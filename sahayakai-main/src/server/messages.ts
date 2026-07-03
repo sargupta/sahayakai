@@ -169,7 +169,22 @@ export async function sendMessage(
     if (audioUrl) {
         if (typeof audioUrl !== 'string') throw new Error('Invalid audio URL');
         if (audioUrl.length > 1024) throw new Error('Audio URL too long');
-        if (!audioUrl.startsWith('https://firebasestorage.googleapis.com/') &&
+        // H8: new private voice messages store the bare Storage PATH
+        // (voice-messages/{senderId}/{conversationId}/{file}) instead of a
+        // token-bearing download URL. Playback goes through the
+        // /api/media/sign proxy which enforces conversation membership.
+        // The path must be scoped to THIS sender and THIS conversation —
+        // a sender cannot attach someone else's recording.
+        const ownVoicePrefix = `voice-messages/${senderId}/${conversationId}/`;
+        const isOwnVoicePath =
+            audioUrl.startsWith(ownVoicePrefix) &&
+            !audioUrl.includes('..') &&
+            !audioUrl.slice(ownVoicePrefix.length).includes('/') &&
+            audioUrl.length > ownVoicePrefix.length;
+        // Legacy clients (and community/group chat) still send full download
+        // URLs — keep the Wave 3 host allowlist for those.
+        if (!isOwnVoicePath &&
+            !audioUrl.startsWith('https://firebasestorage.googleapis.com/') &&
             !audioUrl.startsWith('https://storage.googleapis.com/')) {
             throw new Error('Audio URL must point to Firebase Storage');
         }
@@ -334,6 +349,25 @@ export async function sendMessage(
     }
 
     return { messageId: msgRef.id };
+}
+
+// ── isConversationParticipant ─────────────────────────────────────────────────
+// H8: shared authorization primitive for anything that needs to answer
+// "may this user touch media/data attached to this conversation?" —
+// currently the /api/media/sign proxy for private voice-message playback.
+// Returns false (never throws) for missing conversations so callers can map
+// it to a uniform 403 without leaking which conversation ids exist.
+
+export async function isConversationParticipant(
+    conversationId: string,
+    userId: string,
+): Promise<boolean> {
+    if (!conversationId || !userId) return false;
+    const db = await getDb();
+    const doc = await db.collection('conversations').doc(conversationId).get();
+    if (!doc.exists) return false;
+    const participantIds: string[] = doc.data()?.participantIds ?? [];
+    return participantIds.includes(userId);
 }
 
 // ── markConversationRead ──────────────────────────────────────────────────────

@@ -1,5 +1,6 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { INJECTION_GUARD, neutralizeUserInput } from '@/ai/prompt-hardening';
 
 // Define the possible agent types
 const AgentTypeSchema = z.enum([
@@ -145,6 +146,7 @@ const intentPrompt = ai.definePrompt({
     })
   },
   prompt: `Analyze the user prompt to determine the intended tool and extract key parameters.
+        ${INJECTION_GUARD}
 
         ⚠️ FRESH CLASSIFICATION RULE (NCERT-demo 2026-05-19 hardening):
         This is a FRESH classification of the prompt below — treat it as a single,
@@ -268,7 +270,7 @@ const intentPrompt = ai.definePrompt({
 
         The OmniOrb client iterates \`plannedActions\` and renders each entry as a one-tap chip the teacher can accept. The orchestrator does NOT execute follow-ups automatically — the teacher confirms each one.
 
-        Prompt: {{{prompt}}}
+        Prompt: <user_input field="prompt">{{{prompt}}}</user_input>
         `,
 });
 
@@ -408,7 +410,7 @@ export const agentRouterFlow = ai.defineFlow(
     const { runResiliently } = await import('@/ai/genkit');
     // 1. Determine the user's intent
     const { output: intentOutput } = await runResiliently(async (resilienceConfig) => {
-      return await intentPrompt({ prompt: input.prompt }, resilienceConfig);
+      return await intentPrompt({ prompt: neutralizeUserInput(input.prompt) }, resilienceConfig);
     }, 'intent.classify');
 
     const intent = intentOutput?.intent || 'unknown';

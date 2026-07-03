@@ -9,13 +9,24 @@ import { useLanguage } from "@/context/language-context";
 import { useToast } from "@/hooks/use-toast";
 
 interface VoiceRecorderProps {
-    onSend: (audioUrl: string, duration: number) => void;
+    /**
+     * H8: when set, the recording is a PRIVATE voice DM — it uploads to
+     * voice-messages/{uid}/{conversationId}/… and `onSend` receives the bare
+     * storage PATH (playback signs it via POST /api/media/sign). Client reads
+     * on that prefix are denied by storage.rules, so no getDownloadURL call.
+     *
+     * When absent (community chat), the clip is shared-to-community by
+     * intent: it uploads to community-voice/{uid}/… (auth-read allowed) and
+     * `onSend` receives a regular download URL.
+     */
+    conversationId?: string;
+    onSend: (audioUrlOrPath: string, duration: number) => void;
     disabled?: boolean;
 }
 
 type RecorderState = "idle" | "recording" | "uploading";
 
-export function VoiceRecorder({ onSend, disabled }: VoiceRecorderProps) {
+export function VoiceRecorder({ conversationId, onSend, disabled }: VoiceRecorderProps) {
     const { t } = useLanguage();
     const { toast } = useToast();
     const [state, setState] = useState<RecorderState>("idle");
@@ -186,7 +197,14 @@ export function VoiceRecorder({ onSend, disabled }: VoiceRecorderProps) {
             : "webm";
         // Firestore storage expects a content type without the codecs= suffix.
         const contentType = mimeType.split(";")[0] || "audio/webm";
-        const path = `voice-messages/${user.uid}/${Date.now()}.${ext}`;
+        // H8: private DM audio goes under a conversation-scoped path so the
+        // /api/media/sign proxy can authorize playback by membership; the
+        // prefix has NO client read access, so we must not call
+        // getDownloadURL for it. Community clips keep the old flow on a
+        // dedicated, intentionally auth-readable prefix.
+        const path = conversationId
+            ? `voice-messages/${user.uid}/${conversationId}/${Date.now()}.${ext}`
+            : `community-voice/${user.uid}/${Date.now()}.${ext}`;
         const storageRef = ref(storage, path);
 
         try {
@@ -194,8 +212,12 @@ export function VoiceRecorder({ onSend, disabled }: VoiceRecorderProps) {
             await new Promise<void>((resolve, reject) => {
                 task.on("state_changed", null, reject, resolve);
             });
-            const url = await getDownloadURL(storageRef);
-            onSend(url, duration);
+            if (conversationId) {
+                onSend(path, duration);
+            } else {
+                const url = await getDownloadURL(storageRef);
+                onSend(url, duration);
+            }
         } catch (err: any) {
             // Surface upload failures (most commonly Storage rules denying the
             // voice-messages/{uid}/ path, or a network error) instead of failing silently.

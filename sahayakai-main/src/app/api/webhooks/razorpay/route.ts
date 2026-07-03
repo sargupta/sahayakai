@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { logger } from '@/lib/logger';
 import { verifyWebhookSignature, resolvePlanTypeFromPlanId } from '@/lib/razorpay';
+import { logger } from '@/lib/logger';
 
 /**
  * POST /api/webhooks/razorpay
@@ -242,7 +242,11 @@ export async function POST(request: Request) {
                     throw new Error(`CLAIM_SET_FAILED: ${userId}`);
                 }
 
-                logger.info(`${ledgerResult === 'applied' ? 'Provisioned' : 'Replay no-op (already provisioned)'} ${planType} for user ${userId}, payment ${payment.id}`, 'WEBHOOK');
+                logger.info(
+                    `${ledgerResult === 'applied' ? 'Provisioned' : 'Replay no-op (already provisioned)'} ${planType} for user ${userId}, payment ${payment.id}`,
+                    'Webhook',
+                    { ledgerResult, planType, userId, paymentId: payment.id }
+                );
 
                 // Public checkout: send a passwordless sign-in link so the
                 // anonymous buyer can actually reach their new Pro account.
@@ -272,7 +276,11 @@ export async function POST(request: Request) {
                             },
                             { merge: true }
                         );
-                        logger.info(`Magic sign-in link generated for public buyer ${noteEmail} (user ${userId})`, 'WEBHOOK');
+                        logger.info(
+                            `Magic sign-in link generated for public buyer ${noteEmail} (user ${userId})`,
+                            'Webhook',
+                            { noteEmail, userId }
+                        );
                     } catch (linkErr) {
                         // Don't throw — the payment + plan are already provisioned
                         // atomically above. Magic link delivery is the only thing
@@ -362,7 +370,11 @@ export async function POST(request: Request) {
                             updatedAt: new Date(),
                         });
                     });
-                    logger.info(`subscription.cancelled honored for ${userId} — plan stays until ${new Date(paidUntilSec * 1000).toISOString()}`, 'WEBHOOK');
+                    logger.info(
+                        `subscription.cancelled honored for ${userId} — plan stays until ${new Date(paidUntilSec * 1000).toISOString()}`,
+                        'Webhook',
+                        { userId, paidUntil: new Date(paidUntilSec * 1000).toISOString() }
+                    );
                 } else {
                     // halted, or cancelled past current_end — downgrade now atomically.
                     await db.runTransaction(async (tx) => {
@@ -378,7 +390,7 @@ export async function POST(request: Request) {
                         throw new Error(`CLAIM_SET_FAILED: ${userId}`);
                     }
 
-                    logger.info(`Downgraded user ${userId} to free (${event.event})`, 'WEBHOOK');
+                    logger.info(`Downgraded user ${userId} to free (${event.event})`, 'Webhook', { userId, event: event.event });
                 }
                 break;
             }
@@ -404,7 +416,7 @@ export async function POST(request: Request) {
             }
 
             default:
-                logger.info(`Unhandled event: ${event.event}`, 'WEBHOOK');
+                logger.info(`Unhandled event: ${event.event}`, 'Webhook', { event: event.event });
         }
 
         await eventRef.update({ status: 'completed', completedAt: new Date() });

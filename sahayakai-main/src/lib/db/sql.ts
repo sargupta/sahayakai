@@ -1,5 +1,6 @@
 import { Pool } from 'pg';
 import 'server-only';
+import { logger } from '@/lib/logger';
 
 let pool: Pool | null = null;
 
@@ -37,7 +38,7 @@ export async function query<T = any>(text: string, params?: any[]) {
     const duration = Date.now() - start;
 
     if (process.env.NODE_ENV === 'development') {
-        console.log('Executed query', { text, duration, rows: res.rowCount });
+        logger.info('Executed query', 'db', { text, duration, rows: res.rowCount });
     }
 
     return res;

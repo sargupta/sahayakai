@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isSubscriptionEnabled, isFeatureEnabled, getMaintenanceInfo, readConfig } from '@/lib/feature-flags';
+import { logger } from '@/lib/logger';
 
 /**
  * GET /api/config/flags
@@ -25,7 +26,12 @@ export async function GET(req: NextRequest) {
     }
 
     // Log for debugging (server logs only)
-    console.log(`[FeatureFlags] uid=${uid} subscription=${sub.enabled} (${sub.reason}) maintenance=${maintenance.active}`);
+    logger.info('flag state evaluated', 'FeatureFlags', {
+      uid,
+      subscriptionEnabled: sub.enabled,
+      subscriptionReason: sub.reason,
+      maintenanceActive: maintenance.active,
+    });
 
     return NextResponse.json({
       subscriptionEnabled: sub.enabled,

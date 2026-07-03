@@ -168,6 +168,9 @@ function setMode(mode: VideoStorytellerSidecarMode, percent = 100): void {
 
 beforeEach(() => {
     jest.clearAllMocks();
+    // The dispatch cost-signal is emitted via console.info (single-line JSON);
+    // human logs route through lib/logger. Silence both to keep test output clean.
+    jest.spyOn(console, 'info').mockImplementation(() => {});
     jest.spyOn(console, 'log').mockImplementation(() => {});
     jest.spyOn(console, 'warn').mockImplementation(() => {});
     mockGetFlags.mockResolvedValue({
@@ -198,7 +201,7 @@ describe('dispatchVideoStoryteller — off mode', () => {
     it('logs aiCallsCount=1 (cost dashboard signal)', async () => {
         setMode('off');
         mockGenkit.mockResolvedValue(GENKIT_OUTPUT as any);
-        const logSpy = jest.spyOn(console, 'log');
+        const logSpy = jest.spyOn(console, 'info');
 
         await dispatchVideoStoryteller(BASE_INPUT);
 
@@ -298,7 +301,7 @@ describe('dispatchVideoStoryteller — canary / full (Phase M.1)', () => {
         setMode('canary');
         mockSidecar.mockResolvedValue(SIDECAR_OUTPUT);
         mockYouTubeOnly.mockResolvedValue(YOUTUBE_ONLY_OUTPUT as any);
-        const logSpy = jest.spyOn(console, 'log');
+        const logSpy = jest.spyOn(console, 'info');
 
         await dispatchVideoStoryteller(BASE_INPUT);
 
@@ -382,7 +385,7 @@ describe('dispatchVideoStoryteller — canary / full (Phase M.1)', () => {
         setMode('canary');
         mockSidecar.mockRejectedValue(new Error('sidecar timeout'));
         mockGenkit.mockResolvedValue(GENKIT_OUTPUT as any);
-        const logSpy = jest.spyOn(console, 'log');
+        const logSpy = jest.spyOn(console, 'info');
 
         await dispatchVideoStoryteller(BASE_INPUT);
 

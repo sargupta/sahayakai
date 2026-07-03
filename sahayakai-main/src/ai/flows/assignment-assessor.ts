@@ -20,6 +20,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
+import { INJECTION_GUARD, neutralizeUserInput } from '@/ai/prompt-hardening';
 import { normalizeLanguage } from '@/ai/lib/normalize-language';
 import { HANDWRITING_FEW_SHOTS } from '@/ai/lib/handwriting-fewshots';
 import { validateAssessment } from './assignment-assessor-validation';
@@ -129,6 +130,7 @@ const assignmentAssessorPrompt = ai.definePrompt({
   input: { schema: PromptInputSchema },
   output: { schema: AssessAssignmentOutputSchema },
   prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
+${INJECTION_GUARD}
 {{#if teacherContext}}{{{teacherContext}}}{{/if}}
 
 You are an experienced Indian school teacher assessing ONE student's handwritten assignment. Rigorous, kind, specific.
@@ -169,7 +171,7 @@ Up to 3 strengths, 3 improvements, 3 next-step practice tasks. teacherNote = one
 
 {{#if editedTranscript}}
 **Teacher-edited transcript (use this verbatim INSTEAD of re-reading the image for stages 3–5)**:
-{{{editedTranscript}}}
+<user_input field="edited_transcript">{{{editedTranscript}}}</user_input>
 {{/if}}
 
 **Hard constraints**:
@@ -226,6 +228,7 @@ const assignmentAssessorFlow = ai.defineFlow(
         return assignmentAssessorPrompt(
           {
             ...input,
+            editedTranscript: input.editedTranscript && neutralizeUserInput(input.editedTranscript),
             language,
             rubricJson,
             fewShots: HANDWRITING_FEW_SHOTS,

@@ -10,13 +10,44 @@ rules_version = '2';
 // `firebase deploy --only storage`.
 service firebase.storage {
     match /b/{bucket}/o {
-        // ── Voice messages (1-to-1 chat) ────────────────────────────────────
-        // Path written by src/components/messages/voice-recorder.tsx:
-        //   voice-messages/{uid}/{timestamp}.{webm|m4a}
-        // Only the signed-in owner can upload; any signed-in user can
-        // download (recipients need to play back). 5 MB cap is generous for
-        // a typical 1–2 minute opus/m4a clip and keeps abuse bounded.
+        // ── Voice messages (1-to-1 / group DM chat) ─────────────────────────
+        // H8 (BUG_AUDIT_2026-07-02): reads were auth-wide, so ANY signed-in
+        // user could pull any teacher's private voice DMs off guessable
+        // voice-messages/{uid}/{timestamp} paths. Client reads are now DENIED
+        // entirely — playback is proxy-only via POST /api/media/sign, which
+        // verifies conversation membership server-side and mints a 10-minute
+        // V4 signed URL. Upload rules unchanged (owner-only, audio, 5 MB).
+        //
+        // New path written by src/components/messages/voice-recorder.tsx:
+        //   voice-messages/{uid}/{conversationId}/{timestamp}.{webm|m4a}
+        match /voice-messages/{userId}/{conversationId}/{fileName} {
+            allow read: if false;  // proxy-only — see /api/media/sign
+            allow write: if request.auth != null
+                         && request.auth.uid == userId
+                         && request.resource.size < 5 * 1024 * 1024
+                         && request.resource.contentType.matches('audio/.*');
+            allow delete: if request.auth != null && request.auth.uid == userId;
+        }
+
+        // Legacy pre-H8 layout: voice-messages/{uid}/{timestamp}.{webm|m4a}.
+        // No new uploads land here (recorder now writes the nested path).
+        // Existing messages keep playing via the token-bearing download URL
+        // already stored on the message doc (tokens are rule-independent);
+        // SDK/path reads are closed like the nested path above.
         match /voice-messages/{userId}/{fileName} {
+            allow read: if false;  // proxy-only — see /api/media/sign
+            allow write: if false; // new uploads use the conversation-scoped path
+            allow delete: if request.auth != null && request.auth.uid == userId;
+        }
+
+        // ── Community chat voice notes ──────────────────────────────────────
+        // Path written by src/components/messages/voice-recorder.tsx when
+        // used from community-chat.tsx (no conversationId prop):
+        //   community-voice/{uid}/{timestamp}.{webm|m4a}
+        // Auth-wide read is INTENTIONAL here (H8 reviewed): these clips are
+        // posted to the public community chat — shared-to-community by
+        // intent, unlike private DM audio above.
+        match /community-voice/{userId}/{fileName} {
             allow read: if request.auth != null;
             allow write: if request.auth != null
                          && request.auth.uid == userId
@@ -28,7 +59,9 @@ service firebase.storage {
         // ── User uploads (resource sharing, lesson media) ────────────────────
         // Path written by src/components/image-uploader.tsx:
         //   users/{userId}/uploads/{uuid}_{filename}
-        // Mirrors the voice-messages owner-write / authenticated-read pattern.
+        // Auth-wide read is INTENTIONAL (H8 reviewed): these images are
+        // uploaded to be shared into community resources/lessons — shared by
+        // intent, unlike private DM audio.
         match /users/{userId}/uploads/{fileName=**} {
             allow read: if request.auth != null;
             // Images only (matches the uploader's jpeg/png/webp accept list).

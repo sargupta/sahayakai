@@ -1,7 +1,7 @@
 /**
  * Generic shadow-diff writer (Phase M.5).
  *
- * Replaces the 13 non-parent-call dispatchers' console.log shadow-mode
+ * Replaces the 13 non-parent-call dispatchers' console-based shadow-mode
  * reporting with Firestore writes that the offline aggregator can roll
  * up. Before this lands, only the parent-call dispatcher persisted its
  * (genkit, sidecar) pairs to Firestore via `shadow-diff.ts`; the other

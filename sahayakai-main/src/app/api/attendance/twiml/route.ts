@@ -9,6 +9,7 @@ import { getVoicePipelineConfig } from '@/lib/voice-pipeline/config';
 import type { TranscriptTurn } from '@/types/attendance';
 import type { Language } from '@/types';
 import { LANGUAGE_TO_ISO } from '@/types/index';
+import { logger } from '@/lib/logger';
 
 const MAX_TURNS = 6;
 const SPEECH_TIMEOUT = 'auto'; // Twilio auto-detects end of speech
@@ -244,7 +245,7 @@ export async function POST(req: NextRequest) {
         });
 
         if (dedup.duplicate) {
-            console.log('[twiml] Duplicate turn detected — returning cached reply for', fingerprint);
+            logger.info('Duplicate turn detected — returning cached reply', 'twiml', { fingerprint });
             if (dedup.cachedReply) {
                 return twimlResponse(dedup.cachedReply);
             }

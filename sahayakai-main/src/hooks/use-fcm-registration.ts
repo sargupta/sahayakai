@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { requestNotificationPermission, onForegroundMessage } from '@/lib/fcm-client';
 import { useAuth } from '@/context/auth-context';
+import { logger } from '@/lib/client-logger';
 
 /**
  * Registers FCM token on mount when user is authenticated.
@@ -37,7 +38,7 @@ export function useFcmRegistration() {
         onForegroundMessage((payload) => {
             // Don't show browser notification if app is focused — the real-time listener handles it
             // But we could show a toast here if desired
-            console.log('[FCM] Foreground message:', payload);
+            logger.info('Foreground message', 'FCM', { payload });
         }).then(fn => { unsub = fn; });
 
         return () => {

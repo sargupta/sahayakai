@@ -41,6 +41,7 @@ import {
 import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { shouldRunCanaryShadowDiff } from './canary-shadow-diff';
 import { withTimeout } from './with-timeout';
+import { logger } from '@/lib/logger';
 
 const FALLBACK_TIMEOUT_MS =
     Number(process.env.ASSESSMENT_SCANNER_FALLBACK_TIMEOUT_MS) || 90_000;
@@ -223,16 +224,12 @@ function logDispatch(
     decision: AssessmentScannerSidecarDecision,
     payload: Record<string, unknown>,
 ): void {
-    // eslint-disable-next-line no-console
-    console.log(
-        JSON.stringify({
-            event: 'assessment_scanner.dispatch',
-            mode: decision.mode,
-            reason: decision.reason,
-            bucket: decision.bucket,
-            ...payload,
-        }),
-    );
+    logger.info('assessment_scanner.dispatch', 'assessment_scanner.dispatch', {
+        mode: decision.mode,
+        reason: decision.reason,
+        bucket: decision.bucket,
+        ...payload,
+    });
 }
 
 export async function dispatchAssessmentScanner(

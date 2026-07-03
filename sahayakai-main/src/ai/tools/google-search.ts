@@ -4,6 +4,7 @@
  */
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 export const googleSearch = ai.defineTool(
   {
@@ -24,7 +25,7 @@ export const googleSearch = ai.defineTool(
   async ({ query }) => {
     // In a real implementation, this would call the Google Search API.
     // For this environment, we'll return a mocked response.
-    console.log(`Performing mock Google search for: ${query}`);
+    logger.info(`Performing mock Google search for: ${query}`, 'GoogleSearch', { query });
     if (query.toLowerCase().includes('video') || query.toLowerCase().includes('explain')) {
          return {
             results: [

@@ -12,6 +12,7 @@ import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
+import { INJECTION_GUARD, neutralizeUserInput } from '@/ai/prompt-hardening';
 import { extractGradeFromTopic } from '@/lib/grade-utils';
 import { normalizeLanguage } from '@/ai/lib/normalize-language';
 
@@ -87,6 +88,7 @@ const rubricGeneratorPrompt = ai.definePrompt({
   input: { schema: RubricGeneratorInputSchema },
   output: { schema: RubricGeneratorOutputSchema },
   prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
+${INJECTION_GUARD}
 {{#if teacherContext}}{{{teacherContext}}}{{/if}}
 
 You are an expert educator specializing in assessment and rubric design. Create a detailed, fair, and professional grading rubric.
@@ -104,7 +106,7 @@ You are an expert educator specializing in assessment and rubric design. Create 
 6. **Metadata**: Identify the most appropriate \`subject\` (e.g., English, Science) and \`gradeLevel\` if not explicitly provided.
 
 **Context:**
-- **Assignment**: {{{assignmentDescription}}}
+- **Assignment**: <user_input field="assignment_description">{{{assignmentDescription}}}</user_input>
 - **Grade**: {{{gradeLevel}}}
 - **Subject**: {{{subject}}}
 - **Language**: {{{language}}}
@@ -149,7 +151,10 @@ const rubricGeneratorFlow = ai.defineFlow(
       });
 
       const { output } = await runResiliently(async (resilienceConfig) => {
-        return await rubricGeneratorPrompt(input, resilienceConfig);
+        return await rubricGeneratorPrompt(
+          { ...input, assignmentDescription: neutralizeUserInput(input.assignmentDescription) },
+          resilienceConfig
+        );
       }, 'rubric.generate');
 
       if (!output) {

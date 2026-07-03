@@ -29,6 +29,7 @@ import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { shouldRunCanaryShadowDiff } from './canary-shadow-diff';
 import { WithTimeoutError, withTimeout } from './with-timeout';
 import { toIsoLanguage } from './lang';
+import { logger } from '@/lib/logger';
 
 // Mirrors `TIMEOUT_MS` in quiz-client.ts. Phase J.2 hot-fix (P0 #7) —
 // caps the Genkit fallback to the same budget as the sidecar.
@@ -203,14 +204,12 @@ async function runSidecarSafe(request: SidecarQuizRequest) {
 }
 
 function logDispatch(decision: QuizSidecarDecision, payload: Record<string, unknown>): void {
-    // eslint-disable-next-line no-console
-    console.log(JSON.stringify({
-        event: 'quiz.dispatch',
+    logger.info('quiz.dispatch', 'quiz.dispatch', {
         mode: decision.mode,
         reason: decision.reason,
         bucket: decision.bucket,
         ...payload,
-    }));
+    });
 }
 
 export async function dispatchQuiz(input: QuizDispatchInput): Promise<DispatchedQuiz> {
@@ -249,7 +248,7 @@ async function _dispatchQuizInner(
         const durationMs = Date.now() - dispatchStartedAt;
         logDispatch(decision, { source: 'genkit', uid: input.userId, durationMs });
         // eslint-disable-next-line no-console
-        console.log('[quiz.dispatch] complete', { durationMs, source: 'genkit' });
+        logger.info('complete', 'quiz.dispatch', { durationMs, source: 'genkit' });
 
         // Q4C — canary "bucket-overshoot" observation. When the agent
         // is mid-canary (configuredMode==='canary') but THIS teacher's
@@ -303,7 +302,7 @@ async function _dispatchQuizInner(
         });
         if (!genkit.ok) throw genkit.error;
         // eslint-disable-next-line no-console
-        console.log('[quiz.dispatch] complete', {
+        logger.info('complete', 'quiz.dispatch', {
             durationMs: Date.now() - dispatchStartedAt,
             source: 'genkit',
         });
@@ -354,7 +353,7 @@ async function _dispatchQuizInner(
             durationMs,
         });
         // eslint-disable-next-line no-console
-        console.log('[quiz.dispatch] complete', { durationMs, source: 'sidecar' });
+        logger.info('complete', 'quiz.dispatch', { durationMs, source: 'sidecar' });
 
         // Q4C — canary/full observation: fire Genkit in the background
         // and write a shadow_diff so the promotion-gate aggregator has
@@ -398,7 +397,7 @@ async function _dispatchQuizInner(
         'quiz genkit fallback',
     );
     // eslint-disable-next-line no-console
-    console.log('[quiz.dispatch] complete', {
+    logger.info('complete', 'quiz.dispatch', {
         durationMs: Date.now() - dispatchStartedAt,
         source: 'genkit_fallback',
     });

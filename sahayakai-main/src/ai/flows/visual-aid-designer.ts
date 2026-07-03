@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 import { UsageTracker } from '@/lib/usage-tracker';
 import { validateTopicSafety } from '@/lib/safety';
+import { INJECTION_GUARD, frameUserInput } from '@/ai/prompt-hardening';
 import { normalizeLanguage } from '@/ai/lib/normalize-language';
 
 export const VisualAidInputSchema = z.object({
@@ -132,7 +133,8 @@ const visualAidFlow = ai.defineFlow(
             ...overrideConfig,
             prompt: `
               Create a blackboard chalk-style educational illustration.
-              Task: Draw a "${prompt}" for a ${gradeLevel || 'general'} classroom.
+              ${INJECTION_GUARD}
+              Task: Draw a ${frameUserInput('topic', prompt)} for a ${gradeLevel || 'general'} classroom.
 
               Style:
               - High-fidelity white chalk lines on a dark black background.
@@ -179,7 +181,8 @@ const visualAidFlow = ai.defineFlow(
           output: { schema: MetadataSchema },
           prompt: `
             You are a master teacher.
-            Topic: "${prompt}"
+            ${INJECTION_GUARD}
+            Topic: ${frameUserInput('topic', prompt)}
             Grade: ${gradeLevel || 'any'}
             Language: ${language || 'English'}
 

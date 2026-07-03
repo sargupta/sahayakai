@@ -41,6 +41,7 @@ import {
     type SidecarReplyResponse,
 } from './parent-call-client';
 import { writeShadowDiff } from './shadow-diff';
+import { logger } from '@/lib/logger';
 
 export type DispatchSource = 'genkit' | 'sidecar' | 'genkit_fallback';
 
@@ -167,15 +168,12 @@ function logDispatch(
     // Single structured log line per dispatch decision. The Cloud
     // Logging filter for the Track D dashboards keys off
     // `event="parent_call.dispatch"`.
-    console.log(
-        JSON.stringify({
-            event: 'parent_call.dispatch',
-            mode: decision.mode,
-            reason: decision.reason,
-            bucket: decision.bucket,
-            ...payload,
-        }),
-    );
+    logger.info('parent_call.dispatch', 'parent_call.dispatch', {
+        mode: decision.mode,
+        reason: decision.reason,
+        bucket: decision.bucket,
+        ...payload,
+    });
 }
 
 /**

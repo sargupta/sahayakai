@@ -265,6 +265,7 @@ export async function generateLessonPlan(input: LessonPlanInput): Promise<Lesson
 }
 
 import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
+import { INJECTION_GUARD, neutralizeUserInput } from '@/ai/prompt-hardening';
 import { generateLessonPlanCacheKey, getCachedLessonPlan, setCachedLessonPlan } from '@/lib/lesson-plan-cache';
 
 const lessonPlanPrompt = ai.definePrompt({
@@ -272,6 +273,7 @@ const lessonPlanPrompt = ai.definePrompt({
   input: { schema: LessonPlanInputSchema },
   output: { schema: LessonPlanOutputSchema, format: 'json' },
   prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
+${INJECTION_GUARD}
 {{#if teacherContext}}{{{teacherContext}}}{{/if}}
 
 You are an expert teacher who creates highly precise, balanced, and pedagogically robust lesson plans, especially for multi-grade and rural Indian classrooms.
@@ -340,7 +342,7 @@ You MUST organize the activities into the 5E Instructional Model:
 Primary content is in the provided textbook image: {{media url=imageDataUri}}
 {{/if}}
 
-Topic: {{{topic}}}
+Topic: <user_input field="topic">{{{topic}}}</user_input>
 Grade Levels: {{#each gradeLevels}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 {{#if subject}}Subject: {{{subject}}} — ALWAYS treat this as the authoritative subject area. Do NOT infer a different subject from the topic. If the topic is "Chapter 2" and subject is "Science", generate a Class N Science Ch 2 plan (NOT Mathematics Ch 2, NOT any other subject).{{/if}}
 Language: {{{language}}}
@@ -488,7 +490,10 @@ const lessonPlanFlow = ai.defineFlow(
 
         const { output, usage } = await Sentry.startSpan({ name: 'AI Generation', op: 'ai.generate' }, async () => {
           return await runResiliently(async (resilienceConfig) => {
-            const result = await lessonPlanPrompt(normalizedInput, resilienceConfig);
+            const result = await lessonPlanPrompt(
+              { ...normalizedInput, topic: neutralizeUserInput(normalizedInput.topic) },
+              resilienceConfig
+            );
             return {
               output: result.output,
               usage: (result as any).usage

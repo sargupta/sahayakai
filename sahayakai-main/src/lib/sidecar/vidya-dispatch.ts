@@ -234,8 +234,7 @@ function logDispatch(
     decision: VidyaSidecarDecision,
     payload: Record<string, unknown>,
 ): void {
-    // eslint-disable-next-line no-console
-    console.log(
+    console.info(
         JSON.stringify({
             event: 'vidya.dispatch',
             mode: decision.mode,

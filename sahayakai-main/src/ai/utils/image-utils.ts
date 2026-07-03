@@ -1,6 +1,7 @@
 
 import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
+import { logger } from '@/lib/logger';
 
 /**
  * SSRF hardening for server-side image fetches.
@@ -113,7 +114,7 @@ export async function fetchImageAsBase64(imageUrl: string): Promise<string> {
 
         const mimeType = response.headers.get('content-type') || 'image/jpeg';
 
-        console.log(`[ImageUtils] Fetched and converted image in ${Date.now() - startTime}ms. Size: ${Math.round(buffer.length / 1024)}KB`);
+        logger.info(`Fetched and converted image in ${Date.now() - startTime}ms. Size: ${Math.round(buffer.length / 1024)}KB`, 'ImageUtils', { durationMs: Date.now() - startTime, sizeKB: Math.round(buffer.length / 1024) });
 
         return `data:${mimeType};base64,${base64}`;
     } catch (error) {

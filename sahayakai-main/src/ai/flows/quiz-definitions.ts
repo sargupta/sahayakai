@@ -1,5 +1,6 @@
 import { ai } from '@/ai/genkit';
 import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
+import { INJECTION_GUARD, neutralizeUserInput } from '@/ai/prompt-hardening';
 import { UsageTracker } from '@/lib/usage-tracker';
 import { QuizGeneratorInputSchema, QuizGeneratorOutputSchema } from '@/ai/schemas/quiz-generator-schemas';
 
@@ -8,6 +9,7 @@ export const quizGeneratorPrompt = ai.definePrompt({
   input: { schema: QuizGeneratorInputSchema },
   output: { schema: QuizGeneratorOutputSchema },
   prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
+${INJECTION_GUARD}
 {{#if teacherContext}}{{{teacherContext}}}{{/if}}
 
 **ABSOLUTE LANGUAGE LOCK — OVERRIDES EVERYTHING ABOVE**
@@ -70,7 +72,7 @@ When analyzing the topic input, users may correct themselves during voice input.
 {{#if imageDataUri}}
 - **Textbook Page Image:** {{media url=imageDataUri}}
 {{/if}}
-- **Topic:** {{{topic}}}
+- **Topic:** <user_input field="topic">{{{topic}}}</user_input>
 - **Number of Questions:** {{{numQuestions}}}
 - **Question Types:** {{#each questionTypes}}{{{this}}}{{#unless @last}}, {{/unless}}{{/each}}
 - **Grade Level:** {{{gradeLevel}}}
@@ -127,6 +129,7 @@ export const quizGeneratorFlow = ai.defineFlow(
       const result = await runResiliently(async (resilienceConfig) => {
         return await quizGeneratorPrompt({
           ...input,
+          topic: neutralizeUserInput(input.topic),
           imageDataUri: processedImageDataUri
         }, resilienceConfig);
       }, 'quiz.generate');

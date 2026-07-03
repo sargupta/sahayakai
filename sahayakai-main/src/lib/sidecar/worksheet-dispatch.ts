@@ -155,8 +155,7 @@ async function runSidecarSafe(request: SidecarWorksheetRequest) {
 }
 
 function logDispatch(decision: WorksheetSidecarDecision, payload: Record<string, unknown>): void {
-    // eslint-disable-next-line no-console
-    console.log(JSON.stringify({
+    console.info(JSON.stringify({
         event: 'worksheet.dispatch',
         mode: decision.mode,
         reason: decision.reason,

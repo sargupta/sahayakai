@@ -50,6 +50,7 @@ import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { shouldRunCanaryShadowDiff } from './canary-shadow-diff';
 import { WithTimeoutError, withTimeout } from './with-timeout';
 import { toIsoLanguage } from './lang';
+import { logger } from '@/lib/logger';
 
 // Bumped from 10s — instant-answer uses Google Search grounding which
 // adds 2-5s of latency on top of the model call. 10s caused 500s when the
@@ -233,16 +234,12 @@ function logDispatch(
     decision: InstantAnswerSidecarDecision,
     payload: Record<string, unknown>,
 ): void {
-    // eslint-disable-next-line no-console
-    console.log(
-        JSON.stringify({
-            event: 'instant_answer.dispatch',
-            mode: decision.mode,
-            reason: decision.reason,
-            bucket: decision.bucket,
-            ...payload,
-        }),
-    );
+    logger.info('instant_answer.dispatch', 'instant_answer.dispatch', {
+        mode: decision.mode,
+        reason: decision.reason,
+        bucket: decision.bucket,
+        ...payload,
+    });
 }
 
 // Phase J.5 — `decideInstantAnswerDispatch` is async (Firestore-backed).
@@ -294,8 +291,7 @@ async function _dispatchInstantAnswerInner(
         );
         const durationMs = Date.now() - dispatchStartedAt;
         logDispatch(decision, { source: 'genkit', uid: input.userId, durationMs });
-        // eslint-disable-next-line no-console
-        console.log('[instant_answer.dispatch] complete', { durationMs, source: 'genkit' });
+        logger.info('complete', 'instant_answer.dispatch', { durationMs, source: 'genkit' });
 
         // Q4C — canary "bucket-overshoot" observation. When the agent
         // is mid-canary (configuredMode==='canary') but THIS teacher's
@@ -357,8 +353,7 @@ async function _dispatchInstantAnswerInner(
         });
 
         if (!genkit.ok) throw genkit.error;
-        // eslint-disable-next-line no-console
-        console.log('[instant_answer.dispatch] complete', {
+        logger.info('complete', 'instant_answer.dispatch', {
             durationMs: Date.now() - dispatchStartedAt,
             source: 'genkit',
         });
@@ -413,8 +408,7 @@ async function _dispatchInstantAnswerInner(
             sidecarVersion: sidecar.res.sidecarVersion,
             durationMs,
         });
-        // eslint-disable-next-line no-console
-        console.log('[instant_answer.dispatch] complete', { durationMs, source: 'sidecar' });
+        logger.info('complete', 'instant_answer.dispatch', { durationMs, source: 'sidecar' });
 
         // Q4C — canary/full observation: fire Genkit in the background
         // and write a shadow_diff so the promotion-gate aggregator has
@@ -465,8 +459,7 @@ async function _dispatchInstantAnswerInner(
         FALLBACK_TIMEOUT_MS,
         'instant-answer genkit fallback',
     );
-    // eslint-disable-next-line no-console
-    console.log('[instant_answer.dispatch] complete', {
+    logger.info('complete', 'instant_answer.dispatch', {
         durationMs: Date.now() - dispatchStartedAt,
         source: 'genkit_fallback',
     });

@@ -1,6 +1,7 @@
 import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
 import { getSecret } from '@/lib/secrets';
+import { logger } from '@/lib/logger';
 
 // Protection against placeholder keys in process.env
 const isPlaceholder = (val: string | undefined) => !val || val.startsWith('secrets/');
@@ -30,7 +31,7 @@ export async function initTelemetry() {
   // Firebase telemetry is only for production (Cloud Run / GCE) where Cloud Trace is available.
   const isProd = process.env.NODE_ENV === 'production';
   if (!isProd) {
-    console.log('[Telemetry] ℹ️ Dev mode — using Genkit Dev UI for traces (Firebase telemetry skipped)');
+    logger.info('Dev mode — using Genkit Dev UI for traces (Firebase telemetry skipped)', 'Telemetry');
     return;
   }
 
@@ -41,7 +42,7 @@ export async function initTelemetry() {
       metricExportIntervalMillis: 300_000,  // 5 min (must be >= exportTimeoutMillis default of 30s)
       metricExportTimeoutMillis: 30_000,
     });
-    console.log('[Telemetry] ✅ Firebase telemetry enabled (Cloud Trace + Cloud Logging)');
+    logger.info('Firebase telemetry enabled (Cloud Trace + Cloud Logging)', 'Telemetry');
   } catch (error) {
     // Telemetry failure must not crash the app
     console.warn('[Telemetry] ⚠️ Could not enable Firebase telemetry:', error instanceof Error ? error.message : 'Unknown');
@@ -69,7 +70,7 @@ async function ensureKeyPool() {
         .split(',')
         .map(k => k.trim())
         .filter(Boolean);
-      console.log(`[AI Resilience] ✅ Loaded ${keyPool.length} keys from Secret Manager. Fingerprints: ${keyPool.map(k => k.substring(0, 8) + '...').join(', ')}`);
+      logger.info('Loaded keys from Secret Manager', 'AI Resilience', { keyCount: keyPool.length });
 
       if (keyPool.length < 2) {
         console.warn(`[AI Resilience] ⚠️ WARNING: Only ${keyPool.length} key(s) in pool. Consider adding more for resilience.`);
@@ -86,7 +87,7 @@ async function ensureKeyPool() {
         .filter(k => k && !isPlaceholder(k));
 
       if (keyPool.length > 0) {
-        console.log(`[AI Resilience] ✅ Fallback active. Fingerprints: ${keyPool.map(k => k.substring(0, 8) + '...').join(', ')}`);
+        logger.info('Fallback active', 'AI Resilience', { keyCount: keyPool.length });
       }
     }
   })();
@@ -183,7 +184,7 @@ export async function runResiliently<T>(
       const result = await fn({ config: { apiKey: currentKey } });
 
       if (spanName) {
-        console.log(`[Trace] ${spanName} completed`, {
+        logger.info(`${spanName} completed`, 'Trace', {
           spanName,
           keyIndex: currentIndex,
           attempts: i + 1,

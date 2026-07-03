@@ -12,6 +12,17 @@ if (typeof (global as any).TextDecoder === 'undefined') {
     (global as any).TextDecoder = TextDecoder;
 }
 
+// Polyfill setImmediate for jsdom (Node has it globally; jsdom strips it).
+// Tests that drain the macrotask queue after fire-and-forget async writes
+// rely on it (e.g. usage-tracker convenience-method coverage).
+if (typeof (global as any).setImmediate === 'undefined') {
+    (global as any).setImmediate = ((fn: (...a: any[]) => void, ...args: any[]) =>
+        setTimeout(fn, 0, ...args)) as any;
+}
+if (typeof (global as any).clearImmediate === 'undefined') {
+    (global as any).clearImmediate = ((id: any) => clearTimeout(id)) as any;
+}
+
 // Polyfill Response, Request, Headers for Node environment
 global.Response = class Response {
     constructor(body?: any, init?: any) {
