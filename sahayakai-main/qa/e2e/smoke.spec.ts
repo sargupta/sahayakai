@@ -28,6 +28,8 @@ const IGNORED_CONSOLE = [
   /firebase/i, // stub Firebase config emits init warnings, not real bugs
   /app-check/i,
   /Download the React DevTools/i,
+  /cloudflareinsights\.com|cdn-cgi\/rum/i, // Cloudflare RUM beacon, CORS-blocked on localhost — third-party
+  /blocked by CORS policy/i, // third-party beacons only; our APIs are same-origin
 ];
 
 function collectConsoleErrors(errors: string[]) {
