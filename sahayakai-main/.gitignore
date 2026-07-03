@@ -65,10 +65,13 @@ firestore-debug.log
 *.xlsx
 *.csv
 
-# Generated Service Worker
+# Generated Service Worker (serwist; workbox/fallback patterns kept for old next-pwa artifacts)
 public/sw.js
 public/sw.js.map
 public/workbox-*.js
+public/workbox-*.js.map
+public/fallback-*.js
+public/swe-worker-*.js
 
 # eval runner artifacts
 eval-results/

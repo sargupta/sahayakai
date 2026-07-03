@@ -1,60 +1,17 @@
 import type { NextConfig } from 'next';
 
-const withPWA = require('next-pwa')({
-  dest: 'public',
-  register: true,
-  skipWaiting: true,
+// PWA: @serwist/next (replaces the abandoned next-pwa and its vulnerable
+// workbox 5/6 chain). The service worker source lives in src/app/sw.ts —
+// skipWaiting/clientsClaim, the /offline.html document fallback, and all
+// runtimeCaching entries were ported there. register defaults to true and
+// swUrl defaults to /sw.js (kept in the middleware public-path allowlist).
+// @serwist/next is ESM-only, so it is loaded via dynamic import in the async
+// config factory at the bottom of this file.
+const serwistOptions = {
+  swSrc: 'src/app/sw.ts',
+  swDest: 'public/sw.js',
   disable: process.env.NODE_ENV === 'development',
-  fallbacks: {
-    document: '/offline.html',
-  },
-  runtimeCaching: [
-    {
-      urlPattern: /\/api\/(config|user|health)/,
-      handler: 'StaleWhileRevalidate',
-      options: {
-        cacheName: 'api-config-cache',
-        expiration: {
-          maxEntries: 32,
-          maxAgeSeconds: 24 * 60 * 60,
-        },
-      },
-    },
-    {
-      urlPattern: /^https:\/\/fonts\.googleapis\.com/,
-      handler: 'StaleWhileRevalidate',
-      options: {
-        cacheName: 'google-fonts-stylesheets',
-        expiration: {
-          maxEntries: 4,
-          maxAgeSeconds: 60 * 60 * 24 * 365,
-        },
-      },
-    },
-    {
-      urlPattern: /^https:\/\/fonts\.gstatic\.com/,
-      handler: 'CacheFirst',
-      options: {
-        cacheName: 'google-fonts-webfonts',
-        expiration: {
-          maxEntries: 10,
-          maxAgeSeconds: 60 * 60 * 24 * 365,
-        },
-      },
-    },
-    {
-      urlPattern: /\/icons\/.+\.png$/,
-      handler: 'CacheFirst',
-      options: {
-        cacheName: 'app-icons',
-        expiration: {
-          maxEntries: 20,
-          maxAgeSeconds: 60 * 60 * 24 * 30,
-        },
-      },
-    },
-  ],
-});
+};
 
 const nextConfig: NextConfig = {
   output: "standalone",
@@ -212,8 +169,10 @@ const nextConfig: NextConfig = {
 
 const { withSentryConfig } = require("@sentry/nextjs");
 
-export default withSentryConfig(
-  withPWA(nextConfig),
+export default async () => {
+  const withSerwist = (await import("@serwist/next")).default(serwistOptions);
+  return withSentryConfig(
+  withSerwist(nextConfig),
   {
     // For all available options, see:
     // https://github.com/getsentry/sentry-webpack-plugin#options
@@ -248,4 +207,5 @@ export default withSentryConfig(
     // https://vercel.com/docs/cron-jobs
     automaticVercelMonitors: true,
   }
-);
+  );
+};

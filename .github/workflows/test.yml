@@ -95,6 +95,15 @@ jobs:
           NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: stub
           NEXT_PUBLIC_FIREBASE_APP_ID: stub
 
+      - name: Enforce first-load JS budget
+        # Perf budget (EXECUTION_PLAN continuous gates). Baseline after the
+        # tranche-3 locale split: home = 639 kB. Budget holds the line while
+        # the design tranche drives it down further.
+        # Budget is in THIS script's units (raw sum of the route's manifest
+        # chunks). Baseline 2026-07-03: 2183 kB raw == Next-reported 639 kB
+        # first-load. Raise only with a written justification.
+        run: node scripts/ci/check-first-load-budget.mjs --route / --budget-kb 2250
+
       - name: Upload coverage
         if: matrix.node-version == 20 && github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
