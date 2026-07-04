@@ -1,6 +1,7 @@
 export function detectLangCode(text: string): string {
     if (/[\u0900-\u097F]/.test(text)) return 'hi-IN'; // Devanagari (Hindi, Marathi, etc.)
     if (/[\u0980-\u09FF]/.test(text)) return 'bn-IN'; // Bengali — fixed: was \u0A0F, bled into Gurmukhi
+    if (/[\u0B00-\u0B7F]/.test(text)) return 'or-IN'; // Odia (before Tamil; kept in sync with api/tts/route.ts)
     if (/[\u0B80-\u0BFF]/.test(text)) return 'ta-IN'; // Tamil
     if (/[\u0C00-\u0C7F]/.test(text)) return 'te-IN'; // Telugu
     if (/[\u0C80-\u0CFF]/.test(text)) return 'kn-IN'; // Kannada
@@ -49,6 +50,18 @@ let activeSpeakResolve: (() => void) | null = null;
 // In-memory cache for TTS audio to avoid re-fetching the same text
 const ttsCache = new Map<string, string>();
 const TTS_CACHE_MAX = 50;
+
+// Stable 32-bit string hash (DJB2) over the FULL text. Not cryptographic — just
+// a low-collision fingerprint so two distinct inputs that happen to share a
+// language, length and first 100 chars (e.g. two quizzes that diverge only
+// after the preamble) don't collide onto the same cached audio clip.
+function hashText(s: string): string {
+    let h = 5381;
+    for (let i = 0; i < s.length; i++) {
+        h = ((h << 5) + h) ^ s.charCodeAt(i); // h * 33 XOR c
+    }
+    return (h >>> 0).toString(36);
+}
 
 // ---- Voice cloud quota soft-cap warning system ----
 // The /api/tts response includes a `voiceQuota` snapshot whenever the user
@@ -113,8 +126,10 @@ export const tts = {
                 // Non-critical — will still attempt the request, middleware will 401
             }
 
-            // Use full text length in key to avoid prefix collisions
-            const cacheKey = `${targetLang}:${text.length}:${text.slice(0, 100)}`;
+            // Key on a hash of the FULL text (not a 100-char prefix) so two
+            // distinct texts sharing a language, length and opening lines don't
+            // collide onto the same cached audio.
+            const cacheKey = `${targetLang}:${text.length}:${hashText(text)}`;
             let audioContent = ttsCache.get(cacheKey);
 
             if (!audioContent) {

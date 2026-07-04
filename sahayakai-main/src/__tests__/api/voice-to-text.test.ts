@@ -1,11 +1,14 @@
 /**
- * Bug 2 regression — Sarvam MIME early-skip.
+ * Sarvam MIME gate.
  *
- * Background: Sarvam Saaras v3 only accepts mpeg/mp3/wav. Browser
- * MediaRecorder defaults to `audio/webm;codecs=opus` (Chrome) or
- * `audio/ogg;codecs=opus` (Firefox). Before the fix the route always
- * tried Sarvam first and burned ~1s on a guaranteed-400 before falling
- * through to Gemini. Now it skips Sarvam entirely for unsupported MIMEs.
+ * Background: Sarvam Saaras v3 accepts mpeg/mp3/wav AND opus in webm/ogg
+ * containers (webm/ogg re-verified empirically on 2026-07-05: saaras:v3,
+ * HTTP 200 + accurate Hindi transcript for both). An older Sarvam model
+ * rejected opus containers with HTTP 400, so the route used to skip straight
+ * to Gemini for the browser MediaRecorder default (`audio/webm;codecs=opus`
+ * on Chrome, `audio/ogg;codecs=opus` on Firefox) — which meant EVERY mic
+ * recording bypassed the cheaper, India-resident Sarvam path. The gate now
+ * sends webm/ogg to Sarvam and only skips genuinely unsupported/empty MIMEs.
  *
  * Plan-check is bypassed by mocking @/lib/plan-guard so withPlanCheck
  * returns the inner handler verbatim.
@@ -37,11 +40,12 @@ jest.mock('@/ai/flows/voice-to-text', () => ({
     scriptMatchesExpected: () => true,
 }));
 
-function makeAudioRequest(mime: string, expectedLanguage?: string, userId: string | null = 'test-uid') {
+function makeAudioRequest(mime: string, expectedLanguage?: string, userId: string | null = 'test-uid', sizeBytes?: number) {
     const bytes = new Uint8Array([1, 2, 3, 4, 5]);
     // Duck-typed File for the route — uses `.size`, `.type`, `.arrayBuffer()`.
+    // sizeBytes lets a test spoof an oversized file without allocating it.
     const file = {
-        size: bytes.byteLength,
+        size: sizeBytes ?? bytes.byteLength,
         type: mime,
         arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer,
     };
@@ -73,18 +77,20 @@ describe('POST /api/ai/voice-to-text', () => {
         mockSarvamSTT.mockResolvedValue({ text: 'should-not-be-called', language: 'en' });
     });
 
-    it('skips Sarvam for audio/webm;codecs=opus and goes straight to Gemini', async () => {
+    it('calls Sarvam for audio/webm;codecs=opus (Chrome; opus re-verified accepted)', async () => {
+        mockSarvamSTT.mockResolvedValue({ text: 'transcribed', language: 'hi' });
         const res = await POST(makeAudioRequest('audio/webm;codecs=opus'));
         expect(res.status).toBe(200);
-        expect(mockSarvamSTT).not.toHaveBeenCalled();
-        expect(mockDispatchVoiceToText).toHaveBeenCalledTimes(1);
+        expect(mockSarvamSTT).toHaveBeenCalledTimes(1);
+        expect(mockDispatchVoiceToText).not.toHaveBeenCalled();
     });
 
-    it('skips Sarvam for audio/ogg;codecs=opus (Firefox)', async () => {
+    it('calls Sarvam for audio/ogg;codecs=opus (Firefox; opus re-verified accepted)', async () => {
+        mockSarvamSTT.mockResolvedValue({ text: 'transcribed', language: 'hi' });
         const res = await POST(makeAudioRequest('audio/ogg;codecs=opus'));
         expect(res.status).toBe(200);
-        expect(mockSarvamSTT).not.toHaveBeenCalled();
-        expect(mockDispatchVoiceToText).toHaveBeenCalledTimes(1);
+        expect(mockSarvamSTT).toHaveBeenCalledTimes(1);
+        expect(mockDispatchVoiceToText).not.toHaveBeenCalled();
     });
 
     it('skips Sarvam for empty/unknown MIME', async () => {
@@ -112,5 +118,14 @@ describe('POST /api/ai/voice-to-text', () => {
     it('returns 401 without x-user-id', async () => {
         const res = await POST(makeAudioRequest('audio/wav', undefined, null));
         expect(res.status).toBe(401);
+    });
+
+    it('rejects audio larger than 10 MB with 413 before any provider call', async () => {
+        // 11 MB — over the MAX_AUDIO_BYTES (10 MB) cap. STT cost scales with
+        // duration; the route must reject before touching Sarvam or Gemini.
+        const res = await POST(makeAudioRequest('audio/wav', undefined, 'test-uid', 11 * 1024 * 1024));
+        expect(res.status).toBe(413);
+        expect(mockSarvamSTT).not.toHaveBeenCalled();
+        expect(mockDispatchVoiceToText).not.toHaveBeenCalled();
     });
 });

@@ -41,12 +41,18 @@ async function _handler(request: NextRequest) {
         }
 
         // --- Try Sarvam STT first (cheaper, purpose-built for Indian languages) ---
-        // Sarvam Saaras v3 only accepts mpeg/mp3/wav. Browser MediaRecorder
-        // defaults to `audio/webm;codecs=opus` (Chrome) or `audio/ogg;codecs=opus`
-        // (Firefox) — Sarvam rejects both with HTTP 400. Skip the call entirely
-        // for unsupported MIMEs so we don't waste ~1s + log noise per request.
-        // See qa/results/lane-F/VIDYA_VOICE_DEBUG.md Bug 2.
-        const sarvamSupportedMime = /^audio\/(mpeg|mp3|mpeg3|x-mpeg-3|x-mp3|wav|wave|x-wav)/i;
+        // Sarvam Saaras v3 accepts mpeg/mp3/wav AND opus in webm/ogg containers.
+        // The webm/ogg support was re-verified empirically on 2026-07-05
+        // (saaras:v3, HTTP 200 + accurate Hindi transcript for both, ~0.4-1.1s):
+        // an older Sarvam model rejected them with HTTP 400, which is why this
+        // gate used to skip straight to Gemini. Because the browser
+        // MediaRecorder records `audio/ogg;codecs=opus` (Firefox) or
+        // `audio/webm;codecs=opus` (Chrome), that stale gate meant EVERY mic
+        // recording bypassed Sarvam and paid for the slower, pricier, non-India
+        // Gemini path. Including webm/ogg here restores the fast, cheap,
+        // India-resident Sarvam path for the primary recorder. The regex is not
+        // end-anchored so it still matches the `;codecs=opus` suffix.
+        const sarvamSupportedMime = /^audio\/(mpeg|mp3|mpeg3|x-mpeg-3|x-mp3|wav|wave|x-wav|webm|ogg)/i;
         const audioMime = audioFile.type || '';
         const sarvamCanHandle = sarvamSupportedMime.test(audioMime);
 
