@@ -421,6 +421,29 @@ service cloud.firestore {
     }
 
     // =============================================
+    // PRESENCE + TYPING (migrated off RTDB → Firestore/Mumbai, 2026-07-04)
+    // Ephemeral, non-personal session state. See use-presence.ts /
+    // use-typing-indicator.ts and MUMBAI_REGION_MIGRATION_RUNBOOK.md §6.
+    // TTL policies on `expireAt` (deploy separately) reap idle docs.
+    // =============================================
+    match /presence/{uid} {
+      // Any signed-in user may see who is online (contacts/conversations).
+      allow read: if isSignedIn();
+      // Only the owner writes their own presence.
+      allow write: if isOwner(uid);
+    }
+
+    match /typing_status/{conversationId} {
+      allow read: if isSignedIn();
+      // A caller may only add/refresh their OWN uid key (plus the expireAt
+      // housekeeping field) — never assert that someone else is typing.
+      allow write: if isSignedIn()
+        && request.resource.data.diff(
+             resource == null ? {} : resource.data
+           ).affectedKeys().hasOnly([request.auth.uid, 'expireAt']);
+    }
+
+    // =============================================
     // DEFAULT DENY
     // =============================================
     // Any collection not matched above is denied by default.
