@@ -50,11 +50,12 @@ Legend: **[LIVE]** = enforced by running code today. **[FOUNDER-RATIFY]** = prop
 | Children's attendance + roster | **3 school years** after the academic year ends | **[FOUNDER-RATIFY]** | None yet — no cleanup job exists. Rationale: covers board-exam re-checks and TC issuance windows |
 | Parent-call recordings/transcripts | **90 days** | **[FOUNDER-RATIFY]** | None yet. Also verify what Twilio/Exotel retain on their side and configure their retention to match |
 | Teacher messages (DMs, group chat) | **Until account deletion** | **[FOUNDER-RATIFY]** | Conversations are multi-party; deletion is tied to the erasure flow, not a clock |
-| Telemetry / analytics | **14 months** | **[FOUNDER-RATIFY]** | **No retention job exists.** `scheduleDataDeletion()` in `src/lib/analytics-consent.ts:82` is an empty TODO, while the consent copy tells users data is kept for 1 year (`data_retention_acknowledged`). 14 months aligns with the GA4 default. Until the job ships, the consent promise is unenforced — this is a compliance gap, not a footnote |
+| Detailed activity analytics (`users/{uid}/analytics/{date}`) | **365 days** | **[LIVE — code]** | **Gap closed.** Daily `/api/jobs/analytics-retention` cron (collection-group sweep) deletes docs older than 365 days, matching the consent copy (`data_retention_acknowledged` = "kept for 1 year"). `purgeExpiredAnalytics(uid)` also runs on consent revoke. **Activation TODO:** create the Cloud Scheduler job (setup in the route header) + deploy the new `analytics` collection-group index (`firebase deploy --only firestore:indexes`) |
+| Aggregate telemetry (GA4 / other) | **14 months** | **[FOUNDER-RATIFY]** | GA4 default; separate from the first-party activity docs above |
 | Billing / payment records | **8 years** | **[FOUNDER-RATIFY]** | Statutory financial-record retention (Companies Act/GST); exempt from erasure |
 | Server logs (Cloud Logging) | GCP default (30 days) | **[LIVE by default]** | GCP `_Default` bucket retention; no custom sink configured in-repo |
 
-> Correction to the tranche brief: the brief assumed an `analytics-retention` cron job exists. It does not — `src/app/api/jobs/` contains `ai-community-agent`, `ai-reactive-reply`, `billing-reconciliation`, `community-chat-cleanup`, `daily-briefing`, `edu-news`, `export-reminder`, `grow-persona-pool`, `storage-cleanup`. Analytics retention must be built.
+> ~~Correction: no `analytics-retention` cron job exists — it must be built.~~ **Built (2026-07-03):** `src/app/api/jobs/analytics-retention/route.ts` + `purgeExpiredAnalytics()` in `analytics-consent.ts` (the old empty `scheduleDataDeletion()` stub is now a working alias). Remaining to activate in prod: Cloud Scheduler job + collection-group index deploy.
 
 ## 4. Deletion story (right to erasure — DPDP §12(3))
 
