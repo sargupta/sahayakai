@@ -87,8 +87,8 @@ export function AnalyticsConsentDialog({
 
                             <p className="font-semibold mt-3">{t("Privacy Promise:")}</p>
                             <ul className="list-disc pl-5 space-y-1">
-                                <li>{t("Your data is stored securely on Google Cloud servers in Singapore (Asia region)")}</li>
-                                <li>{t("Your data is processed outside India; by continuing you consent to this cross-border transfer")}</li>
+                                <li>{t("Your data is stored securely on Google Cloud servers in India (Mumbai region)")}</li>
+                                <li>{t("Only transient online-status signals are processed in Singapore; your content and records remain in India")}</li>
                                 <li>{t("We'll keep data for 1 year, then delete it")}</li>
                                 <li>{t("You can see your own analytics anytime")}</li>
                                 <li>{t("You can revoke consent anytime in settings")}</li>

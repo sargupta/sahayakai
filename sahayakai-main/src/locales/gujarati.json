@@ -495,8 +495,6 @@
  "App performance (load times, errors)": "ઍપ પ્રદર્શન (લોડ સમય, ભૂલો)",
  "Your engagement patterns": "તમારી જોડાણ પેટર્ન",
  "Privacy Promise:": "ગોપનીયતા વચન:",
- "Your data is stored securely on Google Cloud servers in Singapore (Asia region)": "તમારો ડેટા Google Cloud સર્વર પર સિંગાપોર (એશિયા પ્રદેશ)માં સુરક્ષિત રીતે સંગ્રહિત થાય છે",
- "Your data is processed outside India; by continuing you consent to this cross-border transfer": "તમારો ડેટા ભારતની બહાર પ્રક્રિયા થાય છે; ચાલુ રાખીને તમે આ સીમાપાર સ્થાનાંતરણ માટે સંમતિ આપો છો",
  "We'll keep data for 1 year, then delete it": "અમે 1 વર્ષ માટે ડેટા રાખીશું, પછી તેને કાઢી નાખીશું",
  "You can see your own analytics anytime": "તમે ગમે ત્યારે તમારું પોતાનું વિશ્લેષણ જોઈ શકો છો",
  "You can revoke consent anytime in settings": "તમે ગમે ત્યારે સેટિંગ્સમાં સંમતિ રદ કરી શકો છો",
@@ -1471,5 +1469,7 @@
  "Use knowledge to solve problems in new situations.": "નવી પરિસ્થિતિમાં સમસ્યા ઉકેલવા જ્ઞાનનો ઉપયોગ.",
  "Break information into parts and find connections.": "માહિતીને ભાગોમાં વહેંચી સંબંધ શોધવા.",
  "Justify a decision or judge the value of ideas.": "નિર્ણયને યોગ્ય ઠેરવવો કે વિચારોનું મૂલ્યાંકન કરવું.",
- "Combine ideas to produce original work or solutions.": "મૌલિક કાર્ય કે ઉકેલ બનાવવા વિચારો જોડવા."
+ "Combine ideas to produce original work or solutions.": "મૌલિક કાર્ય કે ઉકેલ બનાવવા વિચારો જોડવા.",
+ "Your data is stored securely on Google Cloud servers in India (Mumbai region)": "તમારો ડેટા ભારતમાં (મુંબઈ પ્રદેશ) Google Cloud સર્વર પર સુરક્ષિત રીતે સંગ્રહિત થાય છે",
+ "Only transient online-status signals are processed in Singapore; your content and records remain in India": "માત્ર કામચલાઉ ઓનલાઇન-સ્થિતિ સંકેતો સિંગાપોરમાં પ્રક્રિયા થાય છે; તમારી સામગ્રી અને રેકોર્ડ ભારતમાં જ રહે છે"
 }

@@ -259,6 +259,15 @@ Firebase download URLs look like `https://firebasestorage.googleapis.com/v0/b/<B
 > - **Soak window: 2026-06-10 → 2026-07-10 (30 days).** Re-run `bash scripts/qa/soak-check-us-bucket.sh` any time and as the final gate on/after 2026-07-10. It checks object parity, the post-cutover-write tripwire, and US request breakdown; exit 0 = clean. **US bucket NOT deleted; kept fully intact as rollback target during soak.**
 > - **Open decision (deferred to user):** whether to harden US to *read-only* (remove write IAM) now vs. keep it write-capable. Read-only eliminates silent-divergence risk but disables instant write-rollback (rollback would then need a reverse delta-copy first). Kept write-capable for now since cutover is freshly verified; revisit mid-soak.
 
+### 5.5.1 ⚠️ Missed writer found (2026-07-04): call recordings were still leaking to the US
+The soak check (`scripts/qa/soak-check-us-bucket.sh`) returned **NOT CLEAN**: ~20 `call-recordings/{outreachId}/*.wav` objects were written to the **US bucket after cutover** (2026-06-10 … 06-19). Root cause: the **`sahayakai-voice-call`** service (Exotel voicebot, a *separate* repo) is out of scope of the main-app `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` change — its `src/lib/firebase-admin.ts` set **no** `storageBucket`, so `getStorage().bucket()` in `src/exotel/call-record.ts` used the project **default (US) bucket**. The most sensitive media class (parent-call audio) was the one still leaving India.
+
+Remediation (2026-07-04):
+- **Code fix** (`sahayakai-voice-call`, branch `fix/recordings-mumbai`): pin `storageBucket` → `sahayakai-b4248-mumbai`, env-overridable. **Requires redeploy of the voice-call service (`asia-south1`, its own `scripts/safe-deploy.sh`) to take effect — until then, recordings keep going to US.**
+- **Data rescued:** the 20 leaked recordings copied US→Mumbai additively (`gcloud storage rsync`, no `--delete`); both buckets now at 36. US untouched.
+- **No Firestore rewrite needed:** recordings are referenced by relative `recordingPath` (bucket-agnostic → resolves to Mumbai after redeploy) + a 7-day signed URL (all leaked ones long expired).
+- **Sequence correction:** the US bucket **cannot** be deleted (and the soak cannot pass) until the voice-call service is redeployed AND a subsequent soak-check shows zero new US writes. Re-run `soak-check-us-bucket.sh` after redeploy.
+
 ### 5.6 Rollback
 At any point pre-deletion: flip `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` back to `$OLD_BUCKET` and redeploy. Old bucket still has every object; the broadened allowlist already accepts it. URL rewrite is reversible (re-run swap in reverse, both buckets hold the objects).
 

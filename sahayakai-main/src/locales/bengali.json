@@ -495,8 +495,6 @@
  "App performance (load times, errors)": "অ্যাপ পারফরম্যান্স (লোড সময়, ত্রুটি)",
  "Your engagement patterns": "আপনার সম্পৃক্ততার ধরণ",
  "Privacy Promise:": "গোপনীয়তার প্রতিশ্রুতি:",
- "Your data is stored securely on Google Cloud servers in Singapore (Asia region)": "আপনার ডেটা Google Cloud সার্ভারে সিঙ্গাপুরে (এশিয়া অঞ্চল) সুরক্ষিতভাবে সংরক্ষিত হয়",
- "Your data is processed outside India; by continuing you consent to this cross-border transfer": "আপনার ডেটা ভারতের বাইরে প্রক্রিয়া করা হয়; চালিয়ে যাওয়ার মাধ্যমে আপনি এই আন্তঃসীমান্ত স্থানান্তরে সম্মতি দেন",
  "We'll keep data for 1 year, then delete it": "আমরা 1 বছরের জন্য ডেটা রাখব, তারপর মুছে দেব",
  "You can see your own analytics anytime": "আপনি যেকোনো সময় আপনার নিজস্ব বিশ্লেষণ দেখতে পারেন",
  "You can revoke consent anytime in settings": "আপনি যেকোনো সময় সেটিংসে সম্মতি প্রত্যাহার করতে পারেন",
@@ -1471,5 +1469,7 @@
  "Use knowledge to solve problems in new situations.": "নতুন পরিস্থিতিতে সমস্যা সমাধানে জ্ঞান ব্যবহার করা।",
  "Break information into parts and find connections.": "তথ্যকে অংশে ভাগ করে সংযোগ খুঁজে বের করা।",
  "Justify a decision or judge the value of ideas.": "সিদ্ধান্তের যৌক্তিকতা দেওয়া বা ধারণার মূল্য বিচার করা।",
- "Combine ideas to produce original work or solutions.": "মৌলিক কাজ বা সমাধান তৈরিতে ধারণা একত্র করা।"
+ "Combine ideas to produce original work or solutions.": "মৌলিক কাজ বা সমাধান তৈরিতে ধারণা একত্র করা।",
+ "Your data is stored securely on Google Cloud servers in India (Mumbai region)": "আপনার ডেটা ভারতে (মুম্বই অঞ্চল) Google Cloud সার্ভারে নিরাপদে সংরক্ষিত হয়",
+ "Only transient online-status signals are processed in Singapore; your content and records remain in India": "শুধুমাত্র সাময়িক অনলাইন-স্ট্যাটাস সংকেত সিঙ্গাপুরে প্রক্রিয়া করা হয়; আপনার বিষয়বস্তু ও রেকর্ড ভারতেই থাকে"
 }
