@@ -12,7 +12,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { ThumbsDown, ThumbsUp, MessageSquare } from "lucide-react";
 import { useState } from "react";
-import { submitFeedback } from "@/app/actions/feedback";
+import { submitFeedback } from "@/lib/api/feedback";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/language-context";
 

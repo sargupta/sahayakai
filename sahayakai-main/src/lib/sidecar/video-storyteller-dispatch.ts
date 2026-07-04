@@ -54,6 +54,7 @@ import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { shouldRunCanaryShadowDiff } from './canary-shadow-diff';
 import { WithTimeoutError, withTimeout } from './with-timeout';
 import { toIsoLanguage } from './lang';
+import { logger } from '@/lib/logger';
 
 // Mirrors `TIMEOUT_MS` in video-storyteller-client.ts. Phase J.2 hot-fix
 // (P0 #7) — caps the Genkit fallback to the same budget as the sidecar.
@@ -277,8 +278,7 @@ function logDispatch(
     decision: VideoStorytellerSidecarDecision,
     payload: Record<string, unknown>,
 ): void {
-    // eslint-disable-next-line no-console
-    console.log(
+    console.info(
         JSON.stringify({
             event: 'video_storyteller.dispatch',
             mode: decision.mode,
@@ -331,8 +331,7 @@ async function _dispatchVideoStorytellerInner(
             aiCallsCount: 1,
             durationMs,
         });
-        // eslint-disable-next-line no-console
-        console.log('[video_storyteller.dispatch] complete', { durationMs, source: 'genkit' });
+        logger.info('dispatch complete', 'video_storyteller.dispatch', { durationMs, source: 'genkit' });
 
         // Q4C — canary "bucket-overshoot" observation. When the agent
         // is mid-canary (configuredMode==='canary') but THIS teacher's
@@ -393,8 +392,7 @@ async function _dispatchVideoStorytellerInner(
             sidecarError: sidecar.ok ? undefined : sidecar.error.message,
         });
         if (!genkit.ok) throw genkit.error;
-        // eslint-disable-next-line no-console
-        console.log('[video_storyteller.dispatch] complete', {
+        logger.info('dispatch complete', 'video_storyteller.dispatch', {
             durationMs: Date.now() - dispatchStartedAt,
             source: 'genkit',
         });
@@ -440,8 +438,7 @@ async function _dispatchVideoStorytellerInner(
                 aiCallsCount: 1,
                 durationMs,
             });
-            // eslint-disable-next-line no-console
-            console.log('[video_storyteller.dispatch] complete', {
+            logger.info('dispatch complete', 'video_storyteller.dispatch', {
                 durationMs,
                 source: 'sidecar+genkit_videos',
             });
@@ -483,8 +480,7 @@ async function _dispatchVideoStorytellerInner(
                 aiCallsCount: 1,
                 durationMs,
             });
-            // eslint-disable-next-line no-console
-            console.log('[video_storyteller.dispatch] complete', {
+            logger.info('dispatch complete', 'video_storyteller.dispatch', {
                 durationMs,
                 source: 'genkit_fallback',
             });
@@ -521,8 +517,7 @@ async function _dispatchVideoStorytellerInner(
             aiCallsCount: 1,
             durationMs,
         });
-        // eslint-disable-next-line no-console
-        console.log('[video_storyteller.dispatch] complete', {
+        logger.info('dispatch complete', 'video_storyteller.dispatch', {
             durationMs,
             source: 'genkit_fallback',
         });

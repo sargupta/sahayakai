@@ -513,6 +513,16 @@
           "order": "DESCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "analytics",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "lastUpdated",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [

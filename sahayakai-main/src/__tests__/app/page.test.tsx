@@ -9,27 +9,9 @@ jest.mock('next/navigation', () => ({
 }));
 
 
-// Mock `lucide-react` globally for this test file
-jest.mock("lucide-react", () => ({
-    Loader2: (props: any) => <div {...props} data-testid="loader2" />,
-    Mic: (props: any) => <div {...props} data-testid="mic" />,
-    Search: (props: any) => <div {...props} data-testid="search" />,
-    Sparkles: (props: any) => <div {...props} data-testid="sparkles" />,
-    BookOpen: (props: any) => <div {...props} data-testid="book-open" />,
-    BrainCircuit: (props: any) => <div {...props} data-testid="brain-circuit" />,
-    PenTool: (props: any) => <div {...props} data-testid="pen-tool" />,
-    GraduationCap: (props: any) => <div {...props} data-testid="graduation-cap" />,
-    ArrowRight: (props: any) => <div {...props} data-testid="arrow-right" />,
-    X: (props: any) => <div {...props} data-testid="x" />,
-    Lightbulb: (props: any) => <div {...props} data-testid="lightbulb" />,
-    FileText: (props: any) => <div {...props} data-testid="file-text" />,
-    ClipboardList: (props: any) => <div {...props} data-testid="clipboard-list" />,
-    Image: (props: any) => <div {...props} data-testid="image" />,
-    CheckCircle2: (props: any) => <div {...props} data-testid="check-circle" />,
-    Clock: (props: any) => <div {...props} data-testid="clock" />,
-    Users: (props: any) => <div {...props} data-testid="users" />,
-    RefreshCw: (props: any) => <div {...props} data-testid="refresh-cw" />,
-}));
+// lucide-react is mocked globally via moduleNameMapper (src/__mocks__/lucide-react.ts,
+// a Proxy that resolves ANY icon name). Do not shadow it with an inline subset —
+// components under test import icons (e.g. ScanEye) that a fixed list would miss.
 
 // Mock new landing page components
 jest.mock("@/components/landing/sample-output-section", () => ({
@@ -188,12 +170,27 @@ describe('Home Page', () => {
         expect(screen.getByText(/SahayakAI, your personal AI companion/i)).toBeInTheDocument();
     });
 
-    it('renders quick action cards', () => {
+    it('renders the compact prep-tool row (spine tools + quiet Labs link)', () => {
         render(<Home />);
+        // The six prep-loop tools render once, as a compact secondary row —
+        // not a grid of equal cards (design proposals 01 + 04).
         expect(screen.getByText('Lesson Plan')).toBeInTheDocument();
+        expect(screen.getByText('Worksheet Wizard')).toBeInTheDocument();
         expect(screen.getByText('Quiz Generator')).toBeInTheDocument();
-        expect(screen.getByText('Content Creator')).toBeInTheDocument();
-        expect(screen.getByText('Teacher Training')).toBeInTheDocument();
+        expect(screen.getByText('Exam Paper')).toBeInTheDocument();
+        expect(screen.getByText('Rubric Generator')).toBeInTheDocument();
+        expect(screen.getByText('Instant Answer')).toBeInTheDocument();
+        // Labs is a tertiary text link, not a peer card.
+        expect(screen.getByText('Explore Labs')).toBeInTheDocument();
+        // Parked tools (src/lib/labs.ts) must NOT surface on the dashboard.
+        expect(screen.queryByText('Content Creator')).not.toBeInTheDocument();
+        expect(screen.queryByText('Teacher Training')).not.toBeInTheDocument();
+    });
+
+    it('hides the "continue where you left off" strip when the library is empty', () => {
+        render(<Home />);
+        // fetch mock returns no library items, so the recents strip stays hidden.
+        expect(screen.queryByText('Continue where you left off')).not.toBeInTheDocument();
     });
 
     it('navigates on form submission', async () => {

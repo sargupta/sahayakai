@@ -16,29 +16,23 @@ import {
 import { UsageDisplay } from "@/components/usage-display"
 import { PlanBadge } from "@/components/plan-badge"
 import {
-  BarChart,
   Bell,
-  BookOpen,
   CalendarDays,
   ChevronDown,
   ClipboardCheck,
   ClipboardList,
   FileSignature,
   FileText,
-  Globe2,
-  GraduationCap,
+  FlaskConical,
   Home,
-  Images,
   Library,
   Lightbulb,
   MessageCircle,
   PencilRuler,
-  ScanLine,
   Settings,
   ShieldCheck,
   Terminal,
   User,
-  Video,
   Zap,
 } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
@@ -49,7 +43,7 @@ import { db, auth } from "@/lib/firebase"
 import { onAuthStateChanged } from "firebase/auth"
 import { isNewUser as checkIsNewUser } from "@/lib/profile-utils"
 import { FeatureSpotlight, SPOTLIGHT_IDS } from "@/components/onboarding/feature-spotlight"
-import { updateProfileAction } from "@/app/actions/profile"
+import { updateProfileAction } from "@/lib/api/profile"
 import { useLanguage } from "@/context/language-context"
 import type { UserProfile } from "@/types"
 
@@ -216,32 +210,14 @@ export function AppSidebar() {
               </SidebarMenuItem>
             )}
             {canShowAdvanced && (
-              <>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={pathname.startsWith('/worksheet-wizard')} tooltip={t("Worksheet Wizard")}>
-                    <Link href="/worksheet-wizard" onClick={() => handleNavClick('/worksheet-wizard')}>
-                      <PencilRuler />
-                      <span>{t("Worksheet Wizard")}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={pathname.startsWith('/visual-aid-designer')} tooltip={t("Visual Aid Designer")}>
-                    <Link href="/visual-aid-designer" onClick={() => handleNavClick('/visual-aid-designer')}>
-                      <Images />
-                      <span>{t("Visual Aid Designer")}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={pathname.startsWith('/content-creator')} tooltip={t("Content Creator")}>
-                    <Link href="/content-creator" onClick={() => handleNavClick('/content-creator')}>
-                      <BookOpen />
-                      <span>{t("Content Creator")}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/worksheet-wizard')} tooltip={t("Worksheet Wizard")}>
+                  <Link href="/worksheet-wizard" onClick={() => handleNavClick('/worksheet-wizard')}>
+                    <PencilRuler />
+                    <span>{t("Worksheet Wizard")}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             )}
           </SidebarMenu>
         </SidebarGroup>
@@ -283,47 +259,15 @@ export function AppSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/assessment-scanner')} tooltip={t("Assessment Scanner")}>
-                  <Link href="/assessment-scanner" onClick={() => handleNavClick('/assessment-scanner')}>
-                    <ScanLine />
-                    <span>{t("Assessment Scanner")}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroup>
         )}
 
-        {/* ENGAGE — classroom engagement tools */}
+        {/* COMMUNITY — peer network (engagement generators live in Labs now) */}
         {canShowAdvanced && (
           <SidebarGroup>
-            <SidebarGroupLabel>{t("Engage")}</SidebarGroupLabel>
+            <SidebarGroupLabel>{t("Community")}</SidebarGroupLabel>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/video-storyteller')} tooltip={t("Video Storyteller")}>
-                  <Link href="/video-storyteller" onClick={() => handleNavClick('/video-storyteller')}>
-                    <Video />
-                    <span>{t("Video Storyteller")}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/virtual-field-trip')} tooltip={t("Virtual Field Trip")}>
-                  <Link href="/virtual-field-trip" onClick={() => handleNavClick('/virtual-field-trip')}>
-                    <Globe2 />
-                    <span>{t("Virtual Field Trip")}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname.startsWith('/teacher-training')} tooltip={t("Teacher Training")}>
-                  <Link href="/teacher-training" onClick={() => handleNavClick('/teacher-training')}>
-                    <GraduationCap />
-                    <span>{t("Teacher Training")}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={pathname.startsWith('/community')} tooltip={t("Community")}>
                   <Link href="/community" onClick={() => {
@@ -394,14 +338,6 @@ export function AppSidebar() {
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={pathname.startsWith('/impact-dashboard')} tooltip={t("Impact")}>
-                    <Link href="/impact-dashboard" onClick={() => handleNavClick('/impact-dashboard')}>
-                      <BarChart />
-                      <span>{t("Impact")}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
               </>
             )}
             {/* Notifications: always visible when signed in — connection
@@ -431,6 +367,23 @@ export function AppSidebar() {
             )}
           </SidebarMenu>
         </SidebarGroup>
+
+        {/* LABS — parked tools, one entry point (registry: src/lib/labs.ts) */}
+        {canShowAdvanced && (
+          <SidebarGroup>
+            <SidebarGroupLabel>{t("Labs")}</SidebarGroupLabel>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/labs')} tooltip={t("Labs")}>
+                  <Link href="/labs" onClick={() => handleNavClick('/labs')}>
+                    <FlaskConical />
+                    <span>{t("Labs")}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+        )}
 
         {/* "See all tools" trigger — only for new users hiding advanced groups */}
         {isNewUser && !showAllTools && (

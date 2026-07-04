@@ -26,6 +26,8 @@
  * See qa/docs/COST_TELEMETRY.md for the aggregation queries.
  */
 
+import { logger } from '@/lib/logger';
+
 export type CostSource = 'genkit' | 'sidecar' | 'genkit_fallback';
 
 export interface DispatchCostInput {
@@ -60,13 +62,11 @@ export function logDispatchCost(input: DispatchCostInput): void {
         estimateTokens(input.outputChars ?? 0)
     );
 
-    // eslint-disable-next-line no-console
-    console.log(JSON.stringify({
-        event: 'dispatch.cost',
+    logger.info('dispatch.cost', 'dispatch.cost', {
         agent: input.agent,
         source: input.source,
         estimated_tokens: tokens,
         ...(input.uid !== undefined ? { uid: input.uid } : {}),
         ...(input.latencyMs !== undefined ? { latency_ms: input.latencyMs } : {}),
-    }));
+    });
 }

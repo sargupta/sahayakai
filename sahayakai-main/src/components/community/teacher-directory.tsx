@@ -8,14 +8,14 @@ import { Loader2, GraduationCap, Users, MessageCircle, UserPlus, UserCheck, Cloc
 import { Input } from "@/components/ui/input";
 import { useLanguage, BCP47_MAP } from "@/context/language-context";
 import { useToast } from "@/hooks/use-toast";
-import { getAllTeachersAction } from "@/app/actions/community";
+import { getAllTeachersAction } from "@/lib/api/community";
 import {
     sendConnectionRequestAction,
     acceptConnectionRequestAction,
     declineConnectionRequestAction,
     disconnectAction,
     getMyConnectionDataAction,
-} from "@/app/actions/connections";
+} from "@/lib/api/connections";
 import { Badge } from "@/components/ui/badge";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";

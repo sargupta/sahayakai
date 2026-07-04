@@ -406,60 +406,97 @@ export async function middleware(request: NextRequest) {
         response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
     }
 
-    // Content-Security-Policy (H17): shipped in REPORT-ONLY mode on purpose.
+    // Content-Security-Policy (H17): Report-Only always ships; the ENFORCING
+    // header is env-gated behind `CSP_ENFORCED=true` (Tranche 7 flip).
     //
     // This policy is built from the domains the app actually loads (audited
     // 2026-07-02): Firebase (auth/firestore/storage/RTDB/App Check reCAPTCHA),
     // Google Analytics + Tag Manager, Google Fonts, Sentry ingest, Cloudflare
     // Insights beacon, YouTube thumbnails, the voice-call Cloud Run service,
-    // and Next.js inline styles. Because a single missing source would break
-    // production, we DO NOT enforce yet — `Content-Security-Policy-Report-Only`
-    // makes the browser REPORT violations without blocking anything.
+    // and Next.js inline styles.
     //
-    // The per-request `nonce` above is threaded into script-src so future
-    // inline scripts can adopt it. `'unsafe-inline'` is intentionally kept for
-    // now (the Cloudflare beacon <script> and Next.js styles are un-nonced);
-    // once we review real violation reports we can drop 'unsafe-inline' from
-    // script-src and flip this header to the enforcing `Content-Security-Policy`.
+    // ENFORCEMENT NOTE (2026-07-03): the enforcing policy below is IDENTICAL
+    // to the Report-Only policy. The Report-Only header carries no
+    // `report-uri`/`report-to` directive, so no violation telemetry was ever
+    // collected — flip-safety was verified STRUCTURALLY (source audit above),
+    // not against real violation reports. That is why:
+    //  - `'unsafe-inline'` stays in script-src (Cloudflare beacon <script> and
+    //    Next.js bootstrap inline scripts are un-nonced),
+    //  - `'unsafe-eval'` stays in script-src (Firebase JS SDK / GA / reCAPTCHA),
+    //  - `'unsafe-inline'` stays in style-src (Next.js emits inline <style>;
+    //    Tailwind-generated style attributes),
+    //  - the flip is env-gated, OFF by default, so a missed source can be
+    //    rolled back by unsetting one env var — no redeploy of code needed.
+    // The per-request `nonce` above is threaded into script-src so inline
+    // scripts can adopt it and 'unsafe-inline' can eventually be dropped.
     const csp = [
+        // Fallback for every fetch directive not listed below (incl.
+        // manifest-src for the PWA manifest — same-origin, so 'self' is enough).
         `default-src 'self'`,
-        // Firebase JS SDK / GA / reCAPTCHA use eval + inline; nonce added for future adoption.
+        // Scripts: Next.js chunks ('self'), per-request nonce for future inline
+        // adoption, unsafe-inline/eval (see enforcement note), Google APIs
+        // (Firebase auth popup helper), reCAPTCHA (App Check), GTM/GA loaders,
+        // Cloudflare Insights beacon. No Razorpay Checkout script: payments use
+        // server-created payment links / redirects, never an embedded widget.
         `script-src 'self' 'nonce-${nonce}' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://www.google.com https://www.gstatic.com https://www.googletagmanager.com https://www.google-analytics.com https://static.cloudflareinsights.com`,
-        // Next.js emits inline <style>; Google Fonts stylesheet.
+        // Styles: Next.js emits inline <style>; Google Fonts stylesheet.
         `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
+        // Fonts: self-hosted + Google Fonts binaries; data: for icon fonts.
         `font-src 'self' data: https://fonts.gstatic.com`,
+        // Images: blob/data for canvas + upload previews; broad https: kept
+        // deliberately (AI-generated content and community posts embed
+        // arbitrary external images); explicit hosts listed for documentation.
         `img-src 'self' data: blob: https: https://lh3.googleusercontent.com https://*.googleusercontent.com https://i.ytimg.com https://firebasestorage.googleapis.com https://storage.googleapis.com https://placehold.co https://www.google-analytics.com`,
+        // Audio/video: voice messages + TTS output from Firebase/GCS buckets;
+        // blob: for MediaRecorder playback of just-recorded audio.
         `media-src 'self' data: blob: https://firebasestorage.googleapis.com https://storage.googleapis.com`,
         [
+            // XHR/fetch/WebSocket targets:
             `connect-src 'self'`,
-            `https://*.googleapis.com`,
-            `https://firebaseappcheck.googleapis.com`,
-            `https://firebasestorage.googleapis.com`,
-            `https://identitytoolkit.googleapis.com`,
-            `https://securetoken.googleapis.com`,
-            `https://generativelanguage.googleapis.com`,
-            `https://texttospeech.googleapis.com`,
-            `https://firebase.googleapis.com`,
-            `https://*.firebaseio.com`,
-            `https://*.firebasedatabase.app`,
-            `https://*.google-analytics.com`,
-            `https://www.googletagmanager.com`,
-            `https://www.google.com`,
-            `https://*.ingest.sentry.io`,
-            `https://*.sentry.io`,
-            `https://cloudflareinsights.com`,
-            `https://static.cloudflareinsights.com`,
-            `https://*.run.app`,
+            `https://*.googleapis.com`,             // Firestore/other Google APIs (wildcard covers the explicit entries below; they stay listed for auditability)
+            `https://firebaseappcheck.googleapis.com`,   // App Check token exchange
+            `https://firebasestorage.googleapis.com`,    // Storage uploads/downloads
+            `https://identitytoolkit.googleapis.com`,    // Firebase Auth
+            `https://securetoken.googleapis.com`,        // Firebase Auth token refresh
+            `https://generativelanguage.googleapis.com`, // Gemini (client-side flows)
+            `https://texttospeech.googleapis.com`,       // Google TTS
+            `https://firebase.googleapis.com`,           // Firebase installations
+            // RTDB connect-src removed 2026-07-04 — presence/typing moved to
+            // Firestore (Mumbai). Firestore uses firestore.googleapis.com,
+            // already covered by the *.googleapis.com allowances above.
+            `https://*.google-analytics.com`,            // GA4 beacons
+            `https://www.googletagmanager.com`,          // GTM
+            `https://www.google.com`,                    // reCAPTCHA verification
+            `https://*.ingest.sentry.io`,                // Sentry error ingest
+            `https://*.sentry.io`,                       // Sentry envelope endpoint
+            `https://cloudflareinsights.com`,            // CF Insights beacon
+            `https://static.cloudflareinsights.com`,     // CF Insights loader
+            `https://*.run.app`,                         // voice-call / sidecar Cloud Run services
         ].join(' '),
-        // reCAPTCHA (App Check) + Firebase auth handler render in iframes.
+        // Iframes we embed: reCAPTCHA (App Check) + Firebase auth handler.
         `frame-src 'self' https://www.google.com https://www.gstatic.com https://*.firebaseapp.com`,
+        // Web workers / service worker (next-pwa) are same-origin; blob: for
+        // inline workers spawned by libraries.
         `worker-src 'self' blob:`,
+        // No plugins (Flash/Java-era vector) — hard off.
         `object-src 'none'`,
+        // Neutralise <base href> injection.
         `base-uri 'self'`,
+        // Forms only post to ourselves (Razorpay flows navigate via redirect
+        // links, not form posts to third parties).
         `form-action 'self'`,
+        // Clickjacking: nobody may frame us (mirrors X-Frame-Options: DENY).
         `frame-ancestors 'none'`,
     ].join('; ');
+    // Report-Only stays on permanently: with enforcement active it still
+    // surfaces would-be violations in devtools without any user impact, and
+    // during rollout it is the canary signal.
     response.headers.set('Content-Security-Policy-Report-Only', csp);
+    // Enforcing flip (H17, Tranche 7): set `CSP_ENFORCED=true` on the Cloud Run
+    // service to activate. Rollback = unset the env var (config-only change).
+    if (process.env.CSP_ENFORCED === 'true') {
+        response.headers.set('Content-Security-Policy', csp);
+    }
 
     return response;
 }

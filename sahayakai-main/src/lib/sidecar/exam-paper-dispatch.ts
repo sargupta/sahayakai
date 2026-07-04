@@ -30,6 +30,7 @@ import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { shouldRunCanaryShadowDiff } from './canary-shadow-diff';
 import { withTimeout, WithTimeoutError } from './with-timeout';
 import { toLanguageLabel } from './lang';
+import { logger } from '@/lib/logger';
 
 // NCERT demo hot-fix (2026-05-19): exam-paper is the most token-heavy
 // flow we run (full paper + answer key + marking scheme + sections).
@@ -206,8 +207,7 @@ async function runGenkitSafe(input: ExamPaperInput, source: ExamPaperDispatchSou
             FALLBACK_TIMEOUT_MS,
             'exam-paper genkit fallback',
         );
-        // eslint-disable-next-line no-console
-        console.log('[exam-paper.dispatch] complete', {
+        logger.info('complete', 'exam-paper.dispatch', {
             durationMs: Date.now() - startedAt,
             source,
             budgetMs: FALLBACK_TIMEOUT_MS,
@@ -247,8 +247,7 @@ async function runGenkitOrThrow(
             FALLBACK_TIMEOUT_MS,
             'exam-paper genkit fallback',
         );
-        // eslint-disable-next-line no-console
-        console.log('[exam-paper.dispatch] complete', {
+        logger.info('complete', 'exam-paper.dispatch', {
             durationMs: Date.now() - startedAt,
             source,
             budgetMs: FALLBACK_TIMEOUT_MS,
@@ -303,14 +302,12 @@ async function runSidecarSafe(request: SidecarExamPaperRequest) {
 }
 
 function logDispatch(decision: ExamPaperSidecarDecision, payload: Record<string, unknown>): void {
-    // eslint-disable-next-line no-console
-    console.log(JSON.stringify({
-        event: 'exam_paper.dispatch',
+    logger.info('exam_paper.dispatch', 'exam_paper.dispatch', {
         mode: decision.mode,
         reason: decision.reason,
         bucket: decision.bucket,
         ...payload,
-    }));
+    });
 }
 
 export async function dispatchExamPaper(

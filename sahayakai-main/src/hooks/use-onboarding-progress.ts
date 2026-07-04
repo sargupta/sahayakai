@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/context/auth-context';
-import { getProfileData, updateProfileAction } from '@/app/actions/profile';
+import { getProfileData, updateProfileAction } from '@/lib/api/profile';
 import { getEffectiveOnboardingPhase, isNewUser as checkIsNewUser } from '@/lib/profile-utils';
 import { getPersonalizedSuggestions, type ContextualSuggestion } from '@/lib/contextual-suggestions';
 import type { UserProfile } from '@/types';

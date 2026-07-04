@@ -35,6 +35,7 @@ import {
 import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { shouldRunCanaryShadowDiff } from './canary-shadow-diff';
 import { withTimeout } from './with-timeout';
+import { logger } from '@/lib/logger';
 
 // Bumped from 8s — comparator runs showed parent-message latency p95 ~8s
 // with persist adding overhead, causing intermittent 500s on Gujarati
@@ -202,16 +203,12 @@ function logDispatch(
     decision: ParentMessageSidecarDecision,
     payload: Record<string, unknown>,
 ): void {
-    // eslint-disable-next-line no-console
-    console.log(
-        JSON.stringify({
-            event: 'parent_message.dispatch',
-            mode: decision.mode,
-            reason: decision.reason,
-            bucket: decision.bucket,
-            ...payload,
-        }),
-    );
+    logger.info('parent_message.dispatch', 'parent_message.dispatch', {
+        mode: decision.mode,
+        reason: decision.reason,
+        bucket: decision.bucket,
+        ...payload,
+    });
 }
 
 /**

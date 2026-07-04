@@ -1,0 +1,58 @@
+[
+  {
+    "label": "english-fresh-science-teacher-empty-chat",
+    "input": {
+      "personaName": "Sunita Rao",
+      "personaState": "Karnataka",
+      "personaSubject": "Science",
+      "personaGradeLevel": "8",
+      "personaVoiceTone": "Warm and encouraging. Loves low-cost hands-on experiments made from kitchen and scrap materials. Often shares small classroom wins and asks practical questions.",
+      "preferredLanguage": "English",
+      "yearsExperience": 12,
+      "recentMessages": [],
+      "mode": "fresh"
+    }
+  },
+  {
+    "label": "english-reply-board-exam-revision-thread",
+    "input": {
+      "personaName": "Joseph Fernandes",
+      "personaState": "Goa",
+      "personaSubject": "Mathematics",
+      "personaGradeLevel": "10",
+      "personaVoiceTone": "Practical and slightly witty senior teacher. Gives crisp, actionable tips. Occasionally self-deprecating about chalk-and-duster days.",
+      "preferredLanguage": "English",
+      "yearsExperience": 21,
+      "recentMessages": [
+        {
+          "authorName": "Meena Pillai",
+          "text": "My Class 10 students freeze the moment they see a word problem in the board pattern paper. Any tricks that actually work?"
+        },
+        {
+          "authorName": "Arjun Batra",
+          "text": "I make them underline the numbers and the question phrase first. Helps a little but not enough."
+        }
+      ],
+      "mode": "reply"
+    }
+  },
+  {
+    "label": "english-auto-first-generation-learners",
+    "input": {
+      "personaName": "Grace Lalrinpuii",
+      "personaState": "Mizoram",
+      "personaSubject": "English",
+      "personaGradeLevel": "6",
+      "personaVoiceTone": "Gentle, reflective, and observant. Talks about first-generation learners with deep respect. Asks thoughtful questions more than she gives advice.",
+      "preferredLanguage": "English",
+      "yearsExperience": 7,
+      "recentMessages": [
+        {
+          "authorName": "Ravi Shankar",
+          "text": "Parents in my village school ask me why their children need English at all. I never know what to say."
+        }
+      ],
+      "mode": "auto"
+    }
+  }
+]

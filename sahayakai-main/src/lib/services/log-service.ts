@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 export interface LogEntryDTO {
     timestamp: string;
     severity: string;
@@ -36,7 +38,7 @@ export class LogService {
                 orderBy: 'timestamp desc',
             });
 
-            console.log(`[LogService] Found ${entries.length} log entries for filter: ${filter}`);
+            logger.info(`Found ${entries.length} log entries for filter: ${filter}`, 'LogService', { count: entries.length, filter });
 
             return entries.map(entry => {
                 const metadata = entry.metadata;

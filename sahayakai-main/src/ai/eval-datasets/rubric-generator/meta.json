@@ -1,0 +1,14 @@
+{
+  "module": "src/ai/flows/rubric-generator.ts",
+  "export": "generateRubric",
+  "flowName": "rubricGeneratorFlow",
+  "languageInputPath": "language",
+  "outputScriptFields": [
+    "title",
+    "description",
+    "criteria[].name",
+    "criteria[].description",
+    "criteria[].levels[].description"
+  ],
+  "notes": "language is a free string normalized by normalizeLanguage() — display names ('English'/'Bengali'/'Tamil') pass through unchanged. criteria[].levels[].name is EXCLUDED from script checks: the prompt mandates the four fixed level names 'Exemplary/Proficient/Developing/Beginning', which the model may legitimately keep in English even for Indic-language rubrics. userId is optional and omitted in all cases so the wrapper skips profile lookup and Firestore/Storage persistence (no Firebase Admin needed). Always supply gradeLevel+language explicitly to avoid the profile-fetch branch. The wrapper also runs extractGradeFromTopic() on assignmentDescription — avoid mentioning a different grade in the description than in gradeLevel."
+}

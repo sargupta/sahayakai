@@ -51,6 +51,7 @@ import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { shouldRunCanaryShadowDiff } from './canary-shadow-diff';
 import { withTimeout } from './with-timeout';
 import { toIsoLanguage } from './lang';
+import { logger } from '@/lib/logger';
 
 // Mirrors `TIMEOUT_MS` in lesson-plan-client.ts. Phase J.2 hot-fix
 // (P0 #7) — caps the Genkit fallback to the same budget as the sidecar.
@@ -208,15 +209,12 @@ function logDispatch(
 ): void {
     // Single structured log line per dispatch. Cloud Logging filter
     // keys off `event="lesson_plan.dispatch"`.
-    console.log(
-        JSON.stringify({
-            event: 'lesson_plan.dispatch',
-            mode: decision.mode,
-            reason: decision.reason,
-            bucket: decision.bucket,
-            ...payload,
-        }),
-    );
+    logger.info('lesson_plan.dispatch', 'lesson_plan.dispatch', {
+        mode: decision.mode,
+        reason: decision.reason,
+        bucket: decision.bucket,
+        ...payload,
+    });
 }
 
 const DECIDE_DISPATCH_TIMEOUT_MS = 1_500;

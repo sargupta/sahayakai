@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
-import { getOrCreateDirectConversationAction } from "@/app/actions/messages";
+import { getOrCreateDirectConversationAction } from "@/lib/api/messages";
 import { ConversationList } from "@/components/messages/conversation-list";
 import { ConversationThread } from "@/components/messages/conversation-thread";
 import { NewConversationPicker } from "@/components/messages/new-conversation-picker";

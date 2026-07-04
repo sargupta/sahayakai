@@ -34,6 +34,7 @@ import {
 import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { shouldRunCanaryShadowDiff } from './canary-shadow-diff';
 import { withTimeout } from './with-timeout';
+import { logger } from '@/lib/logger';
 
 // Mirrors `TIMEOUT_MS` in avatar-generator-client.ts. Phase J.2 hot-fix
 // (P0 #7) — caps the Genkit fallback so a hung Gemini image call cannot
@@ -201,16 +202,12 @@ function logDispatch(
     decision: AvatarSidecarDecision,
     payload: Record<string, unknown>,
 ): void {
-    // eslint-disable-next-line no-console
-    console.log(
-        JSON.stringify({
-            event: 'avatar.dispatch',
-            mode: decision.mode,
-            reason: decision.reason,
-            bucket: decision.bucket,
-            ...payload,
-        }),
-    );
+    logger.info('avatar.dispatch', 'avatar.dispatch', {
+        mode: decision.mode,
+        reason: decision.reason,
+        bucket: decision.bucket,
+        ...payload,
+    });
 }
 
 export async function dispatchAvatar(
@@ -342,12 +339,10 @@ export async function dispatchAvatar(
                     });
                 });
             } else {
-                // eslint-disable-next-line no-console
-                console.log(JSON.stringify({
-                    event: 'avatar.dispatch.q4c_skipped_quota',
+                logger.info('avatar.dispatch.q4c_skipped_quota', 'avatar.dispatch', {
                     uid: input.userId,
                     reason: 'image_rate_limit_at_cap',
-                }));
+                });
             }
         }
                 return sidecarToDispatched(sidecar.res, decision);

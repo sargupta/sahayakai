@@ -1,0 +1,15 @@
+{
+  "module": "src/ai/flows/virtual-field-trip.ts",
+  "export": "planVirtualFieldTrip",
+  "flowName": "virtualFieldTripFlow",
+  "languageInputPath": "language",
+  "outputScriptFields": [
+    "title",
+    "stops[].description",
+    "stops[].educationalFact",
+    "stops[].reflectionPrompt",
+    "stops[].culturalAnalogy",
+    "stops[].explanation"
+  ],
+  "notes": "userId is optional and omitted in all cases so the wrapper skips profile lookup and Firestore/Storage persistence. stops[].name is EXCLUDED from script checks: it is a proper-noun place name the model may keep in Latin script (must also match the googleEarthUrl search slug). stops[].googleEarthUrl is a URL (validated as https://earth.google.com/web/search/... by virtual-field-trip-validation.ts, which the flow runs in addition to Zod). Output gradeLevel/subject are required strings but metadata — excluded. Wrapper runs extractGradeFromTopic() on topic — keep any grade mention in topic consistent with the gradeLevel field. topic max 1000 chars, language max 50 chars."
+}

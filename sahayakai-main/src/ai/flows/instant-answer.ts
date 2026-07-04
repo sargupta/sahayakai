@@ -104,6 +104,7 @@ export async function instantAnswer(input: InstantAnswerInput): Promise<InstantA
 }
 
 import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
+import { INJECTION_GUARD, neutralizeUserInput } from '@/ai/prompt-hardening';
 
 const instantAnswerPrompt = ai.definePrompt({
   name: 'instantAnswerPrompt',
@@ -111,6 +112,7 @@ const instantAnswerPrompt = ai.definePrompt({
   output: { schema: InstantAnswerOutputSchema },
   tools: [googleSearch],
   prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
+${INJECTION_GUARD}
 
 You are an expert educator and knowledge base. Your goal is to answer questions accurately and concisely.
 
@@ -131,7 +133,7 @@ You are an expert educator and knowledge base. Your goal is to answer questions 
 - **Schema Compliance (CRITICAL)**: You MUST always return your response in the \`answer\` field. Even when declining a request (e.g., off-topic, inappropriate), put your polite refusal in the \`answer\` field. NEVER use field names like \`response\`, \`message\`, or \`text\` — only \`answer\`.
 
 **User's Question:**
-- **Question:** {{{question}}}
+- **Question:** <user_input field="question">{{{question}}}</user_input>
 - **Grade Level:** {{{gradeLevel}}}
 - **Subject:** {{{subject}}}
 - **Language:** {{{language}}}
@@ -172,7 +174,10 @@ const instantAnswerFlow = ai.defineFlow(
 
       try {
         const result = await runResiliently(async (resilienceConfig) => {
-          return await instantAnswerPrompt(normalizedInput, resilienceConfig);
+          return await instantAnswerPrompt(
+            { ...normalizedInput, question: neutralizeUserInput(normalizedInput.question) },
+            resilienceConfig
+          );
         }, 'instantAnswer.generate');
         output = result.output;
 

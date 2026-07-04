@@ -1,0 +1,29 @@
+[
+  {
+    "label": "reading-fluency-remedial",
+    "input": {
+      "question": "என் மூன்றாம் வகுப்பில் பல மாணவர்களால் இன்னும் தமிழ் சரளமாக வாசிக்க முடியவில்லை — எழுத்துக்கூட்டி மெதுவாகப் படிக்கிறார்கள். பாடத்திட்டத்தையும் நடத்த வேண்டும், இவர்களுக்கும் உதவ வேண்டும். வாசிப்புத் திறனை மேம்படுத்த என்ன வழிமுறைகளைப் பின்பற்றலாம்?",
+      "language": "Tamil",
+      "subject": "Language Pedagogy",
+      "userId": "eval-harness-user"
+    }
+  },
+  {
+    "label": "smartphone-distraction-parent-engagement",
+    "input": {
+      "question": "என் ஒன்பதாம் வகுப்பு மாணவர்கள் வீட்டில் செல்போனில் அதிக நேரம் செலவழிப்பதாக பெற்றோர்கள் புகார் கூறுகிறார்கள்; வீட்டுப்பாடம் செய்வதில்லை. பெற்றோர்களையும் இணைத்து இதை எப்படி சமாளிப்பது?",
+      "language": "Tamil",
+      "subject": "Parent Engagement",
+      "userId": "eval-harness-user"
+    }
+  },
+  {
+    "label": "activity-based-learning-time-pressure",
+    "input": {
+      "question": "செயல்வழிக் கற்றல் (activity-based learning) நல்லது என்று பயிற்சியில் சொன்னார்கள், ஆனால் செயல்பாடுகள் செய்தால் பாடத்திட்டத்தை நேரத்திற்குள் முடிக்க முடியவில்லை. பாடத்திட்ட அழுத்தத்துக்கும் செயல்வழிக் கற்றலுக்கும் இடையில் எப்படி சமநிலை காண்பது?",
+      "language": "Tamil",
+      "subject": "Pedagogy",
+      "userId": "eval-harness-user"
+    }
+  }
+]

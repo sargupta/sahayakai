@@ -134,7 +134,7 @@ export function _resetSigningKeyCacheForTest(): void {
  * Forensic finding P1 #18 — telemetry split-brain. The Python side
  * binds this id via structlog contextvars so every log line emitted
  * during the request carries it; here we expose the same id to the
- * TypeScript dispatcher so its `console.log` events can join with
+ * TypeScript dispatcher so its log events can join with
  * sidecar logs in BigQuery / Cloud Logging on a single key.
  *
  * Caller may supply an existing id (e.g. an upstream trace id from

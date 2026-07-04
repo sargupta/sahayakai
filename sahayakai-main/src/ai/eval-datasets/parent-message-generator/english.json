@@ -1,0 +1,68 @@
+[
+  {
+    "label": "class6-attendance-concern-4-days",
+    "input": {
+      "studentName": "Aarav Sharma",
+      "className": "Class 6A",
+      "subject": "Mathematics",
+      "reason": "consecutive_absences",
+      "reasonContext": "The student has been absent for multiple consecutive school days. Express genuine concern for the student's well-being, ask if everything is okay at home, and invite the parent to reach out. Be warm, not accusatory.",
+      "consecutiveAbsentDays": 4,
+      "teacherNote": "Aarav has not attended school since Monday. His classmates mentioned he was unwell last week. We miss him in class and want to make sure everything is alright.",
+      "teacherName": "Mrs. Kavita Iyer",
+      "schoolName": "Government Senior Secondary School, Jaipur",
+      "parentLanguage": "English"
+    }
+  },
+  {
+    "label": "class8-exam-results-support-offer",
+    "input": {
+      "studentName": "Meera Nair",
+      "className": "Class 8B",
+      "subject": "Science",
+      "reason": "poor_performance",
+      "reasonContext": "The student's academic performance has recently declined. Focus on offering support — mention that you want to work together to help the student succeed. Do NOT blame the student or parent.",
+      "teacherNote": "Meera is attentive in class but her recent unit test scores have dipped. I would like to arrange extra practice worksheets and a short weekly doubt-clearing session for her.",
+      "teacherName": "Mr. Joseph Thomas",
+      "schoolName": "St. Mary's High School, Kochi",
+      "parentLanguage": "English",
+      "performanceContext": {
+        "latestPercentage": 41,
+        "isAtRisk": false,
+        "subjectBreakdown": [
+          {
+            "subject": "Science",
+            "name": "Unit Test 2",
+            "marksObtained": 14,
+            "maxMarks": 40,
+            "percentage": 35,
+            "date": "2026-06-20"
+          },
+          {
+            "subject": "Science",
+            "name": "Mid-term Examination",
+            "marksObtained": 23,
+            "maxMarks": 50,
+            "percentage": 46,
+            "date": "2026-05-28"
+          }
+        ]
+      },
+      "performanceSummary": "Science Unit Test 2: 14/40 (35%), Science Mid-term Examination: 23/50 (46%)"
+    }
+  },
+  {
+    "label": "class5-positive-feedback-assembly-poem",
+    "input": {
+      "studentName": "Rohan Patil",
+      "className": "Class 5A",
+      "subject": "English",
+      "reason": "positive_feedback",
+      "reasonContext": "Share a positive achievement or behavior. This message should be warm, celebratory, and brief. Encourage the parent to praise the student at home.",
+      "teacherNote": "Rohan recited a poem confidently at the morning assembly in front of the whole school, and later helped a new student settle into the class. His confidence has grown wonderfully this term.",
+      "teacherName": "Ms. Anjali Deshmukh",
+      "schoolName": "Zilla Parishad Upper Primary School, Nashik",
+      "parentLanguage": "English"
+    }
+  }
+]

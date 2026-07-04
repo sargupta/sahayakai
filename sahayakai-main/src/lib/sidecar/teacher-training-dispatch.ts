@@ -21,6 +21,7 @@ import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { shouldRunCanaryShadowDiff } from './canary-shadow-diff';
 import { WithTimeoutError, withTimeout } from './with-timeout';
 import { toIsoLanguage } from './lang';
+import { logger } from '@/lib/logger';
 
 // Bumped from 12s — comparator runs across 11 languages showed Genkit
 // teacher-training latency p95 ~11s, with persist + post-processing
@@ -172,8 +173,7 @@ function logDispatch(
     decision: TeacherTrainingSidecarDecision,
     payload: Record<string, unknown>,
 ): void {
-    // eslint-disable-next-line no-console
-    console.log(
+    console.info(
         JSON.stringify({
             event: 'teacher_training.dispatch',
             mode: decision.mode,
@@ -231,8 +231,7 @@ async function _dispatchTeacherTrainingInner(
         );
         const durationMs = Date.now() - dispatchStartedAt;
         logDispatch(decision, { source: 'genkit', uid: input.userId, durationMs });
-        // eslint-disable-next-line no-console
-        console.log('[teacher_training.dispatch] complete', { durationMs, source: 'genkit' });
+        logger.info('dispatch complete', 'teacher_training.dispatch', { durationMs, source: 'genkit' });
 
         // Q4C — canary "bucket-overshoot" observation. When the agent
         // is mid-canary (configuredMode==='canary') but THIS teacher's
@@ -284,8 +283,7 @@ async function _dispatchTeacherTrainingInner(
             sidecarError: sidecar.ok ? undefined : sidecar.error.message,
         });
         if (!genkit.ok) throw genkit.error;
-        // eslint-disable-next-line no-console
-        console.log('[teacher_training.dispatch] complete', {
+        logger.info('dispatch complete', 'teacher_training.dispatch', {
             durationMs: Date.now() - dispatchStartedAt,
             source: 'genkit',
         });
@@ -301,8 +299,7 @@ async function _dispatchTeacherTrainingInner(
             sidecarLatencyMs: sidecar.latencyMs,
             durationMs,
         });
-        // eslint-disable-next-line no-console
-        console.log('[teacher_training.dispatch] complete', { durationMs, source: 'sidecar' });
+        logger.info('dispatch complete', 'teacher_training.dispatch', { durationMs, source: 'sidecar' });
         const dispatched = sidecarToDispatched(sidecar.res, decision);
         // Phase K — persist sidecar output to Storage + Firestore so it
         // shows up in My Library, mirroring the Genkit flow's behaviour.
@@ -383,8 +380,7 @@ async function _dispatchTeacherTrainingInner(
         FALLBACK_TIMEOUT_MS,
         'teacher-training genkit fallback',
     );
-    // eslint-disable-next-line no-console
-    console.log('[teacher_training.dispatch] complete', {
+    logger.info('dispatch complete', 'teacher_training.dispatch', {
         durationMs: Date.now() - dispatchStartedAt,
         source: 'genkit_fallback',
     });

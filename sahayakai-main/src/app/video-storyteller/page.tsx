@@ -14,8 +14,10 @@ import { mergeCuratedVideos } from "@/lib/curated-videos";
 import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { VideoFilterBar } from "@/components/video-storyteller/VideoFilterBar";
-import { getUserProfileAction } from "@/app/actions/auth";
+import { getUserProfileAction } from "@/lib/api/auth";
 import { useNetworkAware } from "@/hooks/use-network-aware";
+import { useLimitGuard } from "@/hooks/use-limit-guard";
+import { UpgradePrompt } from "@/components/upgrade-prompt";
 import { useSearchParams } from "next/navigation";
 import { normaliseVidyaLanguage, normaliseVidyaGradeLevel } from "@/lib/vidya-action-normalizer";
 import { LANGUAGE_CODE_MAP } from "@/types";
@@ -59,6 +61,7 @@ function VideoStorytellerPageInner() {
   const { toast } = useToast();
   const { t } = useLanguage();
   const { canUseAI, aiUnavailableReason } = useNetworkAware();
+  const { limitState, checkResponse, clearLimit } = useLimitGuard();
   const [loading, setLoading] = useState(false);
   const [recommendations, setRecommendations] = useState<VideoRecommendations | null>(null);
   const [expandedCategory, setExpandedCategory] = useState<{ key: string; title: string; icon: LucideIcon } | null>(null);
@@ -92,11 +95,17 @@ function VideoStorytellerPageInner() {
 
       if (!response.ok) {
         const errBody = await response.json().catch(() => ({}));
+        // Daily quota hit (429) / plan gate (403) — show the standard
+        // upgrade prompt instead of the curated-content fallback.
+        if (checkResponse(response.status, errBody)) {
+          return;
+        }
         throw new Error(`API ${response.status}: ${errBody?.error || errBody?.code || "Unknown error"}`);
       }
 
       const data = await response.json();
       data.categorizedVideos = mergeCuratedVideos(data.categorizedVideos || {});
+      clearLimit();
       setRecommendations(data);
     } catch (error) {
       console.error("Error fetching video recommendations:", error);
@@ -227,6 +236,15 @@ function VideoStorytellerPageInner() {
 
       {/* Filter bar */}
       <VideoFilterBar onFilterChange={handleFilterChange} initialFilters={filters} />
+
+      {/* Daily quota reached — standard upgrade affordance */}
+      {(limitState.limitReached || limitState.upgradeRequired) && (
+        <UpgradePrompt
+          feature="video-storyteller"
+          used={limitState.used ?? 0}
+          limit={limitState.limit ?? 0}
+        />
+      )}
 
       {/* AI insight banner */}
       {recommendations && (

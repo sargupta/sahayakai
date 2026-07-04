@@ -1,5 +1,23 @@
 "use client";
 
+/**
+ * Dashboard home — redesigned per docs/design/proposals 01 (UX) + 04 (taste).
+ *
+ * Hierarchy (one dominant action, per proposal 04 "quiet craft"):
+ *   1. PRIMARY   — voice mic + topic input feeding the intent router. The
+ *                  entry point of the lesson-prep loop (plan → worksheet →
+ *                  quiz/exam/rubric → export/share).
+ *   2. RECENTS   — "Continue where you left off" strip (read-only over the
+ *                  library API); hidden when empty or signed out.
+ *   3. SECONDARY — the six prep-loop tools as one compact row of quiet
+ *                  chip-links (NOT a grid of equal tinted-icon cards).
+ *   4. TERTIARY  — Labs as a single muted text link.
+ *
+ * Banned patterns intentionally absent (proposal 04 §3): centered badge pill,
+ * N-equal-cards grid, tinted-circle icon walls, unanchored accent ruler,
+ * left-accent border on every card, hardcoded English strings.
+ */
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
@@ -11,9 +29,8 @@ import { z } from "zod";
 import { MicrophoneInput } from "@/components/microphone-input";
 import { AutoCompleteInput } from "@/components/auto-complete-input";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { BookOpen, BrainCircuit, PenTool, GraduationCap, Sparkles, ArrowRight, Loader2, X, Mic, Search, Lightbulb, FileText, ClipboardList, Image, RefreshCw, ScanEye } from "lucide-react";
+import { BookOpen, BrainCircuit, ClipboardCheck, ClipboardList, FileText, FlaskConical, Lightbulb, ArrowRight, X, RefreshCw, type LucideIcon } from "lucide-react";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
@@ -27,6 +44,7 @@ import { useOnboardingProgress } from "@/hooks/use-onboarding-progress";
 import { OnboardingChecklist } from "@/components/onboarding/onboarding-checklist";
 import { ProfileCompletionCard } from "@/components/onboarding/profile-completion-card";
 import { FeatureSpotlight, SPOTLIGHT_IDS } from "@/components/onboarding/feature-spotlight";
+import { RecentWorkStrip } from "@/components/dashboard/recent-work-strip";
 import type { ContextualSuggestion } from "@/lib/contextual-suggestions";
 
 const formSchema = z.object({
@@ -35,15 +53,25 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-
-
-
+/**
+ * The founder-ratified prep loop, in loop order. i18n keys are the existing
+ * dictionary entries — no copy change, only the presentation shrinks from
+ * nine equal cards to one compact row.
+ */
+const PREP_TOOLS: ReadonlyArray<{ labelKey: string; href: string; icon: LucideIcon }> = [
+  { labelKey: "Lesson Plan", href: "/lesson-plan", icon: BookOpen },
+  { labelKey: "Worksheet Wizard", href: "/worksheet-wizard", icon: ClipboardList },
+  { labelKey: "Quiz Generator", href: "/quiz-generator", icon: BrainCircuit },
+  { labelKey: "Exam Paper", href: "/exam-paper", icon: FileText },
+  { labelKey: "Rubric Generator", href: "/rubric-generator", icon: ClipboardCheck },
+  { labelKey: "Instant Answer", href: "/instant-answer", icon: Lightbulb },
+];
 
 const SuggestionCard = ({ suggestion, startLabel }: { suggestion: ContextualSuggestion; startLabel: string }) => {
   const { t } = useLanguage();
   return (
     <Link href={suggestion.toolHref} className="group">
-      <Card className="h-full rounded-surface-md border border-border border-l-2 border-l-primary shadow-soft hover:border-primary/50 hover:border-l-primary hover:shadow-elevated transition-all duration-micro ease-out-quart overflow-hidden">
+      <Card className="h-full rounded-surface-md border border-border shadow-soft hover:border-primary/50 hover:shadow-elevated transition-all duration-micro ease-out-quart overflow-hidden">
         <CardContent className="p-4 flex flex-col gap-2">
           <span className="type-caption text-primary/70">{t(suggestion.toolLabel)}</span>
           <h3 className="font-headline text-sm font-semibold text-foreground leading-tight">{suggestion.topic}</h3>
@@ -54,6 +82,38 @@ const SuggestionCard = ({ suggestion, startLabel }: { suggestion: ContextualSugg
         </CardContent>
       </Card>
     </Link>
+  );
+};
+
+/** Compact prep-loop row + quiet Labs link — the secondary/tertiary tiers. */
+const PrepToolsRow = () => {
+  const { t } = useLanguage();
+  return (
+    <nav className="w-full max-w-2xl" aria-label={t("Prep tools")}>
+      <h2 className="type-caption text-muted-foreground mb-3">{t("Prep tools")}</h2>
+      <div className="flex flex-wrap gap-2">
+        {PREP_TOOLS.map(({ labelKey, href, icon: Icon }) => (
+          <Link
+            key={href}
+            href={href}
+            className="inline-flex items-center gap-2 rounded-surface-sm border border-border bg-card px-3 py-2 text-sm font-medium text-foreground shadow-soft hover:border-primary/50 hover:text-primary transition-colors duration-micro ease-out-quart indic-text"
+          >
+            <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            {t(labelKey)}
+          </Link>
+        ))}
+      </div>
+      <div className="mt-3">
+        <Link
+          href="/labs"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
+        >
+          <FlaskConical className="h-3.5 w-3.5" aria-hidden="true" />
+          {t("Explore Labs")}
+          <ArrowRight className="h-3 w-3" aria-hidden="true" />
+        </Link>
+      </div>
+    </nav>
   );
 };
 
@@ -70,12 +130,10 @@ export function DashboardHome() {
   const [greeting, setGreeting] = useState("Namaste");
   const [isThinking, setIsThinking] = useState(false);
   const [answer, setAnswer] = useState<string | null>(null);
-  const [showAllToolsOnPage, setShowAllToolsOnPage] = useState(false);
   const router = useRouter();
 
   const showNewUserHome = isNewUser && generationCount < 5;
   const teacherName = profileSummary?.displayName?.split(' ')[0] || "Teacher";
-  const primarySubject = profileSummary?.subjects?.[0];
 
   const { toast } = useToast();
 
@@ -180,7 +238,6 @@ export function DashboardHome() {
         form.handleSubmit(onSubmit)();
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form, t]);
 
   const handleTranscript = (transcript: string, _language?: string) => {
@@ -188,57 +245,25 @@ export function DashboardHome() {
     form.handleSubmit(onSubmit)();
   };
 
-  const QuickActionCard = ({ title, icon: Icon, href, color, description }: { title: string, icon: any, href: string, color: string, description: string }) => (
-    <Link href={href} className="group">
-      <Card className="h-full rounded-surface-md border border-border border-l-2 border-l-primary shadow-soft hover:border-primary/50 hover:border-l-primary hover:shadow-elevated transition-all duration-micro ease-out-quart overflow-hidden">
-        <CardContent className="p-4 md:p-6 flex flex-col items-center text-center gap-3 md:gap-4">
-          <div className={cn("p-3 rounded-surface-md bg-primary/10 text-primary group-hover:bg-primary/15 transition-colors duration-micro ease-out-quart")}>
-            <Icon className="h-6 w-6 md:h-8 md:w-8" />
-          </div>
-          <div className="space-y-1 md:space-y-2">
-            <h2 className="font-headline text-base font-semibold text-foreground leading-tight">{title}</h2>
-            <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{description}</p>
-          </div>
-          <div className="mt-auto pt-2 md:pt-4 text-primary font-medium text-xs md:text-sm flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-            {t("Start")} <ArrowRight className="h-3 w-3 md:h-4 md:w-4" />
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
-  );
-
   return (
-    <div className="flex flex-col items-center justify-start min-h-[80vh] w-full container-wide py-8 md:py-12 gap-8 md:gap-12 relative">
-      {/* Clean Top Bar for Consistency */}
-      <div className="absolute top-0 left-0 h-1.5 w-full bg-primary rounded-t-surface-md" />
-
-      {/* Hero Section
-          NCERT demo polish (2026-05-19): tightened cascade durations
-          (700ms → 350ms) and used saffron primary token instead of
-          bare orange-50/orange-700 so the accent matches the rest of
-          the app's saffron design system (60-30-10 rule). The original
-          stacked 700ms cascade was perceptibly slow on a mid-range
-          Android — contributed to the "lagging" report. */}
-      <div className="text-center space-y-4 md:space-y-6 max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-medium">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-saffron-50 text-saffron-700 text-xs md:text-sm font-medium border border-saffron-100 mb-2 md:mb-4">
-          <Sparkles className="h-3 w-3 md:h-4 md:w-4" />
-          <span>{t("AI-Powered Teaching Assistant for Bharat")}</span>
-        </div>
-        <h1 className="font-headline text-4xl md:text-7xl font-bold text-foreground tracking-tight indic-text leading-[1.1]">
+    <div className="flex flex-col items-center justify-start min-h-[80vh] w-full container-wide py-8 md:py-12 gap-8 md:gap-10 relative">
+      {/* Greeting — restrained scale so the input, not the headline, dominates */}
+      <div className="text-center space-y-3 max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-medium">
+        <h1 className="font-headline text-3xl md:text-5xl font-bold text-foreground tracking-tight indic-text leading-[1.15]">
           {greeting}, <span className="text-primary">{teacherName}.</span>
         </h1>
         {showNewUserHome && suggestions.length > 0 ? (
-          <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4 indic-text">
+          <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4 indic-text">
             {t("Ideas for your classes")}
           </p>
         ) : (
-          <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4 indic-text">
+          <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4 indic-text">
             {t("I am SahayakAI, your personal AI companion. I can help you create lesson plans, quizzes, and engaging content in seconds.")}
           </p>
         )}
       </div>
 
-      {/* Main Voice-First Input Section */}
+      {/* PRIMARY — voice-first input, the prep loop's entry point */}
       <div className="w-full max-w-2xl animate-in fade-in slide-in-from-bottom-6 duration-medium delay-75 z-10 flex flex-col items-center gap-8">
 
         {/* BIG MIC BUTTON */}
@@ -297,11 +322,11 @@ export function DashboardHome() {
         </div>
 
         <div className="flex flex-col items-center gap-2">
-          <p className="text-center text-xs text-muted-foreground px-4">
-            try: "Quiz about photosynthesis" or "Lesson plan for solar system"
+          <p className="text-center text-xs text-muted-foreground px-4 indic-text">
+            {t("try: \"Quiz about photosynthesis\" or \"Lesson plan for solar system\"")}
           </p>
           <p className="text-xs text-muted-foreground indic-text leading-relaxed text-center px-4">
-            Works in हिंदी, ಕನ್ನಡ, தமிழ் + 8 more languages
+            {t("Works in Hindi, Kannada, Tamil + 8 more languages")}
           </p>
 
           {/* Thinking Indicator */}
@@ -344,12 +369,38 @@ export function DashboardHome() {
         </div>
       </div>
 
-      {/* Sample Output -- hidden for new users who see personalized suggestions.
-          NCERT demo polish (2026-05-19): trimmed slide-in-from-bottom-10/12 →
-          bottom-4 and cascade delays 150/200ms → 100/150ms so the page feels
-          settled within ~600ms total instead of 1.4s. */}
+      {/* RECENTS — "continue where you left off"; renders nothing when empty */}
+      <div className="w-full flex justify-center animate-in fade-in slide-in-from-bottom-4 duration-medium delay-100">
+        <RecentWorkStrip />
+      </div>
+
+      {/* Daily inspiration — personalized suggestions for new users */}
+      {showNewUserHome && suggestions.length > 0 && (
+        <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-medium delay-150 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+            {suggestions.map(s => (
+              <SuggestionCard key={s.id} suggestion={s} startLabel={t("Start")} />
+            ))}
+          </div>
+          <div className="flex items-center justify-center">
+            <button
+              onClick={refreshSuggestions}
+              className="text-sm text-muted-foreground hover:text-primary font-medium flex items-center gap-1 transition-colors"
+            >
+              <RefreshCw className="h-3 w-3" /> {t("Show different ideas")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* SECONDARY + TERTIARY — the prep loop as one compact row, Labs quiet */}
+      <div className="w-full flex justify-center animate-in fade-in slide-in-from-bottom-4 duration-medium delay-150">
+        <PrepToolsRow />
+      </div>
+
+      {/* Sample Output -- hidden for new users who see personalized suggestions. */}
       {!showNewUserHome && (
-        <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-medium delay-100 flex justify-center">
+        <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-medium delay-150 flex justify-center">
           <SampleOutputSection />
         </div>
       )}
@@ -358,112 +409,6 @@ export function DashboardHome() {
       {!showNewUserHome && (
         <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-medium delay-150">
           <DemoInteraction />
-        </div>
-      )}
-
-      {/* Quick Actions Grid — personalized for new users, full grid for experienced */}
-      {showNewUserHome && suggestions.length > 0 ? (
-        <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-medium delay-150 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
-            {suggestions.map(s => (
-              <SuggestionCard key={s.id} suggestion={s} startLabel={t("Start")} />
-            ))}
-          </div>
-          <div className="flex items-center justify-center gap-4">
-            <button
-              onClick={refreshSuggestions}
-              className="text-sm text-muted-foreground hover:text-primary font-medium flex items-center gap-1 transition-colors"
-            >
-              <RefreshCw className="h-3 w-3" /> {t("Show different ideas")}
-            </button>
-            {!showAllToolsOnPage && (
-              <button
-                onClick={() => setShowAllToolsOnPage(true)}
-                className="text-sm text-primary font-medium hover:underline"
-              >
-                {t("See all tools")} &rarr;
-              </button>
-            )}
-          </div>
-          {showAllToolsOnPage && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 w-full animate-in fade-in duration-300">
-              <QuickActionCard title={t("Lesson Plan")} icon={BookOpen} href="/lesson-plan" color="" description={t("NCERT-aligned plans.")} />
-              <QuickActionCard title={t("Quiz Generator")} icon={BrainCircuit} href="/quiz-generator" color="" description={t("Instant quizzes & worksheets.")} />
-              <QuickActionCard title={t("Exam Paper")} icon={FileText} href="/exam-paper" color="" description={t("Board-aligned papers.")} />
-              <QuickActionCard title={t("Worksheet Wizard")} icon={ClipboardList} href="/worksheet-wizard" color="" description={t("Practice worksheets.")} />
-              <QuickActionCard title={t("Assess Work")} icon={ScanEye} href="/assess-assignment" color="" description={t("Grade handwritten work from a photo.")} />
-              <QuickActionCard title={t("Visual Aid")} icon={Image} href="/visual-aid-designer" color="" description={t("Diagrams & illustrations.")} />
-              <QuickActionCard title={t("Content Creator")} icon={PenTool} href="/content-creator" color="" description={t("Stories & visual aids.")} />
-              <QuickActionCard title={t("Instant Answer")} icon={Lightbulb} href="/instant-answer" color="" description={t("Quick answers to questions.")} />
-              <QuickActionCard title={t("Teacher Training")} icon={GraduationCap} href="/teacher-training" color="" description={t("Professional development.")} />
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 w-full animate-in fade-in slide-in-from-bottom-4 duration-medium delay-150">
-          <QuickActionCard
-            title={t("Lesson Plan")}
-            icon={BookOpen}
-            href="/lesson-plan"
-            color=""
-            description={t("NCERT-aligned plans.")}
-          />
-          <QuickActionCard
-            title={t("Quiz Generator")}
-            icon={BrainCircuit}
-            href="/quiz-generator"
-            color=""
-            description={t("Instant quizzes & worksheets.")}
-          />
-          <QuickActionCard
-            title={t("Exam Paper")}
-            icon={FileText}
-            href="/exam-paper"
-            color=""
-            description={t("Board-aligned papers.")}
-          />
-          <QuickActionCard
-            title={t("Worksheet Wizard")}
-            icon={ClipboardList}
-            href="/worksheet-wizard"
-            color=""
-            description={t("Practice worksheets.")}
-          />
-          <QuickActionCard
-            title={t("Assess Work")}
-            icon={ScanEye}
-            href="/assess-assignment"
-            color=""
-            description={t("Grade handwritten work from a photo.")}
-          />
-          <QuickActionCard
-            title={t("Visual Aid")}
-            icon={Image}
-            href="/visual-aid-designer"
-            color=""
-            description={t("Diagrams & illustrations.")}
-          />
-          <QuickActionCard
-            title={t("Content Creator")}
-            icon={PenTool}
-            href="/content-creator"
-            color=""
-            description={t("Stories & visual aids.")}
-          />
-          <QuickActionCard
-            title={t("Instant Answer")}
-            icon={Lightbulb}
-            href="/instant-answer"
-            color=""
-            description={t("Quick answers to questions.")}
-          />
-          <QuickActionCard
-            title={t("Teacher Training")}
-            icon={GraduationCap}
-            href="/teacher-training"
-            color=""
-            description={t("Professional development.")}
-          />
         </div>
       )}
 

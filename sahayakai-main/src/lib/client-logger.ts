@@ -11,7 +11,9 @@ class ClientLogger {
 
     info(message: string, context?: string, data?: Record<string, any>) {
         const prefix = `[INFO]${context ? `[${context}]` : ''}[CLIENT]`;
-        console.log(`${prefix} ${new Date().toISOString()} - ${message}`, data || '');
+        // Sink for the info level. Uses console.info so the no-console lint gate
+        // stays green while behaving identically in the browser.
+        console.info(`${prefix} ${new Date().toISOString()} - ${message}`, data || '');
     }
 
     warn(message: string, context?: string, data?: Record<string, any>) {

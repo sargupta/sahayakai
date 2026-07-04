@@ -259,6 +259,15 @@ Firebase download URLs look like `https://firebasestorage.googleapis.com/v0/b/<B
 > - **Soak window: 2026-06-10 → 2026-07-10 (30 days).** Re-run `bash scripts/qa/soak-check-us-bucket.sh` any time and as the final gate on/after 2026-07-10. It checks object parity, the post-cutover-write tripwire, and US request breakdown; exit 0 = clean. **US bucket NOT deleted; kept fully intact as rollback target during soak.**
 > - **Open decision (deferred to user):** whether to harden US to *read-only* (remove write IAM) now vs. keep it write-capable. Read-only eliminates silent-divergence risk but disables instant write-rollback (rollback would then need a reverse delta-copy first). Kept write-capable for now since cutover is freshly verified; revisit mid-soak.
 
+### 5.5.1 ⚠️ Missed writer found (2026-07-04): call recordings were still leaking to the US
+The soak check (`scripts/qa/soak-check-us-bucket.sh`) returned **NOT CLEAN**: ~20 `call-recordings/{outreachId}/*.wav` objects were written to the **US bucket after cutover** (2026-06-10 … 06-19). Root cause: the **`sahayakai-voice-call`** service (Exotel voicebot, a *separate* repo) is out of scope of the main-app `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` change — its `src/lib/firebase-admin.ts` set **no** `storageBucket`, so `getStorage().bucket()` in `src/exotel/call-record.ts` used the project **default (US) bucket**. The most sensitive media class (parent-call audio) was the one still leaving India.
+
+Remediation (2026-07-04):
+- **Code fix** (`sahayakai-voice-call`, branch `fix/recordings-mumbai`): pin `storageBucket` → `sahayakai-b4248-mumbai`, env-overridable. **Requires redeploy of the voice-call service (`asia-south1`, its own `scripts/safe-deploy.sh`) to take effect — until then, recordings keep going to US.**
+- **Data rescued:** the 20 leaked recordings copied US→Mumbai additively (`gcloud storage rsync`, no `--delete`); both buckets now at 36. US untouched.
+- **No Firestore rewrite needed:** recordings are referenced by relative `recordingPath` (bucket-agnostic → resolves to Mumbai after redeploy) + a 7-day signed URL (all leaked ones long expired).
+- **Sequence correction:** the US bucket **cannot** be deleted (and the soak cannot pass) until the voice-call service is redeployed AND a subsequent soak-check shows zero new US writes. Re-run `soak-check-us-bucket.sh` after redeploy.
+
 ### 5.6 Rollback
 At any point pre-deletion: flip `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` back to `$OLD_BUCKET` and redeploy. Old bucket still has every object; the broadened allowlist already accepts it. URL rewrite is reversible (re-run swap in reverse, both buckets hold the objects).
 
@@ -283,6 +292,12 @@ The app is **serverless Cloud Run + client-SDK-direct** (browsers connect straig
 | **Cloud Spanner** | ❌ | Massive overkill; global-scale strong consistency | high | Skip |
 | **Bigtable** | ❌ | High write throughput but server-mediated, cost floor | persistent | Overkill |
 | **Memorystore Memcached** | ❌ | No pub/sub / TTL-fanout | floor | Worse than Redis |
+
+> **PHASE C1 IMPLEMENTED (2026-07-04, code):** presence + typing moved off RTDB (Singapore) → Firestore (Mumbai). RTDB is now unused by the app; `getDatabase`/`rtdb` removed from `src/lib/firebase.ts`, RTDB `connect-src` removed from `middleware.ts` CSP.
+> - **Presence** (`use-presence.ts` + `presence-dot.tsx`): heartbeat model — `presence/{uid}` = `{ online, lastSeen, expireAt }`, refreshed every 30 s while the tab is visible; the reader shows "online" only if `online===true` AND `lastSeen` is within 45 s, recovering onDisconnect UX (crashed tab → grey within 45 s). Writes only while visible.
+> - **Typing** (`use-typing-indicator.ts`): one `typing_status/{conversationId}` doc = `{ [uid]: expiryTimestamp }`, debounced to ≤1 write / 2 s; a user is "typing" while their expiry is in the future.
+> - **Rules:** added for `presence/{uid}` (owner-write, signed-in read) and `typing_status/{conversationId}` (a caller may only affect its own uid key + `expireAt`).
+> - **Founder activation:** (1) `firebase deploy --only firestore:rules`; (2) create Firestore **TTL policies** on `presence.expireAt` and `typing_status.expireAt` (console → Firestore → TTL, or `gcloud firestore fields ttls update expireAt --collection-group=presence` and `…=typing_status`) so idle docs self-reap; (3) after soak, the RTDB instance `sahayakai-b4248-default-rtdb` can be deleted. **Cost:** validate presence-write volume at real concurrency before a large rollout.
 
 ### 6.3 Recommended path — C1: fold presence/typing into Firestore (Mumbai)
 Zero new infra, already GCP-native, already in India, rules + listeners already present. Touch `src/hooks/use-presence.ts`, `src/hooks/use-typing-indicator.ts`, `src/components/messages/presence-dot.tsx`, and remove the `rtdb` export in `src/lib/firebase.ts:54`. Engineer around the two real downsides:

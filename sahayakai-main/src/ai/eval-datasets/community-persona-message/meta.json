@@ -1,0 +1,11 @@
+{
+  "module": "src/ai/flows/community-persona-message.ts",
+  "export": "generateCommunityPersonaMessage",
+  "flowName": "communityPersonaMessageFlow",
+  "languageInputPath": "preferredLanguage",
+  "outputScriptFields": [
+    "message"
+  ],
+  "notes": "Case inputs match the flow's flat PersonaMessageInputSchema (the schema on communityPersonaMessageFlow). The exported wrapper generateCommunityPersonaMessage takes POSITIONAL args (persona: PersonaDef, recentMessages, mode); to call it, map case fields onto PersonaDef: personaName→displayName, personaState→state, personaSubject→subject, personaGradeLevel→gradeLevel, personaVoiceTone→voiceTone, preferredLanguage→preferredLanguage, yearsExperience→yearsExperience (PersonaDef's id/avatarSeed are not part of the flow input). Alternatively invoke the flow by flowName with the case input as-is. mode has a Zod default of 'auto' but is set explicitly in every case. Output is plain-text generation (no structured output) — the flow strips quotes/fences and hard-caps at ~240 chars, so script checks on 'message' must tolerate short strings (30-180 chars target). Message may legitimately contain other teachers' Latin-script first names when mode='reply', so script presence (any target-script char) is the right check, not script exclusivity.",
+  "minScriptChars": 8
+}

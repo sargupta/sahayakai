@@ -1,0 +1,13 @@
+{
+  "module": "src/ai/flows/teacher-training.ts",
+  "export": "getTeacherTrainingAdvice",
+  "flowName": "teacherTrainingFlow",
+  "languageInputPath": "language",
+  "outputScriptFields": [
+    "introduction",
+    "advice[].strategy",
+    "advice[].explanation",
+    "conclusion"
+  ],
+  "notes": "userId is REQUIRED by the input schema. When userId is set the flow persists output to Storage/Firestore (non-blocking on failure) — runner should use a dedicated eval uid; Firebase Admin creds needed or persistence just WARN-logs. advice[].pedagogy is EXCLUDED from script checks: it names a pedagogical principle (e.g. 'Scaffolding', 'Constructivism') that the model commonly keeps in English even for Indic-language output. gradeLevel/subject output fields are metadata, excluded. No gradeLevel input field exists on this schema (only question/language/subject/userId). All cases supply language explicitly so the wrapper skips the user-profile fetch. question is capped at 2000 chars."
+}

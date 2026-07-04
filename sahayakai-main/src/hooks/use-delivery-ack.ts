@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useCallback } from 'react';
-import { acknowledgeDeliveryAction } from '@/app/actions/messages';
+import { acknowledgeDeliveryAction } from '@/lib/api/messages';
 
 /**
  * Hook that tracks which messages become visible and batch-acknowledges delivery.

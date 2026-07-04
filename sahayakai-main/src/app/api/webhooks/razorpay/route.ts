@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { verifyWebhookSignature, resolvePlanTypeFromPlanId } from '@/lib/razorpay';
+import { logger } from '@/lib/logger';
 
 /**
  * POST /api/webhooks/razorpay
@@ -148,25 +149,86 @@ export async function POST(request: Request) {
                     throw new Error(`UNKNOWN_PLAN_ID: ${subscription.plan_id}`);
                 }
 
+                // H21: bind the charged amount to the plan being granted BEFORE
+                // provisioning. A captured ₹1 payment must not unlock Pro.
+                const {
+                    validateSubscriptionChargeAmount,
+                    applyPaymentOnce,
+                    recordRejectedPayment,
+                } = await import('@/server/payments');
+
+                const amountPaise = typeof payment.amount === 'string'
+                    ? parseInt(payment.amount, 10)
+                    : (payment.amount ?? 0);
+                const currency = String(payment.currency ?? '');
+
+                const amountCheck = validateSubscriptionChargeAmount({
+                    planId: subscription.plan_id,
+                    planType,
+                    amountPaise,
+                    currency,
+                });
+
+                const ledgerEntry = {
+                    uid: userId,
+                    amountPaise,
+                    currency,
+                    planType,
+                    source: 'razorpay-webhook' as const,
+                    amountVerified: amountCheck.verified,
+                    expectedPaise: amountCheck.expectedPaise,
+                    subscriptionId: subscription.id,
+                };
+
+                if (!amountCheck.ok) {
+                    // Log + NO grant. Mark the event completed (not failed) so
+                    // Razorpay does not retry-storm a permanently-wrong amount;
+                    // the rejected ledger doc is the audit trail for follow-up.
+                    console.error(
+                        `[Webhook] AMOUNT MISMATCH — refusing ${planType} grant for user ${userId}: payment ${payment.id} charged ${amountPaise} ${currency}, expected ${amountCheck.expectedPaise ?? 'n/a'} paise for plan_id ${subscription.plan_id} (${amountCheck.reason})`
+                    );
+                    await recordRejectedPayment(payment.id, ledgerEntry, amountCheck.reason ?? 'AMOUNT_MISMATCH');
+                    await eventRef.update({
+                        status: 'completed',
+                        rejected: amountCheck.reason ?? 'AMOUNT_MISMATCH',
+                        completedAt: new Date(),
+                    });
+                    return NextResponse.json({ status: 'rejected_amount_mismatch' });
+                }
+
                 // Atomically update both subscription and user docs. Previously these were
                 // two separate writes — if the users update failed, the user paid but stayed
                 // on the free plan with no auto-recovery.
+                //
+                // H21: the grant now runs inside applyPaymentOnce — the
+                // payments_ledger/{paymentId} doc is get-then-create'd in the SAME
+                // transaction, so a replayed payment id (same payment re-delivered
+                // under a different event id, or replayed via the org-creation
+                // path) is a no-op with an audit log instead of a double grant.
                 const subRef = db.collection('subscriptions').doc(subscription.id);
                 const userRef = db.collection('users').doc(userId);
-                await db.runTransaction(async (tx) => {
-                    tx.update(subRef, {
-                        status: 'active',
-                        lastPaymentId: payment.id,
-                        currentStart: new Date(subscription.current_start * 1000),
-                        currentEnd: new Date(subscription.current_end * 1000),
-                        updatedAt: new Date(),
-                    });
-                    tx.update(userRef, {
-                        planType,
-                        subscriptionId: subscription.id,
-                        updatedAt: new Date(),
-                    });
+                const ledgerResult = await applyPaymentOnce({
+                    paymentId: payment.id,
+                    entry: ledgerEntry,
+                    grant: (tx) => {
+                        tx.update(subRef, {
+                            status: 'active',
+                            lastPaymentId: payment.id,
+                            currentStart: new Date(subscription.current_start * 1000),
+                            currentEnd: new Date(subscription.current_end * 1000),
+                            updatedAt: new Date(),
+                        });
+                        tx.update(userRef, {
+                            planType,
+                            subscriptionId: subscription.id,
+                            updatedAt: new Date(),
+                        });
+                    },
                 });
+                // On 'replay' the Firestore writes were skipped (already applied on
+                // the first delivery). The custom-claim set below still runs — it is
+                // idempotent, and a prior delivery may have failed AFTER the ledger
+                // transaction committed but BEFORE the claim was set.
 
                 // Set custom claim so middleware can read plan from JWT.
                 // If this fails, throw so the event is marked 'failed' and can be retried
@@ -180,7 +242,11 @@ export async function POST(request: Request) {
                     throw new Error(`CLAIM_SET_FAILED: ${userId}`);
                 }
 
-                console.log(`[Webhook] Provisioned ${planType} for user ${userId}, payment ${payment.id}`);
+                logger.info(
+                    `${ledgerResult === 'applied' ? 'Provisioned' : 'Replay no-op (already provisioned)'} ${planType} for user ${userId}, payment ${payment.id}`,
+                    'Webhook',
+                    { ledgerResult, planType, userId, paymentId: payment.id }
+                );
 
                 // Public checkout: send a passwordless sign-in link so the
                 // anonymous buyer can actually reach their new Pro account.
@@ -210,8 +276,10 @@ export async function POST(request: Request) {
                             },
                             { merge: true }
                         );
-                        console.log(
-                            `[Webhook] Magic sign-in link generated for public buyer ${noteEmail} (user ${userId})`
+                        logger.info(
+                            `Magic sign-in link generated for public buyer ${noteEmail} (user ${userId})`,
+                            'Webhook',
+                            { noteEmail, userId }
                         );
                     } catch (linkErr) {
                         // Don't throw — the payment + plan are already provisioned
@@ -302,8 +370,10 @@ export async function POST(request: Request) {
                             updatedAt: new Date(),
                         });
                     });
-                    console.log(
-                        `[Webhook] subscription.cancelled honored for ${userId} — plan stays until ${new Date(paidUntilSec * 1000).toISOString()}`
+                    logger.info(
+                        `subscription.cancelled honored for ${userId} — plan stays until ${new Date(paidUntilSec * 1000).toISOString()}`,
+                        'Webhook',
+                        { userId, paidUntil: new Date(paidUntilSec * 1000).toISOString() }
                     );
                 } else {
                     // halted, or cancelled past current_end — downgrade now atomically.
@@ -320,7 +390,7 @@ export async function POST(request: Request) {
                         throw new Error(`CLAIM_SET_FAILED: ${userId}`);
                     }
 
-                    console.log(`[Webhook] Downgraded user ${userId} to free (${event.event})`);
+                    logger.info(`Downgraded user ${userId} to free (${event.event})`, 'Webhook', { userId, event: event.event });
                 }
                 break;
             }
@@ -346,7 +416,7 @@ export async function POST(request: Request) {
             }
 
             default:
-                console.log(`[Webhook] Unhandled event: ${event.event}`);
+                logger.info(`Unhandled event: ${event.event}`, 'Webhook', { event: event.event });
         }
 
         await eventRef.update({ status: 'completed', completedAt: new Date() });

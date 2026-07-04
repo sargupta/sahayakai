@@ -1,0 +1,73 @@
+name: E2E Smoke
+
+# Public-route Playwright smoke gate. Builds the app with stub secrets (the
+# same pattern the unit Test Suite uses), boots `next start`, and runs ONLY
+# the @smoke suite (qa/e2e/smoke.spec.ts) against public routes that render
+# without real auth. Deeper authenticated flows need a provisioned test tenant
+# and are intentionally out of scope here — see qa/HARNESS.md.
+
+on:
+  pull_request:
+    branches: [develop, main]
+
+concurrency:
+  group: e2e-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: sahayakai-main
+
+    env:
+      # Stub env vars so `next build` doesn't fail on missing secrets.
+      # Mirrors the Build step in test.yml.
+      GOOGLE_GENAI_API_KEY: stub
+      GOOGLE_CLOUD_PROJECT: stub
+      NEXT_PUBLIC_FIREBASE_API_KEY: stub
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: stub
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: stub
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: stub
+      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: stub
+      NEXT_PUBLIC_FIREBASE_APP_ID: stub
+      # Point Playwright at the locally-booted server and have its config
+      # start `next start` for us (see qa/playwright.config.ts webServer guard).
+      QA_BASE_URL: http://127.0.0.1:3000
+      QA_START_SERVER: '1'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: sahayakai-main/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser (chromium only)
+        run: npx playwright install --with-deps chromium
+
+      - name: Build
+        run: npm run build
+
+      - name: Run @smoke suite
+        # Playwright's webServer block boots `next start` on :3000 and waits
+        # for it before the specs run. Path-target the smoke file AND grep
+        # @smoke so only public-route smoke tests execute.
+        run: npm run qa:e2e -- qa/e2e/smoke.spec.ts --grep @smoke
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-smoke-report
+          path: sahayakai-main/qa/results/playwright-report/
+          retention-days: 7

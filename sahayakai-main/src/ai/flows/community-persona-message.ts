@@ -9,6 +9,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { INJECTION_GUARD, frameUserInput } from '@/ai/prompt-hardening';
 import type { PersonaDef } from '@/ai/data/community-personas';
 
 // ── Schemas ──────────────────────────────────────────────────────────────────
@@ -57,6 +58,7 @@ function buildPrompt(input: PersonaMessageInput): string {
           .join('\n');
 
   return `You are role-playing as an Indian schoolteacher named ${input.personaName} in a community chat for teachers across India. Other teachers in the room are chatting in real time.
+${INJECTION_GUARD}
 
 YOUR CHARACTER:
 - Name: ${input.personaName}
@@ -68,7 +70,7 @@ YOUR CHARACTER:
 - Preferred language: ${input.preferredLanguage}
 
 RECENT CHAT (last 5 messages):
-${recentBlock}
+${frameUserInput('recent_chat_messages', recentBlock)}
 
 TASK: Write ONE short message that ${input.personaName} would post right now.
 

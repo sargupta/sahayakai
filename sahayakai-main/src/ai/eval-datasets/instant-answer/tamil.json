@@ -1,0 +1,32 @@
+[
+  {
+    "label": "class5-evs-water-cycle",
+    "input": {
+      "question": "நீர் சுழற்சி என்றால் என்ன? மழை எப்படி உருவாகிறது என்பதை ஐந்தாம் வகுப்பு மாணவர்களுக்கு எளிமையாக விளக்குங்கள்.",
+      "language": "Tamil",
+      "gradeLevel": "Class 5",
+      "subject": "Science",
+      "userId": "eval-harness-user"
+    }
+  },
+  {
+    "label": "class9-science-electric-circuit-village",
+    "input": {
+      "question": "மின்சுற்று என்றால் என்ன? தொடர் இணைப்பு மற்றும் பக்க இணைப்பு வித்தியாசத்தை வீட்டு மின்விளக்குகளின் உதாரணத்துடன் விளக்கவும்.",
+      "language": "Tamil",
+      "gradeLevel": "Class 9",
+      "subject": "Science",
+      "userId": "eval-harness-user"
+    }
+  },
+  {
+    "label": "class7-social-chola-temples",
+    "input": {
+      "question": "சோழர்கள் கட்டிய தஞ்சை பெரிய கோவில் ஏன் மிகவும் புகழ்பெற்றது? ஏழாம் வகுப்பு சமூக அறிவியல் பாடத்திற்காக சுருக்கமாகச் சொல்லுங்கள்.",
+      "language": "Tamil",
+      "gradeLevel": "Class 7",
+      "subject": "Social Science",
+      "userId": "eval-harness-user"
+    }
+  }
+]

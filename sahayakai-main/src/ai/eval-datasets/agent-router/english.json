@@ -1,0 +1,42 @@
+[
+  {
+    "label": "english-lesson-plan-photosynthesis",
+    "input": {
+      "prompt": "Help me make a lesson plan on photosynthesis for Class 7 science, with a hands-on activity.",
+      "language": "en"
+    },
+    "expect": {
+      "type": "lessonPlan"
+    }
+  },
+  {
+    "label": "english-quiz-quick-mcq-fractions",
+    "input": {
+      "prompt": "Make a quick 10-question MCQ quiz on fractions for Class 5 to check understanding at the start of tomorrow's period.",
+      "language": "en"
+    },
+    "expect": {
+      "type": "quiz"
+    }
+  },
+  {
+    "label": "english-exam-paper-cbse-board-pattern",
+    "input": {
+      "prompt": "Generate a Class 10 CBSE board pattern question paper for Maths on quadratic equations, with sections and marks distribution.",
+      "language": "en"
+    },
+    "expect": {
+      "type": "examPaper"
+    }
+  },
+  {
+    "label": "english-instant-answer-definition",
+    "input": {
+      "prompt": "What is the difference between weather and climate?",
+      "language": "en"
+    },
+    "expect": {
+      "type": "instantAnswer"
+    }
+  }
+]

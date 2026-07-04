@@ -12,6 +12,7 @@ import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
+import { INJECTION_GUARD, neutralizeUserInput } from '@/ai/prompt-hardening';
 import { extractGradeFromTopic } from '@/lib/grade-utils';
 import { normalizeLanguage } from '@/ai/lib/normalize-language';
 
@@ -30,7 +31,10 @@ const VirtualFieldTripOutputSchema = z.object({
     description: z.string().describe('A brief, engaging description of the stop.'),
     educationalFact: z.string().describe('A "wow-factor" educational fact about this location.'),
     reflectionPrompt: z.string().describe('A critical thinking question for students to answer at this stop.'),
-    googleEarthUrl: z.string().url().describe('A valid Google Earth search URL.'),
+    // NOT .url(): Google Earth search URLs legitimately carry Unicode place
+    // names (e.g. Tamil/Bengali), which are valid IRIs but fail Zod's ASCII
+    // .url() check. Format + host are enforced in virtual-field-trip-validation.
+    googleEarthUrl: z.string().describe('A Google Earth search URL, e.g. https://earth.google.com/web/search/PLACE. Percent-encode the place name.'),
     culturalAnalogy: z.string().describe('A "Bharat-First" analogy (e.g., "Like the Western Ghats but in South America").'),
     explanation: z.string().describe('The pedagogical reason for visiting this specific spot.'),
   })).describe('An array of stops.'),
@@ -74,6 +78,7 @@ const virtualFieldTripPrompt = ai.definePrompt({
   input: { schema: VirtualFieldTripInputSchema },
   output: { schema: VirtualFieldTripOutputSchema },
   prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
+${INJECTION_GUARD}
 
 You are an expert geography teacher and curriculum designer. Create an immersive virtual field trip using Google Earth.
 
@@ -86,12 +91,12 @@ You are an expert geography teacher and curriculum designer. Create an immersive
     - **Educational Fact**: A specific, high-value fact that isn't common knowledge.
     - **Reflection Prompt**: A question that forces students to observe and think critically.
     - **Explanation**: The pedagogical reasoning for including this stop in the curriculum.
-5.  **Google Earth URLs**: Format as \`https://earth.google.com/web/search/LOCATION+NAME\`.
+5.  **Google Earth URLs**: Format as \`https://earth.google.com/web/search/LOCATION+NAME\`. URL-encode (percent-encode) non-ASCII characters in the location name.
 6.  **Metadata**: Identify the most appropriate \`subject\` and \`gradeLevel\`.
 7.  **Language**: Respond in \`{{{language}}}\`.
 
 **Context:**
-- **Topic**: {{{topic}}}
+- **Topic**: <user_input field="topic">{{{topic}}}</user_input>
 - **Grade**: {{{gradeLevel}}}
 - **Language**: {{{language}}}
 
@@ -135,7 +140,10 @@ const virtualFieldTripFlow = ai.defineFlow(
       });
 
       const { output } = await runResiliently(async (resilienceConfig) => {
-        return await virtualFieldTripPrompt(input, resilienceConfig);
+        return await virtualFieldTripPrompt(
+          { ...input, topic: neutralizeUserInput(input.topic) },
+          resilienceConfig
+        );
       }, 'virtualFieldTrip.generate');
 
       if (!output) {

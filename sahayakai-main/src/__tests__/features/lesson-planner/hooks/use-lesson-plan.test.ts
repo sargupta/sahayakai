@@ -5,7 +5,7 @@ import { generateLessonPlan } from '@/ai/flows/lesson-plan-generator';
 import { useToast } from '@/hooks/use-toast';
 import { checkRateLimit, validateTopicSafety } from '@/lib/safety';
 import { getCache, saveCache } from '@/lib/indexed-db';
-import { getCachedLessonPlan } from '@/app/actions/lesson-plan';
+import { getCachedLessonPlan } from '@/lib/api/lesson-plan';
 import { useSearchParams } from 'next/navigation';
 
 // Mocks
@@ -13,7 +13,7 @@ jest.mock('@/ai/flows/lesson-plan-generator');
 jest.mock('@/hooks/use-toast');
 jest.mock('@/lib/safety');
 jest.mock('@/lib/indexed-db');
-jest.mock('@/app/actions/lesson-plan');
+jest.mock('@/lib/api/lesson-plan');
 // Critical: Mock the internal firebase-admin wrapper to stop it from loading 'firebase-admin' (server-only)
 // which loads 'jose' (ESM) and crashes Jest.
 jest.mock('@/lib/firebase-admin', () => ({
@@ -25,7 +25,7 @@ jest.mock('@/lib/firebase-admin', () => ({
 jest.mock('@/components/example-prompts', () => ({
     ExamplePrompts: () => null
 }));
-jest.mock('@/app/actions/telemetry', () => ({
+jest.mock('@/lib/api/telemetry', () => ({
     syncTelemetryEvents: jest.fn().mockResolvedValue({ success: true })
 }));
 jest.mock('@/lib/logger', () => ({

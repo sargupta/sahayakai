@@ -3,6 +3,7 @@ import { getDb } from '@/lib/firebase-admin';
 import { validateTwilioSignaturePost } from '@/lib/twilio-validate';
 import { generateCallSummary } from '@/ai/flows/parent-call-agent';
 import type { CallStatus } from '@/types/attendance';
+import { logger } from '@/lib/logger';
 
 // ── PUBLIC route — Twilio status callback ─────────────────────────────────────
 
@@ -87,7 +88,7 @@ export async function POST(req: NextRequest) {
                     docRef.update({ _summaryGenerating: false }).catch(() => {});
                 });
             } else {
-                console.log('[twiml-status] Summary already generated or in-flight — skipping (idempotent)');
+                logger.info('Summary already generated or in-flight — skipping (idempotent)', 'twiml-status');
             }
         }
 
@@ -105,7 +106,7 @@ async function generateAndSaveSummary(
     data: FirebaseFirestore.DocumentData,
     callDuration: string | null,
 ) {
-    console.log('[twiml-status] Generating call summary for outreach:', docRef.id);
+    logger.info('Generating call summary for outreach', 'twiml-status', { outreachId: docRef.id });
 
     // Parent-call schema requires 2-letter ISO (en/hi/bn/...). Profiles
     // store the full Language name (`Hindi`), so map via LANGUAGE_TO_ISO.
@@ -140,5 +141,5 @@ async function generateAndSaveSummary(
         updatedAt: new Date().toISOString(),
     });
 
-    console.log('[twiml-status] Call summary saved. Quality:', summary.callQuality, 'Sentiment:', summary.parentSentiment);
+    logger.info('Call summary saved', 'twiml-status', { quality: summary.callQuality, sentiment: summary.parentSentiment });
 }

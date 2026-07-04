@@ -11,36 +11,37 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        // Indic script families listed after Inter so the browser picks
-        // the right glyphs per Unicode block automatically. Noto Sans
-        // families are loaded on-demand by LanguageContext when the user
-        // picks a non-English language; English-only sessions never fetch
-        // them. Order matters: Inter first so Latin characters still use
-        // it when mixed with Indic script (code-switching Hinglish).
+        // Phase 0 (2026-07-03): all families are SELF-HOSTED via next/font
+        // in src/app/layout.tsx and exposed as CSS custom properties on
+        // <html>. Indic script families listed after Inter/Outfit so the
+        // browser picks the right glyphs per Unicode block automatically
+        // (browsers fetch a family's woff2 lazily, only when text uses it).
+        // Order matters: Inter/Outfit first so Latin characters still use
+        // them when mixed with Indic script (code-switching Hinglish).
         body: [
-          '"Inter"',
-          '"Noto Sans Devanagari"',
-          '"Noto Sans Tamil"',
-          '"Noto Sans Kannada"',
-          '"Noto Sans Telugu"',
-          '"Noto Sans Bengali"',
-          '"Noto Sans Gujarati"',
-          '"Noto Sans Gurmukhi"',
-          '"Noto Sans Malayalam"',
-          '"Noto Sans Oriya"',
+          'var(--font-inter)',
+          'var(--font-noto-devanagari)',
+          'var(--font-noto-tamil)',
+          'var(--font-noto-kannada)',
+          'var(--font-noto-telugu)',
+          'var(--font-noto-bengali)',
+          'var(--font-noto-gujarati)',
+          'var(--font-noto-gurmukhi)',
+          'var(--font-noto-malayalam)',
+          'var(--font-noto-oriya)',
           'sans-serif',
         ],
         headline: [
-          '"Outfit"',
-          '"Noto Sans Devanagari"',
-          '"Noto Sans Tamil"',
-          '"Noto Sans Kannada"',
-          '"Noto Sans Telugu"',
-          '"Noto Sans Bengali"',
-          '"Noto Sans Gujarati"',
-          '"Noto Sans Gurmukhi"',
-          '"Noto Sans Malayalam"',
-          '"Noto Sans Oriya"',
+          'var(--font-outfit)',
+          'var(--font-noto-devanagari)',
+          'var(--font-noto-tamil)',
+          'var(--font-noto-kannada)',
+          'var(--font-noto-telugu)',
+          'var(--font-noto-bengali)',
+          'var(--font-noto-gujarati)',
+          'var(--font-noto-gurmukhi)',
+          'var(--font-noto-malayalam)',
+          'var(--font-noto-oriya)',
           'sans-serif',
         ],
         code: ['monospace'],

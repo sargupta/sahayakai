@@ -33,6 +33,7 @@ import { useEffect, useRef } from 'react';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { getAuthToken } from '@/lib/get-auth-token';
+import { logger } from '@/lib/client-logger';
 
 // ── Config ──────────────────────────────────────────────────────────────────
 const MIN_INTERVAL_MS = 3 * 60 * 1000; // 3 min
@@ -61,11 +62,11 @@ export function useCommunityLivePulse(options: Options = {}) {
     // Production safety: env flag can hard-disable this hook everywhere.
     const flag = process.env.NEXT_PUBLIC_DEMO_PERSONAS_ENABLED;
     if (flag === 'false') {
-      console.log('[persona-pulse] disabled by NEXT_PUBLIC_DEMO_PERSONAS_ENABLED=false');
+      logger.info('disabled by NEXT_PUBLIC_DEMO_PERSONAS_ENABLED=false', 'persona-pulse');
       return;
     }
     if (!enabled) {
-      console.log('[persona-pulse] disabled by enabled=false');
+      logger.info('disabled by enabled=false', 'persona-pulse');
       return;
     }
 
@@ -78,7 +79,7 @@ export function useCommunityLivePulse(options: Options = {}) {
 
       // Skip tick if tab is hidden — no point burning LLM cost if no-one's watching.
       if (typeof document !== 'undefined' && document.visibilityState !== 'visible') {
-        console.log('[persona-pulse] tick skipped — tab hidden');
+        logger.info('tick skipped — tab hidden', 'persona-pulse');
       } else {
         try {
           // Pull the latest 5 messages from community_chat so the LLM has context.
@@ -111,8 +112,9 @@ export function useCommunityLivePulse(options: Options = {}) {
             });
             if (res.ok) {
               const data = await res.json();
-              console.log(
-                `[persona-pulse] tick → ${data.personaName ?? 'unknown'} (${data.personaState ?? '?'}): "${(data.message ?? '').slice(0, 60)}"`,
+              logger.info(
+                `tick → ${data.personaName ?? 'unknown'} (${data.personaState ?? '?'}): "${(data.message ?? '').slice(0, 60)}"`,
+                'persona-pulse',
               );
             } else if (res.status === 503) {
               // Server has disabled the feature via
@@ -123,8 +125,9 @@ export function useCommunityLivePulse(options: Options = {}) {
               // on the retry, another 15-min pause schedules.
               const text = await res.text().catch(() => '');
               const RETRY_AFTER_503_MS = 15 * 60 * 1000;
-              console.log(
-                `[persona-pulse] disabled by feature flag (503): ${text.slice(0, 200)} — pausing ${RETRY_AFTER_503_MS / 60000}min`,
+              logger.info(
+                `disabled by feature flag (503): ${text.slice(0, 200)} — pausing ${RETRY_AFTER_503_MS / 60000}min`,
+                'persona-pulse',
               );
               if (mountedRef.current) {
                 timerRef.current = setTimeout(fireTick, RETRY_AFTER_503_MS);
@@ -143,14 +146,14 @@ export function useCommunityLivePulse(options: Options = {}) {
       // Schedule the next tick with a fresh random interval.
       if (mountedRef.current) {
         const nextDelay = randomBetween(intMin, intMax);
-        console.log(`[persona-pulse] next tick in ${Math.round(nextDelay / 1000)}s`);
+        logger.info(`next tick in ${Math.round(nextDelay / 1000)}s`, 'persona-pulse');
         timerRef.current = setTimeout(fireTick, nextDelay);
       }
     };
 
     // First tick fires after a short delay — gives the page time to load,
     // and ensures the user sees a new message arrive within the first minute.
-    console.log(`[persona-pulse] mounted (frequency=${frequency}), first tick in ${Math.round(FIRST_TICK_DELAY_MS / 1000)}s`);
+    logger.info(`mounted (frequency=${frequency}), first tick in ${Math.round(FIRST_TICK_DELAY_MS / 1000)}s`, 'persona-pulse');
     timerRef.current = setTimeout(fireTick, FIRST_TICK_DELAY_MS);
 
     return () => {
@@ -159,7 +162,7 @@ export function useCommunityLivePulse(options: Options = {}) {
         clearTimeout(timerRef.current);
         timerRef.current = null;
       }
-      console.log('[persona-pulse] unmount, cleared timers');
+      logger.info('unmount, cleared timers', 'persona-pulse');
     };
   }, [enabled, frequency]);
 }

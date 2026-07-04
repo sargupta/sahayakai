@@ -12,7 +12,7 @@ import {
     getClassPerformanceSummariesAction, getStudentsWithRecentBehavioralOutreachAction,
     getStudentAbsenceDatesAction,
     type StudentPerformanceSummary,
-} from "@/app/actions/attendance";
+} from "@/lib/api/attendance";
 import type { ClassRecord, Student, StudentAttendanceSummary, OutreachReason } from "@/types/attendance";
 import { AttendanceGrid } from "@/components/attendance/attendance-grid";
 import { StudentManager } from "@/components/attendance/student-manager";

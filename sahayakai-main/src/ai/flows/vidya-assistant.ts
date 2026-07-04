@@ -18,6 +18,8 @@
 
 import { ai, runResiliently } from '@/ai/genkit';
 import { SAHAYAK_SOUL_PROMPT } from '@/ai/soul';
+import { INJECTION_GUARD, frameUserInput } from '@/ai/prompt-hardening';
+import { logger } from '@/lib/logger';
 
 /**
  * NCERT-demo 2026-05-19 — chapter validation hook.
@@ -186,6 +188,7 @@ function buildSystemPrompt(input: AssistantInput): string {
 
     const screen = input.currentScreenContext;
     return `${SAHAYAK_SOUL_PROMPT}
+${INJECTION_GUARD}
 
 CRITICAL CONTEXT INJECTION:
 Current User Screen path: ${screen?.path || 'unknown'}
@@ -411,7 +414,7 @@ export async function runGenkitVidya(
     return await runResiliently(async (config) => {
         const response = await ai.generate({
             model: 'googleai/gemini-2.5-flash',
-            prompt: `System: ${systemPrompt}\n\nChat History:\n${chatContext}\n\nUser: ${input.message}\n\nOutput strictly the JSON response as required by the System prompt. Return ONLY a single JSON object, no prose, no markdown code fences.`,
+            prompt: `System: ${systemPrompt}\n\nChat History:\n${frameUserInput('chat_history', chatContext)}\n\nUser: ${frameUserInput('message', input.message)}\n\nOutput strictly the JSON response as required by the System prompt. Return ONLY a single JSON object, no prose, no markdown code fences.`,
             ...config,
             config: {
                 ...(config.config || {}),
@@ -444,17 +447,13 @@ export async function runGenkitVidya(
             // [VIDYA Genkit] one-line structured trace so we can confirm
             // every voice utterance produced a valid intent at the LLM
             // boundary even when downstream navigation silently no-ops.
-            // eslint-disable-next-line no-console
-            console.log(
-                JSON.stringify({
-                    event: 'vidya.genkit.parsed',
-                    hasResponse: Boolean(out.response),
-                    responseLen: out.response.length,
-                    actionType: out.action?.type ?? null,
-                    actionFlow: (out.action as { flow?: string } | null)?.flow ?? null,
-                    plannedCount: out.plannedActions?.length ?? 0,
-                }),
-            );
+            logger.info('vidya.genkit.parsed', 'VIDYA Genkit', {
+                hasResponse: Boolean(out.response),
+                responseLen: out.response.length,
+                actionType: out.action?.type ?? null,
+                actionFlow: (out.action as { flow?: string } | null)?.flow ?? null,
+                plannedCount: out.plannedActions?.length ?? 0,
+            });
             return out;
         } catch (err) {
             // Match the legacy route: log + return safe fallback rather

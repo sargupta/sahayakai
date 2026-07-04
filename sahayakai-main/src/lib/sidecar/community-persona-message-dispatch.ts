@@ -35,6 +35,7 @@ import {
 import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { shouldRunCanaryShadowDiff } from './canary-shadow-diff';
 import { withTimeout } from './with-timeout';
+import { logger } from '@/lib/logger';
 
 // 10s fallback budget — persona message is a single short Gemini
 // call (~1-3s typical). 10s gives p99 headroom.
@@ -204,16 +205,12 @@ function logDispatch(
     decision: CommunityPersonaMessageSidecarDecision,
     payload: Record<string, unknown>,
 ): void {
-    // eslint-disable-next-line no-console
-    console.log(
-        JSON.stringify({
-            event: 'community_persona_message.dispatch',
-            mode: decision.mode,
-            reason: decision.reason,
-            bucket: decision.bucket,
-            ...payload,
-        }),
-    );
+    logger.info('community_persona_message.dispatch', 'community_persona_message.dispatch', {
+        mode: decision.mode,
+        reason: decision.reason,
+        bucket: decision.bucket,
+        ...payload,
+    });
 }
 
 export async function dispatchCommunityPersonaMessage(

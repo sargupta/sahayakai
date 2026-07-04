@@ -32,15 +32,18 @@ type FormFix = {
 
 const FORMS: FormFix[] = [
     {
+        // Migrated to the generator spine (2026-07-03): page.tsx is a thin
+        // composition; the VIDYA contract lives in the feature hook.
         name: 'quiz-generator',
-        file: 'src/app/quiz-generator/page.tsx',
+        file: 'src/features/quiz-generator/hooks/use-quiz-generator.ts',
         usesRhf: true,
         hasGradeLevel: true,
         apiPath: '/api/ai/quiz',
     },
     {
+        // Migrated to the generator spine (2026-07-03).
         name: 'worksheet-wizard',
-        file: 'src/app/worksheet-wizard/page.tsx',
+        file: 'src/features/worksheet-wizard/hooks/use-worksheet-wizard.ts',
         usesRhf: true,
         hasGradeLevel: true,
         apiPath: '/api/ai/worksheet',
@@ -67,15 +70,17 @@ const FORMS: FormFix[] = [
         apiPath: '/api/ai/teacher-training',
     },
     {
+        // Migrated to the generator spine (2026-07-03).
         name: 'rubric-generator',
-        file: 'src/app/rubric-generator/page.tsx',
+        file: 'src/features/rubric-generator/hooks/use-rubric-generator.ts',
         usesRhf: true,
         hasGradeLevel: true,
         apiPath: '/api/ai/rubric',
     },
     {
+        // Migrated to the generator spine (2026-07-03).
         name: 'exam-paper',
-        file: 'src/app/exam-paper/page.tsx',
+        file: 'src/features/exam-paper/hooks/use-exam-paper.ts',
         usesRhf: false,
         hasGradeLevel: true,
         apiPath: '/api/ai/exam-paper',

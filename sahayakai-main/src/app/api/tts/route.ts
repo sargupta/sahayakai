@@ -7,6 +7,7 @@ import { UsageTracker } from '@/lib/usage-tracker';
 import { sarvamTTS, toSarvamLangCode, chunkText, concatBase64Mp3 } from '@/lib/sarvam';
 import { bhashiniTTS, bhashiniSupportsLang } from '@/lib/bhashini';
 import { ensureVoiceQuota, recordVoiceMinutes, estimateTTSMinutes, buildVoiceQuotaSnapshot } from '@/lib/voice-quota-guard';
+import { logger } from '@/lib/logger';
 
 // Cache the GCP access token for its full lifetime (1 hour).
 // Re-fetching on every request added 100–300 ms of latency per TTS call.
@@ -227,7 +228,7 @@ export async function POST(req: NextRequest) {
         const cacheKey = generateCacheKey(cleanText, voiceLabel, provider);
         const cached = getCachedAudio(cacheKey);
         if (cached) {
-            console.log(`[TTS] Cache Hit (${provider}): ${voiceLabel}`);
+            logger.info(`Cache Hit (${provider}): ${voiceLabel}`, 'TTS', { provider, voiceLabel });
             UsageTracker.trackTTS(uid, cleanText.length, true, provider);
             return NextResponse.json({ audioContent: cached });
         }
@@ -242,7 +243,7 @@ export async function POST(req: NextRequest) {
         if (sarvamLang) {
             // Sarvam is available for this language — try it first
             try {
-                console.log(`[TTS] Sarvam inference: ${sarvamLang}`);
+                logger.info(`Sarvam inference: ${sarvamLang}`, 'TTS', { sarvamLang });
                 const result = await sarvamTTS(cleanText, sarvamLang);
                 audioContent = result.audioContent;
                 UsageTracker.trackTTS(uid, cleanText.length, false, 'sarvam');
@@ -272,7 +273,7 @@ export async function POST(req: NextRequest) {
             }
         } else {
             // Language not supported by Sarvam — use Google directly
-            console.log(`[TTS] Google inference (no Sarvam for ${langCode}): ${getVoiceName(langCode)}`);
+            logger.info(`Google inference (no Sarvam for ${langCode}): ${getVoiceName(langCode)}`, 'TTS', { langCode, voice: getVoiceName(langCode) });
             audioContent = await googleTTS(cleanText, langCode, getVoiceName(langCode));
             UsageTracker.trackTTS(uid, cleanText.length, false, 'google');
         }

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { UserPlus, Check, Loader2 } from "lucide-react";
-import { getRecommendedTeachersAction, followTeacherAction, getFollowingIdsAction } from "@/app/actions/community";
+import { getRecommendedTeachersAction, followTeacherAction, getFollowingIdsAction } from "@/lib/api/community";
 import { Badge } from "@/components/ui/badge";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";

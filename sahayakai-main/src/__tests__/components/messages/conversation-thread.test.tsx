@@ -11,17 +11,37 @@ jest.mock('@/context/auth-context', () => ({
     useAuth: () => ({ user: mockUser, loading: false }),
 }));
 
+// ConversationThread renders BackButton (@/components/ui/back-button), which
+// calls next/navigation's useRouter — in jsdom there is no app router mounted,
+// so mock the hooks it needs.
+jest.mock('next/navigation', () => ({
+    useRouter: () => ({ push: jest.fn(), back: jest.fn(), refresh: jest.fn() }),
+    usePathname: () => '/messages',
+}));
+
+// Copy is now behind useLanguage()/t() (i18n Wave 1.3). Stable identity
+// translator: keeps English assertions valid and effect deps steady.
+jest.mock('@/context/language-context', () => {
+    const mockLanguageValue = {
+        t: (s: string) => s,
+        language: 'English',
+        setLanguage: jest.fn(),
+        isLoaded: true,
+    };
+    return { useLanguage: () => mockLanguageValue };
+});
+
 jest.mock('@/lib/firebase', () => ({
     db: {},
     storage: {},
     auth: { currentUser: { uid: 'user-a', displayName: 'Test User', photoURL: null } },
 }));
 
-// Mock server actions
+// Mock the typed API client wrappers (tranche 5: server actions → API routes)
 const mockSendMessage = jest.fn().mockResolvedValue({ messageId: 'new-msg-1' });
 const mockMarkRead = jest.fn().mockResolvedValue(undefined);
 
-jest.mock('@/app/actions/messages', () => ({
+jest.mock('@/lib/api/messages', () => ({
     sendMessageAction: (...args: any[]) => mockSendMessage(...args),
     markConversationReadAction: (...args: any[]) => mockMarkRead(...args),
 }));

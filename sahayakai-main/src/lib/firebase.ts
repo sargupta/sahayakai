@@ -36,7 +36,9 @@ const firebaseConfig = {
 };
 
 import { getAuth } from "firebase/auth";
-import { getDatabase } from "firebase/database";
+// Realtime Database removed 2026-07-04: presence + typing migrated to
+// Firestore (Mumbai) for data residency — RTDB has no India region.
+// See docs/MUMBAI_REGION_MIGRATION_RUNBOOK.md §6.
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 
 // Initialize Firebase (Singleton pattern)
@@ -51,7 +53,6 @@ const db = initializeFirestore(app, {
 
 const auth = getAuth(app);
 const storage = getStorage(app);
-const rtdb = getDatabase(app, "https://sahayakai-b4248-default-rtdb.asia-southeast1.firebasedatabase.app");
 
 // Export instances
-export { app, db, auth, storage, rtdb };
+export { app, db, auth, storage };

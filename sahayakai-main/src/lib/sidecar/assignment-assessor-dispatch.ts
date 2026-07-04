@@ -40,6 +40,7 @@ import {
 import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { shouldRunCanaryShadowDiff } from './canary-shadow-diff';
 import { withTimeout } from './with-timeout';
+import { logger } from '@/lib/logger';
 
 // Matches the assessor's client-side budget (slowest single call —
 // multimodal `gemini-2.5-pro`). Env-overridable for production
@@ -245,16 +246,12 @@ function logDispatch(
     decision: AssignmentAssessorSidecarDecision,
     payload: Record<string, unknown>,
 ): void {
-    // eslint-disable-next-line no-console
-    console.log(
-        JSON.stringify({
-            event: 'assignment_assessor.dispatch',
-            mode: decision.mode,
-            reason: decision.reason,
-            bucket: decision.bucket,
-            ...payload,
-        }),
-    );
+    logger.info('assignment_assessor.dispatch', 'assignment_assessor.dispatch', {
+        mode: decision.mode,
+        reason: decision.reason,
+        bucket: decision.bucket,
+        ...payload,
+    });
 }
 
 // ─── Public dispatcher ────────────────────────────────────────────────────

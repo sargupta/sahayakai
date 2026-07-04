@@ -76,6 +76,16 @@ service cloud.firestore {
       // On create, forbid a user seeding themselves with privileged values.
       allow create: if isOwner(userId)
                     && !request.resource.data.keys().hasAny(protectedUserFields());
+
+      // --- Blocks (moderation v1) ---
+      // A user's block list is private to them: owner-only read/write.
+      // Enforcement (DM rejection, feed filtering) happens server-side via
+      // the Admin SDK — these rules only guarantee nobody else can read or
+      // tamper with the list (a blocked user must never learn they were
+      // blocked).
+      match /blocks/{blockedUid} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     // --- Content ---
@@ -159,6 +169,27 @@ service cloud.firestore {
             || request.auth.uid == resource.data.toUid);
 
       allow update: if false;
+    }
+
+    // --- Reports (moderation v1) ---
+    // Create-only for authenticated users; the reporter identity must match
+    // the caller and the doc must land in 'open' state with a known reason.
+    // NO client read path — admins review reports via the Admin SDK only
+    // (reports contain reporter identity + free text about other users).
+    // The primary write path is POST /api/moderation/report (Admin SDK,
+    // rate-limited); this rule keeps a direct client create equally strict.
+    match /reports/{reportId} {
+      allow create: if isSignedIn()
+        && request.resource.data.reporterId == request.auth.uid
+        && request.resource.data.status == 'open'
+        && request.resource.data.targetType in ['message', 'post', 'profile', 'resource']
+        && request.resource.data.reason in ['harassment', 'inappropriate', 'spam', 'other']
+        && request.resource.data.targetId is string
+        && request.resource.data.targetId.size() <= 256
+        && (!('freeText' in request.resource.data)
+            || (request.resource.data.freeText is string
+                && request.resource.data.freeText.size() <= 500));
+      allow read, update, delete: if false;
     }
 
     // --- Connections (accepted, symmetric) ---
@@ -280,6 +311,24 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // --- Payments Ledger (H21) ---
+    // payments_ledger/{paymentId}: paymentId-keyed idempotency + amount-
+    // binding audit ledger. Created TRANSACTIONALLY with each plan grant
+    // (Razorpay webhook + org-creation paths) via the Admin SDK only.
+    // If a client could create/delete these docs it could pre-block or
+    // unblock payment ids — deny everything.
+    match /payments_ledger/{paymentId} {
+      allow read, write: if false;
+    }
+
+    // --- Per-user daily usage counters ---
+    // daily_user_usage/{uid_date}: cost-cap + daily feature-quota counters
+    // (usage-tracker.ts). Written server-side only; a client that could
+    // write these could zero out its own quota.
+    match /daily_user_usage/{docId} {
+      allow read, write: if false;
+    }
+
     // --- Config: Plans ---
     // Feature limits per plan. Readable by any authenticated user.
     // Written only via Admin SDK or Firebase console.
@@ -369,6 +418,29 @@ service cloud.firestore {
     // only.
     match /agent_auto_abort_seen/{incidentId} {
       allow read, write: if false;
+    }
+
+    // =============================================
+    // PRESENCE + TYPING (migrated off RTDB → Firestore/Mumbai, 2026-07-04)
+    // Ephemeral, non-personal session state. See use-presence.ts /
+    // use-typing-indicator.ts and MUMBAI_REGION_MIGRATION_RUNBOOK.md §6.
+    // TTL policies on `expireAt` (deploy separately) reap idle docs.
+    // =============================================
+    match /presence/{uid} {
+      // Any signed-in user may see who is online (contacts/conversations).
+      allow read: if isSignedIn();
+      // Only the owner writes their own presence.
+      allow write: if isOwner(uid);
+    }
+
+    match /typing_status/{conversationId} {
+      allow read: if isSignedIn();
+      // A caller may only add/refresh their OWN uid key (plus the expireAt
+      // housekeeping field) — never assert that someone else is typing.
+      allow write: if isSignedIn()
+        && request.resource.data.diff(
+             resource == null ? {} : resource.data
+           ).affectedKeys().hasOnly([request.auth.uid, 'expireAt']);
     }
 
     // =============================================

@@ -9,6 +9,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
+import { INJECTION_GUARD, neutralizeUserInput } from '@/ai/prompt-hardening';
 import { findBlueprint } from '@/ai/data/board-blueprints';
 import type { PYQQuestion, PYQRetrievalOptions } from '@/lib/services/pyq-retrieval-service';
 import { validateChapterForFlow, type ValidationWarning } from '@/lib/ncert/validate-chapter';
@@ -184,6 +185,7 @@ const examPaperGeneratorPrompt = ai.definePrompt({
   input: { schema: ExamPaperInputSchema.extend({ blueprintConstraint: z.string(), pyqContext: z.string() }) },
   output: { schema: ExamPaperOutputSchema },
   prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
+${INJECTION_GUARD}
 {{#if teacherContext}}{{{teacherContext}}}{{/if}}
 
 You are an expert exam paper setter for Indian board examinations. Generate a complete, print-ready exam paper that STRICTLY follows the official blueprint provided below.
@@ -194,7 +196,7 @@ You are an expert exam paper setter for Indian board examinations. Generate a co
 - **Board**: {{board}}
 - **Grade**: {{gradeLevel}}
 - **Subject**: {{subject}}
-- **Chapters to cover**: {{#each chapters}}{{this}}, {{/each}}
+- **Chapters to cover**: <user_input field="chapters">{{#each chapters}}{{this}}, {{/each}}</user_input>
 - **Difficulty**: {{difficulty}}
 - **Language**: {{language}}
 - **Include Answer Key**: {{includeAnswerKey}}
@@ -447,7 +449,12 @@ const examPaperGeneratorFlow = ai.defineFlow(
 
       const { output } = await runResiliently(async (resilienceConfig) => {
         return await examPaperGeneratorPrompt(
-          { ...input, blueprintConstraint, pyqContext },
+          {
+            ...input,
+            chapters: input.chapters.map((c) => neutralizeUserInput(c)),
+            blueprintConstraint,
+            pyqContext,
+          },
           resilienceConfig
         );
       }, 'examPaper.generate');

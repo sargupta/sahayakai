@@ -5,7 +5,7 @@ import { Share2, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
-import { shareLatestContentAction } from "@/app/actions/community";
+import { shareLatestContentAction } from "@/lib/api/community";
 import { useLanguage } from "@/context/language-context";
 import type { ContentType } from "@/types";
 

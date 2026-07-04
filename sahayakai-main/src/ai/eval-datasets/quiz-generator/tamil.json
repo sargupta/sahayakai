@@ -1,0 +1,41 @@
+[
+  {
+    "label": "Class 5 Science — Water Cycle and Water Conservation in Tamil, easy",
+    "input": {
+      "topic": "Water Cycle and Water Conservation",
+      "numQuestions": 5,
+      "gradeLevel": "Class 5",
+      "language": "Tamil",
+      "questionTypes": ["true_false", "fill_in_the_blanks"],
+      "subject": "Science",
+      "targetDifficulty": "easy",
+      "userId": ""
+    }
+  },
+  {
+    "label": "Class 9 Mathematics — Triangles and Their Properties in Tamil, medium",
+    "input": {
+      "topic": "Triangles and Their Properties",
+      "numQuestions": 6,
+      "gradeLevel": "Class 9",
+      "language": "Tamil",
+      "questionTypes": ["multiple_choice", "true_false"],
+      "subject": "Mathematics",
+      "targetDifficulty": "medium",
+      "userId": ""
+    }
+  },
+  {
+    "label": "Class 9 Science — Motion and Laws of Motion in Tamil, hard",
+    "input": {
+      "topic": "Motion and Laws of Motion",
+      "numQuestions": 8,
+      "gradeLevel": "Class 9",
+      "language": "Tamil",
+      "questionTypes": ["multiple_choice", "short_answer"],
+      "subject": "Science",
+      "targetDifficulty": "hard",
+      "userId": ""
+    }
+  }
+]

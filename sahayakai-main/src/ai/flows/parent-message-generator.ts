@@ -8,6 +8,7 @@
 import { ai, runResiliently } from '@/ai/genkit';
 import { z } from 'genkit';
 import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
+import { INJECTION_GUARD, neutralizeUserInput } from '@/ai/prompt-hardening';
 import type { OutreachReason } from '@/types/attendance';
 import { normalizeLanguage } from '@/ai/lib/normalize-language';
 
@@ -95,6 +96,7 @@ const parentMessagePrompt = ai.definePrompt({
     input:  { schema: ParentMessageInputSchema },
     output: { schema: ParentMessageOutputSchema },
     prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
+${INJECTION_GUARD}
 
 You are a caring and professional school teacher writing a message to a student's parent/guardian. Your tone must be empathetic, respectful, and solution-focused — never threatening or judgmental.
 
@@ -108,7 +110,7 @@ You are a caring and professional school teacher writing a message to a student'
 - Days absent consecutively: {{consecutiveAbsentDays}}
 {{/if}}
 {{#if teacherNote}}
-- Teacher's note: {{teacherNote}}
+- Teacher's note: <user_input field="teacher_note">{{teacherNote}}</user_input>
 {{/if}}
 {{#if performanceSummary}}
 - Recent academic results: {{performanceSummary}}
@@ -153,7 +155,11 @@ const parentMessageFlow = ai.defineFlow(
         // (service-account OAuth), which generativelanguage.googleapis.com rejects
         // with 401 ACCESS_TOKEN_TYPE_UNSUPPORTED — breaking every parent message.
         const result = await runResiliently(
-            (overrideConfig) => parentMessagePrompt(input, overrideConfig),
+            (overrideConfig) =>
+                parentMessagePrompt(
+                    { ...input, teacherNote: input.teacherNote && neutralizeUserInput(input.teacherNote) },
+                    overrideConfig,
+                ),
             'parentMessage.generate',
         );
         const output = result.output;

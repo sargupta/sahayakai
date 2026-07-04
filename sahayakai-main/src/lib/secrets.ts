@@ -1,5 +1,6 @@
 
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
+import { logger } from '@/lib/logger';
 
 let secretManager: SecretManagerServiceClient | null = null;
 const secretCache: Record<string, string> = {};
@@ -19,7 +20,7 @@ export async function getSecret(secretName: string): Promise<string> {
     const isPlaceholder = (val: string | undefined) => !val || val.startsWith('secrets/');
 
     if (!isPlaceholder(envValue)) {
-        console.log(`[Secrets] Using local environment value for ${secretName}`);
+        logger.info(`Using local environment value for ${secretName}`, 'secrets', { secretName });
         secretCache[secretName] = envValue!;
         return envValue!;
     }
@@ -33,7 +34,7 @@ export async function getSecret(secretName: string): Promise<string> {
         const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'sahayakai-b4248';
         const name = `projects/${projectId}/secrets/${secretName}/versions/latest`;
 
-        console.log(`[Secrets] Fetching ${secretName} from Secret Manager...`);
+        logger.info(`Fetching ${secretName} from Secret Manager...`, 'secrets', { secretName });
         const [version] = await secretManager.accessSecretVersion({ name });
 
         const payload = version.payload?.data?.toString();

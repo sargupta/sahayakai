@@ -61,7 +61,7 @@ jest.mock('@/lib/profile-utils', () => ({
     isNewUser: jest.fn(() => false),
 }));
 
-jest.mock('@/app/actions/profile', () => ({
+jest.mock('@/lib/api/profile', () => ({
     updateProfileAction: jest.fn(),
 }));
 
@@ -81,6 +81,12 @@ jest.mock('@/components/onboarding/feature-spotlight', () => ({
 
 jest.mock('@/components/usage-display', () => ({
     UsageDisplay: () => null,
+}));
+
+// PlanBadge (billing plan tier in sidebar) uses useSubscription → useAuth,
+// which requires an AuthProvider. Out of scope for the notification badge.
+jest.mock('@/components/plan-badge', () => ({
+    PlanBadge: () => null,
 }));
 
 // next/link → plain anchor

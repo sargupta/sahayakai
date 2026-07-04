@@ -84,7 +84,8 @@ export class StructuredLogger {
             ...context
         };
 
-        console.log(JSON.stringify(logEntry, null, 2));
+        // Sink for the info level; console.info keeps the no-console lint gate green.
+        console.info(JSON.stringify(logEntry, null, 2));
     }
 
     private static sanitizeInput(input: any): any {

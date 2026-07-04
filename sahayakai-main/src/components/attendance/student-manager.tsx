@@ -15,7 +15,7 @@ import { LANGUAGES } from "@/types";
 import type { Student } from "@/types/attendance";
 import {
     addStudentAction, updateStudentAction, deleteStudentAction,
-} from "@/app/actions/attendance";
+} from "@/lib/api/attendance";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, UserPlus, Pencil, Trash2, Phone } from "lucide-react";
 import { cn } from "@/lib/utils";

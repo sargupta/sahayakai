@@ -1,5 +1,6 @@
 import { ai } from '@/ai/genkit';
 import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
+import { INJECTION_GUARD, neutralizeUserInput } from '@/ai/prompt-hardening';
 
 import {
     VideoStorytellerInputSchema,
@@ -724,6 +725,7 @@ const videoStorytellerPrompt = ai.definePrompt({
     input: { schema: VideoStorytellerInputSchema },
     output: { schema: VideoStorytellerOutputSchema, format: 'json' },
     prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
+${INJECTION_GUARD}
 
 You are SahayakAI, a dedicated mentor for Indian PRIMARY and SECONDARY school teachers (Classes 1-12).
 Generate highly personalized YouTube search queries for SCHOOL TEACHERS — NOT college professors, NOT students.
@@ -731,7 +733,7 @@ Generate highly personalized YouTube search queries for SCHOOL TEACHERS — NOT 
 **Teacher Profile:**
 - **Subject:** {{{subject}}}
 - **Grade Level:** {{{gradeLevel}}}
-- **Topic Context:** {{{topic}}}
+- **Topic Context:** <user_input field="topic">{{{topic}}}</user_input>
 - **Language Preference:** {{{language}}}
 
 **Instructions for Query Generation:**
@@ -772,7 +774,10 @@ const videoStorytellerFlow = ai.defineFlow(
             });
 
             const { output } = await runResiliently(async (resilienceConfig) => {
-                return await videoStorytellerPrompt(input, resilienceConfig);
+                return await videoStorytellerPrompt(
+                    { ...input, topic: input.topic && neutralizeUserInput(input.topic) },
+                    resilienceConfig
+                );
             }, 'videoStoryteller.generate');
 
             if (!output) {

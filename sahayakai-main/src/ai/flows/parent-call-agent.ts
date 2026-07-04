@@ -8,6 +8,7 @@
 
 import { ai, runResiliently } from '@/ai/genkit';
 import { z } from 'genkit';
+import { INJECTION_GUARD, neutralizeUserInput } from '@/ai/prompt-hardening';
 import { assertAllRules, BehaviouralGuardError } from '@/lib/parent-call-guard';
 
 /**
@@ -104,22 +105,25 @@ const agentReplyPrompt = ai.definePrompt({
     input: { schema: AgentReplyInputSchema },
     output: { schema: AgentReplyOutputSchema },
     prompt: `You are a warm, caring school representative making a phone call to a parent about their child. You are NOT a robot — you are having a real conversation.
+${INJECTION_GUARD}
 
 **Context:**
 - Student: {{studentName}}, Class: {{className}}, Subject: {{subject}}
-- Reason for call: {{reason}}
-- Teacher's original message: {{teacherMessage}}
+- Reason for call: <user_input field="reason">{{reason}}</user_input>
+- Teacher's original message: <user_input field="teacher_message">{{teacherMessage}}</user_input>
 {{#if teacherName}}- Teacher: {{teacherName}}{{/if}}
 {{#if schoolName}}- School: {{schoolName}}{{/if}}
 {{#if performanceSummary}}- Recent academic scores (quote ONLY if parent asks about marks/performance): {{performanceSummary}}{{/if}}
 - Parent's language: {{parentLanguage}}
 
 **Conversation so far:**
+<user_input field="transcript">
 {{#each transcript}}
 {{role}}: {{text}}
 {{/each}}
+</user_input>
 
-**Parent just said:** "{{parentSpeech}}"
+**Parent just said:** <user_input field="parent_speech">{{parentSpeech}}</user_input>
 
 **Turn number:** {{turnNumber}} of maximum 6
 
@@ -144,7 +148,20 @@ export async function generateAgentReply(input: AgentReplyInput): Promise<AgentR
     const result = await withTimeout(
         'parentCall.agentReply',
         REPLY_TIMEOUT_MS,
-        runResiliently((cfg) => agentReplyPrompt(input, cfg), 'parentCall.agentReply'),
+        runResiliently(
+            (cfg) =>
+                agentReplyPrompt(
+                    {
+                        ...input,
+                        reason: neutralizeUserInput(input.reason),
+                        teacherMessage: neutralizeUserInput(input.teacherMessage),
+                        parentSpeech: neutralizeUserInput(input.parentSpeech),
+                        transcript: input.transcript.map((t) => ({ ...t, text: neutralizeUserInput(t.text) })),
+                    },
+                    cfg,
+                ),
+            'parentCall.agentReply',
+        ),
     );
     const output = result.output;
 
@@ -254,20 +271,23 @@ const callSummaryPrompt = ai.definePrompt({
     input: { schema: CallSummaryPromptSchema },
     output: { schema: CallSummaryOutputSchema },
     prompt: `You are analyzing a completed phone call between a school AI agent and a parent. Generate a structured summary for the teacher's records.
+${INJECTION_GUARD}
 
 **Call Context:**
 - Student: {{studentName}}, Class: {{className}}, Subject: {{subject}}
-- Reason: {{reason}}
-- Teacher's original message: {{teacherMessage}}
+- Reason: <user_input field="reason">{{reason}}</user_input>
+- Teacher's original message: <user_input field="teacher_message">{{teacherMessage}}</user_input>
 {{#if teacherName}}- Teacher: {{teacherName}}{{/if}}
 {{#if schoolName}}- School: {{schoolName}}{{/if}}
 - Parent's language: {{parentLanguage}}
 {{#if callDurationSeconds}}- Call duration: {{callDurationSeconds}} seconds{{/if}}
 
 **Full Transcript:**
+<user_input field="transcript">
 {{#each transcript}}
 [{{role}}]: {{text}}
 {{/each}}
+</user_input>
 
 **Instructions:**
 1. Write ALL summary text fields (parentResponse, parentConcerns, parentCommitments, actionItemsForTeacher, guidanceGiven, followUpSuggestion) in {{summaryLanguageNative}} — this summary is read by the teacher in their own UI language. NATIVE-SCRIPT MANDATE: write entirely in the native script of {{summaryLanguageNative}}. Never transliterate into Latin. Never let another script bleed in. Keep proper nouns, numbers, and any {placeholders} intact. (The enum fields parentSentiment and callQuality keep their fixed English keyword values.)
@@ -293,7 +313,17 @@ export async function generateCallSummary(input: CallSummaryInput): Promise<Call
         'parentCall.summary',
         SUMMARY_TIMEOUT_MS,
         runResiliently(
-            (cfg) => callSummaryPrompt({ ...input, summaryLanguageNative }, cfg),
+            (cfg) =>
+                callSummaryPrompt(
+                    {
+                        ...input,
+                        reason: neutralizeUserInput(input.reason),
+                        teacherMessage: neutralizeUserInput(input.teacherMessage),
+                        transcript: input.transcript.map((t) => ({ ...t, text: neutralizeUserInput(t.text) })),
+                        summaryLanguageNative,
+                    },
+                    cfg,
+                ),
             'parentCall.summary',
         ),
     );

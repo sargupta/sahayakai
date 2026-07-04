@@ -7,7 +7,7 @@ import { useAuth } from '@/context/auth-context';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { getProfileData, updateProfileAction } from '@/app/actions/profile';
+import { getProfileData, updateProfileAction } from '@/lib/api/profile';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/context/language-context';
 

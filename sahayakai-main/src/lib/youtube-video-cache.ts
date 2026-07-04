@@ -12,6 +12,7 @@
 import { getDb } from './firebase-admin';
 import { YouTubeVideo } from './youtube';
 import { createHash } from 'crypto';
+import { logger } from '@/lib/logger';
 
 const CACHE_COLLECTION = 'video_cache';
 const CACHE_TTL_HOURS = 6;
@@ -91,7 +92,7 @@ export async function getCachedVideos(
         // Increment hit count (fire-and-forget)
         void doc.ref.update({ hitCount: (entry.hitCount || 0) + 1 });
 
-        console.log(`[VideoCache] ✅ Cache hit for ${subject} / ${gradeLevel} (key: ${key})`);
+        logger.info(`Cache hit for ${subject} / ${gradeLevel}`, 'VideoCache', { subject, gradeLevel, key });
         return entry;
     } catch (error) {
         // Cache read failure must never crash the main flow
@@ -135,7 +136,7 @@ export async function setCachedVideos(
         };
 
         await db.collection(CACHE_COLLECTION).doc(key).set(entry);
-        console.log(`[VideoCache] 💾 Stored cache for ${subject} / ${gradeLevel} (expires in ${CACHE_TTL_HOURS}hrs)`);
+        logger.info(`Stored cache for ${subject} / ${gradeLevel} (expires in ${CACHE_TTL_HOURS}hrs)`, 'VideoCache', { subject, gradeLevel, ttlHours: CACHE_TTL_HOURS });
     } catch (error) {
         // Cache write failure must never crash the main flow
         console.error('[VideoCache] Write error (non-fatal):', error);
