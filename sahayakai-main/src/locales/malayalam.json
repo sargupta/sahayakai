@@ -495,8 +495,6 @@
  "App performance (load times, errors)": "ആപ്പ് പ്രകടനം (ലോഡ് സമയങ്ങൾ, പിശകുകൾ)",
  "Your engagement patterns": "നിങ്ങളുടെ ഇടപഴകൽ പാറ്റേണുകൾ",
  "Privacy Promise:": "സ്വകാര്യതാ വാഗ്ദാനം:",
- "Your data is stored securely on Google Cloud servers in Singapore (Asia region)": "നിങ്ങളുടെ ഡാറ്റ Google Cloud സെർവറുകളിൽ സിംഗപ്പൂരിൽ (ഏഷ്യ മേഖല) സുരക്ഷിതമായി സംഭരിക്കുന്നു",
- "Your data is processed outside India; by continuing you consent to this cross-border transfer": "നിങ്ങളുടെ ഡാറ്റ ഇന്ത്യയ്ക്ക് പുറത്ത് പ്രോസസ് ചെയ്യുന്നു; തുടരുന്നതിലൂടെ ഈ അതിർത്തി കടന്നുള്ള കൈമാറ്റത്തിന് നിങ്ങൾ സമ്മതിക്കുന്നു",
  "We'll keep data for 1 year, then delete it": "ഞങ്ങൾ ഡാറ്റ 1 വർഷം സൂക്ഷിക്കും, അതിനുശേഷം അത് ഇല്ലാതാക്കും",
  "You can see your own analytics anytime": "നിങ്ങൾക്ക് എപ്പോൾ വേണമെങ്കിലും നിങ്ങളുടെ സ്വന്തം അനലിറ്റിക്സ് കാണാം",
  "You can revoke consent anytime in settings": "നിങ്ങൾക്ക് എപ്പോൾ വേണമെങ്കിലും ക്രമീകരണങ്ങളിൽ സമ്മതം പിൻവലിക്കാം",
@@ -1471,5 +1469,7 @@
  "Use knowledge to solve problems in new situations.": "പുതിയ സാഹചര്യങ്ങളിൽ പ്രശ്നങ്ങൾ പരിഹരിക്കാൻ അറിവ് ഉപയോഗിക്കുക.",
  "Break information into parts and find connections.": "വിവരങ്ങൾ ഭാഗങ്ങളാക്കി ബന്ധങ്ങൾ കണ്ടെത്തുക.",
  "Justify a decision or judge the value of ideas.": "തീരുമാനത്തെ ന്യായീകരിക്കുക അല്ലെങ്കിൽ ആശയങ്ങളുടെ മൂല്യം വിലയിരുത്തുക.",
- "Combine ideas to produce original work or solutions.": "മൗലിക സൃഷ്ടിയോ പരിഹാരമോ ഉണ്ടാക്കാൻ ആശയങ്ങൾ സംയോജിപ്പിക്കുക."
+ "Combine ideas to produce original work or solutions.": "മൗലിക സൃഷ്ടിയോ പരിഹാരമോ ഉണ്ടാക്കാൻ ആശയങ്ങൾ സംയോജിപ്പിക്കുക.",
+ "Your data is stored securely on Google Cloud servers in India (Mumbai region)": "നിങ്ങളുടെ ഡാറ്റ ഇന്ത്യയിൽ (മുംബൈ മേഖല) Google Cloud സെർവറുകളിൽ സുരക്ഷിതമായി സംഭരിക്കുന്നു",
+ "Only transient online-status signals are processed in Singapore; your content and records remain in India": "താൽക്കാലിക ഓൺലൈൻ-സ്റ്റാറ്റസ് സിഗ്നലുകൾ മാത്രമേ സിംഗപ്പൂരിൽ പ്രോസസ്സ് ചെയ്യുന്നുള്ളൂ; നിങ്ങളുടെ ഉള്ളടക്കവും രേഖകളും ഇന്ത്യയിൽ തന്നെ തുടരും"
 }

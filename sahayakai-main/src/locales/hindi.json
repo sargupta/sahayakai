@@ -521,8 +521,6 @@
  "App performance (load times, errors)": "ऐप प्रदर्शन (लोड समय, त्रुटियाँ)",
  "Your engagement patterns": "आपके जुड़ाव के पैटर्न",
  "Privacy Promise:": "गोपनीयता का वादा:",
- "Your data is stored securely on Google Cloud servers in Singapore (Asia region)": "आपका डेटा Google Cloud सर्वर पर सिंगापुर (एशिया क्षेत्र) में सुरक्षित रूप से संग्रहीत होता है",
- "Your data is processed outside India; by continuing you consent to this cross-border transfer": "आपका डेटा भारत के बाहर संसाधित होता है; जारी रखकर आप इस सीमा-पार स्थानांतरण के लिए सहमति देते हैं",
  "We'll keep data for 1 year, then delete it": "हम डेटा को 1 वर्ष तक रखेंगे, फिर हटा देंगे",
  "You can see your own analytics anytime": "आप अपना एनालिटिक्स कभी भी देख सकते हैं",
  "You can revoke consent anytime in settings": "आप सेटिंग्स में कभी भी सहमति वापस ले सकते हैं",
@@ -1497,5 +1495,7 @@
  "Use knowledge to solve problems in new situations.": "नई परिस्थितियों में समस्याएँ हल करने के लिए ज्ञान का उपयोग।",
  "Break information into parts and find connections.": "जानकारी को भागों में बाँटकर संबंध खोजना।",
  "Justify a decision or judge the value of ideas.": "निर्णय को सही ठहराना या विचारों का मूल्यांकन करना।",
- "Combine ideas to produce original work or solutions.": "मौलिक कार्य या समाधान बनाने के लिए विचारों को जोड़ना।"
+ "Combine ideas to produce original work or solutions.": "मौलिक कार्य या समाधान बनाने के लिए विचारों को जोड़ना।",
+ "Your data is stored securely on Google Cloud servers in India (Mumbai region)": "आपका डेटा भारत (मुंबई क्षेत्र) में Google Cloud सर्वर पर सुरक्षित रूप से संग्रहीत है",
+ "Only transient online-status signals are processed in Singapore; your content and records remain in India": "केवल अस्थायी ऑनलाइन-स्थिति संकेत सिंगापुर में संसाधित होते हैं; आपकी सामग्री और रिकॉर्ड भारत में ही रहते हैं"
 }

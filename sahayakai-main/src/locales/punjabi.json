@@ -495,8 +495,6 @@
  "App performance (load times, errors)": "ਐਪ ਪ੍ਰਦਰਸ਼ਨ (ਲੋਡ ਸਮਾਂ, ਗਲਤੀਆਂ)",
  "Your engagement patterns": "ਤੁਹਾਡੇ ਜੁੜਾਅ ਦੇ ਪੈਟਰਨ",
  "Privacy Promise:": "ਗੋਪਨੀਯਤਾ ਦਾ ਵਾਅਦਾ:",
- "Your data is stored securely on Google Cloud servers in Singapore (Asia region)": "ਤੁਹਾਡਾ ਡਾਟਾ Google Cloud ਸਰਵਰਾਂ 'ਤੇ ਸਿੰਗਾਪੁਰ (ਏਸ਼ੀਆ ਖੇਤਰ) ਵਿੱਚ ਸੁਰੱਖਿਅਤ ਢੰਗ ਨਾਲ ਸਟੋਰ ਹੁੰਦਾ ਹੈ",
- "Your data is processed outside India; by continuing you consent to this cross-border transfer": "ਤੁਹਾਡਾ ਡਾਟਾ ਭਾਰਤ ਤੋਂ ਬਾਹਰ ਪ੍ਰੋਸੈੱਸ ਹੁੰਦਾ ਹੈ; ਜਾਰੀ ਰੱਖ ਕੇ ਤੁਸੀਂ ਇਸ ਸਰਹੱਦ-ਪਾਰ ਤਬਾਦਲੇ ਲਈ ਸਹਿਮਤੀ ਦਿੰਦੇ ਹੋ",
  "We'll keep data for 1 year, then delete it": "ਅਸੀਂ ਡੇਟਾ ਨੂੰ 1 ਸਾਲ ਲਈ ਰੱਖਾਂਗੇ, ਫਿਰ ਇਸਨੂੰ ਮਿਟਾ ਦੇਵਾਂਗੇ",
  "You can see your own analytics anytime": "ਤੁਸੀਂ ਕਦੇ ਵੀ ਆਪਣੇ ਖੁਦ ਦੇ ਵਿਸ਼ਲੇਸ਼ਣ ਨੂੰ ਦੇਖ ਸਕਦੇ ਹੋ",
  "You can revoke consent anytime in settings": "ਤੁਸੀਂ ਕਦੇ ਵੀ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਸਹਿਮਤੀ ਰੱਦ ਕਰ ਸਕਦੇ ਹੋ",
@@ -1471,5 +1469,7 @@
  "Use knowledge to solve problems in new situations.": "ਨਵੀਆਂ ਸਥਿਤੀਆਂ ਵਿੱਚ ਸਮੱਸਿਆਵਾਂ ਹੱਲ ਕਰਨ ਲਈ ਗਿਆਨ ਦੀ ਵਰਤੋਂ।",
  "Break information into parts and find connections.": "ਜਾਣਕਾਰੀ ਨੂੰ ਹਿੱਸਿਆਂ ਵਿੱਚ ਵੰਡ ਕੇ ਸੰਬੰਧ ਲੱਭਣਾ।",
  "Justify a decision or judge the value of ideas.": "ਫ਼ੈਸਲੇ ਨੂੰ ਸਹੀ ਠਹਿਰਾਉਣਾ ਜਾਂ ਵਿਚਾਰਾਂ ਦਾ ਮੁੱਲਾਂਕਣ ਕਰਨਾ।",
- "Combine ideas to produce original work or solutions.": "ਮੌਲਿਕ ਕੰਮ ਜਾਂ ਹੱਲ ਬਣਾਉਣ ਲਈ ਵਿਚਾਰਾਂ ਨੂੰ ਜੋੜਨਾ।"
+ "Combine ideas to produce original work or solutions.": "ਮੌਲਿਕ ਕੰਮ ਜਾਂ ਹੱਲ ਬਣਾਉਣ ਲਈ ਵਿਚਾਰਾਂ ਨੂੰ ਜੋੜਨਾ।",
+ "Your data is stored securely on Google Cloud servers in India (Mumbai region)": "ਤੁਹਾਡਾ ਡਾਟਾ ਭਾਰਤ ਵਿੱਚ (ਮੁੰਬਈ ਖੇਤਰ) Google Cloud ਸਰਵਰਾਂ 'ਤੇ ਸੁਰੱਖਿਅਤ ਢੰਗ ਨਾਲ ਸਟੋਰ ਕੀਤਾ ਜਾਂਦਾ ਹੈ",
+ "Only transient online-status signals are processed in Singapore; your content and records remain in India": "ਸਿਰਫ਼ ਅਸਥਾਈ ਆਨਲਾਈਨ-ਸਥਿਤੀ ਸੰਕੇਤ ਸਿੰਗਾਪੁਰ ਵਿੱਚ ਪ੍ਰੋਸੈਸ ਹੁੰਦੇ ਹਨ; ਤੁਹਾਡੀ ਸਮੱਗਰੀ ਅਤੇ ਰਿਕਾਰਡ ਭਾਰਤ ਵਿੱਚ ਹੀ ਰਹਿੰਦੇ ਹਨ"
 }

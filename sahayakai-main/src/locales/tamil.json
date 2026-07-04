@@ -495,8 +495,6 @@
  "App performance (load times, errors)": "ஆப் செயல்திறன் (ஏற்றுதல் நேரங்கள், பிழைகள்)",
  "Your engagement patterns": "உங்கள் ஈடுபாட்டு முறைகள்",
  "Privacy Promise:": "தனியுரிமை வாக்குறுதி:",
- "Your data is stored securely on Google Cloud servers in Singapore (Asia region)": "உங்கள் தரவு Google Cloud சேவையகங்களில் சிங்கப்பூரில் (ஆசியா பகுதி) பாதுகாப்பாக சேமிக்கப்படுகிறது",
- "Your data is processed outside India; by continuing you consent to this cross-border transfer": "உங்கள் தரவு இந்தியாவுக்கு வெளியே செயலாக்கப்படுகிறது; தொடர்வதன் மூலம் இந்த எல்லை தாண்டிய பரிமாற்றத்திற்கு நீங்கள் ஒப்புதல் அளிக்கிறீர்கள்",
  "We'll keep data for 1 year, then delete it": "நாங்கள் தரவை 1 ஆண்டுக்கு வைத்திருப்போம், பின்னர் அதை நீக்குவோம்",
  "You can see your own analytics anytime": "உங்கள் சொந்த அனலிட்டிக்ஸை எப்போது வேண்டுமானாலும் பார்க்கலாம்",
  "You can revoke consent anytime in settings": "அமைப்புகளில் எப்போது வேண்டுமானாலும் ஒப்புதலை ரத்து செய்யலாம்",
@@ -1471,5 +1469,7 @@
  "Use knowledge to solve problems in new situations.": "புதிய சூழல்களில் சிக்கல்களைத் தீர்க்க அறிவைப் பயன்படுத்துதல்.",
  "Break information into parts and find connections.": "தகவலைப் பகுதிகளாகப் பிரித்து தொடர்புகளைக் கண்டறிதல்.",
  "Justify a decision or judge the value of ideas.": "முடிவை நியாயப்படுத்துதல் அல்லது கருத்துகளின் மதிப்பை மதிப்பிடுதல்.",
- "Combine ideas to produce original work or solutions.": "புதிய படைப்பு அல்லது தீர்வுகளை உருவாக்க கருத்துகளை இணைத்தல்."
+ "Combine ideas to produce original work or solutions.": "புதிய படைப்பு அல்லது தீர்வுகளை உருவாக்க கருத்துகளை இணைத்தல்.",
+ "Your data is stored securely on Google Cloud servers in India (Mumbai region)": "உங்கள் தரவு இந்தியாவில் (மும்பை பகுதி) Google Cloud சேவையகங்களில் பாதுகாப்பாக சேமிக்கப்படுகிறது",
+ "Only transient online-status signals are processed in Singapore; your content and records remain in India": "தற்காலிக ஆன்லைன்-நிலை சமிக்ஞைகள் மட்டுமே சிங்கப்பூரில் செயலாக்கப்படுகின்றன; உங்கள் உள்ளடக்கமும் பதிவுகளும் இந்தியாவிலேயே இருக்கும்"
 }
