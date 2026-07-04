@@ -40,11 +40,12 @@ jest.mock('@/ai/flows/voice-to-text', () => ({
     scriptMatchesExpected: () => true,
 }));
 
-function makeAudioRequest(mime: string, expectedLanguage?: string, userId: string | null = 'test-uid') {
+function makeAudioRequest(mime: string, expectedLanguage?: string, userId: string | null = 'test-uid', sizeBytes?: number) {
     const bytes = new Uint8Array([1, 2, 3, 4, 5]);
     // Duck-typed File for the route — uses `.size`, `.type`, `.arrayBuffer()`.
+    // sizeBytes lets a test spoof an oversized file without allocating it.
     const file = {
-        size: bytes.byteLength,
+        size: sizeBytes ?? bytes.byteLength,
         type: mime,
         arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer,
     };
@@ -117,5 +118,14 @@ describe('POST /api/ai/voice-to-text', () => {
     it('returns 401 without x-user-id', async () => {
         const res = await POST(makeAudioRequest('audio/wav', undefined, null));
         expect(res.status).toBe(401);
+    });
+
+    it('rejects audio larger than 10 MB with 413 before any provider call', async () => {
+        // 11 MB — over the MAX_AUDIO_BYTES (10 MB) cap. STT cost scales with
+        // duration; the route must reject before touching Sarvam or Gemini.
+        const res = await POST(makeAudioRequest('audio/wav', undefined, 'test-uid', 11 * 1024 * 1024));
+        expect(res.status).toBe(413);
+        expect(mockSarvamSTT).not.toHaveBeenCalled();
+        expect(mockDispatchVoiceToText).not.toHaveBeenCalled();
     });
 });
