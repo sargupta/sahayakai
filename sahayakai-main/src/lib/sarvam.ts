@@ -47,12 +47,20 @@ export function toSarvamLangCode(bcp47: string): string | null {
 
 // ---- Internal helpers -------------------------------------------------------
 
-let _apiKeyCache: string | null = null;
+// Cache the in-flight fetch, not just the resolved string, so concurrent
+// callers (parallel TTS chunks, simultaneous TTS + STT) share ONE Secret
+// Manager round-trip instead of racing several. On failure we clear the cache
+// so a transient Secret Manager error doesn't permanently poison Sarvam.
+let _apiKeyPromise: Promise<string> | null = null;
 
-async function getApiKey(): Promise<string> {
-    if (_apiKeyCache) return _apiKeyCache;
-    _apiKeyCache = await getSecret('SARVAM_AI_API_KEY');
-    return _apiKeyCache;
+function getApiKey(): Promise<string> {
+    if (!_apiKeyPromise) {
+        _apiKeyPromise = getSecret('SARVAM_AI_API_KEY').catch((err) => {
+            _apiKeyPromise = null;
+            throw err;
+        });
+    }
+    return _apiKeyPromise;
 }
 
 async function fetchWithRetry(

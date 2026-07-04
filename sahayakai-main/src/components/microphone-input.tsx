@@ -11,27 +11,93 @@ import { useEffect, useRef, useState, type FC } from "react";
 import { useLanguage, BCP47_MAP } from "@/context/language-context";
 import { LANGUAGE_TO_ISO } from "@/types";
 
+/** Time-of-day localised mic greetings, keyed by 2-letter language code.
+ *  Every one of the app's 11 supported languages gets a dignified native
+ *  greeting so a teacher who switched to (say) Kannada never hears English
+ *  when they tap the mic. Resolved via BCP47_MAP so this is robust to the
+ *  exact display-name spelling. ttsLang drives which voice /api/tts uses
+ *  (Odia → Sarvam od-IN natively, etc.). */
+type GreetingSlot = 'morning' | 'afternoon' | 'evening';
+interface Greeting { morning: string; afternoon: string; evening: string; ttsLang: string }
+
+const MIC_GREETINGS: Record<string, Greeting> = {
+    en: {
+        morning: 'Good morning, Teacher. How can I help you today?',
+        afternoon: 'Good afternoon, Teacher. How can I help you today?',
+        evening: 'Good evening, Teacher. How can I help you today?',
+        ttsLang: 'en-IN',
+    },
+    hi: {
+        morning: 'नमस्ते शिक्षक! सुप्रभात। मैं आपकी क्या मदद कर सकता हूँ?',
+        afternoon: 'नमस्ते शिक्षक! मैं आपकी क्या मदद कर सकता हूँ?',
+        evening: 'नमस्ते शिक्षक! शुभ संध्या। मैं आपकी क्या मदद कर सकता हूँ?',
+        ttsLang: 'hi-IN',
+    },
+    bn: {
+        morning: 'নমস্কার শিক্ষক! সুপ্রভাত। আমি আপনাকে কীভাবে সাহায্য করতে পারি?',
+        afternoon: 'নমস্কার শিক্ষক! আমি আপনাকে কীভাবে সাহায্য করতে পারি?',
+        evening: 'নমস্কার শিক্ষক! শুভ সন্ধ্যা। আমি আপনাকে কীভাবে সাহায্য করতে পারি?',
+        ttsLang: 'bn-IN',
+    },
+    ta: {
+        morning: 'வணக்கம் ஆசிரியரே! காலை வணக்கம். நான் உங்களுக்கு எப்படி உதவ முடியும்?',
+        afternoon: 'வணக்கம் ஆசிரியரே! நான் உங்களுக்கு எப்படி உதவ முடியும்?',
+        evening: 'வணக்கம் ஆசிரியரே! மாலை வணக்கம். நான் உங்களுக்கு எப்படி உதவ முடியும்?',
+        ttsLang: 'ta-IN',
+    },
+    te: {
+        morning: 'నమస్కారం ఉపాధ్యాయా! శుభోదయం. నేను మీకు ఎలా సహాయం చేయగలను?',
+        afternoon: 'నమస్కారం ఉపాధ్యాయా! నేను మీకు ఎలా సహాయం చేయగలను?',
+        evening: 'నమస్కారం ఉపాధ్యాయా! శుభ సాయంత్రం. నేను మీకు ఎలా సహాయం చేయగలను?',
+        ttsLang: 'te-IN',
+    },
+    kn: {
+        morning: 'ನಮಸ್ಕಾರ ಶಿಕ್ಷಕರೇ! ಶುಭೋದಯ. ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?',
+        afternoon: 'ನಮಸ್ಕಾರ ಶಿಕ್ಷಕರೇ! ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?',
+        evening: 'ನಮಸ್ಕಾರ ಶಿಕ್ಷಕರೇ! ಶುಭ ಸಂಜೆ. ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?',
+        ttsLang: 'kn-IN',
+    },
+    ml: {
+        morning: 'നമസ്കാരം ടീച്ചർ! സുപ്രഭാതം. ഞാൻ നിങ്ങളെ എങ്ങനെ സഹായിക്കാം?',
+        afternoon: 'നമസ്കാരം ടീച്ചർ! ഞാൻ നിങ്ങളെ എങ്ങനെ സഹായിക്കാം?',
+        evening: 'നമസ്കാരം ടീച്ചർ! ശുഭ സന്ധ്യ. ഞാൻ നിങ്ങളെ എങ്ങനെ സഹായിക്കാം?',
+        ttsLang: 'ml-IN',
+    },
+    gu: {
+        morning: 'નમસ્તે શિક્ષક! સુપ્રભાત. હું તમારી કેવી રીતે મદદ કરી શકું?',
+        afternoon: 'નમસ્તે શિક્ષક! હું તમારી કેવી રીતે મદદ કરી શકું?',
+        evening: 'નમસ્તે શિક્ષક! શુભ સાંજ. હું તમારી કેવી રીતે મદદ કરી શકું?',
+        ttsLang: 'gu-IN',
+    },
+    pa: {
+        morning: 'ਸਤ ਸ੍ਰੀ ਅਕਾਲ ਅਧਿਆਪਕ ਜੀ! ਸ਼ੁਭ ਸਵੇਰ। ਮੈਂ ਤੁਹਾਡੀ ਕਿਵੇਂ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ?',
+        afternoon: 'ਸਤ ਸ੍ਰੀ ਅਕਾਲ ਅਧਿਆਪਕ ਜੀ! ਮੈਂ ਤੁਹਾਡੀ ਕਿਵੇਂ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ?',
+        evening: 'ਸਤ ਸ੍ਰੀ ਅਕਾਲ ਅਧਿਆਪਕ ਜੀ! ਸ਼ੁਭ ਸ਼ਾਮ। ਮੈਂ ਤੁਹਾਡੀ ਕਿਵੇਂ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ?',
+        ttsLang: 'pa-IN',
+    },
+    mr: {
+        morning: 'नमस्कार शिक्षक! सुप्रभात. मी तुमची कशी मदत करू शकतो?',
+        afternoon: 'नमस्कार शिक्षक! मी तुमची कशी मदत करू शकतो?',
+        evening: 'नमस्कार शिक्षक! शुभ संध्याकाळ. मी तुमची कशी मदत करू शकतो?',
+        ttsLang: 'mr-IN',
+    },
+    or: {
+        morning: 'ନମସ୍କାର ଶିକ୍ଷକ! ଶୁଭ ପ୍ରଭାତ। ମୁଁ ଆପଣଙ୍କୁ କିପରି ସାହାଯ୍ୟ କରିପାରିବି?',
+        afternoon: 'ନମସ୍କାର ଶିକ୍ଷକ! ମୁଁ ଆପଣଙ୍କୁ କିପରି ସାହାଯ୍ୟ କରିପାରିବି?',
+        evening: 'ନମସ୍କାର ଶିକ୍ଷକ! ଶୁଭ ସନ୍ଧ୍ୟା। ମୁଁ ଆପଣଙ୍କୁ କିପରି ସାହାଯ୍ୟ କରିପାରିବି?',
+        ttsLang: 'or-IN',
+    },
+};
+
 /** Localised mic greeting — spoken when the teacher first taps the mic.
- *  Keyed by the Language display name used across the app. Falls back to
- *  English for languages not explicitly listed. */
+ *  Resolves the language to a 2-letter code via BCP47_MAP (robust to display
+ *  name), then picks the time-of-day variant. Falls back to English. */
 function buildMicGreeting(lang: string): { text: string; ttsLang: string } {
     const hour = new Date().getHours();
-    switch (lang) {
-        case 'Hindi':
-            return {
-                text: hour < 12 ? 'नमस्ते शिक्षक! सुप्रभात। मैं आपकी क्या मदद कर सकता हूँ?'
-                    : hour < 17 ? 'नमस्ते शिक्षक! मैं आपकी क्या मदद कर सकता हूँ?'
-                    : 'नमस्ते शिक्षक! शुभ संध्या। मैं आपकी क्या मदद कर सकता हूँ?',
-                ttsLang: 'hi-IN',
-            };
-        default:
-            return {
-                text: hour < 12 ? 'Good morning, Teacher. How can I help you today?'
-                    : hour < 17 ? 'Good afternoon, Teacher. How can I help you today?'
-                    : 'Good evening, Teacher. How can I help you today?',
-                ttsLang: 'en-IN',
-            };
-    }
+    const slot: GreetingSlot = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
+    const iso = (BCP47_MAP[lang as keyof typeof BCP47_MAP] ?? 'en-IN').split('-')[0];
+    const g = MIC_GREETINGS[iso] ?? MIC_GREETINGS.en;
+    return { text: g[slot], ttsLang: g.ttsLang };
 }
 
 declare global {
@@ -389,6 +455,28 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
       isSpeakingRef.current = false;
       silenceStartTimeRef.current = null;
       speechStartTimeRef.current = null;
+
+      // Proactive permission check: if the browser already knows the mic is
+      // blocked, surface actionable guidance immediately. Otherwise a denied
+      // getUserMedia rejects silently and the tap looks like it did nothing —
+      // the teacher has no idea they need to re-enable it in site settings.
+      // Wrapped in try/catch because the Permissions API 'microphone' name is
+      // not supported everywhere (older Firefox/Safari); unsupported → fall
+      // through to getUserMedia which prompts or rejects as before.
+      try {
+        const perm = await navigator.permissions?.query?.({ name: 'microphone' as PermissionName });
+        if (perm?.state === 'denied') {
+          toast({
+            title: t("Microphone Access Denied"),
+            description: t("Please allow microphone access in your browser settings."),
+            variant: "destructive",
+          });
+          forceReset();
+          return;
+        }
+      } catch {
+        // Permissions API unavailable or 'microphone' name unsupported — proceed.
+      }
 
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
