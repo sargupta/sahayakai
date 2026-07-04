@@ -293,6 +293,12 @@ The app is **serverless Cloud Run + client-SDK-direct** (browsers connect straig
 | **Bigtable** | ❌ | High write throughput but server-mediated, cost floor | persistent | Overkill |
 | **Memorystore Memcached** | ❌ | No pub/sub / TTL-fanout | floor | Worse than Redis |
 
+> **PHASE C1 IMPLEMENTED (2026-07-04, code):** presence + typing moved off RTDB (Singapore) → Firestore (Mumbai). RTDB is now unused by the app; `getDatabase`/`rtdb` removed from `src/lib/firebase.ts`, RTDB `connect-src` removed from `middleware.ts` CSP.
+> - **Presence** (`use-presence.ts` + `presence-dot.tsx`): heartbeat model — `presence/{uid}` = `{ online, lastSeen, expireAt }`, refreshed every 30 s while the tab is visible; the reader shows "online" only if `online===true` AND `lastSeen` is within 45 s, recovering onDisconnect UX (crashed tab → grey within 45 s). Writes only while visible.
+> - **Typing** (`use-typing-indicator.ts`): one `typing_status/{conversationId}` doc = `{ [uid]: expiryTimestamp }`, debounced to ≤1 write / 2 s; a user is "typing" while their expiry is in the future.
+> - **Rules:** added for `presence/{uid}` (owner-write, signed-in read) and `typing_status/{conversationId}` (a caller may only affect its own uid key + `expireAt`).
+> - **Founder activation:** (1) `firebase deploy --only firestore:rules`; (2) create Firestore **TTL policies** on `presence.expireAt` and `typing_status.expireAt` (console → Firestore → TTL, or `gcloud firestore fields ttls update expireAt --collection-group=presence` and `…=typing_status`) so idle docs self-reap; (3) after soak, the RTDB instance `sahayakai-b4248-default-rtdb` can be deleted. **Cost:** validate presence-write volume at real concurrency before a large rollout.
+
 ### 6.3 Recommended path — C1: fold presence/typing into Firestore (Mumbai)
 Zero new infra, already GCP-native, already in India, rules + listeners already present. Touch `src/hooks/use-presence.ts`, `src/hooks/use-typing-indicator.ts`, `src/components/messages/presence-dot.tsx`, and remove the `rtdb` export in `src/lib/firebase.ts:54`. Engineer around the two real downsides:
 - **No `onDisconnect`** → make presence a **heartbeat**: client writes `lastSeen` every ~20s; "online" = `lastSeen` within 30s; a **Firestore TTL policy** auto-purges stale presence docs.

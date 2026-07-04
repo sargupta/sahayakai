@@ -461,8 +461,9 @@ export async function middleware(request: NextRequest) {
             `https://generativelanguage.googleapis.com`, // Gemini (client-side flows)
             `https://texttospeech.googleapis.com`,       // Google TTS
             `https://firebase.googleapis.com`,           // Firebase installations
-            `https://*.firebaseio.com`,                  // RTDB (presence/typing)
-            `https://*.firebasedatabase.app`,            // RTDB (regional URL)
+            // RTDB connect-src removed 2026-07-04 — presence/typing moved to
+            // Firestore (Mumbai). Firestore uses firestore.googleapis.com,
+            // already covered by the *.googleapis.com allowances above.
             `https://*.google-analytics.com`,            // GA4 beacons
             `https://www.googletagmanager.com`,          // GTM
             `https://www.google.com`,                    // reCAPTCHA verification

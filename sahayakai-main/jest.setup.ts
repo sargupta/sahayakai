@@ -254,27 +254,21 @@ jest.mock('@/lib/firebase-admin', () => ({
     getStorageInstance: jest.fn(async () => ({ bucket: jest.fn() })),
 }));
 
-// `firebase/database` is used by the presence-dot component and the typing
-// indicator. Tests that don't mock it explicitly get a no-op so `ref()`,
-// `onValue()`, `remove()`, etc. never crash.
-jest.mock('firebase/database', () => ({
-    getDatabase: jest.fn(() => ({})),
-    ref: jest.fn(() => ({})),
-    onValue: jest.fn(() => jest.fn()),
-    off: jest.fn(),
-    set: jest.fn(async () => undefined),
-    update: jest.fn(async () => undefined),
-    remove: jest.fn(async () => undefined),
-    push: jest.fn(() => ({ key: 'mock-key' })),
-    child: jest.fn(() => ({})),
-    get: jest.fn(async () => ({ exists: () => false, val: () => null })),
-    onDisconnect: jest.fn(() => ({
-        set: jest.fn(async () => undefined),
-        update: jest.fn(async () => undefined),
-        remove: jest.fn(async () => undefined),
-        cancel: jest.fn(async () => undefined),
-    })),
-    serverTimestamp: jest.fn(() => ({ '.sv': 'timestamp' })),
+// Presence + typing moved off RTDB to Firestore (Mumbai) on 2026-07-04. They
+// are realtime client-only UI (presence dot, typing text); tests that render
+// conversations don't exercise them, so no-op the modules globally — the same
+// role the old `firebase/database` global mock played. A dedicated test can
+// override these mocks locally.
+jest.mock('@/hooks/use-presence', () => ({
+    usePresence: jest.fn(),
+    PRESENCE_HEARTBEAT_MS: 30000,
+    PRESENCE_STALE_MS: 45000,
+}));
+jest.mock('@/hooks/use-typing-indicator', () => ({
+    useTypingIndicator: () => ({ isOtherTyping: false, otherTypingName: undefined, setTyping: jest.fn() }),
+}));
+jest.mock('@/components/messages/presence-dot', () => ({
+    PresenceDot: () => null,
 }));
 
 // `@/context/language-context`: components have grown `useLanguage()` calls.
