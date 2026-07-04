@@ -40,6 +40,19 @@ import { GeneratorPage, GeneratorSubmitBar } from "@/features/generator";
 import { questionTypesData } from "../types";
 import { useQuizGenerator } from "../hooks/use-quiz-generator";
 
+
+// Bloom's taxonomy level hints. Keys are English sentences (the app i18n
+// convention; translations in src/locales/*.json). Previously translated
+// `Bloom-hint-${level}` — keys in no locale, so the raw key leaked to the UI.
+const BLOOM_HINTS: Record<string, string> = {
+    Remember: "Recall facts, terms, and basic concepts.",
+    Understand: "Explain ideas or concepts in their own words.",
+    Apply: "Use knowledge to solve problems in new situations.",
+    Analyze: "Break information into parts and find connections.",
+    Evaluate: "Justify a decision or judge the value of ideas.",
+    Create: "Combine ideas to produce original work or solutions.",
+};
+
 type QuizGeneratorViewProps = ReturnType<typeof useQuizGenerator>;
 
 export function QuizGeneratorView({
@@ -242,37 +255,6 @@ export function QuizGeneratorView({
 
                                 <FormField
                                     control={form.control}
-                                    name="questionTypes"
-                                    render={({ field }) => (
-                                        <FormItem className="space-y-3">
-                                            <FormLabel className="text-xs font-semibold text-muted-foreground">{translate("Question Types")}</FormLabel>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                {["multiple_choice", "short_answer", "fill_in_the_blanks", "true_false"].map((type) => (
-                                                    <div key={type} className="flex items-center space-x-2 bg-muted/20 p-2 rounded border border-border/50">
-                                                        <CheckboxUI
-                                                            id={type}
-                                                            checked={field.value?.includes(type as any)}
-                                                            onCheckedChange={(checked) => {
-                                                                if (checked) {
-                                                                    field.onChange([...(field.value || []), type]);
-                                                                } else {
-                                                                    field.onChange(field.value?.filter((val: string) => val !== type));
-                                                                }
-                                                            }}
-                                                        />
-                                                        <label htmlFor={type} className="text-xs text-foreground cursor-pointer">
-                                                            {translate(type === "multiple_choice" ? "Multiple Choice" : type === "true_false" ? "True/False" : type === "fill_in_the_blanks" ? "Fill in the Blanks" : type === "short_answer" ? "Short Answer" : type)}
-                                                        </label>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <FormField
-                                    control={form.control}
                                     name="bloomsTaxonomyLevels"
                                     render={({ field }) => (
                                         <FormItem className="space-y-3">
@@ -297,7 +279,7 @@ export function QuizGeneratorView({
                                                                 </Badge>
                                                             </TooltipTrigger>
                                                             <TooltipContent className="bg-popover text-popover-foreground border-border">
-                                                                <p className="text-xs">{translate(`Bloom-hint-${level}`)}</p>
+                                                                <p className="text-xs">{translate(BLOOM_HINTS[level] ?? level)}</p>
                                                             </TooltipContent>
                                                         </Tooltip>
                                                     ))}
@@ -316,7 +298,7 @@ export function QuizGeneratorView({
                                                                 <div className="mt-1 w-1 h-1 rounded-full bg-primary shrink-0" />
                                                                 <span>
                                                                     <span className="font-bold text-foreground">{translate(level)}:</span>{" "}
-                                                                    {translate(`Bloom-hint-${level}`)}
+                                                                    {translate(BLOOM_HINTS[level] ?? level)}
                                                                 </span>
                                                             </div>
                                                         ))}
