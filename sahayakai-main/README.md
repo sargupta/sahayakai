@@ -1,22 +1,24 @@
 # SahayakAI: AI-Powered Teaching Assistant
 
-**Try it live: [https://sahayakai-f69e0.web.app](https://sahayakai-f69e0.web.app)**
+**Try it live: [https://www.sahayakai.com](https://www.sahayakai.com)**
 
-SahayakAI is a web-based application designed to assist teachers in India with lesson planning and content creation. It leverages a fully serverless architecture with Google Cloud and Firebase to provide a scalable, reliable, and cost-effective suite of AI-powered tools.
+_Last updated: 2026-06-10_
+
+SahayakAI is a web-based application that helps teachers across India with lesson planning, assessment, classroom communication, and content creation. It runs as a single Next.js app on Cloud Run, backed by Google Cloud and Firebase, providing a scalable, reliable, and cost-effective suite of AI-powered tools.
 
 ## Tech Stack
 
--   **Framework:** [Next.js](https://nextjs.org/) (React)
--   **AI Integration:** [Google's Genkit](https://firebase.google.com/docs/genkit)
--   **AI Models:** [Google Gemini](https://deepmind.google/technologies/gemini/)
+-   **Framework:** [Next.js](https://nextjs.org/) 15 (App Router, React 18)
+-   **AI Integration:** [Google's Genkit](https://firebase.google.com/docs/genkit) (`googleai` plugin)
+-   **AI Models:** [Google Gemini](https://deepmind.google/technologies/gemini/). Default text model `gemini-2.5-flash`; `gemini-2.5-pro` for assignment grading, `gemini-3-pro-image-preview` for visual-aid images, `gemini-2.5-flash-image` for avatars.
 -   **Styling:** [Tailwind CSS](https://tailwindcss.com/) with [Shadcn/ui](https://ui.shadcn.com/) components
 -   **Database:** [Cloud Firestore](https://firebase.google.com/docs/firestore) (Serverless NoSQL)
--   **Authentication:** [Firebase Authentication](https://firebase.google.com/docs/auth)
+-   **Authentication:** [Firebase Authentication](https://firebase.google.com/docs/auth) (ID token verified in middleware via `jose`)
 -   **File Storage:** [Cloud Storage for Firebase](https://firebase.google.com/docs/storage)
--   **CI/CD:** [Cloud Build](https://cloud.google.com/build)
--   **Deployment:**
-    -   **Frontend:** [Firebase Hosting](https://firebase.google.com/docs/hosting) (Global CDN)
-    -   **Backend:** [Cloud Functions for Firebase](https://firebase.google.com/docs/functions) (Serverless, event-driven)
+-   **Payments:** [Razorpay](https://razorpay.com/) (HMAC-verified webhooks)
+-   **Telephony (parent calls):** Twilio REST (default) or Exotel (opt-in via `VOICE_PROVIDER`)
+-   **CI/CD:** [Cloud Build](https://cloud.google.com/build) trigger `sahayakai-main-deploy` on push to `main`
+-   **Deployment:** Single [Cloud Run](https://cloud.google.com/run) service `sahayakai-hotfix-resilience` (region `asia-southeast1`, project `sahayakai-b4248`). New revisions are built `--no-traffic` and traffic is flipped manually.
 
 ## Getting Started
 
@@ -59,7 +61,15 @@ SahayakAI is a web-based application designed to assist teachers in India with l
 
 ## Deployment
 
-Deployment to production is handled automatically by a GitHub Actions workflow. Pushing changes to the `main` branch will trigger the deployment process.
+A Cloud Build trigger (`sahayakai-main-deploy`) fires on every push to `main` and runs `cloudbuild.yaml`, which builds the image and creates a Cloud Run revision **with `--no-traffic`** (no auto-routing, to prevent parallel-deploy races). After the build, audit the new revision and flip traffic manually:
+
+```bash
+./scripts/audit-deployments.sh
+gcloud run services update-traffic sahayakai-hotfix-resilience \
+  --region=asia-southeast1 --project=sahayakai-b4248 --to-latest
+```
+
+`scripts/safe-deploy.sh` is a guarded fallback for when the trigger pipeline is unavailable. Never run raw `gcloud run deploy`. See `AGENTS.md` for the full deploy protocol.
 
 ---
 
@@ -93,4 +103,4 @@ Churn probability $P(\text{churn}) = 1 - H/100$ drives the dashboard's risk labe
 
 For the complete mathematical derivation, rationale for each equation, forensic audit findings, and hyperparameter reference, see:
 
-📄 **[`docs/IMPACT_SCORE.md`](./docs/IMPACT_SCORE.md)**
+📄 **[`docs/strategy/IMPACT_SCORE.md`](./docs/strategy/IMPACT_SCORE.md)**

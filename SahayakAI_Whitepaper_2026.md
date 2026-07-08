@@ -2,17 +2,19 @@
 ## A Whitepaper on Cognitive Sovereignty and Frugal Agentic Systems for the Global South
 
 **Author:** Abhishek Gupta, Founder & CEO, SARGVISION AI  
-**Date:** February 2026  
+**Date:** February 2026 (last updated 2026-06-10)  
 **Status:** Strategic Disclosure Document (Investor Grade)  
 **Affiliation:** SARGVISION AI  
+
+> **Engineering note (2026-06-10):** This whitepaper is a vision and thesis document. The "Agent Garden" and "A2A protocol" are conceptual framings, not the literal runtime. In the live system, AI runs server-side through Google Genkit (`googleai` plugin) calling Google Gemini (default `gemini-2.5-flash`), behind `/api/ai/*` route handlers on a single Cloud Run service. An optional external ADK-Python agent sidecar exists and is currently flag-gated off. The product serves teachers across all school types, not government/rural schools only. Quantitative impact figures below are projections marked TODO(verify) where not yet measured in code or audited data.
 
 ---
 
 ## Abstract
 
-In the vast landscape of rural Indian education, 9.7 million teachers operate within a "Quality Paradox": the successful achievement of physical infrastructure access (UDISE+ metrics) vs. the profound failure of pedagogical quality. This distance between *Access* and *Equity* is where the next billion users are currently being lost. 
+Across Indian education, roughly 10.1 million teachers (all school types) operate within a "Quality Paradox": the successful achievement of physical infrastructure access (UDISE+ metrics) vs. the profound failure of pedagogical quality. This distance between *Access* and *Equity* is where the next billion users are currently being lost. 
 
-This whitepaper argues for **Cognitive Sovereignty**: the right of a nation to own and orchestrate its own intelligence infrastructure. We present **SahayakAI**, not as a tool for lesson planning, but as a decentralized, voice-first **Pedagogical Operating System** for the Global South. We are **building the Civilizational Intelligence Infrastructure for the next billion learners by transforming rural teachers into 'Super Teachers'.** Architected through a deterministic "**Agent Garden**" topology, SahayakAI serves as a **Administrative Cognitive Exoskeleton**, a **Universal Resource Synthesizer**, and a **Real-time Mentorship Engine**. By moving beyond probabilistic monoliths to a Frugal Agentic framework, we demonstrate how this "Post-Colonial AI Stack" transforms the overburdened rural educator into a **Super Teacher**, potentially unlocking **6 Billion Learning Hours** by 2030.
+This whitepaper argues for **Cognitive Sovereignty**: the right of a nation to own and orchestrate its own intelligence infrastructure. We present **SahayakAI**, not as a tool for lesson planning, but as a decentralized, voice-first **Pedagogical Operating System** for the Global South. We are **building the Civilizational Intelligence Infrastructure for the next billion learners by transforming rural teachers into 'Super Teachers'.** Architected through a deterministic "**Agent Garden**" topology, SahayakAI serves as a **Administrative Cognitive Exoskeleton**, a **Universal Resource Synthesizer**, and a **Real-time Mentorship Engine**. By moving beyond probabilistic monoliths to a Frugal Agentic framework, we demonstrate how this "Post-Colonial AI Stack" transforms the overburdened educator into a **Super Teacher**, with the potential to unlock learning hours at civilizational scale by 2030. TODO(verify: projected total learning hours by 2030, with derivation).
 
 ---
 
@@ -36,9 +38,9 @@ This whitepaper argues for **Cognitive Sovereignty**: the right of a nation to o
 
 For three generations, rural India has been waiting. 
 
-The crisis in Indian education is often misdiagnosed as one of *infrastructure*. However, the last decade of the "Digital India" mission has largely solved the problem of physical school buildings and basic internet penetration. The remaining, far more insidious crisis is the **Quality Paradox**. While an urban student in a metropolitan hub like Bangalore interacts with high-fidelity, personalized digital learning, her rural counterpart—often just 50km away—remains trapped in a cognitive vacuum.
+The crisis in Indian education is often misdiagnosed as one of *infrastructure*. However, the last decade of the "Digital India" mission has largely solved the problem of physical school buildings and basic internet penetration. The remaining, far more insidious crisis is the **Quality Paradox**. While an urban student in a metropolitan hub like Bangalore interacts with high-fidelity, personalized digital learning, her rural counterpart, often just 50km away, remains trapped in a cognitive vacuum.
 
-This vacuum is where learning dies. We call this "The Wait"—the systemic delay in delivering quality pedagogy to the last mile. We declare that this wait is over.
+This vacuum is where learning dies. We call this "The Wait", the systemic delay in delivering quality pedagogy to the last mile. We declare that this wait is over.
 
 ### 1.1 The Capacity Calculus: Why Training Fails
 
@@ -68,7 +70,7 @@ A student in an "Aspirational District" today represents a unique hybrid:
 Generic Silicon Valley AI (e.g., ChatGPT) fails because it is "Direct-to-Consumer" by design. It assumes a high-trust, non-mediated interaction. In rural India, trust is **mediated**.
 
 ### 2.2 Mediated Trust Architecture
-A parent in a village does not trust an "App" or a "Logo." They trust the **Teacher**—the local intellectual elder. SahayakAI is functionally architected to **empower the mediator**. We do not sell to the student; we arm the teacher with super-intelligence. This **"Mediated Trust Architecture"** is our unassailable moat. 
+A parent in a village does not trust an "App" or a "Logo." They trust the **Teacher**, the local intellectual elder. SahayakAI is functionally architected to **empower the mediator**. We do not sell to the student; we arm the teacher with super-intelligence. This **"Mediated Trust Architecture"** is our unassailable moat. 
 
 ---
 
@@ -96,7 +98,7 @@ To operationalize Cognitive Sovereignty, SahayakAI rejected the industry-standar
 Instead, we engineered the **Agent Garden**: a deterministic multi-agent topology orchestrated via a strict **A2A (Agent-to-Agent) Protocol**. This architecture allows SahayakAI to function as a unified **Operating System** where specialized agents handle distinct cognitive workflows.
 
 ### 4.1 Topology & Orchestration
-The Garden consists of 13+ specialized agents, each serving a unique pedagogical or administrative function. 
+Conceptually, the Garden is a set of specialized pedagogical workflows. In the live system these are ~17 Genkit flows (lesson plan, quiz, exam paper, worksheet, rubric, instant answer, visual aid, video storyteller, virtual field trip, teacher training, assignment assessor, assessment scanner, avatar, parent message, parent call, community persona, voice-to-text) plus the VIDYA voice assistant whose router classifies 11 intents. 
 
 ```mermaid
 flowchart TD
@@ -123,7 +125,7 @@ By breaking down the cognitive task into specialized agents, we achieve "Interna
 SahayakAI is built on three core capabilities that extend far beyond simple content generation.
 
 ### 5.1 Administrative Cognitive Exoskeleton
-A rural teacher's greatest thief is "Shadow Work": reporting, MDM (Mid-Day Meal) logs, and attendance compliance. SahayakAI automates these administrative burdens through voice commands. By reducing red-tape labor by 80%, we return the teacher to their primary human function: teaching.
+A teacher's greatest thief is "Shadow Work": reporting, MDM (Mid-Day Meal) logs, and attendance compliance. SahayakAI automates parts of this administrative burden, including AI-drafted parent messages and parent-call attendance outreach, returning time to the teacher's primary human function: teaching. TODO(verify: measured reduction in administrative labor).
 
 ### 5.2 Universal Resource Synthesis
 Teachers in rural India lack access to high-quality teaching aids. SahayakAI functions as a **Multilingual Resource Synthesizer**. It doesn't just "write plans": it generates contextually rich worksheets, dynamic quizzes, and visual teaching aids mapped to the local soil. It turns a smartphone into a high-fidelity publishing house for the village school.
@@ -143,7 +145,7 @@ High-fidelity AI usually demands high-end compute. This produces a "Compute Divi
 We implemented **Frugal Semantic Caching**:
 - **The Mechanism**: We store "thought vectors" of validated lesson structures.
 - **The Efficiency**: When a new request arrives, we retrieve the "validated logic" and apply a lightweight context re-skinning. This might involve swapping a village name or a local crop reference.
-- **The Result**: **68% Token Savings.** This makes the system economically viable for B2G (Government) deployment at a fraction of the cost of generic LLM API usage.
+- **The Result**: Substantial token savings versus regenerating each plan from scratch. TODO(verify: measured token-savings percentage from semantic caching). This improves the cost profile for large-scale deployment versus generic LLM API usage.
 
 ### 6.2 Hybrid Offline PWA Architecture
 In Rural India, connectivity is not a utility. It is a sporadic event. SahayakAI is architected as a **Progressive Web App (PWA)** that functions as a "Digital Exoskeleton."
@@ -177,7 +179,7 @@ SahayakAI is not built in a vacuum. It is architected to be the **Digital Infras
 India's NEP 2020 mandates a standardized digital architecture (NDEAR). SahayakAI is built on NDEAR-compliant schemas. This ensures our pedagogical data is interoperable with government systems. This creates a **Regulatory Moat**: we are built to become part of the national procurement cycle from day one.
 
 ### 8.2 The NITI Aayog Outcomes Framework
-We have aligned our success metrics with the **NITI Aayog Aspirational Districts** framework. By focusing on outcomes (learning improvements) rather than just inputs (app downloads), we de-risk the government sales cycle. We are currently a finalist in the NITI Aayog AI challenges, providing significant institutional credibility.
+We have aligned our success metrics with the **NITI Aayog Aspirational Districts** framework. By focusing on outcomes (learning improvements) rather than just inputs (app downloads), we de-risk the government sales cycle. TODO(verify: current NITI Aayog / Atal New India Challenge status and any finalist credential).
 
 ---
 
@@ -188,12 +190,12 @@ We measure our success in **Learning Equity Hours Unlocked**. In our Karnataka p
 
 | Metric | Factor | Value |
 | :--- | :--- | :--- |
-| **Admin Efficiency** | Reporting/Logs saved per day | ~30 Minutes |
-| **Prep Efficiency** | Resource synthesis saved per day | ~45 Minutes |
-| **Annualized Savings** | Reclaimed human hours/year | 250+ Hours |
-| **Student Multiplier** | Avg. students per teacher | 30 |
-| **Total Impact** | Equity hours unlocked per teacher | 7,500 Hours |
-| **Civilizational Scale** | 1M Teachers by 2030 | **7.5 Billion Learning Hours** |
+| **Admin Efficiency** | Reporting/Logs saved per day | TODO(verify: minutes/day) |
+| **Prep Efficiency** | Resource synthesis saved per day | TODO(verify: minutes/day) |
+| **Annualized Savings** | Reclaimed human hours/year | TODO(verify: hours/year) |
+| **Student Multiplier** | Avg. students per teacher | TODO(verify: avg students per teacher) |
+| **Total Impact** | Equity hours unlocked per teacher | TODO(verify: hours per teacher) |
+| **Civilizational Scale** | 1M Teachers by 2030 | TODO(verify: total learning hours at 1M-teacher scale) |
 
 ### 9.2 Beyond Bharat: Global Scalability
 The "Sovereign AI" framework is a template for the Global South. Every nation that faces the "Quality Paradox" and the "Linguistic Mosaic" requires a Post-Colonial AI Stack. SahayakAI's context engine can be swapped from "Bharat-First" to "Kenya-First" or "Brazil-First" with 90% logic reuse.

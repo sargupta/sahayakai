@@ -3,7 +3,7 @@
 #
 # Creates the Cloud Build trigger that fires on every push to main and
 # runs cloudbuild.yaml. Run ONCE after the Cloud Build GitHub App has
-# been installed on the sargupta/sahayakai repository (see DEPLOY.md).
+# been installed on the sargupta/sahayakai repository (see docs/operations/DEPLOY.md).
 #
 # Idempotent: deletes any existing trigger with the same name before
 # creating, so updating the config (file path, branch, included files)

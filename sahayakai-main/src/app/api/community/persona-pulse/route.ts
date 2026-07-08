@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
   // (preserves current behavior). To kill: set
   //   system_config/feature_flags.features.communityPersonas.enabled = false
   // in Firestore. The useCommunityLivePulse hook treats 503 as a
-  // stop-polling signal. See docs/FEATURE_FLAGS.md.
+  // stop-polling signal. See docs/operations/FEATURE_FLAGS.md.
   const flag = await isFeatureEnabled('communityPersonas', userId);
   if (!flag.enabled) {
     return NextResponse.json(
@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
     // Prod (DEMO_MODE unset or != 'true') writes to the canonical
     // community_chat collection. Strict string equality is intentional —
     // anything other than the literal 'true' falls through to prod.
-    // See docs/PREVIEW_ENV.md for the DEMO_MODE contract.
+    // See docs/operations/PREVIEW_ENV.md for the DEMO_MODE contract.
     const targetCollection =
       process.env.DEMO_MODE === 'true' ? 'community_chat_preview' : 'community_chat';
     await db.collection(targetCollection).doc(docId).set({

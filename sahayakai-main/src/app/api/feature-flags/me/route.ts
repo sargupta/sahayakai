@@ -13,7 +13,7 @@
  *
  * Adding a new client-side flag:
  *   1. Add the key to CLIENT_READABLE_FLAGS below
- *   2. Document in docs/FEATURE_FLAGS.md
+ *   2. Document in docs/operations/FEATURE_FLAGS.md
  *   3. Use `useFeatureFlag('<key>')` from `@/context/feature-flags-context`
  *
  * Auth: any signed-in user. Unauthenticated callers get 401.

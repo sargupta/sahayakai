@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
  * SectionCard — the canonical content container inside a PageShell.
  *
  * Replaces ad-hoc <Card> usage. Standard radius, shadow, padding, and
- * internal vertical rhythm — see docs/DESIGN_TOKENS.md §8.
+ * internal vertical rhythm — see docs/product/DESIGN_TOKENS.md §8.
  *
  * Usage:
  *   <SectionCard title="Class details" description="Tell us about your class">

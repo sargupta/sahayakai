@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
  * PageShell — the canonical page container.
  *
  * Replaces ad-hoc `<div className="max-w-[*] mx-auto px-*">` patterns
- * across pages. Three widths only — see docs/DESIGN_TOKENS.md §5.
+ * across pages. Three widths only — see docs/product/DESIGN_TOKENS.md §5.
  *
  * Standard usage:
  *   <PageShell title="Lesson Plan" breadcrumb="Create" width="default">
