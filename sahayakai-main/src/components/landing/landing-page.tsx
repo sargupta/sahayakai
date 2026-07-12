@@ -21,15 +21,12 @@ export function LandingPage({ onAuthClick }: Props) {
       <SignedOutBanner />
       <LandingNav onAuthClick={onAuthClick} />
 
-      {/* Warm stage: saffron radial glow + ghosted Indian-script marks */}
-      <div
-        className="relative flex-1"
-        style={{
-          background:
-            "radial-gradient(ellipse 90% 70% at 50% 40%, hsl(28 75% 94%) 0%, hsl(34 60% 97%) 32%, hsl(40 20% 99.5%) 64%, hsl(40 20% 99.5%) 100%)",
-        }}
-      >
+      {/* Warm stage: a breathing saffron glow, floating Indian-script marks,
+          and a fine film-grain overlay — layered behind the content. */}
+      <div className="relative flex-1 overflow-hidden bg-[hsl(40_20%_99.5%)]">
+        <div className="ambient-glow" aria-hidden />
         <ScriptMarks />
+        <div className="ambient-grain" aria-hidden />
         <LandingHero titleIndex={titleIndex} onAuthClick={onAuthClick} />
         <LandingPillarStrip titleIndex={titleIndex} />
         <LandingQuote />
