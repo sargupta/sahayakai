@@ -240,8 +240,10 @@
       "priority": "p1",
       "endpoint": null,
       "file": "lib/features/create_palette/presentation/create_palette_sheet.dart",
-      "status": "scaffolded",
-      "note": "Create tab opens a placeholder bottom sheet in AppShell. Real searchable palette = P1.8."
+      "status": "done",
+      "note": "Create tab opens a placeholder bottom sheet in AppShell. Real searchable palette = P1.8.",
+      "commit": "ac46495d4",
+      "notes": "Modal bottom sheet (not a route), searchable, deep-links to all 9 tools. Extracted ONE shared kToolRegistry (lib/shared/domain/tool_registry.dart) consumed by BOTH dashboard grid AND palette (placeholder palette was missing assess-assignment). analyze clean; 731 tests; rubric PASS."
     },
     {
       "name": "Visual Aid Designer",
