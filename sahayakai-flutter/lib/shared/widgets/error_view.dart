@@ -6,6 +6,8 @@ import '../../core/theme/app_theme.dart';
 
 /// Left-aligned error state with a human message and an optional retry.
 /// No raw exception strings, no centered-hero slop. See DESIGN_RUBRIC §6.
+///
+/// Owns NO outer padding — the container does. See [EmptyView].
 class ErrorView extends StatelessWidget {
   const ErrorView({super.key, required this.message, this.onRetry});
 
@@ -16,25 +18,22 @@ class ErrorView extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.space6),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(LucideIcons.alertTriangle, color: scheme.error, size: 28),
-          const SizedBox(height: AppSpacing.space3),
-          Text(message, style: text.bodyLarge),
-          if (onRetry != null) ...[
-            const SizedBox(height: AppSpacing.space4),
-            OutlinedButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(LucideIcons.refreshCw, size: 18),
-              label: Text(context.l10n.actionRetry),
-            ),
-          ],
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(LucideIcons.alertTriangle, color: scheme.error, size: 24),
+        const SizedBox(height: AppSpacing.space3),
+        Text(message, style: text.bodyLarge),
+        if (onRetry != null) ...[
+          const SizedBox(height: AppSpacing.space4),
+          OutlinedButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(LucideIcons.refreshCw, size: 20),
+            label: Text(context.l10n.actionRetry),
+          ),
         ],
-      ),
+      ],
     );
   }
 }
