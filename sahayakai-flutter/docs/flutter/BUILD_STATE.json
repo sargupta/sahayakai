@@ -332,6 +332,40 @@
       "summary": "UI is effectively English-only for Indic users: app_en.arb has 262 keys but all 10 Indic ARBs carry only 21 (241 keys render English fallback).",
       "why": "Contradicts the product's core promise (11 Indic languages first-class, never Hindi-only) and DESIGN_RUBRIC 12.15. Language picker and AI output language DO work across 11; the UI chrome does not.",
       "note": "Pre-existing across all shipped screens, not introduced by any one unit. Machine translation of teacher-facing copy needs native review for dignity + pedagogical terminology before shipping."
+    },
+    {
+      "id": "brand-contrast",
+      "severity": "medium",
+      "status": "needs-founder-decision",
+      "summary": "Brand saffron #FF9933 fails WCAG AA contrast: #FF9933 text on white = 2.13:1, white on #FF9933 (button fill) = 2.13:1 (AA needs 4.5, AA-large 3.0). The original token #E0924D was 2.50:1 and also failed.",
+      "why": "Founder chose vivid #FF9933 over #E0924D for brand identity. Contrast is a real accessibility issue (rural low-end screens, sunlight). NOT auto-fixable without either darkening the saffron for text/CTA use (e.g. a #C2410C-ish 'saffron-700' for on-white text while keeping #FF9933 for large brand surfaces) or using dark text on saffron buttons.",
+      "options": [
+        "keep #FF9933 everywhere (accept AA fail)",
+        "use a darker saffron shade ONLY for text/CTA-on-white while keeping #FF9933 for brand surfaces/large fills",
+        "dark onPrimary text on saffron buttons"
+      ],
+      "note": "Left untouched pending the founder's call. Saffron is currently used as text/icon at dashboard tiles, quiz correct-answer mark, plan badge."
     }
-  ]
+  ],
+  "releaseGates": {
+    "p0": {
+      "status": "GREEN",
+      "gen_l10n": "clean",
+      "analyze": "No issues found!",
+      "tests": "421 passed",
+      "token_guard": "PASS",
+      "apk": "build/app/outputs/flutter-apk/app-debug.apk (149 MB, assembleDebug 497.8s, exit 0)",
+      "rubric_sweep": "adversarial cross-screen sweep found 13 confirmed fails; ALL fixed (10 commits cff9e335e..b3b4ff362); token layer was already clean (no hardcoded colors/fontSize/off-grid/emoji/bad-lucide). Key fixes: Indic line-height system was bypassed on AppBar+nav app-wide (now withIndic rebuilds all component styles); Library dead-tab wired; 6 duplicated widgets consolidated to lib/shared.",
+      "screens_shipped": [
+        "Splash",
+        "Login/Onboarding",
+        "Dashboard",
+        "Lesson Plan",
+        "Quiz",
+        "Instant Answer",
+        "Settings",
+        "Profile"
+      ]
+    }
+  }
 }
