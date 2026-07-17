@@ -194,7 +194,9 @@
       "priority": "p1",
       "endpoint": "POST /api/ai/exam-paper (+ PUT save)",
       "file": "lib/features/exam_paper/presentation/exam_paper_screen.dart",
-      "status": "pending"
+      "status": "built-pending-firebase",
+      "commit": "931b36119",
+      "notes": "POST /api/ai/exam-paper (+PUT save). CRITICAL: 202 generation_in_progress is a Dio SUCCESS (<400) so it does NOT throw - decoded off body marker into distinct ExamPaperInProgress state (a naive impl renders an empty paper). 422 exam_paper_unstructured -> fewer-chapters guidance (distinct from generic error). Blueprint = only CBSE 9/10 x Math/Science (4 combos) allow empty chapters; else chapters>=1. difficulty middle value is 'moderate' NOT 'medium'. PUT body {paper:<raw response JSON>} -> {contentId}. ApiException gained errorCode field (no new ApiErrorKind, kept switches exhaustive); ApiClient.put + FakeApiClient.put added. analyze clean; 559 tests; rubric PASS."
     },
     {
       "name": "Teacher Training",
