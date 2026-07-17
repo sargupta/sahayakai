@@ -1631,5 +1631,102 @@
   "examPaperSignIn": "Please sign in again to use this tool.",
   "@examPaperSignIn": {
     "description": "Shown on a 401 unauthorized response."
+  },
+  "teacherTrainingTitle": "Teaching Coach",
+  "@teacherTrainingTitle": {
+    "description": "Title of the Teaching Coach (teacher-training) tool."
+  },
+  "teacherTrainingSubtitle": "Advice and strategy for a teaching question",
+  "@teacherTrainingSubtitle": {
+    "description": "Dashboard/Create subtitle for the Teaching Coach tool."
+  },
+  "teacherTrainingAction": "Get advice",
+  "@teacherTrainingAction": {
+    "description": "Submit button label on the Teaching Coach form."
+  },
+  "teacherTrainingEmpty": "Ask a teaching question to get strategies grounded in pedagogy.",
+  "@teacherTrainingEmpty": {
+    "description": "Idle/empty state before any advice is generated. An invitation, not a pitch."
+  },
+  "teacherTrainingQuestionLabel": "Your question",
+  "@teacherTrainingQuestionLabel": {
+    "description": "Label for the Teaching Coach question field."
+  },
+  "teacherTrainingQuestionHint": "Ask about lesson design, classroom practice or assessment.",
+  "@teacherTrainingQuestionHint": {
+    "description": "Helper line under the question field label."
+  },
+  "teacherTrainingQuestionPlaceholder": "For example, How can I keep a class of 40 engaged through a full lesson?",
+  "@teacherTrainingQuestionPlaceholder": {
+    "description": "Placeholder inside the question input."
+  },
+  "teacherTrainingQuestionError": "Please enter a question.",
+  "@teacherTrainingQuestionError": {
+    "description": "Validation error when the question field is empty."
+  },
+  "teacherTrainingSubjectLabel": "Subject",
+  "@teacherTrainingSubjectLabel": {
+    "description": "Label for the Teaching Coach subject dropdown."
+  },
+  "teacherTrainingSubjectAny": "Any subject",
+  "@teacherTrainingSubjectAny": {
+    "description": "The no-subject-selected option in the subject dropdown."
+  },
+  "teacherTrainingOptional": "Optional",
+  "@teacherTrainingOptional": {
+    "description": "Marks a Teaching Coach form field as optional."
+  },
+  "teacherTrainingStrategiesTitle": "Strategies",
+  "@teacherTrainingStrategiesTitle": {
+    "description": "Section label above the list of advice cards."
+  },
+  "teacherTrainingNoContent": "No advice came back for that. Please try a clearer question.",
+  "@teacherTrainingNoContent": {
+    "description": "Shown when the response carried no usable advice."
+  },
+  "teacherTrainingUpgradeTitle": "A higher plan is needed",
+  "@teacherTrainingUpgradeTitle": {
+    "description": "Title of the 403 upgrade prompt."
+  },
+  "teacherTrainingUpgradeBody": "The Teaching Coach is part of a higher plan. Please upgrade to keep asking.",
+  "@teacherTrainingUpgradeBody": {
+    "description": "Body of the 403 upgrade prompt."
+  },
+  "teacherTrainingLimitTitle": "You have reached your limit",
+  "@teacherTrainingLimitTitle": {
+    "description": "Title of the 429 limit-reached prompt."
+  },
+  "teacherTrainingLimitBody": "You have used the Teaching Coach for now. Please try again later or upgrade your plan.",
+  "@teacherTrainingLimitBody": {
+    "description": "Body of the 429 limit-reached prompt."
+  },
+  "teacherTrainingSeePricing": "See plans and pricing",
+  "@teacherTrainingSeePricing": {
+    "description": "Action on the upgrade / limit prompts, opening the pricing page."
+  },
+  "teacherTrainingRephrase": "We could not build advice from that. Please rephrase the question and try again.",
+  "@teacherTrainingRephrase": {
+    "description": "Shown on a 400 invalid-input response."
+  },
+  "teacherTrainingBusy": "The assistant is busy right now. Please try again in a moment.",
+  "@teacherTrainingBusy": {
+    "description": "Shown on a 503 / server-busy response with no Retry-After."
+  },
+  "teacherTrainingBusyRetryAfter": "{seconds, plural, =1{The assistant is busy right now. Please try again in about 1 second.} other{The assistant is busy right now. Please try again in about {seconds} seconds.}}",
+  "@teacherTrainingBusyRetryAfter": {
+    "description": "Shown on a 503 that carries a Retry-After hint.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "teacherTrainingTimeout": "This is taking longer than expected. Please try again.",
+  "@teacherTrainingTimeout": {
+    "description": "Shown when the request times out."
+  },
+  "teacherTrainingSignIn": "Please sign in again to use this tool.",
+  "@teacherTrainingSignIn": {
+    "description": "Shown on a 401 unauthorized response."
   }
 }

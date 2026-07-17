@@ -217,6 +217,12 @@ class _ToolList extends StatelessWidget {
         LucideIcons.scrollText,
         Routes.examPaper,
       ),
+      _Tool(
+        l10n.teacherTrainingTitle,
+        l10n.teacherTrainingSubtitle,
+        LucideIcons.compass,
+        Routes.teacherTraining,
+      ),
     ];
 
     return Column(

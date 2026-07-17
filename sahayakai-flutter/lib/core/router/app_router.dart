@@ -13,6 +13,7 @@ import '../../features/quiz_generator/presentation/quiz_generator_screen.dart';
 import '../../features/rubric_generator/presentation/rubric_generator_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
+import '../../features/teacher_training/presentation/teacher_training_screen.dart';
 import '../../features/worksheet_wizard/presentation/worksheet_wizard_screen.dart';
 import '../auth/auth_providers.dart';
 import 'routes.dart';
@@ -106,6 +107,10 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: Routes.examPaper,
         builder: (context, state) => const ExamPaperScreen(),
+      ),
+      GoRoute(
+        path: Routes.teacherTraining,
+        builder: (context, state) => const TeacherTrainingScreen(),
       ),
       GoRoute(
         path: Routes.settings,

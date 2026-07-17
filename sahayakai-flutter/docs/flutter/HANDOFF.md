@@ -260,6 +260,40 @@ call out:
   stubbable `post`/`put` (un-stubbed still throw loudly, preserving the
   no-network safety contract).
 
+### Teacher Training / Teaching Coach (P1.4) — verified, NO mismatch
+
+`POST /api/ai/teacher-training` was verified against
+`src/app/api/ai/teacher-training/route.ts`, `TeacherTrainingInputSchema` /
+`TeacherTrainingOutputSchema` in `src/ai/flows/teacher-training.ts`, and
+`src/lib/sidecar/teacher-training-dispatch.ts` (the dispatcher does not reshape
+the payload — `sidecarToDispatched` maps the identical five fields, and the
+route handler hand-picks exactly `{ introduction, advice, conclusion,
+gradeLevel, subject }`). **The SCREEN_INVENTORY §P1.4 contract is accurate** —
+no worksheet-style drift. Confirmed specifics worth pinning:
+
+- **Request** = `{ question, subject?, language? }`. `question` is
+  `z.string().max(2000)` — required (the route also 401s if the header carries
+  no `x-user-id`). `.max(2000)` REJECTS over-length (does not clamp), so the
+  form caps at 2000 client-side (`kMaxTeacherTrainingQuestionLength`). `userId`
+  is server-injected from the verified token and never sent.
+- **There is NO `gradeLevel` in the request.** `TeacherTrainingInputSchema` has
+  only `{ question, language?, subject?, userId }` — unlike lesson-plan / quiz /
+  instant-answer, this form offers no grade picker (the model infers grade for
+  the response). The request DTO does not model it, and a test pins that no
+  `gradeLevel` key is ever serialized.
+- **Response** (verbatim render source) = `{ introduction, advice[{ strategy,
+  pedagogy, explanation }], conclusion, gradeLevel, subject }`. `introduction`
+  and `conclusion` are non-nullable strings on the schema; `advice[]` is
+  `z.array(...)`; `gradeLevel` / `subject` are `.nullable().optional()`. The DTO
+  is defensive on every field anyway (the output is model-generated) and drops
+  any advice point with neither a strategy nor an explanation. Rendered as a
+  plain vertical column of AppCards (no nested scroller → no ToolScaffold
+  crash), so the page scrolls only vertically.
+- **Metered like every AI endpoint** (`withPlanCheck('teacher-training')`): 401 /
+  403 `PLAN_UPGRADE_REQUIRED` / 429 / 503+Retry-After / 400 all reachable. There
+  is **no daily-vs-monthly split** (unlike instant-answer's `DAILY_LIMIT_REACHED`),
+  so the 429 prompt is a single limit message. Pinned by the error-view test.
+
 ## 4. Push notifications (FCM)
 The Settings notifications switch is **local-only and defaults OFF** (deliberate: defaulting a
 permission-bearing toggle on, or promising undeliverable notifications, is a dark pattern). Wiring

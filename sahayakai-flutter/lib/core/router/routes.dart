@@ -32,6 +32,7 @@ class Routes {
   static const String worksheetWizard = '/worksheet-wizard';
   static const String rubricGenerator = '/rubric-generator';
   static const String examPaper = '/exam-paper';
+  static const String teacherTraining = '/teacher-training';
 
   /// Routes reachable while signed out. `/try-call` (anon lead magnet) will
   /// join this set when that screen lands.

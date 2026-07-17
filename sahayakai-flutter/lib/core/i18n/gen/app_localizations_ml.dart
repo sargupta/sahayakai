@@ -1300,4 +1300,93 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get examPaperSignIn => 'Please sign in again to use this tool.';
+
+  @override
+  String get teacherTrainingTitle => 'Teaching Coach';
+
+  @override
+  String get teacherTrainingSubtitle =>
+      'Advice and strategy for a teaching question';
+
+  @override
+  String get teacherTrainingAction => 'Get advice';
+
+  @override
+  String get teacherTrainingEmpty =>
+      'Ask a teaching question to get strategies grounded in pedagogy.';
+
+  @override
+  String get teacherTrainingQuestionLabel => 'Your question';
+
+  @override
+  String get teacherTrainingQuestionHint =>
+      'Ask about lesson design, classroom practice or assessment.';
+
+  @override
+  String get teacherTrainingQuestionPlaceholder =>
+      'For example, How can I keep a class of 40 engaged through a full lesson?';
+
+  @override
+  String get teacherTrainingQuestionError => 'Please enter a question.';
+
+  @override
+  String get teacherTrainingSubjectLabel => 'Subject';
+
+  @override
+  String get teacherTrainingSubjectAny => 'Any subject';
+
+  @override
+  String get teacherTrainingOptional => 'Optional';
+
+  @override
+  String get teacherTrainingStrategiesTitle => 'Strategies';
+
+  @override
+  String get teacherTrainingNoContent =>
+      'No advice came back for that. Please try a clearer question.';
+
+  @override
+  String get teacherTrainingUpgradeTitle => 'A higher plan is needed';
+
+  @override
+  String get teacherTrainingUpgradeBody =>
+      'The Teaching Coach is part of a higher plan. Please upgrade to keep asking.';
+
+  @override
+  String get teacherTrainingLimitTitle => 'You have reached your limit';
+
+  @override
+  String get teacherTrainingLimitBody =>
+      'You have used the Teaching Coach for now. Please try again later or upgrade your plan.';
+
+  @override
+  String get teacherTrainingSeePricing => 'See plans and pricing';
+
+  @override
+  String get teacherTrainingRephrase =>
+      'We could not build advice from that. Please rephrase the question and try again.';
+
+  @override
+  String get teacherTrainingBusy =>
+      'The assistant is busy right now. Please try again in a moment.';
+
+  @override
+  String teacherTrainingBusyRetryAfter(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other:
+          'The assistant is busy right now. Please try again in about $seconds seconds.',
+      one:
+          'The assistant is busy right now. Please try again in about 1 second.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get teacherTrainingTimeout =>
+      'This is taking longer than expected. Please try again.';
+
+  @override
+  String get teacherTrainingSignIn => 'Please sign in again to use this tool.';
 }

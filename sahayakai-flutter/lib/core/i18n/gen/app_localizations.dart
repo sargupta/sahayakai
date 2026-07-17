@@ -2437,6 +2437,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please sign in again to use this tool.'**
   String get examPaperSignIn;
+
+  /// Title of the Teaching Coach (teacher-training) tool.
+  ///
+  /// In en, this message translates to:
+  /// **'Teaching Coach'**
+  String get teacherTrainingTitle;
+
+  /// Dashboard/Create subtitle for the Teaching Coach tool.
+  ///
+  /// In en, this message translates to:
+  /// **'Advice and strategy for a teaching question'**
+  String get teacherTrainingSubtitle;
+
+  /// Submit button label on the Teaching Coach form.
+  ///
+  /// In en, this message translates to:
+  /// **'Get advice'**
+  String get teacherTrainingAction;
+
+  /// Idle/empty state before any advice is generated. An invitation, not a pitch.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask a teaching question to get strategies grounded in pedagogy.'**
+  String get teacherTrainingEmpty;
+
+  /// Label for the Teaching Coach question field.
+  ///
+  /// In en, this message translates to:
+  /// **'Your question'**
+  String get teacherTrainingQuestionLabel;
+
+  /// Helper line under the question field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask about lesson design, classroom practice or assessment.'**
+  String get teacherTrainingQuestionHint;
+
+  /// Placeholder inside the question input.
+  ///
+  /// In en, this message translates to:
+  /// **'For example, How can I keep a class of 40 engaged through a full lesson?'**
+  String get teacherTrainingQuestionPlaceholder;
+
+  /// Validation error when the question field is empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a question.'**
+  String get teacherTrainingQuestionError;
+
+  /// Label for the Teaching Coach subject dropdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Subject'**
+  String get teacherTrainingSubjectLabel;
+
+  /// The no-subject-selected option in the subject dropdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Any subject'**
+  String get teacherTrainingSubjectAny;
+
+  /// Marks a Teaching Coach form field as optional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get teacherTrainingOptional;
+
+  /// Section label above the list of advice cards.
+  ///
+  /// In en, this message translates to:
+  /// **'Strategies'**
+  String get teacherTrainingStrategiesTitle;
+
+  /// Shown when the response carried no usable advice.
+  ///
+  /// In en, this message translates to:
+  /// **'No advice came back for that. Please try a clearer question.'**
+  String get teacherTrainingNoContent;
+
+  /// Title of the 403 upgrade prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'A higher plan is needed'**
+  String get teacherTrainingUpgradeTitle;
+
+  /// Body of the 403 upgrade prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'The Teaching Coach is part of a higher plan. Please upgrade to keep asking.'**
+  String get teacherTrainingUpgradeBody;
+
+  /// Title of the 429 limit-reached prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'You have reached your limit'**
+  String get teacherTrainingLimitTitle;
+
+  /// Body of the 429 limit-reached prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'You have used the Teaching Coach for now. Please try again later or upgrade your plan.'**
+  String get teacherTrainingLimitBody;
+
+  /// Action on the upgrade / limit prompts, opening the pricing page.
+  ///
+  /// In en, this message translates to:
+  /// **'See plans and pricing'**
+  String get teacherTrainingSeePricing;
+
+  /// Shown on a 400 invalid-input response.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not build advice from that. Please rephrase the question and try again.'**
+  String get teacherTrainingRephrase;
+
+  /// Shown on a 503 / server-busy response with no Retry-After.
+  ///
+  /// In en, this message translates to:
+  /// **'The assistant is busy right now. Please try again in a moment.'**
+  String get teacherTrainingBusy;
+
+  /// Shown on a 503 that carries a Retry-After hint.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds, plural, =1{The assistant is busy right now. Please try again in about 1 second.} other{The assistant is busy right now. Please try again in about {seconds} seconds.}}'**
+  String teacherTrainingBusyRetryAfter(int seconds);
+
+  /// Shown when the request times out.
+  ///
+  /// In en, this message translates to:
+  /// **'This is taking longer than expected. Please try again.'**
+  String get teacherTrainingTimeout;
+
+  /// Shown on a 401 unauthorized response.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in again to use this tool.'**
+  String get teacherTrainingSignIn;
 }
 
 class _AppLocalizationsDelegate
