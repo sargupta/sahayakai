@@ -212,7 +212,9 @@
       "priority": "p1",
       "endpoint": "POST /api/ai/parent-message",
       "file": "lib/features/parent_message/presentation/parent_message_screen.dart",
-      "status": "pending"
+      "status": "built-pending-firebase",
+      "commit": "e65ee9860",
+      "notes": "POST /api/ai/parent-message. Required: studentName/className/subject/reason/parentLanguage. reason enum: consecutive_absences|poor_performance|behavioral_concern|positive_feedback (US spelling). parentLanguage = AppLocale.aiName (drives OUTPUT lang, distinct from UI). Response {message,languageCode,wordCount}. Message rendered via AiText (Indic-safe, so Tamil msg from English UI shapes). Copy + share (share_plus 12, behind ShareService provider, faked in tests). BACKEND TRAP: default Genkit path OVERWRITES client reasonContext with a server REASON_CONTEXT[reason] template - teacherNote is the field that actually reaches the model (recorded HANDOFF). analyze clean; 643 tests; rubric PASS."
     },
     {
       "name": "Assess Assignment",
