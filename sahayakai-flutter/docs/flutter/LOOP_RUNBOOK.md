@@ -6,7 +6,20 @@ reschedules. Goal: drive the ENTIRE app (foundation → P0 → P1 → P2 → rel
 unattended, with quality gated at every step. The user granted full permission/approval.
 
 ## Working dir & env
-Repo: `/Users/sargupta/SahayakAIV2/sahayakai/sahayakai-flutter` (branch `develop`). Every shell step:
+**Canonical build location (since the monorepo move):**
+`/Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter` — a **sparse git worktree** of the
+SahayakAI monorepo (`/Users/sargupta/SahayakAIV2/sahayakai`) on branch **`feature/flutter-rebuild`**
+(branched off `develop`, per the project git rules).
+
+> History note: this app was first built in a throwaway nested repo at
+> `sahayakai/sahayakai-flutter`. That was wrong — the monorepo already tracks that path. The app was
+> moved onto `feature/flutter-rebuild` (commit 3e42b0906) and the nested repo removed; its full
+> history is bundled at
+> `<scratchpad>/sahayakai-flutter-nested.bundle`. Do NOT build in `sahayakai/sahayakai-flutter`
+> (that path holds the superseded Phase T tree on other branches). Never touch the main working tree
+> — it carries unrelated uncommitted work.
+
+Every shell step:
 ```
 export ANDROID_HOME="$HOME/Library/Android/sdk"
 export JAVA_HOME="/opt/homebrew/opt/openjdk@17"
@@ -82,7 +95,7 @@ At the end of each priority band (end of P0, end of P1): run `flutter gen-l10n`,
 - Never `git push` / never touch any remote.
 - Never touch `sahayakai-main` or any sibling repo — this app is read-only over that backend; no backend edits.
 - Never publish (no deploy, no store upload).
-- Commit each unit on `develop`; stage explicit paths; no Claude attribution; no `git add -A`.
+- Commit each unit on `feature/flutter-rebuild`; stage explicit paths; no Claude attribution; no `git add -A`.
 - If the Android SDK needs interactive license acceptance, or a build needs Firebase config that isn't present in a way that blocks ALL progress → record it in `docs/flutter/HANDOFF.md` and continue with unblocked work; only `stop` the loop when nothing actionable remains.
 
 ## STOP conditions (call ScheduleWakeup stop:true + final summary)
