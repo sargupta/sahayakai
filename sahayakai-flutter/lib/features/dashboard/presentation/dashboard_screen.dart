@@ -229,6 +229,12 @@ class _ToolList extends StatelessWidget {
         LucideIcons.messageCircle,
         Routes.parentMessage,
       ),
+      _Tool(
+        l10n.assessTitle,
+        l10n.assessSubtitle,
+        LucideIcons.scanLine,
+        Routes.assessAssignment,
+      ),
     ];
 
     return Column(

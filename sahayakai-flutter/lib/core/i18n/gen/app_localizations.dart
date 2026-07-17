@@ -2899,6 +2899,300 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please sign in again to use this tool.'**
   String get parentMessageSignIn;
+
+  /// Assess Assignment tool title (app bar + dashboard tile).
+  ///
+  /// In en, this message translates to:
+  /// **'Assess Assignment'**
+  String get assessTitle;
+
+  /// Assess Assignment dashboard tile subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Grade a student\'s handwritten work from a photo'**
+  String get assessSubtitle;
+
+  /// Idle/empty state before the teacher submits.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a photo of the student\'s work, then tap Assess.'**
+  String get assessEmpty;
+
+  /// The primary submit button label on the Assess Assignment form.
+  ///
+  /// In en, this message translates to:
+  /// **'Assess'**
+  String get assessSubmit;
+
+  /// Label for the required student-work photo field.
+  ///
+  /// In en, this message translates to:
+  /// **'Student work photo'**
+  String get assessImageLabel;
+
+  /// Hint under the student-work photo field.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a clear photo of the whole page.'**
+  String get assessImageHint;
+
+  /// Validation error when no photo is chosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Please add a photo of the student\'s work.'**
+  String get assessImageError;
+
+  /// Label for the mode selector (grade / read only / score a transcript).
+  ///
+  /// In en, this message translates to:
+  /// **'What do you need?'**
+  String get assessModeLabel;
+
+  /// Explains the three assessment modes.
+  ///
+  /// In en, this message translates to:
+  /// **'Grade reads and scores the work. Read only returns the transcript. Score a transcript grades text you paste in.'**
+  String get assessModeHint;
+
+  /// Mode option: transcribe and score the work (backend 'full').
+  ///
+  /// In en, this message translates to:
+  /// **'Grade'**
+  String get assessModeFull;
+
+  /// Mode option: return only the transcript (backend 'transcribe').
+  ///
+  /// In en, this message translates to:
+  /// **'Read only'**
+  String get assessModeTranscribe;
+
+  /// Mode option: grade a corrected transcript (backend 'score').
+  ///
+  /// In en, this message translates to:
+  /// **'Score a transcript'**
+  String get assessModeScore;
+
+  /// Label for the edited-transcript field, shown only in score mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Corrected transcript'**
+  String get assessTranscriptLabel;
+
+  /// Hint under the corrected-transcript field.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste the corrected text to grade instead of re-reading the photo.'**
+  String get assessTranscriptHint;
+
+  /// Placeholder inside the corrected-transcript field.
+  ///
+  /// In en, this message translates to:
+  /// **'Type or paste the student\'s corrected answers'**
+  String get assessTranscriptPlaceholder;
+
+  /// Marks the corrected-transcript field as optional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get assessOptional;
+
+  /// Explains the default rubric used when none is attached.
+  ///
+  /// In en, this message translates to:
+  /// **'Without a rubric, the work is graded on a general rubric: understanding, accuracy, presentation and completion.'**
+  String get assessRubricNote;
+
+  /// Reassures the teacher that student-name PII is not transmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'The student\'s name is never sent for grading.'**
+  String get assessPrivacyNote;
+
+  /// Header above the overall score.
+  ///
+  /// In en, this message translates to:
+  /// **'Overall score'**
+  String get assessScoreLabel;
+
+  /// Caption beside the big score number.
+  ///
+  /// In en, this message translates to:
+  /// **'out of 100'**
+  String get assessScoreOutOf;
+
+  /// Points earned out of points possible.
+  ///
+  /// In en, this message translates to:
+  /// **'{earned} of {possible} points'**
+  String assessPoints(String earned, String possible);
+
+  /// The model's overall self-rated confidence as a percentage.
+  ///
+  /// In en, this message translates to:
+  /// **'Confidence {percent}%'**
+  String assessConfidence(String percent);
+
+  /// Names the rubric the grade was measured against.
+  ///
+  /// In en, this message translates to:
+  /// **'Graded against: {title}'**
+  String assessRubricUsed(String title);
+
+  /// Tag on a criterion the model was unsure about (confidence below 0.5).
+  ///
+  /// In en, this message translates to:
+  /// **'Low confidence'**
+  String get assessLowConfidence;
+
+  /// Section heading for the transcript.
+  ///
+  /// In en, this message translates to:
+  /// **'What the student wrote'**
+  String get assessTranscriptSection;
+
+  /// Section heading for the per-criterion scores.
+  ///
+  /// In en, this message translates to:
+  /// **'Scores by criterion'**
+  String get assessCriteriaSection;
+
+  /// A criterion's points out of its maximum.
+  ///
+  /// In en, this message translates to:
+  /// **'{points} / {max}'**
+  String assessCriterionPoints(String points, String max);
+
+  /// Section heading for what the student did well.
+  ///
+  /// In en, this message translates to:
+  /// **'Strengths'**
+  String get assessStrengthsSection;
+
+  /// Section heading for what the student should improve.
+  ///
+  /// In en, this message translates to:
+  /// **'To work on'**
+  String get assessImprovementsSection;
+
+  /// Section heading for concrete next-step practice tasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Next steps'**
+  String get assessNextStepsSection;
+
+  /// Section heading for the paragraph the teacher can read aloud.
+  ///
+  /// In en, this message translates to:
+  /// **'Note for the student'**
+  String get assessTeacherNoteSection;
+
+  /// Heading for the grader's advisories (blank page, faint photo, etc.).
+  ///
+  /// In en, this message translates to:
+  /// **'Please check'**
+  String get assessWarningsSection;
+
+  /// Advisory for the page_appears_blank warning code.
+  ///
+  /// In en, this message translates to:
+  /// **'This page looks blank. Please check the photo and try again.'**
+  String get assessWarningBlank;
+
+  /// Advisory for the low_contrast warning code.
+  ///
+  /// In en, this message translates to:
+  /// **'The photo is faint. A brighter photo will grade more accurately.'**
+  String get assessWarningLowContrast;
+
+  /// Advisory for the partial_writing warning code.
+  ///
+  /// In en, this message translates to:
+  /// **'Only part of the work could be read.'**
+  String get assessWarningPartial;
+
+  /// Advisory for the language_mismatch warning code.
+  ///
+  /// In en, this message translates to:
+  /// **'The writing may be in a different language than expected.'**
+  String get assessWarningLanguageMismatch;
+
+  /// Empty-result state when the model returned nothing usable.
+  ///
+  /// In en, this message translates to:
+  /// **'No assessment came back. Please try a clearer photo.'**
+  String get assessNoContent;
+
+  /// Shown on a 401 unauthorized response.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in again to grade an assignment.'**
+  String get assessSignIn;
+
+  /// Title of the 403 upgrade prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'A higher plan is needed'**
+  String get assessUpgradeTitle;
+
+  /// Body of the 403 upgrade prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Grading handwritten work is part of a higher plan. Upgrade to keep assessing.'**
+  String get assessUpgradeBody;
+
+  /// Title of the daily-limit prompt (429 DAILY_LIMIT_REACHED).
+  ///
+  /// In en, this message translates to:
+  /// **'That is all your assessments for today'**
+  String get assessDailyLimitTitle;
+
+  /// Body of the daily-limit prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Your plan includes a set number of assessments each day. They reset tomorrow, or you can raise the limit on a higher plan.'**
+  String get assessDailyLimitBody;
+
+  /// Title of the monthly-limit prompt (429 USAGE_LIMIT_REACHED).
+  ///
+  /// In en, this message translates to:
+  /// **'You have reached your assessment limit'**
+  String get assessLimitTitle;
+
+  /// Body of the monthly-limit prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'You have used all the assessments in your plan. They reset next month, or you can raise the limit on a higher plan.'**
+  String get assessLimitBody;
+
+  /// Action that opens the pricing page from a limit or upgrade prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'See plans'**
+  String get assessSeePricing;
+
+  /// Shown on a 503 busy response with no Retry-After.
+  ///
+  /// In en, this message translates to:
+  /// **'The grading model is busy right now. Please try again in a minute.'**
+  String get assessBusy;
+
+  /// Shown on a 503 busy response that carried Retry-After.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds, plural, =1{The grading model is busy right now. Please try again in about 1 second.} other{The grading model is busy right now. Please try again in about {seconds} seconds.}}'**
+  String assessBusyRetryAfter(int seconds);
+
+  /// Shown when the request times out.
+  ///
+  /// In en, this message translates to:
+  /// **'Grading is taking longer than usual. Please try again.'**
+  String get assessTimeout;
+
+  /// Shown on a 400 bad-input response.
+  ///
+  /// In en, this message translates to:
+  /// **'The photo could not be graded. Please re-upload a clearer photo.'**
+  String get assessRephrase;
 }
 
 class _AppLocalizationsDelegate

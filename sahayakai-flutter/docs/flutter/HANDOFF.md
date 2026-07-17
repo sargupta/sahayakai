@@ -359,6 +359,104 @@ mismatch worth pinning:
   copy never touches the real pasteboard. `share_plus: ^12.0.0` resolved to
   12.0.2 with no dependency conflicts.
 
+### Assess Assignment (P1.6) — verified against `route.ts` + the Zod schemas + the dispatcher
+
+`POST /api/ai/assess-assignment` was verified against
+`src/app/api/ai/assess-assignment/route.ts`, `AssessAssignmentInputSchema` /
+`AssessAssignmentOutputSchema` in `src/ai/flows/assignment-assessor.ts`,
+`src/lib/sidecar/assignment-assessor-dispatch.ts`, `src/lib/plan-guard.ts`,
+`src/lib/plan-config.ts`, `src/lib/server-safety.ts`, `src/lib/usage-tracker.ts`
+and `src/lib/ai-error-response.ts`. Confirmed specifics plus **two real
+mismatches** worth pinning:
+
+- **Request** = `{ imageDataUri (required), rubricSnapshot?, language?, subject?,
+  gradeLevel?, studentId?, editedTranscript?, mode? }`. `userId` and
+  `teacherContext` are server-injected; the client never sends them.
+- **`imageDataUri` is STRICTER than the Worksheet cap.** It is
+  `z.string().max(14_000_000)` **AND** `.regex(/^data:image\/(jpeg|png|webp);base64,/)`
+  — so beyond the same 14 MB length cap (reused `kMaxImageDataUriBytes`), only
+  **jpeg / png / webp** mimes are accepted; a `data:image/heic|gif;base64,...`
+  URI 400s here even though Worksheet accepts it (Worksheet only checks the
+  `data:` prefix). In practice the shared `image_picker` re-encodes camera/gallery
+  picks to JPEG (`imageQuality: 70`), so the produced URI is `image/jpeg` and
+  passes; the constraint only bites an exotic gallery mime that survives
+  re-encode. Not enforced client-side (the shared `ImageInput` is unchanged);
+  the server 400 (`INVALID_ARGUMENT`) maps to the "re-upload a clearer photo"
+  state. Recorded so a future device-specific report is not a surprise.
+- **PII: `studentName` is stripped server-side** (`delete raw.studentName` before
+  the Zod parse, and the schema has no `studentName` key). This client goes
+  further and **never collects or sends any student name OR the optional
+  `studentId` handle** — grading needs neither. Pinned by a DTO test asserting
+  none of `studentName` / `studentId` / `userId` / `teacherContext` is ever
+  serialized.
+- **`mode` enum = `['full','transcribe','score']`, default `full`** (verified
+  from the schema, NOT invented). `full` = transcribe + score; `transcribe` =
+  transcript stage only; `score` = grade `editedTranscript` without re-reading
+  the image. The client always sends `mode`, and offers an optional
+  `editedTranscript` field only in `score` mode (schema `.max(50_000)`).
+- **`rubricSnapshot` is OPTIONAL and, when present, is the FULL
+  `RubricGeneratorOutput` shape** (`{ title, description, criteria[{ name,
+  description, levels[{ name, description, points }] }], gradeLevel, subject }`).
+  When omitted the server grades against its own general 4-criterion
+  `DEFAULT_RUBRIC`. **Decision: the form does NOT ship a rubric picker** — there
+  is no client-readable store of saved rubrics yet (the rubric tool P1.2
+  generates but does not persist to a list the app can read; the Library is P1.7
+  and Firebase-gated). Wiring a real picker is heavy, so `rubricSnapshot` is
+  modelled as optional/omitted, the form shows a quiet note that a general rubric
+  is used, and the DTO plumbing + a test cover attaching one so a future picker
+  needs no contract change.
+- **Response** (verbatim render source) = `{ assessmentId, rawTranscript,
+  editedTranscript, language, overallScore (0–100), pointsEarned, pointsPossible,
+  perCriterionScores[{ criterionName, level, points, maxPoints, feedback,
+  confidence (0–1) }], strengths[], improvements[], nextSteps[], teacherNote,
+  confidenceOverall (0–1), warnings[], rubricSnapshot (echoed), studentId,
+  createdAtIso }`. Rendered as a **plain vertical Column of cards** (no nested
+  scroller → no ToolScaffold crash). Rendered **defensively per mode**: a
+  `transcribe`-only pass returns empty score-side fields, so `hasScore` reads
+  false and the view leads with the transcript and shows no score card. Points,
+  score and confidence are decoded as `num?`/`double?` and clamped (score 0–100,
+  confidence 0–1) against model drift. `confidence < 0.5` surfaces a
+  "Low confidence" tag per the schema note. `warnings` codes
+  (`page_appears_blank | low_contrast | partial_writing | language_mismatch`) map
+  to human copy; an unknown code is skipped, never shown raw.
+- **MISMATCH — there is NO distinct "day-budget 429".** The task/spec anticipated
+  the expensive-model per-day guard returning its own 429; it does not. This
+  route runs TWO per-day guards and neither is a 429:
+  1. `checkImageRateLimit(userId)` — 10 images/day (IST reset). On the cap it
+     throws `Error("Daily image limit reached...")`.
+  2. `checkUsage(userId, 'gemini_tokens')` — the expensive gemini-2.5-pro day
+     budget (free 500k tokens/day). On the cap it throws
+     `PlanLimitExceededError("Daily limit reached for gemini_tokens: N/N...")`.
+  **`handleAIError` classifies NEITHER** (its `errorStatus()` finds no status in
+  those messages — the token message even contains `"500000"`, which it reads as
+  a `500`), so both fall through to the generic **HTTP 500
+  `{ error: 'AI generation failed. Please try again.' }`**. So at runtime the
+  expensive-model day budget arrives as a **500**, and the client renders it in
+  the retryable "the grading model is busy / something went wrong" state, NOT a
+  limit state. This is a **backend gap** (the guards should surface a 429 the
+  client can distinguish), left for the backend team — this app must not edit the
+  backend.
+- **The only reliable 429 on this route is the MONTHLY plan quota**
+  `USAGE_LIMIT_REACHED` from `withPlanCheck('assess-assignment')` (free =
+  **5 assessments/month** per `plan-config.ts`; pro = 100; gold/premium = -1
+  unlimited). assess-assignment is **NOT in the plan-guard `dailyLimitMap`**
+  (only `instant-answer` + `assistant` are), so it **never** returns
+  `DAILY_LIMIT_REACHED`, and no plan sets its limit to `0`, so a 403
+  `PLAN_UPGRADE_REQUIRED` is not reachable in the shipped config either (both
+  still handled defensively). The error view keeps a distinct
+  `DAILY_LIMIT_REACHED` branch (kept for the day the backend wires assess into
+  the daily map / fixes the 429 gap) that reads its code from the raw body, but
+  the branch that actually fires today is the monthly `USAGE_LIMIT_REACHED`.
+  Pinned by `assess_assignment_error_view_test.dart` (DAILY vs USAGE render
+  distinctly; both retry-free; pricing opens externally).
+- **503 + Retry-After** is reachable from `checkServerRateLimit` (per-uid sliding
+  window, "Rate limit exceeded" → 429 → `handleAIError` 503) and from Gemini
+  quota / dispatcher timeouts. The view is Retry-After aware. **400** covers Zod
+  validation (incl. the mime-regex above) and Gemini bad-media
+  (`INVALID_MEDIA`). Model runs on the slowest SKU (gemini-2.5-pro) → the
+  skeleton loader matters; the controller drives the standard AsyncNotifier
+  loading state.
+
 ## 4. Push notifications (FCM)
 The Settings notifications switch is **local-only and defaults OFF** (deliberate: defaulting a
 permission-bearing toggle on, or promising undeliverable notifications, is a dark pattern). Wiring

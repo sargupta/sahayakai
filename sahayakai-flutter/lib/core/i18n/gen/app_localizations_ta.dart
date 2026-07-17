@@ -1585,4 +1585,186 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get parentMessageSignIn => 'Please sign in again to use this tool.';
+
+  @override
+  String get assessTitle => 'Assess Assignment';
+
+  @override
+  String get assessSubtitle =>
+      'Grade a student\'s handwritten work from a photo';
+
+  @override
+  String get assessEmpty =>
+      'Add a photo of the student\'s work, then tap Assess.';
+
+  @override
+  String get assessSubmit => 'Assess';
+
+  @override
+  String get assessImageLabel => 'Student work photo';
+
+  @override
+  String get assessImageHint => 'Take a clear photo of the whole page.';
+
+  @override
+  String get assessImageError => 'Please add a photo of the student\'s work.';
+
+  @override
+  String get assessModeLabel => 'What do you need?';
+
+  @override
+  String get assessModeHint =>
+      'Grade reads and scores the work. Read only returns the transcript. Score a transcript grades text you paste in.';
+
+  @override
+  String get assessModeFull => 'Grade';
+
+  @override
+  String get assessModeTranscribe => 'Read only';
+
+  @override
+  String get assessModeScore => 'Score a transcript';
+
+  @override
+  String get assessTranscriptLabel => 'Corrected transcript';
+
+  @override
+  String get assessTranscriptHint =>
+      'Paste the corrected text to grade instead of re-reading the photo.';
+
+  @override
+  String get assessTranscriptPlaceholder =>
+      'Type or paste the student\'s corrected answers';
+
+  @override
+  String get assessOptional => 'Optional';
+
+  @override
+  String get assessRubricNote =>
+      'Without a rubric, the work is graded on a general rubric: understanding, accuracy, presentation and completion.';
+
+  @override
+  String get assessPrivacyNote =>
+      'The student\'s name is never sent for grading.';
+
+  @override
+  String get assessScoreLabel => 'Overall score';
+
+  @override
+  String get assessScoreOutOf => 'out of 100';
+
+  @override
+  String assessPoints(String earned, String possible) {
+    return '$earned of $possible points';
+  }
+
+  @override
+  String assessConfidence(String percent) {
+    return 'Confidence $percent%';
+  }
+
+  @override
+  String assessRubricUsed(String title) {
+    return 'Graded against: $title';
+  }
+
+  @override
+  String get assessLowConfidence => 'Low confidence';
+
+  @override
+  String get assessTranscriptSection => 'What the student wrote';
+
+  @override
+  String get assessCriteriaSection => 'Scores by criterion';
+
+  @override
+  String assessCriterionPoints(String points, String max) {
+    return '$points / $max';
+  }
+
+  @override
+  String get assessStrengthsSection => 'Strengths';
+
+  @override
+  String get assessImprovementsSection => 'To work on';
+
+  @override
+  String get assessNextStepsSection => 'Next steps';
+
+  @override
+  String get assessTeacherNoteSection => 'Note for the student';
+
+  @override
+  String get assessWarningsSection => 'Please check';
+
+  @override
+  String get assessWarningBlank =>
+      'This page looks blank. Please check the photo and try again.';
+
+  @override
+  String get assessWarningLowContrast =>
+      'The photo is faint. A brighter photo will grade more accurately.';
+
+  @override
+  String get assessWarningPartial => 'Only part of the work could be read.';
+
+  @override
+  String get assessWarningLanguageMismatch =>
+      'The writing may be in a different language than expected.';
+
+  @override
+  String get assessNoContent =>
+      'No assessment came back. Please try a clearer photo.';
+
+  @override
+  String get assessSignIn => 'Please sign in again to grade an assignment.';
+
+  @override
+  String get assessUpgradeTitle => 'A higher plan is needed';
+
+  @override
+  String get assessUpgradeBody =>
+      'Grading handwritten work is part of a higher plan. Upgrade to keep assessing.';
+
+  @override
+  String get assessDailyLimitTitle => 'That is all your assessments for today';
+
+  @override
+  String get assessDailyLimitBody =>
+      'Your plan includes a set number of assessments each day. They reset tomorrow, or you can raise the limit on a higher plan.';
+
+  @override
+  String get assessLimitTitle => 'You have reached your assessment limit';
+
+  @override
+  String get assessLimitBody =>
+      'You have used all the assessments in your plan. They reset next month, or you can raise the limit on a higher plan.';
+
+  @override
+  String get assessSeePricing => 'See plans';
+
+  @override
+  String get assessBusy =>
+      'The grading model is busy right now. Please try again in a minute.';
+
+  @override
+  String assessBusyRetryAfter(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other:
+          'The grading model is busy right now. Please try again in about $seconds seconds.',
+      one:
+          'The grading model is busy right now. Please try again in about 1 second.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get assessTimeout =>
+      'Grading is taking longer than usual. Please try again.';
+
+  @override
+  String get assessRephrase =>
+      'The photo could not be graded. Please re-upload a clearer photo.';
 }

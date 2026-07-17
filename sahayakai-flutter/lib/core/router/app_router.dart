@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../features/assess_assignment/presentation/assess_assignment_screen.dart';
 import '../../features/dashboard/presentation/app_shell.dart';
 import '../../features/exam_paper/presentation/exam_paper_screen.dart';
 import '../../features/instant_answer/presentation/instant_answer_screen.dart';
@@ -116,6 +117,10 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: Routes.parentMessage,
         builder: (context, state) => const ParentMessageScreen(),
+      ),
+      GoRoute(
+        path: Routes.assessAssignment,
+        builder: (context, state) => const AssessAssignmentScreen(),
       ),
       GoRoute(
         path: Routes.settings,

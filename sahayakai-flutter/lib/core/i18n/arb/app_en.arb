@@ -1954,5 +1954,238 @@
   "parentMessageSignIn": "Please sign in again to use this tool.",
   "@parentMessageSignIn": {
     "description": "Shown on a 401 unauthorized response."
+  },
+  "assessTitle": "Assess Assignment",
+  "@assessTitle": {
+    "description": "Assess Assignment tool title (app bar + dashboard tile)."
+  },
+  "assessSubtitle": "Grade a student's handwritten work from a photo",
+  "@assessSubtitle": {
+    "description": "Assess Assignment dashboard tile subtitle."
+  },
+  "assessEmpty": "Add a photo of the student's work, then tap Assess.",
+  "@assessEmpty": {
+    "description": "Idle/empty state before the teacher submits."
+  },
+  "assessSubmit": "Assess",
+  "@assessSubmit": {
+    "description": "The primary submit button label on the Assess Assignment form."
+  },
+  "assessImageLabel": "Student work photo",
+  "@assessImageLabel": {
+    "description": "Label for the required student-work photo field."
+  },
+  "assessImageHint": "Take a clear photo of the whole page.",
+  "@assessImageHint": {
+    "description": "Hint under the student-work photo field."
+  },
+  "assessImageError": "Please add a photo of the student's work.",
+  "@assessImageError": {
+    "description": "Validation error when no photo is chosen."
+  },
+  "assessModeLabel": "What do you need?",
+  "@assessModeLabel": {
+    "description": "Label for the mode selector (grade / read only / score a transcript)."
+  },
+  "assessModeHint": "Grade reads and scores the work. Read only returns the transcript. Score a transcript grades text you paste in.",
+  "@assessModeHint": {
+    "description": "Explains the three assessment modes."
+  },
+  "assessModeFull": "Grade",
+  "@assessModeFull": {
+    "description": "Mode option: transcribe and score the work (backend 'full')."
+  },
+  "assessModeTranscribe": "Read only",
+  "@assessModeTranscribe": {
+    "description": "Mode option: return only the transcript (backend 'transcribe')."
+  },
+  "assessModeScore": "Score a transcript",
+  "@assessModeScore": {
+    "description": "Mode option: grade a corrected transcript (backend 'score')."
+  },
+  "assessTranscriptLabel": "Corrected transcript",
+  "@assessTranscriptLabel": {
+    "description": "Label for the edited-transcript field, shown only in score mode."
+  },
+  "assessTranscriptHint": "Paste the corrected text to grade instead of re-reading the photo.",
+  "@assessTranscriptHint": {
+    "description": "Hint under the corrected-transcript field."
+  },
+  "assessTranscriptPlaceholder": "Type or paste the student's corrected answers",
+  "@assessTranscriptPlaceholder": {
+    "description": "Placeholder inside the corrected-transcript field."
+  },
+  "assessOptional": "Optional",
+  "@assessOptional": {
+    "description": "Marks the corrected-transcript field as optional."
+  },
+  "assessRubricNote": "Without a rubric, the work is graded on a general rubric: understanding, accuracy, presentation and completion.",
+  "@assessRubricNote": {
+    "description": "Explains the default rubric used when none is attached."
+  },
+  "assessPrivacyNote": "The student's name is never sent for grading.",
+  "@assessPrivacyNote": {
+    "description": "Reassures the teacher that student-name PII is not transmitted."
+  },
+  "assessScoreLabel": "Overall score",
+  "@assessScoreLabel": {
+    "description": "Header above the overall score."
+  },
+  "assessScoreOutOf": "out of 100",
+  "@assessScoreOutOf": {
+    "description": "Caption beside the big score number."
+  },
+  "assessPoints": "{earned} of {possible} points",
+  "@assessPoints": {
+    "description": "Points earned out of points possible.",
+    "placeholders": {
+      "earned": {
+        "type": "String",
+        "example": "12"
+      },
+      "possible": {
+        "type": "String",
+        "example": "16"
+      }
+    }
+  },
+  "assessConfidence": "Confidence {percent}%",
+  "@assessConfidence": {
+    "description": "The model's overall self-rated confidence as a percentage.",
+    "placeholders": {
+      "percent": {
+        "type": "String",
+        "example": "82"
+      }
+    }
+  },
+  "assessRubricUsed": "Graded against: {title}",
+  "@assessRubricUsed": {
+    "description": "Names the rubric the grade was measured against.",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "example": "Essay rubric"
+      }
+    }
+  },
+  "assessLowConfidence": "Low confidence",
+  "@assessLowConfidence": {
+    "description": "Tag on a criterion the model was unsure about (confidence below 0.5)."
+  },
+  "assessTranscriptSection": "What the student wrote",
+  "@assessTranscriptSection": {
+    "description": "Section heading for the transcript."
+  },
+  "assessCriteriaSection": "Scores by criterion",
+  "@assessCriteriaSection": {
+    "description": "Section heading for the per-criterion scores."
+  },
+  "assessCriterionPoints": "{points} / {max}",
+  "@assessCriterionPoints": {
+    "description": "A criterion's points out of its maximum.",
+    "placeholders": {
+      "points": {
+        "type": "String",
+        "example": "3"
+      },
+      "max": {
+        "type": "String",
+        "example": "4"
+      }
+    }
+  },
+  "assessStrengthsSection": "Strengths",
+  "@assessStrengthsSection": {
+    "description": "Section heading for what the student did well."
+  },
+  "assessImprovementsSection": "To work on",
+  "@assessImprovementsSection": {
+    "description": "Section heading for what the student should improve."
+  },
+  "assessNextStepsSection": "Next steps",
+  "@assessNextStepsSection": {
+    "description": "Section heading for concrete next-step practice tasks."
+  },
+  "assessTeacherNoteSection": "Note for the student",
+  "@assessTeacherNoteSection": {
+    "description": "Section heading for the paragraph the teacher can read aloud."
+  },
+  "assessWarningsSection": "Please check",
+  "@assessWarningsSection": {
+    "description": "Heading for the grader's advisories (blank page, faint photo, etc.)."
+  },
+  "assessWarningBlank": "This page looks blank. Please check the photo and try again.",
+  "@assessWarningBlank": {
+    "description": "Advisory for the page_appears_blank warning code."
+  },
+  "assessWarningLowContrast": "The photo is faint. A brighter photo will grade more accurately.",
+  "@assessWarningLowContrast": {
+    "description": "Advisory for the low_contrast warning code."
+  },
+  "assessWarningPartial": "Only part of the work could be read.",
+  "@assessWarningPartial": {
+    "description": "Advisory for the partial_writing warning code."
+  },
+  "assessWarningLanguageMismatch": "The writing may be in a different language than expected.",
+  "@assessWarningLanguageMismatch": {
+    "description": "Advisory for the language_mismatch warning code."
+  },
+  "assessNoContent": "No assessment came back. Please try a clearer photo.",
+  "@assessNoContent": {
+    "description": "Empty-result state when the model returned nothing usable."
+  },
+  "assessSignIn": "Please sign in again to grade an assignment.",
+  "@assessSignIn": {
+    "description": "Shown on a 401 unauthorized response."
+  },
+  "assessUpgradeTitle": "A higher plan is needed",
+  "@assessUpgradeTitle": {
+    "description": "Title of the 403 upgrade prompt."
+  },
+  "assessUpgradeBody": "Grading handwritten work is part of a higher plan. Upgrade to keep assessing.",
+  "@assessUpgradeBody": {
+    "description": "Body of the 403 upgrade prompt."
+  },
+  "assessDailyLimitTitle": "That is all your assessments for today",
+  "@assessDailyLimitTitle": {
+    "description": "Title of the daily-limit prompt (429 DAILY_LIMIT_REACHED)."
+  },
+  "assessDailyLimitBody": "Your plan includes a set number of assessments each day. They reset tomorrow, or you can raise the limit on a higher plan.",
+  "@assessDailyLimitBody": {
+    "description": "Body of the daily-limit prompt."
+  },
+  "assessLimitTitle": "You have reached your assessment limit",
+  "@assessLimitTitle": {
+    "description": "Title of the monthly-limit prompt (429 USAGE_LIMIT_REACHED)."
+  },
+  "assessLimitBody": "You have used all the assessments in your plan. They reset next month, or you can raise the limit on a higher plan.",
+  "@assessLimitBody": {
+    "description": "Body of the monthly-limit prompt."
+  },
+  "assessSeePricing": "See plans",
+  "@assessSeePricing": {
+    "description": "Action that opens the pricing page from a limit or upgrade prompt."
+  },
+  "assessBusy": "The grading model is busy right now. Please try again in a minute.",
+  "@assessBusy": {
+    "description": "Shown on a 503 busy response with no Retry-After."
+  },
+  "assessBusyRetryAfter": "{seconds, plural, =1{The grading model is busy right now. Please try again in about 1 second.} other{The grading model is busy right now. Please try again in about {seconds} seconds.}}",
+  "@assessBusyRetryAfter": {
+    "description": "Shown on a 503 busy response that carried Retry-After.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "assessTimeout": "Grading is taking longer than usual. Please try again.",
+  "@assessTimeout": {
+    "description": "Shown when the request times out."
+  },
+  "assessRephrase": "The photo could not be graded. Please re-upload a clearer photo.",
+  "@assessRephrase": {
+    "description": "Shown on a 400 bad-input response."
   }
 }

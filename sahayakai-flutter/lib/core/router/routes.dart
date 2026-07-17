@@ -34,6 +34,10 @@ class Routes {
   static const String examPaper = '/exam-paper';
   static const String teacherTraining = '/teacher-training';
 
+  /// Assess Assignment. Grades a student-work photo (SCREEN_INVENTORY P1.6);
+  /// the endpoint is `POST /api/ai/assess-assignment`.
+  static const String assessAssignment = '/assess-assignment';
+
   /// Parent Message composer. Path mirrors the web's `/messages` composer
   /// (SCREEN_INVENTORY P1.5); the endpoint is `POST /api/ai/parent-message`.
   static const String parentMessage = '/messages';
