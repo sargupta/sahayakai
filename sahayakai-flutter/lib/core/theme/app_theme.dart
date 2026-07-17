@@ -28,11 +28,23 @@ class AppTheme {
   static ThemeData light() => _build(Brightness.light);
   static ThemeData dark() => _build(Brightness.dark);
 
-  /// Rebuild the theme's TextTheme for an Indic locale (raised line-heights).
+  /// Rebuild the theme for an Indic locale (raised line-heights).
+  ///
+  /// Re-runs the WHOLE [_build] instead of `copyWith(textTheme:)`, because
+  /// Flutter resolves component text styles — `appBarTheme.titleTextStyle`,
+  /// `navigationBarTheme.labelTextStyle`, `snackBarTheme.contentTextStyle`,
+  /// `tooltipTheme.textStyle`, `ButtonStyle.textStyle` — with `??`: it takes the
+  /// component's style INSTEAD of the TextTheme's, it does not merge the two.
+  /// Swapping only `textTheme` therefore stranded the AppBar and the bottom nav
+  /// — the chrome on EVERY screen — on Latin metrics in all 10 Indic locales,
+  /// clipping Bengali/Tamil/Malayalam matras. See DESIGN_RUBRIC §12.
+  ///
+  /// [_build] is the single construction path and every component style below is
+  /// derived from [textTheme], so the two cannot drift apart again.
   static ThemeData withIndic(ThemeData base) =>
-      base.copyWith(textTheme: AppText.build(base.colorScheme, isIndic: true));
+      _build(base.brightness, isIndic: true);
 
-  static ThemeData _build(Brightness b) {
+  static ThemeData _build(Brightness b, {bool isIndic = false}) {
     final isDark = b == Brightness.dark;
 
     final scheme = isDark
@@ -97,7 +109,7 @@ class AppTheme {
             scrim: Color(0xFF000000),
           );
 
-    final textTheme = AppText.build(scheme, isIndic: false);
+    final textTheme = AppText.build(scheme, isIndic: isIndic);
 
     return ThemeData(
       useMaterial3: true,
@@ -115,12 +127,9 @@ class AppTheme {
         scrolledUnderElevation: 2,
         shadowColor: AppColors.shadowBase,
         centerTitle: false,
-        titleTextStyle: GoogleFonts.outfit(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          height: 1.35,
-          color: scheme.onSurface,
-        ).copyWith(fontFamilyFallback: kIndicFallback),
+        // THEME_SPEC §5.6: "Title: Outfit 20/600 (titleLarge)" — derived rather
+        // than re-declared, so the Indic line-height follows the locale.
+        titleTextStyle: textTheme.titleLarge,
         systemOverlayStyle:
             isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
       ),
@@ -241,16 +250,21 @@ class AppTheme {
                 : scheme.onSurfaceVariant,
           ),
         ),
+        // DEVIATION FROM THEME_SPEC §5.5, which asks for a 10px label to match
+        // the web's `text-[10px]`. DESIGN_RUBRIC §0 floors label text at 12sp /
+        // height 1.4, and §12 (the merge gate) outranks web parity: a 10px label
+        // with no height falls back to Inter's ~1.21 and clips Indic matras on
+        // every screen. Derived from `labelMedium` (12/500, height 1.4 Latin /
+        // 1.5 Indic) so one rule governs; only weight and colour vary by state.
         labelTextStyle: WidgetStateProperty.resolveWith(
-          (s) => GoogleFonts.inter(
-            fontSize: 10,
+          (s) => textTheme.labelMedium?.copyWith(
             fontWeight: s.contains(WidgetState.selected)
                 ? FontWeight.w600
                 : FontWeight.w500,
             color: s.contains(WidgetState.selected)
                 ? scheme.primary
                 : scheme.onSurfaceVariant,
-          ).copyWith(fontFamilyFallback: kIndicFallback),
+          ),
         ),
       ),
       dialogTheme: DialogThemeData(
@@ -267,10 +281,8 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: scheme.inverseSurface,
-        contentTextStyle: GoogleFonts.inter(
-          color: scheme.onInverseSurface,
-          fontSize: 14,
-        ).copyWith(fontFamilyFallback: kIndicFallback),
+        contentTextStyle:
+            textTheme.bodyMedium?.copyWith(color: scheme.onInverseSurface),
         shape: const RoundedRectangleBorder(borderRadius: AppRadius.rMd),
         behavior: SnackBarBehavior.floating,
       ),
@@ -285,10 +297,7 @@ class AppTheme {
           borderRadius: AppRadius.rSm,
           border: Border.all(color: scheme.outline),
         ),
-        textStyle: GoogleFonts.inter(
-          fontSize: 12,
-          color: scheme.onSurface,
-        ).copyWith(fontFamilyFallback: kIndicFallback),
+        textStyle: textTheme.bodySmall?.copyWith(color: scheme.onSurface),
       ),
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
