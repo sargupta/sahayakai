@@ -24,9 +24,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get navProfile => 'প্রোফাইল';
 
   @override
-  String get actionContinue => 'চালিয়ে যান';
-
-  @override
   String get actionRetry => 'আবার চেষ্টা করুন';
 
   @override
@@ -34,9 +31,6 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get actionGenerate => 'তৈরি করুন';
-
-  @override
-  String get stateLoading => 'লোড হচ্ছে';
 
   @override
   String get stateOfflineTitle => 'আপনি অফলাইনে আছেন';
@@ -93,9 +87,6 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get loginValueAnswers =>
       'Answer any classroom question, in your language';
-
-  @override
-  String get loginFailed => 'We could not sign you in. Please try again.';
 
   @override
   String get onboardingTitle => 'Set up SahayakAI';
@@ -777,10 +768,6 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get profilePlanUnknown => 'Not available';
-
-  @override
-  String get profilePlanUnknownHint =>
-      'Sign in to see the plan on your account.';
 
   @override
   String get profileNoName => 'Your profile';

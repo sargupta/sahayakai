@@ -24,9 +24,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navProfile => 'Me';
 
   @override
-  String get actionContinue => 'Continue';
-
-  @override
   String get actionRetry => 'Try again';
 
   @override
@@ -34,9 +31,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get actionGenerate => 'Generate';
-
-  @override
-  String get stateLoading => 'Loading';
 
   @override
   String get stateOfflineTitle => 'You are offline';
@@ -91,9 +85,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get loginValueAnswers =>
       'Answer any classroom question, in your language';
-
-  @override
-  String get loginFailed => 'We could not sign you in. Please try again.';
 
   @override
   String get onboardingTitle => 'Set up SahayakAI';
@@ -775,10 +766,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profilePlanUnknown => 'Not available';
-
-  @override
-  String get profilePlanUnknownHint =>
-      'Sign in to see the plan on your account.';
 
   @override
   String get profileNoName => 'Your profile';

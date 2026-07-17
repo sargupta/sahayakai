@@ -20,10 +20,6 @@
   "@navProfile": {
     "description": "Bottom-nav label: profile / account tab."
   },
-  "actionContinue": "Continue",
-  "@actionContinue": {
-    "description": "Primary button to proceed."
-  },
   "actionRetry": "Try again",
   "@actionRetry": {
     "description": "Retry a failed action."
@@ -35,10 +31,6 @@
   "actionGenerate": "Generate",
   "@actionGenerate": {
     "description": "Submit an AI tool form."
-  },
-  "stateLoading": "Loading",
-  "@stateLoading": {
-    "description": "Generic loading state label."
   },
   "stateOfflineTitle": "You are offline",
   "@stateOfflineTitle": {
@@ -107,10 +99,6 @@
   "loginValueAnswers": "Answer any classroom question, in your language",
   "@loginValueAnswers": {
     "description": "Login: one of three capability lines shown before sign-in."
-  },
-  "loginFailed": "We could not sign you in. Please try again.",
-  "@loginFailed": {
-    "description": "Login: sign-in failure message."
   },
   "onboardingTitle": "Set up SahayakAI",
   "@onboardingTitle": {
@@ -957,10 +945,6 @@
   "profilePlanUnknown": "Not available",
   "@profilePlanUnknown": {
     "description": "Plan badge when there is no signed-in token to read the plan claim from. Deliberately not 'Free': an unknown plan must not be stated as a fact."
-  },
-  "profilePlanUnknownHint": "Sign in to see the plan on your account.",
-  "@profilePlanUnknownHint": {
-    "description": "Explains why the plan badge cannot show a plan."
   },
   "profileNoName": "Your profile",
   "@profileNoName": {

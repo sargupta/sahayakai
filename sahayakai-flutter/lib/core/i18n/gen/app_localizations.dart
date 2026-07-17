@@ -146,12 +146,6 @@ abstract class AppLocalizations {
   /// **'Me'**
   String get navProfile;
 
-  /// Primary button to proceed.
-  ///
-  /// In en, this message translates to:
-  /// **'Continue'**
-  String get actionContinue;
-
   /// Retry a failed action.
   ///
   /// In en, this message translates to:
@@ -169,12 +163,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Generate'**
   String get actionGenerate;
-
-  /// Generic loading state label.
-  ///
-  /// In en, this message translates to:
-  /// **'Loading'**
-  String get stateLoading;
 
   /// Shown when the device has no network.
   ///
@@ -277,12 +265,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Answer any classroom question, in your language'**
   String get loginValueAnswers;
-
-  /// Login: sign-in failure message.
-  ///
-  /// In en, this message translates to:
-  /// **'We could not sign you in. Please try again.'**
-  String get loginFailed;
 
   /// Onboarding: app bar title.
   ///
@@ -1507,12 +1489,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not available'**
   String get profilePlanUnknown;
-
-  /// Explains why the plan badge cannot show a plan.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign in to see the plan on your account.'**
-  String get profilePlanUnknownHint;
 
   /// Identity card heading when the teacher has not set a display name yet.
   ///

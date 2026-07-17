@@ -14,11 +14,16 @@ class EmptyView extends StatelessWidget {
   const EmptyView({
     super.key,
     required this.message,
+    this.title,
     this.icon = LucideIcons.inbox,
     this.action,
   });
 
   final String message;
+
+  /// An optional heading above the message, for states that read better with a
+  /// short title line before the explanation (e.g. an empty profile).
+  final String? title;
   final IconData icon;
   final Widget? action;
 
@@ -32,6 +37,10 @@ class EmptyView extends StatelessWidget {
       children: [
         Icon(icon, color: scheme.onSurfaceVariant, size: AppIconSize.standalone),
         const SizedBox(height: AppSpacing.space3),
+        if (title != null) ...[
+          Text(title!, style: text.titleMedium),
+          const SizedBox(height: AppSpacing.space1),
+        ],
         Text(message, style: text.bodyLarge),
         if (action != null) ...[
           const SizedBox(height: AppSpacing.space4),

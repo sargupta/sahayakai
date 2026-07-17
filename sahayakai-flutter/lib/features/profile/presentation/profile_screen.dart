@@ -220,6 +220,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
             AppCard(
               child: EmptyView(
                 icon: LucideIcons.userCog,
+                title: l10n.profileEmptyTitle,
                 message: l10n.profileEmptyBody,
               ),
             ),

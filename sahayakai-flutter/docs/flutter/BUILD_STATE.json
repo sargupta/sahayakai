@@ -329,7 +329,7 @@
       "id": "i18n-translation",
       "severity": "high",
       "status": "open",
-      "summary": "UI is effectively English-only for Indic users: app_en.arb has 262 keys but all 10 Indic ARBs carry only 23 (239 keys render English fallback).",
+      "summary": "UI is effectively English-only for Indic users: app_en.arb has 262 keys but all 10 Indic ARBs carry only 21 (241 keys render English fallback).",
       "why": "Contradicts the product's core promise (11 Indic languages first-class, never Hindi-only) and DESIGN_RUBRIC 12.15. Language picker and AI output language DO work across 11; the UI chrome does not.",
       "note": "Pre-existing across all shipped screens, not introduced by any one unit. Machine translation of teacher-facing copy needs native review for dignity + pedagogical terminology before shipping."
     }
