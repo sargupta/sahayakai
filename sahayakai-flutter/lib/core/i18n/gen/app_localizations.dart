@@ -800,6 +800,12 @@ abstract class AppLocalizations {
   /// **'You have used your lesson plans for now. Please try again later or upgrade your plan.'**
   String get lessonPlanLimitBody;
 
+  /// Action on the upgrade / limit prompts, opening the pricing page.
+  ///
+  /// In en, this message translates to:
+  /// **'See plans and pricing'**
+  String get lessonPlanSeePricing;
+
   /// Shown on a 400 invalid-input response.
   ///
   /// In en, this message translates to:
@@ -1075,6 +1081,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You have used your quizzes for now. Please try again later or upgrade your plan.'**
   String get quizLimitBody;
+
+  /// Action on the upgrade / limit prompts, opening the pricing page.
+  ///
+  /// In en, this message translates to:
+  /// **'See plans and pricing'**
+  String get quizSeePricing;
 
   /// Shown on a 400 invalid-input response.
   ///

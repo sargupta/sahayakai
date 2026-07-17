@@ -377,6 +377,9 @@ class AppLocalizationsHi extends AppLocalizations {
       'You have used your lesson plans for now. Please try again later or upgrade your plan.';
 
   @override
+  String get lessonPlanSeePricing => 'See plans and pricing';
+
+  @override
   String get lessonPlanRephrase =>
       'We could not build a plan from that. Please rephrase the topic and try again.';
 
@@ -529,6 +532,9 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get quizLimitBody =>
       'You have used your quizzes for now. Please try again later or upgrade your plan.';
+
+  @override
+  String get quizSeePricing => 'See plans and pricing';
 
   @override
   String get quizRephrase =>

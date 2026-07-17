@@ -482,6 +482,10 @@
   "@lessonPlanLimitBody": {
     "description": "Body for the limit-reached state."
   },
+  "lessonPlanSeePricing": "See plans and pricing",
+  "@lessonPlanSeePricing": {
+    "description": "Action on the upgrade / limit prompts, opening the pricing page."
+  },
   "lessonPlanRephrase": "We could not build a plan from that. Please rephrase the topic and try again.",
   "@lessonPlanRephrase": {
     "description": "Shown on a 400 invalid-input response."
@@ -670,6 +674,10 @@
   "quizLimitBody": "You have used your quizzes for now. Please try again later or upgrade your plan.",
   "@quizLimitBody": {
     "description": "Body for the limit-reached state."
+  },
+  "quizSeePricing": "See plans and pricing",
+  "@quizSeePricing": {
+    "description": "Action on the upgrade / limit prompts, opening the pricing page."
   },
   "quizRephrase": "We could not build a quiz from that. Please rephrase the topic and try again.",
   "@quizRephrase": {
