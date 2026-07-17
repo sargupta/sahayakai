@@ -1,0 +1,89 @@
+# SahayakAI Flutter — Handoff (owner actions)
+
+Everything here needs your Google/Firebase accounts and cannot be automated. The app builds, tests,
+and renders without it; these unlock live auth + data.
+
+## 1. Firebase wiring (unblocks every network call)
+The app currently runs on a **stub auth layer**: `tokenProvider` returns null → no `Authorization:
+Bearer` header → middleware injects no `x-user-id` → **every API call 401s at runtime**. UI, DTOs,
+error states and tests are all complete and green; only the live wiring waits on this.
+
+Steps:
+1. `dart pub global activate flutterfire_cli`
+2. `flutterfire configure --project=sahayakai-b4248` → generates `lib/firebase_options.dart` +
+   `android/app/google-services.json`.
+3. Add deps: `firebase_core`, `firebase_auth`, `firebase_app_check`, `google_sign_in`.
+4. Register the Android app `com.sargvision.sahayakai` in Firebase and add its **SHA-1 + SHA-256**
+   (from the release keystore) — required for Google Sign-In.
+5. Enable **Play Integrity** App Check for the app; keep App Check in **monitor / soft-enforce**
+   until verified, or protected routes will hard-block.
+6. Replace the stub `tokenProvider` with the real Firebase ID token, and the stub auth controller
+   with `firebase_auth` state. Call sites are marked with TODOs.
+
+## 2. Delete-account needs REAL re-auth (not forceRefresh) — important
+`POST /api/user/delete-account` checks the ID token's **`auth_time` <= 5 minutes**.
+`getIdToken(forceRefresh: true)` mints a new token but **carries the original `auth_time`**, so it
+will still be rejected. The real flow must call `reauthenticateWithCredential(...)` before deleting.
+Documented at the call site in `lib/features/settings/`.
+- Re-auth failure surfaces as **401 `reauth_required`** (not 403). The route has **no 429**.
+
+## 3. Backend contract gotchas already handled (do not "fix" these)
+- **Profile board field is `preferredBoard`, NOT `educationBoard`.** The route's allowlist accepts
+  only `preferredBoard` and mirrors it into `educationBoard` server-side. Sending `educationBoard`
+  is **silently dropped** — the save appears to succeed and changes nothing. Pinned by a test.
+- **Quiz question field is `questionType`, not `type`** (per the backend Zod schema).
+- `EDUCATION_BOARDS` is **29** entries.
+- `targetDifficulty: null` on quiz is what returns all three difficulty variants.
+
+### Profile (`users/<uid>`) — found while building P0.8, all verified against the handlers
+
+- **There is NO `GET /api/user/profile`.** The route exposes only `POST` and `PATCH`. The web reads
+  the profile through the `getProfileData` **server action** (Next's RSC protocol — a build-specific
+  `Next-Action` id, not a stable HTTP contract), which Flutter cannot call. `/api/auth/profile-check`
+  returns `{exists, onboardingComplete}` only. So the read is a **direct `users/<uid>` client-SDK
+  read**, which `firestore.rules` explicitly allows (`allow read: if isOwner(userId)`). It is behind
+  the `ProfileDocSource` seam, pending Firebase.
+- **NEVER call `POST /api/user/profile` from the app.** It is unsafe for a profile editor on three
+  counts, all verified in `route.ts`:
+  1. It Zod-parses through `UserProfileSchema`, which has **no `state`, `district`, `pincode` or
+     `boardCategory` key**. Zod strips unknown keys, so those fields are dropped **silently**.
+  2. Its schema defaults are applied on every call and written through `dbAdapter.createUser` — a
+     `set(merge:true)` that, unlike `updateUser`, does **not** pass the client allowlist. A body
+     without `planType` writes `planType: 'free'`, plus `impactScore: 0` and
+     `contentSharedCount: 0`. **Saving a display name would downgrade a paying teacher and zero
+     their impact score.**
+  3. It reads grades from **`teachingGradeLevels`** only; sending `gradeLevels` wipes them to `[]`.
+- **`boardCategory` is not a persisted field.** Nothing writes it and nothing stores it (absent from
+  `UserProfileSchema`, the PATCH allowlist, `PROFILE_WRITABLE_FIELDS` and the adapter's
+  `CLIENT_EDITABLE_USER_FIELDS`); the web keeps it in local React state as a cascading-picker
+  helper. SCREEN_INVENTORY P0.2 listing it as a profile field is wrong. It is UI-only here
+  (`BoardCategory`, derived from the board on read).
+- **`administrativeRole` can only be written over PATCH.** It is in `firestore.rules`'
+  `protectedUserFields()`, so a client-SDK write carrying it is rejected — and would take the whole
+  merge down with it. Hence the profile save's two lanes (see `ProfileRepository`).
+- **`INDIAN_STATES` is 36, not 35.** SCREEN_INVENTORY §0's heading says "35 — 28 states + 7 UTs",
+  but the list it prints has 36, and so does the backend's `src/types/index.ts` (8 UTs). Pinned by a
+  test against the backend array.
+- **Plan badge reads the ID token's `planType` custom claim**, not the profile doc — that is what
+  middleware verifies into `x-user-plan` and what the metering enforces, and `planType` is
+  rules-protected so the doc can lag. No token (today's stub) renders **"Not available"**, never a
+  fabricated "Free".
+- Pre-existing **web-side** bug, not ours to fix but worth knowing: `pincode` is in the server
+  action's `PROFILE_WRITABLE_FIELDS` but **not** in the adapter's `CLIENT_EDITABLE_USER_FIELDS`, so
+  `updateProfileAction` drops it (with a warn log). Onboarding has been sending a pincode that never
+  lands. The Flutter document lane writes it directly, so it works here.
+
+## 4. Push notifications (FCM)
+The Settings notifications switch is **local-only and defaults OFF** (deliberate: defaulting a
+permission-bearing toggle on, or promising undeliverable notifications, is a dark pattern). Wiring
+FCM needs `google-services.json` (step 1) plus registering the device token against the existing
+`POST /api/fcm/register`. TODO left in the code.
+
+## 5. Fonts (deferred hardening)
+Currently `google_fonts` fetches at runtime. For rural/offline users, bundle the Inter/Outfit/Noto
+`.ttf`s into `assets/fonts/` and set `GoogleFonts.config.allowRuntimeFetching = false`.
+
+## 6. Device verification (worth a human eye)
+`flutter devices` finds none in this environment, so **contrast and dark-mode are verified by
+token-only color usage + clean renders in both brightnesses, not by on-device screenshots**. Run the
+app on a real handset and eyeball the saffron/dark surfaces before shipping.

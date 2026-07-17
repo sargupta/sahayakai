@@ -1,17 +1,27 @@
-// Phase T smoke test placeholder.
-//
-// We can't fully boot SahayakApp in unit tests without mocking Firebase init,
-// so this just exercises the widget tree as a no-op until Phase T.2 brings in
-// proper integration tests against an Android emulator with Nano weights.
+// Foundation smoke test: the app boots to the themed splash screen.
 
-import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:sahayakai/app.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  testWidgets('placeholder smoke test', (WidgetTester tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(home: Scaffold(body: Text('Phase T scaffolding'))),
-    );
-    expect(find.text('Phase T scaffolding'), findsOneWidget);
+  setUp(() {
+    // No network in tests: don't try to fetch Google Fonts at runtime.
+    GoogleFonts.config.allowRuntimeFetching = false;
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+  });
+
+  testWidgets('App boots to the splash brand mark', (WidgetTester tester) async {
+    await tester.pumpWidget(const ProviderScope(child: SahayakApp()));
+    // One frame is enough to render the splash.
+    await tester.pump();
+    expect(find.text('SahayakAI'), findsWidgets);
+
+    // Drain the 600ms bootstrap timer so no timers remain pending, then let
+    // the router redirect off the splash.
+    await tester.pump(const Duration(milliseconds: 700));
+    await tester.pump();
   });
 }

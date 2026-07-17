@@ -1,0 +1,27 @@
+/// Path constants and the public (no-auth) route set.
+class Routes {
+  Routes._();
+
+  static const String splash = '/splash';
+  static const String login = '/login';
+  static const String home = '/';
+
+  // Reserved for later units (tabs currently live inside AppShell).
+  static const String library = '/my-library';
+  static const String profile = '/my-profile';
+
+  /// Settings. Auth-required per SCREEN_INVENTORY P0.7: it is pushed from the
+  /// Profile (Me) tab's app-bar action. Its signed-out card is a defensive
+  /// state (it renders on the sign-out frame, before the redirect lands, and if
+  /// a token expires while the screen is open), not a public entry point.
+  static const String settings = '/settings';
+
+  // AI tools (pushed on top of the signed-in shell).
+  static const String lessonPlan = '/lesson-plan';
+  static const String quizGenerator = '/quiz-generator';
+  static const String instantAnswer = '/instant-answer';
+
+  /// Routes reachable while signed out. `/try-call` (anon lead magnet) will
+  /// join this set when that screen lands.
+  static const Set<String> publicPaths = {splash, login};
+}

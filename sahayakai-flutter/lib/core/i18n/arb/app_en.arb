@@ -1,0 +1,879 @@
+{
+  "@@locale": "en",
+  "appTitle": "SahayakAI",
+  "@appTitle": {
+    "description": "Application name (brand)."
+  },
+  "navHome": "Home",
+  "@navHome": {
+    "description": "Bottom-nav label: dashboard home tab."
+  },
+  "navCreate": "Create",
+  "@navCreate": {
+    "description": "Bottom-nav label: opens the create/command palette."
+  },
+  "navLibrary": "Library",
+  "@navLibrary": {
+    "description": "Bottom-nav label: saved generations."
+  },
+  "navProfile": "Me",
+  "@navProfile": {
+    "description": "Bottom-nav label: profile / account tab."
+  },
+  "actionContinue": "Continue",
+  "@actionContinue": {
+    "description": "Primary button to proceed."
+  },
+  "actionRetry": "Try again",
+  "@actionRetry": {
+    "description": "Retry a failed action."
+  },
+  "actionSignOut": "Sign out",
+  "@actionSignOut": {
+    "description": "Sign out of the account."
+  },
+  "actionGenerate": "Generate",
+  "@actionGenerate": {
+    "description": "Submit an AI tool form."
+  },
+  "stateLoading": "Loading",
+  "@stateLoading": {
+    "description": "Generic loading state label."
+  },
+  "stateOfflineTitle": "You are offline",
+  "@stateOfflineTitle": {
+    "description": "Shown when the device has no network."
+  },
+  "stateOfflineBody": "Check your connection and try again.",
+  "@stateOfflineBody": {
+    "description": "Offline state helper text."
+  },
+  "errorGeneric": "Something went wrong. Please try again.",
+  "@errorGeneric": {
+    "description": "Generic error message."
+  },
+  "emptyDefault": "Fill in the form and tap Generate.",
+  "@emptyDefault": {
+    "description": "Default empty/idle state for a tool."
+  },
+  "languageLabel": "Language",
+  "@languageLabel": {
+    "description": "Label for the language switcher."
+  },
+  "splashTagline": "Teaching assistant for every classroom",
+  "@splashTagline": {
+    "description": "Splash-screen tagline under the brand mark."
+  },
+  "loginTitle": "Welcome to SahayakAI",
+  "@loginTitle": {
+    "description": "Login screen heading."
+  },
+  "loginSubtitle": "Sign in to plan lessons, quizzes and more.",
+  "@loginSubtitle": {
+    "description": "Login screen subheading."
+  },
+  "dashboardGreeting": "Welcome back",
+  "@dashboardGreeting": {
+    "description": "Dashboard greeting."
+  },
+  "dashboardToolsTitle": "Your teaching tools",
+  "@dashboardToolsTitle": {
+    "description": "Dashboard tools section header."
+  },
+  "libraryTitle": "My Library",
+  "@libraryTitle": {
+    "description": "Library screen title."
+  },
+  "libraryEmpty": "Your saved lesson plans and quizzes will appear here.",
+  "@libraryEmpty": {
+    "description": "Library empty state."
+  },
+  "profileTitle": "Profile",
+  "@profileTitle": {
+    "description": "Profile screen title."
+  },
+  "lessonPlanTitle": "Lesson Plan",
+  "@lessonPlanTitle": {
+    "description": "Lesson Plan tool title (app bar and dashboard tile)."
+  },
+  "lessonPlanSubtitle": "Plan a full 5E lesson",
+  "@lessonPlanSubtitle": {
+    "description": "Lesson Plan dashboard tile subtitle."
+  },
+  "lessonPlanEmpty": "Add a topic and tap Generate to build a 5E lesson plan.",
+  "@lessonPlanEmpty": {
+    "description": "Lesson Plan idle/empty state before generating."
+  },
+  "lessonPlanTopicLabel": "Topic",
+  "@lessonPlanTopicLabel": {
+    "description": "Label for the required lesson topic field."
+  },
+  "lessonPlanTopicHint": "For example, Photosynthesis",
+  "@lessonPlanTopicHint": {
+    "description": "Placeholder for the lesson topic field."
+  },
+  "lessonPlanTopicError": "Please enter a topic to plan.",
+  "@lessonPlanTopicError": {
+    "description": "Validation shown when the topic field is empty."
+  },
+  "lessonPlanGradeLabel": "Grade levels",
+  "@lessonPlanGradeLabel": {
+    "description": "Label for the multi-select grade levels chips."
+  },
+  "lessonPlanSubjectLabel": "Subject",
+  "@lessonPlanSubjectLabel": {
+    "description": "Label for the subject selector."
+  },
+  "lessonPlanSubjectAny": "Any subject",
+  "@lessonPlanSubjectAny": {
+    "description": "Default option meaning no specific subject was chosen."
+  },
+  "lessonPlanResourceLabel": "Classroom resources",
+  "@lessonPlanResourceLabel": {
+    "description": "Label for the resource-level segmented control."
+  },
+  "lessonPlanResourceLow": "Low",
+  "@lessonPlanResourceLow": {
+    "description": "Resource level: few materials available."
+  },
+  "lessonPlanResourceMedium": "Medium",
+  "@lessonPlanResourceMedium": {
+    "description": "Resource level: some materials available."
+  },
+  "lessonPlanResourceHigh": "High",
+  "@lessonPlanResourceHigh": {
+    "description": "Resource level: well-equipped classroom."
+  },
+  "lessonPlanDifficultyLabel": "Difficulty",
+  "@lessonPlanDifficultyLabel": {
+    "description": "Label for the difficulty segmented control."
+  },
+  "lessonPlanDifficultyRemedial": "Remedial",
+  "@lessonPlanDifficultyRemedial": {
+    "description": "Difficulty: for students who need extra support."
+  },
+  "lessonPlanDifficultyStandard": "Standard",
+  "@lessonPlanDifficultyStandard": {
+    "description": "Difficulty: grade-appropriate level."
+  },
+  "lessonPlanDifficultyAdvanced": "Advanced",
+  "@lessonPlanDifficultyAdvanced": {
+    "description": "Difficulty: for students ready to be stretched."
+  },
+  "lessonPlanRuralLabel": "Use local, everyday examples",
+  "@lessonPlanRuralLabel": {
+    "description": "Toggle label for grounding the plan in rural context."
+  },
+  "lessonPlanRuralHint": "Root activities in familiar rural and community settings.",
+  "@lessonPlanRuralHint": {
+    "description": "Helper text for the rural-context toggle."
+  },
+  "lessonPlanOptional": "Optional",
+  "@lessonPlanOptional": {
+    "description": "Marker on non-required form fields."
+  },
+  "lessonPlanObjectives": "Learning objectives",
+  "@lessonPlanObjectives": {
+    "description": "Result section heading for objectives."
+  },
+  "lessonPlanVocabulary": "Key vocabulary",
+  "@lessonPlanVocabulary": {
+    "description": "Result section heading for vocabulary."
+  },
+  "lessonPlanMaterials": "Materials",
+  "@lessonPlanMaterials": {
+    "description": "Result section heading for materials."
+  },
+  "lessonPlanActivities": "5E activities",
+  "@lessonPlanActivities": {
+    "description": "Result section heading for the 5E activities."
+  },
+  "lessonPlanAssessment": "Assessment",
+  "@lessonPlanAssessment": {
+    "description": "Result section heading for assessment."
+  },
+  "lessonPlanHomework": "Homework",
+  "@lessonPlanHomework": {
+    "description": "Result section heading for homework."
+  },
+  "lessonPlanTeacherTip": "Teacher tip",
+  "@lessonPlanTeacherTip": {
+    "description": "Label above an activity's teacher tip."
+  },
+  "lessonPlanUnderstandingCheck": "Check for understanding",
+  "@lessonPlanUnderstandingCheck": {
+    "description": "Label above an activity's understanding check."
+  },
+  "lessonPlanNoteLabel": "A note before you begin",
+  "@lessonPlanNoteLabel": {
+    "description": "Heading of the lenient validation-warning banner."
+  },
+  "lessonPlanUpgradeTitle": "A higher plan is needed",
+  "@lessonPlanUpgradeTitle": {
+    "description": "Title shown when the API returns 403 PLAN_UPGRADE_REQUIRED."
+  },
+  "lessonPlanUpgradeBody": "Lesson planning is part of a higher plan. Please upgrade to keep generating plans.",
+  "@lessonPlanUpgradeBody": {
+    "description": "Body for the upgrade-required state."
+  },
+  "lessonPlanLimitTitle": "You have reached your limit",
+  "@lessonPlanLimitTitle": {
+    "description": "Title shown when the API returns 429 usage/daily limit."
+  },
+  "lessonPlanLimitBody": "You have used your lesson plans for now. Please try again later or upgrade your plan.",
+  "@lessonPlanLimitBody": {
+    "description": "Body for the limit-reached state."
+  },
+  "lessonPlanRephrase": "We could not build a plan from that. Please rephrase the topic and try again.",
+  "@lessonPlanRephrase": {
+    "description": "Shown on a 400 invalid-input response."
+  },
+  "lessonPlanBusy": "The assistant is busy right now. Please try again in a moment.",
+  "@lessonPlanBusy": {
+    "description": "Shown on a 503 busy/quota response."
+  },
+  "lessonPlanTimeout": "This is taking longer than expected. Please try again.",
+  "@lessonPlanTimeout": {
+    "description": "Shown when the request times out."
+  },
+  "lessonPlanSignIn": "Please sign in again to use this tool.",
+  "@lessonPlanSignIn": {
+    "description": "Shown on a 401 unauthorized response."
+  },
+  "quizTitle": "Quiz",
+  "@quizTitle": {
+    "description": "Quiz Generator screen title and tool-tile title."
+  },
+  "quizSubtitle": "Build a quiz in three difficulty levels",
+  "@quizSubtitle": {
+    "description": "Quiz tool-tile subtitle on the dashboard and create palette."
+  },
+  "quizEmpty": "Add a topic and tap Generate to build a quiz.",
+  "@quizEmpty": {
+    "description": "Quiz idle/empty state before generating."
+  },
+  "quizTopicLabel": "Topic",
+  "@quizTopicLabel": {
+    "description": "Label for the quiz topic field."
+  },
+  "quizTopicHint": "For example, Fractions",
+  "@quizTopicHint": {
+    "description": "Placeholder for the quiz topic field."
+  },
+  "quizTopicError": "Please enter a topic for the quiz.",
+  "@quizTopicError": {
+    "description": "Validation shown when the topic field is empty."
+  },
+  "quizNumQuestionsLabel": "Number of questions",
+  "@quizNumQuestionsLabel": {
+    "description": "Label for the question-count stepper."
+  },
+  "quizFewerQuestions": "Fewer questions",
+  "@quizFewerQuestions": {
+    "description": "Tooltip on the stepper decrement button."
+  },
+  "quizMoreQuestions": "More questions",
+  "@quizMoreQuestions": {
+    "description": "Tooltip on the stepper increment button."
+  },
+  "quizTypesLabel": "Question types",
+  "@quizTypesLabel": {
+    "description": "Label for the question-type chips."
+  },
+  "quizTypesError": "Please choose at least one question type.",
+  "@quizTypesError": {
+    "description": "Validation shown when no question type is selected."
+  },
+  "quizTypeMultipleChoice": "Multiple choice",
+  "@quizTypeMultipleChoice": {
+    "description": "Question type: multiple_choice."
+  },
+  "quizTypeFillInTheBlanks": "Fill in the blanks",
+  "@quizTypeFillInTheBlanks": {
+    "description": "Question type: fill_in_the_blanks."
+  },
+  "quizTypeShortAnswer": "Short answer",
+  "@quizTypeShortAnswer": {
+    "description": "Question type: short_answer."
+  },
+  "quizTypeTrueFalse": "True or false",
+  "@quizTypeTrueFalse": {
+    "description": "Question type: true_false."
+  },
+  "quizGradeLabel": "Grade level",
+  "@quizGradeLabel": {
+    "description": "Label for the quiz grade dropdown."
+  },
+  "quizGradeAny": "Any grade",
+  "@quizGradeAny": {
+    "description": "Dropdown entry that leaves the grade unset."
+  },
+  "quizSubjectLabel": "Subject",
+  "@quizSubjectLabel": {
+    "description": "Label for the quiz subject dropdown."
+  },
+  "quizSubjectAny": "Any subject",
+  "@quizSubjectAny": {
+    "description": "Dropdown entry that leaves the subject unset."
+  },
+  "quizDifficultyLabel": "Difficulty",
+  "@quizDifficultyLabel": {
+    "description": "Label for the target-difficulty chips."
+  },
+  "quizDifficultyHint": "Leave this on all levels to get an easy, a medium and a hard version.",
+  "@quizDifficultyHint": {
+    "description": "Explains what the difficulty selector does."
+  },
+  "quizDifficultyAll": "All levels",
+  "@quizDifficultyAll": {
+    "description": "Difficulty chip that sends no targetDifficulty, returning all three variants."
+  },
+  "quizDifficultyEasy": "Easy",
+  "@quizDifficultyEasy": {
+    "description": "Difficulty: easy."
+  },
+  "quizDifficultyMedium": "Medium",
+  "@quizDifficultyMedium": {
+    "description": "Difficulty: medium."
+  },
+  "quizDifficultyHard": "Hard",
+  "@quizDifficultyHard": {
+    "description": "Difficulty: hard."
+  },
+  "quizBloomsLabel": "Thinking skills",
+  "@quizBloomsLabel": {
+    "description": "Label for the Bloom's taxonomy chips."
+  },
+  "quizBloomsHint": "Choose the kinds of thinking the questions should ask for.",
+  "@quizBloomsHint": {
+    "description": "Explains the Bloom's taxonomy selector in plain language."
+  },
+  "quizOptional": "Optional",
+  "@quizOptional": {
+    "description": "Marks a quiz form field as optional."
+  },
+  "quizQuestionCount": "{count, plural, =1{1 question} other{{count} questions}}",
+  "@quizQuestionCount": {
+    "description": "Question count shown in the result header meta row.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "quizShowAnswer": "Show answer",
+  "@quizShowAnswer": {
+    "description": "Reveals one question’s correct answer."
+  },
+  "quizHideAnswer": "Hide answer",
+  "@quizHideAnswer": {
+    "description": "Hides one question’s correct answer again."
+  },
+  "quizShowAllAnswers": "Show all answers",
+  "@quizShowAllAnswers": {
+    "description": "Reveals every answer in the selected difficulty."
+  },
+  "quizHideAllAnswers": "Hide all answers",
+  "@quizHideAllAnswers": {
+    "description": "Hides every answer in the selected difficulty."
+  },
+  "quizCorrectAnswer": "Correct answer",
+  "@quizCorrectAnswer": {
+    "description": "Label above a revealed correct answer."
+  },
+  "quizExplanation": "Why",
+  "@quizExplanation": {
+    "description": "Label above a revealed answer explanation."
+  },
+  "quizTeacherInstructions": "How to run this in class",
+  "@quizTeacherInstructions": {
+    "description": "Heading of the model's teacher instructions block."
+  },
+  "quizNoteLabel": "A note before you begin",
+  "@quizNoteLabel": {
+    "description": "Heading of the lenient validation-warning banner."
+  },
+  "quizNoQuestions": "No questions came back for that topic. Please try a different topic.",
+  "@quizNoQuestions": {
+    "description": "Shown when the response carried no usable variants."
+  },
+  "quizUpgradeTitle": "A higher plan is needed",
+  "@quizUpgradeTitle": {
+    "description": "Title shown when the API returns 403 PLAN_UPGRADE_REQUIRED."
+  },
+  "quizUpgradeBody": "Quiz generation is part of a higher plan. Please upgrade to keep building quizzes.",
+  "@quizUpgradeBody": {
+    "description": "Body for the upgrade-required state."
+  },
+  "quizLimitTitle": "You have reached your limit",
+  "@quizLimitTitle": {
+    "description": "Title shown when the API returns 429 usage/daily limit."
+  },
+  "quizLimitBody": "You have used your quizzes for now. Please try again later or upgrade your plan.",
+  "@quizLimitBody": {
+    "description": "Body for the limit-reached state."
+  },
+  "quizRephrase": "We could not build a quiz from that. Please rephrase the topic and try again.",
+  "@quizRephrase": {
+    "description": "Shown on a 400 invalid-input response."
+  },
+  "quizBusy": "The assistant is busy right now. Please try again in a moment.",
+  "@quizBusy": {
+    "description": "Shown on a 503 busy/quota response."
+  },
+  "quizTimeout": "This is taking longer than expected. Please try again.",
+  "@quizTimeout": {
+    "description": "Shown when the request times out."
+  },
+  "quizSignIn": "Please sign in again to use this tool.",
+  "@quizSignIn": {
+    "description": "Shown on a 401 unauthorized response."
+  },
+  "instantAnswerTitle": "Instant Answer",
+  "@instantAnswerTitle": {
+    "description": "Instant Answer screen title and tool-tile title."
+  },
+  "instantAnswerSubtitle": "Ask any classroom question",
+  "@instantAnswerSubtitle": {
+    "description": "Instant Answer tool-tile subtitle on the dashboard and create palette."
+  },
+  "instantAnswerAction": "Get answer",
+  "@instantAnswerAction": {
+    "description": "Submit button on the Instant Answer form."
+  },
+  "instantAnswerEmpty": "Ask a question and tap Get answer.",
+  "@instantAnswerEmpty": {
+    "description": "Instant Answer idle/empty state before asking."
+  },
+  "instantAnswerQuestionLabel": "Your question",
+  "@instantAnswerQuestionLabel": {
+    "description": "Label for the required question field."
+  },
+  "instantAnswerQuestionHint": "For example, Why does the moon change shape?",
+  "@instantAnswerQuestionHint": {
+    "description": "Placeholder for the question field."
+  },
+  "instantAnswerQuestionError": "Please enter a question.",
+  "@instantAnswerQuestionError": {
+    "description": "Validation shown when the question field is empty."
+  },
+  "instantAnswerGradeLabel": "Grade level",
+  "@instantAnswerGradeLabel": {
+    "description": "Label for the Instant Answer grade dropdown."
+  },
+  "instantAnswerGradeAny": "Any grade",
+  "@instantAnswerGradeAny": {
+    "description": "Dropdown entry that leaves the grade unset."
+  },
+  "instantAnswerSubjectLabel": "Subject",
+  "@instantAnswerSubjectLabel": {
+    "description": "Label for the Instant Answer subject dropdown."
+  },
+  "instantAnswerSubjectAny": "Any subject",
+  "@instantAnswerSubjectAny": {
+    "description": "Dropdown entry that leaves the subject unset."
+  },
+  "instantAnswerOptional": "Optional",
+  "@instantAnswerOptional": {
+    "description": "Marks an Instant Answer form field as optional."
+  },
+  "instantAnswerVideoTitle": "Watch a related video",
+  "@instantAnswerVideoTitle": {
+    "description": "Title of the card that opens the model's videoSuggestionUrl."
+  },
+  "instantAnswerVideoBody": "Opens in your browser, outside the app.",
+  "@instantAnswerVideoBody": {
+    "description": "Tells the teacher where the video card leads before they leave the app."
+  },
+  "instantAnswerNoAnswer": "No answer came back for that question. Please rephrase it and try again.",
+  "@instantAnswerNoAnswer": {
+    "description": "Shown when the response carried no usable answer text."
+  },
+  "instantAnswerSeePricing": "See plans and pricing",
+  "@instantAnswerSeePricing": {
+    "description": "Action on the limit and upgrade prompts; opens the pricing page."
+  },
+  "instantAnswerDailyLimitTitle": "That is all your questions for today",
+  "@instantAnswerDailyLimitTitle": {
+    "description": "Title shown when the API returns 429 DAILY_LIMIT_REACHED."
+  },
+  "instantAnswerDailyLimitBody": "Your plan includes a set number of instant answers each day. Your questions reset tomorrow, or you can raise the daily limit on a higher plan.",
+  "@instantAnswerDailyLimitBody": {
+    "description": "Body for the daily-limit state. Retrying cannot help, so no retry is offered."
+  },
+  "instantAnswerLimitTitle": "You have reached your limit",
+  "@instantAnswerLimitTitle": {
+    "description": "Title shown when the API returns 429 USAGE_LIMIT_REACHED."
+  },
+  "instantAnswerLimitBody": "You have used your instant answers for this month. Your questions reset next month, or you can raise the limit on a higher plan.",
+  "@instantAnswerLimitBody": {
+    "description": "Body for the monthly usage-limit state."
+  },
+  "instantAnswerUpgradeTitle": "A higher plan is needed",
+  "@instantAnswerUpgradeTitle": {
+    "description": "Title shown when the API returns 403 PLAN_UPGRADE_REQUIRED."
+  },
+  "instantAnswerUpgradeBody": "Instant answers are part of a higher plan. Please upgrade to keep asking questions.",
+  "@instantAnswerUpgradeBody": {
+    "description": "Body for the upgrade-required state."
+  },
+  "instantAnswerRephrase": "We could not answer that. Please rephrase the question and try again.",
+  "@instantAnswerRephrase": {
+    "description": "Shown on a 400 invalid-input response."
+  },
+  "instantAnswerBusy": "The assistant is busy right now. Please try again in a moment.",
+  "@instantAnswerBusy": {
+    "description": "Shown on a 503 busy response with no Retry-After."
+  },
+  "instantAnswerBusyRetryAfter": "{seconds, plural, =1{The assistant is busy right now. Please try again in about 1 second.} other{The assistant is busy right now. Please try again in about {seconds} seconds.}}",
+  "@instantAnswerBusyRetryAfter": {
+    "description": "Shown on a 503 busy response that carried Retry-After.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "instantAnswerTimeout": "This is taking longer than expected. Please try again.",
+  "@instantAnswerTimeout": {
+    "description": "Shown when the request times out."
+  },
+  "instantAnswerSignIn": "Please sign in again to use this tool.",
+  "@instantAnswerSignIn": {
+    "description": "Shown on a 401 unauthorized response."
+  },
+  "settingsTitle": "Settings",
+  "@settingsTitle": {
+    "description": "Settings screen title and the tooltip on the gear action."
+  },
+  "settingsAppearanceTitle": "Appearance",
+  "@settingsAppearanceTitle": {
+    "description": "Section header for the theme selector."
+  },
+  "settingsThemeSystem": "Match my device",
+  "@settingsThemeSystem": {
+    "description": "Theme option: follow the device light/dark setting."
+  },
+  "settingsThemeLight": "Light",
+  "@settingsThemeLight": {
+    "description": "Theme option: always light."
+  },
+  "settingsThemeDark": "Dark",
+  "@settingsThemeDark": {
+    "description": "Theme option: always dark."
+  },
+  "settingsLanguageHint": "Sets the app language and the language your teaching material is written in.",
+  "@settingsLanguageHint": {
+    "description": "Explains that the language choice drives both the UI and the AI output language."
+  },
+  "settingsNotificationsTitle": "Notifications",
+  "@settingsNotificationsTitle": {
+    "description": "Section header for the notifications switch."
+  },
+  "settingsNotificationsLabel": "Reminders and updates",
+  "@settingsNotificationsLabel": {
+    "description": "Label on the notifications switch."
+  },
+  "settingsNotificationsHint": "Hear about new teaching tools and your saved work.",
+  "@settingsNotificationsHint": {
+    "description": "Helper text under the notifications switch."
+  },
+  "settingsProfileTitle": "Teaching profile",
+  "@settingsProfileTitle": {
+    "description": "Section header for the board, qualifications and role fields."
+  },
+  "settingsProfileHint": "This helps us match your material to your board and classroom.",
+  "@settingsProfileHint": {
+    "description": "Explains why the teaching profile fields are asked for."
+  },
+  "settingsBoardLabel": "Education board",
+  "@settingsBoardLabel": {
+    "description": "Label for the education board dropdown."
+  },
+  "settingsBoardNone": "Not set",
+  "@settingsBoardNone": {
+    "description": "Dropdown entry that leaves the education board unset."
+  },
+  "settingsQualificationsLabel": "Qualifications",
+  "@settingsQualificationsLabel": {
+    "description": "Label for the multi-select qualification chips."
+  },
+  "settingsQualificationsHint": "Choose every qualification you hold.",
+  "@settingsQualificationsHint": {
+    "description": "Helper text explaining the qualification chips are multi-select."
+  },
+  "settingsAdminRoleLabel": "Administrative role",
+  "@settingsAdminRoleLabel": {
+    "description": "Label for the administrative role dropdown."
+  },
+  "settingsAdminRoleNone": "Not set",
+  "@settingsAdminRoleNone": {
+    "description": "Dropdown entry that leaves the administrative role unset."
+  },
+  "settingsRoleHod": "Head of Department (HoD)",
+  "@settingsRoleHod": {
+    "description": "Administrative role: hod."
+  },
+  "settingsRoleCoordinator": "Academic Coordinator",
+  "@settingsRoleCoordinator": {
+    "description": "Administrative role: coordinator."
+  },
+  "settingsRoleExamController": "Exam Controller",
+  "@settingsRoleExamController": {
+    "description": "Administrative role: exam_controller."
+  },
+  "settingsRoleVicePrincipal": "Vice Principal",
+  "@settingsRoleVicePrincipal": {
+    "description": "Administrative role: vice_principal."
+  },
+  "settingsRolePrincipal": "Principal",
+  "@settingsRolePrincipal": {
+    "description": "Administrative role: principal."
+  },
+  "settingsRoleNone": "Teacher, no administrative role",
+  "@settingsRoleNone": {
+    "description": "Administrative role: none. A deliberate answer, unlike 'Not set'."
+  },
+  "settingsSaveProfile": "Save profile",
+  "@settingsSaveProfile": {
+    "description": "Submits the teaching profile fields."
+  },
+  "settingsProfileSaved": "Your teaching profile has been saved.",
+  "@settingsProfileSaved": {
+    "description": "Confirmation after a successful profile save."
+  },
+  "settingsSaveFailed": "We could not save your profile. Please try again.",
+  "@settingsSaveFailed": {
+    "description": "Shown when the profile save request fails."
+  },
+  "settingsSignedOutTitle": "You are signed out",
+  "@settingsSignedOutTitle": {
+    "description": "Title of the card shown in place of the account sections when signed out."
+  },
+  "settingsSignedOutBody": "Sign in to manage your teaching profile and your account. Your language and appearance choices are saved on this device either way.",
+  "@settingsSignedOutBody": {
+    "description": "Body of the signed-out prompt card."
+  },
+  "settingsSignIn": "Sign in",
+  "@settingsSignIn": {
+    "description": "Action on the signed-out prompt card."
+  },
+  "settingsDangerTitle": "Delete account",
+  "@settingsDangerTitle": {
+    "description": "Section header for the destructive account-deletion block."
+  },
+  "settingsDangerBody": "This closes your account and removes your saved work. You will have 30 days to export everything before it is deleted for good.",
+  "@settingsDangerBody": {
+    "description": "Explains the consequences of account deletion before the teacher opens the dialog."
+  },
+  "settingsDeleteAction": "Delete account",
+  "@settingsDeleteAction": {
+    "description": "The destructive button that opens the typed-confirmation dialog."
+  },
+  "settingsDeleteDialogTitle": "Delete your account?",
+  "@settingsDeleteDialogTitle": {
+    "description": "Title of the typed-confirmation dialog."
+  },
+  "settingsDeleteDialogBody": "Your lesson plans, quizzes and profile will be scheduled for deletion. You have 30 days to export your work before it is removed.",
+  "@settingsDeleteDialogBody": {
+    "description": "Body of the typed-confirmation dialog."
+  },
+  "settingsDeleteConfirmPrompt": "Type {word} below to confirm.",
+  "@settingsDeleteConfirmPrompt": {
+    "description": "Tells the teacher which word unlocks the confirm button. The word itself is a safety token and stays in English.",
+    "placeholders": {
+      "word": {
+        "type": "String",
+        "example": "DELETE"
+      }
+    }
+  },
+  "settingsDeleteConfirmLabel": "Confirmation",
+  "@settingsDeleteConfirmLabel": {
+    "description": "Accessible label for the typed-confirmation text field."
+  },
+  "settingsDeleteCancel": "Keep my account",
+  "@settingsDeleteCancel": {
+    "description": "Dismisses the delete dialog without deleting."
+  },
+  "settingsDeleteConfirm": "Delete account",
+  "@settingsDeleteConfirm": {
+    "description": "The destructive confirm button, enabled only once the word is typed."
+  },
+  "settingsDeleteScheduled": "Your account is scheduled for deletion. You have 30 days to export your work.",
+  "@settingsDeleteScheduled": {
+    "description": "Confirmation after the deletion request succeeds."
+  },
+  "settingsDeleteFailed": "We could not delete your account. Please try again.",
+  "@settingsDeleteFailed": {
+    "description": "Shown when the deletion request fails for a non-auth reason."
+  },
+  "settingsReauthTitle": "Please sign in again",
+  "@settingsReauthTitle": {
+    "description": "Title shown when delete-account returns 401 reauth_required."
+  },
+  "settingsReauthBody": "For your security, deleting an account needs a fresh sign-in. Please sign out, sign in again, and delete within five minutes.",
+  "@settingsReauthBody": {
+    "description": "Body for the re-auth-required state on account deletion."
+  },
+  "profilePlanLabel": "Plan",
+  "@profilePlanLabel": {
+    "description": "Label for the plan badge on the Profile identity card."
+  },
+  "profilePlanFree": "Free",
+  "@profilePlanFree": {
+    "description": "Plan badge for the free tier."
+  },
+  "profilePlanPro": "Pro",
+  "@profilePlanPro": {
+    "description": "Plan badge for the pro tier."
+  },
+  "profilePlanGold": "Gold",
+  "@profilePlanGold": {
+    "description": "Plan badge for the gold tier."
+  },
+  "profilePlanPremium": "Premium",
+  "@profilePlanPremium": {
+    "description": "Plan badge for the premium tier."
+  },
+  "profilePlanUnknown": "Not available",
+  "@profilePlanUnknown": {
+    "description": "Plan badge when there is no signed-in token to read the plan claim from. Deliberately not 'Free': an unknown plan must not be stated as a fact."
+  },
+  "profilePlanUnknownHint": "Sign in to see the plan on your account.",
+  "@profilePlanUnknownHint": {
+    "description": "Explains why the plan badge cannot show a plan."
+  },
+  "profileNoName": "Your profile",
+  "@profileNoName": {
+    "description": "Identity card heading when the teacher has not set a display name yet."
+  },
+  "profileSectionAbout": "About you",
+  "@profileSectionAbout": {
+    "description": "Section header for name and school fields."
+  },
+  "profileSectionTeaching": "What you teach",
+  "@profileSectionTeaching": {
+    "description": "Section header for board, subjects and classes."
+  },
+  "profileSectionLocation": "Where you teach",
+  "@profileSectionLocation": {
+    "description": "Section header for state, district and PIN code."
+  },
+  "profileSectionContact": "How we reach you",
+  "@profileSectionContact": {
+    "description": "Section header for the phone number field."
+  },
+  "profileNameLabel": "Your name",
+  "@profileNameLabel": {
+    "description": "Label for the display name field."
+  },
+  "profileNameHint": "This is the name other teachers see on work you share.",
+  "@profileNameHint": {
+    "description": "Helper text for the display name field."
+  },
+  "profileNameInvalid": "Please use a shorter name.",
+  "@profileNameInvalid": {
+    "description": "Validation error when the display name exceeds the length limit."
+  },
+  "profileSchoolLabel": "School name",
+  "@profileSchoolLabel": {
+    "description": "Label for the school name field."
+  },
+  "profileBoardCategoryLabel": "Board type",
+  "@profileBoardCategoryLabel": {
+    "description": "Label for the coarse board-family picker that narrows the board list."
+  },
+  "profileBoardCategoryHint": "Choose a board type to shorten the list below.",
+  "@profileBoardCategoryHint": {
+    "description": "Helper text for the board category chips."
+  },
+  "profileBoardCategoryState": "State board",
+  "@profileBoardCategoryState": {
+    "description": "The state-board option in the board type picker. CBSE and ICSE / ISC are proper nouns and are not translated."
+  },
+  "profileStateLabel": "State",
+  "@profileStateLabel": {
+    "description": "Label for the state picker."
+  },
+  "profileStateNone": "Not set",
+  "@profileStateNone": {
+    "description": "The unset option in the state picker."
+  },
+  "profileDistrictLabel": "District",
+  "@profileDistrictLabel": {
+    "description": "Label for the district field."
+  },
+  "profileDistrictHint": "The district your school is in.",
+  "@profileDistrictHint": {
+    "description": "Helper text for the district field."
+  },
+  "profileSubjectsLabel": "Subjects you teach",
+  "@profileSubjectsLabel": {
+    "description": "Label for the multi-select subject chips."
+  },
+  "profileSubjectsHint": "Choose as many as you need.",
+  "@profileSubjectsHint": {
+    "description": "Helper text for the subject chips."
+  },
+  "profileGradesLabel": "Classes you teach",
+  "@profileGradesLabel": {
+    "description": "Label for the multi-select grade-level chips."
+  },
+  "profileGradesHint": "Choose as many as you need.",
+  "@profileGradesHint": {
+    "description": "Helper text for the grade-level chips."
+  },
+  "profileLanguageHint": "This is the same language choice as the rest of the app, so changing it here changes it everywhere.",
+  "@profileLanguageHint": {
+    "description": "Explains that the profile language field is the app's single language source of truth, not a second setting."
+  },
+  "profilePhoneLabel": "Mobile number",
+  "@profilePhoneLabel": {
+    "description": "Label for the phone number field."
+  },
+  "profilePhoneHint": "Optional. Ten digits, with or without +91.",
+  "@profilePhoneHint": {
+    "description": "Helper text for the phone number field."
+  },
+  "profilePhoneInvalid": "Please enter a ten digit Indian mobile number.",
+  "@profilePhoneInvalid": {
+    "description": "Validation error for a phone number that is not a valid Indian mobile number."
+  },
+  "profilePincodeLabel": "PIN code",
+  "@profilePincodeLabel": {
+    "description": "Label for the PIN code field."
+  },
+  "profilePincodeHint": "Optional. Six digits.",
+  "@profilePincodeHint": {
+    "description": "Helper text for the PIN code field."
+  },
+  "profilePincodeInvalid": "Please enter a six digit PIN code.",
+  "@profilePincodeInvalid": {
+    "description": "Validation error for a PIN code that is not six digits."
+  },
+  "profileEmptyTitle": "Your profile is empty",
+  "@profileEmptyTitle": {
+    "description": "Title of the empty state, shown when the teacher has no saved profile yet."
+  },
+  "profileEmptyBody": "Add your school and your classes, and every lesson plan and quiz you make will arrive ready for your classroom.",
+  "@profileEmptyBody": {
+    "description": "Body of the empty state, explaining what filling in the profile is worth."
+  },
+  "profileLoadFailed": "We could not open your profile. Please try again.",
+  "@profileLoadFailed": {
+    "description": "Error state when the profile read fails for a non-auth, non-network reason."
+  },
+  "profileSignedOutTitle": "You are signed out",
+  "@profileSignedOutTitle": {
+    "description": "Title of the signed-out state on the Profile screen."
+  },
+  "profileSignedOutBody": "Sign in to see and edit your teaching profile.",
+  "@profileSignedOutBody": {
+    "description": "Body of the signed-out state on the Profile screen."
+  },
+  "profileSaveSignIn": "Please sign in again to save your profile.",
+  "@profileSaveSignIn": {
+    "description": "Shown when a save is rejected because the session has expired."
+  }
+}
