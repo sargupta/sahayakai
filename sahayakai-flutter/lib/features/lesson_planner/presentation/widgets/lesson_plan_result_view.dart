@@ -3,6 +3,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/i18n/l10n_ext.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/bullet_dot.dart';
 import '../../../../shared/widgets/section_label.dart';
@@ -61,11 +62,11 @@ class _Header extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final meta = <Widget>[
       if (plan.gradeLevel != null)
-        _MetaChip(icon: LucideIcons.graduationCap, label: plan.gradeLevel!),
+        AppBadge(icon: LucideIcons.graduationCap, label: plan.gradeLevel!),
       if (plan.subject != null)
-        _MetaChip(icon: LucideIcons.bookOpen, label: plan.subject!),
+        AppBadge(icon: LucideIcons.bookOpen, label: plan.subject!),
       if (plan.duration != null)
-        _MetaChip(icon: LucideIcons.clock, label: plan.duration!),
+        AppBadge(icon: LucideIcons.clock, label: plan.duration!),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,42 +82,6 @@ class _Header extends StatelessWidget {
           ),
         ],
       ],
-    );
-  }
-}
-
-class _MetaChip extends StatelessWidget {
-  const _MetaChip({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.space3,
-        vertical: AppSpacing.space2,
-      ),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHigh,
-        borderRadius: AppRadius.rSm,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: scheme.onSurfaceVariant),
-          const SizedBox(width: AppSpacing.space2),
-          Flexible(
-            child: Text(
-              label,
-              style: text.labelMedium?.copyWith(color: scheme.onSurface),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -276,7 +241,12 @@ class _ActivityCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              if (activity.phase.isNotEmpty) _PhaseBadge(activity.phase),
+              if (activity.phase.isNotEmpty)
+                AppBadge(
+                  label: activity.phase,
+                  tone: AppBadgeTone.accent,
+                  size: AppBadgeSize.small,
+                ),
               if (activity.phase.isNotEmpty && activity.duration != null)
                 const SizedBox(width: AppSpacing.space2),
               if (activity.duration != null)
@@ -323,35 +293,6 @@ class _ActivityCard extends StatelessWidget {
               body: activity.understandingCheck!,
             ),
         ],
-      ),
-    );
-  }
-}
-
-class _PhaseBadge extends StatelessWidget {
-  const _PhaseBadge(this.phase);
-
-  final String phase;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.space3,
-        vertical: AppSpacing.space1,
-      ),
-      decoration: BoxDecoration(
-        color: scheme.primary.withValues(alpha: 0.12),
-        borderRadius: AppRadius.rSm,
-      ),
-      child: Text(
-        phase,
-        style: text.labelSmall?.copyWith(
-          color: scheme.primary,
-          fontWeight: FontWeight.w600,
-        ),
       ),
     );
   }

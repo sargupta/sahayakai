@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../core/i18n/gen/app_localizations.dart';
 import '../../../../core/i18n/l10n_ext.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/empty_view.dart';
 import '../../domain/quiz.dart';
@@ -66,9 +67,9 @@ class _Header extends StatelessWidget {
     final subject = quiz.subject ?? quiz.variants.first.subject;
 
     final meta = <Widget>[
-      if (grade != null) _MetaChip(icon: LucideIcons.graduationCap, label: grade),
-      if (subject != null) _MetaChip(icon: LucideIcons.bookOpen, label: subject),
-      _MetaChip(
+      if (grade != null) AppBadge(icon: LucideIcons.graduationCap, label: grade),
+      if (subject != null) AppBadge(icon: LucideIcons.bookOpen, label: subject),
+      AppBadge(
         icon: LucideIcons.listChecks,
         label: context.l10n.quizQuestionCount(quiz.variants.first.questions.length),
       ),
@@ -302,7 +303,7 @@ class _QuestionCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _NumberBadge(number),
+              AppBadge.count('$number'),
               const SizedBox(width: AppSpacing.space3),
               Expanded(child: _AiText(question.questionText)),
             ],
@@ -314,10 +315,14 @@ class _QuestionCard extends StatelessWidget {
               runSpacing: AppSpacing.space2,
               children: [
                 if (question.questionType != null)
-                  _TypeBadge(label: _typeLabel(l10n, question.questionType!)),
+                  AppBadge(
+                    label: _typeLabel(l10n, question.questionType!),
+                    size: AppBadgeSize.small,
+                  ),
                 if (question.difficultyLevel != null)
-                  _TypeBadge(
+                  AppBadge(
                     label: _difficultyLabel(l10n, question.difficultyLevel!),
+                    size: AppBadgeSize.small,
                   ),
               ],
             ),
@@ -471,96 +476,6 @@ class _OptionRow extends StatelessWidget {
             Icon(LucideIcons.checkCircle,
                 size: AppIconSize.inline, color: scheme.primary),
           ],
-        ],
-      ),
-    );
-  }
-}
-
-class _NumberBadge extends StatelessWidget {
-  const _NumberBadge(this.number);
-
-  final int number;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return Container(
-      constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.space2),
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: scheme.primary.withValues(alpha: 0.12),
-        borderRadius: AppRadius.rSm,
-      ),
-      child: Text(
-        '$number',
-        style: text.labelMedium?.copyWith(
-          color: scheme.primary,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
-class _TypeBadge extends StatelessWidget {
-  const _TypeBadge({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.space3,
-        vertical: AppSpacing.space1,
-      ),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHigh,
-        borderRadius: AppRadius.rSm,
-      ),
-      child: Text(
-        label,
-        style: text.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
-      ),
-    );
-  }
-}
-
-class _MetaChip extends StatelessWidget {
-  const _MetaChip({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.space3,
-        vertical: AppSpacing.space2,
-      ),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHigh,
-        borderRadius: AppRadius.rSm,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: scheme.onSurfaceVariant),
-          const SizedBox(width: AppSpacing.space2),
-          Flexible(
-            child: Text(
-              label,
-              style: text.labelMedium?.copyWith(color: scheme.onSurface),
-            ),
-          ),
         ],
       ),
     );

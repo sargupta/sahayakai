@@ -5,6 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../core/i18n/l10n_ext.dart';
 import '../../../../core/platform/link_opener.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/empty_view.dart';
 import '../../../../shared/widgets/icon_well.dart';
@@ -68,9 +69,9 @@ class _MetaRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final chips = <Widget>[
       if (answer.gradeLevel != null)
-        _MetaChip(icon: LucideIcons.graduationCap, label: answer.gradeLevel!),
+        AppBadge(icon: LucideIcons.graduationCap, label: answer.gradeLevel!),
       if (answer.subject != null)
-        _MetaChip(icon: LucideIcons.bookOpen, label: answer.subject!),
+        AppBadge(icon: LucideIcons.bookOpen, label: answer.subject!),
     ];
     if (chips.isEmpty) return const SizedBox.shrink();
 
@@ -78,42 +79,6 @@ class _MetaRow extends StatelessWidget {
       spacing: AppSpacing.space2,
       runSpacing: AppSpacing.space2,
       children: chips,
-    );
-  }
-}
-
-class _MetaChip extends StatelessWidget {
-  const _MetaChip({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.space3,
-        vertical: AppSpacing.space2,
-      ),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHigh,
-        borderRadius: AppRadius.rSm,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: scheme.onSurfaceVariant),
-          const SizedBox(width: AppSpacing.space2),
-          Flexible(
-            child: Text(
-              label,
-              style: text.labelMedium?.copyWith(color: scheme.onSurface),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

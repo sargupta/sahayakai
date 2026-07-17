@@ -59,14 +59,20 @@ class _Chip extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final fg = muted ? scheme.onSurfaceVariant : scheme.primary;
 
+    // A bordered identity chip — the border is load-bearing (it separates the
+    // free/outline, paid/accent and unknown/muted states), so it is not the
+    // shared fill-only [AppBadge]. It does share §5.4's rounded-full pill shape
+    // and the §13 inline icon token, which is all it took from that badge.
     return DecoratedBox(
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: muted
             ? scheme.surfaceContainer
             : scheme.primary.withValues(alpha: 0.12),
-        borderRadius: AppRadius.rSm,
-        border: Border.all(
-          color: muted ? scheme.outline : scheme.primary.withValues(alpha: 0.5),
+        shape: StadiumBorder(
+          side: BorderSide(
+            color:
+                muted ? scheme.outline : scheme.primary.withValues(alpha: 0.5),
+          ),
         ),
       ),
       child: Padding(
@@ -78,7 +84,7 @@ class _Chip extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 14, color: fg),
+              Icon(icon, size: AppIconSize.inline, color: fg),
               const SizedBox(width: AppSpacing.space1),
             ],
             // Flexible, not fixed: at textScale 1.3 in Malayalam this label is
