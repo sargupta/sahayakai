@@ -221,7 +221,9 @@
       "priority": "p1",
       "endpoint": "POST /api/ai/assess-assignment",
       "file": "lib/features/assess_assignment/presentation/assess_assignment_screen.dart",
-      "status": "pending"
+      "status": "built-pending-firebase",
+      "commit": "f98072a56",
+      "notes": "POST /api/ai/assess-assignment; REUSES lib/shared/media/image_input.dart. imageDataUri REQUIRED, cap 14MB AND regex data:image/(jpeg|png|webp) - STRICTER than worksheet (heic/gif 400; image_picker re-encodes to jpeg so OK). mode enum full|transcribe|score (default full); score reveals editedTranscript. Client sends NEITHER studentName NOR studentId (server strips PII; pinned by test). rubricSnapshot optional (no picker - no client saved-rubric store yet; server DEFAULT_RUBRIC). Scorecard rendered defensively per mode. Distinct retry-free DAILY_LIMIT branch kept (correct for when backend wires it). BACKEND NOTE (CORRECTED from agent overstatement): image daily cap 10/day DOES map to 429 (classifier matches 'Rate limit exceeded'); but the gemini_tokens 500k/day budget error is NOT recognized by the classifier and falls through to a generic 500 - a real backend gap, flagged as a chip. analyze clean; 688 tests; rubric PASS."
     },
     {
       "name": "My Library",
