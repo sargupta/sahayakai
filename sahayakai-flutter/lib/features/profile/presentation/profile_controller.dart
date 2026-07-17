@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../data/profile_repository.dart';
+import '../domain/profile_settings.dart';
 import '../domain/teacher_profile.dart';
 
 part 'profile_controller.g.dart';
@@ -34,6 +35,20 @@ class ProfileController extends _$ProfileController {
   /// and only after a save it saw succeed.
   void applySaved(TeacherProfile profile) {
     state = AsyncValue<TeacherProfile>.data(profile);
+  }
+
+  /// Adopts a patchable slice that Settings has just written, for the same
+  /// reason as [applySaved]: this provider is the ONE reader of `users/<uid>`,
+  /// and both screens edit that document. Without this, saving a board in
+  /// Settings would leave the Profile tab — already mounted in the shell's
+  /// IndexedStack — showing the pre-save value until the app restarted.
+  ///
+  /// A no-op when nothing has been read yet: there is no profile to merge the
+  /// slice into, and inventing one would be the falsehood this avoids.
+  void applySavedSlice(ProfileSettings settings) {
+    final current = state.valueOrNull;
+    if (current == null) return;
+    state = AsyncValue<TeacherProfile>.data(current.copyWith(settings: settings));
   }
 }
 

@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/network/api_providers.dart';
 import '../../profile/data/profile_repository.dart';
+import '../../profile/presentation/profile_controller.dart';
 import '../../profile/domain/profile_settings.dart';
 import '../data/settings_repository.dart';
 import '../domain/account_deletion.dart';
@@ -16,14 +17,16 @@ part 'settings_controller.g.dart';
 ///   - `AsyncLoading`    -> the button shows a spinner and is not re-tappable,
 ///   - `AsyncError`      -> the typed `ApiException` the view maps to copy.
 ///
-/// There is no `build()` fetch: Settings does not read the profile doc. The
-/// read lives in P0.8 (Profile), which owns `users/<uid>`, and duplicating it
-/// here would give the same document two readers with two cache lifetimes.
+/// There is no `build()` fetch here, and there still must not be: `users/<uid>`
+/// has ONE reader, `profileControllerProvider`, and a second would give the same
+/// document two cache lifetimes. Settings does not fork that read — it WATCHES
+/// it, which is how its form hydrates.
 ///
 /// The write goes through `ProfileRepository` for the same reason — Settings
 /// edits a slice of a document it does not own, so it borrows that feature's
 /// gateway (and its verified `preferredBoard` mapping) instead of keeping a
-/// parallel one.
+/// parallel one — and then hands the saved slice back to that one reader, so
+/// the Profile tab does not sit on a pre-save value.
 @riverpod
 class ProfileSaveController extends _$ProfileSaveController {
   @override
@@ -37,6 +40,11 @@ class ProfileSaveController extends _$ProfileSaveController {
       () => ref.read(profileRepositoryProvider).savePatchableSlice(settings),
     );
     state = next;
+    if (!next.hasError) {
+      // The document now matches what was sent, so the one reader adopts it
+      // rather than leaving Profile showing the pre-save values.
+      ref.read(profileControllerProvider.notifier).applySavedSlice(settings);
+    }
     return !next.hasError;
   }
 }

@@ -12,9 +12,14 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/theme_mode_provider.dart';
 import '../../../shared/domain/picker_options.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/app_skeleton.dart';
+import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/language_switcher.dart';
+import '../../../shared/widgets/offline_view.dart';
 import '../../../shared/widgets/section_label.dart';
 import '../../profile/domain/profile_settings.dart';
+import '../../profile/domain/teacher_profile.dart';
+import '../../profile/presentation/profile_controller.dart';
 import '../data/notification_prefs_provider.dart';
 import 'settings_controller.dart';
 import 'widgets/delete_account_dialog.dart';
@@ -46,17 +51,31 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  // Local form state for the profile slice. There is no profile READ wired yet
-  // (that is P0.8 + Firebase), so these start empty rather than pretending to
-  // hydrate from a doc we cannot fetch.
-  ProfileSettings _profile = const ProfileSettings();
+  /// The teacher's UNSAVED edits, or null when they have not touched the form.
+  ///
+  /// Deliberately an overlay rather than a copy seeded on load: the form's
+  /// values come from [profileControllerProvider] — the ONE reader of
+  /// `users/<uid>`, the same one Profile renders — and this only shadows it once
+  /// there is something to shadow. Settings used to hold a bare
+  /// `ProfileSettings()` and never read the document at all, so a teacher who
+  /// set their board on Profile opened Settings and was told "Not set" about
+  /// their own answer.
+  ProfileSettings? _edited;
 
-  Future<void> _saveProfile() async {
+  /// What the form is showing: the teacher's edits if any, else the document.
+  ProfileSettings _effective(TeacherProfile doc) => _edited ?? doc.settings;
+
+  Future<void> _saveProfile(ProfileSettings settings) async {
     FocusScope.of(context).unfocus();
     final saved =
-        await ref.read(profileSaveControllerProvider.notifier).save(_profile);
+        await ref.read(profileSaveControllerProvider.notifier).save(settings);
     if (!mounted) return;
-    if (saved) _snack(context.l10n.settingsProfileSaved);
+    if (saved) {
+      // The shared read has adopted this slice, so drop the overlay and let the
+      // form derive from the document again.
+      setState(() => _edited = null);
+      _snack(context.l10n.settingsProfileSaved);
+    }
   }
 
   Future<void> _deleteAccount() async {
@@ -108,50 +127,72 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // ---------------------------------------------------------------- profile
 
   Widget _profileSection(AppLocalizations l10n) {
+    return Section(
+      title: l10n.settingsProfileTitle,
+      icon: LucideIcons.graduationCap,
+      // The form cannot be shown until the document is known. Rendering an
+      // empty one over a failed read would repeat the original bug in a new
+      // place: it would say "Not set" about a field this build never read, and
+      // a Save from it would send `qualifications: []` — a real, silent wipe of
+      // whatever the teacher had set on Profile, because an empty list is a
+      // meaningful value on the wire (see ProfileSettingsPatchDto).
+      child: ref.watch(profileControllerProvider).when(
+            loading: () => const AppCard(child: AppSkeleton(lines: 4)),
+            error: (error, _) => _ProfileReadError(
+              error: error,
+              onRetry: () =>
+                  ref.read(profileControllerProvider.notifier).refresh(),
+            ),
+            data: (doc) => _profileForm(l10n, _effective(doc)),
+          ),
+    );
+  }
+
+  Widget _profileForm(AppLocalizations l10n, ProfileSettings profile) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final saveState = ref.watch(profileSaveControllerProvider);
 
-    return Section(
-      title: l10n.settingsProfileTitle,
-      icon: LucideIcons.graduationCap,
-      child: AppCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              l10n.settingsProfileHint,
-              style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
-            ),
-            const SizedBox(height: AppSpacing.space6),
-            _boardField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _qualificationsField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _adminRoleField(l10n),
-            if (saveState.hasError) ...[
-              const SizedBox(height: AppSpacing.space4),
-              _InlineError(message: _saveErrorText(l10n, saveState.error)),
-            ],
-            const SizedBox(height: AppSpacing.space6),
-            FilledButton(
-              onPressed: saveState.isLoading ? null : _saveProfile,
-              child: saveState.isLoading
-                  ? const _ButtonSpinner()
-                  : Text(l10n.settingsSaveProfile),
-            ),
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            l10n.settingsProfileHint,
+            style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: AppSpacing.space6),
+          _boardField(l10n, profile),
+          const SizedBox(height: AppSpacing.space6),
+          _qualificationsField(l10n, profile),
+          const SizedBox(height: AppSpacing.space6),
+          _adminRoleField(l10n, profile),
+          if (saveState.hasError) ...[
+            const SizedBox(height: AppSpacing.space4),
+            _InlineError(message: _saveErrorText(l10n, saveState.error)),
           ],
-        ),
+          const SizedBox(height: AppSpacing.space6),
+          FilledButton(
+            onPressed:
+                saveState.isLoading ? null : () => _saveProfile(profile),
+            child: saveState.isLoading
+                ? const _ButtonSpinner()
+                : Text(l10n.settingsSaveProfile),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _boardField(AppLocalizations l10n) {
+  Widget _boardField(AppLocalizations l10n, ProfileSettings profile) {
     return _Field(
       label: l10n.settingsBoardLabel,
       child: DropdownButtonFormField<String?>(
-        initialValue: _profile.educationBoard,
+        // Keyed on the value so a hydrate (or a refresh) rebuilds the field
+        // from the document instead of stranding it on the initial value.
+        key: ValueKey<String?>(profile.educationBoard),
+        initialValue: profile.educationBoard,
         isExpanded: true, // long board names ellipsize instead of overflowing
         items: [
           DropdownMenuItem<String?>(
@@ -162,7 +203,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             DropdownMenuItem<String?>(value: board, child: Text(board)),
         ],
         onChanged: (value) => setState(
-          () => _profile = _profile.copyWith(
+          () => _edited = profile.copyWith(
             educationBoard: value,
             clearEducationBoard: value == null,
           ),
@@ -171,7 +212,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _qualificationsField(AppLocalizations l10n) {
+  Widget _qualificationsField(AppLocalizations l10n, ProfileSettings profile) {
     return _Field(
       label: l10n.settingsQualificationsLabel,
       hint: l10n.settingsQualificationsHint,
@@ -182,10 +223,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           for (final qualification in kQualifications)
             FilterChip(
               label: Text(qualification),
-              selected: _profile.qualifications.contains(qualification),
+              selected: profile.qualifications.contains(qualification),
               // Guarantees the >=48dp target the bare chip height misses.
               materialTapTargetSize: MaterialTapTargetSize.padded,
               onSelected: (selected) => _toggleQualification(
+                profile,
                 qualification,
                 selected: selected,
               ),
@@ -195,21 +237,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  void _toggleQualification(String qualification, {required bool selected}) {
-    final next = [..._profile.qualifications];
+  void _toggleQualification(
+    ProfileSettings profile,
+    String qualification, {
+    required bool selected,
+  }) {
+    final next = [...profile.qualifications];
     if (selected) {
       next.add(qualification);
     } else {
       next.remove(qualification);
     }
-    setState(() => _profile = _profile.copyWith(qualifications: next));
+    setState(() => _edited = profile.copyWith(qualifications: next));
   }
 
-  Widget _adminRoleField(AppLocalizations l10n) {
+  Widget _adminRoleField(AppLocalizations l10n, ProfileSettings profile) {
     return _Field(
       label: l10n.settingsAdminRoleLabel,
       child: DropdownButtonFormField<AdministrativeRole?>(
-        initialValue: _profile.administrativeRole,
+        key: ValueKey<AdministrativeRole?>(profile.administrativeRole),
+        initialValue: profile.administrativeRole,
         isExpanded: true,
         items: [
           DropdownMenuItem<AdministrativeRole?>(
@@ -223,7 +270,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
         ],
         onChanged: (value) => setState(
-          () => _profile = _profile.copyWith(
+          () => _edited = profile.copyWith(
             administrativeRole: value,
             clearAdministrativeRole: value == null,
           ),
@@ -443,6 +490,36 @@ class _SignedOutCard extends StatelessWidget {
             child: Text(l10n.settingsSignIn),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// The `users/<uid>` read failed, so Settings cannot show the teaching-profile
+/// form. Which state this is depends entirely on WHY, so it branches on the
+/// typed [ApiException] kind rather than showing one catch-all apology —
+/// exactly as `ProfileScreen._ProfileError` does for the same read.
+class _ProfileReadError extends StatelessWidget {
+  const _ProfileReadError({required this.error, required this.onRetry});
+
+  final Object error;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final kind = error is ApiException ? (error as ApiException).kind : null;
+
+    // No identity: today this is every runtime read, because the token provider
+    // is the P0.2 stub. Offering "Try again" here would be a lie.
+    if (kind == ApiErrorKind.unauthorized) return const _SignedOutCard();
+
+    if (kind == ApiErrorKind.network || kind == ApiErrorKind.timeout) {
+      return AppCard(child: OfflineView(onRetry: onRetry));
+    }
+    return AppCard(
+      child: ErrorView(
+        message: context.l10n.profileLoadFailed,
+        onRetry: onRetry,
       ),
     );
   }

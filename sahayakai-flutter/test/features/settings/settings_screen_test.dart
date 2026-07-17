@@ -25,6 +25,9 @@ Future<void> _pumpScreen(
   double textScale = 1.0,
   Locale locale = const Locale('en'),
   bool signedIn = false,
+  /// The `users/<uid>` document the teaching-profile form hydrates from. Null
+  /// leaves the default signed-out source bound, so the read 401s.
+  Map<String, dynamic>? doc,
   // Functional tests mount the whole list (see kTallSurface); the overflow
   // gates pass kNarrowPhone and scroll it for real.
   Size surface = kTallSurface,
@@ -39,7 +42,10 @@ Future<void> _pumpScreen(
       brightness: brightness,
       textScale: textScale,
       locale: locale,
-      overrides: signedIn ? [signedInOverride()] : const [],
+      overrides: [
+        if (signedIn) signedInOverride(),
+        if (doc != null) profileDocOverride(doc: doc),
+      ],
     ),
   );
   await tester.pumpAndSettle();
@@ -250,7 +256,9 @@ void main() {
 
     testWidgets('signed in, the account sections replace the sign-in card',
         (tester) async {
-      await _pumpScreen(tester, signedIn: true);
+      // A readable, empty document: signed in, nothing saved yet. The form
+      // hydrates from the profile read, so it needs one to render.
+      await _pumpScreen(tester, signedIn: true, doc: const <String, dynamic>{});
 
       expect(find.text('You are signed out'), findsNothing);
       expect(find.text('Teaching profile'), findsOneWidget);
@@ -262,7 +270,7 @@ void main() {
 
   group('teaching profile form', () {
     testWidgets('qualifications are a multi-select', (tester) async {
-      await _pumpScreen(tester, signedIn: true);
+      await _pumpScreen(tester, signedIn: true, doc: const <String, dynamic>{});
 
       final bEd = find.ancestor(
         of: find.text('B.Ed'),
@@ -318,7 +326,14 @@ void main() {
   group('touch targets (DESIGN_RUBRIC §12.2)', () {
     testWidgets('every control clears 48dp, chips and radios included',
         (tester) async {
-      await _pumpScreen(tester, signedIn: true, surface: kNarrowPhone);
+      // The qualification chips this measures only render once the profile
+      // form hydrates, so it needs a readable document (empty is fine).
+      await _pumpScreen(
+        tester,
+        signedIn: true,
+        doc: const <String, dynamic>{},
+        surface: kNarrowPhone,
+      );
 
       // Measured, not assumed: a bare FilterChip is ~32dp, so the padded tap
       // target is the only thing standing between this screen and a FAIL.
@@ -377,6 +392,10 @@ void main() {
               brightness: brightness,
               textScale: scale,
               signedIn: true,
+              // The form has to hydrate for the gate to measure it; without a
+              // readable doc the section collapses to a sign-in card and this
+              // stops exercising the tallest part of the screen.
+              doc: const <String, dynamic>{},
               surface: kNarrowPhone,
             );
 
@@ -404,6 +423,9 @@ void main() {
             textScale: 1.3,
             locale: locale,
             signedIn: true,
+            // The localized profile-form labels are part of the §11 probe, so
+            // the form must hydrate rather than collapse to a sign-in card.
+            doc: const <String, dynamic>{},
             surface: kNarrowPhone,
           );
 
@@ -418,6 +440,7 @@ void main() {
       await _pumpScreen(
         tester,
         signedIn: true,
+        doc: const <String, dynamic>{},
         textScale: 1.3,
         surface: kNarrowPhone,
       );

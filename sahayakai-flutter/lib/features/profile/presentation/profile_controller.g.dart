@@ -6,7 +6,7 @@ part of 'profile_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$profileControllerHash() => r'b7652ce5fb61d3f3443d11d2e4b3d7f37e95a4de';
+String _$profileControllerHash() => r'c53210d5719da0221a493f32d9804a0f10748bd4';
 
 /// Reads the teacher's profile. `AsyncValue` gives the screen its four states
 /// for free:

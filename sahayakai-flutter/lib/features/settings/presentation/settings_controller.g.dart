@@ -7,21 +7,23 @@ part of 'settings_controller.dart';
 // **************************************************************************
 
 String _$profileSaveControllerHash() =>
-    r'988de9ec37fdfa7f0ab634209381b9c7af4ac6cb';
+    r'61384e28d41f5278f6c204fe711aa3b3b6be9df7';
 
 /// Drives the "Save profile" action through `AsyncValue<void>`:
 ///   - `AsyncData(null)` -> idle (initial, and after a successful save),
 ///   - `AsyncLoading`    -> the button shows a spinner and is not re-tappable,
 ///   - `AsyncError`      -> the typed `ApiException` the view maps to copy.
 ///
-/// There is no `build()` fetch: Settings does not read the profile doc. The
-/// read lives in P0.8 (Profile), which owns `users/<uid>`, and duplicating it
-/// here would give the same document two readers with two cache lifetimes.
+/// There is no `build()` fetch here, and there still must not be: `users/<uid>`
+/// has ONE reader, `profileControllerProvider`, and a second would give the same
+/// document two cache lifetimes. Settings does not fork that read — it WATCHES
+/// it, which is how its form hydrates.
 ///
 /// The write goes through `ProfileRepository` for the same reason — Settings
 /// edits a slice of a document it does not own, so it borrows that feature's
 /// gateway (and its verified `preferredBoard` mapping) instead of keeping a
-/// parallel one.
+/// parallel one — and then hands the saved slice back to that one reader, so
+/// the Profile tab does not sit on a pre-save value.
 ///
 /// Copied from [ProfileSaveController].
 @ProviderFor(ProfileSaveController)

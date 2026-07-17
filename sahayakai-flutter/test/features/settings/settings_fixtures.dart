@@ -4,9 +4,23 @@ import 'package:sahayakai/core/auth/auth_providers.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/core/theme/theme_mode_provider.dart';
+import 'package:sahayakai/features/profile/data/profile_doc_source.dart';
+
+import '../profile/profile_fixtures.dart';
 
 /// Shared fixtures for the settings suites. Not a `_test.dart` file, so the
 /// runner ignores it.
+export '../profile/profile_fixtures.dart' show FakeProfileDocSource, teacherDoc;
+
+/// Binds a readable `users/<uid>` document.
+///
+/// Settings' teaching-profile form hydrates from the SAME read Profile uses
+/// (`profileControllerProvider`), so without this the read 401s through the
+/// default [SignedOutProfileDocSource] and the section correctly shows its
+/// sign-in state instead of a form. `doc: {}` is a signed-in teacher who has
+/// simply saved nothing yet — a readable, empty profile.
+Override profileDocOverride({Map<String, dynamic>? doc}) =>
+    profileDocSourceProvider.overrideWithValue(FakeProfileDocSource(doc: doc));
 
 /// The DESIGN_RUBRIC §11 Indic probe strings (Bengali, Tamil, Malayalam).
 const String kBn = 'শিক্ষকদের জন্য কৃত্রিম বুদ্ধিমত্তা সহায়ক প্রশ্ন';
