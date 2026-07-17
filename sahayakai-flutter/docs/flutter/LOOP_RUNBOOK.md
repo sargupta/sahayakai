@@ -71,7 +71,7 @@ At the end of each priority band (end of P0, end of P1): run `flutter gen-l10n`,
 ---
 
 ## Design & product requirements (enforced on EVERY screen)
-- **Brand:** primary **#FF9933** vivid saffron (light) / #FFAB57 (dark); saffron is an ACCENT (CTA/active/focus), never a surface flood; AppBar surface-colored. Secondary green #28572B, tertiary navy #000080.
+- **Brand (accessible saffron split — founder-approved):** ALWAYS use `Theme.of(context).colorScheme.primary` for saffron, NEVER a raw hex. The theme resolves it to accessible **#C2410C** (light, AA-pass) / vivid **#FFAB57** (dark). Vivid #FF9933 = `AppColors.brandSaffron`, ONLY for large brand moments, NEVER behind small text on light (fails AA). Saffron is an ACCENT (CTA/active/focus), never a surface flood; AppBar surface-colored. Secondary green #28572B, tertiary navy #000080. Contrast is locked by test/core/theme/theme_contrast_test.dart — keep it green.
 - **No emojis** anywhere — Lucide icons only. **No em dashes** in user copy.
 - **All 11 languages first-class**, never Hindi-only. Language switch flips BOTH UI locale AND the AI `language` param via the single `AppLocale`. Indic text line-height ≥1.4 (≥1.7 for AI output blocks); no clipped matras.
 - **Teacher dignity** in all copy — no aggressive marketing jargon.
