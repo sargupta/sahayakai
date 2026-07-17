@@ -185,7 +185,9 @@
       "priority": "p1",
       "endpoint": "POST /api/ai/rubric",
       "file": "lib/features/rubric_generator/presentation/rubric_generator_screen.dart",
-      "status": "pending"
+      "status": "built-pending-firebase",
+      "commit": "f1ca54ff3",
+      "notes": "POST /api/ai/rubric; criteria x performance-levels grid = single Table in ONE horizontal SingleChildScrollView inside a bounded box (page never scrolls sideways; unbounded child in ToolScaffold would crash) - proven by rubric_grid_test (exactly one horizontal Scrollable with extent>0; no overflow 360dp x textScale 1.3 light+dark + Indic probes). points is num? NOT int (.5-point rubrics). SCREEN_INVENTORY was ACCURATE here. analyze clean; 518 tests; rubric PASS."
     },
     {
       "name": "Exam Paper Generator",
