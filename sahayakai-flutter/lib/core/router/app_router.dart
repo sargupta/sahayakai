@@ -11,6 +11,7 @@ import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/quiz_generator/presentation/quiz_generator_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
+import '../../features/worksheet_wizard/presentation/worksheet_wizard_screen.dart';
 import '../auth/auth_providers.dart';
 import 'routes.dart';
 
@@ -91,6 +92,10 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: Routes.instantAnswer,
         builder: (context, state) => const InstantAnswerScreen(),
+      ),
+      GoRoute(
+        path: Routes.worksheetWizard,
+        builder: (context, state) => const WorksheetWizardScreen(),
       ),
       GoRoute(
         path: Routes.settings,

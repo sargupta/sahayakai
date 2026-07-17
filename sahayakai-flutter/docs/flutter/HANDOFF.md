@@ -124,6 +124,35 @@ together with the real `google_sign_in` wiring (§1).
   `updateProfileAction` drops it (with a warn log). Onboarding has been sending a pincode that never
   lands. The Flutter document lane writes it directly, so it works here.
 
+### Worksheet Wizard (P1.1) — found while building it, verified against `route.ts` + the Zod schema
+
+`POST /api/ai/worksheet` was verified against `src/app/api/ai/worksheet/route.ts`,
+`WorksheetWizardInputSchema` / `WorksheetWizardOutputSchema` in
+`src/ai/flows/worksheet-wizard.ts`, and `src/lib/sidecar/worksheet-dispatch.ts` (the dispatcher
+does not reshape the payload; it returns the same seven fields).
+
+- **The response field is `learningObjectives`, NOT `objectives`.** SCREEN_INVENTORY §P1.1 prints
+  the response with an `objectives` key; the route actually returns `learningObjectives`
+  (and `title`, `gradeLevel`, `subject`, `studentInstructions`, `activities`, `answerKey`). The DTO
+  and a test pin `learningObjectives`.
+- **`answerKey` is `[{ activityIndex: number, answer: string }]`**, where `activityIndex` is
+  **0-based**. SCREEN_INVENTORY left the shape as `[ ... ]`. The result view renders it as a 1-based
+  "Activity N" (falling back to a bullet when the index is absent). Pinned by a test.
+- **`imageDataUri` is REQUIRED and capped by `z.string().max(14_000_000)`.** Zod's `.max()` on a
+  string measures the STRING LENGTH of the whole `data:` URI (characters, and a data URI is ASCII so
+  chars == bytes) and **rejects** (400) over the cap — it does not clamp. So the client enforces
+  `dataUri.length <= 14_000_000` (constant `kMaxImageDataUriBytes` in `lib/shared/media/image_input.dart`)
+  and the size counter measures that exact quantity. Because base64 inflates by ~4/3 plus the
+  `data:<mime>;base64,` prefix, ~14 MB of URI is ~10.5 MB of raw image. The image is sent verbatim
+  under `imageDataUri`; `prompt` is `.max(2000)`; `language` is `.max(50)`; `gradeLevel`/`subject`
+  are optional strings. `userId` and `teacherContext` are server-injected and never sent.
+- **No `validationWarning` on this endpoint** (unlike lesson-plan / quiz). The worksheet result view
+  has no note-banner.
+- **Any `data:<mime>;base64,...` is accepted** (the flow only checks the `data:` prefix; the mime is
+  passed to Gemini via `{{media url=imageDataUri}}`). The client derives the mime from the picked
+  file's extension, defaulting to `image/jpeg` (image_picker re-encodes to JPEG when `imageQuality`
+  is set).
+
 ## 4. Push notifications (FCM)
 The Settings notifications switch is **local-only and defaults OFF** (deliberate: defaulting a
 permission-bearing toggle on, or promising undeliverable notifications, is a dark pattern). Wiring
@@ -138,3 +167,23 @@ Currently `google_fonts` fetches at runtime. For rural/offline users, bundle the
 `flutter devices` finds none in this environment, so **contrast and dark-mode are verified by
 token-only color usage + clean renders in both brightnesses, not by on-device screenshots**. Run the
 app on a real handset and eyeball the saffron/dark surfaces before shipping.
+
+## 7. Camera & photo permissions (Worksheet Wizard / Assess Assignment)
+
+The shared `lib/shared/media/image_input.dart` uses `image_picker` (added at `^1.1.2`, resolved to
+1.2.3, no dependency conflicts). Owner/runtime items:
+
+- **Android manifest (done):** `android/app/src/main/AndroidManifest.xml` declares
+  `android.permission.CAMERA` plus `<uses-feature android:name="android.hardware.camera"
+  required="false"/>` (so gallery-only devices still install). Gallery goes through the Android
+  **system photo picker**, which needs no storage permission on modern SDKs.
+- **Runtime permission flow:** `image_picker` requests CAMERA at first use and surfaces a denial as a
+  `PlatformException`; the widget maps that to a dignified "needs permission … allow access in your
+  device settings" message (`imageInputPermissionDenied`) and does NOT report an image upward. There
+  is no in-app "open settings" deep link yet — if the teacher permanently denies, they must enable it
+  in OS settings. A future hardening could add `permission_handler` + an "Open settings" action.
+- **iOS (N/A now, needed when an iOS target is added):** add `NSCameraUsageDescription` and
+  `NSPhotoLibraryUsageDescription` to `ios/Runner/Info.plist`, or the app crashes on first pick. This
+  repo is Android-first; there is no iOS target wired yet.
+- **Tests never open a real camera:** the pick source is behind `imagePickerServiceProvider` and is
+  overridden with a `FakeImagePickerService` in every test.

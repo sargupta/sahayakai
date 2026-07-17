@@ -133,6 +133,15 @@ class _AppShellState extends State<AppShell> {
                     context.push(Routes.instantAnswer);
                   },
                 ),
+                ListTile(
+                  leading: const Icon(LucideIcons.fileText),
+                  title: Text(l10n.worksheetTitle),
+                  subtitle: Text(l10n.worksheetSubtitle),
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    context.push(Routes.worksheetWizard);
+                  },
+                ),
               ],
             ),
           ),

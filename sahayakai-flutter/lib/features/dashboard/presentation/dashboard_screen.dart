@@ -199,6 +199,12 @@ class _ToolList extends StatelessWidget {
         LucideIcons.messageSquare,
         Routes.instantAnswer,
       ),
+      _Tool(
+        l10n.worksheetTitle,
+        l10n.worksheetSubtitle,
+        LucideIcons.fileText,
+        Routes.worksheetWizard,
+      ),
     ];
 
     return Column(

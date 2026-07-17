@@ -6,6 +6,7 @@ import 'package:sahayakai/features/instant_answer/presentation/instant_answer_sc
 import 'package:sahayakai/features/lesson_planner/presentation/lesson_plan_screen.dart';
 import 'package:sahayakai/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:sahayakai/features/quiz_generator/presentation/quiz_generator_screen.dart';
+import 'package:sahayakai/features/worksheet_wizard/presentation/worksheet_wizard_screen.dart';
 import 'package:sahayakai/shared/widgets/app_skeleton.dart';
 import 'package:sahayakai/shared/widgets/empty_view.dart';
 import 'package:sahayakai/shared/widgets/error_view.dart';
@@ -77,9 +78,8 @@ void main() {
       expect(find.text('Lesson Plan'), findsOneWidget);
       expect(find.text('Quiz'), findsOneWidget);
       expect(find.text('Instant Answer'), findsOneWidget);
-      // Worksheet is P1.1 and has no screen. A tile that does nothing is worse
-      // than an absent one.
-      expect(find.text('Worksheet'), findsNothing);
+      // Worksheet (P1.1) now has a real screen, so its tile is live.
+      expect(find.text('Worksheet'), findsOneWidget);
     });
 
     testWidgets('the lesson plan tile opens the real lesson plan screen',
@@ -109,6 +109,20 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(InstantAnswerScreen), findsOneWidget);
+    });
+
+    testWidgets('the worksheet tile opens the real worksheet screen',
+        (tester) async {
+      await pumpDashboard(tester);
+
+      // The tile can sit below the fold at some sizes; bring it into view so the
+      // tap lands (tap only WARNS on a missed hit-test).
+      await tester.ensureVisible(find.text('Worksheet'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Worksheet'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(WorksheetWizardScreen), findsOneWidget);
     });
   });
 

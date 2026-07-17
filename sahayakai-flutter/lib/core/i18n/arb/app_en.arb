@@ -1077,5 +1077,193 @@
   "profileSaveSignIn": "Please sign in again to save your profile.",
   "@profileSaveSignIn": {
     "description": "Shown when a save is rejected because the session has expired."
+  },
+  "imageInputHint": "Add a clear photo of the textbook page.",
+  "@imageInputHint": {
+    "description": "Empty-state prompt inside the image picker well."
+  },
+  "imageInputTakePhoto": "Take photo",
+  "@imageInputTakePhoto": {
+    "description": "Button that opens the camera to capture an image."
+  },
+  "imageInputChooseGallery": "Choose from gallery",
+  "@imageInputChooseGallery": {
+    "description": "Button that opens the photo gallery to choose an image."
+  },
+  "imageInputRetake": "Retake photo",
+  "@imageInputRetake": {
+    "description": "Camera button label once an image is already chosen; replaces it."
+  },
+  "imageInputChangeGallery": "Choose another",
+  "@imageInputChangeGallery": {
+    "description": "Gallery button label once an image is already chosen; replaces it."
+  },
+  "imageInputRemove": "Remove photo",
+  "@imageInputRemove": {
+    "description": "Clears the currently chosen image."
+  },
+  "imageInputPreviewLabel": "Chosen image preview",
+  "@imageInputPreviewLabel": {
+    "description": "Accessibility label for the thumbnail of the chosen image."
+  },
+  "imageInputSizeOfMax": "{used} of {max}",
+  "@imageInputSizeOfMax": {
+    "description": "Size counter under the image preview, e.g. '2.4 MB of 14 MB'.",
+    "placeholders": {
+      "used": {
+        "type": "String",
+        "example": "2.4 MB"
+      },
+      "max": {
+        "type": "String",
+        "example": "14 MB"
+      }
+    }
+  },
+  "imageInputTooLarge": "This photo is too large. Please choose one under {max}.",
+  "@imageInputTooLarge": {
+    "description": "Shown when the chosen image is over the backend size cap.",
+    "placeholders": {
+      "max": {
+        "type": "String",
+        "example": "14 MB"
+      }
+    }
+  },
+  "imageInputPermissionDenied": "SahayakAI needs permission to use your camera or photos. Please allow access in your device settings.",
+  "@imageInputPermissionDenied": {
+    "description": "Shown when the camera or photo-library permission is denied."
+  },
+  "imageInputFailed": "We could not open that image. Please try again.",
+  "@imageInputFailed": {
+    "description": "Shown when picking or reading the image fails."
+  },
+  "worksheetTitle": "Worksheet",
+  "@worksheetTitle": {
+    "description": "Worksheet Wizard screen title and tool-tile title."
+  },
+  "worksheetSubtitle": "Build a worksheet from a textbook photo",
+  "@worksheetSubtitle": {
+    "description": "Worksheet tool-tile subtitle on the dashboard and create palette."
+  },
+  "worksheetEmpty": "Add a textbook photo and a prompt, then tap Generate.",
+  "@worksheetEmpty": {
+    "description": "Worksheet idle/empty state before generating."
+  },
+  "worksheetImageLabel": "Textbook page photo",
+  "@worksheetImageLabel": {
+    "description": "Label for the required image input."
+  },
+  "worksheetImageHint": "The worksheet is built from this page.",
+  "@worksheetImageHint": {
+    "description": "Helper text under the image input label."
+  },
+  "worksheetImageError": "Please add a photo of the textbook page.",
+  "@worksheetImageError": {
+    "description": "Validation shown when no image has been chosen."
+  },
+  "worksheetPromptLabel": "What worksheet do you need?",
+  "@worksheetPromptLabel": {
+    "description": "Label for the required prompt field."
+  },
+  "worksheetPromptHint": "For example, Make a multiplication worksheet from this page",
+  "@worksheetPromptHint": {
+    "description": "Placeholder for the worksheet prompt field."
+  },
+  "worksheetPromptError": "Please describe the worksheet you need.",
+  "@worksheetPromptError": {
+    "description": "Validation shown when the prompt field is empty."
+  },
+  "worksheetGradeLabel": "Grade level",
+  "@worksheetGradeLabel": {
+    "description": "Label for the worksheet grade dropdown."
+  },
+  "worksheetGradeAny": "Any grade",
+  "@worksheetGradeAny": {
+    "description": "Dropdown entry that leaves the grade unset."
+  },
+  "worksheetSubjectLabel": "Subject",
+  "@worksheetSubjectLabel": {
+    "description": "Label for the worksheet subject dropdown."
+  },
+  "worksheetSubjectAny": "Any subject",
+  "@worksheetSubjectAny": {
+    "description": "Dropdown entry that leaves the subject unset."
+  },
+  "worksheetOptional": "Optional",
+  "@worksheetOptional": {
+    "description": "Marks a worksheet form field as optional."
+  },
+  "worksheetObjectives": "Learning objectives",
+  "@worksheetObjectives": {
+    "description": "Result section heading for the worksheet's learning objectives."
+  },
+  "worksheetInstructions": "Instructions for students",
+  "@worksheetInstructions": {
+    "description": "Result section heading for the student instructions."
+  },
+  "worksheetActivities": "Activities",
+  "@worksheetActivities": {
+    "description": "Result section heading for the worksheet activities."
+  },
+  "worksheetActivityQuestion": "Question",
+  "@worksheetActivityQuestion": {
+    "description": "Activity type badge: question."
+  },
+  "worksheetActivityPuzzle": "Puzzle",
+  "@worksheetActivityPuzzle": {
+    "description": "Activity type badge: puzzle."
+  },
+  "worksheetActivityCreativeTask": "Creative task",
+  "@worksheetActivityCreativeTask": {
+    "description": "Activity type badge: creative_task."
+  },
+  "worksheetExplanation": "For the teacher",
+  "@worksheetExplanation": {
+    "description": "Label above an activity's pedagogical explanation."
+  },
+  "worksheetChalkboardNote": "On the blackboard",
+  "@worksheetChalkboardNote": {
+    "description": "Label above an activity's blackboard note."
+  },
+  "worksheetAnswerKey": "Answer key",
+  "@worksheetAnswerKey": {
+    "description": "Result section heading for the answer key."
+  },
+  "worksheetNoContent": "No worksheet came back for that page. Please try a clearer photo or a different prompt.",
+  "@worksheetNoContent": {
+    "description": "Shown when the response carried no usable worksheet."
+  },
+  "worksheetUpgradeTitle": "A higher plan is needed",
+  "@worksheetUpgradeTitle": {
+    "description": "Title shown when the API returns 403 PLAN_UPGRADE_REQUIRED."
+  },
+  "worksheetUpgradeBody": "Worksheet generation is part of a higher plan. Please upgrade to keep building worksheets.",
+  "@worksheetUpgradeBody": {
+    "description": "Body for the upgrade-required state."
+  },
+  "worksheetLimitTitle": "You have reached your limit",
+  "@worksheetLimitTitle": {
+    "description": "Title shown when the API returns 429 usage/daily limit."
+  },
+  "worksheetLimitBody": "You have used your worksheets for now. Please try again later or upgrade your plan.",
+  "@worksheetLimitBody": {
+    "description": "Body for the limit-reached state."
+  },
+  "worksheetRephrase": "We could not build a worksheet from that. Please try a clearer photo or rephrase your prompt.",
+  "@worksheetRephrase": {
+    "description": "Shown on a 400 invalid-input response."
+  },
+  "worksheetBusy": "The assistant is busy right now. Please try again in a moment.",
+  "@worksheetBusy": {
+    "description": "Shown on a 503 busy/quota response."
+  },
+  "worksheetTimeout": "This is taking longer than expected. Please try again.",
+  "@worksheetTimeout": {
+    "description": "Shown when the request times out."
+  },
+  "worksheetSignIn": "Please sign in again to use this tool.",
+  "@worksheetSignIn": {
+    "description": "Shown on a 401 unauthorized response."
   }
 }

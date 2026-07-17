@@ -871,4 +871,147 @@ class AppLocalizationsGu extends AppLocalizations {
 
   @override
   String get profileSaveSignIn => 'Please sign in again to save your profile.';
+
+  @override
+  String get imageInputHint => 'Add a clear photo of the textbook page.';
+
+  @override
+  String get imageInputTakePhoto => 'Take photo';
+
+  @override
+  String get imageInputChooseGallery => 'Choose from gallery';
+
+  @override
+  String get imageInputRetake => 'Retake photo';
+
+  @override
+  String get imageInputChangeGallery => 'Choose another';
+
+  @override
+  String get imageInputRemove => 'Remove photo';
+
+  @override
+  String get imageInputPreviewLabel => 'Chosen image preview';
+
+  @override
+  String imageInputSizeOfMax(String used, String max) {
+    return '$used of $max';
+  }
+
+  @override
+  String imageInputTooLarge(String max) {
+    return 'This photo is too large. Please choose one under $max.';
+  }
+
+  @override
+  String get imageInputPermissionDenied =>
+      'SahayakAI needs permission to use your camera or photos. Please allow access in your device settings.';
+
+  @override
+  String get imageInputFailed =>
+      'We could not open that image. Please try again.';
+
+  @override
+  String get worksheetTitle => 'Worksheet';
+
+  @override
+  String get worksheetSubtitle => 'Build a worksheet from a textbook photo';
+
+  @override
+  String get worksheetEmpty =>
+      'Add a textbook photo and a prompt, then tap Generate.';
+
+  @override
+  String get worksheetImageLabel => 'Textbook page photo';
+
+  @override
+  String get worksheetImageHint => 'The worksheet is built from this page.';
+
+  @override
+  String get worksheetImageError => 'Please add a photo of the textbook page.';
+
+  @override
+  String get worksheetPromptLabel => 'What worksheet do you need?';
+
+  @override
+  String get worksheetPromptHint =>
+      'For example, Make a multiplication worksheet from this page';
+
+  @override
+  String get worksheetPromptError => 'Please describe the worksheet you need.';
+
+  @override
+  String get worksheetGradeLabel => 'Grade level';
+
+  @override
+  String get worksheetGradeAny => 'Any grade';
+
+  @override
+  String get worksheetSubjectLabel => 'Subject';
+
+  @override
+  String get worksheetSubjectAny => 'Any subject';
+
+  @override
+  String get worksheetOptional => 'Optional';
+
+  @override
+  String get worksheetObjectives => 'Learning objectives';
+
+  @override
+  String get worksheetInstructions => 'Instructions for students';
+
+  @override
+  String get worksheetActivities => 'Activities';
+
+  @override
+  String get worksheetActivityQuestion => 'Question';
+
+  @override
+  String get worksheetActivityPuzzle => 'Puzzle';
+
+  @override
+  String get worksheetActivityCreativeTask => 'Creative task';
+
+  @override
+  String get worksheetExplanation => 'For the teacher';
+
+  @override
+  String get worksheetChalkboardNote => 'On the blackboard';
+
+  @override
+  String get worksheetAnswerKey => 'Answer key';
+
+  @override
+  String get worksheetNoContent =>
+      'No worksheet came back for that page. Please try a clearer photo or a different prompt.';
+
+  @override
+  String get worksheetUpgradeTitle => 'A higher plan is needed';
+
+  @override
+  String get worksheetUpgradeBody =>
+      'Worksheet generation is part of a higher plan. Please upgrade to keep building worksheets.';
+
+  @override
+  String get worksheetLimitTitle => 'You have reached your limit';
+
+  @override
+  String get worksheetLimitBody =>
+      'You have used your worksheets for now. Please try again later or upgrade your plan.';
+
+  @override
+  String get worksheetRephrase =>
+      'We could not build a worksheet from that. Please try a clearer photo or rephrase your prompt.';
+
+  @override
+  String get worksheetBusy =>
+      'The assistant is busy right now. Please try again in a moment.';
+
+  @override
+  String get worksheetTimeout =>
+      'This is taking longer than expected. Please try again.';
+
+  @override
+  String get worksheetSignIn => 'Please sign in again to use this tool.';
 }

@@ -1687,6 +1687,264 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please sign in again to save your profile.'**
   String get profileSaveSignIn;
+
+  /// Empty-state prompt inside the image picker well.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a clear photo of the textbook page.'**
+  String get imageInputHint;
+
+  /// Button that opens the camera to capture an image.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photo'**
+  String get imageInputTakePhoto;
+
+  /// Button that opens the photo gallery to choose an image.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from gallery'**
+  String get imageInputChooseGallery;
+
+  /// Camera button label once an image is already chosen; replaces it.
+  ///
+  /// In en, this message translates to:
+  /// **'Retake photo'**
+  String get imageInputRetake;
+
+  /// Gallery button label once an image is already chosen; replaces it.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose another'**
+  String get imageInputChangeGallery;
+
+  /// Clears the currently chosen image.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove photo'**
+  String get imageInputRemove;
+
+  /// Accessibility label for the thumbnail of the chosen image.
+  ///
+  /// In en, this message translates to:
+  /// **'Chosen image preview'**
+  String get imageInputPreviewLabel;
+
+  /// Size counter under the image preview, e.g. '2.4 MB of 14 MB'.
+  ///
+  /// In en, this message translates to:
+  /// **'{used} of {max}'**
+  String imageInputSizeOfMax(String used, String max);
+
+  /// Shown when the chosen image is over the backend size cap.
+  ///
+  /// In en, this message translates to:
+  /// **'This photo is too large. Please choose one under {max}.'**
+  String imageInputTooLarge(String max);
+
+  /// Shown when the camera or photo-library permission is denied.
+  ///
+  /// In en, this message translates to:
+  /// **'SahayakAI needs permission to use your camera or photos. Please allow access in your device settings.'**
+  String get imageInputPermissionDenied;
+
+  /// Shown when picking or reading the image fails.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not open that image. Please try again.'**
+  String get imageInputFailed;
+
+  /// Worksheet Wizard screen title and tool-tile title.
+  ///
+  /// In en, this message translates to:
+  /// **'Worksheet'**
+  String get worksheetTitle;
+
+  /// Worksheet tool-tile subtitle on the dashboard and create palette.
+  ///
+  /// In en, this message translates to:
+  /// **'Build a worksheet from a textbook photo'**
+  String get worksheetSubtitle;
+
+  /// Worksheet idle/empty state before generating.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a textbook photo and a prompt, then tap Generate.'**
+  String get worksheetEmpty;
+
+  /// Label for the required image input.
+  ///
+  /// In en, this message translates to:
+  /// **'Textbook page photo'**
+  String get worksheetImageLabel;
+
+  /// Helper text under the image input label.
+  ///
+  /// In en, this message translates to:
+  /// **'The worksheet is built from this page.'**
+  String get worksheetImageHint;
+
+  /// Validation shown when no image has been chosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Please add a photo of the textbook page.'**
+  String get worksheetImageError;
+
+  /// Label for the required prompt field.
+  ///
+  /// In en, this message translates to:
+  /// **'What worksheet do you need?'**
+  String get worksheetPromptLabel;
+
+  /// Placeholder for the worksheet prompt field.
+  ///
+  /// In en, this message translates to:
+  /// **'For example, Make a multiplication worksheet from this page'**
+  String get worksheetPromptHint;
+
+  /// Validation shown when the prompt field is empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Please describe the worksheet you need.'**
+  String get worksheetPromptError;
+
+  /// Label for the worksheet grade dropdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Grade level'**
+  String get worksheetGradeLabel;
+
+  /// Dropdown entry that leaves the grade unset.
+  ///
+  /// In en, this message translates to:
+  /// **'Any grade'**
+  String get worksheetGradeAny;
+
+  /// Label for the worksheet subject dropdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Subject'**
+  String get worksheetSubjectLabel;
+
+  /// Dropdown entry that leaves the subject unset.
+  ///
+  /// In en, this message translates to:
+  /// **'Any subject'**
+  String get worksheetSubjectAny;
+
+  /// Marks a worksheet form field as optional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get worksheetOptional;
+
+  /// Result section heading for the worksheet's learning objectives.
+  ///
+  /// In en, this message translates to:
+  /// **'Learning objectives'**
+  String get worksheetObjectives;
+
+  /// Result section heading for the student instructions.
+  ///
+  /// In en, this message translates to:
+  /// **'Instructions for students'**
+  String get worksheetInstructions;
+
+  /// Result section heading for the worksheet activities.
+  ///
+  /// In en, this message translates to:
+  /// **'Activities'**
+  String get worksheetActivities;
+
+  /// Activity type badge: question.
+  ///
+  /// In en, this message translates to:
+  /// **'Question'**
+  String get worksheetActivityQuestion;
+
+  /// Activity type badge: puzzle.
+  ///
+  /// In en, this message translates to:
+  /// **'Puzzle'**
+  String get worksheetActivityPuzzle;
+
+  /// Activity type badge: creative_task.
+  ///
+  /// In en, this message translates to:
+  /// **'Creative task'**
+  String get worksheetActivityCreativeTask;
+
+  /// Label above an activity's pedagogical explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'For the teacher'**
+  String get worksheetExplanation;
+
+  /// Label above an activity's blackboard note.
+  ///
+  /// In en, this message translates to:
+  /// **'On the blackboard'**
+  String get worksheetChalkboardNote;
+
+  /// Result section heading for the answer key.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer key'**
+  String get worksheetAnswerKey;
+
+  /// Shown when the response carried no usable worksheet.
+  ///
+  /// In en, this message translates to:
+  /// **'No worksheet came back for that page. Please try a clearer photo or a different prompt.'**
+  String get worksheetNoContent;
+
+  /// Title shown when the API returns 403 PLAN_UPGRADE_REQUIRED.
+  ///
+  /// In en, this message translates to:
+  /// **'A higher plan is needed'**
+  String get worksheetUpgradeTitle;
+
+  /// Body for the upgrade-required state.
+  ///
+  /// In en, this message translates to:
+  /// **'Worksheet generation is part of a higher plan. Please upgrade to keep building worksheets.'**
+  String get worksheetUpgradeBody;
+
+  /// Title shown when the API returns 429 usage/daily limit.
+  ///
+  /// In en, this message translates to:
+  /// **'You have reached your limit'**
+  String get worksheetLimitTitle;
+
+  /// Body for the limit-reached state.
+  ///
+  /// In en, this message translates to:
+  /// **'You have used your worksheets for now. Please try again later or upgrade your plan.'**
+  String get worksheetLimitBody;
+
+  /// Shown on a 400 invalid-input response.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not build a worksheet from that. Please try a clearer photo or rephrase your prompt.'**
+  String get worksheetRephrase;
+
+  /// Shown on a 503 busy/quota response.
+  ///
+  /// In en, this message translates to:
+  /// **'The assistant is busy right now. Please try again in a moment.'**
+  String get worksheetBusy;
+
+  /// Shown when the request times out.
+  ///
+  /// In en, this message translates to:
+  /// **'This is taking longer than expected. Please try again.'**
+  String get worksheetTimeout;
+
+  /// Shown on a 401 unauthorized response.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in again to use this tool.'**
+  String get worksheetSignIn;
 }
 
 class _AppLocalizationsDelegate
