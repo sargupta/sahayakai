@@ -14,6 +14,8 @@ import '../../../shared/domain/picker_options.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/error_view.dart';
+import '../../../shared/widgets/inline_error.dart';
+import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/language_switcher.dart';
 import '../../../shared/widgets/offline_view.dart';
 import '../../../shared/widgets/section_label.dart';
@@ -67,8 +69,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Future<void> _saveProfile(ProfileSettings settings) async {
     FocusScope.of(context).unfocus();
-    final saved =
-        await ref.read(profileSaveControllerProvider.notifier).save(settings);
+    final saved = await ref
+        .read(profileSaveControllerProvider.notifier)
+        .save(settings);
     if (!mounted) return;
     if (saved) {
       // The shared read has adopted this slice, so drop the overlay and let the
@@ -136,7 +139,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       // a Save from it would send `qualifications: []` — a real, silent wipe of
       // whatever the teacher had set on Profile, because an empty list is a
       // meaningful value on the wire (see ProfileSettingsPatchDto).
-      child: ref.watch(profileControllerProvider).when(
+      child: ref
+          .watch(profileControllerProvider)
+          .when(
             loading: () => const AppCard(child: AppSkeleton(lines: 4)),
             error: (error, _) => _ProfileReadError(
               error: error,
@@ -170,12 +175,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _adminRoleField(l10n, profile),
           if (saveState.hasError) ...[
             const SizedBox(height: AppSpacing.space4),
-            _InlineError(message: _saveErrorText(l10n, saveState.error)),
+            InlineError(message: _saveErrorText(l10n, saveState.error)),
           ],
           const SizedBox(height: AppSpacing.space6),
           FilledButton(
-            onPressed:
-                saveState.isLoading ? null : () => _saveProfile(profile),
+            onPressed: saveState.isLoading ? null : () => _saveProfile(profile),
             child: saveState.isLoading
                 ? const _ButtonSpinner()
                 : Text(l10n.settingsSaveProfile),
@@ -186,7 +190,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _boardField(AppLocalizations l10n, ProfileSettings profile) {
-    return _Field(
+    return LabeledField(
       label: l10n.settingsBoardLabel,
       child: DropdownButtonFormField<String?>(
         // Keyed on the value so a hydrate (or a refresh) rebuilds the field
@@ -213,7 +217,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _qualificationsField(AppLocalizations l10n, ProfileSettings profile) {
-    return _Field(
+    return LabeledField(
       label: l10n.settingsQualificationsLabel,
       hint: l10n.settingsQualificationsHint,
       child: Wrap(
@@ -252,7 +256,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _adminRoleField(AppLocalizations l10n, ProfileSettings profile) {
-    return _Field(
+    return LabeledField(
       label: l10n.settingsAdminRoleLabel,
       child: DropdownButtonFormField<AdministrativeRole?>(
         key: ValueKey<AdministrativeRole?>(profile.administrativeRole),
@@ -296,7 +300,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              scheduled ? l10n.settingsDeleteScheduled : l10n.settingsDangerBody,
+              scheduled
+                  ? l10n.settingsDeleteScheduled
+                  : l10n.settingsDangerBody,
               style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
             ),
             if (deleteState.hasError) ...[
@@ -372,7 +378,11 @@ class _ThemeSection extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               for (final entry in <(ThemeMode, String, IconData)>[
-                (ThemeMode.system, l10n.settingsThemeSystem, LucideIcons.monitor),
+                (
+                  ThemeMode.system,
+                  l10n.settingsThemeSystem,
+                  LucideIcons.monitor,
+                ),
                 (ThemeMode.light, l10n.settingsThemeLight, LucideIcons.sun),
                 (ThemeMode.dark, l10n.settingsThemeDark, LucideIcons.moon),
               ])
@@ -472,10 +482,17 @@ class _SignedOutCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(LucideIcons.logIn, size: AppIconSize.inline, color: scheme.primary),
+              Icon(
+                LucideIcons.logIn,
+                size: AppIconSize.inline,
+                color: scheme.primary,
+              ),
               const SizedBox(width: AppSpacing.space3),
               Expanded(
-                child: Text(l10n.settingsSignedOutTitle, style: text.titleMedium),
+                child: Text(
+                  l10n.settingsSignedOutTitle,
+                  style: text.titleMedium,
+                ),
               ),
             ],
           ),
@@ -538,7 +555,7 @@ class _ReauthOrErrorView extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final isReauth = error is ApiException && (error as ApiException).isAuth;
-    return _InlineError(
+    return InlineError(
       title: isReauth ? l10n.settingsReauthTitle : null,
       message: isReauth ? l10n.settingsReauthBody : l10n.settingsDeleteFailed,
     );
@@ -548,84 +565,6 @@ class _ReauthOrErrorView extends StatelessWidget {
 /// An error-toned block that sits inside a card, next to the control that
 /// failed. Left-aligned, human copy, no raw exception strings (DESIGN_RUBRIC
 /// §6) — and no centred-hero slop.
-class _InlineError extends StatelessWidget {
-  const _InlineError({required this.message, this.title});
-
-  final String message;
-  final String? title;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: scheme.error.withValues(alpha: 0.08),
-        borderRadius: AppRadius.rMd,
-        border: Border.all(color: scheme.error.withValues(alpha: 0.4)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.space3),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(LucideIcons.alertTriangle,
-                size: AppIconSize.inline, color: scheme.error),
-            const SizedBox(width: AppSpacing.space3),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (title != null) ...[
-                    Text(
-                      title!,
-                      style: text.titleSmall?.copyWith(color: scheme.error),
-                    ),
-                    const SizedBox(height: AppSpacing.space1),
-                  ],
-                  Text(message, style: text.bodyMedium),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// A labelled form row: a weight-first label above its control, with optional
-/// helper text. Mirrors the `_Field` in the lesson-plan and quiz forms.
-class _Field extends StatelessWidget {
-  const _Field({required this.label, required this.child, this.hint});
-
-  final String label;
-  final String? hint;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(label, style: text.titleSmall?.copyWith(letterSpacing: 0.2)),
-        if (hint != null) ...[
-          const SizedBox(height: AppSpacing.space1),
-          Text(
-            hint!,
-            style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-          ),
-        ],
-        const SizedBox(height: AppSpacing.space3),
-        child,
-      ],
-    );
-  }
-}
 
 /// A spinner sized to sit inside a button without changing its height.
 class _ButtonSpinner extends StatelessWidget {

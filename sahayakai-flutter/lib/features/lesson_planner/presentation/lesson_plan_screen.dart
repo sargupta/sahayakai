@@ -7,6 +7,7 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
+import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
 import '../domain/lesson_plan.dart';
@@ -110,7 +111,7 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
   }
 
   Widget _topicField(AppLocalizations l10n) {
-    return _Field(
+    return LabeledField(
       label: l10n.lessonPlanTopicLabel,
       child: TextFormField(
         controller: _topicController,
@@ -128,7 +129,7 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
   }
 
   Widget _gradeField(AppLocalizations l10n) {
-    return _Field(
+    return LabeledField(
       label: l10n.lessonPlanGradeLabel,
       optionalLabel: l10n.lessonPlanOptional,
       child: Wrap(
@@ -154,7 +155,7 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
   }
 
   Widget _subjectField(AppLocalizations l10n) {
-    return _Field(
+    return LabeledField(
       label: l10n.lessonPlanSubjectLabel,
       optionalLabel: l10n.lessonPlanOptional,
       child: DropdownButtonFormField<String?>(
@@ -174,7 +175,7 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
   }
 
   Widget _languageField(AppLocalizations l10n) {
-    return _Field(
+    return LabeledField(
       label: l10n.languageLabel,
       child: DropdownButtonFormField<AppLocale>(
         initialValue: _language,
@@ -186,14 +187,13 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
               child: Text(locale.nativeLabel),
             ),
         ],
-        onChanged: (value) =>
-            setState(() => _language = value ?? _language),
+        onChanged: (value) => setState(() => _language = value ?? _language),
       ),
     );
   }
 
   Widget _resourceField(AppLocalizations l10n) {
-    return _Field(
+    return LabeledField(
       label: l10n.lessonPlanResourceLabel,
       child: _ChoiceRow<ResourceLevel>(
         values: ResourceLevel.values,
@@ -209,7 +209,7 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
   }
 
   Widget _difficultyField(AppLocalizations l10n) {
-    return _Field(
+    return LabeledField(
       label: l10n.lessonPlanDifficultyLabel,
       child: _ChoiceRow<DifficultyLevel>(
         values: DifficultyLevel.values,
@@ -242,43 +242,6 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
 
 /// A labelled form row: a weight-first label (with an optional "Optional"
 /// marker) above its control, on the 4dp grid.
-class _Field extends StatelessWidget {
-  const _Field({
-    required this.label,
-    required this.child,
-    this.optionalLabel,
-  });
-
-  final String label;
-  final String? optionalLabel;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          children: [
-            Text(label, style: text.titleSmall?.copyWith(letterSpacing: 0.2)),
-            if (optionalLabel != null) ...[
-              const SizedBox(width: AppSpacing.space2),
-              Text(
-                optionalLabel!,
-                style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: AppSpacing.space3),
-        child,
-      ],
-    );
-  }
-}
 
 /// A single-select group rendered as wrapping [ChoiceChip]s. Wrapping (instead
 /// of a fixed-width SegmentedButton) guarantees no horizontal overflow at

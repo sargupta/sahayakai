@@ -17,6 +17,8 @@ import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/icon_well.dart';
+import '../../../shared/widgets/inline_error.dart';
+import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/language_switcher.dart';
 import '../../../shared/widgets/offline_view.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -63,7 +65,8 @@ class ProfileScreen extends ConsumerWidget {
           ),
           error: (error, _) => _ProfileError(
             error: error,
-            onRetry: () => ref.read(profileControllerProvider.notifier).refresh(),
+            onRetry: () =>
+                ref.read(profileControllerProvider.notifier).refresh(),
           ),
           // A brand-new teacher has no document, which reads as an empty
           // profile rather than an error — the production onboarding gate is
@@ -113,7 +116,10 @@ class _ProfileError extends StatelessWidget {
     }
     return SingleChildScrollView(
       padding: AppSpacing.pagePadding,
-      child: ErrorView(message: context.l10n.profileLoadFailed, onRetry: onRetry),
+      child: ErrorView(
+        message: context.l10n.profileLoadFailed,
+        onRetry: onRetry,
+      ),
     );
   }
 }
@@ -183,13 +189,16 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
       preferredLanguage: ref.read(localeControllerProvider),
     );
 
-    final saved =
-        await ref.read(profileFormSaveControllerProvider.notifier).save(profile);
+    final saved = await ref
+        .read(profileFormSaveControllerProvider.notifier)
+        .save(profile);
     if (!mounted) return;
     if (saved) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(context.l10n.settingsProfileSaved)));
+        ..showSnackBar(
+          SnackBar(content: Text(context.l10n.settingsProfileSaved)),
+        );
     }
   }
 
@@ -224,26 +233,28 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _Field(
+                  LabeledField(
                     label: l10n.profileNameLabel,
                     hint: l10n.profileNameHint,
                     child: TextFormField(
                       controller: _name,
                       textCapitalization: TextCapitalization.words,
                       textInputAction: TextInputAction.next,
-                      validator: (value) => (value != null && value.trim().length > 100)
+                      validator: (value) =>
+                          (value != null && value.trim().length > 100)
                           ? l10n.profileNameInvalid
                           : null,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.space6),
-                  _Field(
+                  LabeledField(
                     label: l10n.profileSchoolLabel,
                     child: TextFormField(
                       controller: _school,
                       textCapitalization: TextCapitalization.words,
                       textInputAction: TextInputAction.next,
-                      validator: (value) => (value != null && value.trim().length > 140)
+                      validator: (value) =>
+                          (value != null && value.trim().length > 140)
                           ? l10n.profileNameInvalid
                           : null,
                     ),
@@ -285,7 +296,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
                 children: [
                   _stateField(l10n),
                   const SizedBox(height: AppSpacing.space6),
-                  _Field(
+                  LabeledField(
                     label: l10n.profileDistrictLabel,
                     hint: l10n.profileDistrictHint,
                     child: TextFormField(
@@ -295,7 +306,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.space6),
-                  _Field(
+                  LabeledField(
                     label: l10n.profilePincodeLabel,
                     hint: l10n.profilePincodeHint,
                     child: TextFormField(
@@ -318,7 +329,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
             title: l10n.profileSectionContact,
             icon: LucideIcons.phone,
             child: AppCard(
-              child: _Field(
+              child: LabeledField(
                 label: l10n.profilePhoneLabel,
                 hint: l10n.profilePhoneHint,
                 child: TextFormField(
@@ -338,19 +349,23 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const AppCard(padding: EdgeInsets.zero, child: LanguageSwitcher()),
+                const AppCard(
+                  padding: EdgeInsets.zero,
+                  child: LanguageSwitcher(),
+                ),
                 const SizedBox(height: AppSpacing.space3),
                 Text(
                   l10n.profileLanguageHint,
-                  style:
-                      text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                  style: text.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
           ),
           if (saveState.hasError) ...[
             const SizedBox(height: AppSpacing.space4),
-            _InlineError(message: _saveErrorText(l10n, saveState.error)),
+            InlineError(message: _saveErrorText(l10n, saveState.error)),
           ],
           const SizedBox(height: AppSpacing.space6),
           PrimaryButton(
@@ -361,7 +376,8 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
           ),
           const SizedBox(height: AppSpacing.space6),
           OutlinedButton.icon(
-            onPressed: () => ref.read(authControllerProvider.notifier).signOut(),
+            onPressed: () =>
+                ref.read(authControllerProvider.notifier).signOut(),
             icon: const Icon(LucideIcons.logOut, size: AppIconSize.inline),
             label: Text(l10n.actionSignOut),
           ),
@@ -373,7 +389,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
   // ------------------------------------------------------------------ fields
 
   Widget _boardCategoryField(AppLocalizations l10n) {
-    return _Field(
+    return LabeledField(
       label: l10n.profileBoardCategoryLabel,
       hint: l10n.profileBoardCategoryHint,
       child: Wrap(
@@ -413,7 +429,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
     // Before a family is chosen, offer every board rather than an empty
     // dropdown: the category is a shortcut, not a gate.
     final boards = _category?.boards ?? kEducationBoards;
-    return _Field(
+    return LabeledField(
       label: l10n.settingsBoardLabel,
       child: DropdownButtonFormField<String?>(
         initialValue: _draft.settings.educationBoard,
@@ -440,7 +456,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
   }
 
   Widget _subjectsField(AppLocalizations l10n) {
-    return _Field(
+    return LabeledField(
       label: l10n.profileSubjectsLabel,
       hint: l10n.profileSubjectsHint,
       child: Wrap(
@@ -454,8 +470,11 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
               materialTapTargetSize: MaterialTapTargetSize.padded,
               onSelected: (selected) => setState(() {
                 _draft = _draft.copyWith(
-                  subjects:
-                      _toggled(_draft.subjects, subject, selected: selected),
+                  subjects: _toggled(
+                    _draft.subjects,
+                    subject,
+                    selected: selected,
+                  ),
                 );
               }),
             ),
@@ -465,7 +484,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
   }
 
   Widget _gradesField(AppLocalizations l10n) {
-    return _Field(
+    return LabeledField(
       label: l10n.profileGradesLabel,
       hint: l10n.profileGradesHint,
       child: Wrap(
@@ -479,8 +498,11 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
               materialTapTargetSize: MaterialTapTargetSize.padded,
               onSelected: (selected) => setState(() {
                 _draft = _draft.copyWith(
-                  gradeLevels:
-                      _toggled(_draft.gradeLevels, grade, selected: selected),
+                  gradeLevels: _toggled(
+                    _draft.gradeLevels,
+                    grade,
+                    selected: selected,
+                  ),
                 );
               }),
             ),
@@ -490,7 +512,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
   }
 
   Widget _stateField(AppLocalizations l10n) {
-    return _Field(
+    return LabeledField(
       label: l10n.profileStateLabel,
       child: DropdownButtonFormField<String?>(
         initialValue: _draft.state,
@@ -504,14 +526,15 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
             DropdownMenuItem<String?>(value: state, child: Text(state)),
         ],
         onChanged: (value) => setState(
-          () => _draft = _draft.copyWith(state: value, clearState: value == null),
+          () =>
+              _draft = _draft.copyWith(state: value, clearState: value == null),
         ),
       ),
     );
   }
 
   Widget _adminRoleField(AppLocalizations l10n) {
-    return _Field(
+    return LabeledField(
       label: l10n.settingsAdminRoleLabel,
       child: DropdownButtonFormField<AdministrativeRole?>(
         initialValue: _draft.settings.administrativeRole,
@@ -626,8 +649,9 @@ class _IdentityCard extends StatelessWidget {
                   const SizedBox(height: AppSpacing.space1),
                   Text(
                     school!.trim(),
-                    style:
-                        text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+                    style: text.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
                 const SizedBox(height: AppSpacing.space3),
@@ -640,8 +664,9 @@ class _IdentityCard extends StatelessWidget {
                   children: [
                     Text(
                       l10n.profilePlanLabel,
-                      style:
-                          text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+                      style: text.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
                     ),
                     const PlanBadgeChip(),
                   ],
@@ -674,10 +699,17 @@ class _SignedOutCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(LucideIcons.logIn, size: AppIconSize.inline, color: scheme.primary),
+              Icon(
+                LucideIcons.logIn,
+                size: AppIconSize.inline,
+                color: scheme.primary,
+              ),
               const SizedBox(width: AppSpacing.space3),
               Expanded(
-                child: Text(l10n.profileSignedOutTitle, style: text.titleMedium),
+                child: Text(
+                  l10n.profileSignedOutTitle,
+                  style: text.titleMedium,
+                ),
               ),
             ],
           ),
@@ -699,69 +731,3 @@ class _SignedOutCard extends StatelessWidget {
 
 /// An error-toned block that sits next to the control that failed. Left
 /// aligned, human copy, no raw exception strings (DESIGN_RUBRIC §6).
-class _InlineError extends StatelessWidget {
-  const _InlineError({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: scheme.error.withValues(alpha: 0.08),
-        borderRadius: AppRadius.rMd,
-        border: Border.all(color: scheme.error.withValues(alpha: 0.4)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.space3),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(LucideIcons.alertTriangle,
-                size: AppIconSize.inline, color: scheme.error),
-            const SizedBox(width: AppSpacing.space3),
-            Expanded(child: Text(message, style: text.bodyMedium)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// A section header + its content. The header carries a Lucide glyph so the
-/// list scans without emoji or decorative dividers. Mirrors Settings'
-/// `_Section`.
-
-/// A labelled form row: a weight-first label above its control, with optional
-/// helper text. Mirrors the `_Field` in Settings and the tool forms.
-class _Field extends StatelessWidget {
-  const _Field({required this.label, required this.child, this.hint});
-
-  final String label;
-  final String? hint;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(label, style: text.titleSmall?.copyWith(letterSpacing: 0.2)),
-        if (hint != null) ...[
-          const SizedBox(height: AppSpacing.space1),
-          Text(
-            hint!,
-            style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-          ),
-        ],
-        const SizedBox(height: AppSpacing.space3),
-        child,
-      ],
-    );
-  }
-}

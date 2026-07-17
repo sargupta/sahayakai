@@ -8,6 +8,7 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
+import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
 import '../domain/quiz.dart';
@@ -126,7 +127,7 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
   }
 
   Widget _topicField(AppLocalizations l10n) {
-    return _Field(
+    return LabeledField(
       label: l10n.quizTopicLabel,
       child: TextFormField(
         controller: _topicController,
@@ -136,14 +137,15 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
         textInputAction: TextInputAction.done,
         textCapitalization: TextCapitalization.sentences,
         decoration: InputDecoration(hintText: l10n.quizTopicHint),
-        validator: (value) =>
-            (value == null || value.trim().isEmpty) ? l10n.quizTopicError : null,
+        validator: (value) => (value == null || value.trim().isEmpty)
+            ? l10n.quizTopicError
+            : null,
       ),
     );
   }
 
   Widget _numQuestionsField(AppLocalizations l10n) {
-    return _Field(
+    return LabeledField(
       label: l10n.quizNumQuestionsLabel,
       child: _Stepper(
         value: _numQuestions,
@@ -164,7 +166,7 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
       validator: (value) =>
           (value == null || value.isEmpty) ? l10n.quizTypesError : null,
       builder: (field) {
-        return _Field(
+        return LabeledField(
           label: l10n.quizTypesLabel,
           errorText: field.errorText,
           child: Wrap(
@@ -195,7 +197,7 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
   }
 
   Widget _gradeField(AppLocalizations l10n) {
-    return _Field(
+    return LabeledField(
       label: l10n.quizGradeLabel,
       optionalLabel: l10n.quizOptional,
       child: DropdownButtonFormField<String?>(
@@ -215,7 +217,7 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
   }
 
   Widget _subjectField(AppLocalizations l10n) {
-    return _Field(
+    return LabeledField(
       label: l10n.quizSubjectLabel,
       optionalLabel: l10n.quizOptional,
       child: DropdownButtonFormField<String?>(
@@ -235,7 +237,7 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
   }
 
   Widget _languageField(AppLocalizations l10n) {
-    return _Field(
+    return LabeledField(
       label: l10n.languageLabel,
       child: DropdownButtonFormField<AppLocale>(
         initialValue: _language,
@@ -253,7 +255,7 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
   }
 
   Widget _difficultyField(AppLocalizations l10n) {
-    return _Field(
+    return LabeledField(
       label: l10n.quizDifficultyLabel,
       hint: l10n.quizDifficultyHint,
       child: Wrap(
@@ -283,7 +285,7 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
   }
 
   Widget _bloomsField(AppLocalizations l10n) {
-    return _Field(
+    return LabeledField(
       label: l10n.quizBloomsLabel,
       optionalLabel: l10n.quizOptional,
       hint: l10n.quizBloomsHint,
@@ -313,66 +315,6 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
 /// A labelled form row: a weight-first label (with an optional "Optional"
 /// marker), an optional hint, its control, and an optional error line. On the
 /// 4dp grid throughout.
-class _Field extends StatelessWidget {
-  const _Field({
-    required this.label,
-    required this.child,
-    this.optionalLabel,
-    this.hint,
-    this.errorText,
-  });
-
-  final String label;
-  final String? optionalLabel;
-  final String? hint;
-  final String? errorText;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          children: [
-            Flexible(
-              child: Text(
-                label,
-                style: text.titleSmall?.copyWith(letterSpacing: 0.2),
-              ),
-            ),
-            if (optionalLabel != null) ...[
-              const SizedBox(width: AppSpacing.space2),
-              Text(
-                optionalLabel!,
-                style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-              ),
-            ],
-          ],
-        ),
-        if (hint != null) ...[
-          const SizedBox(height: AppSpacing.space1),
-          Text(
-            hint!,
-            style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-          ),
-        ],
-        const SizedBox(height: AppSpacing.space3),
-        child,
-        if (errorText != null) ...[
-          const SizedBox(height: AppSpacing.space2),
-          Text(
-            errorText!,
-            style: text.bodySmall?.copyWith(color: scheme.error),
-          ),
-        ],
-      ],
-    );
-  }
-}
 
 /// A -/+ counter. Both buttons are full 48dp targets and the value sits between
 /// them, so the control reads at a glance and never overflows at 360dp.
@@ -441,8 +383,8 @@ String _difficultyLabel(AppLocalizations l10n, QuizDifficulty difficulty) =>
     };
 
 String _typeLabel(AppLocalizations l10n, QuestionType type) => switch (type) {
-      QuestionType.multipleChoice => l10n.quizTypeMultipleChoice,
-      QuestionType.fillInTheBlanks => l10n.quizTypeFillInTheBlanks,
-      QuestionType.shortAnswer => l10n.quizTypeShortAnswer,
-      QuestionType.trueFalse => l10n.quizTypeTrueFalse,
-    };
+  QuestionType.multipleChoice => l10n.quizTypeMultipleChoice,
+  QuestionType.fillInTheBlanks => l10n.quizTypeFillInTheBlanks,
+  QuestionType.shortAnswer => l10n.quizTypeShortAnswer,
+  QuestionType.trueFalse => l10n.quizTypeTrueFalse,
+};

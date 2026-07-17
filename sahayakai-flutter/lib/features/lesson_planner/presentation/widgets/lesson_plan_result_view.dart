@@ -3,6 +3,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/i18n/l10n_ext.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/widgets/ai_text.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/bullet_dot.dart';
@@ -10,7 +11,7 @@ import '../../../../shared/widgets/section_label.dart';
 import '../../domain/lesson_plan.dart';
 
 /// Renders a generated [LessonPlan]. All model-authored prose flows through
-/// [_AiText] (line-height 1.7 + Indic height behaviour) so matras and vowel
+/// [AiText] (line-height 1.7 + Indic height behaviour) so matras and vowel
 /// signs never clip, and long compound words wrap instead of scrolling.
 /// See DESIGN_RUBRIC §3 / §8.
 class LessonPlanResultView extends StatelessWidget {
@@ -27,7 +28,10 @@ class LessonPlanResultView extends StatelessWidget {
       if (plan.validationWarning != null)
         _NoteBanner(message: plan.validationWarning!.message),
       if (plan.objectives.isNotEmpty)
-        _BulletSection(title: l10n.lessonPlanObjectives, items: plan.objectives),
+        _BulletSection(
+          title: l10n.lessonPlanObjectives,
+          items: plan.objectives,
+        ),
       if (plan.keyVocabulary.isNotEmpty)
         _VocabularySection(terms: plan.keyVocabulary),
       if (plan.materials.isNotEmpty)
@@ -105,8 +109,11 @@ class _NoteBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(LucideIcons.info,
-              size: AppIconSize.inline, color: scheme.onSurfaceVariant),
+          Icon(
+            LucideIcons.info,
+            size: AppIconSize.inline,
+            color: scheme.onSurfaceVariant,
+          ),
           const SizedBox(width: AppSpacing.space3),
           Expanded(
             child: Column(
@@ -118,7 +125,7 @@ class _NoteBanner extends StatelessWidget {
                   style: text.titleSmall?.copyWith(color: scheme.onSurface),
                 ),
                 const SizedBox(height: AppSpacing.space1),
-                _AiText(message),
+                AiText(message),
               ],
             ),
           ),
@@ -163,7 +170,7 @@ class _Bullet extends StatelessWidget {
       children: [
         const BulletDot(),
         const SizedBox(width: AppSpacing.space3),
-        Expanded(child: _AiText(text)),
+        Expanded(child: AiText(text)),
       ],
     );
   }
@@ -192,7 +199,7 @@ class _VocabularySection extends StatelessWidget {
               Text(terms[i].term, style: text.bodyLarge),
               if (terms[i].meaning.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.space1),
-                _AiText(terms[i].meaning, muted: true),
+                AiText(terms[i].meaning, muted: true),
               ],
             ],
           ),
@@ -263,8 +270,9 @@ class _ActivityCard extends StatelessWidget {
                       Flexible(
                         child: Text(
                           activity.duration!,
-                          style: text.labelMedium
-                              ?.copyWith(color: scheme.onSurfaceVariant),
+                          style: text.labelMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
                         ),
                       ),
                     ],
@@ -278,7 +286,7 @@ class _ActivityCard extends StatelessWidget {
           ],
           if (activity.description.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.space2),
-            _AiText(activity.description),
+            AiText(activity.description),
           ],
           if (activity.teacherTips != null)
             _SubNote(
@@ -299,11 +307,7 @@ class _ActivityCard extends StatelessWidget {
 }
 
 class _SubNote extends StatelessWidget {
-  const _SubNote({
-    required this.icon,
-    required this.label,
-    required this.body,
-  });
+  const _SubNote({required this.icon, required this.label, required this.body});
 
   final IconData icon;
   final String label;
@@ -327,7 +331,11 @@ class _SubNote extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(icon, size: AppIconSize.inline, color: scheme.onSurfaceVariant),
+                Icon(
+                  icon,
+                  size: AppIconSize.inline,
+                  color: scheme.onSurfaceVariant,
+                ),
                 const SizedBox(width: AppSpacing.space2),
                 Text(
                   label,
@@ -339,7 +347,7 @@ class _SubNote extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.space1),
-            _AiText(body),
+            AiText(body),
           ],
         ),
       ),
@@ -361,7 +369,7 @@ class _ProseSection extends StatelessWidget {
       children: [
         SectionLabel(title),
         const SizedBox(height: AppSpacing.space3),
-        _AiText(body),
+        AiText(body),
       ],
     );
   }
@@ -370,27 +378,3 @@ class _ProseSection extends StatelessWidget {
 /// AI-authored prose: line-height 1.7, height applied to first ascent / last
 /// descent (so Indic top matras and bottom vowel signs are never cropped),
 /// and always soft-wrapping. See DESIGN_RUBRIC §3.
-class _AiText extends StatelessWidget {
-  const _AiText(this.data, {this.muted = false});
-
-  final String data;
-  final bool muted;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final base = Theme.of(context).textTheme.bodyMedium!;
-    return Text(
-      data,
-      softWrap: true,
-      textHeightBehavior: const TextHeightBehavior(
-        applyHeightToFirstAscent: true,
-        applyHeightToLastDescent: true,
-      ),
-      style: base.copyWith(
-        height: 1.7,
-        color: muted ? scheme.onSurfaceVariant : scheme.onSurface,
-      ),
-    );
-  }
-}

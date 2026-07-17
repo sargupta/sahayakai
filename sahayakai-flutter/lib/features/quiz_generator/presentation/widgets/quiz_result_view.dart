@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../core/i18n/gen/app_localizations.dart';
 import '../../../../core/i18n/l10n_ext.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/widgets/ai_text.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/empty_view.dart';
@@ -14,7 +15,7 @@ import '../../domain/quiz.dart';
 /// is never drawn. Correct answers stay hidden behind a per-question reveal so
 /// the teacher can project or read a question aloud without spoiling it.
 ///
-/// All model-authored prose flows through [_AiText] (line-height 1.7 + Indic
+/// All model-authored prose flows through [AiText] (line-height 1.7 + Indic
 /// height behaviour) so matras and vowel signs never clip, and long compound
 /// words wrap instead of scrolling. See DESIGN_RUBRIC §3 / §8.
 class QuizResultView extends StatelessWidget {
@@ -67,11 +68,14 @@ class _Header extends StatelessWidget {
     final subject = quiz.subject ?? quiz.variants.first.subject;
 
     final meta = <Widget>[
-      if (grade != null) AppBadge(icon: LucideIcons.graduationCap, label: grade),
+      if (grade != null)
+        AppBadge(icon: LucideIcons.graduationCap, label: grade),
       if (subject != null) AppBadge(icon: LucideIcons.bookOpen, label: subject),
       AppBadge(
         icon: LucideIcons.listChecks,
-        label: context.l10n.quizQuestionCount(quiz.variants.first.questions.length),
+        label: context.l10n.quizQuestionCount(
+          quiz.variants.first.questions.length,
+        ),
       ),
     ];
 
@@ -174,10 +178,7 @@ class _DifficultyTabsState extends State<_DifficultyTabs>
               // scroll view on long quizzes.
               layoutBuilder: (current, previous) => Stack(
                 alignment: Alignment.topLeft,
-                children: [
-                  ...previous,
-                  ?current,
-                ],
+                children: [...previous, ?current],
               ),
               child: _VariantView(
                 key: ValueKey<QuizDifficulty>(variant.difficulty),
@@ -293,7 +294,8 @@ class _QuestionCard extends StatelessWidget {
 
     // Marking the right option inline is clearer than repeating it below, so
     // only fall back to a spelled-out answer line when we cannot mark it.
-    final showAnswerLine = !(question.hasMarkedOption && question.options.isNotEmpty);
+    final showAnswerLine =
+        !(question.hasMarkedOption && question.options.isNotEmpty);
 
     return AppCard(
       child: Column(
@@ -305,10 +307,11 @@ class _QuestionCard extends StatelessWidget {
             children: [
               AppBadge.count('$number'),
               const SizedBox(width: AppSpacing.space3),
-              Expanded(child: _AiText(question.questionText)),
+              Expanded(child: AiText(question.questionText)),
             ],
           ),
-          if (question.questionType != null || question.difficultyLevel != null) ...[
+          if (question.questionType != null ||
+              question.difficultyLevel != null) ...[
             const SizedBox(height: AppSpacing.space3),
             Wrap(
               spacing: AppSpacing.space2,
@@ -334,7 +337,8 @@ class _QuestionCard extends StatelessWidget {
               _OptionRow(
                 marker: _optionMarker(i),
                 label: question.options[i],
-                isCorrect: isRevealed &&
+                isCorrect:
+                    isRevealed &&
                     question.options[i].trim().toLowerCase() ==
                         question.correctAnswer.trim().toLowerCase(),
               ),
@@ -391,7 +395,7 @@ class _QuestionCard extends StatelessWidget {
                               ],
                             ),
                             const SizedBox(height: AppSpacing.space1),
-                            _AiText(question.correctAnswer),
+                            AiText(question.correctAnswer),
                           ],
                           if (question.explanation != null) ...[
                             if (showAnswerLine)
@@ -414,7 +418,7 @@ class _QuestionCard extends StatelessWidget {
                               ],
                             ),
                             const SizedBox(height: AppSpacing.space1),
-                            _AiText(question.explanation!, muted: true),
+                            AiText(question.explanation!, muted: true),
                           ],
                         ],
                       ),
@@ -470,11 +474,14 @@ class _OptionRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppSpacing.space3),
-          Expanded(child: _AiText(label)),
+          Expanded(child: AiText(label)),
           if (isCorrect) ...[
             const SizedBox(width: AppSpacing.space2),
-            Icon(LucideIcons.checkCircle,
-                size: AppIconSize.inline, color: scheme.primary),
+            Icon(
+              LucideIcons.checkCircle,
+              size: AppIconSize.inline,
+              color: scheme.primary,
+            ),
           ],
         ],
       ),
@@ -502,8 +509,11 @@ class _TeacherNote extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(LucideIcons.lightbulb,
-              size: AppIconSize.inline, color: scheme.onSurfaceVariant),
+          Icon(
+            LucideIcons.lightbulb,
+            size: AppIconSize.inline,
+            color: scheme.onSurfaceVariant,
+          ),
           const SizedBox(width: AppSpacing.space3),
           Expanded(
             child: Column(
@@ -515,7 +525,7 @@ class _TeacherNote extends StatelessWidget {
                   style: text.titleSmall?.copyWith(color: scheme.onSurface),
                 ),
                 const SizedBox(height: AppSpacing.space1),
-                _AiText(body),
+                AiText(body),
               ],
             ),
           ),
@@ -544,8 +554,11 @@ class _NoteBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(LucideIcons.info,
-              size: AppIconSize.inline, color: scheme.onSurfaceVariant),
+          Icon(
+            LucideIcons.info,
+            size: AppIconSize.inline,
+            color: scheme.onSurfaceVariant,
+          ),
           const SizedBox(width: AppSpacing.space3),
           Expanded(
             child: Column(
@@ -557,7 +570,7 @@ class _NoteBanner extends StatelessWidget {
                   style: text.titleSmall?.copyWith(color: scheme.onSurface),
                 ),
                 const SizedBox(height: AppSpacing.space1),
-                _AiText(message),
+                AiText(message),
               ],
             ),
           ),
@@ -570,30 +583,6 @@ class _NoteBanner extends StatelessWidget {
 /// AI-authored prose: line-height 1.7, height applied to first ascent / last
 /// descent (so Indic top matras and bottom vowel signs are never cropped),
 /// and always soft-wrapping. See DESIGN_RUBRIC §3.
-class _AiText extends StatelessWidget {
-  const _AiText(this.data, {this.muted = false});
-
-  final String data;
-  final bool muted;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final base = Theme.of(context).textTheme.bodyMedium!;
-    return Text(
-      data,
-      softWrap: true,
-      textHeightBehavior: const TextHeightBehavior(
-        applyHeightToFirstAscent: true,
-        applyHeightToLastDescent: true,
-      ),
-      style: base.copyWith(
-        height: 1.7,
-        color: muted ? scheme.onSurfaceVariant : scheme.onSurface,
-      ),
-    );
-  }
-}
 
 /// A, B, C, ... for the first 26 options; numbers beyond that (defensive — the
 /// model never returns more than a handful).
@@ -608,8 +597,8 @@ String _difficultyLabel(AppLocalizations l10n, QuizDifficulty difficulty) =>
     };
 
 String _typeLabel(AppLocalizations l10n, QuestionType type) => switch (type) {
-      QuestionType.multipleChoice => l10n.quizTypeMultipleChoice,
-      QuestionType.fillInTheBlanks => l10n.quizTypeFillInTheBlanks,
-      QuestionType.shortAnswer => l10n.quizTypeShortAnswer,
-      QuestionType.trueFalse => l10n.quizTypeTrueFalse,
-    };
+  QuestionType.multipleChoice => l10n.quizTypeMultipleChoice,
+  QuestionType.fillInTheBlanks => l10n.quizTypeFillInTheBlanks,
+  QuestionType.shortAnswer => l10n.quizTypeShortAnswer,
+  QuestionType.trueFalse => l10n.quizTypeTrueFalse,
+};

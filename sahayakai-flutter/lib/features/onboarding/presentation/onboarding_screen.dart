@@ -13,6 +13,8 @@ import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/inline_error.dart';
+import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/section_label.dart';
 import '../../profile/domain/board_category.dart';
@@ -114,8 +116,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
     setState(() => _draft = profile);
 
-    final saved =
-        await ref.read(onboardingSaveControllerProvider.notifier).save(profile);
+    final saved = await ref
+        .read(onboardingSaveControllerProvider.notifier)
+        .save(profile);
     if (!mounted) return;
     if (saved) setState(() => _step += 1);
   }
@@ -215,7 +218,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _Field(
+                  LabeledField(
                     label: l10n.profileNameLabel,
                     child: TextFormField(
                       controller: _name,
@@ -223,12 +226,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       textInputAction: TextInputAction.next,
                       validator: (value) =>
                           (value != null && value.trim().length > 100)
-                              ? l10n.profileNameInvalid
-                              : null,
+                          ? l10n.profileNameInvalid
+                          : null,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.space6),
-                  _Field(
+                  LabeledField(
                     label: l10n.profileSchoolLabel,
                     child: TextFormField(
                       controller: _school,
@@ -236,8 +239,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       textInputAction: TextInputAction.next,
                       validator: (value) =>
                           (value != null && value.trim().length > 140)
-                              ? l10n.profileNameInvalid
-                              : null,
+                          ? l10n.profileNameInvalid
+                          : null,
                     ),
                   ),
                 ],
@@ -277,7 +280,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 children: [
                   _stateField(l10n),
                   const SizedBox(height: AppSpacing.space6),
-                  _Field(
+                  LabeledField(
                     label: l10n.profileDistrictLabel,
                     hint: l10n.profileDistrictHint,
                     child: TextFormField(
@@ -287,7 +290,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.space6),
-                  _Field(
+                  LabeledField(
                     label: l10n.profilePincodeLabel,
                     hint: l10n.profilePincodeHint,
                     child: TextFormField(
@@ -312,7 +315,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             title: l10n.profileSectionContact,
             icon: LucideIcons.phone,
             child: AppCard(
-              child: _Field(
+              child: LabeledField(
                 label: l10n.profilePhoneLabel,
                 hint: l10n.profilePhoneHint,
                 child: TextFormField(
@@ -328,7 +331,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ),
           if (saveState.hasError) ...[
             const SizedBox(height: AppSpacing.space4),
-            _InlineError(message: _saveErrorText(l10n, saveState.error)),
+            InlineError(message: _saveErrorText(l10n, saveState.error)),
           ],
         ],
       ),
@@ -336,7 +339,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _boardCategoryField(AppLocalizations l10n) {
-    return _Field(
+    return LabeledField(
       label: l10n.profileBoardCategoryLabel,
       hint: l10n.profileBoardCategoryHint,
       child: Wrap(
@@ -377,7 +380,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     // Before a family is chosen, offer every board rather than an empty
     // dropdown: the category is a shortcut, not a gate.
     final boards = _category?.boards ?? kEducationBoards;
-    return _Field(
+    return LabeledField(
       label: l10n.settingsBoardLabel,
       child: DropdownButtonFormField<String?>(
         initialValue: _draft.settings.educationBoard,
@@ -405,7 +408,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _subjectsField(AppLocalizations l10n) {
-    return _Field(
+    return LabeledField(
       label: l10n.profileSubjectsLabel,
       hint: l10n.profileSubjectsHint,
       child: Wrap(
@@ -419,8 +422,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               materialTapTargetSize: MaterialTapTargetSize.padded,
               onSelected: (selected) => setState(() {
                 _draft = _draft.copyWith(
-                  subjects:
-                      _toggled(_draft.subjects, subject, selected: selected),
+                  subjects: _toggled(
+                    _draft.subjects,
+                    subject,
+                    selected: selected,
+                  ),
                 );
               }),
             ),
@@ -430,7 +436,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _gradesField(AppLocalizations l10n) {
-    return _Field(
+    return LabeledField(
       label: l10n.profileGradesLabel,
       hint: l10n.profileGradesHint,
       child: Wrap(
@@ -444,8 +450,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               materialTapTargetSize: MaterialTapTargetSize.padded,
               onSelected: (selected) => setState(() {
                 _draft = _draft.copyWith(
-                  gradeLevels:
-                      _toggled(_draft.gradeLevels, grade, selected: selected),
+                  gradeLevels: _toggled(
+                    _draft.gradeLevels,
+                    grade,
+                    selected: selected,
+                  ),
                 );
               }),
             ),
@@ -455,7 +464,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Widget _stateField(AppLocalizations l10n) {
-    return _Field(
+    return LabeledField(
       label: l10n.profileStateLabel,
       child: DropdownButtonFormField<String?>(
         initialValue: _draft.state,
@@ -469,15 +478,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             DropdownMenuItem<String?>(value: state, child: Text(state)),
         ],
         onChanged: (value) => setState(
-          () => _draft =
-              _draft.copyWith(state: value, clearState: value == null),
+          () =>
+              _draft = _draft.copyWith(state: value, clearState: value == null),
         ),
       ),
     );
   }
 
   Widget _adminRoleField(AppLocalizations l10n) {
-    return _Field(
+    return LabeledField(
       label: l10n.settingsAdminRoleLabel,
       child: DropdownButtonFormField<AdministrativeRole?>(
         initialValue: _draft.settings.administrativeRole,
@@ -599,8 +608,11 @@ class _ReadyStep extends ConsumerWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(LucideIcons.checkCircle,
-                size: AppIconSize.inline, color: scheme.secondary),
+            Icon(
+              LucideIcons.checkCircle,
+              size: AppIconSize.inline,
+              color: scheme.secondary,
+            ),
             const SizedBox(width: AppSpacing.space3),
             Expanded(
               child: Text(l10n.onboardingReadyTitle, style: text.headlineSmall),
@@ -770,70 +782,3 @@ String _saveErrorText(AppLocalizations l10n, Object? error) {
 
 /// An error-toned block next to the control that failed. Left aligned, human
 /// copy, no raw exception strings (DESIGN_RUBRIC §6). Mirrors Profile's.
-class _InlineError extends StatelessWidget {
-  const _InlineError({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: scheme.error.withValues(alpha: 0.08),
-        borderRadius: AppRadius.rMd,
-        border: Border.all(color: scheme.error.withValues(alpha: 0.4)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.space3),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(LucideIcons.alertTriangle,
-                size: AppIconSize.inline, color: scheme.error),
-            const SizedBox(width: AppSpacing.space3),
-            Expanded(child: Text(message, style: text.bodyMedium)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// A section header + its content. Mirrors Profile's and Settings' `_Section` —
-/// the per-screen private field widget is this codebase's established pattern
-/// (see the note on `ProfileScreen._Field`); the SHARED things are the domain,
-/// the DTOs and the repository, which onboarding reuses rather than forks.
-
-/// A labelled form row: a weight-first label above its control, with optional
-/// helper text.
-class _Field extends StatelessWidget {
-  const _Field({required this.label, required this.child, this.hint});
-
-  final String label;
-  final String? hint;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(label, style: text.titleSmall?.copyWith(letterSpacing: 0.2)),
-        if (hint != null) ...[
-          const SizedBox(height: AppSpacing.space1),
-          Text(
-            hint!,
-            style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-          ),
-        ],
-        const SizedBox(height: AppSpacing.space3),
-        child,
-      ],
-    );
-  }
-}
