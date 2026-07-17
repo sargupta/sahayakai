@@ -45,7 +45,7 @@ export PATH="$JAVA_HOME/bin:$PATH"
    - Only advance to screens once foundation is `done` AND `flutter analyze` is clean.
 3. **Execute the unit** per its type below (spawn inner subagents SYNCHRONOUSLY — `run_in_background:false` — so the wake owns the unit start-to-finish and two builds never overlap).
 4. **Verify** the unit's acceptance gate (see Quality gates). If it fails, fix (another synchronous subagent pass) until it passes. A unit does not advance until green.
-5. **Commit** on `develop`: stage EXPLICIT paths (never `git add -A`/`.`), conventional message (`feat(<feature>): …` / `chore(foundation): …`), NO Claude attribution.
+5. **Commit** on `feature/flutter-rebuild`: stage EXPLICIT paths (never `git add -A`/`.`), conventional message (`feat(<feature>): …` / `chore(foundation): …`), NO Claude attribution.
 6. **Update** `docs/flutter/BUILD_STATE.json`: mark the unit `done` (+ commit hash + notes), advance `currentPhase`/pointer.
 7. **Reschedule or stop.** If more actionable (non-handoff-blocked) units remain → `ScheduleWakeup` (same prompt, delay 240–300s, reason = next unit). If everything actionable is done (only handoff-blocked or P2-optional remains, or all P0+P1 shipped and release gate green) → `ScheduleWakeup stop:true` and post a final summary.
 
