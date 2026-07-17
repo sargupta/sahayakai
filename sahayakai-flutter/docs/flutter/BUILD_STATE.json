@@ -230,8 +230,10 @@
       "priority": "p1",
       "endpoint": "library list/read (Firestore/Storage)",
       "file": "lib/features/library/presentation/library_screen.dart",
-      "status": "scaffolded",
-      "note": "Placeholder empty state. Real list/filters = P1.7."
+      "status": "built-pending-firebase",
+      "note": "Placeholder empty state. Real list/filters = P1.7.",
+      "commit": "2eb4a8e82",
+      "notes": "COMPLETED (not rebuilt): existing library screen/repo/provider/dtos/row kept. Added: type filter chips (client-side over the shared newest-20 read to preserve the one-shared-read invariant the dashboard depends on; server ?type= param exists + recorded for future pagination), tap-to-open -> new LibraryDetailScreen /my-library/detail/:id wiring the REAL GET /api/content/get?id (corrects old 'not wired' comment). Detail is built-pending-firebase: content/get is Firebase-gated AND stored data shape diverges from result-view models (quiz stored single-variant not 3, worksheet stored as .md markdown) - so detail shows metadata + 'sign in to open' state, data payload ready for a future per-type adapter. analyze clean; 716 tests; rubric PASS."
     },
     {
       "name": "Create / Command Palette",
