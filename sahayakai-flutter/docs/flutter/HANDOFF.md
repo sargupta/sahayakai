@@ -190,6 +190,76 @@ banned fixed row heights or a linked-scroll dependency. Proven by `rubric_grid_t
 one horizontal scroller with `maxScrollExtent > 0` at 360dp; the page scroller is vertical; no
 overflow at 360dp x textScale 1.3 in light + dark with Indic probes + an unbreakable compound word).
 
+### Exam Paper Generator (P1.3) — verified against `route.ts` + the Zod schemas + the dispatcher
+
+`POST` and `PUT /api/ai/exam-paper` were verified against
+`src/app/api/ai/exam-paper/route.ts`, `ExamPaperInputSchema` /
+`ExamPaperOutputSchema` in `src/ai/flows/exam-paper-generator.ts`,
+`ExamPaperDataSchema` in `src/ai/schemas/content-schemas.ts`,
+`src/lib/sidecar/exam-paper-dispatch.ts`, and `src/ai/data/board-blueprints.ts`.
+**The SCREEN_INVENTORY §P1.3 contract is accurate** — no worksheet-style drift.
+The confirmed specifics, plus three implementation gotchas the plan does not
+call out:
+
+- **Request** = `{ board, gradeLevel, subject, chapters[], difficulty?,
+  language?, includeAnswerKey?, includeMarkingScheme? }`. `board`/`gradeLevel`/
+  `subject` are required (400 `Missing required fields` otherwise). `userId` and
+  `teacherContext` are server-injected; `duration`/`maxMarks` default from the
+  blueprint. None of those four are ever sent. Pinned by a test.
+- **`difficulty`'s middle value is `moderate`, NOT `medium`** (the quiz endpoint
+  uses `medium`). The enum is `easy|moderate|hard|mixed`, default `mixed`. Sending
+  `medium` here is an invalid difficulty → 400. Modelled as `ExamDifficulty` and
+  pinned.
+- **The 202 `generation_in_progress` is a SUCCESS status to Dio (< 400), so it
+  does NOT throw** — it arrives on the normal decode path. The repository detects
+  it by the `error: 'generation_in_progress'` marker in the (otherwise
+  paper-shaped) body and returns a distinct `ExamPaperInProgress` result, which
+  the screen renders as a calm "we'll save it to your Library" state, never a red
+  retry. A real 200 never carries an `error` field. Body:
+  `{ error: 'generation_in_progress', message: 'Exam paper still generating.
+  Check My Library in 1 minute.', budgetMs, elapsedMs }`. There is **no poll
+  token**, so the UI points at the Library tab and does not busy-poll.
+- **422 `exam_paper_unstructured`** is a real thrown 4xx. Body is a superset of
+  the plan's: `{ error: 'exam_paper_unstructured', code: 'SCHEMA_VALIDATION_FAILED',
+  message: "We couldn't structure the exam paper — try fewer chapters or
+  regenerate." }`. The screen shows a distinct "try fewer chapters" guidance
+  (with a retry), not a generic failure. Branched on `statusCode == 422` /
+  `errorCode == 'exam_paper_unstructured'`.
+- **The blueprint rule (400 `chapters_required_for_unblueprinted_subject`).**
+  `chapters: []` ("all chapters") is only accepted when an official blueprint
+  exists; `findBlueprint` in `board-blueprints.ts` has exactly **four** combos:
+  **CBSE Class 9 / Class 10 × Mathematics / Science** (normalized, case- and
+  space-insensitive). For anything else, an empty chapter list 400s. The client
+  mirrors this in `examPaperNeedsChapters` and enforces `>= 1` chapter in the
+  form validator (better UX than round-tripping the 400). Pinned by a test.
+- **Response** (verbatim render source): `{ title, board, subject, gradeLevel,
+  duration (string, e.g. "3 Hours"), maxMarks (number), generalInstructions[],
+  sections[{ name, label, totalMarks, questions[{ number, text, marks, options?,
+  internalChoice?, answerKey?, markingScheme?, source }] }], blueprintSummary{
+  chapterWise[{ chapter, marks }], difficultyWise[{ level, percentage }] },
+  pyqSources[{ id, year?, chapter? }] }`. The response carries **no `language`
+  or `chapters` key** (the save handler reads `paper.language ?? 'English'` and
+  `paper.chapters` defensively). Rendered as a plain vertical column of
+  section/question cards (no nested scroller → no ToolScaffold crash).
+- **`PUT /api/ai/exam-paper` save** = body `{ paper: <object> }` → `{ success:
+  true, contentId }`. The client sends the **verbatim response JSON** as `paper`
+  (not a re-serialized domain object), so the saved paper is byte-identical to
+  what the model produced and the handler's `paper.title`/`paper.board`/... reads
+  all resolve. `400 { error: 'Missing required field: paper' }` if `paper` is
+  absent/not-an-object; `401` if no user; `500 { error: 'Failed to save exam
+  paper' }` on a persistence failure (no 403/429 on the PUT). Save is its own
+  controller so it never disturbs the rendered paper; success/saving/failed all
+  shown inline. Pinned by tests (success + failure) with a `FakeApiClient`.
+- **`ApiException` gained an `errorCode` field** (`lib/core/network/api_exception.dart`):
+  the body's machine-readable `error` code, kept separate from the user-facing
+  `message`, so a screen can branch on WHY a 4xx came back (here: 422
+  `exam_paper_unstructured`). Populated for every 4xx/5xx `badResponse`; null on
+  network/timeout/parse failures. No new `ApiErrorKind` value was added (that
+  would have broken every existing error view's exhaustive switch). `ApiClient`
+  also gained a `put<T>` method mirroring `post`/`patch`; `FakeApiClient` gained
+  stubbable `post`/`put` (un-stubbed still throw loudly, preserving the
+  no-network safety contract).
+
 ## 4. Push notifications (FCM)
 The Settings notifications switch is **local-only and defaults OFF** (deliberate: defaulting a
 permission-bearing toggle on, or promising undeliverable notifications, is a dark pattern). Wiring

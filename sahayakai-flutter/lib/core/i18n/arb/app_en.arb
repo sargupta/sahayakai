@@ -1366,5 +1366,270 @@
   "rubricSignIn": "Please sign in again to use this tool.",
   "@rubricSignIn": {
     "description": "Shown on a 401 unauthorized response."
+  },
+  "examPaperTitle": "Exam Paper",
+  "@examPaperTitle": {
+    "description": "Title of the Exam Paper Generator tool."
+  },
+  "examPaperSubtitle": "Build a board-pattern exam paper with answer key",
+  "@examPaperSubtitle": {
+    "description": "One-line description of the Exam Paper Generator tool."
+  },
+  "examPaperEmpty": "Choose a board, grade and subject, then tap Generate.",
+  "@examPaperEmpty": {
+    "description": "Idle/empty state before an exam paper is generated."
+  },
+  "examPaperBoardLabel": "Board",
+  "@examPaperBoardLabel": {
+    "description": "Label for the required education-board dropdown."
+  },
+  "examPaperBoardHint": "Select a board",
+  "@examPaperBoardHint": {
+    "description": "Placeholder shown before a board is chosen."
+  },
+  "examPaperBoardError": "Please choose a board.",
+  "@examPaperBoardError": {
+    "description": "Validation error when no board is selected."
+  },
+  "examPaperGradeLabel": "Grade level",
+  "@examPaperGradeLabel": {
+    "description": "Label for the required grade-level dropdown."
+  },
+  "examPaperGradeHint": "Select a grade",
+  "@examPaperGradeHint": {
+    "description": "Placeholder shown before a grade is chosen."
+  },
+  "examPaperGradeError": "Please choose a grade level.",
+  "@examPaperGradeError": {
+    "description": "Validation error when no grade is selected."
+  },
+  "examPaperSubjectLabel": "Subject",
+  "@examPaperSubjectLabel": {
+    "description": "Label for the required subject dropdown."
+  },
+  "examPaperSubjectHint": "Select a subject",
+  "@examPaperSubjectHint": {
+    "description": "Placeholder shown before a subject is chosen."
+  },
+  "examPaperSubjectError": "Please choose a subject.",
+  "@examPaperSubjectError": {
+    "description": "Validation error when no subject is selected."
+  },
+  "examPaperChaptersLabel": "Chapters",
+  "@examPaperChaptersLabel": {
+    "description": "Label for the chapters add-chip list."
+  },
+  "examPaperChaptersHint": "Add the chapters to cover. Leave empty for the full syllabus where an official blueprint exists.",
+  "@examPaperChaptersHint": {
+    "description": "Helper line under the chapters field label."
+  },
+  "examPaperChaptersPlaceholder": "For example, Quadratic Equations",
+  "@examPaperChaptersPlaceholder": {
+    "description": "Placeholder in the chapter text field."
+  },
+  "examPaperChaptersAdd": "Add chapter",
+  "@examPaperChaptersAdd": {
+    "description": "Tooltip on the add-chapter button."
+  },
+  "examPaperChaptersError": "Please add at least one chapter for this board, grade and subject.",
+  "@examPaperChaptersError": {
+    "description": "Validation error shown when a non-blueprinted combination has no chapters."
+  },
+  "examPaperDifficultyLabel": "Difficulty",
+  "@examPaperDifficultyLabel": {
+    "description": "Label for the difficulty segmented control."
+  },
+  "examPaperDifficultyEasy": "Easy",
+  "@examPaperDifficultyEasy": {
+    "description": "Easy difficulty option."
+  },
+  "examPaperDifficultyModerate": "Moderate",
+  "@examPaperDifficultyModerate": {
+    "description": "Moderate difficulty option."
+  },
+  "examPaperDifficultyHard": "Hard",
+  "@examPaperDifficultyHard": {
+    "description": "Hard difficulty option."
+  },
+  "examPaperDifficultyMixed": "Mixed",
+  "@examPaperDifficultyMixed": {
+    "description": "Mixed difficulty option (the default)."
+  },
+  "examPaperIncludeAnswerKey": "Include answer key",
+  "@examPaperIncludeAnswerKey": {
+    "description": "Toggle to include an answer key in the paper."
+  },
+  "examPaperIncludeMarkingScheme": "Include marking scheme",
+  "@examPaperIncludeMarkingScheme": {
+    "description": "Toggle to include a marking scheme in the paper."
+  },
+  "examPaperInProgressTitle": "Your paper is being prepared",
+  "@examPaperInProgressTitle": {
+    "description": "Title of the 202 generation-in-progress state."
+  },
+  "examPaperInProgressBody": "A full board paper takes a little longer to build. We are finishing it now and it will be saved for you.",
+  "@examPaperInProgressBody": {
+    "description": "Body of the 202 generation-in-progress state."
+  },
+  "examPaperInProgressLibraryHint": "Open the Library tab in a minute to find your finished paper.",
+  "@examPaperInProgressLibraryHint": {
+    "description": "Points the teacher to the Library tab for the finished paper."
+  },
+  "examPaperMaxMarks": "Max marks {marks}",
+  "@examPaperMaxMarks": {
+    "description": "Badge showing the paper's maximum marks.",
+    "placeholders": {
+      "marks": {
+        "type": "String"
+      }
+    }
+  },
+  "examPaperMarks": "{marks} marks",
+  "@examPaperMarks": {
+    "description": "Badge showing a question's or chapter's marks.",
+    "placeholders": {
+      "marks": {
+        "type": "String"
+      }
+    }
+  },
+  "examPaperSectionMarks": "{marks} marks",
+  "@examPaperSectionMarks": {
+    "description": "Badge showing a section's total marks.",
+    "placeholders": {
+      "marks": {
+        "type": "String"
+      }
+    }
+  },
+  "examPaperPercent": "{value} percent",
+  "@examPaperPercent": {
+    "description": "Badge showing a difficulty band's percentage of the paper.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "examPaperGeneralInstructions": "General instructions",
+  "@examPaperGeneralInstructions": {
+    "description": "Header for the paper's general instructions list."
+  },
+  "examPaperInternalChoice": "Or attempt",
+  "@examPaperInternalChoice": {
+    "description": "Label above an internal-choice (OR) alternative question."
+  },
+  "examPaperAnswerKey": "Answer",
+  "@examPaperAnswerKey": {
+    "description": "Label of the per-question answer block."
+  },
+  "examPaperMarkingScheme": "Marking scheme",
+  "@examPaperMarkingScheme": {
+    "description": "Label of the per-question marking-scheme block."
+  },
+  "examPaperBlueprintTitle": "Blueprint summary",
+  "@examPaperBlueprintTitle": {
+    "description": "Header for the blueprint summary card."
+  },
+  "examPaperBlueprintChapters": "Marks by chapter",
+  "@examPaperBlueprintChapters": {
+    "description": "Sub-header for the chapter-wise mark split."
+  },
+  "examPaperBlueprintDifficulty": "Difficulty split",
+  "@examPaperBlueprintDifficulty": {
+    "description": "Sub-header for the difficulty-wise split."
+  },
+  "examPaperPyqTitle": "Previous-year questions",
+  "@examPaperPyqTitle": {
+    "description": "Header for the prior-year-question sources card."
+  },
+  "examPaperPyqChapterYear": "{chapter} ({year})",
+  "@examPaperPyqChapterYear": {
+    "description": "A PYQ source row with both a chapter and a year.",
+    "placeholders": {
+      "chapter": {
+        "type": "String"
+      },
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "examPaperPyqYear": "Year {year}",
+  "@examPaperPyqYear": {
+    "description": "A PYQ source row with only a year.",
+    "placeholders": {
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "examPaperNoContent": "No exam paper came back for that. Please try fewer chapters or a different subject.",
+  "@examPaperNoContent": {
+    "description": "Shown when the response carried no usable paper."
+  },
+  "examPaperSave": "Save to Library",
+  "@examPaperSave": {
+    "description": "Button that saves the generated paper to the teacher's library."
+  },
+  "examPaperSaving": "Saving",
+  "@examPaperSaving": {
+    "description": "Shown on the save button while the save is in flight."
+  },
+  "examPaperSaved": "Saved to your Library",
+  "@examPaperSaved": {
+    "description": "Confirmation shown after the paper is saved."
+  },
+  "examPaperSaveFailedTitle": "Could not save",
+  "@examPaperSaveFailedTitle": {
+    "description": "Title of the failed-save inline error."
+  },
+  "examPaperSaveFailedBody": "We could not save this paper to your library. Please try again.",
+  "@examPaperSaveFailedBody": {
+    "description": "Body of the failed-save inline error."
+  },
+  "examPaperSaveRetry": "Try saving again",
+  "@examPaperSaveRetry": {
+    "description": "Retry button on a failed save."
+  },
+  "examPaperUnstructuredTitle": "We could not structure that paper",
+  "@examPaperUnstructuredTitle": {
+    "description": "Title of the 422 exam_paper_unstructured guidance state."
+  },
+  "examPaperUnstructuredBody": "The assistant could not lay this out as a full paper. Please remove a few chapters and generate again.",
+  "@examPaperUnstructuredBody": {
+    "description": "Body of the 422 exam_paper_unstructured guidance state."
+  },
+  "examPaperUpgradeTitle": "A higher plan is needed",
+  "@examPaperUpgradeTitle": {
+    "description": "Title of the 403 upgrade prompt."
+  },
+  "examPaperUpgradeBody": "Exam paper generation is part of a higher plan. Please upgrade to keep building papers.",
+  "@examPaperUpgradeBody": {
+    "description": "Body of the 403 upgrade prompt."
+  },
+  "examPaperLimitTitle": "You have reached your limit",
+  "@examPaperLimitTitle": {
+    "description": "Title of the 429 limit-reached prompt."
+  },
+  "examPaperLimitBody": "You have used your exam papers for now. Please try again later or upgrade your plan.",
+  "@examPaperLimitBody": {
+    "description": "Body of the 429 limit-reached prompt."
+  },
+  "examPaperRephrase": "We could not build a paper from that. Please adjust the chapters and try again.",
+  "@examPaperRephrase": {
+    "description": "Shown on a 400 invalid-input response."
+  },
+  "examPaperBusy": "The assistant is busy right now. Please try again in a moment.",
+  "@examPaperBusy": {
+    "description": "Shown on a 503 / server-busy response."
+  },
+  "examPaperTimeout": "This is taking longer than expected. Please try again.",
+  "@examPaperTimeout": {
+    "description": "Shown when the request times out."
+  },
+  "examPaperSignIn": "Please sign in again to use this tool.",
+  "@examPaperSignIn": {
+    "description": "Shown on a 401 unauthorized response."
   }
 }

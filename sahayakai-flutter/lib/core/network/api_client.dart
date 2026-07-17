@@ -61,6 +61,22 @@ class ApiClient {
     }
   }
 
+  /// Full-object write. Mirrors [post] exactly (same decode contract, same
+  /// typed `ApiException` mapping). The exam-paper save endpoint uses PUT to
+  /// persist a previously generated paper to the user's library.
+  Future<T> put<T>(
+    String path, {
+    Object? data,
+    required T Function(Map<String, dynamic> json) decode,
+  }) async {
+    try {
+      final res = await _dio.put<Map<String, dynamic>>(path, data: data);
+      return decode(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
+
   Future<T> get<T>(
     String path, {
     Map<String, dynamic>? query,

@@ -2089,6 +2089,354 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please sign in again to use this tool.'**
   String get rubricSignIn;
+
+  /// Title of the Exam Paper Generator tool.
+  ///
+  /// In en, this message translates to:
+  /// **'Exam Paper'**
+  String get examPaperTitle;
+
+  /// One-line description of the Exam Paper Generator tool.
+  ///
+  /// In en, this message translates to:
+  /// **'Build a board-pattern exam paper with answer key'**
+  String get examPaperSubtitle;
+
+  /// Idle/empty state before an exam paper is generated.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a board, grade and subject, then tap Generate.'**
+  String get examPaperEmpty;
+
+  /// Label for the required education-board dropdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Board'**
+  String get examPaperBoardLabel;
+
+  /// Placeholder shown before a board is chosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a board'**
+  String get examPaperBoardHint;
+
+  /// Validation error when no board is selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Please choose a board.'**
+  String get examPaperBoardError;
+
+  /// Label for the required grade-level dropdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Grade level'**
+  String get examPaperGradeLabel;
+
+  /// Placeholder shown before a grade is chosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a grade'**
+  String get examPaperGradeHint;
+
+  /// Validation error when no grade is selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Please choose a grade level.'**
+  String get examPaperGradeError;
+
+  /// Label for the required subject dropdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Subject'**
+  String get examPaperSubjectLabel;
+
+  /// Placeholder shown before a subject is chosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a subject'**
+  String get examPaperSubjectHint;
+
+  /// Validation error when no subject is selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Please choose a subject.'**
+  String get examPaperSubjectError;
+
+  /// Label for the chapters add-chip list.
+  ///
+  /// In en, this message translates to:
+  /// **'Chapters'**
+  String get examPaperChaptersLabel;
+
+  /// Helper line under the chapters field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Add the chapters to cover. Leave empty for the full syllabus where an official blueprint exists.'**
+  String get examPaperChaptersHint;
+
+  /// Placeholder in the chapter text field.
+  ///
+  /// In en, this message translates to:
+  /// **'For example, Quadratic Equations'**
+  String get examPaperChaptersPlaceholder;
+
+  /// Tooltip on the add-chapter button.
+  ///
+  /// In en, this message translates to:
+  /// **'Add chapter'**
+  String get examPaperChaptersAdd;
+
+  /// Validation error shown when a non-blueprinted combination has no chapters.
+  ///
+  /// In en, this message translates to:
+  /// **'Please add at least one chapter for this board, grade and subject.'**
+  String get examPaperChaptersError;
+
+  /// Label for the difficulty segmented control.
+  ///
+  /// In en, this message translates to:
+  /// **'Difficulty'**
+  String get examPaperDifficultyLabel;
+
+  /// Easy difficulty option.
+  ///
+  /// In en, this message translates to:
+  /// **'Easy'**
+  String get examPaperDifficultyEasy;
+
+  /// Moderate difficulty option.
+  ///
+  /// In en, this message translates to:
+  /// **'Moderate'**
+  String get examPaperDifficultyModerate;
+
+  /// Hard difficulty option.
+  ///
+  /// In en, this message translates to:
+  /// **'Hard'**
+  String get examPaperDifficultyHard;
+
+  /// Mixed difficulty option (the default).
+  ///
+  /// In en, this message translates to:
+  /// **'Mixed'**
+  String get examPaperDifficultyMixed;
+
+  /// Toggle to include an answer key in the paper.
+  ///
+  /// In en, this message translates to:
+  /// **'Include answer key'**
+  String get examPaperIncludeAnswerKey;
+
+  /// Toggle to include a marking scheme in the paper.
+  ///
+  /// In en, this message translates to:
+  /// **'Include marking scheme'**
+  String get examPaperIncludeMarkingScheme;
+
+  /// Title of the 202 generation-in-progress state.
+  ///
+  /// In en, this message translates to:
+  /// **'Your paper is being prepared'**
+  String get examPaperInProgressTitle;
+
+  /// Body of the 202 generation-in-progress state.
+  ///
+  /// In en, this message translates to:
+  /// **'A full board paper takes a little longer to build. We are finishing it now and it will be saved for you.'**
+  String get examPaperInProgressBody;
+
+  /// Points the teacher to the Library tab for the finished paper.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the Library tab in a minute to find your finished paper.'**
+  String get examPaperInProgressLibraryHint;
+
+  /// Badge showing the paper's maximum marks.
+  ///
+  /// In en, this message translates to:
+  /// **'Max marks {marks}'**
+  String examPaperMaxMarks(String marks);
+
+  /// Badge showing a question's or chapter's marks.
+  ///
+  /// In en, this message translates to:
+  /// **'{marks} marks'**
+  String examPaperMarks(String marks);
+
+  /// Badge showing a section's total marks.
+  ///
+  /// In en, this message translates to:
+  /// **'{marks} marks'**
+  String examPaperSectionMarks(String marks);
+
+  /// Badge showing a difficulty band's percentage of the paper.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} percent'**
+  String examPaperPercent(String value);
+
+  /// Header for the paper's general instructions list.
+  ///
+  /// In en, this message translates to:
+  /// **'General instructions'**
+  String get examPaperGeneralInstructions;
+
+  /// Label above an internal-choice (OR) alternative question.
+  ///
+  /// In en, this message translates to:
+  /// **'Or attempt'**
+  String get examPaperInternalChoice;
+
+  /// Label of the per-question answer block.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer'**
+  String get examPaperAnswerKey;
+
+  /// Label of the per-question marking-scheme block.
+  ///
+  /// In en, this message translates to:
+  /// **'Marking scheme'**
+  String get examPaperMarkingScheme;
+
+  /// Header for the blueprint summary card.
+  ///
+  /// In en, this message translates to:
+  /// **'Blueprint summary'**
+  String get examPaperBlueprintTitle;
+
+  /// Sub-header for the chapter-wise mark split.
+  ///
+  /// In en, this message translates to:
+  /// **'Marks by chapter'**
+  String get examPaperBlueprintChapters;
+
+  /// Sub-header for the difficulty-wise split.
+  ///
+  /// In en, this message translates to:
+  /// **'Difficulty split'**
+  String get examPaperBlueprintDifficulty;
+
+  /// Header for the prior-year-question sources card.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous-year questions'**
+  String get examPaperPyqTitle;
+
+  /// A PYQ source row with both a chapter and a year.
+  ///
+  /// In en, this message translates to:
+  /// **'{chapter} ({year})'**
+  String examPaperPyqChapterYear(String chapter, int year);
+
+  /// A PYQ source row with only a year.
+  ///
+  /// In en, this message translates to:
+  /// **'Year {year}'**
+  String examPaperPyqYear(int year);
+
+  /// Shown when the response carried no usable paper.
+  ///
+  /// In en, this message translates to:
+  /// **'No exam paper came back for that. Please try fewer chapters or a different subject.'**
+  String get examPaperNoContent;
+
+  /// Button that saves the generated paper to the teacher's library.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to Library'**
+  String get examPaperSave;
+
+  /// Shown on the save button while the save is in flight.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving'**
+  String get examPaperSaving;
+
+  /// Confirmation shown after the paper is saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to your Library'**
+  String get examPaperSaved;
+
+  /// Title of the failed-save inline error.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save'**
+  String get examPaperSaveFailedTitle;
+
+  /// Body of the failed-save inline error.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not save this paper to your library. Please try again.'**
+  String get examPaperSaveFailedBody;
+
+  /// Retry button on a failed save.
+  ///
+  /// In en, this message translates to:
+  /// **'Try saving again'**
+  String get examPaperSaveRetry;
+
+  /// Title of the 422 exam_paper_unstructured guidance state.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not structure that paper'**
+  String get examPaperUnstructuredTitle;
+
+  /// Body of the 422 exam_paper_unstructured guidance state.
+  ///
+  /// In en, this message translates to:
+  /// **'The assistant could not lay this out as a full paper. Please remove a few chapters and generate again.'**
+  String get examPaperUnstructuredBody;
+
+  /// Title of the 403 upgrade prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'A higher plan is needed'**
+  String get examPaperUpgradeTitle;
+
+  /// Body of the 403 upgrade prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Exam paper generation is part of a higher plan. Please upgrade to keep building papers.'**
+  String get examPaperUpgradeBody;
+
+  /// Title of the 429 limit-reached prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'You have reached your limit'**
+  String get examPaperLimitTitle;
+
+  /// Body of the 429 limit-reached prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'You have used your exam papers for now. Please try again later or upgrade your plan.'**
+  String get examPaperLimitBody;
+
+  /// Shown on a 400 invalid-input response.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not build a paper from that. Please adjust the chapters and try again.'**
+  String get examPaperRephrase;
+
+  /// Shown on a 503 / server-busy response.
+  ///
+  /// In en, this message translates to:
+  /// **'The assistant is busy right now. Please try again in a moment.'**
+  String get examPaperBusy;
+
+  /// Shown when the request times out.
+  ///
+  /// In en, this message translates to:
+  /// **'This is taking longer than expected. Please try again.'**
+  String get examPaperTimeout;
+
+  /// Shown on a 401 unauthorized response.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in again to use this tool.'**
+  String get examPaperSignIn;
 }
 
 class _AppLocalizationsDelegate

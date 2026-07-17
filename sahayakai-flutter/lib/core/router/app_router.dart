@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../features/dashboard/presentation/app_shell.dart';
+import '../../features/exam_paper/presentation/exam_paper_screen.dart';
 import '../../features/instant_answer/presentation/instant_answer_screen.dart';
 import '../../features/lesson_planner/presentation/lesson_plan_screen.dart';
 import '../../features/onboarding/presentation/login_screen.dart';
@@ -101,6 +102,10 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: Routes.rubricGenerator,
         builder: (context, state) => const RubricGeneratorScreen(),
+      ),
+      GoRoute(
+        path: Routes.examPaper,
+        builder: (context, state) => const ExamPaperScreen(),
       ),
       GoRoute(
         path: Routes.settings,

@@ -211,6 +211,12 @@ class _ToolList extends StatelessWidget {
         LucideIcons.clipboardCheck,
         Routes.rubricGenerator,
       ),
+      _Tool(
+        l10n.examPaperTitle,
+        l10n.examPaperSubtitle,
+        LucideIcons.scrollText,
+        Routes.examPaper,
+      ),
     ];
 
     return Column(

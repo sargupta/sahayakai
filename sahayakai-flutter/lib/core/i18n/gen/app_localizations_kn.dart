@@ -1098,4 +1098,204 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get rubricSignIn => 'Please sign in again to use this tool.';
+
+  @override
+  String get examPaperTitle => 'Exam Paper';
+
+  @override
+  String get examPaperSubtitle =>
+      'Build a board-pattern exam paper with answer key';
+
+  @override
+  String get examPaperEmpty =>
+      'Choose a board, grade and subject, then tap Generate.';
+
+  @override
+  String get examPaperBoardLabel => 'Board';
+
+  @override
+  String get examPaperBoardHint => 'Select a board';
+
+  @override
+  String get examPaperBoardError => 'Please choose a board.';
+
+  @override
+  String get examPaperGradeLabel => 'Grade level';
+
+  @override
+  String get examPaperGradeHint => 'Select a grade';
+
+  @override
+  String get examPaperGradeError => 'Please choose a grade level.';
+
+  @override
+  String get examPaperSubjectLabel => 'Subject';
+
+  @override
+  String get examPaperSubjectHint => 'Select a subject';
+
+  @override
+  String get examPaperSubjectError => 'Please choose a subject.';
+
+  @override
+  String get examPaperChaptersLabel => 'Chapters';
+
+  @override
+  String get examPaperChaptersHint =>
+      'Add the chapters to cover. Leave empty for the full syllabus where an official blueprint exists.';
+
+  @override
+  String get examPaperChaptersPlaceholder => 'For example, Quadratic Equations';
+
+  @override
+  String get examPaperChaptersAdd => 'Add chapter';
+
+  @override
+  String get examPaperChaptersError =>
+      'Please add at least one chapter for this board, grade and subject.';
+
+  @override
+  String get examPaperDifficultyLabel => 'Difficulty';
+
+  @override
+  String get examPaperDifficultyEasy => 'Easy';
+
+  @override
+  String get examPaperDifficultyModerate => 'Moderate';
+
+  @override
+  String get examPaperDifficultyHard => 'Hard';
+
+  @override
+  String get examPaperDifficultyMixed => 'Mixed';
+
+  @override
+  String get examPaperIncludeAnswerKey => 'Include answer key';
+
+  @override
+  String get examPaperIncludeMarkingScheme => 'Include marking scheme';
+
+  @override
+  String get examPaperInProgressTitle => 'Your paper is being prepared';
+
+  @override
+  String get examPaperInProgressBody =>
+      'A full board paper takes a little longer to build. We are finishing it now and it will be saved for you.';
+
+  @override
+  String get examPaperInProgressLibraryHint =>
+      'Open the Library tab in a minute to find your finished paper.';
+
+  @override
+  String examPaperMaxMarks(String marks) {
+    return 'Max marks $marks';
+  }
+
+  @override
+  String examPaperMarks(String marks) {
+    return '$marks marks';
+  }
+
+  @override
+  String examPaperSectionMarks(String marks) {
+    return '$marks marks';
+  }
+
+  @override
+  String examPaperPercent(String value) {
+    return '$value percent';
+  }
+
+  @override
+  String get examPaperGeneralInstructions => 'General instructions';
+
+  @override
+  String get examPaperInternalChoice => 'Or attempt';
+
+  @override
+  String get examPaperAnswerKey => 'Answer';
+
+  @override
+  String get examPaperMarkingScheme => 'Marking scheme';
+
+  @override
+  String get examPaperBlueprintTitle => 'Blueprint summary';
+
+  @override
+  String get examPaperBlueprintChapters => 'Marks by chapter';
+
+  @override
+  String get examPaperBlueprintDifficulty => 'Difficulty split';
+
+  @override
+  String get examPaperPyqTitle => 'Previous-year questions';
+
+  @override
+  String examPaperPyqChapterYear(String chapter, int year) {
+    return '$chapter ($year)';
+  }
+
+  @override
+  String examPaperPyqYear(int year) {
+    return 'Year $year';
+  }
+
+  @override
+  String get examPaperNoContent =>
+      'No exam paper came back for that. Please try fewer chapters or a different subject.';
+
+  @override
+  String get examPaperSave => 'Save to Library';
+
+  @override
+  String get examPaperSaving => 'Saving';
+
+  @override
+  String get examPaperSaved => 'Saved to your Library';
+
+  @override
+  String get examPaperSaveFailedTitle => 'Could not save';
+
+  @override
+  String get examPaperSaveFailedBody =>
+      'We could not save this paper to your library. Please try again.';
+
+  @override
+  String get examPaperSaveRetry => 'Try saving again';
+
+  @override
+  String get examPaperUnstructuredTitle => 'We could not structure that paper';
+
+  @override
+  String get examPaperUnstructuredBody =>
+      'The assistant could not lay this out as a full paper. Please remove a few chapters and generate again.';
+
+  @override
+  String get examPaperUpgradeTitle => 'A higher plan is needed';
+
+  @override
+  String get examPaperUpgradeBody =>
+      'Exam paper generation is part of a higher plan. Please upgrade to keep building papers.';
+
+  @override
+  String get examPaperLimitTitle => 'You have reached your limit';
+
+  @override
+  String get examPaperLimitBody =>
+      'You have used your exam papers for now. Please try again later or upgrade your plan.';
+
+  @override
+  String get examPaperRephrase =>
+      'We could not build a paper from that. Please adjust the chapters and try again.';
+
+  @override
+  String get examPaperBusy =>
+      'The assistant is busy right now. Please try again in a moment.';
+
+  @override
+  String get examPaperTimeout =>
+      'This is taking longer than expected. Please try again.';
+
+  @override
+  String get examPaperSignIn => 'Please sign in again to use this tool.';
 }

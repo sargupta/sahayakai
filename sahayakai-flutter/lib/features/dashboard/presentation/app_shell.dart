@@ -151,6 +151,15 @@ class _AppShellState extends State<AppShell> {
                     context.push(Routes.rubricGenerator);
                   },
                 ),
+                ListTile(
+                  leading: const Icon(LucideIcons.scrollText),
+                  title: Text(l10n.examPaperTitle),
+                  subtitle: Text(l10n.examPaperSubtitle),
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    context.push(Routes.examPaper);
+                  },
+                ),
               ],
             ),
           ),
