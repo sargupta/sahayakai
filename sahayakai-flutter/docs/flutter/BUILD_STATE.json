@@ -176,7 +176,9 @@
       "priority": "p1",
       "endpoint": "POST /api/ai/worksheet",
       "file": "lib/features/worksheet_wizard/presentation/worksheet_wizard_screen.dart",
-      "status": "pending"
+      "status": "built-pending-firebase",
+      "commit": "07b39c764",
+      "notes": "POST /api/ai/worksheet with REQUIRED imageDataUri (data:mime;base64, cap 14_000_000 CHARS enforced client-side; Zod rejects over-cap with 400, does not clamp). Shared lib/shared/media/image_input.dart (camera/gallery, injectable picker service, thumbnail, byte counter, oversized-reject, permission-denied) reused by future Assess Assignment. image_picker 1.2.3; CAMERA manifest perm (required=false). BUGS: response field is learningObjectives NOT objectives; answerKey is [{activityIndex(0-based),answer}]; no validationWarning on this endpoint. Camera RUNTIME permission = handoff. analyze clean; 482 tests; rubric PASS."
     },
     {
       "name": "Rubric Generator",
