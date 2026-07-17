@@ -20,6 +20,7 @@ import '../../../shared/widgets/language_switcher.dart';
 import '../../../shared/widgets/offline_view.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../domain/board_category.dart';
+import '../domain/profile_validators.dart';
 import '../domain/teacher_profile.dart';
 import 'profile_controller.dart';
 import 'widgets/plan_badge_chip.dart';
@@ -551,22 +552,15 @@ List<String> _toggled(
   return next;
 }
 
-/// Optional field: blank is valid (most teachers will not fill this in on day
-/// one). When present it must be a real Indian mobile number, accepting the
-/// three ways a teacher actually writes one: bare, `+91`, or a leading 0.
-/// Spaces, hyphens and brackets are forgiven rather than rejected.
+/// The rules themselves live in `domain/profile_validators.dart`, shared with
+/// onboarding (P0.2), which collects the same fields. These two functions only
+/// attach this screen's copy to them.
 String? _validatePhone(AppLocalizations l10n, String? value) {
-  final raw = value?.replaceAll(RegExp(r'[\s\-()]'), '').trim() ?? '';
-  if (raw.isEmpty) return null;
-  final ok = RegExp(r'^(?:\+?91|0)?[6-9]\d{9}$').hasMatch(raw);
-  return ok ? null : l10n.profilePhoneInvalid;
+  return isValidIndianMobile(value) ? null : l10n.profilePhoneInvalid;
 }
 
-/// Optional. Six digits, first digit 1-9: no Indian PIN code starts with 0.
 String? _validatePincode(AppLocalizations l10n, String? value) {
-  final raw = value?.trim() ?? '';
-  if (raw.isEmpty) return null;
-  return RegExp(r'^[1-9]\d{5}$').hasMatch(raw) ? null : l10n.profilePincodeInvalid;
+  return isValidIndianPincode(value) ? null : l10n.profilePincodeInvalid;
 }
 
 String _categoryLabel(AppLocalizations l10n, BoardCategory category) {

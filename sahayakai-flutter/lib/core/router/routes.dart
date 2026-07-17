@@ -6,6 +6,15 @@ class Routes {
   static const String login = '/login';
   static const String home = '/';
 
+  /// First-run setup. Auth-required, and deliberately NOT a gate.
+  ///
+  /// It is absent from [publicPaths] because the profile it collects is saved
+  /// against `users/<uid>`, so it needs an identity. But nothing forces a
+  /// teacher through it: the redirect guard never sends anyone here, every step
+  /// offers "Skip for now", and the dashboard reaches it through a dismissible
+  /// nudge. See `OnboardingScreen` for the incident this rule comes from.
+  static const String onboarding = '/onboarding';
+
   // Reserved for later units (tabs currently live inside AppShell).
   static const String library = '/my-library';
   static const String profile = '/my-profile';

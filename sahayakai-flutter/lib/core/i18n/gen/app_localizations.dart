@@ -212,6 +212,18 @@ abstract class AppLocalizations {
   /// **'Teaching assistant for every classroom'**
   String get splashTagline;
 
+  /// Splash: heading when the first-run bootstrap (Firebase init / App Check / first auth snapshot) fails.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not start the app'**
+  String get splashFailedTitle;
+
+  /// Splash: body when the bootstrap fails. The retry re-runs it.
+  ///
+  /// In en, this message translates to:
+  /// **'Please check your connection and try again.'**
+  String get splashFailedBody;
+
   /// Login screen heading.
   ///
   /// In en, this message translates to:
@@ -224,17 +236,287 @@ abstract class AppLocalizations {
   /// **'Sign in to plan lessons, quizzes and more.'**
   String get loginSubtitle;
 
+  /// Login: the Google sign-in button label.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Google'**
+  String get loginGoogle;
+
+  /// Login: reassurance under the sign-in button.
+  ///
+  /// In en, this message translates to:
+  /// **'We use your Google account only to sign you in. Your work stays yours.'**
+  String get loginPrivacyNote;
+
+  /// Login: label above the language picker, which is step 0 of setup.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your language'**
+  String get loginLanguagePrompt;
+
+  /// Login: helper text under the language picker.
+  ///
+  /// In en, this message translates to:
+  /// **'SahayakAI works in your language, and writes your teaching material in it too.'**
+  String get loginLanguageHint;
+
+  /// Login: one of three capability lines shown before sign-in.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan a full lesson in minutes'**
+  String get loginValueLessons;
+
+  /// Login: one of three capability lines shown before sign-in.
+  ///
+  /// In en, this message translates to:
+  /// **'Build a quiz at three difficulty levels'**
+  String get loginValueQuizzes;
+
+  /// Login: one of three capability lines shown before sign-in.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer any classroom question, in your language'**
+  String get loginValueAnswers;
+
+  /// Login: sign-in failure message.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not sign you in. Please try again.'**
+  String get loginFailed;
+
+  /// Onboarding: app bar title.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up SahayakAI'**
+  String get onboardingTitle;
+
+  /// Onboarding: skip action, present on every step. Onboarding is never a gate.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip for now'**
+  String get onboardingSkip;
+
+  /// Onboarding: step progress label.
+  ///
+  /// In en, this message translates to:
+  /// **'Step {current} of {total}'**
+  String onboardingStepLabel(int current, int total);
+
+  /// Onboarding: previous-step action.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get onboardingBack;
+
+  /// Onboarding: next-step action.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get onboardingNext;
+
+  /// Onboarding: saves the profile then moves to the last step.
+  ///
+  /// In en, this message translates to:
+  /// **'Save and continue'**
+  String get onboardingSaveAndContinue;
+
+  /// Onboarding: final action on the last step.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to my dashboard'**
+  String get onboardingFinish;
+
+  /// Onboarding step 0: language picker heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Which language do you teach in?'**
+  String get onboardingLanguageTitle;
+
+  /// Onboarding step 0: language picker body.
+  ///
+  /// In en, this message translates to:
+  /// **'Your lesson plans, quizzes and answers arrive in the language you choose. You can change it at any time.'**
+  String get onboardingLanguageBody;
+
+  /// Onboarding step 1: profile form heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us about your classroom'**
+  String get onboardingProfileTitle;
+
+  /// Onboarding step 1: profile form body.
+  ///
+  /// In en, this message translates to:
+  /// **'Every field is optional. What you share is used to match your material to your board, your classes and your state.'**
+  String get onboardingProfileBody;
+
+  /// Onboarding step 2: closing heading.
+  ///
+  /// In en, this message translates to:
+  /// **'You are ready to begin'**
+  String get onboardingReadyTitle;
+
+  /// Onboarding step 2: body above the summary of what the teacher just set up.
+  ///
+  /// In en, this message translates to:
+  /// **'Your lesson plans, quizzes and answers will match this. You can change any of it later from your profile.'**
+  String get onboardingReadyBody;
+
+  /// Onboarding: save failure. It never blocks the teacher from continuing.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not save your profile. You can continue now and add it later from your profile.'**
+  String get onboardingSaveFailed;
+
+  /// Onboarding: save failed with a 401.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in again to save your profile. You can continue now and add it later.'**
+  String get onboardingSaveSignIn;
+
   /// Dashboard greeting.
   ///
   /// In en, this message translates to:
   /// **'Welcome back'**
   String get dashboardGreeting;
 
+  /// Dashboard: greeting once the teacher name is known.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome back, {name}'**
+  String dashboardGreetingNamed(String name);
+
   /// Dashboard tools section header.
   ///
   /// In en, this message translates to:
   /// **'Your teaching tools'**
   String get dashboardToolsTitle;
+
+  /// Dashboard: recent saved items section header.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent work'**
+  String get dashboardRecentTitle;
+
+  /// Dashboard: recent list empty state.
+  ///
+  /// In en, this message translates to:
+  /// **'Anything you make is saved here, ready to open again.'**
+  String get dashboardRecentEmpty;
+
+  /// Dashboard: recent list error state.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not open your recent work. Please try again.'**
+  String get dashboardRecentFailed;
+
+  /// Dashboard: recent list 401 state.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to see your recent work.'**
+  String get dashboardRecentSignedOut;
+
+  /// Dashboard: fallback for a saved item with no title.
+  ///
+  /// In en, this message translates to:
+  /// **'Untitled'**
+  String get dashboardUntitled;
+
+  /// Dashboard: profile nudge heading. A nudge, never a gate.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish setting up your profile'**
+  String get dashboardSetupTitle;
+
+  /// Dashboard: profile nudge body.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your school and your classes, and every lesson plan and quiz will arrive ready for your classroom.'**
+  String get dashboardSetupBody;
+
+  /// Dashboard: profile nudge action, opens onboarding.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up my profile'**
+  String get dashboardSetupAction;
+
+  /// Dashboard: dismisses the profile nudge.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get dashboardSetupDismiss;
+
+  /// Saved content type label: lesson-plan.
+  ///
+  /// In en, this message translates to:
+  /// **'Lesson plan'**
+  String get contentTypeLessonPlan;
+
+  /// Saved content type label: quiz.
+  ///
+  /// In en, this message translates to:
+  /// **'Quiz'**
+  String get contentTypeQuiz;
+
+  /// Saved content type label: worksheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Worksheet'**
+  String get contentTypeWorksheet;
+
+  /// Saved content type label: visual-aid.
+  ///
+  /// In en, this message translates to:
+  /// **'Visual aid'**
+  String get contentTypeVisualAid;
+
+  /// Saved content type label: rubric.
+  ///
+  /// In en, this message translates to:
+  /// **'Rubric'**
+  String get contentTypeRubric;
+
+  /// Saved content type label: micro-lesson.
+  ///
+  /// In en, this message translates to:
+  /// **'Micro lesson'**
+  String get contentTypeMicroLesson;
+
+  /// Saved content type label: virtual-field-trip.
+  ///
+  /// In en, this message translates to:
+  /// **'Virtual field trip'**
+  String get contentTypeVirtualFieldTrip;
+
+  /// Saved content type label: instant-answer.
+  ///
+  /// In en, this message translates to:
+  /// **'Instant answer'**
+  String get contentTypeInstantAnswer;
+
+  /// Saved content type label: teacher-training.
+  ///
+  /// In en, this message translates to:
+  /// **'Teacher training'**
+  String get contentTypeTeacherTraining;
+
+  /// Saved content type label: exam-paper.
+  ///
+  /// In en, this message translates to:
+  /// **'Exam paper'**
+  String get contentTypeExamPaper;
+
+  /// Saved content type label: assessment.
+  ///
+  /// In en, this message translates to:
+  /// **'Assessment'**
+  String get contentTypeAssessment;
+
+  /// Saved content type label for a type this build does not know. The row still renders: it is the teacher own work.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved work'**
+  String get contentTypeUnknown;
 
   /// Library screen title.
   ///

@@ -57,6 +57,12 @@ class AppLocalizationsMr extends AppLocalizations {
   String get splashTagline => 'प्रत्येक वर्गासाठी शिक्षण सहाय्यक';
 
   @override
+  String get splashFailedTitle => 'We could not start the app';
+
+  @override
+  String get splashFailedBody => 'Please check your connection and try again.';
+
+  @override
   String get loginTitle => 'SahayakAI मध्ये आपले स्वागत आहे';
 
   @override
@@ -64,10 +70,160 @@ class AppLocalizationsMr extends AppLocalizations {
       'पाठ योजना, प्रश्नमंजुषा आणि बरेच काही यासाठी साइन इन करा.';
 
   @override
+  String get loginGoogle => 'Continue with Google';
+
+  @override
+  String get loginPrivacyNote =>
+      'We use your Google account only to sign you in. Your work stays yours.';
+
+  @override
+  String get loginLanguagePrompt => 'Choose your language';
+
+  @override
+  String get loginLanguageHint =>
+      'SahayakAI works in your language, and writes your teaching material in it too.';
+
+  @override
+  String get loginValueLessons => 'Plan a full lesson in minutes';
+
+  @override
+  String get loginValueQuizzes => 'Build a quiz at three difficulty levels';
+
+  @override
+  String get loginValueAnswers =>
+      'Answer any classroom question, in your language';
+
+  @override
+  String get loginFailed => 'We could not sign you in. Please try again.';
+
+  @override
+  String get onboardingTitle => 'Set up SahayakAI';
+
+  @override
+  String get onboardingSkip => 'Skip for now';
+
+  @override
+  String onboardingStepLabel(int current, int total) {
+    return 'Step $current of $total';
+  }
+
+  @override
+  String get onboardingBack => 'Back';
+
+  @override
+  String get onboardingNext => 'Next';
+
+  @override
+  String get onboardingSaveAndContinue => 'Save and continue';
+
+  @override
+  String get onboardingFinish => 'Go to my dashboard';
+
+  @override
+  String get onboardingLanguageTitle => 'Which language do you teach in?';
+
+  @override
+  String get onboardingLanguageBody =>
+      'Your lesson plans, quizzes and answers arrive in the language you choose. You can change it at any time.';
+
+  @override
+  String get onboardingProfileTitle => 'Tell us about your classroom';
+
+  @override
+  String get onboardingProfileBody =>
+      'Every field is optional. What you share is used to match your material to your board, your classes and your state.';
+
+  @override
+  String get onboardingReadyTitle => 'You are ready to begin';
+
+  @override
+  String get onboardingReadyBody =>
+      'Your lesson plans, quizzes and answers will match this. You can change any of it later from your profile.';
+
+  @override
+  String get onboardingSaveFailed =>
+      'We could not save your profile. You can continue now and add it later from your profile.';
+
+  @override
+  String get onboardingSaveSignIn =>
+      'Please sign in again to save your profile. You can continue now and add it later.';
+
+  @override
   String get dashboardGreeting => 'पुन्हा स्वागत आहे';
 
   @override
+  String dashboardGreetingNamed(String name) {
+    return 'Welcome back, $name';
+  }
+
+  @override
   String get dashboardToolsTitle => 'तुमची शिक्षण साधने';
+
+  @override
+  String get dashboardRecentTitle => 'Recent work';
+
+  @override
+  String get dashboardRecentEmpty =>
+      'Anything you make is saved here, ready to open again.';
+
+  @override
+  String get dashboardRecentFailed =>
+      'We could not open your recent work. Please try again.';
+
+  @override
+  String get dashboardRecentSignedOut => 'Sign in to see your recent work.';
+
+  @override
+  String get dashboardUntitled => 'Untitled';
+
+  @override
+  String get dashboardSetupTitle => 'Finish setting up your profile';
+
+  @override
+  String get dashboardSetupBody =>
+      'Add your school and your classes, and every lesson plan and quiz will arrive ready for your classroom.';
+
+  @override
+  String get dashboardSetupAction => 'Set up my profile';
+
+  @override
+  String get dashboardSetupDismiss => 'Not now';
+
+  @override
+  String get contentTypeLessonPlan => 'Lesson plan';
+
+  @override
+  String get contentTypeQuiz => 'Quiz';
+
+  @override
+  String get contentTypeWorksheet => 'Worksheet';
+
+  @override
+  String get contentTypeVisualAid => 'Visual aid';
+
+  @override
+  String get contentTypeRubric => 'Rubric';
+
+  @override
+  String get contentTypeMicroLesson => 'Micro lesson';
+
+  @override
+  String get contentTypeVirtualFieldTrip => 'Virtual field trip';
+
+  @override
+  String get contentTypeInstantAnswer => 'Instant answer';
+
+  @override
+  String get contentTypeTeacherTraining => 'Teacher training';
+
+  @override
+  String get contentTypeExamPaper => 'Exam paper';
+
+  @override
+  String get contentTypeAssessment => 'Assessment';
+
+  @override
+  String get contentTypeUnknown => 'Saved work';
 
   @override
   String get libraryTitle => 'माझे ग्रंथालय';

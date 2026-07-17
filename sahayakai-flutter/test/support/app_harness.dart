@@ -1,0 +1,91 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sahayakai/app.dart';
+import 'package:sahayakai/core/auth/auth_providers.dart';
+import 'package:sahayakai/core/network/api_providers.dart';
+import 'package:sahayakai/features/profile/data/profile_doc_source.dart';
+
+import 'fake_api_client.dart';
+
+/// Hosts the REAL app: the real `GoRouter`, the real redirect guard, the real
+/// theme and the real l10n delegates.
+///
+/// Redirect behaviour is the thing under test for splash and login, and it
+/// lives in `app_router.dart` — a hand-rolled router in the test would prove
+/// only that the hand-rolled router works.
+///
+/// [overrides] MUST include an [apiClientOverride]: landing on the dashboard
+/// mounts the recent-work section, which fires `GET /api/content/list`
+/// immediately. Without a fake that is a live request to production from a unit
+/// test. [harnessOverrides] bundles the safe defaults.
+Widget appHarness({List<Override> overrides = const []}) {
+  return ProviderScope(overrides: overrides, child: const SahayakApp());
+}
+
+/// The safe defaults every app-level test needs, plus whatever it is actually
+/// testing. Both data seams are faked, so nothing can escape to the network.
+List<Override> harnessOverrides({
+  required List<Override> overrides,
+  FakeApiClient? client,
+  ProfileDocSource? docs,
+}) {
+  return [
+    apiClientOverride(client ?? FakeApiClient()),
+    profileDocSourceProvider.overrideWithValue(
+      docs ?? const SignedOutProfileDocSource(),
+    ),
+    ...overrides,
+  ];
+}
+
+/// Binds a fake API client, so no test ever opens a socket.
+Override apiClientOverride(FakeApiClient client) =>
+    apiClientProvider.overrideWithValue(client);
+
+/// Binds a token so a plan claim can decode. Null models the current
+/// signed-out stub.
+Override tokenOverride(String? token) => tokenProviderProvider.overrideWithValue(
+      ({bool forceRefresh = false}) async => token,
+    );
+
+/// Signs the stub auth controller in.
+Override signedInOverride() =>
+    authControllerProvider.overrideWith(_SignedInAuth.new);
+
+class _SignedInAuth extends AuthController {
+  @override
+  AuthStatus build() => AuthStatus.signedIn;
+}
+
+/// A controllable stand-in for the first-run bootstrap (what becomes
+/// `Firebase.initializeApp` + `FirebaseAppCheck.activate` + the first auth
+/// snapshot).
+///
+/// The router parks on `/splash` until this resolves, so it is the only lever
+/// that decides whether a redirect happens at all.
+class FakeBootstrap {
+  FakeBootstrap({this.error, this.pending = false});
+
+  /// Thrown to model a failed init: no network for App Check's Play Integrity
+  /// handshake, which is the realistic rural failure.
+  Object? error;
+
+  /// Never completes, so the "still booting" state can be observed.
+  bool pending;
+
+  /// How many times the bootstrap ran. The splash's retry re-runs it, and that
+  /// is the only way to tell a real retry from a repaint.
+  int calls = 0;
+
+  Future<void> call(Ref ref) async {
+    calls += 1;
+    if (pending) return Completer<void>().future;
+    if (error != null) throw error!;
+  }
+}
+
+/// Replaces the 600ms simulated bootstrap with something a test controls.
+Override bootstrapOverride(FakeBootstrap fake) =>
+    appBootstrapProvider.overrideWith(fake.call);

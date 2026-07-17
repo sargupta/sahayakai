@@ -64,6 +64,14 @@
   "@splashTagline": {
     "description": "Splash-screen tagline under the brand mark."
   },
+  "splashFailedTitle": "We could not start the app",
+  "@splashFailedTitle": {
+    "description": "Splash: heading when the first-run bootstrap (Firebase init / App Check / first auth snapshot) fails."
+  },
+  "splashFailedBody": "Please check your connection and try again.",
+  "@splashFailedBody": {
+    "description": "Splash: body when the bootstrap fails. The retry re-runs it."
+  },
   "loginTitle": "Welcome to SahayakAI",
   "@loginTitle": {
     "description": "Login screen heading."
@@ -72,13 +80,207 @@
   "@loginSubtitle": {
     "description": "Login screen subheading."
   },
+  "loginGoogle": "Continue with Google",
+  "@loginGoogle": {
+    "description": "Login: the Google sign-in button label."
+  },
+  "loginPrivacyNote": "We use your Google account only to sign you in. Your work stays yours.",
+  "@loginPrivacyNote": {
+    "description": "Login: reassurance under the sign-in button."
+  },
+  "loginLanguagePrompt": "Choose your language",
+  "@loginLanguagePrompt": {
+    "description": "Login: label above the language picker, which is step 0 of setup."
+  },
+  "loginLanguageHint": "SahayakAI works in your language, and writes your teaching material in it too.",
+  "@loginLanguageHint": {
+    "description": "Login: helper text under the language picker."
+  },
+  "loginValueLessons": "Plan a full lesson in minutes",
+  "@loginValueLessons": {
+    "description": "Login: one of three capability lines shown before sign-in."
+  },
+  "loginValueQuizzes": "Build a quiz at three difficulty levels",
+  "@loginValueQuizzes": {
+    "description": "Login: one of three capability lines shown before sign-in."
+  },
+  "loginValueAnswers": "Answer any classroom question, in your language",
+  "@loginValueAnswers": {
+    "description": "Login: one of three capability lines shown before sign-in."
+  },
+  "loginFailed": "We could not sign you in. Please try again.",
+  "@loginFailed": {
+    "description": "Login: sign-in failure message."
+  },
+  "onboardingTitle": "Set up SahayakAI",
+  "@onboardingTitle": {
+    "description": "Onboarding: app bar title."
+  },
+  "onboardingSkip": "Skip for now",
+  "@onboardingSkip": {
+    "description": "Onboarding: skip action, present on every step. Onboarding is never a gate."
+  },
+  "onboardingStepLabel": "Step {current} of {total}",
+  "@onboardingStepLabel": {
+    "description": "Onboarding: step progress label.",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "onboardingBack": "Back",
+  "@onboardingBack": {
+    "description": "Onboarding: previous-step action."
+  },
+  "onboardingNext": "Next",
+  "@onboardingNext": {
+    "description": "Onboarding: next-step action."
+  },
+  "onboardingSaveAndContinue": "Save and continue",
+  "@onboardingSaveAndContinue": {
+    "description": "Onboarding: saves the profile then moves to the last step."
+  },
+  "onboardingFinish": "Go to my dashboard",
+  "@onboardingFinish": {
+    "description": "Onboarding: final action on the last step."
+  },
+  "onboardingLanguageTitle": "Which language do you teach in?",
+  "@onboardingLanguageTitle": {
+    "description": "Onboarding step 0: language picker heading."
+  },
+  "onboardingLanguageBody": "Your lesson plans, quizzes and answers arrive in the language you choose. You can change it at any time.",
+  "@onboardingLanguageBody": {
+    "description": "Onboarding step 0: language picker body."
+  },
+  "onboardingProfileTitle": "Tell us about your classroom",
+  "@onboardingProfileTitle": {
+    "description": "Onboarding step 1: profile form heading."
+  },
+  "onboardingProfileBody": "Every field is optional. What you share is used to match your material to your board, your classes and your state.",
+  "@onboardingProfileBody": {
+    "description": "Onboarding step 1: profile form body."
+  },
+  "onboardingReadyTitle": "You are ready to begin",
+  "@onboardingReadyTitle": {
+    "description": "Onboarding step 2: closing heading."
+  },
+  "onboardingReadyBody": "Your lesson plans, quizzes and answers will match this. You can change any of it later from your profile.",
+  "@onboardingReadyBody": {
+    "description": "Onboarding step 2: body above the summary of what the teacher just set up."
+  },
+  "onboardingSaveFailed": "We could not save your profile. You can continue now and add it later from your profile.",
+  "@onboardingSaveFailed": {
+    "description": "Onboarding: save failure. It never blocks the teacher from continuing."
+  },
+  "onboardingSaveSignIn": "Please sign in again to save your profile. You can continue now and add it later.",
+  "@onboardingSaveSignIn": {
+    "description": "Onboarding: save failed with a 401."
+  },
   "dashboardGreeting": "Welcome back",
   "@dashboardGreeting": {
     "description": "Dashboard greeting."
   },
+  "dashboardGreetingNamed": "Welcome back, {name}",
+  "@dashboardGreetingNamed": {
+    "description": "Dashboard: greeting once the teacher name is known.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Lakshmi"
+      }
+    }
+  },
   "dashboardToolsTitle": "Your teaching tools",
   "@dashboardToolsTitle": {
     "description": "Dashboard tools section header."
+  },
+  "dashboardRecentTitle": "Recent work",
+  "@dashboardRecentTitle": {
+    "description": "Dashboard: recent saved items section header."
+  },
+  "dashboardRecentEmpty": "Anything you make is saved here, ready to open again.",
+  "@dashboardRecentEmpty": {
+    "description": "Dashboard: recent list empty state."
+  },
+  "dashboardRecentFailed": "We could not open your recent work. Please try again.",
+  "@dashboardRecentFailed": {
+    "description": "Dashboard: recent list error state."
+  },
+  "dashboardRecentSignedOut": "Sign in to see your recent work.",
+  "@dashboardRecentSignedOut": {
+    "description": "Dashboard: recent list 401 state."
+  },
+  "dashboardUntitled": "Untitled",
+  "@dashboardUntitled": {
+    "description": "Dashboard: fallback for a saved item with no title."
+  },
+  "dashboardSetupTitle": "Finish setting up your profile",
+  "@dashboardSetupTitle": {
+    "description": "Dashboard: profile nudge heading. A nudge, never a gate."
+  },
+  "dashboardSetupBody": "Add your school and your classes, and every lesson plan and quiz will arrive ready for your classroom.",
+  "@dashboardSetupBody": {
+    "description": "Dashboard: profile nudge body."
+  },
+  "dashboardSetupAction": "Set up my profile",
+  "@dashboardSetupAction": {
+    "description": "Dashboard: profile nudge action, opens onboarding."
+  },
+  "dashboardSetupDismiss": "Not now",
+  "@dashboardSetupDismiss": {
+    "description": "Dashboard: dismisses the profile nudge."
+  },
+  "contentTypeLessonPlan": "Lesson plan",
+  "@contentTypeLessonPlan": {
+    "description": "Saved content type label: lesson-plan."
+  },
+  "contentTypeQuiz": "Quiz",
+  "@contentTypeQuiz": {
+    "description": "Saved content type label: quiz."
+  },
+  "contentTypeWorksheet": "Worksheet",
+  "@contentTypeWorksheet": {
+    "description": "Saved content type label: worksheet."
+  },
+  "contentTypeVisualAid": "Visual aid",
+  "@contentTypeVisualAid": {
+    "description": "Saved content type label: visual-aid."
+  },
+  "contentTypeRubric": "Rubric",
+  "@contentTypeRubric": {
+    "description": "Saved content type label: rubric."
+  },
+  "contentTypeMicroLesson": "Micro lesson",
+  "@contentTypeMicroLesson": {
+    "description": "Saved content type label: micro-lesson."
+  },
+  "contentTypeVirtualFieldTrip": "Virtual field trip",
+  "@contentTypeVirtualFieldTrip": {
+    "description": "Saved content type label: virtual-field-trip."
+  },
+  "contentTypeInstantAnswer": "Instant answer",
+  "@contentTypeInstantAnswer": {
+    "description": "Saved content type label: instant-answer."
+  },
+  "contentTypeTeacherTraining": "Teacher training",
+  "@contentTypeTeacherTraining": {
+    "description": "Saved content type label: teacher-training."
+  },
+  "contentTypeExamPaper": "Exam paper",
+  "@contentTypeExamPaper": {
+    "description": "Saved content type label: exam-paper."
+  },
+  "contentTypeAssessment": "Assessment",
+  "@contentTypeAssessment": {
+    "description": "Saved content type label: assessment."
+  },
+  "contentTypeUnknown": "Saved work",
+  "@contentTypeUnknown": {
+    "description": "Saved content type label for a type this build does not know. The row still renders: it is the teacher own work."
   },
   "libraryTitle": "My Library",
   "@libraryTitle": {

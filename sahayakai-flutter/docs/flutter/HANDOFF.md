@@ -35,6 +35,57 @@ Documented at the call site in `lib/features/settings/`.
 - `EDUCATION_BOARDS` is **29** entries.
 - `targetDifficulty: null` on quiz is what returns all three difficulty variants.
 
+### Library / recent work (`GET /api/content/list`) — found while building P0.3, verified against `route.ts`
+
+The endpoint SCREEN_INVENTORY never names. §P0.3 says the dashboard reads "recent content (library
+list, see P1.9)" and there IS no P1.9 (the library is P1.7), and neither section gives a path or a
+contract. It is `GET /api/content/list`, and it is what the web's own `content-gallery.tsx` calls
+with a plain `Authorization: Bearer` header.
+
+- **`limit` is `.max(20)`, and the route's OWN swagger comment saying "max 50" is WRONG.** The Zod
+  schema is `z.coerce.number().min(1).max(20).default(20)`, and `.max()` does not clamp — it
+  **rejects**. `?limit=50` returns **400 Invalid Query Parameters**, not 20 items. A client that
+  trusted the documented maximum would break its own library screen. `LibraryRepository` clamps to
+  20; pinned by a test.
+- **The `type` enum has 11 members, not the 8 the swagger comment lists.** `ContentTypeSchema` adds
+  `teacher-training`, `exam-paper` and `assessment`. The Zod enum is the truth; all 11 are pinned by
+  a test.
+- **NOT wrapped in `withPlanCheck`** — unlike every AI endpoint. It reads `x-user-id` directly and
+  meters nothing, so there is **no 403 `PLAN_UPGRADE_REQUIRED` and no 429**. Only 401 / 400 / 500.
+  Reading your own work is not a metered feature; do not add upgrade or limit states to it.
+- Response is `{ items, count, nextCursor }`. `nextCursor` is an **explicit `null`** on the last
+  page, not an absent key. `count` is just `items.length` computed server-side — deliberately not
+  modelled, so the view cannot disagree with itself.
+- `createdAt` arrives as an **ISO 8601 string** (every item is run through `dbAdapter.serialize`,
+  which converts Firestore's `{_seconds, _nanoseconds}`), and `BaseContentSchema` marks it optional.
+- Soft-deleted items are filtered server-side, so the client needs no `deletedAt` handling.
+
+### Onboarding routing — found while building P0.2, verified against the handlers
+
+- **`GET /api/auth/profile-check?uid=<uid>` is PUBLIC and takes the uid as a QUERY PARAM**, not a
+  Bearer token. That is deliberate (it runs immediately after Firebase sign-in, before the app has a
+  session), and the route carries a written note accepting the account-enumeration tradeoff. It
+  returns `{exists, onboardingComplete}` and is the **only** read that can answer "is this teacher
+  new" — there is no `GET /api/user/profile`. It is the seam for sending a RETURNING teacher
+  straight to the dashboard instead of to setup; the TODO is on `LoginScreen.destinationFor`.
+- **Do NOT call `POST /api/profile/mark-complete` from Flutter.** Its primary effect is issuing the
+  httpOnly `sahayakai_profile_complete` cookie that feeds the **Next middleware page gate** — which
+  a dio client neither receives usefully nor needs, and which is default-off anyway
+  (`ONBOARDING_GATE_ENABLED`). It also **404s** for a teacher with no document and **422
+  `PROFILE_INCOMPLETE`** below its 80% threshold. Two ways to fail at something the app is not doing.
+- **The onboarding gate must never be re-created client-side.** `src/middleware.ts` still carries the
+  incident note: shipping it cookie-only on 2026-06-08 locked out the ENTIRE existing user base.
+  Pinned by the `no hard gate` group in `test/features/onboarding/onboarding_screen_test.dart`.
+- `computeProfileCompletion` scores **`gradeLevels`**, while `POST /api/user/profile` reads
+  **`teachingGradeLevels`** — another arm of the wire-name trap below. The document lane writes
+  `gradeLevels`, which is the key that scores. (Confirms the existing P0.8 decision.)
+
+### Login (P0.2) — Google branding asset still needed
+
+The sign-in button uses a Lucide `logIn` glyph as a placeholder. **Lucide has no Google mark**, and
+Google's branding terms require their own asset on a Google sign-in button. Ship the official asset
+together with the real `google_sign_in` wiring (§1).
+
 ### Profile (`users/<uid>`) — found while building P0.8, all verified against the handlers
 
 - **There is NO `GET /api/user/profile`.** The route exposes only `POST` and `PATCH`. The web reads

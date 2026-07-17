@@ -7,6 +7,7 @@ import '../../features/dashboard/presentation/app_shell.dart';
 import '../../features/instant_answer/presentation/instant_answer_screen.dart';
 import '../../features/lesson_planner/presentation/lesson_plan_screen.dart';
 import '../../features/onboarding/presentation/login_screen.dart';
+import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/quiz_generator/presentation/quiz_generator_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
@@ -32,7 +33,13 @@ GoRouter appRouter(Ref ref) {
       final booted = ref.read(appBootstrapProvider);
       final loc = state.matchedLocation;
 
-      // Still bootstrapping the first snapshot -> hold on splash.
+      // No first auth snapshot yet -> hold on splash. This covers BOTH
+      // `AsyncLoading` (still bootstrapping) and `AsyncError` (bootstrap
+      // failed), and the error case is deliberate: with App Check / Firebase
+      // init unresolved there is no honest answer to "is this teacher signed
+      // in", so guessing one would either leak a protected screen or sign out
+      // a signed-in teacher. The splash owns that error and offers a retry
+      // (see `SplashScreen`) rather than spinning forever.
       if (booted.isLoading || !booted.hasValue) {
         return loc == Routes.splash ? null : Routes.splash;
       }
@@ -64,6 +71,10 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: Routes.login,
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: Routes.onboarding,
+        builder: (context, state) => const OnboardingScreen(),
       ),
       GoRoute(
         path: Routes.home,
