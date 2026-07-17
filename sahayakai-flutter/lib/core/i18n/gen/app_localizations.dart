@@ -1945,6 +1945,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please sign in again to use this tool.'**
   String get worksheetSignIn;
+
+  /// Title of the Rubric Generator tool.
+  ///
+  /// In en, this message translates to:
+  /// **'Rubric'**
+  String get rubricTitle;
+
+  /// One-line description of the Rubric Generator tool.
+  ///
+  /// In en, this message translates to:
+  /// **'Build a grading rubric for an assignment'**
+  String get rubricSubtitle;
+
+  /// Idle/empty state before a rubric is generated.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe the assignment, then tap Generate.'**
+  String get rubricEmpty;
+
+  /// Label for the assignment description field.
+  ///
+  /// In en, this message translates to:
+  /// **'What is the assignment?'**
+  String get rubricAssignmentLabel;
+
+  /// Helper line under the assignment field label.
+  ///
+  /// In en, this message translates to:
+  /// **'The rubric grades this assignment.'**
+  String get rubricAssignmentHint;
+
+  /// Placeholder for the assignment description field.
+  ///
+  /// In en, this message translates to:
+  /// **'For example, A Class 5 project on renewable energy'**
+  String get rubricAssignmentPlaceholder;
+
+  /// Validation error when the assignment description is empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Please describe the assignment.'**
+  String get rubricAssignmentError;
+
+  /// Label for the rubric grade dropdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Grade level'**
+  String get rubricGradeLabel;
+
+  /// The no-grade-selected option in the rubric grade dropdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Any grade'**
+  String get rubricGradeAny;
+
+  /// Label for the rubric subject dropdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Subject'**
+  String get rubricSubjectLabel;
+
+  /// The no-subject-selected option in the rubric subject dropdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Any subject'**
+  String get rubricSubjectAny;
+
+  /// Marks a rubric form field as optional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get rubricOptional;
+
+  /// Header of the first grid column, listing the criteria.
+  ///
+  /// In en, this message translates to:
+  /// **'Criteria'**
+  String get rubricCriteriaColumn;
+
+  /// Points badge on a performance level header (e.g. 4 pts).
+  ///
+  /// In en, this message translates to:
+  /// **'{points} pts'**
+  String rubricPoints(String points);
+
+  /// Affordance telling the teacher the grid scrolls sideways.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe across to see all levels.'**
+  String get rubricScrollHint;
+
+  /// Shown when the response carried no usable rubric.
+  ///
+  /// In en, this message translates to:
+  /// **'No rubric came back for that. Please try a clearer assignment description.'**
+  String get rubricNoContent;
+
+  /// Title of the 403 upgrade prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'A higher plan is needed'**
+  String get rubricUpgradeTitle;
+
+  /// Body of the 403 upgrade prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Rubric generation is part of a higher plan. Please upgrade to keep building rubrics.'**
+  String get rubricUpgradeBody;
+
+  /// Title of the 429 limit-reached prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'You have reached your limit'**
+  String get rubricLimitTitle;
+
+  /// Body of the 429 limit-reached prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'You have used your rubrics for now. Please try again later or upgrade your plan.'**
+  String get rubricLimitBody;
+
+  /// Shown on a 400 invalid-input response.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not build a rubric from that. Please rephrase the assignment and try again.'**
+  String get rubricRephrase;
+
+  /// Shown on a 503 / server-busy response.
+  ///
+  /// In en, this message translates to:
+  /// **'The assistant is busy right now. Please try again in a moment.'**
+  String get rubricBusy;
+
+  /// Shown when the request times out.
+  ///
+  /// In en, this message translates to:
+  /// **'This is taking longer than expected. Please try again.'**
+  String get rubricTimeout;
+
+  /// Shown on a 401 unauthorized response.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in again to use this tool.'**
+  String get rubricSignIn;
 }
 
 class _AppLocalizationsDelegate

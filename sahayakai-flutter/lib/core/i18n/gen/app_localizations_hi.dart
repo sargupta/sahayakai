@@ -1016,4 +1016,85 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get worksheetSignIn => 'Please sign in again to use this tool.';
+
+  @override
+  String get rubricTitle => 'Rubric';
+
+  @override
+  String get rubricSubtitle => 'Build a grading rubric for an assignment';
+
+  @override
+  String get rubricEmpty => 'Describe the assignment, then tap Generate.';
+
+  @override
+  String get rubricAssignmentLabel => 'What is the assignment?';
+
+  @override
+  String get rubricAssignmentHint => 'The rubric grades this assignment.';
+
+  @override
+  String get rubricAssignmentPlaceholder =>
+      'For example, A Class 5 project on renewable energy';
+
+  @override
+  String get rubricAssignmentError => 'Please describe the assignment.';
+
+  @override
+  String get rubricGradeLabel => 'Grade level';
+
+  @override
+  String get rubricGradeAny => 'Any grade';
+
+  @override
+  String get rubricSubjectLabel => 'Subject';
+
+  @override
+  String get rubricSubjectAny => 'Any subject';
+
+  @override
+  String get rubricOptional => 'Optional';
+
+  @override
+  String get rubricCriteriaColumn => 'Criteria';
+
+  @override
+  String rubricPoints(String points) {
+    return '$points pts';
+  }
+
+  @override
+  String get rubricScrollHint => 'Swipe across to see all levels.';
+
+  @override
+  String get rubricNoContent =>
+      'No rubric came back for that. Please try a clearer assignment description.';
+
+  @override
+  String get rubricUpgradeTitle => 'A higher plan is needed';
+
+  @override
+  String get rubricUpgradeBody =>
+      'Rubric generation is part of a higher plan. Please upgrade to keep building rubrics.';
+
+  @override
+  String get rubricLimitTitle => 'You have reached your limit';
+
+  @override
+  String get rubricLimitBody =>
+      'You have used your rubrics for now. Please try again later or upgrade your plan.';
+
+  @override
+  String get rubricRephrase =>
+      'We could not build a rubric from that. Please rephrase the assignment and try again.';
+
+  @override
+  String get rubricBusy =>
+      'The assistant is busy right now. Please try again in a moment.';
+
+  @override
+  String get rubricTimeout =>
+      'This is taking longer than expected. Please try again.';
+
+  @override
+  String get rubricSignIn => 'Please sign in again to use this tool.';
 }

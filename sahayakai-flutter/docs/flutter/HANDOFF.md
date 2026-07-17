@@ -153,6 +153,43 @@ does not reshape the payload; it returns the same seven fields).
   file's extension, defaulting to `image/jpeg` (image_picker re-encodes to JPEG when `imageQuality`
   is set).
 
+### Rubric Generator (P1.2) — verified, NO mismatch
+
+`POST /api/ai/rubric` was verified against `src/app/api/ai/rubric/route.ts`,
+`RubricGeneratorInputSchema` / `RubricGeneratorOutputSchema` in `src/ai/flows/rubric-generator.ts`,
+and `src/lib/sidecar/rubric-dispatch.ts`. **The SCREEN_INVENTORY §P1.2 contract is accurate this
+time** — no worksheet-style drift. Confirmed details worth pinning:
+
+- **Request** = `{ assignmentDescription, gradeLevel?, subject?, language? }`. `userId` and
+  `teacherContext` are server-injected (never sent). Pinned by a test.
+- **`assignmentDescription` is `z.string().max(2000)` — required (no `.optional()`) but has NO
+  `.min()`**, so the server would accept an empty string; the client still requires non-empty for a
+  useful result (form validator). `.max(2000)` REJECTS over-length (does not clamp), so the field is
+  capped at 2000 client-side.
+- **Response is exactly the five keys the route handler hand-picks**:
+  `{ title, description, criteria[{ name, description, levels[{ name, description, points }] }],
+  gradeLevel, subject }`. The route builds this object explicitly (`route.ts` lines 63–69), so it is
+  identical whether the genkit or the sidecar path served it (`sidecarToDispatched` maps the same
+  five). `gradeLevel`/`subject` are `string | null`.
+- **`points` is `z.number()`, i.e. a `num`, NOT an int** — a decimal is legal. The DTO reads it as
+  `num?` and the level's `pointsLabel` drops a trailing `.0` (so `4.0` → `4`, `2.5` → `2.5`). Pinned.
+- **Levels are mandated identical across criteria** (the prompt fixes Exemplary 4 / Proficient 3 /
+  Developing 2 / Beginning 1, highest first), so the grid derives its column headers from the widest
+  criterion and lines body cells up by index. A criterion that (rarely) returns fewer levels is
+  padded with blank cells; a response with NO levels anywhere falls back to a plain criteria list.
+
+**Grid layout decision (the §11 wide-grid / ToolScaffold-crash requirement).** The criteria x levels
+grid is a single `Table` (fixed column widths, content-driven row heights — no banned fixed text
+heights) wrapped in ONE horizontal `SingleChildScrollView` inside a card-grammar box. That
+bounded-height child is what keeps the horizontal scroller legal inside ToolScaffold's outer vertical
+scroll (an unbounded child there is the crash). The page therefore scrolls only vertically and the
+grid only within its own box; columns stay aligned because it is one table in one scroller. The
+criterion column is column 0 and scrolls with the grid — a *frozen* first column was NOT attempted,
+because pinning it cannot stay row-aligned with its wrapping, variable-height row without either the
+banned fixed row heights or a linked-scroll dependency. Proven by `rubric_grid_test.dart` (exactly
+one horizontal scroller with `maxScrollExtent > 0` at 360dp; the page scroller is vertical; no
+overflow at 360dp x textScale 1.3 in light + dark with Indic probes + an unbreakable compound word).
+
 ## 4. Push notifications (FCM)
 The Settings notifications switch is **local-only and defaults OFF** (deliberate: defaulting a
 permission-bearing toggle on, or promising undeliverable notifications, is a dark pattern). Wiring

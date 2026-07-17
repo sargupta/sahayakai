@@ -142,6 +142,15 @@ class _AppShellState extends State<AppShell> {
                     context.push(Routes.worksheetWizard);
                   },
                 ),
+                ListTile(
+                  leading: const Icon(LucideIcons.clipboardCheck),
+                  title: Text(l10n.rubricTitle),
+                  subtitle: Text(l10n.rubricSubtitle),
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    context.push(Routes.rubricGenerator);
+                  },
+                ),
               ],
             ),
           ),

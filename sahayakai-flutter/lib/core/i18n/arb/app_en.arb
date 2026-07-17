@@ -1265,5 +1265,106 @@
   "worksheetSignIn": "Please sign in again to use this tool.",
   "@worksheetSignIn": {
     "description": "Shown on a 401 unauthorized response."
+  },
+  "rubricTitle": "Rubric",
+  "@rubricTitle": {
+    "description": "Title of the Rubric Generator tool."
+  },
+  "rubricSubtitle": "Build a grading rubric for an assignment",
+  "@rubricSubtitle": {
+    "description": "One-line description of the Rubric Generator tool."
+  },
+  "rubricEmpty": "Describe the assignment, then tap Generate.",
+  "@rubricEmpty": {
+    "description": "Idle/empty state before a rubric is generated."
+  },
+  "rubricAssignmentLabel": "What is the assignment?",
+  "@rubricAssignmentLabel": {
+    "description": "Label for the assignment description field."
+  },
+  "rubricAssignmentHint": "The rubric grades this assignment.",
+  "@rubricAssignmentHint": {
+    "description": "Helper line under the assignment field label."
+  },
+  "rubricAssignmentPlaceholder": "For example, A Class 5 project on renewable energy",
+  "@rubricAssignmentPlaceholder": {
+    "description": "Placeholder for the assignment description field."
+  },
+  "rubricAssignmentError": "Please describe the assignment.",
+  "@rubricAssignmentError": {
+    "description": "Validation error when the assignment description is empty."
+  },
+  "rubricGradeLabel": "Grade level",
+  "@rubricGradeLabel": {
+    "description": "Label for the rubric grade dropdown."
+  },
+  "rubricGradeAny": "Any grade",
+  "@rubricGradeAny": {
+    "description": "The no-grade-selected option in the rubric grade dropdown."
+  },
+  "rubricSubjectLabel": "Subject",
+  "@rubricSubjectLabel": {
+    "description": "Label for the rubric subject dropdown."
+  },
+  "rubricSubjectAny": "Any subject",
+  "@rubricSubjectAny": {
+    "description": "The no-subject-selected option in the rubric subject dropdown."
+  },
+  "rubricOptional": "Optional",
+  "@rubricOptional": {
+    "description": "Marks a rubric form field as optional."
+  },
+  "rubricCriteriaColumn": "Criteria",
+  "@rubricCriteriaColumn": {
+    "description": "Header of the first grid column, listing the criteria."
+  },
+  "rubricPoints": "{points} pts",
+  "@rubricPoints": {
+    "description": "Points badge on a performance level header (e.g. 4 pts).",
+    "placeholders": {
+      "points": {
+        "type": "String"
+      }
+    }
+  },
+  "rubricScrollHint": "Swipe across to see all levels.",
+  "@rubricScrollHint": {
+    "description": "Affordance telling the teacher the grid scrolls sideways."
+  },
+  "rubricNoContent": "No rubric came back for that. Please try a clearer assignment description.",
+  "@rubricNoContent": {
+    "description": "Shown when the response carried no usable rubric."
+  },
+  "rubricUpgradeTitle": "A higher plan is needed",
+  "@rubricUpgradeTitle": {
+    "description": "Title of the 403 upgrade prompt."
+  },
+  "rubricUpgradeBody": "Rubric generation is part of a higher plan. Please upgrade to keep building rubrics.",
+  "@rubricUpgradeBody": {
+    "description": "Body of the 403 upgrade prompt."
+  },
+  "rubricLimitTitle": "You have reached your limit",
+  "@rubricLimitTitle": {
+    "description": "Title of the 429 limit-reached prompt."
+  },
+  "rubricLimitBody": "You have used your rubrics for now. Please try again later or upgrade your plan.",
+  "@rubricLimitBody": {
+    "description": "Body of the 429 limit-reached prompt."
+  },
+  "rubricRephrase": "We could not build a rubric from that. Please rephrase the assignment and try again.",
+  "@rubricRephrase": {
+    "description": "Shown on a 400 invalid-input response."
+  },
+  "rubricBusy": "The assistant is busy right now. Please try again in a moment.",
+  "@rubricBusy": {
+    "description": "Shown on a 503 / server-busy response."
+  },
+  "rubricTimeout": "This is taking longer than expected. Please try again.",
+  "@rubricTimeout": {
+    "description": "Shown when the request times out."
+  },
+  "rubricSignIn": "Please sign in again to use this tool.",
+  "@rubricSignIn": {
+    "description": "Shown on a 401 unauthorized response."
   }
 }

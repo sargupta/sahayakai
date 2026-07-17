@@ -30,6 +30,7 @@ class Routes {
   static const String quizGenerator = '/quiz-generator';
   static const String instantAnswer = '/instant-answer';
   static const String worksheetWizard = '/worksheet-wizard';
+  static const String rubricGenerator = '/rubric-generator';
 
   /// Routes reachable while signed out. `/try-call` (anon lead magnet) will
   /// join this set when that screen lands.
