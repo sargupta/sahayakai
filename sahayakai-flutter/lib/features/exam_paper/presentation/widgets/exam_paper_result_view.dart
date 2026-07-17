@@ -11,6 +11,7 @@ import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/bullet_dot.dart';
 import '../../../../shared/widgets/empty_view.dart';
 import '../../../../shared/widgets/inline_error.dart';
+import '../../../../shared/widgets/note_banner.dart';
 import '../../../../shared/widgets/section_label.dart';
 import '../../domain/exam_paper.dart';
 import '../exam_paper_controller.dart';
@@ -59,7 +60,7 @@ class ExamPaperResultView extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         for (var i = 0; i < sections.length; i++) ...[
-          if (i > 0) const SizedBox(height: AppSpacing.space6),
+          if (i > 0) const SizedBox(height: AppSpacing.sectionGap),
           sections[i],
         ],
       ],
@@ -361,11 +362,14 @@ class _QuestionCard extends StatelessWidget {
           ],
           if (question.internalChoice != null) ...[
             const SizedBox(height: AppSpacing.space3),
-            _InternalChoice(text: question.internalChoice!),
+            NoteBanner(
+              label: l10n.examPaperInternalChoice,
+              body: question.internalChoice!,
+            ),
           ],
           if (question.hasAnswerKey) ...[
             const SizedBox(height: AppSpacing.space3),
-            _AnswerBlock(
+            NoteBanner(
               icon: LucideIcons.checkCircle,
               label: l10n.examPaperAnswerKey,
               body: question.answerKey!,
@@ -373,7 +377,7 @@ class _QuestionCard extends StatelessWidget {
           ],
           if (question.hasMarkingScheme) ...[
             const SizedBox(height: AppSpacing.space2),
-            _AnswerBlock(
+            NoteBanner(
               icon: LucideIcons.award,
               label: l10n.examPaperMarkingScheme,
               body: question.markingScheme!,
@@ -402,97 +406,6 @@ class _OptionRow extends StatelessWidget {
         const SizedBox(width: AppSpacing.space3),
         Expanded(child: AiText(label)),
       ],
-    );
-  }
-}
-
-/// The "OR" alternative question the blueprint permits.
-class _InternalChoice extends StatelessWidget {
-  const _InternalChoice({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.space3),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHigh,
-        borderRadius: AppRadius.rMd,
-        border: Border.all(color: scheme.outlineVariant),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            context.l10n.examPaperInternalChoice,
-            style: textTheme.labelMedium?.copyWith(
-              color: scheme.onSurfaceVariant,
-              letterSpacing: 0.4,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.space1),
-          AiText(text),
-        ],
-      ),
-    );
-  }
-}
-
-/// An answer-key / marking-scheme block: a labelled, tinted panel below the
-/// question. Colour is never the only signal — each carries its own glyph and
-/// label.
-class _AnswerBlock extends StatelessWidget {
-  const _AnswerBlock({
-    required this.icon,
-    required this.label,
-    required this.body,
-    this.muted = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final String body;
-  final bool muted;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.space3),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHigh,
-        borderRadius: AppRadius.rMd,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Icon(
-                icon,
-                size: AppIconSize.inline,
-                color: muted ? scheme.onSurfaceVariant : scheme.primary,
-              ),
-              const SizedBox(width: AppSpacing.space2),
-              Text(
-                label,
-                style: text.labelMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                  letterSpacing: 0.4,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.space1),
-          AiText(body, muted: muted),
-        ],
-      ),
     );
   }
 }

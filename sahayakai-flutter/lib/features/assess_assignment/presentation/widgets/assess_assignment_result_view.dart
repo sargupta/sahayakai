@@ -9,6 +9,7 @@ import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/bullet_dot.dart';
 import '../../../../shared/widgets/empty_view.dart';
+import '../../../../shared/widgets/note_banner.dart';
 import '../../../../shared/widgets/section_label.dart';
 import '../../domain/assessment.dart';
 
@@ -81,7 +82,7 @@ class AssessAssignmentResultView extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         for (var i = 0; i < sections.length; i++) ...[
-          if (i > 0) const SizedBox(height: AppSpacing.space6),
+          if (i > 0) const SizedBox(height: AppSpacing.sectionGap),
           sections[i],
         ],
       ],
@@ -211,8 +212,6 @@ class _WarningsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
 
     final messages = warnings
         .map((w) => _warningMessage(l10n, w))
@@ -221,42 +220,21 @@ class _WarningsCard extends StatelessWidget {
         .toList(growable: false);
     if (messages.isEmpty) return const SizedBox.shrink();
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.space4),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHigh,
-        borderRadius: AppRadius.rLg,
-        border: Border.all(color: scheme.outlineVariant),
-      ),
+    return NoteBanner.custom(
+      icon: LucideIcons.alertTriangle,
+      label: l10n.assessWarningsSection,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            children: [
-              Icon(
-                LucideIcons.alertTriangle,
-                size: AppIconSize.inline,
-                color: scheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: AppSpacing.space2),
-              Flexible(
-                child: Text(
-                  l10n.assessWarningsSection,
-                  style: text.titleSmall
-                      ?.copyWith(color: scheme.onSurfaceVariant),
-                ),
-              ),
-            ],
-          ),
-          for (final message in messages) ...[
-            const SizedBox(height: AppSpacing.space2),
+          for (var i = 0; i < messages.length; i++) ...[
+            if (i > 0) const SizedBox(height: AppSpacing.space2),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const BulletDot(),
                 const SizedBox(width: AppSpacing.space3),
-                Expanded(child: AiText(message)),
+                Expanded(child: AiText(messages[i])),
               ],
             ),
           ],

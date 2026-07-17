@@ -8,6 +8,7 @@ import '../../../../shared/widgets/ai_text.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/empty_view.dart';
+import '../../../../shared/widgets/note_banner.dart';
 import '../../domain/quiz.dart';
 
 /// Renders a generated [Quiz]. The model returns up to three difficulty
@@ -40,10 +41,14 @@ class QuizResultView extends StatelessWidget {
       children: [
         _Header(quiz: quiz),
         if (quiz.validationWarning != null) ...[
-          const SizedBox(height: AppSpacing.space6),
-          _NoteBanner(message: quiz.validationWarning!.message),
+          const SizedBox(height: AppSpacing.sectionGap),
+          NoteBanner(
+            icon: LucideIcons.info,
+            label: l10n.quizNoteLabel,
+            body: quiz.validationWarning!.message,
+          ),
         ],
-        const SizedBox(height: AppSpacing.space6),
+        const SizedBox(height: AppSpacing.sectionGap),
         if (quiz.variants.length == 1)
           _VariantView(variant: quiz.variants.first)
         else
@@ -236,7 +241,11 @@ class _VariantViewState extends State<_VariantView> {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (widget.variant.teacherInstructions != null) ...[
-          _TeacherNote(body: widget.variant.teacherInstructions!),
+          NoteBanner(
+            icon: LucideIcons.lightbulb,
+            label: l10n.quizTeacherInstructions,
+            body: widget.variant.teacherInstructions!,
+          ),
           const SizedBox(height: AppSpacing.space4),
         ],
         Align(
@@ -387,9 +396,8 @@ class _QuestionCard extends StatelessWidget {
                                 const SizedBox(width: AppSpacing.space2),
                                 Text(
                                   l10n.quizCorrectAnswer,
-                                  style: text.labelMedium?.copyWith(
+                                  style: text.labelSmall?.copyWith(
                                     color: scheme.onSurfaceVariant,
-                                    letterSpacing: 0.4,
                                   ),
                                 ),
                               ],
@@ -410,9 +418,8 @@ class _QuestionCard extends StatelessWidget {
                                 const SizedBox(width: AppSpacing.space2),
                                 Text(
                                   l10n.quizExplanation,
-                                  style: text.labelMedium?.copyWith(
+                                  style: text.labelSmall?.copyWith(
                                     color: scheme.onSurfaceVariant,
-                                    letterSpacing: 0.4,
                                   ),
                                 ),
                               ],
@@ -483,97 +490,6 @@ class _OptionRow extends StatelessWidget {
               color: scheme.primary,
             ),
           ],
-        ],
-      ),
-    );
-  }
-}
-
-/// The model's advice on running the quiz in a chalk-and-blackboard classroom.
-class _TeacherNote extends StatelessWidget {
-  const _TeacherNote({required this.body});
-
-  final String body;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.space4),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHigh,
-        borderRadius: AppRadius.rMd,
-        border: Border.all(color: scheme.outlineVariant),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            LucideIcons.lightbulb,
-            size: AppIconSize.inline,
-            color: scheme.onSurfaceVariant,
-          ),
-          const SizedBox(width: AppSpacing.space3),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  context.l10n.quizTeacherInstructions,
-                  style: text.titleSmall?.copyWith(color: scheme.onSurface),
-                ),
-                const SizedBox(height: AppSpacing.space1),
-                AiText(body),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _NoteBanner extends StatelessWidget {
-  const _NoteBanner({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.space4),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHigh,
-        borderRadius: AppRadius.rMd,
-        border: Border.all(color: scheme.outlineVariant),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            LucideIcons.info,
-            size: AppIconSize.inline,
-            color: scheme.onSurfaceVariant,
-          ),
-          const SizedBox(width: AppSpacing.space3),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  context.l10n.quizNoteLabel,
-                  style: text.titleSmall?.copyWith(color: scheme.onSurface),
-                ),
-                const SizedBox(height: AppSpacing.space1),
-                AiText(message),
-              ],
-            ),
-          ),
         ],
       ),
     );

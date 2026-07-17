@@ -9,6 +9,7 @@ import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/media/image_input.dart';
 import '../../../shared/widgets/labeled_field.dart';
+import '../../../shared/widgets/note_banner.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
 import '../domain/assessment.dart';
@@ -240,44 +241,19 @@ class _RubricNote extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.space4),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHigh,
-        borderRadius: AppRadius.rLg,
-      ),
-      child: Row(
+    final noteStyle = text.bodySmall?.copyWith(
+      color: scheme.onSurfaceVariant,
+      height: 1.5,
+    );
+    return NoteBanner.custom(
+      icon: LucideIcons.info,
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            LucideIcons.info,
-            size: AppIconSize.inline,
-            color: scheme.onSurfaceVariant,
-          ),
-          const SizedBox(width: AppSpacing.space3),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  l10n.assessRubricNote,
-                  style: text.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.space2),
-                Text(
-                  l10n.assessPrivacyNote,
-                  style: text.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          Text(l10n.assessRubricNote, style: noteStyle),
+          const SizedBox(height: AppSpacing.space2),
+          Text(l10n.assessPrivacyNote, style: noteStyle),
         ],
       ),
     );

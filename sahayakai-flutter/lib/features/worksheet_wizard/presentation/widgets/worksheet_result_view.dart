@@ -9,6 +9,7 @@ import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/bullet_dot.dart';
 import '../../../../shared/widgets/empty_view.dart';
+import '../../../../shared/widgets/note_banner.dart';
 import '../../../../shared/widgets/section_label.dart';
 import '../../domain/worksheet.dart';
 
@@ -58,7 +59,7 @@ class WorksheetResultView extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         for (var i = 0; i < sections.length; i++) ...[
-          if (i > 0) const SizedBox(height: AppSpacing.space6),
+          if (i > 0) const SizedBox(height: AppSpacing.sectionGap),
           sections[i],
         ],
       ],
@@ -203,72 +204,23 @@ class _ActivityCard extends StatelessWidget {
               ),
             ),
           ],
-          if (activity.explanation != null)
-            _SubNote(
+          if (activity.explanation != null) ...[
+            const SizedBox(height: AppSpacing.space3),
+            NoteBanner(
               icon: LucideIcons.lightbulb,
               label: l10n.worksheetExplanation,
               body: activity.explanation!,
             ),
-          if (activity.chalkboardNote != null)
-            _SubNote(
+          ],
+          if (activity.chalkboardNote != null) ...[
+            const SizedBox(height: AppSpacing.space3),
+            NoteBanner(
               icon: LucideIcons.penTool,
               label: l10n.worksheetChalkboardNote,
               body: activity.chalkboardNote!,
             ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SubNote extends StatelessWidget {
-  const _SubNote({required this.icon, required this.label, required this.body});
-
-  final IconData icon;
-  final String label;
-  final String body;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.space3),
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.space3),
-        decoration: BoxDecoration(
-          color: scheme.surfaceContainerHigh,
-          borderRadius: AppRadius.rMd,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  icon,
-                  size: AppIconSize.inline,
-                  color: scheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: AppSpacing.space2),
-                // Flexible so a long label at a large textScale wraps instead
-                // of overflowing the row (DESIGN_RUBRIC §8).
-                Flexible(
-                  child: Text(
-                    label,
-                    style: text.labelMedium?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                      letterSpacing: 0.4,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.space1),
-            AiText(body),
           ],
-        ),
+        ],
       ),
     );
   }

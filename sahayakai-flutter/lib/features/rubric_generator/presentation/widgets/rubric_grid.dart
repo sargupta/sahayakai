@@ -100,9 +100,8 @@ class RubricGrid extends StatelessWidget {
         _Cell(
           child: Text(
             context.l10n.rubricCriteriaColumn,
-            style: text.labelMedium?.copyWith(
+            style: text.labelSmall?.copyWith(
               color: scheme.onSurfaceVariant,
-              letterSpacing: 0.4,
             ),
           ),
         ),

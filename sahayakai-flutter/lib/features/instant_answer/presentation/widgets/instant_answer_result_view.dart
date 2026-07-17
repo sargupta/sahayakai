@@ -40,13 +40,13 @@ class InstantAnswerResultView extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         _MetaRow(answer: answer),
-        const SizedBox(height: AppSpacing.space4),
+        const SizedBox(height: AppSpacing.sectionGap),
         AppCard(
           child: AnswerMarkdownView(source: answer.answer),
         ),
         // videoSuggestionUrl is optional and null far more often than not.
         if (video != null) ...[
-          const SizedBox(height: AppSpacing.space4),
+          const SizedBox(height: AppSpacing.sectionGap),
           _VideoCard(
             url: video,
             onOpen: () => ref.read(linkOpenerProvider).open(video),

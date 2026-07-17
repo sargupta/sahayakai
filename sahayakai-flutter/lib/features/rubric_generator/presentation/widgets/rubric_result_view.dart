@@ -51,7 +51,7 @@ class RubricResultView extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         for (var i = 0; i < sections.length; i++) ...[
-          if (i > 0) const SizedBox(height: AppSpacing.space4),
+          if (i > 0) const SizedBox(height: AppSpacing.sectionGap),
           sections[i],
         ],
       ],

@@ -7,6 +7,7 @@ import '../../../../shared/widgets/ai_text.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/bullet_dot.dart';
+import '../../../../shared/widgets/note_banner.dart';
 import '../../../../shared/widgets/section_label.dart';
 import '../../domain/lesson_plan.dart';
 
@@ -26,7 +27,11 @@ class LessonPlanResultView extends StatelessWidget {
     final sections = <Widget>[
       _Header(plan: plan),
       if (plan.validationWarning != null)
-        _NoteBanner(message: plan.validationWarning!.message),
+        NoteBanner(
+          icon: LucideIcons.info,
+          label: l10n.lessonPlanNoteLabel,
+          body: plan.validationWarning!.message,
+        ),
       if (plan.objectives.isNotEmpty)
         _BulletSection(
           title: l10n.lessonPlanObjectives,
@@ -48,7 +53,7 @@ class LessonPlanResultView extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         for (var i = 0; i < sections.length; i++) ...[
-          if (i > 0) const SizedBox(height: AppSpacing.space6),
+          if (i > 0) const SizedBox(height: AppSpacing.sectionGap),
           sections[i],
         ],
       ],
@@ -86,51 +91,6 @@ class _Header extends StatelessWidget {
           ),
         ],
       ],
-    );
-  }
-}
-
-class _NoteBanner extends StatelessWidget {
-  const _NoteBanner({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.space4),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHigh,
-        borderRadius: AppRadius.rMd,
-        border: Border.all(color: scheme.outlineVariant),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            LucideIcons.info,
-            size: AppIconSize.inline,
-            color: scheme.onSurfaceVariant,
-          ),
-          const SizedBox(width: AppSpacing.space3),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  context.l10n.lessonPlanNoteLabel,
-                  style: text.titleSmall?.copyWith(color: scheme.onSurface),
-                ),
-                const SizedBox(height: AppSpacing.space1),
-                AiText(message),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -288,68 +248,23 @@ class _ActivityCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.space2),
             AiText(activity.description),
           ],
-          if (activity.teacherTips != null)
-            _SubNote(
+          if (activity.teacherTips != null) ...[
+            const SizedBox(height: AppSpacing.space3),
+            NoteBanner(
               icon: LucideIcons.lightbulb,
               label: l10n.lessonPlanTeacherTip,
               body: activity.teacherTips!,
             ),
-          if (activity.understandingCheck != null)
-            _SubNote(
+          ],
+          if (activity.understandingCheck != null) ...[
+            const SizedBox(height: AppSpacing.space3),
+            NoteBanner(
               icon: LucideIcons.checkCircle,
               label: l10n.lessonPlanUnderstandingCheck,
               body: activity.understandingCheck!,
             ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SubNote extends StatelessWidget {
-  const _SubNote({required this.icon, required this.label, required this.body});
-
-  final IconData icon;
-  final String label;
-  final String body;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.space3),
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.space3),
-        decoration: BoxDecoration(
-          color: scheme.surfaceContainerHigh,
-          borderRadius: AppRadius.rMd,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  icon,
-                  size: AppIconSize.inline,
-                  color: scheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: AppSpacing.space2),
-                Text(
-                  label,
-                  style: text.labelMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                    letterSpacing: 0.4,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.space1),
-            AiText(body),
           ],
-        ),
+        ],
       ),
     );
   }
