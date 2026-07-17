@@ -8,6 +8,7 @@ import '../../features/dashboard/presentation/app_shell.dart';
 import '../../features/exam_paper/presentation/exam_paper_screen.dart';
 import '../../features/instant_answer/presentation/instant_answer_screen.dart';
 import '../../features/lesson_planner/presentation/lesson_plan_screen.dart';
+import '../../features/library/presentation/library_detail_screen.dart';
 import '../../features/onboarding/presentation/login_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/parent_message/presentation/parent_message_screen.dart';
@@ -17,6 +18,7 @@ import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/teacher_training/presentation/teacher_training_screen.dart';
 import '../../features/worksheet_wizard/presentation/worksheet_wizard_screen.dart';
+import '../../shared/domain/library_item.dart';
 import '../auth/auth_providers.dart';
 import 'routes.dart';
 
@@ -125,6 +127,17 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: Routes.settings,
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        // Pushed on top of the shell from a Library / Recent row. The row hands
+        // the already-loaded `LibraryItem` through `extra` so the header paints
+        // instantly; the `:id` path param is what the detail read uses (and what
+        // a future deep link would carry when `extra` is absent).
+        path: Routes.libraryDetailPattern,
+        builder: (context, state) => LibraryDetailScreen(
+          id: state.pathParameters['id']!,
+          item: state.extra is LibraryItem ? state.extra! as LibraryItem : null,
+        ),
       ),
     ],
     errorBuilder: (context, state) => const _RouteNotFound(),

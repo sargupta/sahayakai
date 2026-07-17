@@ -294,6 +294,50 @@
   "@libraryNewestOnly": {
     "description": "Library footer note. The list route takes a limit and no cursor, so there is no next page to offer."
   },
+  "libraryFilterAll": "All",
+  "@libraryFilterAll": {
+    "description": "Library type-filter chip that clears the filter and shows every saved type."
+  },
+  "libraryFilterEmpty": "You have no saved items of this type yet.",
+  "@libraryFilterEmpty": {
+    "description": "Shown if the selected type filter matches nothing in the loaded list."
+  },
+  "libraryDetailTitle": "Saved item",
+  "@libraryDetailTitle": {
+    "description": "App-bar title for a saved item that has no title of its own."
+  },
+  "libraryDetailSavedOn": "Saved {date}",
+  "@libraryDetailSavedOn": {
+    "description": "The date a saved item was created, on its detail screen.",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "15 Jul 2026"
+      }
+    }
+  },
+  "libraryDetailSignedOut": "Sign in to open your saved work.",
+  "@libraryDetailSignedOut": {
+    "description": "Detail state when the per-item read has no identity (401); the read is built-pending-firebase."
+  },
+  "libraryDetailNotFound": "This item is no longer in your library.",
+  "@libraryDetailNotFound": {
+    "description": "Detail state when the per-item read returns 404 (deleted or expired)."
+  },
+  "libraryDetailLoadFailed": "We could not open this saved item. Please try again.",
+  "@libraryDetailLoadFailed": {
+    "description": "Detail state when the per-item read fails for a non-network reason."
+  },
+  "libraryDetailReady": "You are viewing your saved {type}.",
+  "@libraryDetailReady": {
+    "description": "Detail confirmation once the saved item has loaded.",
+    "placeholders": {
+      "type": {
+        "type": "String",
+        "example": "Lesson plan"
+      }
+    }
+  },
   "profileTitle": "Profile",
   "@profileTitle": {
     "description": "Profile screen title."

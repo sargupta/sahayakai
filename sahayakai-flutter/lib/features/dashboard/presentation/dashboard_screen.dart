@@ -342,7 +342,17 @@ class _RecentSection extends ConsumerWidget {
           children: [
             for (final (index, item) in items.indexed) ...[
               if (index > 0) const SizedBox(height: AppSpacing.space3),
-              LibraryItemRow(item: item),
+              LibraryItemRow(
+                item: item,
+                // Same tap-to-open as the Library tab: a recent row opens the
+                // item's detail. A document with no id cannot be fetched.
+                onTap: item.id.isEmpty
+                    ? null
+                    : () => context.push(
+                          Routes.libraryDetailPath(item.id),
+                          extra: item,
+                        ),
+              ),
             ],
           ],
         );

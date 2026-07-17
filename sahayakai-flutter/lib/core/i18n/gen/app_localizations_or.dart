@@ -236,6 +236,35 @@ class AppLocalizationsOr extends AppLocalizations {
   String get libraryNewestOnly => 'Showing your 20 most recent items.';
 
   @override
+  String get libraryFilterAll => 'All';
+
+  @override
+  String get libraryFilterEmpty => 'You have no saved items of this type yet.';
+
+  @override
+  String get libraryDetailTitle => 'Saved item';
+
+  @override
+  String libraryDetailSavedOn(String date) {
+    return 'Saved $date';
+  }
+
+  @override
+  String get libraryDetailSignedOut => 'Sign in to open your saved work.';
+
+  @override
+  String get libraryDetailNotFound => 'This item is no longer in your library.';
+
+  @override
+  String get libraryDetailLoadFailed =>
+      'We could not open this saved item. Please try again.';
+
+  @override
+  String libraryDetailReady(String type) {
+    return 'You are viewing your saved $type.';
+  }
+
+  @override
   String get profileTitle => 'ପ୍ରୋଫାଇଲ୍';
 
   @override

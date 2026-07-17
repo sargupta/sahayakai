@@ -59,6 +59,39 @@ with a plain `Authorization: Bearer` header.
 - `createdAt` arrives as an **ISO 8601 string** (every item is run through `dbAdapter.serialize`,
   which converts Firestore's `{_seconds, _nanoseconds}`), and `BaseContentSchema` marks it optional.
 - Soft-deleted items are filtered server-side, so the client needs no `deletedAt` handling.
+- **The list route DOES accept a `type` filter** (`ListContentQuerySchema.type = ContentTypeSchema.optional()`,
+  verified in `route.ts`), plus `gradeLevels` / `subjects` (comma-separated) and an opaque `cursor` (last
+  doc id). The Library screen's type filter is nonetheless **client-side** over the loaded newest-20, to
+  preserve the one-shared-read invariant the dashboard depends on (a per-chip re-query would fire a second
+  request; pinned by the `opening the tab fires no second request` test). Recorded so a future paginated
+  filter has the server param ready.
+
+### Per-item open (`GET /api/content/get?id=<id>`) — found while building P1.7, verified against `route.ts` + the adapter
+
+The row's earlier note said tap-to-open "needs `GET /api/content/get`, which is not wired." **The endpoint
+exists and is now wired** (`LibraryRepository.fetchItem`, `libraryItemDetailProvider`, `LibraryDetailScreen`).
+
+- **Same auth model as the list**: it reads `x-user-id` directly and is **NOT** wrapped in `withPlanCheck`,
+  so the only failures are **401** (no identity), **400** (missing `id`), **404** (deleted / soft-delete TTL
+  elapsed), **500**. No 403/429. It 401s on today's stub auth exactly like the list, so tap-to-open is
+  **built-pending-firebase**: the detail shows the item's metadata plus a clear "sign in to open" state.
+- **It returns the FULL stored document** (`dbAdapter.getContent` → the whole `BaseContent`), including a
+  **`data` payload typed `z.any()`** server-side (`SaveContentSchema.data`).
+- **NEW MISMATCH — a saved item cannot be re-rendered through its owning tool's result view without per-type
+  reshaping.** SCREEN_INVENTORY §P1.7 says "tapping an item re-renders the tool's result view." In reality
+  the stored `data` is untyped (`z.any()`), and the documented per-type saved shapes **diverge** from this
+  app's result-view models (which were built for the `POST /api/ai/*` **response** shapes):
+    - **quiz** is stored as a **single-variant** `QuizDataSchema` (`{ title, questions, teacherInstructions,
+      answerKey }`), NOT the tool's `{ easy, medium, hard }` triple the quiz result view renders;
+    - **worksheet** is stored as **markdown** (`WorksheetDataSchema = { worksheetContent }`, saved as a `.md`
+      file per `content/save/route.ts`), NOT the tool's structured `{ learningObjectives,
+      studentInstructions, activities, answerKey }`.
+  So a faithful per-type re-render would need reshaping the backend does not guarantee, and the whole read is
+  Firebase-gated anyway. **Decision:** `fetchItem` decodes only the item's metadata (via the same
+  `LibraryItemDto`), and the detail screen renders that metadata + the built-pending-firebase sign-in state,
+  rather than inventing a per-type re-render that would be a lie for quiz/worksheet. A future unit that wants
+  the full render can add per-type adapters off the `data` payload once Firebase auth lands — no contract
+  change needed (the endpoint already returns `data`).
 
 ### Onboarding routing — found while building P0.2, verified against the handlers
 

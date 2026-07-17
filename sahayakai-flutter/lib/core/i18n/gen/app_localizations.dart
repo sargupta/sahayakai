@@ -536,6 +536,54 @@ abstract class AppLocalizations {
   /// **'Showing your 20 most recent items.'**
   String get libraryNewestOnly;
 
+  /// Library type-filter chip that clears the filter and shows every saved type.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get libraryFilterAll;
+
+  /// Shown if the selected type filter matches nothing in the loaded list.
+  ///
+  /// In en, this message translates to:
+  /// **'You have no saved items of this type yet.'**
+  String get libraryFilterEmpty;
+
+  /// App-bar title for a saved item that has no title of its own.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved item'**
+  String get libraryDetailTitle;
+
+  /// The date a saved item was created, on its detail screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {date}'**
+  String libraryDetailSavedOn(String date);
+
+  /// Detail state when the per-item read has no identity (401); the read is built-pending-firebase.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to open your saved work.'**
+  String get libraryDetailSignedOut;
+
+  /// Detail state when the per-item read returns 404 (deleted or expired).
+  ///
+  /// In en, this message translates to:
+  /// **'This item is no longer in your library.'**
+  String get libraryDetailNotFound;
+
+  /// Detail state when the per-item read fails for a non-network reason.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not open this saved item. Please try again.'**
+  String get libraryDetailLoadFailed;
+
+  /// Detail confirmation once the saved item has loaded.
+  ///
+  /// In en, this message translates to:
+  /// **'You are viewing your saved {type}.'**
+  String libraryDetailReady(String type);
+
   /// Profile screen title.
   ///
   /// In en, this message translates to:

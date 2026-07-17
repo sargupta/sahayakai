@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../core/i18n/gen/app_localizations.dart';
 import '../../core/i18n/l10n_ext.dart';
@@ -11,15 +12,18 @@ import 'icon_well.dart';
 /// screen render it. Shared so the same item cannot read two different ways on
 /// two tabs.
 ///
-/// NOT TAPPABLE, on purpose. There is no screen in this build that can open a
-/// saved generation — rendering one back into its tool's result view needs
-/// `GET /api/content/get`, which is not wired. Sending this row to the tool's
-/// empty form would look like "open my lesson plan" and deliver a blank page
-/// instead, which is worse than no affordance at all.
+/// TAPPABLE when [onTap] is supplied — both surfaces now open the item's detail
+/// (`LibraryDetailScreen`), which reads the full document off the wired
+/// `GET /api/content/get?id=<id>`. When [onTap] is null (e.g. a document with no
+/// id, which cannot be fetched) the row still renders, just without the tap
+/// affordance — an absent affordance is better than one that opens nothing.
 class LibraryItemRow extends StatelessWidget {
-  const LibraryItemRow({super.key, required this.item});
+  const LibraryItemRow({super.key, required this.item, this.onTap});
 
   final LibraryItem item;
+
+  /// Opens the item. Null makes the row inert (no InkWell, no chevron).
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +47,8 @@ class LibraryItemRow extends StatelessWidget {
     ].join(' · ');
 
     return AppCard(
+      // The whole card is the target, so it is far past 48dp.
+      onTap: onTap,
       child: Row(
         children: [
           IconWell(icon: item.type.icon),
@@ -63,6 +69,15 @@ class LibraryItemRow extends StatelessWidget {
               ],
             ),
           ),
+          // The chevron signals the row opens — shown only when it actually can.
+          if (onTap != null) ...[
+            const SizedBox(width: AppSpacing.space2),
+            Icon(
+              LucideIcons.chevronRight,
+              size: AppIconSize.inline,
+              color: scheme.onSurfaceVariant,
+            ),
+          ],
         ],
       ),
     );

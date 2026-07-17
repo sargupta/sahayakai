@@ -19,6 +19,17 @@ class Routes {
   static const String library = '/my-library';
   static const String profile = '/my-profile';
 
+  /// One saved item, opened from a Library (or dashboard Recent) row. Pushed on
+  /// top of the signed-in shell; the id is a path param so a future deep link
+  /// resolves without the in-app `extra`. Reads `GET /api/content/get?id=<id>`.
+  static const String libraryDetail = '/my-library/detail';
+
+  /// The route pattern (`.../:id`) registered in the router.
+  static const String libraryDetailPattern = '$libraryDetail/:id';
+
+  /// The concrete path for [libraryDetail] with [id] filled in.
+  static String libraryDetailPath(String id) => '$libraryDetail/$id';
+
   /// Settings. Auth-required per SCREEN_INVENTORY P0.7: it is pushed from the
   /// Profile (Me) tab's app-bar action. Its signed-out card is a defensive
   /// state (it renders on the sign-out frame, before the redirect lands, and if

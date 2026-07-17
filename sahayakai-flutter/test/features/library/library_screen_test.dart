@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sahayakai/features/lesson_planner/presentation/lesson_plan_screen.dart';
+import 'package:sahayakai/features/library/presentation/library_detail_screen.dart';
 import 'package:sahayakai/features/library/presentation/library_screen.dart';
 import 'package:sahayakai/shared/widgets/app_skeleton.dart';
 import 'package:sahayakai/shared/widgets/empty_view.dart';
@@ -23,11 +24,49 @@ Future<void> _openLibrary(
   WidgetTester tester, {
   FakeApiClient? client,
   bool settle = true,
+  Brightness? brightness,
+  double textScale = 1.0,
+  Locale? locale,
+  Size surface = kTallSurface,
 }) async {
-  await pumpDashboard(tester, client: client, settle: settle);
+  await pumpDashboard(
+    tester,
+    client: client,
+    settle: settle,
+    brightness: brightness,
+    textScale: textScale,
+    locale: locale,
+    surface: surface,
+  );
   await tester.tap(find.text('Library'));
   await (settle ? tester.pumpAndSettle() : tester.pump());
 }
+
+/// Drags the Library list to its end, asserting no overflow along the way.
+Future<void> _scrollWholeList(WidgetTester tester) async {
+  final position =
+      tester.state<ScrollableState>(find.byType(Scrollable).first).position;
+  var guard = 0;
+  while (position.pixels < position.maxScrollExtent && guard++ < 60) {
+    await tester.drag(find.byType(ListView).first, const Offset(0, -280));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  }
+}
+
+/// Two saved items of two types, so the filter bar has something to filter.
+FakeApiClient _twoTypeClient() => libraryClient(
+      response: contentListResponse(
+        items: [
+          contentItem(),
+          contentItem(overrides: {
+            'id': 'id-quiz-1',
+            'type': 'quiz',
+            'title': 'Fractions quiz',
+          }),
+        ],
+      ),
+    );
 
 void main() {
   setUp(() {
@@ -184,6 +223,168 @@ void main() {
 
       expect(client.gets.length, afterDashboard);
       expect(client.gets.single.query, <String, dynamic>{'limit': 20});
+    });
+  });
+
+  group('type filters', () {
+    testWidgets('a filter bar appears when there is more than one type',
+        (tester) async {
+      await _openLibrary(tester, client: _twoTypeClient());
+
+      // "All" plus one chip per present type. The chips are ChoiceChips.
+      expect(find.byType(ChoiceChip), findsNWidgets(3));
+      expect(find.text('All'), findsOneWidget);
+    });
+
+    testWidgets('a single-type library shows no filter bar (it would be busywork)',
+        (tester) async {
+      // Both items are lesson plans, so there is nothing to filter between.
+      await _openLibrary(
+        tester,
+        client: libraryClient(
+          response: contentListResponse(
+            items: [
+              contentItem(),
+              contentItem(overrides: {'id': 'id-2', 'title': 'Cells'}),
+            ],
+          ),
+        ),
+      );
+
+      expect(find.byType(ChoiceChip), findsNothing);
+      expect(find.byType(LibraryItemRow), findsNWidgets(2));
+    });
+
+    testWidgets('selecting a type narrows the list to that type', (tester) async {
+      await _openLibrary(tester, client: _twoTypeClient());
+      expect(find.byType(LibraryItemRow), findsNWidgets(2));
+
+      // The "Quiz" chip is the only widget with exactly that text — the row's
+      // meta line is a single joined string ("Quiz - ...").
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Quiz'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(LibraryItemRow), findsOneWidget);
+      expect(find.text('Fractions quiz'), findsOneWidget);
+      expect(find.text('Photosynthesis for Class 6'), findsNothing);
+    });
+
+    testWidgets('the All chip clears the filter again', (tester) async {
+      await _openLibrary(tester, client: _twoTypeClient());
+
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Quiz'));
+      await tester.pumpAndSettle();
+      expect(find.byType(LibraryItemRow), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(ChoiceChip, 'All'));
+      await tester.pumpAndSettle();
+      expect(find.byType(LibraryItemRow), findsNWidgets(2));
+    });
+
+    testWidgets('client-side filtering fires no extra request', (tester) async {
+      final client = _twoTypeClient();
+      await _openLibrary(tester, client: client);
+      final before = client.gets.length;
+
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Quiz'));
+      await tester.pumpAndSettle();
+
+      // The filter narrows the loaded list; it does not re-query the route.
+      expect(client.gets.length, before);
+    });
+  });
+
+  group('tap to open', () {
+    testWidgets('tapping a row opens the item detail', (tester) async {
+      final client = _twoTypeClient();
+      await _openLibrary(tester, client: client);
+
+      // The per-item read answers the detail; switch the fake to a single item.
+      client.getResponse = contentItem();
+      final row = find.text('Photosynthesis for Class 6');
+      await tester.ensureVisible(row);
+      await tester.pumpAndSettle();
+      await tester.tap(row);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(LibraryDetailScreen), findsOneWidget);
+      // It fetched the tapped item off the per-item GET.
+      expect(client.gets.last.path, '/api/content/get');
+      expect(
+        client.gets.last.query,
+        <String, dynamic>{'id': '3f2a1b4c-0000-4000-8000-000000000001'},
+      );
+    });
+  });
+
+  group('overflow gates (DESIGN_RUBRIC §12.9 / §12.10 / §12.11)', () {
+    for (final brightness in Brightness.values) {
+      testWidgets(
+        'no overflow at 360dp x textScale 1.3 in ${brightness.name}',
+        (tester) async {
+          await _openLibrary(
+            tester,
+            brightness: brightness,
+            textScale: 1.3,
+            surface: kNarrowPhone,
+            client: _twoTypeClient(),
+          );
+
+          expect(tester.takeException(), isNull);
+          // The filter bar is the row most likely to break: pills plus icons at
+          // 1.3 on a 360dp line.
+          expect(find.byType(ChoiceChip), findsNWidgets(3));
+          await _scrollWholeList(tester);
+        },
+      );
+    }
+
+    for (final locale in const [Locale('bn'), Locale('ta'), Locale('ml')]) {
+      testWidgets(
+        'no overflow at 360dp x textScale 1.3 in ${locale.languageCode}',
+        (tester) async {
+          // Real localized screen at a real Indic locale, with Indic data in the
+          // rows — not an English screen with a pasted string.
+          await _openLibrary(
+            tester,
+            locale: locale,
+            textScale: 1.3,
+            surface: kNarrowPhone,
+            client: libraryClient(
+              response: contentListResponse(
+                items: [
+                  contentItem(overrides: {'title': kTa}),
+                  contentItem(overrides: {
+                    'id': 'id-quiz-ml',
+                    'title': kMl,
+                    'type': 'quiz',
+                  }),
+                ],
+              ),
+            ),
+          );
+
+          expect(tester.takeException(), isNull);
+          await _scrollWholeList(tester);
+        },
+      );
+    }
+
+    testWidgets('an unbreakable compound word wraps, never scrolls sideways',
+        (tester) async {
+      await _openLibrary(
+        tester,
+        textScale: 1.3,
+        surface: kNarrowPhone,
+        client: libraryClient(
+          response: contentListResponse(
+            items: [contentItem(overrides: {'title': kLongWord})],
+          ),
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+      await _scrollWholeList(tester);
     });
   });
 }
