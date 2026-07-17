@@ -203,7 +203,9 @@
       "priority": "p1",
       "endpoint": "POST /api/ai/teacher-training",
       "file": "lib/features/teacher_training/presentation/teacher_training_screen.dart",
-      "status": "pending"
+      "status": "built-pending-firebase",
+      "commit": "11ad3182c",
+      "notes": "POST /api/ai/teacher-training. Contract ACCURATE (no mismatch). Request {question(max2000 rejects),subject?,language?} - NO gradeLevel in schema so no grade picker (pinned by test). Response {introduction,advice[{strategy,pedagogy,explanation}],conclusion}; DTO drops advice points with no strategy AND no explanation. Dignified PD copy ('Teaching Coach', empty state = invitation). analyze clean; 598 tests; rubric PASS."
     },
     {
       "name": "Parent Message",
