@@ -336,7 +336,7 @@
     {
       "id": "brand-contrast",
       "severity": "medium",
-      "status": "needs-founder-decision",
+      "status": "resolved",
       "summary": "Brand saffron #FF9933 fails WCAG AA contrast: #FF9933 text on white = 2.13:1, white on #FF9933 (button fill) = 2.13:1 (AA needs 4.5, AA-large 3.0). The original token #E0924D was 2.50:1 and also failed.",
       "why": "Founder chose vivid #FF9933 over #E0924D for brand identity. Contrast is a real accessibility issue (rural low-end screens, sunlight). NOT auto-fixable without either darkening the saffron for text/CTA use (e.g. a #C2410C-ish 'saffron-700' for on-white text while keeping #FF9933 for large brand surfaces) or using dark text on saffron buttons.",
       "options": [
@@ -344,7 +344,8 @@
         "use a darker saffron shade ONLY for text/CTA-on-white while keeping #FF9933 for brand surfaces/large fills",
         "dark onPrimary text on saffron buttons"
       ],
-      "note": "Left untouched pending the founder's call. Saffron is currently used as text/icon at dashboard tiles, quiz correct-answer mark, plan badge."
+      "note": "Left untouched pending the founder's call. Saffron is currently used as text/icon at dashboard tiles, quiz correct-answer mark, plan badge.",
+      "resolution": "Founder-approved accessible split (2026-07): LIGHT primary/ring = #C2410C deep saffron (5.18:1 on white -> saffron text AND white-on-saffron CTA both pass AA); DARK primary stays vivid #FFAB57 (9.7:1 on near-black) but dOnPrimary fixed white->#231200 (white on bright saffron was ~1.9:1, a pre-existing dark-button bug the contrast test caught). brandSaffron #FF9933 reserved for large brand moments only. Locked by test/core/theme/theme_contrast_test.dart."
     }
   ],
   "releaseGates": {
