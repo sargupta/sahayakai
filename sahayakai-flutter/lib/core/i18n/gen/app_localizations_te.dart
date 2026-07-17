@@ -152,6 +152,12 @@ class AppLocalizationsTe extends AppLocalizations {
   String get dashboardToolsTitle => 'మీ బోధన సాధనాలు';
 
   @override
+  String get createPaletteSearchHint => 'సాధనాలను వెతకండి';
+
+  @override
+  String get createPaletteEmpty => 'మీ శోధనకు ఏ సాధనమూ సరిపోలలేదు';
+
+  @override
   String get dashboardRecentTitle => 'Recent work';
 
   @override

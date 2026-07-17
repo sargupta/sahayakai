@@ -154,6 +154,13 @@ class AppLocalizationsMl extends AppLocalizations {
   String get dashboardToolsTitle => 'നിങ്ങളുടെ അധ്യാപന ഉപകരണങ്ങൾ';
 
   @override
+  String get createPaletteSearchHint => 'ഉപകരണങ്ങൾ തിരയുക';
+
+  @override
+  String get createPaletteEmpty =>
+      'നിങ്ങളുടെ തിരയലുമായി പൊരുത്തപ്പെടുന്ന ഉപകരണങ്ങളൊന്നുമില്ല';
+
+  @override
   String get dashboardRecentTitle => 'Recent work';
 
   @override

@@ -150,6 +150,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dashboardToolsTitle => 'Your teaching tools';
 
   @override
+  String get createPaletteSearchHint => 'Search tools';
+
+  @override
+  String get createPaletteEmpty => 'No tools match your search';
+
+  @override
   String get dashboardRecentTitle => 'Recent work';
 
   @override

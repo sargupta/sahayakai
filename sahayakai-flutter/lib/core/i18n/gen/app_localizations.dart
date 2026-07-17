@@ -374,6 +374,18 @@ abstract class AppLocalizations {
   /// **'Your teaching tools'**
   String get dashboardToolsTitle;
 
+  /// Create palette: hint text in the tool search field.
+  ///
+  /// In en, this message translates to:
+  /// **'Search tools'**
+  String get createPaletteSearchHint;
+
+  /// Create palette: shown when the search matches no tools.
+  ///
+  /// In en, this message translates to:
+  /// **'No tools match your search'**
+  String get createPaletteEmpty;
+
   /// Dashboard: recent saved items section header.
   ///
   /// In en, this message translates to:

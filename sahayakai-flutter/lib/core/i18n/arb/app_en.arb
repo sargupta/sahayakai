@@ -186,6 +186,14 @@
   "@dashboardToolsTitle": {
     "description": "Dashboard tools section header."
   },
+  "createPaletteSearchHint": "Search tools",
+  "@createPaletteSearchHint": {
+    "description": "Create palette: hint text in the tool search field."
+  },
+  "createPaletteEmpty": "No tools match your search",
+  "@createPaletteEmpty": {
+    "description": "Create palette: shown when the search matches no tools."
+  },
   "dashboardRecentTitle": "Recent work",
   "@dashboardRecentTitle": {
     "description": "Dashboard: recent saved items section header."

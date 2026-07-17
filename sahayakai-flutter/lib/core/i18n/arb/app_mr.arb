@@ -18,6 +18,8 @@
   "loginSubtitle": "पाठ योजना, प्रश्नमंजुषा आणि बरेच काही यासाठी साइन इन करा.",
   "dashboardGreeting": "पुन्हा स्वागत आहे",
   "dashboardToolsTitle": "तुमची शिक्षण साधने",
+  "createPaletteSearchHint": "साधने शोधा",
+  "createPaletteEmpty": "तुमच्या शोधाशी जुळणारे कोणतेही साधन नाही",
   "libraryTitle": "माझे ग्रंथालय",
   "libraryEmpty": "तुमच्या जतन केलेल्या पाठ योजना आणि प्रश्नमंजुषा येथे दिसतील.",
   "profileTitle": "प्रोफाइल"

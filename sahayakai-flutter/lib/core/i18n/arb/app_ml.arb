@@ -18,6 +18,8 @@
   "loginSubtitle": "പാഠപദ്ധതികൾ, ക്വിസുകൾ എന്നിവയ്ക്കും മറ്റും സൈൻ ഇൻ ചെയ്യുക.",
   "dashboardGreeting": "വീണ്ടും സ്വാഗതം",
   "dashboardToolsTitle": "നിങ്ങളുടെ അധ്യാപന ഉപകരണങ്ങൾ",
+  "createPaletteSearchHint": "ഉപകരണങ്ങൾ തിരയുക",
+  "createPaletteEmpty": "നിങ്ങളുടെ തിരയലുമായി പൊരുത്തപ്പെടുന്ന ഉപകരണങ്ങളൊന്നുമില്ല",
   "libraryTitle": "എന്റെ ലൈബ്രറി",
   "libraryEmpty": "നിങ്ങൾ സംരക്ഷിച്ച പാഠപദ്ധതികളും ക്വിസുകളും ഇവിടെ കാണാം.",
   "profileTitle": "പ്രൊഫൈൽ"

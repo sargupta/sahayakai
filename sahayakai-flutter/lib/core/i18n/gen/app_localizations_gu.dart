@@ -150,6 +150,12 @@ class AppLocalizationsGu extends AppLocalizations {
   String get dashboardToolsTitle => 'તમારા શિક્ષણ સાધનો';
 
   @override
+  String get createPaletteSearchHint => 'સાધનો શોધો';
+
+  @override
+  String get createPaletteEmpty => 'તમારી શોધ સાથે મેળ ખાતું કોઈ સાધન નથી';
+
+  @override
   String get dashboardRecentTitle => 'Recent work';
 
   @override

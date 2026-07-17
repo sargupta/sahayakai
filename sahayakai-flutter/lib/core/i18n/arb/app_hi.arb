@@ -18,6 +18,8 @@
   "loginSubtitle": "पाठ योजना, क्विज़ और बहुत कुछ के लिए साइन इन करें।",
   "dashboardGreeting": "वापसी पर स्वागत है",
   "dashboardToolsTitle": "आपके शिक्षण उपकरण",
+  "createPaletteSearchHint": "उपकरण खोजें",
+  "createPaletteEmpty": "आपकी खोज से मेल खाता कोई उपकरण नहीं",
   "libraryTitle": "मेरी लाइब्रेरी",
   "libraryEmpty": "आपकी सहेजी गई पाठ योजनाएँ और क्विज़ यहाँ दिखेंगी।",
   "profileTitle": "प्रोफ़ाइल"

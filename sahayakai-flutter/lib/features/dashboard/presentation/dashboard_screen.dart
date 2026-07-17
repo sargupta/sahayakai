@@ -13,6 +13,7 @@ import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/icon_well.dart';
 import '../../../shared/data/library_items_provider.dart';
+import '../../../shared/domain/tool_registry.dart';
 import '../../../shared/widgets/library_item_row.dart';
 import '../../../shared/widgets/offline_view.dart';
 import '../../../shared/widgets/section_label.dart';
@@ -171,77 +172,21 @@ class _SetupNudgeState extends ConsumerState<_SetupNudge> {
   }
 }
 
-/// The three tools that exist in this build, each deep-linking to its real
-/// route. No dead tiles: a tool with no screen yet is not listed, because a tile
-/// that does nothing is worse than an absent one.
+/// The built tools, each deep-linking to its real route. The list itself comes
+/// from the shared [kToolRegistry] — the SAME source the Create palette walks —
+/// so the grid and the palette can never list different tools. No dead tiles: a
+/// tool with no screen yet is not in the registry, because a tile that does
+/// nothing is worse than an absent one.
 class _ToolList extends StatelessWidget {
   const _ToolList();
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final tools = <_Tool>[
-      _Tool(
-        l10n.lessonPlanTitle,
-        l10n.lessonPlanSubtitle,
-        LucideIcons.bookOpen,
-        Routes.lessonPlan,
-      ),
-      _Tool(
-        l10n.quizTitle,
-        l10n.quizSubtitle,
-        LucideIcons.clipboardList,
-        Routes.quizGenerator,
-      ),
-      _Tool(
-        l10n.instantAnswerTitle,
-        l10n.instantAnswerSubtitle,
-        LucideIcons.messageSquare,
-        Routes.instantAnswer,
-      ),
-      _Tool(
-        l10n.worksheetTitle,
-        l10n.worksheetSubtitle,
-        LucideIcons.fileText,
-        Routes.worksheetWizard,
-      ),
-      _Tool(
-        l10n.rubricTitle,
-        l10n.rubricSubtitle,
-        LucideIcons.clipboardCheck,
-        Routes.rubricGenerator,
-      ),
-      _Tool(
-        l10n.examPaperTitle,
-        l10n.examPaperSubtitle,
-        LucideIcons.scrollText,
-        Routes.examPaper,
-      ),
-      _Tool(
-        l10n.teacherTrainingTitle,
-        l10n.teacherTrainingSubtitle,
-        LucideIcons.compass,
-        Routes.teacherTraining,
-      ),
-      _Tool(
-        l10n.parentMessageTitle,
-        l10n.parentMessageSubtitle,
-        LucideIcons.messageCircle,
-        Routes.parentMessage,
-      ),
-      _Tool(
-        l10n.assessTitle,
-        l10n.assessSubtitle,
-        LucideIcons.scanLine,
-        Routes.assessAssignment,
-      ),
-    ];
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        for (final (index, tool) in tools.indexed) ...[
+        for (final (index, tool) in kToolRegistry.indexed) ...[
           if (index > 0) const SizedBox(height: AppSpacing.space3),
           _ToolRow(tool: tool),
         ],
@@ -250,21 +195,14 @@ class _ToolList extends StatelessWidget {
   }
 }
 
-class _Tool {
-  const _Tool(this.title, this.subtitle, this.icon, this.route);
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final String route;
-}
-
 class _ToolRow extends StatelessWidget {
   const _ToolRow({required this.tool});
 
-  final _Tool tool;
+  final ToolEntry tool;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     return AppCard(
@@ -279,10 +217,10 @@ class _ToolRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(tool.title, style: text.titleMedium),
+                Text(tool.title(l10n), style: text.titleMedium),
                 const SizedBox(height: AppSpacing.space1),
                 Text(
-                  tool.subtitle,
+                  tool.subtitle(l10n),
                   style: text.bodyMedium?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),

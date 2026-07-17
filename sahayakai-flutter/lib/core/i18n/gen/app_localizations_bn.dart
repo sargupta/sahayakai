@@ -152,6 +152,12 @@ class AppLocalizationsBn extends AppLocalizations {
   String get dashboardToolsTitle => 'আপনার শিক্ষণ সরঞ্জাম';
 
   @override
+  String get createPaletteSearchHint => 'সরঞ্জাম খুঁজুন';
+
+  @override
+  String get createPaletteEmpty => 'আপনার খোঁজের সাথে কোনো সরঞ্জাম মেলেনি';
+
+  @override
   String get dashboardRecentTitle => 'Recent work';
 
   @override

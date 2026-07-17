@@ -151,6 +151,12 @@ class AppLocalizationsOr extends AppLocalizations {
   String get dashboardToolsTitle => 'ଆପଣଙ୍କ ଶିକ୍ଷାଦାନ ଉପକରଣ';
 
   @override
+  String get createPaletteSearchHint => 'ଉପକରଣ ଖୋଜନ୍ତୁ';
+
+  @override
+  String get createPaletteEmpty => 'ଆପଣଙ୍କ ଖୋଜ ସହିତ କୌଣସି ଉପକରଣ ମେଳ ଖାଉନାହିଁ';
+
+  @override
   String get dashboardRecentTitle => 'Recent work';
 
   @override

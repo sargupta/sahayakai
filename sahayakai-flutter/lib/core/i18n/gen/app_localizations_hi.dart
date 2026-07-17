@@ -151,6 +151,12 @@ class AppLocalizationsHi extends AppLocalizations {
   String get dashboardToolsTitle => 'आपके शिक्षण उपकरण';
 
   @override
+  String get createPaletteSearchHint => 'उपकरण खोजें';
+
+  @override
+  String get createPaletteEmpty => 'आपकी खोज से मेल खाता कोई उपकरण नहीं';
+
+  @override
   String get dashboardRecentTitle => 'Recent work';
 
   @override

@@ -151,6 +151,12 @@ class AppLocalizationsPa extends AppLocalizations {
   String get dashboardToolsTitle => 'ਤੁਹਾਡੇ ਅਧਿਆਪਨ ਸਾਧਨ';
 
   @override
+  String get createPaletteSearchHint => 'ਸਾਧਨ ਖੋਜੋ';
+
+  @override
+  String get createPaletteEmpty => 'ਤੁਹਾਡੀ ਖੋਜ ਨਾਲ ਕੋਈ ਸਾਧਨ ਮੇਲ ਨਹੀਂ ਖਾਂਦਾ';
+
+  @override
   String get dashboardRecentTitle => 'Recent work';
 
   @override

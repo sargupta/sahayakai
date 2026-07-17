@@ -3,18 +3,19 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/l10n_ext.dart';
-import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/domain/tool_registry.dart';
+import '../../../shared/widgets/empty_view.dart';
+import '../../../shared/widgets/icon_well.dart';
 import '../../library/presentation/library_screen.dart';
 import '../../profile/presentation/profile_screen.dart';
 import 'dashboard_screen.dart';
 
 /// The signed-in shell: a Material 3 [NavigationBar] with 4 tabs
 /// (Home / Create / Library / Me). "Create" is an action — it opens the
-/// command-palette sheet (placeholder here) rather than switching tabs, so the
+/// searchable Create (command) palette rather than switching tabs, so the
 /// selected index never lands on it. See THEME_SPEC §5.5.
 ///
-/// TODO(P1.8): swap the placeholder sheet for the searchable create palette.
 /// A later unit can convert this to a StatefulShellRoute for deep-linkable tabs.
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -89,99 +90,178 @@ class _AppShellState extends State<AppShell> {
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
-      builder: (sheetContext) {
-        final l10n = sheetContext.l10n;
-        final text = Theme.of(sheetContext).textTheme;
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.space4),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.space6,
+      // The sheet carries a search field: it must be free to grow past the
+      // default 9/16-screen cap and to lift above the keyboard. [_CreatePalette]
+      // bounds its own height and scrolls its list inside that bound, so this
+      // never becomes an unbounded list in an unbounded sheet.
+      isScrollControlled: true,
+      builder: (_) => const _CreatePalette(),
+    );
+  }
+}
+
+/// The Create (command) palette: a search field over the shared [kToolRegistry],
+/// each row deep-linking into its tool. Reached from the shell's Create action.
+///
+/// It walks the SAME registry the dashboard grid does, so the two always agree
+/// on which tools exist. The sheet's chrome (radius-12 top corners,
+/// surfaceTint-transparent, shadow) comes from `bottomSheetTheme`; the height is
+/// bounded here (a min-height [Column] with the list in a [Flexible]) so the
+/// list scrolls inside the sheet rather than the sheet growing without limit.
+class _CreatePalette extends StatefulWidget {
+  const _CreatePalette();
+
+  @override
+  State<_CreatePalette> createState() => _CreatePaletteState();
+}
+
+class _CreatePaletteState extends State<_CreatePalette> {
+  final TextEditingController _controller = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  /// Case- (and, for Latin, diacritic-) folding so "quiz", "QUIZ" and a stray
+  /// leading space all match. Indic scripts are caseless, so `toLowerCase` is a
+  /// no-op there and `contains` matches on the raw glyphs.
+  static String _fold(String s) => s.trim().toLowerCase();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+
+    final query = _fold(_query);
+    final tools = query.isEmpty
+        ? kToolRegistry
+        : [
+            for (final tool in kToolRegistry)
+              if (_fold(tool.title(l10n)).contains(query)) tool,
+          ];
+
+    return SafeArea(
+      // Lift the whole sheet above the keyboard so the focused search field is
+      // never hidden behind it (DESIGN_RUBRIC §9).
+      child: Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.space4,
+                AppSpacing.space2,
+                AppSpacing.space4,
+                AppSpacing.space3,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(l10n.navCreate, style: text.titleMedium),
+                  const SizedBox(height: AppSpacing.space3),
+                  TextField(
+                    controller: _controller,
+                    textInputAction: TextInputAction.search,
+                    onChanged: (value) => setState(() => _query = value),
+                    // The themed input styling (radius, saffron focus ring,
+                    // Indic fallback) comes from `inputDecorationTheme`; only the
+                    // palette-specific affordances are set here.
+                    decoration: InputDecoration(
+                      hintText: l10n.createPaletteSearchHint,
+                      prefixIcon: Icon(
+                        LucideIcons.search,
+                        size: AppIconSize.inline,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                      suffixIcon: _query.isEmpty
+                          ? null
+                          : IconButton(
+                              icon: const Icon(
+                                LucideIcons.x,
+                                size: AppIconSize.inline,
+                              ),
+                              color: scheme.onSurfaceVariant,
+                              tooltip: MaterialLocalizations.of(context)
+                                  .deleteButtonTooltip,
+                              onPressed: () => setState(() {
+                                _controller.clear();
+                                _query = '';
+                              }),
+                            ),
+                    ),
                   ),
-                  child: Text(l10n.navCreate, style: text.titleMedium),
-                ),
-                const SizedBox(height: AppSpacing.space2),
-                ListTile(
-                  leading: const Icon(LucideIcons.bookOpen),
-                  title: Text(l10n.lessonPlanTitle),
-                  subtitle: Text(l10n.lessonPlanSubtitle),
-                  onTap: () {
-                    Navigator.of(sheetContext).pop();
-                    context.push(Routes.lessonPlan);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(LucideIcons.clipboardList),
-                  title: Text(l10n.quizTitle),
-                  subtitle: Text(l10n.quizSubtitle),
-                  onTap: () {
-                    Navigator.of(sheetContext).pop();
-                    context.push(Routes.quizGenerator);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(LucideIcons.messageSquare),
-                  title: Text(l10n.instantAnswerTitle),
-                  subtitle: Text(l10n.instantAnswerSubtitle),
-                  onTap: () {
-                    Navigator.of(sheetContext).pop();
-                    context.push(Routes.instantAnswer);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(LucideIcons.fileText),
-                  title: Text(l10n.worksheetTitle),
-                  subtitle: Text(l10n.worksheetSubtitle),
-                  onTap: () {
-                    Navigator.of(sheetContext).pop();
-                    context.push(Routes.worksheetWizard);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(LucideIcons.clipboardCheck),
-                  title: Text(l10n.rubricTitle),
-                  subtitle: Text(l10n.rubricSubtitle),
-                  onTap: () {
-                    Navigator.of(sheetContext).pop();
-                    context.push(Routes.rubricGenerator);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(LucideIcons.scrollText),
-                  title: Text(l10n.examPaperTitle),
-                  subtitle: Text(l10n.examPaperSubtitle),
-                  onTap: () {
-                    Navigator.of(sheetContext).pop();
-                    context.push(Routes.examPaper);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(LucideIcons.compass),
-                  title: Text(l10n.teacherTrainingTitle),
-                  subtitle: Text(l10n.teacherTrainingSubtitle),
-                  onTap: () {
-                    Navigator.of(sheetContext).pop();
-                    context.push(Routes.teacherTraining);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(LucideIcons.messageCircle),
-                  title: Text(l10n.parentMessageTitle),
-                  subtitle: Text(l10n.parentMessageSubtitle),
-                  onTap: () {
-                    Navigator.of(sheetContext).pop();
-                    context.push(Routes.parentMessage);
-                  },
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        );
+            if (tools.isEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.space4,
+                  AppSpacing.space2,
+                  AppSpacing.space4,
+                  AppSpacing.space6,
+                ),
+                child: EmptyView(
+                  icon: LucideIcons.searchX,
+                  message: l10n.createPaletteEmpty,
+                ),
+              )
+            else
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.only(bottom: AppSpacing.space4),
+                  itemCount: tools.length,
+                  itemBuilder: (context, index) =>
+                      _CreatePaletteRow(tool: tools[index]),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One tool row in the palette: the shared [IconWell], the localized name and
+/// description, deep-linking into the tool's route and closing the sheet. Rows
+/// are ListTiles, so each is comfortably past the 48dp touch floor.
+class _CreatePaletteRow extends StatelessWidget {
+  const _CreatePaletteRow({required this.tool});
+
+  final ToolEntry tool;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    return ListTile(
+      key: ValueKey('create-palette-${tool.id}'),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.space4,
+        vertical: AppSpacing.space2,
+      ),
+      leading: IconWell(icon: tool.icon),
+      title: Text(tool.title(l10n), style: text.titleMedium),
+      subtitle: Text(
+        tool.subtitle(l10n),
+        style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+      ),
+      onTap: () {
+        // Capture the router before the sheet pops: after the pop this row's
+        // element is defunct, so `context.push` off it would look up a disposed
+        // navigator.
+        final router = GoRouter.of(context);
+        Navigator.of(context).pop();
+        router.push(tool.route);
       },
     );
   }

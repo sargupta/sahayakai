@@ -18,6 +18,8 @@
   "loginSubtitle": "পাঠ পরিকল্পনা, কুইজ ও আরও অনেক কিছুর জন্য সাইন ইন করুন।",
   "dashboardGreeting": "আবার স্বাগতম",
   "dashboardToolsTitle": "আপনার শিক্ষণ সরঞ্জাম",
+  "createPaletteSearchHint": "সরঞ্জাম খুঁজুন",
+  "createPaletteEmpty": "আপনার খোঁজের সাথে কোনো সরঞ্জাম মেলেনি",
   "libraryTitle": "আমার লাইব্রেরি",
   "libraryEmpty": "আপনার সংরক্ষিত পাঠ পরিকল্পনা ও কুইজ এখানে দেখা যাবে।",
   "profileTitle": "প্রোফাইল"

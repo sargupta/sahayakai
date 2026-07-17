@@ -152,6 +152,13 @@ class AppLocalizationsKn extends AppLocalizations {
   String get dashboardToolsTitle => 'ನಿಮ್ಮ ಬೋಧನಾ ಸಾಧನಗಳು';
 
   @override
+  String get createPaletteSearchHint => 'ಸಾಧನಗಳನ್ನು ಹುಡುಕಿ';
+
+  @override
+  String get createPaletteEmpty =>
+      'ನಿಮ್ಮ ಹುಡುಕಾಟಕ್ಕೆ ಯಾವುದೇ ಸಾಧನ ಹೊಂದಿಕೆಯಾಗಿಲ್ಲ';
+
+  @override
   String get dashboardRecentTitle => 'Recent work';
 
   @override

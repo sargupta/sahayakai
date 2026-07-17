@@ -152,6 +152,13 @@ class AppLocalizationsTa extends AppLocalizations {
   String get dashboardToolsTitle => 'உங்கள் கற்பித்தல் கருவிகள்';
 
   @override
+  String get createPaletteSearchHint => 'கருவிகளைத் தேடுங்கள்';
+
+  @override
+  String get createPaletteEmpty =>
+      'உங்கள் தேடலுக்கு எந்தக் கருவியும் பொருந்தவில்லை';
+
+  @override
   String get dashboardRecentTitle => 'Recent work';
 
   @override

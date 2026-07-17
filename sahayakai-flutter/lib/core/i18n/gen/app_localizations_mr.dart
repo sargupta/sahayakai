@@ -151,6 +151,12 @@ class AppLocalizationsMr extends AppLocalizations {
   String get dashboardToolsTitle => 'तुमची शिक्षण साधने';
 
   @override
+  String get createPaletteSearchHint => 'साधने शोधा';
+
+  @override
+  String get createPaletteEmpty => 'तुमच्या शोधाशी जुळणारे कोणतेही साधन नाही';
+
+  @override
   String get dashboardRecentTitle => 'Recent work';
 
   @override
