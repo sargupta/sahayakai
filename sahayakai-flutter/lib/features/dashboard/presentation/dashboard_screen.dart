@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/router/routes.dart';
@@ -13,11 +12,11 @@ import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/icon_well.dart';
+import '../../../shared/data/library_items_provider.dart';
+import '../../../shared/widgets/library_item_row.dart';
 import '../../../shared/widgets/offline_view.dart';
 import '../../../shared/widgets/section_label.dart';
 import '../../profile/presentation/profile_controller.dart';
-import '../domain/library_item.dart';
-import 'recent_controller.dart';
 
 /// P0.3 — Dashboard Home. The Home tab of the 4-tab shell (`AppShell`).
 ///
@@ -267,13 +266,18 @@ class _ToolRow extends StatelessWidget {
   }
 }
 
+/// How many saved items the dashboard shows. Small on purpose: this is a
+/// glance-and-resume surface, not the library — the Library tab shows the same
+/// list in full, off the same provider and the same single request.
+const int kRecentItemCount = 5;
+
 /// The teacher's most recent saved work, with all four states.
 class _RecentSection extends ConsumerWidget {
   const _RecentSection();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final recent = ref.watch(recentItemsControllerProvider);
+    final recent = ref.watch(libraryItemsProvider);
 
     return recent.when(
       // A shaped shimmer of the rows that are coming, never a bare spinner
@@ -281,10 +285,13 @@ class _RecentSection extends ConsumerWidget {
       loading: () => const AppSkeleton(lines: 2),
       error: (error, _) => _RecentError(
         error: error,
-        onRetry: () =>
-            ref.read(recentItemsControllerProvider.notifier).refresh(),
+        onRetry: () => ref.read(libraryItemsProvider.notifier).refresh(),
       ),
-      data: (items) {
+      data: (all) {
+        // The dashboard is a glance-and-resume surface, so it caps its own
+        // display. The Library tab shows the same list in full — same provider,
+        // same fetch, one request.
+        final items = all.take(kRecentItemCount).toList();
         if (items.isEmpty) {
           return AppCard(
             child: EmptyView(
@@ -299,7 +306,7 @@ class _RecentSection extends ConsumerWidget {
           children: [
             for (final (index, item) in items.indexed) ...[
               if (index > 0) const SizedBox(height: AppSpacing.space3),
-              _RecentRow(item: item),
+              LibraryItemRow(item: item),
             ],
           ],
         );
@@ -341,85 +348,4 @@ class _RecentError extends StatelessWidget {
       child: ErrorView(message: l10n.dashboardRecentFailed, onRetry: onRetry),
     );
   }
-}
-
-/// One saved item.
-///
-/// NOT TAPPABLE, on purpose. There is no screen in this build that can open a
-/// saved generation — rendering one back into its tool's result view is P1.7,
-/// which owns `GET /api/content/get`. Wiring this row to the tool's empty form
-/// would look like "open my lesson plan" and deliver a blank page instead, which
-/// is worse than no affordance at all.
-class _RecentRow extends StatelessWidget {
-  const _RecentRow({required this.item});
-
-  final LibraryItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-
-    // A document with no title still belongs to the teacher and still renders.
-    final title = item.title.isNotEmpty ? item.title : l10n.dashboardUntitled;
-
-    final meta = <String>[
-      typeLabel(l10n, item.type),
-      if (item.gradeLevel != null) item.gradeLevel!,
-      if (item.subject != null) item.subject!,
-      if (item.createdAt != null)
-        // MaterialLocalizations, not `intl`'s DateFormat: the delegates are
-        // already loaded for all 11 locales, so this needs no
-        // `initializeDateFormatting` call and cannot throw on a locale whose
-        // date symbols were never initialized.
-        MaterialLocalizations.of(context).formatMediumDate(item.createdAt!),
-    ].join(' · ');
-
-    return AppCard(
-      child: Row(
-        children: [
-          IconWell(icon: item.type.icon),
-          const SizedBox(width: AppSpacing.space4),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(title, style: text.titleMedium),
-                const SizedBox(height: AppSpacing.space1),
-                Text(
-                  meta,
-                  style: text.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Exhaustive on purpose: a new [ContentType] will not compile until it has
-/// copy, which is what keeps `unknown` from quietly becoming the label for a
-/// type someone forgot to name.
-@visibleForTesting
-String typeLabel(AppLocalizations l10n, ContentType type) {
-  return switch (type) {
-    ContentType.lessonPlan => l10n.contentTypeLessonPlan,
-    ContentType.quiz => l10n.contentTypeQuiz,
-    ContentType.worksheet => l10n.contentTypeWorksheet,
-    ContentType.visualAid => l10n.contentTypeVisualAid,
-    ContentType.rubric => l10n.contentTypeRubric,
-    ContentType.microLesson => l10n.contentTypeMicroLesson,
-    ContentType.virtualFieldTrip => l10n.contentTypeVirtualFieldTrip,
-    ContentType.instantAnswer => l10n.contentTypeInstantAnswer,
-    ContentType.teacherTraining => l10n.contentTypeTeacherTraining,
-    ContentType.examPaper => l10n.contentTypeExamPaper,
-    ContentType.assessment => l10n.contentTypeAssessment,
-    ContentType.unknown => l10n.contentTypeUnknown,
-  };
 }

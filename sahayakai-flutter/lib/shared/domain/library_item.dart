@@ -4,9 +4,9 @@ import 'package:lucide_icons/lucide_icons.dart';
 /// One saved generation from the teacher's library, as
 /// `GET /api/content/list` returns it.
 ///
-/// The dashboard shows the most recent few; the full list is P1.7. The model
-/// lives here because the dashboard is the first (and today the only) consumer;
-/// P1.7 should move it to a shared library feature rather than copy it.
+/// Lives in `shared/` because it has two consumers — the dashboard's Recent
+/// section and the Library tab — and ARCHITECTURE §7 forbids a feature's
+/// presentation from importing another feature's `data`. Shared, not copied.
 @immutable
 class LibraryItem {
   const LibraryItem({

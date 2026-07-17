@@ -234,6 +234,18 @@ class AppLocalizationsKn extends AppLocalizations {
       'ನೀವು ಉಳಿಸಿದ ಪಾಠ ಯೋಜನೆಗಳು ಮತ್ತು ಕ್ವಿಜ್‌ಗಳು ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತವೆ.';
 
   @override
+  String get libraryEmptyAction => 'Create a lesson plan';
+
+  @override
+  String get librarySignedOut => 'Sign in to see your saved work.';
+
+  @override
+  String get libraryLoadFailed => 'Your library could not be loaded.';
+
+  @override
+  String get libraryNewestOnly => 'Showing your 20 most recent items.';
+
+  @override
   String get profileTitle => 'ಪ್ರೊಫೈಲ್';
 
   @override

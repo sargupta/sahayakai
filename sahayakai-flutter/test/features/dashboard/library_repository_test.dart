@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sahayakai/features/dashboard/data/library_repository.dart';
-import 'package:sahayakai/features/dashboard/domain/library_item.dart';
+import 'package:sahayakai/shared/data/library_repository.dart';
+import 'package:sahayakai/shared/domain/library_item.dart';
 
 import '../../support/fake_api_client.dart';
 import 'dashboard_fixtures.dart';

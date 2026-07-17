@@ -236,6 +236,18 @@ class AppLocalizationsMl extends AppLocalizations {
       'നിങ്ങൾ സംരക്ഷിച്ച പാഠപദ്ധതികളും ക്വിസുകളും ഇവിടെ കാണാം.';
 
   @override
+  String get libraryEmptyAction => 'Create a lesson plan';
+
+  @override
+  String get librarySignedOut => 'Sign in to see your saved work.';
+
+  @override
+  String get libraryLoadFailed => 'Your library could not be loaded.';
+
+  @override
+  String get libraryNewestOnly => 'Showing your 20 most recent items.';
+
+  @override
   String get profileTitle => 'പ്രൊഫൈൽ';
 
   @override

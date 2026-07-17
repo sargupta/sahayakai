@@ -233,6 +233,18 @@ class AppLocalizationsMr extends AppLocalizations {
       'तुमच्या जतन केलेल्या पाठ योजना आणि प्रश्नमंजुषा येथे दिसतील.';
 
   @override
+  String get libraryEmptyAction => 'Create a lesson plan';
+
+  @override
+  String get librarySignedOut => 'Sign in to see your saved work.';
+
+  @override
+  String get libraryLoadFailed => 'Your library could not be loaded.';
+
+  @override
+  String get libraryNewestOnly => 'Showing your 20 most recent items.';
+
+  @override
   String get profileTitle => 'प्रोफाइल';
 
   @override

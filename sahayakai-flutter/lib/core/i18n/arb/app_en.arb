@@ -290,6 +290,22 @@
   "@libraryEmpty": {
     "description": "Library empty state."
   },
+  "libraryEmptyAction": "Create a lesson plan",
+  "@libraryEmptyAction": {
+    "description": "Action on the Library empty state; opens the lesson planner."
+  },
+  "librarySignedOut": "Sign in to see your saved work.",
+  "@librarySignedOut": {
+    "description": "Library state when the saved-work read has no identity (401)."
+  },
+  "libraryLoadFailed": "Your library could not be loaded.",
+  "@libraryLoadFailed": {
+    "description": "Library state when the saved-work read fails."
+  },
+  "libraryNewestOnly": "Showing your 20 most recent items.",
+  "@libraryNewestOnly": {
+    "description": "Library footer note. The list route takes a limit and no cursor, so there is no next page to offer."
+  },
   "profileTitle": "Profile",
   "@profileTitle": {
     "description": "Profile screen title."

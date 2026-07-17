@@ -231,6 +231,18 @@ class AppLocalizationsGu extends AppLocalizations {
   String get libraryEmpty => 'તમે સાચવેલી પાઠ યોજનાઓ અને ક્વિઝ અહીં દેખાશે.';
 
   @override
+  String get libraryEmptyAction => 'Create a lesson plan';
+
+  @override
+  String get librarySignedOut => 'Sign in to see your saved work.';
+
+  @override
+  String get libraryLoadFailed => 'Your library could not be loaded.';
+
+  @override
+  String get libraryNewestOnly => 'Showing your 20 most recent items.';
+
+  @override
   String get profileTitle => 'પ્રોફાઇલ';
 
   @override

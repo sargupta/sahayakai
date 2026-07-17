@@ -234,6 +234,18 @@ class AppLocalizationsTe extends AppLocalizations {
       'మీరు సేవ్ చేసిన పాఠ ప్రణాళికలు మరియు క్విజ్‌లు ఇక్కడ కనిపిస్తాయి.';
 
   @override
+  String get libraryEmptyAction => 'Create a lesson plan';
+
+  @override
+  String get librarySignedOut => 'Sign in to see your saved work.';
+
+  @override
+  String get libraryLoadFailed => 'Your library could not be loaded.';
+
+  @override
+  String get libraryNewestOnly => 'Showing your 20 most recent items.';
+
+  @override
   String get profileTitle => 'ప్రొఫైల్';
 
   @override

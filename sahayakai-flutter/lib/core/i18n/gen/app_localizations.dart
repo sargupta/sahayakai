@@ -530,6 +530,30 @@ abstract class AppLocalizations {
   /// **'Your saved lesson plans and quizzes will appear here.'**
   String get libraryEmpty;
 
+  /// Action on the Library empty state; opens the lesson planner.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a lesson plan'**
+  String get libraryEmptyAction;
+
+  /// Library state when the saved-work read has no identity (401).
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to see your saved work.'**
+  String get librarySignedOut;
+
+  /// Library state when the saved-work read fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Your library could not be loaded.'**
+  String get libraryLoadFailed;
+
+  /// Library footer note. The list route takes a limit and no cursor, so there is no next page to offer.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing your 20 most recent items.'**
+  String get libraryNewestOnly;
+
   /// Profile screen title.
   ///
   /// In en, this message translates to:

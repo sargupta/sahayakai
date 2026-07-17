@@ -233,6 +233,18 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଆପଣ ସଞ୍ଚୟ କରିଥିବା ପାଠ ଯୋଜନା ଏବଂ କୁଇଜ୍ ଏଠାରେ ଦେଖାଯିବ।';
 
   @override
+  String get libraryEmptyAction => 'Create a lesson plan';
+
+  @override
+  String get librarySignedOut => 'Sign in to see your saved work.';
+
+  @override
+  String get libraryLoadFailed => 'Your library could not be loaded.';
+
+  @override
+  String get libraryNewestOnly => 'Showing your 20 most recent items.';
+
+  @override
   String get profileTitle => 'ପ୍ରୋଫାଇଲ୍';
 
   @override

@@ -233,6 +233,18 @@ class AppLocalizationsHi extends AppLocalizations {
       'आपकी सहेजी गई पाठ योजनाएँ और क्विज़ यहाँ दिखेंगी।';
 
   @override
+  String get libraryEmptyAction => 'Create a lesson plan';
+
+  @override
+  String get librarySignedOut => 'Sign in to see your saved work.';
+
+  @override
+  String get libraryLoadFailed => 'Your library could not be loaded.';
+
+  @override
+  String get libraryNewestOnly => 'Showing your 20 most recent items.';
+
+  @override
   String get profileTitle => 'प्रोफ़ाइल';
 
   @override

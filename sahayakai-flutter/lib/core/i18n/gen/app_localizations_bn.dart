@@ -234,6 +234,18 @@ class AppLocalizationsBn extends AppLocalizations {
       'আপনার সংরক্ষিত পাঠ পরিকল্পনা ও কুইজ এখানে দেখা যাবে।';
 
   @override
+  String get libraryEmptyAction => 'Create a lesson plan';
+
+  @override
+  String get librarySignedOut => 'Sign in to see your saved work.';
+
+  @override
+  String get libraryLoadFailed => 'Your library could not be loaded.';
+
+  @override
+  String get libraryNewestOnly => 'Showing your 20 most recent items.';
+
+  @override
   String get profileTitle => 'প্রোফাইল';
 
   @override

@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../core/network/api_client.dart';
-import '../../../core/network/api_providers.dart';
+import '../../core/network/api_client.dart';
+import '../../core/network/api_providers.dart';
 import '../domain/library_item.dart';
 import 'library_dtos.dart';
 
@@ -41,6 +41,10 @@ class LibraryRepository {
   ///
   /// Soft-deleted documents are filtered out by the route, so nothing here has
   /// to know about `deletedAt`.
+  ///
+  /// There is no cursor parameter: the route accepts `limit` only, so [maxLimit]
+  /// is the most this build can ever show. The Library screen discloses that
+  /// rather than implying a complete archive.
   Future<List<LibraryItem>> fetchRecent({int limit = 5}) {
     return _client.get<List<LibraryItem>>(
       _listPath,

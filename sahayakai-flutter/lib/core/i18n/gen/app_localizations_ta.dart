@@ -234,6 +234,18 @@ class AppLocalizationsTa extends AppLocalizations {
       'நீங்கள் சேமித்த பாடத் திட்டங்கள் மற்றும் வினாடி வினாக்கள் இங்கே தோன்றும்.';
 
   @override
+  String get libraryEmptyAction => 'Create a lesson plan';
+
+  @override
+  String get librarySignedOut => 'Sign in to see your saved work.';
+
+  @override
+  String get libraryLoadFailed => 'Your library could not be loaded.';
+
+  @override
+  String get libraryNewestOnly => 'Showing your 20 most recent items.';
+
+  @override
   String get profileTitle => 'சுயவிவரம்';
 
   @override
