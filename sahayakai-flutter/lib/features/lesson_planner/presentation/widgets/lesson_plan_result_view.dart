@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../core/i18n/l10n_ext.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/section_label.dart';
 import '../../domain/lesson_plan.dart';
 
 /// Renders a generated [LessonPlan]. All model-authored prose flows through
@@ -138,7 +139,8 @@ class _NoteBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(LucideIcons.info, size: 20, color: scheme.onSurfaceVariant),
+          Icon(LucideIcons.info,
+              size: AppIconSize.inline, color: scheme.onSurfaceVariant),
           const SizedBox(width: AppSpacing.space3),
           Expanded(
             child: Column(
@@ -160,25 +162,6 @@ class _NoteBanner extends StatelessWidget {
   }
 }
 
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel(this.title);
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return Text(
-      title,
-      style: text.titleSmall?.copyWith(
-        color: scheme.onSurfaceVariant,
-        letterSpacing: 0.6,
-      ),
-    );
-  }
-}
-
 class _BulletSection extends StatelessWidget {
   const _BulletSection({required this.title, required this.items});
 
@@ -191,7 +174,7 @@ class _BulletSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _SectionLabel(title),
+        SectionLabel(title),
         const SizedBox(height: AppSpacing.space3),
         for (var i = 0; i < items.length; i++) ...[
           if (i > 0) const SizedBox(height: AppSpacing.space2),
@@ -243,7 +226,7 @@ class _VocabularySection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _SectionLabel(context.l10n.lessonPlanVocabulary),
+        SectionLabel(context.l10n.lessonPlanVocabulary),
         const SizedBox(height: AppSpacing.space3),
         for (var i = 0; i < terms.length; i++) ...[
           if (i > 0) const SizedBox(height: AppSpacing.space3),
@@ -275,7 +258,7 @@ class _ActivitiesSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _SectionLabel(context.l10n.lessonPlanActivities),
+        SectionLabel(context.l10n.lessonPlanActivities),
         const SizedBox(height: AppSpacing.space3),
         for (var i = 0; i < plan.activities.length; i++) ...[
           if (i > 0) const SizedBox(height: AppSpacing.space3),
@@ -313,7 +296,7 @@ class _ActivityCard extends StatelessWidget {
                     children: [
                       Icon(
                         LucideIcons.clock,
-                        size: 14,
+                        size: AppIconSize.inline,
                         color: scheme.onSurfaceVariant,
                       ),
                       const SizedBox(width: AppSpacing.space1),
@@ -413,7 +396,7 @@ class _SubNote extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(icon, size: 16, color: scheme.onSurfaceVariant),
+                Icon(icon, size: AppIconSize.inline, color: scheme.onSurfaceVariant),
                 const SizedBox(width: AppSpacing.space2),
                 Text(
                   label,
@@ -445,7 +428,7 @@ class _ProseSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _SectionLabel(title),
+        SectionLabel(title),
         const SizedBox(height: AppSpacing.space3),
         _AiText(body),
       ],

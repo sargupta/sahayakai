@@ -410,7 +410,7 @@ class _Stepper extends StatelessWidget {
               IconButton(
                 onPressed: value > min ? () => onChanged(value - 1) : null,
                 tooltip: decrementTooltip,
-                icon: const Icon(LucideIcons.minus, size: 18),
+                icon: const Icon(LucideIcons.minus, size: AppIconSize.inline),
               ),
               ConstrainedBox(
                 constraints: const BoxConstraints(minWidth: 40),
@@ -423,7 +423,7 @@ class _Stepper extends StatelessWidget {
               IconButton(
                 onPressed: value < max ? () => onChanged(value + 1) : null,
                 tooltip: incrementTooltip,
-                icon: const Icon(LucideIcons.plus, size: 18),
+                icon: const Icon(LucideIcons.plus, size: AppIconSize.inline),
               ),
             ],
           ),

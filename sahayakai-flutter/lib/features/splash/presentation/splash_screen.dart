@@ -6,6 +6,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/auth/auth_providers.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/icon_well.dart';
 
 /// P0.1 — Splash.
 ///
@@ -89,20 +90,7 @@ class _BrandMark extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            color: scheme.primary.withValues(alpha: 0.12),
-            borderRadius: AppRadius.rXl,
-          ),
-          alignment: Alignment.center,
-          child: Icon(
-            LucideIcons.graduationCap,
-            size: 32,
-            color: scheme.primary,
-          ),
-        ),
+        const IconWell(icon: LucideIcons.graduationCap),
         const SizedBox(height: AppSpacing.space4),
         Text(
           context.l10n.appTitle,
@@ -162,7 +150,7 @@ class _BootstrapFailed extends StatelessWidget {
             children: [
               Icon(
                 LucideIcons.wifiOff,
-                size: 20,
+                size: AppIconSize.inline,
                 color: scheme.onSurfaceVariant,
               ),
               const SizedBox(width: AppSpacing.space3),
@@ -183,7 +171,7 @@ class _BootstrapFailed extends StatelessWidget {
             alignment: Alignment.centerLeft,
             child: OutlinedButton.icon(
               onPressed: onRetry,
-              icon: const Icon(LucideIcons.refreshCw, size: 18),
+              icon: const Icon(LucideIcons.refreshCw, size: AppIconSize.inline),
               label: Text(l10n.actionRetry),
             ),
           ),

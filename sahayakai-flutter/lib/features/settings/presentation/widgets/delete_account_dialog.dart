@@ -59,7 +59,8 @@ class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
       // Lets the title + content scroll instead of overflowing at textScale
       // 1.3 with a long Indic body.
       scrollable: true,
-      icon: Icon(LucideIcons.alertTriangle, color: scheme.error, size: 28),
+      icon: Icon(LucideIcons.alertTriangle,
+          color: scheme.error, size: AppIconSize.standalone),
       title: Text(l10n.settingsDeleteDialogTitle),
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

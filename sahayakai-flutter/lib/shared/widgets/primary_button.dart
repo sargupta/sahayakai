@@ -40,7 +40,7 @@ class PrimaryButton extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (icon != null) ...[
-                    Icon(icon, size: 20),
+                    Icon(icon, size: AppIconSize.inline),
                     const SizedBox(width: AppSpacing.space2),
                   ],
                   Flexible(

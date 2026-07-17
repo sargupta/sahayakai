@@ -13,6 +13,7 @@ import '../../../core/theme/theme_mode_provider.dart';
 import '../../../shared/domain/picker_options.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/language_switcher.dart';
+import '../../../shared/widgets/section_label.dart';
 import '../../profile/domain/profile_settings.dart';
 import '../data/notification_prefs_provider.dart';
 import 'settings_controller.dart';
@@ -111,7 +112,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final text = Theme.of(context).textTheme;
     final saveState = ref.watch(profileSaveControllerProvider);
 
-    return _Section(
+    return Section(
       title: l10n.settingsProfileTitle,
       icon: LucideIcons.graduationCap,
       child: AppCard(
@@ -239,7 +240,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final deleteState = ref.watch(deleteAccountControllerProvider);
     final scheduled = !deleteState.hasError && deleteState.value != null;
 
-    return _Section(
+    return Section(
       title: l10n.settingsDangerTitle,
       icon: LucideIcons.trash2,
       child: AppCard(
@@ -268,7 +269,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 onPressed: deleteState.isLoading ? null : _deleteAccount,
                 icon: deleteState.isLoading
                     ? const _ButtonSpinner()
-                    : const Icon(LucideIcons.trash2, size: 18),
+                    : const Icon(LucideIcons.trash2, size: AppIconSize.inline),
                 label: Text(l10n.settingsDeleteAction),
               ),
             ],
@@ -308,7 +309,7 @@ class _ThemeSection extends ConsumerWidget {
     final l10n = context.l10n;
     final mode = ref.watch(themeModeControllerProvider);
 
-    return _Section(
+    return Section(
       title: l10n.settingsAppearanceTitle,
       icon: LucideIcons.palette,
       child: AppCard(
@@ -331,7 +332,7 @@ class _ThemeSection extends ConsumerWidget {
                 RadioListTile<ThemeMode>(
                   value: entry.$1,
                   title: Text(entry.$2),
-                  secondary: Icon(entry.$3, size: 20),
+                  secondary: Icon(entry.$3, size: AppIconSize.inline),
                 ),
             ],
           ),
@@ -354,7 +355,7 @@ class _LanguageSection extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
 
-    return _Section(
+    return Section(
       title: l10n.languageLabel,
       icon: LucideIcons.languages,
       child: Column(
@@ -383,7 +384,7 @@ class _NotificationSection extends ConsumerWidget {
     final text = Theme.of(context).textTheme;
     final enabled = ref.watch(notificationPrefsControllerProvider);
 
-    return _Section(
+    return Section(
       title: l10n.settingsNotificationsTitle,
       icon: LucideIcons.bell,
       child: AppCard(
@@ -424,7 +425,7 @@ class _SignedOutCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(LucideIcons.logIn, size: 20, color: scheme.primary),
+              Icon(LucideIcons.logIn, size: AppIconSize.inline, color: scheme.primary),
               const SizedBox(width: AppSpacing.space3),
               Expanded(
                 child: Text(l10n.settingsSignedOutTitle, style: text.titleMedium),
@@ -491,7 +492,8 @@ class _InlineError extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(LucideIcons.alertTriangle, size: 18, color: scheme.error),
+            Icon(LucideIcons.alertTriangle,
+                size: AppIconSize.inline, color: scheme.error),
             const SizedBox(width: AppSpacing.space3),
             Expanded(
               child: Column(
@@ -512,44 +514,6 @@ class _InlineError extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-/// A section header + its content. The header carries a Lucide glyph so the
-/// list scans without emoji or decorative dividers.
-class _Section extends StatelessWidget {
-  const _Section({required this.title, required this.icon, required this.child});
-
-  final String title;
-  final IconData icon;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.space3),
-          child: Row(
-            children: [
-              Icon(icon, size: 18, color: scheme.onSurfaceVariant),
-              const SizedBox(width: AppSpacing.space2),
-              Expanded(
-                child: Text(
-                  title,
-                  style: text.titleSmall?.copyWith(letterSpacing: 0.2),
-                ),
-              ),
-            ],
-          ),
-        ),
-        child,
-      ],
     );
   }
 }

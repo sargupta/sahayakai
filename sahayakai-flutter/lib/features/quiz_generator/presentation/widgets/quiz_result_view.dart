@@ -249,7 +249,7 @@ class _VariantViewState extends State<_VariantView> {
             ),
             icon: Icon(
               _allRevealed ? LucideIcons.eyeOff : LucideIcons.eye,
-              size: 18,
+              size: AppIconSize.inline,
             ),
             label: Text(
               _allRevealed ? l10n.quizHideAllAnswers : l10n.quizShowAllAnswers,
@@ -342,7 +342,7 @@ class _QuestionCard extends StatelessWidget {
               onPressed: onToggle,
               icon: Icon(
                 isRevealed ? LucideIcons.eyeOff : LucideIcons.eye,
-                size: 18,
+                size: AppIconSize.inline,
               ),
               label: Text(
                 isRevealed ? l10n.quizHideAnswer : l10n.quizShowAnswer,
@@ -372,7 +372,7 @@ class _QuestionCard extends StatelessWidget {
                               children: [
                                 Icon(
                                   LucideIcons.checkCircle,
-                                  size: 16,
+                                  size: AppIconSize.inline,
                                   color: scheme.primary,
                                 ),
                                 const SizedBox(width: AppSpacing.space2),
@@ -395,7 +395,7 @@ class _QuestionCard extends StatelessWidget {
                               children: [
                                 Icon(
                                   LucideIcons.lightbulb,
-                                  size: 16,
+                                  size: AppIconSize.inline,
                                   color: scheme.onSurfaceVariant,
                                 ),
                                 const SizedBox(width: AppSpacing.space2),
@@ -468,7 +468,8 @@ class _OptionRow extends StatelessWidget {
           Expanded(child: _AiText(label)),
           if (isCorrect) ...[
             const SizedBox(width: AppSpacing.space2),
-            Icon(LucideIcons.checkCircle, size: 18, color: scheme.primary),
+            Icon(LucideIcons.checkCircle,
+                size: AppIconSize.inline, color: scheme.primary),
           ],
         ],
       ),
@@ -586,7 +587,8 @@ class _TeacherNote extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(LucideIcons.lightbulb, size: 20, color: scheme.onSurfaceVariant),
+          Icon(LucideIcons.lightbulb,
+              size: AppIconSize.inline, color: scheme.onSurfaceVariant),
           const SizedBox(width: AppSpacing.space3),
           Expanded(
             child: Column(
@@ -627,7 +629,8 @@ class _NoteBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(LucideIcons.info, size: 20, color: scheme.onSurfaceVariant),
+          Icon(LucideIcons.info,
+              size: AppIconSize.inline, color: scheme.onSurfaceVariant),
           const SizedBox(width: AppSpacing.space3),
           Expanded(
             child: Column(

@@ -7,6 +7,7 @@ import '../../../../core/platform/link_opener.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/empty_view.dart';
+import '../../../../shared/widgets/icon_well.dart';
 import '../../domain/instant_answer.dart';
 import 'answer_markdown_view.dart';
 
@@ -136,16 +137,7 @@ class _VideoCard extends StatelessWidget {
       onTap: onOpen,
       child: Row(
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: scheme.primary.withValues(alpha: 0.1),
-              borderRadius: AppRadius.rLg,
-            ),
-            alignment: Alignment.center,
-            child: Icon(LucideIcons.playCircle, size: 20, color: scheme.primary),
-          ),
+          const IconWell(icon: LucideIcons.playCircle),
           const SizedBox(width: AppSpacing.space4),
           Expanded(
             child: Column(
@@ -166,7 +158,7 @@ class _VideoCard extends StatelessWidget {
           const SizedBox(width: AppSpacing.space2),
           Icon(
             LucideIcons.externalLink,
-            size: 20,
+            size: AppIconSize.inline,
             color: scheme.onSurfaceVariant,
           ),
         ],

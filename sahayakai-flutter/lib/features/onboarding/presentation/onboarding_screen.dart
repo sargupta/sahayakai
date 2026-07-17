@@ -14,6 +14,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/section_label.dart';
 import '../../profile/domain/board_category.dart';
 import '../../profile/domain/profile_validators.dart';
 import '../../profile/domain/teacher_profile.dart';
@@ -206,7 +207,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
           ),
           const SizedBox(height: AppSpacing.space6),
-          _Section(
+          Section(
             title: l10n.profileSectionAbout,
             icon: LucideIcons.user,
             child: AppCard(
@@ -244,7 +245,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.space6),
-          _Section(
+          Section(
             title: l10n.profileSectionTeaching,
             icon: LucideIcons.graduationCap,
             child: AppCard(
@@ -266,7 +267,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.space6),
-          _Section(
+          Section(
             title: l10n.profileSectionLocation,
             icon: LucideIcons.mapPin,
             child: AppCard(
@@ -307,7 +308,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.space6),
-          _Section(
+          Section(
             title: l10n.profileSectionContact,
             icon: LucideIcons.phone,
             child: AppCard(
@@ -598,7 +599,8 @@ class _ReadyStep extends ConsumerWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(LucideIcons.checkCircle, size: 24, color: scheme.secondary),
+            Icon(LucideIcons.checkCircle,
+                size: AppIconSize.inline, color: scheme.secondary),
             const SizedBox(width: AppSpacing.space3),
             Expanded(
               child: Text(l10n.onboardingReadyTitle, style: text.headlineSmall),
@@ -788,7 +790,8 @@ class _InlineError extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(LucideIcons.alertTriangle, size: 18, color: scheme.error),
+            Icon(LucideIcons.alertTriangle,
+                size: AppIconSize.inline, color: scheme.error),
             const SizedBox(width: AppSpacing.space3),
             Expanded(child: Text(message, style: text.bodyMedium)),
           ],
@@ -802,45 +805,6 @@ class _InlineError extends StatelessWidget {
 /// the per-screen private field widget is this codebase's established pattern
 /// (see the note on `ProfileScreen._Field`); the SHARED things are the domain,
 /// the DTOs and the repository, which onboarding reuses rather than forks.
-class _Section extends StatelessWidget {
-  const _Section({
-    required this.title,
-    required this.icon,
-    required this.child,
-  });
-
-  final String title;
-  final IconData icon;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.space3),
-          child: Row(
-            children: [
-              Icon(icon, size: 18, color: scheme.onSurfaceVariant),
-              const SizedBox(width: AppSpacing.space2),
-              Expanded(
-                child: Text(
-                  title,
-                  style: text.titleSmall?.copyWith(letterSpacing: 0.2),
-                ),
-              ),
-            ],
-          ),
-        ),
-        child,
-      ],
-    );
-  }
-}
 
 /// A labelled form row: a weight-first label above its control, with optional
 /// helper text.

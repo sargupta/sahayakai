@@ -12,7 +12,9 @@ import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
+import '../../../shared/widgets/icon_well.dart';
 import '../../../shared/widgets/offline_view.dart';
+import '../../../shared/widgets/section_label.dart';
 import '../../profile/presentation/profile_controller.dart';
 import '../domain/library_item.dart';
 import 'recent_controller.dart';
@@ -46,11 +48,11 @@ class DashboardScreen extends ConsumerWidget {
             const _Greeting(),
             const _SetupNudge(),
             const SizedBox(height: AppSpacing.space6),
-            _SectionLabel(l10n.dashboardToolsTitle),
+            SectionLabel(l10n.dashboardToolsTitle),
             const SizedBox(height: AppSpacing.space3),
             const _ToolList(),
             const SizedBox(height: AppSpacing.space8),
-            _SectionLabel(l10n.dashboardRecentTitle),
+            SectionLabel(l10n.dashboardRecentTitle),
             const SizedBox(height: AppSpacing.space3),
             const _RecentSection(),
           ],
@@ -134,7 +136,7 @@ class _SetupNudgeState extends ConsumerState<_SetupNudge> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(LucideIcons.userCog, size: 20, color: scheme.primary),
+                Icon(LucideIcons.userCog, size: AppIconSize.inline, color: scheme.primary),
                 const SizedBox(width: AppSpacing.space3),
                 Expanded(
                   child: Text(l10n.dashboardSetupTitle, style: text.titleMedium),
@@ -235,7 +237,7 @@ class _ToolRow extends StatelessWidget {
       onTap: () => context.push(tool.route),
       child: Row(
         children: [
-          _IconWrap(icon: tool.icon),
+          IconWell(icon: tool.icon),
           const SizedBox(width: AppSpacing.space4),
           Expanded(
             child: Column(
@@ -256,7 +258,7 @@ class _ToolRow extends StatelessWidget {
           const SizedBox(width: AppSpacing.space2),
           Icon(
             LucideIcons.chevronRight,
-            size: 20,
+            size: AppIconSize.inline,
             color: scheme.onSurfaceVariant,
           ),
         ],
@@ -377,7 +379,7 @@ class _RecentRow extends StatelessWidget {
     return AppCard(
       child: Row(
         children: [
-          _IconWrap(icon: item.type.icon),
+          IconWell(icon: item.type.icon),
           const SizedBox(width: AppSpacing.space4),
           Expanded(
             child: Column(
@@ -396,49 +398,6 @@ class _RecentRow extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// The web's `tool-icon-wrap`: a 48x48 rounded-12 well, `primary/10` fill,
-/// `primary` glyph. Saffron as accent, never a surface flood (DESIGN_RUBRIC §4,
-/// §5).
-class _IconWrap extends StatelessWidget {
-  const _IconWrap({required this.icon});
-
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        color: scheme.primary.withValues(alpha: 0.1),
-        borderRadius: AppRadius.rLg,
-      ),
-      alignment: Alignment.center,
-      child: Icon(icon, size: 20, color: scheme.primary),
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel(this.label);
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return Text(
-      label,
-      style: text.titleSmall?.copyWith(
-        color: scheme.onSurfaceVariant,
-        letterSpacing: 0.6,
       ),
     );
   }

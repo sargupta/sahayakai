@@ -30,7 +30,7 @@ class EmptyView extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: scheme.onSurfaceVariant, size: 24),
+        Icon(icon, color: scheme.onSurfaceVariant, size: AppIconSize.standalone),
         const SizedBox(height: AppSpacing.space3),
         Text(message, style: text.bodyLarge),
         if (action != null) ...[

@@ -9,6 +9,7 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/icon_well.dart';
 import '../../../shared/widgets/language_switcher.dart';
 import '../../../shared/widgets/primary_button.dart';
 
@@ -173,24 +174,10 @@ class _BrandRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     return Row(
       children: [
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: scheme.primary.withValues(alpha: 0.1),
-            borderRadius: AppRadius.rLg,
-          ),
-          alignment: Alignment.center,
-          child: Icon(
-            LucideIcons.graduationCap,
-            size: 24,
-            color: scheme.primary,
-          ),
-        ),
+        const IconWell(icon: LucideIcons.graduationCap),
         const SizedBox(width: AppSpacing.space3),
         Expanded(child: Text(context.l10n.appTitle, style: text.titleLarge)),
       ],
@@ -212,7 +199,7 @@ class _ValueRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: scheme.primary),
+        Icon(icon, size: AppIconSize.inline, color: scheme.primary),
         const SizedBox(width: AppSpacing.space3),
         // Expanded so a long Malayalam line wraps rather than overflowing the
         // row at textScale 1.3 (DESIGN_RUBRIC §8).

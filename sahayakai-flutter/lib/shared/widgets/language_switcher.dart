@@ -20,7 +20,7 @@ class LanguageSwitcher extends ConsumerWidget {
       leading: const Icon(LucideIcons.languages),
       title: Text(context.l10n.languageLabel),
       subtitle: Text(current.nativeLabel),
-      trailing: const Icon(LucideIcons.chevronRight, size: 20),
+      trailing: const Icon(LucideIcons.chevronRight, size: AppIconSize.inline),
       onTap: () => _openPicker(context, ref, current),
     );
   }

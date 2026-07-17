@@ -3,10 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
+import 'app_icon_size.dart';
 import 'app_radius.dart';
 import 'app_text.dart';
 
 export 'app_colors.dart';
+export 'app_icon_size.dart';
 export 'app_motion.dart';
 export 'app_radius.dart';
 export 'app_shadows.dart';
@@ -244,7 +246,7 @@ class AppTheme {
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         iconTheme: WidgetStateProperty.resolveWith(
           (s) => IconThemeData(
-            size: 20,
+            size: AppIconSize.inline,
             color: s.contains(WidgetState.selected)
                 ? scheme.primary
                 : scheme.onSurfaceVariant,

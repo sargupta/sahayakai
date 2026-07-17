@@ -174,7 +174,7 @@ class _PromptView extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: scheme.primary, size: 28),
+          Icon(icon, color: scheme.primary, size: AppIconSize.standalone),
           const SizedBox(height: AppSpacing.space3),
           Text(title, style: text.titleMedium),
           const SizedBox(height: AppSpacing.space2),
@@ -188,7 +188,7 @@ class _PromptView extends StatelessWidget {
               alignment: Alignment.centerLeft,
               child: OutlinedButton.icon(
                 onPressed: onAction,
-                icon: const Icon(LucideIcons.externalLink, size: 18),
+                icon: const Icon(LucideIcons.externalLink, size: AppIconSize.inline),
                 label: Text(actionLabel!),
               ),
             ),

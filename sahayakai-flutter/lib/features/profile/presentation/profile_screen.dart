@@ -16,9 +16,11 @@ import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
+import '../../../shared/widgets/icon_well.dart';
 import '../../../shared/widgets/language_switcher.dart';
 import '../../../shared/widgets/offline_view.dart';
 import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/section_label.dart';
 import '../domain/board_category.dart';
 import '../domain/profile_validators.dart';
 import '../domain/teacher_profile.dart';
@@ -214,7 +216,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
             ),
           ],
           const SizedBox(height: AppSpacing.space6),
-          _Section(
+          Section(
             title: l10n.profileSectionAbout,
             icon: LucideIcons.user,
             child: AppCard(
@@ -251,7 +253,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
             ),
           ),
           const SizedBox(height: AppSpacing.space6),
-          _Section(
+          Section(
             title: l10n.profileSectionTeaching,
             icon: LucideIcons.graduationCap,
             child: AppCard(
@@ -273,7 +275,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
             ),
           ),
           const SizedBox(height: AppSpacing.space6),
-          _Section(
+          Section(
             title: l10n.profileSectionLocation,
             icon: LucideIcons.mapPin,
             child: AppCard(
@@ -312,7 +314,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
             ),
           ),
           const SizedBox(height: AppSpacing.space6),
-          _Section(
+          Section(
             title: l10n.profileSectionContact,
             icon: LucideIcons.phone,
             child: AppCard(
@@ -329,7 +331,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
             ),
           ),
           const SizedBox(height: AppSpacing.space6),
-          _Section(
+          Section(
             title: l10n.languageLabel,
             icon: LucideIcons.languages,
             child: Column(
@@ -360,7 +362,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
           const SizedBox(height: AppSpacing.space6),
           OutlinedButton.icon(
             onPressed: () => ref.read(authControllerProvider.notifier).signOut(),
-            icon: const Icon(LucideIcons.logOut, size: 18),
+            icon: const Icon(LucideIcons.logOut, size: AppIconSize.inline),
             label: Text(l10n.actionSignOut),
           ),
         ],
@@ -612,16 +614,7 @@ class _IdentityCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: scheme.primary.withValues(alpha: 0.1),
-              borderRadius: AppRadius.rLg,
-            ),
-            alignment: Alignment.center,
-            child: Icon(LucideIcons.user, size: 20, color: scheme.primary),
-          ),
+          const IconWell(icon: LucideIcons.user),
           const SizedBox(width: AppSpacing.space4),
           Expanded(
             child: Column(
@@ -681,7 +674,7 @@ class _SignedOutCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(LucideIcons.logIn, size: 20, color: scheme.primary),
+              Icon(LucideIcons.logIn, size: AppIconSize.inline, color: scheme.primary),
               const SizedBox(width: AppSpacing.space3),
               Expanded(
                 child: Text(l10n.profileSignedOutTitle, style: text.titleMedium),
@@ -726,7 +719,8 @@ class _InlineError extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(LucideIcons.alertTriangle, size: 18, color: scheme.error),
+            Icon(LucideIcons.alertTriangle,
+                size: AppIconSize.inline, color: scheme.error),
             const SizedBox(width: AppSpacing.space3),
             Expanded(child: Text(message, style: text.bodyMedium)),
           ],
@@ -739,41 +733,6 @@ class _InlineError extends StatelessWidget {
 /// A section header + its content. The header carries a Lucide glyph so the
 /// list scans without emoji or decorative dividers. Mirrors Settings'
 /// `_Section`.
-class _Section extends StatelessWidget {
-  const _Section({required this.title, required this.icon, required this.child});
-
-  final String title;
-  final IconData icon;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.space3),
-          child: Row(
-            children: [
-              Icon(icon, size: 18, color: scheme.onSurfaceVariant),
-              const SizedBox(width: AppSpacing.space2),
-              Expanded(
-                child: Text(
-                  title,
-                  style: text.titleSmall?.copyWith(letterSpacing: 0.2),
-                ),
-              ),
-            ],
-          ),
-        ),
-        child,
-      ],
-    );
-  }
-}
 
 /// A labelled form row: a weight-first label above its control, with optional
 /// helper text. Mirrors the `_Field` in Settings and the tool forms.
