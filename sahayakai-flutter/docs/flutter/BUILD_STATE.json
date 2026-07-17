@@ -385,12 +385,12 @@
       ]
     },
     "p1": {
-      "status": "GREEN (pending final APK confirm)",
+      "status": "GREEN",
       "gen_l10n": "clean",
       "analyze": "No issues found!",
       "tests": "747 passed",
       "token_guard": "PASS",
-      "apk": "rebuilding after R1/R2/R3 fixes (prev build 174MB exit 0); final size TBD",
+      "apk": "build/app/outputs/flutter-apk/app-debug.apk (174M, exit 0, post-fix rebuild)",
       "rubric_sweep": "6-agent report-only cross-screen Workflow across all 16 screens: NO hard blockers (zero raw colors/fontSize literals/emoji/em-dashes/sub-48dp/saffron-on-light). 3 REAL fails found + FIXED: R1 (FUNCTIONAL) lesson-plan+quiz plan-limit states had no pricing CTA despite 'upgrade' copy -> wired openPricing (cfe776371, +12 tests); R2 note-panel grammar was 3 divergent variants + stray 0.4-tracking caption -> one shared NoteBanner + labelSmall token, 9 sites unified (42c0208ba); R3 section-gap rhythm 16/24/32 -> standardized to space8 across 10 result views. Nitpicks (header/MetaRow consolidation, switch styles) left as follow-up.",
       "screens_shipped_p1": [
         "Worksheet Wizard",
