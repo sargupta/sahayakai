@@ -20,8 +20,10 @@ class AppSpacing {
   static const double space24 = 96;
   static const double space32 = 128;
 
-  /// Semantic alias used by shared shells (result gap etc.).
-  static const double lg = space6; // 24
+  /// Gap between two stacked sections (e.g. a tool's form and its result).
+  /// A section break, so it resolves to the §0 section gap (32), NOT block
+  /// spacing — the old `lg` alias pointed a section-level name at space6 (24).
+  static const double sectionGap = space8; // 32
 
   /// Screen horizontal safe padding = 16 phone; vertical rhythm = 24.
   static const EdgeInsets pagePadding =

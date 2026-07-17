@@ -41,7 +41,7 @@ class ToolScaffold extends StatelessWidget {
                 children: [
                   child,
                   if (result != null) ...[
-                    const SizedBox(height: AppSpacing.lg),
+                    const SizedBox(height: AppSpacing.sectionGap),
                     result!,
                   ],
                 ],

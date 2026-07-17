@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../core/i18n/l10n_ext.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/bullet_dot.dart';
 import '../../../../shared/widgets/section_label.dart';
 import '../../domain/lesson_plan.dart';
 
@@ -192,21 +193,10 @@ class _Bullet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(top: AppSpacing.space2),
-          child: Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(
-              color: scheme.primary,
-              shape: BoxShape.circle,
-            ),
-          ),
-        ),
+        const BulletDot(),
         const SizedBox(width: AppSpacing.space3),
         Expanded(child: _AiText(text)),
       ],

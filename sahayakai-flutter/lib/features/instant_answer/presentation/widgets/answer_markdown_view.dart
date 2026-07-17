@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/widgets/bullet_dot.dart';
 import '../../domain/answer_markdown.dart';
 
 /// Renders parsed Markdown blocks through the app theme.
@@ -54,7 +55,7 @@ class _BlockView extends StatelessWidget {
       MarkdownHeading(:final level, :final spans) =>
         _Prose(spans: spans, style: _headingStyle(context, level)),
       MarkdownParagraph(:final spans) => _Prose(spans: spans),
-      MarkdownBullet(:final spans) => _ListRow(marker: _BulletDot(), spans: spans),
+      MarkdownBullet(:final spans) => _ListRow(marker: const BulletDot(), spans: spans),
       MarkdownNumbered(:final number, :final spans) =>
         _ListRow(marker: _NumberMarker(number: number), spans: spans),
       MarkdownCodeBlock(:final text) => _CodeBlock(text: text),
@@ -163,31 +164,6 @@ class _ListRow extends StatelessWidget {
         const SizedBox(width: AppSpacing.space3),
         Expanded(child: _Prose(spans: spans)),
       ],
-    );
-  }
-}
-
-class _BulletDot extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final base = Theme.of(context).textTheme.bodyMedium!;
-    // Sized off the real line box so the dot tracks the first line at any
-    // textScale instead of drifting.
-    final lineHeight = (base.fontSize ?? 14) * 1.7;
-    return SizedBox(
-      width: AppSpacing.space2,
-      height: MediaQuery.textScalerOf(context).scale(lineHeight),
-      child: Center(
-        child: Container(
-          width: 5,
-          height: 5,
-          decoration: BoxDecoration(
-            color: scheme.primary,
-            shape: BoxShape.circle,
-          ),
-        ),
-      ),
     );
   }
 }
