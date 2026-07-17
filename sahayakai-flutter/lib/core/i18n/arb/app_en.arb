@@ -1728,5 +1728,231 @@
   "teacherTrainingSignIn": "Please sign in again to use this tool.",
   "@teacherTrainingSignIn": {
     "description": "Shown on a 401 unauthorized response."
+  },
+  "parentMessageTitle": "Parent Message",
+  "@parentMessageTitle": {
+    "description": "Title of the Parent Message tool."
+  },
+  "parentMessageSubtitle": "Draft a message home in the parent's language",
+  "@parentMessageSubtitle": {
+    "description": "Dashboard/Create subtitle for the Parent Message tool."
+  },
+  "parentMessageAction": "Draft message",
+  "@parentMessageAction": {
+    "description": "Submit button label on the Parent Message form."
+  },
+  "parentMessageEmpty": "Share the student and reason, and a caring message home will be drafted in the parent's language.",
+  "@parentMessageEmpty": {
+    "description": "Idle/empty state before any message is generated. An invitation to the teacher, not a pitch."
+  },
+  "parentMessageStudentLabel": "Student name",
+  "@parentMessageStudentLabel": {
+    "description": "Label for the student-name field."
+  },
+  "parentMessageStudentPlaceholder": "The student the message is about",
+  "@parentMessageStudentPlaceholder": {
+    "description": "Placeholder inside the student-name field."
+  },
+  "parentMessageStudentError": "Please enter the student's name.",
+  "@parentMessageStudentError": {
+    "description": "Validation error when the student-name field is empty."
+  },
+  "parentMessageClassLabel": "Class",
+  "@parentMessageClassLabel": {
+    "description": "Label for the class field."
+  },
+  "parentMessageClassPlaceholder": "For example, Class 6A",
+  "@parentMessageClassPlaceholder": {
+    "description": "Placeholder inside the class field."
+  },
+  "parentMessageClassError": "Please enter the class.",
+  "@parentMessageClassError": {
+    "description": "Validation error when the class field is empty."
+  },
+  "parentMessageSubjectLabel": "Subject",
+  "@parentMessageSubjectLabel": {
+    "description": "Label for the subject dropdown."
+  },
+  "parentMessageSubjectHint": "Choose a subject",
+  "@parentMessageSubjectHint": {
+    "description": "Placeholder shown in the subject dropdown before a choice is made."
+  },
+  "parentMessageSubjectError": "Please choose a subject.",
+  "@parentMessageSubjectError": {
+    "description": "Validation error when no subject is chosen."
+  },
+  "parentMessageReasonLabel": "Reason for the message",
+  "@parentMessageReasonLabel": {
+    "description": "Label for the reason dropdown."
+  },
+  "parentMessageReasonHint": "Choose a reason",
+  "@parentMessageReasonHint": {
+    "description": "Placeholder shown in the reason dropdown before a choice is made."
+  },
+  "parentMessageReasonError": "Please choose a reason.",
+  "@parentMessageReasonError": {
+    "description": "Validation error when no reason is chosen."
+  },
+  "parentMessageReasonAbsences": "Repeated absences",
+  "@parentMessageReasonAbsences": {
+    "description": "Reason option: the student has missed several school days."
+  },
+  "parentMessageReasonPerformance": "Academic support",
+  "@parentMessageReasonPerformance": {
+    "description": "Reason option: the student's performance has dipped and needs support."
+  },
+  "parentMessageReasonBehavior": "Behaviour in class",
+  "@parentMessageReasonBehavior": {
+    "description": "Reason option: a classroom behaviour to raise gently with the parent."
+  },
+  "parentMessageReasonPositive": "Good news to share",
+  "@parentMessageReasonPositive": {
+    "description": "Reason option: a positive achievement to celebrate with the parent."
+  },
+  "parentMessageAbsentDaysLabel": "Days absent",
+  "@parentMessageAbsentDaysLabel": {
+    "description": "Label for the consecutive-absent-days field (shown only for the absence reason)."
+  },
+  "parentMessageAbsentDaysHint": "How many days in a row the student has been away.",
+  "@parentMessageAbsentDaysHint": {
+    "description": "Helper line under the days-absent label."
+  },
+  "parentMessageAbsentDaysPlaceholder": "For example, 3",
+  "@parentMessageAbsentDaysPlaceholder": {
+    "description": "Placeholder inside the days-absent field."
+  },
+  "parentMessageParentLanguageLabel": "Parent's language",
+  "@parentMessageParentLanguageLabel": {
+    "description": "Label for the required parent-language dropdown."
+  },
+  "parentMessageParentLanguageHint": "The message is written in this language, which can differ from the app's.",
+  "@parentMessageParentLanguageHint": {
+    "description": "Helper line explaining that the parent language drives the output language."
+  },
+  "parentMessageParentLanguagePlaceholder": "Choose the parent's language",
+  "@parentMessageParentLanguagePlaceholder": {
+    "description": "Placeholder shown in the parent-language dropdown before a choice is made."
+  },
+  "parentMessageParentLanguageError": "Please choose the parent's language.",
+  "@parentMessageParentLanguageError": {
+    "description": "Validation error when no parent language is chosen (the field is required)."
+  },
+  "parentMessageContextLabel": "What is prompting this?",
+  "@parentMessageContextLabel": {
+    "description": "Label for the optional reason-context field."
+  },
+  "parentMessageContextHint": "A short note on the situation helps shape the message.",
+  "@parentMessageContextHint": {
+    "description": "Helper line under the reason-context label."
+  },
+  "parentMessageContextPlaceholder": "For example, missed the last two weeks of fractions",
+  "@parentMessageContextPlaceholder": {
+    "description": "Placeholder inside the reason-context field."
+  },
+  "parentMessageNoteLabel": "Anything specific to mention?",
+  "@parentMessageNoteLabel": {
+    "description": "Label for the optional teacher-note field."
+  },
+  "parentMessageNoteHint": "A detail here is woven into the message.",
+  "@parentMessageNoteHint": {
+    "description": "Helper line under the teacher-note label."
+  },
+  "parentMessageNotePlaceholder": "For example, doing well in group work",
+  "@parentMessageNotePlaceholder": {
+    "description": "Placeholder inside the teacher-note field."
+  },
+  "parentMessageTeacherNameLabel": "Your name",
+  "@parentMessageTeacherNameLabel": {
+    "description": "Label for the optional teacher-name (sign-off) field."
+  },
+  "parentMessageTeacherNameHint": "Signs off the message. Left blank, your profile name is used.",
+  "@parentMessageTeacherNameHint": {
+    "description": "Helper line under the teacher-name label."
+  },
+  "parentMessageTeacherNamePlaceholder": "For example, Mrs. Rao",
+  "@parentMessageTeacherNamePlaceholder": {
+    "description": "Placeholder inside the teacher-name field."
+  },
+  "parentMessageSchoolNameLabel": "School name",
+  "@parentMessageSchoolNameLabel": {
+    "description": "Label for the optional school-name field."
+  },
+  "parentMessageSchoolNamePlaceholder": "Your school's name",
+  "@parentMessageSchoolNamePlaceholder": {
+    "description": "Placeholder inside the school-name field."
+  },
+  "parentMessageOptional": "Optional",
+  "@parentMessageOptional": {
+    "description": "Marks a Parent Message form field as optional."
+  },
+  "parentMessageWordCount": "{count, plural, =1{1 word} other{{count} words}}",
+  "@parentMessageWordCount": {
+    "description": "Approximate length of the drafted message, shown as a meta badge.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "parentMessageCopy": "Copy",
+  "@parentMessageCopy": {
+    "description": "Result action that copies the drafted message to the clipboard."
+  },
+  "parentMessageShare": "Share",
+  "@parentMessageShare": {
+    "description": "Result action that opens the share sheet to send the message on (e.g. WhatsApp)."
+  },
+  "parentMessageCopied": "Message copied",
+  "@parentMessageCopied": {
+    "description": "Snackbar confirmation shown after the message is copied."
+  },
+  "parentMessageNoContent": "No message came back for that. Please add a little more context and try again.",
+  "@parentMessageNoContent": {
+    "description": "Shown when the response carried no usable message."
+  },
+  "parentMessageMissingFields": "Please fill in the student, class, subject, reason and parent's language, then try again.",
+  "@parentMessageMissingFields": {
+    "description": "Shown on the 400 Missing required fields response. Specific, not generic."
+  },
+  "parentMessageUpgradeTitle": "A higher plan is needed",
+  "@parentMessageUpgradeTitle": {
+    "description": "Title of the 403 upgrade prompt."
+  },
+  "parentMessageUpgradeBody": "Parent messages are part of a higher plan. Please upgrade to keep drafting them.",
+  "@parentMessageUpgradeBody": {
+    "description": "Body of the 403 upgrade prompt."
+  },
+  "parentMessageLimitTitle": "You have reached your limit",
+  "@parentMessageLimitTitle": {
+    "description": "Title of the 429 limit-reached prompt."
+  },
+  "parentMessageLimitBody": "You have drafted your parent messages for now. Please try again later or upgrade your plan.",
+  "@parentMessageLimitBody": {
+    "description": "Body of the 429 limit-reached prompt."
+  },
+  "parentMessageSeePricing": "See plans and pricing",
+  "@parentMessageSeePricing": {
+    "description": "Action on the upgrade / limit prompts, opening the pricing page."
+  },
+  "parentMessageBusy": "The assistant is busy right now. Please try again in a moment.",
+  "@parentMessageBusy": {
+    "description": "Shown on a 503 / server-busy response with no Retry-After."
+  },
+  "parentMessageBusyRetryAfter": "{seconds, plural, =1{The assistant is busy right now. Please try again in about 1 second.} other{The assistant is busy right now. Please try again in about {seconds} seconds.}}",
+  "@parentMessageBusyRetryAfter": {
+    "description": "Shown on a 503 that carries a Retry-After hint.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "parentMessageTimeout": "This is taking longer than expected. Please try again.",
+  "@parentMessageTimeout": {
+    "description": "Shown when the request times out."
+  },
+  "parentMessageSignIn": "Please sign in again to use this tool.",
+  "@parentMessageSignIn": {
+    "description": "Shown on a 401 unauthorized response."
   }
 }

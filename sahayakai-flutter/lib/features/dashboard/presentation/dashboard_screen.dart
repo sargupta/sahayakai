@@ -223,6 +223,12 @@ class _ToolList extends StatelessWidget {
         LucideIcons.compass,
         Routes.teacherTraining,
       ),
+      _Tool(
+        l10n.parentMessageTitle,
+        l10n.parentMessageSubtitle,
+        LucideIcons.messageCircle,
+        Routes.parentMessage,
+      ),
     ];
 
     return Column(

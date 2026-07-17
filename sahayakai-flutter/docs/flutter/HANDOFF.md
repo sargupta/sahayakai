@@ -294,6 +294,71 @@ no worksheet-style drift. Confirmed specifics worth pinning:
   is **no daily-vs-monthly split** (unlike instant-answer's `DAILY_LIMIT_REACHED`),
   so the 429 prompt is a single limit message. Pinned by the error-view test.
 
+### Parent Message (P1.5) — verified against `route.ts` + the Zod schema + the dispatcher
+
+`POST /api/ai/parent-message` was verified against
+`src/app/api/ai/parent-message/route.ts`, `ParentMessageInputSchema` /
+`ParentMessageOutputSchema` in `src/ai/flows/parent-message-generator.ts`, and
+`src/lib/sidecar/parent-message-dispatch.ts`. Confirmed specifics and one real
+mismatch worth pinning:
+
+- **Required fields (route 400s without them)** = `studentName`, `className`,
+  `subject`, `reason`, `parentLanguage`. The route validates exactly these five
+  (`if (!body.studentName || !body.className || !body.subject || !body.reason ||
+  !body.parentLanguage) return 400 { error: 'Missing required fields' }`), so
+  the form validates all five before it can submit and the client 400 path is
+  defensive. Its error copy is SPECIFIC ("fill in the student, class, subject,
+  reason and parent's language"), never generic. Pinned by a test.
+- **`reason` enum (4)** = `consecutive_absences` | `poor_performance` |
+  `behavioral_concern` | `positive_feedback` (`z.enum([...])`). Modelled as
+  `ParentMessageReason` with those exact wire tokens; pinned by a test. Note the
+  spelling is US `behavioral` (not `behavioural`).
+- **`parentLanguage` enum (11)** = the canonical LANGUAGES full English names
+  (`English, Hindi, Kannada, Tamil, Telugu, Marathi, Bengali, Gujarati, Punjabi,
+  Malayalam, Odia`) — identical to `AppLocale.aiName`, so the form sends
+  `AppLocale.aiName`, NOT a code. It is a REQUIRED select and deliberately
+  distinct from the app UI locale (it drives the OUTPUT language): the form
+  starts it unset and the validator blocks submit until a language is chosen.
+- **Response** = exactly `{ message, languageCode, wordCount }` (the route
+  hand-picks these three from `dispatched`). `languageCode` is a hard-coded
+  BCP-47 map keyed on `parentLanguage` (e.g. Tamil -> `ta-IN`), NOT the model's
+  guess; `wordCount` is a `number`. The message body is rendered through
+  `AiText` (line-height 1.7 + Indic height behaviour + the `kIndicFallback`
+  baked into `bodyMedium`), so a Tamil message drafted from an English UI shapes
+  correctly and no matra clips. Pinned by a test asserting the render style.
+- **MISMATCH — `reasonContext` is NOT required and is IGNORED on the default
+  path.** SCREEN_INVENTORY §P1.5 lists `reasonContext` as client "guidance text"
+  the teacher provides. In reality: (1) the route does NOT include it in the
+  required-field check, and (2) the default (Genkit) path is what production
+  runs — `SAHAYAKAI_PARENT_MESSAGE_MODE` defaults `off`, so the dispatcher calls
+  `generateParentMessage`, which **OVERWRITES** any client `reasonContext` with a
+  server-side `REASON_CONTEXT[reason]` template lookup
+  (`reasonContext: REASON_CONTEXT[input.reason] ?? ...`). So a client-sent
+  `reasonContext` only reaches the model on the sidecar path (currently off in
+  prod). The client models it as an OPTIONAL field (a blank value is omitted);
+  `teacherNote` is the free-text field that DOES influence the default-path
+  output (the prompt has `{{#if teacherNote}}`). Treat `reasonContext` as
+  optional / best-effort, never required.
+- **Server-injected / never sent**: `userId` (from the verified token),
+  `performanceContext` and `performanceSummary` (the web's Contact-Parent modal
+  populates these from a class's assessment records; `performanceSummary` is
+  derived server-side from `performanceContext` in the route). The DTO models
+  none of them; pinned by a test.
+- **`consecutiveAbsentDays`** is `z.number().optional()` and is only meaningful
+  for `consecutive_absences`; the form shows that numeric field only for the
+  absence reason and the DTO drops the value for any other reason.
+- **No `withPlanCheck` surprises**: the endpoint IS `withPlanCheck('parent-
+  message')` — 401 / 403 `PLAN_UPGRADE_REQUIRED` / 429 / 503+Retry-After / 400
+  all reachable and mapped. There is no daily-vs-monthly 429 split.
+- **New shared service**: `lib/core/platform/share_service.dart` wraps
+  `share_plus` (`SharePlus.instance.share(ShareParams(text:...))`) behind
+  `shareServiceProvider`, mirroring `LinkOpener`. The Parent Message result view
+  offers copy-to-clipboard AND share (the "share to WhatsApp" affordance via the
+  OS sheet). Tests override `shareServiceProvider` with a `FakeShareService` so
+  the real sheet never opens, and intercept the platform clipboard channel so
+  copy never touches the real pasteboard. `share_plus: ^12.0.0` resolved to
+  12.0.2 with no dependency conflicts.
+
 ## 4. Push notifications (FCM)
 The Settings notifications switch is **local-only and defaults OFF** (deliberate: defaulting a
 permission-bearing toggle on, or promising undeliverable notifications, is a dark pattern). Wiring

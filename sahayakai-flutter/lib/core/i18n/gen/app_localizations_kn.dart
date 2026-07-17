@@ -1387,4 +1387,202 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get teacherTrainingSignIn => 'Please sign in again to use this tool.';
+
+  @override
+  String get parentMessageTitle => 'Parent Message';
+
+  @override
+  String get parentMessageSubtitle =>
+      'Draft a message home in the parent\'s language';
+
+  @override
+  String get parentMessageAction => 'Draft message';
+
+  @override
+  String get parentMessageEmpty =>
+      'Share the student and reason, and a caring message home will be drafted in the parent\'s language.';
+
+  @override
+  String get parentMessageStudentLabel => 'Student name';
+
+  @override
+  String get parentMessageStudentPlaceholder =>
+      'The student the message is about';
+
+  @override
+  String get parentMessageStudentError => 'Please enter the student\'s name.';
+
+  @override
+  String get parentMessageClassLabel => 'Class';
+
+  @override
+  String get parentMessageClassPlaceholder => 'For example, Class 6A';
+
+  @override
+  String get parentMessageClassError => 'Please enter the class.';
+
+  @override
+  String get parentMessageSubjectLabel => 'Subject';
+
+  @override
+  String get parentMessageSubjectHint => 'Choose a subject';
+
+  @override
+  String get parentMessageSubjectError => 'Please choose a subject.';
+
+  @override
+  String get parentMessageReasonLabel => 'Reason for the message';
+
+  @override
+  String get parentMessageReasonHint => 'Choose a reason';
+
+  @override
+  String get parentMessageReasonError => 'Please choose a reason.';
+
+  @override
+  String get parentMessageReasonAbsences => 'Repeated absences';
+
+  @override
+  String get parentMessageReasonPerformance => 'Academic support';
+
+  @override
+  String get parentMessageReasonBehavior => 'Behaviour in class';
+
+  @override
+  String get parentMessageReasonPositive => 'Good news to share';
+
+  @override
+  String get parentMessageAbsentDaysLabel => 'Days absent';
+
+  @override
+  String get parentMessageAbsentDaysHint =>
+      'How many days in a row the student has been away.';
+
+  @override
+  String get parentMessageAbsentDaysPlaceholder => 'For example, 3';
+
+  @override
+  String get parentMessageParentLanguageLabel => 'Parent\'s language';
+
+  @override
+  String get parentMessageParentLanguageHint =>
+      'The message is written in this language, which can differ from the app\'s.';
+
+  @override
+  String get parentMessageParentLanguagePlaceholder =>
+      'Choose the parent\'s language';
+
+  @override
+  String get parentMessageParentLanguageError =>
+      'Please choose the parent\'s language.';
+
+  @override
+  String get parentMessageContextLabel => 'What is prompting this?';
+
+  @override
+  String get parentMessageContextHint =>
+      'A short note on the situation helps shape the message.';
+
+  @override
+  String get parentMessageContextPlaceholder =>
+      'For example, missed the last two weeks of fractions';
+
+  @override
+  String get parentMessageNoteLabel => 'Anything specific to mention?';
+
+  @override
+  String get parentMessageNoteHint =>
+      'A detail here is woven into the message.';
+
+  @override
+  String get parentMessageNotePlaceholder =>
+      'For example, doing well in group work';
+
+  @override
+  String get parentMessageTeacherNameLabel => 'Your name';
+
+  @override
+  String get parentMessageTeacherNameHint =>
+      'Signs off the message. Left blank, your profile name is used.';
+
+  @override
+  String get parentMessageTeacherNamePlaceholder => 'For example, Mrs. Rao';
+
+  @override
+  String get parentMessageSchoolNameLabel => 'School name';
+
+  @override
+  String get parentMessageSchoolNamePlaceholder => 'Your school\'s name';
+
+  @override
+  String get parentMessageOptional => 'Optional';
+
+  @override
+  String parentMessageWordCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count words',
+      one: '1 word',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get parentMessageCopy => 'Copy';
+
+  @override
+  String get parentMessageShare => 'Share';
+
+  @override
+  String get parentMessageCopied => 'Message copied';
+
+  @override
+  String get parentMessageNoContent =>
+      'No message came back for that. Please add a little more context and try again.';
+
+  @override
+  String get parentMessageMissingFields =>
+      'Please fill in the student, class, subject, reason and parent\'s language, then try again.';
+
+  @override
+  String get parentMessageUpgradeTitle => 'A higher plan is needed';
+
+  @override
+  String get parentMessageUpgradeBody =>
+      'Parent messages are part of a higher plan. Please upgrade to keep drafting them.';
+
+  @override
+  String get parentMessageLimitTitle => 'You have reached your limit';
+
+  @override
+  String get parentMessageLimitBody =>
+      'You have drafted your parent messages for now. Please try again later or upgrade your plan.';
+
+  @override
+  String get parentMessageSeePricing => 'See plans and pricing';
+
+  @override
+  String get parentMessageBusy =>
+      'The assistant is busy right now. Please try again in a moment.';
+
+  @override
+  String parentMessageBusyRetryAfter(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other:
+          'The assistant is busy right now. Please try again in about $seconds seconds.',
+      one:
+          'The assistant is busy right now. Please try again in about 1 second.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get parentMessageTimeout =>
+      'This is taking longer than expected. Please try again.';
+
+  @override
+  String get parentMessageSignIn => 'Please sign in again to use this tool.';
 }

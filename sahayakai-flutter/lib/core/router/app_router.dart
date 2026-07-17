@@ -9,6 +9,7 @@ import '../../features/instant_answer/presentation/instant_answer_screen.dart';
 import '../../features/lesson_planner/presentation/lesson_plan_screen.dart';
 import '../../features/onboarding/presentation/login_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
+import '../../features/parent_message/presentation/parent_message_screen.dart';
 import '../../features/quiz_generator/presentation/quiz_generator_screen.dart';
 import '../../features/rubric_generator/presentation/rubric_generator_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
@@ -111,6 +112,10 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: Routes.teacherTraining,
         builder: (context, state) => const TeacherTrainingScreen(),
+      ),
+      GoRoute(
+        path: Routes.parentMessage,
+        builder: (context, state) => const ParentMessageScreen(),
       ),
       GoRoute(
         path: Routes.settings,

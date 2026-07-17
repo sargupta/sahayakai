@@ -48,6 +48,13 @@ dependencies:
   # backend's imageDataUri.
   image_picker: ^1.1.2
 
+  # Native share sheet (Parent Message result -> "share to WhatsApp").
+  # share_plus is the standard Flutter community share plugin; it opens the OS
+  # share sheet so a teacher can send the drafted message to a parent over
+  # WhatsApp/SMS. Wrapped behind ShareService so tests fake it (never opens the
+  # real sheet).
+  share_plus: ^12.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -169,6 +169,15 @@ class _AppShellState extends State<AppShell> {
                     context.push(Routes.teacherTraining);
                   },
                 ),
+                ListTile(
+                  leading: const Icon(LucideIcons.messageCircle),
+                  title: Text(l10n.parentMessageTitle),
+                  subtitle: Text(l10n.parentMessageSubtitle),
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    context.push(Routes.parentMessage);
+                  },
+                ),
               ],
             ),
           ),

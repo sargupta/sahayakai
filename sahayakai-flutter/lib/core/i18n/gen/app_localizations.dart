@@ -2575,6 +2575,330 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please sign in again to use this tool.'**
   String get teacherTrainingSignIn;
+
+  /// Title of the Parent Message tool.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent Message'**
+  String get parentMessageTitle;
+
+  /// Dashboard/Create subtitle for the Parent Message tool.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft a message home in the parent\'s language'**
+  String get parentMessageSubtitle;
+
+  /// Submit button label on the Parent Message form.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft message'**
+  String get parentMessageAction;
+
+  /// Idle/empty state before any message is generated. An invitation to the teacher, not a pitch.
+  ///
+  /// In en, this message translates to:
+  /// **'Share the student and reason, and a caring message home will be drafted in the parent\'s language.'**
+  String get parentMessageEmpty;
+
+  /// Label for the student-name field.
+  ///
+  /// In en, this message translates to:
+  /// **'Student name'**
+  String get parentMessageStudentLabel;
+
+  /// Placeholder inside the student-name field.
+  ///
+  /// In en, this message translates to:
+  /// **'The student the message is about'**
+  String get parentMessageStudentPlaceholder;
+
+  /// Validation error when the student-name field is empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter the student\'s name.'**
+  String get parentMessageStudentError;
+
+  /// Label for the class field.
+  ///
+  /// In en, this message translates to:
+  /// **'Class'**
+  String get parentMessageClassLabel;
+
+  /// Placeholder inside the class field.
+  ///
+  /// In en, this message translates to:
+  /// **'For example, Class 6A'**
+  String get parentMessageClassPlaceholder;
+
+  /// Validation error when the class field is empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter the class.'**
+  String get parentMessageClassError;
+
+  /// Label for the subject dropdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Subject'**
+  String get parentMessageSubjectLabel;
+
+  /// Placeholder shown in the subject dropdown before a choice is made.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a subject'**
+  String get parentMessageSubjectHint;
+
+  /// Validation error when no subject is chosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Please choose a subject.'**
+  String get parentMessageSubjectError;
+
+  /// Label for the reason dropdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason for the message'**
+  String get parentMessageReasonLabel;
+
+  /// Placeholder shown in the reason dropdown before a choice is made.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a reason'**
+  String get parentMessageReasonHint;
+
+  /// Validation error when no reason is chosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Please choose a reason.'**
+  String get parentMessageReasonError;
+
+  /// Reason option: the student has missed several school days.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeated absences'**
+  String get parentMessageReasonAbsences;
+
+  /// Reason option: the student's performance has dipped and needs support.
+  ///
+  /// In en, this message translates to:
+  /// **'Academic support'**
+  String get parentMessageReasonPerformance;
+
+  /// Reason option: a classroom behaviour to raise gently with the parent.
+  ///
+  /// In en, this message translates to:
+  /// **'Behaviour in class'**
+  String get parentMessageReasonBehavior;
+
+  /// Reason option: a positive achievement to celebrate with the parent.
+  ///
+  /// In en, this message translates to:
+  /// **'Good news to share'**
+  String get parentMessageReasonPositive;
+
+  /// Label for the consecutive-absent-days field (shown only for the absence reason).
+  ///
+  /// In en, this message translates to:
+  /// **'Days absent'**
+  String get parentMessageAbsentDaysLabel;
+
+  /// Helper line under the days-absent label.
+  ///
+  /// In en, this message translates to:
+  /// **'How many days in a row the student has been away.'**
+  String get parentMessageAbsentDaysHint;
+
+  /// Placeholder inside the days-absent field.
+  ///
+  /// In en, this message translates to:
+  /// **'For example, 3'**
+  String get parentMessageAbsentDaysPlaceholder;
+
+  /// Label for the required parent-language dropdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent\'s language'**
+  String get parentMessageParentLanguageLabel;
+
+  /// Helper line explaining that the parent language drives the output language.
+  ///
+  /// In en, this message translates to:
+  /// **'The message is written in this language, which can differ from the app\'s.'**
+  String get parentMessageParentLanguageHint;
+
+  /// Placeholder shown in the parent-language dropdown before a choice is made.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the parent\'s language'**
+  String get parentMessageParentLanguagePlaceholder;
+
+  /// Validation error when no parent language is chosen (the field is required).
+  ///
+  /// In en, this message translates to:
+  /// **'Please choose the parent\'s language.'**
+  String get parentMessageParentLanguageError;
+
+  /// Label for the optional reason-context field.
+  ///
+  /// In en, this message translates to:
+  /// **'What is prompting this?'**
+  String get parentMessageContextLabel;
+
+  /// Helper line under the reason-context label.
+  ///
+  /// In en, this message translates to:
+  /// **'A short note on the situation helps shape the message.'**
+  String get parentMessageContextHint;
+
+  /// Placeholder inside the reason-context field.
+  ///
+  /// In en, this message translates to:
+  /// **'For example, missed the last two weeks of fractions'**
+  String get parentMessageContextPlaceholder;
+
+  /// Label for the optional teacher-note field.
+  ///
+  /// In en, this message translates to:
+  /// **'Anything specific to mention?'**
+  String get parentMessageNoteLabel;
+
+  /// Helper line under the teacher-note label.
+  ///
+  /// In en, this message translates to:
+  /// **'A detail here is woven into the message.'**
+  String get parentMessageNoteHint;
+
+  /// Placeholder inside the teacher-note field.
+  ///
+  /// In en, this message translates to:
+  /// **'For example, doing well in group work'**
+  String get parentMessageNotePlaceholder;
+
+  /// Label for the optional teacher-name (sign-off) field.
+  ///
+  /// In en, this message translates to:
+  /// **'Your name'**
+  String get parentMessageTeacherNameLabel;
+
+  /// Helper line under the teacher-name label.
+  ///
+  /// In en, this message translates to:
+  /// **'Signs off the message. Left blank, your profile name is used.'**
+  String get parentMessageTeacherNameHint;
+
+  /// Placeholder inside the teacher-name field.
+  ///
+  /// In en, this message translates to:
+  /// **'For example, Mrs. Rao'**
+  String get parentMessageTeacherNamePlaceholder;
+
+  /// Label for the optional school-name field.
+  ///
+  /// In en, this message translates to:
+  /// **'School name'**
+  String get parentMessageSchoolNameLabel;
+
+  /// Placeholder inside the school-name field.
+  ///
+  /// In en, this message translates to:
+  /// **'Your school\'s name'**
+  String get parentMessageSchoolNamePlaceholder;
+
+  /// Marks a Parent Message form field as optional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get parentMessageOptional;
+
+  /// Approximate length of the drafted message, shown as a meta badge.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 word} other{{count} words}}'**
+  String parentMessageWordCount(int count);
+
+  /// Result action that copies the drafted message to the clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get parentMessageCopy;
+
+  /// Result action that opens the share sheet to send the message on (e.g. WhatsApp).
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get parentMessageShare;
+
+  /// Snackbar confirmation shown after the message is copied.
+  ///
+  /// In en, this message translates to:
+  /// **'Message copied'**
+  String get parentMessageCopied;
+
+  /// Shown when the response carried no usable message.
+  ///
+  /// In en, this message translates to:
+  /// **'No message came back for that. Please add a little more context and try again.'**
+  String get parentMessageNoContent;
+
+  /// Shown on the 400 Missing required fields response. Specific, not generic.
+  ///
+  /// In en, this message translates to:
+  /// **'Please fill in the student, class, subject, reason and parent\'s language, then try again.'**
+  String get parentMessageMissingFields;
+
+  /// Title of the 403 upgrade prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'A higher plan is needed'**
+  String get parentMessageUpgradeTitle;
+
+  /// Body of the 403 upgrade prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent messages are part of a higher plan. Please upgrade to keep drafting them.'**
+  String get parentMessageUpgradeBody;
+
+  /// Title of the 429 limit-reached prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'You have reached your limit'**
+  String get parentMessageLimitTitle;
+
+  /// Body of the 429 limit-reached prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'You have drafted your parent messages for now. Please try again later or upgrade your plan.'**
+  String get parentMessageLimitBody;
+
+  /// Action on the upgrade / limit prompts, opening the pricing page.
+  ///
+  /// In en, this message translates to:
+  /// **'See plans and pricing'**
+  String get parentMessageSeePricing;
+
+  /// Shown on a 503 / server-busy response with no Retry-After.
+  ///
+  /// In en, this message translates to:
+  /// **'The assistant is busy right now. Please try again in a moment.'**
+  String get parentMessageBusy;
+
+  /// Shown on a 503 that carries a Retry-After hint.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds, plural, =1{The assistant is busy right now. Please try again in about 1 second.} other{The assistant is busy right now. Please try again in about {seconds} seconds.}}'**
+  String parentMessageBusyRetryAfter(int seconds);
+
+  /// Shown when the request times out.
+  ///
+  /// In en, this message translates to:
+  /// **'This is taking longer than expected. Please try again.'**
+  String get parentMessageTimeout;
+
+  /// Shown on a 401 unauthorized response.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in again to use this tool.'**
+  String get parentMessageSignIn;
 }
 
 class _AppLocalizationsDelegate

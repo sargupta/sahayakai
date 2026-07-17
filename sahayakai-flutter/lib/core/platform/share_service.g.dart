@@ -1,30 +1,27 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'app_router.dart';
+part of 'share_service.dart';
 
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
-String _$appRouterHash() => r'6f51449b72acc5bf4365b7ddfcd02631439c79f2';
+String _$shareServiceHash() => r'6696e95bf7e5367f2f16499274b5b7eb94dbd114';
 
-/// The app's [GoRouter], rebuilt (its `redirect` re-evaluated) whenever the
-/// stub auth state or the bootstrap future changes.
-///
-/// Copied from [appRouter].
-@ProviderFor(appRouter)
-final appRouterProvider = Provider<GoRouter>.internal(
-  appRouter,
-  name: r'appRouterProvider',
+/// See also [shareService].
+@ProviderFor(shareService)
+final shareServiceProvider = Provider<ShareService>.internal(
+  shareService,
+  name: r'shareServiceProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$appRouterHash,
+      : _$shareServiceHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef AppRouterRef = ProviderRef<GoRouter>;
+typedef ShareServiceRef = ProviderRef<ShareService>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

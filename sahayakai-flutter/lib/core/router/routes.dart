@@ -34,6 +34,10 @@ class Routes {
   static const String examPaper = '/exam-paper';
   static const String teacherTraining = '/teacher-training';
 
+  /// Parent Message composer. Path mirrors the web's `/messages` composer
+  /// (SCREEN_INVENTORY P1.5); the endpoint is `POST /api/ai/parent-message`.
+  static const String parentMessage = '/messages';
+
   /// Routes reachable while signed out. `/try-call` (anon lead magnet) will
   /// join this set when that screen lands.
   static const Set<String> publicPaths = {splash, login};
