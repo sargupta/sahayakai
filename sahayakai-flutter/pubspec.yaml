@@ -42,6 +42,12 @@ dependencies:
   intl: ^0.20.2
   url_launcher: ^6.3.2
 
+  # Camera / gallery image capture (Worksheet Wizard, Assess Assignment).
+  # The standard, well-maintained Flutter first-party picker; wraps the native
+  # camera + system photo picker and returns an XFile we base64 into the
+  # backend's imageDataUri.
+  image_picker: ^1.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
