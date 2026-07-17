@@ -100,24 +100,30 @@
       "priority": "p0",
       "endpoint": null,
       "file": "lib/features/splash/presentation/splash_screen.dart",
-      "status": "scaffolded",
-      "note": "Placeholder brand mark + tagline + progress; router redirect wired. Polish = P0.1."
+      "status": "done",
+      "note": "Placeholder brand mark + tagline + progress; router redirect wired. Polish = P0.1.",
+      "commit": "ed82867f9",
+      "notes": "brand mark + FIRST-CLASS ERROR STATE with retry. BUG FIXED: guard parks on /splash whenever bootstrap has no value incl. AsyncError -> old spinner-only splash span FOREVER when App Check/init failed (realistic on rural 2G)."
     },
     {
       "name": "Login / Onboarding (Google)",
       "priority": "p0",
       "endpoint": "client Firebase sign-in + profile save (users/<uid>)",
       "file": "lib/features/onboarding/presentation/login_screen.dart",
-      "status": "scaffolded",
-      "note": "Placeholder 'Continue' flips stub auth to signed-in. Real Google sign-in + onboarding = P0.2."
+      "status": "built-pending-firebase",
+      "note": "Placeholder 'Continue' flips stub auth to signed-in. Real Google sign-in + onboarding = P0.2.",
+      "commit": "ed82867f9",
+      "notes": "Google button -> stub AuthController (built-pending-firebase). Onboarding reachable but SKIPPABLE (ONBOARDING_GATE_ENABLED off; no hard gate reintroduced). Language picker step 0, all 11 native labels. BUG FIXED: 'saved' snackbar floated over the sticky footer and swallowed the CTA tap for 4s. Needs official Google branding asset (Lucide has no Google mark)."
     },
     {
       "name": "Dashboard Home",
       "priority": "p0",
       "endpoint": "profile + recent library (no dedicated AI call)",
       "file": "lib/features/dashboard/presentation/dashboard_screen.dart",
-      "status": "scaffolded",
-      "note": "Greeting + non-navigating tool tiles (AppCard). Real content/routing = P0.3."
+      "status": "built-pending-firebase",
+      "note": "Greeting + non-navigating tool tiles (AppCard). Real content/routing = P0.3.",
+      "commit": "ed82867f9",
+      "notes": "Real tool-tile grid deep-linking live routes (no dead tiles) + recent list via GET /api/content/list with skeleton/empty/error/401 states; hosts 4-tab nav."
     },
     {
       "name": "Lesson Plan Generator",
@@ -317,5 +323,15 @@
     "Primary color is the vivid-saffron BRAND override #FF9933 (light) / #FFAB57 (dark) — see decisions.brandPrimary; never #E0924D",
     "No emojis, no em dashes, Lucide icons only, all 11 languages first-class (never Hindi-only), teacher-dignity copy",
     "Any DESIGN_RUBRIC §12 FAIL blocks that screen's commit"
+  ],
+  "knownGaps": [
+    {
+      "id": "i18n-translation",
+      "severity": "high",
+      "status": "open",
+      "summary": "UI is effectively English-only for Indic users: app_en.arb has 262 keys but all 10 Indic ARBs carry only 23 (239 keys render English fallback).",
+      "why": "Contradicts the product's core promise (11 Indic languages first-class, never Hindi-only) and DESIGN_RUBRIC 12.15. Language picker and AI output language DO work across 11; the UI chrome does not.",
+      "note": "Pre-existing across all shipped screens, not introduced by any one unit. Machine translation of teacher-facing copy needs native review for dignity + pedagogical terminology before shipping."
+    }
   ]
 }
