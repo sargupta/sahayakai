@@ -136,7 +136,9 @@
       ],
       "consumes": ["U-V3", "tool routes via kToolRegistry"],
       "firebaseGated": false,
-      "status": "pending"
+      "status": "done",
+      "commit": "a03f0be3e",
+      "notes": "Threads VIDYA's NAVIGATE_AND_FILL directive INTO the tools. The VidyaFlow -> route+prefill dispatch is wired through app_router (the single intent path ref.listen'd from the voice home) so a spoken 'make a Class 5 fractions quiz' opens the right tool prefilled; instant_answer/lesson_plan/quiz_generator screens accept the prefilled seed + expose an inline field mic entry. Reuses the U-V3 controller + kToolRegistry; no new visual language. ARB keys added across 11 langs. Verified by code+test only (routes 401 on the stub until Firebase); analyze clean, suite green."
     },
     {
       "id": "U-V7",
@@ -148,7 +150,9 @@
       ],
       "consumes": ["GET/POST /api/vidya/session", "GET/POST /api/vidya/profile"],
       "firebaseGated": "yes (live restore needs real auth; plumbing testable now)",
-      "status": "pending"
+      "status": "done",
+      "commit": "d02c81748",
+      "notes": "VIDYA persistence + on-every-screen. restoreSession() concurrently fetches latest session + profile (Future.wait) and rehydrates the conversation as ConversationBlocks on first open, guarding against a mid-fetch tap overwriting an inked block; degrades silently to a fresh empty session on 401; turn-sync + profile-learn remain fire-and-forget. VIDYA is reachable from ANY tool screen: a dignified sparkles app-bar action on ToolScaffold (48dp IconButton, tooltip=semantic label, not a Material FAB) opens vidya_sheet.dart — a bottom sheet bound to the SAME top-level VidyaController, so the conversation is continuous mid-tool; the home route listener guards on ModalRoute.isCurrent so home + sheet never double-dispatch an intent. Terminal/status panels extracted to shared vidya_status_ui.dart consumed by BOTH home and sheet (cannot drift). Design-review PASS (0 blockers) vs PREMIUM_DESIGN_SPEC §7. 11-lang ARB (never Hindi-only). +23 tests (persistence + sheet) -> 912 green, analyze 0, token_guard PASS. No native touched (no APK gate). Live restore/turn-sync verified by code+test only (401 on stub) until Firebase. NIT filed: conversation_block _ConfirmChip ~34dp tap target (pre-existing, now surfaced on every screen)."
     },
     {
       "id": "U-PH1",
