@@ -1,7 +1,7 @@
 {
   "version": 1,
   "app": "sahayakai-flutter",
-  "phase": "premium-rollout (U9-U12 + native branding)",
+  "phase": "premium-complete",
   "concept": "The Ledger — Ivory & Ink, Saffron & Pine. A heritage-school almanac: warm ivory paper, warm charcoal ink, one Fraunces serif masthead, hairline ruled registers, real sheets lifting on warm two-layer shadows, saffron as a scarce wax-seal (<10% of any screen).",
   "spec": "docs/flutter/design/PREMIUM_DESIGN_SPEC.md",
   "supersedes": [
@@ -195,7 +195,14 @@
         "lib/features/create_palette/presentation/create_palette_sheet.dart"
       ],
       "acceptance": "AppCard v2 lists, editorial section headers, EmptyView halo, filled inputs; all save-lane traps and states preserved. analyze 0, token_guard PASS, 747 green.",
-      "status": "pending"
+      "status": "done",
+      "commits": {
+        "settings": "c00dbb020",
+        "profile": "f4f29307b",
+        "library": "b03dc11a5",
+        "createPalette": "8d286a561"
+      },
+      "notes": "Committed each screen separately. All four use the sanctioned non-ToolScaffold grammar (Scaffold + EditorialSectionHeader groups + AppCard v2 + filled LabeledField inputs + EmptyView v2 halo + staggered inkSettle), NOT DocumentSheet (these are not AI-tool result screens). Suite stays at 771 (no net tests). analyze 0, token_guard PASS, theme_contrast green, reduce-motion returns the static frame. SETTINGS (c00dbb020): the five muted Section groups became EditorialSectionHeader groups (saffron uppercase-Latin eyebrow + hairline) over AppCards, staggered inkSettle, filled inputs gained leading Lucide glyphs, chips drop the checkmark. PRESERVED: preferredBoard mapping (untouched DTO lane), the LanguageSwitcher (UI locale + AI param via AppLocale), the LIVE light/dark theme RadioGroup, the typed-DELETE-gated error-coloured OutlinedButton delete-account (dialog untouched), the signed-out sign-in card. TEST UPDATES (structure only, no behaviour weakened): three section-label asserts moved to their UPPERCASE editorial-eyebrow form (APPEARANCE / NOTIFICATIONS / TEACHING PROFILE); the 'Delete account' asserts stay button-scoped. PROFILE (f4f29307b): same Section->EditorialSectionHeader + staggered inkSettle + leading glyphs; the save error + Save + Sign-out fold into ONE stable footer block so an inline error never re-indexes the lazy list beneath the entrance (the flutter_animate delay-timer would otherwise leak on the shifted rows). PRESERVED: the TWO save lanes (the users/<uid> merge document lane stays distinct from the PATCH allowlist, untouched), the plan badge from the ID-token planType claim (unknown is not 'free'), sign-out flipping the router auth state, board-category recovery, phone/PIN validators, all fields. NO profile test changes (no section-title string was asserted). LIBRARY + DETAIL (b03dc11a5): the saved-work group opens with an EditorialSectionHeader(librarySectionSaved) and the rows ink in on a staggered entrance in the EAGER Column (so the client-side type filter still narrows without a lazy re-index or a second request); the detail's saved-item masthead became the one focal elevated AppCard (§7.2) with its entrance carried by the Lift-&-Settle page push (a pushed screen; a second per-block stagger would double-animate). NEW l10n key librarySectionSaved added across ALL 11 ARBs, gen regenerated (additive-only). PRESERVED: type-filter chips over the shared newest-20 read (no second request), tap-to-open -> LibraryDetailScreen built-pending-firebase sign-in state, loading/empty(+action)/error/offline states. NO library test changes. CREATE PALETTE (8d286a561, in app_shell.dart): the sheet now hosts its own premium surface (rHero top corners via the AppRadius.rHero token, e4 modal shadow light / dKey dark, a grab handle, a Fraunces serif masthead, a trailing chevron per row); the modal route is transparent so the sheet draws its own lifted surface. token_guard note: the top-only radius is derived from AppRadius.rHero.topLeft/topRight rather than a .circular(AppRadius.hero) literal, which the guard's numeric-only allowlist would reject. PRESERVED: one search field over the SHARED kToolRegistry, case-folded search, the empty-search EmptyView, each row keyed create-palette-<id> and deep-linking on tap (router captured before pop), the bounded min-height Column + Flexible list. NO palette test changes. HONEST NOTE: all four are renderable live (no 401 result view) and are verified by code + the full 771-test suite; the on-device screenshot pass has not run in this session. U11 COMPLETE; the premium rollout U0-U11 is done."
     },
     {
       "id": "U12",
