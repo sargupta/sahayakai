@@ -2654,6 +2654,18 @@ abstract class AppLocalizations {
   /// **'Strategies'**
   String get teacherTrainingStrategiesTitle;
 
+  /// Editorial section header over the question field on the Teaching Coach form.
+  ///
+  /// In en, this message translates to:
+  /// **'The question'**
+  String get teacherTrainingSectionQuestion;
+
+  /// Masthead document title on the Teaching Coach result DocumentSheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Coaching notes'**
+  String get teacherTrainingResultTitle;
+
   /// Shown when the response carried no usable advice.
   ///
   /// In en, this message translates to:

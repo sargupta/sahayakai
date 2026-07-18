@@ -1418,6 +1418,12 @@ class AppLocalizationsKn extends AppLocalizations {
   String get teacherTrainingStrategiesTitle => 'Strategies';
 
   @override
+  String get teacherTrainingSectionQuestion => 'ಪ್ರಶ್ನೆ';
+
+  @override
+  String get teacherTrainingResultTitle => 'ಮಾರ್ಗದರ್ಶನ ಟಿಪ್ಪಣಿಗಳು';
+
+  @override
   String get teacherTrainingNoContent =>
       'No advice came back for that. Please try a clearer question.';
 

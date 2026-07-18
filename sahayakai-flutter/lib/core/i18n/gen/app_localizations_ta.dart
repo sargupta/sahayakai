@@ -1418,6 +1418,12 @@ class AppLocalizationsTa extends AppLocalizations {
   String get teacherTrainingStrategiesTitle => 'Strategies';
 
   @override
+  String get teacherTrainingSectionQuestion => 'கேள்வி';
+
+  @override
+  String get teacherTrainingResultTitle => 'வழிகாட்டல் குறிப்புகள்';
+
+  @override
   String get teacherTrainingNoContent =>
       'No advice came back for that. Please try a clearer question.';
 

@@ -84,7 +84,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(TeacherTrainingResultView), findsOneWidget);
-      expect(find.text('Strategies'), findsOneWidget);
+      // The strategies heading now renders through the DocumentSheetSection,
+      // which UPPERCASES Latin titles.
+      expect(find.text('STRATEGIES'), findsOneWidget);
     });
 
     testWidgets('an error maps to the error view', (tester) async {

@@ -1417,6 +1417,12 @@ class AppLocalizationsBn extends AppLocalizations {
   String get teacherTrainingStrategiesTitle => 'Strategies';
 
   @override
+  String get teacherTrainingSectionQuestion => 'প্রশ্ন';
+
+  @override
+  String get teacherTrainingResultTitle => 'পরামর্শ নোট';
+
+  @override
   String get teacherTrainingNoContent =>
       'No advice came back for that. Please try a clearer question.';
 

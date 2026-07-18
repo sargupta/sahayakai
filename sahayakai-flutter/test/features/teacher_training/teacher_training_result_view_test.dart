@@ -23,9 +23,10 @@ void main() {
     expect(find.text('Class 8'), findsOneWidget);
     expect(find.text('General'), findsOneWidget);
 
-    // Introduction + the strategies heading + the closing prose.
+    // Introduction + the strategies heading + the closing prose. The heading now
+    // renders through the DocumentSheetSection, which UPPERCASES Latin titles.
     expect(find.textContaining('Engagement across a full lesson'), findsOneWidget);
-    expect(find.text('Strategies'), findsOneWidget);
+    expect(find.text('STRATEGIES'), findsOneWidget);
     expect(find.textContaining('You are already asking the right questions'),
         findsOneWidget);
 
@@ -53,7 +54,7 @@ void main() {
 
     expect(find.byType(EmptyView), findsOneWidget);
     expect(find.textContaining('No advice came back'), findsOneWidget);
-    expect(find.text('Strategies'), findsNothing);
+    expect(find.text('STRATEGIES'), findsNothing);
     expect(find.byType(AdviceCard), findsNothing);
   });
 

@@ -1416,6 +1416,12 @@ class AppLocalizationsOr extends AppLocalizations {
   String get teacherTrainingStrategiesTitle => 'Strategies';
 
   @override
+  String get teacherTrainingSectionQuestion => 'ପ୍ରଶ୍ନ';
+
+  @override
+  String get teacherTrainingResultTitle => 'ମାର୍ଗଦର୍ଶନ ଟିପ୍ପଣୀ';
+
+  @override
   String get teacherTrainingNoContent =>
       'No advice came back for that. Please try a clearer question.';
 

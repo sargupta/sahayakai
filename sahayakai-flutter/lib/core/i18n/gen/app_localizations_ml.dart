@@ -1420,6 +1420,12 @@ class AppLocalizationsMl extends AppLocalizations {
   String get teacherTrainingStrategiesTitle => 'Strategies';
 
   @override
+  String get teacherTrainingSectionQuestion => 'ചോദ്യം';
+
+  @override
+  String get teacherTrainingResultTitle => 'മാർഗനിർദേശ കുറിപ്പുകൾ';
+
+  @override
   String get teacherTrainingNoContent =>
       'No advice came back for that. Please try a clearer question.';
 

@@ -1788,6 +1788,14 @@
   "@teacherTrainingStrategiesTitle": {
     "description": "Section label above the list of advice cards."
   },
+  "teacherTrainingSectionQuestion": "The question",
+  "@teacherTrainingSectionQuestion": {
+    "description": "Editorial section header over the question field on the Teaching Coach form."
+  },
+  "teacherTrainingResultTitle": "Coaching notes",
+  "@teacherTrainingResultTitle": {
+    "description": "Masthead document title on the Teaching Coach result DocumentSheet."
+  },
   "teacherTrainingNoContent": "No advice came back for that. Please try a clearer question.",
   "@teacherTrainingNoContent": {
     "description": "Shown when the response carried no usable advice."

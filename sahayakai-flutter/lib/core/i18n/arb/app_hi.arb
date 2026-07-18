@@ -29,6 +29,8 @@
   "quizSectionQuiz": "क्विज़",
   "sectionForYourClass": "आपकी कक्षा के लिए",
   "instantAnswerResultTitle": "उत्तर",
+  "teacherTrainingSectionQuestion": "प्रश्न",
+  "teacherTrainingResultTitle": "मार्गदर्शन नोट्स",
   "dashboardToolsTitle": "आपके शिक्षण उपकरण",
   "createPaletteSearchHint": "उपकरण खोजें",
   "createPaletteEmpty": "आपकी खोज से मेल खाता कोई उपकरण नहीं",

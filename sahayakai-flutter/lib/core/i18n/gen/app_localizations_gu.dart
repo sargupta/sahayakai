@@ -1414,6 +1414,12 @@ class AppLocalizationsGu extends AppLocalizations {
   String get teacherTrainingStrategiesTitle => 'Strategies';
 
   @override
+  String get teacherTrainingSectionQuestion => 'પ્રશ્ન';
+
+  @override
+  String get teacherTrainingResultTitle => 'માર્ગદર્શન નોંધ';
+
+  @override
   String get teacherTrainingNoContent =>
       'No advice came back for that. Please try a clearer question.';
 

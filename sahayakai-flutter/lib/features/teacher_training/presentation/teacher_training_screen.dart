@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/app_locale.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
@@ -7,6 +8,7 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
+import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
@@ -17,9 +19,11 @@ import 'widgets/teacher_training_result_view.dart';
 import 'widgets/teacher_training_skeleton.dart';
 
 /// P1.4 — the Teaching Coach. A teacher asks a professional-development question
-/// and gets back pedagogically-grounded strategies. A capped, scrolling form + a
-/// sticky action button ([ToolScaffold]), driven by an AsyncNotifier and
-/// rendered through [ResultView] (loading / empty / error / data).
+/// and gets back pedagogically-grounded strategies. A capped, scrolling editorial
+/// form + a sticky action button ([ToolScaffold]), driven by an AsyncNotifier and
+/// rendered through [ResultView] (loading / empty / error / data). On success the
+/// advice is wrapped in a `DocumentSheet` (see [TeacherTrainingResultView]) and
+/// the view auto-scrolls to its masthead.
 ///
 /// Only `question` is required; subject and language are optional because the
 /// flow back-fills them from the teacher's profile. There is no grade field:
@@ -35,6 +39,10 @@ class TeacherTrainingScreen extends ConsumerStatefulWidget {
 class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
   final _formKey = GlobalKey<FormState>();
   final _questionController = TextEditingController();
+
+  /// Anchors the auto-scroll: the result region's top, which for a successful
+  /// generation is the DocumentSheet masthead.
+  final _resultKey = GlobalKey();
 
   String? _subject;
   late AppLocale _language;
@@ -62,10 +70,38 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
     ref.read(teacherTrainingControllerProvider.notifier).ask(request);
   }
 
+  /// Brings the result masthead to the top of the viewport when fresh advice
+  /// lands. Honours reduce-motion by jumping (no scroll tween).
+  void _scrollToResult() {
+    if (!mounted) return;
+    final ctx = _resultKey.currentContext;
+    if (ctx == null) return;
+    final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    Scrollable.ensureVisible(
+      ctx,
+      duration: reduce ? Duration.zero : AppMotion.medium,
+      curve: AppMotion.emphasized,
+      alignment: 0.0,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final state = ref.watch(teacherTrainingControllerProvider);
+
+    // Auto-scroll to the result header on a fresh success (loading -> data).
+    ref.listen<AsyncValue<TeacherAdvice?>>(teacherTrainingControllerProvider,
+        (prev, next) {
+      final wasLoading = prev?.isLoading ?? false;
+      final nowHasAdvice =
+          !next.isLoading && next.hasValue && next.valueOrNull != null;
+      if (wasLoading && nowHasAdvice) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToResult());
+      }
+    });
+
+    final hasResult = state.hasValue && state.valueOrNull != null;
 
     final result = state.hasError
         ? TeacherTrainingErrorView(error: state.error!, onRetry: _submit)
@@ -73,15 +109,18 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
             state: state,
             skeleton: const TeacherTrainingSkeleton(),
             emptyMessage: l10n.teacherTrainingEmpty,
-            onData: (advice) => TeacherTrainingResultView(advice: advice),
+            onData: (advice) =>
+                TeacherTrainingResultView(advice: advice, onRegenerate: _submit),
           );
 
     return ToolScaffold(
       title: l10n.teacherTrainingTitle,
       isBusy: state.isLoading,
       submitLabel: l10n.teacherTrainingAction,
-      onSubmit: state.isLoading ? null : _submit,
-      result: result,
+      // Hide the sticky action button once advice is on screen — the document's
+      // own action bar (Regenerate / Copy) takes over.
+      onSubmit: (state.isLoading || hasResult) ? null : _submit,
+      result: KeyedSubtree(key: _resultKey, child: result),
       child: Form(
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -89,8 +128,12 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
+            EditorialSectionHeader(l10n.teacherTrainingSectionQuestion),
+            const SizedBox(height: AppSpacing.space4),
             _questionField(l10n),
-            const SizedBox(height: AppSpacing.space6),
+            const SizedBox(height: AppSpacing.space8),
+            EditorialSectionHeader(l10n.sectionForYourClass),
+            const SizedBox(height: AppSpacing.space4),
             _subjectField(l10n),
             const SizedBox(height: AppSpacing.space6),
             _languageField(l10n),
@@ -104,6 +147,7 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
     return LabeledField(
       label: l10n.teacherTrainingQuestionLabel,
       hint: l10n.teacherTrainingQuestionHint,
+      leadingIcon: LucideIcons.helpCircle,
       child: TextFormField(
         controller: _questionController,
         // The endpoint rejects anything longer, so stop it here with a counter
@@ -127,6 +171,7 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
     return LabeledField(
       label: l10n.teacherTrainingSubjectLabel,
       optionalLabel: l10n.teacherTrainingOptional,
+      leadingIcon: LucideIcons.bookOpen,
       child: DropdownButtonFormField<String?>(
         initialValue: _subject,
         isExpanded: true,
@@ -146,6 +191,7 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
   Widget _languageField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.languageLabel,
+      leadingIcon: LucideIcons.languages,
       child: DropdownButtonFormField<AppLocale>(
         initialValue: _language,
         isExpanded: true,
