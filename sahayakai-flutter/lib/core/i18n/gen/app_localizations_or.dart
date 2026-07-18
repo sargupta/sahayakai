@@ -160,6 +160,21 @@ class AppLocalizationsOr extends AppLocalizations {
   String get actionOpen => 'ଖୋଲନ୍ତୁ';
 
   @override
+  String get actionRegenerate => 'ପୁଣି ତିଆରି କରନ୍ତୁ';
+
+  @override
+  String get actionCopy => 'କପି କରନ୍ତୁ';
+
+  @override
+  String get copyConfirmation => 'କ୍ଲିପବୋର୍ଡକୁ କପି କରାଗଲା';
+
+  @override
+  String get lessonPlanSectionLesson => 'ପାଠ';
+
+  @override
+  String get lessonPlanSectionApproach => 'ଶିକ୍ଷାଦାନ ପଦ୍ଧତି';
+
+  @override
   String get dashboardToolsTitle => 'ଆପଣଙ୍କ ଶିକ୍ଷାଦାନ ଉପକରଣ';
 
   @override

@@ -160,6 +160,21 @@ class AppLocalizationsHi extends AppLocalizations {
   String get actionOpen => 'खोलें';
 
   @override
+  String get actionRegenerate => 'फिर से बनाएँ';
+
+  @override
+  String get actionCopy => 'कॉपी करें';
+
+  @override
+  String get copyConfirmation => 'क्लिपबोर्ड पर कॉपी किया गया';
+
+  @override
+  String get lessonPlanSectionLesson => 'पाठ';
+
+  @override
+  String get lessonPlanSectionApproach => 'शिक्षण दृष्टिकोण';
+
+  @override
   String get dashboardToolsTitle => 'आपके शिक्षण उपकरण';
 
   @override

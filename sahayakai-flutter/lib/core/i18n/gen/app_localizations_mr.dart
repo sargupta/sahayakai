@@ -160,6 +160,21 @@ class AppLocalizationsMr extends AppLocalizations {
   String get actionOpen => 'उघडा';
 
   @override
+  String get actionRegenerate => 'पुन्हा तयार करा';
+
+  @override
+  String get actionCopy => 'कॉपी करा';
+
+  @override
+  String get copyConfirmation => 'क्लिपबोर्डवर कॉपी केले';
+
+  @override
+  String get lessonPlanSectionLesson => 'धडा';
+
+  @override
+  String get lessonPlanSectionApproach => 'अध्यापन दृष्टिकोन';
+
+  @override
   String get dashboardToolsTitle => 'तुमची शिक्षण साधने';
 
   @override

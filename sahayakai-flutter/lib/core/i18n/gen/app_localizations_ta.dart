@@ -161,6 +161,21 @@ class AppLocalizationsTa extends AppLocalizations {
   String get actionOpen => 'திறக்கவும்';
 
   @override
+  String get actionRegenerate => 'மீண்டும் உருவாக்கு';
+
+  @override
+  String get actionCopy => 'நகலெடு';
+
+  @override
+  String get copyConfirmation => 'கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டது';
+
+  @override
+  String get lessonPlanSectionLesson => 'பாடம்';
+
+  @override
+  String get lessonPlanSectionApproach => 'கற்பித்தல் அணுகுமுறை';
+
+  @override
   String get dashboardToolsTitle => 'உங்கள் கற்பித்தல் கருவிகள்';
 
   @override

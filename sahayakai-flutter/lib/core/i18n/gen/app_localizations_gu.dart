@@ -159,6 +159,21 @@ class AppLocalizationsGu extends AppLocalizations {
   String get actionOpen => 'ખોલો';
 
   @override
+  String get actionRegenerate => 'ફરીથી બનાવો';
+
+  @override
+  String get actionCopy => 'કૉપિ કરો';
+
+  @override
+  String get copyConfirmation => 'ક્લિપબોર્ડ પર કૉપિ થયું';
+
+  @override
+  String get lessonPlanSectionLesson => 'પાઠ';
+
+  @override
+  String get lessonPlanSectionApproach => 'શિક્ષણ અભિગમ';
+
+  @override
   String get dashboardToolsTitle => 'તમારા શિક્ષણ સાધનો';
 
   @override

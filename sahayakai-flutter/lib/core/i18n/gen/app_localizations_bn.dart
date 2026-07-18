@@ -161,6 +161,21 @@ class AppLocalizationsBn extends AppLocalizations {
   String get actionOpen => 'খুলুন';
 
   @override
+  String get actionRegenerate => 'আবার তৈরি করুন';
+
+  @override
+  String get actionCopy => 'কপি করুন';
+
+  @override
+  String get copyConfirmation => 'ক্লিপবোর্ডে কপি করা হয়েছে';
+
+  @override
+  String get lessonPlanSectionLesson => 'পাঠ';
+
+  @override
+  String get lessonPlanSectionApproach => 'শিক্ষণ পদ্ধতি';
+
+  @override
   String get dashboardToolsTitle => 'আপনার শিক্ষণ সরঞ্জাম';
 
   @override

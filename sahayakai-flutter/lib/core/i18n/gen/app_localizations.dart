@@ -392,6 +392,36 @@ abstract class AppLocalizations {
   /// **'Open'**
   String get actionOpen;
 
+  /// Result action bar: generate a fresh version from the same form.
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerate'**
+  String get actionRegenerate;
+
+  /// Result action bar: copy the generated document to the clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get actionCopy;
+
+  /// Snackbar shown after a generated document is copied.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied to clipboard'**
+  String get copyConfirmation;
+
+  /// Lesson plan form section header: what to teach (topic, grades, subject).
+  ///
+  /// In en, this message translates to:
+  /// **'The lesson'**
+  String get lessonPlanSectionLesson;
+
+  /// Lesson plan form section header: how to teach it (language, level, difficulty).
+  ///
+  /// In en, this message translates to:
+  /// **'Teaching approach'**
+  String get lessonPlanSectionApproach;
+
   /// Dashboard tools section header.
   ///
   /// In en, this message translates to:

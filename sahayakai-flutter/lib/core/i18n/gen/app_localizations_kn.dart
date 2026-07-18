@@ -161,6 +161,21 @@ class AppLocalizationsKn extends AppLocalizations {
   String get actionOpen => 'ತೆರೆಯಿರಿ';
 
   @override
+  String get actionRegenerate => 'ಮತ್ತೆ ರಚಿಸಿ';
+
+  @override
+  String get actionCopy => 'ನಕಲಿಸಿ';
+
+  @override
+  String get copyConfirmation => 'ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ';
+
+  @override
+  String get lessonPlanSectionLesson => 'ಪಾಠ';
+
+  @override
+  String get lessonPlanSectionApproach => 'ಬೋಧನಾ ವಿಧಾನ';
+
+  @override
   String get dashboardToolsTitle => 'ನಿಮ್ಮ ಬೋಧನಾ ಸಾಧನಗಳು';
 
   @override

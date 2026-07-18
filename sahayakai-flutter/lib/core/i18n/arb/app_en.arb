@@ -198,6 +198,26 @@
   "@actionOpen": {
     "description": "Action label on the dashboard feature tile, opens the tool."
   },
+  "actionRegenerate": "Regenerate",
+  "@actionRegenerate": {
+    "description": "Result action bar: generate a fresh version from the same form."
+  },
+  "actionCopy": "Copy",
+  "@actionCopy": {
+    "description": "Result action bar: copy the generated document to the clipboard."
+  },
+  "copyConfirmation": "Copied to clipboard",
+  "@copyConfirmation": {
+    "description": "Snackbar shown after a generated document is copied."
+  },
+  "lessonPlanSectionLesson": "The lesson",
+  "@lessonPlanSectionLesson": {
+    "description": "Lesson plan form section header: what to teach (topic, grades, subject)."
+  },
+  "lessonPlanSectionApproach": "Teaching approach",
+  "@lessonPlanSectionApproach": {
+    "description": "Lesson plan form section header: how to teach it (language, level, difficulty)."
+  },
   "dashboardToolsTitle": "Your teaching tools",
   "@dashboardToolsTitle": {
     "description": "Dashboard tools section header."

@@ -160,6 +160,21 @@ class AppLocalizationsPa extends AppLocalizations {
   String get actionOpen => 'ਖੋਲ੍ਹੋ';
 
   @override
+  String get actionRegenerate => 'ਮੁੜ ਬਣਾਓ';
+
+  @override
+  String get actionCopy => 'ਕਾਪੀ ਕਰੋ';
+
+  @override
+  String get copyConfirmation => 'ਕਲਿੱਪਬੋਰਡ \'ਤੇ ਕਾਪੀ ਕੀਤਾ';
+
+  @override
+  String get lessonPlanSectionLesson => 'ਪਾਠ';
+
+  @override
+  String get lessonPlanSectionApproach => 'ਸਿਖਾਉਣ ਦਾ ਢੰਗ';
+
+  @override
   String get dashboardToolsTitle => 'ਤੁਹਾਡੇ ਅਧਿਆਪਨ ਸਾਧਨ';
 
   @override

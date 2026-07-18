@@ -159,6 +159,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionOpen => 'Open';
 
   @override
+  String get actionRegenerate => 'Regenerate';
+
+  @override
+  String get actionCopy => 'Copy';
+
+  @override
+  String get copyConfirmation => 'Copied to clipboard';
+
+  @override
+  String get lessonPlanSectionLesson => 'The lesson';
+
+  @override
+  String get lessonPlanSectionApproach => 'Teaching approach';
+
+  @override
   String get dashboardToolsTitle => 'Your teaching tools';
 
   @override

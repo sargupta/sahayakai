@@ -163,6 +163,21 @@ class AppLocalizationsMl extends AppLocalizations {
   String get actionOpen => 'തുറക്കുക';
 
   @override
+  String get actionRegenerate => 'വീണ്ടും സൃഷ്ടിക്കുക';
+
+  @override
+  String get actionCopy => 'പകർത്തുക';
+
+  @override
+  String get copyConfirmation => 'ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി';
+
+  @override
+  String get lessonPlanSectionLesson => 'പാഠം';
+
+  @override
+  String get lessonPlanSectionApproach => 'അധ്യാപന സമീപനം';
+
+  @override
   String get dashboardToolsTitle => 'നിങ്ങളുടെ അധ്യാപന ഉപകരണങ്ങൾ';
 
   @override

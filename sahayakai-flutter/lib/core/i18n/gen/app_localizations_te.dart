@@ -161,6 +161,21 @@ class AppLocalizationsTe extends AppLocalizations {
   String get actionOpen => 'తెరవండి';
 
   @override
+  String get actionRegenerate => 'మళ్లీ రూపొందించు';
+
+  @override
+  String get actionCopy => 'కాపీ చేయి';
+
+  @override
+  String get copyConfirmation => 'క్లిప్‌బోర్డుకు కాపీ చేయబడింది';
+
+  @override
+  String get lessonPlanSectionLesson => 'పాఠం';
+
+  @override
+  String get lessonPlanSectionApproach => 'బోధనా విధానం';
+
+  @override
   String get dashboardToolsTitle => 'మీ బోధన సాధనాలు';
 
   @override

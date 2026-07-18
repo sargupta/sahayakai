@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/app_locale.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
@@ -7,6 +8,8 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
+import '../../../shared/widgets/app_segmented.dart';
+import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
@@ -16,9 +19,12 @@ import 'widgets/lesson_plan_error_view.dart';
 import 'widgets/lesson_plan_result_view.dart';
 import 'widgets/lesson_plan_skeleton.dart';
 
-/// P0.4 — the flagship Lesson Plan Generator. A capped, scrolling form + a
+/// P0.4 — the flagship Lesson Plan Generator, and the reference tool the rest
+/// copy (PREMIUM_DESIGN_SPEC.md §6b U8). A capped, scrolling editorial form + a
 /// sticky Generate button ([ToolScaffold]), driven by an AsyncNotifier and
-/// rendered through [ResultView] (loading / empty / error / data).
+/// rendered through [ResultView] (loading / empty / error / data). On success
+/// the 5E plan is wrapped in a `DocumentSheet` (see [LessonPlanResultView]) and
+/// the view auto-scrolls to its masthead.
 class LessonPlanScreen extends ConsumerStatefulWidget {
   const LessonPlanScreen({super.key});
 
@@ -29,6 +35,10 @@ class LessonPlanScreen extends ConsumerStatefulWidget {
 class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
   final _formKey = GlobalKey<FormState>();
   final _topicController = TextEditingController();
+
+  /// Anchors the auto-scroll: the result region's top, which for a successful
+  /// generation is the DocumentSheet masthead.
+  final _resultKey = GlobalKey();
 
   final Set<String> _grades = <String>{};
   String? _subject;
@@ -64,10 +74,38 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
     ref.read(lessonPlanControllerProvider.notifier).generate(request);
   }
 
+  /// Brings the result masthead to the top of the viewport when a fresh plan
+  /// lands. Honours reduce-motion by jumping (no scroll tween).
+  void _scrollToResult() {
+    if (!mounted) return;
+    final ctx = _resultKey.currentContext;
+    if (ctx == null) return;
+    final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    Scrollable.ensureVisible(
+      ctx,
+      duration: reduce ? Duration.zero : AppMotion.medium,
+      curve: AppMotion.emphasized,
+      alignment: 0.0,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final state = ref.watch(lessonPlanControllerProvider);
+
+    // Auto-scroll to the result header on a fresh success (loading -> data).
+    ref.listen<AsyncValue<LessonPlan?>>(lessonPlanControllerProvider,
+        (prev, next) {
+      final wasLoading = prev?.isLoading ?? false;
+      final nowHasPlan =
+          !next.isLoading && next.hasValue && next.valueOrNull != null;
+      if (wasLoading && nowHasPlan) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToResult());
+      }
+    });
+
+    final hasResult = state.hasValue && state.valueOrNull != null;
 
     final result = state.hasError
         ? LessonPlanErrorView(error: state.error!, onRetry: _submit)
@@ -75,15 +113,18 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
             state: state,
             skeleton: const LessonPlanSkeleton(),
             emptyMessage: l10n.lessonPlanEmpty,
-            onData: (plan) => LessonPlanResultView(plan: plan),
+            onData: (plan) =>
+                LessonPlanResultView(plan: plan, onRegenerate: _submit),
           );
 
     return ToolScaffold(
       title: l10n.lessonPlanTitle,
       isBusy: state.isLoading,
       submitLabel: l10n.actionGenerate,
-      onSubmit: state.isLoading ? null : _submit,
-      result: result,
+      // Hide the sticky Generate button once a plan is on screen — the
+      // document's own action bar (Regenerate / Copy) takes over.
+      onSubmit: (state.isLoading || hasResult) ? null : _submit,
+      result: KeyedSubtree(key: _resultKey, child: result),
       child: Form(
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -91,12 +132,16 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
+            EditorialSectionHeader(l10n.lessonPlanSectionLesson),
+            const SizedBox(height: AppSpacing.space4),
             _topicField(l10n),
             const SizedBox(height: AppSpacing.space6),
             _gradeField(l10n),
             const SizedBox(height: AppSpacing.space6),
             _subjectField(l10n),
-            const SizedBox(height: AppSpacing.space6),
+            const SizedBox(height: AppSpacing.space8),
+            EditorialSectionHeader(l10n.lessonPlanSectionApproach),
+            const SizedBox(height: AppSpacing.space4),
             _languageField(l10n),
             const SizedBox(height: AppSpacing.space6),
             _resourceField(l10n),
@@ -113,6 +158,7 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
   Widget _topicField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.lessonPlanTopicLabel,
+      leadingIcon: LucideIcons.lightbulb,
       child: TextFormField(
         controller: _topicController,
         maxLength: 1000,
@@ -132,6 +178,7 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
     return LabeledField(
       label: l10n.lessonPlanGradeLabel,
       optionalLabel: l10n.lessonPlanOptional,
+      leadingIcon: LucideIcons.graduationCap,
       child: Wrap(
         spacing: AppSpacing.space2,
         runSpacing: AppSpacing.space2,
@@ -140,6 +187,7 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
             FilterChip(
               label: Text(grade),
               selected: _grades.contains(grade),
+              showCheckmark: false,
               materialTapTargetSize: MaterialTapTargetSize.padded,
               onSelected: (selected) => setState(() {
                 if (selected) {
@@ -158,6 +206,7 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
     return LabeledField(
       label: l10n.lessonPlanSubjectLabel,
       optionalLabel: l10n.lessonPlanOptional,
+      leadingIcon: LucideIcons.bookOpen,
       child: DropdownButtonFormField<String?>(
         initialValue: _subject,
         isExpanded: true,
@@ -177,6 +226,7 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
   Widget _languageField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.languageLabel,
+      leadingIcon: LucideIcons.languages,
       child: DropdownButtonFormField<AppLocale>(
         initialValue: _language,
         isExpanded: true,
@@ -195,15 +245,18 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
   Widget _resourceField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.lessonPlanResourceLabel,
-      child: _ChoiceRow<ResourceLevel>(
-        values: ResourceLevel.values,
-        selected: _resource,
-        labelOf: (value) => switch (value) {
-          ResourceLevel.low => l10n.lessonPlanResourceLow,
-          ResourceLevel.medium => l10n.lessonPlanResourceMedium,
-          ResourceLevel.high => l10n.lessonPlanResourceHigh,
-        },
-        onSelected: (value) => setState(() => _resource = value),
+      leadingIcon: LucideIcons.layers,
+      child: AppSegmented<ResourceLevel>(
+        value: _resource,
+        onChanged: (value) => setState(() => _resource = value),
+        segments: [
+          AppSegment(
+              value: ResourceLevel.low, label: l10n.lessonPlanResourceLow),
+          AppSegment(
+              value: ResourceLevel.medium, label: l10n.lessonPlanResourceMedium),
+          AppSegment(
+              value: ResourceLevel.high, label: l10n.lessonPlanResourceHigh),
+        ],
       ),
     );
   }
@@ -211,15 +264,21 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
   Widget _difficultyField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.lessonPlanDifficultyLabel,
-      child: _ChoiceRow<DifficultyLevel>(
-        values: DifficultyLevel.values,
-        selected: _difficulty,
-        labelOf: (value) => switch (value) {
-          DifficultyLevel.remedial => l10n.lessonPlanDifficultyRemedial,
-          DifficultyLevel.standard => l10n.lessonPlanDifficultyStandard,
-          DifficultyLevel.advanced => l10n.lessonPlanDifficultyAdvanced,
-        },
-        onSelected: (value) => setState(() => _difficulty = value),
+      leadingIcon: LucideIcons.gauge,
+      child: AppSegmented<DifficultyLevel>(
+        value: _difficulty,
+        onChanged: (value) => setState(() => _difficulty = value),
+        segments: [
+          AppSegment(
+              value: DifficultyLevel.remedial,
+              label: l10n.lessonPlanDifficultyRemedial),
+          AppSegment(
+              value: DifficultyLevel.standard,
+              label: l10n.lessonPlanDifficultyStandard),
+          AppSegment(
+              value: DifficultyLevel.advanced,
+              label: l10n.lessonPlanDifficultyAdvanced),
+        ],
       ),
     );
   }
@@ -231,50 +290,16 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
       value: _useRuralContext,
       onChanged: (value) => setState(() => _useRuralContext = value),
       contentPadding: EdgeInsets.zero,
+      secondary: Icon(
+        LucideIcons.sprout,
+        size: AppIconSize.inline,
+        color: scheme.onSurfaceVariant,
+      ),
       title: Text(l10n.lessonPlanRuralLabel, style: text.bodyLarge),
       subtitle: Text(
         l10n.lessonPlanRuralHint,
         style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
       ),
-    );
-  }
-}
-
-/// A labelled form row: a weight-first label (with an optional "Optional"
-/// marker) above its control, on the 4dp grid.
-
-/// A single-select group rendered as wrapping [ChoiceChip]s. Wrapping (instead
-/// of a fixed-width SegmentedButton) guarantees no horizontal overflow at
-/// 360dp width or textScale 1.3, while keeping >=48dp tap targets.
-class _ChoiceRow<T> extends StatelessWidget {
-  const _ChoiceRow({
-    required this.values,
-    required this.selected,
-    required this.labelOf,
-    required this.onSelected,
-  });
-
-  final List<T> values;
-  final T selected;
-  final String Function(T value) labelOf;
-  final ValueChanged<T> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: AppSpacing.space2,
-      runSpacing: AppSpacing.space2,
-      children: [
-        for (final value in values)
-          ChoiceChip(
-            label: Text(labelOf(value)),
-            selected: value == selected,
-            materialTapTargetSize: MaterialTapTargetSize.padded,
-            onSelected: (isSelected) {
-              if (isSelected) onSelected(value);
-            },
-          ),
-      ],
     );
   }
 }
