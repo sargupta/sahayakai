@@ -1,0 +1,109 @@
+import 'dart:async';
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:sahayakai/shared/voice/audio_player_service.dart';
+import 'package:sahayakai/shared/voice/audio_recorder_service.dart';
+import 'package:sahayakai/shared/voice/mic_permission_service.dart';
+
+/// A recorder that never opens a microphone. [stop] writes [captureBytes] of
+/// zeros to a real temp file so `Recording.readBytes()` works exactly as it
+/// would on device; set `captureBytes <= 0` to model "nothing captured" (a
+/// null recording). Push levels through [emitAmplitude] to drive the VAD.
+class FakeAudioRecorderService implements AudioRecorderService {
+  FakeAudioRecorderService({this.permission = true, this.captureBytes = 8000});
+
+  bool permission;
+  int captureBytes;
+
+  final StreamController<double> _amplitude =
+      StreamController<double>.broadcast();
+  bool _recording = false;
+  int startCount = 0;
+  int stopCount = 0;
+  int cancelCount = 0;
+  final List<String> _tempPaths = [];
+
+  void emitAmplitude(double level) {
+    if (!_amplitude.isClosed) _amplitude.add(level);
+  }
+
+  @override
+  Future<bool> hasPermission() async => permission;
+
+  @override
+  bool get isRecording => _recording;
+
+  @override
+  Stream<double> get amplitude => _amplitude.stream;
+
+  @override
+  Future<void> start() async {
+    _recording = true;
+    startCount++;
+  }
+
+  @override
+  Future<Recording?> stop() async {
+    _recording = false;
+    stopCount++;
+    if (captureBytes <= 0) return null;
+    final dir = Directory.systemTemp.createTempSync('vidya_fake_rec');
+    final file = File('${dir.path}/utterance.wav');
+    file.writeAsBytesSync(Uint8List(captureBytes));
+    _tempPaths.add(dir.path);
+    return Recording(path: file.path, byteLength: captureBytes);
+  }
+
+  @override
+  Future<void> cancel() async {
+    _recording = false;
+    cancelCount++;
+  }
+
+  @override
+  Future<void> dispose() async {
+    if (!_amplitude.isClosed) await _amplitude.close();
+    for (final p in _tempPaths) {
+      final d = Directory(p);
+      if (d.existsSync()) d.deleteSync(recursive: true);
+    }
+  }
+}
+
+/// A player that records what it was asked to speak instead of touching a
+/// speaker.
+class FakeAudioPlayerService implements AudioPlayerService {
+  final List<String> played = [];
+  int stopCount = 0;
+
+  @override
+  Future<void> playBase64Mp3(String base64Mp3) async => played.add(base64Mp3);
+
+  @override
+  Future<void> stop() async => stopCount++;
+
+  @override
+  Future<void> dispose() async {}
+}
+
+/// A permission gate that answers from a field instead of the OS.
+class FakeMicPermissionService implements MicPermissionService {
+  FakeMicPermissionService([this.result = MicPermission.granted]);
+
+  MicPermission result;
+  int requestCount = 0;
+  int openSettingsCount = 0;
+
+  @override
+  Future<MicPermission> ensureGranted() async {
+    requestCount++;
+    return result;
+  }
+
+  @override
+  Future<bool> openSettings() async {
+    openSettingsCount++;
+    return true;
+  }
+}

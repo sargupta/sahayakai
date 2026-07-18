@@ -23,7 +23,20 @@ class FakeApiClient extends ApiClient {
     this.putError,
     this.multipartResponse,
     this.multipartError,
+    this.postResponsesByPath,
+    this.postErrorsByPath,
   });
+
+  /// Per-path POST reply, checked BEFORE the single [postResponse]. Lets one
+  /// fake serve a pipeline that posts to several routes (VIDYA: `/api/assistant`
+  /// vs `/api/tts` vs `/api/vidya/session`), which a single [postResponse]
+  /// cannot. Absent (the default) preserves the existing single-response
+  /// behaviour for every current test.
+  final Map<String, Object?>? postResponsesByPath;
+
+  /// Per-path POST error, checked BEFORE [postResponsesByPath] — model a 401 on
+  /// `/api/assistant` while `/api/tts` still succeeds.
+  final Map<String, Object>? postErrorsByPath;
 
   /// The raw JSON [get] hands to its `decode`. `dynamic`, like the real
   /// client's decode contract, so a test can hand it a non-object and prove the
@@ -119,6 +132,13 @@ class FakeApiClient extends ApiClient {
   }) async {
     posts.add((path: path, data: data));
     if (delay != null) await Future<void>.delayed(delay!);
+    // Per-path stubs win, so one fake can drive a multi-route pipeline.
+    final pathError = postErrorsByPath?[path];
+    if (pathError != null) throw pathError;
+    if (postResponsesByPath != null && postResponsesByPath!.containsKey(path)) {
+      final byPath = postResponsesByPath![path];
+      return decode((byPath as Map?)?.cast<String, dynamic>() ?? const {});
+    }
     if (postError != null) throw postError!;
     final stub = postResponse;
     if (stub != null) return decode((stub as Map).cast<String, dynamic>());
