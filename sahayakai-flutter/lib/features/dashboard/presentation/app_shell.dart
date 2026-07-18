@@ -79,7 +79,11 @@ class _AppShellState extends State<AppShell> {
   Future<void> _openCreatePalette() async {
     await showModalBottomSheet<void>(
       context: context,
-      showDragHandle: true,
+      // The sheet hosts its own premium surface (rHero top corners + the e4
+      // modal shadow, §5), so the modal route stays transparent and draws no
+      // Material of its own. [_CreatePalette] carries its own grab handle.
+      backgroundColor: Colors.transparent,
+      elevation: 0,
       // The sheet carries a search field: it must be free to grow past the
       // default 9/16-screen cap and to lift above the keyboard. [_CreatePalette]
       // bounds its own height and scrolls its list inside that bound, so this
@@ -161,10 +165,11 @@ class _AnimatedTabBodyState extends State<_AnimatedTabBody>
 /// each row deep-linking into its tool. Reached from the shell's Create action.
 ///
 /// It walks the SAME registry the dashboard grid does, so the two always agree
-/// on which tools exist. The sheet's chrome (radius-12 top corners,
-/// surfaceTint-transparent, shadow) comes from `bottomSheetTheme`; the height is
-/// bounded here (a min-height [Column] with the list in a [Flexible]) so the
-/// list scrolls inside the sheet rather than the sheet growing without limit.
+/// on which tools exist. It is a premium floating sheet (§5): it draws its own
+/// surface with rHero top corners and the e4 modal shadow (dark uses the black
+/// key shadow), a serif masthead, and its own grab handle. The height is bounded
+/// here (a min-height [Column] with the list in a [Flexible]) so the list
+/// scrolls inside the sheet rather than the sheet growing without limit.
 class _CreatePalette extends StatefulWidget {
   const _CreatePalette();
 
@@ -187,11 +192,22 @@ class _CreatePaletteState extends State<_CreatePalette> {
   /// no-op there and `contains` matches on the raw glyphs.
   static String _fold(String s) => s.trim().toLowerCase();
 
+  /// The sheet's own top-corner radius (rHero 20) — used by both the shadow
+  /// carrier and the clip so the surface and its ripple share one edge. Derived
+  /// from the `AppRadius.rHero` token (top corners only; the bottom sits at the
+  /// screen edge) rather than an off-token literal.
+  static final BorderRadius _sheetRadius = BorderRadius.only(
+    topLeft: AppRadius.rHero.topLeft,
+    topRight: AppRadius.rHero.topRight,
+  );
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final text = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final text = theme.textTheme;
+    final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     final query = _fold(_query);
     final tools = query.isEmpty
@@ -201,86 +217,117 @@ class _CreatePaletteState extends State<_CreatePalette> {
               if (_fold(tool.title(l10n)).contains(query)) tool,
           ];
 
-    return SafeArea(
-      // Lift the whole sheet above the keyboard so the focused search field is
-      // never hidden behind it (DESIGN_RUBRIC §9).
-      child: Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.space4,
-                AppSpacing.space2,
-                AppSpacing.space4,
-                AppSpacing.space3,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(l10n.navCreate, style: text.titleMedium),
-                  const SizedBox(height: AppSpacing.space3),
-                  TextField(
-                    controller: _controller,
-                    textInputAction: TextInputAction.search,
-                    onChanged: (value) => setState(() => _query = value),
-                    // The themed input styling (radius, saffron focus ring,
-                    // Indic fallback) comes from `inputDecorationTheme`; only the
-                    // palette-specific affordances are set here.
-                    decoration: InputDecoration(
-                      hintText: l10n.createPaletteSearchHint,
-                      prefixIcon: Icon(
-                        LucideIcons.search,
-                        size: AppIconSize.inline,
-                        color: scheme.onSurfaceVariant,
+    // Lift the whole sheet above the keyboard so the focused search field is
+    // never hidden behind it (DESIGN_RUBRIC §9).
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: DecoratedBox(
+        // The premium floating surface (§5): rHero top corners + the e4 modal
+        // shadow in light; the black key shadow in dark.
+        decoration: BoxDecoration(
+          color: scheme.surface,
+          borderRadius: _sheetRadius,
+          boxShadow: isDark ? AppShadows.dKey : AppShadows.e4,
+        ),
+        child: ClipRRect(
+          borderRadius: _sheetRadius,
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // A slim grab handle — the sheet hosts its own chrome now.
+                Padding(
+                  padding: const EdgeInsets.only(
+                    top: AppSpacing.space3,
+                    bottom: AppSpacing.space1,
+                  ),
+                  child: Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      decoration: ShapeDecoration(
+                        color: scheme.outlineVariant,
+                        shape: const StadiumBorder(),
                       ),
-                      suffixIcon: _query.isEmpty
-                          ? null
-                          : IconButton(
-                              icon: const Icon(
-                                LucideIcons.x,
-                                size: AppIconSize.inline,
-                              ),
-                              color: scheme.onSurfaceVariant,
-                              tooltip: MaterialLocalizations.of(context)
-                                  .deleteButtonTooltip,
-                              onPressed: () => setState(() {
-                                _controller.clear();
-                                _query = '';
-                              }),
-                            ),
                     ),
                   ),
-                ],
-              ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.space4,
+                    AppSpacing.space2,
+                    AppSpacing.space4,
+                    AppSpacing.space3,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Serif masthead (Fraunces titleLarge) over the search.
+                      Text(l10n.navCreate, style: text.titleLarge),
+                      const SizedBox(height: AppSpacing.space3),
+                      TextField(
+                        controller: _controller,
+                        textInputAction: TextInputAction.search,
+                        onChanged: (value) => setState(() => _query = value),
+                        // The themed input styling (radius, saffron focus ring,
+                        // Indic fallback) comes from `inputDecorationTheme`; only
+                        // the palette-specific affordances are set here.
+                        decoration: InputDecoration(
+                          hintText: l10n.createPaletteSearchHint,
+                          prefixIcon: Icon(
+                            LucideIcons.search,
+                            size: AppIconSize.inline,
+                            color: scheme.onSurfaceVariant,
+                          ),
+                          suffixIcon: _query.isEmpty
+                              ? null
+                              : IconButton(
+                                  icon: const Icon(
+                                    LucideIcons.x,
+                                    size: AppIconSize.inline,
+                                  ),
+                                  color: scheme.onSurfaceVariant,
+                                  tooltip: MaterialLocalizations.of(context)
+                                      .deleteButtonTooltip,
+                                  onPressed: () => setState(() {
+                                    _controller.clear();
+                                    _query = '';
+                                  }),
+                                ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (tools.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.space4,
+                      AppSpacing.space2,
+                      AppSpacing.space4,
+                      AppSpacing.space6,
+                    ),
+                    child: EmptyView(
+                      icon: LucideIcons.searchX,
+                      message: l10n.createPaletteEmpty,
+                    ),
+                  )
+                else
+                  Flexible(
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.only(bottom: AppSpacing.space4),
+                      itemCount: tools.length,
+                      itemBuilder: (context, index) =>
+                          _CreatePaletteRow(tool: tools[index]),
+                    ),
+                  ),
+              ],
             ),
-            if (tools.isEmpty)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.space4,
-                  AppSpacing.space2,
-                  AppSpacing.space4,
-                  AppSpacing.space6,
-                ),
-                child: EmptyView(
-                  icon: LucideIcons.searchX,
-                  message: l10n.createPaletteEmpty,
-                ),
-              )
-            else
-              Flexible(
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  padding: const EdgeInsets.only(bottom: AppSpacing.space4),
-                  itemCount: tools.length,
-                  itemBuilder: (context, index) =>
-                      _CreatePaletteRow(tool: tools[index]),
-                ),
-              ),
-          ],
+          ),
         ),
       ),
     );
@@ -311,6 +358,11 @@ class _CreatePaletteRow extends StatelessWidget {
       subtitle: Text(
         tool.subtitle(l10n),
         style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+      ),
+      trailing: Icon(
+        LucideIcons.chevronRight,
+        size: AppIconSize.inline,
+        color: scheme.onSurfaceVariant,
       ),
       onTap: () {
         // Capture the router before the sheet pops: after the pop this row's
