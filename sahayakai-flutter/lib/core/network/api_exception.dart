@@ -23,6 +23,7 @@ class ApiException implements Exception {
     this.message, {
     this.statusCode,
     this.errorCode,
+    this.retryAfterSeconds,
     this.raw,
   });
 
@@ -38,6 +39,15 @@ class ApiException implements Exception {
   /// "try fewer chapters", not a generic failure. Null when the body carried
   /// no `error` string (network/timeout/parse failures).
   final String? errorCode;
+
+  /// The retry cool-down, in seconds, parsed from a rate-limited (429)
+  /// response. The attendance-outreach route returns a structured
+  /// `{ error, retryAfterSeconds }` body **and** a `Retry-After` header for its
+  /// 5-minute per-(teacher,student) dedup window; this field decodes that
+  /// number (body `retryAfterSeconds` first, then the header) so a caller can
+  /// render an exact countdown instead of a generic "try later". Null for any
+  /// non-429 error or a 429 that carried no retry hint.
+  final int? retryAfterSeconds;
   final Object? raw;
 
   bool get isAuth => kind == ApiErrorKind.unauthorized;
@@ -79,6 +89,7 @@ class ApiException implements Exception {
               serverMsg ?? 'You have reached your usage limit.',
               statusCode: 429,
               errorCode: errorCode,
+              retryAfterSeconds: _extractRetryAfter(e.response),
               raw: e,
             ),
           _ when code >= 500 => ApiException(
@@ -116,6 +127,29 @@ class ApiException implements Exception {
   /// null.
   static String? _extractErrorCode(dynamic data) {
     if (data is Map && data['error'] is String) return data['error'] as String;
+    return null;
+  }
+
+  /// Parses the retry cool-down from a 429 response. Prefers the structured
+  /// body field `retryAfterSeconds` (a `number` server-side — tolerated as
+  /// `int`, `num`, or a numeric string) and falls back to the standard
+  /// `Retry-After` header. Returns null when neither is present or parseable.
+  static int? _extractRetryAfter(Response<dynamic>? response) {
+    final data = response?.data;
+    if (data is Map) {
+      final v = data['retryAfterSeconds'];
+      if (v is int) return v;
+      if (v is num) return v.ceil();
+      if (v is String) {
+        final parsed = num.tryParse(v);
+        if (parsed != null) return parsed.ceil();
+      }
+    }
+    final header = response?.headers.value('retry-after');
+    if (header != null) {
+      final parsed = num.tryParse(header.trim());
+      if (parsed != null) return parsed.ceil();
+    }
     return null;
   }
 
