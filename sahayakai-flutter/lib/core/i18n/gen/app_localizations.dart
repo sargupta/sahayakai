@@ -3337,6 +3337,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The photo could not be graded. Please re-upload a clearer photo.'**
   String get assessRephrase;
+
+  /// Worksheet form section header: the textbook photo and prompt the worksheet is built from.
+  ///
+  /// In en, this message translates to:
+  /// **'The worksheet'**
+  String get worksheetSectionWorksheet;
 }
 
 class _AppLocalizationsDelegate

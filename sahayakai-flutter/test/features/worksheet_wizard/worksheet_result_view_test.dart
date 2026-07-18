@@ -22,11 +22,11 @@ void main() {
       expect(find.text('Class 2'), findsOneWidget);
       expect(find.text('Mathematics'), findsOneWidget);
 
-      // Section headings.
-      expect(find.text('Learning objectives'), findsOneWidget);
-      expect(find.text('Instructions for students'), findsOneWidget);
-      expect(find.text('Activities'), findsOneWidget);
-      expect(find.text('Answer key'), findsOneWidget);
+      // Section headings — DocumentSheetSection UPPERCASEs Latin headings.
+      expect(find.text('LEARNING OBJECTIVES'), findsOneWidget);
+      expect(find.text('INSTRUCTIONS FOR STUDENTS'), findsOneWidget);
+      expect(find.text('ACTIVITIES'), findsOneWidget);
+      expect(find.text('ANSWER KEY'), findsOneWidget);
 
       // Activity type badge + sub-notes.
       expect(find.text('Question'), findsOneWidget);

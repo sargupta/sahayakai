@@ -2295,5 +2295,9 @@
   "assessRephrase": "The photo could not be graded. Please re-upload a clearer photo.",
   "@assessRephrase": {
     "description": "Shown on a 400 bad-input response."
+  },
+  "worksheetSectionWorksheet": "The worksheet",
+  "@worksheetSectionWorksheet": {
+    "description": "Worksheet form section header: the textbook photo and prompt the worksheet is built from."
   }
 }
