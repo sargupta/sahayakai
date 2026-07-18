@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
 import 'app_icon_size.dart';
@@ -14,7 +13,14 @@ export 'app_motion.dart';
 export 'app_radius.dart';
 export 'app_shadows.dart';
 export 'app_spacing.dart';
-export 'app_text.dart' show kIndicFallback, warmIndicFonts, AppText;
+export 'app_text.dart'
+    show
+        kIndicFallback,
+        kIndicSerifFallback,
+        kIndicSansFallback,
+        warmIndicFonts,
+        AppText,
+        AppTextExtras;
 
 /// SahayakAI Material 3 theme — pixel-faithful port of the web design system.
 /// See docs/flutter/THEME_SPEC.md for the full derivation.
@@ -113,14 +119,21 @@ class AppTheme {
           );
 
     final textTheme = AppText.build(scheme, isIndic: isIndic);
+    final textExtras = AppText.buildExtras(scheme, isIndic: isIndic);
 
     return ThemeData(
       useMaterial3: true,
       brightness: b,
       colorScheme: scheme,
-      scaffoldBackgroundColor: scheme.surfaceContainerLowest, // web `background`
+      // Solid paper ground; the barely-there warm wash (AppGradients.lightPaper
+      // / darkVignette) is painted as a DecoratedBox by the scaffold wrapper,
+      // never as scaffoldBackgroundColor (which must stay a solid Color).
+      scaffoldBackgroundColor: scheme.surfaceContainerLowest,
       shadowColor: AppColors.shadowBase,
       textTheme: textTheme,
+      // AppTextExtras is derived from the same scheme/isIndic path, so
+      // AppTheme.withIndic() rebuilds it in lockstep with the TextTheme.
+      extensions: [textExtras],
       splashFactory: InkRipple.splashFactory,
       appBarTheme: AppBarTheme(
         backgroundColor: scheme.surfaceContainerLowest,
@@ -130,8 +143,8 @@ class AppTheme {
         scrolledUnderElevation: 2,
         shadowColor: AppColors.shadowBase,
         centerTitle: false,
-        // THEME_SPEC §5.6: "Title: Outfit 20/600 (titleLarge)" — derived rather
-        // than re-declared, so the Indic line-height follows the locale.
+        // Masthead: the serif titleLarge (Fraunces 21/600) — derived rather than
+        // re-declared, so the Indic line-height follows the locale.
         titleTextStyle: textTheme.titleLarge,
         systemOverlayStyle:
             isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
@@ -185,56 +198,63 @@ class AppTheme {
           textStyle: WidgetStatePropertyAll(textTheme.labelLarge),
         ),
       ),
+      // §2.3: elevation 0 + surfaceTint transparent; depth is drawn as the
+      // two-layer warm AppShadows on each widget's own DecoratedBox (AppCard),
+      // because Material tonal elevation cannot express a two-layer shadow.
       cardTheme: CardThemeData(
         color: scheme.surface,
         surfaceTintColor: Colors.transparent,
-        elevation: 1,
+        elevation: 0,
         shadowColor: AppColors.shadowBase,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: AppRadius.rLg,
+          borderRadius: AppRadius.rCard,
           side: BorderSide(color: scheme.outline, width: 1),
         ),
       ),
+      // §5 LabeledField v2: filled with the grouped surface, control radius,
+      // 16/16 content padding (~56dp), 2px saffron focus ring. The soft focus
+      // GLOW (primary@0.14, spread 3) is drawn by LabeledField's own wrapper —
+      // an InputDecoration cannot cast a shadow.
       inputDecorationTheme: InputDecorationTheme(
-        filled: false,
+        filled: true,
+        fillColor: scheme.surfaceContainerLow,
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        hintStyle: GoogleFonts.inter(
-          fontSize: 14,
-          color: scheme.onSurfaceVariant,
-        ).copyWith(fontFamilyFallback: kIndicFallback),
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        hintStyle: textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
         enabledBorder: OutlineInputBorder(
-          borderRadius: AppRadius.rMd,
+          borderRadius: AppRadius.rControl,
           borderSide: BorderSide(color: scheme.outlineVariant, width: 1),
         ),
         border: OutlineInputBorder(
-          borderRadius: AppRadius.rMd,
+          borderRadius: AppRadius.rControl,
           borderSide: BorderSide(color: scheme.outlineVariant, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: AppRadius.rMd,
+          borderRadius: AppRadius.rControl,
           borderSide: BorderSide(color: scheme.primary, width: 2), // saffron ring
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: AppRadius.rMd,
-          borderSide: BorderSide(color: scheme.error, width: 1),
+          borderRadius: AppRadius.rControl,
+          borderSide: BorderSide(color: scheme.error, width: 2),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: AppRadius.rMd,
+          borderRadius: AppRadius.rControl,
           borderSide: BorderSide(color: scheme.error, width: 2),
         ),
       ),
+      // §5 chip: rest = surfaceContainerHigh fill + 1px outline + labelMedium
+      // onSurface; selected = primaryContainer fill + onPrimaryContainer label
+      // (border+fill suffice, so call sites pass showCheckmark:false). The 1.5px
+      // selected saffron border is applied per-chip where choice chips render.
       chipTheme: ChipThemeData(
-        backgroundColor: scheme.surfaceContainer, // muted chip
+        backgroundColor: scheme.surfaceContainerHigh,
         selectedColor: scheme.primaryContainer,
-        checkmarkColor: scheme.primary,
-        labelStyle: GoogleFonts.inter(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: scheme.onSurface,
-        ).copyWith(fontFamilyFallback: kIndicFallback),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+        checkmarkColor: scheme.onPrimaryContainer,
+        labelStyle: textTheme.labelMedium?.copyWith(color: scheme.onSurface),
+        secondaryLabelStyle: textTheme.labelMedium
+            ?.copyWith(color: scheme.onPrimaryContainer, fontWeight: FontWeight.w600),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         shape: const StadiumBorder(),
         side: BorderSide(color: scheme.outline),
       ),

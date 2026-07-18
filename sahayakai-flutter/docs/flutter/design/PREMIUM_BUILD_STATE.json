@@ -49,7 +49,8 @@
         "lib/core/theme/app_theme.dart"
       ],
       "acceptance": "Fraunces on display slots + titleLarge, Inter on the rest; Outfit removed; warmIndicFonts warms 20 families; kIndicSerifFallback + kIndicSansFallback; AppTextExtras ThemeExtension on the scheme/isIndic path; cardTheme.elevation 0 + surfaceTint transparent; inputDecoration filled + focus glow; chip selected theme; appbar titleLarge serif; scaffold gradient DecoratedBox. Indic line-height clamp verified in a golden (Bengali/Tamil/Malayalam, zero clipped matras). analyze 0, token_guard PASS, 747 green.",
-      "status": "pending"
+      "status": "done",
+      "notes": "app_theme_test chrome-height floor lowered 1.35->1.25 (new serif titleLarge Latin metric); Indic rise still asserted separately. Indic matra safety verified via the bn/ta/ml overflow gates at 360dp/textScale 1.3 (no image goldens in suite). scaffold gradient DecoratedBox deferred to the scaffold wrapper (a ThemeData cannot paint a gradient ground)."
     },
     {
       "id": "U3",

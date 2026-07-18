@@ -60,11 +60,13 @@ void main() {
             reason: '$name declares no height, so it falls back to the font\'s '
                 'own default (~1.21 for Inter) and clips Indic matras',
           );
-          // 1.35 is titleLarge's deliberate Latin display metric (app_text.dart).
-          // Nothing may sit below it, and nothing may be left to the font.
+          // 1.25 is titleLarge's deliberate Latin serif metric (app_text.dart:
+          // Fraunces 21/600 at 1.25 Latin / 1.42 Indic) — the tightest chrome
+          // slot. Nothing may sit below it, and nothing may be left to the font
+          // (~1.21 for Inter). The Indic rise is asserted separately below.
           expect(
             style.height,
-            greaterThanOrEqualTo(1.35),
+            greaterThanOrEqualTo(1.25),
             reason: '$name height ${style.height} is tighter than any '
                 'sanctioned line-height',
           );

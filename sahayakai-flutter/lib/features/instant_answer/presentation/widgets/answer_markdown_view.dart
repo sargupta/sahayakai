@@ -113,7 +113,7 @@ class _Prose extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
 
     // Inline code keeps the body family on a tinted chip rather than pulling in
-    // a monospace family: DESIGN_RUBRIC §0 sanctions Outfit + Inter only, and a
+    // a monospace family: the type system sanctions Fraunces + Inter only, and a
     // third google_fonts family would also mean another runtime fetch.
     if (span.code) {
       return WidgetSpan(
