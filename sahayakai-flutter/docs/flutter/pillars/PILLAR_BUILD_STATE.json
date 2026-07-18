@@ -78,19 +78,32 @@
       "id": "U-V3",
       "pillar": "02",
       "title": "VidyaController — state machine + conversation/session state + guards",
-      "files": ["lib/features/vidya/presentation/vidya_controller.dart"],
+      "files": [
+        "lib/features/vidya/presentation/vidya_controller.dart",
+        "lib/shared/voice/mic_permission_service.dart",
+        "test/features/vidya/vidya_controller_test.dart",
+        "test/support/fake_voice.dart",
+        "test/support/fake_api_client.dart"
+      ],
       "consumes": ["U-V1", "U-V2"],
       "firebaseGated": false,
-      "status": "pending"
+      "status": "done",
+      "commit": "d323aa0fa",
+      "notes": "The single VIDYA brain: coupled capture+conversation state machine ported from the web (SPEC §A.6). VidyaStatus idle -> requestingPermission -> listening -> transcribing -> thinking -> speaking -> idle, plus dignified micDenied / signedOut (401) / limitReached (429) / failed (network) terminal states. Conversation is an ordered list of document blocks (teacher + VIDYA), never a chat thread; 0 directives = speak-only, 1 = pendingNavigation (home auto-routes), 2-3 = confirm chips (dispatchDirective routes one + drops its chip). Every await guarded by a generation counter (_stale) so cancel/fresh-tap abandons an in-flight trip. Ported guards: MIN_AUDIO_BYTES reject, transcription-refusal filter, fresh-classification window (5min+same path) for chatHistory, VAD auto-stop (trailing/initial silence + 30s cap), profile-poisoning guard (learns grade/subject, NEVER utterance language). LANG_TO_BCP47 + normaliseVidyaLanguage (mr->hi voice, or->en). New MicPermissionService seam (permission_handler) -> permanent-deny state. Session turn-sync + profile-learn fire-and-forget (401 on stub, swallowed). Added per-path POST stubs to FakeApiClient (additive; existing tests untouched). 19 pure-Dart machine tests with fake recorder/player/permission — verified by code+test only (no device mic; routes 401)."
     },
     {
       "id": "U-V4",
       "pillar": "02",
       "title": "Seal Mic widget (5 states, breathing/listening/thinking/speaking, reduce-motion)",
-      "files": ["lib/features/vidya/presentation/widgets/seal_mic.dart"],
+      "files": [
+        "lib/features/vidya/presentation/widgets/seal_mic.dart",
+        "test/features/vidya/seal_mic_test.dart"
+      ],
       "consumes": ["U-V3"],
       "firebaseGated": false,
-      "status": "pending"
+      "status": "done",
+      "commit": "66df9b6be",
+      "notes": "The authored signature control (SPEC §B.2): a 128dp circular saffron wax-seal — brandSaffron face + a 2px brandBrass ring, an onPrimary Lucide mic glyph, lifted on the warm CTA glow — mirroring the splash Seal, NOT a Material FAB. Owns a small SealMicState enum (idle/listening/transcribing/thinking/speaking) so it is testable and reusable independently of the controller. Five calm motions, each gated on context.motionEnabled -> reduce-motion renders the composed still: idle 3s breathing scale + halo; listening concentric rings reacting to a passed 0..1 amplitude; transcribing/thinking a calm orbiting arc over a faint track (a full soft ring under reduce-motion); speaking a gentle expanding pulse. PressableScale on tap; a single button Semantics node with the state hint + a tap action; 128dp clears the 48dp floor. 19 widget tests: every state renders; reduce-motion collapses to a non-ticking static frame (pumpAndSettle returns); the four ambient states tick under motion while listening stays amplitude-driven; tap, semantics, tap-target, dark render. CRITICAL for later units: a continuous repeating controller means pumpAndSettle-based tests on any screen hosting it MUST disable animations (see U-V5)."
     },
     {
       "id": "U-V5",
@@ -99,12 +112,18 @@
       "files": [
         "lib/features/vidya/presentation/vidya_home_screen.dart",
         "lib/features/vidya/presentation/widgets/conversation_block.dart",
+        "lib/core/router/routes.dart",
         "lib/core/router/app_router.dart",
-        "lib/features/dashboard/presentation/app_shell.dart"
+        "lib/features/dashboard/presentation/app_shell.dart",
+        "lib/core/i18n/arb/* (24 keys x 11 langs) + lib/core/i18n/gen/**",
+        "test/features/vidya/vidya_home_screen_test.dart",
+        "test/features/{onboarding,splash,library,dashboard}/* (IA test updates)"
       ],
       "consumes": ["U-V3", "U-V4"],
       "firebaseGated": "partial (UI testable now; live conversation needs auth)",
-      "status": "pending"
+      "status": "done",
+      "commit": "801d75cc1",
+      "notes": "The voice-first landing (SPEC §B): a nearly-empty warm-ivory page (paper gradient) with the Seal Mic at the optical centre (slightly high), a time-aware Fraunces greeting (reuses dashboardGreeting* keys), a saffron eyebrow/rule/deck, and a rotating prompt (timer only under motion). Turns ink as document blocks (ConversationBlockView: teacher AppCard(inset)+YOU-SAID overline, VIDYA AppCard+accentBar+tick, all AiText, inkSettle per new block via ListView.builder so only new blocks animate). Compound intents -> confirm chips (primaryContainer + 1.5px primary border + sparkles); single intent -> ref.listen routes to the flow's tool prefilled then consumeNavigation. Terminal states render dignified panels (signed-out has no CTA; mic-denied -> Open settings; failed -> Try again). ROUTER/IA: Home = VidyaHomeScreen in the shell (nav icon -> mic); the former dashboard tool-grid moved to Routes.prepDesk reached from the app-bar layoutGrid action + still in the Create palette. Fixed a latent app_shell bug: _AnimatedTabBody's lazy `late final` controller first-initialised inside dispose() under reduce-motion -> Ticker lookup on a deactivated element crashed 85 tests; now eager in initState. 24 ARB keys added across all 11 languages (never Hindi-only) + gen/** regenerated. 12 home widget tests + updated IA tests (splash/onboarding/login landing -> VidyaHomeScreen; pumpSignedInApp disables animations for the breathing Seal; pumpDashboard -> /prep-desk; library reaches the tab from the shell; shared-read test reframed) — tool reachability assertions kept intact. Verified by code+test only; the loop awaits Firebase auth."
     },
     {
       "id": "U-V6",
