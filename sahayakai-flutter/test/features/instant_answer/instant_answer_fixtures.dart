@@ -43,6 +43,7 @@ Widget hostResult(
   Widget child, {
   Brightness brightness = Brightness.light,
   LinkOpener? linkOpener,
+  bool reduceMotion = false,
 }) {
   return ProviderScope(
     overrides: [
@@ -56,7 +57,15 @@ Widget hostResult(
       home: Scaffold(
         body: SingleChildScrollView(
           padding: AppSpacing.pagePadding,
-          child: child,
+          child: reduceMotion
+              ? Builder(
+                  builder: (context) => MediaQuery(
+                    data: MediaQuery.of(context)
+                        .copyWith(disableAnimations: true),
+                    child: child,
+                  ),
+                )
+              : child,
         ),
       ),
     ),

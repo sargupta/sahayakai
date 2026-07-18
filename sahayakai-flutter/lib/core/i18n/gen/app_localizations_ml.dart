@@ -184,6 +184,9 @@ class AppLocalizationsMl extends AppLocalizations {
   String get sectionForYourClass => 'നിങ്ങളുടെ ക്ലാസിനായി';
 
   @override
+  String get instantAnswerResultTitle => 'ഉത്തരം';
+
+  @override
   String get dashboardToolsTitle => 'നിങ്ങളുടെ അധ്യാപന ഉപകരണങ്ങൾ';
 
   @override

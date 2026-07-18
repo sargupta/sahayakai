@@ -182,6 +182,9 @@ class AppLocalizationsTa extends AppLocalizations {
   String get sectionForYourClass => 'உங்கள் வகுப்பிற்கு';
 
   @override
+  String get instantAnswerResultTitle => 'பதில்';
+
+  @override
   String get dashboardToolsTitle => 'உங்கள் கற்பித்தல் கருவிகள்';
 
   @override

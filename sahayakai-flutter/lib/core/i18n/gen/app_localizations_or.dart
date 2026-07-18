@@ -181,6 +181,9 @@ class AppLocalizationsOr extends AppLocalizations {
   String get sectionForYourClass => 'ଆପଣଙ୍କ ଶ୍ରେଣୀ ପାଇଁ';
 
   @override
+  String get instantAnswerResultTitle => 'ଉତ୍ତର';
+
+  @override
   String get dashboardToolsTitle => 'ଆପଣଙ୍କ ଶିକ୍ଷାଦାନ ଉପକରଣ';
 
   @override

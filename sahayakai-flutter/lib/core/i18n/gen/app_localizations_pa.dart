@@ -181,6 +181,9 @@ class AppLocalizationsPa extends AppLocalizations {
   String get sectionForYourClass => 'ਤੁਹਾਡੀ ਜਮਾਤ ਲਈ';
 
   @override
+  String get instantAnswerResultTitle => 'ਜਵਾਬ';
+
+  @override
   String get dashboardToolsTitle => 'ਤੁਹਾਡੇ ਅਧਿਆਪਨ ਸਾਧਨ';
 
   @override

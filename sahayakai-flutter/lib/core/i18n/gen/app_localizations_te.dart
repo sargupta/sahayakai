@@ -182,6 +182,9 @@ class AppLocalizationsTe extends AppLocalizations {
   String get sectionForYourClass => 'మీ తరగతి కోసం';
 
   @override
+  String get instantAnswerResultTitle => 'సమాధానం';
+
+  @override
   String get dashboardToolsTitle => 'మీ బోధన సాధనాలు';
 
   @override

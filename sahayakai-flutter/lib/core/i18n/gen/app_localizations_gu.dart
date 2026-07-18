@@ -180,6 +180,9 @@ class AppLocalizationsGu extends AppLocalizations {
   String get sectionForYourClass => 'તમારા વર્ગ માટે';
 
   @override
+  String get instantAnswerResultTitle => 'જવાબ';
+
+  @override
   String get dashboardToolsTitle => 'તમારા શિક્ષણ સાધનો';
 
   @override

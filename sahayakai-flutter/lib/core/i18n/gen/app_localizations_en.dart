@@ -180,6 +180,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sectionForYourClass => 'For your class';
 
   @override
+  String get instantAnswerResultTitle => 'Answer';
+
+  @override
   String get dashboardToolsTitle => 'Your teaching tools';
 
   @override

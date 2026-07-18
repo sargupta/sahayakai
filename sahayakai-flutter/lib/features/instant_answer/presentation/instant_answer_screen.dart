@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/app_locale.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
@@ -7,6 +8,7 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
+import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
@@ -35,6 +37,15 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
   final _formKey = GlobalKey<FormState>();
   final _questionController = TextEditingController();
 
+  /// Anchors the auto-scroll: the result region's top, which for a successful
+  /// ask is the DocumentSheet masthead.
+  final _resultKey = GlobalKey();
+
+  /// The question as it was submitted — the masthead title of the answer that
+  /// comes back. Held separately so editing the field afterwards does not
+  /// retitle the answer already on screen.
+  String? _submittedQuestion;
+
   String? _grade;
   String? _subject;
   late AppLocale _language;
@@ -54,6 +65,7 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
   void _submit() {
     FocusScope.of(context).unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    _submittedQuestion = _questionController.text;
     final request = InstantAnswerRequest(
       question: _questionController.text,
       gradeLevel: _grade,
@@ -63,10 +75,38 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
     ref.read(instantAnswerControllerProvider.notifier).ask(request);
   }
 
+  /// Brings the result masthead to the top of the viewport when a fresh answer
+  /// lands. Honours reduce-motion by jumping (no scroll tween).
+  void _scrollToResult() {
+    if (!mounted) return;
+    final ctx = _resultKey.currentContext;
+    if (ctx == null) return;
+    final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    Scrollable.ensureVisible(
+      ctx,
+      duration: reduce ? Duration.zero : AppMotion.medium,
+      curve: AppMotion.emphasized,
+      alignment: 0.0,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final state = ref.watch(instantAnswerControllerProvider);
+
+    // Auto-scroll to the result header on a fresh success (loading -> data).
+    ref.listen<AsyncValue<InstantAnswer?>>(instantAnswerControllerProvider,
+        (prev, next) {
+      final wasLoading = prev?.isLoading ?? false;
+      final nowHasAnswer =
+          !next.isLoading && next.hasValue && next.valueOrNull != null;
+      if (wasLoading && nowHasAnswer) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToResult());
+      }
+    });
+
+    final hasResult = state.hasValue && state.valueOrNull != null;
 
     final result = state.hasError
         ? InstantAnswerErrorView(error: state.error!, onRetry: _submit)
@@ -74,15 +114,21 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
             state: state,
             skeleton: const InstantAnswerSkeleton(),
             emptyMessage: l10n.instantAnswerEmpty,
-            onData: (answer) => InstantAnswerResultView(answer: answer),
+            onData: (answer) => InstantAnswerResultView(
+              answer: answer,
+              question: _submittedQuestion,
+              onRegenerate: _submit,
+            ),
           );
 
     return ToolScaffold(
       title: l10n.instantAnswerTitle,
       isBusy: state.isLoading,
       submitLabel: l10n.instantAnswerAction,
-      onSubmit: state.isLoading ? null : _submit,
-      result: result,
+      // Hide the sticky submit button once an answer is on screen — the
+      // document's own action bar (Regenerate / Copy) takes over.
+      onSubmit: (state.isLoading || hasResult) ? null : _submit,
+      result: KeyedSubtree(key: _resultKey, child: result),
       child: Form(
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -91,7 +137,9 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             _questionField(l10n),
-            const SizedBox(height: AppSpacing.space6),
+            const SizedBox(height: AppSpacing.space8),
+            EditorialSectionHeader(l10n.sectionForYourClass),
+            const SizedBox(height: AppSpacing.space4),
             _gradeField(l10n),
             const SizedBox(height: AppSpacing.space6),
             _subjectField(l10n),
@@ -106,6 +154,7 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
   Widget _questionField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.instantAnswerQuestionLabel,
+      leadingIcon: LucideIcons.helpCircle,
       child: TextFormField(
         controller: _questionController,
         // The flow rejects anything longer, so stop it here with a counter
@@ -128,6 +177,7 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
     return LabeledField(
       label: l10n.instantAnswerGradeLabel,
       optionalLabel: l10n.instantAnswerOptional,
+      leadingIcon: LucideIcons.graduationCap,
       child: DropdownButtonFormField<String?>(
         initialValue: _grade,
         isExpanded: true,
@@ -148,6 +198,7 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
     return LabeledField(
       label: l10n.instantAnswerSubjectLabel,
       optionalLabel: l10n.instantAnswerOptional,
+      leadingIcon: LucideIcons.bookOpen,
       child: DropdownButtonFormField<String?>(
         initialValue: _subject,
         isExpanded: true,
@@ -167,6 +218,7 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
   Widget _languageField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.languageLabel,
+      leadingIcon: LucideIcons.languages,
       child: DropdownButtonFormField<AppLocale>(
         initialValue: _language,
         isExpanded: true,

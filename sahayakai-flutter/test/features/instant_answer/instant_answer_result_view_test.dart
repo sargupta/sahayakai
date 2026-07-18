@@ -4,6 +4,7 @@ import 'package:sahayakai/features/instant_answer/domain/instant_answer.dart';
 import 'package:sahayakai/features/instant_answer/presentation/widgets/answer_markdown_view.dart';
 import 'package:sahayakai/features/instant_answer/presentation/widgets/instant_answer_result_view.dart';
 import 'package:sahayakai/features/instant_answer/presentation/widgets/instant_answer_skeleton.dart';
+import 'package:sahayakai/shared/widgets/document_sheet.dart';
 
 import 'instant_answer_fixtures.dart';
 
@@ -173,11 +174,16 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      // The DocumentSheet is itself an AppCard with an InkWell, so scope to the
+      // nearest (the video card's own) InkWell — structure only; the >=48dp
+      // touch-target assertion is unchanged.
       final size = tester.getSize(
-        find.ancestor(
-          of: find.text('Watch a related video'),
-          matching: find.byType(InkWell),
-        ),
+        find
+            .ancestor(
+              of: find.text('Watch a related video'),
+              matching: find.byType(InkWell),
+            )
+            .first,
       );
       expect(size.height, greaterThanOrEqualTo(48));
     });
@@ -230,6 +236,153 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
+      expect(find.byType(AnswerMarkdownView), findsOneWidget);
+    });
+  });
+
+  group('document sheet (PREMIUM_DESIGN_SPEC §5 / U8)', () {
+    testWidgets('wraps the answer in a DocumentSheet titled by the question',
+        (tester) async {
+      tester.view.physicalSize = const Size(360, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        hostResult(
+          InstantAnswerResultView(
+            answer: buildAnswer(withVideo: false),
+            question: 'Why is the sky blue?',
+          ),
+          linkOpener: FakeLinkOpener(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(DocumentSheet), findsOneWidget);
+      // The masthead doc-type eyebrow (uppercased Latin) and the question title.
+      expect(find.text('INSTANT ANSWER'), findsOneWidget);
+      expect(find.text('Why is the sky blue?'), findsOneWidget);
+      // Meta badges carry the grade and subject.
+      expect(find.text('Class 5'), findsOneWidget);
+      expect(find.text('Science'), findsOneWidget);
+      // The Markdown body is still rendered through the matra-safe renderer.
+      expect(find.byType(AnswerMarkdownView), findsOneWidget);
+    });
+
+    testWidgets('falls back to the localized Answer title with no question',
+        (tester) async {
+      await tester.pumpWidget(
+        hostResult(
+          const InstantAnswerResultView(
+            answer: InstantAnswer(answer: 'An answer.'),
+          ),
+          linkOpener: FakeLinkOpener(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(DocumentSheet), findsOneWidget);
+      // Masthead title 'Answer' (Fraunces); the section header is uppercased.
+      expect(find.text('Answer'), findsOneWidget);
+      expect(find.text('ANSWER'), findsOneWidget);
+    });
+
+    testWidgets('the action bar offers Regenerate and Copy, wired',
+        (tester) async {
+      tester.view.physicalSize = const Size(360, 2000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      var regenerated = false;
+      await tester.pumpWidget(
+        hostResult(
+          InstantAnswerResultView(
+            answer: buildAnswer(),
+            question: 'Why is the sky blue?',
+            onRegenerate: () => regenerated = true,
+          ),
+          linkOpener: FakeLinkOpener(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Regenerate'), findsOneWidget);
+      expect(find.text('Copy'), findsOneWidget);
+
+      await tester.ensureVisible(find.text('Regenerate'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Regenerate'));
+      await tester.pump();
+      expect(regenerated, isTrue, reason: 'Regenerate re-runs the ask');
+    });
+
+    testWidgets('Copy writes the answer to the clipboard and confirms',
+        (tester) async {
+      tester.view.physicalSize = const Size(360, 2000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        hostResult(
+          InstantAnswerResultView(
+            answer: buildAnswer(),
+            question: 'Why is the sky blue?',
+            onRegenerate: () {},
+          ),
+          linkOpener: FakeLinkOpener(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('Copy'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Copy'));
+      await tester.pump(); // let the snackbar appear
+
+      expect(find.text('Copied to clipboard'), findsOneWidget);
+    });
+
+    testWidgets('with no onRegenerate the footer action bar is absent',
+        (tester) async {
+      tester.view.physicalSize = const Size(360, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        hostResult(
+          InstantAnswerResultView(answer: buildAnswer(withVideo: false)),
+          linkOpener: FakeLinkOpener(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Regenerate'), findsNothing);
+      expect(find.text('Copy'), findsNothing);
+    });
+
+    testWidgets('reduce-motion renders the composed frame, no exception',
+        (tester) async {
+      tester.view.physicalSize = const Size(360, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        hostResult(
+          InstantAnswerResultView(
+            answer: buildAnswer(withVideo: false),
+            question: 'Why is the sky blue?',
+          ),
+          linkOpener: FakeLinkOpener(),
+          reduceMotion: true,
+        ),
+      );
+      // With animations disabled the ink-settle blocks are static, so the
+      // document is fully composed on the first frame.
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(DocumentSheet), findsOneWidget);
+      expect(find.text('Why is the sky blue?'), findsOneWidget);
       expect(find.byType(AnswerMarkdownView), findsOneWidget);
     });
   });

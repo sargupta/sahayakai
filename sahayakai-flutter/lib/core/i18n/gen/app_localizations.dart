@@ -434,6 +434,12 @@ abstract class AppLocalizations {
   /// **'For your class'**
   String get sectionForYourClass;
 
+  /// Instant Answer result: the answer section heading, and the masthead title fallback when the asked question is unavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer'**
+  String get instantAnswerResultTitle;
+
   /// Dashboard tools section header.
   ///
   /// In en, this message translates to:

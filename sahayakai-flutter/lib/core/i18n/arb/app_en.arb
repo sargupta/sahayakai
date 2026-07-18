@@ -226,6 +226,10 @@
   "@sectionForYourClass": {
     "description": "Form section header grouping the optional grade, subject and language a tool tailors its output to."
   },
+  "instantAnswerResultTitle": "Answer",
+  "@instantAnswerResultTitle": {
+    "description": "Instant Answer result: the answer section heading, and the masthead title fallback when the asked question is unavailable."
+  },
   "dashboardToolsTitle": "Your teaching tools",
   "@dashboardToolsTitle": {
     "description": "Dashboard tools section header."

@@ -182,6 +182,9 @@ class AppLocalizationsKn extends AppLocalizations {
   String get sectionForYourClass => 'ನಿಮ್ಮ ತರಗತಿಗಾಗಿ';
 
   @override
+  String get instantAnswerResultTitle => 'ಉತ್ತರ';
+
+  @override
   String get dashboardToolsTitle => 'ನಿಮ್ಮ ಬೋಧನಾ ಸಾಧನಗಳು';
 
   @override

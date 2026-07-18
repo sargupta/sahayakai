@@ -182,6 +182,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get sectionForYourClass => 'আপনার শ্রেণির জন্য';
 
   @override
+  String get instantAnswerResultTitle => 'উত্তর';
+
+  @override
   String get dashboardToolsTitle => 'আপনার শিক্ষণ সরঞ্জাম';
 
   @override

@@ -181,6 +181,9 @@ class AppLocalizationsMr extends AppLocalizations {
   String get sectionForYourClass => 'तुमच्या वर्गासाठी';
 
   @override
+  String get instantAnswerResultTitle => 'उत्तर';
+
+  @override
   String get dashboardToolsTitle => 'तुमची शिक्षण साधने';
 
   @override

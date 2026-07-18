@@ -1,24 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/i18n/l10n_ext.dart';
 import '../../../../core/platform/link_opener.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/motion/animated_entrance.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/document_sheet.dart';
 import '../../../../shared/widgets/empty_view.dart';
 import '../../../../shared/widgets/icon_well.dart';
+import '../../../../shared/widgets/secondary_button.dart';
 import '../../domain/instant_answer.dart';
 import 'answer_markdown_view.dart';
 
-/// Renders an [InstantAnswer]: the model's Markdown body, the grade/subject it
-/// was tailored to, and — only when the model actually suggested one — a
-/// tappable card that opens the video outside the app.
+/// Renders an [InstantAnswer] as a printed document, not a chat dump
+/// (PREMIUM_DESIGN_SPEC.md §5 / §6b U8 — the reference every other tool copies).
+///
+/// The answer is wrapped in a [DocumentSheet]: a masthead ("INSTANT ANSWER"
+/// eyebrow, the teacher's [question] as the Fraunces title, saffron rule,
+/// grade/subject meta badges), then an "Answer" section carrying the model's
+/// Markdown body and — only when the model actually suggested one — a tappable
+/// card that opens the video outside the app. Each block inks in on the
+/// Ink-settle reveal, and a footer action bar offers Regenerate / Copy.
+///
+/// The Markdown flows through the app's own [AnswerMarkdownView] (line-height
+/// 1.7 + Indic height behaviour) so matras and vowel signs never clip — the
+/// matra-safe path is untouched. See DESIGN_RUBRIC §3 / §8.
 class InstantAnswerResultView extends ConsumerWidget {
-  const InstantAnswerResultView({super.key, required this.answer});
+  const InstantAnswerResultView({
+    super.key,
+    required this.answer,
+    this.question,
+    this.onRegenerate,
+  });
 
   final InstantAnswer answer;
+
+  /// The teacher's question, used as the masthead title. Null when the view is
+  /// rendered without the originating request (e.g. a direct render in a test),
+  /// in which case the title falls back to the localized "Answer".
+  final String? question;
+
+  /// Re-runs the ask from the current form (the controller's `ask`). When null
+  /// the footer action bar is omitted.
+  final VoidCallback? onRegenerate;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -34,51 +62,115 @@ class InstantAnswerResultView extends ConsumerWidget {
     }
 
     final video = answer.videoSuggestionUrl;
+    final hasQuestion = question != null && question!.trim().isNotEmpty;
+    final title = hasQuestion ? question!.trim() : l10n.instantAnswerResultTitle;
+
+    final meta = <Widget>[
+      if (answer.gradeLevel != null)
+        AppBadge(
+          icon: LucideIcons.graduationCap,
+          label: answer.gradeLevel!,
+          tone: AppBadgeTone.accent,
+        ),
+      if (answer.subject != null)
+        AppBadge(icon: LucideIcons.bookOpen, label: answer.subject!),
+    ];
+
+    // The document blocks, in reading order. Content is unchanged from the flat
+    // renderer — only the composition around it is new.
+    final blocks = <Widget>[
+      DocumentSheetSection(
+        title: l10n.instantAnswerResultTitle,
+        child: AnswerMarkdownView(source: answer.answer),
+      ),
+      // videoSuggestionUrl is optional and null far more often than not. The DTO
+      // layer already normalized it to a validated http(s) Uri, so the tap is
+      // safe.
+      if (video != null)
+        _VideoCard(
+          url: video,
+          onOpen: () => ref.read(linkOpenerProvider).open(video),
+        ),
+    ];
+
+    // Ink-settle: each block fades + rises in turn. Degrades to the static
+    // composed frame under reduce-motion.
+    final revealed = <Widget>[
+      for (var i = 0; i < blocks.length; i++)
+        inkSettle(context, blocks[i], index: i),
+    ];
+
+    return DocumentSheet(
+      docType: l10n.instantAnswerTitle,
+      title: title,
+      meta: meta,
+      footer: onRegenerate == null
+          ? null
+          : _ActionBar(
+              answer: answer,
+              question: hasQuestion ? question!.trim() : null,
+              onRegenerate: onRegenerate!,
+            ),
+      children: revealed,
+    );
+  }
+}
+
+/// The document's action bar: Regenerate (secondary) over a Copy ghost. Copy
+/// exports the question (when known) and the answer's Markdown to the
+/// clipboard — a presentation-only action, no controller involved.
+class _ActionBar extends StatelessWidget {
+  const _ActionBar({
+    required this.answer,
+    required this.question,
+    required this.onRegenerate,
+  });
+
+  final InstantAnswer answer;
+  final String? question;
+  final VoidCallback onRegenerate;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final text = Theme.of(context).textTheme;
+    final saffron = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
+    final messenger = ScaffoldMessenger.of(context);
+
+    void copy() {
+      final buffer = StringBuffer();
+      if (question != null) buffer.writeln('$question\n');
+      buffer.write(answer.answer.trim());
+      Clipboard.setData(ClipboardData(text: buffer.toString().trimRight()));
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(l10n.copyConfirmation)));
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _MetaRow(answer: answer),
-        const SizedBox(height: AppSpacing.sectionGap),
-        AppCard(
-          child: AnswerMarkdownView(source: answer.answer),
+        SecondaryButton(
+          label: l10n.actionRegenerate,
+          icon: LucideIcons.refreshCw,
+          onPressed: onRegenerate,
         ),
-        // videoSuggestionUrl is optional and null far more often than not.
-        if (video != null) ...[
-          const SizedBox(height: AppSpacing.sectionGap),
-          _VideoCard(
-            url: video,
-            onOpen: () => ref.read(linkOpenerProvider).open(video),
+        const SizedBox(height: AppSpacing.space2),
+        SizedBox(
+          height: 48,
+          child: TextButton.icon(
+            onPressed: copy,
+            icon: const Icon(LucideIcons.copy, size: AppIconSize.inline),
+            label: Text(l10n.actionCopy),
+            style: TextButton.styleFrom(
+              foregroundColor: saffron,
+              textStyle: text.labelLarge,
+            ),
           ),
-        ],
+        ),
       ],
-    );
-  }
-}
-
-/// Grade / subject the answer was written for. The envelope echoes back what
-/// the flow resolved (it back-fills from the profile), so this is what the
-/// answer is actually pitched at, not what the form asked for.
-class _MetaRow extends StatelessWidget {
-  const _MetaRow({required this.answer});
-
-  final InstantAnswer answer;
-
-  @override
-  Widget build(BuildContext context) {
-    final chips = <Widget>[
-      if (answer.gradeLevel != null)
-        AppBadge(icon: LucideIcons.graduationCap, label: answer.gradeLevel!),
-      if (answer.subject != null)
-        AppBadge(icon: LucideIcons.bookOpen, label: answer.subject!),
-    ];
-    if (chips.isEmpty) return const SizedBox.shrink();
-
-    return Wrap(
-      spacing: AppSpacing.space2,
-      runSpacing: AppSpacing.space2,
-      children: chips,
     );
   }
 }
