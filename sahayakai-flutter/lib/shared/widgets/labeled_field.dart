@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 
-/// A form field's label, optional inline note, optional hint, its control, and
-/// an optional field-level error — the one labelled-field layout in the app.
+/// LabeledField v2 (PREMIUM_DESIGN_SPEC.md §5). A form field's label, an
+/// optional inline note, an optional hint, the control, and an optional
+/// field-level error — the one labelled-field layout in the app.
 ///
-/// Six screens each kept a private `_Field`: settings/profile/onboarding had
-/// {label, hint}, the tool forms had {label, optionalLabel}, and quiz had the
-/// full {label, optionalLabel, hint, errorText}. They only differed in which
-/// of those slots they exposed, so this is their union — the label always
-/// wraps ([Flexible]) when it shares a row with the optional note, which the
-/// lesson-plan copy did not, so a long Indic label no longer risks the row.
+/// v2 adds an optional [leadingIcon] (a 20dp `onSurfaceVariant` Lucide glyph
+/// before the label, for long forms) and an optional [counterText] (a
+/// tabular-figure count, right-aligned on the label row). Both default to
+/// null, so the v1 API ({label, child, optionalLabel, hint, errorText}) and
+/// every call site are preserved.
 class LabeledField extends StatelessWidget {
   const LabeledField({
     super.key,
@@ -19,6 +19,8 @@ class LabeledField extends StatelessWidget {
     this.optionalLabel,
     this.hint,
     this.errorText,
+    this.leadingIcon,
+    this.counterText,
   });
 
   final String label;
@@ -33,12 +35,17 @@ class LabeledField extends StatelessWidget {
   /// A field-level error shown under the control in the error colour.
   final String? errorText;
 
+  /// An optional leading Lucide glyph before the label (long forms).
+  final IconData? leadingIcon;
+
+  /// An optional right-aligned tabular counter (e.g. "0 / 1000").
+  final String? counterText;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    // A field label tracks tighter than a section label (which bakes ls 0.6):
-    // this is the value all six `_Field`s already used.
+    final extras = AppTextExtras.of(context);
     final labelStyle = text.titleSmall?.copyWith(letterSpacing: 0.2);
     final mutedStyle = text.bodySmall?.copyWith(color: scheme.onSurfaceVariant);
 
@@ -46,16 +53,27 @@ class LabeledField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (optionalLabel == null)
-          Text(label, style: labelStyle)
-        else
-          Row(
-            children: [
-              Flexible(child: Text(label, style: labelStyle)),
+        Row(
+          children: [
+            if (leadingIcon != null) ...[
+              Icon(leadingIcon,
+                  size: AppIconSize.inline, color: scheme.onSurfaceVariant),
+              const SizedBox(width: AppSpacing.space2),
+            ],
+            Flexible(child: Text(label, style: labelStyle)),
+            if (optionalLabel != null) ...[
               const SizedBox(width: AppSpacing.space2),
               Text(optionalLabel!, style: mutedStyle),
             ],
-          ),
+            if (counterText != null) ...[
+              const Spacer(),
+              Text(
+                counterText!,
+                style: extras.dataMedium.copyWith(color: scheme.onSurfaceVariant),
+              ),
+            ],
+          ],
+        ),
         if (hint != null) ...[
           const SizedBox(height: AppSpacing.space1),
           Text(hint!, style: mutedStyle),

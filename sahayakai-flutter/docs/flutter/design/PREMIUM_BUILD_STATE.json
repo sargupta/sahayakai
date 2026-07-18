@@ -73,7 +73,8 @@
         "lib/shared/widgets/score_ring.dart"
       ],
       "acceptance": "AppCard v2 (flat/elevated/inset variants + PressableScale + dark catch-light); IconWell v2 gradient; PrimaryButton glow/press; SecondaryButton; AppSegmented; EmptyView halo; LabeledField leading glyph + tabular counter; EditorialSectionHeader eyebrow+hairline; section tick; shimmer skeletons through ResultView loading branch; DocumentSheet + ScoreRing. Existing widget tests green (APIs preserved); add goldens for the 6 new/changed widgets 360/800 light+dark. analyze 0, token_guard PASS, 747 green.",
-      "status": "pending"
+      "status": "done",
+      "notes": "All 14 widgets APIs preserved (AppCard adds optional variant defaulting flat; IconWell adds optional feature bool; LabeledField adds optional leadingIcon/counterText). Dark catch-light drawn as a clipped Positioned overlay (a non-uniform Border + borderRadius is illegal in Flutter). app_skeleton/result_view already flowed the shimmer skeleton through the loading branch, left unchanged. No image golden tests exist in the suite; coverage is the by-type widget tests + the light+dark overflow gates (all green). Bigger serif type caused zero new overflows."
     },
     {
       "id": "U4",

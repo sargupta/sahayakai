@@ -28,16 +28,31 @@ class SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final text = Theme.of(context).textTheme;
     final style = text.titleSmall?.copyWith(color: scheme.onSurfaceVariant);
+    final saffron =
+        isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
 
-    if (icon == null) return Text(label, style: style);
+    // With an explicit glyph, the glyph leads; otherwise a 3dp saffron tick
+    // gives the muted label an editorial anchor (PREMIUM_DESIGN_SPEC §5).
+    final Widget lead = icon != null
+        ? Icon(icon, size: AppIconSize.inline, color: scheme.onSurfaceVariant)
+        : Container(
+            width: 3,
+            height: 14,
+            decoration: BoxDecoration(
+              color: saffron,
+              borderRadius: AppRadius.rSm,
+            ),
+          );
 
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: AppIconSize.inline, color: scheme.onSurfaceVariant),
+        lead,
         const SizedBox(width: AppSpacing.space2),
-        Expanded(child: Text(label, style: style)),
+        Flexible(child: Text(label, style: style)),
       ],
     );
   }
