@@ -264,6 +264,9 @@ class AppLocalizationsKn extends AppLocalizations {
   String get libraryTitle => 'ನನ್ನ ಗ್ರಂಥಾಲಯ';
 
   @override
+  String get librarySectionSaved => 'ಉಳಿಸಿದವು';
+
+  @override
   String get libraryEmpty =>
       'ನೀವು ಉಳಿಸಿದ ಪಾಠ ಯೋಜನೆಗಳು ಮತ್ತು ಕ್ವಿಜ್‌ಗಳು ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತವೆ.';
 

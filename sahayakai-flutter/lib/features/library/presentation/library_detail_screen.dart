@@ -95,7 +95,11 @@ class _DetailHeader extends StatelessWidget {
       if (item.language != null) item.language!,
     ];
 
+    // The saved item's masthead is the one focal card on this screen, so it
+    // sits a clear step higher than the flat state cards below it (§7.2): an
+    // elevated AppCard (e2, no border) with the serif titleLarge title.
     return AppCard(
+      variant: AppCardVariant.elevated,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,

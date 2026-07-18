@@ -590,6 +590,12 @@ abstract class AppLocalizations {
   /// **'My Library'**
   String get libraryTitle;
 
+  /// Editorial section eyebrow over the teacher's saved-work list on the Library screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved work'**
+  String get librarySectionSaved;
+
   /// Library empty state.
   ///
   /// In en, this message translates to:

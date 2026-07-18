@@ -266,6 +266,9 @@ class AppLocalizationsMl extends AppLocalizations {
   String get libraryTitle => 'എന്റെ ലൈബ്രറി';
 
   @override
+  String get librarySectionSaved => 'സംരക്ഷിച്ചവ';
+
+  @override
   String get libraryEmpty =>
       'നിങ്ങൾ സംരക്ഷിച്ച പാഠപദ്ധതികളും ക്വിസുകളും ഇവിടെ കാണാം.';
 

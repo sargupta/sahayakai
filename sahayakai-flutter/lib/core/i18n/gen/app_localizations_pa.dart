@@ -262,6 +262,9 @@ class AppLocalizationsPa extends AppLocalizations {
   String get libraryTitle => 'ਮੇਰੀ ਲਾਇਬ੍ਰੇਰੀ';
 
   @override
+  String get librarySectionSaved => 'ਸੰਭਾਲਿਆ ਕੰਮ';
+
+  @override
   String get libraryEmpty =>
       'ਤੁਹਾਡੀਆਂ ਸੰਭਾਲੀਆਂ ਪਾਠ ਯੋਜਨਾਵਾਂ ਅਤੇ ਕੁਇਜ਼ ਇੱਥੇ ਦਿਖਣਗੀਆਂ।';
 

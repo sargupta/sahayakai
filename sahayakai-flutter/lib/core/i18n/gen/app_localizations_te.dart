@@ -263,6 +263,9 @@ class AppLocalizationsTe extends AppLocalizations {
   String get libraryTitle => 'నా గ్రంథాలయం';
 
   @override
+  String get librarySectionSaved => 'సేవ్ చేసినవి';
+
+  @override
   String get libraryEmpty =>
       'మీరు సేవ్ చేసిన పాఠ ప్రణాళికలు మరియు క్విజ్‌లు ఇక్కడ కనిపిస్తాయి.';
 

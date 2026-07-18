@@ -262,6 +262,9 @@ class AppLocalizationsOr extends AppLocalizations {
   String get libraryTitle => 'ମୋର ଲାଇବ୍ରେରୀ';
 
   @override
+  String get librarySectionSaved => 'ସଂରକ୍ଷିତ କାର୍ଯ୍ୟ';
+
+  @override
   String get libraryEmpty =>
       'ଆପଣ ସଞ୍ଚୟ କରିଥିବା ପାଠ ଯୋଜନା ଏବଂ କୁଇଜ୍ ଏଠାରେ ଦେଖାଯିବ।';
 

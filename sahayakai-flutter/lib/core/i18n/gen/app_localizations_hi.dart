@@ -262,6 +262,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get libraryTitle => 'मेरी लाइब्रेरी';
 
   @override
+  String get librarySectionSaved => 'सहेजा गया काम';
+
+  @override
   String get libraryEmpty =>
       'आपकी सहेजी गई पाठ योजनाएँ और क्विज़ यहाँ दिखेंगी।';
 

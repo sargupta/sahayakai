@@ -262,6 +262,9 @@ class AppLocalizationsMr extends AppLocalizations {
   String get libraryTitle => 'माझे ग्रंथालय';
 
   @override
+  String get librarySectionSaved => 'जतन केलेले काम';
+
+  @override
   String get libraryEmpty =>
       'तुमच्या जतन केलेल्या पाठ योजना आणि प्रश्नमंजुषा येथे दिसतील.';
 

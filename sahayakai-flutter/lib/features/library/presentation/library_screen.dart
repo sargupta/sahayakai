@@ -10,8 +10,10 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/data/library_items_provider.dart';
 import '../../../shared/data/library_repository.dart';
 import '../../../shared/domain/library_item.dart';
+import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_skeleton.dart';
+import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/library_item_row.dart';
@@ -100,6 +102,7 @@ class _LibraryLoaded extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
 
@@ -122,6 +125,11 @@ class _LibraryLoaded extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
+        // The editorial register: a saffron eyebrow + hairline rule over the
+        // saved-work group (§5), the same grammar the dashboard's Recent section
+        // opens with.
+        EditorialSectionHeader(l10n.librarySectionSaved),
+        const SizedBox(height: AppSpacing.space4),
         if (showFilters) ...[
           _TypeFilterBar(
             present: present,
@@ -137,27 +145,34 @@ class _LibraryLoaded extends StatelessWidget {
           AppCard(
             child: EmptyView(
               icon: LucideIcons.filter,
-              message: context.l10n.libraryFilterEmpty,
+              message: l10n.libraryFilterEmpty,
             ),
           )
         else
           for (final (index, item) in visible.indexed) ...[
             if (index > 0) const SizedBox(height: AppSpacing.space3),
-            LibraryItemRow(
-              item: item,
-              // A document with no id cannot be fetched, so it does not open.
-              onTap: item.id.isEmpty
-                  ? null
-                  : () => context.push(
-                        Routes.libraryDetailPath(item.id),
-                        extra: item,
-                      ),
+            // The saved rows ink in on a staggered entrance (§4); reduce-motion
+            // returns the static composed frame. These live in an eager Column,
+            // so the client-side filter narrows them without a lazy re-index.
+            inkSettle(
+              context,
+              LibraryItemRow(
+                item: item,
+                // A document with no id cannot be fetched, so it does not open.
+                onTap: item.id.isEmpty
+                    ? null
+                    : () => context.push(
+                          Routes.libraryDetailPath(item.id),
+                          extra: item,
+                        ),
+              ),
+              index: index,
             ),
           ],
         if (isCapped) ...[
           const SizedBox(height: AppSpacing.space4),
           Text(
-            context.l10n.libraryNewestOnly,
+            l10n.libraryNewestOnly,
             style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
           ),
         ],

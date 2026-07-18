@@ -330,6 +330,10 @@
   "@libraryTitle": {
     "description": "Library screen title."
   },
+  "librarySectionSaved": "Saved work",
+  "@librarySectionSaved": {
+    "description": "Editorial section eyebrow over the teacher's saved-work list on the Library screen."
+  },
   "libraryEmpty": "Your saved lesson plans and quizzes will appear here.",
   "@libraryEmpty": {
     "description": "Library empty state."

@@ -264,6 +264,9 @@ class AppLocalizationsTa extends AppLocalizations {
   String get libraryTitle => 'எனது நூலகம்';
 
   @override
+  String get librarySectionSaved => 'சேமித்தவை';
+
+  @override
   String get libraryEmpty =>
       'நீங்கள் சேமித்த பாடத் திட்டங்கள் மற்றும் வினாடி வினாக்கள் இங்கே தோன்றும்.';
 

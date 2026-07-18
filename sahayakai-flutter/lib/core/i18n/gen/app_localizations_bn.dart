@@ -263,6 +263,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get libraryTitle => 'আমার লাইব্রেরি';
 
   @override
+  String get librarySectionSaved => 'সংরক্ষিত কাজ';
+
+  @override
   String get libraryEmpty =>
       'আপনার সংরক্ষিত পাঠ পরিকল্পনা ও কুইজ এখানে দেখা যাবে।';
 

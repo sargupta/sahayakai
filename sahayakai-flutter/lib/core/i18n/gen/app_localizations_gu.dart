@@ -261,6 +261,9 @@ class AppLocalizationsGu extends AppLocalizations {
   String get libraryTitle => 'મારું પુસ્તકાલય';
 
   @override
+  String get librarySectionSaved => 'સાચવેલું કામ';
+
+  @override
   String get libraryEmpty => 'તમે સાચવેલી પાઠ યોજનાઓ અને ક્વિઝ અહીં દેખાશે.';
 
   @override

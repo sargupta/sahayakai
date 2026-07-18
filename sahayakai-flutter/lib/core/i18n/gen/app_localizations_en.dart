@@ -261,6 +261,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get libraryTitle => 'My Library';
 
   @override
+  String get librarySectionSaved => 'Saved work';
+
+  @override
   String get libraryEmpty =>
       'Your saved lesson plans and quizzes will appear here.';
 
