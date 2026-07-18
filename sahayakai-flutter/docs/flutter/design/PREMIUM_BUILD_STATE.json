@@ -150,8 +150,9 @@
         "flutter_native_splash.yaml"
       ],
       "acceptance": "Replace the default flutter-create Flutter-logo launcher icon AND the native Android 12+ launch splash with SahayakAI branding: use flutter_launcher_icons (source = the SahayakAI mark, e.g. /Users/sargupta/SahayakAIV2/sahayakai/sahayakai-main/public/icons/icon-512x512.png READ-ONLY, copy into assets) + flutter_native_splash with ivory #F3EEE4 background and the saffron seal/mark centered (light+dark). No default Flutter logo anywhere on cold launch. analyze 0, token_guard PASS, tests green.",
-      "status": "pending",
-      "notes": "Found by on-device screenshot: the fresh flutter-create project never got branded icons; both the launcher icon and the OS launch screen show the blue Flutter logo before the Flutter Seal splash renders."
+      "status": "done",
+      "notes": "flutter_launcher_icons + flutter_native_splash generated from the SahayakAI mark (sahayakai-main icon-512, copied to assets/branding). Launcher = branded mark on ivory adaptive bg; native splash = ivory #F3EEE4 / espresso #17130E dark with the mark (dark surround made transparent so the white sheet floats on ivory). analyze clean, token_guard PASS. Pending on-device cold-launch screenshot confirm.",
+      "commit": "3599d1621"
     },
     {
       "id": "U9",
