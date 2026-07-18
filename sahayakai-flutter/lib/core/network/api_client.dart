@@ -89,4 +89,26 @@ class ApiClient {
       throw ApiException.fromDio(e);
     }
   }
+
+  /// Multipart upload — the STT audio POST (`/api/ai/voice-to-text`). Separate
+  /// from [post] because the body is a `FormData` (an audio file + text
+  /// fields), not JSON: Dio must send `multipart/form-data` with its own
+  /// boundary, overriding the client's default `application/json` content type.
+  /// Same typed [ApiException] mapping as every other verb.
+  Future<T> postMultipart<T>(
+    String path, {
+    required FormData data,
+    required T Function(Map<String, dynamic> json) decode,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        path,
+        data: data,
+        options: Options(contentType: 'multipart/form-data'),
+      );
+      return decode(res.data ?? const {});
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    }
+  }
 }

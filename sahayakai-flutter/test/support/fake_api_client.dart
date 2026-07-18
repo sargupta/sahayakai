@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:sahayakai/core/network/api_client.dart';
 
 /// An [ApiClient] that never opens a socket.
@@ -20,6 +21,8 @@ class FakeApiClient extends ApiClient {
     this.postError,
     this.putResponse,
     this.putError,
+    this.multipartResponse,
+    this.multipartError,
   });
 
   /// The raw JSON [get] hands to its `decode`. `dynamic`, like the real
@@ -55,6 +58,13 @@ class FakeApiClient extends ApiClient {
   /// Thrown from [put] instead of returning, to model a failed save.
   Object? putError;
 
+  /// The JSON body a stubbed [postMultipart] hands to its `decode` (e.g. the
+  /// STT reply `{ text, language }`). Null keeps the loud-failure contract.
+  Object? multipartResponse;
+
+  /// Thrown from [postMultipart] instead of returning, to model a 401/413/500.
+  Object? multipartError;
+
   /// Every GET this client received, in order, with its query.
   final List<({String path, Map<String, dynamic>? query})> gets =
       <({String path, Map<String, dynamic>? query})>[];
@@ -70,6 +80,11 @@ class FakeApiClient extends ApiClient {
   /// Every PUT this client received, in order.
   final List<({String path, Object? data})> puts =
       <({String path, Object? data})>[];
+
+  /// Every multipart POST this client received, in order, with its `FormData`
+  /// (so a test can assert on the audio file's filename/contentType + fields).
+  final List<({String path, FormData data})> multiparts =
+      <({String path, FormData data})>[];
 
   @override
   Future<T> get<T>(
@@ -130,6 +145,23 @@ class FakeApiClient extends ApiClient {
     throw StateError(
       'PUT $path escaped the fake. Tests must never reach the network: '
       'stub putResponse / putError before asserting on it.',
+    );
+  }
+
+  @override
+  Future<T> postMultipart<T>(
+    String path, {
+    required FormData data,
+    required T Function(Map<String, dynamic> json) decode,
+  }) async {
+    multiparts.add((path: path, data: data));
+    if (delay != null) await Future<void>.delayed(delay!);
+    if (multipartError != null) throw multipartError!;
+    final stub = multipartResponse;
+    if (stub != null) return decode((stub as Map).cast<String, dynamic>());
+    throw StateError(
+      'postMultipart $path escaped the fake. Tests must never reach the '
+      'network: stub multipartResponse / multipartError before asserting.',
     );
   }
 }
