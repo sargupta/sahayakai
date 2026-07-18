@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/app_locale.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
@@ -7,6 +8,7 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
+import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
@@ -16,11 +18,13 @@ import 'widgets/rubric_error_view.dart';
 import 'widgets/rubric_result_view.dart';
 import 'widgets/rubric_skeleton.dart';
 
-/// P1.2 — the Rubric Generator. A capped, scrolling form + a sticky Generate
-/// button ([ToolScaffold]), driven by an AsyncNotifier and rendered through
-/// [ResultView] (loading / empty / error / data). The result is a criteria x
-/// performance-levels grid that scrolls horizontally inside its own box
-/// (see [RubricResultView] / RubricGrid), so the page never scrolls sideways.
+/// P1.2 — the Rubric Generator. A capped, scrolling editorial form + a sticky
+/// Generate button ([ToolScaffold]), driven by an AsyncNotifier and rendered
+/// through [ResultView] (loading / empty / error / data). On success the result
+/// is a criteria x performance-levels grid wrapped in a `DocumentSheet`; the
+/// grid scrolls horizontally inside its own box (see [RubricResultView] /
+/// RubricGrid), so the page never scrolls sideways, and the view auto-scrolls
+/// to the document masthead.
 class RubricGeneratorScreen extends ConsumerStatefulWidget {
   const RubricGeneratorScreen({super.key});
 
@@ -32,6 +36,10 @@ class RubricGeneratorScreen extends ConsumerStatefulWidget {
 class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
   final _formKey = GlobalKey<FormState>();
   final _assignmentController = TextEditingController();
+
+  /// Anchors the auto-scroll: the result region's top, which for a successful
+  /// generation is the DocumentSheet masthead.
+  final _resultKey = GlobalKey();
 
   String? _grade;
   String? _subject;
@@ -61,10 +69,37 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
     ref.read(rubricControllerProvider.notifier).generate(request);
   }
 
+  /// Brings the result masthead to the top of the viewport when a fresh rubric
+  /// lands. Honours reduce-motion by jumping (no scroll tween).
+  void _scrollToResult() {
+    if (!mounted) return;
+    final ctx = _resultKey.currentContext;
+    if (ctx == null) return;
+    final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    Scrollable.ensureVisible(
+      ctx,
+      duration: reduce ? Duration.zero : AppMotion.medium,
+      curve: AppMotion.emphasized,
+      alignment: 0.0,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final state = ref.watch(rubricControllerProvider);
+
+    // Auto-scroll to the result header on a fresh success (loading -> data).
+    ref.listen<AsyncValue<Rubric?>>(rubricControllerProvider, (prev, next) {
+      final wasLoading = prev?.isLoading ?? false;
+      final nowHasRubric =
+          !next.isLoading && next.hasValue && next.valueOrNull != null;
+      if (wasLoading && nowHasRubric) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToResult());
+      }
+    });
+
+    final hasResult = state.hasValue && state.valueOrNull != null;
 
     final result = state.hasError
         ? RubricErrorView(error: state.error!, onRetry: _submit)
@@ -72,15 +107,18 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
             state: state,
             skeleton: const RubricSkeleton(),
             emptyMessage: l10n.rubricEmpty,
-            onData: (rubric) => RubricResultView(rubric: rubric),
+            onData: (rubric) =>
+                RubricResultView(rubric: rubric, onRegenerate: _submit),
           );
 
     return ToolScaffold(
       title: l10n.rubricTitle,
       isBusy: state.isLoading,
       submitLabel: l10n.actionGenerate,
-      onSubmit: state.isLoading ? null : _submit,
-      result: result,
+      // Hide the sticky Generate button once a rubric is on screen — the
+      // document's own action bar (Regenerate / Copy) takes over.
+      onSubmit: (state.isLoading || hasResult) ? null : _submit,
+      result: KeyedSubtree(key: _resultKey, child: result),
       child: Form(
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -88,8 +126,12 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
+            EditorialSectionHeader(l10n.rubricSectionAssignment),
+            const SizedBox(height: AppSpacing.space4),
             _assignmentField(l10n),
-            const SizedBox(height: AppSpacing.space6),
+            const SizedBox(height: AppSpacing.space8),
+            EditorialSectionHeader(l10n.sectionForYourClass),
+            const SizedBox(height: AppSpacing.space4),
             _gradeField(l10n),
             const SizedBox(height: AppSpacing.space6),
             _subjectField(l10n),
@@ -105,6 +147,7 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
     return LabeledField(
       label: l10n.rubricAssignmentLabel,
       hint: l10n.rubricAssignmentHint,
+      leadingIcon: LucideIcons.clipboardList,
       child: TextFormField(
         controller: _assignmentController,
         maxLength: 2000,
@@ -124,6 +167,7 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
     return LabeledField(
       label: l10n.rubricGradeLabel,
       optionalLabel: l10n.rubricOptional,
+      leadingIcon: LucideIcons.graduationCap,
       child: DropdownButtonFormField<String?>(
         initialValue: _grade,
         isExpanded: true,
@@ -144,6 +188,7 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
     return LabeledField(
       label: l10n.rubricSubjectLabel,
       optionalLabel: l10n.rubricOptional,
+      leadingIcon: LucideIcons.bookOpen,
       child: DropdownButtonFormField<String?>(
         initialValue: _subject,
         isExpanded: true,
@@ -163,6 +208,7 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
   Widget _languageField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.languageLabel,
+      leadingIcon: LucideIcons.languages,
       child: DropdownButtonFormField<AppLocale>(
         initialValue: _language,
         isExpanded: true,

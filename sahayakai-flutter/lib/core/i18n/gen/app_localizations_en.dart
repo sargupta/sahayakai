@@ -1845,4 +1845,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get worksheetSectionWorksheet => 'The worksheet';
+
+  @override
+  String get rubricSectionAssignment => 'The assignment';
 }

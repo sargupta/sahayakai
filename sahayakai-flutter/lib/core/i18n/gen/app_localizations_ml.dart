@@ -1850,4 +1850,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get worksheetSectionWorksheet => 'വർക്ക്‌ഷീറ്റ്';
+
+  @override
+  String get rubricSectionAssignment => 'അസൈൻമെന്റ്';
 }

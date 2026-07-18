@@ -3343,6 +3343,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The worksheet'**
   String get worksheetSectionWorksheet;
+
+  /// Rubric form section header: the assignment the rubric grades.
+  ///
+  /// In en, this message translates to:
+  /// **'The assignment'**
+  String get rubricSectionAssignment;
 }
 
 class _AppLocalizationsDelegate

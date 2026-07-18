@@ -1848,4 +1848,7 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get worksheetSectionWorksheet => 'ಕಾರ್ಯಪತ್ರಿಕೆ';
+
+  @override
+  String get rubricSectionAssignment => 'ಅಸೈನ್‌ಮೆಂಟ್';
 }

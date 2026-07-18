@@ -1844,4 +1844,7 @@ class AppLocalizationsGu extends AppLocalizations {
 
   @override
   String get worksheetSectionWorksheet => 'કાર્યપત્રક';
+
+  @override
+  String get rubricSectionAssignment => 'અસાઇનમેન્ટ';
 }

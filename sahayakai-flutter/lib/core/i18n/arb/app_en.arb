@@ -2299,5 +2299,9 @@
   "worksheetSectionWorksheet": "The worksheet",
   "@worksheetSectionWorksheet": {
     "description": "Worksheet form section header: the textbook photo and prompt the worksheet is built from."
+  },
+  "rubricSectionAssignment": "The assignment",
+  "@rubricSectionAssignment": {
+    "description": "Rubric form section header: the assignment the rubric grades."
   }
 }

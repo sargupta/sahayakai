@@ -1846,4 +1846,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get worksheetSectionWorksheet => 'ਵਰਕਸ਼ੀਟ';
+
+  @override
+  String get rubricSectionAssignment => 'ਅਸਾਈਨਮੈਂਟ';
 }

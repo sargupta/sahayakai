@@ -1846,4 +1846,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get worksheetSectionWorksheet => 'ୱାର୍କସିଟ୍';
+
+  @override
+  String get rubricSectionAssignment => 'ଆସାଇନ୍‌ମେଣ୍ଟ';
 }

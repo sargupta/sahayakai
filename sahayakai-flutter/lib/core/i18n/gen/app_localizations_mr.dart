@@ -1846,4 +1846,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get worksheetSectionWorksheet => 'कार्यपत्रिका';
+
+  @override
+  String get rubricSectionAssignment => 'असाइनमेंट';
 }
