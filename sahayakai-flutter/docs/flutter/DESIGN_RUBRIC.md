@@ -10,65 +10,94 @@
 
 ## 0. Canonical token constants (put these in `lib/theme/` and never hardcode elsewhere)
 
-These are the ONLY design values allowed in the app. Map them once, reference by name forever. Hex values are the source-of-truth HSL from `globals.css` converted to sRGB.
+These are the ONLY design values allowed in the app. Map them once, reference by name forever. **Superseded by PREMIUM_DESIGN_SPEC.md §2 (relaxation R6/K):** the flat-white light and blue-black dark tables below now carry the Ledger "Ivory & Ink · Saffron & Pine" values (warm-paper light, warm-espresso dark, additive `lPrimaryText`/`lShadowBase`/`brandBrass`/pine/indigo tokens).
 
-### Colors — light (`ColorScheme.light`)
-| Token | HSL (source) | Hex | Flutter role |
-|---|---|---|---|
-| primary (Saffron) | `28 70% 59%` | `#FF9933` | `colorScheme.primary` |
-| onPrimary | `0 0% 100%` | `#FFFFFF` | `colorScheme.onPrimary` |
-| secondary (Green) | `123 37% 25%` | `#2C5F2D` | `colorScheme.secondary` |
-| onSecondary | `0 0% 100%` | `#FFFFFF` | `colorScheme.onSecondary` |
-| accent (Navy) | `240 100% 25%` | `#000080` | `colorScheme.tertiary` (rare use) |
-| background | `40 20% 99.5%` | `#FFFEFB` | `scaffoldBackgroundColor` / `surface` |
-| foreground (text) | `222 47% 11%` | `#1B2637` | `colorScheme.onSurface` |
-| card | `0 0% 100%` | `#FFFFFF` | `Card` / `surfaceContainerLowest` |
-| muted | `210 40% 96%` | `#F1F5F9` | `surfaceContainerHigh` (grouping blocks) |
-| muted-foreground | `215 16% 47%` | `#6B7686` | `onSurfaceVariant` (secondary text) |
-| border | `220 16% 93%` | `#E8EBF0` | `outlineVariant` / dividers |
-| input border | `220 16% 90%` | `#DFE3EA` | input `enabledBorder` |
-| ring (focus) | `28 70% 59%` | `#FF9933` | focus indicator |
-| destructive | `0 84% 60%` | `#EF4444` | `colorScheme.error` |
-| onDestructive | `0 0% 100%` | `#FFFFFF` | `colorScheme.onError` |
-
-### Colors — dark (`ColorScheme.dark`)
-| Token | HSL (source) | Hex |
+### Colors — light (`ColorScheme.light`) — Ivory (§2.1)
+| Token | Hex | Flutter role |
 |---|---|---|
-| background | `222 18% 9%` | `#131722` |
-| foreground | `210 30% 96%` | `#EFF3F8` |
-| card | `222 16% 13%` | `#1B1F29` |
-| popover | `222 16% 14%` | `#1D212C` |
-| primary | `28 80% 60%` | `#F5993D` |
-| secondary | `123 33% 40%` | `#448746` |
-| muted | `222 14% 17%` | `#252932` |
-| muted-foreground | `215 16% 64%` | `#98A0AE` |
-| accent (hover surf) | `222 15% 20%` | `#2B2F3A` |
-| border/input | `222 13% 22%` | `#30343E` |
-| destructive | `0 62% 45%` | `#B92B2B` |
+| background (paper) | `#F3EEE4` | `scaffoldBackgroundColor` / `surfaceContainerLowest` |
+| card | `#FFFCF8` | `colorScheme.surface` — resting card / list tile |
+| surfaceContainerLow | `#FBF6EE` | grouped block, input fill |
+| popover (highest) | `#FFFFFF` | dialogs, menus |
+| muted (sunken well) | `#ECE6DA` | `surfaceContainer` — muted chips, sunken groups |
+| surfaceContainerHigh | `#E4DCCC` | active/hover neutral fill |
+| foreground (ink) | `#232019` | `colorScheme.onSurface` (15.9:1 card / 14.1:1 paper ✓) |
+| muted-foreground | `#6B6157` | `onSurfaceVariant` (5.9:1 card / 5.2:1 paper ✓ AA) |
+| primary (saffron FILL/CTA) | `#C2410C` | `colorScheme.primary` — white label 5.18:1 ✓ |
+| primaryText (saffron TEXT/ICON) | `#A8380A` | `AppColors.lPrimaryText` — eyebrows, links, glyphs (6.4:1 card / 5.6:1 paper ✓) |
+| onPrimary | `#FFFFFF` | label on saffron fill (5.18:1 ✓) |
+| primaryContainer | `#FBEEE2` | saffron tint well / selected chip |
+| onPrimaryContainer | `#8B330E` | text/icon in the tint (~7.9:1 ✓) |
+| secondary (deep pine) | `#12554A` | `colorScheme.secondary` — success, category (8.5:1 ✓) |
+| secondaryContainer | `#E1EEE9` | pine tint well |
+| onSecondaryContainer | `#0C3E36` | text in pine tint |
+| tertiary (indigo-ink) | `#22346B` | `colorScheme.tertiary` — rare depth/info (white on fill 11.9:1 ✓) |
+| destructive | `#C0342B` | `colorScheme.error` — warmed (white on fill 5.0:1 ✓) |
+| border | `#E7E0D4` | `colorScheme.outline` — card outline, dividers (warm hairline) |
+| input border | `#DCD3C4` | input `enabledBorder` |
+| outlineVariant | `#EFE9DE` | subtle dividers, ruled registers |
+| ring (focus) | `#C2410C` | `AppColors.lRing` — focus indicator (>3:1 non-text ✓) |
+| brandBrass (decorative only) | `#B08D57` | seal ring, ornament hairlines — never text/small icon |
+| brandSaffron (large decorative only) | `#FF9933` | splash seal fill, logo mark — never behind small text (2.13:1) |
+| shadowBase | `#3A2E1E` | warm brown-black base for light two-layer shadows — shadow only |
 
-**PASS:** every color used in the app resolves to a `Theme.of(context).colorScheme.*` role or a named constant in `lib/theme/app_colors.dart`.
-**FAIL:** any `Color(0xFF…)` literal outside `lib/theme/`; any `Colors.orange`/`Colors.blue` Material default; any color that isn't in the tables above.
+### Colors — dark (`ColorScheme.dark`) — Warm Espresso (§2.2)
+| Token | Hex |
+|---|---|
+| background (espresso) | `#17130E` |
+| surfaceContainerLow | `#1C1811` |
+| card | `#221D16` |
+| popover (raised) | `#2A241B` |
+| surfaceContainerHigh | `#332B20` |
+| muted | `#241F17` |
+| foreground (ivory) | `#F5EFE6` (14.6:1 ✓) |
+| muted-foreground | `#A89A86` (6.1:1 ✓) |
+| primary (candlelit saffron, fill AND text) | `#F6A959` (text on card 8.6:1 ✓) |
+| onPrimary | `#231200` (9.3:1 ✓) |
+| primaryContainer | `#2E2417` |
+| onPrimaryContainer | `#F6A959` (~7.4:1 ✓) |
+| secondary (bright pine) | `#4FB3A2` (6.6:1 ✓) |
+| secondaryContainer | `#1E3A34` |
+| onSecondaryContainer | `#B7E4DA` |
+| tertiary (soft indigo) | `#8DA4E0` |
+| destructive | `#E0645A` |
+| border | `#3A3226` |
+| input | `#453B2C` |
+| outlineVariant | `#2C261D` |
+| ring | `#F6A959` |
+| brandBrass (dark ornament) | `#8A6E43` |
 
-### Radius (`lib/theme/app_radius.dart`)
+**Two saffron tokens, one rule:** saffron fills/CTAs use `#C2410C` (white label 5.18:1); saffron text/icons/eyebrows use `#A8380A`; vivid `#FF9933` is large-decorative only. Dark: `#F6A959` fill with `#231200` label. This founder-approved accessible split is locked by `test/core/theme/theme_contrast_test.dart`.
+
+**PASS:** every color used in the app resolves to a `Theme.of(context).colorScheme.*` role or a named constant in `lib/core/theme/app_colors.dart`.
+**FAIL:** any `Color(0xFF…)` literal outside `lib/core/theme/`; any `Colors.orange`/`Colors.blue` Material default; any color that isn't in the tables above.
+
+### Radius (`lib/core/theme/app_radius.dart`) — updated per PREMIUM_DESIGN_SPEC §5 (relaxation R1/F)
 | Name | Value | Use |
 |---|---|---|
-| `radiusSm` | `6.0` | chips, pills, inline tags |
-| `radiusMd` | `12.0` | **default** — cards, buttons, inputs |
-| `radiusLg` | `20.0` | hero / onboarding surfaces only |
-| `radiusPill` | `9999.0` (use `StadiumBorder`) | voice orbs, badges, full pills |
+| `sm` | `8.0` | chips, tight tags |
+| `control` | `12.0` | buttons, inputs, segmented track |
+| `well` | `14.0` | IconWell v2 gradient well |
+| `card` | `16.0` | **default** — cards, sheets, result masthead |
+| `hero` | `20.0` | hero surfaces, floating nav |
+| `pill` | `StadiumBorder` | badges, active-nav pill, full pills |
 
-**FAIL:** any `BorderRadius.circular(14)`, `.circular(16)`, `.circular(8)` or other off-scale value.
+Allowed `.circular()` set is **8 / 10 / 12 / 14 / 16 / 20** (10 = legacy `md`; 14 added for the IconWell well). **FAIL:** any off-scale radius outside that set.
 
-### Elevation / shadow (`lib/theme/app_shadows.dart`)
-Match web's soft grammar — do NOT use Material's default heavy elevations.
-| Name | Web equiv | Flutter `BoxShadow` |
+### Elevation / shadow (`lib/core/theme/app_shadows.dart`) — two-layer warm system per §2.3 (relaxation R3/H)
+The flat `.04/.08/.12` grammar is superseded: pure black on warm paper reads dirty and a flat `.04` shadow is imperceptible (the #1 cheap-utility-app tell). LIGHT uses a warm-tinted (`#3A2E1E`) TWO-layer shadow per level; DARK uses surface steps + a 1px top-highlight + a black key shadow only where things float. `cardTheme.elevation` stays `0` (`surfaceTintColor: transparent`); shadows are drawn on the widget's own `DecoratedBox`.
+| Name | Use | Layers (warm base `#3A2E1E`) |
 |---|---|---|
-| `shadowSoft` | `0 1px 2px /0.04` | `BoxShadow(color: onSurface.withOpacity(.04), blurRadius: 2, offset: Offset(0,1))` — cards at rest |
-| `shadowElevated` | `0 4px 12px /0.08` | `blurRadius: 12, offset: Offset(0,4), opacity .08` — hover/pressed/important |
-| `shadowFloating` | `0 16px 40px /0.12` | `blurRadius: 40, offset: Offset(0,16), opacity .12` — dialogs, sheets, menus |
+| `e1` | resting card / list tile / input | `0 1 3 /.04` + `0 2 6 /-1 /.06` |
+| `e2` | raised / hover / focal card / result masthead | `0 2 6 /.05` + `0 8 20 /-4 /.09` |
+| `e3` | dialog / menu / floating CTA bar / floating nav | `0 4 10 /.06` + `0 16 40 /-8 /.14` |
+| `e4` | bottom sheet / modal | `0 8 16 /.08` + `0 28 64 /-12 /.20` |
+| `dKey` | dark floating key shadow (sheets/dialogs) | `black 0 16 48 /-12 /.45` |
+| `dTopHighlight` | dark 1px top catch-light border | `white@0.05` |
+| `ctaGlowLight` / `dSaffronGlow` | the ONE CTA glow, never repeated | saffron `0 6 18 /-4 /.22` / `0 6 24 /-6 /.18` |
 
-**PASS:** `Card`/`Material` elevation ≤ 1 with custom `shadowSoft`; sheets use `shadowFloating`.
-**FAIL:** default `Card` elevation (Material 3 tonal flood), `elevation: 8`, drop shadows darker than `.12`.
+**PASS:** `Card` elevation `0` + `surfaceTintColor: transparent`, depth drawn via `e1`–`e4`; sheets use `e4`; exactly one CTA carries the glow.
+**FAIL:** default `Card` tonal flood, `elevation: 8`, a single flat `.04` shadow, or the CTA glow repeated on multiple elements.
 
 ### Spacing — 4dp grid (`lib/theme/app_spacing.dart`)
 Allowed multiples only: **4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96, 128**.
@@ -84,14 +113,15 @@ Allowed multiples only: **4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96, 128**.
 
 **FAIL:** any `EdgeInsets` / `SizedBox` using 5, 6, 10, 14, 15, 18, 22, 25, 30 dp (off-grid); any raw magic number not from this list.
 
-### Motion (`lib/theme/app_motion.dart`)
-| Name | Duration | Curve | Use |
-|---|---|---|---|
-| `motionMicro` | `150ms` | `easeOutQuart` | hover, focus, color, tap feedback |
-| `motionSmall` | `250ms` | `easeOutQuart` | accordion, reveal, dropdown |
-| `motionMedium` | `350ms` | `easeOutQuart` | page transition, dialog, bottom sheet |
+### Motion (`lib/core/theme/app_motion.dart`) — 3-curve set per §4 (relaxation R2/G)
+One curve cannot drive both a 160ms tap and a 320ms page push, so the sanctioned set is EXACTLY three named curves. Durations: `instant 120` · `micro 160` · `small 240` · `medium 320` · `large 420` · `stagger 55`.
+| Name | Cubic | Use |
+|---|---|---|
+| `easeOutQuart` | `(0.16, 1.0, 0.30, 1.0)` | canonical decelerate — entrances, reveals, settle, taps |
+| `emphasized` | `(0.20, 0.00, 0.00, 1.0)` | page / sheet / result — travels distance |
+| `standard` | `(0.40, 0.00, 0.20, 1.0)` | reversible / symmetric — theme cross-fade, toggle |
 
-`easeOutQuart = Cubic(0.16, 1.0, 0.3, 1.0)` — the SINGLE canonical curve. **FAIL:** `Curves.bounceIn`, `Curves.elasticOut`, `Curves.linear` on UI reveals, any duration <120ms or >400ms, more than one custom curve in the codebase.
+**PASS:** every animation uses one of these three curves; a single element ≤ `420ms`; a multi-element orchestration (splash, result reveal) may span ~`600ms` wall-clock provided each element ≤ 420ms and input is never blocked > 350ms; respects `MediaQuery.disableAnimations`. **FAIL:** `Curves.bounceIn`, `Curves.elasticOut`, `Curves.linear` on UI reveals, any `Cubic`/`Curves.*` outside the three, or a single element > 420ms.
 
 ### Typography (`lib/theme/app_text.dart`)
 Fonts: **Outfit** (headings), **Inter** (body/UI), **Noto Sans <script>** (Indic runtime). Bundle Outfit weights 400/500/600/700/800 and Inter 300/400/500/600/700 as assets (do NOT rely on Google Fonts network fetch — rural = offline). Hierarchy is **weight-first, size-second** (size-only hierarchy breaks on Devanagari/Tamil conjuncts).
@@ -150,7 +180,7 @@ Fonts: **Outfit** (headings), **Inter** (body/UI), **Noto Sans <script>** (Indic
 - [ ] Saffron (`primary`) appears only on: primary CTA, active/selected state, brand mark, focus ring. **FAIL:** saffron app bar background, saffron full-card fills, saffron page backgrounds.
 - [ ] Green (`secondary`) only for success/"saved" states. **Never** in the same element as saffron.
 - [ ] Navy (`tertiary`) is rare — high-attention info badge only.
-- [ ] No raw gradients except the one sanctioned card-accent bar (`primary → primary/40`, 4dp tall top strip). **FAIL:** random purple/pink hero gradients, gradient backgrounds behind body text.
+- [ ] Gradients are limited to the §2.4 sanctioned set (relaxation R4/I): paper wash (3% vertical warm), hero corner wash (8%→0% saffron top-right, hero only), dark vignette, the CTA glow, the 3px accent ribbon (`primary → primary@0`), and the IconWell diagonal tint. If a gradient is noticeable at a glance it is too strong. **STILL FAIL:** mesh gradients, glassmorphism blur panels, gradient-filled text, multi-stop rainbow, any gradient behind body text.
 - [ ] Contrast: body text on its background ≥ **4.5:1** (WCAG AA); large text (≥18sp semibold) ≥ **3:1**. `muted-foreground #6B7686` on `#FFFFFF` = 4.6:1 → OK for ≥14sp. Verify any text placed on saffron uses `onPrimary #FFFFFF` (≥4.5:1).
 - [ ] Dark mode uses the §0 dark tables — not auto-inverted colors. Elevation reads via layered surfaces (bg < card < muted < border), not a single flat navy.
 - [ ] Status colors only from tokens: error = `#EF4444`, success = green `secondary`. No `Colors.red`/`Colors.green`.
@@ -210,7 +240,7 @@ For **every** screen/data surface, all five states are designed and reachable:
 ## 11. Anti-AI-slop — pass/fail
 
 - [ ] **No generic centered hero stack** (big centered icon + centered H1 + centered subtitle + centered button) as a default screen skeleton. Content is left-aligned, real, and dense where content exists.
-- [ ] **No random gradients**, no glassmorphism-for-decoration, no purple/indigo "AI" palette — only the saffron/green/navy system.
+- [ ] **No random gradients**, no glassmorphism-for-decoration, no purple/indigo "AI" palette used as PRIMARY. The sanctioned accent set (relaxation R5/J) is saffron + **pine** (`#12554A` / `#4FB3A2`) + **indigo-ink** (`#22346B` / `#8DA4E0`) + green/navy; only the §2.4 barely-there warm gradients are allowed. Still ban glassmorphism and purple/indigo-as-primary AI slop.
 - [ ] **Real content density** — screens show actual teacher data (lesson plans, call logs, students), not three placeholder cards with lorem-ish filler and huge whitespace.
 - [ ] No perfectly-symmetric 3-equal-cards-in-a-row "feature grid" filler. Layout follows information, not a template.
 - [ ] No decorative stock illustrations that add nothing; icons are functional (Lucide), consistent stroke width.

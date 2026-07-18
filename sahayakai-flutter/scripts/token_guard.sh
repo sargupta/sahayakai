@@ -5,7 +5,7 @@
 #
 # Rejects, outside lib/core/theme/ and generated code:
 #   - raw Color(0x...) literals            (colors must be theme roles/tokens)
-#   - off-scale .circular(N) radii         (allowed: 8, 10, 12, 16, 20)
+#   - off-scale .circular(N) radii         (allowed: 8, 10, 12, 14, 16, 20)
 #   - banned animation curves              (bounce*/elastic*/linear on reveals)
 #   - emoji codepoints                     (Lucide icons only, no emoji)
 #
@@ -32,9 +32,9 @@ if [ -n "$hits" ]; then
 fi
 
 hits=$(scan_files | xargs grep -nE '\.circular\(' 2>/dev/null \
-  | grep -Ev '\.circular\((8|10|12|16|20)(\.0)?\)')
+  | grep -Ev '\.circular\((8|10|12|14|16|20)(\.0)?\)')
 if [ -n "$hits" ]; then
-  echo "VIOLATION: off-scale .circular() radius (allowed 8/10/12/16/20)"; echo "$hits"; fail=1
+  echo "VIOLATION: off-scale .circular() radius (allowed 8/10/12/14/16/20)"; echo "$hits"; fail=1
 fi
 
 hits=$(scan_files | xargs grep -nE 'Curves\.(bounceIn|bounceOut|elasticIn|elasticOut|linear)' 2>/dev/null)

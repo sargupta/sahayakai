@@ -1,0 +1,234 @@
+{
+  "version": 1,
+  "app": "sahayakai-flutter",
+  "phase": "design-foundation",
+  "concept": "The Ledger — Ivory & Ink, Saffron & Pine. A heritage-school almanac: warm ivory paper, warm charcoal ink, one Fraunces serif masthead, hairline ruled registers, real sheets lifting on warm two-layer shadows, saffron as a scarce wax-seal (<10% of any screen).",
+  "spec": "docs/flutter/design/PREMIUM_DESIGN_SPEC.md",
+  "supersedes": ["DESIGN_RUBRIC.md#0 flat-white tables", "THEME_SPEC.md#2", "THEME_SPEC.md#7"],
+  "branch": "feature/flutter-rebuild",
+  "sourceDirections": [
+    "docs/flutter/design/DIRECTION_brand.md",
+    "docs/flutter/design/DIRECTION_color.md",
+    "docs/flutter/design/DIRECTION_type.md",
+    "docs/flutter/design/DIRECTION_motion.md",
+    "docs/flutter/design/DIRECTION_components.md"
+  ],
+  "criticLenses": {
+    "taste": "Winning look = The Ledger / Ivory & Ink, Saffron & Pine.",
+    "a11yIndic": "Every text pair states a measured WCAG AA ratio; 11-script Noto serif+sans dual fallback; line-height floors (serif display >=1.32, titles >=1.42, body >=1.70 Indic); >=48dp; Lucide-only, no emoji; teacher dignity. Nothing that breaks AA / Indic / 48dp / dignity ships.",
+    "feasibility": "Theme + shared-widget re-skin first (M3 slots + widget APIs preserved -> all screens inherit at once), then 3-4 hero screens, then the long tail."
+  },
+  "universalAcceptance": [
+    "flutter analyze = 0 issues",
+    "scripts/token_guard.sh = PASS (after relaxation R1 lands)",
+    "747 behavior tests green (logic/widget/behavior unchanged)",
+    "golden tests re-baseline at 360dp + 800dp, light + dark, with Indic probe strings (expected for a re-skin)",
+    "commit unit on develop; git add explicit paths only; never push"
+  ],
+  "units": [
+    {
+      "id": "U1",
+      "group": "a-theme-reskin",
+      "title": "Token layer: colors, shadows, gradients, radius, motion",
+      "files": [
+        "lib/core/theme/app_colors.dart",
+        "lib/core/theme/app_shadows.dart",
+        "lib/core/theme/app_gradients.dart",
+        "lib/core/theme/app_radius.dart",
+        "lib/core/theme/app_motion.dart"
+      ],
+      "acceptance": "Ivory/ink/pine/indigo/espresso values in; additive lPrimaryText/lShadowBase/brandBrass/brandSaffron; e1-e4 + dark + CTA glow; app_gradients (paper/heroWash/vignette/accentBar); radius card=16/control=12/well=14; AppMotion 3 curves + instant/large/stagger. theme_contrast_test.dart still green (accessible saffron split intact). analyze 0, token_guard PASS (with R1), 747 green.",
+      "status": "done"
+    },
+    {
+      "id": "U2",
+      "group": "a-theme-reskin",
+      "title": "Type system (Fraunces+Inter, dual Indic fallback) + theme wiring",
+      "files": [
+        "lib/core/theme/app_text.dart",
+        "lib/core/theme/app_theme.dart"
+      ],
+      "acceptance": "Fraunces on display slots + titleLarge, Inter on the rest; Outfit removed; warmIndicFonts warms 20 families; kIndicSerifFallback + kIndicSansFallback; AppTextExtras ThemeExtension on the scheme/isIndic path; cardTheme.elevation 0 + surfaceTint transparent; inputDecoration filled + focus glow; chip selected theme; appbar titleLarge serif; scaffold gradient DecoratedBox. Indic line-height clamp verified in a golden (Bengali/Tamil/Malayalam, zero clipped matras). analyze 0, token_guard PASS, 747 green.",
+      "status": "pending"
+    },
+    {
+      "id": "U3",
+      "group": "a-theme-reskin",
+      "title": "Shared-widget re-skin + new premium widgets",
+      "files": [
+        "lib/shared/widgets/app_card.dart",
+        "lib/shared/widgets/icon_well.dart",
+        "lib/shared/widgets/primary_button.dart",
+        "lib/shared/widgets/press_scale.dart",
+        "lib/shared/widgets/secondary_button.dart",
+        "lib/shared/widgets/app_segmented.dart",
+        "lib/shared/widgets/empty_view.dart",
+        "lib/shared/widgets/labeled_field.dart",
+        "lib/shared/widgets/editorial_section_header.dart",
+        "lib/shared/widgets/section_label.dart",
+        "lib/shared/widgets/app_skeleton.dart",
+        "lib/shared/widgets/result_view.dart",
+        "lib/shared/widgets/document_sheet.dart",
+        "lib/shared/widgets/score_ring.dart"
+      ],
+      "acceptance": "AppCard v2 (flat/elevated/inset variants + PressableScale + dark catch-light); IconWell v2 gradient; PrimaryButton glow/press; SecondaryButton; AppSegmented; EmptyView halo; LabeledField leading glyph + tabular counter; EditorialSectionHeader eyebrow+hairline; section tick; shimmer skeletons through ResultView loading branch; DocumentSheet + ScoreRing. Existing widget tests green (APIs preserved); add goldens for the 6 new/changed widgets 360/800 light+dark. analyze 0, token_guard PASS, 747 green.",
+      "status": "pending"
+    },
+    {
+      "id": "U4",
+      "group": "a-theme-reskin",
+      "title": "Motion infrastructure (flutter_animate, page transition, entrance, reduce-motion)",
+      "files": [
+        "pubspec.yaml",
+        "lib/shared/motion/lift_settle_transitions.dart",
+        "lib/shared/motion/animated_entrance.dart",
+        "lib/core/theme/app_theme.dart"
+      ],
+      "acceptance": "flutter_animate ^4.5.0 added; LiftSettleTransitionsBuilder wired both platforms (PredictiveBack kept only for Android OS back); staggeredItem (one-shot, cap 8) + inkSettle helpers; context.motionEnabled reduce-motion helper checked at every animation site. Reduce-motion golden = final composed frame (no tween); only opacity/transform/shadow animated. analyze 0, token_guard PASS, 747 green.",
+      "status": "pending"
+    },
+    {
+      "id": "U5",
+      "group": "b-hero-screens",
+      "title": "Splash — The Seal",
+      "files": ["lib/features/splash/presentation/splash_screen.dart"],
+      "acceptance": "Ivory ground; saffron monogram seal press-in (scale 0.92->1.0) + ink-underline draw + wordmark rise; route-out cross-fade with matched mark geometry to login header; first-class error/retry state retained; reduce-motion renders composed frame. analyze 0, token_guard PASS, 747 green.",
+      "status": "pending"
+    },
+    {
+      "id": "U6",
+      "group": "b-hero-screens",
+      "title": "Login / Onboarding",
+      "files": ["lib/features/onboarding/presentation/login_screen.dart"],
+      "acceptance": "Ivory AppCard sheet; displayHero masthead + lead deck (left-aligned, 2dpx32dp saffron kicker); value props as hairline ruled list; one PrimaryButton; EditorialSectionHeader over language picker (11 native labels); stub-auth flip unchanged. analyze 0, token_guard PASS, 747 green.",
+      "status": "pending"
+    },
+    {
+      "id": "U7",
+      "group": "b-hero-screens",
+      "title": "Dashboard — The Almanac",
+      "files": [
+        "lib/features/dashboard/presentation/dashboard_screen.dart",
+        "lib/core/i18n/app_en.arb",
+        "lib/core/i18n/(10 Indic ARBs)"
+      ],
+      "acceptance": "Seamless app bar + hero header (eyebrow date/school, serif greeting, almanac date line, 2px saffron rule, YOUR TEACHING TOOLS eyebrow) + feature tile + refined-row register with ink-settle stagger; 3 time-aware greeting keys across all 11 languages; recent-list skeleton/empty/error/401 states preserved; saffron surface <10%. analyze 0, token_guard PASS, 747 green.",
+      "status": "pending"
+    },
+    {
+      "id": "U8",
+      "group": "b-hero-screens",
+      "title": "Reference tool + result: Lesson Plan (DocumentSheet + Ink-settle)",
+      "files": ["lib/features/lesson_planner/presentation/lesson_plan_screen.dart"],
+      "acceptance": "Form re-skin (filled inputs, eyebrow section headers, segmented/chips); 5E result wrapped in DocumentSheet with ink-settle reveal + sticky action bar (Save/Regenerate/Copy); all four states intact; 5E content unchanged; auto-scroll to result header. This is the pattern every other tool copies. analyze 0, token_guard PASS, 747 green.",
+      "status": "pending"
+    },
+    {
+      "id": "U9",
+      "group": "c-remaining",
+      "title": "Floating bottom nav + app shell",
+      "files": ["lib/app/app_shell.dart"],
+      "acceptance": "Floating inset nav (radius 20, e3, active saffron pill, icon 1.08 pop, >=12sp label); tab switch = cross-fade + fresh content stagger; Create stays an action. analyze 0, token_guard PASS, 747 green.",
+      "status": "pending"
+    },
+    {
+      "id": "U10",
+      "group": "c-remaining",
+      "title": "Remaining P0/P1 tool forms + results in DocumentSheet",
+      "files": [
+        "lib/features/quiz_generator/presentation/quiz_generator_screen.dart",
+        "lib/features/instant_answer/presentation/instant_answer_screen.dart",
+        "lib/features/worksheet_wizard/presentation/worksheet_wizard_screen.dart",
+        "lib/features/rubric_generator/presentation/rubric_generator_screen.dart",
+        "lib/features/exam_paper/presentation/exam_paper_screen.dart",
+        "lib/features/teacher_training/presentation/teacher_training_screen.dart",
+        "lib/features/parent_message/presentation/parent_message_screen.dart",
+        "lib/features/assess_assignment/presentation/assess_assignment_screen.dart"
+      ],
+      "acceptance": "Each form re-skinned; each result wrapped in DocumentSheet copying U8; ScoreRing for rubric/assess scorecards; rubric grid stays one bounded horizontal scroll; all existing states/traps preserved. analyze 0, token_guard PASS, 747 green.",
+      "status": "pending"
+    },
+    {
+      "id": "U11",
+      "group": "c-remaining",
+      "title": "Settings, Profile, My Library (+detail), Create Palette re-skin",
+      "files": [
+        "lib/features/settings/presentation/settings_screen.dart",
+        "lib/features/profile/presentation/profile_screen.dart",
+        "lib/features/library/presentation/library_screen.dart",
+        "lib/features/create_palette/presentation/create_palette_sheet.dart"
+      ],
+      "acceptance": "AppCard v2 lists, editorial section headers, EmptyView halo, filled inputs; all save-lane traps and states preserved. analyze 0, token_guard PASS, 747 green.",
+      "status": "pending"
+    },
+    {
+      "id": "U12",
+      "group": "c-remaining",
+      "title": "P2 screens adopt the system as they are built",
+      "files": ["lib/features/(visual_aid|assessment_scanner|video_storyteller|virtual_field_trip|attendance|demo_call|community|impact|pricing|notifications)/**"],
+      "acceptance": "Built natively on the premium tokens/widgets/DocumentSheet; per-screen DESIGN_RUBRIC 15-point + premium-done checklist. analyze 0, token_guard PASS, tests green.",
+      "status": "pending"
+    }
+  ],
+  "guardrails": [
+    "Presentation layer only: no providers/controllers/repositories/models/routes/DTO changes; 747 behavior tests must stay green.",
+    "Preserve every widget public API and the 15 M3 TextTheme slot names so screens inherit the re-skin for free.",
+    "Preserve the founder-approved accessible saffron split: fill/CTA #C2410C, text/icon #A8380A, brand-decorative #FF9933 only; dark #F6A959 fill with #231200 label. theme_contrast_test.dart must stay green.",
+    "Every text pairing passes WCAG AA (ratios stated in the spec); >=48dp targets; 12sp minimum.",
+    "11 Indic scripts: serif+sans dual Noto fallback, line-height floors, zero clipped matras verified on Bengali/Tamil/Malayalam at textScale 1.3 / 360dp / light+dark.",
+    "Lucide icons only, no emoji, no em dashes, teacher-dignity copy, all 11 languages first-class (never Hindi-only).",
+    "Saffron surface area < 10% of any screen; one CTA glow, never repeated; no mesh gradients, no glassmorphism, no gradient behind body text, no gradient-filled text.",
+    "Motion curve set is exactly easeOutQuart/emphasized/standard; single element <=420ms, orchestration <=600ms wall-clock, input never blocked >350ms; bounce/elastic/linear-on-reveal banned; respect MediaQuery.disableAnimations.",
+    "Branch develop; commit each unit; git add explicit paths (never -A/.); never push, never deploy, never touch sahayakai-main or sibling repos.",
+    "Any DESIGN_RUBRIC 15-point FAIL blocks that screen's commit."
+  ],
+  "relaxations": [
+    {
+      "id": "R1",
+      "target": "scripts/token_guard.sh + DESIGN_RUBRIC.md#0 radius table",
+      "change": "Add 14 to the allowed .circular() radius set (8/10/12/14/16/20); add card=16/control=12/well=14 aliases to the radius table.",
+      "why": "IconWell v2 gradient well uses r14 — an on-scale premium value, not drift."
+    },
+    {
+      "id": "R2",
+      "target": "DESIGN_RUBRIC.md#0 curve + duration rule",
+      "change": "Replace 'single canonical curve / >400ms FAIL' with the sanctioned 3-curve set (easeOutQuart/emphasized/standard), 420ms single-element ceiling, ~600ms multi-element wall-clock orchestration, input never blocked >350ms. Bounce/elastic still banned.",
+      "why": "One curve cannot drive both a 160ms tap and a 320ms page push; the emphasized/standard pair is the minimum premium motion needs."
+    },
+    {
+      "id": "R3",
+      "target": "DESIGN_RUBRIC.md#0 shadow table",
+      "change": "Replace the flat .04/.08/.12 grammar and the 'darker than .12 FAIL' line with the two-layer warm-tinted e1-e4 system (e4 reaches .20) + dark 1px top-highlight + one CTA glow.",
+      "why": "The flat .04 shadow on white is imperceptible — the #1 cheap-utility-app tell; real depth is the biggest premium lever."
+    },
+    {
+      "id": "R4",
+      "target": "DESIGN_RUBRIC.md#153 gradient rule",
+      "change": "Expand the sanctioned gradient list beyond the accent bar to: paper wash (3%), hero corner wash (8% saffron), dark vignette, CTA glow, ribbon, IconWell tint. Still ban mesh, glassmorphism, gradient-filled text, gradient behind body text.",
+      "why": "The premium language legitimately needs tasteful, barely-there warm gradients; the old rule banned all but one."
+    },
+    {
+      "id": "R5",
+      "target": "DESIGN_RUBRIC.md#213 palette rule",
+      "change": "Add pine (#12554A/#4FB3A2) and indigo-ink (#22346B/#8DA4E0) as sanctioned tertiary accents alongside saffron/green/navy. Still ban glassmorphism and purple/indigo AI-slop-as-primary.",
+      "why": "A 3-note accent story gives the palette a grown-up spread so it never reads as 'M3 + one orange button'."
+    },
+    {
+      "id": "R6",
+      "target": "DESIGN_RUBRIC.md#0 color tables + #2 typography",
+      "change": "Supersede the flat-white light and blue-black dark tables with the Ivory & Ink / warm-espresso values (+ new named tokens lPrimaryText/lShadowBase/brandBrass/pine/indigo); record Fraunces as the editorial display family and mark Outfit retired.",
+      "why": "The tables are the named-token-only gate's source of truth and must reference the shipped premium values."
+    }
+  ],
+  "designDoneChecklist": [
+    "Paper not white: warm ivory ground, cards visibly float (1.13:1 lift + warm two-layer shadow); no two coplanar whites.",
+    "Depth is legible: every card casts a gathered warm two-layer shadow; the one focal card sits a step higher; dark cards show a top catch-light.",
+    "Serif present and restrained: Fraunces on wordmark/heroes/card+result titles (~3-6 strings/screen), Inter elsewhere, clear serif<->sans contrast, no Outfit.",
+    "Sections read editorial: every group has a saffron tracked-uppercase (Latin) eyebrow + hairline rule; no weak grey labels.",
+    "Saffron scarce and confident: <10% surface; #C2410C fills, #A8380A text, #FF9933 only on splash/logo; dark CTA reads brass not neon; no all-peach tiles.",
+    "The three moments land: Splash presses the Seal + draws the ink underline; Dashboard opens as a composed Almanac; results ink in block-by-block on a DocumentSheet (never a chat dump).",
+    "Motion confident not playful: staggered entrances, press-depress everywhere, skeletons (no bare spinner), Lift-&-Settle push, result reveal, all within 3-curve/<=420ms(<=600ms) budget; reduce-motion shows final frame instantly.",
+    "A11y holds under stress: every text pair AA; 48dp targets; longest Bengali+Tamil+Malayalam render no clipped matra at textScale 1.3/360dp/light+dark; Lucide-only, no emoji; dignified copy.",
+    "Looks curated not generated: composed asymmetry, masthead, seal, hairline discipline, tabular data."
+  ]
+}

@@ -8,6 +8,7 @@ import 'app_radius.dart';
 import 'app_text.dart';
 
 export 'app_colors.dart';
+export 'app_gradients.dart';
 export 'app_icon_size.dart';
 export 'app_motion.dart';
 export 'app_radius.dart';
