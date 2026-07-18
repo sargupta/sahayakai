@@ -6,14 +6,21 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/auth/auth_providers.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../shared/widgets/icon_well.dart';
 
-/// P0.1 — Splash.
+/// P0.1 — Splash. "The Seal" (PREMIUM_DESIGN_SPEC.md §4 / §6b U5).
 ///
-/// The brand mark on `background` while [appBootstrap] resolves what will
+/// The brand mark on the ivory ground while [appBootstrap] resolves what will
 /// become Firebase init, App Check activation, and the FIRST auth snapshot. The
 /// router's redirect parks here for exactly as long as that future has no
 /// value, then sends the teacher to Login or Home.
+///
+/// THE SIGNATURE MOMENT. A saffron wax-seal presses in (scale 0.92→1.0 + fade),
+/// then an ink underline draws left-to-right (the signature of authorship), then
+/// the Fraunces wordmark rises — a single ~600ms orchestration, each element
+/// ≤420ms. Under reduce-motion (`MediaQuery.disableAnimations`) the composed
+/// final frame renders instantly, no tween. Route-out is the theme's Lift-&-
+/// Settle push (a cross-fade when motion is reduced), the seal's saffron mark
+/// echoing the login masthead.
 ///
 /// WHY THIS IS NOT JUST A SPINNER. The bootstrap can fail — App Check's Play
 /// Integrity handshake needs the network, and this app's teachers are on rural
@@ -23,10 +30,10 @@ import '../../../shared/widgets/icon_well.dart';
 /// with no way out. So the failure is a first-class state on this screen, with
 /// a retry that re-runs the bootstrap.
 ///
-/// LAYOUT: the brand mark is centred, which on a splash is the brand moment
-/// itself and not the centred-hero filler DESIGN_RUBRIC §11 bans — that rule is
-/// about content screens dressing up emptiness. There is no content to be dense
-/// with here. The failure block below it is left-aligned and real.
+/// LAYOUT: the seal is centred, which on a splash is the brand moment itself and
+/// not the centred-hero filler DESIGN_RUBRIC §11 bans — that rule is about
+/// content screens dressing up emptiness. There is no content to be dense with
+/// here. The failure block below it is left-aligned and real.
 class SplashScreen extends ConsumerWidget {
   const SplashScreen({super.key});
 
@@ -56,7 +63,7 @@ class SplashScreen extends ConsumerWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const _BrandMark(),
+                        const _SealBrand(),
                         const SizedBox(height: AppSpacing.space8),
                         if (boot.hasError)
                           _BootstrapFailed(
@@ -77,40 +84,179 @@ class SplashScreen extends ConsumerWidget {
   }
 }
 
-/// The letter-mark in its saffron-tinted well, the app name, and the tagline.
-/// Saffron stays an accent here: it tints a 64dp well and the glyph, never the
-/// page (DESIGN_RUBRIC §4).
-class _BrandMark extends StatelessWidget {
-  const _BrandMark();
+/// The animated brand: the saffron wax-seal presses in, an ink underline draws
+/// left-to-right, then the Fraunces wordmark and tagline rise. Orchestrated on
+/// one controller so the three beats are staged; degrades to the composed final
+/// frame under reduce-motion. Plays once per mount (the seal sits first in the
+/// Column, so a boot state change rebuilds around it without restarting it).
+class _SealBrand extends StatefulWidget {
+  const _SealBrand();
+
+  @override
+  State<_SealBrand> createState() => _SealBrandState();
+}
+
+class _SealBrandState extends State<_SealBrand>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c;
+  late final Animation<double> _seal; // press-in + fade
+  late final Animation<double> _underline; // draw left-to-right
+  late final Animation<double> _wordmark; // fade + rise
+  bool _kicked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // ≤600ms wall-clock orchestration; each staged element clears in ≤420ms
+    // (PREMIUM_DESIGN_SPEC.md §4 / relaxation R2).
+    _c = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _seal = CurvedAnimation(
+      parent: _c,
+      curve: const Interval(0.0, 0.70, curve: AppMotion.easeOutQuart),
+    );
+    _underline = CurvedAnimation(
+      parent: _c,
+      curve: const Interval(0.50, 0.80, curve: AppMotion.easeOutQuart),
+    );
+    _wordmark = CurvedAnimation(
+      parent: _c,
+      curve: const Interval(0.65, 1.0, curve: AppMotion.easeOutQuart),
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // MediaQuery is available here (unlike initState). Kick once: reduce-motion
+    // jumps to the final composed frame, everyone else plays the sequence.
+    if (_kicked) return;
+    _kicked = true;
+    final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    if (reduce) {
+      _c.value = 1.0;
+    } else {
+      _c.forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const IconWell(icon: LucideIcons.graduationCap),
-        const SizedBox(height: AppSpacing.space4),
-        Text(
-          context.l10n.appTitle,
-          style: text.headlineMedium,
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: AppSpacing.space2),
-        Text(
-          context.l10n.splashTagline,
-          textAlign: TextAlign.center,
-          style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
-        ),
-      ],
+
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (context, _) {
+        final sealV = _seal.value.clamp(0.0, 1.0);
+        final underlineV = _underline.value.clamp(0.0, 1.0);
+        final wordV = _wordmark.value.clamp(0.0, 1.0);
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Beat 1 — the seal presses in.
+            Opacity(
+              opacity: sealV,
+              child: Transform.scale(
+                scale: 0.92 + 0.08 * sealV,
+                child: const _Seal(),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.space5),
+            // Beat 2 — the ink underline draws left-to-right (transform-only, so
+            // nothing reflows): a solid stroke scaled in X from its left edge.
+            SizedBox(
+              width: 56,
+              height: 2,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Transform(
+                  alignment: Alignment.centerLeft,
+                  transform: Matrix4.diagonal3Values(underlineV, 1.0, 1.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: scheme.onSurface,
+                      borderRadius: AppRadius.rSm,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.space5),
+            // Beat 3 — the Fraunces wordmark and tagline rise into place.
+            Opacity(
+              opacity: wordV,
+              child: Transform.translate(
+                offset: Offset(0, 10 * (1 - wordV)),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      context.l10n.appTitle,
+                      style: text.displaySmall,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: AppSpacing.space2),
+                    Text(
+                      context.l10n.splashTagline,
+                      textAlign: TextAlign.center,
+                      style: text.bodyMedium
+                          ?.copyWith(color: scheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// The saffron wax-seal that authenticates the work: a `brandSaffron` disc (the
+/// large-decorative saffron, exempt from the contrast gate) inside a brass ring,
+/// its monogram embossed in `onPrimary`, lifting off the paper on a warm shadow.
+class _Seal extends StatelessWidget {
+  const _Seal();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brass = isDark ? AppColors.dBrandBrass : AppColors.brandBrass;
+    return Container(
+      width: 96,
+      height: 96,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: AppColors.brandSaffron,
+        border: Border.all(color: brass, width: 2),
+        // Lift off the ivory ground; on espresso the bright seal carries itself,
+        // so no muddy warm shadow there (§2.3 dark model).
+        boxShadow: isDark ? null : AppShadows.e2,
+      ),
+      alignment: Alignment.center,
+      child: Icon(
+        LucideIcons.graduationCap,
+        size: 40,
+        color: scheme.onPrimary,
+      ),
     );
   }
 }
 
 /// The bootstrap is still running. Deliberately quiet: this is a sub-second
-/// state on a good connection, and the brand mark above is what the teacher is
-/// meant to be looking at.
+/// state on a good connection, and the seal above is what the teacher is meant
+/// to be looking at.
 class _Booting extends StatelessWidget {
   const _Booting();
 

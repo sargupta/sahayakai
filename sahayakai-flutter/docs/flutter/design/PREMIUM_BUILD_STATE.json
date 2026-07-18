@@ -96,7 +96,8 @@
       "title": "Splash — The Seal",
       "files": ["lib/features/splash/presentation/splash_screen.dart"],
       "acceptance": "Ivory ground; saffron monogram seal press-in (scale 0.92->1.0) + ink-underline draw + wordmark rise; route-out cross-fade with matched mark geometry to login header; first-class error/retry state retained; reduce-motion renders composed frame. analyze 0, token_guard PASS, 747 green.",
-      "status": "pending"
+      "status": "done",
+      "notes": "Single 600ms controller stages three beats via Intervals (seal 0-0.70 press-in+fade, ink underline 0.50-0.80 drawn left-to-right by a transform-only X-scale from the left edge, Fraunces displaySmall wordmark 0.65-1.0 fade+rise); each staged element clears <=420ms. Reduce-motion path sets controller.value=1.0 in didChangeDependencies (composed final frame, no forward()). Seal = brandSaffron disc + brass ring + onPrimary monogram + e2 shadow (light) / none (dark). Bootstrap error/retry state kept verbatim; router redirect + all 16 splash tests green. Route-out uses the theme's LiftSettle push (cross-fade under reduce-motion); NOT a shared-element Hero (would require matching tags on login's tested layout), so the seal echoes the login mark by saffron/glyph rather than exact geometry."
     },
     {
       "id": "U6",
