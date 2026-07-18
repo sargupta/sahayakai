@@ -9,11 +9,15 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_card.dart';
-import '../../../shared/widgets/icon_well.dart';
+import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/language_switcher.dart';
 import '../../../shared/widgets/primary_button.dart';
 
-/// P0.2 — Login.
+/// P0.2 — Login. Re-skinned as a heritage-almanac title page
+/// (PREMIUM_DESIGN_SPEC.md §6b U6): a saffron kicker rule, a Fraunces
+/// `displayHero` masthead, a `lead` deck, the app's real capabilities as a
+/// hairline-ruled editorial register (not saffron bullets), an
+/// `EditorialSectionHeader` over the language picker, and one glowing CTA.
 ///
 /// BUILT-PENDING-FIREBASE. The button below is wired to the STUB
 /// [AuthController], not to Google: `firebase_auth` / `google_sign_in` are
@@ -24,8 +28,9 @@ import '../../../shared/widgets/primary_button.dart';
 /// `GoogleSignIn().signIn()` -> `signInWithCredential`, per
 /// docs/flutter/HANDOFF.md §1.
 ///
-/// LAYOUT: left-aligned, and the page leads with what SahayakAI actually does
-/// for a teacher before it asks for anything. No centred hero stack
+/// LAYOUT: left-aligned, the hero sitting 40dp below the top (the quiet-luxury
+/// top margin, §3.4), and the page leads with what SahayakAI actually does for
+/// a teacher before it asks for anything. No centred hero stack
 /// (DESIGN_RUBRIC §11).
 ///
 /// LANGUAGE IS STEP 0, and it is on this screen ON PURPOSE. It sits ABOVE the
@@ -79,8 +84,10 @@ class LoginScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final text = Theme.of(context).textTheme;
+    final extras = AppTextExtras.of(context);
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final saffron = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       // No AppBar on this screen, so nothing else sets the status-bar style.
@@ -93,41 +100,44 @@ class LoginScreen extends ConsumerWidget {
               // A reading column on tablets; full width on a 360dp phone.
               constraints: const BoxConstraints(maxWidth: 480),
               child: ListView(
-                padding: AppSpacing.pagePadding,
+                // The hero sits 40dp below the top — the quiet-luxury margin.
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.space4,
+                  AppSpacing.space10,
+                  AppSpacing.space4,
+                  AppSpacing.space6,
+                ),
                 children: [
-                  const _BrandRow(),
-                  const SizedBox(height: AppSpacing.space8),
-                  Text(l10n.loginTitle, style: text.headlineMedium),
-                  const SizedBox(height: AppSpacing.space2),
-                  Text(
-                    l10n.loginSubtitle,
-                    style: text.bodyLarge?.copyWith(
-                      color: scheme.onSurfaceVariant,
+                  // The 2dp x 32dp saffron kicker rule above the masthead.
+                  Container(
+                    width: 32,
+                    height: 2,
+                    decoration: BoxDecoration(
+                      color: saffron,
+                      borderRadius: AppRadius.rSm,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.space8),
-                  // The three tools that actually exist in this build. Real
-                  // capabilities, not "Get started" filler (DESIGN_RUBRIC §11).
-                  _ValueRow(
-                    icon: LucideIcons.bookOpen,
-                    label: l10n.loginValueLessons,
-                  ),
+                  const SizedBox(height: AppSpacing.space4),
+                  Text(l10n.loginTitle, style: extras.displayHero),
                   const SizedBox(height: AppSpacing.space3),
-                  _ValueRow(
-                    icon: LucideIcons.clipboardList,
-                    label: l10n.loginValueQuizzes,
-                  ),
-                  const SizedBox(height: AppSpacing.space3),
-                  _ValueRow(
-                    icon: LucideIcons.messageSquare,
-                    label: l10n.loginValueAnswers,
-                  ),
-                  const SizedBox(height: AppSpacing.space8),
                   Text(
-                    l10n.loginLanguagePrompt,
-                    style: text.titleSmall?.copyWith(letterSpacing: 0.2),
+                    l10n.loginSubtitle,
+                    style: extras.lead.copyWith(color: scheme.onSurfaceVariant),
                   ),
-                  const SizedBox(height: AppSpacing.space1),
+                  const SizedBox(height: AppSpacing.space8),
+                  // The three tools that actually exist in this build, as a
+                  // hairline-ruled register — real capabilities, not "Get
+                  // started" filler (DESIGN_RUBRIC §11), and not saffron bullets.
+                  const _ValueRegister(
+                    items: [
+                      (icon: LucideIcons.bookOpen, key: _ValueKey.lessons),
+                      (icon: LucideIcons.clipboardList, key: _ValueKey.quizzes),
+                      (icon: LucideIcons.messageSquare, key: _ValueKey.answers),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.space8),
+                  EditorialSectionHeader(l10n.loginLanguagePrompt),
+                  const SizedBox(height: AppSpacing.space2),
                   Text(
                     l10n.loginLanguageHint,
                     style: text.bodySmall?.copyWith(
@@ -167,25 +177,47 @@ class LoginScreen extends ConsumerWidget {
   }
 }
 
-/// The brand mark, left-aligned and small: this screen is about the teacher's
-/// decision, not about the logo.
-class _BrandRow extends StatelessWidget {
-  const _BrandRow();
+/// Which capability line to render; the copy resolves against the active
+/// locale, so a value prop reads in the teacher's language.
+enum _ValueKey { lessons, quizzes, answers }
+
+/// The app's real capabilities as a hairline-ruled editorial register: each
+/// line is a muted (never saffron) Lucide glyph and a real sentence, the rows
+/// framed and separated by 1px `outlineVariant` rules — the ledger register,
+/// not a bulleted list.
+class _ValueRegister extends StatelessWidget {
+  const _ValueRegister({required this.items});
+
+  final List<({IconData icon, _ValueKey key})> items;
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    return Row(
+    final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
+
+    String labelOf(_ValueKey key) => switch (key) {
+          _ValueKey.lessons => l10n.loginValueLessons,
+          _ValueKey.quizzes => l10n.loginValueQuizzes,
+          _ValueKey.answers => l10n.loginValueAnswers,
+        };
+
+    Widget rule() => Container(height: 1, color: scheme.outlineVariant);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        const IconWell(icon: LucideIcons.graduationCap),
-        const SizedBox(width: AppSpacing.space3),
-        Expanded(child: Text(context.l10n.appTitle, style: text.titleLarge)),
+        rule(),
+        for (final item in items) ...[
+          _ValueRow(icon: item.icon, label: labelOf(item.key)),
+          rule(),
+        ],
       ],
     );
   }
 }
 
-/// One capability line: a functional Lucide glyph and a real sentence.
+/// One register row: a muted glyph and a real sentence, generously spaced.
 class _ValueRow extends StatelessWidget {
   const _ValueRow({required this.icon, required this.label});
 
@@ -196,15 +228,18 @@ class _ValueRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: AppIconSize.inline, color: scheme.primary),
-        const SizedBox(width: AppSpacing.space3),
-        // Expanded so a long Malayalam line wraps rather than overflowing the
-        // row at textScale 1.3 (DESIGN_RUBRIC §8).
-        Expanded(child: Text(label, style: text.bodyMedium)),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.space4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: AppIconSize.inline, color: scheme.onSurfaceVariant),
+          const SizedBox(width: AppSpacing.space4),
+          // Expanded so a long Malayalam line wraps rather than overflowing the
+          // row at textScale 1.3 (DESIGN_RUBRIC §8).
+          Expanded(child: Text(label, style: text.bodyLarge)),
+        ],
+      ),
     );
   }
 }

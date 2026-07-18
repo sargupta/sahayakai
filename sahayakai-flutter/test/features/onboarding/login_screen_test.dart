@@ -84,7 +84,10 @@ void main() {
       // to find out the app speaks Odia.
       await _pumpLogin(tester);
 
-      expect(find.text('Choose your language'), findsOneWidget);
+      // The prompt is now an EditorialSectionHeader eyebrow, which uppercases
+      // Latin (unicameral Indic scripts are left as-is). Same string, same
+      // reachable-before-sign-in behaviour — only the register changed.
+      expect(find.text('CHOOSE YOUR LANGUAGE'), findsOneWidget);
       expect(find.text('Language'), findsWidgets);
     });
   });
@@ -219,6 +222,11 @@ void main() {
         (tester) async {
       await _pumpLogin(tester, textScale: 1.3, surface: kNarrowPhone);
 
+      // The premium hero (displayHero masthead + hairline value register) sits
+      // the language picker below the fold at 360dp x 1.3, so the lazy ListView
+      // has not built it yet — scroll it into view before opening the sheet.
+      await tester.scrollUntilVisible(find.text('Language'), 200);
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Language').first);
       await tester.pumpAndSettle();
 

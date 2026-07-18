@@ -105,7 +105,8 @@
       "title": "Login / Onboarding",
       "files": ["lib/features/onboarding/presentation/login_screen.dart"],
       "acceptance": "Ivory AppCard sheet; displayHero masthead + lead deck (left-aligned, 2dpx32dp saffron kicker); value props as hairline ruled list; one PrimaryButton; EditorialSectionHeader over language picker (11 native labels); stub-auth flip unchanged. analyze 0, token_guard PASS, 747 green.",
-      "status": "pending"
+      "status": "done",
+      "notes": "Hero sits 40dp below the top (ListView top padding space10). 2dp x 32dp saffron kicker (lPrimaryText/dPrimaryText) over a Fraunces displayHero 'Welcome to SahayakAI' + a lead deck (loginSubtitle, onSurfaceVariant), all left-aligned. Value props reworked from saffron-icon rows into a hairline-ruled editorial register (_ValueRegister: 1px outlineVariant top/between/bottom rules, muted onSurfaceVariant glyphs, bodyLarge copy) — no saffron bullets. EditorialSectionHeader(loginLanguagePrompt) -> 'CHOOSE YOUR LANGUAGE' eyebrow + hairline over the language card; loginLanguageHint kept as a muted line; all 11 native labels + stub-auth flip + skippable onboarding untouched. Dropped the old top _BrandRow logo (the displayHero now carries the brand; keeps the hero 40dp margin honest). Reduce-motion N/A (no screen-owned animation; the page-push honours it). TEST UPDATES (structure only, behaviour intact): (1) 'the language picker is reachable BEFORE sign-in' now asserts 'CHOOSE YOUR LANGUAGE' (the eyebrow uppercases Latin) instead of 'Choose your language'; (2) 'the language sheet does not overflow at textScale 1.3' scrolls the switcher into view first (scrollUntilVisible) because the richer hero pushes it below the fold in the lazy ListView — the sheet-opens/no-overflow/Malayalam-visible assertions are unchanged."
     },
     {
       "id": "U7",
