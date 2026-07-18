@@ -175,6 +175,12 @@ class AppLocalizationsPa extends AppLocalizations {
   String get lessonPlanSectionApproach => 'ਸਿਖਾਉਣ ਦਾ ਢੰਗ';
 
   @override
+  String get quizSectionQuiz => 'ਕਵਿਜ਼';
+
+  @override
+  String get sectionForYourClass => 'ਤੁਹਾਡੀ ਜਮਾਤ ਲਈ';
+
+  @override
   String get dashboardToolsTitle => 'ਤੁਹਾਡੇ ਅਧਿਆਪਨ ਸਾਧਨ';
 
   @override

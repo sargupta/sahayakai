@@ -175,6 +175,12 @@ class AppLocalizationsHi extends AppLocalizations {
   String get lessonPlanSectionApproach => 'शिक्षण दृष्टिकोण';
 
   @override
+  String get quizSectionQuiz => 'क्विज़';
+
+  @override
+  String get sectionForYourClass => 'आपकी कक्षा के लिए';
+
+  @override
   String get dashboardToolsTitle => 'आपके शिक्षण उपकरण';
 
   @override

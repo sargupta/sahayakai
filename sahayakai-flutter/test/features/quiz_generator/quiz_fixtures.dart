@@ -22,7 +22,13 @@ const Size kNarrowPhone = Size(360, 900);
 
 /// Hosts a result-layer widget in the same shell the real screen uses: a
 /// scrolling, page-padded body, so height and wrapping behave as in production.
-Widget hostResult(Widget child, {Brightness brightness = Brightness.light}) {
+/// [reduceMotion] disables animations so the ink-settle reveal degrades to its
+/// static composed frame, mirroring `MediaQuery.disableAnimations`.
+Widget hostResult(
+  Widget child, {
+  Brightness brightness = Brightness.light,
+  bool reduceMotion = false,
+}) {
   return MaterialApp(
     theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
     locale: const Locale('en'),
@@ -31,7 +37,14 @@ Widget hostResult(Widget child, {Brightness brightness = Brightness.light}) {
     home: Scaffold(
       body: SingleChildScrollView(
         padding: AppSpacing.pagePadding,
-        child: child,
+        child: reduceMotion
+            ? Builder(
+                builder: (context) => MediaQuery(
+                  data: MediaQuery.of(context).copyWith(disableAnimations: true),
+                  child: child,
+                ),
+              )
+            : child,
       ),
     ),
   );

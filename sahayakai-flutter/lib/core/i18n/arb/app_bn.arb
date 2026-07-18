@@ -26,6 +26,8 @@
   "copyConfirmation": "ক্লিপবোর্ডে কপি করা হয়েছে",
   "lessonPlanSectionLesson": "পাঠ",
   "lessonPlanSectionApproach": "শিক্ষণ পদ্ধতি",
+  "quizSectionQuiz": "কুইজ",
+  "sectionForYourClass": "আপনার শ্রেণির জন্য",
   "dashboardToolsTitle": "আপনার শিক্ষণ সরঞ্জাম",
   "createPaletteSearchHint": "সরঞ্জাম খুঁজুন",
   "createPaletteEmpty": "আপনার খোঁজের সাথে কোনো সরঞ্জাম মেলেনি",

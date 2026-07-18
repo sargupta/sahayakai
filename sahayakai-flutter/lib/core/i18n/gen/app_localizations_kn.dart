@@ -176,6 +176,12 @@ class AppLocalizationsKn extends AppLocalizations {
   String get lessonPlanSectionApproach => 'ಬೋಧನಾ ವಿಧಾನ';
 
   @override
+  String get quizSectionQuiz => 'ರಸಪ್ರಶ್ನೆ';
+
+  @override
+  String get sectionForYourClass => 'ನಿಮ್ಮ ತರಗತಿಗಾಗಿ';
+
+  @override
   String get dashboardToolsTitle => 'ನಿಮ್ಮ ಬೋಧನಾ ಸಾಧನಗಳು';
 
   @override

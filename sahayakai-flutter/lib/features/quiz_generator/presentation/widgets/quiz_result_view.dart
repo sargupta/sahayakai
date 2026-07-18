@@ -1,28 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/i18n/gen/app_localizations.dart';
 import '../../../../core/i18n/l10n_ext.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/motion/animated_entrance.dart';
 import '../../../../shared/widgets/ai_text.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/document_sheet.dart';
 import '../../../../shared/widgets/empty_view.dart';
 import '../../../../shared/widgets/note_banner.dart';
+import '../../../../shared/widgets/secondary_button.dart';
 import '../../domain/quiz.dart';
 
-/// Renders a generated [Quiz]. The model returns up to three difficulty
+/// Renders a generated [Quiz] as a printed document, not a chat dump
+/// (PREMIUM_DESIGN_SPEC.md §5 / §6b U8 — the reference every other tool copies).
+///
+/// The quiz is wrapped in a [DocumentSheet]: a masthead ("QUIZ" eyebrow, the
+/// topic as a Fraunces title, saffron rule, grade/subject/count meta badges),
+/// then the difficulty variants in the body. The model returns up to three
 /// variants; only the ones that actually came back get a tab, so an empty tab
 /// is never drawn. Correct answers stay hidden behind a per-question reveal so
-/// the teacher can project or read a question aloud without spoiling it.
+/// the teacher can project or read a question aloud without spoiling it. Each
+/// block inks in on the Ink-settle reveal, and a footer action bar offers
+/// Regenerate / Copy.
 ///
 /// All model-authored prose flows through [AiText] (line-height 1.7 + Indic
 /// height behaviour) so matras and vowel signs never clip, and long compound
 /// words wrap instead of scrolling. See DESIGN_RUBRIC §3 / §8.
 class QuizResultView extends StatelessWidget {
-  const QuizResultView({super.key, required this.quiz});
+  const QuizResultView({super.key, required this.quiz, this.onRegenerate});
 
   final Quiz quiz;
+
+  /// Re-runs generation from the current form (the controller's `generate`).
+  /// When null (e.g. a direct render in a test) the footer action bar is
+  /// omitted.
+  final VoidCallback? onRegenerate;
 
   @override
   Widget build(BuildContext context) {
@@ -35,37 +51,6 @@ class QuizResultView extends StatelessWidget {
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _Header(quiz: quiz),
-        if (quiz.validationWarning != null) ...[
-          const SizedBox(height: AppSpacing.sectionGap),
-          NoteBanner(
-            icon: LucideIcons.info,
-            label: l10n.quizNoteLabel,
-            body: quiz.validationWarning!.message,
-          ),
-        ],
-        const SizedBox(height: AppSpacing.sectionGap),
-        if (quiz.variants.length == 1)
-          _VariantView(variant: quiz.variants.first)
-        else
-          _DifficultyTabs(variants: quiz.variants),
-      ],
-    );
-  }
-}
-
-class _Header extends StatelessWidget {
-  const _Header({required this.quiz});
-
-  final Quiz quiz;
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
     // The variants carry the model's own title; the envelope carries the
     // teacher's metadata. Prefer the envelope, fall back to the first variant.
     final title = quiz.topic ?? quiz.variants.first.title;
@@ -74,36 +59,143 @@ class _Header extends StatelessWidget {
 
     final meta = <Widget>[
       if (grade != null)
-        AppBadge(icon: LucideIcons.graduationCap, label: grade),
-      if (subject != null) AppBadge(icon: LucideIcons.bookOpen, label: subject),
+        AppBadge(
+          icon: LucideIcons.graduationCap,
+          label: grade,
+          tone: AppBadgeTone.accent,
+        ),
+      if (subject != null)
+        AppBadge(icon: LucideIcons.bookOpen, label: subject),
       AppBadge(
         icon: LucideIcons.listChecks,
-        label: context.l10n.quizQuestionCount(
-          quiz.variants.first.questions.length,
-        ),
+        label: l10n.quizQuestionCount(quiz.variants.first.questions.length),
       ),
     ];
 
+    // The document blocks, in reading order. Content is unchanged from the flat
+    // renderer — only the composition around it is new.
+    final blocks = <Widget>[
+      if (quiz.validationWarning != null)
+        NoteBanner(
+          icon: LucideIcons.info,
+          label: l10n.quizNoteLabel,
+          body: quiz.validationWarning!.message,
+        ),
+      if (quiz.variants.length == 1)
+        _VariantView(variant: quiz.variants.first)
+      else
+        _DifficultyTabs(variants: quiz.variants),
+    ];
+
+    // Ink-settle: each block fades + rises in turn, so the document assembles
+    // itself. Degrades to the static composed frame under reduce-motion.
+    final revealed = <Widget>[
+      for (var i = 0; i < blocks.length; i++)
+        inkSettle(context, blocks[i], index: i),
+    ];
+
+    return DocumentSheet(
+      docType: l10n.quizTitle,
+      title: title,
+      meta: meta,
+      footer: onRegenerate == null
+          ? null
+          : _ActionBar(quiz: quiz, onRegenerate: onRegenerate!),
+      children: revealed,
+    );
+  }
+}
+
+/// The document's action bar: Regenerate (secondary) over a Copy ghost. Copy
+/// exports the full quiz — every variant, with its answer key — as plain text
+/// to the clipboard, a presentation-only action with no controller involved.
+class _ActionBar extends StatelessWidget {
+  const _ActionBar({required this.quiz, required this.onRegenerate});
+
+  final Quiz quiz;
+  final VoidCallback onRegenerate;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final text = Theme.of(context).textTheme;
+    final saffron = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
+    final messenger = ScaffoldMessenger.of(context);
+
+    void copy() {
+      Clipboard.setData(ClipboardData(text: _quizAsText(quiz, l10n)));
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(l10n.copyConfirmation)));
+    }
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (title.isNotEmpty) Text(title, style: text.headlineSmall),
-        if (title.isNotEmpty) const SizedBox(height: AppSpacing.space3),
-        Wrap(
-          spacing: AppSpacing.space2,
-          runSpacing: AppSpacing.space2,
-          children: meta,
+        SecondaryButton(
+          label: l10n.actionRegenerate,
+          icon: LucideIcons.refreshCw,
+          onPressed: onRegenerate,
+        ),
+        const SizedBox(height: AppSpacing.space2),
+        SizedBox(
+          height: 48,
+          child: TextButton.icon(
+            onPressed: copy,
+            icon: const Icon(LucideIcons.copy, size: AppIconSize.inline),
+            label: Text(l10n.actionCopy),
+            style: TextButton.styleFrom(
+              foregroundColor: saffron,
+              textStyle: text.labelLarge,
+            ),
+          ),
         ),
       ],
     );
   }
 }
 
+/// A plain-text export of the whole quiz — every variant and its answer key —
+/// for the clipboard.
+String _quizAsText(Quiz quiz, AppLocalizations l10n) {
+  final b = StringBuffer();
+  final heading = quiz.topic ?? quiz.variants.first.title;
+  if (heading.isNotEmpty) b.writeln(heading);
+  final metaBits = [
+    quiz.gradeLevel ?? quiz.variants.first.gradeLevel,
+    quiz.subject ?? quiz.variants.first.subject,
+  ].whereType<String>().toList();
+  if (metaBits.isNotEmpty) b.writeln(metaBits.join(' · '));
+
+  for (final variant in quiz.variants) {
+    b
+      ..writeln()
+      ..writeln(_difficultyLabel(l10n, variant.difficulty).toUpperCase());
+    if (variant.teacherInstructions != null) {
+      b.writeln(variant.teacherInstructions);
+    }
+    for (var i = 0; i < variant.questions.length; i++) {
+      final q = variant.questions[i];
+      b.writeln('${i + 1}. ${q.questionText}');
+      for (var j = 0; j < q.options.length; j++) {
+        b.writeln('   ${_optionMarker(j)}. ${q.options[j]}');
+      }
+      b.writeln('   ${l10n.quizCorrectAnswer}: ${q.correctAnswer}');
+      if (q.explanation != null) {
+        b.writeln('   ${l10n.quizExplanation}: ${q.explanation}');
+      }
+    }
+  }
+  return b.toString().trimRight();
+}
+
 /// The Easy / Medium / Hard switcher. Deliberately NOT a `TabBarView`: this
-/// result lives inside the [ToolScaffold]'s scroll view, where a TabBarView's
-/// unbounded height would blow up. A TabBar drives an [AnimatedSwitcher]
-/// instead, so each variant is laid out at its natural height.
+/// result lives inside the [DocumentSheet], itself inside the [ToolScaffold]'s
+/// scroll view, where a TabBarView's unbounded height would blow up. A TabBar
+/// drives an [AnimatedSwitcher] instead, so each variant is laid out at its
+/// natural height.
 class _DifficultyTabs extends StatefulWidget {
   const _DifficultyTabs({required this.variants});
 
@@ -282,6 +374,8 @@ class _VariantViewState extends State<_VariantView> {
   }
 }
 
+/// A single question as a numbered inset card, led by a saffron numeral
+/// medallion (mirrors the U8 activity cards).
 class _QuestionCard extends StatelessWidget {
   const _QuestionCard({
     required this.number,
@@ -307,6 +401,7 @@ class _QuestionCard extends StatelessWidget {
         !(question.hasMarkedOption && question.options.isNotEmpty);
 
     return AppCard(
+      variant: AppCardVariant.inset,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -314,7 +409,7 @@ class _QuestionCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              AppBadge.count('$number'),
+              _Medallion(index: number),
               const SizedBox(width: AppSpacing.space3),
               Expanded(child: AiText(question.questionText)),
             ],
@@ -394,10 +489,12 @@ class _QuestionCard extends StatelessWidget {
                                   color: scheme.primary,
                                 ),
                                 const SizedBox(width: AppSpacing.space2),
-                                Text(
-                                  l10n.quizCorrectAnswer,
-                                  style: text.labelSmall?.copyWith(
-                                    color: scheme.onSurfaceVariant,
+                                Flexible(
+                                  child: Text(
+                                    l10n.quizCorrectAnswer,
+                                    style: text.labelSmall?.copyWith(
+                                      color: scheme.onSurfaceVariant,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -416,10 +513,12 @@ class _QuestionCard extends StatelessWidget {
                                   color: scheme.onSurfaceVariant,
                                 ),
                                 const SizedBox(width: AppSpacing.space2),
-                                Text(
-                                  l10n.quizExplanation,
-                                  style: text.labelSmall?.copyWith(
-                                    color: scheme.onSurfaceVariant,
+                                Flexible(
+                                  child: Text(
+                                    l10n.quizExplanation,
+                                    style: text.labelSmall?.copyWith(
+                                      color: scheme.onSurfaceVariant,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -433,6 +532,35 @@ class _QuestionCard extends StatelessWidget {
                   ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// The saffron numeral medallion that numbers a question (mirrors U8).
+class _Medallion extends StatelessWidget {
+  const _Medallion({required this.index});
+
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    return Container(
+      width: 32,
+      height: 32,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: scheme.primaryContainer,
+      ),
+      child: Text(
+        '$index',
+        style: text.labelLarge?.copyWith(
+          color: scheme.onPrimaryContainer,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -495,10 +623,6 @@ class _OptionRow extends StatelessWidget {
     );
   }
 }
-
-/// AI-authored prose: line-height 1.7, height applied to first ascent / last
-/// descent (so Indic top matras and bottom vowel signs are never cropped),
-/// and always soft-wrapping. See DESIGN_RUBRIC §3.
 
 /// A, B, C, ... for the first 26 options; numbers beyond that (defensive — the
 /// model never returns more than a handful).

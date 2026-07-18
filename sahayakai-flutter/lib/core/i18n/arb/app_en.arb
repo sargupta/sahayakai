@@ -218,6 +218,14 @@
   "@lessonPlanSectionApproach": {
     "description": "Lesson plan form section header: how to teach it (language, level, difficulty)."
   },
+  "quizSectionQuiz": "The quiz",
+  "@quizSectionQuiz": {
+    "description": "Quiz form section header: what the quiz is about (topic, number of questions, question types)."
+  },
+  "sectionForYourClass": "For your class",
+  "@sectionForYourClass": {
+    "description": "Form section header grouping the optional grade, subject and language a tool tailors its output to."
+  },
   "dashboardToolsTitle": "Your teaching tools",
   "@dashboardToolsTitle": {
     "description": "Dashboard tools section header."

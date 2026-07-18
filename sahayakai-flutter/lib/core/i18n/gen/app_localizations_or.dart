@@ -175,6 +175,12 @@ class AppLocalizationsOr extends AppLocalizations {
   String get lessonPlanSectionApproach => 'ଶିକ୍ଷାଦାନ ପଦ୍ଧତି';
 
   @override
+  String get quizSectionQuiz => 'କୁଇଜ୍';
+
+  @override
+  String get sectionForYourClass => 'ଆପଣଙ୍କ ଶ୍ରେଣୀ ପାଇଁ';
+
+  @override
   String get dashboardToolsTitle => 'ଆପଣଙ୍କ ଶିକ୍ଷାଦାନ ଉପକରଣ';
 
   @override

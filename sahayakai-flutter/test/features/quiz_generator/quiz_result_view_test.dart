@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/features/quiz_generator/presentation/widgets/quiz_result_view.dart';
 import 'package:sahayakai/features/quiz_generator/presentation/widgets/quiz_skeleton.dart';
+import 'package:sahayakai/shared/widgets/document_sheet.dart';
 
 import 'quiz_fixtures.dart';
 
@@ -31,7 +32,11 @@ void main() {
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
 
-            // Revealing every answer is the tallest, widest state.
+            // Revealing every answer is the tallest, widest state. The richer
+            // DocumentSheet masthead pushes the reveal control below the fold at
+            // 360dp, so scroll it in before tapping (structure only).
+            await tester.ensureVisible(find.text('Show all answers'));
+            await tester.pumpAndSettle();
             await tester.tap(find.text('Show all answers'));
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
@@ -39,12 +44,13 @@ void main() {
 
             // Switching variants must not overflow either. Scope to the tab
             // bar: 'Hard' also appears as a per-question difficulty badge.
-            await tester.tap(
-              find.descendant(
-                of: find.byType(TabBar),
-                matching: find.text('Hard'),
-              ),
+            final hardTab = find.descendant(
+              of: find.byType(TabBar),
+              matching: find.text('Hard'),
             );
+            await tester.ensureVisible(hardTab);
+            await tester.pumpAndSettle();
+            await tester.tap(hardTab);
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
           },
@@ -152,7 +158,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Show answer'), findsNWidgets(3));
-      await tester.tap(find.text('Show answer').first);
+      final firstShow = find.text('Show answer').first;
+      await tester.ensureVisible(firstShow);
+      await tester.pumpAndSettle();
+      await tester.tap(firstShow);
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
@@ -169,7 +178,10 @@ void main() {
       await tester.pumpWidget(hostResult(QuizResultView(quiz: buildQuiz())));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Show answer').first);
+      final firstShow = find.text('Show answer').first;
+      await tester.ensureVisible(firstShow);
+      await tester.pumpAndSettle();
+      await tester.tap(firstShow);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Hide answer'));
       await tester.pumpAndSettle();
@@ -207,7 +219,10 @@ void main() {
 
       // Q1's correct answer ("One half") is one of its options, so it gets
       // marked inline and the spelled-out answer line is redundant.
-      await tester.tap(find.text('Show answer').first);
+      final firstShow = find.text('Show answer').first;
+      await tester.ensureVisible(firstShow);
+      await tester.pumpAndSettle();
+      await tester.tap(firstShow);
       await tester.pumpAndSettle();
 
       expect(find.text('One half'), findsOneWidget); // the option, marked once
@@ -272,6 +287,108 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('How to run this in class'), findsOneWidget);
+    });
+  });
+
+  group('document sheet (PREMIUM_DESIGN_SPEC §5 / U8)', () {
+    testWidgets('wraps the quiz in a DocumentSheet with masthead + meta',
+        (tester) async {
+      tester.view.physicalSize = const Size(360, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(hostResult(QuizResultView(quiz: buildQuiz())));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(DocumentSheet), findsOneWidget);
+      // The masthead doc-type eyebrow (uppercased Latin) and the topic title.
+      expect(find.text('QUIZ'), findsOneWidget);
+      expect(find.text('Fractions'), findsOneWidget);
+      // Meta badges carry the grade, subject and question count.
+      expect(find.text('Class 6'), findsOneWidget);
+      expect(find.text('Mathematics'), findsOneWidget);
+      expect(find.text('3 questions'), findsOneWidget);
+      // The variants still render in the body.
+      expect(find.byType(TabBar), findsOneWidget);
+    });
+
+    testWidgets('the action bar offers Regenerate and Copy, wired',
+        (tester) async {
+      tester.view.physicalSize = const Size(360, 2000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      var regenerated = false;
+      await tester.pumpWidget(
+        hostResult(
+          QuizResultView(
+            quiz: buildQuiz(),
+            onRegenerate: () => regenerated = true,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Regenerate'), findsOneWidget);
+      expect(find.text('Copy'), findsOneWidget);
+
+      // The action bar is the foot of a long document; bring it into view.
+      await tester.ensureVisible(find.text('Regenerate'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Regenerate'));
+      await tester.pump();
+      expect(regenerated, isTrue, reason: 'Regenerate re-runs generation');
+    });
+
+    testWidgets('Copy writes the quiz to the clipboard and confirms',
+        (tester) async {
+      tester.view.physicalSize = const Size(360, 2000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        hostResult(QuizResultView(quiz: buildQuiz(), onRegenerate: () {})),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('Copy'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Copy'));
+      await tester.pump(); // let the snackbar appear
+
+      expect(find.text('Copied to clipboard'), findsOneWidget);
+    });
+
+    testWidgets('with no onRegenerate the footer action bar is absent',
+        (tester) async {
+      tester.view.physicalSize = const Size(360, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(hostResult(QuizResultView(quiz: buildQuiz())));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Regenerate'), findsNothing);
+      expect(find.text('Copy'), findsNothing);
+    });
+
+    testWidgets('reduce-motion renders the composed frame, no exception',
+        (tester) async {
+      tester.view.physicalSize = const Size(360, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        hostResult(QuizResultView(quiz: buildQuiz()), reduceMotion: true),
+      );
+      // With animations disabled the ink-settle blocks are static, so the
+      // document is fully composed on the first frame.
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(DocumentSheet), findsOneWidget);
+      expect(find.text('Fractions'), findsOneWidget);
+      expect(find.byType(TabBar), findsOneWidget);
     });
   });
 }

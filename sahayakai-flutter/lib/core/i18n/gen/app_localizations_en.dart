@@ -174,6 +174,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lessonPlanSectionApproach => 'Teaching approach';
 
   @override
+  String get quizSectionQuiz => 'The quiz';
+
+  @override
+  String get sectionForYourClass => 'For your class';
+
+  @override
   String get dashboardToolsTitle => 'Your teaching tools';
 
   @override

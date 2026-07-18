@@ -174,6 +174,12 @@ class AppLocalizationsGu extends AppLocalizations {
   String get lessonPlanSectionApproach => 'શિક્ષણ અભિગમ';
 
   @override
+  String get quizSectionQuiz => 'ક્વિઝ';
+
+  @override
+  String get sectionForYourClass => 'તમારા વર્ગ માટે';
+
+  @override
   String get dashboardToolsTitle => 'તમારા શિક્ષણ સાધનો';
 
   @override

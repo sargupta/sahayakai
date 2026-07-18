@@ -8,6 +8,7 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
+import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
@@ -33,6 +34,10 @@ class QuizGeneratorScreen extends ConsumerStatefulWidget {
 class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
   final _formKey = GlobalKey<FormState>();
   final _topicController = TextEditingController();
+
+  /// Anchors the auto-scroll: the result region's top, which for a successful
+  /// generation is the DocumentSheet masthead.
+  final _resultKey = GlobalKey();
 
   int _numQuestions = kDefaultQuestions;
   // Mirrors the web form's defaults so the two clients start a teacher off in
@@ -78,10 +83,37 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
     ref.read(quizControllerProvider.notifier).generate(request);
   }
 
+  /// Brings the result masthead to the top of the viewport when a fresh quiz
+  /// lands. Honours reduce-motion by jumping (no scroll tween).
+  void _scrollToResult() {
+    if (!mounted) return;
+    final ctx = _resultKey.currentContext;
+    if (ctx == null) return;
+    final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    Scrollable.ensureVisible(
+      ctx,
+      duration: reduce ? Duration.zero : AppMotion.medium,
+      curve: AppMotion.emphasized,
+      alignment: 0.0,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final state = ref.watch(quizControllerProvider);
+
+    // Auto-scroll to the result header on a fresh success (loading -> data).
+    ref.listen<AsyncValue<Quiz?>>(quizControllerProvider, (prev, next) {
+      final wasLoading = prev?.isLoading ?? false;
+      final nowHasQuiz =
+          !next.isLoading && next.hasValue && next.valueOrNull != null;
+      if (wasLoading && nowHasQuiz) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToResult());
+      }
+    });
+
+    final hasResult = state.hasValue && state.valueOrNull != null;
 
     final result = state.hasError
         ? QuizErrorView(error: state.error!, onRetry: _submit)
@@ -89,15 +121,17 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
             state: state,
             skeleton: const QuizSkeleton(),
             emptyMessage: l10n.quizEmpty,
-            onData: (quiz) => QuizResultView(quiz: quiz),
+            onData: (quiz) => QuizResultView(quiz: quiz, onRegenerate: _submit),
           );
 
     return ToolScaffold(
       title: l10n.quizTitle,
       isBusy: state.isLoading,
       submitLabel: l10n.actionGenerate,
-      onSubmit: state.isLoading ? null : _submit,
-      result: result,
+      // Hide the sticky Generate button once a quiz is on screen — the
+      // document's own action bar (Regenerate / Copy) takes over.
+      onSubmit: (state.isLoading || hasResult) ? null : _submit,
+      result: KeyedSubtree(key: _resultKey, child: result),
       child: Form(
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -105,12 +139,16 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
+            EditorialSectionHeader(l10n.quizSectionQuiz),
+            const SizedBox(height: AppSpacing.space4),
             _topicField(l10n),
             const SizedBox(height: AppSpacing.space6),
             _numQuestionsField(l10n),
             const SizedBox(height: AppSpacing.space6),
             _questionTypesField(l10n),
-            const SizedBox(height: AppSpacing.space6),
+            const SizedBox(height: AppSpacing.space8),
+            EditorialSectionHeader(l10n.sectionForYourClass),
+            const SizedBox(height: AppSpacing.space4),
             _gradeField(l10n),
             const SizedBox(height: AppSpacing.space6),
             _subjectField(l10n),
@@ -129,6 +167,7 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
   Widget _topicField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.quizTopicLabel,
+      leadingIcon: LucideIcons.lightbulb,
       child: TextFormField(
         controller: _topicController,
         maxLength: 1000,
@@ -147,6 +186,7 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
   Widget _numQuestionsField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.quizNumQuestionsLabel,
+      leadingIcon: LucideIcons.hash,
       child: _Stepper(
         value: _numQuestions,
         min: kMinQuestions,
@@ -168,6 +208,7 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
       builder: (field) {
         return LabeledField(
           label: l10n.quizTypesLabel,
+          leadingIcon: LucideIcons.listChecks,
           errorText: field.errorText,
           child: Wrap(
             spacing: AppSpacing.space2,
@@ -177,6 +218,7 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
                 FilterChip(
                   label: Text(_typeLabel(l10n, type)),
                   selected: _types.contains(type),
+                  showCheckmark: false,
                   materialTapTargetSize: MaterialTapTargetSize.padded,
                   onSelected: (selected) {
                     setState(() {
@@ -200,6 +242,7 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
     return LabeledField(
       label: l10n.quizGradeLabel,
       optionalLabel: l10n.quizOptional,
+      leadingIcon: LucideIcons.graduationCap,
       child: DropdownButtonFormField<String?>(
         initialValue: _grade,
         isExpanded: true,
@@ -220,6 +263,7 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
     return LabeledField(
       label: l10n.quizSubjectLabel,
       optionalLabel: l10n.quizOptional,
+      leadingIcon: LucideIcons.bookOpen,
       child: DropdownButtonFormField<String?>(
         initialValue: _subject,
         isExpanded: true,
@@ -239,6 +283,7 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
   Widget _languageField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.languageLabel,
+      leadingIcon: LucideIcons.languages,
       child: DropdownButtonFormField<AppLocale>(
         initialValue: _language,
         isExpanded: true,
@@ -257,6 +302,7 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
   Widget _difficultyField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.quizDifficultyLabel,
+      leadingIcon: LucideIcons.gauge,
       hint: l10n.quizDifficultyHint,
       child: Wrap(
         spacing: AppSpacing.space2,
@@ -288,6 +334,7 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
     return LabeledField(
       label: l10n.quizBloomsLabel,
       optionalLabel: l10n.quizOptional,
+      leadingIcon: LucideIcons.brain,
       hint: l10n.quizBloomsHint,
       child: Wrap(
         spacing: AppSpacing.space2,
@@ -297,6 +344,7 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
             FilterChip(
               label: Text(level),
               selected: _blooms.contains(level),
+              showCheckmark: false,
               materialTapTargetSize: MaterialTapTargetSize.padded,
               onSelected: (selected) => setState(() {
                 if (selected) {

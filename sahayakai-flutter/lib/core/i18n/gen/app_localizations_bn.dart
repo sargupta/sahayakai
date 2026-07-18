@@ -176,6 +176,12 @@ class AppLocalizationsBn extends AppLocalizations {
   String get lessonPlanSectionApproach => 'শিক্ষণ পদ্ধতি';
 
   @override
+  String get quizSectionQuiz => 'কুইজ';
+
+  @override
+  String get sectionForYourClass => 'আপনার শ্রেণির জন্য';
+
+  @override
   String get dashboardToolsTitle => 'আপনার শিক্ষণ সরঞ্জাম';
 
   @override

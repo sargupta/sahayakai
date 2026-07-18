@@ -178,6 +178,12 @@ class AppLocalizationsMl extends AppLocalizations {
   String get lessonPlanSectionApproach => 'അധ്യാപന സമീപനം';
 
   @override
+  String get quizSectionQuiz => 'ക്വിസ്';
+
+  @override
+  String get sectionForYourClass => 'നിങ്ങളുടെ ക്ലാസിനായി';
+
+  @override
   String get dashboardToolsTitle => 'നിങ്ങളുടെ അധ്യാപന ഉപകരണങ്ങൾ';
 
   @override

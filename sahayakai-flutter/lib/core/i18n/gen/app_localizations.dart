@@ -422,6 +422,18 @@ abstract class AppLocalizations {
   /// **'Teaching approach'**
   String get lessonPlanSectionApproach;
 
+  /// Quiz form section header: what the quiz is about (topic, number of questions, question types).
+  ///
+  /// In en, this message translates to:
+  /// **'The quiz'**
+  String get quizSectionQuiz;
+
+  /// Form section header grouping the optional grade, subject and language a tool tailors its output to.
+  ///
+  /// In en, this message translates to:
+  /// **'For your class'**
+  String get sectionForYourClass;
+
   /// Dashboard tools section header.
   ///
   /// In en, this message translates to:

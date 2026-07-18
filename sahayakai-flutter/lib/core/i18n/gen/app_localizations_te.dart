@@ -176,6 +176,12 @@ class AppLocalizationsTe extends AppLocalizations {
   String get lessonPlanSectionApproach => 'బోధనా విధానం';
 
   @override
+  String get quizSectionQuiz => 'క్విజ్';
+
+  @override
+  String get sectionForYourClass => 'మీ తరగతి కోసం';
+
+  @override
   String get dashboardToolsTitle => 'మీ బోధన సాధనాలు';
 
   @override

@@ -176,6 +176,12 @@ class AppLocalizationsTa extends AppLocalizations {
   String get lessonPlanSectionApproach => 'கற்பித்தல் அணுகுமுறை';
 
   @override
+  String get quizSectionQuiz => 'வினாடி வினா';
+
+  @override
+  String get sectionForYourClass => 'உங்கள் வகுப்பிற்கு';
+
+  @override
   String get dashboardToolsTitle => 'உங்கள் கற்பித்தல் கருவிகள்';
 
   @override

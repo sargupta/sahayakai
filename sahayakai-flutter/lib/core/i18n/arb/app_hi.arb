@@ -26,6 +26,8 @@
   "copyConfirmation": "क्लिपबोर्ड पर कॉपी किया गया",
   "lessonPlanSectionLesson": "पाठ",
   "lessonPlanSectionApproach": "शिक्षण दृष्टिकोण",
+  "quizSectionQuiz": "क्विज़",
+  "sectionForYourClass": "आपकी कक्षा के लिए",
   "dashboardToolsTitle": "आपके शिक्षण उपकरण",
   "createPaletteSearchHint": "उपकरण खोजें",
   "createPaletteEmpty": "आपकी खोज से मेल खाता कोई उपकरण नहीं",
