@@ -234,8 +234,10 @@ void main() {
       expect(find.text('You are signed out'), findsOneWidget);
       expect(find.text('Sign in'), findsOneWidget);
 
-      // The account half must be gone entirely, not merely disabled.
-      expect(find.text('Teaching profile'), findsNothing);
+      // The account half must be gone entirely, not merely disabled. The
+      // section eyebrow is now the editorial saffron header (UPPERCASE Latin,
+      // §5) — a structure change from the muted grey label, behaviour intact.
+      expect(find.text('TEACHING PROFILE'), findsNothing);
       expect(find.text('Save profile'), findsNothing);
       expect(find.text('Delete account'), findsNothing);
     });
@@ -245,8 +247,9 @@ void main() {
       // Language / theme / notifications are per-device, so signing out must
       // not take them away.
       await _pumpScreen(tester);
-      expect(find.text('Appearance'), findsOneWidget);
-      expect(find.text('Notifications'), findsOneWidget);
+      // Section eyebrows are the editorial saffron header (UPPERCASE Latin, §5).
+      expect(find.text('APPEARANCE'), findsOneWidget);
+      expect(find.text('NOTIFICATIONS'), findsOneWidget);
 
       await tester.tap(find.text('Dark'));
       await tester.pumpAndSettle();
@@ -261,7 +264,8 @@ void main() {
       await _pumpScreen(tester, signedIn: true, doc: const <String, dynamic>{});
 
       expect(find.text('You are signed out'), findsNothing);
-      expect(find.text('Teaching profile'), findsOneWidget);
+      // The teaching-profile eyebrow is the editorial saffron header.
+      expect(find.text('TEACHING PROFILE'), findsOneWidget);
       expect(find.text('Education board'), findsOneWidget);
       expect(find.text('Qualifications'), findsOneWidget);
       expect(find.text('Administrative role'), findsOneWidget);
@@ -378,7 +382,7 @@ void main() {
             );
 
             expect(tester.takeException(), isNull);
-            expect(find.text('Appearance'), findsOneWidget);
+            expect(find.text('APPEARANCE'), findsOneWidget);
             await _scrollWholeList(tester);
             expect(find.text('You are signed out'), findsOneWidget);
           },

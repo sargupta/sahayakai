@@ -11,14 +11,15 @@ import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/theme_mode_provider.dart';
 import '../../../shared/domain/picker_options.dart';
+import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_skeleton.dart';
+import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/inline_error.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/language_switcher.dart';
 import '../../../shared/widgets/offline_view.dart';
-import '../../../shared/widgets/section_label.dart';
 import '../../profile/domain/profile_settings.dart';
 import '../../profile/domain/teacher_profile.dart';
 import '../../profile/presentation/profile_controller.dart';
@@ -26,7 +27,7 @@ import '../data/notification_prefs_provider.dart';
 import 'settings_controller.dart';
 import 'widgets/delete_account_dialog.dart';
 
-/// P0.7 — Settings.
+/// P0.7 — Settings, re-skinned to the Ledger premium system (U11).
 ///
 /// SHELL CHOICE: a plain `Scaffold` + `AppBar`, NOT [ToolScaffold].
 /// ToolScaffold's grammar is "capped scrolling form + sticky submit button +
@@ -36,9 +37,10 @@ import 'widgets/delete_account_dialog.dart';
 /// (theme, language, notifications). A sticky global submit would be a lie
 /// about what saves when, and the ResultView slot would sit empty forever. So
 /// this uses the app's other, equally-established shell — the one
-/// `ProfileScreen` and `LibraryScreen` already use: `Scaffold` + `AppBar` + a
-/// page-padded `ListView` of [AppCard] sections. Card grammar, spacing and
-/// tokens are unchanged, so it still reads as the same app.
+/// `ProfileScreen` and `LibraryScreen` use: `Scaffold` + `AppBar` + a
+/// page-padded `ListView` of premium groups. Each group opens with an
+/// [EditorialSectionHeader] (a saffron tracked eyebrow + a hairline rule, §5)
+/// over an [AppCard], and the register inks in on a staggered entrance.
 ///
 /// Sections are ordered by who can use them: appearance, language and
 /// notifications are device preferences that work signed out, so they come
@@ -103,24 +105,32 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final l10n = context.l10n;
     final signedIn = ref.watch(isSignedInProvider);
 
+    // Every top-level group, in reading order. Device preferences first (they
+    // work signed out); the account half is either the profile + danger
+    // sections or, with no identity, the sign-in prompt card.
+    final groups = <Widget>[
+      const _ThemeSection(),
+      const _LanguageSection(),
+      const _NotificationSection(),
+      if (signedIn) ...[
+        _profileSection(l10n),
+        _dangerSection(l10n),
+      ] else
+        const _SignedOutCard(),
+    ];
+
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsTitle)),
       body: SafeArea(
         child: ListView(
           padding: AppSpacing.pagePadding,
           children: [
-            const _ThemeSection(),
-            const SizedBox(height: AppSpacing.space6),
-            const _LanguageSection(),
-            const SizedBox(height: AppSpacing.space6),
-            const _NotificationSection(),
-            const SizedBox(height: AppSpacing.space6),
-            if (signedIn) ...[
-              _profileSection(l10n),
-              const SizedBox(height: AppSpacing.space6),
-              _dangerSection(l10n),
-            ] else
-              const _SignedOutCard(),
+            for (final (index, group) in groups.indexed) ...[
+              if (index > 0) const SizedBox(height: AppSpacing.space8),
+              // The register inks in block-by-block (§4); reduce-motion returns
+              // the static composed frame.
+              inkSettle(context, group, index: index),
+            ],
           ],
         ),
       ),
@@ -130,9 +140,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // ---------------------------------------------------------------- profile
 
   Widget _profileSection(AppLocalizations l10n) {
-    return Section(
+    return _SettingsGroup(
       title: l10n.settingsProfileTitle,
-      icon: LucideIcons.graduationCap,
       // The form cannot be shown until the document is known. Rendering an
       // empty one over a failed read would repeat the original bug in a new
       // place: it would say "Not set" about a field this build never read, and
@@ -192,6 +201,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget _boardField(AppLocalizations l10n, ProfileSettings profile) {
     return LabeledField(
       label: l10n.settingsBoardLabel,
+      leadingIcon: LucideIcons.landmark,
       child: DropdownButtonFormField<String?>(
         // Keyed on the value so a hydrate (or a refresh) rebuilds the field
         // from the document instead of stranding it on the initial value.
@@ -219,6 +229,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget _qualificationsField(AppLocalizations l10n, ProfileSettings profile) {
     return LabeledField(
       label: l10n.settingsQualificationsLabel,
+      leadingIcon: LucideIcons.award,
       hint: l10n.settingsQualificationsHint,
       child: Wrap(
         spacing: AppSpacing.space2,
@@ -228,6 +239,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             FilterChip(
               label: Text(qualification),
               selected: profile.qualifications.contains(qualification),
+              showCheckmark: false,
               // Guarantees the >=48dp target the bare chip height misses.
               materialTapTargetSize: MaterialTapTargetSize.padded,
               onSelected: (selected) => _toggleQualification(
@@ -258,6 +270,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget _adminRoleField(AppLocalizations l10n, ProfileSettings profile) {
     return LabeledField(
       label: l10n.settingsAdminRoleLabel,
+      leadingIcon: LucideIcons.briefcase,
       child: DropdownButtonFormField<AdministrativeRole?>(
         key: ValueKey<AdministrativeRole?>(profile.administrativeRole),
         initialValue: profile.administrativeRole,
@@ -291,9 +304,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final deleteState = ref.watch(deleteAccountControllerProvider);
     final scheduled = !deleteState.hasError && deleteState.value != null;
 
-    return Section(
+    return _SettingsGroup(
       title: l10n.settingsDangerTitle,
-      icon: LucideIcons.trash2,
       child: AppCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -333,6 +345,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 }
 
+/// One premium settings group: an [EditorialSectionHeader] (saffron eyebrow +
+/// hairline rule, §5) over its content. Replaces the muted `Section` grammar so
+/// every group reads editorial rather than as a weak grey label (§7.4).
+class _SettingsGroup extends StatelessWidget {
+  const _SettingsGroup({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        EditorialSectionHeader(title),
+        const SizedBox(height: AppSpacing.space4),
+        child,
+      ],
+    );
+  }
+}
+
 /// Maps a role to its localized, teacher-facing label. Exhaustive on purpose:
 /// adding a role to the enum will not compile until it has copy.
 String _roleLabel(AppLocalizations l10n, AdministrativeRole role) {
@@ -362,9 +397,8 @@ class _ThemeSection extends ConsumerWidget {
     final l10n = context.l10n;
     final mode = ref.watch(themeModeControllerProvider);
 
-    return Section(
+    return _SettingsGroup(
       title: l10n.settingsAppearanceTitle,
-      icon: LucideIcons.palette,
       child: AppCard(
         padding: EdgeInsets.zero,
         child: RadioGroup<ThemeMode>(
@@ -412,9 +446,8 @@ class _LanguageSection extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
 
-    return Section(
+    return _SettingsGroup(
       title: l10n.languageLabel,
-      icon: LucideIcons.languages,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
@@ -441,9 +474,8 @@ class _NotificationSection extends ConsumerWidget {
     final text = Theme.of(context).textTheme;
     final enabled = ref.watch(notificationPrefsControllerProvider);
 
-    return Section(
+    return _SettingsGroup(
       title: l10n.settingsNotificationsTitle,
-      icon: LucideIcons.bell,
       child: AppCard(
         padding: EdgeInsets.zero,
         child: SwitchListTile.adaptive(
@@ -561,10 +593,6 @@ class _ReauthOrErrorView extends StatelessWidget {
     );
   }
 }
-
-/// An error-toned block that sits inside a card, next to the control that
-/// failed. Left-aligned, human copy, no raw exception strings (DESIGN_RUBRIC
-/// §6) — and no centred-hero slop.
 
 /// A spinner sized to sit inside a button without changing its height.
 class _ButtonSpinner extends StatelessWidget {
