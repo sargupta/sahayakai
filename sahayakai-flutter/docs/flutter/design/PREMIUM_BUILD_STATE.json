@@ -162,7 +162,9 @@
         "lib/app/app_shell.dart"
       ],
       "acceptance": "Floating inset nav (radius 20, e3, active saffron pill, icon 1.08 pop, >=12sp label); tab switch = cross-fade + fresh content stagger; Create stays an action. analyze 0, token_guard PASS, 747 green.",
-      "status": "pending"
+      "status": "done",
+      "commit": "368992311",
+      "notes": "FloatingBottomNav: inset floated bar (16dp margin, radius 20 rHero, surface, e3 light / dKey+top catch-light dark, 1px outline); active primary@0.12 stadium pill slides via AnimatedAlign 240ms + active icon scale 1.08; Create is an ACTION (never shows the pill). Kept IndexedStack body (not a single-child AnimatedSwitcher) with per-switch cross-fade+rise entrance - a switcher would paint two tabs at once and break the shaped-skeleton test + the shared-read no-second-request invariant (behaviour, not weakened). 760 tests (+9). Reduce-motion collapses all durations to zero. FLAG: pill vertical seating (-0.4 align) worth an eyeball light+dark."
     },
     {
       "id": "U10",
