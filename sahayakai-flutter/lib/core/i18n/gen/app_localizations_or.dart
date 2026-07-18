@@ -1958,4 +1958,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get vidyaFieldMicLabel => 'କହି ପୂରଣ କରନ୍ତୁ';
+
+  @override
+  String get vidyaOpen => 'VIDYA କୁ ପଚାରନ୍ତୁ';
 }

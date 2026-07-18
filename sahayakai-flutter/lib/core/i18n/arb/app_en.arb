@@ -2443,5 +2443,9 @@
   "vidyaFieldMicLabel": "Dictate",
   "@vidyaFieldMicLabel": {
     "description": "Label/tooltip for the inline field mic that dictates one form field (topic/question) by voice."
+  },
+  "vidyaOpen": "Ask VIDYA",
+  "@vidyaOpen": {
+    "description": "App-bar action + sheet title that opens VIDYA (the co-teacher) from any tool screen."
   }
 }

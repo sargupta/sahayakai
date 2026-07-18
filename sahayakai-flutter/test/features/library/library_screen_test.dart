@@ -220,14 +220,21 @@ void main() {
       // landing. Switching to the tab shows it without a second request.
       await pumpSignedInApp(tester, client: client);
 
-      final afterBoot = client.gets.length;
-      expect(afterBoot, 1);
+      // U-V7: the VIDYA home also restores its own session/profile on boot, so
+      // count only the LIBRARY read — the behaviour under test is unchanged.
+      int contentReads() =>
+          client.gets.where((g) => g.path == '/api/content/list').length;
+      expect(contentReads(), 1);
 
       await tester.tap(find.text('Library'));
       await tester.pumpAndSettle();
 
-      expect(client.gets.length, afterBoot);
-      expect(client.gets.single.query, <String, dynamic>{'limit': 20});
+      // Switching to the tab shows the already-loaded list without a re-read.
+      expect(contentReads(), 1);
+      expect(
+        client.gets.firstWhere((g) => g.path == '/api/content/list').query,
+        <String, dynamic>{'limit': 20},
+      );
     });
   });
 

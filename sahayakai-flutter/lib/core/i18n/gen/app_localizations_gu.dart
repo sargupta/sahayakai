@@ -1956,4 +1956,7 @@ class AppLocalizationsGu extends AppLocalizations {
 
   @override
   String get vidyaFieldMicLabel => 'બોલીને ભરો';
+
+  @override
+  String get vidyaOpen => 'VIDYA ને પૂછો';
 }

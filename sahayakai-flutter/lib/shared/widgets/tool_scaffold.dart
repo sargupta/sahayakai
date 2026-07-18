@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../features/vidya/presentation/vidya_sheet.dart';
 import 'primary_button.dart';
 
 /// Every AI tool page's shell: surface AppBar + a scrolling form capped at
 /// 640dp (so it never stretches edge-to-edge on tablets) + an optional sticky
 /// Generate button above the gesture inset. See ARCHITECTURE §9.1.
+///
+/// The app bar carries the VIDYA co-teacher action by default ([vidyaAction]),
+/// so VIDYA is reachable from every tool screen ("on every page", U-V7) without
+/// leaving the task; pass `vidyaAction: false` to opt a scaffold out.
 class ToolScaffold extends StatelessWidget {
   const ToolScaffold({
     super.key,
@@ -15,6 +20,7 @@ class ToolScaffold extends StatelessWidget {
     this.onSubmit,
     this.submitLabel,
     this.isBusy = false,
+    this.vidyaAction = true,
   });
 
   final String title;
@@ -24,11 +30,17 @@ class ToolScaffold extends StatelessWidget {
   final String? submitLabel;
   final bool isBusy;
 
+  /// Whether the app bar shows the VIDYA co-teacher action (default true).
+  final bool vidyaAction;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      appBar: AppBar(title: Text(title)),
+      appBar: AppBar(
+        title: Text(title),
+        actions: [if (vidyaAction) const VidyaAppBarAction()],
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: AppSpacing.pagePadding,

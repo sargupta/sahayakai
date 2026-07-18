@@ -1961,4 +1961,7 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get vidyaFieldMicLabel => 'ಮಾತನಾಡಿ ಭರ್ತಿ ಮಾಡಿ';
+
+  @override
+  String get vidyaOpen => 'VIDYA ಅನ್ನು ಕೇಳಿ';
 }

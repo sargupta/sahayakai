@@ -14,6 +14,7 @@ import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/secondary_button.dart';
 import 'vidya_controller.dart';
 import 'vidya_nav_dispatcher.dart';
+import 'vidya_status_ui.dart';
 import 'widgets/conversation_block.dart';
 import 'widgets/seal_mic.dart';
 
@@ -38,12 +39,15 @@ class _VidyaHomeScreenState extends ConsumerState<VidyaHomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Tell VIDYA which screen she is on, once, after the first frame (so the
-    // state write does not run during build).
+    // Tell VIDYA which screen she is on, and restore the prior session — both
+    // once, after the first frame (so the state write does not run during
+    // build). The restore 401s on the stub token and degrades to a fresh empty
+    // session (U-V7).
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        ref.read(vidyaControllerProvider.notifier).registerScreenContext('/');
-      }
+      if (!mounted) return;
+      final controller = ref.read(vidyaControllerProvider.notifier);
+      controller.registerScreenContext('/');
+      controller.restoreSession();
     });
   }
 
@@ -60,6 +64,10 @@ class _VidyaHomeScreenState extends ConsumerState<VidyaHomeScreen> {
       vidyaControllerProvider.select((s) => s.pendingNavigation),
       (_, directive) {
         if (directive == null) return;
+        // Only the topmost VIDYA surface routes: when a tool or the VIDYA sheet
+        // sits above the home, that surface owns the navigation (else the home
+        // would double-push the same intent). See U-V7.
+        if (!(ModalRoute.of(context)?.isCurrent ?? true)) return;
         controller.consumeNavigation();
         VidyaNavDispatcher.dispatch(context, directive);
       },
@@ -227,22 +235,22 @@ class _MicCluster extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final caption = _captionFor(state.status, l10n);
+    final caption = vidyaStateCaption(state.status, l10n);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         SealMic(
-          state: _sealStateFor(state.status),
+          state: sealStateForStatus(state.status),
           amplitude: state.amplitude,
           size: big ? 128 : 88,
           onTap: controller.onMicTap,
           semanticLabel: l10n.appTitle,
-          semanticHint: caption ?? _terminalTitle(state.status, l10n),
+          semanticHint: caption ?? vidyaTerminalTitle(state.status, l10n),
         ),
         const SizedBox(height: AppSpacing.space5),
-        if (_isTerminal(state.status))
+        if (isVidyaTerminal(state.status))
           _TerminalPanel(status: state.status, controller: controller)
         else ...[
           Text(
@@ -274,35 +282,21 @@ class _TerminalPanel extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
 
-    String title;
-    String body;
+    final title = vidyaTerminalTitle(status, l10n);
+    final body = vidyaTerminalBody(status, l10n);
     Widget? action;
-    switch (status) {
-      case VidyaStatus.signedOut:
-        title = l10n.vidyaSignedOutTitle;
-        body = l10n.vidyaSignedOutBody;
-      case VidyaStatus.micDenied:
-        title = l10n.vidyaMicOffTitle;
-        body = l10n.vidyaMicOffBody;
-        action = SecondaryButton(
-          label: l10n.vidyaOpenSettings,
-          icon: LucideIcons.settings,
-          onPressed: controller.openMicSettings,
-        );
-      case VidyaStatus.limitReached:
-        title = l10n.vidyaLimitTitle;
-        body = l10n.vidyaLimitBody;
-      case VidyaStatus.failed:
-        title = l10n.vidyaErrorTitle;
-        body = l10n.vidyaErrorBody;
-        action = SecondaryButton(
-          label: l10n.actionRetry,
-          icon: LucideIcons.refreshCw,
-          onPressed: controller.onMicTap,
-        );
-      default:
-        title = '';
-        body = '';
+    if (status == VidyaStatus.micDenied) {
+      action = SecondaryButton(
+        label: l10n.vidyaOpenSettings,
+        icon: LucideIcons.settings,
+        onPressed: controller.openMicSettings,
+      );
+    } else if (status == VidyaStatus.failed) {
+      action = SecondaryButton(
+        label: l10n.actionRetry,
+        icon: LucideIcons.refreshCw,
+        onPressed: controller.onMicTap,
+      );
     }
 
     return ConstrainedBox(
@@ -398,68 +392,7 @@ String _salutation(AppLocalizations l10n) {
   return l10n.dashboardGreetingEvening;
 }
 
-SealMicState _sealStateFor(VidyaStatus status) {
-  switch (status) {
-    case VidyaStatus.listening:
-      return SealMicState.listening;
-    case VidyaStatus.transcribing:
-      return SealMicState.transcribing;
-    case VidyaStatus.thinking:
-      return SealMicState.thinking;
-    case VidyaStatus.speaking:
-      return SealMicState.speaking;
-    case VidyaStatus.idle:
-    case VidyaStatus.requestingPermission:
-    case VidyaStatus.micDenied:
-    case VidyaStatus.signedOut:
-    case VidyaStatus.limitReached:
-    case VidyaStatus.failed:
-      return SealMicState.idle;
-  }
-}
-
-String? _captionFor(VidyaStatus status, AppLocalizations l10n) {
-  switch (status) {
-    case VidyaStatus.idle:
-      return l10n.vidyaStateIdle;
-    case VidyaStatus.requestingPermission:
-      return l10n.vidyaStateReady;
-    case VidyaStatus.listening:
-      return l10n.vidyaStateListening;
-    case VidyaStatus.transcribing:
-    case VidyaStatus.thinking:
-      return l10n.vidyaStateThinking;
-    case VidyaStatus.speaking:
-      return l10n.vidyaStateSpeaking;
-    case VidyaStatus.micDenied:
-    case VidyaStatus.signedOut:
-    case VidyaStatus.limitReached:
-    case VidyaStatus.failed:
-      return null; // rendered as a panel
-  }
-}
-
-bool _isTerminal(VidyaStatus s) =>
-    s == VidyaStatus.signedOut ||
-    s == VidyaStatus.micDenied ||
-    s == VidyaStatus.limitReached ||
-    s == VidyaStatus.failed;
-
-// The flow→route map and prefill building moved to `VidyaNavDispatcher` (U-V6),
-// so the home and the everywhere VIDYA sheet route through one source of truth.
-
-String _terminalTitle(VidyaStatus s, AppLocalizations l10n) {
-  switch (s) {
-    case VidyaStatus.signedOut:
-      return l10n.vidyaSignedOutTitle;
-    case VidyaStatus.micDenied:
-      return l10n.vidyaMicOffTitle;
-    case VidyaStatus.limitReached:
-      return l10n.vidyaLimitTitle;
-    case VidyaStatus.failed:
-      return l10n.vidyaErrorTitle;
-    default:
-      return l10n.vidyaStateIdle;
-  }
-}
+// The seal-state / caption / terminal mappings moved to `vidya_status_ui.dart`,
+// and the flow→route map + prefill to `VidyaNavDispatcher` (U-V6/U-V7), so the
+// home and the everywhere VIDYA sheet render and route from one source of truth.
 

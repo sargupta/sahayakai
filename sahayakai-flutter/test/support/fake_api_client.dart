@@ -25,6 +25,8 @@ class FakeApiClient extends ApiClient {
     this.multipartError,
     this.postResponsesByPath,
     this.postErrorsByPath,
+    this.getResponsesByPath,
+    this.getErrorsByPath,
   });
 
   /// Per-path POST reply, checked BEFORE the single [postResponse]. Lets one
@@ -37,6 +39,16 @@ class FakeApiClient extends ApiClient {
   /// Per-path POST error, checked BEFORE [postResponsesByPath] — model a 401 on
   /// `/api/assistant` while `/api/tts` still succeeds.
   final Map<String, Object>? postErrorsByPath;
+
+  /// Per-path GET reply, checked BEFORE the single [getResponse]. Lets one fake
+  /// serve a restore that GETs several routes (VIDYA: `/api/vidya/session` vs
+  /// `/api/vidya/profile`), which a single [getResponse] cannot. Absent (the
+  /// default) preserves the existing single-response behaviour.
+  final Map<String, Object?>? getResponsesByPath;
+
+  /// Per-path GET error, checked BEFORE [getResponsesByPath] — model a 401 on
+  /// the session/profile restore GETs.
+  final Map<String, Object>? getErrorsByPath;
 
   /// The raw JSON [get] hands to its `decode`. `dynamic`, like the real
   /// client's decode contract, so a test can hand it a non-object and prove the
@@ -107,6 +119,12 @@ class FakeApiClient extends ApiClient {
   }) async {
     gets.add((path: path, query: query));
     if (delay != null) await Future<void>.delayed(delay!);
+    // Per-path stubs win, so one fake can drive a multi-route restore.
+    final pathError = getErrorsByPath?[path];
+    if (pathError != null) throw pathError;
+    if (getResponsesByPath != null && getResponsesByPath!.containsKey(path)) {
+      return decode(getResponsesByPath![path]);
+    }
     if (error != null) throw error!;
     return decode(getResponse);
   }

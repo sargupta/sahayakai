@@ -1961,4 +1961,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get vidyaFieldMicLabel => 'பேசி நிரப்பு';
+
+  @override
+  String get vidyaOpen => 'VIDYA-விடம் கேளுங்கள்';
 }

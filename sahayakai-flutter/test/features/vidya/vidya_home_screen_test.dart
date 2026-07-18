@@ -35,6 +35,10 @@ class _FakeVidyaController extends VidyaController {
   void registerScreenContext(String path, {Map<String, dynamic>? uiState}) {}
   @override
   Future<void> openMicSettings() async {}
+  // U-V7: the home now restores the session on load; the fake keeps it inert so
+  // the widget test never reaches the network.
+  @override
+  Future<void> restoreSession() async {}
 }
 
 Future<void> _pumpHome(

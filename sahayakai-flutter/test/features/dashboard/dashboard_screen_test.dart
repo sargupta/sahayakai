@@ -247,14 +247,18 @@ void main() {
       final client = libraryClient(error: kOffline);
       await pumpDashboard(tester, client: client);
       expect(find.byType(OfflineView), findsOneWidget);
-      expect(client.gets, hasLength(1));
+      // U-V7: the VIDYA home restores its own session/profile on boot, so count
+      // only the recent-work read — the retry behaviour under test is unchanged.
+      Iterable<Object?> contentReads() =>
+          client.gets.where((g) => g.path == '/api/content/list');
+      expect(contentReads(), hasLength(1));
 
       // The connection came back.
       client.error = null;
       await tester.tap(find.text('Try again'));
       await tester.pumpAndSettle();
 
-      expect(client.gets, hasLength(2), reason: 'retry must re-run the fetch');
+      expect(contentReads(), hasLength(2), reason: 'retry must re-run the fetch');
       expect(find.byType(OfflineView), findsNothing);
       expect(find.text('Photosynthesis for Class 6'), findsOneWidget);
     });

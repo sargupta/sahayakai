@@ -13,6 +13,7 @@ import '../data/dto/assistant_response.dart';
 import '../data/dto/chat_message.dart';
 import '../data/dto/vidya_action.dart';
 import '../data/dto/vidya_profile.dart';
+import '../data/dto/vidya_session.dart';
 import '../data/tts_repository.dart';
 import '../data/vidya_profile_repository.dart';
 import '../data/vidya_repository.dart';
@@ -295,6 +296,8 @@ class VidyaState {
 class VidyaController extends _$VidyaController {
   int _gen = 0;
   bool _speechDetected = false;
+  bool _restored = false;
+  bool _restoring = false;
   StreamSubscription<double>? _amplitudeSub;
   Timer? _initialSilenceTimer;
   Timer? _trailingSilenceTimer;
@@ -374,6 +377,58 @@ class VidyaController extends _$VidyaController {
   void consumeNavigation() {
     if (state.pendingNavigation != null) {
       _set(pendingNavigation: null);
+    }
+  }
+
+  /// Restores the prior VIDYA session + profile on the first home load, so a
+  /// conversation survives a relaunch (SPEC §A.7). Runs at most once and never
+  /// clobbers an in-progress conversation. On the stub token the GETs 401 → this
+  /// degrades to a fresh empty session gracefully (no crash, no terminal state).
+  /// Live restore needs real Firebase auth; the plumbing is testable now.
+  Future<void> restoreSession() async {
+    if (_restored || _restoring) return;
+    _restoring = true;
+    try {
+      if (state.conversation.isNotEmpty) return; // already talking; leave it
+      // Fetch both concurrently (independent reads): both requests are in flight
+      // together, so a delayed backend drains in one settle window rather than
+      // stranding a pending timer, and `Future.wait` still surfaces the first
+      // error (the 401) to the handler below.
+      final results = await Future.wait<Object?>([
+        _session.fetchLatest(),
+        _profileRepo.fetch(),
+      ]);
+      final session = results[0]! as VidyaSession;
+      final profile = results[1] as VidyaProfile?;
+      // A tap during the fetch would have inked a block — never overwrite it.
+      if (state.conversation.isNotEmpty) return;
+      final blocks = [
+        for (final m in session.messages)
+          ConversationBlock(
+            role: m.role == ChatRole.user
+                ? ConversationRole.teacher
+                : ConversationRole.vidya,
+            text: m.text,
+          ),
+      ];
+      final history = session.messages.length <= kChatHistoryCap
+          ? session.messages
+          : session.messages
+              .sublist(session.messages.length - kChatHistoryCap);
+      _set(
+        conversation: blocks.isEmpty ? null : blocks,
+        chatHistory: history.isEmpty ? null : history,
+        sessionId: session.sessionId,
+        profile: profile ?? state.profile,
+      );
+    } on ApiException {
+      // 401 on the stub token (or any API error) → a fresh empty session. This
+      // is the EXPECTED path until real auth is wired.
+    } catch (_) {
+      // Defensive: a malformed restore must never crash the home.
+    } finally {
+      _restored = true;
+      _restoring = false;
     }
   }
 

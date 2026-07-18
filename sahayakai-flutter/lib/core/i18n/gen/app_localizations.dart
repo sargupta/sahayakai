@@ -3559,6 +3559,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dictate'**
   String get vidyaFieldMicLabel;
+
+  /// App-bar action + sheet title that opens VIDYA (the co-teacher) from any tool screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask VIDYA'**
+  String get vidyaOpen;
 }
 
 class _AppLocalizationsDelegate

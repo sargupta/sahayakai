@@ -1962,4 +1962,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get vidyaFieldMicLabel => 'സംസാരിച്ച് പൂരിപ്പിക്കുക';
+
+  @override
+  String get vidyaOpen => 'VIDYA യോട് ചോദിക്കൂ';
 }

@@ -1958,4 +1958,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get vidyaFieldMicLabel => 'Dictate';
+
+  @override
+  String get vidyaOpen => 'Ask VIDYA';
 }
