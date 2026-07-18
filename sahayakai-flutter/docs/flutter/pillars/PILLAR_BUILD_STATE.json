@@ -172,7 +172,9 @@
         "POST /api/ai/parent-message (reused)"
       ],
       "firebaseGated": "yes (routes 401 + 403 plan-gate until real auth; decode testable now)",
-      "status": "pending"
+      "status": "done",
+      "commit": "79ae6609e",
+      "notes": "Data + domain only (no UI -> code-review not design-review). ParentHotlineRepository over ApiClient binds createOutreach/placeCall/pollSummary/latestForStudent; 6 json_serializable DTOs + domain models (ParentOutreach/CallResult/CallSummary/TranscriptTurn + tolerant-fromWire enums OutreachReason/CallStatus/DeliveryMethod/ParentSentiment/CallQuality) mirroring src/types/attendance.ts name-for-name. Sealed ParentHotlineException {premiumRequired, noParentPhone, dedup(retryAfterSeconds), unsupportedLanguage, callPlacementFailed, twilioNotConfigured, targetNotFound}; 401 auth stays a plain ApiException for the uniform auth gate. api_exception extended ADDITIVELY to decode 429 retryAfterSeconds (body then Retry-After header). Contracts verified against the LIVE route code, catching real spec divergences: call route has TWO indistinct 422s disambiguated on the 'phone' substring; 403 decoded on PREMIUM_REQUIRED so ownership-Forbidden rethrows; parentPhone OMITTED from placeCall (server-trusted F9-001) and pinned by test. +42 tests (golden decode + request-shape pinning + every error branch) via FakeApiClient, no network -> 954 green, analyze 0, token_guard PASS. No native touched (no APK gate). Live routes 401 on stub until Firebase; verified code+test only. Message-draft delegates to parentMessageRepositoryProvider (not re-implemented)."
     },
     {
       "id": "U-PH2",
