@@ -1851,4 +1851,10 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get rubricSectionAssignment => 'ஒப்படைப்பு';
+
+  @override
+  String get examPaperSectionPaper => 'வினாத்தாள்';
+
+  @override
+  String get examPaperSectionFormat => 'வடிவம்';
 }

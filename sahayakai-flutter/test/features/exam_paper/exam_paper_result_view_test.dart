@@ -36,9 +36,10 @@ void main() {
       expect(find.text('Marking scheme'), findsWidgets);
       // The internal-choice (OR) alternative.
       expect(find.text('Or attempt'), findsOneWidget);
-      // Blueprint + PYQ cards.
-      expect(find.text('Blueprint summary'), findsOneWidget);
-      expect(find.text('Previous-year questions'), findsOneWidget);
+      // Blueprint + PYQ sections — DocumentSheetSection UPPERCASEs Latin
+      // headings.
+      expect(find.text('BLUEPRINT SUMMARY'), findsOneWidget);
+      expect(find.text('PREVIOUS-YEAR QUESTIONS'), findsOneWidget);
     });
 
     testWidgets('an empty paper shows the no-content state', (tester) async {
@@ -71,6 +72,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      // The Save action now lives in the DocumentSheet footer (§5 action bar) at
+      // the bottom of a tall paper, so scroll it into view before tapping — the
+      // save behaviour (PUT + saved confirmation) is asserted unchanged.
+      await tester.ensureVisible(find.text('Save to Library'));
       await tester.tap(find.text('Save to Library'));
       await tester.pump();
       await tester.pump();
@@ -96,6 +101,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      // Footer Save action — scroll it into view before tapping (see above).
+      await tester.ensureVisible(find.text('Save to Library'));
       await tester.tap(find.text('Save to Library'));
       await tester.pump();
       await tester.pump();

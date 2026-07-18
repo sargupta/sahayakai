@@ -36,5 +36,7 @@
   "libraryEmpty": "ਤੁਹਾਡੀਆਂ ਸੰਭਾਲੀਆਂ ਪਾਠ ਯੋਜਨਾਵਾਂ ਅਤੇ ਕੁਇਜ਼ ਇੱਥੇ ਦਿਖਣਗੀਆਂ।",
   "profileTitle": "ਪ੍ਰੋਫਾਈਲ",
   "worksheetSectionWorksheet": "ਵਰਕਸ਼ੀਟ",
-  "rubricSectionAssignment": "ਅਸਾਈਨਮੈਂਟ"
+  "rubricSectionAssignment": "ਅਸਾਈਨਮੈਂਟ",
+  "examPaperSectionPaper": "ਪ੍ਰਸ਼ਨ ਪੱਤਰ",
+  "examPaperSectionFormat": "ਫਾਰਮੈਟ"
 }

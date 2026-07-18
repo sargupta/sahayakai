@@ -36,5 +36,7 @@
   "libraryEmpty": "మీరు సేవ్ చేసిన పాఠ ప్రణాళికలు మరియు క్విజ్‌లు ఇక్కడ కనిపిస్తాయి.",
   "profileTitle": "ప్రొఫైల్",
   "worksheetSectionWorksheet": "వర్క్‌షీట్",
-  "rubricSectionAssignment": "అసైన్‌మెంట్"
+  "rubricSectionAssignment": "అసైన్‌మెంట్",
+  "examPaperSectionPaper": "ప్రశ్నపత్రం",
+  "examPaperSectionFormat": "ఫార్మాట్"
 }

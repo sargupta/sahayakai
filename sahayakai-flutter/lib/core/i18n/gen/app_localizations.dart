@@ -3349,6 +3349,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The assignment'**
   String get rubricSectionAssignment;
+
+  /// Exam paper form section header: the board, grade, subject and chapters the paper covers.
+  ///
+  /// In en, this message translates to:
+  /// **'The paper'**
+  String get examPaperSectionPaper;
+
+  /// Exam paper form section header: difficulty, language and what to include (answer key, marking scheme).
+  ///
+  /// In en, this message translates to:
+  /// **'Format'**
+  String get examPaperSectionFormat;
 }
 
 class _AppLocalizationsDelegate

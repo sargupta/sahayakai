@@ -36,5 +36,7 @@
   "libraryEmpty": "તમે સાચવેલી પાઠ યોજનાઓ અને ક્વિઝ અહીં દેખાશે.",
   "profileTitle": "પ્રોફાઇલ",
   "worksheetSectionWorksheet": "કાર્યપત્રક",
-  "rubricSectionAssignment": "અસાઇનમેન્ટ"
+  "rubricSectionAssignment": "અસાઇનમેન્ટ",
+  "examPaperSectionPaper": "પ્રશ્નપત્ર",
+  "examPaperSectionFormat": "ફોર્મેટ"
 }

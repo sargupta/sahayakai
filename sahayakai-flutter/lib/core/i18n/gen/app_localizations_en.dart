@@ -1848,4 +1848,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rubricSectionAssignment => 'The assignment';
+
+  @override
+  String get examPaperSectionPaper => 'The paper';
+
+  @override
+  String get examPaperSectionFormat => 'Format';
 }

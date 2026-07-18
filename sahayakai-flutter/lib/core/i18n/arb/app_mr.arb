@@ -36,5 +36,7 @@
   "libraryEmpty": "तुमच्या जतन केलेल्या पाठ योजना आणि प्रश्नमंजुषा येथे दिसतील.",
   "profileTitle": "प्रोफाइल",
   "worksheetSectionWorksheet": "कार्यपत्रिका",
-  "rubricSectionAssignment": "असाइनमेंट"
+  "rubricSectionAssignment": "असाइनमेंट",
+  "examPaperSectionPaper": "प्रश्नपत्रिका",
+  "examPaperSectionFormat": "स्वरूप"
 }

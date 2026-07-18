@@ -2303,5 +2303,13 @@
   "rubricSectionAssignment": "The assignment",
   "@rubricSectionAssignment": {
     "description": "Rubric form section header: the assignment the rubric grades."
+  },
+  "examPaperSectionPaper": "The paper",
+  "@examPaperSectionPaper": {
+    "description": "Exam paper form section header: the board, grade, subject and chapters the paper covers."
+  },
+  "examPaperSectionFormat": "Format",
+  "@examPaperSectionFormat": {
+    "description": "Exam paper form section header: difficulty, language and what to include (answer key, marking scheme)."
   }
 }

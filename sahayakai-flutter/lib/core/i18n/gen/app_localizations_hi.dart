@@ -1849,4 +1849,10 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get rubricSectionAssignment => 'असाइनमेंट';
+
+  @override
+  String get examPaperSectionPaper => 'प्रश्नपत्र';
+
+  @override
+  String get examPaperSectionFormat => 'प्रारूप';
 }

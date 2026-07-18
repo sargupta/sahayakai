@@ -1850,4 +1850,10 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get rubricSectionAssignment => 'అసైన్‌మెంట్';
+
+  @override
+  String get examPaperSectionPaper => 'ప్రశ్నపత్రం';
+
+  @override
+  String get examPaperSectionFormat => 'ఫార్మాట్';
 }

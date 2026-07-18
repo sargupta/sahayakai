@@ -1847,4 +1847,10 @@ class AppLocalizationsGu extends AppLocalizations {
 
   @override
   String get rubricSectionAssignment => 'અસાઇનમેન્ટ';
+
+  @override
+  String get examPaperSectionPaper => 'પ્રશ્નપત્ર';
+
+  @override
+  String get examPaperSectionFormat => 'ફોર્મેટ';
 }

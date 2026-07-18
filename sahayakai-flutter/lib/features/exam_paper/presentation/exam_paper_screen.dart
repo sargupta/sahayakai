@@ -8,6 +8,7 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
+import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
@@ -35,6 +36,10 @@ class ExamPaperScreen extends ConsumerStatefulWidget {
 class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
   final _formKey = GlobalKey<FormState>();
   final _chapterController = TextEditingController();
+
+  /// Anchors the auto-scroll: the result region's top, which for a rendered
+  /// paper is the DocumentSheet masthead.
+  final _resultKey = GlobalKey();
 
   String? _board;
   String? _grade;
@@ -99,10 +104,42 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
     ref.read(examPaperControllerProvider.notifier).generate(request);
   }
 
+  /// Brings the result masthead to the top of the viewport when a fresh paper
+  /// lands. Honours reduce-motion by jumping (no scroll tween).
+  void _scrollToResult() {
+    if (!mounted) return;
+    final ctx = _resultKey.currentContext;
+    if (ctx == null) return;
+    final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    Scrollable.ensureVisible(
+      ctx,
+      duration: reduce ? Duration.zero : AppMotion.medium,
+      curve: AppMotion.emphasized,
+      alignment: 0.0,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final state = ref.watch(examPaperControllerProvider);
+
+    // Auto-scroll to the masthead on a fresh rendered paper (loading -> Ready).
+    // The 202 in-progress card and errors keep the sticky Generate button, so
+    // only a Ready paper triggers the scroll.
+    ref.listen<AsyncValue<ExamPaperResult?>>(examPaperControllerProvider,
+        (prev, next) {
+      final wasLoading = prev?.isLoading ?? false;
+      final nowReady = !next.isLoading && next.valueOrNull is ExamPaperReady;
+      if (wasLoading && nowReady) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToResult());
+      }
+    });
+
+    // A rendered paper carries its own footer action bar (Save / Regenerate /
+    // Copy), so the sticky Generate button steps aside for it. The 202 and
+    // error states keep the sticky button so the teacher can try again.
+    final hasReadyPaper = state.valueOrNull is ExamPaperReady;
 
     final result = state.hasError
         ? ExamPaperErrorView(error: state.error!, onRetry: _submit)
@@ -111,7 +148,8 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
             skeleton: const ExamPaperSkeleton(),
             emptyMessage: l10n.examPaperEmpty,
             onData: (data) => switch (data) {
-              ExamPaperReady() => ExamPaperResultView(ready: data),
+              ExamPaperReady() =>
+                ExamPaperResultView(ready: data, onRegenerate: _submit),
               ExamPaperInProgress(:final message) =>
                 ExamPaperInProgressView(message: message),
             },
@@ -121,8 +159,8 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
       title: l10n.examPaperTitle,
       isBusy: state.isLoading,
       submitLabel: l10n.actionGenerate,
-      onSubmit: state.isLoading ? null : _submit,
-      result: result,
+      onSubmit: (state.isLoading || hasReadyPaper) ? null : _submit,
+      result: KeyedSubtree(key: _resultKey, child: result),
       child: Form(
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -130,6 +168,8 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
+            EditorialSectionHeader(l10n.examPaperSectionPaper),
+            const SizedBox(height: AppSpacing.space4),
             _boardField(l10n),
             const SizedBox(height: AppSpacing.space6),
             _gradeField(l10n),
@@ -137,7 +177,9 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
             _subjectField(l10n),
             const SizedBox(height: AppSpacing.space6),
             _chaptersField(l10n),
-            const SizedBox(height: AppSpacing.space6),
+            const SizedBox(height: AppSpacing.space8),
+            EditorialSectionHeader(l10n.examPaperSectionFormat),
+            const SizedBox(height: AppSpacing.space4),
             _difficultyField(l10n),
             const SizedBox(height: AppSpacing.space6),
             _languageField(l10n),
@@ -154,6 +196,7 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
   Widget _boardField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.examPaperBoardLabel,
+      leadingIcon: LucideIcons.scrollText,
       child: DropdownButtonFormField<String?>(
         initialValue: _board,
         isExpanded: true,
@@ -172,6 +215,7 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
   Widget _gradeField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.examPaperGradeLabel,
+      leadingIcon: LucideIcons.graduationCap,
       child: DropdownButtonFormField<String?>(
         initialValue: _grade,
         isExpanded: true,
@@ -190,6 +234,7 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
   Widget _subjectField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.examPaperSubjectLabel,
+      leadingIcon: LucideIcons.bookOpen,
       child: DropdownButtonFormField<String?>(
         initialValue: _subject,
         isExpanded: true,
@@ -224,6 +269,7 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
         return LabeledField(
           label: l10n.examPaperChaptersLabel,
           hint: l10n.examPaperChaptersHint,
+          leadingIcon: LucideIcons.bookMarked,
           errorText: field.errorText,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -283,6 +329,7 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
   Widget _difficultyField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.examPaperDifficultyLabel,
+      leadingIcon: LucideIcons.gauge,
       child: Wrap(
         spacing: AppSpacing.space2,
         runSpacing: AppSpacing.space2,
@@ -304,6 +351,7 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
   Widget _languageField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.languageLabel,
+      leadingIcon: LucideIcons.languages,
       child: DropdownButtonFormField<AppLocale>(
         initialValue: _language,
         isExpanded: true,

@@ -1851,4 +1851,10 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get rubricSectionAssignment => 'ಅಸೈನ್‌ಮೆಂಟ್';
+
+  @override
+  String get examPaperSectionPaper => 'ಪ್ರಶ್ನೆಪತ್ರಿಕೆ';
+
+  @override
+  String get examPaperSectionFormat => 'ಸ್ವರೂಪ';
 }

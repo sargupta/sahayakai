@@ -36,5 +36,7 @@
   "libraryEmpty": "ଆପଣ ସଞ୍ଚୟ କରିଥିବା ପାଠ ଯୋଜନା ଏବଂ କୁଇଜ୍ ଏଠାରେ ଦେଖାଯିବ।",
   "profileTitle": "ପ୍ରୋଫାଇଲ୍",
   "worksheetSectionWorksheet": "ୱାର୍କସିଟ୍",
-  "rubricSectionAssignment": "ଆସାଇନ୍‌ମେଣ୍ଟ"
+  "rubricSectionAssignment": "ଆସାଇନ୍‌ମେଣ୍ଟ",
+  "examPaperSectionPaper": "ପ୍ରଶ୍ନପତ୍ର",
+  "examPaperSectionFormat": "ଫର୍ମାଟ୍"
 }

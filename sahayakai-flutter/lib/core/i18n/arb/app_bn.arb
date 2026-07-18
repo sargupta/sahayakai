@@ -36,5 +36,7 @@
   "libraryEmpty": "আপনার সংরক্ষিত পাঠ পরিকল্পনা ও কুইজ এখানে দেখা যাবে।",
   "profileTitle": "প্রোফাইল",
   "worksheetSectionWorksheet": "ওয়ার্কশিট",
-  "rubricSectionAssignment": "অ্যাসাইনমেন্ট"
+  "rubricSectionAssignment": "অ্যাসাইনমেন্ট",
+  "examPaperSectionPaper": "প্রশ্নপত্র",
+  "examPaperSectionFormat": "বিন্যাস"
 }

@@ -36,5 +36,7 @@
   "libraryEmpty": "நீங்கள் சேமித்த பாடத் திட்டங்கள் மற்றும் வினாடி வினாக்கள் இங்கே தோன்றும்.",
   "profileTitle": "சுயவிவரம்",
   "worksheetSectionWorksheet": "பணித்தாள்",
-  "rubricSectionAssignment": "ஒப்படைப்பு"
+  "rubricSectionAssignment": "ஒப்படைப்பு",
+  "examPaperSectionPaper": "வினாத்தாள்",
+  "examPaperSectionFormat": "வடிவம்"
 }

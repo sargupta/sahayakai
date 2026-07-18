@@ -1850,4 +1850,10 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get rubricSectionAssignment => 'অ্যাসাইনমেন্ট';
+
+  @override
+  String get examPaperSectionPaper => 'প্রশ্নপত্র';
+
+  @override
+  String get examPaperSectionFormat => 'বিন্যাস';
 }

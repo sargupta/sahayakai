@@ -36,5 +36,7 @@
   "libraryEmpty": "आपकी सहेजी गई पाठ योजनाएँ और क्विज़ यहाँ दिखेंगी।",
   "profileTitle": "प्रोफ़ाइल",
   "worksheetSectionWorksheet": "वर्कशीट",
-  "rubricSectionAssignment": "असाइनमेंट"
+  "rubricSectionAssignment": "असाइनमेंट",
+  "examPaperSectionPaper": "प्रश्नपत्र",
+  "examPaperSectionFormat": "प्रारूप"
 }
