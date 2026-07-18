@@ -1621,6 +1621,15 @@ class AppLocalizationsTe extends AppLocalizations {
   String get parentMessageCopied => 'Message copied';
 
   @override
+  String get parentMessageSectionMessage => 'సందేశం';
+
+  @override
+  String get parentMessageSectionDetails => 'అదనపు వివరాలు';
+
+  @override
+  String get parentMessageResultTitle => 'తల్లిదండ్రులకు సందేశం';
+
+  @override
   String get parentMessageNoContent =>
       'No message came back for that. Please add a little more context and try again.';
 

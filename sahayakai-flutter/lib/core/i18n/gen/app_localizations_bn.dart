@@ -1621,6 +1621,15 @@ class AppLocalizationsBn extends AppLocalizations {
   String get parentMessageCopied => 'Message copied';
 
   @override
+  String get parentMessageSectionMessage => 'বার্তা';
+
+  @override
+  String get parentMessageSectionDetails => 'অতিরিক্ত বিবরণ';
+
+  @override
+  String get parentMessageResultTitle => 'অভিভাবকের জন্য বার্তা';
+
+  @override
   String get parentMessageNoContent =>
       'No message came back for that. Please add a little more context and try again.';
 

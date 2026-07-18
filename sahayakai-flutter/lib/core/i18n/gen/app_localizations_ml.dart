@@ -1624,6 +1624,15 @@ class AppLocalizationsMl extends AppLocalizations {
   String get parentMessageCopied => 'Message copied';
 
   @override
+  String get parentMessageSectionMessage => 'സന്ദേശം';
+
+  @override
+  String get parentMessageSectionDetails => 'അധിക വിശദാംശങ്ങൾ';
+
+  @override
+  String get parentMessageResultTitle => 'രക്ഷിതാവിനുള്ള സന്ദേശം';
+
+  @override
   String get parentMessageNoContent =>
       'No message came back for that. Please add a little more context and try again.';
 

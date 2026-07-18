@@ -1622,6 +1622,15 @@ class AppLocalizationsTa extends AppLocalizations {
   String get parentMessageCopied => 'Message copied';
 
   @override
+  String get parentMessageSectionMessage => 'செய்தி';
+
+  @override
+  String get parentMessageSectionDetails => 'கூடுதல் விவரங்கள்';
+
+  @override
+  String get parentMessageResultTitle => 'பெற்றோருக்கான செய்தி';
+
+  @override
   String get parentMessageNoContent =>
       'No message came back for that. Please add a little more context and try again.';
 

@@ -1619,6 +1619,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get parentMessageCopied => 'Message copied';
 
   @override
+  String get parentMessageSectionMessage => 'The message';
+
+  @override
+  String get parentMessageSectionDetails => 'Extra details';
+
+  @override
+  String get parentMessageResultTitle => 'Message home';
+
+  @override
   String get parentMessageNoContent =>
       'No message came back for that. Please add a little more context and try again.';
 

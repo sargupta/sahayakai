@@ -1618,6 +1618,15 @@ class AppLocalizationsGu extends AppLocalizations {
   String get parentMessageCopied => 'Message copied';
 
   @override
+  String get parentMessageSectionMessage => 'સંદેશ';
+
+  @override
+  String get parentMessageSectionDetails => 'વધારાની વિગતો';
+
+  @override
+  String get parentMessageResultTitle => 'વાલી માટે સંદેશ';
+
+  @override
   String get parentMessageNoContent =>
       'No message came back for that. Please add a little more context and try again.';
 

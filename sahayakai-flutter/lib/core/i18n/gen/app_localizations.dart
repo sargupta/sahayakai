@@ -2990,6 +2990,24 @@ abstract class AppLocalizations {
   /// **'Message copied'**
   String get parentMessageCopied;
 
+  /// Editorial section header over the core parent-message fields.
+  ///
+  /// In en, this message translates to:
+  /// **'The message'**
+  String get parentMessageSectionMessage;
+
+  /// Editorial section header over the optional parent-message fields.
+  ///
+  /// In en, this message translates to:
+  /// **'Extra details'**
+  String get parentMessageSectionDetails;
+
+  /// Masthead document title on the Parent Message result DocumentSheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Message home'**
+  String get parentMessageResultTitle;
+
   /// Shown when the response carried no usable message.
   ///
   /// In en, this message translates to:

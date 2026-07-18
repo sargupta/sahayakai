@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/app_locale.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
+import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
@@ -18,9 +20,11 @@ import 'widgets/parent_message_skeleton.dart';
 
 /// P1.5 — Parent Message. A teacher drafts an empathetic, ready-to-send message
 /// to a student's parent, in the PARENT'S language (distinct from the app UI
-/// language). A capped, scrolling form + a sticky action button
+/// language). A capped, scrolling editorial form + a sticky action button
 /// ([ToolScaffold]), driven by an AsyncNotifier and rendered through
-/// [ResultView] (loading / empty / error / data).
+/// [ResultView] (loading / empty / error / data). On success the message is
+/// wrapped in a `DocumentSheet` (see [ParentMessageResultView]) and the view
+/// auto-scrolls to its masthead.
 ///
 /// Five fields are required by the endpoint (student, class, subject, reason,
 /// parent's language) and the form validates all five before it can submit, so
@@ -43,6 +47,10 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
   final _absentDaysController = TextEditingController();
   final _teacherNameController = TextEditingController();
   final _schoolNameController = TextEditingController();
+
+  /// Anchors the auto-scroll: the result region's top, which for a successful
+  /// draft is the DocumentSheet masthead.
+  final _resultKey = GlobalKey();
 
   String? _subject;
   ParentMessageReason? _reason;
@@ -83,10 +91,38 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
     ref.read(parentMessageControllerProvider.notifier).draft(request);
   }
 
+  /// Brings the result masthead to the top of the viewport when a fresh draft
+  /// lands. Honours reduce-motion by jumping (no scroll tween).
+  void _scrollToResult() {
+    if (!mounted) return;
+    final ctx = _resultKey.currentContext;
+    if (ctx == null) return;
+    final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    Scrollable.ensureVisible(
+      ctx,
+      duration: reduce ? Duration.zero : AppMotion.medium,
+      curve: AppMotion.emphasized,
+      alignment: 0.0,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final state = ref.watch(parentMessageControllerProvider);
+
+    // Auto-scroll to the result header on a fresh success (loading -> data).
+    ref.listen<AsyncValue<ParentMessage?>>(parentMessageControllerProvider,
+        (prev, next) {
+      final wasLoading = prev?.isLoading ?? false;
+      final nowHasMessage =
+          !next.isLoading && next.hasValue && next.valueOrNull != null;
+      if (wasLoading && nowHasMessage) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToResult());
+      }
+    });
+
+    final hasResult = state.hasValue && state.valueOrNull != null;
 
     final result = state.hasError
         ? ParentMessageErrorView(error: state.error!, onRetry: _submit)
@@ -94,15 +130,18 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
             state: state,
             skeleton: const ParentMessageSkeleton(),
             emptyMessage: l10n.parentMessageEmpty,
-            onData: (message) => ParentMessageResultView(message: message),
+            onData: (message) =>
+                ParentMessageResultView(message: message, onRegenerate: _submit),
           );
 
     return ToolScaffold(
       title: l10n.parentMessageTitle,
       isBusy: state.isLoading,
       submitLabel: l10n.parentMessageAction,
-      onSubmit: state.isLoading ? null : _submit,
-      result: result,
+      // Hide the sticky action button once a draft is on screen — the document's
+      // own action bar (Regenerate / Copy / Share) takes over.
+      onSubmit: (state.isLoading || hasResult) ? null : _submit,
+      result: KeyedSubtree(key: _resultKey, child: result),
       child: Form(
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -110,6 +149,8 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
+            EditorialSectionHeader(l10n.parentMessageSectionMessage),
+            const SizedBox(height: AppSpacing.space4),
             _studentNameField(l10n),
             const SizedBox(height: AppSpacing.space6),
             _classNameField(l10n),
@@ -123,7 +164,9 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
             ],
             const SizedBox(height: AppSpacing.space6),
             _parentLanguageField(l10n),
-            const SizedBox(height: AppSpacing.space6),
+            const SizedBox(height: AppSpacing.space8),
+            EditorialSectionHeader(l10n.parentMessageSectionDetails),
+            const SizedBox(height: AppSpacing.space4),
             _reasonContextField(l10n),
             const SizedBox(height: AppSpacing.space6),
             _teacherNoteField(l10n),
@@ -140,6 +183,7 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
   Widget _studentNameField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.parentMessageStudentLabel,
+      leadingIcon: LucideIcons.user,
       child: TextFormField(
         controller: _studentNameController,
         textCapitalization: TextCapitalization.words,
@@ -156,6 +200,7 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
   Widget _classNameField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.parentMessageClassLabel,
+      leadingIcon: LucideIcons.users,
       child: TextFormField(
         controller: _classNameController,
         textCapitalization: TextCapitalization.characters,
@@ -172,6 +217,7 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
   Widget _subjectField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.parentMessageSubjectLabel,
+      leadingIcon: LucideIcons.bookOpen,
       child: DropdownButtonFormField<String>(
         initialValue: _subject,
         isExpanded: true,
@@ -190,6 +236,7 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
   Widget _reasonField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.parentMessageReasonLabel,
+      leadingIcon: LucideIcons.messageCircle,
       child: DropdownButtonFormField<ParentMessageReason>(
         initialValue: _reason,
         isExpanded: true,
@@ -213,6 +260,7 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
       label: l10n.parentMessageAbsentDaysLabel,
       optionalLabel: l10n.parentMessageOptional,
       hint: l10n.parentMessageAbsentDaysHint,
+      leadingIcon: LucideIcons.calendarDays,
       child: TextFormField(
         controller: _absentDaysController,
         keyboardType: TextInputType.number,
@@ -228,6 +276,7 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
     return LabeledField(
       label: l10n.parentMessageParentLanguageLabel,
       hint: l10n.parentMessageParentLanguageHint,
+      leadingIcon: LucideIcons.languages,
       child: DropdownButtonFormField<AppLocale>(
         initialValue: _parentLanguage,
         isExpanded: true,
@@ -251,6 +300,7 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
       label: l10n.parentMessageContextLabel,
       optionalLabel: l10n.parentMessageOptional,
       hint: l10n.parentMessageContextHint,
+      leadingIcon: LucideIcons.fileText,
       child: TextFormField(
         controller: _reasonContextController,
         maxLines: 3,
@@ -268,6 +318,7 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
       label: l10n.parentMessageNoteLabel,
       optionalLabel: l10n.parentMessageOptional,
       hint: l10n.parentMessageNoteHint,
+      leadingIcon: LucideIcons.stickyNote,
       child: TextFormField(
         controller: _teacherNoteController,
         maxLines: 3,
@@ -285,6 +336,7 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
       label: l10n.parentMessageTeacherNameLabel,
       optionalLabel: l10n.parentMessageOptional,
       hint: l10n.parentMessageTeacherNameHint,
+      leadingIcon: LucideIcons.userCheck,
       child: TextFormField(
         controller: _teacherNameController,
         textCapitalization: TextCapitalization.words,
@@ -299,6 +351,7 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
     return LabeledField(
       label: l10n.parentMessageSchoolNameLabel,
       optionalLabel: l10n.parentMessageOptional,
+      leadingIcon: LucideIcons.school,
       child: TextFormField(
         controller: _schoolNameController,
         textCapitalization: TextCapitalization.words,

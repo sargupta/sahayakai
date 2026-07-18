@@ -1620,6 +1620,15 @@ class AppLocalizationsMr extends AppLocalizations {
   String get parentMessageCopied => 'Message copied';
 
   @override
+  String get parentMessageSectionMessage => 'संदेश';
+
+  @override
+  String get parentMessageSectionDetails => 'अतिरिक्त तपशील';
+
+  @override
+  String get parentMessageResultTitle => 'पालकांसाठी संदेश';
+
+  @override
   String get parentMessageNoContent =>
       'No message came back for that. Please add a little more context and try again.';
 

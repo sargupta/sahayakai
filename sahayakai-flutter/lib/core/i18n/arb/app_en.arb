@@ -2022,6 +2022,18 @@
   "@parentMessageCopied": {
     "description": "Snackbar confirmation shown after the message is copied."
   },
+  "parentMessageSectionMessage": "The message",
+  "@parentMessageSectionMessage": {
+    "description": "Editorial section header over the core parent-message fields."
+  },
+  "parentMessageSectionDetails": "Extra details",
+  "@parentMessageSectionDetails": {
+    "description": "Editorial section header over the optional parent-message fields."
+  },
+  "parentMessageResultTitle": "Message home",
+  "@parentMessageResultTitle": {
+    "description": "Masthead document title on the Parent Message result DocumentSheet."
+  },
   "parentMessageNoContent": "No message came back for that. Please add a little more context and try again.",
   "@parentMessageNoContent": {
     "description": "Shown when the response carried no usable message."

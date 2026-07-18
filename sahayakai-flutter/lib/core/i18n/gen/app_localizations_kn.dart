@@ -1622,6 +1622,15 @@ class AppLocalizationsKn extends AppLocalizations {
   String get parentMessageCopied => 'Message copied';
 
   @override
+  String get parentMessageSectionMessage => 'ಸಂದೇಶ';
+
+  @override
+  String get parentMessageSectionDetails => 'ಹೆಚ್ಚುವರಿ ವಿವರಗಳು';
+
+  @override
+  String get parentMessageResultTitle => 'ಪೋಷಕರಿಗೆ ಸಂದೇಶ';
+
+  @override
   String get parentMessageNoContent =>
       'No message came back for that. Please add a little more context and try again.';
 
