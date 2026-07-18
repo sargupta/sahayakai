@@ -1880,4 +1880,80 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get examPaperSectionFormat => 'বিন্যাস';
+
+  @override
+  String get vidyaEyebrow => 'আপনার সহ-শিক্ষক';
+
+  @override
+  String get vidyaDeck => 'আপনার ভাষায় বলুন, আমি কাজটি প্রস্তুত করে দেব।';
+
+  @override
+  String get vidyaPromptLesson => 'একটি পাঠ পরিকল্পনা করতে বলুন';
+
+  @override
+  String get vidyaPromptQuiz => 'একটি কুইজ তৈরি করতে বলুন';
+
+  @override
+  String get vidyaPromptParent => 'একজন অভিভাবককে বার্তা পাঠাতে বলুন';
+
+  @override
+  String get vidyaStateIdle => 'কথা বলতে ট্যাপ করুন';
+
+  @override
+  String get vidyaStateReady => 'প্রস্তুত হচ্ছে';
+
+  @override
+  String get vidyaStateListening => 'আমি শুনছি';
+
+  @override
+  String get vidyaStateThinking => 'ভাবছি';
+
+  @override
+  String get vidyaStateSpeaking => 'বলছি';
+
+  @override
+  String get vidyaYouSaid => 'আপনি বললেন';
+
+  @override
+  String get vidyaSignedOutTitle => 'VIDYA-র সাথে কথা বলতে সাইন ইন করুন';
+
+  @override
+  String get vidyaSignedOutBody =>
+      'সাইন ইন করুন, VIDYA আপনার ভাষায় পাঠ, কুইজ এবং আরও অনেক কিছু তৈরি করবে।';
+
+  @override
+  String get vidyaMicOffTitle => 'মাইক্রোফোন চালু করুন';
+
+  @override
+  String get vidyaMicOffBody =>
+      'আপনার কথা শুনতে VIDYA-র মাইক্রোফোন দরকার। সেটিংসে এটি চালু করুন।';
+
+  @override
+  String get vidyaOpenSettings => 'সেটিংস খুলুন';
+
+  @override
+  String get vidyaLimitTitle => 'আপনি আজকের ভয়েস সীমায় পৌঁছেছেন';
+
+  @override
+  String get vidyaLimitBody =>
+      'আপনার ভয়েস মিনিট আবার পাওয়া যাবে। ততক্ষণ আপনি টুলগুলি ব্যবহার করতে পারেন।';
+
+  @override
+  String get vidyaErrorTitle => 'এটি সম্পন্ন হয়নি';
+
+  @override
+  String get vidyaErrorBody =>
+      'আপনার সংযোগ পরীক্ষা করুন এবং আবার চেষ্টা করতে সিলে ট্যাপ করুন।';
+
+  @override
+  String get vidyaPrepDesk => 'প্রস্তুতি ডেস্ক';
+
+  @override
+  String get vidyaFlowVisualAid => 'ভিজ্যুয়াল সহায়ক';
+
+  @override
+  String get vidyaFlowVirtualFieldTrip => 'ভার্চুয়াল ফিল্ড ট্রিপ';
+
+  @override
+  String get vidyaFlowVideoStoryteller => 'ভিডিও গল্প';
 }

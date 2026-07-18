@@ -3409,6 +3409,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Format'**
   String get examPaperSectionFormat;
+
+  /// VIDYA home eyebrow above the greeting (co-teacher framing).
+  ///
+  /// In en, this message translates to:
+  /// **'Your co-teacher'**
+  String get vidyaEyebrow;
+
+  /// VIDYA home deck/standfirst inviting the teacher to speak.
+  ///
+  /// In en, this message translates to:
+  /// **'Speak in your language, and I will prepare the work.'**
+  String get vidyaDeck;
+
+  /// Rotating VIDYA prompt example: plan a lesson.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask me to plan a lesson'**
+  String get vidyaPromptLesson;
+
+  /// Rotating VIDYA prompt example: make a quiz.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask me to make a quiz'**
+  String get vidyaPromptQuiz;
+
+  /// Rotating VIDYA prompt example: message a parent.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask me to message a parent'**
+  String get vidyaPromptParent;
+
+  /// Seal-mic caption when idle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to speak'**
+  String get vidyaStateIdle;
+
+  /// Seal-mic caption while requesting the microphone.
+  ///
+  /// In en, this message translates to:
+  /// **'Getting ready'**
+  String get vidyaStateReady;
+
+  /// Seal-mic caption while recording.
+  ///
+  /// In en, this message translates to:
+  /// **'I am listening'**
+  String get vidyaStateListening;
+
+  /// Seal-mic caption while transcribing / thinking.
+  ///
+  /// In en, this message translates to:
+  /// **'Thinking'**
+  String get vidyaStateThinking;
+
+  /// Seal-mic caption while VIDYA speaks the reply.
+  ///
+  /// In en, this message translates to:
+  /// **'Speaking'**
+  String get vidyaStateSpeaking;
+
+  /// Overline above the teacher's transcript block.
+  ///
+  /// In en, this message translates to:
+  /// **'You said'**
+  String get vidyaYouSaid;
+
+  /// VIDYA signed-out state title (401 on the stub token).
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to talk to VIDYA'**
+  String get vidyaSignedOutTitle;
+
+  /// VIDYA signed-out state body.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in and VIDYA will plan lessons, quizzes and more in your language.'**
+  String get vidyaSignedOutBody;
+
+  /// VIDYA permanent mic-denial state title.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on the microphone'**
+  String get vidyaMicOffTitle;
+
+  /// VIDYA permanent mic-denial state body.
+  ///
+  /// In en, this message translates to:
+  /// **'VIDYA needs the microphone to hear you. Enable it in Settings.'**
+  String get vidyaMicOffBody;
+
+  /// Button that deep-links to OS settings to enable the mic.
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get vidyaOpenSettings;
+
+  /// VIDYA voice-quota (429) calm limit state title.
+  ///
+  /// In en, this message translates to:
+  /// **'You have reached today\'s voice limit'**
+  String get vidyaLimitTitle;
+
+  /// VIDYA voice-quota (429) calm limit state body.
+  ///
+  /// In en, this message translates to:
+  /// **'Your voice minutes will refresh. You can keep using the tools in the meantime.'**
+  String get vidyaLimitBody;
+
+  /// VIDYA network/timeout failure state title.
+  ///
+  /// In en, this message translates to:
+  /// **'That did not go through'**
+  String get vidyaErrorTitle;
+
+  /// VIDYA network/timeout failure state body.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your connection and tap the seal to try again.'**
+  String get vidyaErrorBody;
+
+  /// App-bar action opening the Prep desk (teaching tools grid).
+  ///
+  /// In en, this message translates to:
+  /// **'Prep desk'**
+  String get vidyaPrepDesk;
+
+  /// Confirm-chip label for the Visual Aid flow.
+  ///
+  /// In en, this message translates to:
+  /// **'Visual aid'**
+  String get vidyaFlowVisualAid;
+
+  /// Confirm-chip label for the Virtual Field Trip flow.
+  ///
+  /// In en, this message translates to:
+  /// **'Virtual field trip'**
+  String get vidyaFlowVirtualFieldTrip;
+
+  /// Confirm-chip label for the Video Storyteller flow.
+  ///
+  /// In en, this message translates to:
+  /// **'Video story'**
+  String get vidyaFlowVideoStoryteller;
 }
 
 class _AppLocalizationsDelegate

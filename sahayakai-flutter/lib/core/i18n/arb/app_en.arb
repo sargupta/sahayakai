@@ -2343,5 +2343,101 @@
   "examPaperSectionFormat": "Format",
   "@examPaperSectionFormat": {
     "description": "Exam paper form section header: difficulty, language and what to include (answer key, marking scheme)."
+  },
+  "vidyaEyebrow": "Your co-teacher",
+  "@vidyaEyebrow": {
+    "description": "VIDYA home eyebrow above the greeting (co-teacher framing)."
+  },
+  "vidyaDeck": "Speak in your language, and I will prepare the work.",
+  "@vidyaDeck": {
+    "description": "VIDYA home deck/standfirst inviting the teacher to speak."
+  },
+  "vidyaPromptLesson": "Ask me to plan a lesson",
+  "@vidyaPromptLesson": {
+    "description": "Rotating VIDYA prompt example: plan a lesson."
+  },
+  "vidyaPromptQuiz": "Ask me to make a quiz",
+  "@vidyaPromptQuiz": {
+    "description": "Rotating VIDYA prompt example: make a quiz."
+  },
+  "vidyaPromptParent": "Ask me to message a parent",
+  "@vidyaPromptParent": {
+    "description": "Rotating VIDYA prompt example: message a parent."
+  },
+  "vidyaStateIdle": "Tap to speak",
+  "@vidyaStateIdle": {
+    "description": "Seal-mic caption when idle."
+  },
+  "vidyaStateReady": "Getting ready",
+  "@vidyaStateReady": {
+    "description": "Seal-mic caption while requesting the microphone."
+  },
+  "vidyaStateListening": "I am listening",
+  "@vidyaStateListening": {
+    "description": "Seal-mic caption while recording."
+  },
+  "vidyaStateThinking": "Thinking",
+  "@vidyaStateThinking": {
+    "description": "Seal-mic caption while transcribing / thinking."
+  },
+  "vidyaStateSpeaking": "Speaking",
+  "@vidyaStateSpeaking": {
+    "description": "Seal-mic caption while VIDYA speaks the reply."
+  },
+  "vidyaYouSaid": "You said",
+  "@vidyaYouSaid": {
+    "description": "Overline above the teacher's transcript block."
+  },
+  "vidyaSignedOutTitle": "Sign in to talk to VIDYA",
+  "@vidyaSignedOutTitle": {
+    "description": "VIDYA signed-out state title (401 on the stub token)."
+  },
+  "vidyaSignedOutBody": "Sign in and VIDYA will plan lessons, quizzes and more in your language.",
+  "@vidyaSignedOutBody": {
+    "description": "VIDYA signed-out state body."
+  },
+  "vidyaMicOffTitle": "Turn on the microphone",
+  "@vidyaMicOffTitle": {
+    "description": "VIDYA permanent mic-denial state title."
+  },
+  "vidyaMicOffBody": "VIDYA needs the microphone to hear you. Enable it in Settings.",
+  "@vidyaMicOffBody": {
+    "description": "VIDYA permanent mic-denial state body."
+  },
+  "vidyaOpenSettings": "Open settings",
+  "@vidyaOpenSettings": {
+    "description": "Button that deep-links to OS settings to enable the mic."
+  },
+  "vidyaLimitTitle": "You have reached today's voice limit",
+  "@vidyaLimitTitle": {
+    "description": "VIDYA voice-quota (429) calm limit state title."
+  },
+  "vidyaLimitBody": "Your voice minutes will refresh. You can keep using the tools in the meantime.",
+  "@vidyaLimitBody": {
+    "description": "VIDYA voice-quota (429) calm limit state body."
+  },
+  "vidyaErrorTitle": "That did not go through",
+  "@vidyaErrorTitle": {
+    "description": "VIDYA network/timeout failure state title."
+  },
+  "vidyaErrorBody": "Check your connection and tap the seal to try again.",
+  "@vidyaErrorBody": {
+    "description": "VIDYA network/timeout failure state body."
+  },
+  "vidyaPrepDesk": "Prep desk",
+  "@vidyaPrepDesk": {
+    "description": "App-bar action opening the Prep desk (teaching tools grid)."
+  },
+  "vidyaFlowVisualAid": "Visual aid",
+  "@vidyaFlowVisualAid": {
+    "description": "Confirm-chip label for the Visual Aid flow."
+  },
+  "vidyaFlowVirtualFieldTrip": "Virtual field trip",
+  "@vidyaFlowVirtualFieldTrip": {
+    "description": "Confirm-chip label for the Virtual Field Trip flow."
+  },
+  "vidyaFlowVideoStoryteller": "Video story",
+  "@vidyaFlowVideoStoryteller": {
+    "description": "Confirm-chip label for the Video Storyteller flow."
   }
 }

@@ -1879,4 +1879,80 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get examPaperSectionFormat => 'ਫਾਰਮੈਟ';
+
+  @override
+  String get vidyaEyebrow => 'ਤੁਹਾਡਾ ਸਹਿ-ਅਧਿਆਪਕ';
+
+  @override
+  String get vidyaDeck => 'ਆਪਣੀ ਭਾਸ਼ਾ ਵਿੱਚ ਬੋਲੋ, ਅਤੇ ਮੈਂ ਕੰਮ ਤਿਆਰ ਕਰ ਦੇਵਾਂਗੀ।';
+
+  @override
+  String get vidyaPromptLesson => 'ਪਾਠ ਯੋਜਨਾ ਬਣਾਉਣ ਲਈ ਕਹੋ';
+
+  @override
+  String get vidyaPromptQuiz => 'ਇੱਕ ਕਵਿਜ਼ ਬਣਾਉਣ ਲਈ ਕਹੋ';
+
+  @override
+  String get vidyaPromptParent => 'ਮਾਪੇ ਨੂੰ ਸੁਨੇਹਾ ਭੇਜਣ ਲਈ ਕਹੋ';
+
+  @override
+  String get vidyaStateIdle => 'ਬੋਲਣ ਲਈ ਟੈਪ ਕਰੋ';
+
+  @override
+  String get vidyaStateReady => 'ਤਿਆਰ ਹੋ ਰਿਹਾ ਹੈ';
+
+  @override
+  String get vidyaStateListening => 'ਮੈਂ ਸੁਣ ਰਹੀ ਹਾਂ';
+
+  @override
+  String get vidyaStateThinking => 'ਸੋਚ ਰਹੀ ਹਾਂ';
+
+  @override
+  String get vidyaStateSpeaking => 'ਬੋਲ ਰਹੀ ਹਾਂ';
+
+  @override
+  String get vidyaYouSaid => 'ਤੁਸੀਂ ਕਿਹਾ';
+
+  @override
+  String get vidyaSignedOutTitle => 'VIDYA ਨਾਲ ਗੱਲ ਕਰਨ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ';
+
+  @override
+  String get vidyaSignedOutBody =>
+      'ਸਾਈਨ ਇਨ ਕਰੋ ਅਤੇ VIDYA ਤੁਹਾਡੀ ਭਾਸ਼ਾ ਵਿੱਚ ਪਾਠ, ਕਵਿਜ਼ ਅਤੇ ਹੋਰ ਬਹੁਤ ਕੁਝ ਤਿਆਰ ਕਰੇਗੀ।';
+
+  @override
+  String get vidyaMicOffTitle => 'ਮਾਈਕ੍ਰੋਫੋਨ ਚਾਲੂ ਕਰੋ';
+
+  @override
+  String get vidyaMicOffBody =>
+      'ਤੁਹਾਨੂੰ ਸੁਣਨ ਲਈ VIDYA ਨੂੰ ਮਾਈਕ੍ਰੋਫੋਨ ਚਾਹੀਦਾ ਹੈ। ਇਸਨੂੰ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਚਾਲੂ ਕਰੋ।';
+
+  @override
+  String get vidyaOpenSettings => 'ਸੈਟਿੰਗਾਂ ਖੋਲ੍ਹੋ';
+
+  @override
+  String get vidyaLimitTitle => 'ਤੁਸੀਂ ਅੱਜ ਦੀ ਵੌਇਸ ਸੀਮਾ ਤੱਕ ਪਹੁੰਚ ਗਏ ਹੋ';
+
+  @override
+  String get vidyaLimitBody =>
+      'ਤੁਹਾਡੇ ਵੌਇਸ ਮਿੰਟ ਦੁਬਾਰਾ ਮਿਲਣਗੇ। ਉਦੋਂ ਤੱਕ ਤੁਸੀਂ ਟੂਲ ਵਰਤ ਸਕਦੇ ਹੋ।';
+
+  @override
+  String get vidyaErrorTitle => 'ਇਹ ਪੂਰਾ ਨਹੀਂ ਹੋ ਸਕਿਆ';
+
+  @override
+  String get vidyaErrorBody =>
+      'ਆਪਣਾ ਕਨੈਕਸ਼ਨ ਜਾਂਚੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰਨ ਲਈ ਸੀਲ \'ਤੇ ਟੈਪ ਕਰੋ।';
+
+  @override
+  String get vidyaPrepDesk => 'ਤਿਆਰੀ ਡੈਸਕ';
+
+  @override
+  String get vidyaFlowVisualAid => 'ਦ੍ਰਿਸ਼ ਸਮੱਗਰੀ';
+
+  @override
+  String get vidyaFlowVirtualFieldTrip => 'ਵਰਚੁਅਲ ਫੀਲਡ ਟ੍ਰਿਪ';
+
+  @override
+  String get vidyaFlowVideoStoryteller => 'ਵੀਡੀਓ ਕਹਾਣੀ';
 }

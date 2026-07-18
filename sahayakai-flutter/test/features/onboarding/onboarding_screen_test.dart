@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:sahayakai/core/i18n/app_locale.dart';
 import 'package:sahayakai/core/i18n/locale_provider.dart';
 import 'package:sahayakai/core/router/routes.dart';
-import 'package:sahayakai/features/dashboard/presentation/dashboard_screen.dart';
+import 'package:sahayakai/features/vidya/presentation/vidya_home_screen.dart';
 import 'package:sahayakai/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -55,10 +55,10 @@ void main() {
     testWidgets('nothing ever redirects a signed-in teacher TO onboarding',
         (tester) async {
       // A teacher with NO profile at all — the exact user a gate would trap —
-      // boots straight to the dashboard.
+      // boots straight into the app (the VIDYA home is now the landing, U-V5).
       await pumpSignedInApp(tester, docs: FakeProfileDocSource(doc: null));
 
-      expect(find.byType(DashboardScreen), findsOneWidget);
+      expect(find.byType(VidyaHomeScreen), findsOneWidget);
       expect(find.byType(OnboardingScreen), findsNothing);
     });
 
@@ -81,7 +81,7 @@ void main() {
       await tester.tap(find.text('Skip for now'));
       await tester.pumpAndSettle();
 
-      expect(find.byType(DashboardScreen), findsOneWidget);
+      expect(find.byType(VidyaHomeScreen), findsOneWidget);
       expect(find.byType(OnboardingScreen), findsNothing);
     });
 
@@ -93,7 +93,7 @@ void main() {
       await tester.tap(find.text('Skip for now'));
       await tester.pumpAndSettle();
 
-      expect(find.byType(DashboardScreen), findsOneWidget);
+      expect(find.byType(VidyaHomeScreen), findsOneWidget);
     });
 
     testWidgets('skip still works WHILE a save is failing', (tester) async {
@@ -114,7 +114,7 @@ void main() {
       // ... and the way out is right there.
       await tester.tap(find.text('Skip for now'));
       await tester.pumpAndSettle();
-      expect(find.byType(DashboardScreen), findsOneWidget);
+      expect(find.byType(VidyaHomeScreen), findsOneWidget);
     });
 
     testWidgets('a failed save keeps the teacher on the form, not advanced',
@@ -240,7 +240,7 @@ void main() {
       await tester.tap(find.text('Go to my dashboard'));
       await tester.pumpAndSettle();
 
-      expect(find.byType(DashboardScreen), findsOneWidget);
+      expect(find.byType(VidyaHomeScreen), findsOneWidget);
     });
   });
 

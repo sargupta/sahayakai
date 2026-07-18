@@ -1881,4 +1881,81 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get examPaperSectionFormat => 'ಸ್ವರೂಪ';
+
+  @override
+  String get vidyaEyebrow => 'ನಿಮ್ಮ ಸಹ-ಶಿಕ್ಷಕ';
+
+  @override
+  String get vidyaDeck =>
+      'ನಿಮ್ಮ ಭಾಷೆಯಲ್ಲಿ ಮಾತನಾಡಿ, ನಾನು ಕೆಲಸವನ್ನು ಸಿದ್ಧಪಡಿಸುತ್ತೇನೆ.';
+
+  @override
+  String get vidyaPromptLesson => 'ಪಾಠ ಯೋಜನೆ ಮಾಡಲು ನನ್ನನ್ನು ಕೇಳಿ';
+
+  @override
+  String get vidyaPromptQuiz => 'ಕ್ವಿಜ್ ಮಾಡಲು ನನ್ನನ್ನು ಕೇಳಿ';
+
+  @override
+  String get vidyaPromptParent => 'ಪೋಷಕರಿಗೆ ಸಂದೇಶ ಕಳುಹಿಸಲು ಕೇಳಿ';
+
+  @override
+  String get vidyaStateIdle => 'ಮಾತನಾಡಲು ಟ್ಯಾಪ್ ಮಾಡಿ';
+
+  @override
+  String get vidyaStateReady => 'ಸಿದ್ಧವಾಗುತ್ತಿದೆ';
+
+  @override
+  String get vidyaStateListening => 'ನಾನು ಕೇಳುತ್ತಿದ್ದೇನೆ';
+
+  @override
+  String get vidyaStateThinking => 'ಯೋಚಿಸುತ್ತಿದ್ದೇನೆ';
+
+  @override
+  String get vidyaStateSpeaking => 'ಮಾತನಾಡುತ್ತಿದ್ದೇನೆ';
+
+  @override
+  String get vidyaYouSaid => 'ನೀವು ಹೇಳಿದ್ದು';
+
+  @override
+  String get vidyaSignedOutTitle => 'VIDYA ಜೊತೆ ಮಾತನಾಡಲು ಸೈನ್ ಇನ್ ಮಾಡಿ';
+
+  @override
+  String get vidyaSignedOutBody =>
+      'ಸೈನ್ ಇನ್ ಮಾಡಿ, VIDYA ನಿಮ್ಮ ಭಾಷೆಯಲ್ಲಿ ಪಾಠ, ಕ್ವಿಜ್ ಮತ್ತು ಇನ್ನಷ್ಟನ್ನು ಸಿದ್ಧಪಡಿಸುತ್ತದೆ.';
+
+  @override
+  String get vidyaMicOffTitle => 'ಮೈಕ್ರೊಫೋನ್ ಆನ್ ಮಾಡಿ';
+
+  @override
+  String get vidyaMicOffBody =>
+      'ನಿಮ್ಮನ್ನು ಕೇಳಲು VIDYAಗೆ ಮೈಕ್ರೊಫೋನ್ ಬೇಕು. ಅದನ್ನು ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಆನ್ ಮಾಡಿ.';
+
+  @override
+  String get vidyaOpenSettings => 'ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ತೆರೆಯಿರಿ';
+
+  @override
+  String get vidyaLimitTitle => 'ನೀವು ಇಂದಿನ ಧ್ವನಿ ಮಿತಿಯನ್ನು ತಲುಪಿದ್ದೀರಿ';
+
+  @override
+  String get vidyaLimitBody =>
+      'ನಿಮ್ಮ ಧ್ವನಿ ನಿಮಿಷಗಳು ಮತ್ತೆ ಸಿಗುತ್ತವೆ. ಅಲ್ಲಿಯವರೆಗೆ ನೀವು ಟೂಲ್‌ಗಳನ್ನು ಬಳಸಬಹುದು.';
+
+  @override
+  String get vidyaErrorTitle => 'ಅದು ಪೂರ್ಣಗೊಳ್ಳಲಿಲ್ಲ';
+
+  @override
+  String get vidyaErrorBody =>
+      'ನಿಮ್ಮ ಸಂಪರ್ಕ ಪರಿಶೀಲಿಸಿ, ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಲು ಸೀಲ್ ಮೇಲೆ ಟ್ಯಾಪ್ ಮಾಡಿ.';
+
+  @override
+  String get vidyaPrepDesk => 'ಸಿದ್ಧತಾ ಡೆಸ್ಕ್';
+
+  @override
+  String get vidyaFlowVisualAid => 'ದೃಶ್ಯ ಸಾಧನ';
+
+  @override
+  String get vidyaFlowVirtualFieldTrip => 'ವರ್ಚುವಲ್ ಕ್ಷೇತ್ರ ಪ್ರವಾಸ';
+
+  @override
+  String get vidyaFlowVideoStoryteller => 'ವೀಡಿಯೊ ಕಥೆ';
 }

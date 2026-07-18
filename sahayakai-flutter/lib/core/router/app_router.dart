@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../features/assess_assignment/presentation/assess_assignment_screen.dart';
 import '../../features/dashboard/presentation/app_shell.dart';
+import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/exam_paper/presentation/exam_paper_screen.dart';
 import '../../features/instant_answer/presentation/instant_answer_screen.dart';
 import '../../features/lesson_planner/presentation/lesson_plan_screen.dart';
@@ -87,6 +88,13 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: Routes.home,
         builder: (context, state) => const AppShell(),
+      ),
+      GoRoute(
+        // The Prep desk (former dashboard) — the teaching-tools grid, now a
+        // destination pushed on top of the shell from the VIDYA home rather than
+        // the landing itself.
+        path: Routes.prepDesk,
+        builder: (context, state) => const DashboardScreen(),
       ),
       GoRoute(
         path: Routes.lessonPlan,

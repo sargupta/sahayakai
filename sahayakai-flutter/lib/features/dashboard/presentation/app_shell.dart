@@ -10,13 +10,16 @@ import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/icon_well.dart';
 import '../../library/presentation/library_screen.dart';
 import '../../profile/presentation/profile_screen.dart';
-import 'dashboard_screen.dart';
+import '../../vidya/presentation/vidya_home_screen.dart';
 import 'floating_bottom_nav.dart';
 
 /// The signed-in shell: the premium floating bottom navigation ([U9]) over 4
-/// tabs (Home / Create / Library / Me). "Create" is an action — it opens the
-/// searchable Create (command) palette rather than switching tabs, so the
-/// selected index never lands on it and its pill never lights. See
+/// tabs (Home / Create / Library / Me). Home is now the voice-first VIDYA canvas
+/// ("The Almanac Speaks"), not the form-first dashboard — the founder's #1
+/// correction. The teaching-tools grid (Prep desk) is one tap away from the
+/// VIDYA home's app bar and still in the Create palette. "Create" is an action —
+/// it opens the searchable Create (command) palette rather than switching tabs,
+/// so the selected index never lands on it and its pill never lights. See
 /// PREMIUM_DESIGN_SPEC.md §5 ("Bottom nav — floating").
 ///
 /// The body is an [IndexedStack] (every tab stays warm, so the shared library
@@ -43,7 +46,7 @@ class _AppShellState extends State<AppShell> {
 
     // index 1 (Create) is an action, so its stack slot is never shown.
     final pages = <Widget>[
-      const DashboardScreen(),
+      const VidyaHomeScreen(),
       const SizedBox.shrink(),
       const LibraryScreen(),
       const ProfileScreen(),
@@ -55,7 +58,8 @@ class _AppShellState extends State<AppShell> {
         currentIndex: _index,
         onSelected: _onSelect,
         items: [
-          FloatingNavItem(icon: LucideIcons.home, label: l10n.navHome),
+          // Home is the voice-first VIDYA canvas — a mic, not a house.
+          FloatingNavItem(icon: LucideIcons.mic, label: l10n.navHome),
           FloatingNavItem(
             icon: LucideIcons.sparkles,
             label: l10n.navCreate,
@@ -113,13 +117,23 @@ class _AnimatedTabBody extends StatefulWidget {
 
 class _AnimatedTabBodyState extends State<_AnimatedTabBody>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: AppMotion.small,
-    // Start settled: the first tab does its own entrance; only SWITCHING replays
-    // this one.
-    value: 1,
-  );
+  // Created eagerly in initState, NOT as a lazy `late final`: under reduce-motion
+  // build() returns before ever touching it, so a lazy field would first
+  // initialize inside dispose() — which creates a Ticker and looks up TickerMode
+  // on a deactivated element, and Flutter throws. Eager init keeps dispose safe.
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: AppMotion.small,
+      // Start settled: the first tab does its own entrance; only SWITCHING
+      // replays this one.
+      value: 1,
+    );
+  }
 
   @override
   void didUpdateWidget(_AnimatedTabBody old) {

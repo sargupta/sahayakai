@@ -1877,4 +1877,80 @@ class AppLocalizationsGu extends AppLocalizations {
 
   @override
   String get examPaperSectionFormat => 'ફોર્મેટ';
+
+  @override
+  String get vidyaEyebrow => 'તમારા સહ-શિક્ષક';
+
+  @override
+  String get vidyaDeck => 'તમારી ભાષામાં બોલો, અને હું કામ તૈયાર કરીશ.';
+
+  @override
+  String get vidyaPromptLesson => 'પાઠ યોજના બનાવવા મને કહો';
+
+  @override
+  String get vidyaPromptQuiz => 'ક્વિઝ બનાવવા મને કહો';
+
+  @override
+  String get vidyaPromptParent => 'વાલીને સંદેશ મોકલવા મને કહો';
+
+  @override
+  String get vidyaStateIdle => 'બોલવા માટે ટૅપ કરો';
+
+  @override
+  String get vidyaStateReady => 'તૈયાર થઈ રહ્યું છે';
+
+  @override
+  String get vidyaStateListening => 'હું સાંભળી રહી છું';
+
+  @override
+  String get vidyaStateThinking => 'વિચારી રહી છું';
+
+  @override
+  String get vidyaStateSpeaking => 'બોલી રહી છું';
+
+  @override
+  String get vidyaYouSaid => 'તમે કહ્યું';
+
+  @override
+  String get vidyaSignedOutTitle => 'VIDYA સાથે વાત કરવા સાઇન ઇન કરો';
+
+  @override
+  String get vidyaSignedOutBody =>
+      'સાઇન ઇન કરો અને VIDYA તમારી ભાષામાં પાઠ, ક્વિઝ અને વધુ તૈયાર કરશે.';
+
+  @override
+  String get vidyaMicOffTitle => 'માઇક્રોફોન ચાલુ કરો';
+
+  @override
+  String get vidyaMicOffBody =>
+      'તમને સાંભળવા VIDYA ને માઇક્રોફોન જોઈએ. તેને સેટિંગ્સમાં ચાલુ કરો.';
+
+  @override
+  String get vidyaOpenSettings => 'સેટિંગ્સ ખોલો';
+
+  @override
+  String get vidyaLimitTitle => 'તમે આજની વૉઇસ મર્યાદા સુધી પહોંચ્યા છો';
+
+  @override
+  String get vidyaLimitBody =>
+      'તમારી વૉઇસ મિનિટ ફરી મળશે. ત્યાં સુધી તમે ટૂલ્સ વાપરી શકો છો.';
+
+  @override
+  String get vidyaErrorTitle => 'તે પૂર્ણ થઈ શક્યું નહીં';
+
+  @override
+  String get vidyaErrorBody =>
+      'તમારું કનેક્શન તપાસો અને ફરી પ્રયાસ કરવા સીલ પર ટૅપ કરો.';
+
+  @override
+  String get vidyaPrepDesk => 'તૈયારી ડેસ્ક';
+
+  @override
+  String get vidyaFlowVisualAid => 'દૃશ્ય સામગ્રી';
+
+  @override
+  String get vidyaFlowVirtualFieldTrip => 'વર્ચ્યુઅલ ફિલ્ડ ટ્રીપ';
+
+  @override
+  String get vidyaFlowVideoStoryteller => 'વિડિઓ વાર્તા';
 }

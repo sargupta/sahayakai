@@ -13,6 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/fake_api_client.dart';
 import '../dashboard/dashboard_fixtures.dart';
+import '../onboarding/onboarding_fixtures.dart' show pumpSignedInApp;
 
 /// My Library — the tab that used to be a permanent, actionless empty state.
 ///
@@ -29,9 +30,12 @@ Future<void> _openLibrary(
   Locale? locale,
   Size surface = kTallSurface,
 }) async {
-  await pumpDashboard(
+  // NEW IA (U-V5): reach the Library tab the way a teacher does now — by tapping
+  // it in the real bottom nav from the VIDYA home, not through the dashboard
+  // (which is no longer the landing). The Library tab still owns its own read.
+  await pumpSignedInApp(
     tester,
-    client: client,
+    client: client ?? libraryClient(),
     settle: settle,
     brightness: brightness,
     textScale: textScale,
@@ -208,20 +212,21 @@ void main() {
     });
   });
 
-  group('it shares the dashboard\'s single read', () {
+  group('the shell reads the library once', () {
     testWidgets('opening the tab fires no second request', (tester) async {
       final client = libraryClient();
-      await pumpDashboard(tester, client: client);
+      // NEW IA (U-V5): the shell's IndexedStack builds every tab up front, so the
+      // Library tab's single read has already fired behind the VIDYA-home
+      // landing. Switching to the tab shows it without a second request.
+      await pumpSignedInApp(tester, client: client);
 
-      // AppShell builds every tab in an IndexedStack, so Library is already
-      // mounted. One provider means one request serves both surfaces.
-      final afterDashboard = client.gets.length;
-      expect(afterDashboard, 1);
+      final afterBoot = client.gets.length;
+      expect(afterBoot, 1);
 
       await tester.tap(find.text('Library'));
       await tester.pumpAndSettle();
 
-      expect(client.gets.length, afterDashboard);
+      expect(client.gets.length, afterBoot);
       expect(client.gets.single.query, <String, dynamic>{'limit': 20});
     });
   });

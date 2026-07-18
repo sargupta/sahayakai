@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sahayakai/core/network/api_exception.dart';
-import 'package:sahayakai/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:sahayakai/features/onboarding/presentation/login_screen.dart';
 import 'package:sahayakai/features/splash/presentation/splash_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:sahayakai/features/vidya/presentation/vidya_home_screen.dart';
 
 import '../../support/app_harness.dart';
 import '../../support/fake_api_client.dart';
@@ -37,6 +38,13 @@ Future<void> _pumpApp(
   tester.platformDispatcher.textScaleFactorTestValue = textScale;
   addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
   addTearDown(tester.view.reset);
+  if (signedIn) {
+    // The signed-in landing is now the VIDYA home, whose Seal Mic breathes on a
+    // repeating controller; disable animations so pumpAndSettle sees its still.
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+  }
 
   await tester.pumpWidget(
     appHarness(
@@ -135,7 +143,7 @@ void main() {
       // Signed in, but there is no first snapshot yet: nothing may render
       // behind the guard.
       expect(find.byType(SplashScreen), findsOneWidget);
-      expect(find.byType(DashboardScreen), findsNothing);
+      expect(find.byType(VidyaHomeScreen), findsNothing);
       expect(find.byType(LoginScreen), findsNothing);
     });
 
@@ -151,7 +159,7 @@ void main() {
       await tester.pump();
 
       expect(find.byType(SplashScreen), findsOneWidget);
-      expect(find.byType(DashboardScreen), findsNothing);
+      expect(find.byType(VidyaHomeScreen), findsNothing);
     });
 
     testWidgets('booted and signed out -> login', (tester) async {
@@ -162,11 +170,14 @@ void main() {
       expect(find.byType(SplashScreen), findsNothing);
     });
 
-    testWidgets('booted and signed in -> the dashboard', (tester) async {
+    testWidgets('booted and signed in -> the VIDYA home (new landing)',
+        (tester) async {
       await _pumpApp(tester, boot: FakeBootstrap(), signedIn: true);
       await tester.pumpAndSettle();
 
-      expect(find.byType(DashboardScreen), findsOneWidget);
+      // The landing is now the voice-first VIDYA home, not the form-first
+      // dashboard (U-V5 IA change).
+      expect(find.byType(VidyaHomeScreen), findsOneWidget);
       expect(find.byType(SplashScreen), findsNothing);
       expect(find.byType(LoginScreen), findsNothing);
     });

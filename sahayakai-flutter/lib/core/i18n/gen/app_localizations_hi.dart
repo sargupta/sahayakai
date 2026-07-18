@@ -1879,4 +1879,80 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get examPaperSectionFormat => 'प्रारूप';
+
+  @override
+  String get vidyaEyebrow => 'आपके सह-शिक्षक';
+
+  @override
+  String get vidyaDeck => 'अपनी भाषा में बोलिए, और मैं काम तैयार कर दूँगी।';
+
+  @override
+  String get vidyaPromptLesson => 'मुझसे पाठ योजना बनाने को कहिए';
+
+  @override
+  String get vidyaPromptQuiz => 'मुझसे प्रश्नोत्तरी बनाने को कहिए';
+
+  @override
+  String get vidyaPromptParent => 'मुझसे अभिभावक को संदेश भेजने को कहिए';
+
+  @override
+  String get vidyaStateIdle => 'बोलने के लिए टैप करें';
+
+  @override
+  String get vidyaStateReady => 'तैयार हो रहा है';
+
+  @override
+  String get vidyaStateListening => 'मैं सुन रही हूँ';
+
+  @override
+  String get vidyaStateThinking => 'सोच रही हूँ';
+
+  @override
+  String get vidyaStateSpeaking => 'बोल रही हूँ';
+
+  @override
+  String get vidyaYouSaid => 'आपने कहा';
+
+  @override
+  String get vidyaSignedOutTitle => 'VIDYA से बात करने के लिए साइन इन करें';
+
+  @override
+  String get vidyaSignedOutBody =>
+      'साइन इन करें और VIDYA आपकी भाषा में पाठ, प्रश्नोत्तरी और बहुत कुछ तैयार करेगी।';
+
+  @override
+  String get vidyaMicOffTitle => 'माइक्रोफ़ोन चालू करें';
+
+  @override
+  String get vidyaMicOffBody =>
+      'आपको सुनने के लिए VIDYA को माइक्रोफ़ोन चाहिए। इसे सेटिंग में चालू करें।';
+
+  @override
+  String get vidyaOpenSettings => 'सेटिंग खोलें';
+
+  @override
+  String get vidyaLimitTitle => 'आप आज की वॉइस सीमा तक पहुँच गए हैं';
+
+  @override
+  String get vidyaLimitBody =>
+      'आपके वॉइस मिनट फिर से मिलेंगे। तब तक आप टूल इस्तेमाल कर सकते हैं।';
+
+  @override
+  String get vidyaErrorTitle => 'यह पूरा नहीं हो सका';
+
+  @override
+  String get vidyaErrorBody =>
+      'अपना कनेक्शन जाँचें और फिर से कोशिश करने के लिए सील पर टैप करें।';
+
+  @override
+  String get vidyaPrepDesk => 'तैयारी डेस्क';
+
+  @override
+  String get vidyaFlowVisualAid => 'दृश्य सामग्री';
+
+  @override
+  String get vidyaFlowVirtualFieldTrip => 'आभासी भ्रमण';
+
+  @override
+  String get vidyaFlowVideoStoryteller => 'वीडियो कहानी';
 }

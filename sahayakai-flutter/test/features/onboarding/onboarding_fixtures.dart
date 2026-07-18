@@ -69,9 +69,20 @@ Future<void> pumpSignedInApp(
   /// False to observe an in-flight state. `pumpAndSettle` never terminates
   /// while a shimmer or a progress indicator is animating.
   bool settle = true,
+  /// The landing is now the VIDYA home, whose Seal Mic breathes with a
+  /// repeating controller. Disabling animations (the default) renders its
+  /// composed still so `pumpAndSettle` never times out on the ambient motion —
+  /// every assertion here is about the final frame, not a tween. A test that
+  /// needs live motion can opt back in.
+  bool reduceMotion = true,
 }) async {
   tester.view.physicalSize = surface;
   tester.view.devicePixelRatio = 1.0;
+  if (reduceMotion) {
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+  }
   if (brightness != null) {
     tester.platformDispatcher.platformBrightnessTestValue = brightness;
     addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);

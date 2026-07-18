@@ -1878,4 +1878,81 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get examPaperSectionFormat => 'Format';
+
+  @override
+  String get vidyaEyebrow => 'Your co-teacher';
+
+  @override
+  String get vidyaDeck =>
+      'Speak in your language, and I will prepare the work.';
+
+  @override
+  String get vidyaPromptLesson => 'Ask me to plan a lesson';
+
+  @override
+  String get vidyaPromptQuiz => 'Ask me to make a quiz';
+
+  @override
+  String get vidyaPromptParent => 'Ask me to message a parent';
+
+  @override
+  String get vidyaStateIdle => 'Tap to speak';
+
+  @override
+  String get vidyaStateReady => 'Getting ready';
+
+  @override
+  String get vidyaStateListening => 'I am listening';
+
+  @override
+  String get vidyaStateThinking => 'Thinking';
+
+  @override
+  String get vidyaStateSpeaking => 'Speaking';
+
+  @override
+  String get vidyaYouSaid => 'You said';
+
+  @override
+  String get vidyaSignedOutTitle => 'Sign in to talk to VIDYA';
+
+  @override
+  String get vidyaSignedOutBody =>
+      'Sign in and VIDYA will plan lessons, quizzes and more in your language.';
+
+  @override
+  String get vidyaMicOffTitle => 'Turn on the microphone';
+
+  @override
+  String get vidyaMicOffBody =>
+      'VIDYA needs the microphone to hear you. Enable it in Settings.';
+
+  @override
+  String get vidyaOpenSettings => 'Open settings';
+
+  @override
+  String get vidyaLimitTitle => 'You have reached today\'s voice limit';
+
+  @override
+  String get vidyaLimitBody =>
+      'Your voice minutes will refresh. You can keep using the tools in the meantime.';
+
+  @override
+  String get vidyaErrorTitle => 'That did not go through';
+
+  @override
+  String get vidyaErrorBody =>
+      'Check your connection and tap the seal to try again.';
+
+  @override
+  String get vidyaPrepDesk => 'Prep desk';
+
+  @override
+  String get vidyaFlowVisualAid => 'Visual aid';
+
+  @override
+  String get vidyaFlowVirtualFieldTrip => 'Virtual field trip';
+
+  @override
+  String get vidyaFlowVideoStoryteller => 'Video story';
 }

@@ -1881,4 +1881,81 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get examPaperSectionFormat => 'வடிவம்';
+
+  @override
+  String get vidyaEyebrow => 'உங்கள் இணை ஆசிரியர்';
+
+  @override
+  String get vidyaDeck =>
+      'உங்கள் மொழியில் பேசுங்கள், நான் வேலையைத் தயார் செய்கிறேன்.';
+
+  @override
+  String get vidyaPromptLesson => 'ஒரு பாடத்தைத் திட்டமிடச் சொல்லுங்கள்';
+
+  @override
+  String get vidyaPromptQuiz => 'ஒரு வினாடி வினா உருவாக்கச் சொல்லுங்கள்';
+
+  @override
+  String get vidyaPromptParent => 'பெற்றோருக்குச் செய்தி அனுப்பச் சொல்லுங்கள்';
+
+  @override
+  String get vidyaStateIdle => 'பேச தட்டவும்';
+
+  @override
+  String get vidyaStateReady => 'தயாராகிறது';
+
+  @override
+  String get vidyaStateListening => 'நான் கேட்கிறேன்';
+
+  @override
+  String get vidyaStateThinking => 'யோசிக்கிறேன்';
+
+  @override
+  String get vidyaStateSpeaking => 'பேசுகிறேன்';
+
+  @override
+  String get vidyaYouSaid => 'நீங்கள் சொன்னது';
+
+  @override
+  String get vidyaSignedOutTitle => 'VIDYA உடன் பேச உள்நுழையவும்';
+
+  @override
+  String get vidyaSignedOutBody =>
+      'உள்நுழையுங்கள், VIDYA உங்கள் மொழியில் பாடங்கள், வினாடி வினாக்கள் மற்றும் பலவற்றைத் தயார் செய்யும்.';
+
+  @override
+  String get vidyaMicOffTitle => 'மைக்ரோஃபோனை இயக்கவும்';
+
+  @override
+  String get vidyaMicOffBody =>
+      'உங்களைக் கேட்க VIDYA-க்கு மைக்ரோஃபோன் தேவை. அமைப்புகளில் அதை இயக்கவும்.';
+
+  @override
+  String get vidyaOpenSettings => 'அமைப்புகளைத் திற';
+
+  @override
+  String get vidyaLimitTitle => 'இன்றைய குரல் வரம்பை அடைந்துவிட்டீர்கள்';
+
+  @override
+  String get vidyaLimitBody =>
+      'உங்கள் குரல் நிமிடங்கள் புதுப்பிக்கப்படும். அதுவரை கருவிகளைப் பயன்படுத்தலாம்.';
+
+  @override
+  String get vidyaErrorTitle => 'அது நிறைவேறவில்லை';
+
+  @override
+  String get vidyaErrorBody =>
+      'உங்கள் இணைப்பைச் சரிபார்த்து, மீண்டும் முயற்சிக்க முத்திரையைத் தட்டவும்.';
+
+  @override
+  String get vidyaPrepDesk => 'தயாரிப்பு மேசை';
+
+  @override
+  String get vidyaFlowVisualAid => 'காட்சி உதவி';
+
+  @override
+  String get vidyaFlowVirtualFieldTrip => 'மெய்நிகர் கள பயணம்';
+
+  @override
+  String get vidyaFlowVideoStoryteller => 'வீடியோ கதை';
 }

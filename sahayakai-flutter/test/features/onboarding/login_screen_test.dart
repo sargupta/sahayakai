@@ -5,7 +5,7 @@ import 'package:sahayakai/core/auth/auth_providers.dart';
 import 'package:sahayakai/core/i18n/app_locale.dart';
 import 'package:sahayakai/core/i18n/locale_provider.dart';
 import 'package:sahayakai/core/router/routes.dart';
-import 'package:sahayakai/features/dashboard/presentation/dashboard_screen.dart';
+import 'package:sahayakai/features/vidya/presentation/vidya_home_screen.dart';
 import 'package:sahayakai/features/instant_answer/presentation/instant_answer_screen.dart';
 import 'package:sahayakai/features/onboarding/presentation/login_screen.dart';
 import 'package:sahayakai/features/onboarding/presentation/onboarding_screen.dart';
@@ -177,7 +177,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(LoginScreen), findsOneWidget);
-      expect(find.byType(DashboardScreen), findsNothing);
+      expect(find.byType(VidyaHomeScreen), findsNothing);
     });
   });
 

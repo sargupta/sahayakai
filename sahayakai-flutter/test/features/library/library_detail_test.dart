@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/fake_api_client.dart';
 import '../dashboard/dashboard_fixtures.dart';
+import '../onboarding/onboarding_fixtures.dart' show pumpSignedInApp;
 
 /// P1.7 — opening a saved item (`GET /api/content/get?id=<id>`).
 ///
@@ -41,7 +42,9 @@ Future<void> _openDetail(
   Locale? locale,
   Size surface = kTallSurface,
 }) async {
-  await pumpDashboard(
+  // NEW IA (U-V5): reach the Library tab from the VIDYA-home shell, then open a
+  // saved item's detail — the dashboard is no longer the landing.
+  await pumpSignedInApp(
     tester,
     client: client,
     brightness: brightness,

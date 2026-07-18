@@ -4,7 +4,16 @@ class Routes {
 
   static const String splash = '/splash';
   static const String login = '/login';
+
+  /// The app's landing after auth: the voice-first VIDYA home ("The Almanac
+  /// Speaks") inside the signed-in shell. It replaced the form-first dashboard
+  /// as the founder's #1 correction — the app must open on a nearly-empty mic.
   static const String home = '/';
+
+  /// The Prep desk — the teaching-tools grid (the former dashboard). No longer
+  /// the landing; reached from the VIDYA home's app-bar action and still in the
+  /// Create palette. A deliberate destination, one tap from Home.
+  static const String prepDesk = '/prep-desk';
 
   /// First-run setup. Auth-required, and deliberately NOT a gate.
   ///

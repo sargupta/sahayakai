@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/core/network/api_exception.dart';
+import 'package:sahayakai/core/router/routes.dart';
 import 'package:sahayakai/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:sahayakai/features/profile/data/profile_doc_source.dart';
 
@@ -67,7 +68,12 @@ FakeApiClient libraryClient({
   );
 }
 
-/// Boots the app straight onto the dashboard: booted, signed in, redirected.
+/// Boots the app signed in and drives to the Prep desk (the former dashboard).
+///
+/// NEW IA (U-V5): the landing is now the voice-first VIDYA home, and the
+/// teaching-tools grid moved to the `/prep-desk` route reached from its app bar.
+/// These dashboard suites test that grid, so the fixture navigates straight to
+/// it — the tiles, recent-work states and nudge are unchanged, only the way in.
 Future<void> pumpDashboard(
   WidgetTester tester, {
   FakeApiClient? client,
@@ -90,7 +96,16 @@ Future<void> pumpDashboard(
     surface: surface,
     settle: settle,
   );
-  if (settle) expect(find.byType(DashboardScreen), findsOneWidget);
+  // Replace the VIDYA-home landing with the Prep desk so only the dashboard
+  // watches the library provider (the recent-work get-count assertions hold).
+  routerOf(tester).go(Routes.prepDesk);
+  if (settle) {
+    await tester.pumpAndSettle();
+    expect(find.byType(DashboardScreen), findsOneWidget);
+  } else {
+    await tester.pump();
+    await tester.pump();
+  }
 }
 
 /// The offline failure a rural connection produces, which the recent section

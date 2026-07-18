@@ -1879,4 +1879,80 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get examPaperSectionFormat => 'ଫର୍ମାଟ୍';
+
+  @override
+  String get vidyaEyebrow => 'ଆପଣଙ୍କ ସହ-ଶିକ୍ଷକ';
+
+  @override
+  String get vidyaDeck => 'ଆପଣଙ୍କ ଭାଷାରେ କୁହନ୍ତୁ, ଏବଂ ମୁଁ କାମ ପ୍ରସ୍ତୁତ କରିବି।';
+
+  @override
+  String get vidyaPromptLesson => 'ଏକ ପାଠ ଯୋଜନା କରିବାକୁ କୁହନ୍ତୁ';
+
+  @override
+  String get vidyaPromptQuiz => 'ଏକ କୁଇଜ୍ ତିଆରି କରିବାକୁ କୁହନ୍ତୁ';
+
+  @override
+  String get vidyaPromptParent => 'ପିତାମାତାଙ୍କୁ ବାର୍ତ୍ତା ପଠାଇବାକୁ କୁହନ୍ତୁ';
+
+  @override
+  String get vidyaStateIdle => 'କହିବାକୁ ଟ୍ୟାପ୍ କରନ୍ତୁ';
+
+  @override
+  String get vidyaStateReady => 'ପ୍ରସ୍ତୁତ ହେଉଛି';
+
+  @override
+  String get vidyaStateListening => 'ମୁଁ ଶୁଣୁଛି';
+
+  @override
+  String get vidyaStateThinking => 'ଭାବୁଛି';
+
+  @override
+  String get vidyaStateSpeaking => 'କହୁଛି';
+
+  @override
+  String get vidyaYouSaid => 'ଆପଣ କହିଲେ';
+
+  @override
+  String get vidyaSignedOutTitle => 'VIDYA ସହ କଥା ହେବାକୁ ସାଇନ୍ ଇନ୍ କରନ୍ତୁ';
+
+  @override
+  String get vidyaSignedOutBody =>
+      'ସାଇନ୍ ଇନ୍ କରନ୍ତୁ ଏବଂ VIDYA ଆପଣଙ୍କ ଭାଷାରେ ପାଠ, କୁଇଜ୍ ଏବଂ ଅଧିକ ପ୍ରସ୍ତୁତ କରିବ।';
+
+  @override
+  String get vidyaMicOffTitle => 'ମାଇକ୍ରୋଫୋନ୍ ଚାଲୁ କରନ୍ତୁ';
+
+  @override
+  String get vidyaMicOffBody =>
+      'ଆପଣଙ୍କୁ ଶୁଣିବା ପାଇଁ VIDYAର ମାଇକ୍ରୋଫୋନ୍ ଆବଶ୍ୟକ। ଏହାକୁ ସେଟିଂସ୍‌ରେ ଚାଲୁ କରନ୍ତୁ।';
+
+  @override
+  String get vidyaOpenSettings => 'ସେଟିଂସ୍ ଖୋଲନ୍ତୁ';
+
+  @override
+  String get vidyaLimitTitle => 'ଆପଣ ଆଜିର ଭଏସ୍ ସୀମାରେ ପହଞ୍ଚିଛନ୍ତି';
+
+  @override
+  String get vidyaLimitBody =>
+      'ଆପଣଙ୍କ ଭଏସ୍ ମିନିଟ୍ ପୁଣି ମିଳିବ। ସେ ପର୍ଯ୍ୟନ୍ତ ଆପଣ ଟୁଲ୍ ବ୍ୟବହାର କରିପାରିବେ।';
+
+  @override
+  String get vidyaErrorTitle => 'ତାହା ସମ୍ପୂର୍ଣ୍ଣ ହୋଇପାରିଲା ନାହିଁ';
+
+  @override
+  String get vidyaErrorBody =>
+      'ଆପଣଙ୍କ ସଂଯୋଗ ଯାଞ୍ଚ କରନ୍ତୁ ଏବଂ ପୁଣି ଚେଷ୍ଟା କରିବାକୁ ସିଲ୍‌ରେ ଟ୍ୟାପ୍ କରନ୍ତୁ।';
+
+  @override
+  String get vidyaPrepDesk => 'ପ୍ରସ୍ତୁତି ଡେସ୍କ୍';
+
+  @override
+  String get vidyaFlowVisualAid => 'ଦୃଶ୍ୟ ସହାୟକ';
+
+  @override
+  String get vidyaFlowVirtualFieldTrip => 'ଭର୍ଚୁଆଲ୍ କ୍ଷେତ୍ର ଭ୍ରମଣ';
+
+  @override
+  String get vidyaFlowVideoStoryteller => 'ଭିଡିଓ କାହାଣୀ';
 }
