@@ -75,6 +75,10 @@ dev_dependencies:
   custom_lint: ^0.7.0
   riverpod_lint: ^2.6.3
 
+  # Native branding (icons + launch splash) — replaces the default Flutter logo
+  flutter_launcher_icons: ^0.14.1
+  flutter_native_splash: ^2.4.1
+
 flutter:
   uses-material-design: true
   generate: true
