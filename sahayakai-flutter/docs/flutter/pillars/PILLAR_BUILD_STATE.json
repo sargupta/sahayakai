@@ -1,0 +1,385 @@
+{
+  "version": 1,
+  "app": "sahayakai-flutter",
+  "phase": "pillars",
+  "concept": "Full pillar parity, VOICE-FIRST. The form-first Flutter app becomes a voice-first co-teacher: a nearly-empty ivory home with one large saffron seal mic (VIDYA), then the 6 pillars hung off that spine. Reuses The Ledger — Ivory & Ink design system; no new visual language.",
+  "plan": "docs/flutter/pillars/PILLAR_BUILD_PLAN.md",
+  "sourceSpecs": [
+    "docs/flutter/pillars/SPEC_voice_vidya.md",
+    "docs/flutter/pillars/SPEC_pillars_ia.md",
+    "docs/flutter/pillars/SPEC_parent_hotline.md",
+    "docs/flutter/pillars/SPEC_staffroom_inbox.md"
+  ],
+  "designSystem": "docs/flutter/design/PREMIUM_DESIGN_SPEC.md",
+  "backend": "READ-ONLY: /Users/sargupta/SahayakAIV2/sahayakai/sahayakai-main",
+  "branch": "develop",
+  "navigation": {
+    "home": "Pillar 02 VIDYA voice canvas (one large seal mic) + Pillar 01 tool register below the fold",
+    "bottomNav": ["Home (mic, /)", "Network (users, /staffroom = 04+05 segmented + notifications bell)", "Library (library, /my-library)", "Me (user, /me = Pillar 06 OS hub)"],
+    "notes": "Not a flat 6-tab bar. Create is absorbed into the mic (speaking is creating). Parent hotline (03) reached from Home/roster, not a tab."
+  },
+  "units": [
+    {
+      "id": "U-V1",
+      "pillar": "02",
+      "title": "Voice stack + permissions",
+      "files": [
+        "pubspec.yaml",
+        "android/app/src/main/AndroidManifest.xml",
+        "ios/Runner/Info.plist",
+        "lib/shared/media/voice_capture_controller.dart",
+        "lib/shared/media/tts_player.dart"
+      ],
+      "consumes": ["native mic (record)", "native audio (just_audio + audio_session)"],
+      "firebaseGated": false,
+      "status": "pending"
+    },
+    {
+      "id": "U-V2",
+      "pillar": "02",
+      "title": "Backend repos + DTOs (STT / VIDYA / TTS / session / profile)",
+      "files": [
+        "lib/features/vidya/data/voice_to_text_repository.dart",
+        "lib/features/vidya/data/vidya_repository.dart",
+        "lib/features/vidya/data/tts_repository.dart",
+        "lib/features/vidya/data/vidya_session_repository.dart",
+        "lib/features/vidya/data/vidya_profile_repository.dart",
+        "lib/features/vidya/data/dto/assistant_request.dart",
+        "lib/features/vidya/data/dto/assistant_response.dart",
+        "lib/features/vidya/data/dto/vidya_action.dart"
+      ],
+      "consumes": [
+        "POST /api/ai/voice-to-text (multipart WAV)",
+        "POST /api/assistant",
+        "POST /api/tts",
+        "GET/POST /api/vidya/session",
+        "GET/POST /api/vidya/profile"
+      ],
+      "firebaseGated": "partial (decode/guard testable now; live calls 401 until real auth)",
+      "status": "pending"
+    },
+    {
+      "id": "U-V3",
+      "pillar": "02",
+      "title": "VidyaController — state machine + conversation/session state + guards",
+      "files": ["lib/features/vidya/presentation/vidya_controller.dart"],
+      "consumes": ["U-V1", "U-V2"],
+      "firebaseGated": false,
+      "status": "pending"
+    },
+    {
+      "id": "U-V4",
+      "pillar": "02",
+      "title": "Seal Mic widget (5 states, breathing/listening/thinking/speaking, reduce-motion)",
+      "files": ["lib/features/vidya/presentation/widgets/seal_mic.dart"],
+      "consumes": ["U-V3"],
+      "firebaseGated": false,
+      "status": "pending"
+    },
+    {
+      "id": "U-V5",
+      "pillar": "02",
+      "title": "VIDYA Home screen (Almanac Speaks) — replaces the form-first home",
+      "files": [
+        "lib/features/vidya/presentation/vidya_home_screen.dart",
+        "lib/features/vidya/presentation/widgets/conversation_block.dart",
+        "lib/core/router/app_router.dart",
+        "lib/features/dashboard/presentation/app_shell.dart"
+      ],
+      "consumes": ["U-V3", "U-V4"],
+      "firebaseGated": "partial (UI testable now; live conversation needs auth)",
+      "status": "pending"
+    },
+    {
+      "id": "U-V6",
+      "pillar": "01",
+      "title": "Thread voice INTO tools (nav+prefill dispatcher + inline field mic)",
+      "files": [
+        "lib/features/vidya/presentation/vidya_nav_dispatcher.dart",
+        "lib/features/lesson_planner/presentation/lesson_plan_screen.dart",
+        "lib/shared/widgets/labeled_field.dart"
+      ],
+      "consumes": ["U-V3", "tool routes via kToolRegistry"],
+      "firebaseGated": false,
+      "status": "pending"
+    },
+    {
+      "id": "U-V7",
+      "pillar": "02",
+      "title": "Persistence + presence (Firestore restore, turn sync, VIDYA on every screen)",
+      "files": [
+        "lib/features/vidya/data/vidya_session_repository.dart",
+        "lib/features/dashboard/presentation/app_shell.dart"
+      ],
+      "consumes": ["GET/POST /api/vidya/session", "GET/POST /api/vidya/profile"],
+      "firebaseGated": "yes (live restore needs real auth; plumbing testable now)",
+      "status": "pending"
+    },
+    {
+      "id": "U-PH1",
+      "pillar": "03",
+      "title": "Parent hotline data + domain (outreach/call/summary/latest + typed errors)",
+      "files": [
+        "lib/features/parent_hotline/data/parent_hotline_repository.dart",
+        "lib/features/parent_hotline/data/dto/outreach_dtos.dart",
+        "lib/features/parent_hotline/domain/parent_outreach.dart",
+        "lib/features/parent_hotline/domain/call_summary.dart"
+      ],
+      "consumes": [
+        "POST /api/attendance/outreach",
+        "POST /api/attendance/call",
+        "GET /api/attendance/call-summary",
+        "GET /api/attendance/outreach-latest",
+        "POST /api/ai/parent-message (reused)"
+      ],
+      "firebaseGated": "yes (routes 401 + 403 plan-gate until real auth; decode testable now)",
+      "status": "pending"
+    },
+    {
+      "id": "U-PH2",
+      "pillar": "03",
+      "title": "HotlineStage controller + poll discipline + resume",
+      "files": ["lib/features/parent_hotline/presentation/parent_hotline_controller.dart"],
+      "consumes": ["U-PH1"],
+      "firebaseGated": false,
+      "status": "pending"
+    },
+    {
+      "id": "U-PH3",
+      "pillar": "03",
+      "title": "Stages 1-4: pick -> reason -> compose -> review (+ decision bar)",
+      "files": [
+        "lib/features/parent_hotline/presentation/parent_hotline_screen.dart",
+        "lib/features/parent_hotline/presentation/widgets/reason_card.dart",
+        "lib/features/parent_hotline/presentation/widgets/evidence_panel.dart"
+      ],
+      "consumes": ["U-PH1", "U-PH2", "GET /api/performance/student/{id}"],
+      "firebaseGated": "partial (UI testable now)",
+      "status": "pending"
+    },
+    {
+      "id": "U-PH4",
+      "pillar": "03",
+      "title": "Stage 5: calling — honest breathing waiting state (no fake progress bar)",
+      "files": ["lib/features/parent_hotline/presentation/widgets/calling_stage.dart"],
+      "consumes": ["U-PH2"],
+      "firebaseGated": "yes (live status needs a real call; UI testable now)",
+      "status": "pending"
+    },
+    {
+      "id": "U-PH5",
+      "pillar": "03",
+      "title": "Stage 6: summary DocumentSheet (Ink-settle) + all terminal states — the hero",
+      "files": ["lib/features/parent_hotline/presentation/widgets/summary_sheet.dart"],
+      "consumes": ["U-PH1", "U-PH2"],
+      "firebaseGated": false,
+      "status": "pending"
+    },
+    {
+      "id": "U-SI0",
+      "pillar": "04-05",
+      "title": "Transport spike (BLOCKS Block C): Firebase SDK for live reads + REST wrappers for writes + DTOs",
+      "files": [
+        "pubspec.yaml",
+        "lib/core/firebase/firebase_init.dart",
+        "lib/features/staffroom/data/dto/",
+        "lib/features/inbox/data/dto/",
+        "lib/features/inbox/domain/conversation_id.dart"
+      ],
+      "consumes": [
+        "Firebase config (firebase_core/cloud_firestore/firebase_database)",
+        "BACKEND TASK: thin REST wrappers /api/community/* /api/messages/* /api/connections/* /api/notifications/*"
+      ],
+      "firebaseGated": "yes (THE GATE — nothing in Block C verifies live until Firebase is wired)",
+      "status": "pending"
+    },
+    {
+      "id": "U-SI1",
+      "pillar": "05",
+      "title": "Pro Inbox realtime core: inbox list + thread + paginated messages + mark-read + unread badges",
+      "files": [
+        "lib/features/inbox/presentation/inbox_screen.dart",
+        "lib/features/inbox/presentation/conversation_thread_screen.dart",
+        "lib/features/inbox/data/messages_stream_provider.dart"
+      ],
+      "consumes": [
+        "Firestore conversations/messages (onSnapshot, live)",
+        "REST: getOrCreateDirectConversation, sendMessage, markConversationRead"
+      ],
+      "firebaseGated": true,
+      "status": "pending"
+    },
+    {
+      "id": "U-SI2",
+      "pillar": "04",
+      "title": "Staffroom home + Group detail + Unified feed + optimistic likes",
+      "files": [
+        "lib/features/staffroom/presentation/staffroom_screen.dart",
+        "lib/features/staffroom/presentation/group_detail_screen.dart",
+        "lib/features/staffroom/data/staffroom_repository.dart"
+      ],
+      "consumes": [
+        "REST: ensureUserGroups, getMyGroups, getUnifiedFeed, getGroupPosts, likeGroupPost, getRecommendedTeachers, getLibraryResources"
+      ],
+      "firebaseGated": true,
+      "status": "pending"
+    },
+    {
+      "id": "U-SI3",
+      "pillar": "04",
+      "title": "Staff Room chat (realtime) + persona-pulse timer + group chat",
+      "files": [
+        "lib/features/staffroom/presentation/staff_room_chat_screen.dart",
+        "lib/features/staffroom/data/chat_stream_provider.dart"
+      ],
+      "consumes": [
+        "Firestore community_chat + groups/{id}/chat (onSnapshot limitToLast 100)",
+        "POST /api/community/persona-pulse (503 = stop)",
+        "REST: sendChatMessage, sendGroupChatMessage"
+      ],
+      "firebaseGated": true,
+      "status": "pending"
+    },
+    {
+      "id": "U-SI4",
+      "pillar": "04",
+      "title": "Directory + Profile + connection-request lifecycle (the DM gate)",
+      "files": [
+        "lib/features/staffroom/presentation/teacher_directory_screen.dart",
+        "lib/features/staffroom/presentation/teacher_profile_screen.dart"
+      ],
+      "consumes": [
+        "REST: getAllTeachers, getPublicProfile, sendConnectionRequest, accept, decline, disconnect, getMyConnectionData"
+      ],
+      "firebaseGated": true,
+      "status": "pending"
+    },
+    {
+      "id": "U-SI5",
+      "pillar": "05",
+      "title": "Notifications screen + connect-request inline actions + deep links + live badge",
+      "files": [
+        "lib/features/inbox/presentation/notifications_screen.dart",
+        "lib/features/inbox/data/notifications_provider.dart"
+      ],
+      "consumes": [
+        "REST: getNotifications, markNotificationAsRead, markAllAsRead",
+        "Firestore notifications (onSnapshot, unread badge)"
+      ],
+      "firebaseGated": true,
+      "status": "pending"
+    },
+    {
+      "id": "U-SI6",
+      "pillar": "05",
+      "title": "Firebase-gated tail: presence (RTDB) + FCM push parity",
+      "files": [
+        "lib/features/inbox/data/presence_provider.dart",
+        "lib/core/firebase/messaging.dart",
+        "android/app/google-services.json",
+        "ios/Runner/GoogleService-Info.plist"
+      ],
+      "consumes": ["RTDB presence/{uid}/online (onValue)", "firebase_messaging (FCM)"],
+      "firebaseGated": "yes (hardest wall: google-services.json, APNs, RTDB rules)",
+      "status": "pending"
+    },
+    {
+      "id": "U-PD1",
+      "pillar": "01",
+      "title": "Visual Aid Designer tool (copy lesson-plan/DocumentSheet reference -> image card)",
+      "files": [
+        "lib/features/visual_aid/presentation/visual_aid_screen.dart",
+        "lib/shared/domain/tool_registry.dart",
+        "lib/core/router/routes.dart",
+        "lib/core/router/app_router.dart"
+      ],
+      "consumes": ["POST /api/ai/visual-aid"],
+      "firebaseGated": "partial (auth 401 until real auth)",
+      "status": "pending"
+    },
+    {
+      "id": "U-PD2",
+      "pillar": "01",
+      "title": "Content Creator tool",
+      "files": ["lib/features/content_creator/presentation/content_creator_screen.dart"],
+      "consumes": ["POST /api/ai/content"],
+      "firebaseGated": "partial",
+      "status": "pending"
+    },
+    {
+      "id": "U-PD3",
+      "pillar": "01",
+      "title": "Video Storyteller tool",
+      "files": ["lib/features/video_storyteller/presentation/video_storyteller_screen.dart"],
+      "consumes": ["POST /api/ai/video-storyteller"],
+      "firebaseGated": "partial",
+      "status": "pending"
+    },
+    {
+      "id": "U-PD4",
+      "pillar": "01",
+      "title": "Virtual Field Trip tool",
+      "files": ["lib/features/virtual_field_trip/presentation/virtual_field_trip_screen.dart"],
+      "consumes": ["POST /api/ai/virtual-field-trip"],
+      "firebaseGated": "partial",
+      "status": "pending"
+    },
+    {
+      "id": "U-PD5",
+      "pillar": "01",
+      "title": "Assessment Scanner tool (multipart upload + ScoreRing)",
+      "files": ["lib/features/assessment_scanner/presentation/assessment_scanner_screen.dart"],
+      "consumes": ["POST /api/ai/assessment-scanner (multipart)"],
+      "firebaseGated": "partial",
+      "status": "pending"
+    },
+    {
+      "id": "U-OS1",
+      "pillar": "06",
+      "title": "Me / Operating-system hub (profile, board & language defaults, plan & usage, privacy)",
+      "files": [
+        "lib/features/profile/presentation/me_screen.dart",
+        "lib/features/settings/presentation/settings_screen.dart"
+      ],
+      "consumes": ["GET /api/usage"],
+      "firebaseGated": "partial",
+      "status": "pending"
+    }
+  ],
+  "guardrails": [
+    "flutter analyze = 0 issues",
+    "scripts/token_guard.sh = PASS (tokens only; no raw hex/curves/radii)",
+    "existing suite green (771 tests at pillar-phase start; logic/widget/behavior unchanged) + each unit adds its own tests",
+    "golden tests re-baseline at 360dp + 800dp, light + dark, with Bengali/Tamil/Malayalam Indic probes, zero clipped matras at textScale 1.3 (all body text via AiText)",
+    "accessibility: every target >=48dp; WCAG AA contrast; Lucide-only, no emoji; teacher-dignity copy",
+    "Ledger reuse only: no new colors/curves/radii/widgets; saffron surface < 10% of any screen",
+    "motion budget: <=3 curves, <=420ms; every animation site checks context.motionEnabled and degrades to the final composed frame under reduce-motion",
+    "auth: Firebase ID token -> Authorization: Bearer -> server x-user-id; handle 401 / 403 PREMIUM_REQUIRED uniformly",
+    "branch from develop; one commit per unit; explicit git add paths; never push"
+  ],
+  "stack": [
+    "record ^5.1.2 — capture WAV 16kHz mono + onAmplitudeChanged (listening ring); WAV unlocks the Sarvam Saaras v3 Indic fast path",
+    "just_audio ^0.9.42 — playback of base64-mp3 TTS via a custom _Base64Mp3Source (StreamAudioSource, audio/mpeg)",
+    "permission_handler ^11.3.1 — runtime mic permission + openAppSettings() on permanent denial",
+    "audio_session ^0.1.21 — OS audio session speech(), duck others (just_audio peer)",
+    "firebase_core (pinned, U-SI0) — Firebase init for realtime reads",
+    "cloud_firestore (pinned, U-SI0) — onSnapshot: inbox list, thread tail, staff-room/group chat, unread badges",
+    "firebase_database (pinned, U-SI6) — RTDB onValue: presence dot only",
+    "firebase_messaging (pinned, U-SI6) — FCM push parity (handoff-walled)",
+    "REUSED: dio ^5.7.0 ApiClient (baseUrl https://sahayakai.com, AuthInterceptor attaches Bearer), flutter_riverpod, go_router, lucide_icons, flutter_animate (inkSettle), image_picker, share_plus"
+  ],
+  "permissions": {
+    "android": ["RECORD_AUDIO (mic)", "INTERNET (present)", "POST_NOTIFICATIONS (Android 13+, U-SI6)"],
+    "ios": ["NSMicrophoneUsageDescription (localised x11)", "APNs entitlement (U-SI6)"]
+  },
+  "backendTasks": [
+    "Thin REST wrappers over existing Next server actions (community/connections/groups/messages/notifications) — reuse the action authz/validation/transactions verbatim; do NOT reimplement in Flutter",
+    "Confirm middleware accepts the Flutter WAV multipart for /api/ai/voice-to-text (Sarvam fast path)"
+  ],
+  "openDecisions": [
+    "Community/Messages transport: REST wrappers (recommended) vs Firestore-direct — blocks Block C (U-SI0)",
+    "VIDYA home vs modal: mic on Home opening the conversation in place (assumed) vs a dedicated /vidya route",
+    "Parent hotline entitlement: plan-gated (403 PREMIUM_REQUIRED) — confirm the stubbed auth exposes a plan so the gate UI is reachable",
+    "Demo-call 'Hear the Call' (/api/demo-call, needs DEMO_CALL_ENABLED + Turnstile): include in v1 or omit"
+  ]
+}
