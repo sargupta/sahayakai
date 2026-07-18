@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../shared/motion/lift_settle_transitions.dart';
 import 'app_colors.dart';
 import 'app_icon_size.dart';
 import 'app_radius.dart';
@@ -322,9 +323,13 @@ class AppTheme {
         ),
         textStyle: textTheme.bodySmall?.copyWith(color: scheme.onSurface),
       ),
+      // Lift-&-Settle push on both platforms (§4). Android's OS-driven
+      // predictive-back gesture is still served natively (manifest
+      // enableOnBackInvokedCallback); this builder governs the in-app push/pop.
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
-          TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
+          TargetPlatform.android: LiftSettleTransitionsBuilder(),
+          TargetPlatform.iOS: LiftSettleTransitionsBuilder(),
         },
       ),
     );

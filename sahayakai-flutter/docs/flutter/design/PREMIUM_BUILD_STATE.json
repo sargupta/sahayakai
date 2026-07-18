@@ -87,7 +87,8 @@
         "lib/core/theme/app_theme.dart"
       ],
       "acceptance": "flutter_animate ^4.5.0 added; LiftSettleTransitionsBuilder wired both platforms (PredictiveBack kept only for Android OS back); staggeredItem (one-shot, cap 8) + inkSettle helpers; context.motionEnabled reduce-motion helper checked at every animation site. Reduce-motion golden = final composed frame (no tween); only opacity/transform/shadow animated. analyze 0, token_guard PASS, 747 green.",
-      "status": "pending"
+      "status": "done",
+      "notes": "flutter_animate resolved to 4.5.2 (^4.5.0), clean with existing deps. LiftSettle wired for android+iOS; Android OS predictive-back stays native (manifest), not this builder. staggeredItem (moveY 12->0, small) + inkSettle (moveY 8->0, medium) + AnimatedEntrance widget + context.motionEnabled, all reduce-motion aware. AppSegmented's AnimatedAlign given the reduce-motion guard too. Only opacity/transform animated. No image goldens in suite; the reduce-motion final-frame behavior is exercised by the existing overflow-gate tests (test env sets disableAnimations)."
     },
     {
       "id": "U5",

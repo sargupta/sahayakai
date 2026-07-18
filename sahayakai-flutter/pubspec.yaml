@@ -38,6 +38,12 @@ dependencies:
   shimmer: ^3.0.0
   cupertino_icons: ^1.0.8
 
+  # Motion (the one new sanctioned dependency, PREMIUM_DESIGN_SPEC.md §4):
+  # declarative staggered entrances / the Ink-settle result reveal. Every use
+  # site is reduce-motion aware (context.motionEnabled) and degrades to the
+  # final composed frame.
+  flutter_animate: ^4.5.0
+
   # i18n runtime helpers
   intl: ^0.20.2
   url_launcher: ^6.3.2

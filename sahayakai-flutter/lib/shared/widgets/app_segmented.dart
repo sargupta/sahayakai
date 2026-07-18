@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../motion/animated_entrance.dart';
 
 /// One option in an [AppSegmented].
 class AppSegment<T> {
@@ -94,10 +95,10 @@ class AppSegmented<T> extends StatelessWidget {
         builder: (context, constraints) {
           return Stack(
             children: [
-              // Sliding thumb.
+              // Sliding thumb (jumps to the final position under reduce-motion).
               AnimatedAlign(
                 alignment: Alignment(alignX, 0),
-                duration: AppMotion.small,
+                duration: context.motionEnabled ? AppMotion.small : Duration.zero,
                 curve: AppMotion.easeOutQuart,
                 child: FractionallySizedBox(
                   widthFactor: 1 / n,
