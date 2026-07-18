@@ -524,3 +524,33 @@ The shared `lib/shared/media/image_input.dart` uses `image_picker` (added at `^1
   repo is Android-first; there is no iOS target wired yet.
 - **Tests never open a real camera:** the pick source is behind `imagePickerServiceProvider` and is
   overridden with a `FakeImagePickerService` in every test.
+
+## 8. Microphone permission + the voice stack (Pillar 02 / VIDYA, U-V1)
+
+The voice foundation is built and unit-tested with fakes, but **the real voice loop cannot be
+exercised in this environment**: there is no device mic, and every backend voice route (STT / VIDYA /
+TTS) 401s on the stub token (see §1). Verification here is code + unit tests only.
+
+- **Plugins (resolved, no substitution):** `record` 5.2.1 (capture → WAV 16 kHz mono, amplitude
+  stream), `just_audio` 0.9.46 (base64-mp3 playback via `Base64Mp3Source`), `permission_handler`
+  11.4.0 (runtime mic permission), `audio_session` 0.1.25 (speech session / ducking). `path_provider`
+  2.1.6 was added as the companion that gives `record` a writable temp path (Dart's
+  `Directory.systemTemp` is not app-writable on Android) — it is not a substitute for any of the four.
+- **Android manifest (done):** `android/app/src/main/AndroidManifest.xml` now declares
+  `android.permission.RECORD_AUDIO` + `<uses-feature android:name="android.hardware.microphone"
+  required="false"/>`, and `android.permission.INTERNET` (previously only in the debug/profile
+  manifests — a release build would have had no network).
+- **Runtime permission flow (owner action, wired at U-V3):** request `Permission.microphone` at the
+  **first mic tap** via `permission_handler`. On permanent denial, show a dignified `EmptyView` +
+  `SecondaryButton "Open settings"` (`openAppSettings()`), never a raw error dialog. The
+  `AudioRecorderService.hasPermission()` seam already returns the grant state; the tap-time request +
+  settings deep-link UI lands with the Seal Mic (U-V4) / VIDYA home (U-V5).
+- **iOS (N/A now, needed when an iOS target is added):** add `NSMicrophoneUsageDescription` to
+  `ios/Runner/Info.plist` (localised across the 11 languages) or the app crashes on first record.
+  This repo is Android-first; there is no iOS target wired yet, so `Info.plist` was **not** touched.
+- **Tests never open a real mic or speaker:** capture is behind `audioRecorderServiceProvider` and
+  playback behind `audioPlayerServiceProvider`; both are overridden with fakes
+  (`FakeAudioRecorderService` / `FakeAudioPlayerService`) in every test.
+- **Capture format is load-bearing:** the recorder is pinned to `AudioEncoder.wav` because the STT
+  route only tries the cheap Sarvam Saaras v3 Indic path for `audio/(mpeg|mp3|wav)`. Do **not** switch
+  it to opus/aac — that silently drops every Indic utterance onto the slower Gemini fallback.

@@ -61,6 +61,38 @@ dependencies:
   # real sheet).
   share_plus: ^12.0.0
 
+  # ── Voice stack (Pillar 02 / VIDYA, U-V1) ────────────────────────────────
+  # The voice-first co-teacher: capture the teacher's spoken request, ship it
+  # to STT, and play VIDYA's TTS reply. All four are wrapped behind injectable
+  # service abstractions (lib/shared/voice/*) so unit tests never touch a real
+  # mic or speaker.
+  #
+  # record: capture -> WAV 16 kHz mono. WAV (not opus) unlocks the server-side
+  # Sarvam Saaras v3 Indic fast path (route only tries Sarvam when the upload
+  # MIME matches audio/(mpeg|mp3|wav); see /api/ai/voice-to-text). Exposes a
+  # live onAmplitudeChanged stream that drives the listening ring.
+  record: ^5.1.2
+
+  # just_audio: playback of the base64-mp3 TTS the backend returns (bytes, not
+  # a URL) via a custom StreamAudioSource, in-memory, no temp file. Integrates
+  # with audio_session for clean ducking.
+  just_audio: ^0.9.42
+
+  # permission_handler: runtime RECORD_AUDIO permission + openAppSettings() on
+  # a permanent denial (dignified "Open settings" recovery, never a raw dialog).
+  permission_handler: ^11.3.1
+
+  # audio_session: configure the OS audio session (speech(), duck others) so
+  # TTS interrupts/ducks correctly. just_audio peer.
+  audio_session: ^0.1.21
+
+  # path_provider: a writable temp directory for the recorded WAV before it is
+  # multipart-POSTed. record needs a real on-device path; Dart's
+  # Directory.systemTemp is not app-writable on Android, so the first-party
+  # path_provider is the correct companion to the recorder (not a substitution
+  # for any of the four audio plugins above).
+  path_provider: ^2.1.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
