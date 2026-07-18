@@ -1959,4 +1959,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get vidyaFlowVideoStoryteller => 'വീഡിയോ കഥ';
+
+  @override
+  String get vidyaFieldMicLabel => 'സംസാരിച്ച് പൂരിപ്പിക്കുക';
 }

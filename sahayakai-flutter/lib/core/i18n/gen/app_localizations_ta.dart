@@ -1958,4 +1958,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get vidyaFlowVideoStoryteller => 'வீடியோ கதை';
+
+  @override
+  String get vidyaFieldMicLabel => 'பேசி நிரப்பு';
 }

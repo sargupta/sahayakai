@@ -3553,6 +3553,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Video story'**
   String get vidyaFlowVideoStoryteller;
+
+  /// Label/tooltip for the inline field mic that dictates one form field (topic/question) by voice.
+  ///
+  /// In en, this message translates to:
+  /// **'Dictate'**
+  String get vidyaFieldMicLabel;
 }
 
 class _AppLocalizationsDelegate

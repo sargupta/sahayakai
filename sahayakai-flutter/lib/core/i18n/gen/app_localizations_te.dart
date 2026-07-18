@@ -1956,4 +1956,7 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get vidyaFlowVideoStoryteller => 'వీడియో కథ';
+
+  @override
+  String get vidyaFieldMicLabel => 'మాట్లాడి నింపండి';
 }

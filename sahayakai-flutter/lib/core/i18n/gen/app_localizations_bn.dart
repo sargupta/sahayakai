@@ -1956,4 +1956,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get vidyaFlowVideoStoryteller => 'ভিডিও গল্প';
+
+  @override
+  String get vidyaFieldMicLabel => 'বলে পূরণ করুন';
 }

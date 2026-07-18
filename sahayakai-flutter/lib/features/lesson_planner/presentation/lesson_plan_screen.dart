@@ -8,11 +8,13 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
+import '../../../shared/domain/tool_prefill.dart';
 import '../../../shared/widgets/app_segmented.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
+import '../../vidya/presentation/widgets/inline_field_mic.dart';
 import '../domain/lesson_plan.dart';
 import 'lesson_plan_controller.dart';
 import 'widgets/lesson_plan_error_view.dart';
@@ -26,7 +28,12 @@ import 'widgets/lesson_plan_skeleton.dart';
 /// the 5E plan is wrapped in a `DocumentSheet` (see [LessonPlanResultView]) and
 /// the view auto-scrolls to its masthead.
 class LessonPlanScreen extends ConsumerStatefulWidget {
-  const LessonPlanScreen({super.key});
+  const LessonPlanScreen({super.key, this.prefill});
+
+  /// Optional seed from a VIDYA NAVIGATE_AND_FILL directive ("plan a Class 10
+  /// Maths lesson on fractions" → this form opens filled). Defaults to null, so
+  /// every existing call site and test opens the blank form unchanged.
+  final ToolPrefill? prefill;
 
   @override
   ConsumerState<LessonPlanScreen> createState() => _LessonPlanScreenState();
@@ -51,6 +58,24 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
   void initState() {
     super.initState();
     _language = ref.read(localeControllerProvider);
+    _applyPrefill(widget.prefill);
+  }
+
+  /// Seeds the form from a VIDYA directive. Grade/subject are applied only when
+  /// they are values this form actually offers, so an unrecognised classifier
+  /// value never lands in a strict dropdown; the language falls back to the
+  /// current one when it is not one of the 11.
+  void _applyPrefill(ToolPrefill? p) {
+    if (p == null) return;
+    if (p.topic != null) _topicController.text = p.topic!;
+    if (p.gradeLevel != null && kGradeLevels.contains(p.gradeLevel)) {
+      _grades.add(p.gradeLevel!);
+    }
+    if (p.subject != null && kSubjects.contains(p.subject)) {
+      _subject = p.subject;
+    }
+    final locale = prefillLocale(p.language);
+    if (locale != null) _language = locale;
   }
 
   @override
@@ -159,6 +184,10 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
     return LabeledField(
       label: l10n.lessonPlanTopicLabel,
       leadingIcon: LucideIcons.lightbulb,
+      trailing: InlineFieldMic(
+        expectedLanguage: _language.code,
+        onResult: (text) => _topicController.text = text,
+      ),
       child: TextFormField(
         controller: _topicController,
         maxLength: 1000,

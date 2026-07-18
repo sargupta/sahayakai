@@ -2439,5 +2439,9 @@
   "vidyaFlowVideoStoryteller": "Video story",
   "@vidyaFlowVideoStoryteller": {
     "description": "Confirm-chip label for the Video Storyteller flow."
+  },
+  "vidyaFieldMicLabel": "Dictate",
+  "@vidyaFieldMicLabel": {
+    "description": "Label/tooltip for the inline field mic that dictates one form field (topic/question) by voice."
   }
 }

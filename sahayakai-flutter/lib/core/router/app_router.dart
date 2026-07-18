@@ -20,6 +20,7 @@ import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/teacher_training/presentation/teacher_training_screen.dart';
 import '../../features/worksheet_wizard/presentation/worksheet_wizard_screen.dart';
 import '../../shared/domain/library_item.dart';
+import '../../shared/domain/tool_prefill.dart';
 import '../auth/auth_providers.dart';
 import 'routes.dart';
 
@@ -97,16 +98,21 @@ GoRouter appRouter(Ref ref) {
         builder: (context, state) => const DashboardScreen(),
       ),
       GoRoute(
+        // A VIDYA NAVIGATE_AND_FILL directive pushes here with a [ToolPrefill]
+        // in `extra`; a plain open (palette / deep link) carries none.
         path: Routes.lessonPlan,
-        builder: (context, state) => const LessonPlanScreen(),
+        builder: (context, state) =>
+            LessonPlanScreen(prefill: _prefillOf(state)),
       ),
       GoRoute(
         path: Routes.quizGenerator,
-        builder: (context, state) => const QuizGeneratorScreen(),
+        builder: (context, state) =>
+            QuizGeneratorScreen(prefill: _prefillOf(state)),
       ),
       GoRoute(
         path: Routes.instantAnswer,
-        builder: (context, state) => const InstantAnswerScreen(),
+        builder: (context, state) =>
+            InstantAnswerScreen(prefill: _prefillOf(state)),
       ),
       GoRoute(
         path: Routes.worksheetWizard,
@@ -151,6 +157,11 @@ GoRouter appRouter(Ref ref) {
     errorBuilder: (context, state) => const _RouteNotFound(),
   );
 }
+
+/// The [ToolPrefill] a VIDYA directive pushed in `extra`, or null for a plain
+/// open — so a tool route seeds its form only when voice navigated to it.
+ToolPrefill? _prefillOf(GoRouterState state) =>
+    state.extra is ToolPrefill ? state.extra! as ToolPrefill : null;
 
 class _RouteNotFound extends StatelessWidget {
   const _RouteNotFound();

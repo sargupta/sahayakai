@@ -1953,4 +1953,7 @@ class AppLocalizationsGu extends AppLocalizations {
 
   @override
   String get vidyaFlowVideoStoryteller => 'વિડિઓ વાર્તા';
+
+  @override
+  String get vidyaFieldMicLabel => 'બોલીને ભરો';
 }

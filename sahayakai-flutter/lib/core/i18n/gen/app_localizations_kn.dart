@@ -1958,4 +1958,7 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get vidyaFlowVideoStoryteller => 'ವೀಡಿಯೊ ಕಥೆ';
+
+  @override
+  String get vidyaFieldMicLabel => 'ಮಾತನಾಡಿ ಭರ್ತಿ ಮಾಡಿ';
 }

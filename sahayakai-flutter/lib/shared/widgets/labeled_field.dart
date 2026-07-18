@@ -11,6 +11,11 @@ import '../../core/theme/app_theme.dart';
 /// tabular-figure count, right-aligned on the label row). Both default to
 /// null, so the v1 API ({label, child, optionalLabel, hint, errorText}) and
 /// every call site are preserved.
+///
+/// v3 adds an optional [trailing] slot on the label row (right-aligned, after
+/// any counter) — a general end-of-row affordance a form uses to hang, e.g.,
+/// the VIDYA inline "dictate this field" mic beside a topic/question label. It
+/// too defaults to null, so every existing call site is unchanged.
 class LabeledField extends StatelessWidget {
   const LabeledField({
     super.key,
@@ -21,6 +26,7 @@ class LabeledField extends StatelessWidget {
     this.errorText,
     this.leadingIcon,
     this.counterText,
+    this.trailing,
   });
 
   final String label;
@@ -40,6 +46,10 @@ class LabeledField extends StatelessWidget {
 
   /// An optional right-aligned tabular counter (e.g. "0 / 1000").
   final String? counterText;
+
+  /// An optional right-aligned affordance on the label row (e.g. an inline
+  /// voice-dictation mic). Sits after any [counterText].
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -65,12 +75,15 @@ class LabeledField extends StatelessWidget {
               const SizedBox(width: AppSpacing.space2),
               Text(optionalLabel!, style: mutedStyle),
             ],
-            if (counterText != null) ...[
-              const Spacer(),
+            if (counterText != null || trailing != null) const Spacer(),
+            if (counterText != null)
               Text(
                 counterText!,
                 style: extras.dataMedium.copyWith(color: scheme.onSurfaceVariant),
               ),
+            if (trailing != null) ...[
+              if (counterText != null) const SizedBox(width: AppSpacing.space2),
+              trailing!,
             ],
           ],
         ),

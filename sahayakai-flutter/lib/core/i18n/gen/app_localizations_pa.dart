@@ -1955,4 +1955,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get vidyaFlowVideoStoryteller => 'ਵੀਡੀਓ ਕਹਾਣੀ';
+
+  @override
+  String get vidyaFieldMicLabel => 'ਬੋਲ ਕੇ ਭਰੋ';
 }

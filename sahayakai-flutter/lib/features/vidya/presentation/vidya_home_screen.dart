@@ -12,8 +12,8 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/secondary_button.dart';
-import '../data/dto/vidya_action.dart';
 import 'vidya_controller.dart';
+import 'vidya_nav_dispatcher.dart';
 import 'widgets/conversation_block.dart';
 import 'widgets/seal_mic.dart';
 
@@ -54,17 +54,14 @@ class _VidyaHomeScreenState extends ConsumerState<VidyaHomeScreen> {
     final state = ref.watch(vidyaControllerProvider);
     final controller = ref.read(vidyaControllerProvider.notifier);
 
-    // A single valid intent → route to its tool, prefilled, then clear it.
+    // A single valid intent → route to its tool, prefilled, then clear it. The
+    // dispatcher owns the flow→route map and drops not-yet-built tools.
     ref.listen(
       vidyaControllerProvider.select((s) => s.pendingNavigation),
       (_, directive) {
         if (directive == null) return;
         controller.consumeNavigation();
-        final route = _routeForFlow(directive.flow);
-        if (route == null) return; // not-yet-built tools (U-PD*): nothing to open
-        context.push(
-          Uri(path: route, queryParameters: _prefill(directive.params)).toString(),
-        );
+        VidyaNavDispatcher.dispatch(context, directive);
       },
     );
 
@@ -448,6 +445,9 @@ bool _isTerminal(VidyaStatus s) =>
     s == VidyaStatus.limitReached ||
     s == VidyaStatus.failed;
 
+// The flow→route map and prefill building moved to `VidyaNavDispatcher` (U-V6),
+// so the home and the everywhere VIDYA sheet route through one source of truth.
+
 String _terminalTitle(VidyaStatus s, AppLocalizations l10n) {
   switch (s) {
     case VidyaStatus.signedOut:
@@ -463,37 +463,3 @@ String _terminalTitle(VidyaStatus s, AppLocalizations l10n) {
   }
 }
 
-/// The tool route a flow opens, or null for the three not-yet-built tools
-/// (U-PD*). The full nav+prefill dispatcher (and inline field mics) is U-V6;
-/// this is the minimal single-intent routing the home needs now.
-String? _routeForFlow(VidyaFlow flow) {
-  switch (flow) {
-    case VidyaFlow.lessonPlan:
-      return Routes.lessonPlan;
-    case VidyaFlow.quizGenerator:
-      return Routes.quizGenerator;
-    case VidyaFlow.worksheetWizard:
-      return Routes.worksheetWizard;
-    case VidyaFlow.rubricGenerator:
-      return Routes.rubricGenerator;
-    case VidyaFlow.examPaper:
-      return Routes.examPaper;
-    case VidyaFlow.teacherTraining:
-      return Routes.teacherTraining;
-    case VidyaFlow.instantAnswer:
-      return Routes.instantAnswer;
-    case VidyaFlow.visualAidDesigner:
-    case VidyaFlow.virtualFieldTrip:
-    case VidyaFlow.videoStoryteller:
-      return null;
-  }
-}
-
-Map<String, String> _prefill(VidyaDirectiveParams p) {
-  return {
-    'topic': ?p.topic,
-    'gradeLevel': ?p.gradeLevel,
-    'subject': ?p.subject,
-    'language': ?normaliseVidyaLanguage(p.language),
-  };
-}

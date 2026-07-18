@@ -8,10 +8,12 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
+import '../../../shared/domain/tool_prefill.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
+import '../../vidya/presentation/widgets/inline_field_mic.dart';
 import '../domain/instant_answer.dart';
 import 'instant_answer_controller.dart';
 import 'widgets/instant_answer_error_view.dart';
@@ -26,7 +28,12 @@ import 'widgets/instant_answer_skeleton.dart';
 /// Only `question` is required; grade, subject and language are optional
 /// because the flow back-fills them from the teacher's profile.
 class InstantAnswerScreen extends ConsumerStatefulWidget {
-  const InstantAnswerScreen({super.key});
+  const InstantAnswerScreen({super.key, this.prefill});
+
+  /// Optional seed from a VIDYA NAVIGATE_AND_FILL directive — the spoken topic
+  /// becomes the question. Defaults to null, so existing call sites and tests
+  /// open the blank form unchanged.
+  final ToolPrefill? prefill;
 
   @override
   ConsumerState<InstantAnswerScreen> createState() =>
@@ -54,6 +61,23 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
   void initState() {
     super.initState();
     _language = ref.read(localeControllerProvider);
+    _applyPrefill(widget.prefill);
+  }
+
+  /// Seeds the form from a VIDYA directive. The spoken topic becomes the
+  /// question; grade/subject apply only when this form offers them; the language
+  /// falls back to the current one when it is not one of the 11.
+  void _applyPrefill(ToolPrefill? p) {
+    if (p == null) return;
+    if (p.topic != null) _questionController.text = p.topic!;
+    if (p.gradeLevel != null && kGradeLevels.contains(p.gradeLevel)) {
+      _grade = p.gradeLevel;
+    }
+    if (p.subject != null && kSubjects.contains(p.subject)) {
+      _subject = p.subject;
+    }
+    final locale = prefillLocale(p.language);
+    if (locale != null) _language = locale;
   }
 
   @override
@@ -155,6 +179,10 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
     return LabeledField(
       label: l10n.instantAnswerQuestionLabel,
       leadingIcon: LucideIcons.helpCircle,
+      trailing: InlineFieldMic(
+        expectedLanguage: _language.code,
+        onResult: (text) => _questionController.text = text,
+      ),
       child: TextFormField(
         controller: _questionController,
         // The flow rejects anything longer, so stop it here with a counter

@@ -8,10 +8,12 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
+import '../../../shared/domain/tool_prefill.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
+import '../../vidya/presentation/widgets/inline_field_mic.dart';
 import '../domain/quiz.dart';
 import '../domain/quiz_options.dart';
 import 'quiz_controller.dart';
@@ -24,7 +26,11 @@ import 'widgets/quiz_skeleton.dart';
 /// [ResultView] (loading / empty / error / data). The result is up to three
 /// difficulty variants, each on its own tab.
 class QuizGeneratorScreen extends ConsumerStatefulWidget {
-  const QuizGeneratorScreen({super.key});
+  const QuizGeneratorScreen({super.key, this.prefill});
+
+  /// Optional seed from a VIDYA NAVIGATE_AND_FILL directive. Defaults to null,
+  /// so existing call sites and tests open the blank form unchanged.
+  final ToolPrefill? prefill;
 
   @override
   ConsumerState<QuizGeneratorScreen> createState() =>
@@ -59,6 +65,23 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
   void initState() {
     super.initState();
     _language = ref.read(localeControllerProvider);
+    _applyPrefill(widget.prefill);
+  }
+
+  /// Seeds the form from a VIDYA directive. Grade/subject apply only when this
+  /// form offers them; the language falls back to the current one when it is not
+  /// one of the 11.
+  void _applyPrefill(ToolPrefill? p) {
+    if (p == null) return;
+    if (p.topic != null) _topicController.text = p.topic!;
+    if (p.gradeLevel != null && kGradeLevels.contains(p.gradeLevel)) {
+      _grade = p.gradeLevel;
+    }
+    if (p.subject != null && kSubjects.contains(p.subject)) {
+      _subject = p.subject;
+    }
+    final locale = prefillLocale(p.language);
+    if (locale != null) _language = locale;
   }
 
   @override
@@ -168,6 +191,10 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
     return LabeledField(
       label: l10n.quizTopicLabel,
       leadingIcon: LucideIcons.lightbulb,
+      trailing: InlineFieldMic(
+        expectedLanguage: _language.code,
+        onResult: (text) => _topicController.text = text,
+      ),
       child: TextFormField(
         controller: _topicController,
         maxLength: 1000,
