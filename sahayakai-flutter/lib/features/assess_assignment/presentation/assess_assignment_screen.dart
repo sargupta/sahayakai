@@ -8,6 +8,8 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/media/image_input.dart';
+import '../../../shared/widgets/app_segmented.dart';
+import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/note_banner.dart';
 import '../../../shared/widgets/result_view.dart';
@@ -20,13 +22,15 @@ import 'widgets/assess_assignment_skeleton.dart';
 
 /// P1.6 — Assess Assignment. Grade a student's handwritten work from a photo.
 ///
-/// A capped, scrolling form + a sticky Assess button ([ToolScaffold]), driven
-/// by an AsyncNotifier and rendered through [ResultView] (loading / empty /
-/// error / data). It REQUIRES a student-work photo (captured through the shared
-/// [ImageInput] and sent as a base64 data URI) and offers a mode selector:
-/// grade the work, read it only, or score a corrected transcript. The backend
-/// strips the student's name and this form never collects one — grading needs
-/// no PII.
+/// A capped, scrolling editorial form + a sticky Assess button ([ToolScaffold]),
+/// driven by an AsyncNotifier and rendered through [ResultView] (loading /
+/// empty / error / data). It REQUIRES a student-work photo (captured through the
+/// shared [ImageInput] and sent as a base64 data URI) and offers a mode selector
+/// ([AppSegmented], three modes): grade the work, read it only, or score a
+/// corrected transcript. The backend strips the student's name and this form
+/// never collects one — grading needs no PII. On success the scorecard is
+/// wrapped in a `DocumentSheet` (see [AssessAssignmentResultView]) and the view
+/// auto-scrolls to its masthead.
 class AssessAssignmentScreen extends ConsumerStatefulWidget {
   const AssessAssignmentScreen({super.key});
 
@@ -39,6 +43,10 @@ class _AssessAssignmentScreenState
     extends ConsumerState<AssessAssignmentScreen> {
   final _formKey = GlobalKey<FormState>();
   final _transcriptController = TextEditingController();
+
+  /// Anchors the auto-scroll: the result region's top, which for a successful
+  /// assessment is the DocumentSheet masthead.
+  final _resultKey = GlobalKey();
 
   PickedImage? _image;
   AssessmentMode _mode = AssessmentMode.full;
@@ -72,10 +80,38 @@ class _AssessAssignmentScreenState
     ref.read(assessAssignmentControllerProvider.notifier).assess(request);
   }
 
+  /// Brings the result masthead to the top of the viewport when a fresh
+  /// assessment lands. Honours reduce-motion by jumping (no scroll tween).
+  void _scrollToResult() {
+    if (!mounted) return;
+    final ctx = _resultKey.currentContext;
+    if (ctx == null) return;
+    final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    Scrollable.ensureVisible(
+      ctx,
+      duration: reduce ? Duration.zero : AppMotion.medium,
+      curve: AppMotion.emphasized,
+      alignment: 0.0,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final state = ref.watch(assessAssignmentControllerProvider);
+
+    // Auto-scroll to the result header on a fresh success (loading -> data).
+    ref.listen<AsyncValue<Assessment?>>(assessAssignmentControllerProvider,
+        (prev, next) {
+      final wasLoading = prev?.isLoading ?? false;
+      final nowHasAssessment =
+          !next.isLoading && next.hasValue && next.valueOrNull != null;
+      if (wasLoading && nowHasAssessment) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToResult());
+      }
+    });
+
+    final hasResult = state.hasValue && state.valueOrNull != null;
 
     final result = state.hasError
         ? AssessAssignmentErrorView(error: state.error!, onRetry: _submit)
@@ -83,16 +119,20 @@ class _AssessAssignmentScreenState
             state: state,
             skeleton: const AssessAssignmentSkeleton(),
             emptyMessage: l10n.assessEmpty,
-            onData: (assessment) =>
-                AssessAssignmentResultView(assessment: assessment),
+            onData: (assessment) => AssessAssignmentResultView(
+              assessment: assessment,
+              onRegenerate: _submit,
+            ),
           );
 
     return ToolScaffold(
       title: l10n.assessTitle,
       isBusy: state.isLoading,
       submitLabel: l10n.assessSubmit,
-      onSubmit: state.isLoading ? null : _submit,
-      result: result,
+      // Hide the sticky Assess button once a scorecard is on screen — the
+      // document's own action bar (Regenerate / Copy) takes over.
+      onSubmit: (state.isLoading || hasResult) ? null : _submit,
+      result: KeyedSubtree(key: _resultKey, child: result),
       child: Form(
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -100,6 +140,8 @@ class _AssessAssignmentScreenState
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
+            EditorialSectionHeader(l10n.assessSectionWork),
+            const SizedBox(height: AppSpacing.space4),
             _imageField(l10n),
             const SizedBox(height: AppSpacing.space6),
             _modeField(l10n),
@@ -107,7 +149,9 @@ class _AssessAssignmentScreenState
               const SizedBox(height: AppSpacing.space6),
               _transcriptField(l10n),
             ],
-            const SizedBox(height: AppSpacing.space6),
+            const SizedBox(height: AppSpacing.space8),
+            EditorialSectionHeader(l10n.sectionForYourClass),
+            const SizedBox(height: AppSpacing.space4),
             _languageField(l10n),
             const SizedBox(height: AppSpacing.space6),
             _RubricNote(l10n: l10n),
@@ -128,6 +172,7 @@ class _AssessAssignmentScreenState
         return LabeledField(
           label: l10n.assessImageLabel,
           hint: l10n.assessImageHint,
+          leadingIcon: LucideIcons.image,
           child: ImageInput(
             value: _image,
             errorText: field.errorText,
@@ -145,10 +190,20 @@ class _AssessAssignmentScreenState
     return LabeledField(
       label: l10n.assessModeLabel,
       hint: l10n.assessModeHint,
-      child: _ModeChoiceRow(
-        selected: _mode,
-        labelOf: (mode) => _modeLabel(l10n, mode),
-        onSelected: (mode) => setState(() => _mode = mode),
+      leadingIcon: LucideIcons.listChecks,
+      // Three modes -> AppSegmented. The longest label ("Score a transcript")
+      // exceeds the track's length budget, so it falls back to a wrapping chip
+      // row (>=48dp, never clips a translated label).
+      child: AppSegmented<AssessmentMode>(
+        value: _mode,
+        onChanged: (mode) => setState(() => _mode = mode),
+        segments: [
+          AppSegment(value: AssessmentMode.full, label: l10n.assessModeFull),
+          AppSegment(
+              value: AssessmentMode.transcribe,
+              label: l10n.assessModeTranscribe),
+          AppSegment(value: AssessmentMode.score, label: l10n.assessModeScore),
+        ],
       ),
     );
   }
@@ -158,6 +213,7 @@ class _AssessAssignmentScreenState
       label: l10n.assessTranscriptLabel,
       optionalLabel: l10n.assessOptional,
       hint: l10n.assessTranscriptHint,
+      leadingIcon: LucideIcons.fileText,
       child: TextFormField(
         controller: _transcriptController,
         maxLength: 50000,
@@ -173,6 +229,7 @@ class _AssessAssignmentScreenState
   Widget _languageField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.languageLabel,
+      leadingIcon: LucideIcons.languages,
       child: DropdownButtonFormField<AppLocale>(
         initialValue: _language,
         isExpanded: true,
@@ -185,46 +242,6 @@ class _AssessAssignmentScreenState
         ],
         onChanged: (value) => setState(() => _language = value ?? _language),
       ),
-    );
-  }
-}
-
-String _modeLabel(AppLocalizations l10n, AssessmentMode mode) => switch (mode) {
-      AssessmentMode.full => l10n.assessModeFull,
-      AssessmentMode.transcribe => l10n.assessModeTranscribe,
-      AssessmentMode.score => l10n.assessModeScore,
-    };
-
-/// A single-select group of the three modes rendered as wrapping
-/// [ChoiceChip]s. Wrapping (not a fixed-width SegmentedButton) guarantees no
-/// horizontal overflow at 360dp or textScale 1.3, while keeping >=48dp targets.
-class _ModeChoiceRow extends StatelessWidget {
-  const _ModeChoiceRow({
-    required this.selected,
-    required this.labelOf,
-    required this.onSelected,
-  });
-
-  final AssessmentMode selected;
-  final String Function(AssessmentMode value) labelOf;
-  final ValueChanged<AssessmentMode> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: AppSpacing.space2,
-      runSpacing: AppSpacing.space2,
-      children: [
-        for (final mode in AssessmentMode.values)
-          ChoiceChip(
-            label: Text(labelOf(mode)),
-            selected: mode == selected,
-            materialTapTargetSize: MaterialTapTargetSize.padded,
-            onSelected: (isSelected) {
-              if (isSelected) onSelected(mode);
-            },
-          ),
-      ],
     );
   }
 }

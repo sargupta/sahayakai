@@ -1,32 +1,50 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/i18n/gen/app_localizations.dart';
 import '../../../../core/i18n/l10n_ext.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/motion/animated_entrance.dart';
 import '../../../../shared/widgets/ai_text.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/bullet_dot.dart';
+import '../../../../shared/widgets/document_sheet.dart';
 import '../../../../shared/widgets/empty_view.dart';
 import '../../../../shared/widgets/note_banner.dart';
-import '../../../../shared/widgets/section_label.dart';
+import '../../../../shared/widgets/score_ring.dart';
+import '../../../../shared/widgets/secondary_button.dart';
 import '../../domain/assessment.dart';
 
-/// Renders a graded [Assessment] as a scorecard: score, transcript, per-
-/// criterion feedback, strengths, improvements, next steps and a teacher note.
+/// Renders a graded [Assessment] as a printed scorecard, not a chat dump
+/// (PREMIUM_DESIGN_SPEC.md §5 / §6b U8 — the reference every other tool copies).
+///
+/// The scorecard is wrapped in a [DocumentSheet]: a masthead ("ASSESS
+/// ASSIGNMENT" eyebrow, a Fraunces "Assessment" title, saffron rule, points /
+/// confidence meta badges), a hero [ScoreRing] gauge (overallScore over 100),
+/// per-criterion inset cards, and the strengths / to-work-on / next-steps /
+/// transcript / teacher-note sections.
 ///
 /// It renders DEFENSIVELY — every section appears only when the model returned
 /// it — because the shape varies by mode: a `transcribe`-only pass leads with
-/// the transcript and shows no score, while a `full` grade shows everything.
-/// The whole thing is a plain vertical [Column] of cards (never a nested
-/// unbounded scroller), so it composes inside ToolScaffold's page scroll. All
-/// model prose flows through [AiText] (line-height 1.7 + Indic height
-/// behaviour). See DESIGN_RUBRIC §3 / §8 / §12.
+/// the transcript and shows no ScoreRing, while a `full` grade shows everything.
+/// All model prose flows through [AiText] (line-height 1.7 + Indic height
+/// behaviour) so matras never clip. Each block inks in on the Ink-settle reveal;
+/// a footer action bar offers Regenerate / Copy. See DESIGN_RUBRIC §3 / §8 /
+/// §12.
 class AssessAssignmentResultView extends StatelessWidget {
-  const AssessAssignmentResultView({super.key, required this.assessment});
+  const AssessAssignmentResultView({
+    super.key,
+    required this.assessment,
+    this.onRegenerate,
+  });
 
   final Assessment assessment;
+
+  /// Re-runs grading from the current form (the controller's `assess`). When
+  /// null (e.g. a direct render in a test) the footer action bar is omitted.
+  final VoidCallback? onRegenerate;
 
   @override
   Widget build(BuildContext context) {
@@ -39,73 +57,10 @@ class AssessAssignmentResultView extends StatelessWidget {
       );
     }
 
-    final sections = <Widget>[
-      if (assessment.hasScore) _ScoreCard(assessment: assessment),
-      if (assessment.warnings.isNotEmpty)
-        _WarningsCard(warnings: assessment.warnings),
-      if (assessment.displayTranscript != null)
-        _ProseSection(
-          title: l10n.assessTranscriptSection,
-          icon: LucideIcons.fileText,
-          body: assessment.displayTranscript!,
-        ),
-      if (assessment.perCriterionScores.isNotEmpty)
-        _CriteriaSection(scores: assessment.perCriterionScores),
-      if (assessment.strengths.isNotEmpty)
-        _BulletSection(
-          title: l10n.assessStrengthsSection,
-          icon: LucideIcons.thumbsUp,
-          items: assessment.strengths,
-        ),
-      if (assessment.improvements.isNotEmpty)
-        _BulletSection(
-          title: l10n.assessImprovementsSection,
-          icon: LucideIcons.trendingUp,
-          items: assessment.improvements,
-        ),
-      if (assessment.nextSteps.isNotEmpty)
-        _BulletSection(
-          title: l10n.assessNextStepsSection,
-          icon: LucideIcons.arrowRight,
-          items: assessment.nextSteps,
-        ),
-      if (assessment.teacherNote != null)
-        _ProseSection(
-          title: l10n.assessTeacherNoteSection,
-          icon: LucideIcons.messageCircle,
-          body: assessment.teacherNote!,
-        ),
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (var i = 0; i < sections.length; i++) ...[
-          if (i > 0) const SizedBox(height: AppSpacing.sectionGap),
-          sections[i],
-        ],
-      ],
-    );
-  }
-}
-
-/// The headline: a large, high-contrast score with its points, confidence and
-/// the rubric it was measured against. The number is [onSurface] (maximum
-/// contrast, AA in both themes); saffron is confined to the accent bar and the
-/// meter, never used as the score text on white.
-class _ScoreCard extends StatelessWidget {
-  const _ScoreCard({required this.assessment});
-
-  final Assessment assessment;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-
     final percent = assessment.scorePercent;
+    final hasRubric = assessment.rubric?.title.isNotEmpty ?? false;
+
+    // Points and confidence ride in the masthead; the score is the hero gauge.
     final meta = <Widget>[
       if (assessment.pointsPossible != null && assessment.pointsPossible! > 0)
         AppBadge(
@@ -114,6 +69,7 @@ class _ScoreCard extends StatelessWidget {
             _formatNum(assessment.pointsEarned ?? 0),
             _formatNum(assessment.pointsPossible!),
           ),
+          tone: AppBadgeTone.accent,
         ),
       if (assessment.confidencePercent != null)
         AppBadge(
@@ -122,80 +78,109 @@ class _ScoreCard extends StatelessWidget {
         ),
     ];
 
-    return AppCard(
-      accentBar: true,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SectionLabel(l10n.assessScoreLabel, icon: LucideIcons.award),
-          const SizedBox(height: AppSpacing.space3),
-          if (percent != null) ...[
-            // Baseline-aligned "NN out of 100": the number is the hero, the
-            // caption sits beside it. Wraps if a large textScale needs it.
-            Wrap(
-              crossAxisAlignment: WrapCrossAlignment.end,
-              spacing: AppSpacing.space2,
-              children: [
-                Text(
-                  '$percent',
-                  style: text.displaySmall?.copyWith(color: scheme.onSurface),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.space1),
-                  child: Text(
-                    l10n.assessScoreOutOf,
-                    style: text.titleMedium
-                        ?.copyWith(color: scheme.onSurfaceVariant),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.space3),
-            // The score as a proportion of the cap: a legible meter, saffron on
-            // a muted track (both AA), never a bare number on colour.
-            ClipRRect(
-              borderRadius: AppRadius.rSm,
-              child: LinearProgressIndicator(
-                value: percent / 100,
-                minHeight: AppSpacing.space2,
-                backgroundColor: scheme.surfaceContainerHigh,
-                color: scheme.primary,
+    // The document blocks, in reading order. Content is unchanged from the flat
+    // renderer — only the composition around it is new.
+    final blocks = <Widget>[
+      if (percent != null || hasRubric)
+        _ScoreHero(assessment: assessment, percent: percent),
+      if (assessment.warnings.isNotEmpty)
+        _WarningsCard(warnings: assessment.warnings),
+      if (assessment.displayTranscript != null)
+        DocumentSheetSection(
+          title: l10n.assessTranscriptSection,
+          child: AiText(assessment.displayTranscript!),
+        ),
+      if (assessment.perCriterionScores.isNotEmpty)
+        DocumentSheetSection(
+          title: l10n.assessCriteriaSection,
+          child: _CriteriaList(scores: assessment.perCriterionScores),
+        ),
+      if (assessment.strengths.isNotEmpty)
+        DocumentSheetSection(
+          title: l10n.assessStrengthsSection,
+          child: _Bullets(items: assessment.strengths),
+        ),
+      if (assessment.improvements.isNotEmpty)
+        DocumentSheetSection(
+          title: l10n.assessImprovementsSection,
+          child: _Bullets(items: assessment.improvements),
+        ),
+      if (assessment.nextSteps.isNotEmpty)
+        DocumentSheetSection(
+          title: l10n.assessNextStepsSection,
+          child: _Bullets(items: assessment.nextSteps),
+        ),
+      if (assessment.teacherNote != null)
+        DocumentSheetSection(
+          title: l10n.assessTeacherNoteSection,
+          child: AiText(assessment.teacherNote!),
+        ),
+    ];
+
+    // Ink-settle: each block fades + rises in turn, so the document assembles
+    // itself. Degrades to the static composed frame under reduce-motion.
+    final revealed = <Widget>[
+      for (var i = 0; i < blocks.length; i++)
+        inkSettle(context, blocks[i], index: i),
+    ];
+
+    return DocumentSheet(
+      docType: l10n.assessTitle,
+      title: l10n.assessResultTitle,
+      meta: meta,
+      footer: onRegenerate == null
+          ? null
+          : _ActionBar(assessment: assessment, onRegenerate: onRegenerate!),
+      children: revealed,
+    );
+  }
+}
+
+/// The scorecard headline: a hero [ScoreRing] gauge (the overall score out of
+/// 100) over the rubric it was measured against. The number lives inside the
+/// ring in `onSurface` (maximum contrast, AA in both themes); saffron is
+/// confined to the ring's progress arc and the tick, never used as score text.
+class _ScoreHero extends StatelessWidget {
+  const _ScoreHero({required this.assessment, required this.percent});
+
+  final Assessment assessment;
+  final int? percent;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    final rubric = assessment.rubric;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (percent != null)
+          Center(child: ScoreRing(score: percent!, max: 100)),
+        if (rubric != null && rubric.title.isNotEmpty) ...[
+          if (percent != null) const SizedBox(height: AppSpacing.space4),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                LucideIcons.clipboardCheck,
+                size: AppIconSize.inline,
+                color: scheme.onSurfaceVariant,
               ),
-            ),
-          ],
-          if (meta.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.space4),
-            Wrap(
-              spacing: AppSpacing.space2,
-              runSpacing: AppSpacing.space2,
-              children: meta,
-            ),
-          ],
-          if (assessment.rubric != null &&
-              assessment.rubric!.title.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.space3),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  LucideIcons.clipboardCheck,
-                  size: AppIconSize.inline,
-                  color: scheme.onSurfaceVariant,
+              const SizedBox(width: AppSpacing.space2),
+              Expanded(
+                child: Text(
+                  l10n.assessRubricUsed(rubric.title),
+                  style: text.bodySmall
+                      ?.copyWith(color: scheme.onSurfaceVariant, height: 1.4),
                 ),
-                const SizedBox(width: AppSpacing.space2),
-                Expanded(
-                  child: Text(
-                    l10n.assessRubricUsed(assessment.rubric!.title),
-                    style: text.bodySmall
-                        ?.copyWith(color: scheme.onSurfaceVariant, height: 1.4),
-                  ),
-                ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ],
-      ),
+      ],
     );
   }
 }
@@ -255,48 +240,18 @@ class _WarningsCard extends StatelessWidget {
       };
 }
 
-/// One SectionLabel + a card of AI prose (transcript / teacher note).
-class _ProseSection extends StatelessWidget {
-  const _ProseSection({
-    required this.title,
-    required this.icon,
-    required this.body,
-  });
-
-  final String title;
-  final IconData icon;
-  final String body;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SectionLabel(title, icon: icon),
-        const SizedBox(height: AppSpacing.space3),
-        AppCard(child: AiText(body)),
-      ],
-    );
-  }
-}
-
-class _CriteriaSection extends StatelessWidget {
-  const _CriteriaSection({required this.scores});
+/// The per-criterion scores as numbered-grammar inset cards.
+class _CriteriaList extends StatelessWidget {
+  const _CriteriaList({required this.scores});
 
   final List<CriterionScore> scores;
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        SectionLabel(
-          context.l10n.assessCriteriaSection,
-          icon: LucideIcons.listChecks,
-        ),
-        const SizedBox(height: AppSpacing.space3),
         for (var i = 0; i < scores.length; i++) ...[
           if (i > 0) const SizedBox(height: AppSpacing.space3),
           _CriterionCard(score: scores[i]),
@@ -337,6 +292,7 @@ class _CriterionCard extends StatelessWidget {
     ];
 
     return AppCard(
+      variant: AppCardVariant.inset,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -360,16 +316,10 @@ class _CriterionCard extends StatelessWidget {
   }
 }
 
-/// A titled bullet list (strengths / improvements / next steps).
-class _BulletSection extends StatelessWidget {
-  const _BulletSection({
-    required this.title,
-    required this.icon,
-    required this.items,
-  });
+/// A plain vertical bullet list (strengths / to-work-on / next-steps).
+class _Bullets extends StatelessWidget {
+  const _Bullets({required this.items});
 
-  final String title;
-  final IconData icon;
   final List<String> items;
 
   @override
@@ -378,8 +328,6 @@ class _BulletSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        SectionLabel(title, icon: icon),
-        const SizedBox(height: AppSpacing.space3),
         for (var i = 0; i < items.length; i++) ...[
           if (i > 0) const SizedBox(height: AppSpacing.space2),
           Row(
@@ -394,6 +342,113 @@ class _BulletSection extends StatelessWidget {
       ],
     );
   }
+}
+
+/// The document's action bar: Regenerate (secondary) over a Copy ghost. Copy
+/// exports the scorecard as plain text to the clipboard — a presentation-only
+/// action, no controller involved and no student name (grading carries none).
+class _ActionBar extends StatelessWidget {
+  const _ActionBar({required this.assessment, required this.onRegenerate});
+
+  final Assessment assessment;
+  final VoidCallback onRegenerate;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final text = Theme.of(context).textTheme;
+    final saffron = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
+    final messenger = ScaffoldMessenger.of(context);
+
+    void copy() {
+      Clipboard.setData(ClipboardData(text: _assessmentAsText(assessment, l10n)));
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(l10n.copyConfirmation)));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SecondaryButton(
+          label: l10n.actionRegenerate,
+          icon: LucideIcons.refreshCw,
+          onPressed: onRegenerate,
+        ),
+        const SizedBox(height: AppSpacing.space2),
+        SizedBox(
+          height: 48,
+          child: TextButton.icon(
+            onPressed: copy,
+            icon: const Icon(LucideIcons.copy, size: AppIconSize.inline),
+            label: Text(l10n.actionCopy),
+            style: TextButton.styleFrom(
+              foregroundColor: saffron,
+              textStyle: text.labelLarge,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// A plain-text export of the scorecard, for the clipboard. Carries no student
+/// name — grading collects none.
+String _assessmentAsText(Assessment assessment, AppLocalizations l10n) {
+  final b = StringBuffer();
+  final percent = assessment.scorePercent;
+  if (percent != null) {
+    b.writeln('$percent ${l10n.assessScoreOutOf}');
+  }
+  if (assessment.pointsPossible != null && assessment.pointsPossible! > 0) {
+    b.writeln(l10n.assessPoints(
+      _formatNum(assessment.pointsEarned ?? 0),
+      _formatNum(assessment.pointsPossible!),
+    ));
+  }
+
+  void proseSection(String title, String? body) {
+    if (body == null || body.trim().isEmpty) return;
+    b
+      ..writeln()
+      ..writeln(title)
+      ..writeln(body);
+  }
+
+  void bulletSection(String title, Iterable<String> lines) {
+    final items = lines.where((l) => l.trim().isNotEmpty).toList();
+    if (items.isEmpty) return;
+    b
+      ..writeln()
+      ..writeln(title);
+    for (final line in items) {
+      b.writeln('- $line');
+    }
+  }
+
+  proseSection(l10n.assessTranscriptSection, assessment.displayTranscript);
+  if (assessment.perCriterionScores.isNotEmpty) {
+    b
+      ..writeln()
+      ..writeln(l10n.assessCriteriaSection);
+    for (final c in assessment.perCriterionScores) {
+      final pts = (c.points != null && c.maxPoints != null)
+          ? ' (${l10n.assessCriterionPoints(_formatNum(c.points!), _formatNum(c.maxPoints!))})'
+          : '';
+      b.writeln('- ${c.criterionName}$pts');
+      if (c.feedback != null && c.feedback!.trim().isNotEmpty) {
+        b.writeln('  ${c.feedback}');
+      }
+    }
+  }
+  bulletSection(l10n.assessStrengthsSection, assessment.strengths);
+  bulletSection(l10n.assessImprovementsSection, assessment.improvements);
+  bulletSection(l10n.assessNextStepsSection, assessment.nextSteps);
+  proseSection(l10n.assessTeacherNoteSection, assessment.teacherNote);
+  return b.toString().trimRight();
 }
 
 /// Formats a points value for a badge: a whole number drops its `.0`

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/features/assess_assignment/presentation/widgets/assess_assignment_result_view.dart';
 import 'package:sahayakai/shared/widgets/empty_view.dart';
+import 'package:sahayakai/shared/widgets/score_ring.dart';
 
 import 'assess_assignment_fixtures.dart';
 
@@ -16,20 +17,22 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Score card.
+      // Score card: the ScoreRing gauge shows the score over its 100 denominator.
+      expect(find.byType(ScoreRing), findsOneWidget);
       expect(find.text('75'), findsOneWidget);
-      expect(find.text('out of 100'), findsOneWidget);
+      expect(find.text('/ 100'), findsOneWidget);
       expect(find.text('12 of 16 points'), findsOneWidget);
       expect(find.text('Confidence 82%'), findsOneWidget);
       expect(find.textContaining('Graded against:'), findsOneWidget);
 
-      // Sections.
-      expect(find.text('What the student wrote'), findsOneWidget);
-      expect(find.text('Scores by criterion'), findsOneWidget);
-      expect(find.text('Strengths'), findsOneWidget);
-      expect(find.text('To work on'), findsOneWidget);
-      expect(find.text('Next steps'), findsOneWidget);
-      expect(find.text('Note for the student'), findsOneWidget);
+      // Sections. Headings now render through the DocumentSheetSection, which
+      // UPPERCASES Latin titles.
+      expect(find.text('WHAT THE STUDENT WROTE'), findsOneWidget);
+      expect(find.text('SCORES BY CRITERION'), findsOneWidget);
+      expect(find.text('STRENGTHS'), findsOneWidget);
+      expect(find.text('TO WORK ON'), findsOneWidget);
+      expect(find.text('NEXT STEPS'), findsOneWidget);
+      expect(find.text('NOTE FOR THE STUDENT'), findsOneWidget);
 
       // Per-criterion detail: points badge + a low-confidence tag on the 0.3.
       expect(find.text('3 / 4'), findsOneWidget);
@@ -49,10 +52,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('What the student wrote'), findsOneWidget);
-      // No score card / no scores-by-criterion section.
-      expect(find.text('out of 100'), findsNothing);
-      expect(find.text('Scores by criterion'), findsNothing);
+      expect(find.text('WHAT THE STUDENT WROTE'), findsOneWidget);
+      // No score gauge / no scores-by-criterion section on a transcribe-only pass.
+      expect(find.byType(ScoreRing), findsNothing);
+      expect(find.text('SCORES BY CRITERION'), findsNothing);
       expect(find.text('Overall score'), findsNothing);
       expect(tester.takeException(), isNull);
     });

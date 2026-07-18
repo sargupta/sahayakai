@@ -2316,6 +2316,14 @@
   "@assessRephrase": {
     "description": "Shown on a 400 bad-input response."
   },
+  "assessSectionWork": "The student's work",
+  "@assessSectionWork": {
+    "description": "Editorial section header over the student-work fields on the Assess form."
+  },
+  "assessResultTitle": "Assessment",
+  "@assessResultTitle": {
+    "description": "Masthead document title on the Assess Assignment result DocumentSheet."
+  },
   "worksheetSectionWorksheet": "The worksheet",
   "@worksheetSectionWorksheet": {
     "description": "Worksheet form section header: the textbook photo and prompt the worksheet is built from."

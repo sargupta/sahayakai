@@ -1862,6 +1862,12 @@ class AppLocalizationsTa extends AppLocalizations {
       'The photo could not be graded. Please re-upload a clearer photo.';
 
   @override
+  String get assessSectionWork => 'மாணவரின் பணி';
+
+  @override
+  String get assessResultTitle => 'மதிப்பீடு';
+
+  @override
   String get worksheetSectionWorksheet => 'பணித்தாள்';
 
   @override

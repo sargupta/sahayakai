@@ -3368,6 +3368,18 @@ abstract class AppLocalizations {
   /// **'The photo could not be graded. Please re-upload a clearer photo.'**
   String get assessRephrase;
 
+  /// Editorial section header over the student-work fields on the Assess form.
+  ///
+  /// In en, this message translates to:
+  /// **'The student\'s work'**
+  String get assessSectionWork;
+
+  /// Masthead document title on the Assess Assignment result DocumentSheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Assessment'**
+  String get assessResultTitle;
+
   /// Worksheet form section header: the textbook photo and prompt the worksheet is built from.
   ///
   /// In en, this message translates to:
