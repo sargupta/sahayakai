@@ -151,6 +151,18 @@ class AppLocalizationsMl extends AppLocalizations {
   }
 
   @override
+  String get dashboardGreetingMorning => 'സുപ്രഭാതം';
+
+  @override
+  String get dashboardGreetingAfternoon => 'ശുഭ മധ്യാഹ്നം';
+
+  @override
+  String get dashboardGreetingEvening => 'ശുഭ സായാഹ്നം';
+
+  @override
+  String get actionOpen => 'തുറക്കുക';
+
+  @override
   String get dashboardToolsTitle => 'നിങ്ങളുടെ അധ്യാപന ഉപകരണങ്ങൾ';
 
   @override

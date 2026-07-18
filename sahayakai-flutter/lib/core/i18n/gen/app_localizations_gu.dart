@@ -147,6 +147,18 @@ class AppLocalizationsGu extends AppLocalizations {
   }
 
   @override
+  String get dashboardGreetingMorning => 'સુપ્રભાત';
+
+  @override
+  String get dashboardGreetingAfternoon => 'શુભ બપોર';
+
+  @override
+  String get dashboardGreetingEvening => 'શુભ સાંજ';
+
+  @override
+  String get actionOpen => 'ખોલો';
+
+  @override
   String get dashboardToolsTitle => 'તમારા શિક્ષણ સાધનો';
 
   @override

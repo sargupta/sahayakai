@@ -149,6 +149,18 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
+  String get dashboardGreetingMorning => 'সুপ্রভাত';
+
+  @override
+  String get dashboardGreetingAfternoon => 'শুভ অপরাহ্ন';
+
+  @override
+  String get dashboardGreetingEvening => 'শুভ সন্ধ্যা';
+
+  @override
+  String get actionOpen => 'খুলুন';
+
+  @override
   String get dashboardToolsTitle => 'আপনার শিক্ষণ সরঞ্জাম';
 
   @override

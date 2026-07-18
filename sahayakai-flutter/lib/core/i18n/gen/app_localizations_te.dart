@@ -149,6 +149,18 @@ class AppLocalizationsTe extends AppLocalizations {
   }
 
   @override
+  String get dashboardGreetingMorning => 'శుభోదయం';
+
+  @override
+  String get dashboardGreetingAfternoon => 'శుభ మధ్యాహ్నం';
+
+  @override
+  String get dashboardGreetingEvening => 'శుభ సాయంత్రం';
+
+  @override
+  String get actionOpen => 'తెరవండి';
+
+  @override
   String get dashboardToolsTitle => 'మీ బోధన సాధనాలు';
 
   @override

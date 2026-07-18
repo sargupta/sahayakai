@@ -368,6 +368,30 @@ abstract class AppLocalizations {
   /// **'Welcome back, {name}'**
   String dashboardGreetingNamed(String name);
 
+  /// Dashboard hero eyebrow: time-aware salutation shown before noon.
+  ///
+  /// In en, this message translates to:
+  /// **'Good morning'**
+  String get dashboardGreetingMorning;
+
+  /// Dashboard hero eyebrow: time-aware salutation shown from noon to evening.
+  ///
+  /// In en, this message translates to:
+  /// **'Good afternoon'**
+  String get dashboardGreetingAfternoon;
+
+  /// Dashboard hero eyebrow: time-aware salutation shown in the evening.
+  ///
+  /// In en, this message translates to:
+  /// **'Good evening'**
+  String get dashboardGreetingEvening;
+
+  /// Action label on the dashboard feature tile, opens the tool.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get actionOpen;
+
   /// Dashboard tools section header.
   ///
   /// In en, this message translates to:

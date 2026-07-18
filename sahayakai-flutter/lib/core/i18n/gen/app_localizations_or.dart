@@ -148,6 +148,18 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
+  String get dashboardGreetingMorning => 'ଶୁଭ ପ୍ରଭାତ';
+
+  @override
+  String get dashboardGreetingAfternoon => 'ଶୁଭ ଅପରାହ୍ନ';
+
+  @override
+  String get dashboardGreetingEvening => 'ଶୁଭ ସନ୍ଧ୍ୟା';
+
+  @override
+  String get actionOpen => 'ଖୋଲନ୍ତୁ';
+
+  @override
   String get dashboardToolsTitle => 'ଆପଣଙ୍କ ଶିକ୍ଷାଦାନ ଉପକରଣ';
 
   @override

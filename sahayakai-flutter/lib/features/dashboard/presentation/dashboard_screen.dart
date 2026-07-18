@@ -3,34 +3,41 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/data/library_items_provider.dart';
+import '../../../shared/domain/tool_registry.dart';
+import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_skeleton.dart';
+import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/icon_well.dart';
-import '../../../shared/data/library_items_provider.dart';
-import '../../../shared/domain/tool_registry.dart';
 import '../../../shared/widgets/library_item_row.dart';
 import '../../../shared/widgets/offline_view.dart';
-import '../../../shared/widgets/section_label.dart';
 import '../../profile/presentation/profile_controller.dart';
 
-/// P0.3 — Dashboard Home. The Home tab of the 4-tab shell (`AppShell`).
+/// P0.3 — Dashboard Home, "The Almanac" (PREMIUM_DESIGN_SPEC.md §5 / §6b U7).
+/// The Home tab of the 4-tab shell (`AppShell`), and the most-seen screen.
 ///
-/// Left-aligned, and every row on it is real: the tools are the three that
-/// exist in this build and each one deep-links to its live route, and the
-/// recent list is the teacher's own saved work off `GET /api/content/list`.
-/// Nothing here is a placeholder card holding space for a feature (DESIGN_RUBRIC
-/// §11).
+/// It opens as a composed almanac: a time-aware saffron eyebrow, a Fraunces
+/// greeting, an almanac date line and a saffron masthead rule, then the teaching
+/// tools as a register — the first tool a raised feature tile, the rest refined
+/// rows — inking in on a staggered entrance.
 ///
-/// THE TOOL LIST IS FULL-WIDTH ROWS, NOT A 2-COLUMN GRID, deliberately. A grid
+/// Left-aligned, and every row on it is real: the tools are the ones that exist
+/// in this build and each deep-links to its live route, and the recent list is
+/// the teacher's own saved work off `GET /api/content/list`. Nothing here is a
+/// placeholder card holding space for a feature (DESIGN_RUBRIC §11).
+///
+/// THE TOOL LIST IS FULL-WIDTH TILES, NOT A 2-COLUMN GRID, deliberately. A grid
 /// needs a fixed `childAspectRatio`, which is a fixed height for text — banned
 /// by DESIGN_RUBRIC §7 and the first thing to clip at textScale 1.3 in
-/// Malayalam. Rows carry the same `tool-icon-wrap` grammar as the web, wrap
+/// Malayalam. Tiles carry the same `tool-icon-wrap` grammar as the web, wrap
 /// instead of clipping, and read the same at 360dp and on a tablet.
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -40,20 +47,23 @@ class DashboardScreen extends ConsumerWidget {
     final l10n = context.l10n;
 
     return Scaffold(
+      // Seamless masthead: the theme gives the AppBar a serif titleLarge and a
+      // scrolled-under elevation only (elevation 0 at rest); the hero owns the
+      // top of the page.
       appBar: AppBar(title: Text(l10n.appTitle)),
       body: SafeArea(
         child: ListView(
           padding: AppSpacing.pagePadding,
           children: [
-            const _Greeting(),
+            const _AlmanacHeader(),
             const _SetupNudge(),
-            const SizedBox(height: AppSpacing.space6),
-            SectionLabel(l10n.dashboardToolsTitle),
-            const SizedBox(height: AppSpacing.space3),
+            const SizedBox(height: AppSpacing.space8),
+            EditorialSectionHeader(l10n.dashboardToolsTitle),
+            const SizedBox(height: AppSpacing.space4),
             const _ToolList(),
             const SizedBox(height: AppSpacing.space8),
-            SectionLabel(l10n.dashboardRecentTitle),
-            const SizedBox(height: AppSpacing.space3),
+            EditorialSectionHeader(l10n.dashboardRecentTitle),
+            const SizedBox(height: AppSpacing.space4),
             const _RecentSection(),
           ],
         ),
@@ -62,31 +72,80 @@ class DashboardScreen extends ConsumerWidget {
   }
 }
 
-/// "Welcome back" or "Welcome back, Lakshmi".
+/// The Almanac hero header (§5). A time-aware saffron eyebrow (salutation ·
+/// school), a Fraunces `displayLarge` greeting, a 2px x 48dp saffron masthead
+/// rule, and a tabular almanac date line.
 ///
-/// The name is a bonus, never a blocker: the profile read 401s on today's stub
-/// auth and will fail on a rural connection tomorrow. Loading and error both
-/// fall back to the unnamed greeting rather than putting a skeleton or an
-/// apology at the top of the teacher's home screen. The recent section below
-/// owns the honest reporting of a failed read.
-class _Greeting extends ConsumerWidget {
-  const _Greeting();
+/// The greeting name is a bonus, never a blocker: the profile read 401s on
+/// today's stub auth and will fail on a rural connection tomorrow. Loading and
+/// error both fall back to the unnamed greeting rather than putting a skeleton
+/// or an apology at the top of the teacher's home screen. The recent section
+/// below owns the honest reporting of a failed read.
+class _AlmanacHeader extends ConsumerWidget {
+  const _AlmanacHeader();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final text = Theme.of(context).textTheme;
-    final name = ref.watch(
-      profileControllerProvider.select(
-        (profile) => profile.valueOrNull?.displayName,
-      ),
-    );
-    final greeting = (name != null && name.trim().isNotEmpty)
-        ? l10n.dashboardGreetingNamed(name.trim())
+    final extras = AppTextExtras.of(context);
+    final scheme = Theme.of(context).colorScheme;
+
+    final profile = ref.watch(profileControllerProvider).valueOrNull;
+    final name = profile?.displayName?.trim();
+    final school = profile?.schoolName?.trim();
+
+    final greeting = (name != null && name.isNotEmpty)
+        ? l10n.dashboardGreetingNamed(name)
         : l10n.dashboardGreeting;
 
-    return Text(greeting, style: text.headlineSmall);
+    // The eyebrow leads with a time-aware salutation and, when the teacher has
+    // told us their school, the school (§5). `.toUpperCase()` tracks the Latin
+    // register uppercase while leaving unicameral Indic scripts untouched.
+    final salutation = _salutationFor(DateTime.now(), l10n);
+    final eyebrow = (school != null && school.isNotEmpty)
+        ? '$salutation · $school'
+        : salutation;
+
+    // MaterialLocalizations, not intl's DateFormat: the date delegates are
+    // wired for every supported locale and cannot throw on one whose symbols
+    // aren't loaded (the same choice LibraryItemRow made).
+    final dateLine =
+        MaterialLocalizations.of(context).formatFullDate(DateTime.now());
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(eyebrow.toUpperCase(), style: extras.eyebrow),
+        const SizedBox(height: AppSpacing.space2),
+        Text(greeting, style: text.displayLarge),
+        const SizedBox(height: AppSpacing.space3),
+        // The 2px x 48dp saffron masthead rule under the greeting.
+        const SizedBox(
+          width: 48,
+          height: 2,
+          child: DecoratedBox(
+            decoration: BoxDecoration(gradient: AppGradients.accentBar),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.space3),
+        Text(
+          dateLine,
+          style: extras.dataMedium.copyWith(color: scheme.onSurfaceVariant),
+        ),
+      ],
+    );
   }
+}
+
+/// The time-of-day salutation for the eyebrow. Morning before noon, afternoon
+/// through the working day, evening from 5pm. Localized across all 11 languages.
+String _salutationFor(DateTime now, AppLocalizations l10n) {
+  final hour = now.hour;
+  if (hour < 12) return l10n.dashboardGreetingMorning;
+  if (hour < 17) return l10n.dashboardGreetingAfternoon;
+  return l10n.dashboardGreetingEvening;
 }
 
 /// A NUDGE, NOT A GATE. Shown only once the profile has actually loaded and is
@@ -136,7 +195,8 @@ class _SetupNudgeState extends ConsumerState<_SetupNudge> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(LucideIcons.userCog, size: AppIconSize.inline, color: scheme.primary),
+                Icon(LucideIcons.userCog,
+                    size: AppIconSize.inline, color: scheme.primary),
                 const SizedBox(width: AppSpacing.space3),
                 Expanded(
                   child: Text(l10n.dashboardSetupTitle, style: text.titleMedium),
@@ -174,9 +234,13 @@ class _SetupNudgeState extends ConsumerState<_SetupNudge> {
 
 /// The built tools, each deep-linking to its real route. The list itself comes
 /// from the shared [kToolRegistry] — the SAME source the Create palette walks —
-/// so the grid and the palette can never list different tools. No dead tiles: a
-/// tool with no screen yet is not in the registry, because a tile that does
-/// nothing is worse than an absent one.
+/// so the register and the palette can never list different tools. No dead
+/// tiles: a tool with no screen yet is not in the registry, because a tile that
+/// does nothing is worse than an absent one.
+///
+/// The FIRST tool is a raised feature tile; the rest are refined rows (§5). The
+/// register inks in on a staggered entrance (capped at 8) that degrades to the
+/// static composed frame under reduce-motion.
 class _ToolList extends StatelessWidget {
   const _ToolList();
 
@@ -188,13 +252,83 @@ class _ToolList extends StatelessWidget {
       children: [
         for (final (index, tool) in kToolRegistry.indexed) ...[
           if (index > 0) const SizedBox(height: AppSpacing.space3),
-          _ToolRow(tool: tool),
+          inkSettle(
+            context,
+            index == 0 ? _FeatureTile(tool: tool) : _ToolRow(tool: tool),
+            index: index,
+          ),
         ],
       ],
     );
   }
 }
 
+/// The lead tool as a raised feature tile: an elevated card with a 3px saffron
+/// accent bar, a 64dp gradient icon well, a serif name, a subtitle, and an
+/// "Open" affordance (§5).
+class _FeatureTile extends StatelessWidget {
+  const _FeatureTile({required this.tool});
+
+  final ToolEntry tool;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final text = Theme.of(context).textTheme;
+    final saffron = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
+
+    return AppCard(
+      variant: AppCardVariant.elevated,
+      accentBar: true,
+      onTap: () => context.push(tool.route),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              IconWell(icon: tool.icon, feature: true),
+              const SizedBox(width: AppSpacing.space4),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(tool.title(l10n), style: text.titleLarge),
+                    const SizedBox(height: AppSpacing.space1),
+                    Text(
+                      tool.subtitle(l10n),
+                      style: text.bodyMedium
+                          ?.copyWith(color: scheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.space4),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                l10n.actionOpen,
+                style: text.labelLarge?.copyWith(color: saffron),
+              ),
+              const SizedBox(width: AppSpacing.space1),
+              Icon(LucideIcons.chevronRight,
+                  size: AppIconSize.inline, color: saffron),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A refined tool row: a flat card, a 48dp gradient icon well, the name and
+/// subtitle, and a 32dp circular chevron affordance (§5).
 class _ToolRow extends StatelessWidget {
   const _ToolRow({required this.tool});
 
@@ -228,11 +362,20 @@ class _ToolRow extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: AppSpacing.space2),
-          Icon(
-            LucideIcons.chevronRight,
-            size: AppIconSize.inline,
-            color: scheme.onSurfaceVariant,
+          const SizedBox(width: AppSpacing.space3),
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: scheme.surfaceContainerHigh,
+            ),
+            alignment: Alignment.center,
+            child: Icon(
+              LucideIcons.chevronRight,
+              size: AppIconSize.inline,
+              color: scheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),

@@ -149,6 +149,18 @@ class AppLocalizationsTa extends AppLocalizations {
   }
 
   @override
+  String get dashboardGreetingMorning => 'காலை வணக்கம்';
+
+  @override
+  String get dashboardGreetingAfternoon => 'மதிய வணக்கம்';
+
+  @override
+  String get dashboardGreetingEvening => 'மாலை வணக்கம்';
+
+  @override
+  String get actionOpen => 'திறக்கவும்';
+
+  @override
   String get dashboardToolsTitle => 'உங்கள் கற்பித்தல் கருவிகள்';
 
   @override

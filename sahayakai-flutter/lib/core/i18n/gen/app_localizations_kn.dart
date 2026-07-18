@@ -149,6 +149,18 @@ class AppLocalizationsKn extends AppLocalizations {
   }
 
   @override
+  String get dashboardGreetingMorning => 'ಶುಭೋದಯ';
+
+  @override
+  String get dashboardGreetingAfternoon => 'ಶುಭ ಮಧ್ಯಾಹ್ನ';
+
+  @override
+  String get dashboardGreetingEvening => 'ಶುಭ ಸಂಜೆ';
+
+  @override
+  String get actionOpen => 'ತೆರೆಯಿರಿ';
+
+  @override
   String get dashboardToolsTitle => 'ನಿಮ್ಮ ಬೋಧನಾ ಸಾಧನಗಳು';
 
   @override

@@ -147,6 +147,18 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get dashboardGreetingMorning => 'Good morning';
+
+  @override
+  String get dashboardGreetingAfternoon => 'Good afternoon';
+
+  @override
+  String get dashboardGreetingEvening => 'Good evening';
+
+  @override
+  String get actionOpen => 'Open';
+
+  @override
   String get dashboardToolsTitle => 'Your teaching tools';
 
   @override

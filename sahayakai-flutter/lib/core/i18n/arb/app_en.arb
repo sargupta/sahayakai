@@ -182,6 +182,22 @@
       }
     }
   },
+  "dashboardGreetingMorning": "Good morning",
+  "@dashboardGreetingMorning": {
+    "description": "Dashboard hero eyebrow: time-aware salutation shown before noon."
+  },
+  "dashboardGreetingAfternoon": "Good afternoon",
+  "@dashboardGreetingAfternoon": {
+    "description": "Dashboard hero eyebrow: time-aware salutation shown from noon to evening."
+  },
+  "dashboardGreetingEvening": "Good evening",
+  "@dashboardGreetingEvening": {
+    "description": "Dashboard hero eyebrow: time-aware salutation shown in the evening."
+  },
+  "actionOpen": "Open",
+  "@actionOpen": {
+    "description": "Action label on the dashboard feature tile, opens the tool."
+  },
   "dashboardToolsTitle": "Your teaching tools",
   "@dashboardToolsTitle": {
     "description": "Dashboard tools section header."
