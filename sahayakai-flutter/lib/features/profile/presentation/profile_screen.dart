@@ -12,8 +12,10 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
+import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_skeleton.dart';
+import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/icon_well.dart';
@@ -22,7 +24,6 @@ import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/language_switcher.dart';
 import '../../../shared/widgets/offline_view.dart';
 import '../../../shared/widgets/primary_button.dart';
-import '../../../shared/widgets/section_label.dart';
 import '../domain/board_category.dart';
 import '../domain/profile_validators.dart';
 import '../domain/teacher_profile.dart';
@@ -209,166 +210,163 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
     final text = Theme.of(context).textTheme;
     final saveState = ref.watch(profileFormSaveControllerProvider);
 
-    return Form(
-      key: _formKey,
-      child: ListView(
-        padding: AppSpacing.pagePadding,
-        children: [
-          _IdentityCard(name: _draft.displayName, school: _draft.schoolName),
-          if (widget.initial.isEmpty) ...[
-            const SizedBox(height: AppSpacing.space3),
-            AppCard(
-              child: EmptyView(
-                icon: LucideIcons.userCog,
-                title: l10n.profileEmptyTitle,
-                message: l10n.profileEmptyBody,
-              ),
-            ),
-          ],
-          const SizedBox(height: AppSpacing.space6),
-          Section(
-            title: l10n.profileSectionAbout,
-            icon: LucideIcons.user,
-            child: AppCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  LabeledField(
-                    label: l10n.profileNameLabel,
-                    hint: l10n.profileNameHint,
-                    child: TextFormField(
-                      controller: _name,
-                      textCapitalization: TextCapitalization.words,
-                      textInputAction: TextInputAction.next,
-                      validator: (value) =>
-                          (value != null && value.trim().length > 100)
-                          ? l10n.profileNameInvalid
-                          : null,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.space6),
-                  LabeledField(
-                    label: l10n.profileSchoolLabel,
-                    child: TextFormField(
-                      controller: _school,
-                      textCapitalization: TextCapitalization.words,
-                      textInputAction: TextInputAction.next,
-                      validator: (value) =>
-                          (value != null && value.trim().length > 140)
-                          ? l10n.profileNameInvalid
-                          : null,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+    // Every top-level block, in reading order. Each editorial group opens with
+    // an EditorialSectionHeader (saffron eyebrow + hairline, §5) over an
+    // AppCard, and the register inks in on a staggered entrance.
+    final blocks = <Widget>[
+      _IdentityCard(name: _draft.displayName, school: _draft.schoolName),
+      if (widget.initial.isEmpty)
+        AppCard(
+          child: EmptyView(
+            icon: LucideIcons.userCog,
+            title: l10n.profileEmptyTitle,
+            message: l10n.profileEmptyBody,
           ),
-          const SizedBox(height: AppSpacing.space6),
-          Section(
-            title: l10n.profileSectionTeaching,
-            icon: LucideIcons.graduationCap,
-            child: AppCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _boardCategoryField(l10n),
-                  const SizedBox(height: AppSpacing.space6),
-                  _boardField(l10n),
-                  const SizedBox(height: AppSpacing.space6),
-                  _subjectsField(l10n),
-                  const SizedBox(height: AppSpacing.space6),
-                  _gradesField(l10n),
-                  const SizedBox(height: AppSpacing.space6),
-                  _adminRoleField(l10n),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.space6),
-          Section(
-            title: l10n.profileSectionLocation,
-            icon: LucideIcons.mapPin,
-            child: AppCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _stateField(l10n),
-                  const SizedBox(height: AppSpacing.space6),
-                  LabeledField(
-                    label: l10n.profileDistrictLabel,
-                    hint: l10n.profileDistrictHint,
-                    child: TextFormField(
-                      controller: _district,
-                      textCapitalization: TextCapitalization.words,
-                      textInputAction: TextInputAction.next,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.space6),
-                  LabeledField(
-                    label: l10n.profilePincodeLabel,
-                    hint: l10n.profilePincodeHint,
-                    child: TextFormField(
-                      controller: _pincode,
-                      keyboardType: TextInputType.number,
-                      textInputAction: TextInputAction.next,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(6),
-                      ],
-                      validator: (value) => _validatePincode(l10n, value),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.space6),
-          Section(
-            title: l10n.profileSectionContact,
-            icon: LucideIcons.phone,
-            child: AppCard(
-              child: LabeledField(
-                label: l10n.profilePhoneLabel,
-                hint: l10n.profilePhoneHint,
+        ),
+      _ProfileGroup(
+        title: l10n.profileSectionAbout,
+        child: AppCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              LabeledField(
+                label: l10n.profileNameLabel,
+                leadingIcon: LucideIcons.user,
+                hint: l10n.profileNameHint,
                 child: TextFormField(
-                  controller: _phone,
-                  keyboardType: TextInputType.phone,
-                  textInputAction: TextInputAction.done,
-                  validator: (value) => _validatePhone(l10n, value),
+                  controller: _name,
+                  textCapitalization: TextCapitalization.words,
+                  textInputAction: TextInputAction.next,
+                  validator: (value) =>
+                      (value != null && value.trim().length > 100)
+                      ? l10n.profileNameInvalid
+                      : null,
                 ),
               ),
+              const SizedBox(height: AppSpacing.space6),
+              LabeledField(
+                label: l10n.profileSchoolLabel,
+                leadingIcon: LucideIcons.school,
+                child: TextFormField(
+                  controller: _school,
+                  textCapitalization: TextCapitalization.words,
+                  textInputAction: TextInputAction.next,
+                  validator: (value) =>
+                      (value != null && value.trim().length > 140)
+                      ? l10n.profileNameInvalid
+                      : null,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      _ProfileGroup(
+        title: l10n.profileSectionTeaching,
+        child: AppCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _boardCategoryField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _boardField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _subjectsField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _gradesField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _adminRoleField(l10n),
+            ],
+          ),
+        ),
+      ),
+      _ProfileGroup(
+        title: l10n.profileSectionLocation,
+        child: AppCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _stateField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              LabeledField(
+                label: l10n.profileDistrictLabel,
+                leadingIcon: LucideIcons.map,
+                hint: l10n.profileDistrictHint,
+                child: TextFormField(
+                  controller: _district,
+                  textCapitalization: TextCapitalization.words,
+                  textInputAction: TextInputAction.next,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.space6),
+              LabeledField(
+                label: l10n.profilePincodeLabel,
+                leadingIcon: LucideIcons.hash,
+                hint: l10n.profilePincodeHint,
+                child: TextFormField(
+                  controller: _pincode,
+                  keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.next,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(6),
+                  ],
+                  validator: (value) => _validatePincode(l10n, value),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      _ProfileGroup(
+        title: l10n.profileSectionContact,
+        child: AppCard(
+          child: LabeledField(
+            label: l10n.profilePhoneLabel,
+            leadingIcon: LucideIcons.phone,
+            hint: l10n.profilePhoneHint,
+            child: TextFormField(
+              controller: _phone,
+              keyboardType: TextInputType.phone,
+              textInputAction: TextInputAction.done,
+              validator: (value) => _validatePhone(l10n, value),
             ),
           ),
-          const SizedBox(height: AppSpacing.space6),
-          Section(
-            title: l10n.languageLabel,
-            icon: LucideIcons.languages,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const AppCard(
-                  padding: EdgeInsets.zero,
-                  child: LanguageSwitcher(),
-                ),
-                const SizedBox(height: AppSpacing.space3),
-                Text(
-                  l10n.profileLanguageHint,
-                  style: text.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
+        ),
+      ),
+      _ProfileGroup(
+        title: l10n.languageLabel,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const AppCard(
+              padding: EdgeInsets.zero,
+              child: LanguageSwitcher(),
             ),
-          ),
-          if (saveState.hasError) ...[
-            const SizedBox(height: AppSpacing.space4),
-            InlineError(message: _saveErrorText(l10n, saveState.error)),
+            const SizedBox(height: AppSpacing.space3),
+            Text(
+              l10n.profileLanguageHint,
+              style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            ),
           ],
-          const SizedBox(height: AppSpacing.space6),
+        ),
+      ),
+      // Error + actions are ONE stable footer block: an inline save error
+      // appears WITHIN it rather than as a new top-level block, so the block
+      // count never changes and the staggered entrance never re-indexes the
+      // lazy list beneath it (which would churn flutter_animate's delay timers).
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (saveState.hasError) ...[
+            InlineError(message: _saveErrorText(l10n, saveState.error)),
+            const SizedBox(height: AppSpacing.space4),
+          ],
           PrimaryButton(
             label: l10n.settingsSaveProfile,
             icon: LucideIcons.save,
@@ -384,6 +382,19 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
           ),
         ],
       ),
+    ];
+
+    return Form(
+      key: _formKey,
+      child: ListView(
+        padding: AppSpacing.pagePadding,
+        children: [
+          for (final (index, block) in blocks.indexed) ...[
+            if (index > 0) const SizedBox(height: AppSpacing.space6),
+            inkSettle(context, block, index: index),
+          ],
+        ],
+      ),
     );
   }
 
@@ -392,6 +403,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
   Widget _boardCategoryField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.profileBoardCategoryLabel,
+      leadingIcon: LucideIcons.layers,
       hint: l10n.profileBoardCategoryHint,
       child: Wrap(
         spacing: AppSpacing.space2,
@@ -401,6 +413,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
             ChoiceChip(
               label: Text(_categoryLabel(l10n, category)),
               selected: _category == category,
+              showCheckmark: false,
               // The bare chip is 32dp; this pads the tap target past 48dp.
               materialTapTargetSize: MaterialTapTargetSize.padded,
               onSelected: (selected) =>
@@ -432,6 +445,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
     final boards = _category?.boards ?? kEducationBoards;
     return LabeledField(
       label: l10n.settingsBoardLabel,
+      leadingIcon: LucideIcons.landmark,
       child: DropdownButtonFormField<String?>(
         initialValue: _draft.settings.educationBoard,
         isExpanded: true, // long board names ellipsize instead of overflowing
@@ -459,6 +473,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
   Widget _subjectsField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.profileSubjectsLabel,
+      leadingIcon: LucideIcons.bookOpen,
       hint: l10n.profileSubjectsHint,
       child: Wrap(
         spacing: AppSpacing.space2,
@@ -468,6 +483,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
             FilterChip(
               label: Text(subject),
               selected: _draft.subjects.contains(subject),
+              showCheckmark: false,
               materialTapTargetSize: MaterialTapTargetSize.padded,
               onSelected: (selected) => setState(() {
                 _draft = _draft.copyWith(
@@ -487,6 +503,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
   Widget _gradesField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.profileGradesLabel,
+      leadingIcon: LucideIcons.graduationCap,
       hint: l10n.profileGradesHint,
       child: Wrap(
         spacing: AppSpacing.space2,
@@ -496,6 +513,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
             FilterChip(
               label: Text(grade),
               selected: _draft.gradeLevels.contains(grade),
+              showCheckmark: false,
               materialTapTargetSize: MaterialTapTargetSize.padded,
               onSelected: (selected) => setState(() {
                 _draft = _draft.copyWith(
@@ -515,6 +533,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
   Widget _stateField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.profileStateLabel,
+      leadingIcon: LucideIcons.mapPin,
       child: DropdownButtonFormField<String?>(
         initialValue: _draft.state,
         isExpanded: true,
@@ -537,6 +556,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
   Widget _adminRoleField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.settingsAdminRoleLabel,
+      leadingIcon: LucideIcons.briefcase,
       child: DropdownButtonFormField<AdministrativeRole?>(
         initialValue: _draft.settings.administrativeRole,
         isExpanded: true,
@@ -560,6 +580,29 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
           );
         }),
       ),
+    );
+  }
+}
+
+/// One premium profile group: an [EditorialSectionHeader] (saffron eyebrow +
+/// hairline rule, §5) over its content. Replaces the muted `Section` grammar so
+/// every group reads editorial rather than as a weak grey label (§7.4).
+class _ProfileGroup extends StatelessWidget {
+  const _ProfileGroup({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        EditorialSectionHeader(title),
+        const SizedBox(height: AppSpacing.space4),
+        child,
+      ],
     );
   }
 }
