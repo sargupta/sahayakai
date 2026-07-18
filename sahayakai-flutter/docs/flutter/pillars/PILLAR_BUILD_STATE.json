@@ -25,20 +25,26 @@
       "title": "Voice stack + permissions",
       "files": [
         "pubspec.yaml",
+        "pubspec.lock",
         "android/app/src/main/AndroidManifest.xml",
-        "ios/Runner/Info.plist",
-        "lib/shared/media/voice_capture_controller.dart",
-        "lib/shared/media/tts_player.dart"
+        "lib/shared/voice/audio_recorder_service.dart",
+        "lib/shared/voice/audio_player_service.dart",
+        "test/shared/voice/audio_recorder_service_test.dart",
+        "test/shared/voice/audio_player_service_test.dart",
+        "docs/flutter/HANDOFF.md"
       ],
       "consumes": ["native mic (record)", "native audio (just_audio + audio_session)"],
       "firebaseGated": false,
-      "status": "pending"
+      "status": "done",
+      "commit": "22fb7e86b",
+      "notes": "Injectable service abstractions (lib/shared/voice/, not the plan's lib/shared/media/voice_capture_controller+tts_player — the VAD/state-machine controller is U-V3): AudioRecorderService (record 5.2.1 -> WAV 16kHz mono, normalised 0..1 amplitude stream, start/stop -> Recording{path,byteLength}, cancel discards) + AudioPlayerService (just_audio 0.9.46 -> Base64Mp3Source in-memory playback, decodeBase64Mp3 degrades to silence, cancel-before-next-speak). All 4 plugins resolved with NO substitution: record 5.2.1, just_audio 0.9.46, permission_handler 11.4.0, audio_session 0.1.25. Added path_provider 2.1.6 as the recorder's writable-temp-path companion (Directory.systemTemp is not app-writable on Android) — not a substitute. Manifest: RECORD_AUDIO + microphone uses-feature + INTERNET (was missing from the release manifest). iOS Info.plist NOT touched (Android-first, no iOS target). 23 tests with fakes; no real mic/audio in CI. VOICE CANNOT BE EXERCISED LIVE (no device mic; routes 401) — verified by code + unit test only. Runtime mic-permission request UI (permission_handler at first tap + Open-settings recovery) lands with U-V4/U-V5 per HANDOFF.md §8."
     },
     {
       "id": "U-V2",
       "pillar": "02",
       "title": "Backend repos + DTOs (STT / VIDYA / TTS / session / profile)",
       "files": [
+        "lib/core/network/api_client.dart",
         "lib/features/vidya/data/voice_to_text_repository.dart",
         "lib/features/vidya/data/vidya_repository.dart",
         "lib/features/vidya/data/tts_repository.dart",
@@ -46,7 +52,15 @@
         "lib/features/vidya/data/vidya_profile_repository.dart",
         "lib/features/vidya/data/dto/assistant_request.dart",
         "lib/features/vidya/data/dto/assistant_response.dart",
-        "lib/features/vidya/data/dto/vidya_action.dart"
+        "lib/features/vidya/data/dto/vidya_action.dart",
+        "lib/features/vidya/data/dto/chat_message.dart",
+        "lib/features/vidya/data/dto/vidya_profile.dart",
+        "lib/features/vidya/data/dto/vidya_session.dart",
+        "lib/features/vidya/data/dto/tts_dtos.dart",
+        "lib/features/vidya/data/dto/transcript.dart",
+        "test/features/vidya/vidya_dtos_test.dart",
+        "test/features/vidya/vidya_repositories_test.dart",
+        "test/support/fake_api_client.dart"
       ],
       "consumes": [
         "POST /api/ai/voice-to-text (multipart WAV)",
@@ -56,7 +70,9 @@
         "GET/POST /api/vidya/profile"
       ],
       "firebaseGated": "partial (decode/guard testable now; live calls 401 until real auth)",
-      "status": "pending"
+      "status": "done",
+      "commit": "2e743b299",
+      "notes": "5 repos over ApiClient + typed DTOs. Added ApiClient.postMultipart (STT) + mirrored it in FakeApiClient. Typed directive domain object U-V6 consumes: VidyaDirective{VidyaFlow flow, VidyaDirectiveParams params}; VidyaFlow is the closed enum guard (fromWire drops hallucinated flows -> no 404, mirrors web KNOWN_FLOWS); AssistantResponse.toDomain derives 0/1/2-3 guarded directives (plannedActions preferred, singular action fallback, capped 3). Verified contracts: STT multipart field `audio`+`expectedLanguage` -> {text,language}; TTS request field is `targetLang` (BCP-47), NOT `language` (task wrote it loosely); assistant uiLanguage wins over detectedLanguage; profile POST is strict {profile:{...}} envelope; session POST {sessionId,messages,actionTriggered?,screenPath?,isNew?}. 47 tests via FakeApiClient (golden decode + request-shape pinning + a 401/429 branch per repo), NO network. Live calls 401 on the stub token until Firebase auth — EXPECTED, handled, verified by code + unit test only."
     },
     {
       "id": "U-V3",
