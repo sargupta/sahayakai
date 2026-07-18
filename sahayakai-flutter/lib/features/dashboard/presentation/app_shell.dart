@@ -5,16 +5,24 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/tool_registry.dart';
+import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/icon_well.dart';
 import '../../library/presentation/library_screen.dart';
 import '../../profile/presentation/profile_screen.dart';
 import 'dashboard_screen.dart';
+import 'floating_bottom_nav.dart';
 
-/// The signed-in shell: a Material 3 [NavigationBar] with 4 tabs
-/// (Home / Create / Library / Me). "Create" is an action — it opens the
+/// The signed-in shell: the premium floating bottom navigation ([U9]) over 4
+/// tabs (Home / Create / Library / Me). "Create" is an action — it opens the
 /// searchable Create (command) palette rather than switching tabs, so the
-/// selected index never lands on it. See THEME_SPEC §5.5.
+/// selected index never lands on it and its pill never lights. See
+/// PREMIUM_DESIGN_SPEC.md §5 ("Bottom nav — floating").
+///
+/// The body is an [IndexedStack] (every tab stays warm, so the shared library
+/// read serves both surfaces in one request and off-screen peers never slide);
+/// switching tabs plays a fresh cross-fade + rise on the newly-shown tab via
+/// [_AnimatedTabBody], guarded by reduce-motion.
 ///
 /// A later unit can convert this to a StatefulShellRoute for deep-linkable tabs.
 class AppShell extends StatefulWidget {
@@ -42,38 +50,20 @@ class _AppShellState extends State<AppShell> {
     ];
 
     return Scaffold(
-      body: IndexedStack(index: _index, children: pages),
-      bottomNavigationBar: DecoratedBox(
-        decoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(
-              color: Theme.of(context).colorScheme.outline,
-              width: 1,
-            ),
+      body: _AnimatedTabBody(index: _index, children: pages),
+      bottomNavigationBar: FloatingBottomNav(
+        currentIndex: _index,
+        onSelected: _onSelect,
+        items: [
+          FloatingNavItem(icon: LucideIcons.home, label: l10n.navHome),
+          FloatingNavItem(
+            icon: LucideIcons.sparkles,
+            label: l10n.navCreate,
+            isAction: true,
           ),
-        ),
-        child: NavigationBar(
-          selectedIndex: _index,
-          onDestinationSelected: _onSelect,
-          destinations: [
-            NavigationDestination(
-              icon: const Icon(LucideIcons.home),
-              label: l10n.navHome,
-            ),
-            NavigationDestination(
-              icon: const Icon(LucideIcons.sparkles),
-              label: l10n.navCreate,
-            ),
-            NavigationDestination(
-              icon: const Icon(LucideIcons.library),
-              label: l10n.navLibrary,
-            ),
-            NavigationDestination(
-              icon: const Icon(LucideIcons.user),
-              label: l10n.navProfile,
-            ),
-          ],
-        ),
+          FloatingNavItem(icon: LucideIcons.library, label: l10n.navLibrary),
+          FloatingNavItem(icon: LucideIcons.user, label: l10n.navProfile),
+        ],
       ),
     );
   }
@@ -96,6 +86,73 @@ class _AppShellState extends State<AppShell> {
       // never becomes an unbounded list in an unbounded sheet.
       isScrollControlled: true,
       builder: (_) => const _CreatePalette(),
+    );
+  }
+}
+
+/// The shell body: an [IndexedStack] (every tab stays mounted, so the shared
+/// library read serves the dashboard and the Library tab in one request and
+/// off-screen peers keep their state and never slide) wrapped in a one-shot
+/// cross-fade + rise that replays whenever the selected tab changes — the
+/// "fresh content entrance" of PREMIUM_DESIGN_SPEC.md §4/§5, reusing the
+/// `staggeredItem` recipe (fade + moveY, `small`/`standard`). Under reduce-motion
+/// it renders the final composed frame instantly.
+class _AnimatedTabBody extends StatefulWidget {
+  const _AnimatedTabBody({required this.index, required this.children});
+
+  final int index;
+  final List<Widget> children;
+
+  @override
+  State<_AnimatedTabBody> createState() => _AnimatedTabBodyState();
+}
+
+class _AnimatedTabBodyState extends State<_AnimatedTabBody>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: AppMotion.small,
+    // Start settled: the first tab does its own entrance; only SWITCHING replays
+    // this one.
+    value: 1,
+  );
+
+  @override
+  void didUpdateWidget(_AnimatedTabBody old) {
+    super.didUpdateWidget(old);
+    if (old.index != widget.index) {
+      if (context.motionEnabled) {
+        _controller.forward(from: 0);
+      } else {
+        _controller.value = 1;
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final stack = IndexedStack(index: widget.index, children: widget.children);
+    if (!context.motionEnabled) return stack;
+
+    return AnimatedBuilder(
+      animation: _controller,
+      child: stack,
+      builder: (context, child) {
+        final t = AppMotion.standard.transform(_controller.value);
+        return Opacity(
+          opacity: t,
+          child: Transform.translate(
+            offset: Offset(0, (1 - t) * 12),
+            child: child,
+          ),
+        );
+      },
     );
   }
 }
