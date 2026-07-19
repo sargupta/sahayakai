@@ -344,7 +344,9 @@
       ],
       "consumes": ["POST /api/ai/visual-aid"],
       "firebaseGated": "partial (auth 401 until real auth)",
-      "status": "pending"
+      "status": "done",
+      "commit": "c3cf2f62e",
+      "notes": "Visual Aid Designer tool, mirrors instant_answer. Contract verified: POST /api/ai/visual-aid {prompt, language?, gradeLevel?, subject?} -> {imageDataUri (base64 data URI), pedagogicalContext, discussionSpark, subject}; image decoded in the DTO layer -> Image.memory in a DocumentSheet result (image hero + 'how to use' AiText + discussion-spark NoteBanner + Regenerate/Copy), errorBuilder + empty-image guard (422 IMAGE_GENERATION_EMPTY), typed 401/403/429/422/504/500. Registered as 'visual-aid' tool tile (Lucide image) + Routes.visualAid. 31 chrome strings x11 langs (real Indic, native-review-pending; server content as-is via AiText). DESIGN-REVIEW caught 2 AA blockers -> fixed: corrupt-image caption 4.49:1 -> onSurface 17:1; and SHARED app-wide AppBadge.accent used the saffron FILL tone #E0924D as label text (2.26:1, banned) -> routed accent label through saffronText #AC4815/#EB9447 (5.14/5.68:1), fixing the grade badge + ~15 other accent call sites at the source (production-correct). Muted-body-on-paper 4.39:1 left = production parity (pending founder decision). +8 AA tests. Firebase-gated (401) -> code+test only (1x1 PNG fixture). +43 tests -> 1119 green, analyze 0, token_guard PASS. No native/pubspec touched."
     },
     {
       "id": "U-PD2",
