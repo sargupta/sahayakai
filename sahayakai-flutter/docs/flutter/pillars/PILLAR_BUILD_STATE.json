@@ -403,7 +403,9 @@
       ],
       "consumes": ["GET /api/usage"],
       "firebaseGated": "partial",
-      "status": "pending"
+      "status": "done",
+      "commit": "d6a695c53",
+      "notes": "Me / OS hub (pillar 06) — the Me tab now renders MeScreen, composing the EXISTING profile/settings (not duplicated): profile summary header (name, role·school, plan + board + language chips) + Plan & usage + defaults + privacy/settings links. New usage_repository binds GET /api/usage ({plan, capability flags, model, usage: Record<feature,{used,limit}>}; limit -1 unlimited, 0 skipped) into an honest STATIC usage meter (track + FractionallySizedBox fill in saffron-text #AC4815/#EB9447 4.7:1 vs track; used/limit number = non-colour signifier; over-limit full bar w/ true count; unlimited no bar; hairline track; per-row Semantics). Signed-out -> sign-in EmptyView (no faked identity; usage read never fires). Routes.profile exposes the full editor. DESIGN-REVIEW caught 2 pre-existing SHARED-widget AA bugs (fixed at source, app-wide): PlanBadgeChip #E0924D-as-text 2.26:1 -> saffronText 5.15/5.69:1 paid + onSurface 16:1 muted; AppBadge small-NEUTRAL label onSurfaceVariant 3.86:1 -> onSurface 14.7:1 (fixes every neutral badge app-wide). 12 chrome strings x11 langs (real Indic, native-review-pending; feature names reuse tool keys; usage numbers as-is). Firebase-gated (401) -> code+test only. +38 tests -> 1318 green, analyze 0, token_guard PASS. No native/pubspec touched. BLOCK D COMPLETE: U-PD1..U-PD5 + U-PD2 hub + U-OS1 all done."
     }
   ],
   "guardrails": [
