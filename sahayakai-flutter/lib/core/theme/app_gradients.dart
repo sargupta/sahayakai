@@ -14,29 +14,29 @@ import 'package:flutter/material.dart';
 class AppGradients {
   AppGradients._();
 
-  /// 3% vertical warm wash — scaffold body.
+  /// ~2% vertical wash around the warm off-white ground — scaffold body.
   static const lightPaper = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFFFBF7F0), Color(0xFFF1EADD)],
+    colors: [Color(0xFFF9F7F3), Color(0xFFF0EEE9)],
   );
 
   /// 8%→0% saffron top-right corner — hero only.
   static const lightHeroWash = RadialGradient(
     center: Alignment(1.0, -1.0),
     radius: 1.2,
-    colors: [Color(0x14C2410C), Color(0x00C2410C)],
+    colors: [Color(0x14E0924D), Color(0x00E0924D)],
   );
 
-  /// Warm center-top → darker edges — dark scaffold body.
+  /// Cool center-top → darker edges — dark scaffold body (production near-black).
   static const darkVignette = RadialGradient(
     center: Alignment(0.0, -0.6),
     radius: 1.4,
-    colors: [Color(0xFF1E1811), Color(0xFF140F09)],
+    colors: [Color(0xFF181A21), Color(0xFF0E1014)],
   );
 
   /// 3px saffron ribbon: primary → primary@0.
   static const accentBar = LinearGradient(
-    colors: [Color(0xFFC2410C), Color(0x00C2410C)],
+    colors: [Color(0xFFE0924D), Color(0x00E0924D)],
   );
 }

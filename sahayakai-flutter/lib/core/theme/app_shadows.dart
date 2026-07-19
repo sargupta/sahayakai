@@ -46,12 +46,13 @@ class AppShadows {
   static final Border dTopHighlight =
       Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.05), width: 1));
 
-  // Signature saffron glow — CTA only, never repeated. Dark uses candlelit saffron.
+  // Signature saffron glow — CTA / mic orb only, never repeated. Production
+  // saffron (light #E0924D) / dark saffron (#EB9447), matching the brand primary.
   static final List<BoxShadow> ctaGlowLight = [
-    BoxShadow(color: const Color(0xFFC2410C).withValues(alpha: 0.22), offset: const Offset(0, 6), blurRadius: 18, spreadRadius: -4),
+    BoxShadow(color: const Color(0xFFE0924D).withValues(alpha: 0.30), offset: const Offset(0, 6), blurRadius: 18, spreadRadius: -4),
   ];
   static final List<BoxShadow> dSaffronGlow = [
-    BoxShadow(color: const Color(0xFFF6A959).withValues(alpha: 0.18), offset: const Offset(0, 6), blurRadius: 24, spreadRadius: -6),
+    BoxShadow(color: const Color(0xFFEB9447).withValues(alpha: 0.22), offset: const Offset(0, 6), blurRadius: 24, spreadRadius: -6),
   ];
 
   // Back-compat aliases so existing call sites keep compiling during migration.

@@ -1,110 +1,138 @@
 import 'package:flutter/material.dart';
 
-/// SahayakAI color tokens — "The Ledger · Ivory & Ink, Saffron & Pine."
-/// See PREMIUM_DESIGN_SPEC.md §2 (LOCKED). Warm-paper light, warm-espresso
-/// dark, a 5-level warm-tinted elevation system, and a 3-note accent story
-/// (deep saffron primary · deep pine secondary · indigo-ink tertiary).
+/// SahayakAI color tokens — "Saffron Design System" (production parity).
 ///
-/// The `AppColors` field names and the `ColorScheme` mapping in
-/// `app_theme.dart` are PRESERVED so the re-skin flows through every screen
-/// and the 747 behavior tests for free; values change, a few tokens are
-/// additive.
+/// Re-skinned 2026-07 to match the REAL production web/PWA brand, corrected to
+/// LIVE-SAMPLED values (`getComputedStyle` on sahayakai.com). Production RENDERS
+/// the `globals.css` HSL, so the real saffron the founder sees is the muted
+/// `#E0924D` — the CSS `/* #FF9933 */` comment is inaccurate. The predecessor
+/// "Ledger / Ivory & Ink" palette diverged from production; this repoints every
+/// value to the live saffron system while PRESERVING the `AppColors` field
+/// names and the `ColorScheme` mapping in `app_theme.dart`, so the re-skin flows
+/// through every screen and all behavior tests without call-site churn.
 ///
-/// ACCESSIBLE SAFFRON SPLIT (founder-approved, locked by
-/// `test/core/theme/theme_contrast_test.dart` — do not regress):
-///   • saffron FILLS / CTAs use [lPrimary] `#C2410C` (white label 5.18:1 ✓)
-///   • saffron TEXT / icons / eyebrows use [lPrimaryText] `#A8380A`
-///     (6.4:1 card / 5.6:1 paper ✓)
-///   • vivid [brandSaffron] `#FF9933` is LARGE-decorative only (splash seal,
-///     logo mark) — 2.13:1 on white, never behind small text
-///   • dark: [dPrimary] `#F6A959` fill AND saffron text, [dOnPrimary]
-///     `#231200` label (9.3:1 ✓)
+/// PRODUCTION SAFFRON-FILL vs SAFFRON-TEXT CONTRAST CONTRACT
+/// (mirrors globals.css; locked by `test/core/theme/theme_contrast_test.dart`):
+///   • LIGHT: saffron is a FILL with WHITE text — buttons, active cards, the
+///     mic orb (`--primary` + `--primary-foreground: white`). [brandSaffron] /
+///     [lPrimary] `#E0924D` is 2.5:1 with white: a large brand FILL, EXEMPT from
+///     the 4.5 text rule (production parity).
+///   • saffron as TEXT / icon / eyebrow on a light surface uses saffron-700
+///     [saffronText] / [lPrimaryText] `#AC4815` (5.3:1 on bg / 5.7:1 on card ✓).
+///     This is the ONLY saffron routed through small text — never `#E0924D`.
+///   • DARK flips to DARK text on the saffron button: production `.dark`
+///     `--primary-foreground` computes to `#0F1729`, so [dOnPrimary] `#0F1729`
+///     on [dPrimary] `#EB9447` is ~7.5:1 — a genuinely ACCESSIBLE pairing, not
+///     white-on-saffron. Saffron-as-text on the dark ground uses [dPrimaryText]
+///     `#EB9447` itself (7.7:1 ✓).
 class AppColors {
   AppColors._();
 
-  /// Vivid flag saffron #FF9933 — brand-moment color for LARGE decorative
-  /// surfaces only (splash seal fill, logo mark). Fails AA on white (2.13:1);
-  /// never behind small text. Use [lPrimaryText] for saffron text/icons.
-  static const brandSaffron = Color(0xFFFF9933);
+  /// Production saffron #E0924D — the brand primary FILL (buttons, active cards,
+  /// the mic orb) with WHITE text in LIGHT. Large brand fill: 2.5:1 with white,
+  /// EXEMPT from the 4.5 text rule (production parity). For saffron TEXT/icons on
+  /// light surfaces use [saffronText] / [lPrimaryText]. Unifies with
+  /// `saffron.DEFAULT` == `--primary`.
+  static const brandSaffron = Color(0xFFE0924D);
 
-  /// Warm brass, decorative ONLY — seal ring, ornament hairlines. Never text
-  /// or a small icon. Exempt from contrast.
+  /// Warm brass, decorative ONLY — the splash seal ring / ornament hairlines.
+  /// Never text or a small icon. Exempt from contrast.
   static const brandBrass = Color(0xFFB08D57);
 
   /// Dark-theme brass ornament.
   static const dBrandBrass = Color(0xFF8A6E43);
 
-  // ---- Light · "Ivory" (§2.1) ----
-  static const lBackground = Color(0xFFF3EEE4); // paper scaffold
-  static const lCard = Color(0xFFFFFCF8); // resting card / list tile
-  static const lSurfaceContainerLow = Color(0xFFFBF6EE); // grouped block, input fill
-  static const lPopover = Color(0xFFFFFFFF); // dialogs, menus (highest)
-  static const lMuted = Color(0xFFECE6DA); // muted chips, sunken well
-  static const lSurfaceContainerHigh = Color(0xFFE4DCCC); // active/hover neutral fill
-  static const lForeground = Color(0xFF232019); // ink — primary text
-  static const lMutedForeground = Color(0xFF6B6157); // secondary text, hints
+  // ---- Saffron scale (globals.css `--saffron-*`, live-sampled) — same ~28°
+  // hue, shaded across lightness. Landing/pillar chrome, tint wells, glow. ----
+  static const saffron50 = Color(0xFFFFF4EB);
+  static const saffron100 = Color(0xFFFEE9D7);
+  static const saffron200 = Color(0xFFFDD4AF);
+  static const saffron300 = Color(0xFFF7B67E);
+  static const saffron600 = Color(0xFFDF6C20);
+  static const saffron700 = Color(0xFFAC4815); // = saffronText (AA on light)
+  static const saffron800 = Color(0xFF8B330E);
 
-  static const lPrimary = Color(0xFFC2410C); // saffron FILL/CTA (white 5.18:1 ✓)
-  static const lPrimaryText = Color(0xFFA8380A); // saffron TEXT/ICON/eyebrow (additive)
+  /// Flag-adjacent named accents (Indian tricolour). White foregrounds; both
+  /// pass AA as large fills (navy 16:1, green 8.4:1).
+  static const navy = Color(0xFF000080); // `--accent`
+  static const green = Color(0xFF28572B); // `--secondary`
+
+  // ---- Light (globals.css `:root`, live-sampled) ----
+  static const lBackground = Color(0xFFF9F7F3); // warm off-white scaffold
+  static const lCard = Color(0xFFFFFFFF); // card / list tile
+  static const lSurfaceContainerLow = Color(0xFFF8FAFC); // grouped block, input fill
+  static const lPopover = Color(0xFFFFFFFF); // dialogs, menus
+  static const lMuted = Color(0xFFF1F5F9); // `--muted` slate-100 well
+  static const lSurfaceContainerHigh = Color(0xFFE5E9F0); // active/hover neutral fill
+  static const lForeground = Color(0xFF0F1729); // `--foreground` ink (16.7:1 ✓)
+  static const lMutedForeground = Color(0xFF65758B); // `--muted-foreground`
+
+  static const lPrimary = Color(0xFFE0924D); // saffron FILL/CTA (white label, exempt)
+  static const lPrimaryText = Color(0xFFAC4815); // saffron-700 TEXT/ICON/eyebrow (5.3:1 ✓)
   static const lOnPrimary = Color(0xFFFFFFFF);
-  static const lPrimaryContainer = Color(0xFFFBEEE2); // saffron tint well / selected chip
-  static const lOnPrimaryContainer = Color(0xFF8B330E);
+  static const lPrimaryContainer = Color(0xFFFEE9D7); // saffron-100 tint well / selected chip
+  static const lOnPrimaryContainer = Color(0xFF8B330E); // saffron-800 label (6.9:1 ✓)
 
-  static const lSecondary = Color(0xFF12554A); // deep pine
-  static const lSecondaryContainer = Color(0xFFE1EEE9);
-  static const lOnSecondaryContainer = Color(0xFF0C3E36);
+  static const lSecondary = Color(0xFF28572B); // deep green (`--secondary`)
+  static const lSecondaryContainer = Color(0xFFE2EFE3);
+  static const lOnSecondaryContainer = Color(0xFF1B4A1D);
 
-  static const lTertiary = Color(0xFF22346B); // indigo-ink
-  static const lError = Color(0xFFC0342B); // warmed destructive
+  static const lTertiary = Color(0xFF000080); // navy (`--accent`)
+  static const lError = Color(0xFFEF4343); // `--destructive`
 
-  static const lBorder = Color(0xFFE7E0D4); // card outline, dividers (warm hairline)
-  static const lInput = Color(0xFFDCD3C4); // input enabled border
-  static const lOutlineVariant = Color(0xFFEFE9DE); // subtle dividers, ruled registers
-  static const lRing = Color(0xFFC2410C); // focus ring (2px), matches saffron fill
+  static const lBorder = Color(0xFFDCDFE5); // `--border` card outline, dividers
+  static const lInput = Color(0xFFE1E4EA); // `--input` enabled border
+  static const lOutlineVariant = Color(0xFFF0F1F5); // subtle dividers
+  static const lRing = Color(0xFFE0924D); // saffron focus ring (`--ring`)
 
-  /// Warm brown-black base for LIGHT two-layer shadows (pure black on warm
-  /// paper reads dirty). Shadow-only. (§2.3)
-  static const lShadowBase = Color(0xFF3A2E1E);
+  /// Cool near-black base for LIGHT shadows — production draws shadows as
+  /// `hsl(222 47% 11% / a)` (== `--foreground`). Shadow-only.
+  static const lShadowBase = Color(0xFF0F1729);
 
-  /// Named pine / indigo accents (aliases of the secondary/tertiary roles) so
-  /// call sites can name the intent (§2, sanctioned accents R5).
+  /// The ONLY saffron sanctioned as TEXT/icon on light surfaces (saffron-700).
+  /// Route eyebrows / links / inactive glyphs through this, NOT [brandSaffron].
+  static const saffronText = lPrimaryText;
+
+  /// Named accents (aliases of the secondary/tertiary roles) so call sites can
+  /// name the intent. Repointed to the production green / navy.
   static const lPine = lSecondary;
   static const lIndigo = lTertiary;
 
-  // ---- Dark · "Warm Espresso, lit from above" (§2.2) ----
-  static const dBackground = Color(0xFF17130E); // warm near-black espresso
-  static const dSurfaceContainerLow = Color(0xFF1C1811); // sunken wells
-  static const dCard = Color(0xFF221D16); // resting card
-  static const dPopover = Color(0xFF2A241B); // raised cards, menus
-  static const dSurfaceContainerHigh = Color(0xFF332B20); // active/hover, highest
-  static const dMuted = Color(0xFF241F17); // muted chip / sunken group
-  static const dForeground = Color(0xFFF5EFE6); // ivory — primary text (14.6:1 ✓)
-  static const dMutedForeground = Color(0xFFA89A86); // secondary text (6.1:1 ✓)
+  // ---- Dark (globals.css `.dark` — cool near-black with saffron accents) ----
+  static const dBackground = Color(0xFF13151B); // soft near-black base
+  static const dSurfaceContainerLow = Color(0xFF181A21); // sunken wells
+  static const dCard = Color(0xFF1C1F26); // resting card
+  static const dPopover = Color(0xFF1E2129); // raised cards, menus
+  static const dSurfaceContainerHigh = Color(0xFF2B303B); // active/hover, highest
+  static const dMuted = Color(0xFF252931); // muted chip / sunken group
+  static const dForeground = Color(0xFFF2F5F8); // off-white ink (16.7:1 ✓)
+  static const dMutedForeground = Color(0xFF95A1B2); // secondary text (7:1 ✓)
 
-  static const dPrimary = Color(0xFFF6A959); // candlelit saffron — CTA fill AND text
-  static const dPrimaryText = dPrimary; // dark saffron text/eyebrow (additive alias)
-  // Dark primary is a BRIGHT saffron, so its label is DARK, not white
-  // (white on #F6A959 fails). #231200 = 9.3:1 ✓ (fixes the dark-CTA bug).
-  static const dOnPrimary = Color(0xFF231200);
-  static const dPrimaryContainer = Color(0xFF2E2417); // saffron tint well / selected chip
-  static const dOnPrimaryContainer = Color(0xFFF6A959);
+  static const dPrimary = Color(0xFFEB9447); // saffron — CTA fill with DARK label
+  static const dPrimaryText = dPrimary; // dark saffron text/eyebrow (7.7:1 on dBackground ✓)
+  // Production `.dark` `--primary-foreground` computes to #0F1729 — DARK text on
+  // the saffron button, ~7.5:1 (ACCESSIBLE, not a fill-only exemption). Restores
+  // web parity and fixes the dark-CTA legibility the white label had.
+  static const dOnPrimary = Color(0xFF0F1729);
+  static const dPrimaryContainer = Color(0xFF3D2A15); // saffron tint well / selected chip
+  static const dOnPrimaryContainer = Color(0xFFFFCE9E); // light-saffron label (9.5:1 ✓)
 
-  static const dSecondary = Color(0xFF4FB3A2); // bright pine
-  static const dSecondaryContainer = Color(0xFF1E3A34);
-  static const dOnSecondaryContainer = Color(0xFFB7E4DA);
+  static const dSecondary = Color(0xFF448848); // lighter green for dark
+  static const dSecondaryContainer = Color(0xFF1E3A22);
+  static const dOnSecondaryContainer = Color(0xFFBAE0BE);
 
-  static const dTertiary = Color(0xFF8DA4E0); // soft indigo
-  static const dError = Color(0xFFE0645A);
+  static const dTertiary = Color(0xFF8DA4E0); // soft indigo (navy reads on dark)
+  static const dError = Color(0xFFBA2C2C); // `.dark --destructive`
 
-  static const dBorder = Color(0xFF3A3226); // card outline, dividers
-  static const dInput = Color(0xFF453B2C); // input border
-  static const dOutlineVariant = Color(0xFF2C261D); // subtle dividers
-  static const dRing = Color(0xFFF6A959); // focus ring
+  static const dBorder = Color(0xFF31353F); // card outline, dividers
+  static const dInput = Color(0xFF31353F); // input border
+  static const dOutlineVariant = Color(0xFF23272F); // subtle dividers
+  static const dRing = Color(0xFFEB9447); // saffron focus ring
 
   static const dPine = dSecondary;
   static const dIndigo = dTertiary;
 
   /// Back-compat: the theme-wide `shadowColor` for any Material-drawn shadow.
-  /// Repointed to the warm brown-black base so tonal fallbacks stay warm.
+  /// Repointed to the cool near-black base to match production's shadow hue.
   static const shadowBase = lShadowBase;
 }

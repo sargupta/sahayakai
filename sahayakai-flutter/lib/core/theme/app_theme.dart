@@ -26,9 +26,12 @@ export 'app_text.dart'
 /// SahayakAI Material 3 theme — pixel-faithful port of the web design system.
 /// See docs/flutter/THEME_SPEC.md for the full derivation.
 ///
-/// NOTE ON `primary`: the founder chose the vivid flag saffron #FF9933 (light)
-/// / #FFAB57 (dark) as a deliberate BRAND choice, overriding THEME_SPEC's
-/// token-accurate #E0924D / #EB9447 (see [AppColors]). Everything else here is
+/// NOTE ON `primary`: the brand saffron is the muted amber #E0924D (light) /
+/// #EB9447 (dark) — sampled directly from the live production site
+/// (getComputedStyle on sahayakai.com), which RENDERS the HSL `28 70% 59%`.
+/// The `/* #FF9933 */` comment in the web globals.css is inaccurate; the app
+/// matches what production actually displays, not the stale comment (see
+/// [AppColors]). Everything else here is
 /// ported verbatim from THEME_SPEC §7 (surfaceTint transparent on cards/menus,
 /// scaffoldBackground = surfaceContainerLowest, buttons >=48dp radius 10, cards
 /// radius 12, all TextStyle.height >= 1.4, Indic fallbacks).
@@ -144,7 +147,7 @@ class AppTheme {
         scrolledUnderElevation: 2,
         shadowColor: AppColors.shadowBase,
         centerTitle: false,
-        // Masthead: the serif titleLarge (Fraunces 21/600) — derived rather than
+        // Masthead: the display titleLarge (Outfit 21/600) — derived rather than
         // re-declared, so the Indic line-height follows the locale.
         titleTextStyle: textTheme.titleLarge,
         systemOverlayStyle:
