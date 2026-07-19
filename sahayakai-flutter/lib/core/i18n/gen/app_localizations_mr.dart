@@ -2283,6 +2283,32 @@ class AppLocalizationsMr extends AppLocalizations {
       'या कॉलचा सारांश तयार करता आला नाही. संभाषण खाली दिले आहे.';
 
   @override
+  String get contentCreatorTitle => 'सामग्री निर्मिती स्टुडिओ';
+
+  @override
+  String get contentCreatorTileSubtitle =>
+      'तुमच्या वर्गासाठी मल्टीमिडिया तयार करा';
+
+  @override
+  String get contentCreatorSubtitle =>
+      'तुमच्या वर्गासाठी आकर्षक मल्टीमिडिया सामग्री तयार करण्यात मदत करणारी साधने.';
+
+  @override
+  String get contentCreatorSectionEyebrow => 'एक साधन निवडा';
+
+  @override
+  String get contentCreatorVisualAidDesc =>
+      'तुमच्या धड्यांसाठी सोपी रेखाचित्रे आणि आकृत्या तयार करा.';
+
+  @override
+  String get contentCreatorFieldTripDesc =>
+      'Google Earth वापरून रोमांचक व्हर्च्युअल सफरींची योजना करा.';
+
+  @override
+  String get contentCreatorVideoDesc =>
+      'तुमच्या धड्यांसाठी निवडक शैक्षणिक व्हिडिओ शोधा.';
+
+  @override
   String get visualAidTitle => 'दृश्य साधन';
 
   @override

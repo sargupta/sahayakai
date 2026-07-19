@@ -2288,6 +2288,31 @@ class AppLocalizationsKn extends AppLocalizations {
       'ಈ ಕರೆಗೆ ಸಾರಾಂಶ ಸಿದ್ಧಪಡಿಸಲಾಗಲಿಲ್ಲ. ಸಂಭಾಷಣೆ ಕೆಳಗೆ ಇದೆ.';
 
   @override
+  String get contentCreatorTitle => 'ವಿಷಯ ರಚನಾ ಸ್ಟುಡಿಯೋ';
+
+  @override
+  String get contentCreatorTileSubtitle => 'ನಿಮ್ಮ ತರಗತಿಗಾಗಿ ಮಲ್ಟಿಮೀಡಿಯಾ ರಚಿಸಿ';
+
+  @override
+  String get contentCreatorSubtitle =>
+      'ನಿಮ್ಮ ತರಗತಿಗೆ ಆಕರ್ಷಕ ಮಲ್ಟಿಮೀಡಿಯಾ ವಿಷಯವನ್ನು ರಚಿಸಲು ಸಹಾಯ ಮಾಡುವ ಸಾಧನಗಳು.';
+
+  @override
+  String get contentCreatorSectionEyebrow => 'ಒಂದು ಸಾಧನವನ್ನು ಆಯ್ಕೆಮಾಡಿ';
+
+  @override
+  String get contentCreatorVisualAidDesc =>
+      'ನಿಮ್ಮ ಪಾಠಗಳಿಗಾಗಿ ಸರಳ ಗೆರೆ ಚಿತ್ರಗಳು ಮತ್ತು ರೇಖಾಚಿತ್ರಗಳನ್ನು ರಚಿಸಿ.';
+
+  @override
+  String get contentCreatorFieldTripDesc =>
+      'Google Earth ಬಳಸಿ ರೋಮಾಂಚಕ ವರ್ಚುವಲ್ ಪ್ರವಾಸಗಳನ್ನು ಯೋಜಿಸಿ.';
+
+  @override
+  String get contentCreatorVideoDesc =>
+      'ನಿಮ್ಮ ಪಾಠಗಳಿಗಾಗಿ ಆಯ್ದ ಶೈಕ್ಷಣಿಕ ವೀಡಿಯೊಗಳನ್ನು ಹುಡುಕಿ.';
+
+  @override
   String get visualAidTitle => 'ದೃಶ್ಯ ಸಹಾಯಕ';
 
   @override

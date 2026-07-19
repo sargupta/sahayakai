@@ -2284,6 +2284,31 @@ class AppLocalizationsPa extends AppLocalizations {
       'ਇਸ ਕਾਲ ਦਾ ਸਾਰ ਤਿਆਰ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ। ਗੱਲਬਾਤ ਹੇਠਾਂ ਦਿੱਤੀ ਗਈ ਹੈ।';
 
   @override
+  String get contentCreatorTitle => 'ਸਮੱਗਰੀ ਰਚਨਾ ਸਟੂਡੀਓ';
+
+  @override
+  String get contentCreatorTileSubtitle => 'ਆਪਣੀ ਜਮਾਤ ਲਈ ਮਲਟੀਮੀਡੀਆ ਬਣਾਓ';
+
+  @override
+  String get contentCreatorSubtitle =>
+      'ਤੁਹਾਡੀ ਜਮਾਤ ਲਈ ਦਿਲਚਸਪ ਮਲਟੀਮੀਡੀਆ ਸਮੱਗਰੀ ਬਣਾਉਣ ਵਿੱਚ ਮਦਦ ਕਰਨ ਵਾਲੇ ਸਾਧਨ।';
+
+  @override
+  String get contentCreatorSectionEyebrow => 'ਇੱਕ ਸਾਧਨ ਚੁਣੋ';
+
+  @override
+  String get contentCreatorVisualAidDesc =>
+      'ਆਪਣੇ ਪਾਠਾਂ ਲਈ ਸਧਾਰਨ ਰੇਖਾ-ਚਿੱਤਰ ਅਤੇ ਡਾਇਗ੍ਰਾਮ ਬਣਾਓ।';
+
+  @override
+  String get contentCreatorFieldTripDesc =>
+      'Google Earth ਦੀ ਵਰਤੋਂ ਕਰਕੇ ਦਿਲਚਸਪ ਵਰਚੁਅਲ ਸੈਰਾਂ ਦੀ ਯੋਜਨਾ ਬਣਾਓ।';
+
+  @override
+  String get contentCreatorVideoDesc =>
+      'ਆਪਣੇ ਪਾਠਾਂ ਲਈ ਚੁਣੇ ਹੋਏ ਵਿਦਿਅਕ ਵੀਡੀਓ ਲੱਭੋ।';
+
+  @override
   String get visualAidTitle => 'ਦ੍ਰਿਸ਼ ਸਹਾਇਕ';
 
   @override

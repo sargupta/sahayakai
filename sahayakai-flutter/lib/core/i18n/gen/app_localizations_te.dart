@@ -2287,6 +2287,32 @@ class AppLocalizationsTe extends AppLocalizations {
       'ఈ కాల్‌కు సారాంశాన్ని సిద్ధం చేయలేకపోయాము. సంభాషణ కింద ఉంది.';
 
   @override
+  String get contentCreatorTitle => 'కంటెంట్ సృష్టి స్టూడియో';
+
+  @override
+  String get contentCreatorTileSubtitle =>
+      'మీ తరగతికి మల్టీమీడియాను రూపొందించండి';
+
+  @override
+  String get contentCreatorSubtitle =>
+      'మీ తరగతి గదికి ఆకర్షణీయమైన మల్టీమీడియా కంటెంట్‌ను రూపొందించడంలో సహాయపడే సాధనాలు.';
+
+  @override
+  String get contentCreatorSectionEyebrow => 'ఒక సాధనాన్ని ఎంచుకోండి';
+
+  @override
+  String get contentCreatorVisualAidDesc =>
+      'మీ పాఠాల కోసం సరళమైన గీత చిత్రాలు మరియు రేఖాచిత్రాలను గీయండి.';
+
+  @override
+  String get contentCreatorFieldTripDesc =>
+      'Google Earth ఉపయోగించి ఉత్తేజకరమైన వర్చువల్ యాత్రలను ప్లాన్ చేయండి.';
+
+  @override
+  String get contentCreatorVideoDesc =>
+      'మీ పాఠాల కోసం ఎంపిక చేసిన విద్యా వీడియోలను కనుగొనండి.';
+
+  @override
   String get visualAidTitle => 'దృశ్య సహాయకం';
 
   @override

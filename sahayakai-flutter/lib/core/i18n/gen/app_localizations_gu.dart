@@ -2284,6 +2284,31 @@ class AppLocalizationsGu extends AppLocalizations {
       'આ કૉલનો સારાંશ તૈયાર કરી શકાયો નહીં. વાતચીત નીચે આપી છે.';
 
   @override
+  String get contentCreatorTitle => 'સામગ્રી નિર્માણ સ્ટુડિયો';
+
+  @override
+  String get contentCreatorTileSubtitle => 'તમારા વર્ગ માટે મલ્ટિમીડિયા બનાવો';
+
+  @override
+  String get contentCreatorSubtitle =>
+      'તમારા વર્ગખંડ માટે આકર્ષક મલ્ટિમીડિયા સામગ્રી બનાવવામાં મદદ કરતા સાધનો.';
+
+  @override
+  String get contentCreatorSectionEyebrow => 'એક સાધન પસંદ કરો';
+
+  @override
+  String get contentCreatorVisualAidDesc =>
+      'તમારા પાઠ માટે સરળ રેખાચિત્રો અને આકૃતિઓ બનાવો.';
+
+  @override
+  String get contentCreatorFieldTripDesc =>
+      'Google Earth નો ઉપયોગ કરીને રોમાંચક વર્ચ્યુઅલ પ્રવાસોનું આયોજન કરો.';
+
+  @override
+  String get contentCreatorVideoDesc =>
+      'તમારા પાઠ માટે પસંદ કરેલા શૈક્ષણિક વિડિઓ શોધો.';
+
+  @override
   String get visualAidTitle => 'દ્રશ્ય સહાયક';
 
   @override

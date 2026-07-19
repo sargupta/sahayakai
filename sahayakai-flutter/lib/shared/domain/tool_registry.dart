@@ -141,4 +141,16 @@ final List<ToolEntry> kToolRegistry = <ToolEntry>[
     title: (l10n) => l10n.virtualFieldTripTitle,
     subtitle: (l10n) => l10n.virtualFieldTripSubtitle,
   ),
+  // A HUB, not a leaf tool: opening it lands on the Content Creator Studio,
+  // which groups the three multimedia tools above and deep-links to each. It
+  // earns a registry entry so it is reachable from the Prep desk grid and the
+  // Create palette; a painter's palette glyph (unused elsewhere) marks it as a
+  // studio rather than one of the leaf tools.
+  ToolEntry(
+    id: 'content-creator',
+    icon: LucideIcons.palette,
+    route: Routes.contentCreator,
+    title: (l10n) => l10n.contentCreatorTitle,
+    subtitle: (l10n) => l10n.contentCreatorTileSubtitle,
+  ),
 ];

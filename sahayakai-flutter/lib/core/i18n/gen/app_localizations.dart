@@ -4082,6 +4082,48 @@ abstract class AppLocalizations {
   /// **'We couldn\'t prepare a summary for this call. The conversation is below.'**
   String get parentHotlineSummaryUnavailableBody;
 
+  /// Content Creator Studio hub — the page/app-bar title and the dashboard tool-tile name for the multimedia hub that groups Visual Aid, Virtual Field Trip and Video Storyteller.
+  ///
+  /// In en, this message translates to:
+  /// **'Content Creator Studio'**
+  String get contentCreatorTitle;
+
+  /// One-line description under the Content Creator tool name on the dashboard tile and the Create palette.
+  ///
+  /// In en, this message translates to:
+  /// **'Create multimedia for your class'**
+  String get contentCreatorTileSubtitle;
+
+  /// Intro line under the Content Creator Studio title, describing the hub.
+  ///
+  /// In en, this message translates to:
+  /// **'Tools to help you create engaging multimedia content for your classroom.'**
+  String get contentCreatorSubtitle;
+
+  /// Saffron section eyebrow above the three tool cards on the Content Creator Studio hub.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a tool'**
+  String get contentCreatorSectionEyebrow;
+
+  /// Content Creator hub card description for the Visual Aid Designer tool.
+  ///
+  /// In en, this message translates to:
+  /// **'Create simple line drawings and diagrams for your lessons.'**
+  String get contentCreatorVisualAidDesc;
+
+  /// Content Creator hub card description for the Virtual Field Trip tool.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan exciting virtual tours using Google Earth.'**
+  String get contentCreatorFieldTripDesc;
+
+  /// Content Creator hub card description for the Video Storyteller tool.
+  ///
+  /// In en, this message translates to:
+  /// **'Discover curated educational videos for your lessons.'**
+  String get contentCreatorVideoDesc;
+
   /// Visual Aid Designer tool name (dashboard tile, palette, screen app bar).
   ///
   /// In en, this message translates to:

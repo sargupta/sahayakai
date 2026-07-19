@@ -2290,6 +2290,32 @@ class AppLocalizationsTa extends AppLocalizations {
       'இந்த அழைப்புக்கான சுருக்கத்தைத் தயாரிக்க முடியவில்லை. உரையாடல் கீழே உள்ளது.';
 
   @override
+  String get contentCreatorTitle => 'உள்ளடக்க உருவாக்க ஸ்டுடியோ';
+
+  @override
+  String get contentCreatorTileSubtitle =>
+      'உங்கள் வகுப்பிற்கான மல்டிமீடியாவை உருவாக்குங்கள்';
+
+  @override
+  String get contentCreatorSubtitle =>
+      'உங்கள் வகுப்பறைக்கு கவர்ச்சிகரமான மல்டிமீடியா உள்ளடக்கத்தை உருவாக்க உதவும் கருவிகள்.';
+
+  @override
+  String get contentCreatorSectionEyebrow => 'ஒரு கருவியைத் தேர்ந்தெடுக்கவும்';
+
+  @override
+  String get contentCreatorVisualAidDesc =>
+      'உங்கள் பாடங்களுக்கு எளிய கோட்டுப் படங்களையும் வரைபடங்களையும் உருவாக்குங்கள்.';
+
+  @override
+  String get contentCreatorFieldTripDesc =>
+      'Google Earth-ஐப் பயன்படுத்தி சுவாரஸ்யமான மெய்நிகர் சுற்றுலாக்களைத் திட்டமிடுங்கள்.';
+
+  @override
+  String get contentCreatorVideoDesc =>
+      'உங்கள் பாடங்களுக்கு தேர்ந்தெடுக்கப்பட்ட கல்வி வீடியோக்களைக் கண்டறியுங்கள்.';
+
+  @override
   String get visualAidTitle => 'காட்சி உதவி';
 
   @override

@@ -2291,6 +2291,32 @@ class AppLocalizationsMl extends AppLocalizations {
       'ഈ കോളിന്റെ സംഗ്രഹം തയ്യാറാക്കാനായില്ല. സംഭാഷണം താഴെ നൽകിയിരിക്കുന്നു.';
 
   @override
+  String get contentCreatorTitle => 'ഉള്ളടക്ക നിർമ്മാണ സ്റ്റുഡിയോ';
+
+  @override
+  String get contentCreatorTileSubtitle =>
+      'നിങ്ങളുടെ ക്ലാസിനായി മൾട്ടിമീഡിയ സൃഷ്ടിക്കുക';
+
+  @override
+  String get contentCreatorSubtitle =>
+      'നിങ്ങളുടെ ക്ലാസ് മുറിക്കായി ആകർഷകമായ മൾട്ടിമീഡിയ ഉള്ളടക്കം സൃഷ്ടിക്കാൻ സഹായിക്കുന്ന ഉപകരണങ്ങൾ.';
+
+  @override
+  String get contentCreatorSectionEyebrow => 'ഒരു ഉപകരണം തിരഞ്ഞെടുക്കുക';
+
+  @override
+  String get contentCreatorVisualAidDesc =>
+      'നിങ്ങളുടെ പാഠങ്ങൾക്കായി ലളിതമായ വരച്ചിത്രങ്ങളും ഡയഗ്രമുകളും സൃഷ്ടിക്കുക.';
+
+  @override
+  String get contentCreatorFieldTripDesc =>
+      'Google Earth ഉപയോഗിച്ച് ആവേശകരമായ വെർച്വൽ പര്യടനങ്ങൾ ആസൂത്രണം ചെയ്യുക.';
+
+  @override
+  String get contentCreatorVideoDesc =>
+      'നിങ്ങളുടെ പാഠങ്ങൾക്കായി തിരഞ്ഞെടുത്ത വിദ്യാഭ്യാസ വീഡിയോകൾ കണ്ടെത്തുക.';
+
+  @override
   String get visualAidTitle => 'ദൃശ്യ സഹായി';
 
   @override

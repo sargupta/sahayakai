@@ -2286,6 +2286,32 @@ class AppLocalizationsHi extends AppLocalizations {
       'इस कॉल का सारांश तैयार नहीं हो सका। बातचीत नीचे दी गई है।';
 
   @override
+  String get contentCreatorTitle => 'सामग्री निर्माण स्टूडियो';
+
+  @override
+  String get contentCreatorTileSubtitle =>
+      'अपनी कक्षा के लिए मल्टीमीडिया बनाएँ';
+
+  @override
+  String get contentCreatorSubtitle =>
+      'आपकी कक्षा के लिए आकर्षक मल्टीमीडिया सामग्री बनाने में मदद करने वाले उपकरण।';
+
+  @override
+  String get contentCreatorSectionEyebrow => 'एक उपकरण चुनें';
+
+  @override
+  String get contentCreatorVisualAidDesc =>
+      'अपने पाठों के लिए सरल रेखाचित्र और आरेख बनाएँ।';
+
+  @override
+  String get contentCreatorFieldTripDesc =>
+      'Google Earth का उपयोग करके रोमांचक वर्चुअल सैर की योजना बनाएँ।';
+
+  @override
+  String get contentCreatorVideoDesc =>
+      'अपने पाठों के लिए चयनित शैक्षिक वीडियो खोजें।';
+
+  @override
   String get visualAidTitle => 'दृश्य सहायक';
 
   @override

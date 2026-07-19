@@ -22,7 +22,7 @@ import '../onboarding/onboarding_fixtures.dart';
 /// therefore keys off `create-palette-<id>` (unique to a palette row) rather
 /// than the tool name, which would match the tile behind the sheet too.
 
-/// The 13 tools the build ships, by stable id.
+/// The 14 tools the build ships, by stable id.
 const Set<String> _expectedIds = {
   'lesson-plan',
   'quiz',
@@ -37,6 +37,10 @@ const Set<String> _expectedIds = {
   'visual-aid',
   'video-storyteller',
   'virtual-field-trip',
+  // U-PD2 — the Content Creator Studio hub. A registry entry (not a leaf tool),
+  // so it lists on the Prep desk grid AND in this palette; its route opens the
+  // no-backend hub that groups the three multimedia tools above.
+  'content-creator',
 };
 
 Key _rowKey(String id) => ValueKey('create-palette-$id');
@@ -70,9 +74,9 @@ void main() {
   });
 
   group('the shared registry', () {
-    test('lists all thirteen built tools with valid routes and Lucide icons',
+    test('lists all fourteen built tools with valid routes and Lucide icons',
         () {
-      expect(kToolRegistry, hasLength(13));
+      expect(kToolRegistry, hasLength(14));
       expect(kToolRegistry.map((t) => t.id).toSet(), _expectedIds);
 
       const registered = {
@@ -89,6 +93,7 @@ void main() {
         Routes.visualAid,
         Routes.videoStoryteller,
         Routes.virtualFieldTrip,
+        Routes.contentCreator,
       };
       for (final tool in kToolRegistry) {
         expect(tool.route, isIn(registered), reason: '${tool.id} route');
@@ -101,8 +106,8 @@ void main() {
       }
 
       // No two tools collide on a route or an icon.
-      expect(kToolRegistry.map((t) => t.route).toSet(), hasLength(13));
-      expect(kToolRegistry.map((t) => t.icon.codePoint).toSet(), hasLength(13));
+      expect(kToolRegistry.map((t) => t.route).toSet(), hasLength(14));
+      expect(kToolRegistry.map((t) => t.icon.codePoint).toSet(), hasLength(14));
     });
 
     testWidgets('every tool has a resolving, distinct localized name',

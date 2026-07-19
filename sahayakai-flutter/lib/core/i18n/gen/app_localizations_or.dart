@@ -2285,6 +2285,32 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଏହି କଲ୍ ପାଇଁ ସାରାଂଶ ପ୍ରସ୍ତୁତ ହୋଇପାରିଲା ନାହିଁ। କଥୋପକଥନ ତଳେ ଅଛି।';
 
   @override
+  String get contentCreatorTitle => 'ବିଷୟବସ୍ତୁ ନିର୍ମାଣ ଷ୍ଟୁଡିଓ';
+
+  @override
+  String get contentCreatorTileSubtitle =>
+      'ଆପଣଙ୍କ ଶ୍ରେଣୀ ପାଇଁ ମଲ୍ଟିମିଡିଆ ତିଆରି କରନ୍ତୁ';
+
+  @override
+  String get contentCreatorSubtitle =>
+      'ଆପଣଙ୍କ ଶ୍ରେଣୀକକ୍ଷ ପାଇଁ ଆକର୍ଷଣୀୟ ମଲ୍ଟିମିଡିଆ ବିଷୟବସ୍ତୁ ତିଆରି କରିବାରେ ସାହାଯ୍ୟ କରୁଥିବା ଉପକରଣ।';
+
+  @override
+  String get contentCreatorSectionEyebrow => 'ଏକ ଉପକରଣ ବାଛନ୍ତୁ';
+
+  @override
+  String get contentCreatorVisualAidDesc =>
+      'ଆପଣଙ୍କ ପାଠ ପାଇଁ ସରଳ ରେଖାଚିତ୍ର ଓ ଆରେଖ ତିଆରି କରନ୍ତୁ।';
+
+  @override
+  String get contentCreatorFieldTripDesc =>
+      'Google Earth ବ୍ୟବହାର କରି ରୋମାଞ୍ଚକର ଭର୍ଚୁଆଲ ଭ୍ରମଣର ଯୋଜନା କରନ୍ତୁ।';
+
+  @override
+  String get contentCreatorVideoDesc =>
+      'ଆପଣଙ୍କ ପାଠ ପାଇଁ ବଛା ଶିକ୍ଷାମୂଳକ ଭିଡିଓ ଖୋଜନ୍ତୁ।';
+
+  @override
   String get visualAidTitle => 'ଦୃଶ୍ୟ ସହାୟକ';
 
   @override

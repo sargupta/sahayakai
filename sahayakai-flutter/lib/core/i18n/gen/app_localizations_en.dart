@@ -2283,6 +2283,31 @@ class AppLocalizationsEn extends AppLocalizations {
       'We couldn\'t prepare a summary for this call. The conversation is below.';
 
   @override
+  String get contentCreatorTitle => 'Content Creator Studio';
+
+  @override
+  String get contentCreatorTileSubtitle => 'Create multimedia for your class';
+
+  @override
+  String get contentCreatorSubtitle =>
+      'Tools to help you create engaging multimedia content for your classroom.';
+
+  @override
+  String get contentCreatorSectionEyebrow => 'Choose a tool';
+
+  @override
+  String get contentCreatorVisualAidDesc =>
+      'Create simple line drawings and diagrams for your lessons.';
+
+  @override
+  String get contentCreatorFieldTripDesc =>
+      'Plan exciting virtual tours using Google Earth.';
+
+  @override
+  String get contentCreatorVideoDesc =>
+      'Discover curated educational videos for your lessons.';
+
+  @override
   String get visualAidTitle => 'Visual Aid';
 
   @override

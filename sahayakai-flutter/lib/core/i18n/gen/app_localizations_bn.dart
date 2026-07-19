@@ -2286,6 +2286,32 @@ class AppLocalizationsBn extends AppLocalizations {
       'এই কলের সারসংক্ষেপ তৈরি করা যায়নি। কথোপকথনটি নিচে দেওয়া হলো।';
 
   @override
+  String get contentCreatorTitle => 'কনটেন্ট তৈরির স্টুডিও';
+
+  @override
+  String get contentCreatorTileSubtitle =>
+      'আপনার ক্লাসের জন্য মাল্টিমিডিয়া তৈরি করুন';
+
+  @override
+  String get contentCreatorSubtitle =>
+      'আপনার শ্রেণিকক্ষের জন্য আকর্ষণীয় মাল্টিমিডিয়া কনটেন্ট তৈরিতে সাহায্য করার সরঞ্জাম।';
+
+  @override
+  String get contentCreatorSectionEyebrow => 'একটি সরঞ্জাম বেছে নিন';
+
+  @override
+  String get contentCreatorVisualAidDesc =>
+      'আপনার পাঠের জন্য সরল রেখাচিত্র ও ডায়াগ্রাম তৈরি করুন।';
+
+  @override
+  String get contentCreatorFieldTripDesc =>
+      'Google Earth ব্যবহার করে আকর্ষণীয় ভার্চুয়াল ভ্রমণের পরিকল্পনা করুন।';
+
+  @override
+  String get contentCreatorVideoDesc =>
+      'আপনার পাঠের জন্য বাছাই করা শিক্ষামূলক ভিডিও খুঁজে নিন।';
+
+  @override
   String get visualAidTitle => 'চিত্র সহায়ক';
 
   @override

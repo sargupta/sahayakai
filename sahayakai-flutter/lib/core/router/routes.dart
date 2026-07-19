@@ -76,6 +76,12 @@ class Routes {
   /// budget elapses and the trip finishes saving to My Library server-side).
   static const String virtualFieldTrip = '/virtual-field-trip';
 
+  /// Content Creator Studio (U-PD2). A NO-BACKEND hub that groups the three
+  /// multimedia tools — Visual Aid Designer, Virtual Field Trip and Video
+  /// Storyteller — as tappable cards and deep-links to each. It mirrors the web
+  /// `content-creator/page.tsx`; it has no endpoint of its own.
+  static const String contentCreator = '/content-creator';
+
   /// Parent Message composer. Path mirrors the web's `/messages` composer
   /// (SCREEN_INVENTORY P1.5); the endpoint is `POST /api/ai/parent-message`.
   static const String parentMessage = '/messages';

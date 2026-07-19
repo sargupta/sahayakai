@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../features/assess_assignment/presentation/assess_assignment_screen.dart';
+import '../../features/content_creator/presentation/content_creator_screen.dart';
 import '../../features/dashboard/presentation/app_shell.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/exam_paper/presentation/exam_paper_screen.dart';
@@ -170,6 +171,13 @@ GoRouter appRouter(Ref ref) {
         // the palette / dashboard, no VIDYA prefill.
         path: Routes.virtualFieldTrip,
         builder: (context, state) => const VirtualFieldTripScreen(),
+      ),
+      GoRoute(
+        // U-PD2. The Content Creator Studio hub — a no-backend navigation
+        // screen that groups the three multimedia tools. A plain open from the
+        // palette / dashboard, no VIDYA prefill.
+        path: Routes.contentCreator,
+        builder: (context, state) => const ContentCreatorScreen(),
       ),
       GoRoute(
         path: Routes.settings,
