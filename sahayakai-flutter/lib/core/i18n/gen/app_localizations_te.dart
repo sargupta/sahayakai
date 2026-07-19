@@ -3164,4 +3164,30 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get staffroomConnectConnected => 'ఇప్పటికే కనెక్ట్ అయ్యారు';
+
+  @override
+  String get staffroomChatTitle => 'స్టాఫ్‌రూమ్';
+
+  @override
+  String get staffroomChatEntryBody =>
+      'భారతదేశం అంతటా ఉన్న ఉపాధ్యాయులతో చాట్ చేయండి';
+
+  @override
+  String get staffroomChatSignInTitle => 'స్టాఫ్‌రూమ్‌లో చేరండి';
+
+  @override
+  String get staffroomChatSignInBody =>
+      'స్టాఫ్‌రూమ్‌లో చేరడానికి సైన్ ఇన్ చేయండి';
+
+  @override
+  String get staffroomChatEmptyTitle => 'ఇంకా సందేశాలు లేవు';
+
+  @override
+  String get staffroomChatEmptyBody => 'ముందుగా నమస్కారం చెప్పండి.';
+
+  @override
+  String get staffroomChatAiBadge => 'AI ఉపాధ్యాయుడు';
+
+  @override
+  String get staffroomGroupChatEntry => 'గ్రూప్ చాట్';
 }

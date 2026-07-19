@@ -17,6 +17,7 @@ import '../domain/community_post.dart';
 import '../domain/group.dart';
 import '../domain/staffroom_results.dart';
 import '../domain/teacher.dart';
+import 'widgets/chat_entry_tile.dart';
 import 'widgets/feed_item_view.dart';
 import 'widgets/group_chip.dart';
 import 'widgets/teacher_suggestion_card.dart';
@@ -145,6 +146,15 @@ class _StaffroomReadyState extends ConsumerState<_StaffroomReady> {
         padding: AppSpacing.pagePadding,
         children: [
           const _StaffroomHero(),
+          const SizedBox(height: AppSpacing.space5),
+
+          // The Staff Room chat entry (SPEC §A3.1) — the community-wide live room.
+          ChatEntryTile(
+            title: l10n.staffroomChatTitle,
+            subtitle: l10n.staffroomChatEntryBody,
+            feature: true,
+            onTap: () => context.push(Routes.staffRoomChat),
+          ),
           const SizedBox(height: AppSpacing.space6),
 
           // Your groups.

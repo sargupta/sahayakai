@@ -390,5 +390,13 @@
   "staffroomConnect": "ਕਨੈਕਟ ਕਰੋ",
   "staffroomConnectSent": "ਬੇਨਤੀ ਭੇਜੀ ਗਈ",
   "staffroomConnectPending": "ਬੇਨਤੀ ਪਹਿਲਾਂ ਹੀ ਬਕਾਇਆ ਹੈ",
-  "staffroomConnectConnected": "ਪਹਿਲਾਂ ਹੀ ਕਨੈਕਟਡ"
+  "staffroomConnectConnected": "ਪਹਿਲਾਂ ਹੀ ਕਨੈਕਟਡ",
+  "staffroomChatTitle": "ਸਟਾਫ਼ਰੂਮ",
+  "staffroomChatEntryBody": "ਪੂਰੇ ਭਾਰਤ ਦੇ ਅਧਿਆਪਕਾਂ ਨਾਲ ਗੱਲਬਾਤ ਕਰੋ",
+  "staffroomChatSignInTitle": "ਸਟਾਫ਼ਰੂਮ ਵਿੱਚ ਸ਼ਾਮਲ ਹੋਵੋ",
+  "staffroomChatSignInBody": "ਸਟਾਫ਼ਰੂਮ ਵਿੱਚ ਸ਼ਾਮਲ ਹੋਣ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ",
+  "staffroomChatEmptyTitle": "ਹਾਲੇ ਤੱਕ ਕੋਈ ਸੁਨੇਹਾ ਨਹੀਂ",
+  "staffroomChatEmptyBody": "ਸਭ ਤੋਂ ਪਹਿਲਾਂ ਸਤ ਸ੍ਰੀ ਅਕਾਲ ਕਹੋ।",
+  "staffroomChatAiBadge": "AI ਅਧਿਆਪਕ",
+  "staffroomGroupChatEntry": "ਗਰੁੱਪ ਚੈਟ"
 }

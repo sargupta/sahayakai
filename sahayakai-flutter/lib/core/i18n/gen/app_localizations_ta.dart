@@ -3179,4 +3179,29 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get staffroomConnectConnected => 'ஏற்கனவே இணைக்கப்பட்டுள்ளது';
+
+  @override
+  String get staffroomChatTitle => 'ஸ்டாஃப்ரூம்';
+
+  @override
+  String get staffroomChatEntryBody =>
+      'இந்தியா முழுவதும் உள்ள ஆசிரியர்களுடன் அரட்டையடிக்கவும்';
+
+  @override
+  String get staffroomChatSignInTitle => 'ஸ்டாஃப்ரூமில் இணையுங்கள்';
+
+  @override
+  String get staffroomChatSignInBody => 'ஸ்டாஃப்ரூமில் இணைய உள்நுழையவும்';
+
+  @override
+  String get staffroomChatEmptyTitle => 'இதுவரை செய்திகள் இல்லை';
+
+  @override
+  String get staffroomChatEmptyBody => 'முதலில் வணக்கம் சொல்லுங்கள்.';
+
+  @override
+  String get staffroomChatAiBadge => 'AI ஆசிரியர்';
+
+  @override
+  String get staffroomGroupChatEntry => 'குழு அரட்டை';
 }

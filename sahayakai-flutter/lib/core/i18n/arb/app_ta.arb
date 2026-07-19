@@ -390,5 +390,13 @@
   "staffroomConnect": "தொடர்பு கொள்",
   "staffroomConnectSent": "கோரிக்கை அனுப்பப்பட்டது",
   "staffroomConnectPending": "கோரிக்கை ஏற்கனவே நிலுவையில் உள்ளது",
-  "staffroomConnectConnected": "ஏற்கனவே இணைக்கப்பட்டுள்ளது"
+  "staffroomConnectConnected": "ஏற்கனவே இணைக்கப்பட்டுள்ளது",
+  "staffroomChatTitle": "ஸ்டாஃப்ரூம்",
+  "staffroomChatEntryBody": "இந்தியா முழுவதும் உள்ள ஆசிரியர்களுடன் அரட்டையடிக்கவும்",
+  "staffroomChatSignInTitle": "ஸ்டாஃப்ரூமில் இணையுங்கள்",
+  "staffroomChatSignInBody": "ஸ்டாஃப்ரூமில் இணைய உள்நுழையவும்",
+  "staffroomChatEmptyTitle": "இதுவரை செய்திகள் இல்லை",
+  "staffroomChatEmptyBody": "முதலில் வணக்கம் சொல்லுங்கள்.",
+  "staffroomChatAiBadge": "AI ஆசிரியர்",
+  "staffroomGroupChatEntry": "குழு அரட்டை"
 }

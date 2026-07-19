@@ -3163,4 +3163,29 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get staffroomConnectConnected => 'ପୂର୍ବରୁ ସଂଯୁକ୍ତ';
+
+  @override
+  String get staffroomChatTitle => 'ଷ୍ଟାଫରୁମ';
+
+  @override
+  String get staffroomChatEntryBody =>
+      'ସାରା ଭାରତର ଶିକ୍ଷକମାନଙ୍କ ସହିତ ଚାଟ୍ କରନ୍ତୁ';
+
+  @override
+  String get staffroomChatSignInTitle => 'ଷ୍ଟାଫରୁମରେ ଯୋଗ ଦିଅନ୍ତୁ';
+
+  @override
+  String get staffroomChatSignInBody => 'ଷ୍ଟାଫରୁମରେ ଯୋଗ ଦେବାକୁ ସାଇନ ଇନ କରନ୍ତୁ';
+
+  @override
+  String get staffroomChatEmptyTitle => 'ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ସନ୍ଦେଶ ନାହିଁ';
+
+  @override
+  String get staffroomChatEmptyBody => 'ସର୍ବପ୍ରଥମେ ନମସ୍କାର କୁହନ୍ତୁ।';
+
+  @override
+  String get staffroomChatAiBadge => 'AI ଶିକ୍ଷକ';
+
+  @override
+  String get staffroomGroupChatEntry => 'ଗ୍ରୁପ ଚାଟ୍';
 }

@@ -3158,4 +3158,29 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get staffroomConnectConnected => 'पहले से कनेक्टेड';
+
+  @override
+  String get staffroomChatTitle => 'स्टाफ़रूम';
+
+  @override
+  String get staffroomChatEntryBody => 'पूरे भारत के शिक्षकों से बातचीत करें';
+
+  @override
+  String get staffroomChatSignInTitle => 'स्टाफ़रूम से जुड़ें';
+
+  @override
+  String get staffroomChatSignInBody =>
+      'स्टाफ़रूम से जुड़ने के लिए साइन इन करें';
+
+  @override
+  String get staffroomChatEmptyTitle => 'अभी तक कोई संदेश नहीं';
+
+  @override
+  String get staffroomChatEmptyBody => 'सबसे पहले नमस्ते कहें।';
+
+  @override
+  String get staffroomChatAiBadge => 'AI शिक्षक';
+
+  @override
+  String get staffroomGroupChatEntry => 'समूह चैट';
 }

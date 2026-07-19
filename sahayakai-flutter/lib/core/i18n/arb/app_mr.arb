@@ -390,5 +390,13 @@
   "staffroomConnect": "कनेक्ट करा",
   "staffroomConnectSent": "विनंती पाठवली",
   "staffroomConnectPending": "विनंती आधीच प्रलंबित आहे",
-  "staffroomConnectConnected": "आधीच कनेक्टेड"
+  "staffroomConnectConnected": "आधीच कनेक्टेड",
+  "staffroomChatTitle": "स्टाफरूम",
+  "staffroomChatEntryBody": "संपूर्ण भारतातील शिक्षकांशी गप्पा मारा",
+  "staffroomChatSignInTitle": "स्टाफरूममध्ये सामील व्हा",
+  "staffroomChatSignInBody": "स्टाफरूममध्ये सामील होण्यासाठी साइन इन करा",
+  "staffroomChatEmptyTitle": "अद्याप कोणतेही संदेश नाहीत",
+  "staffroomChatEmptyBody": "सर्वात आधी नमस्कार म्हणा.",
+  "staffroomChatAiBadge": "AI शिक्षक",
+  "staffroomGroupChatEntry": "ग्रुप चॅट"
 }

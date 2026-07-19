@@ -3334,5 +3334,21 @@
   "staffroomConnectPending": "Request already pending",
   "@staffroomConnectPending": {"description": "Toast when a connection request is already pending."},
   "staffroomConnectConnected": "Already connected",
-  "@staffroomConnectConnected": {"description": "Toast when already mutually connected."}
+  "@staffroomConnectConnected": {"description": "Toast when already mutually connected."},
+  "staffroomChatTitle": "Staff room",
+  "@staffroomChatTitle": {"description": "Staff Room chat screen app-bar title and the home entry-tile title (the live community chat room)."},
+  "staffroomChatEntryBody": "Chat with teachers across Bharat",
+  "@staffroomChatEntryBody": {"description": "Subtitle on the Staff Room entry tile in the staffroom home / Network hub."},
+  "staffroomChatSignInTitle": "Join the staff room",
+  "@staffroomChatSignInTitle": {"description": "Staff Room chat signed-out / awaiting-Firebase EmptyView title."},
+  "staffroomChatSignInBody": "Sign in to join the staff room",
+  "@staffroomChatSignInBody": {"description": "Staff Room chat signed-out / awaiting-Firebase EmptyView body (Firebase-gated on-device)."},
+  "staffroomChatEmptyTitle": "No messages yet",
+  "@staffroomChatEmptyTitle": {"description": "Staff Room chat ready-but-empty EmptyView title."},
+  "staffroomChatEmptyBody": "Be the first to say hello.",
+  "@staffroomChatEmptyBody": {"description": "Staff Room chat ready-but-empty EmptyView body."},
+  "staffroomChatAiBadge": "AI teacher",
+  "@staffroomChatAiBadge": {"description": "Honest badge on an AI persona (persona-pulse) chat message — labels it AI, never posing as a real teacher."},
+  "staffroomGroupChatEntry": "Group chat",
+  "@staffroomGroupChatEntry": {"description": "Group-detail entry that opens the group's live chat."}
 }

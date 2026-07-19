@@ -25,9 +25,11 @@ import '../../features/quiz_generator/presentation/quiz_generator_screen.dart';
 import '../../features/rubric_generator/presentation/rubric_generator_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
+import '../../features/staffroom/data/chat_stream_provider.dart';
 import '../../features/staffroom/domain/group.dart';
 import '../../features/staffroom/presentation/group_detail_screen.dart';
 import '../../features/staffroom/presentation/network_hub_screen.dart';
+import '../../features/staffroom/presentation/staff_room_chat_screen.dart';
 import '../../features/staffroom/presentation/staffroom_screen.dart';
 import '../../features/teacher_training/presentation/teacher_training_screen.dart';
 import '../../features/video_storyteller/presentation/video_storyteller_screen.dart';
@@ -192,6 +194,23 @@ GoRouter appRouter(Ref ref) {
         builder: (context, state) => GroupDetailScreen(
           groupId: state.pathParameters['id']!,
           group: state.extra is Group ? state.extra! as Group : null,
+        ),
+      ),
+      GoRoute(
+        // The global Staff Room chat (U-SI3) — the community-wide live room.
+        // Pushed from the Staffroom home / Network hub Staff Room entry.
+        path: Routes.staffRoomChat,
+        builder: (context, state) =>
+            const StaffRoomChatScreen(room: ChatRoom.community()),
+      ),
+      GoRoute(
+        // One group's chat (U-SI3). Group detail hands the group name through
+        // `extra` so the app bar paints instantly; a cold deep link carries only
+        // the `:id` and the title resolves from the group read.
+        path: Routes.groupChatPattern,
+        builder: (context, state) => StaffRoomChatScreen(
+          room: ChatRoom.group(state.pathParameters['id']!),
+          title: state.extra is String ? state.extra! as String : null,
         ),
       ),
       GoRoute(

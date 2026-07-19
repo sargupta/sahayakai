@@ -5473,6 +5473,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Already connected'**
   String get staffroomConnectConnected;
+
+  /// Staff Room chat screen app-bar title and the home entry-tile title (the live community chat room).
+  ///
+  /// In en, this message translates to:
+  /// **'Staff room'**
+  String get staffroomChatTitle;
+
+  /// Subtitle on the Staff Room entry tile in the staffroom home / Network hub.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat with teachers across Bharat'**
+  String get staffroomChatEntryBody;
+
+  /// Staff Room chat signed-out / awaiting-Firebase EmptyView title.
+  ///
+  /// In en, this message translates to:
+  /// **'Join the staff room'**
+  String get staffroomChatSignInTitle;
+
+  /// Staff Room chat signed-out / awaiting-Firebase EmptyView body (Firebase-gated on-device).
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to join the staff room'**
+  String get staffroomChatSignInBody;
+
+  /// Staff Room chat ready-but-empty EmptyView title.
+  ///
+  /// In en, this message translates to:
+  /// **'No messages yet'**
+  String get staffroomChatEmptyTitle;
+
+  /// Staff Room chat ready-but-empty EmptyView body.
+  ///
+  /// In en, this message translates to:
+  /// **'Be the first to say hello.'**
+  String get staffroomChatEmptyBody;
+
+  /// Honest badge on an AI persona (persona-pulse) chat message — labels it AI, never posing as a real teacher.
+  ///
+  /// In en, this message translates to:
+  /// **'AI teacher'**
+  String get staffroomChatAiBadge;
+
+  /// Group-detail entry that opens the group's live chat.
+  ///
+  /// In en, this message translates to:
+  /// **'Group chat'**
+  String get staffroomGroupChatEntry;
 }
 
 class _AppLocalizationsDelegate

@@ -390,5 +390,13 @@
   "staffroomConnect": "കണക്റ്റ് ചെയ്യുക",
   "staffroomConnectSent": "അഭ്യർത്ഥന അയച്ചു",
   "staffroomConnectPending": "അഭ്യർത്ഥന ഇതിനകം തീർപ്പാക്കാതെയുണ്ട്",
-  "staffroomConnectConnected": "ഇതിനകം കണക്റ്റ് ചെയ്തിരിക്കുന്നു"
+  "staffroomConnectConnected": "ഇതിനകം കണക്റ്റ് ചെയ്തിരിക്കുന്നു",
+  "staffroomChatTitle": "സ്റ്റാഫ്‌റൂം",
+  "staffroomChatEntryBody": "ഭാരതത്തിലുടനീളമുള്ള അധ്യാപകരുമായി ചാറ്റ് ചെയ്യുക",
+  "staffroomChatSignInTitle": "സ്റ്റാഫ്‌റൂമിൽ ചേരുക",
+  "staffroomChatSignInBody": "സ്റ്റാഫ്‌റൂമിൽ ചേരാൻ സൈൻ ഇൻ ചെയ്യുക",
+  "staffroomChatEmptyTitle": "ഇതുവരെ സന്ദേശങ്ങളൊന്നുമില്ല",
+  "staffroomChatEmptyBody": "ആദ്യമായി ഒരു അഭിവാദ്യം പറയൂ.",
+  "staffroomChatAiBadge": "AI അധ്യാപകൻ",
+  "staffroomGroupChatEntry": "ഗ്രൂപ്പ് ചാറ്റ്"
 }

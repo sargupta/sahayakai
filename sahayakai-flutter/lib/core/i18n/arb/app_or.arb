@@ -390,5 +390,13 @@
   "staffroomConnect": "ସଂଯୋଗ କରନ୍ତୁ",
   "staffroomConnectSent": "ଅନୁରୋଧ ପଠାଗଲା",
   "staffroomConnectPending": "ଅନୁରୋଧ ପୂର୍ବରୁ ବିଚାରାଧୀନ",
-  "staffroomConnectConnected": "ପୂର୍ବରୁ ସଂଯୁକ୍ତ"
+  "staffroomConnectConnected": "ପୂର୍ବରୁ ସଂଯୁକ୍ତ",
+  "staffroomChatTitle": "ଷ୍ଟାଫରୁମ",
+  "staffroomChatEntryBody": "ସାରା ଭାରତର ଶିକ୍ଷକମାନଙ୍କ ସହିତ ଚାଟ୍ କରନ୍ତୁ",
+  "staffroomChatSignInTitle": "ଷ୍ଟାଫରୁମରେ ଯୋଗ ଦିଅନ୍ତୁ",
+  "staffroomChatSignInBody": "ଷ୍ଟାଫରୁମରେ ଯୋଗ ଦେବାକୁ ସାଇନ ଇନ କରନ୍ତୁ",
+  "staffroomChatEmptyTitle": "ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ସନ୍ଦେଶ ନାହିଁ",
+  "staffroomChatEmptyBody": "ସର୍ବପ୍ରଥମେ ନମସ୍କାର କୁହନ୍ତୁ।",
+  "staffroomChatAiBadge": "AI ଶିକ୍ଷକ",
+  "staffroomGroupChatEntry": "ଗ୍ରୁପ ଚାଟ୍"
 }

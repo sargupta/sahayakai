@@ -3172,4 +3172,29 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get staffroomConnectConnected => 'ഇതിനകം കണക്റ്റ് ചെയ്തിരിക്കുന്നു';
+
+  @override
+  String get staffroomChatTitle => 'സ്റ്റാഫ്‌റൂം';
+
+  @override
+  String get staffroomChatEntryBody =>
+      'ഭാരതത്തിലുടനീളമുള്ള അധ്യാപകരുമായി ചാറ്റ് ചെയ്യുക';
+
+  @override
+  String get staffroomChatSignInTitle => 'സ്റ്റാഫ്‌റൂമിൽ ചേരുക';
+
+  @override
+  String get staffroomChatSignInBody => 'സ്റ്റാഫ്‌റൂമിൽ ചേരാൻ സൈൻ ഇൻ ചെയ്യുക';
+
+  @override
+  String get staffroomChatEmptyTitle => 'ഇതുവരെ സന്ദേശങ്ങളൊന്നുമില്ല';
+
+  @override
+  String get staffroomChatEmptyBody => 'ആദ്യമായി ഒരു അഭിവാദ്യം പറയൂ.';
+
+  @override
+  String get staffroomChatAiBadge => 'AI അധ്യാപകൻ';
+
+  @override
+  String get staffroomGroupChatEntry => 'ഗ്രൂപ്പ് ചാറ്റ്';
 }

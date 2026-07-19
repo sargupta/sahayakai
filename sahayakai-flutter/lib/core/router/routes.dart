@@ -142,6 +142,24 @@ class Routes {
   static String groupDetailPath(String groupId) =>
       '$groupDetail/${Uri.encodeComponent(groupId)}';
 
+  /// The global Staff Room chat (Pillar 04 / U-SI3) — the community-wide live
+  /// chat room (`community_chat`). Pushed from the Staffroom home / Network hub
+  /// Staff Room entry.
+  static const String staffRoomChat = '/staffroom/chat';
+
+  /// One group's chat (U-SI3) — `groups/{id}/chat`. Pushed from Group detail's
+  /// "Group chat" entry (which hands the group name through `extra` so the app
+  /// bar paints instantly).
+  static const String groupChat = '/staffroom/group';
+
+  /// The route pattern (`.../:id/chat`) registered in the router.
+  static const String groupChatPattern = '$groupChat/:id/chat';
+
+  /// The concrete group-chat path for [groupId], percent-encoded so a server id
+  /// is path-safe (and a future deep link resolves from the `:id` alone).
+  static String groupChatPath(String groupId) =>
+      '$groupChat/${Uri.encodeComponent(groupId)}/chat';
+
   /// Routes reachable while signed out. `/try-call` (anon lead magnet) will
   /// join this set when that screen lands.
   static const Set<String> publicPaths = {splash, login};

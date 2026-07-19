@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/l10n_ext.dart';
+import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/ai_text.dart';
 import '../../../shared/widgets/app_skeleton.dart';
@@ -10,6 +12,7 @@ import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../data/staffroom_providers.dart';
 import '../domain/group.dart';
+import 'widgets/chat_entry_tile.dart';
 import 'widgets/feed_post_card.dart';
 import 'widgets/join_button.dart';
 
@@ -143,6 +146,19 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
               () => _memberDelta = (joined && !isMember) ? 1 : 0,
             ),
           ),
+          // The group's live chat — member-gated (non-members see the locked
+          // preview below and must join first, mirroring the chat's
+          // `firestore.rules` membership gate).
+          if (isMember) ...[
+            const SizedBox(height: AppSpacing.space4),
+            ChatEntryTile(
+              title: l10n.staffroomGroupChatEntry,
+              onTap: () => context.push(
+                Routes.groupChatPath(group.id),
+                extra: group.name,
+              ),
+            ),
+          ],
           const SizedBox(height: AppSpacing.space5),
           ...postsAsync.when(
             loading: () => const [

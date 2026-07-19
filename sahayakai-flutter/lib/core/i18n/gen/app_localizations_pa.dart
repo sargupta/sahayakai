@@ -3161,4 +3161,29 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get staffroomConnectConnected => 'ਪਹਿਲਾਂ ਹੀ ਕਨੈਕਟਡ';
+
+  @override
+  String get staffroomChatTitle => 'ਸਟਾਫ਼ਰੂਮ';
+
+  @override
+  String get staffroomChatEntryBody => 'ਪੂਰੇ ਭਾਰਤ ਦੇ ਅਧਿਆਪਕਾਂ ਨਾਲ ਗੱਲਬਾਤ ਕਰੋ';
+
+  @override
+  String get staffroomChatSignInTitle => 'ਸਟਾਫ਼ਰੂਮ ਵਿੱਚ ਸ਼ਾਮਲ ਹੋਵੋ';
+
+  @override
+  String get staffroomChatSignInBody =>
+      'ਸਟਾਫ਼ਰੂਮ ਵਿੱਚ ਸ਼ਾਮਲ ਹੋਣ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ';
+
+  @override
+  String get staffroomChatEmptyTitle => 'ਹਾਲੇ ਤੱਕ ਕੋਈ ਸੁਨੇਹਾ ਨਹੀਂ';
+
+  @override
+  String get staffroomChatEmptyBody => 'ਸਭ ਤੋਂ ਪਹਿਲਾਂ ਸਤ ਸ੍ਰੀ ਅਕਾਲ ਕਹੋ।';
+
+  @override
+  String get staffroomChatAiBadge => 'AI ਅਧਿਆਪਕ';
+
+  @override
+  String get staffroomGroupChatEntry => 'ਗਰੁੱਪ ਚੈਟ';
 }

@@ -390,5 +390,13 @@
   "staffroomConnect": "কানেক্ট করুন",
   "staffroomConnectSent": "অনুরোধ পাঠানো হয়েছে",
   "staffroomConnectPending": "অনুরোধ আগে থেকেই অপেক্ষমাণ",
-  "staffroomConnectConnected": "ইতিমধ্যে কানেক্টেড"
+  "staffroomConnectConnected": "ইতিমধ্যে কানেক্টেড",
+  "staffroomChatTitle": "স্টাফরুম",
+  "staffroomChatEntryBody": "সারা ভারতের শিক্ষকদের সঙ্গে আড্ডা দিন",
+  "staffroomChatSignInTitle": "স্টাফরুমে যোগ দিন",
+  "staffroomChatSignInBody": "স্টাফরুমে যোগ দিতে সাইন ইন করুন",
+  "staffroomChatEmptyTitle": "এখনও কোনো বার্তা নেই",
+  "staffroomChatEmptyBody": "প্রথম হয়ে সবাইকে শুভেচ্ছা জানান।",
+  "staffroomChatAiBadge": "AI শিক্ষক",
+  "staffroomGroupChatEntry": "গ্রুপ চ্যাট"
 }

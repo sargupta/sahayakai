@@ -390,5 +390,13 @@
   "staffroomConnect": "ಸಂಪರ್ಕಿಸಿ",
   "staffroomConnectSent": "ವಿನಂತಿ ಕಳುಹಿಸಲಾಗಿದೆ",
   "staffroomConnectPending": "ವಿನಂತಿ ಈಗಾಗಲೇ ಬಾಕಿ ಇದೆ",
-  "staffroomConnectConnected": "ಈಗಾಗಲೇ ಸಂಪರ್ಕಗೊಂಡಿದೆ"
+  "staffroomConnectConnected": "ಈಗಾಗಲೇ ಸಂಪರ್ಕಗೊಂಡಿದೆ",
+  "staffroomChatTitle": "ಸ್ಟಾಫ್‌ರೂಮ್",
+  "staffroomChatEntryBody": "ಭಾರತದಾದ್ಯಂತ ಶಿಕ್ಷಕರೊಂದಿಗೆ ಚಾಟ್ ಮಾಡಿ",
+  "staffroomChatSignInTitle": "ಸ್ಟಾಫ್‌ರೂಮ್‌ಗೆ ಸೇರಿ",
+  "staffroomChatSignInBody": "ಸ್ಟಾಫ್‌ರೂಮ್‌ಗೆ ಸೇರಲು ಸೈನ್ ಇನ್ ಮಾಡಿ",
+  "staffroomChatEmptyTitle": "ಇನ್ನೂ ಯಾವುದೇ ಸಂದೇಶಗಳಿಲ್ಲ",
+  "staffroomChatEmptyBody": "ಮೊದಲಿಗರಾಗಿ ನಮಸ್ಕಾರ ಹೇಳಿ.",
+  "staffroomChatAiBadge": "AI ಶಿಕ್ಷಕ",
+  "staffroomGroupChatEntry": "ಗುಂಪು ಚಾಟ್"
 }

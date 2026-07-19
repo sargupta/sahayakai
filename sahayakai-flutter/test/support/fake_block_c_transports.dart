@@ -326,12 +326,29 @@ class FakeStaffroomTransport implements StaffroomTransport {
   Object? joinError;
   Object? connectionRequestError;
 
+  // Configurable chat-send error (U-SI3): when non-null, the community / group
+  // chat send records the attempt then throws it — the optimistic-send rollback
+  // path (apply → fail → revert + inline retry). Additive: null by default.
+  Object? sendChatError;
+
   // Optional in-flight gates: when set, the write awaits the completer before
   // resolving, so a test can pump a frame and assert the **immediate optimistic**
   // state (toggled heart / "Joined") BEFORE the server reply reconciles it, then
   // complete the gate to observe the reconcile. Additive: null by default.
   Completer<void>? likeGate;
   Completer<void>? joinGate;
+
+  // Optional persona-pulse gate (U-SI3): when set, [triggerPersonaPulse] records
+  // the call, then suspends on this completer before returning — so a test can
+  // hold a pulse IN FLIGHT (its request already recorded) while it disposes the
+  // controller, proving the post-await guard blocks any reschedule after dispose.
+  // Additive: null by default (the pulse resolves immediately).
+  Completer<void>? personaPulseGate;
+
+  // Optional persona-pulse error (U-SI3): when non-null, [triggerPersonaPulse]
+  // records the request then throws it — the "deferred transport / 401 on the
+  // stub → permanently disarm" branch (distinct from the null/503 stop). Additive.
+  Object? personaPulseError;
 
   // Recorded writes.
   final List<String> joinedGroups = <String>[];
@@ -468,6 +485,7 @@ class FakeStaffroomTransport implements StaffroomTransport {
     String? audioUrl,
   }) async {
     sentChats.add((groupId: groupId, text: text));
+    if (sendChatError != null) throw sendChatError!;
     return sendGroupChatResult;
   }
 
@@ -477,6 +495,7 @@ class FakeStaffroomTransport implements StaffroomTransport {
     String? audioUrl,
   }) async {
     sentChats.add((groupId: null, text: text));
+    if (sendChatError != null) throw sendChatError!;
   }
 
   @override
@@ -511,6 +530,8 @@ class FakeStaffroomTransport implements StaffroomTransport {
     PersonaPulseRequest request,
   ) async {
     personaPulses.add(request);
+    if (personaPulseGate != null) await personaPulseGate!.future;
+    if (personaPulseError != null) throw personaPulseError!;
     return personaPulseResult;
   }
 }

@@ -390,5 +390,13 @@
   "staffroomConnect": "కనెక్ట్ అవ్వండి",
   "staffroomConnectSent": "అభ్యర్థన పంపబడింది",
   "staffroomConnectPending": "అభ్యర్థన ఇప్పటికే పెండింగ్‌లో ఉంది",
-  "staffroomConnectConnected": "ఇప్పటికే కనెక్ట్ అయ్యారు"
+  "staffroomConnectConnected": "ఇప్పటికే కనెక్ట్ అయ్యారు",
+  "staffroomChatTitle": "స్టాఫ్‌రూమ్",
+  "staffroomChatEntryBody": "భారతదేశం అంతటా ఉన్న ఉపాధ్యాయులతో చాట్ చేయండి",
+  "staffroomChatSignInTitle": "స్టాఫ్‌రూమ్‌లో చేరండి",
+  "staffroomChatSignInBody": "స్టాఫ్‌రూమ్‌లో చేరడానికి సైన్ ఇన్ చేయండి",
+  "staffroomChatEmptyTitle": "ఇంకా సందేశాలు లేవు",
+  "staffroomChatEmptyBody": "ముందుగా నమస్కారం చెప్పండి.",
+  "staffroomChatAiBadge": "AI ఉపాధ్యాయుడు",
+  "staffroomGroupChatEntry": "గ్రూప్ చాట్"
 }

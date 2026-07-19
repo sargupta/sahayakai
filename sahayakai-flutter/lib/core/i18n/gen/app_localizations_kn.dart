@@ -3166,4 +3166,28 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get staffroomConnectConnected => 'ಈಗಾಗಲೇ ಸಂಪರ್ಕಗೊಂಡಿದೆ';
+
+  @override
+  String get staffroomChatTitle => 'ಸ್ಟಾಫ್‌ರೂಮ್';
+
+  @override
+  String get staffroomChatEntryBody => 'ಭಾರತದಾದ್ಯಂತ ಶಿಕ್ಷಕರೊಂದಿಗೆ ಚಾಟ್ ಮಾಡಿ';
+
+  @override
+  String get staffroomChatSignInTitle => 'ಸ್ಟಾಫ್‌ರೂಮ್‌ಗೆ ಸೇರಿ';
+
+  @override
+  String get staffroomChatSignInBody => 'ಸ್ಟಾಫ್‌ರೂಮ್‌ಗೆ ಸೇರಲು ಸೈನ್ ಇನ್ ಮಾಡಿ';
+
+  @override
+  String get staffroomChatEmptyTitle => 'ಇನ್ನೂ ಯಾವುದೇ ಸಂದೇಶಗಳಿಲ್ಲ';
+
+  @override
+  String get staffroomChatEmptyBody => 'ಮೊದಲಿಗರಾಗಿ ನಮಸ್ಕಾರ ಹೇಳಿ.';
+
+  @override
+  String get staffroomChatAiBadge => 'AI ಶಿಕ್ಷಕ';
+
+  @override
+  String get staffroomGroupChatEntry => 'ಗುಂಪು ಚಾಟ್';
 }

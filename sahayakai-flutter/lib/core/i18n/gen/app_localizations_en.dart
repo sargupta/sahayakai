@@ -3150,4 +3150,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get staffroomConnectConnected => 'Already connected';
+
+  @override
+  String get staffroomChatTitle => 'Staff room';
+
+  @override
+  String get staffroomChatEntryBody => 'Chat with teachers across Bharat';
+
+  @override
+  String get staffroomChatSignInTitle => 'Join the staff room';
+
+  @override
+  String get staffroomChatSignInBody => 'Sign in to join the staff room';
+
+  @override
+  String get staffroomChatEmptyTitle => 'No messages yet';
+
+  @override
+  String get staffroomChatEmptyBody => 'Be the first to say hello.';
+
+  @override
+  String get staffroomChatAiBadge => 'AI teacher';
+
+  @override
+  String get staffroomGroupChatEntry => 'Group chat';
 }
