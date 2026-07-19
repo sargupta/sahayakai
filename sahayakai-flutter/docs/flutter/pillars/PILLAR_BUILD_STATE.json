@@ -258,7 +258,9 @@
         "REST: getOrCreateDirectConversation, sendMessage, markConversationRead"
       ],
       "firebaseGated": true,
-      "status": "pending"
+      "status": "done",
+      "commit": "b00e25f70",
+      "notes": "Pro Inbox built against the U-SI0 InboxTransport interface (NO firebase; APK untouched). messages_stream_provider -> AsyncValue<TransportSnapshot<T>> (inbox list/thread family/unread); uniform snapshot mapping (error->ErrorView, loading->AppSkeleton, isEmptyByDesign/no-uid->sign-in EmptyView, ready-empty->empty, ready->data). inbox_screen: conversation rows (AppCard, Image.network avatar loading+error->initial, name, AiText preview, tabular timestamp, unread AppBadge). conversation_thread_screen: LAZY reversed ListView.builder of message bubbles (production-faithful chat bubbles per message-bubble.tsx; own = saffron primaryContainer + full-ink 15.2:1, read-tick #AC4815; theirs = white surface 16.7:1), honest Load-older pagination (dedup, hides when dry), OPTIMISTIC send (pending clock -> reconcile via clientMessageId dedup; TransportUnavailable -> rollback + inline retry re-sending the SAME clientMessageId, idempotent), markConversationRead on open. Messages entry (IconButton + live unread AppBadge) in the voice-home app bar (Network-tab IA deferred to U-SI2; app_shell/nav untouched). All AA verified both themes (mine 15.2, meta 6.9, badge 5.15, theirs 16.7, muted-preview 4.70 on white). DESIGN-REVIEW PASS; also fixed a shared gap: errorContainer/onErrorContainer were unthemed M3 pink -> warm brand tint (8.08 light/10.6 dark), fixing the send-failed bar + every error-container surface app-wide. 27 chrome strings x11 langs (real Indic, native-review-pending; server content as-is). FIREBASE-GATED: deferred transport renders sign-in/empty on-device; behaviour verified via the fake transport, NOT live. +24 tests -> 1438 green, analyze 0, token_guard PASS. No pubspec/android/firebase."
     },
     {
       "id": "U-SI2",
