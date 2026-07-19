@@ -353,9 +353,10 @@
       "pillar": "01",
       "title": "Content Creator tool",
       "files": ["lib/features/content_creator/presentation/content_creator_screen.dart"],
-      "consumes": ["POST /api/ai/content"],
-      "firebaseGated": "partial",
-      "status": "pending"
+      "consumes": ["(none — hub, not a generation endpoint)"],
+      "firebaseGated": false,
+      "status": "pending",
+      "notes": "CORRECTION (discovered during Block D): 'Content Creator' is NOT a generation tool — the pillar plan's /api/ai/content route does NOT exist. In production (sahayakai-main/src/app/content-creator/page.tsx) it is a 'Content Creator Studio' HUB page that just groups three multimedia tools via <Link>s: Visual Aid Designer + Virtual Field Trip + Video Storyteller. So U-PD2 becomes a small HUB screen grouping those 3 tools (a card grid, no backend), to be built AFTER U-PD4 (Virtual Field Trip) so all 3 constituents exist. Sequencing: U-PD3 (done) -> U-PD4 -> U-PD2 (hub) -> U-PD5 -> U-OS1."
     },
     {
       "id": "U-PD3",
@@ -364,7 +365,9 @@
       "files": ["lib/features/video_storyteller/presentation/video_storyteller_screen.dart"],
       "consumes": ["POST /api/ai/video-storyteller"],
       "firebaseGated": "partial",
-      "status": "pending"
+      "status": "done",
+      "commit": "f39e7ed60",
+      "notes": "Curated YouTube video recommendations (a BROWSE result). Contract: POST /api/ai/video-storyteller {subject?,gradeLevel?,topic?,language?} -> {categories, personalizedMessage, categorizedVideos: Record<category,YouTubeVideo[]> keys topRecommended/storytelling/pedagogy/govtUpdates/courses, fromCache, latencyScore}; video {id,title,thumbnail,channelTitle,duration} — no url/reason, watchUrl derived youtube.com/watch?v={id}. Result: personalizedMessage (AiText/NoteBanner) + per-category VideoCard sections — 16:9 Image.network thumbnail (loading+error builders, labelled fallback, never red-X), over-image duration pill + play glyph (scrim 0.55), title, muted channel/duration on WHITE card surface (4.70:1 AA), 'Official source' AppBadge; whole card >=48dp tap -> opens via injectable linkOpenerProvider seam (faked in tests). 25 chrome strings x11 langs (real Indic, native-review-pending; server content as-is). DESIGN-REVIEW PASS no blockers + 2 nits applied (scrim visibility, thumbnail excludeFromSemantics). Firebase-gated (401) -> code+test only. +41 tests -> 1160 green, analyze 0, token_guard PASS. No native/pubspec touched."
     },
     {
       "id": "U-PD4",
