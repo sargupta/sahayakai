@@ -355,8 +355,10 @@
       "files": ["lib/features/content_creator/presentation/content_creator_screen.dart"],
       "consumes": ["(none — hub, not a generation endpoint)"],
       "firebaseGated": false,
-      "status": "pending",
-      "notes": "CORRECTION (discovered during Block D): 'Content Creator' is NOT a generation tool — the pillar plan's /api/ai/content route does NOT exist. In production (sahayakai-main/src/app/content-creator/page.tsx) it is a 'Content Creator Studio' HUB page that just groups three multimedia tools via <Link>s: Visual Aid Designer + Virtual Field Trip + Video Storyteller. So U-PD2 becomes a small HUB screen grouping those 3 tools (a card grid, no backend), to be built AFTER U-PD4 (Virtual Field Trip) so all 3 constituents exist. Sequencing: U-PD3 (done) -> U-PD4 -> U-PD2 (hub) -> U-PD5 -> U-OS1."
+      "status": "done",
+      "status_history": "was mis-specified as a /api/ai/content generation tool (that route does not exist); corrected to a HUB.",
+      "commit": "609ec04a3",
+      "notes": "DONE as a no-backend HUB (not a generation tool — the plan's /api/ai/content route does not exist; production content-creator/page.tsx is a studio hub grouping 3 multimedia tools). ToolScaffold 'Content Creator Studio' + full-ink intro + editorial eyebrow + 3 ContentCreatorCards (dashboard tool-row grammar: 48dp saffron IconWell image/globe/video, Outfit title, muted desc on WHITE card 4.70:1 AA, chevron) — whole >=48dp card pushes Routes.visualAid/virtualFieldTrip/videoStoryteller (nav test mounts each destination). Fully renders on-device (no auth gate). Registered 'content-creator' tool tile (Lucide palette). 7 chrome strings x11 langs (real Indic, native-review-pending; tool NAMES reuse existing keys). DESIGN-REVIEW PASS no blockers. +11 tests -> 1223 green, analyze 0, token_guard PASS. No native/pubspec touched."
     },
     {
       "id": "U-PD3",
