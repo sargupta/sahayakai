@@ -209,7 +209,9 @@
       "files": ["lib/features/parent_hotline/presentation/widgets/calling_stage.dart"],
       "consumes": ["U-PH2"],
       "firebaseGated": "yes (live status needs a real call; UI testable now)",
-      "status": "pending"
+      "status": "done",
+      "commit": "d2ed06dab",
+      "notes": "The honest calling waiting state (SPEC B.1 stage 5). calling_stage.dart: a centered saffron haloed phone-call IconWell that BREATHES via Transform.scale (3000ms, reduce-motion -> static composed frame; the seal_mic idiom, no per-frame relayout), a display headline 'Calling {studentName}'s parent…', a muted status line driven by callStatus (initiated+0-turns -> Ringing… else Conversation in progress, wrapped in Semantics liveRegion for screen-reader announcement), a tabular '{count} exchanges' pill shown only when turnCount>1, and the 'you can leave this screen — the summary will be waiting' reassurance. HONEST WAITING (B.5.4): NO determinate/percentage progress bar or spinner-with-ETA — ambient breathe only; pinned by a test asserting no Linear/CircularProgressIndicator. RESUMABILITY (B.5.5): PopScope -> leaveCalling() stops polling ONLY, never cancels the server call; re-open resumes via latestForStudent. Adversarial DESIGN-REVIEW caught the exchanges-pill count failing AA (onSurfaceVariant 3.86:1) -> fixed to full-ink onSurface (14.6:1); also fixed halo perf (width/height relayout -> Transform.scale) + added the status liveRegion. NOTE: the app-wide muted role (onSurfaceVariant #65758B on bg #F9F7F3 = 4.39:1, a hair under AA) is left AS-IS = exact production parity (sampled live), flagged to the founder as a production-vs-AA decision, not silently changed. i18n: 5 new strings in all 10 Indic languages (never Hindi-only; interim-LLM, native review pending). Firebase-gated (401 on stub) — verified by code+widget-test only. +19 tests -> 1038 green, analyze 0, token_guard PASS. No native touched."
     },
     {
       "id": "U-PH5",
