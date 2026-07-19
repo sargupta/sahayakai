@@ -293,7 +293,9 @@
         "REST: sendChatMessage, sendGroupChatMessage"
       ],
       "firebaseGated": true,
-      "status": "pending"
+      "status": "done",
+      "commit": "e2b43dee0",
+      "notes": "Realtime multi-author chat vs the U-SI0 StaffroomTransport interface (NO firebase; APK untouched). One staff_room_chat_screen parameterized by ChatRoom (community staff room OR group by id), reusing the U-SI1 thread pattern (lazy reversed ListView.builder + optimistic composer + snapshot-state mapping). chat_bubble 3 variants: OWN (saffron primaryContainer + full-ink 15.2:1, no header, NEVER white-on-#E0924D); OTHERS (white surface + author header: avatar + name overline #AC4815 5.7:1 + timestamp 4.70:1); AI PERSONA (sparkles well + name + honest 'AI teacher' AppBadge — never a teacher avatar/human pose; test-asserted). Body via AiText. Optimistic send: pending -> reconcile by author+text+novelty (community_chat carries no client id) -> rollback + idempotent retry on TransportUnavailable. PERSONA-PULSE: PersonaPulseController (autoDispose) fires triggerPersonaPulse on a polite 3-min self-rescheduling Timer (never t=0), generation-counter + _disposed guard; ref.onDispose cancels (no leak); null(503)/any error STOPS permanently (no loop); community-only. Fake-clock tests prove no-fire-before-interval / 503-stop / error-stop / cancel-on-dispose / in-flight-dispose guard / group-never-arms. Wired Staff Room chat (Routes.staffRoomChat) in the Network hub Staffroom surface + member-gated Group chat (Routes.groupChat) from group detail. 8 chrome strings x11 langs (real Indic, native-review-pending; server content as-is). DESIGN-REVIEW PASS no blockers (AA verified, persona honesty holds, timer leak-free). FIREBASE-GATED: deferred transport renders sign-in/empty on-device + persona timer never fires; verified via fake transport + fake clock, NOT live. +25 tests -> 1484 green, analyze 0, token_guard PASS. No pubspec/android/firebase."
     },
     {
       "id": "U-SI4",
