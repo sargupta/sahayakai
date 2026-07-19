@@ -957,6 +957,46 @@ class AppLocalizationsTa extends AppLocalizations {
   String get profileSaveSignIn => 'Please sign in again to save your profile.';
 
   @override
+  String get meTitle => 'சுயவிவரம்';
+
+  @override
+  String get mePlanUsageTitle => 'திட்டம் & பயன்பாடு';
+
+  @override
+  String get mePlanUsageSubtitle =>
+      'இந்த மாதம் நீங்கள் எவ்வளவு பயன்படுத்தியுள்ளீர்கள்.';
+
+  @override
+  String meUsageValue(int used, int limit) {
+    return '$used / $limit';
+  }
+
+  @override
+  String get meUsageUnlimited => 'வரம்பற்றது';
+
+  @override
+  String get meUsageUnavailable =>
+      'உங்கள் பயன்பாட்டை ஏற்ற முடியவில்லை. மீண்டும் முயற்சிக்கவும்.';
+
+  @override
+  String get meDefaultsTitle => 'இயல்புநிலைகள்';
+
+  @override
+  String get mePrivacyTitle => 'தனியுரிமை & அமைப்புகள்';
+
+  @override
+  String get meRoleTeacher => 'ஆசிரியர்';
+
+  @override
+  String get usageFeatureAvatar => 'AI அவதாரங்கள்';
+
+  @override
+  String get usageFeatureVoiceToText => 'குரலிலிருந்து உரை';
+
+  @override
+  String get usageFeatureAssistant => 'VIDYA உதவியாளர்';
+
+  @override
   String get imageInputHint => 'Add a clear photo of the textbook page.';
 
   @override

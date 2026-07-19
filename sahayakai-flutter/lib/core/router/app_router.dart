@@ -16,6 +16,7 @@ import '../../features/onboarding/presentation/login_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/parent_hotline/presentation/parent_hotline_screen.dart';
 import '../../features/parent_message/presentation/parent_message_screen.dart';
+import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/quiz_generator/presentation/quiz_generator_screen.dart';
 import '../../features/rubric_generator/presentation/rubric_generator_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
@@ -185,6 +186,13 @@ GoRouter appRouter(Ref ref) {
         // palette / dashboard, no VIDYA prefill.
         path: Routes.contentCreator,
         builder: (context, state) => const ContentCreatorScreen(),
+      ),
+      GoRoute(
+        // The full profile editor (U-OS1). No longer the Me tab itself — the
+        // tab is now the [MeScreen] hub, which pushes here to edit name,
+        // school, board, subjects, classes, location and language.
+        path: Routes.profile,
+        builder: (context, state) => const ProfileScreen(),
       ),
       GoRoute(
         path: Routes.settings,

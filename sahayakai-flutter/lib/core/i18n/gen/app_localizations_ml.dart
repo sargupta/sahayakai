@@ -959,6 +959,45 @@ class AppLocalizationsMl extends AppLocalizations {
   String get profileSaveSignIn => 'Please sign in again to save your profile.';
 
   @override
+  String get meTitle => 'പ്രൊഫൈൽ';
+
+  @override
+  String get mePlanUsageTitle => 'പ്ലാനും ഉപയോഗവും';
+
+  @override
+  String get mePlanUsageSubtitle => 'ഈ മാസം നിങ്ങൾ എത്രത്തോളം ഉപയോഗിച്ചു.';
+
+  @override
+  String meUsageValue(int used, int limit) {
+    return '$used / $limit';
+  }
+
+  @override
+  String get meUsageUnlimited => 'പരിധിയില്ലാത്തത്';
+
+  @override
+  String get meUsageUnavailable =>
+      'നിങ്ങളുടെ ഉപയോഗം ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല. വീണ്ടും ശ്രമിക്കുക.';
+
+  @override
+  String get meDefaultsTitle => 'ഡിഫോൾട്ടുകൾ';
+
+  @override
+  String get mePrivacyTitle => 'സ്വകാര്യതയും ക്രമീകരണങ്ങളും';
+
+  @override
+  String get meRoleTeacher => 'അധ്യാപകൻ';
+
+  @override
+  String get usageFeatureAvatar => 'AI അവതാരങ്ങൾ';
+
+  @override
+  String get usageFeatureVoiceToText => 'ശബ്ദത്തിൽ നിന്ന് വാചകം';
+
+  @override
+  String get usageFeatureAssistant => 'VIDYA സഹായി';
+
+  @override
   String get imageInputHint => 'Add a clear photo of the textbook page.';
 
   @override

@@ -9,7 +9,7 @@ import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/icon_well.dart';
 import '../../library/presentation/library_screen.dart';
-import '../../profile/presentation/profile_screen.dart';
+import '../../profile/presentation/me_screen.dart';
 import '../../vidya/presentation/vidya_home_screen.dart';
 import 'floating_bottom_nav.dart';
 
@@ -49,7 +49,10 @@ class _AppShellState extends State<AppShell> {
       const VidyaHomeScreen(),
       const SizedBox.shrink(),
       const LibraryScreen(),
-      const ProfileScreen(),
+      // U-OS1 — the Me tab is now the operating-system hub, which composes the
+      // profile summary, plan & usage, defaults and settings links. The full
+      // profile editor ([ProfileScreen]) is one tap away, at `Routes.profile`.
+      const MeScreen(),
     ];
 
     return Scaffold(

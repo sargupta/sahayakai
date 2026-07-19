@@ -6,7 +6,7 @@ part of 'app_router.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$appRouterHash() => r'4c7cdd171e29396a07955cf0732bdb6c37e7f0e4';
+String _$appRouterHash() => r'e278823c5e431072bdeaa8f168a1a26e4d1075a7';
 
 /// The app's [GoRouter], rebuilt (its `redirect` re-evaluated) whenever the
 /// stub auth state or the bootstrap future changes.

@@ -70,10 +70,12 @@ class AppBadge extends StatelessWidget {
     switch (tone) {
       case AppBadgeTone.neutral:
         background = scheme.surfaceContainerHigh;
-        // A small neutral badge is secondary chrome; a regular one is content.
-        labelColor = size == AppBadgeSize.small
-            ? scheme.onSurfaceVariant
-            : scheme.onSurface;
+        // AA: full-ink onSurface for BOTH sizes (~14:1 on the surfaceContainerHigh
+        // fill). The small size previously muted the LABEL to onSurfaceVariant,
+        // which is only 3.86:1 on that fill — a fail. Only the size-derived text
+        // STYLE stays small (labelSmall vs labelMedium), never the colour; the
+        // glyph keeps onSurfaceVariant (3.86:1 clears the 3:1 non-text floor).
+        labelColor = scheme.onSurface;
         iconColor = scheme.onSurfaceVariant;
         weight = null;
       case AppBadgeTone.accent:

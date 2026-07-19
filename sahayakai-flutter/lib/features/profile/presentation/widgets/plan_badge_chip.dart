@@ -55,9 +55,21 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    final fg = muted ? scheme.onSurfaceVariant : scheme.primary;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final text = theme.textTheme;
+    // AA (label + icon, computed vs the ACTUAL fill):
+    //   • PAID routes through the saffron-TEXT token — saffron-700 #AC4815 light
+    //     / #EB9447 dark — on the primary@0.12 tint (~5.1:1), exactly like
+    //     AppBadge's accent tone. NOT scheme.primary (#E0924D), which is only
+    //     ~2.26:1 on that tint: the #E0924D-as-text anti-pattern app_colors bans.
+    //   • MUTED/free inks full onSurface on its surfaceContainer fill (~14:1),
+    //     not the sub-4.5 onSurfaceVariant it used before.
+    final fg = muted
+        ? scheme.onSurface
+        : (theme.brightness == Brightness.dark
+            ? AppColors.dPrimaryText
+            : AppColors.lPrimaryText);
 
     // A bordered identity chip — the border is load-bearing (it separates the
     // free/outline, paid/accent and unknown/muted states), so it is not the

@@ -1190,6 +1190,64 @@
   "@profileSaveSignIn": {
     "description": "Shown when a save is rejected because the session has expired."
   },
+  "meTitle": "Me",
+  "@meTitle": {
+    "description": "App bar title of the Me tab: the operating-system hub (profile summary, plan and usage, defaults, settings)."
+  },
+  "mePlanUsageTitle": "Plan & usage",
+  "@mePlanUsageTitle": {
+    "description": "Section header over the plan tier and per-feature monthly usage on the Me hub."
+  },
+  "mePlanUsageSubtitle": "How much you have used this month.",
+  "@mePlanUsageSubtitle": {
+    "description": "One-line explanation above the usage rows: the counts are for the current calendar month."
+  },
+  "meUsageValue": "{used} / {limit}",
+  "@meUsageValue": {
+    "description": "A metered feature's usage, e.g. '3 / 10' meaning 3 of 10 used this month. Keep the numbers and the slash; the server supplies the values.",
+    "placeholders": {
+      "used": {
+        "type": "int",
+        "example": "3"
+      },
+      "limit": {
+        "type": "int",
+        "example": "10"
+      }
+    }
+  },
+  "meUsageUnlimited": "Unlimited",
+  "@meUsageUnlimited": {
+    "description": "Shown in place of a count/bar for a feature with no monthly cap on the current plan."
+  },
+  "meUsageUnavailable": "We could not load your usage. Please try again.",
+  "@meUsageUnavailable": {
+    "description": "Shown inside the Plan & usage card when the usage read fails while the rest of the hub is signed in."
+  },
+  "meDefaultsTitle": "Defaults",
+  "@meDefaultsTitle": {
+    "description": "Section header over the education board and app language, which shape the material SahayakAI generates."
+  },
+  "mePrivacyTitle": "Privacy & settings",
+  "@mePrivacyTitle": {
+    "description": "Section header over the rows that link to Settings and to signing out."
+  },
+  "meRoleTeacher": "Teacher",
+  "@meRoleTeacher": {
+    "description": "Default role shown under the teacher's name on the Me hub when they hold no administrative role."
+  },
+  "usageFeatureAvatar": "AI avatars",
+  "@usageFeatureAvatar": {
+    "description": "Usage-row name for the AI teaching-avatar feature (a gated feature that is not one of the tool screens)."
+  },
+  "usageFeatureVoiceToText": "Voice to text",
+  "@usageFeatureVoiceToText": {
+    "description": "Usage-row name for the cloud voice-to-text (speech recognition) feature."
+  },
+  "usageFeatureAssistant": "VIDYA assistant",
+  "@usageFeatureAssistant": {
+    "description": "Usage-row name for the VIDYA chat assistant. 'VIDYA' is a product name; keep it as-is."
+  },
   "imageInputHint": "Add a clear photo of the textbook page.",
   "@imageInputHint": {
     "description": "Empty-state prompt inside the image picker well."

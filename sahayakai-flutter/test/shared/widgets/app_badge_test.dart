@@ -166,4 +166,45 @@ void main() {
           reason: 'dark saffron label must meet AA on the accent tint');
     });
   });
+
+  // The small NEUTRAL tone used to mute its label to onSurfaceVariant, which is
+  // only 3.86:1 on the surfaceContainerHigh fill — a fail the Me hub's board /
+  // language / plan chips surfaced. The label is now full-ink onSurface for both
+  // sizes (the fill is opaque, so no compositing); only the text STYLE stays
+  // small. This locks the fix so every neutral AppBadge site stays AA.
+  group('small neutral label clears WCAG AA on the surfaceContainerHigh fill', () {
+    testWidgets('light: full-ink onSurface, not the sub-4.5 muted token',
+        (tester) async {
+      await tester.pumpWidget(
+        _host(
+          Brightness.light,
+          const AppBadge(label: 'Kannada', size: AppBadgeSize.small),
+        ),
+      );
+
+      final color = _accentLabelColor(tester, 'Kannada');
+      expect(color, AppColors.lForeground); // onSurface, NOT onSurfaceVariant
+      expect(_ratio(color, AppColors.lSurfaceContainerHigh),
+          greaterThanOrEqualTo(4.5));
+      // The OLD muted label (onSurfaceVariant) is a documented fail on the fill.
+      expect(
+        _ratio(AppColors.lMutedForeground, AppColors.lSurfaceContainerHigh),
+        lessThan(4.5),
+      );
+    });
+
+    testWidgets('dark: full-ink onSurface clears AA', (tester) async {
+      await tester.pumpWidget(
+        _host(
+          Brightness.dark,
+          const AppBadge(label: 'Kannada', size: AppBadgeSize.small),
+        ),
+      );
+
+      final color = _accentLabelColor(tester, 'Kannada');
+      expect(color, AppColors.dForeground);
+      expect(_ratio(color, AppColors.dSurfaceContainerHigh),
+          greaterThanOrEqualTo(4.5));
+    });
+  });
 }

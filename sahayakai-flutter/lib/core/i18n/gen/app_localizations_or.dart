@@ -955,6 +955,45 @@ class AppLocalizationsOr extends AppLocalizations {
   String get profileSaveSignIn => 'Please sign in again to save your profile.';
 
   @override
+  String get meTitle => 'ପ୍ରୋଫାଇଲ୍';
+
+  @override
+  String get mePlanUsageTitle => 'ପ୍ଲାନ୍ ଓ ବ୍ୟବହାର';
+
+  @override
+  String get mePlanUsageSubtitle => 'ଏହି ମାସରେ ଆପଣ କେତେ ବ୍ୟବହାର କରିଛନ୍ତି।';
+
+  @override
+  String meUsageValue(int used, int limit) {
+    return '$used / $limit';
+  }
+
+  @override
+  String get meUsageUnlimited => 'ଅସୀମିତ';
+
+  @override
+  String get meUsageUnavailable =>
+      'ଆମେ ଆପଣଙ୍କ ବ୍ୟବହାର ଲୋଡ୍ କରିପାରିଲୁ ନାହିଁ। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
+
+  @override
+  String get meDefaultsTitle => 'ଡିଫଲ୍ଟ';
+
+  @override
+  String get mePrivacyTitle => 'ଗୋପନୀୟତା ଓ ସେଟିଂସ୍';
+
+  @override
+  String get meRoleTeacher => 'ଶିକ୍ଷକ';
+
+  @override
+  String get usageFeatureAvatar => 'AI ଅବତାର';
+
+  @override
+  String get usageFeatureVoiceToText => 'ଭଏସ୍ ରୁ ଟେକ୍ସଟ୍';
+
+  @override
+  String get usageFeatureAssistant => 'VIDYA ସହାୟକ';
+
+  @override
   String get imageInputHint => 'Add a clear photo of the textbook page.';
 
   @override

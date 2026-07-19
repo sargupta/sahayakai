@@ -954,6 +954,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileSaveSignIn => 'Please sign in again to save your profile.';
 
   @override
+  String get meTitle => 'Me';
+
+  @override
+  String get mePlanUsageTitle => 'Plan & usage';
+
+  @override
+  String get mePlanUsageSubtitle => 'How much you have used this month.';
+
+  @override
+  String meUsageValue(int used, int limit) {
+    return '$used / $limit';
+  }
+
+  @override
+  String get meUsageUnlimited => 'Unlimited';
+
+  @override
+  String get meUsageUnavailable =>
+      'We could not load your usage. Please try again.';
+
+  @override
+  String get meDefaultsTitle => 'Defaults';
+
+  @override
+  String get mePrivacyTitle => 'Privacy & settings';
+
+  @override
+  String get meRoleTeacher => 'Teacher';
+
+  @override
+  String get usageFeatureAvatar => 'AI avatars';
+
+  @override
+  String get usageFeatureVoiceToText => 'Voice to text';
+
+  @override
+  String get usageFeatureAssistant => 'VIDYA assistant';
+
+  @override
   String get imageInputHint => 'Add a clear photo of the textbook page.';
 
   @override

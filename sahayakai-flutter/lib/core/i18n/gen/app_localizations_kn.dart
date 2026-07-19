@@ -957,6 +957,45 @@ class AppLocalizationsKn extends AppLocalizations {
   String get profileSaveSignIn => 'Please sign in again to save your profile.';
 
   @override
+  String get meTitle => 'ಪ್ರೊಫೈಲ್';
+
+  @override
+  String get mePlanUsageTitle => 'ಯೋಜನೆ ಮತ್ತು ಬಳಕೆ';
+
+  @override
+  String get mePlanUsageSubtitle => 'ಈ ತಿಂಗಳು ನೀವು ಎಷ್ಟು ಬಳಸಿದ್ದೀರಿ.';
+
+  @override
+  String meUsageValue(int used, int limit) {
+    return '$used / $limit';
+  }
+
+  @override
+  String get meUsageUnlimited => 'ಅಪರಿಮಿತ';
+
+  @override
+  String get meUsageUnavailable =>
+      'ನಿಮ್ಮ ಬಳಕೆಯನ್ನು ನಾವು ಲೋಡ್ ಮಾಡಲಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.';
+
+  @override
+  String get meDefaultsTitle => 'ಡೀಫಾಲ್ಟ್‌ಗಳು';
+
+  @override
+  String get mePrivacyTitle => 'ಗೌಪ್ಯತೆ ಮತ್ತು ಸೆಟ್ಟಿಂಗ್‌ಗಳು';
+
+  @override
+  String get meRoleTeacher => 'ಶಿಕ್ಷಕ';
+
+  @override
+  String get usageFeatureAvatar => 'ಎಐ ಅವತಾರಗಳು';
+
+  @override
+  String get usageFeatureVoiceToText => 'ಧ್ವನಿಯಿಂದ ಪಠ್ಯ';
+
+  @override
+  String get usageFeatureAssistant => 'VIDYA ಸಹಾಯಕ';
+
+  @override
   String get imageInputHint => 'Add a clear photo of the textbook page.';
 
   @override

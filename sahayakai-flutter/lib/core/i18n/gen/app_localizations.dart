@@ -1838,6 +1838,78 @@ abstract class AppLocalizations {
   /// **'Please sign in again to save your profile.'**
   String get profileSaveSignIn;
 
+  /// App bar title of the Me tab: the operating-system hub (profile summary, plan and usage, defaults, settings).
+  ///
+  /// In en, this message translates to:
+  /// **'Me'**
+  String get meTitle;
+
+  /// Section header over the plan tier and per-feature monthly usage on the Me hub.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan & usage'**
+  String get mePlanUsageTitle;
+
+  /// One-line explanation above the usage rows: the counts are for the current calendar month.
+  ///
+  /// In en, this message translates to:
+  /// **'How much you have used this month.'**
+  String get mePlanUsageSubtitle;
+
+  /// A metered feature's usage, e.g. '3 / 10' meaning 3 of 10 used this month. Keep the numbers and the slash; the server supplies the values.
+  ///
+  /// In en, this message translates to:
+  /// **'{used} / {limit}'**
+  String meUsageValue(int used, int limit);
+
+  /// Shown in place of a count/bar for a feature with no monthly cap on the current plan.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited'**
+  String get meUsageUnlimited;
+
+  /// Shown inside the Plan & usage card when the usage read fails while the rest of the hub is signed in.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load your usage. Please try again.'**
+  String get meUsageUnavailable;
+
+  /// Section header over the education board and app language, which shape the material SahayakAI generates.
+  ///
+  /// In en, this message translates to:
+  /// **'Defaults'**
+  String get meDefaultsTitle;
+
+  /// Section header over the rows that link to Settings and to signing out.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy & settings'**
+  String get mePrivacyTitle;
+
+  /// Default role shown under the teacher's name on the Me hub when they hold no administrative role.
+  ///
+  /// In en, this message translates to:
+  /// **'Teacher'**
+  String get meRoleTeacher;
+
+  /// Usage-row name for the AI teaching-avatar feature (a gated feature that is not one of the tool screens).
+  ///
+  /// In en, this message translates to:
+  /// **'AI avatars'**
+  String get usageFeatureAvatar;
+
+  /// Usage-row name for the cloud voice-to-text (speech recognition) feature.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice to text'**
+  String get usageFeatureVoiceToText;
+
+  /// Usage-row name for the VIDYA chat assistant. 'VIDYA' is a product name; keep it as-is.
+  ///
+  /// In en, this message translates to:
+  /// **'VIDYA assistant'**
+  String get usageFeatureAssistant;
+
   /// Empty-state prompt inside the image picker well.
   ///
   /// In en, this message translates to:
