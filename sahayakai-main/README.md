@@ -1,29 +1,40 @@
-# SahayakAI: AI-Powered Teaching Assistant
+# SahayakAI: AI Teaching Platform for India
 
-**Try it live: [https://sahayakai-f69e0.web.app](https://sahayakai-f69e0.web.app)**
+**Try it live: [https://www.sahayakai.com](https://www.sahayakai.com)**
 
-SahayakAI is a web-based application designed to assist teachers in India with lesson planning and content creation. It leverages a fully serverless architecture with Google Cloud and Firebase to provide a scalable, reliable, and cost-effective suite of AI-powered tools.
+> **New to the codebase?** Read [`docs/SYSTEM_OVERVIEW.md`](./docs/SYSTEM_OVERVIEW.md) first. It is the canonical, up-to-date map of every production component and the fastest way to onboard.
+
+SahayakAI is a voice-first, eleven-language teaching platform for K-12 teachers in India. It is more than a lesson-plan generator: alongside a suite of AI content tools, it runs an attendance and parent-outreach system (including AI-scripted phone calls to parents in their own language), a teacher social network, and a per-teacher analytics layer. It is built on a fully serverless Google Cloud stack for scale, reliability, and cost efficiency.
+
+## What it does
+
+- **Content spine.** Lesson plans, worksheets, quizzes, exam papers, rubrics, and instant answers, all NCERT/board-aware and localized across eleven Indian languages.
+- **Attendance and parent outreach.** Class rosters, daily attendance, marks, a priority-sorted "who needs a parent call today" triage, and Twilio-based AI parent calls.
+- **Community.** Groups, a staff-room feed and chat, a teacher directory, connections, 1:1 messaging, and a shared resource library.
+- **Analytics.** A five-dimension Teacher Impact Score (see below) and a principal-facing school analytics dashboard.
+- **Labs.** A set of parked, experimental tools (visual aids, virtual field trips, assessment scanning, and more).
+
+For the full component-by-component breakdown, see [`docs/SYSTEM_OVERVIEW.md`](./docs/SYSTEM_OVERVIEW.md).
 
 ## Tech Stack
 
--   **Framework:** [Next.js](https://nextjs.org/) (React)
--   **AI Integration:** [Google's Genkit](https://firebase.google.com/docs/genkit)
--   **AI Models:** [Google Gemini](https://deepmind.google/technologies/gemini/)
--   **Styling:** [Tailwind CSS](https://tailwindcss.com/) with [Shadcn/ui](https://ui.shadcn.com/) components
--   **Database:** [Cloud Firestore](https://firebase.google.com/docs/firestore) (Serverless NoSQL)
--   **Authentication:** [Firebase Authentication](https://firebase.google.com/docs/auth)
--   **File Storage:** [Cloud Storage for Firebase](https://firebase.google.com/docs/storage)
--   **CI/CD:** [Cloud Build](https://cloud.google.com/build)
--   **Deployment:**
-    -   **Frontend:** [Firebase Hosting](https://firebase.google.com/docs/hosting) (Global CDN)
-    -   **Backend:** [Cloud Functions for Firebase](https://firebase.google.com/docs/functions) (Serverless, event-driven)
+-   **Framework:** [Next.js](https://nextjs.org/) 15 (App Router). The entire application, UI and API routes, is one deployable.
+-   **AI:** [Google's Genkit](https://firebase.google.com/docs/genkit) over [Google Gemini](https://deepmind.google/technologies/gemini/) (default `gemini-2.5-flash`).
+-   **Styling:** [Tailwind CSS](https://tailwindcss.com/) with [Shadcn/ui](https://ui.shadcn.com/) components.
+-   **Database:** [Cloud Firestore](https://firebase.google.com/docs/firestore) (Mumbai, `asia-south1`; India-resident).
+-   **Authentication:** [Firebase Authentication](https://firebase.google.com/docs/auth).
+-   **File Storage:** [Cloud Storage for Firebase](https://firebase.google.com/docs/storage).
+-   **Voice:** Twilio (parent calls); Sarvam, Bhashini, and Google Cloud TTS/STT (in-app speech).
+-   **Billing:** Razorpay.
+-   **CI/CD:** [Cloud Build](https://cloud.google.com/build) + GitHub Actions quality gates.
+-   **Hosting:** [Cloud Run](https://cloud.google.com/run), deployed dual-region (Mumbai `asia-south1` + Singapore `asia-southeast1`) behind a global HTTPS load balancer at `www.sahayakai.com`. This is not Firebase Hosting or Cloud Functions.
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js (v20 or later)
-- npm or yarn
+- Node.js (v20; the project pins `>=20 <21`)
+- npm
 - [Firebase CLI](https://firebase.google.com/docs/cli)
 
 ### Installation
@@ -32,34 +43,51 @@ SahayakAI is a web-based application designed to assist teachers in India with l
     ```bash
     git clone https://github.com/sargupta/sahayakai.git
     ```
-2.  Navigate to the project directory:
+2.  Navigate to the app directory:
     ```bash
-    cd sahayakai-main
+    cd sahayakai/sahayakai-main
     ```
-3.  Install the dependencies:
+3.  Install dependencies:
     ```bash
     npm install
     ```
-4.  Set up your environment variables by creating a `.env.local` file in the root of the project. You will need to add your Firebase configuration details.
-    ```
-    NEXT_PUBLIC_FIREBASE_API_KEY=
-    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
-    NEXT_PUBLIC_FIREBASE_PROJECT_ID=
-    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
-    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
-    NEXT_PUBLIC_FIREBASE_APP_ID=
-    FIREBASE_SERVICE_ACCOUNT_KEY=
-    ```
-5.  Run the development server:
+4.  Create a `.env.local` from the template and fill in your Firebase config and API keys:
     ```bash
-    npm run dev
+    cp .env.example .env.local
+    ```
+    At minimum you need the `NEXT_PUBLIC_FIREBASE_*` values, `FIREBASE_SERVICE_ACCOUNT_KEY`, and `GOOGLE_GENAI_API_KEY`. See [`docs/SYSTEM_OVERVIEW.md`](./docs/SYSTEM_OVERVIEW.md) Section 11 for the grouped environment-variable reference.
+5.  Run the app:
+    ```bash
+    npm run dev          # Next.js dev server at http://localhost:3000
+    npm run genkit:dev   # Genkit dev UI for AI flows (optional)
     ```
 
-    The application will be available at `http://localhost:3000`.
+### Common scripts
+
+```bash
+npm run typecheck     # tsc --noEmit
+npm run lint
+npm test              # jest
+npm run predeploy     # typecheck && build, run before every push
+npm run qa:e2e        # Playwright end-to-end
+```
 
 ## Deployment
 
-Deployment to production is handled automatically by a GitHub Actions workflow. Pushing changes to the `main` branch will trigger the deployment process.
+Production deploys are **manual and gated**, not automatic. Do not run raw `gcloud run deploy`, and do not assume that pushing to `main` deploys anything.
+
+The canonical flow is `bash scripts/safe-deploy.sh` (builds a new Cloud Run revision at 0% traffic), then `scripts/audit-deployments.sh`, then a manual traffic flip to expose the revision to users. Production is dual-region, so Mumbai requires a second run with `REGION=asia-south1`. See [`DEPLOY.md`](./DEPLOY.md) and the deploy-safety contract in [`AGENTS.md`](./AGENTS.md).
+
+## Documentation
+
+Start with [`docs/SYSTEM_OVERVIEW.md`](./docs/SYSTEM_OVERVIEW.md), which links the current, trustworthy documents and flags the stale ones. Key references:
+
+- [`AGENTS.md`](./AGENTS.md), [`DEPLOY.md`](./DEPLOY.md), [`docs/BRANCHING.md`](./docs/BRANCHING.md) - process and deploy.
+- [`docs/API_MIGRATION_PATTERN.md`](./docs/API_MIGRATION_PATTERN.md), [`docs/FEATURE_FLAGS.md`](./docs/FEATURE_FLAGS.md) - backend architecture.
+- [`docs/MUMBAI_REGION_MIGRATION_RUNBOOK.md`](./docs/MUMBAI_REGION_MIGRATION_RUNBOOK.md) - infra topology.
+- [`docs/compliance/DPDP_DATA_PROTECTION.md`](./docs/compliance/DPDP_DATA_PROTECTION.md) - data protection.
+
+Documents describing systems that were never built are retained under [`docs/archive/`](./docs/archive/) and should not be used for onboarding.
 
 ---
 
