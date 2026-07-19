@@ -69,6 +69,13 @@ class Routes {
   /// `categorizedVideos` (category -> videos) plus a personalized message.
   static const String videoStoryteller = '/video-storyteller';
 
+  /// Virtual Field Trip (U-PD4). Plans a curated itinerary of Google-Earth stops
+  /// for a topic — a generated document, not a browse; the endpoint is
+  /// `POST /api/ai/virtual-field-trip`, which returns `{ title, stops, gradeLevel,
+  /// subject }` (and a benign 202 `still_generating` when the dispatcher's 45s
+  /// budget elapses and the trip finishes saving to My Library server-side).
+  static const String virtualFieldTrip = '/virtual-field-trip';
+
   /// Parent Message composer. Path mirrors the web's `/messages` composer
   /// (SCREEN_INVENTORY P1.5); the endpoint is `POST /api/ai/parent-message`.
   static const String parentMessage = '/messages';

@@ -94,6 +94,44 @@ void main() {
       expect(_accentLabelColor(tester, '3'), AppColors.lPrimaryText);
     });
 
+    testWidgets('the accent GLYPH shares the saffron-text token, not the fill',
+        (tester) async {
+      // The glyph now routes through the same saffron-text token as the label
+      // (~5.15:1 on the tint), NOT `scheme.primary` (#E0924D = ~2.26:1) — so
+      // glyph and label read as one accent unit.
+      await tester.pumpWidget(
+        _host(
+          Brightness.light,
+          const AppBadge(
+            icon: LucideIcons.graduationCap,
+            label: 'Class 6',
+            tone: AppBadgeTone.accent,
+          ),
+        ),
+      );
+      final icon = tester.widget<Icon>(find.byIcon(LucideIcons.graduationCap));
+      expect(icon.color, AppColors.lPrimaryText);
+      expect(icon.color, isNot(AppColors.brandSaffron)); // never #E0924D
+    });
+
+    testWidgets('the accent GLYPH uses the dark saffron-text token in dark',
+        (tester) async {
+      await tester.pumpWidget(
+        _host(
+          Brightness.dark,
+          const AppBadge(
+            icon: LucideIcons.graduationCap,
+            label: 'Class 6',
+            tone: AppBadgeTone.accent,
+          ),
+        ),
+      );
+      expect(
+        tester.widget<Icon>(find.byIcon(LucideIcons.graduationCap)).color,
+        AppColors.dPrimaryText,
+      );
+    });
+
     testWidgets('the neutral tone is untouched (regular = onSurface ink)',
         (tester) async {
       await tester.pumpWidget(

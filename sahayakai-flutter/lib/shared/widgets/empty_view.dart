@@ -6,7 +6,14 @@ import '../../core/theme/app_theme.dart';
 /// EmptyView v2 (PREMIUM_DESIGN_SPEC.md §5). Left-aligned (never a centered
 /// hero stack): a 72dp haloed Lucide glyph (`primary@0.06` outer /
 /// `primary@0.12` inner, 28dp glyph in `primary`), an optional `titleMedium`
-/// title, a muted `bodyLarge` message, and an optional next-step action.
+/// title, a full-ink `bodyLarge` message, and an optional next-step action.
+///
+/// The body message is `onSurface` (full ink), NOT the muted `onSurfaceVariant`:
+/// EmptyView mounts on the scaffold ground (`surfaceContainerLowest` #F9F7F3),
+/// where `onSurfaceVariant` is only 4.36:1 — under the 4.5 floor. Full ink is
+/// ~16:1 and aligns EmptyView with its sibling state panels (ErrorView /
+/// OfflineView already use full-ink bodies). Only this body role changed; the
+/// muted-foreground token stays production-parity for genuine captions elsewhere.
 ///
 /// Owns NO outer padding — it is always mounted inside something that already
 /// pads (an [AppCard], or a page's `pagePadding`). API preserved
@@ -43,7 +50,7 @@ class EmptyView extends StatelessWidget {
         ],
         Text(
           message,
-          style: text.bodyLarge?.copyWith(color: scheme.onSurfaceVariant),
+          style: text.bodyLarge?.copyWith(color: scheme.onSurface),
         ),
         if (action != null) ...[
           const SizedBox(height: AppSpacing.space4),

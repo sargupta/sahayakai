@@ -6,8 +6,9 @@ import 'app_card.dart';
 /// DocumentSheet (PREMIUM_DESIGN_SPEC.md §5). The premium payoff: a generated
 /// artifact reads like a printed document, not a chat dump. An
 /// `AppCard(elevated)` (radius 16, `e2`, 3px saffron accent bar) constrained to
-/// a 640dp reading column, with a masthead (saffron eyebrow doc-type, Fraunces
-/// title, a 2px saffron→transparent rule, meta badges), the body [children]
+/// a 640dp reading column, with a masthead (saffron eyebrow doc-type, Outfit
+/// `displaySmall` title, a 2px saffron→transparent rule, meta badges), the body
+/// [children]
 /// (compose [DocumentSheetSection]s), and an optional sticky [footer] action
 /// bar.
 ///

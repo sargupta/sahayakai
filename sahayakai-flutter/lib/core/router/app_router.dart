@@ -20,6 +20,7 @@ import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/teacher_training/presentation/teacher_training_screen.dart';
 import '../../features/video_storyteller/presentation/video_storyteller_screen.dart';
+import '../../features/virtual_field_trip/presentation/virtual_field_trip_screen.dart';
 import '../../features/visual_aid/presentation/visual_aid_screen.dart';
 import '../../features/worksheet_wizard/presentation/worksheet_wizard_screen.dart';
 import '../../shared/domain/library_item.dart';
@@ -163,6 +164,12 @@ GoRouter appRouter(Ref ref) {
         path: Routes.videoStoryteller,
         builder: (context, state) =>
             VideoStorytellerScreen(prefill: _prefillOf(state)),
+      ),
+      GoRoute(
+        // U-PD4. A one-shot document tool (like exam-paper): a plain open from
+        // the palette / dashboard, no VIDYA prefill.
+        path: Routes.virtualFieldTrip,
+        builder: (context, state) => const VirtualFieldTripScreen(),
       ),
       GoRoute(
         path: Routes.settings,

@@ -2487,4 +2487,122 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get videoStorytellerLimit =>
       'You have searched a lot recently. Please try again in a little while.';
+
+  @override
+  String get actionDone => 'Done';
+
+  @override
+  String get virtualFieldTripTitle => 'Virtual Field Trip';
+
+  @override
+  String get virtualFieldTripSubtitle => 'Tour the world on Google Earth';
+
+  @override
+  String get virtualFieldTripEmpty => 'Enter a topic and tap Plan the trip.';
+
+  @override
+  String get virtualFieldTripTopicLabel => 'Topic or theme';
+
+  @override
+  String get virtualFieldTripTopicHint => 'For example, The Great Barrier Reef';
+
+  @override
+  String get virtualFieldTripTopicError => 'Please enter a topic for the trip.';
+
+  @override
+  String get virtualFieldTripGradeLabel => 'Grade level';
+
+  @override
+  String get virtualFieldTripGradeAny => 'Any grade';
+
+  @override
+  String get virtualFieldTripOptional => 'Optional';
+
+  @override
+  String get virtualFieldTripAction => 'Plan the trip';
+
+  @override
+  String get virtualFieldTripDocType => 'Virtual Field Trip';
+
+  @override
+  String virtualFieldTripStopCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count stops',
+      one: '1 stop',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String virtualFieldTripStopSemantics(int number, String name) {
+    return 'Stop $number: $name';
+  }
+
+  @override
+  String get virtualFieldTripFactLabel => 'Did you know?';
+
+  @override
+  String get virtualFieldTripReflectionLabel => 'Think about this';
+
+  @override
+  String get virtualFieldTripAnalogyLabel => 'In our context';
+
+  @override
+  String get virtualFieldTripExplanationLabel => 'Why we visit';
+
+  @override
+  String get virtualFieldTripOpenEarth => 'Open in Google Earth';
+
+  @override
+  String get virtualFieldTripOpensExternally =>
+      'Opens Google Earth, outside the app.';
+
+  @override
+  String get virtualFieldTripPendingTitle => 'Still planning your trip';
+
+  @override
+  String get virtualFieldTripPendingBody =>
+      'Your field trip is still being planned. Check My Library in a minute.';
+
+  @override
+  String get virtualFieldTripNoStops =>
+      'No stops came back for that. Try a different topic.';
+
+  @override
+  String get virtualFieldTripSignIn => 'Please sign in again to use this tool.';
+
+  @override
+  String get virtualFieldTripUnavailable =>
+      'This tool is not part of your current plan.';
+
+  @override
+  String get virtualFieldTripTimeout =>
+      'This is taking longer than expected. Please try again.';
+
+  @override
+  String get virtualFieldTripBusy =>
+      'The assistant is busy right now. Please try again in a moment.';
+
+  @override
+  String virtualFieldTripBusyRetryAfter(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other:
+          'The assistant is busy right now. Please try again in about $seconds seconds.',
+      one:
+          'The assistant is busy right now. Please try again in about 1 second.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get virtualFieldTripRephrase =>
+      'We could not plan a trip for that. Please try a different topic.';
+
+  @override
+  String get virtualFieldTripLimit =>
+      'You have planned a lot of trips recently. Please try again in a little while.';
 }

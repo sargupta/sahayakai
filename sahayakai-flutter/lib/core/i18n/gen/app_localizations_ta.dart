@@ -2501,4 +2501,128 @@ class AppLocalizationsTa extends AppLocalizations {
   @override
   String get videoStorytellerLimit =>
       'நீங்கள் சமீபத்தில் நிறைய தேடியுள்ளீர்கள். சிறிது நேரம் கழித்து மீண்டும் முயற்சிக்கவும்.';
+
+  @override
+  String get actionDone => 'முடிந்தது';
+
+  @override
+  String get virtualFieldTripTitle => 'மெய்நிகர் கள சுற்றுலா';
+
+  @override
+  String get virtualFieldTripSubtitle =>
+      'Google Earth-இல் உலகைச் சுற்றிப் பாருங்கள்';
+
+  @override
+  String get virtualFieldTripEmpty =>
+      'ஒரு தலைப்பை உள்ளிட்டு \'சுற்றுலாவைத் திட்டமிடு\' என்பதைத் தட்டவும்.';
+
+  @override
+  String get virtualFieldTripTopicLabel => 'தலைப்பு அல்லது கருப்பொருள்';
+
+  @override
+  String get virtualFieldTripTopicHint =>
+      'எடுத்துக்காட்டாக, கிரேட் பேரியர் ரீஃப்';
+
+  @override
+  String get virtualFieldTripTopicError =>
+      'சுற்றுலாவுக்கு ஒரு தலைப்பை உள்ளிடவும்.';
+
+  @override
+  String get virtualFieldTripGradeLabel => 'வகுப்பு நிலை';
+
+  @override
+  String get virtualFieldTripGradeAny => 'எந்த வகுப்பும்';
+
+  @override
+  String get virtualFieldTripOptional => 'விருப்பத்திற்குரியது';
+
+  @override
+  String get virtualFieldTripAction => 'சுற்றுலாவைத் திட்டமிடு';
+
+  @override
+  String get virtualFieldTripDocType => 'மெய்நிகர் கள சுற்றுலா';
+
+  @override
+  String virtualFieldTripStopCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count நிறுத்தங்கள்',
+      one: '1 நிறுத்தம்',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String virtualFieldTripStopSemantics(int number, String name) {
+    return 'நிறுத்தம் $number: $name';
+  }
+
+  @override
+  String get virtualFieldTripFactLabel => 'உங்களுக்குத் தெரியுமா?';
+
+  @override
+  String get virtualFieldTripReflectionLabel => 'இதைப் பற்றி சிந்தியுங்கள்';
+
+  @override
+  String get virtualFieldTripAnalogyLabel => 'நம் சூழலில்';
+
+  @override
+  String get virtualFieldTripExplanationLabel => 'நாம் ஏன் செல்கிறோம்';
+
+  @override
+  String get virtualFieldTripOpenEarth => 'Google Earth-இல் திற';
+
+  @override
+  String get virtualFieldTripOpensExternally =>
+      'செயலிக்கு வெளியே, Google Earth-இல் திறக்கும்.';
+
+  @override
+  String get virtualFieldTripPendingTitle =>
+      'உங்கள் சுற்றுலா இன்னும் திட்டமிடப்படுகிறது';
+
+  @override
+  String get virtualFieldTripPendingBody =>
+      'உங்கள் கள சுற்றுலா இன்னும் தயாராகி வருகிறது. ஒரு நிமிடத்தில் \'எனது நூலகம்\' பார்க்கவும்.';
+
+  @override
+  String get virtualFieldTripNoStops =>
+      'அதற்கு நிறுத்தங்கள் எதுவும் வரவில்லை. வேறு தலைப்பை முயற்சிக்கவும்.';
+
+  @override
+  String get virtualFieldTripSignIn =>
+      'இந்தக் கருவியைப் பயன்படுத்த மீண்டும் உள்நுழையவும்.';
+
+  @override
+  String get virtualFieldTripUnavailable =>
+      'இந்தக் கருவி உங்கள் தற்போதைய திட்டத்தில் இல்லை.';
+
+  @override
+  String get virtualFieldTripTimeout =>
+      'இது எதிர்பார்த்ததை விட அதிக நேரம் எடுக்கிறது. மீண்டும் முயற்சிக்கவும்.';
+
+  @override
+  String get virtualFieldTripBusy =>
+      'உதவியாளர் இப்போது பணிமிகுதியில் உள்ளார். சிறிது நேரம் கழித்து மீண்டும் முயற்சிக்கவும்.';
+
+  @override
+  String virtualFieldTripBusyRetryAfter(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other:
+          'உதவியாளர் இப்போது பணிமிகுதியில் உள்ளார். சுமார் $seconds வினாடிகள் கழித்து மீண்டும் முயற்சிக்கவும்.',
+      one:
+          'உதவியாளர் இப்போது பணிமிகுதியில் உள்ளார். சுமார் 1 வினாடி கழித்து மீண்டும் முயற்சிக்கவும்.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get virtualFieldTripRephrase =>
+      'அதற்கு எங்களால் சுற்றுலாவைத் திட்டமிட முடியவில்லை. வேறு தலைப்பை முயற்சிக்கவும்.';
+
+  @override
+  String get virtualFieldTripLimit =>
+      'நீங்கள் சமீபத்தில் நிறைய சுற்றுலாக்களைத் திட்டமிட்டுள்ளீர்கள். சிறிது நேரம் கழித்து மீண்டும் முயற்சிக்கவும்.';
 }

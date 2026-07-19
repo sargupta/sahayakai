@@ -4417,6 +4417,186 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You have searched a lot recently. Please try again in a little while.'**
   String get videoStorytellerLimit;
+
+  /// Generic done/dismiss action; closes a result back to the form.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get actionDone;
+
+  /// Virtual Field Trip tool name (dashboard tile, palette, screen app bar).
+  ///
+  /// In en, this message translates to:
+  /// **'Virtual Field Trip'**
+  String get virtualFieldTripTitle;
+
+  /// One-line description under the Virtual Field Trip tool name.
+  ///
+  /// In en, this message translates to:
+  /// **'Tour the world on Google Earth'**
+  String get virtualFieldTripSubtitle;
+
+  /// Idle/empty message before any trip is planned.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a topic and tap Plan the trip.'**
+  String get virtualFieldTripEmpty;
+
+  /// Label for the required topic/theme field.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic or theme'**
+  String get virtualFieldTripTopicLabel;
+
+  /// Hint/example text in the topic field.
+  ///
+  /// In en, this message translates to:
+  /// **'For example, The Great Barrier Reef'**
+  String get virtualFieldTripTopicHint;
+
+  /// Validation error when the required topic field is empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a topic for the trip.'**
+  String get virtualFieldTripTopicError;
+
+  /// Label for the optional grade-level picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Grade level'**
+  String get virtualFieldTripGradeLabel;
+
+  /// The 'no grade chosen' option in the grade picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Any grade'**
+  String get virtualFieldTripGradeAny;
+
+  /// Inline 'optional' marker on optional fields.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get virtualFieldTripOptional;
+
+  /// The primary submit button that plans the field trip.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan the trip'**
+  String get virtualFieldTripAction;
+
+  /// The document-type eyebrow on the itinerary result masthead.
+  ///
+  /// In en, this message translates to:
+  /// **'Virtual Field Trip'**
+  String get virtualFieldTripDocType;
+
+  /// Masthead badge showing how many stops the itinerary has.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 stop} other{{count} stops}}'**
+  String virtualFieldTripStopCount(int count);
+
+  /// Accessibility label for one numbered stop card.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop {number}: {name}'**
+  String virtualFieldTripStopSemantics(int number, String name);
+
+  /// Heading on the educational-fact highlight in a stop card.
+  ///
+  /// In en, this message translates to:
+  /// **'Did you know?'**
+  String get virtualFieldTripFactLabel;
+
+  /// Heading on the reflection-prompt inset in a stop card.
+  ///
+  /// In en, this message translates to:
+  /// **'Think about this'**
+  String get virtualFieldTripReflectionLabel;
+
+  /// Heading on the Bharat-First cultural-analogy section in a stop card.
+  ///
+  /// In en, this message translates to:
+  /// **'In our context'**
+  String get virtualFieldTripAnalogyLabel;
+
+  /// Heading on the pedagogical-explanation section in a stop card.
+  ///
+  /// In en, this message translates to:
+  /// **'Why we visit'**
+  String get virtualFieldTripExplanationLabel;
+
+  /// Button that opens a stop's location in Google Earth, outside the app.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in Google Earth'**
+  String get virtualFieldTripOpenEarth;
+
+  /// Accessibility hint on the Open in Google Earth action.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens Google Earth, outside the app.'**
+  String get virtualFieldTripOpensExternally;
+
+  /// Title of the calm panel shown for the benign 202 still-generating outcome.
+  ///
+  /// In en, this message translates to:
+  /// **'Still planning your trip'**
+  String get virtualFieldTripPendingTitle;
+
+  /// Body of the calm still-generating panel: the trip keeps saving server-side.
+  ///
+  /// In en, this message translates to:
+  /// **'Your field trip is still being planned. Check My Library in a minute.'**
+  String get virtualFieldTripPendingBody;
+
+  /// Empty-result copy when a planned trip had no usable stops.
+  ///
+  /// In en, this message translates to:
+  /// **'No stops came back for that. Try a different topic.'**
+  String get virtualFieldTripNoStops;
+
+  /// 401 prompt: the token is stale, sign in again.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in again to use this tool.'**
+  String get virtualFieldTripSignIn;
+
+  /// 403 plan-gate message: the tool is not on the teacher's plan.
+  ///
+  /// In en, this message translates to:
+  /// **'This tool is not part of your current plan.'**
+  String get virtualFieldTripUnavailable;
+
+  /// Client-side timeout message.
+  ///
+  /// In en, this message translates to:
+  /// **'This is taking longer than expected. Please try again.'**
+  String get virtualFieldTripTimeout;
+
+  /// 503/5xx busy message without a Retry-After hint.
+  ///
+  /// In en, this message translates to:
+  /// **'The assistant is busy right now. Please try again in a moment.'**
+  String get virtualFieldTripBusy;
+
+  /// Shown on a 503 busy response that carried Retry-After.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds, plural, =1{The assistant is busy right now. Please try again in about 1 second.} other{The assistant is busy right now. Please try again in about {seconds} seconds.}}'**
+  String virtualFieldTripBusyRetryAfter(int seconds);
+
+  /// 400/422 hint: rephrase or try a different topic.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not plan a trip for that. Please try a different topic.'**
+  String get virtualFieldTripRephrase;
+
+  /// 429 rate-limit message for repeated trips.
+  ///
+  /// In en, this message translates to:
+  /// **'You have planned a lot of trips recently. Please try again in a little while.'**
+  String get virtualFieldTripLimit;
 }
 
 class _AppLocalizationsDelegate

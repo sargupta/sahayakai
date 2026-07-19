@@ -134,4 +134,11 @@ final List<ToolEntry> kToolRegistry = <ToolEntry>[
     title: (l10n) => l10n.videoStorytellerTitle,
     subtitle: (l10n) => l10n.videoStorytellerSubtitle,
   ),
+  ToolEntry(
+    id: 'virtual-field-trip',
+    icon: LucideIcons.globe,
+    route: Routes.virtualFieldTrip,
+    title: (l10n) => l10n.virtualFieldTripTitle,
+    subtitle: (l10n) => l10n.virtualFieldTripSubtitle,
+  ),
 ];
