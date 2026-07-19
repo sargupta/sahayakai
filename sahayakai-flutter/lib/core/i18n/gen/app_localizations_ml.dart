@@ -2172,4 +2172,121 @@ class AppLocalizationsMl extends AppLocalizations {
   @override
   String get parentHotlineCallingReassurance =>
       'നിങ്ങൾക്ക് ഈ സ്ക്രീൻ വിട്ടുപോകാം — സംഗ്രഹം നിങ്ങൾക്കായി തയ്യാറായിരിക്കും.';
+
+  @override
+  String get parentHotlineSummaryDocType => 'രക്ഷിതാവിന്റെ കോൾ';
+
+  @override
+  String get parentHotlineSummaryReasonAbsences => 'ഹാജരില്ലായ്മ';
+
+  @override
+  String get parentHotlineSummaryReasonPerformance => 'പ്രകടനം';
+
+  @override
+  String get parentHotlineSummaryReasonBehaviour => 'പെരുമാറ്റം';
+
+  @override
+  String get parentHotlineSummaryReasonPositive => 'സന്തോഷവാർത്ത';
+
+  @override
+  String parentHotlineSummaryTitle(String name) {
+    return '$name ന്റെ രക്ഷിതാവ്';
+  }
+
+  @override
+  String parentHotlineSummaryDurationMin(int minutes) {
+    return '$minutes മിനിറ്റ്';
+  }
+
+  @override
+  String get parentHotlineSentimentCooperative => 'സഹകരണം';
+
+  @override
+  String get parentHotlineSentimentConcerned => 'ആശങ്ക';
+
+  @override
+  String get parentHotlineSentimentGrateful => 'നന്ദിയുള്ള';
+
+  @override
+  String get parentHotlineSentimentUpset => 'അസ്വസ്ഥത';
+
+  @override
+  String get parentHotlineSentimentIndifferent => 'സംയമനം';
+
+  @override
+  String get parentHotlineSentimentConfused => 'ആശയക്കുഴപ്പം';
+
+  @override
+  String get parentHotlineSummarySaidHeader => 'രക്ഷിതാവ് പറഞ്ഞത്';
+
+  @override
+  String get parentHotlineSummaryConcernsHeader => 'ഉന്നയിച്ച ആശങ്കകൾ';
+
+  @override
+  String get parentHotlineSummaryCommitmentsHeader =>
+      'രക്ഷിതാവിന്റെ വാഗ്ദാനങ്ങൾ';
+
+  @override
+  String get parentHotlineSummaryActionsHeader => 'നിങ്ങളുടെ കർമപദ്ധതികൾ';
+
+  @override
+  String get parentHotlineSummaryGuidanceHeader => 'പങ്കുവെച്ച മാർഗനിർദേശം';
+
+  @override
+  String get parentHotlineSummaryFollowUpHeader => 'തുടർനടപടി';
+
+  @override
+  String parentHotlineSummaryTranscript(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'സംഭാഷണം കാണുക · $count സന്ദേശങ്ങൾ',
+      one: 'സംഭാഷണം കാണുക · 1 സന്ദേശം',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get parentHotlineSummaryDone => 'പൂർത്തിയായി';
+
+  @override
+  String get parentHotlineSummaryCallAgain => 'പിന്നീട് വീണ്ടും വിളിക്കുക';
+
+  @override
+  String get parentHotlineSummaryManualTitle => 'സന്ദേശം പകർത്തി';
+
+  @override
+  String get parentHotlineSummaryManualBody =>
+      'രക്ഷിതാവിന് അയയ്ക്കാൻ ഇത് WhatsApp ൽ പേസ്റ്റ് ചെയ്യുക.';
+
+  @override
+  String get parentHotlineSummaryBusy => 'ലൈൻ തിരക്കിലായിരുന്നു';
+
+  @override
+  String get parentHotlineSummaryNoAnswer => 'മറുപടിയില്ല';
+
+  @override
+  String get parentHotlineSummaryFailed => 'കോൾ കണക്റ്റ് ചെയ്യാനായില്ല';
+
+  @override
+  String get parentHotlineSummaryFailedBody =>
+      'കോൾ നടന്നില്ല. നിങ്ങൾക്ക് വീണ്ടും ശ്രമിക്കാം, അല്ലെങ്കിൽ സന്ദേശം പകർത്തി WhatsApp ൽ അയയ്ക്കാം.';
+
+  @override
+  String get parentHotlineSummaryTryAgain => 'വീണ്ടും ശ്രമിക്കുക';
+
+  @override
+  String get parentHotlineSummaryNoConversationTitle =>
+      'കോൾ വളരെ വേഗം അവസാനിച്ചു';
+
+  @override
+  String get parentHotlineSummaryNoConversationBody =>
+      'സംഭാഷണം തുടങ്ങുന്നതിന് മുമ്പ് കോൾ അവസാനിച്ചു. നിങ്ങൾക്ക് വീണ്ടും ശ്രമിക്കാം, അല്ലെങ്കിൽ സന്ദേശം WhatsApp ൽ അയയ്ക്കാം.';
+
+  @override
+  String get parentHotlineSummaryUnavailableTitle => 'സംഗ്രഹം ലഭ്യമല്ല';
+
+  @override
+  String get parentHotlineSummaryUnavailableBody =>
+      'ഈ കോളിന്റെ സംഗ്രഹം തയ്യാറാക്കാനായില്ല. സംഭാഷണം താഴെ നൽകിയിരിക്കുന്നു.';
 }

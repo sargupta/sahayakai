@@ -2689,5 +2689,152 @@
   "parentHotlineCallingReassurance": "You can leave this screen — the summary will be waiting for you.",
   "@parentHotlineCallingReassurance": {
     "description": "Quiet reassurance on the calling stage: leaving does not cancel the call; the summary is ready on return (backs the resume path)."
+  },
+  "parentHotlineSummaryDocType": "Parent call",
+  "@parentHotlineSummaryDocType": {
+    "description": "Summary masthead eyebrow doc-type (U-PH5); the reason word is appended after a middot, e.g. 'PARENT CALL · ABSENCES'."
+  },
+  "parentHotlineSummaryReasonAbsences": "Absences",
+  "@parentHotlineSummaryReasonAbsences": {
+    "description": "Short reason word in the summary eyebrow for the consecutive-absences reason."
+  },
+  "parentHotlineSummaryReasonPerformance": "Performance",
+  "@parentHotlineSummaryReasonPerformance": {
+    "description": "Short reason word in the summary eyebrow for the poor-performance reason."
+  },
+  "parentHotlineSummaryReasonBehaviour": "Behaviour",
+  "@parentHotlineSummaryReasonBehaviour": {
+    "description": "Short reason word in the summary eyebrow for the behavioural-concern reason."
+  },
+  "parentHotlineSummaryReasonPositive": "Good news",
+  "@parentHotlineSummaryReasonPositive": {
+    "description": "Short reason word in the summary eyebrow for the positive-feedback reason."
+  },
+  "parentHotlineSummaryTitle": "{name}'s parent",
+  "@parentHotlineSummaryTitle": {
+    "description": "Summary masthead title (U-PH5), the student whose parent was called.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "parentHotlineSummaryDurationMin": "{minutes} min",
+  "@parentHotlineSummaryDurationMin": {
+    "description": "Call-duration meta badge on the summary masthead, in whole minutes.",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "parentHotlineSentimentCooperative": "Cooperative",
+  "@parentHotlineSentimentCooperative": {
+    "description": "Sentiment badge label: the parent was cooperative on the call."
+  },
+  "parentHotlineSentimentConcerned": "Concerned",
+  "@parentHotlineSentimentConcerned": {
+    "description": "Sentiment badge label: the parent sounded concerned."
+  },
+  "parentHotlineSentimentGrateful": "Grateful",
+  "@parentHotlineSentimentGrateful": {
+    "description": "Sentiment badge label: the parent was grateful."
+  },
+  "parentHotlineSentimentUpset": "Upset",
+  "@parentHotlineSentimentUpset": {
+    "description": "Sentiment badge label: the parent was upset."
+  },
+  "parentHotlineSentimentIndifferent": "Reserved",
+  "@parentHotlineSentimentIndifferent": {
+    "description": "Sentiment badge label for an indifferent/neutral parent. Use a dignified word (not 'indifferent') that reads as reserved/neutral."
+  },
+  "parentHotlineSentimentConfused": "Confused",
+  "@parentHotlineSentimentConfused": {
+    "description": "Sentiment badge label: the parent seemed confused."
+  },
+  "parentHotlineSummarySaidHeader": "What the parent said",
+  "@parentHotlineSummarySaidHeader": {
+    "description": "Summary section header over the AI recap of the parent's response."
+  },
+  "parentHotlineSummaryConcernsHeader": "Concerns raised",
+  "@parentHotlineSummaryConcernsHeader": {
+    "description": "Summary section header over the concerns the parent raised (hidden when none)."
+  },
+  "parentHotlineSummaryCommitmentsHeader": "Parent commitments",
+  "@parentHotlineSummaryCommitmentsHeader": {
+    "description": "Summary section header over what the parent committed to (hidden when none)."
+  },
+  "parentHotlineSummaryActionsHeader": "Your action items",
+  "@parentHotlineSummaryActionsHeader": {
+    "description": "Summary section header over the teacher's follow-up to-dos (the saffron block)."
+  },
+  "parentHotlineSummaryGuidanceHeader": "Guidance shared",
+  "@parentHotlineSummaryGuidanceHeader": {
+    "description": "Summary section header over the home-learning guidance the agent shared (hidden when none)."
+  },
+  "parentHotlineSummaryFollowUpHeader": "Follow-up",
+  "@parentHotlineSummaryFollowUpHeader": {
+    "description": "Summary section header over the suggested follow-up (shown only when follow-up is needed)."
+  },
+  "parentHotlineSummaryTranscript": "{count, plural, =1{View conversation · 1 message} other{View conversation · {count} messages}}",
+  "@parentHotlineSummaryTranscript": {
+    "description": "Collapsed transcript disclosure title on the summary; {count} is the number of turns.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "parentHotlineSummaryDone": "Done",
+  "@parentHotlineSummaryDone": {
+    "description": "Summary footer primary action — closes the summary and returns."
+  },
+  "parentHotlineSummaryCallAgain": "Call again later",
+  "@parentHotlineSummaryCallAgain": {
+    "description": "Summary footer ghost action — starts a fresh call (subject to the 5-minute dedup cool-down)."
+  },
+  "parentHotlineSummaryManualTitle": "Message copied",
+  "@parentHotlineSummaryManualTitle": {
+    "description": "Terminal panel title when the outreach was the WhatsApp-copy path (no call placed)."
+  },
+  "parentHotlineSummaryManualBody": "Paste it in WhatsApp to send it to the parent.",
+  "@parentHotlineSummaryManualBody": {
+    "description": "Terminal panel body for the WhatsApp-copy path."
+  },
+  "parentHotlineSummaryBusy": "The line was busy",
+  "@parentHotlineSummaryBusy": {
+    "description": "Terminal panel title when the call ended busy."
+  },
+  "parentHotlineSummaryNoAnswer": "No answer",
+  "@parentHotlineSummaryNoAnswer": {
+    "description": "Terminal panel title when the parent did not answer."
+  },
+  "parentHotlineSummaryFailed": "The call couldn't connect",
+  "@parentHotlineSummaryFailed": {
+    "description": "Terminal panel title when the call failed to connect."
+  },
+  "parentHotlineSummaryFailedBody": "The call didn't go through. You can try again, or copy the message to send on WhatsApp.",
+  "@parentHotlineSummaryFailedBody": {
+    "description": "Terminal panel body for a failed / no-answer / busy call."
+  },
+  "parentHotlineSummaryTryAgain": "Try again",
+  "@parentHotlineSummaryTryAgain": {
+    "description": "Terminal panel action that re-dials the same outreach."
+  },
+  "parentHotlineSummaryNoConversationTitle": "The call ended too soon",
+  "@parentHotlineSummaryNoConversationTitle": {
+    "description": "Terminal panel title when the call ended before a real conversation happened."
+  },
+  "parentHotlineSummaryNoConversationBody": "The call ended before a conversation could happen. You can try again, or send the message on WhatsApp.",
+  "@parentHotlineSummaryNoConversationBody": {
+    "description": "Terminal panel body when the call ended before a conversation could happen."
+  },
+  "parentHotlineSummaryUnavailableTitle": "Summary isn't available",
+  "@parentHotlineSummaryUnavailableTitle": {
+    "description": "Terminal panel title when the call finished but no AI summary was produced; the transcript is shown below."
+  },
+  "parentHotlineSummaryUnavailableBody": "We couldn't prepare a summary for this call. The conversation is below.",
+  "@parentHotlineSummaryUnavailableBody": {
+    "description": "Terminal panel body when the summary is unavailable but a transcript exists."
   }
 }

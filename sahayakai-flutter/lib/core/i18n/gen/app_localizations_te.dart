@@ -2169,4 +2169,120 @@ class AppLocalizationsTe extends AppLocalizations {
   @override
   String get parentHotlineCallingReassurance =>
       'మీరు ఈ స్క్రీన్‌ను వదిలి వెళ్లవచ్చు — సారాంశం మీ కోసం సిద్ధంగా ఉంటుంది.';
+
+  @override
+  String get parentHotlineSummaryDocType => 'తల్లిదండ్రుల కాల్';
+
+  @override
+  String get parentHotlineSummaryReasonAbsences => 'గైర్హాజరు';
+
+  @override
+  String get parentHotlineSummaryReasonPerformance => 'పనితీరు';
+
+  @override
+  String get parentHotlineSummaryReasonBehaviour => 'ప్రవర్తన';
+
+  @override
+  String get parentHotlineSummaryReasonPositive => 'శుభవార్త';
+
+  @override
+  String parentHotlineSummaryTitle(String name) {
+    return '$name తల్లిదండ్రులు';
+  }
+
+  @override
+  String parentHotlineSummaryDurationMin(int minutes) {
+    return '$minutes నిమిషాలు';
+  }
+
+  @override
+  String get parentHotlineSentimentCooperative => 'సహకారం';
+
+  @override
+  String get parentHotlineSentimentConcerned => 'ఆందోళన';
+
+  @override
+  String get parentHotlineSentimentGrateful => 'కృతజ్ఞత';
+
+  @override
+  String get parentHotlineSentimentUpset => 'అసంతృప్తి';
+
+  @override
+  String get parentHotlineSentimentIndifferent => 'తటస్థం';
+
+  @override
+  String get parentHotlineSentimentConfused => 'గందరగోళం';
+
+  @override
+  String get parentHotlineSummarySaidHeader => 'తల్లిదండ్రులు చెప్పింది';
+
+  @override
+  String get parentHotlineSummaryConcernsHeader => 'లేవనెత్తిన ఆందోళనలు';
+
+  @override
+  String get parentHotlineSummaryCommitmentsHeader => 'తల్లిదండ్రుల హామీలు';
+
+  @override
+  String get parentHotlineSummaryActionsHeader => 'మీ కర్తవ్యాలు';
+
+  @override
+  String get parentHotlineSummaryGuidanceHeader => 'పంచుకున్న మార్గదర్శకత్వం';
+
+  @override
+  String get parentHotlineSummaryFollowUpHeader => 'తదుపరి చర్య';
+
+  @override
+  String parentHotlineSummaryTranscript(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'సంభాషణ చూడండి · $count సందేశాలు',
+      one: 'సంభాషణ చూడండి · 1 సందేశం',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get parentHotlineSummaryDone => 'పూర్తయింది';
+
+  @override
+  String get parentHotlineSummaryCallAgain => 'తర్వాత మళ్లీ కాల్ చేయండి';
+
+  @override
+  String get parentHotlineSummaryManualTitle => 'సందేశం కాపీ అయింది';
+
+  @override
+  String get parentHotlineSummaryManualBody =>
+      'తల్లిదండ్రులకు పంపడానికి దీన్ని WhatsApp లో పేస్ట్ చేయండి.';
+
+  @override
+  String get parentHotlineSummaryBusy => 'లైన్ బిజీగా ఉంది';
+
+  @override
+  String get parentHotlineSummaryNoAnswer => 'సమాధానం లేదు';
+
+  @override
+  String get parentHotlineSummaryFailed => 'కాల్ కనెక్ట్ కాలేదు';
+
+  @override
+  String get parentHotlineSummaryFailedBody =>
+      'కాల్ జరగలేదు. మీరు మళ్లీ ప్రయత్నించవచ్చు, లేదా సందేశాన్ని కాపీ చేసి WhatsApp లో పంపవచ్చు.';
+
+  @override
+  String get parentHotlineSummaryTryAgain => 'మళ్లీ ప్రయత్నించండి';
+
+  @override
+  String get parentHotlineSummaryNoConversationTitle =>
+      'కాల్ చాలా త్వరగా ముగిసింది';
+
+  @override
+  String get parentHotlineSummaryNoConversationBody =>
+      'సంభాషణ మొదలయ్యేలోపే కాల్ ముగిసింది. మీరు మళ్లీ ప్రయత్నించవచ్చు, లేదా సందేశాన్ని WhatsApp లో పంపవచ్చు.';
+
+  @override
+  String get parentHotlineSummaryUnavailableTitle => 'సారాంశం అందుబాటులో లేదు';
+
+  @override
+  String get parentHotlineSummaryUnavailableBody =>
+      'ఈ కాల్‌కు సారాంశాన్ని సిద్ధం చేయలేకపోయాము. సంభాషణ కింద ఉంది.';
 }

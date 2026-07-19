@@ -2165,4 +2165,120 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get parentHotlineCallingReassurance =>
       'You can leave this screen — the summary will be waiting for you.';
+
+  @override
+  String get parentHotlineSummaryDocType => 'Parent call';
+
+  @override
+  String get parentHotlineSummaryReasonAbsences => 'Absences';
+
+  @override
+  String get parentHotlineSummaryReasonPerformance => 'Performance';
+
+  @override
+  String get parentHotlineSummaryReasonBehaviour => 'Behaviour';
+
+  @override
+  String get parentHotlineSummaryReasonPositive => 'Good news';
+
+  @override
+  String parentHotlineSummaryTitle(String name) {
+    return '$name\'s parent';
+  }
+
+  @override
+  String parentHotlineSummaryDurationMin(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get parentHotlineSentimentCooperative => 'Cooperative';
+
+  @override
+  String get parentHotlineSentimentConcerned => 'Concerned';
+
+  @override
+  String get parentHotlineSentimentGrateful => 'Grateful';
+
+  @override
+  String get parentHotlineSentimentUpset => 'Upset';
+
+  @override
+  String get parentHotlineSentimentIndifferent => 'Reserved';
+
+  @override
+  String get parentHotlineSentimentConfused => 'Confused';
+
+  @override
+  String get parentHotlineSummarySaidHeader => 'What the parent said';
+
+  @override
+  String get parentHotlineSummaryConcernsHeader => 'Concerns raised';
+
+  @override
+  String get parentHotlineSummaryCommitmentsHeader => 'Parent commitments';
+
+  @override
+  String get parentHotlineSummaryActionsHeader => 'Your action items';
+
+  @override
+  String get parentHotlineSummaryGuidanceHeader => 'Guidance shared';
+
+  @override
+  String get parentHotlineSummaryFollowUpHeader => 'Follow-up';
+
+  @override
+  String parentHotlineSummaryTranscript(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'View conversation · $count messages',
+      one: 'View conversation · 1 message',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get parentHotlineSummaryDone => 'Done';
+
+  @override
+  String get parentHotlineSummaryCallAgain => 'Call again later';
+
+  @override
+  String get parentHotlineSummaryManualTitle => 'Message copied';
+
+  @override
+  String get parentHotlineSummaryManualBody =>
+      'Paste it in WhatsApp to send it to the parent.';
+
+  @override
+  String get parentHotlineSummaryBusy => 'The line was busy';
+
+  @override
+  String get parentHotlineSummaryNoAnswer => 'No answer';
+
+  @override
+  String get parentHotlineSummaryFailed => 'The call couldn\'t connect';
+
+  @override
+  String get parentHotlineSummaryFailedBody =>
+      'The call didn\'t go through. You can try again, or copy the message to send on WhatsApp.';
+
+  @override
+  String get parentHotlineSummaryTryAgain => 'Try again';
+
+  @override
+  String get parentHotlineSummaryNoConversationTitle =>
+      'The call ended too soon';
+
+  @override
+  String get parentHotlineSummaryNoConversationBody =>
+      'The call ended before a conversation could happen. You can try again, or send the message on WhatsApp.';
+
+  @override
+  String get parentHotlineSummaryUnavailableTitle => 'Summary isn\'t available';
+
+  @override
+  String get parentHotlineSummaryUnavailableBody =>
+      'We couldn\'t prepare a summary for this call. The conversation is below.';
 }

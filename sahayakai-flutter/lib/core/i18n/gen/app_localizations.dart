@@ -3883,6 +3883,204 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You can leave this screen — the summary will be waiting for you.'**
   String get parentHotlineCallingReassurance;
+
+  /// Summary masthead eyebrow doc-type (U-PH5); the reason word is appended after a middot, e.g. 'PARENT CALL · ABSENCES'.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent call'**
+  String get parentHotlineSummaryDocType;
+
+  /// Short reason word in the summary eyebrow for the consecutive-absences reason.
+  ///
+  /// In en, this message translates to:
+  /// **'Absences'**
+  String get parentHotlineSummaryReasonAbsences;
+
+  /// Short reason word in the summary eyebrow for the poor-performance reason.
+  ///
+  /// In en, this message translates to:
+  /// **'Performance'**
+  String get parentHotlineSummaryReasonPerformance;
+
+  /// Short reason word in the summary eyebrow for the behavioural-concern reason.
+  ///
+  /// In en, this message translates to:
+  /// **'Behaviour'**
+  String get parentHotlineSummaryReasonBehaviour;
+
+  /// Short reason word in the summary eyebrow for the positive-feedback reason.
+  ///
+  /// In en, this message translates to:
+  /// **'Good news'**
+  String get parentHotlineSummaryReasonPositive;
+
+  /// Summary masthead title (U-PH5), the student whose parent was called.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}\'s parent'**
+  String parentHotlineSummaryTitle(String name);
+
+  /// Call-duration meta badge on the summary masthead, in whole minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String parentHotlineSummaryDurationMin(int minutes);
+
+  /// Sentiment badge label: the parent was cooperative on the call.
+  ///
+  /// In en, this message translates to:
+  /// **'Cooperative'**
+  String get parentHotlineSentimentCooperative;
+
+  /// Sentiment badge label: the parent sounded concerned.
+  ///
+  /// In en, this message translates to:
+  /// **'Concerned'**
+  String get parentHotlineSentimentConcerned;
+
+  /// Sentiment badge label: the parent was grateful.
+  ///
+  /// In en, this message translates to:
+  /// **'Grateful'**
+  String get parentHotlineSentimentGrateful;
+
+  /// Sentiment badge label: the parent was upset.
+  ///
+  /// In en, this message translates to:
+  /// **'Upset'**
+  String get parentHotlineSentimentUpset;
+
+  /// Sentiment badge label for an indifferent/neutral parent. Use a dignified word (not 'indifferent') that reads as reserved/neutral.
+  ///
+  /// In en, this message translates to:
+  /// **'Reserved'**
+  String get parentHotlineSentimentIndifferent;
+
+  /// Sentiment badge label: the parent seemed confused.
+  ///
+  /// In en, this message translates to:
+  /// **'Confused'**
+  String get parentHotlineSentimentConfused;
+
+  /// Summary section header over the AI recap of the parent's response.
+  ///
+  /// In en, this message translates to:
+  /// **'What the parent said'**
+  String get parentHotlineSummarySaidHeader;
+
+  /// Summary section header over the concerns the parent raised (hidden when none).
+  ///
+  /// In en, this message translates to:
+  /// **'Concerns raised'**
+  String get parentHotlineSummaryConcernsHeader;
+
+  /// Summary section header over what the parent committed to (hidden when none).
+  ///
+  /// In en, this message translates to:
+  /// **'Parent commitments'**
+  String get parentHotlineSummaryCommitmentsHeader;
+
+  /// Summary section header over the teacher's follow-up to-dos (the saffron block).
+  ///
+  /// In en, this message translates to:
+  /// **'Your action items'**
+  String get parentHotlineSummaryActionsHeader;
+
+  /// Summary section header over the home-learning guidance the agent shared (hidden when none).
+  ///
+  /// In en, this message translates to:
+  /// **'Guidance shared'**
+  String get parentHotlineSummaryGuidanceHeader;
+
+  /// Summary section header over the suggested follow-up (shown only when follow-up is needed).
+  ///
+  /// In en, this message translates to:
+  /// **'Follow-up'**
+  String get parentHotlineSummaryFollowUpHeader;
+
+  /// Collapsed transcript disclosure title on the summary; {count} is the number of turns.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{View conversation · 1 message} other{View conversation · {count} messages}}'**
+  String parentHotlineSummaryTranscript(int count);
+
+  /// Summary footer primary action — closes the summary and returns.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get parentHotlineSummaryDone;
+
+  /// Summary footer ghost action — starts a fresh call (subject to the 5-minute dedup cool-down).
+  ///
+  /// In en, this message translates to:
+  /// **'Call again later'**
+  String get parentHotlineSummaryCallAgain;
+
+  /// Terminal panel title when the outreach was the WhatsApp-copy path (no call placed).
+  ///
+  /// In en, this message translates to:
+  /// **'Message copied'**
+  String get parentHotlineSummaryManualTitle;
+
+  /// Terminal panel body for the WhatsApp-copy path.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste it in WhatsApp to send it to the parent.'**
+  String get parentHotlineSummaryManualBody;
+
+  /// Terminal panel title when the call ended busy.
+  ///
+  /// In en, this message translates to:
+  /// **'The line was busy'**
+  String get parentHotlineSummaryBusy;
+
+  /// Terminal panel title when the parent did not answer.
+  ///
+  /// In en, this message translates to:
+  /// **'No answer'**
+  String get parentHotlineSummaryNoAnswer;
+
+  /// Terminal panel title when the call failed to connect.
+  ///
+  /// In en, this message translates to:
+  /// **'The call couldn\'t connect'**
+  String get parentHotlineSummaryFailed;
+
+  /// Terminal panel body for a failed / no-answer / busy call.
+  ///
+  /// In en, this message translates to:
+  /// **'The call didn\'t go through. You can try again, or copy the message to send on WhatsApp.'**
+  String get parentHotlineSummaryFailedBody;
+
+  /// Terminal panel action that re-dials the same outreach.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get parentHotlineSummaryTryAgain;
+
+  /// Terminal panel title when the call ended before a real conversation happened.
+  ///
+  /// In en, this message translates to:
+  /// **'The call ended too soon'**
+  String get parentHotlineSummaryNoConversationTitle;
+
+  /// Terminal panel body when the call ended before a conversation could happen.
+  ///
+  /// In en, this message translates to:
+  /// **'The call ended before a conversation could happen. You can try again, or send the message on WhatsApp.'**
+  String get parentHotlineSummaryNoConversationBody;
+
+  /// Terminal panel title when the call finished but no AI summary was produced; the transcript is shown below.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary isn\'t available'**
+  String get parentHotlineSummaryUnavailableTitle;
+
+  /// Terminal panel body when the summary is unavailable but a transcript exists.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t prepare a summary for this call. The conversation is below.'**
+  String get parentHotlineSummaryUnavailableBody;
 }
 
 class _AppLocalizationsDelegate

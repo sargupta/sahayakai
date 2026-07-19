@@ -29,6 +29,7 @@ import 'parent_hotline_controller.dart';
 import 'widgets/calling_stage.dart';
 import 'widgets/evidence_panel.dart';
 import 'widgets/reason_card.dart';
+import 'widgets/summary_sheet.dart';
 
 /// The Parent Hotline screen (SPEC §B.0 / §B.1), stages 1–5:
 /// `pickStudent → reason → compose → review → calling`, plus the decision bar.
@@ -190,11 +191,23 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
           callResult: state.callResult,
         );
       case HotlineStage.summary:
-        // U-PH5 (summary) — a placeholder until the DocumentSheet payoff lands.
-        return EmptyView(
-          icon: LucideIcons.phoneCall,
-          title: l10n.parentHotlineComingSoonTitle,
-          message: l10n.parentHotlineComingSoonBody,
+        // U-PH5 — the payoff. A full DocumentSheet when the AI summary landed,
+        // else one of the terminal panels; the outcome is the controller's
+        // derived discriminator. Intents route back through the controller
+        // (Done pops; the copy path reuses the review handler so the clipboard
+        // write + snackbar are shared).
+        return SummarySheet(
+          outcome:
+              state.summaryOutcome ?? HotlineSummaryOutcome.endedNoConversation,
+          studentName: state.studentName ?? '',
+          reason: state.selectedReason ?? state.suggestedReason,
+          callResult: state.callResult,
+          isDedupBlocked: state.isDedupBlocked,
+          dedupRetryAfterSeconds: state.dedupRetryAfterSeconds,
+          onDone: () => Navigator.of(context).maybePop(),
+          onCallAgain: () => unawaited(_controller.callAgain()),
+          onRetry: () => unawaited(_controller.retryCall()),
+          onCopyForWhatsApp: _onWhatsApp,
         );
     }
   }

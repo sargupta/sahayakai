@@ -6,13 +6,16 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/parent_hotline/data/parent_hotline_repository.dart';
+import 'package:sahayakai/features/parent_hotline/domain/call_summary.dart';
 import 'package:sahayakai/features/parent_hotline/domain/hotline_student.dart';
 import 'package:sahayakai/features/parent_hotline/domain/parent_outreach.dart';
 import 'package:sahayakai/features/parent_hotline/presentation/hotline_roster_provider.dart';
 import 'package:sahayakai/features/parent_hotline/presentation/parent_hotline_controller.dart';
 import 'package:sahayakai/features/parent_hotline/presentation/parent_hotline_screen.dart';
+import 'package:sahayakai/features/parent_hotline/presentation/widgets/summary_sheet.dart';
 import 'package:sahayakai/features/parent_message/data/parent_message_repository.dart';
 import 'package:sahayakai/shared/widgets/app_skeleton.dart';
+import 'package:sahayakai/shared/widgets/document_sheet.dart';
 import 'package:sahayakai/shared/widgets/empty_view.dart';
 import 'package:sahayakai/shared/widgets/note_banner.dart';
 import 'package:sahayakai/shared/widgets/primary_button.dart';
@@ -355,12 +358,44 @@ void main() {
       expect(find.text('The call view is on its way'), findsNothing);
     });
 
-    testWidgets('the summary stage still renders the U-PH5 placeholder',
-        (tester) async {
+    testWidgets('the summary stage renders the U-PH5 SummarySheet, not the '
+        'placeholder', (tester) async {
+      // A summary stage with no callResult resolves to the endedNoConversation
+      // terminal — the real U-PH5 widget, not the old "coming soon" placeholder.
       await _pump(tester, overrides: _fixed(
-        const ParentHotlineState(stage: HotlineStage.summary),
+        const ParentHotlineState(
+          stage: HotlineStage.summary,
+          studentName: 'Asha Rao',
+        ),
       ));
-      expect(find.text('The call view is on its way'), findsOneWidget);
+      expect(find.byType(SummarySheet), findsOneWidget);
+      expect(find.text('The call ended too soon'), findsOneWidget);
+      expect(find.text('The call view is on its way'), findsNothing);
+    });
+
+    testWidgets('the summary stage renders the full DocumentSheet when the AI '
+        'summary landed', (tester) async {
+      await _pump(tester, overrides: _fixed(
+        ParentHotlineState(
+          stage: HotlineStage.summary,
+          studentName: 'Asha Rao',
+          selectedReason: OutreachReason.consecutiveAbsences,
+          callResult: const CallResult(
+            callStatus: CallStatus.completed,
+            turnCount: 4,
+            callDurationSeconds: 120,
+            callSummary: CallSummary(
+              parentResponse: 'The parent understood and will help at home.',
+              actionItemsForTeacher: ['Share the weekly plan.'],
+              parentSentiment: ParentSentiment.cooperative,
+              callQuality: CallQuality.productive,
+            ),
+          ),
+        ),
+      ));
+      expect(find.byType(DocumentSheet), findsOneWidget);
+      expect(find.text("Asha Rao's parent"), findsOneWidget);
+      expect(find.textContaining('understood'), findsOneWidget);
     });
 
     testWidgets(

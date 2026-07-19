@@ -2166,4 +2166,119 @@ class AppLocalizationsMr extends AppLocalizations {
   @override
   String get parentHotlineCallingReassurance =>
       'तुम्ही ही स्क्रीन सोडू शकता — सारांश तुमच्यासाठी तयार राहील.';
+
+  @override
+  String get parentHotlineSummaryDocType => 'पालक कॉल';
+
+  @override
+  String get parentHotlineSummaryReasonAbsences => 'गैरहजेरी';
+
+  @override
+  String get parentHotlineSummaryReasonPerformance => 'कामगिरी';
+
+  @override
+  String get parentHotlineSummaryReasonBehaviour => 'वर्तन';
+
+  @override
+  String get parentHotlineSummaryReasonPositive => 'आनंदाची बातमी';
+
+  @override
+  String parentHotlineSummaryTitle(String name) {
+    return '$name चे पालक';
+  }
+
+  @override
+  String parentHotlineSummaryDurationMin(int minutes) {
+    return '$minutes मिनिटे';
+  }
+
+  @override
+  String get parentHotlineSentimentCooperative => 'सहकार्यशील';
+
+  @override
+  String get parentHotlineSentimentConcerned => 'चिंतित';
+
+  @override
+  String get parentHotlineSentimentGrateful => 'कृतज्ञ';
+
+  @override
+  String get parentHotlineSentimentUpset => 'नाराज';
+
+  @override
+  String get parentHotlineSentimentIndifferent => 'तटस्थ';
+
+  @override
+  String get parentHotlineSentimentConfused => 'गोंधळलेले';
+
+  @override
+  String get parentHotlineSummarySaidHeader => 'पालक काय म्हणाले';
+
+  @override
+  String get parentHotlineSummaryConcernsHeader => 'मांडलेल्या चिंता';
+
+  @override
+  String get parentHotlineSummaryCommitmentsHeader => 'पालकांची वचने';
+
+  @override
+  String get parentHotlineSummaryActionsHeader => 'तुमची कार्ये';
+
+  @override
+  String get parentHotlineSummaryGuidanceHeader => 'दिलेले मार्गदर्शन';
+
+  @override
+  String get parentHotlineSummaryFollowUpHeader => 'पुढील पाऊल';
+
+  @override
+  String parentHotlineSummaryTranscript(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'संभाषण पहा · $count संदेश',
+      one: 'संभाषण पहा · 1 संदेश',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get parentHotlineSummaryDone => 'पूर्ण झाले';
+
+  @override
+  String get parentHotlineSummaryCallAgain => 'नंतर पुन्हा कॉल करा';
+
+  @override
+  String get parentHotlineSummaryManualTitle => 'संदेश कॉपी झाला';
+
+  @override
+  String get parentHotlineSummaryManualBody =>
+      'पालकांना पाठवण्यासाठी तो WhatsApp मध्ये पेस्ट करा.';
+
+  @override
+  String get parentHotlineSummaryBusy => 'लाइन व्यस्त होती';
+
+  @override
+  String get parentHotlineSummaryNoAnswer => 'उत्तर नाही';
+
+  @override
+  String get parentHotlineSummaryFailed => 'कॉल जोडता आला नाही';
+
+  @override
+  String get parentHotlineSummaryFailedBody =>
+      'कॉल झाला नाही. तुम्ही पुन्हा प्रयत्न करू शकता, किंवा संदेश कॉपी करून WhatsApp वर पाठवू शकता.';
+
+  @override
+  String get parentHotlineSummaryTryAgain => 'पुन्हा प्रयत्न करा';
+
+  @override
+  String get parentHotlineSummaryNoConversationTitle => 'कॉल खूप लवकर संपला';
+
+  @override
+  String get parentHotlineSummaryNoConversationBody =>
+      'संभाषण सुरू होण्यापूर्वीच कॉल संपला. तुम्ही पुन्हा प्रयत्न करू शकता, किंवा संदेश WhatsApp वर पाठवू शकता.';
+
+  @override
+  String get parentHotlineSummaryUnavailableTitle => 'सारांश उपलब्ध नाही';
+
+  @override
+  String get parentHotlineSummaryUnavailableBody =>
+      'या कॉलचा सारांश तयार करता आला नाही. संभाषण खाली दिले आहे.';
 }

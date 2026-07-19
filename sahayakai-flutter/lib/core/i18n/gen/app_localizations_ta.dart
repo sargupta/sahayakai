@@ -2172,4 +2172,120 @@ class AppLocalizationsTa extends AppLocalizations {
   @override
   String get parentHotlineCallingReassurance =>
       'இந்தத் திரையை நீங்கள் விட்டு வெளியேறலாம் — சுருக்கம் உங்களுக்காகக் காத்திருக்கும்.';
+
+  @override
+  String get parentHotlineSummaryDocType => 'பெற்றோர் அழைப்பு';
+
+  @override
+  String get parentHotlineSummaryReasonAbsences => 'வருகையின்மை';
+
+  @override
+  String get parentHotlineSummaryReasonPerformance => 'செயல்திறன்';
+
+  @override
+  String get parentHotlineSummaryReasonBehaviour => 'நடத்தை';
+
+  @override
+  String get parentHotlineSummaryReasonPositive => 'நற்செய்தி';
+
+  @override
+  String parentHotlineSummaryTitle(String name) {
+    return '$name இன் பெற்றோர்';
+  }
+
+  @override
+  String parentHotlineSummaryDurationMin(int minutes) {
+    return '$minutes நிமிடம்';
+  }
+
+  @override
+  String get parentHotlineSentimentCooperative => 'ஒத்துழைப்பு';
+
+  @override
+  String get parentHotlineSentimentConcerned => 'கவலை';
+
+  @override
+  String get parentHotlineSentimentGrateful => 'நன்றியுடன்';
+
+  @override
+  String get parentHotlineSentimentUpset => 'வருத்தம்';
+
+  @override
+  String get parentHotlineSentimentIndifferent => 'நடுநிலை';
+
+  @override
+  String get parentHotlineSentimentConfused => 'குழப்பம்';
+
+  @override
+  String get parentHotlineSummarySaidHeader => 'பெற்றோர் சொன்னது';
+
+  @override
+  String get parentHotlineSummaryConcernsHeader => 'எழுப்பப்பட்ட கவலைகள்';
+
+  @override
+  String get parentHotlineSummaryCommitmentsHeader => 'பெற்றோரின் உறுதிமொழிகள்';
+
+  @override
+  String get parentHotlineSummaryActionsHeader => 'உங்கள் செயல் பணிகள்';
+
+  @override
+  String get parentHotlineSummaryGuidanceHeader => 'பகிர்ந்த வழிகாட்டுதல்';
+
+  @override
+  String get parentHotlineSummaryFollowUpHeader => 'தொடர் நடவடிக்கை';
+
+  @override
+  String parentHotlineSummaryTranscript(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'உரையாடலைப் பார்க்க · $count செய்திகள்',
+      one: 'உரையாடலைப் பார்க்க · 1 செய்தி',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get parentHotlineSummaryDone => 'முடிந்தது';
+
+  @override
+  String get parentHotlineSummaryCallAgain => 'பின்னர் மீண்டும் அழைக்கவும்';
+
+  @override
+  String get parentHotlineSummaryManualTitle => 'செய்தி நகலெடுக்கப்பட்டது';
+
+  @override
+  String get parentHotlineSummaryManualBody =>
+      'பெற்றோருக்கு அனுப்ப WhatsApp இல் ஒட்டவும்.';
+
+  @override
+  String get parentHotlineSummaryBusy => 'இணைப்பு பிஸியாக இருந்தது';
+
+  @override
+  String get parentHotlineSummaryNoAnswer => 'பதில் இல்லை';
+
+  @override
+  String get parentHotlineSummaryFailed => 'அழைப்பை இணைக்க முடியவில்லை';
+
+  @override
+  String get parentHotlineSummaryFailedBody =>
+      'அழைப்பு முடியவில்லை. மீண்டும் முயற்சிக்கலாம், அல்லது செய்தியை நகலெடுத்து WhatsApp இல் அனுப்பலாம்.';
+
+  @override
+  String get parentHotlineSummaryTryAgain => 'மீண்டும் முயற்சிக்கவும்';
+
+  @override
+  String get parentHotlineSummaryNoConversationTitle =>
+      'அழைப்பு மிக விரைவில் முடிந்தது';
+
+  @override
+  String get parentHotlineSummaryNoConversationBody =>
+      'உரையாடல் தொடங்கும் முன்பே அழைப்பு முடிந்தது. மீண்டும் முயற்சிக்கலாம், அல்லது செய்தியை WhatsApp இல் அனுப்பலாம்.';
+
+  @override
+  String get parentHotlineSummaryUnavailableTitle => 'சுருக்கம் கிடைக்கவில்லை';
+
+  @override
+  String get parentHotlineSummaryUnavailableBody =>
+      'இந்த அழைப்புக்கான சுருக்கத்தைத் தயாரிக்க முடியவில்லை. உரையாடல் கீழே உள்ளது.';
 }

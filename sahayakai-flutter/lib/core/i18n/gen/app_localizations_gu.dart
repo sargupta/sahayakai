@@ -2166,4 +2166,120 @@ class AppLocalizationsGu extends AppLocalizations {
   @override
   String get parentHotlineCallingReassurance =>
       'તમે આ સ્ક્રીન છોડી શકો છો — સારાંશ તમારા માટે તૈયાર રહેશે.';
+
+  @override
+  String get parentHotlineSummaryDocType => 'વાલી કૉલ';
+
+  @override
+  String get parentHotlineSummaryReasonAbsences => 'ગેરહાજરી';
+
+  @override
+  String get parentHotlineSummaryReasonPerformance => 'કામગીરી';
+
+  @override
+  String get parentHotlineSummaryReasonBehaviour => 'વર્તન';
+
+  @override
+  String get parentHotlineSummaryReasonPositive => 'સારા સમાચાર';
+
+  @override
+  String parentHotlineSummaryTitle(String name) {
+    return '$name ના વાલી';
+  }
+
+  @override
+  String parentHotlineSummaryDurationMin(int minutes) {
+    return '$minutes મિનિટ';
+  }
+
+  @override
+  String get parentHotlineSentimentCooperative => 'સહકારી';
+
+  @override
+  String get parentHotlineSentimentConcerned => 'ચિંતિત';
+
+  @override
+  String get parentHotlineSentimentGrateful => 'આભારી';
+
+  @override
+  String get parentHotlineSentimentUpset => 'નારાજ';
+
+  @override
+  String get parentHotlineSentimentIndifferent => 'તટસ્થ';
+
+  @override
+  String get parentHotlineSentimentConfused => 'મૂંઝવણમાં';
+
+  @override
+  String get parentHotlineSummarySaidHeader => 'વાલીએ શું કહ્યું';
+
+  @override
+  String get parentHotlineSummaryConcernsHeader => 'ઉઠાવેલી ચિંતાઓ';
+
+  @override
+  String get parentHotlineSummaryCommitmentsHeader => 'વાલીના વચનો';
+
+  @override
+  String get parentHotlineSummaryActionsHeader => 'તમારાં કાર્યો';
+
+  @override
+  String get parentHotlineSummaryGuidanceHeader => 'શેર કરેલું માર્ગદર્શન';
+
+  @override
+  String get parentHotlineSummaryFollowUpHeader => 'આગળનું પગલું';
+
+  @override
+  String parentHotlineSummaryTranscript(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'વાતચીત જુઓ · $count સંદેશ',
+      one: 'વાતચીત જુઓ · 1 સંદેશ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get parentHotlineSummaryDone => 'થઈ ગયું';
+
+  @override
+  String get parentHotlineSummaryCallAgain => 'પછીથી ફરી કૉલ કરો';
+
+  @override
+  String get parentHotlineSummaryManualTitle => 'સંદેશ કૉપિ થયો';
+
+  @override
+  String get parentHotlineSummaryManualBody =>
+      'વાલીને મોકલવા માટે તેને WhatsApp માં પેસ્ટ કરો.';
+
+  @override
+  String get parentHotlineSummaryBusy => 'લાઇન વ્યસ્ત હતી';
+
+  @override
+  String get parentHotlineSummaryNoAnswer => 'કોઈ જવાબ નથી';
+
+  @override
+  String get parentHotlineSummaryFailed => 'કૉલ કનેક્ટ થઈ શક્યો નહીં';
+
+  @override
+  String get parentHotlineSummaryFailedBody =>
+      'કૉલ થઈ શક્યો નહીં. તમે ફરી પ્રયાસ કરી શકો છો, અથવા સંદેશ કૉપિ કરીને WhatsApp પર મોકલી શકો છો.';
+
+  @override
+  String get parentHotlineSummaryTryAgain => 'ફરી પ્રયાસ કરો';
+
+  @override
+  String get parentHotlineSummaryNoConversationTitle =>
+      'કૉલ બહુ વહેલો સમાપ્ત થયો';
+
+  @override
+  String get parentHotlineSummaryNoConversationBody =>
+      'વાતચીત શરૂ થાય તે પહેલાં જ કૉલ સમાપ્ત થયો. તમે ફરી પ્રયાસ કરી શકો છો, અથવા સંદેશ WhatsApp પર મોકલી શકો છો.';
+
+  @override
+  String get parentHotlineSummaryUnavailableTitle => 'સારાંશ ઉપલબ્ધ નથી';
+
+  @override
+  String get parentHotlineSummaryUnavailableBody =>
+      'આ કૉલનો સારાંશ તૈયાર કરી શકાયો નહીં. વાતચીત નીચે આપી છે.';
 }
