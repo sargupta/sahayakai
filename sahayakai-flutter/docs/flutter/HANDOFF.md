@@ -554,3 +554,98 @@ TTS) 401s on the stub token (see §1). Verification here is code + unit tests on
 - **Capture format is load-bearing:** the recorder is pinned to `AudioEncoder.wav` because the STT
   route only tries the cheap Sarvam Saaras v3 Indic path for `audio/(mpeg|mp3|wav)`. Do **not** switch
   it to opus/aac — that silently drops every Indic utterance onto the slower Gemini fallback.
+
+## 9. Block C — Staffroom + Pro Inbox Firebase transport handoff (U-SI0)
+
+**This is the gate.** Block C (Pillar 04 Staffroom + Pillar 05 Pro Inbox) is the only part of
+the app that needs **Firebase in the Flutter client** — direct Firestore `onSnapshot` for the
+realtime surfaces, plus REST wrappers for the writes. U-SI0 landed the **seam** (DTOs, transport
+interfaces, a deferred no-Firebase implementation, a documented Firebase stub) so U-SI1..U-SI6 can
+build the UI against a stable contract **without** Firebase and **without breaking the APK**. Nothing
+in Block C goes live until the two handoffs below are done. Until then every surface renders its
+`EmptyView` "coming soon" and every write is disabled (a typed `TransportUnavailable`).
+
+### 9.1 What U-SI0 shipped (no Firebase, APK stays green)
+- **DTOs + domain**, mirroring `src/types/{messages,community,index}.ts` + the server-action return
+  shapes, tolerant-decoded (unknown enum → safe default, nullable fields):
+  - Inbox: `lib/features/inbox/domain/{conversation_id,inbox_models,notification_item,presence_status}.dart`
+    + `lib/features/inbox/data/dto/**` (conversation, message, notification, presence, `wire_time`).
+    `buildDirectConversationId(a,b) = ([a,b]..sort()).join('_')` is byte-identical to the web so a DM
+    opened from Flutter and web collide on the same doc.
+  - Staffroom: `lib/features/staffroom/domain/**` (group, chat_message, community_post/feed,
+    connection, teacher, persona_pulse, staffroom_results) + `lib/features/staffroom/data/dto/**`.
+    **Two connection graphs share the `connections` collection** — the directed `FollowEdge`
+    (`{followerId}_{followingId}`) and the mutual `MutualConnection` (sorted `{uids,initiatedBy}`,
+    the DM gate). They are modelled as **distinct** Dart types; do not conflate them.
+  - Notification `MESSAGE` type is modelled even though it is **absent from the `NotificationType`
+    union** in `src/types/index.ts` — `sendMessageAction` writes `type:'MESSAGE'` at runtime. (Worth
+    adding to the union server-side.)
+- **Transport interfaces** (the contract U-SI1..U-SI6 code against), each method doc-mapped to the
+  exact Firestore query / server action:
+  - `lib/features/inbox/data/inbox_transport.dart` — `InboxTransport`
+  - `lib/features/inbox/data/notifications_transport.dart` — `NotificationsTransport`
+  - `lib/features/inbox/data/presence_transport.dart` — `PresenceTransport` (RTDB, gated separately)
+  - `lib/features/staffroom/data/staffroom_transport.dart` — `StaffroomTransport`
+  - shared primitives in `lib/features/inbox/data/block_c_transport.dart`: `TransportSnapshot<T>`
+    (state ∈ {awaitingFirebase, signedOut, loading, ready, error} + payload — the `onSnapshot`
+    element type; **missing-index/permission-denied MUST surface as `error` → `ErrorView`, never a
+    hang**), `TransportUnavailable`, and the `BlockCGate` compile flags.
+- **Deferred implementations** (`Deferred*Transport`) bound to the Riverpod providers today: live
+  streams emit one `awaitingFirebase` snapshot, one-shot reads return empty/null, writes throw
+  `TransportUnavailable` (presence writes + persona-pulse are no-op/null so best-effort surfaces do
+  not crash). Reusable **fake** transports for U-SI1+ widget tests live in
+  `test/support/fake_block_c_transports.dart`.
+- **Firebase stub** `lib/core/firebase/firebase_init.dart` — no-op, **imports no Firebase package**,
+  exposes `FirebaseInit.isConfigured` (always `false` now). The transport providers read it: when it
+  flips `true` without the live impl wired, they **throw loudly** rather than silently stay deferred.
+
+### 9.2 Handoff A — Firebase SDK for the realtime reads (owner + eng)
+1. Add to `pubspec.yaml` (pin, do not float): `firebase_core`, `cloud_firestore`,
+   `firebase_database` (presence, U-SI6), `firebase_messaging` (FCM, U-SI6). **Run
+   `scripts/verify_build.sh` after** — analyze+test never compile the release kernel or invoke
+   Gradle, so only the APK build proves the native side survived a plugin add.
+2. Drop `android/app/google-services.json` (Firebase console → SahayakAI project) and apply the
+   Google-services Gradle plugin. Add the FlutterFire `firebase_options.dart` (`flutterfire configure`).
+3. Implement `FirebaseInit.ensureInitialized()` (call it in `main()` before `runApp`, gated) and make
+   `isConfigured` reflect it — see the TODO block in `firebase_init.dart`.
+4. Write the live transports (`FirestoreInboxTransport`, `FirestoreStaffroomTransport`,
+   `FirestoreNotificationsTransport`, `RtdbPresenceTransport`) implementing the same interfaces:
+   reads via `cloud_firestore` `snapshots()` (mapped through the existing DTOs with
+   `{ 'id': doc.id, ...doc.data() }`), writes via the REST wrappers from Handoff B. Bind them in the
+   `*Transport` providers (replace the `Deferred*` return). **No UI change** — U-SI1..U-SI6 already
+   code against the interface.
+5. Bridge auth: `lib/core/network/api_providers.dart::tokenProvider` is still the signed-out stub;
+   return `firebase_auth`'s `user?.getIdToken(forceRefresh)` so the REST-wrapper Bearer token works.
+6. Flip `BlockCGate.staffroomEnabled` / `proInboxEnabled` (via `--dart-define`) once live.
+
+**`firestore.rules` the reads assume (already deployed in `sahayakai-main`):**
+- `conversations` — read/update if `auth.uid in resource.data.participantIds` (drives the
+  `array-contains` inbox query); `conversations/{id}/messages` — read if participant.
+- `community_chat` — read if signed-in; `groups/{id}/chat` + `groups/{id}/posts` — read if group
+  member; `groups/{id}` metadata — read if signed-in.
+- `notifications` — read if `resource.data.recipientId == auth.uid`.
+- `connections` / `connection_requests` — read only if `auth.uid` is a participant.
+The inbox + notification `onSnapshot`s need Firestore **composite indexes**; a missing index throws —
+render `ErrorView`, never hang (the `TransportSnapshot.error` state exists for exactly this).
+
+### 9.3 Handoff B — REST wrappers for the writes (backend task, cross-repo)
+Server actions are Next RPC (`"use server"`), **not** REST — Dio cannot invoke them. Add thin REST
+routes that call the **existing** action bodies (reuse their authz/validation/transactions verbatim;
+do **not** reimplement auth in Flutter): `/api/messages/*` (get-or-create-direct, create-group, send,
+mark-read, ack-delivery, total-unread), `/api/community/*` + `/api/groups/*` (ensure-groups,
+my-groups, group, discover, group-posts, unified-feed, create-post, like-post, group-chat-send,
+community-chat-send, recommended, all-teachers, public-profile, liked-ids), `/api/connections/*`
+(send/accept/decline/disconnect, my-connection-data, follow), `/api/notifications/*` (list, mark-read,
+mark-all). Auth is the verified Bearer → `x-user-id`; the client never sends identity fields
+(`senderId`, `myUid`, `authorId` are all server-derived — the request DTOs already omit them).
+The request/response shapes each wrapper must speak are pinned by the U-SI0 DTOs + their golden tests.
+
+**Already real (no wrapper needed):** `POST /api/community/persona-pulse` (demo heartbeat; 503 = stop),
+`POST /api/teacher-activity` (engagement analytics), `POST /api/feedback` — reachable via the existing
+Dio `ApiClient` today. **Shared Resources row** (Staffroom §A3.1) reuses the existing Library pillar
+repository/DTOs, not a new Block-C type.
+
+### 9.4 Handoff C — FCM push + RTDB presence (U-SI6, hardest wall)
+`firebase_messaging` (APNs key for iOS, `POST_NOTIFICATIONS` runtime perm on Android 13+) and the RTDB
+presence node (`presence/{uid}/online` + rules) are the last mile. `PresenceTransport` is gated
+separately so the Inbox ships without them.
