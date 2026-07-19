@@ -110,6 +110,9 @@ void main() {
       expect(find.text('Ask me to plan a lesson'), findsOneWidget);
       // The Prep desk is one tap away.
       expect(find.byIcon(LucideIcons.layoutGrid), findsOneWidget);
+      // U-SI2 — the Network hub entry sits in the app bar next to the messages
+      // entry.
+      expect(find.byIcon(LucideIcons.network), findsOneWidget);
     });
 
     testWidgets('reduce-motion is a static frame (pumpAndSettle returns)',

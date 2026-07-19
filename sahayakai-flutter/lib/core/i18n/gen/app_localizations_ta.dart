@@ -3018,4 +3018,165 @@ class AppLocalizationsTa extends AppLocalizations {
   String inboxTimeWeeks(int count) {
     return '$count வா';
   }
+
+  @override
+  String get networkTitle => 'நெட்வொர்க்';
+
+  @override
+  String get networkTooltip => 'நெட்வொர்க்';
+
+  @override
+  String get networkTabStaffroom => 'ஸ்டாஃப்ரூம்';
+
+  @override
+  String get networkTabMessages => 'செய்திகள்';
+
+  @override
+  String get staffroomTitle => 'ஸ்டாஃப்ரூம்';
+
+  @override
+  String get staffroomHeroTitle => 'ஸ்டாஃப்ரூம்';
+
+  @override
+  String get staffroomHeroDeck =>
+      'பாரதம் முழுவதும் உள்ள ஆசிரியர்கள், ஒரே அறையில்';
+
+  @override
+  String get staffroomSectionGroups => 'உங்கள் குழுக்கள்';
+
+  @override
+  String get staffroomSectionFeed => 'உங்கள் குழுக்களிலிருந்து';
+
+  @override
+  String get staffroomSectionDiscover => 'குழுக்களைக் கண்டறியுங்கள்';
+
+  @override
+  String get staffroomSectionPeople => 'உங்களுக்குத் தெரிந்தவர்கள்';
+
+  @override
+  String get staffroomSignInTitle => 'ஸ்டாஃப்ரூமில் இணையுங்கள்';
+
+  @override
+  String get staffroomSignInBody => 'ஸ்டாஃப்ரூமில் இணைய உள்நுழையவும்';
+
+  @override
+  String get staffroomFeedEmptyTitle => 'உங்கள் ஃபீட் அமைதியாக உள்ளது';
+
+  @override
+  String get staffroomFeedEmptyBody =>
+      'உங்கள் குழுக்களின் இடுகைகள் இங்கே தோன்றும்.';
+
+  @override
+  String get staffroomErrorBody =>
+      'ஸ்டாஃப்ரூமை ஏற்ற முடியவில்லை. மீண்டும் முயற்சிக்கவும்.';
+
+  @override
+  String get staffroomGroupsEmptyTitle => 'இன்னும் குழுக்கள் இல்லை';
+
+  @override
+  String get staffroomGroupsEmptyBody =>
+      'இடுகைகளையும் அரட்டையையும் காண ஒரு குழுவில் இணையுங்கள்.';
+
+  @override
+  String get staffroomBrowseGroups => 'குழுக்களை உலாவுக';
+
+  @override
+  String staffroomMemberCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count உறுப்பினர்கள்',
+      one: '1 உறுப்பினர்',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get staffroomJoin => 'இணை';
+
+  @override
+  String get staffroomJoined => 'இணைந்தீர்கள்';
+
+  @override
+  String get staffroomJoinFailed =>
+      'இணைய முடியவில்லை. மீண்டும் முயற்சிக்க தட்டவும்.';
+
+  @override
+  String get staffroomGroupLockedTitle => 'உறுப்பினர்களுக்கு மட்டும்';
+
+  @override
+  String get staffroomGroupLockedBody =>
+      'இந்தக் குழுவின் இடுகைகளைக் காண இணையுங்கள்.';
+
+  @override
+  String get staffroomGroupPostsEmptyTitle => 'இன்னும் இடுகைகள் இல்லை';
+
+  @override
+  String get staffroomGroupPostsEmptyBody => 'இங்கே முதலில் பகிருங்கள்.';
+
+  @override
+  String get staffroomGroupNotFoundTitle => 'குழு கிடைக்கவில்லை';
+
+  @override
+  String get staffroomGroupNotFoundBody => 'இந்தக் குழு அகற்றப்பட்டிருக்கலாம்.';
+
+  @override
+  String get staffroomPostTypeShare => 'பகிர்ந்தது';
+
+  @override
+  String get staffroomPostTypeAskHelp => 'உதவி தேவை';
+
+  @override
+  String get staffroomPostTypeCelebrate => 'கொண்டாட்டம்';
+
+  @override
+  String get staffroomPostTypeResource => 'வளம்';
+
+  @override
+  String get staffroomLike => 'விருப்பம்';
+
+  @override
+  String get staffroomLiked => 'விரும்பியது';
+
+  @override
+  String staffroomLikeCountLabel(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count விருப்பங்கள்',
+      one: '1 விருப்பம்',
+      zero: 'விருப்பங்கள் இல்லை',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get staffroomLikeFailed =>
+      'புதுப்பிக்க முடியவில்லை. மீண்டும் முயற்சிக்க தட்டவும்.';
+
+  @override
+  String get staffroomResourceShared => 'ஒரு வளத்தைப் பகிர்ந்தது';
+
+  @override
+  String staffroomChatHighlight(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count புதிய செய்திகள்',
+      one: '1 புதிய செய்தி',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get staffroomConnect => 'தொடர்பு கொள்';
+
+  @override
+  String get staffroomConnectSent => 'கோரிக்கை அனுப்பப்பட்டது';
+
+  @override
+  String get staffroomConnectPending => 'கோரிக்கை ஏற்கனவே நிலுவையில் உள்ளது';
+
+  @override
+  String get staffroomConnectConnected => 'ஏற்கனவே இணைக்கப்பட்டுள்ளது';
 }

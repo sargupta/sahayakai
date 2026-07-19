@@ -3013,4 +3013,163 @@ class AppLocalizationsMl extends AppLocalizations {
   String inboxTimeWeeks(int count) {
     return '$count ആ';
   }
+
+  @override
+  String get networkTitle => 'നെറ്റ്‌വർക്ക്';
+
+  @override
+  String get networkTooltip => 'നെറ്റ്‌വർക്ക്';
+
+  @override
+  String get networkTabStaffroom => 'സ്റ്റാഫ്‌റൂം';
+
+  @override
+  String get networkTabMessages => 'സന്ദേശങ്ങൾ';
+
+  @override
+  String get staffroomTitle => 'സ്റ്റാഫ്‌റൂം';
+
+  @override
+  String get staffroomHeroTitle => 'സ്റ്റാഫ്‌റൂം';
+
+  @override
+  String get staffroomHeroDeck => 'ഭാരതമെമ്പാടുമുള്ള അധ്യാപകർ, ഒരേ മുറിയിൽ';
+
+  @override
+  String get staffroomSectionGroups => 'നിങ്ങളുടെ ഗ്രൂപ്പുകൾ';
+
+  @override
+  String get staffroomSectionFeed => 'നിങ്ങളുടെ ഗ്രൂപ്പുകളിൽ നിന്ന്';
+
+  @override
+  String get staffroomSectionDiscover => 'ഗ്രൂപ്പുകൾ കണ്ടെത്തുക';
+
+  @override
+  String get staffroomSectionPeople => 'നിങ്ങൾക്ക് അറിയാവുന്നവർ';
+
+  @override
+  String get staffroomSignInTitle => 'സ്റ്റാഫ്‌റൂമിൽ ചേരുക';
+
+  @override
+  String get staffroomSignInBody => 'സ്റ്റാഫ്‌റൂമിൽ ചേരാൻ സൈൻ ഇൻ ചെയ്യുക';
+
+  @override
+  String get staffroomFeedEmptyTitle => 'നിങ്ങളുടെ ഫീഡ് ശാന്തമാണ്';
+
+  @override
+  String get staffroomFeedEmptyBody =>
+      'നിങ്ങളുടെ ഗ്രൂപ്പുകളിലെ പോസ്റ്റുകൾ ഇവിടെ കാണാം.';
+
+  @override
+  String get staffroomErrorBody =>
+      'സ്റ്റാഫ്‌റൂം ലോഡ് ചെയ്യാനായില്ല. വീണ്ടും ശ്രമിക്കുക.';
+
+  @override
+  String get staffroomGroupsEmptyTitle => 'ഇതുവരെ ഗ്രൂപ്പുകളൊന്നുമില്ല';
+
+  @override
+  String get staffroomGroupsEmptyBody =>
+      'പോസ്റ്റുകളും ചാറ്റും കാണാൻ ഒരു ഗ്രൂപ്പിൽ ചേരുക.';
+
+  @override
+  String get staffroomBrowseGroups => 'ഗ്രൂപ്പുകൾ ബ്രൗസ് ചെയ്യുക';
+
+  @override
+  String staffroomMemberCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count അംഗങ്ങൾ',
+      one: '1 അംഗം',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get staffroomJoin => 'ചേരുക';
+
+  @override
+  String get staffroomJoined => 'ചേർന്നു';
+
+  @override
+  String get staffroomJoinFailed =>
+      'ചേരാനായില്ല. വീണ്ടും ശ്രമിക്കാൻ ടാപ്പ് ചെയ്യുക.';
+
+  @override
+  String get staffroomGroupLockedTitle => 'അംഗങ്ങൾക്ക് മാത്രം';
+
+  @override
+  String get staffroomGroupLockedBody => 'ഈ ഗ്രൂപ്പിലെ പോസ്റ്റുകൾ കാണാൻ ചേരുക.';
+
+  @override
+  String get staffroomGroupPostsEmptyTitle => 'ഇതുവരെ പോസ്റ്റുകളൊന്നുമില്ല';
+
+  @override
+  String get staffroomGroupPostsEmptyBody => 'ഇവിടെ ആദ്യം പങ്കിടുക.';
+
+  @override
+  String get staffroomGroupNotFoundTitle => 'ഗ്രൂപ്പ് കണ്ടെത്തിയില്ല';
+
+  @override
+  String get staffroomGroupNotFoundBody => 'ഈ ഗ്രൂപ്പ് നീക്കം ചെയ്തിരിക്കാം.';
+
+  @override
+  String get staffroomPostTypeShare => 'പങ്കിട്ടു';
+
+  @override
+  String get staffroomPostTypeAskHelp => 'സഹായം വേണം';
+
+  @override
+  String get staffroomPostTypeCelebrate => 'ആഘോഷം';
+
+  @override
+  String get staffroomPostTypeResource => 'വിഭവം';
+
+  @override
+  String get staffroomLike => 'ഇഷ്ടം';
+
+  @override
+  String get staffroomLiked => 'ഇഷ്ടപ്പെട്ടു';
+
+  @override
+  String staffroomLikeCountLabel(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ഇഷ്ടങ്ങൾ',
+      one: '1 ഇഷ്ടം',
+      zero: 'ഇഷ്ടങ്ങളില്ല',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get staffroomLikeFailed =>
+      'അപ്‌ഡേറ്റ് ചെയ്യാനായില്ല. വീണ്ടും ശ്രമിക്കാൻ ടാപ്പ് ചെയ്യുക.';
+
+  @override
+  String get staffroomResourceShared => 'ഒരു വിഭവം പങ്കിട്ടു';
+
+  @override
+  String staffroomChatHighlight(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count പുതിയ സന്ദേശങ്ങൾ',
+      one: '1 പുതിയ സന്ദേശം',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get staffroomConnect => 'കണക്റ്റ് ചെയ്യുക';
+
+  @override
+  String get staffroomConnectSent => 'അഭ്യർത്ഥന അയച്ചു';
+
+  @override
+  String get staffroomConnectPending => 'അഭ്യർത്ഥന ഇതിനകം തീർപ്പാക്കാതെയുണ്ട്';
+
+  @override
+  String get staffroomConnectConnected => 'ഇതിനകം കണക്റ്റ് ചെയ്തിരിക്കുന്നു';
 }

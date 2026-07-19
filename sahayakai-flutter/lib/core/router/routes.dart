@@ -119,6 +119,29 @@ class Routes {
   static String conversationThreadPath(String conversationId) =>
       '$conversationThread/${Uri.encodeComponent(conversationId)}';
 
+  /// The **Network** hub (Pillar 04 + 05 / U-SI2) — the surface that hosts the
+  /// Staffroom feed and the Pro Inbox behind one `AppSegmented`. Reached from the
+  /// voice-home app bar's network entry (next to the messages entry). The
+  /// notifications surface (U-SI5) is the third Network tab and lands with it.
+  static const String network = '/network';
+
+  /// The Staffroom home (Pillar 04 / U-SI2) — the unified feed, groups, and
+  /// recommendations. Reachable directly (deep link + group-detail back) and as
+  /// the Staffroom tab inside the Network hub.
+  static const String staffroom = '/staffroom';
+
+  /// One group's detail (U-SI2): the group header (join/joined) + its posts.
+  /// Pushed from a feed group chip / the "Your groups" strip.
+  static const String groupDetail = '/staffroom/group';
+
+  /// The route pattern (`.../:id`) registered in the router.
+  static const String groupDetailPattern = '$groupDetail/:id';
+
+  /// The concrete group-detail path for [groupId], percent-encoded so a server
+  /// id is path-safe (and a future deep link resolves from the `:id` alone).
+  static String groupDetailPath(String groupId) =>
+      '$groupDetail/${Uri.encodeComponent(groupId)}';
+
   /// Routes reachable while signed out. `/try-call` (anon lead magnet) will
   /// join this set when that screen lands.
   static const Set<String> publicPaths = {splash, login};

@@ -3002,4 +3002,163 @@ class AppLocalizationsBn extends AppLocalizations {
   String inboxTimeWeeks(int count) {
     return '$count সপ্তা';
   }
+
+  @override
+  String get networkTitle => 'নেটওয়ার্ক';
+
+  @override
+  String get networkTooltip => 'নেটওয়ার্ক';
+
+  @override
+  String get networkTabStaffroom => 'স্টাফরুম';
+
+  @override
+  String get networkTabMessages => 'বার্তা';
+
+  @override
+  String get staffroomTitle => 'স্টাফরুম';
+
+  @override
+  String get staffroomHeroTitle => 'স্টাফরুম';
+
+  @override
+  String get staffroomHeroDeck => 'সারা ভারতের শিক্ষক, এক ঘরে';
+
+  @override
+  String get staffroomSectionGroups => 'আপনার গ্রুপ';
+
+  @override
+  String get staffroomSectionFeed => 'আপনার গ্রুপ থেকে';
+
+  @override
+  String get staffroomSectionDiscover => 'গ্রুপ খুঁজুন';
+
+  @override
+  String get staffroomSectionPeople => 'যাঁদের আপনি চিনতে পারেন';
+
+  @override
+  String get staffroomSignInTitle => 'স্টাফরুমে যোগ দিন';
+
+  @override
+  String get staffroomSignInBody => 'স্টাফরুমে যোগ দিতে সাইন ইন করুন';
+
+  @override
+  String get staffroomFeedEmptyTitle => 'আপনার ফিড শান্ত';
+
+  @override
+  String get staffroomFeedEmptyBody => 'আপনার গ্রুপের পোস্ট এখানে দেখা যাবে।';
+
+  @override
+  String get staffroomErrorBody =>
+      'আমরা স্টাফরুম লোড করতে পারিনি। আবার চেষ্টা করুন।';
+
+  @override
+  String get staffroomGroupsEmptyTitle => 'এখনও কোনো গ্রুপ নেই';
+
+  @override
+  String get staffroomGroupsEmptyBody =>
+      'পোস্ট ও চ্যাট দেখতে একটি গ্রুপে যোগ দিন।';
+
+  @override
+  String get staffroomBrowseGroups => 'গ্রুপ ব্রাউজ করুন';
+
+  @override
+  String staffroomMemberCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count জন সদস্য',
+      one: '1 জন সদস্য',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get staffroomJoin => 'যোগ দিন';
+
+  @override
+  String get staffroomJoined => 'যোগ দিয়েছেন';
+
+  @override
+  String get staffroomJoinFailed =>
+      'যোগ দেওয়া যায়নি। আবার চেষ্টা করতে ট্যাপ করুন।';
+
+  @override
+  String get staffroomGroupLockedTitle => 'শুধু সদস্যদের জন্য';
+
+  @override
+  String get staffroomGroupLockedBody => 'এই গ্রুপের পোস্ট দেখতে যোগ দিন।';
+
+  @override
+  String get staffroomGroupPostsEmptyTitle => 'এখনও কোনো পোস্ট নেই';
+
+  @override
+  String get staffroomGroupPostsEmptyBody => 'এখানে প্রথম শেয়ার করুন।';
+
+  @override
+  String get staffroomGroupNotFoundTitle => 'গ্রুপ পাওয়া যায়নি';
+
+  @override
+  String get staffroomGroupNotFoundBody =>
+      'এই গ্রুপটি সরিয়ে ফেলা হয়ে থাকতে পারে।';
+
+  @override
+  String get staffroomPostTypeShare => 'শেয়ার করেছেন';
+
+  @override
+  String get staffroomPostTypeAskHelp => 'সাহায্য দরকার';
+
+  @override
+  String get staffroomPostTypeCelebrate => 'উদযাপন';
+
+  @override
+  String get staffroomPostTypeResource => 'সম্পদ';
+
+  @override
+  String get staffroomLike => 'লাইক';
+
+  @override
+  String get staffroomLiked => 'লাইক করা হয়েছে';
+
+  @override
+  String staffroomLikeCountLabel(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি লাইক',
+      one: '1টি লাইক',
+      zero: 'কোনো লাইক নেই',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get staffroomLikeFailed =>
+      'আপডেট করা যায়নি। আবার চেষ্টা করতে ট্যাপ করুন।';
+
+  @override
+  String get staffroomResourceShared => 'একটি সম্পদ শেয়ার করেছেন';
+
+  @override
+  String staffroomChatHighlight(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি নতুন বার্তা',
+      one: '1টি নতুন বার্তা',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get staffroomConnect => 'কানেক্ট করুন';
+
+  @override
+  String get staffroomConnectSent => 'অনুরোধ পাঠানো হয়েছে';
+
+  @override
+  String get staffroomConnectPending => 'অনুরোধ আগে থেকেই অপেক্ষমাণ';
+
+  @override
+  String get staffroomConnectConnected => 'ইতিমধ্যে কানেক্টেড';
 }

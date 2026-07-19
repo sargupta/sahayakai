@@ -3005,4 +3005,163 @@ class AppLocalizationsTe extends AppLocalizations {
   String inboxTimeWeeks(int count) {
     return '$count వా';
   }
+
+  @override
+  String get networkTitle => 'నెట్‌వర్క్';
+
+  @override
+  String get networkTooltip => 'నెట్‌వర్క్';
+
+  @override
+  String get networkTabStaffroom => 'స్టాఫ్‌రూమ్';
+
+  @override
+  String get networkTabMessages => 'సందేశాలు';
+
+  @override
+  String get staffroomTitle => 'స్టాఫ్‌రూమ్';
+
+  @override
+  String get staffroomHeroTitle => 'స్టాఫ్‌రూమ్';
+
+  @override
+  String get staffroomHeroDeck => 'భారతదేశం అంతటా ఉపాధ్యాయులు, ఒకే గదిలో';
+
+  @override
+  String get staffroomSectionGroups => 'మీ గ్రూపులు';
+
+  @override
+  String get staffroomSectionFeed => 'మీ గ్రూపుల నుండి';
+
+  @override
+  String get staffroomSectionDiscover => 'గ్రూపులను కనుగొనండి';
+
+  @override
+  String get staffroomSectionPeople => 'మీకు తెలిసిన వారు';
+
+  @override
+  String get staffroomSignInTitle => 'స్టాఫ్‌రూమ్‌లో చేరండి';
+
+  @override
+  String get staffroomSignInBody => 'స్టాఫ్‌రూమ్‌లో చేరడానికి సైన్ ఇన్ చేయండి';
+
+  @override
+  String get staffroomFeedEmptyTitle => 'మీ ఫీడ్ నిశ్శబ్దంగా ఉంది';
+
+  @override
+  String get staffroomFeedEmptyBody =>
+      'మీ గ్రూపుల పోస్ట్‌లు ఇక్కడ కనిపిస్తాయి.';
+
+  @override
+  String get staffroomErrorBody =>
+      'మేము స్టాఫ్‌రూమ్‌ను లోడ్ చేయలేకపోయాము. దయచేసి మళ్లీ ప్రయత్నించండి.';
+
+  @override
+  String get staffroomGroupsEmptyTitle => 'ఇంకా గ్రూపులు లేవు';
+
+  @override
+  String get staffroomGroupsEmptyBody =>
+      'పోస్ట్‌లు, చాట్ చూడటానికి ఒక గ్రూపులో చేరండి.';
+
+  @override
+  String get staffroomBrowseGroups => 'గ్రూపులను బ్రౌజ్ చేయండి';
+
+  @override
+  String staffroomMemberCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count సభ్యులు',
+      one: '1 సభ్యుడు',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get staffroomJoin => 'చేరండి';
+
+  @override
+  String get staffroomJoined => 'చేరారు';
+
+  @override
+  String get staffroomJoinFailed =>
+      'చేరలేకపోయాము. మళ్లీ ప్రయత్నించడానికి ట్యాప్ చేయండి.';
+
+  @override
+  String get staffroomGroupLockedTitle => 'సభ్యులకు మాత్రమే';
+
+  @override
+  String get staffroomGroupLockedBody => 'ఈ గ్రూపు పోస్ట్‌లు చూడటానికి చేరండి.';
+
+  @override
+  String get staffroomGroupPostsEmptyTitle => 'ఇంకా పోస్ట్‌లు లేవు';
+
+  @override
+  String get staffroomGroupPostsEmptyBody => 'ఇక్కడ మొదట షేర్ చేయండి.';
+
+  @override
+  String get staffroomGroupNotFoundTitle => 'గ్రూపు కనబడలేదు';
+
+  @override
+  String get staffroomGroupNotFoundBody => 'ఈ గ్రూపు తీసివేయబడి ఉండవచ్చు.';
+
+  @override
+  String get staffroomPostTypeShare => 'షేర్ చేశారు';
+
+  @override
+  String get staffroomPostTypeAskHelp => 'సహాయం కావాలి';
+
+  @override
+  String get staffroomPostTypeCelebrate => 'వేడుక';
+
+  @override
+  String get staffroomPostTypeResource => 'వనరు';
+
+  @override
+  String get staffroomLike => 'ఇష్టం';
+
+  @override
+  String get staffroomLiked => 'ఇష్టపడ్డారు';
+
+  @override
+  String staffroomLikeCountLabel(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ఇష్టాలు',
+      one: '1 ఇష్టం',
+      zero: 'ఇష్టాలు లేవు',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get staffroomLikeFailed =>
+      'అప్‌డేట్ చేయలేకపోయాము. మళ్లీ ప్రయత్నించడానికి ట్యాప్ చేయండి.';
+
+  @override
+  String get staffroomResourceShared => 'ఒక వనరును షేర్ చేశారు';
+
+  @override
+  String staffroomChatHighlight(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count కొత్త సందేశాలు',
+      one: '1 కొత్త సందేశం',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get staffroomConnect => 'కనెక్ట్ అవ్వండి';
+
+  @override
+  String get staffroomConnectSent => 'అభ్యర్థన పంపబడింది';
+
+  @override
+  String get staffroomConnectPending => 'అభ్యర్థన ఇప్పటికే పెండింగ్‌లో ఉంది';
+
+  @override
+  String get staffroomConnectConnected => 'ఇప్పటికే కనెక్ట్ అయ్యారు';
 }

@@ -3001,4 +3001,164 @@ class AppLocalizationsPa extends AppLocalizations {
   String inboxTimeWeeks(int count) {
     return '$count ਹਫ਼';
   }
+
+  @override
+  String get networkTitle => 'ਨੈੱਟਵਰਕ';
+
+  @override
+  String get networkTooltip => 'ਨੈੱਟਵਰਕ';
+
+  @override
+  String get networkTabStaffroom => 'ਸਟਾਫ਼ਰੂਮ';
+
+  @override
+  String get networkTabMessages => 'ਸੁਨੇਹੇ';
+
+  @override
+  String get staffroomTitle => 'ਸਟਾਫ਼ਰੂਮ';
+
+  @override
+  String get staffroomHeroTitle => 'ਸਟਾਫ਼ਰੂਮ';
+
+  @override
+  String get staffroomHeroDeck => 'ਪੂਰੇ ਭਾਰਤ ਦੇ ਅਧਿਆਪਕ, ਇੱਕੋ ਕਮਰੇ ਵਿੱਚ';
+
+  @override
+  String get staffroomSectionGroups => 'ਤੁਹਾਡੇ ਗਰੁੱਪ';
+
+  @override
+  String get staffroomSectionFeed => 'ਤੁਹਾਡੇ ਗਰੁੱਪਾਂ ਤੋਂ';
+
+  @override
+  String get staffroomSectionDiscover => 'ਗਰੁੱਪ ਲੱਭੋ';
+
+  @override
+  String get staffroomSectionPeople => 'ਜਿਨ੍ਹਾਂ ਨੂੰ ਤੁਸੀਂ ਜਾਣਦੇ ਹੋ ਸਕਦੇ ਹੋ';
+
+  @override
+  String get staffroomSignInTitle => 'ਸਟਾਫ਼ਰੂਮ ਵਿੱਚ ਸ਼ਾਮਲ ਹੋਵੋ';
+
+  @override
+  String get staffroomSignInBody => 'ਸਟਾਫ਼ਰੂਮ ਵਿੱਚ ਸ਼ਾਮਲ ਹੋਣ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ';
+
+  @override
+  String get staffroomFeedEmptyTitle => 'ਤੁਹਾਡੀ ਫੀਡ ਸ਼ਾਂਤ ਹੈ';
+
+  @override
+  String get staffroomFeedEmptyBody =>
+      'ਤੁਹਾਡੇ ਗਰੁੱਪਾਂ ਦੀਆਂ ਪੋਸਟਾਂ ਇੱਥੇ ਦਿਖਾਈ ਦੇਣਗੀਆਂ।';
+
+  @override
+  String get staffroomErrorBody =>
+      'ਅਸੀਂ ਸਟਾਫ਼ਰੂਮ ਲੋਡ ਨਹੀਂ ਕਰ ਸਕੇ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
+
+  @override
+  String get staffroomGroupsEmptyTitle => 'ਹਾਲੇ ਕੋਈ ਗਰੁੱਪ ਨਹੀਂ';
+
+  @override
+  String get staffroomGroupsEmptyBody =>
+      'ਪੋਸਟਾਂ ਅਤੇ ਚੈਟ ਵੇਖਣ ਲਈ ਕਿਸੇ ਗਰੁੱਪ ਵਿੱਚ ਸ਼ਾਮਲ ਹੋਵੋ।';
+
+  @override
+  String get staffroomBrowseGroups => 'ਗਰੁੱਪ ਬ੍ਰਾਊਜ਼ ਕਰੋ';
+
+  @override
+  String staffroomMemberCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ਮੈਂਬਰ',
+      one: '1 ਮੈਂਬਰ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get staffroomJoin => 'ਸ਼ਾਮਲ ਹੋਵੋ';
+
+  @override
+  String get staffroomJoined => 'ਸ਼ਾਮਲ ਹੋ ਗਏ';
+
+  @override
+  String get staffroomJoinFailed =>
+      'ਸ਼ਾਮਲ ਨਹੀਂ ਹੋ ਸਕੇ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਲਈ ਟੈਪ ਕਰੋ।';
+
+  @override
+  String get staffroomGroupLockedTitle => 'ਸਿਰਫ਼ ਮੈਂਬਰਾਂ ਲਈ';
+
+  @override
+  String get staffroomGroupLockedBody =>
+      'ਇਸ ਗਰੁੱਪ ਦੀਆਂ ਪੋਸਟਾਂ ਵੇਖਣ ਲਈ ਸ਼ਾਮਲ ਹੋਵੋ।';
+
+  @override
+  String get staffroomGroupPostsEmptyTitle => 'ਹਾਲੇ ਕੋਈ ਪੋਸਟ ਨਹੀਂ';
+
+  @override
+  String get staffroomGroupPostsEmptyBody => 'ਇੱਥੇ ਸਭ ਤੋਂ ਪਹਿਲਾਂ ਸਾਂਝਾ ਕਰੋ।';
+
+  @override
+  String get staffroomGroupNotFoundTitle => 'ਗਰੁੱਪ ਨਹੀਂ ਮਿਲਿਆ';
+
+  @override
+  String get staffroomGroupNotFoundBody => 'ਇਹ ਗਰੁੱਪ ਹਟਾ ਦਿੱਤਾ ਗਿਆ ਹੋ ਸਕਦਾ ਹੈ।';
+
+  @override
+  String get staffroomPostTypeShare => 'ਸਾਂਝਾ ਕੀਤਾ';
+
+  @override
+  String get staffroomPostTypeAskHelp => 'ਮਦਦ ਚਾਹੀਦੀ ਹੈ';
+
+  @override
+  String get staffroomPostTypeCelebrate => 'ਜਸ਼ਨ';
+
+  @override
+  String get staffroomPostTypeResource => 'ਸਰੋਤ';
+
+  @override
+  String get staffroomLike => 'ਪਸੰਦ';
+
+  @override
+  String get staffroomLiked => 'ਪਸੰਦ ਕੀਤਾ';
+
+  @override
+  String staffroomLikeCountLabel(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ਪਸੰਦ',
+      one: '1 ਪਸੰਦ',
+      zero: 'ਕੋਈ ਪਸੰਦ ਨਹੀਂ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get staffroomLikeFailed =>
+      'ਅੱਪਡੇਟ ਨਹੀਂ ਹੋ ਸਕਿਆ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਲਈ ਟੈਪ ਕਰੋ।';
+
+  @override
+  String get staffroomResourceShared => 'ਇੱਕ ਸਰੋਤ ਸਾਂਝਾ ਕੀਤਾ';
+
+  @override
+  String staffroomChatHighlight(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ਨਵੇਂ ਸੁਨੇਹੇ',
+      one: '1 ਨਵਾਂ ਸੁਨੇਹਾ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get staffroomConnect => 'ਕਨੈਕਟ ਕਰੋ';
+
+  @override
+  String get staffroomConnectSent => 'ਬੇਨਤੀ ਭੇਜੀ ਗਈ';
+
+  @override
+  String get staffroomConnectPending => 'ਬੇਨਤੀ ਪਹਿਲਾਂ ਹੀ ਬਕਾਇਆ ਹੈ';
+
+  @override
+  String get staffroomConnectConnected => 'ਪਹਿਲਾਂ ਹੀ ਕਨੈਕਟਡ';
 }

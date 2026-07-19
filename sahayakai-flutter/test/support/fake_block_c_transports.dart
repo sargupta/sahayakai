@@ -318,6 +318,21 @@ class FakeStaffroomTransport implements StaffroomTransport {
   ConnectionRequestResult connectionRequestResult =
       ConnectionRequestResult.sent;
 
+  // Configurable write errors (thrown when non-null) — the U-SI2 optimistic
+  // rollback tests set these to a [TransportUnavailable] to exercise the
+  // apply → fail → revert path. Additive: null by default, so existing seeds are
+  // unaffected. The attempt is still recorded before the throw.
+  Object? likeError;
+  Object? joinError;
+  Object? connectionRequestError;
+
+  // Optional in-flight gates: when set, the write awaits the completer before
+  // resolving, so a test can pump a frame and assert the **immediate optimistic**
+  // state (toggled heart / "Joined") BEFORE the server reply reconciles it, then
+  // complete the gate to observe the reconcile. Additive: null by default.
+  Completer<void>? likeGate;
+  Completer<void>? joinGate;
+
   // Recorded writes.
   final List<String> joinedGroups = <String>[];
   final List<String> leftGroups = <String>[];
@@ -417,6 +432,8 @@ class FakeStaffroomTransport implements StaffroomTransport {
   @override
   Future<bool> joinGroup(String groupId) async {
     joinedGroups.add(groupId);
+    if (joinGate != null) await joinGate!.future;
+    if (joinError != null) throw joinError!;
     return joinResult;
   }
 
@@ -439,6 +456,8 @@ class FakeStaffroomTransport implements StaffroomTransport {
   @override
   Future<LikeResult> likeGroupPost(String groupId, String postId) async {
     likes.add((groupId: groupId, postId: postId));
+    if (likeGate != null) await likeGate!.future;
+    if (likeError != null) throw likeError!;
     return likeResult;
   }
 
@@ -463,6 +482,7 @@ class FakeStaffroomTransport implements StaffroomTransport {
   @override
   Future<ConnectionRequestResult> sendConnectionRequest(String toUid) async {
     connectionRequests.add(toUid);
+    if (connectionRequestError != null) throw connectionRequestError!;
     return connectionRequestResult;
   }
 

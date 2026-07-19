@@ -25,6 +25,10 @@ import '../../features/quiz_generator/presentation/quiz_generator_screen.dart';
 import '../../features/rubric_generator/presentation/rubric_generator_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
+import '../../features/staffroom/domain/group.dart';
+import '../../features/staffroom/presentation/group_detail_screen.dart';
+import '../../features/staffroom/presentation/network_hub_screen.dart';
+import '../../features/staffroom/presentation/staffroom_screen.dart';
 import '../../features/teacher_training/presentation/teacher_training_screen.dart';
 import '../../features/video_storyteller/presentation/video_storyteller_screen.dart';
 import '../../features/virtual_field_trip/presentation/virtual_field_trip_screen.dart';
@@ -166,6 +170,28 @@ GoRouter appRouter(Ref ref) {
           conversationId: ConversationId(state.pathParameters['id']!),
           conversation:
               state.extra is Conversation ? state.extra! as Conversation : null,
+        ),
+      ),
+      GoRoute(
+        // The Network hub (U-SI2) — the Staffroom feed + Pro Inbox behind an
+        // AppSegmented. Pushed from the voice-home network entry.
+        path: Routes.network,
+        builder: (context, state) => const NetworkHubScreen(),
+      ),
+      GoRoute(
+        // The Staffroom home (U-SI2), also reachable directly (deep link +
+        // group-detail back) beyond the Network hub's Staffroom tab.
+        path: Routes.staffroom,
+        builder: (context, state) => const StaffroomScreen(),
+      ),
+      GoRoute(
+        // One group's detail (U-SI2). A feed / strip row hands the already-loaded
+        // [Group] through `extra` so the header paints instantly; a cold deep
+        // link carries only the `:id` and resolves the group by id.
+        path: Routes.groupDetailPattern,
+        builder: (context, state) => GroupDetailScreen(
+          groupId: state.pathParameters['id']!,
+          group: state.extra is Group ? state.extra! as Group : null,
         ),
       ),
       GoRoute(

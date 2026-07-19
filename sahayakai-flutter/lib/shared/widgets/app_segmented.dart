@@ -15,7 +15,11 @@ class AppSegment<T> {
 /// AppSegmented (PREMIUM_DESIGN_SPEC.md §5). For binary/tertiary choices: a
 /// `surfaceContainerHigh` track (radius 12) with a sliding `surface` thumb
 /// (`e1` + 1px border, 240ms easeOutQuart), selected label `onSurface` w600,
-/// unselected `onSurfaceVariant`, each segment >=48dp, `labelLarge`.
+/// unselected `onSurface` w500 (the thumb/fill is the selection affordance, so
+/// the unselected label stays full-ink for AA — `onSurfaceVariant` is only
+/// 3.86:1 on the track fill, under the 4.5 floor for the `labelLarge` text; this
+/// matches the `_chips` fallback, which already uses `onSurface`), each segment
+/// >=48dp, `labelLarge`.
 ///
 /// Falls back to a wrapped chip row when there are more than 3 options or any
 /// label is long / Indic (unicameral scripts wrap badly in a fixed track), so
@@ -127,9 +131,12 @@ class AppSegmented<T> extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: text.labelLarge?.copyWith(
-                              color: s.value == value
-                                  ? scheme.onSurface
-                                  : scheme.onSurfaceVariant,
+                              // Full-ink for BOTH states (MD3-standard for an
+                              // unselected segment; the thumb is the selection
+                              // affordance). onSurfaceVariant on the track fill
+                              // is 3.86:1 — below the 4.5 floor for this
+                              // labelLarge text. Weight carries the emphasis.
+                              color: scheme.onSurface,
                               fontWeight: s.value == value
                                   ? FontWeight.w600
                                   : FontWeight.w500,

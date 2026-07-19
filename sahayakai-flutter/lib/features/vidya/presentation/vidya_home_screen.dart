@@ -79,6 +79,13 @@ class _VidyaHomeScreenState extends ConsumerState<VidyaHomeScreen> {
         backgroundColor: Colors.transparent,
         title: Text(l10n.appTitle),
         actions: [
+          // The Network hub entry (U-SI2): the Staffroom feed + Pro Inbox behind
+          // one surface. Sits next to the messages entry (SPEC option (a)).
+          IconButton(
+            icon: const Icon(LucideIcons.network),
+            tooltip: l10n.networkTooltip,
+            onPressed: () => context.push(Routes.network),
+          ),
           // The Pro Inbox entry (U-SI1): a messages glyph with a live unread
           // badge. Firebase-gated → the badge stays hidden (deferred unread = 0)
           // until the transport goes live.

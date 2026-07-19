@@ -5215,6 +5215,264 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count}w'**
   String inboxTimeWeeks(int count);
+
+  /// Network hub screen title (hosts the staffroom feed + Pro Inbox).
+  ///
+  /// In en, this message translates to:
+  /// **'Network'**
+  String get networkTitle;
+
+  /// Voice-home app-bar Network entry tooltip / accessibility label.
+  ///
+  /// In en, this message translates to:
+  /// **'Network'**
+  String get networkTooltip;
+
+  /// Network hub segmented tab: the staffroom feed.
+  ///
+  /// In en, this message translates to:
+  /// **'Staffroom'**
+  String get networkTabStaffroom;
+
+  /// Network hub segmented tab: the Pro Inbox conversation list.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages'**
+  String get networkTabMessages;
+
+  /// Staffroom screen title + hero eyebrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Staffroom'**
+  String get staffroomTitle;
+
+  /// Staffroom hero greeting (serif display).
+  ///
+  /// In en, this message translates to:
+  /// **'The Staffroom'**
+  String get staffroomHeroTitle;
+
+  /// Staffroom hero deck line under the greeting.
+  ///
+  /// In en, this message translates to:
+  /// **'Teachers across Bharat, in one room'**
+  String get staffroomHeroDeck;
+
+  /// Staffroom section header: the teacher's groups strip.
+  ///
+  /// In en, this message translates to:
+  /// **'Your groups'**
+  String get staffroomSectionGroups;
+
+  /// Staffroom section header: the unified feed.
+  ///
+  /// In en, this message translates to:
+  /// **'From your groups'**
+  String get staffroomSectionFeed;
+
+  /// Staffroom section header: suggested groups to join.
+  ///
+  /// In en, this message translates to:
+  /// **'Discover groups'**
+  String get staffroomSectionDiscover;
+
+  /// Staffroom section header: recommended teachers.
+  ///
+  /// In en, this message translates to:
+  /// **'People you may know'**
+  String get staffroomSectionPeople;
+
+  /// Staffroom signed-out / awaiting-Firebase EmptyView title.
+  ///
+  /// In en, this message translates to:
+  /// **'Join the staffroom'**
+  String get staffroomSignInTitle;
+
+  /// Staffroom signed-out / awaiting-Firebase EmptyView body.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to join the staffroom'**
+  String get staffroomSignInBody;
+
+  /// Staffroom feed empty (ready, no items) EmptyView title.
+  ///
+  /// In en, this message translates to:
+  /// **'Your feed is quiet'**
+  String get staffroomFeedEmptyTitle;
+
+  /// Staffroom feed empty EmptyView body.
+  ///
+  /// In en, this message translates to:
+  /// **'Posts from your groups will appear here.'**
+  String get staffroomFeedEmptyBody;
+
+  /// Staffroom / group-detail ErrorView body.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load the staffroom. Please try again.'**
+  String get staffroomErrorBody;
+
+  /// Staffroom 'Your groups' empty prompt title.
+  ///
+  /// In en, this message translates to:
+  /// **'No groups yet'**
+  String get staffroomGroupsEmptyTitle;
+
+  /// Staffroom 'Your groups' empty prompt body.
+  ///
+  /// In en, this message translates to:
+  /// **'Join a group to see its posts and chat.'**
+  String get staffroomGroupsEmptyBody;
+
+  /// Button to browse / discover groups to join.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse groups'**
+  String get staffroomBrowseGroups;
+
+  /// Group member count (plural).
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 member} other{{count} members}}'**
+  String staffroomMemberCount(int count);
+
+  /// Join-group button label.
+  ///
+  /// In en, this message translates to:
+  /// **'Join'**
+  String get staffroomJoin;
+
+  /// Joined-group settled state label.
+  ///
+  /// In en, this message translates to:
+  /// **'Joined'**
+  String get staffroomJoined;
+
+  /// Inline hint when an optimistic join rolled back.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t join. Tap to retry.'**
+  String get staffroomJoinFailed;
+
+  /// Group detail locked (non-member, Forbidden posts) EmptyView title.
+  ///
+  /// In en, this message translates to:
+  /// **'Members only'**
+  String get staffroomGroupLockedTitle;
+
+  /// Group detail locked EmptyView body.
+  ///
+  /// In en, this message translates to:
+  /// **'Join this group to see its posts.'**
+  String get staffroomGroupLockedBody;
+
+  /// Group detail posts empty title.
+  ///
+  /// In en, this message translates to:
+  /// **'No posts yet'**
+  String get staffroomGroupPostsEmptyTitle;
+
+  /// Group detail posts empty body.
+  ///
+  /// In en, this message translates to:
+  /// **'Be the first to share here.'**
+  String get staffroomGroupPostsEmptyBody;
+
+  /// Group detail not-found (null group) title.
+  ///
+  /// In en, this message translates to:
+  /// **'Group not found'**
+  String get staffroomGroupNotFoundTitle;
+
+  /// Group detail not-found body.
+  ///
+  /// In en, this message translates to:
+  /// **'This group may have been removed.'**
+  String get staffroomGroupNotFoundBody;
+
+  /// Post-type overline label: a share post.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared'**
+  String get staffroomPostTypeShare;
+
+  /// Post-type overline label: an ask-for-help post.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs help'**
+  String get staffroomPostTypeAskHelp;
+
+  /// Post-type overline label: a celebrate post.
+  ///
+  /// In en, this message translates to:
+  /// **'Celebrating'**
+  String get staffroomPostTypeCelebrate;
+
+  /// Post-type overline label: a resource post.
+  ///
+  /// In en, this message translates to:
+  /// **'Resource'**
+  String get staffroomPostTypeResource;
+
+  /// Like button label / accessibility label when not yet liked.
+  ///
+  /// In en, this message translates to:
+  /// **'Like'**
+  String get staffroomLike;
+
+  /// Like button label / accessibility label when liked.
+  ///
+  /// In en, this message translates to:
+  /// **'Liked'**
+  String get staffroomLiked;
+
+  /// Accessibility label for a post's like count (plural).
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No likes} =1{1 like} other{{count} likes}}'**
+  String staffroomLikeCountLabel(int count);
+
+  /// Inline hint when an optimistic like rolled back.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t update. Tap to retry.'**
+  String get staffroomLikeFailed;
+
+  /// Feed resource_share overline label.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared a resource'**
+  String get staffroomResourceShared;
+
+  /// Feed chat_highlight new-message count (plural).
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 new message} other{{count} new messages}}'**
+  String staffroomChatHighlight(int count);
+
+  /// Connect-with-a-teacher button label (sends a connection request).
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
+  String get staffroomConnect;
+
+  /// Toast after a connection request is sent.
+  ///
+  /// In en, this message translates to:
+  /// **'Request sent'**
+  String get staffroomConnectSent;
+
+  /// Toast when a connection request is already pending.
+  ///
+  /// In en, this message translates to:
+  /// **'Request already pending'**
+  String get staffroomConnectPending;
+
+  /// Toast when already mutually connected.
+  ///
+  /// In en, this message translates to:
+  /// **'Already connected'**
+  String get staffroomConnectConnected;
 }
 
 class _AppLocalizationsDelegate
