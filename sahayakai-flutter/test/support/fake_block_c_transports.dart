@@ -83,6 +83,10 @@ class FakeInboxTransport implements InboxTransport {
   int totalUnreadResult = 0;
   List<Message> olderMessages = const <Message>[];
 
+  /// Recorded `loadOlderMessages` calls (U-SI1 pagination assertions).
+  final List<({ConversationId id, String beforeMessageId})> olderRequests =
+      <({ConversationId id, String beforeMessageId})>[];
+
   void emitInbox(TransportSnapshot<List<Conversation>> snapshot) =>
       _inbox.emit(snapshot);
 
@@ -125,8 +129,10 @@ class FakeInboxTransport implements InboxTransport {
     ConversationId conversationId, {
     required String beforeMessageId,
     int limit = 30,
-  }) async =>
-      olderMessages;
+  }) async {
+    olderRequests.add((id: conversationId, beforeMessageId: beforeMessageId));
+    return olderMessages;
+  }
 
   @override
   Stream<TransportSnapshot<int>> watchUnreadConversations() => _unread.stream;

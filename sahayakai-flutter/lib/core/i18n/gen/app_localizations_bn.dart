@@ -2903,4 +2903,103 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get assessmentScannerRephrase =>
       'ছবিগুলি মূল্যায়ন করা যায়নি। অনুগ্রহ করে পরিষ্কার পৃষ্ঠা আবার আপলোড করুন।';
+
+  @override
+  String get inboxTitle => 'বার্তা';
+
+  @override
+  String get inboxSignInTitle => 'আপনার বার্তা';
+
+  @override
+  String get inboxSignInBody => 'আপনার বার্তা দেখতে সাইন ইন করুন';
+
+  @override
+  String get inboxEmptyTitle => 'এখনও কোনো কথোপকথন নেই';
+
+  @override
+  String get inboxEmptyBody =>
+      'আপনি শিক্ষকদের সাথে যুক্ত হলে, আপনার কথোপকথন এখানে দেখা যাবে।';
+
+  @override
+  String get inboxErrorBody =>
+      'আমরা আপনার বার্তা লোড করতে পারিনি। অনুগ্রহ করে আবার চেষ্টা করুন।';
+
+  @override
+  String get inboxNoMessagesYet => 'এখনও কোনো বার্তা নেই';
+
+  @override
+  String get inboxThreadFallbackTitle => 'কথোপকথন';
+
+  @override
+  String get inboxThreadEmptyTitle => 'এখনও কোনো বার্তা নেই';
+
+  @override
+  String get inboxThreadEmptyBody => 'কথোপকথন শুরু করতে শুভেচ্ছা জানান।';
+
+  @override
+  String get inboxComposerHint => 'একটি বার্তা লিখুন';
+
+  @override
+  String get inboxComposerSend => 'পাঠান';
+
+  @override
+  String get inboxLoadOlder => 'পুরনো বার্তা লোড করুন';
+
+  @override
+  String get inboxSendFailed => 'আপনার বার্তা পাঠানো যায়নি।';
+
+  @override
+  String get inboxResourceLabel => 'রিসোর্স';
+
+  @override
+  String get inboxVoiceNoteLabel => 'ভয়েস নোট';
+
+  @override
+  String inboxUnreadLabel(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি অপঠিত',
+      one: '1টি অপঠিত',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get inboxTickSending => 'পাঠানো হচ্ছে';
+
+  @override
+  String get inboxTickSent => 'পাঠানো হয়েছে';
+
+  @override
+  String get inboxTickDelivered => 'পৌঁছেছে';
+
+  @override
+  String get inboxTickRead => 'পঠিত';
+
+  @override
+  String get inboxTickFailed => 'পাঠানো যায়নি';
+
+  @override
+  String get inboxTimeNow => 'এখন';
+
+  @override
+  String inboxTimeMinutes(int count) {
+    return '$count মি';
+  }
+
+  @override
+  String inboxTimeHours(int count) {
+    return '$count ঘ';
+  }
+
+  @override
+  String inboxTimeDays(int count) {
+    return '$count দি';
+  }
+
+  @override
+  String inboxTimeWeeks(int count) {
+    return '$count সপ্তা';
+  }
 }

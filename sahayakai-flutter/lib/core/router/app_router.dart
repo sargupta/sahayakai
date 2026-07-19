@@ -9,6 +9,10 @@ import '../../features/content_creator/presentation/content_creator_screen.dart'
 import '../../features/dashboard/presentation/app_shell.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/exam_paper/presentation/exam_paper_screen.dart';
+import '../../features/inbox/domain/conversation_id.dart';
+import '../../features/inbox/domain/inbox_models.dart';
+import '../../features/inbox/presentation/conversation_thread_screen.dart';
+import '../../features/inbox/presentation/inbox_screen.dart';
 import '../../features/instant_answer/presentation/instant_answer_screen.dart';
 import '../../features/lesson_planner/presentation/lesson_plan_screen.dart';
 import '../../features/library/presentation/library_detail_screen.dart';
@@ -147,6 +151,22 @@ GoRouter appRouter(Ref ref) {
         // context (studentId/classId/parentLanguage) once it lands.
         path: Routes.parentHotline,
         builder: (context, state) => const ParentHotlineScreen(),
+      ),
+      GoRoute(
+        // The Pro Inbox list (U-SI1), pushed from the voice-home messages entry.
+        path: Routes.inbox,
+        builder: (context, state) => const InboxScreen(),
+      ),
+      GoRoute(
+        // One conversation thread. An inbox row hands the already-loaded
+        // [Conversation] through `extra` so the app bar paints instantly; a cold
+        // deep link carries only the `:id` and the app bar shows a fallback.
+        path: Routes.conversationThreadPattern,
+        builder: (context, state) => ConversationThreadScreen(
+          conversationId: ConversationId(state.pathParameters['id']!),
+          conversation:
+              state.extra is Conversation ? state.extra! as Conversation : null,
+        ),
       ),
       GoRoute(
         path: Routes.assessAssignment,

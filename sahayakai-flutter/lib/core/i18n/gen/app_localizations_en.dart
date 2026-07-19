@@ -2894,4 +2894,103 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get assessmentScannerRephrase =>
       'The photos could not be graded. Please re-upload clearer pages.';
+
+  @override
+  String get inboxTitle => 'Messages';
+
+  @override
+  String get inboxSignInTitle => 'Your messages';
+
+  @override
+  String get inboxSignInBody => 'Sign in to see your messages';
+
+  @override
+  String get inboxEmptyTitle => 'No conversations yet';
+
+  @override
+  String get inboxEmptyBody =>
+      'When you connect with teachers, your conversations will appear here.';
+
+  @override
+  String get inboxErrorBody =>
+      'We couldn\'t load your messages. Please try again.';
+
+  @override
+  String get inboxNoMessagesYet => 'No messages yet';
+
+  @override
+  String get inboxThreadFallbackTitle => 'Conversation';
+
+  @override
+  String get inboxThreadEmptyTitle => 'No messages yet';
+
+  @override
+  String get inboxThreadEmptyBody => 'Say hello to start the conversation.';
+
+  @override
+  String get inboxComposerHint => 'Write a message';
+
+  @override
+  String get inboxComposerSend => 'Send';
+
+  @override
+  String get inboxLoadOlder => 'Load older messages';
+
+  @override
+  String get inboxSendFailed => 'Couldn\'t send your message.';
+
+  @override
+  String get inboxResourceLabel => 'Resource';
+
+  @override
+  String get inboxVoiceNoteLabel => 'Voice note';
+
+  @override
+  String inboxUnreadLabel(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count unread',
+      one: '1 unread',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get inboxTickSending => 'Sending';
+
+  @override
+  String get inboxTickSent => 'Sent';
+
+  @override
+  String get inboxTickDelivered => 'Delivered';
+
+  @override
+  String get inboxTickRead => 'Read';
+
+  @override
+  String get inboxTickFailed => 'Not sent';
+
+  @override
+  String get inboxTimeNow => 'now';
+
+  @override
+  String inboxTimeMinutes(int count) {
+    return '${count}m';
+  }
+
+  @override
+  String inboxTimeHours(int count) {
+    return '${count}h';
+  }
+
+  @override
+  String inboxTimeDays(int count) {
+    return '${count}d';
+  }
+
+  @override
+  String inboxTimeWeeks(int count) {
+    return '${count}w';
+  }
 }

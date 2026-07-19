@@ -2900,4 +2900,103 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get assessmentScannerRephrase =>
       'फ़ोटो जाँची नहीं जा सकीं। कृपया साफ़ पृष्ठ फिर से अपलोड करें।';
+
+  @override
+  String get inboxTitle => 'संदेश';
+
+  @override
+  String get inboxSignInTitle => 'आपके संदेश';
+
+  @override
+  String get inboxSignInBody => 'अपने संदेश देखने के लिए साइन इन करें';
+
+  @override
+  String get inboxEmptyTitle => 'अभी कोई बातचीत नहीं';
+
+  @override
+  String get inboxEmptyBody =>
+      'जब आप शिक्षकों से जुड़ेंगे, तो आपकी बातचीत यहाँ दिखेगी।';
+
+  @override
+  String get inboxErrorBody =>
+      'हम आपके संदेश लोड नहीं कर सके। कृपया फिर से प्रयास करें।';
+
+  @override
+  String get inboxNoMessagesYet => 'अभी कोई संदेश नहीं';
+
+  @override
+  String get inboxThreadFallbackTitle => 'बातचीत';
+
+  @override
+  String get inboxThreadEmptyTitle => 'अभी कोई संदेश नहीं';
+
+  @override
+  String get inboxThreadEmptyBody => 'बातचीत शुरू करने के लिए नमस्ते कहें।';
+
+  @override
+  String get inboxComposerHint => 'संदेश लिखें';
+
+  @override
+  String get inboxComposerSend => 'भेजें';
+
+  @override
+  String get inboxLoadOlder => 'पुराने संदेश लोड करें';
+
+  @override
+  String get inboxSendFailed => 'आपका संदेश नहीं भेजा जा सका।';
+
+  @override
+  String get inboxResourceLabel => 'संसाधन';
+
+  @override
+  String get inboxVoiceNoteLabel => 'वॉइस नोट';
+
+  @override
+  String inboxUnreadLabel(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count अपठित',
+      one: '1 अपठित',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get inboxTickSending => 'भेजा जा रहा है';
+
+  @override
+  String get inboxTickSent => 'भेजा गया';
+
+  @override
+  String get inboxTickDelivered => 'पहुँचा';
+
+  @override
+  String get inboxTickRead => 'पढ़ा गया';
+
+  @override
+  String get inboxTickFailed => 'नहीं भेजा गया';
+
+  @override
+  String get inboxTimeNow => 'अभी';
+
+  @override
+  String inboxTimeMinutes(int count) {
+    return '$count मि';
+  }
+
+  @override
+  String inboxTimeHours(int count) {
+    return '$count घं';
+  }
+
+  @override
+  String inboxTimeDays(int count) {
+    return '$count दि';
+  }
+
+  @override
+  String inboxTimeWeeks(int count) {
+    return '$count सप्त';
+  }
 }

@@ -75,6 +75,10 @@ class AppTheme {
             onTertiary: Color(0xFFFFFFFF),
             error: AppColors.dError,
             onError: Color(0xFFFFFFFF),
+            // Warm error TINT container (not M3's default cool pink) so error
+            // surfaces stay on-brand; onErrorContainer is 10.6:1 on it.
+            errorContainer: AppColors.dErrorContainer,
+            onErrorContainer: AppColors.dOnErrorContainer,
             surface: AppColors.dCard,
             onSurface: AppColors.dForeground,
             surfaceContainerLowest: AppColors.dBackground,
@@ -105,6 +109,10 @@ class AppTheme {
             onTertiary: Color(0xFFFFFFFF),
             error: AppColors.lError,
             onError: Color(0xFFFFFFFF),
+            // Warm error TINT container (not M3's default cool pink) so error
+            // surfaces stay on-brand; onErrorContainer is 8.08:1 on it.
+            errorContainer: AppColors.lErrorContainer,
+            onErrorContainer: AppColors.lOnErrorContainer,
             surface: AppColors.lCard,
             onSurface: AppColors.lForeground,
             surfaceContainerLowest: AppColors.lBackground,

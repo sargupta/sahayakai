@@ -9,6 +9,7 @@ import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../inbox/presentation/widgets/inbox_entry_button.dart';
 import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/secondary_button.dart';
@@ -78,6 +79,10 @@ class _VidyaHomeScreenState extends ConsumerState<VidyaHomeScreen> {
         backgroundColor: Colors.transparent,
         title: Text(l10n.appTitle),
         actions: [
+          // The Pro Inbox entry (U-SI1): a messages glyph with a live unread
+          // badge. Firebase-gated → the badge stays hidden (deferred unread = 0)
+          // until the transport goes live.
+          const InboxEntryButton(),
           IconButton(
             icon: const Icon(LucideIcons.layoutGrid),
             tooltip: l10n.vidyaPrepDesk,

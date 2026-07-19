@@ -2908,4 +2908,103 @@ class AppLocalizationsKn extends AppLocalizations {
   @override
   String get assessmentScannerRephrase =>
       'ಫೋಟೋಗಳನ್ನು ಮೌಲ್ಯಮಾಪನ ಮಾಡಲಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಸ್ಪಷ್ಟ ಪುಟಗಳನ್ನು ಮತ್ತೆ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ.';
+
+  @override
+  String get inboxTitle => 'ಸಂದೇಶಗಳು';
+
+  @override
+  String get inboxSignInTitle => 'ನಿಮ್ಮ ಸಂದೇಶಗಳು';
+
+  @override
+  String get inboxSignInBody => 'ನಿಮ್ಮ ಸಂದೇಶಗಳನ್ನು ನೋಡಲು ಸೈನ್ ಇನ್ ಮಾಡಿ';
+
+  @override
+  String get inboxEmptyTitle => 'ಇನ್ನೂ ಯಾವುದೇ ಸಂಭಾಷಣೆಗಳಿಲ್ಲ';
+
+  @override
+  String get inboxEmptyBody =>
+      'ನೀವು ಶಿಕ್ಷಕರೊಂದಿಗೆ ಸಂಪರ್ಕ ಸಾಧಿಸಿದಾಗ, ನಿಮ್ಮ ಸಂಭಾಷಣೆಗಳು ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತವೆ.';
+
+  @override
+  String get inboxErrorBody =>
+      'ನಿಮ್ಮ ಸಂದೇಶಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.';
+
+  @override
+  String get inboxNoMessagesYet => 'ಇನ್ನೂ ಯಾವುದೇ ಸಂದೇಶಗಳಿಲ್ಲ';
+
+  @override
+  String get inboxThreadFallbackTitle => 'ಸಂಭಾಷಣೆ';
+
+  @override
+  String get inboxThreadEmptyTitle => 'ಇನ್ನೂ ಯಾವುದೇ ಸಂದೇಶಗಳಿಲ್ಲ';
+
+  @override
+  String get inboxThreadEmptyBody => 'ಸಂಭಾಷಣೆ ಪ್ರಾರಂಭಿಸಲು ನಮಸ್ಕಾರ ಹೇಳಿ.';
+
+  @override
+  String get inboxComposerHint => 'ಒಂದು ಸಂದೇಶ ಬರೆಯಿರಿ';
+
+  @override
+  String get inboxComposerSend => 'ಕಳುಹಿಸಿ';
+
+  @override
+  String get inboxLoadOlder => 'ಹಳೆಯ ಸಂದೇಶಗಳನ್ನು ಲೋಡ್ ಮಾಡಿ';
+
+  @override
+  String get inboxSendFailed => 'ನಿಮ್ಮ ಸಂದೇಶ ಕಳುಹಿಸಲಾಗಲಿಲ್ಲ.';
+
+  @override
+  String get inboxResourceLabel => 'ಸಂಪನ್ಮೂಲ';
+
+  @override
+  String get inboxVoiceNoteLabel => 'ಧ್ವನಿ ಟಿಪ್ಪಣಿ';
+
+  @override
+  String inboxUnreadLabel(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ಓದದಿರುವವು',
+      one: '1 ಓದದಿರುವುದು',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get inboxTickSending => 'ಕಳುಹಿಸಲಾಗುತ್ತಿದೆ';
+
+  @override
+  String get inboxTickSent => 'ಕಳುಹಿಸಲಾಗಿದೆ';
+
+  @override
+  String get inboxTickDelivered => 'ತಲುಪಿದೆ';
+
+  @override
+  String get inboxTickRead => 'ಓದಲಾಗಿದೆ';
+
+  @override
+  String get inboxTickFailed => 'ಕಳುಹಿಸಲಾಗಿಲ್ಲ';
+
+  @override
+  String get inboxTimeNow => 'ಈಗ';
+
+  @override
+  String inboxTimeMinutes(int count) {
+    return '$count ನಿ';
+  }
+
+  @override
+  String inboxTimeHours(int count) {
+    return '$count ಗಂ';
+  }
+
+  @override
+  String inboxTimeDays(int count) {
+    return '$count ದಿ';
+  }
+
+  @override
+  String inboxTimeWeeks(int count) {
+    return '$count ವಾ';
+  }
 }

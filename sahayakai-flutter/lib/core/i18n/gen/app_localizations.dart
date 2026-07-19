@@ -5053,6 +5053,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The photos could not be graded. Please re-upload clearer pages.'**
   String get assessmentScannerRephrase;
+
+  /// Pro Inbox title + messages-entry tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages'**
+  String get inboxTitle;
+
+  /// Inbox signed-out / awaiting-Firebase EmptyView title.
+  ///
+  /// In en, this message translates to:
+  /// **'Your messages'**
+  String get inboxSignInTitle;
+
+  /// Inbox signed-out / awaiting-Firebase EmptyView body (DM gate).
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to see your messages'**
+  String get inboxSignInBody;
+
+  /// Inbox EmptyView title when there are no conversations.
+  ///
+  /// In en, this message translates to:
+  /// **'No conversations yet'**
+  String get inboxEmptyTitle;
+
+  /// Inbox EmptyView body when there are no conversations.
+  ///
+  /// In en, this message translates to:
+  /// **'When you connect with teachers, your conversations will appear here.'**
+  String get inboxEmptyBody;
+
+  /// Inbox/thread ErrorView body (missing index / load failure).
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load your messages. Please try again.'**
+  String get inboxErrorBody;
+
+  /// Row preview placeholder for a conversation with no message yet.
+  ///
+  /// In en, this message translates to:
+  /// **'No messages yet'**
+  String get inboxNoMessagesYet;
+
+  /// Thread app-bar fallback title (deep link / missing participant).
+  ///
+  /// In en, this message translates to:
+  /// **'Conversation'**
+  String get inboxThreadFallbackTitle;
+
+  /// Thread EmptyView title when the conversation has no messages.
+  ///
+  /// In en, this message translates to:
+  /// **'No messages yet'**
+  String get inboxThreadEmptyTitle;
+
+  /// Thread EmptyView body when the conversation has no messages.
+  ///
+  /// In en, this message translates to:
+  /// **'Say hello to start the conversation.'**
+  String get inboxThreadEmptyBody;
+
+  /// Thread composer text-field hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Write a message'**
+  String get inboxComposerHint;
+
+  /// Thread composer send-button tooltip / accessibility label.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get inboxComposerSend;
+
+  /// Button to page in older messages above the live tail.
+  ///
+  /// In en, this message translates to:
+  /// **'Load older messages'**
+  String get inboxLoadOlder;
+
+  /// Inline notice when an optimistic send rolled back.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t send your message.'**
+  String get inboxSendFailed;
+
+  /// Badge label for a shared-resource message.
+  ///
+  /// In en, this message translates to:
+  /// **'Resource'**
+  String get inboxResourceLabel;
+
+  /// Badge label for a voice-note (audio) message.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice note'**
+  String get inboxVoiceNoteLabel;
+
+  /// Accessibility label for the unread-count badge.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 unread} other{{count} unread}}'**
+  String inboxUnreadLabel(int count);
+
+  /// Delivery tick accessibility label: send in flight.
+  ///
+  /// In en, this message translates to:
+  /// **'Sending'**
+  String get inboxTickSending;
+
+  /// Delivery tick accessibility label: sent.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent'**
+  String get inboxTickSent;
+
+  /// Delivery tick accessibility label: delivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered'**
+  String get inboxTickDelivered;
+
+  /// Delivery tick accessibility label: read.
+  ///
+  /// In en, this message translates to:
+  /// **'Read'**
+  String get inboxTickRead;
+
+  /// Delivery tick accessibility label: not sent.
+  ///
+  /// In en, this message translates to:
+  /// **'Not sent'**
+  String get inboxTickFailed;
+
+  /// Relative time: under a minute ago.
+  ///
+  /// In en, this message translates to:
+  /// **'now'**
+  String get inboxTimeNow;
+
+  /// Compact relative time, minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}m'**
+  String inboxTimeMinutes(int count);
+
+  /// Compact relative time, hours.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}h'**
+  String inboxTimeHours(int count);
+
+  /// Compact relative time, days.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}d'**
+  String inboxTimeDays(int count);
+
+  /// Compact relative time, weeks.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}w'**
+  String inboxTimeWeeks(int count);
 }
 
 class _AppLocalizationsDelegate

@@ -130,4 +130,19 @@ void main() {
       expect(_ratio(AppColors.brandSaffron, _white), lessThan(3.0));
     });
   });
+
+  group('warm error-container pairing passes AA (>=4.5)', () {
+    // The error TINT container (send-failed bar, and any future error surface)
+    // is a warm brand tint, NOT M3's default cool pink. onErrorContainer is the
+    // label colour on it and must clear AA in both themes.
+    test('LIGHT onErrorContainer on errorContainer', () {
+      expect(_ratio(AppColors.lOnErrorContainer, AppColors.lErrorContainer),
+          greaterThanOrEqualTo(4.5),
+          reason: 'the send-failed bar label must meet AA on the warm tint');
+    });
+    test('DARK onErrorContainer on errorContainer', () {
+      expect(_ratio(AppColors.dOnErrorContainer, AppColors.dErrorContainer),
+          greaterThanOrEqualTo(4.5));
+    });
+  });
 }

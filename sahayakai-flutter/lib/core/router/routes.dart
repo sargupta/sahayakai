@@ -100,6 +100,25 @@ class Routes {
   /// student picker, the U12 attendance hand-off will pass a studentId.
   static const String parentHotline = '/parent-hotline';
 
+  /// Pro Inbox (Pillar 05 / U-SI1) — the conversation list. NOT `/messages`
+  /// (that path is the Parent Message composer above). Pushed on top of the
+  /// signed-in shell from the voice-home messages entry. The full Network tab
+  /// (staffroom + inbox + notifications) IA is deferred to U-SI2.
+  static const String inbox = '/inbox';
+
+  /// One conversation thread (U-SI1), pushed from an inbox row (which hands the
+  /// [Conversation] through `extra` so the app bar paints instantly) or a future
+  /// `/messages?open={id}` deep link (which resolves from the `:id` alone).
+  static const String conversationThread = '/inbox/thread';
+
+  /// The route pattern (`.../:id`) registered in the router.
+  static const String conversationThreadPattern = '$conversationThread/:id';
+
+  /// The concrete thread path for [conversationId] (the Firestore doc id),
+  /// percent-encoded so a deterministic `a_b` id or a server id is path-safe.
+  static String conversationThreadPath(String conversationId) =>
+      '$conversationThread/${Uri.encodeComponent(conversationId)}';
+
   /// Routes reachable while signed out. `/try-call` (anon lead magnet) will
   /// join this set when that screen lands.
   static const Set<String> publicPaths = {splash, login};

@@ -80,6 +80,14 @@ class AppColors {
   static const lTertiary = Color(0xFF000080); // navy (`--accent`)
   static const lError = Color(0xFFEF4343); // `--destructive`
 
+  /// Warm, low-saturation error TINT container (derived from [lError]) for
+  /// error surfaces like the send-failed bar — NOT M3's default cool pink
+  /// `#FFDAD6`, which clashes with the warm saffron brand. [lOnErrorContainer]
+  /// (a dark warm red-brown) is 8.08:1 on this fill ✓ (locked by
+  /// `theme_contrast_test`).
+  static const lErrorContainer = Color(0xFFFBE1DC);
+  static const lOnErrorContainer = Color(0xFF7A241A);
+
   static const lBorder = Color(0xFFDCDFE5); // `--border` card outline, dividers
   static const lInput = Color(0xFFE1E4EA); // `--input` enabled border
   static const lOutlineVariant = Color(0xFFF0F1F5); // subtle dividers
@@ -123,6 +131,12 @@ class AppColors {
 
   static const dTertiary = Color(0xFF8DA4E0); // soft indigo (navy reads on dark)
   static const dError = Color(0xFFBA2C2C); // `.dark --destructive`
+
+  /// Dark-theme warm error TINT container (derived from [dError]) — a deep warm
+  /// red-brown, not a cool pink. [dOnErrorContainer] (a light warm salmon) is
+  /// 10.6:1 on this fill ✓ (locked by `theme_contrast_test`).
+  static const dErrorContainer = Color(0xFF3A1613);
+  static const dOnErrorContainer = Color(0xFFFBC5BC);
 
   static const dBorder = Color(0xFF31353F); // card outline, dividers
   static const dInput = Color(0xFF31353F); // input border
