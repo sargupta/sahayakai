@@ -198,7 +198,9 @@
       ],
       "consumes": ["U-PH1", "U-PH2", "GET /api/performance/student/{id}"],
       "firebaseGated": "partial (UI testable now)",
-      "status": "pending"
+      "status": "done",
+      "commit": "576c97aec",
+      "notes": "Staged flow in one ToolScaffold driving the U-PH2 controller: pickStudent (roster rows, no-phone rows disabled + inline hint) -> reason (4 selectable AppCards, primaryContainer fill + 1.5px primary border + check glyph via onPrimaryContainer, not colour-only) -> compose (reason-aware EvidencePanel + note field + Draft) -> review (drafted msg via AiText + Regenerate + decision bar). Routed via Routes.parentHotline + a 'Parent hotline' tool tile (phone-call) in the shared registry. Decision bar is a STICKY e3 footer (Scaffold.bottomNavigationBar via a small screen-local _ToolFooterScaffold, review stage only) so CTAs never fall below the fold; Copy-for-WhatsApp always enabled, Call hidden when !canAutoCall (NoteBanner), dedup countdown disables Call not WhatsApp. Terminal: signed-out EmptyView (no faked identity), premium-gate panel, InlineError. F9-001: only a pre-masked last-4 (•••• {last4}) ever rendered, pinned by a no-full-number test. i18n: ALL 48 parentHotline strings translated into all 10 Indic languages (480 translations, matching the vidya pillar register; ICU plurals + {last4}/{time}/{language} preserved) — a Hindi teacher gets this screen in Hindi (interim-LLM, native review pending). Firebase-gated (roster + /api/performance 401): overridable roster provider degrades to signed-out EmptyView; verified code+test only. Adversarial DESIGN-REVIEW caught + fixed 2 blockers (untranslated Indic strings; non-sticky/e2 decision bar with a false e3 comment) + 1 nit (low-contrast check glyph). +40 tests -> 1019 green, analyze 0, token_guard PASS, overflow gates bn/ta/te/ml x light/dark @360dp x1.3. No native touched. FOLLOW-UP: promote a footer slot into the shared ToolScaffold (U-PH4/PH5 reuse the pattern) — chip filed."
     },
     {
       "id": "U-PH4",
