@@ -19,6 +19,7 @@ import '../../features/rubric_generator/presentation/rubric_generator_screen.dar
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/teacher_training/presentation/teacher_training_screen.dart';
+import '../../features/visual_aid/presentation/visual_aid_screen.dart';
 import '../../features/worksheet_wizard/presentation/worksheet_wizard_screen.dart';
 import '../../shared/domain/library_item.dart';
 import '../../shared/domain/tool_prefill.dart';
@@ -145,6 +146,14 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: Routes.assessAssignment,
         builder: (context, state) => const AssessAssignmentScreen(),
+      ),
+      GoRoute(
+        // A VIDYA NAVIGATE_AND_FILL directive pushes here with a [ToolPrefill]
+        // in `extra` (the spoken topic becomes the prompt); a plain open carries
+        // none.
+        path: Routes.visualAid,
+        builder: (context, state) =>
+            VisualAidScreen(prefill: _prefillOf(state)),
       ),
       GoRoute(
         path: Routes.settings,

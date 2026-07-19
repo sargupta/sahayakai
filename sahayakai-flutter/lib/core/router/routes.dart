@@ -58,6 +58,11 @@ class Routes {
   /// the endpoint is `POST /api/ai/assess-assignment`.
   static const String assessAssignment = '/assess-assignment';
 
+  /// Visual Aid Designer (U-PD1). Generates a teaching illustration (an image)
+  /// from a prompt (SCREEN_INVENTORY P1.7); the endpoint is
+  /// `POST /api/ai/visual-aid`, which returns the drawing as a base64 data URI.
+  static const String visualAid = '/visual-aid';
+
   /// Parent Message composer. Path mirrors the web's `/messages` composer
   /// (SCREEN_INVENTORY P1.5); the endpoint is `POST /api/ai/parent-message`.
   static const String parentMessage = '/messages';

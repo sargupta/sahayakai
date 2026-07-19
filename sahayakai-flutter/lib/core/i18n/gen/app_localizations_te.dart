@@ -2285,4 +2285,116 @@ class AppLocalizationsTe extends AppLocalizations {
   @override
   String get parentHotlineSummaryUnavailableBody =>
       'ఈ కాల్‌కు సారాంశాన్ని సిద్ధం చేయలేకపోయాము. సంభాషణ కింద ఉంది.';
+
+  @override
+  String get visualAidTitle => 'దృశ్య సహాయకం';
+
+  @override
+  String get visualAidSubtitle => 'బోధన చిత్రాన్ని గీయండి';
+
+  @override
+  String get visualAidEmpty => 'ఒక చిత్రాన్ని వివరించి సృష్టించు నొక్కండి.';
+
+  @override
+  String get visualAidPromptLabel => 'చిత్రంలో ఏమి చూపించాలి?';
+
+  @override
+  String get visualAidPromptHint => 'ఉదాహరణకు, మొక్క కణంలోని భాగాలు';
+
+  @override
+  String get visualAidPromptError => 'మీకు ఎలాంటి చిత్రం కావాలో వివరించండి.';
+
+  @override
+  String get visualAidGradeLabel => 'తరగతి స్థాయి';
+
+  @override
+  String get visualAidGradeAny => 'ఏ తరగతి అయినా';
+
+  @override
+  String get visualAidSubjectLabel => 'విషయం';
+
+  @override
+  String get visualAidSubjectAny => 'ఏ విషయం అయినా';
+
+  @override
+  String get visualAidOptional => 'ఐచ్ఛికం';
+
+  @override
+  String get visualAidAction => 'చిత్రాన్ని సృష్టించు';
+
+  @override
+  String get visualAidResultTitle => 'దృశ్య సహాయకం';
+
+  @override
+  String get visualAidHowToUse => 'దీన్ని ఎలా ఉపయోగించాలి';
+
+  @override
+  String get visualAidDiscussionSpark => 'చర్చా ప్రశ్న';
+
+  @override
+  String get visualAidImageLabel => 'సృష్టించిన బోధన చిత్రం';
+
+  @override
+  String get visualAidImageError => 'ఈ చిత్రాన్ని చూపించలేకపోయాము.';
+
+  @override
+  String get visualAidNoImage =>
+      'ఆ వివరణకు ఏ చిత్రం రాలేదు. దయచేసి దాన్ని మళ్లీ రాసి ప్రయత్నించండి.';
+
+  @override
+  String get visualAidSignIn =>
+      'ఈ సాధనాన్ని ఉపయోగించడానికి దయచేసి మళ్లీ సైన్ ఇన్ చేయండి.';
+
+  @override
+  String get visualAidUpgradeTitle => 'ఉన్నత ప్లాన్ అవసరం';
+
+  @override
+  String get visualAidUpgradeBody =>
+      'దృశ్య సహాయకం ఒక ఉన్నత ప్లాన్‌లో భాగం. చిత్రాలను సృష్టిస్తూ ఉండటానికి దయచేసి అప్‌గ్రేడ్ చేయండి.';
+
+  @override
+  String get visualAidSeePricing => 'ప్లాన్‌లు మరియు ధరలను చూడండి';
+
+  @override
+  String get visualAidDailyLimitTitle => 'ఈరోజుకు మీ చిత్రాలన్నీ పూర్తయ్యాయి';
+
+  @override
+  String get visualAidDailyLimitBody =>
+      'మీ ప్లాన్‌లో ప్రతిరోజూ నిర్దిష్ట సంఖ్యలో దృశ్య సహాయకాలు ఉంటాయి. మీ చిత్రాలు రేపు మళ్లీ అందుబాటులో ఉంటాయి, లేదా ఉన్నత ప్లాన్‌లో రోజువారీ పరిమితిని పెంచుకోవచ్చు.';
+
+  @override
+  String get visualAidLimitTitle => 'మీరు మీ పరిమితిని చేరుకున్నారు';
+
+  @override
+  String get visualAidLimitBody =>
+      'ఈ నెలకు మీ దృశ్య సహాయకాలను ఉపయోగించారు. మీ చిత్రాలు వచ్చే నెలలో మళ్లీ అందుబాటులో ఉంటాయి, లేదా ఉన్నత ప్లాన్‌లో పరిమితిని పెంచుకోవచ్చు.';
+
+  @override
+  String get visualAidRephrase =>
+      'ఆ చిత్రాన్ని మేము సృష్టించలేకపోయాము. దయచేసి దాన్ని మళ్లీ రాసి ప్రయత్నించండి.';
+
+  @override
+  String get visualAidEmptyGeneration =>
+      'చిత్రం ఖాళీగా వచ్చింది. తక్కువ లేబుల్‌లతో వివరించడానికి ప్రయత్నించండి.';
+
+  @override
+  String get visualAidBusy =>
+      'సహాయకం ఇప్పుడు బిజీగా ఉంది. దయచేసి కొద్దిసేపటిలో మళ్లీ ప్రయత్నించండి.';
+
+  @override
+  String visualAidBusyRetryAfter(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other:
+          'సహాయకం ఇప్పుడు బిజీగా ఉంది. దయచేసి సుమారు $seconds సెకన్లలో మళ్లీ ప్రయత్నించండి.',
+      one:
+          'సహాయకం ఇప్పుడు బిజీగా ఉంది. దయచేసి సుమారు 1 సెకనులో మళ్లీ ప్రయత్నించండి.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get visualAidTimeout =>
+      'ఇది ఊహించిన దానికంటే ఎక్కువ సమయం తీసుకుంటోంది. దయచేసి మళ్లీ ప్రయత్నించండి.';
 }

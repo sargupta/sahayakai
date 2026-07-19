@@ -2288,4 +2288,120 @@ class AppLocalizationsTa extends AppLocalizations {
   @override
   String get parentHotlineSummaryUnavailableBody =>
       'இந்த அழைப்புக்கான சுருக்கத்தைத் தயாரிக்க முடியவில்லை. உரையாடல் கீழே உள்ளது.';
+
+  @override
+  String get visualAidTitle => 'காட்சி உதவி';
+
+  @override
+  String get visualAidSubtitle => 'கற்பித்தல் படத்தை உருவாக்குங்கள்';
+
+  @override
+  String get visualAidEmpty =>
+      'ஒரு படத்தை விவரித்து உருவாக்கு என்பதை அழுத்துங்கள்.';
+
+  @override
+  String get visualAidPromptLabel => 'படத்தில் என்ன காட்ட வேண்டும்?';
+
+  @override
+  String get visualAidPromptHint =>
+      'எடுத்துக்காட்டாக, தாவர உயிரணுவின் பாகங்கள்';
+
+  @override
+  String get visualAidPromptError =>
+      'உங்களுக்கு எந்த மாதிரி படம் வேண்டும் என்பதை விவரிக்கவும்.';
+
+  @override
+  String get visualAidGradeLabel => 'வகுப்பு நிலை';
+
+  @override
+  String get visualAidGradeAny => 'எந்த வகுப்பும்';
+
+  @override
+  String get visualAidSubjectLabel => 'பாடம்';
+
+  @override
+  String get visualAidSubjectAny => 'எந்த பாடமும்';
+
+  @override
+  String get visualAidOptional => 'விருப்பத்தேர்வு';
+
+  @override
+  String get visualAidAction => 'படத்தை உருவாக்கு';
+
+  @override
+  String get visualAidResultTitle => 'காட்சி உதவி';
+
+  @override
+  String get visualAidHowToUse => 'இதை எப்படி பயன்படுத்துவது';
+
+  @override
+  String get visualAidDiscussionSpark => 'விவாத கேள்வி';
+
+  @override
+  String get visualAidImageLabel => 'உருவாக்கப்பட்ட கற்பித்தல் படம்';
+
+  @override
+  String get visualAidImageError => 'இந்தப் படத்தைக் காட்ட முடியவில்லை.';
+
+  @override
+  String get visualAidNoImage =>
+      'அந்த விவரத்திற்கு எந்தப் படமும் வரவில்லை. தயவுசெய்து அதை மீண்டும் எழுதி முயற்சிக்கவும்.';
+
+  @override
+  String get visualAidSignIn =>
+      'இந்தக் கருவியைப் பயன்படுத்த மீண்டும் உள்நுழையவும்.';
+
+  @override
+  String get visualAidUpgradeTitle => 'உயர்ந்த திட்டம் தேவை';
+
+  @override
+  String get visualAidUpgradeBody =>
+      'காட்சி உதவி ஒரு உயர்ந்த திட்டத்தின் பகுதி. படங்களை உருவாக்கத் தொடர, தயவுசெய்து மேம்படுத்தவும்.';
+
+  @override
+  String get visualAidSeePricing => 'திட்டங்கள் மற்றும் விலையைப் பார்க்கவும்';
+
+  @override
+  String get visualAidDailyLimitTitle =>
+      'இன்றைக்கான உங்கள் எல்லாப் படங்களும் முடிந்துவிட்டன';
+
+  @override
+  String get visualAidDailyLimitBody =>
+      'உங்கள் திட்டத்தில் ஒவ்வொரு நாளும் குறிப்பிட்ட எண்ணிக்கையிலான காட்சி உதவிகள் அடங்கும். உங்கள் படங்கள் நாளை மீண்டும் கிடைக்கும், அல்லது உயர்ந்த திட்டத்தில் தினசரி வரம்பை உயர்த்தலாம்.';
+
+  @override
+  String get visualAidLimitTitle => 'நீங்கள் உங்கள் வரம்பை அடைந்துவிட்டீர்கள்';
+
+  @override
+  String get visualAidLimitBody =>
+      'இந்த மாதத்திற்கான உங்கள் காட்சி உதவிகளை நீங்கள் பயன்படுத்திவிட்டீர்கள். உங்கள் படங்கள் அடுத்த மாதம் மீண்டும் கிடைக்கும், அல்லது உயர்ந்த திட்டத்தில் வரம்பை உயர்த்தலாம்.';
+
+  @override
+  String get visualAidRephrase =>
+      'அந்தப் படத்தை எங்களால் உருவாக்க முடியவில்லை. தயவுசெய்து அதை மீண்டும் எழுதி முயற்சிக்கவும்.';
+
+  @override
+  String get visualAidEmptyGeneration =>
+      'படம் காலியாக வந்தது. குறைவான லேபிள்களுடன் விவரிக்க முயற்சிக்கவும்.';
+
+  @override
+  String get visualAidBusy =>
+      'உதவியாளர் இப்போது பணிமிகுதியில் உள்ளார். சிறிது நேரத்தில் மீண்டும் முயற்சிக்கவும்.';
+
+  @override
+  String visualAidBusyRetryAfter(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other:
+          'உதவியாளர் இப்போது பணிமிகுதியில் உள்ளார். சுமார் $seconds வினாடிகளில் மீண்டும் முயற்சிக்கவும்.',
+      one:
+          'உதவியாளர் இப்போது பணிமிகுதியில் உள்ளார். சுமார் 1 வினாடியில் மீண்டும் முயற்சிக்கவும்.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get visualAidTimeout =>
+      'எதிர்பார்த்ததை விட அதிக நேரம் ஆகிறது. தயவுசெய்து மீண்டும் முயற்சிக்கவும்.';
 }

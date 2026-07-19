@@ -61,6 +61,7 @@ class AppBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final Color background;
     final Color labelColor;
@@ -77,7 +78,14 @@ class AppBadge extends StatelessWidget {
         weight = null;
       case AppBadgeTone.accent:
         background = scheme.primary.withValues(alpha: 0.12);
-        labelColor = scheme.primary;
+        // The accent LABEL is small text, so it must route through the
+        // saffron-TEXT token (saffron-700 `#AC4815` light / `#EB9447` dark),
+        // NOT `scheme.primary` (the `#E0924D` brand FILL), which as text on the
+        // primary@0.12 tint is only ~2.26:1 — a gross AA fail AND the exact
+        // #E0924D-as-text use app_colors.dart bans. saffron-text on the tint is
+        // ~5:1 and matches production, which uses saffron-700 for saffron text.
+        // The glyph stays `scheme.primary`: an icon is non-text (3:1 suffices).
+        labelColor = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
         iconColor = scheme.primary;
         weight = FontWeight.w600;
     }

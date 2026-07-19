@@ -4081,6 +4081,192 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'We couldn\'t prepare a summary for this call. The conversation is below.'**
   String get parentHotlineSummaryUnavailableBody;
+
+  /// Visual Aid Designer tool name (dashboard tile, palette, screen app bar).
+  ///
+  /// In en, this message translates to:
+  /// **'Visual Aid'**
+  String get visualAidTitle;
+
+  /// One-line description under the Visual Aid tool name.
+  ///
+  /// In en, this message translates to:
+  /// **'Draw a teaching illustration'**
+  String get visualAidSubtitle;
+
+  /// Idle/empty message before any drawing is generated.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe a drawing and tap Create.'**
+  String get visualAidEmpty;
+
+  /// Label for the required prompt field.
+  ///
+  /// In en, this message translates to:
+  /// **'What should the drawing show?'**
+  String get visualAidPromptLabel;
+
+  /// Hint/example text in the prompt field.
+  ///
+  /// In en, this message translates to:
+  /// **'For example, The parts of a plant cell'**
+  String get visualAidPromptHint;
+
+  /// Validation error when the prompt is empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Please describe the drawing you need.'**
+  String get visualAidPromptError;
+
+  /// Label for the optional grade-level picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Grade level'**
+  String get visualAidGradeLabel;
+
+  /// The 'no grade chosen' option in the grade picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Any grade'**
+  String get visualAidGradeAny;
+
+  /// Label for the optional subject picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Subject'**
+  String get visualAidSubjectLabel;
+
+  /// The 'no subject chosen' option in the subject picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Any subject'**
+  String get visualAidSubjectAny;
+
+  /// Inline 'optional' marker on optional fields.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get visualAidOptional;
+
+  /// The primary submit button that generates the drawing.
+  ///
+  /// In en, this message translates to:
+  /// **'Create visual aid'**
+  String get visualAidAction;
+
+  /// Fallback masthead title when the prompt is unknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Visual aid'**
+  String get visualAidResultTitle;
+
+  /// Section heading over the model's pedagogical guidance.
+  ///
+  /// In en, this message translates to:
+  /// **'How to use this'**
+  String get visualAidHowToUse;
+
+  /// Callout label over the model's discussion question.
+  ///
+  /// In en, this message translates to:
+  /// **'Discussion spark'**
+  String get visualAidDiscussionSpark;
+
+  /// Accessibility label for the generated image when no prompt is known.
+  ///
+  /// In en, this message translates to:
+  /// **'Generated teaching illustration'**
+  String get visualAidImageLabel;
+
+  /// Shown when decoded bytes are not a renderable image.
+  ///
+  /// In en, this message translates to:
+  /// **'This drawing could not be displayed.'**
+  String get visualAidImageError;
+
+  /// Empty-result copy when the server returned no usable image.
+  ///
+  /// In en, this message translates to:
+  /// **'No drawing came back for that prompt. Please rephrase it and try again.'**
+  String get visualAidNoImage;
+
+  /// 401 prompt: the token is stale, sign in again.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in again to use this tool.'**
+  String get visualAidSignIn;
+
+  /// 403 upgrade prompt title.
+  ///
+  /// In en, this message translates to:
+  /// **'A higher plan is needed'**
+  String get visualAidUpgradeTitle;
+
+  /// 403 upgrade prompt body.
+  ///
+  /// In en, this message translates to:
+  /// **'Visual aids are part of a higher plan. Please upgrade to keep creating drawings.'**
+  String get visualAidUpgradeBody;
+
+  /// Action that opens the pricing page from a limit/upgrade prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'See plans and pricing'**
+  String get visualAidSeePricing;
+
+  /// 429 daily image-budget title (resets tomorrow).
+  ///
+  /// In en, this message translates to:
+  /// **'That is all your drawings for today'**
+  String get visualAidDailyLimitTitle;
+
+  /// 429 daily image-budget body.
+  ///
+  /// In en, this message translates to:
+  /// **'Your plan includes a set number of visual aids each day. Your drawings reset tomorrow, or you can raise the daily limit on a higher plan.'**
+  String get visualAidDailyLimitBody;
+
+  /// 429 monthly usage-limit title.
+  ///
+  /// In en, this message translates to:
+  /// **'You have reached your limit'**
+  String get visualAidLimitTitle;
+
+  /// 429 monthly usage-limit body.
+  ///
+  /// In en, this message translates to:
+  /// **'You have used your visual aids for this month. Your drawings reset next month, or you can raise the limit on a higher plan.'**
+  String get visualAidLimitBody;
+
+  /// 400 safety/rephrase hint.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not create that drawing. Please rephrase it and try again.'**
+  String get visualAidRephrase;
+
+  /// 422 IMAGE_GENERATION_EMPTY: the model produced no image; use fewer labels.
+  ///
+  /// In en, this message translates to:
+  /// **'The drawing came back empty. Try describing it with fewer labels.'**
+  String get visualAidEmptyGeneration;
+
+  /// 503/5xx busy message without a Retry-After hint.
+  ///
+  /// In en, this message translates to:
+  /// **'The assistant is busy right now. Please try again in a moment.'**
+  String get visualAidBusy;
+
+  /// Shown on a 503 busy response that carried Retry-After.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds, plural, =1{The assistant is busy right now. Please try again in about 1 second.} other{The assistant is busy right now. Please try again in about {seconds} seconds.}}'**
+  String visualAidBusyRetryAfter(int seconds);
+
+  /// Client-side timeout message.
+  ///
+  /// In en, this message translates to:
+  /// **'This is taking longer than expected. Please try again.'**
+  String get visualAidTimeout;
 }
 
 class _AppLocalizationsDelegate

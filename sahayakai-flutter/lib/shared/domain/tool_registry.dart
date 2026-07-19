@@ -120,4 +120,11 @@ final List<ToolEntry> kToolRegistry = <ToolEntry>[
     title: (l10n) => l10n.assessTitle,
     subtitle: (l10n) => l10n.assessSubtitle,
   ),
+  ToolEntry(
+    id: 'visual-aid',
+    icon: LucideIcons.image,
+    route: Routes.visualAid,
+    title: (l10n) => l10n.visualAidTitle,
+    subtitle: (l10n) => l10n.visualAidSubtitle,
+  ),
 ];

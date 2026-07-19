@@ -2281,4 +2281,115 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get parentHotlineSummaryUnavailableBody =>
       'We couldn\'t prepare a summary for this call. The conversation is below.';
+
+  @override
+  String get visualAidTitle => 'Visual Aid';
+
+  @override
+  String get visualAidSubtitle => 'Draw a teaching illustration';
+
+  @override
+  String get visualAidEmpty => 'Describe a drawing and tap Create.';
+
+  @override
+  String get visualAidPromptLabel => 'What should the drawing show?';
+
+  @override
+  String get visualAidPromptHint => 'For example, The parts of a plant cell';
+
+  @override
+  String get visualAidPromptError => 'Please describe the drawing you need.';
+
+  @override
+  String get visualAidGradeLabel => 'Grade level';
+
+  @override
+  String get visualAidGradeAny => 'Any grade';
+
+  @override
+  String get visualAidSubjectLabel => 'Subject';
+
+  @override
+  String get visualAidSubjectAny => 'Any subject';
+
+  @override
+  String get visualAidOptional => 'Optional';
+
+  @override
+  String get visualAidAction => 'Create visual aid';
+
+  @override
+  String get visualAidResultTitle => 'Visual aid';
+
+  @override
+  String get visualAidHowToUse => 'How to use this';
+
+  @override
+  String get visualAidDiscussionSpark => 'Discussion spark';
+
+  @override
+  String get visualAidImageLabel => 'Generated teaching illustration';
+
+  @override
+  String get visualAidImageError => 'This drawing could not be displayed.';
+
+  @override
+  String get visualAidNoImage =>
+      'No drawing came back for that prompt. Please rephrase it and try again.';
+
+  @override
+  String get visualAidSignIn => 'Please sign in again to use this tool.';
+
+  @override
+  String get visualAidUpgradeTitle => 'A higher plan is needed';
+
+  @override
+  String get visualAidUpgradeBody =>
+      'Visual aids are part of a higher plan. Please upgrade to keep creating drawings.';
+
+  @override
+  String get visualAidSeePricing => 'See plans and pricing';
+
+  @override
+  String get visualAidDailyLimitTitle => 'That is all your drawings for today';
+
+  @override
+  String get visualAidDailyLimitBody =>
+      'Your plan includes a set number of visual aids each day. Your drawings reset tomorrow, or you can raise the daily limit on a higher plan.';
+
+  @override
+  String get visualAidLimitTitle => 'You have reached your limit';
+
+  @override
+  String get visualAidLimitBody =>
+      'You have used your visual aids for this month. Your drawings reset next month, or you can raise the limit on a higher plan.';
+
+  @override
+  String get visualAidRephrase =>
+      'We could not create that drawing. Please rephrase it and try again.';
+
+  @override
+  String get visualAidEmptyGeneration =>
+      'The drawing came back empty. Try describing it with fewer labels.';
+
+  @override
+  String get visualAidBusy =>
+      'The assistant is busy right now. Please try again in a moment.';
+
+  @override
+  String visualAidBusyRetryAfter(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other:
+          'The assistant is busy right now. Please try again in about $seconds seconds.',
+      one:
+          'The assistant is busy right now. Please try again in about 1 second.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get visualAidTimeout =>
+      'This is taking longer than expected. Please try again.';
 }
