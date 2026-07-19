@@ -19,6 +19,7 @@ import '../../features/rubric_generator/presentation/rubric_generator_screen.dar
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/teacher_training/presentation/teacher_training_screen.dart';
+import '../../features/video_storyteller/presentation/video_storyteller_screen.dart';
 import '../../features/visual_aid/presentation/visual_aid_screen.dart';
 import '../../features/worksheet_wizard/presentation/worksheet_wizard_screen.dart';
 import '../../shared/domain/library_item.dart';
@@ -154,6 +155,14 @@ GoRouter appRouter(Ref ref) {
         path: Routes.visualAid,
         builder: (context, state) =>
             VisualAidScreen(prefill: _prefillOf(state)),
+      ),
+      GoRoute(
+        // A VIDYA NAVIGATE_AND_FILL directive pushes here with a [ToolPrefill]
+        // in `extra` (the spoken topic becomes the topic field); a plain open
+        // (palette / deep link) carries none.
+        path: Routes.videoStoryteller,
+        builder: (context, state) =>
+            VideoStorytellerScreen(prefill: _prefillOf(state)),
       ),
       GoRoute(
         path: Routes.settings,

@@ -2395,4 +2395,99 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get visualAidTimeout =>
       'इसमें अपेक्षा से अधिक समय लग रहा है। कृपया फिर कोशिश करें।';
+
+  @override
+  String get videoStorytellerTitle => 'वीडियो कहानीकार';
+
+  @override
+  String get videoStorytellerSubtitle => 'शिक्षण वीडियो खोजें';
+
+  @override
+  String get videoStorytellerEmpty =>
+      'कोई विषय या टॉपिक चुनें और वीडियो खोजें पर टैप करें।';
+
+  @override
+  String get videoStorytellerTopicLabel => 'टॉपिक या अध्याय';
+
+  @override
+  String get videoStorytellerTopicHint => 'उदाहरण के लिए, जल चक्र';
+
+  @override
+  String get videoStorytellerSubjectLabel => 'विषय';
+
+  @override
+  String get videoStorytellerSubjectAny => 'कोई भी विषय';
+
+  @override
+  String get videoStorytellerGradeLabel => 'कक्षा स्तर';
+
+  @override
+  String get videoStorytellerGradeAny => 'कोई भी कक्षा';
+
+  @override
+  String get videoStorytellerOptional => 'वैकल्पिक';
+
+  @override
+  String get videoStorytellerAction => 'वीडियो खोजें';
+
+  @override
+  String get videoStorytellerNoResults =>
+      'उसके लिए कोई वीडियो नहीं मिला। कोई अलग विषय या टॉपिक आज़माएँ।';
+
+  @override
+  String get videoStorytellerOfficialSource => 'आधिकारिक स्रोत';
+
+  @override
+  String get videoStorytellerOpensExternally =>
+      'यूट्यूब में, ऐप के बाहर खुलता है।';
+
+  @override
+  String get videoStorytellerCategoryTopRecommended =>
+      'आपके लिए शीर्ष अनुशंसित';
+
+  @override
+  String get videoStorytellerCategoryStorytelling =>
+      'आपके विषयों के लिए कहानी-कथन';
+
+  @override
+  String get videoStorytellerCategoryPedagogy =>
+      'शिक्षण-शास्त्र और शिक्षण विधियाँ';
+
+  @override
+  String get videoStorytellerCategoryGovtUpdates => 'सरकारी अपडेट';
+
+  @override
+  String get videoStorytellerCategoryCourses => 'शिक्षक प्रशिक्षण पाठ्यक्रम';
+
+  @override
+  String get videoStorytellerSignIn =>
+      'इस उपकरण का उपयोग करने के लिए कृपया फिर से साइन इन करें।';
+
+  @override
+  String get videoStorytellerTimeout =>
+      'इसमें अपेक्षा से अधिक समय लग रहा है। कृपया फिर कोशिश करें।';
+
+  @override
+  String get videoStorytellerBusy =>
+      'सहायक अभी व्यस्त है। कृपया थोड़ी देर में फिर कोशिश करें।';
+
+  @override
+  String videoStorytellerBusyRetryAfter(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other:
+          'सहायक अभी व्यस्त है। कृपया लगभग $seconds सेकंड में फिर कोशिश करें।',
+      one: 'सहायक अभी व्यस्त है। कृपया लगभग 1 सेकंड में फिर कोशिश करें।',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get videoStorytellerRephrase =>
+      'हम उसके लिए वीडियो नहीं ढूँढ़ सके। कृपया कोई अलग टॉपिक आज़माएँ।';
+
+  @override
+  String get videoStorytellerLimit =>
+      'आपने हाल ही में बहुत खोज की है। कृपया थोड़ी देर बाद फिर कोशिश करें।';
 }

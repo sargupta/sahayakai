@@ -63,6 +63,12 @@ class Routes {
   /// `POST /api/ai/visual-aid`, which returns the drawing as a base64 data URI.
   static const String visualAid = '/visual-aid';
 
+  /// Video Storyteller (U-PD3). Recommends curated educational YouTube videos
+  /// for a teacher's lesson — a BROWSE result, not a generated document; the
+  /// endpoint is `POST /api/ai/video-storyteller`, which returns
+  /// `categorizedVideos` (category -> videos) plus a personalized message.
+  static const String videoStoryteller = '/video-storyteller';
+
   /// Parent Message composer. Path mirrors the web's `/messages` composer
   /// (SCREEN_INVENTORY P1.5); the endpoint is `POST /api/ai/parent-message`.
   static const String parentMessage = '/messages';

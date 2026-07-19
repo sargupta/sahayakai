@@ -4267,6 +4267,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This is taking longer than expected. Please try again.'**
   String get visualAidTimeout;
+
+  /// Video Storyteller tool name (dashboard tile, palette, screen app bar).
+  ///
+  /// In en, this message translates to:
+  /// **'Video Storyteller'**
+  String get videoStorytellerTitle;
+
+  /// One-line description under the Video Storyteller tool name.
+  ///
+  /// In en, this message translates to:
+  /// **'Find teaching videos'**
+  String get videoStorytellerSubtitle;
+
+  /// Idle/empty message before any search is run.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a subject or topic and tap Find videos.'**
+  String get videoStorytellerEmpty;
+
+  /// Label for the optional topic/chapter search field.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic or chapter'**
+  String get videoStorytellerTopicLabel;
+
+  /// Hint/example text in the topic field.
+  ///
+  /// In en, this message translates to:
+  /// **'For example, The water cycle'**
+  String get videoStorytellerTopicHint;
+
+  /// Label for the optional subject picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Subject'**
+  String get videoStorytellerSubjectLabel;
+
+  /// The 'no subject chosen' option in the subject picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Any subject'**
+  String get videoStorytellerSubjectAny;
+
+  /// Label for the optional grade-level picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Grade level'**
+  String get videoStorytellerGradeLabel;
+
+  /// The 'no grade chosen' option in the grade picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Any grade'**
+  String get videoStorytellerGradeAny;
+
+  /// Inline 'optional' marker on optional fields.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get videoStorytellerOptional;
+
+  /// The primary submit button that searches for videos.
+  ///
+  /// In en, this message translates to:
+  /// **'Find videos'**
+  String get videoStorytellerAction;
+
+  /// Empty-result copy when no videos were found.
+  ///
+  /// In en, this message translates to:
+  /// **'No videos came back for that. Try a different subject or topic.'**
+  String get videoStorytellerNoResults;
+
+  /// Badge on videos from official Indian education channels (NCERT, Ministry of Education, IGNOU, UGC).
+  ///
+  /// In en, this message translates to:
+  /// **'Official source'**
+  String get videoStorytellerOfficialSource;
+
+  /// Accessibility hint on a video card: tapping opens YouTube outside the app.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens in YouTube, outside the app.'**
+  String get videoStorytellerOpensExternally;
+
+  /// Section heading for the top-recommended videos bucket.
+  ///
+  /// In en, this message translates to:
+  /// **'Top recommended for you'**
+  String get videoStorytellerCategoryTopRecommended;
+
+  /// Section heading for the storytelling videos bucket.
+  ///
+  /// In en, this message translates to:
+  /// **'Storytelling for your subjects'**
+  String get videoStorytellerCategoryStorytelling;
+
+  /// Section heading for the pedagogy and teaching-methods videos bucket.
+  ///
+  /// In en, this message translates to:
+  /// **'Pedagogy and teaching methods'**
+  String get videoStorytellerCategoryPedagogy;
+
+  /// Section heading for the government-updates videos bucket.
+  ///
+  /// In en, this message translates to:
+  /// **'Government updates'**
+  String get videoStorytellerCategoryGovtUpdates;
+
+  /// Section heading for the teacher-training-courses videos bucket.
+  ///
+  /// In en, this message translates to:
+  /// **'Teacher training courses'**
+  String get videoStorytellerCategoryCourses;
+
+  /// 401 prompt: the token is stale, sign in again.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in again to use this tool.'**
+  String get videoStorytellerSignIn;
+
+  /// Client-side timeout message.
+  ///
+  /// In en, this message translates to:
+  /// **'This is taking longer than expected. Please try again.'**
+  String get videoStorytellerTimeout;
+
+  /// 503/5xx busy message without a Retry-After hint.
+  ///
+  /// In en, this message translates to:
+  /// **'The assistant is busy right now. Please try again in a moment.'**
+  String get videoStorytellerBusy;
+
+  /// Shown on a 503 busy response that carried Retry-After.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds, plural, =1{The assistant is busy right now. Please try again in about 1 second.} other{The assistant is busy right now. Please try again in about {seconds} seconds.}}'**
+  String videoStorytellerBusyRetryAfter(int seconds);
+
+  /// 400/422 hint: rephrase or try a different topic.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not find videos for that. Please try a different topic.'**
+  String get videoStorytellerRephrase;
+
+  /// 429 rate-limit message for repeated searches.
+  ///
+  /// In en, this message translates to:
+  /// **'You have searched a lot recently. Please try again in a little while.'**
+  String get videoStorytellerLimit;
 }
 
 class _AppLocalizationsDelegate

@@ -127,4 +127,11 @@ final List<ToolEntry> kToolRegistry = <ToolEntry>[
     title: (l10n) => l10n.visualAidTitle,
     subtitle: (l10n) => l10n.visualAidSubtitle,
   ),
+  ToolEntry(
+    id: 'video-storyteller',
+    icon: LucideIcons.video,
+    route: Routes.videoStoryteller,
+    title: (l10n) => l10n.videoStorytellerTitle,
+    subtitle: (l10n) => l10n.videoStorytellerSubtitle,
+  ),
 ];

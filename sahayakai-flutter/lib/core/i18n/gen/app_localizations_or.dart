@@ -2398,4 +2398,99 @@ class AppLocalizationsOr extends AppLocalizations {
   @override
   String get visualAidTimeout =>
       'ଏଥିରେ ଆଶା କରାଯାଇଥିବା ଠାରୁ ଅଧିକ ସମୟ ଲାଗୁଛି। ଦୟାକରି ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।';
+
+  @override
+  String get videoStorytellerTitle => 'ଭିଡିଓ କାହାଣୀକାର';
+
+  @override
+  String get videoStorytellerSubtitle => 'ଶିକ୍ଷାଦାନ ଭିଡିଓ ଖୋଜନ୍ତୁ';
+
+  @override
+  String get videoStorytellerEmpty =>
+      'ଏକ ବିଷୟ କିମ୍ବା ଟପିକ୍ ବାଛନ୍ତୁ ଏବଂ ଭିଡିଓ ଖୋଜନ୍ତୁ ଉପରେ ଟାପ୍ କରନ୍ତୁ।';
+
+  @override
+  String get videoStorytellerTopicLabel => 'ଟପିକ୍ କିମ୍ବା ଅଧ୍ୟାୟ';
+
+  @override
+  String get videoStorytellerTopicHint => 'ଉଦାହରଣ ସ୍ୱରୂପ, ଜଳ ଚକ୍ର';
+
+  @override
+  String get videoStorytellerSubjectLabel => 'ବିଷୟ';
+
+  @override
+  String get videoStorytellerSubjectAny => 'ଯେକୌଣସି ବିଷୟ';
+
+  @override
+  String get videoStorytellerGradeLabel => 'ଶ୍ରେଣୀ ସ୍ତର';
+
+  @override
+  String get videoStorytellerGradeAny => 'ଯେକୌଣସି ଶ୍ରେଣୀ';
+
+  @override
+  String get videoStorytellerOptional => 'ବୈକଳ୍ପିକ';
+
+  @override
+  String get videoStorytellerAction => 'ଭିଡିଓ ଖୋଜନ୍ତୁ';
+
+  @override
+  String get videoStorytellerNoResults =>
+      'ସେଥିପାଇଁ କୌଣସି ଭିଡିଓ ମିଳିଲା ନାହିଁ। ଅନ୍ୟ ଏକ ବିଷୟ କିମ୍ବା ଟପିକ୍ ଚେଷ୍ଟା କରନ୍ତୁ।';
+
+  @override
+  String get videoStorytellerOfficialSource => 'ଆଧିକାରିକ ଉତ୍ସ';
+
+  @override
+  String get videoStorytellerOpensExternally => 'ୟୁଟ୍ୟୁବରେ, ଆପ୍ ବାହାରେ ଖୋଲେ।';
+
+  @override
+  String get videoStorytellerCategoryTopRecommended =>
+      'ଆପଣଙ୍କ ପାଇଁ ଶ୍ରେଷ୍ଠ ସୁପାରିଶ';
+
+  @override
+  String get videoStorytellerCategoryStorytelling =>
+      'ଆପଣଙ୍କ ବିଷୟ ପାଇଁ କାହାଣୀ କଥନ';
+
+  @override
+  String get videoStorytellerCategoryPedagogy =>
+      'ଶିକ୍ଷାଦାନ ଶାସ୍ତ୍ର ଏବଂ ଶିକ୍ଷାଦାନ ପଦ୍ଧତି';
+
+  @override
+  String get videoStorytellerCategoryGovtUpdates => 'ସରକାରୀ ଅପଡେଟ୍';
+
+  @override
+  String get videoStorytellerCategoryCourses => 'ଶିକ୍ଷକ ତାଲିମ ପାଠ୍ୟକ୍ରମ';
+
+  @override
+  String get videoStorytellerSignIn =>
+      'ଏହି ଉପକରଣ ବ୍ୟବହାର କରିବା ପାଇଁ ଦୟାକରି ପୁନର୍ବାର ସାଇନ୍ ଇନ୍ କରନ୍ତୁ।';
+
+  @override
+  String get videoStorytellerTimeout =>
+      'ଏଥିରେ ଆଶା କରାଯାଇଥିବା ଠାରୁ ଅଧିକ ସମୟ ଲାଗୁଛି। ଦୟାକରି ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।';
+
+  @override
+  String get videoStorytellerBusy =>
+      'ସହାୟକ ବର୍ତ୍ତମାନ ବ୍ୟସ୍ତ ଅଛି। ଦୟାକରି କିଛି ସମୟ ପରେ ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।';
+
+  @override
+  String videoStorytellerBusyRetryAfter(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other:
+          'ସହାୟକ ବର୍ତ୍ତମାନ ବ୍ୟସ୍ତ ଅଛି। ଦୟାକରି ପ୍ରାୟ $seconds ସେକେଣ୍ଡରେ ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।',
+      one:
+          'ସହାୟକ ବର୍ତ୍ତମାନ ବ୍ୟସ୍ତ ଅଛି। ଦୟାକରି ପ୍ରାୟ 1 ସେକେଣ୍ଡରେ ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get videoStorytellerRephrase =>
+      'ଆମେ ସେଥିପାଇଁ ଭିଡିଓ ଖୋଜି ପାରିଲୁ ନାହିଁ। ଦୟାକରି ଅନ୍ୟ ଏକ ଟପିକ୍ ଚେଷ୍ଟା କରନ୍ତୁ।';
+
+  @override
+  String get videoStorytellerLimit =>
+      'ଆପଣ ନିକଟରେ ବହୁତ ଖୋଜିଛନ୍ତି। ଦୟାକରି କିଛି ସମୟ ପରେ ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।';
 }

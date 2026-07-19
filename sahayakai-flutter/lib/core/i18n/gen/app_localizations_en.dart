@@ -2392,4 +2392,99 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get visualAidTimeout =>
       'This is taking longer than expected. Please try again.';
+
+  @override
+  String get videoStorytellerTitle => 'Video Storyteller';
+
+  @override
+  String get videoStorytellerSubtitle => 'Find teaching videos';
+
+  @override
+  String get videoStorytellerEmpty =>
+      'Pick a subject or topic and tap Find videos.';
+
+  @override
+  String get videoStorytellerTopicLabel => 'Topic or chapter';
+
+  @override
+  String get videoStorytellerTopicHint => 'For example, The water cycle';
+
+  @override
+  String get videoStorytellerSubjectLabel => 'Subject';
+
+  @override
+  String get videoStorytellerSubjectAny => 'Any subject';
+
+  @override
+  String get videoStorytellerGradeLabel => 'Grade level';
+
+  @override
+  String get videoStorytellerGradeAny => 'Any grade';
+
+  @override
+  String get videoStorytellerOptional => 'Optional';
+
+  @override
+  String get videoStorytellerAction => 'Find videos';
+
+  @override
+  String get videoStorytellerNoResults =>
+      'No videos came back for that. Try a different subject or topic.';
+
+  @override
+  String get videoStorytellerOfficialSource => 'Official source';
+
+  @override
+  String get videoStorytellerOpensExternally =>
+      'Opens in YouTube, outside the app.';
+
+  @override
+  String get videoStorytellerCategoryTopRecommended =>
+      'Top recommended for you';
+
+  @override
+  String get videoStorytellerCategoryStorytelling =>
+      'Storytelling for your subjects';
+
+  @override
+  String get videoStorytellerCategoryPedagogy =>
+      'Pedagogy and teaching methods';
+
+  @override
+  String get videoStorytellerCategoryGovtUpdates => 'Government updates';
+
+  @override
+  String get videoStorytellerCategoryCourses => 'Teacher training courses';
+
+  @override
+  String get videoStorytellerSignIn => 'Please sign in again to use this tool.';
+
+  @override
+  String get videoStorytellerTimeout =>
+      'This is taking longer than expected. Please try again.';
+
+  @override
+  String get videoStorytellerBusy =>
+      'The assistant is busy right now. Please try again in a moment.';
+
+  @override
+  String videoStorytellerBusyRetryAfter(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other:
+          'The assistant is busy right now. Please try again in about $seconds seconds.',
+      one:
+          'The assistant is busy right now. Please try again in about 1 second.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get videoStorytellerRephrase =>
+      'We could not find videos for that. Please try a different topic.';
+
+  @override
+  String get videoStorytellerLimit =>
+      'You have searched a lot recently. Please try again in a little while.';
 }
