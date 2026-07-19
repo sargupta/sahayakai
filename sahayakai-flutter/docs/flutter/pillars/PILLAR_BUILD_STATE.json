@@ -387,9 +387,11 @@
       "pillar": "01",
       "title": "Assessment Scanner tool (multipart upload + ScoreRing)",
       "files": ["lib/features/assessment_scanner/presentation/assessment_scanner_screen.dart"],
-      "consumes": ["POST /api/ai/assessment-scanner (multipart)"],
+      "consumes": ["POST /api/ai/assessment-scanner (multi-page imageDataUri JSON, NOT multipart)"],
       "firebaseGated": "partial",
-      "status": "pending"
+      "status": "done",
+      "commit": "c6c36b42b",
+      "notes": "Multi-page answer-sheet grading (distinct from assess-assignment). Contract: POST /api/ai/assessment-scanner {assessmentId uuid, subject, gradeLevel, language, pageUrls[<=3 data-URIs], teacherAnswerKeyText?, educationBoard?} -> {scorePct (drives ScoreRing), questions[{questionText,studentAnswer,expectedAnswer,marksAwarded,marksMax,feedback,needsTeacherReview,...}], recommendedNextSteps[], studentRecommendations[], totalAwarded/MaxMarks, letterGrade}. Correct/partial/incorrect DERIVED (marksAwarded vs marksMax), icon+word+shape never colour-only. Multi-page capture via the existing imagePickerServiceProvider seam (no new dep): add/remove <=3 page thumbnails (Image.memory+errorBuilder), 'N of 3' counter, Grade gated >=1 page. Result = DocumentSheet: ScoreRing masthead + per-question AppCard(inset) cards (marks badge {awarded}/{max}, prose AiText) + next-steps + student sections. Typed 401/403/429/400/422/5xx. Distinct 'assessment-scanner' tool tile (Lucide file-check). 57 chrome strings x11 langs (real Indic, native-review-pending; server content as-is). DESIGN-REVIEW 5 AA blockers (muted onSurfaceVariant on non-white fills 3.86-4.49:1) all fixed -> onSurface 14.7-17.1:1, RESOLVING the muted-on-ground production-vs-AA case toward legibility (brand tokens unchanged; muted-on-white stays; app-wide sweep chip filed); + _PageTile hand-rolled -> AppCard(flat); widget-level contrast guard added. Firebase-gated (401) -> code+test only (1x1 PNG pages, faked picker). +57 tests -> 1280 green, analyze 0, token_guard PASS. No native/pubspec touched."
     },
     {
       "id": "U-OS1",
