@@ -240,7 +240,9 @@
         "BACKEND TASK: thin REST wrappers /api/community/* /api/messages/* /api/connections/* /api/notifications/*"
       ],
       "firebaseGated": "yes (THE GATE — nothing in Block C verifies live until Firebase is wired)",
-      "status": "pending"
+      "status": "done",
+      "commit": "cc861dbc1",
+      "notes": "The transport SEAM (no screens). Block C reality confirmed: writes = Next server actions (NO REST routes for send/connect/like/mark-read; only /api/community/persona-pulse + /api/teacher-activity + /api/feedback exist), realtime reads = Firestore onSnapshot, Flutter has ZERO firebase pkgs. DECISION: do NOT add firebase_core/cloud_firestore (breaks the APK without google-services.json) — build the abstraction + deferred impl instead. Built: DTOs+domain mirroring src/types (Conversation/Message/SharedResource, Group/GroupPost/CommunityPost/FeedItem/ChatMessage, TeacherSuggestion/PublicProfile, NotificationItem, Presence/Typing, DISTINCT FollowEdge vs MutualConnection per SPEC §E; tolerant fromWire; ConversationId=([a,b]..sort()).join('_') web-identical); transport interfaces InboxTransport/StaffroomTransport/NotificationsTransport/PresenceTransport (live-read Stream<TransportSnapshot<T>> + write Futures, each doc-mapped to its Firestore query/REST route); Deferred impls (no firebase import) emit awaitingFirebase(empty)->EmptyView + throw typed TransportUnavailable + have an error snapshot state->ErrorView; Riverpod providers expose the INTERFACE (overridable/swappable); firebase_init.dart no-op stub; HANDOFF.md documents the 3 handoffs + 2 backend inconsistencies found (MESSAGE notif type missing from union; follow-vs-mutual collision). Reusable fakes in test/support/fake_block_c_transports.dart. CODE-REVIEW PASS no blockers. Firebase-gated -> code+test only. +96 tests -> 1414 green, analyze 0, token_guard PASS, APK STILL BUILDS 176M (zero firebase). No pubspec/android touched. U-SI1..U-SI6 build UI against these interfaces (fake in tests; deferred impl renders signed-out/empty on-device); live at the Firebase handoff."
     },
     {
       "id": "U-SI1",
