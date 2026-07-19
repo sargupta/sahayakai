@@ -275,7 +275,9 @@
         "REST: ensureUserGroups, getMyGroups, getUnifiedFeed, getGroupPosts, likeGroupPost, getRecommendedTeachers, getLibraryResources"
       ],
       "firebaseGated": true,
-      "status": "pending"
+      "status": "done",
+      "commit": "ca5f4ecd6",
+      "notes": "Staffroom built against the U-SI0 StaffroomTransport interface (NO firebase; APK untouched). staffroom_providers (getUnifiedFeed/getMyGroups/discoverGroups/getGroupPosts family/getLikedItemIds/getRecommendedTeachers). staffroom_screen: unified feed (masthead + Your-groups strip + Discover + polymorphic FeedItem list [group posts/connection suggestions/resource+chat highlights] + People-you-may-know). Post cards: avatar (Image.network loading+error->initial), AiText body, group chip, timestamp, OPTIMISTIC like (nullable overrides; adopt likedItemIds on resolve; reconcile to LikeResult.newCount on success; rollback both + quiet hint on TransportUnavailable; count floored >=0). group_detail_screen: header + optimistic JoinButton (member bump + rollback) + member-gated posts (non-member Forbidden -> locked Members-only preview, not a crash). Snapshot/state mapping mirrors U-SI1. NETWORK IA: a Network HUB (AppSegmented [Staffroom | Messages], Messages reuses U-SI1 inbox) from a 'network' IconButton in the voice-home app bar — NOT a 5th nav tab (crowds 360dp; SPEC doesn't insist); app_shell/nav untouched; notifications=3rd surface deferred to U-SI5; Routes.network/staffroom/groupDetail. All AA verified (like/body 17.9, hearts 5.15/4.70, overline 5.69, chip 13.6, timestamp 4.70 on white); hero deck+member count proactively moved off 4.39 ground->full-ink. DESIGN-REVIEW also fixed a shared gap: AppSegmented UNSELECTED label muted 3.86 -> onSurface 14.7 (fixes every segmented control app-wide; thumb carries selection). 43 chrome strings x11 langs (real Indic, native-review-pending; server content as-is). FIREBASE-GATED: deferred transport renders sign-in/empty on-device; verified via fake, NOT live. +21 tests -> 1459 green, analyze 0, token_guard PASS. No pubspec/android/firebase."
     },
     {
       "id": "U-SI3",
