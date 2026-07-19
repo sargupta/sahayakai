@@ -2139,4 +2139,30 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get parentHotlineComingSoonBody =>
       'Placing and following the call arrives in the next update.';
+
+  @override
+  String parentHotlineCallingTitle(String name) {
+    return 'Calling $name\'s parent…';
+  }
+
+  @override
+  String get parentHotlineCallingRinging => 'Ringing…';
+
+  @override
+  String get parentHotlineCallingInProgress => 'Conversation in progress';
+
+  @override
+  String parentHotlineCallingExchanges(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count exchanges',
+      one: '1 exchange',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get parentHotlineCallingReassurance =>
+      'You can leave this screen — the summary will be waiting for you.';
 }

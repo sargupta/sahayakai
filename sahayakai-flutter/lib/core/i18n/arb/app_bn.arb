@@ -120,5 +120,10 @@
   "parentHotlinePremiumTitle": "অভিভাবককে কল করার জন্য একটি উন্নত প্ল্যান প্রয়োজন",
   "parentHotlinePremiumBody": "অভিভাবককে AI ভয়েস কল করা উন্নত প্ল্যানের অংশ। তবে আপনি এখনও বিনামূল্যে WhatsApp-এ পাঠানোর জন্য একটি বার্তা কপি করতে পারেন।",
   "parentHotlineComingSoonTitle": "কলের স্ক্রিন শীঘ্রই আসছে",
-  "parentHotlineComingSoonBody": "কল করা ও তার অগ্রগতি দেখার সুবিধা পরবর্তী আপডেটে আসবে।"
+  "parentHotlineComingSoonBody": "কল করা ও তার অগ্রগতি দেখার সুবিধা পরবর্তী আপডেটে আসবে।",
+  "parentHotlineCallingTitle": "{name}-এর অভিভাবককে কল করা হচ্ছে…",
+  "parentHotlineCallingRinging": "রিং হচ্ছে…",
+  "parentHotlineCallingInProgress": "কথোপকথন চলছে",
+  "parentHotlineCallingExchanges": "{count, plural, =1{১টি বিনিময়} other{{count}টি বিনিময়}}",
+  "parentHotlineCallingReassurance": "আপনি এই স্ক্রিন থেকে চলে যেতে পারেন — সারসংক্ষেপ আপনার জন্য অপেক্ষা করবে।"
 }

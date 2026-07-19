@@ -120,5 +120,10 @@
   "parentHotlinePremiumTitle": "ಪೋಷಕರ ಕರೆಗೆ ಸುಧಾರಿತ ಯೋಜನೆ ಅಗತ್ಯವಿದೆ",
   "parentHotlinePremiumBody": "ಪೋಷಕರಿಗೆ AI ಧ್ವನಿ ಕರೆ ಮಾಡುವುದು ಸುಧಾರಿತ ಯೋಜನೆಯ ಭಾಗವಾಗಿದೆ. ನೀವು ಇನ್ನೂ ಉಚಿತವಾಗಿ WhatsApp ನಲ್ಲಿ ಕಳುಹಿಸಲು ಸಂದೇಶವನ್ನು ನಕಲಿಸಬಹುದು.",
   "parentHotlineComingSoonTitle": "ಕರೆ ವೀಕ್ಷಣೆ ಶೀಘ್ರದಲ್ಲೇ ಬರಲಿದೆ",
-  "parentHotlineComingSoonBody": "ಕರೆ ಮಾಡುವುದು ಮತ್ತು ಅದನ್ನು ಅನುಸರಿಸುವುದು ಮುಂದಿನ ನವೀಕರಣದಲ್ಲಿ ಬರಲಿದೆ."
+  "parentHotlineComingSoonBody": "ಕರೆ ಮಾಡುವುದು ಮತ್ತು ಅದನ್ನು ಅನುಸರಿಸುವುದು ಮುಂದಿನ ನವೀಕರಣದಲ್ಲಿ ಬರಲಿದೆ.",
+  "parentHotlineCallingTitle": "{name} ಅವರ ಪೋಷಕರಿಗೆ ಕರೆ ಮಾಡಲಾಗುತ್ತಿದೆ…",
+  "parentHotlineCallingRinging": "ರಿಂಗ್ ಆಗುತ್ತಿದೆ…",
+  "parentHotlineCallingInProgress": "ಸಂಭಾಷಣೆ ನಡೆಯುತ್ತಿದೆ",
+  "parentHotlineCallingExchanges": "{count, plural, =1{1 ವಿನಿಮಯ} other{{count} ವಿನಿಮಯಗಳು}}",
+  "parentHotlineCallingReassurance": "ನೀವು ಈ ಪರದೆಯನ್ನು ಬಿಟ್ಟು ಹೋಗಬಹುದು — ಸಾರಾಂಶ ನಿಮಗಾಗಿ ಸಿದ್ಧವಾಗಿರುತ್ತದೆ."
 }

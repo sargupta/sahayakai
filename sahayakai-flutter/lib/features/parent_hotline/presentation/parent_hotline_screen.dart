@@ -26,13 +26,20 @@ import '../domain/hotline_student.dart';
 import '../domain/parent_outreach.dart';
 import 'hotline_roster_provider.dart';
 import 'parent_hotline_controller.dart';
+import 'widgets/calling_stage.dart';
 import 'widgets/evidence_panel.dart';
 import 'widgets/reason_card.dart';
 
-/// U-PH3 — the Parent Hotline screen (SPEC §B.0 / §B.1), stages 1–4:
-/// `pickStudent → reason → compose → review`, plus the decision bar. The
-/// `calling` and `summary` stages are U-PH4 / U-PH5 and render a placeholder
-/// here.
+/// The Parent Hotline screen (SPEC §B.0 / §B.1), stages 1–5:
+/// `pickStudent → reason → compose → review → calling`, plus the decision bar.
+/// The `calling` stage is U-PH4 ([CallingStage], the honest breathing waiting
+/// state); the `summary` stage is U-PH5 and still renders a placeholder here.
+///
+/// **Resumability (SPEC §B.5.5).** Leaving the `calling` stage must stop polling
+/// but never cancel the server-side call. The controller is `keepAlive`, so a
+/// screen dispose alone would NOT stop its poll loop; a [PopScope] therefore
+/// calls `leaveCalling()` on every pop so the standard back affordance is the
+/// leave path. Re-opening resumes via `latestForStudent` (`init`).
 ///
 /// One staged flow inside one [ToolScaffold] (max reading width 640, back). It
 /// watches the U-PH2 [ParentHotlineController] and renders the current `stage`;
@@ -138,13 +145,25 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
         !state.isPremiumGated &&
         state.stage == HotlineStage.review;
 
-    return _ToolFooterScaffold(
-      title: l10n.parentHotlineTitle,
-      footer:
-          showDecisionBar ? _stickyDecisionBar(context, state, l10n) : null,
-      child: KeyedSubtree(
-        key: ValueKey(revealKey),
-        child: staggeredItem(context, body),
+    // Any pop stops the poll loop (SPEC §B.5.5). `leaveCalling` cancels the
+    // poll Timer only — it never cancels the server-side call, and is a safe
+    // no-op on the stages that are not polling — so leaving `calling` (via the
+    // app-bar back or the system gesture) resumes cleanly on re-open, while
+    // review/summary pops cost nothing.
+    return PopScope(
+      key: const Key('parentHotlinePopScope'),
+      canPop: true,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) _controller.leaveCalling();
+      },
+      child: _ToolFooterScaffold(
+        title: l10n.parentHotlineTitle,
+        footer:
+            showDecisionBar ? _stickyDecisionBar(context, state, l10n) : null,
+        child: KeyedSubtree(
+          key: ValueKey(revealKey),
+          child: staggeredItem(context, body),
+        ),
       ),
     );
   }
@@ -164,8 +183,14 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
       case HotlineStage.review:
         return _reviewStage(context, state, l10n);
       case HotlineStage.calling:
+        // U-PH4 — the honest breathing waiting state, driven by the polled
+        // callResult (studentName identifies the parent; no separate field).
+        return CallingStage(
+          parentName: state.studentName ?? '',
+          callResult: state.callResult,
+        );
       case HotlineStage.summary:
-        // U-PH4 (calling) / U-PH5 (summary) — a placeholder for this unit.
+        // U-PH5 (summary) — a placeholder until the DocumentSheet payoff lands.
         return EmptyView(
           icon: LucideIcons.phoneCall,
           title: l10n.parentHotlineComingSoonTitle,

@@ -120,5 +120,10 @@
   "parentHotlinePremiumTitle": "ਮਾਪਿਆਂ ਨੂੰ ਕਾਲ ਲਈ ਉੱਨਤ ਪਲਾਨ ਦੀ ਲੋੜ ਹੈ",
   "parentHotlinePremiumBody": "ਮਾਪਿਆਂ ਨੂੰ AI ਆਵਾਜ਼ ਕਾਲ ਕਰਨਾ ਉੱਨਤ ਪਲਾਨ ਦਾ ਹਿੱਸਾ ਹੈ। ਤੁਸੀਂ ਫਿਰ ਵੀ ਮੁਫ਼ਤ ਵਿੱਚ ਇੱਕ ਸੁਨੇਹਾ ਕਾਪੀ ਕਰਕੇ WhatsApp ਉੱਤੇ ਭੇਜ ਸਕਦੇ ਹੋ।",
   "parentHotlineComingSoonTitle": "ਕਾਲ ਸਕ੍ਰੀਨ ਜਲਦੀ ਆ ਰਹੀ ਹੈ",
-  "parentHotlineComingSoonBody": "ਕਾਲ ਕਰਨ ਅਤੇ ਉਸ ਉੱਤੇ ਨਜ਼ਰ ਰੱਖਣ ਦੀ ਸਹੂਲਤ ਅਗਲੇ ਅੱਪਡੇਟ ਵਿੱਚ ਆਵੇਗੀ।"
+  "parentHotlineComingSoonBody": "ਕਾਲ ਕਰਨ ਅਤੇ ਉਸ ਉੱਤੇ ਨਜ਼ਰ ਰੱਖਣ ਦੀ ਸਹੂਲਤ ਅਗਲੇ ਅੱਪਡੇਟ ਵਿੱਚ ਆਵੇਗੀ।",
+  "parentHotlineCallingTitle": "{name} ਦੇ ਮਾਪਿਆਂ ਨੂੰ ਕਾਲ ਕੀਤੀ ਜਾ ਰਹੀ ਹੈ…",
+  "parentHotlineCallingRinging": "ਘੰਟੀ ਵੱਜ ਰਹੀ ਹੈ…",
+  "parentHotlineCallingInProgress": "ਗੱਲਬਾਤ ਚੱਲ ਰਹੀ ਹੈ",
+  "parentHotlineCallingExchanges": "{count, plural, =1{1 ਸੰਵਾਦ} other{{count} ਸੰਵਾਦ}}",
+  "parentHotlineCallingReassurance": "ਤੁਸੀਂ ਇਹ ਸਕ੍ਰੀਨ ਛੱਡ ਸਕਦੇ ਹੋ — ਸਾਰ ਤੁਹਾਡੇ ਲਈ ਤਿਆਰ ਰਹੇਗਾ।"
 }

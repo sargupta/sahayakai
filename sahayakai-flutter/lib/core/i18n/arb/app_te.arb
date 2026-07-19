@@ -120,5 +120,10 @@
   "parentHotlinePremiumTitle": "తల్లిదండ్రులకు కాల్ కోసం అధునాతన ప్లాన్ అవసరం",
   "parentHotlinePremiumBody": "తల్లిదండ్రులకు AI వాయిస్ కాల్ చేయడం అధునాతన ప్లాన్‌లో భాగం. అయినా, ఉచితంగా WhatsAppలో పంపడానికి మీరు సందేశాన్ని కాపీ చేయవచ్చు.",
   "parentHotlineComingSoonTitle": "కాల్ వీక్షణ త్వరలో వస్తోంది",
-  "parentHotlineComingSoonBody": "కాల్ చేయడం, దాన్ని అనుసరించడం తదుపరి అప్‌డేట్‌లో వస్తుంది."
+  "parentHotlineComingSoonBody": "కాల్ చేయడం, దాన్ని అనుసరించడం తదుపరి అప్‌డేట్‌లో వస్తుంది.",
+  "parentHotlineCallingTitle": "{name} తల్లిదండ్రులకు కాల్ చేస్తున్నాం…",
+  "parentHotlineCallingRinging": "రింగ్ అవుతోంది…",
+  "parentHotlineCallingInProgress": "సంభాషణ జరుగుతోంది",
+  "parentHotlineCallingExchanges": "{count, plural, =1{1 సంభాషణ} other{{count} సంభాషణలు}}",
+  "parentHotlineCallingReassurance": "మీరు ఈ స్క్రీన్‌ను వదిలి వెళ్లవచ్చు — సారాంశం మీ కోసం సిద్ధంగా ఉంటుంది."
 }

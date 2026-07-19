@@ -120,5 +120,10 @@
   "parentHotlinePremiumTitle": "વાલી કૉલ લાઇન માટે ઉન્નત પ્લાન જરૂરી છે",
   "parentHotlinePremiumBody": "વાલીને AI અવાજનો કૉલ કરવો એ ઉન્નત પ્લાનનો ભાગ છે. તમે હજી પણ મફતમાં WhatsApp પર મોકલવા માટે સંદેશ કૉપી કરી શકો છો.",
   "parentHotlineComingSoonTitle": "કૉલ સ્ક્રીન ટૂંક સમયમાં આવી રહી છે",
-  "parentHotlineComingSoonBody": "કૉલ કરવાની અને તેને અનુસરવાની સુવિધા પછીના અપડેટમાં આવશે."
+  "parentHotlineComingSoonBody": "કૉલ કરવાની અને તેને અનુસરવાની સુવિધા પછીના અપડેટમાં આવશે.",
+  "parentHotlineCallingTitle": "{name} નાં વાલીને કૉલ કરી રહ્યાં છીએ…",
+  "parentHotlineCallingRinging": "રિંગ વાગી રહી છે…",
+  "parentHotlineCallingInProgress": "વાતચીત ચાલી રહી છે",
+  "parentHotlineCallingExchanges": "{count, plural, =1{1 સંવાદ} other{{count} સંવાદ}}",
+  "parentHotlineCallingReassurance": "તમે આ સ્ક્રીન છોડી શકો છો — સારાંશ તમારા માટે તૈયાર રહેશે."
 }

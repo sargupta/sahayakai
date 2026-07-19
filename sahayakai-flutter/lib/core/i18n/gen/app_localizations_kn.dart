@@ -2145,4 +2145,30 @@ class AppLocalizationsKn extends AppLocalizations {
   @override
   String get parentHotlineComingSoonBody =>
       'ಕರೆ ಮಾಡುವುದು ಮತ್ತು ಅದನ್ನು ಅನುಸರಿಸುವುದು ಮುಂದಿನ ನವೀಕರಣದಲ್ಲಿ ಬರಲಿದೆ.';
+
+  @override
+  String parentHotlineCallingTitle(String name) {
+    return '$name ಅವರ ಪೋಷಕರಿಗೆ ಕರೆ ಮಾಡಲಾಗುತ್ತಿದೆ…';
+  }
+
+  @override
+  String get parentHotlineCallingRinging => 'ರಿಂಗ್ ಆಗುತ್ತಿದೆ…';
+
+  @override
+  String get parentHotlineCallingInProgress => 'ಸಂಭಾಷಣೆ ನಡೆಯುತ್ತಿದೆ';
+
+  @override
+  String parentHotlineCallingExchanges(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ವಿನಿಮಯಗಳು',
+      one: '1 ವಿನಿಮಯ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get parentHotlineCallingReassurance =>
+      'ನೀವು ಈ ಪರದೆಯನ್ನು ಬಿಟ್ಟು ಹೋಗಬಹುದು — ಸಾರಾಂಶ ನಿಮಗಾಗಿ ಸಿದ್ಧವಾಗಿರುತ್ತದೆ.';
 }

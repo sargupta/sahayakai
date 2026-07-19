@@ -2141,4 +2141,30 @@ class AppLocalizationsOr extends AppLocalizations {
   @override
   String get parentHotlineComingSoonBody =>
       'କଲ୍ କରିବା ଏବଂ ତାହାର ପ୍ରଗତି ଦେଖିବା ପରବର୍ତ୍ତୀ ଅପଡେଟ୍‌ରେ ଆସିବ।';
+
+  @override
+  String parentHotlineCallingTitle(String name) {
+    return '$nameଙ୍କ ଅଭିଭାବକଙ୍କୁ କଲ୍ କରାଯାଉଛି…';
+  }
+
+  @override
+  String get parentHotlineCallingRinging => 'ରିଙ୍ଗ୍ ହେଉଛି…';
+
+  @override
+  String get parentHotlineCallingInProgress => 'କଥାବାର୍ତ୍ତା ଚାଲିଛି';
+
+  @override
+  String parentHotlineCallingExchanges(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ବିନିମୟ',
+      one: '1 ବିନିମୟ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get parentHotlineCallingReassurance =>
+      'ଆପଣ ଏହି ସ୍କ୍ରିନ୍ ଛାଡ଼ି ପାରିବେ — ସାରାଂଶ ଆପଣଙ୍କ ପାଇଁ ପ୍ରସ୍ତୁତ ରହିବ।';
 }

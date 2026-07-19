@@ -2659,5 +2659,35 @@
   "parentHotlineComingSoonBody": "Placing and following the call arrives in the next update.",
   "@parentHotlineComingSoonBody": {
     "description": "Placeholder body for the calling/summary stages."
+  },
+  "parentHotlineCallingTitle": "Calling {name}'s parent…",
+  "@parentHotlineCallingTitle": {
+    "description": "Display headline on the calling (waiting) stage while the AI voice call runs. {name} is the student whose parent is being called.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "parentHotlineCallingRinging": "Ringing…",
+  "@parentHotlineCallingRinging": {
+    "description": "Calling-stage status line while the call is placed but the parent has not started talking yet (callStatus initiated, no turns)."
+  },
+  "parentHotlineCallingInProgress": "Conversation in progress",
+  "@parentHotlineCallingInProgress": {
+    "description": "Calling-stage status line once the parent and the AI agent have started exchanging turns."
+  },
+  "parentHotlineCallingExchanges": "{count, plural, =1{1 exchange} other{{count} exchanges}}",
+  "@parentHotlineCallingExchanges": {
+    "description": "Live tabular pill on the calling stage counting the back-and-forth turns so far. Shown only once more than one exchange has happened.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "parentHotlineCallingReassurance": "You can leave this screen — the summary will be waiting for you.",
+  "@parentHotlineCallingReassurance": {
+    "description": "Quiet reassurance on the calling stage: leaving does not cancel the call; the summary is ready on return (backs the resume path)."
   }
 }

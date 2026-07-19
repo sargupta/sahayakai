@@ -120,5 +120,10 @@
   "parentHotlinePremiumTitle": "பெற்றோர் அழைப்புக்கு மேம்பட்ட திட்டம் தேவை",
   "parentHotlinePremiumBody": "பெற்றோருக்கு AI குரல் அழைப்பு செய்வது மேம்பட்ட திட்டத்தின் ஒரு பகுதி. இருப்பினும், WhatsApp-இல் அனுப்ப ஒரு செய்தியை இலவசமாக நகலெடுக்கலாம்.",
   "parentHotlineComingSoonTitle": "அழைப்புக் காட்சி விரைவில் வருகிறது",
-  "parentHotlineComingSoonBody": "அழைப்பைச் செய்து அதைப் பின்தொடரும் வசதி அடுத்த புதுப்பிப்பில் வரும்."
+  "parentHotlineComingSoonBody": "அழைப்பைச் செய்து அதைப் பின்தொடரும் வசதி அடுத்த புதுப்பிப்பில் வரும்.",
+  "parentHotlineCallingTitle": "{name} இன் பெற்றோரை அழைக்கிறோம்…",
+  "parentHotlineCallingRinging": "மணி ஒலிக்கிறது…",
+  "parentHotlineCallingInProgress": "உரையாடல் நடந்து கொண்டிருக்கிறது",
+  "parentHotlineCallingExchanges": "{count, plural, =1{1 பரிமாற்றம்} other{{count} பரிமாற்றங்கள்}}",
+  "parentHotlineCallingReassurance": "இந்தத் திரையை நீங்கள் விட்டு வெளியேறலாம் — சுருக்கம் உங்களுக்காகக் காத்திருக்கும்."
 }

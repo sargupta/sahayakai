@@ -120,5 +120,10 @@
   "parentHotlinePremiumTitle": "पालकांना कॉलसाठी प्रगत योजना आवश्यक आहे",
   "parentHotlinePremiumBody": "पालकांना AI आवाज कॉल करणे प्रगत योजनेचा भाग आहे. तरीही तुम्ही WhatsApp वर पाठवण्यासाठी संदेश मोफत कॉपी करू शकता.",
   "parentHotlineComingSoonTitle": "कॉल स्क्रीन लवकरच येत आहे",
-  "parentHotlineComingSoonBody": "कॉल करणे आणि त्याचा मागोवा घेणे पुढील अपडेटमध्ये येईल."
+  "parentHotlineComingSoonBody": "कॉल करणे आणि त्याचा मागोवा घेणे पुढील अपडेटमध्ये येईल.",
+  "parentHotlineCallingTitle": "{name} यांच्या पालकांना कॉल करत आहोत…",
+  "parentHotlineCallingRinging": "घंटी वाजत आहे…",
+  "parentHotlineCallingInProgress": "संवाद सुरू आहे",
+  "parentHotlineCallingExchanges": "{count, plural, =1{1 संवाद} other{{count} संवाद}}",
+  "parentHotlineCallingReassurance": "तुम्ही ही स्क्रीन सोडू शकता — सारांश तुमच्यासाठी तयार राहील."
 }

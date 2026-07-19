@@ -3853,6 +3853,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Placing and following the call arrives in the next update.'**
   String get parentHotlineComingSoonBody;
+
+  /// Display headline on the calling (waiting) stage while the AI voice call runs. {name} is the student whose parent is being called.
+  ///
+  /// In en, this message translates to:
+  /// **'Calling {name}\'s parent…'**
+  String parentHotlineCallingTitle(String name);
+
+  /// Calling-stage status line while the call is placed but the parent has not started talking yet (callStatus initiated, no turns).
+  ///
+  /// In en, this message translates to:
+  /// **'Ringing…'**
+  String get parentHotlineCallingRinging;
+
+  /// Calling-stage status line once the parent and the AI agent have started exchanging turns.
+  ///
+  /// In en, this message translates to:
+  /// **'Conversation in progress'**
+  String get parentHotlineCallingInProgress;
+
+  /// Live tabular pill on the calling stage counting the back-and-forth turns so far. Shown only once more than one exchange has happened.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 exchange} other{{count} exchanges}}'**
+  String parentHotlineCallingExchanges(int count);
+
+  /// Quiet reassurance on the calling stage: leaving does not cancel the call; the summary is ready on return (backs the resume path).
+  ///
+  /// In en, this message translates to:
+  /// **'You can leave this screen — the summary will be waiting for you.'**
+  String get parentHotlineCallingReassurance;
 }
 
 class _AppLocalizationsDelegate

@@ -2146,4 +2146,30 @@ class AppLocalizationsMl extends AppLocalizations {
   @override
   String get parentHotlineComingSoonBody =>
       'വിളി നടത്തുന്നതും അത് പിന്തുടരുന്നതും അടുത്ത അപ്ഡേറ്റിൽ വരും.';
+
+  @override
+  String parentHotlineCallingTitle(String name) {
+    return '$name ന്റെ രക്ഷിതാവിനെ വിളിക്കുന്നു…';
+  }
+
+  @override
+  String get parentHotlineCallingRinging => 'റിംഗ് ചെയ്യുന്നു…';
+
+  @override
+  String get parentHotlineCallingInProgress => 'സംഭാഷണം നടക്കുന്നു';
+
+  @override
+  String parentHotlineCallingExchanges(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count വിനിമയങ്ങൾ',
+      one: '1 വിനിമയം',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get parentHotlineCallingReassurance =>
+      'നിങ്ങൾക്ക് ഈ സ്ക്രീൻ വിട്ടുപോകാം — സംഗ്രഹം നിങ്ങൾക്കായി തയ്യാറായിരിക്കും.';
 }

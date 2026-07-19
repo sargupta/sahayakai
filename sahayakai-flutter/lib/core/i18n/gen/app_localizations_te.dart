@@ -2143,4 +2143,30 @@ class AppLocalizationsTe extends AppLocalizations {
   @override
   String get parentHotlineComingSoonBody =>
       'కాల్ చేయడం, దాన్ని అనుసరించడం తదుపరి అప్‌డేట్‌లో వస్తుంది.';
+
+  @override
+  String parentHotlineCallingTitle(String name) {
+    return '$name తల్లిదండ్రులకు కాల్ చేస్తున్నాం…';
+  }
+
+  @override
+  String get parentHotlineCallingRinging => 'రింగ్ అవుతోంది…';
+
+  @override
+  String get parentHotlineCallingInProgress => 'సంభాషణ జరుగుతోంది';
+
+  @override
+  String parentHotlineCallingExchanges(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count సంభాషణలు',
+      one: '1 సంభాషణ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get parentHotlineCallingReassurance =>
+      'మీరు ఈ స్క్రీన్‌ను వదిలి వెళ్లవచ్చు — సారాంశం మీ కోసం సిద్ధంగా ఉంటుంది.';
 }

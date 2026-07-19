@@ -120,5 +120,10 @@
   "parentHotlinePremiumTitle": "ଅଭିଭାବକ କଲ୍ ଲାଇନ୍ ପାଇଁ ଏକ ଉନ୍ନତ ପ୍ଲାନ୍ ଆବଶ୍ୟକ",
   "parentHotlinePremiumBody": "ଅଭିଭାବକଙ୍କୁ AI ସ୍ୱର କଲ୍ କରିବା ଉନ୍ନତ ପ୍ଲାନ୍‌ର ଅଂଶ। ଆପଣ ତଥାପି ମାଗଣାରେ WhatsApp ରେ ପଠାଇବାକୁ ଏକ ବାର୍ତ୍ତା କପି କରିପାରିବେ।",
   "parentHotlineComingSoonTitle": "କଲ୍ ପୃଷ୍ଠା ଶୀଘ୍ର ଆସୁଛି",
-  "parentHotlineComingSoonBody": "କଲ୍ କରିବା ଏବଂ ତାହାର ପ୍ରଗତି ଦେଖିବା ପରବର୍ତ୍ତୀ ଅପଡେଟ୍‌ରେ ଆସିବ।"
+  "parentHotlineComingSoonBody": "କଲ୍ କରିବା ଏବଂ ତାହାର ପ୍ରଗତି ଦେଖିବା ପରବର୍ତ୍ତୀ ଅପଡେଟ୍‌ରେ ଆସିବ।",
+  "parentHotlineCallingTitle": "{name}ଙ୍କ ଅଭିଭାବକଙ୍କୁ କଲ୍ କରାଯାଉଛି…",
+  "parentHotlineCallingRinging": "ରିଙ୍ଗ୍ ହେଉଛି…",
+  "parentHotlineCallingInProgress": "କଥାବାର୍ତ୍ତା ଚାଲିଛି",
+  "parentHotlineCallingExchanges": "{count, plural, =1{1 ବିନିମୟ} other{{count} ବିନିମୟ}}",
+  "parentHotlineCallingReassurance": "ଆପଣ ଏହି ସ୍କ୍ରିନ୍ ଛାଡ଼ି ପାରିବେ — ସାରାଂଶ ଆପଣଙ୍କ ପାଇଁ ପ୍ରସ୍ତୁତ ରହିବ।"
 }

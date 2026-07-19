@@ -120,5 +120,10 @@
   "parentHotlinePremiumTitle": "രക്ഷിതാവിനെ വിളിക്കൽ സൗകര്യത്തിന് വിപുലമായ പ്ലാൻ ആവശ്യമാണ്",
   "parentHotlinePremiumBody": "രക്ഷിതാവിന് ഒരു AI ശബ്ദ വിളി നടത്തുന്നത് വിപുലമായ പ്ലാനിന്റെ ഭാഗമാണ്. എന്നിരുന്നാലും, WhatsApp-ൽ അയയ്ക്കാൻ നിങ്ങൾക്ക് സൗജന്യമായി ഒരു സന്ദേശം പകർത്താം.",
   "parentHotlineComingSoonTitle": "വിളിയുടെ കാഴ്ച ഉടൻ എത്തും",
-  "parentHotlineComingSoonBody": "വിളി നടത്തുന്നതും അത് പിന്തുടരുന്നതും അടുത്ത അപ്ഡേറ്റിൽ വരും."
+  "parentHotlineComingSoonBody": "വിളി നടത്തുന്നതും അത് പിന്തുടരുന്നതും അടുത്ത അപ്ഡേറ്റിൽ വരും.",
+  "parentHotlineCallingTitle": "{name} ന്റെ രക്ഷിതാവിനെ വിളിക്കുന്നു…",
+  "parentHotlineCallingRinging": "റിംഗ് ചെയ്യുന്നു…",
+  "parentHotlineCallingInProgress": "സംഭാഷണം നടക്കുന്നു",
+  "parentHotlineCallingExchanges": "{count, plural, =1{1 വിനിമയം} other{{count} വിനിമയങ്ങൾ}}",
+  "parentHotlineCallingReassurance": "നിങ്ങൾക്ക് ഈ സ്ക്രീൻ വിട്ടുപോകാം — സംഗ്രഹം നിങ്ങൾക്കായി തയ്യാറായിരിക്കും."
 }

@@ -340,12 +340,52 @@ void main() {
       expect(find.text('Parent Hotline needs an advanced plan'), findsOneWidget);
     });
 
-    testWidgets('the calling stage renders the U-PH4/5 placeholder',
+    testWidgets('the calling stage renders the U-PH4 breathing waiting state',
         (tester) async {
       await _pump(tester, overrides: _fixed(
-        const ParentHotlineState(stage: HotlineStage.calling),
+        const ParentHotlineState(
+          stage: HotlineStage.calling,
+          studentName: 'Asha Rao',
+          callResult: CallResult(callStatus: CallStatus.initiated),
+        ),
+      ));
+      // The real waiting state, not the placeholder.
+      expect(find.text("Calling Asha Rao's parent…"), findsOneWidget);
+      expect(find.text('Ringing…'), findsOneWidget);
+      expect(find.text('The call view is on its way'), findsNothing);
+    });
+
+    testWidgets('the summary stage still renders the U-PH5 placeholder',
+        (tester) async {
+      await _pump(tester, overrides: _fixed(
+        const ParentHotlineState(stage: HotlineStage.summary),
       ));
       expect(find.text('The call view is on its way'), findsOneWidget);
+    });
+
+    testWidgets(
+        'leaving the calling screen (back/pop) stops polling via leaveCalling '
+        '— the call itself is not cancelled (SPEC §B.5.5)', (tester) async {
+      final fake = _FakeHotlineController(
+        const ParentHotlineState(
+          stage: HotlineStage.calling,
+          studentName: 'Asha Rao',
+          callResult: CallResult(callStatus: CallStatus.initiated),
+        ),
+      );
+      await _pump(tester, overrides: [
+        parentHotlineControllerProvider.overrideWith(() => fake),
+      ]);
+      expect(fake.leaveCallingCount, 0);
+
+      // Simulate the back affordance popping the screen. leaveCalling stops the
+      // poll loop only; it never cancels the server-side call (that guarantee is
+      // pinned in parent_hotline_controller_test.dart).
+      final popScope = tester.widget(
+        find.byKey(const Key('parentHotlinePopScope')),
+      ) as PopScope;
+      popScope.onPopInvokedWithResult?.call(true, null);
+      expect(fake.leaveCallingCount, 1);
     });
   });
 
@@ -524,9 +564,13 @@ class _FakeHotlineController extends ParentHotlineController {
 
   final List<String> studentTaps = [];
   final List<OutreachReason> reasonTaps = [];
+  int leaveCallingCount = 0;
 
   @override
   ParentHotlineState build() => _state;
+
+  @override
+  void leaveCalling() => leaveCallingCount++;
 
   @override
   Future<void> init({

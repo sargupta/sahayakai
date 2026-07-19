@@ -2145,4 +2145,31 @@ class AppLocalizationsTa extends AppLocalizations {
   @override
   String get parentHotlineComingSoonBody =>
       'அழைப்பைச் செய்து அதைப் பின்தொடரும் வசதி அடுத்த புதுப்பிப்பில் வரும்.';
+
+  @override
+  String parentHotlineCallingTitle(String name) {
+    return '$name இன் பெற்றோரை அழைக்கிறோம்…';
+  }
+
+  @override
+  String get parentHotlineCallingRinging => 'மணி ஒலிக்கிறது…';
+
+  @override
+  String get parentHotlineCallingInProgress =>
+      'உரையாடல் நடந்து கொண்டிருக்கிறது';
+
+  @override
+  String parentHotlineCallingExchanges(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count பரிமாற்றங்கள்',
+      one: '1 பரிமாற்றம்',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get parentHotlineCallingReassurance =>
+      'இந்தத் திரையை நீங்கள் விட்டு வெளியேறலாம் — சுருக்கம் உங்களுக்காகக் காத்திருக்கும்.';
 }
