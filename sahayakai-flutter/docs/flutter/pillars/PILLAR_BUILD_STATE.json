@@ -220,7 +220,9 @@
       "files": ["lib/features/parent_hotline/presentation/widgets/summary_sheet.dart"],
       "consumes": ["U-PH1", "U-PH2"],
       "firebaseGated": false,
-      "status": "pending"
+      "status": "done",
+      "commit": "5ba92afd4",
+      "notes": "Stage 6, the pillar HERO. Full DocumentSheet + Ink-settle reveal (reuses inkSettle; reduce-motion -> final frame). Masthead: saffron eyebrow 'PARENT CALL · {REASON}', displaySmall '{student}'s parent', saffron rule, meta Wrap of AppBadges (sentiment toned per ParentSentiment grateful/cooperative->green concerned/confused->saffron upset->error-tint-full-ink indifferent->muted, + duration + exchanges). Sections WHAT THE PARENT SAID / CONCERNS (hide-empty) / COMMITMENTS (check) / YOUR ACTION ITEMS (the one primaryContainer block, arrow-right) / GUIDANCE (hide-empty) / FOLLOW-UP (pine inset, followUpNeeded && suggestion). Collapsed transcript ExpansionTile (bot/user-circle glyphs; agent muted, parent full-ink; on white surface for AA). DocumentSheet footer Done + ghost 'Call again later' (dedup countdown disables it). ALL terminal states via summaryOutcome: manual / callFailed(busy|no_answer|failed phone-off + Try again + WhatsApp) / endedNoConversation / summaryUnavailable(transcript + notice). WCAG AA verified on EVERY toned element both themes (badges 6.9-15.2:1); adversarial DESIGN-REVIEW caught the transcript agent line at 4.49:1 on the inset fill -> moved to white surface = 4.70:1 with a regression test pinning it (asserts AppCard.variant==flat + ratio>=4.5). All prose via AiText; server-localized summary CONTENT rendered as-is (never re-translated); 33 UI-chrome strings translated into all 10 Indic langs (never Hindi-only; interim-LLM, native review pending). Firebase-gated (real summary needs a live call+AI flow, 401) -> verified by widget tests from CallSummary/CallResult fixtures across every outcome, NOT live. +38 tests -> 1076 green, analyze 0, token_guard PASS. END-OF-BLOCK-B APK build SUCCESS (176MB). BLOCK B (parent hotline pillar 03) COMPLETE: U-PH1..U-PH5 all done."
     },
     {
       "id": "U-SI0",
