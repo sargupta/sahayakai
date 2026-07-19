@@ -2640,4 +2640,229 @@ class AppLocalizationsOr extends AppLocalizations {
   @override
   String get virtualFieldTripLimit =>
       'ଆପଣ ନିକଟରେ ବହୁତ ଯାତ୍ରା ଯୋଜନା କରିଛନ୍ତି। ଦୟାକରି କିଛି ସମୟ ପରେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
+
+  @override
+  String get assessmentScannerTitle => 'ମୂଲ୍ୟାୟନ ସ୍କାନର';
+
+  @override
+  String get assessmentScannerSubtitle =>
+      'ଛାତ୍ରର ଉତ୍ତର ଖାତାକୁ ପୃଷ୍ଠା ପ୍ରତି ପୃଷ୍ଠା ମୂଲ୍ୟାୟନ କରନ୍ତୁ';
+
+  @override
+  String get assessmentScannerEmpty =>
+      'ଉତ୍ତର ଖାତାର 3ଟି ପର୍ଯ୍ୟନ୍ତ ଫଟୋ ଯୋଡ଼ନ୍ତୁ, ତା\'ପରେ ମୂଲ୍ୟାୟନ ଦବାନ୍ତୁ।';
+
+  @override
+  String get assessmentScannerSubmit => 'ଉତ୍ତର ଖାତା ମୂଲ୍ୟାୟନ କରନ୍ତୁ';
+
+  @override
+  String get assessmentScannerResultTitle => 'ମୂଲ୍ୟାୟନ';
+
+  @override
+  String get assessmentScannerSectionSheet => 'ଉତ୍ତର ଖାତା';
+
+  @override
+  String get assessmentScannerPagesLabel => 'ଉତ୍ତର ଖାତାର ପୃଷ୍ଠା';
+
+  @override
+  String get assessmentScannerPagesHint =>
+      '3ଟି ପର୍ଯ୍ୟନ୍ତ ସ୍ପଷ୍ଟ ଫଟୋ ଯୋଡ଼ନ୍ତୁ, ପ୍ରତି ପୃଷ୍ଠାର ଗୋଟିଏ।';
+
+  @override
+  String get assessmentScannerPagesEmpty => 'ପ୍ରଥମ ପୃଷ୍ଠାର ଗୋଟିଏ ଫଟୋ ଯୋଡ଼ନ୍ତୁ।';
+
+  @override
+  String assessmentScannerPageLabel(int number) {
+    return 'ପୃଷ୍ଠା $number';
+  }
+
+  @override
+  String assessmentScannerRemovePage(int number) {
+    return 'ପୃଷ୍ଠା $number ହଟାନ୍ତୁ';
+  }
+
+  @override
+  String assessmentScannerPageCounter(int count, int max) {
+    return '$maxରୁ $countଟି ପୃଷ୍ଠା';
+  }
+
+  @override
+  String assessmentScannerPagesFull(int max) {
+    return 'ଆପଣ $maxଟି ପର୍ଯ୍ୟନ୍ତ ପୃଷ୍ଠା ଯୋଡ଼ିପାରିବେ।';
+  }
+
+  @override
+  String get assessmentScannerTakePhoto => 'ଫଟୋ ଉଠାନ୍ତୁ';
+
+  @override
+  String get assessmentScannerChooseGallery => 'ଗ୍ୟାଲେରୀରୁ ବାଛନ୍ତୁ';
+
+  @override
+  String get assessmentScannerSubjectLabel => 'ବିଷୟ';
+
+  @override
+  String get assessmentScannerSubjectHint => 'ମୂଲ୍ୟାୟନ ବିଷୟ ଅନୁସାରେ ହୁଏ।';
+
+  @override
+  String get assessmentScannerSubjectPlaceholder => 'ବିଷୟ ବାଛନ୍ତୁ';
+
+  @override
+  String get assessmentScannerSubjectError => 'ଦୟାକରି ବିଷୟ ବାଛନ୍ତୁ।';
+
+  @override
+  String get assessmentScannerGradeLabel => 'ଶ୍ରେଣୀ ସ୍ତର';
+
+  @override
+  String get assessmentScannerGradePlaceholder => 'ଶ୍ରେଣୀ ବାଛନ୍ତୁ';
+
+  @override
+  String get assessmentScannerGradeError => 'ଦୟାକରି ଶ୍ରେଣୀ ବାଛନ୍ତୁ।';
+
+  @override
+  String get assessmentScannerOptional => 'ଐଚ୍ଛିକ';
+
+  @override
+  String get assessmentScannerAnswerKeyLabel => 'ଉତ୍ତର କି';
+
+  @override
+  String get assessmentScannerAnswerKeyHint =>
+      'ସଠିକ୍ ଉତ୍ତର ପେଷ୍ଟ କରନ୍ତୁ, ସେଗୁଡ଼ିକ ଅନୁସାରେ ମୂଲ୍ୟାୟନ ହେବ।';
+
+  @override
+  String get assessmentScannerAnswerKeyPlaceholder =>
+      'ଉତ୍ତର କି ଟାଇପ୍ କରନ୍ତୁ କିମ୍ବା ପେଷ୍ଟ କରନ୍ତୁ';
+
+  @override
+  String get assessmentScannerPrivacyNote =>
+      'ମୂଲ୍ୟାୟନ ପାଇଁ ଛାତ୍ରର ନାମ କେବେ ପଠାଯାଏ ନାହିଁ।';
+
+  @override
+  String assessmentScannerScoreCaption(String awarded, String max) {
+    return '$maxରୁ $awarded ମାର୍କ';
+  }
+
+  @override
+  String get assessmentScannerScoreOutOf => '100ରୁ';
+
+  @override
+  String assessmentScannerMarks(String awarded, String max) {
+    return '$awarded/$max';
+  }
+
+  @override
+  String assessmentScannerPagesMeta(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ପୃଷ୍ଠା',
+      one: '1 ପୃଷ୍ଠା',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String assessmentScannerReviewBadge(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ଯାଞ୍ଚ କରନ୍ତୁ',
+      one: '1 ଯାଞ୍ଚ କରନ୍ତୁ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get assessmentScannerQuestionsSection => 'ପ୍ରଶ୍ନ ପ୍ରତି ପ୍ରଶ୍ନ';
+
+  @override
+  String get assessmentScannerStudentAnswerLabel => 'ଛାତ୍ର ଲେଖିଛନ୍ତି';
+
+  @override
+  String get assessmentScannerFeedbackLabel => 'ମତାମତ';
+
+  @override
+  String get assessmentScannerExpectedLabel => 'ଆଶାୟିତ ଉତ୍ତର';
+
+  @override
+  String get assessmentScannerNextStepsSection => 'ପରାମର୍ଶିତ ପରବର୍ତ୍ତୀ ପଦକ୍ଷେପ';
+
+  @override
+  String get assessmentScannerStudentSection => 'ଛାତ୍ର ପାଇଁ';
+
+  @override
+  String get assessmentScannerQualitySection => 'ଫଟୋ ଗୁଣବତ୍ତା';
+
+  @override
+  String get assessmentScannerNotScored => 'ମାର୍କ ଦିଆଯାଇନାହିଁ';
+
+  @override
+  String get assessmentScannerNoContent =>
+      'କୌଣସି ମାର୍କ ଆସିଲା ନାହିଁ। ଦୟାକରି ସ୍ପଷ୍ଟ ଫଟୋ ଚେଷ୍ଟା କରନ୍ତୁ।';
+
+  @override
+  String get assessmentScannerOutcomeCorrect => 'ସଠିକ୍';
+
+  @override
+  String get assessmentScannerOutcomePartial => 'ଆଂଶିକ ସଠିକ୍';
+
+  @override
+  String get assessmentScannerOutcomeIncorrect => 'ଭୁଲ';
+
+  @override
+  String get assessmentScannerReviewChip => 'ଏହା ଯାଞ୍ଚ କରନ୍ତୁ';
+
+  @override
+  String get assessmentScannerSignIn =>
+      'ଉତ୍ତର ଖାତା ମୂଲ୍ୟାୟନ କରିବାକୁ ଦୟାକରି ପୁଣି ସାଇନ୍ ଇନ୍ କରନ୍ତୁ।';
+
+  @override
+  String get assessmentScannerUpgradeTitle => 'ଉଚ୍ଚତର ଯୋଜନା ଆବଶ୍ୟକ';
+
+  @override
+  String get assessmentScannerUpgradeBody =>
+      'ଉତ୍ତର ଖାତା ମୂଲ୍ୟାୟନ ଉଚ୍ଚତର ଯୋଜନାର ଅଂଶ। ମୂଲ୍ୟାୟନ ଜାରି ରଖିବାକୁ ଅପଗ୍ରେଡ୍ କରନ୍ତୁ।';
+
+  @override
+  String get assessmentScannerSeePricing => 'ଯୋଜନା ଦେଖନ୍ତୁ';
+
+  @override
+  String get assessmentScannerDailyLimitTitle =>
+      'ଆଜି ପାଇଁ ଆପଣଙ୍କ ସମସ୍ତ ଉତ୍ତର ଖାତା ସରିଗଲା';
+
+  @override
+  String get assessmentScannerDailyLimitBody =>
+      'ଆପଣଙ୍କ ଯୋଜନାରେ ପ୍ରତିଦିନ ନିର୍ଦ୍ଦିଷ୍ଟ ସଂଖ୍ୟକ ଉତ୍ତର ଖାତା ଅଛି। ସେଗୁଡ଼ିକ ଆସନ୍ତାକାଲି ପୁଣି ଆରମ୍ଭ ହେବ, କିମ୍ବା ଉଚ୍ଚତର ଯୋଜନାରେ ସୀମା ବଢ଼ାଇପାରିବେ।';
+
+  @override
+  String get assessmentScannerLimitTitle =>
+      'ଆପଣ ଆପଣଙ୍କ ମୂଲ୍ୟାୟନ ସୀମାରେ ପହଞ୍ଚିଛନ୍ତି';
+
+  @override
+  String get assessmentScannerLimitBody =>
+      'ଆପଣ ଆପଣଙ୍କ ଯୋଜନାର ସମସ୍ତ ଉତ୍ତର ଖାତା ବ୍ୟବହାର କରିଛନ୍ତି। ସେଗୁଡ଼ିକ ଆସନ୍ତା ମାସ ପୁଣି ଆରମ୍ଭ ହେବ, କିମ୍ବା ଉଚ୍ଚତର ଯୋଜନାରେ ସୀମା ବଢ଼ାଇପାରିବେ।';
+
+  @override
+  String get assessmentScannerBusy =>
+      'ମୂଲ୍ୟାୟନ ମଡେଲ ବର୍ତ୍ତମାନ ବ୍ୟସ୍ତ ଅଛି। ଦୟାକରି ଏକ ମିନିଟ୍‌ରେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
+
+  @override
+  String assessmentScannerBusyRetryAfter(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other:
+          'ମୂଲ୍ୟାୟନ ମଡେଲ ବର୍ତ୍ତମାନ ବ୍ୟସ୍ତ ଅଛି। ଦୟାକରି ପ୍ରାୟ $seconds ସେକେଣ୍ଡରେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।',
+      one:
+          'ମୂଲ୍ୟାୟନ ମଡେଲ ବର୍ତ୍ତମାନ ବ୍ୟସ୍ତ ଅଛି। ଦୟାକରି ପ୍ରାୟ 1 ସେକେଣ୍ଡରେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get assessmentScannerTimeout =>
+      'ମୂଲ୍ୟାୟନ ସାଧାରଣ ଠାରୁ ଅଧିକ ସମୟ ନେଉଛି। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
+
+  @override
+  String get assessmentScannerRephrase =>
+      'ଫଟୋଗୁଡ଼ିକ ମୂଲ୍ୟାୟନ କରାଯାଇପାରିଲା ନାହିଁ। ଦୟାକରି ସ୍ପଷ୍ଟ ପୃଷ୍ଠା ପୁଣି ଅପଲୋଡ୍ କରନ୍ତୁ।';
 }

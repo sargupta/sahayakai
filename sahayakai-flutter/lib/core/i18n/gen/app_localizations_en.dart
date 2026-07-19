@@ -2630,4 +2630,229 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get virtualFieldTripLimit =>
       'You have planned a lot of trips recently. Please try again in a little while.';
+
+  @override
+  String get assessmentScannerTitle => 'Assessment Scanner';
+
+  @override
+  String get assessmentScannerSubtitle =>
+      'Grade a student\'s answer sheet page by page';
+
+  @override
+  String get assessmentScannerEmpty =>
+      'Add up to 3 photos of the answer sheet, then tap Grade.';
+
+  @override
+  String get assessmentScannerSubmit => 'Grade the answer sheet';
+
+  @override
+  String get assessmentScannerResultTitle => 'Assessment';
+
+  @override
+  String get assessmentScannerSectionSheet => 'The answer sheet';
+
+  @override
+  String get assessmentScannerPagesLabel => 'Answer sheet pages';
+
+  @override
+  String get assessmentScannerPagesHint =>
+      'Add up to 3 clear photos, one per page.';
+
+  @override
+  String get assessmentScannerPagesEmpty => 'Add a photo of the first page.';
+
+  @override
+  String assessmentScannerPageLabel(int number) {
+    return 'Page $number';
+  }
+
+  @override
+  String assessmentScannerRemovePage(int number) {
+    return 'Remove page $number';
+  }
+
+  @override
+  String assessmentScannerPageCounter(int count, int max) {
+    return '$count of $max pages';
+  }
+
+  @override
+  String assessmentScannerPagesFull(int max) {
+    return 'You can add up to $max pages.';
+  }
+
+  @override
+  String get assessmentScannerTakePhoto => 'Take photo';
+
+  @override
+  String get assessmentScannerChooseGallery => 'Choose from gallery';
+
+  @override
+  String get assessmentScannerSubjectLabel => 'Subject';
+
+  @override
+  String get assessmentScannerSubjectHint => 'Grading is tuned to the subject.';
+
+  @override
+  String get assessmentScannerSubjectPlaceholder => 'Choose a subject';
+
+  @override
+  String get assessmentScannerSubjectError => 'Please choose the subject.';
+
+  @override
+  String get assessmentScannerGradeLabel => 'Grade level';
+
+  @override
+  String get assessmentScannerGradePlaceholder => 'Choose a grade';
+
+  @override
+  String get assessmentScannerGradeError => 'Please choose the grade.';
+
+  @override
+  String get assessmentScannerOptional => 'Optional';
+
+  @override
+  String get assessmentScannerAnswerKeyLabel => 'Answer key';
+
+  @override
+  String get assessmentScannerAnswerKeyHint =>
+      'Paste the correct answers to grade against them.';
+
+  @override
+  String get assessmentScannerAnswerKeyPlaceholder =>
+      'Type or paste the answer key';
+
+  @override
+  String get assessmentScannerPrivacyNote =>
+      'The student\'s name is never sent for grading.';
+
+  @override
+  String assessmentScannerScoreCaption(String awarded, String max) {
+    return '$awarded of $max marks';
+  }
+
+  @override
+  String get assessmentScannerScoreOutOf => 'out of 100';
+
+  @override
+  String assessmentScannerMarks(String awarded, String max) {
+    return '$awarded/$max';
+  }
+
+  @override
+  String assessmentScannerPagesMeta(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pages',
+      one: '1 page',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String assessmentScannerReviewBadge(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count to review',
+      one: '1 to review',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get assessmentScannerQuestionsSection => 'Question by question';
+
+  @override
+  String get assessmentScannerStudentAnswerLabel => 'Student wrote';
+
+  @override
+  String get assessmentScannerFeedbackLabel => 'Feedback';
+
+  @override
+  String get assessmentScannerExpectedLabel => 'Expected answer';
+
+  @override
+  String get assessmentScannerNextStepsSection => 'Recommended next steps';
+
+  @override
+  String get assessmentScannerStudentSection => 'For the student';
+
+  @override
+  String get assessmentScannerQualitySection => 'Photo quality';
+
+  @override
+  String get assessmentScannerNotScored => 'Not scored';
+
+  @override
+  String get assessmentScannerNoContent =>
+      'No grades came back. Please try clearer photos.';
+
+  @override
+  String get assessmentScannerOutcomeCorrect => 'Correct';
+
+  @override
+  String get assessmentScannerOutcomePartial => 'Partly correct';
+
+  @override
+  String get assessmentScannerOutcomeIncorrect => 'Incorrect';
+
+  @override
+  String get assessmentScannerReviewChip => 'Check this';
+
+  @override
+  String get assessmentScannerSignIn =>
+      'Please sign in again to grade an answer sheet.';
+
+  @override
+  String get assessmentScannerUpgradeTitle => 'A higher plan is needed';
+
+  @override
+  String get assessmentScannerUpgradeBody =>
+      'Grading answer sheets is part of a higher plan. Upgrade to keep grading.';
+
+  @override
+  String get assessmentScannerSeePricing => 'See plans';
+
+  @override
+  String get assessmentScannerDailyLimitTitle =>
+      'That is all your answer sheets for today';
+
+  @override
+  String get assessmentScannerDailyLimitBody =>
+      'Your plan includes a set number of answer sheets each day. They reset tomorrow, or you can raise the limit on a higher plan.';
+
+  @override
+  String get assessmentScannerLimitTitle =>
+      'You have reached your grading limit';
+
+  @override
+  String get assessmentScannerLimitBody =>
+      'You have used all the answer sheets in your plan. They reset next month, or you can raise the limit on a higher plan.';
+
+  @override
+  String get assessmentScannerBusy =>
+      'The grading model is busy right now. Please try again in a minute.';
+
+  @override
+  String assessmentScannerBusyRetryAfter(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other:
+          'The grading model is busy right now. Please try again in about $seconds seconds.',
+      one:
+          'The grading model is busy right now. Please try again in about 1 second.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get assessmentScannerTimeout =>
+      'Grading is taking longer than usual. Please try again.';
+
+  @override
+  String get assessmentScannerRephrase =>
+      'The photos could not be graded. Please re-upload clearer pages.';
 }

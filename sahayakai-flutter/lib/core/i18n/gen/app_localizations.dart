@@ -4639,6 +4639,348 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You have planned a lot of trips recently. Please try again in a little while.'**
   String get virtualFieldTripLimit;
+
+  /// Assessment Scanner tool name (U-PD5).
+  ///
+  /// In en, this message translates to:
+  /// **'Assessment Scanner'**
+  String get assessmentScannerTitle;
+
+  /// Assessment Scanner one-line description.
+  ///
+  /// In en, this message translates to:
+  /// **'Grade a student\'s answer sheet page by page'**
+  String get assessmentScannerSubtitle;
+
+  /// Idle/empty prompt on the Assessment Scanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Add up to 3 photos of the answer sheet, then tap Grade.'**
+  String get assessmentScannerEmpty;
+
+  /// Primary action button on the Assessment Scanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Grade the answer sheet'**
+  String get assessmentScannerSubmit;
+
+  /// Result document title on the Assessment Scanner scorecard.
+  ///
+  /// In en, this message translates to:
+  /// **'Assessment'**
+  String get assessmentScannerResultTitle;
+
+  /// Section header for the page-capture group.
+  ///
+  /// In en, this message translates to:
+  /// **'The answer sheet'**
+  String get assessmentScannerSectionSheet;
+
+  /// Label for the multi-page capture field.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer sheet pages'**
+  String get assessmentScannerPagesLabel;
+
+  /// Hint under the pages field.
+  ///
+  /// In en, this message translates to:
+  /// **'Add up to 3 clear photos, one per page.'**
+  String get assessmentScannerPagesHint;
+
+  /// Prompt inside the empty page-capture well.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a photo of the first page.'**
+  String get assessmentScannerPagesEmpty;
+
+  /// Label for one captured page.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {number}'**
+  String assessmentScannerPageLabel(int number);
+
+  /// Accessibility label for the per-page remove button.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove page {number}'**
+  String assessmentScannerRemovePage(int number);
+
+  /// Counter showing captured pages out of the cap.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} of {max} pages'**
+  String assessmentScannerPageCounter(int count, int max);
+
+  /// Note shown when the page cap is reached.
+  ///
+  /// In en, this message translates to:
+  /// **'You can add up to {max} pages.'**
+  String assessmentScannerPagesFull(int max);
+
+  /// Camera button to add a page.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photo'**
+  String get assessmentScannerTakePhoto;
+
+  /// Gallery button to add a page.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from gallery'**
+  String get assessmentScannerChooseGallery;
+
+  /// Subject picker label.
+  ///
+  /// In en, this message translates to:
+  /// **'Subject'**
+  String get assessmentScannerSubjectLabel;
+
+  /// Hint under the subject picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Grading is tuned to the subject.'**
+  String get assessmentScannerSubjectHint;
+
+  /// Placeholder in the subject dropdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a subject'**
+  String get assessmentScannerSubjectPlaceholder;
+
+  /// Validation error when no subject is selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Please choose the subject.'**
+  String get assessmentScannerSubjectError;
+
+  /// Grade picker label.
+  ///
+  /// In en, this message translates to:
+  /// **'Grade level'**
+  String get assessmentScannerGradeLabel;
+
+  /// Placeholder in the grade dropdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a grade'**
+  String get assessmentScannerGradePlaceholder;
+
+  /// Validation error when no grade is selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Please choose the grade.'**
+  String get assessmentScannerGradeError;
+
+  /// Inline 'optional' tag on the answer-key field.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get assessmentScannerOptional;
+
+  /// Optional answer-key field label.
+  ///
+  /// In en, this message translates to:
+  /// **'Answer key'**
+  String get assessmentScannerAnswerKeyLabel;
+
+  /// Hint under the answer-key field.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste the correct answers to grade against them.'**
+  String get assessmentScannerAnswerKeyHint;
+
+  /// Placeholder in the answer-key text field.
+  ///
+  /// In en, this message translates to:
+  /// **'Type or paste the answer key'**
+  String get assessmentScannerAnswerKeyPlaceholder;
+
+  /// Privacy note under the form.
+  ///
+  /// In en, this message translates to:
+  /// **'The student\'s name is never sent for grading.'**
+  String get assessmentScannerPrivacyNote;
+
+  /// Raw-marks caption under the score ring.
+  ///
+  /// In en, this message translates to:
+  /// **'{awarded} of {max} marks'**
+  String assessmentScannerScoreCaption(String awarded, String max);
+
+  /// Suffix for the copied score line.
+  ///
+  /// In en, this message translates to:
+  /// **'out of 100'**
+  String get assessmentScannerScoreOutOf;
+
+  /// Per-question marks badge, awarded over max.
+  ///
+  /// In en, this message translates to:
+  /// **'{awarded}/{max}'**
+  String assessmentScannerMarks(String awarded, String max);
+
+  /// Masthead badge counting graded pages.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 page} other{{count} pages}}'**
+  String assessmentScannerPagesMeta(int count);
+
+  /// Masthead badge counting questions needing a teacher's review.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 to review} other{{count} to review}}'**
+  String assessmentScannerReviewBadge(int count);
+
+  /// Section header for the per-question list.
+  ///
+  /// In en, this message translates to:
+  /// **'Question by question'**
+  String get assessmentScannerQuestionsSection;
+
+  /// Sub-label before the student's answer.
+  ///
+  /// In en, this message translates to:
+  /// **'Student wrote'**
+  String get assessmentScannerStudentAnswerLabel;
+
+  /// Sub-label before the per-question feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback'**
+  String get assessmentScannerFeedbackLabel;
+
+  /// Sub-label before the reference answer.
+  ///
+  /// In en, this message translates to:
+  /// **'Expected answer'**
+  String get assessmentScannerExpectedLabel;
+
+  /// Section header for teacher-facing next steps.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended next steps'**
+  String get assessmentScannerNextStepsSection;
+
+  /// Section header for student-facing recommendations.
+  ///
+  /// In en, this message translates to:
+  /// **'For the student'**
+  String get assessmentScannerStudentSection;
+
+  /// Section header for photo-quality advisories.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo quality'**
+  String get assessmentScannerQualitySection;
+
+  /// Shown on a question that carries no marks scale.
+  ///
+  /// In en, this message translates to:
+  /// **'Not scored'**
+  String get assessmentScannerNotScored;
+
+  /// Empty-result message.
+  ///
+  /// In en, this message translates to:
+  /// **'No grades came back. Please try clearer photos.'**
+  String get assessmentScannerNoContent;
+
+  /// Outcome chip: full marks.
+  ///
+  /// In en, this message translates to:
+  /// **'Correct'**
+  String get assessmentScannerOutcomeCorrect;
+
+  /// Outcome chip: partial marks.
+  ///
+  /// In en, this message translates to:
+  /// **'Partly correct'**
+  String get assessmentScannerOutcomePartial;
+
+  /// Outcome chip: no marks.
+  ///
+  /// In en, this message translates to:
+  /// **'Incorrect'**
+  String get assessmentScannerOutcomeIncorrect;
+
+  /// Chip flagging a question that needs a teacher's review.
+  ///
+  /// In en, this message translates to:
+  /// **'Check this'**
+  String get assessmentScannerReviewChip;
+
+  /// 401 sign-in prompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in again to grade an answer sheet.'**
+  String get assessmentScannerSignIn;
+
+  /// 403 upgrade title.
+  ///
+  /// In en, this message translates to:
+  /// **'A higher plan is needed'**
+  String get assessmentScannerUpgradeTitle;
+
+  /// 403 upgrade body.
+  ///
+  /// In en, this message translates to:
+  /// **'Grading answer sheets is part of a higher plan. Upgrade to keep grading.'**
+  String get assessmentScannerUpgradeBody;
+
+  /// Pricing action label.
+  ///
+  /// In en, this message translates to:
+  /// **'See plans'**
+  String get assessmentScannerSeePricing;
+
+  /// 429 daily-limit title.
+  ///
+  /// In en, this message translates to:
+  /// **'That is all your answer sheets for today'**
+  String get assessmentScannerDailyLimitTitle;
+
+  /// 429 daily-limit body.
+  ///
+  /// In en, this message translates to:
+  /// **'Your plan includes a set number of answer sheets each day. They reset tomorrow, or you can raise the limit on a higher plan.'**
+  String get assessmentScannerDailyLimitBody;
+
+  /// 429 monthly-limit title.
+  ///
+  /// In en, this message translates to:
+  /// **'You have reached your grading limit'**
+  String get assessmentScannerLimitTitle;
+
+  /// 429 monthly-limit body.
+  ///
+  /// In en, this message translates to:
+  /// **'You have used all the answer sheets in your plan. They reset next month, or you can raise the limit on a higher plan.'**
+  String get assessmentScannerLimitBody;
+
+  /// 503 busy message.
+  ///
+  /// In en, this message translates to:
+  /// **'The grading model is busy right now. Please try again in a minute.'**
+  String get assessmentScannerBusy;
+
+  /// 503 busy message with a retry countdown.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds, plural, =1{The grading model is busy right now. Please try again in about 1 second.} other{The grading model is busy right now. Please try again in about {seconds} seconds.}}'**
+  String assessmentScannerBusyRetryAfter(int seconds);
+
+  /// Timeout message.
+  ///
+  /// In en, this message translates to:
+  /// **'Grading is taking longer than usual. Please try again.'**
+  String get assessmentScannerTimeout;
+
+  /// 400/422 re-upload message.
+  ///
+  /// In en, this message translates to:
+  /// **'The photos could not be graded. Please re-upload clearer pages.'**
+  String get assessmentScannerRephrase;
 }
 
 class _AppLocalizationsDelegate

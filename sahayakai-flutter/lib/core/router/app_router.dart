@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../features/assess_assignment/presentation/assess_assignment_screen.dart';
+import '../../features/assessment_scanner/presentation/assessment_scanner_screen.dart';
 import '../../features/content_creator/presentation/content_creator_screen.dart';
 import '../../features/dashboard/presentation/app_shell.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
@@ -149,6 +150,12 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: Routes.assessAssignment,
         builder: (context, state) => const AssessAssignmentScreen(),
+      ),
+      GoRoute(
+        // U-PD5. A one-shot image tool: a plain open from the palette /
+        // dashboard, no VIDYA prefill.
+        path: Routes.assessmentScanner,
+        builder: (context, state) => const AssessmentScannerScreen(),
       ),
       GoRoute(
         // A VIDYA NAVIGATE_AND_FILL directive pushes here with a [ToolPrefill]

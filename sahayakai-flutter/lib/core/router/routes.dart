@@ -58,6 +58,14 @@ class Routes {
   /// the endpoint is `POST /api/ai/assess-assignment`.
   static const String assessAssignment = '/assess-assignment';
 
+  /// Assessment Scanner (U-PD5). Grades a student's answer sheet (up to 3 pages)
+  /// question-by-question with subject-aware rubrics; the endpoint is
+  /// `POST /api/ai/assessment-scanner`, which returns per-question marks +
+  /// feedback, an overall `scorePct`, and recommended next steps. Distinct from
+  /// [assessAssignment] (single-image, rubric scorecard) — this is the
+  /// multi-page, per-question answer-sheet grader.
+  static const String assessmentScanner = '/assessment-scanner';
+
   /// Visual Aid Designer (U-PD1). Generates a teaching illustration (an image)
   /// from a prompt (SCREEN_INVENTORY P1.7); the endpoint is
   /// `POST /api/ai/visual-aid`, which returns the drawing as a base64 data URI.

@@ -2642,4 +2642,231 @@ class AppLocalizationsKn extends AppLocalizations {
   @override
   String get virtualFieldTripLimit =>
       'ನೀವು ಇತ್ತೀಚೆಗೆ ಬಹಳಷ್ಟು ಪ್ರವಾಸಗಳನ್ನು ಯೋಜಿಸಿದ್ದೀರಿ. ದಯವಿಟ್ಟು ಸ್ವಲ್ಪ ಸಮಯದ ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.';
+
+  @override
+  String get assessmentScannerTitle => 'ಮೌಲ್ಯಮಾಪನ ಸ್ಕ್ಯಾನರ್';
+
+  @override
+  String get assessmentScannerSubtitle =>
+      'ವಿದ್ಯಾರ್ಥಿಯ ಉತ್ತರ ಪತ್ರಿಕೆಯನ್ನು ಪುಟದಿಂದ ಪುಟಕ್ಕೆ ಮೌಲ್ಯಮಾಪನ ಮಾಡಿ';
+
+  @override
+  String get assessmentScannerEmpty =>
+      'ಉತ್ತರ ಪತ್ರಿಕೆಯ 3 ರವರೆಗೆ ಫೋಟೋಗಳನ್ನು ಸೇರಿಸಿ, ನಂತರ ಮೌಲ್ಯಮಾಪನ ಒತ್ತಿರಿ.';
+
+  @override
+  String get assessmentScannerSubmit => 'ಉತ್ತರ ಪತ್ರಿಕೆಯನ್ನು ಮೌಲ್ಯಮಾಪನ ಮಾಡಿ';
+
+  @override
+  String get assessmentScannerResultTitle => 'ಮೌಲ್ಯಮಾಪನ';
+
+  @override
+  String get assessmentScannerSectionSheet => 'ಉತ್ತರ ಪತ್ರಿಕೆ';
+
+  @override
+  String get assessmentScannerPagesLabel => 'ಉತ್ತರ ಪತ್ರಿಕೆಯ ಪುಟಗಳು';
+
+  @override
+  String get assessmentScannerPagesHint =>
+      '3 ರವರೆಗೆ ಸ್ಪಷ್ಟ ಫೋಟೋಗಳನ್ನು ಸೇರಿಸಿ, ಪ್ರತಿ ಪುಟಕ್ಕೆ ಒಂದು.';
+
+  @override
+  String get assessmentScannerPagesEmpty => 'ಮೊದಲ ಪುಟದ ಒಂದು ಫೋಟೋ ಸೇರಿಸಿ.';
+
+  @override
+  String assessmentScannerPageLabel(int number) {
+    return 'ಪುಟ $number';
+  }
+
+  @override
+  String assessmentScannerRemovePage(int number) {
+    return 'ಪುಟ $number ತೆಗೆದುಹಾಕಿ';
+  }
+
+  @override
+  String assessmentScannerPageCounter(int count, int max) {
+    return '$max ರಲ್ಲಿ $count ಪುಟಗಳು';
+  }
+
+  @override
+  String assessmentScannerPagesFull(int max) {
+    return 'ನೀವು $max ರವರೆಗೆ ಪುಟಗಳನ್ನು ಸೇರಿಸಬಹುದು.';
+  }
+
+  @override
+  String get assessmentScannerTakePhoto => 'ಫೋಟೋ ತೆಗೆಯಿರಿ';
+
+  @override
+  String get assessmentScannerChooseGallery => 'ಗ್ಯಾಲರಿಯಿಂದ ಆಯ್ಕೆಮಾಡಿ';
+
+  @override
+  String get assessmentScannerSubjectLabel => 'ವಿಷಯ';
+
+  @override
+  String get assessmentScannerSubjectHint =>
+      'ಮೌಲ್ಯಮಾಪನವು ವಿಷಯಕ್ಕೆ ಅನುಗುಣವಾಗಿರುತ್ತದೆ.';
+
+  @override
+  String get assessmentScannerSubjectPlaceholder => 'ವಿಷಯ ಆಯ್ಕೆಮಾಡಿ';
+
+  @override
+  String get assessmentScannerSubjectError => 'ದಯವಿಟ್ಟು ವಿಷಯ ಆಯ್ಕೆಮಾಡಿ.';
+
+  @override
+  String get assessmentScannerGradeLabel => 'ತರಗತಿ ಮಟ್ಟ';
+
+  @override
+  String get assessmentScannerGradePlaceholder => 'ತರಗತಿ ಆಯ್ಕೆಮಾಡಿ';
+
+  @override
+  String get assessmentScannerGradeError => 'ದಯವಿಟ್ಟು ತರಗತಿ ಆಯ್ಕೆಮಾಡಿ.';
+
+  @override
+  String get assessmentScannerOptional => 'ಐಚ್ಛಿಕ';
+
+  @override
+  String get assessmentScannerAnswerKeyLabel => 'ಉತ್ತರ ಕೀಲಿ';
+
+  @override
+  String get assessmentScannerAnswerKeyHint =>
+      'ಸರಿಯಾದ ಉತ್ತರಗಳನ್ನು ಅಂಟಿಸಿ, ಅವುಗಳ ಪ್ರಕಾರ ಮೌಲ್ಯಮಾಪನವಾಗುತ್ತದೆ.';
+
+  @override
+  String get assessmentScannerAnswerKeyPlaceholder =>
+      'ಉತ್ತರ ಕೀಲಿಯನ್ನು ಬರೆಯಿರಿ ಅಥವಾ ಅಂಟಿಸಿ';
+
+  @override
+  String get assessmentScannerPrivacyNote =>
+      'ಮೌಲ್ಯಮಾಪನಕ್ಕಾಗಿ ವಿದ್ಯಾರ್ಥಿಯ ಹೆಸರನ್ನು ಎಂದಿಗೂ ಕಳುಹಿಸಲಾಗುವುದಿಲ್ಲ.';
+
+  @override
+  String assessmentScannerScoreCaption(String awarded, String max) {
+    return '$max ರಲ್ಲಿ $awarded ಅಂಕಗಳು';
+  }
+
+  @override
+  String get assessmentScannerScoreOutOf => '100 ರಲ್ಲಿ';
+
+  @override
+  String assessmentScannerMarks(String awarded, String max) {
+    return '$awarded/$max';
+  }
+
+  @override
+  String assessmentScannerPagesMeta(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ಪುಟಗಳು',
+      one: '1 ಪುಟ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String assessmentScannerReviewBadge(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ಪರಿಶೀಲಿಸಿ',
+      one: '1 ಪರಿಶೀಲಿಸಿ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get assessmentScannerQuestionsSection => 'ಪ್ರಶ್ನೆವಾರು';
+
+  @override
+  String get assessmentScannerStudentAnswerLabel => 'ವಿದ್ಯಾರ್ಥಿ ಬರೆದದ್ದು';
+
+  @override
+  String get assessmentScannerFeedbackLabel => 'ಪ್ರತಿಕ್ರಿಯೆ';
+
+  @override
+  String get assessmentScannerExpectedLabel => 'ನಿರೀಕ್ಷಿತ ಉತ್ತರ';
+
+  @override
+  String get assessmentScannerNextStepsSection =>
+      'ಶಿಫಾರಸು ಮಾಡಿದ ಮುಂದಿನ ಹೆಜ್ಜೆಗಳು';
+
+  @override
+  String get assessmentScannerStudentSection => 'ವಿದ್ಯಾರ್ಥಿಗಾಗಿ';
+
+  @override
+  String get assessmentScannerQualitySection => 'ಫೋಟೋ ಗುಣಮಟ್ಟ';
+
+  @override
+  String get assessmentScannerNotScored => 'ಅಂಕ ನೀಡಿಲ್ಲ';
+
+  @override
+  String get assessmentScannerNoContent =>
+      'ಯಾವುದೇ ಅಂಕಗಳು ಬರಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಸ್ಪಷ್ಟ ಫೋಟೋಗಳನ್ನು ಪ್ರಯತ್ನಿಸಿ.';
+
+  @override
+  String get assessmentScannerOutcomeCorrect => 'ಸರಿ';
+
+  @override
+  String get assessmentScannerOutcomePartial => 'ಭಾಗಶಃ ಸರಿ';
+
+  @override
+  String get assessmentScannerOutcomeIncorrect => 'ತಪ್ಪು';
+
+  @override
+  String get assessmentScannerReviewChip => 'ಇದನ್ನು ಪರಿಶೀಲಿಸಿ';
+
+  @override
+  String get assessmentScannerSignIn =>
+      'ಉತ್ತರ ಪತ್ರಿಕೆಯನ್ನು ಮೌಲ್ಯಮಾಪನ ಮಾಡಲು ದಯವಿಟ್ಟು ಮತ್ತೆ ಸೈನ್ ಇನ್ ಮಾಡಿ.';
+
+  @override
+  String get assessmentScannerUpgradeTitle => 'ಹೆಚ್ಚಿನ ಯೋಜನೆ ಅಗತ್ಯವಿದೆ';
+
+  @override
+  String get assessmentScannerUpgradeBody =>
+      'ಉತ್ತರ ಪತ್ರಿಕೆಗಳ ಮೌಲ್ಯಮಾಪನ ಹೆಚ್ಚಿನ ಯೋಜನೆಯ ಭಾಗ. ಮೌಲ್ಯಮಾಪನ ಮುಂದುವರಿಸಲು ಅಪ್‌ಗ್ರೇಡ್ ಮಾಡಿ.';
+
+  @override
+  String get assessmentScannerSeePricing => 'ಯೋಜನೆಗಳನ್ನು ನೋಡಿ';
+
+  @override
+  String get assessmentScannerDailyLimitTitle =>
+      'ಇಂದಿನ ನಿಮ್ಮ ಎಲ್ಲಾ ಉತ್ತರ ಪತ್ರಿಕೆಗಳು ಮುಗಿದವು';
+
+  @override
+  String get assessmentScannerDailyLimitBody =>
+      'ನಿಮ್ಮ ಯೋಜನೆಯಲ್ಲಿ ಪ್ರತಿ ದಿನ ನಿಗದಿತ ಸಂಖ್ಯೆಯ ಉತ್ತರ ಪತ್ರಿಕೆಗಳಿವೆ. ಅವು ನಾಳೆ ಮತ್ತೆ ಆರಂಭವಾಗುತ್ತವೆ, ಅಥವಾ ಹೆಚ್ಚಿನ ಯೋಜನೆಯಲ್ಲಿ ಮಿತಿಯನ್ನು ಹೆಚ್ಚಿಸಬಹುದು.';
+
+  @override
+  String get assessmentScannerLimitTitle =>
+      'ನೀವು ನಿಮ್ಮ ಮೌಲ್ಯಮಾಪನ ಮಿತಿಯನ್ನು ತಲುಪಿದ್ದೀರಿ';
+
+  @override
+  String get assessmentScannerLimitBody =>
+      'ನಿಮ್ಮ ಯೋಜನೆಯ ಎಲ್ಲಾ ಉತ್ತರ ಪತ್ರಿಕೆಗಳನ್ನು ಬಳಸಿದ್ದೀರಿ. ಅವು ಮುಂದಿನ ತಿಂಗಳು ಮತ್ತೆ ಆರಂಭವಾಗುತ್ತವೆ, ಅಥವಾ ಹೆಚ್ಚಿನ ಯೋಜನೆಯಲ್ಲಿ ಮಿತಿಯನ್ನು ಹೆಚ್ಚಿಸಬಹುದು.';
+
+  @override
+  String get assessmentScannerBusy =>
+      'ಮೌಲ್ಯಮಾಪನ ಮಾದರಿ ಈಗ ಕಾರ್ಯನಿರತವಾಗಿದೆ. ದಯವಿಟ್ಟು ಒಂದು ನಿಮಿಷದಲ್ಲಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.';
+
+  @override
+  String assessmentScannerBusyRetryAfter(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other:
+          'ಮೌಲ್ಯಮಾಪನ ಮಾದರಿ ಈಗ ಕಾರ್ಯನಿರತವಾಗಿದೆ. ದಯವಿಟ್ಟು ಸುಮಾರು $seconds ಸೆಕೆಂಡುಗಳಲ್ಲಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',
+      one:
+          'ಮೌಲ್ಯಮಾಪನ ಮಾದರಿ ಈಗ ಕಾರ್ಯನಿರತವಾಗಿದೆ. ದಯವಿಟ್ಟು ಸುಮಾರು 1 ಸೆಕೆಂಡಿನಲ್ಲಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get assessmentScannerTimeout =>
+      'ಮೌಲ್ಯಮಾಪನಕ್ಕೆ ಎಂದಿನಂತಿಗಿಂತ ಹೆಚ್ಚು ಸಮಯ ತೆಗೆದುಕೊಳ್ಳುತ್ತಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.';
+
+  @override
+  String get assessmentScannerRephrase =>
+      'ಫೋಟೋಗಳನ್ನು ಮೌಲ್ಯಮಾಪನ ಮಾಡಲಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಸ್ಪಷ್ಟ ಪುಟಗಳನ್ನು ಮತ್ತೆ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ.';
 }

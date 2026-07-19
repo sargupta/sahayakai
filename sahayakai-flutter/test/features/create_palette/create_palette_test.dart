@@ -22,7 +22,7 @@ import '../onboarding/onboarding_fixtures.dart';
 /// therefore keys off `create-palette-<id>` (unique to a palette row) rather
 /// than the tool name, which would match the tile behind the sheet too.
 
-/// The 14 tools the build ships, by stable id.
+/// The 15 tools the build ships, by stable id.
 const Set<String> _expectedIds = {
   'lesson-plan',
   'quiz',
@@ -34,6 +34,9 @@ const Set<String> _expectedIds = {
   'parent-message',
   'parent-hotline',
   'assess-assignment',
+  // U-PD5 — Assessment Scanner: a DISTINCT tool from 'assess-assignment' (the
+  // multi-page, per-question answer-sheet grader).
+  'assessment-scanner',
   'visual-aid',
   'video-storyteller',
   'virtual-field-trip',
@@ -74,9 +77,9 @@ void main() {
   });
 
   group('the shared registry', () {
-    test('lists all fourteen built tools with valid routes and Lucide icons',
+    test('lists all fifteen built tools with valid routes and Lucide icons',
         () {
-      expect(kToolRegistry, hasLength(14));
+      expect(kToolRegistry, hasLength(15));
       expect(kToolRegistry.map((t) => t.id).toSet(), _expectedIds);
 
       const registered = {
@@ -90,6 +93,7 @@ void main() {
         Routes.parentMessage,
         Routes.parentHotline,
         Routes.assessAssignment,
+        Routes.assessmentScanner,
         Routes.visualAid,
         Routes.videoStoryteller,
         Routes.virtualFieldTrip,
@@ -106,8 +110,8 @@ void main() {
       }
 
       // No two tools collide on a route or an icon.
-      expect(kToolRegistry.map((t) => t.route).toSet(), hasLength(14));
-      expect(kToolRegistry.map((t) => t.icon.codePoint).toSet(), hasLength(14));
+      expect(kToolRegistry.map((t) => t.route).toSet(), hasLength(15));
+      expect(kToolRegistry.map((t) => t.icon.codePoint).toSet(), hasLength(15));
     });
 
     testWidgets('every tool has a resolving, distinct localized name',

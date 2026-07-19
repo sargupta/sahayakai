@@ -2639,4 +2639,229 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get virtualFieldTripLimit =>
       'আপনি সম্প্রতি অনেক ভ্রমণ পরিকল্পনা করেছেন। অনুগ্রহ করে কিছুক্ষণ পরে আবার চেষ্টা করুন।';
+
+  @override
+  String get assessmentScannerTitle => 'মূল্যায়ন স্ক্যানার';
+
+  @override
+  String get assessmentScannerSubtitle =>
+      'শিক্ষার্থীর উত্তরপত্র পৃষ্ঠা ধরে ধরে মূল্যায়ন করুন';
+
+  @override
+  String get assessmentScannerEmpty =>
+      'উত্তরপত্রের 3টি পর্যন্ত ছবি যোগ করুন, তারপর মূল্যায়ন চাপুন।';
+
+  @override
+  String get assessmentScannerSubmit => 'উত্তরপত্র মূল্যায়ন করুন';
+
+  @override
+  String get assessmentScannerResultTitle => 'মূল্যায়ন';
+
+  @override
+  String get assessmentScannerSectionSheet => 'উত্তরপত্র';
+
+  @override
+  String get assessmentScannerPagesLabel => 'উত্তরপত্রের পৃষ্ঠা';
+
+  @override
+  String get assessmentScannerPagesHint =>
+      '3টি পর্যন্ত পরিষ্কার ছবি যোগ করুন, প্রতিটি পৃষ্ঠার একটি।';
+
+  @override
+  String get assessmentScannerPagesEmpty => 'প্রথম পৃষ্ঠার একটি ছবি যোগ করুন।';
+
+  @override
+  String assessmentScannerPageLabel(int number) {
+    return 'পৃষ্ঠা $number';
+  }
+
+  @override
+  String assessmentScannerRemovePage(int number) {
+    return 'পৃষ্ঠা $number সরান';
+  }
+
+  @override
+  String assessmentScannerPageCounter(int count, int max) {
+    return '$maxটির মধ্যে $countটি পৃষ্ঠা';
+  }
+
+  @override
+  String assessmentScannerPagesFull(int max) {
+    return 'আপনি $maxটি পর্যন্ত পৃষ্ঠা যোগ করতে পারেন।';
+  }
+
+  @override
+  String get assessmentScannerTakePhoto => 'ছবি তুলুন';
+
+  @override
+  String get assessmentScannerChooseGallery => 'গ্যালারি থেকে বেছে নিন';
+
+  @override
+  String get assessmentScannerSubjectLabel => 'বিষয়';
+
+  @override
+  String get assessmentScannerSubjectHint => 'মূল্যায়ন বিষয় অনুযায়ী হয়।';
+
+  @override
+  String get assessmentScannerSubjectPlaceholder => 'বিষয় বেছে নিন';
+
+  @override
+  String get assessmentScannerSubjectError => 'অনুগ্রহ করে বিষয় বেছে নিন।';
+
+  @override
+  String get assessmentScannerGradeLabel => 'শ্রেণি স্তর';
+
+  @override
+  String get assessmentScannerGradePlaceholder => 'শ্রেণি বেছে নিন';
+
+  @override
+  String get assessmentScannerGradeError => 'অনুগ্রহ করে শ্রেণি বেছে নিন।';
+
+  @override
+  String get assessmentScannerOptional => 'ঐচ্ছিক';
+
+  @override
+  String get assessmentScannerAnswerKeyLabel => 'উত্তরসূচি';
+
+  @override
+  String get assessmentScannerAnswerKeyHint =>
+      'সঠিক উত্তরগুলি পেস্ট করুন, সেগুলির অনুযায়ী মূল্যায়ন হবে।';
+
+  @override
+  String get assessmentScannerAnswerKeyPlaceholder =>
+      'উত্তরসূচি টাইপ করুন বা পেস্ট করুন';
+
+  @override
+  String get assessmentScannerPrivacyNote =>
+      'মূল্যায়নের জন্য শিক্ষার্থীর নাম কখনও পাঠানো হয় না।';
+
+  @override
+  String assessmentScannerScoreCaption(String awarded, String max) {
+    return '$max-এর মধ্যে $awarded নম্বর';
+  }
+
+  @override
+  String get assessmentScannerScoreOutOf => '100-এর মধ্যে';
+
+  @override
+  String assessmentScannerMarks(String awarded, String max) {
+    return '$awarded/$max';
+  }
+
+  @override
+  String assessmentScannerPagesMeta(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি পৃষ্ঠা',
+      one: '1টি পৃষ্ঠা',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String assessmentScannerReviewBadge(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি যাচাই করুন',
+      one: '1টি যাচাই করুন',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get assessmentScannerQuestionsSection => 'প্রশ্ন ধরে ধরে';
+
+  @override
+  String get assessmentScannerStudentAnswerLabel => 'শিক্ষার্থী লিখেছে';
+
+  @override
+  String get assessmentScannerFeedbackLabel => 'মতামত';
+
+  @override
+  String get assessmentScannerExpectedLabel => 'প্রত্যাশিত উত্তর';
+
+  @override
+  String get assessmentScannerNextStepsSection => 'সুপারিশকৃত পরবর্তী পদক্ষেপ';
+
+  @override
+  String get assessmentScannerStudentSection => 'শিক্ষার্থীর জন্য';
+
+  @override
+  String get assessmentScannerQualitySection => 'ছবির মান';
+
+  @override
+  String get assessmentScannerNotScored => 'নম্বর দেওয়া হয়নি';
+
+  @override
+  String get assessmentScannerNoContent =>
+      'কোনও নম্বর আসেনি। অনুগ্রহ করে পরিষ্কার ছবি চেষ্টা করুন।';
+
+  @override
+  String get assessmentScannerOutcomeCorrect => 'সঠিক';
+
+  @override
+  String get assessmentScannerOutcomePartial => 'আংশিক সঠিক';
+
+  @override
+  String get assessmentScannerOutcomeIncorrect => 'ভুল';
+
+  @override
+  String get assessmentScannerReviewChip => 'এটি যাচাই করুন';
+
+  @override
+  String get assessmentScannerSignIn =>
+      'উত্তরপত্র মূল্যায়ন করতে অনুগ্রহ করে আবার সাইন ইন করুন।';
+
+  @override
+  String get assessmentScannerUpgradeTitle => 'উচ্চতর পরিকল্পনা প্রয়োজন';
+
+  @override
+  String get assessmentScannerUpgradeBody =>
+      'উত্তরপত্র মূল্যায়ন উচ্চতর পরিকল্পনার অংশ। মূল্যায়ন চালিয়ে যেতে আপগ্রেড করুন।';
+
+  @override
+  String get assessmentScannerSeePricing => 'পরিকল্পনা দেখুন';
+
+  @override
+  String get assessmentScannerDailyLimitTitle =>
+      'আজকের জন্য আপনার সব উত্তরপত্র শেষ';
+
+  @override
+  String get assessmentScannerDailyLimitBody =>
+      'আপনার পরিকল্পনায় প্রতিদিন নির্দিষ্ট সংখ্যক উত্তরপত্র থাকে। সেগুলি আগামীকাল আবার শুরু হবে, বা উচ্চতর পরিকল্পনায় সীমা বাড়াতে পারেন।';
+
+  @override
+  String get assessmentScannerLimitTitle =>
+      'আপনি আপনার মূল্যায়ন সীমায় পৌঁছেছেন';
+
+  @override
+  String get assessmentScannerLimitBody =>
+      'আপনি আপনার পরিকল্পনার সব উত্তরপত্র ব্যবহার করেছেন। সেগুলি আগামী মাসে আবার শুরু হবে, বা উচ্চতর পরিকল্পনায় সীমা বাড়াতে পারেন।';
+
+  @override
+  String get assessmentScannerBusy =>
+      'মূল্যায়ন মডেল এখন ব্যস্ত। অনুগ্রহ করে এক মিনিট পরে আবার চেষ্টা করুন।';
+
+  @override
+  String assessmentScannerBusyRetryAfter(int seconds) {
+    String _temp0 = intl.Intl.pluralLogic(
+      seconds,
+      locale: localeName,
+      other:
+          'মূল্যায়ন মডেল এখন ব্যস্ত। অনুগ্রহ করে প্রায় $seconds সেকেন্ড পরে আবার চেষ্টা করুন।',
+      one:
+          'মূল্যায়ন মডেল এখন ব্যস্ত। অনুগ্রহ করে প্রায় 1 সেকেন্ড পরে আবার চেষ্টা করুন।',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get assessmentScannerTimeout =>
+      'মূল্যায়নে স্বাভাবিকের চেয়ে বেশি সময় লাগছে। অনুগ্রহ করে আবার চেষ্টা করুন।';
+
+  @override
+  String get assessmentScannerRephrase =>
+      'ছবিগুলি মূল্যায়ন করা যায়নি। অনুগ্রহ করে পরিষ্কার পৃষ্ঠা আবার আপলোড করুন।';
 }

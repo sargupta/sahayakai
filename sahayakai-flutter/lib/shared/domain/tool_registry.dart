@@ -120,6 +120,17 @@ final List<ToolEntry> kToolRegistry = <ToolEntry>[
     title: (l10n) => l10n.assessTitle,
     subtitle: (l10n) => l10n.assessSubtitle,
   ),
+  // U-PD5 — Assessment Scanner. A DISTINCT tool from 'assess-assignment'
+  // (single-image rubric scorecard): this grades a multi-page answer sheet
+  // question-by-question. A file-check glyph marks the answer-sheet grader,
+  // kept distinct from assess-assignment's scan-line.
+  ToolEntry(
+    id: 'assessment-scanner',
+    icon: LucideIcons.fileCheck,
+    route: Routes.assessmentScanner,
+    title: (l10n) => l10n.assessmentScannerTitle,
+    subtitle: (l10n) => l10n.assessmentScannerSubtitle,
+  ),
   ToolEntry(
     id: 'visual-aid',
     icon: LucideIcons.image,
