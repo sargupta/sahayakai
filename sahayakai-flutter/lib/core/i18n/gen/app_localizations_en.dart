@@ -1961,4 +1961,182 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get vidyaOpen => 'Ask VIDYA';
+
+  @override
+  String get parentHotlineTitle => 'Parent Hotline';
+
+  @override
+  String get parentHotlineSubtitle =>
+      'Call a student\'s parent in their language';
+
+  @override
+  String get parentHotlineEyebrow => 'Parent hotline';
+
+  @override
+  String get parentHotlinePickStudentIntro => 'Choose whose parent to call.';
+
+  @override
+  String get parentHotlineClassLabel => 'Class';
+
+  @override
+  String get parentHotlineNoPhone => 'No parent number saved';
+
+  @override
+  String get parentHotlineSignedOutTitle => 'Sign in to see your students';
+
+  @override
+  String get parentHotlineSignedOutBody =>
+      'Your class roster loads once you\'re signed in. The parent hotline needs your account before it can place a call.';
+
+  @override
+  String get parentHotlineReasonEyebrow => 'Why are you calling';
+
+  @override
+  String get parentHotlineReasonAbsencesLabel => 'Repeated absences';
+
+  @override
+  String get parentHotlineReasonAbsencesDesc =>
+      'The student has missed several days in a row.';
+
+  @override
+  String get parentHotlineReasonPerformanceLabel => 'Slipping in a subject';
+
+  @override
+  String get parentHotlineReasonPerformanceDesc =>
+      'Recent marks or classwork need attention.';
+
+  @override
+  String get parentHotlineReasonBehaviourLabel => 'Behaviour in class';
+
+  @override
+  String get parentHotlineReasonBehaviourDesc =>
+      'Something happened the parent should know about.';
+
+  @override
+  String get parentHotlineReasonPositiveLabel => 'Good news to share';
+
+  @override
+  String get parentHotlineReasonPositiveDesc =>
+      'Celebrate a win with the parent.';
+
+  @override
+  String get parentHotlineComposeEyebrow => 'Prepare the call';
+
+  @override
+  String get parentHotlineNoteLabel => 'Add a note';
+
+  @override
+  String get parentHotlineNoteHintAbsences =>
+      'Anything the parent should know about the days missed?';
+
+  @override
+  String get parentHotlineNoteHintPerformance =>
+      'What would help the student improve?';
+
+  @override
+  String get parentHotlineNoteHintBehaviour =>
+      'What happened, and what support would help at home?';
+
+  @override
+  String get parentHotlineNoteHintPositive => 'What is the good news to share?';
+
+  @override
+  String get parentHotlineDraftAction => 'Draft the message';
+
+  @override
+  String get parentHotlineErrorTitle => 'Something went wrong';
+
+  @override
+  String get parentHotlineGenericError =>
+      'That didn\'t go through. Please try again.';
+
+  @override
+  String get parentHotlineEvidenceAttendanceHeader => 'Attendance';
+
+  @override
+  String get parentHotlineEvidenceMarksHeader => 'Recent marks';
+
+  @override
+  String get parentHotlineEvidenceBehaviourHeader => 'What happened';
+
+  @override
+  String get parentHotlineEvidencePositiveHeader => 'The good news';
+
+  @override
+  String parentHotlineEvidenceAbsentDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days days absent in a row',
+      one: '1 day absent in a row',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get parentHotlineEvidenceAbsencePrompt =>
+      'Confirm the days missed so the parent hears the exact record.';
+
+  @override
+  String get parentHotlineEvidenceMarksPrompt =>
+      'The latest marks are ready to mention on the call.';
+
+  @override
+  String get parentHotlineEvidenceMarksEmpty =>
+      'No recent marks on record yet. Add what the parent should know below.';
+
+  @override
+  String get parentHotlineEvidenceBehaviourPrompt =>
+      'Describe what happened and the support that would help at home.';
+
+  @override
+  String get parentHotlineEvidencePositivePrompt =>
+      'Share the win you\'d like the parent to celebrate.';
+
+  @override
+  String get parentHotlineReviewEyebrow => 'Message home';
+
+  @override
+  String get parentHotlineCall => 'Call parent';
+
+  @override
+  String get parentHotlineWhatsApp => 'Copy for WhatsApp';
+
+  @override
+  String parentHotlineCallAgainIn(String time) {
+    return 'Call again in $time';
+  }
+
+  @override
+  String parentHotlineUnsupportedLanguage(String language) {
+    return 'Auto-call isn\'t available for $language yet — copy for WhatsApp instead.';
+  }
+
+  @override
+  String parentHotlinePhoneMask(String last4) {
+    return '•••• $last4';
+  }
+
+  @override
+  String get parentHotlineAiNotice =>
+      'The call opens with an automated AI voice notice.';
+
+  @override
+  String get parentHotlineCopied =>
+      'Message copied — paste it in WhatsApp to send.';
+
+  @override
+  String get parentHotlinePremiumTitle =>
+      'Parent Hotline needs an advanced plan';
+
+  @override
+  String get parentHotlinePremiumBody =>
+      'Placing an AI voice call to a parent is part of the advanced plan. You can still copy a message to send on WhatsApp for free.';
+
+  @override
+  String get parentHotlineComingSoonTitle => 'The call view is on its way';
+
+  @override
+  String get parentHotlineComingSoonBody =>
+      'Placing and following the call arrives in the next update.';
 }

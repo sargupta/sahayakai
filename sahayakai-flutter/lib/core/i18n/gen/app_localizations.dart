@@ -3565,6 +3565,294 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ask VIDYA'**
   String get vidyaOpen;
+
+  /// Title of the Parent Hotline tool (U-PH3): an AI voice call to a student's parent.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent Hotline'**
+  String get parentHotlineTitle;
+
+  /// Dashboard/Create subtitle for the Parent Hotline tool.
+  ///
+  /// In en, this message translates to:
+  /// **'Call a student\'s parent in their language'**
+  String get parentHotlineSubtitle;
+
+  /// Saffron section eyebrow above the student picker on the Parent Hotline screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent hotline'**
+  String get parentHotlineEyebrow;
+
+  /// One-line intro under the eyebrow on the pick-student stage.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose whose parent to call.'**
+  String get parentHotlinePickStudentIntro;
+
+  /// Label for the class filter above the student list.
+  ///
+  /// In en, this message translates to:
+  /// **'Class'**
+  String get parentHotlineClassLabel;
+
+  /// Inline hint on a student row that has no parent phone on record (mirrors the server 422); the row is disabled.
+  ///
+  /// In en, this message translates to:
+  /// **'No parent number saved'**
+  String get parentHotlineNoPhone;
+
+  /// Signed-out EmptyView title on the Parent Hotline (no roster without an identity).
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to see your students'**
+  String get parentHotlineSignedOutTitle;
+
+  /// Signed-out EmptyView body on the Parent Hotline.
+  ///
+  /// In en, this message translates to:
+  /// **'Your class roster loads once you\'re signed in. The parent hotline needs your account before it can place a call.'**
+  String get parentHotlineSignedOutBody;
+
+  /// Saffron eyebrow on the reason stage.
+  ///
+  /// In en, this message translates to:
+  /// **'Why are you calling'**
+  String get parentHotlineReasonEyebrow;
+
+  /// Reason card label — consecutive absences.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeated absences'**
+  String get parentHotlineReasonAbsencesLabel;
+
+  /// Reason card description — consecutive absences.
+  ///
+  /// In en, this message translates to:
+  /// **'The student has missed several days in a row.'**
+  String get parentHotlineReasonAbsencesDesc;
+
+  /// Reason card label — poor performance.
+  ///
+  /// In en, this message translates to:
+  /// **'Slipping in a subject'**
+  String get parentHotlineReasonPerformanceLabel;
+
+  /// Reason card description — poor performance.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent marks or classwork need attention.'**
+  String get parentHotlineReasonPerformanceDesc;
+
+  /// Reason card label — behavioural concern.
+  ///
+  /// In en, this message translates to:
+  /// **'Behaviour in class'**
+  String get parentHotlineReasonBehaviourLabel;
+
+  /// Reason card description — behavioural concern.
+  ///
+  /// In en, this message translates to:
+  /// **'Something happened the parent should know about.'**
+  String get parentHotlineReasonBehaviourDesc;
+
+  /// Reason card label — positive feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Good news to share'**
+  String get parentHotlineReasonPositiveLabel;
+
+  /// Reason card description — positive feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Celebrate a win with the parent.'**
+  String get parentHotlineReasonPositiveDesc;
+
+  /// Saffron eyebrow on the compose stage.
+  ///
+  /// In en, this message translates to:
+  /// **'Prepare the call'**
+  String get parentHotlineComposeEyebrow;
+
+  /// Label for the multiline teacher-note field on the compose stage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a note'**
+  String get parentHotlineNoteLabel;
+
+  /// Reason-specific placeholder for the teacher note — absences.
+  ///
+  /// In en, this message translates to:
+  /// **'Anything the parent should know about the days missed?'**
+  String get parentHotlineNoteHintAbsences;
+
+  /// Reason-specific placeholder for the teacher note — poor performance.
+  ///
+  /// In en, this message translates to:
+  /// **'What would help the student improve?'**
+  String get parentHotlineNoteHintPerformance;
+
+  /// Reason-specific placeholder for the teacher note — behaviour.
+  ///
+  /// In en, this message translates to:
+  /// **'What happened, and what support would help at home?'**
+  String get parentHotlineNoteHintBehaviour;
+
+  /// Reason-specific placeholder for the teacher note — positive feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'What is the good news to share?'**
+  String get parentHotlineNoteHintPositive;
+
+  /// Primary CTA on the compose stage that drafts the opening message.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft the message'**
+  String get parentHotlineDraftAction;
+
+  /// Title of the inline error banner on the Parent Hotline.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong'**
+  String get parentHotlineErrorTitle;
+
+  /// Fallback message when the server gave no user-safe error text.
+  ///
+  /// In en, this message translates to:
+  /// **'That didn\'t go through. Please try again.'**
+  String get parentHotlineGenericError;
+
+  /// Evidence panel header — absences reason.
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance'**
+  String get parentHotlineEvidenceAttendanceHeader;
+
+  /// Evidence panel header — poor-performance reason.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent marks'**
+  String get parentHotlineEvidenceMarksHeader;
+
+  /// Evidence panel header — behavioural reason.
+  ///
+  /// In en, this message translates to:
+  /// **'What happened'**
+  String get parentHotlineEvidenceBehaviourHeader;
+
+  /// Evidence panel header — positive-feedback reason.
+  ///
+  /// In en, this message translates to:
+  /// **'The good news'**
+  String get parentHotlineEvidencePositiveHeader;
+
+  /// Absent-days badge in the evidence panel.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{1 day absent in a row} other{{days} days absent in a row}}'**
+  String parentHotlineEvidenceAbsentDays(int days);
+
+  /// Evidence panel prompt — absences.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm the days missed so the parent hears the exact record.'**
+  String get parentHotlineEvidenceAbsencePrompt;
+
+  /// Evidence panel prompt — poor performance when marks are on record.
+  ///
+  /// In en, this message translates to:
+  /// **'The latest marks are ready to mention on the call.'**
+  String get parentHotlineEvidenceMarksPrompt;
+
+  /// Evidence panel prompt — poor performance when no marks are available (the performance read 401s in foundation-v1).
+  ///
+  /// In en, this message translates to:
+  /// **'No recent marks on record yet. Add what the parent should know below.'**
+  String get parentHotlineEvidenceMarksEmpty;
+
+  /// Evidence panel prompt — behavioural concern.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe what happened and the support that would help at home.'**
+  String get parentHotlineEvidenceBehaviourPrompt;
+
+  /// Evidence panel prompt — positive feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Share the win you\'d like the parent to celebrate.'**
+  String get parentHotlineEvidencePositivePrompt;
+
+  /// Saffron eyebrow over the drafted message on the review stage.
+  ///
+  /// In en, this message translates to:
+  /// **'Message home'**
+  String get parentHotlineReviewEyebrow;
+
+  /// Primary decision-bar action that places the AI voice call.
+  ///
+  /// In en, this message translates to:
+  /// **'Call parent'**
+  String get parentHotlineCall;
+
+  /// Decision-bar action that copies the message to paste in WhatsApp (the universal fallback).
+  ///
+  /// In en, this message translates to:
+  /// **'Copy for WhatsApp'**
+  String get parentHotlineWhatsApp;
+
+  /// Disabled Call label during the 5-minute dedup cool-down, showing the mm:ss countdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Call again in {time}'**
+  String parentHotlineCallAgainIn(String time);
+
+  /// NoteBanner shown when the parent's language has no auto-call voice (mirrors the server 422).
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-call isn\'t available for {language} yet — copy for WhatsApp instead.'**
+  String parentHotlineUnsupportedLanguage(String language);
+
+  /// Masked parent phone in the review meta line — last 4 digits only (F9-001, never the full number).
+  ///
+  /// In en, this message translates to:
+  /// **'•••• {last4}'**
+  String parentHotlinePhoneMask(String last4);
+
+  /// Honesty line in the review meta: the parent hears an automated AI notice (dignity + transparency).
+  ///
+  /// In en, this message translates to:
+  /// **'The call opens with an automated AI voice notice.'**
+  String get parentHotlineAiNotice;
+
+  /// Snackbar confirming the message was copied to the clipboard for WhatsApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Message copied — paste it in WhatsApp to send.'**
+  String get parentHotlineCopied;
+
+  /// Premium-gate panel title (the outreach route returns 403 PREMIUM_REQUIRED).
+  ///
+  /// In en, this message translates to:
+  /// **'Parent Hotline needs an advanced plan'**
+  String get parentHotlinePremiumTitle;
+
+  /// Premium-gate panel body.
+  ///
+  /// In en, this message translates to:
+  /// **'Placing an AI voice call to a parent is part of the advanced plan. You can still copy a message to send on WhatsApp for free.'**
+  String get parentHotlinePremiumBody;
+
+  /// Placeholder title for the calling/summary stages (U-PH4/U-PH5), not built in this unit.
+  ///
+  /// In en, this message translates to:
+  /// **'The call view is on its way'**
+  String get parentHotlineComingSoonTitle;
+
+  /// Placeholder body for the calling/summary stages.
+  ///
+  /// In en, this message translates to:
+  /// **'Placing and following the call arrives in the next update.'**
+  String get parentHotlineComingSoonBody;
 }
 
 class _AppLocalizationsDelegate

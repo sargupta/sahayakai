@@ -1962,4 +1962,185 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get vidyaOpen => 'VIDYA ను అడగండి';
+
+  @override
+  String get parentHotlineTitle => 'తల్లిదండ్రులకు కాల్';
+
+  @override
+  String get parentHotlineSubtitle =>
+      'విద్యార్థి తల్లిదండ్రులకు వారి భాషలో కాల్ చేయండి';
+
+  @override
+  String get parentHotlineEyebrow => 'తల్లిదండ్రులకు కాల్';
+
+  @override
+  String get parentHotlinePickStudentIntro =>
+      'ఎవరి తల్లిదండ్రులకు కాల్ చేయాలో ఎంచుకోండి.';
+
+  @override
+  String get parentHotlineClassLabel => 'తరగతి';
+
+  @override
+  String get parentHotlineNoPhone => 'తల్లిదండ్రుల నంబర్ సేవ్ చేయలేదు';
+
+  @override
+  String get parentHotlineSignedOutTitle =>
+      'మీ విద్యార్థులను చూడటానికి సైన్ ఇన్ చేయండి';
+
+  @override
+  String get parentHotlineSignedOutBody =>
+      'మీరు సైన్ ఇన్ చేసిన తర్వాత మీ తరగతి జాబితా లోడ్ అవుతుంది. తల్లిదండ్రులకు కాల్ చేయాలంటే ముందు మీ ఖాతా అవసరం.';
+
+  @override
+  String get parentHotlineReasonEyebrow => 'మీరు ఎందుకు కాల్ చేస్తున్నారు';
+
+  @override
+  String get parentHotlineReasonAbsencesLabel => 'పదేపదే గైర్హాజరు';
+
+  @override
+  String get parentHotlineReasonAbsencesDesc =>
+      'విద్యార్థి వరుసగా చాలా రోజులు రాలేదు.';
+
+  @override
+  String get parentHotlineReasonPerformanceLabel =>
+      'సబ్జెక్ట్‌లో వెనుకబడుతున్నారు';
+
+  @override
+  String get parentHotlineReasonPerformanceDesc =>
+      'ఇటీవలి మార్కులు లేదా తరగతి పనిపై దృష్టి అవసరం.';
+
+  @override
+  String get parentHotlineReasonBehaviourLabel => 'తరగతిలో ప్రవర్తన';
+
+  @override
+  String get parentHotlineReasonBehaviourDesc =>
+      'తల్లిదండ్రులు తెలుసుకోవలసిన విషయం ఏదో జరిగింది.';
+
+  @override
+  String get parentHotlineReasonPositiveLabel => 'పంచుకోవడానికి శుభవార్త';
+
+  @override
+  String get parentHotlineReasonPositiveDesc =>
+      'తల్లిదండ్రులతో కలిసి ఒక విజయాన్ని జరుపుకోండి.';
+
+  @override
+  String get parentHotlineComposeEyebrow => 'కాల్‌ను సిద్ధం చేయండి';
+
+  @override
+  String get parentHotlineNoteLabel => 'ఒక గమనిక జోడించండి';
+
+  @override
+  String get parentHotlineNoteHintAbsences =>
+      'రాని రోజుల గురించి తల్లిదండ్రులు తెలుసుకోవలసిందేదైనా ఉందా?';
+
+  @override
+  String get parentHotlineNoteHintPerformance =>
+      'విద్యార్థి మెరుగుపడటానికి ఏది సహాయపడుతుంది?';
+
+  @override
+  String get parentHotlineNoteHintBehaviour =>
+      'ఏం జరిగింది, ఇంట్లో ఎలాంటి సహాయం ఉపయోగపడుతుంది?';
+
+  @override
+  String get parentHotlineNoteHintPositive => 'పంచుకోవలసిన శుభవార్త ఏమిటి?';
+
+  @override
+  String get parentHotlineDraftAction => 'సందేశాన్ని రూపొందించండి';
+
+  @override
+  String get parentHotlineErrorTitle => 'ఏదో పొరపాటు జరిగింది';
+
+  @override
+  String get parentHotlineGenericError =>
+      'అది పూర్తి కాలేదు. దయచేసి మళ్లీ ప్రయత్నించండి.';
+
+  @override
+  String get parentHotlineEvidenceAttendanceHeader => 'హాజరు';
+
+  @override
+  String get parentHotlineEvidenceMarksHeader => 'ఇటీవలి మార్కులు';
+
+  @override
+  String get parentHotlineEvidenceBehaviourHeader => 'ఏం జరిగింది';
+
+  @override
+  String get parentHotlineEvidencePositiveHeader => 'శుభవార్త';
+
+  @override
+  String parentHotlineEvidenceAbsentDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'వరుసగా $days రోజులు గైర్హాజరు',
+      one: 'వరుసగా 1 రోజు గైర్హాజరు',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get parentHotlineEvidenceAbsencePrompt =>
+      'తల్లిదండ్రులు ఖచ్చితమైన వివరాలు వినేలా, రాని రోజులను నిర్ధారించండి.';
+
+  @override
+  String get parentHotlineEvidenceMarksPrompt =>
+      'కాల్‌లో చెప్పడానికి తాజా మార్కులు సిద్ధంగా ఉన్నాయి.';
+
+  @override
+  String get parentHotlineEvidenceMarksEmpty =>
+      'ఇంకా ఇటీవలి మార్కులేవీ నమోదు కాలేదు. తల్లిదండ్రులు తెలుసుకోవలసినది కింద జోడించండి.';
+
+  @override
+  String get parentHotlineEvidenceBehaviourPrompt =>
+      'ఏం జరిగిందో, ఇంట్లో ఉపయోగపడే సహాయం ఏమిటో వివరించండి.';
+
+  @override
+  String get parentHotlineEvidencePositivePrompt =>
+      'తల్లిదండ్రులు సంతోషించాలని మీరు కోరుకునే విజయాన్ని పంచుకోండి.';
+
+  @override
+  String get parentHotlineReviewEyebrow => 'ఇంటికి సందేశం';
+
+  @override
+  String get parentHotlineCall => 'తల్లిదండ్రులకు కాల్ చేయండి';
+
+  @override
+  String get parentHotlineWhatsApp => 'WhatsApp కోసం కాపీ చేయండి';
+
+  @override
+  String parentHotlineCallAgainIn(String time) {
+    return '$timeలో మళ్లీ కాల్ చేయండి';
+  }
+
+  @override
+  String parentHotlineUnsupportedLanguage(String language) {
+    return '$language కోసం ఆటో-కాల్ ఇంకా అందుబాటులో లేదు — బదులుగా WhatsApp కోసం కాపీ చేయండి.';
+  }
+
+  @override
+  String parentHotlinePhoneMask(String last4) {
+    return '•••• $last4';
+  }
+
+  @override
+  String get parentHotlineAiNotice =>
+      'కాల్ ఒక ఆటోమేటిక్ AI వాయిస్ ప్రకటనతో ప్రారంభమవుతుంది.';
+
+  @override
+  String get parentHotlineCopied =>
+      'సందేశం కాపీ చేయబడింది — పంపడానికి WhatsAppలో పేస్ట్ చేయండి.';
+
+  @override
+  String get parentHotlinePremiumTitle =>
+      'తల్లిదండ్రులకు కాల్ కోసం అధునాతన ప్లాన్ అవసరం';
+
+  @override
+  String get parentHotlinePremiumBody =>
+      'తల్లిదండ్రులకు AI వాయిస్ కాల్ చేయడం అధునాతన ప్లాన్‌లో భాగం. అయినా, ఉచితంగా WhatsAppలో పంపడానికి మీరు సందేశాన్ని కాపీ చేయవచ్చు.';
+
+  @override
+  String get parentHotlineComingSoonTitle => 'కాల్ వీక్షణ త్వరలో వస్తోంది';
+
+  @override
+  String get parentHotlineComingSoonBody =>
+      'కాల్ చేయడం, దాన్ని అనుసరించడం తదుపరి అప్‌డేట్‌లో వస్తుంది.';
 }

@@ -2447,5 +2447,217 @@
   "vidyaOpen": "Ask VIDYA",
   "@vidyaOpen": {
     "description": "App-bar action + sheet title that opens VIDYA (the co-teacher) from any tool screen."
+  },
+  "parentHotlineTitle": "Parent Hotline",
+  "@parentHotlineTitle": {
+    "description": "Title of the Parent Hotline tool (U-PH3): an AI voice call to a student's parent."
+  },
+  "parentHotlineSubtitle": "Call a student's parent in their language",
+  "@parentHotlineSubtitle": {
+    "description": "Dashboard/Create subtitle for the Parent Hotline tool."
+  },
+  "parentHotlineEyebrow": "Parent hotline",
+  "@parentHotlineEyebrow": {
+    "description": "Saffron section eyebrow above the student picker on the Parent Hotline screen."
+  },
+  "parentHotlinePickStudentIntro": "Choose whose parent to call.",
+  "@parentHotlinePickStudentIntro": {
+    "description": "One-line intro under the eyebrow on the pick-student stage."
+  },
+  "parentHotlineClassLabel": "Class",
+  "@parentHotlineClassLabel": {
+    "description": "Label for the class filter above the student list."
+  },
+  "parentHotlineNoPhone": "No parent number saved",
+  "@parentHotlineNoPhone": {
+    "description": "Inline hint on a student row that has no parent phone on record (mirrors the server 422); the row is disabled."
+  },
+  "parentHotlineSignedOutTitle": "Sign in to see your students",
+  "@parentHotlineSignedOutTitle": {
+    "description": "Signed-out EmptyView title on the Parent Hotline (no roster without an identity)."
+  },
+  "parentHotlineSignedOutBody": "Your class roster loads once you're signed in. The parent hotline needs your account before it can place a call.",
+  "@parentHotlineSignedOutBody": {
+    "description": "Signed-out EmptyView body on the Parent Hotline."
+  },
+  "parentHotlineReasonEyebrow": "Why are you calling",
+  "@parentHotlineReasonEyebrow": {
+    "description": "Saffron eyebrow on the reason stage."
+  },
+  "parentHotlineReasonAbsencesLabel": "Repeated absences",
+  "@parentHotlineReasonAbsencesLabel": {
+    "description": "Reason card label — consecutive absences."
+  },
+  "parentHotlineReasonAbsencesDesc": "The student has missed several days in a row.",
+  "@parentHotlineReasonAbsencesDesc": {
+    "description": "Reason card description — consecutive absences."
+  },
+  "parentHotlineReasonPerformanceLabel": "Slipping in a subject",
+  "@parentHotlineReasonPerformanceLabel": {
+    "description": "Reason card label — poor performance."
+  },
+  "parentHotlineReasonPerformanceDesc": "Recent marks or classwork need attention.",
+  "@parentHotlineReasonPerformanceDesc": {
+    "description": "Reason card description — poor performance."
+  },
+  "parentHotlineReasonBehaviourLabel": "Behaviour in class",
+  "@parentHotlineReasonBehaviourLabel": {
+    "description": "Reason card label — behavioural concern."
+  },
+  "parentHotlineReasonBehaviourDesc": "Something happened the parent should know about.",
+  "@parentHotlineReasonBehaviourDesc": {
+    "description": "Reason card description — behavioural concern."
+  },
+  "parentHotlineReasonPositiveLabel": "Good news to share",
+  "@parentHotlineReasonPositiveLabel": {
+    "description": "Reason card label — positive feedback."
+  },
+  "parentHotlineReasonPositiveDesc": "Celebrate a win with the parent.",
+  "@parentHotlineReasonPositiveDesc": {
+    "description": "Reason card description — positive feedback."
+  },
+  "parentHotlineComposeEyebrow": "Prepare the call",
+  "@parentHotlineComposeEyebrow": {
+    "description": "Saffron eyebrow on the compose stage."
+  },
+  "parentHotlineNoteLabel": "Add a note",
+  "@parentHotlineNoteLabel": {
+    "description": "Label for the multiline teacher-note field on the compose stage."
+  },
+  "parentHotlineNoteHintAbsences": "Anything the parent should know about the days missed?",
+  "@parentHotlineNoteHintAbsences": {
+    "description": "Reason-specific placeholder for the teacher note — absences."
+  },
+  "parentHotlineNoteHintPerformance": "What would help the student improve?",
+  "@parentHotlineNoteHintPerformance": {
+    "description": "Reason-specific placeholder for the teacher note — poor performance."
+  },
+  "parentHotlineNoteHintBehaviour": "What happened, and what support would help at home?",
+  "@parentHotlineNoteHintBehaviour": {
+    "description": "Reason-specific placeholder for the teacher note — behaviour."
+  },
+  "parentHotlineNoteHintPositive": "What is the good news to share?",
+  "@parentHotlineNoteHintPositive": {
+    "description": "Reason-specific placeholder for the teacher note — positive feedback."
+  },
+  "parentHotlineDraftAction": "Draft the message",
+  "@parentHotlineDraftAction": {
+    "description": "Primary CTA on the compose stage that drafts the opening message."
+  },
+  "parentHotlineErrorTitle": "Something went wrong",
+  "@parentHotlineErrorTitle": {
+    "description": "Title of the inline error banner on the Parent Hotline."
+  },
+  "parentHotlineGenericError": "That didn't go through. Please try again.",
+  "@parentHotlineGenericError": {
+    "description": "Fallback message when the server gave no user-safe error text."
+  },
+  "parentHotlineEvidenceAttendanceHeader": "Attendance",
+  "@parentHotlineEvidenceAttendanceHeader": {
+    "description": "Evidence panel header — absences reason."
+  },
+  "parentHotlineEvidenceMarksHeader": "Recent marks",
+  "@parentHotlineEvidenceMarksHeader": {
+    "description": "Evidence panel header — poor-performance reason."
+  },
+  "parentHotlineEvidenceBehaviourHeader": "What happened",
+  "@parentHotlineEvidenceBehaviourHeader": {
+    "description": "Evidence panel header — behavioural reason."
+  },
+  "parentHotlineEvidencePositiveHeader": "The good news",
+  "@parentHotlineEvidencePositiveHeader": {
+    "description": "Evidence panel header — positive-feedback reason."
+  },
+  "parentHotlineEvidenceAbsentDays": "{days, plural, =1{1 day absent in a row} other{{days} days absent in a row}}",
+  "@parentHotlineEvidenceAbsentDays": {
+    "description": "Absent-days badge in the evidence panel.",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "parentHotlineEvidenceAbsencePrompt": "Confirm the days missed so the parent hears the exact record.",
+  "@parentHotlineEvidenceAbsencePrompt": {
+    "description": "Evidence panel prompt — absences."
+  },
+  "parentHotlineEvidenceMarksPrompt": "The latest marks are ready to mention on the call.",
+  "@parentHotlineEvidenceMarksPrompt": {
+    "description": "Evidence panel prompt — poor performance when marks are on record."
+  },
+  "parentHotlineEvidenceMarksEmpty": "No recent marks on record yet. Add what the parent should know below.",
+  "@parentHotlineEvidenceMarksEmpty": {
+    "description": "Evidence panel prompt — poor performance when no marks are available (the performance read 401s in foundation-v1)."
+  },
+  "parentHotlineEvidenceBehaviourPrompt": "Describe what happened and the support that would help at home.",
+  "@parentHotlineEvidenceBehaviourPrompt": {
+    "description": "Evidence panel prompt — behavioural concern."
+  },
+  "parentHotlineEvidencePositivePrompt": "Share the win you'd like the parent to celebrate.",
+  "@parentHotlineEvidencePositivePrompt": {
+    "description": "Evidence panel prompt — positive feedback."
+  },
+  "parentHotlineReviewEyebrow": "Message home",
+  "@parentHotlineReviewEyebrow": {
+    "description": "Saffron eyebrow over the drafted message on the review stage."
+  },
+  "parentHotlineCall": "Call parent",
+  "@parentHotlineCall": {
+    "description": "Primary decision-bar action that places the AI voice call."
+  },
+  "parentHotlineWhatsApp": "Copy for WhatsApp",
+  "@parentHotlineWhatsApp": {
+    "description": "Decision-bar action that copies the message to paste in WhatsApp (the universal fallback)."
+  },
+  "parentHotlineCallAgainIn": "Call again in {time}",
+  "@parentHotlineCallAgainIn": {
+    "description": "Disabled Call label during the 5-minute dedup cool-down, showing the mm:ss countdown.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "parentHotlineUnsupportedLanguage": "Auto-call isn't available for {language} yet — copy for WhatsApp instead.",
+  "@parentHotlineUnsupportedLanguage": {
+    "description": "NoteBanner shown when the parent's language has no auto-call voice (mirrors the server 422).",
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "parentHotlinePhoneMask": "•••• {last4}",
+  "@parentHotlinePhoneMask": {
+    "description": "Masked parent phone in the review meta line — last 4 digits only (F9-001, never the full number).",
+    "placeholders": {
+      "last4": {
+        "type": "String"
+      }
+    }
+  },
+  "parentHotlineAiNotice": "The call opens with an automated AI voice notice.",
+  "@parentHotlineAiNotice": {
+    "description": "Honesty line in the review meta: the parent hears an automated AI notice (dignity + transparency)."
+  },
+  "parentHotlineCopied": "Message copied — paste it in WhatsApp to send.",
+  "@parentHotlineCopied": {
+    "description": "Snackbar confirming the message was copied to the clipboard for WhatsApp."
+  },
+  "parentHotlinePremiumTitle": "Parent Hotline needs an advanced plan",
+  "@parentHotlinePremiumTitle": {
+    "description": "Premium-gate panel title (the outreach route returns 403 PREMIUM_REQUIRED)."
+  },
+  "parentHotlinePremiumBody": "Placing an AI voice call to a parent is part of the advanced plan. You can still copy a message to send on WhatsApp for free.",
+  "@parentHotlinePremiumBody": {
+    "description": "Premium-gate panel body."
+  },
+  "parentHotlineComingSoonTitle": "The call view is on its way",
+  "@parentHotlineComingSoonTitle": {
+    "description": "Placeholder title for the calling/summary stages (U-PH4/U-PH5), not built in this unit."
+  },
+  "parentHotlineComingSoonBody": "Placing and following the call arrives in the next update.",
+  "@parentHotlineComingSoonBody": {
+    "description": "Placeholder body for the calling/summary stages."
   }
 }

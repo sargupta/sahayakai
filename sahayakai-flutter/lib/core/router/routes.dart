@@ -62,6 +62,12 @@ class Routes {
   /// (SCREEN_INVENTORY P1.5); the endpoint is `POST /api/ai/parent-message`.
   static const String parentMessage = '/messages';
 
+  /// Parent Hotline (U-PH3). The staged flow that places an AI voice call to a
+  /// student's parent in their language (SPEC_parent_hotline §B.0). Pushed on
+  /// top of the signed-in shell; the standalone Dashboard entry opens on the
+  /// student picker, the U12 attendance hand-off will pass a studentId.
+  static const String parentHotline = '/parent-hotline';
+
   /// Routes reachable while signed out. `/try-call` (anon lead magnet) will
   /// join this set when that screen lands.
   static const Set<String> publicPaths = {splash, login};

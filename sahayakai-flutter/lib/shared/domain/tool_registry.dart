@@ -107,6 +107,13 @@ final List<ToolEntry> kToolRegistry = <ToolEntry>[
     subtitle: (l10n) => l10n.parentMessageSubtitle,
   ),
   ToolEntry(
+    id: 'parent-hotline',
+    icon: LucideIcons.phoneCall,
+    route: Routes.parentHotline,
+    title: (l10n) => l10n.parentHotlineTitle,
+    subtitle: (l10n) => l10n.parentHotlineSubtitle,
+  ),
+  ToolEntry(
     id: 'assess-assignment',
     icon: LucideIcons.scanLine,
     route: Routes.assessAssignment,

@@ -12,6 +12,7 @@ import '../../features/lesson_planner/presentation/lesson_plan_screen.dart';
 import '../../features/library/presentation/library_detail_screen.dart';
 import '../../features/onboarding/presentation/login_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
+import '../../features/parent_hotline/presentation/parent_hotline_screen.dart';
 import '../../features/parent_message/presentation/parent_message_screen.dart';
 import '../../features/quiz_generator/presentation/quiz_generator_screen.dart';
 import '../../features/rubric_generator/presentation/rubric_generator_screen.dart';
@@ -133,6 +134,13 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: Routes.parentMessage,
         builder: (context, state) => const ParentMessageScreen(),
+      ),
+      GoRoute(
+        // The standalone Parent Hotline (U-PH3). A plain open lands on the
+        // student picker; the U12 attendance hand-off will push with launch
+        // context (studentId/classId/parentLanguage) once it lands.
+        path: Routes.parentHotline,
+        builder: (context, state) => const ParentHotlineScreen(),
       ),
       GoRoute(
         path: Routes.assessAssignment,
