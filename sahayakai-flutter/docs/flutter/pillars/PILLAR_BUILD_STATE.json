@@ -376,7 +376,9 @@
       "files": ["lib/features/virtual_field_trip/presentation/virtual_field_trip_screen.dart"],
       "consumes": ["POST /api/ai/virtual-field-trip"],
       "firebaseGated": "partial",
-      "status": "pending"
+      "status": "done",
+      "commit": "c9e9af016",
+      "notes": "Curated Google-Earth itinerary. Contract: POST /api/ai/virtual-field-trip {topic, language?, gradeLevel?} -> {title, stops[7 fields: name/description/educationalFact/reflectionPrompt/googleEarthUrl/culturalAnalogy/explanation], gradeLevel, subject}. The 202 still_generating arrives as SUCCESS (Dio validateStatus<400) -> decoded by shape into a calm EmptyView outcome (not an error); 401/403 plan-gate/429/503/500 typed. Result = DocumentSheet + Ink-settle: title masthead + grade/subject/{n}-stops AppBadges + numbered stop cards (all prose via AiText; fact NoteBanner + reflection inset full-ink for AA; 'Open in Google Earth' SecondaryButton >=48dp via linkOpenerProvider seam, hides on missing/unsafe URL). All in-sheet toned elements AA-verified. 30 chrome strings x11 langs (real Indic, native-review-pending; server content as-is). DESIGN-REVIEW 1 blocker+nits fixed at SHARED widgets (app-wide): EmptyView body muted 4.36:1 -> onSurface 16.7:1 (now consistent w/ ErrorView/OfflineView, fixes all empty/pending states); AppBadge accent glyph #E0924D 2.26:1 -> #AC4815 5.15:1 (badge AA cleanup complete); DocumentSheet Fraunces->Outfit comment. Muted CAPTIONS elsewhere stay production-parity (founder decision). Firebase-gated (401) -> code+test only across 200/202/401/403/429/500. +52 tests -> 1212 green, analyze 0, token_guard PASS. No native/pubspec touched."
     },
     {
       "id": "U-PD5",
