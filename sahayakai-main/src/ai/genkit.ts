@@ -1,5 +1,6 @@
 import { genkit } from 'genkit';
 import { googleAI } from '@genkit-ai/googleai';
+import { vertexAI } from '@genkit-ai/vertexai';
 import { getSecret } from '@/lib/secrets';
 import { logger } from '@/lib/logger';
 
@@ -14,9 +15,20 @@ if (isPlaceholder(process.env.GEMINI_API_KEY)) delete process.env.GEMINI_API_KEY
 // its free-tier per-minute quota was saturating in production (quiz flow
 // calls the API 3× in parallel, one per difficulty, which hits the cap
 // fast). 2.5-flash has the same pricing class with better throughput.
+// Vertex AI is the default provider: billed via Cloud Billing (startup credits
+// apply), authenticated via ADC/service identity — no API keys, no prepay.
+// Rollback lever: set GENKIT_DEFAULT_MODEL='googleai/gemini-2.5-flash' on the
+// service to revert to the AI Studio key-pool path without a redeploy.
+export const DEFAULT_MODEL = 'vertexai/gemini-2.5-flash';
+const activeModel = process.env.GENKIT_DEFAULT_MODEL || DEFAULT_MODEL;
+export const usingVertex = activeModel.startsWith('vertexai/');
+
 export const ai = genkit({
-  plugins: [googleAI()],
-  model: process.env.GENKIT_DEFAULT_MODEL || 'googleai/gemini-2.5-flash',
+  plugins: [
+    vertexAI({ projectId: process.env.GCLOUD_PROJECT || 'sahayakai-b4248', location: 'us-central1' }),
+    googleAI(), // still serves googleai/* models (images, 2.5-pro) via the per-call key pool
+  ],
+  model: activeModel,
   // promptDir: 'src/ai/prompts',  // TODO: Enable after migrating flows from inline definePrompt() to ai.prompt()
 });
 
@@ -63,6 +75,15 @@ async function ensureKeyPool() {
   keyPoolPromise = (async () => {
     // Initialize telemetry alongside the key pool (runs once)
     await initTelemetry();
+
+    // Vertex mode: auth is ADC/service identity — no API keys. A single
+    // sentinel entry keeps the retry/backoff loop (Vertex 429s still benefit)
+    // while skipping Secret Manager entirely (faster cold start).
+    if (usingVertex) {
+      keyPool = [''];
+      logger.info('Vertex mode — key pool bypassed (ADC auth)', 'AI Resilience');
+      return;
+    }
 
     try {
       const secretKeys = await getSecret('GOOGLE_GENAI_API_KEY');
@@ -181,7 +202,7 @@ export async function runResiliently<T>(
     const currentKey = keyPool[currentIndex];
 
     try {
-      const result = await fn({ config: { apiKey: currentKey } });
+      const result = await fn(currentKey ? { config: { apiKey: currentKey } } : { config: {} });
 
       if (spanName) {
         logger.info(`${spanName} completed`, 'Trace', {

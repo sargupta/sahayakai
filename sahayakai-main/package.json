@@ -32,6 +32,7 @@
     "@genkit-ai/firebase": "^1.28.0",
     "@genkit-ai/googleai": "^1.28.0",
     "@genkit-ai/next": "^1.28.0",
+    "@genkit-ai/vertexai": "1.39.0",
     "@google-cloud/logging": "^11.2.1",
     "@google-cloud/pubsub": "^5.2.2",
     "@google-cloud/secret-manager": "^6.1.0",

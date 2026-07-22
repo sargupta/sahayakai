@@ -85,7 +85,7 @@ async function judgeNcertAlignment(
   const outcomesText = learningOutcomes.map((o, i) => `${i + 1}. ${o}`).join('\n');
 
   const result = await ai.generate({
-    model: 'googleai/gemini-2.5-flash',
+    model: 'vertexai/gemini-2.5-flash',
     prompt: `You are an education evaluator.
 
 Given the following NCERT learning outcomes:
@@ -145,7 +145,7 @@ async function judgeLanguageAdherence(
   }
 
   const result = await ai.generate({
-    model: 'googleai/gemini-2.5-flash',
+    model: 'vertexai/gemini-2.5-flash',
     prompt: `You are a language identification expert.
 
 Identify the primary language of the following text sample:

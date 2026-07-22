@@ -413,7 +413,7 @@ export async function runGenkitVidya(
 
     return await runResiliently(async (config) => {
         const response = await ai.generate({
-            model: 'googleai/gemini-2.5-flash',
+            model: 'vertexai/gemini-2.5-flash',
             prompt: `System: ${systemPrompt}\n\nChat History:\n${frameUserInput('chat_history', chatContext)}\n\nUser: ${frameUserInput('message', input.message)}\n\nOutput strictly the JSON response as required by the System prompt. Return ONLY a single JSON object, no prose, no markdown code fences.`,
             ...config,
             config: {

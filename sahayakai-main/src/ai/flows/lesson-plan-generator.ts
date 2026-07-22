@@ -127,7 +127,7 @@ async function auditMaterials(output: LessonPlanOutput, language?: string): Prom
 
     const auditResult = await runResiliently(async (resilienceConfig) => {
       return await ai.generate({
-        model: 'googleai/gemini-2.5-flash',
+        model: 'vertexai/gemini-2.5-flash',
         prompt: `You are a lesson plan auditor.
   
   Materials Listed: ${materialsText}
