@@ -2,10 +2,11 @@
 # setup-grow-persona-pool-cron.sh
 #
 # Creates/updates the Cloud Scheduler job that fires
-# POST /api/jobs/grow-persona-pool?count=5 once a week. Each weekly
-# run adds ~5 new AI teacher personas to the runtime pool, simulating
-# organic teacher onboarding so the community doesn't look like the
-# same fixed set of names cycling forever.
+# POST /api/jobs/grow-persona-pool?count=1 once a DAY. The persona pool
+# is already large enough — this now only trickles in 1 new AI teacher
+# persona/day so the community doesn't look like the exact same fixed
+# set of names cycling forever, without manufacturing a weekly burst of
+# new "teachers" (and the Gemini spend that goes with generating them).
 #
 # Idempotent. Safe to rerun.
 #
@@ -19,10 +20,10 @@ set -euo pipefail
 PROJECT_ID="${PROJECT_ID:-sahayakai-b4248}"
 SCHEDULER_REGION="${SCHEDULER_REGION:-asia-south1}"
 JOB_NAME="${JOB_NAME:-sahayakai-grow-persona-pool}"
-# Every Monday at 04:00 IST — quiet time, finished before peak posting hours.
-SCHEDULE="${SCHEDULE:-0 4 * * 1}"
+# Daily at 04:00 IST — quiet time, finished before peak posting hours.
+SCHEDULE="${SCHEDULE:-0 4 * * *}"
 TIME_ZONE="${TIME_ZONE:-Asia/Kolkata}"
-COUNT="${COUNT:-5}"
+COUNT="${COUNT:-1}"
 
 : "${SERVICE_URL:?Set SERVICE_URL to the Cloud Run service URL}"
 : "${SA_EMAIL:?Set SA_EMAIL to a service account with roles/run.invoker on the service}"
@@ -32,7 +33,7 @@ TARGET_URI="${SERVICE_URL%/}/api/jobs/grow-persona-pool?count=${COUNT}"
 echo "Project:          $PROJECT_ID"
 echo "Scheduler region: $SCHEDULER_REGION"
 echo "Job name:         $JOB_NAME"
-echo "Schedule (cron):  $SCHEDULE ($TIME_ZONE) == Monday 04:00 IST"
+echo "Schedule (cron):  $SCHEDULE ($TIME_ZONE) == daily 04:00 IST"
 echo "Target:           $TARGET_URI"
 echo "Invoker SA:       $SA_EMAIL"
 echo "Personas/run:     $COUNT"

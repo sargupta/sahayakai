@@ -2,10 +2,15 @@
 # setup-community-agent-cron.sh
 #
 # Creates/updates the Cloud Scheduler job that fires
-# POST /api/jobs/ai-community-agent every 3 hours. Each run posts
+# POST /api/jobs/ai-community-agent TWICE a day. Each run posts
 # 1-2 Staff Room chats, 1 group post, and 2-3 likes from random AI
 # teacher personas — keeps the community feed organically active
 # between real-teacher activity.
+#
+# Cut from every-3-hours (~8 firings/day) to twice a day: that cadence
+# was part of what drained the AI Studio prepaid key balance and caused
+# the July outage (see commit b058ca6) — with no real users yet, this
+# job was the majority of the app's own Gemini spend.
 #
 # Idempotent. Safe to rerun.
 #
@@ -19,9 +24,10 @@ set -euo pipefail
 PROJECT_ID="${PROJECT_ID:-sahayakai-b4248}"
 SCHEDULER_REGION="${SCHEDULER_REGION:-asia-south1}"
 JOB_NAME="${JOB_NAME:-sahayakai-community-agent}"
-# Every 3 hours on the hour, IST. Roughly 8 firings per day, covering
-# typical Indian-teacher waking hours plus a couple of overnight runs.
-SCHEDULE="${SCHEDULE:-0 */3 * * *}"
+# Twice a day, IST: 08:00 (before/at school start) and 19:00 (evening,
+# home/after-tuition hours) — matches when a real teacher would actually
+# be on their phone, per the realism time-buckets in ai-teacher-personas.ts.
+SCHEDULE="${SCHEDULE:-0 8,19 * * *}"
 TIME_ZONE="${TIME_ZONE:-Asia/Kolkata}"
 
 : "${SERVICE_URL:?Set SERVICE_URL to the Cloud Run service URL}"
@@ -32,7 +38,7 @@ TARGET_URI="${SERVICE_URL%/}/api/jobs/ai-community-agent"
 echo "Project:          $PROJECT_ID"
 echo "Scheduler region: $SCHEDULER_REGION"
 echo "Job name:         $JOB_NAME"
-echo "Schedule (cron):  $SCHEDULE ($TIME_ZONE) == every 3 h"
+echo "Schedule (cron):  $SCHEDULE ($TIME_ZONE) == twice daily (08:00, 19:00)"
 echo "Target:           $TARGET_URI"
 echo "Invoker SA:       $SA_EMAIL"
 echo

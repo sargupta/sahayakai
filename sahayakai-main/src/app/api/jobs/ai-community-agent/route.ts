@@ -2,7 +2,9 @@
  * POST /api/jobs/ai-community-agent
  *
  * Periodic cron job that makes AI teacher personas participate in the community.
- * Runs every 3 hours via Cloud Scheduler.
+ * Runs TWICE a day via Cloud Scheduler (down from every 3h / ~8x/day — that
+ * cadence was part of what drained the AI Studio prepaid key balance and
+ * caused the July outage; see commit b058ca6).
  *
  * What it does each run:
  * 1. Posts 1-2 staff room chat messages from random personas
@@ -10,9 +12,11 @@
  * 3. Likes 2-3 recent real teacher posts (organic engagement)
  * 4. Optionally replies to a recent staff room message
  *
- * Cloud Scheduler setup:
+ * Cloud Scheduler setup — see scripts/setup-community-agent-cron.sh (the
+ * live schedule is whatever that script was last run with; update it there,
+ * not just here, then re-run it against the deployed service):
  *   gcloud scheduler jobs create http sahayakai-ai-community-agent \
- *     --schedule="0 6,9,12,15,18 * * *" \
+ *     --schedule="0 8,19 * * *" \
  *     --time-zone="Asia/Kolkata" \
  *     --uri="https://<your-app>/api/jobs/ai-community-agent" \
  *     --http-method=POST \
@@ -38,7 +42,16 @@ export const maxDuration = 120;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-async function generateContent(systemPrompt: string, userPrompt: string): Promise<string> {
+// Staff-room chat is WhatsApp-style — real teachers send short bursts, not
+// essays. Group posts are more substantial (Facebook-group style). Giving
+// chat a much smaller token budget than posts pushes the model toward
+// actually-short replies instead of padding out 1-3 "sentences" into a
+// paragraph, which is one of the things that read as "cheap AI" rather
+// than a real person typing on a phone between periods.
+const CHAT_MAX_TOKENS = 70;
+const POST_MAX_TOKENS = 220;
+
+async function generateContent(systemPrompt: string, userPrompt: string, maxOutputTokens: number): Promise<string> {
     const { ai } = await import('@/ai/genkit');
     const { runResiliently } = await import('@/ai/genkit');
 
@@ -49,7 +62,7 @@ async function generateContent(systemPrompt: string, userPrompt: string): Promis
             prompt: userPrompt,
             config: {
                 temperature: 0.9, // High creativity for natural variation
-                maxOutputTokens: 200,
+                maxOutputTokens,
                 ...override.config,
             },
         });
@@ -114,7 +127,7 @@ async function postStaffRoomChat(
     ];
     const userPrompt = prompts[Math.floor(Math.random() * prompts.length)];
 
-    const message = await generateContent(systemPrompt, userPrompt);
+    const message = await generateContent(systemPrompt, userPrompt, CHAT_MAX_TOKENS);
 
     // F12-P1-08: standardise on `createdAt` so ai-reactive-reply cooldown query
     // (which orderBy('createdAt')) sees these messages and respects the cooldown.
@@ -206,7 +219,7 @@ async function createGroupPost(
     const systemPrompt = buildPersonaSystemPrompt(persona, 'group_post', groupName, memoryCtx);
     const userPrompt = 'Write a community post for this group. Share something useful — a tip, an experience, a question, or a resource recommendation.';
 
-    const content = await generateContent(systemPrompt, userPrompt);
+    const content = await generateContent(systemPrompt, userPrompt, POST_MAX_TOKENS);
 
     const postTypes = ['share', 'ask_help', 'celebrate', 'resource'] as const;
     const postType = postTypes[Math.floor(Math.random() * postTypes.length)];

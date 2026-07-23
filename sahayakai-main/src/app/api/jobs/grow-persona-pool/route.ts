@@ -5,11 +5,13 @@
  *   - `ai_teacher_personas_runtime` (full persona profile)
  *   - `users` (so they are discoverable + can post)
  *
- * Designed to run weekly via Cloud Scheduler so the community feed
- * shows believable organic growth (≈5 new teachers/week → ≈260/year).
+ * Designed to run DAILY via Cloud Scheduler, adding just 1 new persona/day.
+ * The pool is already large enough — this now only trickles in enough new
+ * faces to avoid the same fixed set cycling forever, without manufacturing
+ * a burst of new "teachers" (and the Gemini spend that goes with it).
  *
  * Query params:
- *   ?count=5   — how many to generate (default 5, max 15)
+ *   ?count=1   — how many to generate (default 1, max 15)
  *
  * Each generated persona matches the AITeacherPersona schema and gets
  * a unique uid `AI_TEACHER_<slug>` based on the generated displayName.
@@ -184,7 +186,7 @@ export async function POST(request: NextRequest) {
     }
 
     const url = new URL(request.url);
-    const requested = Number(url.searchParams.get('count') ?? '5');
+    const requested = Number(url.searchParams.get('count') ?? '1');
     const count = Math.max(1, Math.min(MAX_PER_RUN, Math.floor(requested)));
 
     try {

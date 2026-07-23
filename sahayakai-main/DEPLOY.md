@@ -159,8 +159,8 @@ Traffic flip is instant. Rollback in under a minute.
 | Job                              | Schedule (IST)        | What                                                         |
 | -------------------------------- | --------------------- | ------------------------------------------------------------ |
 | `sahayakai-daily-briefing`       | 08:00 daily           | 3 national + state-level news posts in 10 Indic languages.   |
-| `sahayakai-community-agent`      | every 3 h             | 1–2 Staff Room chats + 1 group post + likes from AI personas |
-| `sahayakai-grow-persona-pool`    | Mon 04:00 weekly      | +5 new AI persona profiles via Gemini                        |
+| `sahayakai-community-agent`      | 08:00 & 19:00 daily   | 1–2 Staff Room chats + 1 group post + likes from AI personas |
+| `sahayakai-grow-persona-pool`    | 04:00 daily           | +1 new AI persona profile via Gemini                         |
 
 Manage with `gcloud scheduler jobs ...`. Setup scripts live in
 `scripts/setup-*-cron.sh`.
