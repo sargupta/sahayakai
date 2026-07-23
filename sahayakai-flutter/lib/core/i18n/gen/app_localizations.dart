@@ -152,6 +152,12 @@ abstract class AppLocalizations {
   /// **'Try again'**
   String get actionRetry;
 
+  /// Shared sign-in CTA for dead-end empty states (inbox / staffroom / network hub) that route to /login.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get actionSignIn;
+
   /// Sign out of the account.
   ///
   /// In en, this message translates to:

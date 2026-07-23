@@ -10,6 +10,7 @@ import '../../../shared/widgets/app_segmented.dart';
 import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
+import '../../../shared/widgets/secondary_button.dart';
 import '../../inbox/data/messages_stream_provider.dart';
 import '../../inbox/presentation/widgets/conversation_row.dart';
 import 'staffroom_screen.dart';
@@ -128,6 +129,11 @@ class _MessagesTab extends ConsumerWidget {
               icon: LucideIcons.messageCircle,
               title: l10n.inboxSignInTitle,
               message: l10n.inboxSignInBody,
+              action: SecondaryButton(
+                label: l10n.actionSignIn,
+                icon: LucideIcons.logIn,
+                onPressed: () => context.push(Routes.login),
+              ),
             ),
           );
         }

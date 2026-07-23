@@ -9,6 +9,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
+import '../../../shared/widgets/secondary_button.dart';
 import '../data/block_c_transport.dart';
 import '../data/messages_stream_provider.dart';
 import '../domain/inbox_models.dart';
@@ -131,6 +132,11 @@ class _InboxSignIn extends StatelessWidget {
         icon: LucideIcons.messageCircle,
         title: l10n.inboxSignInTitle,
         message: l10n.inboxSignInBody,
+        action: SecondaryButton(
+          label: l10n.actionSignIn,
+          icon: LucideIcons.logIn,
+          onPressed: () => context.push(Routes.login),
+        ),
       ),
     );
   }

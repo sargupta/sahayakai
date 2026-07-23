@@ -27,6 +27,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get actionRetry => 'फिर से कोशिश करें';
 
   @override
+  String get actionSignIn => 'साइन इन करें';
+
+  @override
   String get actionSignOut => 'साइन आउट';
 
   @override

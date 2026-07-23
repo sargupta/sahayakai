@@ -24,6 +24,10 @@
   "@actionRetry": {
     "description": "Retry a failed action."
   },
+  "actionSignIn": "Sign in",
+  "@actionSignIn": {
+    "description": "Shared sign-in CTA for dead-end empty states (inbox / staffroom / network hub) that route to /login."
+  },
   "actionSignOut": "Sign out",
   "@actionSignOut": {
     "description": "Sign out of the account."

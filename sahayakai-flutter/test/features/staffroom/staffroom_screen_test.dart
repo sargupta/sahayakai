@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
+import 'package:sahayakai/core/router/routes.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/inbox/data/block_c_transport.dart';
 import 'package:sahayakai/features/staffroom/data/staffroom_providers.dart';
@@ -19,6 +21,21 @@ import 'package:sahayakai/shared/widgets/empty_view.dart';
 import 'package:sahayakai/shared/widgets/error_view.dart';
 
 import '../../support/fake_block_c_transports.dart';
+
+/// A marker screen a real `context.push` resolves to, so the DP-2 sign-in
+/// navigation assertion does not have to drag a whole login screen's own
+/// provider graph into this suite (mirrors vidya_home_screen_test.dart's
+/// `_DestMarker`).
+class _DestMarker extends StatelessWidget {
+  const _DestMarker(this.id);
+
+  final String id;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(body: Center(child: Text('DEST', key: Key('dest-$id'))));
+  }
+}
 
 /// U-SI2 — the Staffroom home, driven by the fake transport (no Firebase). Every
 /// state → its surface (sign-in / loading / error / empty / feed), plus the
@@ -84,6 +101,7 @@ Future<FakeStaffroomTransport> _pump(
   Size surface = const Size(390, 1400),
   Locale locale = const Locale('en'),
   bool settle = true,
+  bool router = false,
 }) async {
   tester.view.physicalSize = surface;
   tester.view.devicePixelRatio = 1.0;
@@ -106,18 +124,43 @@ Future<FakeStaffroomTransport> _pump(
   final theme =
       brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light();
 
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: overrides,
-      child: MaterialApp(
-        theme: theme,
-        locale: locale,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: const StaffroomScreen(),
+  if (router) {
+    final config = GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(path: '/', builder: (_, _) => const StaffroomScreen()),
+        GoRoute(
+          path: Routes.login,
+          builder: (_, _) => const _DestMarker('login'),
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: overrides,
+        child: MaterialApp.router(
+          theme: theme,
+          locale: locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          routerConfig: config,
+        ),
       ),
-    ),
-  );
+    );
+  } else {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: overrides,
+        child: MaterialApp(
+          theme: theme,
+          locale: locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const StaffroomScreen(),
+        ),
+      ),
+    );
+  }
   if (settle) {
     await tester.pumpAndSettle();
   } else {
@@ -171,6 +214,41 @@ void main() {
     testWidgets('ready empty → "Your feed is quiet" EmptyView', (tester) async {
       await _pump(tester, fake: FakeStaffroomTransport()..feed = const []);
       expect(find.text(l10n.staffroomFeedEmptyTitle), findsOneWidget);
+    });
+  });
+
+  group('DP-2: sign-in CTA (dead-end fix)', () {
+    testWidgets(
+        'sign-in EmptyView offers a Sign in action that navigates to /login',
+        (tester) async {
+      await _pump(tester, uid: null, router: true);
+
+      // The dead end this unit fixes: the signed-out staffroom had no way
+      // forward.
+      final signIn = find.text(l10n.actionSignIn);
+      expect(signIn, findsOneWidget);
+      expect(find.byIcon(LucideIcons.logIn), findsOneWidget);
+
+      await tester.tap(signIn);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('dest-login')), findsOneWidget);
+    });
+
+    testWidgets(
+        'the genuinely-empty "Your feed is quiet" EmptyView does NOT gain a '
+        'Sign in action', (tester) async {
+      await _pump(tester, fake: FakeStaffroomTransport()..feed = const []);
+
+      expect(find.text(l10n.staffroomFeedEmptyTitle), findsOneWidget);
+      // A ready-but-empty feed is not a dead end (a real session with
+      // nothing in it yet) — it must not pick up the sign-in CTA. Note the
+      // feed-empty state co-renders the unrelated "Browse groups"
+      // SecondaryButton (LucideIcons.users) from `_GroupsEmpty`, so this
+      // asserts on the sign-in label/icon specifically rather than a broad
+      // `find.byType(SecondaryButton)`.
+      expect(find.text(l10n.actionSignIn), findsNothing);
+      expect(find.byIcon(LucideIcons.logIn), findsNothing);
     });
   });
 

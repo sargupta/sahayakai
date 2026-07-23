@@ -27,6 +27,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionRetry => 'Try again';
 
   @override
+  String get actionSignIn => 'Sign in';
+
+  @override
   String get actionSignOut => 'Sign out';
 
   @override

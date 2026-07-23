@@ -18,6 +18,7 @@
   "navLibrary": "लाइब्रेरी",
   "navProfile": "प्रोफ़ाइल",
   "actionRetry": "फिर से कोशिश करें",
+  "actionSignIn": "साइन इन करें",
   "actionSignOut": "साइन आउट",
   "actionGenerate": "तैयार करें",
   "stateOfflineTitle": "आप ऑफ़लाइन हैं",

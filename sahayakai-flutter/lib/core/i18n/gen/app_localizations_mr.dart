@@ -27,6 +27,9 @@ class AppLocalizationsMr extends AppLocalizations {
   String get actionRetry => 'पुन्हा प्रयत्न करा';
 
   @override
+  String get actionSignIn => 'साइन इन करा';
+
+  @override
   String get actionSignOut => 'साइन आउट';
 
   @override

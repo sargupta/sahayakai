@@ -27,6 +27,9 @@ class AppLocalizationsMl extends AppLocalizations {
   String get actionRetry => 'വീണ്ടും ശ്രമിക്കുക';
 
   @override
+  String get actionSignIn => 'സൈൻ ഇൻ ചെയ്യൂ';
+
+  @override
   String get actionSignOut => 'സൈൻ ഔട്ട്';
 
   @override

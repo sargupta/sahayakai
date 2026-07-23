@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/router/routes.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
@@ -18,6 +19,21 @@ import 'package:sahayakai/shared/widgets/empty_view.dart';
 import 'package:sahayakai/shared/widgets/error_view.dart';
 
 import '../../support/fake_block_c_transports.dart';
+
+/// A marker screen a real `context.push` resolves to, so the DP-2 sign-in
+/// navigation assertion does not have to drag a whole login screen's own
+/// provider graph into this suite (mirrors vidya_home_screen_test.dart's
+/// `_DestMarker`).
+class _DestMarker extends StatelessWidget {
+  const _DestMarker(this.id);
+
+  final String id;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(body: Center(child: Text('DEST', key: Key('dest-$id'))));
+  }
+}
 
 /// U-SI1 — the Pro Inbox list, driven by the fake transport (no Firebase). Every
 /// [TransportSnapshot] state → its surface: sign-in / empty / error / rows, plus
@@ -94,6 +110,10 @@ Future<FakeInboxTransport> _pump(
                 ? state.extra! as Conversation
                 : null,
           ),
+        ),
+        GoRoute(
+          path: Routes.login,
+          builder: (_, _) => const _DestMarker('login'),
         ),
       ],
     );
@@ -188,6 +208,48 @@ void main() {
       expect(find.byType(ErrorView), findsOneWidget);
       expect(find.text(l10n.inboxErrorBody), findsOneWidget);
       expect(find.text(l10n.actionRetry), findsOneWidget);
+    });
+  });
+
+  group('DP-2: sign-in CTA (dead-end fix)', () {
+    testWidgets(
+        'awaitingFirebase sign-in EmptyView offers a Sign in action that '
+        'navigates to /login', (tester) async {
+      await _pump(
+        tester,
+        inbox: const TransportSnapshot<List<Conversation>>.awaitingFirebase(
+          <Conversation>[],
+        ),
+        router: true,
+      );
+
+      // The dead end this unit fixes: the DM-gate sign-in state had no way
+      // forward.
+      final signIn = find.text(l10n.actionSignIn);
+      expect(signIn, findsOneWidget);
+      expect(find.byIcon(LucideIcons.logIn), findsOneWidget);
+
+      await tester.tap(signIn);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('dest-login')), findsOneWidget);
+    });
+
+    testWidgets(
+        'the genuinely-empty "No conversations yet" EmptyView does NOT gain '
+        'a Sign in action', (tester) async {
+      await _pump(
+        tester,
+        inbox: const TransportSnapshot<List<Conversation>>.ready(
+          <Conversation>[],
+        ),
+      );
+
+      expect(find.text(l10n.inboxEmptyTitle), findsOneWidget);
+      // A ready-but-empty inbox is not a dead end (a real session with
+      // nothing in it yet) — it must not pick up the sign-in CTA.
+      expect(find.text(l10n.actionSignIn), findsNothing);
+      expect(find.byIcon(LucideIcons.logIn), findsNothing);
     });
   });
 

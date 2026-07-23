@@ -27,6 +27,9 @@ class AppLocalizationsKn extends AppLocalizations {
   String get actionRetry => 'ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ';
 
   @override
+  String get actionSignIn => 'ಸೈನ್ ಇನ್ ಮಾಡಿ';
+
+  @override
   String get actionSignOut => 'ಸೈನ್ ಔಟ್';
 
   @override

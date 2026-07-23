@@ -27,6 +27,9 @@ class AppLocalizationsTe extends AppLocalizations {
   String get actionRetry => 'మళ్లీ ప్రయత్నించండి';
 
   @override
+  String get actionSignIn => 'సైన్ ఇన్ చేయండి';
+
+  @override
   String get actionSignOut => 'సైన్ అవుట్';
 
   @override

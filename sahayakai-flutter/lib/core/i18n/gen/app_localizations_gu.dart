@@ -27,6 +27,9 @@ class AppLocalizationsGu extends AppLocalizations {
   String get actionRetry => 'ફરી પ્રયાસ કરો';
 
   @override
+  String get actionSignIn => 'સાઇન ઇન કરો';
+
+  @override
   String get actionSignOut => 'સાઇન આઉટ';
 
   @override

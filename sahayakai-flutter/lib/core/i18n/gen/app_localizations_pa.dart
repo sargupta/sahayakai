@@ -27,6 +27,9 @@ class AppLocalizationsPa extends AppLocalizations {
   String get actionRetry => 'ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ';
 
   @override
+  String get actionSignIn => 'ਸਾਈਨ ਇਨ ਕਰੋ';
+
+  @override
   String get actionSignOut => 'ਸਾਈਨ ਆਊਟ';
 
   @override

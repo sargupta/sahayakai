@@ -343,6 +343,11 @@ class _StaffroomSignIn extends StatelessWidget {
         icon: LucideIcons.users,
         title: l10n.staffroomSignInTitle,
         message: l10n.staffroomSignInBody,
+        action: SecondaryButton(
+          label: l10n.actionSignIn,
+          icon: LucideIcons.logIn,
+          onPressed: () => context.push(Routes.login),
+        ),
       ),
     );
   }

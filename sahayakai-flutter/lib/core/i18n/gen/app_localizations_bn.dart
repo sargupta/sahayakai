@@ -27,6 +27,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get actionRetry => 'আবার চেষ্টা করুন';
 
   @override
+  String get actionSignIn => 'সাইন ইন করুন';
+
+  @override
   String get actionSignOut => 'সাইন আউট';
 
   @override

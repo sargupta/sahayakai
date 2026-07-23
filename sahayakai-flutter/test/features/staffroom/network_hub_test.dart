@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
+import 'package:sahayakai/core/router/routes.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/inbox/data/block_c_transport.dart';
 import 'package:sahayakai/features/inbox/data/inbox_transport.dart';
@@ -16,6 +19,21 @@ import 'package:sahayakai/features/staffroom/domain/group.dart';
 import 'package:sahayakai/features/staffroom/presentation/network_hub_screen.dart';
 
 import '../../support/fake_block_c_transports.dart';
+
+/// A marker screen a real `context.push` resolves to, so the DP-2 sign-in
+/// navigation assertion does not have to drag a whole login screen's own
+/// provider graph into this suite (mirrors vidya_home_screen_test.dart's
+/// `_DestMarker`).
+class _DestMarker extends StatelessWidget {
+  const _DestMarker(this.id);
+
+  final String id;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(body: Center(child: Text('DEST', key: Key('dest-$id'))));
+  }
+}
 
 /// U-SI2 — the Network hub: the `AppSegmented [Staffroom | Messages]` over the
 /// Staffroom feed body and the reused U-SI1 inbox list. Verifies the segments
@@ -60,6 +78,7 @@ Future<void> _pumpHub(
   WidgetTester tester, {
   required FakeStaffroomTransport staffroom,
   required FakeInboxTransport inbox,
+  bool router = false,
 }) async {
   tester.view.physicalSize = const Size(390, 1400);
   tester.view.devicePixelRatio = 1.0;
@@ -71,23 +90,50 @@ Future<void> _pumpHub(
   addTearDown(staffroom.dispose);
   addTearDown(inbox.dispose);
 
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        staffroomTransportProvider.overrideWithValue(staffroom),
-        currentStaffroomUserIdProvider.overrideWithValue(_me),
-        inboxTransportProvider.overrideWithValue(inbox),
-        currentInboxUserIdProvider.overrideWithValue(_me),
+  final overrides = [
+    staffroomTransportProvider.overrideWithValue(staffroom),
+    currentStaffroomUserIdProvider.overrideWithValue(_me),
+    inboxTransportProvider.overrideWithValue(inbox),
+    currentInboxUserIdProvider.overrideWithValue(_me),
+  ];
+
+  if (router) {
+    final config = GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(path: '/', builder: (_, _) => const NetworkHubScreen()),
+        GoRoute(
+          path: Routes.login,
+          builder: (_, _) => const _DestMarker('login'),
+        ),
       ],
-      child: MaterialApp(
-        theme: AppTheme.light(),
-        locale: const Locale('en'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: const NetworkHubScreen(),
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: overrides,
+        child: MaterialApp.router(
+          theme: AppTheme.light(),
+          locale: const Locale('en'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          routerConfig: config,
+        ),
       ),
-    ),
-  );
+    );
+  } else {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: overrides,
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          locale: const Locale('en'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const NetworkHubScreen(),
+        ),
+      ),
+    );
+  }
   await tester.pumpAndSettle();
 }
 
@@ -154,5 +200,57 @@ void main() {
     await tester.tap(find.text(l10n.networkTabMessages));
     await tester.pumpAndSettle();
     expect(find.text(l10n.inboxSignInBody), findsOneWidget);
+  });
+
+  group('DP-2: sign-in CTA (dead-end fix)', () {
+    testWidgets(
+        'the Messages sign-in EmptyView offers a Sign in action that '
+        'navigates to /login', (tester) async {
+      await _pumpHub(
+        tester,
+        staffroom: FakeStaffroomTransport(),
+        inbox: FakeInboxTransport(
+          initialInbox: const TransportSnapshot<List<Conversation>>
+              .awaitingFirebase([]),
+        ),
+        router: true,
+      );
+
+      await tester.tap(find.text(l10n.networkTabMessages));
+      await tester.pumpAndSettle();
+
+      // The dead end this unit fixes: the Network hub's reused Messages
+      // sign-in state had no way forward.
+      final signIn = find.text(l10n.actionSignIn);
+      expect(signIn, findsOneWidget);
+      expect(find.byIcon(LucideIcons.logIn), findsOneWidget);
+
+      await tester.tap(signIn);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('dest-login')), findsOneWidget);
+    });
+
+    testWidgets(
+        'the genuinely-empty Messages EmptyView (ready, no conversations) '
+        'does NOT gain a Sign in action', (tester) async {
+      await _pumpHub(
+        tester,
+        staffroom: FakeStaffroomTransport(),
+        inbox: FakeInboxTransport(
+          initialInbox:
+              const TransportSnapshot<List<Conversation>>.ready(<Conversation>[]),
+        ),
+      );
+
+      await tester.tap(find.text(l10n.networkTabMessages));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.inboxEmptyTitle), findsOneWidget);
+      // A ready-but-empty inbox is not a dead end — it must not pick up the
+      // sign-in CTA.
+      expect(find.text(l10n.actionSignIn), findsNothing);
+      expect(find.byIcon(LucideIcons.logIn), findsNothing);
+    });
   });
 }

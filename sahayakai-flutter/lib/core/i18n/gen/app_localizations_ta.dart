@@ -27,6 +27,9 @@ class AppLocalizationsTa extends AppLocalizations {
   String get actionRetry => 'மீண்டும் முயற்சிக்கவும்';
 
   @override
+  String get actionSignIn => 'உள்நுழையவும்';
+
+  @override
   String get actionSignOut => 'வெளியேறு';
 
   @override
