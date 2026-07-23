@@ -1930,6 +1930,9 @@ class AppLocalizationsTa extends AppLocalizations {
       'உங்கள் மொழியில் பேசுங்கள், நான் வேலையைத் தயார் செய்கிறேன்.';
 
   @override
+  String get vidyaHeroBadge => 'உங்கள் AI கற்பித்தல் உதவியாளர்';
+
+  @override
   String get vidyaPromptLesson => 'ஒரு பாடத்தைத் திட்டமிடச் சொல்லுங்கள்';
 
   @override
@@ -1972,6 +1975,9 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get vidyaOpenSettings => 'அமைப்புகளைத் திற';
+
+  @override
+  String get vidyaSignIn => 'உள்நுழையவும்';
 
   @override
   String get vidyaLimitTitle => 'இன்றைய குரல் வரம்பை அடைந்துவிட்டீர்கள்';
@@ -3204,4 +3210,120 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get staffroomGroupChatEntry => 'குழு அரட்டை';
+
+  @override
+  String get staffroomDirectoryTitle => 'ஆசிரியர்களைக் கண்டறியுங்கள்';
+
+  @override
+  String get staffroomDirectoryEntryBody => 'ஆசிரியர் அடைவில் தேடுங்கள்';
+
+  @override
+  String get staffroomDirectorySearchHint =>
+      'பெயர் அல்லது பாடத்தின் மூலம் தேடுங்கள்';
+
+  @override
+  String get staffroomDirectoryErrorBody =>
+      'அடைவை ஏற்ற முடியவில்லை. மீண்டும் முயற்சிக்கவும்.';
+
+  @override
+  String get staffroomDirectoryEmptyTitle => 'ஆசிரியர்கள் யாரும் கிடைக்கவில்லை';
+
+  @override
+  String get staffroomDirectoryEmptyBody =>
+      'காட்ட இன்னும் ஆசிரியர்கள் யாரும் இல்லை.';
+
+  @override
+  String get staffroomDirectorySearchEmpty =>
+      'உங்கள் தேடலுக்கு ஆசிரியர்கள் யாரும் பொருந்தவில்லை.';
+
+  @override
+  String get staffroomProfileTitle => 'ஆசிரியர்';
+
+  @override
+  String get staffroomProfileErrorBody =>
+      'இந்த சுயவிவரத்தை ஏற்ற முடியவில்லை. மீண்டும் முயற்சிக்கவும்.';
+
+  @override
+  String get staffroomProfileNotFoundTitle => 'சுயவிவரம் கிடைக்கவில்லை';
+
+  @override
+  String get staffroomProfileNotFoundBody =>
+      'இந்த சுயவிவரம் கண்டறியப்படவில்லை.';
+
+  @override
+  String get staffroomProfileAboutLabel => 'அறிமுகம்';
+
+  @override
+  String get staffroomProfileBioEmpty => 'இன்னும் அறிமுகம் எதுவும் இல்லை.';
+
+  @override
+  String get staffroomProfileVerified => 'சரிபார்க்கப்பட்டது';
+
+  @override
+  String staffroomProfileExperience(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ஆண்டுகள் அனுபவம்',
+      one: '1 ஆண்டு அனுபவம்',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get staffroomProfileSubjectsLabel => 'பாடங்கள்';
+
+  @override
+  String get staffroomProfileClassesLabel => 'வகுப்புகள்';
+
+  @override
+  String get staffroomProfileLanguagesLabel => 'மொழிகள்';
+
+  @override
+  String get staffroomRequested => 'கோரிக்கை அனுப்பப்பட்டது';
+
+  @override
+  String get staffroomConnectionAccept => 'ஏற்கவும்';
+
+  @override
+  String get staffroomConnectionDecline => 'நிராகரிக்கவும்';
+
+  @override
+  String get staffroomConnected => 'இணைக்கப்பட்டது';
+
+  @override
+  String get staffroomConnectionWants => 'இணைய விரும்புகிறார்';
+
+  @override
+  String get staffroomMessage => 'செய்தி அனுப்பு';
+
+  @override
+  String get staffroomConnectToMessage => 'செய்தி அனுப்ப இணையுங்கள்';
+
+  @override
+  String get staffroomConnectionFailed =>
+      'புதுப்பிக்க முடியவில்லை. மீண்டும் முயல தட்டவும்.';
+
+  @override
+  String get staffroomDisconnect => 'தொடர்பைத் துண்டி';
+
+  @override
+  String get staffroomDisconnectConfirmTitle => 'தொடர்பைத் துண்டிக்கவா?';
+
+  @override
+  String get staffroomDisconnectConfirmBody =>
+      'நீங்கள் இனி இணைந்திருக்க மாட்டீர்கள் அல்லது ஒருவருக்கொருவர் செய்தி அனுப்ப முடியாது.';
+
+  @override
+  String get staffroomDisconnectCancel => 'இணைந்திருங்கள்';
+
+  @override
+  String get staffroomFollow => 'பின்தொடரவும்';
+
+  @override
+  String get staffroomFollowing => 'பின்தொடர்கிறீர்கள்';
+
+  @override
+  String get staffroomFollowFailed =>
+      'புதுப்பிக்க முடியவில்லை. மீண்டும் முயல தட்டவும்.';
 }

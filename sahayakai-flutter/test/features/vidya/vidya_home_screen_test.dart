@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
+import 'package:sahayakai/core/router/routes.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/vidya/data/dto/vidya_action.dart';
 import 'package:sahayakai/features/vidya/presentation/vidya_controller.dart';
@@ -76,6 +78,66 @@ Future<void> _pumpHome(
     ),
   );
   await tester.pump();
+}
+
+/// A marker screen a real `context.push` resolves to, so a navigation
+/// assertion does not have to drag a whole tool screen's own provider graph
+/// into this suite (mirrors `content_creator_screen_test.dart`'s pattern).
+class _DestMarker extends StatelessWidget {
+  const _DestMarker(this.id);
+
+  final String id;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(body: Center(child: Text('DEST', key: Key('dest-$id'))));
+  }
+}
+
+/// Boots the VIDYA home inside a real [GoRouter] rather than a bare
+/// [MaterialApp], for the two tests that actually exercise a `context.push`
+/// (the Quick Tools tile and the signed-out Sign in action) — the plain
+/// [_pumpHome] harness has no router, so tapping a push-triggering control
+/// there would throw ("No GoRouter found in context").
+Future<void> _pumpHomeWithRouter(
+  WidgetTester tester,
+  VidyaState state, {
+  Locale locale = const Locale('en'),
+}) async {
+  // Same reduce-motion default as [_pumpHome]: without it the idle seal's
+  // breathing animation and the rotating prompt's timer never settle, and
+  // `pumpAndSettle` below times out (DESIGN_RUBRIC's motion-off contract).
+  tester.platformDispatcher.accessibilityFeaturesTestValue =
+      const FakeAccessibilityFeatures(disableAnimations: true);
+  addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+
+  final router = GoRouter(
+    initialLocation: Routes.home,
+    routes: [
+      GoRoute(path: Routes.home, builder: (_, _) => const VidyaHomeScreen()),
+      GoRoute(path: Routes.login, builder: (_, _) => const _DestMarker('login')),
+      GoRoute(
+        path: Routes.lessonPlan,
+        builder: (_, _) => const _DestMarker('lesson-plan'),
+      ),
+    ],
+  );
+
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        vidyaControllerProvider.overrideWith(() => _FakeVidyaController(state)),
+      ],
+      child: MaterialApp.router(
+        routerConfig: router,
+        theme: AppTheme.light(),
+        locale: locale,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
 }
 
 String _expectedGreeting() {
@@ -200,6 +262,31 @@ void main() {
       expect(find.byType(SealMic), findsOneWidget);
     });
 
+    testWidgets(
+        'DP-1: signed-out now offers a Sign in action that navigates to /login',
+        (tester) async {
+      await _pumpHomeWithRouter(
+        tester,
+        const VidyaState(status: VidyaStatus.signedOut),
+      );
+
+      // The dead end this unit fixes: micDenied/failed already had a
+      // recovery action; signed-out now does too.
+      final signIn = find.text('Sign in');
+      expect(signIn, findsOneWidget);
+      expect(find.byIcon(LucideIcons.logIn), findsOneWidget);
+
+      // The idle canvas is a scrollable column (see `_EmptyLayout`); bring
+      // the action into view before tapping (a tap only WARNS on a missed
+      // hit-test, per the dashboard suite's `ensureVisible` pattern).
+      await tester.ensureVisible(signIn);
+      await tester.pumpAndSettle();
+      await tester.tap(signIn);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('dest-login')), findsOneWidget);
+    });
+
     testWidgets('a permanent mic denial offers Open settings', (tester) async {
       await _pumpHome(
         tester,
@@ -220,6 +307,71 @@ void main() {
 
       expect(find.text('That did not go through'), findsOneWidget);
       expect(find.text('Try again'), findsOneWidget);
+    });
+  });
+
+  group('DP-1: the hero badge', () {
+    testWidgets('renders the AI co-teaching badge above the eyebrow',
+        (tester) async {
+      await _pumpHome(tester, const VidyaState());
+      await tester.pumpAndSettle();
+
+      expect(find.text('Your AI co-teaching assistant'), findsOneWidget);
+      // In the idle state (no confirm chips) the sparkles glyph belongs to
+      // the badge alone.
+      expect(find.byIcon(LucideIcons.sparkles), findsOneWidget);
+      // The existing eyebrow still renders below it (EditorialSectionHeader
+      // upper-cases Latin text; unlike the badge, which does not).
+      expect(find.text('YOUR CO-TEACHER'), findsOneWidget);
+    });
+  });
+
+  group('DP-1: Quick Tools preview (idle canvas only)', () {
+    testWidgets('previews the first six registry tools below the mic',
+        (tester) async {
+      await _pumpHome(tester, const VidyaState());
+      await tester.pumpAndSettle();
+
+      // EditorialSectionHeader upper-cases Latin eyebrow text.
+      expect(find.text('YOUR TEACHING TOOLS'), findsOneWidget);
+      expect(find.text('Lesson Plan'), findsOneWidget);
+      expect(find.text('Quiz'), findsOneWidget);
+      expect(find.text('Instant Answer'), findsOneWidget);
+      expect(find.text('Worksheet'), findsOneWidget);
+      expect(find.text('Rubric'), findsOneWidget);
+      expect(find.text('Exam Paper'), findsOneWidget);
+    });
+
+    testWidgets('never appears once a conversation is active', (tester) async {
+      await _pumpHome(
+        tester,
+        const VidyaState(
+          conversation: [
+            ConversationBlock(
+              role: ConversationRole.teacher,
+              text: 'plan a lesson on fractions',
+            ),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // The Quick Tools preview is an idle-canvas affordance only — once a
+      // turn lands, the transcript is the page and the tool grid stays a
+      // Prep-desk tap away, not a second copy inline.
+      expect(find.text('YOUR TEACHING TOOLS'), findsNothing);
+    });
+
+    testWidgets('tapping a tile pushes the tool\'s real route', (tester) async {
+      await _pumpHomeWithRouter(tester, const VidyaState());
+
+      final tile = find.text('Lesson Plan');
+      await tester.ensureVisible(tile);
+      await tester.pumpAndSettle();
+      await tester.tap(tile);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('dest-lesson-plan')), findsOneWidget);
     });
   });
 

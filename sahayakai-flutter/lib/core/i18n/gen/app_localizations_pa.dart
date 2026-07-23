@@ -1926,6 +1926,9 @@ class AppLocalizationsPa extends AppLocalizations {
   String get vidyaDeck => 'ਆਪਣੀ ਭਾਸ਼ਾ ਵਿੱਚ ਬੋਲੋ, ਅਤੇ ਮੈਂ ਕੰਮ ਤਿਆਰ ਕਰ ਦੇਵਾਂਗੀ।';
 
   @override
+  String get vidyaHeroBadge => 'ਤੁਹਾਡਾ AI ਅਧਿਆਪਨ ਸਹਾਇਕ';
+
+  @override
   String get vidyaPromptLesson => 'ਪਾਠ ਯੋਜਨਾ ਬਣਾਉਣ ਲਈ ਕਹੋ';
 
   @override
@@ -1968,6 +1971,9 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get vidyaOpenSettings => 'ਸੈਟਿੰਗਾਂ ਖੋਲ੍ਹੋ';
+
+  @override
+  String get vidyaSignIn => 'ਸਾਈਨ ਇਨ ਕਰੋ';
 
   @override
   String get vidyaLimitTitle => 'ਤੁਸੀਂ ਅੱਜ ਦੀ ਵੌਇਸ ਸੀਮਾ ਤੱਕ ਪਹੁੰਚ ਗਏ ਹੋ';
@@ -3186,4 +3192,118 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get staffroomGroupChatEntry => 'ਗਰੁੱਪ ਚੈਟ';
+
+  @override
+  String get staffroomDirectoryTitle => 'ਅਧਿਆਪਕ ਲੱਭੋ';
+
+  @override
+  String get staffroomDirectoryEntryBody => 'ਅਧਿਆਪਕ ਡਾਇਰੈਕਟਰੀ ਵਿੱਚ ਖੋਜੋ';
+
+  @override
+  String get staffroomDirectorySearchHint => 'ਨਾਮ ਜਾਂ ਵਿਸ਼ੇ ਦੁਆਰਾ ਖੋਜੋ';
+
+  @override
+  String get staffroomDirectoryErrorBody =>
+      'ਡਾਇਰੈਕਟਰੀ ਲੋਡ ਨਹੀਂ ਹੋ ਸਕੀ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
+
+  @override
+  String get staffroomDirectoryEmptyTitle => 'ਕੋਈ ਅਧਿਆਪਕ ਨਹੀਂ ਮਿਲਿਆ';
+
+  @override
+  String get staffroomDirectoryEmptyBody =>
+      'ਦਿਖਾਉਣ ਲਈ ਹਾਲੇ ਕੋਈ ਅਧਿਆਪਕ ਨਹੀਂ ਹੈ।';
+
+  @override
+  String get staffroomDirectorySearchEmpty =>
+      'ਤੁਹਾਡੀ ਖੋਜ ਨਾਲ ਕੋਈ ਅਧਿਆਪਕ ਮੇਲ ਨਹੀਂ ਖਾਂਦਾ।';
+
+  @override
+  String get staffroomProfileTitle => 'ਅਧਿਆਪਕ';
+
+  @override
+  String get staffroomProfileErrorBody =>
+      'ਇਹ ਪ੍ਰੋਫਾਈਲ ਲੋਡ ਨਹੀਂ ਹੋ ਸਕੀ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
+
+  @override
+  String get staffroomProfileNotFoundTitle => 'ਪ੍ਰੋਫਾਈਲ ਉਪਲਬਧ ਨਹੀਂ';
+
+  @override
+  String get staffroomProfileNotFoundBody => 'ਇਹ ਪ੍ਰੋਫਾਈਲ ਨਹੀਂ ਮਿਲੀ।';
+
+  @override
+  String get staffroomProfileAboutLabel => 'ਜਾਣ-ਪਛਾਣ';
+
+  @override
+  String get staffroomProfileBioEmpty => 'ਹਾਲੇ ਕੋਈ ਜਾਣ-ਪਛਾਣ ਨਹੀਂ ਹੈ।';
+
+  @override
+  String get staffroomProfileVerified => 'ਪੁਸ਼ਟੀ ਕੀਤੀ';
+
+  @override
+  String staffroomProfileExperience(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ਸਾਲ ਦਾ ਤਜਰਬਾ',
+      one: '1 ਸਾਲ ਦਾ ਤਜਰਬਾ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get staffroomProfileSubjectsLabel => 'ਵਿਸ਼ੇ';
+
+  @override
+  String get staffroomProfileClassesLabel => 'ਜਮਾਤਾਂ';
+
+  @override
+  String get staffroomProfileLanguagesLabel => 'ਭਾਸ਼ਾਵਾਂ';
+
+  @override
+  String get staffroomRequested => 'ਬੇਨਤੀ ਭੇਜੀ';
+
+  @override
+  String get staffroomConnectionAccept => 'ਸਵੀਕਾਰ ਕਰੋ';
+
+  @override
+  String get staffroomConnectionDecline => 'ਰੱਦ ਕਰੋ';
+
+  @override
+  String get staffroomConnected => 'ਕਨੈਕਟ ਹੋ ਗਏ';
+
+  @override
+  String get staffroomConnectionWants => 'ਕਨੈਕਟ ਹੋਣਾ ਚਾਹੁੰਦੇ ਹਨ';
+
+  @override
+  String get staffroomMessage => 'ਸੁਨੇਹਾ ਭੇਜੋ';
+
+  @override
+  String get staffroomConnectToMessage => 'ਸੁਨੇਹਾ ਭੇਜਣ ਲਈ ਕਨੈਕਟ ਕਰੋ';
+
+  @override
+  String get staffroomConnectionFailed =>
+      'ਅੱਪਡੇਟ ਨਹੀਂ ਹੋ ਸਕਿਆ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਲਈ ਟੈਪ ਕਰੋ।';
+
+  @override
+  String get staffroomDisconnect => 'ਡਿਸਕਨੈਕਟ ਕਰੋ';
+
+  @override
+  String get staffroomDisconnectConfirmTitle => 'ਡਿਸਕਨੈਕਟ ਕਰਨਾ ਹੈ?';
+
+  @override
+  String get staffroomDisconnectConfirmBody =>
+      'ਤੁਸੀਂ ਹੁਣ ਕਨੈਕਟ ਨਹੀਂ ਰਹੋਗੇ ਜਾਂ ਇੱਕ-ਦੂਜੇ ਨੂੰ ਸੁਨੇਹਾ ਨਹੀਂ ਭੇਜ ਸਕੋਗੇ।';
+
+  @override
+  String get staffroomDisconnectCancel => 'ਕਨੈਕਟ ਰਹੋ';
+
+  @override
+  String get staffroomFollow => 'ਫਾਲੋ ਕਰੋ';
+
+  @override
+  String get staffroomFollowing => 'ਫਾਲੋ ਕਰ ਰਹੇ ਹੋ';
+
+  @override
+  String get staffroomFollowFailed =>
+      'ਅੱਪਡੇਟ ਨਹੀਂ ਹੋ ਸਕਿਆ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਲਈ ਟੈਪ ਕਰੋ।';
 }

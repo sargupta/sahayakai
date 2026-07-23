@@ -10,13 +10,16 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../inbox/presentation/widgets/inbox_entry_button.dart';
+import '../../../shared/domain/tool_registry.dart';
 import '../../../shared/motion/animated_entrance.dart';
+import '../../../shared/widgets/app_badge.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/secondary_button.dart';
 import 'vidya_controller.dart';
 import 'vidya_nav_dispatcher.dart';
 import 'vidya_status_ui.dart';
 import 'widgets/conversation_block.dart';
+import 'widgets/quick_tools_row.dart';
 import 'widgets/seal_mic.dart';
 
 /// "The Almanac Speaks" — the voice-first home (PREMIUM_DESIGN_SPEC §B). A
@@ -111,26 +114,48 @@ class _VidyaHomeScreenState extends ConsumerState<VidyaHomeScreen> {
   }
 }
 
-/// The nearly-empty first canvas: masthead pinned high-left, the Seal Mic at the
-/// optical centre (slightly above middle). Uses a `Stack` so it never throws a
-/// RenderFlex overflow at 360dp × textScale 1.3 — the composed still just holds.
+/// The nearly-empty first canvas: masthead pinned high-left, the Seal Mic
+/// beneath it, then a Quick Tools preview so the idle canvas reads as a
+/// populated product (matching the PWA's hero + tool grid) rather than an
+/// empty placeholder holding one mic.
+///
+/// A `SingleChildScrollView` over a top-down `Column`, NOT the earlier
+/// `Stack`-of-`Align`s: the old composition depended on the Stack being given
+/// the full viewport height (so its fractional `Alignment` could place the
+/// mic at the optical centre), which leaves no room to show the Quick Tools
+/// row without an extra full-screen scroll. A `Column` sized to its own
+/// content — scrollable so it NEVER overflows at 360dp × textScale 1.3 or on
+/// a Malayalam-length label — trades the exact fractional centring for
+/// content that is actually visible on the first screen, which is the
+/// specific gap this unit exists to close (DESIGN_PARITY_BLOCK DP-1).
 class _EmptyLayout extends StatelessWidget {
   const _EmptyLayout({required this.state, required this.controller});
 
   final VidyaState state;
   final VidyaController controller;
 
+  /// How many of the registry's tools the idle canvas previews below the
+  /// mic. The rest stay one tap away at the Prep desk — this is a preview,
+  /// not a second copy of the full grid.
+  static const int _quickToolsCount = 6;
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    final l10n = context.l10n;
+    final tools = kToolRegistry.take(_quickToolsCount).toList();
+
+    return SingleChildScrollView(
       padding: AppSpacing.pagePadding,
-      child: Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Align(alignment: Alignment.topLeft, child: _Masthead()),
-          Align(
-            alignment: const Alignment(0, -0.08), // the optical centre, a touch high
-            child: _MicCluster(state: state, controller: controller, big: true),
-          ),
+          const _Masthead(),
+          const SizedBox(height: AppSpacing.space10),
+          _MicCluster(state: state, controller: controller, big: true),
+          const SizedBox(height: AppSpacing.space8),
+          EditorialSectionHeader(l10n.dashboardToolsTitle),
+          const SizedBox(height: AppSpacing.space4),
+          QuickToolsRow(tools: tools),
         ],
       ),
     );
@@ -207,6 +232,12 @@ class _Masthead extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         const SizedBox(height: AppSpacing.space6),
+        AppBadge(
+          icon: LucideIcons.sparkles,
+          label: l10n.vidyaHeroBadge,
+          tone: AppBadgeTone.accent,
+        ),
+        const SizedBox(height: AppSpacing.space3),
         EditorialSectionHeader(l10n.vidyaEyebrow, rule: false),
         const SizedBox(height: AppSpacing.space3),
         Text(_salutation(l10n), style: text.displayLarge),
@@ -308,6 +339,12 @@ class _TerminalPanel extends StatelessWidget {
         label: l10n.actionRetry,
         icon: LucideIcons.refreshCw,
         onPressed: controller.onMicTap,
+      );
+    } else if (status == VidyaStatus.signedOut) {
+      action = SecondaryButton(
+        label: l10n.vidyaSignIn,
+        icon: LucideIcons.logIn,
+        onPressed: () => context.push(Routes.login),
       );
     }
 

@@ -1926,6 +1926,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Speak in your language, and I will prepare the work.';
 
   @override
+  String get vidyaHeroBadge => 'Your AI co-teaching assistant';
+
+  @override
   String get vidyaPromptLesson => 'Ask me to plan a lesson';
 
   @override
@@ -1968,6 +1971,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get vidyaOpenSettings => 'Open settings';
+
+  @override
+  String get vidyaSignIn => 'Sign in';
 
   @override
   String get vidyaLimitTitle => 'You have reached today\'s voice limit';
@@ -3174,4 +3180,115 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get staffroomGroupChatEntry => 'Group chat';
+
+  @override
+  String get staffroomDirectoryTitle => 'Find teachers';
+
+  @override
+  String get staffroomDirectoryEntryBody => 'Search the teacher directory';
+
+  @override
+  String get staffroomDirectorySearchHint => 'Search by name or subject';
+
+  @override
+  String get staffroomDirectoryErrorBody =>
+      'We couldn\'t load the directory. Please try again.';
+
+  @override
+  String get staffroomDirectoryEmptyTitle => 'No teachers found';
+
+  @override
+  String get staffroomDirectoryEmptyBody => 'No teachers to show yet.';
+
+  @override
+  String get staffroomDirectorySearchEmpty => 'No teachers match your search.';
+
+  @override
+  String get staffroomProfileTitle => 'Teacher';
+
+  @override
+  String get staffroomProfileErrorBody =>
+      'We couldn\'t load this profile. Please try again.';
+
+  @override
+  String get staffroomProfileNotFoundTitle => 'Profile unavailable';
+
+  @override
+  String get staffroomProfileNotFoundBody =>
+      'This teacher\'s profile could not be found.';
+
+  @override
+  String get staffroomProfileAboutLabel => 'About';
+
+  @override
+  String get staffroomProfileBioEmpty => 'No bio yet.';
+
+  @override
+  String get staffroomProfileVerified => 'Verified';
+
+  @override
+  String staffroomProfileExperience(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count yrs experience',
+      one: '1 yr experience',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get staffroomProfileSubjectsLabel => 'Subjects';
+
+  @override
+  String get staffroomProfileClassesLabel => 'Classes';
+
+  @override
+  String get staffroomProfileLanguagesLabel => 'Languages';
+
+  @override
+  String get staffroomRequested => 'Requested';
+
+  @override
+  String get staffroomConnectionAccept => 'Accept';
+
+  @override
+  String get staffroomConnectionDecline => 'Decline';
+
+  @override
+  String get staffroomConnected => 'Connected';
+
+  @override
+  String get staffroomConnectionWants => 'Wants to connect';
+
+  @override
+  String get staffroomMessage => 'Message';
+
+  @override
+  String get staffroomConnectToMessage => 'Connect to message';
+
+  @override
+  String get staffroomConnectionFailed => 'Couldn\'t update. Tap to retry.';
+
+  @override
+  String get staffroomDisconnect => 'Disconnect';
+
+  @override
+  String get staffroomDisconnectConfirmTitle => 'Disconnect?';
+
+  @override
+  String get staffroomDisconnectConfirmBody =>
+      'You\'ll no longer be connected or able to message each other.';
+
+  @override
+  String get staffroomDisconnectCancel => 'Stay connected';
+
+  @override
+  String get staffroomFollow => 'Follow';
+
+  @override
+  String get staffroomFollowing => 'Following';
+
+  @override
+  String get staffroomFollowFailed => 'Couldn\'t update. Tap to retry.';
 }

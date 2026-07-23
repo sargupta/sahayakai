@@ -3494,6 +3494,12 @@ abstract class AppLocalizations {
   /// **'Speak in your language, and I will prepare the work.'**
   String get vidyaDeck;
 
+  /// Accent pill above the VIDYA home eyebrow, echoing the PWA hero's AI badge.
+  ///
+  /// In en, this message translates to:
+  /// **'Your AI co-teaching assistant'**
+  String get vidyaHeroBadge;
+
   /// Rotating VIDYA prompt example: plan a lesson.
   ///
   /// In en, this message translates to:
@@ -3577,6 +3583,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open settings'**
   String get vidyaOpenSettings;
+
+  /// VIDYA signed-out terminal panel action button, routes to the login screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get vidyaSignIn;
 
   /// VIDYA voice-quota (429) calm limit state title.
   ///
@@ -5521,6 +5533,204 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Group chat'**
   String get staffroomGroupChatEntry;
+
+  /// Teacher Directory (U-SI4) screen title + the Staffroom-home 'Find teachers' entry-tile title.
+  ///
+  /// In en, this message translates to:
+  /// **'Find teachers'**
+  String get staffroomDirectoryTitle;
+
+  /// Subtitle on the 'Find teachers' entry tile in the Staffroom home.
+  ///
+  /// In en, this message translates to:
+  /// **'Search the teacher directory'**
+  String get staffroomDirectoryEntryBody;
+
+  /// Placeholder in the Teacher Directory search field (client-side name/subject filter).
+  ///
+  /// In en, this message translates to:
+  /// **'Search by name or subject'**
+  String get staffroomDirectorySearchHint;
+
+  /// Teacher Directory load-error ErrorView body (with retry).
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load the directory. Please try again.'**
+  String get staffroomDirectoryErrorBody;
+
+  /// Teacher Directory empty-state title (no teachers, or no search matches).
+  ///
+  /// In en, this message translates to:
+  /// **'No teachers found'**
+  String get staffroomDirectoryEmptyTitle;
+
+  /// Teacher Directory ready-but-empty EmptyView body.
+  ///
+  /// In en, this message translates to:
+  /// **'No teachers to show yet.'**
+  String get staffroomDirectoryEmptyBody;
+
+  /// Teacher Directory body shown when a search query matches no teachers.
+  ///
+  /// In en, this message translates to:
+  /// **'No teachers match your search.'**
+  String get staffroomDirectorySearchEmpty;
+
+  /// Public profile app-bar fallback title before the name resolves.
+  ///
+  /// In en, this message translates to:
+  /// **'Teacher'**
+  String get staffroomProfileTitle;
+
+  /// Public profile load-error ErrorView body (with retry).
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t load this profile. Please try again.'**
+  String get staffroomProfileErrorBody;
+
+  /// Public profile not-found EmptyView title (removed / not found).
+  ///
+  /// In en, this message translates to:
+  /// **'Profile unavailable'**
+  String get staffroomProfileNotFoundTitle;
+
+  /// Public profile not-found EmptyView body.
+  ///
+  /// In en, this message translates to:
+  /// **'This teacher\'s profile could not be found.'**
+  String get staffroomProfileNotFoundBody;
+
+  /// Public profile section header above the teacher's bio.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get staffroomProfileAboutLabel;
+
+  /// Public profile shown when the teacher has written no bio.
+  ///
+  /// In en, this message translates to:
+  /// **'No bio yet.'**
+  String get staffroomProfileBioEmpty;
+
+  /// Badge on a verified teacher's profile masthead.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified'**
+  String get staffroomProfileVerified;
+
+  /// Public profile years-of-experience stat.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 yr experience} other{{count} yrs experience}}'**
+  String staffroomProfileExperience(int count);
+
+  /// Public profile label above the subjects chips.
+  ///
+  /// In en, this message translates to:
+  /// **'Subjects'**
+  String get staffroomProfileSubjectsLabel;
+
+  /// Public profile label above the grade-levels (classes) chips.
+  ///
+  /// In en, this message translates to:
+  /// **'Classes'**
+  String get staffroomProfileClassesLabel;
+
+  /// Public profile label above the languages chips.
+  ///
+  /// In en, this message translates to:
+  /// **'Languages'**
+  String get staffroomProfileLanguagesLabel;
+
+  /// Connection state: an outgoing request is pending (disabled 'Requested' marker).
+  ///
+  /// In en, this message translates to:
+  /// **'Requested'**
+  String get staffroomRequested;
+
+  /// Accept an incoming connection request.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get staffroomConnectionAccept;
+
+  /// Decline an incoming connection request.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get staffroomConnectionDecline;
+
+  /// Connection state: mutually connected (marker label).
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get staffroomConnected;
+
+  /// Compact directory-row badge: this teacher sent the current user a connection request.
+  ///
+  /// In en, this message translates to:
+  /// **'Wants to connect'**
+  String get staffroomConnectionWants;
+
+  /// Open the direct-message thread — enabled ONLY for a mutual connection (the DM gate).
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get staffroomMessage;
+
+  /// Hint shown wherever the Message action is gated: a mutual connection is required to DM.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to message'**
+  String get staffroomConnectToMessage;
+
+  /// Quiet inline hint after an optimistic connection action rolled back.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t update. Tap to retry.'**
+  String get staffroomConnectionFailed;
+
+  /// Remove a mutual connection (also the confirm-dialog confirm label).
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get staffroomDisconnect;
+
+  /// Disconnect confirmation dialog title.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect?'**
+  String get staffroomDisconnectConfirmTitle;
+
+  /// Disconnect confirmation dialog body (explains the DM gate closes).
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ll no longer be connected or able to message each other.'**
+  String get staffroomDisconnectConfirmBody;
+
+  /// Disconnect confirmation dialog cancel label.
+  ///
+  /// In en, this message translates to:
+  /// **'Stay connected'**
+  String get staffroomDisconnectCancel;
+
+  /// Follow a teacher (directed follow graph — INDEPENDENT of the connection/DM gate).
+  ///
+  /// In en, this message translates to:
+  /// **'Follow'**
+  String get staffroomFollow;
+
+  /// Following state (tap to unfollow); independent of the connection/DM gate.
+  ///
+  /// In en, this message translates to:
+  /// **'Following'**
+  String get staffroomFollowing;
+
+  /// Quiet inline hint after an optimistic follow toggle rolled back.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t update. Tap to retry.'**
+  String get staffroomFollowFailed;
 }
 
 class _AppLocalizationsDelegate
