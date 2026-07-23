@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import '../../../core/auth/auth_providers.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
@@ -120,11 +121,11 @@ class _InboxList extends StatelessWidget {
 
 /// The DM-gate / signed-out surface: a dignified sign-in prompt. On-device (the
 /// deferred transport) this is what the inbox always shows.
-class _InboxSignIn extends StatelessWidget {
+class _InboxSignIn extends ConsumerWidget {
   const _InboxSignIn();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     return SingleChildScrollView(
       padding: AppSpacing.pagePadding,
@@ -135,7 +136,14 @@ class _InboxSignIn extends StatelessWidget {
         action: SecondaryButton(
           label: l10n.actionSignIn,
           icon: LucideIcons.logIn,
-          onPressed: () => context.push(Routes.login),
+          // See vidya_home_screen.dart's _TerminalPanel for why: the router's
+          // separate stub authControllerProvider can still read signedIn from
+          // an earlier onboarding pass, which silently bounces a bare push to
+          // /login straight back — clear it first so the push actually lands.
+          onPressed: () {
+            ref.read(authControllerProvider.notifier).signOut();
+            context.push(Routes.login);
+          },
         ),
       ),
     );
