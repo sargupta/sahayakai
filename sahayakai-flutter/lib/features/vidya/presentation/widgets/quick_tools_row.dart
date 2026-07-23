@@ -42,6 +42,7 @@ class QuickToolsRow extends StatelessWidget {
           children: [
             for (final tool in tools)
               SizedBox(
+                key: ValueKey('quick-tool-${tool.id}'),
                 width: tileWidth,
                 child: _QuickToolTile(tool: tool),
               ),

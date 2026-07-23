@@ -7,6 +7,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/router/routes.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
+import 'package:sahayakai/features/dashboard/presentation/floating_bottom_nav.dart';
 import 'package:sahayakai/features/vidya/data/dto/vidya_action.dart';
 import 'package:sahayakai/features/vidya/presentation/vidya_controller.dart';
 import 'package:sahayakai/features/vidya/presentation/vidya_home_screen.dart';
@@ -327,7 +328,7 @@ void main() {
   });
 
   group('DP-1: Quick Tools preview (idle canvas only)', () {
-    testWidgets('previews the first six registry tools below the mic',
+    testWidgets('previews the first two registry tools below the mic',
         (tester) async {
       await _pumpHome(tester, const VidyaState());
       await tester.pumpAndSettle();
@@ -336,10 +337,73 @@ void main() {
       expect(find.text('YOUR TEACHING TOOLS'), findsOneWidget);
       expect(find.text('Lesson Plan'), findsOneWidget);
       expect(find.text('Quiz'), findsOneWidget);
-      expect(find.text('Instant Answer'), findsOneWidget);
-      expect(find.text('Worksheet'), findsOneWidget);
-      expect(find.text('Rubric'), findsOneWidget);
-      expect(find.text('Exam Paper'), findsOneWidget);
+      // Floored at 2 (one row), not the full registry — the rest stay one
+      // tap away at the Prep desk. See the DESIGN_PARITY_BLOCK DP-1 fix:
+      // even a 2nd row measured below the floating bottom nav's top edge in
+      // the real-geometry regression test, so the preview stops at one row.
+      expect(find.text('Instant Answer'), findsNothing);
+      expect(find.text('Worksheet'), findsNothing);
+    });
+
+    testWidgets(
+        'Quick Tools tiles clear the floating bottom nav on first paint',
+        (tester) async {
+      // Regression test for the DP-1 design review finding: the bare
+      // _pumpHome harness has no AppShell/FloatingBottomNav, so it could not
+      // catch a tile being sliced off by the real nav bar. This wraps the
+      // home in the same Scaffold+FloatingBottomNav shape AppShell gives it.
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      tester.platformDispatcher.accessibilityFeaturesTestValue =
+          const FakeAccessibilityFeatures(disableAnimations: true);
+      addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            vidyaControllerProvider
+                .overrideWith(() => _FakeVidyaController(const VidyaState())),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.light(),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: const VidyaHomeScreen(),
+              bottomNavigationBar: FloatingBottomNav(
+                currentIndex: 0,
+                onSelected: (_) {},
+                items: const [
+                  FloatingNavItem(icon: LucideIcons.mic, label: 'Home'),
+                  FloatingNavItem(
+                    icon: LucideIcons.sparkles,
+                    label: 'Create',
+                    isAction: true,
+                  ),
+                  FloatingNavItem(icon: LucideIcons.library, label: 'Library'),
+                  FloatingNavItem(icon: LucideIcons.user, label: 'Me'),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // The last preview tile (the 2nd, at _quickToolsCount) must sit fully
+      // above the floating nav's top edge, unscrolled — not merely present
+      // in the tree (a bare find.text would pass even half-clipped).
+      final lastTile = find.byKey(const ValueKey('quick-tool-quiz'));
+      expect(lastTile, findsOneWidget);
+      final navTop = tester.getTopLeft(find.byType(FloatingBottomNav)).dy;
+      final tileBottom = tester.getBottomLeft(lastTile).dy;
+      expect(
+        tileBottom,
+        lessThanOrEqualTo(navTop),
+        reason: 'the last Quick Tools tile must clear the floating bottom '
+            'nav on first paint, unscrolled',
+      );
     });
 
     testWidgets('never appears once a conversation is active', (tester) async {

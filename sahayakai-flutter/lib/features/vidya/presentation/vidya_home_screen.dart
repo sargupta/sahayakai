@@ -137,7 +137,20 @@ class _EmptyLayout extends StatelessWidget {
   /// How many of the registry's tools the idle canvas previews below the
   /// mic. The rest stay one tap away at the Prep desk — this is a preview,
   /// not a second copy of the full grid.
-  static const int _quickToolsCount = 6;
+  ///
+  /// Floored at 2 (one row), not 6: on the standard 390×844 test surface
+  /// (and smaller real phones) the content above this row — badge, eyebrow,
+  /// greeting, rule, deck, the 128dp mic, caption — already fills most of
+  /// the viewport height that remains once `AppShell`'s floating bottom nav
+  /// claims its ~72dp. Even a 2nd row still landed below the nav bar's top
+  /// edge in a real layout measurement, not just a guess — a 3rd/4th tile
+  /// rendered there with its label sliced off by the nav bar on first
+  /// paint: a half-visible, label-less tile reads as broken, not "scroll for
+  /// more" — the opposite of this unit's purpose. See
+  /// `test/features/vidya/vidya_home_screen_test.dart` ("Quick Tools tiles
+  /// clear the floating bottom nav on first paint"), which asserts this by
+  /// measuring real widget geometry, not by counting rows.
+  static const int _quickToolsCount = 2;
 
   @override
   Widget build(BuildContext context) {
@@ -150,11 +163,15 @@ class _EmptyLayout extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const _Masthead(),
-          const SizedBox(height: AppSpacing.space10),
+          // Tightened from space10/space8/space4 (measured, not guessed): the
+          // Quick Tools row only clears the floating bottom nav on first
+          // paint with this rhythm reclaimed — see the geometry regression
+          // test above _quickToolsCount.
+          const SizedBox(height: AppSpacing.space5),
           _MicCluster(state: state, controller: controller, big: true),
-          const SizedBox(height: AppSpacing.space8),
-          EditorialSectionHeader(l10n.dashboardToolsTitle),
           const SizedBox(height: AppSpacing.space4),
+          EditorialSectionHeader(l10n.dashboardToolsTitle),
+          const SizedBox(height: AppSpacing.space2),
           QuickToolsRow(tools: tools),
         ],
       ),
