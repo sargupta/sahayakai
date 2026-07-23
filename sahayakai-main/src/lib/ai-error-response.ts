@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { logger } from './logger';
+import { PlanLimitExceededError } from './usage-tracker';
 
 // ZodError detection via name + shape rather than `instanceof ZodError`.
 // Next.js can load zod from both CJS (`zod/v3/types.cjs`) and ESM entrypoints
@@ -148,6 +149,12 @@ export function logAIError(
         logger.warn(ctx.message, context, { ...extra, reason: 'invalid_request', zodIssues: error.issues });
         return;
     }
+    if (error instanceof PlanLimitExceededError) {
+        // A user hitting their own daily cap is expected/routine, not a
+        // bug — don't page on-call (see file header re: error-alert noise).
+        logger.warn(ctx.message, context, { ...extra, reason: 'plan_limit', type: error.type, used: error.used, limit: error.limit });
+        return;
+    }
     if (isQuotaExhausted(error) || isSafetyViolation(error) || isBadInputMedia(error)) {
         const reason = isSafetyViolation(error)
             ? 'safety'
@@ -251,6 +258,33 @@ export function handleAIError(
                 })),
             },
             { status: 400 },
+        );
+    }
+
+    // 1b. Per-user daily plan/usage cap reached (`checkUsage` in
+    //     usage-tracker.ts) → 429 with the specific type/used/limit so the
+    //     client's upgrade-prompt UI can render. Before this branch existed,
+    //     handleAIError had no case for it, so every quota-capped call on a
+    //     route using handleAIError (e.g. assess-assignment) fell through to
+    //     the generic 500 "AI generation failed" branch below instead of the
+    //     429 the client's PLAN_LIMIT_EXCEEDED handling expects.
+    if (error instanceof PlanLimitExceededError) {
+        logger.warn(`${ctx.message} — daily plan limit reached`, context, {
+            ...extra,
+            reason: 'plan_limit',
+            type: error.type,
+            used: error.used,
+            limit: error.limit,
+        });
+        return NextResponse.json(
+            {
+                error: error.message,
+                code: 'PLAN_LIMIT_EXCEEDED',
+                type: error.type,
+                used: error.used,
+                limit: error.limit,
+            },
+            { status: 429 },
         );
     }
 

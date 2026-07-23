@@ -201,6 +201,33 @@ describe('writeAgentShadowDiff', () => {
         expect(body.sidecar).toEqual({ ok: true });
     });
 
+    it('truncates large image data URIs in genkit/sidecar before the Firestore write', async () => {
+        // avatar-generator/visual-aid embed a full base64 imageDataUri here.
+        // Writing it untouched into a nested Firestore map field routinely
+        // exceeds Firestore's per-entity size limit and silently drops the
+        // whole shadow-diff write, blinding canary parity scoring.
+        const bigImageDataUri = `data:image/png;base64,${'A'.repeat(10_000)}`;
+
+        await writeAgentShadowDiff({
+            agent: 'avatar-generator',
+            uid: 'teacher-uid-6',
+            genkit: { imageDataUri: bigImageDataUri, subject: 'cell' },
+            sidecar: { imageDataUri: bigImageDataUri, subject: 'cell' },
+            genkitLatencyMs: 100,
+            sidecarLatencyMs: 110,
+            sidecarOk: true,
+        });
+
+        const [body] = mockSet.mock.calls[0] as unknown as [
+            Record<string, any>,
+        ];
+        expect(body.genkit.imageDataUri).toBe(`[truncated ${bigImageDataUri.length} chars]`);
+        expect(body.sidecar.imageDataUri).toBe(`[truncated ${bigImageDataUri.length} chars]`);
+        // Small diagnostic fields alongside the image are untouched.
+        expect(body.genkit.subject).toBe('cell');
+        expect(body.sidecar.subject).toBe('cell');
+    });
+
     it('fails soft when set() rejects after getDb resolves', async () => {
         mockSet.mockRejectedValueOnce(new Error('quota exceeded'));
         const warnSpy = jest.spyOn(console, 'warn');

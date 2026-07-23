@@ -85,6 +85,34 @@ export interface AgentShadowSample<TGenkit = unknown, TSidecar = TGenkit> {
 
 const COLLECTION_ROOT = 'agent_shadow_diffs';
 
+// avatar-generator and visual-aid embed a full base64 `imageDataUri` (often
+// several hundred KB) in their genkit/sidecar output. Writing that untouched
+// into a nested Firestore map field routinely exceeds Firestore's per-entity
+// size limit, so the whole shadow-diff write silently fails — blinding
+// canary parity scoring for exactly those two agents. Truncate any string
+// over this length before the write; parity scoring compares structured
+// fields, not the image bytes, so this doesn't affect scoring accuracy.
+const MAX_STRING_LENGTH = 4000;
+
+function sanitizeForFirestore(value: unknown): unknown {
+    if (typeof value === 'string') {
+        return value.length > MAX_STRING_LENGTH
+            ? `[truncated ${value.length} chars]`
+            : value;
+    }
+    if (Array.isArray(value)) {
+        return value.map(sanitizeForFirestore);
+    }
+    if (value && typeof value === 'object') {
+        const out: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+            out[k] = sanitizeForFirestore(v);
+        }
+        return out;
+    }
+    return value;
+}
+
 /**
  * Fire-and-forget shadow-diff writer for all dispatchers other than
  * parent-call. Returns a promise the caller MAY `void` — failures are
@@ -126,7 +154,10 @@ export async function writeAgentShadowDiff<TGenkit, TSidecar = TGenkit>(
         const expiresAt = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
         const payload: Record<string, unknown> = { createdAt: now, expiresAt };
         for (const [k, v] of Object.entries(sample)) {
-            payload[k] = v === undefined ? null : v;
+            const withNull = v === undefined ? null : v;
+            payload[k] = k === 'genkit' || k === 'sidecar'
+                ? sanitizeForFirestore(withNull)
+                : withNull;
         }
         await db
             .collection(COLLECTION_ROOT)
