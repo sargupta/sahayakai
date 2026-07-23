@@ -490,6 +490,21 @@
       "status": "done",
       "commit": "d38746257",
       "notes": "Founder rejected the app as outdated vs the PWA; root cause was the Home screen being near-empty by design (voice-first) while the PWA home shows a hero pill + immediate tool grid. Adds an AppBadge hero pill above the eyebrow and a QuickToolsRow (Wrap-based, not GridView.count, to stay textScale-safe at 1.3x Malayalam) pulling the first 6 entries from kToolRegistry, visible only in the idle/no-conversation layout. Also wires a Sign-in action into the VIDYA mic signedOut terminal panel (previously a dead end with no recovery action, unlike micDenied/failed which already had one). +13 net tests. Screenshot-confirmed on Pixel_7 emulator. Part of the Design Parity Block (DP-1/DP-2/DP-3), plan at ~/.claude/plans/clever-meandering-bee.md."
+    },
+    {
+      "id": "DP-2",
+      "pillar": "04",
+      "title": "Design Parity Block — sign-in CTAs on the 3 dead-end empty states (Inbox, Staffroom, Network hub Messages)",
+      "files": [
+        "lib/features/inbox/presentation/inbox_screen.dart",
+        "lib/features/staffroom/presentation/staffroom_screen.dart",
+        "lib/features/staffroom/presentation/network_hub_screen.dart"
+      ],
+      "consumes": [],
+      "firebaseGated": "no",
+      "status": "done",
+      "commit": "c3162a2d7 (+ 114bd3d47 live-testing fix)",
+      "notes": "Three sign-in EmptyView states (standalone Inbox, Staffroom, Network hub Messages tab) rendered with no action at all — a dead end. Wired the existing EmptyView.action slot to a Sign-in SecondaryButton for the isEmptyByDesign (awaitingFirebase/signedOut) branch only; genuinely-empty-but-signed-in states left untouched. +6 tests, all gates green (13 pre-existing unrelated create_palette_test.dart failures noted, out of scope). LIVE-TESTING CAUGHT A REAL BUG the build agent and analyze/test gates missed: all 3 buttons pushed to /login with a bare context.push, which the router redirect guard silently bounced back to Home whenever the stub authControllerProvider (pre-Firebase, foundation-v1) still read signedIn from an earlier onboarding pass — same root cause as the DP-1 VIDYA-mic bug (b9a961e3c). Fixed identically: clear the stub flag before navigating. Screenshot-confirmed working on Pixel_7 emulator after the fix. Part of the Design Parity Block, plan at ~/.claude/plans/clever-meandering-bee.md."
     }
   ],
   "guardrails": [
