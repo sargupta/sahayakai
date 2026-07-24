@@ -3,29 +3,48 @@
 Everything here needs your Google/Firebase accounts and cannot be automated. The app builds, tests,
 and renders without it; these unlock live auth + data.
 
-## 1. Firebase wiring (unblocks every network call)
-The app currently runs on a **stub auth layer**: `tokenProvider` returns null → no `Authorization:
-Bearer` header → middleware injects no `x-user-id` → **every API call 401s at runtime**. UI, DTOs,
-error states and tests are all complete and green; only the live wiring waits on this.
+## 1. Firebase wiring (unblocks every network call) — ✅ DONE (2026-07-25)
+Real `firebase_auth` + `google_sign_in` are wired (commit `e873c66df`). `AuthController` mirrors
+`FirebaseAuth.instance.authStateChanges()`; `tokenProvider` returns the real ID token. Verified live:
+Firebase boots without crashing and "Continue with Google" opens the genuine account picker with zero
+DEVELOPER_ERROR — the SHA-1/package/OAuth-client chain is confirmed correct.
 
-Steps:
-1. `dart pub global activate flutterfire_cli`
-2. `flutterfire configure --project=sahayakai-b4248` → generates `lib/firebase_options.dart` +
-   `android/app/google-services.json`.
-3. Add deps: `firebase_core`, `firebase_auth`, `firebase_app_check`, `google_sign_in`.
-4. Register the Android app `com.sargvision.sahayakai` in Firebase and add its **SHA-1 + SHA-256**
-   (from the release keystore) — required for Google Sign-In.
-5. Enable **Play Integrity** App Check for the app; keep App Check in **monitor / soft-enforce**
-   until verified, or protected routes will hard-block.
-6. Replace the stub `tokenProvider` with the real Firebase ID token, and the stub auth controller
-   with `firebase_auth` state. Call sites are marked with TODOs.
+What actually happened, since it diverged from the steps below in one important way: the Firebase
+console's ONLY registered Android app was `app.sahayakai.mobile` — a stale entry from an earlier
+attempt, NOT this app's real `com.sargvision.sahayakai`. A new app was registered for the real
+package (SHA-1 `2B:38:C2:3A:24:05:12:CD:89:B9:6D:A1:C7:E9:3B:43:B0:82:4D:13`, SHA-256
+`10:55:F2:93:B1:2F:73:BC:31:FA:F3:34:17:DC:CE:85:00:62:63:DD:DC:D5:80:D1:B9:7E:95:5B:53:27:38:43` —
+both from the shared debug keystore; **the release keystore's fingerprints still need registering
+before a signed release build can sign in**). `flutterfire configure` was skipped — Android-only, no
+`firebase_options.dart` needed; `google-services.json` alone is sufficient and is now committed at
+`android/app/google-services.json`. The stale `app.sahayakai.mobile` entry is untouched in the
+console — worth deleting once confirmed nothing else depends on it.
 
-## 2. Delete-account needs REAL re-auth (not forceRefresh) — important
+**Still open, deliberately not done in this pass:**
+- **`firebase_app_check`** — not added. Wiring it wrong actively hard-blocks protected routes; this
+  needs your own Play Integrity console call on when to flip monitor → enforce, not a default.
+- **The official Google branding asset** — the sign-in button still uses a Lucide glyph, not Google's
+  mark. Their branding terms require it; still a placeholder.
+- **Release-keystore SHA fingerprints** — only the shared **debug** keystore's are registered. A
+  signed release build's Google Sign-In will hit DEVELOPER_ERROR until the release keystore's SHA-1 +
+  SHA-256 are added the same way in Firebase console → Project settings → the `com.sargvision.sahayakai`
+  app.
+- **Block C (Firestore/RTDB/FCM)** — a separate handoff from auth; still deferred (`cloud_firestore` /
+  `firebase_database` / `firebase_messaging` are still absent from `pubspec.yaml`). Auth alone does not
+  make Staffroom/Inbox live — see `lib/core/firebase/firebase_init.dart`'s own doc comment.
+
+## 2. Delete-account needs REAL re-auth (not forceRefresh) — ✅ DONE (2026-07-25)
 `POST /api/user/delete-account` checks the ID token's **`auth_time` <= 5 minutes**.
 `getIdToken(forceRefresh: true)` mints a new token but **carries the original `auth_time`**, so it
-will still be rejected. The real flow must call `reauthenticateWithCredential(...)` before deleting.
-Documented at the call site in `lib/features/settings/`.
+would still be rejected. `DeleteAccountController.confirmDelete()` (`lib/features/settings/presentation/
+settings_controller.dart`) now calls `reauthenticateWithCredential(...)` (re-running the Google picker)
+before deleting, per this section's original prescription — this was a latent bug only reachable once
+real auth existed, caught and fixed in the same pass as §1.
 - Re-auth failure surfaces as **401 `reauth_required`** (not 403). The route has **no 429**.
+- Not unit-tested past the `FirebaseInit.isConfigured`-false guard (`test/features/settings/
+  settings_controller_test.dart`) — the real credential-exchange branch needs a Firebase auth mocking
+  library this project doesn't have; it is structurally identical to the already-covered
+  `AuthController.signIn()`.
 
 ## 3. Backend contract gotchas already handled (do not "fix" these)
 - **Profile board field is `preferredBoard`, NOT `educationBoard`.** The route's allowlist accepts
