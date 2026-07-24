@@ -50,13 +50,45 @@ Override tokenOverride(String? token) => tokenProviderProvider.overrideWithValue
       ({bool forceRefresh = false}) async => token,
     );
 
-/// Signs the stub auth controller in.
+/// Signs the auth controller in from the start (no credential exchange to
+/// observe — the teacher is already signed in when the screen mounts).
 Override signedInOverride() =>
     authControllerProvider.overrideWith(_SignedInAuth.new);
 
 class _SignedInAuth extends AuthController {
   @override
   AuthStatus build() => AuthStatus.signedIn;
+
+  /// The real [AuthController.signOut] is gated on `FirebaseInit.isConfigured`
+  /// (always false here) and would otherwise no-op, leaving a "sign out"
+  /// button's test unable to observe the router redirect it triggers. This
+  /// fixture models a real, successful sign-out.
+  @override
+  Future<void> signOut() async {
+    state = AuthStatus.signedOut;
+  }
+}
+
+/// Starts signed OUT, and makes `signIn()` succeed without touching real
+/// Firebase/Google — for the login screen's tests, which assert "everything
+/// except the credential exchange" (the destination logic, the router
+/// handoff): the real [AuthController.signIn] is gated on
+/// `FirebaseInit.isConfigured` (always false in a widget test, since `main()`
+/// never runs), so it always returns `false` there. This fake models a
+/// SUCCESSFUL real exchange instead, so the screen's post-sign-in navigation
+/// can actually be exercised.
+Override signInSucceedsOverride() =>
+    authControllerProvider.overrideWith(_SignInSucceedsAuth.new);
+
+class _SignInSucceedsAuth extends AuthController {
+  @override
+  AuthStatus build() => AuthStatus.signedOut;
+
+  @override
+  Future<bool> signIn() async {
+    state = AuthStatus.signedIn;
+    return true;
+  }
 }
 
 /// A controllable stand-in for the first-run bootstrap (what becomes

@@ -99,4 +99,12 @@ Override signedInOverride() =>
 class _SignedInAuth extends AuthController {
   @override
   AuthStatus build() => AuthStatus.signedIn;
+
+  /// The real [AuthController.signOut] is gated on `FirebaseInit.isConfigured`
+  /// (always false in a widget test) and would otherwise no-op — see the
+  /// identical fixture in test/support/app_harness.dart.
+  @override
+  Future<void> signOut() async {
+    state = AuthStatus.signedOut;
+  }
 }

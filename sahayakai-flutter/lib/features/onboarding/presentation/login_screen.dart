@@ -19,13 +19,10 @@ import '../../../shared/widgets/primary_button.dart';
 /// hairline-ruled editorial register (not saffron bullets), an
 /// `EditorialSectionHeader` over the language picker, and one glowing CTA.
 ///
-/// BUILT-PENDING-FIREBASE. The button below is wired to the STUB
-/// [AuthController], not to Google: `firebase_auth` / `google_sign_in` are
-/// deliberately absent from `pubspec.yaml` this pass, so the app builds with no
-/// Firebase config at all. Everything except the credential exchange is real —
-/// the destination logic, the router handoff, the states and the copy.
-/// TODO(P0.2-firebase): replace [_signIn]'s stub call with
-/// `GoogleSignIn().signIn()` -> `signInWithCredential`, per
+/// REAL Google sign-in (the auth handoff has landed — see [AuthController]).
+/// The button icon is still a Lucide glyph, not Google's official mark: Lucide
+/// has no Google logo, and Google's branding terms require their own asset on
+/// a "Sign in with Google" button — still open, tracked in
 /// docs/flutter/HANDOFF.md §1.
 ///
 /// LAYOUT: left-aligned, the hero sitting 40dp below the top (the quiet-luxury
@@ -65,19 +62,38 @@ class LoginScreen extends ConsumerWidget {
     return Routes.onboarding;
   }
 
-  void _signIn(BuildContext context, WidgetRef ref) {
-    // Captured BEFORE the auth flip. Signing in makes the router's redirect
-    // re-evaluate immediately, which can unmount this screen and take its
-    // context with it; the router itself outlives that.
+  Future<void> _signIn(BuildContext context, WidgetRef ref) async {
+    // Captured BEFORE the await: the real sign-in is asynchronous (a Google
+    // account picker + a network credential exchange), so this screen may be
+    // unmounted by the time it resolves (the router's redirect re-evaluates
+    // the moment auth state flips, which can navigate away from here); the
+    // router and the query param are read up front so neither depends on a
+    // `context` that might not survive the await.
     final router = GoRouter.of(context);
     final next = GoRouterState.of(context).uri.queryParameters['next'];
+    final l10n = context.l10n;
 
-    ref.read(authControllerProvider.notifier).signIn();
+    bool signedIn;
+    try {
+      signedIn = await ref.read(authControllerProvider.notifier).signIn();
+    } catch (_) {
+      // A real FirebaseAuthException (network failure, misconfigured
+      // credential, etc). The teacher dismissing the Google account picker is
+      // NOT an error (signIn() returns false for that, not a throw) — only a
+      // genuine failure reaches here.
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(l10n.errorGeneric)));
+      }
+      return;
+    }
+    if (!signedIn) return; // teacher dismissed the account picker
 
-    // Runs after that redirect, so it is the navigation that wins. The redirect
+    // Runs after the redirect, so it is the navigation that wins. The redirect
     // sends a signed-in teacher sitting on /login to `next` or home; this then
     // places them on the destination this screen chose.
-    router.go(destinationFor(next));
+    if (context.mounted) router.go(destinationFor(next));
   }
 
   @override

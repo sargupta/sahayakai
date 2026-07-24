@@ -6,14 +6,12 @@ part of 'api_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$tokenProviderHash() => r'8141c21c781dabfce13e6bdb6022cc9a0c3c1f6f';
+String _$tokenProviderHash() => r'ac7e6478cf3aa1eabd0f27b185cc0b3b25a8ad38';
 
-/// The bearer-token source the dio auth interceptor reads.
-///
-/// foundation-v1 STUB: returns null (signed-out; no token attached).
-/// TODO(P0.2): return the Firebase ID token, e.g.
-///   final user = ref.read(firebaseAuthProvider).currentUser;
-///   return user?.getIdToken(forceRefresh);
+/// The bearer-token source the dio auth interceptor reads: the real Firebase
+/// ID token, or null when signed out. [forceRefresh] backs the interceptor's
+/// one-retry-on-401 (a locally-cached token can be stale even though the
+/// teacher is genuinely signed in).
 ///
 /// Copied from [tokenProvider].
 @ProviderFor(tokenProvider)

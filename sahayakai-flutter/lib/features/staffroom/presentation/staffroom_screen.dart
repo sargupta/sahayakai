@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../../core/auth/auth_providers.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
@@ -332,11 +331,11 @@ class _StaffroomHero extends StatelessWidget {
 
 /// The signed-out / awaiting-Firebase surface — what the Staffroom shows
 /// on-device (deferred reads + null uid). The DM-gate equivalent for Pillar 04.
-class _StaffroomSignIn extends ConsumerWidget {
+class _StaffroomSignIn extends StatelessWidget {
   const _StaffroomSignIn();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = context.l10n;
     return SingleChildScrollView(
       padding: AppSpacing.pagePadding,
@@ -347,14 +346,10 @@ class _StaffroomSignIn extends ConsumerWidget {
         action: SecondaryButton(
           label: l10n.actionSignIn,
           icon: LucideIcons.logIn,
-          // See vidya_home_screen.dart's _TerminalPanel for why: the router's
-          // separate stub authControllerProvider can still read signedIn from
-          // an earlier onboarding pass, which silently bounces a bare push to
-          // /login straight back — clear it first so the push actually lands.
-          onPressed: () {
-            ref.read(authControllerProvider.notifier).signOut();
-            context.push(Routes.login);
-          },
+          // Real auth landed — a plain push is correct now. See
+          // inbox_screen.dart's _InboxSignIn for the Firestore-handoff
+          // caveat this button still carries (same shape here).
+          onPressed: () => context.push(Routes.login),
         ),
       ),
     );

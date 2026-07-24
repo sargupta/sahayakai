@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../../core/auth/auth_providers.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/router/routes.dart';
@@ -331,14 +330,14 @@ class _MicCluster extends StatelessWidget {
 
 /// A dignified panel for the terminal phases (signed-out / mic-off / limit /
 /// failed) — a title, a body, and a recovery action where one exists.
-class _TerminalPanel extends ConsumerWidget {
+class _TerminalPanel extends StatelessWidget {
   const _TerminalPanel({required this.status, required this.controller});
 
   final VidyaStatus status;
   final VidyaController controller;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = context.l10n;
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
@@ -362,18 +361,14 @@ class _TerminalPanel extends ConsumerWidget {
       action = SecondaryButton(
         label: l10n.vidyaSignIn,
         icon: LucideIcons.logIn,
-        // VIDYA reached `signedOut` from a real 401 against the backend, but
-        // the router's OWN stub `authControllerProvider` (foundation-v1, pre-
-        // Firebase — see core/auth/auth_providers.dart) may still be flagged
-        // signedIn from an earlier onboarding pass. If so, a bare push to
-        // `/login` gets silently bounced straight back to `/` by the
-        // redirect guard's "signed in but parked on login -> home" rule, so
-        // the button would appear to do nothing. Clearing the stub flag
-        // first guarantees the push actually lands on the login screen.
-        onPressed: () {
-          ref.read(authControllerProvider.notifier).signOut();
-          context.push(Routes.login);
-        },
+        // Real auth landed (core/auth/auth_providers.dart): the router's
+        // `authControllerProvider` and VIDYA's own 401-driven `signedOut`
+        // status now derive from the SAME Firebase session, so a plain push
+        // is correct — the earlier "clear a stub flag first" workaround is
+        // gone. (That workaround was masking a real bug in the stub, not a
+        // permanent pattern: forcibly signing a teacher out before every
+        // sign-in tap would be wrong the moment auth is real.)
+        onPressed: () => context.push(Routes.login),
       );
     }
 

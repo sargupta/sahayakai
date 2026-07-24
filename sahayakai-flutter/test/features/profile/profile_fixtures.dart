@@ -142,13 +142,21 @@ Override apiClientOverride(ApiClient client) =>
 Override tokenOverride(String? token) =>
     tokenProviderProvider.overrideWithValue(({bool forceRefresh = false}) async => token);
 
-/// Signs the stub auth controller in.
+/// Signs the auth controller in from the start.
 Override signedInOverride() =>
     authControllerProvider.overrideWith(_SignedInAuth.new);
 
 class _SignedInAuth extends AuthController {
   @override
   AuthStatus build() => AuthStatus.signedIn;
+
+  /// The real [AuthController.signOut] is gated on `FirebaseInit.isConfigured`
+  /// (always false in a widget test) and would otherwise no-op — see the
+  /// identical fixture in test/support/app_harness.dart.
+  @override
+  Future<void> signOut() async {
+    state = AuthStatus.signedOut;
+  }
 }
 
 /// The 401 the signed-out document source and the API client both raise.

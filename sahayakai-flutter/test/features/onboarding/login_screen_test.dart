@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sahayakai/core/auth/auth_providers.dart';
@@ -11,12 +12,18 @@ import 'package:sahayakai/features/onboarding/presentation/login_screen.dart';
 import 'package:sahayakai/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../support/app_harness.dart' show signInSucceedsOverride;
 import 'onboarding_fixtures.dart';
 
 /// P0.2 — Login.
 ///
-/// BUILT-PENDING-FIREBASE: the button is wired to the stub `AuthController`, so
-/// what is asserted here is everything except the credential exchange — the
+/// Real Google sign-in is wired (see `AuthController` — `firebase_auth` +
+/// `google_sign_in`), but it is gated on `FirebaseInit.isConfigured`, which is
+/// always false in a widget test (nothing here runs `main()`'s
+/// `Firebase.initializeApp()`). The 'sign in' group's two navigation tests use
+/// `signInSucceedsOverride()` (test/support/app_harness.dart) to model a
+/// SUCCESSFUL real exchange without touching Firebase/Google for real — what
+/// is asserted is everything except the credential exchange itself: the
 /// destination logic, the router handoff, and the language choice that has to
 /// work BEFORE a teacher signs in.
 Future<void> _pumpLogin(
@@ -25,6 +32,7 @@ Future<void> _pumpLogin(
   double textScale = 1.0,
   Locale? locale,
   Size surface = kTallSurface,
+  List<Override> extraOverrides = const [],
 }) async {
   await pumpSignedInApp(
     tester,
@@ -33,6 +41,7 @@ Future<void> _pumpLogin(
     textScale: textScale,
     locale: locale,
     surface: surface,
+    extraOverrides: extraOverrides,
   );
   expect(find.byType(LoginScreen), findsOneWidget);
 }
@@ -141,7 +150,7 @@ void main() {
   group('sign in (built-pending-firebase)', () {
     testWidgets('signing in flips auth and lands on first-run setup',
         (tester) async {
-      await _pumpLogin(tester);
+      await _pumpLogin(tester, extraOverrides: [signInSucceedsOverride()]);
       final container = containerOf(tester);
       expect(container.read(isSignedInProvider), isFalse);
 
@@ -156,7 +165,7 @@ void main() {
     });
 
     testWidgets('a preserved deep link beats first-run setup', (tester) async {
-      await _pumpLogin(tester);
+      await _pumpLogin(tester, extraOverrides: [signInSucceedsOverride()]);
 
       // Exactly what the guard does to an unauthenticated teacher who deep
       // links into a tool.

@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/auth/auth_providers.dart';
+import '../../../core/firebase/firebase_init.dart';
 import '../../../core/network/api_exception.dart';
-import '../../../core/network/api_providers.dart';
 import '../../profile/data/profile_repository.dart';
 import '../../profile/presentation/profile_controller.dart';
 import '../../profile/domain/profile_settings.dart';
@@ -61,33 +63,43 @@ class DeleteAccountController extends _$DeleteAccountController {
   @override
   FutureOr<AccountDeletion?> build() => null;
 
+  static const _reauthRequired = ApiException(
+    ApiErrorKind.unauthorized,
+    'reauth_required',
+    statusCode: 401,
+  );
+
   /// Only ever called once the typed-confirmation interlock has passed; see
   /// [isDeleteConfirmed].
+  ///
+  /// The route demands the ID token's `auth_time` be within 5 minutes — a
+  /// plain `getIdToken(forceRefresh: true)` mints a new TOKEN but preserves
+  /// the ORIGINAL `auth_time` claim, so a teacher signed in this morning
+  /// would still be rejected (HANDOFF.md §2). The real fix is
+  /// `reauthenticateWithCredential`: re-running the Google picker right here,
+  /// which is the only way to actually mint a fresh `auth_time`.
   Future<void> confirmDelete() async {
     state = const AsyncValue<AccountDeletion?>.loading();
     state = await AsyncValue.guard<AccountDeletion?>(() async {
-      // The route re-verifies this token itself and demands an `auth_time`
-      // within 5 minutes.
-      //
-      // BUILT-PENDING-FIREBASE. `tokenProvider` is the foundation-v1 stub and
-      // always returns null, so this throws the re-auth exception below every
-      // time and the screen shows the "please sign in again" state. That is the
-      // correct, honest behaviour for a signed-out client.
-      //
-      // TODO(P0.2): `forceRefresh: true` is NOT sufficient once Firebase lands.
-      // It mints a new token but preserves the ORIGINAL `auth_time` claim, so a
-      // teacher signed in this morning would still be rejected. The real flow
-      // must call `user.reauthenticateWithCredential(...)` (re-running the
-      // Google sign-in) and pass THAT result's token here.
-      final token =
-          await ref.read(tokenProviderProvider)(forceRefresh: true);
-      if (token == null || token.isEmpty) {
-        throw const ApiException(
-          ApiErrorKind.unauthorized,
-          'reauth_required',
-          statusCode: 401,
-        );
+      if (!FirebaseInit.isConfigured) throw _reauthRequired;
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw _reauthRequired;
+
+      final googleUser = await ref.read(googleSignInProvider).signIn();
+      if (googleUser == null) {
+        // The teacher dismissed the re-auth picker — same first-class
+        // "sign in again" state as any other reauth failure, not an error.
+        throw _reauthRequired;
       }
+      final googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      await user.reauthenticateWithCredential(credential);
+
+      final token = await user.getIdToken(true);
+      if (token == null || token.isEmpty) throw _reauthRequired;
       return ref
           .read(settingsRepositoryProvider)
           .deleteAccount(idToken: token);

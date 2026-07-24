@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../../core/auth/auth_providers.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
@@ -121,11 +120,11 @@ class _InboxList extends StatelessWidget {
 
 /// The DM-gate / signed-out surface: a dignified sign-in prompt. On-device (the
 /// deferred transport) this is what the inbox always shows.
-class _InboxSignIn extends ConsumerWidget {
+class _InboxSignIn extends StatelessWidget {
   const _InboxSignIn();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = context.l10n;
     return SingleChildScrollView(
       padding: AppSpacing.pagePadding,
@@ -136,14 +135,20 @@ class _InboxSignIn extends ConsumerWidget {
         action: SecondaryButton(
           label: l10n.actionSignIn,
           icon: LucideIcons.logIn,
-          // See vidya_home_screen.dart's _TerminalPanel for why: the router's
-          // separate stub authControllerProvider can still read signedIn from
-          // an earlier onboarding pass, which silently bounces a bare push to
-          // /login straight back — clear it first so the push actually lands.
-          onPressed: () {
-            ref.read(authControllerProvider.notifier).signOut();
-            context.push(Routes.login);
-          },
+          // Real auth landed — a plain push is correct now (see
+          // vidya_home_screen.dart's _TerminalPanel for the full story).
+          // NOTE — a real, DIFFERENT gap this button doesn't close: this
+          // EmptyView renders whenever the inbox transport is
+          // `awaitingFirebase` OR `signedOut` (isEmptyByDesign). Firestore
+          // (the Block-C live-read layer) is a separate handoff from auth —
+          // so a genuinely signed-in teacher can still land here once
+          // Firestore is wired only if auth is broken; today, pre-Firestore,
+          // ANY teacher (signed in or not) sees this, and a signed-in one
+          // tapping "Sign in" will correctly bounce back to Home (the
+          // router sees them as already authenticated) rather than reach a
+          // login screen they don't need. That's expected, not a bug — the
+          // remaining fix is wiring cloud_firestore, not this button.
+          onPressed: () => context.push(Routes.login),
         ),
       ),
     );

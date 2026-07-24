@@ -22,6 +22,13 @@ dependencies:
   # Networking
   dio: ^5.7.0
 
+  # Real auth (replaces the U-SI0/foundation-v1 stub — HANDOFF.md §1).
+  # cloud_firestore/firebase_database/firebase_messaging (Block C live reads,
+  # presence, FCM) are still deliberately absent — that's a separate handoff.
+  firebase_core: ^3.8.0
+  firebase_auth: ^5.3.3
+  google_sign_in: ^6.2.2
+
   # Fonts (runtime fetch for foundation-v1; bundling deferred — see BUILD_STATE.json)
   google_fonts: ^6.2.1
 
