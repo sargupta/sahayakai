@@ -119,7 +119,18 @@ class AppBadge extends StatelessWidget {
             ],
           );
 
-    return Container(
+    // GL-3 (App-wide Glassmorphism Reskin): the badge previously had NO
+    // border at all (`ShapeDecoration(color: fill, shape: StadiumBorder())`),
+    // which now reads flat/dead next to the glass-bordered cards around it.
+    // Adds [AppGlass]'s shared gradient edge-highlight ring via the same
+    // padding-trick [GlassSurface]/[IconWell] use — a `StadiumBorder`'s
+    // `BorderSide` cannot paint a gradient directly, so the ring is an outer
+    // stadium shape painted with the border gradient, inset by
+    // [AppGlass.borderWidth], with the original fill+content stadium on top.
+    // `background`/`labelColor`/`iconColor` (the fill and AA-checked ink)
+    // are untouched by this — only a 1px translucent ring is added around
+    // the existing pill.
+    final fillPill = Container(
       constraints: _count
           ? const BoxConstraints(minWidth: _countExtent, minHeight: _countExtent)
           : null,
@@ -133,6 +144,19 @@ class AppBadge extends StatelessWidget {
         shape: const StadiumBorder(),
       ),
       child: content,
+    );
+
+    final borderGradient =
+        isDark ? AppGlass.dBorderGradient : AppGlass.lBorderGradient;
+    return DecoratedBox(
+      decoration: ShapeDecoration(
+        shape: const StadiumBorder(),
+        gradient: borderGradient,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppGlass.borderWidth),
+        child: fillPill,
+      ),
     );
   }
 }

@@ -1,20 +1,44 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
+import 'glass_surface.dart';
 
 /// AppCard v2 — the keystone card grammar (PREMIUM_DESIGN_SPEC.md §5).
 ///
-/// Radius `card` 16, warm two-layer shadow, drawn on the widget's own
-/// `DecoratedBox` (Material tonal elevation cannot express two layers). Dark
-/// raised surfaces gain a 1px top `#FFFFFF@0.05` catch-light. When [onTap] is
-/// set the card presses (scale 0.98 + `e1`→`e2`), keeping M3 ink underneath.
+/// Radius `card` 16. `flat`/`elevated` build on [GlassSurface.flat] (App-wide
+/// Glassmorphism Reskin, GL-3) for their fill/border/sheen — the cheap
+/// NO-BLUR path, never real `BackdropFilter` blur: `AppCard` is reused inside
+/// scrolling `ListView`s across ~35 screens, and GL-1's own docs are explicit
+/// that stacking real blur passes inside a scrolling list is the one thing
+/// this reskin must never do. `GlassSurface` draws no external shadow of its
+/// own (confirmed by reading `glass_surface.dart` — same finding GL-2 made
+/// for `FloatingBottomNav`), so the press-driven shadow step (`e1`→`e2` /
+/// `e2`→`e3`) is carried by an external `AnimatedContainer` wrapping the
+/// glass panel — the same shadow-only-carrier pattern GL-2 used for
+/// `FloatingBottomNav` and the modal sheets. That external carrier is still
+/// needed even though the base card has no *traditional* `boxShadow` from
+/// `GlassSurface.flat`: the "card lifts on press" cue is real product
+/// behaviour (list rows/tiles across the app), not decoration for its own
+/// sake, so it survives the reskin via the carrier rather than disappearing.
+///
+/// [AppCardVariant.inset] is deliberately left OFF the glass treatment and
+/// keeps its original flat/opaque `surfaceContainerLow` fill + 1px border,
+/// no shadow. Its entire point is to read as a RECESSED nested panel — the
+/// conceptual opposite of a floating translucent glass surface. Glassing it
+/// would blur the "sits below the surface" cue into "floats above it,"
+/// contradicting the variant's own name and the semantics documented at
+/// each call site (nested panels reading as recession). A recessed panel
+/// and a floating glass card are different materials; only `flat`/`elevated`
+/// (the two variants that were always meant to read as raised/floating)
+/// move to glass.
 ///
 /// Variants:
-///   • [AppCardVariant.flat] — border + `e1` (default; list rows, panels)
-///   • [AppCardVariant.elevated] — `e2`, no border in light (feature tile,
-///     result masthead)
-///   • [AppCardVariant.inset] — no shadow, `surfaceContainerLow` fill, 1px
-///     border (nested panels read as recession)
+///   • [AppCardVariant.flat] — glass fill + border + sheen, `e1`→`e2` shadow
+///     step on press (default; list rows, panels)
+///   • [AppCardVariant.elevated] — glass fill + border + sheen, `e2`→`e3`
+///     shadow step on press (feature tile, result masthead)
+///   • [AppCardVariant.inset] — opaque `surfaceContainerLow` fill, 1px
+///     border, no shadow (nested panels read as recession) — unchanged
 ///
 /// The v1 API ({child, padding, onTap, accentBar}) is preserved; `variant`
 /// defaults to `flat`, so every existing call site keeps working.
@@ -49,9 +73,7 @@ class _AppCardState extends State<AppCard> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
+    final scheme = Theme.of(context).colorScheme;
     final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     final animate = _tappable && !reduce;
 
@@ -59,10 +81,6 @@ class _AppCardState extends State<AppCard> {
     final width = MediaQuery.maybeOf(context)?.size.width ?? 0;
     final pad = widget.padding ??
         EdgeInsets.all(width >= 600 ? AppSpacing.space6 : AppSpacing.space4);
-
-    final fill = widget.variant == AppCardVariant.inset
-        ? scheme.surfaceContainerLow
-        : scheme.surface;
 
     List<BoxShadow>? shadow;
     switch (widget.variant) {
@@ -74,62 +92,66 @@ class _AppCardState extends State<AppCard> {
         shadow = null;
     }
 
-    // Dark raised surfaces (flat/elevated, not the recessed inset) get a 1px
-    // top catch-light. It is drawn as a clipped overlay, NOT a non-uniform
-    // Border (a borderRadius requires uniform border colours).
-    final showCatchLight =
-        isDark && widget.variant != AppCardVariant.inset && !widget.accentBar;
-
-    final content = AnimatedContainer(
-      duration: animate ? AppMotion.micro : Duration.zero,
-      curve: AppMotion.easeOutQuart,
-      decoration: BoxDecoration(
-        color: fill,
-        borderRadius: AppRadius.rCard,
-        border: _border(scheme),
-        boxShadow: shadow,
-      ),
-      child: ClipRRect(
-        borderRadius: AppRadius.rCard,
-        child: Stack(
+    // The tap layer (ripple + accent bar + padded child) is shared by both
+    // the glass (flat/elevated) and opaque (inset) treatments below. Its own
+    // clipping is provided by whichever surface wraps it — GlassSurface's
+    // squircle ClipPath for glass, or the ClipRRect in `_insetContent` for
+    // inset — so it stays a plain, unclipped Material/InkWell here.
+    final tapLayer = Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: widget.onTap,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Material(
-              type: MaterialType.transparency,
-              child: InkWell(
-                onTap: widget.onTap,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (widget.accentBar)
-                      const SizedBox(
-                        height: 3,
-                        child: DecoratedBox(
-                          decoration:
-                              BoxDecoration(gradient: AppGradients.accentBar),
-                        ),
-                      ),
-                    Padding(padding: pad, child: widget.child),
-                  ],
+            if (widget.accentBar)
+              const SizedBox(
+                height: 3,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(gradient: AppGradients.accentBar),
                 ),
               ),
-            ),
-            if (showCatchLight)
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: IgnorePointer(
-                  child: Container(
-                    height: 1,
-                    color: Colors.white.withValues(alpha: 0.05),
-                  ),
-                ),
-              ),
+            Padding(padding: pad, child: widget.child),
           ],
         ),
       ),
     );
+
+    final Widget content = widget.variant == AppCardVariant.inset
+        ? _insetContent(scheme, tapLayer)
+        // Shadow-only carrier: GlassSurface.flat below draws the translucent
+        // fill, gradient border and sheen, but (per the class doc) casts no
+        // external shadow of its own — this AnimatedContainer supplies just
+        // the press-stepped boxShadow, matching the old e1/e2/e3 cue, with a
+        // borderRadius so the shadow itself renders as a rounded rect
+        // matching the glass panel's corner (a plain rounded rect is a fine
+        // approximation for a soft/blurred shadow — it does not need to
+        // trace the squircle's exact Bezier).
+        : AnimatedContainer(
+            duration: animate ? AppMotion.micro : Duration.zero,
+            curve: AppMotion.easeOutQuart,
+            decoration: BoxDecoration(
+              borderRadius: AppRadius.rCard,
+              boxShadow: shadow,
+            ),
+            // padding: borderWidth, NOT zero — GlassSurface stacks its
+            // `child` at its own OUTER bounds (the same edge the
+            // border-gradient ring's outer edge sits on; only the fill layer
+            // is inset by the padding-trick). With zero padding here, an
+            // opaque, edge-flush `accentBar` (3px) fully occludes the 1px
+            // border ring's strongest point (top edge, topLeft@0.40) —
+            // caught by the GL-3 design review. Insetting `child` by the
+            // same borderWidth keeps it flush with the INNER fill instead,
+            // so the ring stays visible all the way around, accentBar
+            // included; the 1px shift to the rest of the card's own
+            // `pad`-ded content is imperceptible.
+            child: GlassSurface.flat(
+              radius: AppRadius.card,
+              padding: const EdgeInsets.all(AppGlass.borderWidth),
+              child: tapLayer,
+            ),
+          );
 
     final scaled = AnimatedScale(
       scale: (animate && _pressed) ? 0.98 : 1.0,
@@ -147,16 +169,23 @@ class _AppCardState extends State<AppCard> {
     );
   }
 
-  // Uniform border only (a borderRadius forbids per-side colours). The dark
-  // top catch-light is a clipped overlay drawn in build(). Elevated carries no
-  // border (it earns its separation from the e2 shadow); flat/inset are ruled.
-  BoxBorder? _border(ColorScheme scheme) {
-    switch (widget.variant) {
-      case AppCardVariant.flat:
-      case AppCardVariant.inset:
-        return Border.all(color: scheme.outline, width: 1);
-      case AppCardVariant.elevated:
-        return null;
-    }
+  // Inset variant: deliberately NOT glassed (see class doc) — the original
+  // opaque/recessed treatment, unchanged. Own AnimatedContainer (fill +
+  // uniform 1px border; a borderRadius forbids per-side colours) + ClipRRect
+  // + tap layer, no shadow.
+  Widget _insetContent(ColorScheme scheme, Widget tapLayer) {
+    return AnimatedContainer(
+      duration: AppMotion.micro,
+      curve: AppMotion.easeOutQuart,
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLow,
+        borderRadius: AppRadius.rCard,
+        border: Border.all(color: scheme.outline, width: 1),
+      ),
+      child: ClipRRect(
+        borderRadius: AppRadius.rCard,
+        child: tapLayer,
+      ),
+    );
   }
 }

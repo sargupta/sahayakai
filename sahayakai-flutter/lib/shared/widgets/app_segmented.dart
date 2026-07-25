@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../motion/animated_entrance.dart';
+import 'glass_surface.dart';
 
 /// One option in an [AppSegmented].
 class AppSegment<T> {
@@ -13,13 +14,22 @@ class AppSegment<T> {
 }
 
 /// AppSegmented (PREMIUM_DESIGN_SPEC.md §5). For binary/tertiary choices: a
-/// `surfaceContainerHigh` track (radius 12) with a sliding `surface` thumb
-/// (`e1` + 1px border, 240ms easeOutQuart), selected label `onSurface` w600,
-/// unselected `onSurface` w500 (the thumb/fill is the selection affordance, so
-/// the unselected label stays full-ink for AA — `onSurfaceVariant` is only
-/// 3.86:1 on the track fill, under the 4.5 floor for the `labelLarge` text; this
+/// glass-flat track (radius 12) with a sliding glass-flat thumb (`e1` shadow
+/// carrier, 240ms easeOutQuart), selected label `onSurface` w600, unselected
+/// `onSurface` w500 (the thumb/fill is the selection affordance, so the
+/// unselected label stays full-ink for AA — `onSurfaceVariant` is only 3.86:1
+/// on the track fill, under the 4.5 floor for the `labelLarge` text; this
 /// matches the `_chips` fallback, which already uses `onSurface`), each segment
 /// >=48dp, `labelLarge`.
+///
+/// GL-3 (App-wide Glassmorphism Reskin): the track's `surfaceContainerHigh`
+/// fill and the thumb's `surface` fill + flat `outline` border are both
+/// tuned to [AppGlass]'s cheap NO-BLUR "flat" tokens (the thumb reuses
+/// [GlassSurface.flat] directly) — the same list-context glass fill
+/// `AppCard` now uses, already GL-1-review-proven AA-safe (see the
+/// `theme_contrast_test.dart` "flat-fill token" group). The thumb's `e1`
+/// shadow is kept as an external carrier, since `GlassSurface` casts none of
+/// its own (same pattern as `AppCard`/`FloatingBottomNav`).
 ///
 /// Falls back to a wrapped chip row when there are more than 3 options or any
 /// label is long / Indic (unicameral scripts wrap badly in a fixed track), so
@@ -81,8 +91,11 @@ class AppSegmented<T> extends StatelessWidget {
   }
 
   Widget _track(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final text = theme.textTheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final trackFill = isDark ? AppGlass.dFlatFill : AppGlass.lFlatFill;
     final n = segments.length;
     final index = segments.indexWhere((s) => s.value == value);
     // Align the thumb's centre to the selected segment (x in -1..1).
@@ -91,7 +104,7 @@ class AppSegmented<T> extends StatelessWidget {
     return Container(
       height: _height,
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerHigh,
+        color: trackFill,
         borderRadius: AppRadius.rControl,
       ),
       padding: const EdgeInsets.all(4),
@@ -107,12 +120,19 @@ class AppSegmented<T> extends StatelessWidget {
                 child: FractionallySizedBox(
                   widthFactor: 1 / n,
                   heightFactor: 1,
+                  // Shadow-only carrier: GlassSurface.flat below draws the
+                  // glass fill/border/sheen but casts no shadow of its own
+                  // (see class doc) — this DecoratedBox supplies the static
+                  // `e1` shadow the thumb always had.
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: scheme.surface,
                       borderRadius: AppRadius.rControl,
-                      border: Border.all(color: scheme.outline, width: 1),
                       boxShadow: AppShadows.e1,
+                    ),
+                    child: GlassSurface.flat(
+                      radius: AppRadius.control,
+                      padding: EdgeInsets.zero,
+                      child: const SizedBox.expand(),
                     ),
                   ),
                 ),
