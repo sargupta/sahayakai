@@ -7,10 +7,18 @@ import 'package:flutter/material.dart';
 /// `Color`). [lightHeroWash] only on the dashboard hero and
 /// marketing/onboarding, never behind dense content.
 ///
-/// BANNED (still): mesh gradients, glassmorphism blur panels, gradient-filled
-/// text, multi-stop rainbow, any gradient behind body text. If a gradient is
-/// noticeable at a glance, it is too strong. This file is exempt from
-/// token_guard.
+/// BANNED (still): mesh gradients, gradient-filled text, multi-stop rainbow,
+/// any gradient behind body text. If a gradient is noticeable at a glance, it
+/// is too strong.
+///
+/// Glassmorphism blur panels were banned here too, until 2026-07-25: the
+/// founder explicitly asked for an Apple "Liquid Glass"-style translucent,
+/// blurred material system app-wide, consciously overriding this file's
+/// prior LOCKED rule on that one point (the rest of the restraint above
+/// stands — it wasn't part of what got overridden). Glassmorphism is now the
+/// SANCTIONED direction; the new system lives in `app_glass.dart` (tokens)
+/// and `lib/shared/widgets/glass_surface.dart` (the `GlassSurface` widget).
+/// This file is exempt from token_guard.
 class AppGradients {
   AppGradients._();
 

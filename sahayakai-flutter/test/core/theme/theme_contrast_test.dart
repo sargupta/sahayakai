@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/core/theme/app_colors.dart';
+import 'package:sahayakai/core/theme/app_glass.dart';
 
 /// WCAG 2.1 relative-luminance contrast, encoding PRODUCTION's real saffron
 /// contract (LIVE-sampled from sahayakai.com) — NOT the predecessor's
@@ -143,6 +144,67 @@ void main() {
     test('DARK onErrorContainer on errorContainer', () {
       expect(_ratio(AppColors.dOnErrorContainer, AppColors.dErrorContainer),
           greaterThanOrEqualTo(4.5));
+    });
+  });
+
+  group('GL-1 glassmorphism — flat-fill token stays AA-safe (>=4.5)', () {
+    // GlassSurface.flat composites AppGlass.l/dFlatFill directly over the
+    // scaffold's near-flat paper/vignette background (~lBackground/
+    // dBackground). onSurface (lForeground/dForeground — see app_theme.dart's
+    // ColorScheme mapping) is the body-text colour that would sit on it.
+    // Color.alphaBlend mirrors what the compositor actually paints.
+    test('LIGHT: onSurface on the composited flat-glass fill passes AA', () {
+      final composited =
+          Color.alphaBlend(AppGlass.lFlatFill, AppColors.lBackground);
+      expect(_ratio(AppColors.lForeground, composited),
+          greaterThanOrEqualTo(4.5),
+          reason:
+              'body text on the flat glass fill must stay AA-safe once composited over the paper background');
+    });
+    test('DARK: onSurface on the composited flat-glass fill passes AA', () {
+      final composited =
+          Color.alphaBlend(AppGlass.dFlatFill, AppColors.dBackground);
+      expect(_ratio(AppColors.dForeground, composited),
+          greaterThanOrEqualTo(4.5),
+          reason:
+              'body text on the flat glass fill must stay AA-safe once composited over the vignette background');
+    });
+
+    // The two tests above assume the near-flat paper/vignette backdrop the
+    // visual design targets. The GL-1 design review flagged that a REAL
+    // BackdropFilter blurs whatever is actually behind it (a busy gradient,
+    // an image, a saffron-heavy hero) — not necessarily something that
+    // softens toward lBackground/dBackground. These test the worst
+    // REALISTIC case (the app's own most saturated brand colour) and the
+    // absolute extremes (pure black/white), so the opacity tuning below
+    // (dropped from an original, over-cautious 85-90% per that same review)
+    // is proven safe against more than the best-case backdrop.
+    test('LIGHT: chrome fill over the most saturated real backdrop '
+        '(brandSaffron) still passes AA', () {
+      final composited =
+          Color.alphaBlend(AppGlass.lChromeFill, AppColors.brandSaffron);
+      expect(_ratio(AppColors.lForeground, composited),
+          greaterThanOrEqualTo(4.5),
+          reason: 'a real blur can soften toward saffron-heavy content '
+              'behind it, not just the paper background');
+    });
+    test('LIGHT: chrome fill over the absolute-worst extremes '
+        '(pure black, pure white) still passes AA', () {
+      for (final extreme in [Colors.black, Colors.white]) {
+        final composited = Color.alphaBlend(AppGlass.lChromeFill, extreme);
+        expect(_ratio(AppColors.lForeground, composited),
+            greaterThanOrEqualTo(4.5),
+            reason: 'worst-case backdrop $extreme must not break AA');
+      }
+    });
+    test('DARK: chrome fill over the absolute-worst extremes '
+        '(pure black, pure white) still passes AA', () {
+      for (final extreme in [Colors.black, Colors.white]) {
+        final composited = Color.alphaBlend(AppGlass.dChromeFill, extreme);
+        expect(_ratio(AppColors.dForeground, composited),
+            greaterThanOrEqualTo(4.5),
+            reason: 'worst-case backdrop $extreme must not break AA');
+      }
     });
   });
 }
