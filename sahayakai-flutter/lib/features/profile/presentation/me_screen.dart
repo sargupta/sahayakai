@@ -17,6 +17,7 @@ import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
+import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/icon_well.dart';
 import '../../../shared/widgets/language_switcher.dart';
 import '../../../shared/widgets/offline_view.dart';
@@ -51,7 +52,7 @@ class MeScreen extends ConsumerWidget {
     final profile = ref.watch(profileControllerProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(context.l10n.meTitle)),
+      appBar: GlassAppBar(title: Text(context.l10n.meTitle)),
       body: SafeArea(
         child: profile.when(
           loading: () => const Padding(

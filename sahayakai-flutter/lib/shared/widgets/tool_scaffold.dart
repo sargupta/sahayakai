@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../features/vidya/presentation/vidya_sheet.dart';
+import 'glass_app_bar.dart';
 import 'primary_button.dart';
 
 /// Every AI tool page's shell: surface AppBar + a scrolling form capped at
@@ -37,7 +38,7 @@ class ToolScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: Text(title),
         actions: [if (vidyaAction) const VidyaAppBarAction()],
       ),

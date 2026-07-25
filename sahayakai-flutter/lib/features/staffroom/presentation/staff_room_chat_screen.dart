@@ -8,6 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
+import '../../../shared/widgets/glass_app_bar.dart';
 import '../../inbox/data/block_c_transport.dart';
 import '../data/chat_stream_provider.dart';
 import '../data/staffroom_providers.dart';
@@ -92,7 +93,7 @@ class _StaffRoomChatScreenState extends ConsumerState<StaffRoomChatScreen> {
     final myUid = ref.watch(currentStaffroomUserIdProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(_appBarTitle(context))),
+      appBar: GlassAppBar(title: Text(_appBarTitle(context))),
       body: SafeArea(
         child: async.when(
           loading: () => const Padding(

@@ -9,6 +9,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
+import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/secondary_button.dart';
 import '../data/block_c_transport.dart';
 import '../data/messages_stream_provider.dart';
@@ -40,7 +41,7 @@ class InboxScreen extends ConsumerWidget {
     final myUid = ref.watch(currentInboxUserIdProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.inboxTitle)),
+      appBar: GlassAppBar(title: Text(l10n.inboxTitle)),
       body: SafeArea(
         child: async.when(
           loading: () => const Padding(

@@ -16,6 +16,7 @@ import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/error_view.dart';
+import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/inline_error.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/language_switcher.dart';
@@ -120,7 +121,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.settingsTitle)),
+      appBar: GlassAppBar(title: Text(l10n.settingsTitle)),
       body: SafeArea(
         child: ListView(
           padding: AppSpacing.pagePadding,

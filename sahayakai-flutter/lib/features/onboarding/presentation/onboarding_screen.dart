@@ -13,6 +13,7 @@ import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/inline_error.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -137,7 +138,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final saveState = ref.watch(onboardingSaveControllerProvider);
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         automaticallyImplyLeading: false,
         leading: _step > 0
             ? IconButton(

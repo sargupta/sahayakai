@@ -10,6 +10,7 @@ import '../../../shared/widgets/ai_text.dart';
 import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
+import '../../../shared/widgets/glass_app_bar.dart';
 import '../data/staffroom_providers.dart';
 import '../domain/group.dart';
 import 'widgets/chat_entry_tile.dart';
@@ -57,7 +58,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
 
     if (uid == null) {
       return Scaffold(
-        appBar: AppBar(title: Text(l10n.staffroomTitle)),
+        appBar: GlassAppBar(title: Text(l10n.staffroomTitle)),
         body: SafeArea(
           child: SingleChildScrollView(
             padding: AppSpacing.pagePadding,
@@ -76,7 +77,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
     final group = widget.group ?? groupAsync.valueOrNull;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: Text(group?.name ?? l10n.staffroomTitle),
       ),
       body: SafeArea(

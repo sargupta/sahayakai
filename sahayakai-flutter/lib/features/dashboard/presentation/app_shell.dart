@@ -7,6 +7,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/tool_registry.dart';
 import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/empty_view.dart';
+import '../../../shared/widgets/glass_surface.dart';
 import '../../../shared/widgets/icon_well.dart';
 import '../../library/presentation/library_screen.dart';
 import '../../profile/presentation/me_screen.dart';
@@ -238,16 +239,28 @@ class _CreatePaletteState extends State<_CreatePalette> {
     // never hidden behind it (DESIGN_RUBRIC §9).
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      // Shadow-only carrier: `GlassSurface` below draws the real-blur fill,
+      // gradient border and sheen (App-wide Glassmorphism Reskin, GL-2) but
+      // casts no external shadow of its own, so the e4/dKey "floating modal"
+      // shadow is kept here, underneath the glass.
       child: DecoratedBox(
-        // The premium floating surface (§5): rHero top corners + the e4 modal
-        // shadow in light; the black key shadow in dark.
         decoration: BoxDecoration(
-          color: scheme.surface,
           borderRadius: _sheetRadius,
           boxShadow: isDark ? AppShadows.dKey : AppShadows.e4,
         ),
-        child: ClipRRect(
+        // Same corner-rounding call as `vidya_sheet.dart`: this is a modal
+        // bottom sheet flush against the screen's bottom edge
+        // (`isScrollControlled: true` + `SafeArea(top: false)`), so the
+        // original rHero-top-corners-only shape is passed straight into
+        // `GlassSurface.borderRadius` (a squircle NATIVELY supports
+        // non-uniform corners) rather than clipping a uniform squircle with
+        // an outer `ClipRRect` — an RRect clip doesn't trim a squircle to a
+        // partial one, it silently discards the squircle geometry entirely
+        // (caught by the GL-2 design review; see `vidya_sheet.dart` for the
+        // full geometric explanation).
+        child: GlassSurface(
           borderRadius: _sheetRadius,
+          padding: EdgeInsets.zero,
           child: SafeArea(
             top: false,
             child: Column(
@@ -307,8 +320,9 @@ class _CreatePaletteState extends State<_CreatePalette> {
                                     size: AppIconSize.inline,
                                   ),
                                   color: scheme.onSurfaceVariant,
-                                  tooltip: MaterialLocalizations.of(context)
-                                      .deleteButtonTooltip,
+                                  tooltip: MaterialLocalizations.of(
+                                    context,
+                                  ).deleteButtonTooltip,
                                   onPressed: () => setState(() {
                                     _controller.clear();
                                     _query = '';

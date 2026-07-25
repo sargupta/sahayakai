@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/motion/animated_entrance.dart';
+import '../../../shared/widgets/glass_surface.dart';
 
 /// One destination (or action) in the [FloatingBottomNav].
 ///
@@ -25,9 +26,13 @@ class FloatingNavItem {
 /// U9 — the floating bottom navigation (PREMIUM_DESIGN_SPEC.md §5).
 ///
 /// An INSET FLOATED bar (not edge-to-edge): radius [AppRadius.hero] (20),
-/// `surface` fill, 1px `outline` border, shadow [AppShadows.e3] in light /
-/// [AppShadows.dKey] + a top catch-light in dark, height 56 above the bottom
-/// safe-area inset, with a horizontal margin so it floats.
+/// real-blur glass fill+border via [GlassSurface] (App-wide Glassmorphism
+/// Reskin, GL-2 — mounted once app-wide and floats over scrolling content,
+/// the textbook `BackdropFilter` case), shadow [AppShadows.e3] in light /
+/// [AppShadows.dKey] in dark cast from a shadow-only carrier BEHIND the glass
+/// (`GlassSurface` draws its own fill/border/sheen but casts no external
+/// shadow of its own), height 56 above the bottom safe-area inset, with a
+/// horizontal margin so it floats.
 ///
 /// The active tab wears a `primary@0.12` STADIUM pill that SLIDES + fades to the
 /// newly-selected tab (240ms · easeOutQuart); its icon is `primary` scaled to
@@ -94,15 +99,26 @@ class FloatingBottomNav extends StatelessWidget {
           AppSpacing.space4,
           AppSpacing.space2,
         ),
+        // Shadow-only carrier: `GlassSurface` below draws the real-blur fill,
+        // gradient border and sheen, but (confirmed by re-reading
+        // `glass_surface.dart`) casts no external shadow of its own. The old
+        // `AppShadows.e3`/`dKey` shadow is kept here, underneath the glass
+        // panel, so the bar still reads as floating above scrolling content —
+        // without it the glass would blend into whatever sits behind it.
+        // `borderRadius` is set so the shadow itself renders as a rounded
+        // rect matching the glass panel's corner, even though this
+        // `DecoratedBox` no longer paints a fill or border (both now come
+        // from `GlassSurface`, which supersedes the old flat `color`/
+        // `Border.all` — a real blurred edge-highlight border reads richer
+        // than the flat 1px `outline` it replaces).
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: scheme.surface,
             borderRadius: AppRadius.rHero,
-            border: Border.all(color: scheme.outline, width: 1),
             boxShadow: isDark ? AppShadows.dKey : AppShadows.e3,
           ),
-          child: ClipRRect(
-            borderRadius: AppRadius.rHero,
+          child: GlassSurface(
+            radius: AppRadius.hero,
+            padding: EdgeInsets.zero,
             child: SizedBox(
               height: _barHeight,
               child: Stack(
@@ -152,22 +168,12 @@ class FloatingBottomNav extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // Dark: a 1px top catch-light, drawn as a clipped overlay (a
-                  // rounded bar forbids a top-only Border), the same treatment
-                  // AppCard uses on raised dark surfaces. Realizes the spec's
-                  // `dTopHighlight` alongside the `dKey` key shadow above.
-                  if (isDark)
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      child: IgnorePointer(
-                        child: Container(
-                          height: 1,
-                          color: Colors.white.withValues(alpha: 0.05),
-                        ),
-                      ),
-                    ),
+                  // The old bespoke dark-mode 1px top catch-light is dropped
+                  // here: `GlassSurface`'s own gradient edge-highlight border
+                  // (`AppGlass.dBorderGradient`) already draws a top-left
+                  // catch-light around the WHOLE panel, so the one-off
+                  // top-only overlay would now just duplicate/compete with
+                  // it rather than add anything.
                 ],
               ),
             ),

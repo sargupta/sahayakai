@@ -185,4 +185,38 @@ class AppGlass {
   /// directory.
   static ShapeBorder squircle(double radius) =>
       ContinuousRectangleBorder(borderRadius: BorderRadius.circular(radius));
+
+  /// Per-corner squircle variant — e.g. a bottom sheet's top-only rounding
+  /// (`BorderRadius.only(topLeft: ..., topRight: ...)`, bottom corners left
+  /// at `Radius.zero`). `ContinuousRectangleBorder` natively supports
+  /// non-uniform `BorderRadius` (confirmed against the Flutter SDK source —
+  /// this is NOT a workaround), so this is the correct way to get a
+  /// partial-corner squircle. `GlassSurface`'s [borderRadius] override uses
+  /// this instead of clipping a uniform squircle with an outer `ClipRRect`:
+  /// a `ContinuousRectangleBorder`'s curve is NOT the same geometry as a
+  /// circular-arc `RRect` corner (the squircle Bezier's control points sit
+  /// on the sharp corner, so at equal nominal radius the squircle curve
+  /// strictly encloses the RRect arc — peaking ~1.24x the radius at the
+  /// corner's 45° midpoint) — clipping a squircle with an RRect of the same
+  /// radius doesn't trim it to a partial squircle, it silently discards the
+  /// squircle shape entirely and replaces it with the plain circular-arc
+  /// corner underneath. GL-2's design review caught exactly this bug.
+  static ShapeBorder squircleFromBorderRadius(BorderRadius borderRadius) =>
+      ContinuousRectangleBorder(borderRadius: borderRadius);
+
+  /// [borderRadius] inset by [borderWidth] on every corner (each corner
+  /// clamped at 0, never negative) — the inner shape of the padding-trick
+  /// border ring, for the per-corner (non-uniform) case. Mirrors the
+  /// uniform-radius inset math `GlassSurface` already does inline for the
+  /// simple `radius: double` case.
+  static BorderRadius insetBorderRadius(BorderRadius borderRadius) {
+    Radius inset(Radius r) =>
+        Radius.circular((r.x - borderWidth).clamp(0.0, double.infinity));
+    return BorderRadius.only(
+      topLeft: inset(borderRadius.topLeft),
+      topRight: inset(borderRadius.topRight),
+      bottomLeft: inset(borderRadius.bottomLeft),
+      bottomRight: inset(borderRadius.bottomRight),
+    );
+  }
 }

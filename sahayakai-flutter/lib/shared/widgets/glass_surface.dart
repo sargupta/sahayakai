@@ -38,6 +38,7 @@ class GlassSurface extends StatelessWidget {
     super.key,
     required this.child,
     this.radius = AppRadius.card,
+    this.borderRadius,
     this.padding,
     this.addSheen = true,
   }) : _blur = true;
@@ -47,15 +48,25 @@ class GlassSurface extends StatelessWidget {
     super.key,
     required this.child,
     this.radius = AppRadius.card,
+    this.borderRadius,
     this.padding,
     this.addSheen = true,
   }) : _blur = false;
 
   final Widget child;
 
-  /// Corner radius, squircle-shaped via [AppGlass.squircle]. Defaults to
-  /// `AppRadius.card` (16); override with any `AppRadius` scale value.
+  /// Uniform corner radius, squircle-shaped via [AppGlass.squircle].
+  /// Defaults to `AppRadius.card` (16); ignored when [borderRadius] is set.
   final double radius;
+
+  /// Per-corner override (e.g. a bottom sheet's top-only rounding) via
+  /// [AppGlass.squircleFromBorderRadius]. Takes precedence over [radius]
+  /// when set — pass a `BorderRadius.only(...)` directly rather than
+  /// clipping a uniform squircle with an outer `ClipRRect`: a squircle's
+  /// curve is NOT the same geometry as a circular-arc `RRect` corner, so an
+  /// outer RRect clip silently discards the squircle shape instead of
+  /// trimming it to a partial one (see [AppGlass.squircleFromBorderRadius]).
+  final BorderRadius? borderRadius;
   final EdgeInsetsGeometry? padding;
 
   /// Barely-there diagonal sheen overlay (see [AppGlass.lSheenGradient]).
@@ -77,9 +88,19 @@ class GlassSurface extends StatelessWidget {
     final sheenGradient =
         isDark ? AppGlass.dSheenGradient : AppGlass.lSheenGradient;
 
-    final outerShape = AppGlass.squircle(radius);
-    final innerRadius = math.max(0.0, radius - AppGlass.borderWidth);
-    final innerShape = AppGlass.squircle(innerRadius);
+    final ShapeBorder outerShape;
+    final ShapeBorder innerShape;
+    final perCorner = borderRadius;
+    if (perCorner != null) {
+      outerShape = AppGlass.squircleFromBorderRadius(perCorner);
+      innerShape = AppGlass.squircleFromBorderRadius(
+        AppGlass.insetBorderRadius(perCorner),
+      );
+    } else {
+      outerShape = AppGlass.squircle(radius);
+      final innerRadius = math.max(0.0, radius - AppGlass.borderWidth);
+      innerShape = AppGlass.squircle(innerRadius);
+    }
 
     return ClipPath(
       clipper: ShapeBorderClipper(shape: outerShape),

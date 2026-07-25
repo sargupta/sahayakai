@@ -5,6 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/glass_surface.dart';
 import '../../../shared/widgets/secondary_button.dart';
 import 'vidya_controller.dart';
 import 'vidya_nav_dispatcher.dart';
@@ -70,20 +71,20 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet> {
 
     // A single valid intent routes to its tool and closes the sheet. The router
     // is captured before the pop (the sheet's own context is defunct after it).
-    ref.listen(
-      vidyaControllerProvider.select((s) => s.pendingNavigation),
-      (_, directive) {
-        if (directive == null) return;
-        final route = VidyaNavDispatcher.routeForFlow(directive.flow);
-        controller.consumeNavigation();
-        final router = GoRouter.of(context);
-        Navigator.of(context).pop();
-        if (route != null) {
-          final prefill = VidyaNavDispatcher.prefillFor(directive.params);
-          router.push(route, extra: prefill.isEmpty ? null : prefill);
-        }
-      },
-    );
+    ref.listen(vidyaControllerProvider.select((s) => s.pendingNavigation), (
+      _,
+      directive,
+    ) {
+      if (directive == null) return;
+      final route = VidyaNavDispatcher.routeForFlow(directive.flow);
+      controller.consumeNavigation();
+      final router = GoRouter.of(context);
+      Navigator.of(context).pop();
+      if (route != null) {
+        final prefill = VidyaNavDispatcher.prefillFor(directive.params);
+        router.push(route, extra: prefill.isEmpty ? null : prefill);
+      }
+    });
 
     final maxHeight = MediaQuery.sizeOf(context).height * 0.72;
 
@@ -91,14 +92,30 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet> {
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: ConstrainedBox(
         constraints: BoxConstraints(maxHeight: maxHeight),
+        // Shadow-only carrier: `GlassSurface` draws the real-blur fill,
+        // gradient border and sheen below, but casts no external shadow of
+        // its own (see `glass_surface.dart`), so the old e4/dKey "floating
+        // modal" shadow is kept here, underneath the glass.
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: scheme.surface,
             borderRadius: _sheetRadius,
             boxShadow: isDark ? AppShadows.dKey : AppShadows.e4,
           ),
-          child: ClipRRect(
+          // CORNER-ROUNDING DECISION: this sheet is a modal BOTTOM sheet
+          // (`showModalBottomSheet`, `isScrollControlled: true`,
+          // `SafeArea(top: false)`) that sits flush against the screen's
+          // bottom edge rather than floating fully in view — deliberately
+          // top-corners-only (`_sheetRadius`), not a fully-floating panel.
+          // Passed straight into `GlassSurface.borderRadius` (a squircle
+          // NATIVELY supports non-uniform corners) rather than clipping a
+          // uniform squircle with an outer `ClipRRect` — an RRect clip
+          // doesn't trim a squircle to a partial one, it silently discards
+          // the squircle geometry entirely (a squircle's curve strictly
+          // encloses the circular-arc RRect corner at equal nominal radius;
+          // caught by the GL-2 design review).
+          child: GlassSurface(
             borderRadius: _sheetRadius,
+            padding: EdgeInsets.zero,
             child: SafeArea(
               top: false,
               child: Column(
@@ -113,7 +130,10 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet> {
                       AppSpacing.space4,
                       AppSpacing.space2,
                     ),
-                    child: Text(l10n.vidyaOpen, style: theme.textTheme.titleLarge),
+                    child: Text(
+                      l10n.vidyaOpen,
+                      style: theme.textTheme.titleLarge,
+                    ),
                   ),
                   if (state.hasConversation)
                     Flexible(
@@ -230,8 +250,11 @@ class _SheetTerminalPanel extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(vidyaTerminalTitle(status, l10n),
-              style: text.titleMedium, textAlign: TextAlign.center),
+          Text(
+            vidyaTerminalTitle(status, l10n),
+            style: text.titleMedium,
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: AppSpacing.space2),
           Text(
             vidyaTerminalBody(status, l10n),
@@ -264,7 +287,10 @@ class _GrabHandle extends StatelessWidget {
         child: Container(
           width: 36,
           height: 4,
-          decoration: ShapeDecoration(color: color, shape: const StadiumBorder()),
+          decoration: ShapeDecoration(
+            color: color,
+            shape: const StadiumBorder(),
+          ),
         ),
       ),
     );

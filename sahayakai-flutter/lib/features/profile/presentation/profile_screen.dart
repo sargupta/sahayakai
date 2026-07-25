@@ -18,6 +18,7 @@ import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
+import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/icon_well.dart';
 import '../../../shared/widgets/inline_error.dart';
 import '../../../shared/widgets/labeled_field.dart';
@@ -45,7 +46,7 @@ class ProfileScreen extends ConsumerWidget {
     final profile = ref.watch(profileControllerProvider);
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: Text(context.l10n.profileTitle),
         actions: [
           // Settings (P0.7) is reached from the Me tab's app bar — the

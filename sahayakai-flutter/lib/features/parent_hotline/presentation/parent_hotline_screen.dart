@@ -15,6 +15,7 @@ import '../../../shared/widgets/app_segmented.dart';
 import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/empty_view.dart';
+import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/icon_well.dart';
 import '../../../shared/widgets/inline_error.dart';
 import '../../../shared/widgets/labeled_field.dart';
@@ -784,7 +785,7 @@ class _ToolFooterScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      appBar: AppBar(
+      appBar: GlassAppBar(
         title: Text(title),
         actions: const [VidyaAppBarAction()],
       ),

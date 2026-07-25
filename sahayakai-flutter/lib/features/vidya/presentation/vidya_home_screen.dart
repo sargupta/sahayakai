@@ -14,6 +14,7 @@ import '../../../shared/domain/tool_registry.dart';
 import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/app_badge.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
+import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/secondary_button.dart';
 import 'vidya_controller.dart';
 import 'vidya_nav_dispatcher.dart';
@@ -78,8 +79,12 @@ class _VidyaHomeScreenState extends ConsumerState<VidyaHomeScreen> {
     );
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
+      appBar: GlassAppBar(
+        // `backgroundColor: Colors.transparent` used to be set explicitly
+        // here so the body's gradient (`AppGradients.darkVignette`/
+        // `lightPaper`) showed through the app bar's slot; `GlassAppBar`
+        // makes transparency (plus the real blur) its own baseline, so the
+        // call site no longer needs to ask for it.
         title: Text(l10n.appTitle),
         actions: [
           // The Network hub entry (U-SI2): the Staffroom feed + Pro Inbox behind

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../shared/motion/lift_settle_transitions.dart';
 import 'app_colors.dart';
+import 'app_glass.dart';
 import 'app_icon_size.dart';
 import 'app_radius.dart';
 import 'app_text.dart';
@@ -303,16 +304,38 @@ class AppTheme {
           ),
         ),
       ),
+      // App-wide Glassmorphism Reskin, GL-2: flat-glass fallback for anything
+      // still relying on these theme defaults for its surface — the
+      // delete-account `AlertDialog` (`delete_account_dialog.dart`, which
+      // deliberately keeps its own `AlertDialog(...)` construction untouched
+      // and relies on this theme default rather than hand-wrapping
+      // `AlertDialog`'s own built-in chrome in a `GlassSurface`) and
+      // `language_switcher.dart`'s `showDragHandle: true` sheet.
+      //
+      // DOCUMENTED TRADEOFF, not an oversight: `Dialog`/`BottomSheet`'s
+      // `ThemeData` surface has no blur hook — there is no `BackdropFilter`
+      // equivalent exposed on `DialogTheme`/`BottomSheetThemeData` — so the
+      // most a theme-only edit can achieve is the FLAT half of the glass
+      // system (a tuned translucent `AppGlass.l/dFlatFill` background +
+      // `ContinuousRectangleBorder` squircle shape), not real blur. Any
+      // surface that needs REAL blur draws itself with `GlassSurface`
+      // directly instead of relying on this default (see `vidya_sheet.dart`,
+      // `app_shell.dart`'s `_CreatePalette`, `GlassAppBar`,
+      // `FloatingBottomNav`).
       dialogTheme: DialogThemeData(
-        backgroundColor: scheme.surface,
+        backgroundColor: isDark ? AppGlass.dFlatFill : AppGlass.lFlatFill,
         surfaceTintColor: Colors.transparent,
-        shape: const RoundedRectangleBorder(borderRadius: AppRadius.rLg),
+        shape: AppGlass.squircle(AppRadius.card),
       ),
       bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: scheme.surface,
+        backgroundColor: isDark ? AppGlass.dFlatFill : AppGlass.lFlatFill,
         surfaceTintColor: Colors.transparent,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+        // Top-corners-only squircle (`ContinuousRectangleBorder` takes any
+        // `BorderRadiusGeometry`, not just a uniform one) — a bottom sheet
+        // sits flush against the screen's bottom edge, same reasoning as the
+        // `vidya_sheet.dart`/`_CreatePalette` corner-rounding decision.
+        shape: const ContinuousRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.hero)),
         ),
       ),
       snackBarTheme: SnackBarThemeData(
