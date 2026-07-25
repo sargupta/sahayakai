@@ -6,25 +6,60 @@ import '../../../../core/i18n/l10n_ext.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/ai_text.dart';
 import '../../../../shared/widgets/app_badge.dart';
+import '../../../../shared/widgets/glass_surface.dart';
 import '../../domain/inbox_models.dart';
 
 /// One message in the thread (SPEC §B3.2): a bubble aligned **end** for my own
-/// messages (a saffron `primaryContainer` tint) and **start** for the other
-/// participant's (a bordered `surface` card). The body is server-authored prose
-/// rendered through [AiText] (Indic matra-safe, soft-wrapping); a meta line
-/// carries a compact timestamp and — for my own messages — a delivery/read tick.
+/// messages (a saffron-tinted glass fill) and **start** for the other
+/// participant's (the neutral flat-glass fill). Both variants render through
+/// [GlassSurface.flat] (App-wide Glassmorphism Reskin, GL-4) — the cheap
+/// NO-BLUR path, never real `BackdropFilter`: these bubbles live inside a
+/// scrolling `ListView`, exactly the case GL-1's docs say must never get a
+/// real blur pass. The body is server-authored prose rendered through
+/// [AiText] (Indic matra-safe, soft-wrapping); a meta line carries a compact
+/// timestamp and — for my own messages — a delivery/read tick.
 ///
-/// WCAG AA, computed vs the ACTUAL fill (never `#E0924D` routed as text):
-///   • **mine body** = `onSurface` on `primaryContainer` (saffron-100 light /
-///     #3D2A15 dark) = **15.2:1** light / **12.4:1** dark — well clear of 4.5.
-///     `primaryContainer` is deliberately the *lighter* tint (not the `#E0924D`
-///     fill, which is only ~2.5:1 with any dark ink); on it, ink reads cleanly.
-///   • **mine meta / tick** = `onPrimaryContainer` (#8B330E light / #FFCE9E dark)
-///     = **6.9:1** / **9.5:1**; the "read" tick uses the saffron-text token
-///     (#AC4815 / #EB9447) = **5.14:1** on the tint — both clear 4.5. The muted
-///     `onSurfaceVariant` is NOT used here (it is only ~3.99:1 on this fill).
-///   • **theirs body** = `onSurface` on white `surface` = ~16.7:1; **theirs meta**
-///     = muted `onSurfaceVariant` on white = **4.70:1** (muted only on white).
+/// GLASS TREATMENT — "mine" vs "theirs": `GlassSurface.flat`'s own fill,
+/// border and sheen are deliberately NEUTRAL (the one shared flat-glass
+/// family every list-context surface in the app now uses — see `app_card.dart`,
+/// `app_segmented.dart`). So the saffron identity that used to live in a raw
+/// `BoxDecoration.color: primaryContainer` is layered back on top as a
+/// translucent `primaryContainer` wash (alpha 0.85) painted UNDER the actual
+/// message content but ON TOP of the glass fill/sheen — still real
+/// translucency (not a repaint back to opaque), automatically clipped to the
+/// same squircle by `GlassSurface`'s own `ClipPath`. "Theirs" gets the bare
+/// neutral `GlassSurface.flat`, no wash. Net effect: both bubbles are visibly
+/// the same glass MATERIAL (identical border ring, corner shape, sheen), but
+/// "mine" keeps its own distinct saffron-tinted FILL — alignment (end/start)
+/// remains the primary cue, the tint is the reinforcing one, same relationship
+/// as before the reskin, not flattened into visual sameness.
+///
+/// WCAG AA, computed vs the ACTUAL DOUBLE composite (the wash sits on top of
+/// the already-composited glass fill, not a single layer — `Color.alphaBlend`
+/// applied twice, same math `theme_contrast_test.dart` locks in the
+/// `GL-4 mine-bubble wash` group below):
+///   • **mine body** = `onSurface` on the primaryContainer-washed glass fill =
+///     **15.5:1** light / **12.9:1** dark — clear of 4.5 with wide margin.
+///   • **mine meta / tick** = `onPrimaryContainer` (#8B330E light / #FFCE9E
+///     dark) on that same composite = **7.08:1** light / **9.82:1** dark —
+///     also clear of 4.5. (An earlier pass on this doc comment mislabelled
+///     these meta/tick numbers as the BODY ratio, computed against the wrong
+///     token — caught by the GL-4 design review and corrected here, with the
+///     locked test below so it can't drift silently again.) The "read" tick's
+///     saffron-text token stays well clear of 4.5 too. The muted
+///     `onSurfaceVariant` is still NOT used here.
+///   • **theirs body** = `onSurface` on the neutral flat-glass fill — the same
+///     composite `theme_contrast_test.dart` already asserts passes AA (the
+///     flat-fill-over-background case), effectively unchanged from the old
+///     solid white `surface` (~16.7:1) since the composite sits within ~2 RGB
+///     units of pure white. **theirs meta** = muted `onSurfaceVariant` on that
+///     same near-white composite = still ~4.70:1 (muted only on a light fill).
+///   • **theirs body** = `onSurface` on the neutral flat-glass fill — the same
+///     composite `theme_contrast_test.dart` already asserts passes AA (the
+///     flat-fill-over-background case), effectively unchanged from the old
+///     solid white `surface` (~16.7:1) since the composite sits within ~2 RGB
+///     units of pure white. **theirs meta** = muted `onSurfaceVariant` on that
+///     same near-white composite = still ~4.70:1 (muted only on a light fill).
 class MessageBubble extends StatelessWidget {
   const MessageBubble({
     super.key,
@@ -61,42 +96,63 @@ class MessageBubble extends StatelessWidget {
       alignment: _mine ? Alignment.centerRight : Alignment.centerLeft,
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: width * 0.78),
-        child: Container(
-          margin: const EdgeInsets.symmetric(vertical: AppSpacing.space1),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.space4,
-            vertical: AppSpacing.space3,
-          ),
-          decoration: BoxDecoration(
-            color: _mine ? scheme.primaryContainer : scheme.surface,
-            borderRadius: AppRadius.rCard,
-            border: _mine
-                ? null
-                : Border.all(color: scheme.outline, width: 1),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Group threads name the sender on incoming messages; direct
-              // threads omit it (the app bar already names the one other party).
-              if (isGroup && !_mine && message.senderName.trim().isNotEmpty) ...[
-                Text(
-                  message.senderName.trim(),
-                  style: AppTextExtras.of(context).overline,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.space1),
+          child: GlassSurface.flat(
+            radius: AppRadius.card,
+            // padding: borderWidth, NOT zero — same fix `AppCard` needed: an
+            // edge-flush opaque child (our "mine" wash, or dense text) would
+            // otherwise occlude the border ring's strongest point.
+            padding: const EdgeInsets.all(AppGlass.borderWidth),
+            child: Stack(
+              children: [
+                // "Mine" saffron wash — see class doc. Auto-clipped to the
+                // same squircle as the glass fill/border by GlassSurface's
+                // own ClipPath, so no extra corner handling needed here.
+                if (_mine)
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color:
+                            scheme.primaryContainer.withValues(alpha: 0.85),
+                      ),
+                    ),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.space4,
+                    vertical: AppSpacing.space3,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Group threads name the sender on incoming messages;
+                      // direct threads omit it (the app bar already names the
+                      // one other party).
+                      if (isGroup &&
+                          !_mine &&
+                          message.senderName.trim().isNotEmpty) ...[
+                        Text(
+                          message.senderName.trim(),
+                          style: AppTextExtras.of(context).overline,
+                        ),
+                        const SizedBox(height: AppSpacing.space1),
+                      ],
+                      _MessageBody(message: message, mine: _mine),
+                      const SizedBox(height: AppSpacing.space1),
+                      _MetaLine(
+                        message: message,
+                        mine: _mine,
+                        metaColor: metaColor,
+                        otherParticipantIds: otherParticipantIds,
+                        now: now,
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: AppSpacing.space1),
               ],
-              _MessageBody(message: message, mine: _mine),
-              const SizedBox(height: AppSpacing.space1),
-              _MetaLine(
-                message: message,
-                mine: _mine,
-                metaColor: metaColor,
-                otherParticipantIds: otherParticipantIds,
-                now: now,
-              ),
-            ],
+            ),
           ),
         ),
       ),

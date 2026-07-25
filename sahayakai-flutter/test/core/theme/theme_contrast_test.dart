@@ -207,4 +207,68 @@ void main() {
       }
     });
   });
+
+  group('GL-4 mine-bubble wash — DOUBLE composite stays AA-safe (>=4.5)', () {
+    // message_bubble.dart / chat_bubble.dart paint a translucent
+    // primaryContainer@0.85 wash ON TOP of the already-composited flat-glass
+    // fill — a composite of a composite, not a single layer. The GL-4 design
+    // review caught the doc comments asserting a number that didn't match
+    // EITHER token actually used here (it matched onPrimaryContainer,
+    // mislabelled as onSurface) — this locks the real double-blend so it
+    // can't drift silently again.
+    Color doubleComposite(Color flatFill, Color background, Color container) {
+      final step1 = Color.alphaBlend(flatFill, background);
+      return Color.alphaBlend(
+        container.withValues(alpha: 0.85),
+        step1,
+      );
+    }
+
+    test('LIGHT: onSurface (body) on the wash composite passes AA', () {
+      final composited = doubleComposite(
+        AppGlass.lFlatFill,
+        AppColors.lBackground,
+        AppColors.lPrimaryContainer,
+      );
+      expect(_ratio(AppColors.lForeground, composited),
+          greaterThanOrEqualTo(4.5),
+          reason: 'mine-bubble body text must stay AA-safe on the '
+              'double-composited wash');
+    });
+    test('DARK: onSurface (body) on the wash composite passes AA', () {
+      final composited = doubleComposite(
+        AppGlass.dFlatFill,
+        AppColors.dBackground,
+        AppColors.dPrimaryContainer,
+      );
+      expect(_ratio(AppColors.dForeground, composited),
+          greaterThanOrEqualTo(4.5),
+          reason: 'mine-bubble body text must stay AA-safe on the '
+              'double-composited wash');
+    });
+    test('LIGHT: onPrimaryContainer (meta/tick) on the wash composite '
+        'passes AA', () {
+      final composited = doubleComposite(
+        AppGlass.lFlatFill,
+        AppColors.lBackground,
+        AppColors.lPrimaryContainer,
+      );
+      expect(_ratio(AppColors.lOnPrimaryContainer, composited),
+          greaterThanOrEqualTo(4.5),
+          reason: 'mine-bubble meta/tick must stay AA-safe on the '
+              'double-composited wash');
+    });
+    test('DARK: onPrimaryContainer (meta/tick) on the wash composite '
+        'passes AA', () {
+      final composited = doubleComposite(
+        AppGlass.dFlatFill,
+        AppColors.dBackground,
+        AppColors.dPrimaryContainer,
+      );
+      expect(_ratio(AppColors.dOnPrimaryContainer, composited),
+          greaterThanOrEqualTo(4.5),
+          reason: 'mine-bubble meta/tick must stay AA-safe on the '
+              'double-composited wash');
+    });
+  });
 }

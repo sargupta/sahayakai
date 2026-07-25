@@ -6,6 +6,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/auth/auth_providers.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/glass_surface.dart';
 
 /// P0.1 — Splash. "The Seal" (PREMIUM_DESIGN_SPEC.md §4 / §6b U5).
 ///
@@ -162,12 +163,13 @@ class _SealBrandState extends State<_SealBrand>
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Beat 1 — the seal presses in.
+            // Beat 1 — the seal presses in, framed by a frosted glass halo
+            // (App-wide Glassmorphism Reskin, GL-4 — see [_HaloedSeal]).
             Opacity(
               opacity: sealV,
               child: Transform.scale(
                 scale: 0.92 + 0.08 * sealV,
-                child: const _Seal(),
+                child: const _HaloedSeal(),
               ),
             ),
             const SizedBox(height: AppSpacing.space5),
@@ -218,6 +220,55 @@ class _SealBrandState extends State<_SealBrand>
           ],
         );
       },
+    );
+  }
+}
+
+/// A restrained frosted-glass halo behind the brand seal (App-wide
+/// Glassmorphism Reskin, GL-4). Kept deliberately restrained: a single soft
+/// glass card, sized just large enough to frame the 96dp seal with breathing
+/// room on every side, default sheen strength, no extra ornament layered on —
+/// "the splash gained a tasteful glass touch," not a rebuild. This is the one
+/// candidate in this unit for visibly overdoing the effect (a
+/// first-impression screen invites exactly that temptation), so it stays a
+/// single quiet panel rather than, say, a stack of concentric glass rings or
+/// a full-bleed frosted background.
+///
+/// Uses [GlassSurface.flat], NOT the real-blur constructor: the GL-4 design
+/// review found `scaffoldBackgroundColor` here is a flat, uniform
+/// `scheme.surfaceContainerLowest` (`app_theme.dart` — "must stay a solid
+/// Color") with no gradient/image behind this panel, so a real
+/// `BackdropFilter` blurring a mathematically uniform colour field returns
+/// that same uniform colour — visually identical to the flat path, but at a
+/// real `saveLayer` + GPU blur cost for zero benefit. Exactly the "does the
+/// blur earn its cost" mistake GL-2's review already caught once on
+/// `GlassAppBar`; the fill/border/sheen are the only parts of this panel
+/// doing visible work either way.
+///
+/// Fixed pixel size (not textScale-dependent) so the overflow-gate tests
+/// (360dp x textScale 1.3, the short-screen scroll case) are unaffected: this
+/// sits behind the fixed-size [_Seal], not the reflowing wordmark/tagline
+/// text rendered below it in [_SealBrandState].
+class _HaloedSeal extends StatelessWidget {
+  const _HaloedSeal();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 152,
+      height: 152,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // .flat, not real blur (see class doc — nothing behind this panel
+          // for a real BackdropFilter to blur). radius: 40 on a 152dp box
+          // reads as a soft, almost-circular squircle behind the seal's true
+          // circle, echoing it without needing a separate circular-clip code
+          // path.
+          GlassSurface.flat(radius: 40, child: const SizedBox.expand()),
+          const _Seal(),
+        ],
+      ),
     );
   }
 }
