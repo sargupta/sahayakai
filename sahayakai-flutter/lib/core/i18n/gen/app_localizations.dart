@@ -3608,16 +3608,16 @@ abstract class AppLocalizations {
   /// **'Your voice minutes will refresh. You can keep using the tools in the meantime.'**
   String get vidyaLimitBody;
 
-  /// VIDYA network/timeout failure state title.
+  /// VIDYA failure state title — shared by network/timeout failures and unexpected mic/recorder plugin failures (T1-U6), so it must stay cause-agnostic.
   ///
   /// In en, this message translates to:
   /// **'That did not go through'**
   String get vidyaErrorTitle;
 
-  /// VIDYA network/timeout failure state body.
+  /// VIDYA failure state body — shared by network/timeout failures and unexpected mic/recorder plugin failures (T1-U6). Was network-specific ("Check your connection..."), which read as wrong guidance for a mic/recorder failure; kept cause-agnostic instead, matching errorGeneric's phrasing.
   ///
   /// In en, this message translates to:
-  /// **'Check your connection and tap the seal to try again.'**
+  /// **'Something went wrong. Tap the seal to try again.'**
   String get vidyaErrorBody;
 
   /// App-bar action opening the Prep desk (teaching tools grid).

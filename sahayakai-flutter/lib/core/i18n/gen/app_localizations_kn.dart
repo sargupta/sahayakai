@@ -1993,7 +1993,7 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get vidyaErrorBody =>
-      'ನಿಮ್ಮ ಸಂಪರ್ಕ ಪರಿಶೀಲಿಸಿ, ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಲು ಸೀಲ್ ಮೇಲೆ ಟ್ಯಾಪ್ ಮಾಡಿ.';
+      'ಏನೋ ತಪ್ಪಾಗಿದೆ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಲು ಸೀಲ್ ಮೇಲೆ ಟ್ಯಾಪ್ ಮಾಡಿ.';
 
   @override
   String get vidyaPrepDesk => 'ಸಿದ್ಧತಾ ಡೆಸ್ಕ್';

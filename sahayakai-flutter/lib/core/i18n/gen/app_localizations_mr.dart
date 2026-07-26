@@ -1990,7 +1990,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get vidyaErrorBody =>
-      'तुमचे कनेक्शन तपासा आणि पुन्हा प्रयत्न करण्यासाठी सीलवर टॅप करा.';
+      'काहीतरी चूक झाली. पुन्हा प्रयत्न करण्यासाठी सीलवर टॅप करा.';
 
   @override
   String get vidyaPrepDesk => 'तयारी डेस्क';

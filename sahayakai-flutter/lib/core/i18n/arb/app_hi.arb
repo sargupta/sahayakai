@@ -81,7 +81,7 @@
   "vidyaLimitTitle": "आप आज की वॉइस सीमा तक पहुँच गए हैं",
   "vidyaLimitBody": "आपके वॉइस मिनट फिर से मिलेंगे। तब तक आप टूल इस्तेमाल कर सकते हैं।",
   "vidyaErrorTitle": "यह पूरा नहीं हो सका",
-  "vidyaErrorBody": "अपना कनेक्शन जाँचें और फिर से कोशिश करने के लिए सील पर टैप करें।",
+  "vidyaErrorBody": "कुछ गड़बड़ हो गई। फिर से कोशिश करने के लिए सील पर टैप करें।",
   "vidyaPrepDesk": "तैयारी डेस्क",
   "vidyaFlowVisualAid": "दृश्य सामग्री",
   "vidyaFlowVirtualFieldTrip": "आभासी भ्रमण",

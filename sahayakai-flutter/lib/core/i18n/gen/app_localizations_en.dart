@@ -1990,7 +1990,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get vidyaErrorBody =>
-      'Check your connection and tap the seal to try again.';
+      'Something went wrong. Tap the seal to try again.';
 
   @override
   String get vidyaPrepDesk => 'Prep desk';

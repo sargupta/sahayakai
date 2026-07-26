@@ -1994,7 +1994,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get vidyaErrorBody =>
-      'உங்கள் இணைப்பைச் சரிபார்த்து, மீண்டும் முயற்சிக்க முத்திரையைத் தட்டவும்.';
+      'ஏதோ தவறு நடந்தது. மீண்டும் முயற்சிக்க முத்திரையைத் தட்டவும்.';
 
   @override
   String get vidyaPrepDesk => 'தயாரிப்பு மேசை';

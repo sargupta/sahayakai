@@ -1991,7 +1991,7 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get vidyaErrorBody =>
-      'మీ కనెక్షన్‌ను తనిఖీ చేసి, మళ్లీ ప్రయత్నించడానికి సీల్‌ను నొక్కండి.';
+      'ఏదో తప్పు జరిగింది. మళ్లీ ప్రయత్నించడానికి సీల్‌ను నొక్కండి.';
 
   @override
   String get vidyaPrepDesk => 'సన్నాహక డెస్క్';

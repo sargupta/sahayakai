@@ -1988,7 +1988,7 @@ class AppLocalizationsGu extends AppLocalizations {
 
   @override
   String get vidyaErrorBody =>
-      'તમારું કનેક્શન તપાસો અને ફરી પ્રયાસ કરવા સીલ પર ટૅપ કરો.';
+      'કંઈક ખોટું થયું. ફરી પ્રયાસ કરવા સીલ પર ટૅપ કરો.';
 
   @override
   String get vidyaPrepDesk => 'તૈયારી ડેસ્ક';

@@ -1991,7 +1991,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get vidyaErrorBody =>
-      'আপনার সংযোগ পরীক্ষা করুন এবং আবার চেষ্টা করতে সিলে ট্যাপ করুন।';
+      'কিছু একটা সমস্যা হয়েছে। আবার চেষ্টা করতে সিলে ট্যাপ করুন।';
 
   @override
   String get vidyaPrepDesk => 'প্রস্তুতি ডেস্ক';

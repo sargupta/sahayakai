@@ -1994,7 +1994,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get vidyaErrorBody =>
-      'നിങ്ങളുടെ കണക്ഷൻ പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കാൻ മുദ്രയിൽ ടാപ്പ് ചെയ്യൂ.';
+      'എന്തോ കുഴപ്പം സംഭവിച്ചു. വീണ്ടും ശ്രമിക്കാൻ മുദ്രയിൽ ടാപ്പ് ചെയ്യൂ.';
 
   @override
   String get vidyaPrepDesk => 'ഒരുക്ക ഡെസ്ക്';

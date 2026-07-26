@@ -1990,7 +1990,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get vidyaErrorBody =>
-      'अपना कनेक्शन जाँचें और फिर से कोशिश करने के लिए सील पर टैप करें।';
+      'कुछ गड़बड़ हो गई। फिर से कोशिश करने के लिए सील पर टैप करें।';
 
   @override
   String get vidyaPrepDesk => 'तैयारी डेस्क';

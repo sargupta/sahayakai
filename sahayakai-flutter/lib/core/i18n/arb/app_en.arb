@@ -2488,11 +2488,11 @@
   },
   "vidyaErrorTitle": "That did not go through",
   "@vidyaErrorTitle": {
-    "description": "VIDYA network/timeout failure state title."
+    "description": "VIDYA failure state title — shared by network/timeout failures and unexpected mic/recorder plugin failures (T1-U6), so it must stay cause-agnostic."
   },
-  "vidyaErrorBody": "Check your connection and tap the seal to try again.",
+  "vidyaErrorBody": "Something went wrong. Tap the seal to try again.",
   "@vidyaErrorBody": {
-    "description": "VIDYA network/timeout failure state body."
+    "description": "VIDYA failure state body — shared by network/timeout failures and unexpected mic/recorder plugin failures (T1-U6). Was network-specific (\"Check your connection...\"), which read as wrong guidance for a mic/recorder failure; kept cause-agnostic instead, matching errorGeneric's phrasing."
   },
   "vidyaPrepDesk": "Prep desk",
   "@vidyaPrepDesk": {
