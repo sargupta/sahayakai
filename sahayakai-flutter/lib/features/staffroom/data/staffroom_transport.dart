@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -318,24 +320,34 @@ class DeferredStaffroomTransport implements StaffroomTransport {
 }
 
 /// Thrown by [StaffroomTransport.sendCommunityChatMessage] (and reserved for
-/// the future group-chat send) when [text] exceeds the 500-char cap
+/// the future group-chat send) when [text] exceeds the 500-**byte** cap
 /// `community_chat`'s `create` rule enforces (`firestore.rules:139-145`) and
 /// no [audioUrl] is present to bypass it (the rule's
 /// `text.size() <= 500 || audioUrl is string` clause). Checked **client-side,
 /// before the write**, so a too-long message fails with a clear typed error
 /// instead of the raw `PERMISSION_DENIED` the rule would otherwise produce.
+///
+/// **Bytes, not characters.** Firestore rules' `string.size()` counts UTF-8
+/// bytes, not Dart's UTF-16 code-unit `.length` — for this app's Indic
+/// scripts (Bengali/Hindi/Tamil/Devanagari etc, all 3 bytes/char in UTF-8) a
+/// message well under 500 *characters* can still exceed 500 *bytes*. Checking
+/// `.length` here would let exactly that message through the client guard
+/// and still fail server-side with a raw `PERMISSION_DENIED` — the silent/
+/// confusing failure this guard exists to prevent, on the one script family
+/// this app is built for. [length] is therefore the UTF-8 byte count.
 class ChatMessageTooLongException implements Exception {
   const ChatMessageTooLongException(this.length);
 
-  /// The 500-char cap this exception is thrown against.
+  /// The 500-byte cap this exception is thrown against.
   static const int maxLength = 500;
 
-  /// The (too-long) trimmed text length that triggered this.
+  /// The (too-long) trimmed text's UTF-8 byte length that triggered this —
+  /// NOT its `String.length` (UTF-16 code units). See class doc.
   final int length;
 
   @override
-  String toString() => 'ChatMessageTooLongException: $length chars exceeds '
-      'the $maxLength-char cap.';
+  String toString() => 'ChatMessageTooLongException: $length bytes exceeds '
+      'the $maxLength-byte cap.';
 }
 
 /// The live Staff Room transport (T1-U5): a real `cloud_firestore`
@@ -433,9 +445,13 @@ class FirestoreStaffroomTransport implements StaffroomTransport {
     // Client-side pre-check mirroring the rule's `text.size() <= 500 ||
     // audioUrl is string` clause: fail with a typed error BEFORE the write
     // when there is no audio to bypass the cap, rather than let the rule
-    // reject it as a raw permission-denied.
-    if (!hasAudio && trimmedText.length > ChatMessageTooLongException.maxLength) {
-      throw ChatMessageTooLongException(trimmedText.length);
+    // reject it as a raw permission-denied. UTF-8 BYTE length, matching the
+    // rule's `string.size()` — NOT `.length` (UTF-16 code units), which
+    // would under-count every non-Latin script this app is built for. See
+    // ChatMessageTooLongException's class doc.
+    final byteLength = utf8.encode(trimmedText).length;
+    if (!hasAudio && byteLength > ChatMessageTooLongException.maxLength) {
+      throw ChatMessageTooLongException(byteLength);
     }
     await _communityChat.add(<String, dynamic>{
       'text': trimmedText,
