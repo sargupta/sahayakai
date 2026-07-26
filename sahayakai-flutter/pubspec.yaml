@@ -23,11 +23,18 @@ dependencies:
   dio: ^5.7.0
 
   # Real auth (replaces the U-SI0/foundation-v1 stub — HANDOFF.md §1).
-  # cloud_firestore/firebase_database/firebase_messaging (Block C live reads,
-  # presence, FCM) are still deliberately absent — that's a separate handoff.
+  # firebase_database/firebase_messaging (Block C presence, FCM) are still
+  # deliberately absent — that's a separate handoff.
   firebase_core: ^3.8.0
   firebase_auth: ^5.3.3
   google_sign_in: ^6.2.2
+
+  # T1-U3: real `users/<uid>` document reads/writes (Profile/Settings/
+  # Onboarding) via the client SDK, matching firestore.rules's
+  # `isOwner(userId)` gate. Version pinned to what resolves against the
+  # firebase_core/firebase_auth pair already locked in pubspec.lock
+  # (firebase_core 3.15.2, firebase_auth 5.7.0).
+  cloud_firestore: ^5.6.0
 
   # Fonts (runtime fetch for foundation-v1; bundling deferred — see BUILD_STATE.json)
   google_fonts: ^6.2.1

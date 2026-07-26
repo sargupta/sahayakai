@@ -1,6 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/auth/auth_providers.dart';
 import '../../../core/network/api_exception.dart';
 
 part 'profile_doc_source.g.dart';
@@ -18,11 +21,11 @@ part 'profile_doc_source.g.dart';
 ///     `users/{userId}`, so the client SDK is the intended read path for a
 ///     first-party app — which is exactly what this seam becomes.
 ///
-/// BUILT-PENDING-FIREBASE. [FirestoreProfileDocSource] is the real
-/// implementation and needs `cloud_firestore` + a signed-in uid, both of which
-/// arrive with the P0.2 handoff. Until then [SignedOutProfileDocSource] is
-/// bound: it reports "no identity" the same way the network layer would, so the
-/// screen shows its sign-in state instead of an invented profile.
+/// LIVE (T1-U3). [FirestoreProfileDocSource] is the real implementation,
+/// bound whenever a real teacher is signed in; [SignedOutProfileDocSource]
+/// is bound otherwise. It reports "no identity" the same way the network
+/// layer would, so the screen shows its sign-in state instead of an invented
+/// profile.
 abstract class ProfileDocSource {
   /// The document, or null when the teacher has no `users/<uid>` doc yet — a
   /// real and common case, because the production onboarding gate is OFF, so a
@@ -57,18 +60,59 @@ class SignedOutProfileDocSource implements ProfileDocSource {
   Future<void> merge(Map<String, dynamic> patch) async => throw _noIdentity;
 }
 
-/// TODO(P0.2): once `firebase_auth` + `cloud_firestore` are added, replace the
-/// binding below with:
+/// The real binding once Firebase is live for a signed-in teacher: reads and
+/// merges `users/<uid>` directly via the client SDK. Matches
+/// `firestore.rules`'s `match /users/{userId}` block — `allow read` /
+/// `allow update` / `allow create` are all gated on `isOwner(userId)`
+/// (`request.auth.uid == userId`), so [_uid] must be exactly the signed-in
+/// Firebase uid, never a client-supplied value.
+class FirestoreProfileDocSource implements ProfileDocSource {
+  const FirestoreProfileDocSource(this._firestore, this._uid);
+
+  final FirebaseFirestore _firestore;
+  final String _uid;
+
+  DocumentReference<Map<String, dynamic>> get _doc =>
+      _firestore.collection('users').doc(_uid);
+
+  @override
+  Future<Map<String, dynamic>?> read() async {
+    final snapshot = await _doc.get();
+    return snapshot.data();
+  }
+
+  /// A merge-set, never a plain `set`: `firestore.rules`'s `isSafeUserUpdate()`
+  /// rejects any write that touches a protected field (`impactScore`,
+  /// `badges`, `planType`, role/billing/org fields — the full list is
+  /// `protectedUserFields()` in `firestore.rules`), and `SetOptions(merge:
+  /// true)` only ever touches the keys [patch] actually names — this app's
+  /// writes are always partial (Settings patches one slice, onboarding
+  /// completion another). The rules key `create` vs. `update` off whether the
+  /// document already exists, not off the SDK call used, so this same merge
+  /// call both creates the doc on a teacher's first save (subject to the
+  /// rules' `create` branch, which forbids seeding privileged fields) and
+  /// updates it afterwards — no separate create/update branch is needed here.
+  @override
+  Future<void> merge(Map<String, dynamic> patch) =>
+      _doc.set(patch, SetOptions(merge: true));
+}
+
+/// [FirestoreProfileDocSource] once a real teacher is signed in,
+/// [SignedOutProfileDocSource] otherwise. Reactive on [authControllerProvider]
+/// (`core/auth/auth_providers.dart`) — the single source of truth the router
+/// and the token exchange already agree on — rather than reading
+/// `FirebaseAuth.instance.currentUser` once at build time, so a real
+/// sign-in/sign-out flips this binding the same beat the rest of the app
+/// reacts to it.
 ///
-/// ```dart
-/// final uid = ref.watch(firebaseAuthProvider).currentUser?.uid;
-/// if (uid == null) return const SignedOutProfileDocSource();
-/// return FirestoreProfileDocSource(FirebaseFirestore.instance, uid);
-/// ```
-///
-/// Nothing above this line changes: the DTOs, the repository, the controller
-/// and the screen all already speak [ProfileDocSource].
+/// Nothing below this line changes when this binding flips: the DTOs, the
+/// repository, the controller and the screen all already speak
+/// [ProfileDocSource].
 @riverpod
 ProfileDocSource profileDocSource(Ref ref) {
-  return const SignedOutProfileDocSource();
+  final status = ref.watch(authControllerProvider);
+  if (status != AuthStatus.signedIn) return const SignedOutProfileDocSource();
+  final uid = FirebaseAuth.instance.currentUser?.uid;
+  if (uid == null) return const SignedOutProfileDocSource();
+  return FirestoreProfileDocSource(FirebaseFirestore.instance, uid);
 }

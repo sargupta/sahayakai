@@ -6,19 +6,19 @@ part of 'profile_doc_source.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$profileDocSourceHash() => r'9e09778115b3cdb04d57191758d6c64e9a303a67';
+String _$profileDocSourceHash() => r'ac2377596b8dc86253f95b79262a0169e07fc579';
 
-/// TODO(P0.2): once `firebase_auth` + `cloud_firestore` are added, replace the
-/// binding below with:
+/// [FirestoreProfileDocSource] once a real teacher is signed in,
+/// [SignedOutProfileDocSource] otherwise. Reactive on [authControllerProvider]
+/// (`core/auth/auth_providers.dart`) — the single source of truth the router
+/// and the token exchange already agree on — rather than reading
+/// `FirebaseAuth.instance.currentUser` once at build time, so a real
+/// sign-in/sign-out flips this binding the same beat the rest of the app
+/// reacts to it.
 ///
-/// ```dart
-/// final uid = ref.watch(firebaseAuthProvider).currentUser?.uid;
-/// if (uid == null) return const SignedOutProfileDocSource();
-/// return FirestoreProfileDocSource(FirebaseFirestore.instance, uid);
-/// ```
-///
-/// Nothing above this line changes: the DTOs, the repository, the controller
-/// and the screen all already speak [ProfileDocSource].
+/// Nothing below this line changes when this binding flips: the DTOs, the
+/// repository, the controller and the screen all already speak
+/// [ProfileDocSource].
 ///
 /// Copied from [profileDocSource].
 @ProviderFor(profileDocSource)
