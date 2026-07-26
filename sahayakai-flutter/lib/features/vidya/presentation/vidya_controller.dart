@@ -291,7 +291,15 @@ class VidyaState {
 /// tap abandons an in-flight trip instead of applying a stale result. Errors are
 /// typed: 401 → [VidyaStatus.signedOut] (expected on the stub token until real
 /// auth), 429 → [VidyaStatus.limitReached], network/timeout/server →
-/// [VidyaStatus.failed].
+/// [VidyaStatus.failed]. The same [VidyaStatus.failed] dignified state (a
+/// title, body copy and a Retry action — see `vidya_status_ui.dart`) is also
+/// where an UNEXPECTED capture-side failure lands: the permission plugin
+/// throwing, the recorder failing to start, or the recorder failing to stop.
+/// None of those are the expected "permission denied" outcome (that is a
+/// [MicPermission] return value, handled below and left exactly as-is) — they
+/// are plugin hiccups, and silently resetting to [VidyaStatus.idle] for them
+/// would be indistinguishable from the pre-tap state (SPEC-adjacent bug class:
+/// see `b9a961e3c`/`114bd3d47`, "silently bounced back").
 @Riverpod(keepAlive: true)
 class VidyaController extends _$VidyaController {
   int _gen = 0;
@@ -451,8 +459,12 @@ class VidyaController extends _$VidyaController {
     try {
       perm = await _permission.ensureGranted();
     } catch (_) {
+      // The permission plugin itself threw — a hiccup, not the expected
+      // "denied" outcome (that's a [MicPermission] value, handled in the
+      // switch below and untouched by this fix). Land on the dignified
+      // `failed` panel instead of bouncing silently back to idle.
       if (_stale(gen)) return;
-      _set(status: VidyaStatus.idle);
+      _set(status: VidyaStatus.failed);
       return;
     }
     if (_stale(gen)) return;
@@ -471,8 +483,10 @@ class VidyaController extends _$VidyaController {
     try {
       await _recorder.start();
     } catch (_) {
+      // Unexpected (device busy, plugin error) — not a mis-tap. Same
+      // dignified-failure treatment as above, never a silent idle bounce.
       if (_stale(gen)) return;
-      _set(status: VidyaStatus.idle);
+      _set(status: VidyaStatus.failed);
       return;
     }
     if (_stale(gen)) {
@@ -522,8 +536,11 @@ class VidyaController extends _$VidyaController {
     try {
       recording = await _recorder.stop();
     } catch (_) {
+      // The recorder failed to stop/flush — unexpected, same treatment: the
+      // teacher just spoke, so silence here is exactly the bug this exists
+      // to kill.
       if (_stale(gen)) return;
-      _set(status: VidyaStatus.idle);
+      _set(status: VidyaStatus.failed);
       return;
     }
     if (_stale(gen)) return;

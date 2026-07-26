@@ -2008,6 +2008,10 @@ class AppLocalizationsOr extends AppLocalizations {
   String get vidyaFieldMicLabel => 'କହି ପୂରଣ କରନ୍ତୁ';
 
   @override
+  String get vidyaFieldMicFailed =>
+      'ଶୁଣିହେଲା ନାହିଁ। ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ କିମ୍ବା ଟାଇପ୍ କରନ୍ତୁ।';
+
+  @override
   String get vidyaOpen => 'VIDYA କୁ ପଚାରନ୍ତୁ';
 
   @override

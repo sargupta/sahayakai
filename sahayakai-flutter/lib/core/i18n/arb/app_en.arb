@@ -2514,6 +2514,10 @@
   "@vidyaFieldMicLabel": {
     "description": "Label/tooltip for the inline field mic that dictates one form field (topic/question) by voice."
   },
+  "vidyaFieldMicFailed": "Didn't catch that. Try again or type it in.",
+  "@vidyaFieldMicFailed": {
+    "description": "Brief snackbar shown when the inline field mic's speech-to-text fails unexpectedly (network, 401, 413…)."
+  },
   "vidyaOpen": "Ask VIDYA",
   "@vidyaOpen": {
     "description": "App-bar action + sheet title that opens VIDYA (the co-teacher) from any tool screen."

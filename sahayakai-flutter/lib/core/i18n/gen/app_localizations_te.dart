@@ -2009,6 +2009,10 @@ class AppLocalizationsTe extends AppLocalizations {
   String get vidyaFieldMicLabel => 'మాట్లాడి నింపండి';
 
   @override
+  String get vidyaFieldMicFailed =>
+      'వినిపించలేదు. మళ్లీ ప్రయత్నించండి లేదా టైప్ చేయండి.';
+
+  @override
   String get vidyaOpen => 'VIDYA ను అడగండి';
 
   @override

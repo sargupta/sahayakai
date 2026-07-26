@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
+import 'package:sahayakai/core/network/api_exception.dart';
 import 'package:sahayakai/core/network/api_providers.dart';
 import 'package:sahayakai/features/vidya/presentation/widgets/inline_field_mic.dart';
 import 'package:sahayakai/shared/voice/audio_recorder_service.dart';
@@ -110,10 +111,55 @@ void main() {
     await tester.tap(find.byType(InlineFieldMic));
     await tester.pumpAndSettle();
 
-    // No recording started, no field filled, no crash.
+    // No recording started, no field filled, no crash. This is the
+    // deliberately-benign path (SPEC-adjacent): still silent, unchanged by
+    // the T1-U6 fix.
     expect(recorder.startCount, 0);
     expect(result, isNull);
     expect(tester.takeException(), isNull);
+    expect(find.byType(SnackBar), findsNothing);
+  });
+
+  testWidgets(
+      'an unexpected STT failure (network/401/413) shows a brief snackbar, '
+      'not silence', (tester) async {
+    final recorder = FakeAudioRecorderService();
+    final client = FakeApiClient(
+      multipartError:
+          const ApiException(ApiErrorKind.network, 'No internet connection.'),
+    );
+    String? result;
+
+    await _pumpMic(
+      tester,
+      onResult: (t) => result = t,
+      client: client,
+      recorder: recorder,
+      permission: FakeMicPermissionService(),
+    );
+
+    await tester.tap(find.byType(InlineFieldMic));
+    await tester.pump();
+    expect(recorder.startCount, 1);
+
+    await tester.runAsync(() async {
+      await tester.tap(find.byType(InlineFieldMic));
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    });
+    await tester.pump(); // let the SnackBar animate in
+
+    // The field mic still resets to idle and never fills the field with
+    // garbage — but unlike before this fix, the teacher now sees SOMETHING.
+    expect(result, isNull);
+    expect(recorder.stopCount, 1);
+    expect(find.byType(SnackBar), findsOneWidget);
+    expect(
+      find.text("Didn't catch that. Try again or type it in."),
+      findsOneWidget,
+    );
+
+    // Cleanly dismiss so the timer doesn't leak into the next test.
+    await tester.pumpAndSettle(const Duration(seconds: 5));
   });
 
   testWidgets('a near-silent capture never pays for STT nor fills the field',

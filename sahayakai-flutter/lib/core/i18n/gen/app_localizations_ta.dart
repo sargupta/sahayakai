@@ -2012,6 +2012,10 @@ class AppLocalizationsTa extends AppLocalizations {
   String get vidyaFieldMicLabel => 'பேசி நிரப்பு';
 
   @override
+  String get vidyaFieldMicFailed =>
+      'கேட்கவில்லை. மீண்டும் முயற்சிக்கவும் அல்லது தட்டச்சு செய்யவும்.';
+
+  @override
   String get vidyaOpen => 'VIDYA-விடம் கேளுங்கள்';
 
   @override

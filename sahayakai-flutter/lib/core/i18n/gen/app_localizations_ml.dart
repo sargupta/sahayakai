@@ -2012,6 +2012,10 @@ class AppLocalizationsMl extends AppLocalizations {
   String get vidyaFieldMicLabel => 'സംസാരിച്ച് പൂരിപ്പിക്കുക';
 
   @override
+  String get vidyaFieldMicFailed =>
+      'കേൾക്കാനായില്ല. വീണ്ടും ശ്രമിക്കുക അല്ലെങ്കിൽ ടൈപ്പ് ചെയ്യുക.';
+
+  @override
   String get vidyaOpen => 'VIDYA യോട് ചോദിക്കൂ';
 
   @override

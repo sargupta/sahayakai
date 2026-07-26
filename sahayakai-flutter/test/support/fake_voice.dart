@@ -11,10 +11,24 @@ import 'package:sahayakai/shared/voice/mic_permission_service.dart';
 /// would on device; set `captureBytes <= 0` to model "nothing captured" (a
 /// null recording). Push levels through [emitAmplitude] to drive the VAD.
 class FakeAudioRecorderService implements AudioRecorderService {
-  FakeAudioRecorderService({this.permission = true, this.captureBytes = 8000});
+  FakeAudioRecorderService({
+    this.permission = true,
+    this.captureBytes = 8000,
+    this.throwOnStart,
+    this.throwOnStop,
+  });
 
   bool permission;
   int captureBytes;
+
+  /// When set, [start] throws this instead of starting — models a plugin
+  /// hiccup (device busy, platform error), NOT the expected permission-denied
+  /// path (that's [FakeMicPermissionService.result]).
+  Object? throwOnStart;
+
+  /// When set, [stop] throws this instead of returning a [Recording] — models
+  /// a recorder failing to stop/flush.
+  Object? throwOnStop;
 
   final StreamController<double> _amplitude =
       StreamController<double>.broadcast();
@@ -39,12 +53,14 @@ class FakeAudioRecorderService implements AudioRecorderService {
 
   @override
   Future<void> start() async {
+    if (throwOnStart != null) throw throwOnStart!;
     _recording = true;
     startCount++;
   }
 
   @override
   Future<Recording?> stop() async {
+    if (throwOnStop != null) throw throwOnStop!;
     _recording = false;
     stopCount++;
     if (captureBytes <= 0) return null;
@@ -95,9 +111,15 @@ class FakeMicPermissionService implements MicPermissionService {
   int requestCount = 0;
   int openSettingsCount = 0;
 
+  /// When set, [ensureGranted] throws this instead of returning [result] —
+  /// models the permission plugin itself failing (a hiccup), distinct from
+  /// the expected "denied" outcome which is a plain [MicPermission] value.
+  Object? throwOnEnsureGranted;
+
   @override
   Future<MicPermission> ensureGranted() async {
     requestCount++;
+    if (throwOnEnsureGranted != null) throw throwOnEnsureGranted!;
     return result;
   }
 

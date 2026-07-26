@@ -87,6 +87,7 @@
   "vidyaFlowVirtualFieldTrip": "आभासी भ्रमण",
   "vidyaFlowVideoStoryteller": "वीडियो कहानी",
   "vidyaFieldMicLabel": "बोलकर भरें",
+  "vidyaFieldMicFailed": "सुन नहीं पाए। फिर से कोशिश करें या टाइप करें।",
   "vidyaOpen": "VIDYA से पूछें",
   "parentHotlineTitle": "अभिभावक कॉल लाइन",
   "parentHotlineSubtitle": "विद्यार्थी के अभिभावक को उनकी भाषा में कॉल करें",

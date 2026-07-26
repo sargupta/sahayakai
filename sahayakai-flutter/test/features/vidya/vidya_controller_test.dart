@@ -367,6 +367,70 @@ void main() {
     });
   });
 
+  group('unexpected plugin failures (silent-bounce regression, T1-U6)', () {
+    test(
+        'the permission plugin throwing (not a denial) lands on the '
+        'dignified failed state, never a silent idle bounce', () async {
+      final container = _container(
+        client: _happyClient(),
+        permission: FakeMicPermissionService()
+          ..throwOnEnsureGranted = Exception('platform channel hiccup'),
+      );
+      final vidya = container.read(vidyaControllerProvider.notifier);
+
+      await vidya.onMicTap();
+
+      final state = container.read(vidyaControllerProvider);
+      expect(state.status, VidyaStatus.failed);
+      expect(state.status, isNot(VidyaStatus.idle));
+    });
+
+    test('the recorder failing to start lands on the failed state', () async {
+      final recorder = FakeAudioRecorderService()
+        ..throwOnStart = Exception('mic already in use');
+      final container = _container(client: _happyClient(), recorder: recorder);
+      final vidya = container.read(vidyaControllerProvider.notifier);
+
+      await vidya.onMicTap();
+
+      expect(
+          container.read(vidyaControllerProvider).status, VidyaStatus.failed);
+    });
+
+    test('the recorder failing to stop/flush lands on the failed state',
+        () async {
+      final recorder = FakeAudioRecorderService()
+        ..throwOnStop = Exception('flush failed');
+      final container = _container(client: _happyClient(), recorder: recorder);
+      final vidya = container.read(vidyaControllerProvider.notifier);
+
+      await vidya.onMicTap(); // idle → listening
+      await vidya.onMicTap(); // listening → stop (throws) → failed
+
+      expect(
+          container.read(vidyaControllerProvider).status, VidyaStatus.failed);
+    });
+
+    test(
+        'regression: a permanent denial and a soft denial are untouched by '
+        'this fix', () async {
+      final permanent = _container(
+        client: _happyClient(),
+        permission: FakeMicPermissionService(MicPermission.permanentlyDenied),
+      );
+      await permanent.read(vidyaControllerProvider.notifier).onMicTap();
+      expect(permanent.read(vidyaControllerProvider).status,
+          VidyaStatus.micDenied);
+
+      final soft = _container(
+        client: _happyClient(),
+        permission: FakeMicPermissionService(MicPermission.denied),
+      );
+      await soft.read(vidyaControllerProvider.notifier).onMicTap();
+      expect(soft.read(vidyaControllerProvider).status, VidyaStatus.idle);
+    });
+  });
+
   group('guards', () {
     test('a near-empty capture is rejected before paying for STT', () async {
       final recorder = FakeAudioRecorderService(captureBytes: 500); // < 2000

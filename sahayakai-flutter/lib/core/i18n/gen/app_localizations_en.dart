@@ -2008,6 +2008,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get vidyaFieldMicLabel => 'Dictate';
 
   @override
+  String get vidyaFieldMicFailed =>
+      'Didn\'t catch that. Try again or type it in.';
+
+  @override
   String get vidyaOpen => 'Ask VIDYA';
 
   @override

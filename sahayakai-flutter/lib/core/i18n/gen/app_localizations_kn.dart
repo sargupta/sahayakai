@@ -2011,6 +2011,10 @@ class AppLocalizationsKn extends AppLocalizations {
   String get vidyaFieldMicLabel => 'ಮಾತನಾಡಿ ಭರ್ತಿ ಮಾಡಿ';
 
   @override
+  String get vidyaFieldMicFailed =>
+      'ಕೇಳಲಾಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ ಅಥವಾ ಟೈಪ್ ಮಾಡಿ.';
+
+  @override
   String get vidyaOpen => 'VIDYA ಅನ್ನು ಕೇಳಿ';
 
   @override

@@ -2009,6 +2009,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get vidyaFieldMicLabel => 'বলে পূরণ করুন';
 
   @override
+  String get vidyaFieldMicFailed =>
+      'শুনতে পাইনি। আবার চেষ্টা করুন বা টাইপ করুন।';
+
+  @override
   String get vidyaOpen => 'VIDYA কে জিজ্ঞাসা করুন';
 
   @override

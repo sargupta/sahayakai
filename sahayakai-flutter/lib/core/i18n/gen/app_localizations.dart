@@ -3650,6 +3650,12 @@ abstract class AppLocalizations {
   /// **'Dictate'**
   String get vidyaFieldMicLabel;
 
+  /// Brief snackbar shown when the inline field mic's speech-to-text fails unexpectedly (network, 401, 413…).
+  ///
+  /// In en, this message translates to:
+  /// **'Didn\'t catch that. Try again or type it in.'**
+  String get vidyaFieldMicFailed;
+
   /// App-bar action + sheet title that opens VIDYA (the co-teacher) from any tool screen.
   ///
   /// In en, this message translates to:

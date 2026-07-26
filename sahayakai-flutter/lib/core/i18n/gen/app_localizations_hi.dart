@@ -2008,6 +2008,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get vidyaFieldMicLabel => 'बोलकर भरें';
 
   @override
+  String get vidyaFieldMicFailed =>
+      'सुन नहीं पाए। फिर से कोशिश करें या टाइप करें।';
+
+  @override
   String get vidyaOpen => 'VIDYA से पूछें';
 
   @override

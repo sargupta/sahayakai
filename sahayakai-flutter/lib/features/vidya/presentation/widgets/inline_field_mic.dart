@@ -36,8 +36,13 @@ enum InlineMicPhase { idle, requesting, listening, transcribing }
 /// continuously (each state is a composed still), so it never blocks a hosting
 /// form's `pumpAndSettle` and is trivially reduce-motion safe.
 ///
-/// Errors are swallowed here by design: the field mic is a convenience, and the
-/// home Seal Mic owns the dignified permission / signed-out / limit recovery.
+/// Errors stay minimal here by design: the field mic is a convenience, and the
+/// home Seal Mic owns the dignified permission / signed-out / limit recovery —
+/// so an expected outcome (a soft permission denial, a near-silent capture)
+/// still returns quietly to idle with no dialog of its own. An UNEXPECTED STT
+/// failure (network, 401, 413…) is different: it still resets to idle, but
+/// also raises a brief snackbar, because dropping a teacher's spoken input
+/// with zero feedback is a silent-failure bug, not a "convenience."
 class InlineFieldMic extends ConsumerStatefulWidget {
   const InlineFieldMic({
     super.key,
@@ -190,8 +195,21 @@ class _InlineFieldMicState extends ConsumerState<InlineFieldMic> {
       // the rest and lets the teacher edit it.
       if (transcript.isUsable) widget.onResult(transcript.text);
     } catch (_) {
-      // Swallow (401 on the stub token, network, 413…): the field mic is a
-      // convenience; the home Seal Mic surfaces the dignified error state.
+      // Swallow the exception itself (401, network, 413…): the field mic is
+      // a convenience, so no full error UI, and the home Seal Mic still owns
+      // the dignified permission/signed-out/limit recovery. But dropping the
+      // teacher's spoken input with literally nothing shown is the same
+      // silent-bounce-to-idle bug this fix exists to kill — a brief snackbar
+      // is the minimal signal that keeps this a "convenience," not silence.
+      // Skip it for an abandoned/stale capture (a cancel or a fresh tap
+      // already moved on) so a late failure never surfaces confusingly.
+      if (!_stale(gen) && mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(content: Text(AppLocalizations.of(context).vidyaFieldMicFailed)),
+          );
+      }
     }
     _resetTo(gen, InlineMicPhase.idle);
   }

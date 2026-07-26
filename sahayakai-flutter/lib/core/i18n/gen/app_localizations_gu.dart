@@ -2006,6 +2006,10 @@ class AppLocalizationsGu extends AppLocalizations {
   String get vidyaFieldMicLabel => 'બોલીને ભરો';
 
   @override
+  String get vidyaFieldMicFailed =>
+      'સાંભળી શકાયું નહીં. ફરી પ્રયાસ કરો અથવા ટાઈપ કરો.';
+
+  @override
   String get vidyaOpen => 'VIDYA ને પૂછો';
 
   @override
