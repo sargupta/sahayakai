@@ -123,6 +123,12 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
 
+  # T1-U4: an in-memory fake of the cloud_firestore client SDK, test-only —
+  # proves FirestoreInboxTransport's queries/writes against the real
+  # cloud_firestore API surface (arrayContains/orderBy/limitToLast/
+  # runTransaction/batch) without a live project or the emulator.
+  fake_cloud_firestore: ^3.1.0
+
   # Code generation
   build_runner: ^2.4.13
   riverpod_generator: ^2.6.3
