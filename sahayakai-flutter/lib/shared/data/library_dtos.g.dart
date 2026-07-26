@@ -16,6 +16,7 @@ LibraryItemDto _$LibraryItemDtoFromJson(Map<String, dynamic> json) =>
       topic: json['topic'] as String?,
       language: json['language'] as String?,
       createdAt: json['createdAt'],
+      data: json['data'],
     );
 
 LibraryListDto _$LibraryListDtoFromJson(Map<String, dynamic> json) =>

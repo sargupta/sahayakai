@@ -142,6 +142,123 @@ void main() {
       );
     });
 
+    testWidgets(
+        'T1-U2: a saved lesson plan renders through its own result view, '
+        'not the bare "Ready" checkmark', (tester) async {
+      await _openDetail(
+        tester,
+        client: libraryClient(),
+        itemResponse: contentItem(overrides: {
+          'data': {
+            'title': 'Photosynthesis for Class 6',
+            'gradeLevel': 'Class 6',
+            'subject': 'Science',
+            'objectives': ['Explain how plants make food'],
+            'materials': ['Leaves', 'Sunlight'],
+            'activities': [
+              {
+                'phase': 'Engage',
+                'name': 'Leaf walk',
+                'description': 'Collect leaves from the schoolyard.',
+                'duration': '10 minutes',
+              },
+            ],
+          },
+        }),
+      );
+
+      // The actual saved content is now on screen...
+      expect(find.text('Explain how plants make food'), findsOneWidget);
+      expect(find.text('Leaf walk'), findsOneWidget);
+      // ...instead of the old placeholder.
+      expect(
+        find.text('You are viewing your saved Lesson plan.'),
+        findsNothing,
+      );
+    });
+
+    testWidgets(
+        'T1-U2: a saved worksheet dispatches on the fetched type, not the '
+        "row's", (tester) async {
+      final worksheetData = {
+        'title': 'Fractions Worksheet',
+        'gradeLevel': 'Class 5',
+        'subject': 'Mathematics',
+        'learningObjectives': ['Add fractions with unlike denominators'],
+        'studentInstructions': 'Solve each problem and show your work.',
+        'activities': [
+          {
+            'type': 'question',
+            'content': 'What is 1/2 + 1/4?',
+            'explanation': 'Find a common denominator first.',
+          },
+        ],
+        'answerKey': [
+          {'activityIndex': 0, 'answer': '3/4'},
+        ],
+        // A legacy markdown field real saved worksheets also carry — must be
+        // ignored in favour of the structured fields above.
+        'worksheetContent': '# Fractions Worksheet\n\nignored',
+      };
+      await _openDetail(
+        tester,
+        client: libraryClient(
+          response: contentListResponse(items: [
+            contentItem(overrides: {
+              'type': 'worksheet',
+              'title': 'Fractions Worksheet',
+            }),
+          ]),
+        ),
+        rowText: 'Fractions Worksheet',
+        itemResponse: contentItem(overrides: {
+          'type': 'worksheet',
+          'title': 'Fractions Worksheet',
+          'data': worksheetData,
+        }),
+      );
+
+      expect(find.text('What is 1/2 + 1/4?'), findsOneWidget);
+      expect(find.textContaining('ignored'), findsNothing);
+    });
+
+    testWidgets(
+        'T1-U2: a saved item with no data payload keeps the honest "Ready" '
+        'state', (tester) async {
+      // A document that predates the `data` field, or a content type with no
+      // mobile tool screen yet — either way this must never guess.
+      await _openDetail(
+        tester,
+        client: libraryClient(),
+        itemResponse: contentItem(),
+      );
+
+      expect(
+        find.text('You are viewing your saved Lesson plan.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
+        'T1-U2: a saved item whose data cannot decode falls back to "Ready" '
+        'rather than rendering garbage', (tester) async {
+      await _openDetail(
+        tester,
+        client: libraryClient(),
+        itemResponse: contentItem(overrides: {
+          // A lesson-plan type whose `data` is structurally foreign (an
+          // array, not an object) — must never crash or half-render.
+          'data': ['not', 'an', 'object'],
+        }),
+      );
+
+      expect(
+        find.text('You are viewing your saved Lesson plan.'),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('no identity asks for sign-in, with no retry that cannot work',
         (tester) async {
       await _openDetail(

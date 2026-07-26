@@ -23,6 +23,7 @@ class LibraryItemDto {
     this.topic,
     this.language,
     this.createdAt,
+    this.data,
   });
 
   factory LibraryItemDto.fromJson(Map<String, dynamic> json) =>
@@ -48,6 +49,13 @@ class LibraryItemDto {
   /// cast error mid-list; [_parseDate] simply reports null for it.
   final dynamic createdAt;
 
+  /// The `GET /api/content/get`-only `data` payload — absent from
+  /// `GET /api/content/list` rows. `z.any()` server-side (`SaveContentSchema`),
+  /// so this is decoded as-is rather than through a typed field: reshaping it
+  /// into a tool's render model is `library_result_mapper.dart`'s job, not
+  /// this shared DTO's.
+  final dynamic data;
+
   LibraryItem toDomain() {
     return LibraryItem(
       id: id?.trim() ?? '',
@@ -58,6 +66,7 @@ class LibraryItemDto {
       topic: _clean(topic),
       language: _clean(language),
       createdAt: _parseDate(createdAt),
+      data: data,
     );
   }
 }

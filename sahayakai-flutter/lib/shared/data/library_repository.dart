@@ -72,19 +72,24 @@ class LibraryRepository {
 
   /// Opens one saved generation by id (`GET /api/content/get?id=<id>`).
   ///
-  /// Decodes ONLY the item's metadata (through the same [LibraryItemDto] the
-  /// list uses), NOT the `data` payload. That is a deliberate scope decision,
-  /// verified against the backend and recorded in HANDOFF:
+  /// Decodes the item's metadata AND the `data` payload (through the same
+  /// [LibraryItemDto] the list uses — [LibraryItem.data] is simply null on a
+  /// list row, which never carries it). The stored `data` is `z.any()`
+  /// (`SaveContentSchema`) server-side, so this repository still hands it back
+  /// undecoded; `library_result_mapper.dart` (Library's own `data` layer) is
+  /// where it gets reshaped into each tool's render model, verified per-type
+  /// against the `sahayakai-main` flow that actually persists it. That used to
+  /// be documented here as a divergence too deep to bridge (a saved `quiz`
+  /// assumed single-variant, a saved `worksheet` assumed markdown) — verifying
+  /// against the actual `dbAdapter.saveContent` calls found every one of the 8
+  /// mapped types saves the flow's own output object verbatim, which is either
+  /// identical to or a superset of what the live generate endpoint already
+  /// returns, so the app's existing `*ResponseDto`s decode it correctly.
   ///
-  ///  - the stored `data` is `z.any()` (`SaveContentSchema`), and the per-type
-  ///    saved shapes DIVERGE from this app's tool result-view models — a saved
-  ///    `quiz` is a single-variant `{title, questions}` (not the tool's
-  ///    easy/medium/hard triple), a saved `worksheet` is a markdown string (not
-  ///    the tool's structured activities). So a saved item cannot be re-rendered
-  ///    through its owning result view without per-type reshaping;
-  ///  - and the read is Firebase-gated exactly like the list — on today's stub
-  ///    auth it 401s — so the detail screen is BUILT-PENDING-FIREBASE and shows
-  ///    the metadata the item carries plus a clear "sign in to open" state.
+  /// The read is still Firebase-gated exactly like the list — on today's stub
+  /// auth it 401s — so the detail screen is BUILT-PENDING-FIREBASE and shows
+  /// the metadata the item carries plus a clear "sign in to open" state until
+  /// that lands.
   ///
   /// A non-object 200 body (a proxy or an error page) is a failure to open the
   /// item, not an empty item, so it surfaces as a typed [ApiException] the

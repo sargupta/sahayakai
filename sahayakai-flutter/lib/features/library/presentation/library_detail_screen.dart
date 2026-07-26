@@ -15,7 +15,16 @@ import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/icon_well.dart';
 import '../../../shared/widgets/library_item_row.dart';
 import '../../../shared/widgets/offline_view.dart';
+import '../../assess_assignment/presentation/widgets/assess_assignment_result_view.dart';
+import '../../exam_paper/presentation/widgets/exam_paper_result_view.dart';
+import '../../instant_answer/presentation/widgets/instant_answer_result_view.dart';
+import '../../lesson_planner/presentation/widgets/lesson_plan_result_view.dart';
+import '../../quiz_generator/presentation/widgets/quiz_result_view.dart';
+import '../../rubric_generator/presentation/widgets/rubric_result_view.dart';
+import '../../teacher_training/presentation/widgets/teacher_training_result_view.dart';
+import '../../worksheet_wizard/presentation/widgets/worksheet_result_view.dart';
 import '../data/library_item_detail_provider.dart';
+import '../data/library_result_mapper.dart';
 
 /// One saved generation, opened from a Library (or dashboard Recent) row.
 ///
@@ -25,12 +34,15 @@ import '../data/library_item_detail_provider.dart';
 /// metadata header paints immediately from the [item] the row handed through
 /// `extra`; the read below enriches / reports.
 ///
-/// It deliberately does NOT re-render the saved output through its owning tool's
-/// result view. The stored `data` payload is `z.any()` server-side and its
-/// per-type saved shape diverges from this app's result-view models (a saved
-/// quiz is single-variant, a saved worksheet is markdown), so a faithful
-/// re-render would need per-type reshaping the backend does not guarantee. See
-/// `LibraryRepository.fetchItem` and HANDOFF.
+/// It re-renders the saved output through its owning tool's OWN
+/// `*_result_view.dart` widget wherever `library_result_mapper.dart` can
+/// confidently reshape the saved `data` payload into that widget's render
+/// model (verified against the `sahayakai-main` flow that actually persists
+/// each content type — see that file). For anything the mapper cannot
+/// confidently reshape (no saved `data`, a decode that fails, or a content
+/// type with no mobile tool screen yet), this falls back to the honest
+/// "Ready" state rather than guessing at a shape and rendering something
+/// wrong or garbled. See `LibraryRepository.fetchItem` and HANDOFF.
 class LibraryDetailScreen extends ConsumerWidget {
   const LibraryDetailScreen({super.key, required this.id, this.item});
 
@@ -210,6 +222,9 @@ class _DetailBody extends StatelessWidget {
         );
       },
       data: (full) {
+        final rendered = _savedResultView(full);
+        if (rendered != null) return rendered;
+
         final scheme = Theme.of(context).colorScheme;
         final text = Theme.of(context).textTheme;
         // Green is the "saved / success" role (DESIGN_RUBRIC §4).
@@ -234,6 +249,76 @@ class _DetailBody extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+/// Reshapes [full]'s saved `data` (via `library_result_mapper.dart`) and, on
+/// success, renders it through its owning tool's OWN result-view widget — the
+/// same widget that tool's live generate screen uses. Null when there is
+/// nothing saved to show (no `data`, a decode that failed, a structurally
+/// empty result, or a content type with no mobile tool screen yet), so the
+/// caller falls back to the honest "Ready" state instead of guessing.
+///
+/// Switches on `full.type` (the fetched document's own type), not the header
+/// row's [ContentType] — `full` is the record that actually owns `data`, so
+/// its type is the authoritative one for deciding how to reshape it.
+///
+/// Every embedded result view is handed `onRegenerate: null` (or simply
+/// omitted, for the tools where it already defaults to null): there is no
+/// live controller behind a saved item on this screen, so the "Regenerate"
+/// action every tool's footer normally offers is correctly absent here — see
+/// each widget's own doc comment for that null-omits-the-footer contract.
+Widget? _savedResultView(LibraryItem full) {
+  switch (full.type) {
+    case ContentType.lessonPlan:
+      final plan = mapSavedLessonPlan(full.data);
+      return plan == null ? null : LessonPlanResultView(plan: plan);
+
+    case ContentType.quiz:
+      final quiz = mapSavedQuiz(full.data);
+      return quiz == null ? null : QuizResultView(quiz: quiz);
+
+    case ContentType.worksheet:
+      final worksheet = mapSavedWorksheet(full.data);
+      return worksheet == null
+          ? null
+          : WorksheetResultView(worksheet: worksheet);
+
+    case ContentType.rubric:
+      final rubric = mapSavedRubric(full.data);
+      return rubric == null ? null : RubricResultView(rubric: rubric);
+
+    case ContentType.instantAnswer:
+      final answer = mapSavedInstantAnswer(full.data);
+      return answer == null
+          ? null
+          : InstantAnswerResultView(
+              answer: answer,
+              question: full.title.isEmpty ? null : full.title,
+            );
+
+    case ContentType.teacherTraining:
+      final advice = mapSavedTeacherAdvice(full.data);
+      return advice == null
+          ? null
+          : TeacherTrainingResultView(advice: advice);
+
+    case ContentType.examPaper:
+      final ready = mapSavedExamPaper(full.data);
+      return ready == null ? null : ExamPaperResultView(ready: ready);
+
+    case ContentType.assessment:
+      final assessment = mapSavedAssessment(full.data);
+      return assessment == null
+          ? null
+          : AssessAssignmentResultView(assessment: assessment);
+
+    // No mobile tool screen yet for these — see library_result_mapper.dart.
+    case ContentType.visualAid:
+    case ContentType.microLesson:
+    case ContentType.virtualFieldTrip:
+    case ContentType.unknown:
+      return null;
   }
 }
 

@@ -18,6 +18,7 @@ class LibraryItem {
     this.topic,
     this.language,
     this.createdAt,
+    this.data,
   });
 
   /// The document id. Stable, and the cursor value for the next page.
@@ -42,6 +43,23 @@ class LibraryItem {
   /// carries one this build cannot parse — the row still renders, just undated.
   final DateTime? createdAt;
 
+  /// The generation itself — `GET /api/content/get`'s `data` field, `z.any()`
+  /// server-side. Null from `GET /api/content/list` (the list route never
+  /// sends it) and from every deep-link header this app paints before the
+  /// per-item read lands; populated only by [LibraryRepository.fetchItem].
+  ///
+  /// Left as the raw decoded JSON (a `Map<String, dynamic>` for every content
+  /// type this app knows how to render, but deliberately untyped here — this
+  /// is a `shared/domain` model with no business reshaping it into a tool's
+  /// render model, that is `library_result_mapper.dart`'s job). See
+  /// `library_detail_screen.dart` for where it is finally read.
+  final Object? data;
+
+  /// [data] is deliberately excluded: it is a bulky, server-authored payload
+  /// that plays no part in this item's identity, and two decodes of the same
+  /// document would otherwise compare unequal (`Map` uses identity equality),
+  /// which would make this operator lie for no benefit — the metadata fields
+  /// already say whether two items are "the same".
   @override
   bool operator ==(Object other) =>
       other is LibraryItem &&

@@ -30,13 +30,16 @@ class LessonPlanResultView extends StatelessWidget {
   const LessonPlanResultView({
     super.key,
     required this.plan,
-    required this.onRegenerate,
+    this.onRegenerate,
   });
 
   final LessonPlan plan;
 
   /// Re-runs generation from the current form (the controller's `generate`).
-  final VoidCallback onRegenerate;
+  /// When null (e.g. a saved item re-rendered read-only from the Library, or a
+  /// direct render in a test) the footer action bar is omitted, mirroring
+  /// every other tool's result view.
+  final VoidCallback? onRegenerate;
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +110,9 @@ class LessonPlanResultView extends StatelessWidget {
       docType: '${l10n.lessonPlanTitle} · 5E',
       title: plan.title,
       meta: meta,
-      footer: _ActionBar(plan: plan, onRegenerate: onRegenerate),
+      footer: onRegenerate == null
+          ? null
+          : _ActionBar(plan: plan, onRegenerate: onRegenerate!),
       children: revealed,
     );
   }
