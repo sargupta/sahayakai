@@ -239,22 +239,37 @@ void main() {
     });
   });
 
-  group('FirestoreInboxTransport — methods left TransportUnavailable', () {
-    test('getTotalUnreadCount throws restWrapperMissing', () async {
-      final transport =
-          FirestoreInboxTransport(FakeFirebaseFirestore(), 'u1');
-      await expectLater(
-        transport.getTotalUnreadCount,
-        throwsA(
-          isA<TransportUnavailable>().having(
-            (e) => e.kind,
-            'kind',
-            TransportUnavailableKind.restWrapperMissing,
-          ),
-        ),
-      );
+  group('FirestoreInboxTransport.getTotalUnreadCount', () {
+    test('sums unreadCount for my uid across my conversations only',
+        () async {
+      final firestore = FakeFirebaseFirestore();
+      final conversations = firestore.collection('conversations');
+      await conversations.doc('u1_u2').set({
+        'participantIds': ['u1', 'u2'],
+        'unreadCount': {'u1': 2, 'u2': 0},
+      });
+      await conversations.doc('u1_u3').set({
+        'participantIds': ['u1', 'u3'],
+        'unreadCount': {'u1': 5, 'u3': 1},
+      });
+      // Not mine — must not be counted.
+      await conversations.doc('u2_u3').set({
+        'participantIds': ['u2', 'u3'],
+        'unreadCount': {'u2': 9, 'u3': 9},
+      });
+
+      final transport = FirestoreInboxTransport(firestore, 'u1');
+      expect(await transport.getTotalUnreadCount(), 7);
     });
 
+    test('returns 0 when the caller has no conversations', () async {
+      final transport =
+          FirestoreInboxTransport(FakeFirebaseFirestore(), 'u1');
+      expect(await transport.getTotalUnreadCount(), 0);
+    });
+  });
+
+  group('FirestoreInboxTransport — methods left TransportUnavailable', () {
     test('createGroupConversation throws restWrapperMissing', () async {
       final transport =
           FirestoreInboxTransport(FakeFirebaseFirestore(), 'u1');

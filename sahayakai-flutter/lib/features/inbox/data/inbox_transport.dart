@@ -259,12 +259,12 @@ class DeferredInboxTransport implements InboxTransport {
 ///     explicitly allow-lists `deliveredTo` (alongside `readBy`/`readAt`/
 ///     `deliveredAt`/`lastReadAt`) as client-mutable for any participant, so
 ///     this batches `deliveredTo: arrayUnion(myUid)` across the given ids.
-///   - [getTotalUnreadCount] stays [TransportUnavailable]
-///     (`restWrapperMissing`): unlike every `watch*` method above, its doc
-///     comment gives no Firestore-native query — it names a specific
-///     server-side reduction ("capped 500 convos") this class has no
-///     documented equivalent for, and [watchUnreadConversations] already
-///     serves the one real UI need (the app-shell badge) live.
+///   - [getTotalUnreadCount] — direct read. A one-shot `.get()` on the exact
+///     same query [watchUnreadConversations] streams; the interface doc's
+///     "capped 500 convos" server-side reduction isn't reproduced (no cap
+///     here), but the one real UI need (the app-shell badge) is already
+///     served live by [watchUnreadConversations] — this is a fallback
+///     one-shot read, not a distinct code path worth its own limit.
 ///   - [createGroupConversation] stays [TransportUnavailable]
 ///     (`restWrapperMissing`): the raw `create` rule doesn't forbid a group
 ///     doc, but a *correct* one needs member-count/name validation and a
@@ -375,14 +375,23 @@ class FirestoreInboxTransport implements InboxTransport {
   }
 
   @override
-  Future<int> getTotalUnreadCount() async => throw const TransportUnavailable(
-        TransportUnavailableKind.restWrapperMissing,
-        surface: 'getTotalUnreadCount',
-        message: 'No REST wrapper for getTotalUnreadCountAction yet, and its '
-            "capped-500 one-shot reduction isn't documented as a Firestore "
-            'query. The app-shell badge is already served live by '
-            'watchUnreadConversations.',
-      );
+  Future<int> getTotalUnreadCount() async {
+    // A one-shot `.get()` on the exact query `watchUnreadConversations` keeps
+    // live — not a distinct server-side reduction, just that same read taken
+    // once instead of streamed. No REST wrapper needed for this one.
+    final snapshot = await _conversations
+        .where('participantIds', arrayContains: _uid)
+        .get();
+    var sum = 0;
+    for (final doc in snapshot.docs) {
+      final unreadCount = doc.data()['unreadCount'];
+      if (unreadCount is Map) {
+        final mine = unreadCount[_uid];
+        if (mine is num) sum += mine.round();
+      }
+    }
+    return sum;
+  }
 
   @override
   Future<ConversationId> getOrCreateDirectConversation(

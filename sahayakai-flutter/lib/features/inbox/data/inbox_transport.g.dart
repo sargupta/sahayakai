@@ -6,12 +6,16 @@ part of 'inbox_transport.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$inboxTransportHash() => r'1eceeaed0e74896674bd7f46ff509767df2cba61';
+String _$inboxTransportHash() => r'4f68ad9b12b4e741c9596dc3a87cabc14f687d82';
 
-/// The Pro-Inbox transport. Bound to [DeferredInboxTransport] until Firebase is
-/// wired; swap to `FirestoreInboxTransport` at the handoff (see the throw below —
-/// it fails loudly if someone flips `FirebaseInit.isConfigured` without wiring
-/// the live impl, rather than silently staying deferred).
+/// The Pro-Inbox transport. [FirestoreInboxTransport] once Firebase is
+/// configured **and** a real teacher is signed in; [DeferredInboxTransport]
+/// otherwise — including a genuinely signed-out teacher, so the signed-out UI
+/// (the DM-gate `EmptyView`) renders exactly as it does today. Mirrors
+/// `profileDocSource`'s branch on [authControllerProvider] (`core/auth/
+/// auth_providers.dart`) for consistency: the same provider both the router
+/// and every other Block-C-adjacent surface already agree is the source of
+/// truth for "is this a real signed-in teacher."
 ///
 /// Copied from [inboxTransport].
 @ProviderFor(inboxTransport)
