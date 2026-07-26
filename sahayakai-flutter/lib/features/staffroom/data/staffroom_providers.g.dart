@@ -437,18 +437,23 @@ class _GroupPostsProviderElement
 }
 
 String _$currentStaffroomUserIdHash() =>
-    r'7ec5d654a8da12ca49192af3c6e7a7a2f2d0249f';
+    r'cd30c606491d4fb748d22064fda0686b28cd7002';
 
 /// The current user's uid for the Staffroom, mirroring `currentInboxUserId`
-/// (SPEC §0 — server-derived `x-user-id`, never client-supplied). It returns
-/// `null` today (no client auth identity yet): combined with the deferred
-/// transport's empty reads, the Staffroom home renders its "sign in to join"
-/// surface on-device.
+/// (`features/inbox/data/messages_stream_provider.dart`).
 ///
-/// A deliberately thin, overridable seam:
-///   • the live handoff repoints it to `FirebaseAuth.instance.currentUser?.uid`;
-///   • widget tests override it with a fixed uid to exercise the feed rows,
-///     the groups strip, likes and the join button.
+/// **LIVE (T1-U5).** Watches [authControllerProvider] — the same source of
+/// truth the router and [staffroomTransportProvider] already agree on — and
+/// resolves to `FirebaseAuth.instance.currentUser?.uid` for a real signed-in
+/// teacher, `null` otherwise. A `null` uid is itself treated as "signed out"
+/// by the screens (defensive), which also covers the on-device deferred case:
+/// while Firebase isn't wired [staffroomTransportProvider] only ever emits
+/// `awaitingFirebase` / empty reads, so this uid is irrelevant to what renders
+/// either way.
+///
+/// A deliberately thin, overridable seam: widget tests override it with a
+/// fixed uid to exercise the feed rows, the groups strip, likes and the join
+/// button without touching real auth.
 ///
 /// Copied from [currentStaffroomUserId].
 @ProviderFor(currentStaffroomUserId)

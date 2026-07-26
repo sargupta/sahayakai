@@ -1,7 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/auth/auth_providers.dart';
 import '../../../core/firebase/firebase_init.dart';
+import '../../../core/network/api_client.dart';
+import '../../../core/network/api_exception.dart';
+import '../../../core/network/api_providers.dart';
 import '../../inbox/data/block_c_transport.dart';
 import '../domain/chat_message.dart';
 import '../domain/community_post.dart';
@@ -10,6 +16,8 @@ import '../domain/group.dart';
 import '../domain/persona_pulse.dart';
 import '../domain/staffroom_results.dart';
 import '../domain/teacher.dart';
+import 'dto/chat_message_dto.dart';
+import 'dto/persona_pulse_dto.dart';
 
 part 'staffroom_transport.g.dart';
 
@@ -309,15 +317,321 @@ class DeferredStaffroomTransport implements StaffroomTransport {
       null;
 }
 
+/// Thrown by [StaffroomTransport.sendCommunityChatMessage] (and reserved for
+/// the future group-chat send) when [text] exceeds the 500-char cap
+/// `community_chat`'s `create` rule enforces (`firestore.rules:139-145`) and
+/// no [audioUrl] is present to bypass it (the rule's
+/// `text.size() <= 500 || audioUrl is string` clause). Checked **client-side,
+/// before the write**, so a too-long message fails with a clear typed error
+/// instead of the raw `PERMISSION_DENIED` the rule would otherwise produce.
+class ChatMessageTooLongException implements Exception {
+  const ChatMessageTooLongException(this.length);
+
+  /// The 500-char cap this exception is thrown against.
+  static const int maxLength = 500;
+
+  /// The (too-long) trimmed text length that triggered this.
+  final int length;
+
+  @override
+  String toString() => 'ChatMessageTooLongException: $length chars exceeds '
+      'the $maxLength-char cap.';
+}
+
+/// The live Staff Room transport (T1-U5): a real `cloud_firestore`
+/// `community_chat` read/write pair, checked directly against
+/// `firestore.rules:139-145` (quoted below — not assumed), plus the one
+/// already-deployed REST route (`triggerPersonaPulse`) reached via the
+/// existing Dio [ApiClient]. Every other method is intentionally left exactly
+/// as [DeferredStaffroomTransport] left it — same body, same
+/// [TransportUnavailable] / empty-list behavior — because none of them has a
+/// matching REST route yet (`sahayakai-main/src/app/api` has none besides
+/// `persona-pulse`) and several depend on server-side logic (PII-stripping
+/// the teacher directory, group-membership validation) that must not move to
+/// raw client Firestore reads even where a rule might technically permit one.
+/// Groups/Directory/Feed get a real backend punch-list in Tranche 3, not a
+/// client-side workaround here.
+///
+/// Bound only for a real signed-in teacher ([staffroomTransportProvider]
+/// falls back to [DeferredStaffroomTransport] otherwise), so `_uid` is always
+/// the verified Firebase Auth uid — matching `request.auth.uid` in the rule
+/// below, never a client-supplied value (same discipline as
+/// `FirestoreInboxTransport`).
+///
+/// **The `community_chat/{messageId}` rule, verbatim:**
+/// ```
+/// allow read: if isSignedIn();
+/// allow create: if isSignedIn()
+///   && request.resource.data.authorId == request.auth.uid
+///   && (request.resource.data.text.size() <= 500
+///       || request.resource.data.audioUrl is string);
+/// allow update, delete: if false;
+/// ```
+/// [watchStaffRoomChat] relies only on `read` (unconditional for any signed-in
+/// teacher — a global room, not a membership-gated one). [sendCommunityChatMessage]
+/// relies only on `create`, writing `authorId: _uid` and pre-checking the
+/// 500-char cap itself ([ChatMessageTooLongException]) so a too-long message
+/// never round-trips to the rule just to be denied. `update`/`delete` are
+/// `false` — this class never attempts either, matching the rule exactly.
+class FirestoreStaffroomTransport implements StaffroomTransport {
+  /// [myDisplayName] / [myPhotoURL] are the caller's own Firebase Auth
+  /// profile, resolved once by [staffroomTransportProvider] at bind time and
+  /// passed in — rather than this class reaching for `FirebaseAuth.instance`
+  /// itself — so it needs nothing but a uid + a `FirebaseFirestore` to run the
+  /// chat surface (including under `fake_cloud_firestore`, which has no
+  /// Firebase Auth counterpart to fake against). [apiClient] backs only
+  /// [triggerPersonaPulse] — the one method that is a real REST call, not a
+  /// Firestore read/write.
+  FirestoreStaffroomTransport(
+    this._firestore,
+    this._uid,
+    this._apiClient, {
+    String? myDisplayName,
+    this.myPhotoURL,
+  }) : myDisplayName = (myDisplayName?.trim().isNotEmpty ?? false)
+            ? myDisplayName!.trim()
+            : 'Teacher';
+
+  final FirebaseFirestore _firestore;
+  final String _uid;
+  final ApiClient _apiClient;
+  final String myDisplayName;
+  final String? myPhotoURL;
+
+  CollectionReference<Map<String, dynamic>> get _communityChat =>
+      _firestore.collection('community_chat');
+
+  // ── LIVE: the global Staff Room ─────────────────────────────────────────
+
+  @override
+  Stream<TransportSnapshot<List<ChatMessage>>> watchStaffRoomChat({
+    int limit = 100,
+  }) async* {
+    final query =
+        _communityChat.orderBy('createdAt').limitToLast(limit);
+    var last = const <ChatMessage>[];
+    try {
+      await for (final snapshot in query.snapshots()) {
+        last = _toChatMessages(snapshot);
+        yield TransportSnapshot<List<ChatMessage>>.ready(last);
+      }
+    } catch (error) {
+      // Missing index / permission-denied MUST surface here, never a silent
+      // hang — same discipline as FirestoreInboxTransport.watchInbox.
+      yield TransportSnapshot<List<ChatMessage>>.error(last, error);
+    }
+  }
+
+  @override
+  Future<void> sendCommunityChatMessage({
+    required String text,
+    String? audioUrl,
+  }) async {
+    final trimmedText = text.trim();
+    final trimmedAudio = audioUrl?.trim();
+    final hasAudio = trimmedAudio != null && trimmedAudio.isNotEmpty;
+    // Client-side pre-check mirroring the rule's `text.size() <= 500 ||
+    // audioUrl is string` clause: fail with a typed error BEFORE the write
+    // when there is no audio to bypass the cap, rather than let the rule
+    // reject it as a raw permission-denied.
+    if (!hasAudio && trimmedText.length > ChatMessageTooLongException.maxLength) {
+      throw ChatMessageTooLongException(trimmedText.length);
+    }
+    await _communityChat.add(<String, dynamic>{
+      'text': trimmedText,
+      'authorId': _uid,
+      'authorName': myDisplayName,
+      'authorPhotoURL': myPhotoURL,
+      if (hasAudio) 'audioUrl': trimmedAudio,
+      'isDemoPersona': false,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  List<ChatMessage> _toChatMessages(
+    QuerySnapshot<Map<String, dynamic>> snapshot,
+  ) =>
+      snapshot.docs
+          .map((doc) => ChatMessageDto.fromJson(_withId(doc)).toDomain())
+          .toList(growable: false);
+
+  /// `{ 'id': doc.id, ...doc.data() }`, with `createdAt` converted from a raw
+  /// `Timestamp` to millis first — [ChatMessageDto]'s `createdAt` goes through
+  /// `wireTimeToIso`, which does not understand a raw `Timestamp` object (only
+  /// ISO strings / millis / a `{seconds,...}` map), per its own doc comment.
+  static Map<String, dynamic> _withId(
+    QueryDocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final data = Map<String, dynamic>.from(doc.data());
+    final createdAt = data['createdAt'];
+    if (createdAt is Timestamp) {
+      data['createdAt'] = createdAt.millisecondsSinceEpoch;
+    }
+    return <String, dynamic>{'id': doc.id, ...data};
+  }
+
+  // ── Real REST route (already deployed) ──────────────────────────────────
+
+  @override
+  Future<PersonaPulse?> triggerPersonaPulse(
+    PersonaPulseRequest request,
+  ) async {
+    try {
+      final response = await _apiClient.post<PersonaPulseResponseDto>(
+        '/api/community/persona-pulse',
+        data: PersonaPulseRequestDto.fromDomain(request).toJson(),
+        decode: PersonaPulseResponseDto.fromJson,
+      );
+      return response.toDomain();
+    } on ApiException catch (e) {
+      // A 503 means the communityPersonas flag is off — the transport models
+      // that as null (a stop signal, NOT an error), matching the deferred
+      // seam's contract; every other status propagates as itself.
+      if (e.statusCode == 503) return null;
+      rethrow;
+    }
+  }
+
+  // ── Everything else: unchanged from DeferredStaffroomTransport ──────────
+  // No matching REST route exists yet (only persona-pulse is deployed), and
+  // several of these depend on server-side logic (PII-stripping, membership
+  // validation) that must not move to a raw client Firestore read even where
+  // a rule might technically permit one. Left exactly as-is — Tranche 3
+  // produces the backend punch-list for Groups/Directory/Feed.
+
+  @override
+  Stream<TransportSnapshot<List<ChatMessage>>> watchGroupChat(
+    String groupId, {
+    int limit = 100,
+  }) =>
+      Stream<TransportSnapshot<List<ChatMessage>>>.value(
+        const TransportSnapshot<List<ChatMessage>>.awaitingFirebase(
+          <ChatMessage>[],
+        ),
+      );
+
+  @override
+  Future<List<String>> ensureUserGroups() async => const <String>[];
+
+  @override
+  Future<List<Group>> getMyGroups() async => const <Group>[];
+
+  @override
+  Future<Group?> getGroup(String groupId) async => null;
+
+  @override
+  Future<List<Group>> discoverGroups() async => const <Group>[];
+
+  @override
+  Future<List<GroupPost>> getGroupPosts(
+    String groupId, {
+    int limit = 20,
+    String? startAfterPostId,
+  }) async =>
+      const <GroupPost>[];
+
+  @override
+  Future<List<FeedItem>> getUnifiedFeed({
+    int limit = 20,
+    String? startAfterTimestamp,
+  }) async =>
+      const <FeedItem>[];
+
+  @override
+  Future<List<TeacherSuggestion>> getRecommendedTeachers() async =>
+      const <TeacherSuggestion>[];
+
+  @override
+  Future<List<TeacherSuggestion>> getAllTeachers() async =>
+      const <TeacherSuggestion>[];
+
+  @override
+  Future<PublicProfile?> getPublicProfile(String uid) async => null;
+
+  @override
+  Future<LikedItemIds> getLikedItemIds() async => const LikedItemIds();
+
+  @override
+  Future<MyConnectionData> getMyConnectionData() async =>
+      const MyConnectionData();
+
+  @override
+  Future<bool> joinGroup(String groupId) async =>
+      throw const TransportUnavailable.awaitingFirebase('joinGroup');
+
+  @override
+  Future<void> leaveGroup(String groupId) async =>
+      throw const TransportUnavailable.awaitingFirebase('leaveGroup');
+
+  @override
+  Future<String> createGroupPost({
+    required String groupId,
+    required String content,
+    required PostType postType,
+    List<Map<String, dynamic>> attachments = const <Map<String, dynamic>>[],
+  }) async =>
+      throw const TransportUnavailable.awaitingFirebase('createGroupPost');
+
+  @override
+  Future<LikeResult> likeGroupPost(String groupId, String postId) async =>
+      throw const TransportUnavailable.awaitingFirebase('likeGroupPost');
+
+  @override
+  Future<String> sendGroupChatMessage(
+    String groupId, {
+    required String text,
+    String? audioUrl,
+  }) async =>
+      throw const TransportUnavailable.awaitingFirebase('sendGroupChatMessage');
+
+  @override
+  Future<ConnectionRequestResult> sendConnectionRequest(String toUid) async =>
+      throw const TransportUnavailable.awaitingFirebase(
+        'sendConnectionRequest',
+      );
+
+  @override
+  Future<void> acceptConnectionRequest(String requestId) async =>
+      throw const TransportUnavailable.awaitingFirebase(
+        'acceptConnectionRequest',
+      );
+
+  @override
+  Future<void> declineConnectionRequest(String requestId) async =>
+      throw const TransportUnavailable.awaitingFirebase(
+        'declineConnectionRequest',
+      );
+
+  @override
+  Future<void> disconnect(String otherUid) async =>
+      throw const TransportUnavailable.awaitingFirebase('disconnect');
+
+  @override
+  Future<void> followTeacher(String followingId) async =>
+      throw const TransportUnavailable.awaitingFirebase('followTeacher');
+}
+
+/// The Staffroom transport. [FirestoreStaffroomTransport] once Firebase is
+/// configured **and** a real teacher is signed in; [DeferredStaffroomTransport]
+/// otherwise — including a genuinely signed-out teacher, so the signed-out UI
+/// (the "sign in to join the staffroom" `EmptyView`) renders exactly as it
+/// does today. Mirrors `inboxTransportProvider`'s branch on
+/// [authControllerProvider] (`core/auth/auth_providers.dart`) for consistency:
+/// the same provider both the router and every other Block-C-adjacent surface
+/// already agree is the source of truth for "is this a real signed-in
+/// teacher."
 @Riverpod(keepAlive: true)
 StaffroomTransport staffroomTransport(Ref ref) {
-  if (FirebaseInit.isConfigured) {
-    throw StateError(
-      'Firebase is configured but the live StaffroomTransport is not wired. Bind '
-      'FirestoreStaffroomTransport in staffroomTransport() (cloud_firestore chat '
-      'reads + Dio REST-wrapper reads/writes) as part of the Block C handoff — '
-      'see docs/flutter/HANDOFF.md.',
-    );
-  }
-  return const DeferredStaffroomTransport();
+  if (!FirebaseInit.isConfigured) return const DeferredStaffroomTransport();
+  final status = ref.watch(authControllerProvider);
+  if (status != AuthStatus.signedIn) return const DeferredStaffroomTransport();
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) return const DeferredStaffroomTransport();
+  return FirestoreStaffroomTransport(
+    FirebaseFirestore.instance,
+    user.uid,
+    ref.watch(apiClientProvider),
+    myDisplayName: user.displayName,
+    myPhotoURL: user.photoURL,
+  );
 }
