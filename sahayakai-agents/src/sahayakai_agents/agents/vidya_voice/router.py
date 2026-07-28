@@ -91,8 +91,9 @@ async def _mint_ephemeral_token(
     """
     from google import genai
     from google.genai import types as genai_types
+    from ..._adk_keyed_gemini import build_genai_client
 
-    client = genai.Client(api_key=api_key)
+    client = build_genai_client(api_key)
 
     # Bind the token to the specific model + tools we plan to use.
     # `LiveConnectConfig` accepts `system_instruction` as either a

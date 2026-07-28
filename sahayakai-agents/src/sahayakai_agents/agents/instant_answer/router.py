@@ -68,8 +68,9 @@ async def _call_gemini_grounded(
     """
     from google import genai
     from google.genai import types as genai_types
+    from ..._adk_keyed_gemini import build_genai_client
 
-    client = genai.Client(api_key=api_key)
+    client = build_genai_client(api_key)
     # Gemini rejects `response_mime_type='application/json'` (structured output)
     # combined with `tools=[google_search]` — the API explicitly errors with
     # "Tool use with a response mime type: 'application/json' is unsupported".
