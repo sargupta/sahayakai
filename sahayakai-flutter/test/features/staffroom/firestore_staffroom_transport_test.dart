@@ -144,9 +144,8 @@ void main() {
     });
 
     test(
-        'rejects Devanagari text over 500 UTF-8 BYTES even though it is '
-        'under 500 characters — the rule counts bytes, not code units',
-        () async {
+        'a normal-length Indic message (under 500 CHARACTERS) SENDS — the cap '
+        'is characters (matching the web), not UTF-8 bytes', () async {
       final firestore = FakeFirebaseFirestore();
       final transport = FirestoreStaffroomTransport(
         firestore,
@@ -154,36 +153,35 @@ void main() {
         FakeApiClient(),
       );
       // 'न' is 1 UTF-16 code unit but 3 UTF-8 bytes — 167 of them is 167
-      // chars (under the old, wrong char-based 500 cap) but 501 bytes (over
-      // the real firestore.rules `text.size() <= 500` cap).
+      // CHARACTERS (well under the 500 cap) but 501 bytes. An earlier
+      // byte-based version of this guard WRONGLY rejected this; the web app
+      // accepts it (`String.length` character cap, the same unit the Firestore
+      // rule backstops), and now so does this client.
       final devanagari167Chars = 'न' * 167;
       expect(devanagari167Chars.length, 167);
 
-      await expectLater(
-        () => transport.sendCommunityChatMessage(text: devanagari167Chars),
-        throwsA(isA<ChatMessageTooLongException>()
-            .having((e) => e.length, 'byte length', 501)),
-      );
+      await transport.sendCommunityChatMessage(text: devanagari167Chars);
+
       final docs = await firestore.collection('community_chat').get();
-      expect(docs.docs, isEmpty);
+      expect(docs.docs, hasLength(1));
     });
 
-    test(
-        'allows Devanagari text within 500 UTF-8 bytes '
-        '(not over-conservative on multi-byte scripts)', () async {
+    test('rejects Indic text over 500 CHARACTERS (no audio)', () async {
       final firestore = FakeFirebaseFirestore();
       final transport = FirestoreStaffroomTransport(
         firestore,
         'u1',
         FakeApiClient(),
       );
-      // 166 * 3 = 498 bytes — under the cap.
-      final devanagari166Chars = 'न' * 166;
+      final tooLongIndic = 'न' * 501; // 501 characters, over the cap
 
-      await transport.sendCommunityChatMessage(text: devanagari166Chars);
-
+      await expectLater(
+        () => transport.sendCommunityChatMessage(text: tooLongIndic),
+        throwsA(isA<ChatMessageTooLongException>()
+            .having((e) => e.length, 'character length', 501)),
+      );
       final docs = await firestore.collection('community_chat').get();
-      expect(docs.docs, hasLength(1));
+      expect(docs.docs, isEmpty);
     });
   });
 

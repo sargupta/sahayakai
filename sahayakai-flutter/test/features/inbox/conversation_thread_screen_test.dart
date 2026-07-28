@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -253,15 +251,15 @@ void main() {
 
   group('U15: composer 1000-BYTE length guard (firestore.rules:123)', () {
     testWidgets(
-        'an over-1000-byte ASCII message blocks send and shows an honest hint',
+        'an over-1000-character ASCII message blocks send and shows an honest hint',
         (tester) async {
       final fake = await _pump(
         tester,
         thread: const TransportSnapshot<List<Message>>.ready(<Message>[]),
       );
 
-      // 1001 ASCII bytes — one past the cap.
-      final tooLong = 'a' * (kInboxMessageMaxBytes + 1);
+      // 1001 characters — one past the cap.
+      final tooLong = 'a' * (kInboxMessageMaxChars + 1);
       await tester.enterText(find.byType(TextField), tooLong);
       await tester.pump();
 
@@ -275,8 +273,8 @@ void main() {
     });
 
     testWidgets(
-        'the cap counts UTF-8 BYTES, not characters: a multi-byte Indic '
-        'message under 1000 CHARS but over 1000 BYTES is blocked',
+        'the cap counts CHARACTERS (matching the web), so a normal-length '
+        'Indic message SENDS — never wrongly blocked by a byte count',
         (tester) async {
       final fake = await _pump(
         tester,
@@ -284,19 +282,34 @@ void main() {
       );
 
       // Devanagari 'क' (U+0915): 1 UTF-16 code unit, 3 UTF-8 bytes. 400 of them
-      // is 400 chars (well under the cap) but 1200 bytes (over it). Counting
-      // `String.length` would wave this straight through to a PERMISSION_DENIED
-      // at the rules layer — the exact silent failure on the one script family
-      // this app is built for.
+      // is 400 CHARACTERS (well under the 1000 cap) but 1200 bytes. The web app
+      // accepts this (it caps on `String.length`, "max 1000 chars"), and the
+      // Firestore rule is that same character cap — an earlier byte-based
+      // version of this guard WRONGLY blocked a normal Bengali/Hindi reply. It
+      // must send.
       final indic = 'क' * 400;
-      expect(indic.length, lessThan(kInboxMessageMaxBytes)); // char count OK
-      expect(
-        utf8.encode(indic).length,
-        greaterThan(kInboxMessageMaxBytes),
-      ); // byte count over
-      expect(inboxMessageByteLength(indic), utf8.encode(indic).length);
-
+      expect(indic.length, lessThan(kInboxMessageMaxChars)); // 400 chars, under
       await tester.enterText(find.byType(TextField), indic);
+      await tester.pump();
+
+      // NOT blocked: no hint, and the send goes through.
+      expect(find.text(l10n.inboxComposerTooLong), findsNothing);
+      await tester.tap(find.byIcon(LucideIcons.send));
+      await tester.pumpAndSettle();
+      expect(fake.sentMessages, hasLength(1));
+      expect(fake.sentMessages.single.text, indic);
+    });
+
+    testWidgets(
+        'a genuinely-too-long Indic message (>1000 characters) is still blocked',
+        (tester) async {
+      final fake = await _pump(
+        tester,
+        thread: const TransportSnapshot<List<Message>>.ready(<Message>[]),
+      );
+
+      final tooLongIndic = 'क' * (kInboxMessageMaxChars + 1); // 1001 chars
+      await tester.enterText(find.byType(TextField), tooLongIndic);
       await tester.pump();
 
       expect(find.text(l10n.inboxComposerTooLong), findsOneWidget);
@@ -305,14 +318,14 @@ void main() {
       expect(fake.sentMessages, isEmpty);
     });
 
-    testWidgets('a message exactly at the 1000-byte cap still sends',
+    testWidgets('a message exactly at the 1000-character cap still sends',
         (tester) async {
       final fake = await _pump(
         tester,
         thread: const TransportSnapshot<List<Message>>.ready(<Message>[]),
       );
 
-      final atCap = 'a' * kInboxMessageMaxBytes; // exactly 1000 bytes
+      final atCap = 'a' * kInboxMessageMaxChars; // exactly 1000 characters
       await tester.enterText(find.byType(TextField), atCap);
       await tester.pump();
 
