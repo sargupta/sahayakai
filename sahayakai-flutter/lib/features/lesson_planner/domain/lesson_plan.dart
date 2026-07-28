@@ -38,6 +38,7 @@ class LessonPlanRequest {
     this.resourceLevel = ResourceLevel.low,
     this.difficultyLevel = DifficultyLevel.standard,
     this.useRuralContext = true,
+    this.imageDataUri,
   });
 
   final String topic;
@@ -50,6 +51,11 @@ class LessonPlanRequest {
   final ResourceLevel resourceLevel;
   final DifficultyLevel difficultyLevel;
   final bool useRuralContext;
+
+  /// Optional photo of a textbook page, as a `data:<mime>;base64,<data>` URI.
+  /// When present the flow treats it as the primary content to plan from (the
+  /// rural "photograph the page" path); omitted from the request when null.
+  final String? imageDataUri;
 }
 
 /// A single vocabulary term and its plain-language meaning.

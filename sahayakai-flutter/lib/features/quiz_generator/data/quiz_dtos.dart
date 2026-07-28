@@ -19,6 +19,7 @@ class QuizRequestDto {
     this.language,
     this.targetDifficulty,
     this.bloomsTaxonomyLevels,
+    this.imageDataUri,
   });
 
   factory QuizRequestDto.fromDomain(QuizRequest request) {
@@ -36,6 +37,7 @@ class QuizRequestDto {
       language: _blankToNull(request.language),
       targetDifficulty: request.targetDifficulty?.wire,
       bloomsTaxonomyLevels: blooms.isEmpty ? null : blooms,
+      imageDataUri: request.imageDataUri,
     );
   }
 
@@ -47,6 +49,7 @@ class QuizRequestDto {
   final String? language;
   final String? targetDifficulty;
   final List<String>? bloomsTaxonomyLevels;
+  final String? imageDataUri;
 
   Map<String, dynamic> toJson() => _$QuizRequestDtoToJson(this);
 }

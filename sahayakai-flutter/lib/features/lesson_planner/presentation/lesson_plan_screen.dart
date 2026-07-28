@@ -9,6 +9,7 @@ import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
 import '../../../shared/domain/tool_prefill.dart';
+import '../../../shared/media/image_input.dart';
 import '../../../shared/voice/tts_speaker.dart';
 import '../../../shared/widgets/app_segmented.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
@@ -54,6 +55,10 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
   ResourceLevel _resource = ResourceLevel.low;
   DifficultyLevel _difficulty = DifficultyLevel.standard;
   bool _useRuralContext = true;
+
+  /// Optional textbook-page photo. When set, its data URI is sent as the flow's
+  /// primary content (the rural "photograph the page" path); null otherwise.
+  PickedImage? _image;
 
   /// Part-B once-guard: the voice-path spoken summary fires at most once, when
   /// the first voice-originated result lands (VOICE_FIRST_GAP §5.6).
@@ -112,6 +117,7 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
       resourceLevel: _resource,
       difficultyLevel: _difficulty,
       useRuralContext: _useRuralContext,
+      imageDataUri: _image?.dataUri,
     );
     ref.read(lessonPlanControllerProvider.notifier).generate(request);
   }
@@ -202,6 +208,8 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
             _gradeField(l10n),
             const SizedBox(height: AppSpacing.space6),
             _subjectField(l10n),
+            const SizedBox(height: AppSpacing.space6),
+            _imageField(l10n),
             const SizedBox(height: AppSpacing.space8),
             EditorialSectionHeader(l10n.lessonPlanSectionApproach),
             const SizedBox(height: AppSpacing.space4),
@@ -286,6 +294,21 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
             DropdownMenuItem<String?>(value: subject, child: Text(subject)),
         ],
         onChanged: (value) => setState(() => _subject = value),
+      ),
+    );
+  }
+
+  Widget _imageField(AppLocalizations l10n) {
+    // Optional here (unlike Worksheet, where the photo is required and gated by
+    // a FormField validator): a teacher may photograph a textbook page to plan
+    // straight from it, or leave it blank and the form works exactly as before.
+    return LabeledField(
+      label: l10n.toolImageOptionalLabel,
+      hint: l10n.toolImageOptionalHint,
+      leadingIcon: LucideIcons.image,
+      child: ImageInput(
+        value: _image,
+        onChanged: (picked) => setState(() => _image = picked),
       ),
     );
   }

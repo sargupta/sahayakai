@@ -1102,6 +1102,13 @@ class AppLocalizationsTa extends AppLocalizations {
   String get worksheetImageHint => 'The worksheet is built from this page.';
 
   @override
+  String get toolImageOptionalLabel => 'Textbook page photo (optional)';
+
+  @override
+  String get toolImageOptionalHint =>
+      'Add a page photo and it becomes the main source, or leave blank.';
+
+  @override
   String get worksheetImageError => 'Please add a photo of the textbook page.';
 
   @override

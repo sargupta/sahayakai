@@ -16,6 +16,7 @@ Map<String, dynamic> _$LessonPlanRequestDtoToJson(
   if (instance.resourceLevel case final value?) 'resourceLevel': value,
   if (instance.difficultyLevel case final value?) 'difficultyLevel': value,
   if (instance.useRuralContext case final value?) 'useRuralContext': value,
+  if (instance.imageDataUri case final value?) 'imageDataUri': value,
 };
 
 LessonPlanResponseDto _$LessonPlanResponseDtoFromJson(

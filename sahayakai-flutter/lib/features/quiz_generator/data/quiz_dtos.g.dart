@@ -18,6 +18,7 @@ Map<String, dynamic> _$QuizRequestDtoToJson(
   if (instance.targetDifficulty case final value?) 'targetDifficulty': value,
   if (instance.bloomsTaxonomyLevels case final value?)
     'bloomsTaxonomyLevels': value,
+  if (instance.imageDataUri case final value?) 'imageDataUri': value,
 };
 
 QuizResponseDto _$QuizResponseDtoFromJson(Map<String, dynamic> json) =>

@@ -17,6 +17,7 @@ class LessonPlanRequestDto {
     this.resourceLevel,
     this.difficultyLevel,
     this.useRuralContext,
+    this.imageDataUri,
   });
 
   factory LessonPlanRequestDto.fromDomain(LessonPlanRequest request) {
@@ -32,6 +33,7 @@ class LessonPlanRequestDto {
       resourceLevel: request.resourceLevel.wire,
       difficultyLevel: request.difficultyLevel.wire,
       useRuralContext: request.useRuralContext,
+      imageDataUri: request.imageDataUri,
     );
   }
 
@@ -42,6 +44,7 @@ class LessonPlanRequestDto {
   final String? resourceLevel;
   final String? difficultyLevel;
   final bool? useRuralContext;
+  final String? imageDataUri;
 
   Map<String, dynamic> toJson() => _$LessonPlanRequestDtoToJson(this);
 }

@@ -1392,6 +1392,14 @@
   "@worksheetImageHint": {
     "description": "Helper text under the image input label."
   },
+  "toolImageOptionalLabel": "Textbook page photo (optional)",
+  "@toolImageOptionalLabel": {
+    "description": "Label for the optional textbook-page image input shared by Lesson Plan and Quiz."
+  },
+  "toolImageOptionalHint": "Add a page photo and it becomes the main source, or leave blank.",
+  "@toolImageOptionalHint": {
+    "description": "Helper text under the optional image input label."
+  },
   "worksheetImageError": "Please add a photo of the textbook page.",
   "@worksheetImageError": {
     "description": "Validation shown when no image has been chosen."

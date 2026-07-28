@@ -77,6 +77,29 @@ void main() {
       });
     });
 
+    test('carries imageDataUri only when a textbook photo is attached', () {
+      // The rural "photograph the page" path: the quiz schema treats this as the
+      // primary context. Sent verbatim when present, and absent (not an explicit
+      // null) when the teacher supplies no photo.
+      const uri = 'data:image/png;base64,iVBORw0KGgo=';
+      final withPhoto = QuizRequestDto.fromDomain(
+        const QuizRequest(
+          topic: 'Fractions',
+          questionTypes: [QuestionType.multipleChoice],
+          imageDataUri: uri,
+        ),
+      ).toJson();
+      expect(withPhoto['imageDataUri'], uri);
+
+      final without = QuizRequestDto.fromDomain(
+        const QuizRequest(
+          topic: 'Fractions',
+          questionTypes: [QuestionType.multipleChoice],
+        ),
+      ).toJson();
+      expect(without.containsKey('imageDataUri'), isFalse);
+    });
+
     test('every QuestionType and QuizDifficulty maps to its wire member', () {
       expect(
         QuestionType.values.map((t) => t.wire),

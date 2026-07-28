@@ -42,7 +42,7 @@ enum QuizDifficulty {
 /// Immutable input the teacher assembles on the form. `userId` (and the other
 /// server-injected fields such as `gradeBandLabel` and `teacherContext`) come
 /// from the verified token on the server and are deliberately NOT modelled
-/// here. `imageDataUri` is P2 and intentionally omitted.
+/// here.
 @immutable
 class QuizRequest {
   const QuizRequest({
@@ -54,6 +54,7 @@ class QuizRequest {
     this.language,
     this.targetDifficulty,
     this.bloomsTaxonomyLevels = const <String>[],
+    this.imageDataUri,
   });
 
   final String topic;
@@ -69,6 +70,11 @@ class QuizRequest {
   final String? language;
   final QuizDifficulty? targetDifficulty;
   final List<String> bloomsTaxonomyLevels;
+
+  /// Optional photo of a textbook page, as a `data:<mime>;base64,<data>` URI.
+  /// The quiz schema calls this "the primary context for the quiz"; omitted
+  /// from the request when null.
+  final String? imageDataUri;
 }
 
 /// One generated question. [options] is only populated for multiple-choice.

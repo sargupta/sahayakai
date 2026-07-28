@@ -2078,6 +2078,18 @@ abstract class AppLocalizations {
   /// **'The worksheet is built from this page.'**
   String get worksheetImageHint;
 
+  /// Label for the optional textbook-page image input shared by Lesson Plan and Quiz.
+  ///
+  /// In en, this message translates to:
+  /// **'Textbook page photo (optional)'**
+  String get toolImageOptionalLabel;
+
+  /// Helper text under the optional image input label.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a page photo and it becomes the main source, or leave blank.'**
+  String get toolImageOptionalHint;
+
   /// Validation shown when no image has been chosen.
   ///
   /// In en, this message translates to:

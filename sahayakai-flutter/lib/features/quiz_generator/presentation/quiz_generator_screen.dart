@@ -9,6 +9,7 @@ import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
 import '../../../shared/domain/tool_prefill.dart';
+import '../../../shared/media/image_input.dart';
 import '../../../shared/voice/tts_speaker.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
@@ -61,6 +62,10 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
   /// `null` means "no target" — the endpoint then returns all three variants,
   /// which is the useful default for a teacher planning a mixed class.
   QuizDifficulty? _targetDifficulty;
+
+  /// Optional textbook-page photo. When set, its data URI is sent as the quiz's
+  /// primary context; null otherwise.
+  PickedImage? _image;
 
   /// Part-B once-guard: the voice-path spoken summary fires at most once, when
   /// the first voice-originated result lands (VOICE_FIRST_GAP §5.6).
@@ -119,6 +124,7 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
       language: _language.aiName,
       targetDifficulty: _targetDifficulty,
       bloomsTaxonomyLevels: _blooms.toList(growable: false),
+      imageDataUri: _image?.dataUri,
     );
     ref.read(quizControllerProvider.notifier).generate(request);
   }
@@ -220,6 +226,8 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
             _gradeField(l10n),
             const SizedBox(height: AppSpacing.space6),
             _subjectField(l10n),
+            const SizedBox(height: AppSpacing.space6),
+            _imageField(l10n),
             const SizedBox(height: AppSpacing.space6),
             _languageField(l10n),
             const SizedBox(height: AppSpacing.space6),
@@ -348,6 +356,21 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
             DropdownMenuItem<String?>(value: subject, child: Text(subject)),
         ],
         onChanged: (value) => setState(() => _subject = value),
+      ),
+    );
+  }
+
+  Widget _imageField(AppLocalizations l10n) {
+    // Optional (unlike Worksheet, where the photo is required): a teacher may
+    // photograph a textbook page so the quiz is generated from it, or leave it
+    // blank and the form behaves exactly as before.
+    return LabeledField(
+      label: l10n.toolImageOptionalLabel,
+      hint: l10n.toolImageOptionalHint,
+      leadingIcon: LucideIcons.image,
+      child: ImageInput(
+        value: _image,
+        onChanged: (picked) => setState(() => _image = picked),
       ),
     );
   }
