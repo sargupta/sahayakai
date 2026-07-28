@@ -2072,6 +2072,14 @@ class AppLocalizationsKn extends AppLocalizations {
       'ನೀವು ಸೈನ್ ಇನ್ ಆದ ನಂತರ ನಿಮ್ಮ ತರಗತಿಯ ವಿದ್ಯಾರ್ಥಿ ಪಟ್ಟಿ ಕಾಣಿಸುತ್ತದೆ. ಕರೆ ಮಾಡುವ ಮೊದಲು ಪೋಷಕರ ಕರೆಗೆ ನಿಮ್ಮ ಖಾತೆಯ ಅಗತ್ಯವಿದೆ.';
 
   @override
+  String get parentHotlineRosterUnavailableTitle =>
+      'ನಿಮ್ಮ ತರಗತಿಯ ಪಟ್ಟಿ ಇನ್ನೂ ಲಭ್ಯವಿಲ್ಲ';
+
+  @override
+  String get parentHotlineRosterUnavailableBody =>
+      'ನಾವು ಇನ್ನೂ ಇಲ್ಲಿ ನಿಮ್ಮ ವಿದ್ಯಾರ್ಥಿಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿಲ್ಲ. ಇದು ಮುಂದಿನ ಅಪ್‌ಡೇಟ್‌ನಲ್ಲಿ ಬರಲಿದೆ. ನೀವು ಈಗಾಗಲೇ ಸೈನ್ ಇನ್ ಆಗಿದ್ದೀರಿ, ಆದ್ದರಿಂದ ನೀವು ಏನನ್ನೂ ಸರಿಪಡಿಸಬೇಕಿಲ್ಲ.';
+
+  @override
   String get parentHotlineReasonEyebrow => 'ನೀವು ಏಕೆ ಕರೆ ಮಾಡುತ್ತಿದ್ದೀರಿ';
 
   @override

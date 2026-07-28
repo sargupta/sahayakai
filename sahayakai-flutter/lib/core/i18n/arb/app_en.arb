@@ -2586,6 +2586,14 @@
   "@parentHotlineSignedOutBody": {
     "description": "Signed-out EmptyView body on the Parent Hotline."
   },
+  "parentHotlineRosterUnavailableTitle": "Your class list isn't available yet",
+  "@parentHotlineRosterUnavailableTitle": {
+    "description": "EmptyView title on the pick-student stage when the teacher IS signed in but the student-roster API isn't on the app yet (distinct from the signed-out case)."
+  },
+  "parentHotlineRosterUnavailableBody": "We can't load your students here just yet. This is coming in a later update. You're already signed in, so there's nothing you need to fix.",
+  "@parentHotlineRosterUnavailableBody": {
+    "description": "EmptyView body on the pick-student stage when the teacher is signed in but the roster can't be fetched on the app yet."
+  },
   "parentHotlineReasonEyebrow": "Why are you calling",
   "@parentHotlineReasonEyebrow": {
     "description": "Saffron eyebrow on the reason stage."

@@ -3758,6 +3758,18 @@ abstract class AppLocalizations {
   /// **'Your class roster loads once you\'re signed in. The parent hotline needs your account before it can place a call.'**
   String get parentHotlineSignedOutBody;
 
+  /// EmptyView title on the pick-student stage when the teacher IS signed in but the student-roster API isn't on the app yet (distinct from the signed-out case).
+  ///
+  /// In en, this message translates to:
+  /// **'Your class list isn\'t available yet'**
+  String get parentHotlineRosterUnavailableTitle;
+
+  /// EmptyView body on the pick-student stage when the teacher is signed in but the roster can't be fetched on the app yet.
+  ///
+  /// In en, this message translates to:
+  /// **'We can\'t load your students here just yet. This is coming in a later update. You\'re already signed in, so there\'s nothing you need to fix.'**
+  String get parentHotlineRosterUnavailableBody;
+
   /// Saffron eyebrow on the reason stage.
   ///
   /// In en, this message translates to:

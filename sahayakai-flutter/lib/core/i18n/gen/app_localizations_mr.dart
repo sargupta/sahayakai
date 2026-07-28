@@ -2068,6 +2068,14 @@ class AppLocalizationsMr extends AppLocalizations {
       'तुम्ही साइन इन केल्यावर तुमच्या वर्गातील विद्यार्थ्यांची यादी दिसेल. पालकांना कॉल करण्यासाठी आधी तुमचे खाते आवश्यक आहे.';
 
   @override
+  String get parentHotlineRosterUnavailableTitle =>
+      'तुमची वर्गयादी अजून उपलब्ध नाही';
+
+  @override
+  String get parentHotlineRosterUnavailableBody =>
+      'आम्ही अजून येथे तुमच्या विद्यार्थ्यांची यादी लोड करू शकत नाही. ती पुढील एखाद्या अपडेटमध्ये येईल. तुम्ही आधीच साइन इन आहात, त्यामुळे तुम्हाला काहीही दुरुस्त करण्याची गरज नाही.';
+
+  @override
   String get parentHotlineReasonEyebrow => 'तुम्ही का कॉल करत आहात';
 
   @override

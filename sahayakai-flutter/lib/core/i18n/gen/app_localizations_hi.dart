@@ -2069,6 +2069,14 @@ class AppLocalizationsHi extends AppLocalizations {
       'साइन इन करते ही आपकी कक्षा की सूची लोड हो जाएगी। कॉल करने से पहले अभिभावक कॉल लाइन को आपके खाते की ज़रूरत होती है।';
 
   @override
+  String get parentHotlineRosterUnavailableTitle =>
+      'आपकी कक्षा की सूची अभी उपलब्ध नहीं है';
+
+  @override
+  String get parentHotlineRosterUnavailableBody =>
+      'हम अभी यहाँ आपके विद्यार्थियों को लोड नहीं कर पा रहे। यह किसी आगामी अपडेट में आएगा। आप पहले से साइन इन हैं, इसलिए आपको कुछ ठीक करने की ज़रूरत नहीं है।';
+
+  @override
   String get parentHotlineReasonEyebrow => 'आप कॉल क्यों कर रहे हैं';
 
   @override

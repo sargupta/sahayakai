@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import '../../../core/auth/auth_providers.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/theme/app_theme.dart';
@@ -49,10 +50,14 @@ import 'widgets/summary_sheet.dart';
 /// slideY 12→0), degrading to the final frame under reduce-motion.
 ///
 /// **No faked identity (SPEC §B.1 / §B.5).** The `pickStudent` roster comes from
-/// [hotlineStudentRosterProvider], which is empty in foundation-v1 (no student
-/// API — the routes 401); an empty roster shows the signed-out `EmptyView`, not
-/// invented students. The controller's own terminal facets — `isSignedOut` (401)
-/// and `isPremiumGated` (403) — replace the whole body with a dignified gate.
+/// [hotlineStudentRosterProvider], which is empty in foundation-v1 (no student-
+/// roster API yet). An empty roster degrades HONESTLY on the cause: a signed-out
+/// teacher sees the sign-in `EmptyView`; a signed-in one (whose roster is empty
+/// only because the class list can't be fetched on the app yet) sees the "class
+/// list isn't available yet" `EmptyView` — never "sign in", which would be false.
+/// Neither path invents students. The controller's own terminal facets —
+/// `isSignedOut` (401) and `isPremiumGated` (403) — replace the whole body with
+/// a dignified gate.
 ///
 /// **F9-001.** The screen never renders or chooses a full parent phone. The
 /// review meta line shows only a pre-masked last-4 fragment (from the roster
@@ -220,9 +225,19 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
 
-    // No roster → the signed-out EmptyView (foundation-v1 has no student API;
-    // never invent students / a signed-in identity).
-    if (roster.isEmpty) return _signedOut(l10n);
+    // An empty roster has two very different causes, and telling them apart is
+    // the difference between honest and misleading. foundation-v1 ships no
+    // student-roster API, so a signed-IN teacher's roster is empty not because
+    // of auth but because the class list simply cannot be fetched on the app
+    // yet — telling them to "sign in" would be a plain lie. Only a genuinely
+    // signed-OUT teacher gets the sign-in EmptyView; a signed-in one gets honest
+    // "your class list isn't available yet" copy. Neither path ever invents
+    // students (F9-001).
+    if (roster.isEmpty) {
+      return ref.watch(isSignedInProvider)
+          ? _rosterUnavailable(l10n)
+          : _signedOut(l10n);
+    }
 
     final classes = _distinctClasses(roster);
     final selectedClassId = (_selectedClassId != null &&
@@ -672,6 +687,16 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
         icon: LucideIcons.logIn,
         title: l10n.parentHotlineSignedOutTitle,
         message: l10n.parentHotlineSignedOutBody,
+      );
+
+  /// The signed-in-but-no-roster state: the teacher IS authenticated, but the
+  /// student-roster API does not exist on the app yet (a future unit), so there
+  /// is genuinely nothing to list. Honest copy that owns the gap instead of
+  /// blaming the teacher's sign-in (and, like `_signedOut`, invents no students).
+  Widget _rosterUnavailable(AppLocalizations l10n) => EmptyView(
+        icon: LucideIcons.users,
+        title: l10n.parentHotlineRosterUnavailableTitle,
+        message: l10n.parentHotlineRosterUnavailableBody,
       );
 
   Widget _premiumGate(ParentHotlineState state, AppLocalizations l10n) {

@@ -2071,6 +2071,14 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଆପଣ ସାଇନ୍ ଇନ୍ କଲାପରେ ଆପଣଙ୍କ ଶ୍ରେଣୀ ତାଲିକା ଲୋଡ୍ ହେବ। କଲ୍ କରିବା ପୂର୍ବରୁ ଅଭିଭାବକ କଲ୍ ଲାଇନ୍ ପାଇଁ ଆପଣଙ୍କ ଆକାଉଣ୍ଟ ଆବଶ୍ୟକ।';
 
   @override
+  String get parentHotlineRosterUnavailableTitle =>
+      'ଆପଣଙ୍କ ଶ୍ରେଣୀ ତାଲିକା ଏବେ ଉପଲବ୍ଧ ନାହିଁ';
+
+  @override
+  String get parentHotlineRosterUnavailableBody =>
+      'ଆମେ ଏବେ ଏଠାରେ ଆପଣଙ୍କ ଛାତ୍ରମାନଙ୍କୁ ଲୋଡ୍ କରିପାରୁନାହିଁ। ଏହା ଆଗାମୀ କୌଣସି ଅପଡେଟ୍‌ରେ ଆସିବ। ଆପଣ ପୂର୍ବରୁ ସାଇନ୍ ଇନ୍ ଅଛନ୍ତି, ତେଣୁ ଆପଣଙ୍କୁ କିଛି ଠିକ୍ କରିବାକୁ ପଡ଼ିବ ନାହିଁ।';
+
+  @override
   String get parentHotlineReasonEyebrow => 'ଆପଣ କାହିଁକି କଲ୍ କରୁଛନ୍ତି';
 
   @override

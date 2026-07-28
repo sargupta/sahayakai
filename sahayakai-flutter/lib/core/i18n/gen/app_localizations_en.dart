@@ -2067,6 +2067,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your class roster loads once you\'re signed in. The parent hotline needs your account before it can place a call.';
 
   @override
+  String get parentHotlineRosterUnavailableTitle =>
+      'Your class list isn\'t available yet';
+
+  @override
+  String get parentHotlineRosterUnavailableBody =>
+      'We can\'t load your students here just yet. This is coming in a later update. You\'re already signed in, so there\'s nothing you need to fix.';
+
+  @override
   String get parentHotlineReasonEyebrow => 'Why are you calling';
 
   @override

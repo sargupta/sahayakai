@@ -75,6 +75,18 @@ enum CallStatus {
 
   /// The WhatsApp-copy path — no phone call was ever placed.
   bool get isManual => this == CallStatus.manual;
+
+  /// A terminal call FAILURE — the call never connected, so no conversation
+  /// happened and no AI `callSummary` will ever generate (`failed` / `no_answer`
+  /// / `busy`). Distinct from `completed`, which is terminal but NOT a failure:
+  /// a conversation happened and its summary may still be settling, so it earns
+  /// the short summary-wait. The controller uses this to leave the `calling`
+  /// stage the instant a failure lands, rather than waiting out that window
+  /// while the honest waiting state falsely reads "Conversation in progress".
+  bool get isTerminalFailure =>
+      this == CallStatus.failed ||
+      this == CallStatus.noAnswer ||
+      this == CallStatus.busy;
 }
 
 /// How the outreach was delivered. Wire values mirror

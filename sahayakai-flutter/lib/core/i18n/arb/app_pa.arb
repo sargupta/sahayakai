@@ -98,6 +98,8 @@
   "parentHotlineNoPhone": "ਮਾਪਿਆਂ ਦਾ ਕੋਈ ਨੰਬਰ ਸੇਵ ਨਹੀਂ ਹੈ",
   "parentHotlineSignedOutTitle": "ਆਪਣੇ ਵਿਦਿਆਰਥੀ ਦੇਖਣ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ",
   "parentHotlineSignedOutBody": "ਸਾਈਨ ਇਨ ਕਰਦੇ ਹੀ ਤੁਹਾਡੀ ਜਮਾਤ ਦੀ ਸੂਚੀ ਲੋਡ ਹੋ ਜਾਂਦੀ ਹੈ। ਮਾਪਿਆਂ ਨੂੰ ਕਾਲ ਕਰਨ ਤੋਂ ਪਹਿਲਾਂ ਇਸ ਸੇਵਾ ਨੂੰ ਤੁਹਾਡੇ ਖਾਤੇ ਦੀ ਲੋੜ ਹੁੰਦੀ ਹੈ।",
+  "parentHotlineRosterUnavailableTitle": "ਤੁਹਾਡੀ ਜਮਾਤ ਦੀ ਸੂਚੀ ਹਾਲੇ ਉਪਲਬਧ ਨਹੀਂ ਹੈ",
+  "parentHotlineRosterUnavailableBody": "ਅਸੀਂ ਹਾਲੇ ਇੱਥੇ ਤੁਹਾਡੇ ਵਿਦਿਆਰਥੀ ਲੋਡ ਨਹੀਂ ਕਰ ਸਕਦੇ। ਇਹ ਕਿਸੇ ਆਉਣ ਵਾਲੇ ਅੱਪਡੇਟ ਵਿੱਚ ਆਵੇਗਾ। ਤੁਸੀਂ ਪਹਿਲਾਂ ਹੀ ਸਾਈਨ ਇਨ ਹੋ, ਇਸ ਲਈ ਤੁਹਾਨੂੰ ਕੁਝ ਠੀਕ ਕਰਨ ਦੀ ਲੋੜ ਨਹੀਂ ਹੈ।",
   "parentHotlineReasonEyebrow": "ਤੁਸੀਂ ਕਿਉਂ ਕਾਲ ਕਰ ਰਹੇ ਹੋ",
   "parentHotlineReasonAbsencesLabel": "ਵਾਰ-ਵਾਰ ਗ਼ੈਰਹਾਜ਼ਰੀ",
   "parentHotlineReasonAbsencesDesc": "ਵਿਦਿਆਰਥੀ ਕਈ ਦਿਨਾਂ ਤੋਂ ਲਗਾਤਾਰ ਗ਼ੈਰਹਾਜ਼ਰ ਹੈ।",

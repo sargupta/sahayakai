@@ -2067,6 +2067,14 @@ class AppLocalizationsGu extends AppLocalizations {
       'તમે સાઇન ઇન કરો એટલે તમારા વર્ગની યાદી લોડ થાય છે. કૉલ કરી શકે તે પહેલાં વાલી કૉલ લાઇનને તમારા ખાતાની જરૂર છે.';
 
   @override
+  String get parentHotlineRosterUnavailableTitle =>
+      'તમારી વર્ગની યાદી હજી ઉપલબ્ધ નથી';
+
+  @override
+  String get parentHotlineRosterUnavailableBody =>
+      'અમે હજી અહીં તમારા વિદ્યાર્થીઓને લોડ કરી શકતા નથી. તે આગામી કોઈ અપડેટમાં આવશે. તમે પહેલેથી સાઇન ઇન છો, તેથી તમારે કંઈ ઠીક કરવાની જરૂર નથી.';
+
+  @override
   String get parentHotlineReasonEyebrow => 'તમે શા માટે કૉલ કરો છો';
 
   @override

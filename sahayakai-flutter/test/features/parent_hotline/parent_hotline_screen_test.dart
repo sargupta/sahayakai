@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:sahayakai/core/auth/auth_providers.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/parent_hotline/data/parent_hotline_repository.dart';
@@ -167,18 +168,41 @@ void main() {
       expect(fake.studentTaps, ['s1']);
     });
 
-    testWidgets('empty roster shows the signed-out EmptyView (no faked identity)',
-        (tester) async {
+    testWidgets(
+        'empty roster while SIGNED OUT shows the sign-in EmptyView '
+        '(no faked identity)', (tester) async {
       await _pump(
         tester,
         overrides: [
           parentHotlineControllerProvider
               .overrideWith(() => _FakeHotlineController(const ParentHotlineState())),
-          // Default roster is empty (foundation-v1 has no student API).
+          isSignedInProvider.overrideWithValue(false),
+          // Default roster is empty (foundation-v1 has no student-roster API).
         ],
       );
       expect(find.byType(EmptyView), findsOneWidget);
       expect(find.text('Sign in to see your students'), findsOneWidget);
+    });
+
+    testWidgets(
+        'empty roster while SIGNED IN shows the honest "not available yet" copy, '
+        'never a false sign-in prompt', (tester) async {
+      // The teacher IS authenticated; the roster is empty only because the
+      // student-roster API isn't on the app yet (a future unit). Telling them to
+      // "sign in" would be a lie — the honest state must own the gap instead.
+      await _pump(
+        tester,
+        overrides: [
+          parentHotlineControllerProvider
+              .overrideWith(() => _FakeHotlineController(const ParentHotlineState())),
+          isSignedInProvider.overrideWithValue(true),
+        ],
+      );
+      expect(find.byType(EmptyView), findsOneWidget);
+      expect(find.text("Your class list isn't available yet"), findsOneWidget);
+      expect(find.textContaining("can't load your students"), findsOneWidget);
+      // Crucially, a signed-in teacher is NEVER told to sign in.
+      expect(find.text('Sign in to see your students'), findsNothing);
     });
 
     testWidgets('reason stage renders the four selectable reasons, pre-selected',

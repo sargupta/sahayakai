@@ -2069,6 +2069,14 @@ class AppLocalizationsPa extends AppLocalizations {
       'ਸਾਈਨ ਇਨ ਕਰਦੇ ਹੀ ਤੁਹਾਡੀ ਜਮਾਤ ਦੀ ਸੂਚੀ ਲੋਡ ਹੋ ਜਾਂਦੀ ਹੈ। ਮਾਪਿਆਂ ਨੂੰ ਕਾਲ ਕਰਨ ਤੋਂ ਪਹਿਲਾਂ ਇਸ ਸੇਵਾ ਨੂੰ ਤੁਹਾਡੇ ਖਾਤੇ ਦੀ ਲੋੜ ਹੁੰਦੀ ਹੈ।';
 
   @override
+  String get parentHotlineRosterUnavailableTitle =>
+      'ਤੁਹਾਡੀ ਜਮਾਤ ਦੀ ਸੂਚੀ ਹਾਲੇ ਉਪਲਬਧ ਨਹੀਂ ਹੈ';
+
+  @override
+  String get parentHotlineRosterUnavailableBody =>
+      'ਅਸੀਂ ਹਾਲੇ ਇੱਥੇ ਤੁਹਾਡੇ ਵਿਦਿਆਰਥੀ ਲੋਡ ਨਹੀਂ ਕਰ ਸਕਦੇ। ਇਹ ਕਿਸੇ ਆਉਣ ਵਾਲੇ ਅੱਪਡੇਟ ਵਿੱਚ ਆਵੇਗਾ। ਤੁਸੀਂ ਪਹਿਲਾਂ ਹੀ ਸਾਈਨ ਇਨ ਹੋ, ਇਸ ਲਈ ਤੁਹਾਨੂੰ ਕੁਝ ਠੀਕ ਕਰਨ ਦੀ ਲੋੜ ਨਹੀਂ ਹੈ।';
+
+  @override
   String get parentHotlineReasonEyebrow => 'ਤੁਸੀਂ ਕਿਉਂ ਕਾਲ ਕਰ ਰਹੇ ਹੋ';
 
   @override

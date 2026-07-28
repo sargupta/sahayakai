@@ -2081,6 +2081,14 @@ class AppLocalizationsTa extends AppLocalizations {
       'நீங்கள் உள்நுழைந்ததும் உங்கள் வகுப்பு பட்டியல் ஏற்றப்படும். அழைப்பைச் செய்வதற்கு முன் பெற்றோர் அழைப்புக்கு உங்கள் கணக்கு தேவை.';
 
   @override
+  String get parentHotlineRosterUnavailableTitle =>
+      'உங்கள் வகுப்புப் பட்டியல் இன்னும் கிடைக்கவில்லை';
+
+  @override
+  String get parentHotlineRosterUnavailableBody =>
+      'உங்கள் மாணவர்களை இங்கு இன்னும் ஏற்ற முடியவில்லை. இது வரவிருக்கும் புதுப்பிப்பில் வரும். நீங்கள் ஏற்கனவே உள்நுழைந்துள்ளீர்கள், எனவே நீங்கள் எதையும் சரிசெய்ய வேண்டியதில்லை.';
+
+  @override
   String get parentHotlineReasonEyebrow => 'நீங்கள் ஏன் அழைக்கிறீர்கள்';
 
   @override

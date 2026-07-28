@@ -98,6 +98,8 @@
   "parentHotlineNoPhone": "తల్లిదండ్రుల నంబర్ సేవ్ చేయలేదు",
   "parentHotlineSignedOutTitle": "మీ విద్యార్థులను చూడటానికి సైన్ ఇన్ చేయండి",
   "parentHotlineSignedOutBody": "మీరు సైన్ ఇన్ చేసిన తర్వాత మీ తరగతి జాబితా లోడ్ అవుతుంది. తల్లిదండ్రులకు కాల్ చేయాలంటే ముందు మీ ఖాతా అవసరం.",
+  "parentHotlineRosterUnavailableTitle": "మీ తరగతి జాబితా ఇంకా అందుబాటులో లేదు",
+  "parentHotlineRosterUnavailableBody": "మేము ఇంకా ఇక్కడ మీ విద్యార్థులను లోడ్ చేయలేకపోతున్నాము. ఇది తర్వాతి అప్‌డేట్‌లో వస్తుంది. మీరు ఇప్పటికే సైన్ ఇన్ అయ్యారు, కాబట్టి మీరు ఏమీ సరిచేయాల్సిన అవసరం లేదు.",
   "parentHotlineReasonEyebrow": "మీరు ఎందుకు కాల్ చేస్తున్నారు",
   "parentHotlineReasonAbsencesLabel": "పదేపదే గైర్హాజరు",
   "parentHotlineReasonAbsencesDesc": "విద్యార్థి వరుసగా చాలా రోజులు రాలేదు.",

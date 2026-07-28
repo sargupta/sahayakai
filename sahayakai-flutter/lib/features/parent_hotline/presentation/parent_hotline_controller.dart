@@ -842,6 +842,19 @@ class ParentHotlineController extends _$ParentHotlineController {
         _set(stage: HotlineStage.summary, error: HotlineError.none);
         return;
       }
+      // A terminal FAILURE (failed / no_answer / busy) can never produce a
+      // summary — the call never connected — so flip to the `summary` stage's
+      // honest `callFailed` outcome the INSTANT it lands, rather than sitting on
+      // the calling stage for the ~24s summary-wait window while it falsely reads
+      // "Conversation in progress". This mirrors the web modal, which leaves the
+      // calling view on any terminal status. A `completed` call (a real
+      // conversation whose AI summary may still be settling) is NOT a failure and
+      // keeps the short summary-wait below.
+      if (result.callStatus.isTerminalFailure) {
+        _stopPolling();
+        _set(stage: HotlineStage.summary);
+        return;
+      }
     }
 
     // Terminal-without-summary tightens to the 3s summary-wait cadence; once in

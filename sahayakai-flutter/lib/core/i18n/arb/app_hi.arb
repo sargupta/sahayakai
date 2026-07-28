@@ -98,6 +98,8 @@
   "parentHotlineNoPhone": "अभिभावक का नंबर सहेजा नहीं गया",
   "parentHotlineSignedOutTitle": "अपने विद्यार्थी देखने के लिए साइन इन करें",
   "parentHotlineSignedOutBody": "साइन इन करते ही आपकी कक्षा की सूची लोड हो जाएगी। कॉल करने से पहले अभिभावक कॉल लाइन को आपके खाते की ज़रूरत होती है।",
+  "parentHotlineRosterUnavailableTitle": "आपकी कक्षा की सूची अभी उपलब्ध नहीं है",
+  "parentHotlineRosterUnavailableBody": "हम अभी यहाँ आपके विद्यार्थियों को लोड नहीं कर पा रहे। यह किसी आगामी अपडेट में आएगा। आप पहले से साइन इन हैं, इसलिए आपको कुछ ठीक करने की ज़रूरत नहीं है।",
   "parentHotlineReasonEyebrow": "आप कॉल क्यों कर रहे हैं",
   "parentHotlineReasonAbsencesLabel": "बार-बार अनुपस्थिति",
   "parentHotlineReasonAbsencesDesc": "विद्यार्थी लगातार कई दिन अनुपस्थित रहा है।",

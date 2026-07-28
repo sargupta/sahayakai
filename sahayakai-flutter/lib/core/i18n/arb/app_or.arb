@@ -98,6 +98,8 @@
   "parentHotlineNoPhone": "ଅଭିଭାବକଙ୍କ ନମ୍ବର ସେଭ୍ ହୋଇନାହିଁ",
   "parentHotlineSignedOutTitle": "ନିଜ ଛାତ୍ରମାନଙ୍କୁ ଦେଖିବାକୁ ସାଇନ୍ ଇନ୍ କରନ୍ତୁ",
   "parentHotlineSignedOutBody": "ଆପଣ ସାଇନ୍ ଇନ୍ କଲାପରେ ଆପଣଙ୍କ ଶ୍ରେଣୀ ତାଲିକା ଲୋଡ୍ ହେବ। କଲ୍ କରିବା ପୂର୍ବରୁ ଅଭିଭାବକ କଲ୍ ଲାଇନ୍ ପାଇଁ ଆପଣଙ୍କ ଆକାଉଣ୍ଟ ଆବଶ୍ୟକ।",
+  "parentHotlineRosterUnavailableTitle": "ଆପଣଙ୍କ ଶ୍ରେଣୀ ତାଲିକା ଏବେ ଉପଲବ୍ଧ ନାହିଁ",
+  "parentHotlineRosterUnavailableBody": "ଆମେ ଏବେ ଏଠାରେ ଆପଣଙ୍କ ଛାତ୍ରମାନଙ୍କୁ ଲୋଡ୍ କରିପାରୁନାହିଁ। ଏହା ଆଗାମୀ କୌଣସି ଅପଡେଟ୍‌ରେ ଆସିବ। ଆପଣ ପୂର୍ବରୁ ସାଇନ୍ ଇନ୍ ଅଛନ୍ତି, ତେଣୁ ଆପଣଙ୍କୁ କିଛି ଠିକ୍ କରିବାକୁ ପଡ଼ିବ ନାହିଁ।",
   "parentHotlineReasonEyebrow": "ଆପଣ କାହିଁକି କଲ୍ କରୁଛନ୍ତି",
   "parentHotlineReasonAbsencesLabel": "ବାରମ୍ବାର ଅନୁପସ୍ଥିତି",
   "parentHotlineReasonAbsencesDesc": "ଛାତ୍ର କ୍ରମାଗତ ଅନେକ ଦିନ ଅନୁପସ୍ଥିତ ରହିଛି।",

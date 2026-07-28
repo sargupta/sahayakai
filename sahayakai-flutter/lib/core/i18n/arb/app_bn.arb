@@ -98,6 +98,8 @@
   "parentHotlineNoPhone": "অভিভাবকের নম্বর সংরক্ষিত নেই",
   "parentHotlineSignedOutTitle": "আপনার শিক্ষার্থীদের দেখতে সাইন ইন করুন",
   "parentHotlineSignedOutBody": "সাইন ইন করলেই আপনার শ্রেণির তালিকা আসবে। অভিভাবককে কল করার জন্য প্রথমে আপনার অ্যাকাউন্টে প্রবেশ করা প্রয়োজন।",
+  "parentHotlineRosterUnavailableTitle": "আপনার শ্রেণির তালিকা এখনও পাওয়া যাচ্ছে না",
+  "parentHotlineRosterUnavailableBody": "আমরা এখনও এখানে আপনার শিক্ষার্থীদের লোড করতে পারছি না। এটি পরবর্তী কোনো আপডেটে আসবে। আপনি ইতিমধ্যে সাইন ইন করা আছেন, তাই আপনাকে কিছু ঠিক করতে হবে না।",
   "parentHotlineReasonEyebrow": "কেন কল করছেন",
   "parentHotlineReasonAbsencesLabel": "বারবার অনুপস্থিতি",
   "parentHotlineReasonAbsencesDesc": "শিক্ষার্থী পরপর কয়েক দিন অনুপস্থিত ছিল।",

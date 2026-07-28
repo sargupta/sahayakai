@@ -2078,6 +2078,14 @@ class AppLocalizationsMl extends AppLocalizations {
       'സൈൻ ഇൻ ചെയ്താൽ നിങ്ങളുടെ ക്ലാസ് പട്ടിക ലോഡ് ആകും. രക്ഷിതാവിനെ വിളിക്കുന്നതിന് മുൻപ് ഈ സൗകര്യത്തിന് നിങ്ങളുടെ അക്കൗണ്ട് ആവശ്യമാണ്.';
 
   @override
+  String get parentHotlineRosterUnavailableTitle =>
+      'നിങ്ങളുടെ ക്ലാസ് പട്ടിക ഇനിയും ലഭ്യമല്ല';
+
+  @override
+  String get parentHotlineRosterUnavailableBody =>
+      'നിങ്ങളുടെ വിദ്യാർത്ഥികളെ ഇവിടെ ഇനിയും ലോഡ് ചെയ്യാൻ കഴിയുന്നില്ല. ഇത് വരാനിരിക്കുന്ന ഒരു അപ്ഡേറ്റിൽ വരും. നിങ്ങൾ ഇതിനകം സൈൻ ഇൻ ചെയ്തിട്ടുണ്ട്, അതിനാൽ നിങ്ങൾ ഒന്നും ശരിയാക്കേണ്ടതില്ല.';
+
+  @override
   String get parentHotlineReasonEyebrow => 'എന്തിനാണ് വിളിക്കുന്നത്';
 
   @override

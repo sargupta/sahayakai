@@ -2070,6 +2070,14 @@ class AppLocalizationsBn extends AppLocalizations {
       'সাইন ইন করলেই আপনার শ্রেণির তালিকা আসবে। অভিভাবককে কল করার জন্য প্রথমে আপনার অ্যাকাউন্টে প্রবেশ করা প্রয়োজন।';
 
   @override
+  String get parentHotlineRosterUnavailableTitle =>
+      'আপনার শ্রেণির তালিকা এখনও পাওয়া যাচ্ছে না';
+
+  @override
+  String get parentHotlineRosterUnavailableBody =>
+      'আমরা এখনও এখানে আপনার শিক্ষার্থীদের লোড করতে পারছি না। এটি পরবর্তী কোনো আপডেটে আসবে। আপনি ইতিমধ্যে সাইন ইন করা আছেন, তাই আপনাকে কিছু ঠিক করতে হবে না।';
+
+  @override
   String get parentHotlineReasonEyebrow => 'কেন কল করছেন';
 
   @override

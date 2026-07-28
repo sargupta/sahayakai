@@ -98,6 +98,8 @@
   "parentHotlineNoPhone": "વાલીનો નંબર સાચવ્યો નથી",
   "parentHotlineSignedOutTitle": "તમારા વિદ્યાર્થીઓ જોવા સાઇન ઇન કરો",
   "parentHotlineSignedOutBody": "તમે સાઇન ઇન કરો એટલે તમારા વર્ગની યાદી લોડ થાય છે. કૉલ કરી શકે તે પહેલાં વાલી કૉલ લાઇનને તમારા ખાતાની જરૂર છે.",
+  "parentHotlineRosterUnavailableTitle": "તમારી વર્ગની યાદી હજી ઉપલબ્ધ નથી",
+  "parentHotlineRosterUnavailableBody": "અમે હજી અહીં તમારા વિદ્યાર્થીઓને લોડ કરી શકતા નથી. તે આગામી કોઈ અપડેટમાં આવશે. તમે પહેલેથી સાઇન ઇન છો, તેથી તમારે કંઈ ઠીક કરવાની જરૂર નથી.",
   "parentHotlineReasonEyebrow": "તમે શા માટે કૉલ કરો છો",
   "parentHotlineReasonAbsencesLabel": "વારંવાર ગેરહાજરી",
   "parentHotlineReasonAbsencesDesc": "વિદ્યાર્થી સતત ઘણા દિવસથી ગેરહાજર છે.",

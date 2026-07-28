@@ -98,6 +98,8 @@
   "parentHotlineNoPhone": "पालकांचा नंबर जतन केलेला नाही",
   "parentHotlineSignedOutTitle": "तुमचे विद्यार्थी पाहण्यासाठी साइन इन करा",
   "parentHotlineSignedOutBody": "तुम्ही साइन इन केल्यावर तुमच्या वर्गातील विद्यार्थ्यांची यादी दिसेल. पालकांना कॉल करण्यासाठी आधी तुमचे खाते आवश्यक आहे.",
+  "parentHotlineRosterUnavailableTitle": "तुमची वर्गयादी अजून उपलब्ध नाही",
+  "parentHotlineRosterUnavailableBody": "आम्ही अजून येथे तुमच्या विद्यार्थ्यांची यादी लोड करू शकत नाही. ती पुढील एखाद्या अपडेटमध्ये येईल. तुम्ही आधीच साइन इन आहात, त्यामुळे तुम्हाला काहीही दुरुस्त करण्याची गरज नाही.",
   "parentHotlineReasonEyebrow": "तुम्ही का कॉल करत आहात",
   "parentHotlineReasonAbsencesLabel": "वारंवार गैरहजेरी",
   "parentHotlineReasonAbsencesDesc": "विद्यार्थी सलग अनेक दिवस गैरहजर आहे.",

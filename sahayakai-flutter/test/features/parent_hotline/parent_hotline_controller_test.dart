@@ -178,6 +178,39 @@ void main() {
     });
   });
 
+  test('a terminal FAILURE (busy) leaves calling on the FIRST poll, not after '
+      'the summary-wait window', () {
+    fakeAsync((async) {
+      // The first poll returns a terminal `busy` with no summary. A busy /
+      // no_answer / failed call never produces a summary, so the controller must
+      // flip to the summary stage's honest `callFailed` outcome AT ONCE — never
+      // sit on the calling stage (which would falsely read "Conversation in
+      // progress") for the ~24s summary-wait window the web modal also skips.
+      final hotline = FakeParentHotlineRepository(
+        pollResults: [const CallResult(callStatus: CallStatus.busy)],
+      );
+      final container = makeContainer(hotline: hotline);
+      final ctrl = container.read(parentHotlineControllerProvider.notifier);
+
+      driveToReview(async, container);
+      unawaited(ctrl.createAndCall());
+      async.flushMicrotasks();
+
+      async.elapse(const Duration(seconds: 3)); // the FIRST poll fires
+      expect(hotline.pollCount, 1);
+      final s = container.read(parentHotlineControllerProvider);
+      expect(s.stage, HotlineStage.summary,
+          reason: 'a terminal failure flips immediately, not after 8 waits');
+      expect(s.summaryOutcome, HotlineSummaryOutcome.callFailed);
+
+      // …and polling has STOPPED — no summary-wait window is burned on a call
+      // that can never produce a summary.
+      async.elapse(const Duration(seconds: 3 * kMaxSummaryWaits));
+      expect(hotline.pollCount, 1,
+          reason: 'a failed call is terminal — the poll loop is done');
+    });
+  });
+
   test('poll-exhausted with no conversation → endedNoConversation', () {
     fakeAsync((async) {
       final hotline = FakeParentHotlineRepository(

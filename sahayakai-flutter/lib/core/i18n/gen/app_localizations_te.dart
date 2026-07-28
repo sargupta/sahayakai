@@ -2072,6 +2072,14 @@ class AppLocalizationsTe extends AppLocalizations {
       'మీరు సైన్ ఇన్ చేసిన తర్వాత మీ తరగతి జాబితా లోడ్ అవుతుంది. తల్లిదండ్రులకు కాల్ చేయాలంటే ముందు మీ ఖాతా అవసరం.';
 
   @override
+  String get parentHotlineRosterUnavailableTitle =>
+      'మీ తరగతి జాబితా ఇంకా అందుబాటులో లేదు';
+
+  @override
+  String get parentHotlineRosterUnavailableBody =>
+      'మేము ఇంకా ఇక్కడ మీ విద్యార్థులను లోడ్ చేయలేకపోతున్నాము. ఇది తర్వాతి అప్‌డేట్‌లో వస్తుంది. మీరు ఇప్పటికే సైన్ ఇన్ అయ్యారు, కాబట్టి మీరు ఏమీ సరిచేయాల్సిన అవసరం లేదు.';
+
+  @override
   String get parentHotlineReasonEyebrow => 'మీరు ఎందుకు కాల్ చేస్తున్నారు';
 
   @override

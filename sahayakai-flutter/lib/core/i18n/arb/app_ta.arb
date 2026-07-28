@@ -98,6 +98,8 @@
   "parentHotlineNoPhone": "பெற்றோர் எண் சேமிக்கப்படவில்லை",
   "parentHotlineSignedOutTitle": "உங்கள் மாணவர்களைப் பார்க்க உள்நுழையவும்",
   "parentHotlineSignedOutBody": "நீங்கள் உள்நுழைந்ததும் உங்கள் வகுப்பு பட்டியல் ஏற்றப்படும். அழைப்பைச் செய்வதற்கு முன் பெற்றோர் அழைப்புக்கு உங்கள் கணக்கு தேவை.",
+  "parentHotlineRosterUnavailableTitle": "உங்கள் வகுப்புப் பட்டியல் இன்னும் கிடைக்கவில்லை",
+  "parentHotlineRosterUnavailableBody": "உங்கள் மாணவர்களை இங்கு இன்னும் ஏற்ற முடியவில்லை. இது வரவிருக்கும் புதுப்பிப்பில் வரும். நீங்கள் ஏற்கனவே உள்நுழைந்துள்ளீர்கள், எனவே நீங்கள் எதையும் சரிசெய்ய வேண்டியதில்லை.",
   "parentHotlineReasonEyebrow": "நீங்கள் ஏன் அழைக்கிறீர்கள்",
   "parentHotlineReasonAbsencesLabel": "தொடர் வருகையின்மை",
   "parentHotlineReasonAbsencesDesc": "மாணவர் தொடர்ந்து பல நாட்கள் வரவில்லை.",
