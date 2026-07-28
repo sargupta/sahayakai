@@ -124,6 +124,45 @@ void main() {
     expect(find.text('Listen'), findsOneWidget);
   });
 
+  testWidgets(
+      'disposing DURING synthesis stops the clip — audio never bleeds into the '
+      'next screen', (tester) async {
+    // The bug this pins (P1 review): the clip starts inside speak() during the
+    // synth window, but the control only flips to "playing" AFTER speak()
+    // returns. A teacher who taps Listen then navigates back mid-synthesis (a
+    // slow rural connection) must not hear a full narration over the next
+    // screen with no way to stop it. Delay the /api/tts reply so the dispose
+    // lands mid-synthesis.
+    final client = FakeApiClient(
+      postResponse: {'audioContent': _b64},
+      delay: const Duration(milliseconds: 200),
+    );
+    final player = FakeAudioPlayerService();
+    final overrides = [
+      apiClientProvider.overrideWithValue(client),
+      audioPlayerServiceProvider.overrideWithValue(player),
+    ];
+
+    await tester.pumpWidget(_host(
+      const ReadAloudButton(text: 'a long deliverable to narrate', language: 'en'),
+      overrides,
+    ));
+    await tester.tap(find.text('Listen'));
+    await tester.pump(); // _toggle runs up to `await speak()`; synth is in flight
+
+    // Navigate away mid-synthesis (the button disposes while _playing is still
+    // false, the exact window the fix covers).
+    await tester.pumpWidget(_host(const SizedBox.shrink(), overrides));
+    // Let the delayed synth resolve; the clip started on the shared player, and
+    // the disposed control must have stopped it.
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
+
+    expect(player.stopCount, greaterThanOrEqualTo(1),
+        reason: 'a clip started during synthesis must be stopped when the view '
+            'disposes mid-synthesis, so it does not outlive the screen');
+  });
+
   testWidgets('natural completion resets the control to Listen', (tester) async {
     final client = FakeApiClient(postResponse: {'audioContent': _b64});
     final player = FakeAudioPlayerService();

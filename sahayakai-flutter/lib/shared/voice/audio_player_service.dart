@@ -87,10 +87,11 @@ abstract interface class AudioPlayerService {
   /// Decodes [base64Mp3] and plays it, **cancelling any clip already playing**
   /// (the web's `tts.cancel()` before the next `speak()`). Completes once
   /// playback has started; the clip plays on in the background. Returns the new
-  /// clip's [PlaybackProgress.session] id so a caller can track its own
-  /// playback. An empty / un-decodable payload is a silent no-op that returns
-  /// the current (unchanged) session id.
-  Future<int> playBase64Mp3(String base64Mp3);
+  /// clip's [PlaybackProgress.session] id, or **null** when there was nothing
+  /// to play (the payload decoded to zero bytes) — returning null, not the
+  /// stale session id, so a caller never shows a "Stop" state for a clip that
+  /// never started and can never emit a completion event.
+  Future<int?> playBase64Mp3(String base64Mp3);
 
   /// Stops the current clip (VIDYA cancel / mic re-tap / read-aloud stop).
   Future<void> stop();
@@ -142,9 +143,9 @@ class JustAudioPlayerService implements AudioPlayerService {
   }
 
   @override
-  Future<int> playBase64Mp3(String base64Mp3) async {
+  Future<int?> playBase64Mp3(String base64Mp3) async {
     final bytes = decodeBase64Mp3(base64Mp3);
-    if (bytes.isEmpty) return _session;
+    if (bytes.isEmpty) return null;
     await _ensureSession();
     // Cancel the previous clip before the next speak (tts.cancel parity). This
     // drives processingState to idle, not completed, so it emits no false event

@@ -102,7 +102,7 @@ class FakeAudioPlayerService implements AudioPlayerService {
   Stream<PlaybackProgress> get playback => _progress.stream;
 
   @override
-  Future<int> playBase64Mp3(String base64Mp3) async {
+  Future<int?> playBase64Mp3(String base64Mp3) async {
     played.add(base64Mp3);
     final id = ++_session;
     if (!_progress.isClosed) _progress.add(PlaybackProgress(id, true));

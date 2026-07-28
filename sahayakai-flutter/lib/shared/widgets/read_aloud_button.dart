@@ -70,7 +70,16 @@ class _ReadAloudButtonState extends ConsumerState<ReadAloudButton> {
       final id = await ref
           .read(ttsSpeakerProvider)
           .speak(widget.text, language: language);
-      if (!mounted) return;
+      if (!mounted) {
+        // Disposed DURING synthesis: `speak()` already started the clip on the
+        // shared player before returning (synth → play → return id), so a bare
+        // `return` would leave a full narration playing over the next screen
+        // with no control to stop it. Stop the clip we just started. (Single-
+        // threaded: nothing else could have superseded it between the await
+        // resolving and here, so the current clip is ours.)
+        if (id != null) unawaited(player.stop());
+        return;
+      }
       setState(() {
         _loading = false;
         if (id != null) {
