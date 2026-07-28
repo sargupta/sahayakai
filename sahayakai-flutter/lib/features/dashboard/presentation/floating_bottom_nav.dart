@@ -26,13 +26,26 @@ class FloatingNavItem {
 /// U9 — the floating bottom navigation (PREMIUM_DESIGN_SPEC.md §5).
 ///
 /// An INSET FLOATED bar (not edge-to-edge): radius [AppRadius.hero] (20),
-/// real-blur glass fill+border via [GlassSurface] (App-wide Glassmorphism
-/// Reskin, GL-2 — mounted once app-wide and floats over scrolling content,
-/// the textbook `BackdropFilter` case), shadow [AppShadows.e3] in light /
-/// [AppShadows.dKey] in dark cast from a shadow-only carrier BEHIND the glass
-/// (`GlassSurface` draws its own fill/border/sheen but casts no external
-/// shadow of its own), height 56 above the bottom safe-area inset, with a
-/// horizontal margin so it floats.
+/// glass fill+border via [GlassSurface.flat] (App-wide Glassmorphism Reskin,
+/// GL-2), shadow [AppShadows.e3] in light / [AppShadows.dKey] in dark cast
+/// from a shadow-only carrier BEHIND the glass (`GlassSurface` draws its own
+/// fill/border/sheen but casts no external shadow of its own), height 56 above
+/// the bottom safe-area inset, with a horizontal margin so it floats.
+///
+/// It uses the CHEAP [GlassSurface.flat] path, NOT the real-blur constructor:
+/// the shell's [Scaffold] does not `extendBody`, so scrolling tab content never
+/// passes UNDER this bar — it sits over the flat, uniform
+/// `scaffoldBackgroundColor` (a solid `surfaceContainerLowest`; `app_theme.dart`
+/// — "must stay a solid Color"). A real `BackdropFilter(ImageFilter.blur)`
+/// blurring a mathematically uniform colour field returns that same colour:
+/// visually identical to the flat fill, but at a per-frame `saveLayer` + GPU
+/// blur cost for zero benefit — exactly the "does the blur earn its cost"
+/// mistake GL-4 already caught on the splash halo (`_HaloedSeal`) and GL-2 on
+/// `GlassAppBar`. The flat fill's own tuned opacity, gradient border and sheen
+/// do all the visible work either way. If a later unit makes the shell
+/// `extendBody: true` and pads the tabs so content scrolls beneath the bar,
+/// switch this back to [GlassSurface.new] so the blur has real content to
+/// soften.
 ///
 /// The active tab wears a `primary@0.12` STADIUM pill that SLIDES + fades to the
 /// newly-selected tab (240ms · easeOutQuart); its icon is `primary` scaled to
@@ -99,24 +112,23 @@ class FloatingBottomNav extends StatelessWidget {
           AppSpacing.space4,
           AppSpacing.space2,
         ),
-        // Shadow-only carrier: `GlassSurface` below draws the real-blur fill,
+        // Shadow-only carrier: `GlassSurface.flat` below draws the glass fill,
         // gradient border and sheen, but (confirmed by re-reading
         // `glass_surface.dart`) casts no external shadow of its own. The old
         // `AppShadows.e3`/`dKey` shadow is kept here, underneath the glass
-        // panel, so the bar still reads as floating above scrolling content —
-        // without it the glass would blend into whatever sits behind it.
-        // `borderRadius` is set so the shadow itself renders as a rounded
-        // rect matching the glass panel's corner, even though this
-        // `DecoratedBox` no longer paints a fill or border (both now come
-        // from `GlassSurface`, which supersedes the old flat `color`/
-        // `Border.all` — a real blurred edge-highlight border reads richer
-        // than the flat 1px `outline` it replaces).
+        // panel, so the bar still reads as floating above the content — without
+        // it the glass would blend into whatever sits behind it. `borderRadius`
+        // is set so the shadow itself renders as a rounded rect matching the
+        // glass panel's corner, even though this `DecoratedBox` no longer paints
+        // a fill or border (both now come from `GlassSurface`, which supersedes
+        // the old flat `color`/`Border.all` — a gradient edge-highlight border
+        // reads richer than the flat 1px `outline` it replaces).
         child: DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: AppRadius.rHero,
             boxShadow: isDark ? AppShadows.dKey : AppShadows.e3,
           ),
-          child: GlassSurface(
+          child: GlassSurface.flat(
             radius: AppRadius.hero,
             padding: EdgeInsets.zero,
             child: SizedBox(

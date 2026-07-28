@@ -96,12 +96,27 @@ class AuthController extends _$AuthController {
 bool isSignedIn(Ref ref) =>
     ref.watch(authControllerProvider) == AuthStatus.signedIn;
 
-/// First-run bootstrap: `main()` already awaited `FirebaseInit
-/// .ensureInitialized()` before `runApp`, so by the time this provider builds
-/// Firebase is already up — this is a deliberate minimum splash dwell (a
-/// beat to read the brand mark), not a simulation of anything still pending.
-/// While this future is loading, the router parks on /splash.
+/// First-run bootstrap the router parks `/splash` on until it resolves.
+///
+/// `main()` already awaited [FirebaseInit.ensureInitialized] before `runApp`,
+/// so on the happy path this re-attempt returns instantly and the only work
+/// left is a deliberate minimum splash dwell (a beat to read the brand mark),
+/// not a simulation of anything still pending.
+///
+/// The re-attempt is what makes the splash's retry real: `_BootstrapFailed`
+/// invalidates THIS provider, and `ensureInitialized` is idempotent — a prior
+/// failure left Firebase unready, so it re-runs `Firebase.initializeApp`. A
+/// genuine init failure is now surfaced as an [AsyncError] rather than
+/// swallowed: with init unresolved there is no honest answer to "is this
+/// teacher signed in", and proceeding would strand the teacher on a dead Login
+/// button (`signIn()` no-ops while unconfigured), so the splash owns the
+/// failure and offers a retry (see `SplashScreen`).
 @Riverpod(keepAlive: true)
 Future<void> appBootstrap(Ref ref) async {
+  await FirebaseInit.ensureInitialized();
+  final initError = FirebaseInit.initError;
+  if (initError != null) {
+    throw FirebaseInitException(initError);
+  }
   await Future<void>.delayed(const Duration(milliseconds: 600));
 }

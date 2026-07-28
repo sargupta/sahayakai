@@ -42,9 +42,16 @@ class PrimaryButton extends StatelessWidget {
           borderRadius: AppRadius.rControl,
           boxShadow: glow,
         ),
-        child: SizedBox(
-          height: 56,
-          width: double.infinity,
+        child: ConstrainedBox(
+          // A MINIMUM height, not a fixed one: at textScale 1.3 a long label
+          // wraps to a second line and the button GROWS to fit it rather than
+          // clipping it below the pill (a `ButtonStyleButton` defaults to
+          // `Clip.none`). A short label at scale 1.0 still renders at exactly
+          // 56dp. `minWidth: infinity` keeps the full-width fill.
+          constraints: const BoxConstraints(
+            minWidth: double.infinity,
+            minHeight: 56,
+          ),
           child: FilledButton(
             onPressed: isBusy ? null : onPressed,
             style: const ButtonStyle(
@@ -70,7 +77,20 @@ class PrimaryButton extends StatelessWidget {
                         const SizedBox(width: AppSpacing.space2),
                       ],
                       Flexible(
-                        child: Text(label, textAlign: TextAlign.center),
+                        child: Text(
+                          label,
+                          textAlign: TextAlign.center,
+                          // Cap the wrap at two lines (then ellipsis) and clamp
+                          // accessibility scaling at the project's tested 1.3
+                          // ceiling, so a long localized label can never bleed
+                          // past the pill — the same no-overflow discipline the
+                          // floating nav slot applies.
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textScaler: MediaQuery.textScalerOf(
+                            context,
+                          ).clamp(maxScaleFactor: 1.3),
+                        ),
                       ),
                     ],
                   ),
