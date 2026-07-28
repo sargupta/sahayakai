@@ -5,8 +5,32 @@ The reviewed Flutter build isn't in this checkout, but the findings are self-con
 # SahayakAI Flutter — Remediation Plan to Voice-First End-to-End Parity
 
 **Status:** Draft for founder review
-**Last updated:** 2026-07-28
+**Last updated:** 2026-07-29
 **Scope:** Prioritized, phased engineering plan to close the mobile/web parity gaps documented in this report and deliver the "speak → generate → hear/act" thesis on the Flutter app.
+
+---
+
+## Session progress — 2026-07-29 (voice-first core delivered)
+
+The thesis — **speak the inputs → it runs → hear the result, in the teacher's language** — is now shipped and verified on the tool surfaces. Delivered + pushed this session (each gated: `flutter analyze` 0, token_guard PASS, tests green, full-suite baseline held):
+
+- **P0 — the RUN verb.** A voice directive auto-generates; "speak → filled form → tap Generate" became "speak → result" on 10 tools.
+- **P1 — HEAR.** Result read-aloud + a spoken "your … is ready" summary on the voice path.
+- **P1.6 — field-mic sweep.** `InlineFieldMic` on every form tool's free-text content field (exam_paper/content_creator deliberately excluded, documented).
+- **P1.2 — launcher ubiquity.** `VidyaAppBarAction` on the five non-`ToolScaffold` shell surfaces (Library, Inbox, conversation thread, Staffroom, Network hub).
+- **P2.0 — Parent Message voice input** (result already read aloud → its voice loop is closed).
+- **P3.2 — device-locale language default** (the app opens in the teacher's language; also fixed 6 library tests that had been silently rendering English).
+- **P4 — context-image input** (optional textbook-photo → generate on Lesson Plan + Quiz).
+
+**Verified already-done (no change):** T2-U12 parent_hotline honest-degrade + failed-call terminal state.
+
+**What remains, honestly bucketed:**
+
+1. **Founder decisions** (documented, not shipped — need your call): the mother-tongue greeting's *auto-play audio* (tap-to-hear recommended, P3.2); collapsing the onboarding duplicate-language step (P3.1 — an inclusive-design tradeoff); and what "video capability" should mean (web's is a YouTube curator, not a generator).
+2. **Backend-blocked** (owner action on `sahayakai-main`): voice→VIDYA→parent-call classifier (P2.2); voice-driven profile capture (P3.3).
+3. **Large units needing human review** (real, but not safe to ship autonomously): **P4.1 rich rendering — the worksheet LaTeX gap (#22) is genuine** (the flow emits `$…$`, mobile shows it raw), but the fix is a dependency choice + design-system theming + visual QA of immature Flutter math packages; **P4.2 PDF export** (package + design); and the net-new Tranche 5 features (Attendance, Community Library, Impact/Org dashboards), most of which are backend-gated.
+
+The clean, mechanical, obviously-safe non-blocked queue is exhausted; the autonomous loop stopped here rather than ship a design-sensitive or QA-heavy unit without review.
 
 ---
 
