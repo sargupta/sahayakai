@@ -9,6 +9,7 @@ import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
 import '../../../shared/domain/tool_prefill.dart';
+import '../../../shared/voice/tts_speaker.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
@@ -59,6 +60,10 @@ class _VisualAidScreenState extends ConsumerState<VisualAidScreen> {
   String? _grade;
   String? _subject;
   late AppLocale _language;
+
+  /// Part-B once-guard: the voice-path spoken summary fires at most once, when
+  /// the first voice-originated result lands (VOICE_FIRST_GAP §5.6).
+  bool _spokeVoiceSummary = false;
 
   @override
   void initState() {
@@ -128,6 +133,26 @@ class _VisualAidScreenState extends ConsumerState<VisualAidScreen> {
     );
   }
 
+  /// Part B — closes "speak → generate → hear". When the landed result was
+  /// voice-originated (VIDYA's RUN verb set `autoSubmit`), auto-speak a short
+  /// "your … is ready" summary in the result's language, once. A manual open
+  /// never speaks. The short VIDYA confirmation spoken before navigation has
+  /// long finished by the time the drawing lands, so this is a single,
+  /// non-overlapping utterance.
+  void _maybeSpeakVoiceSummary(AppLocalizations l10n) {
+    if (_spokeVoiceSummary || widget.prefill?.autoSubmit != true) return;
+    _spokeVoiceSummary = true;
+    final topic = widget.prefill?.topic?.trim();
+    final summary = (topic == null || topic.isEmpty)
+        ? l10n.voiceResultReady(l10n.visualAidTitle)
+        : l10n.voiceResultReadyWithTopic(l10n.visualAidTitle, topic);
+    speakResultSummary(
+      ref.read(ttsSpeakerProvider),
+      summary,
+      language: _language.aiName,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -141,6 +166,7 @@ class _VisualAidScreenState extends ConsumerState<VisualAidScreen> {
           !next.isLoading && next.hasValue && next.valueOrNull != null;
       if (wasLoading && nowHasResult) {
         WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToResult());
+        _maybeSpeakVoiceSummary(l10n);
       }
     });
 

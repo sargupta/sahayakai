@@ -172,6 +172,25 @@ class AppLocalizationsHi extends AppLocalizations {
   String get copyConfirmation => 'क्लिपबोर्ड पर कॉपी किया गया';
 
   @override
+  String get readAloudListen => 'Listen';
+
+  @override
+  String get readAloudStop => 'Stop';
+
+  @override
+  String get readAloudError => 'Couldn\'t play the audio. Please try again.';
+
+  @override
+  String voiceResultReady(String tool) {
+    return 'Your $tool is ready.';
+  }
+
+  @override
+  String voiceResultReadyWithTopic(String tool, String topic) {
+    return 'Your $tool on $topic is ready.';
+  }
+
+  @override
   String get lessonPlanSectionLesson => 'पाठ';
 
   @override

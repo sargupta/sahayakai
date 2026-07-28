@@ -16,6 +16,7 @@ import '../../../../shared/widgets/empty_view.dart';
 import '../../../../shared/widgets/inline_error.dart';
 import '../../../../shared/widgets/note_banner.dart';
 import '../../../../shared/widgets/primary_button.dart';
+import '../../../../shared/widgets/read_aloud_button.dart';
 import '../../../../shared/widgets/secondary_button.dart';
 import '../../domain/exam_paper.dart';
 import '../exam_paper_controller.dart';
@@ -163,6 +164,10 @@ class _ActionBar extends StatelessWidget {
           label: l10n.actionRegenerate,
           icon: LucideIcons.refreshCw,
           onPressed: onRegenerate,
+        ),
+        const SizedBox(height: AppSpacing.space2),
+        ReadAloudButton(
+          text: _paperAsText(ready.paper, l10n),
         ),
         const SizedBox(height: AppSpacing.space2),
         SizedBox(

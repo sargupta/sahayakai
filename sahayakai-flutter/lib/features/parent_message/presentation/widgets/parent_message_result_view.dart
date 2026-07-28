@@ -11,6 +11,7 @@ import '../../../../shared/widgets/ai_text.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/document_sheet.dart';
 import '../../../../shared/widgets/empty_view.dart';
+import '../../../../shared/widgets/read_aloud_button.dart';
 import '../../../../shared/widgets/secondary_button.dart';
 import '../../domain/parent_message.dart';
 
@@ -79,7 +80,11 @@ class ParentMessageResultView extends StatelessWidget {
       docType: l10n.parentMessageTitle,
       title: l10n.parentMessageResultTitle,
       meta: meta,
-      footer: _ActionBar(message: message.message, onRegenerate: onRegenerate),
+      footer: _ActionBar(
+        message: message.message,
+        language: message.languageCode,
+        onRegenerate: onRegenerate,
+      ),
       children: revealed,
     );
   }
@@ -91,9 +96,10 @@ class ParentMessageResultView extends StatelessWidget {
 /// behind [ShareService] so a test can assert it was invoked without popping the
 /// real OS sheet; Copy writes the system clipboard and confirms with a snackbar.
 class _ActionBar extends ConsumerWidget {
-  const _ActionBar({required this.message, this.onRegenerate});
+  const _ActionBar({required this.message, this.language, this.onRegenerate});
 
   final String message;
+  final String? language;
   final VoidCallback? onRegenerate;
 
   @override
@@ -125,6 +131,8 @@ class _ActionBar extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.space3),
         ],
+        ReadAloudButton(text: message, language: language),
+        const SizedBox(height: AppSpacing.space3),
         Wrap(
           spacing: AppSpacing.space3,
           runSpacing: AppSpacing.space3,

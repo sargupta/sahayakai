@@ -179,6 +179,25 @@ class AppLocalizationsMl extends AppLocalizations {
   String get copyConfirmation => 'ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി';
 
   @override
+  String get readAloudListen => 'Listen';
+
+  @override
+  String get readAloudStop => 'Stop';
+
+  @override
+  String get readAloudError => 'Couldn\'t play the audio. Please try again.';
+
+  @override
+  String voiceResultReady(String tool) {
+    return 'Your $tool is ready.';
+  }
+
+  @override
+  String voiceResultReadyWithTopic(String tool, String topic) {
+    return 'Your $tool on $topic is ready.';
+  }
+
+  @override
   String get lessonPlanSectionLesson => 'പാഠം';
 
   @override

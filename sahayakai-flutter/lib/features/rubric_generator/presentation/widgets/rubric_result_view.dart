@@ -10,6 +10,7 @@ import '../../../../shared/widgets/ai_text.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/document_sheet.dart';
 import '../../../../shared/widgets/empty_view.dart';
+import '../../../../shared/widgets/read_aloud_button.dart';
 import '../../../../shared/widgets/secondary_button.dart';
 import '../../domain/rubric.dart';
 import 'rubric_grid.dart';
@@ -138,6 +139,10 @@ class _ActionBar extends StatelessWidget {
           label: l10n.actionRegenerate,
           icon: LucideIcons.refreshCw,
           onPressed: onRegenerate,
+        ),
+        const SizedBox(height: AppSpacing.space2),
+        ReadAloudButton(
+          text: _rubricAsText(rubric, l10n),
         ),
         const SizedBox(height: AppSpacing.space2),
         SizedBox(

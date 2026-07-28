@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/i18n/l10n_ext.dart';
+import '../../../../core/i18n/locale_provider.dart';
 import '../../../../core/platform/link_opener.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/motion/animated_entrance.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/document_sheet.dart';
 import '../../../../shared/widgets/empty_view.dart';
+import '../../../../shared/widgets/read_aloud_button.dart';
 import '../../../../shared/widgets/secondary_button.dart';
 import '../../domain/virtual_field_trip.dart';
 import 'field_trip_stop_card.dart';
@@ -87,19 +89,54 @@ class VirtualFieldTripResultView extends ConsumerWidget {
       docType: l10n.virtualFieldTripDocType,
       title: trip.title,
       meta: meta,
-      footer: _ActionBar(onRegenerate: onRegenerate, onDone: onDone),
+      footer: _ActionBar(
+        onRegenerate: onRegenerate,
+        onDone: onDone,
+        spokenText: _tripAsText(trip),
+        // FieldTrip carries no language on the result; the current UI locale is
+        // the best available signal for the voice (it drove the form's default).
+        language: ref.read(localeControllerProvider).code,
+      ),
       children: revealed,
     );
   }
 }
 
+/// A plain-text narration of the itinerary for read-aloud: the title, then each
+/// stop's name and its prose fields in visiting order.
+String _tripAsText(FieldTrip trip) {
+  final b = StringBuffer()..writeln(trip.title);
+  for (var i = 0; i < trip.stops.length; i++) {
+    final s = trip.stops[i];
+    b
+      ..writeln()
+      ..writeln('${i + 1}. ${s.name}');
+    for (final line in [
+      s.description,
+      s.educationalFact,
+      s.reflectionPrompt,
+      s.culturalAnalogy,
+    ]) {
+      if (line.trim().isNotEmpty) b.writeln(line.trim());
+    }
+  }
+  return b.toString().trimRight();
+}
+
 /// The itinerary's action bar: Regenerate (secondary) over a Done ghost. Done
 /// clears the result back to the form; Regenerate re-runs the plan.
 class _ActionBar extends StatelessWidget {
-  const _ActionBar({required this.onRegenerate, required this.onDone});
+  const _ActionBar({
+    required this.onRegenerate,
+    required this.onDone,
+    required this.spokenText,
+    this.language,
+  });
 
   final VoidCallback onRegenerate;
   final VoidCallback onDone;
+  final String spokenText;
+  final String? language;
 
   @override
   Widget build(BuildContext context) {
@@ -117,6 +154,8 @@ class _ActionBar extends StatelessWidget {
           icon: LucideIcons.refreshCw,
           onPressed: onRegenerate,
         ),
+        const SizedBox(height: AppSpacing.space2),
+        ReadAloudButton(text: spokenText, language: language),
         const SizedBox(height: AppSpacing.space2),
         SizedBox(
           height: 48,

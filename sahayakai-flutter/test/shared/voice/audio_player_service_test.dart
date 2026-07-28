@@ -1,4 +1,5 @@
 // ignore_for_file: experimental_member_use
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -13,15 +14,29 @@ class FakeAudioPlayerService implements AudioPlayerService {
   final List<String> played = <String>[];
   int stopCount = 0;
   bool disposed = false;
+  int _session = 0;
+  final StreamController<PlaybackProgress> _progress =
+      StreamController<PlaybackProgress>.broadcast();
 
   @override
-  Future<void> playBase64Mp3(String base64Mp3) async => played.add(base64Mp3);
+  Stream<PlaybackProgress> get playback => _progress.stream;
+
+  @override
+  Future<int> playBase64Mp3(String base64Mp3) async {
+    played.add(base64Mp3);
+    final id = ++_session;
+    if (!_progress.isClosed) _progress.add(PlaybackProgress(id, true));
+    return id;
+  }
 
   @override
   Future<void> stop() async => stopCount++;
 
   @override
-  Future<void> dispose() async => disposed = true;
+  Future<void> dispose() async {
+    disposed = true;
+    if (!_progress.isClosed) await _progress.close();
+  }
 }
 
 void main() {

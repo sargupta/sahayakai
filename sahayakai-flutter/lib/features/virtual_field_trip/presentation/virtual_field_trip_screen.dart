@@ -9,6 +9,7 @@ import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
 import '../../../shared/domain/tool_prefill.dart';
+import '../../../shared/voice/tts_speaker.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
@@ -54,6 +55,10 @@ class _VirtualFieldTripScreenState
 
   String? _grade;
   late AppLocale _language;
+
+  /// Part-B once-guard: the voice-path spoken summary fires at most once, when
+  /// the first voice-originated itinerary lands (VOICE_FIRST_GAP §5.6).
+  bool _spokeVoiceSummary = false;
 
   @override
   void initState() {
@@ -122,6 +127,28 @@ class _VirtualFieldTripScreenState
     );
   }
 
+  /// Part B — closes "speak → generate → hear". When a voice-originated
+  /// (autoSubmit) request lands a real, populated itinerary, auto-speak a short
+  /// "your … is ready" summary in the result's language, once. Deliberately
+  /// gated to [FieldTripResult] with stops: the 202 still-generating panel is
+  /// not a finished result and must not announce one. A manual open never
+  /// speaks. The short VIDYA confirmation has finished well before this fires,
+  /// so it is a single, non-overlapping utterance.
+  void _maybeSpeakVoiceSummary(AppLocalizations l10n, FieldTripOutcome? outcome) {
+    if (_spokeVoiceSummary || widget.prefill?.autoSubmit != true) return;
+    if (outcome is! FieldTripResult || !outcome.trip.hasStops) return;
+    _spokeVoiceSummary = true;
+    final topic = widget.prefill?.topic?.trim();
+    final summary = (topic == null || topic.isEmpty)
+        ? l10n.voiceResultReady(l10n.virtualFieldTripTitle)
+        : l10n.voiceResultReadyWithTopic(l10n.virtualFieldTripTitle, topic);
+    speakResultSummary(
+      ref.read(ttsSpeakerProvider),
+      summary,
+      language: _language.aiName,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -136,6 +163,7 @@ class _VirtualFieldTripScreenState
           !next.isLoading && next.hasValue && next.valueOrNull != null;
       if (wasLoading && nowHasOutcome) {
         WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToResult());
+        _maybeSpeakVoiceSummary(l10n, next.valueOrNull);
       }
     });
 

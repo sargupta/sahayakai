@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../shared/voice/audio_player_service.dart';
+import '../../../shared/voice/tts_language.dart';
 import '../../../shared/voice/audio_recorder_service.dart';
 import '../../../shared/voice/mic_permission_service.dart';
 import '../data/dto/assistant_request.dart';
@@ -19,6 +20,12 @@ import '../data/vidya_profile_repository.dart';
 import '../data/vidya_repository.dart';
 import '../data/vidya_session_repository.dart';
 import '../data/voice_to_text_repository.dart';
+
+// The language→BCP-47 helpers now live in shared voice infra (so the
+// read-aloud path resolves the same way); re-exported here for this feature's
+// existing call sites (vidya_nav_dispatcher) and tests.
+export '../../../shared/voice/tts_language.dart'
+    show kLangToBcp47, normaliseVidyaLanguage, vidyaTtsBcp47;
 
 part 'vidya_controller.g.dart';
 
@@ -51,49 +58,10 @@ const Duration kFreshClassificationWindow = Duration(minutes: 5);
 /// (SPEC §A.7 — the web keeps the last 20).
 const int kChatHistoryCap = 20;
 
-// ─── Language mapping (SPEC §A.5, the client owns this) ──────────────────────
-
-/// STT 2-letter code → TTS BCP-47 tag. Note `mr` borrows the Hindi voice and
-/// `or` has no native voice so it falls to English (SPEC §A.5 `LANG_TO_BCP47`).
-const Map<String, String> kLangToBcp47 = {
-  'en': 'en-IN',
-  'hi': 'hi-IN',
-  'bn': 'bn-IN',
-  'ta': 'ta-IN',
-  'te': 'te-IN',
-  'kn': 'kn-IN',
-  'ml': 'ml-IN',
-  'gu': 'gu-IN',
-  'pa': 'pa-IN',
-  'mr': 'hi-IN',
-  'or': 'en-IN',
-};
-
-/// Full English names / Sarvam aliases → the supported ISO-2 code.
-const Map<String, String> _kLangAliases = {
-  'od': 'or', 'ori': 'or', 'oriya': 'or', 'odia': 'or',
-  'english': 'en', 'hindi': 'hi', 'kannada': 'kn', 'tamil': 'ta',
-  'telugu': 'te', 'marathi': 'mr', 'bengali': 'bn', 'bangla': 'bn',
-  'gujarati': 'gu', 'punjabi': 'pa', 'panjabi': 'pa', 'malayalam': 'ml',
-};
-
-/// Normalise a classifier / STT language hint to a supported ISO-2 code, or
-/// null when unknown. Handles Sarvam's `od`→`or`, full English names
-/// (`Hindi`→`hi`), casing, and region suffixes (`hi-IN`→`hi`). This is half the
-/// fix for the "form shows English, output Hindi" bug (SPEC §A.8); the other
-/// half is [_learnProfile] never persisting an utterance's language.
-String? normaliseVidyaLanguage(String? raw) {
-  if (raw == null) return null;
-  var s = raw.trim().toLowerCase();
-  if (s.isEmpty) return null;
-  s = s.split(RegExp(r'[-_]')).first; // hi-IN / hi_IN → hi
-  s = _kLangAliases[s] ?? s;
-  return kLangToBcp47.containsKey(s) ? s : null;
-}
-
-/// The TTS BCP-47 tag VIDYA should speak a reply in, defaulting to `en-IN`.
-String vidyaTtsBcp47(String? lang) =>
-    kLangToBcp47[normaliseVidyaLanguage(lang) ?? 'en'] ?? 'en-IN';
+// ─── Language mapping ────────────────────────────────────────────────────────
+// `kLangToBcp47` / `normaliseVidyaLanguage` / `vidyaTtsBcp47` now live in
+// `shared/voice/tts_language.dart` (imported above, re-exported at the top of
+// this library) so the read-aloud path resolves the same tags.
 
 /// Guards against a Gemini STT refusal ("I'm sorry, I cannot process the
 /// audio") leaking into the transcript as a fake teacher turn (SPEC §A.4

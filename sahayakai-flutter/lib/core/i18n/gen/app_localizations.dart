@@ -416,6 +416,36 @@ abstract class AppLocalizations {
   /// **'Copied to clipboard'**
   String get copyConfirmation;
 
+  /// Result action bar: read the generated document aloud through TTS.
+  ///
+  /// In en, this message translates to:
+  /// **'Listen'**
+  String get readAloudListen;
+
+  /// Result action bar: stop the read-aloud playback that is in progress.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get readAloudStop;
+
+  /// Snackbar shown when read-aloud text-to-speech fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t play the audio. Please try again.'**
+  String get readAloudError;
+
+  /// Short spoken summary auto-played after a voice-originated generation lands, when no topic is known.
+  ///
+  /// In en, this message translates to:
+  /// **'Your {tool} is ready.'**
+  String voiceResultReady(String tool);
+
+  /// Short spoken summary auto-played after a voice-originated generation lands, naming the tool and topic.
+  ///
+  /// In en, this message translates to:
+  /// **'Your {tool} on {topic} is ready.'**
+  String voiceResultReadyWithTopic(String tool, String topic);
+
   /// Lesson plan form section header: what to teach (topic, grades, subject).
   ///
   /// In en, this message translates to:

@@ -10,6 +10,7 @@ import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/document_sheet.dart';
 import '../../../../shared/widgets/empty_view.dart';
 import '../../../../shared/widgets/note_banner.dart';
+import '../../../../shared/widgets/read_aloud_button.dart';
 import '../../../../shared/widgets/secondary_button.dart';
 import '../../domain/visual_aid.dart';
 
@@ -208,21 +209,23 @@ class _ActionBar extends StatelessWidget {
     final saffron = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
     final messenger = ScaffoldMessenger.of(context);
 
+    final buffer = StringBuffer();
+    if (prompt != null) buffer.writeln('$prompt\n');
+    if (aid.pedagogicalContext.isNotEmpty) {
+      buffer
+        ..writeln(l10n.visualAidHowToUse)
+        ..writeln(aid.pedagogicalContext);
+    }
+    if (aid.discussionSpark.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln(l10n.visualAidDiscussionSpark)
+        ..writeln(aid.discussionSpark);
+    }
+    final spoken = buffer.toString().trimRight();
+
     void copy() {
-      final buffer = StringBuffer();
-      if (prompt != null) buffer.writeln('$prompt\n');
-      if (aid.pedagogicalContext.isNotEmpty) {
-        buffer
-          ..writeln(l10n.visualAidHowToUse)
-          ..writeln(aid.pedagogicalContext);
-      }
-      if (aid.discussionSpark.isNotEmpty) {
-        buffer
-          ..writeln()
-          ..writeln(l10n.visualAidDiscussionSpark)
-          ..writeln(aid.discussionSpark);
-      }
-      Clipboard.setData(ClipboardData(text: buffer.toString().trimRight()));
+      Clipboard.setData(ClipboardData(text: spoken));
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text(l10n.copyConfirmation)));
@@ -237,6 +240,8 @@ class _ActionBar extends StatelessWidget {
           icon: LucideIcons.refreshCw,
           onPressed: onRegenerate,
         ),
+        const SizedBox(height: AppSpacing.space2),
+        ReadAloudButton(text: spoken),
         const SizedBox(height: AppSpacing.space2),
         SizedBox(
           height: 48,

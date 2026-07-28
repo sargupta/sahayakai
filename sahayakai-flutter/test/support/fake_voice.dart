@@ -88,19 +88,43 @@ class FakeAudioRecorderService implements AudioRecorderService {
 }
 
 /// A player that records what it was asked to speak instead of touching a
-/// speaker.
+/// speaker. Emits [PlaybackProgress] like the real one so read-aloud controls
+/// can be driven in a test: each play starts a new session (`playing: true`);
+/// [stop] and the [completePlayback] hook flip it to `playing: false`.
 class FakeAudioPlayerService implements AudioPlayerService {
   final List<String> played = [];
   int stopCount = 0;
+  int _session = 0;
+  final StreamController<PlaybackProgress> _progress =
+      StreamController<PlaybackProgress>.broadcast();
 
   @override
-  Future<void> playBase64Mp3(String base64Mp3) async => played.add(base64Mp3);
+  Stream<PlaybackProgress> get playback => _progress.stream;
 
   @override
-  Future<void> stop() async => stopCount++;
+  Future<int> playBase64Mp3(String base64Mp3) async {
+    played.add(base64Mp3);
+    final id = ++_session;
+    if (!_progress.isClosed) _progress.add(PlaybackProgress(id, true));
+    return id;
+  }
 
   @override
-  Future<void> dispose() async {}
+  Future<void> stop() async {
+    stopCount++;
+    if (!_progress.isClosed) _progress.add(PlaybackProgress(_session, false));
+  }
+
+  /// Test hook: simulate the current clip finishing on its own (the completion
+  /// signal the real player derives from just_audio's processing state).
+  void completePlayback() {
+    if (!_progress.isClosed) _progress.add(PlaybackProgress(_session, false));
+  }
+
+  @override
+  Future<void> dispose() async {
+    if (!_progress.isClosed) await _progress.close();
+  }
 }
 
 /// A permission gate that answers from a field instead of the OS.

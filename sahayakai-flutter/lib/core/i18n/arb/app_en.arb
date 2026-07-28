@@ -214,6 +214,42 @@
   "@copyConfirmation": {
     "description": "Snackbar shown after a generated document is copied."
   },
+  "readAloudListen": "Listen",
+  "@readAloudListen": {
+    "description": "Result action bar: read the generated document aloud through TTS."
+  },
+  "readAloudStop": "Stop",
+  "@readAloudStop": {
+    "description": "Result action bar: stop the read-aloud playback that is in progress."
+  },
+  "readAloudError": "Couldn't play the audio. Please try again.",
+  "@readAloudError": {
+    "description": "Snackbar shown when read-aloud text-to-speech fails."
+  },
+  "voiceResultReady": "Your {tool} is ready.",
+  "@voiceResultReady": {
+    "description": "Short spoken summary auto-played after a voice-originated generation lands, when no topic is known.",
+    "placeholders": {
+      "tool": {
+        "type": "String",
+        "example": "lesson plan"
+      }
+    }
+  },
+  "voiceResultReadyWithTopic": "Your {tool} on {topic} is ready.",
+  "@voiceResultReadyWithTopic": {
+    "description": "Short spoken summary auto-played after a voice-originated generation lands, naming the tool and topic.",
+    "placeholders": {
+      "tool": {
+        "type": "String",
+        "example": "lesson plan"
+      },
+      "topic": {
+        "type": "String",
+        "example": "photosynthesis"
+      }
+    }
+  },
   "lessonPlanSectionLesson": "The lesson",
   "@lessonPlanSectionLesson": {
     "description": "Lesson plan form section header: what to teach (topic, grades, subject)."

@@ -12,6 +12,7 @@ import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/document_sheet.dart';
 import '../../../../shared/widgets/empty_view.dart';
 import '../../../../shared/widgets/icon_well.dart';
+import '../../../../shared/widgets/read_aloud_button.dart';
 import '../../../../shared/widgets/secondary_button.dart';
 import '../../domain/instant_answer.dart';
 import 'answer_markdown_view.dart';
@@ -138,11 +139,11 @@ class _ActionBar extends StatelessWidget {
     final saffron = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
     final messenger = ScaffoldMessenger.of(context);
 
+    final spoken = (question != null ? '$question\n\n' : '') +
+        answer.answer.trim();
+
     void copy() {
-      final buffer = StringBuffer();
-      if (question != null) buffer.writeln('$question\n');
-      buffer.write(answer.answer.trim());
-      Clipboard.setData(ClipboardData(text: buffer.toString().trimRight()));
+      Clipboard.setData(ClipboardData(text: spoken.trimRight()));
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text(l10n.copyConfirmation)));
@@ -157,6 +158,8 @@ class _ActionBar extends StatelessWidget {
           icon: LucideIcons.refreshCw,
           onPressed: onRegenerate,
         ),
+        const SizedBox(height: AppSpacing.space2),
+        ReadAloudButton(text: spoken),
         const SizedBox(height: AppSpacing.space2),
         SizedBox(
           height: 48,
