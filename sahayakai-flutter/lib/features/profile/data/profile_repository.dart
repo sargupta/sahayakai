@@ -60,13 +60,24 @@ class ProfileRepository {
   /// the document half, and [ProfileSettings] for why the document lane cannot
   /// carry `administrativeRole`).
   ///
+  /// [previous] is the profile as it was LOADED, passed through so the document
+  /// patch can send an explicit clear for a field the teacher deliberately
+  /// blanked (rather than silently omitting it and leaving the stale server
+  /// value to reappear). It is optional: onboarding's first save has no prior
+  /// snapshot and nothing to clear.
+  ///
   /// The document write goes FIRST. Both writes are idempotent merges, so a
   /// half-completed save is recoverable by tapping Save again — but ordering it
   /// this way means the lane that carries the most fields is the one that gets
   /// to run, and a failure in either surfaces as one error to the teacher
   /// rather than a silent partial success.
-  Future<void> saveProfile(TeacherProfile profile) async {
-    await _docs.merge(TeacherProfileDocPatch(profile).toJson());
+  Future<void> saveProfile(
+    TeacherProfile profile, {
+    TeacherProfile? previous,
+  }) async {
+    await _docs.merge(
+      TeacherProfileDocPatch(profile, previous: previous).toJson(),
+    );
     await savePatchableSlice(profile.patchableSlice);
   }
 }

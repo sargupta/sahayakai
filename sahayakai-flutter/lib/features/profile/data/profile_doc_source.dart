@@ -1,12 +1,30 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/auth/auth_providers.dart';
 import '../../../core/network/api_exception.dart';
+import 'profile_dtos.dart';
 
 part 'profile_doc_source.g.dart';
+
+/// Rewrites a merge patch so every [kProfileFieldClear] sentinel becomes the
+/// real `FieldValue.delete()` the server honors, leaving every other value
+/// untouched. The sentinel keeps [TeacherProfileDocPatch] free of a
+/// `cloud_firestore` dependency; this is the one place that speaks Firestore, so
+/// the translation lives here. Pure and side-effect-free so it is unit-testable
+/// without a Firebase binding.
+@visibleForTesting
+Map<String, dynamic> applyProfileFieldClears(Map<String, dynamic> patch) {
+  return <String, dynamic>{
+    for (final entry in patch.entries)
+      entry.key: identical(entry.value, kProfileFieldClear)
+          ? FieldValue.delete()
+          : entry.value,
+  };
+}
 
 /// Reads and writes the teacher's own `users/<uid>` document.
 ///
@@ -94,7 +112,7 @@ class FirestoreProfileDocSource implements ProfileDocSource {
   /// updates it afterwards — no separate create/update branch is needed here.
   @override
   Future<void> merge(Map<String, dynamic> patch) =>
-      _doc.set(patch, SetOptions(merge: true));
+      _doc.set(applyProfileFieldClears(patch), SetOptions(merge: true));
 }
 
 /// [FirestoreProfileDocSource] once a real teacher is signed in,

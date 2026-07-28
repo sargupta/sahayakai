@@ -3000,6 +3000,9 @@ class AppLocalizationsKn extends AppLocalizations {
   String get inboxComposerSend => 'ಕಳುಹಿಸಿ';
 
   @override
+  String get inboxComposerTooLong => 'Message too long. Please shorten it.';
+
+  @override
   String get inboxLoadOlder => 'ಹಳೆಯ ಸಂದೇಶಗಳನ್ನು ಲೋಡ್ ಮಾಡಿ';
 
   @override

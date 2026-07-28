@@ -2986,6 +2986,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inboxComposerSend => 'Send';
 
   @override
+  String get inboxComposerTooLong => 'Message too long. Please shorten it.';
+
+  @override
   String get inboxLoadOlder => 'Load older messages';
 
   @override

@@ -2993,6 +2993,9 @@ class AppLocalizationsGu extends AppLocalizations {
   String get inboxComposerSend => 'મોકલો';
 
   @override
+  String get inboxComposerTooLong => 'Message too long. Please shorten it.';
+
+  @override
   String get inboxLoadOlder => 'જૂના સંદેશા લોડ કરો';
 
   @override

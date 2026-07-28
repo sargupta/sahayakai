@@ -2999,6 +2999,9 @@ class AppLocalizationsOr extends AppLocalizations {
   String get inboxComposerSend => 'ପଠାନ୍ତୁ';
 
   @override
+  String get inboxComposerTooLong => 'Message too long. Please shorten it.';
+
+  @override
   String get inboxLoadOlder => 'ପୁରୁଣା ସନ୍ଦେଶ ଲୋଡ୍ କରନ୍ତୁ';
 
   @override

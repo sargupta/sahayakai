@@ -72,10 +72,16 @@ class ProfileFormSaveController extends _$ProfileFormSaveController {
 
   /// Returns true when the save succeeded, so the view can show its
   /// confirmation without duplicating the state check.
-  Future<bool> save(TeacherProfile profile) async {
+  ///
+  /// [previous] is the profile as it was loaded, forwarded to the repository so
+  /// a field the teacher deliberately cleared is persisted as an explicit clear
+  /// rather than silently omitted.
+  Future<bool> save(TeacherProfile profile, {TeacherProfile? previous}) async {
     state = const AsyncValue<void>.loading();
     final next = await AsyncValue.guard<void>(
-      () => ref.read(profileRepositoryProvider).saveProfile(profile),
+      () => ref
+          .read(profileRepositoryProvider)
+          .saveProfile(profile, previous: previous),
     );
     state = next;
     if (!next.hasError) {

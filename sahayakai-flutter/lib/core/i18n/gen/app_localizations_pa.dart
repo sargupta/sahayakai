@@ -2995,6 +2995,9 @@ class AppLocalizationsPa extends AppLocalizations {
   String get inboxComposerSend => 'ਭੇਜੋ';
 
   @override
+  String get inboxComposerTooLong => 'Message too long. Please shorten it.';
+
+  @override
   String get inboxLoadOlder => 'ਪੁਰਾਣੇ ਸੁਨੇਹੇ ਲੋਡ ਕਰੋ';
 
   @override

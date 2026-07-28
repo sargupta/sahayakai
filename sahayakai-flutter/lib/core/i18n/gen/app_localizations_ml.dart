@@ -3011,6 +3011,9 @@ class AppLocalizationsMl extends AppLocalizations {
   String get inboxComposerSend => 'അയയ്ക്കുക';
 
   @override
+  String get inboxComposerTooLong => 'Message too long. Please shorten it.';
+
+  @override
   String get inboxLoadOlder => 'പഴയ സന്ദേശങ്ങൾ ലോഡ് ചെയ്യുക';
 
   @override

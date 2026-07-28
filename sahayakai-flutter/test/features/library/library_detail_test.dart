@@ -7,6 +7,7 @@ import 'package:sahayakai/shared/data/library_repository.dart';
 import 'package:sahayakai/shared/domain/library_item.dart';
 import 'package:sahayakai/shared/widgets/error_view.dart';
 import 'package:sahayakai/shared/widgets/offline_view.dart';
+import 'package:sahayakai/shared/widgets/secondary_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/fake_api_client.dart';
@@ -400,6 +401,9 @@ void main() {
       expect(find.byType(LibraryDetailScreen), findsOneWidget);
       expect(find.text('Sign in to open your saved work.'), findsOneWidget);
       expect(find.text('Try again'), findsNothing);
+      // Same dead-end fix as the list: the signed-out detail now offers a
+      // working "Sign in" action rather than an actionless message.
+      expect(find.widgetWithText(SecondaryButton, 'Sign in'), findsOneWidget);
     });
 
     testWidgets('offline gets its own copy and a retry', (tester) async {

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -16,6 +18,24 @@ import '../domain/conversation_id.dart';
 import '../domain/inbox_models.dart';
 import 'widgets/conversation_row.dart';
 import 'widgets/message_bubble.dart';
+
+/// The server-side message-text cap the composer guards BEFORE dispatch
+/// (`firestore.rules:123` — `request.resource.data.text.size() <= 1000` on
+/// `conversations/{convId}/messages/{msgId}` create).
+///
+/// **Bytes, not characters.** Firestore rules' `string.size()` counts UTF-8
+/// bytes, not Dart's UTF-16 code-unit `String.length` — for the Indic scripts
+/// this app is built for (Bengali / Hindi / Tamil / Devanagari, ~3 bytes/char in
+/// UTF-8) a message well under 1000 *characters* can still exceed 1000 *bytes*.
+/// Counting `.length` here would let exactly that message through the client
+/// guard and still fail server-side with a raw `PERMISSION_DENIED` — the
+/// unrecoverable "couldn't send · retry" loop this guard exists to break. So the
+/// guard measures `utf8.encode(text).length` (mirroring
+/// `staffroom_transport.dart`'s `ChatMessageTooLongException`).
+const int kInboxMessageMaxBytes = 1000;
+
+/// The trimmed text's UTF-8 byte length — what the server rule actually counts.
+int inboxMessageByteLength(String text) => utf8.encode(text.trim()).length;
 
 /// U-SI1 — the conversation thread (SPEC §B3.2). A reversed list of message
 /// bubbles (mine vs theirs), honest "load older" pagination, and an optimistic
@@ -115,6 +135,12 @@ class _ConversationThreadScreenState
     final text = _composer.text.trim();
     final myUid = ref.read(currentInboxUserIdProvider);
     if (text.isEmpty || myUid == null) return;
+    // Stop an oversized message HERE, before dispatch — the composer already
+    // disables the send button while over the cap, but this belt-and-suspenders
+    // guard means no code path can push a >1000-BYTE message into the
+    // "couldn't send · retry" loop against firestore.rules:123. Bytes, not
+    // chars — see [kInboxMessageMaxBytes].
+    if (inboxMessageByteLength(text) > kInboxMessageMaxBytes) return;
 
     final pending = _PendingSend(
       clientMessageId: _newClientId(),
@@ -509,7 +535,15 @@ class _ComposerState extends State<_Composer> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
-    final canSend = widget.controller.text.trim().isNotEmpty;
+
+    // The 1000-BYTE server cap, measured in UTF-8 bytes (not `String.length`)
+    // so a multi-byte Indic message can't slip past the client guard and fail
+    // at the rules layer. Over the cap → the send button greys out and an
+    // honest hint appears, so the message is stopped here, not looped in retry.
+    final byteLength = inboxMessageByteLength(widget.controller.text);
+    final tooLong = byteLength > kInboxMessageMaxBytes;
+    final hasText = widget.controller.text.trim().isNotEmpty;
+    final canSend = hasText && !tooLong;
 
     return SafeArea(
       top: false,
@@ -520,56 +554,118 @@ class _ComposerState extends State<_Composer> {
           AppSpacing.space4,
           AppSpacing.space2,
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(
-              child: TextField(
-                controller: widget.controller,
-                minLines: 1,
-                maxLines: 5,
-                textInputAction: TextInputAction.newline,
-                keyboardType: TextInputType.multiline,
-                decoration: InputDecoration(
-                  hintText: l10n.inboxComposerHint,
-                  isDense: true,
-                ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.space2),
-            Semantics(
-              button: true,
-              enabled: canSend,
-              label: l10n.inboxComposerSend,
-              child: SizedBox(
-                width: 48,
-                height: 48,
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: Ink(
-                    decoration: ShapeDecoration(
-                      color: canSend
-                          ? scheme.primaryContainer
-                          : scheme.surfaceContainerHigh,
-                      shape: const CircleBorder(),
+            if (tooLong) _TooLongHint(byteLength: byteLength),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: widget.controller,
+                    minLines: 1,
+                    maxLines: 5,
+                    textInputAction: TextInputAction.newline,
+                    keyboardType: TextInputType.multiline,
+                    decoration: InputDecoration(
+                      hintText: l10n.inboxComposerHint,
+                      isDense: true,
+                      // Turn the field's own border red while over the cap, so
+                      // the block state reads even without looking at the hint.
+                      enabledBorder: tooLong
+                          ? UnderlineInputBorder(
+                              borderSide: BorderSide(color: scheme.error),
+                            )
+                          : null,
+                      focusedBorder: tooLong
+                          ? UnderlineInputBorder(
+                              borderSide: BorderSide(color: scheme.error),
+                            )
+                          : null,
                     ),
-                    child: InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: canSend ? widget.onSend : null,
-                      child: Icon(
-                        LucideIcons.send,
-                        size: AppIconSize.inline,
-                        color: canSend
-                            ? scheme.onPrimaryContainer
-                            : scheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.space2),
+                Semantics(
+                  button: true,
+                  enabled: canSend,
+                  label: l10n.inboxComposerSend,
+                  child: SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: Ink(
+                        decoration: ShapeDecoration(
+                          color: canSend
+                              ? scheme.primaryContainer
+                              : scheme.surfaceContainerHigh,
+                          shape: const CircleBorder(),
+                        ),
+                        child: InkWell(
+                          customBorder: const CircleBorder(),
+                          onTap: canSend ? widget.onSend : null,
+                          child: Icon(
+                            LucideIcons.send,
+                            size: AppIconSize.inline,
+                            color: canSend
+                                ? scheme.onPrimaryContainer
+                                : scheme.onSurfaceVariant,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
+              ],
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// The honest over-limit state: an inline hint + a byte counter, shown when the
+/// composer text exceeds the 1000-BYTE server cap ([kInboxMessageMaxBytes]).
+/// Send is disabled while it shows, so an oversized paste is stopped in the
+/// composer instead of failing forever at `firestore.rules:123`.
+class _TooLongHint extends StatelessWidget {
+  const _TooLongHint({required this.byteLength});
+
+  final int byteLength;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.space2),
+      child: Row(
+        children: [
+          Icon(
+            LucideIcons.alertCircle,
+            size: AppIconSize.inline,
+            color: scheme.error,
+          ),
+          const SizedBox(width: AppSpacing.space2),
+          Expanded(
+            child: Text(
+              l10n.inboxComposerTooLong,
+              style: text.bodySmall?.copyWith(color: scheme.error),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.space2),
+          // A byte counter, not a character count: the cap is bytes, and on the
+          // Indic scripts this app targets the two differ sharply.
+          Text(
+            '$byteLength / $kInboxMessageMaxBytes',
+            style: text.bodySmall?.copyWith(color: scheme.error),
+          ),
+        ],
       ),
     );
   }

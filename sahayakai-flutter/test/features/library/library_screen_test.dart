@@ -1,19 +1,79 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
+import 'package:sahayakai/core/network/api_exception.dart';
+import 'package:sahayakai/core/router/routes.dart';
 import 'package:sahayakai/features/lesson_planner/presentation/lesson_plan_screen.dart';
 import 'package:sahayakai/features/library/presentation/library_detail_screen.dart';
 import 'package:sahayakai/features/library/presentation/library_screen.dart';
+import 'package:sahayakai/shared/data/library_items_provider.dart';
+import 'package:sahayakai/shared/domain/library_item.dart';
 import 'package:sahayakai/shared/widgets/app_skeleton.dart';
 import 'package:sahayakai/shared/widgets/empty_view.dart';
 import 'package:sahayakai/shared/widgets/error_view.dart';
 import 'package:sahayakai/shared/widgets/library_item_row.dart';
 import 'package:sahayakai/shared/widgets/offline_view.dart';
+import 'package:sahayakai/shared/widgets/secondary_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/fake_api_client.dart';
 import '../dashboard/dashboard_fixtures.dart';
 import '../onboarding/onboarding_fixtures.dart' show pumpSignedInApp;
+
+/// A `LibraryItems` override that resolves to the typed 401, so the Library
+/// screen's signed-out empty state renders without a live read.
+class _UnauthorizedLibraryItems extends LibraryItems {
+  @override
+  Future<List<LibraryItem>> build() => Future<List<LibraryItem>>.error(
+        const ApiException(
+          ApiErrorKind.unauthorized,
+          'Please sign in again.',
+          statusCode: 401,
+        ),
+      );
+}
+
+/// A marker a real `context.push(Routes.login)` resolves to, so the sign-in CTA
+/// navigation can be asserted without dragging the login screen's provider
+/// graph (and the router's signed-in redirect) into this suite.
+class _DestMarker extends StatelessWidget {
+  const _DestMarker(this.id);
+
+  final String id;
+
+  @override
+  Widget build(BuildContext context) =>
+      Scaffold(body: Center(child: Text('DEST', key: Key('dest-$id'))));
+}
+
+/// Pumps [LibraryScreen] over a two-route GoRouter (/ + /login), with the
+/// library read forced to the signed-out 401.
+Future<void> _pumpSignedOutLibrary(WidgetTester tester) async {
+  final router = GoRouter(
+    initialLocation: '/',
+    routes: [
+      GoRoute(path: '/', builder: (_, _) => const LibraryScreen()),
+      GoRoute(path: Routes.login, builder: (_, _) => const _DestMarker('login')),
+    ],
+  );
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [
+        libraryItemsProvider.overrideWith(_UnauthorizedLibraryItems.new),
+      ],
+      child: MaterialApp.router(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        routerConfig: router,
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
+}
 
 /// My Library — the tab that used to be a permanent, actionless empty state.
 ///
@@ -184,6 +244,28 @@ void main() {
       expect(find.byType(EmptyView), findsOneWidget);
       expect(find.text('Sign in to see your saved work.'), findsOneWidget);
       expect(find.text('Try again'), findsNothing);
+      // The dead-end this unit fixes: the signed-out state now offers a way
+      // FORWARD (a working "Sign in" action), not just an actionless message.
+      expect(
+        find.widgetWithText(SecondaryButton, 'Sign in'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('the signed-out "Sign in" action navigates to /login',
+        (tester) async {
+      await _pumpSignedOutLibrary(tester);
+
+      expect(find.text('Sign in to see your saved work.'), findsOneWidget);
+      final signIn = find.widgetWithText(SecondaryButton, 'Sign in');
+      expect(signIn, findsOneWidget);
+      expect(find.byIcon(LucideIcons.logIn), findsWidgets);
+
+      await tester.tap(signIn);
+      await tester.pumpAndSettle();
+
+      // The action is real: it reaches the login route, not a dead end.
+      expect(find.byKey(const Key('dest-login')), findsOneWidget);
     });
   });
 

@@ -2991,6 +2991,9 @@ class AppLocalizationsMr extends AppLocalizations {
   String get inboxComposerSend => 'पाठवा';
 
   @override
+  String get inboxComposerTooLong => 'Message too long. Please shorten it.';
+
+  @override
   String get inboxLoadOlder => 'जुने संदेश लोड करा';
 
   @override

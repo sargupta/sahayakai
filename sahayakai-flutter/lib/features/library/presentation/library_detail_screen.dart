@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/library_item.dart';
 import '../../../shared/widgets/app_badge.dart';
@@ -15,6 +17,7 @@ import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/icon_well.dart';
 import '../../../shared/widgets/library_item_row.dart';
 import '../../../shared/widgets/offline_view.dart';
+import '../../../shared/widgets/secondary_button.dart';
 import '../../assess_assignment/presentation/widgets/assess_assignment_result_view.dart';
 import '../../assessment_scanner/presentation/widgets/assessment_scanner_result_view.dart';
 import '../../exam_paper/presentation/widgets/exam_paper_result_view.dart';
@@ -191,14 +194,19 @@ class _DetailBody extends StatelessWidget {
       error: (error, _) {
         final kind = error is ApiException ? error.kind : null;
 
-        // No identity: today this is every runtime read (the token provider is
-        // the P0.2 stub). A retry would be a lie, so it is not offered — this is
-        // the BUILT-PENDING-FIREBASE state.
+        // No identity: a retry would be a lie (it would fail the same way), so
+        // instead of a dead-end we offer the way OUT — the same working
+        // "Sign in" action the list / inbox / profile signed-out states use.
         if (kind == ApiErrorKind.unauthorized) {
           return AppCard(
             child: EmptyView(
               icon: LucideIcons.logIn,
               message: l10n.libraryDetailSignedOut,
+              action: SecondaryButton(
+                label: l10n.actionSignIn,
+                icon: LucideIcons.logIn,
+                onPressed: () => context.push(Routes.login),
+              ),
             ),
           );
         }

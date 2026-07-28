@@ -146,26 +146,47 @@ class TeacherProfileDto {
 /// `administrativeRole` is deliberately absent — it IS in `protectedUserFields()`
 /// and travels down the PATCH lane instead ([ProfileSettingsPatchDto]).
 class TeacherProfileDocPatch {
-  const TeacherProfileDocPatch(this._profile);
+  const TeacherProfileDocPatch(this._profile, {TeacherProfile? previous})
+      : _previous = previous;
 
   final TeacherProfile _profile;
 
-  /// Only keys the teacher actually has a value for are emitted. A merge write
-  /// of an explicit null would DELETE the server's value, turning "I did not
-  /// fill this in" into "erase what you knew about me".
+  /// The profile as it was LOADED, before this edit. It exists so the patch can
+  /// tell a field the teacher DELIBERATELY blanked (had a value, now empty →
+  /// send an explicit clear) from one they never filled in (empty before, empty
+  /// now → omit, leave the server untouched). Null when there is nothing to
+  /// diff against — onboarding's very first save — which reduces to the old
+  /// omit-blanks behavior, correctly: a brand-new profile has nothing to clear.
+  final TeacherProfile? _previous;
+
+  /// Emits, for each key: the trimmed value when set; a [kProfileFieldClear]
+  /// marker when the teacher erased a field that previously HAD a value; and
+  /// nothing at all when the field was never filled in. The clear marker is the
+  /// fix for a real dead-end: a plain omit (the old behavior) left the stale
+  /// value on the server, so "Saved" was a lie and the old value reappeared on
+  /// the next fetch. [FirestoreProfileDocSource] turns the marker into the
+  /// `FieldValue.delete()` the server honors.
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    void put(String key, String? value) {
+    final previous = _previous;
+
+    void put(String key, String? value, String? previousValue) {
       final trimmed = value?.trim();
-      if (trimmed != null && trimmed.isNotEmpty) json[key] = trimmed;
+      if (trimmed != null && trimmed.isNotEmpty) {
+        json[key] = trimmed;
+      } else if (previousValue != null && previousValue.trim().isNotEmpty) {
+        // Erased a field that had a value → an explicit clear, not silence.
+        json[key] = kProfileFieldClear;
+      }
+      // else: blank now AND blank before (or no prior snapshot) → omit.
     }
 
-    put('displayName', _profile.displayName);
-    put('schoolName', _profile.schoolName);
-    put('state', _profile.state);
-    put('district', _profile.district);
-    put('phoneNumber', _profile.phoneNumber);
-    put('pincode', _profile.pincode);
+    put('displayName', _profile.displayName, previous?.displayName);
+    put('schoolName', _profile.schoolName, previous?.schoolName);
+    put('state', _profile.state, previous?.state);
+    put('district', _profile.district, previous?.district);
+    put('phoneNumber', _profile.phoneNumber, previous?.phoneNumber);
+    put('pincode', _profile.pincode, previous?.pincode);
 
     // Lists are always sent, empty included: deselecting every subject is an
     // intent ("I do not teach those any more"), not an absence.
@@ -180,8 +201,42 @@ class TeacherProfileDocPatch {
       // what the AI flows read back as their `language` param.
       json['preferredLanguage'] = language.aiName;
     }
+
+    // BOARD CLEAR travels this lane, NOT the PATCH lane. Setting a board goes
+    // over REST (validated against EDUCATION_BOARDS and mirrored into
+    // `educationBoard` server-side), but that route CANNOT clear it: an
+    // empty/null `preferredBoard` fails its enum check and 400s the whole
+    // request (verified in `src/app/api/user/profile/route.ts`). Neither
+    // `preferredBoard` nor `educationBoard` is in the rules'
+    // `protectedUserFields()`, so an explicit clear is instead an owner-scoped
+    // merge delete of BOTH columns the read falls back across
+    // (`preferredBoard ?? educationBoard`). Setting a board still omits it here
+    // (the PATCH lane owns that), so the two writers never race.
+    if (previous != null &&
+        previous.settings.educationBoard != null &&
+        _profile.settings.educationBoard == null) {
+      json['preferredBoard'] = kProfileFieldClear;
+      json['educationBoard'] = kProfileFieldClear;
+    }
+
     return json;
   }
+}
+
+/// A merge-write value meaning "clear this field on the server", as distinct
+/// from OMITTING the key (which leaves the server's value untouched). Kept as a
+/// plain-Dart sentinel so this DTO layer carries no `cloud_firestore`
+/// dependency and stays unit-testable; [FirestoreProfileDocSource] translates it
+/// into the real `FieldValue.delete()` at write time. The server honors the
+/// delete because every field it is used on is absent from the rules'
+/// `protectedUserFields()`.
+const Object kProfileFieldClear = _ProfileFieldClear();
+
+class _ProfileFieldClear {
+  const _ProfileFieldClear();
+
+  @override
+  String toString() => 'kProfileFieldClear';
 }
 
 String? _clean(String? value) {

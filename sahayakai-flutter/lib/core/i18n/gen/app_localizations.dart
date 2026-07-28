@@ -5216,6 +5216,12 @@ abstract class AppLocalizations {
   /// **'Send'**
   String get inboxComposerSend;
 
+  /// Inline composer hint shown when the message exceeds the 1000-byte server cap; send is blocked until it is shortened.
+  ///
+  /// In en, this message translates to:
+  /// **'Message too long. Please shorten it.'**
+  String get inboxComposerTooLong;
+
   /// Button to page in older messages above the live tail.
   ///
   /// In en, this message translates to:

@@ -19,6 +19,7 @@ import 'package:sahayakai/features/staffroom/presentation/staffroom_screen.dart'
 import 'package:sahayakai/shared/widgets/app_skeleton.dart';
 import 'package:sahayakai/shared/widgets/empty_view.dart';
 import 'package:sahayakai/shared/widgets/error_view.dart';
+import 'package:sahayakai/shared/widgets/secondary_button.dart';
 
 import '../../support/fake_block_c_transports.dart';
 
@@ -242,13 +243,33 @@ void main() {
 
       expect(find.text(l10n.staffroomFeedEmptyTitle), findsOneWidget);
       // A ready-but-empty feed is not a dead end (a real session with
-      // nothing in it yet) — it must not pick up the sign-in CTA. Note the
-      // feed-empty state co-renders the unrelated "Browse groups"
-      // SecondaryButton (LucideIcons.users) from `_GroupsEmpty`, so this
-      // asserts on the sign-in label/icon specifically rather than a broad
-      // `find.byType(SecondaryButton)`.
+      // nothing in it yet) — it must not pick up the sign-in CTA.
       expect(find.text(l10n.actionSignIn), findsNothing);
       expect(find.byIcon(LucideIcons.logIn), findsNothing);
+    });
+  });
+
+  group('U15: honest "Your groups" empty (dead browse-button removed)', () {
+    testWidgets(
+        'the groups-empty prompt no longer carries a "Browse groups" button',
+        (tester) async {
+      // A signed-in teacher on the shipping Firestore transport has no groups
+      // AND an empty feed (discoverGroups / getUnifiedFeed are a real backend
+      // gap, hardcoded empty). The button used to scroll to a "Discover groups"
+      // section that never renders, dumping the teacher at "Your feed is quiet".
+      // With no real destination, the honest empty prompt carries no button.
+      await _pump(tester, fake: FakeStaffroomTransport()..feed = const []);
+
+      // The empty prompt itself is still there — an honest statement, not a
+      // dead affordance.
+      expect(find.text(l10n.staffroomGroupsEmptyTitle), findsOneWidget);
+      expect(find.text(l10n.staffroomGroupsEmptyBody), findsOneWidget);
+      // The dead button is gone: no "Browse groups" label, and no
+      // SecondaryButton at all in this (feed-empty, groups-empty) state — the
+      // only SecondaryButton the screen has left is the signed-out sign-in one,
+      // which does not render for a signed-in teacher.
+      expect(find.text(l10n.staffroomBrowseGroups), findsNothing);
+      expect(find.byType(SecondaryButton), findsNothing);
     });
   });
 

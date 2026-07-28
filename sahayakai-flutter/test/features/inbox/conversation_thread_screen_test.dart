@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -247,6 +249,80 @@ void main() {
 
     expect(fake.sentMessages, hasLength(2));
     expect(fake.sentMessages.last.clientMessageId, firstId);
+  });
+
+  group('U15: composer 1000-BYTE length guard (firestore.rules:123)', () {
+    testWidgets(
+        'an over-1000-byte ASCII message blocks send and shows an honest hint',
+        (tester) async {
+      final fake = await _pump(
+        tester,
+        thread: const TransportSnapshot<List<Message>>.ready(<Message>[]),
+      );
+
+      // 1001 ASCII bytes — one past the cap.
+      final tooLong = 'a' * (kInboxMessageMaxBytes + 1);
+      await tester.enterText(find.byType(TextField), tooLong);
+      await tester.pump();
+
+      // The honest block state: a "too long" hint appears...
+      expect(find.text(l10n.inboxComposerTooLong), findsOneWidget);
+      // ...and tapping send does nothing (the button is disabled), so the
+      // oversized message never reaches the transport to loop in retry.
+      await tester.tap(find.byIcon(LucideIcons.send));
+      await tester.pumpAndSettle();
+      expect(fake.sentMessages, isEmpty);
+    });
+
+    testWidgets(
+        'the cap counts UTF-8 BYTES, not characters: a multi-byte Indic '
+        'message under 1000 CHARS but over 1000 BYTES is blocked',
+        (tester) async {
+      final fake = await _pump(
+        tester,
+        thread: const TransportSnapshot<List<Message>>.ready(<Message>[]),
+      );
+
+      // Devanagari 'क' (U+0915): 1 UTF-16 code unit, 3 UTF-8 bytes. 400 of them
+      // is 400 chars (well under the cap) but 1200 bytes (over it). Counting
+      // `String.length` would wave this straight through to a PERMISSION_DENIED
+      // at the rules layer — the exact silent failure on the one script family
+      // this app is built for.
+      final indic = 'क' * 400;
+      expect(indic.length, lessThan(kInboxMessageMaxBytes)); // char count OK
+      expect(
+        utf8.encode(indic).length,
+        greaterThan(kInboxMessageMaxBytes),
+      ); // byte count over
+      expect(inboxMessageByteLength(indic), utf8.encode(indic).length);
+
+      await tester.enterText(find.byType(TextField), indic);
+      await tester.pump();
+
+      expect(find.text(l10n.inboxComposerTooLong), findsOneWidget);
+      await tester.tap(find.byIcon(LucideIcons.send));
+      await tester.pumpAndSettle();
+      expect(fake.sentMessages, isEmpty);
+    });
+
+    testWidgets('a message exactly at the 1000-byte cap still sends',
+        (tester) async {
+      final fake = await _pump(
+        tester,
+        thread: const TransportSnapshot<List<Message>>.ready(<Message>[]),
+      );
+
+      final atCap = 'a' * kInboxMessageMaxBytes; // exactly 1000 bytes
+      await tester.enterText(find.byType(TextField), atCap);
+      await tester.pump();
+
+      // At the boundary the guard does NOT fire, and the send goes through.
+      expect(find.text(l10n.inboxComposerTooLong), findsNothing);
+      await tester.tap(find.byIcon(LucideIcons.send));
+      await tester.pumpAndSettle();
+      expect(fake.sentMessages, hasLength(1));
+      expect(fake.sentMessages.single.text, atCap);
+    });
   });
 
   group('overflow probe — 360dp × 1.3, light + dark', () {

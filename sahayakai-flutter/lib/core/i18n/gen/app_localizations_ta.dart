@@ -3019,6 +3019,9 @@ class AppLocalizationsTa extends AppLocalizations {
   String get inboxComposerSend => 'அனுப்பு';
 
   @override
+  String get inboxComposerTooLong => 'Message too long. Please shorten it.';
+
+  @override
   String get inboxLoadOlder => 'பழைய செய்திகளை ஏற்று';
 
   @override

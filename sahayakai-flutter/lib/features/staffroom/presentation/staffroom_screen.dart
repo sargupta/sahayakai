@@ -6,7 +6,6 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/empty_view.dart';
@@ -84,25 +83,12 @@ class StaffroomFeedView extends ConsumerWidget {
 /// The ready scroll: hero + groups + discover + feed + people. Each secondary
 /// section watches its own provider and degrades to nothing on loading/error, so
 /// a failed groups read never breaks the feed.
-class _StaffroomReady extends ConsumerStatefulWidget {
+class _StaffroomReady extends ConsumerWidget {
   const _StaffroomReady({required this.feed});
 
   final List<FeedItem> feed;
 
-  @override
-  ConsumerState<_StaffroomReady> createState() => _StaffroomReadyState();
-}
-
-class _StaffroomReadyState extends ConsumerState<_StaffroomReady> {
-  final ScrollController _controller = ScrollController();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Future<void> _refresh() async {
+  Future<void> _refresh(WidgetRef ref) async {
     ref
       ..invalidate(unifiedFeedProvider)
       ..invalidate(myGroupsProvider)
@@ -112,25 +98,8 @@ class _StaffroomReadyState extends ConsumerState<_StaffroomReady> {
     await ref.read(unifiedFeedProvider.future);
   }
 
-  /// Reveal the inline "Discover groups" / feed below (the browse affordance in
-  /// U-SI2 — there is no separate browse screen). Reduce-motion jumps instead.
-  void _browse() {
-    if (!_controller.hasClients) return;
-    final target = _controller.position.maxScrollExtent;
-    if (context.motionEnabled) {
-      _controller.animateTo(
-        target,
-        duration: AppMotion.medium,
-        curve: AppMotion.easeOutQuart,
-      );
-    } else {
-      _controller.jumpTo(target);
-    }
-  }
-
   @override
-  Widget build(BuildContext context) {
-    final feed = widget.feed;
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final likedIds =
         ref.watch(likedItemIdsProvider).valueOrNull ?? const LikedItemIds();
@@ -141,9 +110,8 @@ class _StaffroomReadyState extends ConsumerState<_StaffroomReady> {
         const <TeacherSuggestion>[];
 
     return RefreshIndicator(
-      onRefresh: _refresh,
+      onRefresh: () => _refresh(ref),
       child: ListView(
-        controller: _controller,
         padding: AppSpacing.pagePadding,
         children: [
           const _StaffroomHero(),
@@ -162,7 +130,7 @@ class _StaffroomReadyState extends ConsumerState<_StaffroomReady> {
           EditorialSectionHeader(l10n.staffroomSectionGroups),
           const SizedBox(height: AppSpacing.space3),
           if (myGroups.isEmpty)
-            _GroupsEmpty(onBrowse: _browse)
+            const _GroupsEmpty()
           else
             _GroupStrip(groups: myGroups),
           const SizedBox(height: AppSpacing.space6),
@@ -243,12 +211,20 @@ class _GroupStrip extends StatelessWidget {
 }
 
 /// The compact "Your groups" empty prompt (not a full halo — the feed owns the
-/// prominent empty state below). "Browse groups" scrolls to the inline Discover
-/// section rather than a screen U-SI2 does not have.
+/// prominent empty state below).
+///
+/// It carries NO "Browse groups" button. The button used to scroll to the
+/// inline "Discover groups" section, but that section only renders when
+/// `discoverGroups()` returns suggestions — and the shipping Firestore transport
+/// hardcodes it empty (a real backend gap, not a client bug; the Groups /
+/// Directory / Feed reads land in a later tranche). With nothing to discover,
+/// the button silently scrolled the page down to the "Your feed is quiet"
+/// region — an affordance that led nowhere. An honest empty prompt (a plain
+/// statement that you haven't joined a group yet) beats a button that lies about
+/// having a destination; the browse affordance returns with the backend that
+/// gives it somewhere real to go.
 class _GroupsEmpty extends StatelessWidget {
-  const _GroupsEmpty({required this.onBrowse});
-
-  final VoidCallback onBrowse;
+  const _GroupsEmpty();
 
   @override
   Widget build(BuildContext context) {
@@ -266,12 +242,6 @@ class _GroupsEmpty extends StatelessWidget {
         Text(
           l10n.staffroomGroupsEmptyBody,
           style: text.bodyMedium?.copyWith(color: scheme.onSurface),
-        ),
-        const SizedBox(height: AppSpacing.space3),
-        SecondaryButton(
-          label: l10n.staffroomBrowseGroups,
-          icon: LucideIcons.users,
-          onPressed: onBrowse,
         ),
       ],
     );

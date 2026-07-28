@@ -1,7 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/core/network/api_exception.dart';
 import 'package:sahayakai/features/profile/data/profile_doc_source.dart';
+import 'package:sahayakai/features/profile/data/profile_dtos.dart';
 
 /// T1-U3's review found `FirestoreProfileDocSource.read()`/`merge()` had no
 /// direct test — every screen/repository test bypasses it entirely via
@@ -104,6 +106,51 @@ void main() {
       final data = doc.data()!;
       expect(data['displayName'], 'Priya Sharma');
       expect(data['schoolName'], 'Govt Model School');
+    });
+
+    test('U15: a clear-marker DELETES the field server-side, not just omits it',
+        () async {
+      final firestore = FakeFirebaseFirestore();
+      await firestore.collection('users').doc('u1').set({
+        'displayName': 'Priya Sharma',
+        'schoolName': 'Old School',
+        'impactScore': 42,
+      });
+
+      final source = FirestoreProfileDocSource(firestore, 'u1');
+      // What TeacherProfileDocPatch emits for a field the teacher erased.
+      await source.merge({'schoolName': kProfileFieldClear});
+
+      final data = (await firestore.collection('users').doc('u1').get()).data()!;
+      // The cleared field is GONE (so it reads back as "not set"), while every
+      // untouched field — including protected ones — is left exactly as it was.
+      expect(data.containsKey('schoolName'), isFalse);
+      expect(data['displayName'], 'Priya Sharma');
+      expect(data['impactScore'], 42);
+    });
+  });
+
+  group('U15: applyProfileFieldClears', () {
+    test('translates the clear sentinel into FieldValue.delete()', () {
+      final out = applyProfileFieldClears({
+        'schoolName': kProfileFieldClear,
+        'preferredBoard': kProfileFieldClear,
+      });
+
+      expect(out['schoolName'], isA<FieldValue>());
+      expect(out['preferredBoard'], isA<FieldValue>());
+    });
+
+    test('passes every non-sentinel value through untouched', () {
+      final out = applyProfileFieldClears({
+        'displayName': 'Priya',
+        'subjects': ['Science'],
+        'schoolName': kProfileFieldClear,
+      });
+
+      expect(out['displayName'], 'Priya');
+      expect(out['subjects'], ['Science']);
+      expect(out['schoolName'], isA<FieldValue>());
     });
   });
 

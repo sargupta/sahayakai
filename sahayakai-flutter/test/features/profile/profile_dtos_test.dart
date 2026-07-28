@@ -377,6 +377,85 @@ void main() {
       expect(json['subjects'], isEmpty);
       expect(json['gradeLevels'], isEmpty);
     });
+
+    group('U15: a DELIBERATELY-cleared field is sent as an explicit clear', () {
+      test('erasing a field that HAD a value emits the clear marker, not silence',
+          () {
+        // The bug: with only the new profile, a blank field is indistinguishable
+        // from "never set", so the old code omitted it — the server kept the
+        // stale value and it reappeared on the next fetch, though "Saved" was
+        // shown. Diffing against the loaded profile restores the distinction.
+        final json = TeacherProfileDocPatch(
+          const TeacherProfile(schoolName: ''), // teacher erased the school
+          previous: const TeacherProfile(schoolName: 'Govt HPS Mysuru'),
+        ).toJson();
+
+        expect(json.containsKey('schoolName'), isTrue);
+        expect(json['schoolName'], same(kProfileFieldClear));
+      });
+
+      test('a never-touched blank field is still OMITTED (server untouched)', () {
+        // Both empty → the teacher never filled it in; sending anything would
+        // risk clobbering a value another surface owns.
+        final json = TeacherProfileDocPatch(
+          const TeacherProfile(schoolName: ''),
+          previous: const TeacherProfile(schoolName: ''),
+        ).toJson();
+
+        expect(json.containsKey('schoolName'), isFalse);
+      });
+
+      test('changing a value to a new one sends the value, not a clear', () {
+        final json = TeacherProfileDocPatch(
+          const TeacherProfile(schoolName: 'New School'),
+          previous: const TeacherProfile(schoolName: 'Old School'),
+        ).toJson();
+
+        expect(json['schoolName'], 'New School');
+      });
+
+      test('clearing the board deletes BOTH columns the read falls back across',
+          () {
+        // The board's SET travels the PATCH lane, but PATCH cannot CLEAR it (an
+        // empty/null preferredBoard fails its enum check and 400s). Neither
+        // board column is protected, so the clear is a merge delete of both —
+        // otherwise `preferredBoard ?? educationBoard` would resurrect the old
+        // value from the un-deleted column.
+        final json = TeacherProfileDocPatch(
+          const TeacherProfile(), // board now null
+          previous: const TeacherProfile(
+            settings: ProfileSettings(educationBoard: 'CBSE'),
+          ),
+        ).toJson();
+
+        expect(json['preferredBoard'], same(kProfileFieldClear));
+        expect(json['educationBoard'], same(kProfileFieldClear));
+      });
+
+      test('a board left unchanged (or newly set) writes NO board key here', () {
+        // Regression guard for the two-writers race: only a CLEAR uses this lane.
+        final unchanged = TeacherProfileDocPatch(
+          const TeacherProfile(
+            settings: ProfileSettings(educationBoard: 'CBSE'),
+          ),
+          previous: const TeacherProfile(
+            settings: ProfileSettings(educationBoard: 'CBSE'),
+          ),
+        ).toJson();
+
+        expect(unchanged.containsKey('preferredBoard'), isFalse);
+        expect(unchanged.containsKey('educationBoard'), isFalse);
+      });
+
+      test('with no previous snapshot nothing is cleared (onboarding first save)',
+          () {
+        // A brand-new profile has nothing to clear, so the marker never appears
+        // and the behavior reduces to the old omit-blanks path.
+        final json = TeacherProfileDocPatch(const TeacherProfile()).toJson();
+
+        expect(json.values, isNot(contains(same(kProfileFieldClear))));
+      });
+    });
   });
 
   group('the picker lists mirror the backend', () {

@@ -19,6 +19,7 @@ import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/library_item_row.dart';
 import '../../../shared/widgets/offline_view.dart';
+import '../../../shared/widgets/secondary_button.dart';
 
 /// My Library — the teacher's own saved work.
 ///
@@ -302,13 +303,20 @@ class _LibraryError extends StatelessWidget {
     final l10n = context.l10n;
     final kind = error is ApiException ? (error as ApiException).kind : null;
 
-    // No identity: today this is every runtime read, because the token provider
-    // is the P0.2 stub. A retry here would be a lie, so it is not offered.
+    // No identity: a retry here would be a lie (the read would fail the same
+    // way), so instead of a bare dead-end we offer the way OUT — the same
+    // working "Sign in" action the inbox / profile / staffroom signed-out
+    // states use (a plain push to /login now that real auth landed).
     if (kind == ApiErrorKind.unauthorized) {
       return AppCard(
         child: EmptyView(
           icon: LucideIcons.logIn,
           message: l10n.librarySignedOut,
+          action: SecondaryButton(
+            label: l10n.actionSignIn,
+            icon: LucideIcons.logIn,
+            onPressed: () => context.push(Routes.login),
+          ),
         ),
       );
     }

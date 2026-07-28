@@ -3000,6 +3000,9 @@ class AppLocalizationsTe extends AppLocalizations {
   String get inboxComposerSend => 'పంపు';
 
   @override
+  String get inboxComposerTooLong => 'Message too long. Please shorten it.';
+
+  @override
   String get inboxLoadOlder => 'పాత సందేశాలను లోడ్ చేయండి';
 
   @override

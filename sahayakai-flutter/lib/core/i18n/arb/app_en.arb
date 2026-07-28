@@ -3277,6 +3277,8 @@
   "@inboxComposerHint": {"description": "Thread composer text-field hint."},
   "inboxComposerSend": "Send",
   "@inboxComposerSend": {"description": "Thread composer send-button tooltip / accessibility label."},
+  "inboxComposerTooLong": "Message too long. Please shorten it.",
+  "@inboxComposerTooLong": {"description": "Inline composer hint shown when the message exceeds the 1000-byte server cap; send is blocked until it is shortened."},
   "inboxLoadOlder": "Load older messages",
   "@inboxLoadOlder": {"description": "Button to page in older messages above the live tail."},
   "inboxSendFailed": "Couldn't send your message.",

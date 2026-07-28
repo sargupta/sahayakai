@@ -191,9 +191,14 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
       preferredLanguage: ref.read(localeControllerProvider),
     );
 
+    // `widget.initial` is the loaded document. Passing it as `previous` lets the
+    // save distinguish a field the teacher DELIBERATELY blanked (persist an
+    // explicit clear) from one never filled in (leave the server untouched) —
+    // without it, clearing a field reported "Saved" but the old value returned
+    // on the next fetch.
     final saved = await ref
         .read(profileFormSaveControllerProvider.notifier)
-        .save(profile);
+        .save(profile, previous: widget.initial);
     if (!mounted) return;
     if (saved) {
       ScaffoldMessenger.of(context)
