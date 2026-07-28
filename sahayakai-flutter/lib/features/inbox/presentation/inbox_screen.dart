@@ -11,6 +11,7 @@ import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/secondary_button.dart';
+import '../../vidya/presentation/vidya_sheet.dart';
 import '../data/block_c_transport.dart';
 import '../data/messages_stream_provider.dart';
 import '../domain/inbox_models.dart';
@@ -41,7 +42,10 @@ class InboxScreen extends ConsumerWidget {
     final myUid = ref.watch(currentInboxUserIdProvider);
 
     return Scaffold(
-      appBar: GlassAppBar(title: Text(l10n.inboxTitle)),
+      appBar: GlassAppBar(
+        title: Text(l10n.inboxTitle),
+        actions: const [VidyaAppBarAction()],
+      ),
       body: SafeArea(
         child: async.when(
           loading: () => const Padding(

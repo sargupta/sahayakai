@@ -10,6 +10,7 @@ import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/secondary_button.dart';
+import '../../vidya/presentation/vidya_sheet.dart';
 import '../data/block_c_transport.dart';
 import '../data/inbox_transport.dart';
 import '../data/messages_stream_provider.dart';
@@ -253,6 +254,7 @@ class _ConversationThreadScreenState
     return Scaffold(
       appBar: GlassAppBar(
         title: _ThreadTitle(conversation: widget.conversation, myUid: myUid),
+        actions: const [VidyaAppBarAction()],
       ),
       body: SafeArea(
         child: async.when(

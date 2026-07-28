@@ -12,6 +12,7 @@ import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/secondary_button.dart';
+import '../../vidya/presentation/vidya_sheet.dart';
 import '../data/staffroom_providers.dart';
 import '../domain/community_post.dart';
 import '../domain/group.dart';
@@ -48,7 +49,10 @@ class StaffroomScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return Scaffold(
-      appBar: GlassAppBar(title: Text(l10n.staffroomTitle)),
+      appBar: GlassAppBar(
+        title: Text(l10n.staffroomTitle),
+        actions: const [VidyaAppBarAction()],
+      ),
       body: const SafeArea(child: StaffroomFeedView()),
     );
   }

@@ -14,6 +14,7 @@ import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/secondary_button.dart';
 import '../../inbox/data/messages_stream_provider.dart';
 import '../../inbox/presentation/widgets/conversation_row.dart';
+import '../../vidya/presentation/vidya_sheet.dart';
 import 'staffroom_screen.dart';
 
 /// U-SI2 — the **Network** hub (the SPEC's "Network" surface = Staffroom (04) +
@@ -48,7 +49,10 @@ class _NetworkHubScreenState extends State<NetworkHubScreen> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return Scaffold(
-      appBar: GlassAppBar(title: Text(l10n.networkTitle)),
+      appBar: GlassAppBar(
+        title: Text(l10n.networkTitle),
+        actions: const [VidyaAppBarAction()],
+      ),
       body: SafeArea(
         child: Column(
           children: [

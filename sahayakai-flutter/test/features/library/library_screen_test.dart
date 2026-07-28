@@ -10,6 +10,7 @@ import 'package:sahayakai/core/router/routes.dart';
 import 'package:sahayakai/features/lesson_planner/presentation/lesson_plan_screen.dart';
 import 'package:sahayakai/features/library/presentation/library_detail_screen.dart';
 import 'package:sahayakai/features/library/presentation/library_screen.dart';
+import 'package:sahayakai/features/vidya/presentation/vidya_sheet.dart';
 import 'package:sahayakai/shared/data/library_items_provider.dart';
 import 'package:sahayakai/shared/domain/library_item.dart';
 import 'package:sahayakai/shared/widgets/app_skeleton.dart';
@@ -158,6 +159,9 @@ void main() {
       expect(find.text('Photosynthesis for Class 6'), findsOneWidget);
       expect(find.text('Fractions quiz'), findsOneWidget);
       expect(find.byType(EmptyView), findsNothing);
+      // P1.2 launcher ubiquity: the VIDYA co-teacher action is in the app bar
+      // here too, not only on the ToolScaffold tool screens.
+      expect(find.byType(VidyaAppBarAction), findsOneWidget);
     });
 
     testWidgets('shows a shaped skeleton while the read is in flight, never a '
