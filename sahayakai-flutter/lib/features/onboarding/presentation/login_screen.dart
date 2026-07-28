@@ -161,7 +161,12 @@ class LoginScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.space3),
-                  // All 11 languages, each in its own script.
+                  // A compact switcher: the current language's own endonym on
+                  // the tile, opening a sheet of all 11 scripts. The inline
+                  // all-scripts list a first-run teacher confirms lives on
+                  // onboarding step 0; here the tile now opens ALREADY on the
+                  // device language (see LocaleController.build), so an Odia
+                  // phone reads "ଓଡ଼ିଆ", not "English", before sign-in.
                   const AppCard(
                     padding: EdgeInsets.zero,
                     child: LanguageSwitcher(),

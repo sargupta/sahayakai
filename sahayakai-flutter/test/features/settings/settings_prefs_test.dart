@@ -129,6 +129,40 @@ void main() {
       await hydrate(container);
       expect(container.read(localeControllerProvider), AppLocale.en);
     });
+
+    test('first run with no stored choice seeds from the device locale', () {
+      // A teacher on a Bengali phone must open into Bengali, not English — the
+      // web-parity default (navigator.language). No persisted choice.
+      final binding = TestWidgetsFlutterBinding.ensureInitialized();
+      binding.platformDispatcher.localeTestValue = const Locale('bn');
+      addTearDown(binding.platformDispatcher.clearLocaleTestValue);
+
+      expect(makeContainer().read(localeControllerProvider), AppLocale.bn);
+    });
+
+    test('an unsupported device locale seeds English, not a crash', () {
+      final binding = TestWidgetsFlutterBinding.ensureInitialized();
+      binding.platformDispatcher.localeTestValue = const Locale('fr');
+      addTearDown(binding.platformDispatcher.clearLocaleTestValue);
+
+      expect(makeContainer().read(localeControllerProvider), AppLocale.en);
+    });
+
+    test('a persisted choice still overrides the device locale', () async {
+      // Returning teacher: the phone is Tamil but they previously picked Odia.
+      // The device seed shows first, then their explicit choice wins.
+      SharedPreferences.setMockInitialValues(
+        <String, Object>{'app_locale_code': 'or'},
+      );
+      final binding = TestWidgetsFlutterBinding.ensureInitialized();
+      binding.platformDispatcher.localeTestValue = const Locale('ta');
+      addTearDown(binding.platformDispatcher.clearLocaleTestValue);
+
+      final container = makeContainer();
+      expect(container.read(localeControllerProvider), AppLocale.ta);
+      await hydrate(container);
+      expect(container.read(localeControllerProvider), AppLocale.or);
+    });
   });
 }
 

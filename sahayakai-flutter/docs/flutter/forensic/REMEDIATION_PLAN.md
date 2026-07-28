@@ -196,19 +196,22 @@ What remains (P2.1–P2.3 below) is the *other* voice path — speaking to VIDYA
 
 **Founder's verdict ("terrible") is substantially correct.** The divergence from web is choreography and payoff, and it lands against the voice-first thesis.
 
-### P3.1 — Kill the duplicate language step
+### P3.1 — The "duplicate language step" — **RE-SCOPED (2026-07-29): a design call, not a mechanical dedup — deliberately NOT auto-removed**
 
-**Work:** Mobile asks for language **twice, back to back** — the `LanguageSwitcher` on login (`login_screen.dart:155-168`) and then onboarding step 0's 11-item radio list ("Which language do you teach in?", `onboarding_screen.dart:528-575`) — both writing the same `AppLocale`. Web asks **once** as step 0 and **pre-selects from `navigator.language`** so the teacher only confirms (`page.tsx:343-350, 570-607`). Collapse to one: pre-select from the device locale on mobile, present it as a confirm-not-choose, and remove the redundant step.
+**Correction to the original framing.** Reading both screens closely, the two asks are **not** the same control asked twice — they are different affordances, and one carries a deliberate inclusivity rationale that a blind "remove the redundant step" would regress:
 
-**Files:** `login_screen.dart`, `onboarding_screen.dart:528-575`, `onboarding_controller.dart`.
+- **Login** (`login_screen.dart:155-168`) mounts the shared `LanguageSwitcher`, which is a **collapsed `ListTile`** — "Language" plus the current endonym, tapping opens a bottom sheet (`language_switcher.dart:19-25`). Before this pass, on an English-locale phone it read "Language / English" — a first-run Odia teacher saw *English*, not their script, until they tapped. (The `login_screen.dart:164` comment claimed "All 11 languages, each in its own script" inline; that was inaccurate and is now corrected.)
+- **Onboarding step 0** (`onboarding_screen.dart:519-575`) is the **inline all-11-scripts radio list**, and its doc comment states the reason explicitly: "a teacher who reads Odia should SEE Odia, not a row labelled 'English' they must tap to discover their language exists."
 
-**Effort:** ~1 day. Quick, high-perceived-quality win.
+So the inline onboarding step is the *better* inclusive-design surface, and deleting it to satisfy "ask once" would trade away exactly the voice-first/rural-inclusion property the app is trying to protect. **Whether to collapse to one ask — and if so, which surface keeps the inline all-scripts list — is a founder design decision, not an autonomous refactor.** Overnight it was left intact rather than risk regressing an intentional choice ("don't create chaos"). The genuinely safe half (making the *first* screen open in the teacher's language) shipped as P3.2 below, which removes most of the friction the "duplicate" framing was really pointing at.
 
-### P3.2 — Device-locale pre-selection + mother-tongue greeting
+**Options for the founder** (pick one; none are auto-applied): (a) keep both, now that P3.2 makes both open pre-set to the device language (lowest risk; the "second ask" is now a one-glance confirm of an already-correct choice); (b) move the inline all-scripts list onto login and drop onboarding step 0 (one ask, but bloats login's editorial hero); (c) keep onboarding inline and demote login's switcher to a small change-language affordance. Recommendation: **(a)** — cheapest, and P3.2 already did the work that made the redundancy feel redundant.
 
-**Work:** Pre-fill the profile language/state defaults from the device locale (web reads `navigator.language`; mobile has `Platform.localeName`/`ui.window.locale`). Web opens with a mother-tongue greeting (`mother-tongue-greeting.tsx:72`) — port an equivalent so the first screen speaks the teacher's language back to them. This is a voice-first-brand moment, not just cosmetics.
+### P3.2 — Device-locale pre-selection — **DONE (2026-07-29)**; mother-tongue greeting still open
 
-**Effort:** ~1 day (greeting reuses B4/TTS if you want it spoken).
+**Shipped (no backend):** `LocaleController.build()` (`locale_provider.dart`) previously returned `AppLocale.en` unconditionally on first run, so *every* teacher started in English regardless of their phone — the real friction behind the "onboarding is terrible" language complaint. It now **seeds the initial locale from the device locale** (`WidgetsBinding…platformDispatcher.locale`, `AppLocale.fromCode` falling back to English for an unsupported locale), matching web's `navigator.language` default. A persisted choice still overrides it asynchronously in `_hydrate()`, so a returning teacher's explicit pick always wins. Consequence: on a Bengali/Tamil/Odia phone the **login switcher now reads the teacher's own endonym before sign-in**, onboarding step 0 opens **pre-selected on their language**, and every AI call defaults to it. The read is guarded (falls back to the raw `ui.PlatformDispatcher` singleton) so a plain unit-test `ProviderContainer` that builds this provider without a widgets binding never throws. Tests: `settings_prefs_test.dart` `group('LocaleController')` — device-locale seed, unsupported-locale→English, and persisted-choice-overrides-device.
+
+**Still open (no backend, ~0.5–1 day):** the **mother-tongue greeting** — web opens with a spoken/visible greeting in the teacher's language (`mother-tongue-greeting.tsx:72`). Porting it (reusing the P1 TTS speaker if spoken) is the remaining voice-first-brand moment; not shipped in this slice.
 
 ### P3.3 — Voice-drivable profile capture (stretch)
 
@@ -218,7 +221,7 @@ What remains (P2.1–P2.3 below) is the *other* voice path — speaking to VIDYA
 
 **Effort:** ~2–3 days; the free-form parse is the expensive part and is owner-dependent.
 
-**Honest note on P3:** P3.1 + P3.2 are a clean, fast, obviously-better rebuild (~2 days, no backend) that answers "terrible." P3.3 is the genuinely differentiated version and is a multi-day effort gated on the same classifier work as Phase P2. Ship P3.1/P3.2 now; treat P3.3 as a fast-follow.
+**Honest note on P3:** the device-locale default (P3.2) shipped and is the piece that most directly answers "terrible" — the app now opens in the teacher's language instead of English. P3.1 turned out to be a design decision rather than a bug and was deliberately left for the founder (see its options above) rather than auto-removing an intentional inclusive-design step. The mother-tongue greeting (rest of P3.2) and voice-drivable capture (P3.3) remain; P3.3 is the differentiated version and is gated on the same classifier work as Phase P2. Treat the greeting as the next quick win and P3.3 as a fast-follow.
 
 ---
 
