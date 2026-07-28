@@ -153,6 +153,19 @@ Ranked by thesis impact: read-aloud first (it's the missing HEAR half and reuses
 
 **Root cause (voice-first verdict + census):** the voice classifier can't reach the parent phone-call or either grader on *either* platform — a shared 10-flow enum ceiling (`vidya_action.dart:12-22` vs `omni-orb.tsx:26-37`). But the telephony itself is present and working: `parent_hotline_controller.dart:18-36` mirrors the web modal against the same Twilio/Exotel voicebot (`src/app/api/attendance/call/route.ts:10`). So the parent *action* exists; the *voice route to it* does not.
 
+### P2.0 — Voice INPUT on Parent Message — **DONE (2026-07-29)**, no backend
+
+**The founder's specific complaint** was that parent communication is "purely handwritten" when the concept is voice-first. Re-verified against ground truth: the web `KNOWN_FLOWS` set is *exactly* the 10 tool flows (`omni-orb.tsx:26-37`) — there is **no `parent-message` / `parent-hotline` flow on either platform**, so "speak to VIDYA → parent message drafts itself" is a shared product gap (P2.2 below), **not** a mobile parity gap, and building the mobile enum plumbing for it now would be dead code the shared backend never feeds. That trap was avoided.
+
+What *is* non-blocked and directly answers "handwritten" is the **input half** of the parent-message loop, and it is now shipped:
+
+- **Field-mic dictation** (`InlineFieldMic`, the same control five other tools already carry) is wired into Parent Message's three free-text **content** fields — the student's name (`_studentNameController`) and the two situation narratives (`_reasonContextController`, `_teacherNoteController`). A teacher speaks "Ravi missed three days and is behind in fractions" instead of typing it. The closed pickers (subject/reason/parent-language) and the identity/numeric fields deliberately carry no mic.
+- Dictation transcribes in the teacher's **own** app language (`localeControllerProvider.code`), *not* the parent's output language — the teacher speaks their tongue; the parent's language still governs only the drafted output.
+- The **HEAR** half was already present: `parent_message_result_view.dart:134` carries the P1 `ReadAloudButton`, so the drafted message reads back aloud. **For Parent Message specifically the voice loop is now closed end-to-end — speak the inputs → generate → hear the draft → Copy/Share — with no classifier dependency.**
+- Files: `parent_message_screen.dart` (+3 mics, `_dictationLanguage` getter); tests in `parent_message_screen_test.dart` (`group('voice input')`) assert exactly the three content mics render and the closed-choice/numeric fields carry none. `flutter analyze` 0, token_guard PASS, suite 47/47.
+
+What remains (P2.1–P2.3 below) is the *other* voice path — speaking to VIDYA to **trigger** a parent call/message hands-free — which is genuinely blocked on the classifier (P2.2, owner/backend) and, for one-shot dialing, a contacts source (P2.3).
+
 ### P2.1 — Extend `VidyaFlow` with `parentHotline` / `parentMessage`
 
 **Work:** Add enum entries to `VidyaFlow` (`vidya_action.dart:12-22`) and the corresponding `routeForFlow` switch entries so a directive can route to the existing parent-call and parent-message screens. The routes already exist; only the enum + switch need the entries (voice-first verdict, step 6).

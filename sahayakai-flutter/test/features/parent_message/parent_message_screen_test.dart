@@ -14,6 +14,7 @@ import 'package:sahayakai/features/parent_message/presentation/parent_message_sc
 import 'package:sahayakai/features/parent_message/presentation/widgets/parent_message_error_view.dart';
 import 'package:sahayakai/features/parent_message/presentation/widgets/parent_message_result_view.dart';
 import 'package:sahayakai/features/parent_message/presentation/widgets/parent_message_skeleton.dart';
+import 'package:sahayakai/features/vidya/presentation/widgets/inline_field_mic.dart';
 import 'package:sahayakai/shared/widgets/labeled_field.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -326,6 +327,51 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
+    });
+  });
+
+  // VOICE_FIRST_GAP P2 — parent communication must not be "purely handwritten".
+  // The three free-text CONTENT fields a teacher naturally speaks (the student's
+  // name and the two situation narratives) each carry a field mic; the closed
+  // pickers and the identity/number fields deliberately do not.
+  group('voice input', () {
+    /// The InlineFieldMic nested inside the LabeledField carrying [label].
+    Finder micFor(String label) => find.descendant(
+          of: find.ancestor(
+            of: find.text(label),
+            matching: find.byType(LabeledField),
+          ),
+          matching: find.byType(InlineFieldMic),
+        );
+
+    testWidgets('the three free-text content fields each carry a field mic',
+        (tester) async {
+      await tester.pumpWidget(_host());
+      await tester.pumpAndSettle();
+
+      // Exactly the three content fields — not the class code, the numeric
+      // days-absent field, the teacher/school identity fields, or the dropdowns.
+      expect(find.byType(InlineFieldMic), findsNWidgets(3));
+      expect(micFor('Student name'), findsOneWidget);
+      expect(micFor('What is prompting this?'), findsOneWidget);
+      expect(micFor('Anything specific to mention?'), findsOneWidget);
+    });
+
+    testWidgets('closed-choice and numeric fields carry no mic', (tester) async {
+      await tester.pumpWidget(_host());
+      await tester.pumpAndSettle();
+
+      // The Class field is a short alphanumeric code (e.g. "6A"), poorly served
+      // by dictation, and stays type-only — proving the mic is scoped to the
+      // narrative content, not sprayed onto every field.
+      final classMic = find.descendant(
+        of: find.ancestor(
+          of: find.text('Class'),
+          matching: find.byType(LabeledField),
+        ),
+        matching: find.byType(InlineFieldMic),
+      );
+      expect(classMic, findsNothing);
     });
   });
 }

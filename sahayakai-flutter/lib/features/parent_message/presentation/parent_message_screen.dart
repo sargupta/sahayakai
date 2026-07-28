@@ -6,12 +6,14 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/i18n/app_locale.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
+import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
+import '../../vidya/presentation/widgets/inline_field_mic.dart';
 import '../domain/parent_message.dart';
 import 'parent_message_controller.dart';
 import 'widgets/parent_message_error_view.dart';
@@ -72,6 +74,13 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
     _schoolNameController.dispose();
     super.dispose();
   }
+
+  /// The language the inline mic transcribes the teacher's dictation in — the
+  /// teacher's OWN app language, NOT [_parentLanguage]. The teacher speaks the
+  /// student's name and the situation in their own tongue; the parent's language
+  /// only governs the drafted OUTPUT. Read (not watched) so the mic captures the
+  /// UI locale at build; a locale switch rebuilds the screen and refreshes it.
+  String get _dictationLanguage => ref.read(localeControllerProvider).code;
 
   void _submit() {
     FocusScope.of(context).unfocus();
@@ -184,6 +193,13 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
     return LabeledField(
       label: l10n.parentMessageStudentLabel,
       leadingIcon: LucideIcons.user,
+      // Voice-first: a teacher speaks the student's name rather than typing it —
+      // the same field mic every tool input carries. Overwrites the field with
+      // the transcript (mirrors Instant Answer's question mic).
+      trailing: InlineFieldMic(
+        expectedLanguage: _dictationLanguage,
+        onResult: (text) => _studentNameController.text = text,
+      ),
       child: TextFormField(
         controller: _studentNameController,
         textCapitalization: TextCapitalization.words,
@@ -301,6 +317,12 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
       optionalLabel: l10n.parentMessageOptional,
       hint: l10n.parentMessageContextHint,
       leadingIcon: LucideIcons.fileText,
+      // The narrative field a teacher most naturally dictates ("Ravi missed
+      // three days and is behind in fractions") instead of typing a paragraph.
+      trailing: InlineFieldMic(
+        expectedLanguage: _dictationLanguage,
+        onResult: (text) => _reasonContextController.text = text,
+      ),
       child: TextFormField(
         controller: _reasonContextController,
         maxLines: 3,
@@ -319,6 +341,11 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
       optionalLabel: l10n.parentMessageOptional,
       hint: l10n.parentMessageNoteHint,
       leadingIcon: LucideIcons.stickyNote,
+      // A second free-text narrative the teacher can speak rather than type.
+      trailing: InlineFieldMic(
+        expectedLanguage: _dictationLanguage,
+        onResult: (text) => _teacherNoteController.text = text,
+      ),
       child: TextFormField(
         controller: _teacherNoteController,
         maxLines: 3,
