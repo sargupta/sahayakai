@@ -132,8 +132,12 @@ GoRouter appRouter(Ref ref) {
             InstantAnswerScreen(prefill: _prefillOf(state)),
       ),
       GoRoute(
+        // A VIDYA NAVIGATE_AND_FILL directive pushes here with a [ToolPrefill]
+        // in `extra` (the spoken topic becomes the worksheet prompt); a plain
+        // open (palette / deep link) carries none.
         path: Routes.worksheetWizard,
-        builder: (context, state) => const WorksheetWizardScreen(),
+        builder: (context, state) =>
+            WorksheetWizardScreen(prefill: _prefillOf(state)),
       ),
       GoRoute(
         // A VIDYA NAVIGATE_AND_FILL directive pushes here with a [ToolPrefill]
@@ -143,8 +147,12 @@ GoRouter appRouter(Ref ref) {
             RubricGeneratorScreen(prefill: _prefillOf(state)),
       ),
       GoRoute(
+        // A VIDYA NAVIGATE_AND_FILL directive pushes here with a [ToolPrefill]
+        // in `extra` (the spoken grade/subject/topic seed the form); a plain
+        // open (palette / deep link) carries none.
         path: Routes.examPaper,
-        builder: (context, state) => const ExamPaperScreen(),
+        builder: (context, state) =>
+            ExamPaperScreen(prefill: _prefillOf(state)),
       ),
       GoRoute(
         // A VIDYA NAVIGATE_AND_FILL directive pushes here with a [ToolPrefill]

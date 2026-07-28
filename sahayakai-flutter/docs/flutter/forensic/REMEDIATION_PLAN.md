@@ -69,6 +69,14 @@ Nine findings collapse into a handful of reusable components. Building these fir
 
 **Effort:** ~0.5 day per tool once the pattern is set → ~3–4 days for the 8 generative tools. Genuinely fast because it is the same ~10-line change each time and the tools share a scaffold.
 
+**Status (2026-07-28) — the last two tools, Worksheet Wizard + Exam Paper, are now wired (B1 complete on all 10):** both screens take a `ToolPrefill? prefill`, seed their fields in `_applyPrefill`, carry the P0 guarded auto-run and the P1 voice-summary auto-speak, and their routes now pass `_prefillOf(state)`. VIDYA *can* route voice to both — the classifier emits `flow: "worksheet-wizard"` and `flow: "exam-paper"` (`src/ai/flows/vidya-assistant.ts` §11 worked examples), and mobile's `VidyaFlow`/`routeForFlow`/`prefillFor` already handled them — **so this is NOT a backend-classifier gap.**
+
+**Honest caveat — neither of these two can complete "speak → result" on its own, by structure, not by omission:**
+- **Worksheet Wizard** requires a **textbook photo** (`imageDataUri`), which the voice classifier cannot supply. The auto-run guard therefore gates on `_image != null && prompt` and, on a voice open, correctly **waits** — the teacher lands on a form pre-filled with the prompt/grade/subject and adds only the photo.
+- **Exam Paper** requires a **board** selection, and the classifier's `params` schema (`VidyaDirectiveParams`) carries **no board field**. The auto-run guard gates on `_board != null && _grade != null && _effectiveSubject != null` (+ the conditional-chapters rule) and, on a voice open, correctly **waits** — the teacher lands on a form pre-filled with grade/subject/chapter and picks only the board.
+
+In both cases the prefill still delivers most of the form, and the **P1 voice summary auto-speaks once when the result finally lands** (after the teacher supplies the one missing input and taps Generate), so the voice loop still closes. Closing the "speak → result" inch fully for these two would need either an input the voice path cannot capture (a photo) or a new `board` param on the classifier + `VidyaDirectiveParams`/`ToolPrefill` (a small, well-scoped backend + DTO follow-up). Tests: `test/features/worksheet_wizard/worksheet_voice_test.dart`, `test/features/exam_paper/exam_paper_voice_test.dart`.
+
 ### P0.3 — Language/grade normalization guard (don't reintroduce the "form English, output Hindi" race)
 
 **Work:** Web pairs auto-submit with `SET_OPTS` + `normaliseVidyaLanguage`/`normaliseVidyaGradeLevel` (`quiz-generator/page.tsx:221-228`). Mobile already has `prefillLocale` (`tool_prefill.dart:65-71`) and `normaliseVidyaLanguage` (`vidya_controller.dart:85-92`). Ensure `_applyPrefill` fully commits `_language`/grade/subject **before** the post-frame submit fires. Because `_applyPrefill` runs in `initState`, state is settled by first frame — safe — but this must be asserted in a test, not assumed.

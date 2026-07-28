@@ -8,6 +8,8 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
+import '../../../shared/domain/tool_prefill.dart';
+import '../../../shared/voice/tts_speaker.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
@@ -27,7 +29,17 @@ import 'widgets/exam_paper_skeleton.dart';
 /// failed generation branches into upgrade / limit / sign-in / busy and, for
 /// **422**, a "try fewer chapters" guidance (see [ExamPaperErrorView]).
 class ExamPaperScreen extends ConsumerStatefulWidget {
-  const ExamPaperScreen({super.key});
+  const ExamPaperScreen({super.key, this.prefill});
+
+  /// Optional seed from a VIDYA NAVIGATE_AND_FILL directive ("make a Class 10
+  /// Maths board paper on quadratic equations" → this form opens with the
+  /// grade/subject/chapter filled). Defaults to null, so every existing call
+  /// site and test opens the blank form unchanged. NOTE: the paper REQUIRES a
+  /// board, and the classifier's params carry no board field, so a voice open
+  /// lands on a pre-filled form and WAITS for the teacher to pick the board — it
+  /// never completes "speak → result" on its own (see [_applyPrefill] /
+  /// initState).
+  final ToolPrefill? prefill;
 
   @override
   ConsumerState<ExamPaperScreen> createState() => _ExamPaperScreenState();
@@ -56,10 +68,71 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
   bool _includeAnswerKey = true;
   bool _includeMarkingScheme = true;
 
+  /// Part-B once-guard: the voice-path spoken summary fires at most once, when
+  /// the first voice-originated result lands (VOICE_FIRST_GAP §5.6).
+  bool _spokeVoiceSummary = false;
+
   @override
   void initState() {
     super.initState();
     _language = ref.read(localeControllerProvider);
+    _applyPrefill(widget.prefill);
+    // The voice path's RUN verb (VOICE_FIRST_GAP §4): a directive that arrives
+    // with autoSubmit fires generation itself once every required field is
+    // present. The paper's blocking required field is the board, which the
+    // classifier's params never carry — so this guard holds and the form waits
+    // for the teacher to pick the board rather than flashing a "choose a board"
+    // error on open. Grade/subject/chapter are already seeded, so all that is
+    // left is the one tap the voice path cannot do for them. (The guard is kept
+    // parallel to the eight fully voice-driven tools so it "just works" the day
+    // a prefill can carry a board.)
+    if (widget.prefill?.autoSubmit == true && _readyToSubmit) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _submit();
+      });
+    }
+  }
+
+  /// Seeds the form from a VIDYA directive. Grade is applied only when it is a
+  /// value this form offers; the subject slots straight in when it is a known
+  /// subject, otherwise the "Other" free-text escape hatch carries it (so a
+  /// Commerce/Humanities subject the fixed list omits is still honoured); the
+  /// spoken topic becomes a first chapter; the language falls back to the
+  /// current one when it is not one of the 11. The board is deliberately
+  /// untouched — the classifier resolves no board, so the teacher picks it on
+  /// the pre-filled form.
+  void _applyPrefill(ToolPrefill? p) {
+    if (p == null) return;
+    if (p.gradeLevel != null && kGradeLevels.contains(p.gradeLevel)) {
+      _grade = p.gradeLevel;
+    }
+    final subject = p.subject;
+    if (subject != null) {
+      if (kSubjects.contains(subject)) {
+        _subject = subject;
+      } else {
+        _subject = _otherSubjectValue;
+        _otherSubjectController.text = subject;
+      }
+    }
+    final topic = p.topic?.trim();
+    if (topic != null && topic.isNotEmpty) _chapters.add(topic);
+    final locale = prefillLocale(p.language);
+    if (locale != null) _language = locale;
+  }
+
+  /// Whether the required fields the validators guard are all present, so a
+  /// programmatic [_submit] would fire the request rather than surface a
+  /// validation error. Mirrors the board/grade/subject validators plus the
+  /// conditional-chapters rule ([examPaperNeedsChapters]).
+  bool get _readyToSubmit {
+    if (_board == null || _grade == null || _effectiveSubject == null) {
+      return false;
+    }
+    if (examPaperNeedsChapters(_board, _grade, _subject) && _chapters.isEmpty) {
+      return false;
+    }
+    return true;
   }
 
   @override
@@ -122,6 +195,30 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
     ref.read(examPaperControllerProvider.notifier).generate(request);
   }
 
+  /// Part B — closes "speak → generate → hear". When the landed paper was
+  /// voice-originated (VIDYA's RUN verb set `autoSubmit`), auto-speak a short
+  /// "your … is ready" summary in the result's language, once. A manual open
+  /// (tapped Generate, or a tile open with no auto-submit) never speaks. Because
+  /// the paper needs a board the teacher picks by hand, this fires when they
+  /// finish that pick and tap Generate — still the voice-loop close, just after
+  /// the one tap voice could not do for them. The summary names the subject
+  /// (the paper's natural "on X"), falling back to the spoken topic.
+  void _maybeSpeakVoiceSummary(AppLocalizations l10n) {
+    if (_spokeVoiceSummary || widget.prefill?.autoSubmit != true) return;
+    _spokeVoiceSummary = true;
+    final topic = widget.prefill?.subject?.trim().isNotEmpty == true
+        ? widget.prefill!.subject!.trim()
+        : widget.prefill?.topic?.trim();
+    final summary = (topic == null || topic.isEmpty)
+        ? l10n.voiceResultReady(l10n.examPaperTitle)
+        : l10n.voiceResultReadyWithTopic(l10n.examPaperTitle, topic);
+    speakResultSummary(
+      ref.read(ttsSpeakerProvider),
+      summary,
+      language: _language.aiName,
+    );
+  }
+
   /// Brings the result masthead to the top of the viewport when a fresh paper
   /// lands. Honours reduce-motion by jumping (no scroll tween).
   void _scrollToResult() {
@@ -151,6 +248,7 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
       final nowReady = !next.isLoading && next.valueOrNull is ExamPaperReady;
       if (wasLoading && nowReady) {
         WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToResult());
+        _maybeSpeakVoiceSummary(l10n);
       }
     });
 
