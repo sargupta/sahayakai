@@ -1,4 +1,28 @@
 /**
+ * CLASS IX UPDATED FOR CBSE 2026-27 (NCF-2023 scheme of studies).
+ *
+ * Rewritten from the official Class IX syllabus, ScienceSt_SecP1_2026-27.pdf
+ * (cbseacademic.nic.in, Curriculum 2026-27, Secondary Part-1).
+ *
+ * CBSE's own COURSE STRUCTURE table numbers Class IX chapters 2..13 — there is
+ * no chapter 1 in the Class IX table. Units and marks:
+ *   Unit I  World of Living            ch 2,3,11,12  27
+ *   Unit II Matter - Its Nature and Behaviour ch 5,8,9  25
+ *   Unit III Motion, Force, Work and Sound   ch 4,6,7,10  23
+ *   Unit IV Earth as a system                ch 13         5   = 80 (+20 IA)
+ *
+ * Entirely new chapter set vs 2025-26 (Matter in Our Surroundings, Is Matter
+ * Around Us Pure?, Gravitation, Improvement in Food Resources etc. are gone;
+ * Cell, Tissues, Reproduction, Diversity, Work Energy and Simple Machines,
+ * Earth as a System are in).
+ *
+ * `estimatedPeriods`, `learningOutcomes` and `keywords` are AUTHORED — CBSE
+ * publishes none of them at chapter level.
+ *
+ * Class X is UNCHANGED for 2026-27 and is untouched here. A separate optional
+ * Science Advanced paper exists for Class IX — not yet modelled.
+ */
+/**
  * NCERT Science / EVS Curriculum
  * Grades 3–5: EVS "Looking Around" (NCF-2023)
  * Grades 6–8: Science "Curiosity" (NCF-2023, new 2024–26 rollout)
@@ -176,18 +200,18 @@ export const NCERTScience: NCERTGrade[] = [
         grade: 9,
         subject: 'Science',
         chapters: [
-            { id: 'sci-9-1',  number: 1,  title: 'Matter in Our Surroundings',         titleHindi: 'हमारे आस-पास के पदार्थ',              textbookName: 'Science (NCERT)', learningOutcomes: ['States of matter', 'Changes of state and their conditions'], keywords: ['matter', 'solid', 'liquid', 'gas', 'states'], estimatedPeriods: 12 },
-            { id: 'sci-9-2',  number: 2,  title: 'Is Matter Around Us Pure?',           titleHindi: 'क्या हमारे आस-पास के पदार्थ शुद्ध हैं?', textbookName: 'Science (NCERT)', learningOutcomes: ['Mixtures and compounds', 'Separation methods', 'Colloids and suspensions'], keywords: ['pure', 'mixture', 'compound', 'colloid'], estimatedPeriods: 10 },
-            { id: 'sci-9-3',  number: 3,  title: 'Atoms and Molecules',                 titleHindi: 'परमाणु एवं अणु',                      textbookName: 'Science (NCERT)', learningOutcomes: ['Dalton\'s atomic theory', 'Atomic mass and molar mass', 'Chemical formulae'], keywords: ['atoms', 'molecules', 'atomic mass', 'formulae'], estimatedPeriods: 14 },
-            { id: 'sci-9-4',  number: 4,  title: 'Structure of the Atom',               titleHindi: 'परमाणु की संरचना',                     textbookName: 'Science (NCERT)', learningOutcomes: ['Subatomic particles', 'Bohr\'s model', 'Electronic configuration'], keywords: ['electron', 'proton', 'neutron', 'atomic structure'], estimatedPeriods: 12 },
-            { id: 'sci-9-5',  number: 5,  title: 'The Fundamental Unit of Life',        titleHindi: 'जीवन की मौलिक इकाई',                  textbookName: 'Science (NCERT)', learningOutcomes: ['Cell structure and organelles', 'Differences between plant and animal cells'], keywords: ['cell', 'organelles', 'nucleus', 'membrane'], estimatedPeriods: 12 },
-            { id: 'sci-9-6',  number: 6,  title: 'Tissues',                             titleHindi: 'ऊतक',                                 textbookName: 'Science (NCERT)', learningOutcomes: ['Plant and animal tissues', 'Types and functions of tissues'], keywords: ['tissues', 'epithelial', 'meristematic', 'muscle'], estimatedPeriods: 10 },
-            { id: 'sci-9-7',  number: 7,  title: 'Motion',                              titleHindi: 'गति',                                 textbookName: 'Science (NCERT)', learningOutcomes: ['Distance, displacement, speed, velocity', 'Equations of uniformly accelerated motion'], keywords: ['motion', 'acceleration', 'velocity', 'distance'], estimatedPeriods: 14 },
-            { id: 'sci-9-8',  number: 8,  title: 'Force and Laws of Motion',            titleHindi: 'बल तथा गति के नियम',                  textbookName: 'Science (NCERT)', learningOutcomes: ['Newton\'s three laws of motion', 'Inertia and momentum'], keywords: ['force', 'inertia', 'Newton', 'momentum'], estimatedPeriods: 14 },
-            { id: 'sci-9-9',  number: 9,  title: 'Gravitation',                         titleHindi: 'गुरुत्वाकर्षण',                        textbookName: 'Science (NCERT)', learningOutcomes: ['Universal law of gravitation', 'Free fall and acceleration due to gravity'], keywords: ['gravity', 'acceleration', 'gravitation', 'free fall'], estimatedPeriods: 12 },
-            { id: 'sci-9-10', number: 10, title: 'Work and Energy',                     titleHindi: 'कार्य तथा ऊर्जा',                      textbookName: 'Science (NCERT)', learningOutcomes: ['Potential and kinetic energy', 'Work-energy theorem', 'Power'], keywords: ['work', 'energy', 'power', 'kinetic', 'potential'], estimatedPeriods: 12 },
-            { id: 'sci-9-11', number: 11, title: 'Sound',                               titleHindi: 'ध्वनि',                               textbookName: 'Science (NCERT)', learningOutcomes: ['Propagation of sound', 'Frequency, amplitude, wavelength', 'Echo and reverberation'], keywords: ['sound', 'echo', 'frequency', 'wavelength'], estimatedPeriods: 12 },
-            { id: 'sci-9-12', number: 12, title: 'Improvement in Food Resources',      titleHindi: 'खाद्य संसाधनों में सुधार',             textbookName: 'Science (NCERT)', learningOutcomes: ['Crops and animal husbandry', 'Sustainable farming practices'], keywords: ['agriculture', 'livestock', 'food resources', 'farming'], estimatedPeriods: 10 },
+            { id: 'sci-9-2', number: 2, title: 'Cell', titleHindi: 'कोशिका', textbookName: 'Science (NCERT)', learningOutcomes: ['Cell as the basic unit of life'], keywords: ['NCF-2023'], estimatedPeriods: 14 },
+            { id: 'sci-9-3', number: 3, title: 'Tissues', titleHindi: 'ऊतक', textbookName: 'Science (NCERT)', learningOutcomes: ['Plant and animal tissues'], keywords: ['NCF-2023'], estimatedPeriods: 12 },
+            { id: 'sci-9-4', number: 4, title: 'Motion', titleHindi: 'गति', textbookName: 'Science (NCERT)', learningOutcomes: ['Distance, displacement, velocity, acceleration'], keywords: ['NCF-2023'], estimatedPeriods: 14 },
+            { id: 'sci-9-5', number: 5, title: 'Exploring Mixtures and their Separation', titleHindi: 'मिश्रण एवं पृथक्करण', textbookName: 'Science (NCERT)', learningOutcomes: ['Mixtures, solutions, separation techniques'], keywords: ['NCF-2023'], estimatedPeriods: 14 },
+            { id: 'sci-9-6', number: 6, title: 'Force and Laws of Motion', titleHindi: 'बल तथा गति के नियम', textbookName: 'Science (NCERT)', learningOutcomes: ['Newton\'s laws, momentum'], keywords: ['NCF-2023'], estimatedPeriods: 14 },
+            { id: 'sci-9-7', number: 7, title: 'Work, Energy and Simple Machines', titleHindi: 'कार्य, ऊर्जा एवं सरल मशीनें', textbookName: 'Science (NCERT)', learningOutcomes: ['Work, energy, power, simple machines'], keywords: ['NCF-2023'], estimatedPeriods: 14 },
+            { id: 'sci-9-8', number: 8, title: 'Structure of an Atom', titleHindi: 'परमाणु की संरचना', textbookName: 'Science (NCERT)', learningOutcomes: ['Subatomic particles, electronic configuration'], keywords: ['NCF-2023'], estimatedPeriods: 12 },
+            { id: 'sci-9-9', number: 9, title: 'Atoms and Molecules', titleHindi: 'परमाणु एवं अणु', textbookName: 'Science (NCERT)', learningOutcomes: ['Atomic and molecular masses, mole concept'], keywords: ['NCF-2023'], estimatedPeriods: 14 },
+            { id: 'sci-9-10', number: 10, title: 'Sound', titleHindi: 'ध्वनि', textbookName: 'Science (NCERT)', learningOutcomes: ['Production, propagation and reflection of sound'], keywords: ['NCF-2023'], estimatedPeriods: 12 },
+            { id: 'sci-9-11', number: 11, title: 'Reproduction', titleHindi: 'जनन', textbookName: 'Science (NCERT)', learningOutcomes: ['Modes of reproduction'], keywords: ['NCF-2023'], estimatedPeriods: 12 },
+            { id: 'sci-9-12', number: 12, title: 'Diversity', titleHindi: 'विविधता', textbookName: 'Science (NCERT)', learningOutcomes: ['Diversity in living organisms'], keywords: ['NCF-2023'], estimatedPeriods: 12 },
+            { id: 'sci-9-13', number: 13, title: 'Earth as a System: Energy, Matter & Life', titleHindi: 'पृथ्वी एक तंत्र के रूप में', textbookName: 'Science (NCERT)', learningOutcomes: ['Energy, matter and life as an integrated system'], keywords: ['NCF-2023'], estimatedPeriods: 8 },
         ],
     },
     {
