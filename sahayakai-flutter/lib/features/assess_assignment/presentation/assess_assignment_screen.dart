@@ -14,6 +14,7 @@ import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/note_banner.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
+import '../../vidya/presentation/widgets/inline_field_mic.dart';
 import '../domain/assessment.dart';
 import 'assess_assignment_controller.dart';
 import 'widgets/assess_assignment_error_view.dart';
@@ -221,6 +222,11 @@ class _AssessAssignmentScreenState
       optionalLabel: l10n.assessOptional,
       hint: l10n.assessTranscriptHint,
       leadingIcon: LucideIcons.fileText,
+      // Voice-first: dictate the student's answer transcript instead of typing.
+      trailing: InlineFieldMic(
+        expectedLanguage: _language.code,
+        onResult: (text) => _transcriptController.text = text,
+      ),
       child: TextFormField(
         controller: _transcriptController,
         maxLength: 50000,

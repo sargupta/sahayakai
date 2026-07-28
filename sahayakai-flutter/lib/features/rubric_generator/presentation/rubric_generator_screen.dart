@@ -14,6 +14,7 @@ import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
+import '../../vidya/presentation/widgets/inline_field_mic.dart';
 import '../domain/rubric.dart';
 import 'rubric_controller.dart';
 import 'widgets/rubric_error_view.dart';
@@ -208,6 +209,11 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
       label: l10n.rubricAssignmentLabel,
       hint: l10n.rubricAssignmentHint,
       leadingIcon: LucideIcons.clipboardList,
+      // Voice-first: dictate the assignment description instead of typing it.
+      trailing: InlineFieldMic(
+        expectedLanguage: _language.code,
+        onResult: (text) => _assignmentController.text = text,
+      ),
       child: TextFormField(
         controller: _assignmentController,
         maxLength: 2000,

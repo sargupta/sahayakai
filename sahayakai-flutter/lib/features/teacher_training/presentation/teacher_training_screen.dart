@@ -14,6 +14,7 @@ import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
+import '../../vidya/presentation/widgets/inline_field_mic.dart';
 import '../domain/teacher_advice.dart';
 import 'teacher_training_controller.dart';
 import 'widgets/teacher_training_error_view.dart';
@@ -206,6 +207,11 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
       label: l10n.teacherTrainingQuestionLabel,
       hint: l10n.teacherTrainingQuestionHint,
       leadingIcon: LucideIcons.helpCircle,
+      // Voice-first: dictate the training question instead of typing it.
+      trailing: InlineFieldMic(
+        expectedLanguage: _language.code,
+        onResult: (text) => _questionController.text = text,
+      ),
       child: TextFormField(
         controller: _questionController,
         // The endpoint rejects anything longer, so stop it here with a counter

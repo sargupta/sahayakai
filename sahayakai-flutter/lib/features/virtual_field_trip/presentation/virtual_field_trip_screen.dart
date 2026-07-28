@@ -14,6 +14,7 @@ import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
+import '../../vidya/presentation/widgets/inline_field_mic.dart';
 import '../domain/virtual_field_trip.dart';
 import 'virtual_field_trip_controller.dart';
 import 'widgets/virtual_field_trip_error_view.dart';
@@ -223,6 +224,11 @@ class _VirtualFieldTripScreenState
     return LabeledField(
       label: l10n.virtualFieldTripTopicLabel,
       leadingIcon: LucideIcons.globe,
+      // Voice-first: dictate the field-trip topic instead of typing it.
+      trailing: InlineFieldMic(
+        expectedLanguage: _language.code,
+        onResult: (text) => _topicController.text = text,
+      ),
       child: TextFormField(
         controller: _topicController,
         maxLength: 1000,

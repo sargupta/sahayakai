@@ -45,7 +45,7 @@ Nine findings collapse into a handful of reusable components. Building these fir
 | **B6** | `ExamplePrompts` + `QuickTemplates` widget (11-language) | #5, #13, #16, #24 | new `lib/shared/widgets/example_prompts.dart` |
 | **B7** | Proactive `UsageRemainingBadge` + inline upgrade prompt | #7, #14, #26 | new `lib/shared/widgets/usage_badge.dart` |
 | **B8** | Localized grade/subject picker labels | #18 | `picker_options.dart` + l10n arb |
-| **B9** | `InlineFieldMic` rollout to the remaining 8 tools | voice-first verdict step 5 | `inline_field_mic.dart` consumers |
+| **B9** | `InlineFieldMic` rollout to the remaining tools — **DONE (P1.6)** | voice-first verdict step 5 | `inline_field_mic.dart` consumers |
 
 ---
 
@@ -146,6 +146,15 @@ Ranked by thesis impact: read-aloud first (it's the missing HEAR half and reuses
 ### P1.5 — Realtime/streaming voice: parity with *shipped* web, leave it
 
 **Finding: ABSENT in-app, but PARITY with production.** Web's low-latency streaming path (`omni-orb-live.tsx:4-31`) is explicitly an **unshipped spike** — "Phase S spike, NOT for production traffic … NOT being imported anywhere." Production web runs the same turn-based typed pipeline mobile does (VAD → STT → `/api/assistant` → `/api/tts`). **No action.** Building Gemini-Live/WebSocket streaming on mobile would put mobile *ahead* of production web — a product bet, not remediation. Note it as a future item, not a gap.
+
+### P1.6 — Field-mic dictation on every form input (building block B9) — **DONE (2026-07-29)**, no backend
+
+**The most direct answer to "screen dependent, finger dependent."** `InlineFieldMic` — capture → VAD → STT → text, straight into a field — was present on only 6 tools. It is now on **every** form-driven tool with a free-text CONTENT field, so a teacher can *speak* the input everywhere instead of typing:
+
+- Added this pass: **Worksheet Wizard** (instructions), **Rubric Generator** (assignment), **Teacher Training** (question), **Virtual Field Trip** (topic), **Assess Assignment** (the score-mode corrected transcript). Each mic transcribes in the screen's own selected `_language`, overwriting the field with the transcript (the established `onResult: (t) => _controller.text = t` pattern).
+- Already had it (unchanged): Instant Answer, Lesson Plan, Quiz, Visual Aid, Video Storyteller, Parent Message.
+- **Deliberately skipped, documented:** **Exam Paper** — its only free-text fields are the chapter entry (a chip-add `TextField` with its own `+` suffix) and a short "Other subject" fallback, both identifiers rather than narrative, and the chip-add flow makes a mic low-value/high-complexity; **Content Creator** — has no free-text form (it is a launcher, not a form). Closed pickers, numeric and short-code fields everywhere carry no mic by design.
+- Verified: `flutter analyze` 0, token_guard PASS, textScale-1.3 overflow gates still green with the trailing mic, and a consolidated `test/features/voice/field_mic_sweep_test.dart` pins exactly one mic per swept screen (Assess via its score-mode path). The remaining lever for hands-free input is the global launcher ubiquity (P1.2), still open.
 
 ---
 

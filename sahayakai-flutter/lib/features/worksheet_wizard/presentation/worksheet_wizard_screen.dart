@@ -15,6 +15,7 @@ import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
+import '../../vidya/presentation/widgets/inline_field_mic.dart';
 import '../domain/worksheet.dart';
 import 'worksheet_controller.dart';
 import 'widgets/worksheet_error_view.dart';
@@ -264,6 +265,11 @@ class _WorksheetWizardScreenState extends ConsumerState<WorksheetWizardScreen> {
     return LabeledField(
       label: l10n.worksheetPromptLabel,
       leadingIcon: LucideIcons.fileText,
+      // Voice-first: dictate the worksheet instructions instead of typing them.
+      trailing: InlineFieldMic(
+        expectedLanguage: _language.code,
+        onResult: (text) => _promptController.text = text,
+      ),
       child: TextFormField(
         controller: _promptController,
         maxLength: 2000,
