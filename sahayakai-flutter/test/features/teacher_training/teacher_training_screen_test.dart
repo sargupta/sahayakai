@@ -12,19 +12,22 @@ import 'package:sahayakai/features/teacher_training/presentation/teacher_trainin
 import 'package:sahayakai/features/teacher_training/presentation/widgets/teacher_training_error_view.dart';
 import 'package:sahayakai/features/teacher_training/presentation/widgets/teacher_training_result_view.dart';
 import 'package:sahayakai/features/teacher_training/presentation/widgets/teacher_training_skeleton.dart';
+import 'package:sahayakai/shared/domain/tool_prefill.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'teacher_training_fixtures.dart';
 
 /// Screen-layer gates: the required-question validation the endpoint depends on,
-/// the four async states, the deliberate absence of a grade field, and the
-/// DESIGN_RUBRIC §12 overflow checks. No live API is exercised: the controller
-/// is stubbed for the state tests and no test taps the submit button with a
-/// valid form (a live call would 401 anyway — auth is still stubbed).
+/// the four async states, the deliberate absence of a grade field, the U9 VIDYA
+/// prefill, and the DESIGN_RUBRIC §12 overflow checks. No live API is
+/// exercised: the controller is stubbed for the state tests and no test taps
+/// the submit button with a valid form (a live call would 401 anyway — auth is
+/// still stubbed).
 Widget _host({
   Brightness brightness = Brightness.light,
   double textScale = 1.0,
   List<Override> overrides = const [],
+  ToolPrefill? prefill,
 }) {
   return ProviderScope(
     overrides: overrides,
@@ -38,7 +41,7 @@ Widget _host({
             .copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
-      home: const TeacherTrainingScreen(),
+      home: TeacherTrainingScreen(prefill: prefill),
     ),
   );
 }
@@ -180,6 +183,67 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Please enter a question.'), findsOneWidget);
+    });
+  });
+
+  group('U9: VIDYA prefill', () {
+    testWidgets('a VIDYA prefill seeds the question, subject and language',
+        (tester) async {
+      tester.view.physicalSize = const Size(420, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(_host(
+        prefill: const ToolPrefill(
+          topic: 'How do I manage a noisy classroom?',
+          gradeLevel: 'Class 10', // this form has no grade field — ignored
+          subject: 'Science',
+          language: 'kn',
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(
+          find.text('How do I manage a noisy classroom?'), findsOneWidget);
+      expect(find.text('Science'), findsOneWidget);
+      // language 'kn' → the Kannada endonym is shown in the language picker.
+      expect(find.text('ಕನ್ನಡ'), findsOneWidget);
+      // No grade field exists on this form — the prefilled grade must not
+      // conjure one into existence.
+      expect(find.text('Grade level'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('an unknown subject is ignored, never crashing the dropdown',
+        (tester) async {
+      tester.view.physicalSize = const Size(420, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(_host(
+        prefill: const ToolPrefill(
+          topic: 'Classroom management tips',
+          subject: 'Astrophysics', // not a known subject
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Classroom management tips'), findsOneWidget);
+      expect(find.text('Any subject'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('no prefill opens the blank form (existing behaviour unchanged)',
+        (tester) async {
+      tester.view.physicalSize = const Size(420, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(_host());
+      await tester.pumpAndSettle();
+
+      expect(find.text('How do I manage a noisy classroom?'), findsNothing);
+      expect(find.text('Any subject'), findsOneWidget);
     });
   });
 

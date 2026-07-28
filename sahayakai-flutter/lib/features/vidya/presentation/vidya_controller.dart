@@ -388,6 +388,27 @@ class VidyaController extends _$VidyaController {
     }
   }
 
+  /// The manual "Clear conversation" action (U9) — the app-bar analogue of the
+  /// web's `resetContext` / Trash2 "Clear Context" button in `omni-orb.tsx`.
+  /// Abandons anything in flight, stops capture/playback, and drops the
+  /// transcript, chat history, session id, screen context and any pending
+  /// navigation — returning to a fresh idle canvas. The learned
+  /// [VidyaProfile] is a teacher PREFERENCE, not conversation content; the web
+  /// reference deliberately keeps it across a reset, and so does this.
+  ///
+  /// This is distinct from the full [Ref.invalidate] a sign-out performs on
+  /// this whole provider (`AuthController.signOut`): that also wipes the
+  /// profile, because a *different* teacher may pick up a shared device next
+  /// and must not inherit the outgoing teacher's grade/subject preference
+  /// either. This method is the lighter, same-teacher, mid-session reset.
+  void clearConversation() {
+    _gen++;
+    _teardownCapture();
+    unawaited(_recorder.cancel());
+    unawaited(_player.stop());
+    state = VidyaState(profile: state.profile);
+  }
+
   /// Restores the prior VIDYA session + profile on the first home load, so a
   /// conversation survives a relaunch (SPEC §A.7). Runs at most once and never
   /// clobbers an in-progress conversation. On the stub token the GETs 401 → this

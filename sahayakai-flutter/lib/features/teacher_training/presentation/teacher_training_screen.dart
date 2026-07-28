@@ -8,6 +8,7 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
+import '../../../shared/domain/tool_prefill.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
@@ -29,7 +30,13 @@ import 'widgets/teacher_training_skeleton.dart';
 /// flow back-fills them from the teacher's profile. There is no grade field:
 /// the endpoint's input schema has none.
 class TeacherTrainingScreen extends ConsumerStatefulWidget {
-  const TeacherTrainingScreen({super.key});
+  const TeacherTrainingScreen({super.key, this.prefill});
+
+  /// Optional seed from a VIDYA NAVIGATE_AND_FILL directive — the spoken topic
+  /// becomes the question. Defaults to null, so every existing call site and
+  /// test opens the blank form unchanged. There is no grade to seed (this form
+  /// offers none); a prefilled grade is simply ignored.
+  final ToolPrefill? prefill;
 
   @override
   ConsumerState<TeacherTrainingScreen> createState() =>
@@ -51,6 +58,21 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
   void initState() {
     super.initState();
     _language = ref.read(localeControllerProvider);
+    _applyPrefill(widget.prefill);
+  }
+
+  /// Seeds the form from a VIDYA directive. The spoken topic becomes the
+  /// question; subject applies only when this form offers it; the language
+  /// falls back to the current one when it is not one of the 11. This form has
+  /// no grade field, so a prefilled grade is deliberately never read.
+  void _applyPrefill(ToolPrefill? p) {
+    if (p == null) return;
+    if (p.topic != null) _questionController.text = p.topic!;
+    if (p.subject != null && kSubjects.contains(p.subject)) {
+      _subject = p.subject;
+    }
+    final locale = prefillLocale(p.language);
+    if (locale != null) _language = locale;
   }
 
   @override

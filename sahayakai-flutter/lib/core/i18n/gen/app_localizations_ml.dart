@@ -742,7 +742,7 @@ class AppLocalizationsMl extends AppLocalizations {
   String get settingsBoardLabel => 'വിദ്യാഭ്യാസ ബോർഡ്';
 
   @override
-  String get settingsBoardNone => 'Not set';
+  String get settingsBoardNone => 'സജ്ജമാക്കിയിട്ടില്ല';
 
   @override
   String get settingsQualificationsLabel => 'Qualifications';
@@ -755,25 +755,25 @@ class AppLocalizationsMl extends AppLocalizations {
   String get settingsAdminRoleLabel => 'ഭരണപരമായ പങ്ക്';
 
   @override
-  String get settingsAdminRoleNone => 'Not set';
+  String get settingsAdminRoleNone => 'സജ്ജമാക്കിയിട്ടില്ല';
 
   @override
-  String get settingsRoleHod => 'Head of Department (HoD)';
+  String get settingsRoleHod => 'വകുപ്പ് മേധാവി (HoD)';
 
   @override
-  String get settingsRoleCoordinator => 'Academic Coordinator';
+  String get settingsRoleCoordinator => 'അക്കാദമിക് കോർഡിനേറ്റർ';
 
   @override
-  String get settingsRoleExamController => 'Exam Controller';
+  String get settingsRoleExamController => 'പരീക്ഷാ നിയന്ത്രകൻ';
 
   @override
-  String get settingsRoleVicePrincipal => 'Vice Principal';
+  String get settingsRoleVicePrincipal => 'വൈസ് പ്രിൻസിപ്പൽ';
 
   @override
-  String get settingsRolePrincipal => 'Principal';
+  String get settingsRolePrincipal => 'പ്രിൻസിപ്പൽ';
 
   @override
-  String get settingsRoleNone => 'Teacher, no administrative role';
+  String get settingsRoleNone => 'അധ്യാപകൻ, ഭരണപരമായ പങ്ക് ഇല്ല';
 
   @override
   String get settingsSaveProfile => 'Save profile';
@@ -882,7 +882,7 @@ class AppLocalizationsMl extends AppLocalizations {
       'This is the name other teachers see on work you share.';
 
   @override
-  String get profileNameInvalid => 'Please use a shorter name.';
+  String get profileNameInvalid => 'ദയവായി ഒരു ചെറിയ പേര് ഉപയോഗിക്കുക.';
 
   @override
   String get profileSchoolLabel => 'സ്കൂളിന്റെ പേര്';
@@ -892,34 +892,34 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get profileBoardCategoryHint =>
-      'Choose a board type to shorten the list below.';
+      'താഴെയുള്ള ലിസ്റ്റ് ചെറുതാക്കാൻ ഒരു ബോർഡ് തരം തിരഞ്ഞെടുക്കുക.';
 
   @override
-  String get profileBoardCategoryState => 'State board';
+  String get profileBoardCategoryState => 'സംസ്ഥാന ബോർഡ്';
 
   @override
   String get profileStateLabel => 'സംസ്ഥാനം';
 
   @override
-  String get profileStateNone => 'Not set';
+  String get profileStateNone => 'സജ്ജമാക്കിയിട്ടില്ല';
 
   @override
   String get profileDistrictLabel => 'ജില്ല';
 
   @override
-  String get profileDistrictHint => 'The district your school is in.';
+  String get profileDistrictHint => 'നിങ്ങളുടെ സ്കൂൾ സ്ഥിതിചെയ്യുന്ന ജില്ല.';
 
   @override
   String get profileSubjectsLabel => 'നിങ്ങൾ പഠിപ്പിക്കുന്ന വിഷയങ്ങൾ';
 
   @override
-  String get profileSubjectsHint => 'Choose as many as you need.';
+  String get profileSubjectsHint => 'നിങ്ങൾക്ക് ആവശ്യമുള്ളത്ര തിരഞ്ഞെടുക്കുക.';
 
   @override
   String get profileGradesLabel => 'നിങ്ങൾ പഠിപ്പിക്കുന്ന ക്ലാസുകൾ';
 
   @override
-  String get profileGradesHint => 'Choose as many as you need.';
+  String get profileGradesHint => 'നിങ്ങൾക്ക് ആവശ്യമുള്ളത്ര തിരഞ്ഞെടുക്കുക.';
 
   @override
   String get profileLanguageHint =>
@@ -929,20 +929,21 @@ class AppLocalizationsMl extends AppLocalizations {
   String get profilePhoneLabel => 'മൊബൈൽ നമ്പർ';
 
   @override
-  String get profilePhoneHint => 'Optional. Ten digits, with or without +91.';
+  String get profilePhoneHint =>
+      'ഐച്ഛികം. +91 സഹിതം അല്ലെങ്കിൽ അല്ലാതെ, പത്ത് അക്കങ്ങൾ.';
 
   @override
   String get profilePhoneInvalid =>
-      'Please enter a ten digit Indian mobile number.';
+      'ദയവായി പത്ത് അക്കമുള്ള ഒരു ഇന്ത്യൻ മൊബൈൽ നമ്പർ നൽകുക.';
 
   @override
   String get profilePincodeLabel => 'പിൻ കോഡ്';
 
   @override
-  String get profilePincodeHint => 'Optional. Six digits.';
+  String get profilePincodeHint => 'ഐച്ഛികം. ആറ് അക്കങ്ങൾ.';
 
   @override
-  String get profilePincodeInvalid => 'Please enter a six digit PIN code.';
+  String get profilePincodeInvalid => 'ദയവായി ആറ് അക്കമുള്ള പിൻ കോഡ് നൽകുക.';
 
   @override
   String get profileEmptyTitle => 'Your profile is empty';
@@ -2002,6 +2003,9 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get vidyaPrepDesk => 'ഒരുക്ക ഡെസ്ക്';
+
+  @override
+  String get vidyaClearConversation => 'സംഭാഷണം മായ്ക്കുക';
 
   @override
   String get vidyaFlowVisualAid => 'ദൃശ്യ സഹായി';

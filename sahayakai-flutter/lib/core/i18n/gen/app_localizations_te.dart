@@ -736,7 +736,7 @@ class AppLocalizationsTe extends AppLocalizations {
   String get settingsBoardLabel => 'విద్యా బోర్డు';
 
   @override
-  String get settingsBoardNone => 'Not set';
+  String get settingsBoardNone => 'సెట్ చేయలేదు';
 
   @override
   String get settingsQualificationsLabel => 'Qualifications';
@@ -749,25 +749,25 @@ class AppLocalizationsTe extends AppLocalizations {
   String get settingsAdminRoleLabel => 'పరిపాలనా పాత్ర';
 
   @override
-  String get settingsAdminRoleNone => 'Not set';
+  String get settingsAdminRoleNone => 'సెట్ చేయలేదు';
 
   @override
-  String get settingsRoleHod => 'Head of Department (HoD)';
+  String get settingsRoleHod => 'విభాగాధిపతి (HoD)';
 
   @override
-  String get settingsRoleCoordinator => 'Academic Coordinator';
+  String get settingsRoleCoordinator => 'అకడమిక్ కోఆర్డినేటర్';
 
   @override
-  String get settingsRoleExamController => 'Exam Controller';
+  String get settingsRoleExamController => 'పరీక్షల నియంత్రణాధికారి';
 
   @override
-  String get settingsRoleVicePrincipal => 'Vice Principal';
+  String get settingsRoleVicePrincipal => 'వైస్ ప్రిన్సిపాల్';
 
   @override
-  String get settingsRolePrincipal => 'Principal';
+  String get settingsRolePrincipal => 'ప్రిన్సిపాల్';
 
   @override
-  String get settingsRoleNone => 'Teacher, no administrative role';
+  String get settingsRoleNone => 'ఉపాధ్యాయుడు, పరిపాలనా పాత్ర లేదు';
 
   @override
   String get settingsSaveProfile => 'Save profile';
@@ -876,7 +876,7 @@ class AppLocalizationsTe extends AppLocalizations {
       'This is the name other teachers see on work you share.';
 
   @override
-  String get profileNameInvalid => 'Please use a shorter name.';
+  String get profileNameInvalid => 'దయచేసి చిన్న పేరును ఉపయోగించండి.';
 
   @override
   String get profileSchoolLabel => 'పాఠశాల పేరు';
@@ -886,34 +886,34 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get profileBoardCategoryHint =>
-      'Choose a board type to shorten the list below.';
+      'కింద ఉన్న జాబితాను తగ్గించడానికి బోర్డు రకాన్ని ఎంచుకోండి.';
 
   @override
-  String get profileBoardCategoryState => 'State board';
+  String get profileBoardCategoryState => 'రాష్ట్ర బోర్డు';
 
   @override
   String get profileStateLabel => 'రాష్ట్రం';
 
   @override
-  String get profileStateNone => 'Not set';
+  String get profileStateNone => 'సెట్ చేయలేదు';
 
   @override
   String get profileDistrictLabel => 'జిల్లా';
 
   @override
-  String get profileDistrictHint => 'The district your school is in.';
+  String get profileDistrictHint => 'మీ పాఠశాల ఉన్న జిల్లా.';
 
   @override
   String get profileSubjectsLabel => 'మీరు బోధించే విషయాలు';
 
   @override
-  String get profileSubjectsHint => 'Choose as many as you need.';
+  String get profileSubjectsHint => 'మీకు అవసరమైనన్ని ఎంచుకోండి.';
 
   @override
   String get profileGradesLabel => 'మీరు బోధించే తరగతులు';
 
   @override
-  String get profileGradesHint => 'Choose as many as you need.';
+  String get profileGradesHint => 'మీకు అవసరమైనన్ని ఎంచుకోండి.';
 
   @override
   String get profileLanguageHint =>
@@ -923,20 +923,21 @@ class AppLocalizationsTe extends AppLocalizations {
   String get profilePhoneLabel => 'మొబైల్ నంబర్';
 
   @override
-  String get profilePhoneHint => 'Optional. Ten digits, with or without +91.';
+  String get profilePhoneHint => 'ఐచ్ఛికం. +91తో లేదా లేకుండా, పది అంకెలు.';
 
   @override
   String get profilePhoneInvalid =>
-      'Please enter a ten digit Indian mobile number.';
+      'దయచేసి పది అంకెల భారతీయ మొబైల్ నంబర్‌ను నమోదు చేయండి.';
 
   @override
   String get profilePincodeLabel => 'పిన్ కోడ్';
 
   @override
-  String get profilePincodeHint => 'Optional. Six digits.';
+  String get profilePincodeHint => 'ఐచ్ఛికం. ఆరు అంకెలు.';
 
   @override
-  String get profilePincodeInvalid => 'Please enter a six digit PIN code.';
+  String get profilePincodeInvalid =>
+      'దయచేసి ఆరు అంకెల పిన్ కోడ్‌ను నమోదు చేయండి.';
 
   @override
   String get profileEmptyTitle => 'Your profile is empty';
@@ -1996,6 +1997,9 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get vidyaPrepDesk => 'సన్నాహక డెస్క్';
+
+  @override
+  String get vidyaClearConversation => 'సంభాషణను తొలగించు';
 
   @override
   String get vidyaFlowVisualAid => 'దృశ్య సాధనం';

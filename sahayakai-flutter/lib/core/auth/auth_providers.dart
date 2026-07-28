@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../features/vidya/presentation/vidya_controller.dart';
 import '../firebase/firebase_init.dart';
 
 part 'auth_providers.g.dart';
@@ -72,6 +73,18 @@ class AuthController extends _$AuthController {
   }
 
   Future<void> signOut() async {
+    // Always drop VIDYA's conversation first (U9) — `VidyaController` is
+    // `keepAlive` (SPEC §C.5: it must follow the teacher across every
+    // screen), so without this a shared-device sign-in/out cycle leaves the
+    // outgoing teacher's transcript AND learned profile sitting there for
+    // whoever signs in next — a real cross-teacher data leak, not a cosmetic
+    // one. `invalidate` (not `clearConversation()`) so the incoming session
+    // gets a truly fresh controller: the internal restore guards
+    // (`_restored`/`_restoring`) reset too, not just the visible state. This
+    // must run even when Firebase itself isn't configured (a stub-token dev
+    // build can still have accumulated a local conversation) — hence it sits
+    // before, not after, the [FirebaseInit.isConfigured] guard below.
+    ref.invalidate(vidyaControllerProvider);
     if (!FirebaseInit.isConfigured) return;
     await ref.read(googleSignInProvider).signOut();
     await FirebaseAuth.instance.signOut();

@@ -2498,6 +2498,10 @@
   "@vidyaPrepDesk": {
     "description": "App-bar action opening the Prep desk (teaching tools grid)."
   },
+  "vidyaClearConversation": "Clear conversation",
+  "@vidyaClearConversation": {
+    "description": "App-bar action (shown only while a conversation is active) that clears VIDYA's transcript — the manual analogue of the web's Trash2 'Clear Context' button."
+  },
   "vidyaFlowVisualAid": "Visual aid",
   "@vidyaFlowVisualAid": {
     "description": "Confirm-chip label for the Visual Aid flow."

@@ -42,6 +42,14 @@ class _FakeVidyaController extends VidyaController {
   // the widget test never reaches the network.
   @override
   Future<void> restoreSession() async {}
+
+  // U9: tracked (not just inert) so a test can prove the app-bar "Clear
+  // conversation" action really reaches the controller.
+  bool clearConversationCalled = false;
+  @override
+  void clearConversation() {
+    clearConversationCalled = true;
+  }
 }
 
 Future<void> _pumpHome(
@@ -436,6 +444,64 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('dest-lesson-plan')), findsOneWidget);
+    });
+  });
+
+  group('U9: manual "Clear conversation" action', () {
+    testWidgets('is absent on the idle canvas (nothing to clear)',
+        (tester) async {
+      await _pumpHome(tester, const VidyaState());
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(LucideIcons.trash2), findsNothing);
+    });
+
+    testWidgets(
+        'appears once a conversation is active, and tapping it clears it',
+        (tester) async {
+      final fake = _FakeVidyaController(
+        const VidyaState(
+          conversation: [
+            ConversationBlock(
+              role: ConversationRole.teacher,
+              text: 'plan a lesson on fractions',
+            ),
+            ConversationBlock(
+              role: ConversationRole.vidya,
+              text: 'Making your fractions lesson plan.',
+            ),
+          ],
+        ),
+      );
+
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      tester.platformDispatcher.accessibilityFeaturesTestValue =
+          const FakeAccessibilityFeatures(disableAnimations: true);
+      addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [vidyaControllerProvider.overrideWith(() => fake)],
+          child: MaterialApp(
+            theme: AppTheme.light(),
+            locale: const Locale('en'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const VidyaHomeScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final clearAction = find.byIcon(LucideIcons.trash2);
+      expect(clearAction, findsOneWidget);
+
+      await tester.tap(clearAction);
+      await tester.pump();
+
+      expect(fake.clearConversationCalled, isTrue);
     });
   });
 

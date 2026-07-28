@@ -12,16 +12,18 @@ import 'vidya_controller.dart' show normaliseVidyaLanguage;
 /// `flow → route` (both the VIDYA home and the everywhere VIDYA sheet dispatch
 /// through it, so they can never disagree).
 ///
-/// A flow whose tool is not built yet (Visual Aid / Virtual Field Trip / Video
-/// Storyteller) maps to null and is DROPPED — [dispatch] returns false and pushes
-/// nothing, so a directive never routes to a 404. (A hallucinated *wire* flow
-/// never even becomes a [VidyaFlow]; that closed-enum guard is at the DTO, U-V2.)
+/// Every [VidyaFlow] now maps to a real, shipped tool route (U9 — Visual Aid
+/// Designer / Virtual Field Trip / Video Storyteller were live routes all
+/// along; only this map had gone stale). [routeForFlow] stays nullable and
+/// [dispatch] keeps its false-return/no-push contract as the guard against a
+/// FUTURE flow landing in the enum before its tool ships — a hallucinated
+/// *wire* flow never even becomes a [VidyaFlow] in the first place; that
+/// closed-enum guard is at the DTO, U-V2.
 class VidyaNavDispatcher {
   const VidyaNavDispatcher._();
 
-  /// The tool route a flow opens, or null for the three not-yet-built tools
-  /// (U-PD*). Kept exhaustive (no `default`) so adding a [VidyaFlow] fails the
-  /// compile until it is mapped.
+  /// The tool route a flow opens. Kept exhaustive (no `default`) so adding a
+  /// [VidyaFlow] fails the compile until it is mapped.
   static String? routeForFlow(VidyaFlow flow) {
     switch (flow) {
       case VidyaFlow.lessonPlan:
@@ -39,9 +41,11 @@ class VidyaNavDispatcher {
       case VidyaFlow.instantAnswer:
         return Routes.instantAnswer;
       case VidyaFlow.visualAidDesigner:
+        return Routes.visualAid;
       case VidyaFlow.virtualFieldTrip:
+        return Routes.virtualFieldTrip;
       case VidyaFlow.videoStoryteller:
-        return null;
+        return Routes.videoStoryteller;
     }
   }
 

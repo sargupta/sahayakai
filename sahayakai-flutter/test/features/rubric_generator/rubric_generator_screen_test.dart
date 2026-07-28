@@ -12,18 +12,20 @@ import 'package:sahayakai/features/rubric_generator/presentation/rubric_generato
 import 'package:sahayakai/features/rubric_generator/presentation/widgets/rubric_error_view.dart';
 import 'package:sahayakai/features/rubric_generator/presentation/widgets/rubric_result_view.dart';
 import 'package:sahayakai/features/rubric_generator/presentation/widgets/rubric_skeleton.dart';
+import 'package:sahayakai/shared/domain/tool_prefill.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'rubric_fixtures.dart';
 
 /// Screen-layer gates: the required-assignment validation the endpoint depends
-/// on, the four async states, and the DESIGN_RUBRIC §12 overflow checks. No live
-/// API is exercised: the controller is stubbed for the state tests and no test
-/// taps Generate with a valid form.
+/// on, the four async states, the U9 VIDYA prefill, and the DESIGN_RUBRIC §12
+/// overflow checks. No live API is exercised: the controller is stubbed for the
+/// state tests and no test taps Generate with a valid form.
 Widget _host({
   Brightness brightness = Brightness.light,
   double textScale = 1.0,
   List<Override> overrides = const [],
+  ToolPrefill? prefill,
 }) {
   return ProviderScope(
     overrides: overrides,
@@ -37,7 +39,7 @@ Widget _host({
             .copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
-      home: const RubricGeneratorScreen(),
+      home: RubricGeneratorScreen(prefill: prefill),
     ),
   );
 }
@@ -126,6 +128,70 @@ void main() {
 
       expect(find.text('Please describe the assignment.'), findsOneWidget);
       expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('U9: VIDYA prefill', () {
+    testWidgets(
+        'a VIDYA prefill seeds the assignment, grade, subject and language',
+        (tester) async {
+      tester.view.physicalSize = const Size(420, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(_host(
+        prefill: const ToolPrefill(
+          topic: 'Renewable energy poster',
+          gradeLevel: 'Class 10',
+          subject: 'Science',
+          language: 'kn',
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Renewable energy poster'), findsOneWidget);
+      expect(find.text('Class 10'), findsOneWidget);
+      expect(find.text('Science'), findsOneWidget);
+      // language 'kn' → the Kannada endonym is shown in the language picker.
+      expect(find.text('ಕನ್ನಡ'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('an unknown grade/subject is ignored, never crashing a dropdown',
+        (tester) async {
+      tester.view.physicalSize = const Size(420, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(_host(
+        prefill: const ToolPrefill(
+          topic: 'Photosynthesis',
+          gradeLevel: 'Grade 99', // not a known grade
+          subject: 'Astrophysics', // not a known subject
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      // The assignment still seeds; the unknown grade/subject simply do not
+      // apply (the dropdowns fall back to their "Any" placeholder).
+      expect(find.text('Photosynthesis'), findsOneWidget);
+      expect(find.text('Any grade'), findsOneWidget);
+      expect(find.text('Any subject'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('no prefill opens the blank form (existing behaviour unchanged)',
+        (tester) async {
+      tester.view.physicalSize = const Size(420, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(_host());
+      await tester.pumpAndSettle();
+
+      expect(find.text('Renewable energy poster'), findsNothing);
+      expect(find.text('Any grade'), findsOneWidget);
+      expect(find.text('Any subject'), findsOneWidget);
     });
   });
 

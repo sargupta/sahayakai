@@ -735,7 +735,7 @@ class AppLocalizationsOr extends AppLocalizations {
   String get settingsBoardLabel => 'ଶିକ୍ଷା ବୋର୍ଡ';
 
   @override
-  String get settingsBoardNone => 'Not set';
+  String get settingsBoardNone => 'ସେଟ୍ ହୋଇନାହିଁ';
 
   @override
   String get settingsQualificationsLabel => 'Qualifications';
@@ -748,25 +748,25 @@ class AppLocalizationsOr extends AppLocalizations {
   String get settingsAdminRoleLabel => 'ପ୍ରଶାସନିକ ଭୂମିକା';
 
   @override
-  String get settingsAdminRoleNone => 'Not set';
+  String get settingsAdminRoleNone => 'ସେଟ୍ ହୋଇନାହିଁ';
 
   @override
-  String get settingsRoleHod => 'Head of Department (HoD)';
+  String get settingsRoleHod => 'ବିଭାଗୀୟ ମୁଖ୍ୟ (HoD)';
 
   @override
-  String get settingsRoleCoordinator => 'Academic Coordinator';
+  String get settingsRoleCoordinator => 'ଶୈକ୍ଷିକ ସଂଯୋଜକ';
 
   @override
-  String get settingsRoleExamController => 'Exam Controller';
+  String get settingsRoleExamController => 'ପରୀକ୍ଷା ନିୟନ୍ତ୍ରକ';
 
   @override
-  String get settingsRoleVicePrincipal => 'Vice Principal';
+  String get settingsRoleVicePrincipal => 'ଉପାଧ୍ୟକ୍ଷ';
 
   @override
-  String get settingsRolePrincipal => 'Principal';
+  String get settingsRolePrincipal => 'ଅଧ୍ୟକ୍ଷ';
 
   @override
-  String get settingsRoleNone => 'Teacher, no administrative role';
+  String get settingsRoleNone => 'ଶିକ୍ଷକ, କୌଣସି ପ୍ରଶାସନିକ ଭୂମିକା ନାହିଁ';
 
   @override
   String get settingsSaveProfile => 'Save profile';
@@ -875,7 +875,7 @@ class AppLocalizationsOr extends AppLocalizations {
       'This is the name other teachers see on work you share.';
 
   @override
-  String get profileNameInvalid => 'Please use a shorter name.';
+  String get profileNameInvalid => 'ଦୟାକରି ଏକ ଛୋଟ ନାମ ବ୍ୟବହାର କରନ୍ତୁ।';
 
   @override
   String get profileSchoolLabel => 'ବିଦ୍ୟାଳୟର ନାମ';
@@ -885,34 +885,34 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get profileBoardCategoryHint =>
-      'Choose a board type to shorten the list below.';
+      'ନିମ୍ନରେ ଥିବା ତାଲିକାକୁ ଛୋଟ କରିବାକୁ ଏକ ବୋର୍ଡ ପ୍ରକାର ବାଛନ୍ତୁ।';
 
   @override
-  String get profileBoardCategoryState => 'State board';
+  String get profileBoardCategoryState => 'ରାଜ୍ୟ ବୋର୍ଡ';
 
   @override
   String get profileStateLabel => 'ରାଜ୍ୟ';
 
   @override
-  String get profileStateNone => 'Not set';
+  String get profileStateNone => 'ସେଟ୍ ହୋଇନାହିଁ';
 
   @override
   String get profileDistrictLabel => 'ଜିଲ୍ଲା';
 
   @override
-  String get profileDistrictHint => 'The district your school is in.';
+  String get profileDistrictHint => 'ଆପଣଙ୍କ ବିଦ୍ୟାଳୟ ଥିବା ଜିଲ୍ଲା।';
 
   @override
   String get profileSubjectsLabel => 'ଆପଣ ପଢ଼ାଉଥିବା ବିଷୟ';
 
   @override
-  String get profileSubjectsHint => 'Choose as many as you need.';
+  String get profileSubjectsHint => 'ଆପଣଙ୍କୁ ଆବଶ୍ୟକ ହେଲେ ସେତେ ବାଛନ୍ତୁ।';
 
   @override
   String get profileGradesLabel => 'ଆପଣ ପଢ଼ାଉଥିବା ଶ୍ରେଣୀ';
 
   @override
-  String get profileGradesHint => 'Choose as many as you need.';
+  String get profileGradesHint => 'ଆପଣଙ୍କୁ ଆବଶ୍ୟକ ହେଲେ ସେତେ ବାଛନ୍ତୁ।';
 
   @override
   String get profileLanguageHint =>
@@ -922,20 +922,21 @@ class AppLocalizationsOr extends AppLocalizations {
   String get profilePhoneLabel => 'ମୋବାଇଲ୍ ନମ୍ବର';
 
   @override
-  String get profilePhoneHint => 'Optional. Ten digits, with or without +91.';
+  String get profilePhoneHint => 'ଐଚ୍ଛିକ। +91 ସହିତ କିମ୍ବା ବିନା, ଦଶ ଅଙ୍କ।';
 
   @override
   String get profilePhoneInvalid =>
-      'Please enter a ten digit Indian mobile number.';
+      'ଦୟାକରି ଦଶ ଅଙ୍କ ବିଶିଷ୍ଟ ଏକ ଭାରତୀୟ ମୋବାଇଲ୍ ନମ୍ବର ଦିଅନ୍ତୁ।';
 
   @override
   String get profilePincodeLabel => 'ପିନ୍ କୋଡ୍';
 
   @override
-  String get profilePincodeHint => 'Optional. Six digits.';
+  String get profilePincodeHint => 'ଐଚ୍ଛିକ। ଛଅ ଅଙ୍କ।';
 
   @override
-  String get profilePincodeInvalid => 'Please enter a six digit PIN code.';
+  String get profilePincodeInvalid =>
+      'ଦୟାକରି ଛଅ ଅଙ୍କ ବିଶିଷ୍ଟ ପିନ୍ କୋଡ୍ ଦିଅନ୍ତୁ।';
 
   @override
   String get profileEmptyTitle => 'Your profile is empty';
@@ -1995,6 +1996,9 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get vidyaPrepDesk => 'ପ୍ରସ୍ତୁତି ଡେସ୍କ୍';
+
+  @override
+  String get vidyaClearConversation => 'କଥୋପକଥନ ଲିଭାନ୍ତୁ';
 
   @override
   String get vidyaFlowVisualAid => 'ଦୃଶ୍ୟ ସହାୟକ';

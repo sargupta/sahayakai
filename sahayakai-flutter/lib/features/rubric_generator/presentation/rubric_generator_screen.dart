@@ -8,6 +8,7 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
+import '../../../shared/domain/tool_prefill.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
@@ -26,7 +27,12 @@ import 'widgets/rubric_skeleton.dart';
 /// RubricGrid), so the page never scrolls sideways, and the view auto-scrolls
 /// to the document masthead.
 class RubricGeneratorScreen extends ConsumerStatefulWidget {
-  const RubricGeneratorScreen({super.key});
+  const RubricGeneratorScreen({super.key, this.prefill});
+
+  /// Optional seed from a VIDYA NAVIGATE_AND_FILL directive — the spoken topic
+  /// becomes the assignment description. Defaults to null, so every existing
+  /// call site and test opens the blank form unchanged.
+  final ToolPrefill? prefill;
 
   @override
   ConsumerState<RubricGeneratorScreen> createState() =>
@@ -49,6 +55,24 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
   void initState() {
     super.initState();
     _language = ref.read(localeControllerProvider);
+    _applyPrefill(widget.prefill);
+  }
+
+  /// Seeds the form from a VIDYA directive. Grade/subject are applied only when
+  /// they are values this form actually offers, so an unrecognised classifier
+  /// value never lands in a strict dropdown; the language falls back to the
+  /// current one when it is not one of the 11.
+  void _applyPrefill(ToolPrefill? p) {
+    if (p == null) return;
+    if (p.topic != null) _assignmentController.text = p.topic!;
+    if (p.gradeLevel != null && kGradeLevels.contains(p.gradeLevel)) {
+      _grade = p.gradeLevel;
+    }
+    if (p.subject != null && kSubjects.contains(p.subject)) {
+      _subject = p.subject;
+    }
+    final locale = prefillLocale(p.language);
+    if (locale != null) _language = locale;
   }
 
   @override

@@ -6,8 +6,9 @@ import 'package:sahayakai/features/vidya/data/dto/vidya_action.dart';
 import 'package:sahayakai/features/vidya/presentation/vidya_nav_dispatcher.dart';
 import 'package:sahayakai/shared/domain/tool_prefill.dart';
 
-/// U-V6 — the NAVIGATE_AND_FILL dispatcher: the `flow → route` map, the prefill
-/// it carries, and that a not-yet-built flow is dropped (never a 404).
+/// U-V6/U9 — the NAVIGATE_AND_FILL dispatcher: the `flow → route` map (now
+/// exhaustive — every [VidyaFlow] has a real, shipped tool) and the prefill it
+/// carries.
 
 VidyaDirective _dir(VidyaFlow flow, [VidyaDirectiveParams? params]) =>
     VidyaDirective(flow: flow, params: params ?? const VidyaDirectiveParams());
@@ -31,13 +32,16 @@ void main() {
           Routes.teacherTraining);
     });
 
-    test('the three not-yet-built tools map to null (dropped, never a 404)', () {
+    test(
+        'U9 regression: Visual Aid / Virtual Field Trip / Video Storyteller '
+        'no longer map to null — all three are real, shipped tools the '
+        'dispatcher used to silently drop', () {
       expect(VidyaNavDispatcher.routeForFlow(VidyaFlow.visualAidDesigner),
-          isNull);
-      expect(
-          VidyaNavDispatcher.routeForFlow(VidyaFlow.virtualFieldTrip), isNull);
-      expect(
-          VidyaNavDispatcher.routeForFlow(VidyaFlow.videoStoryteller), isNull);
+          Routes.visualAid);
+      expect(VidyaNavDispatcher.routeForFlow(VidyaFlow.virtualFieldTrip),
+          Routes.virtualFieldTrip);
+      expect(VidyaNavDispatcher.routeForFlow(VidyaFlow.videoStoryteller),
+          Routes.videoStoryteller);
     });
   });
 
@@ -110,30 +114,48 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('drops a not-built flow without navigating or crashing',
-        (tester) async {
-      bool? returned;
-      final router = GoRouter(
-        initialLocation: '/',
-        routes: [
-          GoRoute(
-            path: '/',
-            builder: (context, _) => _Launcher(
-              directive: _dir(VidyaFlow.visualAidDesigner),
-              onDispatched: (ok) => returned = ok,
+    testWidgets(
+        'U9 regression: the three previously-dropped flows now really '
+        'navigate, each to its own real route', (tester) async {
+      for (final entry in {
+        VidyaFlow.visualAidDesigner: Routes.visualAid,
+        VidyaFlow.virtualFieldTrip: Routes.virtualFieldTrip,
+        VidyaFlow.videoStoryteller: Routes.videoStoryteller,
+      }.entries) {
+        bool? returned;
+        var built = false;
+        final router = GoRouter(
+          initialLocation: '/',
+          routes: [
+            GoRoute(
+              path: '/',
+              builder: (context, _) => _Launcher(
+                directive: _dir(
+                  entry.key,
+                  const VidyaDirectiveParams(topic: 'Volcanoes'),
+                ),
+                onDispatched: (ok) => returned = ok,
+              ),
             ),
-          ),
-          // No visual-aid route is registered — a bad dispatch would 404 here.
-        ],
-      );
+            GoRoute(
+              path: entry.value,
+              builder: (context, state) {
+                built = true;
+                return const Scaffold(body: Text('destination'));
+              },
+            ),
+          ],
+        );
 
-      await tester.pumpWidget(MaterialApp.router(routerConfig: router));
-      await tester.tap(find.byType(ElevatedButton));
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.tap(find.byType(ElevatedButton));
+        await tester.pumpAndSettle();
 
-      expect(returned, isFalse); // dropped
-      expect(find.text('launcher'), findsOneWidget); // never left home
-      expect(tester.takeException(), isNull);
+        expect(returned, isTrue, reason: '${entry.key} must dispatch');
+        expect(built, isTrue,
+            reason: '${entry.key} must reach ${entry.value}, not a 404');
+        expect(tester.takeException(), isNull);
+      }
     });
   });
 }

@@ -98,6 +98,16 @@ class _VidyaHomeScreenState extends ConsumerState<VidyaHomeScreen> {
           // badge. Firebase-gated → the badge stays hidden (deferred unread = 0)
           // until the transport goes live.
           const InboxEntryButton(),
+          // U9 — the manual "Clear conversation" action (the app's analogue of
+          // the web's Trash2 "Clear Context" button): only offered once there
+          // is a transcript to clear, so the idle canvas never carries a
+          // dead-looking action.
+          if (state.hasConversation)
+            IconButton(
+              icon: const Icon(LucideIcons.trash2),
+              tooltip: l10n.vidyaClearConversation,
+              onPressed: controller.clearConversation,
+            ),
           IconButton(
             icon: const Icon(LucideIcons.layoutGrid),
             tooltip: l10n.vidyaPrepDesk,

@@ -488,6 +488,69 @@ void main() {
     });
   });
 
+  group('manual clear (U9 — the Trash2 "Clear conversation" action)', () {
+    test(
+        'clears the transcript/history/session/pending-nav but keeps the '
+        'learned profile', () async {
+      final container = _container(client: _happyClient());
+      final vidya = container.read(vidyaControllerProvider.notifier);
+
+      await vidya.onMicTap();
+      await vidya.onMicTap();
+
+      final before = container.read(vidyaControllerProvider);
+      expect(before.conversation, isNotEmpty);
+      expect(before.chatHistory, isNotEmpty);
+      expect(before.sessionId, isNotNull);
+      expect(before.profile?.preferredGrade, 'Class 10');
+      expect(before.profile?.preferredSubject, 'Maths');
+
+      vidya.clearConversation();
+
+      final after = container.read(vidyaControllerProvider);
+      expect(after.conversation, isEmpty);
+      expect(after.chatHistory, isEmpty);
+      expect(after.sessionId, isNull);
+      expect(after.pendingNavigation, isNull);
+      expect(after.screenPath, isNull);
+      expect(after.status, VidyaStatus.idle);
+      // The learned profile is a teacher PREFERENCE, not conversation content
+      // — the web's resetContext() deliberately keeps it across a reset, and
+      // so does this.
+      expect(after.profile?.preferredGrade, 'Class 10');
+      expect(after.profile?.preferredSubject, 'Maths');
+    });
+
+    test('abandons an in-flight trip (a stale result never re-applies)',
+        () async {
+      final client = _happyClient(delay: const Duration(milliseconds: 60));
+      final container = _container(client: client);
+      final vidya = container.read(vidyaControllerProvider.notifier);
+
+      await vidya.onMicTap(); // listening
+      final trip = vidya.onMicTap(); // -> transcribing (STT delayed 60ms)
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+      vidya.clearConversation();
+      await trip; // the delayed STT resolves stale and is discarded
+
+      final state = container.read(vidyaControllerProvider);
+      expect(state.conversation, isEmpty);
+      expect(state.status, VidyaStatus.idle);
+    });
+
+    test('is a safe no-op shape on an already-idle, empty controller',
+        () async {
+      final container = _container(client: _happyClient());
+      final vidya = container.read(vidyaControllerProvider.notifier);
+
+      vidya.clearConversation();
+
+      final state = container.read(vidyaControllerProvider);
+      expect(state.conversation, isEmpty);
+      expect(state.status, VidyaStatus.idle);
+    });
+  });
+
   group('language mapping', () {
     test('normaliseVidyaLanguage handles aliases, names, and region tags', () {
       expect(normaliseVidyaLanguage('od'), 'or');

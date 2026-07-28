@@ -1996,6 +1996,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get vidyaPrepDesk => 'Prep desk';
 
   @override
+  String get vidyaClearConversation => 'Clear conversation';
+
+  @override
   String get vidyaFlowVisualAid => 'Visual aid';
 
   @override

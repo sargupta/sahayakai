@@ -3626,6 +3626,12 @@ abstract class AppLocalizations {
   /// **'Prep desk'**
   String get vidyaPrepDesk;
 
+  /// App-bar action (shown only while a conversation is active) that clears VIDYA's transcript — the manual analogue of the web's Trash2 'Clear Context' button.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear conversation'**
+  String get vidyaClearConversation;
+
   /// Confirm-chip label for the Visual Aid flow.
   ///
   /// In en, this message translates to:

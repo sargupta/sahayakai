@@ -136,16 +136,22 @@ GoRouter appRouter(Ref ref) {
         builder: (context, state) => const WorksheetWizardScreen(),
       ),
       GoRoute(
+        // A VIDYA NAVIGATE_AND_FILL directive pushes here with a [ToolPrefill]
+        // in `extra`; a plain open (palette / deep link) carries none.
         path: Routes.rubricGenerator,
-        builder: (context, state) => const RubricGeneratorScreen(),
+        builder: (context, state) =>
+            RubricGeneratorScreen(prefill: _prefillOf(state)),
       ),
       GoRoute(
         path: Routes.examPaper,
         builder: (context, state) => const ExamPaperScreen(),
       ),
       GoRoute(
+        // A VIDYA NAVIGATE_AND_FILL directive pushes here with a [ToolPrefill]
+        // in `extra`; a plain open (palette / deep link) carries none.
         path: Routes.teacherTraining,
-        builder: (context, state) => const TeacherTrainingScreen(),
+        builder: (context, state) =>
+            TeacherTrainingScreen(prefill: _prefillOf(state)),
       ),
       GoRoute(
         path: Routes.parentMessage,
