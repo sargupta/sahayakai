@@ -127,9 +127,18 @@ def score(cell: dict, probe_result: dict, genkit_text: dict | None) -> dict:
     }
 
     if not probe_result["ok"]:
-        row["failReasons"].append(
-            "quota_exhausted" if probe_result.get("quotaExhausted") else "sidecar_missing"
-        )
+        err = probe_result.get("error", "")
+        if probe_result.get("quotaExhausted"):
+            reason = "quota_exhausted"
+        elif "Behavioural guard failed" in err and "Script mismatch" in err:
+            reason = "behavioural_502_script"   # root cause 1, as a hard error
+        elif "Behavioural guard failed" in err:
+            reason = "behavioural_502_other"
+        elif "instant-answer agent failed" in err:
+            reason = "instant_answer_502"       # root cause 2 territory
+        else:
+            reason = "sidecar_missing"
+        row["failReasons"].append(reason)
         row["notes"] = probe_result.get("error", "")[:200]
         return row
 
@@ -150,7 +159,15 @@ def score(cell: dict, probe_result: dict, genkit_text: dict | None) -> dict:
         row["failReasons"].append("script_mismatch")
 
     # 3. entity hit
-    row["entityHit"] = entity_hit(response_text, cell.get("entities", []))
+    # For CREATE/ACTION the reply is a short acknowledgement by design — the
+    # extracted topic lives in action.params, not in the prose. Checking the
+    # response text there would fail every cell for a bug that isn't real.
+    if cell["intent"] == "ANSWER":
+        haystack = response_text
+    else:
+        params = action.get("params") if isinstance(action, dict) else None
+        haystack = " ".join(str(v) for v in (params or {}).values() if v)
+    row["entityHit"] = entity_hit(haystack, cell.get("entities", []))
     if not row["entityHit"]:
         row["failReasons"].append("entity_miss")
 
