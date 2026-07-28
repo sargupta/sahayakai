@@ -59,6 +59,16 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
     super.initState();
     _language = ref.read(localeControllerProvider);
     _applyPrefill(widget.prefill);
+    // The voice path's RUN verb (VOICE_FIRST_GAP §4): answer the spoken coaching
+    // question itself when a voice directive carried one — "speak → advice", no
+    // tap. Gated on a non-empty question so a partial utterance lands and waits.
+    // Post-frame so the Form (and its GlobalKey) is mounted before _submit runs.
+    if (widget.prefill?.autoSubmit == true &&
+        _questionController.text.trim().isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _submit();
+      });
+    }
   }
 
   /// Seeds the form from a VIDYA directive. The spoken topic becomes the

@@ -59,6 +59,18 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
     super.initState();
     _language = ref.read(localeControllerProvider);
     _applyPrefill(widget.prefill);
+    // The voice path's RUN verb (VOICE_FIRST_GAP §4): a directive that arrives
+    // with autoSubmit fires generation itself once its required field is filled,
+    // turning "speak → filled form → tap Generate" into "speak → result". Gated
+    // on a non-empty topic so a partial utterance ("plan a lesson") lands on the
+    // form and waits rather than flashing a validation error on an empty submit.
+    // Post-frame so the Form (and its GlobalKey) is mounted before _submit runs.
+    if (widget.prefill?.autoSubmit == true &&
+        _topicController.text.trim().isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _submit();
+      });
+    }
   }
 
   /// Seeds the form from a VIDYA directive. Grade/subject are applied only when

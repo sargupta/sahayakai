@@ -65,6 +65,16 @@ class _VisualAidScreenState extends ConsumerState<VisualAidScreen> {
     super.initState();
     _language = ref.read(localeControllerProvider);
     _applyPrefill(widget.prefill);
+    // The voice path's RUN verb (VOICE_FIRST_GAP §4): draw the visual aid itself
+    // when a voice directive carried a prompt — "speak → diagram", no tap. Gated
+    // on a non-empty prompt so a partial utterance lands on the form and waits.
+    // Post-frame so the Form (and its GlobalKey) is mounted before _submit runs.
+    if (widget.prefill?.autoSubmit == true &&
+        _promptController.text.trim().isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _submit();
+      });
+    }
   }
 
   /// Seeds the form from a VIDYA directive. The spoken topic becomes the prompt;

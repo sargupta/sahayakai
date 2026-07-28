@@ -60,6 +60,16 @@ class _VirtualFieldTripScreenState
     super.initState();
     _language = ref.read(localeControllerProvider);
     _applyPrefill(widget.prefill);
+    // The voice path's RUN verb (VOICE_FIRST_GAP §4): plan the trip itself when a
+    // voice directive named a destination — "speak → itinerary", no tap. Gated on
+    // a non-empty topic so a partial utterance lands on the form and waits.
+    // Post-frame so the Form (and its GlobalKey) is mounted before _submit runs.
+    if (widget.prefill?.autoSubmit == true &&
+        _topicController.text.trim().isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _submit();
+      });
+    }
   }
 
   /// Seeds the form from a VIDYA directive. The spoken topic becomes the

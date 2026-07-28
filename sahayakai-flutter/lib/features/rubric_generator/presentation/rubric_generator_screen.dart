@@ -56,6 +56,16 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
     super.initState();
     _language = ref.read(localeControllerProvider);
     _applyPrefill(widget.prefill);
+    // The voice path's RUN verb (VOICE_FIRST_GAP §4): build the rubric itself when
+    // a voice directive described the assignment — "speak → rubric", no tap. Gated
+    // on a non-empty assignment so a partial utterance lands on the form and waits.
+    // Post-frame so the Form (and its GlobalKey) is mounted before _submit runs.
+    if (widget.prefill?.autoSubmit == true &&
+        _assignmentController.text.trim().isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _submit();
+      });
+    }
   }
 
   /// Seeds the form from a VIDYA directive. Grade/subject are applied only when

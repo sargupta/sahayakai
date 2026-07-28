@@ -52,11 +52,22 @@ class VidyaNavDispatcher {
   /// The prefill a directive carries into its tool form. The directive's
   /// language is normalised to an ISO-2 code (matching the picker); unknown
   /// languages fall to null rather than poisoning the field.
+  ///
+  /// [ToolPrefill.autoSubmit] is `true` here because this is the *only* place a
+  /// prefill is built, and it is only ever built on the voice path: both
+  /// consumers — the VIDYA home listener ([dispatch]) and the everywhere VIDYA
+  /// sheet — react to a `pendingNavigation` directive, which is set for both the
+  /// single-directive intent and the compound confirm-chip tap
+  /// (`dispatchDirective`). So every voice-originated open carries the RUN verb;
+  /// a manual tool-grid open builds no prefill and stays tap-gated. The tool
+  /// screen still guards on its required field, so a fieldless utterance lands
+  /// on the form and waits rather than firing empty.
   static ToolPrefill prefillFor(VidyaDirectiveParams params) => ToolPrefill(
         topic: params.topic,
         gradeLevel: params.gradeLevel,
         subject: params.subject,
         language: normaliseVidyaLanguage(params.language),
+        autoSubmit: true,
       );
 
   /// Routes to [directive]'s tool with its prefill, or returns false (and pushes

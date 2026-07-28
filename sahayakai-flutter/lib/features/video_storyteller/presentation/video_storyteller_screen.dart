@@ -59,6 +59,18 @@ class _VideoStorytellerScreenState
     super.initState();
     _language = ref.read(localeControllerProvider);
     _applyPrefill(widget.prefill);
+    // The voice path's RUN verb (VOICE_FIRST_GAP §4): find the videos itself when
+    // a voice directive named a topic — "speak → videos", no tap. This tool's
+    // _submit tolerates an empty topic (subject/grade alone still search), but we
+    // deliberately gate on the primary input so a fieldless utterance lands on the
+    // form and waits rather than auto-firing a topic-less search the teacher
+    // didn't intend. Post-frame so the widget is mounted before _submit runs.
+    if (widget.prefill?.autoSubmit == true &&
+        _topicController.text.trim().isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _submit();
+      });
+    }
   }
 
   /// Seeds the form from a VIDYA directive. The spoken topic becomes the topic

@@ -23,6 +23,7 @@ class ToolPrefill {
     this.gradeLevel,
     this.subject,
     this.language,
+    this.autoSubmit = false,
   });
 
   /// The primary text field's seed (a lesson-plan / quiz topic, or an
@@ -41,8 +42,20 @@ class ToolPrefill {
   /// tool's language picker.
   final String? language;
 
-  /// True when nothing was extracted — the screen then behaves exactly as an
+  /// The voice path's RUN verb: when true, a tool screen that receives this
+  /// prefill and finds its required field populated auto-runs generation (no
+  /// finger on Generate) — the last inch of "speak → result". The VIDYA nav
+  /// dispatcher sets it on every voice-originated directive; a manual tool-grid
+  /// open passes no prefill (or one with this `false`), so a teacher who tapped
+  /// a tile is never surprised by an auto-generation. It is a *dispatch intent*,
+  /// not extracted field data, so it is deliberately excluded from [isEmpty] (a
+  /// fieldless prefill is still empty and carries nothing to auto-run on).
+  final bool autoSubmit;
+
+  /// True when no field was extracted — the screen then behaves exactly as an
   /// un-prefilled open, so existing call sites and tests are unaffected.
+  /// [autoSubmit] is intentionally not part of this: an intent to run with no
+  /// data to run on is still empty.
   bool get isEmpty =>
       topic == null && gradeLevel == null && subject == null && language == null;
 
@@ -52,10 +65,12 @@ class ToolPrefill {
       other.topic == topic &&
       other.gradeLevel == gradeLevel &&
       other.subject == subject &&
-      other.language == language;
+      other.language == language &&
+      other.autoSubmit == autoSubmit;
 
   @override
-  int get hashCode => Object.hash(topic, gradeLevel, subject, language);
+  int get hashCode =>
+      Object.hash(topic, gradeLevel, subject, language, autoSubmit);
 }
 
 /// The [AppLocale] a prefill's ISO-2 [code] maps to, or null when [code] is null
