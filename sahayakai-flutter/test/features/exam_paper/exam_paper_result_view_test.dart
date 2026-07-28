@@ -55,6 +55,23 @@ void main() {
 
       expect(find.textContaining('No exam paper came back'), findsOneWidget);
     });
+
+    testWidgets(
+        'money bug: a title-only response (no sections) shows the '
+        'no-content state, never a fake-success Save button',
+        (tester) async {
+      await tester.pumpWidget(
+        hostResult(
+          const ExamPaperResultView(ready: _titleOnlyReady, onRegenerate: null),
+          overrides: [apiClientOverride(FakeApiClient())],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('No exam paper came back'), findsOneWidget);
+      expect(find.textContaining('CBSE Class 10'), findsNothing);
+      expect(find.text('Save to Library'), findsNothing);
+    });
   });
 
   group('save action', () {
@@ -66,7 +83,7 @@ void main() {
       );
       await tester.pumpWidget(
         hostResult(
-          ExamPaperResultView(ready: ready),
+          ExamPaperResultView(ready: ready, onRegenerate: () {}),
           overrides: [apiClientOverride(client)],
         ),
       );
@@ -95,7 +112,7 @@ void main() {
       );
       await tester.pumpWidget(
         hostResult(
-          ExamPaperResultView(ready: buildReady()),
+          ExamPaperResultView(ready: buildReady(), onRegenerate: () {}),
           overrides: [apiClientOverride(client)],
         ),
       );
@@ -109,6 +126,44 @@ void main() {
 
       expect(find.text('Could not save'), findsOneWidget);
       expect(find.text('Try saving again'), findsOneWidget);
+    });
+  });
+
+  group('read-only from Library (money bug regression)', () {
+    testWidgets(
+        'onRegenerate omitted (a saved item reopened from Library) hides the '
+        'ENTIRE footer — Save included, not just Regenerate/Copy',
+        (tester) async {
+      await tester.pumpWidget(
+        hostResult(
+          ExamPaperResultView(ready: buildReady()),
+          overrides: [apiClientOverride(FakeApiClient())],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // The paper itself still renders...
+      expect(find.text('Section A'), findsOneWidget);
+      // ...but nothing that would PUT a duplicate to the library, or imply a
+      // live generate controller exists behind this render.
+      expect(find.text('Save to Library'), findsNothing);
+      expect(find.text('Regenerate'), findsNothing);
+      expect(find.text('Copy'), findsNothing);
+    });
+
+    testWidgets('onRegenerate provided (the live generate screen) shows Save',
+        (tester) async {
+      await tester.pumpWidget(
+        hostResult(
+          ExamPaperResultView(ready: buildReady(), onRegenerate: () {}),
+          overrides: [apiClientOverride(FakeApiClient())],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('Save to Library'));
+      expect(find.text('Save to Library'), findsOneWidget);
+      expect(find.text('Regenerate'), findsOneWidget);
     });
   });
 
@@ -145,5 +200,20 @@ void main() {
 
 const _emptyReady = ExamPaperReady(
   paper: ExamPaper(title: '', board: '', subject: '', gradeLevel: ''),
+  raw: <String, dynamic>{},
+);
+
+/// A malformed response with a title but no sections — no actual questions.
+/// The money bug: the old AND-of-three emptiness check treated this as
+/// "not empty" because the title was non-blank, rendering a full masthead and
+/// a tappable Save button over zero content.
+const _titleOnlyReady = ExamPaperReady(
+  paper: ExamPaper(
+    title: 'CBSE Class 10 Mathematics Sample Paper',
+    board: 'CBSE',
+    subject: 'Mathematics',
+    gradeLevel: 'Class 10',
+    generalInstructions: ['All questions are compulsory.'],
+  ),
   raw: <String, dynamic>{},
 );

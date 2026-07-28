@@ -26,6 +26,7 @@ import '../../profile/domain/teacher_profile.dart';
 import '../../profile/presentation/profile_controller.dart';
 import '../data/notification_prefs_provider.dart';
 import 'settings_controller.dart';
+import 'widgets/account_deleted_dialog.dart';
 import 'widgets/delete_account_dialog.dart';
 
 /// P0.7 — Settings, re-skinned to the Ledger premium system (U11).
@@ -90,9 +91,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     await ref.read(deleteAccountControllerProvider.notifier).confirmDelete();
     if (!mounted) return;
     final state = ref.read(deleteAccountControllerProvider);
-    if (!state.hasError && state.value != null) {
-      _snack(context.l10n.settingsDeleteScheduled);
-    }
+    final deletion = state.value;
+    if (state.hasError || deletion == null) return;
+
+    // The delete succeeded. `FirebaseAuth.instance.authStateChanges()` can
+    // take up to an hour to notice a server-side deletion, so waiting on it
+    // would leave the teaching-profile form and its Save button fully live
+    // against an account that is already scheduled for removal. Show the
+    // one-time confirmation (with the export link, when the server sent one),
+    // then force an immediate local sign-out and leave Settings rather than
+    // wait on the stream.
+    await AccountDeletedDialog.show(context, deletion);
+    if (!mounted) return;
+    await ref.read(authControllerProvider.notifier).signOut();
+    if (!mounted) return;
+    context.go(Routes.login);
   }
 
   void _snack(String message) {

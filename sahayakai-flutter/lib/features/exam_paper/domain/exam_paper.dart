@@ -201,8 +201,16 @@ class ExamPaper {
 
   /// True when the model returned nothing worth rendering — the view shows an
   /// empty result state rather than an unhelpful blank paper.
-  bool get isEmpty =>
-      title.isEmpty && sections.isEmpty && generalInstructions.isEmpty;
+  ///
+  /// Gated on [sections] alone, NOT `title.isEmpty && sections.isEmpty &&
+  /// generalInstructions.isEmpty`. That AND-of-three used to require every
+  /// field to be empty before the paper counted as empty, so a malformed
+  /// response carrying only a `title` (no sections — no actual questions) read
+  /// as "not empty" and rendered a full masthead + a tappable Save button over
+  /// zero content: a fake-success state a teacher could save and burn quota
+  /// on. A paper's only real content is its sections/questions, so emptiness
+  /// must turn on them alone.
+  bool get isEmpty => sections.isEmpty;
 }
 
 /// The outcome of a generate call. Distinct from a thrown [ApiException]: both

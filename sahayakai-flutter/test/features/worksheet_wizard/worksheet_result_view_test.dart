@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sahayakai/features/worksheet_wizard/domain/worksheet.dart';
 import 'package:sahayakai/features/worksheet_wizard/presentation/widgets/worksheet_result_view.dart';
 import 'package:sahayakai/shared/widgets/empty_view.dart';
 
@@ -59,6 +60,31 @@ void main() {
 
       expect(find.byType(EmptyView), findsOneWidget);
       expect(find.textContaining('No worksheet came back'), findsOneWidget);
+    });
+
+    testWidgets(
+        'money bug: a title-only response (no activities) shows the empty '
+        'state, never a fake-success Save button', (tester) async {
+      // The old AND-of-every-field emptiness check treated a title-only,
+      // activity-less worksheet as "not empty" because the title alone was
+      // non-blank — the same fake-success bug the exam paper had.
+      const titleOnly = Worksheet(
+        title: 'Counting Mangoes',
+        gradeLevel: 'Class 2',
+        subject: 'Mathematics',
+        learningObjectives: ['Count up to 20'],
+      );
+      expect(titleOnly.activities, isEmpty);
+      expect(titleOnly.isEmpty, isTrue);
+
+      await tester.pumpWidget(hostResult(
+        const WorksheetResultView(worksheet: titleOnly),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(EmptyView), findsOneWidget);
+      expect(find.textContaining('No worksheet came back'), findsOneWidget);
+      expect(find.textContaining('Counting Mangoes'), findsNothing);
     });
   });
 

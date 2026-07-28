@@ -824,6 +824,15 @@ class AppLocalizationsBn extends AppLocalizations {
       'Your account is scheduled for deletion. You have 30 days to export your work.';
 
   @override
+  String get settingsDeleteSuccessTitle => 'Account scheduled for deletion';
+
+  @override
+  String get settingsExportDataAction => 'Export my data';
+
+  @override
+  String get settingsDeleteSuccessDone => 'Done';
+
+  @override
   String get settingsDeleteFailed =>
       'We could not delete your account. Please try again.';
 
@@ -1124,6 +1133,9 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get worksheetLimitBody =>
       'You have used your worksheets for now. Please try again later or upgrade your plan.';
+
+  @override
+  String get worksheetSeePricing => 'See plans and pricing';
 
   @override
   String get worksheetRephrase =>

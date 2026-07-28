@@ -1026,6 +1026,18 @@
   "@settingsDeleteScheduled": {
     "description": "Confirmation after the deletion request succeeds."
   },
+  "settingsDeleteSuccessTitle": "Account scheduled for deletion",
+  "@settingsDeleteSuccessTitle": {
+    "description": "Title of the one-time confirmation dialog shown right after a successful delete-account call, before the teacher is signed out."
+  },
+  "settingsExportDataAction": "Export my data",
+  "@settingsExportDataAction": {
+    "description": "Button on the delete-success dialog that opens the server-provided export link, when the delete-account response carried one."
+  },
+  "settingsDeleteSuccessDone": "Done",
+  "@settingsDeleteSuccessDone": {
+    "description": "Dismisses the delete-success dialog; the teacher is signed out and navigated away immediately after."
+  },
   "settingsDeleteFailed": "We could not delete your account. Please try again.",
   "@settingsDeleteFailed": {
     "description": "Shown when the deletion request fails for a non-auth reason."
@@ -1423,6 +1435,10 @@
   "worksheetLimitBody": "You have used your worksheets for now. Please try again later or upgrade your plan.",
   "@worksheetLimitBody": {
     "description": "Body for the limit-reached state."
+  },
+  "worksheetSeePricing": "See plans and pricing",
+  "@worksheetSeePricing": {
+    "description": "Action on the upgrade / limit prompts, opening the pricing page."
   },
   "worksheetRephrase": "We could not build a worksheet from that. Please try a clearer photo or rephrase your prompt.",
   "@worksheetRephrase": {

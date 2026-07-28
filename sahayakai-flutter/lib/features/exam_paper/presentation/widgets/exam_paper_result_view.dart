@@ -42,8 +42,13 @@ class ExamPaperResultView extends StatelessWidget {
   final ExamPaperReady ready;
 
   /// Re-runs generation from the current form (the controller's `generate`).
-  /// When null (e.g. a direct render in a test) the footer keeps the Save action
-  /// but omits Regenerate / Copy.
+  /// When null (e.g. a saved item re-rendered read-only from the Library, or a
+  /// direct render in a test) the ENTIRE footer action bar is omitted —
+  /// Save included, not just Regenerate / Copy — mirroring every other tool's
+  /// result view. Save is a real PUT-to-library call with quota cost, so
+  /// leaving it reachable on a paper already sitting in the Library (opened
+  /// with no live generate controller behind it) let a re-open-and-tap create
+  /// a duplicate save and burn quota for nothing.
   final VoidCallback? onRegenerate;
 
   @override
@@ -114,21 +119,24 @@ class ExamPaperResultView extends StatelessWidget {
       docType: l10n.examPaperTitle,
       title: title,
       meta: meta,
-      footer: _ActionBar(ready: ready, onRegenerate: onRegenerate),
+      footer: onRegenerate == null
+          ? null
+          : _ActionBar(ready: ready, onRegenerate: onRegenerate!),
       children: revealed,
     );
   }
 }
 
 /// The document's action bar: the PUT-to-library Save (a saffron [PrimaryButton]
-/// that reflects saving / saved / failed) over Regenerate and a Copy ghost. Save
-/// is always available; Regenerate / Copy appear only when the screen provided a
-/// regenerate callback.
+/// that reflects saving / saved / failed) over Regenerate and a Copy ghost.
+/// Only built when the screen provided a regenerate callback — see
+/// [ExamPaperResultView.onRegenerate] — so a saved item re-opened read-only
+/// from the Library never gets a live Save action.
 class _ActionBar extends StatelessWidget {
-  const _ActionBar({required this.ready, this.onRegenerate});
+  const _ActionBar({required this.ready, required this.onRegenerate});
 
   final ExamPaperReady ready;
-  final VoidCallback? onRegenerate;
+  final VoidCallback onRegenerate;
 
   @override
   Widget build(BuildContext context) {
@@ -150,27 +158,25 @@ class _ActionBar extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         _SaveBar(ready: ready),
-        if (onRegenerate != null) ...[
-          const SizedBox(height: AppSpacing.space3),
-          SecondaryButton(
-            label: l10n.actionRegenerate,
-            icon: LucideIcons.refreshCw,
-            onPressed: onRegenerate,
-          ),
-          const SizedBox(height: AppSpacing.space2),
-          SizedBox(
-            height: 48,
-            child: TextButton.icon(
-              onPressed: copy,
-              icon: const Icon(LucideIcons.copy, size: AppIconSize.inline),
-              label: Text(l10n.actionCopy),
-              style: TextButton.styleFrom(
-                foregroundColor: saffron,
-                textStyle: text.labelLarge,
-              ),
+        const SizedBox(height: AppSpacing.space3),
+        SecondaryButton(
+          label: l10n.actionRegenerate,
+          icon: LucideIcons.refreshCw,
+          onPressed: onRegenerate,
+        ),
+        const SizedBox(height: AppSpacing.space2),
+        SizedBox(
+          height: 48,
+          child: TextButton.icon(
+            onPressed: copy,
+            icon: const Icon(LucideIcons.copy, size: AppIconSize.inline),
+            label: Text(l10n.actionCopy),
+            style: TextButton.styleFrom(
+              foregroundColor: saffron,
+              textStyle: text.labelLarge,
             ),
           ),
-        ],
+        ),
       ],
     );
   }

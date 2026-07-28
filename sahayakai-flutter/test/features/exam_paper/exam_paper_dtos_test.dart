@@ -191,6 +191,33 @@ void main() {
       expect(paper.sections, isEmpty);
     });
 
+    test(
+      'money bug: a title-only malformed response (no sections) is EMPTY, '
+      'not a fake success',
+      () {
+        // A real regression: the model (or a proxy/error page) returns a
+        // title with no sections at all — no questions, nothing to render.
+        // The old `title.isEmpty && sections.isEmpty && ...` AND-of-three
+        // required every field empty before counting as empty, so this exact
+        // shape read as "not empty" and rendered a full masthead + a tappable
+        // Save button over zero content.
+        final result = ExamPaperResponseDto.resultFrom(<String, dynamic>{
+          'title': 'CBSE Class 10 Mathematics Sample Paper',
+          'board': 'CBSE',
+          'subject': 'Mathematics',
+          'gradeLevel': 'Class 10',
+          'generalInstructions': ['All questions are compulsory.'],
+          'sections': <Map<String, dynamic>>[],
+        });
+        final paper = (result as ExamPaperReady).paper;
+        expect(paper.title, isNotEmpty);
+        expect(paper.generalInstructions, isNotEmpty);
+        expect(paper.sections, isEmpty);
+        expect(paper.isEmpty, isTrue,
+            reason: 'no sections means no real paper, regardless of title');
+      },
+    );
+
     test('tolerates a partial paper (missing marks, options, blueprint, pyq)',
         () {
       final result = ExamPaperResponseDto.resultFrom(<String, dynamic>{

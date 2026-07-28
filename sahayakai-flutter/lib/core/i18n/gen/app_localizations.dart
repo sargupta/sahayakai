@@ -1592,6 +1592,24 @@ abstract class AppLocalizations {
   /// **'Your account is scheduled for deletion. You have 30 days to export your work.'**
   String get settingsDeleteScheduled;
 
+  /// Title of the one-time confirmation dialog shown right after a successful delete-account call, before the teacher is signed out.
+  ///
+  /// In en, this message translates to:
+  /// **'Account scheduled for deletion'**
+  String get settingsDeleteSuccessTitle;
+
+  /// Button on the delete-success dialog that opens the server-provided export link, when the delete-account response carried one.
+  ///
+  /// In en, this message translates to:
+  /// **'Export my data'**
+  String get settingsExportDataAction;
+
+  /// Dismisses the delete-success dialog; the teacher is signed out and navigated away immediately after.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get settingsDeleteSuccessDone;
+
   /// Shown when the deletion request fails for a non-auth reason.
   ///
   /// In en, this message translates to:
@@ -2149,6 +2167,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You have used your worksheets for now. Please try again later or upgrade your plan.'**
   String get worksheetLimitBody;
+
+  /// Action on the upgrade / limit prompts, opening the pricing page.
+  ///
+  /// In en, this message translates to:
+  /// **'See plans and pricing'**
+  String get worksheetSeePricing;
 
   /// Shown on a 400 invalid-input response.
   ///

@@ -112,10 +112,14 @@ class Worksheet {
 
   /// True when the model returned nothing worth rendering — the view shows an
   /// empty result state rather than an unhelpful blank card.
-  bool get isEmpty =>
-      title.isEmpty &&
-      learningObjectives.isEmpty &&
-      (studentInstructions == null || studentInstructions!.isEmpty) &&
-      activities.isEmpty &&
-      answerKey.isEmpty;
+  ///
+  /// Gated on [activities] alone, NOT an AND of every field. That AND used to
+  /// require title, objectives, instructions, activities AND the answer key to
+  /// all be empty before the worksheet counted as empty, so a malformed
+  /// response carrying only a `title` (no activities — nothing for the
+  /// student to actually do) read as "not empty" and rendered a full masthead
+  /// + a tappable Save button over zero content — the same fake-success bug
+  /// `ExamPaper.isEmpty` had. A worksheet's only real content is its
+  /// activities, so emptiness must turn on them alone.
+  bool get isEmpty => activities.isEmpty;
 }

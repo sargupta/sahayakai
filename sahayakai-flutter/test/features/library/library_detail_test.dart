@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/fake_api_client.dart';
 import '../dashboard/dashboard_fixtures.dart';
+import '../exam_paper/exam_paper_fixtures.dart' show examPaperJson;
 import '../onboarding/onboarding_fixtures.dart' show pumpSignedInApp;
 
 /// P1.7 — opening a saved item (`GET /api/content/get?id=<id>`).
@@ -257,6 +258,39 @@ void main() {
         findsOneWidget,
       );
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets(
+        'money bug: a saved exam paper opened from Library has no working '
+        'Save button (re-saving would PUT a duplicate and burn quota)',
+        (tester) async {
+      await _openDetail(
+        tester,
+        client: libraryClient(
+          response: contentListResponse(items: [
+            contentItem(overrides: {
+              'type': 'exam-paper',
+              'title': 'CBSE Exam Paper',
+            }),
+          ]),
+        ),
+        rowText: 'CBSE Exam Paper',
+        itemResponse: contentItem(overrides: {
+          'type': 'exam-paper',
+          'title': 'CBSE Exam Paper',
+          'data': examPaperJson(),
+        }),
+      );
+
+      // The saved paper renders through its own result view (proof the
+      // mapper + result view are wired) ...
+      expect(find.text('Section A'), findsOneWidget);
+      // ... but there must be no live Save action: a saved item re-opened
+      // read-only from Library has no generate controller behind it, so
+      // tapping Save here would PUT a byte-for-byte duplicate to the library
+      // and burn a real quota unit for nothing.
+      expect(find.text('Save to Library'), findsNothing);
+      expect(find.text('Saving'), findsNothing);
     });
 
     testWidgets('no identity asks for sign-in, with no retry that cannot work',
