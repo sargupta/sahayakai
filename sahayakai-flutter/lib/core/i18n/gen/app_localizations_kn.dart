@@ -831,6 +831,14 @@ class AppLocalizationsKn extends AppLocalizations {
   String get settingsExportDataAction => 'Export my data';
 
   @override
+  String get settingsExportQueuedMessage =>
+      'Your export is too large to prepare right away, so we\'ve queued it instead. Please try again later, or contact support for a copy of your data.';
+
+  @override
+  String get settingsExportFailedMessage =>
+      'Couldn\'t prepare your export. Please try again.';
+
+  @override
   String get settingsDeleteSuccessDone => 'Done';
 
   @override

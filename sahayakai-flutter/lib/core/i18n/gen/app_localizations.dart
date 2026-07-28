@@ -1598,11 +1598,23 @@ abstract class AppLocalizations {
   /// **'Account scheduled for deletion'**
   String get settingsDeleteSuccessTitle;
 
-  /// Button on the delete-success dialog that opens the server-provided export link, when the delete-account response carried one.
+  /// Button on the delete-success dialog that requests the real data export through the authenticated API client, when the delete-account response carried an export path. Shows a spinner while the request is in flight, then hands the returned archive to the OS share sheet.
   ///
   /// In en, this message translates to:
   /// **'Export my data'**
   String get settingsExportDataAction;
+
+  /// Shown when POST /api/export returns a background job instead of the archive itself (only reachable for a very large individual export). Deliberately does not promise an email or an automatic download, because nothing in the backend currently completes that job.
+  ///
+  /// In en, this message translates to:
+  /// **'Your export is too large to prepare right away, so we\'ve queued it instead. Please try again later, or contact support for a copy of your data.'**
+  String get settingsExportQueuedMessage;
+
+  /// Shown when the export request fails for a reason other than reauth (network error, server error, unexpected response shape).
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t prepare your export. Please try again.'**
+  String get settingsExportFailedMessage;
 
   /// Dismisses the delete-success dialog; the teacher is signed out and navigated away immediately after.
   ///

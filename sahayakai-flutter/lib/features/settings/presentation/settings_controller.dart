@@ -11,6 +11,7 @@ import '../../profile/presentation/profile_controller.dart';
 import '../../profile/domain/profile_settings.dart';
 import '../data/settings_repository.dart';
 import '../domain/account_deletion.dart';
+import '../domain/export_result.dart';
 
 part 'settings_controller.g.dart';
 
@@ -104,5 +105,32 @@ class DeleteAccountController extends _$DeleteAccountController {
           .read(settingsRepositoryProvider)
           .deleteAccount(idToken: token);
     });
+  }
+}
+
+/// Drives `POST /api/export` through `AsyncValue<ExportResult?>`:
+///   - `AsyncData(null)`   -> nothing attempted yet,
+///   - `AsyncLoading`      -> in flight (the export button shows a spinner),
+///   - `AsyncError`        -> typed `ApiException`,
+///   - `AsyncData(result)` -> either the real archive bytes ready to hand to
+///     the OS share sheet, or an honest "this got queued" notice — see
+///     [ExportResult].
+///
+/// This replaces the previous `linkOpenerProvider` approach (opening
+/// `exportUrl` in the external system browser), which 401ed for essentially
+/// every teacher: a mobile app's external browser tab carries neither the
+/// Bearer token this route's middleware requires nor the web-only session
+/// cookie it also accepts. Going through [SettingsRepository] means this
+/// request rides the SAME authenticated [ApiClient] every other screen uses.
+@riverpod
+class ExportDataController extends _$ExportDataController {
+  @override
+  FutureOr<ExportResult?> build() => null;
+
+  Future<void> requestExport(String path) async {
+    state = const AsyncValue<ExportResult?>.loading();
+    state = await AsyncValue.guard<ExportResult?>(
+      () => ref.read(settingsRepositoryProvider).requestExport(path),
+    );
   }
 }

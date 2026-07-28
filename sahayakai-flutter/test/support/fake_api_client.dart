@@ -27,6 +27,8 @@ class FakeApiClient extends ApiClient {
     this.postErrorsByPath,
     this.getResponsesByPath,
     this.getErrorsByPath,
+    this.postRawResponse,
+    this.postRawError,
   });
 
   /// Per-path POST reply, checked BEFORE the single [postResponse]. Lets one
@@ -90,6 +92,14 @@ class FakeApiClient extends ApiClient {
   /// Thrown from [postMultipart] instead of returning, to model a 401/413/500.
   Object? multipartError;
 
+  /// The [RawResponse] a stubbed [postRaw] returns (e.g. a ZIP's bytes +
+  /// `application/zip` content-type, or a JSON job-queued body's bytes +
+  /// `application/json`). Null keeps the loud-failure contract.
+  RawResponse? postRawResponse;
+
+  /// Thrown from [postRaw] instead of returning, to model a 401/500/etc.
+  Object? postRawError;
+
   /// Every GET this client received, in order, with its query.
   final List<({String path, Map<String, dynamic>? query})> gets =
       <({String path, Map<String, dynamic>? query})>[];
@@ -110,6 +120,10 @@ class FakeApiClient extends ApiClient {
   /// (so a test can assert on the audio file's filename/contentType + fields).
   final List<({String path, FormData data})> multiparts =
       <({String path, FormData data})>[];
+
+  /// Every [postRaw] this client received, in order.
+  final List<({String path, Object? data})> postRaws =
+      <({String path, Object? data})>[];
 
   @override
   Future<T> get<T>(
@@ -183,6 +197,19 @@ class FakeApiClient extends ApiClient {
     throw StateError(
       'PUT $path escaped the fake. Tests must never reach the network: '
       'stub putResponse / putError before asserting on it.',
+    );
+  }
+
+  @override
+  Future<RawResponse> postRaw(String path, {Object? data}) async {
+    postRaws.add((path: path, data: data));
+    if (delay != null) await Future<void>.delayed(delay!);
+    if (postRawError != null) throw postRawError!;
+    final stub = postRawResponse;
+    if (stub != null) return stub;
+    throw StateError(
+      'postRaw $path escaped the fake. Tests must never reach the network: '
+      'stub postRawResponse / postRawError before asserting on it.',
     );
   }
 

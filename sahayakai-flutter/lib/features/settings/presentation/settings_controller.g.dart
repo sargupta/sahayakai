@@ -40,7 +40,7 @@ final profileSaveControllerProvider =
 
 typedef _$ProfileSaveController = AutoDisposeAsyncNotifier<void>;
 String _$deleteAccountControllerHash() =>
-    r'd30fca50bce4335b71110f07276be342db217610';
+    r'3f2aebd2ebac4244fa9fbef423eacacf90e24c35';
 
 /// Drives account deletion through `AsyncValue<AccountDeletion?>`:
 ///   - `AsyncData(null)`      -> nothing attempted,
@@ -67,5 +67,40 @@ final deleteAccountControllerProvider =
     );
 
 typedef _$DeleteAccountController = AutoDisposeAsyncNotifier<AccountDeletion?>;
+String _$exportDataControllerHash() =>
+    r'08f85216c625842be049a8d8f13a8fc42a2c5033';
+
+/// Drives `POST /api/export` through `AsyncValue<ExportResult?>`:
+///   - `AsyncData(null)`   -> nothing attempted yet,
+///   - `AsyncLoading`      -> in flight (the export button shows a spinner),
+///   - `AsyncError`        -> typed `ApiException`,
+///   - `AsyncData(result)` -> either the real archive bytes ready to hand to
+///     the OS share sheet, or an honest "this got queued" notice — see
+///     [ExportResult].
+///
+/// This replaces the previous `linkOpenerProvider` approach (opening
+/// `exportUrl` in the external system browser), which 401ed for essentially
+/// every teacher: a mobile app's external browser tab carries neither the
+/// Bearer token this route's middleware requires nor the web-only session
+/// cookie it also accepts. Going through [SettingsRepository] means this
+/// request rides the SAME authenticated [ApiClient] every other screen uses.
+///
+/// Copied from [ExportDataController].
+@ProviderFor(ExportDataController)
+final exportDataControllerProvider =
+    AutoDisposeAsyncNotifierProvider<
+      ExportDataController,
+      ExportResult?
+    >.internal(
+      ExportDataController.new,
+      name: r'exportDataControllerProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$exportDataControllerHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$ExportDataController = AutoDisposeAsyncNotifier<ExportResult?>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

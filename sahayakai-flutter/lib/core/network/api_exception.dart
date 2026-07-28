@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 
 /// Typed error kinds the UI can branch on (401 -> re-auth, 429 -> pricing…).
@@ -117,7 +119,8 @@ class ApiException implements Exception {
   }
 
   static String? _extractMessage(dynamic data) {
-    if (data is Map && data['error'] is String) return data['error'] as String;
+    final json = _asJsonMap(data);
+    if (json != null && json['error'] is String) return json['error'] as String;
     return null;
   }
 
@@ -126,7 +129,28 @@ class ApiException implements Exception {
   /// user-facing [message]. A JSON parse failure or a non-object body yields
   /// null.
   static String? _extractErrorCode(dynamic data) {
-    if (data is Map && data['error'] is String) return data['error'] as String;
+    final json = _asJsonMap(data);
+    if (json != null && json['error'] is String) return json['error'] as String;
+    return null;
+  }
+
+  /// Normalizes a Dio error body to a JSON map, whether Dio already parsed it
+  /// (every call site using the default `ResponseType.json`) or handed back
+  /// raw bytes (`ApiClient.postRaw`, e.g. the export endpoint — a 401/403/500
+  /// from it still carries the standard `{ "error": "..." }` JSON body, just
+  /// undecoded because the *success* shape can be a binary ZIP). A body that
+  /// isn't valid UTF-8 JSON (a real binary or HTML error page) yields null.
+  static Map<String, dynamic>? _asJsonMap(dynamic data) {
+    if (data is Map<String, dynamic>) return data;
+    if (data is Map) return data.cast<String, dynamic>();
+    if (data is List<int>) {
+      try {
+        final decoded = jsonDecode(utf8.decode(data));
+        if (decoded is Map) return decoded.cast<String, dynamic>();
+      } catch (_) {
+        // Not JSON — fall through to null.
+      }
+    }
     return null;
   }
 
