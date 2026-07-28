@@ -86,13 +86,23 @@ class LibraryItem {
 }
 
 /// The backend's `ContentTypeSchema` (`src/ai/schemas/content-schemas.ts`),
-/// verbatim, plus an [unknown] fallback.
+/// plus an [unknown] fallback.
 ///
 /// COUNT DEVIATION FROM THE BACKEND'S OWN DOCS (verified, deliberate): the
 /// swagger block above `GET /api/content/list` lists EIGHT types and omits
 /// `teacher-training`, `exam-paper` and `assessment`. `ContentTypeSchema` — the
 /// value the route actually validates and the writer actually stores — has
-/// ELEVEN. The Zod enum is the truth here; this is a copy of it.
+/// ELEVEN.
+///
+/// A TWELFTH deviation, also verified directly against the writer rather than
+/// the schema (`ContentTypeSchema` does not list it at all):
+/// `assessment-scanner.ts`'s own `persist()` helper calls
+/// `dbAdapter.saveContent(..., { type: 'assessment-submission', ... })` — a
+/// distinct wire value from Assess Assignment's `assessment`
+/// (`assignment-assessor.ts`), for a different tool's saved shape. Before this
+/// enum carried [assessmentSubmission], every document written with that type
+/// silently fell through to [unknown] — not a decode bug, just a genuinely
+/// undocumented type this copy hadn't caught up to yet.
 ///
 /// [unknown] is not decoration. The library is server-authored and older than
 /// this app: a document written by a future tool, or by a build that renamed a
@@ -110,6 +120,12 @@ enum ContentType {
   teacherTraining('teacher-training', LucideIcons.graduationCap),
   examPaper('exam-paper', LucideIcons.fileText),
   assessment('assessment', LucideIcons.clipboardCheck),
+
+  /// The Assessment Scanner's saved grade (`assessment-scanner.ts`) — NOT the
+  /// same tool or shape as [assessment] (Assess Assignment,
+  /// `assignment-assessor.ts`). Same icon family as Assessment Scanner's own
+  /// tool tile (`tool_registry.dart`) for visual continuity.
+  assessmentSubmission('assessment-submission', LucideIcons.scanLine),
 
   /// A type this build has never heard of.
   unknown('', LucideIcons.fileQuestion);

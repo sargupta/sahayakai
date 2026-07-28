@@ -31,9 +31,11 @@ class LibraryItemDto {
 
   final String? id;
 
-  /// One of `ContentTypeSchema`'s 11 wire values. Anything else, including
-  /// null, maps to [ContentType.unknown] — see that enum for why an unknown
-  /// type is rendered rather than dropped.
+  /// One of `ContentTypeSchema`'s 11 documented wire values, OR
+  /// `assessment-submission` (a 12th, genuinely undocumented value the
+  /// Assessment Scanner writer emits — see [ContentType.assessmentSubmission]).
+  /// Anything else, including null, maps to [ContentType.unknown] — see that
+  /// enum for why an unknown type is rendered rather than dropped.
   final String? type;
 
   final String? title;

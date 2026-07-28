@@ -584,6 +584,12 @@ abstract class AppLocalizations {
   /// **'Assessment'**
   String get contentTypeAssessment;
 
+  /// Saved content type label: assessment-submission (Assessment Scanner's saved grade — distinct from contentTypeAssessment, which is Assess Assignment). English-only in every locale for now, joining the same pre-existing, tracked Library-labels translation backlog as the other 11 contentType* keys (see T2-U8/check_i18n_gate.sh scope notes) — not a new regression.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanned assessment'**
+  String get contentTypeAssessmentSubmission;
+
   /// Saved content type label for a type this build does not know. The row still renders: it is the teacher own work.
   ///
   /// In en, this message translates to:

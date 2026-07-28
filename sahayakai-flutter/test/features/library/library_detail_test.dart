@@ -293,6 +293,102 @@ void main() {
       expect(find.text('Saving'), findsNothing);
     });
 
+    testWidgets(
+        'T2-U11: a saved assessment-submission renders through its own '
+        'scanner result view, not the bare "Ready" checkmark', (tester) async {
+      final assessmentData = {
+        'assessmentId': 'a1b2c3d4-0000-4000-8000-000000000001',
+        'status': 'graded',
+        'pageCount': 1,
+        'totalAwardedMarks': 8,
+        'totalMaxMarks': 10,
+        'scorePct': 80,
+        'letterGrade': 'A',
+        'questions': [
+          {
+            'questionId': 'p0-q1',
+            'pageIndex': 0,
+            'questionText': 'What is 2 + 2?',
+            'studentAnswer': '4',
+            'expectedAnswer': '4',
+            'marksAwarded': 4,
+            'marksMax': 4,
+            'partialCreditBreakdown': [],
+            'feedback': 'Correct.',
+            'studentFacingFeedback': 'Well done!',
+            'conceptTested': 'Addition',
+            'ncertChapterId': null,
+            'mistakePattern': 'none',
+            'needsTeacherReview': false,
+            'confidence': 0.95,
+          },
+        ],
+        'recommendedNextSteps': ['Practice subtraction next.'],
+        'studentRecommendations': ['Review addition facts.'],
+        'needsReviewCount': 0,
+        'imageQualityWarnings': [],
+      };
+
+      await _openDetail(
+        tester,
+        client: libraryClient(
+          response: contentListResponse(items: [
+            contentItem(overrides: {
+              'type': 'assessment-submission',
+              'title': 'Assessment: Mathematics Class 6 (80%)',
+            }),
+          ]),
+        ),
+        rowText: 'Assessment: Mathematics Class 6 (80%)',
+        itemResponse: contentItem(overrides: {
+          'type': 'assessment-submission',
+          'title': 'Assessment: Mathematics Class 6 (80%)',
+          'data': assessmentData,
+        }),
+      );
+
+      expect(find.text('What is 2 + 2?'), findsOneWidget);
+      expect(
+        find.text('You are viewing your saved Scanned assessment.'),
+        findsNothing,
+      );
+    });
+
+    testWidgets(
+        'T2-U11: a saved visual-aid keeps the honest "Ready" state — the '
+        'real saved shape has no imageDataUri to render', (tester) async {
+      final visualAidData = {
+        'pedagogicalContext': 'Use this to explain the water cycle.',
+        'discussionSpark': 'Where does the rain go after it falls?',
+        'subject': 'Science',
+        'storageRef': 'users/u1/visual-aids/20260715_water_cycle.png',
+      };
+
+      await _openDetail(
+        tester,
+        client: libraryClient(
+          response: contentListResponse(items: [
+            contentItem(overrides: {
+              'type': 'visual-aid',
+              'title': 'The Water Cycle',
+            }),
+          ]),
+        ),
+        rowText: 'The Water Cycle',
+        itemResponse: contentItem(overrides: {
+          'type': 'visual-aid',
+          'title': 'The Water Cycle',
+          'data': visualAidData,
+        }),
+      );
+
+      expect(
+        find.text('You are viewing your saved Visual aid.'),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('no identity asks for sign-in, with no retry that cannot work',
         (tester) async {
       await _openDetail(

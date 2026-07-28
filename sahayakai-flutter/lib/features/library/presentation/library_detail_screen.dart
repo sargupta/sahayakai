@@ -16,12 +16,14 @@ import '../../../shared/widgets/icon_well.dart';
 import '../../../shared/widgets/library_item_row.dart';
 import '../../../shared/widgets/offline_view.dart';
 import '../../assess_assignment/presentation/widgets/assess_assignment_result_view.dart';
+import '../../assessment_scanner/presentation/widgets/assessment_scanner_result_view.dart';
 import '../../exam_paper/presentation/widgets/exam_paper_result_view.dart';
 import '../../instant_answer/presentation/widgets/instant_answer_result_view.dart';
 import '../../lesson_planner/presentation/widgets/lesson_plan_result_view.dart';
 import '../../quiz_generator/presentation/widgets/quiz_result_view.dart';
 import '../../rubric_generator/presentation/widgets/rubric_result_view.dart';
 import '../../teacher_training/presentation/widgets/teacher_training_result_view.dart';
+import '../../visual_aid/presentation/widgets/visual_aid_result_view.dart';
 import '../../worksheet_wizard/presentation/widgets/worksheet_result_view.dart';
 import '../data/library_item_detail_provider.dart';
 import '../data/library_result_mapper.dart';
@@ -313,8 +315,23 @@ Widget? _savedResultView(LibraryItem full) {
           ? null
           : AssessAssignmentResultView(assessment: assessment);
 
-    // No mobile tool screen yet for these — see library_result_mapper.dart.
     case ContentType.visualAid:
+      final aid = mapSavedVisualAid(full.data);
+      return aid == null
+          ? null
+          : VisualAidResultView(
+              aid: aid,
+              prompt: full.title.isEmpty ? null : full.title,
+              gradeLevel: full.gradeLevel,
+            );
+
+    case ContentType.assessmentSubmission:
+      final result = mapSavedAssessmentScanner(full.data);
+      return result == null
+          ? null
+          : AssessmentScannerResultView(result: result);
+
+    // No mobile tool screen yet for these two — see library_result_mapper.dart.
     case ContentType.microLesson:
     case ContentType.virtualFieldTrip:
     case ContentType.unknown:

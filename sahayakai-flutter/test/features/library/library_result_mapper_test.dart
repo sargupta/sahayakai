@@ -2,6 +2,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/features/library/data/library_result_mapper.dart';
 import 'package:sahayakai/features/quiz_generator/domain/quiz.dart';
 
+/// A valid 1x1 transparent PNG data URI — enough for `base64Decode` to
+/// succeed without needing a real drawing.
+const String _kTinyPngDataUri = 'data:image/png;base64,'
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY'
+    '42YAAAAASUVORK5CYII=';
+
 /// T1-U2 — the reshape this screen used to skip entirely.
 ///
 /// Every fixture below is the REAL saved shape, copied from the backend
@@ -420,6 +426,150 @@ void main() {
 
       expect(advice, isNotNull);
       expect(advice!.advice.single.strategy, 'Use a quiet signal.');
+    });
+  });
+
+  group('mapSavedVisualAid', () {
+    test(
+        'T2-U11: the real saved shape strips imageDataUri — decodes the '
+        'captions fine but has no image, so it falls back honestly like '
+        'mapSavedInstantAnswer does for hasAnswer', () {
+      // Verified against src/ai/flows/visual-aid-designer.ts: the persist
+      // call saves `{ ...finalOutput, imageDataUri: undefined, storageRef:
+      // filePath }` — `imageDataUri` (the only field carrying the drawing) is
+      // deliberately absent on every real saved document; the actual PNG
+      // lives in GCS behind a private, signed-URL-only download endpoint this
+      // mapper cannot reach.
+      final json = <String, dynamic>{
+        'pedagogicalContext': 'Use this to explain the water cycle.',
+        'discussionSpark': 'Where does the rain go after it falls?',
+        'subject': 'Science',
+        'storageRef': 'users/u1/visual-aids/20260715_water_cycle.png',
+      };
+
+      expect(mapSavedVisualAid(json), isNull);
+    });
+
+    test('decodes a payload that does carry imageDataUri', () {
+      // Not the real saved shape (see above) — this proves the mapper's
+      // decode path itself is correct for whenever a future increment
+      // resolves the image (e.g. via a signed-URL fetch) and hands it a
+      // payload with `imageDataUri` populated.
+      final json = <String, dynamic>{
+        'imageDataUri': _kTinyPngDataUri,
+        'pedagogicalContext': 'Use this to explain the water cycle.',
+        'discussionSpark': 'Where does the rain go after it falls?',
+        'subject': 'Science',
+      };
+
+      final aid = mapSavedVisualAid(json);
+
+      expect(aid, isNotNull);
+      expect(aid!.hasImage, isTrue);
+      expect(aid.pedagogicalContext, 'Use this to explain the water cycle.');
+      expect(
+          aid.discussionSpark, 'Where does the rain go after it falls?');
+      expect(aid.subject, 'Science');
+    });
+
+    test('a non-object payload is refused, not guessed at', () {
+      expect(mapSavedVisualAid('just a string'), isNull);
+      expect(mapSavedVisualAid(null), isNull);
+    });
+
+    test('a structurally broken payload degrades to null, never a throw', () {
+      final json = <String, dynamic>{'imageDataUri': 12345};
+      expect(() => mapSavedVisualAid(json), returnsNormally);
+      expect(mapSavedVisualAid(json), isNull);
+    });
+  });
+
+  group('mapSavedAssessmentScanner', () {
+    test(
+        'T2-U11: decodes a real saved graded assessment field-for-field '
+        '(marksAwarded / marksMax, not maxMarks)', () {
+      // Verified against src/ai/flows/assessment-scanner.ts: `persist()`
+      // saves `data: output`, the exact `AssessmentScannerOutputSchema`
+      // value `POST /api/ai/assessment-scanner` returns verbatim.
+      final json = <String, dynamic>{
+        'assessmentId': 'a1b2c3d4-0000-4000-8000-000000000001',
+        'status': 'graded',
+        'pageCount': 1,
+        'totalAwardedMarks': 8,
+        'totalMaxMarks': 10,
+        'scorePct': 80,
+        'letterGrade': 'A',
+        'questions': [
+          <String, dynamic>{
+            'questionId': 'p0-q1',
+            'pageIndex': 0,
+            'questionText': 'What is 2 + 2?',
+            'studentAnswer': '4',
+            'expectedAnswer': '4',
+            'marksAwarded': 4,
+            'marksMax': 4,
+            'partialCreditBreakdown': <dynamic>[],
+            'feedback': 'Correct.',
+            'studentFacingFeedback': 'Well done!',
+            'conceptTested': 'Addition',
+            'ncertChapterId': null,
+            'mistakePattern': 'none',
+            'needsTeacherReview': false,
+            'confidence': 0.95,
+          },
+        ],
+        // Fields the mobile model does not need, present on every real saved
+        // document — must not break the decode.
+        'classAverageAtScan': null,
+        'conceptMastery': [
+          <String, dynamic>{
+            'chapterId': 'ch1',
+            'chapterTitle': 'Numbers',
+            'masteryPct': 80,
+            'weakestConcept': null,
+          },
+        ],
+        'recommendedNextSteps': ['Practice subtraction next.'],
+        'studentRecommendations': ['Review addition facts.'],
+        'needsReviewCount': 0,
+        'imageQualityWarnings': <String>[],
+      };
+
+      final result = mapSavedAssessmentScanner(json);
+
+      expect(result, isNotNull);
+      expect(result!.scorePercent, 80);
+      expect(result.letterGrade, 'A');
+      expect(result.questions, hasLength(1));
+      expect(result.questions.single.marksAwarded, 4);
+      expect(result.questions.single.marksMax, 4);
+      expect(result.recommendedNextSteps, ['Practice subtraction next.']);
+    });
+
+    test('a non-object payload is refused', () {
+      expect(mapSavedAssessmentScanner('just a string'), isNull);
+      expect(mapSavedAssessmentScanner(null), isNull);
+    });
+
+    test(
+        'a structurally decoded but empty result (no questions, no '
+        'recommendations) falls back honestly', () {
+      final json = <String, dynamic>{
+        'assessmentId': 'a1',
+        'status': 'failed',
+        'pageCount': 1,
+        'totalAwardedMarks': 0,
+        'totalMaxMarks': 0,
+        'scorePct': 0,
+        'letterGrade': '',
+        'questions': <dynamic>[],
+        'recommendedNextSteps': <String>[],
+        'studentRecommendations': <String>[],
+        'needsReviewCount': 0,
+        'imageQualityWarnings': <String>[],
+      };
+
+      expect(mapSavedAssessmentScanner(json), isNull);
     });
   });
 }

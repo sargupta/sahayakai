@@ -100,6 +100,7 @@ String typeLabel(AppLocalizations l10n, ContentType type) {
     ContentType.teacherTraining => l10n.contentTypeTeacherTraining,
     ContentType.examPaper => l10n.contentTypeExamPaper,
     ContentType.assessment => l10n.contentTypeAssessment,
+    ContentType.assessmentSubmission => l10n.contentTypeAssessmentSubmission,
     ContentType.unknown => l10n.contentTypeUnknown,
   };
 }

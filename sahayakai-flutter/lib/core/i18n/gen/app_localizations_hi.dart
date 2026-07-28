@@ -259,6 +259,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get contentTypeAssessment => 'Assessment';
 
   @override
+  String get contentTypeAssessmentSubmission => 'Scanned assessment';
+
+  @override
   String get contentTypeUnknown => 'Saved work';
 
   @override

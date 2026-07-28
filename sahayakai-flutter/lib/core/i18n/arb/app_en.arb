@@ -326,6 +326,10 @@
   "@contentTypeAssessment": {
     "description": "Saved content type label: assessment."
   },
+  "contentTypeAssessmentSubmission": "Scanned assessment",
+  "@contentTypeAssessmentSubmission": {
+    "description": "Saved content type label: assessment-submission (Assessment Scanner's saved grade — distinct from contentTypeAssessment, which is Assess Assignment). English-only in every locale for now, joining the same pre-existing, tracked Library-labels translation backlog as the other 11 contentType* keys (see T2-U8/check_i18n_gate.sh scope notes) — not a new regression."
+  },
   "contentTypeUnknown": "Saved work",
   "@contentTypeUnknown": {
     "description": "Saved content type label for a type this build does not know. The row still renders: it is the teacher own work."
