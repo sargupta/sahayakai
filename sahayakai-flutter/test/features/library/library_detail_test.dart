@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sahayakai/core/network/api_exception.dart';
 import 'package:sahayakai/features/library/presentation/library_detail_screen.dart';
 import 'package:sahayakai/shared/data/library_repository.dart';
@@ -54,7 +55,10 @@ Future<void> _openDetail(
     locale: locale,
     surface: surface,
   );
-  await tester.tap(find.text('Library'));
+  // Tap the Library tab by its icon, not the English label: the app now honours
+  // the device locale (LocaleController seeds from it), so in bn/ta/ml the nav
+  // reads the translated `navLibrary` and a `find.text('Library')` would miss.
+  await tester.tap(find.byIcon(LucideIcons.library));
   await tester.pumpAndSettle();
 
   // The list has loaded; now answer the per-item GET.
