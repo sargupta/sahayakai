@@ -15,6 +15,7 @@ import 'package:sahayakai/features/virtual_field_trip/presentation/widgets/virtu
 import 'package:sahayakai/features/virtual_field_trip/presentation/widgets/virtual_field_trip_pending_view.dart';
 import 'package:sahayakai/features/virtual_field_trip/presentation/widgets/virtual_field_trip_result_view.dart';
 import 'package:sahayakai/features/virtual_field_trip/presentation/widgets/virtual_field_trip_skeleton.dart';
+import 'package:sahayakai/shared/domain/tool_prefill.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/app_harness.dart';
@@ -31,6 +32,7 @@ Widget _host({
   Brightness brightness = Brightness.light,
   double textScale = 1.0,
   List<Override> overrides = const [],
+  ToolPrefill? prefill,
 }) {
   return ProviderScope(
     overrides: overrides,
@@ -44,7 +46,7 @@ Widget _host({
             .copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
-      home: const VirtualFieldTripScreen(),
+      home: VirtualFieldTripScreen(prefill: prefill),
     ),
   );
 }
@@ -347,6 +349,64 @@ void main() {
         '$kBn $kTa $kMl $kLongWord',
       );
       await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('VIDYA prefill (T2-U9 review fix)', () {
+    testWidgets('a VIDYA prefill seeds the topic and grade — no subject field',
+        (tester) async {
+      tester.view.physicalSize = const Size(420, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(_host(
+        prefill: const ToolPrefill(
+          topic: 'A trip through the solar system',
+          gradeLevel: 'Class 10',
+          subject: 'Science', // this screen has no subject field; must be ignored, not crash
+          language: 'kn',
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('A trip through the solar system'), findsOneWidget);
+      expect(find.text('Class 10'), findsOneWidget);
+      // language 'kn' → the Kannada endonym is shown in the language picker.
+      expect(find.text('ಕನ್ನಡ'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('an unknown grade is ignored, never crashing the dropdown',
+        (tester) async {
+      tester.view.physicalSize = const Size(420, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(_host(
+        prefill: const ToolPrefill(
+          topic: 'Ancient Rome',
+          gradeLevel: 'Grade 99', // not a known grade
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Ancient Rome'), findsOneWidget);
+      expect(find.text('Any grade'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('no prefill opens the blank form (existing behaviour unchanged)',
+        (tester) async {
+      tester.view.physicalSize = const Size(420, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(_host());
+      await tester.pumpAndSettle();
+
+      expect(find.text('A trip through the solar system'), findsNothing);
+      expect(find.text('Any grade'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

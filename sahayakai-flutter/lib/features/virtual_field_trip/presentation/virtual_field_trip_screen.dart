@@ -8,6 +8,7 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
+import '../../../shared/domain/tool_prefill.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
@@ -30,7 +31,12 @@ import 'widgets/virtual_field_trip_skeleton.dart';
 /// a calm "check My Library" panel, NOT the red error view — the teacher's trip
 /// is being saved server-side.
 class VirtualFieldTripScreen extends ConsumerStatefulWidget {
-  const VirtualFieldTripScreen({super.key});
+  const VirtualFieldTripScreen({super.key, this.prefill});
+
+  /// Optional seed from a VIDYA NAVIGATE_AND_FILL directive — the spoken topic
+  /// becomes the topic field. Defaults to null, so existing call sites and
+  /// tests open the blank form unchanged.
+  final ToolPrefill? prefill;
 
   @override
   ConsumerState<VirtualFieldTripScreen> createState() =>
@@ -53,6 +59,21 @@ class _VirtualFieldTripScreenState
   void initState() {
     super.initState();
     _language = ref.read(localeControllerProvider);
+    _applyPrefill(widget.prefill);
+  }
+
+  /// Seeds the form from a VIDYA directive. The spoken topic becomes the
+  /// topic field; grade applies only when it's one of the offered levels;
+  /// the language falls back to the current one when it is not one of the 11.
+  /// This screen has no subject field, unlike its Visual Aid sibling.
+  void _applyPrefill(ToolPrefill? p) {
+    if (p == null) return;
+    if (p.topic != null) _topicController.text = p.topic!;
+    if (p.gradeLevel != null && kGradeLevels.contains(p.gradeLevel)) {
+      _grade = p.gradeLevel;
+    }
+    final locale = prefillLocale(p.language);
+    if (locale != null) _language = locale;
   }
 
   @override

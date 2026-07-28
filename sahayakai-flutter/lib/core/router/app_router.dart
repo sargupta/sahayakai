@@ -246,10 +246,12 @@ GoRouter appRouter(Ref ref) {
             VideoStorytellerScreen(prefill: _prefillOf(state)),
       ),
       GoRoute(
-        // U-PD4. A one-shot document tool (like exam-paper): a plain open from
-        // the palette / dashboard, no VIDYA prefill.
+        // A VIDYA NAVIGATE_AND_FILL directive pushes here with a [ToolPrefill]
+        // in `extra` (the spoken topic becomes the topic field); a plain open
+        // (palette / deep link) carries none.
         path: Routes.virtualFieldTrip,
-        builder: (context, state) => const VirtualFieldTripScreen(),
+        builder: (context, state) =>
+            VirtualFieldTripScreen(prefill: _prefillOf(state)),
       ),
       GoRoute(
         // U-PD2. The Content Creator Studio hub — a no-backend navigation
