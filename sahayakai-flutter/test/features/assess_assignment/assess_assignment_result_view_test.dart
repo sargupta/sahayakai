@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sahayakai/features/assess_assignment/domain/assessment.dart';
 import 'package:sahayakai/features/assess_assignment/presentation/widgets/assess_assignment_result_view.dart';
 import 'package:sahayakai/shared/widgets/empty_view.dart';
 import 'package:sahayakai/shared/widgets/score_ring.dart';
@@ -82,6 +83,58 @@ void main() {
 
       expect(find.byType(EmptyView), findsOneWidget);
       expect(find.textContaining('No assessment came back'), findsOneWidget);
+    });
+  });
+
+  group('honest "Read only" mode', () {
+    testWidgets(
+        'Read only hides the score even when the backend returns a full grade',
+        (tester) async {
+      // The backend ignores mode and always scores, so a "Read only" run still
+      // carries a grade + feedback. The view must suppress those and lead with
+      // just the transcript, so the mode selector is not a false promise.
+      await tester.pumpWidget(
+        hostResult(
+          AssessAssignmentResultView(
+            assessment: buildAssessment(),
+            mode: AssessmentMode.transcribe,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // The transcript still leads.
+      expect(find.text('WHAT THE STUDENT WROTE'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      // Everything score-side is gone: no gauge, no percentage, no criteria,
+      // no points/confidence badges, no evaluative feedback.
+      expect(find.byType(ScoreRing), findsNothing);
+      expect(find.text('75'), findsNothing);
+      expect(find.text('SCORES BY CRITERION'), findsNothing);
+      expect(find.text('12 of 16 points'), findsNothing);
+      expect(find.text('Confidence 82%'), findsNothing);
+      expect(find.text('STRENGTHS'), findsNothing);
+      expect(find.text('TO WORK ON'), findsNothing);
+      expect(find.text('NEXT STEPS'), findsNothing);
+      expect(find.text('NOTE FOR THE STUDENT'), findsNothing);
+    });
+
+    testWidgets('full mode (default) still shows the whole scorecard',
+        (tester) async {
+      await tester.pumpWidget(
+        hostResult(
+          AssessAssignmentResultView(
+            assessment: buildAssessment(),
+            mode: AssessmentMode.full,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ScoreRing), findsOneWidget);
+      expect(find.text('SCORES BY CRITERION'), findsOneWidget);
+      expect(find.text('STRENGTHS'), findsOneWidget);
     });
   });
 

@@ -1133,6 +1133,25 @@ class AppLocalizationsKn extends AppLocalizations {
       'No worksheet came back for that page. Please try a clearer photo or a different prompt.';
 
   @override
+  String get worksheetSave => 'Save to Library';
+
+  @override
+  String get worksheetSaving => 'Saving';
+
+  @override
+  String get worksheetSaved => 'Saved to your Library';
+
+  @override
+  String get worksheetSaveFailedTitle => 'Could not save';
+
+  @override
+  String get worksheetSaveFailedBody =>
+      'We could not save this worksheet to your library. Please try again.';
+
+  @override
+  String get worksheetSaveRetry => 'Try saving again';
+
+  @override
   String get worksheetUpgradeTitle => 'A higher plan is needed';
 
   @override
@@ -1282,6 +1301,18 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get examPaperSubjectError => 'Please choose a subject.';
+
+  @override
+  String get examPaperSubjectOther => 'Other subject';
+
+  @override
+  String get examPaperSubjectOtherLabel => 'Subject name';
+
+  @override
+  String get examPaperSubjectOtherHint => 'For example, Economics';
+
+  @override
+  String get examPaperSubjectOtherError => 'Please enter a subject.';
 
   @override
   String get examPaperChaptersLabel => 'Chapters';

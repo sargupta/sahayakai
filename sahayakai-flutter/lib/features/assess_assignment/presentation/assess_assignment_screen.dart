@@ -50,6 +50,11 @@ class _AssessAssignmentScreenState
 
   PickedImage? _image;
   AssessmentMode _mode = AssessmentMode.full;
+
+  /// The mode that produced the scorecard on screen, captured at assess time so
+  /// changing the selector afterwards never silently re-labels the result. The
+  /// result view uses it to hide the score-side sections in "Read only" mode.
+  AssessmentMode _resultMode = AssessmentMode.full;
   late AppLocale _language;
 
   @override
@@ -67,6 +72,7 @@ class _AssessAssignmentScreenState
   void _submit() {
     FocusScope.of(context).unfocus();
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    _resultMode = _mode;
     // The image is validated by its FormField, so it is non-null here.
     final request = AssessAssignmentRequest(
       imageDataUri: _image!.dataUri,
@@ -122,6 +128,7 @@ class _AssessAssignmentScreenState
             onData: (assessment) => AssessAssignmentResultView(
               assessment: assessment,
               onRegenerate: _submit,
+              mode: _resultMode,
             ),
           );
 

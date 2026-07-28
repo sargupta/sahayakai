@@ -36,10 +36,16 @@ class ExamPaperScreen extends ConsumerStatefulWidget {
 class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
   final _formKey = GlobalKey<FormState>();
   final _chapterController = TextEditingController();
+  final _otherSubjectController = TextEditingController();
 
   /// Anchors the auto-scroll: the result region's top, which for a rendered
   /// paper is the DocumentSheet masthead.
   final _resultKey = GlobalKey();
+
+  /// Sentinel dropdown value that reveals the free-text subject field. Not a
+  /// real subject, so it never leaves the client — [_effectiveSubject] resolves
+  /// it to whatever the teacher typed.
+  static const String _otherSubjectValue = '__other__';
 
   String? _board;
   String? _grade;
@@ -59,7 +65,19 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
   @override
   void dispose() {
     _chapterController.dispose();
+    _otherSubjectController.dispose();
     super.dispose();
+  }
+
+  /// The subject the request carries: the typed value when "Other" is chosen,
+  /// otherwise the selected dropdown value. Null when nothing usable is set (the
+  /// validators block a submit in that case).
+  String? get _effectiveSubject {
+    if (_subject == _otherSubjectValue) {
+      final typed = _otherSubjectController.text.trim();
+      return typed.isEmpty ? null : typed;
+    }
+    return _subject;
   }
 
   void _addChapter() {
@@ -94,7 +112,7 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
     final request = ExamPaperRequest(
       board: _board!,
       gradeLevel: _grade!,
-      subject: _subject!,
+      subject: _effectiveSubject!,
       chapters: List<String>.of(_chapters),
       difficulty: _difficulty,
       language: _language.aiName,
@@ -175,6 +193,10 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
             _gradeField(l10n),
             const SizedBox(height: AppSpacing.space6),
             _subjectField(l10n),
+            if (_subject == _otherSubjectValue) ...[
+              const SizedBox(height: AppSpacing.space6),
+              _otherSubjectField(l10n),
+            ],
             const SizedBox(height: AppSpacing.space6),
             _chaptersField(l10n),
             const SizedBox(height: AppSpacing.space8),
@@ -242,10 +264,37 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
         items: [
           for (final subject in kSubjects)
             DropdownMenuItem<String?>(value: subject, child: Text(subject)),
+          // Escape hatch for Commerce/Humanities subjects the fixed list omits
+          // (Economics, Business Studies, Political Science, …). Selecting it
+          // reveals a free-text field so any subject can be entered.
+          DropdownMenuItem<String?>(
+            value: _otherSubjectValue,
+            child: Text(l10n.examPaperSubjectOther),
+          ),
         ],
         validator: (value) =>
             value == null ? l10n.examPaperSubjectError : null,
         onChanged: (value) => setState(() => _subject = value),
+      ),
+    );
+  }
+
+  /// The free-text subject field, shown only when "Other" is chosen. A real
+  /// [TextFormField] so its "required" error joins the form's own validation
+  /// pass; its value flows into the request through [_effectiveSubject].
+  Widget _otherSubjectField(AppLocalizations l10n) {
+    return LabeledField(
+      label: l10n.examPaperSubjectOtherLabel,
+      leadingIcon: LucideIcons.pencil,
+      child: TextFormField(
+        controller: _otherSubjectController,
+        maxLength: 60,
+        textInputAction: TextInputAction.done,
+        textCapitalization: TextCapitalization.words,
+        decoration: InputDecoration(hintText: l10n.examPaperSubjectOtherHint),
+        validator: (value) => (value == null || value.trim().isEmpty)
+            ? l10n.examPaperSubjectOtherError
+            : null,
       ),
     );
   }

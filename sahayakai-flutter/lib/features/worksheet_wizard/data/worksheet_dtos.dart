@@ -67,7 +67,11 @@ class WorksheetResponseDto {
   final List<WorksheetActivityDto>? activities;
   final List<AnswerKeyEntryDto>? answerKey;
 
-  Worksheet toDomain() {
+  /// [raw] is the verbatim response body this DTO was decoded from; it is
+  /// carried onto [Worksheet.raw] so a Save-to-Library can persist the exact
+  /// `data: output` the backend flow does. Defaults to `{}` when a caller
+  /// (e.g. the Library re-hydration path) has nothing to round-trip.
+  Worksheet toDomain({Map<String, dynamic> raw = const <String, dynamic>{}}) {
     return Worksheet(
       title: _clean(title) ?? '',
       gradeLevel: _clean(gradeLevel),
@@ -82,6 +86,7 @@ class WorksheetResponseDto {
           .map((a) => a.toDomain())
           .where((a) => a.answer.isNotEmpty)
           .toList(growable: false),
+      raw: raw,
     );
   }
 }

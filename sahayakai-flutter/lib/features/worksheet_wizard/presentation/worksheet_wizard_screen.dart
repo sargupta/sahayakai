@@ -47,6 +47,11 @@ class _WorksheetWizardScreenState extends ConsumerState<WorksheetWizardScreen> {
   String? _subject;
   late AppLocale _language;
 
+  /// The request that produced the worksheet on screen, held so its Save action
+  /// can build the `content/save` body (which needs the prompt / language the
+  /// model output alone does not carry).
+  WorksheetRequest? _lastRequest;
+
   @override
   void initState() {
     super.initState();
@@ -70,6 +75,10 @@ class _WorksheetWizardScreenState extends ConsumerState<WorksheetWizardScreen> {
       subject: _subject,
       language: _language.aiName,
     );
+    _lastRequest = request;
+    // A fresh generation starts a fresh save state, so the previous worksheet's
+    // "Saved" badge does not carry over onto the new result.
+    ref.read(worksheetSaveControllerProvider.notifier).reset();
     ref.read(worksheetControllerProvider.notifier).generate(request);
   }
 
@@ -112,8 +121,11 @@ class _WorksheetWizardScreenState extends ConsumerState<WorksheetWizardScreen> {
             state: state,
             skeleton: const WorksheetSkeleton(),
             emptyMessage: l10n.worksheetEmpty,
-            onData: (worksheet) =>
-                WorksheetResultView(worksheet: worksheet, onRegenerate: _submit),
+            onData: (worksheet) => WorksheetResultView(
+              worksheet: worksheet,
+              onRegenerate: _submit,
+              saveRequest: _lastRequest,
+            ),
           );
 
     return ToolScaffold(

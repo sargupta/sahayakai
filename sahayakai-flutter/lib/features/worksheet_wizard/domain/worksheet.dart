@@ -100,6 +100,7 @@ class Worksheet {
     this.studentInstructions,
     this.activities = const <WorksheetActivity>[],
     this.answerKey = const <AnswerKeyEntry>[],
+    this.raw = const <String, dynamic>{},
   });
 
   final String title;
@@ -109,6 +110,15 @@ class Worksheet {
   final String? studentInstructions;
   final List<WorksheetActivity> activities;
   final List<AnswerKeyEntry> answerKey;
+
+  /// The verbatim `/api/ai/worksheet` 200 body (the `WorksheetWizardOutput`),
+  /// kept so a Save-to-Library round-trips byte-identically to what the model
+  /// produced — the same `data: output` payload the backend flow persists via
+  /// `dbAdapter.saveContent` and the Library reads back through
+  /// `mapSavedWorksheet`. Defaults to `{}` (e.g. a worksheet built directly in
+  /// a test or re-hydrated from the Library, where there is nothing new to
+  /// save).
+  final Map<String, dynamic> raw;
 
   /// True when the model returned nothing worth rendering — the view shows an
   /// empty result state rather than an unhelpful blank card.

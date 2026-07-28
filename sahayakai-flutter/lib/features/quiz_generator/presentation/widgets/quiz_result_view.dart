@@ -30,7 +30,7 @@ import '../../domain/quiz.dart';
 /// All model-authored prose flows through [AiText] (line-height 1.7 + Indic
 /// height behaviour) so matras and vowel signs never clip, and long compound
 /// words wrap instead of scrolling. See DESIGN_RUBRIC §3 / §8.
-class QuizResultView extends StatelessWidget {
+class QuizResultView extends StatefulWidget {
   const QuizResultView({super.key, required this.quiz, this.onRegenerate});
 
   final Quiz quiz;
@@ -41,7 +41,47 @@ class QuizResultView extends StatelessWidget {
   final VoidCallback? onRegenerate;
 
   @override
+  State<QuizResultView> createState() => _QuizResultViewState();
+}
+
+class _QuizResultViewState extends State<QuizResultView> {
+  /// Which answers are currently revealed, per difficulty variant. Lifted out
+  /// of the variant views (where it used to live) so the Copy export can honour
+  /// the on-screen "hide answers" state — a hidden answer must not leak into the
+  /// clipboard, the same way the web gates its export on `showAnswers`. Reveal
+  /// is remembered per variant, so switching a tab and coming back keeps what
+  /// the teacher had shown; a freshly-opened variant starts unspoiled (its set
+  /// is absent, hence empty).
+  final Map<QuizDifficulty, Set<int>> _revealed = <QuizDifficulty, Set<int>>{};
+
+  /// Read-only view of a variant's revealed indices (never mutates the map).
+  Set<int> _revealedOf(QuizVariant variant) =>
+      _revealed[variant.difficulty] ?? const <int>{};
+
+  void _toggle(QuizVariant variant, int index) {
+    setState(() {
+      final set = _revealed.putIfAbsent(variant.difficulty, () => <int>{});
+      if (!set.remove(index)) set.add(index);
+    });
+  }
+
+  void _toggleAll(QuizVariant variant) {
+    setState(() {
+      final set = _revealed.putIfAbsent(variant.difficulty, () => <int>{});
+      if (set.length == variant.questions.length) {
+        set.clear();
+      } else {
+        set
+          ..clear()
+          ..addAll(List<int>.generate(variant.questions.length, (i) => i));
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final quiz = widget.quiz;
+    final onRegenerate = widget.onRegenerate;
     final l10n = context.l10n;
 
     if (quiz.variants.isEmpty) {
@@ -82,9 +122,19 @@ class QuizResultView extends StatelessWidget {
           body: quiz.validationWarning!.message,
         ),
       if (quiz.variants.length == 1)
-        _VariantView(variant: quiz.variants.first)
+        _VariantView(
+          variant: quiz.variants.first,
+          revealed: _revealedOf(quiz.variants.first),
+          onToggle: (i) => _toggle(quiz.variants.first, i),
+          onToggleAll: () => _toggleAll(quiz.variants.first),
+        )
       else
-        _DifficultyTabs(variants: quiz.variants),
+        _DifficultyTabs(
+          variants: quiz.variants,
+          revealedOf: _revealedOf,
+          onToggle: _toggle,
+          onToggleAll: _toggleAll,
+        ),
     ];
 
     // Ink-settle: each block fades + rises in turn, so the document assembles
@@ -100,20 +150,33 @@ class QuizResultView extends StatelessWidget {
       meta: meta,
       footer: onRegenerate == null
           ? null
-          : _ActionBar(quiz: quiz, onRegenerate: onRegenerate!),
+          : _ActionBar(
+              quiz: quiz,
+              onRegenerate: onRegenerate,
+              revealed: _revealed,
+            ),
       children: revealed,
     );
   }
 }
 
 /// The document's action bar: Regenerate (secondary) over a Copy ghost. Copy
-/// exports the full quiz — every variant, with its answer key — as plain text
-/// to the clipboard, a presentation-only action with no controller involved.
+/// exports the quiz as plain text to the clipboard — a presentation-only action
+/// with no controller involved. It honours the on-screen reveal state: only
+/// answers the teacher has revealed are included, so a teacher who hid the
+/// answers before projecting does not paste the answer key into WhatsApp.
 class _ActionBar extends StatelessWidget {
-  const _ActionBar({required this.quiz, required this.onRegenerate});
+  const _ActionBar({
+    required this.quiz,
+    required this.onRegenerate,
+    required this.revealed,
+  });
 
   final Quiz quiz;
   final VoidCallback onRegenerate;
+
+  /// Revealed answer indices, per difficulty variant. See [_QuizResultViewState].
+  final Map<QuizDifficulty, Set<int>> revealed;
 
   @override
   Widget build(BuildContext context) {
@@ -124,7 +187,9 @@ class _ActionBar extends StatelessWidget {
     final messenger = ScaffoldMessenger.of(context);
 
     void copy() {
-      Clipboard.setData(ClipboardData(text: _quizAsText(quiz, l10n)));
+      Clipboard.setData(
+        ClipboardData(text: _quizAsText(quiz, l10n, revealed: revealed)),
+      );
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text(l10n.copyConfirmation)));
@@ -157,9 +222,15 @@ class _ActionBar extends StatelessWidget {
   }
 }
 
-/// A plain-text export of the whole quiz — every variant and its answer key —
-/// for the clipboard.
-String _quizAsText(Quiz quiz, AppLocalizations l10n) {
+/// A plain-text export of the quiz for the clipboard. A question's answer and
+/// explanation are written out ONLY when that question is currently revealed on
+/// screen ([revealed], keyed by variant difficulty); a hidden answer is left
+/// out, so a projected/printed copy stays unspoiled.
+String _quizAsText(
+  Quiz quiz,
+  AppLocalizations l10n, {
+  required Map<QuizDifficulty, Set<int>> revealed,
+}) {
   final b = StringBuffer();
   final heading = quiz.topic ?? quiz.variants.first.title;
   if (heading.isNotEmpty) b.writeln(heading);
@@ -170,6 +241,7 @@ String _quizAsText(Quiz quiz, AppLocalizations l10n) {
   if (metaBits.isNotEmpty) b.writeln(metaBits.join(' · '));
 
   for (final variant in quiz.variants) {
+    final shown = revealed[variant.difficulty] ?? const <int>{};
     b
       ..writeln()
       ..writeln(_difficultyLabel(l10n, variant.difficulty).toUpperCase());
@@ -182,9 +254,11 @@ String _quizAsText(Quiz quiz, AppLocalizations l10n) {
       for (var j = 0; j < q.options.length; j++) {
         b.writeln('   ${_optionMarker(j)}. ${q.options[j]}');
       }
-      b.writeln('   ${l10n.quizCorrectAnswer}: ${q.correctAnswer}');
-      if (q.explanation != null) {
-        b.writeln('   ${l10n.quizExplanation}: ${q.explanation}');
+      if (shown.contains(i)) {
+        b.writeln('   ${l10n.quizCorrectAnswer}: ${q.correctAnswer}');
+        if (q.explanation != null) {
+          b.writeln('   ${l10n.quizExplanation}: ${q.explanation}');
+        }
       }
     }
   }
@@ -197,9 +271,20 @@ String _quizAsText(Quiz quiz, AppLocalizations l10n) {
 /// drives an [AnimatedSwitcher] instead, so each variant is laid out at its
 /// natural height.
 class _DifficultyTabs extends StatefulWidget {
-  const _DifficultyTabs({required this.variants});
+  const _DifficultyTabs({
+    required this.variants,
+    required this.revealedOf,
+    required this.onToggle,
+    required this.onToggleAll,
+  });
 
   final List<QuizVariant> variants;
+
+  /// Read-only reveal set for a variant, and the callbacks that mutate it. State
+  /// lives up in [_QuizResultViewState] so the Copy export can see it.
+  final Set<int> Function(QuizVariant) revealedOf;
+  final void Function(QuizVariant, int) onToggle;
+  final void Function(QuizVariant) onToggleAll;
 
   @override
   State<_DifficultyTabs> createState() => _DifficultyTabsState();
@@ -280,6 +365,9 @@ class _DifficultyTabsState extends State<_DifficultyTabs>
               child: _VariantView(
                 key: ValueKey<QuizDifficulty>(variant.difficulty),
                 variant: variant,
+                revealed: widget.revealedOf(variant),
+                onToggle: (i) => widget.onToggle(variant, i),
+                onToggleAll: () => widget.onToggleAll(variant),
               ),
             );
           },
@@ -289,61 +377,48 @@ class _DifficultyTabsState extends State<_DifficultyTabs>
   }
 }
 
-/// One difficulty's questions, with a reveal-all shortcut. Reveal state is
-/// per-variant on purpose: switching tabs re-hides the answers.
-class _VariantView extends StatefulWidget {
-  const _VariantView({super.key, required this.variant});
+/// One difficulty's questions, with a reveal-all shortcut. Controlled: the
+/// reveal state lives up in [_QuizResultViewState] (so the Copy export can read
+/// it) and is passed back down here as [revealed] + the toggle callbacks.
+class _VariantView extends StatelessWidget {
+  const _VariantView({
+    super.key,
+    required this.variant,
+    required this.revealed,
+    required this.onToggle,
+    required this.onToggleAll,
+  });
 
   final QuizVariant variant;
+  final Set<int> revealed;
+  final void Function(int index) onToggle;
+  final VoidCallback onToggleAll;
 
-  @override
-  State<_VariantView> createState() => _VariantViewState();
-}
-
-class _VariantViewState extends State<_VariantView> {
-  final Set<int> _revealed = <int>{};
-
-  bool get _allRevealed => _revealed.length == widget.variant.questions.length;
-
-  void _toggleAll() {
-    setState(() {
-      if (_allRevealed) {
-        _revealed.clear();
-      } else {
-        _revealed.addAll(
-          List<int>.generate(widget.variant.questions.length, (i) => i),
-        );
-      }
-    });
-  }
-
-  void _toggle(int index) {
-    setState(() {
-      if (!_revealed.remove(index)) _revealed.add(index);
-    });
-  }
+  bool get _allRevealed =>
+      variant.questions.isNotEmpty &&
+      revealed.length == variant.questions.length;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final questions = widget.variant.questions;
+    final questions = variant.questions;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (widget.variant.teacherInstructions != null) ...[
+        if (variant.teacherInstructions != null) ...[
           NoteBanner(
             icon: LucideIcons.lightbulb,
             label: l10n.quizTeacherInstructions,
-            body: widget.variant.teacherInstructions!,
+            body: variant.teacherInstructions!,
           ),
           const SizedBox(height: AppSpacing.space4),
         ],
         Align(
           alignment: Alignment.centerLeft,
           child: TextButton.icon(
-            onPressed: questions.isEmpty ? null : _toggleAll,
+            onPressed: questions.isEmpty ? null : onToggleAll,
             style: TextButton.styleFrom(
               minimumSize: const Size(0, 48),
               padding: const EdgeInsets.symmetric(
@@ -365,8 +440,8 @@ class _VariantViewState extends State<_VariantView> {
           _QuestionCard(
             number: i + 1,
             question: questions[i],
-            isRevealed: _revealed.contains(i),
-            onToggle: () => _toggle(i),
+            isRevealed: revealed.contains(i),
+            onToggle: () => onToggle(i),
           ),
         ],
       ],

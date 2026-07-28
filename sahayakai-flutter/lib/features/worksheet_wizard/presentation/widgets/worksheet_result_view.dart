@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/i18n/gen/app_localizations.dart';
@@ -12,9 +13,12 @@ import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/bullet_dot.dart';
 import '../../../../shared/widgets/document_sheet.dart';
 import '../../../../shared/widgets/empty_view.dart';
+import '../../../../shared/widgets/inline_error.dart';
 import '../../../../shared/widgets/note_banner.dart';
+import '../../../../shared/widgets/primary_button.dart';
 import '../../../../shared/widgets/secondary_button.dart';
 import '../../domain/worksheet.dart';
+import '../worksheet_controller.dart';
 
 /// Renders a generated [Worksheet] as a printed document, not a chat dump
 /// (PREMIUM_DESIGN_SPEC.md §5 / §6b U8 — the reference every other tool copies).
@@ -34,6 +38,7 @@ class WorksheetResultView extends StatelessWidget {
     super.key,
     required this.worksheet,
     this.onRegenerate,
+    this.saveRequest,
   });
 
   final Worksheet worksheet;
@@ -42,6 +47,13 @@ class WorksheetResultView extends StatelessWidget {
   /// When null (e.g. a direct render in a test) the footer action bar is
   /// omitted.
   final VoidCallback? onRegenerate;
+
+  /// The request that produced [worksheet]. Supplies the prompt / language the
+  /// `POST /api/content/save` body needs (the model output alone carries no
+  /// prompt or language). When null — or when [onRegenerate] is null, so there
+  /// is no live generation behind the result — the Save action is omitted and
+  /// the footer falls back to Regenerate / Copy only.
+  final WorksheetRequest? saveRequest;
 
   @override
   Widget build(BuildContext context) {
@@ -106,20 +118,30 @@ class WorksheetResultView extends StatelessWidget {
       meta: meta,
       footer: onRegenerate == null
           ? null
-          : _ActionBar(worksheet: worksheet, onRegenerate: onRegenerate!),
+          : _ActionBar(
+              worksheet: worksheet,
+              onRegenerate: onRegenerate!,
+              saveRequest: saveRequest,
+            ),
       children: revealed,
     );
   }
 }
 
-/// The document's action bar: Regenerate (secondary) over a Copy ghost. Copy
-/// exports the worksheet as plain text to the clipboard — a presentation-only
-/// action, no controller involved.
+/// The document's action bar: the PUT-to-library Save (when a [saveRequest] is
+/// available) over Regenerate (secondary) and a Copy ghost. Copy exports the
+/// worksheet as plain text to the clipboard — a presentation-only action, no
+/// controller involved.
 class _ActionBar extends StatelessWidget {
-  const _ActionBar({required this.worksheet, required this.onRegenerate});
+  const _ActionBar({
+    required this.worksheet,
+    required this.onRegenerate,
+    this.saveRequest,
+  });
 
   final Worksheet worksheet;
   final VoidCallback onRegenerate;
+  final WorksheetRequest? saveRequest;
 
   @override
   Widget build(BuildContext context) {
@@ -140,6 +162,10 @@ class _ActionBar extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (saveRequest != null) ...[
+          _SaveBar(worksheet: worksheet, request: saveRequest!),
+          const SizedBox(height: AppSpacing.space3),
+        ],
         SecondaryButton(
           label: l10n.actionRegenerate,
           icon: LucideIcons.refreshCw,
@@ -159,6 +185,92 @@ class _ActionBar extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// The POST-to-library save action. Reads the save controller so the button
+/// reflects saving / saved / failed without ever disturbing the rendered
+/// worksheet. Mirrors the exam-paper `_SaveBar`.
+class _SaveBar extends ConsumerWidget {
+  const _SaveBar({required this.worksheet, required this.request});
+
+  final Worksheet worksheet;
+  final WorksheetRequest request;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final state = ref.watch(worksheetSaveControllerProvider);
+
+    Future<void> save() =>
+        ref.read(worksheetSaveControllerProvider.notifier).save(
+              worksheet: worksheet,
+              prompt: request.prompt,
+              gradeLevel: request.gradeLevel,
+              language: request.language,
+            );
+
+    // Saved: a non-empty contentId came back.
+    final savedId = state.valueOrNull;
+    if (!state.isLoading &&
+        !state.hasError &&
+        savedId != null &&
+        savedId.isNotEmpty) {
+      return Row(
+        children: [
+          Icon(
+            LucideIcons.checkCircle,
+            size: AppIconSize.inline,
+            color: scheme.primary,
+          ),
+          const SizedBox(width: AppSpacing.space2),
+          Expanded(
+            child: Text(
+              l10n.worksheetSaved,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: scheme.onSurfaceVariant, height: 1.4),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Failed: show the reason and let the teacher try the save again.
+    if (state.hasError) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          InlineError(
+            title: l10n.worksheetSaveFailedTitle,
+            message: l10n.worksheetSaveFailedBody,
+          ),
+          const SizedBox(height: AppSpacing.space3),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              onPressed: save,
+              icon:
+                  const Icon(LucideIcons.refreshCw, size: AppIconSize.inline),
+              label: Text(l10n.worksheetSaveRetry),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Idle or saving — the primary action, a saffron CTA whose width holds while
+    // it spins.
+    final saving = state.isLoading;
+    return PrimaryButton(
+      label: saving ? l10n.worksheetSaving : l10n.worksheetSave,
+      icon: saving ? null : LucideIcons.save,
+      isBusy: saving,
+      onPressed: save,
     );
   }
 }

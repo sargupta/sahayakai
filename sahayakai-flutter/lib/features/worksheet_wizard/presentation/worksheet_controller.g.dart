@@ -29,5 +29,30 @@ final worksheetControllerProvider =
     );
 
 typedef _$WorksheetController = AutoDisposeAsyncNotifier<Worksheet?>;
+String _$worksheetSaveControllerHash() =>
+    r'1af0800f38fea2d471cda02a3bf1f2db24f43cf9';
+
+/// Drives the "Save to Library" action independently of the generate state, so
+/// saving a worksheet never disturbs the rendered result (mirrors
+/// `ExamPaperSaveController`):
+///   - `AsyncData(null)`         -> idle (not yet saved),
+///   - `AsyncLoading`            -> saving,
+///   - `AsyncData(contentId)`    -> saved (non-empty id),
+///   - `AsyncError`              -> save failed (offer retry).
+///
+/// Copied from [WorksheetSaveController].
+@ProviderFor(WorksheetSaveController)
+final worksheetSaveControllerProvider =
+    AutoDisposeAsyncNotifierProvider<WorksheetSaveController, String?>.internal(
+      WorksheetSaveController.new,
+      name: r'worksheetSaveControllerProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$worksheetSaveControllerHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$WorksheetSaveController = AutoDisposeAsyncNotifier<String?>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

@@ -243,6 +243,84 @@ void main() {
     });
   });
 
+  group('free-text subject (Commerce / Humanities escape hatch)', () {
+    testWidgets(
+        'choosing "Other subject" reveals a field whose value flows into the '
+        'request', (tester) async {
+      // A tall surface so the grade/subject dropdown menus lay out every item
+      // (Class 11 and "Other subject" both sit near the bottom of their lists).
+      tester.view.physicalSize = const Size(800, 2000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      final spy = _SpyController();
+      await tester.pumpWidget(
+        _host(overrides: [examPaperControllerProvider.overrideWith(() => spy)]),
+      );
+      await tester.pumpAndSettle();
+
+      await _selectDropdown(tester, boardField, 'CBSE');
+      await _selectDropdown(tester, gradeField, 'Class 11');
+
+      // No free-text field until "Other subject" is chosen.
+      expect(find.byType(TextFormField), findsNothing);
+
+      // Add a chapter first, while the chapters TextField is the only text
+      // input on screen (keeps the finder unambiguous).
+      final chaptersField = find.byType(TextField);
+      await tester.ensureVisible(chaptersField);
+      await tester.enterText(chaptersField, 'Microeconomics');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      // Economics is not one of the 13 fixed subjects — choose "Other subject".
+      await _selectDropdown(tester, subjectField, 'Other subject');
+      final otherField = find.byType(TextFormField);
+      expect(otherField, findsOneWidget,
+          reason: 'the free-text subject field is revealed');
+
+      await tester.ensureVisible(otherField);
+      await tester.enterText(otherField, 'Economics');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Generate'));
+      await tester.pumpAndSettle();
+
+      expect(spy.calls, 1);
+      expect(spy.last?.subject, 'Economics');
+      expect(spy.last?.chapters, ['Microeconomics']);
+    });
+
+    testWidgets('an empty free-text subject blocks the request', (tester) async {
+      tester.view.physicalSize = const Size(800, 2000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      final spy = _SpyController();
+      await tester.pumpWidget(
+        _host(overrides: [examPaperControllerProvider.overrideWith(() => spy)]),
+      );
+      await tester.pumpAndSettle();
+
+      await _selectDropdown(tester, boardField, 'CBSE');
+      await _selectDropdown(tester, gradeField, 'Class 11');
+
+      final chaptersField = find.byType(TextField);
+      await tester.ensureVisible(chaptersField);
+      await tester.enterText(chaptersField, 'Microeconomics');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      await _selectDropdown(tester, subjectField, 'Other subject');
+      // Leave the free-text field empty.
+      await tester.tap(find.text('Generate'));
+      await tester.pumpAndSettle();
+
+      expect(spy.calls, 0);
+      expect(find.text('Please enter a subject.'), findsOneWidget);
+    });
+  });
+
   group('overflow gates (DESIGN_RUBRIC §12.9, §12.10, §12.13)', () {
     for (final brightness in Brightness.values) {
       for (final scale in <double>[1.0, 1.3]) {

@@ -38,6 +38,7 @@ class AssessAssignmentResultView extends StatelessWidget {
     super.key,
     required this.assessment,
     this.onRegenerate,
+    this.mode = AssessmentMode.full,
   });
 
   final Assessment assessment;
@@ -45,6 +46,14 @@ class AssessAssignmentResultView extends StatelessWidget {
   /// Re-runs grading from the current form (the controller's `assess`). When
   /// null (e.g. a direct render in a test) the footer action bar is omitted.
   final VoidCallback? onRegenerate;
+
+  /// The mode the teacher chose for this run. It matters because the backend
+  /// ignores it — every request runs the full transcribe→score→feedback
+  /// pipeline, so a "Read only" pass STILL returns a grade and feedback. When
+  /// the teacher asked to only read the work ([AssessmentMode.transcribe]), the
+  /// score-side sections are a false promise, so we suppress them here and lead
+  /// with just the transcript. `full` and `score` show everything as before.
+  final AssessmentMode mode;
 
   @override
   Widget build(BuildContext context) {
@@ -57,12 +66,20 @@ class AssessAssignmentResultView extends StatelessWidget {
       );
     }
 
+    // "Read only" mode asked for a transcript, not a grade — so hide everything
+    // the model scored (the gauge, points/confidence badges, per-criterion
+    // scores and the evaluative feedback), keeping only the transcript and any
+    // image-quality warnings that bear on the reading itself.
+    final scoreSuppressed = mode == AssessmentMode.transcribe;
+
     final percent = assessment.scorePercent;
     final hasRubric = assessment.rubric?.title.isNotEmpty ?? false;
 
     // Points and confidence ride in the masthead; the score is the hero gauge.
     final meta = <Widget>[
-      if (assessment.pointsPossible != null && assessment.pointsPossible! > 0)
+      if (!scoreSuppressed &&
+          assessment.pointsPossible != null &&
+          assessment.pointsPossible! > 0)
         AppBadge(
           icon: LucideIcons.target,
           label: l10n.assessPoints(
@@ -71,7 +88,7 @@ class AssessAssignmentResultView extends StatelessWidget {
           ),
           tone: AppBadgeTone.accent,
         ),
-      if (assessment.confidencePercent != null)
+      if (!scoreSuppressed && assessment.confidencePercent != null)
         AppBadge(
           icon: LucideIcons.gauge,
           label: l10n.assessConfidence('${assessment.confidencePercent}'),
@@ -81,7 +98,7 @@ class AssessAssignmentResultView extends StatelessWidget {
     // The document blocks, in reading order. Content is unchanged from the flat
     // renderer — only the composition around it is new.
     final blocks = <Widget>[
-      if (percent != null || hasRubric)
+      if (!scoreSuppressed && (percent != null || hasRubric))
         _ScoreHero(assessment: assessment, percent: percent),
       if (assessment.warnings.isNotEmpty)
         _WarningsCard(warnings: assessment.warnings),
@@ -90,27 +107,27 @@ class AssessAssignmentResultView extends StatelessWidget {
           title: l10n.assessTranscriptSection,
           child: AiText(assessment.displayTranscript!),
         ),
-      if (assessment.perCriterionScores.isNotEmpty)
+      if (!scoreSuppressed && assessment.perCriterionScores.isNotEmpty)
         DocumentSheetSection(
           title: l10n.assessCriteriaSection,
           child: _CriteriaList(scores: assessment.perCriterionScores),
         ),
-      if (assessment.strengths.isNotEmpty)
+      if (!scoreSuppressed && assessment.strengths.isNotEmpty)
         DocumentSheetSection(
           title: l10n.assessStrengthsSection,
           child: _Bullets(items: assessment.strengths),
         ),
-      if (assessment.improvements.isNotEmpty)
+      if (!scoreSuppressed && assessment.improvements.isNotEmpty)
         DocumentSheetSection(
           title: l10n.assessImprovementsSection,
           child: _Bullets(items: assessment.improvements),
         ),
-      if (assessment.nextSteps.isNotEmpty)
+      if (!scoreSuppressed && assessment.nextSteps.isNotEmpty)
         DocumentSheetSection(
           title: l10n.assessNextStepsSection,
           child: _Bullets(items: assessment.nextSteps),
         ),
-      if (assessment.teacherNote != null)
+      if (!scoreSuppressed && assessment.teacherNote != null)
         DocumentSheetSection(
           title: l10n.assessTeacherNoteSection,
           child: AiText(assessment.teacherNote!),
@@ -130,7 +147,11 @@ class AssessAssignmentResultView extends StatelessWidget {
       meta: meta,
       footer: onRegenerate == null
           ? null
-          : _ActionBar(assessment: assessment, onRegenerate: onRegenerate!),
+          : _ActionBar(
+              assessment: assessment,
+              onRegenerate: onRegenerate!,
+              includeScore: !scoreSuppressed,
+            ),
       children: revealed,
     );
   }
@@ -348,10 +369,19 @@ class _Bullets extends StatelessWidget {
 /// exports the scorecard as plain text to the clipboard — a presentation-only
 /// action, no controller involved and no student name (grading carries none).
 class _ActionBar extends StatelessWidget {
-  const _ActionBar({required this.assessment, required this.onRegenerate});
+  const _ActionBar({
+    required this.assessment,
+    required this.onRegenerate,
+    this.includeScore = true,
+  });
 
   final Assessment assessment;
   final VoidCallback onRegenerate;
+
+  /// Whether the clipboard export should carry the score-side sections. False in
+  /// "Read only" mode, so a copied transcript is not padded with a grade and
+  /// feedback the teacher chose not to run.
+  final bool includeScore;
 
   @override
   Widget build(BuildContext context) {
@@ -362,7 +392,9 @@ class _ActionBar extends StatelessWidget {
     final messenger = ScaffoldMessenger.of(context);
 
     void copy() {
-      Clipboard.setData(ClipboardData(text: _assessmentAsText(assessment, l10n)));
+      Clipboard.setData(ClipboardData(
+        text: _assessmentAsText(assessment, l10n, includeScore: includeScore),
+      ));
       messenger
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text(l10n.copyConfirmation)));
@@ -396,18 +428,26 @@ class _ActionBar extends StatelessWidget {
 }
 
 /// A plain-text export of the scorecard, for the clipboard. Carries no student
-/// name — grading collects none.
-String _assessmentAsText(Assessment assessment, AppLocalizations l10n) {
+/// name — grading collects none. When [includeScore] is false ("Read only"
+/// mode) the export is just the transcript — no grade, criteria or feedback,
+/// matching what is shown on screen.
+String _assessmentAsText(
+  Assessment assessment,
+  AppLocalizations l10n, {
+  bool includeScore = true,
+}) {
   final b = StringBuffer();
   final percent = assessment.scorePercent;
-  if (percent != null) {
-    b.writeln('$percent ${l10n.assessScoreOutOf}');
-  }
-  if (assessment.pointsPossible != null && assessment.pointsPossible! > 0) {
-    b.writeln(l10n.assessPoints(
-      _formatNum(assessment.pointsEarned ?? 0),
-      _formatNum(assessment.pointsPossible!),
-    ));
+  if (includeScore) {
+    if (percent != null) {
+      b.writeln('$percent ${l10n.assessScoreOutOf}');
+    }
+    if (assessment.pointsPossible != null && assessment.pointsPossible! > 0) {
+      b.writeln(l10n.assessPoints(
+        _formatNum(assessment.pointsEarned ?? 0),
+        _formatNum(assessment.pointsPossible!),
+      ));
+    }
   }
 
   void proseSection(String title, String? body) {
@@ -430,24 +470,26 @@ String _assessmentAsText(Assessment assessment, AppLocalizations l10n) {
   }
 
   proseSection(l10n.assessTranscriptSection, assessment.displayTranscript);
-  if (assessment.perCriterionScores.isNotEmpty) {
-    b
-      ..writeln()
-      ..writeln(l10n.assessCriteriaSection);
-    for (final c in assessment.perCriterionScores) {
-      final pts = (c.points != null && c.maxPoints != null)
-          ? ' (${l10n.assessCriterionPoints(_formatNum(c.points!), _formatNum(c.maxPoints!))})'
-          : '';
-      b.writeln('- ${c.criterionName}$pts');
-      if (c.feedback != null && c.feedback!.trim().isNotEmpty) {
-        b.writeln('  ${c.feedback}');
+  if (includeScore) {
+    if (assessment.perCriterionScores.isNotEmpty) {
+      b
+        ..writeln()
+        ..writeln(l10n.assessCriteriaSection);
+      for (final c in assessment.perCriterionScores) {
+        final pts = (c.points != null && c.maxPoints != null)
+            ? ' (${l10n.assessCriterionPoints(_formatNum(c.points!), _formatNum(c.maxPoints!))})'
+            : '';
+        b.writeln('- ${c.criterionName}$pts');
+        if (c.feedback != null && c.feedback!.trim().isNotEmpty) {
+          b.writeln('  ${c.feedback}');
+        }
       }
     }
+    bulletSection(l10n.assessStrengthsSection, assessment.strengths);
+    bulletSection(l10n.assessImprovementsSection, assessment.improvements);
+    bulletSection(l10n.assessNextStepsSection, assessment.nextSteps);
+    proseSection(l10n.assessTeacherNoteSection, assessment.teacherNote);
   }
-  bulletSection(l10n.assessStrengthsSection, assessment.strengths);
-  bulletSection(l10n.assessImprovementsSection, assessment.improvements);
-  bulletSection(l10n.assessNextStepsSection, assessment.nextSteps);
-  proseSection(l10n.assessTeacherNoteSection, assessment.teacherNote);
   return b.toString().trimRight();
 }
 

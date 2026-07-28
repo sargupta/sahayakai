@@ -2162,6 +2162,42 @@ abstract class AppLocalizations {
   /// **'No worksheet came back for that page. Please try a clearer photo or a different prompt.'**
   String get worksheetNoContent;
 
+  /// Label for the button that saves the worksheet to the library.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to Library'**
+  String get worksheetSave;
+
+  /// Label while the save request is in flight.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving'**
+  String get worksheetSaving;
+
+  /// Confirmation shown once the worksheet is saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to your Library'**
+  String get worksheetSaved;
+
+  /// Title of the inline error shown when a save fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save'**
+  String get worksheetSaveFailedTitle;
+
+  /// Body of the inline error shown when a save fails.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not save this worksheet to your library. Please try again.'**
+  String get worksheetSaveFailedBody;
+
+  /// Label for the retry button after a failed save.
+  ///
+  /// In en, this message translates to:
+  /// **'Try saving again'**
+  String get worksheetSaveRetry;
+
   /// Title shown when the API returns 403 PLAN_UPGRADE_REQUIRED.
   ///
   /// In en, this message translates to:
@@ -2431,6 +2467,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please choose a subject.'**
   String get examPaperSubjectError;
+
+  /// Dropdown option that reveals a free-text subject field, for subjects not in the list (e.g. Economics, Business Studies, Political Science).
+  ///
+  /// In en, this message translates to:
+  /// **'Other subject'**
+  String get examPaperSubjectOther;
+
+  /// Label for the free-text field shown when 'Other subject' is chosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Subject name'**
+  String get examPaperSubjectOtherLabel;
+
+  /// Placeholder in the free-text subject field.
+  ///
+  /// In en, this message translates to:
+  /// **'For example, Economics'**
+  String get examPaperSubjectOtherHint;
+
+  /// Validation error when 'Other subject' is chosen but no subject is typed.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a subject.'**
+  String get examPaperSubjectOtherError;
 
   /// Label for the chapters add-chip list.
   ///

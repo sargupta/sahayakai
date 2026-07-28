@@ -1432,6 +1432,30 @@
   "@worksheetNoContent": {
     "description": "Shown when the response carried no usable worksheet."
   },
+  "worksheetSave": "Save to Library",
+  "@worksheetSave": {
+    "description": "Label for the button that saves the worksheet to the library."
+  },
+  "worksheetSaving": "Saving",
+  "@worksheetSaving": {
+    "description": "Label while the save request is in flight."
+  },
+  "worksheetSaved": "Saved to your Library",
+  "@worksheetSaved": {
+    "description": "Confirmation shown once the worksheet is saved."
+  },
+  "worksheetSaveFailedTitle": "Could not save",
+  "@worksheetSaveFailedTitle": {
+    "description": "Title of the inline error shown when a save fails."
+  },
+  "worksheetSaveFailedBody": "We could not save this worksheet to your library. Please try again.",
+  "@worksheetSaveFailedBody": {
+    "description": "Body of the inline error shown when a save fails."
+  },
+  "worksheetSaveRetry": "Try saving again",
+  "@worksheetSaveRetry": {
+    "description": "Label for the retry button after a failed save."
+  },
   "worksheetUpgradeTitle": "A higher plan is needed",
   "@worksheetUpgradeTitle": {
     "description": "Title shown when the API returns 403 PLAN_UPGRADE_REQUIRED."
@@ -1616,6 +1640,22 @@
   "examPaperSubjectError": "Please choose a subject.",
   "@examPaperSubjectError": {
     "description": "Validation error when no subject is selected."
+  },
+  "examPaperSubjectOther": "Other subject",
+  "@examPaperSubjectOther": {
+    "description": "Dropdown option that reveals a free-text subject field, for subjects not in the list (e.g. Economics, Business Studies, Political Science)."
+  },
+  "examPaperSubjectOtherLabel": "Subject name",
+  "@examPaperSubjectOtherLabel": {
+    "description": "Label for the free-text field shown when 'Other subject' is chosen."
+  },
+  "examPaperSubjectOtherHint": "For example, Economics",
+  "@examPaperSubjectOtherHint": {
+    "description": "Placeholder in the free-text subject field."
+  },
+  "examPaperSubjectOtherError": "Please enter a subject.",
+  "@examPaperSubjectOtherError": {
+    "description": "Validation error when 'Other subject' is chosen but no subject is typed."
   },
   "examPaperChaptersLabel": "Chapters",
   "@examPaperChaptersLabel": {

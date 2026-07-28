@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/worksheet_wizard/domain/worksheet.dart';
@@ -26,17 +27,25 @@ const String kLongWord = 'A supercalifragilisticexpialidociousworksheetword?';
 const Size kNarrowPhone = Size(360, 900);
 
 /// Hosts a result-layer widget in the same shell the real screen uses: a
-/// scrolling, page-padded body, so height and wrapping behave as in production.
-Widget hostResult(Widget child, {Brightness brightness = Brightness.light}) {
-  return MaterialApp(
-    theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
-    locale: const Locale('en'),
-    localizationsDelegates: AppLocalizations.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    home: Scaffold(
-      body: SingleChildScrollView(
-        padding: AppSpacing.pagePadding,
-        child: child,
+/// scrolling, page-padded body inside a [ProviderScope] (so the Save bar's
+/// providers resolve), so height and wrapping behave as in production.
+Widget hostResult(
+  Widget child, {
+  Brightness brightness = Brightness.light,
+  List<Override> overrides = const [],
+}) {
+  return ProviderScope(
+    overrides: overrides,
+    child: MaterialApp(
+      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+      locale: const Locale('en'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(
+        body: SingleChildScrollView(
+          padding: AppSpacing.pagePadding,
+          child: child,
+        ),
       ),
     ),
   );

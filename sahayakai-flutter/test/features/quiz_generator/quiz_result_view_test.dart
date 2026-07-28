@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/features/quiz_generator/presentation/widgets/quiz_result_view.dart';
 import 'package:sahayakai/features/quiz_generator/presentation/widgets/quiz_skeleton.dart';
@@ -357,6 +358,62 @@ void main() {
       await tester.pump(); // let the snackbar appear
 
       expect(find.text('Copied to clipboard'), findsOneWidget);
+    });
+
+    testWidgets(
+        'Copy excludes hidden answers and includes revealed ones (the '
+        'hide-answers toggle is honoured)', (tester) async {
+      tester.view.physicalSize = const Size(360, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      // Capture whatever is written to the clipboard.
+      String? clipped;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'Clipboard.setData') {
+            clipped = (call.arguments as Map)['text'] as String?;
+          }
+          return null;
+        },
+      );
+      addTearDown(() => tester.binding.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null));
+
+      // A single variant keeps the reveal state simple (no tabs).
+      await tester.pumpWidget(
+        hostResult(
+          QuizResultView(quiz: buildQuiz(onlyMedium: true), onRegenerate: () {}),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      Future<void> tapCopy() async {
+        await tester.ensureVisible(find.text('Copy'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Copy'));
+        await tester.pump();
+      }
+
+      // Answers start hidden, so the export must NOT carry the answer key.
+      await tapCopy();
+      expect(clipped, isNotNull);
+      expect(clipped, contains('What is one half')); // the question is there
+      expect(clipped, isNot(contains('Correct answer:')),
+          reason: 'a hidden answer must not leak into the clipboard');
+      expect(clipped, isNot(contains('Half means two equal parts')));
+
+      // Reveal every answer, then copy again — now the key is included.
+      await tester.ensureVisible(find.text('Show all answers'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Show all answers'));
+      await tester.pumpAndSettle();
+
+      await tapCopy();
+      expect(clipped, contains('Correct answer:'),
+          reason: 'a revealed answer is included in the export');
+      expect(clipped, contains('Half means two equal parts'));
     });
 
     testWidgets('with no onRegenerate the footer action bar is absent',

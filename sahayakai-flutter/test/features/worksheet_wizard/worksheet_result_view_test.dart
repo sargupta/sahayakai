@@ -4,6 +4,8 @@ import 'package:sahayakai/features/worksheet_wizard/domain/worksheet.dart';
 import 'package:sahayakai/features/worksheet_wizard/presentation/widgets/worksheet_result_view.dart';
 import 'package:sahayakai/shared/widgets/empty_view.dart';
 
+import '../../support/app_harness.dart';
+import '../../support/fake_api_client.dart';
 import 'worksheet_fixtures.dart';
 
 /// Result-layer gates for the Worksheet Wizard. Renders a real worksheet inside
@@ -85,6 +87,71 @@ void main() {
       expect(find.byType(EmptyView), findsOneWidget);
       expect(find.textContaining('No worksheet came back'), findsOneWidget);
       expect(find.textContaining('Counting Mangoes'), findsNothing);
+    });
+  });
+
+  group('save to library', () {
+    testWidgets(
+        'a save request surfaces a Save action that POSTs to content/save',
+        (tester) async {
+      tester.view.physicalSize = const Size(360, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      final client = FakeApiClient(
+        postResponse: <String, dynamic>{'success': true, 'id': 'ws-9'},
+      );
+
+      const request = WorksheetRequest(
+        imageDataUri: 'data:image/png;base64,AAAA',
+        prompt: 'Counting mangoes',
+        gradeLevel: 'Class 2',
+        language: 'English',
+      );
+
+      await tester.pumpWidget(
+        hostResult(
+          WorksheetResultView(
+            worksheet: buildWorksheet(),
+            onRegenerate: () {},
+            saveRequest: request,
+          ),
+          overrides: [apiClientOverride(client)],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // The Save action is now offered (it was Copy-only before Unit 14).
+      final save = find.text('Save to Library');
+      expect(save, findsOneWidget);
+
+      await tester.ensureVisible(save);
+      await tester.pumpAndSettle();
+      await tester.tap(save);
+      await tester.pumpAndSettle();
+
+      // It hit the real content/save endpoint and reflected the saved state.
+      expect(client.posts.single.path, '/api/content/save');
+      expect((client.posts.single.data! as Map)['type'], 'worksheet');
+      expect(find.text('Saved to your Library'), findsOneWidget);
+    });
+
+    testWidgets('with no saveRequest the footer has no Save action',
+        (tester) async {
+      tester.view.physicalSize = const Size(360, 2000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        hostResult(
+          WorksheetResultView(worksheet: buildWorksheet(), onRegenerate: () {}),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Save to Library'), findsNothing);
+      expect(find.text('Regenerate'), findsOneWidget);
+      expect(find.text('Copy'), findsOneWidget);
     });
   });
 
