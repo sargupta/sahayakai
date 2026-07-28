@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# ─────────────────────────────────────────────────────────────────────────────
+# SahayakAI Flutter — pre-commit hook
+#
+# Mirrors sahayakai-main/scripts/hooks/pre-commit's convention (dart type
+# check only for the sub-project that changed, print "✓ Pre-commit checks
+# passed" on success) — but wired for THIS worktree, whose git-tracked
+# Flutter app root is `sahayakai-flutter/` at the worktree top level rather
+# than `sahayakai_mobile/`. The shared monorepo-wide hook at
+# `.git/hooks/pre-commit` (installed from sahayakai-main) only pattern-matches
+# `sahayakai_mobile/*` and `sahayakai-main/*` staged paths, so on this
+# worktree's branch (feature/flutter-rebuild) it was a silent no-op: it always
+# printed "✓ Pre-commit checks passed" without ever running `flutter analyze`,
+# because no staged path ever matched `sahayakai_mobile/*`.
+#
+# This hook is installed via a WORKTREE-SCOPED `core.hooksPath`
+# (see scripts/install-hooks.sh) so it only affects this worktree — the
+# shared monorepo hook keeps working unmodified for every other worktree.
+#
+# Runs (only for the sub-checks whose staged files actually changed):
+#   1. flutter analyze          (any staged lib/**/*.dart)
+#   2. scripts/token_guard.sh   (any staged lib/**/*.dart)
+#   3. scripts/check_i18n_gate.sh (any staged lib/core/i18n/arb/*.arb —
+#      T2-U8's regression gate: fails the commit if any Login/Onboarding key
+#      is untranslated — baked-English — in any of the 10 non-English
+#      locales. Deliberately narrow: the larger ~480-key backlog outside
+#      Login/Onboarding is tracked separately and does not block commits.)
+#
+# Install once (or after a hook update): bash scripts/install-hooks.sh
+# ─────────────────────────────────────────────────────────────────────────────
+set -e
+
+# Git sets GIT_DIR / GIT_WORK_TREE / GIT_INDEX_FILE / GIT_PREFIX / GIT_COMMON_DIR
+# in every hook's environment, pointing at THIS repo's worktree. `flutter`
+# internally shells out to `git` to self-version the Flutter SDK checkout
+# (a completely different repo) — inheriting those vars makes that inner git
+# call run against OUR repo/index instead, which breaks SDK version detection
+# ("The current Flutter SDK version is 0.0.0-unknown.", then a bogus pub
+# resolution failure). Unset them before running anything that shells out.
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR GIT_OBJECT_DIRECTORY
+
+REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+cd "$REPO_ROOT"
+
+DART_CHANGED=false
+ARB_CHANGED=false
+
+while IFS= read -r file; do
+  case "$file" in
+    # `git diff --cached --name-only` paths are relative to the WORKTREE
+    # TOPLEVEL (one level above this Flutter app, i.e. prefixed with
+    # `sahayakai-flutter/`), not this repo's own root — hence the leading
+    # `*`. Matching only `lib/core/i18n/arb/*.arb` here was exactly the same
+    # prefix-mismatch bug that made the shared monorepo hook a silent no-op
+    # for this worktree (see the header comment above).
+    *lib/core/i18n/arb/*.arb) ARB_CHANGED=true ;;
+    *.dart)                   DART_CHANGED=true ;;
+  esac
+done < <(git diff --cached --name-only)
+
+if $DART_CHANGED; then
+  echo ""
+  echo "━━━ Flutter analyze ─────────────────────────────────────────────────────"
+  if ! command -v flutter &>/dev/null; then
+    echo "⚠  flutter not found in PATH — skipping Flutter analysis."
+    echo "   Run: export PATH=\"\$PATH:\$HOME/flutter/bin\" and re-commit."
+  else
+    flutter analyze
+    echo "✓  Flutter analyze passed"
+  fi
+
+  echo ""
+  echo "━━━ Token guard ─────────────────────────────────────────────────────────"
+  bash scripts/token_guard.sh
+fi
+
+if $ARB_CHANGED; then
+  echo ""
+  echo "━━━ i18n gate (Login + Onboarding, T2-U8) ─────────────────────────────────"
+  bash scripts/check_i18n_gate.sh
+fi
+
+echo ""
+echo "✓  Pre-commit checks passed — committing."
+echo ""

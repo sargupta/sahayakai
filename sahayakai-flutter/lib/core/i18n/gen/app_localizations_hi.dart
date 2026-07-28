@@ -67,80 +67,80 @@ class AppLocalizationsHi extends AppLocalizations {
       'पाठ योजना, क्विज़ और बहुत कुछ के लिए साइन इन करें।';
 
   @override
-  String get loginGoogle => 'Continue with Google';
+  String get loginGoogle => 'Google से जारी रखें';
 
   @override
   String get loginPrivacyNote =>
-      'We use your Google account only to sign you in. Your work stays yours.';
+      'हम आपके Google खाते का उपयोग केवल साइन इन करने के लिए करते हैं। आपका काम आपका ही रहता है।';
 
   @override
-  String get loginLanguagePrompt => 'Choose your language';
+  String get loginLanguagePrompt => 'अपनी भाषा चुनें';
 
   @override
   String get loginLanguageHint =>
-      'SahayakAI works in your language, and writes your teaching material in it too.';
+      'SahayakAI आपकी भाषा में काम करता है, और आपकी शिक्षण सामग्री भी उसी भाषा में लिखता है।';
 
   @override
-  String get loginValueLessons => 'Plan a full lesson in minutes';
+  String get loginValueLessons => 'मिनटों में पूरी पाठ योजना बनाएं';
 
   @override
-  String get loginValueQuizzes => 'Build a quiz at three difficulty levels';
+  String get loginValueQuizzes => 'तीन कठिनाई स्तरों पर क्विज़ बनाएं';
 
   @override
   String get loginValueAnswers =>
-      'Answer any classroom question, in your language';
+      'अपनी भाषा में कक्षा के किसी भी प्रश्न का उत्तर दें';
 
   @override
-  String get onboardingTitle => 'Set up SahayakAI';
+  String get onboardingTitle => 'SahayakAI सेट अप करें';
 
   @override
-  String get onboardingSkip => 'Skip for now';
+  String get onboardingSkip => 'अभी के लिए छोड़ें';
 
   @override
   String onboardingStepLabel(int current, int total) {
-    return 'Step $current of $total';
+    return '$total में से चरण $current';
   }
 
   @override
-  String get onboardingBack => 'Back';
+  String get onboardingBack => 'वापस';
 
   @override
-  String get onboardingNext => 'Next';
+  String get onboardingNext => 'अगला';
 
   @override
-  String get onboardingSaveAndContinue => 'Save and continue';
+  String get onboardingSaveAndContinue => 'सहेजें और जारी रखें';
 
   @override
-  String get onboardingFinish => 'Go to my dashboard';
+  String get onboardingFinish => 'अपने डैशबोर्ड पर जाएं';
 
   @override
-  String get onboardingLanguageTitle => 'Which language do you teach in?';
+  String get onboardingLanguageTitle => 'आप किस भाषा में पढ़ाते हैं?';
 
   @override
   String get onboardingLanguageBody =>
-      'Your lesson plans, quizzes and answers arrive in the language you choose. You can change it at any time.';
+      'आपकी चुनी हुई भाषा में ही पाठ योजनाएं, क्विज़ और उत्तर मिलेंगे। आप इसे कभी भी बदल सकते हैं।';
 
   @override
-  String get onboardingProfileTitle => 'Tell us about your classroom';
+  String get onboardingProfileTitle => 'अपनी कक्षा के बारे में बताएं';
 
   @override
   String get onboardingProfileBody =>
-      'Every field is optional. What you share is used to match your material to your board, your classes and your state.';
+      'हर फ़ील्ड वैकल्पिक है। आप जो साझा करते हैं, उसका उपयोग आपकी सामग्री को आपके बोर्ड, आपकी कक्षाओं और आपके राज्य के अनुसार तैयार करने के लिए किया जाता है।';
 
   @override
-  String get onboardingReadyTitle => 'You are ready to begin';
+  String get onboardingReadyTitle => 'आप शुरू करने के लिए तैयार हैं';
 
   @override
   String get onboardingReadyBody =>
-      'Your lesson plans, quizzes and answers will match this. You can change any of it later from your profile.';
+      'आपकी पाठ योजनाएं, क्विज़ और उत्तर इसी के अनुसार होंगे। आप इसे बाद में अपनी प्रोफ़ाइल से कभी भी बदल सकते हैं।';
 
   @override
   String get onboardingSaveFailed =>
-      'We could not save your profile. You can continue now and add it later from your profile.';
+      'हम आपकी प्रोफ़ाइल सहेज नहीं सके। आप अभी जारी रख सकते हैं और इसे बाद में अपनी प्रोफ़ाइल से जोड़ सकते हैं।';
 
   @override
   String get onboardingSaveSignIn =>
-      'Please sign in again to save your profile. You can continue now and add it later.';
+      'अपनी प्रोफ़ाइल सहेजने के लिए कृपया फिर से साइन इन करें। आप अभी जारी रख सकते हैं और इसे बाद में जोड़ सकते हैं।';
 
   @override
   String get dashboardGreeting => 'वापसी पर स्वागत है';
@@ -731,7 +731,7 @@ class AppLocalizationsHi extends AppLocalizations {
       'This helps us match your material to your board and classroom.';
 
   @override
-  String get settingsBoardLabel => 'Education board';
+  String get settingsBoardLabel => 'शिक्षा बोर्ड';
 
   @override
   String get settingsBoardNone => 'Not set';
@@ -744,7 +744,7 @@ class AppLocalizationsHi extends AppLocalizations {
       'Choose every qualification you hold.';
 
   @override
-  String get settingsAdminRoleLabel => 'Administrative role';
+  String get settingsAdminRoleLabel => 'प्रशासनिक भूमिका';
 
   @override
   String get settingsAdminRoleNone => 'Not set';
@@ -855,19 +855,19 @@ class AppLocalizationsHi extends AppLocalizations {
   String get profileNoName => 'Your profile';
 
   @override
-  String get profileSectionAbout => 'About you';
+  String get profileSectionAbout => 'आपके बारे में';
 
   @override
-  String get profileSectionTeaching => 'What you teach';
+  String get profileSectionTeaching => 'आप क्या पढ़ाते हैं';
 
   @override
-  String get profileSectionLocation => 'Where you teach';
+  String get profileSectionLocation => 'आप कहां पढ़ाते हैं';
 
   @override
-  String get profileSectionContact => 'How we reach you';
+  String get profileSectionContact => 'हम आपसे कैसे संपर्क करें';
 
   @override
-  String get profileNameLabel => 'Your name';
+  String get profileNameLabel => 'आपका नाम';
 
   @override
   String get profileNameHint =>
@@ -877,10 +877,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get profileNameInvalid => 'Please use a shorter name.';
 
   @override
-  String get profileSchoolLabel => 'School name';
+  String get profileSchoolLabel => 'स्कूल का नाम';
 
   @override
-  String get profileBoardCategoryLabel => 'Board type';
+  String get profileBoardCategoryLabel => 'बोर्ड का प्रकार';
 
   @override
   String get profileBoardCategoryHint =>
@@ -890,25 +890,25 @@ class AppLocalizationsHi extends AppLocalizations {
   String get profileBoardCategoryState => 'State board';
 
   @override
-  String get profileStateLabel => 'State';
+  String get profileStateLabel => 'राज्य';
 
   @override
   String get profileStateNone => 'Not set';
 
   @override
-  String get profileDistrictLabel => 'District';
+  String get profileDistrictLabel => 'ज़िला';
 
   @override
   String get profileDistrictHint => 'The district your school is in.';
 
   @override
-  String get profileSubjectsLabel => 'Subjects you teach';
+  String get profileSubjectsLabel => 'आप जो विषय पढ़ाते हैं';
 
   @override
   String get profileSubjectsHint => 'Choose as many as you need.';
 
   @override
-  String get profileGradesLabel => 'Classes you teach';
+  String get profileGradesLabel => 'आप जो कक्षाएं पढ़ाते हैं';
 
   @override
   String get profileGradesHint => 'Choose as many as you need.';
@@ -918,7 +918,7 @@ class AppLocalizationsHi extends AppLocalizations {
       'This is the same language choice as the rest of the app, so changing it here changes it everywhere.';
 
   @override
-  String get profilePhoneLabel => 'Mobile number';
+  String get profilePhoneLabel => 'मोबाइल नंबर';
 
   @override
   String get profilePhoneHint => 'Optional. Ten digits, with or without +91.';
@@ -928,7 +928,7 @@ class AppLocalizationsHi extends AppLocalizations {
       'Please enter a ten digit Indian mobile number.';
 
   @override
-  String get profilePincodeLabel => 'PIN code';
+  String get profilePincodeLabel => 'पिन कोड';
 
   @override
   String get profilePincodeHint => 'Optional. Six digits.';
