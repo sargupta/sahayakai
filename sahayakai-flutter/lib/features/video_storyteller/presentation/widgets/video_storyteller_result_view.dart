@@ -25,8 +25,11 @@ import 'video_card.dart';
 /// [linkOpenerProvider] seam.
 ///
 /// The per-section [_maxVideosPerCategory] cap keeps the eager scroll view
-/// bounded: the endpoint ranks each bucket and can return up to 60, so the top
-/// slice is the strongest browse without building hundreds of cards.
+/// bounded on first paint: the endpoint ranks each bucket and can return up to
+/// 60, so the top slice is the strongest browse without building hundreds of
+/// cards. The full ranked list still arrives (the cap is purely client-side), so
+/// a bucket with more than the cap offers a "View all N" affordance that expands
+/// it to every video — matching the web app's per-category expand.
 class VideoStorytellerResultView extends ConsumerWidget {
   const VideoStorytellerResultView({super.key, required this.recommendations});
 
@@ -77,31 +80,66 @@ class VideoStorytellerResultView extends ConsumerWidget {
   }
 }
 
-/// One bucket: its localized label + glyph, then its ranked video cards (capped).
-class _CategorySection extends StatelessWidget {
+/// One bucket: its localized label + glyph, then its ranked video cards. Shows
+/// the first [VideoStorytellerResultView._maxVideosPerCategory] on first paint;
+/// when the bucket carries more, a "View all N" button expands it to the full
+/// ranked list (a one-way escape hatch, so the teacher is never capped out of
+/// videos the server already sent).
+class _CategorySection extends StatefulWidget {
   const _CategorySection({required this.section, required this.onOpen});
 
   final VideoCategorySection section;
   final void Function(Video video) onOpen;
 
   @override
+  State<_CategorySection> createState() => _CategorySectionState();
+}
+
+class _CategorySectionState extends State<_CategorySection> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final videos = section.videos
-        .take(VideoStorytellerResultView._maxVideosPerCategory)
-        .toList();
+    final all = widget.section.videos;
+    const cap = VideoStorytellerResultView._maxVideosPerCategory;
+    final hasMore = all.length > cap;
+    final videos = (_expanded || !hasMore) ? all : all.take(cap).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         SectionLabel(
-          _categoryLabel(section.category, l10n),
-          icon: _categoryIcon(section.category),
+          _categoryLabel(widget.section.category, l10n),
+          icon: _categoryIcon(widget.section.category),
         ),
         for (var i = 0; i < videos.length; i++) ...[
           const SizedBox(height: AppSpacing.space4),
-          VideoCard(video: videos[i], onOpen: () => onOpen(videos[i])),
+          VideoCard(
+            video: videos[i],
+            onOpen: () => widget.onOpen(videos[i]),
+          ),
+        ],
+        if (hasMore && !_expanded) ...[
+          const SizedBox(height: AppSpacing.space4),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () => setState(() => _expanded = true),
+              style: TextButton.styleFrom(
+                minimumSize: const Size(0, 48),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.space3,
+                ),
+              ),
+              icon: const Icon(
+                LucideIcons.chevronDown,
+                size: AppIconSize.inline,
+              ),
+              label: Text(l10n.videoStorytellerViewAll(all.length)),
+            ),
+          ),
         ],
       ],
     );

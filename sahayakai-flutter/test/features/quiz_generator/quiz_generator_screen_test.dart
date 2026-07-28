@@ -1,10 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
+import 'package:sahayakai/features/quiz_generator/domain/quiz.dart';
+import 'package:sahayakai/features/quiz_generator/presentation/quiz_controller.dart';
 import 'package:sahayakai/features/quiz_generator/presentation/quiz_generator_screen.dart';
+import 'package:sahayakai/features/quiz_generator/presentation/widgets/quiz_result_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'quiz_fixtures.dart';
@@ -18,8 +23,10 @@ import 'quiz_fixtures.dart';
 Widget _hostScreen({
   Brightness brightness = Brightness.light,
   double textScale = 1.0,
+  List<Override> overrides = const [],
 }) {
   return ProviderScope(
+    overrides: overrides,
     child: MaterialApp(
       theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
       locale: const Locale('en'),
@@ -241,6 +248,53 @@ void main() {
       expect(find.text('Please choose at least one question type.'), findsNothing);
     });
   });
+
+  group('empty-variants result keeps a retry affordance (T2-U11b dead-end fix)',
+      () {
+    testWidgets(
+        'an empty quiz shows the empty state AND keeps the sticky Generate '
+        'button', (tester) async {
+      tester.view.physicalSize = const Size(400, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        _hostScreen(
+          overrides: [
+            quizControllerProvider.overrideWith(
+              () => _StubController(data: buildQuiz(empty: true)),
+            ),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // The by-design empty state renders (no variants came back)...
+      expect(find.byType(QuizResultView), findsOneWidget);
+      expect(
+        find.text(
+          'No questions came back for that topic. Please try a different '
+          'topic.',
+        ),
+        findsOneWidget,
+      );
+      // ...and — the fix — the sticky Generate button is still there, so the
+      // teacher can retry instead of being stranded past the skipped footer.
+      expect(find.text('Generate'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
+}
+
+/// Injects a fixed [Quiz] so the empty-result state can be asserted without a
+/// live API. Mirrors the visual-aid / field-trip screen-test stubs.
+class _StubController extends QuizController {
+  _StubController({this.data});
+
+  final Quiz? data;
+
+  @override
+  FutureOr<Quiz?> build() => data;
 }
 
 Finder _chip(String label) => find.ancestor(

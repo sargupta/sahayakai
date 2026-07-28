@@ -2541,6 +2541,11 @@ class AppLocalizationsKn extends AppLocalizations {
       'ಅದಕ್ಕೆ ಯಾವುದೇ ವೀಡಿಯೊ ಬರಲಿಲ್ಲ. ಬೇರೆ ವಿಷಯ ಅಥವಾ ಟಾಪಿಕ್ ಪ್ರಯತ್ನಿಸಿ.';
 
   @override
+  String videoStorytellerViewAll(int count) {
+    return 'View all $count';
+  }
+
+  @override
   String get videoStorytellerOfficialSource => 'ಅಧಿಕೃತ ಮೂಲ';
 
   @override

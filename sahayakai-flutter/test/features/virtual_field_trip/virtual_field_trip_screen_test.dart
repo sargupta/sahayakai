@@ -280,6 +280,47 @@ void main() {
     });
   });
 
+  group('zero-stops result keeps a retry affordance (T2-U11b dead-end fix)', () {
+    testWidgets(
+        'a zero-stops itinerary shows the empty state AND keeps the sticky Plan '
+        'button', (tester) async {
+      tester.view.physicalSize = const Size(400, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        _host(
+          overrides: [
+            virtualFieldTripControllerProvider.overrideWith(
+              () => _StubController(
+                data: const FieldTripResult(
+                  FieldTrip(
+                    title: 'A trip with no stops',
+                    stops: <FieldTripStop>[],
+                    gradeLevel: 'Class 7',
+                    subject: 'Geography',
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // The by-design empty state renders (every stop was dropped)...
+      expect(find.byType(VirtualFieldTripResultView), findsOneWidget);
+      expect(
+        find.text('No stops came back for that. Try a different topic.'),
+        findsOneWidget,
+      );
+      // ...and — the fix — the sticky Plan button survives a stop-less
+      // itinerary, so the teacher can try again instead of hitting a dead end.
+      expect(find.text('Plan the trip'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
   group('overflow gates (DESIGN_RUBRIC §12.9, §12.10, §12.13)', () {
     for (final brightness in Brightness.values) {
       for (final scale in <double>[1.0, 1.3]) {

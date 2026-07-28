@@ -2558,6 +2558,11 @@ class AppLocalizationsTa extends AppLocalizations {
       'அதற்கு எந்த வீடியோவும் வரவில்லை. வேறு பாடம் அல்லது தலைப்பை முயற்சிக்கவும்.';
 
   @override
+  String videoStorytellerViewAll(int count) {
+    return 'View all $count';
+  }
+
+  @override
   String get videoStorytellerOfficialSource => 'அதிகாரப்பூர்வ ஆதாரம்';
 
   @override

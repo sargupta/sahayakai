@@ -2544,6 +2544,11 @@ class AppLocalizationsOr extends AppLocalizations {
       'ସେଥିପାଇଁ କୌଣସି ଭିଡିଓ ମିଳିଲା ନାହିଁ। ଅନ୍ୟ ଏକ ବିଷୟ କିମ୍ବା ଟପିକ୍ ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
+  String videoStorytellerViewAll(int count) {
+    return 'View all $count';
+  }
+
+  @override
   String get videoStorytellerOfficialSource => 'ଆଧିକାରିକ ଉତ୍ସ';
 
   @override

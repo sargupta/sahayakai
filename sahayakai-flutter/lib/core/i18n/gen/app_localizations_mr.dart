@@ -2536,6 +2536,11 @@ class AppLocalizationsMr extends AppLocalizations {
       'त्यासाठी कोणतेही व्हिडिओ मिळाले नाहीत. वेगळा विषय किंवा टॉपिक वापरून पहा.';
 
   @override
+  String videoStorytellerViewAll(int count) {
+    return 'View all $count';
+  }
+
+  @override
   String get videoStorytellerOfficialSource => 'अधिकृत स्रोत';
 
   @override

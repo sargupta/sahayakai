@@ -136,7 +136,13 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
       }
     });
 
-    final hasResult = state.hasValue && state.valueOrNull != null;
+    // A quiz only "takes over" the sticky button when it actually carries
+    // variants. An empty-variants quiz (the backend schema allows one) is a
+    // by-design empty state — the result view early-returns an EmptyView with no
+    // footer — so the sticky Generate button must stay visible to offer a retry
+    // rather than stranding the teacher.
+    final hasResult =
+        state.hasValue && (state.valueOrNull?.variants.isNotEmpty ?? false);
 
     final result = state.hasError
         ? QuizErrorView(error: state.error!, onRetry: _submit)
@@ -151,8 +157,9 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
       title: l10n.quizTitle,
       isBusy: state.isLoading,
       submitLabel: l10n.actionGenerate,
-      // Hide the sticky Generate button once a quiz is on screen — the
-      // document's own action bar (Regenerate / Copy) takes over.
+      // Hide the sticky Generate button once a quiz with questions is on screen
+      // — the document's own action bar (Regenerate / Copy) takes over. An
+      // empty-variants result keeps it, so the empty state is never a dead end.
       onSubmit: (state.isLoading || hasResult) ? null : _submit,
       result: KeyedSubtree(key: _resultKey, child: result),
       child: Form(

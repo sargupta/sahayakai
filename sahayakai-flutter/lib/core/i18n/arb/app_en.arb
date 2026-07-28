@@ -3043,6 +3043,8 @@
   "@videoStorytellerAction": {"description": "The primary submit button that searches for videos."},
   "videoStorytellerNoResults": "No videos came back for that. Try a different subject or topic.",
   "@videoStorytellerNoResults": {"description": "Empty-result copy when no videos were found."},
+  "videoStorytellerViewAll": "View all {count}",
+  "@videoStorytellerViewAll": {"description": "Button that expands a video category beyond its first six cards to show the full ranked list. {count} is the total number of videos in that category.", "placeholders": {"count": {"type": "int"}}},
   "videoStorytellerOfficialSource": "Official source",
   "@videoStorytellerOfficialSource": {"description": "Badge on videos from official Indian education channels (NCERT, Ministry of Education, IGNOU, UGC)."},
   "videoStorytellerOpensExternally": "Opens in YouTube, outside the app.",

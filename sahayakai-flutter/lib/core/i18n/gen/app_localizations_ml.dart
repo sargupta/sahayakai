@@ -2552,6 +2552,11 @@ class AppLocalizationsMl extends AppLocalizations {
       'അതിനായി വീഡിയോകളൊന്നും ലഭിച്ചില്ല. മറ്റൊരു വിഷയമോ ടോപ്പിക്കോ പരീക്ഷിക്കുക.';
 
   @override
+  String videoStorytellerViewAll(int count) {
+    return 'View all $count';
+  }
+
+  @override
   String get videoStorytellerOfficialSource => 'ഔദ്യോഗിക ഉറവിടം';
 
   @override

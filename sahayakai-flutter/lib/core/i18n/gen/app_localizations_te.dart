@@ -2543,6 +2543,11 @@ class AppLocalizationsTe extends AppLocalizations {
       'దాని కోసం ఏ వీడియో రాలేదు. వేరే విషయం లేదా అంశాన్ని ప్రయత్నించండి.';
 
   @override
+  String videoStorytellerViewAll(int count) {
+    return 'View all $count';
+  }
+
+  @override
   String get videoStorytellerOfficialSource => 'అధికారిక మూలం';
 
   @override

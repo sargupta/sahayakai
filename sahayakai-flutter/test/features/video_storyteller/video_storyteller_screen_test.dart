@@ -187,6 +187,76 @@ void main() {
     });
   });
 
+  group('category "View all" expand (T2-U11b 6-cap escape hatch)', () {
+    VideoRecommendations recsWith(int count) {
+      return VideoRecommendations(
+        personalizedMessage: '',
+        categorizedVideos: <VideoCategory, List<Video>>{
+          VideoCategory.topRecommended: <Video>[
+            for (var i = 0; i < count; i++)
+              Video(
+                id: 'vid_$i',
+                title: 'Video number $i',
+                channelTitle: 'Channel $i',
+                thumbnailUrl: 'https://i.ytimg.com/vi/vid_$i/mqdefault.jpg',
+                watchUrl: Uri.parse('https://www.youtube.com/watch?v=vid_$i'),
+              ),
+          ],
+        },
+        fromCache: false,
+        latencyScore: 0,
+      );
+    }
+
+    testWidgets(
+        'a bucket with more than six videos caps at six then expands to all',
+        (tester) async {
+      // A tall surface so all cards + the button lay out without scrolling.
+      tester.view.physicalSize = const Size(400, 6000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        hostResult(
+          VideoStorytellerResultView(recommendations: recsWith(8)),
+          linkOpener: FakeLinkOpener(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Capped at six on first paint, with a "View all 8" escape hatch — the
+      // backend sends the full ranked list, so nothing is lost, just deferred.
+      expect(find.byType(VideoCard), findsNWidgets(6));
+      expect(find.text('View all 8'), findsOneWidget);
+
+      // Tapping it reveals every video the bucket carries.
+      await tester.tap(find.text('View all 8'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(VideoCard), findsNWidgets(8));
+      expect(find.text('View all 8'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a bucket at the cap shows no expand affordance',
+        (tester) async {
+      tester.view.physicalSize = const Size(400, 6000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        hostResult(
+          VideoStorytellerResultView(recommendations: recsWith(6)),
+          linkOpener: FakeLinkOpener(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(VideoCard), findsNWidgets(6));
+      expect(find.textContaining('View all'), findsNothing);
+    });
+  });
+
   group('overflow gates (DESIGN_RUBRIC §12.9, §12.10, §12.13)', () {
     for (final brightness in Brightness.values) {
       for (final scale in <double>[1.0, 1.3]) {

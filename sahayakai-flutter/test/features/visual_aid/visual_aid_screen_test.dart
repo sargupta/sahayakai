@@ -201,6 +201,42 @@ void main() {
     });
   });
 
+  group('imageless result keeps a retry affordance (T2-U11b dead-end fix)', () {
+    testWidgets(
+        'an imageless result shows the empty state AND keeps the sticky Create '
+        'button', (tester) async {
+      tester.view.physicalSize = const Size(400, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        _host(
+          overrides: [
+            visualAidControllerProvider.overrideWith(
+              () => _StubController(data: buildVisualAid(withImage: false)),
+            ),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // The by-design empty state renders (no usable drawing came back)...
+      expect(find.byType(VisualAidResultView), findsOneWidget);
+      expect(
+        find.text(
+          'No drawing came back for that prompt. Please rephrase it and try '
+          'again.',
+        ),
+        findsOneWidget,
+      );
+      // ...and — the fix — the sticky Create button is still there, so the
+      // teacher can retry with the prompt still in the field instead of being
+      // stranded with "rephrase and try again" copy and nothing to tap.
+      expect(find.text('Create visual aid'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
   group('overflow gates (DESIGN_RUBRIC §12.9, §12.10, §12.13)', () {
     for (final brightness in Brightness.values) {
       for (final scale in <double>[1.0, 1.3]) {

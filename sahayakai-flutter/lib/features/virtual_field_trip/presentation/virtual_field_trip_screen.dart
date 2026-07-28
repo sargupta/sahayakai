@@ -129,10 +129,15 @@ class _VirtualFieldTripScreenState
       }
     });
 
-    // Only a rendered itinerary hands its actions to the footer and hides the
-    // sticky button. The idle, loading and still-generating states keep "Plan
-    // the trip" available so a teacher can plan another trip or try again.
-    final hasTrip = state.valueOrNull is FieldTripResult;
+    // Only a rendered itinerary WITH stops hands its actions to the footer and
+    // hides the sticky button. A zero-stops itinerary is a by-design empty state
+    // (the result view renders an EmptyView with no footer), so — like the idle,
+    // loading and still-generating states — it keeps "Plan the trip" available
+    // so a teacher can try again instead of hitting a dead end.
+    final hasTrip = switch (state.valueOrNull) {
+      FieldTripResult(:final trip) => trip.hasStops,
+      _ => false,
+    };
 
     final result = state.hasError
         ? VirtualFieldTripErrorView(error: state.error!, onRetry: _submit)

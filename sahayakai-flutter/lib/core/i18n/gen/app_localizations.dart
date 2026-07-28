@@ -4526,6 +4526,12 @@ abstract class AppLocalizations {
   /// **'No videos came back for that. Try a different subject or topic.'**
   String get videoStorytellerNoResults;
 
+  /// Button that expands a video category beyond its first six cards to show the full ranked list. {count} is the total number of videos in that category.
+  ///
+  /// In en, this message translates to:
+  /// **'View all {count}'**
+  String videoStorytellerViewAll(int count);
+
   /// Badge on videos from official Indian education channels (NCERT, Ministry of Education, IGNOU, UGC).
   ///
   /// In en, this message translates to:

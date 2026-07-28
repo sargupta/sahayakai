@@ -2535,6 +2535,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'No videos came back for that. Try a different subject or topic.';
 
   @override
+  String videoStorytellerViewAll(int count) {
+    return 'View all $count';
+  }
+
+  @override
   String get videoStorytellerOfficialSource => 'Official source';
 
   @override

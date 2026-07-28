@@ -134,7 +134,14 @@ class _VisualAidScreenState extends ConsumerState<VisualAidScreen> {
       }
     });
 
-    final hasResult = state.hasValue && state.valueOrNull != null;
+    // A result only "takes over" the sticky button when it is actionable — i.e.
+    // it actually carries a drawing. An imageless VisualAid is a by-design empty
+    // state (the result view renders an EmptyView with no footer), so the sticky
+    // Create button must stay visible to offer a retry with the prompt still in
+    // the field, rather than stranding the teacher with "rephrase and try again"
+    // copy and nothing to tap.
+    final hasActionableResult =
+        state.hasValue && (state.valueOrNull?.hasImage ?? false);
 
     final result = state.hasError
         ? VisualAidErrorView(error: state.error!, onRetry: _submit)
@@ -154,9 +161,10 @@ class _VisualAidScreenState extends ConsumerState<VisualAidScreen> {
       title: l10n.visualAidTitle,
       isBusy: state.isLoading,
       submitLabel: l10n.visualAidAction,
-      // Hide the sticky submit button once a drawing is on screen — the
-      // document's own action bar (Regenerate / Copy) takes over.
-      onSubmit: (state.isLoading || hasResult) ? null : _submit,
+      // Hide the sticky submit button once a usable drawing is on screen — the
+      // document's own action bar (Regenerate / Copy) takes over. An imageless
+      // result keeps it, so the empty state is never a dead end.
+      onSubmit: (state.isLoading || hasActionableResult) ? null : _submit,
       result: KeyedSubtree(key: _resultKey, child: result),
       child: Form(
         key: _formKey,

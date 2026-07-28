@@ -2541,6 +2541,11 @@ class AppLocalizationsBn extends AppLocalizations {
       'তার জন্য কোনো ভিডিও পাওয়া যায়নি। অন্য কোনো বিষয় বা টপিক চেষ্টা করুন।';
 
   @override
+  String videoStorytellerViewAll(int count) {
+    return 'View all $count';
+  }
+
+  @override
   String get videoStorytellerOfficialSource => 'আধিকারিক উৎস';
 
   @override

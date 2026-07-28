@@ -2539,6 +2539,11 @@ class AppLocalizationsPa extends AppLocalizations {
       'ਉਸ ਲਈ ਕੋਈ ਵੀਡੀਓ ਨਹੀਂ ਮਿਲਿਆ। ਕੋਈ ਵੱਖਰਾ ਵਿਸ਼ਾ ਜਾਂ ਟੌਪਿਕ ਅਜ਼ਮਾਓ।';
 
   @override
+  String videoStorytellerViewAll(int count) {
+    return 'View all $count';
+  }
+
+  @override
   String get videoStorytellerOfficialSource => 'ਅਧਿਕਾਰਤ ਸਰੋਤ';
 
   @override
