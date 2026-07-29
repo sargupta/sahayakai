@@ -28,6 +28,8 @@ from __future__ import annotations
 import asyncio
 import base64
 import contextlib
+import hashlib
+import hmac as hmaclib
 import json
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -290,6 +292,43 @@ VERTEX_LIVE_LOCATION = "us-central1"
 _PCM_IN_MIME = "audio/pcm;rate=16000"
 
 
+def mint_stream_token(uid: str, ttl_seconds: int = 120) -> str:
+    """Mint a short-lived token authorising `uid` to open a /stream socket.
+
+    Format: `<uid>.<exp_unix>.<b64url_hmac_sha256(key, "uid.exp")>`, signed
+    with the shared `SAHAYAKAI_REQUEST_SIGNING_KEY` (same secret both the web
+    runtime and this sidecar mount). The web start-session route mints it; the
+    sidecar verifies it before opening a (billable) Vertex session. The client
+    never sees a Google credential — only this opaque, expiring token.
+    """
+    exp = int((datetime.now(UTC) + timedelta(seconds=ttl_seconds)).timestamp())
+    key = get_settings().request_signing_key.get_secret_value().strip().encode()
+    sig = base64.urlsafe_b64encode(
+        hmaclib.new(key, f"{uid}.{exp}".encode(), hashlib.sha256).digest()
+    ).rstrip(b"=").decode()
+    return f"{uid}.{exp}.{sig}"
+
+
+def verify_stream_token(token: str | None) -> str | None:
+    """Return the uid if `token` is a valid, unexpired stream token, else None."""
+    if not token:
+        return None
+    try:
+        uid, exp_raw, sig = token.split(".", 2)
+        exp = int(exp_raw)
+    except (ValueError, AttributeError):
+        return None
+    if exp < int(datetime.now(UTC).timestamp()):
+        return None
+    key = get_settings().request_signing_key.get_secret_value().strip().encode()
+    expected = base64.urlsafe_b64encode(
+        hmaclib.new(key, f"{uid}.{exp}".encode(), hashlib.sha256).digest()
+    ).rstrip(b"=").decode()
+    if not hmaclib.compare_digest(expected, sig):
+        return None
+    return uid
+
+
 def _build_vertex_live_config(session_config: dict[str, Any]) -> Any:
     """Build the `LiveConnectConfig` for the proxied Vertex session."""
     from google.genai import types as genai_types
@@ -402,20 +441,21 @@ async def vidya_voice_stream(ws: WebSocket) -> None:
         {"toolCall": {"name","args","id"}}          a routed VIDYA flow (client navigates)
         {"turnComplete": true} | {"interrupted": true} | {"error": "..."}
 
-    Auth: the client presents a short-lived token minted by the web
-    `/api/vidya-voice/start-session` route (query param `?t=` or the first
-    frame). NOTE: token verification is a deliberate TODO for the production
-    wiring unit — this handler proves the Vertex bridge; do NOT expose it
-    publicly until the token check below is enforced.
+    Auth: the client presents a short-lived signed token (query param `?t=`)
+    minted by the web `/api/vidya-voice/start-session` route. The socket is
+    rejected (4401) before any billable Vertex session opens if the token is
+    missing, malformed, expired, or fails the HMAC check.
     """
     from google import genai
 
     await ws.accept()
     settings = get_settings()
 
-    # TODO(prod-wiring): verify a signed session token from the web route here
-    # and reject unauthenticated sockets before opening a (billable) Vertex
-    # session. Kept open ONLY for the local bridge proof.
+    # Reject unauthenticated / expired sockets BEFORE opening a billable session.
+    uid = verify_stream_token(ws.query_params.get("t"))
+    if not uid:
+        await ws.close(code=4401)
+        return
 
     detected_language = ws.query_params.get("lang") or "en"
     screen_path = ws.query_params.get("screen") or "/dashboard"
@@ -437,6 +477,9 @@ async def vidya_voice_stream(ws: WebSocket) -> None:
         location=VERTEX_LIVE_LOCATION,
     )
     config = _build_vertex_live_config(session_config)
+    log.info(
+        "vidya_voice.stream_open", uid=uid, model=model, language=detected_language
+    )
 
     try:
         async with client.aio.live.connect(model=model, config=config) as session:
