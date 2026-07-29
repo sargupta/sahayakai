@@ -6,11 +6,11 @@ import '../../../../core/i18n/gen/app_localizations.dart';
 import '../../../../core/i18n/l10n_ext.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/motion/animated_entrance.dart';
-import '../../../../shared/widgets/ai_text.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/document_sheet.dart';
 import '../../../../shared/widgets/empty_view.dart';
 import '../../../../shared/widgets/read_aloud_button.dart';
+import '../../../../shared/widgets/rich_markdown.dart';
 import '../../../../shared/widgets/secondary_button.dart';
 import '../../domain/rubric.dart';
 import 'rubric_grid.dart';
@@ -73,7 +73,7 @@ class RubricResultView extends StatelessWidget {
     // renderer — only the composition around it is new. The grid keeps its own
     // bounded horizontal scroller.
     final blocks = <Widget>[
-      if (rubric.description != null) AiText(rubric.description!, muted: true),
+      if (rubric.description != null) RichMarkdown(rubric.description!, muted: true),
       if (hasGrid)
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

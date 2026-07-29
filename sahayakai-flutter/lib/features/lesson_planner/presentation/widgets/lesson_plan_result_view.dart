@@ -6,13 +6,13 @@ import '../../../../core/i18n/gen/app_localizations.dart';
 import '../../../../core/i18n/l10n_ext.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/motion/animated_entrance.dart';
-import '../../../../shared/widgets/ai_text.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/bullet_dot.dart';
 import '../../../../shared/widgets/document_sheet.dart';
 import '../../../../shared/widgets/note_banner.dart';
 import '../../../../shared/widgets/read_aloud_button.dart';
+import '../../../../shared/widgets/rich_markdown.dart';
 import '../../../../shared/widgets/secondary_button.dart';
 import '../../domain/lesson_plan.dart';
 
@@ -78,12 +78,12 @@ class LessonPlanResultView extends StatelessWidget {
       if (plan.assessment != null)
         DocumentSheetSection(
           title: l10n.lessonPlanAssessment,
-          child: AiText(plan.assessment!),
+          child: RichMarkdown(plan.assessment!),
         ),
       if (plan.homework != null)
         DocumentSheetSection(
           title: l10n.lessonPlanHomework,
-          child: AiText(plan.homework!),
+          child: RichMarkdown(plan.homework!),
         ),
     ];
 
@@ -247,7 +247,7 @@ class _Bullets extends StatelessWidget {
             children: [
               const BulletDot(),
               const SizedBox(width: AppSpacing.space3),
-              Expanded(child: AiText(items[i])),
+              Expanded(child: RichMarkdown(items[i])),
             ],
           ),
         ],
@@ -273,7 +273,7 @@ class _Vocabulary extends StatelessWidget {
           Text(terms[i].term, style: text.bodyLarge),
           if (terms[i].meaning.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.space1),
-            AiText(terms[i].meaning, muted: true),
+            RichMarkdown(terms[i].meaning, muted: true),
           ],
         ],
       ],
@@ -366,7 +366,7 @@ class _ActivityCard extends StatelessWidget {
                 ],
                 if (activity.description.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.space2),
-                  AiText(activity.description),
+                  RichMarkdown(activity.description),
                 ],
                 if (activity.teacherTips != null) ...[
                   const SizedBox(height: AppSpacing.space3),

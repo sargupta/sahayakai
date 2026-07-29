@@ -17,6 +17,7 @@ import '../../../../shared/widgets/inline_error.dart';
 import '../../../../shared/widgets/note_banner.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../../../../shared/widgets/read_aloud_button.dart';
+import '../../../../shared/widgets/rich_markdown.dart';
 import '../../../../shared/widgets/secondary_button.dart';
 import '../../domain/exam_paper.dart';
 import '../exam_paper_controller.dart';
@@ -364,7 +365,7 @@ class _QuestionCard extends StatelessWidget {
                 label: number != null ? _formatNum(number) : '${index + 1}',
               ),
               const SizedBox(width: AppSpacing.space3),
-              Expanded(child: AiText(question.text)),
+              Expanded(child: RichMarkdown(question.text)),
             ],
           ),
           if (marks != null || question.source != null) ...[
@@ -435,7 +436,7 @@ class _OptionRow extends StatelessWidget {
       children: [
         const BulletDot(),
         const SizedBox(width: AppSpacing.space3),
-        Expanded(child: AiText(label)),
+        Expanded(child: RichMarkdown(label)),
       ],
     );
   }
@@ -578,7 +579,7 @@ class _Bullets extends StatelessWidget {
             children: [
               const BulletDot(),
               const SizedBox(width: AppSpacing.space3),
-              Expanded(child: AiText(items[i])),
+              Expanded(child: RichMarkdown(items[i])),
             ],
           ),
         ],

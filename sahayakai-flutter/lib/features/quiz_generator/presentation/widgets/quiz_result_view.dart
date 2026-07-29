@@ -6,13 +6,13 @@ import '../../../../core/i18n/gen/app_localizations.dart';
 import '../../../../core/i18n/l10n_ext.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/motion/animated_entrance.dart';
-import '../../../../shared/widgets/ai_text.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/document_sheet.dart';
 import '../../../../shared/widgets/empty_view.dart';
 import '../../../../shared/widgets/note_banner.dart';
 import '../../../../shared/widgets/read_aloud_button.dart';
+import '../../../../shared/widgets/rich_markdown.dart';
 import '../../../../shared/widgets/secondary_button.dart';
 import '../../domain/quiz.dart';
 
@@ -491,7 +491,7 @@ class _QuestionCard extends StatelessWidget {
             children: [
               _Medallion(index: number),
               const SizedBox(width: AppSpacing.space3),
-              Expanded(child: AiText(question.questionText)),
+              Expanded(child: RichMarkdown(question.questionText)),
             ],
           ),
           if (question.questionType != null ||
@@ -580,7 +580,7 @@ class _QuestionCard extends StatelessWidget {
                               ],
                             ),
                             const SizedBox(height: AppSpacing.space1),
-                            AiText(question.correctAnswer),
+                            RichMarkdown(question.correctAnswer),
                           ],
                           if (question.explanation != null) ...[
                             if (showAnswerLine)
@@ -604,7 +604,7 @@ class _QuestionCard extends StatelessWidget {
                               ],
                             ),
                             const SizedBox(height: AppSpacing.space1),
-                            AiText(question.explanation!, muted: true),
+                            RichMarkdown(question.explanation!, muted: true),
                           ],
                         ],
                       ),
@@ -689,7 +689,7 @@ class _OptionRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppSpacing.space3),
-          Expanded(child: AiText(label)),
+          Expanded(child: RichMarkdown(label)),
           if (isCorrect) ...[
             const SizedBox(width: AppSpacing.space2),
             Icon(
