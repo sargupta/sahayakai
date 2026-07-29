@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../../../core/network/api_client.dart';
@@ -137,8 +138,16 @@ class LiveStartSession {
 }
 
 /// The dependency seam for the WebSocket transport, so a test can inject a fake
-/// channel without opening a real socket. Defaults to [WebSocketChannel.connect].
-typedef WebSocketConnector = WebSocketChannel Function(Uri url);
+/// channel without opening a real socket. Takes optional [headers] because a
+/// Gemini Live ephemeral token authenticates via the `Authorization: Token …`
+/// HEADER (verified against a real session) — NOT a `?access_token=` query
+/// param, which Google rejects as an unregistered caller. Only `IOWebSocketChannel`
+/// can set request headers, so the default uses it (mobile/desktop; the browser
+/// path would need the JS SDK, which can't set WS headers).
+typedef WebSocketConnector = WebSocketChannel Function(
+  Uri url, {
+  Map<String, dynamic>? headers,
+});
 
 /// The real-time Gemini Live client. A plain class behind an overridable
 /// [geminiLiveClientProvider] (mirroring `voiceToTextRepository`), so tests swap
@@ -146,7 +155,9 @@ typedef WebSocketConnector = WebSocketChannel Function(Uri url);
 /// onto the existing `VidyaStatus` machine.
 class GeminiLiveClient {
   GeminiLiveClient(this._client, {WebSocketConnector? connector})
-      : _connector = connector ?? WebSocketChannel.connect;
+      : _connector = connector ??
+            ((url, {headers}) =>
+                IOWebSocketChannel.connect(url, headers: headers));
 
   final ApiClient _client;
   final WebSocketConnector _connector;
@@ -235,11 +246,15 @@ class GeminiLiveClient {
     if (!session.isUsable) return false;
 
     // 2. Open the socket DIRECTLY to Google with the ephemeral token.
+    //    Auth is the `Authorization: Token <token>` HEADER (verified against a
+    //    real Live session) — NOT a `?access_token=` query param. `wssUrl` is
+    //    the v1alpha BidiGenerateContentConstrained endpoint the sidecar returns.
     try {
-      final uri = Uri.parse(
-        '${session.wssUrl}?access_token=${Uri.encodeComponent(session.sessionToken)}',
+      final uri = Uri.parse(session.wssUrl);
+      final channel = _connector(
+        uri,
+        headers: {'Authorization': 'Token ${session.sessionToken}'},
       );
-      final channel = _connector(uri);
       // `ready` completes when the handshake succeeds and throws when it fails,
       // so a dead socket falls back rather than silently stranding the session.
       await channel.ready;

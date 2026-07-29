@@ -166,7 +166,7 @@ void main() {
         () async {
       final client = GeminiLiveClient(
         FakeApiClient(postErrorsByPath: {_startPath: Exception('503')}),
-        connector: (_) => _FakeWebSocketChannel(const Stream.empty()),
+        connector: (_, {headers}) => _FakeWebSocketChannel(const Stream.empty()),
       );
       addTearDown(client.dispose);
       expect(await client.connect(screenPath: '/home'), isFalse);
@@ -179,7 +179,7 @@ void main() {
       late _FakeWebSocketChannel channel;
       final client = GeminiLiveClient(
         FakeApiClient(postResponsesByPath: {_startPath: _sessionJson()}),
-        connector: (_) => channel = _FakeWebSocketChannel(inbound.stream),
+        connector: (_, {headers}) => channel = _FakeWebSocketChannel(inbound.stream),
       );
       addTearDown(client.dispose);
 
@@ -197,7 +197,7 @@ void main() {
       late _FakeWebSocketChannel channel;
       final client = GeminiLiveClient(
         FakeApiClient(postResponsesByPath: {_startPath: _sessionJson()}),
-        connector: (_) => channel = _FakeWebSocketChannel(inbound.stream),
+        connector: (_, {headers}) => channel = _FakeWebSocketChannel(inbound.stream),
       );
       addTearDown(client.dispose);
       await client.connect(screenPath: '/home');
@@ -235,7 +235,7 @@ void main() {
       addTearDown(inbound.close);
       final client = GeminiLiveClient(
         FakeApiClient(postResponsesByPath: {_startPath: _sessionJson()}),
-        connector: (_) => _FakeWebSocketChannel(inbound.stream),
+        connector: (_, {headers}) => _FakeWebSocketChannel(inbound.stream),
       );
       addTearDown(client.dispose);
       await client.connect(screenPath: '/home');
@@ -265,7 +265,7 @@ void main() {
       addTearDown(inbound.close);
       final client = GeminiLiveClient(
         FakeApiClient(postResponsesByPath: {_startPath: _sessionJson()}),
-        connector: (_) => _FakeWebSocketChannel(inbound.stream),
+        connector: (_, {headers}) => _FakeWebSocketChannel(inbound.stream),
       );
       addTearDown(client.dispose);
       await client.connect(screenPath: '/home');
