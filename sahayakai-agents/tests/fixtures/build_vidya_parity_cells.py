@@ -213,6 +213,40 @@ PROMPTS: dict[str, list[str]] = {
     ],
 }
 
+
+# ── Per-language concept terms for the ANSWER archetypes ─────────────────
+# The entity check needs the concept word in the language the answer is
+# actually written in. A shared English/Hindi/Bengali/Tamil list failed 19
+# perfectly-correct cells: `te-ans-photosyn` answers with
+# "కిరణజన్య సంయోగక్రియ", and even `mr-ans-democracy` uses "लोकशाही" where the
+# Hindi list had "लोकतंत्र". Different word, same script.
+CONCEPT_TERMS: dict[str, dict[str, str]] = {
+    "photosynthesis": {
+        "en": "photosynthesis", "hi": "प्रकाश संश्लेषण", "bn": "সালোকসংশ্লেষ",
+        "ta": "ஒளிச்சேர்க்கை", "te": "కిరణజన్య సంయోగక్రియ", "mr": "प्रकाशसंश्लेषण",
+        "gu": "પ્રકાશસંશ્લેષણ", "kn": "ದ್ಯುತಿಸಂಶ್ಲೇಷಣೆ", "ml": "പ്രകാശസംശ്ലേഷണം",
+        "pa": "ਪ੍ਰਕਾਸ਼ ਸੰਸ਼ਲੇਸ਼ਣ", "or": "ଆଲୋକ ସଂଶ୍ଳେଷଣ",
+    },
+    "fraction": {
+        "en": "fraction", "hi": "भिन्न", "bn": "ভগ্নাংশ", "ta": "பின்னம்",
+        "te": "భిన్నం", "mr": "अपूर्णांक", "gu": "અપૂર્ણાંક", "kn": "ಭಿನ್ನರಾಶಿ",
+        "ml": "ഭിന്നസംഖ്യ", "pa": "ਭਿੰਨ", "or": "ଭଗ୍ନାଂଶ",
+    },
+    "democracy": {
+        "en": "democracy", "hi": "लोकतंत्र", "bn": "গণতন্ত্র", "ta": "ஜனநாயகம்",
+        "te": "ప్రజాస్వామ్యం", "mr": "लोकशाही", "gu": "લોકશાહી",
+        "kn": "ಪ್ರಜಾಪ್ರಭುತ್ವ", "ml": "ജനാധിപത്യം", "pa": "ਲੋਕਤੰਤਰ", "or": "ଗଣତନ୍ତ୍ର",
+    },
+}
+
+# archetype id -> CONCEPT_TERMS key (ANSWER archetypes only)
+ANSWER_CONCEPT = {
+    "ans-photosyn": "photosynthesis",
+    "ans-fractions": "fraction",
+    "ans-democracy": "democracy",
+}
+
+
 OUT = Path(__file__).parent / "vidya_parity_cells.json"
 
 
@@ -222,6 +256,13 @@ def build() -> list[dict]:
         if len(prompts) != len(ARCHETYPES):
             raise SystemExit(f"{lang}: {len(prompts)} prompts, expected {len(ARCHETYPES)}")
         for arch, message in zip(ARCHETYPES, prompts, strict=True):
+            concept = ANSWER_CONCEPT.get(arch["id"])
+            if concept:
+                # Native term first, English second: answers sometimes carry the
+                # English word alongside the local one, and either counts.
+                entities = [CONCEPT_TERMS[concept][lang], CONCEPT_TERMS[concept]["en"]]
+            else:
+                entities = arch["entities"]
             cells.append({
                 "cell": f"{lang}-{arch['id']}",
                 "lang": lang,
@@ -229,7 +270,7 @@ def build() -> list[dict]:
                 "message": message,
                 "expectedFlow": arch["expected_flow"],
                 "genkitFlow": arch["genkit_flow"],
-                "entities": arch["entities"],
+                "entities": entities,
             })
     return cells
 
