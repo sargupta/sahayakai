@@ -117,6 +117,7 @@ dependencies:
   # path_provider is the correct companion to the recorder (not a substitution
   # for any of the four audio plugins above).
   path_provider: ^2.1.4
+  gpt_markdown: ^1.1.8
 
 dev_dependencies:
   flutter_test:

@@ -7,7 +7,6 @@ import '../../../../core/i18n/gen/app_localizations.dart';
 import '../../../../core/i18n/l10n_ext.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/motion/animated_entrance.dart';
-import '../../../../shared/widgets/ai_text.dart';
 import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/bullet_dot.dart';
@@ -17,6 +16,7 @@ import '../../../../shared/widgets/inline_error.dart';
 import '../../../../shared/widgets/note_banner.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../../../../shared/widgets/read_aloud_button.dart';
+import '../../../../shared/widgets/rich_markdown.dart';
 import '../../../../shared/widgets/secondary_button.dart';
 import '../../domain/worksheet.dart';
 import '../worksheet_controller.dart';
@@ -31,9 +31,10 @@ import '../worksheet_controller.dart';
 /// medallions) and the answer key. Each block inks in on the Ink-settle reveal,
 /// and a footer action bar offers Regenerate / Copy.
 ///
-/// All model-authored prose flows through [AiText] (line-height 1.7 + Indic
-/// height behaviour) so matras and vowel signs never clip, and long compound
-/// words wrap instead of scrolling. See DESIGN_RUBRIC §3 / §8.
+/// All model-authored content flows through [RichMarkdown] — the worksheet flow is
+/// instructed to emit math as LaTeX (`$…$` / `$$…$$`) and may use markdown, so it
+/// is typeset, not printed raw; it keeps [AiText]'s line-height 1.7 metrics so
+/// matras and vowel signs never clip. See DESIGN_RUBRIC §3 / §8.
 class WorksheetResultView extends StatelessWidget {
   const WorksheetResultView({
     super.key,
@@ -92,7 +93,7 @@ class WorksheetResultView extends StatelessWidget {
       if (worksheet.studentInstructions != null)
         DocumentSheetSection(
           title: l10n.worksheetInstructions,
-          child: AiText(worksheet.studentInstructions!),
+          child: RichMarkdown(worksheet.studentInstructions!),
         ),
       if (worksheet.activities.isNotEmpty)
         DocumentSheetSection(
@@ -341,7 +342,7 @@ class _Bullets extends StatelessWidget {
             children: [
               const BulletDot(),
               const SizedBox(width: AppSpacing.space3),
-              Expanded(child: AiText(items[i])),
+              Expanded(child: RichMarkdown(items[i])),
             ],
           ),
         ],
@@ -392,7 +393,7 @@ class _ActivityCard extends StatelessWidget {
             children: [
               _Medallion(index: number),
               const SizedBox(width: AppSpacing.space3),
-              Expanded(child: AiText(activity.content)),
+              Expanded(child: RichMarkdown(activity.content)),
             ],
           ),
           if (activity.type != null) ...[
@@ -472,7 +473,7 @@ class _AnswerRow extends StatelessWidget {
             child: BulletDot(),
           ),
         const SizedBox(width: AppSpacing.space3),
-        Expanded(child: AiText(entry.answer)),
+        Expanded(child: RichMarkdown(entry.answer)),
       ],
     );
   }
