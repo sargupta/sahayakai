@@ -61,10 +61,17 @@ SIDECAR_VERSION = "phase-s.0.0-spike"
 # default is 60s for new-session use; we keep that.
 DEFAULT_TOKEN_TTL_SECONDS = 60
 
-# Live API WSS endpoint. The SDK's own `client.aio.live.connect()`
-# resolves this internally; we surface it explicitly so the browser
-# client can open the same socket. URL pinned per Live region rollout.
-LIVE_WSS_BASE_URL = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent"
+# Live API WSS endpoint for an EPHEMERAL-TOKEN client.
+#
+# Verified 2026-07-30 against a real Google Live session (matches the
+# google-genai SDK's own `live.connect` code path for `auth_tokens/*`):
+# an ephemeral token MUST use the `v1alpha` surface and the
+# `BidiGenerateContentConstrained` method (NOT `v1beta` /
+# `BidiGenerateContent` — that combination 1008s "unregistered callers").
+# The client authenticates with the header `Authorization: Token <token>`,
+# NOT a `?access_token=` query param (also verified: query-param auth is
+# rejected as an unregistered caller).
+LIVE_WSS_BASE_URL = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContentConstrained"
 
 
 # ---- Ephemeral token minting --------------------------------------------
