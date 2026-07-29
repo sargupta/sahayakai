@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
+import 'package:sahayakai/core/network/api_providers.dart';
 import 'package:sahayakai/core/router/routes.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/dashboard/presentation/floating_bottom_nav.dart';
@@ -12,7 +13,11 @@ import 'package:sahayakai/features/vidya/data/dto/vidya_action.dart';
 import 'package:sahayakai/features/vidya/presentation/vidya_controller.dart';
 import 'package:sahayakai/features/vidya/presentation/vidya_home_screen.dart';
 import 'package:sahayakai/features/vidya/presentation/widgets/seal_mic.dart';
+import 'package:sahayakai/shared/voice/audio_player_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../support/fake_api_client.dart';
+import '../../support/fake_voice.dart';
 
 /// U-V5 — the VIDYA home. Rendered with a fixed-state fake controller so each
 /// phase is asserted in isolation (the machine itself is covered by
@@ -76,6 +81,10 @@ Future<void> _pumpHome(
     ProviderScope(
       overrides: [
         vidyaControllerProvider.overrideWith(() => _FakeVidyaController(state)),
+        // The home speaks a mother-tongue greeting on load; fake the TTS stack so
+        // it never reaches the network (or leaves a pending timer under motion).
+        apiClientProvider.overrideWithValue(FakeApiClient()),
+        audioPlayerServiceProvider.overrideWithValue(FakeAudioPlayerService()),
       ],
       child: MaterialApp(
         theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
@@ -136,6 +145,10 @@ Future<void> _pumpHomeWithRouter(
     ProviderScope(
       overrides: [
         vidyaControllerProvider.overrideWith(() => _FakeVidyaController(state)),
+        // The home speaks a mother-tongue greeting on load; fake the TTS stack so
+        // it never reaches the network (or leaves a pending timer under motion).
+        apiClientProvider.overrideWithValue(FakeApiClient()),
+        audioPlayerServiceProvider.overrideWithValue(FakeAudioPlayerService()),
       ],
       child: MaterialApp.router(
         routerConfig: router,

@@ -17,6 +17,7 @@ import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/secondary_button.dart';
 import 'vidya_controller.dart';
+import 'vidya_greeting.dart';
 import 'vidya_nav_dispatcher.dart';
 import 'vidya_status_ui.dart';
 import 'widgets/conversation_block.dart';
@@ -53,6 +54,14 @@ class _VidyaHomeScreenState extends ConsumerState<VidyaHomeScreen> {
       final controller = ref.read(vidyaControllerProvider.notifier);
       controller.registerScreenContext('/');
       controller.restoreSession();
+      // Mother-tongue welcome: auto-spoken once per session in the teacher's
+      // language via the existing TTS, skipped under reduce-motion. Trigger is a
+      // founder UX call (auto vs tap) — see [maybeSpeakVidyaGreeting].
+      maybeSpeakVidyaGreeting(
+        ref,
+        motionEnabled: context.motionEnabled,
+        greeting: context.l10n.vidyaGreeting,
+      );
     });
   }
 

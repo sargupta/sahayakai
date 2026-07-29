@@ -2018,6 +2018,10 @@ class AppLocalizationsMl extends AppLocalizations {
   String get vidyaDeck => 'നിങ്ങളുടെ ഭാഷയിൽ സംസാരിക്കൂ, ഞാൻ ജോലി തയ്യാറാക്കാം.';
 
   @override
+  String get vidyaGreeting =>
+      'Welcome, teacher. Speak in your language, and I will prepare your work.';
+
+  @override
   String get vidyaHeroBadge => 'നിങ്ങളുടെ AI അധ്യാപന സഹായി';
 
   @override

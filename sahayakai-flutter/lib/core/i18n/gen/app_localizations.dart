@@ -3644,6 +3644,12 @@ abstract class AppLocalizations {
   /// **'Speak in your language, and I will prepare the work.'**
   String get vidyaDeck;
 
+  /// Spoken mother-tongue welcome, auto-played once per session on the VIDYA voice home (skipped under reduce-motion). Non-English locales fall back to English until the translation backlog (P5) lands.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome, teacher. Speak in your language, and I will prepare your work.'**
+  String get vidyaGreeting;
+
   /// Accent pill above the VIDYA home eyebrow, echoing the PWA hero's AI badge.
   ///
   /// In en, this message translates to:

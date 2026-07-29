@@ -2526,6 +2526,10 @@
   "@vidyaDeck": {
     "description": "VIDYA home deck/standfirst inviting the teacher to speak."
   },
+  "vidyaGreeting": "Welcome, teacher. Speak in your language, and I will prepare your work.",
+  "@vidyaGreeting": {
+    "description": "Spoken mother-tongue welcome, auto-played once per session on the VIDYA voice home (skipped under reduce-motion). Non-English locales fall back to English until the translation backlog (P5) lands."
+  },
   "vidyaHeroBadge": "Your AI co-teaching assistant",
   "@vidyaHeroBadge": {
     "description": "Accent pill above the VIDYA home eyebrow, echoing the PWA hero's AI badge."

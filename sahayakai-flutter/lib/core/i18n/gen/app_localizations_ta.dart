@@ -2021,6 +2021,10 @@ class AppLocalizationsTa extends AppLocalizations {
       'உங்கள் மொழியில் பேசுங்கள், நான் வேலையைத் தயார் செய்கிறேன்.';
 
   @override
+  String get vidyaGreeting =>
+      'Welcome, teacher. Speak in your language, and I will prepare your work.';
+
+  @override
   String get vidyaHeroBadge => 'உங்கள் AI கற்பித்தல் உதவியாளர்';
 
   @override

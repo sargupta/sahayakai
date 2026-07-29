@@ -2012,6 +2012,10 @@ class AppLocalizationsKn extends AppLocalizations {
       'ನಿಮ್ಮ ಭಾಷೆಯಲ್ಲಿ ಮಾತನಾಡಿ, ನಾನು ಕೆಲಸವನ್ನು ಸಿದ್ಧಪಡಿಸುತ್ತೇನೆ.';
 
   @override
+  String get vidyaGreeting =>
+      'Welcome, teacher. Speak in your language, and I will prepare your work.';
+
+  @override
   String get vidyaHeroBadge => 'ನಿಮ್ಮ ಎಐ ಬೋಧನಾ ಸಹಾಯಕ';
 
   @override

@@ -2010,6 +2010,10 @@ class AppLocalizationsPa extends AppLocalizations {
   String get vidyaDeck => 'ਆਪਣੀ ਭਾਸ਼ਾ ਵਿੱਚ ਬੋਲੋ, ਅਤੇ ਮੈਂ ਕੰਮ ਤਿਆਰ ਕਰ ਦੇਵਾਂਗੀ।';
 
   @override
+  String get vidyaGreeting =>
+      'Welcome, teacher. Speak in your language, and I will prepare your work.';
+
+  @override
   String get vidyaHeroBadge => 'ਤੁਹਾਡਾ AI ਅਧਿਆਪਨ ਸਹਾਇਕ';
 
   @override

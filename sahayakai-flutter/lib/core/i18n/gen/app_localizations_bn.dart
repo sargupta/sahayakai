@@ -2010,6 +2010,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get vidyaDeck => 'আপনার ভাষায় বলুন, আমি কাজটি প্রস্তুত করে দেব।';
 
   @override
+  String get vidyaGreeting =>
+      'Welcome, teacher. Speak in your language, and I will prepare your work.';
+
+  @override
   String get vidyaHeroBadge => 'আপনার এআই শিক্ষণ সহায়ক';
 
   @override

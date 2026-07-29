@@ -2009,6 +2009,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Speak in your language, and I will prepare the work.';
 
   @override
+  String get vidyaGreeting =>
+      'Welcome, teacher. Speak in your language, and I will prepare your work.';
+
+  @override
   String get vidyaHeroBadge => 'Your AI co-teaching assistant';
 
   @override

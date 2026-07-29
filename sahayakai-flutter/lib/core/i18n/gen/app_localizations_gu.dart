@@ -2007,6 +2007,10 @@ class AppLocalizationsGu extends AppLocalizations {
   String get vidyaDeck => 'તમારી ભાષામાં બોલો, અને હું કામ તૈયાર કરીશ.';
 
   @override
+  String get vidyaGreeting =>
+      'Welcome, teacher. Speak in your language, and I will prepare your work.';
+
+  @override
   String get vidyaHeroBadge => 'તમારો AI શિક્ષણ સહાયક';
 
   @override
