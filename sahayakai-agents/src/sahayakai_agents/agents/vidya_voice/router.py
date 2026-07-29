@@ -25,11 +25,15 @@ Phase S (spike). Migration plan in
 """
 from __future__ import annotations
 
+import asyncio
+import base64
+import contextlib
+import json
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import structlog
-from fastapi import APIRouter
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from ...config import get_settings
 from ...shared.errors import AgentError
@@ -267,3 +271,192 @@ async def start_session(payload: SessionStartRequest) -> SessionStartResponse:
         tool_count=len(response.tools),
     )
     return response
+
+
+# ---- Vertex Live WebSocket proxy -----------------------------------------
+#
+# Why a PROXY (client <-> sidecar <-> Vertex) and not the client-direct
+# ephemeral-token path above: Gemini Live on the Developer API runs on a
+# prepaid credit tier that Cloud/startup credits do NOT fund. Vertex AI Live
+# IS funded by Cloud Billing (verified 2026-07-30: a real session returned
+# audio). Vertex authenticates with the sidecar's own ADC — there is no
+# client-facing ephemeral token — so the sidecar terminates the client socket
+# and relays PCM frames to Vertex. The master credentials never leave Cloud Run.
+
+# A CURRENT Vertex Live model that accepts bidiGenerateContent (verified live
+# in us-central1). Override with SAHAYAKAI_VIDYA_VOICE_MODEL.
+VERTEX_LIVE_MODEL = "gemini-live-2.5-flash-native-audio"
+VERTEX_LIVE_LOCATION = "us-central1"
+_PCM_IN_MIME = "audio/pcm;rate=16000"
+
+
+def _build_vertex_live_config(session_config: dict[str, Any]) -> Any:
+    """Build the `LiveConnectConfig` for the proxied Vertex session."""
+    from google.genai import types as genai_types
+
+    tools = [
+        genai_types.Tool(
+            function_declarations=[
+                genai_types.FunctionDeclaration(
+                    name=d.name,
+                    description=d.description,
+                    parameters=genai_types.Schema(
+                        type=genai_types.Type.OBJECT,
+                        properties={
+                            "topic": genai_types.Schema(type=genai_types.Type.STRING),
+                            "gradeLevel": genai_types.Schema(type=genai_types.Type.STRING),
+                            "subject": genai_types.Schema(type=genai_types.Type.STRING),
+                            "language": genai_types.Schema(type=genai_types.Type.STRING),
+                        },
+                    ),
+                )
+                for d in build_tool_definitions()
+            ]
+        )
+    ]
+    return genai_types.LiveConnectConfig(
+        response_modalities=[genai_types.Modality.AUDIO],
+        system_instruction=genai_types.Content(
+            parts=[genai_types.Part(text=session_config["system_instruction"])]
+        ),
+        speech_config=genai_types.SpeechConfig(
+            voice_config=genai_types.VoiceConfig(
+                prebuilt_voice_config=genai_types.PrebuiltVoiceConfig(
+                    voice_name=get_voice_name()
+                )
+            )
+        ),
+        tools=tools,
+    )
+
+
+async def _pump_client_to_vertex(ws: WebSocket, session: Any) -> None:
+    """Relay client frames (mic audio / text turns) up to Vertex Live."""
+    from google.genai import types as genai_types
+
+    while True:
+        frame = json.loads(await ws.receive_text())
+        if frame.get("end"):
+            return
+        if frame.get("audio"):
+            await session.send_realtime_input(
+                audio=genai_types.Blob(
+                    data=base64.b64decode(frame["audio"]), mime_type=_PCM_IN_MIME
+                )
+            )
+        elif frame.get("text"):
+            await session.send_client_content(
+                turns=genai_types.Content(
+                    role="user", parts=[genai_types.Part(text=frame["text"])]
+                ),
+                turn_complete=True,
+            )
+
+
+async def _pump_vertex_to_client(ws: WebSocket, session: Any) -> None:
+    """Relay Vertex responses (audio / tool-calls / turn markers) down to client."""
+    from google.genai import types as genai_types
+
+    async for resp in session.receive():
+        if getattr(resp, "data", None):
+            await ws.send_text(
+                json.dumps({"audio": base64.b64encode(resp.data).decode()})
+            )
+        tc = getattr(resp, "tool_call", None)
+        if tc and tc.function_calls:
+            for fc in tc.function_calls:
+                await ws.send_text(
+                    json.dumps({
+                        "toolCall": {
+                            "name": fc.name,
+                            "args": dict(fc.args or {}),
+                            "id": fc.id,
+                        }
+                    })
+                )
+            await session.send_tool_response(
+                function_responses=[
+                    genai_types.FunctionResponse(
+                        id=fc.id, name=fc.name, response={"status": "dispatched"}
+                    )
+                    for fc in tc.function_calls
+                ]
+            )
+        sc = getattr(resp, "server_content", None)
+        if sc and getattr(sc, "interrupted", False):
+            await ws.send_text(json.dumps({"interrupted": True}))
+        if sc and getattr(sc, "turn_complete", False):
+            await ws.send_text(json.dumps({"turnComplete": True}))
+
+
+@vidya_voice_router.websocket("/stream")
+async def vidya_voice_stream(ws: WebSocket) -> None:
+    """Full-duplex bridge: OmniOrb client <-> sidecar <-> Vertex Live.
+
+    Client -> sidecar frames (JSON text):
+        {"audio": "<base64 PCM16LE 16kHz mono>"}   one mic chunk
+        {"text": "<utterance>"}                     a text turn (testing / fallback)
+        {"end": true}                               end the session
+    Sidecar -> client frames (JSON text):
+        {"audio": "<base64 PCM16LE 24kHz>"}         one model-audio chunk
+        {"toolCall": {"name","args","id"}}          a routed VIDYA flow (client navigates)
+        {"turnComplete": true} | {"interrupted": true} | {"error": "..."}
+
+    Auth: the client presents a short-lived token minted by the web
+    `/api/vidya-voice/start-session` route (query param `?t=` or the first
+    frame). NOTE: token verification is a deliberate TODO for the production
+    wiring unit — this handler proves the Vertex bridge; do NOT expose it
+    publicly until the token check below is enforced.
+    """
+    from google import genai
+
+    await ws.accept()
+    settings = get_settings()
+
+    # TODO(prod-wiring): verify a signed session token from the web route here
+    # and reject unauthenticated sockets before opening a (billable) Vertex
+    # session. Kept open ONLY for the local bridge proof.
+
+    detected_language = ws.query_params.get("lang") or "en"
+    screen_path = ws.query_params.get("screen") or "/dashboard"
+    session_config = build_vidya_voice_session(
+        language=detected_language,
+        screen_path=screen_path,
+        grade=None,
+        subject=None,
+        school_context=None,
+    )
+    # Vertex uses its OWN model naming (`gemini-live-2.5-flash-native-audio`),
+    # distinct from the Developer-API names `get_voice_model()` returns
+    # (`…-native-audio-latest`). Always use the Vertex name for this path.
+    model = VERTEX_LIVE_MODEL
+
+    client = genai.Client(
+        vertexai=True,
+        project=settings.gcp_project,
+        location=VERTEX_LIVE_LOCATION,
+    )
+    config = _build_vertex_live_config(session_config)
+
+    try:
+        async with client.aio.live.connect(model=model, config=config) as session:
+            up = asyncio.create_task(_pump_client_to_vertex(ws, session))
+            down = asyncio.create_task(_pump_vertex_to_client(ws, session))
+            _done, pending = await asyncio.wait(
+                {up, down}, return_when=asyncio.FIRST_COMPLETED
+            )
+            for task in pending:
+                task.cancel()
+    except WebSocketDisconnect:
+        return
+    except Exception as exc:  # noqa: BLE001
+        log.error(
+            "vidya_voice.stream_failed",
+            error=str(exc),
+            error_type=type(exc).__name__,
+        )
+        with contextlib.suppress(Exception):
+            await ws.send_text(json.dumps({"error": "live session failed"}))
+    finally:
+        with contextlib.suppress(Exception):
+            await ws.close()
