@@ -39,6 +39,25 @@ Each loop iteration is still ONE focused, gated, committed unit; rotate across t
 
 **Steps:** audit the mobile design tokens (colours in `app_theme.dart`, the production saffron `#E0924D` per memory, typography Outfit/Inter) against the web's tokens (`sahayakai-main` globals/tailwind); produce a parity matrix (token-by-token, screen-by-screen); apply the **mechanical** matches (colour tokens, icon swaps to the web's set, spacing) as gated units; **flag judgment calls** (where mobile deliberately diverges for a native pattern) for founder review rather than unilaterally overriding an intentional choice. Icons: web uses Lucide; mobile uses `lucide_icons` — reconcile any mismatched glyphs per screen.
 
+**AUDIT (2026-07-29) — core design system is ALREADY ALIGNED with web; almost no mechanical work, and applying "fixes" would *diverge* from web.** The earlier reskin built `app_colors.dart` directly from `globals.css` (the tokens even carry `// --primary`, `// --accent`, `// --secondary`, `// --foreground`, `// --muted` annotations). Token-by-token, light theme:
+
+| token | web `globals.css` (HSL → hex) | mobile `app_colors.dart` | verdict |
+|---|---|---|---|
+| primary / saffron | `28 70% 59%` = **#E0924D** | `brandSaffron` #E0924D | ✅ exact |
+| accent (navy) | `240 100% 25%` = **#000080** | `navy` #000080 | ✅ exact |
+| secondary (green) | `123 37% 25%` ≈ #285738 | `green` #28572B | ✅ ~exact |
+| foreground (ink) | `222 47% 11%` = #0F1729 | `lForeground` #0F1729 | ✅ exact |
+| card | `0 0% 100%` = #FFFFFF | `lCard` #FFFFFF | ✅ exact |
+| muted | `210 40% 96%` = #F1F5F9 | `lMuted` #F1F5F9 | ✅ exact |
+| muted-foreground | `215 16% 47%` = #65758B | `lMutedForeground` #65758B | ✅ exact |
+| ring | saffron | saffron | ✅ |
+| background | `40 20% 99.5%` ≈ #FEFDFB | `lBackground` #F9F7F3 | ⚠️ mobile deliberately warmer ("warm off-white scaffold" / paper feel) |
+| border | `220 16% 93%` ≈ #E8EBF0 | `lBorder` #DCDFE5 | ⚠️ mobile a touch darker |
+
+**Typography:** both use **Inter** (body) + **Outfit** (display) — identical. **Nav icons:** web `Home / Sparkles / Library / User`; mobile `mic / sparkles / library / user` — **3 of 4 identical**; the Home tab uses a **mic** on mobile because the mobile Home *is* the voice-first "Tap to speak" landing (web's Home is the dashboard) — a deliberate, defensible divergence.
+
+**Conclusion:** colour + type parity is effectively DONE; there is no honest mechanical fix to ship (the tokens already equal web, and forcing the two ⚠️ shades to web would undo intentional mobile choices). **Flag for founder** (design calls, not bugs): (a) keep the warmer mobile background/border or match web's cooler near-white? (b) keep the mic-for-Home tab (recommended — it reflects the voice-first landing) or use web's Home glyph? A full per-tool *icon* audit (beyond the nav) is the only remaining WS3 work and is low-yield (same team, same Lucide set); available on request. **No code unit shipped for WS3 — it would be churn away from parity.** Rotate to WS4.
+
 ### WS4 — Gemini Live audio-to-audio (Flutter, additive, fallback to TTS/STT)
 
 **Why:** founder wants real-time audio-to-audio (speak → the assistant speaks back live), opening with a **mother-tongue greeting** in the teacher's selected/device language.
