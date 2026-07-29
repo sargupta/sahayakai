@@ -83,7 +83,7 @@ class TestVidyaActionShape:
             flow = "deleted-flow"
             params = VidyaActionParams()
 
-        with pytest.raises(AssertionError, match="ALLOWED_FLOWS"):
+        with pytest.raises(AssertionError, match="AllowedFlow"):
             assert_vidya_action_shape(_FakeAction())
 
     def test_unexpected_action_type_rejects(self) -> None:
@@ -191,7 +191,7 @@ class TestVidyaResponseRules:
             flow = "removed-flow"
             params = VidyaActionParams()
 
-        with pytest.raises(AssertionError, match="ALLOWED_FLOWS"):
+        with pytest.raises(AssertionError, match="AllowedFlow"):
             assert_vidya_response_rules(
                 response_text="Opening the tool now",
                 language="en",

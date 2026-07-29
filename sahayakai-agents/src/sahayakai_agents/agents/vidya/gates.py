@@ -48,7 +48,32 @@ def classify_action(intent: IntentClassification) -> VidyaAction | None:
         This is a fail-safe: a bad classifier output should never
         navigate the teacher to a non-existent route.
     """
-    if intent.type in (INSTANT_ANSWER_INTENT, UNKNOWN_INTENT):
+    if intent.type == INSTANT_ANSWER_INTENT:
+        # Root cause 2. The answer is produced INLINE by the router — this
+        # action is a report of what was done, not an instruction to go and
+        # do it. We emit it because Genkit does: on 30 of 33 ANSWER cells the
+        # production Genkit path returns flow='instant-answer' alongside the
+        # answer text, and the client (KNOWN_FLOWS, omni-orb.tsx:36) navigates
+        # on it. VIDYA returning None was the deviation, and it failed every
+        # ANSWER cell in the parity harness with `action_flow_mismatch`.
+        #
+        # Yes, this means the answer is computed twice — once here, once by
+        # the page the client lands on. That double-handling is the EXISTING
+        # production behaviour on the Genkit path. Changing it is a product
+        # decision that has to be made on both engines at once; making it here
+        # alone would re-open the divergence this work exists to close.
+        return VidyaAction(
+            type="NAVIGATE_AND_FILL",
+            flow="instant-answer",
+            params=VidyaActionParams(
+                topic=intent.topic,
+                gradeLevel=intent.gradeLevel,
+                subject=intent.subject,
+                language=intent.language,
+                ncertChapter=None,
+            ),
+        )
+    if intent.type == UNKNOWN_INTENT:
         return None
     if intent.type not in ALLOWED_FLOWS:
         # Defensive: classifier returned something we don't route.
