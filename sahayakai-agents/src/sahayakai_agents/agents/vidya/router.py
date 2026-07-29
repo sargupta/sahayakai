@@ -449,6 +449,9 @@ async def vidya_orchestrate(payload: VidyaRequest) -> VidyaResponse:
                 message="VIDYA instant-answer agent failed",
                 http_status=502,
             ) from exc
+        # Root cause 2 — report the flow alongside the inline answer so the
+        # action matches Genkit. See classify_action for why.
+        action = classify_action(intent)
     elif intent.type in ALLOWED_FLOWS:
         # Phase N.1 — delegated to `_map_routable_flow`. Helper picks
         # the typed `plannedActions` path for compound requests and

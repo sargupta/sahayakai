@@ -87,8 +87,27 @@ class TestClassifyAction:
         assert action.params.subject is None
         assert action.params.language is None
 
-    def test_instant_answer_returns_none(self) -> None:
-        assert classify_action(_intent(type=INSTANT_ANSWER_INTENT)) is None
+    def test_instant_answer_returns_the_instant_answer_flow(self) -> None:
+        """Root cause 2 (2026-07-28). Was `is None`.
+
+        Production Genkit emits flow='instant-answer' on 30 of 33 ANSWER
+        cells and the client navigates on it (KNOWN_FLOWS, omni-orb.tsx:36).
+        VIDYA returning None was the deviation and failed every ANSWER cell
+        with `action_flow_mismatch`. The answer is still produced inline —
+        this action reports what happened, it does not request it.
+        """
+        action = classify_action(_intent(type=INSTANT_ANSWER_INTENT))
+        assert action is not None
+        assert action.flow == "instant-answer"
+        assert action.type == "NAVIGATE_AND_FILL"
+
+    def test_instant_answer_carries_the_extracted_params(self) -> None:
+        """The client turns these into the /instant-answer query string."""
+        action = classify_action(
+            _intent(type=INSTANT_ANSWER_INTENT, topic="photosynthesis")
+        )
+        assert action is not None
+        assert action.params.topic == "photosynthesis"
 
     def test_unknown_returns_none(self) -> None:
         assert classify_action(_intent(type=UNKNOWN_INTENT)) is None

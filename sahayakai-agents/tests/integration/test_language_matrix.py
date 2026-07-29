@@ -756,7 +756,11 @@ def test_vidya_language_matrix(
     )
     body = res.json()
     assert body["intent"] == "instantAnswer"
-    assert body["action"] is None
+    # Root cause 2: instantAnswer now reports flow='instant-answer' to match
+    # Genkit. Was None; that mismatch failed every ANSWER parity cell.
+    assert body["action"] is not None
+    assert body["action"]["flow"] == "instant-answer"
+    assert body["action"]["type"] == "NAVIGATE_AND_FILL"
     assert snippet[:8] in body["response"], (
         f"language={language!r}: response text drifted"
     )
