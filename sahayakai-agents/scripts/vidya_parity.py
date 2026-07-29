@@ -163,11 +163,36 @@ def score(cell: dict, probe_result: dict, genkit_text: dict | None) -> dict:
     # extracted topic lives in action.params, not in the prose. Checking the
     # response text there would fail every cell for a bug that isn't real.
     if cell["intent"] == "ANSWER":
-        haystack = response_text
+        # ANSWER replies are prose: the concept should appear in the text.
+        row["entityHit"] = entity_hit(response_text, cell.get("entities", []))
     else:
-        params = action.get("params") if isinstance(action, dict) else None
-        haystack = " ".join(str(v) for v in (params or {}).values() if v)
-    row["entityHit"] = entity_hit(haystack, cell.get("entities", []))
+        # CREATE/ACTION: the reply is a fixed acknowledgement, so the thing to
+        # verify is that VIDYA pulled the topic OUT of what the teacher said.
+        #
+        # A keyword list cannot do this — the extracted topic comes back in the
+        # teacher's own script ("ದ್ಯುತಿಸಂಶ್ಲೇಷಣೆ", not "photosynthesis"), so a
+        # list of English terms fails 8 perfectly-correct cells. Checking that
+        # the extracted topic actually overlaps the input message is both
+        # language-agnostic and a stricter test of the real behaviour.
+        params = action.get("params") if isinstance(action, dict) else {}
+        topic = str((params or {}).get("topic") or "").strip()
+        row["extractedTopic"] = topic
+        msg = cell["message"]
+        in_message = bool(topic) and (
+            topic.lower() in msg.lower()
+            or any(len(w) > 3 and w.lower() in msg.lower() for w in topic.split())
+        )
+        in_entities = entity_hit(topic, cell.get("entities", []))
+        # VIDYA is inconsistent about this: sometimes it returns the topic in
+        # the teacher's own script, sometimes translated to English. BOTH are
+        # legitimate extractions, so both count. Only an EMPTY topic fails.
+        row["entityHit"] = bool(topic) and (in_message or in_entities)
+        # Flag the inconsistency without failing the cell — it matters for
+        # prefill (the destination form receives whatever this says) and it is
+        # a separate decision from parity.
+        if topic and not in_message and cell["lang"] != "en":
+            row["topicTranslated"] = True
+
     if not row["entityHit"]:
         row["failReasons"].append("entity_miss")
 
