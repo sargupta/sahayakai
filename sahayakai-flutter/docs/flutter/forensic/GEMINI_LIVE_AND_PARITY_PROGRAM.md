@@ -3,6 +3,24 @@
 **Founder directive:** 2026-07-29. **Status:** active, autonomous `/loop`.
 **Scope:** all work in the Flutter app at `/Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter`, branch `feature/flutter-rebuild`.
 
+## UNBLOCKED — headliners back in scope (2026-07-29, founder go-ahead + gcloud access)
+
+The founder lifted Android-only: "go ahead for the two headliners — Gemini Live and attendance→parent-call. There is nothing to be blocked. You have gcloud access." **Greeting trigger confirmed: auto-on-open** ("how would you deal with a real person? Auto on when open") — already shipped (`e93b749a7`), no change. So the two backend-blocked items are now buildable. This is a large multi-repo effort (web Next.js routes + the Python `vidya_voice` sidecar + the Flutter clients + production deploys); it is **methodical and multi-iteration, not a one-night "done"** — especially the real-time-audio Live path and any security-sensitive route.
+
+### Safe-deploy discipline (holds even with the go-ahead — it protects prod)
+- **Branch from `develop`, NEVER commit to `main`.** `main` = production (www.sahayakai.com); `develop` exists. Web work lands on a `feature/…`-from-`develop` branch. Flutter work stays on `feature/flutter-rebuild`. Merge `--no-ff`.
+- **Deploy only via `scripts/safe-deploy.sh` + `scripts/audit-deployments.sh` before AND after; NEVER raw `gcloud run deploy`.** Dual-region (asia-south1 Mumbai + asia-southeast1 Singapore) — deploy BOTH.
+- **gcloud is currently on the DEV project `atithi-dev-503606`, not prod `sahayakai-b4248`.** Set the correct project deliberately before any deploy; stage/verify on dev first where possible.
+- **Checkpoint with the founder before the FIRST production deploy of anything touching the live voice pipeline.** Gemini Live is ADDITIVE behind a flag — the current STT/TTS stays untouched, and remains the fallback.
+
+### Attendance build (de-risked; auth + ownership + masking understood)
+- `getClassesAction` (`src/app/actions/attendance.ts`) is **owner-scoped**: `db.collection('classes').where('teacherUid','==',uid)`; students live in `classes/{classId}/students` (each with a full `parentPhone`); `getClassAction` enforces `data.teacherUid !== uid → Unauthorized`.
+- Mobile-facing REST routes authenticate via the **`x-user-id`** header the middleware injects from the verified Firebase Bearer token (pattern: `src/app/api/user/profile/route.ts`).
+- **Build (web branch):** `GET /api/attendance/classes` → read `x-user-id`, return that teacher's owner-scoped classes; `GET /api/attendance/classes/[classId]/students` → verify `class.teacherUid === x-user-id`, return students with a **MASKED last-4 phone only** (never the full number to the client — the hotline's F9-001 rule). Then the mobile Attendance feature (class → students → mark → "call parent") + feed the students into `hotlineStudentRosterProvider`. Deploy the additive routes via safe-deploy.
+
+### Gemini Live build (larger; recon the sidecar first)
+- The `sahayakai-agents` sidecar (`vidya_voice`) exists with a `Dockerfile` + `deploy/cloudbuild.yaml` + `deploy/service.yaml` + `spikes/` — study its start-session contract before wiring. Implement `POST /api/vidya-voice/start-session` (mint an ephemeral Gemini Live token via the sidecar, return wssUrl + sessionConfig + tool/flow declarations). Build the Dart Live client (WebSocket + `record` mic PCM + audio playback) behind a `voiceMode` flag that FALLS BACK to the turn-based pipeline AND declares the app tools as function-calls dispatched via `VidyaNavDispatcher` + the RUN verb — Live must ACT, not just talk. Opens with the mother-tongue greeting. Deploy sidecar + route (safe-deploy, checkpointed); on-device verify the audio round-trip before any "works" claim; never delete `tts_repository`/`voice_to_text`/`audio_player_service`.
+
 ## Hard constraints (this session)
 
 - **Android/Flutter ONLY.** No changes to the web app (`sahayakai-main`), no `main` branch, no production deploy. `sahayakai-main` stays READ-ONLY reference (for the backend contract + the web Gemini Live spike to learn from). Founder chose "Android only for now."
