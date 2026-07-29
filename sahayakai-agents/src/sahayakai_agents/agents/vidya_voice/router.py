@@ -91,9 +91,16 @@ async def _mint_ephemeral_token(
     """
     from google import genai
     from google.genai import types as genai_types
-    from ..._adk_keyed_gemini import build_genai_client
 
-    client = build_genai_client(api_key)
+    # Developer API + `v1alpha` is the ONLY combination that mints a Live auth
+    # token: `auth_tokens.create()` is unavailable on Vertex and pre-`v1alpha`.
+    # `build_genai_client` is bypassed here on purpose — it would route the Vertex
+    # sentinel to Vertex (401/denied). Verified: this config mints an ephemeral
+    # token for `gemini-2.0-flash-live-001`.
+    client = genai.Client(
+        api_key=api_key,
+        http_options=genai_types.HttpOptions(api_version="v1alpha"),
+    )
 
     # Bind the token to the specific model + tools we plan to use.
     # `LiveConnectConfig` accepts `system_instruction` as either a
@@ -128,13 +135,13 @@ async def _mint_ephemeral_token(
                 new_session_expire_time=expire_at,
                 uses=1,
                 live_connect_constraints=constraints,
-                # Lock the bound config so a malicious client can't
-                # try to override system_instruction or tools at
-                # `live.connect()` time.
-                lock_additional_fields=[
-                    "model",
-                    "config",
-                ],
+                # NOTE: `lock_additional_fields=["model","config"]` was rejected by
+                # Live with `400 field_mask is invalid for BidiGenerateContentSetup`
+                # ("config" is not a valid setup field-mask entry), which blocked
+                # every mint. The token is still bound to the model + system
+                # instruction via `live_connect_constraints`; re-add a lock only
+                # with VALIDATED field-mask names (a follow-up) rather than an
+                # invalid one that breaks minting entirely.
             )
         )
     except Exception as exc:
@@ -193,16 +200,21 @@ async def start_session(payload: SessionStartRequest) -> SessionStartResponse:
            tool-call events to the existing NAVIGATE_AND_FILL handler.
     """
     settings = get_settings()
-    api_keys = settings.genai_keys
-    if not api_keys:
+    # Live token minting REQUIRES the Developer API (auth_tokens.create is not a
+    # Vertex operation) + the v1alpha surface, so use the real developer key
+    # directly — NOT settings.genai_keys, which returns the Vertex sentinel when
+    # GOOGLE_GENAI_USE_VERTEXAI is on. Other agents may run on Vertex; the Live
+    # mint may not. (Verified: this key mints a token for the Live model.)
+    dev_api_key = settings.genai_api_key.get_secret_value()
+    if not dev_api_key:
         raise AgentError(
             code="INTERNAL",
-            message="No Gemini API key configured (GOOGLE_GENAI_API_KEY).",
+            message=(
+                "No Gemini Developer API key (GOOGLE_GENAI_API_KEY) configured — "
+                "required to mint a Live session token."
+            ),
             http_status=502,
         )
-    # Spike: just use the first key. Production migration will route
-    # through `run_resiliently` for key rotation parity.
-    api_key = api_keys[0]
 
     # 1. Build the per-teacher session config.
     session_config = build_vidya_voice_session(
@@ -218,7 +230,7 @@ async def start_session(payload: SessionStartRequest) -> SessionStartResponse:
     # 2. Mint the ephemeral token.
     ttl = DEFAULT_TOKEN_TTL_SECONDS
     token = await _mint_ephemeral_token(
-        api_key=api_key,
+        api_key=dev_api_key,
         session_config=session_config,
         ttl_seconds=ttl,
     )
