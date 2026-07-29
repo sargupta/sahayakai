@@ -29,6 +29,17 @@ class FakeAudioPlayerService implements AudioPlayerService {
     return id;
   }
 
+  int pcmStreamCount = 0;
+
+  @override
+  Future<int?> playPcmStream(Stream<Uint8List> pcm) async {
+    pcmStreamCount++;
+    final id = ++_session;
+    unawaited(pcm.drain<void>());
+    if (!_progress.isClosed) _progress.add(PlaybackProgress(id, true));
+    return id;
+  }
+
   @override
   Future<void> stop() async => stopCount++;
 

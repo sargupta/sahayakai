@@ -9,6 +9,8 @@ import '../../../shared/voice/audio_player_service.dart';
 import '../../../shared/voice/tts_language.dart';
 import '../../../shared/voice/audio_recorder_service.dart';
 import '../../../shared/voice/mic_permission_service.dart';
+import '../../settings/data/voice_mode_provider.dart';
+import '../data/gemini_live_client.dart';
 import '../data/dto/assistant_request.dart';
 import '../data/dto/assistant_response.dart';
 import '../data/dto/chat_message.dart';
@@ -279,6 +281,26 @@ class VidyaController extends _$VidyaController {
   Timer? _trailingSilenceTimer;
   Timer? _hardCapTimer;
 
+  // ── Live session (Gemini Live audio-to-audio, behind the voiceMode flag) ────
+  // ADDITIVE: when this is running the turn-based capture above is idle. On any
+  // Live failure the machine tears this down and can fall back to `_begin()`.
+  bool _liveActive = false;
+  StreamSubscription<Uint8List>? _liveMicSub;
+  StreamSubscription<Uint8List>? _liveAudioSub;
+  StreamSubscription<VidyaDirective>? _liveToolSub;
+  StreamSubscription<void>? _liveTurnSub;
+  StreamSubscription<void>? _liveInterruptSub;
+  StreamSubscription<Object>? _liveErrorSub;
+
+  /// The current model turn's streaming-PCM playback feed. Opened lazily on the
+  /// first audio chunk of a turn, closed on turnComplete / barge-in.
+  StreamController<Uint8List>? _livePcmController;
+
+  /// Tool-calls buffered within the current model turn, flushed on turnComplete
+  /// so a single action auto-navigates and a compound (2–3) offers confirm
+  /// chips — the same 0/1/2–3 rule `_converse` applies to the turn-based reply.
+  final List<VidyaDirective> _liveTurnDirectives = [];
+
   @override
   VidyaState build() {
     // No eager network here: a session/profile restore is U-V7 (needs real
@@ -297,6 +319,18 @@ class VidyaController extends _$VidyaController {
       ref.read(vidyaSessionRepositoryProvider);
   VidyaProfileRepository get _profileRepo =>
       ref.read(vidyaProfileRepositoryProvider);
+  GeminiLiveClient get _live => ref.read(geminiLiveClientProvider);
+
+  /// The teacher's chosen voice engine. Defensive: a missing preferences plugin
+  /// in a plain unit test degrades to the turn-based default rather than
+  /// throwing (the Live path is opt-in anyway).
+  VoiceMode get _voiceMode {
+    try {
+      return ref.read(voiceModeControllerProvider);
+    } catch (_) {
+      return VoiceMode.turnBased;
+    }
+  }
 
   /// The one entry point the Seal Mic tap calls. Its meaning depends on the
   /// phase (SPEC §B.2 tap semantics):
@@ -304,6 +338,12 @@ class VidyaController extends _$VidyaController {
   ///   • listening → stop now and process what was said
   ///   • any other in-flight phase → cancel and return to idle
   Future<void> onMicTap() async {
+    // A Live session owns the mic continuously (full-duplex): there is no
+    // separate "stop and process" — any tap during a Live session ends it.
+    if (_liveActive) {
+      await cancel();
+      return;
+    }
     switch (state.status) {
       case VidyaStatus.listening:
         await _stopAndProcess();
@@ -317,14 +357,30 @@ class VidyaController extends _$VidyaController {
       case VidyaStatus.signedOut:
       case VidyaStatus.limitReached:
       case VidyaStatus.failed:
-        await _begin();
+        await _beginVoice();
     }
+  }
+
+  /// Starts a voice interaction using the teacher's chosen engine. In `live`
+  /// mode it attempts a Gemini Live session; if the flag is off OR the Live
+  /// connect/mic fails, it falls through to the EXISTING turn-based `_begin()`
+  /// — the always-available fallback, which is never removed.
+  Future<void> _beginVoice() async {
+    if (_voiceMode == VoiceMode.live) {
+      final handled = await _beginLive();
+      if (handled) return;
+      // Live could not connect (or the mic would not open) — fall through.
+    }
+    await _begin();
   }
 
   /// Abandons whatever is in flight (a fresh generation invalidates every
   /// pending await), stops any capture and any TTS, and returns to idle.
   Future<void> cancel() async {
     _gen++;
+    // Tear the Live session down first (awaited, deterministic); a no-op when
+    // there is no Live session. `_teardownCapture()` also fires it, guarded.
+    await _teardownLive();
     _teardownCapture();
     await _recorder.cancel();
     await _player.stop();
@@ -371,7 +427,8 @@ class VidyaController extends _$VidyaController {
   /// either. This method is the lighter, same-teacher, mid-session reset.
   void clearConversation() {
     _gen++;
-    _teardownCapture();
+    _teardownCapture(); // also tears down any Live session (guarded)
+    unawaited(_teardownLive());
     unawaited(_recorder.cancel());
     unawaited(_player.stop());
     state = VidyaState(profile: state.profile);
@@ -756,6 +813,219 @@ class VidyaController extends _$VidyaController {
     _hardCapTimer = null;
     unawaited(_amplitudeSub?.cancel());
     _amplitudeSub = null;
+    // A Live session, if any, is torn down alongside the capture machinery (a
+    // guarded no-op in the turn-based path). This is also the provider-dispose
+    // hook (see build()), so a disposed controller never leaks an open socket.
+    unawaited(_teardownLive());
+  }
+
+  // ── Live session (Gemini Live) ─────────────────────────────────────────────
+
+  /// Attempts a Gemini Live session. Returns **true** when the tap was handled
+  /// (a session started, OR a terminal permission state was set), and **false**
+  /// only when Live could not connect / the mic would not open — the sole signal
+  /// for [_beginVoice] to fall back to the turn-based `_begin()`.
+  Future<bool> _beginLive() async {
+    final gen = ++_gen;
+    _set(status: VidyaStatus.requestingPermission, errorMessage: null);
+    final MicPermission perm;
+    try {
+      perm = await _permission.ensureGranted();
+    } catch (_) {
+      if (_stale(gen)) return true;
+      _set(status: VidyaStatus.failed);
+      return true;
+    }
+    if (_stale(gen)) return true;
+    switch (perm) {
+      case MicPermission.permanentlyDenied:
+        _set(status: VidyaStatus.micDenied);
+        return true;
+      case MicPermission.denied:
+        _set(status: VidyaStatus.idle);
+        return true;
+      case MicPermission.granted:
+        break;
+    }
+
+    // Mint the ephemeral token + open the socket. Any failure here is the
+    // sanctioned fallback trigger (connect() never throws, but guard anyway).
+    final bool connected;
+    try {
+      connected = await _live.connect(
+        teacherProfile: _liveTeacherProfile(),
+        screenPath: state.screenPath,
+        screenUiState: state.screenUiState,
+        detectedLanguage: _uiLanguage(),
+      );
+    } catch (_) {
+      return false;
+    }
+    if (_stale(gen)) {
+      await _live.close();
+      return true;
+    }
+    if (!connected) return false;
+
+    _liveActive = true;
+    _wireLiveStreams(gen);
+
+    // Stream mic PCM16@16k up.
+    try {
+      final micStream = await _recorder.startStream();
+      if (_stale(gen)) {
+        await _teardownLive();
+        return true;
+      }
+      _liveMicSub = micStream.listen(
+        (chunk) {
+          if (!_stale(gen)) _live.sendAudioChunk(chunk);
+        },
+        onError: (Object e) {
+          if (!_stale(gen)) _handleLiveError(e);
+        },
+      );
+    } catch (_) {
+      // Socket is up but the mic would not open — tear down and fall back.
+      await _teardownLive();
+      return false;
+    }
+
+    _set(status: VidyaStatus.listening, amplitude: 0);
+    return true;
+  }
+
+  void _wireLiveStreams(int gen) {
+    _liveAudioSub = _live.audioOut.listen((chunk) {
+      if (_stale(gen) || !_liveActive) return;
+      _feedLiveAudio(chunk);
+    });
+    _liveToolSub = _live.toolCalls.listen((directive) {
+      if (_stale(gen) || !_liveActive) return;
+      _liveTurnDirectives.add(directive);
+    });
+    _liveTurnSub = _live.turnComplete.listen((_) {
+      if (_stale(gen) || !_liveActive) return;
+      _closeLivePcm();
+      _flushLiveDirectives();
+      _set(status: VidyaStatus.listening);
+    });
+    _liveInterruptSub = _live.interrupted.listen((_) {
+      if (_stale(gen) || !_liveActive) return;
+      // Barge-in: flush queued playback immediately.
+      _closeLivePcm();
+      unawaited(_player.stop());
+      _set(status: VidyaStatus.listening);
+    });
+    _liveErrorSub = _live.errors.listen((e) {
+      if (_stale(gen)) return;
+      _handleLiveError(e);
+    });
+    // Partial transcript (`_live.transcript`) is intentionally not inked as a
+    // register block yet: an AUDIO-only session's text channel is sparse and
+    // inking partials risks duplicated/garbled entries. Captions read from the
+    // VidyaStatus phase, which needs no change. (Phase-4 on-device tuning item.)
+  }
+
+  /// Feeds one model-audio chunk into the current turn's streaming playback,
+  /// opening a fresh feed (and the `speaking` phase) on the turn's first chunk.
+  void _feedLiveAudio(Uint8List pcm) {
+    var controller = _livePcmController;
+    if (controller == null) {
+      controller = StreamController<Uint8List>();
+      _livePcmController = controller;
+      _set(status: VidyaStatus.speaking);
+      unawaited(_player.playPcmStream(controller.stream));
+    }
+    if (!controller.isClosed) controller.add(pcm);
+  }
+
+  void _closeLivePcm() {
+    final controller = _livePcmController;
+    _livePcmController = null;
+    if (controller != null && !controller.isClosed) {
+      unawaited(controller.close());
+    }
+  }
+
+  /// Applies the tool-calls buffered during a model turn: 0 → speak-only,
+  /// 1 → auto-navigate (`pendingNavigation`), 2–3 → confirm chips — the SAME
+  /// rule and the SAME state fields `_converse` sets, so the nav/RUN chain is
+  /// reused unchanged.
+  void _flushLiveDirectives() {
+    if (_liveTurnDirectives.isEmpty) return;
+    final directives = List<VidyaDirective>.of(_liveTurnDirectives);
+    _liveTurnDirectives.clear();
+    if (directives.length == 1) {
+      _set(pendingNavigation: directives.single);
+      _learnProfile(directives);
+    } else {
+      _set(conversation: [
+        ...state.conversation,
+        ConversationBlock(
+          role: ConversationRole.vidya,
+          text: '',
+          directives: directives,
+        ),
+      ]);
+      _learnProfile(directives);
+    }
+  }
+
+  Map<String, dynamic>? _liveTeacherProfile() {
+    final p = state.profile;
+    if (p == null || p.isEmpty) return null;
+    return {
+      if (p.preferredGrade != null) 'preferredGrade': p.preferredGrade,
+      if (p.preferredSubject != null) 'preferredSubject': p.preferredSubject,
+      if (p.preferredLanguage != null) 'preferredLanguage': p.preferredLanguage,
+      if (p.schoolContext != null) 'schoolContext': p.schoolContext,
+    };
+  }
+
+  /// A Live-session error ends the session and lands on the SAME dignified
+  /// panels the turn-based path uses (via [_handleError]).
+  void _handleLiveError(Object e) {
+    unawaited(_teardownLive());
+    if (e is ApiException) {
+      _handleError(e);
+    } else {
+      _set(status: VidyaStatus.failed);
+    }
+  }
+
+  /// Cancels every Live subscription, closes the mic stream + the socket, and
+  /// resets the Live flags. A guarded no-op when no Live session is active — so
+  /// it is safe to call from the shared teardown paths without ever touching the
+  /// Live client in the turn-based flow.
+  Future<void> _teardownLive() async {
+    if (!_liveActive &&
+        _liveMicSub == null &&
+        _liveAudioSub == null &&
+        _liveToolSub == null &&
+        _liveTurnSub == null &&
+        _liveInterruptSub == null &&
+        _liveErrorSub == null &&
+        _livePcmController == null) {
+      return;
+    }
+    _liveActive = false;
+    _liveTurnDirectives.clear();
+    await _liveMicSub?.cancel();
+    await _liveAudioSub?.cancel();
+    await _liveToolSub?.cancel();
+    await _liveTurnSub?.cancel();
+    await _liveInterruptSub?.cancel();
+    await _liveErrorSub?.cancel();
+    _liveMicSub = null;
+    _liveAudioSub = null;
+    _liveToolSub = null;
+    _liveTurnSub = null;
+    _liveInterruptSub = null;
+    _liveErrorSub = null;
+    _closeLivePcm();
+    await _recorder.cancel();
+    await _live.close();
   }
 
   void _set({

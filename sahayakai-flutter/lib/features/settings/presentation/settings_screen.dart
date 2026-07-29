@@ -25,6 +25,7 @@ import '../../profile/domain/profile_settings.dart';
 import '../../profile/domain/teacher_profile.dart';
 import '../../profile/presentation/profile_controller.dart';
 import '../data/notification_prefs_provider.dart';
+import '../data/voice_mode_provider.dart';
 import 'settings_controller.dart';
 import 'widgets/account_deleted_dialog.dart';
 import 'widgets/delete_account_dialog.dart';
@@ -126,6 +127,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       const _ThemeSection(),
       const _LanguageSection(),
       const _NotificationSection(),
+      const _VoiceModeSection(),
       if (signedIn) ...[
         _profileSection(l10n),
         _dangerSection(l10n),
@@ -473,6 +475,41 @@ class _LanguageSection extends StatelessWidget {
             style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Voice mode: the VIDYA engine switch. Live (real-time Gemini Live
+/// audio-to-audio) vs the default turn-based STT -> classifier -> TTS pipeline.
+/// A device preference that works signed out, committing the instant it is
+/// touched — same grammar as the notifications switch. Defaults OFF: the Live
+/// surface is opt-in and turn-based is always the fallback.
+class _VoiceModeSection extends ConsumerWidget {
+  const _VoiceModeSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    final mode = ref.watch(voiceModeControllerProvider);
+
+    return _SettingsGroup(
+      title: l10n.settingsVoiceModeTitle,
+      child: AppCard(
+        padding: EdgeInsets.zero,
+        child: SwitchListTile.adaptive(
+          value: mode == VoiceMode.live,
+          onChanged: (value) => ref
+              .read(voiceModeControllerProvider.notifier)
+              .set(value ? VoiceMode.live : VoiceMode.turnBased),
+          title: Text(l10n.settingsVoiceModeLabel, style: text.bodyLarge),
+          subtitle: Text(
+            l10n.settingsVoiceModeHint,
+            style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+        ),
       ),
     );
   }

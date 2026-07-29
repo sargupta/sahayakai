@@ -60,6 +60,84 @@ class Base64Mp3Source extends StreamAudioSource {
   }
 }
 
+/// The sample rate of Gemini Live model audio (PCM16LE mono).
+const int kLivePlaybackSampleRate = 24000;
+
+/// Builds a 44-byte canonical WAV header for a **streaming** PCM source whose
+/// total length is not known up front. The two length fields are written as the
+/// 32-bit max sentinel (a widely-tolerated streaming-WAV convention) so the
+/// header can prefix an open-ended PCM stream. Little-endian, [bitsPerSample]
+/// PCM. Kept as a named helper so it can be adjusted during on-device tuning.
+Uint8List buildStreamingWavHeader({
+  required int sampleRate,
+  int channels = 1,
+  int bitsPerSample = 16,
+}) {
+  const int maxSize = 0xFFFFFFFF;
+  final byteRate = sampleRate * channels * (bitsPerSample ~/ 8);
+  final blockAlign = channels * (bitsPerSample ~/ 8);
+  final builder = BytesBuilder();
+  Uint8List u32(int v) =>
+      (ByteData(4)..setUint32(0, v, Endian.little)).buffer.asUint8List();
+  Uint8List u16(int v) =>
+      (ByteData(2)..setUint16(0, v, Endian.little)).buffer.asUint8List();
+  builder.add(ascii.encode('RIFF'));
+  builder.add(u32(maxSize)); // ChunkSize — streaming sentinel
+  builder.add(ascii.encode('WAVE'));
+  builder.add(ascii.encode('fmt '));
+  builder.add(u32(16)); // Subchunk1Size (PCM)
+  builder.add(u16(1)); // AudioFormat = PCM
+  builder.add(u16(channels));
+  builder.add(u32(sampleRate));
+  builder.add(u32(byteRate));
+  builder.add(u16(blockAlign));
+  builder.add(u16(bitsPerSample));
+  builder.add(ascii.encode('data'));
+  builder.add(u32(maxSize - 44)); // Subchunk2Size — streaming sentinel
+  return builder.toBytes();
+}
+
+/// A [StreamAudioSource] that wraps an open-ended stream of raw PCM16LE chunks
+/// (Gemini Live model audio, 24 kHz mono) as a streaming WAV: a header, then the
+/// PCM bytes as they arrive, closing when the source stream closes (turn end).
+/// This is the streaming analogue of [Base64Mp3Source]. UNVERIFIED on-device —
+/// streaming-WAV playback back-pressure is a Phase-4 tuning item.
+class PcmStreamAudioSource extends StreamAudioSource {
+  PcmStreamAudioSource(
+    this._pcm, {
+    this.sampleRate = kLivePlaybackSampleRate,
+    this.channels = 1,
+  });
+
+  final Stream<Uint8List> _pcm;
+  final int sampleRate;
+  final int channels;
+
+  @override
+  Future<StreamAudioResponse> request([int? start, int? end]) async {
+    // A live stream cannot be seeked; serve from the beginning regardless of a
+    // ranged request (just_audio issues one open request for a null-length
+    // source).
+    final header =
+        buildStreamingWavHeader(sampleRate: sampleRate, channels: channels);
+    return StreamAudioResponse(
+      sourceLength: null,
+      contentLength: null,
+      offset: start ?? 0,
+      contentType: 'audio/wav',
+      stream: _headerThen(header, _pcm),
+    );
+  }
+
+  static Stream<List<int>> _headerThen(
+    Uint8List header,
+    Stream<Uint8List> rest,
+  ) async* {
+    yield header;
+    yield* rest;
+  }
+}
+
 /// One playback-progress event: the [session] id of a clip and whether it is
 /// currently [playing]. Each new clip supersedes the prior session id; natural
 /// completion or an explicit stop flips [playing] to false for that session.
@@ -93,7 +171,17 @@ abstract interface class AudioPlayerService {
   /// never started and can never emit a completion event.
   Future<int?> playBase64Mp3(String base64Mp3);
 
-  /// Stops the current clip (VIDYA cancel / mic re-tap / read-aloud stop).
+  /// Plays a live stream of raw PCM16LE 24 kHz mono chunks (Gemini Live model
+  /// audio) by wrapping it in a streaming WAV [PcmStreamAudioSource], cancelling
+  /// any clip already playing. One call per model turn; the caller closes the
+  /// [pcm] stream at turn end. On barge-in the caller invokes [stop] to flush.
+  /// Kept separate from [playBase64Mp3] — that stays the fallback TTS path.
+  /// Returns the new clip's session id, or **null** when the session could not
+  /// be configured.
+  Future<int?> playPcmStream(Stream<Uint8List> pcm);
+
+  /// Stops the current clip (VIDYA cancel / mic re-tap / read-aloud stop /
+  /// Live barge-in flush).
   Future<void> stop();
 
   /// Playback-progress for the currently-loaded clip. Emits on play-start
@@ -158,6 +246,20 @@ class JustAudioPlayerService implements AudioPlayerService {
     // Start playback but do not await completion — mirror the web's
     // `new Audio().play()` which resolves when playback *begins*, so the
     // caller's conversation flow is not blocked for the length of the clip.
+    unawaited(_player.play());
+    return id;
+  }
+
+  @override
+  Future<int?> playPcmStream(Stream<Uint8List> pcm) async {
+    await _ensureSession();
+    // Cancel any clip first (same tts.cancel parity as playBase64Mp3): drives
+    // processingState to idle, not completed, so no false completion for the
+    // outgoing session.
+    await _player.stop();
+    final id = ++_session;
+    await _player.setAudioSource(PcmStreamAudioSource(pcm));
+    _emit(true);
     unawaited(_player.play());
     return id;
   }

@@ -361,7 +361,18 @@ void main() {
       }
 
       await checkAll(find.byType(RadioListTile<ThemeMode>), 'theme radio');
-      await checkAll(find.byType(SwitchListTile), 'notification switch');
+      // The two switches (notifications, live voice) sit in different sections
+      // of a lazily-built ListView, so a bare `byType(SwitchListTile)` index can
+      // go stale as off-screen tiles unmount mid-scroll. Measure each by a
+      // stable, unique title instead — same 48dp gate, one match apiece.
+      await checkAll(
+        find.widgetWithText(SwitchListTile, 'Reminders and updates'),
+        'notifications switch',
+      );
+      await checkAll(
+        find.widgetWithText(SwitchListTile, 'Live voice (beta)'),
+        'live voice switch',
+      );
       await checkAll(find.byType(FilterChip), 'qualification chip');
       await checkAll(find.byType(FilledButton), 'save button');
       await checkAll(find.byType(OutlinedButton), 'delete button');

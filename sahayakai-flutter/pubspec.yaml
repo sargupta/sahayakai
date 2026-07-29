@@ -22,6 +22,13 @@ dependencies:
   # Networking
   dio: ^5.7.0
 
+  # web_socket_channel: the raw WebSocket transport for the Gemini Live voice
+  # path (VIDYA). The client opens a socket DIRECTLY to Google with the
+  # ephemeral session token from /api/vidya-voice/start-session (dio only talks
+  # to sahayakai.com). Promoted from a transitive dependency to a direct one;
+  # pinned to the already-resolved 3.x line so nothing else re-resolves.
+  web_socket_channel: ^3.0.0
+
   # Real auth (replaces the U-SI0/foundation-v1 stub — HANDOFF.md §1).
   # firebase_database/firebase_messaging (Block C presence, FCM) are still
   # deliberately absent — that's a separate handoff.

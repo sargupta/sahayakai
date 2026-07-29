@@ -940,6 +940,18 @@
   "@settingsNotificationsHint": {
     "description": "Helper text under the notifications switch."
   },
+  "settingsVoiceModeTitle": "Voice mode",
+  "@settingsVoiceModeTitle": {
+    "description": "Section header for the VIDYA voice-mode switch."
+  },
+  "settingsVoiceModeLabel": "Live voice (beta)",
+  "@settingsVoiceModeLabel": {
+    "description": "Label on the switch that turns on the real-time Gemini Live voice mode."
+  },
+  "settingsVoiceModeHint": "Speak with VIDYA in real time. When off, VIDYA listens, then replies one turn at a time.",
+  "@settingsVoiceModeHint": {
+    "description": "Helper text under the live voice switch explaining live vs turn-based voice."
+  },
   "settingsProfileTitle": "Teaching profile",
   "@settingsProfileTitle": {
     "description": "Section header for the board, qualifications and role fields."

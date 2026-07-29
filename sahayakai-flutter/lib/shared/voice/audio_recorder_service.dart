@@ -70,6 +70,13 @@ abstract interface class AudioRecorderService {
   /// recording.
   Future<void> start();
 
+  /// Begins a STREAMING capture (VIDYA Live path): PCM16LE 16 kHz mono chunks
+  /// pushed onto the returned stream as they are captured, for real-time upload
+  /// to Gemini Live. No temp file is written — the bytes never touch disk. End
+  /// the stream with [cancel] (or [stop]). Kept separate from [start] so the
+  /// turn-based file capture is untouched. Throws if already recording.
+  Future<Stream<Uint8List>> startStream();
+
   /// Stops and returns the completed [Recording] (path + byte length), or null
   /// when nothing was captured.
   Future<Recording?> stop();
@@ -135,6 +142,29 @@ class RecordAudioRecorderService implements AudioRecorderService {
         _amplitude.add(normaliseAmplitudeDb(amp.current));
       }
     });
+  }
+
+  @override
+  Future<Stream<Uint8List>> startStream() async {
+    if (_isRecording) {
+      throw StateError('AudioRecorder is already recording');
+    }
+    // Raw PCM16 16 kHz mono, streamed — the format Gemini Live wants on
+    // `realtimeInput.mediaChunks`. No `path` is written (this is a stream, not a
+    // file); `_activePath` stays null so [cancel]/[stop] behave for both modes.
+    final stream = await _recorder.startStream(
+      const RecordConfig(
+        encoder: AudioEncoder.pcm16bits,
+        sampleRate: kRecorderSampleRate,
+        numChannels: kRecorderNumChannels,
+        // Match the file-capture constraints: autoGain OFF, echo/noise ON.
+        autoGain: false,
+        echoCancel: true,
+        noiseSuppress: true,
+      ),
+    );
+    _isRecording = true;
+    return stream;
   }
 
   @override

@@ -34,12 +34,22 @@ class FakeAudioRecorderService implements AudioRecorderService {
       StreamController<double>.broadcast();
   bool _recording = false;
   int startCount = 0;
+  int startStreamCount = 0;
   int stopCount = 0;
   int cancelCount = 0;
   final List<String> _tempPaths = [];
 
+  /// Feeds the streaming (Live) capture. Push PCM chunks with [emitStreamChunk].
+  final StreamController<Uint8List> _pcmStream =
+      StreamController<Uint8List>.broadcast();
+
   void emitAmplitude(double level) {
     if (!_amplitude.isClosed) _amplitude.add(level);
+  }
+
+  /// Pushes one PCM chunk onto the streaming capture (VIDYA Live path).
+  void emitStreamChunk(Uint8List chunk) {
+    if (!_pcmStream.isClosed) _pcmStream.add(chunk);
   }
 
   @override
@@ -56,6 +66,18 @@ class FakeAudioRecorderService implements AudioRecorderService {
     if (throwOnStart != null) throw throwOnStart!;
     _recording = true;
     startCount++;
+  }
+
+  /// When set, [startStream] throws this instead of returning a stream — models
+  /// the mic failing to open for the Live path.
+  Object? throwOnStartStream;
+
+  @override
+  Future<Stream<Uint8List>> startStream() async {
+    if (throwOnStartStream != null) throw throwOnStartStream!;
+    _recording = true;
+    startStreamCount++;
+    return _pcmStream.stream;
   }
 
   @override
@@ -80,6 +102,7 @@ class FakeAudioRecorderService implements AudioRecorderService {
   @override
   Future<void> dispose() async {
     if (!_amplitude.isClosed) await _amplitude.close();
+    if (!_pcmStream.isClosed) await _pcmStream.close();
     for (final p in _tempPaths) {
       final d = Directory(p);
       if (d.existsSync()) d.deleteSync(recursive: true);
@@ -93,6 +116,9 @@ class FakeAudioRecorderService implements AudioRecorderService {
 /// [stop] and the [completePlayback] hook flip it to `playing: false`.
 class FakeAudioPlayerService implements AudioPlayerService {
   final List<String> played = [];
+
+  /// How many times the Live streaming-PCM playback was started.
+  int pcmStreamCount = 0;
   int stopCount = 0;
   int _session = 0;
   final StreamController<PlaybackProgress> _progress =
@@ -105,6 +131,16 @@ class FakeAudioPlayerService implements AudioPlayerService {
   Future<int?> playBase64Mp3(String base64Mp3) async {
     played.add(base64Mp3);
     final id = ++_session;
+    if (!_progress.isClosed) _progress.add(PlaybackProgress(id, true));
+    return id;
+  }
+
+  @override
+  Future<int?> playPcmStream(Stream<Uint8List> pcm) async {
+    pcmStreamCount++;
+    final id = ++_session;
+    // Drain the feed so the source is not left dangling in a test.
+    unawaited(pcm.drain<void>());
     if (!_progress.isClosed) _progress.add(PlaybackProgress(id, true));
     return id;
   }

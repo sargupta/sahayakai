@@ -1448,6 +1448,24 @@ abstract class AppLocalizations {
   /// **'Hear about new teaching tools and your saved work.'**
   String get settingsNotificationsHint;
 
+  /// Section header for the VIDYA voice-mode switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice mode'**
+  String get settingsVoiceModeTitle;
+
+  /// Label on the switch that turns on the real-time Gemini Live voice mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Live voice (beta)'**
+  String get settingsVoiceModeLabel;
+
+  /// Helper text under the live voice switch explaining live vs turn-based voice.
+  ///
+  /// In en, this message translates to:
+  /// **'Speak with VIDYA in real time. When off, VIDYA listens, then replies one turn at a time.'**
+  String get settingsVoiceModeHint;
+
   /// Section header for the board, qualifications and role fields.
   ///
   /// In en, this message translates to:

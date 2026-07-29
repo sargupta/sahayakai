@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -43,6 +44,17 @@ class FakeAudioRecorderService implements AudioRecorderService {
     _isRecording = true;
   }
 
+  int startStreamCount = 0;
+  final StreamController<Uint8List> _pcmStream =
+      StreamController<Uint8List>.broadcast();
+
+  @override
+  Future<Stream<Uint8List>> startStream() async {
+    startStreamCount++;
+    _isRecording = true;
+    return _pcmStream.stream;
+  }
+
   @override
   Future<Recording?> stop() async {
     stopCount++;
@@ -60,6 +72,7 @@ class FakeAudioRecorderService implements AudioRecorderService {
   Future<void> dispose() async {
     disposed = true;
     await _amplitude.close();
+    await _pcmStream.close();
   }
 }
 

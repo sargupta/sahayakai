@@ -754,6 +754,16 @@ class AppLocalizationsMl extends AppLocalizations {
       'Hear about new teaching tools and your saved work.';
 
   @override
+  String get settingsVoiceModeTitle => 'Voice mode';
+
+  @override
+  String get settingsVoiceModeLabel => 'Live voice (beta)';
+
+  @override
+  String get settingsVoiceModeHint =>
+      'Speak with VIDYA in real time. When off, VIDYA listens, then replies one turn at a time.';
+
+  @override
   String get settingsProfileTitle => 'Teaching profile';
 
   @override
