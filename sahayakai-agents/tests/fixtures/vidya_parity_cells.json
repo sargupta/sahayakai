@@ -8,9 +8,7 @@
     "genkitFlow": "instant-answer",
     "entities": [
       "photosynthesis",
-      "प्रकाश संश्लेषण",
-      "সালোকসংশ্লেষ",
-      "ஒளிச்சேர்க்கை"
+      "photosynthesis"
     ]
   },
   {
@@ -22,9 +20,7 @@
     "genkitFlow": "instant-answer",
     "entities": [
       "fraction",
-      "भिन्न",
-      "ভগ্নাংশ",
-      "பின்னம்"
+      "fraction"
     ]
   },
   {
@@ -36,9 +32,7 @@
     "genkitFlow": "instant-answer",
     "entities": [
       "democracy",
-      "लोकतंत्र",
-      "গণতন্ত্র",
-      "ஜனநாயகம்"
+      "democracy"
     ]
   },
   {
@@ -127,10 +121,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "photosynthesis",
       "प्रकाश संश्लेषण",
-      "সালোকসংশ্লেষ",
-      "ஒளிச்சேர்க்கை"
+      "photosynthesis"
     ]
   },
   {
@@ -141,10 +133,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "fraction",
       "भिन्न",
-      "ভগ্নাংশ",
-      "பின்னம்"
+      "fraction"
     ]
   },
   {
@@ -155,10 +145,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "democracy",
       "लोकतंत्र",
-      "গণতন্ত্র",
-      "ஜனநாயகம்"
+      "democracy"
     ]
   },
   {
@@ -247,10 +235,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "photosynthesis",
-      "प्रकाश संश्लेषण",
       "সালোকসংশ্লেষ",
-      "ஒளிச்சேர்க்கை"
+      "photosynthesis"
     ]
   },
   {
@@ -261,10 +247,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "fraction",
-      "भिन्न",
       "ভগ্নাংশ",
-      "பின்னம்"
+      "fraction"
     ]
   },
   {
@@ -275,10 +259,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "democracy",
-      "लोकतंत्र",
       "গণতন্ত্র",
-      "ஜனநாயகம்"
+      "democracy"
     ]
   },
   {
@@ -367,10 +349,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "photosynthesis",
-      "प्रकाश संश्लेषण",
-      "সালোকসংশ্লেষ",
-      "ஒளிச்சேர்க்கை"
+      "ஒளிச்சேர்க்கை",
+      "photosynthesis"
     ]
   },
   {
@@ -381,10 +361,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "fraction",
-      "भिन्न",
-      "ভগ্নাংশ",
-      "பின்னம்"
+      "பின்னம்",
+      "fraction"
     ]
   },
   {
@@ -395,10 +373,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "democracy",
-      "लोकतंत्र",
-      "গণতন্ত্র",
-      "ஜனநாயகம்"
+      "ஜனநாயகம்",
+      "democracy"
     ]
   },
   {
@@ -487,10 +463,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "photosynthesis",
-      "प्रकाश संश्लेषण",
-      "সালোকসংশ্লেষ",
-      "ஒளிச்சேர்க்கை"
+      "కిరణజన్య సంయోగక్రియ",
+      "photosynthesis"
     ]
   },
   {
@@ -501,10 +475,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "fraction",
-      "भिन्न",
-      "ভগ্নাংশ",
-      "பின்னம்"
+      "భిన్నం",
+      "fraction"
     ]
   },
   {
@@ -515,10 +487,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "democracy",
-      "लोकतंत्र",
-      "গণতন্ত্র",
-      "ஜனநாயகம்"
+      "ప్రజాస్వామ్యం",
+      "democracy"
     ]
   },
   {
@@ -607,10 +577,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "photosynthesis",
-      "प्रकाश संश्लेषण",
-      "সালোকসংশ্লেষ",
-      "ஒளிச்சேர்க்கை"
+      "प्रकाशसंश्लेषण",
+      "photosynthesis"
     ]
   },
   {
@@ -621,10 +589,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "fraction",
-      "भिन्न",
-      "ভগ্নাংশ",
-      "பின்னம்"
+      "अपूर्णांक",
+      "fraction"
     ]
   },
   {
@@ -635,10 +601,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "democracy",
-      "लोकतंत्र",
-      "গণতন্ত্র",
-      "ஜனநாயகம்"
+      "लोकशाही",
+      "democracy"
     ]
   },
   {
@@ -727,10 +691,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "photosynthesis",
-      "प्रकाश संश्लेषण",
-      "সালোকসংশ্লেষ",
-      "ஒளிச்சேர்க்கை"
+      "પ્રકાશસંશ્લેષણ",
+      "photosynthesis"
     ]
   },
   {
@@ -741,10 +703,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "fraction",
-      "भिन्न",
-      "ভগ্নাংশ",
-      "பின்னம்"
+      "અપૂર્ણાંક",
+      "fraction"
     ]
   },
   {
@@ -755,10 +715,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "democracy",
-      "लोकतंत्र",
-      "গণতন্ত্র",
-      "ஜனநாயகம்"
+      "લોકશાહી",
+      "democracy"
     ]
   },
   {
@@ -847,10 +805,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "photosynthesis",
-      "प्रकाश संश्लेषण",
-      "সালোকসংশ্লেষ",
-      "ஒளிச்சேர்க்கை"
+      "ದ್ಯುತಿಸಂಶ್ಲೇಷಣೆ",
+      "photosynthesis"
     ]
   },
   {
@@ -861,10 +817,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "fraction",
-      "भिन्न",
-      "ভগ্নাংশ",
-      "பின்னம்"
+      "ಭಿನ್ನರಾಶಿ",
+      "fraction"
     ]
   },
   {
@@ -875,10 +829,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "democracy",
-      "लोकतंत्र",
-      "গণতন্ত্র",
-      "ஜனநாயகம்"
+      "ಪ್ರಜಾಪ್ರಭುತ್ವ",
+      "democracy"
     ]
   },
   {
@@ -967,10 +919,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "photosynthesis",
-      "प्रकाश संश्लेषण",
-      "সালোকসংশ্লেষ",
-      "ஒளிச்சேர்க்கை"
+      "പ്രകാശസംശ്ലേഷണം",
+      "photosynthesis"
     ]
   },
   {
@@ -981,10 +931,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "fraction",
-      "भिन्न",
-      "ভগ্নাংশ",
-      "பின்னம்"
+      "ഭിന്നസംഖ്യ",
+      "fraction"
     ]
   },
   {
@@ -995,10 +943,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "democracy",
-      "लोकतंत्र",
-      "গণতন্ত্র",
-      "ஜனநாயகம்"
+      "ജനാധിപത്യം",
+      "democracy"
     ]
   },
   {
@@ -1087,10 +1033,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "photosynthesis",
-      "प्रकाश संश्लेषण",
-      "সালোকসংশ্লেষ",
-      "ஒளிச்சேர்க்கை"
+      "ਪ੍ਰਕਾਸ਼ ਸੰਸ਼ਲੇਸ਼ਣ",
+      "photosynthesis"
     ]
   },
   {
@@ -1101,10 +1045,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "fraction",
-      "भिन्न",
-      "ভগ্নাংশ",
-      "பின்னம்"
+      "ਭਿੰਨ",
+      "fraction"
     ]
   },
   {
@@ -1115,10 +1057,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "democracy",
-      "लोकतंत्र",
-      "গণতন্ত্র",
-      "ஜனநாயகம்"
+      "ਲੋਕਤੰਤਰ",
+      "democracy"
     ]
   },
   {
@@ -1207,10 +1147,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "photosynthesis",
-      "प्रकाश संश्लेषण",
-      "সালোকসংশ্লেষ",
-      "ஒளிச்சேர்க்கை"
+      "ଆଲୋକ ସଂଶ୍ଳେଷଣ",
+      "photosynthesis"
     ]
   },
   {
@@ -1221,10 +1159,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "fraction",
-      "भिन्न",
-      "ভগ্নাংশ",
-      "பின்னம்"
+      "ଭଗ୍ନାଂଶ",
+      "fraction"
     ]
   },
   {
@@ -1235,10 +1171,8 @@
     "expectedFlow": null,
     "genkitFlow": "instant-answer",
     "entities": [
-      "democracy",
-      "लोकतंत्र",
-      "গণতন্ত্র",
-      "ஜனநாயகம்"
+      "ଗଣତନ୍ତ୍ର",
+      "democracy"
     ]
   },
   {

@@ -175,21 +175,29 @@ def score(cell: dict, probe_result: dict, genkit_text: dict | None) -> dict:
         # the extracted topic actually overlaps the input message is both
         # language-agnostic and a stricter test of the real behaviour.
         params = action.get("params") if isinstance(action, dict) else {}
-        topic = str((params or {}).get("topic") or "").strip()
+        params = params or {}
+        topic = str(params.get("topic") or "").strip()
         row["extractedTopic"] = topic
         msg = cell["message"]
-        in_message = bool(topic) and (
-            topic.lower() in msg.lower()
-            or any(len(w) > 3 and w.lower() in msg.lower() for w in topic.split())
+
+        # Check ALL populated params, not just topic. An exam-paper request
+        # has a SUBJECT and a grade, not a topic — VIDYA correctly returns
+        # topic='' and subject='Science' there, and requiring a topic failed
+        # 6 perfectly-correct act-exam cells. English only passed because it
+        # happened to put "Science" in topic.
+        extracted = [str(v).strip() for v in params.values() if v and str(v).strip()]
+        haystack = " ".join(extracted)
+
+        in_message = any(
+            v.lower() in msg.lower()
+            or any(len(w) > 3 and w.lower() in msg.lower() for w in v.split())
+            for v in extracted
         )
-        in_entities = entity_hit(topic, cell.get("entities", []))
-        # VIDYA is inconsistent about this: sometimes it returns the topic in
-        # the teacher's own script, sometimes translated to English. BOTH are
-        # legitimate extractions, so both count. Only an EMPTY topic fails.
-        row["entityHit"] = bool(topic) and (in_message or in_entities)
-        # Flag the inconsistency without failing the cell — it matters for
-        # prefill (the destination form receives whatever this says) and it is
-        # a separate decision from parity.
+        in_entities = entity_hit(haystack, cell.get("entities", []))
+        # VIDYA is inconsistent about whether the topic comes back in the
+        # teacher's script or translated to English. soul.ts:125 asks for
+        # English, so both are legitimate. Only extracting NOTHING fails.
+        row["entityHit"] = bool(extracted) and (in_message or in_entities)
         if topic and not in_message and cell["lang"] != "en":
             row["topicTranslated"] = True
 
