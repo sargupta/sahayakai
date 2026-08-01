@@ -256,12 +256,12 @@ async def _call_gemini_structured(
     agent module now so each sub-agent can run its own resilient call
     without the router needing to know about Gemini at all.
     """
-    from google import genai  # noqa: PLC0415
     from google.genai import types as genai_types  # noqa: PLC0415
 
+    from ..._adk_keyed_gemini import build_genai_client
     from ...shared.gemini_schema import gemini_response_schema  # noqa: PLC0415
 
-    client = genai.Client(api_key=api_key)
+    client = build_genai_client(api_key)
     return await client.aio.models.generate_content(
         model=model,
         contents=prompt,

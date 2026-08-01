@@ -98,8 +98,8 @@ def fake_genai(monkeypatch: pytest.MonkeyPatch) -> _FakeAuthTokens:
 
     import sys
 
-    sys.modules["google.genai"] = fake_module  # type: ignore[assignment]
-    sys.modules["google.genai.types"] = fake_types  # type: ignore[assignment]
+    monkeypatch.setitem(sys.modules, "google.genai", fake_module)
+    monkeypatch.setitem(sys.modules, "google.genai.types", fake_types)
     # `from google import genai` reads the `genai` attribute on the parent
     # `google` package (not sys.modules), so we must also patch the
     # attribute. monkeypatch restores the original on teardown.
