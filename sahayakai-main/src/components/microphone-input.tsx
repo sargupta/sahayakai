@@ -564,7 +564,20 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
       startFallbackRecognition();
 
     } catch (err) {
-      logger.error("Microphone access denied", err);
+      // A user declining the mic (NotAllowedError / PermissionDeniedError) is a
+      // choice, not an application fault — log it at warn so it doesn't trip the
+      // Next.js dev error overlay or pollute production error telemetry. A real
+      // device failure (NotFoundError, NotReadableError, …) stays at error.
+      const isPermissionDenial =
+        err instanceof DOMException &&
+        (err.name === "NotAllowedError" || err.name === "PermissionDeniedError");
+      if (isPermissionDenial) {
+        logger.warn("Microphone permission denied by user", "VOICE", {
+          name: err.name,
+        });
+      } else {
+        logger.error("Microphone access failed", err);
+      }
       toast({
         title: t("Microphone Access Denied"),
         description: t("Please allow microphone access in your browser settings."),

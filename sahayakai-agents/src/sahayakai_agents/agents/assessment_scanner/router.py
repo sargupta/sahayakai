@@ -24,9 +24,9 @@ from typing import Any
 import httpx
 import structlog
 from fastapi import APIRouter
-from google import genai
 from google.genai import types as genai_types
 
+from ..._adk_keyed_gemini import build_genai_client
 from ...config import get_settings
 from ...resilience import run_resiliently
 from ...shared.errors import (
@@ -126,7 +126,7 @@ async def _call_gemini_structured(
     response_schema: type,
 ) -> Any:
     """One structured-output Gemini call. Mirrors lesson_plan/agent.py."""
-    client = genai.Client(api_key=api_key)
+    client = build_genai_client(api_key)
     return await client.aio.models.generate_content(
         model=model,
         contents=contents,

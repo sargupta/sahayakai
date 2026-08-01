@@ -120,6 +120,27 @@ export async function computeBodyDigest(rawBody: string): Promise<string> {
 }
 
 /**
+ * Mint a short-lived token authorising `uid` to open the sidecar's Vertex
+ * Live `/stream` WebSocket. Format + signature MUST match the sidecar's
+ * `verify_stream_token` (router.py): `<uid>.<exp_unix>.<base64url(hmac_sha256(
+ * key, "uid.exp"))>`, no padding. Node's `digest('base64url')` matches
+ * Python's `urlsafe_b64encode(...).rstrip("=")`. The client never sees a
+ * Google credential — only this opaque, expiring token.
+ */
+export async function mintStreamToken(
+  uid: string,
+  ttlSeconds = 120,
+): Promise<{ token: string; expiresInSeconds: number }> {
+  const key = await getSigningKey();
+  const exp = Math.floor(Date.now() / 1000) + ttlSeconds;
+  const sig = crypto
+    .createHmac('sha256', key)
+    .update(`${uid}.${exp}`, 'utf8')
+    .digest('base64url');
+  return { token: `${uid}.${exp}.${sig}`, expiresInSeconds: ttlSeconds };
+}
+
+/**
  * Test-only: clear the cached signing key. Lets unit tests rotate the
  * key without restarting the process. Not exported through index.
  */
