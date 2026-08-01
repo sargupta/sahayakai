@@ -25,11 +25,17 @@ Phase S (spike). Migration plan in
 """
 from __future__ import annotations
 
+import asyncio
+import base64
+import contextlib
+import hashlib
+import hmac as hmaclib
+import json
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import structlog
-from fastapi import APIRouter
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from ...config import get_settings
 from ...shared.errors import AgentError
@@ -61,10 +67,17 @@ SIDECAR_VERSION = "phase-s.0.0-spike"
 # default is 60s for new-session use; we keep that.
 DEFAULT_TOKEN_TTL_SECONDS = 60
 
-# Live API WSS endpoint. The SDK's own `client.aio.live.connect()`
-# resolves this internally; we surface it explicitly so the browser
-# client can open the same socket. URL pinned per Live region rollout.
-LIVE_WSS_BASE_URL = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent"
+# Live API WSS endpoint for an EPHEMERAL-TOKEN client.
+#
+# Verified 2026-07-30 against a real Google Live session (matches the
+# google-genai SDK's own `live.connect` code path for `auth_tokens/*`):
+# an ephemeral token MUST use the `v1alpha` surface and the
+# `BidiGenerateContentConstrained` method (NOT `v1beta` /
+# `BidiGenerateContent` — that combination 1008s "unregistered callers").
+# The client authenticates with the header `Authorization: Token <token>`,
+# NOT a `?access_token=` query param (also verified: query-param auth is
+# rejected as an unregistered caller).
+LIVE_WSS_BASE_URL = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContentConstrained"
 
 
 # ---- Ephemeral token minting --------------------------------------------
@@ -89,11 +102,18 @@ async def _mint_ephemeral_token(
     a different model with different system instruction. This is the
     main reason we don't just hand the master key to the browser.
     """
+    from google import genai
     from google.genai import types as genai_types
 
-    from ..._adk_keyed_gemini import build_genai_client
-
-    client = build_genai_client(api_key)
+    # Developer API + `v1alpha` is the ONLY combination that mints a Live auth
+    # token: `auth_tokens.create()` is unavailable on Vertex and pre-`v1alpha`.
+    # `build_genai_client` is bypassed here on purpose — it would route the Vertex
+    # sentinel to Vertex (401/denied). Verified: this config mints an ephemeral
+    # token for `gemini-2.0-flash-live-001`.
+    client = genai.Client(
+        api_key=api_key,
+        http_options=genai_types.HttpOptions(api_version="v1alpha"),
+    )
 
     # Bind the token to the specific model + tools we plan to use.
     # `LiveConnectConfig` accepts `system_instruction` as either a
@@ -128,13 +148,13 @@ async def _mint_ephemeral_token(
                 new_session_expire_time=expire_at,
                 uses=1,
                 live_connect_constraints=constraints,
-                # Lock the bound config so a malicious client can't
-                # try to override system_instruction or tools at
-                # `live.connect()` time.
-                lock_additional_fields=[
-                    "model",
-                    "config",
-                ],
+                # NOTE: `lock_additional_fields=["model","config"]` was rejected by
+                # Live with `400 field_mask is invalid for BidiGenerateContentSetup`
+                # ("config" is not a valid setup field-mask entry), which blocked
+                # every mint. The token is still bound to the model + system
+                # instruction via `live_connect_constraints`; re-add a lock only
+                # with VALIDATED field-mask names (a follow-up) rather than an
+                # invalid one that breaks minting entirely.
             )
         )
     except Exception as exc:
@@ -193,16 +213,21 @@ async def start_session(payload: SessionStartRequest) -> SessionStartResponse:
            tool-call events to the existing NAVIGATE_AND_FILL handler.
     """
     settings = get_settings()
-    api_keys = settings.genai_keys
-    if not api_keys:
+    # Live token minting REQUIRES the Developer API (auth_tokens.create is not a
+    # Vertex operation) + the v1alpha surface, so use the real developer key
+    # directly — NOT settings.genai_keys, which returns the Vertex sentinel when
+    # GOOGLE_GENAI_USE_VERTEXAI is on. Other agents may run on Vertex; the Live
+    # mint may not. (Verified: this key mints a token for the Live model.)
+    dev_api_key = settings.genai_api_key.get_secret_value()
+    if not dev_api_key:
         raise AgentError(
             code="INTERNAL",
-            message="No Gemini API key configured (GOOGLE_GENAI_API_KEY).",
+            message=(
+                "No Gemini Developer API key (GOOGLE_GENAI_API_KEY) configured — "
+                "required to mint a Live session token."
+            ),
             http_status=502,
         )
-    # Spike: just use the first key. Production migration will route
-    # through `run_resiliently` for key rotation parity.
-    api_key = api_keys[0]
 
     # 1. Build the per-teacher session config.
     session_config = build_vidya_voice_session(
@@ -218,7 +243,7 @@ async def start_session(payload: SessionStartRequest) -> SessionStartResponse:
     # 2. Mint the ephemeral token.
     ttl = DEFAULT_TOKEN_TTL_SECONDS
     token = await _mint_ephemeral_token(
-        api_key=api_key,
+        api_key=dev_api_key,
         session_config=session_config,
         ttl_seconds=ttl,
     )
@@ -248,3 +273,233 @@ async def start_session(payload: SessionStartRequest) -> SessionStartResponse:
         tool_count=len(response.tools),
     )
     return response
+
+
+# ---- Vertex Live WebSocket proxy -----------------------------------------
+#
+# Why a PROXY (client <-> sidecar <-> Vertex) and not the client-direct
+# ephemeral-token path above: Gemini Live on the Developer API runs on a
+# prepaid credit tier that Cloud/startup credits do NOT fund. Vertex AI Live
+# IS funded by Cloud Billing (verified 2026-07-30: a real session returned
+# audio). Vertex authenticates with the sidecar's own ADC — there is no
+# client-facing ephemeral token — so the sidecar terminates the client socket
+# and relays PCM frames to Vertex. The master credentials never leave Cloud Run.
+
+# A CURRENT Vertex Live model that accepts bidiGenerateContent (verified live
+# in us-central1). Override with SAHAYAKAI_VIDYA_VOICE_MODEL.
+VERTEX_LIVE_MODEL = "gemini-live-2.5-flash-native-audio"
+VERTEX_LIVE_LOCATION = "us-central1"
+_PCM_IN_MIME = "audio/pcm;rate=16000"
+
+
+def mint_stream_token(uid: str, ttl_seconds: int = 120) -> str:
+    """Mint a short-lived token authorising `uid` to open a /stream socket.
+
+    Format: `<uid>.<exp_unix>.<b64url_hmac_sha256(key, "uid.exp")>`, signed
+    with the shared `SAHAYAKAI_REQUEST_SIGNING_KEY` (same secret both the web
+    runtime and this sidecar mount). The web start-session route mints it; the
+    sidecar verifies it before opening a (billable) Vertex session. The client
+    never sees a Google credential — only this opaque, expiring token.
+    """
+    exp = int((datetime.now(UTC) + timedelta(seconds=ttl_seconds)).timestamp())
+    key = get_settings().request_signing_key.get_secret_value().strip().encode()
+    sig = base64.urlsafe_b64encode(
+        hmaclib.new(key, f"{uid}.{exp}".encode(), hashlib.sha256).digest()
+    ).rstrip(b"=").decode()
+    return f"{uid}.{exp}.{sig}"
+
+
+def verify_stream_token(token: str | None) -> str | None:
+    """Return the uid if `token` is a valid, unexpired stream token, else None."""
+    if not token:
+        return None
+    try:
+        uid, exp_raw, sig = token.split(".", 2)
+        exp = int(exp_raw)
+    except (ValueError, AttributeError):
+        return None
+    if exp < int(datetime.now(UTC).timestamp()):
+        return None
+    key = get_settings().request_signing_key.get_secret_value().strip().encode()
+    expected = base64.urlsafe_b64encode(
+        hmaclib.new(key, f"{uid}.{exp}".encode(), hashlib.sha256).digest()
+    ).rstrip(b"=").decode()
+    if not hmaclib.compare_digest(expected, sig):
+        return None
+    return uid
+
+
+def _build_vertex_live_config(session_config: dict[str, Any]) -> Any:
+    """Build the `LiveConnectConfig` for the proxied Vertex session."""
+    from google.genai import types as genai_types
+
+    tools = [
+        genai_types.Tool(
+            function_declarations=[
+                genai_types.FunctionDeclaration(
+                    name=d.name,
+                    description=d.description,
+                    parameters=genai_types.Schema(
+                        type=genai_types.Type.OBJECT,
+                        properties={
+                            "topic": genai_types.Schema(type=genai_types.Type.STRING),
+                            "gradeLevel": genai_types.Schema(type=genai_types.Type.STRING),
+                            "subject": genai_types.Schema(type=genai_types.Type.STRING),
+                            "language": genai_types.Schema(type=genai_types.Type.STRING),
+                        },
+                    ),
+                )
+                for d in build_tool_definitions()
+            ]
+        )
+    ]
+    return genai_types.LiveConnectConfig(
+        response_modalities=[genai_types.Modality.AUDIO],
+        system_instruction=genai_types.Content(
+            parts=[genai_types.Part(text=session_config["system_instruction"])]
+        ),
+        speech_config=genai_types.SpeechConfig(
+            voice_config=genai_types.VoiceConfig(
+                prebuilt_voice_config=genai_types.PrebuiltVoiceConfig(
+                    voice_name=get_voice_name()
+                )
+            )
+        ),
+        tools=tools,
+    )
+
+
+async def _pump_client_to_vertex(ws: WebSocket, session: Any) -> None:
+    """Relay client frames (mic audio / text turns) up to Vertex Live."""
+    from google.genai import types as genai_types
+
+    while True:
+        frame = json.loads(await ws.receive_text())
+        if frame.get("end"):
+            return
+        if frame.get("audio"):
+            await session.send_realtime_input(
+                audio=genai_types.Blob(
+                    data=base64.b64decode(frame["audio"]), mime_type=_PCM_IN_MIME
+                )
+            )
+        elif frame.get("text"):
+            await session.send_client_content(
+                turns=genai_types.Content(
+                    role="user", parts=[genai_types.Part(text=frame["text"])]
+                ),
+                turn_complete=True,
+            )
+
+
+async def _pump_vertex_to_client(ws: WebSocket, session: Any) -> None:
+    """Relay Vertex responses (audio / tool-calls / turn markers) down to client."""
+    from google.genai import types as genai_types
+
+    async for resp in session.receive():
+        if getattr(resp, "data", None):
+            await ws.send_text(
+                json.dumps({"audio": base64.b64encode(resp.data).decode()})
+            )
+        tc = getattr(resp, "tool_call", None)
+        if tc and tc.function_calls:
+            for fc in tc.function_calls:
+                await ws.send_text(
+                    json.dumps({
+                        "toolCall": {
+                            "name": fc.name,
+                            "args": dict(fc.args or {}),
+                            "id": fc.id,
+                        }
+                    })
+                )
+            await session.send_tool_response(
+                function_responses=[
+                    genai_types.FunctionResponse(
+                        id=fc.id, name=fc.name, response={"status": "dispatched"}
+                    )
+                    for fc in tc.function_calls
+                ]
+            )
+        sc = getattr(resp, "server_content", None)
+        if sc and getattr(sc, "interrupted", False):
+            await ws.send_text(json.dumps({"interrupted": True}))
+        if sc and getattr(sc, "turn_complete", False):
+            await ws.send_text(json.dumps({"turnComplete": True}))
+
+
+@vidya_voice_router.websocket("/stream")
+async def vidya_voice_stream(ws: WebSocket) -> None:
+    """Full-duplex bridge: OmniOrb client <-> sidecar <-> Vertex Live.
+
+    Client -> sidecar frames (JSON text):
+        {"audio": "<base64 PCM16LE 16kHz mono>"}   one mic chunk
+        {"text": "<utterance>"}                     a text turn (testing / fallback)
+        {"end": true}                               end the session
+    Sidecar -> client frames (JSON text):
+        {"audio": "<base64 PCM16LE 24kHz>"}         one model-audio chunk
+        {"toolCall": {"name","args","id"}}          a routed VIDYA flow (client navigates)
+        {"turnComplete": true} | {"interrupted": true} | {"error": "..."}
+
+    Auth: the client presents a short-lived signed token (query param `?t=`)
+    minted by the web `/api/vidya-voice/start-session` route. The socket is
+    rejected (4401) before any billable Vertex session opens if the token is
+    missing, malformed, expired, or fails the HMAC check.
+    """
+    from google import genai
+
+    await ws.accept()
+    settings = get_settings()
+
+    # Reject unauthenticated / expired sockets BEFORE opening a billable session.
+    uid = verify_stream_token(ws.query_params.get("t"))
+    if not uid:
+        await ws.close(code=4401)
+        return
+
+    detected_language = ws.query_params.get("lang") or "en"
+    screen_path = ws.query_params.get("screen") or "/dashboard"
+    session_config = build_vidya_voice_session(
+        language=detected_language,
+        screen_path=screen_path,
+        grade=None,
+        subject=None,
+        school_context=None,
+    )
+    # Vertex uses its OWN model naming (`gemini-live-2.5-flash-native-audio`),
+    # distinct from the Developer-API names `get_voice_model()` returns
+    # (`…-native-audio-latest`). Always use the Vertex name for this path.
+    model = VERTEX_LIVE_MODEL
+
+    client = genai.Client(
+        vertexai=True,
+        project=settings.gcp_project,
+        location=VERTEX_LIVE_LOCATION,
+    )
+    config = _build_vertex_live_config(session_config)
+    log.info(
+        "vidya_voice.stream_open", uid=uid, model=model, language=detected_language
+    )
+
+    try:
+        async with client.aio.live.connect(model=model, config=config) as session:
+            up = asyncio.create_task(_pump_client_to_vertex(ws, session))
+            down = asyncio.create_task(_pump_vertex_to_client(ws, session))
+            _done, pending = await asyncio.wait(
+                {up, down}, return_when=asyncio.FIRST_COMPLETED
+            )
+            for task in pending:
+                task.cancel()
+    except WebSocketDisconnect:
+        return
+    except Exception as exc:  # noqa: BLE001
+        log.error(
+            "vidya_voice.stream_failed",
+            error=str(exc),
+            error_type=type(exc).__name__,
+        )
+        with contextlib.suppress(Exception):
+            await ws.send_text(json.dumps({"error": "live session failed"}))
+    finally:
+        with contextlib.suppress(Exception):
+            await ws.close()
