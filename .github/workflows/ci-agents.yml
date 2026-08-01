@@ -50,13 +50,13 @@ jobs:
     name: pytest (blocking gate)
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    env:
-      SAHAYAKAI_AGENTS_ENV: development
-      GOOGLE_CLOUD_PROJECT: sahayakai-b4248-test
-      SAHAYAKAI_REQUEST_SIGNING_KEY: test-signing-key-for-ci-runs-only
-      # Force the API-key transport in CI: the integration fakes only accept
-      # `api_key=`, and the Vertex branch is covered directly in test_vertex_client.
-      GOOGLE_GENAI_USE_VERTEXAI: 'false'
+    # No env overrides on purpose. tests/conftest.py os.environ.setdefault()s
+    # every value the suite needs — crucially SAHAYAKAI_REQUEST_SIGNING_KEY,
+    # which the HMAC-auth test fixtures both sign AND verify with. Setting a
+    # different value here breaks that self-consistency ("Body HMAC digest
+    # mismatch"). conftest also pins GOOGLE_GENAI_USE_VERTEXAI=false so the
+    # integration fakes (api_key= only) work; the Vertex branch is covered in
+    # test_vertex_client.py.
     steps:
       - uses: actions/checkout@v4
 
