@@ -43,6 +43,7 @@ from ...config import get_settings
 from ...resilience import run_resiliently
 from ...shared.errors import AgentError, AISafetyBlockError
 from ...shared.prompt_safety import sanitize, sanitize_optional
+from .acknowledgements import get_acknowledgement
 from .agent import (
     ALLOWED_FLOWS,
     INSTANT_ANSWER_INTENT,
@@ -448,22 +449,21 @@ async def vidya_orchestrate(payload: VidyaRequest) -> VidyaResponse:
                 message="VIDYA instant-answer agent failed",
                 http_status=502,
             ) from exc
+        # Root cause 2 — report the flow alongside the inline answer so the
+        # action matches Genkit. See classify_action for why.
+        action = classify_action(intent)
     elif intent.type in ALLOWED_FLOWS:
         # Phase N.1 — delegated to `_map_routable_flow`. Helper picks
         # the typed `plannedActions` path for compound requests and
         # falls back to `classify_action(intent)` otherwise.
         action, planned_actions = _map_routable_flow(intent)
-        response_text = (
-            "Opening the right tool for you now."
-            if action is not None
-            else "I could not route that request."
+        response_text = get_acknowledgement(
+            "routing" if action is not None else "route_failed",
+            payload.detectedLanguage,
         )
     else:
         # `unknown` or any unrecognised label — polite fallback.
-        response_text = (
-            "I am not sure how to help with that yet. "
-            "Please try rephrasing your request."
-        )
+        response_text = get_acknowledgement("unknown", payload.detectedLanguage)
 
     # Step 3: behavioural guard. Fail-closed on any violation.
     try:

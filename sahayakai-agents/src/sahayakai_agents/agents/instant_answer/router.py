@@ -180,44 +180,73 @@ async def run_answerer(
         "gradeLevel": sanitize_optional(payload.gradeLevel, max_length=50),
         "subject": sanitize_optional(payload.subject, max_length=100),
     }
-    prompt = render_answerer_prompt(context)
+    base_prompt = render_answerer_prompt(context)
     model = get_answerer_model()
 
-    async def _do(api_key: str) -> Any:
-        return await _call_gemini_grounded(
-            api_key=api_key, model=model, prompt=prompt
-        )
-
-    result = await run_resiliently(
-        _do,
-        api_keys,
-        span_name="instant_answer.answerer",
-        max_total_backoff_seconds=settings.max_total_backoff_seconds,
-        per_call_timeout_seconds=_PER_CALL_TIMEOUT_S,
+    # Parse-level retry (2026-07-29). Grounding mode forces us to disable
+    # Gemini's structured-output (`response_mime_type='application/json'` is
+    # rejected alongside `tools=[google_search]`), so the JSON contract is
+    # carried by the PROMPT and parsed from raw text. The model honours it
+    # unreliably, more often in non-English — the single biggest source of
+    # VIDYA parity flakiness (score swung 93-98 across identical runs).
+    #
+    # This is distinct from `run_resiliently`, which retries TRANSPORT failures
+    # (429 / timeout / key rotation) on a model that never returned. Here the
+    # model returned 200 with prose. A plain re-ask usually succeeds because
+    # generation is non-deterministic; the second attempt also appends a firmer
+    # JSON-only instruction to shorten the odds. One extra attempt, not a loop —
+    # the orchestrator runs a hard 2-Gemini-call budget on the hottest path.
+    _STRICT_SUFFIX = (
+        "\n\nIMPORTANT: Respond with ONLY a single valid JSON object matching the "
+        "required schema. No prose before or after, no markdown fences."
     )
-    text = _extract_text(result)
-    grounding_used = _grounding_used(result)
-    # Grounding mode disables Gemini's structured-output, so the response
-    # may come back wrapped in ```json fences or plain text. Extract the
-    # first JSON object before parsing.
-    text_to_parse = _extract_json_object(text)
-    try:
-        return (
-            InstantAnswerCore.model_validate_json(text_to_parse),
-            grounding_used,
-            result,
+    max_parse_attempts = 2
+    last_exc: Exception | None = None
+    last_text = ""
+
+    for attempt in range(max_parse_attempts):
+        prompt = base_prompt if attempt == 0 else base_prompt + _STRICT_SUFFIX
+
+        async def _do(api_key: str, _prompt: str = prompt) -> Any:
+            return await _call_gemini_grounded(
+                api_key=api_key, model=model, prompt=_prompt
+            )
+
+        result = await run_resiliently(
+            _do,
+            api_keys,
+            span_name="instant_answer.answerer",
+            max_total_backoff_seconds=settings.max_total_backoff_seconds,
+            per_call_timeout_seconds=_PER_CALL_TIMEOUT_S,
         )
-    except Exception as exc:
-        log.error(
-            "instant_answer.answerer.json_parse_failed",
-            raw_excerpt=text[:200],
-            error=str(exc),
-        )
-        raise AgentError(
-            code="INTERNAL",
-            message="Answerer returned text that does not match InstantAnswerCore",
-            http_status=502,
-        ) from exc
+        text = _extract_text(result)
+        grounding_used = _grounding_used(result)
+        # Grounding mode may wrap the object in ```json fences or plain text.
+        text_to_parse = _extract_json_object(text)
+        try:
+            return (
+                InstantAnswerCore.model_validate_json(text_to_parse),
+                grounding_used,
+                result,
+            )
+        except Exception as exc:
+            last_exc = exc
+            last_text = text
+            log.warning(
+                "instant_answer.answerer.json_parse_retry"
+                if attempt + 1 < max_parse_attempts
+                else "instant_answer.answerer.json_parse_failed",
+                attempt=attempt + 1,
+                max_attempts=max_parse_attempts,
+                raw_excerpt=text[:200],
+                error=str(exc),
+            )
+
+    raise AgentError(
+        code="INTERNAL",
+        message="Answerer returned text that does not match InstantAnswerCore",
+        http_status=502,
+    ) from last_exc
 
 
 # ---- Endpoint ------------------------------------------------------------
