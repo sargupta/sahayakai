@@ -89,8 +89,8 @@ async def _mint_ephemeral_token(
     a different model with different system instruction. This is the
     main reason we don't just hand the master key to the browser.
     """
-    from google import genai
     from google.genai import types as genai_types
+
     from ..._adk_keyed_gemini import build_genai_client
 
     client = build_genai_client(api_key)

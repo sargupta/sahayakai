@@ -9,6 +9,7 @@ The load-bearing test here is `test_every_string_passes_the_script_guard`. A
 test asserting only "returns a non-empty string" would have passed with the bug
 fully present, which is exactly how this survived to production.
 """
+
 from __future__ import annotations
 
 import unicodedata
@@ -29,11 +30,16 @@ KINDS = ("routing", "route_failed", "unknown")
 # Same blocks the behavioural guard uses.
 SCRIPT_RANGES = {
     "en": [(0x0041, 0x005A), (0x0061, 0x007A)],
-    "hi": [(0x0900, 0x097F)], "mr": [(0x0900, 0x097F)],
-    "bn": [(0x0980, 0x09FF)], "pa": [(0x0A00, 0x0A7F)],
-    "gu": [(0x0A80, 0x0AFF)], "or": [(0x0B00, 0x0B7F)],
-    "ta": [(0x0B80, 0x0BFF)], "te": [(0x0C00, 0x0C7F)],
-    "kn": [(0x0C80, 0x0CFF)], "ml": [(0x0D00, 0x0D7F)],
+    "hi": [(0x0900, 0x097F)],
+    "mr": [(0x0900, 0x097F)],
+    "bn": [(0x0980, 0x09FF)],
+    "pa": [(0x0A00, 0x0A7F)],
+    "gu": [(0x0A80, 0x0AFF)],
+    "or": [(0x0B00, 0x0B7F)],
+    "ta": [(0x0B80, 0x0BFF)],
+    "te": [(0x0C00, 0x0C7F)],
+    "kn": [(0x0C80, 0x0CFF)],
+    "ml": [(0x0D00, 0x0D7F)],
 }
 
 
@@ -47,7 +53,17 @@ def script_ratio(text: str, lang: str) -> float:
 class TestCoverage:
     def test_all_eleven_languages_present(self) -> None:
         assert set(SUPPORTED_LANGUAGES) == {
-            "en", "hi", "bn", "ta", "te", "mr", "gu", "kn", "ml", "pa", "or"
+            "en",
+            "hi",
+            "bn",
+            "ta",
+            "te",
+            "mr",
+            "gu",
+            "kn",
+            "ml",
+            "pa",
+            "or",
         }
 
     @pytest.mark.parametrize("lang", SUPPORTED_LANGUAGES)

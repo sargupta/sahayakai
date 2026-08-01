@@ -20,7 +20,8 @@ Local imports keep tests that don't exercise ADK fast — the heavy
 """
 from __future__ import annotations
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 
 def _resolve_model_name(template_model: Any) -> str:

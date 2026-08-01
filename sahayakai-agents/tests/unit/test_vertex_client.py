@@ -12,9 +12,9 @@ Guards the failure that shipped during the migration: five routers built
 
 while the ADK path worked fine. Every ANSWER cell in the parity harness 502'd.
 """
+
 from __future__ import annotations
 
-import importlib
 from unittest.mock import patch
 
 import pytest
@@ -32,8 +32,10 @@ class TestGenaiClientTransport:
             GOOGLE_CLOUD_PROJECT="proj-x",
             GOOGLE_CLOUD_LOCATION="asia-south1",
         )
-        with patch("sahayakai_agents.config.get_settings", return_value=settings), \
-             patch("google.genai.Client") as mock_client:
+        with (
+            patch("sahayakai_agents.config.get_settings", return_value=settings),
+            patch("google.genai.Client") as mock_client,
+        ):
             build_genai_client(VERTEX_SENTINEL)
 
         kwargs = mock_client.call_args.kwargs
@@ -53,8 +55,10 @@ class TestGenaiClientTransport:
 
     def test_extra_kwargs_are_forwarded_on_both_branches(self) -> None:
         settings = Settings(GOOGLE_GENAI_USE_VERTEXAI=True, GOOGLE_CLOUD_PROJECT="p")
-        with patch("sahayakai_agents.config.get_settings", return_value=settings), \
-             patch("google.genai.Client") as mock_client:
+        with (
+            patch("sahayakai_agents.config.get_settings", return_value=settings),
+            patch("google.genai.Client") as mock_client,
+        ):
             build_genai_client(VERTEX_SENTINEL, http_options={"headers": {"x": "1"}})
         assert mock_client.call_args.kwargs["http_options"] == {"headers": {"x": "1"}}
 

@@ -94,10 +94,9 @@ async def _call_gemini_structured(
     https://googleapis.github.io/python-genai/ \u2014 "For async operations,
     replace `client.models` with `client.aio.models`."
     """
-    from google import genai
     from google.genai import types as genai_types
-    from ..._adk_keyed_gemini import build_genai_client
 
+    from ..._adk_keyed_gemini import build_genai_client
     from ...shared.gemini_schema import gemini_response_schema  # noqa: PLC0415
 
     client = build_genai_client(api_key)

@@ -21,7 +21,6 @@ from fastapi import APIRouter
 from ...config import get_settings
 from ...resilience import extract_cache_metrics, run_resiliently
 from ...shared.errors import AgentError, AISafetyBlockError
-from ...shared.gemini_schema import gemini_response_schema
 from ...shared.prompt_safety import sanitize, sanitize_optional
 from ._guard import assert_instant_answer_response_rules
 from .agent import get_answerer_model, render_answerer_prompt
@@ -66,8 +65,8 @@ async def _call_gemini_grounded(
     compatible — the model returns JSON matching the schema while
     still being able to ground via search.
     """
-    from google import genai
     from google.genai import types as genai_types
+
     from ..._adk_keyed_gemini import build_genai_client
 
     client = build_genai_client(api_key)
@@ -125,10 +124,10 @@ def _extract_json_object(text: str) -> str:
     """
     fenced = _JSON_FENCE_RE.search(text)
     if fenced:
-        return fenced.group(1)
+        return str(fenced.group(1))
     bare = _JSON_BARE_RE.search(text)
     if bare:
-        return bare.group(1)
+        return str(bare.group(1))
     return text
 
 
@@ -203,7 +202,6 @@ async def run_answerer(
     )
     max_parse_attempts = 2
     last_exc: Exception | None = None
-    last_text = ""
 
     for attempt in range(max_parse_attempts):
         prompt = base_prompt if attempt == 0 else base_prompt + _STRICT_SUFFIX
@@ -232,7 +230,6 @@ async def run_answerer(
             )
         except Exception as exc:
             last_exc = exc
-            last_text = text
             log.warning(
                 "instant_answer.answerer.json_parse_retry"
                 if attempt + 1 < max_parse_attempts

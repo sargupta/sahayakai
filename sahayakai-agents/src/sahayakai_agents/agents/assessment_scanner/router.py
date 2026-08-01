@@ -24,11 +24,9 @@ from typing import Any
 import httpx
 import structlog
 from fastapi import APIRouter
-from google import genai
-
-from ..._adk_keyed_gemini import build_genai_client
 from google.genai import types as genai_types
 
+from ..._adk_keyed_gemini import build_genai_client
 from ...config import get_settings
 from ...resilience import run_resiliently
 from ...shared.errors import (

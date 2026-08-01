@@ -42,48 +42,66 @@ from pathlib import Path
 # `entities` are the key terms the entity-hit scorer looks for in a reply.
 ARCHETYPES = [
     {
-        "id": "ans-photosyn", "intent": "ANSWER",
-        "expected_flow": None, "genkit_flow": "instant-answer",
+        "id": "ans-photosyn",
+        "intent": "ANSWER",
+        "expected_flow": None,
+        "genkit_flow": "instant-answer",
         "entities": ["photosynthesis", "प्रकाश संश्लेषण", "সালোকসংশ্লেষ", "ஒளிச்சேர்க்கை"],
     },
     {
-        "id": "ans-fractions", "intent": "ANSWER",
-        "expected_flow": None, "genkit_flow": "instant-answer",
+        "id": "ans-fractions",
+        "intent": "ANSWER",
+        "expected_flow": None,
+        "genkit_flow": "instant-answer",
         "entities": ["fraction", "भिन्न", "ভগ্নাংশ", "பின்னம்"],
     },
     {
-        "id": "ans-democracy", "intent": "ANSWER",
-        "expected_flow": None, "genkit_flow": "instant-answer",
+        "id": "ans-democracy",
+        "intent": "ANSWER",
+        "expected_flow": None,
+        "genkit_flow": "instant-answer",
         "entities": ["democracy", "लोकतंत्र", "গণতন্ত্র", "ஜனநாயகம்"],
     },
     {
-        "id": "cre-lesson", "intent": "CREATE",
-        "expected_flow": "lessonPlan", "genkit_flow": "lesson-plan",
+        "id": "cre-lesson",
+        "intent": "CREATE",
+        "expected_flow": "lessonPlan",
+        "genkit_flow": "lesson-plan",
         "entities": ["water cycle", "जल चक्र", "lesson"],
     },
     {
-        "id": "cre-quiz", "intent": "CREATE",
-        "expected_flow": "quiz", "genkit_flow": "quiz-generator",
+        "id": "cre-quiz",
+        "intent": "CREATE",
+        "expected_flow": "quiz",
+        "genkit_flow": "quiz-generator",
         "entities": ["photosynthesis", "quiz", "प्रकाश संश्लेषण"],
     },
     {
-        "id": "cre-workshet", "intent": "CREATE",
-        "expected_flow": "worksheet", "genkit_flow": "worksheet-wizard",
+        "id": "cre-workshet",
+        "intent": "CREATE",
+        "expected_flow": "worksheet",
+        "genkit_flow": "worksheet-wizard",
         "entities": ["fraction", "worksheet", "भिन्न"],
     },
     {
-        "id": "act-visual", "intent": "ACTION",
-        "expected_flow": "visualAid", "genkit_flow": "visual-aid-designer",
+        "id": "act-visual",
+        "intent": "ACTION",
+        "expected_flow": "visualAid",
+        "genkit_flow": "visual-aid-designer",
         "entities": ["digestive", "diagram", "पाचन"],
     },
     {
-        "id": "act-exam", "intent": "ACTION",
-        "expected_flow": "examPaper", "genkit_flow": "exam-paper",
+        "id": "act-exam",
+        "intent": "ACTION",
+        "expected_flow": "examPaper",
+        "genkit_flow": "exam-paper",
         "entities": ["exam", "science", "परीक्षा"],
     },
     {
-        "id": "act-video", "intent": "ACTION",
-        "expected_flow": "videoStoryteller", "genkit_flow": "video-storyteller",
+        "id": "act-video",
+        "intent": "ACTION",
+        "expected_flow": "videoStoryteller",
+        "genkit_flow": "video-storyteller",
         "entities": ["solar system", "video", "सौर मंडल"],
     },
 ]
@@ -222,20 +240,43 @@ PROMPTS: dict[str, list[str]] = {
 # Hindi list had "लोकतंत्र". Different word, same script.
 CONCEPT_TERMS: dict[str, dict[str, str]] = {
     "photosynthesis": {
-        "en": "photosynthesis", "hi": "प्रकाश संश्लेषण", "bn": "সালোকসংশ্লেষ",
-        "ta": "ஒளிச்சேர்க்கை", "te": "కిరణజన్య సంయోగక్రియ", "mr": "प्रकाशसंश्लेषण",
-        "gu": "પ્રકાશસંશ્લેષણ", "kn": "ದ್ಯುತಿಸಂಶ್ಲೇಷಣೆ", "ml": "പ്രകാശസംശ്ലേഷണം",
-        "pa": "ਪ੍ਰਕਾਸ਼ ਸੰਸ਼ਲੇਸ਼ਣ", "or": "ଆଲୋକ ସଂଶ୍ଳେଷଣ",
+        "en": "photosynthesis",
+        "hi": "प्रकाश संश्लेषण",
+        "bn": "সালোকসংশ্লেষ",
+        "ta": "ஒளிச்சேர்க்கை",
+        "te": "కిరణజన్య సంయోగక్రియ",
+        "mr": "प्रकाशसंश्लेषण",
+        "gu": "પ્રકાશસંશ્લેષણ",
+        "kn": "ದ್ಯುತಿಸಂಶ್ಲೇಷಣೆ",
+        "ml": "പ്രകാശസംശ്ലേഷണം",
+        "pa": "ਪ੍ਰਕਾਸ਼ ਸੰਸ਼ਲੇਸ਼ਣ",
+        "or": "ଆଲୋକ ସଂଶ୍ଳେଷଣ",
     },
     "fraction": {
-        "en": "fraction", "hi": "भिन्न", "bn": "ভগ্নাংশ", "ta": "பின்னம்",
-        "te": "భిన్నం", "mr": "अपूर्णांक", "gu": "અપૂર્ણાંક", "kn": "ಭಿನ್ನರಾಶಿ",
-        "ml": "ഭിന്നസംഖ്യ", "pa": "ਭਿੰਨ", "or": "ଭଗ୍ନାଂଶ",
+        "en": "fraction",
+        "hi": "भिन्न",
+        "bn": "ভগ্নাংশ",
+        "ta": "பின்னம்",
+        "te": "భిన్నం",
+        "mr": "अपूर्णांक",
+        "gu": "અપૂર્ણાંક",
+        "kn": "ಭಿನ್ನರಾಶಿ",
+        "ml": "ഭിന്നസംഖ്യ",
+        "pa": "ਭਿੰਨ",
+        "or": "ଭଗ୍ନାଂଶ",
     },
     "democracy": {
-        "en": "democracy", "hi": "लोकतंत्र", "bn": "গণতন্ত্র", "ta": "ஜனநாயகம்",
-        "te": "ప్రజాస్వామ్యం", "mr": "लोकशाही", "gu": "લોકશાહી",
-        "kn": "ಪ್ರಜಾಪ್ರಭುತ್ವ", "ml": "ജനാധിപത്യം", "pa": "ਲੋਕਤੰਤਰ", "or": "ଗଣତନ୍ତ୍ର",
+        "en": "democracy",
+        "hi": "लोकतंत्र",
+        "bn": "গণতন্ত্র",
+        "ta": "ஜனநாயகம்",
+        "te": "ప్రజాస్వామ్యం",
+        "mr": "लोकशाही",
+        "gu": "લોકશાહી",
+        "kn": "ಪ್ರಜಾಪ್ರಭುತ್ವ",
+        "ml": "ജനാധിപത്യം",
+        "pa": "ਲੋਕਤੰਤਰ",
+        "or": "ଗଣତନ୍ତ୍ର",
     },
 }
 
@@ -263,15 +304,17 @@ def build() -> list[dict]:
                 entities = [CONCEPT_TERMS[concept][lang], CONCEPT_TERMS[concept]["en"]]
             else:
                 entities = arch["entities"]
-            cells.append({
-                "cell": f"{lang}-{arch['id']}",
-                "lang": lang,
-                "intent": arch["intent"],
-                "message": message,
-                "expectedFlow": arch["expected_flow"],
-                "genkitFlow": arch["genkit_flow"],
-                "entities": entities,
-            })
+            cells.append(
+                {
+                    "cell": f"{lang}-{arch['id']}",
+                    "lang": lang,
+                    "intent": arch["intent"],
+                    "message": message,
+                    "expectedFlow": arch["expected_flow"],
+                    "genkitFlow": arch["genkit_flow"],
+                    "entities": entities,
+                }
+            )
     return cells
 
 

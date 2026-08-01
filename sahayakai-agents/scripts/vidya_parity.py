@@ -30,7 +30,7 @@ import asyncio
 import json
 import sys
 import unicodedata
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import httpx
@@ -100,7 +100,7 @@ async def probe(client: httpx.AsyncClient, base: str, cell: dict, pace: float) -
     for attempt in range(MAX_ATTEMPTS):
         if attempt or pace:
             # Exponential backoff on retry; a flat pace between first attempts.
-            await asyncio.sleep(pace if not attempt else min(2 ** attempt * 2.0, 30.0))
+            await asyncio.sleep(pace if not attempt else min(2**attempt * 2.0, 30.0))
         try:
             r = await client.post(f"{base}/v1/vidya/orchestrate", json=payload, timeout=45.0)
         except Exception as exc:  # noqa: BLE001
@@ -118,12 +118,19 @@ async def probe(client: httpx.AsyncClient, base: str, cell: dict, pace: float) -
     return last
 
 
-def score(cell: dict, probe_result: dict, genkit_text: dict | None) -> dict:
+def score(cell: dict, probe_result: dict, genkit_text: dict | None) -> dict:  # noqa: PLR0912 — one branch per failure-reason classification; flat reads clearer than a dispatch table in a test harness
     row = {
-        "cell": cell["cell"], "lang": cell["lang"], "intent": cell["intent"],
-        "expectedFlow": cell["expectedFlow"], "genkitFlow": cell["genkitFlow"],
-        "sidecarFlow": None, "flowMatch": False, "script": 0.0,
-        "entityHit": False, "verdict": "FAIL", "failReasons": [],
+        "cell": cell["cell"],
+        "lang": cell["lang"],
+        "intent": cell["intent"],
+        "expectedFlow": cell["expectedFlow"],
+        "genkitFlow": cell["genkitFlow"],
+        "sidecarFlow": None,
+        "flowMatch": False,
+        "script": 0.0,
+        "entityHit": False,
+        "verdict": "FAIL",
+        "failReasons": [],
     }
 
     if not probe_result["ok"]:
@@ -131,11 +138,11 @@ def score(cell: dict, probe_result: dict, genkit_text: dict | None) -> dict:
         if probe_result.get("quotaExhausted"):
             reason = "quota_exhausted"
         elif "Behavioural guard failed" in err and "Script mismatch" in err:
-            reason = "behavioural_502_script"   # root cause 1, as a hard error
+            reason = "behavioural_502_script"  # root cause 1, as a hard error
         elif "Behavioural guard failed" in err:
             reason = "behavioural_502_other"
         elif "instant-answer agent failed" in err:
-            reason = "instant_answer_502"       # root cause 2 territory
+            reason = "instant_answer_502"  # root cause 2 territory
         else:
             reason = "sidecar_missing"
         row["failReasons"].append(reason)
@@ -221,12 +228,14 @@ async def run(base: str, lang_filter: str | None, concurrency: int, pace: float)
         genkit_text = {r["cell"]: r for r in json.loads(GENKIT_TEXT.read_text(encoding="utf-8"))}
 
     sem = asyncio.Semaphore(concurrency)
-    started = datetime.now(timezone.utc)
+    started = datetime.now(UTC)
 
     async with httpx.AsyncClient() as client:
+
         async def one(c: dict) -> dict:
             async with sem:
                 return score(c, await probe(client, base, c, pace), genkit_text)
+
         rows = await asyncio.gather(*(one(c) for c in cells))
 
     passed = sum(1 for r in rows if r["verdict"] == "PASS")
@@ -235,7 +244,7 @@ async def run(base: str, lang_filter: str | None, concurrency: int, pace: float)
 
     return {
         "runStartedAt": started.isoformat(),
-        "runFinishedAt": datetime.now(timezone.utc).isoformat(),
+        "runFinishedAt": datetime.now(UTC).isoformat(),
         "total": len(rows),
         "passed": passed,
         "passRate": round(passed / len(rows), 4) if rows else 0.0,
@@ -246,12 +255,13 @@ async def run(base: str, lang_filter: str | None, concurrency: int, pace: float)
     }
 
 
-def report(res: dict, verbose: bool) -> None:
+def report(res: dict, verbose: bool) -> None:  # noqa: PLR0912 — sequential report sections; splitting them would obscure the output layout
     import collections
-    print(f"\n{'='*66}")
-    print(f"  VIDYA PARITY   {res['passed']}/{res['total']}   ({res['passRate']*100:.1f}%)")
-    print(f"{'='*66}")
-    print(f"  sidecar OK      {res['sidecarOkRatio']*100:.1f}%")
+
+    print(f"\n{'=' * 66}")
+    print(f"  VIDYA PARITY   {res['passed']}/{res['total']}   ({res['passRate'] * 100:.1f}%)")
+    print(f"{'=' * 66}")
+    print(f"  sidecar OK      {res['sidecarOkRatio'] * 100:.1f}%")
     print(f"  criteria        {', '.join(res['criteriaScored'])}")
     if not res["cosineScored"]:
         print("  NOTE            cosine NOT scored — no Genkit text capture present.")
@@ -269,10 +279,19 @@ def report(res: dict, verbose: bool) -> None:
         reasons.update(r["failReasons"])
 
     print(f"\n  {'lang':<6}{'pass':>8}   {'intent':<10}{'pass':>8}")
-    langs = sorted(by_lang); intents = sorted(by_intent)
+    langs = sorted(by_lang)
+    intents = sorted(by_intent)
     for i in range(max(len(langs), len(intents))):
-        left = f"  {langs[i]:<6}{by_lang[langs[i]][0]:>3}/{by_lang[langs[i]][1]:<4}" if i < len(langs) else " " * 15
-        right = f"   {intents[i]:<10}{by_intent[intents[i]][0]:>3}/{by_intent[intents[i]][1]:<4}" if i < len(intents) else ""
+        if i < len(langs):
+            lang = langs[i]
+            left = f"  {lang:<6}{by_lang[lang][0]:>3}/{by_lang[lang][1]:<4}"
+        else:
+            left = " " * 15
+        if i < len(intents):
+            intent = intents[i]
+            right = f"   {intent:<10}{by_intent[intent][0]:>3}/{by_intent[intent][1]:<4}"
+        else:
+            right = ""
         print(left + right)
 
     quota = reasons.get("quota_exhausted", 0)
@@ -289,8 +308,10 @@ def report(res: dict, verbose: bool) -> None:
         print("\n  failing cells:")
         for r in res["results"]:
             if r["verdict"] == "FAIL":
-                print(f"    {r['cell']:<18} flow={str(r['sidecarFlow']):<20} "
-                      f"script={r['script']:.2f} {','.join(r['failReasons'])}")
+                print(
+                    f"    {r['cell']:<18} flow={str(r['sidecarFlow']):<20} "
+                    f"script={r['script']:.2f} {','.join(r['failReasons'])}"
+                )
     print()
 
 
@@ -299,23 +320,30 @@ def main() -> int:
     ap.add_argument("--base-url", default="http://localhost:8080")
     ap.add_argument("--threshold", type=int, default=0, help="exit 1 if passed < this")
     ap.add_argument("--lang", default=None, help="score one language only")
-    ap.add_argument("--concurrency", type=int, default=1,
-                help="parallel requests; keep at 1 on a free-tier key")
-    ap.add_argument("--pace", type=float, default=4.0,
-                help="seconds between requests, to stay under the quota")
+    ap.add_argument(
+        "--concurrency", type=int, default=1, help="parallel requests; keep at 1 on a free-tier key"
+    )
+    ap.add_argument(
+        "--pace", type=float, default=4.0, help="seconds between requests, to stay under the quota"
+    )
     ap.add_argument("--verbose", action="store_true")
     ap.add_argument("--out", default=None, help="write JSON here (default: qa/parity/<ts>.json)")
     a = ap.parse_args()
 
     if not CELLS.exists():
-        print(f"ERROR: {CELLS} missing. Run tests/fixtures/build_vidya_parity_cells.py", file=sys.stderr)
+        print(
+            f"ERROR: {CELLS} missing. Run tests/fixtures/build_vidya_parity_cells.py",
+            file=sys.stderr,
+        )
         return 2
 
     res = asyncio.run(run(a.base_url, a.lang, a.concurrency, a.pace))
     report(res, a.verbose)
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    out = Path(a.out) if a.out else RESULTS_DIR / f"{res['runStartedAt'][:19].replace(':','')}.json"
+    out = (
+        Path(a.out) if a.out else RESULTS_DIR / f"{res['runStartedAt'][:19].replace(':', '')}.json"
+    )
     out.write_text(json.dumps(res, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     latest = RESULTS_DIR / "latest.json"
     latest.write_text(json.dumps(res, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -323,8 +351,10 @@ def main() -> int:
 
     quota_hits = sum(1 for r in res["results"] if "quota_exhausted" in r["failReasons"])
     if quota_hits:
-        print(f"  RUN INVALID: {quota_hits} cell(s) quota-limited. Score is not trustworthy.\n",
-              file=sys.stderr)
+        print(
+            f"  RUN INVALID: {quota_hits} cell(s) quota-limited. Score is not trustworthy.\n",
+            file=sys.stderr,
+        )
         return 3
 
     if a.threshold and res["passed"] < a.threshold:
