@@ -38,7 +38,7 @@ export async function GET() {
         const latencyMs = Date.now() - startTime;
 
         if (result === 'timeout') {
-            logger.error('[AI Health] provider down', new Error('TimeoutError'), 'HEALTH_CHECK', { provider, model, latencyMs });
+            logger.error('[AI Health] provider down', new Error('TimeoutError'), 'HEALTH_CHECK', { status: 'down', provider, model, latencyMs });
             return NextResponse.json(
                 { status: 'down', provider, model, latencyMs, checkedAt: new Date().toISOString(), error: 'TimeoutError' },
                 { status: 503, headers: cacheHeaders },
@@ -47,7 +47,7 @@ export async function GET() {
 
         const status = latencyMs > DEGRADED_MS ? 'degraded' : 'ok';
         if (status === 'degraded') {
-            logger.warn('[AI Health] slow', 'HEALTH_CHECK', { provider, model, latencyMs });
+            logger.warn('[AI Health] slow', 'HEALTH_CHECK', { status: 'degraded', provider, model, latencyMs });
         }
 
         return NextResponse.json(
@@ -58,7 +58,7 @@ export async function GET() {
         const latencyMs = Date.now() - startTime;
         const errorName = error instanceof Error ? error.name : 'UnknownError';
 
-        logger.error('[AI Health] provider down', error, 'HEALTH_CHECK', { provider, model, latencyMs });
+        logger.error('[AI Health] provider down', error, 'HEALTH_CHECK', { status: 'down', provider, model, latencyMs });
 
         return NextResponse.json(
             { status: 'down', provider, model, latencyMs, checkedAt: new Date().toISOString(), error: errorName },

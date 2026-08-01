@@ -71,7 +71,9 @@ describe('GET /api/health/ai', () => {
             }),
         );
 
-        const res = await GET();
+        const responsePromise = GET();
+        jest.advanceTimersByTime(3000);
+        const res = await responsePromise;
 
         expect(res.status).toBe(200);
         const body = lastJsonBody();
