@@ -95,8 +95,8 @@ def fake_genai(monkeypatch: pytest.MonkeyPatch) -> _SequencedFakeAioModels:
 
     import sys
 
-    sys.modules["google.genai"] = fake_module  # type: ignore[assignment]
-    sys.modules["google.genai.types"] = fake_types  # type: ignore[assignment]
+    monkeypatch.setitem(sys.modules, "google.genai", fake_module)
+    monkeypatch.setitem(sys.modules, "google.genai.types", fake_types)
     # `from google import genai` reads the `genai` attribute on the parent
     # `google` package (not sys.modules), so we must also patch the
     # attribute. monkeypatch restores the original on teardown.
@@ -206,15 +206,47 @@ class TestInstantAnswerRouter:
         assert body["groundingUsed"] is False
         assert fake_genai.queue == []
 
-    def test_malformed_json_returns_502(
+    def test_malformed_json_both_attempts_returns_502(
         self,
         client: TestClient,
         fake_genai: _SequencedFakeAioModels,
     ) -> None:
-        fake_genai.queue = [("not valid json at all", True)]
+        # Parse-level retry (2026-07-29): the answerer re-asks once when the
+        # model returns non-JSON. Only when BOTH attempts fail is it a 502.
+        # Two bad responses queued; both consumed.
+        fake_genai.queue = [
+            ("not valid json at all", True),
+            ("still not json, sorry", True),
+        ]
         res = client.post("/v1/instant-answer/answer", json=_BASE_REQUEST)
         assert res.status_code == 502, res.text
         assert fake_genai.queue == []
+
+    def test_bad_json_then_good_json_recovers_on_retry(
+        self,
+        client: TestClient,
+        fake_genai: _SequencedFakeAioModels,
+    ) -> None:
+        # This is the fix for the dominant VIDYA parity flake: grounding mode
+        # forces prompt-based JSON, which the model honours unreliably. The
+        # first response is prose; the retry gets clean JSON and the request
+        # succeeds instead of 502-ing.
+        fake_genai.queue = [
+            ("Here is your answer: photosynthesis is...", True),  # prose, unparseable
+            (
+                _answer_json(
+                    answer="Photosynthesis is how plants make food from sunlight.",
+                    video_url=None,
+                    grade_level="Class 5",
+                    subject="Science",
+                ),
+                True,
+            ),
+        ]
+        res = client.post("/v1/instant-answer/answer", json=_BASE_REQUEST)
+        assert res.status_code == 200, res.text
+        assert "Photosynthesis" in res.json()["answer"]
+        assert fake_genai.queue == []  # both attempts consumed
 
     def test_invalid_video_url_returns_502_via_guard(
         self,

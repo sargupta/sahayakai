@@ -74,7 +74,9 @@ def fake_genai(monkeypatch: pytest.MonkeyPatch) -> _FakeAuthTokens:
     auth_tokens = _FakeAuthTokens()
 
     class _FakeGenai:
-        def Client(self, api_key: str) -> _FakeClient:  # noqa: N802
+        def Client(  # noqa: N802
+            self, *, api_key: str | None = None, http_options: Any = None, **_: Any
+        ) -> _FakeClient:
             return _FakeClient(auth_tokens)
 
     # Build a minimal `types` shim so the router's imports resolve.
@@ -89,14 +91,15 @@ def fake_genai(monkeypatch: pytest.MonkeyPatch) -> _FakeAuthTokens:
         LiveConnectConfig=_capture,
         LiveConnectConstraints=_capture,
         CreateAuthTokenConfig=_capture,
+        HttpOptions=_capture,
     )
     fake_module = _FakeGenai()
     fake_module.types = fake_types  # type: ignore[attr-defined]
 
     import sys
 
-    sys.modules["google.genai"] = fake_module  # type: ignore[assignment]
-    sys.modules["google.genai.types"] = fake_types  # type: ignore[assignment]
+    monkeypatch.setitem(sys.modules, "google.genai", fake_module)
+    monkeypatch.setitem(sys.modules, "google.genai.types", fake_types)
     # `from google import genai` reads the `genai` attribute on the parent
     # `google` package (not sys.modules), so we must also patch the
     # attribute. monkeypatch restores the original on teardown.
@@ -157,7 +160,12 @@ class TestVidyaVoiceRouter:
         assert body["wssUrl"].startswith("wss://generativelanguage.googleapis.com/")
         assert body["expiresInSeconds"] >= 30
         assert body["sessionConfig"]["model"].startswith("gemini-")
-        assert "live" in body["sessionConfig"]["model"]
+        # A current Live-capable model (the retired "*-live-*" names are gone;
+        # valid ones include the native-audio family).
+        assert any(
+            tag in body["sessionConfig"]["model"]
+            for tag in ("live", "native-audio")
+        )
         assert body["sessionConfig"]["responseModalities"] == ["AUDIO"]
         assert body["sessionConfig"]["voice"]
         assert body["sidecarVersion"].startswith("phase-s")

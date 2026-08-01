@@ -25,6 +25,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 Environment = Literal["development", "staging", "production"]
 
 
+# Stand-in for an API key when running on Vertex AI (ADC auth, no key).
+# `build_keyed_gemini` branches on this exact value.
+VERTEX_SENTINEL = "__vertex_adc__"
+
+
 class Settings(BaseSettings):
     """Typed, validated runtime settings."""
 
@@ -63,6 +68,16 @@ class Settings(BaseSettings):
 
     # --- AI keys (P0 #2 — two SEPARATE pools) ---
     genai_api_key: SecretStr = Field(default=SecretStr(""), alias="GOOGLE_GENAI_API_KEY")
+
+    # ── Vertex AI ────────────────────────────────────────────────────────
+    # Default ON. The public Gemini API's free tier rate-limits hard enough to
+    # make the parity harness unusable (99 sequential calls exhaust it), and
+    # the Next.js side already moved to Vertex in 32126add / b058ca65. Vertex
+    # bills to Cloud Billing 016D07 (startup credits) and needs no key.
+    #
+    # Set GOOGLE_GENAI_USE_VERTEXAI=false to fall back to the API-key pool.
+    use_vertexai: bool = Field(default=True, alias="GOOGLE_GENAI_USE_VERTEXAI")
+    vertex_location: str = Field(default="asia-south1", alias="GOOGLE_CLOUD_LOCATION")
     genai_shadow_api_key: SecretStr = Field(
         default=SecretStr(""), alias="GOOGLE_GENAI_SHADOW_API_KEY"
     )
@@ -105,7 +120,23 @@ class Settings(BaseSettings):
 
     @property
     def genai_keys(self) -> tuple[str, ...]:
-        """Live Gemini API key pool. Comma-separated for failover."""
+        """Live Gemini credential pool.
+
+        On Vertex AI there is no API key — auth is ADC (a service account on
+        Cloud Run, `gcloud auth application-default login` locally). But the
+        whole call path (`run_resiliently` → `fn(api_key)` →
+        `build_keyed_gemini`) is threaded on a key string, and rewriting that
+        for every one of the 19 agents would be a far larger change than this
+        migration warrants.
+
+        So Vertex mode returns a single sentinel. `build_keyed_gemini`
+        recognises it and constructs a Vertex client instead of a keyed one.
+        The pool has one entry, so key failover degenerates into plain retry —
+        which is correct: Vertex quota is project-level and generous, and there
+        are no sibling keys to rotate to.
+        """
+        if self.use_vertexai:
+            return (VERTEX_SENTINEL,)
         raw = self.genai_api_key.get_secret_value()
         return tuple(k.strip() for k in raw.split(",") if k.strip())
 
@@ -169,7 +200,11 @@ class Settings(BaseSettings):
                 "invoke this service."
             )
 
-        if not self.genai_keys:
+        # On Vertex there is no key to validate — ADC is the credential, and a
+
+        # missing/again-broken ADC surfaces at the first call, not at boot.
+
+        if not self.use_vertexai and not self.genai_keys:
             errors.append(
                 "GOOGLE_GENAI_API_KEY pool is empty; model calls will fail."
             )

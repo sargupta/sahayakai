@@ -16,6 +16,14 @@ os.environ.setdefault("SAHAYAKAI_REQUEST_SIGNING_KEY", "test-signing-key")
 # layer still asserts the pool is non-empty before calling.
 os.environ.setdefault("GOOGLE_GENAI_API_KEY", "test-key-1,test-key-2")
 os.environ.setdefault("GOOGLE_GENAI_SHADOW_API_KEY", "shadow-key-1")
+# Pin the API-key transport for the suite. Production now defaults to Vertex
+# (ADC, no key), but the integration fakes replace `google.genai.Client` with
+# stubs whose signature takes `api_key=` only — passing `vertexai=True` into
+# them raises TypeError, which surfaces as a misleading 502.
+#
+# The transport is not what these tests are exercising. The Vertex branch is
+# covered directly in tests/unit/test_vertex_client.py.
+os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "false")
 
 
 @pytest.fixture(autouse=True)

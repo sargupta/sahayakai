@@ -1,0 +1,54 @@
+# Policy 10: Regional Cloud Run CPU-allocation quota utilization — PAGE.
+#
+# WHY: CpuAllocPerProjectRegion in asia-southeast1 is the single binding
+# scaling constraint for the whole app (default 20 vCPU = 20000 m-cpu). At
+# cpu=2/instance that is the hard ceiling behind maxScale. This alert watches
+# the quota itself, not the instance count, so we see the wall coming even if
+# the autoscaler is throttled below it.
+#
+# Metric: serviceruntime quota usage ratio for the run.googleapis.com
+# cpu_allocation limit. Alert at 80% utilization sustained 5m.
+#
+# A quota-increase request (20000 → 200000) is filed and PENDING Google review
+# (see docs/SCALING_AND_RELIABILITY.md). Until granted, 80% here means you are
+# minutes from the ceiling — escalate the quota case immediately.
+displayName: "sahayakai prod — regional CPU quota util > 80% (5m) [PAGE]"
+combiner: OR
+enabled: true
+alertStrategy:
+  autoClose: 86400s
+documentation:
+  mimeType: text/markdown
+  content: |
+    **PAGE.** Cloud Run regional CPU-allocation quota is >80% used in
+    asia-southeast1. This is the hard scaling wall; there is no autoscaling
+    past it.
+
+    Action:
+      1. Check current grant + usage:
+         `gcloud alpha services quota list --service=run.googleapis.com --consumer=projects/sahayakai-b4248 --filter='metric:run.googleapis.com/cpu_allocation'`
+      2. Check the pending increase:
+         `gcloud alpha quotas preferences list --service=run.googleapis.com --project=sahayakai-b4248`
+      3. If still 20000: escalate the quota case in the Cloud Console
+         (IAM & Admin → Quotas → CPU allocation, asia-southeast1 → Edit) or
+         open a support case. Self-service CLI cannot exceed the default.
+      4. Interim relief without a grant: a NEW revision at cpu=1 fits 20
+         instances inside 20 vCPU (vs 10 at cpu=2). Weigh per-request headroom.
+conditions:
+  - displayName: "cpu_allocation quota usage > 80%"
+    conditionThreshold:
+      filter: |
+        resource.type = "consumer_quota"
+        metric.type = "serviceruntime.googleapis.com/quota/allocation/usage"
+        metric.label.quota_metric = "run.googleapis.com/cpu_allocation"
+      aggregations:
+        - alignmentPeriod: 300s
+          perSeriesAligner: ALIGN_MAX
+          crossSeriesReducer: REDUCE_MAX
+          groupByFields:
+            - resource.label.location
+      comparison: COMPARISON_GT
+      thresholdValue: 16000
+      duration: 300s
+      trigger:
+        count: 1
