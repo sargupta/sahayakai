@@ -1,0 +1,53 @@
+# Policy 9: Cloud Run instance count nearing maxScale — PAGE (launch-critical).
+#
+# WHY: the prod service `sahayakai-hotfix-resilience` is pinned at maxScale=20
+# (grandfathered — see docs/SCALING_AND_RELIABILITY.md; the regional
+# CpuAllocPerProjectRegion quota of 20 vCPU currently caps any NEW revision at
+# 10 instances). When active instances approach the cap, the NEXT request is
+# queued or 429'd. This is the #1 fall-over risk on the 8 AM IST wall.
+#
+# Threshold: alert when the active instance count for the serving revision
+# stays >= 16 (80% of the 20 cap) for 3 minutes. Drop to >= 8 if a new revision
+# lands under the 10-instance quota cap before the increase is granted.
+#
+# WHEN THE QUOTA INCREASE LANDS: raise thresholdValue to 80% of the new
+# maxScale and re-tune.
+displayName: "sahayakai prod — Cloud Run instances >= 80% of maxScale (3m) [PAGE]"
+combiner: OR
+enabled: true
+alertStrategy:
+  autoClose: 86400s
+documentation:
+  mimeType: text/markdown
+  content: |
+    **PAGE.** Active Cloud Run instances are within 20% of the maxScale ceiling.
+    Beyond the cap, new requests queue then 429. This is the launch fall-over
+    path on the morning prep spike.
+
+    Action:
+      1. Confirm the live ceiling:
+         `gcloud run services describe sahayakai-hotfix-resilience --region asia-southeast1 --format='value(spec.template.metadata.annotations[autoscaling.knative.dev/maxScale])'`
+      2. Check the regional CPU quota (the real wall):
+         `gcloud alpha services quota list --service=run.googleapis.com --consumer=projects/sahayakai-b4248 --filter='metric:run.googleapis.com/cpu_allocation'`
+      3. If quota increase (CpuAllocPerProjectRegion → 200000) is GRANTED, raise
+         maxScale via `scripts/safe-deploy.sh` (never raw gcloud run deploy).
+      4. If NOT granted, shed load: confirm the AI kill-switch path degrades
+         gracefully and consider lowering per-instance concurrency.
+conditions:
+  - displayName: "instance_count >= 16"
+    conditionThreshold:
+      filter: |
+        resource.type = "cloud_run_revision"
+        resource.label.service_name = "sahayakai-hotfix-resilience"
+        metric.type = "run.googleapis.com/container/instance_count"
+      aggregations:
+        - alignmentPeriod: 60s
+          perSeriesAligner: ALIGN_MAX
+          crossSeriesReducer: REDUCE_SUM
+          groupByFields:
+            - resource.label.service_name
+      comparison: COMPARISON_GT
+      thresholdValue: 16
+      duration: 180s
+      trigger:
+        count: 1
