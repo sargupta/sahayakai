@@ -102,8 +102,8 @@ def _patch_gemini(monkeypatch: pytest.MonkeyPatch, reply_json: dict[str, Any]) -
     # then via sys.modules. Attach `types` to the fake parent so the
     # import succeeds.
     fake_module.types = fake_genai_types  # type: ignore[attr-defined]
-    sys.modules["google.genai"] = fake_module  # type: ignore[assignment]
-    sys.modules["google.genai.types"] = fake_genai_types  # type: ignore[assignment]
+    monkeypatch.setitem(sys.modules, "google.genai", fake_module)
+    monkeypatch.setitem(sys.modules, "google.genai.types", fake_genai_types)
     # `from google import genai` reads the `genai` attribute on the parent
     # `google` package — that lookup bypasses sys.modules, so we must also
     # patch the attribute. Without this, the real SDK keeps running and the
