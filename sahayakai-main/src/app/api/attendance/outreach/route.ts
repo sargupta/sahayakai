@@ -35,6 +35,10 @@ export async function POST(req: NextRequest) {
             reason: OutreachReason;
             teacherNote?: string;
             generatedMessage: string;
+            // Phone-call rendition of generatedMessage (no salutation/sign-off,
+            // assistant speaks on behalf of the teacher). Spoken by the twiml
+            // route instead of the written letter.
+            spokenScript?: string;
             deliveryMethod: 'twilio_call' | 'whatsapp_copy';
             performanceContext?: PerformanceContext;
             // Forwarded from the modal; used only by the Exotel streaming voicebot
@@ -122,6 +126,10 @@ export async function POST(req: NextRequest) {
             updatedAt: now,
         };
         if (data.teacherNote) record.teacherNote = data.teacherNote;
+        // Cap length defensively — this string is spoken verbatim by TTS.
+        if (typeof data.spokenScript === 'string' && data.spokenScript.trim()) {
+            record.spokenScript = data.spokenScript.trim().slice(0, 1500);
+        }
         if (data.performanceContext) record.performanceContext = data.performanceContext;
         // Personalization for the Exotel streaming voicebot. subject comes from the
         // modal; teacherName/schoolName are server-trusted from the teacher profile.

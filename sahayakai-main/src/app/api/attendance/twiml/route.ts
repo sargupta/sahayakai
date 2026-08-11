@@ -6,6 +6,7 @@ import { validateTwilioSignature, validateTwilioSignaturePost } from '@/lib/twil
 import { generateAgentReply } from '@/ai/flows/parent-call-agent';
 import { dispatchParentCallReply } from '@/lib/sidecar/dispatch';
 import { getVoicePipelineConfig } from '@/lib/voice-pipeline/config';
+import { resolveSpokenMessage } from '@/lib/voice-pipeline/spoken-script';
 import type { TranscriptTurn } from '@/types/attendance';
 import type { Language } from '@/types';
 import { LANGUAGE_TO_ISO } from '@/types/index';
@@ -73,7 +74,10 @@ export async function GET(req: NextRequest) {
         if (!doc.exists) return new NextResponse(hangupXml(), { headers: XML_HEADERS });
 
         const data = doc.data()!;
-        const message: string = data.generatedMessage || '';
+        // Speak the phone-call rendition, never the written letter. Legacy
+        // docs without spokenScript get the salutation/sign-off stripped so
+        // TTS does not read "Dear …" / "Sincerely, <name>" aloud.
+        const message: string = resolveSpokenMessage(data);
         const language = data.parentLanguage as Language;
 
         if (!message) return new NextResponse(hangupXml(), { headers: XML_HEADERS });
@@ -168,6 +172,19 @@ export async function POST(req: NextRequest) {
     const speechResult = formData.get('SpeechResult') as string | null;
     const digits = formData.get('Digits') as string | null;
 
+    // `recover=1` marks a turn that already went through the AI-failure
+    // recovery path once — a second failure ends the call gracefully
+    // instead of looping the parent through endless retries.
+    const isRecoveryTurn = new URL(req.url).searchParams.get('recover') === '1';
+
+    // Hoisted so the catch block can speak in the CALL's language instead
+    // of the historical hard-coded English apology (which fired mid-call in
+    // Hindi/Bengali conversations whenever the AI reply timed out).
+    let failLangCode = 'en-IN';
+    let failVoice: string = 'Google.en-IN-Neural2-A';
+    let failPrompts = CALL_MENU_PROMPTS['en-IN'];
+    let failSpeechLang = 'en-IN';
+
     try {
         const db = await getDb();
         const outreachRef = db.collection('parent_outreach').doc(outreachId);
@@ -181,6 +198,10 @@ export async function POST(req: NextRequest) {
         const voice = TWILIO_VOICE_MAP[language] ?? 'Google.en-IN-Neural2-A';
         const prompts = CALL_MENU_PROMPTS[langCode] ?? CALL_MENU_PROMPTS['en-IN'];
         const speechLang = SPEECH_LANGUAGE_MAP[langCode] ?? 'en-IN';
+        failLangCode = langCode;
+        failVoice = voice;
+        failPrompts = prompts;
+        failSpeechLang = speechLang;
 
         // F5-006 fix: snapshot reads are local-only — every Firestore write
         // below goes through `appendTurnAtomically` which uses a transaction
@@ -367,12 +388,28 @@ export async function POST(req: NextRequest) {
         return twimlResponse(replyXml);
     } catch (error) {
         console.error('[twiml] POST Error:', error);
-        // On AI failure, gracefully end the call rather than hanging up abruptly
+        // AI failure (most commonly a reply timeout). Recover IN THE CALL'S
+        // LANGUAGE: ask the parent to repeat once and give the pipeline a
+        // fresh turn. Only a second consecutive failure ends the call — and
+        // it says goodbye in the parent's language, not the old hard-coded
+        // English apology.
         try {
-            const language = 'en-IN';
+            const esc = escapeXml;
+            if (isRecoveryTurn) {
+                return twimlResponse(`<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Say language="${failLangCode}" voice="${failVoice}">${esc(failPrompts.thanks)}</Say>
+  <Hangup/>
+</Response>`);
+            }
+            const retryUrl = `/api/attendance/twiml?outreachId=${outreachId}&recover=1`;
             return twimlResponse(`<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say language="${language}" voice="Google.en-IN-Neural2-A">We apologize, but we are experiencing a technical issue. The teacher's message has been delivered. Thank you for your time. Goodbye.</Say>
+  <Say language="${failLangCode}" voice="${failVoice}">${esc(failPrompts.didntHear)}</Say>
+  <Gather input="speech dtmf" action="${retryUrl}" method="POST" language="${failSpeechLang}" speechTimeout="${SPEECH_TIMEOUT}" timeout="10" numDigits="1">
+    <Say language="${failLangCode}" voice="${failVoice}">${esc(failPrompts.waitingPrompt)}</Say>
+  </Gather>
+  <Say language="${failLangCode}" voice="${failVoice}">${esc(failPrompts.noResponseGoodbye)}</Say>
   <Hangup/>
 </Response>`);
         } catch {

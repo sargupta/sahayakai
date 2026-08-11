@@ -22,7 +22,12 @@ import { assertAllRules, BehaviouralGuardError } from '@/lib/parent-call-guard';
  * try/catch which serves the canned wrap-up — better than letting
  * Twilio time the whole call out.
  */
-const REPLY_TIMEOUT_MS = 10_000;
+// 13s, not 10s: prod traces (2026-08-11 call CA8b26…) show agentReply
+// latency of 7.6s/17.7s — the 10s ceiling fired mid-call and the parent
+// got the canned wrap-up while a good reply was still in flight. Twilio's
+// webhook budget is 15s, so 13s + ~1.5s for Firestore writes/XML still
+// answers Twilio in time while roughly halving spurious timeouts.
+const REPLY_TIMEOUT_MS = 13_000;
 /**
  * Summary path is post-call (no Twilio budget). Allow more headroom
  * because summaries are richer outputs.
@@ -104,6 +109,10 @@ const agentReplyPrompt = ai.definePrompt({
     name: 'parentCallAgentReply',
     input: { schema: AgentReplyInputSchema },
     output: { schema: AgentReplyOutputSchema },
+    // The reply is 3-4 spoken sentences; capping generation keeps the
+    // phone turn inside REPLY_TIMEOUT_MS. 512 tokens is ~3x the largest
+    // legitimate reply even in Indic scripts.
+    config: { maxOutputTokens: 512 },
     prompt: `You are a warm, caring school representative making a phone call to a parent about their child. You are NOT a robot — you are having a real conversation.
 ${INJECTION_GUARD}
 
