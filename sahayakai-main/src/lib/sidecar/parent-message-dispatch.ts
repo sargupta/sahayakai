@@ -32,6 +32,7 @@ import {
     type SidecarParentMessageRequest,
     type SidecarParentMessageResponse,
 } from './parent-message-client';
+import { sanitizeLetterForSpeech } from '@/lib/voice-pipeline/spoken-script';
 import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { shouldRunCanaryShadowDiff } from './canary-shadow-diff';
 import { withTimeout } from './with-timeout';
@@ -145,6 +146,9 @@ function sidecarToDispatched(
 ): DispatchedParentMessage {
     return {
         message: res.message,
+        // The ADK sidecar does not produce a spoken rendition yet — sanitize
+        // the letter so the voice pipeline never reads salutations aloud.
+        spokenScript: sanitizeLetterForSpeech(res.message),
         languageCode: res.languageCode,
         wordCount: res.wordCount,
         source: 'sidecar',

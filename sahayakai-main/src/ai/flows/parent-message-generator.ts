@@ -11,6 +11,7 @@ import { SAHAYAK_SOUL_PROMPT, STRUCTURED_OUTPUT_OVERRIDE } from '@/ai/soul';
 import { INJECTION_GUARD, neutralizeUserInput } from '@/ai/prompt-hardening';
 import type { OutreachReason } from '@/types/attendance';
 import { normalizeLanguage } from '@/ai/lib/normalize-language';
+import { sanitizeLetterForSpeech } from '@/lib/voice-pipeline/spoken-script';
 
 // ── Language → BCP-47 code map ────────────────────────────────────────────────
 // Do NOT let the AI decide this — hard-coded to prevent hallucination.
@@ -83,6 +84,7 @@ export type ParentMessageInput = z.infer<typeof ParentMessageInputSchema>;
 
 const ParentMessageOutputSchema = z.object({
     message:        z.string().describe('The complete, ready-to-send message in the parent\'s language. Max 250 words.'),
+    spokenScript:   z.string().describe('Conversational phone-call rendition of the same content, in the parent\'s language. Max 100 words. No salutation, no sign-off.'),
     languageCode:   z.string().describe('BCP-47 language code e.g. hi-IN'),
     wordCount:      z.number().describe('Approximate word count of the message'),
 });
@@ -137,8 +139,26 @@ You are a caring and professional school teacher writing a message to a student'
    - behavioral_concern: Be factual but gentle. Acknowledge positive qualities. Ask for home support.
    - positive_feedback: Be warm and celebratory. Specific praise is more meaningful than generic praise. If "Recent academic results" shows high scores, cite the highest as evidence.
 
+**Second output — spokenScript (for the automated phone call):**
+The same content must ALSO be produced as a spoken phone-call script. This is
+NOT the letter read aloud — it is what a warm school assistant would actually
+SAY to the parent on a call. Rules for spokenScript:
+- Same LANGUAGE LOCK and NATIVE SCRIPT MANDATE as the message.
+- Max 100 words. Short spoken sentences. Natural, warm, unhurried.
+- NO salutation line ("Dear …") and NO sign-off ("Sincerely, …") — those are
+  written-letter artifacts and sound absurd when spoken.
+- The caller is a school assistant calling ON BEHALF OF the teacher — never
+  speak in first person AS the teacher. Refer to the teacher in third person
+  (e.g. "{{teacherName}} has asked me to share…" in the parent's language).
+  This matters because the phone voice is not the teacher's own voice.
+- Open by saying which school you are calling from and which child the call
+  is about, then deliver the substance of the message conversationally.
+- Keep the ONE specific score citation if the written message has one.
+- No phone numbers, links, or product/AI names — same as the message.
+
 Return:
 - message: the complete message text
+- spokenScript: the phone-call rendition
 - languageCode: the BCP-47 code for the language
 - wordCount: approximate word count`,
 });
@@ -178,6 +198,10 @@ const parentMessageFlow = ai.defineFlow(
 
         return {
             message:      output.message,
+            // Defensive: if the model skips spokenScript, fall back to the
+            // sanitized letter so the voice pipeline never reads "Dear …" /
+            // "Sincerely, …" aloud on the call.
+            spokenScript: output.spokenScript?.trim() || sanitizeLetterForSpeech(output.message),
             languageCode,
             wordCount:    output.wordCount ?? output.message.split(/\s+/).length,
         };
