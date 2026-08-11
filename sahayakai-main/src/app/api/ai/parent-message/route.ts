@@ -28,6 +28,7 @@ async function _handler(req: NextRequest) {
         });
         return NextResponse.json({
             message: dispatched.message,
+            spokenScript: dispatched.spokenScript,
             languageCode: dispatched.languageCode,
             wordCount: dispatched.wordCount,
         });
