@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { pillars } from "./pillar-data";
+import { pillars, pillarText } from "./pillar-data";
 import { useLanguage } from "@/context/language-context";
 
 type Props = {
@@ -52,14 +52,14 @@ export function LandingPillarStrip({ titleIndex }: Props) {
                   active ? "text-white" : "text-foreground"
                 }`}
               >
-                {t(`pillar.${pillar.id}.name`)}
+                {pillarText(t, pillar, "name")}
               </div>
               <div
                 className={`text-[10px] leading-[1.4] ${
                   active ? "text-white/85" : "text-neutral-500"
                 }`}
               >
-                {t(`pillar.${pillar.id}.desc`)}
+                {pillarText(t, pillar, "desc")}
               </div>
             </motion.div>
           );
