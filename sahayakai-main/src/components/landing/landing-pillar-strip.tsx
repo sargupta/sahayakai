@@ -25,10 +25,10 @@ export function LandingPillarStrip({ titleIndex }: Props) {
                 opacity: active ? 1 : 0.55,
               }}
               transition={{ duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
-              className={`p-[14px] pr-3 rounded-[14px] border flex flex-col gap-2 items-start transition-colors duration-500 ${
+              className={`p-[14px] pr-3 rounded-[14px] border flex flex-col gap-2 items-start transition-[box-shadow,background-color,border-color] duration-500 ${
                 active
-                  ? "bg-gradient-to-br from-saffron to-saffron-600 border-transparent text-white shadow-[0_20px_38px_-16px_hsl(28_70%_42%/0.5)]"
-                  : "bg-white border-black/5"
+                  ? "bg-gradient-to-br from-saffron to-saffron-600 border-transparent text-white shadow-[0_24px_44px_-16px_hsl(28_70%_42%/0.55)]"
+                  : "bg-white border-black/[0.06] shadow-[0_1px_2px_-1px_hsl(28_30%_30%/0.08),0_10px_24px_-10px_hsl(28_45%_38%/0.18)] hover:shadow-[0_2px_4px_-1px_hsl(28_30%_30%/0.10),0_16px_32px_-12px_hsl(28_45%_38%/0.26)]"
               }`}
             >
               <div

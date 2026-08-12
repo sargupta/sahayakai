@@ -18,7 +18,7 @@ export function LandingQuote() {
     return v === key ? EN[key] : v;
   };
   return (
-    <section id="schools" className="px-6 sm:px-12 pb-20 flex justify-center scroll-mt-24">
+    <section id="schools" className="relative z-10 px-6 sm:px-12 pb-8 flex justify-center scroll-mt-24">
       <figure className="max-w-[720px] w-full bg-white border-l-4 border-saffron-200 rounded-[14px] px-7 py-6 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
         <blockquote className="font-headline font-medium italic text-[18px] leading-[1.55] text-foreground">
           {tr("quote.lakshmi.body")}
