@@ -85,7 +85,7 @@ steps:
       - --project=$PROJECT_ID
       - --no-traffic
       - --tag=sha-$SHORT_SHA
-      - --update-secrets=TWILIO_ACCOUNT_SID=TWILIO_ACCOUNT_SID:latest,TWILIO_AUTH_TOKEN=TWILIO_AUTH_TOKEN:latest,SAHAYAKAI_AGENTS_AUDIENCE=SAHAYAKAI_AGENTS_AUDIENCE:latest,PROFILE_COMPLETE_COOKIE_SECRET=PROFILE_COMPLETE_COOKIE_SECRET:latest
+      - --update-secrets=TWILIO_ACCOUNT_SID=TWILIO_ACCOUNT_SID:latest,TWILIO_AUTH_TOKEN=TWILIO_AUTH_TOKEN:latest,SAHAYAKAI_AGENTS_AUDIENCE=SAHAYAKAI_AGENTS_AUDIENCE:latest,PROFILE_COMPLETE_COOKIE_SECRET=PROFILE_COMPLETE_COOKIE_SECRET:latest,DEMO_CALL_PEPPER=DEMO_CALL_PEPPER:latest,DEMO_CALL_ENC_KEY=DEMO_CALL_ENC_KEY:latest
       # Sidecar URL — pinned to PROD service so a fresh deploy cannot
       # silently inherit a staging URL from a previous ad-hoc env override.
       # 2026-06-06 (parent-call attendance diagnosis): the live revision was
@@ -102,7 +102,12 @@ steps:
       # sidecar-mint path (start-session/route.ts). OFF everywhere else
       # (default 503 → turn-based STT/classifier/TTS fallback). Enabled
       # in prod 2026-08-13 alongside the revert to the sidecar-mint path.
-      - --update-env-vars=NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL=https://sahayakai-agents-zwydpvyuca-as.a.run.app,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248-mumbai,VIDYA_VOICE_LIVE_ENABLED=true
+      # DEMO_CALL_ENABLED: "Hear the Call" public lead magnet (/try-call →
+      # /api/demo-call, real Twilio calls). Enabled in prod 2026-08-13.
+      # DAILY_CAP=50 = conservative soft-launch spend ceiling (code default
+      # is 500); raise once abuse patterns are understood. Pepper + enc-key
+      # bound via --update-secrets above; Twilio creds already present.
+      - --update-env-vars=NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL=https://sahayakai-agents-zwydpvyuca-as.a.run.app,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248-mumbai,VIDYA_VOICE_LIVE_ENABLED=true,DEMO_CALL_ENABLED=true,DEMO_CALL_DAILY_CAP=50
       - --quiet
     waitFor: [push-sha]
 

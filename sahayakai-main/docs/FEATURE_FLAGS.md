@@ -120,3 +120,10 @@ If a flag MUST be respected (e.g., legal compliance), do not rely solely on this
 - Subscribe to the Firestore `system_config/feature_flags` document directly (client Firestore SDK can read this if the security rules allow).
 
 For most demo gates (Community Personas, Assessment Scanner cap), wrapping the server endpoint is enough — client-rendered content remains, but new server-side writes stop.
+
+## Env-var flags (process-start, not Firestore)
+
+A small set of gates read `process.env` directly — they change only on deploy/restart, independent of `system_config/feature_flags`:
+
+- `ONBOARDING_GATE_ENABLED` — onboarding completion gate in `src/middleware.ts`. **Stays OFF in prod** (2026-06-08 lockout incident, PR #68).
+- `DEMO_CALL_ENABLED` — public "Hear the Call" lead-magnet endpoint (`/api/demo-call`, page `/try-call`). Default OFF. Before enabling, provision `DEMO_CALL_PEPPER` (required in prod), review `DEMO_CALL_DAILY_CAP` / `DEMO_CALL_IP_DAILY_LIMIT` / `DEMO_CALL_PHONE_COOLDOWN_DAYS`, and optionally `TURNSTILE_SECRET_KEY` + `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `DEMO_CALL_ENC_KEY`. Spec: `docs/PARENT_CALL_DEMO_SPEC.md`.
