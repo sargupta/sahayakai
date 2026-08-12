@@ -109,7 +109,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 27 90% 37%;
+    --primary: 24 65% 47%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 123 37% 25%;
@@ -126,7 +126,7 @@
 
     --border: 220 16% 93%;
     --input: 220 16% 90%;
-    --ring: 27 90% 37%;
+    --ring: 24 65% 47%;
 
     --chart-1: 28 70% 59%;
     --chart-2: 123 37% 25%;
@@ -139,9 +139,9 @@
     --sidebar-primary: 240 5.9% 10%;
     --sidebar-primary-foreground: 0 0% 98%;
     --sidebar-accent: 28 70% 96%;
-    --sidebar-accent-foreground: 27 90% 37%;
+    --sidebar-accent-foreground: 24 65% 47%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 27 90% 37%;
+    --sidebar-ring: 24 65% 47%;
 
     /* Paint this subtree's own surface light too, so any element that
        relies on inherited body background (not an explicit bg-*) reads
@@ -214,17 +214,16 @@
        ======================================== */
 
     /* Primary - Saffron Theme (Indian Flag Orange)
-       Phase 0 contrast fix (design proposal 02, 2026-07-03): the old
-       interactive tone hsl(28 70% 59%) (#E0924D, nominal #FF9933) hit only
-       2.50:1 against white — failing WCAG AA (4.5:1 text, 3:1 UI). The
-       proposal's saffron-600 #F08A2E ALSO measures 2.51:1, so the ramp's
-       text/interactive tone is corrected to hsl(27 90% 37%) = #B35609:
-       4.94:1 vs white, 4.89:1 vs the warm app background — AA-passing in
-       BOTH directions (saffron text on white, white text on saffron).
-       Flag saffron #FF9933 and the bright --saffron-{50..300} shades are
+       History: flag saffron #FF9933 and the softer #E0924D (hsl 28 70% 59%)
+       both measure only ~2.5:1 on white — failing WCAG AA. A 2026-07-03 fix
+       darkened it to #B35609 (hsl 27 90% 37%, 4.94:1), but that read too
+       dark. 2026-08-13: settled on the warm AA-passing middle ground
+       hsl(24 65% 47%) = #C96A28 — lighter/warmer than #B35609 while still
+       passing AA both ways (saffron text on white, white text on saffron).
+       Flag saffron #FF9933 and the bright --saffron-{50..300} shades stay
        DECORATIVE ONLY (gradients, tints, glows) — never text or icons. */
-    --primary: 27 90% 37%;
-    /* #B35609 - Deep saffron, AA-passing interactive/text tone */
+    --primary: 24 65% 47%;
+    /* #C96A28 - Warm saffron, AA-passing interactive/text tone */
     --primary-foreground: 0 0% 100%;
     /* White text on Saffron — 4.94:1, passes AA */
 
@@ -274,7 +273,7 @@
     /* Warm light gray */
     --input: 220 16% 90%;
     /* Slightly darker for input affordance */
-    --ring: 27 90% 37%;
+    --ring: 24 65% 47%;
     /* Saffron focus ring — matches --primary (AA tone) */
 
     /* Status Colors */
@@ -329,10 +328,10 @@
     --sidebar-primary-foreground: 0 0% 98%;
     --sidebar-accent: 28 70% 96%;
     /* Light Saffron Tint */
-    --sidebar-accent-foreground: 27 90% 37%;
+    --sidebar-accent-foreground: 24 65% 47%;
     /* Saffron Text — AA tone (#B35609), 4.54:1 on the 96% tint */
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 27 90% 37%;
+    --sidebar-ring: 24 65% 47%;
   }
 
   .dark {
