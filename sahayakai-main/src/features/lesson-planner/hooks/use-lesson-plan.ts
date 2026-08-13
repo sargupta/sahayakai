@@ -164,18 +164,26 @@ export function useLessonPlan() {
             if (typeof window !== 'undefined') {
                 try {
                     const savedDraft = await getDraft("lessonPlanDraft");
-                    if (savedDraft && (savedDraft.language || savedDraft.gradeLevels)) {
-                        // Restore preferences; also restore topic from VIDYA snapshot if available
+                    if (savedDraft && savedDraft.language) {
+                        // Restore preferences; also restore topic from VIDYA snapshot if available.
+                        //
+                        // Tester bug 2026-08-13: gradeLevels is deliberately NOT
+                        // restored. The draft captured classes that were often
+                        // auto-filled (opening a saved plan, VIDYA hand-off), so a
+                        // fresh visit showed "1 class selected" the teacher never
+                        // chose — and the toast explaining why is easy to miss.
+                        // Language is a stable per-teacher preference; class
+                        // changes lesson to lesson, so it now always starts empty.
                         const vidyaSnap = formSnapshots["lesson-plan"];
                         form.reset({
                             topic: vidyaSnap?.topic || "", // Restore topic from VIDYA snapshot
                             language: savedDraft.language || "en",
-                            gradeLevels: savedDraft.gradeLevels || [],
+                            gradeLevels: [],
                             imageDataUri: savedDraft.imageDataUri || "",
                         });
                         toast({
                             title: "Preferences Restored",
-                            description: "Your language and class preferences have been restored.",
+                            description: "Your language preference has been restored.",
                         });
                     }
                 } catch (e) {
