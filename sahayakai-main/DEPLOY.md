@@ -64,7 +64,65 @@ bash scripts/release/promote-release.sh
 git tag release-$(date +%F) && git push origin release-$(date +%F)
 ```
 
-Watch builds at:
+Idempotent — re-run any time you want to update branch pattern,
+build-config path, or included files.
+
+### 3. Grant the Cloud Build SA permission to deploy Cloud Run + read Artifact Registry
+
+Already done; documented for completeness.
+
+```bash
+PROJECT_ID=sahayakai-b4248
+PROJECT_NUMBER=640589855975
+SA="${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com"
+
+# Allow Cloud Build SA to deploy Cloud Run revisions
+gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+  --member="serviceAccount:$SA" \
+  --role="roles/run.admin"
+
+# Allow Cloud Build SA to act-as the Cloud Run runtime SA
+gcloud iam service-accounts add-iam-policy-binding \
+  "${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+  --member="serviceAccount:$SA" \
+  --role="roles/iam.serviceAccountUser" \
+  --project="$PROJECT_ID"
+```
+
+---
+
+## Day-to-day: shipping a change
+
+```text
+┌────────────────┐     ┌──────────────────┐     ┌──────────────────────┐
+│ git push       │ ──▶ │ Cloud Build      │ ──▶ │ Cloud Run revision   │
+│ origin main    │     │ runs             │     │ created with         │
+│                │     │ cloudbuild.yaml  │     │ --no-traffic + tag   │
+└────────────────┘     └──────────────────┘     └──────────────────────┘
+                                                          │
+                                                          ▼
+                                                ┌──────────────────────┐
+                                                │ Audit + flip traffic │
+                                                │ (manual, by you)     │
+                                                └──────────────────────┘
+```
+
+### 1. Push your change
+
+```bash
+# from a fix branch: PR into main (trunk — develop is retired 2026-08)
+gh pr create --base main ...
+# merge → sahayakai-uat-deploy trigger fires (UAT deploy + smoke + flip)
+
+# When ready to release (requires uat/verified commit status on the SHA)
+bash sahayakai-main/scripts/release/cut-release.sh
+# push of release/* fires sahayakai-release-deploy (both regions, no traffic)
+bash sahayakai-main/scripts/release/promote-release.sh --sha <short-sha>
+```
+
+The push triggers the `sahayakai-main-deploy` Cloud Build job. Watch
+it at:
+
 https://console.cloud.google.com/cloud-build/builds?project=sahayakai-b4248
 
 ## Audit a deployed revision
@@ -146,36 +204,43 @@ Never use `safe-deploy.sh` as the routine path.
 
 ## One-time setup history (kept for reference)
 
-### Cloud Build GitHub App on `sargupta/sahayakai`
+| Branch       | Deploys to                              |
+|--------------|-----------------------------------------|
+| `main`       | `sahayakai-preview` (UAT)               |
+| `release/*`  | `sahayakai-hotfix-resilience` (PROD)    |
+| `hotfix/*`   | `sahayakai-hotfix-resilience` (PROD)    |
+| `develop`    | ABORT (retired 2026-08 — trunk is main) |
+| anything else| ABORT (open PR to main)                 |
 
 Manual OAuth step, cannot be scripted:
 
-1. Open https://github.com/marketplace/google-cloud-build
-2. **Set up plan** → **Configure** → account `sargupta`
-3. **Only select repositories** → `sahayakai` → confirm
+To wire the auto-deploy Cloud Build triggers (T2 of the pipeline
+rebuild):
 
-### Cloud Build SA permissions (already granted)
+1. Install the Cloud Build GitHub App (manual OAuth):
+   open https://github.com/marketplace/google-cloud-build → Set up plan →
+   Configure → account `sargupta` → Only select repositories → `sahayakai`.
+2. Run `bash scripts/setup-build-trigger-uat.sh` (UAT, main →
+   cloudbuild-uat.yaml) and `bash scripts/setup-build-trigger.sh` (prod,
+   release/* → cloudbuild-release.yaml).
+3. **Delete the retired legacy triggers** or every push to main
+   double-fires (legacy `sahayakai-main-deploy` deploys toward prod in
+   parallel with the UAT pipeline):
+   `bash scripts/teardown-legacy-triggers.sh`
+4. Wire the `GCP_DEPLOYER_KEY` repo secret so
+   `.github/workflows/release-promote.yml` can auto-promote (until then it
+   is a safe no-op stub).
+5. Verify with `gcloud beta builds triggers list --project=sahayakai-b4248`.
 
 ```bash
 PROJECT_ID=sahayakai-b4248
 PROJECT_NUMBER=640589855975
 SA="${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com"
 
-gcloud projects add-iam-policy-binding "$PROJECT_ID" \
-  --member="serviceAccount:$SA" \
-  --role="roles/run.admin"
-
-gcloud iam service-accounts add-iam-policy-binding \
-  "${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
-  --member="serviceAccount:$SA" \
-  --role="roles/iam.serviceAccountUser" \
-  --project="$PROJECT_ID"
-```
-
-## UAT environment
-
-`sahayakai-preview` is the UAT tier fed by `main` pushes (P2). Full
-docs: [`docs/UAT_ENV.md`](./docs/UAT_ENV.md) (renamed from
-`PREVIEW_ENV.md`).
+`sahayakai-preview` is a separate Cloud Run service — the UAT tier.
+Auto-deploys from main tip once the GitHub App is reinstalled and the
+`sahayakai-uat-deploy` trigger exists; until then, manual via
+`safe-deploy.sh` after `git checkout main`. It is where features get
+validated (and marked `uat/verified`) before a release branch is cut. Full docs: [`docs/UAT_ENV.md`](./docs/UAT_ENV.md) (renamed from `PREVIEW_ENV.md`).
 
 URL: `https://sahayakai-preview-640589855975.asia-southeast1.run.app`

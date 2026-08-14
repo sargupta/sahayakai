@@ -15,7 +15,15 @@ function walk(dir) {
             if (entry.name === 'node_modules' || entry.name === '.next') continue;
             walk(p);
         } else if (/\.(tsx|jsx|ts|js)$/.test(entry.name)) {
-            const src = fs.readFileSync(p, 'utf8');
+            // Strip comments before scanning: a t("...") inside a JSDoc usage
+            // example or commented-out code is not a real call site. Without
+            // this, a doc example in section-card.tsx put two phantom keys
+            // into the missing list and tripped Gate 9's ratchet (2026-08-14).
+            // Line structure is preserved (comments become blank/spaces) so
+            // reported line numbers stay accurate.
+            const src = fs.readFileSync(p, 'utf8')
+                .replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, ' '))
+                .replace(/(^|[^:])\/\/[^\n]*/gm, (c, pre) => pre + ' '.repeat(c.length - pre.length));
             let m;
             while ((m = TFN_RE.exec(src)) !== null) {
                 const key = m[2];

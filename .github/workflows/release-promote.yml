@@ -1,0 +1,140 @@
+# release-promote.yml
+#
+# Auto-promotion for release branches. On push to release/**:
+#   1. Wait for the `sahayakai-release-deploy` Cloud Build (fired by the
+#      same push) to produce a Ready, sha-tagged revision in BOTH prod
+#      regions (asia-southeast1 + asia-south1).
+#   2. Run scripts/release/promote-release.sh --auto, which preflights
+#      (digest parity, capacity, index diff, tagged-URL smokes), flips
+#      Singapore → LB smoke → Mumbai → LB smoke, and AUTO-ROLLS-BACK both
+#      regions if an LB smoke fails.
+#
+# Secret gating: every GCP step is conditional on the repo secret
+# GCP_DEPLOYER_KEY (a service-account JSON key with run.admin +
+# datastore.indexAdmin, following the existing credentials_json pattern in
+# quality-gates.yml / google-cloudrun-docker.yml — no workload identity is
+# configured in this repo). T2 wires the secret; until then this workflow
+# is a safe no-op stub: it merges cleanly, runs, detects the missing
+# secret, and skips every mutating step with a notice. NO infra is touched
+# without the secret.
+#
+# SHA note: Cloud Build's $SHORT_SHA is the FIRST 7 CHARS of the commit
+# sha, so the revision tag is sha-<7 chars>. We slice GITHUB_SHA to 7 to
+# match — a longer slice would never find the tag.
+#
+# PROVENANCE (CRITICAL-1): the wait loop below only waits for a Ready
+# revision carrying the sha- tag — it does NOT prove which pipeline built
+# it. A release branch cut from main tip shares its SHORT_SHA with any
+# main-triggered build, so while the legacy `sahayakai-main-deploy`
+# trigger exists, the tag/AR reference is ambiguous. Two mitigations:
+#   1. promote-release.sh preflight HARD-ABORTS while the legacy trigger
+#      exists (run scripts/teardown-legacy-triggers.sh), and verifies each
+#      revision's image digest equals Artifact Registry's digest for
+#      :<short-sha> plus cross-region digest parity.
+#   2. Flips are pinned to the preflighted revision NAME (--to-revisions),
+#      never tag indirection.
+
+name: release-promote
+
+on:
+  push:
+    branches: ['release/**']
+
+# SERIALIZE ALL PROMOTIONS (H2): the group is a FIXED string, not keyed on
+# the branch/ref. Two release branches cut the same day (release/2026.08.14
+# and .1) must never promote concurrently — interleaved flips + LB smokes
+# would race and the second run's preflight could observe the first run's
+# half-flipped state. cancel-in-progress stays false: queue, never kill a
+# promotion mid-flip.
+concurrency:
+  group: release-promote-prod
+  cancel-in-progress: false
+
+permissions:
+  contents: write   # promote-release.sh pushes the release-YYYY-MM-DD git tag
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Detect deployer credentials
+        id: creds
+        env:
+          GCP_DEPLOYER_KEY: ${{ secrets.GCP_DEPLOYER_KEY }}
+        run: |
+          if [ -n "$GCP_DEPLOYER_KEY" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::GCP_DEPLOYER_KEY secret not configured — release-promote is a no-op stub."
+            echo "::notice::Wire the secret (T2) to enable auto-promotion, or promote manually:"
+            echo "::notice::  bash sahayakai-main/scripts/release/promote-release.sh --sha <short-sha>"
+          fi
+
+      - name: Checkout (full history — promote diffs serving..new for firestore.indexes.json)
+        if: steps.creds.outputs.present == 'true'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Authenticate to GCP
+        if: steps.creds.outputs.present == 'true'
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_DEPLOYER_KEY }}
+
+      - name: Set up gcloud
+        if: steps.creds.outputs.present == 'true'
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Wait for Ready sha-tagged revisions in both regions
+        if: steps.creds.outputs.present == 'true'
+        env:
+          PROJECT: sahayakai-b4248
+          SERVICE: sahayakai-hotfix-resilience
+        run: |
+          set -euo pipefail
+          SHORT="${GITHUB_SHA::7}"   # matches Cloud Build $SHORT_SHA (7 chars)
+          TAG="sha-$SHORT"
+          echo "Waiting for Ready revisions tagged $TAG in asia-southeast1 + asia-south1..."
+
+          region_ready() {
+            local region="$1" rev ready
+            rev=$(gcloud run services describe "$SERVICE" \
+                    --region="$region" --project="$PROJECT" --format=json 2>/dev/null \
+                  | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next((t.get("revisionName","") for t in (d.get("status",{}).get("traffic") or []) if t.get("tag")==sys.argv[1]), ""))' "$TAG") || return 1
+            [ -n "$rev" ] || return 1
+            ready=$(gcloud run revisions describe "$rev" \
+                      --region="$region" --project="$PROJECT" --format=json 2>/dev/null \
+                    | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next((c.get("status","") for c in (d.get("status",{}).get("conditions") or []) if c.get("type")=="Ready"), ""))') || return 1
+            [ "$ready" = "True" ]
+          }
+
+          # ~35 min budget (Cloud Build cap is 2400s + queue time); the job
+          # itself is capped at 45 min.
+          DEADLINE=$(( $(date +%s) + 35*60 ))
+          while :; do
+            ok=0
+            region_ready asia-southeast1 && region_ready asia-south1 && ok=1
+            if [ "$ok" = "1" ]; then
+              echo "Both regions Ready with $TAG."
+              break
+            fi
+            if [ "$(date +%s)" -ge "$DEADLINE" ]; then
+              echo "::error::Timed out waiting for Ready $TAG revisions in both regions."
+              echo "Check the Cloud Build: gcloud builds list --project=$PROJECT --limit=5"
+              exit 1
+            fi
+            echo "Not ready yet — retrying in 30s..."
+            sleep 30
+          done
+
+      - name: Promote (auto)
+        if: steps.creds.outputs.present == 'true'
+        run: |
+          set -euo pipefail
+          git config user.name "sahayakai-release-bot"
+          git config user.email "contact@sargvision.com"
+          SHORT="${GITHUB_SHA::7}"
+          bash sahayakai-main/scripts/release/promote-release.sh --sha "$SHORT" --auto

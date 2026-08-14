@@ -29,33 +29,54 @@ import { Rate, Trend } from 'k6/metrics';
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000';
 const TOKEN = __ENV.TOKEN || '';
 
+// PROFILE=smoke → short, gentle ramp for release-gate sanity (UAT / tagged
+// revisions): 4 minutes, peak 25 VUs, and the expensive visual/image leg is
+// skipped so a gate run never burns image-generation money. Anything else
+// (unset, or any other value) keeps the historical full "8 AM wall" run —
+// no behavior change without PROFILE=smoke.
+const SMOKE = (__ENV.PROFILE || '') === 'smoke';
+
 const rate429 = new Rate('http_429');
 const rate5xx = new Rate('http_5xx');
 const aiLatency = new Trend('ai_generation_latency', true);
 
-// Ramp shape: a steep climb to simulate the morning spike, hold at the wall,
-// then ease off. Tune the peak target up until you find the knee.
+// Ramp shape (wall profile): a steep climb to simulate the morning spike,
+// hold at the wall, then ease off. Tune the peak target up until you find
+// the knee.
 export const options = {
   scenarios: {
-    morning_wall: {
+    [SMOKE ? 'release_smoke' : 'morning_wall']: {
       executor: 'ramping-vus',
-      startVUs: 5,
-      stages: [
-        { duration: '2m', target: 50 },   // early prep
-        { duration: '3m', target: 200 },  // the spike
-        { duration: '5m', target: 400 },  // the wall — push until knee
-        { duration: '3m', target: 400 },  // hold
-        { duration: '2m', target: 0 },    // ease off
-      ],
+      startVUs: SMOKE ? 1 : 5,
+      stages: SMOKE
+        ? [
+            { duration: '1m', target: 10 },
+            { duration: '2m', target: 25 },
+            { duration: '1m', target: 0 },
+          ]
+        : [
+            { duration: '2m', target: 50 },   // early prep
+            { duration: '3m', target: 200 },  // the spike
+            { duration: '5m', target: 400 },  // the wall — push until knee
+            { duration: '3m', target: 400 },  // hold
+            { duration: '2m', target: 0 },    // ease off
+          ],
       gracefulStop: '30s',
     },
   },
-  thresholds: {
-    // Launch survival lines. If these break, the system falls over at the wall.
-    http_429: ['rate<0.05'],          // <5% throttled
-    http_5xx: ['rate<0.01'],          // <1% hard errors (AI should degrade to 503-as-handled, not crash)
-    ai_generation_latency: ['p(95)<45000'],
-  },
+  thresholds: SMOKE
+    ? {
+        // Release-gate lines: hard errors must be rare; modest throttling
+        // is tolerated at this scale.
+        http_5xx: ['rate<0.01'],
+        http_429: ['rate<0.10'],
+      }
+    : {
+        // Launch survival lines. If these break, the system falls over at the wall.
+        http_429: ['rate<0.05'],          // <5% throttled
+        http_5xx: ['rate<0.01'],          // <1% hard errors (AI should degrade to 503-as-handled, not crash)
+        ai_generation_latency: ['p(95)<45000'],
+      },
 };
 
 function authHeaders() {
@@ -99,9 +120,12 @@ export default function () {
     // 429 = throttled. A 500 is a real failure.
     check(res, { 'lesson-plan not 5xx-hard': (x) => x.status !== 500 });
     sleep(2 + Math.random() * 3);
-  } else if (r < 0.95) {
+  } else if (r < 0.95 || SMOKE) {
     // directory — teacher discovery (scrape-shaped). Adjust path to the real
     // discovery endpoint/action if it is exposed over HTTP.
+    // Under PROFILE=smoke this leg also absorbs the image/visual traffic
+    // share: the visual-aid call is the most expensive in the app ($0.04+,
+    // 25-90s) and a release-gate smoke must not burn image-generation spend.
     const res = record(http.get(`${BASE_URL}/community`, { headers: authHeaders() }));
     check(res, { 'directory reachable': (x) => x.status < 500 });
     sleep(1 + Math.random() * 2);

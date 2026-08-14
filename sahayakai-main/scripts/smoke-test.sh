@@ -1,15 +1,29 @@
 #!/usr/bin/env bash
 # ────────────────────────────────────────────────────────────────────────────
-# Post-deploy smoke test for SahayakAI (Cloud Run, asia-south1)
-# Run AFTER git push origin main — Cloud Run takes ~90s to roll out.
+# Post-deploy smoke test for SahayakAI
+# (Cloud Run, dual-region: asia-southeast1 Singapore + asia-south1 Mumbai)
+# Run AFTER a deploy — Cloud Run takes ~90s to roll out.
 #
 # Usage:
 #   bash scripts/smoke-test.sh                  # tests production
 #   BASE=http://localhost:3000 bash scripts/smoke-test.sh  # tests locally
+#   REQUIRE_ENV=0 BASE=<uat-url> bash scripts/smoke-test.sh
+#     # UAT / tagged revisions: skip the env-var completeness gate (UAT
+#     # intentionally omits prod-only env vars and secrets).
+#
+# COVERAGE GAP (S6): the Twilio / parent-call path is NEVER exercised here —
+# verifying it needs real Twilio credentials and places a real call. A green
+# smoke says nothing about voice calling. After releases that touch the
+# call stack, verify a real parent call manually (see
+# docs/PARENT_CALL_RUNBOOK if present, or qa/ scripts).
 # ────────────────────────────────────────────────────────────────────────────
 
-BASE="${BASE:-https://sahayakai.com}"
+# Default to www: the apex answers page routes with 308 → www (curl here
+# does not follow redirects, deliberately — a redirect is not a rendered
+# page). Recent green runs are all against www.
+BASE="${BASE:-https://www.sahayakai.com}"
 WAIT_SECS="${WAIT_SECS:-90}"
+REQUIRE_ENV="${REQUIRE_ENV:-1}"
 FAIL=0
 
 echo "Smoke test → $BASE"
@@ -100,13 +114,39 @@ echo ""
 echo "--- Health ---"
 check "API health"          "$BASE/api/health"
 
-# Parse health response to check env vars
+# Parse health response to check env vars. REQUIRE_ENV=0 downgrades a
+# failure to a warning — UAT / preview services intentionally omit
+# prod-only env vars and secrets, so completeness is advisory there.
+#
+# The payload shape depends on auth (the health route is auth-gated since
+# 0c14582d1 — unauthenticated callers do not get the full checks object).
+# Parse, in order of preference:
+#   1. checks.environment.healthy — full diagnostic payload (authed / local)
+#   2. envOk                      — coarse boolean exposed to unauthenticated
+#                                   callers (added 2026-08-14)
+#   3. top-level status == "ok"   — pre-envOk unauthenticated shape; the
+#                                   route folds environment.healthy into the
+#                                   200-vs-503 + ok-vs-unhealthy decision,
+#                                   so this is a valid coarse env signal on
+#                                   revisions that predate envOk.
 health_body=$(curl -s --max-time 10 "$BASE/api/health")
-env_healthy=$(echo "$health_body" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('checks',{}).get('environment',{}).get('healthy', False))" 2>/dev/null)
-missing=$(echo "$health_body" | python3 -c "import json,sys; d=json.load(sys.stdin); missing=d.get('checks',{}).get('environment',{}).get('missingVars',[]); print(', '.join(missing) if missing else 'none')" 2>/dev/null)
+env_healthy=$(echo "$health_body" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+env = d.get('checks', {}).get('environment', {})
+if 'healthy' in env:
+    print(env['healthy'])
+elif 'envOk' in d:
+    print(d['envOk'])
+else:
+    print(d.get('status') == 'ok')
+" 2>/dev/null)
+missing=$(echo "$health_body" | python3 -c "import json,sys; d=json.load(sys.stdin); missing=d.get('checks',{}).get('environment',{}).get('missingVars',[]); print(', '.join(missing) if missing else '(no detail — unauthenticated caller gets coarse signal only)')" 2>/dev/null)
 
 if [[ "$env_healthy" == "True" ]]; then
   echo "  PASS  [env]  All required env vars present"
+elif [[ "$REQUIRE_ENV" == "0" ]]; then
+  echo "  WARN  [env]  Missing env vars (not gating, REQUIRE_ENV=0): $missing"
 else
   echo "  FAIL  [env]  Missing env vars: $missing"
   FAIL=1
@@ -121,7 +161,8 @@ check "Attendance"          "$BASE/attendance"
 check "My Library"          "$BASE/my-library"
 check "Community Library"   "$BASE/community-library"
 check "Community"           "$BASE/community"
-check "Visual Aid Creator"  "$BASE/visual-aid-creator"
+# visual-aid-creator was deleted in eb612c4a9 (stub removed); the surviving
+# surface is visual-aid-designer only.
 check "Visual Aid Designer" "$BASE/visual-aid-designer"
 
 # ── API routes ──────────────────────────────────────────────────────────────
@@ -132,7 +173,11 @@ check "Visual Aid Designer" "$BASE/visual-aid-designer"
 # silently failing for weeks.
 echo ""
 echo "--- API Routes ---"
-check_post "Teacher Activity (empty body)"  "$BASE/api/teacher-activity"  "400"  "Invalid events format"
+# teacher-activity now auth-gates BEFORE validation (x-user-id check →
+# 401 Unauthorized on anonymous POST). 401 + "Unauthorized" still proves
+# "route exists, gate ran" — the previous 400 "Invalid events format"
+# expectation predates the auth gate and was failing against prod.
+check_post "Teacher Activity (unauth)"      "$BASE/api/teacher-activity"  "401"  "Unauthorized"
 check_post "Metrics (empty body)"           "$BASE/api/metrics"           "400"  "Invalid metrics format"
 
 # ── Security — confirm /admin and AI POST routes require auth ───────────────

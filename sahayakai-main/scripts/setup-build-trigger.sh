@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
 # setup-build-trigger.sh
 #
-# Creates the Cloud Build trigger that fires on every push to main and
-# runs cloudbuild.yaml. Run ONCE after the Cloud Build GitHub App has
-# been installed on the sargupta/sahayakai repository (see DEPLOY.md).
+# Creates the Cloud Build trigger that fires on every push to a
+# release/* branch and runs cloudbuild-release.yaml (two-region prod
+# deploy, --no-traffic; promotion via scripts/release/promote-release.sh).
+# Run ONCE after the Cloud Build GitHub App has been installed on the
+# sargupta/sahayakai repository (see DEPLOY.md).
+#
+# The companion UAT trigger (push to main → cloudbuild-uat.yaml) is
+# scripts/setup-build-trigger-uat.sh.
 #
 # Idempotent: deletes any existing trigger with the same name before
 # creating, so updating the config (file path, branch, included files)
@@ -13,12 +18,16 @@ set -euo pipefail
 
 PROJECT_ID="${PROJECT_ID:-sahayakai-b4248}"
 PROJECT_NUMBER="${PROJECT_NUMBER:-640589855975}"
-TRIGGER_NAME="${TRIGGER_NAME:-sahayakai-main-deploy}"
+TRIGGER_NAME="${TRIGGER_NAME:-sahayakai-release-deploy}"
 GITHUB_OWNER="${GITHUB_OWNER:-sargupta}"
 GITHUB_REPO="${GITHUB_REPO:-sahayakai}"
-BRANCH_PATTERN="${BRANCH_PATTERN:-^main$}"
-BUILD_CONFIG="${BUILD_CONFIG:-sahayakai-main/cloudbuild.yaml}"
-INCLUDED_FILES="${INCLUDED_FILES:-sahayakai-main/**}"
+BRANCH_PATTERN="${BRANCH_PATTERN:-^release/.*$}"
+BUILD_CONFIG="${BUILD_CONFIG:-sahayakai-main/cloudbuild-release.yaml}"
+# NO --included-files on the release trigger (minor-6): a release branch is
+# usually CREATED at an existing main commit, so the branch-creation push
+# can compute an EMPTY changed-file set — an included-files filter would
+# then silently skip the build and the promotion workflow would wait 35 min
+# for revisions that never appear. A release/* push must ALWAYS build.
 # Dedicated least-privilege deployer SA (created 2026-05-24, Task 21).
 # Has the minimal roles needed for Cloud Build → Cloud Run deploy:
 #   roles/cloudbuild.builds.builder
@@ -35,7 +44,6 @@ echo "Trigger:           $TRIGGER_NAME"
 echo "Repo:              github.com/$GITHUB_OWNER/$GITHUB_REPO"
 echo "Branch pattern:    $BRANCH_PATTERN"
 echo "Build config:      $BUILD_CONFIG"
-echo "Included files:    $INCLUDED_FILES"
 echo "Build SA:          $BUILD_SERVICE_ACCOUNT"
 echo
 
@@ -52,13 +60,12 @@ gcloud beta builds triggers create github \
     --repo-name="$GITHUB_REPO" \
     --branch-pattern="$BRANCH_PATTERN" \
     --build-config="$BUILD_CONFIG" \
-    --included-files="$INCLUDED_FILES" \
     --service-account="$BUILD_SERVICE_ACCOUNT" \
-    --description="On push to main: build & deploy sahayakai-hotfix-resilience with --no-traffic. Operator flips traffic manually."
+    --description="On push to release/*: build & deploy sahayakai-hotfix-resilience to BOTH prod regions with --no-traffic. Promote via scripts/release/promote-release.sh."
 
 echo
 echo "Trigger created. Verify in console:"
 echo "  https://console.cloud.google.com/cloud-build/triggers?project=$PROJECT_ID"
 echo
-echo "Test fire (uses HEAD of main):"
-echo "  gcloud beta builds triggers run $TRIGGER_NAME --branch=main --project=$PROJECT_ID"
+echo "Test fire (uses HEAD of a release branch):"
+echo "  gcloud beta builds triggers run $TRIGGER_NAME --branch=release/<date> --project=$PROJECT_ID"

@@ -101,11 +101,11 @@
 > Canonical doc: [`sahayakai-main/docs/BRANCHING.md`](sahayakai-main/docs/BRANCHING.md). This section is a summary.
 
 ### Branch Strategy
-- **`main`** — production branch. **NEVER commit directly to main.** Only receives merges from `develop` (release PRs) or `hotfix/*` (emergencies). Auto-deploy is DISABLED; prod deploys are manual via `sahayakai-main/scripts/safe-deploy.sh` from a `main` checkout.
-- **`develop`** — integration / staging branch. Source of truth for the `sahayakai-preview` Cloud Run service. Auto-deploys to preview on push (once Cloud Build GitHub App is reinstalled; manual via `safe-deploy.sh` from a `develop` checkout until then).
-- **`feature/<name>`** — new features. Branch from `develop`, merge back to `develop` via squash PR.
-- **`fix/<name>`** — bug fixes (non-emergency). Branch from `develop`, merge back to `develop`.
-- **`hotfix/<name>`** — emergency prod fix. Branch from `main`, merge to `main` + back-merge to `develop`.
+- **`main`** — the trunk. **NEVER commit directly to main.** Receives squash PRs from feature/fix branches and `hotfix/*` merges. Push to main auto-deploys the UAT tier (`sahayakai-preview`) via `cloudbuild-uat.yaml`; prod deploys come from `release/*` branches only (cut via `scripts/release/cut-release.sh` from a `uat/verified` SHA).
+- **`develop`** — RETIRED (2026-08). Repo is trunk-based on main; `safe-deploy.sh` hard-aborts on develop checkouts. See docs/BRANCHING.md.
+- **`feature/<name>`** — new features. Branch from `main`, merge back to `main` via squash PR.
+- **`fix/<name>`** — bug fixes (non-emergency). Branch from `main`, merge back to `main`.
+- **`hotfix/<name>`** — emergency prod fix. Branch from `main`; `safe-deploy.sh` deploys it straight to prod; merge back to `main`.
 - **`chore/<name>`**, **`docs/<name>`**, **`refactor/<name>`** — same pattern as `fix/*`.
 
 Legacy aliases (`feat/*`, `bugfix/*`, `audit/*`, `polish/*`) are deprecated — use canonical names. Cleanup PR pending.
@@ -171,8 +171,8 @@ Examples:
 ### Deployment
 
 Reality (2026-05-21; ⚠ updated 2026-08-14 — the bullets below were stale):
-- **Prod deploy**: the "NO auto-deploy on push to main" claim is **outdated** — the `sahayakai-main-deploy` Cloud Build trigger IS installed and LIVE: every push to `main` builds a prod revision at `--no-traffic` via `cloudbuild.yaml` (traffic flip stays manual). The trigger is slated for retirement in Tranche 2 of the 2026-08 delivery rebuild (see `sahayakai-main/DEPLOY.md`). `safe-deploy.sh` remains the break-glass path for Cloud Build outages only.
-- **Preview/UAT deploy** (`sahayakai-preview`): the `develop` branch was **retired 2026-08-12** — the develop-based preview flow is dead. The service becomes the UAT tier fed by `main` pushes once `cloudbuild-uat.yaml` lands (Tranche 2); until then, manual deploys only. See `sahayakai-main/docs/UAT_ENV.md`.
+- **Prod deploy (TODAY)**: the `sahayakai-main-deploy` Cloud Build trigger IS installed and LIVE: every push to `main` builds a prod revision at `--no-traffic` via `cloudbuild.yaml` (traffic flip stays manual). TARGET (activates in Tranche 2, artifacts already merged): cut a release branch from a UAT-verified main SHA (`scripts/release/cut-release.sh`) → trigger `sahayakai-release-deploy` (`cloudbuild-release.yaml`) deploys BOTH prod regions `--no-traffic` → `scripts/release/promote-release.sh` (preflight + per-region smokes + rollback recording). `safe-deploy.sh` remains the break-glass path.
+- **UAT deploy (`sahayakai-preview`)**: `develop` retired 2026-08-12; nothing auto-deploys this service TODAY. TARGET (Tranche 2): auto on push to `main` via trigger `sahayakai-uat-deploy` (`cloudbuild-uat.yaml`: no-traffic deploy → tagged-URL smoke → pinned flip). Trigger setup: `scripts/setup-build-trigger-uat.sh`. See `sahayakai-main/docs/UAT_ENV.md`.
 - **Service**: `sahayakai-hotfix-resilience` (prod) and `sahayakai-preview` (preview) — Cloud Run, region `asia-southeast1`, project `sahayakai-b4248`.
 
 See [`sahayakai-main/DEPLOY.md`](sahayakai-main/DEPLOY.md) for the operator runbook, [`sahayakai-main/docs/UAT_ENV.md`](sahayakai-main/docs/UAT_ENV.md) for UAT env details, and [`sahayakai-main/docs/ROLLBACK.md`](sahayakai-main/docs/ROLLBACK.md) for rollback procedure.
