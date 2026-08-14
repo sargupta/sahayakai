@@ -10,6 +10,18 @@ code, see [`AGENTS.md`](./AGENTS.md). For the branching / release
 policy, see [`docs/BRANCHING.md`](./docs/BRANCHING.md). This file is
 for the operator.
 
+> ⚠ **CURRENT STATE (2026-08-14): the three-pipeline model below is the
+> TARGET — P2 and P3 are NOT live yet.** Today, a push to `main` fires
+> the **LIVE `sahayakai-main-deploy` trigger** → prod `--no-traffic`
+> build via `cloudbuild.yaml` (flip is manual); nothing auto-deploys the
+> UAT tier. The P2/P3 configs (`cloudbuild-uat.yaml`,
+> `cloudbuild-release.yaml`, `uat-verify.yml`, `release-promote.yml`,
+> `scripts/release/*`) land in Tranches 2–3 — activation tracked in
+> [`docs/IMPLEMENTATION_LEDGER_2026-08.md`](./docs/IMPLEMENTATION_LEDGER_2026-08.md).
+> Until then, "Shipping a change" below is the target procedure, not
+> today's; the operative pieces today are the trigger table, rollback,
+> audit, and break-glass sections.
+
 ---
 
 ## The three pipelines (2026-08 delivery model)
@@ -20,8 +32,11 @@ for the operator.
 | P2 | `main` push → UAT | Cloud Build `cloudbuild-uat.yaml`: build → `--no-traffic` deploy → smoke → flip; then `uat-verify.yml` (e2e + visual + k6) posts `uat/verified` on the SHA |
 | P3 | `release/*` push → prod | Cloud Build `cloudbuild-release.yaml`: both regions, `--no-traffic`; `release-promote.yml` auto-flips with LB-smoke auto-rollback |
 
-There is no `develop` branch and no manual routine deploy. The old
-`develop → preview` and push-to-main prod-deploy flows are retired.
+There is no `develop` branch (retired 2026-08-12, along with its
+`sahayakai-preview-deploy` trigger). The push-to-main prod-deploy flow
+(`sahayakai-main-deploy` → `cloudbuild.yaml`) is **being retired in
+Tranche 2 — its trigger is still LIVE today**; see the trigger table
+below.
 
 ## Shipping a change
 
@@ -124,9 +139,9 @@ Never use `safe-deploy.sh` as the routine path.
 
 | Trigger | Config | Status |
 |---|---|---|
-| UAT (`^main$`) | `cloudbuild-uat.yaml` | v2 pipeline (P2) — Tranche 2 of the 2026-08 rebuild |
-| Release (`^release/.*$`) | `cloudbuild-release.yaml` | v2 pipeline (P3) |
-| `sahayakai-main-deploy` (`^main$` → prod) | `cloudbuild.yaml` | **Being retired in Tranche 2.** In the v2 model a `main` push must reach UAT only — a prod build on `main` pushes is a footgun. Delete after the UAT trigger is verified live: `gcloud beta builds triggers delete sahayakai-main-deploy --project=sahayakai-b4248` |
+| UAT (`^main$`) | `cloudbuild-uat.yaml` | **Does not exist yet** — created in Tranche 2 of the 2026-08 rebuild (P2) |
+| Release (`^release/.*$`) | `cloudbuild-release.yaml` | **Does not exist yet** — created in Tranche 3 (P3) |
+| `sahayakai-main-deploy` (`^main$` → prod) | `cloudbuild.yaml` | **LIVE today; being retired in Tranche 2.** Every `main` push builds a prod revision at `--no-traffic` (flip manual). In the v2 model a `main` push must reach UAT only — a prod build on `main` pushes is a footgun. Delete only after the UAT trigger is verified live: `gcloud beta builds triggers delete sahayakai-main-deploy --project=sahayakai-b4248` |
 | `sahayakai-preview-deploy` (`^develop$`) | `cloudbuild-preview.yaml` | Retired with the `develop` branch (2026-08-12) |
 
 ## One-time setup history (kept for reference)

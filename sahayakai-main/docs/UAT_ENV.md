@@ -10,6 +10,15 @@
 > cutting a release. Real teachers do NOT see this tier — it's for
 > Abhishek, QA, demos, and the automated verification suite.
 
+> ⚠ **CURRENT STATE (2026-08-14): Pipeline 2 is NOT live yet.** Nothing
+> auto-deploys this service today — `cloudbuild-uat.yaml` and
+> `uat-verify.yml` land in Tranche 2 (tracked in
+> [docs/IMPLEMENTATION_LEDGER_2026-08.md](./IMPLEMENTATION_LEDGER_2026-08.md)).
+> Today a `main` push instead fires the LIVE `sahayakai-main-deploy`
+> trigger → **prod** `--no-traffic` build via `cloudbuild.yaml`. Until T2
+> lands, this service only updates via a manual `safe-deploy.sh`-style
+> deploy; the "How deploys work" section below describes the target flow.
+
 ## URL
 
 Cloud Run-assigned URL (find with `gcloud run services describe sahayakai-preview --region=asia-southeast1 --format='value(status.url)'`). Looks like `https://sahayakai-preview-<hash>-as.a.run.app`.

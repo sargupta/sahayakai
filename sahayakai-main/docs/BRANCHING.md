@@ -10,6 +10,16 @@ BRANCHING v1 (the `develop`-centred model) and the historical
 > the three pipelines below. Historical references to `develop` in older
 > docs/PRs describe the v1 world.
 
+> ⚠ **CURRENT STATE (2026-08-14): this document describes the TARGET
+> model — P2 and P3 are NOT live yet.** Today, a push to `main` fires the
+> **LIVE `sahayakai-main-deploy` Cloud Build trigger**, which runs
+> `cloudbuild.yaml` and builds a **prod** revision at `--no-traffic`
+> (traffic flip stays manual). Nothing auto-deploys the UAT tier.
+> `cloudbuild-uat.yaml`, `uat-verify.yml`, `cloudbuild-release.yaml`,
+> `release-promote.yml`, and `scripts/release/*` do not exist yet — they
+> land in Tranches 2–3. Activation is tracked in
+> [docs/IMPLEMENTATION_LEDGER_2026-08.md](./IMPLEMENTATION_LEDGER_2026-08.md).
+
 ## Long-lived branches
 
 | Branch | Role | Protection |
@@ -43,7 +53,7 @@ All short-lived branches are **parented on `main`** and merged back to
 
 | # | Pipeline | Trigger | What runs | Outcome |
 |---|---|---|---|---|
-| **P1** | **PR → `main`** | PR opened/updated against `main` | GitHub Actions gates: `test (20)`, `smoke`, Gates 1, 2, 5, 6, 8, 9, 10, 11, 12 (see inventory below) | Merge allowed only when required checks are green |
+| **P1** | **PR → `main`** | PR opened/updated against `main` | GitHub Actions gates: `test (20)`, `smoke`, Gates 1, 2, 5, 6, 8, 10, 11 — live today (see inventory below). Gates 9 and 12 are **pending** (ship with PR #113) and join only after producing check runs | Merge allowed only when required checks are green |
 | **P2** | **`main` → UAT** | push to `main` | Cloud Build `cloudbuild-uat.yaml`: build → `--no-traffic` deploy to the UAT Cloud Run service → smoke → traffic flip. Then GitHub Actions `uat-verify.yml`: Playwright e2e + visual regression + k6 load probe → posts commit status **`uat/verified`** on the `main` SHA | Every `main` commit is exercised on a live tier; `uat/verified` marks release-candidate SHAs |
 | **P3** | **`release/*` → prod** | push of a `release/*` branch | Cloud Build `cloudbuild-release.yaml`: builds and deploys **both regions** (Mumbai `asia-south1` + Singapore `asia-southeast1`) with `--no-traffic`. Then `release-promote.yml`: auto traffic flip with load-balancer smoke check and **auto-rollback** on failure. Manual path: `scripts/release/promote-release.sh` | Prod revision live in both regions, or automatically rolled back |
 
@@ -104,10 +114,11 @@ Rulesets, or `gh api /repos/sargupta/sahayakai/rulesets`).
 > spacing, and matrix suffixes like `(20)`). Before applying either
 > ruleset, open a recent PR → Checks tab (or
 > `gh pr checks <n>`) and confirm every context below appears verbatim.
-> Gates that have not landed yet (e.g. 9 and 12, which ship in a later
-> tranche of the 2026-08 rebuild) must be added to the ruleset only
-> **after** they have produced at least one check run — a required context
-> that never reports blocks every merge forever.
+> Gates that have not landed yet (9 and 12, shipping with PR #113) are
+> **deliberately excluded** from the main-protection JSON below — they
+> live in a separate addendum fragment and may be added only **after**
+> they have produced at least one check run. A required context that
+> never reports blocks every merge forever.
 
 ### `main` ruleset
 
@@ -144,16 +155,33 @@ Rulesets, or `gh api /repos/sargupta/sahayakai/rulesets`).
           { "context": "Gate 5: no console.log in changed files" },
           { "context": "Gate 6: typecheck" },
           { "context": "Gate 8: test CI scripts" },
-          { "context": "Gate 9: i18n keys (ratchet)" },
           { "context": "Gate 10: no new files in src/app/actions" },
-          { "context": "Gate 11: design tokens (changed files)" },
-          { "context": "Gate 12: firestore index drift" }
+          { "context": "Gate 11: design tokens (changed files)" }
         ]
       }
     }
   ]
 }
 ```
+
+The JSON above contains **only checks that are live today** — applying it
+as-is cannot freeze `main`.
+
+#### Addendum — add ONLY after Gates 9/12 have produced check runs on a real PR
+
+Gates 9 and 12 ship with PR #113. After that PR is merged **and** both
+gates have reported at least one check run on a real PR (verify via
+`gh pr checks <n>`), append these two entries to the
+`required_status_checks` array above and re-apply the ruleset
+(`gh api --method PUT /repos/sargupta/sahayakai/rulesets/<id> ...`):
+
+```json
+          { "context": "Gate 9: i18n keys (ratchet)" },
+          { "context": "Gate 12: firestore index drift" }
+```
+
+Do **not** include them in the initial apply — a required context that
+never reports blocks every merge forever.
 
 ### `release/*` ruleset
 
@@ -222,10 +250,10 @@ forever.
 | `Gate 6: typecheck` | `quality-gates.yml` → `typecheck` | **Yes** | |
 | `Gate 7: AppCheck env (warn-only)` | `quality-gates.yml` → `appcheck-env` | **No** | Warn-only by design |
 | `Gate 8: test CI scripts` | `quality-gates.yml` → `test-ci-scripts` | **Yes** | Jest over `scripts/ci/*` tests |
-| `Gate 9: i18n keys (ratchet)` | `quality-gates.yml` (lands in the 2026-08 rebuild) | **Yes — after it produces check runs** | See WARNING above |
+| `Gate 9: i18n keys (ratchet)` | `quality-gates.yml` (ships with PR #113) | **Not yet** — add via the addendum fragment after first check run | See WARNING above |
 | `Gate 10: no new files in src/app/actions` | `quality-gates.yml` → `no-new-server-actions` | **Yes** | `pull_request` events only — fine, since the ruleset gates PRs |
 | `Gate 11: design tokens (changed files)` | `quality-gates.yml` → `design-tokens` | **Yes** | Ratchet — changed files only |
-| `Gate 12: firestore index drift` | `quality-gates.yml` (lands in the 2026-08 rebuild) | **Yes — after it produces check runs** | See WARNING above |
+| `Gate 12: firestore index drift` | `quality-gates.yml` (ships with PR #113) | **Not yet** — add via the addendum fragment after first check run | See WARNING above |
 | `pytest (blocking gate)` | `ci-agents.yml` → job `test` | **No — never** | **Path-filtered** (`sahayakai-agents/**`, generated sidecar types); PRs not touching those paths would block forever |
 | `evaluate` | `genkit-eval.yml` → job `evaluate` | **No — never** | **Path-filtered** (`src/ai/**`, `scripts/eval/**`); same failure mode |
 
@@ -250,7 +278,7 @@ Unchanged from v1:
 | `release/*` | never merged back — tagged and deleted |
 | hotfix cherry-pick → `release/*` | `git cherry-pick -x` (traceable to the `main` commit) |
 
-## What this model prevents
+## What this model will prevent (once T2/T3 land)
 
 - "We shipped to prod by accident" — prod only moves via a `release/*`
   branch through P3; `main` pushes stop at UAT.
