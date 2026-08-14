@@ -51,7 +51,11 @@ const PAGES: Array<{ slug: string; path: string }> = [
  * Regions whose pixels legitimately change between runs. Masked out of the
  * screenshot comparison (drawn as solid overlay boxes by Playwright).
  * Derived from the actual page components:
- *  - `[data-live]`                      — explicit live-region opt-outs.
+ *  - `[data-live]`                      — RESERVED opt-in hook: matches
+ *                                         nothing today. Kept so page authors
+ *                                         can tag any new live-updating
+ *                                         region and have it masked with zero
+ *                                         spec changes.
  *  - `time` / `[datetime]`              — semantic timestamps (blog, feeds).
  *  - `[aria-roledescription="carousel"]`— shadcn/embla carousels.
  *  - `.animate-pulse`                   — skeleton loaders + pulsing dots
@@ -62,9 +66,22 @@ const PAGES: Array<{ slug: string; path: string }> = [
  *                                         JS-driven so `animations:'disabled'`
  *                                         cannot freeze it — see
  *                                         src/components/landing/animated-headline.tsx).
+ *  - `#product`                         — the LandingPillarStrip section: the
+ *                                         active card flips saffron on the
+ *                                         same 2.2s timer as the headline,
+ *                                         ~2.5% of the home page — over the
+ *                                         2% diff budget on a slow runner.
+ *                                         Same JS-driven motion, so mask the
+ *                                         whole strip.
  *  - avatar images                      — Google-account photos + Radix
  *                                         Avatar imgs on community feeds
  *                                         (src/components/community/feed-post.tsx).
+ *  - muted-foreground/60 spans          — relative "time ago" text on
+ *                                         community feed posts is a plain
+ *                                         span (feed-post.tsx:238), not a
+ *                                         <time> element. Latent today (feeds
+ *                                         need auth) but required once the
+ *                                         suite runs authenticated.
  *  - `[data-sonner-toaster]`            — transient toasts.
  */
 const DYNAMIC_MASKS: string[] = [
@@ -74,8 +91,10 @@ const DYNAMIC_MASKS: string[] = [
   '[aria-roledescription="carousel"]',
   '.animate-pulse',
   'h1 .text-saffron',
+  '#product',
   'img[src*="googleusercontent"]',
   'span[class*="rounded-full"] img',
+  'span[class*="text-muted-foreground/60"]',
   '[data-sonner-toaster]',
 ];
 

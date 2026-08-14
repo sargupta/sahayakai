@@ -3,17 +3,23 @@
 # — authenticated E2E, visual regression + axe, and a k6 smoke profile — and
 # folds the results into a single `uat/verified` commit status.
 #
+# MERGE ORDER: PR #114 (release pipelines) must merge BEFORE this gate can go
+# green — it ships both (a) the unauthenticated `gitSha` short-SHA field on
+# /api/health that wait-for-uat polls, and (b) the PROFILE=smoke mode for
+# launch-wall.js that k6-probe requires.
+#
 # Requirements wired elsewhere:
-#   - vars.UAT_BASE_URL         (repo variable) — UAT origin, no trailing slash.
+#   - vars.UAT_BASE_URL          (repo variable) — UAT origin, no trailing slash.
+#   - vars.UAT_K6_ENABLED        (repo variable) — 'true' enables the k6 probe.
+#     Absent/other → job skipped (report treats var-skip as success-equivalent).
+#     T2 flips it on after #114's smoke profile is confirmed on main.
 #   - secrets.QA_FIREBASE_SA_KEY — Firebase Admin SA JSON for the QA harness.
 #     Absent → the e2e-auth steps skip with a neutral notice (T2 wires it).
-#   - secrets.UAT_HEALTH_BEARER (optional) — /api/health only exposes
-#     build.gitShaFull to AUTHENTICATED callers (see
-#     sahayakai-main/src/app/api/health/route.ts). Until UAT either exposes
-#     the SHA publicly or this bearer token is wired, the wait-for-uat poll
-#     cannot confirm the SHA and will time out.
-#   - scripts/loadtest/launch-wall.js PROFILE=smoke — added by a sibling PR;
-#     the k6-probe job codes against it.
+#
+# Concurrency note: cancel-in-progress means rapid successive pushes to main
+# cancel the in-flight run, so intermediate SHAs never receive a `uat/verified`
+# status. Intended: the gate always tracks the LATEST push; superseded commits
+# are not individually verified.
 
 name: UAT Verify
 
@@ -48,33 +54,39 @@ jobs:
   wait-for-uat:
     name: Wait for UAT rollout
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    # Poll budget: 40 tries x (10s curl max + 30s sleep) ≈ 27 min worst case,
+    # so the loop exhausts and emits its own ::error BEFORE the job timeout.
+    timeout-minutes: 32
     steps:
+      # /api/health exposes `gitSha` (the 7-char Cloud Build $SHORT_SHA) to
+      # UNAUTHENTICATED callers — added by PR #114 (see MERGE ORDER above).
+      # gitShaFull stays auth-gated, so we prefix-match the short SHA against
+      # the 40-char target.
       - name: Poll /api/health until the target SHA is live
-        env:
-          UAT_HEALTH_BEARER: ${{ secrets.UAT_HEALTH_BEARER }}
         run: |
           set -euo pipefail
           if [ -z "${UAT_BASE_URL:-}" ]; then
             echo "::error::Repo variable UAT_BASE_URL is not set"
             exit 1
           fi
-          echo "Waiting for $TARGET_SHA on $UAT_BASE_URL (60 tries x 30s)"
-          auth_args=()
-          if [ -n "${UAT_HEALTH_BEARER:-}" ]; then
-            auth_args=(-H "Authorization: Bearer $UAT_HEALTH_BEARER")
-          fi
-          for i in $(seq 1 60); do
-            deployed=$(curl -fsS --max-time 15 "${auth_args[@]}" "$UAT_BASE_URL/api/health" \
-              | jq -r '.build.gitShaFull // .gitShaFull // empty' || true)
-            echo "try $i/60: deployed=${deployed:-<none>}"
-            if [ "$deployed" = "$TARGET_SHA" ]; then
-              echo "UAT is serving $TARGET_SHA"
-              exit 0
+          echo "Waiting for $TARGET_SHA on $UAT_BASE_URL (40 tries x 30s)"
+          for i in $(seq 1 40); do
+            deployed=$(curl -fsS --max-time 10 "$UAT_BASE_URL/api/health" \
+              | jq -r '.gitSha // empty' || true)
+            echo "try $i/40: deployed=${deployed:-<none>}"
+            # Match: non-empty, not the local-build placeholder, >= 7 chars,
+            # and a prefix of the full target SHA.
+            if [ -n "$deployed" ] && [ "$deployed" != "local" ] && [ "${#deployed}" -ge 7 ]; then
+              case "$TARGET_SHA" in
+                "$deployed"*)
+                  echo "UAT is serving $deployed (prefix of $TARGET_SHA)"
+                  exit 0
+                  ;;
+              esac
             fi
             sleep 30
           done
-          echo "::error::UAT never reported $TARGET_SHA after 60 tries (30 min)"
+          echo "::error::UAT never reported a short SHA matching $TARGET_SHA after 40 tries (~27 min). Check the UAT deploy pipeline, and that PR #114's public gitSha health field is live."
           exit 1
 
   e2e-auth:
@@ -215,18 +227,31 @@ jobs:
   k6-probe:
     name: k6 smoke probe
     needs: wait-for-uat
+    # Gate 1: opt-in repo variable. Absent/false → job SKIPPED (the report job
+    # treats a var-skip as success-equivalent). T2 sets UAT_K6_ENABLED='true'
+    # only after PR #114's PROFILE=smoke lands on main — never enable before,
+    # or the script's default is the full 400-VU morning-wall ramp.
+    if: vars.UAT_K6_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Gate 2 (belt-and-braces): k6 silently ignores unknown -e vars, so if
+      # the smoke profile is not implemented in launch-wall.js yet,
+      # `-e PROFILE=smoke` would degrade to the full wall ramp without any
+      # error. Refuse to run unless the script provably reads PROFILE.
+      - name: Verify launch-wall.js supports PROFILE selection
+        run: |
+          if ! grep -q '__ENV\.PROFILE' sahayakai-main/scripts/loadtest/launch-wall.js; then
+            echo "::error::launch-wall.js does not read __ENV.PROFILE — the smoke profile (PR #114) is not on this ref. Refusing to run: without it, k6 would fire the full 400-VU morning-wall ramp."
+            exit 1
+          fi
+
       - name: Setup k6
         uses: grafana/setup-k6-action@v1
 
-      # DEPENDENCY: the `smoke` PROFILE for launch-wall.js is added by a
-      # sibling PR. Until that lands, k6 falls back to the script's default
-      # (full morning-wall ramp) — do NOT run this against prod.
       - name: Run k6 smoke profile against UAT
         run: |
           k6 run -e PROFILE=smoke -e BASE_URL="$UAT_BASE_URL" \
@@ -234,28 +259,45 @@ jobs:
 
   report:
     name: Post uat/verified status
-    needs: [e2e-auth, visual, k6-probe]
+    # wait-for-uat is in needs so its result is directly observable: if it
+    # failed, every probe is dependency-SKIPPED — treating those skips as
+    # passes would rubber-stamp a commit with ZERO tests run.
+    needs: [wait-for-uat, e2e-auth, visual, k6-probe]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      # State matrix:
+      #   wait-for-uat != success            → failure (probes never ran).
+      #   e2e-auth must be 'success' outright — the secret-absent case is
+      #     implemented as job SUCCESS with a ::notice (step-level guard), so
+      #     'skipped' here can only mean dependency-skip → failure.
+      #   visual must be 'success' outright — same reasoning.
+      #   k6-probe may be 'success' OR 'skipped': job-level
+      #     `if: vars.UAT_K6_ENABLED == 'true'` skips it intentionally when
+      #     the var is unset. But wait-for-uat==success is required first, so
+      #     a dependency-skip can never masquerade as a var-skip. A k6 job
+      #     that RAN and failed → failure.
       - name: Compute state and post commit status
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WAIT_RESULT: ${{ needs.wait-for-uat.result }}
           E2E_RESULT: ${{ needs.e2e-auth.result }}
           VISUAL_RESULT: ${{ needs.visual.result }}
           K6_RESULT: ${{ needs.k6-probe.result }}
         run: |
           set -euo pipefail
-          ok() { [ "$1" = "success" ] || [ "$1" = "skipped" ]; }
           state=failure
-          if ok "$E2E_RESULT" && ok "$VISUAL_RESULT" && ok "$K6_RESULT"; then
+          if [ "$WAIT_RESULT" = "success" ] \
+            && [ "$E2E_RESULT" = "success" ] \
+            && [ "$VISUAL_RESULT" = "success" ] \
+            && { [ "$K6_RESULT" = "success" ] || [ "$K6_RESULT" = "skipped" ]; }; then
             state=success
           fi
           run_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          echo "uat/verified → $state (e2e:$E2E_RESULT visual:$VISUAL_RESULT k6:$K6_RESULT) for $TARGET_SHA"
+          echo "uat/verified → $state (uat:$WAIT_RESULT e2e:$E2E_RESULT visual:$VISUAL_RESULT k6:$K6_RESULT) for $TARGET_SHA"
           gh api "repos/${{ github.repository }}/statuses/$TARGET_SHA" \
             -f state="$state" \
             -f context="uat/verified" \
-            -f description="e2e:$E2E_RESULT visual:$VISUAL_RESULT k6:$K6_RESULT" \
+            -f description="uat:$WAIT_RESULT e2e:$E2E_RESULT visual:$VISUAL_RESULT k6:$K6_RESULT" \
             -f target_url="$run_url"
