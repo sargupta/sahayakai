@@ -495,7 +495,7 @@ The `docs/` tree is trustworthy in a narrow, recent cluster and misleading elsew
 
 ### Canonical (current, matches code, link and trust)
 
-- [`AGENTS.md`](../AGENTS.md), [`DEPLOY.md`](../DEPLOY.md), [`docs/BRANCHING.md`](./BRANCHING.md), [`docs/ROLLBACK.md`](./ROLLBACK.md), [`docs/PREVIEW_ENV.md`](./PREVIEW_ENV.md) - process and ops.
+- [`AGENTS.md`](../AGENTS.md), [`DEPLOY.md`](../DEPLOY.md), [`docs/BRANCHING.md`](./BRANCHING.md), [`docs/ROLLBACK.md`](./ROLLBACK.md), [`docs/UAT_ENV.md`](./UAT_ENV.md) - process and ops.
 - [`docs/API_MIGRATION_PATTERN.md`](./API_MIGRATION_PATTERN.md), [`docs/FEATURE_FLAGS.md`](./FEATURE_FLAGS.md), [`docs/DESIGN_TOKENS.md`](./DESIGN_TOKENS.md) - architecture and design system.
 - [`docs/IMPACT_SCORE.md`](./IMPACT_SCORE.md), [`docs/VIDEO_RECOMMENDATION_ALGORITHM.md`](./VIDEO_RECOMMENDATION_ALGORITHM.md) - the two deepest, accurate feature specs.
 - [`docs/MUMBAI_REGION_MIGRATION_RUNBOOK.md`](./MUMBAI_REGION_MIGRATION_RUNBOOK.md) - current infra topology.

@@ -175,7 +175,7 @@ Reality (2026-05-21):
 - **Preview deploy** (`sahayakai-preview`): `bash sahayakai-main/scripts/safe-deploy.sh` from a `develop` checkout. Will become auto on push to develop once the Cloud Build GitHub App is reinstalled and `scripts/setup-build-trigger-preview.sh` is run.
 - **Service**: `sahayakai-hotfix-resilience` (prod) and `sahayakai-preview` (preview) — Cloud Run, region `asia-southeast1`, project `sahayakai-b4248`.
 
-See [`sahayakai-main/DEPLOY.md`](sahayakai-main/DEPLOY.md) for the operator runbook, [`sahayakai-main/docs/PREVIEW_ENV.md`](sahayakai-main/docs/PREVIEW_ENV.md) for preview env details, and [`sahayakai-main/docs/ROLLBACK.md`](sahayakai-main/docs/ROLLBACK.md) for rollback procedure.
+See [`sahayakai-main/DEPLOY.md`](sahayakai-main/DEPLOY.md) for the operator runbook, [`sahayakai-main/docs/UAT_ENV.md`](sahayakai-main/docs/UAT_ENV.md) for UAT env details, and [`sahayakai-main/docs/ROLLBACK.md`](sahayakai-main/docs/ROLLBACK.md) for rollback procedure.
 
 ## Maintenance Log
 *   **2026-01-29:** Project initialized. Discovery Questions answered via strategic analysis. Handshake verified Gemini API link. Created `architecture/lesson_plan_generation_sop.md`.

@@ -69,10 +69,10 @@ PRs: [#43](https://github.com/sargupta/sahayakai/pull/43) (catch-up + auto-deplo
 - **iOS Safari auth blank-page guard** — null-safety on `getRedirectResult` + 5s safety timeout in `src/lib/sign-in-with-google.ts`.
 - **Library route + download/print fixes** — assessment-scanner, exam-paper, video-storyteller, assessment, micro-lesson types now open in viewer and download via HTML print flow (+83 LOC in `src/components/library/content-gallery.tsx`).
 - **Wire-contract tests** for assessment-scanner PATCH edit endpoint.
-- **Preview Cloud Run environment** (`sahayakai-preview`) — provisioned 2026-05-21. URL: `https://sahayakai-preview-640589855975.asia-southeast1.run.app`. Auto-deploys develop tip (once Cloud Build GitHub App is reinstalled; manual via `safe-deploy.sh` until then). Full docs at [`docs/PREVIEW_ENV.md`](./docs/PREVIEW_ENV.md).
+- **Preview Cloud Run environment** (`sahayakai-preview`) — provisioned 2026-05-21. URL: `https://sahayakai-preview-640589855975.asia-southeast1.run.app`. Auto-deploys develop tip (once Cloud Build GitHub App is reinstalled; manual via `safe-deploy.sh` until then). Full docs at [`docs/UAT_ENV.md`](./docs/UAT_ENV.md) (renamed from `PREVIEW_ENV.md`, 2026-08).
 - **Branch-aware `safe-deploy.sh`** — main → prod, develop → preview, hotfix/* → prod, anything else → ABORT. Build-in-flight check scoped per service via `substitutions._SERVICE` filter.
 - **`cloudbuild-preview.yaml`** — preview build pipeline (parallel to `cloudbuild.yaml`).
-- **Repo organization artifacts** — `.github/PULL_REQUEST_TEMPLATE.md`, `.github/CODEOWNERS`, `docs/BRANCHING.md`, `docs/INCIDENTS.md`, `docs/ROLLBACK.md`, `docs/PREVIEW_ENV.md`.
+- **Repo organization artifacts** — `.github/PULL_REQUEST_TEMPLATE.md`, `.github/CODEOWNERS`, `docs/BRANCHING.md`, `docs/INCIDENTS.md`, `docs/ROLLBACK.md`, `docs/PREVIEW_ENV.md` (renamed `docs/UAT_ENV.md`, 2026-08).
 
 ### Changed
 

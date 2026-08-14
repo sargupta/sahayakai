@@ -1,47 +1,56 @@
-# Preview Environment
+# UAT Environment
 
-Cloud Run service `sahayakai-preview` is the staging tier for SahayakAI. Every push to `develop` auto-builds and auto-deploys here. Real teachers do NOT see this — it's for Abhishek, QA, and demos.
+> Renamed from `PREVIEW_ENV.md` (2026-08). The Cloud Run service keeps its
+> historical name `sahayakai-preview`, but its role in the v2 delivery
+> model is the **UAT tier**: every push to `main` auto-builds and
+> auto-deploys here via `cloudbuild-uat.yaml` (Pipeline 2 in
+> [docs/BRANCHING.md](./BRANCHING.md)). After the deploy,
+> `uat-verify.yml` runs e2e + visual + load verification and stamps the
+> `main` SHA with the `uat/verified` commit status — the precondition for
+> cutting a release. Real teachers do NOT see this tier — it's for
+> Abhishek, QA, demos, and the automated verification suite.
 
 ## URL
 
 Cloud Run-assigned URL (find with `gcloud run services describe sahayakai-preview --region=asia-southeast1 --format='value(status.url)'`). Looks like `https://sahayakai-preview-<hash>-as.a.run.app`.
 
-A custom domain (`preview.sahayakai.com`) is not yet wired — Phase F task if QA usage grows.
+A custom domain (`uat.sahayakai.com`) is not yet wired — provision if QA usage grows.
 
-## What's on preview right now
+## What's on UAT right now
 
-The latest commit on `develop`. Look at the tagged-revision URL for a specific develop SHA:
+The latest commit on `main` that finished its UAT build. Tagged-revision URL for a specific SHA:
 
 ```
-https://dev-<short-sha>---sahayakai-preview-<hash>-as.a.run.app
+https://sha-<short-sha>---sahayakai-preview-<hash>-as.a.run.app
 ```
 
-## How deploys work
+## How deploys work (Pipeline 2)
 
-1. **Push to `develop`** (any merge to develop, or a direct push)
-2. Cloud Build trigger `sahayakai-preview-deploy` fires, runs `cloudbuild-preview.yaml`
-3. Build takes 5–8 min: Docker build → push to Artifact Registry → `gcloud run deploy sahayakai-preview` with `--tag=dev-<sha>`
-4. The new revision serves 100% traffic immediately (preview is low-stakes; no `--no-traffic` ceremony)
-5. Existing revisions stay around tagged for direct access
+1. **Push to `main`** (i.e. any PR merge)
+2. Cloud Build trigger fires `cloudbuild-uat.yaml`
+3. Build: Docker build → push to Artifact Registry → `gcloud run deploy` with `--no-traffic` and a `sha-<short-sha>` tag
+4. Smoke probe against the tagged revision
+5. Traffic flip to the new revision on smoke pass
+6. GitHub Actions `uat-verify.yml` then runs Playwright e2e + visual regression + k6 load probe against the tier and posts the **`uat/verified`** commit status on the `main` SHA
 
-This is **different from prod**, which is manual via `scripts/safe-deploy.sh` with `--no-traffic` and a manual traffic flip.
+This mirrors prod's no-traffic-then-flip discipline (unlike the v1 preview flow, which deployed traffic-first). Prod itself only moves via `release/*` branches — see Pipeline 3 in [docs/BRANCHING.md](./BRANCHING.md).
 
 ## Env vars
 
-Preview deploys with these env vars baked at deploy time:
+UAT deploys with these env vars baked at deploy time:
 
-- `DEMO_MODE=true` — gates demo-only features (Community Personas seeding, etc.) ON in preview, OFF in prod
+- `DEMO_MODE=true` — gates demo-only features (Community Personas seeding, etc.) ON in UAT, OFF in prod. **Scheduled for retirement** — see "Project split" below.
 - `NODE_ENV=production` — same as prod so app behaves like prod
 
-Plus all `--set-secrets` pulls that prod has (shared Secret Manager secrets — Firebase service account, Genkit API key, etc.). If/when we want preview to use isolated secrets, switch to `*_PREVIEW` aliases — see "Firebase project isolation" below.
+Plus all `--set-secrets` pulls that prod has (shared Secret Manager secrets — Firebase service account, Genkit API key, etc.).
 
-## Firebase project isolation
+## Project split (planned)
 
-Preview currently writes to the **same** Firebase project as prod (`sahayakai-b4248`). This means preview writes to community chat, notifications, etc. will appear in prod data.
+UAT currently writes to the **same** Firebase project as prod (`sahayakai-b4248`), so UAT writes to community chat, notifications, etc. land in prod data. The 2026-08 rebuild retires this shared-project setup:
 
-Mitigation: features that write to Firestore in a way that pollutes prod should be wrapped with `DEMO_MODE` check + route to `*_preview` collection prefixes. This is a Phase C task once feature flags are in place.
-
-If pollution becomes a real problem, switch preview to a separate Firebase project (`sahayakai-preview` or `sahayakai-b4248-preview`). Costs ~$0–25/mo extra for Firebase services but provides clean isolation.
+- **Cloud Build substitutions** `_DEPLOY_PROJECT` and `_FB_*` parameterise the target GCP project and Firebase config per pipeline, so `cloudbuild-uat.yaml` and `cloudbuild-release.yaml` share build logic but deploy to different projects.
+- **`DEMO_MODE` retirement**: the blunt boolean is replaced by explicit configuration — first `COMMUNITY_CHAT_COLLECTION` (UAT points at an isolated collection, prod at the real one), then a separate Firebase project entirely once the substitutions land.
+- Until the split lands, the v1 mitigation stands: Firestore-writing demo features must check `DEMO_MODE` and route to `*_preview` collection prefixes.
 
 ## Costs
 
@@ -54,7 +63,7 @@ Estimated $5–10/mo at current usage. Bump min-instances to 1 (~$30–50/mo) if
 ## Logs
 
 ```bash
-# Tail recent preview logs
+# Tail recent UAT logs
 gcloud logging read 'resource.type="cloud_run_revision" resource.labels.service_name="sahayakai-preview"' \
   --limit=50 --format=json --project=sahayakai-b4248
 
@@ -63,7 +72,7 @@ gcloud logging read 'resource.type="cloud_run_revision" resource.labels.revision
   --limit=50 --format=json --project=sahayakai-b4248
 ```
 
-## Smoke test against preview
+## Smoke test against UAT
 
 ```bash
 URL=$(gcloud run services describe sahayakai-preview --region=asia-southeast1 \
@@ -71,7 +80,7 @@ URL=$(gcloud run services describe sahayakai-preview --region=asia-southeast1 \
 BASE="$URL" bash scripts/smoke-test.sh
 ```
 
-## Audit preview
+## Audit UAT
 
 ```bash
 SERVICE=sahayakai-preview bash scripts/audit-deployments.sh
@@ -79,7 +88,7 @@ SERVICE=sahayakai-preview bash scripts/audit-deployments.sh
 
 ## Rollback
 
-Preview rollback is essentially "redeploy from a different develop SHA." Three ways:
+UAT rollback is essentially "point traffic at a previous revision" (or land a revert PR on `main`, which redeploys):
 
 **A. Pin to a previous tagged revision:**
 
@@ -89,37 +98,29 @@ gcloud run services update-traffic sahayakai-preview \
   --to-revisions sahayakai-preview-<rev>=100
 ```
 
-**B. Revert a commit on develop:**
+**B. Revert the offending commit on `main`:**
 
 ```bash
-git checkout develop
+git checkout main && git pull --ff-only
 git revert <bad-commit-sha>
-git push origin develop   # auto-deploys to preview
+# open a PR — the merge redeploys UAT via Pipeline 2
 ```
 
-**C. Manual deploy from a known-good local commit:**
+## What UAT verification covers before a release
 
-```bash
-git checkout develop
-git reset --hard <good-sha>   # CAREFUL — destructive if not coordinated
-bash scripts/safe-deploy.sh   # safe-deploy detects develop → deploys to preview
-```
-
-## What to test in preview before promoting to prod
-
-For every develop → main PR, run through preview:
+A `main` SHA is release-eligible when `uat/verified` is green, which means:
 
 - [ ] `/api/health` returns 200 with all env vars present
-- [ ] Home page loads
-- [ ] Auth flow (login + redirect)
-- [ ] One AI flow end-to-end (e.g., lesson plan generation)
-- [ ] One voice-to-action flow (VIDYA)
-- [ ] Smoke test `bash scripts/smoke-test.sh` against preview URL
-- [ ] Any new feature in the PR — manually click through
+- [ ] Public-route e2e suite passes against the live tier
+- [ ] Visual regression suite passes
+- [ ] k6 load probe within thresholds
+- [ ] Smoke test (`scripts/smoke-test.sh`) passed during the deploy flip
 
-If feature flags are wrapping a specific risky surface (post-Phase C), toggle the flag in Firebase Remote Config (preview project / template) to verify both ON and OFF behaviors.
+Manual spot checks (auth flow, one AI flow end-to-end, one VIDYA voice flow, anything new in the release) remain good practice before cutting a release — see the release procedure in [docs/BRANCHING.md](./BRANCHING.md).
 
-## Provisioning (one-time)
+## Provisioning history (2026-05-21, one-time — kept for reference)
+
+The service was provisioned as `sahayakai-preview`, the v1 staging tier fed by `develop`:
 
 ```bash
 gcloud run deploy sahayakai-preview \
@@ -132,11 +133,10 @@ gcloud run deploy sahayakai-preview \
   --set-secrets=GOOGLE_GENAI_API_KEY=GOOGLE_GENAI_API_KEY:latest,FIREBASE_SERVICE_ACCOUNT_KEY=FIREBASE_SERVICE_ACCOUNT_KEY:latest,YOUTUBE_API_KEY=YOUTUBE_API_KEY:latest,SAHAYAKAI_REQUEST_SIGNING_KEY=SAHAYAKAI_REQUEST_SIGNING_KEY:latest
 ```
 
-The first deploy uses the prod image to bootstrap the service. Subsequent deploys come via `cloudbuild-preview.yaml` on push to develop.
-
-## Cloud Build trigger setup (one-time)
+The first deploy bootstrapped from the prod image. The original v1 trigger (`sahayakai-preview-deploy`, branch pattern `^develop$`, build config `cloudbuild-preview.yaml`) is superseded by the `main`-triggered `cloudbuild-uat.yaml` trigger:
 
 ```bash
+# v1 (historical):
 gcloud beta builds triggers create github \
   --name=sahayakai-preview-deploy \
   --project=sahayakai-b4248 \
@@ -144,6 +144,7 @@ gcloud beta builds triggers create github \
   --branch-pattern='^develop$' \
   --build-config=sahayakai-main/cloudbuild-preview.yaml \
   --description='Auto-deploy develop tip to sahayakai-preview Cloud Run'
-```
 
-After setup, every push to `develop` fires this trigger automatically.
+# v2: same shape, --branch-pattern='^main$' and
+# --build-config=sahayakai-main/cloudbuild-uat.yaml
+```
