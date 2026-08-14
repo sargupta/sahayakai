@@ -21,6 +21,18 @@
 # SHA note: Cloud Build's $SHORT_SHA is the FIRST 7 CHARS of the commit
 # sha, so the revision tag is sha-<7 chars>. We slice GITHUB_SHA to 7 to
 # match — a longer slice would never find the tag.
+#
+# PROVENANCE (CRITICAL-1): the wait loop below only waits for a Ready
+# revision carrying the sha- tag — it does NOT prove which pipeline built
+# it. A release branch cut from main tip shares its SHORT_SHA with any
+# main-triggered build, so while the legacy `sahayakai-main-deploy`
+# trigger exists, the tag/AR reference is ambiguous. Two mitigations:
+#   1. promote-release.sh preflight HARD-ABORTS while the legacy trigger
+#      exists (run scripts/teardown-legacy-triggers.sh), and verifies each
+#      revision's image digest equals Artifact Registry's digest for
+#      :<short-sha> plus cross-region digest parity.
+#   2. Flips are pinned to the preflighted revision NAME (--to-revisions),
+#      never tag indirection.
 
 name: release-promote
 
@@ -28,8 +40,14 @@ on:
   push:
     branches: ['release/**']
 
+# SERIALIZE ALL PROMOTIONS (H2): the group is a FIXED string, not keyed on
+# the branch/ref. Two release branches cut the same day (release/2026.08.14
+# and .1) must never promote concurrently — interleaved flips + LB smokes
+# would race and the second run's preflight could observe the first run's
+# half-flipped state. cancel-in-progress stays false: queue, never kill a
+# promotion mid-flip.
 concurrency:
-  group: release-promote-${{ github.ref }}
+  group: release-promote-prod
   cancel-in-progress: false
 
 permissions:

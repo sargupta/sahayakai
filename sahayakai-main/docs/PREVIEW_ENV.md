@@ -1,6 +1,6 @@
 # Preview Environment
 
-Cloud Run service `sahayakai-preview` is the staging tier for SahayakAI. Every push to `develop` auto-builds and auto-deploys here. Real teachers do NOT see this — it's for Abhishek, QA, and demos.
+Cloud Run service `sahayakai-preview` is the UAT tier for SahayakAI. Every push to `main` auto-builds, deploys with `--no-traffic`, smoke-tests, and flips here (cloudbuild-uat.yaml). Real teachers do NOT see this — it's for Abhishek, QA, and demos.
 
 ## URL
 
@@ -10,11 +10,13 @@ A custom domain (`preview.sahayakai.com`) is not yet wired — Phase F task if Q
 
 ## What's on preview right now
 
-The latest commit on `develop`. Look at the tagged-revision URL for a specific develop SHA:
+The latest smoke-passed commit on `main`. Look at the tagged-revision URL for a specific main SHA:
 
 ```
-https://dev-<short-sha>---sahayakai-preview-<hash>-as.a.run.app
+https://sha-<short-sha>---sahayakai-preview-<hash>-as.a.run.app
 ```
+
+(Pre-2026-08 revisions were tagged `dev-<short-sha>`; those tags remain on old revisions.)
 
 ## How deploys work
 
@@ -79,7 +81,7 @@ SERVICE=sahayakai-preview bash scripts/audit-deployments.sh
 
 ## Rollback
 
-Preview rollback is essentially "redeploy from a different develop SHA." Three ways:
+UAT rollback is essentially "point traffic at a different main SHA's revision." Two ways:
 
 **A. Pin to a previous tagged revision:**
 
@@ -89,25 +91,21 @@ gcloud run services update-traffic sahayakai-preview \
   --to-revisions sahayakai-preview-<rev>=100
 ```
 
-**B. Revert a commit on develop:**
+**B. Revert a commit on main (via PR — main is protected):**
 
 ```bash
-git checkout develop
+git checkout main
+git pull --ff-only origin main
 git revert <bad-commit-sha>
-git push origin develop   # auto-deploys to preview
+gh pr create --base main ...   # merge → auto-deploys to UAT
 ```
 
-**C. Manual deploy from a known-good local commit:**
-
-```bash
-git checkout develop
-git reset --hard <good-sha>   # CAREFUL — destructive if not coordinated
-bash scripts/safe-deploy.sh   # safe-deploy detects develop → deploys to preview
-```
+(safe-deploy.sh from a `main` checkout is the manual fallback; `develop`
+checkouts hard-abort — the branch is retired.)
 
 ## What to test in preview before promoting to prod
 
-For every develop → main PR, run through preview:
+For every SHA you intend to mark `uat/verified` (the release gate), run through UAT:
 
 - [ ] `/api/health` returns 200 with all env vars present
 - [ ] Home page loads

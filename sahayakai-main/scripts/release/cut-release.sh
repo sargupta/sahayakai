@@ -12,6 +12,15 @@
 # — set by QA (or the UAT verification job) after validating the UAT
 # deployment of that SHA. No status, no release branch.
 #
+# WHAT uat/verified ATTESTS — AND WHAT IT DOES NOT (S7): the status is a
+# SOURCE-LEVEL attestation ("this git SHA behaved correctly on UAT"). The
+# UAT image and the release image are SEPARATE builds of that SHA
+# (different pipeline, different build args — e.g. UAT points at the
+# staging sidecar); the release image's binary digest is never compared to
+# UAT's. Digest parity is only enforced between the two release-region
+# images at promote time. The release pipeline's own tagged-URL + LB
+# smokes are what verify the release image itself.
+#
 # Usage:
 #   bash scripts/release/cut-release.sh            # cut from origin/main tip
 #   bash scripts/release/cut-release.sh <sha>      # cut from a specific SHA

@@ -23,7 +23,11 @@ GITHUB_OWNER="${GITHUB_OWNER:-sargupta}"
 GITHUB_REPO="${GITHUB_REPO:-sahayakai}"
 BRANCH_PATTERN="${BRANCH_PATTERN:-^release/.*$}"
 BUILD_CONFIG="${BUILD_CONFIG:-sahayakai-main/cloudbuild-release.yaml}"
-INCLUDED_FILES="${INCLUDED_FILES:-sahayakai-main/**}"
+# NO --included-files on the release trigger (minor-6): a release branch is
+# usually CREATED at an existing main commit, so the branch-creation push
+# can compute an EMPTY changed-file set — an included-files filter would
+# then silently skip the build and the promotion workflow would wait 35 min
+# for revisions that never appear. A release/* push must ALWAYS build.
 # Dedicated least-privilege deployer SA (created 2026-05-24, Task 21).
 # Has the minimal roles needed for Cloud Build → Cloud Run deploy:
 #   roles/cloudbuild.builds.builder
@@ -40,7 +44,6 @@ echo "Trigger:           $TRIGGER_NAME"
 echo "Repo:              github.com/$GITHUB_OWNER/$GITHUB_REPO"
 echo "Branch pattern:    $BRANCH_PATTERN"
 echo "Build config:      $BUILD_CONFIG"
-echo "Included files:    $INCLUDED_FILES"
 echo "Build SA:          $BUILD_SERVICE_ACCOUNT"
 echo
 
@@ -57,7 +60,6 @@ gcloud beta builds triggers create github \
     --repo-name="$GITHUB_REPO" \
     --branch-pattern="$BRANCH_PATTERN" \
     --build-config="$BUILD_CONFIG" \
-    --included-files="$INCLUDED_FILES" \
     --service-account="$BUILD_SERVICE_ACCOUNT" \
     --description="On push to release/*: build & deploy sahayakai-hotfix-resilience to BOTH prod regions with --no-traffic. Promote via scripts/release/promote-release.sh."
 

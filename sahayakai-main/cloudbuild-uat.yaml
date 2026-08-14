@@ -17,7 +17,8 @@
 #   4. firestore  — indexes/rules deploy, ONLY when _DEPLOY_PROJECT is a
 #                   non-prod project (prod pipeline owns prod Firestore).
 #   5. smoke      — smoke-test.sh against the tagged (zero-traffic) URL.
-#   6. flip       — update-traffic --to-latest. Cloud Build halts on any
+#   6. flip       — update-traffic --to-revisions <smoked-rev>=100 (pinned,
+#                   not --to-latest — see step 6). Cloud Build halts on any
 #                   failed step, so a failed smoke means UAT keeps serving
 #                   the previous good revision.
 #
@@ -28,6 +29,18 @@
 #   PROFILE_COMPLETE_COOKIE_SECRET_UAT — random 32+ byte secret, distinct
 #                                        from prod so UAT cookies can never
 #                                        be replayed against prod.
+#
+# ONE-TIME MIGRATION prerequisite (MAJOR-4 — first run WILL FAIL without it):
+# the retired cloudbuild-preview.yaml set SAHAYAKAI_AGENTS_AUDIENCE as a
+# LITERAL env var on sahayakai-preview. This pipeline binds the same name
+# via --update-secrets, and gcloud REJECTS changing an existing literal env
+# var into a secret binding in one deploy. Before the first run, strip the
+# literal once:
+#   gcloud run services update sahayakai-preview \
+#     --region=asia-southeast1 --project=sahayakai-b4248 \
+#     --remove-env-vars=SAHAYAKAI_AGENTS_AUDIENCE
+# (Also echoed by scripts/setup-build-trigger-uat.sh. Harmless if the var
+# is already gone.)
 #
 # Variables:
 #   $PROJECT_ID  — build project, provided by Cloud Build automatically
@@ -187,22 +200,33 @@ steps:
         BASE="$${TAG_URL}" WAIT_SECS=0 REQUIRE_ENV=0 bash sahayakai-main/scripts/smoke-test.sh
     waitFor: [firestore-indexes]
 
-  # ── 6. Flip traffic ───────────────────────────────────────────────────────
+  # ── 6. Flip traffic — pinned to the SMOKED revision ───────────────────────
   # Runs ONLY if the smoke step succeeded — Cloud Build halts the whole
   # build on any failed step, so a failed smoke leaves UAT serving the
   # previous good revision and the build red (visible in the PR checks).
+  #
+  # M4: flip via --to-revisions with the revision resolved from THIS build's
+  # sha- tag, never --to-latest. Two merges to main can race: build A smokes
+  # its revision, build B deploys a newer LATEST, then A's flip would route
+  # traffic to B's UNSMOKED revision. Pinning to the tag-resolved revision
+  # name makes each build flip exactly what it verified.
   - id: flip
     name: gcr.io/google.com/cloudsdktool/cloud-sdk
-    entrypoint: gcloud
+    entrypoint: bash
     args:
-      - run
-      - services
-      - update-traffic
-      - ${_SERVICE}
-      - --project=${_DEPLOY_PROJECT}
-      - --region=${_REGION}
-      - --to-latest
-      - --quiet
+      - -ceu
+      - |
+        REV=$(gcloud run services describe ${_SERVICE} \
+          --project=${_DEPLOY_PROJECT} --region=${_REGION} --format=json \
+          | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next((t.get("revisionName","") for t in (d.get("status",{}).get("traffic") or []) if t.get("tag")==sys.argv[1]), ""))' sha-$SHORT_SHA)
+        if [[ -z "$$REV" ]]; then
+          echo "FATAL: no revision carries tag sha-$SHORT_SHA — cannot flip."
+          exit 1
+        fi
+        echo "Flipping UAT traffic to smoked revision $$REV (sha-$SHORT_SHA)"
+        gcloud run services update-traffic ${_SERVICE} \
+          --project=${_DEPLOY_PROJECT} --region=${_REGION} \
+          --to-revisions "$$REV=100" --quiet
     waitFor: [smoke]
 
 options:

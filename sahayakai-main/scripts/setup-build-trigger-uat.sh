@@ -11,6 +11,15 @@
 # The prod trigger (release/* → cloudbuild-release.yaml) is
 # scripts/setup-build-trigger.sh.
 #
+# ONE-TIME MIGRATION (MAJOR-4) — do this BEFORE the trigger's first fire:
+# the retired preview pipeline left SAHAYAKAI_AGENTS_AUDIENCE as a LITERAL
+# env var on sahayakai-preview; cloudbuild-uat.yaml binds the same name via
+# --update-secrets and gcloud rejects a literal→secret type change in one
+# deploy. Strip the literal once (harmless if already gone):
+#   gcloud run services update sahayakai-preview \
+#     --region=asia-southeast1 --project=sahayakai-b4248 \
+#     --remove-env-vars=SAHAYAKAI_AGENTS_AUDIENCE
+#
 # Idempotent: deletes any existing trigger with the same name before
 # creating, so updating the config (file path, branch, included files)
 # is a single re-run.
@@ -60,6 +69,14 @@ gcloud beta builds triggers create github \
 echo
 echo "Trigger created. Verify in console:"
 echo "  https://console.cloud.google.com/cloud-build/triggers?project=$PROJECT_ID"
+echo
+echo "ONE-TIME MIGRATION before the first fire (see header, MAJOR-4):"
+echo "  gcloud run services update sahayakai-preview \\"
+echo "    --region=asia-southeast1 --project=$PROJECT_ID \\"
+echo "    --remove-env-vars=SAHAYAKAI_AGENTS_AUDIENCE"
+echo "  (the retired preview pipeline left this as a LITERAL env var;"
+echo "   cloudbuild-uat.yaml re-binds it as a secret — gcloud rejects the"
+echo "   literal→secret type change unless the literal is removed first)"
 echo
 echo "Test fire (uses HEAD of main):"
 echo "  gcloud beta builds triggers run $TRIGGER_NAME --branch=main --project=$PROJECT_ID"

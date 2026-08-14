@@ -74,17 +74,14 @@ gcloud iam service-accounts add-iam-policy-binding \
 ### 1. Push your change
 
 ```bash
-# from a fix branch
-git checkout develop
-git pull --ff-only origin develop
-git merge fix/your-change --no-ff
-git push origin develop
+# from a fix branch: PR into main (trunk — develop is retired 2026-08)
+gh pr create --base main ...
+# merge → sahayakai-uat-deploy trigger fires (UAT deploy + smoke + flip)
 
-# When ready to release
-git checkout main
-git pull --ff-only origin main
-git merge develop --no-ff
-git push origin main          # ← trigger fires here
+# When ready to release (requires uat/verified commit status on the SHA)
+bash sahayakai-main/scripts/release/cut-release.sh
+# push of release/* fires sahayakai-release-deploy (both regions, no traffic)
+bash sahayakai-main/scripts/release/promote-release.sh --sha <short-sha>
 ```
 
 The push triggers the `sahayakai-main-deploy` Cloud Build job. Watch
@@ -195,29 +192,39 @@ now branch-aware:
 
 | Branch       | Deploys to                              |
 |--------------|-----------------------------------------|
-| `main`       | `sahayakai-hotfix-resilience` (PROD)    |
-| `develop`    | `sahayakai-preview` (PREVIEW, staging)  |
+| `main`       | `sahayakai-preview` (UAT)               |
+| `release/*`  | `sahayakai-hotfix-resilience` (PROD)    |
 | `hotfix/*`   | `sahayakai-hotfix-resilience` (PROD)    |
-| anything else| ABORT (open PR to develop or main)      |
+| `develop`    | ABORT (retired 2026-08 — trunk is main) |
+| anything else| ABORT (open PR to main)                 |
 
 See [docs/PREVIEW_ENV.md](./docs/PREVIEW_ENV.md) for the preview
 environment.
 
-To re-enable auto-deploy via Cloud Build triggers later:
+To wire the auto-deploy Cloud Build triggers (T2 of the pipeline
+rebuild):
 
 1. Install the Cloud Build GitHub App per the "One-time setup" section
    above (manual OAuth).
-2. Run `bash scripts/setup-build-trigger.sh` (prod, release/* →
-   cloudbuild-release.yaml) and `bash scripts/setup-build-trigger-uat.sh`
-   (UAT, main → cloudbuild-uat.yaml).
-3. Verify with `gcloud beta builds triggers list --project=sahayakai-b4248`.
+2. Run `bash scripts/setup-build-trigger-uat.sh` (UAT, main →
+   cloudbuild-uat.yaml) and `bash scripts/setup-build-trigger.sh` (prod,
+   release/* → cloudbuild-release.yaml).
+3. **Delete the retired legacy triggers** or every push to main
+   double-fires (legacy `sahayakai-main-deploy` deploys toward prod in
+   parallel with the UAT pipeline):
+   `bash scripts/teardown-legacy-triggers.sh`
+4. Wire the `GCP_DEPLOYER_KEY` repo secret so
+   `.github/workflows/release-promote.yml` can auto-promote (until then it
+   is a safe no-op stub).
+5. Verify with `gcloud beta builds triggers list --project=sahayakai-b4248`.
 
 ## Preview environment
 
-`sahayakai-preview` is a separate Cloud Run service. Auto-deploys from
-develop tip once the GitHub App is reinstalled; until then, manual via
-`safe-deploy.sh` after `git checkout develop`. It is the staging tier
-where features get validated before promotion to prod.
+`sahayakai-preview` is a separate Cloud Run service — the UAT tier.
+Auto-deploys from main tip once the GitHub App is reinstalled and the
+`sahayakai-uat-deploy` trigger exists; until then, manual via
+`safe-deploy.sh` after `git checkout main`. It is where features get
+validated (and marked `uat/verified`) before a release branch is cut.
 
 URL: `https://sahayakai-preview-640589855975.asia-southeast1.run.app`
 

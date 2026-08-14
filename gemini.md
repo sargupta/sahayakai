@@ -101,11 +101,11 @@
 > Canonical doc: [`sahayakai-main/docs/BRANCHING.md`](sahayakai-main/docs/BRANCHING.md). This section is a summary.
 
 ### Branch Strategy
-- **`main`** — production branch. **NEVER commit directly to main.** Only receives merges from `develop` (release PRs) or `hotfix/*` (emergencies). Auto-deploy is DISABLED; prod deploys are manual via `sahayakai-main/scripts/safe-deploy.sh` from a `main` checkout.
-- **`develop`** — integration / staging branch. Source of truth for the `sahayakai-preview` Cloud Run service. Auto-deploys to preview on push (once Cloud Build GitHub App is reinstalled; manual via `safe-deploy.sh` from a `develop` checkout until then).
-- **`feature/<name>`** — new features. Branch from `develop`, merge back to `develop` via squash PR.
-- **`fix/<name>`** — bug fixes (non-emergency). Branch from `develop`, merge back to `develop`.
-- **`hotfix/<name>`** — emergency prod fix. Branch from `main`, merge to `main` + back-merge to `develop`.
+- **`main`** — the trunk. **NEVER commit directly to main.** Receives squash PRs from feature/fix branches and `hotfix/*` merges. Push to main auto-deploys the UAT tier (`sahayakai-preview`) via `cloudbuild-uat.yaml`; prod deploys come from `release/*` branches only (cut via `scripts/release/cut-release.sh` from a `uat/verified` SHA).
+- **`develop`** — RETIRED (2026-08). Repo is trunk-based on main; `safe-deploy.sh` hard-aborts on develop checkouts. See docs/BRANCHING.md.
+- **`feature/<name>`** — new features. Branch from `main`, merge back to `main` via squash PR.
+- **`fix/<name>`** — bug fixes (non-emergency). Branch from `main`, merge back to `main`.
+- **`hotfix/<name>`** — emergency prod fix. Branch from `main`; `safe-deploy.sh` deploys it straight to prod; merge back to `main`.
 - **`chore/<name>`**, **`docs/<name>`**, **`refactor/<name>`** — same pattern as `fix/*`.
 
 Legacy aliases (`feat/*`, `bugfix/*`, `audit/*`, `polish/*`) are deprecated — use canonical names. Cleanup PR pending.
