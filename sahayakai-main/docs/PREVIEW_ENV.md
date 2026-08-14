@@ -18,13 +18,13 @@ https://dev-<short-sha>---sahayakai-preview-<hash>-as.a.run.app
 
 ## How deploys work
 
-1. **Push to `develop`** (any merge to develop, or a direct push)
-2. Cloud Build trigger `sahayakai-preview-deploy` fires, runs `cloudbuild-preview.yaml`
-3. Build takes 5–8 min: Docker build → push to Artifact Registry → `gcloud run deploy sahayakai-preview` with `--tag=dev-<sha>`
-4. The new revision serves 100% traffic immediately (preview is low-stakes; no `--no-traffic` ceremony)
+1. **Push to `main`** (any merge to main — develop is retired 2026-08, see docs/BRANCHING.md)
+2. Cloud Build trigger `sahayakai-uat-deploy` fires, runs `cloudbuild-uat.yaml`
+3. Build takes 5–8 min: Docker build → push to Artifact Registry → `gcloud run deploy sahayakai-preview` with `--no-traffic --tag=sha-<sha>`
+4. The pipeline smoke-tests the tagged zero-traffic URL, then flips traffic with `update-traffic --to-latest` — a failed smoke leaves the previous good revision serving
 5. Existing revisions stay around tagged for direct access
 
-This is **different from prod**, which is manual via `scripts/safe-deploy.sh` with `--no-traffic` and a manual traffic flip.
+This is **different from prod**, which deploys from `release/*` branches via `cloudbuild-release.yaml` (both regions, `--no-traffic`) and flips traffic only through `scripts/release/promote-release.sh`.
 
 ## Env vars
 
@@ -132,18 +132,12 @@ gcloud run deploy sahayakai-preview \
   --set-secrets=GOOGLE_GENAI_API_KEY=GOOGLE_GENAI_API_KEY:latest,FIREBASE_SERVICE_ACCOUNT_KEY=FIREBASE_SERVICE_ACCOUNT_KEY:latest,YOUTUBE_API_KEY=YOUTUBE_API_KEY:latest,SAHAYAKAI_REQUEST_SIGNING_KEY=SAHAYAKAI_REQUEST_SIGNING_KEY:latest
 ```
 
-The first deploy uses the prod image to bootstrap the service. Subsequent deploys come via `cloudbuild-preview.yaml` on push to develop.
+The first deploy uses the prod image to bootstrap the service. Subsequent deploys come via `cloudbuild-uat.yaml` on push to main.
 
 ## Cloud Build trigger setup (one-time)
 
 ```bash
-gcloud beta builds triggers create github \
-  --name=sahayakai-preview-deploy \
-  --project=sahayakai-b4248 \
-  --repo-name=sahayakai --repo-owner=sargupta \
-  --branch-pattern='^develop$' \
-  --build-config=sahayakai-main/cloudbuild-preview.yaml \
-  --description='Auto-deploy develop tip to sahayakai-preview Cloud Run'
+bash scripts/setup-build-trigger-uat.sh
 ```
 
-After setup, every push to `develop` fires this trigger automatically.
+After setup, every push to `main` fires the `sahayakai-uat-deploy` trigger automatically.

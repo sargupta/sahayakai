@@ -10,12 +10,12 @@
 #      MIN_REVISION_AGE_SECONDS (default 90 s) — tells you another
 #      session probably just deployed.
 #   3. Refuses tracked-file drift from HEAD (commit or stash first).
-#   4. Refuses non-prod, non-preview branches. Maps:
-#         main     → sahayakai-hotfix-resilience (PROD)
-#         develop  → sahayakai-preview            (PREVIEW)
-#         hotfix/* → sahayakai-hotfix-resilience (PROD, emergency)
-#      Any other branch (feature/*, fix/*, etc.) is rejected — open
-#      a PR to develop or main first.
+#   4. Refuses non-deploy branches. Maps:
+#         main      → sahayakai-preview            (UAT)
+#         release/* → sahayakai-hotfix-resilience (PROD)
+#         hotfix/*  → sahayakai-hotfix-resilience (PROD, emergency)
+#      develop is retired (2026-08) and hard-aborts. Any other branch
+#      (feature/*, fix/*, etc.) is rejected — open a PR to main first.
 #
 #   5. Defaults to --no-traffic. The new revision is created and
 #      kept warm, but traffic routing must be flipped manually with
@@ -28,22 +28,29 @@
 #
 # Usage:
 #   git checkout main
-#   ./scripts/safe-deploy.sh                       # safe — prod, no-traffic
+#   ./scripts/safe-deploy.sh                       # safe — UAT, no-traffic
 #
-#   git checkout develop
-#   ./scripts/safe-deploy.sh                       # safe — preview, no-traffic
+#   git checkout release/2026.08.14
+#   ./scripts/safe-deploy.sh                       # safe — prod, no-traffic
 #
 #   ./scripts/safe-deploy.sh --route-immediately   # legacy — risky
 #
 # Environment overrides (precedence: env var > branch-derived default):
-#   PROJECT_ID, SERVICE, REGION, MIN_REVISION_AGE_SECONDS
+#   PROJECT_ID, SERVICE, REGION, MIN_REVISION_AGE_SECONDS, UAT_SERVICE
+#   (PREVIEW_SERVICE is a deprecated alias for UAT_SERVICE.)
 #   If SERVICE is set explicitly, the branch check is bypassed.
 
 set -euo pipefail
 
 PROJECT_ID="${PROJECT_ID:-sahayakai-b4248}"
 PROD_SERVICE="${PROD_SERVICE:-sahayakai-hotfix-resilience}"
-PREVIEW_SERVICE="${PREVIEW_SERVICE:-sahayakai-preview}"
+# UAT service (formerly "preview"). PREVIEW_SERVICE is honoured as a
+# deprecated alias so older wrappers keep working.
+if [[ -n "${PREVIEW_SERVICE:-}" && -z "${UAT_SERVICE:-}" ]]; then
+    echo "⚠ PREVIEW_SERVICE is deprecated — use UAT_SERVICE. Honouring the alias for now."
+    UAT_SERVICE="$PREVIEW_SERVICE"
+fi
+UAT_SERVICE="${UAT_SERVICE:-sahayakai-preview}"
 REGION="${REGION:-asia-southeast1}"
 MIN_REVISION_AGE_SECONDS="${MIN_REVISION_AGE_SECONDS:-90}"
 
@@ -59,7 +66,7 @@ for arg in "$@"; do
         --route-immediately) ROUTE_IMMEDIATELY=1 ;;
         --i-know-what-im-doing) I_KNOW=1 ;;
         --help|-h)
-            sed -n '2,30p' "$0"
+            sed -n '2,41p' "$0"
             exit 0
             ;;
     esac
@@ -79,7 +86,7 @@ if [[ -n "$SERVICE_EXPLICIT" ]]; then
     # it can ship random WIP straight to prod. Require an explicit
     # --i-know-what-im-doing flag for that combination.
     case "$HEAD_BRANCH" in
-        main|develop|hotfix/*) ;;
+        main|release/*|hotfix/*) ;;
         *)
             if [[ "$I_KNOW" -ne 1 ]]; then
                 echo "✗ ABORT: SERVICE explicitly set to '$SERVICE_EXPLICIT' from non-deploy branch '$HEAD_BRANCH'."
@@ -87,7 +94,7 @@ if [[ -n "$SERVICE_EXPLICIT" ]]; then
                 echo "  This combination bypasses the branch check. Confirm intent:"
                 echo "    SERVICE='$SERVICE_EXPLICIT' bash scripts/safe-deploy.sh --i-know-what-im-doing"
                 echo
-                echo "  Or open a PR to develop / main and deploy from the canonical branch."
+                echo "  Or open a PR to main and deploy from the canonical branch."
                 exit 6
             fi
             echo "  ⚠ --i-know-what-im-doing acknowledged — proceeding from '$HEAD_BRANCH'."
@@ -95,22 +102,25 @@ if [[ -n "$SERVICE_EXPLICIT" ]]; then
     esac
     SERVICE="$SERVICE_EXPLICIT"
     echo "  ⚠ SERVICE explicitly set to '$SERVICE' via env — bypassing branch check."
-elif [[ "$HEAD_BRANCH" == "main" ]] || [[ "$HEAD_BRANCH" == hotfix/* ]]; then
+elif [[ "$HEAD_BRANCH" == "main" ]]; then
+    SERVICE="$UAT_SERVICE"
+    echo "  ✓ branch '$HEAD_BRANCH' → UAT service '$SERVICE'"
+elif [[ "$HEAD_BRANCH" == release/* ]] || [[ "$HEAD_BRANCH" == hotfix/* ]]; then
     SERVICE="$PROD_SERVICE"
     echo "  ✓ branch '$HEAD_BRANCH' → PROD service '$SERVICE'"
 elif [[ "$HEAD_BRANCH" == "develop" ]]; then
-    SERVICE="$PREVIEW_SERVICE"
-    echo "  ✓ branch '$HEAD_BRANCH' → PREVIEW service '$SERVICE'"
+    echo "✗ ABORT: develop is retired (2026-08); trunk is main — see docs/BRANCHING.md"
+    exit 5
 else
     echo "✗ ABORT: branch '$HEAD_BRANCH' is not a deploy source."
     echo
     echo "  Deploy sources:"
-    echo "    main      → $PROD_SERVICE (production)"
-    echo "    develop   → $PREVIEW_SERVICE (preview)"
-    echo "    hotfix/*  → $PROD_SERVICE (production, emergency)"
+    echo "    main       → $UAT_SERVICE (UAT)"
+    echo "    release/*  → $PROD_SERVICE (production)"
+    echo "    hotfix/*   → $PROD_SERVICE (production, emergency)"
     echo
-    echo "  For feature/fix/chore work, open a PR to develop first."
-    echo "  Develop pushes auto-deploy to preview via Cloud Build."
+    echo "  For feature/fix/chore work, open a PR to main first."
+    echo "  Main pushes auto-deploy to UAT via Cloud Build."
     echo
     echo "  To override (NOT recommended), set SERVICE=<name> in the env."
     exit 5
@@ -121,7 +131,7 @@ fi
 #
 # The OR-filter catches two cases:
 #   a) Builds with substitutions._SERVICE set (canonical — set by our
-#      cloudbuild.yaml + cloudbuild-preview.yaml).
+#      cloudbuild.yaml + cloudbuild-uat.yaml + cloudbuild-release.yaml).
 #   b) Builds that DON'T set the substitution but DO push to the
 #      service's image path (manual `gcloud builds submit`, externally
 #      triggered builds, legacy YAMLs). Without the OR, those would be

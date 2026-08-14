@@ -207,8 +207,9 @@ To re-enable auto-deploy via Cloud Build triggers later:
 
 1. Install the Cloud Build GitHub App per the "One-time setup" section
    above (manual OAuth).
-2. Run `bash scripts/setup-build-trigger.sh` (prod) and
-   `bash scripts/setup-build-trigger-preview.sh` (preview).
+2. Run `bash scripts/setup-build-trigger.sh` (prod, release/* →
+   cloudbuild-release.yaml) and `bash scripts/setup-build-trigger-uat.sh`
+   (UAT, main → cloudbuild-uat.yaml).
 3. Verify with `gcloud beta builds triggers list --project=sahayakai-b4248`.
 
 ## Preview environment

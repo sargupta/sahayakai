@@ -1,0 +1,166 @@
+# cloudbuild-release.yaml
+#
+# Two-region PROD release pipeline for SahayakAI. Triggered on push to
+# `release/*` via the Cloud Build GitHub trigger `sahayakai-release-deploy`
+# (see scripts/setup-build-trigger.sh). Release branches are cut from a
+# UAT-verified main SHA by scripts/release/cut-release.sh.
+#
+# Steps:
+#   1. Build the Docker image once, tag it with both :latest and :<short-sha>.
+#   2. Push both tags to Artifact Registry (asia-southeast1; Mumbai pulls
+#      cross-region — Artifact Registry serves both).
+#   3. Deploy the SAME image to BOTH prod regions with --no-traffic:
+#        deploy-sg  → asia-southeast1 (Singapore, primary)
+#        deploy-mum → asia-south1    (Mumbai)
+#      Both revisions are tagged sha-$SHORT_SHA and held warm with ZERO
+#      traffic. Promotion (traffic flip + LB smoke + rollback recording)
+#      is scripts/release/promote-release.sh — never flip by hand.
+#
+# Why --no-traffic? Same race rationale as cloudbuild.yaml, plus: the two
+# regions must flip together (Singapore first, LB-smoke, then Mumbai) and
+# only after per-region tagged-URL smokes pass. promote-release.sh owns
+# that sequence and the rollback file.
+#
+# Variables:
+#   $PROJECT_ID  — provided by Cloud Build automatically
+#   $SHORT_SHA   — provided by Cloud Build automatically (first 7 chars)
+
+substitutions:
+  _SERVICE: sahayakai-hotfix-resilience
+  # Capacity flags. _MAX_INSTANCES=10 at _CPU=2 is quota-capped: the
+  # regional quota CpuAllocPerProjectRegion = 20000 m-cpu caps
+  # maxScale × cpu, so a cpu=2 revision admission-fails above 10
+  # instances. Raise _MAX_INSTANCES only after the pending
+  # CpuAllocPerProjectRegion increase is granted — see
+  # docs/SCALING_AND_RELIABILITY.md §A1 (launch blocker).
+  # _MIN_INSTANCES=1 keeps one warm instance per region (§A3 cold starts).
+  _MAX_INSTANCES: '10'
+  _CPU: '2'
+  _MIN_INSTANCES: '1'
+
+steps:
+  # ── 1. Build ──────────────────────────────────────────────────────────────
+  # `dir: sahayakai-main` is required: Cloud Build clones the WHOLE repo
+  # to /workspace, so without this step's `dir`, --file=Dockerfile would
+  # resolve to /workspace/Dockerfile (which doesn't exist — Dockerfile
+  # lives at /workspace/sahayakai-main/Dockerfile).
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    dir: sahayakai-main
+    args:
+      - build
+      - --tag=asia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sahayakai-hotfix-resilience:$SHORT_SHA
+      - --tag=asia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sahayakai-hotfix-resilience:latest
+      - --build-arg=GIT_SHA=$SHORT_SHA
+      - --build-arg=GIT_SHA_FULL=$COMMIT_SHA
+      - --build-arg=BUILD_ID=$BUILD_ID
+      - --build-arg=NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248-mumbai
+      - --file=Dockerfile
+      - .
+
+  # ── 2. Push both tags ─────────────────────────────────────────────────────
+  - id: push-sha
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - asia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sahayakai-hotfix-resilience:$SHORT_SHA
+    waitFor: [build]
+  - id: push-latest
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - asia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sahayakai-hotfix-resilience:latest
+    waitFor: [build]
+
+  # ── 3a. Deploy to Singapore (asia-southeast1), NO traffic ─────────────────
+  # Tag the revision with the short sha so it is reachable directly at
+  # https://sha-<sha>---<service-host> for verification.
+  # F1-04 fix (2026-06-06): Twilio credentials moved to Secret Manager.
+  # `--update-secrets` is idempotent: it (re)binds the env var to a
+  # Secret Manager version on every deploy, so the secret reference
+  # survives even if a future operator runs an ad-hoc `gcloud run deploy`
+  # that resets env. Plaintext TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN env
+  # vars MUST NOT be reintroduced — they would be readable by any
+  # principal holding `run.services.get`.
+  - id: deploy-sg
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - sahayakai-hotfix-resilience
+      - --image=asia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sahayakai-hotfix-resilience:$SHORT_SHA
+      - --region=asia-southeast1
+      - --project=$PROJECT_ID
+      - --no-traffic
+      - --tag=sha-$SHORT_SHA
+      - --max-instances=${_MAX_INSTANCES}
+      - --cpu=${_CPU}
+      - --min-instances=${_MIN_INSTANCES}
+      - --update-secrets=TWILIO_ACCOUNT_SID=TWILIO_ACCOUNT_SID:latest,TWILIO_AUTH_TOKEN=TWILIO_AUTH_TOKEN:latest,SAHAYAKAI_AGENTS_AUDIENCE=SAHAYAKAI_AGENTS_AUDIENCE:latest,PROFILE_COMPLETE_COOKIE_SECRET=PROFILE_COMPLETE_COOKIE_SECRET:latest,DEMO_CALL_PEPPER=DEMO_CALL_PEPPER:latest,DEMO_CALL_ENC_KEY=DEMO_CALL_ENC_KEY:latest
+      # Sidecar URL — pinned to PROD service so a fresh deploy cannot
+      # silently inherit a staging URL from a previous ad-hoc env override.
+      # 2026-06-06 (parent-call attendance diagnosis): the live revision was
+      # serving with NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL pointing at the staging
+      # sidecar — every parent-call turn fired the shadow-diff pair via
+      # Promise.all and the sidecar leg burned its full timeout against
+      # staging from prod before the dispatcher gave up, slowing the call.
+      # The audience secret (verified at the sidecar) was also pointing at
+      # staging. Both are now pinned at the deploy step. If you really need
+      # to point preview/staging deploys at the staging sidecar, do that in
+      # a SEPARATE Cloud Build trigger — never as an ad-hoc env override on
+      # the prod service.
+      # VIDYA_VOICE_LIVE_ENABLED: turns on Gemini Live voice via the
+      # sidecar-mint path (start-session/route.ts). OFF everywhere else
+      # (default 503 → turn-based STT/classifier/TTS fallback). Enabled
+      # in prod 2026-08-13 alongside the revert to the sidecar-mint path.
+      # DEMO_CALL_ENABLED: "Hear the Call" public lead magnet (/try-call →
+      # /api/demo-call, real Twilio calls). Enabled in prod 2026-08-13.
+      # DAILY_CAP=50 = conservative soft-launch spend ceiling (code default
+      # is 500); raise once abuse patterns are understood. Pepper + enc-key
+      # bound via --update-secrets above; Twilio creds already present.
+      - --update-env-vars=NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL=https://sahayakai-agents-zwydpvyuca-as.a.run.app,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248-mumbai,VIDYA_VOICE_LIVE_ENABLED=true,DEMO_CALL_ENABLED=true,DEMO_CALL_DAILY_CAP=50
+      - --quiet
+    waitFor: [push-sha]
+
+  # ── 3b. Deploy to Mumbai (asia-south1), NO traffic ────────────────────────
+  # Same image, same flags, same secrets — only the region differs. Runs in
+  # parallel with deploy-sg (both wait only on push-sha). promote-release.sh
+  # verifies the two regions carry identical image digests before flipping.
+  - id: deploy-mum
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - sahayakai-hotfix-resilience
+      - --image=asia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sahayakai-hotfix-resilience:$SHORT_SHA
+      - --region=asia-south1
+      - --project=$PROJECT_ID
+      - --no-traffic
+      - --tag=sha-$SHORT_SHA
+      - --max-instances=${_MAX_INSTANCES}
+      - --cpu=${_CPU}
+      - --min-instances=${_MIN_INSTANCES}
+      - --update-secrets=TWILIO_ACCOUNT_SID=TWILIO_ACCOUNT_SID:latest,TWILIO_AUTH_TOKEN=TWILIO_AUTH_TOKEN:latest,SAHAYAKAI_AGENTS_AUDIENCE=SAHAYAKAI_AGENTS_AUDIENCE:latest,PROFILE_COMPLETE_COOKIE_SECRET=PROFILE_COMPLETE_COOKIE_SECRET:latest,DEMO_CALL_PEPPER=DEMO_CALL_PEPPER:latest,DEMO_CALL_ENC_KEY=DEMO_CALL_ENC_KEY:latest
+      # See deploy-sg for the sidecar-pinning + env-var rationale — the two
+      # steps must stay flag-identical apart from --region.
+      - --update-env-vars=NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL=https://sahayakai-agents-zwydpvyuca-as.a.run.app,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248-mumbai,VIDYA_VOICE_LIVE_ENABLED=true,DEMO_CALL_ENABLED=true,DEMO_CALL_DAILY_CAP=50
+      - --quiet
+    waitFor: [push-sha]
+
+# Build options
+options:
+  # Use higher-CPU machine to keep Next.js build under 10 min.
+  machineType: E2_HIGHCPU_8
+  logging: CLOUD_LOGGING_ONLY
+
+# Hard cap so a hung build never blocks the queue forever. 2400s (vs the
+# single-region 1800s) because the two Cloud Run deploys, while parallel,
+# add rollout wait time on top of the same build.
+timeout: 2400s
+
+# Image list for Cloud Build artifact tracking.
+images:
+  - asia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sahayakai-hotfix-resilience:$SHORT_SHA
+  - asia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sahayakai-hotfix-resilience:latest

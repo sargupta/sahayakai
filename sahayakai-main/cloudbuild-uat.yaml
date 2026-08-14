@@ -1,0 +1,217 @@
+# cloudbuild-uat.yaml
+#
+# UAT deploy pipeline for SahayakAI. Triggered on push to `main` via the
+# Cloud Build GitHub trigger `sahayakai-uat-deploy`
+# (see scripts/setup-build-trigger-uat.sh).
+#
+# Replaces cloudbuild-preview.yaml (retired 2026-08 with the develop
+# branch — trunk is main, see docs/BRANCHING.md). Every merge to main
+# lands on the UAT service automatically, is smoke-tested against the
+# tagged revision URL, and only then receives traffic.
+#
+# Flow:
+#   1. build      — docker build (Firebase web-config build-args only when
+#                   the _FB_* substitutions are non-empty).
+#   2. push       — push :$SHORT_SHA and :latest to Artifact Registry.
+#   3. deploy     — gcloud run deploy --no-traffic --tag=sha-$SHORT_SHA.
+#   4. firestore  — indexes/rules deploy, ONLY when _DEPLOY_PROJECT is a
+#                   non-prod project (prod pipeline owns prod Firestore).
+#   5. smoke      — smoke-test.sh against the tagged (zero-traffic) URL.
+#   6. flip       — update-traffic --to-latest. Cloud Build halts on any
+#                   failed step, so a failed smoke means UAT keeps serving
+#                   the previous good revision.
+#
+# Secrets prerequisite (create BEFORE the first run of this pipeline):
+#   SAHAYAKAI_AGENTS_AUDIENCE_UAT      — value = the STAGING sidecar URL
+#                                        (${_SIDECAR_URL}); the sidecar
+#                                        verifies this audience claim.
+#   PROFILE_COMPLETE_COOKIE_SECRET_UAT — random 32+ byte secret, distinct
+#                                        from prod so UAT cookies can never
+#                                        be replayed against prod.
+#
+# Variables:
+#   $PROJECT_ID  — build project, provided by Cloud Build automatically
+#   $SHORT_SHA   — provided by Cloud Build automatically (first 7 chars)
+
+substitutions:
+  _SERVICE: sahayakai-preview
+  _DEPLOY_PROJECT: sahayakai-b4248
+  _REGION: asia-southeast1
+  _REGISTRY: asia-southeast1-docker.pkg.dev/sahayakai-b4248/cloud-run-source-deploy
+  # Staging sidecar — UAT must NEVER point at the prod sidecar (see the
+  # 2026-06-06 parent-call incident notes in cloudbuild.yaml).
+  _SIDECAR_URL: https://sahayakai-agents-staging-zwydpvyuca-as.a.run.app
+  # Firebase web config. Empty by default: when UAT deploys into the prod
+  # project (sahayakai-b4248), src/lib/firebase.ts's built-in prod fallback
+  # literals are the CORRECT config, so no build-args are needed. Set all
+  # six when pointing _DEPLOY_PROJECT at a separate UAT project.
+  _FB_API_KEY: ''
+  _FB_AUTH_DOMAIN: ''
+  _FB_PROJECT_ID: ''
+  _FB_STORAGE_BUCKET: ''
+  _FB_MSG_SENDER_ID: ''
+  _FB_APP_ID: ''
+  _DEMO_MODE: 'true'
+
+steps:
+  # ── 1. Build ──────────────────────────────────────────────────────────────
+  # `dir: sahayakai-main` is required: Cloud Build clones the WHOLE repo
+  # to /workspace, so without this step's `dir`, --file=Dockerfile would
+  # resolve to /workspace/Dockerfile (which doesn't exist — Dockerfile
+  # lives at /workspace/sahayakai-main/Dockerfile).
+  #
+  # bash-wrapped so the _FB_* build-args are passed only when non-empty:
+  # passing --build-arg=NEXT_PUBLIC_FIREBASE_API_KEY= (empty) would bake
+  # an empty string into the bundle and BREAK the || fallback chain in
+  # src/lib/firebase.ts. Conversely, if _DEPLOY_PROJECT is NOT the prod
+  # project and no _FB_API_KEY is supplied, we HARD FAIL: firebase.ts's
+  # fallback literals are the PROD web config, and silently baking prod
+  # Firebase credentials into a non-prod deployment would point UAT
+  # traffic at prod Auth/Firestore.
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    dir: sahayakai-main
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        if [[ "${_DEPLOY_PROJECT}" != "sahayakai-b4248" && -z "${_FB_API_KEY}" ]]; then
+          echo "FATAL: _DEPLOY_PROJECT=${_DEPLOY_PROJECT} is not the prod project but _FB_API_KEY is empty."
+          echo "src/lib/firebase.ts falls back to PROD Firebase web-config literals when the"
+          echo "NEXT_PUBLIC_FIREBASE_* build-args are absent — a non-prod deploy would silently"
+          echo "authenticate against prod. Set all six _FB_* substitutions on the trigger."
+          exit 1
+        fi
+        FB_ARGS=()
+        if [[ -n "${_FB_API_KEY}" ]];        then FB_ARGS+=( "--build-arg=NEXT_PUBLIC_FIREBASE_API_KEY=${_FB_API_KEY}" ); fi
+        if [[ -n "${_FB_AUTH_DOMAIN}" ]];    then FB_ARGS+=( "--build-arg=NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${_FB_AUTH_DOMAIN}" ); fi
+        if [[ -n "${_FB_PROJECT_ID}" ]];     then FB_ARGS+=( "--build-arg=NEXT_PUBLIC_FIREBASE_PROJECT_ID=${_FB_PROJECT_ID}" ); fi
+        if [[ -n "${_FB_STORAGE_BUCKET}" ]]; then FB_ARGS+=( "--build-arg=NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${_FB_STORAGE_BUCKET}" ); fi
+        if [[ -n "${_FB_MSG_SENDER_ID}" ]];  then FB_ARGS+=( "--build-arg=NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${_FB_MSG_SENDER_ID}" ); fi
+        if [[ -n "${_FB_APP_ID}" ]];         then FB_ARGS+=( "--build-arg=NEXT_PUBLIC_FIREBASE_APP_ID=${_FB_APP_ID}" ); fi
+        docker build \
+          --tag="${_REGISTRY}/${_SERVICE}:$SHORT_SHA" \
+          --tag="${_REGISTRY}/${_SERVICE}:latest" \
+          --build-arg=GIT_SHA=$SHORT_SHA \
+          --build-arg=GIT_SHA_FULL=$COMMIT_SHA \
+          --build-arg=BUILD_ID=$BUILD_ID \
+          $${FB_ARGS[@]+"$${FB_ARGS[@]}"} \
+          --file=Dockerfile \
+          .
+
+  # ── 2. Push both tags ─────────────────────────────────────────────────────
+  - id: push-sha
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGISTRY}/${_SERVICE}:$SHORT_SHA
+    waitFor: [build]
+  - id: push-latest
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGISTRY}/${_SERVICE}:latest
+    waitFor: [build]
+
+  # ── 3. Deploy to UAT, NO traffic ──────────────────────────────────────────
+  # Tagged sha-$SHORT_SHA so the new revision is reachable at
+  # https://sha-<sha>---<service-host> for the smoke step BEFORE any real
+  # UAT traffic hits it. Capacity is deliberately small (max 2 × 1 vCPU):
+  # UAT is a correctness tier, not a load tier, and the regional CPU quota
+  # is nearly all reserved for prod (SCALING_AND_RELIABILITY.md A1).
+  #
+  # Secrets note: SAHAYAKAI_AGENTS_AUDIENCE_UAT and
+  # PROFILE_COMPLETE_COOKIE_SECRET_UAT must exist in Secret Manager before
+  # the first run (see header). The audience secret's value must equal the
+  # staging sidecar URL (${_SIDECAR_URL}) — the sidecar rejects tokens
+  # minted for any other audience.
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGISTRY}/${_SERVICE}:$SHORT_SHA
+      - --project=${_DEPLOY_PROJECT}
+      - --region=${_REGION}
+      - --no-traffic
+      - --tag=sha-$SHORT_SHA
+      - --max-instances=2
+      - --min-instances=0
+      - --cpu=1
+      - --memory=2Gi
+      - --update-env-vars=NODE_ENV=production,DEMO_MODE=${_DEMO_MODE},NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL=${_SIDECAR_URL},SAHAYAKAI_AGENTS_URL=${_SIDECAR_URL}
+      - --update-secrets=SAHAYAKAI_AGENTS_AUDIENCE=SAHAYAKAI_AGENTS_AUDIENCE_UAT:latest,PROFILE_COMPLETE_COOKIE_SECRET=PROFILE_COMPLETE_COOKIE_SECRET_UAT:latest
+      - --quiet
+    waitFor: [push-sha]
+
+  # ── 4. Firestore indexes + rules (non-prod projects ONLY) ─────────────────
+  # When UAT shares the prod project, the prod release pipeline + operators
+  # own firestore indexes/rules — deploying them from UAT would let a merge
+  # to main mutate prod Firestore config before the release gate. Only when
+  # _DEPLOY_PROJECT points at a dedicated UAT project does this step run.
+  - id: firestore-indexes
+    name: node:20
+    dir: sahayakai-main
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        if [[ "${_DEPLOY_PROJECT}" == "sahayakai-b4248" ]]; then
+          echo "UAT is deployed into the prod project — skipping firestore indexes/rules"
+          echo "deploy (prod pipeline + operators own prod Firestore config)."
+          exit 0
+        fi
+        npx --yes firebase-tools deploy \
+          --only firestore:indexes,firestore:rules \
+          --project "${_DEPLOY_PROJECT}" --non-interactive --force
+    waitFor: [deploy]
+
+  # ── 5. Smoke the tagged (zero-traffic) revision ───────────────────────────
+  # REQUIRE_ENV=0: the UAT service intentionally omits prod-only env/secrets
+  # (Twilio, demo-call pepper, etc.), so the health endpoint's env-var
+  # completeness assertion is advisory here, not a gate.
+  - id: smoke
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        SERVICE_URL=$(gcloud run services describe ${_SERVICE} \
+          --project=${_DEPLOY_PROJECT} --region=${_REGION} \
+          --format='value(status.url)')
+        HOST="$${SERVICE_URL#https://}"
+        TAG_URL="https://sha-$SHORT_SHA---$${HOST}"
+        echo "Smoke-testing tagged revision at $${TAG_URL}"
+        BASE="$${TAG_URL}" WAIT_SECS=0 REQUIRE_ENV=0 bash sahayakai-main/scripts/smoke-test.sh
+    waitFor: [firestore-indexes]
+
+  # ── 6. Flip traffic ───────────────────────────────────────────────────────
+  # Runs ONLY if the smoke step succeeded — Cloud Build halts the whole
+  # build on any failed step, so a failed smoke leaves UAT serving the
+  # previous good revision and the build red (visible in the PR checks).
+  - id: flip
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - services
+      - update-traffic
+      - ${_SERVICE}
+      - --project=${_DEPLOY_PROJECT}
+      - --region=${_REGION}
+      - --to-latest
+      - --quiet
+    waitFor: [smoke]
+
+options:
+  machineType: E2_HIGHCPU_8
+  logging: CLOUD_LOGGING_ONLY
+
+# Hard cap so a hung build never blocks the queue forever.
+timeout: 1800s
+
+images:
+  - ${_REGISTRY}/${_SERVICE}:$SHORT_SHA
+  - ${_REGISTRY}/${_SERVICE}:latest

@@ -171,8 +171,8 @@ Examples:
 ### Deployment
 
 Reality (2026-05-21):
-- **Prod deploy**: `bash sahayakai-main/scripts/safe-deploy.sh` from a `main` checkout, then manual `gcloud run services update-traffic ... --to-latest`. NO auto-deploy on push to main (workflows disabled, Cloud Build trigger not installed).
-- **Preview deploy** (`sahayakai-preview`): `bash sahayakai-main/scripts/safe-deploy.sh` from a `develop` checkout. Will become auto on push to develop once the Cloud Build GitHub App is reinstalled and `scripts/setup-build-trigger-preview.sh` is run.
+- **Prod deploy**: cut a release branch from a UAT-verified main SHA (`scripts/release/cut-release.sh`) → Cloud Build trigger `sahayakai-release-deploy` (`cloudbuild-release.yaml`) deploys BOTH prod regions with `--no-traffic` → promote with `scripts/release/promote-release.sh` (preflight + LB smokes + rollback recording). Manual fallback: `bash sahayakai-main/scripts/safe-deploy.sh` from a `release/*` checkout.
+- **UAT deploy** (`sahayakai-preview`): auto on push to `main` via Cloud Build trigger `sahayakai-uat-deploy` (`cloudbuild-uat.yaml`: no-traffic deploy → tagged-URL smoke → flip). Manual fallback: `bash sahayakai-main/scripts/safe-deploy.sh` from a `main` checkout. Trigger setup: `scripts/setup-build-trigger-uat.sh`.
 - **Service**: `sahayakai-hotfix-resilience` (prod) and `sahayakai-preview` (preview) — Cloud Run, region `asia-southeast1`, project `sahayakai-b4248`.
 
 See [`sahayakai-main/DEPLOY.md`](sahayakai-main/DEPLOY.md) for the operator runbook, [`sahayakai-main/docs/PREVIEW_ENV.md`](sahayakai-main/docs/PREVIEW_ENV.md) for preview env details, and [`sahayakai-main/docs/ROLLBACK.md`](sahayakai-main/docs/ROLLBACK.md) for rollback procedure.

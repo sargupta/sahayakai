@@ -1,15 +1,20 @@
 #!/usr/bin/env bash
 # ────────────────────────────────────────────────────────────────────────────
-# Post-deploy smoke test for SahayakAI (Cloud Run, asia-south1)
-# Run AFTER git push origin main — Cloud Run takes ~90s to roll out.
+# Post-deploy smoke test for SahayakAI
+# (Cloud Run, dual-region: asia-southeast1 Singapore + asia-south1 Mumbai)
+# Run AFTER a deploy — Cloud Run takes ~90s to roll out.
 #
 # Usage:
 #   bash scripts/smoke-test.sh                  # tests production
 #   BASE=http://localhost:3000 bash scripts/smoke-test.sh  # tests locally
+#   REQUIRE_ENV=0 BASE=<uat-url> bash scripts/smoke-test.sh
+#     # UAT / tagged revisions: skip the env-var completeness gate (UAT
+#     # intentionally omits prod-only env vars and secrets).
 # ────────────────────────────────────────────────────────────────────────────
 
 BASE="${BASE:-https://sahayakai.com}"
 WAIT_SECS="${WAIT_SECS:-90}"
+REQUIRE_ENV="${REQUIRE_ENV:-1}"
 FAIL=0
 
 echo "Smoke test → $BASE"
@@ -100,13 +105,17 @@ echo ""
 echo "--- Health ---"
 check "API health"          "$BASE/api/health"
 
-# Parse health response to check env vars
+# Parse health response to check env vars. REQUIRE_ENV=0 downgrades a
+# failure to a warning — UAT / preview services intentionally omit
+# prod-only env vars and secrets, so completeness is advisory there.
 health_body=$(curl -s --max-time 10 "$BASE/api/health")
 env_healthy=$(echo "$health_body" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('checks',{}).get('environment',{}).get('healthy', False))" 2>/dev/null)
 missing=$(echo "$health_body" | python3 -c "import json,sys; d=json.load(sys.stdin); missing=d.get('checks',{}).get('environment',{}).get('missingVars',[]); print(', '.join(missing) if missing else 'none')" 2>/dev/null)
 
 if [[ "$env_healthy" == "True" ]]; then
   echo "  PASS  [env]  All required env vars present"
+elif [[ "$REQUIRE_ENV" == "0" ]]; then
+  echo "  WARN  [env]  Missing env vars (not gating, REQUIRE_ENV=0): $missing"
 else
   echo "  FAIL  [env]  Missing env vars: $missing"
   FAIL=1
