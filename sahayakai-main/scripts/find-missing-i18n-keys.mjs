@@ -53,5 +53,11 @@ for (const k of missing) {
     console.log('- ' + JSON.stringify(k) + ' @ ' + usedKeyLocations.get(k).slice(0, 2).join(', '));
 }
 
-fs.writeFileSync('scripts/i18n-missing-keys.json', JSON.stringify(missing, null, 2));
-console.error('\nWrote scripts/i18n-missing-keys.json (' + missing.length + ' keys)');
+// --no-write: report only, leave the committed snapshot untouched (used by
+// Gate 9's check-i18n-ratchet.mjs so a CI run never dirties the tree).
+if (process.argv.includes('--no-write')) {
+    console.error('\n--no-write: snapshot scripts/i18n-missing-keys.json left untouched (' + missing.length + ' keys found)');
+} else {
+    fs.writeFileSync('scripts/i18n-missing-keys.json', JSON.stringify(missing, null, 2));
+    console.error('\nWrote scripts/i18n-missing-keys.json (' + missing.length + ' keys)');
+}

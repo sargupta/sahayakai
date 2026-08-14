@@ -170,12 +170,12 @@ Examples:
 
 ### Deployment
 
-Reality (2026-05-21):
-- **Prod deploy**: cut a release branch from a UAT-verified main SHA (`scripts/release/cut-release.sh`) → Cloud Build trigger `sahayakai-release-deploy` (`cloudbuild-release.yaml`) deploys BOTH prod regions with `--no-traffic` → promote with `scripts/release/promote-release.sh` (preflight + LB smokes + rollback recording). Manual fallback: `bash sahayakai-main/scripts/safe-deploy.sh` from a `release/*` checkout.
-- **UAT deploy** (`sahayakai-preview`): auto on push to `main` via Cloud Build trigger `sahayakai-uat-deploy` (`cloudbuild-uat.yaml`: no-traffic deploy → tagged-URL smoke → flip). Manual fallback: `bash sahayakai-main/scripts/safe-deploy.sh` from a `main` checkout. Trigger setup: `scripts/setup-build-trigger-uat.sh`.
+Reality (2026-05-21; ⚠ updated 2026-08-14 — the bullets below were stale):
+- **Prod deploy (TODAY)**: the `sahayakai-main-deploy` Cloud Build trigger IS installed and LIVE: every push to `main` builds a prod revision at `--no-traffic` via `cloudbuild.yaml` (traffic flip stays manual). TARGET (activates in Tranche 2, artifacts already merged): cut a release branch from a UAT-verified main SHA (`scripts/release/cut-release.sh`) → trigger `sahayakai-release-deploy` (`cloudbuild-release.yaml`) deploys BOTH prod regions `--no-traffic` → `scripts/release/promote-release.sh` (preflight + per-region smokes + rollback recording). `safe-deploy.sh` remains the break-glass path.
+- **UAT deploy (`sahayakai-preview`)**: `develop` retired 2026-08-12; nothing auto-deploys this service TODAY. TARGET (Tranche 2): auto on push to `main` via trigger `sahayakai-uat-deploy` (`cloudbuild-uat.yaml`: no-traffic deploy → tagged-URL smoke → pinned flip). Trigger setup: `scripts/setup-build-trigger-uat.sh`. See `sahayakai-main/docs/UAT_ENV.md`.
 - **Service**: `sahayakai-hotfix-resilience` (prod) and `sahayakai-preview` (preview) — Cloud Run, region `asia-southeast1`, project `sahayakai-b4248`.
 
-See [`sahayakai-main/DEPLOY.md`](sahayakai-main/DEPLOY.md) for the operator runbook, [`sahayakai-main/docs/PREVIEW_ENV.md`](sahayakai-main/docs/PREVIEW_ENV.md) for preview env details, and [`sahayakai-main/docs/ROLLBACK.md`](sahayakai-main/docs/ROLLBACK.md) for rollback procedure.
+See [`sahayakai-main/DEPLOY.md`](sahayakai-main/DEPLOY.md) for the operator runbook, [`sahayakai-main/docs/UAT_ENV.md`](sahayakai-main/docs/UAT_ENV.md) for UAT env details, and [`sahayakai-main/docs/ROLLBACK.md`](sahayakai-main/docs/ROLLBACK.md) for rollback procedure.
 
 ## Maintenance Log
 *   **2026-01-29:** Project initialized. Discovery Questions answered via strategic analysis. Handshake verified Gemini API link. Created `architecture/lesson_plan_generation_sop.md`.

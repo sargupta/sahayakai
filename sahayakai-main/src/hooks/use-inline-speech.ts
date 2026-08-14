@@ -10,7 +10,7 @@ import { logger } from "@/lib/client-logger";
  * Distinct from <MicrophoneInput>: that component is the heavy-duty
  * VAD + cloud-fallback voice surface used by VIDYA / OmniOrb / standalone
  * recorders. This hook is for the small mic icon next to a text input
- * inside <FieldRow>. Browser-native SpeechRecognition only — free, no
+ * (<InlineMicButton>). Browser-native SpeechRecognition only — free, no
  * cloud calls, no waveform render.
  *
  * Returns interim + final transcript via onTranscript callback. The

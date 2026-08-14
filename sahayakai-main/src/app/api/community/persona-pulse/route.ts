@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
     // Prod (DEMO_MODE unset or != 'true') writes to the canonical
     // community_chat collection. Strict string equality is intentional —
     // anything other than the literal 'true' falls through to prod.
-    // See docs/PREVIEW_ENV.md for the DEMO_MODE contract.
+    // See docs/UAT_ENV.md for the DEMO_MODE contract.
     const targetCollection =
       process.env.DEMO_MODE === 'true' ? 'community_chat_preview' : 'community_chat';
     await db.collection(targetCollection).doc(docId).set({

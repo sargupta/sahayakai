@@ -1,24 +1,5 @@
-# Git Branch Strategy & Log
+# Git Branch Strategy (historical stub)
 
-This document tracks the purpose and status of branches in the `SahayakAI` repository to ensure disciplined version control.
+This document is retired. The canonical branching, release, and delivery standard is [docs/BRANCHING.md](./BRANCHING.md) (v2, trunk-based, three pipelines).
 
-## Active Branches
-
-| Branch Name | Status | Purpose | Key Features / Changes |
-| :--- | :--- | :--- | :--- |
-| **`main`** | 🟢 Stable | Production-ready code. | The "Golden Copy". Only merged into after verification. |
-| **`feature/mvp-quality-improvement`** | 🟡 Active | Implementing "World Class" UI/UX & Critical MVP Featuers. | - "Structured Minimalism" UI<br>- Lesson Plan Result Rewrite<br>- Native PDF Export<br>- Global Feedback System<br>- Firestore Content Saving<br>- Architecture Docs |
-
-## Merged / Archived Branches
-
-| Branch Name | Date Merged | Purpose |
-| :--- | :--- | :--- |
-| `feature/lesson-plan-ui-refactor` | (Previously) | Initial work on splitting the Lesson Plan into components. |
-
-## workflow
-
-1.  **Create Feature Branch**: `git checkout -b feature/topic-name` from `main`.
-2.  **Develop & Verify**: Make changes, verify with `npm run dev` and Browser Tools.
-3.  **Commit**: Use descriptive commit messages (`feat:`, `fix:`, `docs:`).
-4.  **Merge**: Switch to `main`, `git merge feature/topic-name`.
-5.  **Tag**: (Optional) Tag versions for release.
+Kept only so old links resolve; the pre-2026 branch log it contained is preserved in git history.

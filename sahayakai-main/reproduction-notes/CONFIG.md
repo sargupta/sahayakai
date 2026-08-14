@@ -65,7 +65,7 @@ These Node.js modules are stubbed out for client-side bundles:
 
 ### Design Tokens
 ```
-primary: saffron orange (HSL 28 70% 59%)
+primary: warm saffron (HSL 24 65% 47%, ~#C96A28 — frozen 2026-08; see docs/DESIGN_TOKENS.md)
 secondary: deep green (HSL 123 37% 25%)
 accent: navy blue (HSL 240 100% 25%)
 background: white
