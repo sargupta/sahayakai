@@ -48,11 +48,25 @@ export async function GET() {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
     };
 
-    // Public callers get only a coarse liveness signal — no build provenance,
-    // no environment names, no missing-var listing.
+    // Public callers get only a coarse liveness signal — no build provenance
+    // details, no environment names, no missing-var listing.
+    //
+    // envOk + gitSha (2026-08-14, release-pipeline preflight): the promote /
+    // UAT-verify smoke runs are unauthenticated, and they need (a) a coarse
+    // "required env present" boolean and (b) which short SHA is serving.
+    // Security posture: envOk is a single boolean — it names no env vars and
+    // reveals nothing an attacker can act on beyond what the 200-vs-503
+    // status code already implies (allHealthy folds environment.healthy in).
+    // gitSha is the 7-char build SHA of a public open-source repo — it
+    // identifies WHICH commit serves, not any secret. Full SHA, buildId,
+    // NODE_ENV, and missing-var names stay auth-gated.
     if (!isAuthed) {
         return NextResponse.json(
-            { status: allHealthy ? 'ok' : 'unhealthy' },
+            {
+                status: allHealthy ? 'ok' : 'unhealthy',
+                envOk: checks.checks.environment.healthy,
+                gitSha: process.env.GIT_SHA || 'local',
+            },
             { status, headers: cacheHeaders },
         );
     }
