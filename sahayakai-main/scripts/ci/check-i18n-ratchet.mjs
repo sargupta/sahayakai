@@ -54,9 +54,9 @@ for (const key of ['missingKeys', 'hardcodedStrings']) {
 // --- Measurement 1: missing t() keys -------------------------------------
 let missingKeys;
 {
-  // The script exits 0 and reports counts on stdout; it also refreshes
-  // scripts/i18n-missing-keys.json as a side effect (harmless in CI).
-  const out = execFileSync(process.execPath, ['scripts/find-missing-i18n-keys.mjs'], {
+  // --no-write keeps the committed scripts/i18n-missing-keys.json snapshot
+  // untouched — a gate run must never dirty the working tree.
+  const out = execFileSync(process.execPath, ['scripts/find-missing-i18n-keys.mjs', '--no-write'], {
     cwd: APP_ROOT,
     encoding: 'utf8',
   });

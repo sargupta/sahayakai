@@ -9,7 +9,7 @@ name: Quality Gates
 #   * AppCheck-disabled regressions (warn-only today)
 #   * i18n regressions (missing keys / hard-coded strings ratchet)
 #   * Firestore queries that need an index missing from firestore.indexes.json
-# (post-deploy smoke moved to uat-verify.yml — see Gate 4 note below)
+# (post-deploy smoke superseded by the UAT pipeline — see Gate 4 note below)
 
 on:
   pull_request:
@@ -117,9 +117,10 @@ jobs:
           SERVICE: sahayakai-agents-staging
         run: bash scripts/ci/check-service-yaml-drift.sh
 
-  # Gate 4 (post-deploy smoke) moved to uat-verify.yml — post-deploy
-  # verification belongs to the deploy pipeline, not the PR quality gates.
-  # The probe script itself stays at scripts/ci/post-deploy-smoke.mjs.
+  # Gate 4 (post-deploy smoke) superseded by the UAT pipeline's post-deploy
+  # verification (uat-verify.yml, arriving in the QA lane PR); Gate 4 was
+  # workflow_dispatch-only and never ran automatically. The probe script
+  # itself stays at scripts/ci/post-deploy-smoke.mjs.
 
   no-console-log:
     # Ratchet gate: 299 legacy console.log sites predate this gate ever

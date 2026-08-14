@@ -23,6 +23,26 @@
  *      set that is a SUPERSET of the chain's fields (scope `group` chains
  *      additionally require queryScope COLLECTION_GROUP).
  *
+ * KNOWN LIMITATIONS (deliberate scope — widen later if needed):
+ *   - Only the chained/namespaced call style is detected
+ *     (`db.collection('x').where(...)`, firebase-admin's API). The
+ *     modular/v9 call style — `query(collection(db, 'x'), where(...),
+ *     orderBy(...))` — is NOT parsed; if modular-style queries appear in
+ *     scanned code, extend extractChains() before trusting a green run.
+ *   - Client-side queries are OUT of scan scope: src/components, src/hooks
+ *     and other client code are not scanned — only server/API/lib code.
+ *   - compositeCovered() is a field-SET superset test. It ignores index
+ *     field ORDER and direction, so an index with the right fields in the
+ *     wrong order/direction still counts as covered. A green Gate 12 means
+ *     "an index plausibly exists", not proof of the exact index Firestore
+ *     will accept — FAILED_PRECONDITION in UAT smoke remains the backstop.
+ *   - Equality-only multi-.where() chains with no .orderBy() are EXEMPT
+ *     from the composite check: Firestore serves those by merging its
+ *     automatic single-field indexes, no composite index required. The
+ *     exemption applies only when EVERY .where() operator is a literal
+ *     '==' — dynamic or non-equality operators keep the chain in scope
+ *     (strict by default).
+ *
  * RATCHET (same model as Gates 5/9/11): pre-existing unmatched signatures
  * live in scripts/ci/firestore-queries-baseline.json and never block; only
  * NEW unmatched signatures fail. A signature that stops being unmatched
@@ -147,6 +167,12 @@ function firstStringLiteral(args) {
   return m ? m[1] : null;
 }
 
+/** Second string-literal argument (the .where() operator), or null. */
+function secondStringLiteral(args) {
+  const m = args.match(/^\s*['"`][^'"`\n]*['"`]\s*,\s*['"`]([^'"`\n]+)['"`]/);
+  return m ? m[1] : null;
+}
+
 /**
  * Firestore indexes are declared per collection ID, so a path-style
  * reference like `groups/${gid}/posts` maps to collection ID `posts`.
@@ -192,6 +218,8 @@ function extractChains(src) {
             collection: collectionId(name),
             scope: method === 'collectionGroup' ? 'group' : 'collection',
             whereFields: new Set(),
+            whereOps: [],
+            opUnknown: false,
             orderByFields: [],
             startLine: lineOf(i),
             endLine: lineOf(parsed.end),
@@ -203,6 +231,9 @@ function extractChains(src) {
         if (method === 'where') {
           const f = firstStringLiteral(args);
           if (f) chain.whereFields.add(f);
+          const op = secondStringLiteral(args);
+          if (op) chain.whereOps.push(op);
+          else chain.opUnknown = true; // dynamic operator — stay strict
         } else if (method === 'orderBy') {
           const f = firstStringLiteral(args);
           if (f) chain.orderByFields.push(f);
@@ -274,6 +305,15 @@ for (const root of SCAN_ROOTS) {
       const ob = chain.orderByFields.filter((f) => !chain.whereFields.has(f));
       const isComposite = wf.length >= 2 || (wf.length >= 1 && ob.length >= 1);
       if (!isComposite) continue;
+      // Equality-only exemption: multi-.where() with no .orderBy() where
+      // every operator is a literal '==' needs no composite index —
+      // Firestore serves it by merging automatic single-field indexes.
+      const equalityOnly =
+        ob.length === 0 &&
+        !chain.opUnknown &&
+        chain.whereOps.length > 0 &&
+        chain.whereOps.every((op) => op === '==');
+      if (equalityOnly) continue;
       const fields = new Set([...wf, ...ob]);
       if (!compositeCovered(chain, fields)) {
         const sig =
