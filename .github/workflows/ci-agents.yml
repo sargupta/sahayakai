@@ -22,14 +22,14 @@ name: CI — agents (Python ADK sidecar)
 
 on:
   pull_request:
-    branches: [develop, main]
+    branches: [main, 'release/**']
     paths:
       - 'sahayakai-agents/**'
       # Generated TS lives in sahayakai-main; a drift there should trigger too.
       - 'sahayakai-main/src/lib/sidecar/types.generated.ts'
       - '.github/workflows/ci-agents.yml'
   push:
-    branches: [develop, main]
+    branches: [main]
     paths:
       - 'sahayakai-agents/**'
   workflow_dispatch:

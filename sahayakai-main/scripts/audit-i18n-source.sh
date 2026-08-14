@@ -31,8 +31,13 @@
 # Usage:
 #   ./scripts/audit-i18n-source.sh                       # all default scope
 #   ./scripts/audit-i18n-source.sh src/components/community  # custom scope
+#   COUNT_ONLY=1 ./scripts/audit-i18n-source.sh          # print ONLY the
+#                                                        # flagged count, exit 0
+#                                                        # (Gate 9 ratchet mode)
 
 set -euo pipefail
+
+COUNT_ONLY="${COUNT_ONLY:-}"
 
 SCOPE_DEFAULT=(
     "src/components/landing"
@@ -56,7 +61,10 @@ for p in "${SCOPE[@]}"; do
     esac
     EXISTING+=("$p")
 done
-[[ "${#EXISTING[@]}" -eq 0 ]] && { echo "no existing scope paths (or all test files — exempt)"; exit 0; }
+if [[ "${#EXISTING[@]}" -eq 0 ]]; then
+    if [[ -n "$COUNT_ONLY" ]]; then echo 0; else echo "no existing scope paths (or all test files — exempt)"; fi
+    exit 0
+fi
 
 # When all scope paths are individual files (not directories), treat
 # the run as "scoped" — typical for pre-commit-hook invocation. We
@@ -106,9 +114,11 @@ build_exclude_args() {
 EXCLUDE_REGEX="$(printf '%s' "${EXCLUDE_PATTERNS[@]/#/|}" | sed 's/^|//')"
 
 count=0
-echo "── i18n source audit ─────────────────────────────────────────"
-echo "Scope: ${EXISTING[*]}"
-echo
+if [[ -z "$COUNT_ONLY" ]]; then
+    echo "── i18n source audit ─────────────────────────────────────────"
+    echo "Scope: ${EXISTING[*]}"
+    echo
+fi
 
 scan_one() {
     local pattern="$1"; local label="$2"
@@ -124,13 +134,20 @@ scan_one() {
         if echo "$line" | grep -Eq "${EXCLUDE_REGEX}"; then
             continue
         fi
-        printf "  %s  %s\n" "$label" "$line"
+        [[ -z "$COUNT_ONLY" ]] && printf "  %s  %s\n" "$label" "$line"
         count=$((count + 1))
     done < <(grep "${grep_args[@]}" 2>/dev/null || true)
 }
 
 scan_one "$PAT_JSX_TEXT" "[JSX-text]"
 scan_one "$PAT_ATTR"     "[attr]    "
+
+# Count mode (Gate 9 ratchet): print a single integer, always exit 0 —
+# the caller (scripts/ci/check-i18n-ratchet.mjs) owns the pass/fail decision.
+if [[ -n "$COUNT_ONLY" ]]; then
+    echo "$count"
+    exit 0
+fi
 
 echo
 echo "Total flagged: $count"

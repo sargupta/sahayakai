@@ -16,15 +16,26 @@
  *      primary/saffron token classes.
  *   3. Arbitrary px font sizes — text-[NNpx]; use the type scale
  *      (.type-* utilities or text-xs..text-3xl).
+ *   4. Raw Tailwind palette classes — bg-red-500, text-green-600, etc.
+ *      Status UI has tokens now: success / warning / info (+ destructive),
+ *      mapped in tailwind.config.ts to globals.css HSL vars.
+ *
+ * REPO-WIDE BUDGET (in addition to the per-PR added-lines ratchet):
+ * total banned-pattern hits across src/**\/*.tsx are compared to the
+ * committed scripts/ci/design-tokens-budget.json { maxHits }. Over budget
+ * FAILS in every mode — even a PR whose own added lines are clean — so the
+ * backlog can never silently grow via merges/renames. Under budget prints
+ * a ::notice:: to ratchet maxHits down.
  *
  * Escape hatch: a line containing `design-token-allow` is skipped
  * (e.g. Next's metadata themeColor, which requires a literal hex).
  *
  * Usage:
  *   BASE_SHA=<sha|ref> node scripts/ci/check-design-tokens.mjs
- *     -> scans files changed since BASE_SHA; exits 1 on any hit.
+ *     -> scans files changed since BASE_SHA; exits 1 on any added-line hit
+ *        or a repo-wide budget breach.
  *   node scripts/ci/check-design-tokens.mjs   (no BASE_SHA)
- *     -> full-repo backlog report; always exits 0 (warn-only).
+ *     -> full-repo backlog report; exits 1 only on a budget breach.
  *
  * Works from either the repo root or sahayakai-main/ (resolves paths
  * against the git toplevel).
@@ -46,6 +57,10 @@ const BANNED = [
   {
     name: 'arbitrary px font size text-[NNpx] (use the type scale)',
     re: /\btext-\[\d+(?:\.\d+)?px\]/,
+  },
+  {
+    name: 'raw Tailwind palette class (use tokens: success/warning/info/destructive, primary/saffron, muted)',
+    re: /\b(?:bg|text|border|ring|from|via|to|fill|stroke|divide|outline|decoration|accent|caret|shadow)-(?:red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone)-(?:50|[1-9]00|950)\b/,
   },
 ];
 
@@ -94,7 +109,9 @@ if (baseSha) {
     .filter(isTarget);
   if (files.length === 0) {
     console.log('OK — no relevant .tsx files changed.');
-    process.exit(0);
+    // Budget still applies (merges/renames can grow the backlog without
+    // this diff touching any .tsx file).
+    process.exit(checkBudget() ? 0 : 1);
   }
   // Ratchet on ADDED LINES only. A whole-file scan would fail PRs that
   // merely touch files carrying legacy debt (measured: 82 legacy hits in
@@ -124,6 +141,47 @@ if (baseSha) {
     .filter(isTarget);
 }
 
+/**
+ * Repo-wide budget: total banned-pattern hits across ALL target .tsx files
+ * vs scripts/ci/design-tokens-budget.json { maxHits }. Runs in every mode.
+ * Returns true when within budget (printing a ratchet notice when under).
+ */
+function checkBudget() {
+  const budgetPath = join(repoRoot, `${appPrefix}scripts/ci/design-tokens-budget.json`);
+  let budget;
+  try {
+    budget = JSON.parse(readFileSync(budgetPath, 'utf8'));
+  } catch (err) {
+    console.error(`::error::Gate 11 — cannot read budget file ${budgetPath}: ${err.message}`);
+    return false;
+  }
+  if (!Number.isInteger(budget.maxHits)) {
+    console.error(`::error::Gate 11 — budget file lacks an integer maxHits field.`);
+    return false;
+  }
+  const allFiles = git(['ls-files', `${appPrefix}src/**/*.tsx`], { cwd: repoRoot })
+    .split('\n')
+    .filter(Boolean)
+    .filter(isTarget);
+  const total = allFiles.flatMap(scanFile).length;
+  if (total > budget.maxHits) {
+    console.error(
+      `::error::Gate 11 — repo-wide design-token debt is OVER budget: ${total} hits > maxHits ${budget.maxHits}. ` +
+      'The backlog may never grow. Convert the offending styles to tokens (or, for true literals, add `design-token-allow` with a justification).'
+    );
+    return false;
+  }
+  if (total < budget.maxHits) {
+    console.log(
+      `::notice::Gate 11 — repo-wide design-token debt went DOWN: ${total} hits < maxHits ${budget.maxHits}. ` +
+      'Ratchet the budget: set maxHits to the new total in sahayakai-main/scripts/ci/design-tokens-budget.json in this PR.'
+    );
+  } else {
+    console.log(`Budget OK — ${total} repo-wide hit(s), at maxHits ${budget.maxHits}.`);
+  }
+  return true;
+}
+
 let hits = files.flatMap(scanFile);
 if (addedLinesByFile) {
   hits = hits.filter((h) => addedLinesByFile.get(h.file)?.has(h.line));
@@ -140,13 +198,18 @@ if (baseSha) {
     console.error(
       'Use tokens (globals.css vars / tailwind.config.ts classes), or append `design-token-allow` with a justification for true literals.'
     );
+    checkBudget(); // still report budget state before failing
     process.exit(1);
   }
+  const budgetOk = checkBudget();
   console.log(`OK — ${files.length} changed .tsx file(s), no banned design-token patterns.`);
+  if (!budgetOk) process.exit(1);
 } else {
-  // Backlog mode (push/dispatch): report, never block.
+  // Backlog mode (push/dispatch): report per-pattern debt; only a budget
+  // breach blocks.
   const byFile = new Set(hits.map((h) => h.file));
   console.log(
     `::warning::design-token legacy backlog: ${hits.length} banned pattern(s) across ${byFile.size} file(s) (target: 0).`
   );
+  if (!checkBudget()) process.exit(1);
 }

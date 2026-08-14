@@ -1,0 +1,11 @@
+{
+  "comment": "Gate 12 ratchet baseline (scripts/ci/check-firestore-indexes.mjs). Seeded 2026-08-14 from main HEAD: pre-existing query signatures with no matching entry in firestore.indexes.json (they work today via manually-created console indexes, or degrade gracefully). Only NEW unmatched signatures fail the gate. When one of these is fixed (index added to firestore.indexes.json) remove it here in the same PR.",
+  "unmatched": [
+    "composite:collection:community_posts:where=authorId:orderBy=createdAt",
+    "composite:collection:notifications:where=isRead,recipientId:orderBy=__name__",
+    "composite:collection:notifications:where=metadata.postId,recipientId,type",
+    "composite:collection:parent_outreach:where=classId,reason,teacherUid",
+    "composite:collection:subscriptions:where=status,userId",
+    "composite:collection:users:where=cancellation.dataExported,cancellation.gracePeriodEnd"
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "comment": "Gate 9 ratchet baseline (scripts/ci/check-i18n-ratchet.mjs). Seeded 2026-08-14 from main HEAD. Counts may only go DOWN — when a PR reduces them, update this file to the new numbers in the same PR.",
+  "missingKeys": 25,
+  "hardcodedStrings": 58
+}
