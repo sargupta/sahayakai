@@ -1,182 +1,272 @@
-# Branching, versioning, and release standards
+# Branching, release, and delivery standards (v2)
 
-This is the canonical doc for how work flows from a feature branch through `develop`, `sahayakai-preview`, `main`, and into production. It supersedes the older "Git Standards & Branching Rules" section of `gemini.md`.
+Canonical doc for how work flows from a branch into production. Supersedes
+BRANCHING v1 (the `develop`-centred model) and the historical
+`docs/BRANCH_STRATEGY.md` (now a stub).
+
+> **`develop` retired 2026-08-12.** The repo is trunk-based: `main` is the
+> only long-lived branch. The old `develop` → preview → `main` flow, its
+> back-merge rules, and the `sahayakai-preview` staging tier are replaced by
+> the three pipelines below. Historical references to `develop` in older
+> docs/PRs describe the v1 world.
 
 ## Long-lived branches
 
-| Branch | Role | Receives merges from | Auto-deploys to | Protection |
-|---|---|---|---|---|
-| `main` | Production. Anything here is or has been live. | `develop` (release PRs only), `hotfix/*` (emergencies) | nothing automatic; `scripts/safe-deploy.sh` is the manual gate | strict: PR required, status checks, linear history, no force-push |
-| `develop` | Integration / staging. Source of truth for `sahayakai-preview`. | `feature/*`, `fix/*`, `chore/*`, `docs/*`, back-merges from `hotfix/*` | `sahayakai-preview` Cloud Run (auto on push, once Cloud Build GitHub App is reinstalled — see [DEPLOY.md](../DEPLOY.md)) | moderate: PR required for > 50 LOC, no force-push |
+| Branch | Role | Protection |
+|---|---|---|
+| `main` | Trunk. Every PR lands here. Every push feeds the UAT tier (Pipeline 2). | Ruleset `main-protection` (below) |
+| `release/*` | **Ephemeral** release branches cut from `main`, deleted after the release lands. Only long-lived while a release is in flight. | Ruleset `release-protection` (below) |
 
-`develop` should never lag `main` and never drift away on a multi-month tangent. After every `develop → main` merge, the two are identical; no back-merge from `main` to `develop` is needed.
+There is no `develop`, no permanent staging branch, and no back-merge
+ceremony. `main` is always releasable.
 
 ## Short-lived branches (naming canon)
 
+All short-lived branches are **parented on `main`** and merged back to
+`main` via PR.
+
 | Prefix | Purpose | Branched from | Merged into | Max lifetime |
 |---|---|---|---|---|
-| `feature/<kebab>` | new user-visible feature | `develop` | `develop` | 7 days (else rebase) |
-| `fix/<kebab>` | bug fix that isn't urgent | `develop` | `develop` | 3 days |
-| `hotfix/<kebab>` | emergency prod fix | `main` | `main` + back-merge to `develop` | 24 h |
-| `chore/<kebab>` | tooling, deps, config, CI | `develop` | `develop` | 3 days |
-| `docs/<kebab>` | docs-only | `develop` | `develop` | 3 days |
-| `refactor/<kebab>` | internal restructure, no behavior change | `develop` | `develop` | 7 days |
-| `experiment/<kebab>` | exploration, may be discarded | `develop` | `develop` or delete | 14 days; ruthlessly pruned |
-| `claude/*` | Claude-Code-generated work-in-progress | varies | `develop` after manual review | auto-delete on merge or at 14 days |
-| `release/<calver>` | release branch (if multi-step rollout needed) | `develop` | `main` | until release lands |
+| `feature/<kebab>` | new user-visible feature | `main` | `main` | 7 days (else rebase) |
+| `fix/<kebab>` | bug fix that isn't urgent | `main` | `main` | 3 days |
+| `hotfix/<kebab>` | emergency prod fix | released tag (see hotfix procedure) | `main` (+ cherry-pick to active `release/*`) | 24 h |
+| `chore/<kebab>` | tooling, deps, config, CI | `main` | `main` | 3 days |
+| `docs/<kebab>` | docs-only | `main` | `main` | 3 days |
+| `refactor/<kebab>` | internal restructure, no behavior change | `main` | `main` | 7 days |
+| `experiment/<kebab>` | exploration, may be discarded | `main` | `main` or delete | 14 days; ruthlessly pruned |
+| `claude/*` | agent-generated work-in-progress | `main` | `main` after review | auto-delete on merge or at 14 days |
+| `release/<calver>` | release branch | `main` (via `scripts/release/cut-release.sh`) | never merged; tagged + deleted after promote | until release lands |
 
-**Legacy aliases to retire** (still present on origin as of 2026-05-21, due for the next cleanup pass):
-- `feat/*` → use `feature/*`
-- `bugfix/*` → use `fix/*`
-- `audit/*` → use `chore/*` if tooling, `docs/*` if a write-up
-- `polish/*` → use `feature/*` or `fix/*` depending on whether it's visible
+`<kebab>` ≤ 40 chars, lowercase, hyphenated, descriptive.
 
-`<kebab>` ≤ 40 chars, lowercase, hyphenated, descriptive. Examples: `feature/community-personas-live-pulse`, `fix/vidya-prefill-sweep-7-forms`, `hotfix/intent-classifier-zod-const`.
+## The three pipelines
 
-## Branch lifecycle
+| # | Pipeline | Trigger | What runs | Outcome |
+|---|---|---|---|---|
+| **P1** | **PR → `main`** | PR opened/updated against `main` | GitHub Actions gates: `test (20)`, `smoke`, Gates 1, 2, 5, 6, 8, 9, 10, 11, 12 (see inventory below) | Merge allowed only when required checks are green |
+| **P2** | **`main` → UAT** | push to `main` | Cloud Build `cloudbuild-uat.yaml`: build → `--no-traffic` deploy to the UAT Cloud Run service → smoke → traffic flip. Then GitHub Actions `uat-verify.yml`: Playwright e2e + visual regression + k6 load probe → posts commit status **`uat/verified`** on the `main` SHA | Every `main` commit is exercised on a live tier; `uat/verified` marks release-candidate SHAs |
+| **P3** | **`release/*` → prod** | push of a `release/*` branch | Cloud Build `cloudbuild-release.yaml`: builds and deploys **both regions** (Mumbai `asia-south1` + Singapore `asia-southeast1`) with `--no-traffic`. Then `release-promote.yml`: auto traffic flip with load-balancer smoke check and **auto-rollback** on failure. Manual path: `scripts/release/promote-release.sh` | Prod revision live in both regions, or automatically rolled back |
 
-1. **Open**: branch from `develop` (or `main` for hotfix). Push immediately so the work is visible.
-2. **Maintain**: rebase against the parent branch at least every 3 days; merge conflicts caught early are cheap.
-3. **Land**: open PR against parent. CI must be green. PR description matches `.github/PULL_REQUEST_TEMPLATE.md`.
-4. **Close**: delete the remote branch immediately after merge. GitHub setting: "Automatically delete head branches" is ON.
-5. **Stale cleanup**: a weekly `chore/branch-cleanup-YYYY-MM-DD` PR sweeps any merged-but-undeleted branch + any open branch with no commits in 30 days (after a 7-day warning ping to the author).
+Notes:
+
+- P2's UAT tier is documented in [docs/UAT_ENV.md](./UAT_ENV.md)
+  (formerly `PREVIEW_ENV.md`).
+- P3 never deploys traffic-first; the flip is a separate, observable,
+  reversible step whether automated or manual.
+- `scripts/safe-deploy.sh` remains the **break-glass** manual deploy for
+  Cloud Build outages only — never the routine path.
+
+## Release procedure
+
+1. **Pick a candidate**: a `main` SHA carrying the `uat/verified` commit
+   status.
+2. **Cut**: `bash scripts/release/cut-release.sh` — creates
+   `release/<calver>` from that SHA and pushes it (fires P3 builds).
+3. **Watch builds**: both regional Cloud Build jobs must go green with the
+   new revisions at 0% traffic.
+4. **Promote**:
+   - *Auto*: `release-promote.yml` flips traffic and runs the LB smoke; on
+     smoke failure it rolls traffic back automatically.
+   - *Manual*: `bash scripts/release/promote-release.sh` (same
+     flip + smoke + rollback logic, human-invoked).
+5. **Tag**: `release-YYYY-MM-DD` (`.N` suffix for same-day repeats) on the
+   released SHA; push the tag. Delete the `release/*` branch.
+
+CalVer stays: tags are `release-YYYY-MM-DD`, `hotfix-YYYY-MM-DD`,
+`prod-YYYY-MM-DD-pre-<event>`, `milestone-<name>`. Tags are immutable;
+every prod deploy corresponds to a tag.
+
+## Hotfix procedure
+
+1. **Branch from the released tag** (not `main`, which may have moved):
+   `git checkout -b hotfix/<kebab> release-YYYY-MM-DD`.
+2. **Fix + test**: `npm run predeploy` must pass.
+3. **PR to `main`** — all P1 gates apply (hotfixes get no gate exemption).
+4. **Ship to prod** by either:
+   - **cherry-picking** the fix onto the active `release/*` branch (P3
+     rebuilds + promotes), or
+   - **cutting a fresh release** from `main` once the PR lands (preferred
+     when no release is in flight).
+5. **Break-glass**: if Cloud Build itself is down, `scripts/safe-deploy.sh`
+   from the hotfix branch, then reconcile with a real release ASAP.
+6. **Tag** `hotfix-YYYY-MM-DD`; post-mortem entry in `docs/INCIDENTS.md`.
+
+Hotfix discipline: small. > 50 LOC or > 3 files means it is a feature being
+rushed — do it through the normal P1 → P2 → P3 flow.
+
+## Branch protection (rulesets)
+
+Protection is applied as **repository rulesets** (Settings → Rules →
+Rulesets, or `gh api /repos/sargupta/sahayakai/rulesets`).
+
+> **WARNING — verify contexts before applying.** Required-check context
+> strings must match the live check-run names **exactly** (including case,
+> spacing, and matrix suffixes like `(20)`). Before applying either
+> ruleset, open a recent PR → Checks tab (or
+> `gh pr checks <n>`) and confirm every context below appears verbatim.
+> Gates that have not landed yet (e.g. 9 and 12, which ship in a later
+> tranche of the 2026-08 rebuild) must be added to the ruleset only
+> **after** they have produced at least one check run — a required context
+> that never reports blocks every merge forever.
+
+### `main` ruleset
+
+```json
+{
+  "name": "main-protection",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": { "include": ["refs/heads/main"], "exclude": [] }
+  },
+  "rules": [
+    { "type": "deletion" },
+    { "type": "non_fast_forward" },
+    {
+      "type": "pull_request",
+      "parameters": {
+        "required_approving_review_count": 0,
+        "dismiss_stale_reviews_on_push": false,
+        "require_code_owner_review": false,
+        "require_last_push_approval": false,
+        "required_review_thread_resolution": false
+      }
+    },
+    {
+      "type": "required_status_checks",
+      "parameters": {
+        "strict_required_status_checks_policy": false,
+        "required_status_checks": [
+          { "context": "test (20)" },
+          { "context": "smoke" },
+          { "context": "Gate 1: block --no-verify commits" },
+          { "context": "Gate 2: schema drift" },
+          { "context": "Gate 5: no console.log in changed files" },
+          { "context": "Gate 6: typecheck" },
+          { "context": "Gate 8: test CI scripts" },
+          { "context": "Gate 9: i18n keys (ratchet)" },
+          { "context": "Gate 10: no new files in src/app/actions" },
+          { "context": "Gate 11: design tokens (changed files)" },
+          { "context": "Gate 12: firestore index drift" }
+        ]
+      }
+    }
+  ]
+}
+```
+
+### `release/*` ruleset
+
+Release branches are cut from an already-fully-gated `main` SHA, so they
+carry only the fast recompile-safety checks:
+
+```json
+{
+  "name": "release-protection",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": { "include": ["refs/heads/release/*"], "exclude": [] }
+  },
+  "rules": [
+    { "type": "deletion" },
+    { "type": "non_fast_forward" },
+    {
+      "type": "required_status_checks",
+      "parameters": {
+        "strict_required_status_checks_policy": false,
+        "required_status_checks": [
+          { "context": "test (20)" },
+          { "context": "Gate 6: typecheck" },
+          { "context": "smoke" }
+        ]
+      }
+    }
+  ]
+}
+```
+
+### Apply / rollback
+
+```bash
+# Apply (returns the ruleset id)
+gh api --method POST /repos/sargupta/sahayakai/rulesets --input main-ruleset.json
+gh api --method POST /repos/sargupta/sahayakai/rulesets --input release-ruleset.json
+
+# List ids
+gh api /repos/sargupta/sahayakai/rulesets --jq '.[] | {id, name, enforcement}'
+
+# Soft-disable (keep the ruleset, stop enforcing — evaluations still logged)
+gh api --method PUT /repos/sargupta/sahayakai/rulesets/<id> -f enforcement=evaluate
+
+# Hard rollback (delete the ruleset entirely)
+gh api --method DELETE /repos/sargupta/sahayakai/rulesets/<id>
+```
+
+## Required-check inventory
+
+Literal context strings as GitHub reports them. **Path-filtered or
+conditional checks must NOT be required** — a required context that
+doesn't trigger for a given PR never reports, and the merge blocks
+forever.
+
+| Context (literal) | Workflow / job | Required on `main`? | Notes |
+|---|---|---|---|
+| `test (20)` | `test.yml` → job `test`, node matrix `[20]` | **Yes** | Full unit + integration suite, typecheck, lint, build, bundle budget |
+| `smoke` | `e2e-smoke.yml` → job `smoke` | **Yes** | Public-route Playwright @smoke suite |
+| `Gate 1: block --no-verify commits` | `quality-gates.yml` → `no-verify-bypass` | **Yes** | |
+| `Gate 2: schema drift` | `quality-gates.yml` → `schema-drift` | **Yes** | |
+| `Gate 3: Cloud Run service.yaml drift` | `quality-gates.yml` → `service-yaml-drift` | **No — never** | `workflow_dispatch`-only (`run_live_checks`); would never report on PRs |
+| `Gate 4: post-deploy smoke` | `quality-gates.yml` → `post-deploy-smoke` | **No — never** | `workflow_dispatch`-only; same reason |
+| `Gate 5: no console.log in changed files` | `quality-gates.yml` → `no-console-log` | **Yes** | Ratchet — changed files only |
+| `Gate 6: typecheck` | `quality-gates.yml` → `typecheck` | **Yes** | |
+| `Gate 7: AppCheck env (warn-only)` | `quality-gates.yml` → `appcheck-env` | **No** | Warn-only by design |
+| `Gate 8: test CI scripts` | `quality-gates.yml` → `test-ci-scripts` | **Yes** | Jest over `scripts/ci/*` tests |
+| `Gate 9: i18n keys (ratchet)` | `quality-gates.yml` (lands in the 2026-08 rebuild) | **Yes — after it produces check runs** | See WARNING above |
+| `Gate 10: no new files in src/app/actions` | `quality-gates.yml` → `no-new-server-actions` | **Yes** | `pull_request` events only — fine, since the ruleset gates PRs |
+| `Gate 11: design tokens (changed files)` | `quality-gates.yml` → `design-tokens` | **Yes** | Ratchet — changed files only |
+| `Gate 12: firestore index drift` | `quality-gates.yml` (lands in the 2026-08 rebuild) | **Yes — after it produces check runs** | See WARNING above |
+| `pytest (blocking gate)` | `ci-agents.yml` → job `test` | **No — never** | **Path-filtered** (`sahayakai-agents/**`, generated sidecar types); PRs not touching those paths would block forever |
+| `evaluate` | `genkit-eval.yml` → job `evaluate` | **No — never** | **Path-filtered** (`src/ai/**`, `scripts/eval/**`); same failure mode |
 
 ## Commit messages (Conventional Commits)
 
+Unchanged from v1:
+
 ```
 <type>(<scope>): <subject>
-
-<body — explain WHY, not WHAT. Code shows what.>
-
-<footer — refs, breaking changes, co-authors>
 ```
 
 - **Types**: `feat | fix | chore | docs | refactor | test | perf | build | ci | revert | merge`
-- **Scope**: short noun, lowercase. `vidya | tts | exam-paper | community | deploy | cost | auth | flag | intent | ...`. Avoid generic scopes (`general`, `misc`).
-- **Subject**: imperative, lowercase, ≤72 chars, no trailing period. "fix mic permission re-prompt on iOS" — not "fixed the mic re-prompt issue".
+- **Scope**: short lowercase noun (`vidya | tts | exam-paper | community | deploy | ...`).
+- **Subject**: imperative, lowercase, ≤72 chars, no trailing period.
+- Footers: `Closes #<n>`, `Refs #<n>`, `BREAKING CHANGE: <what>`.
 
-Footer conventions:
-- `Co-Authored-By: <name> <email>` — required when AI agents authored
-- `Closes #<n>` — for issue/PR closure
-- `Refs #<n>` — for references without closure
-- `BREAKING CHANGE: <what>` — for incompatible changes (rare in this solo project)
+## Merge strategy
 
-## Merge strategy per direction
-
-| Source → Target | Strategy | Rationale |
-|---|---|---|
-| `feature/*` → `develop` | **squash merge** | one logical change per merge; keeps `develop` linear and bisect-able |
-| `fix/*` → `develop` | squash merge | same |
-| `chore/*`, `docs/*`, `refactor/*` → `develop` | squash merge | same |
-| `experiment/*` → `develop` | usually deleted, not merged; if merged, squash | exploration shouldn't pollute history |
-| `develop` → `main` | **`--no-ff` merge** | preserves the per-feature history of the release on `main`'s graph |
-| `hotfix/*` → `main` | `--no-ff` merge | hotfix is visible as its own subtree |
-| `hotfix/*` → `develop` (back-merge) | `--no-ff` merge | same |
-| Catch-up (one-off) | `--no-ff` merge | preserves the underlying commit history for `git blame` / `git bisect` |
-
-**Never rebase-merge feature → develop.** Rebase merges replay each commit but never test them as a unit, which breaks bisect.
-
-## Versioning — CalVer + git tags
-
-CalVer (Calendar Versioning) because solo dev, no public API to break, releases are date-driven.
-
-Tag format: `release-YYYY-MM-DD` (or `release-YYYY-MM-DD.N` if multiple releases same day).
-
-| Tag | When | Format |
-|---|---|---|
-| `release-YYYY-MM-DD` | after a `develop → main` merge that goes to prod | `release-2026-05-21` |
-| `hotfix-YYYY-MM-DD` | after a `hotfix/*` lands on main | `hotfix-2026-05-21` |
-| `prod-YYYY-MM-DD-pre-<event>` | rollback fence before a risky push | `prod-2026-05-21-pre-catchup` |
-| `milestone-<name>` | major capability milestone | `milestone-vidya-v2` |
-
-Tags are immutable. Every prod deploy must correspond to a tag.
-
-## CHANGELOG.md
-
-Maintained at `sahayakai-main/CHANGELOG.md`. Format: [Keep a Changelog](https://keepachangelog.com/).
-
-Updated as part of every `develop → main` PR (not per-feature-branch — too noisy). Sections per release: `Added | Changed | Fixed | Removed | Security`.
-
-## PR template + CODEOWNERS
-
-- `.github/PULL_REQUEST_TEMPLATE.md` renders automatically on every new PR.
-- `.github/CODEOWNERS` auto-assigns reviewers based on the paths touched.
-
-## Hotfix workflow
-
-When prod breaks:
-
-1. **Branch** from `main`: `git checkout main && git pull && git checkout -b hotfix/<short-name>`
-2. **Fix + test locally**: `npm run predeploy` must pass.
-3. **Deploy from hotfix branch**: `bash scripts/safe-deploy.sh` (the branch-aware logic recognizes `hotfix/*` as a prod deploy source).
-4. **Flip traffic**: `gcloud run services update-traffic sahayakai-hotfix-resilience --region=asia-southeast1 --to-latest`.
-5. **Smoke test**: `bash scripts/smoke-test.sh`.
-6. **Merge to main**: PR `hotfix/<name> → main`, `--no-ff` merge.
-7. **Back-merge to develop**: PR `main → develop` (or cherry-pick the hotfix commit), `--no-ff` merge. **Critical** — without this, the next `develop → main` release reverts the hotfix.
-8. **Tag**: `git tag hotfix-YYYY-MM-DD && git push origin hotfix-YYYY-MM-DD`
-9. **Post-mortem entry**: append to `docs/INCIDENTS.md`.
-
-Hotfix discipline: hotfixes are **small**. If the fix needs > 50 LOC or touches > 3 files, it's probably not a hotfix — it's a feature being rushed under pressure. Push back, do it through `develop`.
-
-## CI / CD pipeline summary
-
-| Stage | What runs | Where |
-|---|---|---|
-| Pre-commit (local) | `tsc --noEmit` on staged files, i18n audit, `flutter analyze` if Flutter files staged | `scripts/hooks/pre-commit` |
-| Push to `develop` | (once Cloud Build GitHub App is reinstalled) Cloud Build → deploy to `sahayakai-preview` | Cloud Build trigger `sahayakai-preview-deploy` |
-| PR opened against `develop` | Test Suite (GitHub Actions, `test.yml`) | GitHub Actions |
-| PR opened against `main` | Test Suite | GitHub Actions |
-| Push to `main` | NOTHING auto-deploys (workflows `firebase-deploy.yml` and `google-cloudrun-docker.yml` are disabled). Manual `safe-deploy.sh` only. | — |
-| Post manual prod deploy | `bash scripts/smoke-test.sh` against prod URL | local |
-
-## Release cadence
-
-- **Hotfixes**: as needed. Target time-to-fix ≤ 24 h.
-- **Regular releases**: weekly bundle `develop → main → prod`. Default day: Tuesday. Skip if `develop` has nothing meaningful.
-- **Major capability launches**: gate behind a feature flag (see `docs/FEATURE_FLAGS.md` once Phase C lands), ship to prod with flag OFF, flip ON for a controlled rollout.
-- **NCERT / investor / partner demos**: never deploy < 24 h before a demo. Validate on preview; promote to prod after the demo only if the new code performed.
-
-## Branch protection rules (final state)
-
-GitHub Settings → Branches → Branch protection rules:
-
-**`main`**:
-- ☑ Require a pull request before merging
-- ☑ Require approvals (1) — solo dev: self-approval allowed via bypass
-- ☑ Dismiss stale approvals when new commits pushed
-- ☑ Require status checks: `Test Suite` (`test (18)`, `test (20)`)
-- ☑ Require branches to be up to date before merging
-- ☑ Require linear history
-- ☑ Do not allow bypassing the above settings (except for `@sargupta` for emergencies)
-- ☐ Allow force-pushes — OFF
-- ☐ Allow deletions — OFF
-
-**`develop`**:
-- ☑ Require a pull request for direct pushes > 50 LOC
-- ☑ Require status checks: `Test Suite`
-- ☐ Allow force-pushes — OFF (bypass for `@sargupta` only)
-- ☐ Allow deletions — OFF
-
-**Other branches**: no protection.
-
-## Solo developer practices
-
-- **Self-PR review**: own PRs still get reviewed (by self, using the PR template checklist as a forcing function).
-- **Second-opinion review by Codex + Gemini** (per memory `feedback_peer_review_codex_gemini.md`): every shipped artifact gets a second pass. Mandatory for HIGH-risk PRs.
-- **AI review agents**: use the `/review` skill for diff-level review before merge to develop; `/ultrareview` for develop → main PRs.
+| Direction | Strategy |
+|---|---|
+| any short-lived branch → `main` | **squash merge** (one logical change; linear, bisect-able trunk) |
+| `release/*` | never merged back — tagged and deleted |
+| hotfix cherry-pick → `release/*` | `git cherry-pick -x` (traceable to the `main` commit) |
 
 ## What this model prevents
 
-- "We shipped to prod by accident" — prod = manual `safe-deploy.sh` from main only; develop pushes can't touch prod.
-- "We don't know what's in prod" — main commit hash = prod, full stop. `release-YYYY-MM-DD` tags mark each prod state.
-- "We can't roll back" — every prod release has a tag. Roll back via Cloud Run revision promote OR `git revert <merge>` + redeploy.
-- "Develop drifted six months from main" — weekly release cadence forces merges; CalVer tags make drift visible at a glance.
-- "Branches pile up forever" — weekly cleanup PR + auto-delete on merge.
+- "We shipped to prod by accident" — prod only moves via a `release/*`
+  branch through P3; `main` pushes stop at UAT.
+- "We don't know what's in prod" — prod = the last `release-*` tag,
+  full stop.
+- "It worked on my machine" — every `main` SHA runs on a live UAT tier
+  and only `uat/verified` SHAs become release candidates.
+- "The hotfix got reverted by the next release" — hotfixes land on `main`
+  via PR first; there is no divergent branch to forget to back-merge.
+- "A required check never ran and the PR is stuck" — the inventory above
+  marks path-filtered checks as never-required.
 
 See also:
-- [DEPLOY.md](../DEPLOY.md) — operator runbook
-- [docs/PREVIEW_ENV.md](./PREVIEW_ENV.md) — preview environment
+- [DEPLOY.md](../DEPLOY.md) — operator runbook (three-pipeline edition)
+- [docs/UAT_ENV.md](./UAT_ENV.md) — UAT tier
 - [docs/ROLLBACK.md](./ROLLBACK.md) — rollback procedure
 - [docs/INCIDENTS.md](./INCIDENTS.md) — incident log
-- (future) [docs/FEATURE_FLAGS.md](./FEATURE_FLAGS.md) — flag inventory once Phase C lands
-- [.claude/plans/based-on-the-current-tidy-rabbit.md](../.claude/plans/based-on-the-current-tidy-rabbit.md) — the workflow rationalization plan
+- [docs/FEATURE_FLAGS.md](./FEATURE_FLAGS.md) — flag inventory
+- [docs/IMPLEMENTATION_LEDGER_2026-08.md](./IMPLEMENTATION_LEDGER_2026-08.md) — 2026-08 delivery-rebuild tranche ledger
