@@ -1,0 +1,261 @@
+# UAT verification gate. After a push to main (or on manual dispatch), waits
+# for the UAT environment to serve the target SHA, then fans out three probes
+# — authenticated E2E, visual regression + axe, and a k6 smoke profile — and
+# folds the results into a single `uat/verified` commit status.
+#
+# Requirements wired elsewhere:
+#   - vars.UAT_BASE_URL         (repo variable) — UAT origin, no trailing slash.
+#   - secrets.QA_FIREBASE_SA_KEY — Firebase Admin SA JSON for the QA harness.
+#     Absent → the e2e-auth steps skip with a neutral notice (T2 wires it).
+#   - secrets.UAT_HEALTH_BEARER (optional) — /api/health only exposes
+#     build.gitShaFull to AUTHENTICATED callers (see
+#     sahayakai-main/src/app/api/health/route.ts). Until UAT either exposes
+#     the SHA publicly or this bearer token is wired, the wait-for-uat poll
+#     cannot confirm the SHA and will time out.
+#   - scripts/loadtest/launch-wall.js PROFILE=smoke — added by a sibling PR;
+#     the k6-probe job codes against it.
+
+name: UAT Verify
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: 'Full git SHA expected live on UAT (defaults to the ref HEAD)'
+        required: false
+        type: string
+      update_snapshots:
+        description: 'Regenerate visual baselines (--update-snapshots) and upload them as an artifact instead of comparing'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  statuses: write
+
+concurrency:
+  group: uat-verify-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UAT_BASE_URL: ${{ vars.UAT_BASE_URL }}
+  TARGET_SHA: ${{ github.event.inputs.sha || github.sha }}
+
+jobs:
+  wait-for-uat:
+    name: Wait for UAT rollout
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Poll /api/health until the target SHA is live
+        env:
+          UAT_HEALTH_BEARER: ${{ secrets.UAT_HEALTH_BEARER }}
+        run: |
+          set -euo pipefail
+          if [ -z "${UAT_BASE_URL:-}" ]; then
+            echo "::error::Repo variable UAT_BASE_URL is not set"
+            exit 1
+          fi
+          echo "Waiting for $TARGET_SHA on $UAT_BASE_URL (60 tries x 30s)"
+          auth_args=()
+          if [ -n "${UAT_HEALTH_BEARER:-}" ]; then
+            auth_args=(-H "Authorization: Bearer $UAT_HEALTH_BEARER")
+          fi
+          for i in $(seq 1 60); do
+            deployed=$(curl -fsS --max-time 15 "${auth_args[@]}" "$UAT_BASE_URL/api/health" \
+              | jq -r '.build.gitShaFull // .gitShaFull // empty' || true)
+            echo "try $i/60: deployed=${deployed:-<none>}"
+            if [ "$deployed" = "$TARGET_SHA" ]; then
+              echo "UAT is serving $TARGET_SHA"
+              exit 0
+            fi
+            sleep 30
+          done
+          echo "::error::UAT never reported $TARGET_SHA after 60 tries (30 min)"
+          exit 1
+
+  e2e-auth:
+    name: Authenticated E2E
+    needs: wait-for-uat
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: sahayakai-main
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Job-level `if:` cannot read secrets, so gate every subsequent step on
+      # this output instead. With the secret absent the job "runs" but every
+      # step no-ops, leaving the job green — the report job treats that the
+      # same as skipped.
+      - name: Check for QA_FIREBASE_SA_KEY
+        id: guard
+        env:
+          QA_FIREBASE_SA_KEY: ${{ secrets.QA_FIREBASE_SA_KEY }}
+        run: |
+          if [ -n "$QA_FIREBASE_SA_KEY" ]; then
+            echo "have_key=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "have_key=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::QA_FIREBASE_SA_KEY is not configured — authenticated E2E skipped (T2 wires this secret)."
+          fi
+
+      - name: Setup Node 20
+        if: steps.guard.outputs.have_key == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: sahayakai-main/package-lock.json
+
+      - name: Install dependencies
+        if: steps.guard.outputs.have_key == 'true'
+        run: npm ci
+
+      - name: Install Playwright browser (chromium only)
+        if: steps.guard.outputs.have_key == 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Provision test user + storage state
+        if: steps.guard.outputs.have_key == 'true'
+        env:
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.QA_FIREBASE_SA_KEY }}
+        run: |
+          set -euo pipefail
+          out=$(node scripts/qa/playwright-storage-state.mjs \
+            --plan=premium --role=teacher --baseUrl="$UAT_BASE_URL")
+          storage_state=$(echo "$out" | jq -r '.storageStatePath')
+          uid=$(echo "$out" | jq -r '.uid')
+          echo "Provisioned QA user uid=$uid"
+          echo "QA_STORAGE_STATE=$storage_state" >> "$GITHUB_ENV"
+
+      - name: Run authenticated harness suite against UAT
+        if: steps.guard.outputs.have_key == 'true'
+        env:
+          QA_BASE_URL: ${{ vars.UAT_BASE_URL }}
+        run: npm run qa:e2e -- qa/tests/
+
+      - name: Cleanup test users
+        if: always() && steps.guard.outputs.have_key == 'true'
+        env:
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.QA_FIREBASE_SA_KEY }}
+        run: node scripts/qa/cleanup-test-users.mjs
+
+      - name: Upload Playwright report
+        if: failure() && steps.guard.outputs.have_key == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-auth-report
+          path: sahayakai-main/qa/results/playwright-report/
+          retention-days: 7
+
+  visual:
+    name: Visual regression + axe
+    needs: wait-for-uat
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: sahayakai-main
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: sahayakai-main/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser (chromium only)
+        run: npx playwright install --with-deps chromium
+
+      - name: Run @visual suite against UAT
+        env:
+          QA_BASE_URL: ${{ vars.UAT_BASE_URL }}
+          UPDATE_SNAPSHOTS: ${{ github.event.inputs.update_snapshots }}
+        run: |
+          extra=""
+          if [ "${UPDATE_SNAPSHOTS:-false}" = "true" ]; then
+            extra="--update-snapshots"
+            echo "::notice::Baseline-refresh run: regenerating linux snapshots instead of comparing."
+          fi
+          npm run qa:e2e -- qa/e2e/visual.spec.ts --grep @visual $extra
+
+      # Baseline-refresh runs upload the regenerated linux snapshots; download
+      # this artifact and commit its contents to qa/e2e/__screenshots__/.
+      # See qa/HARNESS.md "Visual Regression".
+      - name: Upload regenerated baselines
+        if: github.event.inputs.update_snapshots == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-baselines-linux
+          path: sahayakai-main/qa/e2e/__screenshots__/
+          retention-days: 14
+
+      - name: Upload Playwright report + diffs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-report-and-diffs
+          path: |
+            sahayakai-main/qa/results/playwright-report/
+            sahayakai-main/qa/results/playwright-output/
+          retention-days: 14
+
+  k6-probe:
+    name: k6 smoke probe
+    needs: wait-for-uat
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      # DEPENDENCY: the `smoke` PROFILE for launch-wall.js is added by a
+      # sibling PR. Until that lands, k6 falls back to the script's default
+      # (full morning-wall ramp) — do NOT run this against prod.
+      - name: Run k6 smoke profile against UAT
+        run: |
+          k6 run -e PROFILE=smoke -e BASE_URL="$UAT_BASE_URL" \
+            sahayakai-main/scripts/loadtest/launch-wall.js
+
+  report:
+    name: Post uat/verified status
+    needs: [e2e-auth, visual, k6-probe]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Compute state and post commit status
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          E2E_RESULT: ${{ needs.e2e-auth.result }}
+          VISUAL_RESULT: ${{ needs.visual.result }}
+          K6_RESULT: ${{ needs.k6-probe.result }}
+        run: |
+          set -euo pipefail
+          ok() { [ "$1" = "success" ] || [ "$1" = "skipped" ]; }
+          state=failure
+          if ok "$E2E_RESULT" && ok "$VISUAL_RESULT" && ok "$K6_RESULT"; then
+            state=success
+          fi
+          run_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          echo "uat/verified → $state (e2e:$E2E_RESULT visual:$VISUAL_RESULT k6:$K6_RESULT) for $TARGET_SHA"
+          gh api "repos/${{ github.repository }}/statuses/$TARGET_SHA" \
+            -f state="$state" \
+            -f context="uat/verified" \
+            -f description="e2e:$E2E_RESULT visual:$VISUAL_RESULT k6:$K6_RESULT" \
+            -f target_url="$run_url"
