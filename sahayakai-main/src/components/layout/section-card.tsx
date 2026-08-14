@@ -11,8 +11,8 @@ import { cn } from "@/lib/utils";
  * internal vertical rhythm — see docs/DESIGN_TOKENS.md §8.
  *
  * Usage:
- *   <SectionCard title="Class details" description="Tell us about your class">
- *     <FieldRow label="Grade">...</FieldRow>
+ *   <SectionCard title={t("Class details")} description={t("Tell us about your class")}>
+ *     ...form fields...
  *   </SectionCard>
  *
  * For helper / informational blocks: <SectionCard tone="muted">.

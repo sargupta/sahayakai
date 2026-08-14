@@ -6,7 +6,7 @@ import { useLanguage } from "@/context/language-context";
 import { cn } from "@/lib/utils";
 
 /**
- * InlineMicButton — the small mic icon inside a FieldRow.
+ * InlineMicButton — the small mic icon rendered next to a text input.
  *
  * Uses browser-native SpeechRecognition (free, on-device when available).
  * For richer voice flows (VAD, cloud fallback) use <MicrophoneInput>.
