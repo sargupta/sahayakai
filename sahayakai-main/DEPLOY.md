@@ -1,139 +1,85 @@
 # Deploy runbook — SahayakAI
 
-This file documents the production deploy pipeline for
-`sahayakai-hotfix-resilience` on Cloud Run, project `sahayakai-b4248`,
-region `asia-southeast1`.
+This file documents the deploy pipelines for SahayakAI on Cloud Run,
+project `sahayakai-b4248`. Prod service: `sahayakai-hotfix-resilience`
+(Singapore `asia-southeast1` + Mumbai `asia-south1` under the 2026-08
+dual-region model). UAT service: `sahayakai-preview`.
 
 For the *rules* every agent / contributor must follow when shipping
-code, see [`AGENTS.md`](./AGENTS.md). This file is for the operator
-who actually flips traffic.
+code, see [`AGENTS.md`](./AGENTS.md). For the branching / release
+policy, see [`docs/BRANCHING.md`](./docs/BRANCHING.md). This file is
+for the operator.
+
+> ⚠ **CURRENT STATE (2026-08-14): the three-pipeline model below is the
+> TARGET — P2 and P3 are NOT live yet.** Today, a push to `main` fires
+> the **LIVE `sahayakai-main-deploy` trigger** → prod `--no-traffic`
+> build via `cloudbuild.yaml` (flip is manual); nothing auto-deploys the
+> UAT tier. The P2/P3 configs (`cloudbuild-uat.yaml`,
+> `cloudbuild-release.yaml`, `uat-verify.yml`, `release-promote.yml`,
+> `scripts/release/*`) land in Tranches 2–3 — activation tracked in
+> [`docs/IMPLEMENTATION_LEDGER_2026-08.md`](./docs/IMPLEMENTATION_LEDGER_2026-08.md).
+> Until then, "Shipping a change" below is the target procedure, not
+> today's; the operative pieces today are the trigger table, rollback,
+> audit, and break-glass sections.
 
 ---
 
-## One-time setup (already done — keep for reference)
+## The three pipelines (2026-08 delivery model)
 
-### 1. Install the Cloud Build GitHub App on `sargupta/sahayakai`
+| # | Flow | Automation |
+|---|---|---|
+| P1 | PR → `main` | GitHub Actions gates (`test (20)`, `smoke`, quality gates) — merge blocked until green |
+| P2 | `main` push → UAT | Cloud Build `cloudbuild-uat.yaml`: build → `--no-traffic` deploy → smoke → flip; then `uat-verify.yml` (e2e + visual + k6) posts `uat/verified` on the SHA |
+| P3 | `release/*` push → prod | Cloud Build `cloudbuild-release.yaml`: both regions, `--no-traffic`; `release-promote.yml` auto-flips with LB-smoke auto-rollback |
 
-This is a manual OAuth step that cannot be scripted from `gcloud`.
+There is no `develop` branch (retired 2026-08-12, along with its
+`sahayakai-preview-deploy` trigger). The push-to-main prod-deploy flow
+(`sahayakai-main-deploy` → `cloudbuild.yaml`) is **being retired in
+Tranche 2 — its trigger is still LIVE today**; see the trigger table
+below.
 
-1. Open https://github.com/marketplace/google-cloud-build
-2. Click **Set up plan** → **Configure**
-3. Pick the `sargupta` account
-4. Choose **Only select repositories** → `sahayakai`
-5. Confirm
-
-### 2. Create the trigger
-
-```bash
-./scripts/setup-build-trigger.sh
-```
-
-Idempotent — re-run any time you want to update branch pattern,
-build-config path, or included files.
-
-### 3. Grant the Cloud Build SA permission to deploy Cloud Run + read Artifact Registry
-
-Already done; documented for completeness.
+## Shipping a change
 
 ```bash
-PROJECT_ID=sahayakai-b4248
-PROJECT_NUMBER=640589855975
-SA="${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com"
+# 1. Branch from main, do the work, open a PR
+git checkout main && git pull --ff-only origin main
+git checkout -b fix/your-change
+# ... commit ...
+gh pr create --base main
 
-# Allow Cloud Build SA to deploy Cloud Run revisions
-gcloud projects add-iam-policy-binding "$PROJECT_ID" \
-  --member="serviceAccount:$SA" \
-  --role="roles/run.admin"
+# 2. Merge when P1 gates are green. The merge push fires P2:
+#    UAT builds, deploys no-traffic, smokes, flips, then uat-verify.yml
+#    runs. Wait for the `uat/verified` commit status on the main SHA.
 
-# Allow Cloud Build SA to act-as the Cloud Run runtime SA
-gcloud iam service-accounts add-iam-policy-binding \
-  "${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
-  --member="serviceAccount:$SA" \
-  --role="roles/iam.serviceAccountUser" \
-  --project="$PROJECT_ID"
+# 3. Cut a release from a uat/verified SHA (fires P3 in both regions):
+bash scripts/release/cut-release.sh
+
+# 4. Promote:
+#    - Auto: release-promote.yml flips traffic after the regional builds
+#      go green, runs the LB smoke, and AUTO-ROLLS-BACK on failure.
+#    - Manual (same logic, human-invoked):
+bash scripts/release/promote-release.sh
+
+# 5. Tag the release and delete the release branch:
+git tag release-$(date +%F) && git push origin release-$(date +%F)
 ```
 
----
-
-## Day-to-day: shipping a change
-
-```text
-┌────────────────┐     ┌──────────────────┐     ┌──────────────────────┐
-│ git push       │ ──▶ │ Cloud Build      │ ──▶ │ Cloud Run revision   │
-│ origin main    │     │ runs             │     │ created with         │
-│                │     │ cloudbuild.yaml  │     │ --no-traffic + tag   │
-└────────────────┘     └──────────────────┘     └──────────────────────┘
-                                                          │
-                                                          ▼
-                                                ┌──────────────────────┐
-                                                │ Audit + flip traffic │
-                                                │ (manual, by you)     │
-                                                └──────────────────────┘
-```
-
-### 1. Push your change
-
-```bash
-# from a fix branch
-git checkout develop
-git pull --ff-only origin develop
-git merge fix/your-change --no-ff
-git push origin develop
-
-# When ready to release
-git checkout main
-git pull --ff-only origin main
-git merge develop --no-ff
-git push origin main          # ← trigger fires here
-```
-
-The push triggers the `sahayakai-main-deploy` Cloud Build job. Watch
-it at:
-
+Watch builds at:
 https://console.cloud.google.com/cloud-build/builds?project=sahayakai-b4248
 
-It typically takes 6–10 min. When green, a new revision exists in
-Cloud Run with **0 % traffic** and a tag `sha-<short-sha>`.
-
-### 2. Audit the new revision
+## Audit a deployed revision
 
 ```bash
-./scripts/audit-deployments.sh
+./scripts/audit-deployments.sh            # prod
+SERVICE=sahayakai-preview ./scripts/audit-deployments.sh   # UAT
 ```
 
 Look for ✗ in the feature probes. The probes are unauthenticated, so
-some features that only render for logged-in users will always show
-as missing — these are noted in the script. Real failures are:
+some logged-in-only features always show as missing — noted in the
+script. Real failures are `/api/jobs/*` anomalies and always-SSR
+action-tile strings missing.
 
-- `/api/jobs/*` returning anything other than the expected status
-- An action-tile string that should always SSR (e.g. `Open chat with
-  every teacher`) showing as missing.
-
-If the audit is clean, proceed. If anything looks wrong, **do not flip
-traffic** — open the build log to investigate.
-
-### 3. Flip traffic to the new revision
-
-```bash
-gcloud run services update-traffic sahayakai-hotfix-resilience \
-  --region=asia-southeast1 \
-  --project=sahayakai-b4248 \
-  --to-latest
-```
-
-This is the only step that affects production users. Re-run the audit
-script afterwards to confirm.
-
-### 4. (Optional) Smoke test from a real account
-
-Open https://sahayakai-hotfix-resilience-640589855975.asia-southeast1.run.app/community
-in your logged-in browser and confirm the change is visible.
-
----
-
-## Rollback
-
-If a deploy goes wrong:
+## Rollback (prod)
 
 ```bash
 # List recent revisions
@@ -143,14 +89,18 @@ gcloud run revisions list \
   --project=sahayakai-b4248 \
   --limit=10
 
-# Pick the last known-good revision (e.g. sahayakai-hotfix-resilience-00280-lin)
+# Pin traffic to the last known-good revision
 gcloud run services update-traffic sahayakai-hotfix-resilience \
   --region=asia-southeast1 \
   --project=sahayakai-b4248 \
-  --to-revisions=sahayakai-hotfix-resilience-00280-lin=100
+  --to-revisions=<known-good-revision>=100
 ```
 
-Traffic flip is instant. Rollback in under a minute.
+Repeat for the Mumbai region (`--region=asia-south1`) — both regions
+must be rolled together. Traffic flip is instant. See
+[`docs/ROLLBACK.md`](./docs/ROLLBACK.md) for the full procedure.
+`release-promote.yml` performs this automatically when its LB smoke
+fails during a promote.
 
 ---
 
@@ -167,11 +117,11 @@ Manage with `gcloud scheduler jobs ...`. Setup scripts live in
 
 ---
 
-## Emergency: trigger is broken / Cloud Build outage
+## Emergency: Cloud Build outage (break-glass)
 
-Use `scripts/safe-deploy.sh` as a fallback. Same `--no-traffic` +
-audit + flip workflow, but builds via local `gcloud run deploy
---source .` instead of the trigger.
+`scripts/safe-deploy.sh` is the fallback ONLY when Cloud Build itself
+is down. Same `--no-traffic` + audit + flip discipline, built via local
+`gcloud run deploy --source .`:
 
 ```bash
 ./scripts/safe-deploy.sh
@@ -180,44 +130,52 @@ gcloud run services update-traffic sahayakai-hotfix-resilience \
   --region=asia-southeast1 --project=sahayakai-b4248 --to-latest
 ```
 
+Reconcile with a real release (P3) as soon as Cloud Build is back.
+Never use `safe-deploy.sh` as the routine path.
+
 ---
 
-## Current state (as of 2026-05-21)
+## Triggers: state and retirement plan
 
-**The Cloud Build GitHub trigger described in the "One-time setup"
-section above is NOT currently active.** `gcloud beta builds triggers
-list --project=sahayakai-b4248` returns empty. The GitHub App may have
-been uninstalled or never wired up post-trigger-creation.
+| Trigger | Config | Status |
+|---|---|---|
+| UAT (`^main$`) | `cloudbuild-uat.yaml` | **Does not exist yet** — created in Tranche 2 of the 2026-08 rebuild (P2) |
+| Release (`^release/.*$`) | `cloudbuild-release.yaml` | **Does not exist yet** — created in Tranche 3 (P3) |
+| `sahayakai-main-deploy` (`^main$` → prod) | `cloudbuild.yaml` | **LIVE today; being retired in Tranche 2.** Every `main` push builds a prod revision at `--no-traffic` (flip manual). In the v2 model a `main` push must reach UAT only — a prod build on `main` pushes is a footgun. Delete only after the UAT trigger is verified live: `gcloud beta builds triggers delete sahayakai-main-deploy --project=sahayakai-b4248` |
+| `sahayakai-preview-deploy` (`^develop$`) | `cloudbuild-preview.yaml` | Retired with the `develop` branch (2026-08-12) |
 
-**All deploys to prod are currently via `scripts/safe-deploy.sh`** (the
-"emergency" path is the primary path right now). `safe-deploy.sh` is
-now branch-aware:
+## One-time setup history (kept for reference)
 
-| Branch       | Deploys to                              |
-|--------------|-----------------------------------------|
-| `main`       | `sahayakai-hotfix-resilience` (PROD)    |
-| `develop`    | `sahayakai-preview` (PREVIEW, staging)  |
-| `hotfix/*`   | `sahayakai-hotfix-resilience` (PROD)    |
-| anything else| ABORT (open PR to develop or main)      |
+### Cloud Build GitHub App on `sargupta/sahayakai`
 
-See [docs/PREVIEW_ENV.md](./docs/PREVIEW_ENV.md) for the preview
-environment.
+Manual OAuth step, cannot be scripted:
 
-To re-enable auto-deploy via Cloud Build triggers later:
+1. Open https://github.com/marketplace/google-cloud-build
+2. **Set up plan** → **Configure** → account `sargupta`
+3. **Only select repositories** → `sahayakai` → confirm
 
-1. Install the Cloud Build GitHub App per the "One-time setup" section
-   above (manual OAuth).
-2. Run `bash scripts/setup-build-trigger.sh` (prod) and
-   `bash scripts/setup-build-trigger-preview.sh` (preview).
-3. Verify with `gcloud beta builds triggers list --project=sahayakai-b4248`.
+### Cloud Build SA permissions (already granted)
 
-## Preview environment
+```bash
+PROJECT_ID=sahayakai-b4248
+PROJECT_NUMBER=640589855975
+SA="${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com"
 
-`sahayakai-preview` is a separate Cloud Run service. Auto-deploys from
-develop tip once the GitHub App is reinstalled; until then, manual via
-`safe-deploy.sh` after `git checkout develop`. It is the staging tier
-where features get validated before promotion to prod.
+gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+  --member="serviceAccount:$SA" \
+  --role="roles/run.admin"
+
+gcloud iam service-accounts add-iam-policy-binding \
+  "${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+  --member="serviceAccount:$SA" \
+  --role="roles/iam.serviceAccountUser" \
+  --project="$PROJECT_ID"
+```
+
+## UAT environment
+
+`sahayakai-preview` is the UAT tier fed by `main` pushes (P2). Full
+docs: [`docs/UAT_ENV.md`](./docs/UAT_ENV.md) (renamed from
+`PREVIEW_ENV.md`).
 
 URL: `https://sahayakai-preview-640589855975.asia-southeast1.run.app`
-
-Full docs: [docs/PREVIEW_ENV.md](./docs/PREVIEW_ENV.md).

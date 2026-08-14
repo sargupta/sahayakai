@@ -6,23 +6,45 @@ Defined in:
 - `src/app/globals.css` (CSS variables + utility classes)
 - `tailwind.config.ts` (Tailwind utility names)
 
-This is **Phase 1** of the layout overhaul. See [`DESIGN_EXECUTION_PLAN.md`](./DESIGN_EXECUTION_PLAN.md) for the full migration plan.
+This began as **Phase 1** of the layout overhaul (the original `DESIGN_EXECUTION_PLAN.md` is retired; the plan-of-record for design work is Tranche 6 of [`EXECUTION_PLAN_2026-07.md`](./EXECUTION_PLAN_2026-07.md)).
 
 ---
 
 ## 1. Color
 
-All colors use HSL CSS variables defined in `:root` of `globals.css`.
+All colors use HSL CSS variables defined in `:root` of `globals.css`. The light palette is duplicated verbatim in the `.force-light` block (marketing pages) — **any change to a `:root` color must be mirrored there in the same PR** until that block is generated.
 
 ### Brand
 | Token | Value | Tailwind | When to use |
 |---|---|---|---|
-| `--primary` | Saffron `#FF9933` | `bg-primary`, `text-primary` | Primary CTA, active state, brand mark, focus ring |
-| `--secondary` | Deep Green `#2C5F2D` | `bg-secondary` | Confirmations, "saved" states. **Never** combine with primary in the same element |
-| `--accent` | Navy `#000080` | `bg-accent` | Rare — high-attention info badges only |
+| `--primary` | Warm saffron `hsl(24 65% 47%)` ≈ `#C96A28` | `bg-primary`, `text-primary` | Primary CTA, active state, brand mark, focus ring |
+| `--secondary` | Deep Green `hsl(123 37% 25%)` (`#2C5F2D`) | `bg-secondary` | Confirmations, "saved" states. **Never** combine with primary in the same element |
+| `--accent` | Navy `hsl(240 100% 25%)` (`#000080`) | `bg-accent` | Rare — high-attention info badges only |
+
+History: flag saffron `#FF9933` and the softer `#E0924D` (`hsl(28 70% 59%)`) both measured ~2.5:1 on white and were retired as interactive/text tones (2026-07-03). The over-dark `#B35609` correction was relaxed on 2026-08-13 to the current `hsl(24 65% 47%)`. As of 2026-08 the last drifted `hsl(28 70% 59%)` remnants (`--chart-1`, `shadow-glow`) were re-pointed at `--primary`'s value.
+
+### Measured contrast (WCAG 2.x, computed 2026-08-14)
+
+| Pair | Ratio | Verdict |
+|---|---|---|
+| `--primary` `hsl(24 65% 47%)` on white `#FFFFFF` | **3.88:1** | Passes AA for **large text** (≥3:1) and **non-text UI components**; **below** the 4.5:1 normal-text bar |
+| `--primary` on `--background` `hsl(40 20% 99.5%)` | **3.84:1** | Same verdict as on white |
+| White on `--primary` (buttons) | **3.88:1** | Same ratio (symmetric); keep button labels ≥14pt bold or ≥18pt, or accept large-text-only AA |
+| `--foreground` on `--background` | **17.71:1** | AAA |
+| `--secondary` on white | **8.44:1** | AAA |
+| `--accent` (navy) on white | **16.01:1** | AAA |
+| Dark mode `--primary` `hsl(28 80% 60%)` on dark `--background` | **7.70:1** | AAA-level |
+| Dark mode `--primary-foreground` on dark `--primary` | **7.54:1** | AAA-level |
+| `--sidebar-accent-foreground` on `--sidebar-accent` tint | **3.57:1** | Large text / UI components only |
+
+Usage rule that follows from the numbers: saffron may color **large headings, icons, borders, focus rings, and filled buttons**; body-size saffron text on white (or white body text on saffron) does not meet AA 4.5:1 — use `--foreground` for body copy.
+
+### Palette FREEZE (2026-08)
+
+The brand palette is **frozen**. Any PR that changes `--primary` (or any brand/status color) MUST include the contrast math in the PR description: recompute the table above (ratio vs white and vs `--background`, both modes) and state which WCAG level each affected pair meets. No eyeballed color changes. Remember the `.force-light` mirror.
 
 ### Saffron scale (landing only)
-`saffron-{50,100,200,300,500,600,700,800}` — used by hero CTA gradients and pillar strip. Don't introduce inside the authenticated app.
+`--saffron-{50,100,200,300,600,700,800}` — hero CTA gradients, pillar strip, animated-headline border. Decorative ONLY (the 50–300 tints measure far below 3:1) — never text or icons, and don't introduce inside the authenticated app.
 
 ### Surfaces
 | Token | Tailwind | Use |
@@ -39,7 +61,10 @@ All colors use HSL CSS variables defined in `:root` of `globals.css`.
 |---|---|---|
 | `--destructive` | `bg-destructive`, `text-destructive` | Destructive actions, errors |
 
-**Anti-pattern:** custom hex/rgb values in components. If you need a color that isn't here, add a token first.
+### Charts
+`--chart-1..5` — saffron (= `--primary`), green, navy, gold, rose. `--chart-1` matches `--primary` exactly (drift fixed 2026-08); if `--primary` ever changes under the FREEZE process, `--chart-1` and `shadow-glow` (in `tailwind.config.ts`) move with it.
+
+**Anti-pattern:** custom hex/rgb values in components. If you need a color that isn't here, add a token first. Gate 11 (design tokens) blocks raw palette classes in changed files.
 
 ---
 

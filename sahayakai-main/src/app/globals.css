@@ -98,6 +98,11 @@
 
      Token values are copied verbatim from the `:root` light block
      below — keep them in sync if the light palette ever changes.
+
+     MUST MIRROR :root — this block is a hand-maintained copy of the
+     `:root` light palette. Any edit to a `:root` token below MUST be
+     replicated here in the same PR until the block is generated from a
+     single source (planned; do not restructure it by hand now).
      ======================================== */
   .force-light {
     --background: 40 20% 99.5%;
@@ -128,7 +133,7 @@
     --input: 220 16% 90%;
     --ring: 24 65% 47%;
 
-    --chart-1: 28 70% 59%;
+    --chart-1: 24 65% 47%;
     --chart-2: 123 37% 25%;
     --chart-3: 240 100% 25%;
     --chart-4: 43 96% 56%;
@@ -217,15 +222,18 @@
        History: flag saffron #FF9933 and the softer #E0924D (hsl 28 70% 59%)
        both measure only ~2.5:1 on white — failing WCAG AA. A 2026-07-03 fix
        darkened it to #B35609 (hsl 27 90% 37%, 4.94:1), but that read too
-       dark. 2026-08-13: settled on the warm AA-passing middle ground
-       hsl(24 65% 47%) = #C96A28 — lighter/warmer than #B35609 while still
-       passing AA both ways (saffron text on white, white text on saffron).
+       dark. 2026-08-13: settled on the warm middle ground
+       hsl(24 65% 47%) ≈ #C96A28. Measured 2026-08-14: 3.88:1 on white —
+       passes AA for LARGE text (≥3:1) and non-text UI components, but is
+       BELOW the 4.5:1 normal-text threshold. See the AA-pairs table in
+       docs/DESIGN_TOKENS.md for the usage rules and the palette FREEZE.
        Flag saffron #FF9933 and the bright --saffron-{50..300} shades stay
        DECORATIVE ONLY (gradients, tints, glows) — never text or icons. */
     --primary: 24 65% 47%;
-    /* #C96A28 - Warm saffron, AA-passing interactive/text tone */
+    /* ≈#C96A28 - Warm saffron interactive tone (contrast data in
+       docs/DESIGN_TOKENS.md) */
     --primary-foreground: 0 0% 100%;
-    /* White text on Saffron — 4.94:1, passes AA */
+    /* White on saffron — 3.88:1 measured; AA for large text / UI only */
 
     /* Saffron scale for landing page — same hue ~28° as --primary, shaded
        across lightness. Used by landing-hero CTAs, landing-pillar-strip
@@ -309,8 +317,9 @@
     --motion-medium: 350ms; /* page transition, modal */
 
     /* Chart Colors - Indian-friendly palette */
-    --chart-1: 28 70% 59%;
-    /* Saffron */
+    --chart-1: 24 65% 47%;
+    /* Saffron — matches --primary (2026-08 token-drift fix; was the
+       pre-2026-07 #E0924D value hsl(28 70% 59%)) */
     --chart-2: 123 37% 25%;
     /* Green */
     --chart-3: 240 100% 25%;
@@ -329,7 +338,9 @@
     --sidebar-accent: 28 70% 96%;
     /* Light Saffron Tint */
     --sidebar-accent-foreground: 24 65% 47%;
-    /* Saffron Text — AA tone (#B35609), 4.54:1 on the 96% tint */
+    /* Saffron text — 3.57:1 measured on the 96% tint (AA for large
+       text / UI components; the old #B35609 note claiming 4.54:1 was
+       stale) */
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 24 65% 47%;
   }

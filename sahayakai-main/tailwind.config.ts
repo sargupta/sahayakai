@@ -116,7 +116,7 @@ export default {
       boxShadow: {
         soft: '0 1px 2px 0 rgb(0 0 0 / 0.04), 0 1px 3px 0 rgb(0 0 0 / 0.03)',
         elevated: '0 4px 12px -2px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.04)',
-        glow: '0 0 0 3px hsl(28 70% 59% / 0.12), 0 4px 12px -2px rgb(0 0 0 / 0.08)',
+        glow: '0 0 0 3px hsl(24 65% 47% / 0.12), 0 4px 12px -2px rgb(0 0 0 / 0.08)',
         'inner-soft': 'inset 0 1px 2px 0 rgb(0 0 0 / 0.04)',
         // Phase 1 (2026-04-24): floating shadow for modals/sheets/menus
         floating: 'var(--shadow-floating)',
