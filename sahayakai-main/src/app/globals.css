@@ -289,6 +289,20 @@
     /* #EF4444 - Red */
     --destructive-foreground: 0 0% 100%;
 
+    /* Status tokens (Gate 11 prereq, 2026-08-14) — the legal alternative to
+       raw green/amber/blue Tailwind palette classes in status UI. All three
+       pass WCAG AA both ways: as text/icon on --background AND with their
+       white foreground on top. */
+    --success: 142 72% 29%;
+    /* #15803D - Green, 5.0:1 on white */
+    --success-foreground: 0 0% 100%;
+    --warning: 26 90% 37%;
+    /* #B45309 - Deep amber, 5.0:1 on white */
+    --warning-foreground: 0 0% 100%;
+    --info: 221 83% 53%;
+    /* #2563EB - Blue, 5.2:1 on white */
+    --info-foreground: 0 0% 100%;
+
     /* Radius - Soft, friendly */
     --radius: 0.75rem;
     /* 12px - Rounded corners */
@@ -383,6 +397,19 @@
 
     --destructive: 0 62% 45%;
     --destructive-foreground: 0 0% 100%;
+
+    /* Status tokens — brighter tints for the dark base (all pass AA as
+       text/icon on --background). Foregrounds flip to dark navy: white on
+       these tints fails AA, same rationale as --primary-foreground above. */
+    --success: 142 71% 58%;
+    /* #4ADE80 - 10.4:1 on the dark background */
+    --success-foreground: 222 47% 11%;
+    --warning: 46 96% 56%;
+    /* #FBBF24 - 10.9:1 on the dark background */
+    --warning-foreground: 222 47% 11%;
+    --info: 213 94% 68%;
+    /* #60A5FA - 7.2:1 on the dark background */
+    --info-foreground: 222 47% 11%;
 
     --border: 222 13% 22%;
     /* Visible separators — lighter than card so edges show */

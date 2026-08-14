@@ -8,7 +8,7 @@ name: E2E Smoke
 
 on:
   pull_request:
-    branches: [develop, main]
+    branches: [main, 'release/**']
 
 concurrency:
   group: e2e-smoke-${{ github.ref }}
