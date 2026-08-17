@@ -8,7 +8,7 @@
     "landingModeAtEpoch": 1786989417,
     "deadlineEpoch": 1786993017,
     "mode": "build",
-    "wakeCount": 3,
+    "wakeCount": 4,
     "consecutiveNoProgressWakes": 0,
     "haltReason": null
   },
@@ -49,16 +49,16 @@
     ]
   },
   "machine": {
-    "reconciledAtEpoch": 1786965783,
+    "reconciledAtEpoch": 1786966055,
     "git": {
       "appRoot": "/Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter",
       "gitPathPrefix": "sahayakai-flutter/",
       "branch": "feature/flutter-rebuild",
-      "head": "edba55e5a924db867f9932ec5cd08d77aa290304",
-      "headShort": "edba55e5a",
-      "headEpoch": 1786965760,
+      "head": "4da09aa9fccfe8c2c9164b121f48b93a4e9c91bd",
+      "headShort": "4da09aa9f",
+      "headEpoch": 1786966053,
       "remoteUrl": "https://github.com/sargupta/sahayakai.git",
-      "aheadOfOriginMain": 192,
+      "aheadOfOriginMain": 194,
       "behindOriginMain": 66,
       "dirtyPaths": [
         "ahayakai-flutter/docs/flutter/loop/LOOP_STATE.json",
@@ -132,8 +132,8 @@
     "status": "ok",
     "violations": [],
     "consecutiveViolationWakes": 0,
-    "checkedAtEpoch": 1786965783,
-    "checkedAtSha": "edba55e5a924db867f9932ec5cd08d77aa290304"
+    "checkedAtEpoch": 1786966055,
+    "checkedAtSha": "4da09aa9fccfe8c2c9164b121f48b93a4e9c91bd"
   },
   "measurements": {
     "analyze": {
@@ -412,19 +412,79 @@
       "dependsOn": [
         "U0.1"
       ],
-      "status": "pending",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "reviewRounds": 0,
-      "verifiedAtSha": null,
-      "commit": null,
+      "verifiedAtSha": "4da09aa9fccfe8c2c9164b121f48b93a4e9c91bd",
+      "commit": "4da09aa9f",
       "evidence": {
-        "gatesRun": [],
+        "gatesRun": [
+          {
+            "gate": "guard",
+            "exit": 0,
+            "durationSec": 1,
+            "tail": "GUARD NOTE: sibling tree has pre-existing changes (not caused by this wake):\n    ?? sahayakai-main/._fields.mjs\n    ?? sahayakai-main/._live.mjs\n    ?? sahayakai-main/.claude/launch.json\n    ?? sahayakai-main/.claude/skills/\n    ?? sahayakai-main/AI_Literacy_Drive_Women_Siliguri_INTERN_MARKETING_PLAYBOOK.md\nGUARD NOTE: the loop must not add to these. Web/sidecar units use a separate worktree.\nloop_guard: OK (branch=feature/flutter-rebuild head=0ff6d8084)"
+          },
+          {
+            "gate": "reconcile",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "reconcile: head=0ff6d8084 branch=feature/flutter-rebuild tests=1552 goldens=0 i18n_missing=4760 claims=2g/8r\nreconcile: integrity OK"
+          },
+          {
+            "gate": "scope",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "all changes within the declared file list\n  (excluding 9 declared pre-existing dirty path(s))"
+          },
+          {
+            "gate": "format",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "no hand-written dart files changed"
+          },
+          {
+            "gate": "analyze",
+            "exit": 0,
+            "durationSec": 5,
+            "tail": "Analyzing sahayakai-flutter...                                  \nNo issues found! (ran in 3.8s)"
+          },
+          {
+            "gate": "token_guard",
+            "exit": 0,
+            "durationSec": 1,
+            "tail": "token-guard: PASS"
+          },
+          {
+            "gate": "secret_scan",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "secret_scan: OK"
+          },
+          {
+            "gate": "contradiction",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "contradiction_guard: OK"
+          },
+          {
+            "gate": "doc_truth",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "CLAIM                            ACTUAL   EXPECT   VERDICT\ngolden_gate_exists               0        >=12     RED\ni18n_zero_untranslated           4760     ==0      RED\ni18n_zero_identical_english      40       ==0      RED\nfonts_bundled                    0        >=11     RED\nfonts_no_runtime_fetch           1        ==0      RED\nrelease_signing_verified         0        ==1      RED\nflutter_ci_present               0        >=1      RED\nlints_enforced                   0        >=15     RED\nfirebase_wired                   1        >=1      GREEN\nturn_based_fallback_present      5        >=1      GREEN\n\ndoc_truth_guard: 2 green / 8 red\n  red: golden_gate_exists i18n_zero_untranslated i18n_zero_identical_english fonts_bundled fonts_no_runtime_fetch release_signing_verified flutter_ci_present lints_enforced"
+          }
+        ],
         "reviewers": [],
-        "artifacts": []
+        "artifacts": [],
+        "gateProfile": "fast",
+        "gateExit": 0,
+        "gateAtSha": "0ff6d8084602be1dd5c1632567ab050934f59eae"
       },
       "failure": null,
       "blockedBy": null,
-      "notes": []
+      "notes": [
+        "3 of 4 patterns pre-existed from the Flutter template; only keystore.properties (the Capacitor project's filename) was missing. Verified with git check-ignore on 5 candidate paths, not by reading the file. No BUILD/review subagents: a one-line gitignore with a mechanical check has no design surface for them to review."
+      ]
     },
     {
       "id": "U0.4",
