@@ -8,7 +8,7 @@
     "landingModeAtEpoch": 1786989417,
     "deadlineEpoch": 1786993017,
     "mode": "build",
-    "wakeCount": 2,
+    "wakeCount": 3,
     "consecutiveNoProgressWakes": 0,
     "haltReason": null
   },
@@ -49,16 +49,16 @@
     ]
   },
   "machine": {
-    "reconciledAtEpoch": 1786965733,
+    "reconciledAtEpoch": 1786965783,
     "git": {
       "appRoot": "/Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter",
       "gitPathPrefix": "sahayakai-flutter/",
       "branch": "feature/flutter-rebuild",
-      "head": "88c14f6b0f8b00cf58c6f82a42244bfbc38b726c",
-      "headShort": "88c14f6b0",
-      "headEpoch": 1786965726,
+      "head": "edba55e5a924db867f9932ec5cd08d77aa290304",
+      "headShort": "edba55e5a",
+      "headEpoch": 1786965760,
       "remoteUrl": "https://github.com/sargupta/sahayakai.git",
-      "aheadOfOriginMain": 190,
+      "aheadOfOriginMain": 192,
       "behindOriginMain": 66,
       "dirtyPaths": [
         "ahayakai-flutter/docs/flutter/loop/LOOP_STATE.json",
@@ -132,8 +132,8 @@
     "status": "ok",
     "violations": [],
     "consecutiveViolationWakes": 0,
-    "checkedAtEpoch": 1786965733,
-    "checkedAtSha": "88c14f6b0f8b00cf58c6f82a42244bfbc38b726c"
+    "checkedAtEpoch": 1786965783,
+    "checkedAtSha": "edba55e5a924db867f9932ec5cd08d77aa290304"
   },
   "measurements": {
     "analyze": {
@@ -203,24 +203,24 @@
         "docs/flutter/pillars/PILLAR_BUILD_STATE.ARCHIVED.json"
       ],
       "dependsOn": [],
-      "status": "stale",
-      "attempts": 2,
+      "status": "done",
+      "attempts": 3,
       "reviewRounds": 0,
-      "verifiedAtSha": "7adadfb9a354b282964ef430a8189aafcc1ae625",
-      "commit": "7adadfb9a",
+      "verifiedAtSha": "edba55e5a924db867f9932ec5cd08d77aa290304",
+      "commit": "edba55e5a",
       "evidence": {
         "gatesRun": [
           {
             "gate": "guard",
             "exit": 0,
-            "durationSec": 1,
-            "tail": "GUARD NOTE: sibling tree has pre-existing changes (not caused by this wake):\n    ?? sahayakai-main/._fields.mjs\n    ?? sahayakai-main/._live.mjs\n    ?? sahayakai-main/.claude/launch.json\n    ?? sahayakai-main/.claude/skills/\n    ?? sahayakai-main/AI_Literacy_Drive_Women_Siliguri_INTERN_MARKETING_PLAYBOOK.md\nGUARD NOTE: the loop must not add to these. Web/sidecar units use a separate worktree.\nloop_guard: OK (branch=feature/flutter-rebuild head=cb0d49fa8)"
+            "durationSec": 0,
+            "tail": "GUARD NOTE: sibling tree has pre-existing changes (not caused by this wake):\n    ?? sahayakai-main/._fields.mjs\n    ?? sahayakai-main/._live.mjs\n    ?? sahayakai-main/.claude/launch.json\n    ?? sahayakai-main/.claude/skills/\n    ?? sahayakai-main/AI_Literacy_Drive_Women_Siliguri_INTERN_MARKETING_PLAYBOOK.md\nGUARD NOTE: the loop must not add to these. Web/sidecar units use a separate worktree.\nloop_guard: OK (branch=feature/flutter-rebuild head=edba55e5a)"
           },
           {
             "gate": "reconcile",
             "exit": 0,
-            "durationSec": 0,
-            "tail": "reconcile: head=cb0d49fa8 branch=feature/flutter-rebuild tests=1552 goldens=0 i18n_missing=4760 claims=2g/8r\nreconcile: integrity OK"
+            "durationSec": 1,
+            "tail": "reconcile: head=edba55e5a branch=feature/flutter-rebuild tests=1552 goldens=0 i18n_missing=4760 claims=2g/8r\nreconcile: integrity OK"
           },
           {
             "gate": "scope",
@@ -238,7 +238,7 @@
             "gate": "analyze",
             "exit": 0,
             "durationSec": 5,
-            "tail": "Analyzing sahayakai-flutter...                                  \nNo issues found! (ran in 3.7s)"
+            "tail": "Analyzing sahayakai-flutter...                                  \nNo issues found! (ran in 3.8s)"
           },
           {
             "gate": "token_guard",
@@ -269,14 +269,15 @@
         "artifacts": [],
         "gateProfile": "fast",
         "gateExit": 0,
-        "gateAtSha": "cb0d49fa8a7521b07a16af8a9e6541865df8a337"
+        "gateAtSha": "edba55e5a924db867f9932ec5cd08d77aa290304"
       },
       "failure": null,
       "blockedBy": null,
       "notes": [
         "selftest.sh added mid-unit after three guards were found to be silent no-ops; 11/11 now demonstrably fail when they should",
         "Harness landed over two commits (cb0d49fa8, 7adadfb9a). selftest.sh was added mid-unit after three guards were found to be silent no-ops and one evidence-binding hole was found by testing the refusal path; 12/12 cases now demonstrably fail when they should.",
-        "auto-demoted to stale at 1786965344: 1 declared file(s) changed since 7adadfb9a — re-gate required"
+        "auto-demoted to stale at 1786965344: 1 declared file(s) changed since 7adadfb9a — re-gate required",
+        "Re-verified after the harness scripts were hardened during U0.2 (auto-decay exclusion, scope bookkeeping, codegen idempotency, test ratchet)."
       ]
     },
     {
