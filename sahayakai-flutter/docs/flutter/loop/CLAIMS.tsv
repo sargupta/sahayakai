@@ -27,6 +27,7 @@ i18n_zero_untranslated	All 11 locales are fully translated	bash scripts/loop/i18
 i18n_zero_identical_english	No locale ships an English string as its translation	bash scripts/loop/i18n_count.sh identical	==0
 fonts_bundled	Fonts ship inside the app, not fetched at runtime	bash scripts/loop/font_count.sh families	>=11
 fonts_no_runtime_fetch	The app cannot fetch a font at runtime	bash scripts/loop/font_count.sh google_fonts_dep	==0
+fonts_not_fetched_from_lib	No app code can trigger a runtime font fetch	bash scripts/loop/font_lib_refs.sh	==0
 release_signing_verified	Release builds are signed with the upload key	bash scripts/loop/verify_aab_signer.sh --quiet	==1
 flutter_ci_present	CI runs the Flutter gate ladder on this branch	grep -rl 'flutter analyze' ../.github/workflows/ 2>/dev/null | wc -l | tr -d ' '	>=1
 lints_enforced	Custom lint rules are enforced, not merely declared	bash scripts/loop/lint_count.sh	>=15

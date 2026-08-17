@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
 
@@ -16,28 +15,26 @@ import 'app_colors.dart';
 /// additive opt-ins exposed via a `ThemeExtension<AppTextExtras>` built on the
 /// same `scheme`/`isIndic` path as `AppTheme`.
 ///
-/// DUAL FALLBACK: the web pairs BOTH Latin families with the Noto **Sans**
-/// Indic block (`headline: [Outfit, "Noto Sans Devanagari", …]`,
+/// FALLBACK: the web pairs BOTH Latin families with the Noto **Sans** Indic
+/// block (`headline: [Outfit, "Noto Sans Devanagari", …]`,
 /// `body: [Inter, "Noto Sans Devanagari", …]`). Since Outfit is a sans, its
 /// Indic companion is Noto Sans — so both families degrade through
 /// [kIndicSansFallback], matching production exactly and never clipping matras.
-/// [kIndicSerifFallback] is retained (and warmed) for compatibility so the
-/// dual-fallback set stays registered, though production no longer ships a
-/// serif Latin family.
-
-/// Serif Indic fallback set — retained for compatibility (no serif Latin family
-/// ships today; production's display family is the sans Outfit).
-const List<String> kIndicSerifFallback = [
-  'Noto Serif Devanagari',
-  'Noto Serif Bengali',
-  'Noto Serif Tamil',
-  'Noto Serif Telugu',
-  'Noto Serif Kannada',
-  'Noto Serif Malayalam',
-  'Noto Serif Gujarati',
-  'Noto Serif Gurmukhi',
-  'Noto Serif Oriya',
-];
+///
+/// BUNDLED, NOT FETCHED (U0.5). Every family here ships inside the APK via
+/// `pubspec.yaml`'s `flutter.fonts` block. This previously went through
+/// `google_fonts`, which streams a face on first use — so a teacher opening the
+/// app offline saw fallback boxes for their own script, and golden tests were
+/// impossible, because `flutter test` has no network and would have blessed
+/// those boxes as correct.
+///
+/// `warmIndicFonts()` went with it. It existed to pre-fetch faces; the engine
+/// registers bundled fonts at startup, so there is nothing left to warm. A
+/// no-op kept "for compatibility" is just a lie in the shape of a function.
+///
+/// `kIndicSerifFallback` went too. It was exported from `app_theme.dart` but
+/// never consumed as a `fontFamilyFallback` anywhere, so bundling its nine Noto
+/// Serif families would have doubled the Indic payload to render nothing.
 
 /// Sans fallback per Indic script — Outfit (display) and Inter (body) both
 /// degrade to Noto Sans, matching the web `headline`/`body` families.
@@ -56,40 +53,6 @@ const List<String> kIndicSansFallback = [
 /// Back-compat alias (the app referenced a single `kIndicFallback`).
 const List<String> kIndicFallback = kIndicSansFallback;
 
-/// Call once at startup so every family is registered before it is referenced
-/// as a `fontFamilyFallback`. Warms all 20 families (Inter, Outfit, 9 Noto
-/// Sans, 9 Noto Serif) so the whole dual-fallback set is registered; if a face
-/// fails to resolve for a script the chain degrades to Noto Sans / Inter —
-/// never a tofu box.
-///
-/// foundation-v1 uses google_fonts RUNTIME fetch (fonts stream on first use);
-/// bundling the TTFs as offline assets is a deferred hardening task.
-void warmIndicFonts() {
-  // Latin primaries
-  GoogleFonts.inter();
-  GoogleFonts.outfit();
-  // Sans Indic
-  GoogleFonts.notoSansDevanagari();
-  GoogleFonts.notoSansBengali();
-  GoogleFonts.notoSansTamil();
-  GoogleFonts.notoSansTelugu();
-  GoogleFonts.notoSansKannada();
-  GoogleFonts.notoSansMalayalam();
-  GoogleFonts.notoSansGujarati();
-  GoogleFonts.notoSansGurmukhi();
-  GoogleFonts.notoSansOriya();
-  // Serif Indic (retained for the dual-fallback set)
-  GoogleFonts.notoSerifDevanagari();
-  GoogleFonts.notoSerifBengali();
-  GoogleFonts.notoSerifTamil();
-  GoogleFonts.notoSerifTelugu();
-  GoogleFonts.notoSerifKannada();
-  GoogleFonts.notoSerifMalayalam();
-  GoogleFonts.notoSerifGujarati();
-  GoogleFonts.notoSerifGurmukhi();
-  GoogleFonts.notoSerifOriya();
-}
-
 /// Outfit (display) + Inter (structure/body). Pass [isIndic] true when the
 /// active locale uses an Indic script to raise line-heights so matras /
 /// conjuncts never clip (§3.2 floors).
@@ -107,26 +70,38 @@ class AppText {
     double h(double latin, double indic) => isIndic ? indic : latin;
 
     // Display family — Outfit (geometric sans), Noto Sans Indic fallback.
-    TextStyle display(double size, FontWeight w, double lh,
-            {Color? c, double ls = 0, List<FontFeature>? feats}) =>
-        GoogleFonts.outfit(
-          fontSize: size,
-          fontWeight: w,
-          height: lh,
-          letterSpacing: ls,
-          color: c ?? onS,
-          fontFeatures: feats,
-        ).copyWith(fontFamilyFallback: kIndicSansFallback);
-    TextStyle sans(double size, FontWeight w, double lh,
-            {Color? c, double ls = 0, List<FontFeature>? feats}) =>
-        GoogleFonts.inter(
-          fontSize: size,
-          fontWeight: w,
-          height: lh,
-          letterSpacing: ls,
-          color: c ?? onS,
-          fontFeatures: feats,
-        ).copyWith(fontFamilyFallback: kIndicSansFallback);
+    TextStyle display(
+      double size,
+      FontWeight w,
+      double lh, {
+      Color? c,
+      double ls = 0,
+      List<FontFeature>? feats,
+    }) => TextStyle(
+      fontFamily: 'Outfit',
+      fontSize: size,
+      fontWeight: w,
+      height: lh,
+      letterSpacing: ls,
+      color: c ?? onS,
+      fontFeatures: feats,
+    ).copyWith(fontFamilyFallback: kIndicSansFallback);
+    TextStyle sans(
+      double size,
+      FontWeight w,
+      double lh, {
+      Color? c,
+      double ls = 0,
+      List<FontFeature>? feats,
+    }) => TextStyle(
+      fontFamily: 'Inter',
+      fontSize: size,
+      fontWeight: w,
+      height: lh,
+      letterSpacing: ls,
+      color: c ?? onS,
+      fontFeatures: feats,
+    ).copyWith(fontFamilyFallback: kIndicSansFallback);
 
     return TextTheme(
       // --- Outfit (display / masthead) ---
@@ -153,39 +128,64 @@ class AppText {
   /// so `AppTheme.withIndic` keeps them in sync with the TextTheme.
   static AppTextExtras buildExtras(ColorScheme s, {required bool isIndic}) {
     final onS = s.onSurface;
-    final saffronText =
-        s.brightness == Brightness.dark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
+    final saffronText = s.brightness == Brightness.dark
+        ? AppColors.dPrimaryText
+        : AppColors.lPrimaryText;
     double h(double latin, double indic) => isIndic ? indic : latin;
 
     // Display family — Outfit (geometric sans), Noto Sans Indic fallback.
-    TextStyle display(double size, FontWeight w, double lh,
-            {Color? c, double ls = 0, List<FontFeature>? feats}) =>
-        GoogleFonts.outfit(
-          fontSize: size,
-          fontWeight: w,
-          height: lh,
-          letterSpacing: ls,
-          color: c ?? onS,
-          fontFeatures: feats,
-        ).copyWith(fontFamilyFallback: kIndicSansFallback);
-    TextStyle sans(double size, FontWeight w, double lh,
-            {Color? c, double ls = 0, List<FontFeature>? feats}) =>
-        GoogleFonts.inter(
-          fontSize: size,
-          fontWeight: w,
-          height: lh,
-          letterSpacing: ls,
-          color: c ?? onS,
-          fontFeatures: feats,
-        ).copyWith(fontFamilyFallback: kIndicSansFallback);
+    TextStyle display(
+      double size,
+      FontWeight w,
+      double lh, {
+      Color? c,
+      double ls = 0,
+      List<FontFeature>? feats,
+    }) => TextStyle(
+      fontFamily: 'Outfit',
+      fontSize: size,
+      fontWeight: w,
+      height: lh,
+      letterSpacing: ls,
+      color: c ?? onS,
+      fontFeatures: feats,
+    ).copyWith(fontFamilyFallback: kIndicSansFallback);
+    TextStyle sans(
+      double size,
+      FontWeight w,
+      double lh, {
+      Color? c,
+      double ls = 0,
+      List<FontFeature>? feats,
+    }) => TextStyle(
+      fontFamily: 'Inter',
+      fontSize: size,
+      fontWeight: w,
+      height: lh,
+      letterSpacing: ls,
+      color: c ?? onS,
+      fontFeatures: feats,
+    ).copyWith(fontFamilyFallback: kIndicSansFallback);
 
     return AppTextExtras(
       displayHero: display(40, FontWeight.w600, h(1.12, 1.32), ls: -0.8),
       lead: sans(17, FontWeight.w400, h(1.50, 1.65)),
       // Eyebrow / overline colour = saffron TEXT token; the widget applies
       // UPPERCASE for Latin only (unicameral Indic leans on tracking + saffron).
-      eyebrow: sans(12, FontWeight.w700, h(1.40, 1.50), ls: 1.2, c: saffronText),
-      overline: sans(12, FontWeight.w600, h(1.40, 1.50), ls: 0.8, c: saffronText),
+      eyebrow: sans(
+        12,
+        FontWeight.w700,
+        h(1.40, 1.50),
+        ls: 1.2,
+        c: saffronText,
+      ),
+      overline: sans(
+        12,
+        FontWeight.w600,
+        h(1.40, 1.50),
+        ls: 0.8,
+        c: saffronText,
+      ),
       // A serif-free display numeral, tabular so counters never reflow.
       dataLarge: display(28, FontWeight.w600, 1.10, ls: -0.3, feats: _tabular),
       dataMedium: sans(15, FontWeight.w500, h(1.40, 1.40), feats: _tabular),
@@ -240,15 +240,14 @@ class AppTextExtras extends ThemeExtension<AppTextExtras> {
     TextStyle? overline,
     TextStyle? dataLarge,
     TextStyle? dataMedium,
-  }) =>
-      AppTextExtras(
-        displayHero: displayHero ?? this.displayHero,
-        lead: lead ?? this.lead,
-        eyebrow: eyebrow ?? this.eyebrow,
-        overline: overline ?? this.overline,
-        dataLarge: dataLarge ?? this.dataLarge,
-        dataMedium: dataMedium ?? this.dataMedium,
-      );
+  }) => AppTextExtras(
+    displayHero: displayHero ?? this.displayHero,
+    lead: lead ?? this.lead,
+    eyebrow: eyebrow ?? this.eyebrow,
+    overline: overline ?? this.overline,
+    dataLarge: dataLarge ?? this.dataLarge,
+    dataMedium: dataMedium ?? this.dataMedium,
+  );
 
   @override
   AppTextExtras lerp(covariant ThemeExtension<AppTextExtras>? other, double t) {

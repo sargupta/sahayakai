@@ -160,3 +160,53 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   generate: true
+
+  # Bundled offline. These were fetched at runtime by google_fonts until U0.5,
+  # which meant a teacher opening the app for the first time without
+  # connectivity — the exact teacher this product is for — saw fallback boxes
+  # instead of their own script. It also made golden tests impossible:
+  # `flutter test` has no network, so any baseline captured before bundling
+  # would have blessed those boxes as the correct rendering.
+  #
+  # Variable fonts (one file per family, all weights on the wght axis). Google
+  # Fonts no longer ships static instances for these families — ofl/*/static/
+  # returns 404 — so this is not a preference, it is what upstream publishes.
+  # 5.8MB total across 11 families, on a ~30MB release APK.
+  #
+  # Noto SERIF Indic is deliberately absent: kIndicSerifFallback was exported
+  # but never consumed as a fontFamilyFallback anywhere, so bundling 9 more
+  # families would have doubled the Indic payload to render exactly nothing.
+  fonts:
+    - family: Outfit
+      fonts:
+        - asset: assets/fonts/Outfit-Variable.ttf
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Variable.ttf
+    - family: Noto Sans Devanagari
+      fonts:
+        - asset: assets/fonts/NotoSansDevanagari-Variable.ttf
+    - family: Noto Sans Bengali
+      fonts:
+        - asset: assets/fonts/NotoSansBengali-Variable.ttf
+    - family: Noto Sans Tamil
+      fonts:
+        - asset: assets/fonts/NotoSansTamil-Variable.ttf
+    - family: Noto Sans Telugu
+      fonts:
+        - asset: assets/fonts/NotoSansTelugu-Variable.ttf
+    - family: Noto Sans Kannada
+      fonts:
+        - asset: assets/fonts/NotoSansKannada-Variable.ttf
+    - family: Noto Sans Malayalam
+      fonts:
+        - asset: assets/fonts/NotoSansMalayalam-Variable.ttf
+    - family: Noto Sans Gujarati
+      fonts:
+        - asset: assets/fonts/NotoSansGujarati-Variable.ttf
+    - family: Noto Sans Gurmukhi
+      fonts:
+        - asset: assets/fonts/NotoSansGurmukhi-Variable.ttf
+    - family: Noto Sans Oriya
+      fonts:
+        - asset: assets/fonts/NotoSansOriya-Variable.ttf

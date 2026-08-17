@@ -36,26 +36,34 @@
     "knownFailingTests": []
   },
   "machine": {
-    "reconciledAtEpoch": 1786968185,
+    "reconciledAtEpoch": 1786969588,
     "git": {
       "appRoot": "/Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter",
       "gitPathPrefix": "sahayakai-flutter/",
       "branch": "feature/flutter-rebuild",
-      "head": "097b492d46d89828c7fc0e9a44cea27124f0d9ab",
-      "headShort": "097b492d4",
-      "headEpoch": 1786968183,
+      "head": "2b2050dba75593ed617ef43b64c544537a1c005d",
+      "headShort": "2b2050dba",
+      "headEpoch": 1786968188,
       "remoteUrl": "https://github.com/sargupta/sahayakai.git",
-      "aheadOfOriginMain": 202,
+      "aheadOfOriginMain": 203,
       "behindOriginMain": 66,
       "dirtyPaths": [
-        "ahayakai-flutter/docs/flutter/loop/LOOP_STATE.json",
-        "sahayakai-flutter/docs/flutter/loop/WAKE_LOG.jsonl"
+        "ahayakai-flutter/docs/flutter/loop/CLAIMS.tsv",
+        "sahayakai-flutter/docs/flutter/loop/LOOP_STATE.json",
+        "sahayakai-flutter/lib/core/theme/app_text.dart",
+        "sahayakai-flutter/lib/core/theme/app_theme.dart",
+        "sahayakai-flutter/lib/main.dart",
+        "sahayakai-flutter/pubspec.yaml",
+        "sahayakai-flutter/scripts/token_guard.sh"
       ],
-      "untrackedPaths": []
+      "untrackedPaths": [
+        "sahayakai-flutter/assets/fonts/",
+        "sahayakai-flutter/scripts/loop/font_lib_refs.sh"
+      ]
     },
     "code": {
       "dartFiles": 308,
-      "dartLoc": 53308,
+      "dartLoc": 53323,
       "features": 24,
       "routes": 30
     },
@@ -84,7 +92,7 @@
       "identicalToEnglishTotal": 40
     },
     "fonts": {
-      "families": 0,
+      "families": 11,
       "googleFontsDep": 1
     },
     "lints": {
@@ -101,13 +109,12 @@
       "flutterWorkflowFiles": []
     },
     "claims": {
-      "green": 3,
-      "red": 7,
+      "green": 5,
+      "red": 6,
       "redIds": [
         "golden_gate_exists",
         "i18n_zero_untranslated",
         "i18n_zero_identical_english",
-        "fonts_bundled",
         "fonts_no_runtime_fetch",
         "flutter_ci_present",
         "lints_enforced"
@@ -118,8 +125,8 @@
     "status": "ok",
     "violations": [],
     "consecutiveViolationWakes": 0,
-    "checkedAtEpoch": 1786968185,
-    "checkedAtSha": "097b492d46d89828c7fc0e9a44cea27124f0d9ab"
+    "checkedAtEpoch": 1786969588,
+    "checkedAtSha": "2b2050dba75593ed617ef43b64c544537a1c005d"
   },
   "measurements": {
     "analyze": {
@@ -753,8 +760,12 @@
         "pubspec.lock",
         "assets/fonts",
         "lib/core/theme/app_text.dart",
+        "lib/core/theme/app_theme.dart",
         "lib/main.dart",
-        "scripts/token_guard.sh"
+        "scripts/token_guard.sh",
+        "docs/flutter/loop/CLAIMS.tsv",
+        "scripts/loop/font_lib_refs.sh",
+        "docs/flutter/loop/LOOP_STATE.json"
       ],
       "dependsOn": [
         "U0.2"
@@ -775,7 +786,39 @@
         "detail": "H1 — approve downloading the Outfit / Inter / Noto Sans Indic TTFs (SIL Open Font License) from github.com/google/fonts. Granted by plan approval."
       },
       "notes": [
-        "Blocks U0.18: goldens baselined against runtime-fetched fonts capture fallback boxes as the blessed rendering, because flutter test has no network."
+        "Blocks U0.18: goldens baselined against runtime-fetched fonts capture fallback boxes as the blessed rendering, because flutter test has no network.",
+        "Scope extended deliberately, recorded here rather than silently: app_theme.dart (export list referenced the two removed symbols) and the CLAIMS row. Removing the google_fonts DEPENDENCY was split out to U0.5b — 37 test files call GoogleFonts.config.allowRuntimeFetching and editing them all inside this unit would have made the diff unreviewable."
+      ]
+    },
+    {
+      "id": "U0.5b",
+      "band": "B0",
+      "kind": "build",
+      "gateProfile": "native",
+      "title": "Remove the google_fonts dependency entirely",
+      "contract": "Drop google_fonts from pubspec.yaml and delete the 37 `GoogleFonts.config.allowRuntimeFetching = false` lines in test/ that only exist to disable it. With the package gone, 'the app cannot fetch a font at runtime' is enforced by ABSENCE rather than by a grep, which is strictly stronger. Turns the fonts_no_runtime_fetch claim green. Purely mechanical, but touches 38 files, so it is its own unit.",
+      "files": [
+        "pubspec.yaml",
+        "pubspec.lock",
+        "test"
+      ],
+      "dependsOn": [
+        "U0.5"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": [
+        "Split out of U0.5 to keep that diff reviewable."
       ]
     },
     {

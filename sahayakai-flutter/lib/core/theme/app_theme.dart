@@ -17,13 +17,7 @@ export 'app_radius.dart';
 export 'app_shadows.dart';
 export 'app_spacing.dart';
 export 'app_text.dart'
-    show
-        kIndicFallback,
-        kIndicSerifFallback,
-        kIndicSansFallback,
-        warmIndicFonts,
-        AppText,
-        AppTextExtras;
+    show kIndicFallback, kIndicSansFallback, AppText, AppTextExtras;
 
 /// SahayakAI Material 3 theme — pixel-faithful port of the web design system.
 /// See docs/flutter/THEME_SPEC.md for the full derivation.
@@ -160,18 +154,21 @@ class AppTheme {
         // Masthead: the display titleLarge (Outfit 21/600) — derived rather than
         // re-declared, so the Indic line-height follows the locale.
         titleTextStyle: textTheme.titleLarge,
-        systemOverlayStyle:
-            isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+        systemOverlayStyle: isDark
+            ? SystemUiOverlayStyle.light
+            : SystemUiOverlayStyle.dark,
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: ButtonStyle(
           backgroundColor: WidgetStatePropertyAll(scheme.primary),
           foregroundColor: WidgetStatePropertyAll(scheme.onPrimary),
           minimumSize: const WidgetStatePropertyAll(Size(0, 48)),
-          padding:
-              const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 16)),
+          padding: const WidgetStatePropertyAll(
+            EdgeInsets.symmetric(horizontal: 16),
+          ),
           shape: const WidgetStatePropertyAll(
-              RoundedRectangleBorder(borderRadius: AppRadius.rMd)),
+            RoundedRectangleBorder(borderRadius: AppRadius.rMd),
+          ),
           textStyle: WidgetStatePropertyAll(textTheme.labelLarge),
           elevation: const WidgetStatePropertyAll(0),
         ),
@@ -181,10 +178,12 @@ class AppTheme {
           backgroundColor: WidgetStatePropertyAll(scheme.primary),
           foregroundColor: WidgetStatePropertyAll(scheme.onPrimary),
           minimumSize: const WidgetStatePropertyAll(Size(0, 48)),
-          padding:
-              const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 16)),
+          padding: const WidgetStatePropertyAll(
+            EdgeInsets.symmetric(horizontal: 16),
+          ),
           shape: const WidgetStatePropertyAll(
-              RoundedRectangleBorder(borderRadius: AppRadius.rMd)),
+            RoundedRectangleBorder(borderRadius: AppRadius.rMd),
+          ),
           elevation: const WidgetStatePropertyAll(1),
           shadowColor: WidgetStatePropertyAll(AppColors.shadowBase),
           textStyle: WidgetStatePropertyAll(textTheme.labelLarge),
@@ -194,12 +193,15 @@ class AppTheme {
         style: ButtonStyle(
           foregroundColor: WidgetStatePropertyAll(scheme.onSurface),
           minimumSize: const WidgetStatePropertyAll(Size(0, 48)),
-          padding:
-              const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 16)),
+          padding: const WidgetStatePropertyAll(
+            EdgeInsets.symmetric(horizontal: 16),
+          ),
           side: WidgetStatePropertyAll(
-              BorderSide(color: scheme.outlineVariant, width: 1)),
+            BorderSide(color: scheme.outlineVariant, width: 1),
+          ),
           shape: const WidgetStatePropertyAll(
-              RoundedRectangleBorder(borderRadius: AppRadius.rMd)),
+            RoundedRectangleBorder(borderRadius: AppRadius.rMd),
+          ),
           textStyle: WidgetStatePropertyAll(textTheme.labelLarge),
         ),
       ),
@@ -208,7 +210,8 @@ class AppTheme {
           foregroundColor: WidgetStatePropertyAll(scheme.primary),
           minimumSize: const WidgetStatePropertyAll(Size(0, 44)),
           shape: const WidgetStatePropertyAll(
-              RoundedRectangleBorder(borderRadius: AppRadius.rMd)),
+            RoundedRectangleBorder(borderRadius: AppRadius.rMd),
+          ),
           textStyle: WidgetStatePropertyAll(textTheme.labelLarge),
         ),
       ),
@@ -233,9 +236,13 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: scheme.surfaceContainerLow,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        hintStyle: textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
+        hintStyle: textTheme.bodyMedium?.copyWith(
+          color: scheme.onSurfaceVariant,
+        ),
         enabledBorder: OutlineInputBorder(
           borderRadius: AppRadius.rControl,
           borderSide: BorderSide(color: scheme.outlineVariant, width: 1),
@@ -246,7 +253,10 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: AppRadius.rControl,
-          borderSide: BorderSide(color: scheme.primary, width: 2), // saffron ring
+          borderSide: BorderSide(
+            color: scheme.primary,
+            width: 2,
+          ), // saffron ring
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: AppRadius.rControl,
@@ -266,8 +276,10 @@ class AppTheme {
         selectedColor: scheme.primaryContainer,
         checkmarkColor: scheme.onPrimaryContainer,
         labelStyle: textTheme.labelMedium?.copyWith(color: scheme.onSurface),
-        secondaryLabelStyle: textTheme.labelMedium
-            ?.copyWith(color: scheme.onPrimaryContainer, fontWeight: FontWeight.w600),
+        secondaryLabelStyle: textTheme.labelMedium?.copyWith(
+          color: scheme.onPrimaryContainer,
+          fontWeight: FontWeight.w600,
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         shape: const StadiumBorder(),
         side: BorderSide(color: scheme.outline),
@@ -335,13 +347,16 @@ class AppTheme {
         // sits flush against the screen's bottom edge, same reasoning as the
         // `vidya_sheet.dart`/`_CreatePalette` corner-rounding decision.
         shape: const ContinuousRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.hero)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadius.hero),
+          ),
         ),
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: scheme.inverseSurface,
-        contentTextStyle:
-            textTheme.bodyMedium?.copyWith(color: scheme.onInverseSurface),
+        contentTextStyle: textTheme.bodyMedium?.copyWith(
+          color: scheme.onInverseSurface,
+        ),
         shape: const RoundedRectangleBorder(borderRadius: AppRadius.rMd),
         behavior: SnackBarBehavior.floating,
       ),
