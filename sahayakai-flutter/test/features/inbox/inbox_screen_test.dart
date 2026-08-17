@@ -31,7 +31,9 @@ class _DestMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: Center(child: Text('DEST', key: Key('dest-$id'))));
+    return Scaffold(
+      body: Center(child: Text('DEST', key: Key('dest-$id'))),
+    );
   }
 }
 
@@ -49,20 +51,19 @@ Conversation _convo({
   String preview = 'See you at the staff meeting',
   int unread = 0,
   String lastMessageAt = '2026-07-19T11:55:00Z',
-}) =>
-    Conversation(
-      id: ConversationId(id),
-      type: ConversationType.direct,
-      participantIds: const [_other, _me],
-      participants: {
-        _other: ParticipantSnapshot(displayName: otherName),
-        _me: const ParticipantSnapshot(displayName: 'Me'),
-      },
-      lastMessage: preview,
-      lastMessageSenderId: _other,
-      unreadCount: {_me: unread},
-      lastMessageAt: lastMessageAt,
-    );
+}) => Conversation(
+  id: ConversationId(id),
+  type: ConversationType.direct,
+  participantIds: const [_other, _me],
+  participants: {
+    _other: ParticipantSnapshot(displayName: otherName),
+    _me: const ParticipantSnapshot(displayName: 'Me'),
+  },
+  lastMessage: preview,
+  lastMessageSenderId: _other,
+  unreadCount: {_me: unread},
+  lastMessageAt: lastMessageAt,
+);
 
 Future<FakeInboxTransport> _pump(
   WidgetTester tester, {
@@ -88,20 +89,18 @@ Future<FakeInboxTransport> _pump(
 
   final overrides = <Override>[
     inboxTransportProvider.overrideWithValue(fake),
-    if (myUid != null)
-      currentInboxUserIdProvider.overrideWithValue(myUid),
+    if (myUid != null) currentInboxUserIdProvider.overrideWithValue(myUid),
   ];
 
-  final theme = brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light();
+  final theme = brightness == Brightness.dark
+      ? AppTheme.dark()
+      : AppTheme.light();
 
   if (router) {
     final config = GoRouter(
       initialLocation: Routes.inbox,
       routes: [
-        GoRoute(
-          path: Routes.inbox,
-          builder: (_, _) => const InboxScreen(),
-        ),
+        GoRoute(path: Routes.inbox, builder: (_, _) => const InboxScreen()),
         GoRoute(
           path: Routes.conversationThreadPattern,
           builder: (context, state) => ConversationThreadScreen(
@@ -155,8 +154,9 @@ void main() {
   final l10n = _en();
 
   group('state → surface', () {
-    testWidgets('awaitingFirebase → sign-in EmptyView (DM gate)',
-        (tester) async {
+    testWidgets('awaitingFirebase → sign-in EmptyView (DM gate)', (
+      tester,
+    ) async {
       await _pump(
         tester,
         inbox: const TransportSnapshot<List<Conversation>>.awaitingFirebase(
@@ -177,8 +177,9 @@ void main() {
       expect(find.text(l10n.inboxSignInBody), findsOneWidget);
     });
 
-    testWidgets('ready + null uid → sign-in EmptyView (defensive)',
-        (tester) async {
+    testWidgets('ready + null uid → sign-in EmptyView (defensive)', (
+      tester,
+    ) async {
       await _pump(
         tester,
         inbox: TransportSnapshot<List<Conversation>>.ready([_convo()]),
@@ -213,49 +214,54 @@ void main() {
 
   group('DP-2: sign-in CTA (dead-end fix)', () {
     testWidgets(
-        'awaitingFirebase sign-in EmptyView offers a Sign in action that '
-        'navigates to /login', (tester) async {
-      await _pump(
-        tester,
-        inbox: const TransportSnapshot<List<Conversation>>.awaitingFirebase(
-          <Conversation>[],
-        ),
-        router: true,
-      );
+      'awaitingFirebase sign-in EmptyView offers a Sign in action that '
+      'navigates to /login',
+      (tester) async {
+        await _pump(
+          tester,
+          inbox: const TransportSnapshot<List<Conversation>>.awaitingFirebase(
+            <Conversation>[],
+          ),
+          router: true,
+        );
 
-      // The dead end this unit fixes: the DM-gate sign-in state had no way
-      // forward.
-      final signIn = find.text(l10n.actionSignIn);
-      expect(signIn, findsOneWidget);
-      expect(find.byIcon(LucideIcons.logIn), findsOneWidget);
+        // The dead end this unit fixes: the DM-gate sign-in state had no way
+        // forward.
+        final signIn = find.text(l10n.actionSignIn);
+        expect(signIn, findsOneWidget);
+        expect(find.byIcon(LucideIcons.logIn), findsOneWidget);
 
-      await tester.tap(signIn);
-      await tester.pumpAndSettle();
+        await tester.tap(signIn);
+        await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('dest-login')), findsOneWidget);
-    });
+        expect(find.byKey(const Key('dest-login')), findsOneWidget);
+      },
+    );
 
     testWidgets(
-        'the genuinely-empty "No conversations yet" EmptyView does NOT gain '
-        'a Sign in action', (tester) async {
-      await _pump(
-        tester,
-        inbox: const TransportSnapshot<List<Conversation>>.ready(
-          <Conversation>[],
-        ),
-      );
+      'the genuinely-empty "No conversations yet" EmptyView does NOT gain '
+      'a Sign in action',
+      (tester) async {
+        await _pump(
+          tester,
+          inbox: const TransportSnapshot<List<Conversation>>.ready(
+            <Conversation>[],
+          ),
+        );
 
-      expect(find.text(l10n.inboxEmptyTitle), findsOneWidget);
-      // A ready-but-empty inbox is not a dead end (a real session with
-      // nothing in it yet) — it must not pick up the sign-in CTA.
-      expect(find.text(l10n.actionSignIn), findsNothing);
-      expect(find.byIcon(LucideIcons.logIn), findsNothing);
-    });
+        expect(find.text(l10n.inboxEmptyTitle), findsOneWidget);
+        // A ready-but-empty inbox is not a dead end (a real session with
+        // nothing in it yet) — it must not pick up the sign-in CTA.
+        expect(find.text(l10n.actionSignIn), findsNothing);
+        expect(find.byIcon(LucideIcons.logIn), findsNothing);
+      },
+    );
   });
 
   group('rows', () {
-    testWidgets('renders name, preview and an unread badge when unread>0',
-        (tester) async {
+    testWidgets('renders name, preview and an unread badge when unread>0', (
+      tester,
+    ) async {
       await _pump(
         tester,
         inbox: TransportSnapshot<List<Conversation>>.ready([
@@ -272,9 +278,7 @@ void main() {
     testWidgets('no unread badge when unread==0', (tester) async {
       await _pump(
         tester,
-        inbox: TransportSnapshot<List<Conversation>>.ready([
-          _convo(unread: 0),
-        ]),
+        inbox: TransportSnapshot<List<Conversation>>.ready([_convo(unread: 0)]),
       );
       expect(find.byType(AppBadge), findsNothing);
     });
@@ -300,8 +304,9 @@ void main() {
 
   group('overflow probe — 360dp × 1.3, light + dark', () {
     for (final brightness in Brightness.values) {
-      testWidgets('no overflow (${brightness.name}) with a long Bengali name',
-          (tester) async {
+      testWidgets('no overflow (${brightness.name}) with a long Bengali name', (
+        tester,
+      ) async {
         await _pump(
           tester,
           surface: const Size(360, 800),
@@ -310,7 +315,8 @@ void main() {
           inbox: TransportSnapshot<List<Conversation>>.ready([
             _convo(
               otherName: 'বিনা দেবী শিক্ষিকা মহাশয়া বিদ্যালয়',
-              preview: 'আগামীকাল স্টাফ মিটিংয়ে দেখা হবে, দয়া করে নোটগুলি আনবেন',
+              preview:
+                  'আগামীকাল স্টাফ মিটিংয়ে দেখা হবে, দয়া করে নোটগুলি আনবেন',
               unread: 12,
             ),
           ]),

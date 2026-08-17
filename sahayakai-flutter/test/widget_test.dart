@@ -13,7 +13,9 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
-  testWidgets('App boots to the splash brand mark', (WidgetTester tester) async {
+  testWidgets('App boots to the splash brand mark', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(const ProviderScope(child: SahayakApp()));
     // One frame is enough to render the splash.
     await tester.pump();

@@ -39,15 +39,18 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
-  testWidgets('a bootstrap failure surfaces as a typed FirebaseInitException',
-      (tester) async {
-    final container = ProviderContainer(overrides: [
-      bootstrapOverride(
-        FakeBootstrap(
-          error: const FirebaseInitException('injected init failure'),
+  testWidgets('a bootstrap failure surfaces as a typed FirebaseInitException', (
+    tester,
+  ) async {
+    final container = ProviderContainer(
+      overrides: [
+        bootstrapOverride(
+          FakeBootstrap(
+            error: const FirebaseInitException('injected init failure'),
+          ),
         ),
-      ),
-    ]);
+      ],
+    );
     addTearDown(container.dispose);
 
     // The provider resolves to an error (fast — the fake throws immediately),
@@ -60,41 +63,42 @@ void main() {
   });
 
   testWidgets(
-      'the bootstrap failure reaches the splash retry screen (and retry re-runs it)',
-      (tester) async {
-    final fake = FakeBootstrap(
-      error: const FirebaseInitException('injected init failure'),
-    );
-    await tester.pumpWidget(
-      appHarness(
-        overrides: harnessOverrides(
-          client: FakeApiClient(),
-          overrides: [bootstrapOverride(fake)],
+    'the bootstrap failure reaches the splash retry screen (and retry re-runs it)',
+    (tester) async {
+      final fake = FakeBootstrap(
+        error: const FirebaseInitException('injected init failure'),
+      );
+      await tester.pumpWidget(
+        appHarness(
+          overrides: harnessOverrides(
+            client: FakeApiClient(),
+            overrides: [bootstrapOverride(fake)],
+          ),
         ),
-      ),
-    );
-    // The fake throws immediately, so the splash settles onto its failure state
-    // (no spinner) rather than hanging.
-    await tester.pumpAndSettle();
+      );
+      // The fake throws immediately, so the splash settles onto its failure state
+      // (no spinner) rather than hanging.
+      await tester.pumpAndSettle();
 
-    // The router parked on the splash instead of guessing an auth answer, and
-    // the splash surfaced its retry — the teacher is no longer stranded on a
-    // dead Login button.
-    expect(find.byType(SplashScreen), findsOneWidget);
-    expect(find.text('Try again'), findsOneWidget);
-    expect(find.byType(LoginScreen), findsNothing);
-    // No raw exception text ever reaches the teacher.
-    expect(find.textContaining('FirebaseInitException'), findsNothing);
-    expect(find.textContaining('Exception'), findsNothing);
+      // The router parked on the splash instead of guessing an auth answer, and
+      // the splash surfaced its retry — the teacher is no longer stranded on a
+      // dead Login button.
+      expect(find.byType(SplashScreen), findsOneWidget);
+      expect(find.text('Try again'), findsOneWidget);
+      expect(find.byType(LoginScreen), findsNothing);
+      // No raw exception text ever reaches the teacher.
+      expect(find.textContaining('FirebaseInitException'), findsNothing);
+      expect(find.textContaining('Exception'), findsNothing);
 
-    // Tapping retry genuinely re-runs the bootstrap (the whole point of the
-    // fix: the retry is real, not a repaint), which fails again and stays on
-    // the retry screen.
-    final callsBeforeRetry = fake.calls;
-    await tester.tap(find.text('Try again'));
-    await tester.pumpAndSettle();
-    expect(fake.calls, greaterThan(callsBeforeRetry));
-    expect(find.byType(SplashScreen), findsOneWidget);
-    expect(find.text('Try again'), findsOneWidget);
-  });
+      // Tapping retry genuinely re-runs the bootstrap (the whole point of the
+      // fix: the retry is real, not a repaint), which fails again and stays on
+      // the retry screen.
+      final callsBeforeRetry = fake.calls;
+      await tester.tap(find.text('Try again'));
+      await tester.pumpAndSettle();
+      expect(fake.calls, greaterThan(callsBeforeRetry));
+      expect(find.byType(SplashScreen), findsOneWidget);
+      expect(find.text('Try again'), findsOneWidget);
+    },
+  );
 }

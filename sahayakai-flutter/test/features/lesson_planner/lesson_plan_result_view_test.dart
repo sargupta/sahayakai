@@ -12,35 +12,35 @@ import 'package:sahayakai/shared/widgets/document_sheet.dart';
 /// numbered activity medallions, and a Regenerate / Copy action bar. These
 /// render a plain plan object — no network, no controller.
 LessonPlan _plan() => const LessonPlan(
-      title: 'Photosynthesis for Class 6',
-      language: 'English',
-      gradeLevel: 'Class 6',
-      subject: 'Science',
-      duration: '40 min',
-      objectives: ['Explain how plants make food', 'Name the inputs and outputs'],
-      keyVocabulary: [
-        VocabularyTerm(term: 'Chlorophyll', meaning: 'The green pigment in leaves'),
-      ],
-      materials: ['Fresh leaves', 'Chart paper'],
-      activities: [
-        LessonActivity(
-          phase: 'Engage',
-          name: 'Observe a leaf',
-          description: 'Look closely at a leaf held to the light.',
-          duration: '5 min',
-          teacherTips: 'Bring a few different leaves.',
-          understandingCheck: 'Ask what colour the leaf is and why.',
-        ),
-        LessonActivity(
-          phase: 'Explore',
-          name: 'The sunlight test',
-          description: 'Compare a shaded leaf with a sunlit one.',
-        ),
-      ],
-      assessment: 'A short oral quiz on the process.',
-      homework: 'Draw and label the photosynthesis cycle.',
-      validationWarning: ValidationWarning(message: 'Simplified for the grade.'),
-    );
+  title: 'Photosynthesis for Class 6',
+  language: 'English',
+  gradeLevel: 'Class 6',
+  subject: 'Science',
+  duration: '40 min',
+  objectives: ['Explain how plants make food', 'Name the inputs and outputs'],
+  keyVocabulary: [
+    VocabularyTerm(term: 'Chlorophyll', meaning: 'The green pigment in leaves'),
+  ],
+  materials: ['Fresh leaves', 'Chart paper'],
+  activities: [
+    LessonActivity(
+      phase: 'Engage',
+      name: 'Observe a leaf',
+      description: 'Look closely at a leaf held to the light.',
+      duration: '5 min',
+      teacherTips: 'Bring a few different leaves.',
+      understandingCheck: 'Ask what colour the leaf is and why.',
+    ),
+    LessonActivity(
+      phase: 'Explore',
+      name: 'The sunlight test',
+      description: 'Compare a shaded leaf with a sunlit one.',
+    ),
+  ],
+  assessment: 'A short oral quiz on the process.',
+  homework: 'Draw and label the photosynthesis cycle.',
+  validationWarning: ValidationWarning(message: 'Simplified for the grade.'),
+);
 
 Widget _host(Widget child, {bool reduceMotion = false}) {
   return MaterialApp(
@@ -50,9 +50,7 @@ Widget _host(Widget child, {bool reduceMotion = false}) {
     supportedLocales: AppLocalizations.supportedLocales,
     home: Builder(
       builder: (context) {
-        final view = Scaffold(
-          body: SingleChildScrollView(child: child),
-        );
+        final view = Scaffold(body: SingleChildScrollView(child: child));
         if (!reduceMotion) return view;
         return MediaQuery(
           data: MediaQuery.of(context).copyWith(disableAnimations: true),
@@ -68,8 +66,9 @@ void main() {
     GoogleFonts.config.allowRuntimeFetching = false;
   });
 
-  testWidgets('wraps the 5E plan in a DocumentSheet with masthead + sections',
-      (tester) async {
+  testWidgets('wraps the 5E plan in a DocumentSheet with masthead + sections', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _host(LessonPlanResultView(plan: _plan(), onRegenerate: () {})),
     );
@@ -85,16 +84,21 @@ void main() {
     expect(find.text('1'), findsOneWidget);
     expect(find.text('2'), findsOneWidget);
     // The model's prose is preserved verbatim.
-    expect(find.text('Look closely at a leaf held to the light.'), findsOneWidget);
+    expect(
+      find.text('Look closely at a leaf held to the light.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('the action bar offers Regenerate and Copy', (tester) async {
     var regenerated = false;
     await tester.pumpWidget(
-      _host(LessonPlanResultView(
-        plan: _plan(),
-        onRegenerate: () => regenerated = true,
-      )),
+      _host(
+        LessonPlanResultView(
+          plan: _plan(),
+          onRegenerate: () => regenerated = true,
+        ),
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -109,8 +113,9 @@ void main() {
     expect(regenerated, isTrue, reason: 'Regenerate re-runs generation');
   });
 
-  testWidgets('Copy writes the plan to the clipboard and confirms',
-      (tester) async {
+  testWidgets('Copy writes the plan to the clipboard and confirms', (
+    tester,
+  ) async {
     // The test binding backs Clipboard with an in-memory store.
     await tester.pumpWidget(
       _host(LessonPlanResultView(plan: _plan(), onRegenerate: () {})),
@@ -127,8 +132,9 @@ void main() {
     expect(find.text('Copied to clipboard'), findsOneWidget);
   });
 
-  testWidgets('reduce-motion renders the composed frame, no exception',
-      (tester) async {
+  testWidgets('reduce-motion renders the composed frame, no exception', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       _host(
         LessonPlanResultView(plan: _plan(), onRegenerate: () {}),

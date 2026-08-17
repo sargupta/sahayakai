@@ -32,7 +32,9 @@ class _DestMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: Center(child: Text('DEST', key: Key('dest-$id'))));
+    return Scaffold(
+      body: Center(child: Text('DEST', key: Key('dest-$id'))),
+    );
   }
 }
 
@@ -74,8 +76,9 @@ Widget _host({
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
     ),
@@ -100,8 +103,9 @@ void main() {
   });
 
   group('renders', () {
-    testWidgets('the studio title, its intro and all three tool cards',
-        (tester) async {
+    testWidgets('the studio title, its intro and all three tool cards', (
+      tester,
+    ) async {
       await tester.pumpWidget(_host(router: _buildRouter()));
       await tester.pumpAndSettle();
 
@@ -119,16 +123,23 @@ void main() {
       // Exactly the three curated tool cards, in the web order, each carrying
       // its reused registry title.
       expect(find.byType(ContentCreatorCard), findsNWidgets(3));
-      expect(find.widgetWithText(ContentCreatorCard, 'Visual Aid'),
-          findsOneWidget);
-      expect(find.widgetWithText(ContentCreatorCard, 'Virtual Field Trip'),
-          findsOneWidget);
-      expect(find.widgetWithText(ContentCreatorCard, 'Video Storyteller'),
-          findsOneWidget);
+      expect(
+        find.widgetWithText(ContentCreatorCard, 'Visual Aid'),
+        findsOneWidget,
+      );
+      expect(
+        find.widgetWithText(ContentCreatorCard, 'Virtual Field Trip'),
+        findsOneWidget,
+      );
+      expect(
+        find.widgetWithText(ContentCreatorCard, 'Video Storyteller'),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('no generation surface: the hub has no submit button',
-        (tester) async {
+    testWidgets('no generation surface: the hub has no submit button', (
+      tester,
+    ) async {
       // The hub is a router, not a tool — it must not sprout a Generate button.
       await tester.pumpWidget(_host(router: _buildRouter()));
       await tester.pumpAndSettle();
@@ -139,8 +150,9 @@ void main() {
   });
 
   group('navigation (context.push to each live tool route)', () {
-    testWidgets('the Visual Aid card deep-links to Routes.visualAid',
-        (tester) async {
+    testWidgets('the Visual Aid card deep-links to Routes.visualAid', (
+      tester,
+    ) async {
       await tester.pumpWidget(_host(router: _buildRouter()));
       await tester.pumpAndSettle();
 
@@ -152,29 +164,35 @@ void main() {
     });
 
     testWidgets(
-        'the Virtual Field Trip card deep-links to Routes.virtualFieldTrip',
-        (tester) async {
-      await tester.pumpWidget(_host(router: _buildRouter()));
-      await tester.pumpAndSettle();
+      'the Virtual Field Trip card deep-links to Routes.virtualFieldTrip',
+      (tester) async {
+        await tester.pumpWidget(_host(router: _buildRouter()));
+        await tester.pumpAndSettle();
 
-      await _tapCard(tester, 'Virtual Field Trip');
+        await _tapCard(tester, 'Virtual Field Trip');
 
-      expect(find.byKey(const Key('dest-virtual-field-trip')), findsOneWidget);
-      expect(find.byKey(const Key('dest-visual-aid')), findsNothing);
-      expect(find.byKey(const Key('dest-video-storyteller')), findsNothing);
-    });
+        expect(
+          find.byKey(const Key('dest-virtual-field-trip')),
+          findsOneWidget,
+        );
+        expect(find.byKey(const Key('dest-visual-aid')), findsNothing);
+        expect(find.byKey(const Key('dest-video-storyteller')), findsNothing);
+      },
+    );
 
-    testWidgets('the Video Storyteller card deep-links to Routes.videoStoryteller',
-        (tester) async {
-      await tester.pumpWidget(_host(router: _buildRouter()));
-      await tester.pumpAndSettle();
+    testWidgets(
+      'the Video Storyteller card deep-links to Routes.videoStoryteller',
+      (tester) async {
+        await tester.pumpWidget(_host(router: _buildRouter()));
+        await tester.pumpAndSettle();
 
-      await _tapCard(tester, 'Video Storyteller');
+        await _tapCard(tester, 'Video Storyteller');
 
-      expect(find.byKey(const Key('dest-video-storyteller')), findsOneWidget);
-      expect(find.byKey(const Key('dest-visual-aid')), findsNothing);
-      expect(find.byKey(const Key('dest-virtual-field-trip')), findsNothing);
-    });
+        expect(find.byKey(const Key('dest-video-storyteller')), findsOneWidget);
+        expect(find.byKey(const Key('dest-visual-aid')), findsNothing);
+        expect(find.byKey(const Key('dest-virtual-field-trip')), findsNothing);
+      },
+    );
   });
 
   group('tap targets (DESIGN_RUBRIC §13 — >=48dp)', () {
@@ -188,8 +206,11 @@ void main() {
         final size = tester.getSize(cards.at(i));
         // The whole card is the tap target; a 48dp icon well plus 16dp card
         // padding puts it well past the floor, but assert the floor explicitly.
-        expect(size.height, greaterThanOrEqualTo(48.0),
-            reason: 'card $i height');
+        expect(
+          size.height,
+          greaterThanOrEqualTo(48.0),
+          reason: 'card $i height',
+        );
         expect(size.width, greaterThanOrEqualTo(48.0), reason: 'card $i width');
       }
     });

@@ -25,7 +25,9 @@ import 'package:sahayakai/shared/widgets/app_segmented.dart';
 /// reskin.
 double _lin(int c) {
   final s = c / 255.0;
-  return s <= 0.03928 ? s / 12.92 : math.pow((s + 0.055) / 1.055, 2.4).toDouble();
+  return s <= 0.03928
+      ? s / 12.92
+      : math.pow((s + 0.055) / 1.055, 2.4).toDouble();
 }
 
 double _luminance(Color c) =>
@@ -41,7 +43,10 @@ double _ratio(Color a, Color b) {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-Future<Color> _unselectedLabelColor(WidgetTester tester, ThemeData theme) async {
+Future<Color> _unselectedLabelColor(
+  WidgetTester tester,
+  ThemeData theme,
+) async {
   await tester.pumpWidget(
     MaterialApp(
       theme: theme,
@@ -67,32 +72,36 @@ Future<Color> _unselectedLabelColor(WidgetTester tester, ThemeData theme) async 
 void main() {
   for (final brightness in Brightness.values) {
     testWidgets(
-        'AppSegmented unselected label clears AA on the track fill (${brightness.name})',
-        (tester) async {
-      // Build the theme INSIDE the test body — constructing it at collection
-      // time (a top-level literal) hits google_fonts before the binding inits.
-      final theme =
-          brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light();
-      // The real rendered track fill post-GL-3: AppGlass's translucent flat
-      // token composited over the screen backdrop it actually sits on (the
-      // same backdrop AppGlass's own doc comments and theme_contrast_test.dart
-      // assume — see the file header).
-      final backdrop =
-          brightness == Brightness.dark ? AppColors.dBackground : AppColors.lBackground;
-      final glassFill =
-          brightness == Brightness.dark ? AppGlass.dFlatFill : AppGlass.lFlatFill;
-      final trackFill = Color.alphaBlend(glassFill, backdrop);
-      final labelColor = await _unselectedLabelColor(tester, theme);
+      'AppSegmented unselected label clears AA on the track fill (${brightness.name})',
+      (tester) async {
+        // Build the theme INSIDE the test body — constructing it at collection
+        // time (a top-level literal) hits google_fonts before the binding inits.
+        final theme = brightness == Brightness.dark
+            ? AppTheme.dark()
+            : AppTheme.light();
+        // The real rendered track fill post-GL-3: AppGlass's translucent flat
+        // token composited over the screen backdrop it actually sits on (the
+        // same backdrop AppGlass's own doc comments and theme_contrast_test.dart
+        // assume — see the file header).
+        final backdrop = brightness == Brightness.dark
+            ? AppColors.dBackground
+            : AppColors.lBackground;
+        final glassFill = brightness == Brightness.dark
+            ? AppGlass.dFlatFill
+            : AppGlass.lFlatFill;
+        final trackFill = Color.alphaBlend(glassFill, backdrop);
+        final labelColor = await _unselectedLabelColor(tester, theme);
 
-      // Full-ink, not the muted onSurfaceVariant (the regression this guards).
-      expect(labelColor, theme.colorScheme.onSurface);
-      expect(
-        _ratio(labelColor, trackFill),
-        greaterThanOrEqualTo(4.5),
-        reason:
-            'the unselected segment label must meet AA (>=4.5) on the '
-            'surfaceContainerHigh track fill',
-      );
-    });
+        // Full-ink, not the muted onSurfaceVariant (the regression this guards).
+        expect(labelColor, theme.colorScheme.onSurface);
+        expect(
+          _ratio(labelColor, trackFill),
+          greaterThanOrEqualTo(4.5),
+          reason:
+              'the unselected segment label must meet AA (>=4.5) on the '
+              'surfaceContainerHigh track fill',
+        );
+      },
+    );
   }
 }

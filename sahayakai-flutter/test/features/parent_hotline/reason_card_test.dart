@@ -26,7 +26,9 @@ Future<void> _pump(
   await tester.pumpWidget(
     MaterialApp(
       theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
-      home: Scaffold(body: Padding(padding: const EdgeInsets.all(16), child: child)),
+      home: Scaffold(
+        body: Padding(padding: const EdgeInsets.all(16), child: child),
+      ),
     ),
   );
   await tester.pumpAndSettle();
@@ -51,8 +53,9 @@ void main() {
     expect(find.text('Recent marks need attention.'), findsOneWidget);
   });
 
-  testWidgets('unselected shows the empty circle, selected shows the check',
-      (tester) async {
+  testWidgets('unselected shows the empty circle, selected shows the check', (
+    tester,
+  ) async {
     await _pump(
       tester,
       const ReasonCard(
@@ -101,8 +104,9 @@ void main() {
 
   group('overflow gates (DESIGN_RUBRIC §12)', () {
     for (final brightness in Brightness.values) {
-      testWidgets('no overflow at 360dp x 1.3 (${brightness.name})',
-          (tester) async {
+      testWidgets('no overflow at 360dp x 1.3 (${brightness.name})', (
+        tester,
+      ) async {
         await _pump(
           tester,
           // A long Indic (Bengali) label + description at the narrow floor.

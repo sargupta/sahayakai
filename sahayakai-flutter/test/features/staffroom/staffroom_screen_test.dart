@@ -34,7 +34,9 @@ class _DestMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: Center(child: Text('DEST', key: Key('dest-$id'))));
+    return Scaffold(
+      body: Center(child: Text('DEST', key: Key('dest-$id'))),
+    );
   }
 }
 
@@ -52,17 +54,16 @@ Group _group({
   String name = 'Class 8 Science',
   int members = 42,
   String description = 'Science teachers, Class 8',
-}) =>
-    Group(
-      id: id,
-      name: name,
-      description: description,
-      type: GroupType.subjectGrade,
-      coverColor: '',
-      memberCount: members,
-      autoJoinRules: const GroupAutoJoinRules(),
-      createdBy: 'system',
-    );
+}) => Group(
+  id: id,
+  name: name,
+  description: description,
+  type: GroupType.subjectGrade,
+  coverColor: '',
+  memberCount: members,
+  autoJoinRules: const GroupAutoJoinRules(),
+  createdBy: 'system',
+);
 
 GroupPost _post({
   String id = 'p1',
@@ -71,17 +72,16 @@ GroupPost _post({
   String content = 'hello staffroom',
   PostType type = PostType.share,
   int likes = 3,
-}) =>
-    GroupPost(
-      id: id,
-      groupId: groupId,
-      authorUid: 'u1',
-      authorName: author,
-      content: content,
-      postType: type,
-      likesCount: likes,
-      createdAt: '2026-07-19T09:00:00Z',
-    );
+}) => GroupPost(
+  id: id,
+  groupId: groupId,
+  authorUid: 'u1',
+  authorName: author,
+  content: content,
+  postType: type,
+  likesCount: likes,
+  createdAt: '2026-07-19T09:00:00Z',
+);
 
 FeedItem _feedPost(GroupPost post, {String groupName = 'Class 8 Science'}) =>
     FeedItem(
@@ -122,8 +122,9 @@ Future<FakeStaffroomTransport> _pump(
     ...extraOverrides,
   ];
 
-  final theme =
-      brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light();
+  final theme = brightness == Brightness.dark
+      ? AppTheme.dark()
+      : AppTheme.light();
 
   if (router) {
     final config = GoRouter(
@@ -178,8 +179,9 @@ void main() {
   final l10n = _en();
 
   group('state → surface', () {
-    testWidgets('null uid (awaiting / signed out) → sign-in EmptyView',
-        (tester) async {
+    testWidgets('null uid (awaiting / signed out) → sign-in EmptyView', (
+      tester,
+    ) async {
       await _pump(tester, uid: null);
       expect(find.text(l10n.staffroomSignInBody), findsOneWidget);
       expect(find.byType(EmptyView), findsOneWidget);
@@ -220,77 +222,84 @@ void main() {
 
   group('DP-2: sign-in CTA (dead-end fix)', () {
     testWidgets(
-        'sign-in EmptyView offers a Sign in action that navigates to /login',
-        (tester) async {
-      await _pump(tester, uid: null, router: true);
+      'sign-in EmptyView offers a Sign in action that navigates to /login',
+      (tester) async {
+        await _pump(tester, uid: null, router: true);
 
-      // The dead end this unit fixes: the signed-out staffroom had no way
-      // forward.
-      final signIn = find.text(l10n.actionSignIn);
-      expect(signIn, findsOneWidget);
-      expect(find.byIcon(LucideIcons.logIn), findsOneWidget);
+        // The dead end this unit fixes: the signed-out staffroom had no way
+        // forward.
+        final signIn = find.text(l10n.actionSignIn);
+        expect(signIn, findsOneWidget);
+        expect(find.byIcon(LucideIcons.logIn), findsOneWidget);
 
-      await tester.tap(signIn);
-      await tester.pumpAndSettle();
+        await tester.tap(signIn);
+        await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('dest-login')), findsOneWidget);
-    });
+        expect(find.byKey(const Key('dest-login')), findsOneWidget);
+      },
+    );
 
     testWidgets(
-        'the genuinely-empty "Your feed is quiet" EmptyView does NOT gain a '
-        'Sign in action', (tester) async {
-      await _pump(tester, fake: FakeStaffroomTransport()..feed = const []);
+      'the genuinely-empty "Your feed is quiet" EmptyView does NOT gain a '
+      'Sign in action',
+      (tester) async {
+        await _pump(tester, fake: FakeStaffroomTransport()..feed = const []);
 
-      expect(find.text(l10n.staffroomFeedEmptyTitle), findsOneWidget);
-      // A ready-but-empty feed is not a dead end (a real session with
-      // nothing in it yet) — it must not pick up the sign-in CTA.
-      expect(find.text(l10n.actionSignIn), findsNothing);
-      expect(find.byIcon(LucideIcons.logIn), findsNothing);
-    });
+        expect(find.text(l10n.staffroomFeedEmptyTitle), findsOneWidget);
+        // A ready-but-empty feed is not a dead end (a real session with
+        // nothing in it yet) — it must not pick up the sign-in CTA.
+        expect(find.text(l10n.actionSignIn), findsNothing);
+        expect(find.byIcon(LucideIcons.logIn), findsNothing);
+      },
+    );
   });
 
   group('U15: honest "Your groups" empty (dead browse-button removed)', () {
     testWidgets(
-        'the groups-empty prompt no longer carries a "Browse groups" button',
-        (tester) async {
-      // A signed-in teacher on the shipping Firestore transport has no groups
-      // AND an empty feed (discoverGroups / getUnifiedFeed are a real backend
-      // gap, hardcoded empty). The button used to scroll to a "Discover groups"
-      // section that never renders, dumping the teacher at "Your feed is quiet".
-      // With no real destination, the honest empty prompt carries no button.
-      await _pump(tester, fake: FakeStaffroomTransport()..feed = const []);
+      'the groups-empty prompt no longer carries a "Browse groups" button',
+      (tester) async {
+        // A signed-in teacher on the shipping Firestore transport has no groups
+        // AND an empty feed (discoverGroups / getUnifiedFeed are a real backend
+        // gap, hardcoded empty). The button used to scroll to a "Discover groups"
+        // section that never renders, dumping the teacher at "Your feed is quiet".
+        // With no real destination, the honest empty prompt carries no button.
+        await _pump(tester, fake: FakeStaffroomTransport()..feed = const []);
 
-      // The empty prompt itself is still there — an honest statement, not a
-      // dead affordance.
-      expect(find.text(l10n.staffroomGroupsEmptyTitle), findsOneWidget);
-      expect(find.text(l10n.staffroomGroupsEmptyBody), findsOneWidget);
-      // The dead button is gone: no "Browse groups" label, and no
-      // SecondaryButton at all in this (feed-empty, groups-empty) state — the
-      // only SecondaryButton the screen has left is the signed-out sign-in one,
-      // which does not render for a signed-in teacher.
-      expect(find.text(l10n.staffroomBrowseGroups), findsNothing);
-      expect(find.byType(SecondaryButton), findsNothing);
-    });
+        // The empty prompt itself is still there — an honest statement, not a
+        // dead affordance.
+        expect(find.text(l10n.staffroomGroupsEmptyTitle), findsOneWidget);
+        expect(find.text(l10n.staffroomGroupsEmptyBody), findsOneWidget);
+        // The dead button is gone: no "Browse groups" label, and no
+        // SecondaryButton at all in this (feed-empty, groups-empty) state — the
+        // only SecondaryButton the screen has left is the signed-out sign-in one,
+        // which does not render for a signed-in teacher.
+        expect(find.text(l10n.staffroomBrowseGroups), findsNothing);
+        expect(find.byType(SecondaryButton), findsNothing);
+      },
+    );
   });
 
   group('feed content', () {
-    testWidgets('renders a seeded group_post (author, body, group, like count)',
-        (tester) async {
-      await _pump(
-        tester,
-        fake: FakeStaffroomTransport()..feed = [_feedPost(_post())],
-      );
-      expect(find.text('Asha'), findsOneWidget);
-      expect(find.text('hello staffroom'), findsOneWidget);
-      expect(find.text('Class 8 Science'), findsOneWidget); // the group chip
-      expect(find.text('3'), findsOneWidget); // the like count
-      expect(find.byIcon(LucideIcons.heart), findsOneWidget);
-    });
+    testWidgets(
+      'renders a seeded group_post (author, body, group, like count)',
+      (tester) async {
+        await _pump(
+          tester,
+          fake: FakeStaffroomTransport()..feed = [_feedPost(_post())],
+        );
+        expect(find.text('Asha'), findsOneWidget);
+        expect(find.text('hello staffroom'), findsOneWidget);
+        expect(find.text('Class 8 Science'), findsOneWidget); // the group chip
+        expect(find.text('3'), findsOneWidget); // the like count
+        expect(find.byIcon(LucideIcons.heart), findsOneWidget);
+      },
+    );
   });
 
   group('optimistic like', () {
-    testWidgets('toggles immediately, then reconciles to the server count',
-        (tester) async {
+    testWidgets('toggles immediately, then reconciles to the server count', (
+      tester,
+    ) async {
       final gate = Completer<void>();
       final fake = FakeStaffroomTransport()
         ..feed = [_feedPost(_post(likes: 3))]
@@ -310,12 +319,14 @@ void main() {
       expect(fake.likes.single.postId, 'p1');
     });
 
-    testWidgets('rolls back + hints on a thrown TransportUnavailable',
-        (tester) async {
+    testWidgets('rolls back + hints on a thrown TransportUnavailable', (
+      tester,
+    ) async {
       final fake = FakeStaffroomTransport()
         ..feed = [_feedPost(_post(likes: 3))]
-        ..likeError =
-            const TransportUnavailable.awaitingFirebase('likeGroupPost');
+        ..likeError = const TransportUnavailable.awaitingFirebase(
+          'likeGroupPost',
+        );
       await _pump(tester, fake: fake);
 
       expect(find.text('3'), findsOneWidget);
@@ -331,8 +342,9 @@ void main() {
 
   group('overflow probe — 360dp × 1.3, light + dark', () {
     for (final brightness in Brightness.values) {
-      testWidgets('no overflow (${brightness.name}) with bn/ta + a long post',
-          (tester) async {
+      testWidgets('no overflow (${brightness.name}) with bn/ta + a long post', (
+        tester,
+      ) async {
         final fake = FakeStaffroomTransport()
           ..myGroups = [_group(name: 'অষ্টম শ্রেণির বিজ্ঞান শিক্ষকমণ্ডলী')]
           ..feed = [

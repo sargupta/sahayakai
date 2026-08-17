@@ -45,19 +45,16 @@ void main() {
   });
 
   GoRouter testRouter() => GoRouter(
-        initialLocation: Routes.settings,
-        routes: [
-          GoRoute(
-            path: Routes.settings,
-            builder: (_, _) => const SettingsScreen(),
-          ),
-          GoRoute(
-            path: Routes.login,
-            builder: (_, _) =>
-                const Scaffold(body: Center(child: Text('LOGIN SCREEN'))),
-          ),
-        ],
-      );
+    initialLocation: Routes.settings,
+    routes: [
+      GoRoute(path: Routes.settings, builder: (_, _) => const SettingsScreen()),
+      GoRoute(
+        path: Routes.login,
+        builder: (_, _) =>
+            const Scaffold(body: Center(child: Text('LOGIN SCREEN'))),
+      ),
+    ],
+  );
 
   Widget host({required List<Override> overrides}) {
     return ProviderScope(
@@ -102,78 +99,90 @@ void main() {
   }
 
   testWidgets(
-      'success WITH an exportPath: the export action calls POST /api/export '
-      'through the authenticated ApiClient and hands the archive to the '
-      'share sheet — NOT the external-browser-tab link opener — and Done '
-      'signs out + leaves Settings for Login', (tester) async {
-    final opener = _FakeLinkOpener();
-    final apiClient = FakeApiClient(
-      postRawResponse: RawResponse(
-        bytes: Uint8List.fromList([1, 2, 3]),
-        contentType: 'application/zip',
-        filename: 'sahayakai_export_2026-07-28.zip',
-      ),
-    );
-    final shareCalls = <({Uint8List bytes, String filename, String? mimeType})>[];
-    await tester.pumpWidget(host(overrides: [
-      signedInOverride(),
-      profileDocOverride(doc: const <String, dynamic>{}),
-      deleteAccountControllerProvider.overrideWith(_FakeDeleteSuccess.new),
-      // Still overridden and asserted on below: proves the OLD
-      // external-browser-tab behaviour is genuinely gone, not just
-      // unreferenced by coincidence.
-      linkOpenerProvider.overrideWithValue(opener),
-      apiClientProvider.overrideWithValue(apiClient),
-      shareServiceProvider.overrideWithValue(_FakeShareService(shareCalls)),
-    ]));
-    await tester.pumpAndSettle();
+    'success WITH an exportPath: the export action calls POST /api/export '
+    'through the authenticated ApiClient and hands the archive to the '
+    'share sheet — NOT the external-browser-tab link opener — and Done '
+    'signs out + leaves Settings for Login',
+    (tester) async {
+      final opener = _FakeLinkOpener();
+      final apiClient = FakeApiClient(
+        postRawResponse: RawResponse(
+          bytes: Uint8List.fromList([1, 2, 3]),
+          contentType: 'application/zip',
+          filename: 'sahayakai_export_2026-07-28.zip',
+        ),
+      );
+      final shareCalls =
+          <({Uint8List bytes, String filename, String? mimeType})>[];
+      await tester.pumpWidget(
+        host(
+          overrides: [
+            signedInOverride(),
+            profileDocOverride(doc: const <String, dynamic>{}),
+            deleteAccountControllerProvider.overrideWith(
+              _FakeDeleteSuccess.new,
+            ),
+            // Still overridden and asserted on below: proves the OLD
+            // external-browser-tab behaviour is genuinely gone, not just
+            // unreferenced by coincidence.
+            linkOpenerProvider.overrideWithValue(opener),
+            apiClientProvider.overrideWithValue(apiClient),
+            shareServiceProvider.overrideWithValue(
+              _FakeShareService(shareCalls),
+            ),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
 
-    await confirmDeleteDialog(tester);
+      await confirmDeleteDialog(tester);
 
-    // The one-time confirmation, with a real, working export action.
-    expect(find.text('Account scheduled for deletion'), findsOneWidget);
-    // Two legitimate renders of the same copy, not a duplication bug: the
-    // danger section's own body text switches to this exact copy the instant
-    // `scheduled` flips true (correct, reactive UI), and the modal
-    // confirmation shows the identical sentence on top of it.
-    expect(
-      find.text(
-        'Your account is scheduled for deletion. You have 30 days to export your work.',
-      ),
-      findsAtLeastNWidgets(1),
-    );
-    final exportButton =
-        find.widgetWithText(OutlinedButton, 'Export my data');
-    expect(exportButton, findsOneWidget);
+      // The one-time confirmation, with a real, working export action.
+      expect(find.text('Account scheduled for deletion'), findsOneWidget);
+      // Two legitimate renders of the same copy, not a duplication bug: the
+      // danger section's own body text switches to this exact copy the instant
+      // `scheduled` flips true (correct, reactive UI), and the modal
+      // confirmation shows the identical sentence on top of it.
+      expect(
+        find.text(
+          'Your account is scheduled for deletion. You have 30 days to export your work.',
+        ),
+        findsAtLeastNWidgets(1),
+      );
+      final exportButton = find.widgetWithText(
+        OutlinedButton,
+        'Export my data',
+      );
+      expect(exportButton, findsOneWidget);
 
-    await tester.tap(exportButton);
-    await tester.pumpAndSettle();
+      await tester.tap(exportButton);
+      await tester.pumpAndSettle();
 
-    // The real trigger: an authenticated POST to the server-supplied path,
-    // through the SAME ApiClient every other screen uses.
-    expect(apiClient.postRaws.single.path, '/api/export');
-    // The returned archive went to the OS share sheet...
-    expect(shareCalls, hasLength(1));
-    expect(shareCalls.single.filename, 'sahayakai_export_2026-07-28.zip');
-    expect(shareCalls.single.mimeType, 'application/zip');
-    // ...and the old external-browser-tab path was never touched.
-    expect(opener.opened, isEmpty);
+      // The real trigger: an authenticated POST to the server-supplied path,
+      // through the SAME ApiClient every other screen uses.
+      expect(apiClient.postRaws.single.path, '/api/export');
+      // The returned archive went to the OS share sheet...
+      expect(shareCalls, hasLength(1));
+      expect(shareCalls.single.filename, 'sahayakai_export_2026-07-28.zip');
+      expect(shareCalls.single.mimeType, 'application/zip');
+      // ...and the old external-browser-tab path was never touched.
+      expect(opener.opened, isEmpty);
 
-    // Settings is still open until the teacher dismisses the dialog — the
-    // profile form and Save button underneath must not be reachable through
-    // the dialog's modal barrier.
-    expect(find.byType(SettingsScreen), findsOneWidget);
+      // Settings is still open until the teacher dismisses the dialog — the
+      // profile form and Save button underneath must not be reachable through
+      // the dialog's modal barrier.
+      expect(find.byType(SettingsScreen), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Done'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Done'));
+      await tester.pumpAndSettle();
 
-    // Immediate local sign-out + navigation, not a wait on authStateChanges.
-    expect(find.byType(SettingsScreen), findsNothing);
-    expect(find.text('LOGIN SCREEN'), findsOneWidget);
-  });
+      // Immediate local sign-out + navigation, not a wait on authStateChanges.
+      expect(find.byType(SettingsScreen), findsNothing);
+      expect(find.text('LOGIN SCREEN'), findsOneWidget);
+    },
+  );
 
-  testWidgets(
-      'the export button is disabled (spinner) while the request is in '
+  testWidgets('the export button is disabled (spinner) while the request is in '
       'flight, and Done cannot be tapped out from under it', (tester) async {
     final apiClient = FakeApiClient(
       postRawResponse: RawResponse(
@@ -182,20 +191,26 @@ void main() {
       ),
       delay: const Duration(milliseconds: 200),
     );
-    await tester.pumpWidget(host(overrides: [
-      signedInOverride(),
-      profileDocOverride(doc: const <String, dynamic>{}),
-      deleteAccountControllerProvider.overrideWith(_FakeDeleteSuccess.new),
-      linkOpenerProvider.overrideWithValue(_FakeLinkOpener()),
-      apiClientProvider.overrideWithValue(apiClient),
-      shareServiceProvider.overrideWithValue(_FakeShareService([])),
-    ]));
+    await tester.pumpWidget(
+      host(
+        overrides: [
+          signedInOverride(),
+          profileDocOverride(doc: const <String, dynamic>{}),
+          deleteAccountControllerProvider.overrideWith(_FakeDeleteSuccess.new),
+          linkOpenerProvider.overrideWithValue(_FakeLinkOpener()),
+          apiClientProvider.overrideWithValue(apiClient),
+          shareServiceProvider.overrideWithValue(_FakeShareService([])),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
 
     await confirmDeleteDialog(tester);
 
-    final exportButtonFinder =
-        find.widgetWithText(OutlinedButton, 'Export my data');
+    final exportButtonFinder = find.widgetWithText(
+      OutlinedButton,
+      'Export my data',
+    );
     await tester.tap(exportButtonFinder);
     await tester.pump();
 
@@ -203,15 +218,24 @@ void main() {
     // spinner in the icon slot and un-tappable.
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
     final exportButton = tester.widget<OutlinedButton>(exportButtonFinder);
-    expect(exportButton.onPressed, isNull,
-        reason: 'export button must be disabled while the request is in '
-            'flight');
+    expect(
+      exportButton.onPressed,
+      isNull,
+      reason:
+          'export button must be disabled while the request is in '
+          'flight',
+    );
 
-    final doneButton =
-        tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Done'));
-    expect(doneButton.onPressed, isNull,
-        reason: 'Done must not be tappable mid-export, or the teacher would '
-            'be signed out and navigated away from their own download');
+    final doneButton = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Done'),
+    );
+    expect(
+      doneButton.onPressed,
+      isNull,
+      reason:
+          'Done must not be tappable mid-export, or the teacher would '
+          'be signed out and navigated away from their own download',
+    );
 
     // Let the in-flight request resolve so the pending timer does not leak
     // into the next test.
@@ -219,54 +243,67 @@ void main() {
   });
 
   testWidgets(
-      'success with NO exportPath: confirmation shows without an export '
-      'button, Done still signs out and leaves Settings', (tester) async {
-    await tester.pumpWidget(host(overrides: [
-      signedInOverride(),
-      profileDocOverride(doc: const <String, dynamic>{}),
-      deleteAccountControllerProvider
-          .overrideWith(_FakeDeleteSuccessNoExport.new),
-      linkOpenerProvider.overrideWithValue(_FakeLinkOpener()),
-    ]));
-    await tester.pumpAndSettle();
+    'success with NO exportPath: confirmation shows without an export '
+    'button, Done still signs out and leaves Settings',
+    (tester) async {
+      await tester.pumpWidget(
+        host(
+          overrides: [
+            signedInOverride(),
+            profileDocOverride(doc: const <String, dynamic>{}),
+            deleteAccountControllerProvider.overrideWith(
+              _FakeDeleteSuccessNoExport.new,
+            ),
+            linkOpenerProvider.overrideWithValue(_FakeLinkOpener()),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
 
-    await confirmDeleteDialog(tester);
+      await confirmDeleteDialog(tester);
 
-    expect(find.text('Account scheduled for deletion'), findsOneWidget);
-    expect(
-      find.widgetWithText(OutlinedButton, 'Export my data'),
-      findsNothing,
-    );
+      expect(find.text('Account scheduled for deletion'), findsOneWidget);
+      expect(
+        find.widgetWithText(OutlinedButton, 'Export my data'),
+        findsNothing,
+      );
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Done'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Done'));
+      await tester.pumpAndSettle();
 
-    expect(find.byType(SettingsScreen), findsNothing);
-    expect(find.text('LOGIN SCREEN'), findsOneWidget);
-  });
+      expect(find.byType(SettingsScreen), findsNothing);
+      expect(find.text('LOGIN SCREEN'), findsOneWidget);
+    },
+  );
 
   testWidgets(
-      'a failed delete (reauth required) shows the error, no dialog, no '
-      'sign-out, Settings stays put', (tester) async {
-    // No override on deleteAccountControllerProvider: the REAL controller
-    // runs, and FirebaseInit.isConfigured is always false in a widget test,
-    // so this exercises the honest early-exit every device hits if Firebase
-    // itself is unavailable — the same path settings_controller_test.dart
-    // pins at the provider layer.
-    await tester.pumpWidget(host(overrides: [
-      signedInOverride(),
-      profileDocOverride(doc: const <String, dynamic>{}),
-      linkOpenerProvider.overrideWithValue(_FakeLinkOpener()),
-    ]));
-    await tester.pumpAndSettle();
+    'a failed delete (reauth required) shows the error, no dialog, no '
+    'sign-out, Settings stays put',
+    (tester) async {
+      // No override on deleteAccountControllerProvider: the REAL controller
+      // runs, and FirebaseInit.isConfigured is always false in a widget test,
+      // so this exercises the honest early-exit every device hits if Firebase
+      // itself is unavailable — the same path settings_controller_test.dart
+      // pins at the provider layer.
+      await tester.pumpWidget(
+        host(
+          overrides: [
+            signedInOverride(),
+            profileDocOverride(doc: const <String, dynamic>{}),
+            linkOpenerProvider.overrideWithValue(_FakeLinkOpener()),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
 
-    await confirmDeleteDialog(tester);
+      await confirmDeleteDialog(tester);
 
-    expect(find.text('Please sign in again'), findsOneWidget);
-    expect(find.text('Account scheduled for deletion'), findsNothing);
-    expect(find.byType(SettingsScreen), findsOneWidget);
-    expect(find.text('LOGIN SCREEN'), findsNothing);
-  });
+      expect(find.text('Please sign in again'), findsOneWidget);
+      expect(find.text('Account scheduled for deletion'), findsNothing);
+      expect(find.byType(SettingsScreen), findsOneWidget);
+      expect(find.text('LOGIN SCREEN'), findsNothing);
+    },
+  );
 }
 
 class _FakeDeleteSuccess extends DeleteAccountController {

@@ -102,8 +102,13 @@ void main() {
       final client = FakeApiClient(error: _kNotFound);
       expect(
         () => LibraryRepository(client).fetchItem('gone'),
-        throwsA(isA<ApiException>()
-            .having((e) => e.kind, 'kind', ApiErrorKind.notFound)),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.kind,
+            'kind',
+            ApiErrorKind.notFound,
+          ),
+        ),
       );
     });
 
@@ -113,14 +118,21 @@ void main() {
       final client = FakeApiClient(getResponse: 'not json');
       expect(
         () => LibraryRepository(client).fetchItem('abc123'),
-        throwsA(isA<ApiException>()
-            .having((e) => e.kind, 'kind', ApiErrorKind.badResponse)),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.kind,
+            'kind',
+            ApiErrorKind.badResponse,
+          ),
+        ),
       );
     });
   });
 
   group('detail screen', () {
-    testWidgets('renders the item metadata from the tapped row', (tester) async {
+    testWidgets('renders the item metadata from the tapped row', (
+      tester,
+    ) async {
       await _openDetail(
         tester,
         client: libraryClient(),
@@ -149,157 +161,178 @@ void main() {
     });
 
     testWidgets(
-        'T1-U2: a saved lesson plan renders through its own result view, '
-        'not the bare "Ready" checkmark', (tester) async {
-      await _openDetail(
-        tester,
-        client: libraryClient(),
-        itemResponse: contentItem(overrides: {
-          'data': {
-            'title': 'Photosynthesis for Class 6',
-            'gradeLevel': 'Class 6',
-            'subject': 'Science',
-            'objectives': ['Explain how plants make food'],
-            'materials': ['Leaves', 'Sunlight'],
-            'activities': [
-              {
-                'phase': 'Engage',
-                'name': 'Leaf walk',
-                'description': 'Collect leaves from the schoolyard.',
-                'duration': '10 minutes',
+      'T1-U2: a saved lesson plan renders through its own result view, '
+      'not the bare "Ready" checkmark',
+      (tester) async {
+        await _openDetail(
+          tester,
+          client: libraryClient(),
+          itemResponse: contentItem(
+            overrides: {
+              'data': {
+                'title': 'Photosynthesis for Class 6',
+                'gradeLevel': 'Class 6',
+                'subject': 'Science',
+                'objectives': ['Explain how plants make food'],
+                'materials': ['Leaves', 'Sunlight'],
+                'activities': [
+                  {
+                    'phase': 'Engage',
+                    'name': 'Leaf walk',
+                    'description': 'Collect leaves from the schoolyard.',
+                    'duration': '10 minutes',
+                  },
+                ],
               },
-            ],
-          },
-        }),
-      );
+            },
+          ),
+        );
 
-      // The actual saved content is now on screen...
-      expect(find.text('Explain how plants make food'), findsOneWidget);
-      expect(find.text('Leaf walk'), findsOneWidget);
-      // ...instead of the old placeholder.
-      expect(
-        find.text('You are viewing your saved Lesson plan.'),
-        findsNothing,
-      );
-    });
+        // The actual saved content is now on screen...
+        expect(find.text('Explain how plants make food'), findsOneWidget);
+        expect(find.text('Leaf walk'), findsOneWidget);
+        // ...instead of the old placeholder.
+        expect(
+          find.text('You are viewing your saved Lesson plan.'),
+          findsNothing,
+        );
+      },
+    );
 
     testWidgets(
-        'T1-U2: a saved worksheet dispatches on the fetched type, not the '
-        "row's", (tester) async {
-      final worksheetData = {
-        'title': 'Fractions Worksheet',
-        'gradeLevel': 'Class 5',
-        'subject': 'Mathematics',
-        'learningObjectives': ['Add fractions with unlike denominators'],
-        'studentInstructions': 'Solve each problem and show your work.',
-        'activities': [
-          {
-            'type': 'question',
-            'content': 'What is 1/2 + 1/4?',
-            'explanation': 'Find a common denominator first.',
-          },
-        ],
-        'answerKey': [
-          {'activityIndex': 0, 'answer': '3/4'},
-        ],
-        // A legacy markdown field real saved worksheets also carry — must be
-        // ignored in favour of the structured fields above.
-        'worksheetContent': '# Fractions Worksheet\n\nignored',
-      };
-      await _openDetail(
-        tester,
-        client: libraryClient(
-          response: contentListResponse(items: [
-            contentItem(overrides: {
+      'T1-U2: a saved worksheet dispatches on the fetched type, not the '
+      "row's",
+      (tester) async {
+        final worksheetData = {
+          'title': 'Fractions Worksheet',
+          'gradeLevel': 'Class 5',
+          'subject': 'Mathematics',
+          'learningObjectives': ['Add fractions with unlike denominators'],
+          'studentInstructions': 'Solve each problem and show your work.',
+          'activities': [
+            {
+              'type': 'question',
+              'content': 'What is 1/2 + 1/4?',
+              'explanation': 'Find a common denominator first.',
+            },
+          ],
+          'answerKey': [
+            {'activityIndex': 0, 'answer': '3/4'},
+          ],
+          // A legacy markdown field real saved worksheets also carry — must be
+          // ignored in favour of the structured fields above.
+          'worksheetContent': '# Fractions Worksheet\n\nignored',
+        };
+        await _openDetail(
+          tester,
+          client: libraryClient(
+            response: contentListResponse(
+              items: [
+                contentItem(
+                  overrides: {
+                    'type': 'worksheet',
+                    'title': 'Fractions Worksheet',
+                  },
+                ),
+              ],
+            ),
+          ),
+          rowText: 'Fractions Worksheet',
+          itemResponse: contentItem(
+            overrides: {
               'type': 'worksheet',
               'title': 'Fractions Worksheet',
-            }),
-          ]),
-        ),
-        rowText: 'Fractions Worksheet',
-        itemResponse: contentItem(overrides: {
-          'type': 'worksheet',
-          'title': 'Fractions Worksheet',
-          'data': worksheetData,
-        }),
-      );
+              'data': worksheetData,
+            },
+          ),
+        );
 
-      expect(find.text('What is 1/2 + 1/4?'), findsOneWidget);
-      expect(find.textContaining('ignored'), findsNothing);
-    });
+        expect(find.text('What is 1/2 + 1/4?'), findsOneWidget);
+        expect(find.textContaining('ignored'), findsNothing);
+      },
+    );
 
     testWidgets(
-        'T1-U2: a saved item with no data payload keeps the honest "Ready" '
-        'state', (tester) async {
-      // A document that predates the `data` field, or a content type with no
-      // mobile tool screen yet — either way this must never guess.
-      await _openDetail(
-        tester,
-        client: libraryClient(),
-        itemResponse: contentItem(),
-      );
+      'T1-U2: a saved item with no data payload keeps the honest "Ready" '
+      'state',
+      (tester) async {
+        // A document that predates the `data` field, or a content type with no
+        // mobile tool screen yet — either way this must never guess.
+        await _openDetail(
+          tester,
+          client: libraryClient(),
+          itemResponse: contentItem(),
+        );
 
-      expect(
-        find.text('You are viewing your saved Lesson plan.'),
-        findsOneWidget,
-      );
-    });
-
-    testWidgets(
-        'T1-U2: a saved item whose data cannot decode falls back to "Ready" '
-        'rather than rendering garbage', (tester) async {
-      await _openDetail(
-        tester,
-        client: libraryClient(),
-        itemResponse: contentItem(overrides: {
-          // A lesson-plan type whose `data` is structurally foreign (an
-          // array, not an object) — must never crash or half-render.
-          'data': ['not', 'an', 'object'],
-        }),
-      );
-
-      expect(
-        find.text('You are viewing your saved Lesson plan.'),
-        findsOneWidget,
-      );
-      expect(tester.takeException(), isNull);
-    });
+        expect(
+          find.text('You are viewing your saved Lesson plan.'),
+          findsOneWidget,
+        );
+      },
+    );
 
     testWidgets(
-        'money bug: a saved exam paper opened from Library has no working '
-        'Save button (re-saving would PUT a duplicate and burn quota)',
-        (tester) async {
-      await _openDetail(
-        tester,
-        client: libraryClient(
-          response: contentListResponse(items: [
-            contentItem(overrides: {
+      'T1-U2: a saved item whose data cannot decode falls back to "Ready" '
+      'rather than rendering garbage',
+      (tester) async {
+        await _openDetail(
+          tester,
+          client: libraryClient(),
+          itemResponse: contentItem(
+            overrides: {
+              // A lesson-plan type whose `data` is structurally foreign (an
+              // array, not an object) — must never crash or half-render.
+              'data': ['not', 'an', 'object'],
+            },
+          ),
+        );
+
+        expect(
+          find.text('You are viewing your saved Lesson plan.'),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets(
+      'money bug: a saved exam paper opened from Library has no working '
+      'Save button (re-saving would PUT a duplicate and burn quota)',
+      (tester) async {
+        await _openDetail(
+          tester,
+          client: libraryClient(
+            response: contentListResponse(
+              items: [
+                contentItem(
+                  overrides: {'type': 'exam-paper', 'title': 'CBSE Exam Paper'},
+                ),
+              ],
+            ),
+          ),
+          rowText: 'CBSE Exam Paper',
+          itemResponse: contentItem(
+            overrides: {
               'type': 'exam-paper',
               'title': 'CBSE Exam Paper',
-            }),
-          ]),
-        ),
-        rowText: 'CBSE Exam Paper',
-        itemResponse: contentItem(overrides: {
-          'type': 'exam-paper',
-          'title': 'CBSE Exam Paper',
-          'data': examPaperJson(),
-        }),
-      );
+              'data': examPaperJson(),
+            },
+          ),
+        );
 
-      // The saved paper renders through its own result view (proof the
-      // mapper + result view are wired) ...
-      expect(find.text('Section A'), findsOneWidget);
-      // ... but there must be no live Save action: a saved item re-opened
-      // read-only from Library has no generate controller behind it, so
-      // tapping Save here would PUT a byte-for-byte duplicate to the library
-      // and burn a real quota unit for nothing.
-      expect(find.text('Save to Library'), findsNothing);
-      expect(find.text('Saving'), findsNothing);
-    });
+        // The saved paper renders through its own result view (proof the
+        // mapper + result view are wired) ...
+        expect(find.text('Section A'), findsOneWidget);
+        // ... but there must be no live Save action: a saved item re-opened
+        // read-only from Library has no generate controller behind it, so
+        // tapping Save here would PUT a byte-for-byte duplicate to the library
+        // and burn a real quota unit for nothing.
+        expect(find.text('Save to Library'), findsNothing);
+        expect(find.text('Saving'), findsNothing);
+      },
+    );
 
-    testWidgets(
-        'T2-U11: a saved assessment-submission renders through its own '
+    testWidgets('T2-U11: a saved assessment-submission renders through its own '
         'scanner result view, not the bare "Ready" checkmark', (tester) async {
       final assessmentData = {
         'assessmentId': 'a1b2c3d4-0000-4000-8000-000000000001',
@@ -337,19 +370,25 @@ void main() {
       await _openDetail(
         tester,
         client: libraryClient(
-          response: contentListResponse(items: [
-            contentItem(overrides: {
-              'type': 'assessment-submission',
-              'title': 'Assessment: Mathematics Class 6 (80%)',
-            }),
-          ]),
+          response: contentListResponse(
+            items: [
+              contentItem(
+                overrides: {
+                  'type': 'assessment-submission',
+                  'title': 'Assessment: Mathematics Class 6 (80%)',
+                },
+              ),
+            ],
+          ),
         ),
         rowText: 'Assessment: Mathematics Class 6 (80%)',
-        itemResponse: contentItem(overrides: {
-          'type': 'assessment-submission',
-          'title': 'Assessment: Mathematics Class 6 (80%)',
-          'data': assessmentData,
-        }),
+        itemResponse: contentItem(
+          overrides: {
+            'type': 'assessment-submission',
+            'title': 'Assessment: Mathematics Class 6 (80%)',
+            'data': assessmentData,
+          },
+        ),
       );
 
       expect(find.text('What is 2 + 2?'), findsOneWidget);
@@ -360,62 +399,65 @@ void main() {
     });
 
     testWidgets(
-        'T2-U11: a saved visual-aid keeps the honest "Ready" state — the '
-        'real saved shape has no imageDataUri to render', (tester) async {
-      final visualAidData = {
-        'pedagogicalContext': 'Use this to explain the water cycle.',
-        'discussionSpark': 'Where does the rain go after it falls?',
-        'subject': 'Science',
-        'storageRef': 'users/u1/visual-aids/20260715_water_cycle.png',
-      };
+      'T2-U11: a saved visual-aid keeps the honest "Ready" state — the '
+      'real saved shape has no imageDataUri to render',
+      (tester) async {
+        final visualAidData = {
+          'pedagogicalContext': 'Use this to explain the water cycle.',
+          'discussionSpark': 'Where does the rain go after it falls?',
+          'subject': 'Science',
+          'storageRef': 'users/u1/visual-aids/20260715_water_cycle.png',
+        };
 
-      await _openDetail(
-        tester,
-        client: libraryClient(
-          response: contentListResponse(items: [
-            contentItem(overrides: {
+        await _openDetail(
+          tester,
+          client: libraryClient(
+            response: contentListResponse(
+              items: [
+                contentItem(
+                  overrides: {'type': 'visual-aid', 'title': 'The Water Cycle'},
+                ),
+              ],
+            ),
+          ),
+          rowText: 'The Water Cycle',
+          itemResponse: contentItem(
+            overrides: {
               'type': 'visual-aid',
               'title': 'The Water Cycle',
-            }),
-          ]),
-        ),
-        rowText: 'The Water Cycle',
-        itemResponse: contentItem(overrides: {
-          'type': 'visual-aid',
-          'title': 'The Water Cycle',
-          'data': visualAidData,
-        }),
-      );
+              'data': visualAidData,
+            },
+          ),
+        );
 
-      expect(
-        find.text('You are viewing your saved Visual aid.'),
-        findsOneWidget,
-      );
-      expect(tester.takeException(), isNull);
-    });
+        expect(
+          find.text('You are viewing your saved Visual aid.'),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
 
-    testWidgets('no identity asks for sign-in, with no retry that cannot work',
-        (tester) async {
-      await _openDetail(
-        tester,
-        client: libraryClient(),
-        itemError: kUnauthorized,
-      );
+    testWidgets(
+      'no identity asks for sign-in, with no retry that cannot work',
+      (tester) async {
+        await _openDetail(
+          tester,
+          client: libraryClient(),
+          itemError: kUnauthorized,
+        );
 
-      expect(find.byType(LibraryDetailScreen), findsOneWidget);
-      expect(find.text('Sign in to open your saved work.'), findsOneWidget);
-      expect(find.text('Try again'), findsNothing);
-      // Same dead-end fix as the list: the signed-out detail now offers a
-      // working "Sign in" action rather than an actionless message.
-      expect(find.widgetWithText(SecondaryButton, 'Sign in'), findsOneWidget);
-    });
+        expect(find.byType(LibraryDetailScreen), findsOneWidget);
+        expect(find.text('Sign in to open your saved work.'), findsOneWidget);
+        expect(find.text('Try again'), findsNothing);
+        // Same dead-end fix as the list: the signed-out detail now offers a
+        // working "Sign in" action rather than an actionless message.
+        expect(find.widgetWithText(SecondaryButton, 'Sign in'), findsOneWidget);
+      },
+    );
 
     testWidgets('offline gets its own copy and a retry', (tester) async {
-      await _openDetail(
-        tester,
-        client: libraryClient(),
-        itemError: kOffline,
-      );
+      await _openDetail(tester, client: libraryClient(), itemError: kOffline);
 
       expect(find.byType(OfflineView), findsOneWidget);
       expect(find.byType(ErrorView), findsNothing);
@@ -440,13 +482,10 @@ void main() {
       );
     });
 
-    testWidgets('a deleted item says so, and offers no dead retry',
-        (tester) async {
-      await _openDetail(
-        tester,
-        client: libraryClient(),
-        itemError: _kNotFound,
-      );
+    testWidgets('a deleted item says so, and offers no dead retry', (
+      tester,
+    ) async {
+      await _openDetail(tester, client: libraryClient(), itemError: _kNotFound);
 
       expect(
         find.text('This item is no longer in your library.'),
@@ -455,8 +494,9 @@ void main() {
       expect(find.text('Try again'), findsNothing);
     });
 
-    testWidgets('a server error offers a retry, with no raw exception',
-        (tester) async {
+    testWidgets('a server error offers a retry, with no raw exception', (
+      tester,
+    ) async {
       await _openDetail(
         tester,
         client: libraryClient(),
@@ -485,7 +525,9 @@ void main() {
             // A long compound word stresses the header title wrap.
             client: libraryClient(
               response: contentListResponse(
-                items: [contentItem(overrides: {'title': kLongWord})],
+                items: [
+                  contentItem(overrides: {'title': kLongWord}),
+                ],
               ),
             ),
             rowText: kLongWord,
@@ -509,7 +551,9 @@ void main() {
             surface: kNarrowPhone,
             client: libraryClient(
               response: contentListResponse(
-                items: [contentItem(overrides: {'title': kTa})],
+                items: [
+                  contentItem(overrides: {'title': kTa}),
+                ],
               ),
             ),
             rowText: kTa,

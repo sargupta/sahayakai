@@ -25,6 +25,7 @@ Future<void> _pumpScreen(
   double textScale = 1.0,
   Locale locale = const Locale('en'),
   bool signedIn = false,
+
   /// The `users/<uid>` document the teaching-profile form hydrates from. Null
   /// leaves the default signed-out source bound, so the read 401s.
   Map<String, dynamic>? doc,
@@ -55,7 +56,8 @@ Future<void> _pumpScreen(
 /// overflow at any scroll offset. An overflow below the fold is still an
 /// overflow, and Settings is taller than any phone.
 Future<void> _scrollWholeList(WidgetTester tester) async {
-  final position = tester.state<ScrollableState>(find.byType(Scrollable).first)
+  final position = tester
+      .state<ScrollableState>(find.byType(Scrollable).first)
       .position;
   var guard = 0;
   while (position.pixels < position.maxScrollExtent && guard++ < 40) {
@@ -87,8 +89,9 @@ void main() {
       }
     });
 
-    testWidgets('selecting a language flips the UI locale AND the AI param',
-        (tester) async {
+    testWidgets('selecting a language flips the UI locale AND the AI param', (
+      tester,
+    ) async {
       await _pumpScreen(tester);
       final container = _containerOf(tester);
       expect(container.read(localeControllerProvider), AppLocale.en);
@@ -118,14 +121,13 @@ void main() {
       expect(prefs.getString('app_locale_code'), 'kn');
     });
 
-    testWidgets('app.dart drives MaterialApp.locale from the provider',
-        (tester) async {
+    testWidgets('app.dart drives MaterialApp.locale from the provider', (
+      tester,
+    ) async {
       // Proves the "flips the UI locale" half end to end, not just the provider.
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [
-            localeControllerProvider.overrideWith(_FixedLocale.new),
-          ],
+          overrides: [localeControllerProvider.overrideWith(_FixedLocale.new)],
           child: const SahayakApp(),
         ),
       );
@@ -189,8 +191,9 @@ void main() {
       expect(group.groupValue, ThemeMode.dark);
     });
 
-    testWidgets('app.dart drives MaterialApp.themeMode from the provider',
-        (tester) async {
+    testWidgets('app.dart drives MaterialApp.themeMode from the provider', (
+      tester,
+    ) async {
       // Proves "re-themes LIVE": the screen sets the provider (above) and the
       // root MaterialApp reads it, so the whole app re-themes on the tap.
       await tester.pumpWidget(
@@ -227,8 +230,9 @@ void main() {
   });
 
   group('logged-out state', () {
-    testWidgets('renders the sign-in card instead of the account sections',
-        (tester) async {
+    testWidgets('renders the sign-in card instead of the account sections', (
+      tester,
+    ) async {
       await _pumpScreen(tester);
 
       expect(find.text('You are signed out'), findsOneWidget);
@@ -242,8 +246,9 @@ void main() {
       expect(find.text('Delete account'), findsNothing);
     });
 
-    testWidgets('device preferences still work while signed out',
-        (tester) async {
+    testWidgets('device preferences still work while signed out', (
+      tester,
+    ) async {
       // Language / theme / notifications are per-device, so signing out must
       // not take them away.
       await _pumpScreen(tester);
@@ -253,12 +258,15 @@ void main() {
 
       await tester.tap(find.text('Dark'));
       await tester.pumpAndSettle();
-      expect(_containerOf(tester).read(themeModeControllerProvider),
-          ThemeMode.dark);
+      expect(
+        _containerOf(tester).read(themeModeControllerProvider),
+        ThemeMode.dark,
+      );
     });
 
-    testWidgets('signed in, the account sections replace the sign-in card',
-        (tester) async {
+    testWidgets('signed in, the account sections replace the sign-in card', (
+      tester,
+    ) async {
       // A readable, empty document: signed in, nothing saved yet. The form
       // hydrates from the profile read, so it needs one to render.
       await _pumpScreen(tester, signedIn: true, doc: const <String, dynamic>{});
@@ -308,11 +316,15 @@ void main() {
       expect(tester.widget<FilterChip>(net).selected, isTrue);
     });
 
-    testWidgets('the delete-account button is reachable and destructive',
-        (tester) async {
+    testWidgets('the delete-account button is reachable and destructive', (
+      tester,
+    ) async {
       await _pumpScreen(tester, signedIn: true);
 
-      final deleteButton = find.widgetWithText(OutlinedButton, 'Delete account');
+      final deleteButton = find.widgetWithText(
+        OutlinedButton,
+        'Delete account',
+      );
       // Below the fold: tap() only WARNS on a missed hit-test, so scroll first.
       await tester.ensureVisible(deleteButton);
       await tester.pumpAndSettle();
@@ -328,8 +340,9 @@ void main() {
   });
 
   group('touch targets (DESIGN_RUBRIC §12.2)', () {
-    testWidgets('every control clears 48dp, chips and radios included',
-        (tester) async {
+    testWidgets('every control clears 48dp, chips and radios included', (
+      tester,
+    ) async {
       // The qualification chips this measures only render once the profile
       // form hydrates, so it needs a readable document (empty is fine).
       await _pumpScreen(
@@ -495,7 +508,9 @@ void main() {
       expect(find.text(boardField), findsOneWidget);
     });
 
-    testWidgets('long words in a Text do not overflow the page', (tester) async {
+    testWidgets('long words in a Text do not overflow the page', (
+      tester,
+    ) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -505,7 +520,12 @@ void main() {
           Scaffold(
             body: ListView(
               padding: const EdgeInsets.all(16),
-              children: const [Text(kLongWord), Text(kBn), Text(kTa), Text(kMl)],
+              children: const [
+                Text(kLongWord),
+                Text(kBn),
+                Text(kTa),
+                Text(kMl),
+              ],
             ),
           ),
           textScale: 1.3,

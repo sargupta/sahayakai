@@ -31,7 +31,9 @@ class _DestMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: Center(child: Text('DEST', key: Key('dest-$id'))));
+    return Scaffold(
+      body: Center(child: Text('DEST', key: Key('dest-$id'))),
+    );
   }
 }
 
@@ -45,34 +47,34 @@ const _me = 'u-me';
 const _other = 'u-bina';
 
 FeedItem _feedPost(String content) => FeedItem(
-      id: 'feed-p1',
-      type: FeedItemType.groupPost,
-      groupName: 'Class 8 Science',
-      post: GroupPost(
-        id: 'p1',
-        groupId: 'g1',
-        authorUid: 'u1',
-        authorName: 'Asha',
-        content: content,
-        postType: PostType.share,
-        likesCount: 1,
-        createdAt: '2026-07-19T09:00:00Z',
-      ),
-    );
+  id: 'feed-p1',
+  type: FeedItemType.groupPost,
+  groupName: 'Class 8 Science',
+  post: GroupPost(
+    id: 'p1',
+    groupId: 'g1',
+    authorUid: 'u1',
+    authorName: 'Asha',
+    content: content,
+    postType: PostType.share,
+    likesCount: 1,
+    createdAt: '2026-07-19T09:00:00Z',
+  ),
+);
 
 Conversation _convo({String otherName = 'Bina Devi'}) => Conversation(
-      id: const ConversationId('u-bina_u-me'),
-      type: ConversationType.direct,
-      participantIds: const [_other, _me],
-      participants: {
-        _other: ParticipantSnapshot(displayName: otherName),
-        _me: const ParticipantSnapshot(displayName: 'Me'),
-      },
-      lastMessage: 'See you at the meeting',
-      lastMessageSenderId: _other,
-      unreadCount: const {_me: 0},
-      lastMessageAt: '2026-07-19T11:55:00Z',
-    );
+  id: const ConversationId('u-bina_u-me'),
+  type: ConversationType.direct,
+  participantIds: const [_other, _me],
+  participants: {
+    _other: ParticipantSnapshot(displayName: otherName),
+    _me: const ParticipantSnapshot(displayName: 'Me'),
+  },
+  lastMessage: 'See you at the meeting',
+  lastMessageSenderId: _other,
+  unreadCount: const {_me: 0},
+  lastMessageAt: '2026-07-19T11:55:00Z',
+);
 
 Future<void> _pumpHub(
   WidgetTester tester, {
@@ -144,14 +146,14 @@ void main() {
 
   final l10n = _en();
 
-  testWidgets('renders both segments; defaults to the Staffroom feed',
-      (tester) async {
+  testWidgets('renders both segments; defaults to the Staffroom feed', (
+    tester,
+  ) async {
     await _pumpHub(
       tester,
       staffroom: FakeStaffroomTransport()..feed = [_feedPost('staffroom body')],
       inbox: FakeInboxTransport(
-        initialInbox:
-            TransportSnapshot<List<Conversation>>.ready([_convo()]),
+        initialInbox: TransportSnapshot<List<Conversation>>.ready([_convo()]),
       ),
     );
 
@@ -166,14 +168,14 @@ void main() {
     expect(find.text('Bina Devi'), findsNothing);
   });
 
-  testWidgets('switching to Messages surfaces the reused inbox list',
-      (tester) async {
+  testWidgets('switching to Messages surfaces the reused inbox list', (
+    tester,
+  ) async {
     await _pumpHub(
       tester,
       staffroom: FakeStaffroomTransport()..feed = [_feedPost('staffroom body')],
       inbox: FakeInboxTransport(
-        initialInbox:
-            TransportSnapshot<List<Conversation>>.ready([_convo()]),
+        initialInbox: TransportSnapshot<List<Conversation>>.ready([_convo()]),
       ),
     );
 
@@ -186,8 +188,9 @@ void main() {
     expect(find.text('staffroom body'), findsNothing);
   });
 
-  testWidgets('the Messages segment shows the inbox sign-in when awaiting',
-      (tester) async {
+  testWidgets('the Messages segment shows the inbox sign-in when awaiting', (
+    tester,
+  ) async {
     await _pumpHub(
       tester,
       staffroom: FakeStaffroomTransport(),
@@ -203,15 +206,14 @@ void main() {
   });
 
   group('DP-2: sign-in CTA (dead-end fix)', () {
-    testWidgets(
-        'the Messages sign-in EmptyView offers a Sign in action that '
+    testWidgets('the Messages sign-in EmptyView offers a Sign in action that '
         'navigates to /login', (tester) async {
       await _pumpHub(
         tester,
         staffroom: FakeStaffroomTransport(),
         inbox: FakeInboxTransport(
-          initialInbox: const TransportSnapshot<List<Conversation>>
-              .awaitingFirebase([]),
+          initialInbox:
+              const TransportSnapshot<List<Conversation>>.awaitingFirebase([]),
         ),
         router: true,
       );
@@ -232,25 +234,28 @@ void main() {
     });
 
     testWidgets(
-        'the genuinely-empty Messages EmptyView (ready, no conversations) '
-        'does NOT gain a Sign in action', (tester) async {
-      await _pumpHub(
-        tester,
-        staffroom: FakeStaffroomTransport(),
-        inbox: FakeInboxTransport(
-          initialInbox:
-              const TransportSnapshot<List<Conversation>>.ready(<Conversation>[]),
-        ),
-      );
+      'the genuinely-empty Messages EmptyView (ready, no conversations) '
+      'does NOT gain a Sign in action',
+      (tester) async {
+        await _pumpHub(
+          tester,
+          staffroom: FakeStaffroomTransport(),
+          inbox: FakeInboxTransport(
+            initialInbox: const TransportSnapshot<List<Conversation>>.ready(
+              <Conversation>[],
+            ),
+          ),
+        );
 
-      await tester.tap(find.text(l10n.networkTabMessages));
-      await tester.pumpAndSettle();
+        await tester.tap(find.text(l10n.networkTabMessages));
+        await tester.pumpAndSettle();
 
-      expect(find.text(l10n.inboxEmptyTitle), findsOneWidget);
-      // A ready-but-empty inbox is not a dead end — it must not pick up the
-      // sign-in CTA.
-      expect(find.text(l10n.actionSignIn), findsNothing);
-      expect(find.byIcon(LucideIcons.logIn), findsNothing);
-    });
+        expect(find.text(l10n.inboxEmptyTitle), findsOneWidget);
+        // A ready-but-empty inbox is not a dead end — it must not pick up the
+        // sign-in CTA.
+        expect(find.text(l10n.actionSignIn), findsNothing);
+        expect(find.byIcon(LucideIcons.logIn), findsNothing);
+      },
+    );
   });
 }

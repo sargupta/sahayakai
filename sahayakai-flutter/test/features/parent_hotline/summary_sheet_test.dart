@@ -29,7 +29,8 @@ import 'package:sahayakai/shared/widgets/empty_view.dart';
 
 double _lin(double c) =>
     c <= 0.03928 ? c / 12.92 : math.pow((c + 0.055) / 1.055, 2.4).toDouble();
-double _lum(Color c) => 0.2126 * _lin(c.r) + 0.7152 * _lin(c.g) + 0.0722 * _lin(c.b);
+double _lum(Color c) =>
+    0.2126 * _lin(c.r) + 0.7152 * _lin(c.g) + 0.0722 * _lin(c.b);
 double _ratio(Color fg, Color bg) {
   final a = _lum(fg), b = _lum(bg);
   final hi = math.max(a, b), lo = math.min(a, b);
@@ -69,36 +70,36 @@ CallSummary _summary({
   String parentResponse = 'The parent listened and agreed to help at home.',
   List<String> concerns = const ['Homework has been piling up at home.'],
   List<String> commitments = const ['Will check the school diary each night.'],
-  List<String> actions = const ['Share this week revision sheet with the parent.'],
+  List<String> actions = const [
+    'Share this week revision sheet with the parent.',
+  ],
   List<String> guidance = const ['Read together for fifteen minutes a day.'],
   bool followUpNeeded = true,
   String? followUpSuggestion = 'Call again next Friday to check progress.',
-}) =>
-    CallSummary(
-      parentResponse: parentResponse,
-      parentConcerns: concerns,
-      parentCommitments: commitments,
-      actionItemsForTeacher: actions,
-      guidanceGiven: guidance,
-      parentSentiment: sentiment,
-      callQuality: CallQuality.productive,
-      followUpNeeded: followUpNeeded,
-      followUpSuggestion: followUpSuggestion,
-    );
+}) => CallSummary(
+  parentResponse: parentResponse,
+  parentConcerns: concerns,
+  parentCommitments: commitments,
+  actionItemsForTeacher: actions,
+  guidanceGiven: guidance,
+  parentSentiment: sentiment,
+  callQuality: CallQuality.productive,
+  followUpNeeded: followUpNeeded,
+  followUpSuggestion: followUpSuggestion,
+);
 
 CallResult _summaryResult(
   CallSummary summary, {
   int turnCount = 4,
   int? durationSeconds = 180,
   List<TranscriptTurn> transcript = _transcript,
-}) =>
-    CallResult(
-      callStatus: CallStatus.completed,
-      turnCount: turnCount,
-      callDurationSeconds: durationSeconds,
-      transcript: transcript,
-      callSummary: summary,
-    );
+}) => CallResult(
+  callStatus: CallStatus.completed,
+  turnCount: turnCount,
+  callDurationSeconds: durationSeconds,
+  transcript: transcript,
+  callSummary: summary,
+);
 
 Future<void> _pump(
   WidgetTester tester, {
@@ -162,37 +163,31 @@ Future<void> _pump(
 
 // Expected sentiment tone roles (SPEC §B.1) — the label ink and the fill.
 Color _expectedInk(ColorScheme s, ParentSentiment sent) => switch (sent) {
-      ParentSentiment.grateful ||
-      ParentSentiment.cooperative =>
-        s.onSecondaryContainer,
-      ParentSentiment.concerned ||
-      ParentSentiment.confused =>
-        s.onPrimaryContainer,
-      ParentSentiment.upset => s.onSurface,
-      ParentSentiment.indifferent => s.onSurface,
-    };
+  ParentSentiment.grateful ||
+  ParentSentiment.cooperative => s.onSecondaryContainer,
+  ParentSentiment.concerned || ParentSentiment.confused => s.onPrimaryContainer,
+  ParentSentiment.upset => s.onSurface,
+  ParentSentiment.indifferent => s.onSurface,
+};
 
 Color _expectedFill(ColorScheme s, ParentSentiment sent, bool dark) =>
     switch (sent) {
       ParentSentiment.grateful ||
-      ParentSentiment.cooperative =>
-        s.secondaryContainer,
+      ParentSentiment.cooperative => s.secondaryContainer,
       ParentSentiment.concerned ||
-      ParentSentiment.confused =>
-        s.primaryContainer,
-      ParentSentiment.upset =>
-        s.error.withValues(alpha: dark ? 0.22 : 0.12),
+      ParentSentiment.confused => s.primaryContainer,
+      ParentSentiment.upset => s.error.withValues(alpha: dark ? 0.22 : 0.12),
       ParentSentiment.indifferent => s.surfaceContainerHigh,
     };
 
 String _sentimentLabel(AppLocalizations l10n, ParentSentiment s) => switch (s) {
-      ParentSentiment.cooperative => l10n.parentHotlineSentimentCooperative,
-      ParentSentiment.concerned => l10n.parentHotlineSentimentConcerned,
-      ParentSentiment.grateful => l10n.parentHotlineSentimentGrateful,
-      ParentSentiment.upset => l10n.parentHotlineSentimentUpset,
-      ParentSentiment.indifferent => l10n.parentHotlineSentimentIndifferent,
-      ParentSentiment.confused => l10n.parentHotlineSentimentConfused,
-    };
+  ParentSentiment.cooperative => l10n.parentHotlineSentimentCooperative,
+  ParentSentiment.concerned => l10n.parentHotlineSentimentConcerned,
+  ParentSentiment.grateful => l10n.parentHotlineSentimentGrateful,
+  ParentSentiment.upset => l10n.parentHotlineSentimentUpset,
+  ParentSentiment.indifferent => l10n.parentHotlineSentimentIndifferent,
+  ParentSentiment.confused => l10n.parentHotlineSentimentConfused,
+};
 
 void main() {
   setUp(() => GoogleFonts.config.allowRuntimeFetching = false);
@@ -202,8 +197,9 @@ void main() {
   // ── The full summary payoff ────────────────────────────────────────────────
 
   group('full summary (outcome == summary)', () {
-    testWidgets('renders the DocumentSheet masthead + every present section',
-        (tester) async {
+    testWidgets('renders the DocumentSheet masthead + every present section', (
+      tester,
+    ) async {
       await _pump(
         tester,
         outcome: HotlineSummaryOutcome.summary,
@@ -229,19 +225,25 @@ void main() {
       expect(find.text('View conversation · 2 messages'), findsOneWidget);
     });
 
-    testWidgets('the meta shows a duration and an exchanges badge',
-        (tester) async {
+    testWidgets('the meta shows a duration and an exchanges badge', (
+      tester,
+    ) async {
       await _pump(
         tester,
         outcome: HotlineSummaryOutcome.summary,
-        callResult: _summaryResult(_summary(), turnCount: 4, durationSeconds: 180),
+        callResult: _summaryResult(
+          _summary(),
+          turnCount: 4,
+          durationSeconds: 180,
+        ),
       );
       expect(find.text('3 min'), findsOneWidget); // 180s → 3 min
       expect(find.text('4 exchanges'), findsOneWidget);
     });
 
-    testWidgets('empty concerns / commitments / guidance sections are HIDDEN',
-        (tester) async {
+    testWidgets('empty concerns / commitments / guidance sections are HIDDEN', (
+      tester,
+    ) async {
       await _pump(
         tester,
         outcome: HotlineSummaryOutcome.summary,
@@ -287,31 +289,33 @@ void main() {
     });
 
     testWidgets(
-        'the action-items block is the ONE primary-toned block (saffron)',
-        (tester) async {
-      const action = 'Share this week revision sheet with the parent.';
-      await _pump(
-        tester,
-        outcome: HotlineSummaryOutcome.summary,
-        callResult: _summaryResult(_summary(actions: const [action])),
-      );
-      final scheme = AppTheme.light().colorScheme;
+      'the action-items block is the ONE primary-toned block (saffron)',
+      (tester) async {
+        const action = 'Share this week revision sheet with the parent.';
+        await _pump(
+          tester,
+          outcome: HotlineSummaryOutcome.summary,
+          callResult: _summaryResult(_summary(actions: const [action])),
+        );
+        final scheme = AppTheme.light().colorScheme;
 
-      // The action item prose sits inside a Container tinted with
-      // primaryContainer — the saffron block the teacher must act on.
-      final tonedBox = find.ancestor(
-        of: find.text(action),
-        matching: find.byWidgetPredicate(
-          (w) =>
-              w is Container &&
-              w.decoration is BoxDecoration &&
-              (w.decoration as BoxDecoration).color == scheme.primaryContainer,
-        ),
-      );
-      expect(tonedBox, findsOneWidget);
-      // Each to-do carries the arrow-right glyph.
-      expect(find.byIcon(LucideIcons.arrowRight), findsWidgets);
-    });
+        // The action item prose sits inside a Container tinted with
+        // primaryContainer — the saffron block the teacher must act on.
+        final tonedBox = find.ancestor(
+          of: find.text(action),
+          matching: find.byWidgetPredicate(
+            (w) =>
+                w is Container &&
+                w.decoration is BoxDecoration &&
+                (w.decoration as BoxDecoration).color ==
+                    scheme.primaryContainer,
+          ),
+        );
+        expect(tonedBox, findsOneWidget);
+        // Each to-do carries the arrow-right glyph.
+        expect(find.byIcon(LucideIcons.arrowRight), findsWidgets);
+      },
+    );
   });
 
   // ── Sentiment badge: tone per sentiment + WCAG AA on the fill ───────────────
@@ -320,40 +324,49 @@ void main() {
     for (final brightness in Brightness.values) {
       for (final sentiment in ParentSentiment.values) {
         testWidgets(
-            'sentiment ${sentiment.name} (${brightness.name}): correct ink role '
-            'and label clears AA 4.5:1 on its fill', (tester) async {
-          await _pump(
-            tester,
-            outcome: HotlineSummaryOutcome.summary,
-            callResult: _summaryResult(_summary(sentiment: sentiment)),
-            brightness: brightness,
-          );
-          final scheme = (brightness == Brightness.dark
-                  ? AppTheme.dark()
-                  : AppTheme.light())
-              .colorScheme;
+          'sentiment ${sentiment.name} (${brightness.name}): correct ink role '
+          'and label clears AA 4.5:1 on its fill',
+          (tester) async {
+            await _pump(
+              tester,
+              outcome: HotlineSummaryOutcome.summary,
+              callResult: _summaryResult(_summary(sentiment: sentiment)),
+              brightness: brightness,
+            );
+            final scheme =
+                (brightness == Brightness.dark
+                        ? AppTheme.dark()
+                        : AppTheme.light())
+                    .colorScheme;
 
-          final label = _sentimentLabel(en, sentiment);
-          final labelWidget = tester.widget<Text>(find.text(label));
-          final ink = _expectedInk(scheme, sentiment);
+            final label = _sentimentLabel(en, sentiment);
+            final labelWidget = tester.widget<Text>(find.text(label));
+            final ink = _expectedInk(scheme, sentiment);
 
-          // The label uses the sanctioned full-ink / onXContainer role — never
-          // the muted onSurfaceVariant (the U-PH4 3.86:1 trap).
-          expect(labelWidget.style?.color, ink,
-              reason: 'sentiment ${sentiment.name} label ink role');
-          expect(labelWidget.style?.color, isNot(scheme.onSurfaceVariant));
+            // The label uses the sanctioned full-ink / onXContainer role — never
+            // the muted onSurfaceVariant (the U-PH4 3.86:1 trap).
+            expect(
+              labelWidget.style?.color,
+              ink,
+              reason: 'sentiment ${sentiment.name} label ink role',
+            );
+            expect(labelWidget.style?.color, isNot(scheme.onSurfaceVariant));
 
-          // …and it clears WCAG AA on its own (composited) fill.
-          final fill = _composite(
-            _expectedFill(scheme, sentiment, brightness == Brightness.dark),
-            scheme.surface,
-          );
-          final ratio = _ratio(ink, fill);
-          expect(ratio, greaterThanOrEqualTo(4.5),
+            // …and it clears WCAG AA on its own (composited) fill.
+            final fill = _composite(
+              _expectedFill(scheme, sentiment, brightness == Brightness.dark),
+              scheme.surface,
+            );
+            final ratio = _ratio(ink, fill);
+            expect(
+              ratio,
+              greaterThanOrEqualTo(4.5),
               reason:
                   'sentiment ${sentiment.name} (${brightness.name}) = '
-                  '${ratio.toStringAsFixed(2)}:1');
-        });
+                  '${ratio.toStringAsFixed(2)}:1',
+            );
+          },
+        );
       }
     }
   });
@@ -364,8 +377,7 @@ void main() {
     const agentLine = 'Hello, I am calling from the school about your child.';
 
     for (final brightness in Brightness.values) {
-      testWidgets(
-          'agent (muted) turn clears AA 4.5:1 on the transcript card '
+      testWidgets('agent (muted) turn clears AA 4.5:1 on the transcript card '
           '(${brightness.name})', (tester) async {
         await _pump(
           tester,
@@ -373,10 +385,9 @@ void main() {
           callResult: _summaryResult(_summary(), transcript: _transcript),
           brightness: brightness,
         );
-        final scheme = (brightness == Brightness.dark
-                ? AppTheme.dark()
-                : AppTheme.light())
-            .colorScheme;
+        final scheme =
+            (brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light())
+                .colorScheme;
 
         // Expand so the agent turn is in the tree.
         await tester.ensureVisible(find.text('View conversation · 2 messages'));
@@ -386,8 +397,11 @@ void main() {
         // The agent turn renders muted (onSurfaceVariant); the parent turn is
         // full ink — both must stay legible.
         final agent = tester.widget<Text>(find.text(agentLine));
-        expect(agent.style?.color, scheme.onSurfaceVariant,
-            reason: 'agent turn renders muted');
+        expect(
+          agent.style?.color,
+          scheme.onSurfaceVariant,
+          reason: 'agent turn renders muted',
+        );
 
         // The transcript sits on a FLAT card (surface fill), NOT the inset
         // surfaceContainerLow — that is what lifts the muted line over the AA
@@ -401,27 +415,39 @@ void main() {
               ),
             )
             .first;
-        expect(card.variant, AppCardVariant.flat,
-            reason: 'transcript must render on the white surface, not inset');
+        expect(
+          card.variant,
+          AppCardVariant.flat,
+          reason: 'transcript must render on the white surface, not inset',
+        );
 
         // The actual contrast check: muted agent ink on the card surface.
         final ratio = _ratio(scheme.onSurfaceVariant, scheme.surface);
-        expect(ratio, greaterThanOrEqualTo(4.5),
-            reason: 'agent line on transcript surface (${brightness.name}) = '
-                '${ratio.toStringAsFixed(2)}:1');
+        expect(
+          ratio,
+          greaterThanOrEqualTo(4.5),
+          reason:
+              'agent line on transcript surface (${brightness.name}) = '
+              '${ratio.toStringAsFixed(2)}:1',
+        );
       });
     }
 
-    testWidgets('regression guard: the inset fill WOULD fail AA in light',
-        (tester) async {
+    testWidgets('regression guard: the inset fill WOULD fail AA in light', (
+      tester,
+    ) async {
       // Pin the exact reason the fix was needed — the muted role on the inset
       // surfaceContainerLow is 4.49:1 (under the floor), while the surface fill
       // clears it — so the transcript must never regress to inset.
       final scheme = AppTheme.light().colorScheme;
-      expect(_ratio(scheme.onSurfaceVariant, scheme.surfaceContainerLow),
-          lessThan(4.5));
-      expect(_ratio(scheme.onSurfaceVariant, scheme.surface),
-          greaterThanOrEqualTo(4.5));
+      expect(
+        _ratio(scheme.onSurfaceVariant, scheme.surfaceContainerLow),
+        lessThan(4.5),
+      );
+      expect(
+        _ratio(scheme.onSurfaceVariant, scheme.surface),
+        greaterThanOrEqualTo(4.5),
+      );
     });
   });
 
@@ -464,7 +490,9 @@ void main() {
   // ── Footer + dedup countdown ───────────────────────────────────────────────
 
   group('footer', () {
-    testWidgets('Done and Call-again-later fire their callbacks', (tester) async {
+    testWidgets('Done and Call-again-later fire their callbacks', (
+      tester,
+    ) async {
       var done = 0, callAgain = 0;
       await _pump(
         tester,
@@ -483,40 +511,44 @@ void main() {
       expect(callAgain, 1);
     });
 
-    testWidgets('dedup: "Call again later" is disabled and shows the countdown',
-        (tester) async {
-      var callAgain = 0;
-      await _pump(
-        tester,
-        outcome: HotlineSummaryOutcome.summary,
-        callResult: _summaryResult(_summary()),
-        isDedupBlocked: true,
-        dedupRetryAfterSeconds: 90,
-        onCallAgain: () => callAgain++,
-      );
+    testWidgets(
+      'dedup: "Call again later" is disabled and shows the countdown',
+      (tester) async {
+        var callAgain = 0;
+        await _pump(
+          tester,
+          outcome: HotlineSummaryOutcome.summary,
+          callResult: _summaryResult(_summary()),
+          isDedupBlocked: true,
+          dedupRetryAfterSeconds: 90,
+          onCallAgain: () => callAgain++,
+        );
 
-      // The mm:ss countdown replaces the label…
-      expect(find.textContaining('1:30'), findsOneWidget);
-      expect(find.text('Call again later'), findsNothing);
-      // …and the ghost is disabled (no error loop).
-      final ghost = tester.widget<TextButton>(
-        find.ancestor(
-          of: find.textContaining('1:30'),
-          matching: find.byType(TextButton),
-        ),
-      );
-      expect(ghost.onPressed, isNull);
+        // The mm:ss countdown replaces the label…
+        expect(find.textContaining('1:30'), findsOneWidget);
+        expect(find.text('Call again later'), findsNothing);
+        // …and the ghost is disabled (no error loop).
+        final ghost = tester.widget<TextButton>(
+          find.ancestor(
+            of: find.textContaining('1:30'),
+            matching: find.byType(TextButton),
+          ),
+        );
+        expect(ghost.onPressed, isNull);
 
-      // Done stays available.
-      final ghostTapAttempt = callAgain;
-      expect(ghostTapAttempt, 0);
-    });
+        // Done stays available.
+        final ghostTapAttempt = callAgain;
+        expect(ghostTapAttempt, 0);
+      },
+    );
   });
 
   // ── Terminal non-summary states ────────────────────────────────────────────
 
   group('terminal states', () {
-    testWidgets('manual → "Message copied" + a copy affordance', (tester) async {
+    testWidgets('manual → "Message copied" + a copy affordance', (
+      tester,
+    ) async {
       var copy = 0;
       await _pump(
         tester,
@@ -539,29 +571,33 @@ void main() {
       (CallStatus.noAnswer, 'No answer'),
       (CallStatus.failed, "The call couldn't connect"),
     ]) {
-      testWidgets('callFailed (${status.name}) → "$line" + Try again + WhatsApp',
-          (tester) async {
-        var retry = 0, copy = 0;
-        await _pump(
-          tester,
-          outcome: HotlineSummaryOutcome.callFailed,
-          callResult: CallResult(callStatus: status),
-          onRetry: () => retry++,
-          onCopyForWhatsApp: () => copy++,
-        );
-        expect(find.text(line), findsOneWidget);
-        expect(find.byIcon(LucideIcons.phoneOff), findsOneWidget);
+      testWidgets(
+        'callFailed (${status.name}) → "$line" + Try again + WhatsApp',
+        (tester) async {
+          var retry = 0, copy = 0;
+          await _pump(
+            tester,
+            outcome: HotlineSummaryOutcome.callFailed,
+            callResult: CallResult(callStatus: status),
+            onRetry: () => retry++,
+            onCopyForWhatsApp: () => copy++,
+          );
+          expect(find.text(line), findsOneWidget);
+          expect(find.byIcon(LucideIcons.phoneOff), findsOneWidget);
 
-        await tester.ensureVisible(find.text('Try again'));
-        await tester.tap(find.text('Try again'));
-        expect(retry, 1);
-        await tester.ensureVisible(find.text('Copy for WhatsApp'));
-        await tester.tap(find.text('Copy for WhatsApp'));
-        expect(copy, 1);
-      });
+          await tester.ensureVisible(find.text('Try again'));
+          await tester.tap(find.text('Try again'));
+          expect(retry, 1);
+          await tester.ensureVisible(find.text('Copy for WhatsApp'));
+          await tester.tap(find.text('Copy for WhatsApp'));
+          expect(copy, 1);
+        },
+      );
     }
 
-    testWidgets('endedNoConversation → the "ended too soon" copy', (tester) async {
+    testWidgets('endedNoConversation → the "ended too soon" copy', (
+      tester,
+    ) async {
       await _pump(
         tester,
         outcome: HotlineSummaryOutcome.endedNoConversation,
@@ -571,13 +607,16 @@ void main() {
         ),
       );
       expect(find.text('The call ended too soon'), findsOneWidget);
-      expect(find.textContaining('before a conversation could happen'),
-          findsOneWidget);
+      expect(
+        find.textContaining('before a conversation could happen'),
+        findsOneWidget,
+      );
       expect(find.byType(DocumentSheet), findsNothing);
     });
 
-    testWidgets('summaryUnavailable → the copy + the transcript below',
-        (tester) async {
+    testWidgets('summaryUnavailable → the copy + the transcript below', (
+      tester,
+    ) async {
       await _pump(
         tester,
         outcome: HotlineSummaryOutcome.summaryUnavailable,
@@ -593,8 +632,9 @@ void main() {
       expect(find.text('View conversation · 2 messages'), findsOneWidget);
     });
 
-    testWidgets('summaryUnavailable with no transcript → just the copy',
-        (tester) async {
+    testWidgets('summaryUnavailable with no transcript → just the copy', (
+      tester,
+    ) async {
       await _pump(
         tester,
         outcome: HotlineSummaryOutcome.summaryUnavailable,
@@ -611,8 +651,9 @@ void main() {
   // ── Reduce-motion ──────────────────────────────────────────────────────────
 
   group('reduce-motion', () {
-    testWidgets('Ink-settle renders the final composed frame (settles)',
-        (tester) async {
+    testWidgets('Ink-settle renders the final composed frame (settles)', (
+      tester,
+    ) async {
       // _pump disables animations and pumpAndSettles; reaching here without a
       // timeout proves the Ink-settle degraded to the static frame. The whole
       // document is composed.
@@ -672,26 +713,29 @@ void main() {
 
     for (final brightness in Brightness.values) {
       for (final (code, locale, summary, transcriptLabel) in probes) {
-        testWidgets('full summary at 360dp x 1.3 in $code (${brightness.name})',
-            (tester) async {
-          await _pump(
-            tester,
-            outcome: HotlineSummaryOutcome.summary,
-            callResult: _summaryResult(summary, transcript: _transcript),
-            brightness: brightness,
-            textScale: 1.3,
-            locale: locale,
-            surface: const Size(360, 1600),
-          );
-          expect(tester.takeException(), isNull);
-          // The REAL translated transcript disclosure rendered at the floor.
-          expect(find.text(transcriptLabel), findsOneWidget);
-        });
+        testWidgets(
+          'full summary at 360dp x 1.3 in $code (${brightness.name})',
+          (tester) async {
+            await _pump(
+              tester,
+              outcome: HotlineSummaryOutcome.summary,
+              callResult: _summaryResult(summary, transcript: _transcript),
+              brightness: brightness,
+              textScale: 1.3,
+              locale: locale,
+              surface: const Size(360, 1600),
+            );
+            expect(tester.takeException(), isNull);
+            // The REAL translated transcript disclosure rendered at the floor.
+            expect(find.text(transcriptLabel), findsOneWidget);
+          },
+        );
       }
     }
 
-    testWidgets('a callFailed terminal at 360dp x 1.3 in ta (dark)',
-        (tester) async {
+    testWidgets('a callFailed terminal at 360dp x 1.3 in ta (dark)', (
+      tester,
+    ) async {
       await _pump(
         tester,
         outcome: HotlineSummaryOutcome.callFailed,

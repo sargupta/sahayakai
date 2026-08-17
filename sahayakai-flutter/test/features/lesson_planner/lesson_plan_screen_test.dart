@@ -32,20 +32,23 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
-  testWidgets('a VIDYA prefill seeds topic, grade, subject and language',
-      (tester) async {
+  testWidgets('a VIDYA prefill seeds topic, grade, subject and language', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(420, 1600);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
-    await tester.pumpWidget(_host(
-      prefill: const ToolPrefill(
-        topic: 'Fractions',
-        gradeLevel: 'Class 10',
-        subject: 'Science',
-        language: 'kn',
+    await tester.pumpWidget(
+      _host(
+        prefill: const ToolPrefill(
+          topic: 'Fractions',
+          gradeLevel: 'Class 10',
+          subject: 'Science',
+          language: 'kn',
+        ),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Fractions'), findsOneWidget);
@@ -61,52 +64,59 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('an unknown grade/subject is ignored, never crashing a dropdown',
-      (tester) async {
-    tester.view.physicalSize = const Size(420, 1600);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.reset);
+  testWidgets(
+    'an unknown grade/subject is ignored, never crashing a dropdown',
+    (tester) async {
+      tester.view.physicalSize = const Size(420, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
 
-    await tester.pumpWidget(_host(
-      prefill: const ToolPrefill(
-        topic: 'Photosynthesis',
-        gradeLevel: 'Grade 99', // not a known grade
-        subject: 'Astrophysics', // not a known subject
-      ),
-    ));
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        _host(
+          prefill: const ToolPrefill(
+            topic: 'Photosynthesis',
+            gradeLevel: 'Grade 99', // not a known grade
+            subject: 'Astrophysics', // not a known subject
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
 
-    // Topic still seeds; the unknown grade/subject simply do not apply.
-    expect(find.text('Photosynthesis'), findsOneWidget);
-    expect(
-      tester
-          .widget<FilterChip>(find.widgetWithText(FilterChip, 'Class 10'))
-          .selected,
-      isFalse,
-    );
-    expect(tester.takeException(), isNull);
-  });
+      // Topic still seeds; the unknown grade/subject simply do not apply.
+      expect(find.text('Photosynthesis'), findsOneWidget);
+      expect(
+        tester
+            .widget<FilterChip>(find.widgetWithText(FilterChip, 'Class 10'))
+            .selected,
+        isFalse,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
 
-  testWidgets('no prefill opens the blank form (existing behaviour unchanged)',
-      (tester) async {
-    tester.view.physicalSize = const Size(420, 1600);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.reset);
+  testWidgets(
+    'no prefill opens the blank form (existing behaviour unchanged)',
+    (tester) async {
+      tester.view.physicalSize = const Size(420, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
 
-    await tester.pumpWidget(_host());
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(_host());
+      await tester.pumpAndSettle();
 
-    expect(find.text('Fractions'), findsNothing);
-    expect(
-      tester
-          .widget<FilterChip>(find.widgetWithText(FilterChip, 'Class 10'))
-          .selected,
-      isFalse,
-    );
-  });
+      expect(find.text('Fractions'), findsNothing);
+      expect(
+        tester
+            .widget<FilterChip>(find.widgetWithText(FilterChip, 'Class 10'))
+            .selected,
+        isFalse,
+      );
+    },
+  );
 
-  testWidgets('the topic field carries the inline dictation mic',
-      (tester) async {
+  testWidgets('the topic field carries the inline dictation mic', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(420, 1600);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);

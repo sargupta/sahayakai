@@ -31,33 +31,31 @@ Group _group({
   String name = 'Class 8 Science',
   int members = 42,
   String description = 'Science teachers, Class 8',
-}) =>
-    Group(
-      id: id,
-      name: name,
-      description: description,
-      type: GroupType.subjectGrade,
-      coverColor: '',
-      memberCount: members,
-      autoJoinRules: const GroupAutoJoinRules(),
-      createdBy: 'system',
-    );
+}) => Group(
+  id: id,
+  name: name,
+  description: description,
+  type: GroupType.subjectGrade,
+  coverColor: '',
+  memberCount: members,
+  autoJoinRules: const GroupAutoJoinRules(),
+  createdBy: 'system',
+);
 
 GroupPost _post({
   String id = 'p1',
   String content = 'inside the group',
   int likes = 2,
-}) =>
-    GroupPost(
-      id: id,
-      groupId: 'g1',
-      authorUid: 'u1',
-      authorName: 'Asha',
-      content: content,
-      postType: PostType.share,
-      likesCount: likes,
-      createdAt: '2026-07-19T09:00:00Z',
-    );
+}) => GroupPost(
+  id: id,
+  groupId: 'g1',
+  authorUid: 'u1',
+  authorName: 'Asha',
+  content: content,
+  postType: PostType.share,
+  likesCount: likes,
+  createdAt: '2026-07-19T09:00:00Z',
+);
 
 Future<void> _pump(
   WidgetTester tester, {
@@ -106,8 +104,9 @@ Future<void> _pump(
         ...extraOverrides,
       ],
       child: MaterialApp.router(
-        theme:
-            brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+        theme: brightness == Brightness.dark
+            ? AppTheme.dark()
+            : AppTheme.light(),
         locale: const Locale('en'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
@@ -130,15 +129,21 @@ void main() {
   final l10n = _en();
 
   testWidgets('null uid → sign-in EmptyView', (tester) async {
-    await _pump(tester, fake: FakeStaffroomTransport()..group = _group(), uid: null);
+    await _pump(
+      tester,
+      fake: FakeStaffroomTransport()..group = _group(),
+      uid: null,
+    );
     expect(find.text(l10n.staffroomSignInBody), findsOneWidget);
   });
 
-  testWidgets('renders the header (name, member count, description) + posts',
-      (tester) async {
+  testWidgets('renders the header (name, member count, description) + posts', (
+    tester,
+  ) async {
     final fake = FakeStaffroomTransport()
       ..group = _group()
-      ..myGroups = [_group()] // a member
+      ..myGroups =
+          [_group()] // a member
       ..groupPosts = [_post(content: 'a member-gated post body')];
     await _pump(tester, fake: fake);
 
@@ -158,8 +163,9 @@ void main() {
     expect(find.text(l10n.staffroomGroupPostsEmptyTitle), findsOneWidget);
   });
 
-  testWidgets('member-gated: a Forbidden posts read → the locked preview',
-      (tester) async {
+  testWidgets('member-gated: a Forbidden posts read → the locked preview', (
+    tester,
+  ) async {
     final fake = FakeStaffroomTransport()
       ..group = _group()
       ..myGroups = const []; // NOT a member
@@ -177,12 +183,14 @@ void main() {
   });
 
   group('optimistic join', () {
-    testWidgets('flips to "Joined" + bumps the count immediately, reconciles',
-        (tester) async {
+    testWidgets('flips to "Joined" + bumps the count immediately, reconciles', (
+      tester,
+    ) async {
       final gate = Completer<void>();
       final fake = FakeStaffroomTransport()
         ..group = _group(members: 42)
-        ..myGroups = const [] // not a member
+        ..myGroups =
+            const [] // not a member
         ..groupPosts = const []
         ..joinResult = true
         ..joinGate = gate;
@@ -197,13 +205,15 @@ void main() {
       expect(find.text(l10n.staffroomMemberCount(43)), findsOneWidget);
 
       gate.complete();
-      await tester.pumpAndSettle(); // reconcile (joinResult true → stays Joined)
+      await tester
+          .pumpAndSettle(); // reconcile (joinResult true → stays Joined)
       expect(find.text(l10n.staffroomJoined), findsOneWidget);
       expect(fake.joinedGroups.single, 'g1');
     });
 
-    testWidgets('rolls back + hints on a thrown TransportUnavailable',
-        (tester) async {
+    testWidgets('rolls back + hints on a thrown TransportUnavailable', (
+      tester,
+    ) async {
       final fake = FakeStaffroomTransport()
         ..group = _group(members: 42)
         ..myGroups = const []
@@ -220,20 +230,24 @@ void main() {
     });
   });
 
-  testWidgets('tapping a group in the "Your groups" strip → group detail posts',
-      (tester) async {
-    final fake = FakeStaffroomTransport()
-      ..group = _group(name: 'Class 8 Science')
-      ..myGroups = [_group(name: 'Class 8 Science')] // shows the strip chip
-      ..feed = const [] // ready, quiet feed
-      ..groupPosts = [_post(content: 'a post inside the group')];
-    await _pump(tester, fake: fake, initialLocation: Routes.staffroom);
+  testWidgets(
+    'tapping a group in the "Your groups" strip → group detail posts',
+    (tester) async {
+      final fake = FakeStaffroomTransport()
+        ..group = _group(name: 'Class 8 Science')
+        ..myGroups =
+            [_group(name: 'Class 8 Science')] // shows the strip chip
+        ..feed =
+            const [] // ready, quiet feed
+        ..groupPosts = [_post(content: 'a post inside the group')];
+      await _pump(tester, fake: fake, initialLocation: Routes.staffroom);
 
-    // The "Your groups" strip chip is present; tap it.
-    await tester.tap(find.byKey(const ValueKey<String>('group-chip-g1')));
-    await tester.pumpAndSettle();
+      // The "Your groups" strip chip is present; tap it.
+      await tester.tap(find.byKey(const ValueKey<String>('group-chip-g1')));
+      await tester.pumpAndSettle();
 
-    expect(find.byType(GroupDetailScreen), findsOneWidget);
-    expect(find.text('a post inside the group'), findsOneWidget);
-  });
+      expect(find.byType(GroupDetailScreen), findsOneWidget);
+      expect(find.text('a post inside the group'), findsOneWidget);
+    },
+  );
 }

@@ -71,15 +71,19 @@ void main() {
   });
 
   group('content', () {
-    testWidgets('leads with what the app does before it asks for anything',
-        (tester) async {
+    testWidgets('leads with what the app does before it asks for anything', (
+      tester,
+    ) async {
       await _pumpLogin(tester);
 
       expect(find.text('Welcome to SahayakAI'), findsOneWidget);
       // Real capabilities that exist in this build, not "Get started" filler
       // (DESIGN_RUBRIC §11).
       expect(find.text('Plan a full lesson in minutes'), findsOneWidget);
-      expect(find.text('Build a quiz at three difficulty levels'), findsOneWidget);
+      expect(
+        find.text('Build a quiz at three difficulty levels'),
+        findsOneWidget,
+      );
       expect(
         find.text('Answer any classroom question, in your language'),
         findsOneWidget,
@@ -87,8 +91,9 @@ void main() {
       expect(find.text('Continue with Google'), findsOneWidget);
     });
 
-    testWidgets('the language picker is reachable BEFORE sign-in',
-        (tester) async {
+    testWidgets('the language picker is reachable BEFORE sign-in', (
+      tester,
+    ) async {
       // A teacher who reads Odia must not have to sign in to an English screen
       // to find out the app speaks Odia.
       await _pumpLogin(tester);
@@ -102,8 +107,9 @@ void main() {
   });
 
   group('language picker (step 0)', () {
-    testWidgets('offers all 11 languages, each in its own script',
-        (tester) async {
+    testWidgets('offers all 11 languages, each in its own script', (
+      tester,
+    ) async {
       await _pumpLogin(tester);
 
       await tester.tap(find.text('Language').first);
@@ -120,36 +126,39 @@ void main() {
       expect(AppLocale.values, hasLength(11));
     });
 
-    testWidgets('choosing a language sets the UI locale AND the AI language param',
-        (tester) async {
-      await _pumpLogin(tester);
-      final container = containerOf(tester);
-      expect(container.read(localeControllerProvider), AppLocale.en);
+    testWidgets(
+      'choosing a language sets the UI locale AND the AI language param',
+      (tester) async {
+        await _pumpLogin(tester);
+        final container = containerOf(tester);
+        expect(container.read(localeControllerProvider), AppLocale.en);
 
-      await tester.tap(find.text('Language').first);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('বাংলা'));
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('Language').first);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('বাংলা'));
+        await tester.pumpAndSettle();
 
-      final selected = container.read(localeControllerProvider);
-      // One switcher, two consumers, zero drift: the SAME enum drives the UI
-      // locale and the `language` every AI endpoint is called with.
-      expect(selected, AppLocale.bn);
-      expect(selected.flutterLocale, const Locale('bn'));
-      expect(
-        selected.aiName,
-        'Bengali',
-        reason: 'the AI param is the full English name the backend expects',
-      );
+        final selected = container.read(localeControllerProvider);
+        // One switcher, two consumers, zero drift: the SAME enum drives the UI
+        // locale and the `language` every AI endpoint is called with.
+        expect(selected, AppLocale.bn);
+        expect(selected.flutterLocale, const Locale('bn'));
+        expect(
+          selected.aiName,
+          'Bengali',
+          reason: 'the AI param is the full English name the backend expects',
+        );
 
-      // And the app really re-localized, not just stored a value.
-      expect(find.text('Welcome to SahayakAI'), findsNothing);
-    });
+        // And the app really re-localized, not just stored a value.
+        expect(find.text('Welcome to SahayakAI'), findsNothing);
+      },
+    );
   });
 
   group('sign in (built-pending-firebase)', () {
-    testWidgets('signing in flips auth and lands on first-run setup',
-        (tester) async {
+    testWidgets('signing in flips auth and lands on first-run setup', (
+      tester,
+    ) async {
       await _pumpLogin(tester, extraOverrides: [signInSucceedsOverride()]);
       final container = containerOf(tester);
       expect(container.read(isSignedInProvider), isFalse);
@@ -178,16 +187,18 @@ void main() {
       expect(find.byType(OnboardingScreen), findsNothing);
     });
 
-    testWidgets('an unauthenticated teacher on a protected route is bounced here',
-        (tester) async {
-      await _pumpLogin(tester);
+    testWidgets(
+      'an unauthenticated teacher on a protected route is bounced here',
+      (tester) async {
+        await _pumpLogin(tester);
 
-      routerOf(tester).go(Routes.quizGenerator);
-      await tester.pumpAndSettle();
+        routerOf(tester).go(Routes.quizGenerator);
+        await tester.pumpAndSettle();
 
-      expect(find.byType(LoginScreen), findsOneWidget);
-      expect(find.byType(VidyaHomeScreen), findsNothing);
-    });
+        expect(find.byType(LoginScreen), findsOneWidget);
+        expect(find.byType(VidyaHomeScreen), findsNothing);
+      },
+    );
   });
 
   group('overflow gates (DESIGN_RUBRIC §12.9 / §12.10 / §12.11)', () {
@@ -227,8 +238,9 @@ void main() {
       );
     }
 
-    testWidgets('the language sheet does not overflow at textScale 1.3',
-        (tester) async {
+    testWidgets('the language sheet does not overflow at textScale 1.3', (
+      tester,
+    ) async {
       await _pumpLogin(tester, textScale: 1.3, surface: kNarrowPhone);
 
       // The premium hero (displayHero masthead + hairline value register) sits
@@ -248,8 +260,9 @@ void main() {
 /// Walks the list top to bottom, asserting no RenderFlex overflow at any scroll
 /// offset. An overflow below the fold is still an overflow.
 Future<void> scrollWholeList(WidgetTester tester) async {
-  final position =
-      tester.state<ScrollableState>(find.byType(Scrollable).first).position;
+  final position = tester
+      .state<ScrollableState>(find.byType(Scrollable).first)
+      .position;
   var guard = 0;
   while (position.pixels < position.maxScrollExtent && guard++ < 60) {
     await tester.drag(find.byType(ListView).first, const Offset(0, -280));

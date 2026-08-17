@@ -104,27 +104,31 @@ void main() {
     );
   }
 
-  testWidgets('PrimaryButton: a short label at scale 1.0 still renders at 56dp',
-      (tester) async {
-    await tester.pumpWidget(
-      _host(const PrimaryButton(label: 'Sign in', onPressed: _noop)),
-    );
-    await tester.pumpAndSettle();
+  testWidgets(
+    'PrimaryButton: a short label at scale 1.0 still renders at 56dp',
+    (tester) async {
+      await tester.pumpWidget(
+        _host(const PrimaryButton(label: 'Sign in', onPressed: _noop)),
+      );
+      await tester.pumpAndSettle();
 
-    expect(tester.takeException(), isNull);
-    expect(tester.getSize(find.byType(PrimaryButton)).height, 56);
-  });
+      expect(tester.takeException(), isNull);
+      expect(tester.getSize(find.byType(PrimaryButton)).height, 56);
+    },
+  );
 
-  testWidgets('SecondaryButton: a short label at scale 1.0 still renders at 52dp',
-      (tester) async {
-    await tester.pumpWidget(
-      _host(const SecondaryButton(label: 'Skip', onPressed: _noop)),
-    );
-    await tester.pumpAndSettle();
+  testWidgets(
+    'SecondaryButton: a short label at scale 1.0 still renders at 52dp',
+    (tester) async {
+      await tester.pumpWidget(
+        _host(const SecondaryButton(label: 'Skip', onPressed: _noop)),
+      );
+      await tester.pumpAndSettle();
 
-    expect(tester.takeException(), isNull);
-    expect(tester.getSize(find.byType(SecondaryButton)).height, 52);
-  });
+      expect(tester.takeException(), isNull);
+      expect(tester.getSize(find.byType(SecondaryButton)).height, 52);
+    },
+  );
 }
 
 void _noop() {}

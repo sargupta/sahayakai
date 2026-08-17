@@ -23,7 +23,9 @@ Future<void> _pumpSeal(
       theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
       home: Builder(
         builder: (context) => MediaQuery(
-          data: MediaQuery.of(context).copyWith(disableAnimations: reduceMotion),
+          data: MediaQuery.of(
+            context,
+          ).copyWith(disableAnimations: reduceMotion),
           child: Scaffold(
             body: Center(
               child: SealMic(
@@ -66,8 +68,9 @@ void main() {
 
   group('reduce-motion is a static composed frame', () {
     for (final state in SealMicState.values) {
-      testWidgets('${state.name} does not tick under reduce-motion',
-          (tester) async {
+      testWidgets('${state.name} does not tick under reduce-motion', (
+        tester,
+      ) async {
         await _pumpSeal(tester, state, reduceMotion: true, amplitude: 0.6);
         // A static frame schedules no further work: pumpAndSettle returns
         // instead of timing out on an infinite animation.
@@ -80,24 +83,30 @@ void main() {
 
   group('motion drives the animated states', () {
     for (final state in _animatedStates) {
-      testWidgets('${state.name} ticks a repeating controller under motion',
-          (tester) async {
+      testWidgets('${state.name} ticks a repeating controller under motion', (
+        tester,
+      ) async {
         await _pumpSeal(tester, state);
         // A repeating controller keeps a transient (ticker) callback registered.
-        expect(tester.binding.transientCallbackCount, greaterThan(0),
-            reason: '$state must animate when motion is enabled');
+        expect(
+          tester.binding.transientCallbackCount,
+          greaterThan(0),
+          reason: '$state must animate when motion is enabled',
+        );
       });
     }
 
-    testWidgets('listening is amplitude-driven, not a free-running controller',
-        (tester) async {
-      // The ring reacts to the passed level (data), so no ambient controller
-      // ticks — the home pushes amplitude frames in.
-      await _pumpSeal(tester, SealMicState.listening, amplitude: 0.5);
-      await tester.pumpAndSettle();
-      expect(tester.binding.transientCallbackCount, 0);
-      expect(find.byType(SealMic), findsOneWidget);
-    });
+    testWidgets(
+      'listening is amplitude-driven, not a free-running controller',
+      (tester) async {
+        // The ring reacts to the passed level (data), so no ambient controller
+        // ticks — the home pushes amplitude frames in.
+        await _pumpSeal(tester, SealMicState.listening, amplitude: 0.5);
+        await tester.pumpAndSettle();
+        expect(tester.binding.transientCallbackCount, 0);
+        expect(find.byType(SealMic), findsOneWidget);
+      },
+    );
   });
 
   testWidgets('a tap fires onTap', (tester) async {
@@ -108,8 +117,9 @@ void main() {
     expect(taps, 1);
   });
 
-  testWidgets('exposes a button semantics node with the state hint',
-      (tester) async {
+  testWidgets('exposes a button semantics node with the state hint', (
+    tester,
+  ) async {
     final handle = tester.ensureSemantics();
     await _pumpSeal(tester, SealMicState.idle, onTap: () {});
     expect(
@@ -134,8 +144,12 @@ void main() {
   });
 
   testWidgets('renders in dark without error', (tester) async {
-    await _pumpSeal(tester, SealMicState.listening,
-        amplitude: 0.8, brightness: Brightness.dark);
+    await _pumpSeal(
+      tester,
+      SealMicState.listening,
+      amplitude: 0.8,
+      brightness: Brightness.dark,
+    );
     expect(tester.takeException(), isNull);
     expect(find.byType(SealMic), findsOneWidget);
   });

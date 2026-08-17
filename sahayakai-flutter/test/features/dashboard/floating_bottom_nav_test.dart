@@ -78,8 +78,9 @@ void main() {
       }
     });
 
-    testWidgets('the active pill sits behind the active destination',
-        (tester) async {
+    testWidgets('the active pill sits behind the active destination', (
+      tester,
+    ) async {
       await _pumpNav(tester, initialIndex: 0);
 
       expect(find.byKey(const ValueKey('nav-active-pill')), findsOneWidget);
@@ -105,8 +106,9 @@ void main() {
   });
 
   group('Create is an action, never a destination', () {
-    testWidgets('tapping Create never moves the pill off the current tab',
-        (tester) async {
+    testWidgets('tapping Create never moves the pill off the current tab', (
+      tester,
+    ) async {
       await _pumpNav(tester, initialIndex: 2); // start on Library
 
       final before = _pillAlignment(tester);
@@ -129,8 +131,9 @@ void main() {
   });
 
   group('accessibility', () {
-    testWidgets('exposes selected state on the active destination',
-        (tester) async {
+    testWidgets('exposes selected state on the active destination', (
+      tester,
+    ) async {
       await _pumpNav(tester, initialIndex: 2);
 
       expect(
@@ -168,8 +171,9 @@ void main() {
           ),
         );
 
-    testWidgets('every implicit tween collapses to Duration.zero',
-        (tester) async {
+    testWidgets('every implicit tween collapses to Duration.zero', (
+      tester,
+    ) async {
       await _pumpNav(tester, initialIndex: 0, reduceMotion: true);
 
       // The sliding pill jumps.
@@ -191,8 +195,9 @@ void main() {
       );
     });
 
-    testWidgets('with motion ON the tweens carry the spec durations',
-        (tester) async {
+    testWidgets('with motion ON the tweens carry the spec durations', (
+      tester,
+    ) async {
       await _pumpNav(tester, initialIndex: 0);
 
       expect(

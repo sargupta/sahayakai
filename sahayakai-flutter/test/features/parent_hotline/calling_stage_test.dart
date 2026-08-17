@@ -71,8 +71,9 @@ void main() {
   setUp(() => GoogleFonts.config.allowRuntimeFetching = false);
 
   group('status line + headline', () {
-    testWidgets('ringing: initiated with no turns → headline + "Ringing…"',
-        (tester) async {
+    testWidgets('ringing: initiated with no turns → headline + "Ringing…"', (
+      tester,
+    ) async {
       await _pump(tester, parentName: 'Asha Rao', callResult: _calling(0));
 
       expect(find.text("Calling Asha Rao's parent…"), findsOneWidget);
@@ -83,26 +84,32 @@ void main() {
       expect(find.byIcon(LucideIcons.phoneCall), findsOneWidget);
     });
 
-    testWidgets('null result (just entered calling) reads as ringing',
-        (tester) async {
+    testWidgets('null result (just entered calling) reads as ringing', (
+      tester,
+    ) async {
       await _pump(tester, parentName: 'Asha Rao', callResult: null);
       expect(find.text('Ringing…'), findsOneWidget);
       expect(find.text('Conversation in progress'), findsNothing);
     });
 
-    testWidgets('in progress: initiated with turns → "Conversation in progress"',
-        (tester) async {
-      await _pump(tester, parentName: 'Asha Rao', callResult: _calling(3));
+    testWidgets(
+      'in progress: initiated with turns → "Conversation in progress"',
+      (tester) async {
+        await _pump(tester, parentName: 'Asha Rao', callResult: _calling(3));
 
-      expect(find.text('Conversation in progress'), findsOneWidget);
-      expect(find.text('Ringing…'), findsNothing);
-    });
+        expect(find.text('Conversation in progress'), findsOneWidget);
+        expect(find.text('Ringing…'), findsNothing);
+      },
+    );
 
-    testWidgets('the reassurance backing the resume path is shown',
-        (tester) async {
+    testWidgets('the reassurance backing the resume path is shown', (
+      tester,
+    ) async {
       await _pump(tester, parentName: 'Asha Rao', callResult: _calling(0));
       expect(
-        find.text('You can leave this screen — the summary will be waiting for you.'),
+        find.text(
+          'You can leave this screen — the summary will be waiting for you.',
+        ),
         findsOneWidget,
       );
     });
@@ -114,8 +121,9 @@ void main() {
       expect(find.textContaining('exchange'), findsNothing);
     });
 
-    testWidgets('hidden at turnCount 1 (a lone opening greeting)',
-        (tester) async {
+    testWidgets('hidden at turnCount 1 (a lone opening greeting)', (
+      tester,
+    ) async {
       await _pump(tester, parentName: 'Asha Rao', callResult: _calling(1));
       expect(find.textContaining('exchange'), findsNothing);
     });
@@ -133,26 +141,36 @@ void main() {
 
   group('honest waiting (SPEC §B.5.4)', () {
     testWidgets(
-        'NO determinate progress indicator anywhere (breathe/shimmer only)',
-        (tester) async {
-      // Cover both ringing and in-progress so neither introduces a bar/spinner.
-      for (final turns in [0, 4]) {
-        await _pump(tester, parentName: 'Asha Rao', callResult: _calling(turns));
+      'NO determinate progress indicator anywhere (breathe/shimmer only)',
+      (tester) async {
+        // Cover both ringing and in-progress so neither introduces a bar/spinner.
+        for (final turns in [0, 4]) {
+          await _pump(
+            tester,
+            parentName: 'Asha Rao',
+            callResult: _calling(turns),
+          );
 
-        // A determinate/percentage bar is an automatic FAIL.
-        expect(find.byType(LinearProgressIndicator), findsNothing);
-        // No spinner at all, and certainly no determinate (value != null) one.
-        expect(find.byType(CircularProgressIndicator), findsNothing);
-        for (final w in tester.widgetList<CircularProgressIndicator>(
-            find.byType(CircularProgressIndicator))) {
-          expect(w.value, isNull,
-              reason: 'no determinate progress — honest breathe only');
+          // A determinate/percentage bar is an automatic FAIL.
+          expect(find.byType(LinearProgressIndicator), findsNothing);
+          // No spinner at all, and certainly no determinate (value != null) one.
+          expect(find.byType(CircularProgressIndicator), findsNothing);
+          for (final w in tester.widgetList<CircularProgressIndicator>(
+            find.byType(CircularProgressIndicator),
+          )) {
+            expect(
+              w.value,
+              isNull,
+              reason: 'no determinate progress — honest breathe only',
+            );
+          }
         }
-      }
-    });
+      },
+    );
 
-    testWidgets('reduce-motion renders a static frame — pumpAndSettle returns',
-        (tester) async {
+    testWidgets('reduce-motion renders a static frame — pumpAndSettle returns', (
+      tester,
+    ) async {
       // _pump disables animations and calls pumpAndSettle; reaching here without
       // a timeout proves the breathe froze (no infinite ticker). The glyph is
       // still composed.
@@ -164,23 +182,28 @@ void main() {
 
   group('contrast + a11y', () {
     testWidgets(
-        'exchanges pill count is full-ink onSurface (WCAG AA) with tabular '
-        'figures', (tester) async {
-      await _pump(tester, parentName: 'Asha Rao', callResult: _calling(3));
-      final scheme = AppTheme.light().colorScheme;
+      'exchanges pill count is full-ink onSurface (WCAG AA) with tabular '
+      'figures',
+      (tester) async {
+        await _pump(tester, parentName: 'Asha Rao', callResult: _calling(3));
+        final scheme = AppTheme.light().colorScheme;
 
-      final pill = tester.widget<Text>(find.text('3 exchanges'));
-      // onSurface on the surfaceContainerHigh pill clears ~14.6:1; the muted
-      // onSurfaceVariant role would fail AA at 3.86:1 for this 15sp count.
-      expect(pill.style?.color, scheme.onSurface);
-      // The tabular figures survive the colour override, so the count never
-      // reflows as it grows.
-      expect(pill.style?.fontFeatures,
-          contains(const FontFeature.tabularFigures()));
-    });
+        final pill = tester.widget<Text>(find.text('3 exchanges'));
+        // onSurface on the surfaceContainerHigh pill clears ~14.6:1; the muted
+        // onSurfaceVariant role would fail AA at 3.86:1 for this 15sp count.
+        expect(pill.style?.color, scheme.onSurface);
+        // The tabular figures survive the colour override, so the count never
+        // reflows as it grows.
+        expect(
+          pill.style?.fontFeatures,
+          contains(const FontFeature.tabularFigures()),
+        );
+      },
+    );
 
-    testWidgets('the status line is a live region for screen readers',
-        (tester) async {
+    testWidgets('the status line is a live region for screen readers', (
+      tester,
+    ) async {
       await _pump(tester, parentName: 'Asha Rao', callResult: _calling(0));
 
       final liveRegion = find.byWidgetPredicate(
@@ -195,7 +218,9 @@ void main() {
       );
       expect(
         find.descendant(
-            of: liveRegion, matching: find.text("Calling Asha Rao's parent…")),
+          of: liveRegion,
+          matching: find.text("Calling Asha Rao's parent…"),
+        ),
         findsNothing,
       );
     });
@@ -211,28 +236,32 @@ void main() {
 
     for (final brightness in Brightness.values) {
       for (final (code, locale, ringing, parentWord) in probes) {
-        testWidgets('calling stage at 360dp x 1.3 in $code (${brightness.name})',
-            (tester) async {
-          await _pump(
-            tester,
-            parentName: 'Asha Rao',
-            // Ringing frame; the in-progress + tabular pill floor is covered by
-            // the dedicated bn/dark probe below.
-            callResult: _calling(0),
-            brightness: brightness,
-            textScale: 1.3,
-            locale: locale,
-            surface: const Size(360, 1200),
-          );
-          expect(tester.takeException(), isNull);
-          // The REAL translated status + a real translated headline rendered.
-          expect(find.text(ringing), findsOneWidget);
-          expect(find.textContaining(parentWord), findsOneWidget);
-        });
+        testWidgets(
+          'calling stage at 360dp x 1.3 in $code (${brightness.name})',
+          (tester) async {
+            await _pump(
+              tester,
+              parentName: 'Asha Rao',
+              // Ringing frame; the in-progress + tabular pill floor is covered by
+              // the dedicated bn/dark probe below.
+              callResult: _calling(0),
+              brightness: brightness,
+              textScale: 1.3,
+              locale: locale,
+              surface: const Size(360, 1200),
+            );
+            expect(tester.takeException(), isNull);
+            // The REAL translated status + a real translated headline rendered.
+            expect(find.text(ringing), findsOneWidget);
+            expect(find.textContaining(parentWord), findsOneWidget);
+          },
+        );
       }
     }
 
-    testWidgets('in-progress + pill at 360dp x 1.3 in bn (dark)', (tester) async {
+    testWidgets('in-progress + pill at 360dp x 1.3 in bn (dark)', (
+      tester,
+    ) async {
       await _pump(
         tester,
         parentName: 'Asha Rao',
@@ -243,7 +272,10 @@ void main() {
         surface: const Size(360, 1200),
       );
       expect(tester.takeException(), isNull);
-      expect(find.text('কথোপকথন চলছে'), findsOneWidget); // conversation in progress
+      expect(
+        find.text('কথোপকথন চলছে'),
+        findsOneWidget,
+      ); // conversation in progress
     });
   });
 }

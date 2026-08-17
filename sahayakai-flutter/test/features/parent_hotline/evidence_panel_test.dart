@@ -34,7 +34,9 @@ Future<void> _pump(
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(body: Padding(padding: const EdgeInsets.all(16), child: child)),
+      home: Scaffold(
+        body: Padding(padding: const EdgeInsets.all(16), child: child),
+      ),
     ),
   );
   // A shimmering AppSkeleton animates forever, so its state pumps a frame
@@ -62,21 +64,27 @@ void main() {
     expect(find.textContaining('Confirm the days missed'), findsOneWidget);
   });
 
-  testWidgets('poor performance with no snapshot degrades to the empty prompt',
-      (tester) async {
-    await _pump(
-      tester,
-      const EvidencePanel(
-        reason: OutreachReason.poorPerformance,
-        // foundation-v1: no performance snapshot (the read 401s).
-      ),
-    );
-    expect(find.text('Recent marks'), findsOneWidget);
-    expect(find.textContaining('No recent marks on record yet'), findsOneWidget);
-  });
+  testWidgets(
+    'poor performance with no snapshot degrades to the empty prompt',
+    (tester) async {
+      await _pump(
+        tester,
+        const EvidencePanel(
+          reason: OutreachReason.poorPerformance,
+          // foundation-v1: no performance snapshot (the read 401s).
+        ),
+      );
+      expect(find.text('Recent marks'), findsOneWidget);
+      expect(
+        find.textContaining('No recent marks on record yet'),
+        findsOneWidget,
+      );
+    },
+  );
 
-  testWidgets('behavioural concern shows the what-happened prompt',
-      (tester) async {
+  testWidgets('behavioural concern shows the what-happened prompt', (
+    tester,
+  ) async {
     await _pump(
       tester,
       const EvidencePanel(reason: OutreachReason.behavioralConcern),
@@ -94,8 +102,9 @@ void main() {
     expect(find.textContaining('Share the win'), findsOneWidget);
   });
 
-  testWidgets('isLoading shows the shaped skeleton, not a prompt',
-      (tester) async {
+  testWidgets('isLoading shows the shaped skeleton, not a prompt', (
+    tester,
+  ) async {
     await _pump(
       tester,
       const EvidencePanel(
@@ -110,8 +119,9 @@ void main() {
 
   group('overflow gates (DESIGN_RUBRIC §12)', () {
     for (final brightness in Brightness.values) {
-      testWidgets('no overflow at 360dp x 1.3, Tamil (${brightness.name})',
-          (tester) async {
+      testWidgets('no overflow at 360dp x 1.3, Tamil (${brightness.name})', (
+        tester,
+      ) async {
         await _pump(
           tester,
           const EvidencePanel(

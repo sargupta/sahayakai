@@ -47,8 +47,9 @@ Widget _host({
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
       home: const AssessmentScannerScreen(),
@@ -67,7 +68,10 @@ Future<void> _addPage(WidgetTester tester) async {
 }
 
 Future<void> _pickDropdown(
-    WidgetTester tester, String placeholder, String value) async {
+  WidgetTester tester,
+  String placeholder,
+  String value,
+) async {
   final field = find.text(placeholder);
   await tester.ensureVisible(field);
   await tester.tap(field);
@@ -83,8 +87,9 @@ void main() {
   });
 
   group('idle + the page gate', () {
-    testWidgets('opens on the empty page-capture prompt, no Grade button yet',
-        (tester) async {
+    testWidgets('opens on the empty page-capture prompt, no Grade button yet', (
+      tester,
+    ) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -164,12 +169,11 @@ void main() {
   });
 
   group('validation + submit', () {
-    testWidgets('Grade with no subject chosen blocks and shows the error',
-        (tester) async {
+    testWidgets('Grade with no subject chosen blocks and shows the error', (
+      tester,
+    ) async {
       final client = FakeApiClient(postResponse: scanJson());
-      await tester.pumpWidget(
-        _host(overrides: [apiClientOverride(client)]),
-      );
+      await tester.pumpWidget(_host(overrides: [apiClientOverride(client)]));
       await tester.pumpAndSettle();
 
       await _addPage(tester);
@@ -180,12 +184,11 @@ void main() {
       expect(client.posts, isEmpty);
     });
 
-    testWidgets('a complete form grades: posts the multi-page body, renders',
-        (tester) async {
+    testWidgets('a complete form grades: posts the multi-page body, renders', (
+      tester,
+    ) async {
       final client = FakeApiClient(postResponse: scanJson());
-      await tester.pumpWidget(
-        _host(overrides: [apiClientOverride(client)]),
-      );
+      await tester.pumpWidget(_host(overrides: [apiClientOverride(client)]));
       await tester.pumpAndSettle();
 
       await _addPage(tester);
@@ -211,9 +214,13 @@ void main() {
   group('async states', () {
     testWidgets('loading shows the scorecard-shaped skeleton', (tester) async {
       await tester.pumpWidget(
-        _host(overrides: [
-          assessmentScannerControllerProvider.overrideWith(_StubController.loading),
-        ]),
+        _host(
+          overrides: [
+            assessmentScannerControllerProvider.overrideWith(
+              _StubController.loading,
+            ),
+          ],
+        ),
       );
       await tester.pump(); // don't settle: the loading future never completes
 
@@ -222,10 +229,13 @@ void main() {
 
     testWidgets('data renders the scorecard result', (tester) async {
       await tester.pumpWidget(
-        _host(overrides: [
-          assessmentScannerControllerProvider
-              .overrideWith(() => _StubController(data: buildResult())),
-        ]),
+        _host(
+          overrides: [
+            assessmentScannerControllerProvider.overrideWith(
+              () => _StubController(data: buildResult()),
+            ),
+          ],
+        ),
       );
       await tester.pumpAndSettle();
 
@@ -235,23 +245,27 @@ void main() {
 
     testWidgets('a 401 maps to the signed-out error view', (tester) async {
       await tester.pumpWidget(
-        _host(overrides: [
-          assessmentScannerControllerProvider.overrideWith(
-            () => _StubController(
-              error: const ApiException(
-                ApiErrorKind.unauthorized,
-                'x',
-                statusCode: 401,
+        _host(
+          overrides: [
+            assessmentScannerControllerProvider.overrideWith(
+              () => _StubController(
+                error: const ApiException(
+                  ApiErrorKind.unauthorized,
+                  'x',
+                  statusCode: 401,
+                ),
               ),
             ),
-          ),
-        ]),
+          ],
+        ),
       );
       await tester.pumpAndSettle();
 
       expect(find.byType(AssessmentScannerErrorView), findsOneWidget);
-      expect(find.text('Please sign in again to grade an answer sheet.'),
-          findsOneWidget);
+      expect(
+        find.text('Please sign in again to grade an answer sheet.'),
+        findsOneWidget,
+      );
     });
   });
 

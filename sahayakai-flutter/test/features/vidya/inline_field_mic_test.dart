@@ -55,8 +55,9 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
-  testWidgets('tap → speak → tap fills the field from a fake STT result',
-      (tester) async {
+  testWidgets('tap → speak → tap fills the field from a fake STT result', (
+    tester,
+  ) async {
     final recorder = FakeAudioRecorderService();
     final permission = FakeMicPermissionService();
     final client = FakeApiClient(
@@ -92,8 +93,9 @@ void main() {
     expect(client.multiparts.single.path, '/api/ai/voice-to-text');
   });
 
-  testWidgets('a permission denial returns quietly to idle, never a dialog',
-      (tester) async {
+  testWidgets('a permission denial returns quietly to idle, never a dialog', (
+    tester,
+  ) async {
     final recorder = FakeAudioRecorderService();
     final client = FakeApiClient(
       multipartResponse: {'text': 'ignored', 'language': 'en'},
@@ -121,49 +123,54 @@ void main() {
   });
 
   testWidgets(
-      'an unexpected STT failure (network/401/413) shows a brief snackbar, '
-      'not silence', (tester) async {
-    final recorder = FakeAudioRecorderService();
-    final client = FakeApiClient(
-      multipartError:
-          const ApiException(ApiErrorKind.network, 'No internet connection.'),
-    );
-    String? result;
+    'an unexpected STT failure (network/401/413) shows a brief snackbar, '
+    'not silence',
+    (tester) async {
+      final recorder = FakeAudioRecorderService();
+      final client = FakeApiClient(
+        multipartError: const ApiException(
+          ApiErrorKind.network,
+          'No internet connection.',
+        ),
+      );
+      String? result;
 
-    await _pumpMic(
-      tester,
-      onResult: (t) => result = t,
-      client: client,
-      recorder: recorder,
-      permission: FakeMicPermissionService(),
-    );
+      await _pumpMic(
+        tester,
+        onResult: (t) => result = t,
+        client: client,
+        recorder: recorder,
+        permission: FakeMicPermissionService(),
+      );
 
-    await tester.tap(find.byType(InlineFieldMic));
-    await tester.pump();
-    expect(recorder.startCount, 1);
-
-    await tester.runAsync(() async {
       await tester.tap(find.byType(InlineFieldMic));
-      await Future<void>.delayed(const Duration(milliseconds: 50));
-    });
-    await tester.pump(); // let the SnackBar animate in
+      await tester.pump();
+      expect(recorder.startCount, 1);
 
-    // The field mic still resets to idle and never fills the field with
-    // garbage — but unlike before this fix, the teacher now sees SOMETHING.
-    expect(result, isNull);
-    expect(recorder.stopCount, 1);
-    expect(find.byType(SnackBar), findsOneWidget);
-    expect(
-      find.text("Didn't catch that. Try again or type it in."),
-      findsOneWidget,
-    );
+      await tester.runAsync(() async {
+        await tester.tap(find.byType(InlineFieldMic));
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      });
+      await tester.pump(); // let the SnackBar animate in
 
-    // Cleanly dismiss so the timer doesn't leak into the next test.
-    await tester.pumpAndSettle(const Duration(seconds: 5));
-  });
+      // The field mic still resets to idle and never fills the field with
+      // garbage — but unlike before this fix, the teacher now sees SOMETHING.
+      expect(result, isNull);
+      expect(recorder.stopCount, 1);
+      expect(find.byType(SnackBar), findsOneWidget);
+      expect(
+        find.text("Didn't catch that. Try again or type it in."),
+        findsOneWidget,
+      );
 
-  testWidgets('a near-silent capture never pays for STT nor fills the field',
-      (tester) async {
+      // Cleanly dismiss so the timer doesn't leak into the next test.
+      await tester.pumpAndSettle(const Duration(seconds: 5));
+    },
+  );
+
+  testWidgets('a near-silent capture never pays for STT nor fills the field', (
+    tester,
+  ) async {
     final recorder = FakeAudioRecorderService(captureBytes: 500); // < 2000
     final client = FakeApiClient(
       multipartResponse: {'text': 'should not be used', 'language': 'en'},
@@ -187,8 +194,9 @@ void main() {
     expect(client.multiparts, isEmpty);
   });
 
-  testWidgets('the tap target clears the 48dp accessibility floor',
-      (tester) async {
+  testWidgets('the tap target clears the 48dp accessibility floor', (
+    tester,
+  ) async {
     await _pumpMic(
       tester,
       onResult: (_) {},

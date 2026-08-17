@@ -43,16 +43,15 @@ HotlineStudent _student({
   String parentLanguage = 'Kannada',
   bool hasParentPhone = true,
   String? parentPhoneLast4 = '4821',
-}) =>
-    HotlineStudent(
-      id: id,
-      name: name,
-      classId: classId,
-      className: className,
-      parentLanguage: parentLanguage,
-      hasParentPhone: hasParentPhone,
-      parentPhoneLast4: parentPhoneLast4,
-    );
+}) => HotlineStudent(
+  id: id,
+  name: name,
+  classId: classId,
+  className: className,
+  parentLanguage: parentLanguage,
+  hasParentPhone: hasParentPhone,
+  parentPhoneLast4: parentPhoneLast4,
+);
 
 Future<void> _pump(
   WidgetTester tester, {
@@ -76,8 +75,9 @@ Future<void> _pump(
     ProviderScope(
       overrides: overrides,
       child: MaterialApp(
-        theme:
-            brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+        theme: brightness == Brightness.dark
+            ? AppTheme.dark()
+            : AppTheme.light(),
         locale: locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
@@ -96,13 +96,15 @@ Future<void> _pump(
 }
 
 /// Overrides that stand a fixed [state] up behind the screen.
-List<Override> _fixed(ParentHotlineState state, {List<HotlineStudent>? roster}) =>
-    [
-      parentHotlineControllerProvider.overrideWith(
-        () => _FakeHotlineController(state),
-      ),
-      if (roster != null) hotlineStudentRosterProvider.overrideWithValue(roster),
-    ];
+List<Override> _fixed(
+  ParentHotlineState state, {
+  List<HotlineStudent>? roster,
+}) => [
+  parentHotlineControllerProvider.overrideWith(
+    () => _FakeHotlineController(state),
+  ),
+  if (roster != null) hotlineStudentRosterProvider.overrideWithValue(roster),
+];
 
 Future<void> _tapText(WidgetTester tester, String text) async {
   final finder = find.text(text);
@@ -121,13 +123,13 @@ void main() {
     clip.clear();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(SystemChannels.platform, (call) async {
-      if (call.method == 'Clipboard.setData') {
-        clip['text'] = (call.arguments as Map)['text'];
-      } else if (call.method == 'Clipboard.getData') {
-        return <String, Object?>{'text': clip['text']};
-      }
-      return null;
-    });
+          if (call.method == 'Clipboard.setData') {
+            clip['text'] = (call.arguments as Map)['text'];
+          } else if (call.method == 'Clipboard.getData') {
+            return <String, Object?>{'text': clip['text']};
+          }
+          return null;
+        });
   });
   tearDown(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -137,8 +139,9 @@ void main() {
   // ── Stages render (fixed state) ────────────────────────────────────────────
 
   group('stages render', () {
-    testWidgets('pickStudent lists roster rows; a no-phone row is disabled',
-        (tester) async {
+    testWidgets('pickStudent lists roster rows; a no-phone row is disabled', (
+      tester,
+    ) async {
       final fake = _FakeHotlineController(const ParentHotlineState());
       await _pump(
         tester,
@@ -147,10 +150,11 @@ void main() {
           hotlineStudentRosterProvider.overrideWithValue([
             _student(),
             _student(
-                id: 's2',
-                name: 'Bhavya Nair',
-                hasParentPhone: false,
-                parentPhoneLast4: null),
+              id: 's2',
+              name: 'Bhavya Nair',
+              hasParentPhone: false,
+              parentPhoneLast4: null,
+            ),
           ]),
         ],
       );
@@ -168,14 +172,14 @@ void main() {
       expect(fake.studentTaps, ['s1']);
     });
 
-    testWidgets(
-        'empty roster while SIGNED OUT shows the sign-in EmptyView '
+    testWidgets('empty roster while SIGNED OUT shows the sign-in EmptyView '
         '(no faked identity)', (tester) async {
       await _pump(
         tester,
         overrides: [
-          parentHotlineControllerProvider
-              .overrideWith(() => _FakeHotlineController(const ParentHotlineState())),
+          parentHotlineControllerProvider.overrideWith(
+            () => _FakeHotlineController(const ParentHotlineState()),
+          ),
           isSignedInProvider.overrideWithValue(false),
           // Default roster is empty (foundation-v1 has no student-roster API).
         ],
@@ -185,63 +189,77 @@ void main() {
     });
 
     testWidgets(
-        'empty roster while SIGNED IN shows the honest "not available yet" copy, '
-        'never a false sign-in prompt', (tester) async {
-      // The teacher IS authenticated; the roster is empty only because the
-      // student-roster API isn't on the app yet (a future unit). Telling them to
-      // "sign in" would be a lie — the honest state must own the gap instead.
+      'empty roster while SIGNED IN shows the honest "not available yet" copy, '
+      'never a false sign-in prompt',
+      (tester) async {
+        // The teacher IS authenticated; the roster is empty only because the
+        // student-roster API isn't on the app yet (a future unit). Telling them to
+        // "sign in" would be a lie — the honest state must own the gap instead.
+        await _pump(
+          tester,
+          overrides: [
+            parentHotlineControllerProvider.overrideWith(
+              () => _FakeHotlineController(const ParentHotlineState()),
+            ),
+            isSignedInProvider.overrideWithValue(true),
+          ],
+        );
+        expect(find.byType(EmptyView), findsOneWidget);
+        expect(
+          find.text("Your class list isn't available yet"),
+          findsOneWidget,
+        );
+        expect(find.textContaining("can't load your students"), findsOneWidget);
+        // Crucially, a signed-in teacher is NEVER told to sign in.
+        expect(find.text('Sign in to see your students'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'reason stage renders the four selectable reasons, pre-selected',
+      (tester) async {
+        final fake = _FakeHotlineController(
+          const ParentHotlineState(
+            stage: HotlineStage.reason,
+            selectedReason: OutreachReason.poorPerformance,
+          ),
+        );
+        await _pump(
+          tester,
+          overrides: [parentHotlineControllerProvider.overrideWith(() => fake)],
+        );
+
+        expect(find.text('Repeated absences'), findsOneWidget);
+        expect(find.text('Slipping in a subject'), findsOneWidget);
+        expect(find.text('Behaviour in class'), findsOneWidget);
+        expect(find.text('Good news to share'), findsOneWidget);
+
+        // Tapping a reason wires selectReason with that exact reason.
+        await _tapText(tester, 'Behaviour in class');
+        expect(fake.reasonTaps, [OutreachReason.behavioralConcern]);
+      },
+    );
+
+    testWidgets('compose stage shows the reason-aware evidence + note + CTA', (
+      tester,
+    ) async {
       await _pump(
         tester,
-        overrides: [
-          parentHotlineControllerProvider
-              .overrideWith(() => _FakeHotlineController(const ParentHotlineState())),
-          isSignedInProvider.overrideWithValue(true),
-        ],
-      );
-      expect(find.byType(EmptyView), findsOneWidget);
-      expect(find.text("Your class list isn't available yet"), findsOneWidget);
-      expect(find.textContaining("can't load your students"), findsOneWidget);
-      // Crucially, a signed-in teacher is NEVER told to sign in.
-      expect(find.text('Sign in to see your students'), findsNothing);
-    });
-
-    testWidgets('reason stage renders the four selectable reasons, pre-selected',
-        (tester) async {
-      final fake = _FakeHotlineController(
-        const ParentHotlineState(
-          stage: HotlineStage.reason,
-          selectedReason: OutreachReason.poorPerformance,
+        overrides: _fixed(
+          const ParentHotlineState(
+            stage: HotlineStage.compose,
+            selectedReason: OutreachReason.behavioralConcern,
+          ),
         ),
       );
-      await _pump(tester, overrides: [
-        parentHotlineControllerProvider.overrideWith(() => fake),
-      ]);
-
-      expect(find.text('Repeated absences'), findsOneWidget);
-      expect(find.text('Slipping in a subject'), findsOneWidget);
-      expect(find.text('Behaviour in class'), findsOneWidget);
-      expect(find.text('Good news to share'), findsOneWidget);
-
-      // Tapping a reason wires selectReason with that exact reason.
-      await _tapText(tester, 'Behaviour in class');
-      expect(fake.reasonTaps, [OutreachReason.behavioralConcern]);
-    });
-
-    testWidgets('compose stage shows the reason-aware evidence + note + CTA',
-        (tester) async {
-      await _pump(tester, overrides: _fixed(
-        const ParentHotlineState(
-          stage: HotlineStage.compose,
-          selectedReason: OutreachReason.behavioralConcern,
-        ),
-      ));
       expect(find.text('What happened'), findsOneWidget); // evidence header
       expect(find.text('Add a note'), findsOneWidget);
       expect(find.text('Draft the message'), findsOneWidget);
     });
 
-    testWidgets('compose while drafting shows a skeleton, not the CTA',
-        (tester) async {
+    testWidgets('compose while drafting shows a skeleton, not the CTA', (
+      tester,
+    ) async {
       await _pump(
         tester,
         overrides: _fixed(
@@ -257,86 +275,114 @@ void main() {
       expect(find.text('Draft the message'), findsNothing);
     });
 
-    testWidgets('review shows the message, Call, WhatsApp, and the AI notice',
-        (tester) async {
-      await _pump(tester, overrides: _fixed(
-        const ParentHotlineState(
-          stage: HotlineStage.review,
-          parentLanguage: 'Kannada',
-          draftedMessage: 'Namaste, Asha ke baare mein baat karni thi.',
+    testWidgets('review shows the message, Call, WhatsApp, and the AI notice', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        overrides: _fixed(
+          const ParentHotlineState(
+            stage: HotlineStage.review,
+            parentLanguage: 'Kannada',
+            draftedMessage: 'Namaste, Asha ke baare mein baat karni thi.',
+          ),
         ),
-      ));
+      );
       expect(find.textContaining('Namaste'), findsOneWidget);
       expect(find.text('Call parent'), findsOneWidget);
       expect(find.text('Copy for WhatsApp'), findsOneWidget);
       expect(find.textContaining('automated AI voice notice'), findsOneWidget);
     });
 
-    testWidgets('the decision bar is pinned in the footer, not the scroll body',
-        (tester) async {
-      await _pump(tester, overrides: _fixed(
-        const ParentHotlineState(
-          stage: HotlineStage.review,
-          parentLanguage: 'Kannada',
-          draftedMessage: 'Message body',
-        ),
-      ));
+    testWidgets(
+      'the decision bar is pinned in the footer, not the scroll body',
+      (tester) async {
+        await _pump(
+          tester,
+          overrides: _fixed(
+            const ParentHotlineState(
+              stage: HotlineStage.review,
+              parentLanguage: 'Kannada',
+              draftedMessage: 'Message body',
+            ),
+          ),
+        );
 
-      // The CTAs are on screen…
-      expect(find.text('Copy for WhatsApp'), findsOneWidget);
-      expect(find.text('Call parent'), findsOneWidget);
-      // …but pinned in the Scaffold footer, NOT scrolling inside the body's
-      // SingleChildScrollView (so they never fall below the fold).
-      final scrollBody = find.byType(SingleChildScrollView);
-      expect(
-        find.descendant(of: scrollBody, matching: find.text('Copy for WhatsApp')),
-        findsNothing,
-        reason: 'the decision bar must be a sticky footer, not scroll content',
-      );
-      expect(
-        find.descendant(of: scrollBody, matching: find.text('Call parent')),
-        findsNothing,
-      );
-    });
+        // The CTAs are on screen…
+        expect(find.text('Copy for WhatsApp'), findsOneWidget);
+        expect(find.text('Call parent'), findsOneWidget);
+        // …but pinned in the Scaffold footer, NOT scrolling inside the body's
+        // SingleChildScrollView (so they never fall below the fold).
+        final scrollBody = find.byType(SingleChildScrollView);
+        expect(
+          find.descendant(
+            of: scrollBody,
+            matching: find.text('Copy for WhatsApp'),
+          ),
+          findsNothing,
+          reason:
+              'the decision bar must be a sticky footer, not scroll content',
+        );
+        expect(
+          find.descendant(of: scrollBody, matching: find.text('Call parent')),
+          findsNothing,
+        );
+      },
+    );
   });
 
   // ── Callability + dedup ────────────────────────────────────────────────────
 
   group('callability + dedup', () {
-    testWidgets('!canAutoCall hides Call and shows the WhatsApp fallback banner',
-        (tester) async {
-      await _pump(tester, overrides: _fixed(
-        const ParentHotlineState(
-          stage: HotlineStage.review,
-          parentLanguage: 'Odia',
-          canAutoCall: false,
-          draftedMessage: 'Message body',
-        ),
-      ));
-      expect(find.text('Call parent'), findsNothing);
-      expect(find.byType(PrimaryButton), findsNothing);
-      expect(find.text('Copy for WhatsApp'), findsOneWidget);
-      expect(find.byType(NoteBanner), findsOneWidget);
-      expect(find.textContaining("Auto-call isn't available for Odia"),
-          findsOneWidget);
-    });
+    testWidgets(
+      '!canAutoCall hides Call and shows the WhatsApp fallback banner',
+      (tester) async {
+        await _pump(
+          tester,
+          overrides: _fixed(
+            const ParentHotlineState(
+              stage: HotlineStage.review,
+              parentLanguage: 'Odia',
+              canAutoCall: false,
+              draftedMessage: 'Message body',
+            ),
+          ),
+        );
+        expect(find.text('Call parent'), findsNothing);
+        expect(find.byType(PrimaryButton), findsNothing);
+        expect(find.text('Copy for WhatsApp'), findsOneWidget);
+        expect(find.byType(NoteBanner), findsOneWidget);
+        expect(
+          find.textContaining("Auto-call isn't available for Odia"),
+          findsOneWidget,
+        );
+      },
+    );
 
-    testWidgets('dedup countdown disables Call but NOT WhatsApp copy',
-        (tester) async {
-      await _pump(tester, overrides: _fixed(
-        const ParentHotlineState(
-          stage: HotlineStage.review,
-          parentLanguage: 'Kannada',
-          canAutoCall: true,
-          draftedMessage: 'Message body',
-          dedupRetryAfterSeconds: 90,
+    testWidgets('dedup countdown disables Call but NOT WhatsApp copy', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        overrides: _fixed(
+          const ParentHotlineState(
+            stage: HotlineStage.review,
+            parentLanguage: 'Kannada',
+            canAutoCall: true,
+            draftedMessage: 'Message body',
+            dedupRetryAfterSeconds: 90,
+          ),
         ),
-      ));
+      );
 
       // Call shows the mm:ss countdown and is disabled…
       expect(find.textContaining('1:30'), findsOneWidget);
       final call = tester.widget<PrimaryButton>(find.byType(PrimaryButton));
-      expect(call.onPressed, isNull, reason: 'Call is blocked by the cool-down');
+      expect(
+        call.onPressed,
+        isNull,
+        reason: 'Call is blocked by the cool-down',
+      );
 
       // …WhatsApp copy stays available (the universal fallback).
       final whatsApp = tester.widget<SecondaryButton>(
@@ -349,33 +395,48 @@ void main() {
   // ── Terminal gates ─────────────────────────────────────────────────────────
 
   group('gates', () {
-    testWidgets('signed-out replaces the flow with the sign-in EmptyView',
-        (tester) async {
-      await _pump(tester, overrides: _fixed(
-        const ParentHotlineState(error: HotlineError.signedOut),
-      ));
+    testWidgets('signed-out replaces the flow with the sign-in EmptyView', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        overrides: _fixed(
+          const ParentHotlineState(error: HotlineError.signedOut),
+        ),
+      );
       expect(find.byType(EmptyView), findsOneWidget);
       expect(find.textContaining('Sign in'), findsWidgets);
       expect(find.text('Call parent'), findsNothing);
     });
 
-    testWidgets('premium-gated shows the dignified advanced-plan panel',
-        (tester) async {
-      await _pump(tester, overrides: _fixed(
-        const ParentHotlineState(error: HotlineError.premiumRequired),
-      ));
-      expect(find.text('Parent Hotline needs an advanced plan'), findsOneWidget);
+    testWidgets('premium-gated shows the dignified advanced-plan panel', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        overrides: _fixed(
+          const ParentHotlineState(error: HotlineError.premiumRequired),
+        ),
+      );
+      expect(
+        find.text('Parent Hotline needs an advanced plan'),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('the calling stage renders the U-PH4 breathing waiting state',
-        (tester) async {
-      await _pump(tester, overrides: _fixed(
-        const ParentHotlineState(
-          stage: HotlineStage.calling,
-          studentName: 'Asha Rao',
-          callResult: CallResult(callStatus: CallStatus.initiated),
+    testWidgets('the calling stage renders the U-PH4 breathing waiting state', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        overrides: _fixed(
+          const ParentHotlineState(
+            stage: HotlineStage.calling,
+            studentName: 'Asha Rao',
+            callResult: CallResult(callStatus: CallStatus.initiated),
+          ),
         ),
-      ));
+      );
       // The real waiting state, not the placeholder.
       expect(find.text("Calling Asha Rao's parent…"), findsOneWidget);
       expect(find.text('Ringing…'), findsOneWidget);
@@ -386,12 +447,15 @@ void main() {
         'placeholder', (tester) async {
       // A summary stage with no callResult resolves to the endedNoConversation
       // terminal — the real U-PH5 widget, not the old "coming soon" placeholder.
-      await _pump(tester, overrides: _fixed(
-        const ParentHotlineState(
-          stage: HotlineStage.summary,
-          studentName: 'Asha Rao',
+      await _pump(
+        tester,
+        overrides: _fixed(
+          const ParentHotlineState(
+            stage: HotlineStage.summary,
+            studentName: 'Asha Rao',
+          ),
         ),
-      ));
+      );
       expect(find.byType(SummarySheet), findsOneWidget);
       expect(find.text('The call ended too soon'), findsOneWidget);
       expect(find.text('The call view is on its way'), findsNothing);
@@ -399,53 +463,59 @@ void main() {
 
     testWidgets('the summary stage renders the full DocumentSheet when the AI '
         'summary landed', (tester) async {
-      await _pump(tester, overrides: _fixed(
-        ParentHotlineState(
-          stage: HotlineStage.summary,
-          studentName: 'Asha Rao',
-          selectedReason: OutreachReason.consecutiveAbsences,
-          callResult: const CallResult(
-            callStatus: CallStatus.completed,
-            turnCount: 4,
-            callDurationSeconds: 120,
-            callSummary: CallSummary(
-              parentResponse: 'The parent understood and will help at home.',
-              actionItemsForTeacher: ['Share the weekly plan.'],
-              parentSentiment: ParentSentiment.cooperative,
-              callQuality: CallQuality.productive,
+      await _pump(
+        tester,
+        overrides: _fixed(
+          ParentHotlineState(
+            stage: HotlineStage.summary,
+            studentName: 'Asha Rao',
+            selectedReason: OutreachReason.consecutiveAbsences,
+            callResult: const CallResult(
+              callStatus: CallStatus.completed,
+              turnCount: 4,
+              callDurationSeconds: 120,
+              callSummary: CallSummary(
+                parentResponse: 'The parent understood and will help at home.',
+                actionItemsForTeacher: ['Share the weekly plan.'],
+                parentSentiment: ParentSentiment.cooperative,
+                callQuality: CallQuality.productive,
+              ),
             ),
           ),
         ),
-      ));
+      );
       expect(find.byType(DocumentSheet), findsOneWidget);
       expect(find.text("Asha Rao's parent"), findsOneWidget);
       expect(find.textContaining('understood'), findsOneWidget);
     });
 
     testWidgets(
-        'leaving the calling screen (back/pop) stops polling via leaveCalling '
-        '— the call itself is not cancelled (SPEC §B.5.5)', (tester) async {
-      final fake = _FakeHotlineController(
-        const ParentHotlineState(
-          stage: HotlineStage.calling,
-          studentName: 'Asha Rao',
-          callResult: CallResult(callStatus: CallStatus.initiated),
-        ),
-      );
-      await _pump(tester, overrides: [
-        parentHotlineControllerProvider.overrideWith(() => fake),
-      ]);
-      expect(fake.leaveCallingCount, 0);
+      'leaving the calling screen (back/pop) stops polling via leaveCalling '
+      '— the call itself is not cancelled (SPEC §B.5.5)',
+      (tester) async {
+        final fake = _FakeHotlineController(
+          const ParentHotlineState(
+            stage: HotlineStage.calling,
+            studentName: 'Asha Rao',
+            callResult: CallResult(callStatus: CallStatus.initiated),
+          ),
+        );
+        await _pump(
+          tester,
+          overrides: [parentHotlineControllerProvider.overrideWith(() => fake)],
+        );
+        expect(fake.leaveCallingCount, 0);
 
-      // Simulate the back affordance popping the screen. leaveCalling stops the
-      // poll loop only; it never cancels the server-side call (that guarantee is
-      // pinned in parent_hotline_controller_test.dart).
-      final popScope = tester.widget(
-        find.byKey(const Key('parentHotlinePopScope')),
-      ) as PopScope;
-      popScope.onPopInvokedWithResult?.call(true, null);
-      expect(fake.leaveCallingCount, 1);
-    });
+        // Simulate the back affordance popping the screen. leaveCalling stops the
+        // poll loop only; it never cancels the server-side call (that guarantee is
+        // pinned in parent_hotline_controller_test.dart).
+        final popScope =
+            tester.widget(find.byKey(const Key('parentHotlinePopScope')))
+                as PopScope;
+        popScope.onPopInvokedWithResult?.call(true, null);
+        expect(fake.leaveCallingCount, 1);
+      },
+    );
   });
 
   // ── Interactive flow (real controller over fake repositories) ───────────────
@@ -457,15 +527,12 @@ void main() {
     List<Override> flowOverrides({
       List<HotlineStudent>? roster,
       CallabilityPolicy? policy,
-    }) =>
-        [
-          parentHotlineRepositoryProvider.overrideWithValue(hotline),
-          parentMessageRepositoryProvider.overrideWithValue(messages),
-          hotlineStudentRosterProvider
-              .overrideWithValue(roster ?? [_student()]),
-          if (policy != null)
-            callabilityPolicyProvider.overrideWithValue(policy),
-        ];
+    }) => [
+      parentHotlineRepositoryProvider.overrideWithValue(hotline),
+      parentMessageRepositoryProvider.overrideWithValue(messages),
+      hotlineStudentRosterProvider.overrideWithValue(roster ?? [_student()]),
+      if (policy != null) callabilityPolicyProvider.overrideWithValue(policy),
+    ];
 
     setUp(() {
       hotline = FakeParentHotlineRepository();
@@ -474,18 +541,23 @@ void main() {
       );
     });
 
-    Future<void> driveToReview(WidgetTester tester,
-        {CallabilityPolicy? policy}) async {
-      await _pump(tester,
-          overrides: flowOverrides(policy: policy),
-          surface: const Size(390, 1400));
+    Future<void> driveToReview(
+      WidgetTester tester, {
+      CallabilityPolicy? policy,
+    }) async {
+      await _pump(
+        tester,
+        overrides: flowOverrides(policy: policy),
+        surface: const Size(390, 1400),
+      );
       await _tapText(tester, 'Asha Rao'); // pick → reason
       await _tapText(tester, 'Slipping in a subject'); // reason → compose
       await _tapText(tester, 'Draft the message'); // compose → review
     }
 
-    testWidgets('tapping a student advances to the reason stage',
-        (tester) async {
+    testWidgets('tapping a student advances to the reason stage', (
+      tester,
+    ) async {
       await _pump(tester, overrides: flowOverrides());
       expect(find.text('Asha Rao'), findsOneWidget);
 
@@ -495,18 +567,21 @@ void main() {
       expect(find.text('Good news to share'), findsOneWidget);
     });
 
-    testWidgets('choosing a reason advances to compose (evidence + draft CTA)',
-        (tester) async {
-      await _pump(tester, overrides: flowOverrides());
-      await _tapText(tester, 'Asha Rao');
-      await _tapText(tester, 'Slipping in a subject');
+    testWidgets(
+      'choosing a reason advances to compose (evidence + draft CTA)',
+      (tester) async {
+        await _pump(tester, overrides: flowOverrides());
+        await _tapText(tester, 'Asha Rao');
+        await _tapText(tester, 'Slipping in a subject');
 
-      expect(find.text('Recent marks'), findsOneWidget); // evidence header
-      expect(find.text('Draft the message'), findsOneWidget);
-    });
+        expect(find.text('Recent marks'), findsOneWidget); // evidence header
+        expect(find.text('Draft the message'), findsOneWidget);
+      },
+    );
 
-    testWidgets('drafting advances to review and shows the drafted message',
-        (tester) async {
+    testWidgets('drafting advances to review and shows the drafted message', (
+      tester,
+    ) async {
       await driveToReview(tester);
       expect(find.textContaining('Namaste'), findsOneWidget);
       expect(find.text('Call parent'), findsOneWidget);
@@ -516,41 +591,49 @@ void main() {
     });
 
     testWidgets(
-        'F9-001: the review meta shows the masked last-4 and never a full number',
-        (tester) async {
-      await driveToReview(tester);
+      'F9-001: the review meta shows the masked last-4 and never a full number',
+      (tester) async {
+        await driveToReview(tester);
 
-      // The pre-masked fragment is shown…
-      expect(find.text('•••• 4821'), findsOneWidget);
-      // …and NO rendered text anywhere contains a 5+ digit run (a real phone).
-      final longDigits = RegExp(r'\d{5,}');
-      for (final t in tester.widgetList<Text>(find.byType(Text))) {
-        final data = t.data;
-        if (data != null) {
-          expect(longDigits.hasMatch(data), isFalse,
-              reason: 'no full phone number may be rendered (F9-001): "$data"');
+        // The pre-masked fragment is shown…
+        expect(find.text('•••• 4821'), findsOneWidget);
+        // …and NO rendered text anywhere contains a 5+ digit run (a real phone).
+        final longDigits = RegExp(r'\d{5,}');
+        for (final t in tester.widgetList<Text>(find.byType(Text))) {
+          final data = t.data;
+          if (data != null) {
+            expect(
+              longDigits.hasMatch(data),
+              isFalse,
+              reason: 'no full phone number may be rendered (F9-001): "$data"',
+            );
+          }
         }
-      }
-    });
+      },
+    );
 
-    testWidgets('Copy for WhatsApp persists a whatsapp_copy outreach + confirms',
-        (tester) async {
-      await driveToReview(tester);
-      await _tapText(tester, 'Copy for WhatsApp');
+    testWidgets(
+      'Copy for WhatsApp persists a whatsapp_copy outreach + confirms',
+      (tester) async {
+        await driveToReview(tester);
+        await _tapText(tester, 'Copy for WhatsApp');
 
-      expect(hotline.createRequests, isNotEmpty);
-      expect(hotline.createRequests.last.toJson()['deliveryMethod'],
-          'whatsapp_copy');
-      // The client also copies the text to the clipboard for the paste.
-      final clip = await Clipboard.getData(Clipboard.kTextPlain);
-      expect(clip?.text, contains('Namaste'));
-    });
+        expect(hotline.createRequests, isNotEmpty);
+        expect(
+          hotline.createRequests.last.toJson()['deliveryMethod'],
+          'whatsapp_copy',
+        );
+        // The client also copies the text to the clipboard for the paste.
+        final clip = await Clipboard.getData(Clipboard.kTextPlain);
+        expect(clip?.text, contains('Namaste'));
+      },
+    );
 
-    testWidgets('an uncallable language hides Call at review, keeps WhatsApp',
-        (tester) async {
+    testWidgets('an uncallable language hides Call at review, keeps WhatsApp', (
+      tester,
+    ) async {
       // A policy that only allows English → the Kannada student is not callable.
-      await driveToReview(tester,
-          policy: const CallabilityPolicy({'english'}));
+      await driveToReview(tester, policy: const CallabilityPolicy({'english'}));
 
       expect(find.byType(PrimaryButton), findsNothing); // no Call
       expect(find.text('Copy for WhatsApp'), findsOneWidget);
@@ -565,37 +648,56 @@ void main() {
     // Indic buttons / banners / meta at the 360dp × 1.3 floor with a same-script
     // parent message (bn/ta from the review, te/ml added per review).
     const reviewProbes = <(String, String, String)>[
-      ('bn', 'Bengali', 'নমস্কার, আপনার সন্তানের ক্লাসে উপস্থিতি নিয়ে কথা বলতে চেয়েছিলাম।'),
-      ('ta', 'Tamil', 'வணக்கம், உங்கள் பிள்ளையின் வகுப்பு வருகை குறித்து பேச விரும்பினேன்.'),
-      ('te', 'Telugu', 'నమస్కారం, మీ పిల్లల తరగతి హాజరు గురించి మాట్లాడాలనుకుంటున్నాను.'),
-      ('ml', 'Malayalam', 'നമസ്കാരം, നിങ്ങളുടെ കുട്ടിയുടെ ക്ലാസ് ഹാജരിനെക്കുറിച്ച് സംസാരിക്കാൻ ആഗ്രഹിച്ചു.'),
+      (
+        'bn',
+        'Bengali',
+        'নমস্কার, আপনার সন্তানের ক্লাসে উপস্থিতি নিয়ে কথা বলতে চেয়েছিলাম।',
+      ),
+      (
+        'ta',
+        'Tamil',
+        'வணக்கம், உங்கள் பிள்ளையின் வகுப்பு வருகை குறித்து பேச விரும்பினேன்.',
+      ),
+      (
+        'te',
+        'Telugu',
+        'నమస్కారం, మీ పిల్లల తరగతి హాజరు గురించి మాట్లాడాలనుకుంటున్నాను.',
+      ),
+      (
+        'ml',
+        'Malayalam',
+        'നമസ്കാരം, നിങ്ങളുടെ കുട്ടിയുടെ ക്ലാസ് ഹാജരിനെക്കുറിച്ച് സംസാരിക്കാൻ ആഗ്രഹിച്ചു.',
+      ),
     ];
 
     for (final brightness in Brightness.values) {
       for (final (code, language, message) in reviewProbes) {
-        testWidgets('review chrome at 360dp x 1.3 in $code (${brightness.name})',
-            (tester) async {
-          await _pump(
-            tester,
-            overrides: _fixed(
-              ParentHotlineState(
-                stage: HotlineStage.review,
-                parentLanguage: language,
-                canAutoCall: true,
-                draftedMessage: message,
+        testWidgets(
+          'review chrome at 360dp x 1.3 in $code (${brightness.name})',
+          (tester) async {
+            await _pump(
+              tester,
+              overrides: _fixed(
+                ParentHotlineState(
+                  stage: HotlineStage.review,
+                  parentLanguage: language,
+                  canAutoCall: true,
+                  draftedMessage: message,
+                ),
               ),
-            ),
-            brightness: brightness,
-            textScale: 1.3,
-            locale: Locale(code),
-            surface: const Size(360, 1200),
-          );
-          expect(tester.takeException(), isNull);
-        });
+              brightness: brightness,
+              textScale: 1.3,
+              locale: Locale(code),
+              surface: const Size(360, 1200),
+            );
+            expect(tester.takeException(), isNull);
+          },
+        );
       }
 
-      testWidgets('reason stage at 360dp x 1.3, Tamil (${brightness.name})',
-          (tester) async {
+      testWidgets('reason stage at 360dp x 1.3, Tamil (${brightness.name})', (
+        tester,
+      ) async {
         await _pump(
           tester,
           overrides: _fixed(

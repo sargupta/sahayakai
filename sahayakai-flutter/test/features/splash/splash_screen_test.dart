@@ -52,10 +52,7 @@ Future<void> _pumpApp(
         // The dashboard fires GET /api/content/list the moment the redirect
         // lands on it. Without this that is a live request to production.
         client: FakeApiClient(error: kUnauthorized),
-        overrides: [
-          bootstrapOverride(boot),
-          if (signedIn) signedInOverride(),
-        ],
+        overrides: [bootstrapOverride(boot), if (signedIn) signedInOverride()],
       ),
     ),
   );
@@ -75,25 +72,34 @@ void main() {
   });
 
   group('states', () {
-    testWidgets('while bootstrapping it shows the brand mark, not a bare spinner',
-        (tester) async {
-      await _pumpApp(tester, boot: FakeBootstrap(pending: true));
-      await tester.pump();
+    testWidgets(
+      'while bootstrapping it shows the brand mark, not a bare spinner',
+      (tester) async {
+        await _pumpApp(tester, boot: FakeBootstrap(pending: true));
+        await tester.pump();
 
-      expect(find.byType(SplashScreen), findsOneWidget);
-      // The brand mark IS the loading state. The progress indicator is beside
-      // it, not instead of it (DESIGN_RUBRIC §6).
-      expect(find.text('SahayakAI'), findsWidgets);
-      expect(find.text('Teaching assistant for every classroom'), findsOneWidget);
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      expect(find.text('Try again'), findsNothing);
-    });
+        expect(find.byType(SplashScreen), findsOneWidget);
+        // The brand mark IS the loading state. The progress indicator is beside
+        // it, not instead of it (DESIGN_RUBRIC §6).
+        expect(find.text('SahayakAI'), findsWidgets);
+        expect(
+          find.text('Teaching assistant for every classroom'),
+          findsOneWidget,
+        );
+        expect(find.byType(CircularProgressIndicator), findsOneWidget);
+        expect(find.text('Try again'), findsNothing);
+      },
+    );
 
-    testWidgets('a failed bootstrap shows a retry, not an endless spinner',
-        (tester) async {
+    testWidgets('a failed bootstrap shows a retry, not an endless spinner', (
+      tester,
+    ) async {
       // The router keeps parking on /splash while the bootstrap has no value,
       // so without this state the teacher would spin here forever.
-      await _pumpApp(tester, boot: FakeBootstrap(error: Exception('no network')));
+      await _pumpApp(
+        tester,
+        boot: FakeBootstrap(error: Exception('no network')),
+      );
       await tester.pump();
 
       expect(find.byType(SplashScreen), findsOneWidget);
@@ -104,7 +110,9 @@ void main() {
       expect(find.text('SahayakAI'), findsWidgets);
     });
 
-    testWidgets('no raw exception text ever reaches the teacher', (tester) async {
+    testWidgets('no raw exception text ever reaches the teacher', (
+      tester,
+    ) async {
       await _pumpApp(
         tester,
         boot: FakeBootstrap(error: Exception('PlayIntegrity handshake failed')),
@@ -115,8 +123,9 @@ void main() {
       expect(find.textContaining('Exception'), findsNothing);
     });
 
-    testWidgets('retry re-runs the bootstrap and lets the redirect proceed',
-        (tester) async {
+    testWidgets('retry re-runs the bootstrap and lets the redirect proceed', (
+      tester,
+    ) async {
       final boot = FakeBootstrap(error: Exception('no network'));
       await _pumpApp(tester, boot: boot);
       await tester.pump();
@@ -137,7 +146,11 @@ void main() {
 
   group('redirect on each auth state (P0.1 acceptance)', () {
     testWidgets('bootstrap pending -> parks on splash', (tester) async {
-      await _pumpApp(tester, boot: FakeBootstrap(pending: true), signedIn: true);
+      await _pumpApp(
+        tester,
+        boot: FakeBootstrap(pending: true),
+        signedIn: true,
+      );
       await tester.pump();
 
       // Signed in, but there is no first snapshot yet: nothing may render
@@ -147,8 +160,9 @@ void main() {
       expect(find.byType(LoginScreen), findsNothing);
     });
 
-    testWidgets('bootstrap failed -> parks on splash, never guesses',
-        (tester) async {
+    testWidgets('bootstrap failed -> parks on splash, never guesses', (
+      tester,
+    ) async {
       // Guessing here would either leak a protected screen or sign out a
       // signed-in teacher.
       await _pumpApp(
@@ -170,8 +184,9 @@ void main() {
       expect(find.byType(SplashScreen), findsNothing);
     });
 
-    testWidgets('booted and signed in -> the VIDYA home (new landing)',
-        (tester) async {
+    testWidgets('booted and signed in -> the VIDYA home (new landing)', (
+      tester,
+    ) async {
       await _pumpApp(tester, boot: FakeBootstrap(), signedIn: true);
       await tester.pumpAndSettle();
 
@@ -235,8 +250,9 @@ void main() {
       );
     }
 
-    testWidgets('the failure state survives a short screen at textScale 1.3',
-        (tester) async {
+    testWidgets('the failure state survives a short screen at textScale 1.3', (
+      tester,
+    ) async {
       // A Spacer-based column would overflow here; the splash scrolls instead.
       await _pumpApp(
         tester,

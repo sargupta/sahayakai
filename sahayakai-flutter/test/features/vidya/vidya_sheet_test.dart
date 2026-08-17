@@ -34,10 +34,7 @@ class _FakeVidyaController extends VidyaController {
   Future<void> restoreSession() async {}
 }
 
-Future<void> _pumpHost(
-  WidgetTester tester, {
-  VidyaState? state,
-}) async {
+Future<void> _pumpHost(WidgetTester tester, {VidyaState? state}) async {
   tester.view.physicalSize = const Size(390, 844);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
@@ -51,7 +48,9 @@ Future<void> _pumpHost(
     ProviderScope(
       overrides: [
         if (state != null)
-          vidyaControllerProvider.overrideWith(() => _FakeVidyaController(state)),
+          vidyaControllerProvider.overrideWith(
+            () => _FakeVidyaController(state),
+          ),
       ],
       child: MaterialApp(
         theme: AppTheme.light(),
@@ -74,8 +73,9 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
-  testWidgets('the app-bar action opens the VIDYA sheet with the Seal Mic',
-      (tester) async {
+  testWidgets('the app-bar action opens the VIDYA sheet with the Seal Mic', (
+    tester,
+  ) async {
     await _pumpHost(tester);
 
     // The action is present and unobtrusive (one glyph).
@@ -91,8 +91,9 @@ void main() {
     expect(find.byType(SealMic), findsOneWidget);
   });
 
-  testWidgets('the running conversation renders inside the sheet',
-      (tester) async {
+  testWidgets('the running conversation renders inside the sheet', (
+    tester,
+  ) async {
     await _pumpHost(
       tester,
       state: const VidyaState(

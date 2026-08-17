@@ -25,19 +25,19 @@ import 'profile_fixtures.dart';
 /// The `GET /api/usage` body a signed-in hub would receive. `limit: -1` is the
 /// unlimited sentinel; a zero-limit feature is omitted server-side.
 Map<String, dynamic> usageJson({String plan = 'free'}) => <String, dynamic>{
-      'plan': plan,
-      'canExport': false,
-      'canViewDetailedAnalytics': false,
-      'canAccessAbsenceRecords': false,
-      'canUseParentMessaging': false,
-      'model': 'gemini-2.5-flash',
-      'usage': <String, dynamic>{
-        'lesson-plan': <String, dynamic>{'used': 3, 'limit': 10},
-        'quiz': <String, dynamic>{'used': 5, 'limit': 5},
-        'instant-answer': <String, dynamic>{'used': 12, 'limit': -1},
-        'visual-aid': <String, dynamic>{'used': 0, 'limit': 2},
-      },
-    };
+  'plan': plan,
+  'canExport': false,
+  'canViewDetailedAnalytics': false,
+  'canAccessAbsenceRecords': false,
+  'canUseParentMessaging': false,
+  'model': 'gemini-2.5-flash',
+  'usage': <String, dynamic>{
+    'lesson-plan': <String, dynamic>{'used': 3, 'limit': 10},
+    'quiz': <String, dynamic>{'used': 5, 'limit': 5},
+    'instant-answer': <String, dynamic>{'used': 12, 'limit': -1},
+    'visual-aid': <String, dynamic>{'used': 0, 'limit': 2},
+  },
+};
 
 Future<void> _pumpMe(
   WidgetTester tester, {
@@ -62,7 +62,9 @@ Future<void> _pumpMe(
       locale: locale,
       overrides: [
         docSourceOverride(source ?? FakeProfileDocSource(doc: teacherDoc())),
-        apiClientOverride(client ?? net.FakeApiClient(getResponse: usageJson())),
+        apiClientOverride(
+          client ?? net.FakeApiClient(getResponse: usageJson()),
+        ),
         tokenOverride(token),
       ],
     ),
@@ -94,9 +96,13 @@ Future<void> _pumpMeRouter(
     routes: [
       GoRoute(path: '/', builder: (_, _) => const MeScreen()),
       GoRoute(
-          path: Routes.profile, builder: (_, _) => const _Probe('EDIT-PROFILE')),
+        path: Routes.profile,
+        builder: (_, _) => const _Probe('EDIT-PROFILE'),
+      ),
       GoRoute(
-          path: Routes.settings, builder: (_, _) => const _Probe('SETTINGS')),
+        path: Routes.settings,
+        builder: (_, _) => const _Probe('SETTINGS'),
+      ),
       GoRoute(path: Routes.login, builder: (_, _) => const _Probe('LOGIN')),
     ],
   );
@@ -117,8 +123,9 @@ Future<void> _pumpMeRouter(
 
 /// Walks the hub top to bottom, asserting no overflow at any scroll offset.
 Future<void> _scrollWholeList(WidgetTester tester) async {
-  final position =
-      tester.state<ScrollableState>(find.byType(Scrollable).first).position;
+  final position = tester
+      .state<ScrollableState>(find.byType(Scrollable).first)
+      .position;
   var guard = 0;
   while (position.pixels < position.maxScrollExtent && guard++ < 60) {
     await tester.drag(find.byType(ListView), const Offset(0, -280));
@@ -134,8 +141,9 @@ void main() {
   });
 
   group('states', () {
-    testWidgets('shows a skeleton while the profile is being read',
-        (tester) async {
+    testWidgets('shows a skeleton while the profile is being read', (
+      tester,
+    ) async {
       await _pumpMe(
         tester,
         source: FakeProfileDocSource(
@@ -153,8 +161,9 @@ void main() {
       expect(find.text('Lakshmi Iyer'), findsWidgets);
     });
 
-    testWidgets('renders the profile summary header from the loaded document',
-        (tester) async {
+    testWidgets('renders the profile summary header from the loaded document', (
+      tester,
+    ) async {
       await _pumpMe(tester, token: fakeJwt({'planType': 'pro'}));
 
       // Name + role · school + the identity plan badge (from the token claim).
@@ -169,8 +178,9 @@ void main() {
       expect(find.text('ಕನ್ನಡ'), findsOneWidget); // Kannada endonym
     });
 
-    testWidgets('no display name falls back to a placeholder, never a blank',
-        (tester) async {
+    testWidgets('no display name falls back to a placeholder, never a blank', (
+      tester,
+    ) async {
       await _pumpMe(tester, source: FakeProfileDocSource(doc: null));
       // An empty profile is a valid hub (onboarding gate is OFF): the header
       // shows the placeholder identity, not an error.
@@ -180,8 +190,9 @@ void main() {
   });
 
   group('plan & usage', () {
-    testWidgets('a metered feature shows used/limit and a bar sized to it',
-        (tester) async {
+    testWidgets('a metered feature shows used/limit and a bar sized to it', (
+      tester,
+    ) async {
       await _pumpMe(tester);
 
       // Section is present (the editorial eyebrow uppercases Latin).
@@ -189,15 +200,17 @@ void main() {
 
       // The metered lesson-plan row: its "3 / 10" and a meter whose fill is the
       // fraction 0.3.
-      final lessonRow =
-          find.byKey(const ValueKey<String>('usage-row-lesson-plan'));
+      final lessonRow = find.byKey(
+        const ValueKey<String>('usage-row-lesson-plan'),
+      );
       expect(lessonRow, findsOneWidget);
       expect(
         find.descendant(of: lessonRow, matching: find.text('3 / 10')),
         findsOneWidget,
       );
-      final meter =
-          find.byKey(const ValueKey<String>('usage-meter-lesson-plan'));
+      final meter = find.byKey(
+        const ValueKey<String>('usage-meter-lesson-plan'),
+      );
       expect(meter, findsOneWidget);
       final fill = tester.widget<FractionallySizedBox>(
         find.descendant(of: meter, matching: find.byType(FractionallySizedBox)),
@@ -205,12 +218,14 @@ void main() {
       expect(fill.widthFactor, closeTo(0.3, 1e-6));
     });
 
-    testWidgets('an unlimited feature says "Unlimited" and draws no bar',
-        (tester) async {
+    testWidgets('an unlimited feature says "Unlimited" and draws no bar', (
+      tester,
+    ) async {
       await _pumpMe(tester);
 
-      final instantRow =
-          find.byKey(const ValueKey<String>('usage-row-instant-answer'));
+      final instantRow = find.byKey(
+        const ValueKey<String>('usage-row-instant-answer'),
+      );
       expect(instantRow, findsOneWidget);
       expect(
         find.descendant(of: instantRow, matching: find.text('Unlimited')),
@@ -234,8 +249,9 @@ void main() {
       expect(find.text('Not available'), findsOneWidget);
     });
 
-    testWidgets('a usage failure degrades only the section, keeping the hub',
-        (tester) async {
+    testWidgets('a usage failure degrades only the section, keeping the hub', (
+      tester,
+    ) async {
       // The profile read still succeeds, so the header stays; only the usage
       // card shows its degraded note + retry.
       await _pumpMe(tester, client: net.FakeApiClient(error: kUnauthorized));
@@ -250,8 +266,9 @@ void main() {
   });
 
   group('defaults', () {
-    testWidgets('surfaces the board and the shared language switcher',
-        (tester) async {
+    testWidgets('surfaces the board and the shared language switcher', (
+      tester,
+    ) async {
       await _pumpMe(tester);
 
       expect(find.text('DEFAULTS'), findsOneWidget); // uppercased eyebrow
@@ -270,8 +287,10 @@ void main() {
       // Board, Settings and Sign out are the hub rows (scoped by label so the
       // shared LanguageSwitcher's own tiles are not counted).
       for (final label in const ['Education board', 'Settings', 'Sign out']) {
-        final tile =
-            find.ancestor(of: find.text(label), matching: find.byType(ListTile));
+        final tile = find.ancestor(
+          of: find.text(label),
+          matching: find.byType(ListTile),
+        );
         expect(tile, findsOneWidget, reason: label);
         expect(
           tester.getSize(tile).height,
@@ -282,24 +301,31 @@ void main() {
     });
 
     testWidgets('the Settings row navigates to Settings', (tester) async {
-      await _pumpMeRouter(tester, overrides: [
-        docSourceOverride(FakeProfileDocSource(doc: teacherDoc())),
-        apiClientOverride(net.FakeApiClient(getResponse: usageJson())),
-        tokenOverride(null),
-      ]);
+      await _pumpMeRouter(
+        tester,
+        overrides: [
+          docSourceOverride(FakeProfileDocSource(doc: teacherDoc())),
+          apiClientOverride(net.FakeApiClient(getResponse: usageJson())),
+          tokenOverride(null),
+        ],
+      );
 
       await tester.tap(find.text('Settings'));
       await tester.pumpAndSettle();
       expect(find.text('SETTINGS'), findsOneWidget);
     });
 
-    testWidgets('tapping the summary header opens the profile editor',
-        (tester) async {
-      await _pumpMeRouter(tester, overrides: [
-        docSourceOverride(FakeProfileDocSource(doc: teacherDoc())),
-        apiClientOverride(net.FakeApiClient(getResponse: usageJson())),
-        tokenOverride(null),
-      ]);
+    testWidgets('tapping the summary header opens the profile editor', (
+      tester,
+    ) async {
+      await _pumpMeRouter(
+        tester,
+        overrides: [
+          docSourceOverride(FakeProfileDocSource(doc: teacherDoc())),
+          apiClientOverride(net.FakeApiClient(getResponse: usageJson())),
+          tokenOverride(null),
+        ],
+      );
 
       await tester.tap(find.text('Lakshmi Iyer'));
       await tester.pumpAndSettle();
@@ -307,19 +333,23 @@ void main() {
     });
 
     testWidgets('the board row opens the profile editor', (tester) async {
-      await _pumpMeRouter(tester, overrides: [
-        docSourceOverride(FakeProfileDocSource(doc: teacherDoc())),
-        apiClientOverride(net.FakeApiClient(getResponse: usageJson())),
-        tokenOverride(null),
-      ]);
+      await _pumpMeRouter(
+        tester,
+        overrides: [
+          docSourceOverride(FakeProfileDocSource(doc: teacherDoc())),
+          apiClientOverride(net.FakeApiClient(getResponse: usageJson())),
+          tokenOverride(null),
+        ],
+      );
 
       await tester.tap(find.text('Education board'));
       await tester.pumpAndSettle();
       expect(find.text('EDIT-PROFILE'), findsOneWidget);
     });
 
-    testWidgets('sign out flips the auth state the router redirects on',
-        (tester) async {
+    testWidgets('sign out flips the auth state the router redirects on', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         hostProfile(
           const MeScreen(),
@@ -352,30 +382,35 @@ void main() {
   });
 
   group('signed out (401)', () {
-    testWidgets('the whole hub degrades to a sign-in prompt, no faked identity',
-        (tester) async {
-      final client = net.FakeApiClient(getResponse: usageJson());
-      await _pumpMe(
-        tester,
-        source: FakeProfileDocSource(readError: kUnauthorized),
-        client: client,
-      );
+    testWidgets(
+      'the whole hub degrades to a sign-in prompt, no faked identity',
+      (tester) async {
+        final client = net.FakeApiClient(getResponse: usageJson());
+        await _pumpMe(
+          tester,
+          source: FakeProfileDocSource(readError: kUnauthorized),
+          client: client,
+        );
 
-      // A sign-in prompt, not a retry, not an invented profile.
-      expect(find.byType(EmptyView), findsOneWidget);
-      expect(find.text('You are signed out'), findsOneWidget);
-      expect(find.text('Sign in'), findsOneWidget);
-      expect(find.text('Lakshmi Iyer'), findsNothing);
-      // The usage read is never even fired when there is no identity.
-      expect(client.gets, isEmpty);
-    });
+        // A sign-in prompt, not a retry, not an invented profile.
+        expect(find.byType(EmptyView), findsOneWidget);
+        expect(find.text('You are signed out'), findsOneWidget);
+        expect(find.text('Sign in'), findsOneWidget);
+        expect(find.text('Lakshmi Iyer'), findsNothing);
+        // The usage read is never even fired when there is no identity.
+        expect(client.gets, isEmpty);
+      },
+    );
 
     testWidgets('the sign-in button routes to login', (tester) async {
-      await _pumpMeRouter(tester, overrides: [
-        docSourceOverride(FakeProfileDocSource(readError: kUnauthorized)),
-        apiClientOverride(net.FakeApiClient(getResponse: usageJson())),
-        tokenOverride(null),
-      ]);
+      await _pumpMeRouter(
+        tester,
+        overrides: [
+          docSourceOverride(FakeProfileDocSource(readError: kUnauthorized)),
+          apiClientOverride(net.FakeApiClient(getResponse: usageJson())),
+          tokenOverride(null),
+        ],
+      );
 
       await tester.tap(find.text('Sign in'));
       await tester.pumpAndSettle();
@@ -385,41 +420,43 @@ void main() {
 
   group('overflow gates (DESIGN_RUBRIC §12.9 / §12.10 / §12.11)', () {
     for (final brightness in Brightness.values) {
-      testWidgets('no overflow at 360dp x textScale 1.3 in ${brightness.name}',
-          (tester) async {
-        await _pumpMe(
-          tester,
-          brightness: brightness,
-          textScale: 1.3,
-          surface: kNarrowPhone,
-          token: fakeJwt({'planType': 'pro'}),
-        );
+      testWidgets(
+        'no overflow at 360dp x textScale 1.3 in ${brightness.name}',
+        (tester) async {
+          await _pumpMe(
+            tester,
+            brightness: brightness,
+            textScale: 1.3,
+            surface: kNarrowPhone,
+            token: fakeJwt({'planType': 'pro'}),
+          );
 
-        expect(tester.takeException(), isNull);
-        await _scrollWholeList(tester);
-      });
+          expect(tester.takeException(), isNull);
+          await _scrollWholeList(tester);
+        },
+      );
     }
 
     for (final locale in const [Locale('bn'), Locale('ta')]) {
       testWidgets(
-          'no overflow at 360dp x textScale 1.3 in ${locale.languageCode}',
-          (tester) async {
-        await _pumpMe(
-          tester,
-          locale: locale,
-          textScale: 1.3,
-          surface: kNarrowPhone,
-          source: FakeProfileDocSource(
-            doc: teacherDoc(overrides: {
-              'displayName': kBn,
-              'schoolName': kTa,
-            }),
-          ),
-        );
+        'no overflow at 360dp x textScale 1.3 in ${locale.languageCode}',
+        (tester) async {
+          await _pumpMe(
+            tester,
+            locale: locale,
+            textScale: 1.3,
+            surface: kNarrowPhone,
+            source: FakeProfileDocSource(
+              doc: teacherDoc(
+                overrides: {'displayName': kBn, 'schoolName': kTa},
+              ),
+            ),
+          );
 
-        expect(tester.takeException(), isNull);
-        await _scrollWholeList(tester);
-      });
+          expect(tester.takeException(), isNull);
+          await _scrollWholeList(tester);
+        },
+      );
     }
   });
 }

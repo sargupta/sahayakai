@@ -35,7 +35,9 @@ class _DestMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: Center(child: Text('DEST', key: Key('dest-$id'))));
+    return Scaffold(
+      body: Center(child: Text('DEST', key: Key('dest-$id'))),
+    );
   }
 }
 
@@ -50,13 +52,13 @@ GoRouter _buildRouter({required List<ToolEntry> tools}) {
         ),
       ),
       for (final tool in tools)
-        GoRoute(
-          path: tool.route,
-          builder: (_, _) => _DestMarker(tool.id),
-        ),
+        GoRoute(path: tool.route, builder: (_, _) => _DestMarker(tool.id)),
       // The signed-out mic terminal panel routes here too (vidya home tests
       // cover that directly); registered so a stray push never 404s a test.
-      GoRoute(path: Routes.login, builder: (_, _) => const _DestMarker('login')),
+      GoRoute(
+        path: Routes.login,
+        builder: (_, _) => const _DestMarker('login'),
+      ),
     ],
   );
 }
@@ -74,8 +76,9 @@ Widget _host({
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     builder: (context, child) => MediaQuery(
-      data: MediaQuery.of(context)
-          .copyWith(textScaler: TextScaler.linear(textScale)),
+      data: MediaQuery.of(
+        context,
+      ).copyWith(textScaler: TextScaler.linear(textScale)),
       child: child!,
     ),
   );
@@ -88,8 +91,9 @@ void main() {
   });
 
   group('renders the registry preview', () {
-    testWidgets('a tile for each of the first six registry tools',
-        (tester) async {
+    testWidgets('a tile for each of the first six registry tools', (
+      tester,
+    ) async {
       await tester.pumpWidget(_host(tools: _firstSix()));
       await tester.pumpAndSettle();
 
@@ -104,8 +108,9 @@ void main() {
   });
 
   group('layout (a Wrap of intrinsic-height tiles, never GridView.count)', () {
-    testWidgets('two tiles per row, each roughly half the available width',
-        (tester) async {
+    testWidgets('two tiles per row, each roughly half the available width', (
+      tester,
+    ) async {
       tester.view.physicalSize = _kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -124,8 +129,9 @@ void main() {
       expect(firstWidth, greaterThan(_kNarrowPhone.width / 3));
     });
 
-    testWidgets('a two-line title does not force every tile to one height',
-        (tester) async {
+    testWidgets('a two-line title does not force every tile to one height', (
+      tester,
+    ) async {
       // A short and a very long title side by side: with an intrinsic-height
       // Wrap (not a fixed `childAspectRatio`), the long tile is free to grow
       // taller than its short neighbour instead of clipping.
@@ -158,8 +164,9 @@ void main() {
   });
 
   group('navigation (context.push to the tool\'s real route)', () {
-    testWidgets('tapping the Lesson Plan tile pushes Routes.lessonPlan',
-        (tester) async {
+    testWidgets('tapping the Lesson Plan tile pushes Routes.lessonPlan', (
+      tester,
+    ) async {
       await tester.pumpWidget(_host(tools: _firstSix()));
       await tester.pumpAndSettle();
 
@@ -169,8 +176,9 @@ void main() {
       expect(find.byKey(const Key('dest-lesson-plan')), findsOneWidget);
     });
 
-    testWidgets('tapping the Quiz tile pushes Routes.quizGenerator',
-        (tester) async {
+    testWidgets('tapping the Quiz tile pushes Routes.quizGenerator', (
+      tester,
+    ) async {
       await tester.pumpWidget(_host(tools: _firstSix()));
       await tester.pumpAndSettle();
 
@@ -184,55 +192,59 @@ void main() {
   group('overflow gates (DESIGN_RUBRIC §12.9)', () {
     for (final brightness in Brightness.values) {
       testWidgets(
-          'no overflow at 360dp x textScale 1.3 with a Malayalam-length title '
-          '(${brightness.name})', (tester) async {
+        'no overflow at 360dp x textScale 1.3 with a Malayalam-length title '
+        '(${brightness.name})',
+        (tester) async {
+          tester.view.physicalSize = _kNarrowPhone;
+          tester.view.devicePixelRatio = 1.0;
+          addTearDown(tester.view.reset);
+
+          // A genuinely long, real Malayalam sentence (borrowed from the
+          // VIDYA signed-out body copy already in `app_ml.arb`) standing in
+          // for a tool title — the worst case a real translation could ever
+          // reach, not a placeholder string invented for the test.
+          const longMalayalamTitle =
+              'സൈൻ ഇൻ ചെയ്യൂ, VIDYA നിങ്ങളുടെ ഭാഷയിൽ പാഠങ്ങൾ, ക്വിസുകൾ '
+              'എന്നിവയും അതിലധികവും തയ്യാറാക്കും.';
+          final tools = [
+            for (final tool in _firstSix())
+              ToolEntry(
+                id: tool.id,
+                icon: tool.icon,
+                route: tool.route,
+                title: (_) => longMalayalamTitle,
+                subtitle: tool.subtitle,
+              ),
+          ];
+
+          await tester.pumpWidget(
+            _host(
+              tools: tools,
+              locale: const Locale('ml'),
+              textScale: 1.3,
+              brightness: brightness,
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          expect(tester.takeException(), isNull);
+          expect(find.byType(AppCard), findsNWidgets(6));
+        },
+      );
+    }
+
+    testWidgets(
+      'the real (English) registry preview does not overflow either',
+      (tester) async {
         tester.view.physicalSize = _kNarrowPhone;
         tester.view.devicePixelRatio = 1.0;
         addTearDown(tester.view.reset);
 
-        // A genuinely long, real Malayalam sentence (borrowed from the
-        // VIDYA signed-out body copy already in `app_ml.arb`) standing in
-        // for a tool title — the worst case a real translation could ever
-        // reach, not a placeholder string invented for the test.
-        const longMalayalamTitle =
-            'സൈൻ ഇൻ ചെയ്യൂ, VIDYA നിങ്ങളുടെ ഭാഷയിൽ പാഠങ്ങൾ, ക്വിസുകൾ '
-            'എന്നിവയും അതിലധികവും തയ്യാറാക്കും.';
-        final tools = [
-          for (final tool in _firstSix())
-            ToolEntry(
-              id: tool.id,
-              icon: tool.icon,
-              route: tool.route,
-              title: (_) => longMalayalamTitle,
-              subtitle: tool.subtitle,
-            ),
-        ];
-
-        await tester.pumpWidget(
-          _host(
-            tools: tools,
-            locale: const Locale('ml'),
-            textScale: 1.3,
-            brightness: brightness,
-          ),
-        );
+        await tester.pumpWidget(_host(tools: _firstSix(), textScale: 1.3));
         await tester.pumpAndSettle();
 
         expect(tester.takeException(), isNull);
-        expect(find.byType(AppCard), findsNWidgets(6));
-      });
-    }
-
-    testWidgets('the real (English) registry preview does not overflow either',
-        (tester) async {
-      tester.view.physicalSize = _kNarrowPhone;
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
-
-      await tester.pumpWidget(_host(tools: _firstSix(), textScale: 1.3));
-      await tester.pumpAndSettle();
-
-      expect(tester.takeException(), isNull);
-    });
+      },
+    );
   });
 }

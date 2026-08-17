@@ -56,8 +56,9 @@ Future<void> _pumpScreen(
 /// any scroll offset. An overflow below the fold is still an overflow, and this
 /// screen is taller than any phone.
 Future<void> _scrollWholeList(WidgetTester tester) async {
-  final position =
-      tester.state<ScrollableState>(find.byType(Scrollable).first).position;
+  final position = tester
+      .state<ScrollableState>(find.byType(Scrollable).first)
+      .position;
   var guard = 0;
   while (position.pixels < position.maxScrollExtent && guard++ < 60) {
     await tester.drag(find.byType(ListView), const Offset(0, -280));
@@ -73,8 +74,9 @@ void main() {
   });
 
   group('states', () {
-    testWidgets('shows a skeleton while the profile is being read',
-        (tester) async {
+    testWidgets('shows a skeleton while the profile is being read', (
+      tester,
+    ) async {
       await _pumpScreen(
         tester,
         // A read that is still in flight, which is the only state where a
@@ -99,7 +101,9 @@ void main() {
       expect(find.text('Lakshmi Iyer'), findsWidgets);
     });
 
-    testWidgets('renders the teacher\'s saved values once loaded', (tester) async {
+    testWidgets('renders the teacher\'s saved values once loaded', (
+      tester,
+    ) async {
       await _pumpScreen(tester);
 
       expect(find.text('Lakshmi Iyer'), findsWidgets);
@@ -111,8 +115,9 @@ void main() {
       expect(find.text('Karnataka State Board (KSEEB)'), findsWidgets);
     });
 
-    testWidgets('an empty profile gets the empty state, not an error',
-        (tester) async {
+    testWidgets('an empty profile gets the empty state, not an error', (
+      tester,
+    ) async {
       await _pumpScreen(tester, source: FakeProfileDocSource(doc: null));
 
       expect(find.byType(EmptyView), findsOneWidget);
@@ -121,7 +126,9 @@ void main() {
       expect(find.byType(TextFormField), findsWidgets);
     });
 
-    testWidgets('a loaded profile does NOT show the empty state', (tester) async {
+    testWidgets('a loaded profile does NOT show the empty state', (
+      tester,
+    ) async {
       await _pumpScreen(tester);
       expect(find.byType(EmptyView), findsNothing);
     });
@@ -139,12 +146,16 @@ void main() {
       expect(find.byType(ErrorView), findsNothing);
     });
 
-    testWidgets('a network failure shows the offline state with a retry',
-        (tester) async {
+    testWidgets('a network failure shows the offline state with a retry', (
+      tester,
+    ) async {
       await _pumpScreen(
         tester,
         source: FakeProfileDocSource(
-          readError: const ApiException(ApiErrorKind.network, 'No internet connection.'),
+          readError: const ApiException(
+            ApiErrorKind.network,
+            'No internet connection.',
+          ),
         ),
       );
 
@@ -163,8 +174,9 @@ void main() {
       expect(find.byType(OfflineView), findsOneWidget);
     });
 
-    testWidgets('any other failure shows the error state with a retry',
-        (tester) async {
+    testWidgets('any other failure shows the error state with a retry', (
+      tester,
+    ) async {
       await _pumpScreen(
         tester,
         source: FakeProfileDocSource(
@@ -173,15 +185,20 @@ void main() {
       );
 
       expect(find.byType(ErrorView), findsOneWidget);
-      expect(find.text('We could not open your profile. Please try again.'),
-          findsOneWidget);
+      expect(
+        find.text('We could not open your profile. Please try again.'),
+        findsOneWidget,
+      );
       // No raw exception text ever reaches the teacher (DESIGN_RUBRIC §6).
       expect(find.textContaining('boom'), findsNothing);
     });
 
     testWidgets('retry re-runs the read and recovers', (tester) async {
       final source = FakeProfileDocSource(
-        readError: const ApiException(ApiErrorKind.network, 'No internet connection.'),
+        readError: const ApiException(
+          ApiErrorKind.network,
+          'No internet connection.',
+        ),
       );
       await _pumpScreen(tester, source: source);
       expect(find.byType(OfflineView), findsOneWidget);
@@ -199,8 +216,9 @@ void main() {
   });
 
   group('plan badge', () {
-    testWidgets('with no token it says "Not available", never "Free"',
-        (tester) async {
+    testWidgets('with no token it says "Not available", never "Free"', (
+      tester,
+    ) async {
       // This is the runtime state today: the token provider is the P0.2 stub.
       // Rendering "Free" here would state a fact about a paying teacher's
       // account that the app has no way to know.
@@ -235,8 +253,9 @@ void main() {
       expect(find.text('Free'), findsOneWidget);
     });
 
-    testWidgets('a malformed token falls back to unknown, not a crash',
-        (tester) async {
+    testWidgets('a malformed token falls back to unknown, not a crash', (
+      tester,
+    ) async {
       await _pumpScreen(tester, token: 'not-a-jwt');
 
       expect(find.text('Not available'), findsOneWidget);
@@ -268,18 +287,26 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('rejects a phone number that is not an Indian mobile',
-        (tester) async {
+    testWidgets('rejects a phone number that is not an Indian mobile', (
+      tester,
+    ) async {
       await _pumpScreen(tester);
       await enterAndSave(tester, label: 'Mobile number', value: '12345');
 
-      expect(find.text('Please enter a ten digit Indian mobile number.'),
-          findsOneWidget);
+      expect(
+        find.text('Please enter a ten digit Indian mobile number.'),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('accepts the three ways a teacher writes their number',
-        (tester) async {
-      for (final number in const ['9845012345', '+919845012345', '09845012345']) {
+    testWidgets('accepts the three ways a teacher writes their number', (
+      tester,
+    ) async {
+      for (final number in const [
+        '9845012345',
+        '+919845012345',
+        '09845012345',
+      ]) {
         await _pumpScreen(tester);
         await enterAndSave(tester, label: 'Mobile number', value: number);
 
@@ -291,21 +318,28 @@ void main() {
       }
     });
 
-    testWidgets('forgives spaces and hyphens in a phone number', (tester) async {
+    testWidgets('forgives spaces and hyphens in a phone number', (
+      tester,
+    ) async {
       await _pumpScreen(tester);
       await enterAndSave(tester, label: 'Mobile number', value: '98450 12345');
 
-      expect(find.text('Please enter a ten digit Indian mobile number.'),
-          findsNothing);
+      expect(
+        find.text('Please enter a ten digit Indian mobile number.'),
+        findsNothing,
+      );
     });
 
-    testWidgets('a blank phone number is valid: the field is optional',
-        (tester) async {
+    testWidgets('a blank phone number is valid: the field is optional', (
+      tester,
+    ) async {
       await _pumpScreen(tester, source: FakeProfileDocSource(doc: null));
       await enterAndSave(tester, label: 'Mobile number', value: '');
 
-      expect(find.text('Please enter a ten digit Indian mobile number.'),
-          findsNothing);
+      expect(
+        find.text('Please enter a ten digit Indian mobile number.'),
+        findsNothing,
+      );
     });
 
     testWidgets('rejects a PIN code that is not six digits', (tester) async {
@@ -330,8 +364,9 @@ void main() {
       expect(find.text('Please enter a six digit PIN code.'), findsNothing);
     });
 
-    testWidgets('a blank PIN code is valid: the field is optional',
-        (tester) async {
+    testWidgets('a blank PIN code is valid: the field is optional', (
+      tester,
+    ) async {
       await _pumpScreen(tester, source: FakeProfileDocSource(doc: null));
       await enterAndSave(tester, label: 'PIN code', value: '');
 
@@ -340,7 +375,9 @@ void main() {
   });
 
   group('save', () {
-    testWidgets('a validation failure never reaches the network', (tester) async {
+    testWidgets('a validation failure never reaches the network', (
+      tester,
+    ) async {
       final source = FakeProfileDocSource(doc: teacherDoc());
       await _pumpScreen(tester, source: source);
 
@@ -379,9 +416,13 @@ void main() {
       expect(source.merges.single.containsKey('administrativeRole'), isFalse);
     });
 
-    testWidgets('a save failure shows an inline error, keeping the form',
-        (tester) async {
-      final source = FakeProfileDocSource(doc: teacherDoc(), writeError: kUnauthorized);
+    testWidgets('a save failure shows an inline error, keeping the form', (
+      tester,
+    ) async {
+      final source = FakeProfileDocSource(
+        doc: teacherDoc(),
+        writeError: kUnauthorized,
+      );
       await _pumpScreen(tester, source: source);
 
       final save = find.text('Save profile');
@@ -390,8 +431,10 @@ void main() {
       await tester.tap(save);
       await tester.pumpAndSettle();
 
-      expect(find.text('Please sign in again to save your profile.'),
-          findsOneWidget);
+      expect(
+        find.text('Please sign in again to save your profile.'),
+        findsOneWidget,
+      );
       // The teacher's typing survives the failure.
       expect(find.text('Lakshmi Iyer'), findsWidgets);
     });
@@ -407,8 +450,9 @@ void main() {
       expect(find.byTooltip('Settings'), findsOneWidget);
     });
 
-    testWidgets('sign out flips the auth state the router redirects on',
-        (tester) async {
+    testWidgets('sign out flips the auth state the router redirects on', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         hostProfile(
           const ProfileScreen(),
@@ -472,11 +516,13 @@ void main() {
             textScale: 1.3,
             surface: kNarrowPhone,
             source: FakeProfileDocSource(
-              doc: teacherDoc(overrides: {
-                'displayName': kBn,
-                'schoolName': kTa,
-                'district': kMl,
-              }),
+              doc: teacherDoc(
+                overrides: {
+                  'displayName': kBn,
+                  'schoolName': kTa,
+                  'district': kMl,
+                },
+              ),
             ),
           );
 
@@ -486,18 +532,21 @@ void main() {
       );
     }
 
-    testWidgets('an unbreakable compound word wraps, never scrolls sideways',
-        (tester) async {
+    testWidgets('an unbreakable compound word wraps, never scrolls sideways', (
+      tester,
+    ) async {
       await _pumpScreen(
         tester,
         textScale: 1.3,
         surface: kNarrowPhone,
         source: FakeProfileDocSource(
-          doc: teacherDoc(overrides: {
-            'displayName': kLongWord,
-            'schoolName': kLongWord,
-            'district': kLongWord,
-          }),
+          doc: teacherDoc(
+            overrides: {
+              'displayName': kLongWord,
+              'schoolName': kLongWord,
+              'district': kLongWord,
+            },
+          ),
         ),
       );
 
@@ -505,18 +554,21 @@ void main() {
       await _scrollWholeList(tester);
     });
 
-    testWidgets('the longest board name does not overflow the identity card',
-        (tester) async {
+    testWidgets('the longest board name does not overflow the identity card', (
+      tester,
+    ) async {
       await _pumpScreen(
         tester,
         textScale: 1.3,
         surface: kNarrowPhone,
         token: fakeJwt({'planType': 'premium'}),
         source: FakeProfileDocSource(
-          doc: teacherDoc(overrides: {
-            'preferredBoard': 'Himachal Pradesh State Board (HPBOSE)',
-            'state': 'Dadra and Nagar Haveli and Daman and Diu',
-          }),
+          doc: teacherDoc(
+            overrides: {
+              'preferredBoard': 'Himachal Pradesh State Board (HPBOSE)',
+              'state': 'Dadra and Nagar Haveli and Daman and Diu',
+            },
+          ),
         ),
       );
 

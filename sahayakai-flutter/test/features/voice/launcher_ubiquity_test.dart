@@ -19,14 +19,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// provider actively fetches (and ConversationThread needs constructor args), so
 /// both are covered by explicit assertions in their own screen suites instead.
 Widget _host(Widget screen) => ProviderScope(
-      child: MaterialApp(
-        theme: AppTheme.light(),
-        locale: const Locale('en'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: screen,
-      ),
-    );
+  child: MaterialApp(
+    theme: AppTheme.light(),
+    locale: const Locale('en'),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: screen,
+  ),
+);
 
 void main() {
   setUp(() {
@@ -41,8 +41,9 @@ void main() {
   };
 
   surfaces.forEach((name, screen) {
-    testWidgets('$name carries the VIDYA co-teacher launcher in its app bar',
-        (tester) async {
+    testWidgets('$name carries the VIDYA co-teacher launcher in its app bar', (
+      tester,
+    ) async {
       await tester.pumpWidget(_host(screen));
       // pump (not pumpAndSettle): the deferred transports/streams never settle,
       // but the app bar and its action render on the first frame.

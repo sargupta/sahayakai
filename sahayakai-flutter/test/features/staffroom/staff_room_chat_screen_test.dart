@@ -36,15 +36,14 @@ ChatMessage _msg({
   String authorName = '',
   bool persona = false,
   String? createdAt = '2026-07-19T11:00:00Z',
-}) =>
-    ChatMessage(
-      id: id,
-      text: text,
-      authorId: authorId,
-      authorName: authorName,
-      isDemoPersona: persona,
-      createdAt: createdAt,
-    );
+}) => ChatMessage(
+  id: id,
+  text: text,
+  authorId: authorId,
+  authorName: authorName,
+  isDemoPersona: persona,
+  createdAt: createdAt,
+);
 
 Future<FakeStaffroomTransport> _pump(
   WidgetTester tester, {
@@ -90,8 +89,9 @@ Future<FakeStaffroomTransport> _pump(
           currentStaffroomUserIdProvider.overrideWithValue(myUid),
       ],
       child: MaterialApp(
-        theme:
-            brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+        theme: brightness == Brightness.dark
+            ? AppTheme.dark()
+            : AppTheme.light(),
         locale: locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
@@ -110,8 +110,9 @@ void main() {
   final l10n = _en();
 
   group('bubbles', () {
-    testWidgets('own (no author header) vs others (avatar + author header)',
-        (tester) async {
+    testWidgets('own (no author header) vs others (avatar + author header)', (
+      tester,
+    ) async {
       await _pump(
         tester,
         chat: TransportSnapshot<List<ChatMessage>>.ready([
@@ -121,7 +122,12 @@ void main() {
             authorId: _other,
             authorName: 'Bina Devi',
           ),
-          _msg(id: 'm2', text: 'Thank you Bina', authorId: _me, authorName: 'Me'),
+          _msg(
+            id: 'm2',
+            text: 'Thank you Bina',
+            authorId: _me,
+            authorName: 'Me',
+          ),
         ]),
       );
 
@@ -133,35 +139,38 @@ void main() {
       expect(find.byType(StaffroomAvatar), findsOneWidget); // only the other's
     });
 
-    testWidgets('AI persona bubble is honestly labelled + distinct (no avatar)',
-        (tester) async {
-      await _pump(
-        tester,
-        chat: TransportSnapshot<List<ChatMessage>>.ready([
-          _msg(
-            id: 'p1',
-            text: 'Try a chapati fraction demo!',
-            authorId: 'persona-1',
-            authorName: 'Meera',
-            persona: true,
-          ),
-        ]),
-      );
+    testWidgets(
+      'AI persona bubble is honestly labelled + distinct (no avatar)',
+      (tester) async {
+        await _pump(
+          tester,
+          chat: TransportSnapshot<List<ChatMessage>>.ready([
+            _msg(
+              id: 'p1',
+              text: 'Try a chapati fraction demo!',
+              authorId: 'persona-1',
+              authorName: 'Meera',
+              persona: true,
+            ),
+          ]),
+        );
 
-      expect(find.text('Try a chapati fraction demo!'), findsOneWidget);
-      expect(find.text('Meera'), findsOneWidget); // the persona name
-      // Honest AI label present…
-      expect(find.text(l10n.staffroomChatAiBadge), findsOneWidget);
-      // …and it is rendered distinctly (sparkles glyph), NOT with a teacher's
-      // StaffroomAvatar — never posing as a real teacher.
-      expect(find.byIcon(LucideIcons.sparkles), findsWidgets);
-      expect(find.byType(StaffroomAvatar), findsNothing);
-    });
+        expect(find.text('Try a chapati fraction demo!'), findsOneWidget);
+        expect(find.text('Meera'), findsOneWidget); // the persona name
+        // Honest AI label present…
+        expect(find.text(l10n.staffroomChatAiBadge), findsOneWidget);
+        // …and it is rendered distinctly (sparkles glyph), NOT with a teacher's
+        // StaffroomAvatar — never posing as a real teacher.
+        expect(find.byIcon(LucideIcons.sparkles), findsWidgets);
+        expect(find.byType(StaffroomAvatar), findsNothing);
+      },
+    );
   });
 
   group('state → surface', () {
-    testWidgets('awaitingFirebase → sign-in EmptyView, composer hidden',
-        (tester) async {
+    testWidgets('awaitingFirebase → sign-in EmptyView, composer hidden', (
+      tester,
+    ) async {
       await _pump(
         tester,
         chat: const TransportSnapshot<List<ChatMessage>>.awaitingFirebase(
@@ -172,7 +181,9 @@ void main() {
       expect(find.byType(TextField), findsNothing);
     });
 
-    testWidgets('null uid → sign-in EmptyView, composer hidden', (tester) async {
+    testWidgets('null uid → sign-in EmptyView, composer hidden', (
+      tester,
+    ) async {
       await _pump(
         tester,
         myUid: null,
@@ -184,8 +195,9 @@ void main() {
       expect(find.byType(TextField), findsNothing);
     });
 
-    testWidgets('ready empty → "be the first" EmptyView, composer shown',
-        (tester) async {
+    testWidgets('ready empty → "be the first" EmptyView, composer shown', (
+      tester,
+    ) async {
       await _pump(
         tester,
         chat: const TransportSnapshot<List<ChatMessage>>.ready(<ChatMessage>[]),
@@ -227,8 +239,8 @@ void main() {
             currentStaffroomUserIdProvider.overrideWithValue(_me),
             // Hold the stream in AsyncLoading (never emits a first value).
             staffRoomChatProvider.overrideWith(
-              (ref) => const Stream<
-                  TransportSnapshot<List<ChatMessage>>>.empty(),
+              (ref) =>
+                  const Stream<TransportSnapshot<List<ChatMessage>>>.empty(),
             ),
           ],
           child: MaterialApp(
@@ -246,8 +258,9 @@ void main() {
   });
 
   group('optimistic send', () {
-    testWidgets('appends a pending bubble, records the send, reconciles on echo',
-        (tester) async {
+    testWidgets('appends a pending bubble, records the send, reconciles on echo', (
+      tester,
+    ) async {
       final fake = await _pump(
         tester,
         chat: const TransportSnapshot<List<ChatMessage>>.ready(<ChatMessage>[]),
@@ -282,8 +295,9 @@ void main() {
       expect(find.text('Hello room'), findsOneWidget);
     });
 
-    testWidgets('a thrown TransportUnavailable rolls back + inline retry',
-        (tester) async {
+    testWidgets('a thrown TransportUnavailable rolls back + inline retry', (
+      tester,
+    ) async {
       final fake = await _pump(
         tester,
         chat: const TransportSnapshot<List<ChatMessage>>.ready(<ChatMessage>[]),
@@ -306,8 +320,9 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('retry re-sends the same message (idempotent) after clearing',
-        (tester) async {
+    testWidgets('retry re-sends the same message (idempotent) after clearing', (
+      tester,
+    ) async {
       final fake = await _pump(
         tester,
         chat: const TransportSnapshot<List<ChatMessage>>.ready(<ChatMessage>[]),
@@ -333,41 +348,44 @@ void main() {
   });
 
   group('group chat', () {
-    testWidgets('renders a group message + the group name title; send targets it',
-        (tester) async {
-      final fake = await _pump(
-        tester,
-        room: const ChatRoom.group('g1'),
-        title: 'Class 8 Science',
-        chat: TransportSnapshot<List<ChatMessage>>.ready([
-          _msg(
-            id: 'gm1',
-            text: 'Anyone tried the volcano demo?',
-            authorId: _other,
-            authorName: 'Bina Devi',
-          ),
-        ]),
-      );
+    testWidgets(
+      'renders a group message + the group name title; send targets it',
+      (tester) async {
+        final fake = await _pump(
+          tester,
+          room: const ChatRoom.group('g1'),
+          title: 'Class 8 Science',
+          chat: TransportSnapshot<List<ChatMessage>>.ready([
+            _msg(
+              id: 'gm1',
+              text: 'Anyone tried the volcano demo?',
+              authorId: _other,
+              authorName: 'Bina Devi',
+            ),
+          ]),
+        );
 
-      expect(find.text('Class 8 Science'), findsOneWidget); // app-bar title
-      expect(find.text('Anyone tried the volcano demo?'), findsOneWidget);
+        expect(find.text('Class 8 Science'), findsOneWidget); // app-bar title
+        expect(find.text('Anyone tried the volcano demo?'), findsOneWidget);
 
-      await tester.enterText(find.byType(TextField), 'Not yet!');
-      await tester.pump();
-      await tester.tap(find.byIcon(LucideIcons.send));
-      await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextField), 'Not yet!');
+        await tester.pump();
+        await tester.tap(find.byIcon(LucideIcons.send));
+        await tester.pumpAndSettle();
 
-      // The send targets THIS group (groupId g1), not the community room.
-      expect(fake.sentChats, hasLength(1));
-      expect(fake.sentChats.single.groupId, 'g1');
-      expect(fake.sentChats.single.text, 'Not yet!');
-    });
+        // The send targets THIS group (groupId g1), not the community room.
+        expect(fake.sentChats, hasLength(1));
+        expect(fake.sentChats.single.groupId, 'g1');
+        expect(fake.sentChats.single.text, 'Not yet!');
+      },
+    );
   });
 
   group('overflow probe — 360dp × 1.3, light + dark', () {
     for (final brightness in Brightness.values) {
-      testWidgets('no overflow (${brightness.name}) with bn/ta + persona',
-          (tester) async {
+      testWidgets('no overflow (${brightness.name}) with bn/ta + persona', (
+        tester,
+      ) async {
         await _pump(
           tester,
           surface: const Size(360, 800),
@@ -378,14 +396,16 @@ void main() {
               id: 'm1',
               authorId: _other,
               authorName: 'আশা মুখোপাধ্যায় শিক্ষিকা',
-              text: 'আগামীকাল স্টাফ মিটিংয়ে আপনার তৈরি করা পাঠ পরিকল্পনা এবং '
+              text:
+                  'আগামীকাল স্টাফ মিটিংয়ে আপনার তৈরি করা পাঠ পরিকল্পনা এবং '
                   'মূল্যায়নের নোটগুলি অনুগ্রহ করে সঙ্গে নিয়ে আসবেন।',
             ),
             _msg(
               id: 'm2',
               authorId: _me,
               authorName: 'Me',
-              text: 'நாளை ஆசிரியர் கூட்டத்திற்கு உங்கள் பாடத் திட்டத்தையும் '
+              text:
+                  'நாளை ஆசிரியர் கூட்டத்திற்கு உங்கள் பாடத் திட்டத்தையும் '
                   'மதிப்பீட்டுக் குறிப்புகளையும் தயவுசெய்து கொண்டு வாருங்கள்.',
             ),
             _msg(

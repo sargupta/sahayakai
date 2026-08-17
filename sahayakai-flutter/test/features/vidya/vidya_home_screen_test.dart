@@ -87,7 +87,9 @@ Future<void> _pumpHome(
         audioPlayerServiceProvider.overrideWithValue(FakeAudioPlayerService()),
       ],
       child: MaterialApp(
-        theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+        theme: brightness == Brightness.dark
+            ? AppTheme.dark()
+            : AppTheme.light(),
         locale: locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
@@ -108,7 +110,9 @@ class _DestMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: Center(child: Text('DEST', key: Key('dest-$id'))));
+    return Scaffold(
+      body: Center(child: Text('DEST', key: Key('dest-$id'))),
+    );
   }
 }
 
@@ -133,7 +137,10 @@ Future<void> _pumpHomeWithRouter(
     initialLocation: Routes.home,
     routes: [
       GoRoute(path: Routes.home, builder: (_, _) => const VidyaHomeScreen()),
-      GoRoute(path: Routes.login, builder: (_, _) => const _DestMarker('login')),
+      GoRoute(
+        path: Routes.login,
+        builder: (_, _) => const _DestMarker('login'),
+      ),
       GoRoute(
         path: Routes.lessonPlan,
         builder: (_, _) => const _DestMarker('lesson-plan'),
@@ -179,8 +186,9 @@ void main() {
   });
 
   group('the nearly-empty first canvas', () {
-    testWidgets('renders the Seal Mic, a time-aware greeting, and a prompt',
-        (tester) async {
+    testWidgets('renders the Seal Mic, a time-aware greeting, and a prompt', (
+      tester,
+    ) async {
       await _pumpHome(tester, const VidyaState());
       await tester.pumpAndSettle();
 
@@ -188,8 +196,10 @@ void main() {
       expect(find.byIcon(LucideIcons.mic), findsOneWidget);
       expect(find.text(_expectedGreeting()), findsOneWidget);
       // The deck and the idle caption + first (static) rotating prompt.
-      expect(find.text('Speak in your language, and I will prepare the work.'),
-          findsOneWidget);
+      expect(
+        find.text('Speak in your language, and I will prepare the work.'),
+        findsOneWidget,
+      );
       expect(find.text('Tap to speak'), findsOneWidget);
       expect(find.text('Ask me to plan a lesson'), findsOneWidget);
       // The Prep desk is one tap away.
@@ -199,16 +209,18 @@ void main() {
       expect(find.byIcon(LucideIcons.network), findsOneWidget);
     });
 
-    testWidgets('reduce-motion is a static frame (pumpAndSettle returns)',
-        (tester) async {
+    testWidgets('reduce-motion is a static frame (pumpAndSettle returns)', (
+      tester,
+    ) async {
       await _pumpHome(tester, const VidyaState());
       await tester.pumpAndSettle();
       expect(tester.binding.transientCallbackCount, 0);
       expect(find.byType(SealMic), findsOneWidget);
     });
 
-    testWidgets('under motion the seal breathes and the page still builds',
-        (tester) async {
+    testWidgets('under motion the seal breathes and the page still builds', (
+      tester,
+    ) async {
       await _pumpHome(tester, const VidyaState(), reduceMotion: false);
       // The Seal Mic ticks its breathing controller; do not settle (infinite).
       expect(tester.binding.transientCallbackCount, greaterThan(0));
@@ -218,31 +230,33 @@ void main() {
   });
 
   group('a turn inks onto the page as a document block', () {
-    testWidgets('a teacher + VIDYA turn render as composed blocks, not bubbles',
-        (tester) async {
-      await _pumpHome(
-        tester,
-        const VidyaState(
-          conversation: [
-            ConversationBlock(
-              role: ConversationRole.teacher,
-              text: 'plan a lesson on fractions',
-            ),
-            ConversationBlock(
-              role: ConversationRole.vidya,
-              text: 'Making your fractions lesson plan.',
-            ),
-          ],
-        ),
-      );
-      await tester.pumpAndSettle();
+    testWidgets(
+      'a teacher + VIDYA turn render as composed blocks, not bubbles',
+      (tester) async {
+        await _pumpHome(
+          tester,
+          const VidyaState(
+            conversation: [
+              ConversationBlock(
+                role: ConversationRole.teacher,
+                text: 'plan a lesson on fractions',
+              ),
+              ConversationBlock(
+                role: ConversationRole.vidya,
+                text: 'Making your fractions lesson plan.',
+              ),
+            ],
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.text('YOU SAID'), findsOneWidget);
-      expect(find.text('plan a lesson on fractions'), findsOneWidget);
-      expect(find.text('Making your fractions lesson plan.'), findsOneWidget);
-      // The mic settles to the anchored control, still present.
-      expect(find.byType(SealMic), findsOneWidget);
-    });
+        expect(find.text('YOU SAID'), findsOneWidget);
+        expect(find.text('plan a lesson on fractions'), findsOneWidget);
+        expect(find.text('Making your fractions lesson plan.'), findsOneWidget);
+        // The mic settles to the anchored control, still present.
+        expect(find.byType(SealMic), findsOneWidget);
+      },
+    );
 
     testWidgets('a compound reply renders confirm chips', (tester) async {
       await _pumpHome(
@@ -256,7 +270,10 @@ void main() {
             ConversationBlock(
               role: ConversationRole.vidya,
               text: 'I can make both.',
-              directives: [_dir(VidyaFlow.lessonPlan), _dir(VidyaFlow.quizGenerator)],
+              directives: [
+                _dir(VidyaFlow.lessonPlan),
+                _dir(VidyaFlow.quizGenerator),
+              ],
             ),
           ],
         ),
@@ -271,12 +288,10 @@ void main() {
   });
 
   group('signed-out and terminal states', () {
-    testWidgets('signed-out shows the dignified sign-in state with the mic',
-        (tester) async {
-      await _pumpHome(
-        tester,
-        const VidyaState(status: VidyaStatus.signedOut),
-      );
+    testWidgets('signed-out shows the dignified sign-in state with the mic', (
+      tester,
+    ) async {
+      await _pumpHome(tester, const VidyaState(status: VidyaStatus.signedOut));
       await tester.pumpAndSettle();
 
       expect(find.text('Sign in to talk to VIDYA'), findsOneWidget);
@@ -285,35 +300,33 @@ void main() {
     });
 
     testWidgets(
-        'DP-1: signed-out now offers a Sign in action that navigates to /login',
-        (tester) async {
-      await _pumpHomeWithRouter(
-        tester,
-        const VidyaState(status: VidyaStatus.signedOut),
-      );
+      'DP-1: signed-out now offers a Sign in action that navigates to /login',
+      (tester) async {
+        await _pumpHomeWithRouter(
+          tester,
+          const VidyaState(status: VidyaStatus.signedOut),
+        );
 
-      // The dead end this unit fixes: micDenied/failed already had a
-      // recovery action; signed-out now does too.
-      final signIn = find.text('Sign in');
-      expect(signIn, findsOneWidget);
-      expect(find.byIcon(LucideIcons.logIn), findsOneWidget);
+        // The dead end this unit fixes: micDenied/failed already had a
+        // recovery action; signed-out now does too.
+        final signIn = find.text('Sign in');
+        expect(signIn, findsOneWidget);
+        expect(find.byIcon(LucideIcons.logIn), findsOneWidget);
 
-      // The idle canvas is a scrollable column (see `_EmptyLayout`); bring
-      // the action into view before tapping (a tap only WARNS on a missed
-      // hit-test, per the dashboard suite's `ensureVisible` pattern).
-      await tester.ensureVisible(signIn);
-      await tester.pumpAndSettle();
-      await tester.tap(signIn);
-      await tester.pumpAndSettle();
+        // The idle canvas is a scrollable column (see `_EmptyLayout`); bring
+        // the action into view before tapping (a tap only WARNS on a missed
+        // hit-test, per the dashboard suite's `ensureVisible` pattern).
+        await tester.ensureVisible(signIn);
+        await tester.pumpAndSettle();
+        await tester.tap(signIn);
+        await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('dest-login')), findsOneWidget);
-    });
+        expect(find.byKey(const Key('dest-login')), findsOneWidget);
+      },
+    );
 
     testWidgets('a permanent mic denial offers Open settings', (tester) async {
-      await _pumpHome(
-        tester,
-        const VidyaState(status: VidyaStatus.micDenied),
-      );
+      await _pumpHome(tester, const VidyaState(status: VidyaStatus.micDenied));
       await tester.pumpAndSettle();
 
       expect(find.text('Turn on the microphone'), findsOneWidget);
@@ -321,10 +334,7 @@ void main() {
     });
 
     testWidgets('a network failure offers a retry', (tester) async {
-      await _pumpHome(
-        tester,
-        const VidyaState(status: VidyaStatus.failed),
-      );
+      await _pumpHome(tester, const VidyaState(status: VidyaStatus.failed));
       await tester.pumpAndSettle();
 
       expect(find.text('That did not go through'), findsOneWidget);
@@ -333,8 +343,9 @@ void main() {
   });
 
   group('DP-1: the hero badge', () {
-    testWidgets('renders the AI co-teaching badge above the eyebrow',
-        (tester) async {
+    testWidgets('renders the AI co-teaching badge above the eyebrow', (
+      tester,
+    ) async {
       await _pumpHome(tester, const VidyaState());
       await tester.pumpAndSettle();
 
@@ -349,8 +360,9 @@ void main() {
   });
 
   group('DP-1: Quick Tools preview (idle canvas only)', () {
-    testWidgets('previews the first two registry tools below the mic',
-        (tester) async {
+    testWidgets('previews the first two registry tools below the mic', (
+      tester,
+    ) async {
       await _pumpHome(tester, const VidyaState());
       await tester.pumpAndSettle();
 
@@ -367,65 +379,73 @@ void main() {
     });
 
     testWidgets(
-        'Quick Tools tiles clear the floating bottom nav on first paint',
-        (tester) async {
-      // Regression test for the DP-1 design review finding: the bare
-      // _pumpHome harness has no AppShell/FloatingBottomNav, so it could not
-      // catch a tile being sliced off by the real nav bar. This wraps the
-      // home in the same Scaffold+FloatingBottomNav shape AppShell gives it.
-      tester.view.physicalSize = const Size(390, 844);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
-      tester.platformDispatcher.accessibilityFeaturesTestValue =
-          const FakeAccessibilityFeatures(disableAnimations: true);
-      addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+      'Quick Tools tiles clear the floating bottom nav on first paint',
+      (tester) async {
+        // Regression test for the DP-1 design review finding: the bare
+        // _pumpHome harness has no AppShell/FloatingBottomNav, so it could not
+        // catch a tile being sliced off by the real nav bar. This wraps the
+        // home in the same Scaffold+FloatingBottomNav shape AppShell gives it.
+        tester.view.physicalSize = const Size(390, 844);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
+        tester.platformDispatcher.accessibilityFeaturesTestValue =
+            const FakeAccessibilityFeatures(disableAnimations: true);
+        addTearDown(
+          tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+        );
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            vidyaControllerProvider
-                .overrideWith(() => _FakeVidyaController(const VidyaState())),
-          ],
-          child: MaterialApp(
-            theme: AppTheme.light(),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: Scaffold(
-              body: const VidyaHomeScreen(),
-              bottomNavigationBar: FloatingBottomNav(
-                currentIndex: 0,
-                onSelected: (_) {},
-                items: const [
-                  FloatingNavItem(icon: LucideIcons.mic, label: 'Home'),
-                  FloatingNavItem(
-                    icon: LucideIcons.sparkles,
-                    label: 'Create',
-                    isAction: true,
-                  ),
-                  FloatingNavItem(icon: LucideIcons.library, label: 'Library'),
-                  FloatingNavItem(icon: LucideIcons.user, label: 'Me'),
-                ],
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              vidyaControllerProvider.overrideWith(
+                () => _FakeVidyaController(const VidyaState()),
+              ),
+            ],
+            child: MaterialApp(
+              theme: AppTheme.light(),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: Scaffold(
+                body: const VidyaHomeScreen(),
+                bottomNavigationBar: FloatingBottomNav(
+                  currentIndex: 0,
+                  onSelected: (_) {},
+                  items: const [
+                    FloatingNavItem(icon: LucideIcons.mic, label: 'Home'),
+                    FloatingNavItem(
+                      icon: LucideIcons.sparkles,
+                      label: 'Create',
+                      isAction: true,
+                    ),
+                    FloatingNavItem(
+                      icon: LucideIcons.library,
+                      label: 'Library',
+                    ),
+                    FloatingNavItem(icon: LucideIcons.user, label: 'Me'),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // The last preview tile (the 2nd, at _quickToolsCount) must sit fully
-      // above the floating nav's top edge, unscrolled — not merely present
-      // in the tree (a bare find.text would pass even half-clipped).
-      final lastTile = find.byKey(const ValueKey('quick-tool-quiz'));
-      expect(lastTile, findsOneWidget);
-      final navTop = tester.getTopLeft(find.byType(FloatingBottomNav)).dy;
-      final tileBottom = tester.getBottomLeft(lastTile).dy;
-      expect(
-        tileBottom,
-        lessThanOrEqualTo(navTop),
-        reason: 'the last Quick Tools tile must clear the floating bottom '
-            'nav on first paint, unscrolled',
-      );
-    });
+        // The last preview tile (the 2nd, at _quickToolsCount) must sit fully
+        // above the floating nav's top edge, unscrolled — not merely present
+        // in the tree (a bare find.text would pass even half-clipped).
+        final lastTile = find.byKey(const ValueKey('quick-tool-quiz'));
+        expect(lastTile, findsOneWidget);
+        final navTop = tester.getTopLeft(find.byType(FloatingBottomNav)).dy;
+        final tileBottom = tester.getBottomLeft(lastTile).dy;
+        expect(
+          tileBottom,
+          lessThanOrEqualTo(navTop),
+          reason:
+              'the last Quick Tools tile must clear the floating bottom '
+              'nav on first paint, unscrolled',
+        );
+      },
+    );
 
     testWidgets('never appears once a conversation is active', (tester) async {
       await _pumpHome(
@@ -461,8 +481,9 @@ void main() {
   });
 
   group('U9: manual "Clear conversation" action', () {
-    testWidgets('is absent on the idle canvas (nothing to clear)',
-        (tester) async {
+    testWidgets('is absent on the idle canvas (nothing to clear)', (
+      tester,
+    ) async {
       await _pumpHome(tester, const VidyaState());
       await tester.pumpAndSettle();
 
@@ -470,58 +491,62 @@ void main() {
     });
 
     testWidgets(
-        'appears once a conversation is active, and tapping it clears it',
-        (tester) async {
-      final fake = _FakeVidyaController(
-        const VidyaState(
-          conversation: [
-            ConversationBlock(
-              role: ConversationRole.teacher,
-              text: 'plan a lesson on fractions',
-            ),
-            ConversationBlock(
-              role: ConversationRole.vidya,
-              text: 'Making your fractions lesson plan.',
-            ),
-          ],
-        ),
-      );
-
-      tester.view.physicalSize = const Size(390, 844);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
-      tester.platformDispatcher.accessibilityFeaturesTestValue =
-          const FakeAccessibilityFeatures(disableAnimations: true);
-      addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
-
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [vidyaControllerProvider.overrideWith(() => fake)],
-          child: MaterialApp(
-            theme: AppTheme.light(),
-            locale: const Locale('en'),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: const VidyaHomeScreen(),
+      'appears once a conversation is active, and tapping it clears it',
+      (tester) async {
+        final fake = _FakeVidyaController(
+          const VidyaState(
+            conversation: [
+              ConversationBlock(
+                role: ConversationRole.teacher,
+                text: 'plan a lesson on fractions',
+              ),
+              ConversationBlock(
+                role: ConversationRole.vidya,
+                text: 'Making your fractions lesson plan.',
+              ),
+            ],
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
 
-      final clearAction = find.byIcon(LucideIcons.trash2);
-      expect(clearAction, findsOneWidget);
+        tester.view.physicalSize = const Size(390, 844);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
+        tester.platformDispatcher.accessibilityFeaturesTestValue =
+            const FakeAccessibilityFeatures(disableAnimations: true);
+        addTearDown(
+          tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+        );
 
-      await tester.tap(clearAction);
-      await tester.pump();
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [vidyaControllerProvider.overrideWith(() => fake)],
+            child: MaterialApp(
+              theme: AppTheme.light(),
+              locale: const Locale('en'),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: const VidyaHomeScreen(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      expect(fake.clearConversationCalled, isTrue);
-    });
+        final clearAction = find.byIcon(LucideIcons.trash2);
+        expect(clearAction, findsOneWidget);
+
+        await tester.tap(clearAction);
+        await tester.pump();
+
+        expect(fake.clearConversationCalled, isTrue);
+      },
+    );
   });
 
   group('overflow gates (DESIGN_RUBRIC §12.9)', () {
     for (final brightness in Brightness.values) {
-      testWidgets('no overflow at 360dp x 1.3 (${brightness.name})',
-          (tester) async {
+      testWidgets('no overflow at 360dp x 1.3 (${brightness.name})', (
+        tester,
+      ) async {
         await _pumpHome(
           tester,
           const VidyaState(),
@@ -534,8 +559,9 @@ void main() {
       });
     }
 
-    testWidgets('no overflow with a Bengali conversation at 360dp x 1.3',
-        (tester) async {
+    testWidgets('no overflow with a Bengali conversation at 360dp x 1.3', (
+      tester,
+    ) async {
       await _pumpHome(
         tester,
         const VidyaState(

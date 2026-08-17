@@ -36,7 +36,10 @@ Future<void> _tapSave(WidgetTester tester) async {
 }
 
 Future<void> _enter(WidgetTester tester, String label, String value) async {
-  final field = find.ancestor(of: find.text(label), matching: find.byType(Column));
+  final field = find.ancestor(
+    of: find.text(label),
+    matching: find.byType(Column),
+  );
   expect(field, findsWidgets);
   await tester.enterText(
     find.descendant(of: field.first, matching: find.byType(TextFormField)),
@@ -52,8 +55,9 @@ void main() {
   });
 
   group('no hard gate (the 2026-06-08 incident must not come back)', () {
-    testWidgets('nothing ever redirects a signed-in teacher TO onboarding',
-        (tester) async {
+    testWidgets('nothing ever redirects a signed-in teacher TO onboarding', (
+      tester,
+    ) async {
       // A teacher with NO profile at all — the exact user a gate would trap —
       // boots straight into the app (the VIDYA home is now the landing, U-V5).
       await pumpSignedInApp(tester, docs: FakeProfileDocSource(doc: null));
@@ -62,8 +66,9 @@ void main() {
       expect(find.byType(OnboardingScreen), findsNothing);
     });
 
-    testWidgets('every tool stays reachable with an empty profile',
-        (tester) async {
+    testWidgets('every tool stays reachable with an empty profile', (
+      tester,
+    ) async {
       await pumpSignedInApp(tester, docs: FakeProfileDocSource(doc: null));
 
       routerOf(tester).go(Routes.quizGenerator);
@@ -73,8 +78,9 @@ void main() {
       expect(find.byType(OnboardingScreen), findsNothing);
     });
 
-    testWidgets('skip is offered on step 0 and lands on the dashboard',
-        (tester) async {
+    testWidgets('skip is offered on step 0 and lands on the dashboard', (
+      tester,
+    ) async {
       await pumpOnboarding(tester);
 
       expect(find.text('Skip for now'), findsOneWidget);
@@ -117,8 +123,9 @@ void main() {
       expect(find.byType(VidyaHomeScreen), findsOneWidget);
     });
 
-    testWidgets('a failed save keeps the teacher on the form, not advanced',
-        (tester) async {
+    testWidgets('a failed save keeps the teacher on the form, not advanced', (
+      tester,
+    ) async {
       // The other half of honesty: never tell a teacher their profile is saved
       // when it is not.
       final docs = FakeProfileDocSource(doc: null, writeError: kUnauthorized);
@@ -132,8 +139,9 @@ void main() {
   });
 
   group('step 0 language', () {
-    testWidgets('offers all 11 languages inline, each in its own script',
-        (tester) async {
+    testWidgets('offers all 11 languages inline, each in its own script', (
+      tester,
+    ) async {
       // Inline, not behind a sheet: this is the first screen of setup, and a
       // teacher must SEE their language. Never Hindi-only (DESIGN_RUBRIC §10).
       await pumpOnboarding(tester);
@@ -148,33 +156,35 @@ void main() {
       expect(AppLocale.values, hasLength(11));
     });
 
-    testWidgets('choosing a language sets the UI locale AND the AI language param',
-        (tester) async {
-      await pumpOnboarding(tester);
-      final container = containerOf(tester);
+    testWidgets(
+      'choosing a language sets the UI locale AND the AI language param',
+      (tester) async {
+        await pumpOnboarding(tester);
+        final container = containerOf(tester);
 
-      await tester.tap(find.text('தமிழ்'));
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('தமிழ்'));
+        await tester.pumpAndSettle();
 
-      final selected = container.read(localeControllerProvider);
-      expect(selected, AppLocale.ta);
-      expect(selected.flutterLocale, const Locale('ta'));
-      expect(
-        selected.aiName,
-        'Tamil',
-        reason: 'the AI param is the full English name the backend expects',
-      );
+        final selected = container.read(localeControllerProvider);
+        expect(selected, AppLocale.ta);
+        expect(selected.flutterLocale, const Locale('ta'));
+        expect(
+          selected.aiName,
+          'Tamil',
+          reason: 'the AI param is the full English name the backend expects',
+        );
 
-      // ... and the running app really adopted it, rather than only storing a
-      // value. Asserted on the resolved locale and not on translated copy: only
-      // 23 of the 264 ARB keys carry translations today, so most strings still
-      // render their English fallback (a pre-existing content gap across every
-      // shipped screen, not a wiring bug).
-      expect(
-        Localizations.localeOf(tester.element(find.byType(OnboardingScreen))),
-        const Locale('ta'),
-      );
-    });
+        // ... and the running app really adopted it, rather than only storing a
+        // value. Asserted on the resolved locale and not on translated copy: only
+        // 23 of the 264 ARB keys carry translations today, so most strings still
+        // render their English fallback (a pre-existing content gap across every
+        // shipped screen, not a wiring bug).
+        expect(
+          Localizations.localeOf(tester.element(find.byType(OnboardingScreen))),
+          const Locale('ta'),
+        );
+      },
+    );
   });
 
   group('steps', () {
@@ -215,8 +225,9 @@ void main() {
       expect(find.text('Step 3 of 3'), findsOneWidget);
     });
 
-    testWidgets('the summary reflects what the teacher actually chose',
-        (tester) async {
+    testWidgets('the summary reflects what the teacher actually chose', (
+      tester,
+    ) async {
       // Step 2 earns its place by proving the setup bought something, rather
       // than congratulating the teacher for filling in a form.
       await pumpOnboarding(tester, docs: FakeProfileDocSource(doc: null));
@@ -245,8 +256,9 @@ void main() {
   });
 
   group('save (backend contract)', () {
-    testWidgets('writes the document lane, and never the protected fields',
-        (tester) async {
+    testWidgets('writes the document lane, and never the protected fields', (
+      tester,
+    ) async {
       final docs = FakeProfileDocSource(doc: null);
       await pumpOnboarding(tester, docs: docs);
       await _toProfileStep(tester);
@@ -270,7 +282,9 @@ void main() {
       expect(merge.containsKey('boardCategory'), isFalse);
     });
 
-    testWidgets('the language lane writes the full English name', (tester) async {
+    testWidgets('the language lane writes the full English name', (
+      tester,
+    ) async {
       final docs = FakeProfileDocSource(doc: null);
       await pumpOnboarding(tester, docs: docs);
       await tester.tap(find.text('বাংলা'));
@@ -286,8 +300,9 @@ void main() {
       expect(docs.merges.single['preferredLanguage'], 'Bengali');
     });
 
-    testWidgets('goes down the PATCH lane, and never sends educationBoard',
-        (tester) async {
+    testWidgets('goes down the PATCH lane, and never sends educationBoard', (
+      tester,
+    ) async {
       // THE TRAP (pinned in docs/flutter/HANDOFF.md §3): the route's allowlist
       // accepts only `preferredBoard` and silently DROPS `educationBoard` — the
       // save would appear to succeed and change nothing.
@@ -327,7 +342,9 @@ void main() {
       expect(body.containsKey('educationBoard'), isFalse);
     });
 
-    testWidgets('a validation failure never reaches the network', (tester) async {
+    testWidgets('a validation failure never reaches the network', (
+      tester,
+    ) async {
       final client = FakeApiClient();
       final docs = FakeProfileDocSource(doc: null);
       await pumpOnboarding(tester, client: client, docs: docs);
@@ -343,8 +360,9 @@ void main() {
       expect(client.patches, isEmpty);
     });
 
-    testWidgets('a blank optional field is valid: nothing here is required',
-        (tester) async {
+    testWidgets('a blank optional field is valid: nothing here is required', (
+      tester,
+    ) async {
       // Onboarding must accept a teacher who fills in nothing at all.
       final docs = FakeProfileDocSource(doc: null);
       await pumpOnboarding(tester, docs: docs);
@@ -407,8 +425,9 @@ void main() {
       );
     }
 
-    testWidgets('an unbreakable compound word wraps, never scrolls sideways',
-        (tester) async {
+    testWidgets('an unbreakable compound word wraps, never scrolls sideways', (
+      tester,
+    ) async {
       await pumpOnboarding(tester, textScale: 1.3, surface: kNarrowPhone);
       await _toProfileStep(tester);
       await _enter(tester, 'Your name', kLongWord);
@@ -418,8 +437,9 @@ void main() {
       await _scrollWholeList(tester);
     });
 
-    testWidgets('the summary does not overflow with Indic values at 1.3',
-        (tester) async {
+    testWidgets('the summary does not overflow with Indic values at 1.3', (
+      tester,
+    ) async {
       await pumpOnboarding(
         tester,
         textScale: 1.3,
@@ -456,8 +476,9 @@ void main() {
 /// overflow at any scroll offset. An overflow below the fold is still an
 /// overflow, and the profile step is taller than any phone.
 Future<void> _scrollWholeList(WidgetTester tester) async {
-  final position =
-      tester.state<ScrollableState>(find.byType(Scrollable).first).position;
+  final position = tester
+      .state<ScrollableState>(find.byType(Scrollable).first)
+      .position;
   var guard = 0;
   while (position.pixels < position.maxScrollExtent && guard++ < 60) {
     await tester.drag(find.byType(ListView).first, const Offset(0, -280));
