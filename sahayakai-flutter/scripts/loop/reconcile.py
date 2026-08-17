@@ -203,6 +203,23 @@ def is_ancestor(sha: str) -> bool:
     return git_argv(["merge-base", "--is-ancestor", sha, "HEAD"]).returncode == 0
 
 
+# The loop's own bookkeeping changes on EVERY wake by definition: each unit
+# writes its outcome into LOOP_STATE.json and appends to WAKE_LOG.jsonl. If
+# auto-decay counted those, the unit that created the tracker (U0.1, whose
+# declared files include docs/flutter/loop/) would be demoted to `stale` by the
+# very commit recording it as done, and would be re-selected forever. Observed
+# on the first wake after U0.1 landed.
+#
+# Excluding them is narrow and safe: they carry no logic, only state this
+# script recomputes anyway. Everything else — including the harness SCRIPTS —
+# still decays normally, so a later change to gate.sh does re-open U0.1.
+BOOKKEEPING = {
+    "sahayakai-flutter/docs/flutter/loop/LOOP_STATE.json",
+    "sahayakai-flutter/docs/flutter/loop/WAKE_LOG.jsonl",
+    "sahayakai-flutter/docs/flutter/loop/last_gate_run.json",
+}
+
+
 def files_changed_since(sha: str, files: list[str]) -> list[str]:
     if not sha or not files or not SHA_RE.match(sha):
         return []
@@ -211,7 +228,8 @@ def files_changed_since(sha: str, files: list[str]) -> list[str]:
     if not paths:
         return []
     r = git_argv(["diff", "--name-only", f"{sha}..HEAD", "--", *paths])
-    return [l for l in r.stdout.splitlines() if l.strip()]
+    return [l for l in r.stdout.splitlines()
+            if l.strip() and l.strip() not in BOOKKEEPING]
 
 
 def reconcile(state: dict) -> list[dict]:
