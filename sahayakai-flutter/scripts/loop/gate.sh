@@ -230,6 +230,40 @@ gate_i18n_full() {
   fi
 }
 
+# A ratchet against baselines.testsFailing, not a hard zero.
+#
+# The suite starts with 13 genuinely failing tests (the Create-palette suite,
+# broken when that widget was refactored into a private class in
+# app_shell.dart). A hard zero-gate would block every unrelated unit behind
+# them, and a gate that blocks everything gets bypassed — which is how those
+# 13 came to be written off as "pre-existing, out of scope" in the first place.
+#
+# So: failures may not EXCEED the baseline, and the baseline only ever moves
+# down. Unit U0.17 drives it to zero. Passing count must not fall either — that
+# would catch a test being deleted or skipped to make this rung green.
+gate_tests() {
+  local out fails passes base
+  out="$(flutter test --reporter compact --exclude-tags golden 2>&1)"
+  printf '%s\n' "$out" | tail -3
+
+  passes="$(printf '%s\n' "$out" | grep -oE '\+[0-9]+' | tail -1 | tr -d '+')"
+  fails="$(printf '%s\n' "$out" | grep -oE '\-[0-9]+' | tail -1 | tr -d '-')"
+  fails="${fails:-0}"; passes="${passes:-0}"
+
+  base="$(python3 -c "import json;print(json.load(open('$LOOP_STATE'))['baselines'].get('testsFailing',0))" 2>/dev/null || echo 0)"
+
+  echo "passing=$passes failing=$fails (baseline failing=$base)"
+  if [ "$fails" -gt "$base" ]; then
+    echo "REGRESSION: $((fails - base)) test(s) newly failing"
+    printf '%s\n' "$out" | grep -E 'The test description was:' | tail -20 | sed 's/^/    /'
+    return 1
+  fi
+  if [ "$fails" -lt "$base" ]; then
+    echo "IMPROVED: $((base - fails)) fewer failures than baseline — lower baselines.testsFailing to $fails in the same commit"
+  fi
+  return 0
+}
+
 gate_release_aab() { flutter build appbundle --release; }
 gate_signature()   { bash scripts/loop/verify_aab_signer.sh; }
 
@@ -255,7 +289,7 @@ esac
 run "codegen_drift"  gate_codegen_drift
 if gate_custom_lint >/dev/null 2>&1; then run "custom_lint" gate_custom_lint
 else skip "custom_lint" "no custom_lint block in analysis_options.yaml yet (unit U0.21)"; fi
-run "tests"          flutter test --reporter compact --exclude-tags golden
+run "tests"          gate_tests
 if [ "$(grep -rho matchesGoldenFile test 2>/dev/null | wc -l | tr -d ' ')" -gt 0 ]
   then run "goldens" gate_goldens
   else skip "goldens" "no matchesGoldenFile call sites exist yet (units U0.18/U0.19)"; fi

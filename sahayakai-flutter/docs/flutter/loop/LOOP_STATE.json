@@ -30,19 +30,35 @@
       "sahayakai-flutter/lib/features/parent_hotline/presentation/parent_hotline_controller.g.dart",
       "sahayakai-flutter/lib/features/profile/presentation/profile_controller.g.dart",
       "sahayakai-flutter/lib/features/vidya/presentation/vidya_controller.g.dart"
+    ],
+    "testsFailing": 13,
+    "$testsFailingNote": "13 failing tests in test/features/create_palette/create_palette_test.dart, present before this loop began. They are NOT tests for a deleted feature: the Create palette is live and is one of four bottom-nav destinations. They broke when the widget was refactored out of its own file into a private _CreatePalette class inside app_shell.dart. The archived PILLAR_BUILD_STATE wrote them off as 'pre-existing unrelated failures, out of scope', which is how a live feature's coverage rots. Unit U0.17 repairs them. This baseline is a ratchet that may only move DOWN — it exists so the backlog does not block unrelated units, not to excuse it.",
+    "knownFailingTests": [
+      "create_palette: the Create action opens the palette over the shell",
+      "create_palette: narrows the list to tools whose name matches",
+      "create_palette: matches case-insensitively",
+      "create_palette: a search that matches nothing shows the empty state",
+      "create_palette: tapping a tool deep-links to its route and closes the sheet",
+      "create_palette: a filtered result still deep-links to the right route",
+      "create_palette: no overflow at 360dp x textScale 1.3 in dark",
+      "create_palette: no overflow at 360dp x textScale 1.3 in light",
+      "create_palette: the dark palette really is dark",
+      "create_palette: no overflow at 360dp x textScale 1.3 in bn (Indic ARB probe)",
+      "create_palette: the empty state does not overflow at 360dp x 1.3",
+      "create_palette: (2 further cases in the same suite)"
     ]
   },
   "machine": {
-    "reconciledAtEpoch": 1786965257,
+    "reconciledAtEpoch": 1786965593,
     "git": {
       "appRoot": "/Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter",
       "gitPathPrefix": "sahayakai-flutter/",
       "branch": "feature/flutter-rebuild",
-      "head": "a3bd3b2342984c0522b7935a6e9d260500213346",
-      "headShort": "a3bd3b234",
-      "headEpoch": 1786965174,
+      "head": "4bd43fb84b8473d3450dc0ec6bc9d1ef0f73fa2c",
+      "headShort": "4bd43fb84",
+      "headEpoch": 1786965415,
       "remoteUrl": "https://github.com/sargupta/sahayakai.git",
-      "aheadOfOriginMain": 185,
+      "aheadOfOriginMain": 188,
       "behindOriginMain": 66,
       "dirtyPaths": [
         "ahayakai-flutter/docs/flutter/loop/LOOP_STATE.json",
@@ -55,7 +71,7 @@
         "sahayakai-flutter/lib/features/parent_hotline/presentation/parent_hotline_controller.g.dart",
         "sahayakai-flutter/lib/features/profile/presentation/profile_controller.g.dart",
         "sahayakai-flutter/lib/features/vidya/presentation/vidya_controller.g.dart",
-        "sahayakai-flutter/scripts/loop/reconcile.py"
+        "sahayakai-flutter/scripts/loop/gate.sh"
       ],
       "untrackedPaths": []
     },
@@ -125,8 +141,8 @@
     "status": "ok",
     "violations": [],
     "consecutiveViolationWakes": 0,
-    "checkedAtEpoch": 1786965257,
-    "checkedAtSha": "a3bd3b2342984c0522b7935a6e9d260500213346"
+    "checkedAtEpoch": 1786965593,
+    "checkedAtSha": "4bd43fb84b8473d3450dc0ec6bc9d1ef0f73fa2c"
   },
   "measurements": {
     "analyze": {
@@ -195,7 +211,7 @@
         "docs/flutter/pillars/PILLAR_BUILD_STATE.ARCHIVED.json"
       ],
       "dependsOn": [],
-      "status": "done",
+      "status": "stale",
       "attempts": 2,
       "reviewRounds": 0,
       "verifiedAtSha": "7adadfb9a354b282964ef430a8189aafcc1ae625",
@@ -267,7 +283,8 @@
       "blockedBy": null,
       "notes": [
         "selftest.sh added mid-unit after three guards were found to be silent no-ops; 11/11 now demonstrably fail when they should",
-        "Harness landed over two commits (cb0d49fa8, 7adadfb9a). selftest.sh was added mid-unit after three guards were found to be silent no-ops and one evidence-binding hole was found by testing the refusal path; 12/12 cases now demonstrably fail when they should."
+        "Harness landed over two commits (cb0d49fa8, 7adadfb9a). selftest.sh was added mid-unit after three guards were found to be silent no-ops and one evidence-binding hole was found by testing the refusal path; 12/12 cases now demonstrably fail when they should.",
+        "auto-demoted to stale at 1786965344: 1 declared file(s) changed since 7adadfb9a — re-gate required"
       ]
     },
     {
@@ -304,6 +321,36 @@
       "failure": null,
       "blockedBy": null,
       "notes": []
+    },
+    {
+      "id": "U0.17",
+      "band": "B0",
+      "kind": "test",
+      "gateProfile": "standard",
+      "title": "Repair the 13 broken Create-palette tests",
+      "contract": "test/features/create_palette/create_palette_test.dart passes against the live widget. The palette moved into a private _CreatePalette class in app_shell.dart, so the suite can no longer construct it directly; drive it through the shell's Create tab instead, the way a teacher reaches it. Covers search filtering, case-insensitivity, the empty state, deep-linking to a tool route, dark theme, and no overflow at 360dp x textScale 1.3 including a Bengali probe. DO NOT delete the suite to make the gate green — this is a live, four-tab-nav feature and these are the only tests it has. Lower baselines.testsFailing to 0 in the same commit.",
+      "files": [
+        "test/features/create_palette/create_palette_test.dart",
+        "docs/flutter/loop/LOOP_STATE.json"
+      ],
+      "dependsOn": [
+        "U0.2"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": [
+        "Found by the U0.2 gate, which is the first thing in this repo's history to run the full suite and refuse to look away from the result."
+      ]
     },
     {
       "id": "U0.3",
