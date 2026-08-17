@@ -8,7 +8,7 @@
     "landingModeAtEpoch": 1786989417,
     "deadlineEpoch": 1786993017,
     "mode": "build",
-    "wakeCount": 6,
+    "wakeCount": 7,
     "consecutiveNoProgressWakes": 0,
     "haltReason": null
   },
@@ -36,21 +36,20 @@
     "knownFailingTests": []
   },
   "machine": {
-    "reconciledAtEpoch": 1786967970,
+    "reconciledAtEpoch": 1786968087,
     "git": {
       "appRoot": "/Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter",
       "gitPathPrefix": "sahayakai-flutter/",
       "branch": "feature/flutter-rebuild",
-      "head": "e1b1f73e9bebe4062fb698a8904d9b6cc07287c6",
-      "headShort": "e1b1f73e9",
-      "headEpoch": 1786967959,
+      "head": "b59abb9a4f34c8ef904f50087cfecafb1b15fef0",
+      "headShort": "b59abb9a4",
+      "headEpoch": 1786968077,
       "remoteUrl": "https://github.com/sargupta/sahayakai.git",
-      "aheadOfOriginMain": 199,
+      "aheadOfOriginMain": 200,
       "behindOriginMain": 66,
       "dirtyPaths": [
         "ahayakai-flutter/docs/flutter/loop/LOOP_STATE.json",
-        "sahayakai-flutter/docs/flutter/loop/WAKE_LOG.jsonl",
-        "sahayakai-flutter/test/features/create_palette/create_palette_test.dart"
+        "sahayakai-flutter/docs/flutter/loop/WAKE_LOG.jsonl"
       ],
       "untrackedPaths": []
     },
@@ -119,8 +118,8 @@
     "status": "ok",
     "violations": [],
     "consecutiveViolationWakes": 0,
-    "checkedAtEpoch": 1786967970,
-    "checkedAtSha": "e1b1f73e9bebe4062fb698a8904d9b6cc07287c6"
+    "checkedAtEpoch": 1786968087,
+    "checkedAtSha": "b59abb9a4f34c8ef904f50087cfecafb1b15fef0"
   },
   "measurements": {
     "analyze": {
@@ -636,20 +635,103 @@
       "dependsOn": [
         "U0.4"
       ],
-      "status": "pending",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "reviewRounds": 0,
-      "verifiedAtSha": null,
-      "commit": null,
+      "verifiedAtSha": "b59abb9a4f34c8ef904f50087cfecafb1b15fef0",
+      "commit": "b59abb9a4",
       "evidence": {
-        "gatesRun": [],
+        "gatesRun": [
+          {
+            "gate": "guard",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "GUARD NOTE: sibling tree has pre-existing changes (not caused by this wake):\n    ?? sahayakai-main/._fields.mjs\n    ?? sahayakai-main/._live.mjs\n    ?? sahayakai-main/.claude/launch.json\n    ?? sahayakai-main/.claude/skills/\n    ?? sahayakai-main/AI_Literacy_Drive_Women_Siliguri_INTERN_MARKETING_PLAYBOOK.md\nGUARD NOTE: the loop must not add to these. Web/sidecar units use a separate worktree.\nloop_guard: OK (branch=feature/flutter-rebuild head=e1b1f73e9)"
+          },
+          {
+            "gate": "reconcile",
+            "exit": 0,
+            "durationSec": 3,
+            "tail": "reconcile: head=e1b1f73e9 branch=feature/flutter-rebuild tests=1552 goldens=0 i18n_missing=4760 claims=3g/7r\nreconcile: integrity OK"
+          },
+          {
+            "gate": "scope",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "all changes within the declared file list\n  (excluding 9 declared pre-existing dirty path(s))"
+          },
+          {
+            "gate": "format",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "Formatted 1 file (0 changed) in 0.01 seconds."
+          },
+          {
+            "gate": "analyze",
+            "exit": 0,
+            "durationSec": 6,
+            "tail": "Analyzing sahayakai-flutter...                                  \nNo issues found! (ran in 5.3s)"
+          },
+          {
+            "gate": "token_guard",
+            "exit": 0,
+            "durationSec": 1,
+            "tail": "token-guard: PASS"
+          },
+          {
+            "gate": "secret_scan",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "secret_scan: OK"
+          },
+          {
+            "gate": "contradiction",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "contradiction_guard: OK"
+          },
+          {
+            "gate": "doc_truth",
+            "exit": 0,
+            "durationSec": 1,
+            "tail": "CLAIM                            ACTUAL   EXPECT   VERDICT\ngolden_gate_exists               0        >=12     RED\ni18n_zero_untranslated           4760     ==0      RED\ni18n_zero_identical_english      40       ==0      RED\nfonts_bundled                    0        >=11     RED\nfonts_no_runtime_fetch           1        ==0      RED\nrelease_signing_verified         1        ==1      GREEN\nflutter_ci_present               0        >=1      RED\nlints_enforced                   0        >=15     RED\nfirebase_wired                   1        >=1      GREEN\nturn_based_fallback_present      5        >=1      GREEN\n\ndoc_truth_guard: 3 green / 7 red\n  red: golden_gate_exists i18n_zero_untranslated i18n_zero_identical_english fonts_bundled fonts_no_runtime_fetch flutter_ci_present lints_enforced"
+          },
+          {
+            "gate": "codegen_drift",
+            "exit": 0,
+            "durationSec": 3,
+            "tail": "codegen is idempotent against the working tree"
+          },
+          {
+            "gate": "custom_lint",
+            "exit": null,
+            "skipped": true,
+            "reason": "no custom_lint block in analysis_options.yaml yet (unit U0.21)"
+          },
+          {
+            "gate": "tests",
+            "exit": 0,
+            "durationSec": 72,
+            "tail": "  01:09 +1750: All tests passed!                                                                                                                                                                         \npassing=1750 failing=0 (baseline failing=0)"
+          },
+          {
+            "gate": "goldens",
+            "exit": null,
+            "skipped": true,
+            "reason": "no matchesGoldenFile call sites exist yet (units U0.18/U0.19)"
+          }
+        ],
         "reviewers": [],
-        "artifacts": []
+        "artifacts": [],
+        "gateProfile": "standard",
+        "gateExit": 0,
+        "gateAtSha": "e1b1f73e9bebe4062fb698a8904d9b6cc07287c6"
       },
       "failure": null,
       "blockedBy": null,
       "notes": [
-        "Found by the U0.2 gate, which is the first thing in this repo's history to run the full suite and refuse to look away from the result."
+        "Found by the U0.2 gate, which is the first thing in this repo's history to run the full suite and refuse to look away from the result.",
+        "Root cause was an ambiguous icon finder, not a broken feature. Both reviewers PASS. Suite 1750/0; baseline retired to 0."
       ]
     },
     {
