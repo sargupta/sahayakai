@@ -134,13 +134,26 @@ ${GITPFX}docs/flutter/loop/last_gate_run.json"
                     <(printf '%s\n%s\n%s\n' "$declared" "$preexisting" "$bookkeeping" | sort -u))"
 
   # A declared path may be a directory; treat any change beneath it as in scope.
+  #
+  # The reverse also has to hold. git collapses a wholly-untracked directory to
+  # a single trailing-slash entry — a unit adding test/i18n/locale_sweep_test.dart
+  # shows up as `?? sahayakai-flutter/test/i18n/`, which matches no declared FILE
+  # inside it. Without this, every unit that creates a new directory fails scope
+  # on its own new work.
   if [ -n "$extra" ] && [ -n "$UNIT_FILES" ]; then
     local remaining=""
     while IFS= read -r p; do
       [ -z "$p" ] && continue
       local matched=0
       for f in $UNIT_FILES; do
-        case "$p" in "${GITPFX}${f}"/*|"${GITPFX}${f}") matched=1; break ;; esac
+        case "$p" in
+          # declared path is a directory containing the change
+          "${GITPFX}${f}"/*|"${GITPFX}${f}") matched=1; break ;;
+        esac
+        # git reported a parent directory of a declared file
+        case "${GITPFX}${f}" in
+          "${p}"*) [ "${p%/}" != "$p" ] && { matched=1; break; } ;;
+        esac
       done
       [ "$matched" -eq 0 ] && remaining="${remaining}${p}"$'\n'
     done <<< "$extra"

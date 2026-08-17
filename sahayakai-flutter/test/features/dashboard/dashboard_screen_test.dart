@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sahayakai/core/i18n/gen/app_localizations_ml.dart';
 import 'package:sahayakai/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:sahayakai/features/instant_answer/presentation/instant_answer_screen.dart';
 import 'package:sahayakai/features/lesson_planner/presentation/lesson_plan_screen.dart';
@@ -440,7 +441,18 @@ void main() {
       );
 
       expect(tester.takeException(), isNull);
-      expect(find.text('Set up my profile'), findsOneWidget);
+      // Resolved from the Malayalam localization, not hardcoded in either
+      // language. This read find.text('Set up my profile') — the ENGLISH
+      // string — while booting the screen in `ml`, and it passed only because
+      // dashboardSetupAction was untranslated: gen-l10n silently bakes the
+      // English value into a locale class for any missing key, so the Malayalam
+      // class really did return English. The test was asserting the exact
+      // defect the i18n work removed. Reading the value back through
+      // AppLocalizationsMl means it cannot rot again when the copy changes.
+      expect(
+        find.text(AppLocalizationsMl().dashboardSetupAction),
+        findsOneWidget,
+      );
       await _scrollWholeList(tester);
     });
   });

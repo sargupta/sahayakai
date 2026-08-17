@@ -54,10 +54,11 @@ class AppLocalizationsOr extends AppLocalizations {
   String get splashTagline => 'ପ୍ରତ୍ୟେକ ଶ୍ରେଣୀକକ୍ଷ ପାଇଁ ଶିକ୍ଷାଦାନ ସହାୟକ';
 
   @override
-  String get splashFailedTitle => 'We could not start the app';
+  String get splashFailedTitle => 'ଆମେ ଆପ୍ ଆରମ୍ଭ କରିପାରିଲୁ ନାହିଁ';
 
   @override
-  String get splashFailedBody => 'Please check your connection and try again.';
+  String get splashFailedBody =>
+      'ଦୟାକରି ଆପଣଙ୍କ ସଂଯୋଗ ଯାଞ୍ଚ କରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
   String get loginTitle => 'SahayakAI କୁ ସ୍ୱାଗତ';
@@ -148,7 +149,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String dashboardGreetingNamed(String name) {
-    return 'Welcome back, $name';
+    return 'ପୁଣି ସ୍ୱାଗତ, $name';
   }
 
   @override
@@ -173,22 +174,23 @@ class AppLocalizationsOr extends AppLocalizations {
   String get copyConfirmation => 'କ୍ଲିପବୋର୍ଡକୁ କପି କରାଗଲା';
 
   @override
-  String get readAloudListen => 'Listen';
+  String get readAloudListen => 'ଶୁଣନ୍ତୁ';
 
   @override
-  String get readAloudStop => 'Stop';
+  String get readAloudStop => 'ବନ୍ଦ କରନ୍ତୁ';
 
   @override
-  String get readAloudError => 'Couldn\'t play the audio. Please try again.';
+  String get readAloudError =>
+      'ଅଡିଓ ଚଲାଯାଇପାରିଲା ନାହିଁ। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
   String voiceResultReady(String tool) {
-    return 'Your $tool is ready.';
+    return 'ଆପଣଙ୍କ $tool ପ୍ରସ୍ତୁତ।';
   }
 
   @override
   String voiceResultReadyWithTopic(String tool, String topic) {
-    return 'Your $tool on $topic is ready.';
+    return '$topic ଉପରେ ଆପଣଙ୍କ $tool ପ୍ରସ୍ତୁତ।';
   }
 
   @override
@@ -216,73 +218,74 @@ class AppLocalizationsOr extends AppLocalizations {
   String get createPaletteEmpty => 'ଆପଣଙ୍କ ଖୋଜ ସହିତ କୌଣସି ଉପକରଣ ମେଳ ଖାଉନାହିଁ';
 
   @override
-  String get dashboardRecentTitle => 'Recent work';
+  String get dashboardRecentTitle => 'ସାମ୍ପ୍ରତିକ କାର୍ଯ୍ୟ';
 
   @override
   String get dashboardRecentEmpty =>
-      'Anything you make is saved here, ready to open again.';
+      'ଆପଣ ତିଆରି କରୁଥିବା ସବୁ ଏଠାରେ ସେଭ୍ ହୁଏ, ପୁଣି ଖୋଲିବା ପାଇଁ ପ୍ରସ୍ତୁତ।';
 
   @override
   String get dashboardRecentFailed =>
-      'We could not open your recent work. Please try again.';
+      'ଆମେ ଆପଣଙ୍କ ସାମ୍ପ୍ରତିକ କାର୍ଯ୍ୟ ଖୋଲିପାରିଲୁ ନାହିଁ। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
-  String get dashboardRecentSignedOut => 'Sign in to see your recent work.';
+  String get dashboardRecentSignedOut =>
+      'ଆପଣଙ୍କ ସାମ୍ପ୍ରତିକ କାର୍ଯ୍ୟ ଦେଖିବାକୁ ସାଇନ୍ ଇନ୍ କରନ୍ତୁ।';
 
   @override
-  String get dashboardUntitled => 'Untitled';
+  String get dashboardUntitled => 'ଶୀର୍ଷକହୀନ';
 
   @override
-  String get dashboardSetupTitle => 'Finish setting up your profile';
+  String get dashboardSetupTitle => 'ଆପଣଙ୍କ ପ୍ରୋଫାଇଲ୍ ସମ୍ପୂର୍ଣ୍ଣ କରନ୍ତୁ';
 
   @override
   String get dashboardSetupBody =>
-      'Add your school and your classes, and every lesson plan and quiz will arrive ready for your classroom.';
+      'ଆପଣଙ୍କ ବିଦ୍ୟାଳୟ ଓ ଶ୍ରେଣୀ ଯୋଡ଼ନ୍ତୁ, ପ୍ରତ୍ୟେକ ପାଠ ଯୋଜନା ଓ କୁଇଜ୍ ଆପଣଙ୍କ ଶ୍ରେଣୀଗୃହ ପାଇଁ ପ୍ରସ୍ତୁତ ହୋଇ ଆସିବ।';
 
   @override
-  String get dashboardSetupAction => 'Set up my profile';
+  String get dashboardSetupAction => 'ମୋ ପ୍ରୋଫାଇଲ୍ ସେଟ୍ ଅପ୍ କରନ୍ତୁ';
 
   @override
-  String get dashboardSetupDismiss => 'Not now';
+  String get dashboardSetupDismiss => 'ଏବେ ନୁହେଁ';
 
   @override
-  String get contentTypeLessonPlan => 'Lesson plan';
+  String get contentTypeLessonPlan => 'ପାଠ ଯୋଜନା';
 
   @override
-  String get contentTypeQuiz => 'Quiz';
+  String get contentTypeQuiz => 'କୁଇଜ୍';
 
   @override
-  String get contentTypeWorksheet => 'Worksheet';
+  String get contentTypeWorksheet => 'ୱାର୍କସିଟ୍';
 
   @override
-  String get contentTypeVisualAid => 'Visual aid';
+  String get contentTypeVisualAid => 'ଦୃଶ୍ୟ ସହାୟକ';
 
   @override
-  String get contentTypeRubric => 'Rubric';
+  String get contentTypeRubric => 'ରୁବ୍ରିକ୍';
 
   @override
-  String get contentTypeMicroLesson => 'Micro lesson';
+  String get contentTypeMicroLesson => 'ମାଇକ୍ରୋ ପାଠ';
 
   @override
-  String get contentTypeVirtualFieldTrip => 'Virtual field trip';
+  String get contentTypeVirtualFieldTrip => 'ଭର୍ଚୁଆଲ ଫିଲ୍ଡ ଟ୍ରିପ୍';
 
   @override
-  String get contentTypeInstantAnswer => 'Instant answer';
+  String get contentTypeInstantAnswer => 'ତୁରନ୍ତ ଉତ୍ତର';
 
   @override
-  String get contentTypeTeacherTraining => 'Teacher training';
+  String get contentTypeTeacherTraining => 'ଶିକ୍ଷକ ତାଲିମ';
 
   @override
-  String get contentTypeExamPaper => 'Exam paper';
+  String get contentTypeExamPaper => 'ପ୍ରଶ୍ନପତ୍ର';
 
   @override
-  String get contentTypeAssessment => 'Assessment';
+  String get contentTypeAssessment => 'ମୂଲ୍ୟାୟନ';
 
   @override
-  String get contentTypeAssessmentSubmission => 'Scanned assessment';
+  String get contentTypeAssessmentSubmission => 'ସ୍କାନ୍ ହୋଇଥିବା ମୂଲ୍ୟାୟନ';
 
   @override
-  String get contentTypeUnknown => 'Saved work';
+  String get contentTypeUnknown => 'ସଂରକ୍ଷିତ କାର୍ଯ୍ୟ';
 
   @override
   String get libraryTitle => 'ମୋର ଲାଇବ୍ରେରୀ';
@@ -295,407 +298,413 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଆପଣ ସଞ୍ଚୟ କରିଥିବା ପାଠ ଯୋଜନା ଏବଂ କୁଇଜ୍ ଏଠାରେ ଦେଖାଯିବ।';
 
   @override
-  String get libraryEmptyAction => 'Create a lesson plan';
+  String get libraryEmptyAction => 'ଏକ ପାଠ ଯୋଜନା ତିଆରି କରନ୍ତୁ';
 
   @override
-  String get librarySignedOut => 'Sign in to see your saved work.';
+  String get librarySignedOut =>
+      'ଆପଣଙ୍କ ସଂରକ୍ଷିତ କାର୍ଯ୍ୟ ଦେଖିବାକୁ ସାଇନ୍ ଇନ୍ କରନ୍ତୁ।';
 
   @override
-  String get libraryLoadFailed => 'Your library could not be loaded.';
+  String get libraryLoadFailed => 'ଆପଣଙ୍କ ଲାଇବ୍ରେରୀ ଲୋଡ୍ ହୋଇପାରିଲା ନାହିଁ।';
 
   @override
-  String get libraryNewestOnly => 'Showing your 20 most recent items.';
+  String get libraryNewestOnly => 'ଆପଣଙ୍କ ସର୍ବଶେଷ 20ଟି ଆଇଟମ୍ ଦେଖାଯାଉଛି।';
 
   @override
-  String get libraryFilterAll => 'All';
+  String get libraryFilterAll => 'ସବୁ';
 
   @override
-  String get libraryFilterEmpty => 'You have no saved items of this type yet.';
+  String get libraryFilterEmpty =>
+      'ଏହି ପ୍ରକାରର କୌଣସି ସଂରକ୍ଷିତ ଆଇଟମ୍ ଏପର୍ଯ୍ୟନ୍ତ ନାହିଁ।';
 
   @override
-  String get libraryDetailTitle => 'Saved item';
+  String get libraryDetailTitle => 'ସଂରକ୍ଷିତ ଆଇଟମ୍';
 
   @override
   String libraryDetailSavedOn(String date) {
-    return 'Saved $date';
+    return '$dateରେ ସେଭ୍ ହୋଇଛି';
   }
 
   @override
-  String get libraryDetailSignedOut => 'Sign in to open your saved work.';
+  String get libraryDetailSignedOut =>
+      'ଆପଣଙ୍କ ସଂରକ୍ଷିତ କାର୍ଯ୍ୟ ଖୋଲିବାକୁ ସାଇନ୍ ଇନ୍ କରନ୍ତୁ।';
 
   @override
-  String get libraryDetailNotFound => 'This item is no longer in your library.';
+  String get libraryDetailNotFound => 'ଏହି ଆଇଟମ୍ ଆଉ ଆପଣଙ୍କ ଲାଇବ୍ରେରୀରେ ନାହିଁ।';
 
   @override
   String get libraryDetailLoadFailed =>
-      'We could not open this saved item. Please try again.';
+      'ଆମେ ଏହି ସଂରକ୍ଷିତ ଆଇଟମ୍ ଖୋଲିପାରିଲୁ ନାହିଁ। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
   String libraryDetailReady(String type) {
-    return 'You are viewing your saved $type.';
+    return 'ଆପଣ ଆପଣଙ୍କ ସଂରକ୍ଷିତ $type ଦେଖୁଛନ୍ତି।';
   }
 
   @override
   String get profileTitle => 'ପ୍ରୋଫାଇଲ୍';
 
   @override
-  String get lessonPlanTitle => 'Lesson Plan';
+  String get lessonPlanTitle => 'ପାଠ ଯୋଜନା';
 
   @override
-  String get lessonPlanSubtitle => 'Plan a full 5E lesson';
+  String get lessonPlanSubtitle => 'ଏକ ସମ୍ପୂର୍ଣ୍ଣ 5E ପାଠ ଯୋଜନା କରନ୍ତୁ';
 
   @override
   String get lessonPlanEmpty =>
-      'Add a topic and tap Generate to build a 5E lesson plan.';
+      'ଏକ ଟପିକ୍ ଯୋଡ଼ନ୍ତୁ ଏବଂ 5E ପାଠ ଯୋଜନା ପାଇଁ \'ତିଆରି କରନ୍ତୁ\' ଟ୍ୟାପ୍ କରନ୍ତୁ।';
 
   @override
-  String get lessonPlanTopicLabel => 'Topic';
+  String get lessonPlanTopicLabel => 'ଟପିକ୍';
 
   @override
-  String get lessonPlanTopicHint => 'For example, Photosynthesis';
+  String get lessonPlanTopicHint => 'ଉଦାହରଣ ସ୍ୱରୂପ, ଆଲୋକ ସଂଶ୍ଳେଷଣ';
 
   @override
-  String get lessonPlanTopicError => 'Please enter a topic to plan.';
+  String get lessonPlanTopicError => 'ଦୟାକରି ଯୋଜନା ପାଇଁ ଏକ ଟପିକ୍ ଲେଖନ୍ତୁ।';
 
   @override
-  String get lessonPlanGradeLabel => 'Grade levels';
+  String get lessonPlanGradeLabel => 'ଶ୍ରେଣୀ ସ୍ତର';
 
   @override
-  String get lessonPlanSubjectLabel => 'Subject';
+  String get lessonPlanSubjectLabel => 'ବିଷୟ';
 
   @override
-  String get lessonPlanSubjectAny => 'Any subject';
+  String get lessonPlanSubjectAny => 'ଯେକୌଣସି ବିଷୟ';
 
   @override
-  String get lessonPlanResourceLabel => 'Classroom resources';
+  String get lessonPlanResourceLabel => 'ଶ୍ରେଣୀଗୃହ ସମ୍ବଳ';
 
   @override
-  String get lessonPlanResourceLow => 'Low';
+  String get lessonPlanResourceLow => 'କମ୍';
 
   @override
-  String get lessonPlanResourceMedium => 'Medium';
+  String get lessonPlanResourceMedium => 'ମଧ୍ୟମ';
 
   @override
-  String get lessonPlanResourceHigh => 'High';
+  String get lessonPlanResourceHigh => 'ଅଧିକ';
 
   @override
-  String get lessonPlanDifficultyLabel => 'Difficulty';
+  String get lessonPlanDifficultyLabel => 'କଠିନତା';
 
   @override
-  String get lessonPlanDifficultyRemedial => 'Remedial';
+  String get lessonPlanDifficultyRemedial => 'ପ୍ରତିକାରମୂଳକ';
 
   @override
-  String get lessonPlanDifficultyStandard => 'Standard';
+  String get lessonPlanDifficultyStandard => 'ସାଧାରଣ';
 
   @override
-  String get lessonPlanDifficultyAdvanced => 'Advanced';
+  String get lessonPlanDifficultyAdvanced => 'ଉନ୍ନତ';
 
   @override
-  String get lessonPlanRuralLabel => 'Use local, everyday examples';
+  String get lessonPlanRuralLabel => 'ସ୍ଥାନୀୟ, ଦୈନନ୍ଦିନ ଉଦାହରଣ ବ୍ୟବହାର କରନ୍ତୁ';
 
   @override
   String get lessonPlanRuralHint =>
-      'Root activities in familiar rural and community settings.';
+      'କାର୍ଯ୍ୟକଳାପକୁ ପରିଚିତ ଗ୍ରାମୀଣ ଓ ସାମାଜିକ ପରିବେଶରେ ରଖନ୍ତୁ।';
 
   @override
-  String get lessonPlanOptional => 'Optional';
+  String get lessonPlanOptional => 'ଐଚ୍ଛିକ';
 
   @override
-  String get lessonPlanObjectives => 'Learning objectives';
+  String get lessonPlanObjectives => 'ଶିକ୍ଷଣ ଉଦ୍ଦେଶ୍ୟ';
 
   @override
-  String get lessonPlanVocabulary => 'Key vocabulary';
+  String get lessonPlanVocabulary => 'ମୁଖ୍ୟ ଶବ୍ଦାବଳୀ';
 
   @override
-  String get lessonPlanMaterials => 'Materials';
+  String get lessonPlanMaterials => 'ସାମଗ୍ରୀ';
 
   @override
-  String get lessonPlanActivities => '5E activities';
+  String get lessonPlanActivities => '5E କାର୍ଯ୍ୟକଳାପ';
 
   @override
-  String get lessonPlanAssessment => 'Assessment';
+  String get lessonPlanAssessment => 'ମୂଲ୍ୟାୟନ';
 
   @override
-  String get lessonPlanHomework => 'Homework';
+  String get lessonPlanHomework => 'ଗୃହକାର୍ଯ୍ୟ';
 
   @override
-  String get lessonPlanTeacherTip => 'Teacher tip';
+  String get lessonPlanTeacherTip => 'ଶିକ୍ଷକଙ୍କ ପାଇଁ ପରାମର୍ଶ';
 
   @override
-  String get lessonPlanUnderstandingCheck => 'Check for understanding';
+  String get lessonPlanUnderstandingCheck => 'ବୁଝାମଣା ଯାଞ୍ଚ';
 
   @override
-  String get lessonPlanNoteLabel => 'A note before you begin';
+  String get lessonPlanNoteLabel => 'ଆରମ୍ଭ କରିବା ପୂର୍ବରୁ ଏକ ଟିପ୍ପଣୀ';
 
   @override
-  String get lessonPlanUpgradeTitle => 'A higher plan is needed';
+  String get lessonPlanUpgradeTitle => 'ଏକ ଉଚ୍ଚ ଯୋଜନା ଆବଶ୍ୟକ';
 
   @override
   String get lessonPlanUpgradeBody =>
-      'Lesson planning is part of a higher plan. Please upgrade to keep generating plans.';
+      'ପାଠ ଯୋଜନା ଏକ ଉଚ୍ଚ ଯୋଜନାର ଅଂଶ। ଯୋଜନା ତିଆରି ଜାରି ରଖିବା ପାଇଁ ଦୟାକରି ଅପଗ୍ରେଡ୍ କରନ୍ତୁ।';
 
   @override
-  String get lessonPlanLimitTitle => 'You have reached your limit';
+  String get lessonPlanLimitTitle => 'ଆପଣ ଆପଣଙ୍କ ସୀମାରେ ପହଞ୍ଚିଛନ୍ତି';
 
   @override
   String get lessonPlanLimitBody =>
-      'You have used your lesson plans for now. Please try again later or upgrade your plan.';
+      'ଆପଣ ଏବେ ପାଇଁ ଆପଣଙ୍କ ପାଠ ଯୋଜନା ବ୍ୟବହାର କରିସାରିଛନ୍ତି। ଦୟାକରି ପରେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ କିମ୍ବା ଯୋଜନା ଅପଗ୍ରେଡ୍ କରନ୍ତୁ।';
 
   @override
-  String get lessonPlanSeePricing => 'See plans and pricing';
+  String get lessonPlanSeePricing => 'ଯୋଜନା ଏବଂ ମୂଲ୍ୟ ଦେଖନ୍ତୁ';
 
   @override
   String get lessonPlanRephrase =>
-      'We could not build a plan from that. Please rephrase the topic and try again.';
+      'ଆମେ ସେଥିରୁ ଏକ ଯୋଜନା ତିଆରି କରିପାରିଲୁ ନାହିଁ। ଦୟାକରି ଟପିକ୍ ପୁନର୍ବାର ଲେଖି ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
   String get lessonPlanBusy =>
-      'The assistant is busy right now. Please try again in a moment.';
+      'ସହାୟକ ବର୍ତ୍ତମାନ ବ୍ୟସ୍ତ ଅଛି। ଦୟାକରି କିଛି ସମୟ ପରେ ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
   String get lessonPlanTimeout =>
-      'This is taking longer than expected. Please try again.';
+      'ଏଥିରେ ଆଶା କରାଯାଇଥିବା ଠାରୁ ଅଧିକ ସମୟ ଲାଗୁଛି। ଦୟାକରି ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
-  String get lessonPlanSignIn => 'Please sign in again to use this tool.';
+  String get lessonPlanSignIn =>
+      'ଏହି ଉପକରଣ ବ୍ୟବହାର କରିବା ପାଇଁ ଦୟାକରି ପୁନର୍ବାର ସାଇନ୍ ଇନ୍ କରନ୍ତୁ।';
 
   @override
-  String get quizTitle => 'Quiz';
+  String get quizTitle => 'କୁଇଜ୍';
 
   @override
-  String get quizSubtitle => 'Build a quiz in three difficulty levels';
+  String get quizSubtitle => 'ତିନି କଠିନତା ସ୍ତରରେ କୁଇଜ୍ ତିଆରି କରନ୍ତୁ';
 
   @override
-  String get quizEmpty => 'Add a topic and tap Generate to build a quiz.';
+  String get quizEmpty =>
+      'ଏକ ଟପିକ୍ ଯୋଡ଼ନ୍ତୁ ଏବଂ କୁଇଜ୍ ପାଇଁ \'ତିଆରି କରନ୍ତୁ\' ଟ୍ୟାପ୍ କରନ୍ତୁ।';
 
   @override
-  String get quizTopicLabel => 'Topic';
+  String get quizTopicLabel => 'ଟପିକ୍';
 
   @override
-  String get quizTopicHint => 'For example, Fractions';
+  String get quizTopicHint => 'ଉଦାହରଣ ସ୍ୱରୂପ, ଭଗ୍ନାଂଶ';
 
   @override
-  String get quizTopicError => 'Please enter a topic for the quiz.';
+  String get quizTopicError => 'ଦୟାକରି କୁଇଜ୍ ପାଇଁ ଏକ ଟପିକ୍ ଲେଖନ୍ତୁ।';
 
   @override
-  String get quizNumQuestionsLabel => 'Number of questions';
+  String get quizNumQuestionsLabel => 'ପ୍ରଶ୍ନ ସଂଖ୍ୟା';
 
   @override
-  String get quizFewerQuestions => 'Fewer questions';
+  String get quizFewerQuestions => 'କମ୍ ପ୍ରଶ୍ନ';
 
   @override
-  String get quizMoreQuestions => 'More questions';
+  String get quizMoreQuestions => 'ଅଧିକ ପ୍ରଶ୍ନ';
 
   @override
-  String get quizTypesLabel => 'Question types';
+  String get quizTypesLabel => 'ପ୍ରଶ୍ନର ପ୍ରକାର';
 
   @override
-  String get quizTypesError => 'Please choose at least one question type.';
+  String get quizTypesError => 'ଦୟାକରି ଅନ୍ତତଃ ଗୋଟିଏ ପ୍ରଶ୍ନ ପ୍ରକାର ବାଛନ୍ତୁ।';
 
   @override
-  String get quizTypeMultipleChoice => 'Multiple choice';
+  String get quizTypeMultipleChoice => 'ବହୁବିକଳ୍ପ';
 
   @override
-  String get quizTypeFillInTheBlanks => 'Fill in the blanks';
+  String get quizTypeFillInTheBlanks => 'ଶୂନ୍ୟସ୍ଥାନ ପୂରଣ';
 
   @override
-  String get quizTypeShortAnswer => 'Short answer';
+  String get quizTypeShortAnswer => 'ସଂକ୍ଷିପ୍ତ ଉତ୍ତର';
 
   @override
-  String get quizTypeTrueFalse => 'True or false';
+  String get quizTypeTrueFalse => 'ସତ୍ୟ କିମ୍ବା ମିଥ୍ୟା';
 
   @override
-  String get quizGradeLabel => 'Grade level';
+  String get quizGradeLabel => 'ଶ୍ରେଣୀ ସ୍ତର';
 
   @override
-  String get quizGradeAny => 'Any grade';
+  String get quizGradeAny => 'ଯେକୌଣସି ଶ୍ରେଣୀ';
 
   @override
-  String get quizSubjectLabel => 'Subject';
+  String get quizSubjectLabel => 'ବିଷୟ';
 
   @override
-  String get quizSubjectAny => 'Any subject';
+  String get quizSubjectAny => 'ଯେକୌଣସି ବିଷୟ';
 
   @override
-  String get quizDifficultyLabel => 'Difficulty';
+  String get quizDifficultyLabel => 'କଠିନତା';
 
   @override
   String get quizDifficultyHint =>
-      'Leave this on all levels to get an easy, a medium and a hard version.';
+      'ସହଜ, ମଧ୍ୟମ ଓ କଠିନ ତିନୋଟି ସଂସ୍କରଣ ପାଇବାକୁ ଏହାକୁ \'ସବୁ ସ୍ତର\'ରେ ରଖନ୍ତୁ।';
 
   @override
-  String get quizDifficultyAll => 'All levels';
+  String get quizDifficultyAll => 'ସବୁ ସ୍ତର';
 
   @override
-  String get quizDifficultyEasy => 'Easy';
+  String get quizDifficultyEasy => 'ସହଜ';
 
   @override
-  String get quizDifficultyMedium => 'Medium';
+  String get quizDifficultyMedium => 'ମଧ୍ୟମ';
 
   @override
-  String get quizDifficultyHard => 'Hard';
+  String get quizDifficultyHard => 'କଠିନ';
 
   @override
-  String get quizBloomsLabel => 'Thinking skills';
+  String get quizBloomsLabel => 'ଚିନ୍ତନ କୌଶଳ';
 
   @override
   String get quizBloomsHint =>
-      'Choose the kinds of thinking the questions should ask for.';
+      'ପ୍ରଶ୍ନଗୁଡ଼ିକ କେଉଁ ପ୍ରକାର ଚିନ୍ତନ ମାଗିବ ତାହା ବାଛନ୍ତୁ।';
 
   @override
-  String get quizOptional => 'Optional';
+  String get quizOptional => 'ଐଚ୍ଛିକ';
 
   @override
   String quizQuestionCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count questions',
-      one: '1 question',
+      other: '$count ପ୍ରଶ୍ନ',
+      one: '1 ପ୍ରଶ୍ନ',
     );
     return '$_temp0';
   }
 
   @override
-  String get quizShowAnswer => 'Show answer';
+  String get quizShowAnswer => 'ଉତ୍ତର ଦେଖାନ୍ତୁ';
 
   @override
-  String get quizHideAnswer => 'Hide answer';
+  String get quizHideAnswer => 'ଉତ୍ତର ଲୁଚାନ୍ତୁ';
 
   @override
-  String get quizShowAllAnswers => 'Show all answers';
+  String get quizShowAllAnswers => 'ସବୁ ଉତ୍ତର ଦେଖାନ୍ତୁ';
 
   @override
-  String get quizHideAllAnswers => 'Hide all answers';
+  String get quizHideAllAnswers => 'ସବୁ ଉତ୍ତର ଲୁଚାନ୍ତୁ';
 
   @override
-  String get quizCorrectAnswer => 'Correct answer';
+  String get quizCorrectAnswer => 'ସଠିକ୍ ଉତ୍ତର';
 
   @override
-  String get quizExplanation => 'Why';
+  String get quizExplanation => 'କାହିଁକି';
 
   @override
-  String get quizTeacherInstructions => 'How to run this in class';
+  String get quizTeacherInstructions => 'ଶ୍ରେଣୀରେ ଏହା କିପରି ଚଲାଇବେ';
 
   @override
-  String get quizNoteLabel => 'A note before you begin';
+  String get quizNoteLabel => 'ଆରମ୍ଭ କରିବା ପୂର୍ବରୁ ଏକ ଟିପ୍ପଣୀ';
 
   @override
   String get quizNoQuestions =>
-      'No questions came back for that topic. Please try a different topic.';
+      'ସେହି ଟପିକ୍ ପାଇଁ କୌଣସି ପ୍ରଶ୍ନ ଆସିଲା ନାହିଁ। ଦୟାକରି ଅନ୍ୟ ଏକ ଟପିକ୍ ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
-  String get quizUpgradeTitle => 'A higher plan is needed';
+  String get quizUpgradeTitle => 'ଏକ ଉଚ୍ଚ ଯୋଜନା ଆବଶ୍ୟକ';
 
   @override
   String get quizUpgradeBody =>
-      'Quiz generation is part of a higher plan. Please upgrade to keep building quizzes.';
+      'କୁଇଜ୍ ତିଆରି ଏକ ଉଚ୍ଚ ଯୋଜନାର ଅଂଶ। କୁଇଜ୍ ତିଆରି ଜାରି ରଖିବା ପାଇଁ ଦୟାକରି ଅପଗ୍ରେଡ୍ କରନ୍ତୁ।';
 
   @override
-  String get quizLimitTitle => 'You have reached your limit';
+  String get quizLimitTitle => 'ଆପଣ ଆପଣଙ୍କ ସୀମାରେ ପହଞ୍ଚିଛନ୍ତି';
 
   @override
   String get quizLimitBody =>
-      'You have used your quizzes for now. Please try again later or upgrade your plan.';
+      'ଆପଣ ଏବେ ପାଇଁ ଆପଣଙ୍କ କୁଇଜ୍ ବ୍ୟବହାର କରିସାରିଛନ୍ତି। ଦୟାକରି ପରେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ କିମ୍ବା ଯୋଜନା ଅପଗ୍ରେଡ୍ କରନ୍ତୁ।';
 
   @override
-  String get quizSeePricing => 'See plans and pricing';
+  String get quizSeePricing => 'ଯୋଜନା ଏବଂ ମୂଲ୍ୟ ଦେଖନ୍ତୁ';
 
   @override
   String get quizRephrase =>
-      'We could not build a quiz from that. Please rephrase the topic and try again.';
+      'ଆମେ ସେଥିରୁ ଏକ କୁଇଜ୍ ତିଆରି କରିପାରିଲୁ ନାହିଁ। ଦୟାକରି ଟପିକ୍ ପୁନର୍ବାର ଲେଖି ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
   String get quizBusy =>
-      'The assistant is busy right now. Please try again in a moment.';
+      'ସହାୟକ ବର୍ତ୍ତମାନ ବ୍ୟସ୍ତ ଅଛି। ଦୟାକରି କିଛି ସମୟ ପରେ ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
   String get quizTimeout =>
-      'This is taking longer than expected. Please try again.';
+      'ଏଥିରେ ଆଶା କରାଯାଇଥିବା ଠାରୁ ଅଧିକ ସମୟ ଲାଗୁଛି। ଦୟାକରି ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
-  String get quizSignIn => 'Please sign in again to use this tool.';
+  String get quizSignIn =>
+      'ଏହି ଉପକରଣ ବ୍ୟବହାର କରିବା ପାଇଁ ଦୟାକରି ପୁନର୍ବାର ସାଇନ୍ ଇନ୍ କରନ୍ତୁ।';
 
   @override
-  String get instantAnswerTitle => 'Instant Answer';
+  String get instantAnswerTitle => 'ତୁରନ୍ତ ଉତ୍ତର';
 
   @override
-  String get instantAnswerSubtitle => 'Ask any classroom question';
+  String get instantAnswerSubtitle => 'ଶ୍ରେଣୀଗୃହର ଯେକୌଣସି ପ୍ରଶ୍ନ ପଚାରନ୍ତୁ';
 
   @override
-  String get instantAnswerAction => 'Get answer';
+  String get instantAnswerAction => 'ଉତ୍ତର ପାଆନ୍ତୁ';
 
   @override
-  String get instantAnswerEmpty => 'Ask a question and tap Get answer.';
+  String get instantAnswerEmpty =>
+      'ଏକ ପ୍ରଶ୍ନ ପଚାରନ୍ତୁ ଏବଂ \'ଉତ୍ତର ପାଆନ୍ତୁ\' ଟ୍ୟାପ୍ କରନ୍ତୁ।';
 
   @override
-  String get instantAnswerQuestionLabel => 'Your question';
+  String get instantAnswerQuestionLabel => 'ଆପଣଙ୍କ ପ୍ରଶ୍ନ';
 
   @override
   String get instantAnswerQuestionHint =>
-      'For example, Why does the moon change shape?';
+      'ଉଦାହରଣ ସ୍ୱରୂପ, ଚନ୍ଦ୍ର କାହିଁକି ଆକାର ବଦଳାଏ?';
 
   @override
-  String get instantAnswerQuestionError => 'Please enter a question.';
+  String get instantAnswerQuestionError => 'ଦୟାକରି ଏକ ପ୍ରଶ୍ନ ଲେଖନ୍ତୁ।';
 
   @override
-  String get instantAnswerGradeLabel => 'Grade level';
+  String get instantAnswerGradeLabel => 'ଶ୍ରେଣୀ ସ୍ତର';
 
   @override
-  String get instantAnswerGradeAny => 'Any grade';
+  String get instantAnswerGradeAny => 'ଯେକୌଣସି ଶ୍ରେଣୀ';
 
   @override
-  String get instantAnswerSubjectLabel => 'Subject';
+  String get instantAnswerSubjectLabel => 'ବିଷୟ';
 
   @override
-  String get instantAnswerSubjectAny => 'Any subject';
+  String get instantAnswerSubjectAny => 'ଯେକୌଣସି ବିଷୟ';
 
   @override
-  String get instantAnswerOptional => 'Optional';
+  String get instantAnswerOptional => 'ଐଚ୍ଛିକ';
 
   @override
-  String get instantAnswerVideoTitle => 'Watch a related video';
+  String get instantAnswerVideoTitle => 'ଏକ ସମ୍ବନ୍ଧିତ ଭିଡିଓ ଦେଖନ୍ତୁ';
 
   @override
-  String get instantAnswerVideoBody =>
-      'Opens in your browser, outside the app.';
+  String get instantAnswerVideoBody => 'ଆପ୍ ବାହାରେ, ଆପଣଙ୍କ ବ୍ରାଉଜରରେ ଖୋଲେ।';
 
   @override
   String get instantAnswerNoAnswer =>
-      'No answer came back for that question. Please rephrase it and try again.';
+      'ସେହି ପ୍ରଶ୍ନ ପାଇଁ କୌଣସି ଉତ୍ତର ଆସିଲା ନାହିଁ। ଦୟାକରି ଏହାକୁ ପୁନର୍ବାର ଲେଖି ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
-  String get instantAnswerSeePricing => 'See plans and pricing';
+  String get instantAnswerSeePricing => 'ଯୋଜନା ଏବଂ ମୂଲ୍ୟ ଦେଖନ୍ତୁ';
 
   @override
   String get instantAnswerDailyLimitTitle =>
-      'That is all your questions for today';
+      'ଆଜି ପାଇଁ ଆପଣଙ୍କର ସମସ୍ତ ପ୍ରଶ୍ନ ସରିଗଲା';
 
   @override
   String get instantAnswerDailyLimitBody =>
-      'Your plan includes a set number of instant answers each day. Your questions reset tomorrow, or you can raise the daily limit on a higher plan.';
+      'ଆପଣଙ୍କ ଯୋଜନାରେ ପ୍ରତିଦିନ ଏକ ନିର୍ଦ୍ଦିଷ୍ଟ ସଂଖ୍ୟକ ତୁରନ୍ତ ଉତ୍ତର ଅନ୍ତର୍ଭୁକ୍ତ। ଆପଣଙ୍କ ପ୍ରଶ୍ନ ଆସନ୍ତାକାଲି ପୁଣି ଆରମ୍ଭ ହେବ, କିମ୍ବା ଆପଣ ଉଚ୍ଚ ଯୋଜନାରେ ଦୈନିକ ସୀମା ବଢ଼ାଇ ପାରିବେ।';
 
   @override
-  String get instantAnswerLimitTitle => 'You have reached your limit';
+  String get instantAnswerLimitTitle => 'ଆପଣ ଆପଣଙ୍କ ସୀମାରେ ପହଞ୍ଚିଛନ୍ତି';
 
   @override
   String get instantAnswerLimitBody =>
-      'You have used your instant answers for this month. Your questions reset next month, or you can raise the limit on a higher plan.';
+      'ଆପଣ ଏହି ମାସର ତୁରନ୍ତ ଉତ୍ତର ବ୍ୟବହାର କରିସାରିଛନ୍ତି। ଆପଣଙ୍କ ପ୍ରଶ୍ନ ଆସନ୍ତା ମାସରେ ପୁଣି ଆରମ୍ଭ ହେବ, କିମ୍ବା ଆପଣ ଉଚ୍ଚ ଯୋଜନାରେ ସୀମା ବଢ଼ାଇ ପାରିବେ।';
 
   @override
-  String get instantAnswerUpgradeTitle => 'A higher plan is needed';
+  String get instantAnswerUpgradeTitle => 'ଏକ ଉଚ୍ଚ ଯୋଜନା ଆବଶ୍ୟକ';
 
   @override
   String get instantAnswerUpgradeBody =>
-      'Instant answers are part of a higher plan. Please upgrade to keep asking questions.';
+      'ତୁରନ୍ତ ଉତ୍ତର ଏକ ଉଚ୍ଚ ଯୋଜନାର ଅଂଶ। ପ୍ରଶ୍ନ ପଚାରିବା ଜାରି ରଖିବା ପାଇଁ ଦୟାକରି ଅପଗ୍ରେଡ୍ କରନ୍ତୁ।';
 
   @override
   String get instantAnswerRephrase =>
-      'We could not answer that. Please rephrase the question and try again.';
+      'ଆମେ ସେହି ଉତ୍ତର ଦେଇପାରିଲୁ ନାହିଁ। ଦୟାକରି ପ୍ରଶ୍ନ ପୁନର୍ବାର ଲେଖି ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
   String get instantAnswerBusy =>
-      'The assistant is busy right now. Please try again in a moment.';
+      'ସହାୟକ ବର୍ତ୍ତମାନ ବ୍ୟସ୍ତ ଅଛି। ଦୟାକରି କିଛି ସମୟ ପରେ ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
   String instantAnswerBusyRetryAfter(int seconds) {
@@ -703,65 +712,66 @@ class AppLocalizationsOr extends AppLocalizations {
       seconds,
       locale: localeName,
       other:
-          'The assistant is busy right now. Please try again in about $seconds seconds.',
+          'ସହାୟକ ବର୍ତ୍ତମାନ ବ୍ୟସ୍ତ ଅଛି। ଦୟାକରି ପ୍ରାୟ $seconds ସେକେଣ୍ଡରେ ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।',
       one:
-          'The assistant is busy right now. Please try again in about 1 second.',
+          'ସହାୟକ ବର୍ତ୍ତମାନ ବ୍ୟସ୍ତ ଅଛି। ଦୟାକରି ପ୍ରାୟ 1 ସେକେଣ୍ଡରେ ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।',
     );
     return '$_temp0';
   }
 
   @override
   String get instantAnswerTimeout =>
-      'This is taking longer than expected. Please try again.';
+      'ଏଥିରେ ଆଶା କରାଯାଇଥିବା ଠାରୁ ଅଧିକ ସମୟ ଲାଗୁଛି। ଦୟାକରି ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
-  String get instantAnswerSignIn => 'Please sign in again to use this tool.';
+  String get instantAnswerSignIn =>
+      'ଏହି ଉପକରଣ ବ୍ୟବହାର କରିବା ପାଇଁ ଦୟାକରି ପୁନର୍ବାର ସାଇନ୍ ଇନ୍ କରନ୍ତୁ।';
 
   @override
-  String get settingsTitle => 'Settings';
+  String get settingsTitle => 'ସେଟିଂସ୍';
 
   @override
-  String get settingsAppearanceTitle => 'Appearance';
+  String get settingsAppearanceTitle => 'ଦୃଶ୍ୟରୂପ';
 
   @override
-  String get settingsThemeSystem => 'Match my device';
+  String get settingsThemeSystem => 'ମୋ ଡିଭାଇସ୍ ଅନୁସାରେ';
 
   @override
-  String get settingsThemeLight => 'Light';
+  String get settingsThemeLight => 'ଉଜ୍ଜ୍ୱଳ';
 
   @override
-  String get settingsThemeDark => 'Dark';
+  String get settingsThemeDark => 'ଗାଢ଼';
 
   @override
   String get settingsLanguageHint =>
-      'Sets the app language and the language your teaching material is written in.';
+      'ଆପ୍‌ର ଭାଷା ଏବଂ ଆପଣଙ୍କ ଶିକ୍ଷାଦାନ ସାମଗ୍ରୀ ଲେଖାଯିବା ଭାଷା ଏଥିରେ ସେଟ୍ ହୁଏ।';
 
   @override
-  String get settingsNotificationsTitle => 'Notifications';
+  String get settingsNotificationsTitle => 'ବିଜ୍ଞପ୍ତି';
 
   @override
-  String get settingsNotificationsLabel => 'Reminders and updates';
+  String get settingsNotificationsLabel => 'ସ୍ମାରକ ଓ ଅପଡେଟ୍';
 
   @override
   String get settingsNotificationsHint =>
-      'Hear about new teaching tools and your saved work.';
+      'ନୂଆ ଶିକ୍ଷାଦାନ ଉପକରଣ ଓ ଆପଣଙ୍କ ସଂରକ୍ଷିତ କାର୍ଯ୍ୟ ବିଷୟରେ ଜାଣନ୍ତୁ।';
 
   @override
-  String get settingsVoiceModeTitle => 'Voice mode';
+  String get settingsVoiceModeTitle => 'ଭଏସ୍ ମୋଡ୍';
 
   @override
-  String get settingsVoiceModeLabel => 'Live voice (beta)';
+  String get settingsVoiceModeLabel => 'ଲାଇଭ୍ ଭଏସ୍ (ବିଟା)';
 
   @override
   String get settingsVoiceModeHint =>
-      'Speak with VIDYA in real time. When off, VIDYA listens, then replies one turn at a time.';
+      'VIDYA ସହ ରିଅଲ୍ ଟାଇମ୍‌ରେ କଥା ହୁଅନ୍ତୁ। ବନ୍ଦ ଥିଲେ, VIDYA ଶୁଣେ, ତା\'ପରେ ଥରକୁ ଥର ଉତ୍ତର ଦିଏ।';
 
   @override
-  String get settingsProfileTitle => 'Teaching profile';
+  String get settingsProfileTitle => 'ଶିକ୍ଷାଦାନ ପ୍ରୋଫାଇଲ୍';
 
   @override
   String get settingsProfileHint =>
-      'This helps us match your material to your board and classroom.';
+      'ଏହା ଆପଣଙ୍କ ସାମଗ୍ରୀକୁ ଆପଣଙ୍କ ବୋର୍ଡ ଓ ଶ୍ରେଣୀଗୃହ ସହିତ ମେଳ ଖୁଆଇବାରେ ସାହାଯ୍ୟ କରେ।';
 
   @override
   String get settingsBoardLabel => 'ଶିକ୍ଷା ବୋର୍ଡ';
@@ -770,11 +780,11 @@ class AppLocalizationsOr extends AppLocalizations {
   String get settingsBoardNone => 'ସେଟ୍ ହୋଇନାହିଁ';
 
   @override
-  String get settingsQualificationsLabel => 'Qualifications';
+  String get settingsQualificationsLabel => 'ଯୋଗ୍ୟତା';
 
   @override
   String get settingsQualificationsHint =>
-      'Choose every qualification you hold.';
+      'ଆପଣଙ୍କର ଥିବା ପ୍ରତ୍ୟେକ ଯୋଗ୍ୟତା ବାଛନ୍ତୁ।';
 
   @override
   String get settingsAdminRoleLabel => 'ପ୍ରଶାସନିକ ଭୂମିକା';
@@ -801,108 +811,108 @@ class AppLocalizationsOr extends AppLocalizations {
   String get settingsRoleNone => 'ଶିକ୍ଷକ, କୌଣସି ପ୍ରଶାସନିକ ଭୂମିକା ନାହିଁ';
 
   @override
-  String get settingsSaveProfile => 'Save profile';
+  String get settingsSaveProfile => 'ପ୍ରୋଫାଇଲ୍ ସେଭ୍ କରନ୍ତୁ';
 
   @override
-  String get settingsProfileSaved => 'Your teaching profile has been saved.';
+  String get settingsProfileSaved => 'ଆପଣଙ୍କ ଶିକ୍ଷାଦାନ ପ୍ରୋଫାଇଲ୍ ସେଭ୍ ହୋଇଛି।';
 
   @override
   String get settingsSaveFailed =>
-      'We could not save your profile. Please try again.';
+      'ଆମେ ଆପଣଙ୍କ ପ୍ରୋଫାଇଲ୍ ସେଭ୍ କରିପାରିଲୁ ନାହିଁ। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
-  String get settingsSignedOutTitle => 'You are signed out';
+  String get settingsSignedOutTitle => 'ଆପଣ ସାଇନ୍ ଆଉଟ୍ ଅଛନ୍ତି';
 
   @override
   String get settingsSignedOutBody =>
-      'Sign in to manage your teaching profile and your account. Your language and appearance choices are saved on this device either way.';
+      'ଆପଣଙ୍କ ଶିକ୍ଷାଦାନ ପ୍ରୋଫାଇଲ୍ ଓ ଆକାଉଣ୍ଟ ପରିଚାଳନା କରିବାକୁ ସାଇନ୍ ଇନ୍ କରନ୍ତୁ। ଯେକୌଣସି ପରିସ୍ଥିତିରେ ଆପଣଙ୍କ ଭାଷା ଓ ଦୃଶ୍ୟରୂପ ପସନ୍ଦ ଏହି ଡିଭାଇସ୍‌ରେ ସେଭ୍ ରହେ।';
 
   @override
-  String get settingsSignIn => 'Sign in';
+  String get settingsSignIn => 'ସାଇନ୍ ଇନ୍ କରନ୍ତୁ';
 
   @override
-  String get settingsDangerTitle => 'Delete account';
+  String get settingsDangerTitle => 'ଆକାଉଣ୍ଟ ଡିଲିଟ୍ କରନ୍ତୁ';
 
   @override
   String get settingsDangerBody =>
-      'This closes your account and removes your saved work. You will have 30 days to export everything before it is deleted for good.';
+      'ଏହା ଆପଣଙ୍କ ଆକାଉଣ୍ଟ ବନ୍ଦ କରେ ଏବଂ ସଂରକ୍ଷିତ କାର୍ଯ୍ୟ ହଟାଇଦିଏ। ସ୍ଥାୟୀ ଭାବେ ଡିଲିଟ୍ ହେବା ପୂର୍ବରୁ ସବୁକିଛି ଏକ୍ସପୋର୍ଟ କରିବାକୁ ଆପଣଙ୍କୁ 30 ଦିନ ମିଳିବ।';
 
   @override
-  String get settingsDeleteAction => 'Delete account';
+  String get settingsDeleteAction => 'ଆକାଉଣ୍ଟ ଡିଲିଟ୍ କରନ୍ତୁ';
 
   @override
-  String get settingsDeleteDialogTitle => 'Delete your account?';
+  String get settingsDeleteDialogTitle => 'ଆପଣଙ୍କ ଆକାଉଣ୍ଟ ଡିଲିଟ୍ କରିବେ?';
 
   @override
   String get settingsDeleteDialogBody =>
-      'Your lesson plans, quizzes and profile will be scheduled for deletion. You have 30 days to export your work before it is removed.';
+      'ଆପଣଙ୍କ ପାଠ ଯୋଜନା, କୁଇଜ୍ ଓ ପ୍ରୋଫାଇଲ୍ ଡିଲିଟ୍ ପାଇଁ ନିର୍ଦ୍ଧାରିତ ହେବ। ହଟାଯିବା ପୂର୍ବରୁ ଆପଣଙ୍କ କାର୍ଯ୍ୟ ଏକ୍ସପୋର୍ଟ କରିବାକୁ ଆପଣଙ୍କ ପାଖରେ 30 ଦିନ ଅଛି।';
 
   @override
   String settingsDeleteConfirmPrompt(String word) {
-    return 'Type $word below to confirm.';
+    return 'ନିଶ୍ଚିତ କରିବାକୁ ତଳେ $word ଟାଇପ୍ କରନ୍ତୁ।';
   }
 
   @override
-  String get settingsDeleteConfirmLabel => 'Confirmation';
+  String get settingsDeleteConfirmLabel => 'ନିଶ୍ଚିତକରଣ';
 
   @override
-  String get settingsDeleteCancel => 'Keep my account';
+  String get settingsDeleteCancel => 'ମୋ ଆକାଉଣ୍ଟ ରଖନ୍ତୁ';
 
   @override
-  String get settingsDeleteConfirm => 'Delete account';
+  String get settingsDeleteConfirm => 'ଆକାଉଣ୍ଟ ଡିଲିଟ୍ କରନ୍ତୁ';
 
   @override
   String get settingsDeleteScheduled =>
-      'Your account is scheduled for deletion. You have 30 days to export your work.';
+      'ଆପଣଙ୍କ ଆକାଉଣ୍ଟ ଡିଲିଟ୍ ପାଇଁ ନିର୍ଦ୍ଧାରିତ ହୋଇଛି। ଆପଣଙ୍କ କାର୍ଯ୍ୟ ଏକ୍ସପୋର୍ଟ କରିବାକୁ ଆପଣଙ୍କ ପାଖରେ 30 ଦିନ ଅଛି।';
 
   @override
-  String get settingsDeleteSuccessTitle => 'Account scheduled for deletion';
+  String get settingsDeleteSuccessTitle => 'ଆକାଉଣ୍ଟ ଡିଲିଟ୍ ପାଇଁ ନିର୍ଦ୍ଧାରିତ';
 
   @override
-  String get settingsExportDataAction => 'Export my data';
+  String get settingsExportDataAction => 'ମୋ ତଥ୍ୟ ଏକ୍ସପୋର୍ଟ କରନ୍ତୁ';
 
   @override
   String get settingsExportQueuedMessage =>
-      'Your export is too large to prepare right away, so we\'ve queued it instead. Please try again later, or contact support for a copy of your data.';
+      'ଆପଣଙ୍କ ଏକ୍ସପୋର୍ଟ ତୁରନ୍ତ ପ୍ରସ୍ତୁତ କରିବା ପାଇଁ ବହୁତ ବଡ଼, ତେଣୁ ଆମେ ଏହାକୁ ଧାଡ଼ିରେ ରଖିଛୁ। ଦୟାକରି ପରେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ, କିମ୍ବା ଆପଣଙ୍କ ତଥ୍ୟର ଏକ କପି ପାଇଁ ସହାୟତା ସହ ଯୋଗାଯୋଗ କରନ୍ତୁ।';
 
   @override
   String get settingsExportFailedMessage =>
-      'Couldn\'t prepare your export. Please try again.';
+      'ଆପଣଙ୍କ ଏକ୍ସପୋର୍ଟ ପ୍ରସ୍ତୁତ ହୋଇପାରିଲା ନାହିଁ। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
-  String get settingsDeleteSuccessDone => 'Done';
+  String get settingsDeleteSuccessDone => 'ହୋଇଗଲା';
 
   @override
   String get settingsDeleteFailed =>
-      'We could not delete your account. Please try again.';
+      'ଆମେ ଆପଣଙ୍କ ଆକାଉଣ୍ଟ ଡିଲିଟ୍ କରିପାରିଲୁ ନାହିଁ। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
-  String get settingsReauthTitle => 'Please sign in again';
+  String get settingsReauthTitle => 'ଦୟାକରି ପୁନର୍ବାର ସାଇନ୍ ଇନ୍ କରନ୍ତୁ';
 
   @override
   String get settingsReauthBody =>
-      'For your security, deleting an account needs a fresh sign-in. Please sign out, sign in again, and delete within five minutes.';
+      'ଆପଣଙ୍କ ସୁରକ୍ଷା ପାଇଁ, ଆକାଉଣ୍ଟ ଡିଲିଟ୍ କରିବାକୁ ନୂଆ ସାଇନ୍ ଇନ୍ ଆବଶ୍ୟକ। ଦୟାକରି ସାଇନ୍ ଆଉଟ୍ କରି ପୁଣି ସାଇନ୍ ଇନ୍ କରନ୍ତୁ, ଏବଂ ପାଞ୍ଚ ମିନିଟ୍ ଭିତରେ ଡିଲିଟ୍ କରନ୍ତୁ।';
 
   @override
-  String get profilePlanLabel => 'Plan';
+  String get profilePlanLabel => 'ଯୋଜନା';
 
   @override
-  String get profilePlanFree => 'Free';
+  String get profilePlanFree => 'ମାଗଣା';
 
   @override
-  String get profilePlanPro => 'Pro';
+  String get profilePlanPro => 'ପ୍ରୋ';
 
   @override
-  String get profilePlanGold => 'Gold';
+  String get profilePlanGold => 'ଗୋଲ୍ଡ';
 
   @override
-  String get profilePlanPremium => 'Premium';
+  String get profilePlanPremium => 'ପ୍ରିମିୟମ୍';
 
   @override
-  String get profilePlanUnknown => 'Not available';
+  String get profilePlanUnknown => 'ଉପଲବ୍ଧ ନାହିଁ';
 
   @override
-  String get profileNoName => 'Your profile';
+  String get profileNoName => 'ଆପଣଙ୍କ ପ୍ରୋଫାଇଲ୍';
 
   @override
   String get profileSectionAbout => 'ଆପଣଙ୍କ ବିଷୟରେ';
@@ -921,7 +931,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get profileNameHint =>
-      'This is the name other teachers see on work you share.';
+      'ଆପଣ ସେୟାର୍ କରୁଥିବା କାର୍ଯ୍ୟରେ ଅନ୍ୟ ଶିକ୍ଷକମାନେ ଏହି ନାମ ଦେଖନ୍ତି।';
 
   @override
   String get profileNameInvalid => 'ଦୟାକରି ଏକ ଛୋଟ ନାମ ବ୍ୟବହାର କରନ୍ତୁ।';
@@ -965,7 +975,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get profileLanguageHint =>
-      'This is the same language choice as the rest of the app, so changing it here changes it everywhere.';
+      'ଏହା ଆପ୍‌ର ସେହି ଏକା ଭାଷା ପସନ୍ଦ, ତେଣୁ ଏଠାରେ ବଦଳାଇଲେ ସବୁଠାରେ ବଦଳିଯାଏ।';
 
   @override
   String get profilePhoneLabel => 'ମୋବାଇଲ୍ ନମ୍ବର';
@@ -988,25 +998,26 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଦୟାକରି ଛଅ ଅଙ୍କ ବିଶିଷ୍ଟ ପିନ୍ କୋଡ୍ ଦିଅନ୍ତୁ।';
 
   @override
-  String get profileEmptyTitle => 'Your profile is empty';
+  String get profileEmptyTitle => 'ଆପଣଙ୍କ ପ୍ରୋଫାଇଲ୍ ଖାଲି ଅଛି';
 
   @override
   String get profileEmptyBody =>
-      'Add your school and your classes, and every lesson plan and quiz you make will arrive ready for your classroom.';
+      'ଆପଣଙ୍କ ବିଦ୍ୟାଳୟ ଓ ଶ୍ରେଣୀ ଯୋଡ଼ନ୍ତୁ, ଆପଣ ତିଆରି କରୁଥିବା ପ୍ରତ୍ୟେକ ପାଠ ଯୋଜନା ଓ କୁଇଜ୍ ଆପଣଙ୍କ ଶ୍ରେଣୀଗୃହ ପାଇଁ ପ୍ରସ୍ତୁତ ହୋଇ ଆସିବ।';
 
   @override
   String get profileLoadFailed =>
-      'We could not open your profile. Please try again.';
+      'ଆମେ ଆପଣଙ୍କ ପ୍ରୋଫାଇଲ୍ ଖୋଲିପାରିଲୁ ନାହିଁ। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
-  String get profileSignedOutTitle => 'You are signed out';
+  String get profileSignedOutTitle => 'ଆପଣ ସାଇନ୍ ଆଉଟ୍ ଅଛନ୍ତି';
 
   @override
   String get profileSignedOutBody =>
-      'Sign in to see and edit your teaching profile.';
+      'ଆପଣଙ୍କ ଶିକ୍ଷାଦାନ ପ୍ରୋଫାଇଲ୍ ଦେଖିବା ଓ ସମ୍ପାଦନ କରିବାକୁ ସାଇନ୍ ଇନ୍ କରନ୍ତୁ।';
 
   @override
-  String get profileSaveSignIn => 'Please sign in again to save your profile.';
+  String get profileSaveSignIn =>
+      'ଆପଣଙ୍କ ପ୍ରୋଫାଇଲ୍ ସେଭ୍ କରିବାକୁ ଦୟାକରି ପୁନର୍ବାର ସାଇନ୍ ଇନ୍ କରନ୍ତୁ।';
 
   @override
   String get meTitle => 'ପ୍ରୋଫାଇଲ୍';
@@ -1048,400 +1059,408 @@ class AppLocalizationsOr extends AppLocalizations {
   String get usageFeatureAssistant => 'VIDYA ସହାୟକ';
 
   @override
-  String get imageInputHint => 'Add a clear photo of the textbook page.';
+  String get imageInputHint => 'ପାଠ୍ୟପୁସ୍ତକ ପୃଷ୍ଠାର ଏକ ସ୍ପଷ୍ଟ ଫଟୋ ଯୋଡ଼ନ୍ତୁ।';
 
   @override
-  String get imageInputTakePhoto => 'Take photo';
+  String get imageInputTakePhoto => 'ଫଟୋ ଉଠାନ୍ତୁ';
 
   @override
-  String get imageInputChooseGallery => 'Choose from gallery';
+  String get imageInputChooseGallery => 'ଗ୍ୟାଲେରୀରୁ ବାଛନ୍ତୁ';
 
   @override
-  String get imageInputRetake => 'Retake photo';
+  String get imageInputRetake => 'ପୁଣି ଫଟୋ ଉଠାନ୍ତୁ';
 
   @override
-  String get imageInputChangeGallery => 'Choose another';
+  String get imageInputChangeGallery => 'ଅନ୍ୟ ଏକ ବାଛନ୍ତୁ';
 
   @override
-  String get imageInputRemove => 'Remove photo';
+  String get imageInputRemove => 'ଫଟୋ ହଟାନ୍ତୁ';
 
   @override
-  String get imageInputPreviewLabel => 'Chosen image preview';
+  String get imageInputPreviewLabel => 'ବଛା ଚିତ୍ରର ପ୍ରିଭ୍ୟୁ';
 
   @override
   String imageInputSizeOfMax(String used, String max) {
-    return '$used of $max';
+    return '$maxରୁ $used';
   }
 
   @override
   String imageInputTooLarge(String max) {
-    return 'This photo is too large. Please choose one under $max.';
+    return 'ଏହି ଫଟୋ ବହୁତ ବଡ଼। ଦୟାକରି $maxରୁ କମ୍ ଗୋଟିଏ ବାଛନ୍ତୁ।';
   }
 
   @override
   String get imageInputPermissionDenied =>
-      'SahayakAI needs permission to use your camera or photos. Please allow access in your device settings.';
+      'SahayakAI କୁ ଆପଣଙ୍କ କ୍ୟାମେରା କିମ୍ବା ଫଟୋ ବ୍ୟବହାର କରିବାକୁ ଅନୁମତି ଆବଶ୍ୟକ। ଦୟାକରି ଡିଭାଇସ୍ ସେଟିଂସ୍‌ରେ ଅନୁମତି ଦିଅନ୍ତୁ।';
 
   @override
   String get imageInputFailed =>
-      'We could not open that image. Please try again.';
+      'ଆମେ ସେହି ଚିତ୍ର ଖୋଲିପାରିଲୁ ନାହିଁ। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
-  String get worksheetTitle => 'Worksheet';
+  String get worksheetTitle => 'ୱାର୍କସିଟ୍';
 
   @override
-  String get worksheetSubtitle => 'Build a worksheet from a textbook photo';
+  String get worksheetSubtitle => 'ପାଠ୍ୟପୁସ୍ତକ ଫଟୋରୁ ୱାର୍କସିଟ୍ ତିଆରି କରନ୍ତୁ';
 
   @override
   String get worksheetEmpty =>
-      'Add a textbook photo and a prompt, then tap Generate.';
+      'ଏକ ପାଠ୍ୟପୁସ୍ତକ ଫଟୋ ଓ ଏକ ନିର୍ଦ୍ଦେଶ ଯୋଡ଼ନ୍ତୁ, ତା\'ପରେ \'ତିଆରି କରନ୍ତୁ\' ଟ୍ୟାପ୍ କରନ୍ତୁ।';
 
   @override
-  String get worksheetImageLabel => 'Textbook page photo';
+  String get worksheetImageLabel => 'ପାଠ୍ୟପୁସ୍ତକ ପୃଷ୍ଠାର ଫଟୋ';
 
   @override
-  String get worksheetImageHint => 'The worksheet is built from this page.';
+  String get worksheetImageHint => 'ଏହି ପୃଷ୍ଠାରୁ ୱାର୍କସିଟ୍ ତିଆରି ହୁଏ।';
 
   @override
-  String get toolImageOptionalLabel => 'Textbook page photo (optional)';
+  String get toolImageOptionalLabel => 'ପାଠ୍ୟପୁସ୍ତକ ପୃଷ୍ଠାର ଫଟୋ (ଐଚ୍ଛିକ)';
 
   @override
   String get toolImageOptionalHint =>
-      'Add a page photo and it becomes the main source, or leave blank.';
+      'ଏକ ପୃଷ୍ଠା ଫଟୋ ଯୋଡ଼ିଲେ ତାହା ମୁଖ୍ୟ ଉତ୍ସ ହୁଏ, କିମ୍ବା ଖାଲି ଛାଡ଼ନ୍ତୁ।';
 
   @override
-  String get worksheetImageError => 'Please add a photo of the textbook page.';
+  String get worksheetImageError =>
+      'ଦୟାକରି ପାଠ୍ୟପୁସ୍ତକ ପୃଷ୍ଠାର ଏକ ଫଟୋ ଯୋଡ଼ନ୍ତୁ।';
 
   @override
-  String get worksheetPromptLabel => 'What worksheet do you need?';
+  String get worksheetPromptLabel => 'ଆପଣଙ୍କୁ କେଉଁ ୱାର୍କସିଟ୍ ଦରକାର?';
 
   @override
   String get worksheetPromptHint =>
-      'For example, Make a multiplication worksheet from this page';
+      'ଉଦାହରଣ ସ୍ୱରୂପ, ଏହି ପୃଷ୍ଠାରୁ ଏକ ଗୁଣନ ୱାର୍କସିଟ୍ ତିଆରି କରନ୍ତୁ';
 
   @override
-  String get worksheetPromptError => 'Please describe the worksheet you need.';
+  String get worksheetPromptError =>
+      'ଦୟାକରି ଆପଣଙ୍କୁ ଦରକାରୀ ୱାର୍କସିଟ୍ ବର୍ଣ୍ଣନା କରନ୍ତୁ।';
 
   @override
-  String get worksheetGradeLabel => 'Grade level';
+  String get worksheetGradeLabel => 'ଶ୍ରେଣୀ ସ୍ତର';
 
   @override
-  String get worksheetGradeAny => 'Any grade';
+  String get worksheetGradeAny => 'ଯେକୌଣସି ଶ୍ରେଣୀ';
 
   @override
-  String get worksheetSubjectLabel => 'Subject';
+  String get worksheetSubjectLabel => 'ବିଷୟ';
 
   @override
-  String get worksheetSubjectAny => 'Any subject';
+  String get worksheetSubjectAny => 'ଯେକୌଣସି ବିଷୟ';
 
   @override
-  String get worksheetOptional => 'Optional';
+  String get worksheetOptional => 'ଐଚ୍ଛିକ';
 
   @override
-  String get worksheetObjectives => 'Learning objectives';
+  String get worksheetObjectives => 'ଶିକ୍ଷଣ ଉଦ୍ଦେଶ୍ୟ';
 
   @override
-  String get worksheetInstructions => 'Instructions for students';
+  String get worksheetInstructions => 'ଛାତ୍ରମାନଙ୍କ ପାଇଁ ନିର୍ଦ୍ଦେଶ';
 
   @override
-  String get worksheetActivities => 'Activities';
+  String get worksheetActivities => 'କାର୍ଯ୍ୟକଳାପ';
 
   @override
-  String get worksheetActivityQuestion => 'Question';
+  String get worksheetActivityQuestion => 'ପ୍ରଶ୍ନ';
 
   @override
-  String get worksheetActivityPuzzle => 'Puzzle';
+  String get worksheetActivityPuzzle => 'ପହେଲି';
 
   @override
-  String get worksheetActivityCreativeTask => 'Creative task';
+  String get worksheetActivityCreativeTask => 'ସୃଜନଶୀଳ କାର୍ଯ୍ୟ';
 
   @override
-  String get worksheetExplanation => 'For the teacher';
+  String get worksheetExplanation => 'ଶିକ୍ଷକଙ୍କ ପାଇଁ';
 
   @override
-  String get worksheetChalkboardNote => 'On the blackboard';
+  String get worksheetChalkboardNote => 'ବ୍ଲାକବୋର୍ଡରେ';
 
   @override
-  String get worksheetAnswerKey => 'Answer key';
+  String get worksheetAnswerKey => 'ଉତ୍ତର କି';
 
   @override
   String get worksheetNoContent =>
-      'No worksheet came back for that page. Please try a clearer photo or a different prompt.';
+      'ସେହି ପୃଷ୍ଠା ପାଇଁ କୌଣସି ୱାର୍କସିଟ୍ ଆସିଲା ନାହିଁ। ଦୟାକରି ଅଧିକ ସ୍ପଷ୍ଟ ଫଟୋ କିମ୍ବା ଅନ୍ୟ ନିର୍ଦ୍ଦେଶ ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
-  String get worksheetSave => 'Save to Library';
+  String get worksheetSave => 'ଲାଇବ୍ରେରୀରେ ସେଭ୍ କରନ୍ତୁ';
 
   @override
-  String get worksheetSaving => 'Saving';
+  String get worksheetSaving => 'ସେଭ୍ ହେଉଛି';
 
   @override
-  String get worksheetSaved => 'Saved to your Library';
+  String get worksheetSaved => 'ଆପଣଙ୍କ ଲାଇବ୍ରେରୀରେ ସେଭ୍ ହେଲା';
 
   @override
-  String get worksheetSaveFailedTitle => 'Could not save';
+  String get worksheetSaveFailedTitle => 'ସେଭ୍ ହୋଇପାରିଲା ନାହିଁ';
 
   @override
   String get worksheetSaveFailedBody =>
-      'We could not save this worksheet to your library. Please try again.';
+      'ଆମେ ଏହି ୱାର୍କସିଟ୍ ଆପଣଙ୍କ ଲାଇବ୍ରେରୀରେ ସେଭ୍ କରିପାରିଲୁ ନାହିଁ। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
-  String get worksheetSaveRetry => 'Try saving again';
+  String get worksheetSaveRetry => 'ପୁଣି ସେଭ୍ କରିବାକୁ ଚେଷ୍ଟା କରନ୍ତୁ';
 
   @override
-  String get worksheetUpgradeTitle => 'A higher plan is needed';
+  String get worksheetUpgradeTitle => 'ଏକ ଉଚ୍ଚ ଯୋଜନା ଆବଶ୍ୟକ';
 
   @override
   String get worksheetUpgradeBody =>
-      'Worksheet generation is part of a higher plan. Please upgrade to keep building worksheets.';
+      'ୱାର୍କସିଟ୍ ତିଆରି ଏକ ଉଚ୍ଚ ଯୋଜନାର ଅଂଶ। ୱାର୍କସିଟ୍ ତିଆରି ଜାରି ରଖିବା ପାଇଁ ଦୟାକରି ଅପଗ୍ରେଡ୍ କରନ୍ତୁ।';
 
   @override
-  String get worksheetLimitTitle => 'You have reached your limit';
+  String get worksheetLimitTitle => 'ଆପଣ ଆପଣଙ୍କ ସୀମାରେ ପହଞ୍ଚିଛନ୍ତି';
 
   @override
   String get worksheetLimitBody =>
-      'You have used your worksheets for now. Please try again later or upgrade your plan.';
+      'ଆପଣ ଏବେ ପାଇଁ ଆପଣଙ୍କ ୱାର୍କସିଟ୍ ବ୍ୟବହାର କରିସାରିଛନ୍ତି। ଦୟାକରି ପରେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ କିମ୍ବା ଯୋଜନା ଅପଗ୍ରେଡ୍ କରନ୍ତୁ।';
 
   @override
-  String get worksheetSeePricing => 'See plans and pricing';
+  String get worksheetSeePricing => 'ଯୋଜନା ଏବଂ ମୂଲ୍ୟ ଦେଖନ୍ତୁ';
 
   @override
   String get worksheetRephrase =>
-      'We could not build a worksheet from that. Please try a clearer photo or rephrase your prompt.';
+      'ଆମେ ସେଥିରୁ ଏକ ୱାର୍କସିଟ୍ ତିଆରି କରିପାରିଲୁ ନାହିଁ। ଦୟାକରି ଅଧିକ ସ୍ପଷ୍ଟ ଫଟୋ କିମ୍ବା ନିର୍ଦ୍ଦେଶ ପୁନର୍ବାର ଲେଖି ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
   String get worksheetBusy =>
-      'The assistant is busy right now. Please try again in a moment.';
+      'ସହାୟକ ବର୍ତ୍ତମାନ ବ୍ୟସ୍ତ ଅଛି। ଦୟାକରି କିଛି ସମୟ ପରେ ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
   String get worksheetTimeout =>
-      'This is taking longer than expected. Please try again.';
+      'ଏଥିରେ ଆଶା କରାଯାଇଥିବା ଠାରୁ ଅଧିକ ସମୟ ଲାଗୁଛି। ଦୟାକରି ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
-  String get worksheetSignIn => 'Please sign in again to use this tool.';
+  String get worksheetSignIn =>
+      'ଏହି ଉପକରଣ ବ୍ୟବହାର କରିବା ପାଇଁ ଦୟାକରି ପୁନର୍ବାର ସାଇନ୍ ଇନ୍ କରନ୍ତୁ।';
 
   @override
-  String get rubricTitle => 'Rubric';
+  String get rubricTitle => 'ରୁବ୍ରିକ୍';
 
   @override
-  String get rubricSubtitle => 'Build a grading rubric for an assignment';
+  String get rubricSubtitle =>
+      'ଏକ ଆସାଇନ୍‌ମେଣ୍ଟ ପାଇଁ ମୂଲ୍ୟାୟନ ରୁବ୍ରିକ୍ ତିଆରି କରନ୍ତୁ';
 
   @override
-  String get rubricEmpty => 'Describe the assignment, then tap Generate.';
+  String get rubricEmpty =>
+      'ଆସାଇନ୍‌ମେଣ୍ଟ ବର୍ଣ୍ଣନା କରନ୍ତୁ, ତା\'ପରେ \'ତିଆରି କରନ୍ତୁ\' ଟ୍ୟାପ୍ କରନ୍ତୁ।';
 
   @override
-  String get rubricAssignmentLabel => 'What is the assignment?';
+  String get rubricAssignmentLabel => 'ଆସାଇନ୍‌ମେଣ୍ଟ କ\'ଣ?';
 
   @override
-  String get rubricAssignmentHint => 'The rubric grades this assignment.';
+  String get rubricAssignmentHint =>
+      'ରୁବ୍ରିକ୍ ଏହି ଆସାଇନ୍‌ମେଣ୍ଟକୁ ମୂଲ୍ୟାୟନ କରେ।';
 
   @override
   String get rubricAssignmentPlaceholder =>
-      'For example, A Class 5 project on renewable energy';
+      'ଉଦାହରଣ ସ୍ୱରୂପ, ନବୀକରଣୀୟ ଶକ୍ତି ଉପରେ ଏକ ଶ୍ରେଣୀ 5 ପ୍ରକଳ୍ପ';
 
   @override
-  String get rubricAssignmentError => 'Please describe the assignment.';
+  String get rubricAssignmentError => 'ଦୟାକରି ଆସାଇନ୍‌ମେଣ୍ଟ ବର୍ଣ୍ଣନା କରନ୍ତୁ।';
 
   @override
-  String get rubricGradeLabel => 'Grade level';
+  String get rubricGradeLabel => 'ଶ୍ରେଣୀ ସ୍ତର';
 
   @override
-  String get rubricGradeAny => 'Any grade';
+  String get rubricGradeAny => 'ଯେକୌଣସି ଶ୍ରେଣୀ';
 
   @override
-  String get rubricSubjectLabel => 'Subject';
+  String get rubricSubjectLabel => 'ବିଷୟ';
 
   @override
-  String get rubricSubjectAny => 'Any subject';
+  String get rubricSubjectAny => 'ଯେକୌଣସି ବିଷୟ';
 
   @override
-  String get rubricOptional => 'Optional';
+  String get rubricOptional => 'ଐଚ୍ଛିକ';
 
   @override
-  String get rubricCriteriaColumn => 'Criteria';
+  String get rubricCriteriaColumn => 'ମାନଦଣ୍ଡ';
 
   @override
   String rubricPoints(String points) {
-    return '$points pts';
+    return '$points ପଏଣ୍ଟ';
   }
 
   @override
-  String get rubricScrollHint => 'Swipe across to see all levels.';
+  String get rubricScrollHint => 'ସବୁ ସ୍ତର ଦେଖିବାକୁ ପାର୍ଶ୍ୱକୁ ସ୍ୱାଇପ୍ କରନ୍ତୁ।';
 
   @override
   String get rubricNoContent =>
-      'No rubric came back for that. Please try a clearer assignment description.';
+      'ସେଥିପାଇଁ କୌଣସି ରୁବ୍ରିକ୍ ଆସିଲା ନାହିଁ। ଦୟାକରି ଆସାଇନ୍‌ମେଣ୍ଟର ଅଧିକ ସ୍ପଷ୍ଟ ବର୍ଣ୍ଣନା ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
-  String get rubricUpgradeTitle => 'A higher plan is needed';
+  String get rubricUpgradeTitle => 'ଏକ ଉଚ୍ଚ ଯୋଜନା ଆବଶ୍ୟକ';
 
   @override
   String get rubricUpgradeBody =>
-      'Rubric generation is part of a higher plan. Please upgrade to keep building rubrics.';
+      'ରୁବ୍ରିକ୍ ତିଆରି ଏକ ଉଚ୍ଚ ଯୋଜନାର ଅଂଶ। ରୁବ୍ରିକ୍ ତିଆରି ଜାରି ରଖିବା ପାଇଁ ଦୟାକରି ଅପଗ୍ରେଡ୍ କରନ୍ତୁ।';
 
   @override
-  String get rubricLimitTitle => 'You have reached your limit';
+  String get rubricLimitTitle => 'ଆପଣ ଆପଣଙ୍କ ସୀମାରେ ପହଞ୍ଚିଛନ୍ତି';
 
   @override
   String get rubricLimitBody =>
-      'You have used your rubrics for now. Please try again later or upgrade your plan.';
+      'ଆପଣ ଏବେ ପାଇଁ ଆପଣଙ୍କ ରୁବ୍ରିକ୍ ବ୍ୟବହାର କରିସାରିଛନ୍ତି। ଦୟାକରି ପରେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ କିମ୍ବା ଯୋଜନା ଅପଗ୍ରେଡ୍ କରନ୍ତୁ।';
 
   @override
   String get rubricRephrase =>
-      'We could not build a rubric from that. Please rephrase the assignment and try again.';
+      'ଆମେ ସେଥିରୁ ଏକ ରୁବ୍ରିକ୍ ତିଆରି କରିପାରିଲୁ ନାହିଁ। ଦୟାକରି ଆସାଇନ୍‌ମେଣ୍ଟ ପୁନର୍ବାର ଲେଖି ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
   String get rubricBusy =>
-      'The assistant is busy right now. Please try again in a moment.';
+      'ସହାୟକ ବର୍ତ୍ତମାନ ବ୍ୟସ୍ତ ଅଛି। ଦୟାକରି କିଛି ସମୟ ପରେ ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
   String get rubricTimeout =>
-      'This is taking longer than expected. Please try again.';
+      'ଏଥିରେ ଆଶା କରାଯାଇଥିବା ଠାରୁ ଅଧିକ ସମୟ ଲାଗୁଛି। ଦୟାକରି ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
-  String get rubricSignIn => 'Please sign in again to use this tool.';
+  String get rubricSignIn =>
+      'ଏହି ଉପକରଣ ବ୍ୟବହାର କରିବା ପାଇଁ ଦୟାକରି ପୁନର୍ବାର ସାଇନ୍ ଇନ୍ କରନ୍ତୁ।';
 
   @override
-  String get examPaperTitle => 'Exam Paper';
+  String get examPaperTitle => 'ପ୍ରଶ୍ନପତ୍ର';
 
   @override
   String get examPaperSubtitle =>
-      'Build a board-pattern exam paper with answer key';
+      'ଉତ୍ତର କି ସହିତ ବୋର୍ଡ ପ୍ୟାଟର୍ନ ପ୍ରଶ୍ନପତ୍ର ତିଆରି କରନ୍ତୁ';
 
   @override
   String get examPaperEmpty =>
-      'Choose a board, grade and subject, then tap Generate.';
+      'ଏକ ବୋର୍ଡ, ଶ୍ରେଣୀ ଓ ବିଷୟ ବାଛନ୍ତୁ, ତା\'ପରେ \'ତିଆରି କରନ୍ତୁ\' ଟ୍ୟାପ୍ କରନ୍ତୁ।';
 
   @override
-  String get examPaperBoardLabel => 'Board';
+  String get examPaperBoardLabel => 'ବୋର୍ଡ';
 
   @override
-  String get examPaperBoardHint => 'Select a board';
+  String get examPaperBoardHint => 'ଏକ ବୋର୍ଡ ବାଛନ୍ତୁ';
 
   @override
-  String get examPaperBoardError => 'Please choose a board.';
+  String get examPaperBoardError => 'ଦୟାକରି ଏକ ବୋର୍ଡ ବାଛନ୍ତୁ।';
 
   @override
-  String get examPaperGradeLabel => 'Grade level';
+  String get examPaperGradeLabel => 'ଶ୍ରେଣୀ ସ୍ତର';
 
   @override
-  String get examPaperGradeHint => 'Select a grade';
+  String get examPaperGradeHint => 'ଏକ ଶ୍ରେଣୀ ବାଛନ୍ତୁ';
 
   @override
-  String get examPaperGradeError => 'Please choose a grade level.';
+  String get examPaperGradeError => 'ଦୟାକରି ଏକ ଶ୍ରେଣୀ ସ୍ତର ବାଛନ୍ତୁ।';
 
   @override
-  String get examPaperSubjectLabel => 'Subject';
+  String get examPaperSubjectLabel => 'ବିଷୟ';
 
   @override
-  String get examPaperSubjectHint => 'Select a subject';
+  String get examPaperSubjectHint => 'ଏକ ବିଷୟ ବାଛନ୍ତୁ';
 
   @override
-  String get examPaperSubjectError => 'Please choose a subject.';
+  String get examPaperSubjectError => 'ଦୟାକରି ଏକ ବିଷୟ ବାଛନ୍ତୁ।';
 
   @override
-  String get examPaperSubjectOther => 'Other subject';
+  String get examPaperSubjectOther => 'ଅନ୍ୟ ବିଷୟ';
 
   @override
-  String get examPaperSubjectOtherLabel => 'Subject name';
+  String get examPaperSubjectOtherLabel => 'ବିଷୟର ନାମ';
 
   @override
-  String get examPaperSubjectOtherHint => 'For example, Economics';
+  String get examPaperSubjectOtherHint => 'ଉଦାହରଣ ସ୍ୱରୂପ, ଅର୍ଥଶାସ୍ତ୍ର';
 
   @override
-  String get examPaperSubjectOtherError => 'Please enter a subject.';
+  String get examPaperSubjectOtherError => 'ଦୟାକରି ଏକ ବିଷୟ ଲେଖନ୍ତୁ।';
 
   @override
-  String get examPaperChaptersLabel => 'Chapters';
+  String get examPaperChaptersLabel => 'ଅଧ୍ୟାୟ';
 
   @override
   String get examPaperChaptersHint =>
-      'Add the chapters to cover. Leave empty for the full syllabus where an official blueprint exists.';
+      'ଅନ୍ତର୍ଭୁକ୍ତ କରିବାକୁ ଥିବା ଅଧ୍ୟାୟ ଯୋଡ଼ନ୍ତୁ। ଆଧିକାରିକ ବ୍ଲୁପ୍ରିଣ୍ଟ ଥିଲେ ସମ୍ପୂର୍ଣ୍ଣ ପାଠ୍ୟକ୍ରମ ପାଇଁ ଏହା ଖାଲି ଛାଡ଼ନ୍ତୁ।';
 
   @override
-  String get examPaperChaptersPlaceholder => 'For example, Quadratic Equations';
+  String get examPaperChaptersPlaceholder => 'ଉଦାହରଣ ସ୍ୱରୂପ, ଦ୍ୱିଘାତ ସମୀକରଣ';
 
   @override
-  String get examPaperChaptersAdd => 'Add chapter';
+  String get examPaperChaptersAdd => 'ଅଧ୍ୟାୟ ଯୋଡ଼ନ୍ତୁ';
 
   @override
   String get examPaperChaptersError =>
-      'Please add at least one chapter for this board, grade and subject.';
+      'ଦୟାକରି ଏହି ବୋର୍ଡ, ଶ୍ରେଣୀ ଓ ବିଷୟ ପାଇଁ ଅନ୍ତତଃ ଗୋଟିଏ ଅଧ୍ୟାୟ ଯୋଡ଼ନ୍ତୁ।';
 
   @override
-  String get examPaperDifficultyLabel => 'Difficulty';
+  String get examPaperDifficultyLabel => 'କଠିନତା';
 
   @override
-  String get examPaperDifficultyEasy => 'Easy';
+  String get examPaperDifficultyEasy => 'ସହଜ';
 
   @override
-  String get examPaperDifficultyModerate => 'Moderate';
+  String get examPaperDifficultyModerate => 'ମଧ୍ୟମ';
 
   @override
-  String get examPaperDifficultyHard => 'Hard';
+  String get examPaperDifficultyHard => 'କଠିନ';
 
   @override
-  String get examPaperDifficultyMixed => 'Mixed';
+  String get examPaperDifficultyMixed => 'ମିଶ୍ରିତ';
 
   @override
-  String get examPaperIncludeAnswerKey => 'Include answer key';
+  String get examPaperIncludeAnswerKey => 'ଉତ୍ତର କି ଅନ୍ତର୍ଭୁକ୍ତ କରନ୍ତୁ';
 
   @override
-  String get examPaperIncludeMarkingScheme => 'Include marking scheme';
+  String get examPaperIncludeMarkingScheme =>
+      'ମାର୍କିଂ ସ୍କିମ୍ ଅନ୍ତର୍ଭୁକ୍ତ କରନ୍ତୁ';
 
   @override
-  String get examPaperInProgressTitle => 'Your paper is being prepared';
+  String get examPaperInProgressTitle => 'ଆପଣଙ୍କ ପ୍ରଶ୍ନପତ୍ର ପ୍ରସ୍ତୁତ ହେଉଛି';
 
   @override
   String get examPaperInProgressBody =>
-      'A full board paper takes a little longer to build. We are finishing it now and it will be saved for you.';
+      'ଏକ ସମ୍ପୂର୍ଣ୍ଣ ବୋର୍ଡ ପ୍ରଶ୍ନପତ୍ର ତିଆରି କରିବାକୁ ଟିକେ ଅଧିକ ସମୟ ଲାଗେ। ଆମେ ଏବେ ଏହା ଶେଷ କରୁଛୁ ଏବଂ ଏହା ଆପଣଙ୍କ ପାଇଁ ସେଭ୍ ହୋଇଯିବ।';
 
   @override
   String get examPaperInProgressLibraryHint =>
-      'Open the Library tab in a minute to find your finished paper.';
+      'ଏକ ମିନିଟ୍ ପରେ ଲାଇବ୍ରେରୀ ଟ୍ୟାବ୍ ଖୋଲି ଆପଣଙ୍କ ପ୍ରସ୍ତୁତ ପ୍ରଶ୍ନପତ୍ର ପାଆନ୍ତୁ।';
 
   @override
   String examPaperMaxMarks(String marks) {
-    return 'Max marks $marks';
+    return 'ପୂର୍ଣ୍ଣାଙ୍କ $marks';
   }
 
   @override
   String examPaperMarks(String marks) {
-    return '$marks marks';
+    return '$marks ମାର୍କ';
   }
 
   @override
   String examPaperSectionMarks(String marks) {
-    return '$marks marks';
+    return '$marks ମାର୍କ';
   }
 
   @override
   String examPaperPercent(String value) {
-    return '$value percent';
+    return '$value ପ୍ରତିଶତ';
   }
 
   @override
-  String get examPaperGeneralInstructions => 'General instructions';
+  String get examPaperGeneralInstructions => 'ସାଧାରଣ ନିର୍ଦ୍ଦେଶାବଳୀ';
 
   @override
-  String get examPaperInternalChoice => 'Or attempt';
+  String get examPaperInternalChoice => 'କିମ୍ବା ଏହା କରନ୍ତୁ';
 
   @override
-  String get examPaperAnswerKey => 'Answer';
+  String get examPaperAnswerKey => 'ଉତ୍ତର';
 
   @override
-  String get examPaperMarkingScheme => 'Marking scheme';
+  String get examPaperMarkingScheme => 'ମାର୍କିଂ ସ୍କିମ୍';
 
   @override
-  String get examPaperBlueprintTitle => 'Blueprint summary';
+  String get examPaperBlueprintTitle => 'ବ୍ଲୁପ୍ରିଣ୍ଟ ସାରାଂଶ';
 
   @override
-  String get examPaperBlueprintChapters => 'Marks by chapter';
+  String get examPaperBlueprintChapters => 'ଅଧ୍ୟାୟ ଅନୁସାରେ ମାର୍କ';
 
   @override
-  String get examPaperBlueprintDifficulty => 'Difficulty split';
+  String get examPaperBlueprintDifficulty => 'କଠିନତା ବିଭାଜନ';
 
   @override
-  String get examPaperPyqTitle => 'Previous-year questions';
+  String get examPaperPyqTitle => 'ପୂର୍ବ ବର୍ଷର ପ୍ରଶ୍ନ';
 
   @override
   String examPaperPyqChapterYear(String chapter, int year) {
@@ -1450,107 +1469,109 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String examPaperPyqYear(int year) {
-    return 'Year $year';
+    return 'ବର୍ଷ $year';
   }
 
   @override
   String get examPaperNoContent =>
-      'No exam paper came back for that. Please try fewer chapters or a different subject.';
+      'ସେଥିପାଇଁ କୌଣସି ପ୍ରଶ୍ନପତ୍ର ଆସିଲା ନାହିଁ। ଦୟାକରି କମ୍ ଅଧ୍ୟାୟ କିମ୍ବା ଅନ୍ୟ ବିଷୟ ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
-  String get examPaperSave => 'Save to Library';
+  String get examPaperSave => 'ଲାଇବ୍ରେରୀରେ ସେଭ୍ କରନ୍ତୁ';
 
   @override
-  String get examPaperSaving => 'Saving';
+  String get examPaperSaving => 'ସେଭ୍ ହେଉଛି';
 
   @override
-  String get examPaperSaved => 'Saved to your Library';
+  String get examPaperSaved => 'ଆପଣଙ୍କ ଲାଇବ୍ରେରୀରେ ସେଭ୍ ହେଲା';
 
   @override
-  String get examPaperSaveFailedTitle => 'Could not save';
+  String get examPaperSaveFailedTitle => 'ସେଭ୍ ହୋଇପାରିଲା ନାହିଁ';
 
   @override
   String get examPaperSaveFailedBody =>
-      'We could not save this paper to your library. Please try again.';
+      'ଆମେ ଏହି ପ୍ରଶ୍ନପତ୍ର ଆପଣଙ୍କ ଲାଇବ୍ରେରୀରେ ସେଭ୍ କରିପାରିଲୁ ନାହିଁ। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
-  String get examPaperSaveRetry => 'Try saving again';
+  String get examPaperSaveRetry => 'ପୁଣି ସେଭ୍ କରିବାକୁ ଚେଷ୍ଟା କରନ୍ତୁ';
 
   @override
-  String get examPaperUnstructuredTitle => 'We could not structure that paper';
+  String get examPaperUnstructuredTitle =>
+      'ଆମେ ସେହି ପ୍ରଶ୍ନପତ୍ର ସଜାଇ ପାରିଲୁ ନାହିଁ';
 
   @override
   String get examPaperUnstructuredBody =>
-      'The assistant could not lay this out as a full paper. Please remove a few chapters and generate again.';
+      'ସହାୟକ ଏହାକୁ ଏକ ସମ୍ପୂର୍ଣ୍ଣ ପ୍ରଶ୍ନପତ୍ର ଭାବେ ସଜାଇ ପାରିଲା ନାହିଁ। ଦୟାକରି କିଛି ଅଧ୍ୟାୟ ହଟାଇ ପୁଣି ତିଆରି କରନ୍ତୁ।';
 
   @override
-  String get examPaperUpgradeTitle => 'A higher plan is needed';
+  String get examPaperUpgradeTitle => 'ଏକ ଉଚ୍ଚ ଯୋଜନା ଆବଶ୍ୟକ';
 
   @override
   String get examPaperUpgradeBody =>
-      'Exam paper generation is part of a higher plan. Please upgrade to keep building papers.';
+      'ପ୍ରଶ୍ନପତ୍ର ତିଆରି ଏକ ଉଚ୍ଚ ଯୋଜନାର ଅଂଶ। ପ୍ରଶ୍ନପତ୍ର ତିଆରି ଜାରି ରଖିବା ପାଇଁ ଦୟାକରି ଅପଗ୍ରେଡ୍ କରନ୍ତୁ।';
 
   @override
-  String get examPaperLimitTitle => 'You have reached your limit';
+  String get examPaperLimitTitle => 'ଆପଣ ଆପଣଙ୍କ ସୀମାରେ ପହଞ୍ଚିଛନ୍ତି';
 
   @override
   String get examPaperLimitBody =>
-      'You have used your exam papers for now. Please try again later or upgrade your plan.';
+      'ଆପଣ ଏବେ ପାଇଁ ଆପଣଙ୍କ ପ୍ରଶ୍ନପତ୍ର ବ୍ୟବହାର କରିସାରିଛନ୍ତି। ଦୟାକରି ପରେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ କିମ୍ବା ଯୋଜନା ଅପଗ୍ରେଡ୍ କରନ୍ତୁ।';
 
   @override
   String get examPaperRephrase =>
-      'We could not build a paper from that. Please adjust the chapters and try again.';
+      'ଆମେ ସେଥିରୁ ଏକ ପ୍ରଶ୍ନପତ୍ର ତିଆରି କରିପାରିଲୁ ନାହିଁ। ଦୟାକରି ଅଧ୍ୟାୟ ବଦଳାଇ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
   String get examPaperBusy =>
-      'The assistant is busy right now. Please try again in a moment.';
+      'ସହାୟକ ବର୍ତ୍ତମାନ ବ୍ୟସ୍ତ ଅଛି। ଦୟାକରି କିଛି ସମୟ ପରେ ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
   String get examPaperTimeout =>
-      'This is taking longer than expected. Please try again.';
+      'ଏଥିରେ ଆଶା କରାଯାଇଥିବା ଠାରୁ ଅଧିକ ସମୟ ଲାଗୁଛି। ଦୟାକରି ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
-  String get examPaperSignIn => 'Please sign in again to use this tool.';
+  String get examPaperSignIn =>
+      'ଏହି ଉପକରଣ ବ୍ୟବହାର କରିବା ପାଇଁ ଦୟାକରି ପୁନର୍ବାର ସାଇନ୍ ଇନ୍ କରନ୍ତୁ।';
 
   @override
-  String get teacherTrainingTitle => 'Teaching Coach';
+  String get teacherTrainingTitle => 'ଶିକ୍ଷାଦାନ କୋଚ୍';
 
   @override
   String get teacherTrainingSubtitle =>
-      'Advice and strategy for a teaching question';
+      'ଏକ ଶିକ୍ଷାଦାନ ପ୍ରଶ୍ନ ପାଇଁ ପରାମର୍ଶ ଓ ରଣନୀତି';
 
   @override
-  String get teacherTrainingAction => 'Get advice';
+  String get teacherTrainingAction => 'ପରାମର୍ଶ ପାଆନ୍ତୁ';
 
   @override
   String get teacherTrainingEmpty =>
-      'Ask a teaching question to get strategies grounded in pedagogy.';
+      'ଶିକ୍ଷଣ ଶାସ୍ତ୍ର ଆଧାରିତ ରଣନୀତି ପାଇବାକୁ ଏକ ଶିକ୍ଷାଦାନ ପ୍ରଶ୍ନ ପଚାରନ୍ତୁ।';
 
   @override
-  String get teacherTrainingQuestionLabel => 'Your question';
+  String get teacherTrainingQuestionLabel => 'ଆପଣଙ୍କ ପ୍ରଶ୍ନ';
 
   @override
   String get teacherTrainingQuestionHint =>
-      'Ask about lesson design, classroom practice or assessment.';
+      'ପାଠ ଡିଜାଇନ୍, ଶ୍ରେଣୀଗୃହ ଅଭ୍ୟାସ କିମ୍ବା ମୂଲ୍ୟାୟନ ବିଷୟରେ ପଚାରନ୍ତୁ।';
 
   @override
   String get teacherTrainingQuestionPlaceholder =>
-      'For example, How can I keep a class of 40 engaged through a full lesson?';
+      'ଉଦାହରଣ ସ୍ୱରୂପ, 40 ଛାତ୍ରଙ୍କ ଶ୍ରେଣୀକୁ ପୂରା ପାଠ ପର୍ଯ୍ୟନ୍ତ କିପରି ଯୋଡ଼ି ରଖିବି?';
 
   @override
-  String get teacherTrainingQuestionError => 'Please enter a question.';
+  String get teacherTrainingQuestionError => 'ଦୟାକରି ଏକ ପ୍ରଶ୍ନ ଲେଖନ୍ତୁ।';
 
   @override
-  String get teacherTrainingSubjectLabel => 'Subject';
+  String get teacherTrainingSubjectLabel => 'ବିଷୟ';
 
   @override
-  String get teacherTrainingSubjectAny => 'Any subject';
+  String get teacherTrainingSubjectAny => 'ଯେକୌଣସି ବିଷୟ';
 
   @override
-  String get teacherTrainingOptional => 'Optional';
+  String get teacherTrainingOptional => 'ଐଚ୍ଛିକ';
 
   @override
-  String get teacherTrainingStrategiesTitle => 'Strategies';
+  String get teacherTrainingStrategiesTitle => 'ରଣନୀତି';
 
   @override
   String get teacherTrainingSectionQuestion => 'ପ୍ରଶ୍ନ';
@@ -1560,32 +1581,32 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get teacherTrainingNoContent =>
-      'No advice came back for that. Please try a clearer question.';
+      'ସେଥିପାଇଁ କୌଣସି ପରାମର୍ଶ ଆସିଲା ନାହିଁ। ଦୟାକରି ଅଧିକ ସ୍ପଷ୍ଟ ପ୍ରଶ୍ନ ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
-  String get teacherTrainingUpgradeTitle => 'A higher plan is needed';
+  String get teacherTrainingUpgradeTitle => 'ଏକ ଉଚ୍ଚ ଯୋଜନା ଆବଶ୍ୟକ';
 
   @override
   String get teacherTrainingUpgradeBody =>
-      'The Teaching Coach is part of a higher plan. Please upgrade to keep asking.';
+      'ଶିକ୍ଷାଦାନ କୋଚ୍ ଏକ ଉଚ୍ଚ ଯୋଜନାର ଅଂଶ। ପଚାରିବା ଜାରି ରଖିବା ପାଇଁ ଦୟାକରି ଅପଗ୍ରେଡ୍ କରନ୍ତୁ।';
 
   @override
-  String get teacherTrainingLimitTitle => 'You have reached your limit';
+  String get teacherTrainingLimitTitle => 'ଆପଣ ଆପଣଙ୍କ ସୀମାରେ ପହଞ୍ଚିଛନ୍ତି';
 
   @override
   String get teacherTrainingLimitBody =>
-      'You have used the Teaching Coach for now. Please try again later or upgrade your plan.';
+      'ଆପଣ ଏବେ ପାଇଁ ଶିକ୍ଷାଦାନ କୋଚ୍ ବ୍ୟବହାର କରିସାରିଛନ୍ତି। ଦୟାକରି ପରେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ କିମ୍ବା ଯୋଜନା ଅପଗ୍ରେଡ୍ କରନ୍ତୁ।';
 
   @override
-  String get teacherTrainingSeePricing => 'See plans and pricing';
+  String get teacherTrainingSeePricing => 'ଯୋଜନା ଏବଂ ମୂଲ୍ୟ ଦେଖନ୍ତୁ';
 
   @override
   String get teacherTrainingRephrase =>
-      'We could not build advice from that. Please rephrase the question and try again.';
+      'ଆମେ ସେଥିରୁ ପରାମର୍ଶ ତିଆରି କରିପାରିଲୁ ନାହିଁ। ଦୟାକରି ପ୍ରଶ୍ନ ପୁନର୍ବାର ଲେଖି ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
   String get teacherTrainingBusy =>
-      'The assistant is busy right now. Please try again in a moment.';
+      'ସହାୟକ ବର୍ତ୍ତମାନ ବ୍ୟସ୍ତ ଅଛି। ଦୟାକରି କିଛି ସମୟ ପରେ ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
   String teacherTrainingBusyRetryAfter(int seconds) {
@@ -1593,168 +1614,171 @@ class AppLocalizationsOr extends AppLocalizations {
       seconds,
       locale: localeName,
       other:
-          'The assistant is busy right now. Please try again in about $seconds seconds.',
+          'ସହାୟକ ବର୍ତ୍ତମାନ ବ୍ୟସ୍ତ ଅଛି। ଦୟାକରି ପ୍ରାୟ $seconds ସେକେଣ୍ଡରେ ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।',
       one:
-          'The assistant is busy right now. Please try again in about 1 second.',
+          'ସହାୟକ ବର୍ତ୍ତମାନ ବ୍ୟସ୍ତ ଅଛି। ଦୟାକରି ପ୍ରାୟ 1 ସେକେଣ୍ଡରେ ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।',
     );
     return '$_temp0';
   }
 
   @override
   String get teacherTrainingTimeout =>
-      'This is taking longer than expected. Please try again.';
+      'ଏଥିରେ ଆଶା କରାଯାଇଥିବା ଠାରୁ ଅଧିକ ସମୟ ଲାଗୁଛି। ଦୟାକରି ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
-  String get teacherTrainingSignIn => 'Please sign in again to use this tool.';
+  String get teacherTrainingSignIn =>
+      'ଏହି ଉପକରଣ ବ୍ୟବହାର କରିବା ପାଇଁ ଦୟାକରି ପୁନର୍ବାର ସାଇନ୍ ଇନ୍ କରନ୍ତୁ।';
 
   @override
-  String get parentMessageTitle => 'Parent Message';
+  String get parentMessageTitle => 'ଅଭିଭାବକଙ୍କ ପାଇଁ ବାର୍ତ୍ତା';
 
   @override
   String get parentMessageSubtitle =>
-      'Draft a message home in the parent\'s language';
+      'ଅଭିଭାବକଙ୍କ ଭାଷାରେ ଘରକୁ ଏକ ବାର୍ତ୍ତା ପ୍ରସ୍ତୁତ କରନ୍ତୁ';
 
   @override
-  String get parentMessageAction => 'Draft message';
+  String get parentMessageAction => 'ବାର୍ତ୍ତା ପ୍ରସ୍ତୁତ କରନ୍ତୁ';
 
   @override
   String get parentMessageEmpty =>
-      'Share the student and reason, and a caring message home will be drafted in the parent\'s language.';
+      'ଛାତ୍ର ଓ କାରଣ ଦିଅନ୍ତୁ, ଅଭିଭାବକଙ୍କ ଭାଷାରେ ଘରକୁ ଏକ ସ୍ନେହପୂର୍ଣ୍ଣ ବାର୍ତ୍ତା ପ୍ରସ୍ତୁତ ହେବ।';
 
   @override
-  String get parentMessageStudentLabel => 'Student name';
+  String get parentMessageStudentLabel => 'ଛାତ୍ରର ନାମ';
 
   @override
   String get parentMessageStudentPlaceholder =>
-      'The student the message is about';
+      'ଯାହା ବିଷୟରେ ବାର୍ତ୍ତା, ସେହି ଛାତ୍ର';
 
   @override
-  String get parentMessageStudentError => 'Please enter the student\'s name.';
+  String get parentMessageStudentError => 'ଦୟାକରି ଛାତ୍ରର ନାମ ଲେଖନ୍ତୁ।';
 
   @override
-  String get parentMessageClassLabel => 'Class';
+  String get parentMessageClassLabel => 'ଶ୍ରେଣୀ';
 
   @override
-  String get parentMessageClassPlaceholder => 'For example, Class 6A';
+  String get parentMessageClassPlaceholder => 'ଉଦାହରଣ ସ୍ୱରୂପ, ଶ୍ରେଣୀ 6A';
 
   @override
-  String get parentMessageClassError => 'Please enter the class.';
+  String get parentMessageClassError => 'ଦୟାକରି ଶ୍ରେଣୀ ଲେଖନ୍ତୁ।';
 
   @override
-  String get parentMessageSubjectLabel => 'Subject';
+  String get parentMessageSubjectLabel => 'ବିଷୟ';
 
   @override
-  String get parentMessageSubjectHint => 'Choose a subject';
+  String get parentMessageSubjectHint => 'ଏକ ବିଷୟ ବାଛନ୍ତୁ';
 
   @override
-  String get parentMessageSubjectError => 'Please choose a subject.';
+  String get parentMessageSubjectError => 'ଦୟାକରି ଏକ ବିଷୟ ବାଛନ୍ତୁ।';
 
   @override
-  String get parentMessageReasonLabel => 'Reason for the message';
+  String get parentMessageReasonLabel => 'ବାର୍ତ୍ତାର କାରଣ';
 
   @override
-  String get parentMessageReasonHint => 'Choose a reason';
+  String get parentMessageReasonHint => 'ଏକ କାରଣ ବାଛନ୍ତୁ';
 
   @override
-  String get parentMessageReasonError => 'Please choose a reason.';
+  String get parentMessageReasonError => 'ଦୟାକରି ଏକ କାରଣ ବାଛନ୍ତୁ।';
 
   @override
-  String get parentMessageReasonAbsences => 'Repeated absences';
+  String get parentMessageReasonAbsences => 'ବାରମ୍ବାର ଅନୁପସ୍ଥିତି';
 
   @override
-  String get parentMessageReasonPerformance => 'Academic support';
+  String get parentMessageReasonPerformance => 'ଶୈକ୍ଷିକ ସହାୟତା';
 
   @override
-  String get parentMessageReasonBehavior => 'Behaviour in class';
+  String get parentMessageReasonBehavior => 'ଶ୍ରେଣୀରେ ଆଚରଣ';
 
   @override
-  String get parentMessageReasonPositive => 'Good news to share';
+  String get parentMessageReasonPositive => 'ବାଣ୍ଟିବାକୁ ଭଲ ଖବର';
 
   @override
-  String get parentMessageAbsentDaysLabel => 'Days absent';
+  String get parentMessageAbsentDaysLabel => 'ଅନୁପସ୍ଥିତ ଦିନ';
 
   @override
   String get parentMessageAbsentDaysHint =>
-      'How many days in a row the student has been away.';
+      'ଛାତ୍ର କେତେ ଦିନ କ୍ରମାଗତ ଅନୁପସ୍ଥିତ ରହିଛି।';
 
   @override
-  String get parentMessageAbsentDaysPlaceholder => 'For example, 3';
+  String get parentMessageAbsentDaysPlaceholder => 'ଉଦାହରଣ ସ୍ୱରୂପ, 3';
 
   @override
-  String get parentMessageParentLanguageLabel => 'Parent\'s language';
+  String get parentMessageParentLanguageLabel => 'ଅଭିଭାବକଙ୍କ ଭାଷା';
 
   @override
   String get parentMessageParentLanguageHint =>
-      'The message is written in this language, which can differ from the app\'s.';
+      'ବାର୍ତ୍ତା ଏହି ଭାଷାରେ ଲେଖାଯାଏ, ଯାହା ଆପ୍‌ର ଭାଷାଠାରୁ ଅଲଗା ହୋଇପାରେ।';
 
   @override
   String get parentMessageParentLanguagePlaceholder =>
-      'Choose the parent\'s language';
+      'ଅଭିଭାବକଙ୍କ ଭାଷା ବାଛନ୍ତୁ';
 
   @override
   String get parentMessageParentLanguageError =>
-      'Please choose the parent\'s language.';
+      'ଦୟାକରି ଅଭିଭାବକଙ୍କ ଭାଷା ବାଛନ୍ତୁ।';
 
   @override
-  String get parentMessageContextLabel => 'What is prompting this?';
+  String get parentMessageContextLabel => 'ଏହାର କାରଣ କ\'ଣ?';
 
   @override
   String get parentMessageContextHint =>
-      'A short note on the situation helps shape the message.';
+      'ପରିସ୍ଥିତି ଉପରେ ଏକ ଛୋଟ ଟିପ୍ପଣୀ ବାର୍ତ୍ତାକୁ ଗଢ଼ିବାରେ ସାହାଯ୍ୟ କରେ।';
 
   @override
   String get parentMessageContextPlaceholder =>
-      'For example, missed the last two weeks of fractions';
+      'ଉଦାହରଣ ସ୍ୱରୂପ, ଭଗ୍ନାଂଶର ଶେଷ ଦୁଇ ସପ୍ତାହ ଛାଡ଼ିଛନ୍ତି';
 
   @override
-  String get parentMessageNoteLabel => 'Anything specific to mention?';
+  String get parentMessageNoteLabel =>
+      'ନିର୍ଦ୍ଦିଷ୍ଟ କିଛି ଉଲ୍ଲେଖ କରିବାକୁ ଅଛି କି?';
 
   @override
   String get parentMessageNoteHint =>
-      'A detail here is woven into the message.';
+      'ଏଠାରେ ଦିଆଯାଇଥିବା ବିବରଣୀ ବାର୍ତ୍ତାରେ ମିଶାଯାଏ।';
 
   @override
   String get parentMessageNotePlaceholder =>
-      'For example, doing well in group work';
+      'ଉଦାହରଣ ସ୍ୱରୂପ, ଗୋଷ୍ଠୀ କାର୍ଯ୍ୟରେ ଭଲ କରୁଛନ୍ତି';
 
   @override
-  String get parentMessageTeacherNameLabel => 'Your name';
+  String get parentMessageTeacherNameLabel => 'ଆପଣଙ୍କ ନାମ';
 
   @override
   String get parentMessageTeacherNameHint =>
-      'Signs off the message. Left blank, your profile name is used.';
+      'ବାର୍ତ୍ତାରେ ସ୍ୱାକ୍ଷର ହୁଏ। ଖାଲି ଛାଡ଼ିଲେ ଆପଣଙ୍କ ପ୍ରୋଫାଇଲ୍ ନାମ ବ୍ୟବହାର ହୁଏ।';
 
   @override
-  String get parentMessageTeacherNamePlaceholder => 'For example, Mrs. Rao';
+  String get parentMessageTeacherNamePlaceholder =>
+      'ଉଦାହରଣ ସ୍ୱରୂପ, ଶ୍ରୀମତୀ ରାଓ';
 
   @override
-  String get parentMessageSchoolNameLabel => 'School name';
+  String get parentMessageSchoolNameLabel => 'ବିଦ୍ୟାଳୟର ନାମ';
 
   @override
-  String get parentMessageSchoolNamePlaceholder => 'Your school\'s name';
+  String get parentMessageSchoolNamePlaceholder => 'ଆପଣଙ୍କ ବିଦ୍ୟାଳୟର ନାମ';
 
   @override
-  String get parentMessageOptional => 'Optional';
+  String get parentMessageOptional => 'ଐଚ୍ଛିକ';
 
   @override
   String parentMessageWordCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count words',
-      one: '1 word',
+      other: '$count ଶବ୍ଦ',
+      one: '1 ଶବ୍ଦ',
     );
     return '$_temp0';
   }
 
   @override
-  String get parentMessageCopy => 'Copy';
+  String get parentMessageCopy => 'କପି କରନ୍ତୁ';
 
   @override
-  String get parentMessageShare => 'Share';
+  String get parentMessageShare => 'ସେୟାର୍ କରନ୍ତୁ';
 
   @override
-  String get parentMessageCopied => 'Message copied';
+  String get parentMessageCopied => 'ବାର୍ତ୍ତା କପି ହେଲା';
 
   @override
   String get parentMessageSectionMessage => 'ବାର୍ତ୍ତା';
@@ -1767,32 +1791,32 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get parentMessageNoContent =>
-      'No message came back for that. Please add a little more context and try again.';
+      'ସେଥିପାଇଁ କୌଣସି ବାର୍ତ୍ତା ଆସିଲା ନାହିଁ। ଦୟାକରି ଟିକେ ଅଧିକ ପ୍ରସଙ୍ଗ ଯୋଡ଼ି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
   String get parentMessageMissingFields =>
-      'Please fill in the student, class, subject, reason and parent\'s language, then try again.';
+      'ଦୟାକରି ଛାତ୍ର, ଶ୍ରେଣୀ, ବିଷୟ, କାରଣ ଓ ଅଭିଭାବକଙ୍କ ଭାଷା ପୂରଣ କରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
-  String get parentMessageUpgradeTitle => 'A higher plan is needed';
+  String get parentMessageUpgradeTitle => 'ଏକ ଉଚ୍ଚ ଯୋଜନା ଆବଶ୍ୟକ';
 
   @override
   String get parentMessageUpgradeBody =>
-      'Parent messages are part of a higher plan. Please upgrade to keep drafting them.';
+      'ଅଭିଭାବକଙ୍କ ବାର୍ତ୍ତା ଏକ ଉଚ୍ଚ ଯୋଜନାର ଅଂଶ। ବାର୍ତ୍ତା ପ୍ରସ୍ତୁତି ଜାରି ରଖିବା ପାଇଁ ଦୟାକରି ଅପଗ୍ରେଡ୍ କରନ୍ତୁ।';
 
   @override
-  String get parentMessageLimitTitle => 'You have reached your limit';
+  String get parentMessageLimitTitle => 'ଆପଣ ଆପଣଙ୍କ ସୀମାରେ ପହଞ୍ଚିଛନ୍ତି';
 
   @override
   String get parentMessageLimitBody =>
-      'You have drafted your parent messages for now. Please try again later or upgrade your plan.';
+      'ଆପଣ ଏବେ ପାଇଁ ଆପଣଙ୍କ ଅଭିଭାବକ ବାର୍ତ୍ତା ପ୍ରସ୍ତୁତ କରିସାରିଛନ୍ତି। ଦୟାକରି ପରେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ କିମ୍ବା ଯୋଜନା ଅପଗ୍ରେଡ୍ କରନ୍ତୁ।';
 
   @override
-  String get parentMessageSeePricing => 'See plans and pricing';
+  String get parentMessageSeePricing => 'ଯୋଜନା ଏବଂ ମୂଲ୍ୟ ଦେଖନ୍ତୁ';
 
   @override
   String get parentMessageBusy =>
-      'The assistant is busy right now. Please try again in a moment.';
+      'ସହାୟକ ବର୍ତ୍ତମାନ ବ୍ୟସ୍ତ ଅଛି। ଦୟାକରି କିଛି ସମୟ ପରେ ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
   String parentMessageBusyRetryAfter(int seconds) {
@@ -1800,110 +1824,109 @@ class AppLocalizationsOr extends AppLocalizations {
       seconds,
       locale: localeName,
       other:
-          'The assistant is busy right now. Please try again in about $seconds seconds.',
+          'ସହାୟକ ବର୍ତ୍ତମାନ ବ୍ୟସ୍ତ ଅଛି। ଦୟାକରି ପ୍ରାୟ $seconds ସେକେଣ୍ଡରେ ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।',
       one:
-          'The assistant is busy right now. Please try again in about 1 second.',
+          'ସହାୟକ ବର୍ତ୍ତମାନ ବ୍ୟସ୍ତ ଅଛି। ଦୟାକରି ପ୍ରାୟ 1 ସେକେଣ୍ଡରେ ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।',
     );
     return '$_temp0';
   }
 
   @override
   String get parentMessageTimeout =>
-      'This is taking longer than expected. Please try again.';
+      'ଏଥିରେ ଆଶା କରାଯାଇଥିବା ଠାରୁ ଅଧିକ ସମୟ ଲାଗୁଛି। ଦୟାକରି ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
-  String get parentMessageSignIn => 'Please sign in again to use this tool.';
+  String get parentMessageSignIn =>
+      'ଏହି ଉପକରଣ ବ୍ୟବହାର କରିବା ପାଇଁ ଦୟାକରି ପୁନର୍ବାର ସାଇନ୍ ଇନ୍ କରନ୍ତୁ।';
 
   @override
-  String get assessTitle => 'Assess Assignment';
+  String get assessTitle => 'ଆସାଇନ୍‌ମେଣ୍ଟ ମୂଲ୍ୟାୟନ';
 
   @override
-  String get assessSubtitle =>
-      'Grade a student\'s handwritten work from a photo';
+  String get assessSubtitle => 'ଫଟୋରୁ ଛାତ୍ରର ହସ୍ତଲିଖିତ କାର୍ଯ୍ୟ ମୂଲ୍ୟାୟନ କରନ୍ତୁ';
 
   @override
   String get assessEmpty =>
-      'Add a photo of the student\'s work, then tap Assess.';
+      'ଛାତ୍ରର କାର୍ଯ୍ୟର ଏକ ଫଟୋ ଯୋଡ଼ନ୍ତୁ, ତା\'ପରେ \'ମୂଲ୍ୟାୟନ କରନ୍ତୁ\' ଟ୍ୟାପ୍ କରନ୍ତୁ।';
 
   @override
-  String get assessSubmit => 'Assess';
+  String get assessSubmit => 'ମୂଲ୍ୟାୟନ କରନ୍ତୁ';
 
   @override
-  String get assessImageLabel => 'Student work photo';
+  String get assessImageLabel => 'ଛାତ୍ରର କାର୍ଯ୍ୟର ଫଟୋ';
 
   @override
-  String get assessImageHint => 'Take a clear photo of the whole page.';
+  String get assessImageHint => 'ପୂରା ପୃଷ୍ଠାର ଏକ ସ୍ପଷ୍ଟ ଫଟୋ ଉଠାନ୍ତୁ।';
 
   @override
-  String get assessImageError => 'Please add a photo of the student\'s work.';
+  String get assessImageError => 'ଦୟାକରି ଛାତ୍ରର କାର୍ଯ୍ୟର ଏକ ଫଟୋ ଯୋଡ଼ନ୍ତୁ।';
 
   @override
-  String get assessModeLabel => 'What do you need?';
+  String get assessModeLabel => 'ଆପଣଙ୍କୁ କ\'ଣ ଦରକାର?';
 
   @override
   String get assessModeHint =>
-      'Grade reads and scores the work. Read only returns the transcript. Score a transcript grades text you paste in.';
+      '\'ମୂଲ୍ୟାୟନ\' କାର୍ଯ୍ୟ ପଢ଼ି ମାର୍କ ଦିଏ। \'କେବଳ ପଢ଼ନ୍ତୁ\' କେବଳ ଲେଖା ଫେରାଏ। \'ଲେଖା ମୂଲ୍ୟାୟନ\' ଆପଣ ପେଷ୍ଟ କରିଥିବା ଲେଖାକୁ ମାର୍କ ଦିଏ।';
 
   @override
-  String get assessModeFull => 'Grade';
+  String get assessModeFull => 'ମୂଲ୍ୟାୟନ';
 
   @override
-  String get assessModeTranscribe => 'Read only';
+  String get assessModeTranscribe => 'କେବଳ ପଢ଼ନ୍ତୁ';
 
   @override
-  String get assessModeScore => 'Score a transcript';
+  String get assessModeScore => 'ଲେଖା ମୂଲ୍ୟାୟନ';
 
   @override
-  String get assessTranscriptLabel => 'Corrected transcript';
+  String get assessTranscriptLabel => 'ସଂଶୋଧିତ ଲେଖା';
 
   @override
   String get assessTranscriptHint =>
-      'Paste the corrected text to grade instead of re-reading the photo.';
+      'ଫଟୋ ପୁଣି ପଢ଼ିବା ବଦଳରେ ମୂଲ୍ୟାୟନ ପାଇଁ ସଂଶୋଧିତ ଲେଖା ପେଷ୍ଟ କରନ୍ତୁ।';
 
   @override
   String get assessTranscriptPlaceholder =>
-      'Type or paste the student\'s corrected answers';
+      'ଛାତ୍ରର ସଂଶୋଧିତ ଉତ୍ତର ଟାଇପ୍ କରନ୍ତୁ କିମ୍ବା ପେଷ୍ଟ କରନ୍ତୁ';
 
   @override
-  String get assessOptional => 'Optional';
+  String get assessOptional => 'ଐଚ୍ଛିକ';
 
   @override
   String get assessRubricNote =>
-      'Without a rubric, the work is graded on a general rubric: understanding, accuracy, presentation and completion.';
+      'ରୁବ୍ରିକ୍ ନଥିଲେ, କାର୍ଯ୍ୟ ଏକ ସାଧାରଣ ରୁବ୍ରିକ୍ ଉପରେ ମୂଲ୍ୟାୟନ ହୁଏ: ବୁଝାମଣା, ସଠିକତା, ଉପସ୍ଥାପନ ଓ ସମ୍ପୂର୍ଣ୍ଣତା।';
 
   @override
-  String get assessPrivacyNote =>
-      'The student\'s name is never sent for grading.';
+  String get assessPrivacyNote => 'ମୂଲ୍ୟାୟନ ପାଇଁ ଛାତ୍ରର ନାମ କେବେ ପଠାଯାଏ ନାହିଁ।';
 
   @override
-  String get assessScoreLabel => 'Overall score';
+  String get assessScoreLabel => 'ସାମଗ୍ରିକ ମାର୍କ';
 
   @override
-  String get assessScoreOutOf => 'out of 100';
+  String get assessScoreOutOf => '100ରୁ';
 
   @override
   String assessPoints(String earned, String possible) {
-    return '$earned of $possible points';
+    return '$possible ପଏଣ୍ଟରୁ $earned';
   }
 
   @override
   String assessConfidence(String percent) {
-    return 'Confidence $percent%';
+    return 'ନିଶ୍ଚିତତା $percent%';
   }
 
   @override
   String assessRubricUsed(String title) {
-    return 'Graded against: $title';
+    return 'ଏହା ଅନୁସାରେ ମୂଲ୍ୟାୟନ: $title';
   }
 
   @override
-  String get assessLowConfidence => 'Low confidence';
+  String get assessLowConfidence => 'କମ୍ ନିଶ୍ଚିତତା';
 
   @override
-  String get assessTranscriptSection => 'What the student wrote';
+  String get assessTranscriptSection => 'ଛାତ୍ର କ\'ଣ ଲେଖିଛନ୍ତି';
 
   @override
-  String get assessCriteriaSection => 'Scores by criterion';
+  String get assessCriteriaSection => 'ମାନଦଣ୍ଡ ଅନୁସାରେ ମାର୍କ';
 
   @override
   String assessCriterionPoints(String points, String max) {
@@ -1911,69 +1934,70 @@ class AppLocalizationsOr extends AppLocalizations {
   }
 
   @override
-  String get assessStrengthsSection => 'Strengths';
+  String get assessStrengthsSection => 'ଭଲ ଦିଗ';
 
   @override
-  String get assessImprovementsSection => 'To work on';
+  String get assessImprovementsSection => 'ଉନ୍ନତି ପାଇଁ';
 
   @override
-  String get assessNextStepsSection => 'Next steps';
+  String get assessNextStepsSection => 'ପରବର୍ତ୍ତୀ ପଦକ୍ଷେପ';
 
   @override
-  String get assessTeacherNoteSection => 'Note for the student';
+  String get assessTeacherNoteSection => 'ଛାତ୍ର ପାଇଁ ଟିପ୍ପଣୀ';
 
   @override
-  String get assessWarningsSection => 'Please check';
+  String get assessWarningsSection => 'ଦୟାକରି ଯାଞ୍ଚ କରନ୍ତୁ';
 
   @override
   String get assessWarningBlank =>
-      'This page looks blank. Please check the photo and try again.';
+      'ଏହି ପୃଷ୍ଠା ଖାଲି ଦେଖାଯାଉଛି। ଦୟାକରି ଫଟୋ ଯାଞ୍ଚ କରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
   String get assessWarningLowContrast =>
-      'The photo is faint. A brighter photo will grade more accurately.';
+      'ଫଟୋ ଫିକା ଅଛି। ଅଧିକ ଉଜ୍ଜ୍ୱଳ ଫଟୋ ଅଧିକ ସଠିକ୍ ମୂଲ୍ୟାୟନ ଦେବ।';
 
   @override
-  String get assessWarningPartial => 'Only part of the work could be read.';
+  String get assessWarningPartial => 'କାର୍ଯ୍ୟର କେବଳ ଏକ ଅଂଶ ପଢ଼ାଯାଇପାରିଲା।';
 
   @override
   String get assessWarningLanguageMismatch =>
-      'The writing may be in a different language than expected.';
+      'ଲେଖା ଆଶା କରାଯାଇଥିବା ଭାଷାଠାରୁ ଅଲଗା ଭାଷାରେ ହୋଇପାରେ।';
 
   @override
   String get assessNoContent =>
-      'No assessment came back. Please try a clearer photo.';
+      'କୌଣସି ମୂଲ୍ୟାୟନ ଆସିଲା ନାହିଁ। ଦୟାକରି ଅଧିକ ସ୍ପଷ୍ଟ ଫଟୋ ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
-  String get assessSignIn => 'Please sign in again to grade an assignment.';
+  String get assessSignIn =>
+      'ଆସାଇନ୍‌ମେଣ୍ଟ ମୂଲ୍ୟାୟନ କରିବାକୁ ଦୟାକରି ପୁଣି ସାଇନ୍ ଇନ୍ କରନ୍ତୁ।';
 
   @override
-  String get assessUpgradeTitle => 'A higher plan is needed';
+  String get assessUpgradeTitle => 'ଏକ ଉଚ୍ଚ ଯୋଜନା ଆବଶ୍ୟକ';
 
   @override
   String get assessUpgradeBody =>
-      'Grading handwritten work is part of a higher plan. Upgrade to keep assessing.';
+      'ହସ୍ତଲିଖିତ କାର୍ଯ୍ୟ ମୂଲ୍ୟାୟନ ଏକ ଉଚ୍ଚ ଯୋଜନାର ଅଂଶ। ମୂଲ୍ୟାୟନ ଜାରି ରଖିବାକୁ ଅପଗ୍ରେଡ୍ କରନ୍ତୁ।';
 
   @override
-  String get assessDailyLimitTitle => 'That is all your assessments for today';
+  String get assessDailyLimitTitle => 'ଆଜି ପାଇଁ ଆପଣଙ୍କ ସମସ୍ତ ମୂଲ୍ୟାୟନ ସରିଗଲା';
 
   @override
   String get assessDailyLimitBody =>
-      'Your plan includes a set number of assessments each day. They reset tomorrow, or you can raise the limit on a higher plan.';
+      'ଆପଣଙ୍କ ଯୋଜନାରେ ପ୍ରତିଦିନ ନିର୍ଦ୍ଦିଷ୍ଟ ସଂଖ୍ୟକ ମୂଲ୍ୟାୟନ ଅଛି। ସେଗୁଡ଼ିକ ଆସନ୍ତାକାଲି ପୁଣି ଆରମ୍ଭ ହେବ, କିମ୍ବା ଆପଣ ଉଚ୍ଚ ଯୋଜନାରେ ସୀମା ବଢ଼ାଇପାରିବେ।';
 
   @override
-  String get assessLimitTitle => 'You have reached your assessment limit';
+  String get assessLimitTitle => 'ଆପଣ ଆପଣଙ୍କ ମୂଲ୍ୟାୟନ ସୀମାରେ ପହଞ୍ଚିଛନ୍ତି';
 
   @override
   String get assessLimitBody =>
-      'You have used all the assessments in your plan. They reset next month, or you can raise the limit on a higher plan.';
+      'ଆପଣ ଆପଣଙ୍କ ଯୋଜନାର ସମସ୍ତ ମୂଲ୍ୟାୟନ ବ୍ୟବହାର କରିଛନ୍ତି। ସେଗୁଡ଼ିକ ଆସନ୍ତା ମାସ ପୁଣି ଆରମ୍ଭ ହେବ, କିମ୍ବା ଆପଣ ଉଚ୍ଚ ଯୋଜନାରେ ସୀମା ବଢ଼ାଇପାରିବେ।';
 
   @override
-  String get assessSeePricing => 'See plans';
+  String get assessSeePricing => 'ଯୋଜନା ଦେଖନ୍ତୁ';
 
   @override
   String get assessBusy =>
-      'The grading model is busy right now. Please try again in a minute.';
+      'ମୂଲ୍ୟାୟନ ମଡେଲ ବର୍ତ୍ତମାନ ବ୍ୟସ୍ତ ଅଛି। ଦୟାକରି ଏକ ମିନିଟ୍‌ରେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
   String assessBusyRetryAfter(int seconds) {
@@ -1981,20 +2005,20 @@ class AppLocalizationsOr extends AppLocalizations {
       seconds,
       locale: localeName,
       other:
-          'The grading model is busy right now. Please try again in about $seconds seconds.',
+          'ମୂଲ୍ୟାୟନ ମଡେଲ ବର୍ତ୍ତମାନ ବ୍ୟସ୍ତ ଅଛି। ଦୟାକରି ପ୍ରାୟ $seconds ସେକେଣ୍ଡରେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।',
       one:
-          'The grading model is busy right now. Please try again in about 1 second.',
+          'ମୂଲ୍ୟାୟନ ମଡେଲ ବର୍ତ୍ତମାନ ବ୍ୟସ୍ତ ଅଛି। ଦୟାକରି ପ୍ରାୟ 1 ସେକେଣ୍ଡରେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।',
     );
     return '$_temp0';
   }
 
   @override
   String get assessTimeout =>
-      'Grading is taking longer than usual. Please try again.';
+      'ମୂଲ୍ୟାୟନ ସାଧାରଣ ଠାରୁ ଅଧିକ ସମୟ ନେଉଛି। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
 
   @override
   String get assessRephrase =>
-      'The photo could not be graded. Please re-upload a clearer photo.';
+      'ଫଟୋ ମୂଲ୍ୟାୟନ କରାଯାଇପାରିଲା ନାହିଁ। ଦୟାକରି ଅଧିକ ସ୍ପଷ୍ଟ ଫଟୋ ପୁଣି ଅପଲୋଡ୍ କରନ୍ତୁ।';
 
   @override
   String get assessSectionWork => 'ଛାତ୍ରର କାର୍ଯ୍ୟ';
@@ -2022,7 +2046,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get vidyaGreeting =>
-      'Welcome, teacher. Speak in your language, and I will prepare your work.';
+      'ସ୍ୱାଗତ, ଶିକ୍ଷକ ମହୋଦୟ। ଆପଣଙ୍କ ଭାଷାରେ କୁହନ୍ତୁ, ମୁଁ ଆପଣଙ୍କ କାମ ପ୍ରସ୍ତୁତ କରିବି।';
 
   @override
   String get vidyaHeroBadge => 'ଆପଣଙ୍କ AI ଶିକ୍ଷାଦାନ ସହାୟକ';
@@ -2624,7 +2648,7 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String videoStorytellerViewAll(int count) {
-    return 'View all $count';
+    return 'ସବୁ $count ଦେଖନ୍ତୁ';
   }
 
   @override
@@ -3070,7 +3094,8 @@ class AppLocalizationsOr extends AppLocalizations {
   String get inboxComposerSend => 'ପଠାନ୍ତୁ';
 
   @override
-  String get inboxComposerTooLong => 'Message too long. Please shorten it.';
+  String get inboxComposerTooLong =>
+      'ବାର୍ତ୍ତା ବହୁତ ଲମ୍ବା। ଦୟାକରି ଏହାକୁ ଛୋଟ କରନ୍ତୁ।';
 
   @override
   String get inboxLoadOlder => 'ପୁରୁଣା ସନ୍ଦେଶ ଲୋଡ୍ କରନ୍ତୁ';
