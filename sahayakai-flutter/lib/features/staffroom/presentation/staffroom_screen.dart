@@ -76,9 +76,8 @@ class StaffroomFeedView extends ConsumerWidget {
         padding: AppSpacing.pagePadding,
         child: AppSkeleton(lines: 6),
       ),
-      error: (_, _) => _StaffroomError(
-        onRetry: () => ref.invalidate(unifiedFeedProvider),
-      ),
+      error: (_, _) =>
+          _StaffroomError(onRetry: () => ref.invalidate(unifiedFeedProvider)),
       data: (feed) => _StaffroomReady(feed: feed),
     );
   }
@@ -110,7 +109,8 @@ class _StaffroomReady extends ConsumerWidget {
     final myGroups = ref.watch(myGroupsProvider).valueOrNull ?? const <Group>[];
     final discover =
         ref.watch(discoverGroupsProvider).valueOrNull ?? const <Group>[];
-    final people = ref.watch(recommendedTeachersProvider).valueOrNull ??
+    final people =
+        ref.watch(recommendedTeachersProvider).valueOrNull ??
         const <TeacherSuggestion>[];
 
     return RefreshIndicator(
@@ -185,8 +185,31 @@ class _StaffroomReady extends ConsumerWidget {
   }
 }
 
-/// A horizontal strip of [GroupChip]s. The height is bounded (and the chip
-/// content maxLines-capped) so it never RenderFlex-overflows at textScale 1.3.
+/// A horizontal strip of [GroupChip]s, sized to the tallest chip.
+///
+/// ## Why this is measured, not a constant
+/// This strip used to be a `SizedBox(height: 116)` wrapping a horizontal
+/// `ListView.separated`. A horizontal list has to be given a cross-axis extent
+/// from somewhere, and 116 was the number a Latin group name at textScale 1.0
+/// happened to need. It is not a number the *content* agrees with: [GroupChip]
+/// stacks a two-line `titleSmall` name over a `dataMedium` member count beside
+/// a 48dp [IconWell], inside [AppCard]'s 16dp padding and 1dp glass border. A
+/// Bengali name at textScale 1.3 wants 117dp of that box's 114dp of usable
+/// height — the RenderFlex overflowed by exactly 3dp, and a teacher on a cheap
+/// Android with large text saw the member count clipped.
+///
+/// Bumping 116 to 120 would only move the cliff: Devanagari and Malayalam stack
+/// taller matras still, and textScale goes to 2.0. So the extent is now
+/// **derived from the content**. [IntrinsicHeight] asks the row how tall its
+/// tallest chip actually wants to be and tightens the strip to that, and
+/// `CrossAxisAlignment.stretch` levels every chip to the same measured height
+/// so the strip still reads as one even row.
+///
+/// The lazy `ListView` gives way to a `SingleChildScrollView` + `Row` because a
+/// viewport reports no intrinsic dimensions — it cannot be measured, only
+/// bounded. That trade is safe here: `groups` is a single teacher's group
+/// membership (a handful of chips), not an unbounded feed, so the whole row is
+/// cheap to build and to measure eagerly.
 class _GroupStrip extends StatelessWidget {
   const _GroupStrip({required this.groups});
 
@@ -194,21 +217,22 @@ class _GroupStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 116,
-      child: ListView.separated(
+    return IntrinsicHeight(
+      child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         clipBehavior: Clip.none,
-        itemCount: groups.length,
-        separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.space3),
-        itemBuilder: (context, index) {
-          final group = groups[index];
-          return GroupChip(
-            key: ValueKey<String>('group-chip-${group.id}'),
-            group: group,
-            onTap: () => context.push(Routes.groupDetailPath(group.id)),
-          );
-        },
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: AppSpacing.space3,
+          children: [
+            for (final group in groups)
+              GroupChip(
+                key: ValueKey<String>('group-chip-${group.id}'),
+                group: group,
+                onTap: () => context.push(Routes.groupDetailPath(group.id)),
+              ),
+          ],
+        ),
       ),
     );
   }
