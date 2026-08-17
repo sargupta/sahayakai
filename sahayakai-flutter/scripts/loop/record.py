@@ -101,14 +101,23 @@ def main() -> int:
                   f"bash scripts/loop/gate.sh {unit.get('gateProfile')}",
                   file=sys.stderr)
             return 2
-        # And it must be the profile this unit actually requires. A `fast` run
-        # is not evidence for a unit whose contract demands `release`.
+        # And it must be AT LEAST the profile this unit requires. A `fast` run
+        # is not evidence for a unit demanding `release` — but a `native` run is
+        # perfectly good evidence for one demanding `standard`, because the
+        # profiles are strictly nested supersets. Requiring exact equality
+        # rejected a unit that had just passed a STRONGER ladder, which pushes
+        # toward running the weaker gate to satisfy the bookkeeping — exactly
+        # backwards.
+        STRENGTH = {"fast": 0, "standard": 1, "i18n": 2, "native": 3, "release": 4}
         want = unit.get("gateProfile")
-        if want and gate.get("profile") != want:
-            print(f"record: REFUSED — {a.unit} requires gate profile '{want}' "
-                  f"but the recorded run was '{gate.get('profile')}'.",
-                  file=sys.stderr)
-            return 2
+        if want:
+            need = STRENGTH.get(want, 1)
+            have = STRENGTH.get(gate.get("profile", ""), -1)
+            if have < need:
+                print(f"record: REFUSED — {a.unit} requires gate profile "
+                      f"'{want}' or stronger, but the recorded run was "
+                      f"'{gate.get('profile')}'.", file=sys.stderr)
+                return 2
         # The gate runs on the working tree BEFORE the commit, so its recorded
         # sha is the commit's parent. Both are valid evidence for this unit and
         # nothing else is: `parent` proves the gate judged exactly the tree that
