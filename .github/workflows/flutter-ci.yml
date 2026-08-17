@@ -1,0 +1,195 @@
+name: Flutter CI
+
+# The Flutter app had NO CI at all until 2026-08-17. An audit that day found
+# `grep -ril flutter .github/workflows/` returned zero matches, while
+# quality-gates.yml scoped its diff to sahayakai-main/src/** and triggered only
+# on develop/main — so 182 commits of Android work had never been touched by an
+# automated check. Every gate was a local script somebody remembered to run.
+#
+# This runs the same ladder the loop harness runs locally
+# (scripts/loop/gate.sh), so a green run here means the same thing a green
+# local gate means.
+
+on:
+  push:
+    branches: [feature/flutter-rebuild]
+    paths:
+      - 'sahayakai-flutter/**'
+      - '.github/workflows/flutter-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'sahayakai-flutter/**'
+      - '.github/workflows/flutter-ci.yml'
+  workflow_dispatch:
+    inputs:
+      update_goldens:
+        description: >-
+          Re-baseline the golden PNGs on Linux and commit them. Flutter goldens
+          are NOT portable across host platforms: baselines generated on a
+          developer Mac will not match ubuntu-latest. CI is the sole authority,
+          and this input is how its baselines get established.
+        type: boolean
+        default: false
+
+concurrency:
+  group: flutter-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: sahayakai-flutter
+
+env:
+  FLUTTER_VERSION: 3.41.6
+
+jobs:
+  analyze:
+    name: 'Gate 1: codegen, analyze, tokens, i18n'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - name: pub get
+        run: flutter pub get
+
+      # Codegen must be IDEMPOTENT, not merely equal to HEAD: a unit whose job
+      # is committing regenerated output would fail a HEAD comparison by
+      # definition. Run the generator; nothing further may change.
+      - name: codegen is idempotent
+        run: |
+          before=$(find lib -name '*.g.dart' -exec shasum {} + | shasum)
+          dart run build_runner build --delete-conflicting-outputs
+          after=$(find lib -name '*.g.dart' -exec shasum {} + | shasum)
+          if [ "$before" != "$after" ]; then
+            echo "::error::source and generated output disagree — run build_runner and commit"
+            git status --porcelain -- ':(glob)lib/**/*.g.dart'
+            exit 1
+          fi
+
+      - name: analyze
+        run: flutter analyze
+
+      - name: token guard
+        run: bash scripts/token_guard.sh
+
+      # The check gen-l10n structurally cannot do. It does not fail on a missing
+      # key — it bakes the ENGLISH string into the generated locale class, which
+      # is how 4,760 strings went missing while analyze and 1,750 tests stayed
+      # green.
+      - name: i18n audit (11 locales, 5 checks)
+        run: python3 scripts/loop/i18n_audit.py
+
+      - name: guards can still fail
+        run: bash scripts/loop/selftest.sh
+
+  test:
+    name: 'Gate 2: unit + widget tests'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      # Goldens are excluded here and owned by their own job: they are the only
+      # rung whose result depends on the host platform.
+      - name: test
+        run: flutter test --reporter expanded --exclude-tags golden
+
+  goldens:
+    name: 'Gate 3: golden baselines (Linux is the authority)'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # A commit-back needs real history, not a shallow clone.
+          fetch-depth: 0
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+
+      - name: re-baseline on Linux
+        if: github.event_name == 'workflow_dispatch' && inputs.update_goldens
+        run: flutter test --tags golden --update-goldens
+
+      - name: commit re-baselined goldens
+        if: github.event_name == 'workflow_dispatch' && inputs.update_goldens
+        env:
+          # Never interpolate a ref directly into a shell command. A branch name
+          # is attacker-influencable text, and `git push origin HEAD:${{ ... }}`
+          # would hand it straight to bash.
+          TARGET_REF: ${{ github.ref_name }}
+        run: |
+          # This job can WRITE to the repository, so it enforces the same branch
+          # policy the build loop follows: only the feature branch, never main.
+          # A dispatch triggered from another ref re-baselines and uploads, but
+          # does not push.
+          if [ "$TARGET_REF" != "feature/flutter-rebuild" ]; then
+            echo "::error::refusing to push goldens to '$TARGET_REF' — this job only writes to feature/flutter-rebuild"
+            exit 1
+          fi
+          if git diff --quiet -- test/golden; then
+            echo "goldens already match this platform — nothing to commit"
+            exit 0
+          fi
+          git config user.name  'Abhishek Gupta'
+          git config user.email 'abhi.ist.15@gmail.com'
+          git add test/golden
+          git commit -m 'test(golden): re-baseline on linux (CI is the authority)'
+          git push origin "HEAD:refs/heads/$TARGET_REF"
+
+      - name: verify goldens
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.update_goldens) }}
+        run: flutter test --tags golden
+
+      # Without this a golden failure is unreadable: the diff exists only as a
+      # file in the runner's workspace.
+      - name: upload golden diffs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-failures
+          path: sahayakai-flutter/test/**/failures/*.png
+          if-no-files-found: ignore
+
+  build:
+    name: 'Gate 4: debug APK'
+    runs-on: ubuntu-latest
+    needs: [analyze]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+
+      # analyze and test run the analysis server and the test VM. Neither
+      # compiles the release kernel snapshot or invokes Gradle. This repo has
+      # already lost a build to that blind spot: record 5.2.1 capped
+      # record_linux below 1.0.0, resolving a stale sibling whose hasPermission
+      # signature no longer matched the platform interface. Analyze was clean,
+      # every test was green, and `flutter build apk` was broken.
+      - name: build debug APK
+        run: flutter build apk --debug
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: sahayakai-flutter/build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
