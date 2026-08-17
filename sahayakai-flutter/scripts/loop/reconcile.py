@@ -283,25 +283,36 @@ def reconcile(state: dict) -> list[dict]:
             gate_run = {}
     gate_ok_here = (gate_run.get("exit") == 0 and gate_run.get("atSha") == head)
 
+    # `stale` is included, not just `done`: a unit demoted on an earlier wake
+    # must be able to recover when a stronger gate later proves it at this head.
+    # Restricting this to `done` stranded U0.1 permanently — it decayed once,
+    # and every later passing gate was then ignored because it was no longer
+    # `done` to begin with.
     for u in state.get("queue", []):
-        if u.get("status") != "done":
+        if u.get("status") not in ("done", "stale"):
             continue
-        changed = files_changed_since(u.get("verifiedAtSha", ""), u.get("files", []))
-        if not changed:
+        if not u.get("verifiedAtSha"):
+            continue
+        changed = files_changed_since(u["verifiedAtSha"], u.get("files", []))
+        if not changed and u.get("status") == "done":
             continue
         need = STRENGTH.get(u.get("gateProfile", "standard"), 1)
         have = STRENGTH.get(gate_run.get("profile", ""), -1)
         if gate_ok_here and have >= need and gate_run.get("unit") != u["id"]:
+            was = u.get("status")
+            u["status"] = "done"
             u["verifiedAtSha"] = head
             u.setdefault("notes", []).append(
-                f"re-affirmed at {now}: {len(changed)} declared file(s) changed, but "
-                f"{gate_run.get('unit')}'s '{gate_run.get('profile')}' gate passed at "
-                f"{head[:9]} and runs the same ladder at equal-or-greater strength")
+                f"re-affirmed at {now} (was {was}): {len(changed)} declared file(s) "
+                f"changed, but {gate_run.get('unit')}'s '{gate_run.get('profile')}' "
+                f"gate passed at {head[:9]} and runs the same ladder at "
+                f"equal-or-greater strength")
             continue
-        u["status"] = "stale"
-        u.setdefault("notes", []).append(
-            f"auto-demoted to stale at {now}: {len(changed)} declared file(s) "
-            f"changed since {u.get('verifiedAtSha', '')[:9]} — re-gate required")
+        if changed and u.get("status") == "done":
+            u["status"] = "stale"
+            u.setdefault("notes", []).append(
+                f"auto-demoted to stale at {now}: {len(changed)} declared file(s) "
+                f"changed since {u['verifiedAtSha'][:9]} — re-gate required")
 
     # A3 — void any measurement not taken at HEAD. Never leave it green.
     for key in ("analyze", "testRun"):

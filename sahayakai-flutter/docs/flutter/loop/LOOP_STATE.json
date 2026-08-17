@@ -36,20 +36,20 @@
     "knownFailingTests": []
   },
   "machine": {
-    "reconciledAtEpoch": 1786970911,
+    "reconciledAtEpoch": 1786970960,
     "git": {
       "appRoot": "/Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter",
       "gitPathPrefix": "sahayakai-flutter/",
       "branch": "feature/flutter-rebuild",
-      "head": "3644a9df07cc99fbbb5de1253fe2c4672064c024",
-      "headShort": "3644a9df0",
-      "headEpoch": 1786970797,
+      "head": "8a509824d9635f8a705dae17d7fd8ff3d9bdc9e3",
+      "headShort": "8a509824d",
+      "headEpoch": 1786970914,
       "remoteUrl": "https://github.com/sargupta/sahayakai.git",
-      "aheadOfOriginMain": 209,
+      "aheadOfOriginMain": 210,
       "behindOriginMain": 66,
       "dirtyPaths": [
         "ahayakai-flutter/docs/flutter/loop/LOOP_STATE.json",
-        "sahayakai-flutter/docs/flutter/loop/WAKE_LOG.jsonl"
+        "sahayakai-flutter/scripts/loop/reconcile.py"
       ],
       "untrackedPaths": []
     },
@@ -116,8 +116,8 @@
     "status": "ok",
     "violations": [],
     "consecutiveViolationWakes": 0,
-    "checkedAtEpoch": 1786970911,
-    "checkedAtSha": "3644a9df07cc99fbbb5de1253fe2c4672064c024"
+    "checkedAtEpoch": 1786970960,
+    "checkedAtSha": "8a509824d9635f8a705dae17d7fd8ff3d9bdc9e3"
   },
   "measurements": {
     "analyze": {
