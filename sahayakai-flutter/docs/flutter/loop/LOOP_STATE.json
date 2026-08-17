@@ -33,23 +33,19 @@
     ]
   },
   "machine": {
-    "reconciledAtEpoch": 1786964969,
+    "reconciledAtEpoch": 1786965156,
     "git": {
       "appRoot": "/Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter",
       "gitPathPrefix": "sahayakai-flutter/",
       "branch": "feature/flutter-rebuild",
-      "head": "27f1ecb3ccc9cf769a22255f78775d9767419c59",
-      "headShort": "27f1ecb3c",
-      "headEpoch": 1785359675,
+      "head": "cb0d49fa8a7521b07a16af8a9e6541865df8a337",
+      "headShort": "cb0d49fa8",
+      "headEpoch": 1786965009,
       "remoteUrl": "https://github.com/sargupta/sahayakai.git",
-      "aheadOfOriginMain": 182,
+      "aheadOfOriginMain": 183,
       "behindOriginMain": 66,
       "dirtyPaths": [
-        "ahayakai-flutter/.gitignore",
-        "sahayakai-flutter/docs/flutter/BUILD_STATE.json -> sahayakai-flutter/docs/flutter/BUILD_STATE.ARCHIVED.json",
-        "sahayakai-flutter/docs/flutter/LOOP_RUNBOOK.md -> sahayakai-flutter/docs/flutter/LOOP_RUNBOOK.ARCHIVED.md",
-        "sahayakai-flutter/docs/flutter/SESSION_CHECKPOINT.md -> sahayakai-flutter/docs/flutter/SESSION_CHECKPOINT.ARCHIVED.md",
-        "sahayakai-flutter/docs/flutter/pillars/PILLAR_BUILD_STATE.json -> sahayakai-flutter/docs/flutter/pillars/PILLAR_BUILD_STATE.ARCHIVED.json",
+        "ahayakai-flutter/docs/flutter/loop/LOOP_STATE.json",
         "sahayakai-flutter/lib/core/auth/auth_providers.g.dart",
         "sahayakai-flutter/lib/core/i18n/locale_provider.g.dart",
         "sahayakai-flutter/lib/core/network/api_providers.g.dart",
@@ -58,11 +54,12 @@
         "sahayakai-flutter/lib/features/lesson_planner/presentation/lesson_plan_controller.g.dart",
         "sahayakai-flutter/lib/features/parent_hotline/presentation/parent_hotline_controller.g.dart",
         "sahayakai-flutter/lib/features/profile/presentation/profile_controller.g.dart",
-        "sahayakai-flutter/lib/features/vidya/presentation/vidya_controller.g.dart"
+        "sahayakai-flutter/lib/features/vidya/presentation/vidya_controller.g.dart",
+        "sahayakai-flutter/scripts/loop/gate.sh",
+        "sahayakai-flutter/scripts/loop/selftest.sh"
       ],
       "untrackedPaths": [
-        "sahayakai-flutter/docs/flutter/loop/",
-        "sahayakai-flutter/scripts/loop/"
+        "sahayakai-flutter/scripts/loop/record.py"
       ]
     },
     "code": {
@@ -131,8 +128,8 @@
     "status": "ok",
     "violations": [],
     "consecutiveViolationWakes": 0,
-    "checkedAtEpoch": 1786964969,
-    "checkedAtSha": "27f1ecb3ccc9cf769a22255f78775d9767419c59"
+    "checkedAtEpoch": 1786965156,
+    "checkedAtSha": "cb0d49fa8a7521b07a16af8a9e6541865df8a337"
   },
   "measurements": {
     "analyze": {
@@ -205,7 +202,7 @@
       "attempts": 1,
       "reviewRounds": 0,
       "verifiedAtSha": null,
-      "commit": null,
+      "commit": "cb0d49fa8a7521b07a16af8a9e6541865df8a337",
       "evidence": {
         "gatesRun": [],
         "reviewers": [],
@@ -213,7 +210,9 @@
       },
       "failure": null,
       "blockedBy": null,
-      "notes": []
+      "notes": [
+        "selftest.sh added mid-unit after three guards were found to be silent no-ops; 11/11 now demonstrably fail when they should"
+      ]
     },
     {
       "id": "U0.2",

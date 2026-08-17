@@ -70,7 +70,12 @@ skip() {
 finish() {
   local rc="$1"
   {
-    printf '{"profile":"%s","atSha":"%s","atEpoch":%s,"exit":%s,' \
+    # UNIT_ID is written into the evidence so record.py can refuse to accept
+    # one unit's passing gate as proof for a different unit. Without this
+    # binding, any unit could claim the most recent green run — which is how a
+    # not-yet-started unit gets marked done.
+    printf '{"unit":%s,"profile":"%s","atSha":"%s","atEpoch":%s,"exit":%s,' \
+      "$( [ -n "${UNIT_ID:-}" ] && printf '%s' "$UNIT_ID" | json_escape || echo null )" \
       "$PROFILE" "$(git rev-parse HEAD)" "$(date +%s)" "$rc"
     printf '"failedRung":%s,"gates":[' \
       "$( [ -n "$FAILED_RUNG" ] && printf '%s' "$FAILED_RUNG" | json_escape || echo null )"

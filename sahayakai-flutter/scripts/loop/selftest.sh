@@ -112,7 +112,27 @@ expect_fail "doc_truth_guard --strict fails while any claim is red" \
 expect_fail "verifiedAtSha ancestry check rejects a fabricated sha" \
   git merge-base --is-ancestor deadbeefdeadbeefdeadbeefdeadbeefdeadbeef HEAD
 
-# ── 8. guards must still PASS on a clean tree ────────────────────────────────
+# ── 8. record.py must not let one unit borrow another unit's evidence ────────
+# This existed as a live hole: record.py checked only that SOME gate run had
+# passed, so a not-yet-started unit could be marked done on the strength of a
+# different unit's green run. Proven here so it cannot silently return.
+if [ -f "$LOOP_DIR/last_gate_run.json" ]; then
+  gated_unit="$(python3 -c "import json;print(json.load(open('$LOOP_DIR/last_gate_run.json')).get('unit') or '')" 2>/dev/null || true)"
+  other="$(python3 -c "
+import json
+s=json.load(open('$LOOP_STATE'))
+for u in s['queue']:
+    if u['id'] != '${gated_unit:-none}':
+        print(u['id']); break" 2>/dev/null || true)"
+  if [ -n "$other" ]; then
+    expect_fail "record.py refuses another unit's gate as evidence" \
+      python3 scripts/loop/record.py --unit "$other" --status done
+  fi
+else
+  echo "  ⊘ SKIP: no gate run on disk to test evidence binding against"
+fi
+
+# ── 9. guards must still PASS on a clean tree ────────────────────────────────
 expect_pass "loop_guard passes on the real tree" bash scripts/loop/loop_guard.sh
 expect_pass "reconcile passes on the real tree"  bash scripts/loop/reconcile.sh
 
