@@ -1,0 +1,1301 @@
+{
+  "$schemaVersion": 3,
+  "$rule": "Fields under .machine are OVERWRITTEN by scripts/loop/reconcile.py every wake. NEVER hand-edit them. Fields under .queue[] and .bands[] are agent-written and MUST carry evidence: a claim without a verifiedAtSha that is an ancestor of HEAD is invalid and reconcile will flag it.",
+  "$provenance": "Created 2026-08-17 by unit U0.1, replacing BUILD_STATE.json, pillars/PILLAR_BUILD_STATE.json, SESSION_CHECKPOINT.md and LOOP_RUNBOOK.md — all four were audited that day and found to assert things the code contradicted. They are archived as *.ARCHIVED.*, not deleted, so the forensic record survives.",
+  "loop": {
+    "id": "loop-2026-08-17T16-26+0530",
+    "startedAtEpoch": 1786964217,
+    "landingModeAtEpoch": 1786989417,
+    "deadlineEpoch": 1786993017,
+    "mode": "build",
+    "wakeCount": 0,
+    "consecutiveNoProgressWakes": 0,
+    "haltReason": null
+  },
+  "baselines": {
+    "$note": "Captured at loop start from the real repo. Gates ratchet against these: a unit may not make any of them worse. Absolute targets live in bands[].exitCriteria.",
+    "capturedAtSha": "27f1ecb3ccc9cf769a22255f78775d9767419c59",
+    "i18nUntranslated": 4760,
+    "i18nIdentical": 40,
+    "testDeclarations": 1551,
+    "testsSkipped": 0,
+    "$preexistingNote": "These 9 files were already modified-uncommitted when the loop started, on 2026-07-30's HEAD. They are riverpod/json codegen drift and are owned by unit U0.2. The scope gate subtracts them so it can still attribute every OTHER change to the unit that made it. Declared here rather than folded into a unit's files[], because widening a unit's scope to swallow pre-existing dirt is exactly how drift becomes invisible.",
+    "preexistingDirtyPaths": [
+      "sahayakai-flutter/lib/core/auth/auth_providers.g.dart",
+      "sahayakai-flutter/lib/core/i18n/locale_provider.g.dart",
+      "sahayakai-flutter/lib/core/network/api_providers.g.dart",
+      "sahayakai-flutter/lib/core/router/app_router.g.dart",
+      "sahayakai-flutter/lib/features/inbox/data/messages_stream_provider.g.dart",
+      "sahayakai-flutter/lib/features/lesson_planner/presentation/lesson_plan_controller.g.dart",
+      "sahayakai-flutter/lib/features/parent_hotline/presentation/parent_hotline_controller.g.dart",
+      "sahayakai-flutter/lib/features/profile/presentation/profile_controller.g.dart",
+      "sahayakai-flutter/lib/features/vidya/presentation/vidya_controller.g.dart"
+    ]
+  },
+  "machine": {
+    "reconciledAtEpoch": 1786964969,
+    "git": {
+      "appRoot": "/Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter",
+      "gitPathPrefix": "sahayakai-flutter/",
+      "branch": "feature/flutter-rebuild",
+      "head": "27f1ecb3ccc9cf769a22255f78775d9767419c59",
+      "headShort": "27f1ecb3c",
+      "headEpoch": 1785359675,
+      "remoteUrl": "https://github.com/sargupta/sahayakai.git",
+      "aheadOfOriginMain": 182,
+      "behindOriginMain": 66,
+      "dirtyPaths": [
+        "ahayakai-flutter/.gitignore",
+        "sahayakai-flutter/docs/flutter/BUILD_STATE.json -> sahayakai-flutter/docs/flutter/BUILD_STATE.ARCHIVED.json",
+        "sahayakai-flutter/docs/flutter/LOOP_RUNBOOK.md -> sahayakai-flutter/docs/flutter/LOOP_RUNBOOK.ARCHIVED.md",
+        "sahayakai-flutter/docs/flutter/SESSION_CHECKPOINT.md -> sahayakai-flutter/docs/flutter/SESSION_CHECKPOINT.ARCHIVED.md",
+        "sahayakai-flutter/docs/flutter/pillars/PILLAR_BUILD_STATE.json -> sahayakai-flutter/docs/flutter/pillars/PILLAR_BUILD_STATE.ARCHIVED.json",
+        "sahayakai-flutter/lib/core/auth/auth_providers.g.dart",
+        "sahayakai-flutter/lib/core/i18n/locale_provider.g.dart",
+        "sahayakai-flutter/lib/core/network/api_providers.g.dart",
+        "sahayakai-flutter/lib/core/router/app_router.g.dart",
+        "sahayakai-flutter/lib/features/inbox/data/messages_stream_provider.g.dart",
+        "sahayakai-flutter/lib/features/lesson_planner/presentation/lesson_plan_controller.g.dart",
+        "sahayakai-flutter/lib/features/parent_hotline/presentation/parent_hotline_controller.g.dart",
+        "sahayakai-flutter/lib/features/profile/presentation/profile_controller.g.dart",
+        "sahayakai-flutter/lib/features/vidya/presentation/vidya_controller.g.dart"
+      ],
+      "untrackedPaths": [
+        "sahayakai-flutter/docs/flutter/loop/",
+        "sahayakai-flutter/scripts/loop/"
+      ]
+    },
+    "code": {
+      "dartFiles": 308,
+      "dartLoc": 53308,
+      "features": 24,
+      "routes": 30
+    },
+    "tests": {
+      "files": 142,
+      "declarations": 1552,
+      "skipped": 0,
+      "goldenCallSites": 0,
+      "goldenBaselinePngs": 0
+    },
+    "i18n": {
+      "templateKeys": 971,
+      "perLocaleKeys": {
+        "bn": 495,
+        "gu": 495,
+        "hi": 495,
+        "kn": 495,
+        "ml": 495,
+        "mr": 495,
+        "or": 495,
+        "pa": 495,
+        "ta": 495,
+        "te": 495
+      },
+      "untranslatedTotal": 4760,
+      "identicalToEnglishTotal": 40
+    },
+    "fonts": {
+      "families": 0,
+      "googleFontsDep": 1
+    },
+    "lints": {
+      "activeRules": 0
+    },
+    "signing": {
+      "releaseConfigPresent": false,
+      "keyPropertiesPresent": false,
+      "aabPresent": false,
+      "aabBytes": 0,
+      "aabSignerVerified": false
+    },
+    "ci": {
+      "flutterWorkflowFiles": []
+    },
+    "claims": {
+      "green": 2,
+      "red": 8,
+      "redIds": [
+        "golden_gate_exists",
+        "i18n_zero_untranslated",
+        "i18n_zero_identical_english",
+        "fonts_bundled",
+        "fonts_no_runtime_fetch",
+        "release_signing_verified",
+        "flutter_ci_present",
+        "lints_enforced"
+      ]
+    }
+  },
+  "integrity": {
+    "status": "ok",
+    "violations": [],
+    "consecutiveViolationWakes": 0,
+    "checkedAtEpoch": 1786964969,
+    "checkedAtSha": "27f1ecb3ccc9cf769a22255f78775d9767419c59"
+  },
+  "measurements": {
+    "analyze": {
+      "atSha": null,
+      "exit": -1
+    },
+    "testRun": {
+      "atSha": null,
+      "exit": -1
+    }
+  },
+  "bands": [
+    {
+      "id": "B0",
+      "title": "Trust foundation + shippable build",
+      "status": "in_progress",
+      "isHardDeliverable": true,
+      "exitCriteria": {
+        "releaseAabSignatureVerified": true,
+        "i18nUntranslatedTotal": 0,
+        "i18nIdenticalToEnglishTotal": 0,
+        "goldenCallSitesMin": 12,
+        "fontsRuntimeFetchDisabled": true,
+        "flutterCiWorkflowPresent": true,
+        "analyzeIssues": 0,
+        "claimsRed": 0
+      },
+      "exitVerifiedAtSha": null
+    },
+    {
+      "id": "B1",
+      "title": "Live voice on Vertex via the hardened sidecar proxy",
+      "status": "pending",
+      "exitCriteria": {},
+      "exitVerifiedAtSha": null
+    },
+    {
+      "id": "B2",
+      "title": "Classroom parity: attendance, hotline roster, result actions",
+      "status": "pending",
+      "exitCriteria": {},
+      "exitVerifiedAtSha": null
+    },
+    {
+      "id": "B3",
+      "title": "Landing: final release gate, honest report, draft PR",
+      "status": "pending",
+      "exitCriteria": {},
+      "exitVerifiedAtSha": null
+    }
+  ],
+  "queue": [
+    {
+      "id": "U0.1",
+      "band": "B0",
+      "kind": "infra",
+      "gateProfile": "fast",
+      "title": "Land the loop harness; archive the four false state trackers",
+      "contract": "scripts/loop/* and docs/flutter/loop/* exist and run. doc_truth_guard.sh reports 8 red / 2 green against CLAIMS.tsv — the honest starting state. The four audited-false documents are renamed *.ARCHIVED.* with a SUPERSEDED header.",
+      "files": [
+        "scripts/loop",
+        "docs/flutter/loop",
+        "docs/flutter/BUILD_STATE.ARCHIVED.json",
+        "docs/flutter/SESSION_CHECKPOINT.ARCHIVED.md",
+        "docs/flutter/LOOP_RUNBOOK.ARCHIVED.md",
+        "docs/flutter/pillars/PILLAR_BUILD_STATE.ARCHIVED.json"
+      ],
+      "dependsOn": [],
+      "status": "in_progress",
+      "attempts": 1,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": []
+    },
+    {
+      "id": "U0.2",
+      "band": "B0",
+      "kind": "codegen",
+      "gateProfile": "standard",
+      "title": "Resolve the 9 uncommitted .g.dart drift files; widen sparse-checkout",
+      "contract": "build_runner output matches committed .g.dart exactly (codegen_drift gate green). Sparse-checkout includes .github and sahayakai-main/public so later units can write a workflow and assetlinks.json. Three of the nine files have STRUCTURAL diffs, not hash bumps — read them before committing; something changed in source without a regen.",
+      "files": [
+        "lib/core/auth/auth_providers.g.dart",
+        "lib/core/i18n/locale_provider.g.dart",
+        "lib/core/network/api_providers.g.dart",
+        "lib/core/router/app_router.g.dart",
+        "lib/features/inbox/data/messages_stream_provider.g.dart",
+        "lib/features/lesson_planner/presentation/lesson_plan_controller.g.dart",
+        "lib/features/parent_hotline/presentation/parent_hotline_controller.g.dart",
+        "lib/features/profile/presentation/profile_controller.g.dart",
+        "lib/features/vidya/presentation/vidya_controller.g.dart"
+      ],
+      "dependsOn": [
+        "U0.1"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": []
+    },
+    {
+      "id": "U0.3",
+      "band": "B0",
+      "kind": "infra",
+      "gateProfile": "fast",
+      "title": "Gitignore keystore and key.properties BEFORE any key file is written",
+      "contract": "android/.gitignore covers key.properties, *.keystore, *.jks, keystore.properties. loop_guard's secret-hygiene check passes. This lands before U0.4 so there is no window in which a signing credential could be staged.",
+      "files": [
+        "android/.gitignore"
+      ],
+      "dependsOn": [
+        "U0.1"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": []
+    },
+    {
+      "id": "U0.4",
+      "band": "B0",
+      "kind": "build",
+      "gateProfile": "release",
+      "title": "Release signing config; produce a genuinely signed AAB",
+      "contract": "android/app/build.gradle.kts gains a release signingConfig loaded from a gitignored android/key.properties, falling back to debug signing when that file is absent so CI never breaks. flutter build appbundle --release produces an AAB whose signer certificate SHA-256 equals the upload keystore's. verify_aab_signer.sh exits 0.",
+      "files": [
+        "android/app/build.gradle.kts",
+        "android/key.properties.example",
+        "docs/flutter/RELEASE.md"
+      ],
+      "dependsOn": [
+        "U0.3"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": {
+        "kind": "human",
+        "detail": "H3 — confirm the highest existing versionCode on com.sargvision.sahayakai in Play Console. The Capacitor wrap already burned versionCode 1 on this same applicationId, so the floor is at least 2. Build proceeds; the version number is provisional until confirmed."
+      },
+      "notes": []
+    },
+    {
+      "id": "U0.5",
+      "band": "B0",
+      "kind": "build",
+      "gateProfile": "native",
+      "title": "Bundle Outfit, Inter and 9 Noto Sans Indic; remove google_fonts entirely",
+      "contract": "pubspec.yaml declares >=11 font families as bundled assets; the google_fonts dependency is GONE, making 'no runtime font fetch' enforceable by absence rather than by grep. Noto Serif Indic is deliberately NOT bundled — app_text.dart documents that kIndicSerifFallback is never rendered, so it would double the Indic payload for zero pixels. Expect 2-5 test-expectation adjustments: google_fonts applies its own text-metric overrides and theme_contrast_test.dart asserts against them.",
+      "files": [
+        "pubspec.yaml",
+        "pubspec.lock",
+        "assets/fonts",
+        "lib/core/theme/app_text.dart",
+        "lib/main.dart",
+        "scripts/token_guard.sh"
+      ],
+      "dependsOn": [
+        "U0.2"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": {
+        "kind": "human",
+        "detail": "H1 — approve downloading the Outfit / Inter / Noto Sans Indic TTFs (SIL Open Font License) from github.com/google/fonts. Granted by plan approval."
+      },
+      "notes": [
+        "Blocks U0.18: goldens baselined against runtime-fetched fonts capture fallback boxes as the blessed rendering, because flutter test has no network."
+      ]
+    },
+    {
+      "id": "U0.6",
+      "band": "B0",
+      "kind": "i18n",
+      "gateProfile": "fast",
+      "title": "i18n audit tooling, locked glossary, and per-locale work packets",
+      "contract": "scripts/loop/i18n_audit.py performs five checks: key parity, script coverage per Unicode block, placeholder parity, ICU plural-category validity, and no-emoji/no-em-dash. GLOSSARY.md is seeded MECHANICALLY by extracting how each product noun was already rendered in the existing 495 translated keys per language — this is what stops ten parallel agents inventing ten words for 'worksheet'. A work-packet extractor emits {key, en, description} JSON per locale so no translation agent ever parses an ARB.",
+      "files": [
+        "scripts/loop/i18n_audit.py",
+        "scripts/loop/i18n_extract_missing.py",
+        "lib/core/i18n/GLOSSARY.md",
+        "lib/core/i18n/arb/.identical_allowlist"
+      ],
+      "dependsOn": [
+        "U0.1"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": [
+        "All 971 en keys carry @description metadata — the translation input is unusually good.",
+        "Only 40 of the existing 4950 translated values are English-identical, so the script-coverage gate will be near-zero-noise."
+      ]
+    },
+    {
+      "id": "U0.7",
+      "band": "B0",
+      "kind": "i18n",
+      "gateProfile": "i18n",
+      "title": "Hindi pilot translation — 476 keys, one locale, calibration run",
+      "contract": "app_hi.arb reaches 971 keys, all passing i18n_audit. Run ALONE before the nine-locale fan-out: a tooling or glossary bug found here costs 1x rework instead of 10x. Hindi and Marathi treat 0 as CLDR plural category 'one' — get that right here.",
+      "files": [
+        "lib/core/i18n/arb/app_hi.arb"
+      ],
+      "dependsOn": [
+        "U0.6"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": []
+    },
+    {
+      "id": "U0.8",
+      "band": "B0",
+      "kind": "i18n",
+      "gateProfile": "i18n",
+      "title": "Nine-locale translation fan-out: bn gu kn ml mr or pa ta te",
+      "contract": "Each of the nine remaining Indic ARBs reaches 971 keys passing i18n_audit. Run as a Workflow fan-out — one agent per locale, one file each, no shared state. CRITICALLY: no translation agent runs flutter gen-l10n; nine agents racing on lib/core/i18n/gen/ would corrupt it. Codegen is serialised into U0.9.",
+      "files": [
+        "lib/core/i18n/arb/app_bn.arb",
+        "lib/core/i18n/arb/app_gu.arb",
+        "lib/core/i18n/arb/app_kn.arb",
+        "lib/core/i18n/arb/app_ml.arb",
+        "lib/core/i18n/arb/app_mr.arb",
+        "lib/core/i18n/arb/app_or.arb",
+        "lib/core/i18n/arb/app_pa.arb",
+        "lib/core/i18n/arb/app_ta.arb",
+        "lib/core/i18n/arb/app_te.arb"
+      ],
+      "dependsOn": [
+        "U0.7"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": []
+    },
+    {
+      "id": "U0.9",
+      "band": "B0",
+      "kind": "i18n",
+      "gateProfile": "i18n",
+      "title": "Serialise gen-l10n; flip the i18n gate to absolute; add the 11-locale render sweep",
+      "contract": "flutter gen-l10n runs once, committed. Zero baked-English strings in any generated locale class (assert on a known offender: app_localizations_kn.dart must no longer contain 'Voice mode'). A new locale_sweep_test.dart pumps the golden-set screens at 360dp x textScale 1.3 across ALL 11 locales asserting no exception and no RenderFlex overflow — assertions for all eleven, pixel goldens for the three named in U0.19.",
+      "files": [
+        "lib/core/i18n/gen",
+        "test/i18n/locale_sweep_test.dart",
+        "scripts/check_i18n_gate.sh"
+      ],
+      "dependsOn": [
+        "U0.8",
+        "U0.5"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": []
+    },
+    {
+      "id": "U0.10",
+      "band": "B0",
+      "kind": "test",
+      "gateProfile": "standard",
+      "title": "Golden harness + Tier A/C baselines",
+      "contract": "test/flutter_test_config.dart registers every BUNDLED font via FontLoader (without this flutter_test renders Ahem boxes and every golden is meaningless) and installs a comparator with ~0.5% pixel tolerance. 12 screens x {360dp,800dp} x {light,dark} = 48, plus 4 shared-state widgets (loading skeleton, error, empty, offline) x {light,dark} = 8. Goldens ride the EXISTING test/support/app_harness.dart and FakeApiClient — no new network seams. Every golden file carries @Tags(['golden']).",
+      "files": [
+        "test/flutter_test_config.dart",
+        "test/support/golden_harness.dart",
+        "test/golden",
+        "dart_test.yaml"
+      ],
+      "dependsOn": [
+        "U0.5"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": [
+        "Hard dependency on U0.5 — see that unit's note."
+      ]
+    },
+    {
+      "id": "U0.11",
+      "band": "B0",
+      "kind": "test",
+      "gateProfile": "standard",
+      "title": "Tier B Indic golden probes at textScale 1.3",
+      "contract": "6 densest screens x {bn, ta, ml} x 360dp x textScale 1.3 = 18 baselines, asserting zero clipped matras. Depends on U0.9: baselining Indic goldens before the 4,760 translations land guarantees a full re-baseline.",
+      "files": [
+        "test/golden/indic"
+      ],
+      "dependsOn": [
+        "U0.10",
+        "U0.9"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": []
+    },
+    {
+      "id": "U0.12",
+      "band": "B0",
+      "kind": "ci",
+      "gateProfile": "native",
+      "title": "Flutter CI workflow, plus the Linux golden re-baseline",
+      "contract": "A workflow runs the gate ladder on pushes to feature/flutter-rebuild and on PRs. Flutter goldens are NOT portable across host platforms — the macOS baselines from U0.10/U0.11 will fail on ubuntu-latest. CI's Linux baseline becomes the sole authority; --update-goldens is reachable only via workflow_dispatch; the local ladder keeps --exclude-tags golden.",
+      "files": [
+        ".github/workflows/flutter-ci.yml",
+        "scripts/verify_build.sh"
+      ],
+      "dependsOn": [
+        "U0.11"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": [
+        "Requires sparse-checkout to include .github (unit U0.2)."
+      ]
+    },
+    {
+      "id": "U0.13",
+      "band": "B0",
+      "kind": "infra",
+      "gateProfile": "standard",
+      "title": "Enable real lint rules and wire the never-run custom_lint / riverpod_lint",
+      "contract": ">=15 active rules in analysis_options.yaml plus a custom_lint block, so the two linters that have sat in dev_dependencies without ever running actually run. Fix the fallout, splitting into additional units if the count is large.",
+      "files": [
+        "analysis_options.yaml"
+      ],
+      "dependsOn": [
+        "U0.2"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": []
+    },
+    {
+      "id": "U0.14",
+      "band": "B0",
+      "kind": "build",
+      "gateProfile": "native",
+      "title": "App Check client and the X-Firebase-AppCheck header",
+      "contract": "Replaces the TODO(P0.2) at auth_interceptor.dart:31. BEST-EFFORT ONLY: 3s timeout, and a failure never blocks the request — a rural teacher on 2G must not be locked out because Play Integrity could not handshake. Uses the same provider seam shape as the existing TokenProvider so tests fake it and no socket opens.",
+      "files": [
+        "pubspec.yaml",
+        "lib/core/firebase/firebase_init.dart",
+        "lib/core/network/auth_interceptor.dart",
+        "lib/core/network/api_providers.dart",
+        "test/core/network/auth_interceptor_test.dart"
+      ],
+      "dependsOn": [
+        "U0.5"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": {
+        "kind": "human",
+        "detail": "H5 — register Play Integrity in Firebase App Check, MONITOR mode. The client header is safe to ship alone; enforcement is a one-way door in both directions."
+      },
+      "notes": [
+        "Serialise against U0.5 — both edit pubspec.yaml."
+      ]
+    },
+    {
+      "id": "U0.15",
+      "band": "B0",
+      "kind": "infra",
+      "gateProfile": "fast",
+      "title": "assetlinks.json PR to main; fix firebase.json's .well-known-stripping ignore rule",
+      "contract": "sahayakai-main/public/.well-known/assetlinks.json exists on a PR branch targeting main, carrying the upload-key SHA-256. firebase.json's \"ignore\": [\"**/.*\"] is corrected — it silently strips public/.well-known/ on any Firebase Hosting deploy, which is harmless today because Cloud Run is canonical and lethal the moment anyone re-enables Hosting. The App Links autoVerify intent-filter is deliberately NOT added here: Android caches a FAILED verification, so it must not ship before the file is live with both fingerprints.",
+      "files": [
+        "docs/flutter/RELEASE.md"
+      ],
+      "dependsOn": [
+        "U0.4"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": {
+        "kind": "human",
+        "detail": "H2 — the second fingerprint slot needs the Play App Signing SHA-256, readable only from Play Console. H8 — merging the PR."
+      },
+      "notes": [
+        "Web-repo work happens in a separate worktree; this loop never dirties the monorepo main tree."
+      ]
+    },
+    {
+      "id": "U0.16",
+      "band": "B0",
+      "kind": "infra",
+      "gateProfile": "release",
+      "title": "B0 exit gate",
+      "contract": "Full release ladder green, every bands[B0].exitCriteria machine-true, doc_truth_guard --strict exits 0 with all 10 claims green.",
+      "files": [
+        "docs/flutter/loop/LOOP_STATE.json"
+      ],
+      "dependsOn": [
+        "U0.4",
+        "U0.9",
+        "U0.11",
+        "U0.12",
+        "U0.13",
+        "U0.14"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": []
+    },
+    {
+      "id": "U1.1",
+      "band": "B1",
+      "kind": "build",
+      "gateProfile": "fast",
+      "title": "Sidecar: verify before accept, required env, redacted /readyz",
+      "contract": "In sahayakai-agents vidya_voice/router.py, move verify_stream_token ABOVE ws.accept() so an unauthenticated caller never gets a WebSocket and no billable Vertex session is allocated. Remove config.py's env default of 'development' — auth.py skips ALL gates in that mode, so a deploy path that forgets SAHAYAKAI_AGENTS_ENV currently serves wide open; without the default it crash-loops on the startup probe instead. Reduce public /readyz to {status:ok}: it currently leaks env, allowedInvokerCount, liveKeyCount and shadowKeyCount. Test must assert genai.Client is NEVER constructed for a rejected token.",
+      "files": [
+        "sahayakai-agents"
+      ],
+      "dependsOn": [
+        "U0.16"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": [
+        "The WS bypasses auth entirely today: Starlette's BaseHTTPMiddleware does not wrap websocket ASGI scopes, so the sidecar's OIDC + HMAC + App Check gate never runs on /stream.",
+        "Runs in a separate worktree of the monorepo."
+      ]
+    },
+    {
+      "id": "U1.2",
+      "band": "B1",
+      "kind": "build",
+      "gateProfile": "fast",
+      "title": "Sidecar cost control: single-use tokens, concurrency, rate limit, session caps",
+      "contract": "Single-use stream tokens via a TTLCache (cachetools is already a dependency for the HMAC replay guard — reuse the pattern, add nothing). Per-uid concurrency 1, per-uid hourly rate limit, a global asyncio.Semaphore ceiling, a 600s session wall clock and a 30s idle-input timeout, plus per-session byte accounting. Move the token from ?t= to Authorization: Bearer, accepting ?t= for exactly one release — a credential in a query string lands in Cloud Run access logs.",
+      "files": [
+        "sahayakai-agents"
+      ],
+      "dependsOn": [
+        "U1.1"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": [
+        "Must land BEFORE U1.5 merges. Today anyone holding a 120s token can open a billable audio socket repeatedly, concurrently, without limit."
+      ]
+    },
+    {
+      "id": "U1.3",
+      "band": "B1",
+      "kind": "build",
+      "gateProfile": "fast",
+      "title": "Sidecar: env-driven model/location and a teacher-context setup frame",
+      "contract": "VERTEX_LIVE_MODEL and VERTEX_LIVE_LOCATION become env-driven (they are module constants today, so a region change needs a code deploy) with the proven values as defaults. Accept a first client frame {setup:{grade,subject,schoolContext,language,screenPath}} with the same length bounds as SessionStartRequest and a 5s deadline: the proxy currently calls build_vidya_voice_session with grade=None, subject=None, school_context=None, so re-landing it as-is would be a personalisation REGRESSION against the Developer-API path. Harden the client pump against binary frames, malformed JSON and disconnects.",
+      "files": [
+        "sahayakai-agents"
+      ],
+      "dependsOn": [
+        "U1.2"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": []
+    },
+    {
+      "id": "U1.4",
+      "band": "B1",
+      "kind": "infra",
+      "gateProfile": "fast",
+      "title": "Deploy the sidecar to STAGING and prove the socket with negatives",
+      "contract": "cloudbuild.yaml defaults to _STAGING_SUFFIX=-staging, so the default deploy touches staging only and prod requires an explicit substitution we simply do not pass. The probe asserts four things and the three negatives matter more than the positive: valid token yields real audio bytes; a garbage token is rejected at handshake AND no stream_open appears in logs; a replayed token closes 4409; the seventh open in an hour closes 4429.",
+      "files": [
+        "sahayakai-agents"
+      ],
+      "dependsOn": [
+        "U1.3"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": []
+    },
+    {
+      "id": "U1.5",
+      "band": "B1",
+      "kind": "build",
+      "gateProfile": "fast",
+      "title": "Web: re-land the Vertex wsUrl + streamToken response, behind an allowlist",
+      "contract": "start-session returns {mode:'vertex-proxy', wsUrl, streamToken, expiresInSeconds, languageCode}, keeping origin/main's stricter body validation rather than the develop variant's language-only parse. Add VIDYA_VOICE_LIVE_ALLOWED_UIDS: ten teachers is a canary, everyone is an experiment. mintStreamToken already exists and is byte-compatible with the Python verifier. PR to main; the loop never merges.",
+      "files": [
+        "sahayakai-main"
+      ],
+      "dependsOn": [
+        "U1.4"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": {
+        "kind": "human",
+        "detail": "H8 — merging the PR, and setting VIDYA_VOICE_LIVE_ENABLED on the prod web service."
+      },
+      "notes": [
+        "Leave the Developer-API mint endpoint in place: it is flag-dead, costs nothing, and is the only rollback target if Vertex Live has an outage."
+      ]
+    },
+    {
+      "id": "U1.6",
+      "band": "B1",
+      "kind": "build",
+      "gateProfile": "native",
+      "title": "Flutter: rewire the Live client to the proxy, dual-shape tolerant",
+      "contract": "gemini_live_client.dart talks to the sidecar proxy. Fix _handleToolCall: it reads toolCall['functionCalls'], which the proxy never sends — Live would talk and never act, the exact regression the program doc calls unacceptable. Drop the client-side sendToolResponse (the sidecar already answers Vertex). Keep dual-shape parsing so a U1.5 rollback or a stale web revision degrades to the old path instead of bricking. Tests must pin connect()==false (never throws) for all five failure shapes, and _beginLive()==false so _begin() runs.",
+      "files": [
+        "lib/features/vidya/data/gemini_live_client.dart",
+        "test/features/vidya/data/gemini_live_client_test.dart"
+      ],
+      "dependsOn": [
+        "U1.3"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": [
+        "Highest-consequence possible regression: Live failing silently AND turn-based not running means the app has no voice at all.",
+        "Contract-dependent on U1.3 but not deploy-dependent on U1.4 — write and test against the frame spec while the sidecar is still being hardened."
+      ]
+    },
+    {
+      "id": "U1.7",
+      "band": "B1",
+      "kind": "build",
+      "gateProfile": "native",
+      "title": "Live diagnostics panel and the on-device verification protocol",
+      "contract": "A debug-only line under the existing 'Live voice (beta)' switch reporting last session: frames up, bytes down, tool calls, WS close code, fallback-taken. Without numbers, 'it worked' is a feeling. Commit 27f1ecb3c has never been through flutter build apk, so this unit also proves the Live client compiles at all.",
+      "files": [
+        "lib/features/settings/presentation/settings_screen.dart",
+        "lib/features/vidya/presentation/vidya_controller.dart",
+        "docs/flutter/forensic/LIVE_DEVICE_VERIFICATION.md"
+      ],
+      "dependsOn": [
+        "U1.6",
+        "U1.4"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": {
+        "kind": "human",
+        "detail": "H7 — a physical Android device with a working mic. Emulator audio cannot honestly test barge-in or echo."
+      },
+      "notes": []
+    },
+    {
+      "id": "U2.1",
+      "band": "B2",
+      "kind": "build",
+      "gateProfile": "fast",
+      "title": "Web: opt-in masked roster projection",
+      "contract": "Add ?projection=roster returning {id,name,rollNumber,parentLanguage,hasParentPhone,parentPhoneLast4}. getStudents() currently returns the whole document including parentPhone in E.164, while the Flutter domain model states 'the client never holds the full parent phone number'. Wiring the roster before this ships would put every parent's number on every teacher's handset. Default response stays byte-identical so the web student-manager is untouched.",
+      "files": [
+        "sahayakai-main"
+      ],
+      "dependsOn": [
+        "U0.16"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": {
+        "kind": "human",
+        "detail": "H8 — merging the PR."
+      },
+      "notes": [
+        "This is the true head of Band B2. Starting the Flutter roster first means writing a DTO against a shape we intend to change, and shipping a PII leak in the meantime."
+      ]
+    },
+    {
+      "id": "U2.2",
+      "band": "B2",
+      "kind": "build",
+      "gateProfile": "standard",
+      "title": "Attendance domain, DTOs and repository (no UI)",
+      "contract": "A new lib/features/attendance data+domain layer against the ten REST routes that already ship on origin/main. Correct the stale forensic claim that attendance is backend-blocked in the same commit, or the next agent re-derives the same wrong conclusion.",
+      "files": [
+        "lib/features/attendance",
+        "test/features/attendance",
+        "docs/flutter/forensic/GEMINI_LIVE_AND_PARITY_PROGRAM.md"
+      ],
+      "dependsOn": [
+        "U2.1"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": []
+    },
+    {
+      "id": "U2.3",
+      "band": "B2",
+      "kind": "build",
+      "gateProfile": "i18n",
+      "title": "Attendance: class list, class CRUD, route, premium-gate panel",
+      "contract": "Reads are ungated; every WRITE is premium-gated server-side (requireProPlan covers createClass, addStudent and saveAttendance), so a free-plan teacher gets a read-only register and a 403 the moment they mark it. The UI must say so before the tap, not after.",
+      "files": [
+        "lib/features/attendance",
+        "lib/core/router/routes.dart",
+        "lib/core/router/app_router.dart",
+        "lib/core/i18n/arb"
+      ],
+      "dependsOn": [
+        "U2.2"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": {
+        "kind": "human",
+        "detail": "H6 — a pro/advanced-plan test account. Without one only the 403 path is provable; the happy path is not."
+      },
+      "notes": []
+    },
+    {
+      "id": "U2.4",
+      "band": "B2",
+      "kind": "build",
+      "gateProfile": "i18n",
+      "title": "Attendance: student roster and CRUD",
+      "contract": "40-student cap (enforced transactionally server-side), roll numbers 1-40, E.164 phone validation. Consumes the masked projection from U2.1.",
+      "files": [
+        "lib/features/attendance",
+        "lib/core/i18n/arb"
+      ],
+      "dependsOn": [
+        "U2.3"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": []
+    },
+    {
+      "id": "U2.5",
+      "band": "B2",
+      "kind": "build",
+      "gateProfile": "i18n",
+      "title": "Attendance: mark the register",
+      "contract": "The server clamps date to [today-7d, today] computed in Asia/Kolkata. A client computing 'today' in device-local time returns 400 for any teacher marking between 00:00 and 05:30 IST. Compute the window in IST and CLAMP the date picker rather than validating after the fact — a teacher must not be offered a date the server will reject. Unit-test with a fixed clock at 20:00 UTC, where the naive implementation picks the wrong day.",
+      "files": [
+        "lib/features/attendance",
+        "lib/core/i18n/arb"
+      ],
+      "dependsOn": [
+        "U2.4"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": []
+    },
+    {
+      "id": "U2.6",
+      "band": "B2",
+      "kind": "build",
+      "gateProfile": "i18n",
+      "title": "Attendance: monthly view, summaries, per-student absences",
+      "contract": "Monthly grid plus summaries and the per-student absence list, all from existing routes.",
+      "files": [
+        "lib/features/attendance",
+        "lib/core/i18n/arb"
+      ],
+      "dependsOn": [
+        "U2.5"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": []
+    },
+    {
+      "id": "U2.7",
+      "band": "B2",
+      "kind": "build",
+      "gateProfile": "standard",
+      "title": "Parent Hotline: bring the roster to life",
+      "contract": "hotline_roster_provider.dart returns const <HotlineStudent>[] unconditionally — the one dead wire in an otherwise complete 13-file feature with four stage widgets and a full typed exception hierarchy already built. Replace it with the real provider and move the screen from List to AsyncValue (loading skeleton / ErrorView / signed-out EmptyView). Budget this small and be pleased if it is smaller.",
+      "files": [
+        "lib/features/parent_hotline/presentation/hotline_roster_provider.dart",
+        "lib/features/parent_hotline/presentation/parent_hotline_screen.dart",
+        "test/features/parent_hotline"
+      ],
+      "dependsOn": [
+        "U2.2"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": []
+    },
+    {
+      "id": "U2.8",
+      "band": "B2",
+      "kind": "build",
+      "gateProfile": "standard",
+      "title": "Parent Hotline: error-path audit and resume-on-open",
+      "contract": "An AUDIT unit, not a build unit: confirm each typed exception (403 PREMIUM_REQUIRED, 429 with Retry-After, 422 no phone, 503 Twilio unconfigured, 403 not-your-class) reaches a distinct, dignified panel, and fill only what is missing. Verify resume-on-open via outreach-latest with its 24h lookback.",
+      "files": [
+        "lib/features/parent_hotline",
+        "test/features/parent_hotline"
+      ],
+      "dependsOn": [
+        "U2.7"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": []
+    },
+    {
+      "id": "U2.9",
+      "band": "B2",
+      "kind": "build",
+      "gateProfile": "i18n",
+      "title": "Result actions: Copy, Share, Save-to-Library — pilot on two screens",
+      "contract": "A shared ResultActionsBar reusing share_plus, path_provider and library_repository.dart, all already in the tree. Eleven of thirteen tool results currently dead-end at copy-to-clipboard. Note /api/content/save requires a client-generated UUID v4: generate from Random.secure() rather than adding a package for twenty lines.",
+      "files": [
+        "lib/shared/widgets/result_actions_bar.dart",
+        "lib/features/lesson_planner",
+        "lib/features/worksheet_wizard",
+        "lib/core/i18n/arb"
+      ],
+      "dependsOn": [
+        "U0.16"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": []
+    },
+    {
+      "id": "U2.10",
+      "band": "B2",
+      "kind": "build",
+      "gateProfile": "standard",
+      "title": "Result actions: roll out to the remaining eleven result views",
+      "contract": "Same bar, eleven more screens.",
+      "files": [
+        "lib/features"
+      ],
+      "dependsOn": [
+        "U2.9"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": []
+    },
+    {
+      "id": "U2.11",
+      "band": "B2",
+      "kind": "test",
+      "gateProfile": "standard",
+      "title": "PDF export: an Indic-shaping spike, gated on a human look",
+      "contract": "A SPIKE, not a rollout. The Dart pdf package does no complex-script shaping: Devanagari conjuncts, Tamil ligatures and Odia render as boxes or reorder. Render one line of each of the 11 scripts, produce a golden PNG, and put it in front of the founder before any rollout. A Hindi worksheet rendered as boxes is worse than the clipboard. If shaping fails, the honest ship is Share-as-text and PDF is flagged as needing a server-side renderer.",
+      "files": [
+        "test/golden/pdf_script_probe"
+      ],
+      "dependsOn": [
+        "U2.10"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": {
+        "kind": "human",
+        "detail": "Founder reviews the 11-script golden PNG before any rollout decision."
+      },
+      "notes": []
+    },
+    {
+      "id": "U2.12",
+      "band": "B2",
+      "kind": "build",
+      "gateProfile": "i18n",
+      "title": "Notifications surface",
+      "contract": "The Network hub already reserves a third tab, and /api/notifications, /mark-read and /mark-all-read all exist. Push (FCM) is the payoff but is human-blocked on Firebase console registration; it lands as its own single-purpose unit, because this repo has already lost a build to a federated plugin.",
+      "files": [
+        "lib/features/notifications",
+        "lib/features/staffroom/presentation",
+        "lib/core/i18n/arb"
+      ],
+      "dependsOn": [
+        "U0.16"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": []
+    },
+    {
+      "id": "U3.1",
+      "band": "B3",
+      "kind": "infra",
+      "gateProfile": "release",
+      "title": "Landing: final release gate, generated report, draft PR, checkpoint",
+      "contract": "Full release ladder on HEAD. Record the AAB (path, bytes, sha256, signer cert, match). doc_truth_guard --strict green, or the offending doc is edited to the truth. SESSION_REPORT.md is GENERATED from WAKE_LOG.jsonl by script, never hand-written, so a wake that shipped nothing appears as a wake that shipped nothing. Push, open a DRAFT PR to main, run /checkpoint, then ScheduleWakeup stop.",
+      "files": [
+        "docs/flutter/loop/SESSION_REPORT.md",
+        "docs/flutter/loop/LOOP_STATE.json"
+      ],
+      "dependsOn": [],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": []
+    }
+  ],
+  "deferred": [
+    {
+      "id": "D1",
+      "title": "Teacher directory, profile and connection requests (old U-SI4)",
+      "reason": "Community networking, not teaching. Low value against the cost."
+    },
+    {
+      "id": "D2",
+      "title": "Community Library",
+      "reason": "A local library already exists; this is discovery, not capability."
+    },
+    {
+      "id": "D3",
+      "title": "Impact Dashboard",
+      "reason": "Vanity metrics for a teacher with 40 children and one free hour. Do not build."
+    },
+    {
+      "id": "D4",
+      "title": "FCM push (old U-SI6)",
+      "reason": "High teacher value — without push, Notifications is a page nobody visits — but blocked on Firebase console registration (H4/H5). Lands as its own single-purpose unit once unblocked."
+    }
+  ],
+  "log": "docs/flutter/loop/WAKE_LOG.jsonl"
+}

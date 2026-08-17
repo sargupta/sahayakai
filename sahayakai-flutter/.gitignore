@@ -43,3 +43,10 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Loop harness scratch — per-wake evidence, never committed.
+# gate.sh records each rung's verbatim output here so the outer loop can copy
+# it into LOOP_STATE.json and WAKE_LOG.jsonl (which ARE committed). Leaving it
+# tracked also created a self-referential trap: a recorded secret-scan failure
+# contains the offending line, so the next scan flags the log that reported it.
+docs/flutter/loop/last_gate_run.json

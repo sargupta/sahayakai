@@ -1,4 +1,12 @@
 {
+  "$SUPERSEDED": "SUPERSEDED 2026-08-17 by docs/flutter/loop/LOOP_STATE.json and LOOP_RUNBOOK_V3.md. An audit on that date compared this file against the code and found specific false claims (see the $falseClaims list). It is kept, not deleted, so the forensic record survives and any future grep hit is obviously stale. DO NOT USE IT AS A SOURCE OF TRUTH.",
+  "$falseClaims": [
+    "Says Firebase auth is deferred with no firebase_* deps — four Firebase packages are in pubspec.yaml and a real google-services.json is committed.",
+    "Marks Visual Aid, Assessment Scanner, Video Storyteller and Virtual Field Trip as pending — all four are built, tested and routed.",
+    "Reports i18n as 262 keys / 21 translated — the real numbers are 971 / 495.",
+    "Records branch 'develop' — the work is on feature/flutter-rebuild.",
+    "Cites golden tests as an acceptance gate — there were zero matchesGoldenFile call sites."
+  ],
   "version": 1,
   "app": "sahayakai-flutter",
   "generatedFrom": [

@@ -1,3 +1,10 @@
+> **SUPERSEDED 2026-08-17 by docs/flutter/loop/LOOP_STATE.json and LOOP_RUNBOOK_V3.md. An audit on that date compared this file against the code and found specific false claims (see the $falseClaims list). It is kept, not deleted, so the forensic record survives and any future grep hit is obviously stale. DO NOT USE IT AS A SOURCE OF TRUTH.**
+>
+> - Claims 'ZERO firebase packages' — Firebase landed five days after this was written.
+> - Reports 22 of 25 units done and 1484 tests as if current; 60 commits have landed since.
+
+---
+
 # SESSION CHECKPOINT — SahayakAI Flutter app (2026-07-20)
 
 Durable resume doc. Read this + memory `project_android_app.md` + `reference_production_brand_palette.md`.

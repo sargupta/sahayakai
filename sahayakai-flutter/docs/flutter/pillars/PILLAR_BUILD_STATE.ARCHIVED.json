@@ -1,4 +1,11 @@
 {
+  "$SUPERSEDED": "SUPERSEDED 2026-08-17 by docs/flutter/loop/LOOP_STATE.json and LOOP_RUNBOOK_V3.md. An audit on that date compared this file against the code and found specific false claims (see the $falseClaims list). It is kept, not deleted, so the forensic record survives and any future grep hit is obviously stale. DO NOT USE IT AS A SOURCE OF TRUTH.",
+  "$falseClaims": [
+    "60 commits stale: last recorded commit 2026-07-24, with everything from the RUN verb through Gemini Live unrecorded.",
+    "Has no releaseGates key at all, so the pillar phase never recorded a gate.",
+    "Cites golden tests at 360dp/800dp with Indic probes as universal acceptance — none existed.",
+    "Lists iOS Info.plist and NSMicrophoneUsageDescription work — there is no ios/ directory."
+  ],
   "version": 1,
   "app": "sahayakai-flutter",
   "phase": "pillars",

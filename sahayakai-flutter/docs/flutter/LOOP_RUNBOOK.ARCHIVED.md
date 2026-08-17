@@ -1,3 +1,11 @@
+> **SUPERSEDED 2026-08-17 by docs/flutter/loop/LOOP_STATE.json and LOOP_RUNBOOK_V3.md. An audit on that date compared this file against the code and found specific false claims (see the $falseClaims list). It is kept, not deleted, so the forensic record survives and any future grep hit is obviously stale. DO NOT USE IT AS A SOURCE OF TRUTH.**
+>
+> - Its 'never push / never touch any remote' guardrail was already untrue — the branch was pushed and tracking origin.
+> - Its brand-colour guardrail (#C2410C / #A8380A) matches nothing in the codebase; app_colors.dart ships #E0924D / #AC4815.
+> - Its golden-test acceptance gate was never implemented.
+
+---
+
 # Autonomous Build Loop — SahayakAI Flutter (master runbook)
 
 This runbook makes every loop wake deterministic. The outer loop (ScheduleWakeup dynamic mode)
