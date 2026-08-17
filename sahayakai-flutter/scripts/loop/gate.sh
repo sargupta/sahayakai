@@ -122,8 +122,16 @@ try:
 except Exception:
     pass" 2>/dev/null | sort -u)"
 
+  # The harness's own bookkeeping is rewritten by the `reconcile` rung, which
+  # runs BEFORE this one — so the gate would otherwise flag the file it just
+  # dirtied itself. Same narrow set reconcile.py excludes from auto-decay, and
+  # for the same reason: these hold no logic, only state the harness recomputes.
+  local bookkeeping="${GITPFX}docs/flutter/loop/LOOP_STATE.json
+${GITPFX}docs/flutter/loop/WAKE_LOG.jsonl
+${GITPFX}docs/flutter/loop/last_gate_run.json"
+
   extra="$(comm -23 <(printf '%s\n' "$actual") \
-                    <(printf '%s\n%s\n' "$declared" "$preexisting" | sort -u))"
+                    <(printf '%s\n%s\n%s\n' "$declared" "$preexisting" "$bookkeeping" | sort -u))"
 
   # A declared path may be a directory; treat any change beneath it as in scope.
   if [ -n "$extra" ] && [ -n "$UNIT_FILES" ]; then
