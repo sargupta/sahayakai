@@ -242,13 +242,35 @@ gate_i18n_full() {
 # down. Unit U0.17 drives it to zero. Passing count must not fall either — that
 # would catch a test being deleted or skipped to make this rung green.
 gate_tests() {
-  local out fails passes base
-  out="$(flutter test --reporter compact --exclude-tags golden 2>&1)"
-  printf '%s\n' "$out" | tail -3
+  local out rc fails passes base summary
+  out="$(flutter test --reporter compact --exclude-tags golden 2>&1)"; rc=$?
 
-  passes="$(printf '%s\n' "$out" | grep -oE '\+[0-9]+' | tail -1 | tr -d '+')"
-  fails="$(printf '%s\n' "$out" | grep -oE '\-[0-9]+' | tail -1 | tr -d '-')"
-  fails="${fails:-0}"; passes="${passes:-0}"
+  # The EXIT CODE is the authority on pass/fail. The counts are for the ratchet
+  # message only.
+  #
+  # An earlier version of this rung parsed counts with
+  #     grep -oE '\-[0-9]+' | tail -1
+  # over the whole output. The compact reporter rewrites one line with carriage
+  # returns, so there are no line anchors to match, and that grep happily
+  # scanned 300KB of unrelated text — it returned "-700" from a stray token and
+  # reported a REGRESSION on a suite that had just passed 1750/0. A gate that
+  # invents a failure destroys trust exactly as fast as one that hides a real
+  # one, and it is likelier to get itself disabled.
+  summary="$(printf '%s' "$out" | tr '\r' '\n' \
+             | grep -E '^[0-9]{2}:[0-9]{2} \+[0-9]+' | tail -1)"
+  [ -n "$summary" ] && echo "  $summary"
+
+  passes="$(printf '%s' "$summary" | sed -nE 's/.*\+([0-9]+).*/\1/p')"
+  fails="$(printf '%s' "$summary" | sed -nE 's/.* -([0-9]+):.*/\1/p')"
+  passes="${passes:-0}"
+
+  if [ "$rc" -eq 0 ]; then
+    # flutter test exits 0 only when nothing failed. Trust that over any parse.
+    fails=0
+  else
+    # Non-zero with an unparseable summary must fail closed, never open.
+    fails="${fails:-999}"
+  fi
 
   base="$(python3 -c "import json;print(json.load(open('$LOOP_STATE'))['baselines'].get('testsFailing',0))" 2>/dev/null || echo 0)"
 
