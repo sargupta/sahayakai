@@ -8,7 +8,7 @@
     "landingModeAtEpoch": 1786989417,
     "deadlineEpoch": 1786993017,
     "mode": "build",
-    "wakeCount": 15,
+    "wakeCount": 16,
     "consecutiveNoProgressWakes": 0,
     "haltReason": null
   },
@@ -37,30 +37,24 @@
     "$i18nNote": "Ratchet, only ever downward. 4760 at loop start; 4284 after the Hindi pilot (U0.7) closed 476. Absolute zero is a B0 exit criterion."
   },
   "machine": {
-    "reconciledAtEpoch": 1786972477,
+    "reconciledAtEpoch": 1786972599,
     "git": {
       "appRoot": "/Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter",
       "gitPathPrefix": "sahayakai-flutter/",
       "branch": "feature/flutter-rebuild",
-      "head": "a966d6fdea4de64285794c289c177fd9b6474833",
-      "headShort": "a966d6fde",
-      "headEpoch": 1786971292,
+      "head": "a8a97c2595e1a268036dbbd88bae711374f7e455",
+      "headShort": "a8a97c259",
+      "headEpoch": 1786972594,
       "remoteUrl": "https://github.com/sargupta/sahayakai.git",
-      "aheadOfOriginMain": 214,
+      "aheadOfOriginMain": 215,
       "behindOriginMain": 66,
       "dirtyPaths": [
         "ahayakai-flutter/docs/flutter/loop/LOOP_STATE.json",
-        "sahayakai-flutter/lib/core/i18n/GLOSSARY.md",
-        "sahayakai-flutter/lib/core/i18n/arb/.identical_allowlist",
-        "sahayakai-flutter/lib/core/i18n/arb/app_en.arb",
-        "sahayakai-flutter/lib/core/i18n/arb/app_hi.arb",
-        "sahayakai-flutter/scripts/loop/i18n_audit.py",
-        "sahayakai-flutter/scripts/loop/i18n_count.sh",
-        "sahayakai-flutter/scripts/loop/i18n_extract_missing.py"
+        "sahayakai-flutter/docs/flutter/loop/WAKE_LOG.jsonl",
+        "sahayakai-flutter/lib/core/i18n/gen/app_localizations.dart",
+        "sahayakai-flutter/lib/core/i18n/gen/app_localizations_hi.dart"
       ],
-      "untrackedPaths": [
-        "sahayakai-flutter/scripts/loop/i18n_merge.py"
-      ]
+      "untrackedPaths": []
     },
     "code": {
       "dartFiles": 308,
@@ -124,8 +118,8 @@
     "status": "ok",
     "violations": [],
     "consecutiveViolationWakes": 0,
-    "checkedAtEpoch": 1786972477,
-    "checkedAtSha": "a966d6fdea4de64285794c289c177fd9b6474833"
+    "checkedAtEpoch": 1786972599,
+    "checkedAtSha": "a8a97c2595e1a268036dbbd88bae711374f7e455"
   },
   "measurements": {
     "analyze": {
@@ -195,7 +189,7 @@
         "docs/flutter/pillars/PILLAR_BUILD_STATE.ARCHIVED.json"
       ],
       "dependsOn": [],
-      "status": "done",
+      "status": "stale",
       "attempts": 7,
       "reviewRounds": 0,
       "verifiedAtSha": "a966d6fdea4de64285794c289c177fd9b6474833",
@@ -285,7 +279,8 @@
         "auto-demoted to stale at 1786970803: 1 declared file(s) changed since 15370f2f8 — re-gate required",
         "Re-verified after the reconcile re-affirmation logic landed.",
         "auto-demoted to stale at 1786971289: 2 declared file(s) changed since 973b781c3 — re-gate required",
-        "re-affirmed at 1786972451 (was stale): 2 declared file(s) changed, but U0.7's 'i18n' gate passed at a966d6fde and runs the same ladder at equal-or-greater strength"
+        "re-affirmed at 1786972451 (was stale): 2 declared file(s) changed, but U0.7's 'i18n' gate passed at a966d6fde and runs the same ladder at equal-or-greater strength",
+        "auto-demoted to stale at 1786972599: 4 declared file(s) changed since a966d6fde — re-gate required"
       ]
     },
     {
@@ -1057,7 +1052,7 @@
       "dependsOn": [
         "U0.1"
       ],
-      "status": "done",
+      "status": "stale",
       "attempts": 1,
       "reviewRounds": 0,
       "verifiedAtSha": "65ef4f5a1d883c1e0a5b1be38275b043ad38ec77",
@@ -1136,7 +1131,8 @@
       "notes": [
         "All 971 en keys carry @description metadata — the translation input is unusually good.",
         "Only 40 of the existing 4950 translated values are English-identical, so the script-coverage gate will be near-zero-noise.",
-        "Audit found zero quality defects in the 4950 existing translations; the gap is purely the 4760 missing. Two of my own rules were wrong on first run and were corrected, not allowlisted."
+        "Audit found zero quality defects in the 4950 existing translations; the gap is purely the 4760 missing. Two of my own rules were wrong on first run and were corrected, not allowlisted.",
+        "auto-demoted to stale at 1786972599: 4 declared file(s) changed since 65ef4f5a1 — re-gate required"
       ]
     },
     {
@@ -1159,20 +1155,115 @@
       "dependsOn": [
         "U0.6"
       ],
-      "status": "pending",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "reviewRounds": 0,
-      "verifiedAtSha": null,
-      "commit": null,
+      "verifiedAtSha": "a8a97c2595e1a268036dbbd88bae711374f7e455",
+      "commit": "a8a97c259",
       "evidence": {
-        "gatesRun": [],
+        "gatesRun": [
+          {
+            "gate": "guard",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "GUARD NOTE: sibling tree has pre-existing changes (not caused by this wake):\n    ?? sahayakai-main/._fields.mjs\n    ?? sahayakai-main/._live.mjs\n    ?? sahayakai-main/.claude/launch.json\n    ?? sahayakai-main/.claude/skills/\n    ?? sahayakai-main/AI_Literacy_Drive_Women_Siliguri_INTERN_MARKETING_PLAYBOOK.md\nGUARD NOTE: the loop must not add to these. Web/sidecar units use a separate worktree.\nloop_guard: OK (branch=feature/flutter-rebuild head=a966d6fde)"
+          },
+          {
+            "gate": "selftest",
+            "exit": 0,
+            "durationSec": 6,
+            "tail": "selftest: planting violations to prove each guard can fail\n\n  ✓ secret_scan detects a planted keystore password\n  ✓ contradiction_guard detects a stub claim above real wiring\n  ✓ scope gate detects an undeclared changed file\n  ✓ scope gate refuses to run with UNIT_FILES unset\n  ✓ i18n_count reads real ARBs (untranslated=4284)\n  ✓ template key count matches the audited value (971)\n  ✓ doc_truth_guard reports 4 red claims (honest starting state)\n  ✓ doc_truth_guard --strict fails while any claim is red\n  ✓ verifiedAtSha ancestry check rejects a fabricated sha\n  ✓ record.py refuses another unit's gate as evidence\n  ✓ loop_guard passes on the real tree\n  ✓ reconcile passes on the real tree\n\nselftest: 12 passed, 0 failed\nselftest: every guard demonstrably fails when it should"
+          },
+          {
+            "gate": "reconcile",
+            "exit": 0,
+            "durationSec": 4,
+            "tail": "reconcile: head=a966d6fde branch=feature/flutter-rebuild tests=1552 goldens=0 i18n_missing=4284 claims=7g/4r\nreconcile: integrity OK"
+          },
+          {
+            "gate": "scope",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "all changes within the declared file list\n  (excluding 9 declared pre-existing dirty path(s))"
+          },
+          {
+            "gate": "format",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "no hand-written dart files changed"
+          },
+          {
+            "gate": "analyze",
+            "exit": 0,
+            "durationSec": 7,
+            "tail": "Analyzing sahayakai-flutter...                                  \nNo issues found! (ran in 6.1s)"
+          },
+          {
+            "gate": "token_guard",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "token-guard: PASS"
+          },
+          {
+            "gate": "secret_scan",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "secret_scan: OK"
+          },
+          {
+            "gate": "contradiction",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "contradiction_guard: OK"
+          },
+          {
+            "gate": "doc_truth",
+            "exit": 0,
+            "durationSec": 1,
+            "tail": "CLAIM                            ACTUAL   EXPECT   VERDICT\ngolden_gate_exists               0        >=12     RED\ni18n_zero_untranslated           4284     ==0      RED\ni18n_zero_identical_english      0        ==0      GREEN\nfonts_bundled                    11       >=11     GREEN\nfonts_no_runtime_fetch           0        ==0      GREEN\nfonts_not_fetched_from_lib       0        ==0      GREEN\nrelease_signing_verified         1        ==1      GREEN\nflutter_ci_present               0        >=1      RED\nlints_enforced                   0        >=15     RED\nfirebase_wired                   1        >=1      GREEN\nturn_based_fallback_present      5        >=1      GREEN\n\ndoc_truth_guard: 7 green / 4 red\n  red: golden_gate_exists i18n_zero_untranslated flutter_ci_present lints_enforced"
+          },
+          {
+            "gate": "codegen_drift",
+            "exit": 0,
+            "durationSec": 3,
+            "tail": "codegen is idempotent against the working tree"
+          },
+          {
+            "gate": "custom_lint",
+            "exit": null,
+            "skipped": true,
+            "reason": "no custom_lint block in analysis_options.yaml yet (unit U0.21)"
+          },
+          {
+            "gate": "tests",
+            "exit": 0,
+            "durationSec": 76,
+            "tail": "  01:14 +1750: All tests passed!                                                                                                                                                                         \npassing=1750 failing=0 (baseline failing=0)"
+          },
+          {
+            "gate": "goldens",
+            "exit": null,
+            "skipped": true,
+            "reason": "no matchesGoldenFile call sites exist yet (units U0.18/U0.19)"
+          },
+          {
+            "gate": "i18n_full",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "untranslated=4284 identical-to-english=0"
+          }
+        ],
         "reviewers": [],
-        "artifacts": []
+        "artifacts": [],
+        "gateProfile": "i18n",
+        "gateExit": 0,
+        "gateAtSha": "a966d6fdea4de64285794c289c177fd9b6474833"
       },
       "failure": null,
       "blockedBy": null,
       "notes": [
-        "Pilot found a systematic flaw that would have hit all 10 locales: the script-coverage rule had no notion of format-only strings, so the translator invented words to satisfy it. Now auto-detected rather than hand-allowlisted."
+        "Pilot found a systematic flaw that would have hit all 10 locales: the script-coverage rule had no notion of format-only strings, so the translator invented words to satisfy it. Now auto-detected rather than hand-allowlisted.",
+        "Pilot caught a systematic rule flaw before it hit 10 locales — exactly what it was sequenced alone for."
       ]
     },
     {
