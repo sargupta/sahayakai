@@ -21,8 +21,14 @@ before a signed release build can sign in**). `flutterfire configure` was skippe
 console — worth deleting once confirmed nothing else depends on it.
 
 **Still open, deliberately not done in this pass:**
-- **`firebase_app_check`** — not added. Wiring it wrong actively hard-blocks protected routes; this
-  needs your own Play Integrity console call on when to flip monitor → enforce, not a default.
+- **App Check enforcement** — the CLIENT half is now done: `firebase_app_check` is in `pubspec.yaml`,
+  `FirebaseInit` activates it (`AndroidProvider.debug` in debug builds, `playIntegrity` in release),
+  and `AuthInterceptor` attaches `X-Firebase-AppCheck` to every request — best effort, 3-second
+  timeout, a failure never blocks the request. Nothing is enforced. Registering Play Integrity in the
+  Firebase console, registering a debug token for each developer device, and choosing when to flip
+  the backend's `APP_CHECK_REQUIRED` monitor → enforce are still yours. Shipping the header first is
+  the point: by the time you flip it, builds in the field are already sending tokens, so the flip
+  does not lock a teacher out.
 - **The official Google branding asset** — the sign-in button still uses a Lucide glyph, not Google's
   mark. Their branding terms require it; still a placeholder.
 - **Release-keystore SHA fingerprints** — only the shared **debug** keystore's are registered. A

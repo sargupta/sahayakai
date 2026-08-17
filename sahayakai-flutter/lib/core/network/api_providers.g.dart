@@ -33,7 +33,39 @@ final tokenProviderProvider = Provider<TokenProvider>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef TokenProviderRef = ProviderRef<TokenProvider>;
-String _$apiClientHash() => r'0a0704f804b2a1069e862b8302de412393b042e2';
+String _$appCheckTokenProviderHash() =>
+    r'8f8ed9491d7d7c5e33dc21ac57766ee2c269aae3';
+
+/// The App Check attestation source the dio auth interceptor reads for the
+/// `X-Firebase-AppCheck` header. Deliberately the same shape as
+/// [tokenProvider] — a plain function behind a provider — so a test overrides
+/// it with a fake and no test ever calls into Play Integrity.
+///
+/// Guarded on [FirebaseInit.isConfigured] for the same reason [tokenProvider]
+/// is: `FirebaseAppCheck.instance` needs a registered default app, and a widget
+/// test never runs `main()`'s `Firebase.initializeApp()`.
+///
+/// This returns the raw future without a try/catch on purpose. Swallowing here
+/// too would put the best-effort rule in two places and let one of them drift;
+/// `AuthInterceptor._appCheckToken` owns it — throw, null, and timeout all mean
+/// "send the request without the header".
+///
+/// Copied from [appCheckTokenProvider].
+@ProviderFor(appCheckTokenProvider)
+final appCheckTokenProviderProvider = Provider<AppCheckTokenProvider>.internal(
+  appCheckTokenProvider,
+  name: r'appCheckTokenProviderProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$appCheckTokenProviderHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef AppCheckTokenProviderRef = ProviderRef<AppCheckTokenProvider>;
+String _$apiClientHash() => r'757c7b1dfcee6333b6f27152181fe17fcb315ec7';
 
 /// The single configured [ApiClient] used by every repository.
 ///

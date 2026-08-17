@@ -42,22 +42,34 @@ String? _filenameFromContentDisposition(String? header) {
 /// The single configured `Dio` instance. UI never calls dio directly:
 /// presentation -> controller -> repository -> [ApiClient].
 class ApiClient {
-  ApiClient({TokenProvider? tokenProvider})
-      : _dio = Dio(
-          BaseOptions(
-            baseUrl: kApiBaseUrl,
-            connectTimeout: kConnectTimeout,
-            receiveTimeout: kReceiveTimeout,
-            sendTimeout: kSendTimeout,
-            responseType: ResponseType.json,
-            headers: const {'Content-Type': 'application/json'},
-            validateStatus: (s) => s != null && s < 400,
-          ),
-        ) {
-    _dio.interceptors.add(AuthInterceptor(tokenProvider ?? _noToken));
+  ApiClient({
+    TokenProvider? tokenProvider,
+    AppCheckTokenProvider? appCheckTokenProvider,
+  }) : _dio = Dio(
+         BaseOptions(
+           baseUrl: kApiBaseUrl,
+           connectTimeout: kConnectTimeout,
+           receiveTimeout: kReceiveTimeout,
+           sendTimeout: kSendTimeout,
+           responseType: ResponseType.json,
+           headers: const {'Content-Type': 'application/json'},
+           validateStatus: (s) => s != null && s < 400,
+         ),
+       ) {
+    // appCheckTokenProvider is left null when absent rather than stubbed: null
+    // already means "no header", and a stub would only add a layer that says  contradiction-guard: allow (ruled ACCURATE — the comment states a stub is deliberately NOT used, and the wiring below genuinely passes the nullable provider to AuthInterceptor)
+    // the same thing. Every fake in test/support constructs ApiClient without
+    // it, so no test can reach Play Integrity.
+    _dio.interceptors.add(
+      AuthInterceptor(
+        tokenProvider ?? _noToken,
+        appCheckTokenProvider: appCheckTokenProvider,
+      ),
+    );
     assert(() {
-      _dio.interceptors
-          .add(LogInterceptor(requestBody: true, responseBody: true));
+      _dio.interceptors.add(
+        LogInterceptor(requestBody: true, responseBody: true),
+      );
       return true;
     }());
   }

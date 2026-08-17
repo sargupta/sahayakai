@@ -1,4 +1,6 @@
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 
 /// # Firebase init (real, since the auth handoff)
 ///
@@ -21,15 +23,21 @@ import 'package:firebase_core/firebase_core.dart';
 /// (with a retry), instead of letting the teacher fall through to a dead Login
 /// button while the already-built retry screen stays unreachable.
 ///
-/// **What this file does NOT do**: `cloud_firestore` / `firebase_database` /
-/// `firebase_messaging` are still absent — those back the Block-C *live reads*
-/// (inbox/staffroom/chat/presence/FCM), a separate handoff from auth. Auth
-/// alone does not make those providers live; see each transport's own
-/// `Deferred*Transport` for that seam. `firebase_app_check` is also
-/// deliberately still absent — HANDOFF.md is explicit that App Check must
-/// land in monitor/soft-enforce, verified, before hard-enforcing, and that is
-/// a founder-side call on the Play Integrity console, not a default to wire
-/// blind.
+/// **App Check** is activated here too, and it is worth being precise about
+/// what that does and does not mean. Activating the SDK makes the client able
+/// to MINT attestation tokens, which `AuthInterceptor` then attaches to
+/// outgoing requests as `X-Firebase-AppCheck`, best-effort. It does not enable
+/// enforcement anywhere: registering Play Integrity and flipping a backend from
+/// monitor to enforce are console actions, deliberately left to the founder
+/// (HANDOFF.md). Shipping the header first is the safe half of that sequence —
+/// by the time enforcement is flipped on, builds in the field are already
+/// sending tokens, so the flip does not lock anyone out.
+///
+/// **What this file does NOT do**: `firebase_database` / `firebase_messaging`
+/// are still absent — those back part of the Block-C *live reads*
+/// (chat/presence/FCM), a separate handoff from auth. Auth alone does not make
+/// those providers live; see each transport's own `Deferred*Transport` for that
+/// seam.
 class FirebaseInit {
   const FirebaseInit._();
 
@@ -65,6 +73,37 @@ class FirebaseInit {
     } catch (error) {
       _ready = false;
       _initError = error;
+    }
+    if (_ready) await _activateAppCheck();
+  }
+
+  /// Turns on App Check so the client can mint attestation tokens. Runs only
+  /// after `initializeApp` succeeded (there is no Firebase app to attest
+  /// otherwise).
+  ///
+  /// `activate()` registers the provider; it does NOT fetch a token, so this
+  /// adds no network round trip to app boot. The provider split is by build
+  /// mode: [AndroidProvider.debug] under [kDebugMode], which mints a debug
+  /// token a developer registers once in the console, and
+  /// [AndroidProvider.playIntegrity] in release, the real attestation.
+  ///
+  /// Failure is swallowed on purpose, and separately from init's own
+  /// [initError]. A device with no Google Play services, or a Play Integrity
+  /// call that cannot complete, must not turn into a boot error screen or a
+  /// [isConfigured] of `false` — that would take auth and Firestore down with
+  /// it over an optional header. The only consequence of failing here is that
+  /// `appCheckTokenProvider` later yields nothing and requests go out
+  /// unattested, which is exactly the degradation `AuthInterceptor` is built
+  /// to absorb.
+  static Future<void> _activateAppCheck() async {
+    try {
+      await FirebaseAppCheck.instance.activate(
+        androidProvider: kDebugMode
+            ? AndroidProvider.debug
+            : AndroidProvider.playIntegrity,
+      );
+    } catch (_) {
+      // Best effort. See above: never fatal, never touches _ready/_initError.
     }
   }
 }

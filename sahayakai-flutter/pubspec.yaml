@@ -50,6 +50,21 @@ dependencies:
   # (firebase_core 3.15.2, firebase_auth 5.7.0).
   cloud_firestore: ^5.6.0
 
+  # App Check attestation for the `X-Firebase-AppCheck` header the web
+  # middleware already reads (and hard-requires on /api/ai/* once the server
+  # sets APP_CHECK_REQUIRED=true). The client ships the header FIRST, on
+  # purpose: the token is attached best-effort and a failure never blocks a
+  # request, so a build in the field is already sending attestation by the time
+  # the founder registers Play Integrity and flips monitor -> enforce in the
+  # Firebase console. Nothing here enables enforcement.
+  #
+  # Pinned to the 0.3.2 line, NOT 0.4.x: firebase_app_check 0.4.x requires
+  # firebase_core ^4.x, and this app is locked to firebase_core 3.15.2 (the
+  # pair firebase_auth 5.7.0 / cloud_firestore 5.6.12 resolve against).
+  # 0.3.2+10 is the last 0.3.x, and its constraint is `firebase_core ^3.15.2` —
+  # exactly what is already in pubspec.lock, so nothing else re-resolves.
+  firebase_app_check: ^0.3.2+10
+
   # Fonts: no package. All 11 families are bundled as assets under
   # flutter.fonts below, so nothing can fetch a face at runtime.
 

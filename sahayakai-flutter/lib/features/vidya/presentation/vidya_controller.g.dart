@@ -6,7 +6,7 @@ part of 'vidya_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$vidyaControllerHash() => r'610e0b56994b6daaf9143c06fc1e940c14e9bc0b';
+String _$vidyaControllerHash() => r'389acaa0bbf1b73d6e8c44616d26c19ac0980ac0';
 
 /// The single VIDYA brain: the coupled capture + conversation state machine
 /// (SPEC §A.6) that the home mic and every inline mic feed.
