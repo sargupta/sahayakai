@@ -5,6 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/router/routes.dart';
 import 'package:sahayakai/features/dashboard/presentation/app_shell.dart';
+import 'package:sahayakai/features/dashboard/presentation/floating_bottom_nav.dart';
 import 'package:sahayakai/features/lesson_planner/presentation/lesson_plan_screen.dart';
 import 'package:sahayakai/shared/domain/tool_registry.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,10 +18,15 @@ import '../onboarding/onboarding_fixtures.dart';
 /// onto the signed-in shell and tapping the Create action, so the sheet, the
 /// search, the deep links and the shared registry are all asserted end to end.
 ///
-/// The dashboard is still mounted behind the modal sheet, so its own tool tiles
-/// carry the same names as the palette rows. Every palette-scoped assertion
-/// therefore keys off `create-palette-<id>` (unique to a palette row) rather
-/// than the tool name, which would match the tile behind the sheet too.
+/// The shell's tab body stays mounted behind the modal sheet, so tool names
+/// visible there collide with the palette's own rows. Every palette-scoped
+/// assertion therefore keys off `create-palette-<id>` (unique to a palette row)
+/// rather than the tool name, which would match what is behind the sheet too.
+///
+/// (This paragraph used to say "the dashboard is still mounted behind the
+/// sheet". Home is [VidyaHomeScreen] now; the tool grid moved to /prep-desk.
+/// The discipline it describes is still correct, so it is corrected here rather
+/// than left to rot into another confidently wrong comment.)
 
 /// The 15 tools the build ships, by stable id.
 const Set<String> _expectedIds = {
@@ -48,10 +54,34 @@ const Set<String> _expectedIds = {
 
 Key _rowKey(String id) => ValueKey('create-palette-$id');
 
+/// The shell's Create action, scoped to the bottom nav bar.
+///
+/// The sparkles glyph is NOT unique on screen. The VIDYA home behind the shell
+/// wears one in its hero badge, so a bare `find.byIcon` is ambiguous and `tap`
+/// refuses it — which is how 13 cases in this file came to fail at once.
+///
+/// It is not the only other one, either: Me renders a sparkles in its plan
+/// badge when the plan is paid, and Me is permanently mounted in the shell's
+/// IndexedStack. Today's fixture is on a free plan, so there are two on screen
+/// rather than three — a paid-plan fixture would add a third, which is further
+/// reason not to depend on the count.
+///
+/// Scoping by the [FloatingBottomNav] ancestor is the durable fix: the nav owns
+/// exactly one sparkles slot (Home/Create/Library/Me are
+/// mic/sparkles/library/user), and it survives any restyle of either badge,
+/// unlike a finder keyed on the icon's size or colour. It is also
+/// locale-independent, which the Indic probes below require — the slot's
+/// [Semantics] label is the translated `navCreate` string, so a label-based
+/// finder would pass in English and fail under bn/ta/ml.
+final Finder _createAction = find.descendant(
+  of: find.byType(FloatingBottomNav),
+  matching: find.byIcon(LucideIcons.sparkles),
+);
+
 /// Opens the palette from the shell's Create action.
 Future<void> _openPalette(WidgetTester tester) async {
-  // The Create destination is the only place the sparkles glyph appears.
-  await tester.tap(find.byIcon(LucideIcons.sparkles));
+  expect(_createAction, findsOneWidget, reason: 'nav Create action');
+  await tester.tap(_createAction);
   await tester.pumpAndSettle();
 }
 
@@ -77,45 +107,58 @@ void main() {
   });
 
   group('the shared registry', () {
-    test('lists all fifteen built tools with valid routes and Lucide icons',
-        () {
-      expect(kToolRegistry, hasLength(15));
-      expect(kToolRegistry.map((t) => t.id).toSet(), _expectedIds);
+    test(
+      'lists all fifteen built tools with valid routes and Lucide icons',
+      () {
+        expect(kToolRegistry, hasLength(15));
+        expect(kToolRegistry.map((t) => t.id).toSet(), _expectedIds);
 
-      const registered = {
-        Routes.lessonPlan,
-        Routes.quizGenerator,
-        Routes.instantAnswer,
-        Routes.worksheetWizard,
-        Routes.rubricGenerator,
-        Routes.examPaper,
-        Routes.teacherTraining,
-        Routes.parentMessage,
-        Routes.parentHotline,
-        Routes.assessAssignment,
-        Routes.assessmentScanner,
-        Routes.visualAid,
-        Routes.videoStoryteller,
-        Routes.virtualFieldTrip,
-        Routes.contentCreator,
-      };
-      for (final tool in kToolRegistry) {
-        expect(tool.route, isIn(registered), reason: '${tool.id} route');
-        expect(tool.route, startsWith('/'), reason: '${tool.id} route shape');
-        // A resolving Lucide glyph, never a Material fallback (DESIGN_RUBRIC
-        // §13): the Lucide port stamps this family/package on every icon.
-        expect(tool.icon.fontFamily, 'Lucide', reason: '${tool.id} icon family');
-        expect(tool.icon.fontPackage, 'lucide_icons',
-            reason: '${tool.id} icon package');
-      }
+        const registered = {
+          Routes.lessonPlan,
+          Routes.quizGenerator,
+          Routes.instantAnswer,
+          Routes.worksheetWizard,
+          Routes.rubricGenerator,
+          Routes.examPaper,
+          Routes.teacherTraining,
+          Routes.parentMessage,
+          Routes.parentHotline,
+          Routes.assessAssignment,
+          Routes.assessmentScanner,
+          Routes.visualAid,
+          Routes.videoStoryteller,
+          Routes.virtualFieldTrip,
+          Routes.contentCreator,
+        };
+        for (final tool in kToolRegistry) {
+          expect(tool.route, isIn(registered), reason: '${tool.id} route');
+          expect(tool.route, startsWith('/'), reason: '${tool.id} route shape');
+          // A resolving Lucide glyph, never a Material fallback (DESIGN_RUBRIC
+          // §13): the Lucide port stamps this family/package on every icon.
+          expect(
+            tool.icon.fontFamily,
+            'Lucide',
+            reason: '${tool.id} icon family',
+          );
+          expect(
+            tool.icon.fontPackage,
+            'lucide_icons',
+            reason: '${tool.id} icon package',
+          );
+        }
 
-      // No two tools collide on a route or an icon.
-      expect(kToolRegistry.map((t) => t.route).toSet(), hasLength(15));
-      expect(kToolRegistry.map((t) => t.icon.codePoint).toSet(), hasLength(15));
-    });
+        // No two tools collide on a route or an icon.
+        expect(kToolRegistry.map((t) => t.route).toSet(), hasLength(15));
+        expect(
+          kToolRegistry.map((t) => t.icon.codePoint).toSet(),
+          hasLength(15),
+        );
+      },
+    );
 
-    testWidgets('every tool has a resolving, distinct localized name',
-        (tester) async {
+    testWidgets('every tool has a resolving, distinct localized name', (
+      tester,
+    ) async {
       // Names come from the ARB, not hardcoded English: prove each getter
       // resolves to a real, non-empty, distinct string through the real
       // localization delegates.
@@ -137,18 +180,25 @@ void main() {
       final names = <String>{};
       for (final tool in kToolRegistry) {
         expect(tool.title(l10n).trim(), isNotEmpty, reason: '${tool.id} title');
-        expect(tool.subtitle(l10n).trim(), isNotEmpty,
-            reason: '${tool.id} subtitle');
+        expect(
+          tool.subtitle(l10n).trim(),
+          isNotEmpty,
+          reason: '${tool.id} subtitle',
+        );
         names.add(tool.title(l10n));
       }
-      expect(names, hasLength(kToolRegistry.length),
-          reason: 'tool names must be distinct');
+      expect(
+        names,
+        hasLength(kToolRegistry.length),
+        reason: 'tool names must be distinct',
+      );
     });
   });
 
   group('opening', () {
-    testWidgets('the Create action opens the palette over the shell',
-        (tester) async {
+    testWidgets('the Create action opens the palette over the shell', (
+      tester,
+    ) async {
       await pumpSignedInApp(tester);
       expect(find.byType(AppShell), findsOneWidget);
 
@@ -186,8 +236,9 @@ void main() {
       expect(find.byKey(_rowKey('lesson-plan')), findsNothing);
     });
 
-    testWidgets('a search that matches nothing shows the empty state',
-        (tester) async {
+    testWidgets('a search that matches nothing shows the empty state', (
+      tester,
+    ) async {
       await pumpSignedInApp(tester);
       await _openPalette(tester);
 
@@ -209,8 +260,9 @@ void main() {
   });
 
   group('navigation', () {
-    testWidgets('tapping a tool deep-links to its route and closes the sheet',
-        (tester) async {
+    testWidgets('tapping a tool deep-links to its route and closes the sheet', (
+      tester,
+    ) async {
       await pumpSignedInApp(tester);
       await _openPalette(tester);
 
@@ -229,8 +281,9 @@ void main() {
       expect(find.text('Search tools'), findsNothing);
     });
 
-    testWidgets('a filtered result still deep-links to the right route',
-        (tester) async {
+    testWidgets('a filtered result still deep-links to the right route', (
+      tester,
+    ) async {
       await pumpSignedInApp(tester);
       await _openPalette(tester);
 
@@ -246,23 +299,22 @@ void main() {
 
   group('overflow gates (DESIGN_RUBRIC §12.9 / §12.10 / §12.11 / §12.13)', () {
     for (final brightness in Brightness.values) {
-      testWidgets(
-        'no overflow at 360dp x textScale 1.3 in ${brightness.name}',
-        (tester) async {
-          await pumpSignedInApp(
-            tester,
-            brightness: brightness,
-            textScale: 1.3,
-            surface: kNarrowPhone,
-          );
-          await _openPalette(tester);
+      testWidgets('no overflow at 360dp x textScale 1.3 in ${brightness.name}', (
+        tester,
+      ) async {
+        await pumpSignedInApp(
+          tester,
+          brightness: brightness,
+          textScale: 1.3,
+          surface: kNarrowPhone,
+        );
+        await _openPalette(tester);
 
-          // No RenderFlex overflow when the sheet opens, nor as its list scrolls
-          // every row into view at the narrow, scaled size.
-          expect(tester.takeException(), isNull);
-          await _scrollPalette(tester);
-        },
-      );
+        // No RenderFlex overflow when the sheet opens, nor as its list scrolls
+        // every row into view at the narrow, scaled size.
+        expect(tester.takeException(), isNull);
+        await _scrollPalette(tester);
+      });
     }
 
     testWidgets('the dark palette really is dark', (tester) async {
@@ -295,8 +347,9 @@ void main() {
       );
     }
 
-    testWidgets('the empty state does not overflow at 360dp x 1.3',
-        (tester) async {
+    testWidgets('the empty state does not overflow at 360dp x 1.3', (
+      tester,
+    ) async {
       await pumpSignedInApp(
         tester,
         locale: const Locale('ml'),
