@@ -6,12 +6,17 @@ part of 'api_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$tokenProviderHash() => r'ac7e6478cf3aa1eabd0f27b185cc0b3b25a8ad38';
+String _$tokenProviderHash() => r'29bf7ec460f935327a3e933df572a69d5d405f8c';
 
 /// The bearer-token source the dio auth interceptor reads: the real Firebase
 /// ID token, or null when signed out. [forceRefresh] backs the interceptor's
 /// one-retry-on-401 (a locally-cached token can be stale even though the
 /// teacher is genuinely signed in).
+///
+/// Guarded on [FirebaseInit.isConfigured] for the same reason
+/// `AuthController` is (core/auth/auth_providers.dart): `FirebaseAuth.instance`
+/// throws with no default app registered, and a widget test never runs
+/// `main()`'s `Firebase.initializeApp()`.
 ///
 /// Copied from [tokenProvider].
 @ProviderFor(tokenProvider)

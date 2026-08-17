@@ -7,7 +7,7 @@ part of 'lesson_plan_controller.dart';
 // **************************************************************************
 
 String _$lessonPlanControllerHash() =>
-    r'2cbb335356d5a9960d8011a718eb431fbac30677';
+    r'ac8ca9dd572c6b2ebf2e80fc47cff54e0ffbdf5a';
 
 /// Drives the lesson-plan screen through `AsyncValue<LessonPlan?>`:
 ///   - `AsyncData(null)`  -> empty / idle (initial),

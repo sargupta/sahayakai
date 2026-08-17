@@ -34,7 +34,7 @@ final profileControllerProvider =
 
 typedef _$ProfileController = AutoDisposeAsyncNotifier<TeacherProfile>;
 String _$profileFormSaveControllerHash() =>
-    r'31e42b13c5ce78260904f18cae44b55665ae1f0a';
+    r'07ac9bb948166067c484cf759b2413c71ad33d3f';
 
 /// Drives the "Save" action through `AsyncValue<void>`:
 ///   - `AsyncData(null)` -> idle (initial, and after a successful save),

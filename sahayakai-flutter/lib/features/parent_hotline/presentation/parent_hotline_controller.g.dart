@@ -25,7 +25,7 @@ final callabilityPolicyProvider =
 // ignore: unused_element
 typedef CallabilityPolicyRef = AutoDisposeProviderRef<CallabilityPolicy>;
 String _$parentHotlineControllerHash() =>
-    r'c79a9e1561b28671bec2373783bc144ffb2d31aa';
+    r'dd17a80f9e4345362a6d9bb177b6163dc25f1cbd';
 
 /// The Parent Hotline brain (SPEC §B.3): the staged flow + the exact web poll
 /// discipline + resume.

@@ -6,7 +6,7 @@ part of 'locale_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$localeControllerHash() => r'21a80df1117434203308e9946a43bdcb1f90dae2';
+String _$localeControllerHash() => r'd324da8904f466895b1998ea2692d3fc49f8d674';
 
 /// The active UI locale. Also the source for the AI `language` param via
 /// [AppLocale.aiName]. Persisted across launches with shared_preferences.

@@ -47,13 +47,23 @@ final isSignedInProvider = AutoDisposeProvider<bool>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef IsSignedInRef = AutoDisposeProviderRef<bool>;
-String _$appBootstrapHash() => r'c2dc482a228589b54d09670751cd45f5e33cf530';
+String _$appBootstrapHash() => r'389467d56103740343644c068076ec6cadc04a5f';
 
-/// First-run bootstrap: `main()` already awaited `FirebaseInit
-/// .ensureInitialized()` before `runApp`, so by the time this provider builds
-/// Firebase is already up — this is a deliberate minimum splash dwell (a
-/// beat to read the brand mark), not a simulation of anything still pending.
-/// While this future is loading, the router parks on /splash.
+/// First-run bootstrap the router parks `/splash` on until it resolves.
+///
+/// `main()` already awaited [FirebaseInit.ensureInitialized] before `runApp`,
+/// so on the happy path this re-attempt returns instantly and the only work
+/// left is a deliberate minimum splash dwell (a beat to read the brand mark),
+/// not a simulation of anything still pending.
+///
+/// The re-attempt is what makes the splash's retry real: `_BootstrapFailed`
+/// invalidates THIS provider, and `ensureInitialized` is idempotent — a prior
+/// failure left Firebase unready, so it re-runs `Firebase.initializeApp`. A
+/// genuine init failure is now surfaced as an [AsyncError] rather than
+/// swallowed: with init unresolved there is no honest answer to "is this
+/// teacher signed in", and proceeding would strand the teacher on a dead Login
+/// button (`signIn()` no-ops while unconfigured), so the splash owns the
+/// failure and offers a retry (see `SplashScreen`).
 ///
 /// Copied from [appBootstrap].
 @ProviderFor(appBootstrap)

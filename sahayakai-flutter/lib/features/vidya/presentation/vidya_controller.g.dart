@@ -6,7 +6,7 @@ part of 'vidya_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$vidyaControllerHash() => r'977a4b0130a19b8aea892ca3c2f470291c91eb5d';
+String _$vidyaControllerHash() => r'610e0b56994b6daaf9143c06fc1e940c14e9bc0b';
 
 /// The single VIDYA brain: the coupled capture + conversation state machine
 /// (SPEC §A.6) that the home mic and every inline mic feed.
@@ -16,7 +16,15 @@ String _$vidyaControllerHash() => r'977a4b0130a19b8aea892ca3c2f470291c91eb5d';
 /// tap abandons an in-flight trip instead of applying a stale result. Errors are
 /// typed: 401 → [VidyaStatus.signedOut] (expected on the stub token until real
 /// auth), 429 → [VidyaStatus.limitReached], network/timeout/server →
-/// [VidyaStatus.failed].
+/// [VidyaStatus.failed]. The same [VidyaStatus.failed] dignified state (a
+/// title, body copy and a Retry action — see `vidya_status_ui.dart`) is also
+/// where an UNEXPECTED capture-side failure lands: the permission plugin
+/// throwing, the recorder failing to start, or the recorder failing to stop.
+/// None of those are the expected "permission denied" outcome (that is a
+/// [MicPermission] return value, handled below and left exactly as-is) — they
+/// are plugin hiccups, and silently resetting to [VidyaStatus.idle] for them
+/// would be indistinguishable from the pre-tap state (SPEC-adjacent bug class:
+/// see `b9a961e3c`/`114bd3d47`, "silently bounced back").
 ///
 /// Copied from [VidyaController].
 @ProviderFor(VidyaController)

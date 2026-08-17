@@ -245,25 +245,23 @@ final unreadConversationsProvider =
 typedef UnreadConversationsRef =
     AutoDisposeStreamProviderRef<TransportSnapshot<int>>;
 String _$currentInboxUserIdHash() =>
-    r'59f9e10d01ace3a6e535a9f3e019aa0957c658ef';
+    r'fdc7d14846bd531748ef4919b5549620351cebd3';
 
 /// The current user's uid, used to interpret a [Conversation] (which participant
 /// is "the other", `unreadCount[me]`) and a [Message] (mine vs theirs).
 ///
-/// It is **server-derived** on the wire (`x-user-id` from the verified Bearer
-/// token; never client-supplied — see `conversation_dto.dart`), and there is no
-/// client-side auth identity yet (the P0.2 auth stub). So this returns `null`
-/// today: combined with the deferred transport's `awaitingFirebase` snapshot,
-/// the inbox always renders its sign-in surface on-device, and a `null` uid is
-/// itself treated as "signed out" by the screens (defensive — a `ready` snapshot
-/// can never be interpreted without an identity).
+/// **LIVE (T1-U4).** Watches [authControllerProvider] — the same source of
+/// truth the router and [inboxTransportProvider] already agree on — and
+/// resolves to `FirebaseAuth.instance.currentUser?.uid` for a real signed-in
+/// teacher, `null` otherwise. A `null` uid is itself treated as "signed out"
+/// by the screens (defensive — a `ready` snapshot can never be interpreted
+/// without an identity), which also covers the on-device deferred case: while
+/// Firebase isn't wired the transport only ever emits `awaitingFirebase`, so
+/// this uid is irrelevant to what renders either way.
 ///
-/// It is a deliberately thin, overridable seam:
-///   • the `FirestoreInboxTransport` handoff repoints it to
-///     `FirebaseAuth.instance.currentUser?.uid` (the same uid the live query is
-///     scoped to);
-///   • widget tests override it with a fixed uid to exercise the rows, the
-///     other-participant label, the unread badge and mine-vs-theirs bubbles.
+/// It is a deliberately thin, overridable seam — widget tests override it
+/// with a fixed uid to exercise the rows, the other-participant label, the
+/// unread badge and mine-vs-theirs bubbles without touching real auth.
 ///
 /// Copied from [currentInboxUserId].
 @ProviderFor(currentInboxUserId)
