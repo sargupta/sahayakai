@@ -1,7 +1,14 @@
 name: sahayakai
 description: "SahayakAI — native Android app (SARGVISION Intelligence)"
 publish_to: 'none'
-version: 1.0.0+1
+# versionName+versionCode. Starts at build 2, not 1: the Capacitor wrap at
+# sahayakai-android/ declares the same applicationId and built its AAB at
+# versionCode 1. That artifact was never uploaded — Play publish is still an
+# open handoff step there — so 1 is not actually burned, but two distinct
+# artifacts sharing an applicationId and a versionCode is an ambiguity with no
+# upside. Provisional until H3 confirms the highest versionCode Play has seen
+# for com.sargvision.sahayakai. See docs/flutter/RELEASE.md.
+version: 1.0.0+2
 
 environment:
   sdk: ^3.11.4
