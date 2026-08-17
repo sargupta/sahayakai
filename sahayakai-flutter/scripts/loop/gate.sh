@@ -294,6 +294,12 @@ echo
 
 # ── rungs common to every profile ───────────────────────────────────────────
 run "guard"          bash scripts/loop/loop_guard.sh
+# Prove the guards can still FAIL before trusting any of them to pass. Three of
+# them shipped as silent no-ops on day one and all three reported green; a
+# guard nobody has watched fail is indistinguishable from one that cannot.
+# ~10s, and it means a guard broken by ANY unit is caught by that unit's own
+# gate rather than whenever U0.1 next happens to be re-verified.
+run "selftest"       bash scripts/loop/selftest.sh
 run "reconcile"      bash scripts/loop/reconcile.sh
 run "scope"          gate_scope
 run "format"         gate_format

@@ -125,8 +125,10 @@ for u in s['queue']:
     if u['id'] != '${gated_unit:-none}':
         print(u['id']); break" 2>/dev/null || true)"
   if [ -n "$other" ]; then
+    # --dry-run, because if the binding check HAS regressed, a live call would
+    # mark an unstarted unit done and corrupt the tracker while proving it.
     expect_fail "record.py refuses another unit's gate as evidence" \
-      python3 scripts/loop/record.py --unit "$other" --status done
+      python3 scripts/loop/record.py --unit "$other" --status done --dry-run
   fi
 else
   echo "  ⊘ SKIP: no gate run on disk to test evidence binding against"

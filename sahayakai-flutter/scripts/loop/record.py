@@ -58,6 +58,11 @@ def main() -> int:
     ap.add_argument("--blocked-detail")
     ap.add_argument("--noop", action="store_true",
                     help="this wake advanced nothing; recorded as such")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="run every refusal check but write nothing. Used by "
+                         "selftest.sh, which must be able to prove the "
+                         "cross-unit evidence check still refuses WITHOUT "
+                         "corrupting real state if that check has regressed.")
     a = ap.parse_args()
 
     state = json.loads(STATE.read_text(encoding="utf-8"))
@@ -115,6 +120,11 @@ def main() -> int:
                   f"which is neither HEAD ({head[:9]}) nor its parent "
                   f"({parent[:9] or 'none'}). Re-run the gate.", file=sys.stderr)
             return 2
+
+    if a.dry_run:
+        print(f"record: DRY RUN — {a.unit} would be recorded {a.status}; "
+              f"all refusal checks passed. Nothing written.")
+        return 0
 
     unit["status"] = a.status
     unit["attempts"] = int(unit.get("attempts", 0)) + 1
