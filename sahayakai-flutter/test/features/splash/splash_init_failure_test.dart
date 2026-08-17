@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:sahayakai/core/auth/auth_providers.dart';
 import 'package:sahayakai/core/firebase/firebase_init.dart';
 import 'package:sahayakai/features/onboarding/presentation/login_screen.dart';
@@ -35,7 +34,6 @@ import '../../support/fake_api_client.dart';
 /// [FirebaseInitException] these tests inject.
 void main() {
   setUp(() {
-    GoogleFonts.config.allowRuntimeFetching = false;
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 

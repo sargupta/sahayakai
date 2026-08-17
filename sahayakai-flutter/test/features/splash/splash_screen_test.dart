@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:sahayakai/core/network/api_exception.dart';
 import 'package:sahayakai/features/onboarding/presentation/login_screen.dart';
 import 'package:sahayakai/features/splash/presentation/splash_screen.dart';
@@ -66,8 +65,6 @@ const ApiException kUnauthorized = ApiException(
 
 void main() {
   setUp(() {
-    // No network in tests: never try to fetch Google Fonts at runtime.
-    GoogleFonts.config.allowRuntimeFetching = false;
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 

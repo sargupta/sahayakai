@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:sahayakai/core/auth/auth_providers.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
@@ -118,7 +117,6 @@ void main() {
   // platform channel is absent under flutter_test).
   final clip = <String, Object?>{};
   setUp(() {
-    GoogleFonts.config.allowRuntimeFetching = false;
     SharedPreferences.setMockInitialValues(<String, Object>{});
     clip.clear();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger

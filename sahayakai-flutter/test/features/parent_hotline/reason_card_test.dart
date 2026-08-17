@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/parent_hotline/presentation/widgets/reason_card.dart';
@@ -35,8 +34,6 @@ Future<void> _pump(
 }
 
 void main() {
-  setUp(() => GoogleFonts.config.allowRuntimeFetching = false);
-
   testWidgets('renders the label + description', (tester) async {
     await _pump(
       tester,

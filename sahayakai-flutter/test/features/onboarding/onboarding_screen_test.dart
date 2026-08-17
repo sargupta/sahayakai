@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:sahayakai/core/i18n/app_locale.dart';
 import 'package:sahayakai/core/i18n/locale_provider.dart';
 import 'package:sahayakai/core/router/routes.dart';
@@ -50,7 +49,6 @@ Future<void> _enter(WidgetTester tester, String label, String value) async {
 
 void main() {
   setUp(() {
-    GoogleFonts.config.allowRuntimeFetching = false;
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 

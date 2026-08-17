@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/vidya/presentation/widgets/seal_mic.dart';
@@ -53,8 +52,6 @@ const _animatedStates = [
 ];
 
 void main() {
-  setUp(() => GoogleFonts.config.allowRuntimeFetching = false);
-
   group('every state renders the seal + mic glyph', () {
     for (final state in SealMicState.values) {
       testWidgets('${state.name} renders', (tester) async {

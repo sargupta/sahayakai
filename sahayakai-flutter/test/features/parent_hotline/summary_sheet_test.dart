@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
@@ -190,8 +189,6 @@ String _sentimentLabel(AppLocalizations l10n, ParentSentiment s) => switch (s) {
 };
 
 void main() {
-  setUp(() => GoogleFonts.config.allowRuntimeFetching = false);
-
   final en = lookupAppLocalizations(const Locale('en'));
 
   // ── The full summary payoff ────────────────────────────────────────────────

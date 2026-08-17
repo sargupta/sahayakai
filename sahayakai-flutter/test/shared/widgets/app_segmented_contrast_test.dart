@@ -75,7 +75,7 @@ void main() {
       'AppSegmented unselected label clears AA on the track fill (${brightness.name})',
       (tester) async {
         // Build the theme INSIDE the test body — constructing it at collection
-        // time (a top-level literal) hits google_fonts before the binding inits.
+        // time (a top-level literal) would build a theme before the binding inits.
         final theme = brightness == Brightness.dark
             ? AppTheme.dark()
             : AppTheme.light();

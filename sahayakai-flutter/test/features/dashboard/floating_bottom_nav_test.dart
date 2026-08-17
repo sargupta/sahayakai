@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/dashboard/presentation/floating_bottom_nav.dart';
@@ -59,8 +58,6 @@ AlignmentGeometry _pillAlignment(WidgetTester tester) => tester
     .alignment;
 
 void main() {
-  setUp(() => GoogleFonts.config.allowRuntimeFetching = false);
-
   group('structure', () {
     testWidgets('renders all four glyphs and labels', (tester) async {
       await _pumpNav(tester);

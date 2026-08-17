@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:sahayakai/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:sahayakai/features/instant_answer/presentation/instant_answer_screen.dart';
 import 'package:sahayakai/features/lesson_planner/presentation/lesson_plan_screen.dart';
@@ -47,7 +46,6 @@ Future<void> _scrollWholeList(WidgetTester tester) async {
 
 void main() {
   setUp(() {
-    GoogleFonts.config.allowRuntimeFetching = false;
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 

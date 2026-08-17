@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/parent_hotline/domain/parent_outreach.dart';
@@ -49,8 +48,6 @@ Future<void> _pump(
 }
 
 void main() {
-  setUp(() => GoogleFonts.config.allowRuntimeFetching = false);
-
   testWidgets('absences: header + absent-days badge + prompt', (tester) async {
     await _pump(
       tester,

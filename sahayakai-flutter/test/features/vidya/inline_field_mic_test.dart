@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/network/api_exception.dart';
 import 'package:sahayakai/core/network/api_providers.dart';
@@ -34,7 +33,7 @@ Future<void> _pumpMic(
       ],
       child: MaterialApp(
         // A plain M3 theme (not AppTheme) so the runAsync leg — which drives
-        // real file IO for the STT step — never triggers a google_fonts network
+        // real file IO for the STT step — and no font fetch can occur at all
         // fetch. The mic only needs the ColorScheme roles, which any theme has.
         theme: ThemeData(useMaterial3: true),
         locale: const Locale('en'),
@@ -51,7 +50,6 @@ Future<void> _pumpMic(
 
 void main() {
   setUp(() {
-    GoogleFonts.config.allowRuntimeFetching = false;
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 

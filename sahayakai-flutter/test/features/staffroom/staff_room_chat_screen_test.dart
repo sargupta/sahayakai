@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
@@ -106,7 +105,6 @@ Future<FakeStaffroomTransport> _pump(
 AppLocalizations _en() => lookupAppLocalizations(const Locale('en'));
 
 void main() {
-  setUp(() => GoogleFonts.config.allowRuntimeFetching = false);
   final l10n = _en();
 
   group('bubbles', () {

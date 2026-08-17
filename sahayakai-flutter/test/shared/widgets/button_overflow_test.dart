@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/shared/widgets/primary_button.dart';
 import 'package:sahayakai/shared/widgets/secondary_button.dart';
@@ -47,8 +46,6 @@ RenderParagraph _label(WidgetTester tester, Type buttonType) =>
     );
 
 void main() {
-  setUp(() => GoogleFonts.config.allowRuntimeFetching = false);
-
   for (final brightness in Brightness.values) {
     testWidgets(
       'PrimaryButton: a wrapping label never overflows at textScale 1.3 '

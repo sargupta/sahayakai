@@ -37,11 +37,11 @@ class AnswerMarkdownView extends StatelessWidget {
   /// Headings open a new idea, so they get the section gap; everything else
   /// sits on the internal card gap. Both are 4dp-grid members (§1).
   double _gapBefore(MarkdownBlock block) => switch (block) {
-        MarkdownHeading() => AppSpacing.space6,
-        MarkdownDivider() => AppSpacing.space6,
-        MarkdownCodeBlock() => AppSpacing.space4,
-        _ => AppSpacing.space3,
-      };
+    MarkdownHeading() => AppSpacing.space6,
+    MarkdownDivider() => AppSpacing.space6,
+    MarkdownCodeBlock() => AppSpacing.space4,
+    _ => AppSpacing.space3,
+  };
 }
 
 class _BlockView extends StatelessWidget {
@@ -52,12 +52,19 @@ class _BlockView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return switch (block) {
-      MarkdownHeading(:final level, :final spans) =>
-        _Prose(spans: spans, style: _headingStyle(context, level)),
+      MarkdownHeading(:final level, :final spans) => _Prose(
+        spans: spans,
+        style: _headingStyle(context, level),
+      ),
       MarkdownParagraph(:final spans) => _Prose(spans: spans),
-      MarkdownBullet(:final spans) => _ListRow(marker: const BulletDot(), spans: spans),
-      MarkdownNumbered(:final number, :final spans) =>
-        _ListRow(marker: _NumberMarker(number: number), spans: spans),
+      MarkdownBullet(:final spans) => _ListRow(
+        marker: const BulletDot(),
+        spans: spans,
+      ),
+      MarkdownNumbered(:final number, :final spans) => _ListRow(
+        marker: _NumberMarker(number: number),
+        spans: spans,
+      ),
       MarkdownCodeBlock(:final text) => _CodeBlock(text: text),
       MarkdownDivider() => const Divider(height: 1),
     };
@@ -97,9 +104,7 @@ class _Prose extends StatelessWidget {
     return Text.rich(
       TextSpan(
         style: base,
-        children: [
-          for (final span in spans) _toSpan(context, span, base),
-        ],
+        children: [for (final span in spans) _toSpan(context, span, base)],
       ),
       softWrap: true,
       textHeightBehavior: const TextHeightBehavior(
@@ -113,8 +118,13 @@ class _Prose extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
 
     // Inline code keeps the body family on a tinted chip rather than pulling in
-    // a monospace family: the type system sanctions Fraunces + Inter only, and a
-    // third google_fonts family would also mean another runtime fetch.
+    // a monospace family: the type system sanctions Outfit + Inter only, and a
+    // third family would be another ~100KB bundled into the APK for the rare
+    // inline-code span.
+    //
+    // (This said "Fraunces + Inter" — Fraunces was retired for Outfit — and
+    // justified the rule by a google_fonts runtime fetch, which no longer
+    // exists: U0.5b removed the package and every family ships as an asset.)
     if (span.code) {
       return WidgetSpan(
         alignment: PlaceholderAlignment.middle,

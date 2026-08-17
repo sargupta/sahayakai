@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 
 /// DESIGN_RUBRIC §0 / §12 — the Indic line-height merge gate.
@@ -15,11 +14,10 @@ import 'package:sahayakai/core/theme/app_theme.dart';
 /// These assert the derivation directly, because that is the only way to make
 /// the bug observable without golden-rendering all 10 locales.
 void main() {
-  // AppTheme reaches GoogleFonts; without this it tries to fetch TTFs over the
+  // AppTheme resolves its families from the bundled font assets (pubspec
   // network from a unit test. These are `testWidgets` for the same reason: the
   // font loader reports asynchronously and a bare `test` fails on it.
   TestWidgetsFlutterBinding.ensureInitialized();
-  setUp(() => GoogleFonts.config.allowRuntimeFetching = false);
 
   /// Every component style Flutter takes INSTEAD of the TextTheme, keyed by
   /// name so a failure names the widget that will clip.
@@ -46,7 +44,7 @@ void main() {
     ),
   };
 
-  // Built lazily inside each test body: AppTheme touches GoogleFonts, which
+  // Built lazily inside each test body, matching how the app builds it;
   // needs an initialized binding, so building at main() scope throws first.
   final bases = <String, ThemeData Function()>{
     'light': AppTheme.light,
