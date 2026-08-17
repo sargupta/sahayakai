@@ -175,16 +175,28 @@ gate_analyze() {
     || { printf '%s\n' "$out" | grep -E '^\s+(error|warning|info)' | head -20; return 1; }
 }
 
+# Asserts the generator is IDEMPOTENT against the current working tree: running
+# it again changes nothing.
+#
+# The obvious check — compare .g.dart against HEAD — is wrong here, because the
+# gate runs BEFORE the commit. A unit whose entire purpose is to commit
+# regenerated output would fail a HEAD comparison by definition, and the only
+# way to "pass" would be to commit first and gate afterwards, which defeats the
+# gate. Idempotency is the property actually worth having: it catches source
+# changed without a regen, and a .g.dart edited by hand, at any point in the
+# cycle.
 gate_codegen_drift() {
-  dart run build_runner build --delete-conflicting-outputs >/dev/null 2>&1 || return 1
-  # Pathspec is CWD-relative; the ':(glob)' magic makes '**' match across
-  # directory separators rather than being treated literally.
-  if ! git diff --quiet -- ':(glob)lib/**/*.g.dart'; then
-    echo "generated output does not match committed .g.dart files:"
-    git diff --name-only -- ':(glob)lib/**/*.g.dart' | sed 's/^/    /'
+  local before after
+  before="$(find lib -name '*.g.dart' -exec shasum {} + 2>/dev/null | shasum | awk '{print $1}')"
+  dart run build_runner build --delete-conflicting-outputs >/dev/null 2>&1 || {
+    echo "build_runner failed"; return 1; }
+  after="$(find lib -name '*.g.dart' -exec shasum {} + 2>/dev/null | shasum | awk '{print $1}')"
+  if [ "$before" != "$after" ]; then
+    echo "re-running the generator CHANGED the tree — source and generated output disagree:"
+    git status --porcelain -- ':(glob)lib/**/*.g.dart' | sed 's/^/    /'
     return 1
   fi
-  echo "codegen output matches committed files"
+  echo "codegen is idempotent against the working tree"
 }
 
 gate_custom_lint() {
