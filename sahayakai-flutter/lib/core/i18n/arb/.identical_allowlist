@@ -1,0 +1,15 @@
+# Keys whose value is legitimately identical to English in every locale.
+#
+# Kept deliberately tiny. A generous allowlist defeats the script-coverage
+# check entirely, and that check is the only thing standing between a parallel
+# translation fan-out and ten agents pasting English to make the key counts
+# reconcile.
+#
+# The bar: the string contains NO translatable words. Every entry below is a
+# pure format string — placeholders and punctuation only. There is nothing in
+# them a translator could render differently.
+#
+appTitle
+meUsageValue              # "{used} / {limit}"
+parentHotlinePhoneMask    # "•••• {last4}"
+assessmentScannerMarks    # "{awarded}/{max}"
