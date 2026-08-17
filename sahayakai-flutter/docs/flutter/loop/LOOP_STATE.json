@@ -15,7 +15,7 @@
   "baselines": {
     "$note": "Captured at loop start from the real repo. Gates ratchet against these: a unit may not make any of them worse. Absolute targets live in bands[].exitCriteria.",
     "capturedAtSha": "27f1ecb3ccc9cf769a22255f78775d9767419c59",
-    "i18nUntranslated": 4284,
+    "i18nUntranslated": 0,
     "i18nIdentical": 40,
     "testDeclarations": 1551,
     "testsSkipped": 0,
@@ -34,25 +34,32 @@
     "testsFailing": 0,
     "$testsFailingNote": "Was 13 (the Create-palette suite). Driven to 0 by unit U0.17 on 2026-08-17: the suite was never testing a deleted feature, it was tapping the Create action via a bare find.byIcon(sparkles) that had become ambiguous when a second sparkles appeared in the VIDYA hero badge. Fixed by scoping the finder to the FloatingBottomNav ancestor. No case was deleted, skipped or weakened. This baseline may only ever move DOWN.",
     "knownFailingTests": [],
-    "$i18nNote": "Ratchet, only ever downward. 4760 at loop start; 4284 after the Hindi pilot (U0.7) closed 476. Absolute zero is a B0 exit criterion."
+    "$i18nNote": "Ratchet, downward only. 4760 at loop start; 0 after U0.7 (Hindi) + U0.8 (nine locales). All 11 locales now carry all 971 keys with zero audit defects."
   },
   "machine": {
-    "reconciledAtEpoch": 1786972599,
+    "reconciledAtEpoch": 1786977733,
     "git": {
       "appRoot": "/Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter",
       "gitPathPrefix": "sahayakai-flutter/",
       "branch": "feature/flutter-rebuild",
-      "head": "a8a97c2595e1a268036dbbd88bae711374f7e455",
-      "headShort": "a8a97c259",
-      "headEpoch": 1786972594,
+      "head": "2c4049cb9557861a96965eda2432194adb1fca0d",
+      "headShort": "2c4049cb9",
+      "headEpoch": 1786972603,
       "remoteUrl": "https://github.com/sargupta/sahayakai.git",
-      "aheadOfOriginMain": 215,
+      "aheadOfOriginMain": 216,
       "behindOriginMain": 66,
       "dirtyPaths": [
         "ahayakai-flutter/docs/flutter/loop/LOOP_STATE.json",
-        "sahayakai-flutter/docs/flutter/loop/WAKE_LOG.jsonl",
-        "sahayakai-flutter/lib/core/i18n/gen/app_localizations.dart",
-        "sahayakai-flutter/lib/core/i18n/gen/app_localizations_hi.dart"
+        "sahayakai-flutter/lib/core/i18n/arb/app_bn.arb",
+        "sahayakai-flutter/lib/core/i18n/arb/app_gu.arb",
+        "sahayakai-flutter/lib/core/i18n/arb/app_kn.arb",
+        "sahayakai-flutter/lib/core/i18n/arb/app_ml.arb",
+        "sahayakai-flutter/lib/core/i18n/arb/app_mr.arb",
+        "sahayakai-flutter/lib/core/i18n/arb/app_or.arb",
+        "sahayakai-flutter/lib/core/i18n/arb/app_pa.arb",
+        "sahayakai-flutter/lib/core/i18n/arb/app_ta.arb",
+        "sahayakai-flutter/lib/core/i18n/arb/app_te.arb",
+        "sahayakai-flutter/scripts/loop/selftest.sh"
       ],
       "untrackedPaths": []
     },
@@ -72,18 +79,18 @@
     "i18n": {
       "templateKeys": 971,
       "perLocaleKeys": {
-        "bn": 495,
-        "gu": 495,
+        "bn": 971,
+        "gu": 971,
         "hi": 971,
-        "kn": 495,
-        "ml": 495,
-        "mr": 495,
-        "or": 495,
-        "pa": 495,
-        "ta": 495,
-        "te": 495
+        "kn": 971,
+        "ml": 971,
+        "mr": 971,
+        "or": 971,
+        "pa": 971,
+        "ta": 971,
+        "te": 971
       },
-      "untranslatedTotal": 4284,
+      "untranslatedTotal": 0,
       "identicalToEnglishTotal": 0
     },
     "fonts": {
@@ -104,11 +111,10 @@
       "flutterWorkflowFiles": []
     },
     "claims": {
-      "green": 7,
-      "red": 4,
+      "green": 8,
+      "red": 3,
       "redIds": [
         "golden_gate_exists",
-        "i18n_zero_untranslated",
         "flutter_ci_present",
         "lints_enforced"
       ]
@@ -118,8 +124,8 @@
     "status": "ok",
     "violations": [],
     "consecutiveViolationWakes": 0,
-    "checkedAtEpoch": 1786972599,
-    "checkedAtSha": "a8a97c2595e1a268036dbbd88bae711374f7e455"
+    "checkedAtEpoch": 1786977733,
+    "checkedAtSha": "2c4049cb9557861a96965eda2432194adb1fca0d"
   },
   "measurements": {
     "analyze": {
@@ -1282,7 +1288,8 @@
         "lib/core/i18n/arb/app_or.arb",
         "lib/core/i18n/arb/app_pa.arb",
         "lib/core/i18n/arb/app_ta.arb",
-        "lib/core/i18n/arb/app_te.arb"
+        "lib/core/i18n/arb/app_te.arb",
+        "docs/flutter/loop/LOOP_STATE.json"
       ],
       "dependsOn": [
         "U0.7"
@@ -1330,6 +1337,37 @@
       "failure": null,
       "blockedBy": null,
       "notes": []
+    },
+    {
+      "id": "U0.18",
+      "band": "B0",
+      "kind": "i18n",
+      "gateProfile": "i18n",
+      "title": "Resolve two pre-existing per-locale term splits",
+      "contract": "Kannada ships TWO renderings of 'quiz' — ರಸಪ್ರಶ್ನೆ in quizSectionQuiz/loginValueQuizzes and ಕ್ವಿಜ್ in vidyaPromptQuiz/libraryEmpty — so a teacher meets both words in one app. Malayalam ships 'lesson plan' both as പാഠപദ്ധതി and പാഠ പദ്ധതി. Both predate U0.8; its translators flagged them rather than picking silently. Choose one per locale, apply it across the file, and record it in GLOSSARY.md so no later pass re-splits it.",
+      "files": [
+        "lib/core/i18n/arb/app_kn.arb",
+        "lib/core/i18n/arb/app_ml.arb",
+        "lib/core/i18n/GLOSSARY.md"
+      ],
+      "dependsOn": [
+        "U0.9"
+      ],
+      "status": "pending",
+      "attempts": 0,
+      "reviewRounds": 0,
+      "verifiedAtSha": null,
+      "commit": null,
+      "evidence": {
+        "gatesRun": [],
+        "reviewers": [],
+        "artifacts": []
+      },
+      "failure": null,
+      "blockedBy": null,
+      "notes": [
+        "Surfaced by the U0.8 fan-out. Pre-existing, so it does not block U0.8; recorded so it does not vanish."
+      ]
     },
     {
       "id": "U0.10",

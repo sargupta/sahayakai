@@ -93,9 +93,22 @@ expect_fail "scope gate refuses to run with UNIT_FILES unset" \
 
 # ── 5. the counters must be reading real data, not returning a stub zero ─────
 # A counter stuck at 0 would make CLAIMS rows go green for the wrong reason.
+# Proving the counter reads real data must NOT depend on the gap being
+# non-empty. The original form asserted untranslated > 0 — true while 4,760
+# strings were missing, and false the moment the work was finished, so
+# completing the task broke the test that watched it. Instead: it must return a
+# real integer (never the -1 failure sentinel) AND agree with the audit, which
+# is now its single source of truth.
 n="$(bash scripts/loop/i18n_count.sh untranslated)"
-if [ "${n:-0}" -gt 0 ]; then ok "i18n_count reads real ARBs (untranslated=$n)"
-else nope "i18n_count returned $n — it is not reading the ARB files"; fi
+a="$(python3 scripts/loop/i18n_audit.py --json 2>/dev/null \
+     | python3 -c 'import json,sys; print(json.load(sys.stdin)["totals"]["missing"])' 2>/dev/null)"
+if [ "${n:-x}" = "-1" ] || [ -z "${n:-}" ]; then
+  nope "i18n_count returned '$n' — it failed to read the ARB files"
+elif [ "$n" != "$a" ]; then
+  nope "i18n_count says $n untranslated but the audit says $a — the two have drifted apart"
+else
+  ok "i18n_count reads real ARBs and agrees with the audit (untranslated=$n)"
+fi
 
 k="$(python3 -c "import json;print(len([x for x in json.load(open('lib/core/i18n/arb/app_en.arb')) if not x.startswith('@')]))")"
 if [ "$k" -eq 971 ]; then ok "template key count matches the audited value (971)"
