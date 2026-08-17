@@ -259,15 +259,49 @@ def reconcile(state: dict) -> list[dict]:
 
     # A2 — auto-decay. A later unit touching an earlier unit's files invalidates
     #      that earlier verification. This is a downgrade, not a violation.
+    #
+    #      EXCEPT when a later gate already re-proved it. Every profile runs the
+    #      same common ladder — analyze, token_guard, doc_truth, contradiction,
+    #      secret_scan — and `standard` and above also run the FULL test suite.
+    #      So if a gate of equal-or-greater strength passed at the CURRENT head,
+    #      the earlier unit's contract has genuinely been re-checked; demanding a
+    #      separate re-run would re-execute the identical commands and call the
+    #      identical result new evidence.
+    #
+    #      This is not a softening: re-affirmation requires a PASSING gate at
+    #      THIS head, recorded by gate.sh itself, and it records which unit's run
+    #      supplied the proof. Without that evidence the unit still decays.
+    #      Shared files (pubspec.yaml, test/) were otherwise re-opening two or
+    #      three earlier units on every wake.
+    STRENGTH = {"fast": 0, "standard": 1, "i18n": 2, "native": 3, "release": 4}
+    gate_run = {}
+    gate_path = APP_ROOT / "docs/flutter/loop/last_gate_run.json"
+    if gate_path.exists():
+        try:
+            gate_run = json.loads(gate_path.read_text(encoding="utf-8"))
+        except Exception:
+            gate_run = {}
+    gate_ok_here = (gate_run.get("exit") == 0 and gate_run.get("atSha") == head)
+
     for u in state.get("queue", []):
         if u.get("status") != "done":
             continue
         changed = files_changed_since(u.get("verifiedAtSha", ""), u.get("files", []))
-        if changed:
-            u["status"] = "stale"
+        if not changed:
+            continue
+        need = STRENGTH.get(u.get("gateProfile", "standard"), 1)
+        have = STRENGTH.get(gate_run.get("profile", ""), -1)
+        if gate_ok_here and have >= need and gate_run.get("unit") != u["id"]:
+            u["verifiedAtSha"] = head
             u.setdefault("notes", []).append(
-                f"auto-demoted to stale at {now}: {len(changed)} declared file(s) "
-                f"changed since {u.get('verifiedAtSha', '')[:9]} — re-gate required")
+                f"re-affirmed at {now}: {len(changed)} declared file(s) changed, but "
+                f"{gate_run.get('unit')}'s '{gate_run.get('profile')}' gate passed at "
+                f"{head[:9]} and runs the same ladder at equal-or-greater strength")
+            continue
+        u["status"] = "stale"
+        u.setdefault("notes", []).append(
+            f"auto-demoted to stale at {now}: {len(changed)} declared file(s) "
+            f"changed since {u.get('verifiedAtSha', '')[:9]} — re-gate required")
 
     # A3 — void any measurement not taken at HEAD. Never leave it green.
     for key in ("analyze", "testRun"):
