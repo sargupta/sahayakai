@@ -8,7 +8,7 @@
     "landingModeAtEpoch": 1786989417,
     "deadlineEpoch": 1786993017,
     "mode": "build",
-    "wakeCount": 10,
+    "wakeCount": 11,
     "consecutiveNoProgressWakes": 0,
     "haltReason": null
   },
@@ -36,61 +36,20 @@
     "knownFailingTests": []
   },
   "machine": {
-    "reconciledAtEpoch": 1786970256,
+    "reconciledAtEpoch": 1786970421,
     "git": {
       "appRoot": "/Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter",
       "gitPathPrefix": "sahayakai-flutter/",
       "branch": "feature/flutter-rebuild",
-      "head": "5082c4333d37937222a320fa297d585dc5b475a8",
-      "headShort": "5082c4333",
-      "headEpoch": 1786970203,
+      "head": "90aaef19676e5892b880a820ff13ebfb4687ca38",
+      "headShort": "90aaef196",
+      "headEpoch": 1786970411,
       "remoteUrl": "https://github.com/sargupta/sahayakai.git",
-      "aheadOfOriginMain": 206,
+      "aheadOfOriginMain": 207,
       "behindOriginMain": 66,
       "dirtyPaths": [
         "ahayakai-flutter/docs/flutter/loop/LOOP_STATE.json",
-        "sahayakai-flutter/docs/flutter/loop/WAKE_LOG.jsonl",
-        "sahayakai-flutter/lib/features/instant_answer/presentation/widgets/answer_markdown_view.dart",
-        "sahayakai-flutter/pubspec.lock",
-        "sahayakai-flutter/pubspec.yaml",
-        "sahayakai-flutter/test/core/theme/app_theme_test.dart",
-        "sahayakai-flutter/test/features/assessment_scanner/assessment_scanner_screen_test.dart",
-        "sahayakai-flutter/test/features/content_creator/content_creator_screen_test.dart",
-        "sahayakai-flutter/test/features/create_palette/create_palette_test.dart",
-        "sahayakai-flutter/test/features/dashboard/dashboard_screen_test.dart",
-        "sahayakai-flutter/test/features/dashboard/floating_bottom_nav_test.dart",
-        "sahayakai-flutter/test/features/inbox/conversation_thread_screen_test.dart",
-        "sahayakai-flutter/test/features/inbox/inbox_screen_test.dart",
-        "sahayakai-flutter/test/features/lesson_planner/lesson_plan_result_view_test.dart",
-        "sahayakai-flutter/test/features/lesson_planner/lesson_plan_screen_test.dart",
-        "sahayakai-flutter/test/features/library/library_detail_test.dart",
-        "sahayakai-flutter/test/features/library/library_screen_test.dart",
-        "sahayakai-flutter/test/features/onboarding/login_screen_test.dart",
-        "sahayakai-flutter/test/features/onboarding/onboarding_screen_test.dart",
-        "sahayakai-flutter/test/features/parent_hotline/calling_stage_test.dart",
-        "sahayakai-flutter/test/features/parent_hotline/evidence_panel_test.dart",
-        "sahayakai-flutter/test/features/parent_hotline/parent_hotline_screen_test.dart",
-        "sahayakai-flutter/test/features/parent_hotline/reason_card_test.dart",
-        "sahayakai-flutter/test/features/parent_hotline/summary_sheet_test.dart",
-        "sahayakai-flutter/test/features/profile/me_screen_test.dart",
-        "sahayakai-flutter/test/features/profile/profile_screen_test.dart",
-        "sahayakai-flutter/test/features/settings/settings_delete_flow_test.dart",
-        "sahayakai-flutter/test/features/settings/settings_screen_test.dart",
-        "sahayakai-flutter/test/features/splash/splash_init_failure_test.dart",
-        "sahayakai-flutter/test/features/splash/splash_screen_test.dart",
-        "sahayakai-flutter/test/features/staffroom/group_detail_screen_test.dart",
-        "sahayakai-flutter/test/features/staffroom/network_hub_test.dart",
-        "sahayakai-flutter/test/features/staffroom/staff_room_chat_screen_test.dart",
-        "sahayakai-flutter/test/features/staffroom/staffroom_screen_test.dart",
-        "sahayakai-flutter/test/features/vidya/inline_field_mic_test.dart",
-        "sahayakai-flutter/test/features/vidya/quick_tools_row_test.dart",
-        "sahayakai-flutter/test/features/vidya/seal_mic_test.dart",
-        "sahayakai-flutter/test/features/vidya/vidya_home_screen_test.dart",
-        "sahayakai-flutter/test/features/vidya/vidya_sheet_test.dart",
-        "sahayakai-flutter/test/features/voice/launcher_ubiquity_test.dart",
-        "sahayakai-flutter/test/shared/widgets/app_segmented_contrast_test.dart",
-        "sahayakai-flutter/test/shared/widgets/button_overflow_test.dart",
-        "sahayakai-flutter/test/widget_test.dart"
+        "sahayakai-flutter/docs/flutter/loop/WAKE_LOG.jsonl"
       ],
       "untrackedPaths": []
     },
@@ -157,8 +116,8 @@
     "status": "ok",
     "violations": [],
     "consecutiveViolationWakes": 0,
-    "checkedAtEpoch": 1786970256,
-    "checkedAtSha": "5082c4333d37937222a320fa297d585dc5b475a8"
+    "checkedAtEpoch": 1786970421,
+    "checkedAtSha": "90aaef19676e5892b880a820ff13ebfb4687ca38"
   },
   "measurements": {
     "analyze": {
@@ -683,7 +642,7 @@
       "dependsOn": [
         "U0.4"
       ],
-      "status": "done",
+      "status": "stale",
       "attempts": 1,
       "reviewRounds": 0,
       "verifiedAtSha": "b59abb9a4f34c8ef904f50087cfecafb1b15fef0",
@@ -779,7 +738,8 @@
       "blockedBy": null,
       "notes": [
         "Found by the U0.2 gate, which is the first thing in this repo's history to run the full suite and refuse to look away from the result.",
-        "Root cause was an ambiguous icon finder, not a broken feature. Both reviewers PASS. Suite 1750/0; baseline retired to 0."
+        "Root cause was an ambiguous icon finder, not a broken feature. Both reviewers PASS. Suite 1750/0; baseline retired to 0.",
+        "auto-demoted to stale at 1786970421: 1 declared file(s) changed since b59abb9a4 — re-gate required"
       ]
     },
     {
@@ -804,7 +764,7 @@
       "dependsOn": [
         "U0.2"
       ],
-      "status": "done",
+      "status": "stale",
       "attempts": 1,
       "reviewRounds": 0,
       "verifiedAtSha": "986157fd721b5a3afd0a49140b117e93249881f5",
@@ -922,7 +882,8 @@
       "notes": [
         "Blocks U0.18: goldens baselined against runtime-fetched fonts capture fallback boxes as the blessed rendering, because flutter test has no network.",
         "Scope extended deliberately, recorded here rather than silently: app_theme.dart (export list referenced the two removed symbols) and the CLAIMS row. Removing the google_fonts DEPENDENCY was split out to U0.5b — 37 test files call GoogleFonts.config.allowRuntimeFetching and editing them all inside this unit would have made the diff unreviewable.",
-        "Honesty audit found and fixed one fabricated comment rationale. Theme tests needed zero metric adjustments despite dropping google_fonts' metric overrides."
+        "Honesty audit found and fixed one fabricated comment rationale. Theme tests needed zero metric adjustments despite dropping google_fonts' metric overrides.",
+        "auto-demoted to stale at 1786970421: 2 declared file(s) changed since 986157fd7 — re-gate required"
       ]
     },
     {
@@ -942,21 +903,122 @@
       "dependsOn": [
         "U0.5"
       ],
-      "status": "pending",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "reviewRounds": 0,
-      "verifiedAtSha": null,
-      "commit": null,
+      "verifiedAtSha": "90aaef19676e5892b880a820ff13ebfb4687ca38",
+      "commit": "90aaef196",
       "evidence": {
-        "gatesRun": [],
+        "gatesRun": [
+          {
+            "gate": "guard",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "GUARD NOTE: sibling tree has pre-existing changes (not caused by this wake):\n    ?? sahayakai-main/._fields.mjs\n    ?? sahayakai-main/._live.mjs\n    ?? sahayakai-main/.claude/launch.json\n    ?? sahayakai-main/.claude/skills/\n    ?? sahayakai-main/AI_Literacy_Drive_Women_Siliguri_INTERN_MARKETING_PLAYBOOK.md\nGUARD NOTE: the loop must not add to these. Web/sidecar units use a separate worktree.\nloop_guard: OK (branch=feature/flutter-rebuild head=5082c4333)"
+          },
+          {
+            "gate": "selftest",
+            "exit": 0,
+            "durationSec": 6,
+            "tail": "selftest: planting violations to prove each guard can fail\n\n  ✓ secret_scan detects a planted keystore password\n  ✓ contradiction_guard detects a stub claim above real wiring\n  ✓ scope gate detects an undeclared changed file\n  ✓ scope gate refuses to run with UNIT_FILES unset\n  ✓ i18n_count reads real ARBs (untranslated=4760)\n  ✓ template key count matches the audited value (971)\n  ✓ doc_truth_guard reports 5 red claims (honest starting state)\n  ✓ doc_truth_guard --strict fails while any claim is red\n  ✓ verifiedAtSha ancestry check rejects a fabricated sha\n  ✓ record.py refuses another unit's gate as evidence\n  ✓ loop_guard passes on the real tree\n  ✓ reconcile passes on the real tree\n\nselftest: 12 passed, 0 failed\nselftest: every guard demonstrably fails when it should"
+          },
+          {
+            "gate": "reconcile",
+            "exit": 0,
+            "durationSec": 3,
+            "tail": "reconcile: head=5082c4333 branch=feature/flutter-rebuild tests=1552 goldens=0 i18n_missing=4760 claims=6g/5r\nreconcile: integrity OK"
+          },
+          {
+            "gate": "scope",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "all changes within the declared file list\n  (excluding 9 declared pre-existing dirty path(s))"
+          },
+          {
+            "gate": "format",
+            "exit": 0,
+            "durationSec": 1,
+            "tail": "Formatted 39 files (0 changed) in 0.12 seconds."
+          },
+          {
+            "gate": "analyze",
+            "exit": 0,
+            "durationSec": 7,
+            "tail": "Analyzing sahayakai-flutter...                                  \nNo issues found! (ran in 6.2s)"
+          },
+          {
+            "gate": "token_guard",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "token-guard: PASS"
+          },
+          {
+            "gate": "secret_scan",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "secret_scan: OK"
+          },
+          {
+            "gate": "contradiction",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "contradiction_guard: OK"
+          },
+          {
+            "gate": "doc_truth",
+            "exit": 0,
+            "durationSec": 2,
+            "tail": "CLAIM                            ACTUAL   EXPECT   VERDICT\ngolden_gate_exists               0        >=12     RED\ni18n_zero_untranslated           4760     ==0      RED\ni18n_zero_identical_english      40       ==0      RED\nfonts_bundled                    11       >=11     GREEN\nfonts_no_runtime_fetch           0        ==0      GREEN\nfonts_not_fetched_from_lib       0        ==0      GREEN\nrelease_signing_verified         1        ==1      GREEN\nflutter_ci_present               0        >=1      RED\nlints_enforced                   0        >=15     RED\nfirebase_wired                   1        >=1      GREEN\nturn_based_fallback_present      5        >=1      GREEN\n\ndoc_truth_guard: 6 green / 5 red\n  red: golden_gate_exists i18n_zero_untranslated i18n_zero_identical_english flutter_ci_present lints_enforced"
+          },
+          {
+            "gate": "codegen_drift",
+            "exit": 0,
+            "durationSec": 23,
+            "tail": "codegen is idempotent against the working tree"
+          },
+          {
+            "gate": "custom_lint",
+            "exit": null,
+            "skipped": true,
+            "reason": "no custom_lint block in analysis_options.yaml yet (unit U0.21)"
+          },
+          {
+            "gate": "tests",
+            "exit": 0,
+            "durationSec": 86,
+            "tail": "  01:22 +1750: All tests passed!                                                                                                                                                                         \npassing=1750 failing=0 (baseline failing=0)"
+          },
+          {
+            "gate": "goldens",
+            "exit": null,
+            "skipped": true,
+            "reason": "no matchesGoldenFile call sites exist yet (units U0.18/U0.19)"
+          },
+          {
+            "gate": "i18n_full",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "untranslated=4760 identical-to-english=40"
+          },
+          {
+            "gate": "build_apk_debug",
+            "exit": 0,
+            "durationSec": 12,
+            "tail": "Running Gradle task 'assembleDebug'...                             10.6s\n✓ Built build/app/outputs/flutter-apk/app-debug.apk"
+          }
+        ],
         "reviewers": [],
-        "artifacts": []
+        "artifacts": [],
+        "gateProfile": "native",
+        "gateExit": 0,
+        "gateAtSha": "5082c4333d37937222a320fa297d585dc5b475a8"
       },
       "failure": null,
       "blockedBy": null,
       "notes": [
         "Split out of U0.5 to keep that diff reviewable.",
-        "Scope extended deliberately: answer_markdown_view.dart carried a comment justifying a design rule by the google_fonts runtime fetch this unit deletes, and naming Fraunces as the display family (retired for Outfit). Leaving it would have left a false claim behind the very change that falsified it."
+        "Scope extended deliberately: answer_markdown_view.dart carried a comment justifying a design rule by the google_fonts runtime fetch this unit deletes, and naming Fraunces as the display family (retired for Outfit). Leaving it would have left a false claim behind the very change that falsified it.",
+        "Split into a formatting commit (5082c4333) and this semantic one so the 96-line deletion was reviewable rather than buried in 3206 lines of formatter churn."
       ]
     },
     {
