@@ -45,14 +45,23 @@ check() {
   [ -n "$m" ] && flag "$label" "$m"
 }
 
-# The value may be bare or quoted. An earlier version of this pattern excluded
-# a leading quote in an attempt to ignore env indirection like
-# `storePassword=$STORE_PASS` — but that also excluded every quoted literal,
-# which is the actual dangerous case, and made this scanner a no-op. Allow an
-# optional quote, then require a character that is not `$` (env var), not `{`
-# (gradle/property interpolation), and not `-` or `}` (which would match the
-# `${VAR:-}` shell-default idiom on the `:` separator).
-check "keystore password" '(store|key)_?pass(word)?[[:space:]]*[=:][[:space:]]*["'"'"']?[^-${}"'"'"'[:space:]]'
+# A credential is dangerous when it is a LITERAL. Reading one out of a
+# gitignored properties file or an env var is the correct pattern and must not
+# be flagged, or the gate cries wolf on exactly the code that does the right
+# thing — as it did on
+#     storePassword = keystoreProperties["storePassword"] as String
+# which is the fix for hardcoded credentials, not an instance of them.
+#
+# So match the two shapes a literal actually takes, and nothing else:
+#   1. quoted        storePassword = "hunter2"
+#   2. bare, to EOL  storePassword=hunter2        (.properties / .env style)
+# An expression — a map lookup, a getenv call, a ${} interpolation — has
+# brackets, dots or parens and never ends the line as a plain token, so neither
+# pattern reaches it.
+check "keystore password (quoted literal)" \
+  '(store|key)_?pass(word)?[[:space:]]*[=:][[:space:]]*["'"'"'][^"'"'"'$]'
+check "keystore password (bare literal)" \
+  '(store|key)_?pass(word)?[[:space:]]*=[[:space:]]*[A-Za-z0-9+/_-]{6,}[[:space:]]*$'
 check "private key block" 'BEGIN (RSA|EC|DSA|OPENSSH|PGP) PRIVATE KEY'
 check "google api key"    'AIza[0-9A-Za-z_-]{35}' --case-sensitive
 check "service account"   '"private_key"[[:space:]]*:'

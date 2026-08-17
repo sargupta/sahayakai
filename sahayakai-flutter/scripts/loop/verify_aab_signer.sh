@@ -32,26 +32,39 @@ if [ ! -f "$AAB" ]; then
   result 0
 fi
 
-if [ ! -f "$UPLOAD_KEYSTORE" ]; then
-  say "verify_aab_signer: upload keystore not found at $UPLOAD_KEYSTORE"
+# Prefer the LOCAL keystore + key.properties, because that is what Gradle
+# actually signed with. Falling back to the Capacitor original would still
+# compare equal today (it is a byte copy), but it would compare the AAB against
+# a key the build never touched — and the whole point of this script is to stop
+# trusting things that merely ought to be true.
+KEYSTORE="$UPLOAD_KEYSTORE"
+PROPS="$UPLOAD_KEYSTORE_PROPS"
+if [ -f "android/key.properties" ] && [ -f "android/app/upload.keystore" ]; then
+  KEYSTORE="android/app/upload.keystore"
+  PROPS="android/key.properties"
+  say "  using the local signing config (android/key.properties)"
+fi
+
+if [ ! -f "$KEYSTORE" ]; then
+  say "verify_aab_signer: keystore not found at $KEYSTORE"
   result 0
 fi
 
 # Read credentials without ever printing them.
 STORE_PASS=""; KEY_ALIAS=""
-if [ -f "$UPLOAD_KEYSTORE_PROPS" ]; then
-  STORE_PASS="$(grep -E '^storePassword=' "$UPLOAD_KEYSTORE_PROPS" | head -1 | cut -d= -f2-)"
-  KEY_ALIAS="$(grep -E '^keyAlias=' "$UPLOAD_KEYSTORE_PROPS" | head -1 | cut -d= -f2-)"
+if [ -f "$PROPS" ]; then
+  STORE_PASS="$(grep -E '^storePassword=' "$PROPS" | head -1 | cut -d= -f2-)"
+  KEY_ALIAS="$(grep -E '^keyAlias=' "$PROPS" | head -1 | cut -d= -f2-)"
 fi
 [ -n "${KEYSTORE_STORE_PASS:-}" ] && STORE_PASS="$KEYSTORE_STORE_PASS"
 [ -n "${KEYSTORE_KEY_ALIAS:-}" ] && KEY_ALIAS="$KEYSTORE_KEY_ALIAS"
 
 if [ -z "$STORE_PASS" ]; then
-  say "verify_aab_signer: no store password available (checked $UPLOAD_KEYSTORE_PROPS and \$KEYSTORE_STORE_PASS)"
+  say "verify_aab_signer: no store password available (checked $PROPS and \$KEYSTORE_STORE_PASS)"
   result 0
 fi
 
-KS_SHA="$(keytool -list -v -keystore "$UPLOAD_KEYSTORE" -storepass "$STORE_PASS" \
+KS_SHA="$(keytool -list -v -keystore "$KEYSTORE" -storepass "$STORE_PASS" \
             ${KEY_ALIAS:+-alias "$KEY_ALIAS"} 2>/dev/null \
           | grep -m1 'SHA256:' | awk '{print $2}')"
 
