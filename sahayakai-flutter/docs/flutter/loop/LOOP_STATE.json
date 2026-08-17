@@ -15,7 +15,7 @@
   "baselines": {
     "$note": "Captured at loop start from the real repo. Gates ratchet against these: a unit may not make any of them worse. Absolute targets live in bands[].exitCriteria.",
     "capturedAtSha": "27f1ecb3ccc9cf769a22255f78775d9767419c59",
-    "i18nUntranslated": 4760,
+    "i18nUntranslated": 4284,
     "i18nIdentical": 40,
     "testDeclarations": 1551,
     "testsSkipped": 0,
@@ -33,25 +33,34 @@
     ],
     "testsFailing": 0,
     "$testsFailingNote": "Was 13 (the Create-palette suite). Driven to 0 by unit U0.17 on 2026-08-17: the suite was never testing a deleted feature, it was tapping the Create action via a bare find.byIcon(sparkles) that had become ambiguous when a second sparkles appeared in the VIDYA hero badge. Fixed by scoping the finder to the FloatingBottomNav ancestor. No case was deleted, skipped or weakened. This baseline may only ever move DOWN.",
-    "knownFailingTests": []
+    "knownFailingTests": [],
+    "$i18nNote": "Ratchet, only ever downward. 4760 at loop start; 4284 after the Hindi pilot (U0.7) closed 476. Absolute zero is a B0 exit criterion."
   },
   "machine": {
-    "reconciledAtEpoch": 1786971289,
+    "reconciledAtEpoch": 1786972477,
     "git": {
       "appRoot": "/Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter",
       "gitPathPrefix": "sahayakai-flutter/",
       "branch": "feature/flutter-rebuild",
-      "head": "65ef4f5a1d883c1e0a5b1be38275b043ad38ec77",
-      "headShort": "65ef4f5a1",
-      "headEpoch": 1786971286,
+      "head": "a966d6fdea4de64285794c289c177fd9b6474833",
+      "headShort": "a966d6fde",
+      "headEpoch": 1786971292,
       "remoteUrl": "https://github.com/sargupta/sahayakai.git",
-      "aheadOfOriginMain": 213,
+      "aheadOfOriginMain": 214,
       "behindOriginMain": 66,
       "dirtyPaths": [
         "ahayakai-flutter/docs/flutter/loop/LOOP_STATE.json",
-        "sahayakai-flutter/docs/flutter/loop/WAKE_LOG.jsonl"
+        "sahayakai-flutter/lib/core/i18n/GLOSSARY.md",
+        "sahayakai-flutter/lib/core/i18n/arb/.identical_allowlist",
+        "sahayakai-flutter/lib/core/i18n/arb/app_en.arb",
+        "sahayakai-flutter/lib/core/i18n/arb/app_hi.arb",
+        "sahayakai-flutter/scripts/loop/i18n_audit.py",
+        "sahayakai-flutter/scripts/loop/i18n_count.sh",
+        "sahayakai-flutter/scripts/loop/i18n_extract_missing.py"
       ],
-      "untrackedPaths": []
+      "untrackedPaths": [
+        "sahayakai-flutter/scripts/loop/i18n_merge.py"
+      ]
     },
     "code": {
       "dartFiles": 308,
@@ -71,7 +80,7 @@
       "perLocaleKeys": {
         "bn": 495,
         "gu": 495,
-        "hi": 495,
+        "hi": 971,
         "kn": 495,
         "ml": 495,
         "mr": 495,
@@ -80,8 +89,8 @@
         "ta": 495,
         "te": 495
       },
-      "untranslatedTotal": 4760,
-      "identicalToEnglishTotal": 30
+      "untranslatedTotal": 4284,
+      "identicalToEnglishTotal": 0
     },
     "fonts": {
       "families": 11,
@@ -101,12 +110,11 @@
       "flutterWorkflowFiles": []
     },
     "claims": {
-      "green": 6,
-      "red": 5,
+      "green": 7,
+      "red": 4,
       "redIds": [
         "golden_gate_exists",
         "i18n_zero_untranslated",
-        "i18n_zero_identical_english",
         "flutter_ci_present",
         "lints_enforced"
       ]
@@ -116,8 +124,8 @@
     "status": "ok",
     "violations": [],
     "consecutiveViolationWakes": 0,
-    "checkedAtEpoch": 1786971289,
-    "checkedAtSha": "65ef4f5a1d883c1e0a5b1be38275b043ad38ec77"
+    "checkedAtEpoch": 1786972477,
+    "checkedAtSha": "a966d6fdea4de64285794c289c177fd9b6474833"
   },
   "measurements": {
     "analyze": {
@@ -187,10 +195,10 @@
         "docs/flutter/pillars/PILLAR_BUILD_STATE.ARCHIVED.json"
       ],
       "dependsOn": [],
-      "status": "stale",
+      "status": "done",
       "attempts": 7,
       "reviewRounds": 0,
-      "verifiedAtSha": "973b781c3571e3809d1fbc2cc200362f23821349",
+      "verifiedAtSha": "a966d6fdea4de64285794c289c177fd9b6474833",
       "commit": "973b781c3",
       "evidence": {
         "gatesRun": [
@@ -276,7 +284,8 @@
         "Re-verified after font_lib_refs.sh was added in U0.5.",
         "auto-demoted to stale at 1786970803: 1 declared file(s) changed since 15370f2f8 — re-gate required",
         "Re-verified after the reconcile re-affirmation logic landed.",
-        "auto-demoted to stale at 1786971289: 2 declared file(s) changed since 973b781c3 — re-gate required"
+        "auto-demoted to stale at 1786971289: 2 declared file(s) changed since 973b781c3 — re-gate required",
+        "re-affirmed at 1786972451 (was stale): 2 declared file(s) changed, but U0.7's 'i18n' gate passed at a966d6fde and runs the same ladder at equal-or-greater strength"
       ]
     },
     {
@@ -1138,7 +1147,14 @@
       "title": "Hindi pilot translation — 476 keys, one locale, calibration run",
       "contract": "app_hi.arb reaches 971 keys, all passing i18n_audit. Run ALONE before the nine-locale fan-out: a tooling or glossary bug found here costs 1x rework instead of 10x. Hindi and Marathi treat 0 as CLDR plural category 'one' — get that right here.",
       "files": [
-        "lib/core/i18n/arb/app_hi.arb"
+        "lib/core/i18n/arb/app_hi.arb",
+        "lib/core/i18n/arb/app_en.arb",
+        "lib/core/i18n/arb/.identical_allowlist",
+        "lib/core/i18n/GLOSSARY.md",
+        "scripts/loop/i18n_audit.py",
+        "scripts/loop/i18n_extract_missing.py",
+        "scripts/loop/i18n_merge.py",
+        "docs/flutter/loop/LOOP_STATE.json"
       ],
       "dependsOn": [
         "U0.6"
@@ -1155,7 +1171,9 @@
       },
       "failure": null,
       "blockedBy": null,
-      "notes": []
+      "notes": [
+        "Pilot found a systematic flaw that would have hit all 10 locales: the script-coverage rule had no notion of format-only strings, so the translator invented words to satisfy it. Now auto-detected rather than hand-allowlisted."
+      ]
     },
     {
       "id": "U0.8",

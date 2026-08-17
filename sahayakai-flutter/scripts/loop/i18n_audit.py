@@ -63,6 +63,21 @@ EMOJI = re.compile(
 EM_DASH = "—"
 
 
+def is_format_only(en_value: str) -> bool:
+    """True when the English string carries no translatable word.
+
+    Remove the placeholders and the ICU plural scaffolding; if no Latin letter
+    survives, everything left is punctuation, digits or symbols, and the
+    correct translation in every language is the identical string.
+    """
+    if not isinstance(en_value, str):
+        return False
+    if PLURAL_OPEN.search(en_value):
+        return False  # plurals always contain prose in their branches
+    stripped = PLACEHOLDER.sub("", en_value)
+    return not re.search(r"[A-Za-z]", stripped)
+
+
 def load(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -126,9 +141,25 @@ def audit(locales: list[str] | None = None) -> dict:
                 continue
             env = en.get(k)  # noqa: F841 — read by several checks below
 
-            # 2. script coverage — present but English
+            # 2. script coverage — present but English.
+            #
+            #    Format-only strings are exempt AUTOMATICALLY, not by a
+            #    hand-kept list. Strip the placeholders from the English; if
+            #    nothing alphabetic remains, there is no word to translate —
+            #    '{used} / {limit}', '{chapter} ({year})', '•••• {last4}'.
+            #
+            #    This is not a convenience. The Hindi pilot showed the rule
+            #    doing active harm without it: told every value must contain
+            #    Devanagari, the translator invented words to satisfy it,
+            #    turning '{points} / {max}' into '{points}/{max} अंक' and
+            #    '{chapter} ({year})' into '{chapter} (वर्ष {year})' — adding
+            #    text English never had, and contradicting the sibling key
+            #    assessmentScannerMarks which ships as bare '{awarded}/{max}'.
+            #    A hand-kept allowlist would have had to anticipate every such
+            #    key across ten locales; deriving it cannot miss one.
             if k not in allow and env is not None and len(v) > 3:
-                if v == env and (script_re is None or not script_re.search(v)):
+                if not is_format_only(env) and v == env and (
+                        script_re is None or not script_re.search(v)):
                     identical.append(k)
 
             # 3. placeholder parity

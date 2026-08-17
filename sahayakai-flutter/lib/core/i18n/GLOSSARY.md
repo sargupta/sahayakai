@@ -100,105 +100,139 @@ Evidence: `parentHotlineTitle` = 'Parent Hotline'
 
 ### lesson plan
 
-Evidence: `libraryEmpty` = 'Your saved lesson plans and quizzes will appear here.'
+Evidence: `contentTypeLessonPlan` = 'Lesson plan'
 
 | locale | shipped string |
 |---|---|
-| Hindi (hi) | आपकी सहेजी गई पाठ योजनाएँ और क्विज़ यहाँ दिखेंगी। |
-| Bengali (bn) | আপনার সংরক্ষিত পাঠ পরিকল্পনা ও কুইজ এখানে দেখা যাবে। |
-| Tamil (ta) | நீங்கள் சேமித்த பாடத் திட்டங்கள் மற்றும் வினாடி வினாக்கள் இங்கே தோன்றும். |
-| Telugu (te) | మీరు సేవ్ చేసిన పాఠ ప్రణాళికలు మరియు క్విజ్‌లు ఇక్కడ కనిపిస్తాయి. |
-| Kannada (kn) | ನೀವು ಉಳಿಸಿದ ಪಾಠ ಯೋಜನೆಗಳು ಮತ್ತು ಕ್ವಿಜ್‌ಗಳು ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತವೆ. |
-| Malayalam (ml) | നിങ്ങൾ സംരക്ഷിച്ച പാഠപദ്ധതികളും ക്വിസുകളും ഇവിടെ കാണാം. |
-| Marathi (mr) | तुमच्या जतन केलेल्या पाठ योजना आणि प्रश्नमंजुषा येथे दिसतील. |
-| Gujarati (gu) | તમે સાચવેલી પાઠ યોજનાઓ અને ક્વિઝ અહીં દેખાશે. |
-| Punjabi (pa) | ਤੁਹਾਡੀਆਂ ਸੰਭਾਲੀਆਂ ਪਾਠ ਯੋਜਨਾਵਾਂ ਅਤੇ ਕੁਇਜ਼ ਇੱਥੇ ਦਿਖਣਗੀਆਂ। |
-| Odia (or) | ଆପଣ ସଞ୍ଚୟ କରିଥିବା ପାଠ ଯୋଜନା ଏବଂ କୁଇଜ୍ ଏଠାରେ ଦେଖାଯିବ। |
+| Hindi (hi) | पाठ योजना |
+| Bengali (bn) | _(not yet translated — follow the rows above)_ |
+| Tamil (ta) | _(not yet translated — follow the rows above)_ |
+| Telugu (te) | _(not yet translated — follow the rows above)_ |
+| Kannada (kn) | _(not yet translated — follow the rows above)_ |
+| Malayalam (ml) | _(not yet translated — follow the rows above)_ |
+| Marathi (mr) | _(not yet translated — follow the rows above)_ |
+| Gujarati (gu) | _(not yet translated — follow the rows above)_ |
+| Punjabi (pa) | _(not yet translated — follow the rows above)_ |
+| Odia (or) | _(not yet translated — follow the rows above)_ |
 
 ### worksheet
 
-Evidence: `worksheetSectionWorksheet` = 'The worksheet'
+Evidence: `contentTypeWorksheet` = 'Worksheet'
 
 | locale | shipped string |
 |---|---|
 | Hindi (hi) | वर्कशीट |
-| Bengali (bn) | ওয়ার্কশিট |
-| Tamil (ta) | பணித்தாள் |
-| Telugu (te) | వర్క్‌షీట్ |
-| Kannada (kn) | ಕಾರ್ಯಪತ್ರಿಕೆ |
-| Malayalam (ml) | വർക്ക്‌ഷീറ്റ് |
-| Marathi (mr) | कार्यपत्रिका |
-| Gujarati (gu) | કાર્યપત્રક |
-| Punjabi (pa) | ਵਰਕਸ਼ੀਟ |
-| Odia (or) | ୱାର୍କସିଟ୍ |
+| Bengali (bn) | _(not yet translated — follow the rows above)_ |
+| Tamil (ta) | _(not yet translated — follow the rows above)_ |
+| Telugu (te) | _(not yet translated — follow the rows above)_ |
+| Kannada (kn) | _(not yet translated — follow the rows above)_ |
+| Malayalam (ml) | _(not yet translated — follow the rows above)_ |
+| Marathi (mr) | _(not yet translated — follow the rows above)_ |
+| Gujarati (gu) | _(not yet translated — follow the rows above)_ |
+| Punjabi (pa) | _(not yet translated — follow the rows above)_ |
+| Odia (or) | _(not yet translated — follow the rows above)_ |
 
 ### quiz
 
-Evidence: `quizSectionQuiz` = 'The quiz'
+Evidence: `contentTypeQuiz` = 'Quiz'
 
 | locale | shipped string |
 |---|---|
 | Hindi (hi) | क्विज़ |
-| Bengali (bn) | কুইজ |
-| Tamil (ta) | வினாடி வினா |
-| Telugu (te) | క్విజ్ |
-| Kannada (kn) | ರಸಪ್ರಶ್ನೆ |
-| Malayalam (ml) | ക്വിസ് |
-| Marathi (mr) | क्विझ |
-| Gujarati (gu) | ક્વિઝ |
-| Punjabi (pa) | ਕਵਿਜ਼ |
-| Odia (or) | କୁଇଜ୍ |
+| Bengali (bn) | _(not yet translated — follow the rows above)_ |
+| Tamil (ta) | _(not yet translated — follow the rows above)_ |
+| Telugu (te) | _(not yet translated — follow the rows above)_ |
+| Kannada (kn) | _(not yet translated — follow the rows above)_ |
+| Malayalam (ml) | _(not yet translated — follow the rows above)_ |
+| Marathi (mr) | _(not yet translated — follow the rows above)_ |
+| Gujarati (gu) | _(not yet translated — follow the rows above)_ |
+| Punjabi (pa) | _(not yet translated — follow the rows above)_ |
+| Odia (or) | _(not yet translated — follow the rows above)_ |
 
-### teacher training
+### rubric
 
-Evidence: `videoStorytellerCategoryCourses` = 'Teacher training courses'
+Evidence: `contentTypeRubric` = 'Rubric'
 
 | locale | shipped string |
 |---|---|
-| Hindi (hi) | शिक्षक प्रशिक्षण पाठ्यक्रम |
-| Bengali (bn) | শিক্ষক প্রশিক্ষণ কোর্স |
-| Tamil (ta) | ஆசிரியர் பயிற்சி பாடநெறிகள் |
-| Telugu (te) | ఉపాధ్యాయ శిక్షణ కోర్సులు |
-| Kannada (kn) | ಶಿಕ್ಷಕ ತರಬೇತಿ ಕೋರ್ಸ್‌ಗಳು |
-| Malayalam (ml) | അധ്യാപക പരിശീലന കോഴ്‌സുകൾ |
-| Marathi (mr) | शिक्षक प्रशिक्षण अभ्यासक्रम |
-| Gujarati (gu) | શિક્ષક તાલીમ અભ્યાસક્રમો |
-| Punjabi (pa) | ਅਧਿਆਪਕ ਸਿਖਲਾਈ ਕੋਰਸ |
-| Odia (or) | ଶିକ୍ଷକ ତାଲିମ ପାଠ୍ୟକ୍ରମ |
+| Hindi (hi) | रूब्रिक |
+| Bengali (bn) | _(not yet translated — follow the rows above)_ |
+| Tamil (ta) | _(not yet translated — follow the rows above)_ |
+| Telugu (te) | _(not yet translated — follow the rows above)_ |
+| Kannada (kn) | _(not yet translated — follow the rows above)_ |
+| Malayalam (ml) | _(not yet translated — follow the rows above)_ |
+| Marathi (mr) | _(not yet translated — follow the rows above)_ |
+| Gujarati (gu) | _(not yet translated — follow the rows above)_ |
+| Punjabi (pa) | _(not yet translated — follow the rows above)_ |
+| Odia (or) | _(not yet translated — follow the rows above)_ |
+
+### exam paper
+
+Evidence: `contentTypeExamPaper` = 'Exam paper'
+
+| locale | shipped string |
+|---|---|
+| Hindi (hi) | प्रश्नपत्र |
+| Bengali (bn) | _(not yet translated — follow the rows above)_ |
+| Tamil (ta) | _(not yet translated — follow the rows above)_ |
+| Telugu (te) | _(not yet translated — follow the rows above)_ |
+| Kannada (kn) | _(not yet translated — follow the rows above)_ |
+| Malayalam (ml) | _(not yet translated — follow the rows above)_ |
+| Marathi (mr) | _(not yet translated — follow the rows above)_ |
+| Gujarati (gu) | _(not yet translated — follow the rows above)_ |
+| Punjabi (pa) | _(not yet translated — follow the rows above)_ |
+| Odia (or) | _(not yet translated — follow the rows above)_ |
+
+### teacher training
+
+Evidence: `contentTypeTeacherTraining` = 'Teacher training'
+
+| locale | shipped string |
+|---|---|
+| Hindi (hi) | शिक्षक प्रशिक्षण |
+| Bengali (bn) | _(not yet translated — follow the rows above)_ |
+| Tamil (ta) | _(not yet translated — follow the rows above)_ |
+| Telugu (te) | _(not yet translated — follow the rows above)_ |
+| Kannada (kn) | _(not yet translated — follow the rows above)_ |
+| Malayalam (ml) | _(not yet translated — follow the rows above)_ |
+| Marathi (mr) | _(not yet translated — follow the rows above)_ |
+| Gujarati (gu) | _(not yet translated — follow the rows above)_ |
+| Punjabi (pa) | _(not yet translated — follow the rows above)_ |
+| Odia (or) | _(not yet translated — follow the rows above)_ |
 
 ### visual aid
 
-Evidence: `vidyaFlowVisualAid` = 'Visual aid'
+Evidence: `contentTypeVisualAid` = 'Visual aid'
 
 | locale | shipped string |
 |---|---|
 | Hindi (hi) | दृश्य सामग्री |
-| Bengali (bn) | ভিজ্যুয়াল সহায়ক |
-| Tamil (ta) | காட்சி உதவி |
-| Telugu (te) | దృశ్య సాధనం |
-| Kannada (kn) | ದೃಶ್ಯ ಸಾಧನ |
-| Malayalam (ml) | ദൃശ്യ സഹായി |
-| Marathi (mr) | दृश्य साधन |
-| Gujarati (gu) | દૃશ્ય સામગ્રી |
-| Punjabi (pa) | ਦ੍ਰਿਸ਼ ਸਮੱਗਰੀ |
-| Odia (or) | ଦୃଶ୍ୟ ସହାୟକ |
+| Bengali (bn) | _(not yet translated — follow the rows above)_ |
+| Tamil (ta) | _(not yet translated — follow the rows above)_ |
+| Telugu (te) | _(not yet translated — follow the rows above)_ |
+| Kannada (kn) | _(not yet translated — follow the rows above)_ |
+| Malayalam (ml) | _(not yet translated — follow the rows above)_ |
+| Marathi (mr) | _(not yet translated — follow the rows above)_ |
+| Gujarati (gu) | _(not yet translated — follow the rows above)_ |
+| Punjabi (pa) | _(not yet translated — follow the rows above)_ |
+| Odia (or) | _(not yet translated — follow the rows above)_ |
 
 ### assessment
 
-Evidence: `assessResultTitle` = 'Assessment'
+Evidence: `contentTypeAssessment` = 'Assessment'
 
 | locale | shipped string |
 |---|---|
 | Hindi (hi) | मूल्यांकन |
-| Bengali (bn) | মূল্যায়ন |
-| Tamil (ta) | மதிப்பீடு |
-| Telugu (te) | మూల్యాంకనం |
-| Kannada (kn) | ಮೌಲ್ಯಮಾಪನ |
-| Malayalam (ml) | വിലയിരുത്തൽ |
-| Marathi (mr) | मूल्यांकन |
-| Gujarati (gu) | મૂલ્યાંકન |
-| Punjabi (pa) | ਮੁਲਾਂਕਣ |
-| Odia (or) | ମୂଲ୍ୟାୟନ |
+| Bengali (bn) | _(not yet translated — follow the rows above)_ |
+| Tamil (ta) | _(not yet translated — follow the rows above)_ |
+| Telugu (te) | _(not yet translated — follow the rows above)_ |
+| Kannada (kn) | _(not yet translated — follow the rows above)_ |
+| Malayalam (ml) | _(not yet translated — follow the rows above)_ |
+| Marathi (mr) | _(not yet translated — follow the rows above)_ |
+| Gujarati (gu) | _(not yet translated — follow the rows above)_ |
+| Punjabi (pa) | _(not yet translated — follow the rows above)_ |
+| Odia (or) | _(not yet translated — follow the rows above)_ |
 
 ### attendance
 
@@ -236,20 +270,20 @@ Evidence: `meRoleTeacher` = 'Teacher'
 
 ### student
 
-Evidence: `assessmentScannerStudentAnswerLabel` = 'Student wrote'
+Evidence: `parentMessageStudentLabel` = 'Student name'
 
 | locale | shipped string |
 |---|---|
-| Hindi (hi) | छात्र ने लिखा |
-| Bengali (bn) | শিক্ষার্থী লিখেছে |
-| Tamil (ta) | மாணவர் எழுதியது |
-| Telugu (te) | విద్యార్థి రాసినది |
-| Kannada (kn) | ವಿದ್ಯಾರ್ಥಿ ಬರೆದದ್ದು |
-| Malayalam (ml) | വിദ്യാർത്ഥി എഴുതിയത് |
-| Marathi (mr) | विद्यार्थ्याने लिहिले |
-| Gujarati (gu) | વિદ્યાર્થીએ લખ્યું |
-| Punjabi (pa) | ਵਿਦਿਆਰਥੀ ਨੇ ਲਿਖਿਆ |
-| Odia (or) | ଛାତ୍ର ଲେଖିଛନ୍ତି |
+| Hindi (hi) | विद्यार्थी का नाम |
+| Bengali (bn) | _(not yet translated — follow the rows above)_ |
+| Tamil (ta) | _(not yet translated — follow the rows above)_ |
+| Telugu (te) | _(not yet translated — follow the rows above)_ |
+| Kannada (kn) | _(not yet translated — follow the rows above)_ |
+| Malayalam (ml) | _(not yet translated — follow the rows above)_ |
+| Marathi (mr) | _(not yet translated — follow the rows above)_ |
+| Gujarati (gu) | _(not yet translated — follow the rows above)_ |
+| Punjabi (pa) | _(not yet translated — follow the rows above)_ |
+| Odia (or) | _(not yet translated — follow the rows above)_ |
 
 ### parent
 
@@ -270,54 +304,54 @@ Evidence: `parentHotlineCall` = 'Call parent'
 
 ### class
 
-Evidence: `parentHotlineClassLabel` = 'Class'
+Evidence: `parentMessageClassLabel` = 'Class'
 
 | locale | shipped string |
 |---|---|
 | Hindi (hi) | कक्षा |
-| Bengali (bn) | শ্রেণি |
-| Tamil (ta) | வகுப்பு |
-| Telugu (te) | తరగతి |
-| Kannada (kn) | ತರಗತಿ |
-| Malayalam (ml) | ക്ലാസ് |
-| Marathi (mr) | इयत्ता |
-| Gujarati (gu) | વર્ગ |
-| Punjabi (pa) | ਜਮਾਤ |
-| Odia (or) | ଶ୍ରେଣୀ |
+| Bengali (bn) | _(not yet translated — follow the rows above)_ |
+| Tamil (ta) | _(not yet translated — follow the rows above)_ |
+| Telugu (te) | _(not yet translated — follow the rows above)_ |
+| Kannada (kn) | _(not yet translated — follow the rows above)_ |
+| Malayalam (ml) | _(not yet translated — follow the rows above)_ |
+| Marathi (mr) | _(not yet translated — follow the rows above)_ |
+| Gujarati (gu) | _(not yet translated — follow the rows above)_ |
+| Punjabi (pa) | _(not yet translated — follow the rows above)_ |
+| Odia (or) | _(not yet translated — follow the rows above)_ |
 
 ### subject
 
-Evidence: `visualAidSubjectLabel` = 'Subject'
+Evidence: `lessonPlanSubjectLabel` = 'Subject'
 
 | locale | shipped string |
 |---|---|
 | Hindi (hi) | विषय |
-| Bengali (bn) | বিষয় |
-| Tamil (ta) | பாடம் |
-| Telugu (te) | విషయం |
-| Kannada (kn) | ವಿಷಯ |
-| Malayalam (ml) | വിഷയം |
-| Marathi (mr) | विषय |
-| Gujarati (gu) | વિષય |
-| Punjabi (pa) | ਵਿਸ਼ਾ |
-| Odia (or) | ବିଷୟ |
+| Bengali (bn) | _(not yet translated — follow the rows above)_ |
+| Tamil (ta) | _(not yet translated — follow the rows above)_ |
+| Telugu (te) | _(not yet translated — follow the rows above)_ |
+| Kannada (kn) | _(not yet translated — follow the rows above)_ |
+| Malayalam (ml) | _(not yet translated — follow the rows above)_ |
+| Marathi (mr) | _(not yet translated — follow the rows above)_ |
+| Gujarati (gu) | _(not yet translated — follow the rows above)_ |
+| Punjabi (pa) | _(not yet translated — follow the rows above)_ |
+| Odia (or) | _(not yet translated — follow the rows above)_ |
 
 ### grade
 
-Evidence: `visualAidGradeAny` = 'Any grade'
+Evidence: `assessModeFull` = 'Grade'
 
 | locale | shipped string |
 |---|---|
-| Hindi (hi) | कोई भी कक्षा |
-| Bengali (bn) | যেকোনো শ্রেণি |
-| Tamil (ta) | எந்த வகுப்பும் |
-| Telugu (te) | ఏ తరగతి అయినా |
-| Kannada (kn) | ಯಾವುದೇ ತರಗತಿ |
-| Malayalam (ml) | ഏത് ക്ലാസും |
-| Marathi (mr) | कोणतीही इयत्ता |
-| Gujarati (gu) | કોઈપણ ધોરણ |
-| Punjabi (pa) | ਕੋਈ ਵੀ ਜਮਾਤ |
-| Odia (or) | ଯେକୌଣସି ଶ୍ରେଣୀ |
+| Hindi (hi) | पूरी जाँच |
+| Bengali (bn) | _(not yet translated — follow the rows above)_ |
+| Tamil (ta) | _(not yet translated — follow the rows above)_ |
+| Telugu (te) | _(not yet translated — follow the rows above)_ |
+| Kannada (kn) | _(not yet translated — follow the rows above)_ |
+| Malayalam (ml) | _(not yet translated — follow the rows above)_ |
+| Marathi (mr) | _(not yet translated — follow the rows above)_ |
+| Gujarati (gu) | _(not yet translated — follow the rows above)_ |
+| Punjabi (pa) | _(not yet translated — follow the rows above)_ |
+| Odia (or) | _(not yet translated — follow the rows above)_ |
 
 ### library
 
@@ -372,20 +406,20 @@ Evidence: `navHome` = 'Home'
 
 ### settings
 
-Evidence: `vidyaOpenSettings` = 'Open settings'
+Evidence: `settingsTitle` = 'Settings'
 
 | locale | shipped string |
 |---|---|
-| Hindi (hi) | सेटिंग खोलें |
-| Bengali (bn) | সেটিংস খুলুন |
-| Tamil (ta) | அமைப்புகளைத் திற |
-| Telugu (te) | సెట్టింగ్‌లను తెరవండి |
-| Kannada (kn) | ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ತೆರೆಯಿರಿ |
-| Malayalam (ml) | ക്രമീകരണങ്ങൾ തുറക്കൂ |
-| Marathi (mr) | सेटिंग्ज उघडा |
-| Gujarati (gu) | સેટિંગ્સ ખોલો |
-| Punjabi (pa) | ਸੈਟਿੰਗਾਂ ਖੋਲ੍ਹੋ |
-| Odia (or) | ସେଟିଂସ୍ ଖୋଲନ୍ତୁ |
+| Hindi (hi) | सेटिंग्स |
+| Bengali (bn) | _(not yet translated — follow the rows above)_ |
+| Tamil (ta) | _(not yet translated — follow the rows above)_ |
+| Telugu (te) | _(not yet translated — follow the rows above)_ |
+| Kannada (kn) | _(not yet translated — follow the rows above)_ |
+| Malayalam (ml) | _(not yet translated — follow the rows above)_ |
+| Marathi (mr) | _(not yet translated — follow the rows above)_ |
+| Gujarati (gu) | _(not yet translated — follow the rows above)_ |
+| Punjabi (pa) | _(not yet translated — follow the rows above)_ |
+| Odia (or) | _(not yet translated — follow the rows above)_ |
 
 ### profile
 
@@ -420,13 +454,4 @@ Evidence: `actionSignIn` = 'Sign in'
 | Gujarati (gu) | સાઇન ઇન કરો |
 | Punjabi (pa) | ਸਾਈਨ ਇਨ ਕਰੋ |
 | Odia (or) | ସାଇନ୍ ଇନ୍ କରନ୍ତୁ |
-
-## No precedent yet
-
-No already-translated string contains these terms, so there is nothing
-to be consistent with. The first translator to need one decides, and
-should add it here so the other nine follow.
-
-- rubric
-- exam paper
 

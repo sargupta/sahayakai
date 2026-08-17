@@ -110,7 +110,7 @@ def glossary() -> str:
         cands.sort(key=lambda k: len(en[k]))
         row = None
         for k in cands:
-            if all(k in tr[l] for l in locales):
+            if any(k in tr[l] for l in locales):
                 row = k
                 break
         if row is None:
@@ -122,12 +122,13 @@ def glossary() -> str:
         lines.append("| locale | shipped string |")
         lines.append("|---|---|")
         for l in locales:
-            lines.append(f"| {LOCALE_NAMES[l]} ({l}) | {tr[l][row]} |")
+            shipped = tr[l].get(row)
+            lines.append(f"| {LOCALE_NAMES[l]} ({l}) | {shipped if shipped else '_(not yet translated — follow the rows above)_'} |")
         lines.append("")
 
     missing = [t for t in GLOSSARY_TERMS
                if not any(isinstance(v, str) and t.lower() in v.lower() and len(v) < 60
-                          and all(k in tr[l] for l in locales)
+                          and any(k in tr[l] for l in locales)
                           for k, v in en.items())]
     if missing:
         lines += [
