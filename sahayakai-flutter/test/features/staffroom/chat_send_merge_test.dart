@@ -22,13 +22,12 @@ ChatMessage _server(String id, String text, {String author = _me}) =>
 PendingChatSend _pending(
   String text, {
   Set<String> knownServerIds = const <String>{},
-}) =>
-    PendingChatSend(
-      clientMessageId: 'ccid-$text',
-      text: text,
-      authorId: _me,
-      knownServerIds: knownServerIds,
-    );
+}) => PendingChatSend(
+  clientMessageId: 'ccid-$text',
+  text: text,
+  authorId: _me,
+  knownServerIds: knownServerIds,
+);
 
 void main() {
   test('no pending → the server list is returned unchanged', () {
@@ -36,32 +35,40 @@ void main() {
     expect(mergeChatForDisplay(server, const []), server);
   });
 
-  test('an in-flight pending (no echo yet) is appended as an optimistic bubble',
-      () {
-    final out = mergeChatForDisplay(const <ChatMessage>[], [_pending('draft')]);
-    expect(out, hasLength(1));
-    expect(out.single.text, 'draft');
-    expect(out.single.authorId, _me);
-  });
+  test(
+    'an in-flight pending (no echo yet) is appended as an optimistic bubble',
+    () {
+      final out = mergeChatForDisplay(const <ChatMessage>[], [
+        _pending('draft'),
+      ]);
+      expect(out, hasLength(1));
+      expect(out.single.text, 'draft');
+      expect(out.single.authorId, _me);
+    },
+  );
 
-  test('a FRESH server echo (novel id) reconciles the pending — no duplicate',
-      () {
-    // The send began with no server messages, so srv-1 is novel → it covers the
-    // pending; only the single server message shows.
-    final out = mergeChatForDisplay(
-      [_server('srv-1', 'hi team')],
-      [_pending('hi team', knownServerIds: const <String>{})],
-    );
-    expect(out, hasLength(1));
-    expect(out.single.id, 'srv-1'); // the server copy, not the optimistic one
-  });
+  test(
+    'a FRESH server echo (novel id) reconciles the pending — no duplicate',
+    () {
+      // The send began with no server messages, so srv-1 is novel → it covers the
+      // pending; only the single server message shows.
+      final out = mergeChatForDisplay(
+        [_server('srv-1', 'hi team')],
+        [_pending('hi team', knownServerIds: const <String>{})],
+      );
+      expect(out, hasLength(1));
+      expect(out.single.id, 'srv-1'); // the server copy, not the optimistic one
+    },
+  );
 
   test('a PRE-EXISTING identical message does NOT reconcile a fresh send', () {
     // "ok" already existed (old-1) when the new send began, so it must NOT cancel
     // the new optimistic bubble — the teacher genuinely sent "ok" again.
     final out = mergeChatForDisplay(
       [_server('old-1', 'ok')],
-      [_pending('ok', knownServerIds: const {'old-1'})],
+      [
+        _pending('ok', knownServerIds: const {'old-1'}),
+      ],
     );
     expect(out, hasLength(2), reason: 'the old "ok" is not the new send');
     expect(out.first.id, 'old-1');

@@ -61,9 +61,10 @@ class LiveSessionConfig {
   final String? languageCode;
 
   static LiveSessionConfig fromJson(Map<String, dynamic> json) {
-    final modalities = (json['responseModalities'] as List?)
-            ?.whereType<String>()
-            .toList(growable: false) ??
+    final modalities =
+        (json['responseModalities'] as List?)?.whereType<String>().toList(
+          growable: false,
+        ) ??
         const ['AUDIO'];
     return LiveSessionConfig(
       model: (json['model'] as String?)?.trim() ?? '',
@@ -118,7 +119,8 @@ class LiveStartSession {
   bool get isUsable => sessionToken.isNotEmpty && wssUrl.isNotEmpty;
 
   static LiveStartSession fromJson(Map<String, dynamic> json) {
-    final config = (json['sessionConfig'] as Map?)?.cast<String, dynamic>() ??
+    final config =
+        (json['sessionConfig'] as Map?)?.cast<String, dynamic>() ??
         const <String, dynamic>{};
     final toolsJson = (json['tools'] as List?) ?? const [];
     return LiveStartSession(
@@ -144,10 +146,8 @@ class LiveStartSession {
 /// param, which Google rejects as an unregistered caller. Only `IOWebSocketChannel`
 /// can set request headers, so the default uses it (mobile/desktop; the browser
 /// path would need the JS SDK, which can't set WS headers).
-typedef WebSocketConnector = WebSocketChannel Function(
-  Uri url, {
-  Map<String, dynamic>? headers,
-});
+typedef WebSocketConnector =
+    WebSocketChannel Function(Uri url, {Map<String, dynamic>? headers});
 
 /// The real-time Gemini Live client. A plain class behind an overridable
 /// [geminiLiveClientProvider] (mirroring `voiceToTextRepository`), so tests swap
@@ -155,9 +155,10 @@ typedef WebSocketConnector = WebSocketChannel Function(
 /// onto the existing `VidyaStatus` machine.
 class GeminiLiveClient {
   GeminiLiveClient(this._client, {WebSocketConnector? connector})
-      : _connector = connector ??
-            ((url, {headers}) =>
-                IOWebSocketChannel.connect(url, headers: headers));
+    : _connector =
+          connector ??
+          ((url, {headers}) =>
+              IOWebSocketChannel.connect(url, headers: headers));
 
   final ApiClient _client;
   final WebSocketConnector _connector;
@@ -165,6 +166,13 @@ class GeminiLiveClient {
   static const String _startSessionPath = '/api/vidya-voice/start-session';
 
   WebSocketChannel? _channel;
+  // VERIFIED NOT A LEAK: _closeSocket() reads this into a local, nulls the
+  // field, then awaits sub.cancel(). The analyzer cannot trace disposal
+  // through that null-then-cancel indirection, so it reports the subscription
+  // as uncancelled. The rule stays enabled because it would catch a genuine
+  // leak in code written later; this one site is annotated rather than the
+  // rule being dropped.
+  // ignore: cancel_subscriptions
   StreamSubscription<dynamic>? _socketSub;
   LiveStartSession? _session;
 
@@ -326,8 +334,9 @@ class GeminiLiveClient {
     String? systemInstruction,
   }) {
     final config = session.sessionConfig;
-    final model =
-        config.model.startsWith('models/') ? config.model : 'models/${config.model}';
+    final model = config.model.startsWith('models/')
+        ? config.model
+        : 'models/${config.model}';
     final instruction = systemInstruction?.trim();
     return {
       'setup': {
@@ -365,38 +374,36 @@ class GeminiLiveClient {
   /// The prefill fields a NAVIGATE_AND_FILL tool accepts, mirroring
   /// `VidyaActionParamsDto`. The classifier fills what the utterance implied.
   static Map<String, dynamic> _toolParameterSchema() => {
-        'type': 'object',
-        'properties': {
-          'topic': {
-            'type': 'string',
-            'description': 'The subject-matter topic the teacher named.',
-          },
-          'gradeLevel': {
-            'type': 'string',
-            'description': 'The class / grade, e.g. "Class 8".',
-          },
-          'subject': {
-            'type': 'string',
-            'description': 'The school subject, e.g. "Science".',
-          },
-          'language': {
-            'type': 'string',
-            'description': 'The requested output language, if the teacher named one.',
-          },
-        },
-      };
+    'type': 'object',
+    'properties': {
+      'topic': {
+        'type': 'string',
+        'description': 'The subject-matter topic the teacher named.',
+      },
+      'gradeLevel': {
+        'type': 'string',
+        'description': 'The class / grade, e.g. "Class 8".',
+      },
+      'subject': {
+        'type': 'string',
+        'description': 'The school subject, e.g. "Science".',
+      },
+      'language': {
+        'type': 'string',
+        'description':
+            'The requested output language, if the teacher named one.',
+      },
+    },
+  };
 
   @visibleForTesting
   static Map<String, dynamic> encodeRealtimeAudio(Uint8List pcm16le16k) => {
-        'realtimeInput': {
-          'mediaChunks': [
-            {
-              'mimeType': 'audio/pcm;rate=16000',
-              'data': base64Encode(pcm16le16k),
-            },
-          ],
-        },
-      };
+    'realtimeInput': {
+      'mediaChunks': [
+        {'mimeType': 'audio/pcm;rate=16000', 'data': base64Encode(pcm16le16k)},
+      ],
+    },
+  };
 
   void _onFrame(dynamic raw) {
     final Map<String, dynamic>? msg = _decodeFrame(raw);
@@ -478,7 +485,8 @@ class GeminiLiveClient {
       final name = call['name'] as String?;
       final id = call['id'] as String?;
       final args =
-          (call['args'] as Map?)?.cast<String, dynamic>() ?? const <String, dynamic>{};
+          (call['args'] as Map?)?.cast<String, dynamic>() ??
+          const <String, dynamic>{};
       final flow = VidyaFlow.fromWire(name);
       if (flow != null) {
         final directive = VidyaDirective(

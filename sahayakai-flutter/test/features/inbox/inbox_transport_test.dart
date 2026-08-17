@@ -26,8 +26,7 @@ void main() {
     });
 
     test('the state constructors set the right flags', () {
-      const awaiting =
-          TransportSnapshot<List<int>>.awaitingFirebase(<int>[]);
+      const awaiting = TransportSnapshot<List<int>>.awaitingFirebase(<int>[]);
       expect(awaiting.isAwaitingFirebase, isTrue);
       expect(awaiting.isEmptyByDesign, isTrue);
       expect(awaiting.data, isEmpty);
@@ -36,8 +35,10 @@ void main() {
       expect(signedOut.isSignedOut, isTrue);
       expect(signedOut.isEmptyByDesign, isTrue);
 
-      final err =
-          TransportSnapshot<List<int>>.error(const <int>[], StateError('x'));
+      final err = TransportSnapshot<List<int>>.error(
+        const <int>[],
+        StateError('x'),
+      );
       expect(err.hasError, isTrue);
       expect(err.isEmptyByDesign, isFalse);
       expect(err.error, isA<StateError>());
@@ -47,22 +48,24 @@ void main() {
       expect(ready.isEmptyByDesign, isFalse);
     });
 
-    test('an error→ready transition CLEARS the error (no stale error retained)',
-        () {
-      // The named constructors, not a copyWith, are the only way to build a
-      // snapshot — so a live impl moving error→ready cannot silently keep the
-      // stale error object.
-      final errored = TransportSnapshot<List<int>>.error(
-        const <int>[],
-        StateError('missing index'),
-      );
-      expect(errored.error, isNotNull);
+    test(
+      'an error→ready transition CLEARS the error (no stale error retained)',
+      () {
+        // The named constructors, not a copyWith, are the only way to build a
+        // snapshot — so a live impl moving error→ready cannot silently keep the
+        // stale error object.
+        final errored = TransportSnapshot<List<int>>.error(
+          const <int>[],
+          StateError('missing index'),
+        );
+        expect(errored.error, isNotNull);
 
-      const recovered = TransportSnapshot<List<int>>.ready([1, 2]);
-      expect(recovered.error, isNull);
-      expect(recovered.hasError, isFalse);
-      expect(recovered.isReady, isTrue);
-    });
+        const recovered = TransportSnapshot<List<int>>.ready([1, 2]);
+        expect(recovered.error, isNull);
+        expect(recovered.hasError, isFalse);
+        expect(recovered.isReady, isTrue);
+      },
+    );
   });
 
   group('DeferredInboxTransport — keeps the APK green (no Firebase)', () {
@@ -74,17 +77,20 @@ void main() {
       expect(snap.data, isEmpty);
     });
 
-    test('watchThread + watchUnreadConversations emit awaitingFirebase',
-        () async {
-      final thread =
-          await transport.watchThread(const ConversationId('u1_u2')).first;
-      expect(thread.isAwaitingFirebase, isTrue);
-      expect(thread.data, isEmpty);
+    test(
+      'watchThread + watchUnreadConversations emit awaitingFirebase',
+      () async {
+        final thread = await transport
+            .watchThread(const ConversationId('u1_u2'))
+            .first;
+        expect(thread.isAwaitingFirebase, isTrue);
+        expect(thread.data, isEmpty);
 
-      final unread = await transport.watchUnreadConversations().first;
-      expect(unread.isAwaitingFirebase, isTrue);
-      expect(unread.data, 0);
-    });
+        final unread = await transport.watchUnreadConversations().first;
+        expect(unread.isAwaitingFirebase, isTrue);
+        expect(unread.data, 0);
+      },
+    );
 
     test('one-shot reads return safe empties', () async {
       expect(await transport.getTotalUnreadCount(), 0);
@@ -97,41 +103,51 @@ void main() {
       );
     });
 
-    test('every write throws a typed TransportUnavailable (awaitingFirebase)',
-        () async {
-      Future<void> expectUnavailable(Future<void> Function() op) async {
-        await expectLater(
-          op,
-          throwsA(
-            isA<TransportUnavailable>().having(
-              (e) => e.kind,
-              'kind',
-              TransportUnavailableKind.awaitingFirebase,
+    test(
+      'every write throws a typed TransportUnavailable (awaitingFirebase)',
+      () async {
+        Future<void> expectUnavailable(Future<void> Function() op) async {
+          await expectLater(
+            op,
+            throwsA(
+              isA<TransportUnavailable>().having(
+                (e) => e.kind,
+                'kind',
+                TransportUnavailableKind.awaitingFirebase,
+              ),
             ),
-          ),
-        );
-      }
+          );
+        }
 
-      await expectUnavailable(
-          () => transport.getOrCreateDirectConversation('u2'));
-      await expectUnavailable(() => transport.createGroupConversation(
+        await expectUnavailable(
+          () => transport.getOrCreateDirectConversation('u2'),
+        );
+        await expectUnavailable(
+          () => transport.createGroupConversation(
             participantUids: const ['u1', 'u2'],
             name: 'g',
-          ));
-      await expectUnavailable(() => transport.sendMessage(
+          ),
+        );
+        await expectUnavailable(
+          () => transport.sendMessage(
             const SendMessageInput(
               conversationId: ConversationId('u1_u2'),
               type: MessageType.text,
               text: 'hi',
             ),
-          ));
-      await expectUnavailable(
-          () => transport.markConversationRead(const ConversationId('u1_u2')));
-      await expectUnavailable(() => transport.acknowledgeDelivery(
+          ),
+        );
+        await expectUnavailable(
+          () => transport.markConversationRead(const ConversationId('u1_u2')),
+        );
+        await expectUnavailable(
+          () => transport.acknowledgeDelivery(
             const ConversationId('u1_u2'),
             const ['m1'],
-          ));
-    });
+          ),
+        );
+      },
+    );
 
     test('TransportUnavailable names the surface + is awaitingFirebase', () {
       const e = TransportUnavailable.awaitingFirebase('sendMessage');
@@ -141,50 +157,54 @@ void main() {
     });
   });
 
-  group('inboxTransportProvider — binds the deferred impl while Firebase-gated',
-      () {
-    test('resolves to DeferredInboxTransport (Firebase not configured)', () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-      expect(
-        container.read(inboxTransportProvider),
-        isA<DeferredInboxTransport>(),
-      );
-      expect(
-        container.read(notificationsTransportProvider),
-        isA<DeferredNotificationsTransport>(),
-      );
-      expect(
-        container.read(presenceTransportProvider),
-        isA<DeferredPresenceTransport>(),
-      );
-    });
+  group(
+    'inboxTransportProvider — binds the deferred impl while Firebase-gated',
+    () {
+      test('resolves to DeferredInboxTransport (Firebase not configured)', () {
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+        expect(
+          container.read(inboxTransportProvider),
+          isA<DeferredInboxTransport>(),
+        );
+        expect(
+          container.read(notificationsTransportProvider),
+          isA<DeferredNotificationsTransport>(),
+        );
+        expect(
+          container.read(presenceTransportProvider),
+          isA<DeferredPresenceTransport>(),
+        );
+      });
 
-    test('a UI unit can override the provider with the fake', () async {
-      final fake = FakeInboxTransport();
-      addTearDown(fake.dispose);
-      final container = ProviderContainer(
-        overrides: [inboxTransportProvider.overrideWithValue(fake)],
-      );
-      addTearDown(container.dispose);
+      test('a UI unit can override the provider with the fake', () async {
+        final fake = FakeInboxTransport();
+        addTearDown(fake.dispose);
+        final container = ProviderContainer(
+          overrides: [inboxTransportProvider.overrideWithValue(fake)],
+        );
+        addTearDown(container.dispose);
 
-      final transport = container.read(inboxTransportProvider);
-      fake.emitInbox(TransportSnapshot<List<Conversation>>.ready([
-        Conversation(
-          id: const ConversationId('u1_u2'),
-          type: ConversationType.direct,
-          participantIds: const ['u1', 'u2'],
-          participants: const {},
-          lastMessage: 'hi',
-          lastMessageSenderId: 'u2',
-          unreadCount: const {'u1': 1},
-        ),
-      ]));
-      final snap = await transport.watchInbox().first;
-      expect(snap.isReady, isTrue);
-      expect(snap.data.single.lastMessage, 'hi');
-    });
-  });
+        final transport = container.read(inboxTransportProvider);
+        fake.emitInbox(
+          const TransportSnapshot<List<Conversation>>.ready([
+            Conversation(
+              id: ConversationId('u1_u2'),
+              type: ConversationType.direct,
+              participantIds: ['u1', 'u2'],
+              participants: {},
+              lastMessage: 'hi',
+              lastMessageSenderId: 'u2',
+              unreadCount: {'u1': 1},
+            ),
+          ]),
+        );
+        final snap = await transport.watchInbox().first;
+        expect(snap.isReady, isTrue);
+        expect(snap.data.single.lastMessage, 'hi');
+      });
+    },
+  );
 
   group('FakeInboxTransport — drives streams + records writes', () {
     test('emit pushes a new inbox snapshot to a live listener', () async {
@@ -209,61 +229,70 @@ void main() {
       expect(seen.last.hasError, isTrue);
     });
 
-    test('sendMessage records the input and returns the configured id',
-        () async {
-      final fake = FakeInboxTransport()..sendMessageResult = 'm-99';
-      addTearDown(fake.dispose);
+    test(
+      'sendMessage records the input and returns the configured id',
+      () async {
+        final fake = FakeInboxTransport()..sendMessageResult = 'm-99';
+        addTearDown(fake.dispose);
 
-      final id = await fake.sendMessage(
-        const SendMessageInput(
-          conversationId: ConversationId('u1_u2'),
-          type: MessageType.text,
-          text: 'hello',
-          clientMessageId: 'uuid-1',
-        ),
-      );
-      expect(id, 'm-99');
-      expect(fake.sentMessages.single.text, 'hello');
-      expect(fake.sentMessages.single.clientMessageId, 'uuid-1');
-    });
-
-    test('a configured sendMessage error surfaces (failed-send path)',
-        () async {
-      final fake = FakeInboxTransport()..sendMessageError = StateError('boom');
-      addTearDown(fake.dispose);
-      await expectLater(
-        () => fake.sendMessage(const SendMessageInput(
-          conversationId: ConversationId('u1_u2'),
-          type: MessageType.text,
-        )),
-        throwsA(isA<StateError>()),
-      );
-    });
-
-    test('markConversationRead + thread emit are recorded/observable',
-        () async {
-      final fake = FakeInboxTransport();
-      addTearDown(fake.dispose);
-
-      const id = ConversationId('u1_u2');
-      await fake.markConversationRead(id);
-      expect(fake.markedRead, [id]);
-
-      fake.emitThread(
-        id,
-        TransportSnapshot<List<Message>>.ready(const [
-          Message(
-            id: 'm1',
+        final id = await fake.sendMessage(
+          const SendMessageInput(
+            conversationId: ConversationId('u1_u2'),
             type: MessageType.text,
-            text: 'yo',
-            senderId: 'u2',
-            senderName: 'Bina',
+            text: 'hello',
+            clientMessageId: 'uuid-1',
           ),
-        ]),
-      );
-      final snap = await fake.watchThread(id).first;
-      expect(snap.data.single.text, 'yo');
-    });
+        );
+        expect(id, 'm-99');
+        expect(fake.sentMessages.single.text, 'hello');
+        expect(fake.sentMessages.single.clientMessageId, 'uuid-1');
+      },
+    );
+
+    test(
+      'a configured sendMessage error surfaces (failed-send path)',
+      () async {
+        final fake = FakeInboxTransport()
+          ..sendMessageError = StateError('boom');
+        addTearDown(fake.dispose);
+        await expectLater(
+          () => fake.sendMessage(
+            const SendMessageInput(
+              conversationId: ConversationId('u1_u2'),
+              type: MessageType.text,
+            ),
+          ),
+          throwsA(isA<StateError>()),
+        );
+      },
+    );
+
+    test(
+      'markConversationRead + thread emit are recorded/observable',
+      () async {
+        final fake = FakeInboxTransport();
+        addTearDown(fake.dispose);
+
+        const id = ConversationId('u1_u2');
+        await fake.markConversationRead(id);
+        expect(fake.markedRead, [id]);
+
+        fake.emitThread(
+          id,
+          const TransportSnapshot<List<Message>>.ready([
+            Message(
+              id: 'm1',
+              type: MessageType.text,
+              text: 'yo',
+              senderId: 'u2',
+              senderName: 'Bina',
+            ),
+          ]),
+        );
+        final snap = await fake.watchThread(id).first;
+        expect(snap.data.single.text, 'yo');
+      },
+    );
   });
 
   group('DeferredNotificationsTransport', () {
@@ -295,8 +324,9 @@ void main() {
       expect(p.presence, Presence.unknown);
       expect(p.showsDot, isFalse);
 
-      final t =
-          await transport.watchTyping(const ConversationId('u1_u2')).first;
+      final t = await transport
+          .watchTyping(const ConversationId('u1_u2'))
+          .first;
       expect(t.isAnyoneTyping, isFalse);
     });
 

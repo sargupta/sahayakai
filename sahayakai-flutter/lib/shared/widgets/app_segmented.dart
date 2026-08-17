@@ -50,7 +50,9 @@ class AppSegmented<T> extends StatelessWidget {
 
   bool get _useChips =>
       segments.length > 3 ||
-      segments.any((s) => s.label.characters.length > 14 || _hasNonLatin(s.label));
+      segments.any(
+        (s) => s.label.characters.length > 14 || _hasNonLatin(s.label),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -115,7 +117,9 @@ class AppSegmented<T> extends StatelessWidget {
               // Sliding thumb (jumps to the final position under reduce-motion).
               AnimatedAlign(
                 alignment: Alignment(alignX, 0),
-                duration: context.motionEnabled ? AppMotion.small : Duration.zero,
+                duration: context.motionEnabled
+                    ? AppMotion.small
+                    : Duration.zero,
                 curve: AppMotion.easeOutQuart,
                 child: FractionallySizedBox(
                   widthFactor: 1 / n,
@@ -129,10 +133,10 @@ class AppSegmented<T> extends StatelessWidget {
                       borderRadius: AppRadius.rControl,
                       boxShadow: AppShadows.e1,
                     ),
-                    child: GlassSurface.flat(
+                    child: const GlassSurface.flat(
                       radius: AppRadius.control,
                       padding: EdgeInsets.zero,
-                      child: const SizedBox.expand(),
+                      child: SizedBox.expand(),
                     ),
                   ),
                 ),

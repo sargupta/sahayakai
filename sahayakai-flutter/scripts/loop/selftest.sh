@@ -115,11 +115,28 @@ if [ "$k" -eq 971 ]; then ok "template key count matches the audited value (971)
 else nope "template keys = $k, audit said 971 — one of them is wrong, find out which"; fi
 
 # ── 6. doc_truth_guard must report the honest red count, and --strict must exit 1
-r="$(bash scripts/loop/doc_truth_guard.sh --json | python3 -c 'import json,sys;print(json.load(sys.stdin)["red"])')"
-if [ "${r:-0}" -gt 0 ]; then ok "doc_truth_guard reports $r red claims (honest starting state)"
-else nope "doc_truth_guard reports 0 red — implausible before B0 has run"; fi
-expect_fail "doc_truth_guard --strict fails while any claim is red" \
-  bash scripts/loop/doc_truth_guard.sh --strict
+# Proving doc_truth_guard works must NOT assume a claim is red. The original
+# form asserted red > 0 — true while band B0 was unfinished, and false the
+# moment every row went green, so COMPLETING the work broke the test watching
+# it. (The i18n counter case above had the same defect, for the same reason.)
+# Instead: it must account for every row in CLAIMS.tsv, and --strict must still
+# fail when handed a claim that cannot pass.
+rows="$(grep -cvE '^\s*(#|$)' "$CLAIMS_TSV")"
+counts="$(bash scripts/loop/doc_truth_guard.sh --json \
+  | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["green"], d["red"])')"
+g="${counts%% *}"; r="${counts##* }"
+if [ "$((g + r))" = "$rows" ]; then
+  ok "doc_truth_guard accounts for all $rows claims (${g} green / ${r} red)"
+else
+  nope "doc_truth_guard saw $((g + r)) claims but CLAIMS.tsv has $rows — it is not reading every row"
+fi
+
+# A claim that can never pass, in a throwaway file: --strict must still exit 1.
+_impossible="$(mktemp -t claims)"
+printf 'impossible_by_construction\tThis can never hold\techo 0\t>=1\n' > "$_impossible"
+expect_fail "doc_truth_guard --strict still fails on an unsatisfiable claim" \
+  env CLAIMS_TSV="$_impossible" bash scripts/loop/doc_truth_guard.sh --strict
+rm -f "$_impossible"
 
 # ── 7. reconcile's ancestry check must reject a fabricated sha ───────────────
 expect_fail "verifiedAtSha ancestry check rejects a fabricated sha" \

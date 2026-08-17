@@ -19,23 +19,27 @@ import '../../support/fake_voice.dart';
 /// first, so the next session starts from a genuinely fresh controller.
 
 FakeApiClient _happyClient() => FakeApiClient(
-      multipartResponse: {'text': 'plan a lesson', 'language': 'en'},
-      postResponsesByPath: {
-        '/api/assistant': {
-          'response': 'Making your Class 10 Maths lesson plan.',
-          'plannedActions': [
-            {
-              'type': 'NAVIGATE_AND_FILL',
-              'flow': 'lesson-plan',
-              'params': {'topic': 'Fractions', 'gradeLevel': 'Class 10', 'subject': 'Maths'},
-            },
-          ],
+  multipartResponse: {'text': 'plan a lesson', 'language': 'en'},
+  postResponsesByPath: {
+    '/api/assistant': {
+      'response': 'Making your Class 10 Maths lesson plan.',
+      'plannedActions': [
+        {
+          'type': 'NAVIGATE_AND_FILL',
+          'flow': 'lesson-plan',
+          'params': {
+            'topic': 'Fractions',
+            'gradeLevel': 'Class 10',
+            'subject': 'Maths',
+          },
         },
-        '/api/tts': {'audioContent': 'QUJD'},
-        '/api/vidya/session': {'success': true},
-        '/api/vidya/profile': {'success': true},
-      },
-    );
+      ],
+    },
+    '/api/tts': {'audioContent': 'QUJD'},
+    '/api/vidya/session': {'success': true},
+    '/api/vidya/profile': {'success': true},
+  },
+);
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues(<String, Object>{}));
@@ -44,11 +48,13 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         apiClientProvider.overrideWithValue(_happyClient()),
-        audioRecorderServiceProvider
-            .overrideWithValue(FakeAudioRecorderService()),
+        audioRecorderServiceProvider.overrideWithValue(
+          FakeAudioRecorderService(),
+        ),
         audioPlayerServiceProvider.overrideWithValue(FakeAudioPlayerService()),
-        micPermissionServiceProvider
-            .overrideWithValue(FakeMicPermissionService()),
+        micPermissionServiceProvider.overrideWithValue(
+          FakeMicPermissionService(),
+        ),
       ],
     );
     addTearDown(container.dispose);
@@ -82,24 +88,30 @@ void main() {
     expect(after.profile, isNull);
   });
 
-  test('signOut() on an already-empty controller is a safe no-op shape',
-      () async {
-    final container = ProviderContainer(
-      overrides: [
-        apiClientProvider.overrideWithValue(_happyClient()),
-        audioRecorderServiceProvider
-            .overrideWithValue(FakeAudioRecorderService()),
-        audioPlayerServiceProvider.overrideWithValue(FakeAudioPlayerService()),
-        micPermissionServiceProvider
-            .overrideWithValue(FakeMicPermissionService()),
-      ],
-    );
-    addTearDown(container.dispose);
+  test(
+    'signOut() on an already-empty controller is a safe no-op shape',
+    () async {
+      final container = ProviderContainer(
+        overrides: [
+          apiClientProvider.overrideWithValue(_happyClient()),
+          audioRecorderServiceProvider.overrideWithValue(
+            FakeAudioRecorderService(),
+          ),
+          audioPlayerServiceProvider.overrideWithValue(
+            FakeAudioPlayerService(),
+          ),
+          micPermissionServiceProvider.overrideWithValue(
+            FakeMicPermissionService(),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
 
-    await container.read(authControllerProvider.notifier).signOut();
+      await container.read(authControllerProvider.notifier).signOut();
 
-    final state = container.read(vidyaControllerProvider);
-    expect(state.conversation, isEmpty);
-    expect(state.status, VidyaStatus.idle);
-  });
+      final state = container.read(vidyaControllerProvider);
+      expect(state.conversation, isEmpty);
+      expect(state.status, VidyaStatus.idle);
+    },
+  );
 }

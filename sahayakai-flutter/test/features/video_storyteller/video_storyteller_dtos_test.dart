@@ -72,8 +72,9 @@ void main() {
 
   group('VideoStorytellerResponseDto — the categorizedVideos map', () {
     test('decodes each bucket key to a VideoCategory with its videos', () {
-      final recs =
-          VideoStorytellerResponseDto.fromJson(videoStorytellerJson()).toDomain();
+      final recs = VideoStorytellerResponseDto.fromJson(
+        videoStorytellerJson(),
+      ).toDomain();
 
       // Every non-empty bucket decoded, keyed by the enum.
       expect(recs.categorizedVideos.keys, containsAll(VideoCategory.values));
@@ -85,16 +86,13 @@ void main() {
 
     test('sections come back in the canonical display order', () {
       final recs = buildRecommendations();
-      expect(
-        recs.sections.map((s) => s.category).toList(),
-        const [
-          VideoCategory.topRecommended,
-          VideoCategory.storytelling,
-          VideoCategory.pedagogy,
-          VideoCategory.govtUpdates,
-          VideoCategory.courses,
-        ],
-      );
+      expect(recs.sections.map((s) => s.category).toList(), const [
+        VideoCategory.topRecommended,
+        VideoCategory.storytelling,
+        VideoCategory.pedagogy,
+        VideoCategory.govtUpdates,
+        VideoCategory.courses,
+      ]);
     });
 
     test('decodes the exact YouTubeVideo fields', () {
@@ -111,8 +109,10 @@ void main() {
       final recs = buildRecommendations();
       final top = recs.categorizedVideos[VideoCategory.topRecommended]!.first;
 
-      expect(top.watchUrl.toString(),
-          'https://www.youtube.com/watch?v=vid_top_1');
+      expect(
+        top.watchUrl.toString(),
+        'https://www.youtube.com/watch?v=vid_top_1',
+      );
       expect(top.watchUrl.scheme, 'https');
     });
 
@@ -130,24 +130,33 @@ void main() {
 
       // Provided, good-quality thumbnail is used as-is.
       final top = recs.categorizedVideos[VideoCategory.topRecommended]!.first;
-      expect(top.thumbnailUrl, 'https://i.ytimg.com/vi/vid_top_1/mqdefault.jpg');
+      expect(
+        top.thumbnailUrl,
+        'https://i.ytimg.com/vi/vid_top_1/mqdefault.jpg',
+      );
 
       // Missing thumbnail → derived mqdefault.
-      final story =
-          recs.categorizedVideos[VideoCategory.storytelling]!.first;
+      final story = recs.categorizedVideos[VideoCategory.storytelling]!.first;
       expect(
-          story.thumbnailUrl, 'https://i.ytimg.com/vi/vid_story_1/mqdefault.jpg');
+        story.thumbnailUrl,
+        'https://i.ytimg.com/vi/vid_story_1/mqdefault.jpg',
+      );
 
       // Low-quality hqdefault → swapped to the mqdefault pattern.
       final ped = recs.categorizedVideos[VideoCategory.pedagogy]!.first;
-      expect(ped.thumbnailUrl, 'https://i.ytimg.com/vi/vid_ped_1/mqdefault.jpg');
+      expect(
+        ped.thumbnailUrl,
+        'https://i.ytimg.com/vi/vid_ped_1/mqdefault.jpg',
+      );
     });
 
     test('flags official Indian education sources', () {
       final recs = buildRecommendations();
       // NCERT, Ministry of Education, IGNOU are official; a generic channel is not.
       expect(
-        recs.categorizedVideos[VideoCategory.topRecommended]!.first
+        recs
+            .categorizedVideos[VideoCategory.topRecommended]!
+            .first
             .isOfficialSource,
         isTrue,
       );
@@ -156,7 +165,9 @@ void main() {
         isTrue,
       );
       expect(
-        recs.categorizedVideos[VideoCategory.storytelling]!.first
+        recs
+            .categorizedVideos[VideoCategory.storytelling]!
+            .first
             .isOfficialSource,
         isFalse,
       );
@@ -164,8 +175,7 @@ void main() {
 
     test('decodes the categories (search-query) buckets', () {
       // Not user-facing, but part of the wire contract — prove it decodes.
-      final dto =
-          VideoStorytellerResponseDto.fromJson(videoStorytellerJson());
+      final dto = VideoStorytellerResponseDto.fromJson(videoStorytellerJson());
       expect(dto.categories, isNotNull);
       expect(dto.categories!.pedagogy, ['NEP 2020 pedagogy']);
       expect(dto.categories!.topRecommended, ['best science class 6']);
@@ -182,13 +192,16 @@ void main() {
       }).toDomain();
 
       expect(recs.categorizedVideos.keys, [VideoCategory.topRecommended]);
-      expect(recs.categorizedVideos.containsKey(VideoCategory.courses), isFalse);
+      expect(
+        recs.categorizedVideos.containsKey(VideoCategory.courses),
+        isFalse,
+      );
     });
 
     test('a fully-empty payload decodes to no-videos, not a crash', () {
-      final recs =
-          VideoStorytellerResponseDto.fromJson(const <String, dynamic>{})
-              .toDomain();
+      final recs = VideoStorytellerResponseDto.fromJson(
+        const <String, dynamic>{},
+      ).toDomain();
       expect(recs.hasVideos, isFalse);
       expect(recs.personalizedMessage, '');
       expect(recs.fromCache, isFalse);

@@ -112,39 +112,53 @@ void main() {
   });
 
   group('Lesson Plan — full a/b/c/d matrix', () {
-    testWidgets('(b) autoSubmit + a topic RUNS generation, no tap',
-        (tester) async {
+    testWidgets('(b) autoSubmit + a topic RUNS generation, no tap', (
+      tester,
+    ) async {
       _tallPhone(tester);
       final log = <LessonPlanRequest>[];
 
-      await tester.pumpWidget(_host(
-        const LessonPlanScreen(
-          prefill: ToolPrefill(
-            topic: 'Photosynthesis',
-            gradeLevel: 'Class 10',
-            autoSubmit: true,
+      await tester.pumpWidget(
+        _host(
+          const LessonPlanScreen(
+            prefill: ToolPrefill(
+              topic: 'Photosynthesis',
+              gradeLevel: 'Class 10',
+              autoSubmit: true,
+            ),
           ),
+          [
+            lessonPlanControllerProvider.overrideWith(
+              () => _RecordingLesson(log),
+            ),
+          ],
         ),
-        [lessonPlanControllerProvider.overrideWith(() => _RecordingLesson(log))],
-      ));
+      );
       await tester.pumpAndSettle();
 
       expect(log, hasLength(1), reason: 'voice must auto-run generation');
       expect(log.single.topic, 'Photosynthesis');
     });
 
-    testWidgets('(c) autoSubmit + an EMPTY topic does NOT run — form waits',
-        (tester) async {
+    testWidgets('(c) autoSubmit + an EMPTY topic does NOT run — form waits', (
+      tester,
+    ) async {
       _tallPhone(tester);
       final log = <LessonPlanRequest>[];
 
-      await tester.pumpWidget(_host(
-        // A partial utterance ("plan a lesson") — grade only, no topic.
-        const LessonPlanScreen(
-          prefill: ToolPrefill(gradeLevel: 'Class 10', autoSubmit: true),
+      await tester.pumpWidget(
+        _host(
+          // A partial utterance ("plan a lesson") — grade only, no topic.
+          const LessonPlanScreen(
+            prefill: ToolPrefill(gradeLevel: 'Class 10', autoSubmit: true),
+          ),
+          [
+            lessonPlanControllerProvider.overrideWith(
+              () => _RecordingLesson(log),
+            ),
+          ],
         ),
-        [lessonPlanControllerProvider.overrideWith(() => _RecordingLesson(log))],
-      ));
+      );
       await tester.pumpAndSettle();
 
       expect(log, isEmpty, reason: 'a topic-less utterance must not auto-fire');
@@ -152,101 +166,138 @@ void main() {
       expect(find.byType(TextFormField), findsWidgets);
     });
 
-    testWidgets('(d) a manual open (null prefill) never auto-runs',
-        (tester) async {
+    testWidgets('(d) a manual open (null prefill) never auto-runs', (
+      tester,
+    ) async {
       _tallPhone(tester);
       final log = <LessonPlanRequest>[];
 
-      await tester.pumpWidget(_host(
-        const LessonPlanScreen(),
-        [lessonPlanControllerProvider.overrideWith(() => _RecordingLesson(log))],
-      ));
+      await tester.pumpWidget(
+        _host(const LessonPlanScreen(), [
+          lessonPlanControllerProvider.overrideWith(
+            () => _RecordingLesson(log),
+          ),
+        ]),
+      );
       await tester.pumpAndSettle();
 
       expect(log, isEmpty);
     });
 
-    testWidgets('(d) autoSubmit: false + a topic never auto-runs (tile open)',
-        (tester) async {
+    testWidgets('(d) autoSubmit: false + a topic never auto-runs (tile open)', (
+      tester,
+    ) async {
       _tallPhone(tester);
       final log = <LessonPlanRequest>[];
 
-      await tester.pumpWidget(_host(
-        const LessonPlanScreen(
-          prefill: ToolPrefill(topic: 'Photosynthesis'),
+      await tester.pumpWidget(
+        _host(
+          const LessonPlanScreen(prefill: ToolPrefill(topic: 'Photosynthesis')),
+          [
+            lessonPlanControllerProvider.overrideWith(
+              () => _RecordingLesson(log),
+            ),
+          ],
         ),
-        [lessonPlanControllerProvider.overrideWith(() => _RecordingLesson(log))],
-      ));
+      );
       await tester.pumpAndSettle();
 
-      expect(log, isEmpty, reason: 'a tapped tile did not ask to auto-generate');
+      expect(
+        log,
+        isEmpty,
+        reason: 'a tapped tile did not ask to auto-generate',
+      );
     });
   });
 
-  group('Quiz Generator — the extra required field must not block auto-run', () {
-    testWidgets('(b) autoSubmit + a topic RUNS (defaulted types pass validation)',
+  group(
+    'Quiz Generator — the extra required field must not block auto-run',
+    () {
+      testWidgets(
+        '(b) autoSubmit + a topic RUNS (defaulted types pass validation)',
         (tester) async {
-      _tallPhone(tester);
-      final log = <QuizRequest>[];
+          _tallPhone(tester);
+          final log = <QuizRequest>[];
 
-      await tester.pumpWidget(_host(
-        const QuizGeneratorScreen(
-          prefill: ToolPrefill(topic: 'The water cycle', autoSubmit: true),
-        ),
-        [quizControllerProvider.overrideWith(() => _RecordingQuiz(log))],
-      ));
-      await tester.pumpAndSettle();
+          await tester.pumpWidget(
+            _host(
+              const QuizGeneratorScreen(
+                prefill: ToolPrefill(
+                  topic: 'The water cycle',
+                  autoSubmit: true,
+                ),
+              ),
+              [quizControllerProvider.overrideWith(() => _RecordingQuiz(log))],
+            ),
+          );
+          await tester.pumpAndSettle();
 
-      expect(log, hasLength(1));
-      expect(log.single.topic, 'The water cycle');
-    });
+          expect(log, hasLength(1));
+          expect(log.single.topic, 'The water cycle');
+        },
+      );
 
-    testWidgets('(c) autoSubmit + an empty topic does NOT run', (tester) async {
-      _tallPhone(tester);
-      final log = <QuizRequest>[];
+      testWidgets('(c) autoSubmit + an empty topic does NOT run', (
+        tester,
+      ) async {
+        _tallPhone(tester);
+        final log = <QuizRequest>[];
 
-      await tester.pumpWidget(_host(
-        const QuizGeneratorScreen(prefill: ToolPrefill(autoSubmit: true)),
-        [quizControllerProvider.overrideWith(() => _RecordingQuiz(log))],
-      ));
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          _host(
+            const QuizGeneratorScreen(prefill: ToolPrefill(autoSubmit: true)),
+            [quizControllerProvider.overrideWith(() => _RecordingQuiz(log))],
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      expect(log, isEmpty);
-    });
-  });
+        expect(log, isEmpty);
+      });
+    },
+  );
 
   group('Instant Answer — question is the required field', () {
     testWidgets('(b) autoSubmit + a question ASKS immediately', (tester) async {
       _tallPhone(tester);
       final log = <InstantAnswerRequest>[];
 
-      await tester.pumpWidget(_host(
-        const InstantAnswerScreen(
-          prefill: ToolPrefill(topic: 'Why is the sky blue?', autoSubmit: true),
+      await tester.pumpWidget(
+        _host(
+          const InstantAnswerScreen(
+            prefill: ToolPrefill(
+              topic: 'Why is the sky blue?',
+              autoSubmit: true,
+            ),
+          ),
+          [
+            instantAnswerControllerProvider.overrideWith(
+              () => _RecordingInstant(log),
+            ),
+          ],
         ),
-        [
-          instantAnswerControllerProvider
-              .overrideWith(() => _RecordingInstant(log)),
-        ],
-      ));
+      );
       await tester.pumpAndSettle();
 
       expect(log, hasLength(1));
       expect(log.single.question, 'Why is the sky blue?');
     });
 
-    testWidgets('(c) autoSubmit + an empty question does NOT ask',
-        (tester) async {
+    testWidgets('(c) autoSubmit + an empty question does NOT ask', (
+      tester,
+    ) async {
       _tallPhone(tester);
       final log = <InstantAnswerRequest>[];
 
-      await tester.pumpWidget(_host(
-        const InstantAnswerScreen(prefill: ToolPrefill(autoSubmit: true)),
-        [
-          instantAnswerControllerProvider
-              .overrideWith(() => _RecordingInstant(log)),
-        ],
-      ));
+      await tester.pumpWidget(
+        _host(
+          const InstantAnswerScreen(prefill: ToolPrefill(autoSubmit: true)),
+          [
+            instantAnswerControllerProvider.overrideWith(
+              () => _RecordingInstant(log),
+            ),
+          ],
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(log, isEmpty);
@@ -258,26 +309,35 @@ void main() {
       _tallPhone(tester);
       final log = <VisualAidRequest>[];
 
-      await tester.pumpWidget(_host(
-        const VisualAidScreen(
-          prefill: ToolPrefill(topic: 'Label a plant cell', autoSubmit: true),
+      await tester.pumpWidget(
+        _host(
+          const VisualAidScreen(
+            prefill: ToolPrefill(topic: 'Label a plant cell', autoSubmit: true),
+          ),
+          [
+            visualAidControllerProvider.overrideWith(
+              () => _RecordingVisual(log),
+            ),
+          ],
         ),
-        [visualAidControllerProvider.overrideWith(() => _RecordingVisual(log))],
-      ));
+      );
       await tester.pumpAndSettle();
 
       expect(log, hasLength(1));
       expect(log.single.prompt, 'Label a plant cell');
     });
 
-    testWidgets('(c) autoSubmit + an empty prompt does NOT draw', (tester) async {
+    testWidgets('(c) autoSubmit + an empty prompt does NOT draw', (
+      tester,
+    ) async {
       _tallPhone(tester);
       final log = <VisualAidRequest>[];
 
-      await tester.pumpWidget(_host(
-        const VisualAidScreen(prefill: ToolPrefill(autoSubmit: true)),
-        [visualAidControllerProvider.overrideWith(() => _RecordingVisual(log))],
-      ));
+      await tester.pumpWidget(
+        _host(const VisualAidScreen(prefill: ToolPrefill(autoSubmit: true)), [
+          visualAidControllerProvider.overrideWith(() => _RecordingVisual(log)),
+        ]),
+      );
       await tester.pumpAndSettle();
 
       expect(log, isEmpty);

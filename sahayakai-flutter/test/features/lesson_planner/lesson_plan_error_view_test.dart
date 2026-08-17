@@ -36,61 +36,71 @@ void main() {
     );
   }
 
-  testWidgets('403 -> upgrade prompt with an actionable pricing button, no retry',
-      (tester) async {
-    final opener = _FakeLinkOpener();
-    await tester.pumpWidget(
-      host(
-        LessonPlanErrorView(
-          error: const ApiException(
-            ApiErrorKind.forbidden,
-            'PLAN_UPGRADE_REQUIRED',
-            statusCode: 403,
+  testWidgets(
+    '403 -> upgrade prompt with an actionable pricing button, no retry',
+    (tester) async {
+      final opener = _FakeLinkOpener();
+      await tester.pumpWidget(
+        host(
+          LessonPlanErrorView(
+            error: const ApiException(
+              ApiErrorKind.forbidden,
+              'PLAN_UPGRADE_REQUIRED',
+              statusCode: 403,
+            ),
+            onRetry: () => fail('an upgrade wall must not offer a retry'),
           ),
-          onRetry: () => fail('an upgrade wall must not offer a retry'),
+          linkOpener: opener,
         ),
-        linkOpener: opener,
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('A higher plan is needed'), findsOneWidget);
-    expect(find.text('Try again'), findsNothing);
+      expect(find.text('A higher plan is needed'), findsOneWidget);
+      expect(find.text('Try again'), findsNothing);
 
-    final pricing = find.widgetWithText(OutlinedButton, 'See plans and pricing');
-    expect(pricing, findsOneWidget);
-    await tester.tap(pricing);
-    await tester.pumpAndSettle();
-    expect(opener.opened.single.toString(), 'https://sahayakai.com/pricing');
-  });
+      final pricing = find.widgetWithText(
+        OutlinedButton,
+        'See plans and pricing',
+      );
+      expect(pricing, findsOneWidget);
+      await tester.tap(pricing);
+      await tester.pumpAndSettle();
+      expect(opener.opened.single.toString(), 'https://sahayakai.com/pricing');
+    },
+  );
 
-  testWidgets('429 -> limit prompt with an actionable pricing button, no retry',
-      (tester) async {
-    final opener = _FakeLinkOpener();
-    await tester.pumpWidget(
-      host(
-        LessonPlanErrorView(
-          error: const ApiException(
-            ApiErrorKind.rateLimited,
-            'USAGE_LIMIT_REACHED',
-            statusCode: 429,
+  testWidgets(
+    '429 -> limit prompt with an actionable pricing button, no retry',
+    (tester) async {
+      final opener = _FakeLinkOpener();
+      await tester.pumpWidget(
+        host(
+          LessonPlanErrorView(
+            error: const ApiException(
+              ApiErrorKind.rateLimited,
+              'USAGE_LIMIT_REACHED',
+              statusCode: 429,
+            ),
+            onRetry: () => fail('the limit state must not offer a retry'),
           ),
-          onRetry: () => fail('the limit state must not offer a retry'),
+          linkOpener: opener,
         ),
-        linkOpener: opener,
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('You have reached your limit'), findsOneWidget);
-    expect(find.text('Try again'), findsNothing);
+      expect(find.text('You have reached your limit'), findsOneWidget);
+      expect(find.text('Try again'), findsNothing);
 
-    final pricing = find.widgetWithText(OutlinedButton, 'See plans and pricing');
-    expect(pricing, findsOneWidget);
-    await tester.tap(pricing);
-    await tester.pumpAndSettle();
-    expect(opener.opened.single.toString(), 'https://sahayakai.com/pricing');
-  });
+      final pricing = find.widgetWithText(
+        OutlinedButton,
+        'See plans and pricing',
+      );
+      expect(pricing, findsOneWidget);
+      await tester.tap(pricing);
+      await tester.pumpAndSettle();
+      expect(opener.opened.single.toString(), 'https://sahayakai.com/pricing');
+    },
+  );
 
   testWidgets('network -> offline card with a retry', (tester) async {
     await tester.pumpWidget(
@@ -145,8 +155,9 @@ void main() {
     expect(find.text('Try again'), findsOneWidget);
   });
 
-  testWidgets('a non-ApiException falls back to the generic error',
-      (tester) async {
+  testWidgets('a non-ApiException falls back to the generic error', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       host(
         LessonPlanErrorView(error: StateError('boom'), onRetry: () {}),

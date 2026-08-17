@@ -33,8 +33,9 @@ void main() {
       final client = FakeApiClient(postResponse: examPaperJson());
       final container = containerWith(client);
 
-      final result =
-          await container.read(examPaperRepositoryProvider).generate(request);
+      final result = await container
+          .read(examPaperRepositoryProvider)
+          .generate(request);
 
       expect(result, isA<ExamPaperReady>());
       expect((result as ExamPaperReady).paper.board, 'CBSE');
@@ -48,45 +49,57 @@ void main() {
       expect(body.containsKey('userId'), isFalse);
     });
 
-    test('a 202 body returns the distinct IN-PROGRESS state, not an error',
-        () async {
-      final client = FakeApiClient(postResponse: examPaperInProgressJson());
-      final container = containerWith(client);
+    test(
+      'a 202 body returns the distinct IN-PROGRESS state, not an error',
+      () async {
+        final client = FakeApiClient(postResponse: examPaperInProgressJson());
+        final container = containerWith(client);
 
-      final result =
-          await container.read(examPaperRepositoryProvider).generate(request);
+        final result = await container
+            .read(examPaperRepositoryProvider)
+            .generate(request);
 
-      expect(result, isA<ExamPaperInProgress>());
-      expect((result as ExamPaperInProgress).message, isNotNull);
-    });
+        expect(result, isA<ExamPaperInProgress>());
+        expect((result as ExamPaperInProgress).message, isNotNull);
+      },
+    );
 
-    test('a 422 surfaces as the typed 422 exception the screen branches on',
-        () async {
-      final client = FakeApiClient(
-        postError: const ApiException(
-          ApiErrorKind.badResponse,
-          'exam_paper_unstructured',
-          statusCode: 422,
-          errorCode: 'exam_paper_unstructured',
-        ),
-      );
-      final container = containerWith(client);
+    test(
+      'a 422 surfaces as the typed 422 exception the screen branches on',
+      () async {
+        final client = FakeApiClient(
+          postError: const ApiException(
+            ApiErrorKind.badResponse,
+            'exam_paper_unstructured',
+            statusCode: 422,
+            errorCode: 'exam_paper_unstructured',
+          ),
+        );
+        final container = containerWith(client);
 
-      await expectLater(
-        container.read(examPaperRepositoryProvider).generate(request),
-        throwsA(
-          isA<ApiException>()
-              .having((e) => e.statusCode, 'statusCode', 422)
-              .having((e) => e.errorCode, 'errorCode', 'exam_paper_unstructured'),
-        ),
-      );
-    });
+        await expectLater(
+          container.read(examPaperRepositoryProvider).generate(request),
+          throwsA(
+            isA<ApiException>()
+                .having((e) => e.statusCode, 'statusCode', 422)
+                .having(
+                  (e) => e.errorCode,
+                  'errorCode',
+                  'exam_paper_unstructured',
+                ),
+          ),
+        );
+      },
+    );
   });
 
   group('ExamPaperRepository.save', () {
     test('PUTs the verbatim paper and returns the new contentId', () async {
       final client = FakeApiClient(
-        putResponse: <String, dynamic>{'success': true, 'contentId': 'content-42'},
+        putResponse: <String, dynamic>{
+          'success': true,
+          'contentId': 'content-42',
+        },
       );
       final container = containerWith(client);
       final ready = buildReady();
@@ -100,11 +113,7 @@ void main() {
 
     test('a failed save surfaces as the typed exception', () async {
       final client = FakeApiClient(
-        putError: const ApiException(
-          ApiErrorKind.server,
-          'x',
-          statusCode: 500,
-        ),
+        putError: const ApiException(ApiErrorKind.server, 'x', statusCode: 500),
       );
       final container = containerWith(client);
 

@@ -27,87 +27,102 @@ class _FakeLessonPlanRepository extends LessonPlanRepository {
 }
 
 void main() {
-  const request =
-      LessonPlanRequest(topic: 'Photosynthesis', language: 'English');
+  const request = LessonPlanRequest(
+    topic: 'Photosynthesis',
+    language: 'English',
+  );
   const plan = LessonPlan(title: 'Photosynthesis', language: 'English');
 
   ProviderContainer containerWith(Future<LessonPlan> result) {
-    final container = ProviderContainer(overrides: [
-      lessonPlanRepositoryProvider
-          .overrideWithValue(_FakeLessonPlanRepository(result)),
-    ]);
+    final container = ProviderContainer(
+      overrides: [
+        lessonPlanRepositoryProvider.overrideWithValue(
+          _FakeLessonPlanRepository(result),
+        ),
+      ],
+    );
     addTearDown(container.dispose);
     return container;
   }
 
-  test('a generated plan survives the screen disposing and being re-read',
-      () async {
-    final container = containerWith(Future<LessonPlan>.value(plan));
+  test(
+    'a generated plan survives the screen disposing and being re-read',
+    () async {
+      final container = containerWith(Future<LessonPlan>.value(plan));
 
-    // The screen subscribes while it is on-route.
-    final sub = container.listen(lessonPlanControllerProvider, (_, _) {});
+      // The screen subscribes while it is on-route.
+      final sub = container.listen(lessonPlanControllerProvider, (_, _) {});
 
-    await container
-        .read(lessonPlanControllerProvider.notifier)
-        .generate(request);
-    expect(container.read(lessonPlanControllerProvider).value?.title,
-        'Photosynthesis');
+      await container
+          .read(lessonPlanControllerProvider.notifier)
+          .generate(request);
+      expect(
+        container.read(lessonPlanControllerProvider).value?.title,
+        'Photosynthesis',
+      );
 
-    // The teacher tabs away: the only subscription is removed. Give AutoDispose
-    // a full event-loop turn to run — without the keepAlive pin held through
-    // generate(), the notifier (and its result) would be torn down here.
-    sub.close();
-    await Future<void>.delayed(const Duration(milliseconds: 10));
+      // The teacher tabs away: the only subscription is removed. Give AutoDispose
+      // a full event-loop turn to run — without the keepAlive pin held through
+      // generate(), the notifier (and its result) would be torn down here.
+      sub.close();
+      await Future<void>.delayed(const Duration(milliseconds: 10));
 
-    // On return the plan is still there.
-    expect(
-      container.read(lessonPlanControllerProvider).value?.title,
-      'Photosynthesis',
-      reason: 'keepAlive kept the generated plan across the dispose gap',
-    );
-  });
+      // On return the plan is still there.
+      expect(
+        container.read(lessonPlanControllerProvider).value?.title,
+        'Photosynthesis',
+        reason: 'keepAlive kept the generated plan across the dispose gap',
+      );
+    },
+  );
 
-  test('an in-flight generation is not discarded when the screen leaves',
-      () async {
-    final completer = Completer<LessonPlan>();
-    final container = containerWith(completer.future);
+  test(
+    'an in-flight generation is not discarded when the screen leaves',
+    () async {
+      final completer = Completer<LessonPlan>();
+      final container = containerWith(completer.future);
 
-    final sub = container.listen(lessonPlanControllerProvider, (_, _) {});
+      final sub = container.listen(lessonPlanControllerProvider, (_, _) {});
 
-    // Start the long generation; it is still loading.
-    final generating = container
-        .read(lessonPlanControllerProvider.notifier)
-        .generate(request);
-    expect(container.read(lessonPlanControllerProvider).isLoading, isTrue);
+      // Start the long generation; it is still loading.
+      final generating = container
+          .read(lessonPlanControllerProvider.notifier)
+          .generate(request);
+      expect(container.read(lessonPlanControllerProvider).isLoading, isTrue);
 
-    // Teacher navigates away mid-generation; let AutoDispose try to run.
-    sub.close();
-    await Future<void>.delayed(const Duration(milliseconds: 10));
+      // Teacher navigates away mid-generation; let AutoDispose try to run.
+      sub.close();
+      await Future<void>.delayed(const Duration(milliseconds: 10));
 
-    // The server answers after the teacher has left. Without keepAlive the
-    // notifier is gone and writing the result would throw; with it, the result
-    // lands cleanly.
-    completer.complete(plan);
-    await generating;
+      // The server answers after the teacher has left. Without keepAlive the
+      // notifier is gone and writing the result would throw; with it, the result
+      // lands cleanly.
+      completer.complete(plan);
+      await generating;
 
-    expect(container.read(lessonPlanControllerProvider).value?.title,
-        'Photosynthesis');
-  });
+      expect(
+        container.read(lessonPlanControllerProvider).value?.title,
+        'Photosynthesis',
+      );
+    },
+  );
 
-  test('clear() releases the keepAlive so the provider disposes again',
-      () async {
-    final container = containerWith(Future<LessonPlan>.value(plan));
+  test(
+    'clear() releases the keepAlive so the provider disposes again',
+    () async {
+      final container = containerWith(Future<LessonPlan>.value(plan));
 
-    final sub = container.listen(lessonPlanControllerProvider, (_, _) {});
-    await container
-        .read(lessonPlanControllerProvider.notifier)
-        .generate(request);
-    // As after a save: reset to idle and drop the pin.
-    container.read(lessonPlanControllerProvider.notifier).clear();
-    sub.close();
-    await Future<void>.delayed(const Duration(milliseconds: 10));
+      final sub = container.listen(lessonPlanControllerProvider, (_, _) {});
+      await container
+          .read(lessonPlanControllerProvider.notifier)
+          .generate(request);
+      // As after a save: reset to idle and drop the pin.
+      container.read(lessonPlanControllerProvider.notifier).clear();
+      sub.close();
+      await Future<void>.delayed(const Duration(milliseconds: 10));
 
-    // Re-reading returns the idle state, not a stale plan.
-    expect(container.read(lessonPlanControllerProvider).value, isNull);
-  });
+      // Re-reading returns the idle state, not a stale plan.
+      expect(container.read(lessonPlanControllerProvider).value, isNull);
+    },
+  );
 }

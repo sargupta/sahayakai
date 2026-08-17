@@ -80,8 +80,10 @@ Map<String, dynamic> virtualFieldTripJson() {
     'stops': <Map<String, dynamic>>[
       stopJson(
         'The Amazon River Basin. $kTa',
-        description: 'The largest rainforest on Earth stretches to the horizon.',
-        educationalFact: 'The Amazon releases one-fifth of the world’s '
+        description:
+            'The largest rainforest on Earth stretches to the horizon.',
+        educationalFact:
+            'The Amazon releases one-fifth of the world’s '
             'river water into the ocean. $kBn',
         reflectionPrompt: 'How is this river’s scale like the Ganga? $kMl',
         culturalAnalogy: 'Like the Ganga basin, but many times larger. $kMl',
@@ -91,14 +93,8 @@ Map<String, dynamic> virtualFieldTripJson() {
       // An UNSAFE url (javascript: scheme) — the DTO must drop it to null, so
       // this stop renders WITHOUT a launch action rather than passing junk to
       // the launcher.
-      stopJson(
-        'The Andes Mountains',
-        googleEarthUrl: 'javascript:alert(1)',
-      ),
-      stopJson(
-        'The Sahara Desert',
-        googleEarthUrl: kSaharaEarthUrl,
-      ),
+      stopJson('The Andes Mountains', googleEarthUrl: 'javascript:alert(1)'),
+      stopJson('The Sahara Desert', googleEarthUrl: kSaharaEarthUrl),
       // A stop that arrived with no name — it cannot title a numbered card, so
       // the DTO must drop it rather than render a headless block.
       stopJson('', description: 'Junk with no name'),
@@ -112,7 +108,8 @@ Map<String, dynamic> virtualFieldTripJson() {
 Map<String, dynamic> stillGeneratingJson() {
   return <String, dynamic>{
     'error': 'still_generating',
-    'message': 'Your field trip is still generating. Check My Library in a minute.',
+    'message':
+        'Your field trip is still generating. Check My Library in a minute.',
     'budgetMs': 45000,
     'elapsedMs': 45231,
   };
@@ -147,8 +144,9 @@ Widget hostResult(
           child: reduceMotion
               ? Builder(
                   builder: (context) => MediaQuery(
-                    data: MediaQuery.of(context)
-                        .copyWith(disableAnimations: true),
+                    data: MediaQuery.of(
+                      context,
+                    ).copyWith(disableAnimations: true),
                     child: child,
                   ),
                 )

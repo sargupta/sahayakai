@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../profile/data/profile_repository.dart';
-import '../../profile/presentation/profile_controller.dart';
 import '../../profile/domain/teacher_profile.dart';
+import '../../profile/presentation/profile_controller.dart';
 
 part 'onboarding_controller.g.dart';
 

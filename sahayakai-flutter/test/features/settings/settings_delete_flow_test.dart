@@ -197,6 +197,13 @@ void main() {
           deleteAccountControllerProvider.overrideWith(_FakeDeleteSuccess.new),
           linkOpenerProvider.overrideWithValue(_FakeLinkOpener()),
           apiClientProvider.overrideWithValue(apiClient),
+          // NOT const: dart fix --apply proposed `const _FakeShareService([])`
+          // here, which makes the backing list unmodifiable and turns
+          // shareFile()'s calls.add(...) into an UnsupportedError at runtime.
+          // The fake exists to RECORD calls, so it must stay mutable. The
+          // gate caught this — the autofix was a real behaviour regression,
+          // not a style preference.
+          // ignore: prefer_const_constructors
           shareServiceProvider.overrideWithValue(_FakeShareService([])),
         ],
       ),

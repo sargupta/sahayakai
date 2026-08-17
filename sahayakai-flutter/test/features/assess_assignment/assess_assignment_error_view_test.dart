@@ -32,20 +32,21 @@ void main() {
             linkOpenerProvider.overrideWithValue(linkOpener),
         ],
         child: MaterialApp(
-          theme:
-              brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+          theme: brightness == Brightness.dark
+              ? AppTheme.dark()
+              : AppTheme.light(),
           locale: const Locale('en'),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(context)
-                .copyWith(textScaler: TextScaler.linear(textScale)),
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(textScale)),
             child: child!,
           ),
           home: Scaffold(
             body: SingleChildScrollView(
-              child:
-                  AssessAssignmentErrorView(error: error, onRetry: onRetry),
+              child: AssessAssignmentErrorView(error: error, onRetry: onRetry),
             ),
           ),
         ),
@@ -55,8 +56,9 @@ void main() {
   }
 
   group('the day-budget limit is a distinct, no-retry state', () {
-    testWidgets('429 DAILY_LIMIT_REACHED shows the daily prompt, NO retry',
-        (tester) async {
+    testWidgets('429 DAILY_LIMIT_REACHED shows the daily prompt, NO retry', (
+      tester,
+    ) async {
       await pump(
         tester,
         _rateLimited('DAILY_LIMIT_REACHED'),
@@ -73,8 +75,9 @@ void main() {
       expect(find.byType(OutlinedButton), findsOneWidget); // pricing only
     });
 
-    testWidgets('429 USAGE_LIMIT_REACHED is the DIFFERENT monthly state',
-        (tester) async {
+    testWidgets('429 USAGE_LIMIT_REACHED is the DIFFERENT monthly state', (
+      tester,
+    ) async {
       await pump(
         tester,
         _rateLimited('USAGE_LIMIT_REACHED'),
@@ -87,15 +90,13 @@ void main() {
         findsOneWidget,
       );
       expect(find.textContaining('reset next month'), findsOneWidget);
-      expect(
-        find.text('That is all your assessments for today'),
-        findsNothing,
-      );
+      expect(find.text('That is all your assessments for today'), findsNothing);
       expect(find.text('Try again'), findsNothing);
     });
 
-    testWidgets('the daily state reads its code from the raw body',
-        (tester) async {
+    testWidgets('the daily state reads its code from the raw body', (
+      tester,
+    ) async {
       await pump(
         tester,
         ApiException(
@@ -115,10 +116,15 @@ void main() {
       );
     });
 
-    testWidgets('the pricing action opens the pricing page externally',
-        (tester) async {
+    testWidgets('the pricing action opens the pricing page externally', (
+      tester,
+    ) async {
       final opener = FakeLinkOpener();
-      await pump(tester, _rateLimited('USAGE_LIMIT_REACHED'), linkOpener: opener);
+      await pump(
+        tester,
+        _rateLimited('USAGE_LIMIT_REACHED'),
+        linkOpener: opener,
+      );
 
       final pricing = find.text('See plans');
       expect(pricing, findsOneWidget);
@@ -132,8 +138,12 @@ void main() {
 
   group('the other states', () {
     testWidgets('network -> offline card with a retry', (tester) async {
-      await pump(tester, const ApiException(ApiErrorKind.network, 'x'),
-          onRetry: () {}, linkOpener: FakeLinkOpener());
+      await pump(
+        tester,
+        const ApiException(ApiErrorKind.network, 'x'),
+        onRetry: () {},
+        linkOpener: FakeLinkOpener(),
+      );
       expect(find.byType(OfflineView), findsOneWidget);
       expect(find.text('Try again'), findsOneWidget);
     });
@@ -155,8 +165,11 @@ void main() {
     testWidgets('403 -> upgrade prompt + pricing, no retry', (tester) async {
       await pump(
         tester,
-        const ApiException(ApiErrorKind.forbidden, 'PLAN_UPGRADE_REQUIRED',
-            statusCode: 403),
+        const ApiException(
+          ApiErrorKind.forbidden,
+          'PLAN_UPGRADE_REQUIRED',
+          statusCode: 403,
+        ),
         onRetry: () => fail('upgrade must not offer a retry'),
         linkOpener: FakeLinkOpener(),
       );
@@ -165,8 +178,9 @@ void main() {
       expect(find.text('Try again'), findsNothing);
     });
 
-    testWidgets('503 -> busy with the Retry-After seconds and a retry',
-        (tester) async {
+    testWidgets('503 -> busy with the Retry-After seconds and a retry', (
+      tester,
+    ) async {
       await pump(
         tester,
         ApiException(
@@ -182,7 +196,9 @@ void main() {
       expect(find.text('Try again'), findsOneWidget);
     });
 
-    testWidgets('400 -> re-upload a clearer photo, with a retry', (tester) async {
+    testWidgets('400 -> re-upload a clearer photo, with a retry', (
+      tester,
+    ) async {
       await pump(
         tester,
         const ApiException(ApiErrorKind.badResponse, 'x', statusCode: 400),
@@ -194,24 +210,34 @@ void main() {
     });
 
     testWidgets('timeout -> timeout message with a retry', (tester) async {
-      await pump(tester, const ApiException(ApiErrorKind.timeout, 'x'),
-          onRetry: () {}, linkOpener: FakeLinkOpener());
+      await pump(
+        tester,
+        const ApiException(ApiErrorKind.timeout, 'x'),
+        onRetry: () {},
+        linkOpener: FakeLinkOpener(),
+      );
       expect(find.textContaining('taking longer'), findsOneWidget);
       expect(find.text('Try again'), findsOneWidget);
     });
 
-    testWidgets('a non-ApiException falls back to the generic error',
-        (tester) async {
-      await pump(tester, StateError('boom'),
-          onRetry: () {}, linkOpener: FakeLinkOpener());
+    testWidgets('a non-ApiException falls back to the generic error', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        StateError('boom'),
+        onRetry: () {},
+        linkOpener: FakeLinkOpener(),
+      );
       expect(find.byType(ErrorView), findsOneWidget);
     });
   });
 
   group('overflow gates (DESIGN_RUBRIC §12.9, §12.10, §12.13)', () {
     for (final brightness in Brightness.values) {
-      testWidgets('daily-limit prompt at 360dp x 1.3 in ${brightness.name}',
-          (tester) async {
+      testWidgets('daily-limit prompt at 360dp x 1.3 in ${brightness.name}', (
+        tester,
+      ) async {
         tester.view.physicalSize = kNarrowPhone;
         tester.view.devicePixelRatio = 1.0;
         addTearDown(tester.view.reset);
@@ -230,11 +256,11 @@ void main() {
 }
 
 ApiException _rateLimited(String code) => ApiException(
-      ApiErrorKind.rateLimited,
-      code,
-      statusCode: 429,
-      raw: _dio(429, {'error': code}),
-    );
+  ApiErrorKind.rateLimited,
+  code,
+  statusCode: 429,
+  raw: _dio(429, {'error': code}),
+);
 
 DioException _dio(int status, Map<String, dynamic> body) {
   final options = RequestOptions(path: '/api/ai/assess-assignment');

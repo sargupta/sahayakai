@@ -14,7 +14,9 @@ import 'assessment_scanner_fixtures.dart';
 // ── WCAG 2.1 relative-luminance contrast (mirrors theme_contrast_test) ──
 double _lin(int c) {
   final s = c / 255.0;
-  return s <= 0.03928 ? s / 12.92 : math.pow((s + 0.055) / 1.055, 2.4).toDouble();
+  return s <= 0.03928
+      ? s / 12.92
+      : math.pow((s + 0.055) / 1.055, 2.4).toDouble();
 }
 
 double _luminance(Color c) =>
@@ -35,10 +37,12 @@ double _ratio(Color a, Color b) {
 /// chips computed against their ACTUAL rendered fills.
 void main() {
   group('rendering', () {
-    testWidgets('renders the overall gauge, per-question cards and sections',
-        (tester) async {
-      await tester
-          .pumpWidget(hostResult(AssessmentScannerResultView(result: buildResult())));
+    testWidgets('renders the overall gauge, per-question cards and sections', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        hostResult(AssessmentScannerResultView(result: buildResult())),
+      );
       await tester.pumpAndSettle();
 
       // Hero gauge: the overall scorePct over 100.
@@ -68,8 +72,9 @@ void main() {
 
     testWidgets('the correct/partial/incorrect state is icon + text, not colour '
         'alone', (tester) async {
-      await tester
-          .pumpWidget(hostResult(AssessmentScannerResultView(result: buildResult())));
+      await tester.pumpWidget(
+        hostResult(AssessmentScannerResultView(result: buildResult())),
+      );
       await tester.pumpAndSettle();
 
       // Each outcome chip carries a DISTINCT glyph AND a word — a colour-blind
@@ -86,8 +91,9 @@ void main() {
       expect(find.byIcon(LucideIcons.alertCircle), findsWidgets);
     });
 
-    testWidgets('the empty result shows the dignified empty state',
-        (tester) async {
+    testWidgets('the empty result shows the dignified empty state', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         hostResult(AssessmentScannerResultView(result: buildEmptyResult())),
       );
@@ -102,32 +108,40 @@ void main() {
   group('WCAG AA — computed against the actual rendered fills', () {
     for (final brightness in Brightness.values) {
       test('marks badge + outcome chips clear 4.5:1 in ${brightness.name}', () {
-        final scheme = (brightness == Brightness.dark
-                ? AppTheme.dark()
-                : AppTheme.light())
-            .colorScheme;
+        final scheme =
+            (brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light())
+                .colorScheme;
         final isDark = brightness == Brightness.dark;
 
         // Marks badge: saffron-TEXT on the accent tint (primary@0.12) composited
         // over the inset question card (surfaceContainerLow) — NOT the #E0924D
         // fill, which as ink would fail AA.
-        final marksFg = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
+        final marksFg = isDark
+            ? AppColors.dPrimaryText
+            : AppColors.lPrimaryText;
         final marksBg = Color.alphaBlend(
           scheme.primary.withValues(alpha: 0.12),
           scheme.surfaceContainerLow,
         );
-        expect(_ratio(marksFg, marksBg), greaterThanOrEqualTo(4.5),
-            reason: 'marks badge label vs its actual fill (${brightness.name})');
+        expect(
+          _ratio(marksFg, marksBg),
+          greaterThanOrEqualTo(4.5),
+          reason: 'marks badge label vs its actual fill (${brightness.name})',
+        );
 
         // "Correct" chip: the green container pairing.
-        expect(_ratio(scheme.onSecondaryContainer, scheme.secondaryContainer),
-            greaterThanOrEqualTo(4.5),
-            reason: 'correct chip (${brightness.name})');
+        expect(
+          _ratio(scheme.onSecondaryContainer, scheme.secondaryContainer),
+          greaterThanOrEqualTo(4.5),
+          reason: 'correct chip (${brightness.name})',
+        );
 
         // Partial / incorrect / review chips: full ink on the neutral fill.
-        expect(_ratio(scheme.onSurface, scheme.surfaceContainerHigh),
-            greaterThanOrEqualTo(4.5),
-            reason: 'neutral outcome/review chip (${brightness.name})');
+        expect(
+          _ratio(scheme.onSurface, scheme.surfaceContainerHigh),
+          greaterThanOrEqualTo(4.5),
+          reason: 'neutral outcome/review chip (${brightness.name})',
+        );
       });
     }
   });
@@ -139,70 +153,85 @@ void main() {
     // site's ACTUAL fill, in BOTH themes.
     for (final brightness in Brightness.values) {
       test('every fixed site clears 4.5:1 in ${brightness.name}', () {
-        final scheme = (brightness == Brightness.dark
-                ? AppTheme.dark()
-                : AppTheme.light())
-            .colorScheme;
+        final scheme =
+            (brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light())
+                .colorScheme;
 
         // 1. Empty page-capture well prompt — on the well's surfaceContainerHigh.
         // 2. Privacy NoteBanner body — same fill.
-        expect(_ratio(scheme.onSurface, scheme.surfaceContainerHigh),
-            greaterThanOrEqualTo(4.5),
-            reason: 'empty-well prompt + privacy note (${brightness.name})');
+        expect(
+          _ratio(scheme.onSurface, scheme.surfaceContainerHigh),
+          greaterThanOrEqualTo(4.5),
+          reason: 'empty-well prompt + privacy note (${brightness.name})',
+        );
         // 3. Page counter + pages-full label — on the scaffold paper ground.
         // 4. Error _PromptView body — same ground.
-        expect(_ratio(scheme.onSurface, scheme.surfaceContainerLowest),
-            greaterThanOrEqualTo(4.5),
-            reason:
-                'page counter / pages-full / error prompt body (${brightness.name})');
+        expect(
+          _ratio(scheme.onSurface, scheme.surfaceContainerLowest),
+          greaterThanOrEqualTo(4.5),
+          reason:
+              'page counter / pages-full / error prompt body (${brightness.name})',
+        );
         // 5. "Not scored" meta — inside the inset question card
         //    (surfaceContainerLow).
-        expect(_ratio(scheme.onSurface, scheme.surfaceContainerLow),
-            greaterThanOrEqualTo(4.5),
-            reason: 'not-scored meta (${brightness.name})');
+        expect(
+          _ratio(scheme.onSurface, scheme.surfaceContainerLow),
+          greaterThanOrEqualTo(4.5),
+          reason: 'not-scored meta (${brightness.name})',
+        );
       });
 
       // A REAL widget-level guard for the in-file site: render an unscored
       // question and read the ACTUAL "Not scored" colour, so a revert to the
       // muted role would bite here, not just pass a token-pair contract.
-      testWidgets('the rendered "Not scored" colour clears AA (${brightness.name})',
-          (tester) async {
-        final scheme = (brightness == Brightness.dark
-                ? AppTheme.dark()
-                : AppTheme.light())
-            .colorScheme;
-        const unscored = AssessmentResult(
-          assessmentId: 'x',
-          status: 'partial',
-          pageCount: 1,
-          totalAwardedMarks: 0,
-          totalMaxMarks: 0,
-          scorePct: 0,
-          letterGrade: '',
-          questions: <GradedQuestion>[
-            GradedQuestion(
-              questionId: 'q',
-              pageIndex: 0,
-              questionText: 'On a question-only page',
-              studentAnswer: '',
-              marksAwarded: 0,
-              marksMax: 0,
+      testWidgets(
+        'the rendered "Not scored" colour clears AA (${brightness.name})',
+        (tester) async {
+          final scheme =
+              (brightness == Brightness.dark
+                      ? AppTheme.dark()
+                      : AppTheme.light())
+                  .colorScheme;
+          const unscored = AssessmentResult(
+            assessmentId: 'x',
+            status: 'partial',
+            pageCount: 1,
+            totalAwardedMarks: 0,
+            totalMaxMarks: 0,
+            scorePct: 0,
+            letterGrade: '',
+            questions: <GradedQuestion>[
+              GradedQuestion(
+                questionId: 'q',
+                pageIndex: 0,
+                questionText: 'On a question-only page',
+                studentAnswer: '',
+                marksAwarded: 0,
+                marksMax: 0,
+              ),
+            ],
+          );
+
+          await tester.pumpWidget(
+            hostResult(
+              const AssessmentScannerResultView(result: unscored),
+              brightness: brightness,
             ),
-          ],
-        );
+          );
+          await tester.pumpAndSettle();
 
-        await tester.pumpWidget(hostResult(
-          const AssessmentScannerResultView(result: unscored),
-          brightness: brightness,
-        ));
-        await tester.pumpAndSettle();
-
-        final color = tester.widget<Text>(find.text('Not scored')).style?.color;
-        expect(color, isNotNull);
-        expect(_ratio(color!, scheme.surfaceContainerLow),
+          final color = tester
+              .widget<Text>(find.text('Not scored'))
+              .style
+              ?.color;
+          expect(color, isNotNull);
+          expect(
+            _ratio(color!, scheme.surfaceContainerLow),
             greaterThanOrEqualTo(4.5),
-            reason: 'not-scored rendered colour vs the inset card fill');
-      });
+            reason: 'not-scored rendered colour vs the inset card fill',
+          );
+        },
+      );
     }
   });
 

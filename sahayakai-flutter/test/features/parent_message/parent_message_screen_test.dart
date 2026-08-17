@@ -40,8 +40,9 @@ Widget _host({
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
       home: const ParentMessageScreen(),
@@ -51,20 +52,19 @@ Widget _host({
 
 /// The TextFormField inside the [LabeledField] carrying [label].
 Finder _fieldFor(String label) => find.descendant(
-      of: find.ancestor(
-        of: find.text(label),
-        matching: find.byType(LabeledField),
-      ),
-      matching: find.byType(TextFormField),
-    );
+  of: find.ancestor(of: find.text(label), matching: find.byType(LabeledField)),
+  matching: find.byType(TextFormField),
+);
 
 /// Typed dropdown finders. Tapping the DropdownButtonFormField itself (not the
 /// hint Text behind its decoration) is the hit target, so the tap never warns.
 final Finder _subjectDropdown = find.byType(DropdownButtonFormField<String>);
-final Finder _reasonDropdown =
-    find.byType(DropdownButtonFormField<ParentMessageReason>);
-final Finder _languageDropdown =
-    find.byType(DropdownButtonFormField<AppLocale>);
+final Finder _reasonDropdown = find.byType(
+  DropdownButtonFormField<ParentMessageReason>,
+);
+final Finder _languageDropdown = find.byType(
+  DropdownButtonFormField<AppLocale>,
+);
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues(<String, Object>{}));
@@ -78,15 +78,19 @@ void main() {
       await tester.pumpWidget(_host());
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('a caring message home will be drafted'),
-          findsOneWidget);
+      expect(
+        find.textContaining('a caring message home will be drafted'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('loading shows the message-shaped skeleton', (tester) async {
       await tester.pumpWidget(
         _host(
           overrides: [
-            parentMessageControllerProvider.overrideWith(_StubController.loading),
+            parentMessageControllerProvider.overrideWith(
+              _StubController.loading,
+            ),
           ],
         ),
       );
@@ -99,8 +103,9 @@ void main() {
       await tester.pumpWidget(
         _host(
           overrides: [
-            parentMessageControllerProvider
-                .overrideWith(() => _StubController(data: buildMessage())),
+            parentMessageControllerProvider.overrideWith(
+              () => _StubController(data: buildMessage()),
+            ),
           ],
         ),
       );
@@ -131,8 +136,9 @@ void main() {
       expect(find.textContaining('busy right now'), findsOneWidget);
     });
 
-    testWidgets('a 400 missing-required error surfaces the SPECIFIC message',
-        (tester) async {
+    testWidgets('a 400 missing-required error surfaces the SPECIFIC message', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         _host(
           overrides: [
@@ -161,8 +167,9 @@ void main() {
   });
 
   group('form', () {
-    testWidgets('renders the required fields and the four reason options',
-        (tester) async {
+    testWidgets('renders the required fields and the four reason options', (
+      tester,
+    ) async {
       await tester.pumpWidget(_host());
       await tester.pumpAndSettle();
 
@@ -183,8 +190,9 @@ void main() {
       expect(find.text('Good news to share'), findsOneWidget);
     });
 
-    testWidgets('the days-absent field appears only for an absence reason',
-        (tester) async {
+    testWidgets('the days-absent field appears only for an absence reason', (
+      tester,
+    ) async {
       await tester.pumpWidget(_host());
       await tester.pumpAndSettle();
 
@@ -199,32 +207,36 @@ void main() {
 
   group('validation', () {
     testWidgets(
-        'the parent-language select is required: a missing choice blocks submit',
-        (tester) async {
-      final fake = FakeApiClient();
-      tester.view.physicalSize = kNarrowPhone;
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
+      'the parent-language select is required: a missing choice blocks submit',
+      (tester) async {
+        final fake = FakeApiClient();
+        tester.view.physicalSize = kNarrowPhone;
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(
-        _host(overrides: [apiClientProvider.overrideWithValue(fake)]),
-      );
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          _host(overrides: [apiClientProvider.overrideWithValue(fake)]),
+        );
+        await tester.pumpAndSettle();
 
-      // Fill everything EXCEPT the parent's language.
-      await tester.enterText(_fieldFor('Student name'), 'Ravi Kumar');
-      await tester.enterText(_fieldFor('Class'), 'Class 6A');
-      await _selectDropdown(tester, _subjectDropdown, 'Mathematics');
-      await _selectDropdown(tester, _reasonDropdown, 'Academic support');
+        // Fill everything EXCEPT the parent's language.
+        await tester.enterText(_fieldFor('Student name'), 'Ravi Kumar');
+        await tester.enterText(_fieldFor('Class'), 'Class 6A');
+        await _selectDropdown(tester, _subjectDropdown, 'Mathematics');
+        await _selectDropdown(tester, _reasonDropdown, 'Academic support');
 
-      await _tapSubmit(tester);
+        await _tapSubmit(tester);
 
-      // The validator surfaces its message and no request is fired.
-      expect(find.text("Please choose the parent's language."), findsOneWidget);
-      expect(fake.posts, isEmpty);
-      expect(find.byType(ParentMessageResultView), findsNothing);
-      expect(find.byType(ParentMessageSkeleton), findsNothing);
-    });
+        // The validator surfaces its message and no request is fired.
+        expect(
+          find.text("Please choose the parent's language."),
+          findsOneWidget,
+        );
+        expect(fake.posts, isEmpty);
+        expect(find.byType(ParentMessageResultView), findsNothing);
+        expect(find.byType(ParentMessageSkeleton), findsNothing);
+      },
+    );
 
     testWidgets('an empty student name blocks submit', (tester) async {
       final fake = FakeApiClient();
@@ -242,51 +254,53 @@ void main() {
 
   group('submit', () {
     testWidgets(
-        'a complete form submits, sends the reason wire + parentLanguage, and '
-        'renders the result', (tester) async {
-      // A tall viewport so the whole form (down to the parent-language select)
-      // is on-screen and every dropdown tap lands cleanly, rather than
-      // ensureVisible parking a field under the app bar.
-      tester.view.physicalSize = const Size(360, 1600);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
+      'a complete form submits, sends the reason wire + parentLanguage, and '
+      'renders the result',
+      (tester) async {
+        // A tall viewport so the whole form (down to the parent-language select)
+        // is on-screen and every dropdown tap lands cleanly, rather than
+        // ensureVisible parking a field under the app bar.
+        tester.view.physicalSize = const Size(360, 1600);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
 
-      final fake = FakeApiClient(
-        postResponse: <String, dynamic>{
-          'message': 'Dear parent, thank you for your support.',
-          'languageCode': 'hi-IN',
-          'wordCount': 20,
-        },
-      );
+        final fake = FakeApiClient(
+          postResponse: <String, dynamic>{
+            'message': 'Dear parent, thank you for your support.',
+            'languageCode': 'hi-IN',
+            'wordCount': 20,
+          },
+        );
 
-      await tester.pumpWidget(
-        _host(overrides: [apiClientProvider.overrideWithValue(fake)]),
-      );
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          _host(overrides: [apiClientProvider.overrideWithValue(fake)]),
+        );
+        await tester.pumpAndSettle();
 
-      await tester.enterText(_fieldFor('Student name'), 'Ravi Kumar');
-      await tester.enterText(_fieldFor('Class'), 'Class 6A');
-      await _selectDropdown(tester, _subjectDropdown, 'Mathematics');
-      await _selectDropdown(tester, _reasonDropdown, 'Academic support');
-      await _selectDropdown(tester, _languageDropdown, 'हिन्दी');
+        await tester.enterText(_fieldFor('Student name'), 'Ravi Kumar');
+        await tester.enterText(_fieldFor('Class'), 'Class 6A');
+        await _selectDropdown(tester, _subjectDropdown, 'Mathematics');
+        await _selectDropdown(tester, _reasonDropdown, 'Academic support');
+        await _selectDropdown(tester, _languageDropdown, 'हिन्दी');
 
-      await _tapSubmit(tester);
-      await tester.pumpAndSettle();
+        await _tapSubmit(tester);
+        await tester.pumpAndSettle();
 
-      // The request went out with the exact wire contract.
-      expect(fake.posts, hasLength(1));
-      expect(fake.posts.single.path, '/api/ai/parent-message');
-      final body = fake.posts.single.data as Map<String, dynamic>;
-      expect(body['studentName'], 'Ravi Kumar');
-      expect(body['className'], 'Class 6A');
-      expect(body['subject'], 'Mathematics');
-      expect(body['reason'], 'poor_performance'); // enum -> wire token
-      expect(body['parentLanguage'], 'Hindi'); // AppLocale.aiName
+        // The request went out with the exact wire contract.
+        expect(fake.posts, hasLength(1));
+        expect(fake.posts.single.path, '/api/ai/parent-message');
+        final body = fake.posts.single.data as Map<String, dynamic>;
+        expect(body['studentName'], 'Ravi Kumar');
+        expect(body['className'], 'Class 6A');
+        expect(body['subject'], 'Mathematics');
+        expect(body['reason'], 'poor_performance'); // enum -> wire token
+        expect(body['parentLanguage'], 'Hindi'); // AppLocale.aiName
 
-      // And the result renders.
-      expect(find.byType(ParentMessageResultView), findsOneWidget);
-      expect(find.textContaining('Dear parent'), findsOneWidget);
-    });
+        // And the result renders.
+        expect(find.byType(ParentMessageResultView), findsOneWidget);
+        expect(find.textContaining('Dear parent'), findsOneWidget);
+      },
+    );
   });
 
   group('overflow gates (DESIGN_RUBRIC §12.9, §12.10, §12.13)', () {
@@ -312,8 +326,9 @@ void main() {
       }
     }
 
-    testWidgets('a long Indic student name does not overflow the field',
-        (tester) async {
+    testWidgets('a long Indic student name does not overflow the field', (
+      tester,
+    ) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -337,15 +352,16 @@ void main() {
   group('voice input', () {
     /// The InlineFieldMic nested inside the LabeledField carrying [label].
     Finder micFor(String label) => find.descendant(
-          of: find.ancestor(
-            of: find.text(label),
-            matching: find.byType(LabeledField),
-          ),
-          matching: find.byType(InlineFieldMic),
-        );
+      of: find.ancestor(
+        of: find.text(label),
+        matching: find.byType(LabeledField),
+      ),
+      matching: find.byType(InlineFieldMic),
+    );
 
-    testWidgets('the three free-text content fields each carry a field mic',
-        (tester) async {
+    testWidgets('the three free-text content fields each carry a field mic', (
+      tester,
+    ) async {
       await tester.pumpWidget(_host());
       await tester.pumpAndSettle();
 
@@ -357,7 +373,9 @@ void main() {
       expect(micFor('Anything specific to mention?'), findsOneWidget);
     });
 
-    testWidgets('closed-choice and numeric fields carry no mic', (tester) async {
+    testWidgets('closed-choice and numeric fields carry no mic', (
+      tester,
+    ) async {
       await tester.pumpWidget(_host());
       await tester.pumpAndSettle();
 

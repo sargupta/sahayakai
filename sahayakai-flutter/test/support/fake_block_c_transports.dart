@@ -51,15 +51,15 @@ class FakeInboxTransport implements InboxTransport {
   FakeInboxTransport({
     TransportSnapshot<List<Conversation>>? initialInbox,
     TransportSnapshot<int>? initialUnread,
-  })  : _inbox = _Seeded<TransportSnapshot<List<Conversation>>>(
-          initialInbox ??
-              const TransportSnapshot<List<Conversation>>.ready(
-                <Conversation>[],
-              ),
-        ),
-        _unread = _Seeded<TransportSnapshot<int>>(
-          initialUnread ?? const TransportSnapshot<int>.ready(0),
-        );
+  }) : _inbox = _Seeded<TransportSnapshot<List<Conversation>>>(
+         initialInbox ??
+             const TransportSnapshot<List<Conversation>>.ready(
+               <Conversation>[],
+             ),
+       ),
+       _unread = _Seeded<TransportSnapshot<int>>(
+         initialUnread ?? const TransportSnapshot<int>.ready(0),
+       );
 
   final _Seeded<TransportSnapshot<List<Conversation>>> _inbox;
   final _Seeded<TransportSnapshot<int>> _unread;
@@ -95,8 +95,7 @@ class FakeInboxTransport implements InboxTransport {
   void emitThread(
     ConversationId id,
     TransportSnapshot<List<Message>> snapshot,
-  ) =>
-      _thread(id).emit(snapshot);
+  ) => _thread(id).emit(snapshot);
 
   _Seeded<TransportSnapshot<List<Message>>> _thread(ConversationId id) =>
       _threads.putIfAbsent(
@@ -121,8 +120,7 @@ class FakeInboxTransport implements InboxTransport {
   Stream<TransportSnapshot<List<Message>>> watchThread(
     ConversationId conversationId, {
     int tailLimit = 30,
-  }) =>
-      _thread(conversationId).stream;
+  }) => _thread(conversationId).stream;
 
   @override
   Future<List<Message>> loadOlderMessages(
@@ -182,15 +180,15 @@ class FakeNotificationsTransport implements NotificationsTransport {
   FakeNotificationsTransport({
     TransportSnapshot<List<NotificationItem>>? initialUnread,
     TransportSnapshot<int>? initialCount,
-  })  : _unread = _Seeded<TransportSnapshot<List<NotificationItem>>>(
-          initialUnread ??
-              const TransportSnapshot<List<NotificationItem>>.ready(
-                <NotificationItem>[],
-              ),
-        ),
-        _count = _Seeded<TransportSnapshot<int>>(
-          initialCount ?? const TransportSnapshot<int>.ready(0),
-        );
+  }) : _unread = _Seeded<TransportSnapshot<List<NotificationItem>>>(
+         initialUnread ??
+             const TransportSnapshot<List<NotificationItem>>.ready(
+               <NotificationItem>[],
+             ),
+       ),
+       _count = _Seeded<TransportSnapshot<int>>(
+         initialCount ?? const TransportSnapshot<int>.ready(0),
+       );
 
   final _Seeded<TransportSnapshot<List<NotificationItem>>> _unread;
   final _Seeded<TransportSnapshot<int>> _count;
@@ -211,7 +209,7 @@ class FakeNotificationsTransport implements NotificationsTransport {
 
   @override
   Stream<TransportSnapshot<List<NotificationItem>>>
-      watchUnreadNotifications() => _unread.stream;
+  watchUnreadNotifications() => _unread.stream;
 
   @override
   Stream<TransportSnapshot<int>> watchUnreadNotificationCount() =>
@@ -239,21 +237,21 @@ class FakePresenceTransport implements PresenceTransport {
   final List<({ConversationId id, bool typing})> typingWrites =
       <({ConversationId id, bool typing})>[];
 
-  void emitPresence(PresenceStatus status) => _presenceFor(status.uid)
-      .emit(status);
+  void emitPresence(PresenceStatus status) =>
+      _presenceFor(status.uid).emit(status);
 
   void emitTyping(TypingStatus status) =>
       _typingFor(status.conversationId).emit(status);
 
   _Seeded<PresenceStatus> _presenceFor(String uid) => _presence.putIfAbsent(
-        uid,
-        () => _Seeded<PresenceStatus>(PresenceStatus.unknown(uid)),
-      );
+    uid,
+    () => _Seeded<PresenceStatus>(PresenceStatus.unknown(uid)),
+  );
 
   _Seeded<TypingStatus> _typingFor(ConversationId id) => _typing.putIfAbsent(
-        id.value,
-        () => _Seeded<TypingStatus>(TypingStatus.empty(id)),
-      );
+    id.value,
+    () => _Seeded<TypingStatus>(TypingStatus.empty(id)),
+  );
 
   Future<void> dispose() async {
     for (final p in _presence.values) {
@@ -291,10 +289,10 @@ class FakePresenceTransport implements PresenceTransport {
 class FakeStaffroomTransport implements StaffroomTransport {
   final _Seeded<TransportSnapshot<List<ChatMessage>>> _staffRoom =
       _Seeded<TransportSnapshot<List<ChatMessage>>>(
-    const TransportSnapshot<List<ChatMessage>>.ready(<ChatMessage>[]),
-  );
-  final Map<String, _Seeded<TransportSnapshot<List<ChatMessage>>>>
-      _groupChats = {};
+        const TransportSnapshot<List<ChatMessage>>.ready(<ChatMessage>[]),
+      );
+  final Map<String, _Seeded<TransportSnapshot<List<ChatMessage>>>> _groupChats =
+      {};
 
   // Configurable reads.
   List<String> ensuredGroupIds = const <String>[];
@@ -354,7 +352,7 @@ class FakeStaffroomTransport implements StaffroomTransport {
   final List<String> joinedGroups = <String>[];
   final List<String> leftGroups = <String>[];
   final List<({String groupId, String content, PostType postType})>
-      createdPosts = <({String groupId, String content, PostType postType})>[];
+  createdPosts = <({String groupId, String content, PostType postType})>[];
   final List<({String groupId, String postId})> likes =
       <({String groupId, String postId})>[];
   final List<({String? groupId, String text})> sentChats =
@@ -372,8 +370,7 @@ class FakeStaffroomTransport implements StaffroomTransport {
   void emitGroupChat(
     String groupId,
     TransportSnapshot<List<ChatMessage>> snapshot,
-  ) =>
-      _groupChatFor(groupId).emit(snapshot);
+  ) => _groupChatFor(groupId).emit(snapshot);
 
   _Seeded<TransportSnapshot<List<ChatMessage>>> _groupChatFor(String groupId) =>
       _groupChats.putIfAbsent(
@@ -393,15 +390,13 @@ class FakeStaffroomTransport implements StaffroomTransport {
   @override
   Stream<TransportSnapshot<List<ChatMessage>>> watchStaffRoomChat({
     int limit = 100,
-  }) =>
-      _staffRoom.stream;
+  }) => _staffRoom.stream;
 
   @override
   Stream<TransportSnapshot<List<ChatMessage>>> watchGroupChat(
     String groupId, {
     int limit = 100,
-  }) =>
-      _groupChatFor(groupId).stream;
+  }) => _groupChatFor(groupId).stream;
 
   @override
   Future<List<String>> ensureUserGroups() async => ensuredGroupIds;
@@ -420,19 +415,16 @@ class FakeStaffroomTransport implements StaffroomTransport {
     String groupId, {
     int limit = 20,
     String? startAfterPostId,
-  }) async =>
-      groupPosts;
+  }) async => groupPosts;
 
   @override
   Future<List<FeedItem>> getUnifiedFeed({
     int limit = 20,
     String? startAfterTimestamp,
-  }) async =>
-      feed;
+  }) async => feed;
 
   @override
-  Future<List<TeacherSuggestion>> getRecommendedTeachers() async =>
-      recommended;
+  Future<List<TeacherSuggestion>> getRecommendedTeachers() async => recommended;
 
   @override
   Future<List<TeacherSuggestion>> getAllTeachers() async => allTeachers;
@@ -526,9 +518,7 @@ class FakeStaffroomTransport implements StaffroomTransport {
   }
 
   @override
-  Future<PersonaPulse?> triggerPersonaPulse(
-    PersonaPulseRequest request,
-  ) async {
+  Future<PersonaPulse?> triggerPersonaPulse(PersonaPulseRequest request) async {
     personaPulses.add(request);
     if (personaPulseGate != null) await personaPulseGate!.future;
     if (personaPulseError != null) throw personaPulseError!;

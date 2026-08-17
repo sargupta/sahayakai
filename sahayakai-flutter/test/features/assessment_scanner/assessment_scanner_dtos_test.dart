@@ -13,9 +13,9 @@ void main() {
   group('AssessmentScannerRequestDto', () {
     test('serializes the multi-page request with the exact field names', () {
       final json = AssessmentScannerRequestDto.fromDomain(
-        AssessmentScanRequest(
+        const AssessmentScanRequest(
           assessmentId: 'abcdef00-1111-4222-8333-444444444444',
-          pageDataUris: const [
+          pageDataUris: [
             'data:image/jpeg;base64,AAAA',
             'data:image/png;base64,BBBB',
           ],
@@ -40,9 +40,9 @@ void main() {
 
     test('omits the optionals the teacher left blank', () {
       final json = AssessmentScannerRequestDto.fromDomain(
-        AssessmentScanRequest(
+        const AssessmentScanRequest(
           assessmentId: 'abcdef00-1111-4222-8333-444444444444',
-          pageDataUris: const ['data:image/jpeg;base64,AAAA'],
+          pageDataUris: ['data:image/jpeg;base64,AAAA'],
           subject: 'Science',
           gradeLevel: 'Class 8',
           language: 'English',
@@ -56,16 +56,20 @@ void main() {
 
     test('NEVER sends userId / studentId / classId (injected server-side)', () {
       final json = AssessmentScannerRequestDto.fromDomain(
-        AssessmentScanRequest(
+        const AssessmentScanRequest(
           assessmentId: 'abcdef00-1111-4222-8333-444444444444',
-          pageDataUris: const ['data:image/jpeg;base64,AAAA'],
+          pageDataUris: ['data:image/jpeg;base64,AAAA'],
           subject: 'Hindi',
           gradeLevel: 'Class 3',
         ),
       ).toJson();
 
       for (final field in ['userId', 'studentId', 'classId']) {
-        expect(json.containsKey(field), isFalse, reason: '$field is server-side');
+        expect(
+          json.containsKey(field),
+          isFalse,
+          reason: '$field is server-side',
+        );
       }
     });
   });

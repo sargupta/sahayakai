@@ -45,8 +45,9 @@ Widget _host({
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
       home: const VideoStorytellerScreen(),
@@ -73,8 +74,9 @@ void main() {
       await tester.pumpWidget(
         _host(
           overrides: [
-            videoStorytellerControllerProvider
-                .overrideWith(_StubController.loading),
+            videoStorytellerControllerProvider.overrideWith(
+              _StubController.loading,
+            ),
           ],
         ),
       );
@@ -83,8 +85,9 @@ void main() {
       expect(find.byType(VideoStorytellerSkeleton), findsOneWidget);
     });
 
-    testWidgets('data renders the curated video cards with thumbnails',
-        (tester) async {
+    testWidgets('data renders the curated video cards with thumbnails', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         _host(
           overrides: [
@@ -108,33 +111,37 @@ void main() {
       expect(find.text('Official source'), findsWidgets);
     });
 
-    testWidgets('tapping a video card opens its URL through the launcher seam',
-        (tester) async {
-      final opener = FakeLinkOpener();
-      await tester.pumpWidget(
-        _host(
-          overrides: [
-            linkOpenerProvider.overrideWithValue(opener),
-            videoStorytellerControllerProvider.overrideWith(
-              () => _StubController(data: buildRecommendations()),
-            ),
-          ],
-        ),
-      );
-      await tester.pumpAndSettle();
+    testWidgets(
+      'tapping a video card opens its URL through the launcher seam',
+      (tester) async {
+        final opener = FakeLinkOpener();
+        await tester.pumpWidget(
+          _host(
+            overrides: [
+              linkOpenerProvider.overrideWithValue(opener),
+              videoStorytellerControllerProvider.overrideWith(
+                () => _StubController(data: buildRecommendations()),
+              ),
+            ],
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      final firstCard = find.byType(VideoCard).first;
-      await tester.ensureVisible(firstCard);
-      await tester.pumpAndSettle();
-      await tester.tap(firstCard);
-      await tester.pumpAndSettle();
+        final firstCard = find.byType(VideoCard).first;
+        await tester.ensureVisible(firstCard);
+        await tester.pumpAndSettle();
+        await tester.tap(firstCard);
+        await tester.pumpAndSettle();
 
-      // The tap opened the first (top-recommended) video, and only via the
-      // faked launcher — never a real URL / platform channel.
-      expect(opener.opened, hasLength(1));
-      expect(opener.opened.single.toString(),
-          'https://www.youtube.com/watch?v=vid_top_1');
-    });
+        // The tap opened the first (top-recommended) video, and only via the
+        // faked launcher — never a real URL / platform channel.
+        expect(opener.opened, hasLength(1));
+        expect(
+          opener.opened.single.toString(),
+          'https://www.youtube.com/watch?v=vid_top_1',
+        );
+      },
+    );
 
     testWidgets('a 401 maps to the sign-in recovery copy', (tester) async {
       await tester.pumpWidget(
@@ -155,14 +162,17 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(VideoStorytellerErrorView), findsOneWidget);
-      expect(find.text('Please sign in again to use this tool.'),
-          findsOneWidget);
+      expect(
+        find.text('Please sign in again to use this tool.'),
+        findsOneWidget,
+      );
     });
   });
 
   group('submission', () {
-    testWidgets('tapping Find drives the controller -> repository -> client',
-        (tester) async {
+    testWidgets('tapping Find drives the controller -> repository -> client', (
+      tester,
+    ) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -209,37 +219,39 @@ void main() {
     }
 
     testWidgets(
-        'a bucket with more than six videos caps at six then expands to all',
-        (tester) async {
-      // A tall surface so all cards + the button lay out without scrolling.
-      tester.view.physicalSize = const Size(400, 6000);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
+      'a bucket with more than six videos caps at six then expands to all',
+      (tester) async {
+        // A tall surface so all cards + the button lay out without scrolling.
+        tester.view.physicalSize = const Size(400, 6000);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(
-        hostResult(
-          VideoStorytellerResultView(recommendations: recsWith(8)),
-          linkOpener: FakeLinkOpener(),
-        ),
-      );
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          hostResult(
+            VideoStorytellerResultView(recommendations: recsWith(8)),
+            linkOpener: FakeLinkOpener(),
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      // Capped at six on first paint, with a "View all 8" escape hatch — the
-      // backend sends the full ranked list, so nothing is lost, just deferred.
-      expect(find.byType(VideoCard), findsNWidgets(6));
-      expect(find.text('View all 8'), findsOneWidget);
+        // Capped at six on first paint, with a "View all 8" escape hatch — the
+        // backend sends the full ranked list, so nothing is lost, just deferred.
+        expect(find.byType(VideoCard), findsNWidgets(6));
+        expect(find.text('View all 8'), findsOneWidget);
 
-      // Tapping it reveals every video the bucket carries.
-      await tester.tap(find.text('View all 8'));
-      await tester.pumpAndSettle();
+        // Tapping it reveals every video the bucket carries.
+        await tester.tap(find.text('View all 8'));
+        await tester.pumpAndSettle();
 
-      expect(find.byType(VideoCard), findsNWidgets(8));
-      expect(find.text('View all 8'), findsNothing);
-      expect(tester.takeException(), isNull);
-    });
+        expect(find.byType(VideoCard), findsNWidgets(8));
+        expect(find.text('View all 8'), findsNothing);
+        expect(tester.takeException(), isNull);
+      },
+    );
 
-    testWidgets('a bucket at the cap shows no expand affordance',
-        (tester) async {
+    testWidgets('a bucket at the cap shows no expand affordance', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(400, 6000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -282,8 +294,9 @@ void main() {
       }
     }
 
-    testWidgets('the video cards do not overflow at 360dp x 1.3 (Indic probe)',
-        (tester) async {
+    testWidgets('the video cards do not overflow at 360dp x 1.3 (Indic probe)', (
+      tester,
+    ) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -306,8 +319,9 @@ void main() {
       expect(find.byType(VideoCard), findsNWidgets(5));
     });
 
-    testWidgets('a long Indic topic does not overflow the field',
-        (tester) async {
+    testWidgets('a long Indic topic does not overflow the field', (
+      tester,
+    ) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);

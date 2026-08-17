@@ -438,7 +438,11 @@ void main() {
       }
     }
 
-    for (final locale in <Locale>[Locale('bn'), Locale('ta'), Locale('ml')]) {
+    for (final locale in <Locale>[
+      const Locale('bn'),
+      const Locale('ta'),
+      const Locale('ml'),
+    ]) {
       testWidgets(
         'renders in ${locale.languageCode} at 360dp x textScale 1.3',
         (tester) async {

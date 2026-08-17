@@ -12,11 +12,12 @@ import 'teacher_training_fixtures.dart';
 /// scroller sneaks in (the advice list is a plain vertical column of cards) and
 /// no overflow at 360dp x textScale 1.3 in light + dark with Indic probes.
 void main() {
-  testWidgets('renders meta, introduction, one card per point, and conclusion',
-      (tester) async {
-    await tester.pumpWidget(hostResult(
-      TeacherTrainingResultView(advice: buildAdvice()),
-    ));
+  testWidgets('renders meta, introduction, one card per point, and conclusion', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      hostResult(TeacherTrainingResultView(advice: buildAdvice())),
+    );
     await tester.pumpAndSettle();
 
     // Meta badges.
@@ -25,10 +26,15 @@ void main() {
 
     // Introduction + the strategies heading + the closing prose. The heading now
     // renders through the DocumentSheetSection, which UPPERCASES Latin titles.
-    expect(find.textContaining('Engagement across a full lesson'), findsOneWidget);
+    expect(
+      find.textContaining('Engagement across a full lesson'),
+      findsOneWidget,
+    );
     expect(find.text('STRATEGIES'), findsOneWidget);
-    expect(find.textContaining('You are already asking the right questions'),
-        findsOneWidget);
+    expect(
+      find.textContaining('You are already asking the right questions'),
+      findsOneWidget,
+    );
 
     // One card per advice point, each showing its pedagogy tag.
     expect(find.byType(AdviceCard), findsNWidgets(3));
@@ -46,7 +52,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('the empty result shows the dignified empty state', (tester) async {
+  testWidgets('the empty result shows the dignified empty state', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       hostResult(TeacherTrainingResultView(advice: buildAdvice(empty: true))),
     );
@@ -59,20 +67,26 @@ void main() {
   });
 
   testWidgets(
-      'a partial result keeps intro + cards, drops the empty conclusion and a '
-      'blank pedagogy tag', (tester) async {
-    await tester.pumpWidget(
-      hostResult(TeacherTrainingResultView(advice: buildAdvice(partial: true))),
-    );
-    await tester.pumpAndSettle();
+    'a partial result keeps intro + cards, drops the empty conclusion and a '
+    'blank pedagogy tag',
+    (tester) async {
+      await tester.pumpWidget(
+        hostResult(
+          TeacherTrainingResultView(advice: buildAdvice(partial: true)),
+        ),
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.textContaining('A fair question about classroom practice'),
-        findsOneWidget);
-    expect(find.byType(AdviceCard), findsOneWidget);
-    // No conclusion in the partial fixture, and the sole point has no pedagogy.
-    expect(find.textContaining('Keep going'), findsNothing);
-    expect(tester.takeException(), isNull);
-  });
+      expect(
+        find.textContaining('A fair question about classroom practice'),
+        findsOneWidget,
+      );
+      expect(find.byType(AdviceCard), findsOneWidget);
+      // No conclusion in the partial fixture, and the sole point has no pedagogy.
+      expect(find.textContaining('Keep going'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   group('overflow gates (DESIGN_RUBRIC §12.9, §12.10, §12.11, §12.13)', () {
     for (final brightness in Brightness.values) {

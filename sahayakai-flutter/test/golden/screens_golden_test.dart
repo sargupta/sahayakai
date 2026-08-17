@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../features/onboarding/onboarding_fixtures.dart';
+import '../support/app_harness.dart';
 
 /// Pixel baselines for the screens that own a distinct layout grammar.
 ///
@@ -46,6 +47,7 @@ void main() {
       testWidgets('login — $mode', (tester) async {
         await pumpSignedInApp(
           tester,
+          extraOverrides: [fixedClock()],
           signedIn: false,
           brightness: brightness,
           surface: kNarrowPhone,
@@ -59,6 +61,7 @@ void main() {
       testWidgets('home — $mode', (tester) async {
         await pumpSignedInApp(
           tester,
+          extraOverrides: [fixedClock()],
           brightness: brightness,
           surface: kNarrowPhone,
         );
@@ -73,6 +76,7 @@ void main() {
       testWidgets('login at textScale 1.3 — $mode', (tester) async {
         await pumpSignedInApp(
           tester,
+          extraOverrides: [fixedClock()],
           signedIn: false,
           brightness: brightness,
           surface: kNarrowPhone,
@@ -87,6 +91,7 @@ void main() {
       testWidgets('home at textScale 1.3 — $mode', (tester) async {
         await pumpSignedInApp(
           tester,
+          extraOverrides: [fixedClock()],
           brightness: brightness,
           surface: kNarrowPhone,
           textScale: 1.3,
@@ -108,6 +113,7 @@ void main() {
       testWidgets('login wide — $mode', (tester) async {
         await pumpSignedInApp(
           tester,
+          extraOverrides: [fixedClock()],
           signedIn: false,
           brightness: brightness,
           surface: const Size(800, 1200),
@@ -121,6 +127,7 @@ void main() {
       testWidgets('home wide — $mode', (tester) async {
         await pumpSignedInApp(
           tester,
+          extraOverrides: [fixedClock()],
           brightness: brightness,
           surface: const Size(800, 1200),
         );

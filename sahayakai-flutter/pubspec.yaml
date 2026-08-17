@@ -157,6 +157,12 @@ dev_dependencies:
   flutter_launcher_icons: ^0.14.1
   flutter_native_splash: ^2.4.1
 
+  # Two test files import package:fake_async while it was only a transitive
+  # dependency. `depend_on_referenced_packages` — now enforced, since U0.13
+  # made analyze a real gate — flagged that correctly, and `dart fix` promoted
+  # it. Pinned rather than left at the `any` the autofix wrote.
+  fake_async: ^1.3.3
+
 flutter:
   uses-material-design: true
   generate: true

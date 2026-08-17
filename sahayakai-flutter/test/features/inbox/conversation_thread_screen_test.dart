@@ -20,19 +20,19 @@ import '../../support/fake_block_c_transports.dart';
 
 const _me = 'u-me';
 const _other = 'u-bina';
-final _id = ConversationId('${_other}_$_me');
+const _id = ConversationId('${_other}_$_me');
 
-Conversation _convo() => Conversation(
+Conversation _convo() => const Conversation(
   id: _id,
   type: ConversationType.direct,
-  participantIds: const [_other, _me],
+  participantIds: [_other, _me],
   participants: {
-    _other: const ParticipantSnapshot(displayName: 'Bina Devi'),
-    _me: const ParticipantSnapshot(displayName: 'Me'),
+    _other: ParticipantSnapshot(displayName: 'Bina Devi'),
+    _me: ParticipantSnapshot(displayName: 'Me'),
   },
   lastMessage: 'hi',
   lastMessageSenderId: _other,
-  unreadCount: const {_me: 1},
+  unreadCount: {_me: 1},
 );
 
 Message _msg({

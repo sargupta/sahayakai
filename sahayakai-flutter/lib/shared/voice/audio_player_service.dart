@@ -118,8 +118,10 @@ class PcmStreamAudioSource extends StreamAudioSource {
     // A live stream cannot be seeked; serve from the beginning regardless of a
     // ranged request (just_audio issues one open request for a null-length
     // source).
-    final header =
-        buildStreamingWavHeader(sampleRate: sampleRate, channels: channels);
+    final header = buildStreamingWavHeader(
+      sampleRate: sampleRate,
+      channels: channels,
+    );
     return StreamAudioResponse(
       sourceLength: null,
       contentLength: null,
@@ -196,7 +198,7 @@ abstract interface class AudioPlayerService {
 /// The production [AudioPlayerService], backed by `just_audio` + `audio_session`.
 class JustAudioPlayerService implements AudioPlayerService {
   JustAudioPlayerService([AudioPlayer? player])
-      : _player = player ?? AudioPlayer();
+    : _player = player ?? AudioPlayer();
 
   final AudioPlayer _player;
   bool _sessionConfigured = false;
@@ -223,7 +225,7 @@ class JustAudioPlayerService implements AudioPlayerService {
   Future<void> _ensureSession() async {
     if (_sessionConfigured) return;
     final session = await AudioSession.instance;
-    await session.configure(AudioSessionConfiguration.speech());
+    await session.configure(const AudioSessionConfiguration.speech());
     _stateSub ??= _player.processingStateStream.listen((s) {
       if (s == ProcessingState.completed) _emit(false);
     });

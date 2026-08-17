@@ -46,10 +46,13 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('a transcribe-only result leads with the transcript, no score',
-        (tester) async {
+    testWidgets('a transcribe-only result leads with the transcript, no score', (
+      tester,
+    ) async {
       await tester.pumpWidget(
-        hostResult(AssessAssignmentResultView(assessment: buildTranscribeOnly())),
+        hostResult(
+          AssessAssignmentResultView(assessment: buildTranscribeOnly()),
+        ),
       );
       await tester.pumpAndSettle();
 
@@ -61,8 +64,9 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('a blank-page result shows 0 and the blank-page warning',
-        (tester) async {
+    testWidgets('a blank-page result shows 0 and the blank-page warning', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         hostResult(AssessAssignmentResultView(assessment: buildBlankPage())),
       );
@@ -74,8 +78,9 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('an empty assessment shows the dignified empty state',
-        (tester) async {
+    testWidgets('an empty assessment shows the dignified empty state', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         hostResult(AssessAssignmentResultView(assessment: buildEmpty())),
       );
@@ -88,40 +93,42 @@ void main() {
 
   group('honest "Read only" mode', () {
     testWidgets(
-        'Read only hides the score even when the backend returns a full grade',
-        (tester) async {
-      // The backend ignores mode and always scores, so a "Read only" run still
-      // carries a grade + feedback. The view must suppress those and lead with
-      // just the transcript, so the mode selector is not a false promise.
-      await tester.pumpWidget(
-        hostResult(
-          AssessAssignmentResultView(
-            assessment: buildAssessment(),
-            mode: AssessmentMode.transcribe,
+      'Read only hides the score even when the backend returns a full grade',
+      (tester) async {
+        // The backend ignores mode and always scores, so a "Read only" run still
+        // carries a grade + feedback. The view must suppress those and lead with
+        // just the transcript, so the mode selector is not a false promise.
+        await tester.pumpWidget(
+          hostResult(
+            AssessAssignmentResultView(
+              assessment: buildAssessment(),
+              mode: AssessmentMode.transcribe,
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // The transcript still leads.
-      expect(find.text('WHAT THE STUDENT WROTE'), findsOneWidget);
-      expect(tester.takeException(), isNull);
+        // The transcript still leads.
+        expect(find.text('WHAT THE STUDENT WROTE'), findsOneWidget);
+        expect(tester.takeException(), isNull);
 
-      // Everything score-side is gone: no gauge, no percentage, no criteria,
-      // no points/confidence badges, no evaluative feedback.
-      expect(find.byType(ScoreRing), findsNothing);
-      expect(find.text('75'), findsNothing);
-      expect(find.text('SCORES BY CRITERION'), findsNothing);
-      expect(find.text('12 of 16 points'), findsNothing);
-      expect(find.text('Confidence 82%'), findsNothing);
-      expect(find.text('STRENGTHS'), findsNothing);
-      expect(find.text('TO WORK ON'), findsNothing);
-      expect(find.text('NEXT STEPS'), findsNothing);
-      expect(find.text('NOTE FOR THE STUDENT'), findsNothing);
-    });
+        // Everything score-side is gone: no gauge, no percentage, no criteria,
+        // no points/confidence badges, no evaluative feedback.
+        expect(find.byType(ScoreRing), findsNothing);
+        expect(find.text('75'), findsNothing);
+        expect(find.text('SCORES BY CRITERION'), findsNothing);
+        expect(find.text('12 of 16 points'), findsNothing);
+        expect(find.text('Confidence 82%'), findsNothing);
+        expect(find.text('STRENGTHS'), findsNothing);
+        expect(find.text('TO WORK ON'), findsNothing);
+        expect(find.text('NEXT STEPS'), findsNothing);
+        expect(find.text('NOTE FOR THE STUDENT'), findsNothing);
+      },
+    );
 
-    testWidgets('full mode (default) still shows the whole scorecard',
-        (tester) async {
+    testWidgets('full mode (default) still shows the whole scorecard', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         hostResult(
           AssessAssignmentResultView(

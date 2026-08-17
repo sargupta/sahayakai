@@ -37,17 +37,17 @@ class _StopSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return const Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
         SkeletonBar(height: SkeletonBar.subtitle, widthFactor: 0.6),
-        const SizedBox(height: AppSpacing.space3),
-        const SkeletonBar(widthFactor: 0.95),
-        const SizedBox(height: AppSpacing.space2),
-        const SkeletonBar(widthFactor: 0.85),
-        const SizedBox(height: AppSpacing.space3),
-        const SkeletonBlock(height: 72),
+        SizedBox(height: AppSpacing.space3),
+        SkeletonBar(widthFactor: 0.95),
+        SizedBox(height: AppSpacing.space2),
+        SkeletonBar(widthFactor: 0.85),
+        SizedBox(height: AppSpacing.space3),
+        SkeletonBlock(height: 72),
       ],
     );
   }

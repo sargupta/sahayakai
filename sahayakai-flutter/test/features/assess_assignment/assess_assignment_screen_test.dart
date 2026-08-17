@@ -41,8 +41,9 @@ Widget _host({
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
       home: const AssessAssignmentScreen(),
@@ -72,8 +73,9 @@ void main() {
       await tester.pumpWidget(
         _host(
           overrides: [
-            assessAssignmentControllerProvider
-                .overrideWith(_StubController.loading),
+            assessAssignmentControllerProvider.overrideWith(
+              _StubController.loading,
+            ),
           ],
         ),
       );
@@ -86,8 +88,9 @@ void main() {
       await tester.pumpWidget(
         _host(
           overrides: [
-            assessAssignmentControllerProvider
-                .overrideWith(() => _StubController(data: buildAssessment())),
+            assessAssignmentControllerProvider.overrideWith(
+              () => _StubController(data: buildAssessment()),
+            ),
           ],
         ),
       );
@@ -121,8 +124,9 @@ void main() {
   });
 
   group('validation', () {
-    testWidgets('an empty form blocks submit on the required image',
-        (tester) async {
+    testWidgets('an empty form blocks submit on the required image', (
+      tester,
+    ) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -140,8 +144,9 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('picking an image clears the required-image error',
-        (tester) async {
+    testWidgets('picking an image clears the required-image error', (
+      tester,
+    ) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -186,8 +191,9 @@ void main() {
       );
     });
 
-    testWidgets('the corrected-transcript field appears only in score mode',
-        (tester) async {
+    testWidgets('the corrected-transcript field appears only in score mode', (
+      tester,
+    ) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);

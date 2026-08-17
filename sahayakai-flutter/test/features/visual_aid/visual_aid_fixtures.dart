@@ -91,8 +91,9 @@ Widget hostResult(
           child: reduceMotion
               ? Builder(
                   builder: (context) => MediaQuery(
-                    data: MediaQuery.of(context)
-                        .copyWith(disableAnimations: true),
+                    data: MediaQuery.of(
+                      context,
+                    ).copyWith(disableAnimations: true),
                     child: child,
                   ),
                 )

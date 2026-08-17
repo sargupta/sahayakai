@@ -7,8 +7,8 @@ import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../shared/media/image_input.dart';
 import '../../../shared/domain/picker_options.dart';
+import '../../../shared/media/image_input.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/note_banner.dart';
@@ -109,14 +109,18 @@ class _AssessmentScannerScreenState
 
     // Auto-scroll to the result header on a fresh success (loading -> data).
     ref.listen<AsyncValue<AssessmentResult?>>(
-        assessmentScannerControllerProvider, (prev, next) {
-      final wasLoading = prev?.isLoading ?? false;
-      final nowHasResult =
-          !next.isLoading && next.hasValue && next.valueOrNull != null;
-      if (wasLoading && nowHasResult) {
-        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToResult());
-      }
-    });
+      assessmentScannerControllerProvider,
+      (prev, next) {
+        final wasLoading = prev?.isLoading ?? false;
+        final nowHasResult =
+            !next.isLoading && next.hasValue && next.valueOrNull != null;
+        if (wasLoading && nowHasResult) {
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _scrollToResult(),
+          );
+        }
+      },
+    );
 
     final hasResult = state.hasValue && state.valueOrNull != null;
 
@@ -258,8 +262,9 @@ class _AssessmentScannerScreenState
         minLines: 2,
         textInputAction: TextInputAction.newline,
         textCapitalization: TextCapitalization.sentences,
-        decoration:
-            InputDecoration(hintText: l10n.assessmentScannerAnswerKeyPlaceholder),
+        decoration: InputDecoration(
+          hintText: l10n.assessmentScannerAnswerKeyPlaceholder,
+        ),
       ),
     );
   }

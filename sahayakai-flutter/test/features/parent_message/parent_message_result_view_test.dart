@@ -15,12 +15,13 @@ import 'parent_message_fixtures.dart';
 /// exact message to the (faked) share service without popping a real sheet, and
 /// nothing overflows at 360dp x textScale 1.3 in light + dark.
 void main() {
-  testWidgets('renders the meta and the message body through AiText',
-      (tester) async {
+  testWidgets('renders the meta and the message body through AiText', (
+    tester,
+  ) async {
     final message = buildMessage();
-    await tester.pumpWidget(hostResult(
-      ParentMessageResultView(message: message),
-    ));
+    await tester.pumpWidget(
+      hostResult(ParentMessageResultView(message: message)),
+    );
     await tester.pumpAndSettle();
 
     // Meta badges: the language code and the word count.
@@ -38,25 +39,27 @@ void main() {
   });
 
   testWidgets(
-      'the message uses the Indic-safe prose style (height >= 1.7, height '
-      'behaviour applied) so a Tamil message from an English UI shapes',
-      (tester) async {
-    await tester.pumpWidget(hostResult(
-      ParentMessageResultView(message: buildMessage()),
-    ));
-    await tester.pumpAndSettle();
+    'the message uses the Indic-safe prose style (height >= 1.7, height '
+    'behaviour applied) so a Tamil message from an English UI shapes',
+    (tester) async {
+      await tester.pumpWidget(
+        hostResult(ParentMessageResultView(message: buildMessage())),
+      );
+      await tester.pumpAndSettle();
 
-    final bodyText = tester.widget<Text>(
-      find.descendant(of: find.byType(AiText), matching: find.byType(Text)),
-    );
-    expect(bodyText.style?.height, greaterThanOrEqualTo(1.7));
-    // The top matra / bottom vowel sign must not be cropped (DESIGN_RUBRIC §12.4).
-    expect(bodyText.textHeightBehavior?.applyHeightToFirstAscent, isTrue);
-    expect(bodyText.textHeightBehavior?.applyHeightToLastDescent, isTrue);
-  });
+      final bodyText = tester.widget<Text>(
+        find.descendant(of: find.byType(AiText), matching: find.byType(Text)),
+      );
+      expect(bodyText.style?.height, greaterThanOrEqualTo(1.7));
+      // The top matra / bottom vowel sign must not be cropped (DESIGN_RUBRIC §12.4).
+      expect(bodyText.textHeightBehavior?.applyHeightToFirstAscent, isTrue);
+      expect(bodyText.textHeightBehavior?.applyHeightToLastDescent, isTrue);
+    },
+  );
 
-  testWidgets('Copy writes the drafted message to the system clipboard',
-      (tester) async {
+  testWidgets('Copy writes the drafted message to the system clipboard', (
+    tester,
+  ) async {
     final message = buildMessage();
 
     // Intercept the platform clipboard channel so nothing touches the real OS
@@ -76,9 +79,9 @@ void main() {
       ),
     );
 
-    await tester.pumpWidget(hostResult(
-      ParentMessageResultView(message: message),
-    ));
+    await tester.pumpWidget(
+      hostResult(ParentMessageResultView(message: message)),
+    );
     await tester.pumpAndSettle();
 
     final copyButton = find.widgetWithText(FilledButton, 'Copy');
@@ -87,25 +90,25 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(copied, hasLength(1));
-    expect(
-      (copied.single.arguments as Map)['text'],
-      message.message,
-    );
+    expect((copied.single.arguments as Map)['text'], message.message);
     // The teacher gets clear feedback that it copied.
     expect(find.text('Message copied'), findsOneWidget);
   });
 
-  testWidgets('Share hands the exact message to the share service (faked)',
-      (tester) async {
+  testWidgets('Share hands the exact message to the share service (faked)', (
+    tester,
+  ) async {
     final message = buildMessage();
     final calls = <({String text, String? subject})>[];
 
-    await tester.pumpWidget(hostResult(
-      ParentMessageResultView(message: message),
-      overrides: [
-        shareServiceProvider.overrideWithValue(FakeShareService(calls)),
-      ],
-    ));
+    await tester.pumpWidget(
+      hostResult(
+        ParentMessageResultView(message: message),
+        overrides: [
+          shareServiceProvider.overrideWithValue(FakeShareService(calls)),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
 
     final shareButton = find.widgetWithText(FilledButton, 'Share');
@@ -119,10 +122,12 @@ void main() {
     expect(calls.single.text, message.message);
   });
 
-  testWidgets('a blank message shows the dignified empty state', (tester) async {
-    await tester.pumpWidget(hostResult(
-      ParentMessageResultView(message: buildMessage(empty: true)),
-    ));
+  testWidgets('a blank message shows the dignified empty state', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      hostResult(ParentMessageResultView(message: buildMessage(empty: true))),
+    );
     await tester.pumpAndSettle();
 
     expect(find.byType(EmptyView), findsOneWidget);

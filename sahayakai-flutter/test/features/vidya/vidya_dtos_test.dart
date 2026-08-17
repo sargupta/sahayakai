@@ -45,8 +45,10 @@ void main() {
     });
 
     test('a sub-2-char transcript is not worth a VIDYA round-trip', () {
-      expect(Transcript.fromJson({'text': 'a', 'language': 'en'}).isUsable,
-          isFalse);
+      expect(
+        Transcript.fromJson({'text': 'a', 'language': 'en'}).isUsable,
+        isFalse,
+      );
     });
   });
 
@@ -82,15 +84,15 @@ void main() {
 
   group('AssistantResponse.toDomain — 0/1/2-3 behaviour + guard', () {
     Map<String, dynamic> action(String flow, {String? topic}) => {
-          'type': 'NAVIGATE_AND_FILL',
-          'flow': flow,
-          'params': {
-            'topic': ?topic,
-            'gradeLevel': 'Class 10',
-            'subject': 'Maths',
-            'language': 'hi',
-          },
-        };
+      'type': 'NAVIGATE_AND_FILL',
+      'flow': flow,
+      'params': {
+        'topic': ?topic,
+        'gradeLevel': 'Class 10',
+        'subject': 'Maths',
+        'language': 'hi',
+      },
+    };
 
     test('0 actions -> conversational, just speak', () {
       final turn = AssistantResponseDto.fromJson({
@@ -123,12 +125,17 @@ void main() {
     test('2-3 actions -> compound (confirm chips)', () {
       final turn = AssistantResponseDto.fromJson({
         'response': 'Making a quiz and a worksheet.',
-        'plannedActions': [action('quiz-generator'), action('worksheet-wizard')],
+        'plannedActions': [
+          action('quiz-generator'),
+          action('worksheet-wizard'),
+        ],
       }).toDomain();
 
       expect(turn.isCompound, isTrue);
-      expect(turn.directives.map((d) => d.flow),
-          [VidyaFlow.quizGenerator, VidyaFlow.worksheetWizard]);
+      expect(turn.directives.map((d) => d.flow), [
+        VidyaFlow.quizGenerator,
+        VidyaFlow.worksheetWizard,
+      ]);
     });
 
     test('a hallucinated flow inside the queue is dropped', () {
@@ -217,7 +224,9 @@ void main() {
     });
 
     test('a missing response decodes to empty string, not null', () {
-      final turn = AssistantResponseDto.fromJson(<String, dynamic>{}).toDomain();
+      final turn = AssistantResponseDto.fromJson(
+        <String, dynamic>{},
+      ).toDomain();
       expect(turn.response, '');
       expect(turn.isConversational, isTrue);
     });
@@ -290,8 +299,14 @@ void main() {
 
   group('VidyaProfile — GET/POST /api/vidya/profile (strict schema)', () {
     test('toJson drops nulls (route rejects unknown keys + undefined)', () {
-      const p = VidyaProfile(preferredGrade: 'Class 10', preferredSubject: 'Maths');
-      expect(p.toJson(), {'preferredGrade': 'Class 10', 'preferredSubject': 'Maths'});
+      const p = VidyaProfile(
+        preferredGrade: 'Class 10',
+        preferredSubject: 'Maths',
+      );
+      expect(p.toJson(), {
+        'preferredGrade': 'Class 10',
+        'preferredSubject': 'Maths',
+      });
     });
 
     test('fromJson of a null profile is null (first visit)', () {
@@ -332,7 +347,10 @@ void main() {
     });
 
     test('a brand-new teacher decodes to an empty session', () {
-      final s = VidyaSession.fromJson({'sessionId': null, 'messages': <dynamic>[]});
+      final s = VidyaSession.fromJson({
+        'sessionId': null,
+        'messages': <dynamic>[],
+      });
       expect(s.sessionId, isNull);
       expect(s.isEmpty, isTrue);
     });
@@ -359,7 +377,12 @@ void main() {
     test('an unlimited plan (remaining null on the wire) does not crash', () {
       final r = TtsResult.fromJson({
         'audioContent': 'QUJD',
-        'voiceQuota': {'used': 0, 'limit': -1, 'remaining': null, 'warning': 'none'},
+        'voiceQuota': {
+          'used': 0,
+          'limit': -1,
+          'remaining': null,
+          'warning': 'none',
+        },
       });
       expect(r.voiceQuota?.limit, -1);
       expect(r.voiceQuota?.remaining, isNull);

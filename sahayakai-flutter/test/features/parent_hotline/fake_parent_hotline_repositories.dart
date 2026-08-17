@@ -24,10 +24,10 @@ class FakeParentHotlineRepository extends ParentHotlineRepository {
     this.pollGate,
     String outreachId = 'o-1',
     String callSid = 'CA-1',
-  })  : _pollResults = pollResults,
-        _outreachId = outreachId,
-        _callSid = callSid,
-        super(FakeApiClient());
+  }) : _pollResults = pollResults,
+       _outreachId = outreachId,
+       _callSid = callSid,
+       super(FakeApiClient());
 
   /// Poll projections returned in sequence; the last one repeats once exhausted.
   final List<CallResult> _pollResults;
@@ -93,7 +93,9 @@ class FakeParentHotlineRepository extends ParentHotlineRepository {
     if (_pollResults.isEmpty) {
       return const CallResult(callStatus: CallStatus.initiated);
     }
-    return index < _pollResults.length ? _pollResults[index] : _pollResults.last;
+    return index < _pollResults.length
+        ? _pollResults[index]
+        : _pollResults.last;
   }
 
   @override

@@ -13,8 +13,9 @@ import 'instant_answer_fixtures.dart';
 /// again and read as the app being broken.
 void main() {
   group('429 DAILY_LIMIT_REACHED (the first-class limit state)', () {
-    testWidgets('shows the daily-limit prompt with NO retry button',
-        (tester) async {
+    testWidgets('shows the daily-limit prompt with NO retry button', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         hostResult(
           InstantAnswerErrorView(
@@ -54,8 +55,9 @@ void main() {
       expect(opener.opened.single.toString(), 'https://sahayakai.com/pricing');
     });
 
-    testWidgets('is read from the raw body, not just the message field',
-        (tester) async {
+    testWidgets('is read from the raw body, not just the message field', (
+      tester,
+    ) async {
       // The plan guard returns `{ error: 'DAILY_LIMIT_REACHED', message: ... }`.
       // The client copies `error` into ApiException.message today, but the raw
       // body is the contract; both paths must land on the daily state.
@@ -81,8 +83,9 @@ void main() {
       expect(find.text('Try again'), findsNothing);
     });
 
-    testWidgets('renders at 360dp, textScale 1.3, light and dark',
-        (tester) async {
+    testWidgets('renders at 360dp, textScale 1.3, light and dark', (
+      tester,
+    ) async {
       for (final brightness in Brightness.values) {
         tester.view.physicalSize = kNarrowPhone;
         tester.view.devicePixelRatio = 1.0;
@@ -130,8 +133,9 @@ void main() {
   });
 
   group('403 PLAN_UPGRADE_REQUIRED', () {
-    testWidgets('shows the upgrade prompt with pricing and no retry',
-        (tester) async {
+    testWidgets('shows the upgrade prompt with pricing and no retry', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         hostResult(
           InstantAnswerErrorView(
@@ -155,8 +159,9 @@ void main() {
   });
 
   group('503 AI_SERVICE_BUSY', () {
-    testWidgets('uses retryAfterSeconds from the body and offers a retry',
-        (tester) async {
+    testWidgets('uses retryAfterSeconds from the body and offers a retry', (
+      tester,
+    ) async {
       var retried = false;
       await tester.pumpWidget(
         hostResult(
@@ -208,8 +213,9 @@ void main() {
       expect(find.textContaining('about 45 seconds'), findsOneWidget);
     });
 
-    testWidgets('a nonsense Retry-After degrades to the plain busy message',
-        (tester) async {
+    testWidgets('a nonsense Retry-After degrades to the plain busy message', (
+      tester,
+    ) async {
       for (final value in <Object>[0, -5, 99999, 'soon']) {
         await tester.pumpWidget(
           hostResult(
@@ -228,15 +234,18 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(
-          find.text('The assistant is busy right now. Please try again in a moment.'),
+          find.text(
+            'The assistant is busy right now. Please try again in a moment.',
+          ),
           findsOneWidget,
           reason: 'retryAfterSeconds: $value',
         );
       }
     });
 
-    testWidgets('a 500 with no Retry-After still offers a retry',
-        (tester) async {
+    testWidgets('a 500 with no Retry-After still offers a retry', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         hostResult(
           InstantAnswerErrorView(
@@ -274,12 +283,16 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Please sign in again to use this tool.'), findsOneWidget);
+      expect(
+        find.text('Please sign in again to use this tool.'),
+        findsOneWidget,
+      );
       expect(find.text('Try again'), findsNothing);
     });
 
-    testWidgets('400 asks the teacher to rephrase, with a retry',
-        (tester) async {
+    testWidgets('400 asks the teacher to rephrase, with a retry', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         hostResult(
           InstantAnswerErrorView(
@@ -299,8 +312,9 @@ void main() {
       expect(find.text('Try again'), findsOneWidget);
     });
 
-    testWidgets('a network failure shows the offline card with a retry',
-        (tester) async {
+    testWidgets('a network failure shows the offline card with a retry', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         hostResult(
           InstantAnswerErrorView(
@@ -334,24 +348,28 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('taking longer than expected'), findsOneWidget);
+      expect(
+        find.textContaining('taking longer than expected'),
+        findsOneWidget,
+      );
       expect(find.text('Try again'), findsOneWidget);
     });
 
-    testWidgets('a non-ApiException degrades to the generic error',
-        (tester) async {
+    testWidgets('a non-ApiException degrades to the generic error', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         hostResult(
-          InstantAnswerErrorView(
-            error: Exception('boom'),
-            onRetry: () {},
-          ),
+          InstantAnswerErrorView(error: Exception('boom'), onRetry: () {}),
           linkOpener: FakeLinkOpener(),
         ),
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Something went wrong. Please try again.'), findsOneWidget);
+      expect(
+        find.text('Something went wrong. Please try again.'),
+        findsOneWidget,
+      );
       // A raw exception string must never reach a teacher.
       expect(find.textContaining('boom'), findsNothing);
     });
@@ -359,12 +377,12 @@ void main() {
 }
 
 ApiException _dailyLimit() => ApiException(
-      ApiErrorKind.rateLimited,
-      // The client copies the body's `error` code into `message` for 429s.
-      'DAILY_LIMIT_REACHED',
-      statusCode: 429,
-      raw: _dio(429, const {'error': 'DAILY_LIMIT_REACHED'}),
-    );
+  ApiErrorKind.rateLimited,
+  // The client copies the body's `error` code into `message` for 429s.
+  'DAILY_LIMIT_REACHED',
+  statusCode: 429,
+  raw: _dio(429, const {'error': 'DAILY_LIMIT_REACHED'}),
+);
 
 DioException _dio(
   int status,

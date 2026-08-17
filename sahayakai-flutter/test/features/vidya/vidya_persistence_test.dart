@@ -22,33 +22,37 @@ const _unauthorized = ApiException(
 );
 
 Map<String, dynamic> _singleActionReply() => {
-      'response': 'Making your Class 10 Maths lesson plan.',
-      'plannedActions': [
-        {
-          'type': 'NAVIGATE_AND_FILL',
-          'flow': 'lesson-plan',
-          'params': {'topic': 'Fractions', 'gradeLevel': 'Class 10'},
-        },
-      ],
-    };
+  'response': 'Making your Class 10 Maths lesson plan.',
+  'plannedActions': [
+    {
+      'type': 'NAVIGATE_AND_FILL',
+      'flow': 'lesson-plan',
+      'params': {'topic': 'Fractions', 'gradeLevel': 'Class 10'},
+    },
+  ],
+};
 
 FakeApiClient _happyClient() => FakeApiClient(
-      multipartResponse: {'text': 'lesson plan on fractions', 'language': 'en'},
-      postResponsesByPath: {
-        '/api/assistant': _singleActionReply(),
-        '/api/tts': {'audioContent': 'QUJD'},
-        '/api/vidya/session': {'success': true},
-        '/api/vidya/profile': {'success': true},
-      },
-    );
+  multipartResponse: {'text': 'lesson plan on fractions', 'language': 'en'},
+  postResponsesByPath: {
+    '/api/assistant': _singleActionReply(),
+    '/api/tts': {'audioContent': 'QUJD'},
+    '/api/vidya/session': {'success': true},
+    '/api/vidya/profile': {'success': true},
+  },
+);
 
 ProviderContainer _container(FakeApiClient client) {
   final container = ProviderContainer(
     overrides: [
       apiClientProvider.overrideWithValue(client),
-      audioRecorderServiceProvider.overrideWithValue(FakeAudioRecorderService()),
+      audioRecorderServiceProvider.overrideWithValue(
+        FakeAudioRecorderService(),
+      ),
       audioPlayerServiceProvider.overrideWithValue(FakeAudioPlayerService()),
-      micPermissionServiceProvider.overrideWithValue(FakeMicPermissionService()),
+      micPermissionServiceProvider.overrideWithValue(
+        FakeMicPermissionService(),
+      ),
     ],
   );
   addTearDown(container.dispose);
@@ -62,28 +66,33 @@ void main() {
 
   group('restore', () {
     test('restores the prior conversation, session id and profile', () async {
-      final client = FakeApiClient(getResponsesByPath: {
-        '/api/vidya/session': {
-          'sessionId': 's1',
-          'messages': [
-            {
-              'role': 'user',
-              'parts': [
-                {'text': 'plan a lesson on fractions'}
-              ]
+      final client = FakeApiClient(
+        getResponsesByPath: {
+          '/api/vidya/session': {
+            'sessionId': 's1',
+            'messages': [
+              {
+                'role': 'user',
+                'parts': [
+                  {'text': 'plan a lesson on fractions'},
+                ],
+              },
+              {
+                'role': 'model',
+                'parts': [
+                  {'text': 'Here is a fractions lesson.'},
+                ],
+              },
+            ],
+          },
+          '/api/vidya/profile': {
+            'profile': {
+              'preferredGrade': 'Class 8',
+              'preferredSubject': 'Science',
             },
-            {
-              'role': 'model',
-              'parts': [
-                {'text': 'Here is a fractions lesson.'}
-              ]
-            },
-          ],
+          },
         },
-        '/api/vidya/profile': {
-          'profile': {'preferredGrade': 'Class 8', 'preferredSubject': 'Science'},
-        },
-      });
+      );
       final container = _container(client);
       final vidya = container.read(vidyaControllerProvider.notifier);
 
@@ -102,21 +111,25 @@ void main() {
       expect(state.status, VidyaStatus.idle);
     });
 
-    test('runs at most once (a relaunch restore, not on every home mount)',
-        () async {
-      final client = FakeApiClient(getResponsesByPath: {
-        '/api/vidya/session': {'sessionId': null, 'messages': <dynamic>[]},
-        '/api/vidya/profile': {'profile': null},
-      });
-      final container = _container(client);
-      final vidya = container.read(vidyaControllerProvider.notifier);
+    test(
+      'runs at most once (a relaunch restore, not on every home mount)',
+      () async {
+        final client = FakeApiClient(
+          getResponsesByPath: {
+            '/api/vidya/session': {'sessionId': null, 'messages': <dynamic>[]},
+            '/api/vidya/profile': {'profile': null},
+          },
+        );
+        final container = _container(client);
+        final vidya = container.read(vidyaControllerProvider.notifier);
 
-      await vidya.restoreSession();
-      final firstCount = client.gets.length;
-      await vidya.restoreSession();
+        await vidya.restoreSession();
+        final firstCount = client.gets.length;
+        await vidya.restoreSession();
 
-      expect(client.gets.length, firstCount, reason: 'restore is once-only');
-    });
+        expect(client.gets.length, firstCount, reason: 'restore is once-only');
+      },
+    );
   });
 
   group('sync', () {
@@ -128,8 +141,9 @@ void main() {
       await vidya.onMicTap(); // listening
       await vidya.onMicTap(); // … → idle, turn persisted
 
-      final sessionPosts =
-          client.posts.where((p) => p.path == '/api/vidya/session').toList();
+      final sessionPosts = client.posts
+          .where((p) => p.path == '/api/vidya/session')
+          .toList();
       expect(sessionPosts, isNotEmpty);
       final body = sessionPosts.first.data as Map<String, dynamic>;
       expect(body['sessionId'], isNotNull);
@@ -138,23 +152,27 @@ void main() {
   });
 
   group('401 degrades gracefully', () {
-    test('a 401 on the restore GETs → a fresh empty session, never a crash',
-        () async {
-      final client = FakeApiClient(getErrorsByPath: {
-        '/api/vidya/session': _unauthorized,
-        '/api/vidya/profile': _unauthorized,
-      });
-      final container = _container(client);
-      final vidya = container.read(vidyaControllerProvider.notifier);
+    test(
+      'a 401 on the restore GETs → a fresh empty session, never a crash',
+      () async {
+        final client = FakeApiClient(
+          getErrorsByPath: {
+            '/api/vidya/session': _unauthorized,
+            '/api/vidya/profile': _unauthorized,
+          },
+        );
+        final container = _container(client);
+        final vidya = container.read(vidyaControllerProvider.notifier);
 
-      await vidya.restoreSession();
+        await vidya.restoreSession();
 
-      final state = container.read(vidyaControllerProvider);
-      expect(state.conversation, isEmpty);
-      expect(state.sessionId, isNull);
-      // NOT a terminal signed-out state — restore degrades silently to empty.
-      expect(state.status, VidyaStatus.idle);
-    });
+        final state = container.read(vidyaControllerProvider);
+        expect(state.conversation, isEmpty);
+        expect(state.sessionId, isNull);
+        // NOT a terminal signed-out state — restore degrades silently to empty.
+        expect(state.status, VidyaStatus.idle);
+      },
+    );
 
     test('restore never clobbers an in-progress conversation', () async {
       // Session restore would return an old conversation, but a turn is already

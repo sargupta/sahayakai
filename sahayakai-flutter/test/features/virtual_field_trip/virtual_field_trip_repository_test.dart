@@ -52,21 +52,25 @@ void main() {
       expect(body.containsKey('userId'), isFalse);
     });
 
-    test('a 202 still_generating surfaces as the distinct outcome, not an error',
-        () async {
-      // The 202 rides the success path (status < 400), so it reaches `decode` like
-      // a 200 — the repository must route it to FieldTripStillGenerating by shape.
-      final client = FakeApiClient(postResponse: stillGeneratingJson());
-      final container = containerWith(client);
+    test(
+      'a 202 still_generating surfaces as the distinct outcome, not an error',
+      () async {
+        // The 202 rides the success path (status < 400), so it reaches `decode` like
+        // a 200 — the repository must route it to FieldTripStillGenerating by shape.
+        final client = FakeApiClient(postResponse: stillGeneratingJson());
+        final container = containerWith(client);
 
-      final outcome = await container
-          .read(virtualFieldTripRepositoryProvider)
-          .plan(request);
+        final outcome = await container
+            .read(virtualFieldTripRepositoryProvider)
+            .plan(request);
 
-      expect(outcome, isA<FieldTripStillGenerating>());
-      expect((outcome as FieldTripStillGenerating).message,
-          contains('still generating'));
-    });
+        expect(outcome, isA<FieldTripStillGenerating>());
+        expect(
+          (outcome as FieldTripStillGenerating).message,
+          contains('still generating'),
+        );
+      },
+    );
 
     test('a 401 surfaces as the typed unauthorized exception', () async {
       final client = FakeApiClient(
@@ -80,9 +84,11 @@ void main() {
 
       await expectLater(
         container.read(virtualFieldTripRepositoryProvider).plan(request),
-        throwsA(isA<ApiException>()
-            .having((e) => e.kind, 'kind', ApiErrorKind.unauthorized)
-            .having((e) => e.statusCode, 'statusCode', 401)),
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.kind, 'kind', ApiErrorKind.unauthorized)
+              .having((e) => e.statusCode, 'statusCode', 401),
+        ),
       );
     });
 
@@ -99,30 +105,36 @@ void main() {
 
       await expectLater(
         container.read(virtualFieldTripRepositoryProvider).plan(request),
-        throwsA(isA<ApiException>()
-            .having((e) => e.kind, 'kind', ApiErrorKind.forbidden)
-            .having((e) => e.statusCode, 'statusCode', 403)),
-      );
-    });
-
-    test('a 429 rate-limit surfaces as the typed rate-limit exception',
-        () async {
-      final client = FakeApiClient(
-        postError: const ApiException(
-          ApiErrorKind.rateLimited,
-          'Too many requests.',
-          statusCode: 429,
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.kind, 'kind', ApiErrorKind.forbidden)
+              .having((e) => e.statusCode, 'statusCode', 403),
         ),
       );
-      final container = containerWith(client);
-
-      await expectLater(
-        container.read(virtualFieldTripRepositoryProvider).plan(request),
-        throwsA(isA<ApiException>()
-            .having((e) => e.kind, 'kind', ApiErrorKind.rateLimited)
-            .having((e) => e.statusCode, 'statusCode', 429)),
-      );
     });
+
+    test(
+      'a 429 rate-limit surfaces as the typed rate-limit exception',
+      () async {
+        final client = FakeApiClient(
+          postError: const ApiException(
+            ApiErrorKind.rateLimited,
+            'Too many requests.',
+            statusCode: 429,
+          ),
+        );
+        final container = containerWith(client);
+
+        await expectLater(
+          container.read(virtualFieldTripRepositoryProvider).plan(request),
+          throwsA(
+            isA<ApiException>()
+                .having((e) => e.kind, 'kind', ApiErrorKind.rateLimited)
+                .having((e) => e.statusCode, 'statusCode', 429),
+          ),
+        );
+      },
+    );
 
     test('a 5xx surfaces as the typed server exception', () async {
       final client = FakeApiClient(
@@ -136,24 +148,36 @@ void main() {
 
       await expectLater(
         container.read(virtualFieldTripRepositoryProvider).plan(request),
-        throwsA(isA<ApiException>()
-            .having((e) => e.kind, 'kind', ApiErrorKind.server)),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.kind,
+            'kind',
+            ApiErrorKind.server,
+          ),
+        ),
       );
     });
 
-    test('an offline network error surfaces as the typed network exception',
-        () async {
-      final client = FakeApiClient(
-        postError: const ApiException(ApiErrorKind.network, 'No internet.'),
-      );
-      final container = containerWith(client);
+    test(
+      'an offline network error surfaces as the typed network exception',
+      () async {
+        final client = FakeApiClient(
+          postError: const ApiException(ApiErrorKind.network, 'No internet.'),
+        );
+        final container = containerWith(client);
 
-      await expectLater(
-        container.read(virtualFieldTripRepositoryProvider).plan(request),
-        throwsA(isA<ApiException>()
-            .having((e) => e.kind, 'kind', ApiErrorKind.network)),
-      );
-    });
+        await expectLater(
+          container.read(virtualFieldTripRepositoryProvider).plan(request),
+          throwsA(
+            isA<ApiException>().having(
+              (e) => e.kind,
+              'kind',
+              ApiErrorKind.network,
+            ),
+          ),
+        );
+      },
+    );
 
     test('a timeout surfaces as the typed timeout exception', () async {
       final client = FakeApiClient(
@@ -163,8 +187,13 @@ void main() {
 
       await expectLater(
         container.read(virtualFieldTripRepositoryProvider).plan(request),
-        throwsA(isA<ApiException>()
-            .having((e) => e.kind, 'kind', ApiErrorKind.timeout)),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.kind,
+            'kind',
+            ApiErrorKind.timeout,
+          ),
+        ),
       );
     });
   });

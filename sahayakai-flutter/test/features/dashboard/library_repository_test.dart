@@ -76,7 +76,12 @@ void main() {
       //
       // Constructed directly rather than through `libraryClient`, whose `??`
       // default would swallow the intentional null body.
-      for (final body in <Object?>[null, 'not json', 42, <String>['a']]) {
+      for (final body in <Object?>[
+        null,
+        'not json',
+        42,
+        <String>['a'],
+      ]) {
         final client = FakeApiClient(getResponse: body);
         expect(
           await LibraryRepository(client).fetchRecent(),
@@ -86,17 +91,19 @@ void main() {
       }
     });
 
-    test('a failure propagates as the typed exception the UI branches on',
-        () async {
-      // This route is NOT wrapped in withPlanCheck (it reads x-user-id directly
-      // and meters nothing), so there is no 403 or 429 to model here — only
-      // 401, 400 and 500. Reading your own work is not a metered feature.
-      final client = libraryClient(error: kUnauthorized);
+    test(
+      'a failure propagates as the typed exception the UI branches on',
+      () async {
+        // This route is NOT wrapped in withPlanCheck (it reads x-user-id directly
+        // and meters nothing), so there is no 403 or 429 to model here — only
+        // 401, 400 and 500. Reading your own work is not a metered feature.
+        final client = libraryClient(error: kUnauthorized);
 
-      expect(
-        () => LibraryRepository(client).fetchRecent(),
-        throwsA(same(kUnauthorized)),
-      );
-    });
+        expect(
+          () => LibraryRepository(client).fetchRecent(),
+          throwsA(same(kUnauthorized)),
+        );
+      },
+    );
   });
 }

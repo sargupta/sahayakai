@@ -15,7 +15,9 @@ void main() {
       // The route 400s without a truthy `confirm`, and 401s without a string
       // `idToken` (it re-verifies the token itself; middleware forwards only
       // x-user-id).
-      final json = const DeleteAccountRequestDto(idToken: 'fresh-token').toJson();
+      final json = const DeleteAccountRequestDto(
+        idToken: 'fresh-token',
+      ).toJson();
       expect(json, {'confirm': true, 'idToken': 'fresh-token'});
     });
   });
@@ -29,7 +31,10 @@ void main() {
         'exportUrl': '/api/export',
       }).toDomain();
 
-      expect(deletion.gracePeriodEnd, DateTime.parse('2026-08-16T10:30:00.000Z'));
+      expect(
+        deletion.gracePeriodEnd,
+        DateTime.parse('2026-08-16T10:30:00.000Z'),
+      );
       expect(deletion.exportPath, '/api/export');
     });
 
@@ -37,8 +42,9 @@ void main() {
       // The deletion still succeeded; the UI just omits the date. Throwing here
       // would turn a successful delete into an error state.
       for (final raw in <Object?>[null, '', '   ', 'next tuesday']) {
-        final deletion =
-            DeleteAccountResponseDto.fromJson({'gracePeriodEnd': raw}).toDomain();
+        final deletion = DeleteAccountResponseDto.fromJson({
+          'gracePeriodEnd': raw,
+        }).toDomain();
         expect(deletion.gracePeriodEnd, isNull);
       }
     });

@@ -1,12 +1,16 @@
-# This file configures the analyzer, which statically analyzes Dart code to
-# check for errors, warnings, and lints.
+# Analyzer configuration.
 #
-# The issues identified by the analyzer are surfaced in the UI of Dart-enabled
-# IDEs (https://dart.dev/tools#ides-and-editors). The analyzer can also be
-# invoked from the command line by running `flutter analyze`.
+# Until 2026-08-17 every rule in this file was commented out, and custom_lint +
+# riverpod_lint sat in dev_dependencies with no `plugins:` block — so neither
+# had ever run. The file looked configured and enforced nothing beyond the
+# flutter_lints defaults. An audit that day recorded it as one of several gates
+# that existed in prose only.
+#
+# Rules below are chosen to match how this codebase is already written, so they
+# lock in existing discipline rather than manufacturing a backlog. Anything that
+# would have required a large sweep was left off deliberately and can be added
+# by a unit that also does the sweep.
 
-# The following line activates a set of recommended lints for Flutter apps,
-# packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
@@ -14,21 +18,61 @@ analyzer:
   exclude:
     - "**/*.g.dart"
     - "**/*.gr.dart"
+    - "lib/core/i18n/gen/**"
+
+  plugins:
+    # riverpod_lint. In dev_dependencies since the project began and never
+    # activated — this line is what makes `dart run custom_lint` do anything.
+    - custom_lint
+
+  errors:
+    # A missing await on a Future is a race, not a style preference.
+    unawaited_futures: error
 
 linter:
-  # The lint rules applied to this project can be customized in the
-  # section below to disable rules from the `package:flutter_lints/flutter.yaml`
-  # included above or to enable additional rules. A list of all available lints
-  # and their documentation is published at https://dart.dev/lints.
-  #
-  # Instead of disabling a lint rule for the entire project in the
-  # section below, it can also be suppressed for a single line of code
-  # or a specific dart file by using the `// ignore: name_of_lint` and
-  # `// ignore_for_file: name_of_lint` syntax on the line or in the file
-  # producing the lint.
   rules:
-    # avoid_print: false  # Uncomment to disable the `avoid_print` rule
-    # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
+    # --- correctness -------------------------------------------------------
+    - unawaited_futures
+    - avoid_empty_else
+    - avoid_relative_lib_imports
+    - no_duplicate_case_values
+    - unnecessary_statements
+    - avoid_slow_async_io
+    - cancel_subscriptions
+    - close_sinks
 
-# Additional information about this file can be found at
-# https://dart.dev/guides/language/analysis-options
+    # --- Flutter widget hygiene -------------------------------------------
+    - use_key_in_widget_constructors
+    - sort_child_properties_last
+    - avoid_unnecessary_containers
+    - sized_box_for_whitespace
+    - use_colored_box
+    - use_decorated_box
+
+    # --- readability, matching the existing style --------------------------
+    - prefer_single_quotes
+    - prefer_const_constructors
+    - prefer_const_declarations
+    - prefer_final_locals
+    - unnecessary_parenthesis
+    - use_super_parameters
+    - directives_ordering
+
+    # --- product rules -----------------------------------------------------
+    # This app ships to teachers; a stray print() is a leak, not a debug aid.
+    - avoid_print
+
+# riverpod_lint, via the custom_lint plugin above.
+#
+# Two rules are off. Across the whole tree they report 46 issues — every one in
+# test/, zero in lib/. They fire on test doubles, where a fake Notifier
+# exposing `calls` or `state` as a public property is the entire point of the
+# double. custom_lint's own `exclude:` key is not honoured by this version, so
+# scoping them to lib/ is not available; the choice is between 46 permanent
+# warnings people learn to scroll past, or turning off two rules that
+# production code already satisfies. Every other riverpod_lint rule stays on
+# and is enforced.
+custom_lint:
+  rules:
+    - avoid_public_notifier_properties: false
+    - scoped_providers_should_specify_dependencies: false

@@ -6,17 +6,17 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../shared/voice/audio_player_service.dart';
-import '../../../shared/voice/tts_language.dart';
 import '../../../shared/voice/audio_recorder_service.dart';
 import '../../../shared/voice/mic_permission_service.dart';
+import '../../../shared/voice/tts_language.dart';
 import '../../settings/data/voice_mode_provider.dart';
-import '../data/gemini_live_client.dart';
 import '../data/dto/assistant_request.dart';
 import '../data/dto/assistant_response.dart';
 import '../data/dto/chat_message.dart';
 import '../data/dto/vidya_action.dart';
 import '../data/dto/vidya_profile.dart';
 import '../data/dto/vidya_session.dart';
+import '../data/gemini_live_client.dart';
 import '../data/tts_repository.dart';
 import '../data/vidya_profile_repository.dart';
 import '../data/vidya_repository.dart';
@@ -227,11 +227,15 @@ class VidyaState {
       conversation: conversation ?? this.conversation,
       amplitude: amplitude ?? this.amplitude,
       chatHistory: chatHistory ?? this.chatHistory,
-      profile: identical(profile, _unset) ? this.profile : profile as VidyaProfile?,
-      sessionId:
-          identical(sessionId, _unset) ? this.sessionId : sessionId as String?,
-      screenPath:
-          identical(screenPath, _unset) ? this.screenPath : screenPath as String?,
+      profile: identical(profile, _unset)
+          ? this.profile
+          : profile as VidyaProfile?,
+      sessionId: identical(sessionId, _unset)
+          ? this.sessionId
+          : sessionId as String?,
+      screenPath: identical(screenPath, _unset)
+          ? this.screenPath
+          : screenPath as String?,
       screenUiState: identical(screenUiState, _unset)
           ? this.screenUiState
           : screenUiState as Map<String, dynamic>?,
@@ -311,7 +315,8 @@ class VidyaController extends _$VidyaController {
 
   AudioRecorderService get _recorder => ref.read(audioRecorderServiceProvider);
   AudioPlayerService get _player => ref.read(audioPlayerServiceProvider);
-  MicPermissionService get _permission => ref.read(micPermissionServiceProvider);
+  MicPermissionService get _permission =>
+      ref.read(micPermissionServiceProvider);
   VoiceToTextRepository get _stt => ref.read(voiceToTextRepositoryProvider);
   VidyaRepository get _vidya => ref.read(vidyaRepositoryProvider);
   TtsRepository get _tts => ref.read(ttsRepositoryProvider);
@@ -396,8 +401,9 @@ class VidyaController extends _$VidyaController {
             ? ConversationBlock(
                 role: b.role,
                 text: b.text,
-                directives:
-                    b.directives.where((d) => d != directive).toList(growable: false),
+                directives: b.directives
+                    .where((d) => d != directive)
+                    .toList(growable: false),
               )
             : b,
     ];
@@ -467,8 +473,7 @@ class VidyaController extends _$VidyaController {
       ];
       final history = session.messages.length <= kChatHistoryCap
           ? session.messages
-          : session.messages
-              .sublist(session.messages.length - kChatHistoryCap);
+          : session.messages.sublist(session.messages.length - kChatHistoryCap);
       _set(
         conversation: blocks.isEmpty ? null : blocks,
         chatHistory: history.isEmpty ? null : history,
@@ -542,7 +547,9 @@ class VidyaController extends _$VidyaController {
     _set(status: VidyaStatus.listening, amplitude: 0);
     _amplitudeSub = _recorder.amplitude.listen(_onAmplitude);
     _hardCapTimer = Timer(kMaxCapture, () {
-      if (!_stale(gen) && state.status == VidyaStatus.listening) _stopAndProcess();
+      if (!_stale(gen) && state.status == VidyaStatus.listening) {
+        _stopAndProcess();
+      }
     });
     _initialSilenceTimer = Timer(kInitialSilence, () {
       if (!_stale(gen) &&
@@ -600,10 +607,13 @@ class VidyaController extends _$VidyaController {
       final bytes = await recording.readBytes();
       if (_stale(gen)) return;
       final uiLang = _uiLanguage();
-      final transcript =
-          await _stt.transcribe(audioBytes: bytes, expectedLanguage: uiLang);
+      final transcript = await _stt.transcribe(
+        audioBytes: bytes,
+        expectedLanguage: uiLang,
+      );
       if (_stale(gen)) return;
-      if (!transcript.isUsable || isLikelyTranscriptionRefusal(transcript.text)) {
+      if (!transcript.isUsable ||
+          isLikelyTranscriptionRefusal(transcript.text)) {
         _set(status: VidyaStatus.idle);
         return;
       }
@@ -626,7 +636,9 @@ class VidyaController extends _$VidyaController {
       ConversationBlock(role: ConversationRole.teacher, text: message),
     ];
     // The prior history rides only when the fresh-classification window holds.
-    final priorHistory = _carryHistory() ? state.chatHistory : const <ChatMessage>[];
+    final priorHistory = _carryHistory()
+        ? state.chatHistory
+        : const <ChatMessage>[];
     _set(conversation: withUser, status: VidyaStatus.thinking);
 
     final uiLang = _uiLanguage();
@@ -690,10 +702,7 @@ class VidyaController extends _$VidyaController {
 
     // 0 actions → speak only · 1 action → auto-navigate · 2–3 → confirm chips.
     final single = turn.directives.length == 1 ? turn.directives.single : null;
-    _set(
-      status: VidyaStatus.idle,
-      pendingNavigation: single,
-    );
+    _set(status: VidyaStatus.idle, pendingNavigation: single);
 
     _persistTurn(message, turn.response, single);
   }
@@ -702,7 +711,8 @@ class VidyaController extends _$VidyaController {
   bool _carryHistory() {
     final last = state.lastQueryAtMs;
     if (last == null || state.chatHistory.isEmpty) return false;
-    final withinWindow = DateTime.now().millisecondsSinceEpoch - last <=
+    final withinWindow =
+        DateTime.now().millisecondsSinceEpoch - last <=
         kFreshClassificationWindow.inMilliseconds;
     return withinWindow && state.lastQueryPath == state.screenPath;
   }
@@ -726,7 +736,8 @@ class VidyaController extends _$VidyaController {
     final current = state.profile ?? const VidyaProfile();
     final grade = params.gradeLevel ?? current.preferredGrade;
     final subject = params.subject ?? current.preferredSubject;
-    if (grade == current.preferredGrade && subject == current.preferredSubject) {
+    if (grade == current.preferredGrade &&
+        subject == current.preferredSubject) {
       return;
     }
     final updated = VidyaProfile(
@@ -746,7 +757,8 @@ class VidyaController extends _$VidyaController {
   void _persistTurn(String userText, String modelText, VidyaDirective? action) {
     final existing = state.sessionId;
     final isNew = existing == null;
-    final sessionId = existing ?? 'sess-${DateTime.now().microsecondsSinceEpoch}';
+    final sessionId =
+        existing ?? 'sess-${DateTime.now().microsecondsSinceEpoch}';
     if (isNew) _set(sessionId: sessionId);
     unawaited(
       _session
@@ -765,14 +777,14 @@ class VidyaController extends _$VidyaController {
   }
 
   Map<String, dynamic> _actionEvent(VidyaDirective d) => {
-        'flow': d.flow.wire,
-        'params': {
-          if (d.params.topic != null) 'topic': d.params.topic,
-          if (d.params.gradeLevel != null) 'gradeLevel': d.params.gradeLevel,
-          if (d.params.subject != null) 'subject': d.params.subject,
-          if (d.params.language != null) 'language': d.params.language,
-        },
-      };
+    'flow': d.flow.wire,
+    'params': {
+      if (d.params.topic != null) 'topic': d.params.topic,
+      if (d.params.gradeLevel != null) 'gradeLevel': d.params.gradeLevel,
+      if (d.params.subject != null) 'subject': d.params.subject,
+      if (d.params.language != null) 'language': d.params.language,
+    },
+  };
 
   void _handleError(ApiException e) {
     switch (e.kind) {
@@ -960,14 +972,16 @@ class VidyaController extends _$VidyaController {
       _set(pendingNavigation: directives.single);
       _learnProfile(directives);
     } else {
-      _set(conversation: [
-        ...state.conversation,
-        ConversationBlock(
-          role: ConversationRole.vidya,
-          text: '',
-          directives: directives,
-        ),
-      ]);
+      _set(
+        conversation: [
+          ...state.conversation,
+          ConversationBlock(
+            role: ConversationRole.vidya,
+            text: '',
+            directives: directives,
+          ),
+        ],
+      );
       _learnProfile(directives);
     }
   }

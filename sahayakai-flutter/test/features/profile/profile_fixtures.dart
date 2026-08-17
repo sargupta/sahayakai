@@ -114,7 +114,8 @@ class FakeApiClient extends ApiClient {
   final Object? error;
 
   /// Every PATCH this client received, in order.
-  final List<({String path, Object? data})> patches = <({String path, Object? data})>[];
+  final List<({String path, Object? data})> patches =
+      <({String path, Object? data})>[];
 
   @override
   Future<T> patch<T>(
@@ -139,8 +140,8 @@ Override apiClientOverride(ApiClient client) =>
 
 /// Binds a token so the plan badge can decode a claim. Pass null to model the
 /// current signed-out stub.
-Override tokenOverride(String? token) =>
-    tokenProviderProvider.overrideWithValue(({bool forceRefresh = false}) async => token);
+Override tokenOverride(String? token) => tokenProviderProvider
+    .overrideWithValue(({bool forceRefresh = false}) async => token);
 
 /// Signs the auth controller in from the start.
 Override signedInOverride() =>
@@ -201,7 +202,9 @@ Widget hostProfile(
   Locale locale = const Locale('en'),
   List<Override> overrides = const [],
 }) {
-  final base = brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light();
+  final base = brightness == Brightness.dark
+      ? AppTheme.dark()
+      : AppTheme.light();
   return ProviderScope(
     overrides: overrides,
     child: MaterialApp(
@@ -212,8 +215,9 @@ Widget hostProfile(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
       home: child,

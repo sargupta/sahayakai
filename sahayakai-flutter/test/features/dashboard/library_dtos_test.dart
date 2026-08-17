@@ -22,7 +22,10 @@ void main() {
       expect(item.topic, 'Photosynthesis');
       expect(item.language, 'English');
       // Local, not UTC: the teacher reads their own date, not the server's.
-      expect(item.createdAt, DateTime.parse('2026-07-15T09:30:00.000Z').toLocal());
+      expect(
+        item.createdAt,
+        DateTime.parse('2026-07-15T09:30:00.000Z').toLocal(),
+      );
       expect(item.createdAt!.isUtc, isFalse);
     });
 
@@ -46,9 +49,9 @@ void main() {
       expect(wire, hasLength(11));
 
       for (final entry in wire.entries) {
-        final item =
-            LibraryItemDto.fromJson(contentItem(overrides: {'type': entry.key}))
-                .toDomain();
+        final item = LibraryItemDto.fromJson(
+          contentItem(overrides: {'type': entry.key}),
+        ).toDomain();
         expect(item.type, entry.value, reason: '"${entry.key}" must decode');
       }
     });
@@ -66,7 +69,10 @@ void main() {
 
     test('a missing type is unknown, not a crash', () {
       final json = contentItem()..remove('type');
-      expect(LibraryItemDto.fromJson(json).toDomain().type, ContentType.unknown);
+      expect(
+        LibraryItemDto.fromJson(json).toDomain().type,
+        ContentType.unknown,
+      );
     });
 
     test('a missing title decodes to empty, so the view can substitute', () {
@@ -129,8 +135,9 @@ void main() {
 
     test('reads nextCursor, and tolerates its explicit null', () {
       expect(
-        LibraryListDto.fromJson(contentListResponse(nextCursor: 'abc123'))
-            .nextCursor,
+        LibraryListDto.fromJson(
+          contentListResponse(nextCursor: 'abc123'),
+        ).nextCursor,
         'abc123',
       );
       // The route sends `nextCursor: null` rather than omitting it.

@@ -40,26 +40,22 @@ void main() {
       expect(state.value, isNull);
     });
 
-    test(
-      'Firebase not configured -> settles to a typed reauth_required error, '
-      'never throws or hangs',
-      () async {
-        final container = makeContainer();
-        final notifier =
-            container.read(deleteAccountControllerProvider.notifier);
+    test('Firebase not configured -> settles to a typed reauth_required error, '
+        'never throws or hangs', () async {
+      final container = makeContainer();
+      final notifier = container.read(deleteAccountControllerProvider.notifier);
 
-        // Must not throw synchronously or leave the state stuck loading.
-        await notifier.confirmDelete();
+      // Must not throw synchronously or leave the state stuck loading.
+      await notifier.confirmDelete();
 
-        final state = container.read(deleteAccountControllerProvider);
-        expect(state.hasError, isTrue);
-        expect(state.isLoading, isFalse);
-        final error = state.error;
-        expect(error, isA<ApiException>());
-        expect((error as ApiException).isAuth, isTrue);
-        expect(error.message, 'reauth_required');
-      },
-    );
+      final state = container.read(deleteAccountControllerProvider);
+      expect(state.hasError, isTrue);
+      expect(state.isLoading, isFalse);
+      final error = state.error;
+      expect(error, isA<ApiException>());
+      expect((error as ApiException).isAuth, isTrue);
+      expect(error.message, 'reauth_required');
+    });
   });
 
   /// [ExportDataController] — the fix that replaces the broken
@@ -82,8 +78,7 @@ void main() {
       expect(state.value, isNull);
     });
 
-    test('a ready archive settles to AsyncData(ExportArchiveReady)',
-        () async {
+    test('a ready archive settles to AsyncData(ExportArchiveReady)', () async {
       final client = FakeApiClient(
         postRawResponse: RawResponse(
           bytes: Uint8List.fromList([9, 9, 9]),
@@ -103,23 +98,25 @@ void main() {
       expect(client.postRaws.single.path, '/api/export');
     });
 
-    test('a transport failure settles to a typed AsyncError, not a hang',
-        () async {
-      final client = FakeApiClient(
-        postRawError: const ApiException(
-          ApiErrorKind.server,
-          'Something went wrong on our side.',
-          statusCode: 500,
-        ),
-      );
-      final container = containerWithClient(client);
-      final notifier = container.read(exportDataControllerProvider.notifier);
+    test(
+      'a transport failure settles to a typed AsyncError, not a hang',
+      () async {
+        final client = FakeApiClient(
+          postRawError: const ApiException(
+            ApiErrorKind.server,
+            'Something went wrong on our side.',
+            statusCode: 500,
+          ),
+        );
+        final container = containerWithClient(client);
+        final notifier = container.read(exportDataControllerProvider.notifier);
 
-      await notifier.requestExport('/api/export');
+        await notifier.requestExport('/api/export');
 
-      final state = container.read(exportDataControllerProvider);
-      expect(state.hasError, isTrue);
-      expect(state.isLoading, isFalse);
-    });
+        final state = container.read(exportDataControllerProvider);
+        expect(state.hasError, isTrue);
+        expect(state.isLoading, isFalse);
+      },
+    );
   });
 }

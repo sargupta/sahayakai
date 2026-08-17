@@ -88,8 +88,9 @@ void main() {
     test('drops an unsafe googleEarthUrl to null (launch action then hides)', () {
       // The Andes stop carried a javascript: url — unsafe. The stop survives (its
       // text is still valuable) but its URL is null so the card omits the action.
-      final andes =
-          buildFieldTrip().stops.firstWhere((s) => s.name == 'The Andes Mountains');
+      final andes = buildFieldTrip().stops.firstWhere(
+        (s) => s.name == 'The Andes Mountains',
+      );
       expect(andes.googleEarthUrl, isNull);
     });
 
@@ -101,9 +102,9 @@ void main() {
     });
 
     test('a fully-empty payload decodes to no-stops, not a crash', () {
-      final trip =
-          VirtualFieldTripResponseDto.fromJson(const <String, dynamic>{})
-              .toDomain();
+      final trip = VirtualFieldTripResponseDto.fromJson(
+        const <String, dynamic>{},
+      ).toDomain();
       expect(trip.hasStops, isFalse);
       expect(trip.title, '');
       expect(trip.subject, '');

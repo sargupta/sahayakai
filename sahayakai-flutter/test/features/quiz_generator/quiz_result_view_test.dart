@@ -14,48 +14,47 @@ void main() {
   group('overflow gates (DESIGN_RUBRIC §12.9, §12.10, §12.13)', () {
     for (final brightness in Brightness.values) {
       for (final scale in <double>[1.0, 1.3]) {
-        testWidgets(
-          'renders at 360dp, textScale $scale, ${brightness.name}',
-          (tester) async {
-            tester.view.physicalSize = kNarrowPhone;
-            tester.view.devicePixelRatio = 1.0;
-            addTearDown(tester.view.reset);
+        testWidgets('renders at 360dp, textScale $scale, ${brightness.name}', (
+          tester,
+        ) async {
+          tester.view.physicalSize = kNarrowPhone;
+          tester.view.devicePixelRatio = 1.0;
+          addTearDown(tester.view.reset);
 
-            await tester.pumpWidget(
-              MediaQuery(
-                data: MediaQueryData(textScaler: TextScaler.linear(scale)),
-                child: hostResult(
-                  QuizResultView(quiz: buildQuiz()),
-                  brightness: brightness,
-                ),
+          await tester.pumpWidget(
+            MediaQuery(
+              data: MediaQueryData(textScaler: TextScaler.linear(scale)),
+              child: hostResult(
+                QuizResultView(quiz: buildQuiz()),
+                brightness: brightness,
               ),
-            );
-            await tester.pumpAndSettle();
-            expect(tester.takeException(), isNull);
+            ),
+          );
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
 
-            // Revealing every answer is the tallest, widest state. The richer
-            // DocumentSheet masthead pushes the reveal control below the fold at
-            // 360dp, so scroll it in before tapping (structure only).
-            await tester.ensureVisible(find.text('Show all answers'));
-            await tester.pumpAndSettle();
-            await tester.tap(find.text('Show all answers'));
-            await tester.pumpAndSettle();
-            expect(tester.takeException(), isNull);
-            expect(find.text('Correct answer'), findsWidgets);
+          // Revealing every answer is the tallest, widest state. The richer
+          // DocumentSheet masthead pushes the reveal control below the fold at
+          // 360dp, so scroll it in before tapping (structure only).
+          await tester.ensureVisible(find.text('Show all answers'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('Show all answers'));
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+          expect(find.text('Correct answer'), findsWidgets);
 
-            // Switching variants must not overflow either. Scope to the tab
-            // bar: 'Hard' also appears as a per-question difficulty badge.
-            final hardTab = find.descendant(
-              of: find.byType(TabBar),
-              matching: find.text('Hard'),
-            );
-            await tester.ensureVisible(hardTab);
-            await tester.pumpAndSettle();
-            await tester.tap(hardTab);
-            await tester.pumpAndSettle();
-            expect(tester.takeException(), isNull);
-          },
-        );
+          // Switching variants must not overflow either. Scope to the tab
+          // bar: 'Hard' also appears as a per-question difficulty badge.
+          final hardTab = find.descendant(
+            of: find.byType(TabBar),
+            matching: find.text('Hard'),
+          );
+          await tester.ensureVisible(hardTab);
+          await tester.pumpAndSettle();
+          await tester.tap(hardTab);
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+        });
       }
     }
 
@@ -101,8 +100,9 @@ void main() {
       expect(find.text('Show all answers'), findsOneWidget);
     });
 
-    testWidgets('no variants shows the empty view, never an empty tab',
-        (tester) async {
+    testWidgets('no variants shows the empty view, never an empty tab', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         hostResult(QuizResultView(quiz: buildQuiz(empty: true))),
       );
@@ -149,8 +149,9 @@ void main() {
       expect(find.text('Why'), findsNothing);
     });
 
-    testWidgets('revealing one question leaves the others hidden',
-        (tester) async {
+    testWidgets('revealing one question leaves the others hidden', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(360, 1400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -209,8 +210,9 @@ void main() {
       expect(find.text('Correct answer'), findsNothing);
     });
 
-    testWidgets('a marked multiple-choice answer is not repeated below',
-        (tester) async {
+    testWidgets('a marked multiple-choice answer is not repeated below', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(360, 1400);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -251,8 +253,9 @@ void main() {
   });
 
   group('metadata', () {
-    testWidgets('header shows grade, subject and question count',
-        (tester) async {
+    testWidgets('header shows grade, subject and question count', (
+      tester,
+    ) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -265,8 +268,9 @@ void main() {
       expect(find.text('3 questions'), findsOneWidget);
     });
 
-    testWidgets('a validation warning surfaces as a note, not an error',
-        (tester) async {
+    testWidgets('a validation warning surfaces as a note, not an error', (
+      tester,
+    ) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -292,8 +296,9 @@ void main() {
   });
 
   group('document sheet (PREMIUM_DESIGN_SPEC §5 / U8)', () {
-    testWidgets('wraps the quiz in a DocumentSheet with masthead + meta',
-        (tester) async {
+    testWidgets('wraps the quiz in a DocumentSheet with masthead + meta', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(360, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -313,8 +318,9 @@ void main() {
       expect(find.byType(TabBar), findsOneWidget);
     });
 
-    testWidgets('the action bar offers Regenerate and Copy, wired',
-        (tester) async {
+    testWidgets('the action bar offers Regenerate and Copy, wired', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(360, 2000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -341,8 +347,9 @@ void main() {
       expect(regenerated, isTrue, reason: 'Regenerate re-runs generation');
     });
 
-    testWidgets('Copy writes the quiz to the clipboard and confirms',
-        (tester) async {
+    testWidgets('Copy writes the quiz to the clipboard and confirms', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(360, 2000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -360,8 +367,7 @@ void main() {
       expect(find.text('Copied to clipboard'), findsOneWidget);
     });
 
-    testWidgets(
-        'Copy excludes hidden answers and includes revealed ones (the '
+    testWidgets('Copy excludes hidden answers and includes revealed ones (the '
         'hide-answers toggle is honoured)', (tester) async {
       tester.view.physicalSize = const Size(360, 2400);
       tester.view.devicePixelRatio = 1.0;
@@ -378,13 +384,20 @@ void main() {
           return null;
         },
       );
-      addTearDown(() => tester.binding.defaultBinaryMessenger
-          .setMockMethodCallHandler(SystemChannels.platform, null));
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
 
       // A single variant keeps the reveal state simple (no tabs).
       await tester.pumpWidget(
         hostResult(
-          QuizResultView(quiz: buildQuiz(onlyMedium: true), onRegenerate: () {}),
+          QuizResultView(
+            quiz: buildQuiz(onlyMedium: true),
+            onRegenerate: () {},
+          ),
         ),
       );
       await tester.pumpAndSettle();
@@ -400,8 +413,11 @@ void main() {
       await tapCopy();
       expect(clipped, isNotNull);
       expect(clipped, contains('What is one half')); // the question is there
-      expect(clipped, isNot(contains('Correct answer:')),
-          reason: 'a hidden answer must not leak into the clipboard');
+      expect(
+        clipped,
+        isNot(contains('Correct answer:')),
+        reason: 'a hidden answer must not leak into the clipboard',
+      );
       expect(clipped, isNot(contains('Half means two equal parts')));
 
       // Reveal every answer, then copy again — now the key is included.
@@ -411,13 +427,17 @@ void main() {
       await tester.pumpAndSettle();
 
       await tapCopy();
-      expect(clipped, contains('Correct answer:'),
-          reason: 'a revealed answer is included in the export');
+      expect(
+        clipped,
+        contains('Correct answer:'),
+        reason: 'a revealed answer is included in the export',
+      );
       expect(clipped, contains('Half means two equal parts'));
     });
 
-    testWidgets('with no onRegenerate the footer action bar is absent',
-        (tester) async {
+    testWidgets('with no onRegenerate the footer action bar is absent', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(360, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -429,8 +449,9 @@ void main() {
       expect(find.text('Copy'), findsNothing);
     });
 
-    testWidgets('reduce-motion renders the composed frame, no exception',
-        (tester) async {
+    testWidgets('reduce-motion renders the composed frame, no exception', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(360, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);

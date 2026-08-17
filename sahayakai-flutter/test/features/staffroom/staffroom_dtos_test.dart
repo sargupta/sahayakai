@@ -113,8 +113,10 @@ void main() {
     });
 
     test('LikeResultDto decodes { isLiked, newCount }', () {
-      final r =
-          LikeResultDto.fromJson({'isLiked': true, 'newCount': 5}).toDomain();
+      final r = LikeResultDto.fromJson({
+        'isLiked': true,
+        'newCount': 5,
+      }).toDomain();
       expect(r.isLiked, isTrue);
       expect(r.newCount, 5);
     });
@@ -170,17 +172,20 @@ void main() {
       expect(m.text, '');
     });
 
-    test('SendChatMessageRequestDto.build drops groupId for the global room',
-        () {
-      final global =
-          SendChatMessageRequestDto.build(text: 'hi').toJson();
-      expect(global, {'text': 'hi'});
-      expect(global.containsKey('groupId'), isFalse);
+    test(
+      'SendChatMessageRequestDto.build drops groupId for the global room',
+      () {
+        final global = SendChatMessageRequestDto.build(text: 'hi').toJson();
+        expect(global, {'text': 'hi'});
+        expect(global.containsKey('groupId'), isFalse);
 
-      final group =
-          SendChatMessageRequestDto.build(text: 'hi', groupId: 'g1').toJson();
-      expect(group['groupId'], 'g1');
-    });
+        final group = SendChatMessageRequestDto.build(
+          text: 'hi',
+          groupId: 'g1',
+        ).toJson();
+        expect(group['groupId'], 'g1');
+      },
+    );
   });
 
   group('CommunityPostDto — top-level posts/{id} golden', () {
@@ -201,9 +206,11 @@ void main() {
     });
 
     test('missing visibility defaults to public', () {
-      final p = CommunityPostDto.fromJson(
-              {'id': 'cp2', 'authorId': 'u1', 'content': 'x'})
-          .toDomain();
+      final p = CommunityPostDto.fromJson({
+        'id': 'cp2',
+        'authorId': 'u1',
+        'content': 'x',
+      }).toDomain();
       expect(p.visibility, 'public');
     });
   });
@@ -230,47 +237,49 @@ void main() {
       expect(f.groupName, 'Class 8 Science');
     });
 
-    test('connection_suggestion + resource_share + chat_highlight payloads',
-        () {
-      final conn = FeedItemDto.fromJson({
-        'id': 'f2',
-        'type': 'connection_suggestion',
-        'connectionSuggestion': {
-          'uid': 'u9',
-          'displayName': 'Ravi',
-          'reason': 'Same district',
-          'sharedSubjects': ['Science'],
-        },
-      }).toDomain();
-      expect(conn.type, FeedItemType.connectionSuggestion);
-      expect(conn.connectionSuggestion!.reason, 'Same district');
+    test(
+      'connection_suggestion + resource_share + chat_highlight payloads',
+      () {
+        final conn = FeedItemDto.fromJson({
+          'id': 'f2',
+          'type': 'connection_suggestion',
+          'connectionSuggestion': {
+            'uid': 'u9',
+            'displayName': 'Ravi',
+            'reason': 'Same district',
+            'sharedSubjects': ['Science'],
+          },
+        }).toDomain();
+        expect(conn.type, FeedItemType.connectionSuggestion);
+        expect(conn.connectionSuggestion!.reason, 'Same district');
 
-      final res = FeedItemDto.fromJson({
-        'id': 'f3',
-        'type': 'resource_share',
-        'resource': {
-          'id': 'r1',
-          'title': 'Worksheet',
-          'type': 'worksheet',
-          'authorName': 'Asha',
-          'authorUid': 'u1',
-          'likes': 4,
-        },
-      }).toDomain();
-      expect(res.resource!.likes, 4);
+        final res = FeedItemDto.fromJson({
+          'id': 'f3',
+          'type': 'resource_share',
+          'resource': {
+            'id': 'r1',
+            'title': 'Worksheet',
+            'type': 'worksheet',
+            'authorName': 'Asha',
+            'authorUid': 'u1',
+            'likes': 4,
+          },
+        }).toDomain();
+        expect(res.resource!.likes, 4);
 
-      final chat = FeedItemDto.fromJson({
-        'id': 'f4',
-        'type': 'chat_highlight',
-        'chatHighlight': {
-          'groupId': 'g1',
-          'groupName': 'Class 8 Science',
-          'messageCount': 7,
-          'latestMessage': 'See you there',
-        },
-      }).toDomain();
-      expect(chat.chatHighlight!.messageCount, 7);
-    });
+        final chat = FeedItemDto.fromJson({
+          'id': 'f4',
+          'type': 'chat_highlight',
+          'chatHighlight': {
+            'groupId': 'g1',
+            'groupName': 'Class 8 Science',
+            'messageCount': 7,
+            'latestMessage': 'See you there',
+          },
+        }).toDomain();
+        expect(chat.chatHighlight!.messageCount, 7);
+      },
+    );
 
     test('group_suggestion carries a Group; unknown type → group_post', () {
       final f = FeedItemDto.fromJson({
@@ -281,8 +290,10 @@ void main() {
       expect(f.type, FeedItemType.groupSuggestion);
       expect(f.groupSuggestion!.name, 'Region: Karnataka');
 
-      final unknown =
-          FeedItemDto.fromJson({'id': 'f6', 'type': 'meteor'}).toDomain();
+      final unknown = FeedItemDto.fromJson({
+        'id': 'f6',
+        'type': 'meteor',
+      }).toDomain();
       expect(unknown.type, FeedItemType.groupPost);
     });
 
@@ -322,39 +333,48 @@ void main() {
         ConnectionRequestResult.sent,
       );
       expect(
-        ConnectionRequestResponseDto.fromJson({'status': 'already_connected'})
-            .toDomain(),
+        ConnectionRequestResponseDto.fromJson({
+          'status': 'already_connected',
+        }).toDomain(),
         ConnectionRequestResult.alreadyConnected,
       );
       expect(
-        ConnectionRequestResponseDto.fromJson({'status': 'already_pending'})
-            .toDomain(),
+        ConnectionRequestResponseDto.fromJson({
+          'status': 'already_pending',
+        }).toDomain(),
         ConnectionRequestResult.alreadyPending,
       );
     });
 
-    test('FollowEdge (directed) and MutualConnection (sorted) are distinct', () {
-      // follow doc id is NOT sorted (direction matters)
-      const follow = FollowEdge(followerId: 'zeta', followingId: 'alpha');
-      expect(follow.docId, 'zeta_alpha');
-      // mutual connection resolves the "other" participant
-      const mutual = MutualConnection(
-        id: 'alpha_zeta',
-        uids: ['alpha', 'zeta'],
-        initiatedBy: 'alpha',
-      );
-      expect(mutual.other('alpha'), 'zeta');
-    });
+    test(
+      'FollowEdge (directed) and MutualConnection (sorted) are distinct',
+      () {
+        // follow doc id is NOT sorted (direction matters)
+        const follow = FollowEdge(followerId: 'zeta', followingId: 'alpha');
+        expect(follow.docId, 'zeta_alpha');
+        // mutual connection resolves the "other" participant
+        const mutual = MutualConnection(
+          id: 'alpha_zeta',
+          uids: ['alpha', 'zeta'],
+          initiatedBy: 'alpha',
+        );
+        expect(mutual.other('alpha'), 'zeta');
+      },
+    );
 
     test('request DTOs send only the id fields (server-derived caller)', () {
-      expect(const SendConnectionRequestDto(toUid: 'u2').toJson(),
-          {'toUid': 'u2'});
-      expect(const ConnectionRequestActionDto(requestId: 'r1').toJson(),
-          {'requestId': 'r1'});
-      expect(const DisconnectRequestDto(otherUid: 'u2').toJson(),
-          {'otherUid': 'u2'});
-      expect(const FollowTeacherRequestDto(followingId: 'u2').toJson(),
-          {'followingId': 'u2'});
+      expect(const SendConnectionRequestDto(toUid: 'u2').toJson(), {
+        'toUid': 'u2',
+      });
+      expect(const ConnectionRequestActionDto(requestId: 'r1').toJson(), {
+        'requestId': 'r1',
+      });
+      expect(const DisconnectRequestDto(otherUid: 'u2').toJson(), {
+        'otherUid': 'u2',
+      });
+      expect(const FollowTeacherRequestDto(followingId: 'u2').toJson(), {
+        'followingId': 'u2',
+      });
     });
   });
 
@@ -412,15 +432,17 @@ void main() {
         ),
       ).toJson();
       expect(json['mode'], 'auto');
-      expect((json['recentMessages'] as List).single,
-          {'authorName': 'Asha', 'text': 'Hi all'});
+      expect((json['recentMessages'] as List).single, {
+        'authorName': 'Asha',
+        'text': 'Hi all',
+      });
       expect(json.containsKey('personaId'), isFalse);
     });
 
     test('empty recentMessages is omitted', () {
-      final json =
-          PersonaPulseRequestDto.fromDomain(const PersonaPulseRequest())
-              .toJson();
+      final json = PersonaPulseRequestDto.fromDomain(
+        const PersonaPulseRequest(),
+      ).toJson();
       expect(json.containsKey('recentMessages'), isFalse);
     });
 

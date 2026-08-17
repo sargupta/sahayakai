@@ -113,9 +113,9 @@ void main() {
     });
 
     test('an entirely empty payload decodes to an empty result', () {
-      final advice =
-          TeacherTrainingResponseDto.fromJson(const <String, dynamic>{})
-              .toDomain();
+      final advice = TeacherTrainingResponseDto.fromJson(
+        const <String, dynamic>{},
+      ).toDomain();
 
       expect(advice.isEmpty, isTrue);
       expect(advice.introduction, isEmpty);
@@ -143,7 +143,11 @@ void main() {
       final advice = TeacherTrainingResponseDto.fromJson(<String, dynamic>{
         'introduction': 'Intro.',
         'advice': [
-          {'strategy': '  ', 'pedagogy': 'Nothing', 'explanation': '  '}, // dropped
+          {
+            'strategy': '  ',
+            'pedagogy': 'Nothing',
+            'explanation': '  ',
+          }, // dropped
           {'strategy': 'A real strategy.', 'pedagogy': '', 'explanation': ''},
           {'strategy': '', 'pedagogy': 'X', 'explanation': 'A real why.'},
         ],

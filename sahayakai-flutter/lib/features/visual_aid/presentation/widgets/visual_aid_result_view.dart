@@ -59,10 +59,7 @@ class VisualAidResultView extends StatelessWidget {
     // The server can come back with no usable image; that is an empty state the
     // teacher can act on, not a broken card.
     if (!aid.hasImage) {
-      return EmptyView(
-        message: l10n.visualAidNoImage,
-        icon: LucideIcons.image,
-      );
+      return EmptyView(message: l10n.visualAidNoImage, icon: LucideIcons.image);
     }
 
     final hasPrompt = prompt != null && prompt!.trim().isNotEmpty;
@@ -135,7 +132,7 @@ class _DrawingFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Container(
+    return DecoratedBox(
       decoration: BoxDecoration(
         color: scheme.surfaceContainerLow,
         borderRadius: AppRadius.rCard,
@@ -168,8 +165,11 @@ class _BrokenImage extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(LucideIcons.imageOff,
-              size: AppIconSize.standalone, color: scheme.onSurfaceVariant),
+          Icon(
+            LucideIcons.imageOff,
+            size: AppIconSize.standalone,
+            color: scheme.onSurfaceVariant,
+          ),
           const SizedBox(height: AppSpacing.space3),
           Text(
             l10n.visualAidImageError,

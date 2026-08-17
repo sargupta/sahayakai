@@ -29,8 +29,9 @@ const Size kNarrowPhone = Size(360, 900);
 /// [empty] returns a blank completion (the empty-state path).
 ParentMessage buildMessage({bool empty = false}) {
   if (empty) return const ParentMessage(message: '   ');
-  return ParentMessage(
-    message: 'மதிப்பிற்குரிய பெற்றோருக்கு வணக்கம். $kTa $kBn $kMl $kLongWord '
+  return const ParentMessage(
+    message:
+        'மதிப்பிற்குரிய பெற்றோருக்கு வணக்கம். $kTa $kBn $kMl $kLongWord '
         'உங்கள் மகனின் வருகை குறித்து பேச விரும்புகிறேன்.',
     languageCode: 'ta-IN',
     wordCount: 42,
@@ -73,8 +74,9 @@ Widget hostResult(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
       home: Scaffold(

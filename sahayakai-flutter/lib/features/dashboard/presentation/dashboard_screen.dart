@@ -6,6 +6,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/platform/clock.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/data/library_items_provider.dart';
@@ -103,7 +104,7 @@ class _AlmanacHeader extends ConsumerWidget {
     // The eyebrow leads with a time-aware salutation and, when the teacher has
     // told us their school, the school (§5). `.toUpperCase()` tracks the Latin
     // register uppercase while leaving unicameral Indic scripts untouched.
-    final salutation = _salutationFor(DateTime.now(), l10n);
+    final salutation = _salutationFor(ref.read(nowProvider)(), l10n);
     final eyebrow = (school != null && school.isNotEmpty)
         ? '$salutation · $school'
         : salutation;
@@ -111,8 +112,9 @@ class _AlmanacHeader extends ConsumerWidget {
     // MaterialLocalizations, not intl's DateFormat: the date delegates are
     // wired for every supported locale and cannot throw on one whose symbols
     // aren't loaded (the same choice LibraryItemRow made).
-    final dateLine =
-        MaterialLocalizations.of(context).formatFullDate(DateTime.now());
+    final dateLine = MaterialLocalizations.of(
+      context,
+    ).formatFullDate(DateTime.now());
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -196,11 +198,17 @@ class _SetupNudgeState extends ConsumerState<_SetupNudge> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(LucideIcons.userCog,
-                    size: AppIconSize.inline, color: scheme.primary),
+                Icon(
+                  LucideIcons.userCog,
+                  size: AppIconSize.inline,
+                  color: scheme.primary,
+                ),
                 const SizedBox(width: AppSpacing.space3),
                 Expanded(
-                  child: Text(l10n.dashboardSetupTitle, style: text.titleMedium),
+                  child: Text(
+                    l10n.dashboardSetupTitle,
+                    style: text.titleMedium,
+                  ),
                 ),
               ],
             ),
@@ -301,8 +309,9 @@ class _FeatureTile extends StatelessWidget {
                     const SizedBox(height: AppSpacing.space1),
                     Text(
                       tool.subtitle(l10n),
-                      style: text.bodyMedium
-                          ?.copyWith(color: scheme.onSurfaceVariant),
+                      style: text.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -318,8 +327,11 @@ class _FeatureTile extends StatelessWidget {
                 style: text.labelLarge?.copyWith(color: saffron),
               ),
               const SizedBox(width: AppSpacing.space1),
-              Icon(LucideIcons.chevronRight,
-                  size: AppIconSize.inline, color: saffron),
+              Icon(
+                LucideIcons.chevronRight,
+                size: AppIconSize.inline,
+                color: saffron,
+              ),
             ],
           ),
         ],
@@ -431,9 +443,9 @@ class _RecentSection extends ConsumerWidget {
                 onTap: item.id.isEmpty
                     ? null
                     : () => context.push(
-                          Routes.libraryDetailPath(item.id),
-                          extra: item,
-                        ),
+                        Routes.libraryDetailPath(item.id),
+                        extra: item,
+                      ),
               ),
             ],
           ],

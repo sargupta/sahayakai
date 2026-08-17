@@ -17,10 +17,10 @@ import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
 import '../../vidya/presentation/widgets/inline_field_mic.dart';
 import '../domain/worksheet.dart';
-import 'worksheet_controller.dart';
 import 'widgets/worksheet_error_view.dart';
 import 'widgets/worksheet_result_view.dart';
 import 'widgets/worksheet_skeleton.dart';
+import 'worksheet_controller.dart';
 
 /// P1.1 — the Worksheet Wizard. A capped, scrolling editorial form + a sticky
 /// Generate button ([ToolScaffold]), driven by an AsyncNotifier and rendered
@@ -176,8 +176,10 @@ class _WorksheetWizardScreenState extends ConsumerState<WorksheetWizardScreen> {
     final state = ref.watch(worksheetControllerProvider);
 
     // Auto-scroll to the result header on a fresh success (loading -> data).
-    ref.listen<AsyncValue<Worksheet?>>(worksheetControllerProvider,
-        (prev, next) {
+    ref.listen<AsyncValue<Worksheet?>>(worksheetControllerProvider, (
+      prev,
+      next,
+    ) {
       final wasLoading = prev?.isLoading ?? false;
       final nowHasWorksheet =
           !next.isLoading && next.hasValue && next.valueOrNull != null;

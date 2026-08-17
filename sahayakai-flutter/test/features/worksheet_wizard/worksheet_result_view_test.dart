@@ -40,8 +40,9 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('numbers the answer key from the 0-based activityIndex',
-        (tester) async {
+    testWidgets('numbers the answer key from the 0-based activityIndex', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         hostResult(WorksheetResultView(worksheet: buildWorksheet())),
       );
@@ -53,8 +54,9 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('an empty worksheet shows the dignified empty state',
-        (tester) async {
+    testWidgets('an empty worksheet shows the dignified empty state', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         hostResult(WorksheetResultView(worksheet: buildWorksheet(empty: true))),
       );
@@ -65,79 +67,83 @@ void main() {
     });
 
     testWidgets(
-        'money bug: a title-only response (no activities) shows the empty '
-        'state, never a fake-success Save button', (tester) async {
-      // The old AND-of-every-field emptiness check treated a title-only,
-      // activity-less worksheet as "not empty" because the title alone was
-      // non-blank — the same fake-success bug the exam paper had.
-      const titleOnly = Worksheet(
-        title: 'Counting Mangoes',
-        gradeLevel: 'Class 2',
-        subject: 'Mathematics',
-        learningObjectives: ['Count up to 20'],
-      );
-      expect(titleOnly.activities, isEmpty);
-      expect(titleOnly.isEmpty, isTrue);
+      'money bug: a title-only response (no activities) shows the empty '
+      'state, never a fake-success Save button',
+      (tester) async {
+        // The old AND-of-every-field emptiness check treated a title-only,
+        // activity-less worksheet as "not empty" because the title alone was
+        // non-blank — the same fake-success bug the exam paper had.
+        const titleOnly = Worksheet(
+          title: 'Counting Mangoes',
+          gradeLevel: 'Class 2',
+          subject: 'Mathematics',
+          learningObjectives: ['Count up to 20'],
+        );
+        expect(titleOnly.activities, isEmpty);
+        expect(titleOnly.isEmpty, isTrue);
 
-      await tester.pumpWidget(hostResult(
-        const WorksheetResultView(worksheet: titleOnly),
-      ));
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          hostResult(const WorksheetResultView(worksheet: titleOnly)),
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.byType(EmptyView), findsOneWidget);
-      expect(find.textContaining('No worksheet came back'), findsOneWidget);
-      expect(find.textContaining('Counting Mangoes'), findsNothing);
-    });
+        expect(find.byType(EmptyView), findsOneWidget);
+        expect(find.textContaining('No worksheet came back'), findsOneWidget);
+        expect(find.textContaining('Counting Mangoes'), findsNothing);
+      },
+    );
   });
 
   group('save to library', () {
     testWidgets(
-        'a save request surfaces a Save action that POSTs to content/save',
-        (tester) async {
-      tester.view.physicalSize = const Size(360, 2400);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
+      'a save request surfaces a Save action that POSTs to content/save',
+      (tester) async {
+        tester.view.physicalSize = const Size(360, 2400);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
 
-      final client = FakeApiClient(
-        postResponse: <String, dynamic>{'success': true, 'id': 'ws-9'},
-      );
+        final client = FakeApiClient(
+          postResponse: <String, dynamic>{'success': true, 'id': 'ws-9'},
+        );
 
-      const request = WorksheetRequest(
-        imageDataUri: 'data:image/png;base64,AAAA',
-        prompt: 'Counting mangoes',
-        gradeLevel: 'Class 2',
-        language: 'English',
-      );
+        const request = WorksheetRequest(
+          imageDataUri: 'data:image/png;base64,AAAA',
+          prompt: 'Counting mangoes',
+          gradeLevel: 'Class 2',
+          language: 'English',
+        );
 
-      await tester.pumpWidget(
-        hostResult(
-          WorksheetResultView(
-            worksheet: buildWorksheet(),
-            onRegenerate: () {},
-            saveRequest: request,
+        await tester.pumpWidget(
+          hostResult(
+            WorksheetResultView(
+              worksheet: buildWorksheet(),
+              onRegenerate: () {},
+              saveRequest: request,
+            ),
+            overrides: [apiClientOverride(client)],
           ),
-          overrides: [apiClientOverride(client)],
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // The Save action is now offered (it was Copy-only before Unit 14).
-      final save = find.text('Save to Library');
-      expect(save, findsOneWidget);
+        // The Save action is now offered (it was Copy-only before Unit 14).
+        final save = find.text('Save to Library');
+        expect(save, findsOneWidget);
 
-      await tester.ensureVisible(save);
-      await tester.pumpAndSettle();
-      await tester.tap(save);
-      await tester.pumpAndSettle();
+        await tester.ensureVisible(save);
+        await tester.pumpAndSettle();
+        await tester.tap(save);
+        await tester.pumpAndSettle();
 
-      // It hit the real content/save endpoint and reflected the saved state.
-      expect(client.posts.single.path, '/api/content/save');
-      expect((client.posts.single.data! as Map)['type'], 'worksheet');
-      expect(find.text('Saved to your Library'), findsOneWidget);
-    });
+        // It hit the real content/save endpoint and reflected the saved state.
+        expect(client.posts.single.path, '/api/content/save');
+        expect((client.posts.single.data! as Map)['type'], 'worksheet');
+        expect(find.text('Saved to your Library'), findsOneWidget);
+      },
+    );
 
-    testWidgets('with no saveRequest the footer has no Save action',
-        (tester) async {
+    testWidgets('with no saveRequest the footer has no Save action', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(360, 2000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);

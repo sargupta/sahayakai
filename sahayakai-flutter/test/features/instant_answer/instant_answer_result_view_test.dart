@@ -16,31 +16,30 @@ void main() {
   group('overflow gates (DESIGN_RUBRIC §12.9, §12.10, §12.13)', () {
     for (final brightness in Brightness.values) {
       for (final scale in <double>[1.0, 1.3]) {
-        testWidgets(
-          'renders at 360dp, textScale $scale, ${brightness.name}',
-          (tester) async {
-            tester.view.physicalSize = kNarrowPhone;
-            tester.view.devicePixelRatio = 1.0;
-            addTearDown(tester.view.reset);
+        testWidgets('renders at 360dp, textScale $scale, ${brightness.name}', (
+          tester,
+        ) async {
+          tester.view.physicalSize = kNarrowPhone;
+          tester.view.devicePixelRatio = 1.0;
+          addTearDown(tester.view.reset);
 
-            await tester.pumpWidget(
-              MediaQuery(
-                data: MediaQueryData(textScaler: TextScaler.linear(scale)),
-                child: hostResult(
-                  InstantAnswerResultView(answer: buildAnswer()),
-                  brightness: brightness,
-                  linkOpener: FakeLinkOpener(),
-                ),
+          await tester.pumpWidget(
+            MediaQuery(
+              data: MediaQueryData(textScaler: TextScaler.linear(scale)),
+              child: hostResult(
+                InstantAnswerResultView(answer: buildAnswer()),
+                brightness: brightness,
+                linkOpener: FakeLinkOpener(),
               ),
-            );
-            await tester.pumpAndSettle();
-            expect(tester.takeException(), isNull);
+            ),
+          );
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
 
-            // The Indic probes and the unbreakable compound word are the
-            // widest things on the screen; they must wrap, not overflow.
-            expect(find.byType(AnswerMarkdownView), findsOneWidget);
-          },
-        );
+          // The Indic probes and the unbreakable compound word are the
+          // widest things on the screen; they must wrap, not overflow.
+          expect(find.byType(AnswerMarkdownView), findsOneWidget);
+        });
       }
     }
 
@@ -56,8 +55,9 @@ void main() {
   });
 
   group('markdown rendering', () {
-    testWidgets('a basic answer renders its prose, headings and lists',
-        (tester) async {
+    testWidgets('a basic answer renders its prose, headings and lists', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(360, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -66,7 +66,8 @@ void main() {
         hostResult(
           const InstantAnswerResultView(
             answer: InstantAnswer(
-              answer: '# Photosynthesis\n\n'
+              answer:
+                  '# Photosynthesis\n\n'
                   'Plants make **their own** food.\n\n'
                   '- Sunlight\n'
                   '- Water\n\n'
@@ -91,8 +92,9 @@ void main() {
       expect(find.text('1.'), findsOneWidget); // the numbered marker
     });
 
-    testWidgets('AI prose keeps line-height 1.7 and full height behaviour',
-        (tester) async {
+    testWidgets('AI prose keeps line-height 1.7 and full height behaviour', (
+      tester,
+    ) async {
       // DESIGN_RUBRIC §3 / §12.4: AI output blocks run at 1.7 with the height
       // applied to the first ascent and last descent, or Indic matras clip.
       await tester.pumpWidget(
@@ -116,8 +118,9 @@ void main() {
       expect(rich.textSpan!.style?.height, 1.7);
     });
 
-    testWidgets('an empty answer shows the rephrase state, not a blank card',
-        (tester) async {
+    testWidgets('an empty answer shows the rephrase state, not a blank card', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         hostResult(
           InstantAnswerResultView(answer: buildAnswer(empty: true)),
@@ -133,8 +136,9 @@ void main() {
   });
 
   group('videoSuggestionUrl', () {
-    testWidgets('renders a tappable card that opens the video externally',
-        (tester) async {
+    testWidgets('renders a tappable card that opens the video externally', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(360, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -158,7 +162,9 @@ void main() {
       await tester.tap(card);
       await tester.pumpAndSettle();
 
-      expect(opener.opened, [Uri.parse('https://www.youtube.com/watch?v=abc123')]);
+      expect(opener.opened, [
+        Uri.parse('https://www.youtube.com/watch?v=abc123'),
+      ]);
     });
 
     testWidgets('the whole card clears the 48dp touch target', (tester) async {
@@ -188,8 +194,9 @@ void main() {
       expect(size.height, greaterThanOrEqualTo(48));
     });
 
-    testWidgets('a null videoSuggestionUrl renders no card and no crash',
-        (tester) async {
+    testWidgets('a null videoSuggestionUrl renders no card and no crash', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(360, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -210,8 +217,9 @@ void main() {
   });
 
   group('metadata', () {
-    testWidgets('shows the grade and subject the answer was tailored to',
-        (tester) async {
+    testWidgets('shows the grade and subject the answer was tailored to', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         hostResult(
           InstantAnswerResultView(answer: buildAnswer()),
@@ -241,8 +249,9 @@ void main() {
   });
 
   group('document sheet (PREMIUM_DESIGN_SPEC §5 / U8)', () {
-    testWidgets('wraps the answer in a DocumentSheet titled by the question',
-        (tester) async {
+    testWidgets('wraps the answer in a DocumentSheet titled by the question', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(360, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -269,8 +278,9 @@ void main() {
       expect(find.byType(AnswerMarkdownView), findsOneWidget);
     });
 
-    testWidgets('falls back to the localized Answer title with no question',
-        (tester) async {
+    testWidgets('falls back to the localized Answer title with no question', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         hostResult(
           const InstantAnswerResultView(
@@ -287,8 +297,9 @@ void main() {
       expect(find.text('ANSWER'), findsOneWidget);
     });
 
-    testWidgets('the action bar offers Regenerate and Copy, wired',
-        (tester) async {
+    testWidgets('the action bar offers Regenerate and Copy, wired', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(360, 2000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -316,8 +327,9 @@ void main() {
       expect(regenerated, isTrue, reason: 'Regenerate re-runs the ask');
     });
 
-    testWidgets('Copy writes the answer to the clipboard and confirms',
-        (tester) async {
+    testWidgets('Copy writes the answer to the clipboard and confirms', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(360, 2000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -342,8 +354,9 @@ void main() {
       expect(find.text('Copied to clipboard'), findsOneWidget);
     });
 
-    testWidgets('with no onRegenerate the footer action bar is absent',
-        (tester) async {
+    testWidgets('with no onRegenerate the footer action bar is absent', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(360, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -360,8 +373,9 @@ void main() {
       expect(find.text('Copy'), findsNothing);
     });
 
-    testWidgets('reduce-motion renders the composed frame, no exception',
-        (tester) async {
+    testWidgets('reduce-motion renders the composed frame, no exception', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(360, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -396,7 +410,5 @@ String _renderedText(WidgetTester tester) {
       matching: find.byType(Text),
     ),
   );
-  return texts
-      .map((t) => t.data ?? t.textSpan?.toPlainText() ?? '')
-      .join('\n');
+  return texts.map((t) => t.data ?? t.textSpan?.toPlainText() ?? '').join('\n');
 }

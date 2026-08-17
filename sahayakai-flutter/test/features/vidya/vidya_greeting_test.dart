@@ -23,27 +23,37 @@ void main() {
   Future<(FakeApiClient, WidgetRef)> pump(WidgetTester tester) async {
     final client = FakeApiClient(postResponse: {'audioContent': _b64});
     late WidgetRef captured;
-    await tester.pumpWidget(ProviderScope(
-      overrides: [
-        apiClientProvider.overrideWithValue(client),
-        audioPlayerServiceProvider.overrideWithValue(FakeAudioPlayerService()),
-      ],
-      child: Consumer(builder: (context, ref, _) {
-        captured = ref;
-        return const SizedBox();
-      }),
-    ));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          apiClientProvider.overrideWithValue(client),
+          audioPlayerServiceProvider.overrideWithValue(
+            FakeAudioPlayerService(),
+          ),
+        ],
+        child: Consumer(
+          builder: (context, ref, _) {
+            captured = ref;
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
     return (client, captured);
   }
 
   List<({String path, Object? data})> ttsPosts(FakeApiClient c) =>
       c.posts.where((p) => p.path == '/api/tts').toList();
 
-  testWidgets('speaks the greeting once, in the teacher language, motion on',
-      (tester) async {
+  testWidgets('speaks the greeting once, in the teacher language, motion on', (
+    tester,
+  ) async {
     final (client, ref) = await pump(tester);
-    maybeSpeakVidyaGreeting(ref,
-        motionEnabled: true, greeting: 'Welcome, teacher.');
+    maybeSpeakVidyaGreeting(
+      ref,
+      motionEnabled: true,
+      greeting: 'Welcome, teacher.',
+    );
     await tester.pumpAndSettle();
 
     final posts = ttsPosts(client);
@@ -65,8 +75,9 @@ void main() {
     expect(ttsPosts(client), hasLength(1));
   });
 
-  testWidgets('reduce-motion suppresses the greeting (no surprise audio)',
-      (tester) async {
+  testWidgets('reduce-motion suppresses the greeting (no surprise audio)', (
+    tester,
+  ) async {
     final (client, ref) = await pump(tester);
     maybeSpeakVidyaGreeting(ref, motionEnabled: false, greeting: 'Hi');
     await tester.pumpAndSettle();

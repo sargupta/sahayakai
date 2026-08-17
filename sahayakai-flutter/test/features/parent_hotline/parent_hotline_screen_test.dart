@@ -464,11 +464,11 @@ void main() {
       await _pump(
         tester,
         overrides: _fixed(
-          ParentHotlineState(
+          const ParentHotlineState(
             stage: HotlineStage.summary,
             studentName: 'Asha Rao',
             selectedReason: OutreachReason.consecutiveAbsences,
-            callResult: const CallResult(
+            callResult: CallResult(
               callStatus: CallStatus.completed,
               turnCount: 4,
               callDurationSeconds: 120,

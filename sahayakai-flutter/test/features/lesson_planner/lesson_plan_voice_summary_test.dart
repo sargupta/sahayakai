@@ -43,15 +43,15 @@ class _AutoLesson extends LessonPlanController {
 }
 
 Widget _host(Widget screen, List<Override> overrides) => ProviderScope(
-      overrides: overrides,
-      child: MaterialApp(
-        theme: AppTheme.light(),
-        locale: const Locale('en'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: screen,
-      ),
-    );
+  overrides: overrides,
+  child: MaterialApp(
+    theme: AppTheme.light(),
+    locale: const Locale('en'),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: screen,
+  ),
+);
 
 void _tallPhone(WidgetTester tester) {
   tester.view.physicalSize = const Size(420, 1600);
@@ -65,22 +65,25 @@ List<({String path, Object? data})> _ttsPosts(FakeApiClient c) =>
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues(<String, Object>{}));
 
-  testWidgets('a voice-originated result auto-speaks a short summary, once',
-      (tester) async {
+  testWidgets('a voice-originated result auto-speaks a short summary, once', (
+    tester,
+  ) async {
     _tallPhone(tester);
     final client = FakeApiClient(postResponse: {'audioContent': _b64});
     final player = FakeAudioPlayerService();
 
-    await tester.pumpWidget(_host(
-      const LessonPlanScreen(
-        prefill: ToolPrefill(topic: 'Photosynthesis', autoSubmit: true),
+    await tester.pumpWidget(
+      _host(
+        const LessonPlanScreen(
+          prefill: ToolPrefill(topic: 'Photosynthesis', autoSubmit: true),
+        ),
+        [
+          lessonPlanControllerProvider.overrideWith(_AutoLesson.new),
+          apiClientProvider.overrideWithValue(client),
+          audioPlayerServiceProvider.overrideWithValue(player),
+        ],
       ),
-      [
-        lessonPlanControllerProvider.overrideWith(_AutoLesson.new),
-        apiClientProvider.overrideWithValue(client),
-        audioPlayerServiceProvider.overrideWithValue(player),
-      ],
-    ));
+    );
     await tester.pumpAndSettle();
 
     // Exactly one utterance was played — the summary — and only once.
@@ -96,20 +99,24 @@ void main() {
     expect(spoken.length, lessThan(120));
   });
 
-  testWidgets('a manually-generated result does NOT auto-speak', (tester) async {
+  testWidgets('a manually-generated result does NOT auto-speak', (
+    tester,
+  ) async {
     _tallPhone(tester);
     final client = FakeApiClient(postResponse: {'audioContent': _b64});
     final player = FakeAudioPlayerService();
 
-    await tester.pumpWidget(_host(
-      // autoSubmit defaults false — a tapped tile with the topic pre-filled.
-      const LessonPlanScreen(prefill: ToolPrefill(topic: 'Photosynthesis')),
-      [
-        lessonPlanControllerProvider.overrideWith(_AutoLesson.new),
-        apiClientProvider.overrideWithValue(client),
-        audioPlayerServiceProvider.overrideWithValue(player),
-      ],
-    ));
+    await tester.pumpWidget(
+      _host(
+        // autoSubmit defaults false — a tapped tile with the topic pre-filled.
+        const LessonPlanScreen(prefill: ToolPrefill(topic: 'Photosynthesis')),
+        [
+          lessonPlanControllerProvider.overrideWith(_AutoLesson.new),
+          apiClientProvider.overrideWithValue(client),
+          audioPlayerServiceProvider.overrideWithValue(player),
+        ],
+      ),
+    );
     await tester.pumpAndSettle();
 
     // Nothing auto-ran, nothing spoke.

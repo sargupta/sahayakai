@@ -58,12 +58,14 @@ void main() {
       final client = FakeApiClient(
         multipartResponse: {'text': 'hi', 'language': 'en'},
       );
-      await VoiceToTextRepository(client)
-          .transcribe(audioBytes: Uint8List.fromList([9]));
+      await VoiceToTextRepository(
+        client,
+      ).transcribe(audioBytes: Uint8List.fromList([9]));
 
       expect(
-        client.multiparts.single.data.fields
-            .where((f) => f.key == 'expectedLanguage'),
+        client.multiparts.single.data.fields.where(
+          (f) => f.key == 'expectedLanguage',
+        ),
         isEmpty,
       );
     });
@@ -71,8 +73,9 @@ void main() {
     test('a 401 on the stub token surfaces as the typed exception', () async {
       final client = FakeApiClient(multipartError: _unauthorized);
       expect(
-        () => VoiceToTextRepository(client)
-            .transcribe(audioBytes: Uint8List.fromList([1])),
+        () => VoiceToTextRepository(
+          client,
+        ).transcribe(audioBytes: Uint8List.fromList([1])),
         throwsA(same(_unauthorized)),
       );
     });
@@ -93,11 +96,13 @@ void main() {
         },
       );
 
-      final turn = await VidyaRepository(client).ask(const AssistantRequest(
-        message: 'lesson plan on fractions',
-        uiLanguage: 'hi',
-        chatHistory: [ChatMessage(role: ChatRole.user, text: 'earlier')],
-      ));
+      final turn = await VidyaRepository(client).ask(
+        const AssistantRequest(
+          message: 'lesson plan on fractions',
+          uiLanguage: 'hi',
+          chatHistory: [ChatMessage(role: ChatRole.user, text: 'earlier')],
+        ),
+      );
 
       expect(client.posts.single.path, '/api/assistant');
       final body = client.posts.single.data as Map<String, dynamic>;
@@ -125,20 +130,27 @@ void main() {
         postResponse: {'audioContent': 'QUJD', 'voiceQuota': null},
       );
 
-      final res = await TtsRepository(client)
-          .synthesize(text: 'Namaste', targetLang: 'hi-IN');
+      final res = await TtsRepository(
+        client,
+      ).synthesize(text: 'Namaste', targetLang: 'hi-IN');
 
       expect(client.posts.single.path, '/api/tts');
-      expect(client.posts.single.data, {'text': 'Namaste', 'targetLang': 'hi-IN'});
+      expect(client.posts.single.data, {
+        'text': 'Namaste',
+        'targetLang': 'hi-IN',
+      });
       expect(res.audioContent, 'QUJD');
     });
 
-    test('omits targetLang when the server should detect from script', () async {
-      final client = FakeApiClient(postResponse: {'audioContent': 'QUJD'});
-      await TtsRepository(client).synthesize(text: 'কি খবর');
+    test(
+      'omits targetLang when the server should detect from script',
+      () async {
+        final client = FakeApiClient(postResponse: {'audioContent': 'QUJD'});
+        await TtsRepository(client).synthesize(text: 'কি খবর');
 
-      expect(client.posts.single.data, {'text': 'কি খবর'});
-    });
+        expect(client.posts.single.data, {'text': 'কি খবর'});
+      },
+    );
 
     test('a 429 rate-limit surfaces as the typed exception', () async {
       const rateLimited = ApiException(
@@ -156,17 +168,19 @@ void main() {
 
   group('VidyaSessionRepository — GET/POST /api/vidya/session', () {
     test('GET decodes the latest session', () async {
-      final client = FakeApiClient(getResponse: {
-        'sessionId': 'sess-9',
-        'messages': [
-          {
-            'role': 'model',
-            'parts': [
-              {'text': 'welcome back'},
-            ],
-          },
-        ],
-      });
+      final client = FakeApiClient(
+        getResponse: {
+          'sessionId': 'sess-9',
+          'messages': [
+            {
+              'role': 'model',
+              'parts': [
+                {'text': 'welcome back'},
+              ],
+            },
+          ],
+        },
+      );
 
       final session = await VidyaSessionRepository(client).fetchLatest();
       expect(client.gets.single.path, '/api/vidya/session');
@@ -192,31 +206,36 @@ void main() {
 
       final body = client.posts.single.data as Map<String, dynamic>;
       expect(body['sessionId'], 'sess-9');
-      expect((body['messages'] as List), hasLength(2));
+      expect(body['messages'] as List, hasLength(2));
       expect(body['messages'][0], {
         'role': 'user',
         'parts': [
           {'text': 'hi'},
         ],
       });
-      expect(body['actionTriggered'],
-          {'flow': 'lesson-plan', 'params': {'topic': 'Fractions'}});
+      expect(body['actionTriggered'], {
+        'flow': 'lesson-plan',
+        'params': {'topic': 'Fractions'},
+      });
       expect(body['screenPath'], '/lesson-plan');
       expect(body['isNew'], true);
     });
 
-    test('POST omits actionTriggered / screenPath / isNew when unset', () async {
-      final client = FakeApiClient(postResponse: {'success': true});
-      await VidyaSessionRepository(client).save(
-        sessionId: 'sess-9',
-        messages: const [ChatMessage(role: ChatRole.user, text: 'hi')],
-      );
+    test(
+      'POST omits actionTriggered / screenPath / isNew when unset',
+      () async {
+        final client = FakeApiClient(postResponse: {'success': true});
+        await VidyaSessionRepository(client).save(
+          sessionId: 'sess-9',
+          messages: const [ChatMessage(role: ChatRole.user, text: 'hi')],
+        );
 
-      final body = client.posts.single.data as Map<String, dynamic>;
-      expect(body.containsKey('actionTriggered'), isFalse);
-      expect(body.containsKey('screenPath'), isFalse);
-      expect(body.containsKey('isNew'), isFalse);
-    });
+        final body = client.posts.single.data as Map<String, dynamic>;
+        expect(body.containsKey('actionTriggered'), isFalse);
+        expect(body.containsKey('screenPath'), isFalse);
+        expect(body.containsKey('isNew'), isFalse);
+      },
+    );
 
     test('a 401 surfaces from the GET', () async {
       final client = FakeApiClient(error: _unauthorized);
@@ -229,9 +248,14 @@ void main() {
 
   group('VidyaProfileRepository — GET/POST /api/vidya/profile', () {
     test('GET unwraps the { profile } envelope', () async {
-      final client = FakeApiClient(getResponse: {
-        'profile': {'preferredGrade': 'Class 10', 'preferredSubject': 'Maths'},
-      });
+      final client = FakeApiClient(
+        getResponse: {
+          'profile': {
+            'preferredGrade': 'Class 10',
+            'preferredSubject': 'Maths',
+          },
+        },
+      );
 
       final profile = await VidyaProfileRepository(client).fetch();
       expect(client.gets.single.path, '/api/vidya/profile');
@@ -247,7 +271,10 @@ void main() {
     test('POST wraps the strict { profile } body', () async {
       final client = FakeApiClient(postResponse: {'success': true});
       await VidyaProfileRepository(client).save(
-        const VidyaProfile(preferredGrade: 'Class 10', preferredLanguage: 'Hindi'),
+        const VidyaProfile(
+          preferredGrade: 'Class 10',
+          preferredLanguage: 'Hindi',
+        ),
       );
 
       expect(client.posts.single.path, '/api/vidya/profile');

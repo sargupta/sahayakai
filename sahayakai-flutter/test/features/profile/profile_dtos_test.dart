@@ -46,20 +46,25 @@ void main() {
     test('unset fields are omitted, never sent as null', () {
       // The route validates any key it receives, so an explicit null board
       // would 400 the whole request instead of leaving the field alone.
-      final json =
-          ProfileSettingsPatchDto.fromDomain(const ProfileSettings()).toJson();
+      final json = ProfileSettingsPatchDto.fromDomain(
+        const ProfileSettings(),
+      ).toJson();
 
       expect(json.containsKey('preferredBoard'), isFalse);
       expect(json.containsKey('administrativeRole'), isFalse);
     });
 
-    test('an empty qualification list is sent, because clearing is an intent', () {
-      // Distinct from "unset": the teacher deselected every chip and wants that
-      // persisted. The route accepts any array whose members are all valid.
-      final json =
-          ProfileSettingsPatchDto.fromDomain(const ProfileSettings()).toJson();
-      expect(json['qualifications'], isEmpty);
-    });
+    test(
+      'an empty qualification list is sent, because clearing is an intent',
+      () {
+        // Distinct from "unset": the teacher deselected every chip and wants that
+        // persisted. The route accepts any array whose members are all valid.
+        final json = ProfileSettingsPatchDto.fromDomain(
+          const ProfileSettings(),
+        ).toJson();
+        expect(json['qualifications'], isEmpty);
+      },
+    );
 
     test('AdministrativeRole.none serializes as the "none" answer', () {
       // "I hold no administrative role" is an answer and must reach the server;
@@ -81,9 +86,12 @@ void main() {
         ),
       ).toJson();
       expect(
-        json.keys.toSet().difference(
-          {'yearsOfExperience', 'administrativeRole', 'qualifications', 'preferredBoard'},
-        ),
+        json.keys.toSet().difference({
+          'yearsOfExperience',
+          'administrativeRole',
+          'qualifications',
+          'preferredBoard',
+        }),
         isEmpty,
       );
     });
@@ -208,8 +216,9 @@ void main() {
       });
 
       test('a legacy BCP-47 language code still resolves', () {
-        final profile =
-            TeacherProfileDto.fromJson(const {'preferredLanguage': 'ta'}).toDomain();
+        final profile = TeacherProfileDto.fromJson(const {
+          'preferredLanguage': 'ta',
+        }).toDomain();
 
         expect(profile.preferredLanguage, AppLocale.ta);
       });
@@ -236,8 +245,8 @@ void main() {
 
   group('TeacherProfileDocPatch -> the users/<uid> merge write', () {
     test('carries the fields REST cannot, and only those', () {
-      final json = TeacherProfileDocPatch(
-        const TeacherProfile(
+      final json = const TeacherProfileDocPatch(
+        TeacherProfile(
           displayName: 'Lakshmi Iyer',
           schoolName: 'GHPS',
           state: 'Karnataka',
@@ -274,10 +283,12 @@ void main() {
       // client-SDK write carrying it is REJECTED — and the rejection would
       // take the whole merge (name, school, location) down with it. It travels
       // the PATCH lane instead.
-      final json = TeacherProfileDocPatch(
-        const TeacherProfile(
+      final json = const TeacherProfileDocPatch(
+        TeacherProfile(
           displayName: 'Lakshmi Iyer',
-          settings: ProfileSettings(administrativeRole: AdministrativeRole.principal),
+          settings: ProfileSettings(
+            administrativeRole: AdministrativeRole.principal,
+          ),
         ),
       ).toJson();
 
@@ -319,27 +330,30 @@ void main() {
     });
 
     test('never writes boardCategory, which nothing persists', () {
-      final json = TeacherProfileDocPatch(
-        const TeacherProfile(settings: ProfileSettings(educationBoard: 'CBSE')),
+      final json = const TeacherProfileDocPatch(
+        TeacherProfile(settings: ProfileSettings(educationBoard: 'CBSE')),
       ).toJson();
 
       expect(json.containsKey('boardCategory'), isFalse);
     });
 
-    test('never writes the board: preferredBoard is the PATCH lane\'s field', () {
-      // Writing it here too would give one field two writers racing on one
-      // save, and the doc lane cannot mirror it into `educationBoard` the way
-      // the route does.
-      final json = TeacherProfileDocPatch(
-        const TeacherProfile(settings: ProfileSettings(educationBoard: 'CBSE')),
-      ).toJson();
+    test(
+      'never writes the board: preferredBoard is the PATCH lane\'s field',
+      () {
+        // Writing it here too would give one field two writers racing on one
+        // save, and the doc lane cannot mirror it into `educationBoard` the way
+        // the route does.
+        final json = const TeacherProfileDocPatch(
+          TeacherProfile(settings: ProfileSettings(educationBoard: 'CBSE')),
+        ).toJson();
 
-      expect(json.containsKey('preferredBoard'), isFalse);
-      expect(json.containsKey('educationBoard'), isFalse);
-    });
+        expect(json.containsKey('preferredBoard'), isFalse);
+        expect(json.containsKey('educationBoard'), isFalse);
+      },
+    );
 
     test('unset text fields are omitted: a merge-null would DELETE them', () {
-      final json = TeacherProfileDocPatch(const TeacherProfile()).toJson();
+      final json = const TeacherProfileDocPatch(TeacherProfile()).toJson();
 
       expect(json.containsKey('displayName'), isFalse);
       expect(json.containsKey('schoolName'), isFalse);
@@ -351,8 +365,8 @@ void main() {
     });
 
     test('blank text is omitted rather than saved as an empty value', () {
-      final json = TeacherProfileDocPatch(
-        const TeacherProfile(displayName: '   ', district: ''),
+      final json = const TeacherProfileDocPatch(
+        TeacherProfile(displayName: '   ', district: ''),
       ).toJson();
 
       expect(json.containsKey('displayName'), isFalse);
@@ -360,85 +374,92 @@ void main() {
     });
 
     test('text is trimmed before it is written', () {
-      final json = TeacherProfileDocPatch(
-        const TeacherProfile(displayName: '  Lakshmi Iyer  '),
+      final json = const TeacherProfileDocPatch(
+        TeacherProfile(displayName: '  Lakshmi Iyer  '),
       ).toJson();
 
       expect(json['displayName'], 'Lakshmi Iyer');
     });
 
-    test('empty lists ARE written, because deselecting everything is an intent',
-        () {
-      // Distinct from "unset": a teacher who stopped teaching Science must be
-      // able to say so, and a merge that omitted the key would leave the old
-      // list standing.
-      final json = TeacherProfileDocPatch(const TeacherProfile()).toJson();
+    test(
+      'empty lists ARE written, because deselecting everything is an intent',
+      () {
+        // Distinct from "unset": a teacher who stopped teaching Science must be
+        // able to say so, and a merge that omitted the key would leave the old
+        // list standing.
+        final json = const TeacherProfileDocPatch(TeacherProfile()).toJson();
 
-      expect(json['subjects'], isEmpty);
-      expect(json['gradeLevels'], isEmpty);
-    });
+        expect(json['subjects'], isEmpty);
+        expect(json['gradeLevels'], isEmpty);
+      },
+    );
 
     group('U15: a DELIBERATELY-cleared field is sent as an explicit clear', () {
-      test('erasing a field that HAD a value emits the clear marker, not silence',
-          () {
-        // The bug: with only the new profile, a blank field is indistinguishable
-        // from "never set", so the old code omitted it — the server kept the
-        // stale value and it reappeared on the next fetch, though "Saved" was
-        // shown. Diffing against the loaded profile restores the distinction.
-        final json = TeacherProfileDocPatch(
-          const TeacherProfile(schoolName: ''), // teacher erased the school
-          previous: const TeacherProfile(schoolName: 'Govt HPS Mysuru'),
-        ).toJson();
+      test(
+        'erasing a field that HAD a value emits the clear marker, not silence',
+        () {
+          // The bug: with only the new profile, a blank field is indistinguishable
+          // from "never set", so the old code omitted it — the server kept the
+          // stale value and it reappeared on the next fetch, though "Saved" was
+          // shown. Diffing against the loaded profile restores the distinction.
+          final json = const TeacherProfileDocPatch(
+            TeacherProfile(schoolName: ''), // teacher erased the school
+            previous: TeacherProfile(schoolName: 'Govt HPS Mysuru'),
+          ).toJson();
 
-        expect(json.containsKey('schoolName'), isTrue);
-        expect(json['schoolName'], same(kProfileFieldClear));
-      });
+          expect(json.containsKey('schoolName'), isTrue);
+          expect(json['schoolName'], same(kProfileFieldClear));
+        },
+      );
 
-      test('a never-touched blank field is still OMITTED (server untouched)', () {
-        // Both empty → the teacher never filled it in; sending anything would
-        // risk clobbering a value another surface owns.
-        final json = TeacherProfileDocPatch(
-          const TeacherProfile(schoolName: ''),
-          previous: const TeacherProfile(schoolName: ''),
-        ).toJson();
+      test(
+        'a never-touched blank field is still OMITTED (server untouched)',
+        () {
+          // Both empty → the teacher never filled it in; sending anything would
+          // risk clobbering a value another surface owns.
+          final json = const TeacherProfileDocPatch(
+            TeacherProfile(schoolName: ''),
+            previous: TeacherProfile(schoolName: ''),
+          ).toJson();
 
-        expect(json.containsKey('schoolName'), isFalse);
-      });
+          expect(json.containsKey('schoolName'), isFalse);
+        },
+      );
 
       test('changing a value to a new one sends the value, not a clear', () {
-        final json = TeacherProfileDocPatch(
-          const TeacherProfile(schoolName: 'New School'),
-          previous: const TeacherProfile(schoolName: 'Old School'),
+        final json = const TeacherProfileDocPatch(
+          TeacherProfile(schoolName: 'New School'),
+          previous: TeacherProfile(schoolName: 'Old School'),
         ).toJson();
 
         expect(json['schoolName'], 'New School');
       });
 
-      test('clearing the board deletes BOTH columns the read falls back across',
-          () {
-        // The board's SET travels the PATCH lane, but PATCH cannot CLEAR it (an
-        // empty/null preferredBoard fails its enum check and 400s). Neither
-        // board column is protected, so the clear is a merge delete of both —
-        // otherwise `preferredBoard ?? educationBoard` would resurrect the old
-        // value from the un-deleted column.
-        final json = TeacherProfileDocPatch(
-          const TeacherProfile(), // board now null
-          previous: const TeacherProfile(
-            settings: ProfileSettings(educationBoard: 'CBSE'),
-          ),
-        ).toJson();
+      test(
+        'clearing the board deletes BOTH columns the read falls back across',
+        () {
+          // The board's SET travels the PATCH lane, but PATCH cannot CLEAR it (an
+          // empty/null preferredBoard fails its enum check and 400s). Neither
+          // board column is protected, so the clear is a merge delete of both —
+          // otherwise `preferredBoard ?? educationBoard` would resurrect the old
+          // value from the un-deleted column.
+          final json = const TeacherProfileDocPatch(
+            TeacherProfile(), // board now null
+            previous: TeacherProfile(
+              settings: ProfileSettings(educationBoard: 'CBSE'),
+            ),
+          ).toJson();
 
-        expect(json['preferredBoard'], same(kProfileFieldClear));
-        expect(json['educationBoard'], same(kProfileFieldClear));
-      });
+          expect(json['preferredBoard'], same(kProfileFieldClear));
+          expect(json['educationBoard'], same(kProfileFieldClear));
+        },
+      );
 
       test('a board left unchanged (or newly set) writes NO board key here', () {
         // Regression guard for the two-writers race: only a CLEAR uses this lane.
-        final unchanged = TeacherProfileDocPatch(
-          const TeacherProfile(
-            settings: ProfileSettings(educationBoard: 'CBSE'),
-          ),
-          previous: const TeacherProfile(
+        final unchanged = const TeacherProfileDocPatch(
+          TeacherProfile(settings: ProfileSettings(educationBoard: 'CBSE')),
+          previous: TeacherProfile(
             settings: ProfileSettings(educationBoard: 'CBSE'),
           ),
         ).toJson();
@@ -447,14 +468,16 @@ void main() {
         expect(unchanged.containsKey('educationBoard'), isFalse);
       });
 
-      test('with no previous snapshot nothing is cleared (onboarding first save)',
-          () {
-        // A brand-new profile has nothing to clear, so the marker never appears
-        // and the behavior reduces to the old omit-blanks path.
-        final json = TeacherProfileDocPatch(const TeacherProfile()).toJson();
+      test(
+        'with no previous snapshot nothing is cleared (onboarding first save)',
+        () {
+          // A brand-new profile has nothing to clear, so the marker never appears
+          // and the behavior reduces to the old omit-blanks path.
+          final json = const TeacherProfileDocPatch(TeacherProfile()).toJson();
 
-        expect(json.values, isNot(contains(same(kProfileFieldClear))));
-      });
+          expect(json.values, isNot(contains(same(kProfileFieldClear))));
+        },
+      );
     });
   });
 
@@ -467,7 +490,10 @@ void main() {
       expect(kIndianStates, hasLength(36));
       expect(kIndianStates.first, 'Andhra Pradesh');
       expect(kIndianStates, contains('Ladakh'));
-      expect(kIndianStates, contains('Dadra and Nagar Haveli and Daman and Diu'));
+      expect(
+        kIndianStates,
+        contains('Dadra and Nagar Haveli and Daman and Diu'),
+      );
       // Duplicates would break DropdownButton value equality at runtime.
       expect(kIndianStates.toSet(), hasLength(kIndianStates.length));
     });

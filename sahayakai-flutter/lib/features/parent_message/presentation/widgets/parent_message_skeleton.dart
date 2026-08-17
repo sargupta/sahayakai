@@ -11,20 +11,20 @@ class ParentMessageSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SkeletonShimmer(
+    return const SkeletonShimmer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
           // Language / word-count meta.
-          const SkeletonBar(height: SkeletonBar.subtitle, widthFactor: 0.45),
-          const SizedBox(height: AppSpacing.space4),
+          SkeletonBar(height: SkeletonBar.subtitle, widthFactor: 0.45),
+          SizedBox(height: AppSpacing.space4),
           // The message body.
-          const SkeletonBlock(),
-          const SizedBox(height: AppSpacing.space4),
+          SkeletonBlock(),
+          SizedBox(height: AppSpacing.space4),
           // Copy + share action buttons.
           Row(
-            children: const [
+            children: [
               Expanded(child: SkeletonBar(height: SkeletonBar.title)),
               SizedBox(width: AppSpacing.space3),
               Expanded(child: SkeletonBar(height: SkeletonBar.title)),

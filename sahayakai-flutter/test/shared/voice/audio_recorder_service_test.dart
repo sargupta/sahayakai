@@ -155,8 +155,10 @@ void main() {
     });
 
     test('hasPermission answers from the field, never the OS', () async {
-      expect(await FakeAudioRecorderService(granted: false).hasPermission(),
-          isFalse);
+      expect(
+        await FakeAudioRecorderService(granted: false).hasPermission(),
+        isFalse,
+      );
       expect(await FakeAudioRecorderService().hasPermission(), isTrue);
     });
   });
@@ -164,9 +166,9 @@ void main() {
   group('audioRecorderServiceProvider', () {
     test('is overridable with a fake so nothing touches the mic', () {
       final fake = FakeAudioRecorderService();
-      final container = ProviderContainer(overrides: [
-        audioRecorderServiceProvider.overrideWithValue(fake),
-      ]);
+      final container = ProviderContainer(
+        overrides: [audioRecorderServiceProvider.overrideWithValue(fake)],
+      );
       addTearDown(container.dispose);
 
       expect(container.read(audioRecorderServiceProvider), same(fake));

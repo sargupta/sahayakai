@@ -40,8 +40,9 @@ Widget _host({
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
       home: const ExamPaperScreen(),
@@ -97,8 +98,9 @@ void main() {
       await tester.pumpWidget(
         _host(
           overrides: [
-            examPaperControllerProvider
-                .overrideWith(() => _StubController(data: buildReady())),
+            examPaperControllerProvider.overrideWith(
+              () => _StubController(data: buildReady()),
+            ),
           ],
         ),
       );
@@ -129,37 +131,41 @@ void main() {
       expect(find.textContaining('being prepared'), findsOneWidget);
     });
 
-    testWidgets('a 422 renders the fewer-chapters guidance, NOT generic error', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        _host(
-          overrides: [
-            examPaperControllerProvider.overrideWith(
-              () => _StubController(
-                error: const ApiException(
-                  ApiErrorKind.badResponse,
-                  'exam_paper_unstructured',
-                  statusCode: 422,
-                  errorCode: 'exam_paper_unstructured',
+    testWidgets(
+      'a 422 renders the fewer-chapters guidance, NOT generic error',
+      (tester) async {
+        await tester.pumpWidget(
+          _host(
+            overrides: [
+              examPaperControllerProvider.overrideWith(
+                () => _StubController(
+                  error: const ApiException(
+                    ApiErrorKind.badResponse,
+                    'exam_paper_unstructured',
+                    statusCode: 422,
+                    errorCode: 'exam_paper_unstructured',
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-      );
-      await tester.pumpAndSettle();
+            ],
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.byType(ExamPaperErrorView), findsOneWidget);
-      // The distinct guidance copy — proves it is NOT the generic failure.
-      expect(
-        find.textContaining('could not structure that paper'),
-        findsOneWidget,
-      );
-      expect(find.textContaining('remove a few chapters'), findsOneWidget);
-      // And it keeps a retry (unlike the upgrade / limit prompts).
-      expect(find.widgetWithText(OutlinedButton, 'Try again'), findsOneWidget);
-    });
+        expect(find.byType(ExamPaperErrorView), findsOneWidget);
+        // The distinct guidance copy — proves it is NOT the generic failure.
+        expect(
+          find.textContaining('could not structure that paper'),
+          findsOneWidget,
+        );
+        expect(find.textContaining('remove a few chapters'), findsOneWidget);
+        // And it keeps a retry (unlike the upgrade / limit prompts).
+        expect(
+          find.widgetWithText(OutlinedButton, 'Try again'),
+          findsOneWidget,
+        );
+      },
+    );
   });
 
   group('chapters chip flow', () {
@@ -176,8 +182,10 @@ void main() {
       await tester.enterText(textField, 'Quadratic Equations');
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
-      expect(find.widgetWithText(InputChip, 'Quadratic Equations'),
-          findsOneWidget);
+      expect(
+        find.widgetWithText(InputChip, 'Quadratic Equations'),
+        findsOneWidget,
+      );
 
       await tester.enterText(textField, 'Triangles');
       await tester.testTextInput.receiveAction(TextInputAction.done);
@@ -188,32 +196,39 @@ void main() {
       await tester.tap(find.byIcon(LucideIcons.x).first);
       await tester.pumpAndSettle();
 
-      expect(find.widgetWithText(InputChip, 'Quadratic Equations'), findsNothing);
+      expect(
+        find.widgetWithText(InputChip, 'Quadratic Equations'),
+        findsNothing,
+      );
       expect(find.widgetWithText(InputChip, 'Triangles'), findsOneWidget);
     });
   });
 
   group('the >= 1 chapter requirement (non-blueprinted combos)', () {
-    testWidgets('an empty chapter list blocks submit and does not call generate',
-        (tester) async {
-      final spy = _SpyController();
-      await tester.pumpWidget(
-        _host(overrides: [examPaperControllerProvider.overrideWith(() => spy)]),
-      );
-      await tester.pumpAndSettle();
+    testWidgets(
+      'an empty chapter list blocks submit and does not call generate',
+      (tester) async {
+        final spy = _SpyController();
+        await tester.pumpWidget(
+          _host(
+            overrides: [examPaperControllerProvider.overrideWith(() => spy)],
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      // CBSE + Nursery + Mathematics is NOT blueprinted (only Class 9/10
-      // Maths/Science are), so it requires at least one chapter.
-      await _selectDropdown(tester, boardField, 'CBSE');
-      await _selectDropdown(tester, gradeField, 'Nursery');
-      await _selectDropdown(tester, subjectField, 'Mathematics');
+        // CBSE + Nursery + Mathematics is NOT blueprinted (only Class 9/10
+        // Maths/Science are), so it requires at least one chapter.
+        await _selectDropdown(tester, boardField, 'CBSE');
+        await _selectDropdown(tester, gradeField, 'Nursery');
+        await _selectDropdown(tester, subjectField, 'Mathematics');
 
-      await tester.tap(find.text('Generate'));
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('Generate'));
+        await tester.pumpAndSettle();
 
-      expect(find.textContaining('at least one chapter'), findsOneWidget);
-      expect(spy.calls, 0);
-    });
+        expect(find.textContaining('at least one chapter'), findsOneWidget);
+        expect(spy.calls, 0);
+      },
+    );
 
     testWidgets('adding a chapter satisfies the requirement and submits', (
       tester,
@@ -245,53 +260,62 @@ void main() {
 
   group('free-text subject (Commerce / Humanities escape hatch)', () {
     testWidgets(
-        'choosing "Other subject" reveals a field whose value flows into the '
-        'request', (tester) async {
-      // A tall surface so the grade/subject dropdown menus lay out every item
-      // (Class 11 and "Other subject" both sit near the bottom of their lists).
-      tester.view.physicalSize = const Size(800, 2000);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
+      'choosing "Other subject" reveals a field whose value flows into the '
+      'request',
+      (tester) async {
+        // A tall surface so the grade/subject dropdown menus lay out every item
+        // (Class 11 and "Other subject" both sit near the bottom of their lists).
+        tester.view.physicalSize = const Size(800, 2000);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
 
-      final spy = _SpyController();
-      await tester.pumpWidget(
-        _host(overrides: [examPaperControllerProvider.overrideWith(() => spy)]),
-      );
-      await tester.pumpAndSettle();
+        final spy = _SpyController();
+        await tester.pumpWidget(
+          _host(
+            overrides: [examPaperControllerProvider.overrideWith(() => spy)],
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      await _selectDropdown(tester, boardField, 'CBSE');
-      await _selectDropdown(tester, gradeField, 'Class 11');
+        await _selectDropdown(tester, boardField, 'CBSE');
+        await _selectDropdown(tester, gradeField, 'Class 11');
 
-      // No free-text field until "Other subject" is chosen.
-      expect(find.byType(TextFormField), findsNothing);
+        // No free-text field until "Other subject" is chosen.
+        expect(find.byType(TextFormField), findsNothing);
 
-      // Add a chapter first, while the chapters TextField is the only text
-      // input on screen (keeps the finder unambiguous).
-      final chaptersField = find.byType(TextField);
-      await tester.ensureVisible(chaptersField);
-      await tester.enterText(chaptersField, 'Microeconomics');
-      await tester.testTextInput.receiveAction(TextInputAction.done);
-      await tester.pumpAndSettle();
+        // Add a chapter first, while the chapters TextField is the only text
+        // input on screen (keeps the finder unambiguous).
+        final chaptersField = find.byType(TextField);
+        await tester.ensureVisible(chaptersField);
+        await tester.enterText(chaptersField, 'Microeconomics');
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+        await tester.pumpAndSettle();
 
-      // Economics is not one of the 13 fixed subjects — choose "Other subject".
-      await _selectDropdown(tester, subjectField, 'Other subject');
-      final otherField = find.byType(TextFormField);
-      expect(otherField, findsOneWidget,
-          reason: 'the free-text subject field is revealed');
+        // Economics is not one of the 13 fixed subjects — choose "Other subject".
+        await _selectDropdown(tester, subjectField, 'Other subject');
+        final otherField = find.byType(TextFormField);
+        expect(
+          otherField,
+          findsOneWidget,
+          reason: 'the free-text subject field is revealed',
+        );
 
-      await tester.ensureVisible(otherField);
-      await tester.enterText(otherField, 'Economics');
-      await tester.pumpAndSettle();
+        await tester.ensureVisible(otherField);
+        await tester.enterText(otherField, 'Economics');
+        await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Generate'));
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('Generate'));
+        await tester.pumpAndSettle();
 
-      expect(spy.calls, 1);
-      expect(spy.last?.subject, 'Economics');
-      expect(spy.last?.chapters, ['Microeconomics']);
-    });
+        expect(spy.calls, 1);
+        expect(spy.last?.subject, 'Economics');
+        expect(spy.last?.chapters, ['Microeconomics']);
+      },
+    );
 
-    testWidgets('an empty free-text subject blocks the request', (tester) async {
+    testWidgets('an empty free-text subject blocks the request', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(800, 2000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);

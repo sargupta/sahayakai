@@ -7,15 +7,16 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
+import '../../../core/platform/clock.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../inbox/presentation/widgets/inbox_entry_button.dart';
 import '../../../shared/domain/tool_registry.dart';
 import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/app_badge.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/secondary_button.dart';
+import '../../inbox/presentation/widgets/inbox_entry_button.dart';
 import 'vidya_controller.dart';
 import 'vidya_greeting.dart';
 import 'vidya_nav_dispatcher.dart';
@@ -74,18 +75,18 @@ class _VidyaHomeScreenState extends ConsumerState<VidyaHomeScreen> {
 
     // A single valid intent → route to its tool, prefilled, then clear it. The
     // dispatcher owns the flow→route map and drops not-yet-built tools.
-    ref.listen(
-      vidyaControllerProvider.select((s) => s.pendingNavigation),
-      (_, directive) {
-        if (directive == null) return;
-        // Only the topmost VIDYA surface routes: when a tool or the VIDYA sheet
-        // sits above the home, that surface owns the navigation (else the home
-        // would double-push the same intent). See U-V7.
-        if (!(ModalRoute.of(context)?.isCurrent ?? true)) return;
-        controller.consumeNavigation();
-        VidyaNavDispatcher.dispatch(context, directive);
-      },
-    );
+    ref.listen(vidyaControllerProvider.select((s) => s.pendingNavigation), (
+      _,
+      directive,
+    ) {
+      if (directive == null) return;
+      // Only the topmost VIDYA surface routes: when a tool or the VIDYA sheet
+      // sits above the home, that surface owns the navigation (else the home
+      // would double-push the same intent). See U-V7.
+      if (!(ModalRoute.of(context)?.isCurrent ?? true)) return;
+      controller.consumeNavigation();
+      VidyaNavDispatcher.dispatch(context, directive);
+    });
 
     return Scaffold(
       appBar: GlassAppBar(
@@ -126,7 +127,9 @@ class _VidyaHomeScreenState extends ConsumerState<VidyaHomeScreen> {
       ),
       body: DecoratedBox(
         decoration: BoxDecoration(
-          gradient: isDark ? AppGradients.darkVignette : AppGradients.lightPaper,
+          gradient: isDark
+              ? AppGradients.darkVignette
+              : AppGradients.lightPaper,
         ),
         child: SafeArea(
           child: state.hasConversation
@@ -258,11 +261,11 @@ class _ActiveLayout extends StatelessWidget {
 
 /// The idle masthead: saffron eyebrow → time-aware Fraunces greeting → a saffron
 /// masthead rule → the deck. Reuses the dashboard's time-aware l10n keys.
-class _Masthead extends StatelessWidget {
+class _Masthead extends ConsumerWidget {
   const _Masthead();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final text = Theme.of(context).textTheme;
     final extras = AppTextExtras.of(context);
@@ -281,7 +284,10 @@ class _Masthead extends StatelessWidget {
         const SizedBox(height: AppSpacing.space3),
         EditorialSectionHeader(l10n.vidyaEyebrow, rule: false),
         const SizedBox(height: AppSpacing.space3),
-        Text(_salutation(l10n), style: text.displayLarge),
+        Text(
+          _salutation(l10n, ref.read(nowProvider)()),
+          style: text.displayLarge,
+        ),
         const SizedBox(height: AppSpacing.space3),
         const SizedBox(
           width: 48,
@@ -482,8 +488,8 @@ class _RotatingPromptState extends State<_RotatingPrompt> {
 
 // ─── Mappings ────────────────────────────────────────────────────────────────
 
-String _salutation(AppLocalizations l10n) {
-  final hour = DateTime.now().hour;
+String _salutation(AppLocalizations l10n, DateTime now) {
+  final hour = now.hour;
   if (hour < 12) return l10n.dashboardGreetingMorning;
   if (hour < 17) return l10n.dashboardGreetingAfternoon;
   return l10n.dashboardGreetingEvening;
@@ -492,4 +498,3 @@ String _salutation(AppLocalizations l10n) {
 // The seal-state / caption / terminal mappings moved to `vidya_status_ui.dart`,
 // and the flow→route map + prefill to `VidyaNavDispatcher` (U-V6/U-V7), so the
 // home and the everywhere VIDYA sheet render and route from one source of truth.
-

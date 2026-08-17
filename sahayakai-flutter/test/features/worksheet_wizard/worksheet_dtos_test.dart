@@ -79,10 +79,11 @@ void main() {
 
   group('WorksheetActivityType', () {
     test('maps every member to its wire value', () {
-      expect(
-        WorksheetActivityType.values.map((t) => t.wire),
-        ['question', 'puzzle', 'creative_task'],
-      );
+      expect(WorksheetActivityType.values.map((t) => t.wire), [
+        'question',
+        'puzzle',
+        'creative_task',
+      ]);
     });
 
     test('tolerates unknown / absent members rather than throwing', () {
@@ -96,60 +97,66 @@ void main() {
   });
 
   group('WorksheetResponseDto', () {
-    test('decodes the route shape: learningObjectives, activities, answerKey',
-        () {
-      // NOTE the field name is `learningObjectives`, NOT the `objectives`
-      // SCREEN_INVENTORY P1.1 prints (see docs/flutter/HANDOFF.md).
-      final worksheet = WorksheetResponseDto.fromJson(<String, dynamic>{
-        'title': 'Counting Mangoes',
-        'gradeLevel': 'Class 2',
-        'subject': 'Mathematics',
-        'learningObjectives': ['Count up to 20', 'Group to add'],
-        'studentInstructions': 'Solve each problem.',
-        'activities': [
-          {
-            'type': 'question',
-            'content': r'$5 + 3 = ?$',
-            'explanation': 'Local fruit analogy.',
-            'chalkboardNote': 'Draw two baskets.',
-          },
-          {
-            'type': 'creative_task',
-            'content': 'Draw a paddy field.',
-            'explanation': 'Builds observation.',
-          },
-        ],
-        'answerKey': [
-          {'activityIndex': 0, 'answer': r'$8$'},
-          {'activityIndex': 1, 'answer': 'Any labelled drawing'},
-        ],
-      }).toDomain();
+    test(
+      'decodes the route shape: learningObjectives, activities, answerKey',
+      () {
+        // NOTE the field name is `learningObjectives`, NOT the `objectives`
+        // SCREEN_INVENTORY P1.1 prints (see docs/flutter/HANDOFF.md).
+        final worksheet = WorksheetResponseDto.fromJson(<String, dynamic>{
+          'title': 'Counting Mangoes',
+          'gradeLevel': 'Class 2',
+          'subject': 'Mathematics',
+          'learningObjectives': ['Count up to 20', 'Group to add'],
+          'studentInstructions': 'Solve each problem.',
+          'activities': [
+            {
+              'type': 'question',
+              'content': r'$5 + 3 = ?$',
+              'explanation': 'Local fruit analogy.',
+              'chalkboardNote': 'Draw two baskets.',
+            },
+            {
+              'type': 'creative_task',
+              'content': 'Draw a paddy field.',
+              'explanation': 'Builds observation.',
+            },
+          ],
+          'answerKey': [
+            {'activityIndex': 0, 'answer': r'$8$'},
+            {'activityIndex': 1, 'answer': 'Any labelled drawing'},
+          ],
+        }).toDomain();
 
-      expect(worksheet.title, 'Counting Mangoes');
-      expect(worksheet.gradeLevel, 'Class 2');
-      expect(worksheet.subject, 'Mathematics');
-      expect(worksheet.learningObjectives, ['Count up to 20', 'Group to add']);
-      expect(worksheet.studentInstructions, 'Solve each problem.');
+        expect(worksheet.title, 'Counting Mangoes');
+        expect(worksheet.gradeLevel, 'Class 2');
+        expect(worksheet.subject, 'Mathematics');
+        expect(worksheet.learningObjectives, [
+          'Count up to 20',
+          'Group to add',
+        ]);
+        expect(worksheet.studentInstructions, 'Solve each problem.');
 
-      expect(worksheet.activities, hasLength(2));
-      final first = worksheet.activities.first;
-      expect(first.type, WorksheetActivityType.question);
-      expect(first.content, r'$5 + 3 = ?$');
-      expect(first.explanation, 'Local fruit analogy.');
-      expect(first.chalkboardNote, 'Draw two baskets.');
-      // A missing chalkboardNote stays null (it is optional server-side).
-      expect(worksheet.activities[1].chalkboardNote, isNull);
+        expect(worksheet.activities, hasLength(2));
+        final first = worksheet.activities.first;
+        expect(first.type, WorksheetActivityType.question);
+        expect(first.content, r'$5 + 3 = ?$');
+        expect(first.explanation, 'Local fruit analogy.');
+        expect(first.chalkboardNote, 'Draw two baskets.');
+        // A missing chalkboardNote stays null (it is optional server-side).
+        expect(worksheet.activities[1].chalkboardNote, isNull);
 
-      // The 0-based activityIndex renders as a 1-based "Activity N".
-      expect(worksheet.answerKey.first.activityIndex, 0);
-      expect(worksheet.answerKey.first.displayNumber, 1);
-      expect(worksheet.answerKey.first.answer, r'$8$');
-      expect(worksheet.answerKey.last.displayNumber, 2);
-    });
+        // The 0-based activityIndex renders as a 1-based "Activity N".
+        expect(worksheet.answerKey.first.activityIndex, 0);
+        expect(worksheet.answerKey.first.displayNumber, 1);
+        expect(worksheet.answerKey.first.answer, r'$8$');
+        expect(worksheet.answerKey.last.displayNumber, 2);
+      },
+    );
 
     test('an entirely empty payload decodes to an empty worksheet', () {
-      final worksheet =
-          WorksheetResponseDto.fromJson(const <String, dynamic>{}).toDomain();
+      final worksheet = WorksheetResponseDto.fromJson(
+        const <String, dynamic>{},
+      ).toDomain();
       expect(worksheet.isEmpty, isTrue);
       expect(worksheet.title, isEmpty);
       expect(worksheet.learningObjectives, isEmpty);
@@ -157,35 +164,35 @@ void main() {
       expect(worksheet.answerKey, isEmpty);
     });
 
-    test(
-      'money bug: a title-only malformed response (no activities) is EMPTY, '
-      'not a fake success',
-      () {
-        // A real regression, identical in shape to the exam-paper one: a
-        // title with no activities at all — nothing for the student to do.
-        // The old AND-of-every-field emptiness check required title,
-        // objectives, instructions, activities AND the answer key to ALL be
-        // empty, so this shape read as "not empty" and would have rendered a
-        // full masthead + a tappable Save button over zero content.
-        final worksheet = WorksheetResponseDto.fromJson(<String, dynamic>{
-          'title': 'Counting Mangoes',
-          'gradeLevel': 'Class 2',
-          'subject': 'Mathematics',
-          'learningObjectives': ['Count up to 20'],
-          'activities': <Map<String, dynamic>>[],
-        }).toDomain();
+    test('money bug: a title-only malformed response (no activities) is EMPTY, '
+        'not a fake success', () {
+      // A real regression, identical in shape to the exam-paper one: a
+      // title with no activities at all — nothing for the student to do.
+      // The old AND-of-every-field emptiness check required title,
+      // objectives, instructions, activities AND the answer key to ALL be
+      // empty, so this shape read as "not empty" and would have rendered a
+      // full masthead + a tappable Save button over zero content.
+      final worksheet = WorksheetResponseDto.fromJson(<String, dynamic>{
+        'title': 'Counting Mangoes',
+        'gradeLevel': 'Class 2',
+        'subject': 'Mathematics',
+        'learningObjectives': ['Count up to 20'],
+        'activities': <Map<String, dynamic>>[],
+      }).toDomain();
 
-        expect(worksheet.title, isNotEmpty);
-        expect(worksheet.learningObjectives, isNotEmpty);
-        expect(worksheet.activities, isEmpty);
-        expect(worksheet.isEmpty, isTrue,
-            reason: 'no activities means nothing for the student to do, '
-                'regardless of title');
-      },
-    );
+      expect(worksheet.title, isNotEmpty);
+      expect(worksheet.learningObjectives, isNotEmpty);
+      expect(worksheet.activities, isEmpty);
+      expect(
+        worksheet.isEmpty,
+        isTrue,
+        reason:
+            'no activities means nothing for the student to do, '
+            'regardless of title',
+      );
+    });
 
-    test('drops blank objectives, content-less activities and blank answers',
-        () {
+    test('drops blank objectives, content-less activities and blank answers', () {
       final worksheet = WorksheetResponseDto.fromJson(<String, dynamic>{
         'title': '  Worksheet  ',
         'learningObjectives': ['Keep this', '   ', ''],

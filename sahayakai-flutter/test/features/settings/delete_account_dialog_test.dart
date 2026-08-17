@@ -49,9 +49,9 @@ class _HarnessState extends State<_Harness> {
 
 /// The confirm button, found by its label inside the dialog.
 Finder _confirmButton() => find.ancestor(
-      of: find.text('Delete account'),
-      matching: find.byType(FilledButton),
-    );
+  of: find.text('Delete account'),
+  matching: find.byType(FilledButton),
+);
 
 bool _isEnabled(WidgetTester tester) =>
     tester.widget<FilledButton>(_confirmButton()).onPressed != null;
@@ -103,7 +103,9 @@ void main() {
       }
     });
 
-    testWidgets('correcting a wrong string re-locks the button', (tester) async {
+    testWidgets('correcting a wrong string re-locks the button', (
+      tester,
+    ) async {
       await _openDialog(tester);
       await tester.enterText(find.byType(TextField), 'DELETE');
       await tester.pumpAndSettle();
@@ -126,8 +128,9 @@ void main() {
       expect(find.text('result:true'), findsOneWidget);
     });
 
-    testWidgets('cancelling returns null, even with the word typed',
-        (tester) async {
+    testWidgets('cancelling returns null, even with the word typed', (
+      tester,
+    ) async {
       await _openDialog(tester);
       await tester.enterText(find.byType(TextField), 'DELETE');
       await tester.pumpAndSettle();
@@ -136,8 +139,9 @@ void main() {
       expect(find.text('result:null'), findsOneWidget);
     });
 
-    testWidgets('the confirm button is error-coloured and >=48dp',
-        (tester) async {
+    testWidgets('the confirm button is error-coloured and >=48dp', (
+      tester,
+    ) async {
       await _openDialog(tester);
       await tester.enterText(find.byType(TextField), 'DELETE');
       await tester.pumpAndSettle();
@@ -182,8 +186,9 @@ void main() {
       }
     }
 
-    testWidgets('renders in Bengali at textScale 1.3 without overflow',
-        (tester) async {
+    testWidgets('renders in Bengali at textScale 1.3 without overflow', (
+      tester,
+    ) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);

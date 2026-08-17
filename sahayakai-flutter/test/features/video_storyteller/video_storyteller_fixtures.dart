@@ -109,8 +109,11 @@ Map<String, dynamic> videoStorytellerJson() {
         videoJson('vid_gov_1', title: 'Latest circular', channel: 'PIB India'),
       ],
       'courses': <Map<String, dynamic>>[
-        videoJson('vid_course_1',
-            title: 'Free teacher course', channel: 'IGNOU'),
+        videoJson(
+          'vid_course_1',
+          title: 'Free teacher course',
+          channel: 'IGNOU',
+        ),
       ],
     },
     'fromCache': false,
@@ -121,7 +124,9 @@ Map<String, dynamic> videoStorytellerJson() {
 /// A fully-decoded recommendation set, built through the real DTO so the fixture
 /// and the production decode path can never drift.
 VideoRecommendations buildRecommendations() {
-  return VideoStorytellerResponseDto.fromJson(videoStorytellerJson()).toDomain();
+  return VideoStorytellerResponseDto.fromJson(
+    videoStorytellerJson(),
+  ).toDomain();
 }
 
 /// Hosts a result-layer widget in the same shell the real screen uses: a
@@ -148,8 +153,9 @@ Widget hostResult(
           child: reduceMotion
               ? Builder(
                   builder: (context) => MediaQuery(
-                    data: MediaQuery.of(context)
-                        .copyWith(disableAnimations: true),
+                    data: MediaQuery.of(
+                      context,
+                    ).copyWith(disableAnimations: true),
                     child: child,
                   ),
                 )

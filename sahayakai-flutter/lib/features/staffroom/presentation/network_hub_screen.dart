@@ -8,9 +8,9 @@ import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_segmented.dart';
 import '../../../shared/widgets/app_skeleton.dart';
-import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
+import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/secondary_button.dart';
 import '../../inbox/data/messages_stream_provider.dart';
 import '../../inbox/presentation/widgets/conversation_row.dart';
@@ -84,10 +84,7 @@ class _NetworkHubScreenState extends State<NetworkHubScreen> {
                     offstage: _index != 0,
                     child: const StaffroomFeedView(),
                   ),
-                  Offstage(
-                    offstage: _index != 1,
-                    child: const _MessagesTab(),
-                  ),
+                  Offstage(offstage: _index != 1, child: const _MessagesTab()),
                 ],
               ),
             ),

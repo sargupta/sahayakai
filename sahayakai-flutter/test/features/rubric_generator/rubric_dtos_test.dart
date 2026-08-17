@@ -104,8 +104,12 @@ void main() {
       // levelCount is the WIDEST criterion's level count; short rows are padded
       // in the grid, not here.
       expect(rubric.levelCount, 4);
-      expect(rubric.headerLevels.map((l) => l.name),
-          ['Exemplary', 'Proficient', 'Developing', 'Beginning']);
+      expect(rubric.headerLevels.map((l) => l.name), [
+        'Exemplary',
+        'Proficient',
+        'Developing',
+        'Beginning',
+      ]);
       expect(rubric.criteria[1].levels, hasLength(1));
     });
 
@@ -128,8 +132,9 @@ void main() {
     });
 
     test('an entirely empty payload decodes to an empty rubric', () {
-      final rubric =
-          RubricResponseDto.fromJson(const <String, dynamic>{}).toDomain();
+      final rubric = RubricResponseDto.fromJson(
+        const <String, dynamic>{},
+      ).toDomain();
       expect(rubric.isEmpty, isTrue);
       expect(rubric.title, isEmpty);
       expect(rubric.criteria, isEmpty);
@@ -158,7 +163,10 @@ void main() {
       final rubric = RubricResponseDto.fromJson(<String, dynamic>{
         'title': '  Rubric  ',
         'criteria': [
-          {'name': '   ', 'levels': <dynamic>[]}, // no name, no levels -> dropped
+          {
+            'name': '   ',
+            'levels': <dynamic>[],
+          }, // no name, no levels -> dropped
           {
             'name': 'Kept',
             'levels': [

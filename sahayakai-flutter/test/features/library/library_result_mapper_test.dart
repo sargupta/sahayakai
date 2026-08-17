@@ -4,7 +4,8 @@ import 'package:sahayakai/features/quiz_generator/domain/quiz.dart';
 
 /// A valid 1x1 transparent PNG data URI — enough for `base64Decode` to
 /// succeed without needing a real drawing.
-const String _kTinyPngDataUri = 'data:image/png;base64,'
+const String _kTinyPngDataUri =
+    'data:image/png;base64,'
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY'
     '42YAAAAASUVORK5CYII=';
 
@@ -20,8 +21,7 @@ const String _kTinyPngDataUri = 'data:image/png;base64,'
 /// predictions wrong, and these tests are the proof.
 void main() {
   group('mapSavedQuiz', () {
-    test(
-        'the saved shape is multi-variant (easy/medium/hard), never the '
+    test('the saved shape is multi-variant (easy/medium/hard), never the '
         'single-variant {title, questions} shape once assumed', () {
       // Verified against src/ai/flows/quiz-generator.ts: `output` (the value
       // persisted as `data`) is a `QuizVariantsOutput` envelope, not a bare
@@ -67,40 +67,42 @@ void main() {
       expect(quiz.topic, 'Photosynthesis');
     });
 
-    test('a saved quiz with all three variants decodes all three, in order',
-        () {
-      Map<String, dynamic> variant(String difficulty) => <String, dynamic>{
-            'title': 'Fractions ($difficulty)',
-            'questions': [
-              <String, dynamic>{
-                'questionText': 'What is 1/2 + 1/2?',
-                'questionType': 'short_answer',
-                'correctAnswer': '1',
-                'explanation': 'Two halves make one whole.',
-                'difficultyLevel': difficulty,
-              },
-            ],
-          };
-      final json = <String, dynamic>{
-        'easy': variant('easy'),
-        'medium': variant('medium'),
-        'hard': variant('hard'),
-        'id': 'quiz-456',
-        'gradeLevel': 'Class 5',
-        'subject': 'Mathematics',
-        'topic': 'Fractions',
-        'isSaved': true,
-      };
+    test(
+      'a saved quiz with all three variants decodes all three, in order',
+      () {
+        Map<String, dynamic> variant(String difficulty) => <String, dynamic>{
+          'title': 'Fractions ($difficulty)',
+          'questions': [
+            <String, dynamic>{
+              'questionText': 'What is 1/2 + 1/2?',
+              'questionType': 'short_answer',
+              'correctAnswer': '1',
+              'explanation': 'Two halves make one whole.',
+              'difficultyLevel': difficulty,
+            },
+          ],
+        };
+        final json = <String, dynamic>{
+          'easy': variant('easy'),
+          'medium': variant('medium'),
+          'hard': variant('hard'),
+          'id': 'quiz-456',
+          'gradeLevel': 'Class 5',
+          'subject': 'Mathematics',
+          'topic': 'Fractions',
+          'isSaved': true,
+        };
 
-      final quiz = mapSavedQuiz(json);
+        final quiz = mapSavedQuiz(json);
 
-      expect(quiz, isNotNull);
-      expect(quiz!.variants.map((v) => v.difficulty), [
-        QuizDifficulty.easy,
-        QuizDifficulty.medium,
-        QuizDifficulty.hard,
-      ]);
-    });
+        expect(quiz, isNotNull);
+        expect(quiz!.variants.map((v) => v.difficulty), [
+          QuizDifficulty.easy,
+          QuizDifficulty.medium,
+          QuizDifficulty.hard,
+        ]);
+      },
+    );
 
     test('a non-object payload is refused, not guessed at', () {
       expect(mapSavedQuiz('just a string'), isNull);
@@ -120,21 +122,22 @@ void main() {
       expect(mapSavedQuiz(json), isNull);
     });
 
-    test('three empty/null variants is nothing to show — falls back honestly',
-        () {
-      final json = <String, dynamic>{
-        'easy': null,
-        'medium': null,
-        'hard': null,
-        'id': 'quiz-empty',
-      };
-      expect(mapSavedQuiz(json), isNull);
-    });
+    test(
+      'three empty/null variants is nothing to show — falls back honestly',
+      () {
+        final json = <String, dynamic>{
+          'easy': null,
+          'medium': null,
+          'hard': null,
+          'id': 'quiz-empty',
+        };
+        expect(mapSavedQuiz(json), isNull);
+      },
+    );
   });
 
   group('mapSavedWorksheet', () {
-    test(
-        'the saved shape is a fully structured object, not the bare '
+    test('the saved shape is a fully structured object, not the bare '
         'markdown string once assumed', () {
       // Verified against src/ai/flows/worksheet-wizard.ts:
       // `WorksheetWizardOutputSchema` — structured `activities` +
@@ -166,24 +169,29 @@ void main() {
 
       expect(worksheet, isNotNull);
       expect(worksheet!.title, 'Fractions Worksheet');
-      expect(worksheet.learningObjectives,
-          ['Add fractions with unlike denominators']);
+      expect(worksheet.learningObjectives, [
+        'Add fractions with unlike denominators',
+      ]);
       expect(worksheet.activities, hasLength(1));
       expect(worksheet.activities.single.content, 'What is 1/2 + 1/4?');
-      expect(worksheet.activities.single.chalkboardNote,
-          'Draw a pie split into quarters.');
+      expect(
+        worksheet.activities.single.chalkboardNote,
+        'Draw a pie split into quarters.',
+      );
       expect(worksheet.answerKey, hasLength(1));
       expect(worksheet.answerKey.single.answer, '3/4');
       expect(worksheet.answerKey.single.displayNumber, 1);
     });
 
-    test('a bare markdown string (the once-assumed legacy shape) is refused',
-        () {
-      // If a genuinely old document really does store `data` as a raw
-      // string, this must NOT be guessed into a Worksheet — it must fall
-      // back to the honest "Ready" state.
-      expect(mapSavedWorksheet('# Just markdown, no structure'), isNull);
-    });
+    test(
+      'a bare markdown string (the once-assumed legacy shape) is refused',
+      () {
+        // If a genuinely old document really does store `data` as a raw
+        // string, this must NOT be guessed into a Worksheet — it must fall
+        // back to the honest "Ready" state.
+        expect(mapSavedWorksheet('# Just markdown, no structure'), isNull);
+      },
+    );
 
     test('a structurally empty object is nothing to show', () {
       expect(mapSavedWorksheet(<String, dynamic>{}), isNull);
@@ -252,8 +260,10 @@ void main() {
       expect(assessment.rubric, isNotNull);
       expect(assessment.rubric!.title, 'Biology Short Answer Rubric');
       expect(assessment.rubric!.criteria.single.name, 'Content Accuracy');
-      expect(assessment.displayTranscript,
-          'The mitochondria is the powerhouse of the cell.');
+      expect(
+        assessment.displayTranscript,
+        'The mitochondria is the powerhouse of the cell.',
+      );
     });
 
     test('a non-object payload is refused', () {
@@ -262,50 +272,54 @@ void main() {
   });
 
   group('mapSavedExamPaper', () {
-    test('decodes the paper and keeps raw verbatim for the Save round-trip',
-        () {
-      // Verified against src/ai/flows/exam-paper-generator.ts and the PUT
-      // /api/ai/exam-paper save handler in sahayakai-main — both persist
-      // `data` as the exact ExamPaperDataSchema object.
-      final json = <String, dynamic>{
-        'title': 'CBSE Class 10 Mathematics Exam',
-        'board': 'CBSE',
-        'subject': 'Mathematics',
-        'gradeLevel': 'Class 10',
-        'duration': '3 hours',
-        'maxMarks': 80,
-        'generalInstructions': ['Attempt all questions.'],
-        'sections': [
-          <String, dynamic>{
-            'name': 'Section A',
-            'label': 'Multiple Choice Questions',
-            'totalMarks': 20,
-            'questions': [
-              <String, dynamic>{
-                'number': 1,
-                'text': 'What is 2 + 2?',
-                'marks': 1,
-                'options': ['3', '4', '5', '6'],
-                'source': 'AI Generated',
-              },
-            ],
+    test(
+      'decodes the paper and keeps raw verbatim for the Save round-trip',
+      () {
+        // Verified against src/ai/flows/exam-paper-generator.ts and the PUT
+        // /api/ai/exam-paper save handler in sahayakai-main — both persist
+        // `data` as the exact ExamPaperDataSchema object.
+        final json = <String, dynamic>{
+          'title': 'CBSE Class 10 Mathematics Exam',
+          'board': 'CBSE',
+          'subject': 'Mathematics',
+          'gradeLevel': 'Class 10',
+          'duration': '3 hours',
+          'maxMarks': 80,
+          'generalInstructions': ['Attempt all questions.'],
+          'sections': [
+            <String, dynamic>{
+              'name': 'Section A',
+              'label': 'Multiple Choice Questions',
+              'totalMarks': 20,
+              'questions': [
+                <String, dynamic>{
+                  'number': 1,
+                  'text': 'What is 2 + 2?',
+                  'marks': 1,
+                  'options': ['3', '4', '5', '6'],
+                  'source': 'AI Generated',
+                },
+              ],
+            },
+          ],
+          'blueprintSummary': <String, dynamic>{
+            'chapterWise': <dynamic>[],
+            'difficultyWise': <dynamic>[],
           },
-        ],
-        'blueprintSummary': <String, dynamic>{
-          'chapterWise': <dynamic>[],
-          'difficultyWise': <dynamic>[],
-        },
-        'pyqSources': <dynamic>[],
-      };
+          'pyqSources': <dynamic>[],
+        };
 
-      final ready = mapSavedExamPaper(json);
+        final ready = mapSavedExamPaper(json);
 
-      expect(ready, isNotNull);
-      expect(ready!.paper.title, 'CBSE Class 10 Mathematics Exam');
-      expect(ready.paper.sections.single.questions.single.text,
-          'What is 2 + 2?');
-      expect(ready.raw, same(json));
-    });
+        expect(ready, isNotNull);
+        expect(ready!.paper.title, 'CBSE Class 10 Mathematics Exam');
+        expect(
+          ready.paper.sections.single.questions.single.text,
+          'What is 2 + 2?',
+        );
+        expect(ready.raw, same(json));
+      },
+    );
 
     test('an empty paper is nothing to show', () {
       expect(mapSavedExamPaper(<String, dynamic>{'title': ''}), isNull);
@@ -430,8 +444,7 @@ void main() {
   });
 
   group('mapSavedVisualAid', () {
-    test(
-        'T2-U11: the real saved shape strips imageDataUri — decodes the '
+    test('T2-U11: the real saved shape strips imageDataUri — decodes the '
         'captions fine but has no image, so it falls back honestly like '
         'mapSavedInstantAnswer does for hasAnswer', () {
       // Verified against src/ai/flows/visual-aid-designer.ts: the persist
@@ -467,8 +480,7 @@ void main() {
       expect(aid, isNotNull);
       expect(aid!.hasImage, isTrue);
       expect(aid.pedagogicalContext, 'Use this to explain the water cycle.');
-      expect(
-          aid.discussionSpark, 'Where does the rain go after it falls?');
+      expect(aid.discussionSpark, 'Where does the rain go after it falls?');
       expect(aid.subject, 'Science');
     });
 
@@ -485,8 +497,7 @@ void main() {
   });
 
   group('mapSavedAssessmentScanner', () {
-    test(
-        'T2-U11: decodes a real saved graded assessment field-for-field '
+    test('T2-U11: decodes a real saved graded assessment field-for-field '
         '(marksAwarded / marksMax, not maxMarks)', () {
       // Verified against src/ai/flows/assessment-scanner.ts: `persist()`
       // saves `data: output`, the exact `AssessmentScannerOutputSchema`
@@ -551,8 +562,7 @@ void main() {
       expect(mapSavedAssessmentScanner(null), isNull);
     });
 
-    test(
-        'a structurally decoded but empty result (no questions, no '
+    test('a structurally decoded but empty result (no questions, no '
         'recommendations) falls back honestly', () {
       final json = <String, dynamic>{
         'assessmentId': 'a1',

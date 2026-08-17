@@ -61,17 +61,14 @@ void main() {
     test('wire values match the API enum verbatim', () {
       // These are validated server-side against ADMINISTRATIVE_ROLES; a typo
       // here is a 400 at runtime.
-      expect(
-        AdministrativeRole.values.map((r) => r.wire).toList(),
-        <String>[
-          'hod',
-          'coordinator',
-          'exam_controller',
-          'vice_principal',
-          'principal',
-          'none',
-        ],
-      );
+      expect(AdministrativeRole.values.map((r) => r.wire).toList(), <String>[
+        'hod',
+        'coordinator',
+        'exam_controller',
+        'vice_principal',
+        'principal',
+        'none',
+      ]);
     });
 
     test('fromWire round-trips every role', () {
@@ -105,5 +102,4 @@ void main() {
       expect(kQualifications.toSet(), hasLength(kQualifications.length));
     });
   });
-
 }

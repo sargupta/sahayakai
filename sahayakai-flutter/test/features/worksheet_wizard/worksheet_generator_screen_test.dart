@@ -7,12 +7,12 @@ import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/network/api_exception.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/worksheet_wizard/domain/worksheet.dart';
-import 'package:sahayakai/features/worksheet_wizard/presentation/worksheet_controller.dart';
-import 'package:sahayakai/features/worksheet_wizard/presentation/worksheet_wizard_screen.dart';
-import 'package:sahayakai/shared/media/image_input.dart';
 import 'package:sahayakai/features/worksheet_wizard/presentation/widgets/worksheet_error_view.dart';
 import 'package:sahayakai/features/worksheet_wizard/presentation/widgets/worksheet_result_view.dart';
 import 'package:sahayakai/features/worksheet_wizard/presentation/widgets/worksheet_skeleton.dart';
+import 'package:sahayakai/features/worksheet_wizard/presentation/worksheet_controller.dart';
+import 'package:sahayakai/features/worksheet_wizard/presentation/worksheet_wizard_screen.dart';
+import 'package:sahayakai/shared/media/image_input.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'worksheet_fixtures.dart';
@@ -40,8 +40,9 @@ Widget _host({
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
       home: const WorksheetWizardScreen(),
@@ -71,8 +72,7 @@ void main() {
       await tester.pumpWidget(
         _host(
           overrides: [
-            worksheetControllerProvider
-                .overrideWith(_StubController.loading),
+            worksheetControllerProvider.overrideWith(_StubController.loading),
           ],
         ),
       );
@@ -85,8 +85,9 @@ void main() {
       await tester.pumpWidget(
         _host(
           overrides: [
-            worksheetControllerProvider
-                .overrideWith(() => _StubController(data: buildWorksheet())),
+            worksheetControllerProvider.overrideWith(
+              () => _StubController(data: buildWorksheet()),
+            ),
           ],
         ),
       );
@@ -120,8 +121,9 @@ void main() {
   });
 
   group('validation', () {
-    testWidgets('an empty form blocks submit on both image and prompt',
-        (tester) async {
+    testWidgets('an empty form blocks submit on both image and prompt', (
+      tester,
+    ) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -132,15 +134,20 @@ void main() {
       await tester.tap(find.text('Generate'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Please add a photo of the textbook page.'),
-          findsOneWidget);
-      expect(find.text('Please describe the worksheet you need.'),
-          findsOneWidget);
+      expect(
+        find.text('Please add a photo of the textbook page.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Please describe the worksheet you need.'),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('picking an image clears the required-image error',
-        (tester) async {
+    testWidgets('picking an image clears the required-image error', (
+      tester,
+    ) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -153,19 +160,25 @@ void main() {
       // Surface the errors first.
       await tester.tap(find.text('Generate'));
       await tester.pumpAndSettle();
-      expect(find.text('Please add a photo of the textbook page.'),
-          findsOneWidget);
+      expect(
+        find.text('Please add a photo of the textbook page.'),
+        findsOneWidget,
+      );
 
       // Now pick a photo; the image error clears and the preview appears.
       await tester.tap(find.text('Take photo'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Please add a photo of the textbook page.'),
-          findsNothing);
+      expect(
+        find.text('Please add a photo of the textbook page.'),
+        findsNothing,
+      );
       expect(find.text('Remove photo'), findsOneWidget);
       // The prompt is still required, so the form is still incomplete.
-      expect(find.text('Please describe the worksheet you need.'),
-          findsOneWidget);
+      expect(
+        find.text('Please describe the worksheet you need.'),
+        findsOneWidget,
+      );
     });
   });
 

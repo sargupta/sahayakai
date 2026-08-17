@@ -36,8 +36,9 @@ Widget _host({
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
       home: const VisualAidScreen(),
@@ -73,12 +74,15 @@ void main() {
       expect(find.byType(VisualAidSkeleton), findsOneWidget);
     });
 
-    testWidgets('data renders the generated drawing as an image', (tester) async {
+    testWidgets('data renders the generated drawing as an image', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         _host(
           overrides: [
-            visualAidControllerProvider
-                .overrideWith(() => _StubController(data: buildVisualAid())),
+            visualAidControllerProvider.overrideWith(
+              () => _StubController(data: buildVisualAid()),
+            ),
           ],
         ),
       );
@@ -110,8 +114,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(VisualAidErrorView), findsOneWidget);
-      expect(find.text('Please sign in again to use this tool.'),
-          findsOneWidget);
+      expect(
+        find.text('Please sign in again to use this tool.'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('a 5xx maps to the busy recovery copy + retry', (tester) async {
@@ -152,12 +158,16 @@ void main() {
       await tester.tap(submit);
       await tester.pumpAndSettle();
 
-      expect(find.text('Please describe the drawing you need.'), findsOneWidget);
+      expect(
+        find.text('Please describe the drawing you need.'),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('the prompt field caps at the flow 1000-char limit',
-        (tester) async {
+    testWidgets('the prompt field caps at the flow 1000-char limit', (
+      tester,
+    ) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -171,70 +181,76 @@ void main() {
   });
 
   group('submission', () {
-    testWidgets('tapping Create drives the controller -> repository -> client',
-        (tester) async {
-      tester.view.physicalSize = kNarrowPhone;
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
+    testWidgets(
+      'tapping Create drives the controller -> repository -> client',
+      (tester) async {
+        tester.view.physicalSize = kNarrowPhone;
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
 
-      final client = FakeApiClient(postResponse: visualAidJson());
-      await tester.pumpWidget(_host(overrides: [apiClientOverride(client)]));
-      await tester.pumpAndSettle();
+        final client = FakeApiClient(postResponse: visualAidJson());
+        await tester.pumpWidget(_host(overrides: [apiClientOverride(client)]));
+        await tester.pumpAndSettle();
 
-      await tester.enterText(
-        find.byType(TextFormField),
-        'Structure of a plant cell',
-      );
-      final submit = find.text('Create visual aid');
-      await tester.ensureVisible(submit);
-      await tester.pumpAndSettle();
-      await tester.tap(submit);
-      await tester.pumpAndSettle();
+        await tester.enterText(
+          find.byType(TextFormField),
+          'Structure of a plant cell',
+        );
+        final submit = find.text('Create visual aid');
+        await tester.ensureVisible(submit);
+        await tester.pumpAndSettle();
+        await tester.tap(submit);
+        await tester.pumpAndSettle();
 
-      // The real chain fired exactly one POST to the endpoint...
-      expect(client.posts.single.path, '/api/ai/visual-aid');
-      expect((client.posts.single.data! as Map)['prompt'],
-          'Structure of a plant cell');
-      // ...and the decoded drawing rendered.
-      expect(find.byType(VisualAidResultView), findsOneWidget);
-      expect(find.byType(Image), findsOneWidget);
-    });
+        // The real chain fired exactly one POST to the endpoint...
+        expect(client.posts.single.path, '/api/ai/visual-aid');
+        expect(
+          (client.posts.single.data! as Map)['prompt'],
+          'Structure of a plant cell',
+        );
+        // ...and the decoded drawing rendered.
+        expect(find.byType(VisualAidResultView), findsOneWidget);
+        expect(find.byType(Image), findsOneWidget);
+      },
+    );
   });
 
   group('imageless result keeps a retry affordance (T2-U11b dead-end fix)', () {
     testWidgets(
-        'an imageless result shows the empty state AND keeps the sticky Create '
-        'button', (tester) async {
-      tester.view.physicalSize = const Size(400, 1600);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
+      'an imageless result shows the empty state AND keeps the sticky Create '
+      'button',
+      (tester) async {
+        tester.view.physicalSize = const Size(400, 1600);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(
-        _host(
-          overrides: [
-            visualAidControllerProvider.overrideWith(
-              () => _StubController(data: buildVisualAid(withImage: false)),
-            ),
-          ],
-        ),
-      );
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          _host(
+            overrides: [
+              visualAidControllerProvider.overrideWith(
+                () => _StubController(data: buildVisualAid(withImage: false)),
+              ),
+            ],
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      // The by-design empty state renders (no usable drawing came back)...
-      expect(find.byType(VisualAidResultView), findsOneWidget);
-      expect(
-        find.text(
-          'No drawing came back for that prompt. Please rephrase it and try '
-          'again.',
-        ),
-        findsOneWidget,
-      );
-      // ...and — the fix — the sticky Create button is still there, so the
-      // teacher can retry with the prompt still in the field instead of being
-      // stranded with "rephrase and try again" copy and nothing to tap.
-      expect(find.text('Create visual aid'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    });
+        // The by-design empty state renders (no usable drawing came back)...
+        expect(find.byType(VisualAidResultView), findsOneWidget);
+        expect(
+          find.text(
+            'No drawing came back for that prompt. Please rephrase it and try '
+            'again.',
+          ),
+          findsOneWidget,
+        );
+        // ...and — the fix — the sticky Create button is still there, so the
+        // teacher can retry with the prompt still in the field instead of being
+        // stranded with "rephrase and try again" copy and nothing to tap.
+        expect(find.text('Create visual aid'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
   });
 
   group('overflow gates (DESIGN_RUBRIC §12.9, §12.10, §12.13)', () {
@@ -262,8 +278,9 @@ void main() {
       }
     }
 
-    testWidgets('a long Indic prompt does not overflow the field',
-        (tester) async {
+    testWidgets('a long Indic prompt does not overflow the field', (
+      tester,
+    ) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);

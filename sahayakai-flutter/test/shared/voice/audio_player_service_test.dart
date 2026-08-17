@@ -97,21 +97,23 @@ void main() {
       expect(collected, rawBytes);
     });
 
-    test('a ranged request returns the correct slice with its offset',
-        () async {
-      final source = Base64Mp3Source(rawBytes);
-      final res = await source.request(2, 5);
+    test(
+      'a ranged request returns the correct slice with its offset',
+      () async {
+        final source = Base64Mp3Source(rawBytes);
+        final res = await source.request(2, 5);
 
-      expect(res.offset, 2);
-      expect(res.contentLength, 3);
-      expect(res.sourceLength, rawBytes.length);
+        expect(res.offset, 2);
+        expect(res.contentLength, 3);
+        expect(res.sourceLength, rawBytes.length);
 
-      final collected = <int>[];
-      await for (final chunk in res.stream) {
-        collected.addAll(chunk);
-      }
-      expect(collected, rawBytes.sublist(2, 5));
-    });
+        final collected = <int>[];
+        await for (final chunk in res.stream) {
+          collected.addAll(chunk);
+        }
+        expect(collected, rawBytes.sublist(2, 5));
+      },
+    );
   });
 
   group('AudioPlayerService fake — the seam tests drive', () {
@@ -132,9 +134,9 @@ void main() {
   group('audioPlayerServiceProvider', () {
     test('is overridable with a fake so nothing touches the speaker', () {
       final fake = FakeAudioPlayerService();
-      final container = ProviderContainer(overrides: [
-        audioPlayerServiceProvider.overrideWithValue(fake),
-      ]);
+      final container = ProviderContainer(
+        overrides: [audioPlayerServiceProvider.overrideWithValue(fake)],
+      );
       addTearDown(container.dispose);
 
       expect(container.read(audioPlayerServiceProvider), same(fake));

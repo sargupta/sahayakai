@@ -33,8 +33,9 @@ Widget _hostScreen({
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
       home: const QuizGeneratorScreen(),
@@ -198,8 +199,9 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('deselecting every question type blocks submit',
-        (tester) async {
+    testWidgets('deselecting every question type blocks submit', (
+      tester,
+    ) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -245,45 +247,52 @@ void main() {
 
       await tester.tap(find.text('True or false'));
       await tester.pumpAndSettle();
-      expect(find.text('Please choose at least one question type.'), findsNothing);
-    });
-  });
-
-  group('empty-variants result keeps a retry affordance (T2-U11b dead-end fix)',
-      () {
-    testWidgets(
-        'an empty quiz shows the empty state AND keeps the sticky Generate '
-        'button', (tester) async {
-      tester.view.physicalSize = const Size(400, 1400);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
-
-      await tester.pumpWidget(
-        _hostScreen(
-          overrides: [
-            quizControllerProvider.overrideWith(
-              () => _StubController(data: buildQuiz(empty: true)),
-            ),
-          ],
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // The by-design empty state renders (no variants came back)...
-      expect(find.byType(QuizResultView), findsOneWidget);
       expect(
-        find.text(
-          'No questions came back for that topic. Please try a different '
-          'topic.',
-        ),
-        findsOneWidget,
+        find.text('Please choose at least one question type.'),
+        findsNothing,
       );
-      // ...and — the fix — the sticky Generate button is still there, so the
-      // teacher can retry instead of being stranded past the skipped footer.
-      expect(find.text('Generate'), findsOneWidget);
-      expect(tester.takeException(), isNull);
     });
   });
+
+  group(
+    'empty-variants result keeps a retry affordance (T2-U11b dead-end fix)',
+    () {
+      testWidgets(
+        'an empty quiz shows the empty state AND keeps the sticky Generate '
+        'button',
+        (tester) async {
+          tester.view.physicalSize = const Size(400, 1400);
+          tester.view.devicePixelRatio = 1.0;
+          addTearDown(tester.view.reset);
+
+          await tester.pumpWidget(
+            _hostScreen(
+              overrides: [
+                quizControllerProvider.overrideWith(
+                  () => _StubController(data: buildQuiz(empty: true)),
+                ),
+              ],
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          // The by-design empty state renders (no variants came back)...
+          expect(find.byType(QuizResultView), findsOneWidget);
+          expect(
+            find.text(
+              'No questions came back for that topic. Please try a different '
+              'topic.',
+            ),
+            findsOneWidget,
+          );
+          // ...and — the fix — the sticky Generate button is still there, so the
+          // teacher can retry instead of being stranded past the skipped footer.
+          expect(find.text('Generate'), findsOneWidget);
+          expect(tester.takeException(), isNull);
+        },
+      );
+    },
+  );
 }
 
 /// Injects a fixed [Quiz] so the empty-result state can be asserted without a
@@ -297,12 +306,8 @@ class _StubController extends QuizController {
   FutureOr<Quiz?> build() => data;
 }
 
-Finder _chip(String label) => find.ancestor(
-      of: find.text(label),
-      matching: find.byType(FilterChip),
-    );
+Finder _chip(String label) =>
+    find.ancestor(of: find.text(label), matching: find.byType(FilterChip));
 
-Finder _choice(String label) => find.ancestor(
-      of: find.text(label),
-      matching: find.byType(ChoiceChip),
-    );
+Finder _choice(String label) =>
+    find.ancestor(of: find.text(label), matching: find.byType(ChoiceChip));

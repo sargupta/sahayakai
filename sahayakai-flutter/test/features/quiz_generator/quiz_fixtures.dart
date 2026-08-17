@@ -40,7 +40,9 @@ Widget hostResult(
         child: reduceMotion
             ? Builder(
                 builder: (context) => MediaQuery(
-                  data: MediaQuery.of(context).copyWith(disableAnimations: true),
+                  data: MediaQuery.of(
+                    context,
+                  ).copyWith(disableAnimations: true),
                   child: child,
                 ),
               )
@@ -58,36 +60,36 @@ Quiz buildQuiz({bool onlyMedium = false, bool empty = false}) {
   if (empty) return const Quiz();
 
   QuizVariant variant(QuizDifficulty difficulty) => QuizVariant(
-        difficulty: difficulty,
-        title: 'Fractions quiz $kBn',
-        teacherInstructions: 'Write these on the board. $kTa',
-        gradeLevel: 'Class 6',
-        subject: 'Mathematics',
-        questions: [
-          Question(
-            questionText: 'What is one half of a mango? $kBn $kTa $kMl',
-            questionType: QuestionType.multipleChoice,
-            options: const ['One quarter', 'One half', 'Two thirds', 'Whole'],
-            correctAnswer: 'One half',
-            explanation: 'Half means two equal parts. $kMl',
-            difficultyLevel: difficulty,
-          ),
-          Question(
-            questionText: 'Fill in: 1/2 + 1/2 = ____',
-            questionType: QuestionType.fillInTheBlanks,
-            correctAnswer: '1',
-            explanation: 'Two halves make one whole.',
-            difficultyLevel: difficulty,
-          ),
-          const Question(
-            questionText: kLongWord,
-            questionType: QuestionType.trueFalse,
-            options: ['True', 'False'],
-            correctAnswer: 'True',
-            difficultyLevel: QuizDifficulty.hard,
-          ),
-        ],
-      );
+    difficulty: difficulty,
+    title: 'Fractions quiz $kBn',
+    teacherInstructions: 'Write these on the board. $kTa',
+    gradeLevel: 'Class 6',
+    subject: 'Mathematics',
+    questions: [
+      Question(
+        questionText: 'What is one half of a mango? $kBn $kTa $kMl',
+        questionType: QuestionType.multipleChoice,
+        options: const ['One quarter', 'One half', 'Two thirds', 'Whole'],
+        correctAnswer: 'One half',
+        explanation: 'Half means two equal parts. $kMl',
+        difficultyLevel: difficulty,
+      ),
+      Question(
+        questionText: 'Fill in: 1/2 + 1/2 = ____',
+        questionType: QuestionType.fillInTheBlanks,
+        correctAnswer: '1',
+        explanation: 'Two halves make one whole.',
+        difficultyLevel: difficulty,
+      ),
+      const Question(
+        questionText: kLongWord,
+        questionType: QuestionType.trueFalse,
+        options: ['True', 'False'],
+        correctAnswer: 'True',
+        difficultyLevel: QuizDifficulty.hard,
+      ),
+    ],
+  );
 
   return Quiz(
     topic: 'Fractions',

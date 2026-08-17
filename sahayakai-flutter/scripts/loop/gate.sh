@@ -328,8 +328,16 @@ esac
 
 # ── standard and above ──────────────────────────────────────────────────────
 run "codegen_drift"  gate_codegen_drift
-if gate_custom_lint >/dev/null 2>&1; then run "custom_lint" gate_custom_lint
-else skip "custom_lint" "no custom_lint block in analysis_options.yaml yet (unit U0.21)"; fi
+# Decide SKIP vs RUN by whether the plugin is configured — never by whether it
+# passes. The previous form ran gate_custom_lint as a probe and skipped on ANY
+# non-zero, so a genuinely FAILING custom_lint was silently skipped instead of
+# failing the gate. That is the same can't-fail shape as the three no-op guards
+# this harness shipped on day one.
+if grep -q '^custom_lint:' analysis_options.yaml 2>/dev/null; then
+  run "custom_lint" dart run custom_lint
+else
+  skip "custom_lint" "no custom_lint block in analysis_options.yaml"
+fi
 run "tests"          gate_tests
 if [ "$(grep -rho matchesGoldenFile test 2>/dev/null | wc -l | tr -d ' ')" -gt 0 ]
   then run "goldens" gate_goldens

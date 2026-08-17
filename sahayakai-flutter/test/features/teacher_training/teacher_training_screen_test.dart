@@ -37,8 +37,9 @@ Widget _host({
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
       home: TeacherTrainingScreen(prefill: prefill),
@@ -65,8 +66,9 @@ void main() {
       await tester.pumpWidget(
         _host(
           overrides: [
-            teacherTrainingControllerProvider
-                .overrideWith(_StubController.loading),
+            teacherTrainingControllerProvider.overrideWith(
+              _StubController.loading,
+            ),
           ],
         ),
       );
@@ -79,8 +81,9 @@ void main() {
       await tester.pumpWidget(
         _host(
           overrides: [
-            teacherTrainingControllerProvider
-                .overrideWith(() => _StubController(data: buildAdvice())),
+            teacherTrainingControllerProvider.overrideWith(
+              () => _StubController(data: buildAdvice()),
+            ),
           ],
         ),
       );
@@ -116,8 +119,9 @@ void main() {
   });
 
   group('form', () {
-    testWidgets('offers subject and language but NOT a grade field',
-        (tester) async {
+    testWidgets('offers subject and language but NOT a grade field', (
+      tester,
+    ) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -135,8 +139,9 @@ void main() {
       expect(find.text('Optional'), findsOneWidget);
     });
 
-    testWidgets('the question field caps at the endpoint 2000-char limit',
-        (tester) async {
+    testWidgets('the question field caps at the endpoint 2000-char limit', (
+      tester,
+    ) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -187,24 +192,26 @@ void main() {
   });
 
   group('U9: VIDYA prefill', () {
-    testWidgets('a VIDYA prefill seeds the question, subject and language',
-        (tester) async {
+    testWidgets('a VIDYA prefill seeds the question, subject and language', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(420, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(_host(
-        prefill: const ToolPrefill(
-          topic: 'How do I manage a noisy classroom?',
-          gradeLevel: 'Class 10', // this form has no grade field — ignored
-          subject: 'Science',
-          language: 'kn',
+      await tester.pumpWidget(
+        _host(
+          prefill: const ToolPrefill(
+            topic: 'How do I manage a noisy classroom?',
+            gradeLevel: 'Class 10', // this form has no grade field — ignored
+            subject: 'Science',
+            language: 'kn',
+          ),
         ),
-      ));
+      );
       await tester.pumpAndSettle();
 
-      expect(
-          find.text('How do I manage a noisy classroom?'), findsOneWidget);
+      expect(find.text('How do I manage a noisy classroom?'), findsOneWidget);
       expect(find.text('Science'), findsOneWidget);
       // language 'kn' → the Kannada endonym is shown in the language picker.
       expect(find.text('ಕನ್ನಡ'), findsOneWidget);
@@ -214,18 +221,21 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('an unknown subject is ignored, never crashing the dropdown',
-        (tester) async {
+    testWidgets('an unknown subject is ignored, never crashing the dropdown', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(420, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(_host(
-        prefill: const ToolPrefill(
-          topic: 'Classroom management tips',
-          subject: 'Astrophysics', // not a known subject
+      await tester.pumpWidget(
+        _host(
+          prefill: const ToolPrefill(
+            topic: 'Classroom management tips',
+            subject: 'Astrophysics', // not a known subject
+          ),
         ),
-      ));
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('Classroom management tips'), findsOneWidget);
@@ -233,18 +243,20 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('no prefill opens the blank form (existing behaviour unchanged)',
-        (tester) async {
-      tester.view.physicalSize = const Size(420, 1600);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
+    testWidgets(
+      'no prefill opens the blank form (existing behaviour unchanged)',
+      (tester) async {
+        tester.view.physicalSize = const Size(420, 1600);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(_host());
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(_host());
+        await tester.pumpAndSettle();
 
-      expect(find.text('How do I manage a noisy classroom?'), findsNothing);
-      expect(find.text('Any subject'), findsOneWidget);
-    });
+        expect(find.text('How do I manage a noisy classroom?'), findsNothing);
+        expect(find.text('Any subject'), findsOneWidget);
+      },
+    );
   });
 
   group('overflow gates (DESIGN_RUBRIC §12.9, §12.10, §12.13)', () {
@@ -271,8 +283,9 @@ void main() {
       }
     }
 
-    testWidgets('a long Indic question does not overflow the field',
-        (tester) async {
+    testWidgets('a long Indic question does not overflow the field', (
+      tester,
+    ) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);

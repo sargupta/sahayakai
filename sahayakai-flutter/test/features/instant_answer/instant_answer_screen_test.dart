@@ -25,8 +25,9 @@ Widget _hostScreen({
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
       home: const InstantAnswerScreen(),
@@ -62,8 +63,9 @@ void main() {
       }
     }
 
-    testWidgets('a long Indic question does not overflow the field',
-        (tester) async {
+    testWidgets('a long Indic question does not overflow the field', (
+      tester,
+    ) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -153,13 +155,17 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Please enter a question.'), findsOneWidget);
 
-      await tester.enterText(find.byType(TextFormField), 'Why is the sky blue?');
+      await tester.enterText(
+        find.byType(TextFormField),
+        'Why is the sky blue?',
+      );
       await tester.pumpAndSettle();
       expect(find.text('Please enter a question.'), findsNothing);
     });
 
-    testWidgets('the question field caps at the flow own 4000-char limit',
-        (tester) async {
+    testWidgets('the question field caps at the flow own 4000-char limit', (
+      tester,
+    ) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);

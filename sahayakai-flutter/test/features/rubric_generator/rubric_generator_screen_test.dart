@@ -35,8 +35,9 @@ Widget _host({
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
       home: RubricGeneratorScreen(prefill: prefill),
@@ -56,10 +57,7 @@ void main() {
       await tester.pumpWidget(_host());
       await tester.pumpAndSettle();
 
-      expect(
-        find.textContaining('Describe the assignment'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('Describe the assignment'), findsOneWidget);
     });
 
     testWidgets('loading shows the rubric-shaped skeleton', (tester) async {
@@ -79,16 +77,19 @@ void main() {
       await tester.pumpWidget(
         _host(
           overrides: [
-            rubricControllerProvider
-                .overrideWith(() => _StubController(data: buildRubric())),
+            rubricControllerProvider.overrideWith(
+              () => _StubController(data: buildRubric()),
+            ),
           ],
         ),
       );
       await tester.pumpAndSettle();
 
       expect(find.byType(RubricResultView), findsOneWidget);
-      expect(find.textContaining('Renewable Energy Project Rubric'),
-          findsOneWidget);
+      expect(
+        find.textContaining('Renewable Energy Project Rubric'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('an error maps to the rubric error view', (tester) async {
@@ -133,66 +134,75 @@ void main() {
 
   group('U9: VIDYA prefill', () {
     testWidgets(
-        'a VIDYA prefill seeds the assignment, grade, subject and language',
-        (tester) async {
-      tester.view.physicalSize = const Size(420, 1600);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
+      'a VIDYA prefill seeds the assignment, grade, subject and language',
+      (tester) async {
+        tester.view.physicalSize = const Size(420, 1600);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(_host(
-        prefill: const ToolPrefill(
-          topic: 'Renewable energy poster',
-          gradeLevel: 'Class 10',
-          subject: 'Science',
-          language: 'kn',
-        ),
-      ));
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          _host(
+            prefill: const ToolPrefill(
+              topic: 'Renewable energy poster',
+              gradeLevel: 'Class 10',
+              subject: 'Science',
+              language: 'kn',
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.text('Renewable energy poster'), findsOneWidget);
-      expect(find.text('Class 10'), findsOneWidget);
-      expect(find.text('Science'), findsOneWidget);
-      // language 'kn' → the Kannada endonym is shown in the language picker.
-      expect(find.text('ಕನ್ನಡ'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    });
+        expect(find.text('Renewable energy poster'), findsOneWidget);
+        expect(find.text('Class 10'), findsOneWidget);
+        expect(find.text('Science'), findsOneWidget);
+        // language 'kn' → the Kannada endonym is shown in the language picker.
+        expect(find.text('ಕನ್ನಡ'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
 
-    testWidgets('an unknown grade/subject is ignored, never crashing a dropdown',
-        (tester) async {
-      tester.view.physicalSize = const Size(420, 1600);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
+    testWidgets(
+      'an unknown grade/subject is ignored, never crashing a dropdown',
+      (tester) async {
+        tester.view.physicalSize = const Size(420, 1600);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(_host(
-        prefill: const ToolPrefill(
-          topic: 'Photosynthesis',
-          gradeLevel: 'Grade 99', // not a known grade
-          subject: 'Astrophysics', // not a known subject
-        ),
-      ));
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(
+          _host(
+            prefill: const ToolPrefill(
+              topic: 'Photosynthesis',
+              gradeLevel: 'Grade 99', // not a known grade
+              subject: 'Astrophysics', // not a known subject
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      // The assignment still seeds; the unknown grade/subject simply do not
-      // apply (the dropdowns fall back to their "Any" placeholder).
-      expect(find.text('Photosynthesis'), findsOneWidget);
-      expect(find.text('Any grade'), findsOneWidget);
-      expect(find.text('Any subject'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    });
+        // The assignment still seeds; the unknown grade/subject simply do not
+        // apply (the dropdowns fall back to their "Any" placeholder).
+        expect(find.text('Photosynthesis'), findsOneWidget);
+        expect(find.text('Any grade'), findsOneWidget);
+        expect(find.text('Any subject'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
 
-    testWidgets('no prefill opens the blank form (existing behaviour unchanged)',
-        (tester) async {
-      tester.view.physicalSize = const Size(420, 1600);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
+    testWidgets(
+      'no prefill opens the blank form (existing behaviour unchanged)',
+      (tester) async {
+        tester.view.physicalSize = const Size(420, 1600);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(_host());
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(_host());
+        await tester.pumpAndSettle();
 
-      expect(find.text('Renewable energy poster'), findsNothing);
-      expect(find.text('Any grade'), findsOneWidget);
-      expect(find.text('Any subject'), findsOneWidget);
-    });
+        expect(find.text('Renewable energy poster'), findsNothing);
+        expect(find.text('Any grade'), findsOneWidget);
+        expect(find.text('Any subject'), findsOneWidget);
+      },
+    );
   });
 
   group('overflow gates (DESIGN_RUBRIC §12.9, §12.10, §12.13)', () {

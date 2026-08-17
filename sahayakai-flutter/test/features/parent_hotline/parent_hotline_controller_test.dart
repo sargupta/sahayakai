@@ -28,38 +28,62 @@ void main() {
       CallResult(
         callStatus: CallStatus.initiated,
         turnCount: turnCount,
-        transcript: transcript ??
+        transcript:
+            transcript ??
             const [
-              TranscriptTurn(role: TranscriptRole.agent, text: 'Namaste.', timestamp: 't0'),
+              TranscriptTurn(
+                role: TranscriptRole.agent,
+                text: 'Namaste.',
+                timestamp: 't0',
+              ),
             ],
       );
 
-  CallResult completedWithSummary() => CallResult(
-        callStatus: CallStatus.completed,
-        callDurationSeconds: 132,
-        turnCount: 4,
-        transcript: const [
-          TranscriptTurn(role: TranscriptRole.agent, text: 'Namaste.', timestamp: 't0'),
-          TranscriptTurn(role: TranscriptRole.parent, text: 'Haan ji.', timestamp: 't1'),
+  CallResult completedWithSummary() => const CallResult(
+    callStatus: CallStatus.completed,
+    callDurationSeconds: 132,
+    turnCount: 4,
+    transcript: [
+      TranscriptTurn(
+        role: TranscriptRole.agent,
+        text: 'Namaste.',
+        timestamp: 't0',
+      ),
+      TranscriptTurn(
+        role: TranscriptRole.parent,
+        text: 'Haan ji.',
+        timestamp: 't1',
+      ),
+    ],
+    callSummary: CallSummary(
+      parentResponse: 'Grateful and engaged.',
+      actionItemsForTeacher: ['Share worksheets'],
+      parentSentiment: ParentSentiment.grateful,
+      callQuality: CallQuality.productive,
+    ),
+  );
+
+  CallResult completedNoSummary({
+    int turnCount = 4,
+    List<TranscriptTurn>? transcript,
+  }) => CallResult(
+    callStatus: CallStatus.completed,
+    turnCount: turnCount,
+    transcript:
+        transcript ??
+        const [
+          TranscriptTurn(
+            role: TranscriptRole.agent,
+            text: 'Namaste.',
+            timestamp: 't0',
+          ),
+          TranscriptTurn(
+            role: TranscriptRole.parent,
+            text: 'Haan.',
+            timestamp: 't1',
+          ),
         ],
-        callSummary: const CallSummary(
-          parentResponse: 'Grateful and engaged.',
-          actionItemsForTeacher: ['Share worksheets'],
-          parentSentiment: ParentSentiment.grateful,
-          callQuality: CallQuality.productive,
-        ),
-      );
-
-  CallResult completedNoSummary({int turnCount = 4, List<TranscriptTurn>? transcript}) =>
-      CallResult(
-        callStatus: CallStatus.completed,
-        turnCount: turnCount,
-        transcript: transcript ??
-            const [
-              TranscriptTurn(role: TranscriptRole.agent, text: 'Namaste.', timestamp: 't0'),
-              TranscriptTurn(role: TranscriptRole.parent, text: 'Haan.', timestamp: 't1'),
-            ],
-      );
+  );
 
   ProviderContainer makeContainer({
     required FakeParentHotlineRepository hotline,
@@ -69,10 +93,10 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         parentHotlineRepositoryProvider.overrideWithValue(hotline),
-        parentMessageRepositoryProvider
-            .overrideWithValue(messages ?? FakeParentMessageRepository()),
-        if (policy != null)
-          callabilityPolicyProvider.overrideWithValue(policy),
+        parentMessageRepositoryProvider.overrideWithValue(
+          messages ?? FakeParentMessageRepository(),
+        ),
+        if (policy != null) callabilityPolicyProvider.overrideWithValue(policy),
       ],
     );
     // A test may dispose the container early (to prove cancel-on-dispose); guard
@@ -116,15 +140,21 @@ void main() {
       final ctrl = container.read(parentHotlineControllerProvider.notifier);
 
       driveToReview(async, container);
-      expect(container.read(parentHotlineControllerProvider).stage,
-          HotlineStage.review);
-      expect(container.read(parentHotlineControllerProvider).draftedMessage,
-          isNotNull);
+      expect(
+        container.read(parentHotlineControllerProvider).stage,
+        HotlineStage.review,
+      );
+      expect(
+        container.read(parentHotlineControllerProvider).draftedMessage,
+        isNotNull,
+      );
 
       unawaited(ctrl.createAndCall());
       async.flushMicrotasks(); // create + place resolve → calling
-      expect(container.read(parentHotlineControllerProvider).stage,
-          HotlineStage.calling);
+      expect(
+        container.read(parentHotlineControllerProvider).stage,
+        HotlineStage.calling,
+      );
       expect(hotline.pollCount, 0, reason: 'no poll before the 3s delay');
 
       async.elapse(const Duration(seconds: 2));
@@ -154,7 +184,9 @@ void main() {
   test('completed without summary switches to 3s cadence and exhausts', () {
     fakeAsync((async) {
       final hotline = FakeParentHotlineRepository(
-        pollResults: [completedNoSummary()], // repeats: always completed, no summary
+        pollResults: [
+          completedNoSummary(),
+        ], // repeats: always completed, no summary
       );
       final container = makeContainer(hotline: hotline);
       final ctrl = container.read(parentHotlineControllerProvider.notifier);
@@ -165,16 +197,22 @@ void main() {
 
       async.elapse(const Duration(seconds: 3)); // wait #1 (terminal detected)
       expect(hotline.pollCount, 1);
-      expect(container.read(parentHotlineControllerProvider).stage,
-          HotlineStage.calling, reason: 'still waiting for the summary');
+      expect(
+        container.read(parentHotlineControllerProvider).stage,
+        HotlineStage.calling,
+        reason: 'still waiting for the summary',
+      );
 
       // Seven more 3s waits (waits #2..#8) → exhaustion at #8.
       async.elapse(const Duration(seconds: 3 * 7));
       expect(hotline.pollCount, kMaxSummaryWaits);
       final s = container.read(parentHotlineControllerProvider);
       expect(s.stage, HotlineStage.summary);
-      expect(s.summaryOutcome, HotlineSummaryOutcome.summaryUnavailable,
-          reason: 'a transcript exists but no summary');
+      expect(
+        s.summaryOutcome,
+        HotlineSummaryOutcome.summaryUnavailable,
+        reason: 'a transcript exists but no summary',
+      );
     });
   });
 
@@ -199,15 +237,21 @@ void main() {
       async.elapse(const Duration(seconds: 3)); // the FIRST poll fires
       expect(hotline.pollCount, 1);
       final s = container.read(parentHotlineControllerProvider);
-      expect(s.stage, HotlineStage.summary,
-          reason: 'a terminal failure flips immediately, not after 8 waits');
+      expect(
+        s.stage,
+        HotlineStage.summary,
+        reason: 'a terminal failure flips immediately, not after 8 waits',
+      );
       expect(s.summaryOutcome, HotlineSummaryOutcome.callFailed);
 
       // …and polling has STOPPED — no summary-wait window is burned on a call
       // that can never produce a summary.
       async.elapse(const Duration(seconds: 3 * kMaxSummaryWaits));
-      expect(hotline.pollCount, 1,
-          reason: 'a failed call is terminal — the poll loop is done');
+      expect(
+        hotline.pollCount,
+        1,
+        reason: 'a failed call is terminal — the poll loop is done',
+      );
     });
   });
 
@@ -215,7 +259,7 @@ void main() {
     fakeAsync((async) {
       final hotline = FakeParentHotlineRepository(
         pollResults: [
-          CallResult(callStatus: CallStatus.completed, turnCount: 1),
+          const CallResult(callStatus: CallStatus.completed, turnCount: 1),
         ],
       );
       final container = makeContainer(hotline: hotline);
@@ -232,41 +276,47 @@ void main() {
     });
   });
 
-  test('NIT-1: turnCount==1 with a lone-greeting transcript → endedNoConversation',
-      () {
-    fakeAsync((async) {
-      // A completed, no-summary call with only the agent's opening line: the
-      // SPEC's turnCount<2 rule must win over the transcript-present rule.
-      final hotline = FakeParentHotlineRepository(
-        pollResults: [
-          CallResult(
-            callStatus: CallStatus.completed,
-            turnCount: 1,
-            transcript: const [
-              TranscriptTurn(
-                  role: TranscriptRole.agent, text: 'Namaste.', timestamp: 't0'),
-            ],
-          ),
-        ],
-      );
-      final container = makeContainer(hotline: hotline);
-      final ctrl = container.read(parentHotlineControllerProvider.notifier);
+  test(
+    'NIT-1: turnCount==1 with a lone-greeting transcript → endedNoConversation',
+    () {
+      fakeAsync((async) {
+        // A completed, no-summary call with only the agent's opening line: the
+        // SPEC's turnCount<2 rule must win over the transcript-present rule.
+        final hotline = FakeParentHotlineRepository(
+          pollResults: [
+            const CallResult(
+              callStatus: CallStatus.completed,
+              turnCount: 1,
+              transcript: [
+                TranscriptTurn(
+                  role: TranscriptRole.agent,
+                  text: 'Namaste.',
+                  timestamp: 't0',
+                ),
+              ],
+            ),
+          ],
+        );
+        final container = makeContainer(hotline: hotline);
+        final ctrl = container.read(parentHotlineControllerProvider.notifier);
 
-      driveToReview(async, container);
-      unawaited(ctrl.createAndCall());
-      async.flushMicrotasks();
-      async.elapse(const Duration(seconds: 3 * kMaxSummaryWaits));
+        driveToReview(async, container);
+        unawaited(ctrl.createAndCall());
+        async.flushMicrotasks();
+        async.elapse(const Duration(seconds: 3 * kMaxSummaryWaits));
 
-      expect(container.read(parentHotlineControllerProvider).summaryOutcome,
+        expect(
+          container.read(parentHotlineControllerProvider).summaryOutcome,
           HotlineSummaryOutcome.endedNoConversation,
-          reason: 'turnCount<2 beats transcript-present (SPEC §B.1 ordering)');
-    });
-  });
+          reason: 'turnCount<2 beats transcript-present (SPEC §B.1 ordering)',
+        );
+      });
+    },
+  );
 
   // ── 3. Cancel on dispose (the guard is load-bearing) ──
 
-  test('disposing WITH a poll in flight: the post-await guard blocks re-entry',
-      () {
+  test('disposing WITH a poll in flight: the post-await guard blocks re-entry', () {
     fakeAsync((async) {
       // The gate holds poll #1 suspended (after pollCount was bumped, before the
       // result resolves) precisely while we dispose. The result is `initiated`,
@@ -282,16 +332,15 @@ void main() {
       final ctrl = container.read(parentHotlineControllerProvider.notifier);
 
       var emissions = 0;
-      container.listen(
-        parentHotlineControllerProvider,
-        (_, _) => emissions++,
-      );
+      container.listen(parentHotlineControllerProvider, (_, _) => emissions++);
 
       driveToReview(async, container);
       unawaited(ctrl.createAndCall());
       async.flushMicrotasks();
 
-      async.elapse(const Duration(seconds: 3)); // poll #1 fires → suspends on the gate
+      async.elapse(
+        const Duration(seconds: 3),
+      ); // poll #1 fires → suspends on the gate
       async.flushMicrotasks();
       expect(hotline.pollCount, 1, reason: 'poll #1 is IN FLIGHT (awaiting)');
       final emissionsBeforeDispose = emissions;
@@ -302,10 +351,16 @@ void main() {
       async.flushMicrotasks(); // its continuation runs → must hit the guard
       async.elapse(const Duration(seconds: 30)); // no rescheduled poll may fire
 
-      expect(hotline.pollCount, 1,
-          reason: 'the guarded continuation must not reschedule a poll');
-      expect(emissions, emissionsBeforeDispose,
-          reason: 'no state may be emitted after dispose');
+      expect(
+        hotline.pollCount,
+        1,
+        reason: 'the guarded continuation must not reschedule a poll',
+      );
+      expect(
+        emissions,
+        emissionsBeforeDispose,
+        reason: 'no state may be emitted after dispose',
+      );
     });
   });
 
@@ -330,15 +385,23 @@ void main() {
       ctrl.leaveCalling();
       async.elapse(const Duration(seconds: 30));
       expect(hotline.pollCount, 1, reason: 'leaving calling stops polling');
-      expect(container.read(parentHotlineControllerProvider).error,
-          HotlineError.none, reason: 'leaving is not an error');
-      expect(container.read(parentHotlineControllerProvider).stage,
-          HotlineStage.calling, reason: 'the call itself is not cancelled');
+      expect(
+        container.read(parentHotlineControllerProvider).error,
+        HotlineError.none,
+        reason: 'leaving is not an error',
+      );
+      expect(
+        container.read(parentHotlineControllerProvider).stage,
+        HotlineStage.calling,
+        reason: 'the call itself is not cancelled',
+      );
 
       unawaited(ctrl.init(studentId: 's1', parentLanguage: 'Kannada'));
       async.flushMicrotasks(); // latestForStudent resolves → re-bind
-      expect(container.read(parentHotlineControllerProvider).stage,
-          HotlineStage.calling);
+      expect(
+        container.read(parentHotlineControllerProvider).stage,
+        HotlineStage.calling,
+      );
       expect(hotline.latestQueries, contains('s1'));
 
       async.elapse(const Duration(seconds: 3)); // resumed poll fires
@@ -351,7 +414,10 @@ void main() {
   test('resume (a): terminal + summary → jump straight to summary', () {
     fakeAsync((async) {
       final hotline = FakeParentHotlineRepository(
-        latest: LatestOutreach(outreachId: 'o-a', result: completedWithSummary()),
+        latest: LatestOutreach(
+          outreachId: 'o-a',
+          result: completedWithSummary(),
+        ),
       );
       final container = makeContainer(hotline: hotline);
       final ctrl = container.read(parentHotlineControllerProvider.notifier);
@@ -363,7 +429,11 @@ void main() {
       expect(s.stage, HotlineStage.summary);
       expect(s.outreachId, 'o-a');
       expect(s.summaryOutcome, HotlineSummaryOutcome.summary);
-      expect(hotline.pollCount, 0, reason: 'a settled summary needs no polling');
+      expect(
+        hotline.pollCount,
+        0,
+        reason: 'a settled summary needs no polling',
+      );
       // Nothing should ever poll from here.
       async.elapse(const Duration(seconds: 30));
       expect(hotline.pollCount, 0);
@@ -384,7 +454,11 @@ void main() {
       final s = container.read(parentHotlineControllerProvider);
       expect(s.stage, HotlineStage.calling);
       expect(s.outreachId, 'o-b');
-      expect(hotline.createRequests, isEmpty, reason: 'resume never re-creates');
+      expect(
+        hotline.createRequests,
+        isEmpty,
+        reason: 'resume never re-creates',
+      );
       expect(hotline.placeCalls, isEmpty, reason: 'resume never re-dials');
 
       async.elapse(const Duration(seconds: 3));
@@ -392,23 +466,30 @@ void main() {
     });
   });
 
-  test('resume (c): nothing → fresh flow (reason w/ student, else pickStudent)', () {
-    fakeAsync((async) {
-      final hotline = FakeParentHotlineRepository(latest: null);
-      final container = makeContainer(hotline: hotline);
-      final ctrl = container.read(parentHotlineControllerProvider.notifier);
+  test(
+    'resume (c): nothing → fresh flow (reason w/ student, else pickStudent)',
+    () {
+      fakeAsync((async) {
+        final hotline = FakeParentHotlineRepository(latest: null);
+        final container = makeContainer(hotline: hotline);
+        final ctrl = container.read(parentHotlineControllerProvider.notifier);
 
-      unawaited(ctrl.init(studentId: 's1', parentLanguage: 'Kannada'));
-      async.flushMicrotasks();
-      expect(container.read(parentHotlineControllerProvider).stage,
-          HotlineStage.reason);
+        unawaited(ctrl.init(studentId: 's1', parentLanguage: 'Kannada'));
+        async.flushMicrotasks();
+        expect(
+          container.read(parentHotlineControllerProvider).stage,
+          HotlineStage.reason,
+        );
 
-      unawaited(ctrl.init()); // no student → the picker
-      async.flushMicrotasks();
-      expect(container.read(parentHotlineControllerProvider).stage,
-          HotlineStage.pickStudent);
-    });
-  });
+        unawaited(ctrl.init()); // no student → the picker
+        async.flushMicrotasks();
+        expect(
+          container.read(parentHotlineControllerProvider).stage,
+          HotlineStage.pickStudent,
+        );
+      });
+    },
+  );
 
   // ── 6. Dedup countdown blocks callAgain until elapsed ──
 
@@ -416,9 +497,13 @@ void main() {
     fakeAsync((async) {
       final hotline = FakeParentHotlineRepository(
         pollResults: [initiated()],
-        createError: OutreachDedupException(
-          const ApiException(ApiErrorKind.rateLimited, 'Slow down',
-              statusCode: 429, retryAfterSeconds: 120),
+        createError: const OutreachDedupException(
+          ApiException(
+            ApiErrorKind.rateLimited,
+            'Slow down',
+            statusCode: 429,
+            retryAfterSeconds: 120,
+          ),
           retryAfterSeconds: 120,
         ),
       );
@@ -430,33 +515,54 @@ void main() {
       async.flushMicrotasks();
 
       expect(hotline.createRequests, hasLength(1));
-      expect(container.read(parentHotlineControllerProvider).dedupRetryAfterSeconds,
-          120);
-      expect(container.read(parentHotlineControllerProvider).isDedupBlocked, isTrue);
+      expect(
+        container.read(parentHotlineControllerProvider).dedupRetryAfterSeconds,
+        120,
+      );
+      expect(
+        container.read(parentHotlineControllerProvider).isDedupBlocked,
+        isTrue,
+      );
 
       // Blocked: callAgain is a no-op while the countdown runs.
       unawaited(ctrl.callAgain());
       async.flushMicrotasks();
-      expect(hotline.createRequests, hasLength(1),
-          reason: 'callAgain must not re-create while the countdown runs');
+      expect(
+        hotline.createRequests,
+        hasLength(1),
+        reason: 'callAgain must not re-create while the countdown runs',
+      );
 
       // The countdown ticks down.
       async.elapse(const Duration(seconds: 119));
-      expect(container.read(parentHotlineControllerProvider).dedupRetryAfterSeconds,
-          1);
-      expect(container.read(parentHotlineControllerProvider).isDedupBlocked, isTrue);
+      expect(
+        container.read(parentHotlineControllerProvider).dedupRetryAfterSeconds,
+        1,
+      );
+      expect(
+        container.read(parentHotlineControllerProvider).isDedupBlocked,
+        isTrue,
+      );
 
       async.elapse(const Duration(seconds: 1)); // total 120s → cleared
-      expect(container.read(parentHotlineControllerProvider).dedupRetryAfterSeconds,
-          isNull);
-      expect(container.read(parentHotlineControllerProvider).isDedupBlocked, isFalse);
+      expect(
+        container.read(parentHotlineControllerProvider).dedupRetryAfterSeconds,
+        isNull,
+      );
+      expect(
+        container.read(parentHotlineControllerProvider).isDedupBlocked,
+        isFalse,
+      );
 
       // Now callAgain proceeds (the outreach succeeds this time).
       hotline.createError = null;
       unawaited(ctrl.callAgain());
       async.flushMicrotasks();
-      expect(hotline.createRequests, hasLength(2),
-          reason: 'callAgain is allowed once the countdown clears');
+      expect(
+        hotline.createRequests,
+        hasLength(2),
+        reason: 'callAgain is allowed once the countdown clears',
+      );
     });
   });
 
@@ -466,9 +572,13 @@ void main() {
     fakeAsync((async) {
       final hotline = FakeParentHotlineRepository(
         pollResults: [initiated()],
-        createError: OutreachDedupException(
-          const ApiException(ApiErrorKind.rateLimited, 'Slow down',
-              statusCode: 429, retryAfterSeconds: 300),
+        createError: const OutreachDedupException(
+          ApiException(
+            ApiErrorKind.rateLimited,
+            'Slow down',
+            statusCode: 429,
+            retryAfterSeconds: 300,
+          ),
           retryAfterSeconds: 300,
         ),
       );
@@ -489,7 +599,10 @@ void main() {
       async.flushMicrotasks();
       unawaited(ctrl.createAndCall());
       async.flushMicrotasks();
-      expect(container.read(parentHotlineControllerProvider).isDedupBlocked, isTrue);
+      expect(
+        container.read(parentHotlineControllerProvider).isDedupBlocked,
+        isTrue,
+      );
 
       // Switch to a never-contacted student B — the cool-down must NOT carry
       // over (the server dedups per (teacher, student)).
@@ -502,10 +615,15 @@ void main() {
         parentLanguage: 'Kannada',
         subject: 'Mathematics',
       );
-      expect(container.read(parentHotlineControllerProvider).isDedupBlocked, isFalse,
-          reason: 'dedup is per-student and is cleared on switch');
-      expect(container.read(parentHotlineControllerProvider).dedupRetryAfterSeconds,
-          isNull);
+      expect(
+        container.read(parentHotlineControllerProvider).isDedupBlocked,
+        isFalse,
+        reason: 'dedup is per-student and is cleared on switch',
+      );
+      expect(
+        container.read(parentHotlineControllerProvider).dedupRetryAfterSeconds,
+        isNull,
+      );
 
       // B can actually be called (not a silent no-op).
       ctrl.selectReason(OutreachReason.behavioralConcern);
@@ -513,58 +631,79 @@ void main() {
       async.flushMicrotasks();
       unawaited(ctrl.createAndCall());
       async.flushMicrotasks();
-      expect(container.read(parentHotlineControllerProvider).stage,
-          HotlineStage.calling, reason: 'B was never contacted — the call proceeds');
+      expect(
+        container.read(parentHotlineControllerProvider).stage,
+        HotlineStage.calling,
+        reason: 'B was never contacted — the call proceeds',
+      );
       expect(hotline.placeCalls, hasLength(1));
     });
   });
 
-  test('copyForWhatsApp is never dedup-gated (always available, SPEC §B.5.2)', () {
-    fakeAsync((async) {
-      final hotline = FakeParentHotlineRepository(
-        createError: OutreachDedupException(
-          const ApiException(ApiErrorKind.rateLimited, 'Slow down',
-              statusCode: 429, retryAfterSeconds: 300),
-          retryAfterSeconds: 300,
-        ),
-      );
-      final container = makeContainer(hotline: hotline);
-      final ctrl = container.read(parentHotlineControllerProvider.notifier);
+  test(
+    'copyForWhatsApp is never dedup-gated (always available, SPEC §B.5.2)',
+    () {
+      fakeAsync((async) {
+        final hotline = FakeParentHotlineRepository(
+          createError: const OutreachDedupException(
+            ApiException(
+              ApiErrorKind.rateLimited,
+              'Slow down',
+              statusCode: 429,
+              retryAfterSeconds: 300,
+            ),
+            retryAfterSeconds: 300,
+          ),
+        );
+        final container = makeContainer(hotline: hotline);
+        final ctrl = container.read(parentHotlineControllerProvider.notifier);
 
-      driveToReview(async, container);
-      unawaited(ctrl.createAndCall()); // arm the dedup countdown
-      async.flushMicrotasks();
-      expect(container.read(parentHotlineControllerProvider).isDedupBlocked, isTrue);
-      expect(hotline.createRequests, hasLength(1));
+        driveToReview(async, container);
+        unawaited(ctrl.createAndCall()); // arm the dedup countdown
+        async.flushMicrotasks();
+        expect(
+          container.read(parentHotlineControllerProvider).isDedupBlocked,
+          isTrue,
+        );
+        expect(hotline.createRequests, hasLength(1));
 
-      // While the cool-down is live, createAndCall is blocked (client no-op)...
-      unawaited(ctrl.createAndCall());
-      async.flushMicrotasks();
-      expect(hotline.createRequests, hasLength(1),
-          reason: 'createAndCall stays dedup-gated');
+        // While the cool-down is live, createAndCall is blocked (client no-op)...
+        unawaited(ctrl.createAndCall());
+        async.flushMicrotasks();
+        expect(
+          hotline.createRequests,
+          hasLength(1),
+          reason: 'createAndCall stays dedup-gated',
+        );
 
-      // ...but WhatsApp copy is NOT: it issues its request regardless.
-      hotline.createError = null; // the copy outreach succeeds
-      unawaited(ctrl.copyForWhatsApp());
-      async.flushMicrotasks();
-      expect(hotline.createRequests, hasLength(2),
-          reason: 'copyForWhatsApp must not be blocked by the dedup countdown');
-      final s = container.read(parentHotlineControllerProvider);
-      expect(s.stage, HotlineStage.summary);
-      expect(s.summaryOutcome, HotlineSummaryOutcome.manual);
-      expect(hotline.placeCalls, isEmpty);
-    });
-  });
+        // ...but WhatsApp copy is NOT: it issues its request regardless.
+        hotline.createError = null; // the copy outreach succeeds
+        unawaited(ctrl.copyForWhatsApp());
+        async.flushMicrotasks();
+        expect(
+          hotline.createRequests,
+          hasLength(2),
+          reason: 'copyForWhatsApp must not be blocked by the dedup countdown',
+        );
+        final s = container.read(parentHotlineControllerProvider);
+        expect(s.stage, HotlineStage.summary);
+        expect(s.summaryOutcome, HotlineSummaryOutcome.manual);
+        expect(hotline.placeCalls, isEmpty);
+      });
+    },
+  );
 
   // ── 7. Unsupported language flips callability + WhatsApp fallback ──
 
   test('422 unsupported-language → canAutoCall false + review fallback', () {
     fakeAsync((async) {
       final hotline = FakeParentHotlineRepository(
-        placeCallError: UnsupportedCallLanguageException(
-          const ApiException(ApiErrorKind.badResponse,
-              'Auto-call not supported for Odia. Use WhatsApp copy instead.',
-              statusCode: 422),
+        placeCallError: const UnsupportedCallLanguageException(
+          ApiException(
+            ApiErrorKind.badResponse,
+            'Auto-call not supported for Odia. Use WhatsApp copy instead.',
+            statusCode: 422,
+          ),
           language: 'Odia',
         ),
       );
@@ -572,8 +711,11 @@ void main() {
       final ctrl = container.read(parentHotlineControllerProvider.notifier);
 
       driveToReview(async, container, parentLanguage: 'Odia');
-      expect(container.read(parentHotlineControllerProvider).canAutoCall, isTrue,
-          reason: 'optimistically callable before the server says otherwise');
+      expect(
+        container.read(parentHotlineControllerProvider).canAutoCall,
+        isTrue,
+        reason: 'optimistically callable before the server says otherwise',
+      );
 
       unawaited(ctrl.createAndCall());
       async.flushMicrotasks();
@@ -581,10 +723,17 @@ void main() {
       final s = container.read(parentHotlineControllerProvider);
       expect(hotline.createRequests, hasLength(1));
       expect(hotline.placeCalls, hasLength(1), reason: 'we tried to dial');
-      expect(s.canAutoCall, isFalse, reason: 'the 422 flipped it off at runtime');
+      expect(
+        s.canAutoCall,
+        isFalse,
+        reason: 'the 422 flipped it off at runtime',
+      );
       expect(s.error, HotlineError.unsupportedLanguage);
-      expect(s.stage, HotlineStage.review,
-          reason: 'back to review so the teacher can copy for WhatsApp');
+      expect(
+        s.stage,
+        HotlineStage.review,
+        reason: 'back to review so the teacher can copy for WhatsApp',
+      );
     });
   });
 
@@ -594,8 +743,12 @@ void main() {
     fakeAsync((async) {
       final hotline = FakeParentHotlineRepository(
         createError: const PremiumRequiredException(
-          ApiException(ApiErrorKind.forbidden, 'PREMIUM_REQUIRED',
-              statusCode: 403, errorCode: 'PREMIUM_REQUIRED'),
+          ApiException(
+            ApiErrorKind.forbidden,
+            'PREMIUM_REQUIRED',
+            statusCode: 403,
+            errorCode: 'PREMIUM_REQUIRED',
+          ),
         ),
       );
       final container = makeContainer(hotline: hotline);
@@ -618,8 +771,10 @@ void main() {
     fakeAsync((async) {
       final hotline = FakeParentHotlineRepository(
         createError: const ApiException(
-            ApiErrorKind.unauthorized, 'Please sign in again.',
-            statusCode: 401),
+          ApiErrorKind.unauthorized,
+          'Please sign in again.',
+          statusCode: 401,
+        ),
       );
       final container = makeContainer(hotline: hotline);
       final ctrl = container.read(parentHotlineControllerProvider.notifier);
@@ -651,35 +806,40 @@ void main() {
       expect(s.stage, HotlineStage.summary);
       expect(s.summaryOutcome, HotlineSummaryOutcome.manual);
       expect(hotline.placeCalls, isEmpty, reason: 'WhatsApp copy never dials');
-      expect(hotline.createRequests.single.toJson()['deliveryMethod'],
-          'whatsapp_copy');
+      expect(
+        hotline.createRequests.single.toJson()['deliveryMethod'],
+        'whatsapp_copy',
+      );
     });
   });
 
   // ── 11. F9-001 — no parent phone anywhere ──
 
-  test('F9-001: no parentPhone in the create body; placeCall sends only 2 keys',
-      () {
-    fakeAsync((async) {
-      final hotline = FakeParentHotlineRepository(
-        pollResults: [initiated()],
-      );
-      final container = makeContainer(hotline: hotline);
-      final ctrl = container.read(parentHotlineControllerProvider.notifier);
+  test(
+    'F9-001: no parentPhone in the create body; placeCall sends only 2 keys',
+    () {
+      fakeAsync((async) {
+        final hotline = FakeParentHotlineRepository(pollResults: [initiated()]);
+        final container = makeContainer(hotline: hotline);
+        final ctrl = container.read(parentHotlineControllerProvider.notifier);
 
-      driveToReview(async, container);
-      unawaited(ctrl.createAndCall());
-      async.flushMicrotasks();
+        driveToReview(async, container);
+        unawaited(ctrl.createAndCall());
+        async.flushMicrotasks();
 
-      final body = hotline.createRequests.single.toJson();
-      expect(body.containsKey('parentPhone'), isFalse,
-          reason: 'F9-001: the client never sends the phone');
-      expect(hotline.placeCalls.single.outreachId, isNotEmpty);
-      expect(hotline.placeCalls.single.parentLanguage, 'Kannada');
-      // placeCall carries ONLY {outreachId, parentLanguage} — proven at the
-      // repository layer; here we prove the controller passes nothing else.
-    });
-  });
+        final body = hotline.createRequests.single.toJson();
+        expect(
+          body.containsKey('parentPhone'),
+          isFalse,
+          reason: 'F9-001: the client never sends the phone',
+        );
+        expect(hotline.placeCalls.single.outreachId, isNotEmpty);
+        expect(hotline.placeCalls.single.parentLanguage, 'Kannada');
+        // placeCall carries ONLY {outreachId, parentLanguage} — proven at the
+        // repository layer; here we prove the controller passes nothing else.
+      });
+    },
+  );
 
   // ── extra: an injected callability policy hides Call up front ──
 
@@ -699,8 +859,11 @@ void main() {
         className: 'Class 6A',
         parentLanguage: 'Kannada',
       );
-      expect(container.read(parentHotlineControllerProvider).canAutoCall, isFalse,
-          reason: 'Kannada is not in the injected callable set');
+      expect(
+        container.read(parentHotlineControllerProvider).canAutoCall,
+        isFalse,
+        reason: 'Kannada is not in the injected callable set',
+      );
     });
   });
 }

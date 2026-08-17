@@ -40,8 +40,10 @@ void main() {
 
       expect(recs.hasVideos, isTrue);
       expect(recs.sections, isNotEmpty);
-      expect(recs.categorizedVideos[VideoCategory.topRecommended]!.first.id,
-          'vid_top_1');
+      expect(
+        recs.categorizedVideos[VideoCategory.topRecommended]!.first.id,
+        'vid_top_1',
+      );
 
       expect(client.posts.single.path, '/api/ai/video-storyteller');
       final body = client.posts.single.data! as Map<String, dynamic>;
@@ -75,30 +77,36 @@ void main() {
 
       await expectLater(
         container.read(videoStorytellerRepositoryProvider).recommend(request),
-        throwsA(isA<ApiException>()
-            .having((e) => e.kind, 'kind', ApiErrorKind.unauthorized)
-            .having((e) => e.statusCode, 'statusCode', 401)),
-      );
-    });
-
-    test('a 429 rate-limit surfaces as the typed rate-limit exception',
-        () async {
-      final client = FakeApiClient(
-        postError: const ApiException(
-          ApiErrorKind.rateLimited,
-          'Too many requests.',
-          statusCode: 429,
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.kind, 'kind', ApiErrorKind.unauthorized)
+              .having((e) => e.statusCode, 'statusCode', 401),
         ),
       );
-      final container = containerWith(client);
-
-      await expectLater(
-        container.read(videoStorytellerRepositoryProvider).recommend(request),
-        throwsA(isA<ApiException>()
-            .having((e) => e.kind, 'kind', ApiErrorKind.rateLimited)
-            .having((e) => e.statusCode, 'statusCode', 429)),
-      );
     });
+
+    test(
+      'a 429 rate-limit surfaces as the typed rate-limit exception',
+      () async {
+        final client = FakeApiClient(
+          postError: const ApiException(
+            ApiErrorKind.rateLimited,
+            'Too many requests.',
+            statusCode: 429,
+          ),
+        );
+        final container = containerWith(client);
+
+        await expectLater(
+          container.read(videoStorytellerRepositoryProvider).recommend(request),
+          throwsA(
+            isA<ApiException>()
+                .having((e) => e.kind, 'kind', ApiErrorKind.rateLimited)
+                .having((e) => e.statusCode, 'statusCode', 429),
+          ),
+        );
+      },
+    );
 
     test('a 400 surfaces as the typed badResponse exception', () async {
       final client = FakeApiClient(
@@ -112,43 +120,58 @@ void main() {
 
       await expectLater(
         container.read(videoStorytellerRepositoryProvider).recommend(request),
-        throwsA(isA<ApiException>()
-            .having((e) => e.statusCode, 'statusCode', 400)),
-      );
-    });
-
-    test('a 5xx surfaces as the typed server exception (INTERNAL_ERROR)',
-        () async {
-      // The route returns { error, code: INTERNAL_ERROR } with status 500.
-      final client = FakeApiClient(
-        postError: const ApiException(
-          ApiErrorKind.server,
-          'Something went wrong on our side.',
-          statusCode: 500,
+        throwsA(
+          isA<ApiException>().having((e) => e.statusCode, 'statusCode', 400),
         ),
       );
-      final container = containerWith(client);
-
-      await expectLater(
-        container.read(videoStorytellerRepositoryProvider).recommend(request),
-        throwsA(isA<ApiException>()
-            .having((e) => e.kind, 'kind', ApiErrorKind.server)),
-      );
     });
 
-    test('an offline network error surfaces as the typed network exception',
-        () async {
-      final client = FakeApiClient(
-        postError: const ApiException(ApiErrorKind.network, 'No internet.'),
-      );
-      final container = containerWith(client);
+    test(
+      'a 5xx surfaces as the typed server exception (INTERNAL_ERROR)',
+      () async {
+        // The route returns { error, code: INTERNAL_ERROR } with status 500.
+        final client = FakeApiClient(
+          postError: const ApiException(
+            ApiErrorKind.server,
+            'Something went wrong on our side.',
+            statusCode: 500,
+          ),
+        );
+        final container = containerWith(client);
 
-      await expectLater(
-        container.read(videoStorytellerRepositoryProvider).recommend(request),
-        throwsA(isA<ApiException>()
-            .having((e) => e.kind, 'kind', ApiErrorKind.network)),
-      );
-    });
+        await expectLater(
+          container.read(videoStorytellerRepositoryProvider).recommend(request),
+          throwsA(
+            isA<ApiException>().having(
+              (e) => e.kind,
+              'kind',
+              ApiErrorKind.server,
+            ),
+          ),
+        );
+      },
+    );
+
+    test(
+      'an offline network error surfaces as the typed network exception',
+      () async {
+        final client = FakeApiClient(
+          postError: const ApiException(ApiErrorKind.network, 'No internet.'),
+        );
+        final container = containerWith(client);
+
+        await expectLater(
+          container.read(videoStorytellerRepositoryProvider).recommend(request),
+          throwsA(
+            isA<ApiException>().having(
+              (e) => e.kind,
+              'kind',
+              ApiErrorKind.network,
+            ),
+          ),
+        );
+      },
+    );
   });
 
   group('VideoStorytellerController', () {

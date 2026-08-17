@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/core/network/api_exception.dart';
 import 'package:sahayakai/core/router/routes.dart';
@@ -15,8 +16,17 @@ import '../onboarding/onboarding_fixtures.dart';
 /// app through the shared harness (see `test/support/app_harness.dart`) and
 /// arrive here the way a teacher does: through the router's redirect.
 export '../onboarding/onboarding_fixtures.dart'
-    show FakeProfileDocSource, kBn, kTa, kMl, kLongWord, kNarrowPhone,
-        kTallSurface, kUnauthorized, containerOf, routerOf;
+    show
+        FakeProfileDocSource,
+        kBn,
+        kTa,
+        kMl,
+        kLongWord,
+        kNarrowPhone,
+        kTallSurface,
+        kUnauthorized,
+        containerOf,
+        routerOf;
 
 /// One item of `GET /api/content/list`'s `items` array, in the shape the route
 /// really returns: every timestamp already run through `dbAdapter.serialize`,
@@ -83,9 +93,15 @@ Future<void> pumpDashboard(
   Locale? locale,
   Size surface = kTallSurface,
   bool settle = true,
+
+  /// Passed through to [pumpSignedInApp]. The golden suites use it to pin the
+  /// clock, because the dashboard eyebrow greets by time of day and a baseline
+  /// that encodes the hour it was generated in is not a baseline.
+  List<Override> extraOverrides = const [],
 }) async {
   await pumpSignedInApp(
     tester,
+    extraOverrides: extraOverrides,
     client: client ?? libraryClient(),
     // The profile read 401s on today's stub auth, which is the honest default:
     // it is what a real device does right now.

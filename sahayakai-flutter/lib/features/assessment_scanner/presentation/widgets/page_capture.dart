@@ -108,11 +108,7 @@ class _PageCaptureState extends ConsumerState<PageCapture> {
         if (pages.isEmpty)
           _EmptyWell(busy: _busy)
         else
-          _PageList(
-            pages: pages,
-            busy: _busy,
-            onRemove: _remove,
-          ),
+          _PageList(pages: pages, busy: _busy, onRemove: _remove),
         const SizedBox(height: AppSpacing.space3),
         // The page counter, so the cap is legible before it is hit. Full ink
         // (onSurface): this sits on the scaffold paper ground, where the muted
@@ -120,23 +116,19 @@ class _PageCaptureState extends ConsumerState<PageCapture> {
         Text(
           l10n.assessmentScannerPageCounter(pages.length, widget.maxPages),
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
         ),
         const SizedBox(height: AppSpacing.space3),
-        _SourceButtons(
-          busy: _busy,
-          atLimit: _atLimit,
-          onPick: _pick,
-        ),
+        _SourceButtons(busy: _busy, atLimit: _atLimit, onPick: _pick),
         if (_atLimit) ...[
           const SizedBox(height: AppSpacing.space2),
           Text(
             l10n.assessmentScannerPagesFull(widget.maxPages),
             // Full ink: on the paper ground the muted role is under AA.
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
         ],
         if (errorMessage != null) ...[
@@ -150,15 +142,16 @@ class _PageCaptureState extends ConsumerState<PageCapture> {
   String _errorMessage(AppLocalizations l10n, ImageInputErrorKind kind) =>
       switch (kind) {
         ImageInputErrorKind.permissionDenied => l10n.imageInputPermissionDenied,
-        ImageInputErrorKind.tooLarge =>
-          l10n.imageInputTooLarge(_formatMaxBytes()),
+        ImageInputErrorKind.tooLarge => l10n.imageInputTooLarge(
+          _formatMaxBytes(),
+        ),
         ImageInputErrorKind.failed => l10n.imageInputFailed,
       };
 }
 
 /// Matches the shared image input's "14 MB" framing (1 MB = 1,000,000 bytes).
 String _formatMaxBytes() {
-  final mb = kMaxImageDataUriBytes / 1000000;
+  const mb = kMaxImageDataUriBytes / 1000000;
   final rounded = mb.toStringAsFixed(1);
   final trimmed = rounded.endsWith('.0')
       ? rounded.substring(0, rounded.length - 2)
@@ -192,7 +185,9 @@ class _EmptyWell extends StatelessWidget {
               width: AppIconSize.standalone,
               height: AppIconSize.standalone,
               child: CircularProgressIndicator(
-                  strokeWidth: 2, color: scheme.primary),
+                strokeWidth: 2,
+                color: scheme.primary,
+              ),
             )
           : Column(
               mainAxisSize: MainAxisSize.min,
@@ -208,9 +203,7 @@ class _EmptyWell extends StatelessWidget {
                   textAlign: TextAlign.center,
                   // Full ink: the well's surfaceContainerHigh fill makes the
                   // muted onSurfaceVariant only ~3.86:1 — under the AA floor.
-                  style: text.bodyMedium?.copyWith(
-                    color: scheme.onSurface,
-                  ),
+                  style: text.bodyMedium?.copyWith(color: scheme.onSurface),
                 ),
               ],
             ),

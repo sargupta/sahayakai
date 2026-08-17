@@ -18,7 +18,9 @@ import 'profile_fixtures.dart';
 
 double _lin(int c) {
   final s = c / 255.0;
-  return s <= 0.03928 ? s / 12.92 : math.pow((s + 0.055) / 1.055, 2.4).toDouble();
+  return s <= 0.03928
+      ? s / 12.92
+      : math.pow((s + 0.055) / 1.055, 2.4).toDouble();
 }
 
 double _luminance(Color c) =>
@@ -36,7 +38,12 @@ double _ratio(Color a, Color b) {
 Color _over(Color fg, Color bg) {
   final a = fg.a;
   double ch(double f, double b) => f * a + b * (1 - a);
-  return Color.from(alpha: 1, red: ch(fg.r, bg.r), green: ch(fg.g, bg.g), blue: ch(fg.b, bg.b));
+  return Color.from(
+    alpha: 1,
+    red: ch(fg.r, bg.r),
+    green: ch(fg.g, bg.g),
+    blue: ch(fg.b, bg.b),
+  );
 }
 
 Color _labelColor(WidgetTester tester, String label) =>
@@ -44,29 +51,37 @@ Color _labelColor(WidgetTester tester, String label) =>
 
 void main() {
   group('paid plan chip', () {
-    testWidgets('label + glyph use the saffron-TEXT token in light, not #E0924D',
-        (tester) async {
-      await tester.pumpWidget(
-        hostProfile(
-          const PlanBadgeChip(),
-          overrides: [tokenOverride(fakeJwt({'planType': 'pro'}))],
-        ),
-      );
-      await tester.pumpAndSettle();
+    testWidgets(
+      'label + glyph use the saffron-TEXT token in light, not #E0924D',
+      (tester) async {
+        await tester.pumpWidget(
+          hostProfile(
+            const PlanBadgeChip(),
+            overrides: [
+              tokenOverride(fakeJwt({'planType': 'pro'})),
+            ],
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      expect(_labelColor(tester, 'Pro'), AppColors.lPrimaryText); // #AC4815
-      expect(_labelColor(tester, 'Pro'), isNot(AppColors.brandSaffron));
-      final icon = tester.widget<Icon>(find.byIcon(LucideIcons.sparkles));
-      expect(icon.color, AppColors.lPrimaryText);
-      expect(icon.color, isNot(AppColors.brandSaffron));
-    });
+        expect(_labelColor(tester, 'Pro'), AppColors.lPrimaryText); // #AC4815
+        expect(_labelColor(tester, 'Pro'), isNot(AppColors.brandSaffron));
+        final icon = tester.widget<Icon>(find.byIcon(LucideIcons.sparkles));
+        expect(icon.color, AppColors.lPrimaryText);
+        expect(icon.color, isNot(AppColors.brandSaffron));
+      },
+    );
 
-    testWidgets('label uses the dark saffron-text token in dark', (tester) async {
+    testWidgets('label uses the dark saffron-text token in dark', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         hostProfile(
           const PlanBadgeChip(),
           brightness: Brightness.dark,
-          overrides: [tokenOverride(fakeJwt({'planType': 'gold'}))],
+          overrides: [
+            tokenOverride(fakeJwt({'planType': 'gold'})),
+          ],
         ),
       );
       await tester.pumpAndSettle();
@@ -76,12 +91,15 @@ void main() {
   });
 
   group('muted / free plan chip', () {
-    testWidgets('inks full onSurface, never the sub-4.5 muted token',
-        (tester) async {
+    testWidgets('inks full onSurface, never the sub-4.5 muted token', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         hostProfile(
           const PlanBadgeChip(),
-          overrides: [tokenOverride(fakeJwt({'planType': 'free'}))],
+          overrides: [
+            tokenOverride(fakeJwt({'planType': 'free'})),
+          ],
         ),
       );
       await tester.pumpAndSettle();
@@ -94,23 +112,40 @@ void main() {
 
   group('WCAG AA ratios (computed vs the ACTUAL fill)', () {
     test('paid label clears 4.5 on the primary@0.12 tint; #E0924D fails', () {
-      final tint = _over(AppColors.lPrimary.withValues(alpha: 0.12), AppColors.lCard);
+      final tint = _over(
+        AppColors.lPrimary.withValues(alpha: 0.12),
+        AppColors.lCard,
+      );
       expect(_ratio(AppColors.lPrimaryText, tint), greaterThanOrEqualTo(4.5));
       expect(_ratio(AppColors.brandSaffron, tint), lessThan(3.0));
 
-      final darkTint =
-          _over(AppColors.dPrimary.withValues(alpha: 0.12), AppColors.dCard);
-      expect(_ratio(AppColors.dPrimaryText, darkTint), greaterThanOrEqualTo(4.5));
+      final darkTint = _over(
+        AppColors.dPrimary.withValues(alpha: 0.12),
+        AppColors.dCard,
+      );
+      expect(
+        _ratio(AppColors.dPrimaryText, darkTint),
+        greaterThanOrEqualTo(4.5),
+      );
     });
 
-    test('muted label clears 4.5 on the surfaceContainer fill; old token failed',
-        () {
-      expect(_ratio(AppColors.lForeground, AppColors.lMuted),
-          greaterThanOrEqualTo(4.5));
-      // The OLD muted label (onSurfaceVariant on surfaceContainer) was < 4.5.
-      expect(_ratio(AppColors.lMutedForeground, AppColors.lMuted), lessThan(4.5));
-      expect(_ratio(AppColors.dForeground, AppColors.dMuted),
-          greaterThanOrEqualTo(4.5));
-    });
+    test(
+      'muted label clears 4.5 on the surfaceContainer fill; old token failed',
+      () {
+        expect(
+          _ratio(AppColors.lForeground, AppColors.lMuted),
+          greaterThanOrEqualTo(4.5),
+        );
+        // The OLD muted label (onSurfaceVariant on surfaceContainer) was < 4.5.
+        expect(
+          _ratio(AppColors.lMutedForeground, AppColors.lMuted),
+          lessThan(4.5),
+        );
+        expect(
+          _ratio(AppColors.dForeground, AppColors.dMuted),
+          greaterThanOrEqualTo(4.5),
+        );
+      },
+    );
   });
 }

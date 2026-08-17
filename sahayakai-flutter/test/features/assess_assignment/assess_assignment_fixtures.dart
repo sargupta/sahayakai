@@ -43,79 +43,84 @@ Widget hostResult(Widget child, {Brightness brightness = Brightness.light}) {
 }
 
 /// A sample rubric the grade was measured against.
-AssessmentRubric buildRubric() => AssessmentRubric(
-      title: 'Short-answer rubric $kBn',
-      description: 'Grades a short written answer. $kTa',
-      criteria: const <AssessmentRubricCriterion>[
-        AssessmentRubricCriterion(
-          name: 'Understanding',
-          description: 'Conceptual grasp.',
-          levels: <AssessmentRubricLevel>[
-            AssessmentRubricLevel(
-                name: 'Exemplary', description: 'Complete.', points: 4),
-            AssessmentRubricLevel(
-                name: 'Beginning', description: 'Minimal.', points: 1),
-          ],
+AssessmentRubric buildRubric() => const AssessmentRubric(
+  title: 'Short-answer rubric $kBn',
+  description: 'Grades a short written answer. $kTa',
+  criteria: <AssessmentRubricCriterion>[
+    AssessmentRubricCriterion(
+      name: 'Understanding',
+      description: 'Conceptual grasp.',
+      levels: <AssessmentRubricLevel>[
+        AssessmentRubricLevel(
+          name: 'Exemplary',
+          description: 'Complete.',
+          points: 4,
+        ),
+        AssessmentRubricLevel(
+          name: 'Beginning',
+          description: 'Minimal.',
+          points: 1,
         ),
       ],
-      gradeLevel: 'Class 5',
-      subject: 'Science',
-    );
+    ),
+  ],
+  gradeLevel: 'Class 5',
+  subject: 'Science',
+);
 
 /// A fully-graded assessment (the `full` mode shape) with Indic probes in every
 /// prose slot and an unbreakable compound word.
 Assessment buildAssessment() => Assessment(
-      rawTranscript: 'The water cycle has evaporation and rain. $kBn $kLongWord',
-      overallScore: 75,
-      pointsEarned: 12,
-      pointsPossible: 16,
-      confidenceOverall: 0.82,
-      perCriterionScores: <CriterionScore>[
-        CriterionScore(
-          criterionName: 'Understanding $kTa',
-          level: 'Proficient',
-          points: 3,
-          maxPoints: 4,
-          feedback: 'Named evaporation correctly. $kMl',
-          confidence: 0.9,
-        ),
-        CriterionScore(
-          criterionName: 'Accuracy',
-          level: 'Developing',
-          points: 2,
-          maxPoints: 4,
-          // Below 0.5 -> a low-confidence tag.
-          feedback: 'Some steps were hard to read. $kLongWord',
-          confidence: 0.3,
-        ),
-      ],
-      strengths: <String>['Clear opening sentence. $kBn', kLongWord],
-      improvements: <String>['Add the condensation step. $kTa'],
-      nextSteps: <String>['Draw the cycle with labels. $kMl'],
-      teacherNote: 'You have understood the main idea. Keep going. $kBn',
-      warnings: const <String>['low_contrast'],
-      rubric: buildRubric(),
-      language: 'English',
-    );
+  rawTranscript: 'The water cycle has evaporation and rain. $kBn $kLongWord',
+  overallScore: 75,
+  pointsEarned: 12,
+  pointsPossible: 16,
+  confidenceOverall: 0.82,
+  perCriterionScores: <CriterionScore>[
+    const CriterionScore(
+      criterionName: 'Understanding $kTa',
+      level: 'Proficient',
+      points: 3,
+      maxPoints: 4,
+      feedback: 'Named evaporation correctly. $kMl',
+      confidence: 0.9,
+    ),
+    const CriterionScore(
+      criterionName: 'Accuracy',
+      level: 'Developing',
+      points: 2,
+      maxPoints: 4,
+      // Below 0.5 -> a low-confidence tag.
+      feedback: 'Some steps were hard to read. $kLongWord',
+      confidence: 0.3,
+    ),
+  ],
+  strengths: <String>['Clear opening sentence. $kBn', kLongWord],
+  improvements: <String>['Add the condensation step. $kTa'],
+  nextSteps: <String>['Draw the cycle with labels. $kMl'],
+  teacherNote: 'You have understood the main idea. Keep going. $kBn',
+  warnings: const <String>['low_contrast'],
+  rubric: buildRubric(),
+  language: 'English',
+);
 
 /// A `transcribe`-only result: a transcript and nothing to score. Proves the
 /// view leads with the transcript and shows no score card.
-Assessment buildTranscribeOnly() => Assessment(
-      rawTranscript: 'पानी का चक्र. $kBn $kTa',
-      language: 'English',
-    );
+Assessment buildTranscribeOnly() => const Assessment(
+  rawTranscript: 'पानी का चक्र. $kBn $kTa',
+  language: 'English',
+);
 
 /// A blank-page result: score 0 plus the page_appears_blank warning.
 Assessment buildBlankPage() => const Assessment(
-      rawTranscript: '[BLANK]',
-      overallScore: 0,
-      pointsEarned: 0,
-      pointsPossible: 16,
-      confidenceOverall: 0.1,
-      warnings: <String>['page_appears_blank'],
-      teacherNote:
-          'No student work was detected in this image. Please try again.',
-    );
+  rawTranscript: '[BLANK]',
+  overallScore: 0,
+  pointsEarned: 0,
+  pointsPossible: 16,
+  confidenceOverall: 0.1,
+  warnings: <String>['page_appears_blank'],
+  teacherNote: 'No student work was detected in this image. Please try again.',
+);
 
 /// The empty-result state (nothing worth rendering).
 Assessment buildEmpty() => const Assessment();

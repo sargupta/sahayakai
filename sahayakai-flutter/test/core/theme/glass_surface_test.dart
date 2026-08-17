@@ -17,10 +17,7 @@ Widget _host({required Widget child, required Brightness brightness}) {
     home: Scaffold(
       body: Center(
         child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: child,
-          ),
+          child: Padding(padding: const EdgeInsets.all(16), child: child),
         ),
       ),
     ),
@@ -32,51 +29,59 @@ void main() {
     for (final size in [_narrow, _wide]) {
       final label = '${brightness.name} @ ${size.width.toInt()}dp';
 
-      testWidgets('GlassSurface (real blur) renders without error — $label',
-          (tester) async {
+      testWidgets('GlassSurface (real blur) renders without error — $label', (
+        tester,
+      ) async {
         tester.view.physicalSize = size;
         tester.view.devicePixelRatio = 1.0;
         addTearDown(tester.view.reset);
 
-        await tester.pumpWidget(_host(
-          brightness: brightness,
-          child: const GlassSurface(
-            child: SizedBox(
-              width: 220,
-              height: 120,
-              child: Center(child: Text('Glass chrome')),
+        await tester.pumpWidget(
+          _host(
+            brightness: brightness,
+            child: const GlassSurface(
+              child: SizedBox(
+                width: 220,
+                height: 120,
+                child: Center(child: Text('Glass chrome')),
+              ),
             ),
           ),
-        ));
+        );
         await tester.pumpAndSettle();
 
         expect(tester.takeException(), isNull);
         expect(find.text('Glass chrome'), findsOneWidget);
       });
 
-      testWidgets('GlassSurface.flat renders without error — $label',
-          (tester) async {
+      testWidgets('GlassSurface.flat renders without error — $label', (
+        tester,
+      ) async {
         tester.view.physicalSize = size;
         tester.view.devicePixelRatio = 1.0;
         addTearDown(tester.view.reset);
 
-        await tester.pumpWidget(_host(
-          brightness: brightness,
-          child: GlassSurface.flat(
-            radius: 12,
-            padding: const EdgeInsets.all(12),
-            child: const SizedBox(
-              width: 260,
-              height: 90,
-              child: Text('Glass flat fill, list-context reuse candidate'),
+        await tester.pumpWidget(
+          _host(
+            brightness: brightness,
+            child: const GlassSurface.flat(
+              radius: 12,
+              padding: EdgeInsets.all(12),
+              child: SizedBox(
+                width: 260,
+                height: 90,
+                child: Text('Glass flat fill, list-context reuse candidate'),
+              ),
             ),
           ),
-        ));
+        );
         await tester.pumpAndSettle();
 
         expect(tester.takeException(), isNull);
-        expect(find.text('Glass flat fill, list-context reuse candidate'),
-            findsOneWidget);
+        expect(
+          find.text('Glass flat fill, list-context reuse candidate'),
+          findsOneWidget,
+        );
       });
     }
   }
@@ -86,13 +91,15 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
-    await tester.pumpWidget(_host(
-      brightness: Brightness.light,
-      child: const GlassSurface(
-        addSheen: false,
-        child: SizedBox(width: 180, height: 80),
+    await tester.pumpWidget(
+      _host(
+        brightness: Brightness.light,
+        child: const GlassSurface(
+          addSheen: false,
+          child: SizedBox(width: 180, height: 80),
+        ),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
@@ -105,21 +112,26 @@ void main() {
       expect(const GlassSurface(child: SizedBox()).radius, isNotNull);
     });
 
-    test('chrome and flat fill pairs are distinct, meaningfully translucent',
-        () {
-      for (final c in [
-        AppGlass.lChromeFill,
-        AppGlass.dChromeFill,
-        AppGlass.lFlatFill,
-        AppGlass.dFlatFill,
-      ]) {
-        expect(c.a, lessThan(1.0), reason: 'glass fills must be translucent');
-        expect(c.a, greaterThan(0.5),
-            reason: 'erred toward more opaque for contrast safety');
-      }
-      expect(AppGlass.lChromeFill, isNot(AppGlass.lFlatFill));
-      expect(AppGlass.dChromeFill, isNot(AppGlass.dFlatFill));
-    });
+    test(
+      'chrome and flat fill pairs are distinct, meaningfully translucent',
+      () {
+        for (final c in [
+          AppGlass.lChromeFill,
+          AppGlass.dChromeFill,
+          AppGlass.lFlatFill,
+          AppGlass.dFlatFill,
+        ]) {
+          expect(c.a, lessThan(1.0), reason: 'glass fills must be translucent');
+          expect(
+            c.a,
+            greaterThan(0.5),
+            reason: 'erred toward more opaque for contrast safety',
+          );
+        }
+        expect(AppGlass.lChromeFill, isNot(AppGlass.lFlatFill));
+        expect(AppGlass.dChromeFill, isNot(AppGlass.dFlatFill));
+      },
+    );
 
     test('border and sheen gradients exist and are barely-there', () {
       expect(AppGlass.lBorderGradient.colors, hasLength(2));
@@ -147,19 +159,21 @@ void main() {
     // gets a tight or Expanded constraint.
     testWidgets('real-blur GlassSurface with a small intrinsic child in a '
         'bare Row', (tester) async {
-      await tester.pumpWidget(_host(
-        brightness: Brightness.light,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            GlassSurface(
-              radius: 12,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              child: const Text('Chip'),
-            ),
-          ],
+      await tester.pumpWidget(
+        _host(
+          brightness: Brightness.light,
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GlassSurface(
+                radius: 12,
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Text('Chip'),
+              ),
+            ],
+          ),
         ),
-      ));
+      );
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
@@ -167,25 +181,28 @@ void main() {
     });
 
     testWidgets(
-        'flat GlassSurface with a small intrinsic child in a bare Row',
-        (tester) async {
-      await tester.pumpWidget(_host(
-        brightness: Brightness.dark,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            GlassSurface.flat(
-              radius: 8,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: const Text('Badge'),
+      'flat GlassSurface with a small intrinsic child in a bare Row',
+      (tester) async {
+        await tester.pumpWidget(
+          _host(
+            brightness: Brightness.dark,
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GlassSurface.flat(
+                  radius: 8,
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Text('Badge'),
+                ),
+              ],
             ),
-          ],
-        ),
-      ));
-      await tester.pumpAndSettle();
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      expect(tester.takeException(), isNull);
-      expect(find.text('Badge'), findsOneWidget);
-    });
+        expect(tester.takeException(), isNull);
+        expect(find.text('Badge'), findsOneWidget);
+      },
+    );
   });
 }

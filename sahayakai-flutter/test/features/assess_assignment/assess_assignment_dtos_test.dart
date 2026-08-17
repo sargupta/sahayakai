@@ -11,21 +11,24 @@ import 'assess_assignment_fixtures.dart';
 /// field names, casing, enum members or PII rules, these fail first.
 void main() {
   group('AssessAssignmentRequestDto', () {
-    test('serializes the required image + mode + language with exact names', () {
-      final json = AssessAssignmentRequestDto.fromDomain(
-        AssessAssignmentRequest(
-          imageDataUri: 'data:image/jpeg;base64,AAAA',
-          mode: AssessmentMode.full,
-          language: AppLocale.kn.aiName,
-        ),
-      ).toJson();
+    test(
+      'serializes the required image + mode + language with exact names',
+      () {
+        final json = AssessAssignmentRequestDto.fromDomain(
+          AssessAssignmentRequest(
+            imageDataUri: 'data:image/jpeg;base64,AAAA',
+            mode: AssessmentMode.full,
+            language: AppLocale.kn.aiName,
+          ),
+        ).toJson();
 
-      expect(json, {
-        'imageDataUri': 'data:image/jpeg;base64,AAAA',
-        'mode': 'full',
-        'language': 'Kannada', // AppLocale.aiName, not the code
-      });
-    });
+        expect(json, {
+          'imageDataUri': 'data:image/jpeg;base64,AAAA',
+          'mode': 'full',
+          'language': 'Kannada', // AppLocale.aiName, not the code
+        });
+      },
+    );
 
     test('sends the image data URI verbatim under imageDataUri', () {
       // The server validates the URI's exact length AND its
@@ -60,14 +63,17 @@ void main() {
         expect(
           json.containsKey(field),
           isFalse,
-          reason: '$field is stripped/injected server-side and must not be sent',
+          reason:
+              '$field is stripped/injected server-side and must not be sent',
         );
       }
     });
 
     test('always sends mode, defaulting to full', () {
       final json = AssessAssignmentRequestDto.fromDomain(
-        const AssessAssignmentRequest(imageDataUri: 'data:image/jpeg;base64,AA'),
+        const AssessAssignmentRequest(
+          imageDataUri: 'data:image/jpeg;base64,AA',
+        ),
       ).toJson();
       expect(json['mode'], 'full');
     });
@@ -92,35 +98,41 @@ void main() {
       expect(blank.containsKey('editedTranscript'), isFalse);
     });
 
-    test('omits a null rubric, serializes a provided one as the full shape', () {
-      final without = AssessAssignmentRequestDto.fromDomain(
-        const AssessAssignmentRequest(imageDataUri: 'data:image/jpeg;base64,AA'),
-      ).toJson();
-      expect(without.containsKey('rubricSnapshot'), isFalse);
+    test(
+      'omits a null rubric, serializes a provided one as the full shape',
+      () {
+        final without = AssessAssignmentRequestDto.fromDomain(
+          const AssessAssignmentRequest(
+            imageDataUri: 'data:image/jpeg;base64,AA',
+          ),
+        ).toJson();
+        expect(without.containsKey('rubricSnapshot'), isFalse);
 
-      final with_ = AssessAssignmentRequestDto.fromDomain(
-        AssessAssignmentRequest(
-          imageDataUri: 'data:image/jpeg;base64,AA',
-          rubric: buildRubric(),
-        ),
-      ).toJson();
-      final rubric = with_['rubricSnapshot'] as Map<String, dynamic>;
-      expect(rubric['title'], startsWith('Short-answer rubric'));
-      final criteria = rubric['criteria'] as List;
-      expect(criteria, hasLength(1));
-      final levels = (criteria.first as Map)['levels'] as List;
-      expect((levels.first as Map)['points'], 4);
-      expect(rubric['gradeLevel'], 'Class 5');
-      expect(rubric['subject'], 'Science');
-    });
+        final with_ = AssessAssignmentRequestDto.fromDomain(
+          AssessAssignmentRequest(
+            imageDataUri: 'data:image/jpeg;base64,AA',
+            rubric: buildRubric(),
+          ),
+        ).toJson();
+        final rubric = with_['rubricSnapshot'] as Map<String, dynamic>;
+        expect(rubric['title'], startsWith('Short-answer rubric'));
+        final criteria = rubric['criteria'] as List;
+        expect(criteria, hasLength(1));
+        final levels = (criteria.first as Map)['levels'] as List;
+        expect((levels.first as Map)['points'], 4);
+        expect(rubric['gradeLevel'], 'Class 5');
+        expect(rubric['subject'], 'Science');
+      },
+    );
   });
 
   group('AssessmentMode', () {
     test('maps every member to its exact wire value', () {
-      expect(
-        AssessmentMode.values.map((m) => m.wire),
-        ['full', 'transcribe', 'score'],
-      );
+      expect(AssessmentMode.values.map((m) => m.wire), [
+        'full',
+        'transcribe',
+        'score',
+      ]);
     });
 
     test('tolerates unknown / absent members by falling back to full', () {

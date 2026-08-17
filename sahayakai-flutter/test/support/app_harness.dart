@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sahayakai/app.dart';
 import 'package:sahayakai/core/auth/auth_providers.dart';
 import 'package:sahayakai/core/network/api_providers.dart';
+import 'package:sahayakai/core/platform/clock.dart';
 import 'package:sahayakai/features/profile/data/profile_doc_source.dart';
 
 import 'fake_api_client.dart';
@@ -46,9 +47,8 @@ Override apiClientOverride(FakeApiClient client) =>
 
 /// Binds a token so a plan claim can decode. Null models the current
 /// signed-out stub.
-Override tokenOverride(String? token) => tokenProviderProvider.overrideWithValue(
-      ({bool forceRefresh = false}) async => token,
-    );
+Override tokenOverride(String? token) => tokenProviderProvider
+    .overrideWithValue(({bool forceRefresh = false}) async => token);
 
 /// Signs the auth controller in from the start (no credential exchange to
 /// observe — the teacher is already signed in when the screen mounts).
@@ -121,3 +121,10 @@ class FakeBootstrap {
 /// Replaces the 600ms simulated bootstrap with something a test controls.
 Override bootstrapOverride(FakeBootstrap fake) =>
     appBootstrapProvider.overrideWith(fake.call);
+
+/// A fixed instant so the time-of-day greeting is deterministic. 10:00 renders
+/// "Good morning" in every locale. Without this the baselines silently encode
+/// whatever hour they were generated in — which is exactly how the first set
+/// captured "evening" and went red after midnight.
+Override fixedClock() =>
+    nowProvider.overrideWithValue(() => DateTime(2026, 1, 1, 10));

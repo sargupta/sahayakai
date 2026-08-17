@@ -32,29 +32,30 @@ void main() {
   }
 
   group('requestExport — archive returned inline', () {
-    test('application/zip -> ExportArchiveReady with the server filename',
-        () async {
-      final bytes = Uint8List.fromList([1, 2, 3, 4]);
-      final client = FakeApiClient(
-        postRawResponse: RawResponse(
-          bytes: bytes,
-          contentType: 'application/zip',
-          filename: 'sahayakai_export_2026-07-28.zip',
-        ),
-      );
-      final container = containerWith(client);
+    test(
+      'application/zip -> ExportArchiveReady with the server filename',
+      () async {
+        final bytes = Uint8List.fromList([1, 2, 3, 4]);
+        final client = FakeApiClient(
+          postRawResponse: RawResponse(
+            bytes: bytes,
+            contentType: 'application/zip',
+            filename: 'sahayakai_export_2026-07-28.zip',
+          ),
+        );
+        final container = containerWith(client);
 
-      final result =
-          await container.read(settingsRepositoryProvider).requestExport(
-                '/api/export',
-              );
+        final result = await container
+            .read(settingsRepositoryProvider)
+            .requestExport('/api/export');
 
-      expect(result, isA<ExportArchiveReady>());
-      final archive = result as ExportArchiveReady;
-      expect(archive.bytes, bytes);
-      expect(archive.filename, 'sahayakai_export_2026-07-28.zip');
-      expect(client.postRaws.single.path, '/api/export');
-    });
+        expect(result, isA<ExportArchiveReady>());
+        final archive = result as ExportArchiveReady;
+        expect(archive.bytes, bytes);
+        expect(archive.filename, 'sahayakai_export_2026-07-28.zip');
+        expect(client.postRaws.single.path, '/api/export');
+      },
+    );
 
     test('a zip content-type with charset params still matches', () async {
       // Real servers sometimes append parameters; matching must not require
@@ -75,34 +76,38 @@ void main() {
       expect(result, isA<ExportArchiveReady>());
     });
 
-    test('missing Content-Disposition filename falls back to a generated one',
-        () async {
-      final client = FakeApiClient(
-        postRawResponse: RawResponse(
-          bytes: Uint8List(0),
-          contentType: 'application/zip',
-          filename: null,
-        ),
-      );
-      final container = containerWith(client);
+    test(
+      'missing Content-Disposition filename falls back to a generated one',
+      () async {
+        final client = FakeApiClient(
+          postRawResponse: RawResponse(
+            bytes: Uint8List(0),
+            contentType: 'application/zip',
+            filename: null,
+          ),
+        );
+        final container = containerWith(client);
 
-      final result = await container
-          .read(settingsRepositoryProvider)
-          .requestExport('/api/export');
+        final result = await container
+            .read(settingsRepositoryProvider)
+            .requestExport('/api/export');
 
-      final archive = result as ExportArchiveReady;
-      expect(archive.filename, startsWith('sahayakai_export_'));
-      expect(archive.filename, endsWith('.zip'));
-    });
+        final archive = result as ExportArchiveReady;
+        expect(archive.filename, startsWith('sahayakai_export_'));
+        expect(archive.filename, endsWith('.zip'));
+      },
+    );
   });
 
   group('requestExport — server queued a background job instead', () {
     test('application/json with a jobId -> ExportJobQueued', () async {
-      final body = utf8.encode(jsonEncode({
-        'jobId': 'job_abc123',
-        'status': 'pending',
-        'fileCount': 812,
-      }));
+      final body = utf8.encode(
+        jsonEncode({
+          'jobId': 'job_abc123',
+          'status': 'pending',
+          'fileCount': 812,
+        }),
+      );
       final client = FakeApiClient(
         postRawResponse: RawResponse(
           bytes: Uint8List.fromList(body),

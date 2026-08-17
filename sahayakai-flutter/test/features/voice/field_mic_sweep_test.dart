@@ -20,14 +20,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// therefore exactly one [InlineFieldMic] (the closed pickers, numeric and
 /// short-identifier fields deliberately have none).
 Widget _host(Widget screen) => ProviderScope(
-      child: MaterialApp(
-        theme: AppTheme.light(),
-        locale: const Locale('en'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: screen,
-      ),
-    );
+  child: MaterialApp(
+    theme: AppTheme.light(),
+    locale: const Locale('en'),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: screen,
+  ),
+);
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues(<String, Object>{}));
@@ -44,17 +44,20 @@ void main() {
   };
 
   swept.forEach((name, screen) {
-    testWidgets('$name carries a dictation mic on its free-text content field',
-        (tester) async {
-      await tester.pumpWidget(_host(screen));
-      await tester.pumpAndSettle();
-      expect(
-        find.byType(InlineFieldMic),
-        findsOneWidget,
-        reason: '$name must let a teacher speak its free-text content, not only '
-            'type it',
-      );
-    });
+    testWidgets(
+      '$name carries a dictation mic on its free-text content field',
+      (tester) async {
+        await tester.pumpWidget(_host(screen));
+        await tester.pumpAndSettle();
+        expect(
+          find.byType(InlineFieldMic),
+          findsOneWidget,
+          reason:
+              '$name must let a teacher speak its free-text content, not only '
+              'type it',
+        );
+      },
+    );
   });
 
   // Assess Assignment's only free-text field is the corrected transcript, which

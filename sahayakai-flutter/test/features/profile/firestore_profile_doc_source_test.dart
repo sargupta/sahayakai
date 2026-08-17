@@ -22,8 +22,7 @@ import 'package:sahayakai/features/profile/data/profile_dtos.dart';
 /// class's own doc comments (confirmed by T1-U3's adversarial review).
 void main() {
   group('FirestoreProfileDocSource.read', () {
-    test('returns null when the teacher has no users/<uid> doc yet',
-        () async {
+    test('returns null when the teacher has no users/<uid> doc yet', () async {
       final source = FirestoreProfileDocSource(FakeFirebaseFirestore(), 'u1');
       expect(await source.read(), isNull);
     });
@@ -46,10 +45,9 @@ void main() {
 
     test('reads only my own uid\'s document, never another\'s', () async {
       final firestore = FakeFirebaseFirestore();
-      await firestore
-          .collection('users')
-          .doc('other-uid')
-          .set({'displayName': 'Not Me'});
+      await firestore.collection('users').doc('other-uid').set({
+        'displayName': 'Not Me',
+      });
 
       final source = FirestoreProfileDocSource(firestore, 'u1');
       expect(await source.read(), isNull);
@@ -57,20 +55,21 @@ void main() {
   });
 
   group('FirestoreProfileDocSource.merge', () {
-    test('a merge on a brand-new doc creates it with only the patched keys',
-        () async {
-      final firestore = FakeFirebaseFirestore();
-      final source = FirestoreProfileDocSource(firestore, 'u1');
-
-      await source.merge({'displayName': 'Priya Sharma'});
-
-      final doc = await firestore.collection('users').doc('u1').get();
-      expect(doc.exists, isTrue);
-      expect(doc.data()!['displayName'], 'Priya Sharma');
-    });
-
     test(
-        'merge never clobbers existing fields outside the patch — '
+      'a merge on a brand-new doc creates it with only the patched keys',
+      () async {
+        final firestore = FakeFirebaseFirestore();
+        final source = FirestoreProfileDocSource(firestore, 'u1');
+
+        await source.merge({'displayName': 'Priya Sharma'});
+
+        final doc = await firestore.collection('users').doc('u1').get();
+        expect(doc.exists, isTrue);
+        expect(doc.data()!['displayName'], 'Priya Sharma');
+      },
+    );
+
+    test('merge never clobbers existing fields outside the patch — '
         'this is the entire reason it is not a plain set()', () async {
       final firestore = FakeFirebaseFirestore();
       await firestore.collection('users').doc('u1').set({
@@ -108,26 +107,29 @@ void main() {
       expect(data['schoolName'], 'Govt Model School');
     });
 
-    test('U15: a clear-marker DELETES the field server-side, not just omits it',
-        () async {
-      final firestore = FakeFirebaseFirestore();
-      await firestore.collection('users').doc('u1').set({
-        'displayName': 'Priya Sharma',
-        'schoolName': 'Old School',
-        'impactScore': 42,
-      });
+    test(
+      'U15: a clear-marker DELETES the field server-side, not just omits it',
+      () async {
+        final firestore = FakeFirebaseFirestore();
+        await firestore.collection('users').doc('u1').set({
+          'displayName': 'Priya Sharma',
+          'schoolName': 'Old School',
+          'impactScore': 42,
+        });
 
-      final source = FirestoreProfileDocSource(firestore, 'u1');
-      // What TeacherProfileDocPatch emits for a field the teacher erased.
-      await source.merge({'schoolName': kProfileFieldClear});
+        final source = FirestoreProfileDocSource(firestore, 'u1');
+        // What TeacherProfileDocPatch emits for a field the teacher erased.
+        await source.merge({'schoolName': kProfileFieldClear});
 
-      final data = (await firestore.collection('users').doc('u1').get()).data()!;
-      // The cleared field is GONE (so it reads back as "not set"), while every
-      // untouched field — including protected ones — is left exactly as it was.
-      expect(data.containsKey('schoolName'), isFalse);
-      expect(data['displayName'], 'Priya Sharma');
-      expect(data['impactScore'], 42);
-    });
+        final data = (await firestore.collection('users').doc('u1').get())
+            .data()!;
+        // The cleared field is GONE (so it reads back as "not set"), while every
+        // untouched field — including protected ones — is left exactly as it was.
+        expect(data.containsKey('schoolName'), isFalse);
+        expect(data['displayName'], 'Priya Sharma');
+        expect(data['impactScore'], 42);
+      },
+    );
   });
 
   group('U15: applyProfileFieldClears', () {
@@ -159,8 +161,13 @@ void main() {
       const source = SignedOutProfileDocSource();
       await expectLater(
         source.read,
-        throwsA(isA<ApiException>()
-            .having((e) => e.kind, 'kind', ApiErrorKind.unauthorized)),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.kind,
+            'kind',
+            ApiErrorKind.unauthorized,
+          ),
+        ),
       );
     });
 
@@ -168,8 +175,13 @@ void main() {
       const source = SignedOutProfileDocSource();
       await expectLater(
         () => source.merge({'displayName': 'x'}),
-        throwsA(isA<ApiException>()
-            .having((e) => e.kind, 'kind', ApiErrorKind.unauthorized)),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.kind,
+            'kind',
+            ApiErrorKind.unauthorized,
+          ),
+        ),
       );
     });
   });

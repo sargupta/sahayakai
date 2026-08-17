@@ -110,7 +110,9 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(
-        ref.read(parentHotlineControllerProvider.notifier).init(
+        ref
+            .read(parentHotlineControllerProvider.notifier)
+            .init(
               studentId: widget.studentId,
               studentName: widget.studentName,
               classId: widget.classId,
@@ -140,7 +142,10 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
     // Terminal gates outrank the stage: the whole feature is blocked.
     final (Widget body, String revealKey) = switch (state) {
       _ when state.isSignedOut => (_signedOut(l10n), 'gate-signed-out'),
-      _ when state.isPremiumGated => (_premiumGate(state, l10n), 'gate-premium'),
+      _ when state.isPremiumGated => (
+        _premiumGate(state, l10n),
+        'gate-premium',
+      ),
       _ => (_stageBody(context, state, l10n), 'stage-${state.stage.name}'),
     };
 
@@ -148,7 +153,8 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
     // the Call / WhatsApp CTAs never fall below the fold on a long message. It
     // lives in the Scaffold's bottomNavigationBar slot (which reserves its own
     // space above the scrolling body) rather than scrolling with the content.
-    final showDecisionBar = !state.isSignedOut &&
+    final showDecisionBar =
+        !state.isSignedOut &&
         !state.isPremiumGated &&
         state.stage == HotlineStage.review;
 
@@ -165,8 +171,9 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
       },
       child: _ToolFooterScaffold(
         title: l10n.parentHotlineTitle,
-        footer:
-            showDecisionBar ? _stickyDecisionBar(context, state, l10n) : null,
+        footer: showDecisionBar
+            ? _stickyDecisionBar(context, state, l10n)
+            : null,
         child: KeyedSubtree(
           key: ValueKey(revealKey),
           child: staggeredItem(context, body),
@@ -240,12 +247,14 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
     }
 
     final classes = _distinctClasses(roster);
-    final selectedClassId = (_selectedClassId != null &&
+    final selectedClassId =
+        (_selectedClassId != null &&
             classes.any((c) => c.id == _selectedClassId))
         ? _selectedClassId!
         : classes.first.id;
-    final students =
-        roster.where((s) => s.classId == selectedClassId).toList(growable: false);
+    final students = roster
+        .where((s) => s.classId == selectedClassId)
+        .toList(growable: false);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -291,7 +300,7 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
       onTap: enabled ? () => _pickStudent(student) : null,
       child: Row(
         children: [
-          IconWell(icon: LucideIcons.user),
+          const IconWell(icon: LucideIcons.user),
           const SizedBox(width: AppSpacing.space4),
           Expanded(
             child: Column(
@@ -302,7 +311,9 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
                 const SizedBox(height: AppSpacing.space1),
                 Text(
                   '${student.className} · ${student.parentLanguage}',
-                  style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+                  style: text.bodyMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
                 ),
                 if (!enabled) ...[
                   const SizedBox(height: AppSpacing.space2),
@@ -311,14 +322,18 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
                   // call (SPEC §B.1 stage 1).
                   Row(
                     children: [
-                      Icon(LucideIcons.phoneOff,
-                          size: AppIconSize.inline, color: scheme.onSurfaceVariant),
+                      Icon(
+                        LucideIcons.phoneOff,
+                        size: AppIconSize.inline,
+                        color: scheme.onSurfaceVariant,
+                      ),
                       const SizedBox(width: AppSpacing.space2),
                       Flexible(
                         child: Text(
                           l10n.parentHotlineNoPhone,
-                          style: text.bodySmall
-                              ?.copyWith(color: scheme.onSurfaceVariant),
+                          style: text.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
                         ),
                       ),
                     ],
@@ -337,8 +352,11 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
                 color: scheme.surfaceContainerHigh,
               ),
               alignment: Alignment.center,
-              child: Icon(LucideIcons.chevronRight,
-                  size: AppIconSize.inline, color: scheme.onSurfaceVariant),
+              child: Icon(
+                LucideIcons.chevronRight,
+                size: AppIconSize.inline,
+                color: scheme.onSurfaceVariant,
+              ),
             ),
           ],
         ],
@@ -424,8 +442,7 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
             textCapitalization: TextCapitalization.sentences,
             keyboardType: TextInputType.multiline,
             onChanged: _controller.updateNote,
-            decoration:
-                InputDecoration(hintText: _noteHint(l10n, reason)),
+            decoration: InputDecoration(hintText: _noteHint(l10n, reason)),
           ),
         ),
         const SizedBox(height: AppSpacing.space6),
@@ -443,10 +460,12 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
           PrimaryButton(
             label: l10n.parentHotlineDraftAction,
             icon: LucideIcons.sparkles,
-            onPressed: () => unawaited(_controller.draftMessage(
-              consecutiveAbsentDays: state.consecutiveAbsentDays,
-              performanceContext: state.performanceContext,
-            )),
+            onPressed: () => unawaited(
+              _controller.draftMessage(
+                consecutiveAbsentDays: state.consecutiveAbsentDays,
+                performanceContext: state.performanceContext,
+              ),
+            ),
           ),
       ],
     );
@@ -478,10 +497,12 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
           icon: LucideIcons.refreshCw,
           onPressed: state.isBusy
               ? null
-              : () => unawaited(_controller.draftMessage(
+              : () => unawaited(
+                  _controller.draftMessage(
                     consecutiveAbsentDays: state.consecutiveAbsentDays,
                     performanceContext: state.performanceContext,
-                  )),
+                  ),
+                ),
         ),
         // The decision bar is NOT here — it is pinned as the Scaffold footer
         // (see `_stickyDecisionBar`) so it stays visible while this body scrolls.
@@ -512,10 +533,12 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
     if (!canCall) {
       // Mirrors the server 422: auto-call unavailable for this language.
       children
-        ..add(NoteBanner(
-          icon: LucideIcons.phoneOff,
-          body: l10n.parentHotlineUnsupportedLanguage(state.parentLanguage),
-        ))
+        ..add(
+          NoteBanner(
+            icon: LucideIcons.phoneOff,
+            body: l10n.parentHotlineUnsupportedLanguage(state.parentLanguage),
+          ),
+        )
         ..add(const SizedBox(height: AppSpacing.space3));
     } else if (errorBanner != null) {
       children
@@ -525,29 +548,34 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
 
     if (canCall) {
       children
-        ..add(PrimaryButton(
-          label: blocked
-              ? l10n.parentHotlineCallAgainIn(_formatCountdown(
-                  state.dedupRetryAfterSeconds ?? 0))
-              : l10n.parentHotlineCall,
-          icon: blocked ? null : LucideIcons.phoneCall,
-          isBusy: state.isBusy && !blocked,
-          // Disabled while the dedup countdown runs (SPEC §B.5.3) — never a
-          // retry-loop toast — and while a create/place is in flight.
-          onPressed: (blocked || state.isBusy)
-              ? null
-              : () => unawaited(_controller.createAndCall()),
-        ))
+        ..add(
+          PrimaryButton(
+            label: blocked
+                ? l10n.parentHotlineCallAgainIn(
+                    _formatCountdown(state.dedupRetryAfterSeconds ?? 0),
+                  )
+                : l10n.parentHotlineCall,
+            icon: blocked ? null : LucideIcons.phoneCall,
+            isBusy: state.isBusy && !blocked,
+            // Disabled while the dedup countdown runs (SPEC §B.5.3) — never a
+            // retry-loop toast — and while a create/place is in flight.
+            onPressed: (blocked || state.isBusy)
+                ? null
+                : () => unawaited(_controller.createAndCall()),
+          ),
+        )
         ..add(const SizedBox(height: AppSpacing.space3));
     }
 
     // Copy for WhatsApp — the universal fallback, never dedup-gated (SPEC
     // §B.5.2). Disabled only while a request is already in flight.
-    children.add(SecondaryButton(
-      label: l10n.parentHotlineWhatsApp,
-      icon: LucideIcons.messageCircle,
-      onPressed: state.isBusy ? null : _onWhatsApp,
-    ));
+    children.add(
+      SecondaryButton(
+        label: l10n.parentHotlineWhatsApp,
+        icon: LucideIcons.messageCircle,
+        onPressed: state.isBusy ? null : _onWhatsApp,
+      ),
+    );
 
     // The footer surface: `e3` (the sanctioned floating-CTA-bar elevation — note
     // AppCard(elevated) rests at `e2`, so the token is applied directly here) +
@@ -590,18 +618,18 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
     final last4 = _selectedStudent?.parentPhoneLast4;
 
     Widget chip(IconData icon, String label) => Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: AppIconSize.inline, color: scheme.onSurfaceVariant),
-            const SizedBox(width: AppSpacing.space1),
-            Flexible(
-              child: Text(
-                label,
-                style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-              ),
-            ),
-          ],
-        );
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: AppIconSize.inline, color: scheme.onSurfaceVariant),
+        const SizedBox(width: AppSpacing.space1),
+        Flexible(
+          child: Text(
+            label,
+            style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+        ),
+      ],
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -621,8 +649,11 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(LucideIcons.shieldCheck,
-                size: AppIconSize.inline, color: scheme.onSurfaceVariant),
+            Icon(
+              LucideIcons.shieldCheck,
+              size: AppIconSize.inline,
+              color: scheme.onSurfaceVariant,
+            ),
             const SizedBox(width: AppSpacing.space2),
             Expanded(
               child: Text(
@@ -684,20 +715,20 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
   // ── Gates ───────────────────────────────────────────────────────────────────
 
   Widget _signedOut(AppLocalizations l10n) => EmptyView(
-        icon: LucideIcons.logIn,
-        title: l10n.parentHotlineSignedOutTitle,
-        message: l10n.parentHotlineSignedOutBody,
-      );
+    icon: LucideIcons.logIn,
+    title: l10n.parentHotlineSignedOutTitle,
+    message: l10n.parentHotlineSignedOutBody,
+  );
 
   /// The signed-in-but-no-roster state: the teacher IS authenticated, but the
   /// student-roster API does not exist on the app yet (a future unit), so there
   /// is genuinely nothing to list. Honest copy that owns the gap instead of
   /// blaming the teacher's sign-in (and, like `_signedOut`, invents no students).
   Widget _rosterUnavailable(AppLocalizations l10n) => EmptyView(
-        icon: LucideIcons.users,
-        title: l10n.parentHotlineRosterUnavailableTitle,
-        message: l10n.parentHotlineRosterUnavailableBody,
-      );
+    icon: LucideIcons.users,
+    title: l10n.parentHotlineRosterUnavailableTitle,
+    message: l10n.parentHotlineRosterUnavailableBody,
+  );
 
   Widget _premiumGate(ParentHotlineState state, AppLocalizations l10n) {
     final text = Theme.of(context).textTheme;
@@ -707,7 +738,7 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          IconWell(icon: LucideIcons.sparkles, feature: true),
+          const IconWell(icon: LucideIcons.sparkles, feature: true),
           const SizedBox(height: AppSpacing.space4),
           Text(l10n.parentHotlinePremiumTitle, style: text.titleLarge),
           const SizedBox(height: AppSpacing.space2),

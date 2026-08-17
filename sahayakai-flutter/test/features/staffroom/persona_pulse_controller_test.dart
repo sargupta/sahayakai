@@ -43,30 +43,44 @@ void main() {
     container.listen(personaPulseControllerProvider(room), (_, _) {});
   }
 
-  test('does not fire before the interval, then fires and reschedules on a 200',
-      () {
-    fakeAsync((async) {
-      final fake = FakeStaffroomTransport()..personaPulseResult = aPulse;
-      final container = makeContainer(fake);
-      arm(container, community);
-      async.flushMicrotasks();
+  test(
+    'does not fire before the interval, then fires and reschedules on a 200',
+    () {
+      fakeAsync((async) {
+        final fake = FakeStaffroomTransport()..personaPulseResult = aPulse;
+        final container = makeContainer(fake);
+        arm(container, community);
+        async.flushMicrotasks();
 
-      expect(fake.personaPulses, isEmpty, reason: 'nothing before the interval');
-      async.elapse(kPersonaPulseInterval - const Duration(seconds: 1));
-      expect(fake.personaPulses, isEmpty, reason: 'still waiting');
+        expect(
+          fake.personaPulses,
+          isEmpty,
+          reason: 'nothing before the interval',
+        );
+        async.elapse(kPersonaPulseInterval - const Duration(seconds: 1));
+        expect(fake.personaPulses, isEmpty, reason: 'still waiting');
 
-      async.elapse(const Duration(seconds: 1)); // == interval
-      expect(fake.personaPulses, hasLength(1), reason: 'first pulse at interval');
+        async.elapse(const Duration(seconds: 1)); // == interval
+        expect(
+          fake.personaPulses,
+          hasLength(1),
+          reason: 'first pulse at interval',
+        );
 
-      async.elapse(kPersonaPulseInterval); // a 200 → one more
-      expect(fake.personaPulses, hasLength(2), reason: '200 reschedules a pulse');
+        async.elapse(kPersonaPulseInterval); // a 200 → one more
+        expect(
+          fake.personaPulses,
+          hasLength(2),
+          reason: '200 reschedules a pulse',
+        );
 
-      expect(
-        container.read(personaPulseControllerProvider(community)),
-        PersonaPulseStatus.warmed,
-      );
-    });
-  });
+        expect(
+          container.read(personaPulseControllerProvider(community)),
+          PersonaPulseStatus.warmed,
+        );
+      });
+    },
+  );
 
   test('a null result (503) permanently disarms the timer', () {
     fakeAsync((async) {
@@ -88,73 +102,99 @@ void main() {
     });
   });
 
-  test('a thrown error (deferred transport / 401 on the stub) also stops it', () {
-    fakeAsync((async) {
-      final fake = FakeStaffroomTransport()
-        ..personaPulseResult = aPulse
-        ..personaPulseError = StateError('401 on the persona-pulse stub');
-      final container = makeContainer(fake);
-      arm(container, community);
-      async.flushMicrotasks();
+  test(
+    'a thrown error (deferred transport / 401 on the stub) also stops it',
+    () {
+      fakeAsync((async) {
+        final fake = FakeStaffroomTransport()
+          ..personaPulseResult = aPulse
+          ..personaPulseError = StateError('401 on the persona-pulse stub');
+        final container = makeContainer(fake);
+        arm(container, community);
+        async.flushMicrotasks();
 
-      async.elapse(kPersonaPulseInterval);
-      expect(fake.personaPulses, hasLength(1));
-      async.elapse(kPersonaPulseInterval * 5);
-      expect(fake.personaPulses, hasLength(1), reason: 'an error stops the loop');
-      expect(
-        container.read(personaPulseControllerProvider(community)),
-        PersonaPulseStatus.stopped,
-      );
-    });
-  });
+        async.elapse(kPersonaPulseInterval);
+        expect(fake.personaPulses, hasLength(1));
+        async.elapse(kPersonaPulseInterval * 5);
+        expect(
+          fake.personaPulses,
+          hasLength(1),
+          reason: 'an error stops the loop',
+        );
+        expect(
+          container.read(personaPulseControllerProvider(community)),
+          PersonaPulseStatus.stopped,
+        );
+      });
+    },
+  );
 
-  test('disposing (leaving the screen) cancels the timer — no fire afterwards',
-      () {
-    fakeAsync((async) {
-      final fake = FakeStaffroomTransport()..personaPulseResult = aPulse;
-      final container = makeContainer(fake);
-      arm(container, community);
-      async.flushMicrotasks();
+  test(
+    'disposing (leaving the screen) cancels the timer — no fire afterwards',
+    () {
+      fakeAsync((async) {
+        final fake = FakeStaffroomTransport()..personaPulseResult = aPulse;
+        final container = makeContainer(fake);
+        arm(container, community);
+        async.flushMicrotasks();
 
-      async.elapse(kPersonaPulseInterval);
-      expect(fake.personaPulses, hasLength(1)); // one fire
+        async.elapse(kPersonaPulseInterval);
+        expect(fake.personaPulses, hasLength(1)); // one fire
 
-      container.dispose(); // leaving the screen
-      async.elapse(kPersonaPulseInterval * 3);
-      expect(fake.personaPulses, hasLength(1), reason: 'no fire after dispose');
-    });
-  });
+        container.dispose(); // leaving the screen
+        async.elapse(kPersonaPulseInterval * 3);
+        expect(
+          fake.personaPulses,
+          hasLength(1),
+          reason: 'no fire after dispose',
+        );
+      });
+    },
+  );
 
-  test('disposing WITH a pulse in flight blocks the reschedule (post-await guard)',
-      () {
-    fakeAsync((async) {
-      // The gate holds pulse #1 suspended (request already recorded, before the
-      // result resolves) precisely while we dispose. The result is a 200, so IF
-      // the `_disposed || gen != _gen` guard in `_fire` were removed, the
-      // continuation would `_schedule` a new timer post-dispose and the elapse
-      // would drive the count past 1. The guard is what freezes it.
-      final gate = Completer<void>();
-      final fake = FakeStaffroomTransport()
-        ..personaPulseResult = aPulse
-        ..personaPulseGate = gate;
-      final container = makeContainer(fake);
-      arm(container, community);
-      async.flushMicrotasks();
+  test(
+    'disposing WITH a pulse in flight blocks the reschedule (post-await guard)',
+    () {
+      fakeAsync((async) {
+        // The gate holds pulse #1 suspended (request already recorded, before the
+        // result resolves) precisely while we dispose. The result is a 200, so IF
+        // the `_disposed || gen != _gen` guard in `_fire` were removed, the
+        // continuation would `_schedule` a new timer post-dispose and the elapse
+        // would drive the count past 1. The guard is what freezes it.
+        final gate = Completer<void>();
+        final fake = FakeStaffroomTransport()
+          ..personaPulseResult = aPulse
+          ..personaPulseGate = gate;
+        final container = makeContainer(fake);
+        arm(container, community);
+        async.flushMicrotasks();
 
-      async.elapse(kPersonaPulseInterval); // pulse #1 fires → suspends on the gate
-      async.flushMicrotasks();
-      expect(fake.personaPulses, hasLength(1), reason: 'pulse #1 is IN FLIGHT');
+        async.elapse(
+          kPersonaPulseInterval,
+        ); // pulse #1 fires → suspends on the gate
+        async.flushMicrotasks();
+        expect(
+          fake.personaPulses,
+          hasLength(1),
+          reason: 'pulse #1 is IN FLIGHT',
+        );
 
-      container.dispose(); // dispose WHILE the pulse awaits the transport
+        container.dispose(); // dispose WHILE the pulse awaits the transport
 
-      gate.complete(); // the in-flight triggerPersonaPulse resolves, post-dispose
-      async.flushMicrotasks(); // its continuation runs → must hit the guard
-      async.elapse(kPersonaPulseInterval * 3); // no rescheduled pulse may fire
+        gate.complete(); // the in-flight triggerPersonaPulse resolves, post-dispose
+        async.flushMicrotasks(); // its continuation runs → must hit the guard
+        async.elapse(
+          kPersonaPulseInterval * 3,
+        ); // no rescheduled pulse may fire
 
-      expect(fake.personaPulses, hasLength(1),
-          reason: 'the guarded continuation must not reschedule a pulse');
-    });
-  });
+        expect(
+          fake.personaPulses,
+          hasLength(1),
+          reason: 'the guarded continuation must not reschedule a pulse',
+        );
+      });
+    },
+  );
 
   test('a group chat never arms the persona pulse', () {
     fakeAsync((async) {
@@ -164,8 +204,11 @@ void main() {
       async.flushMicrotasks();
 
       async.elapse(kPersonaPulseInterval * 3);
-      expect(fake.personaPulses, isEmpty,
-          reason: 'the persona pulse writes community_chat only');
+      expect(
+        fake.personaPulses,
+        isEmpty,
+        reason: 'the persona pulse writes community_chat only',
+      );
       expect(
         container.read(personaPulseControllerProvider(group)),
         PersonaPulseStatus.idle,

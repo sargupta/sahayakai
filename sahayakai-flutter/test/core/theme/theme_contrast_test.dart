@@ -26,7 +26,9 @@ import 'package:sahayakai/core/theme/app_glass.dart';
 ///     on the dark ground uses `#EB9447` itself.
 double _lin(int c) {
   final s = c / 255.0;
-  return s <= 0.03928 ? s / 12.92 : math.pow((s + 0.055) / 1.055, 2.4).toDouble();
+  return s <= 0.03928
+      ? s / 12.92
+      : math.pow((s + 0.055) / 1.055, 2.4).toDouble();
 }
 
 double _luminance(Color c) =>
@@ -49,42 +51,53 @@ void main() {
     // Saffron used as TEXT/icons/eyebrows routes through saffron-700
     // (`saffronText` / `lPrimaryText` `#AC4815`), NOT the `#E0924D` fill.
     test('saffronText passes AA on the light background', () {
-      expect(_ratio(AppColors.saffronText, AppColors.lBackground),
-          greaterThanOrEqualTo(4.5),
-          reason: 'saffron-700 text must meet AA on the warm off-white ground');
+      expect(
+        _ratio(AppColors.saffronText, AppColors.lBackground),
+        greaterThanOrEqualTo(4.5),
+        reason: 'saffron-700 text must meet AA on the warm off-white ground',
+      );
     });
     test('saffronText passes AA on a white card', () {
-      expect(_ratio(AppColors.saffronText, AppColors.lCard),
-          greaterThanOrEqualTo(4.5),
-          reason: 'saffron-700 text must meet AA on white cards');
+      expect(
+        _ratio(AppColors.saffronText, AppColors.lCard),
+        greaterThanOrEqualTo(4.5),
+        reason: 'saffron-700 text must meet AA on white cards',
+      );
     });
     test('saffronText is saffron-700 #AC4815 and lPrimaryText aliases it', () {
       expect(AppColors.saffronText, const Color(0xFFAC4815));
       expect(AppColors.saffronText, AppColors.lPrimaryText);
     });
     test('body foreground passes AA on the background', () {
-      expect(_ratio(AppColors.lForeground, AppColors.lBackground),
-          greaterThanOrEqualTo(4.5),
-          reason: 'primary ink must be legible on the ground');
+      expect(
+        _ratio(AppColors.lForeground, AppColors.lBackground),
+        greaterThanOrEqualTo(4.5),
+        reason: 'primary ink must be legible on the ground',
+      );
     });
   });
 
   group('LIGHT — saffron FILL carries white (brand fill, exempt from 4.5)', () {
-    test('the primary fill is the production saffron #E0924D with a white label',
-        () {
-      // Production `--primary` + `--primary-foreground: white`. We assert the
-      // PAIRING, not a ratio: this is a large brand fill, not saffron-as-text.
-      expect(AppColors.lPrimary, const Color(0xFFE0924D));
-      expect(AppColors.lPrimary, AppColors.brandSaffron);
-      expect(AppColors.lOnPrimary, _white);
-      expect(AppColors.lRing, AppColors.lPrimary); // `--ring` = saffron
-    });
-    test('white on the saffron fill is below the text floor — hence white-only, '
-        'large-fill use (documented exemption)', () {
-      // Records WHY saffron may not sit behind small text: as text it fails.
-      // It is sanctioned ONLY as a large fill with a white label (~2.5:1).
-      expect(_ratio(_white, AppColors.lPrimary), lessThan(3.0));
-    });
+    test(
+      'the primary fill is the production saffron #E0924D with a white label',
+      () {
+        // Production `--primary` + `--primary-foreground: white`. We assert the
+        // PAIRING, not a ratio: this is a large brand fill, not saffron-as-text.
+        expect(AppColors.lPrimary, const Color(0xFFE0924D));
+        expect(AppColors.lPrimary, AppColors.brandSaffron);
+        expect(AppColors.lOnPrimary, _white);
+        expect(AppColors.lRing, AppColors.lPrimary); // `--ring` = saffron
+      },
+    );
+    test(
+      'white on the saffron fill is below the text floor — hence white-only, '
+      'large-fill use (documented exemption)',
+      () {
+        // Records WHY saffron may not sit behind small text: as text it fails.
+        // It is sanctioned ONLY as a large fill with a white label (~2.5:1).
+        expect(_ratio(_white, AppColors.lPrimary), lessThan(3.0));
+      },
+    );
   });
 
   group('LIGHT — tricolour accent FILLS clear AA with white', () {
@@ -105,31 +118,39 @@ void main() {
       // a real accessible pairing, so it is asserted as passing AA (~7.5:1).
       expect(AppColors.dPrimary, const Color(0xFFEB9447));
       expect(AppColors.dOnPrimary, const Color(0xFF0F1729));
-      expect(_ratio(AppColors.dOnPrimary, AppColors.dPrimary),
-          greaterThanOrEqualTo(4.5),
-          reason: 'dark mode flips to dark-on-saffron, which must meet AA');
+      expect(
+        _ratio(AppColors.dOnPrimary, AppColors.dPrimary),
+        greaterThanOrEqualTo(4.5),
+        reason: 'dark mode flips to dark-on-saffron, which must meet AA',
+      );
     });
     test('saffron-as-text is legible on the dark ground (>=4.5)', () {
       // Dark has no saffron-700; the saffron itself is the text/eyebrow colour
       // and reads fine on near-black (~7.7:1).
-      expect(_ratio(AppColors.dPrimaryText, AppColors.dBackground),
-          greaterThanOrEqualTo(4.5),
-          reason: 'dark saffron text must be legible on the dark ground');
+      expect(
+        _ratio(AppColors.dPrimaryText, AppColors.dBackground),
+        greaterThanOrEqualTo(4.5),
+        reason: 'dark saffron text must be legible on the dark ground',
+      );
     });
     test('body foreground passes AA on the dark ground', () {
-      expect(_ratio(AppColors.dForeground, AppColors.dBackground),
-          greaterThanOrEqualTo(4.5));
+      expect(
+        _ratio(AppColors.dForeground, AppColors.dBackground),
+        greaterThanOrEqualTo(4.5),
+      );
     });
   });
 
   group('the production saffron is reserved for large brand fills', () {
-    test('brandSaffron is the rendered #E0924D and unifies with the primary fill',
-        () {
-      expect(AppColors.brandSaffron, const Color(0xFFE0924D));
-      // Documented as failing AA with white — never behind small text; used as
-      // a large fill (buttons, active cards, the mic orb).
-      expect(_ratio(AppColors.brandSaffron, _white), lessThan(3.0));
-    });
+    test(
+      'brandSaffron is the rendered #E0924D and unifies with the primary fill',
+      () {
+        expect(AppColors.brandSaffron, const Color(0xFFE0924D));
+        // Documented as failing AA with white — never behind small text; used as
+        // a large fill (buttons, active cards, the mic orb).
+        expect(_ratio(AppColors.brandSaffron, _white), lessThan(3.0));
+      },
+    );
   });
 
   group('warm error-container pairing passes AA (>=4.5)', () {
@@ -137,13 +158,17 @@ void main() {
     // is a warm brand tint, NOT M3's default cool pink. onErrorContainer is the
     // label colour on it and must clear AA in both themes.
     test('LIGHT onErrorContainer on errorContainer', () {
-      expect(_ratio(AppColors.lOnErrorContainer, AppColors.lErrorContainer),
-          greaterThanOrEqualTo(4.5),
-          reason: 'the send-failed bar label must meet AA on the warm tint');
+      expect(
+        _ratio(AppColors.lOnErrorContainer, AppColors.lErrorContainer),
+        greaterThanOrEqualTo(4.5),
+        reason: 'the send-failed bar label must meet AA on the warm tint',
+      );
     });
     test('DARK onErrorContainer on errorContainer', () {
-      expect(_ratio(AppColors.dOnErrorContainer, AppColors.dErrorContainer),
-          greaterThanOrEqualTo(4.5));
+      expect(
+        _ratio(AppColors.dOnErrorContainer, AppColors.dErrorContainer),
+        greaterThanOrEqualTo(4.5),
+      );
     });
   });
 
@@ -154,20 +179,28 @@ void main() {
     // ColorScheme mapping) is the body-text colour that would sit on it.
     // Color.alphaBlend mirrors what the compositor actually paints.
     test('LIGHT: onSurface on the composited flat-glass fill passes AA', () {
-      final composited =
-          Color.alphaBlend(AppGlass.lFlatFill, AppColors.lBackground);
-      expect(_ratio(AppColors.lForeground, composited),
-          greaterThanOrEqualTo(4.5),
-          reason:
-              'body text on the flat glass fill must stay AA-safe once composited over the paper background');
+      final composited = Color.alphaBlend(
+        AppGlass.lFlatFill,
+        AppColors.lBackground,
+      );
+      expect(
+        _ratio(AppColors.lForeground, composited),
+        greaterThanOrEqualTo(4.5),
+        reason:
+            'body text on the flat glass fill must stay AA-safe once composited over the paper background',
+      );
     });
     test('DARK: onSurface on the composited flat-glass fill passes AA', () {
-      final composited =
-          Color.alphaBlend(AppGlass.dFlatFill, AppColors.dBackground);
-      expect(_ratio(AppColors.dForeground, composited),
-          greaterThanOrEqualTo(4.5),
-          reason:
-              'body text on the flat glass fill must stay AA-safe once composited over the vignette background');
+      final composited = Color.alphaBlend(
+        AppGlass.dFlatFill,
+        AppColors.dBackground,
+      );
+      expect(
+        _ratio(AppColors.dForeground, composited),
+        greaterThanOrEqualTo(4.5),
+        reason:
+            'body text on the flat glass fill must stay AA-safe once composited over the vignette background',
+      );
     });
 
     // The two tests above assume the near-flat paper/vignette backdrop the
@@ -181,29 +214,38 @@ void main() {
     // is proven safe against more than the best-case backdrop.
     test('LIGHT: chrome fill over the most saturated real backdrop '
         '(brandSaffron) still passes AA', () {
-      final composited =
-          Color.alphaBlend(AppGlass.lChromeFill, AppColors.brandSaffron);
-      expect(_ratio(AppColors.lForeground, composited),
-          greaterThanOrEqualTo(4.5),
-          reason: 'a real blur can soften toward saffron-heavy content '
-              'behind it, not just the paper background');
+      final composited = Color.alphaBlend(
+        AppGlass.lChromeFill,
+        AppColors.brandSaffron,
+      );
+      expect(
+        _ratio(AppColors.lForeground, composited),
+        greaterThanOrEqualTo(4.5),
+        reason:
+            'a real blur can soften toward saffron-heavy content '
+            'behind it, not just the paper background',
+      );
     });
     test('LIGHT: chrome fill over the absolute-worst extremes '
         '(pure black, pure white) still passes AA', () {
       for (final extreme in [Colors.black, Colors.white]) {
         final composited = Color.alphaBlend(AppGlass.lChromeFill, extreme);
-        expect(_ratio(AppColors.lForeground, composited),
-            greaterThanOrEqualTo(4.5),
-            reason: 'worst-case backdrop $extreme must not break AA');
+        expect(
+          _ratio(AppColors.lForeground, composited),
+          greaterThanOrEqualTo(4.5),
+          reason: 'worst-case backdrop $extreme must not break AA',
+        );
       }
     });
     test('DARK: chrome fill over the absolute-worst extremes '
         '(pure black, pure white) still passes AA', () {
       for (final extreme in [Colors.black, Colors.white]) {
         final composited = Color.alphaBlend(AppGlass.dChromeFill, extreme);
-        expect(_ratio(AppColors.dForeground, composited),
-            greaterThanOrEqualTo(4.5),
-            reason: 'worst-case backdrop $extreme must not break AA');
+        expect(
+          _ratio(AppColors.dForeground, composited),
+          greaterThanOrEqualTo(4.5),
+          reason: 'worst-case backdrop $extreme must not break AA',
+        );
       }
     });
   });
@@ -218,10 +260,7 @@ void main() {
     // can't drift silently again.
     Color doubleComposite(Color flatFill, Color background, Color container) {
       final step1 = Color.alphaBlend(flatFill, background);
-      return Color.alphaBlend(
-        container.withValues(alpha: 0.85),
-        step1,
-      );
+      return Color.alphaBlend(container.withValues(alpha: 0.85), step1);
     }
 
     test('LIGHT: onSurface (body) on the wash composite passes AA', () {
@@ -230,10 +269,13 @@ void main() {
         AppColors.lBackground,
         AppColors.lPrimaryContainer,
       );
-      expect(_ratio(AppColors.lForeground, composited),
-          greaterThanOrEqualTo(4.5),
-          reason: 'mine-bubble body text must stay AA-safe on the '
-              'double-composited wash');
+      expect(
+        _ratio(AppColors.lForeground, composited),
+        greaterThanOrEqualTo(4.5),
+        reason:
+            'mine-bubble body text must stay AA-safe on the '
+            'double-composited wash',
+      );
     });
     test('DARK: onSurface (body) on the wash composite passes AA', () {
       final composited = doubleComposite(
@@ -241,10 +283,13 @@ void main() {
         AppColors.dBackground,
         AppColors.dPrimaryContainer,
       );
-      expect(_ratio(AppColors.dForeground, composited),
-          greaterThanOrEqualTo(4.5),
-          reason: 'mine-bubble body text must stay AA-safe on the '
-              'double-composited wash');
+      expect(
+        _ratio(AppColors.dForeground, composited),
+        greaterThanOrEqualTo(4.5),
+        reason:
+            'mine-bubble body text must stay AA-safe on the '
+            'double-composited wash',
+      );
     });
     test('LIGHT: onPrimaryContainer (meta/tick) on the wash composite '
         'passes AA', () {
@@ -253,10 +298,13 @@ void main() {
         AppColors.lBackground,
         AppColors.lPrimaryContainer,
       );
-      expect(_ratio(AppColors.lOnPrimaryContainer, composited),
-          greaterThanOrEqualTo(4.5),
-          reason: 'mine-bubble meta/tick must stay AA-safe on the '
-              'double-composited wash');
+      expect(
+        _ratio(AppColors.lOnPrimaryContainer, composited),
+        greaterThanOrEqualTo(4.5),
+        reason:
+            'mine-bubble meta/tick must stay AA-safe on the '
+            'double-composited wash',
+      );
     });
     test('DARK: onPrimaryContainer (meta/tick) on the wash composite '
         'passes AA', () {
@@ -265,10 +313,13 @@ void main() {
         AppColors.dBackground,
         AppColors.dPrimaryContainer,
       );
-      expect(_ratio(AppColors.dOnPrimaryContainer, composited),
-          greaterThanOrEqualTo(4.5),
-          reason: 'mine-bubble meta/tick must stay AA-safe on the '
-              'double-composited wash');
+      expect(
+        _ratio(AppColors.dOnPrimaryContainer, composited),
+        greaterThanOrEqualTo(4.5),
+        reason:
+            'mine-bubble meta/tick must stay AA-safe on the '
+            'double-composited wash',
+      );
     });
   });
 }

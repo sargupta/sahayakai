@@ -3,9 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/core/network/api_exception.dart';
 import 'package:sahayakai/features/onboarding/presentation/login_screen.dart';
 import 'package:sahayakai/features/splash/presentation/splash_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:sahayakai/features/vidya/presentation/vidya_home_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/app_harness.dart';
 import '../../support/fake_api_client.dart';

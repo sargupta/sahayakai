@@ -10,35 +10,35 @@ import 'package:sahayakai/features/parent_hotline/domain/parent_outreach.dart';
 void main() {
   // A full `GET /api/attendance/call-summary` 200 body, as the route emits it.
   Map<String, dynamic> callSummaryBody() => {
-        'callStatus': 'completed',
-        'callDurationSeconds': 132,
-        'answeredBy': 'human',
-        'turnCount': 4,
-        'transcript': [
-          {
-            'role': 'agent',
-            'text': 'Namaste, this is an important message from school.',
-            'timestamp': '2026-07-18T10:00:00.000Z',
-          },
-          {
-            'role': 'parent',
-            'text': 'Haan ji, boliye.',
-            'timestamp': '2026-07-18T10:00:12.000Z',
-          },
-        ],
-        'callSummary': {
-          'parentResponse': 'The parent was grateful and engaged.',
-          'parentConcerns': ['Child struggles with fractions'],
-          'parentCommitments': ['Will ensure a daily study time'],
-          'actionItemsForTeacher': ['Share extra fraction worksheets'],
-          'guidanceGiven': ['Suggested 20 minutes of daily practice'],
-          'parentSentiment': 'grateful',
-          'callQuality': 'productive',
-          'followUpNeeded': true,
-          'followUpSuggestion': 'Call again in two weeks',
-          'generatedAt': '2026-07-18T10:03:00.000Z',
-        },
-      };
+    'callStatus': 'completed',
+    'callDurationSeconds': 132,
+    'answeredBy': 'human',
+    'turnCount': 4,
+    'transcript': [
+      {
+        'role': 'agent',
+        'text': 'Namaste, this is an important message from school.',
+        'timestamp': '2026-07-18T10:00:00.000Z',
+      },
+      {
+        'role': 'parent',
+        'text': 'Haan ji, boliye.',
+        'timestamp': '2026-07-18T10:00:12.000Z',
+      },
+    ],
+    'callSummary': {
+      'parentResponse': 'The parent was grateful and engaged.',
+      'parentConcerns': ['Child struggles with fractions'],
+      'parentCommitments': ['Will ensure a daily study time'],
+      'actionItemsForTeacher': ['Share extra fraction worksheets'],
+      'guidanceGiven': ['Suggested 20 minutes of daily practice'],
+      'parentSentiment': 'grateful',
+      'callQuality': 'productive',
+      'followUpNeeded': true,
+      'followUpSuggestion': 'Call again in two weeks',
+      'generatedAt': '2026-07-18T10:03:00.000Z',
+    },
+  };
 
   group('CreateOutreachResponseDto — POST /api/attendance/outreach 200', () {
     test('decodes { outreachId }', () {
@@ -47,11 +47,13 @@ void main() {
       expect(dto.id, 'o-123');
     });
 
-    test('a missing / blank id yields an empty id (repo treats as malformed)',
-        () {
-      expect(CreateOutreachResponseDto.fromJson(<String, dynamic>{}).id, '');
-      expect(CreateOutreachResponseDto.fromJson({'outreachId': '  '}).id, '');
-    });
+    test(
+      'a missing / blank id yields an empty id (repo treats as malformed)',
+      () {
+        expect(CreateOutreachResponseDto.fromJson(<String, dynamic>{}).id, '');
+        expect(CreateOutreachResponseDto.fromJson({'outreachId': '  '}).id, '');
+      },
+    );
   });
 
   group('PlaceCallResponseDto — POST /api/attendance/call 200', () {
@@ -75,8 +77,10 @@ void main() {
 
       expect(result.transcript, hasLength(2));
       expect(result.transcript.first.role, TranscriptRole.agent);
-      expect(result.transcript.first.text,
-          'Namaste, this is an important message from school.');
+      expect(
+        result.transcript.first.text,
+        'Namaste, this is an important message from school.',
+      );
       expect(result.transcript.first.timestamp, '2026-07-18T10:00:00.000Z');
       expect(result.transcript.last.role, TranscriptRole.parent);
 
@@ -93,28 +97,30 @@ void main() {
       expect(s.generatedAt, '2026-07-18T10:03:00.000Z');
     });
 
-    test('an in-flight call (no summary yet) decodes with the server defaults',
-        () {
-      // The route sends `turnCount ?? 0`, `transcript ?? []`,
-      // `callSummary ?? null` while the call is still `initiated`.
-      final result = CallResultDto.fromJson({
-        'callStatus': 'initiated',
-        'callDurationSeconds': null,
-        'answeredBy': null,
-        'turnCount': 0,
-        'transcript': <dynamic>[],
-        'callSummary': null,
-      }).toDomain();
+    test(
+      'an in-flight call (no summary yet) decodes with the server defaults',
+      () {
+        // The route sends `turnCount ?? 0`, `transcript ?? []`,
+        // `callSummary ?? null` while the call is still `initiated`.
+        final result = CallResultDto.fromJson({
+          'callStatus': 'initiated',
+          'callDurationSeconds': null,
+          'answeredBy': null,
+          'turnCount': 0,
+          'transcript': <dynamic>[],
+          'callSummary': null,
+        }).toDomain();
 
-      expect(result.callStatus, CallStatus.initiated);
-      expect(result.callStatus.isInFlight, isTrue);
-      expect(result.isTerminal, isFalse);
-      expect(result.callDurationSeconds, isNull);
-      expect(result.turnCount, 0);
-      expect(result.hadConversation, isFalse);
-      expect(result.transcript, isEmpty);
-      expect(result.callSummary, isNull);
-    });
+        expect(result.callStatus, CallStatus.initiated);
+        expect(result.callStatus.isInFlight, isTrue);
+        expect(result.isTerminal, isFalse);
+        expect(result.callDurationSeconds, isNull);
+        expect(result.turnCount, 0);
+        expect(result.hadConversation, isFalse);
+        expect(result.transcript, isEmpty);
+        expect(result.callSummary, isNull);
+      },
+    );
   });
 
   group('LatestOutreachDto — GET /api/attendance/outreach-latest 200', () {
@@ -125,18 +131,24 @@ void main() {
       expect(latest, isNotNull);
       expect(latest!.outreachId, 'o-777');
       expect(latest.result.callStatus, CallStatus.completed);
-      expect(latest.result.callSummary?.parentSentiment,
-          ParentSentiment.grateful);
+      expect(
+        latest.result.callSummary?.parentSentiment,
+        ParentSentiment.grateful,
+      );
     });
 
     test('{ outreachId: null } → null (nothing to resume)', () {
-      expect(LatestOutreachDto.fromJson({'outreachId': null}).toDomain(),
-          isNull);
+      expect(
+        LatestOutreachDto.fromJson({'outreachId': null}).toDomain(),
+        isNull,
+      );
     });
 
     test('a blank id is also treated as nothing to resume', () {
-      expect(LatestOutreachDto.fromJson({'outreachId': '   '}).toDomain(),
-          isNull);
+      expect(
+        LatestOutreachDto.fromJson({'outreachId': '   '}).toDomain(),
+        isNull,
+      );
     });
   });
 
@@ -160,14 +172,16 @@ void main() {
       expect(s.actionItemsForTeacher, isEmpty);
     });
 
-    test('stray nulls / non-strings inside a list are dropped, not a crash',
-        () {
-      final s = CallSummaryDto.fromJson({
-        'parentResponse': 'ok',
-        'parentConcerns': ['real concern', null, '', 42, '  trimmed  '],
-      }).toDomain();
-      expect(s.parentConcerns, ['real concern', 'trimmed']);
-    });
+    test(
+      'stray nulls / non-strings inside a list are dropped, not a crash',
+      () {
+        final s = CallSummaryDto.fromJson({
+          'parentResponse': 'ok',
+          'parentConcerns': ['real concern', null, '', 42, '  trimmed  '],
+        }).toDomain();
+        expect(s.parentConcerns, ['real concern', 'trimmed']);
+      },
+    );
 
     test('a completely empty summary decodes to safe defaults', () {
       final s = CallSummaryDto.fromJson(<String, dynamic>{}).toDomain();
@@ -183,10 +197,14 @@ void main() {
 
   group('Enum tolerant fromWire (unknown → safe default, never throws)', () {
     test('OutreachReason', () {
-      expect(OutreachReason.fromWire('poor_performance'),
-          OutreachReason.poorPerformance);
-      expect(OutreachReason.fromWire('made_up'),
-          OutreachReason.consecutiveAbsences);
+      expect(
+        OutreachReason.fromWire('poor_performance'),
+        OutreachReason.poorPerformance,
+      );
+      expect(
+        OutreachReason.fromWire('made_up'),
+        OutreachReason.consecutiveAbsences,
+      );
       expect(OutreachReason.fromWire(null), OutreachReason.consecutiveAbsences);
     });
 
@@ -197,10 +215,14 @@ void main() {
     });
 
     test('DeliveryMethod', () {
-      expect(DeliveryMethod.fromWire('whatsapp_copy'),
-          DeliveryMethod.whatsappCopy);
-      expect(DeliveryMethod.fromWire('carrier_pigeon'),
-          DeliveryMethod.twilioCall);
+      expect(
+        DeliveryMethod.fromWire('whatsapp_copy'),
+        DeliveryMethod.whatsappCopy,
+      );
+      expect(
+        DeliveryMethod.fromWire('carrier_pigeon'),
+        DeliveryMethod.twilioCall,
+      );
     });
 
     test('ParentSentiment', () {
@@ -213,12 +235,14 @@ void main() {
       expect(CallQuality.fromWire('epic'), CallQuality.brief);
     });
 
-    test('TranscriptRole (unknown → agent, never mis-attributes to parent)',
-        () {
-      expect(TranscriptRole.fromWire('parent'), TranscriptRole.parent);
-      expect(TranscriptRole.fromWire('system'), TranscriptRole.agent);
-      expect(TranscriptRole.fromWire(null), TranscriptRole.agent);
-    });
+    test(
+      'TranscriptRole (unknown → agent, never mis-attributes to parent)',
+      () {
+        expect(TranscriptRole.fromWire('parent'), TranscriptRole.parent);
+        expect(TranscriptRole.fromWire('system'), TranscriptRole.agent);
+        expect(TranscriptRole.fromWire(null), TranscriptRole.agent);
+      },
+    );
 
     test('the wire tokens mirror src/types/attendance.ts name-for-name', () {
       expect(OutreachReason.values.map((r) => r.wire).toList(), [
@@ -235,8 +259,10 @@ void main() {
         'busy',
         'manual',
       ]);
-      expect(DeliveryMethod.values.map((m) => m.wire).toList(),
-          ['twilio_call', 'whatsapp_copy']);
+      expect(DeliveryMethod.values.map((m) => m.wire).toList(), [
+        'twilio_call',
+        'whatsapp_copy',
+      ]);
       expect(ParentSentiment.values.map((s) => s.wire).toList(), [
         'cooperative',
         'concerned',
@@ -245,96 +271,110 @@ void main() {
         'indifferent',
         'confused',
       ]);
-      expect(CallQuality.values.map((q) => q.wire).toList(),
-          ['productive', 'brief', 'difficult', 'unanswered']);
-      expect(TranscriptRole.values.map((r) => r.wire).toList(),
-          ['agent', 'parent']);
+      expect(CallQuality.values.map((q) => q.wire).toList(), [
+        'productive',
+        'brief',
+        'difficult',
+        'unanswered',
+      ]);
+      expect(TranscriptRole.values.map((r) => r.wire).toList(), [
+        'agent',
+        'parent',
+      ]);
     });
   });
 
-  group('CreateOutreachRequestDto.toJson — POST /api/attendance/outreach body',
-      () {
-    test('carries the exact field names incl. deliveryMethod + wire enums', () {
-      final json = CreateOutreachRequestDto.build(
-        classId: 'c1',
-        className: 'Class 6A',
-        studentId: 's1',
-        studentName: 'Asha',
-        parentLanguage: 'Kannada',
-        reason: OutreachReason.consecutiveAbsences,
-        generatedMessage: 'Namaste...',
-        deliveryMethod: DeliveryMethod.twilioCall,
-      ).toJson();
+  group(
+    'CreateOutreachRequestDto.toJson — POST /api/attendance/outreach body',
+    () {
+      test(
+        'carries the exact field names incl. deliveryMethod + wire enums',
+        () {
+          final json = CreateOutreachRequestDto.build(
+            classId: 'c1',
+            className: 'Class 6A',
+            studentId: 's1',
+            studentName: 'Asha',
+            parentLanguage: 'Kannada',
+            reason: OutreachReason.consecutiveAbsences,
+            generatedMessage: 'Namaste...',
+            deliveryMethod: DeliveryMethod.twilioCall,
+          ).toJson();
 
-      expect(json, {
-        'classId': 'c1',
-        'className': 'Class 6A',
-        'studentId': 's1',
-        'studentName': 'Asha',
-        'parentLanguage': 'Kannada',
-        'reason': 'consecutive_absences',
-        'generatedMessage': 'Namaste...',
-        'deliveryMethod': 'twilio_call',
+          expect(json, {
+            'classId': 'c1',
+            'className': 'Class 6A',
+            'studentId': 's1',
+            'studentName': 'Asha',
+            'parentLanguage': 'Kannada',
+            'reason': 'consecutive_absences',
+            'generatedMessage': 'Namaste...',
+            'deliveryMethod': 'twilio_call',
+          });
+        },
+      );
+
+      test(
+        'NEVER includes parentPhone (F9-001 — server sources the phone)',
+        () {
+          final json = CreateOutreachRequestDto.build(
+            classId: 'c1',
+            className: 'Class 6A',
+            studentId: 's1',
+            studentName: 'Asha',
+            parentLanguage: 'Kannada',
+            reason: OutreachReason.poorPerformance,
+            generatedMessage: 'msg',
+            deliveryMethod: DeliveryMethod.whatsappCopy,
+          ).toJson();
+          expect(json.containsKey('parentPhone'), isFalse);
+          expect(json['deliveryMethod'], 'whatsapp_copy');
+          expect(json['reason'], 'poor_performance');
+        },
+      );
+
+      test('omits the optional teacherNote / subject / performanceContext when '
+          'blank', () {
+        final json = CreateOutreachRequestDto.build(
+          classId: 'c1',
+          className: 'Class 6A',
+          studentId: 's1',
+          studentName: 'Asha',
+          parentLanguage: 'Hindi',
+          reason: OutreachReason.behavioralConcern,
+          generatedMessage: 'msg',
+          deliveryMethod: DeliveryMethod.twilioCall,
+          teacherNote: '   ',
+          subject: null,
+          performanceContext: const {},
+        ).toJson();
+
+        expect(json.containsKey('teacherNote'), isFalse);
+        expect(json.containsKey('subject'), isFalse);
+        expect(json.containsKey('performanceContext'), isFalse);
       });
-    });
 
-    test('NEVER includes parentPhone (F9-001 — server sources the phone)', () {
-      final json = CreateOutreachRequestDto.build(
-        classId: 'c1',
-        className: 'Class 6A',
-        studentId: 's1',
-        studentName: 'Asha',
-        parentLanguage: 'Kannada',
-        reason: OutreachReason.poorPerformance,
-        generatedMessage: 'msg',
-        deliveryMethod: DeliveryMethod.whatsappCopy,
-      ).toJson();
-      expect(json.containsKey('parentPhone'), isFalse);
-      expect(json['deliveryMethod'], 'whatsapp_copy');
-      expect(json['reason'], 'poor_performance');
-    });
+      test('includes the optional fields when present', () {
+        final json = CreateOutreachRequestDto.build(
+          classId: 'c1',
+          className: 'Class 6A',
+          studentId: 's1',
+          studentName: 'Asha',
+          parentLanguage: 'Hindi',
+          reason: OutreachReason.positiveFeedback,
+          generatedMessage: 'msg',
+          deliveryMethod: DeliveryMethod.twilioCall,
+          teacherNote: 'Great improvement',
+          subject: 'Mathematics',
+          performanceContext: const {'latestPercentage': 82},
+        ).toJson();
 
-    test('omits the optional teacherNote / subject / performanceContext when '
-        'blank', () {
-      final json = CreateOutreachRequestDto.build(
-        classId: 'c1',
-        className: 'Class 6A',
-        studentId: 's1',
-        studentName: 'Asha',
-        parentLanguage: 'Hindi',
-        reason: OutreachReason.behavioralConcern,
-        generatedMessage: 'msg',
-        deliveryMethod: DeliveryMethod.twilioCall,
-        teacherNote: '   ',
-        subject: null,
-        performanceContext: const {},
-      ).toJson();
-
-      expect(json.containsKey('teacherNote'), isFalse);
-      expect(json.containsKey('subject'), isFalse);
-      expect(json.containsKey('performanceContext'), isFalse);
-    });
-
-    test('includes the optional fields when present', () {
-      final json = CreateOutreachRequestDto.build(
-        classId: 'c1',
-        className: 'Class 6A',
-        studentId: 's1',
-        studentName: 'Asha',
-        parentLanguage: 'Hindi',
-        reason: OutreachReason.positiveFeedback,
-        generatedMessage: 'msg',
-        deliveryMethod: DeliveryMethod.twilioCall,
-        teacherNote: 'Great improvement',
-        subject: 'Mathematics',
-        performanceContext: const {'latestPercentage': 82},
-      ).toJson();
-
-      expect(json['teacherNote'], 'Great improvement');
-      expect(json['subject'], 'Mathematics');
-      expect(json['performanceContext'], {'latestPercentage': 82});
-    });
-  });
+        expect(json['teacherNote'], 'Great improvement');
+        expect(json['subject'], 'Mathematics');
+        expect(json['performanceContext'], {'latestPercentage': 82});
+      });
+    },
+  );
 
   group('PlaceCallRequestDto.toJson — POST /api/attendance/call body', () {
     test('sends ONLY { outreachId, parentLanguage } — NEVER parentPhone '

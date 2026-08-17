@@ -43,15 +43,13 @@ void main() {
         'u1',
         FakeApiClient(),
       );
-      final snapshot =
-          await transport.watchStaffRoomChat(limit: 2).first;
+      final snapshot = await transport.watchStaffRoomChat(limit: 2).first;
 
       expect(snapshot.isReady, isTrue);
       expect(snapshot.data.map((m) => m.text), ['msg 1', 'msg 2']);
     });
 
-    test('a genuinely empty room resolves ready-empty, not an error',
-        () async {
+    test('a genuinely empty room resolves ready-empty, not an error', () async {
       final transport = FirestoreStaffroomTransport(
         FakeFirebaseFirestore(),
         'u1',
@@ -123,28 +121,31 @@ void main() {
 
       final docs = await firestore.collection('community_chat').get();
       expect(docs.docs, hasLength(1));
-      expect(docs.docs.single.data()['audioUrl'],
-          'https://storage.googleapis.com/voice.m4a');
-    });
-
-    test('exactly 500 chars (no audio) is allowed — the cap is inclusive',
-        () async {
-      final firestore = FakeFirebaseFirestore();
-      final transport = FirestoreStaffroomTransport(
-        firestore,
-        'u1',
-        FakeApiClient(),
+      expect(
+        docs.docs.single.data()['audioUrl'],
+        'https://storage.googleapis.com/voice.m4a',
       );
-      final exactly500 = 'x' * 500;
-
-      await transport.sendCommunityChatMessage(text: exactly500);
-
-      final docs = await firestore.collection('community_chat').get();
-      expect(docs.docs, hasLength(1));
     });
 
     test(
-        'a normal-length Indic message (under 500 CHARACTERS) SENDS — the cap '
+      'exactly 500 chars (no audio) is allowed — the cap is inclusive',
+      () async {
+        final firestore = FakeFirebaseFirestore();
+        final transport = FirestoreStaffroomTransport(
+          firestore,
+          'u1',
+          FakeApiClient(),
+        );
+        final exactly500 = 'x' * 500;
+
+        await transport.sendCommunityChatMessage(text: exactly500);
+
+        final docs = await firestore.collection('community_chat').get();
+        expect(docs.docs, hasLength(1));
+      },
+    );
+
+    test('a normal-length Indic message (under 500 CHARACTERS) SENDS — the cap '
         'is characters (matching the web), not UTF-8 bytes', () async {
       final firestore = FakeFirebaseFirestore();
       final transport = FirestoreStaffroomTransport(
@@ -177,8 +178,13 @@ void main() {
 
       await expectLater(
         () => transport.sendCommunityChatMessage(text: tooLongIndic),
-        throwsA(isA<ChatMessageTooLongException>()
-            .having((e) => e.length, 'character length', 501)),
+        throwsA(
+          isA<ChatMessageTooLongException>().having(
+            (e) => e.length,
+            'character length',
+            501,
+          ),
+        ),
       );
       final docs = await firestore.collection('community_chat').get();
       expect(docs.docs, isEmpty);
@@ -186,27 +192,33 @@ void main() {
   });
 
   group('FirestoreStaffroomTransport.triggerPersonaPulse', () {
-    test('a 200 decodes the persona message via the existing ApiClient',
-        () async {
-      final api = FakeApiClient(
-        postResponse: const {
-          'message': 'Good morning, teachers!',
-          'personaName': 'Priya',
-          'personaState': 'WB',
-          'personaSubject': 'Math',
-        },
-      );
-      final transport =
-          FirestoreStaffroomTransport(FakeFirebaseFirestore(), 'u1', api);
+    test(
+      'a 200 decodes the persona message via the existing ApiClient',
+      () async {
+        final api = FakeApiClient(
+          postResponse: const {
+            'message': 'Good morning, teachers!',
+            'personaName': 'Priya',
+            'personaState': 'WB',
+            'personaSubject': 'Math',
+          },
+        );
+        final transport = FirestoreStaffroomTransport(
+          FakeFirebaseFirestore(),
+          'u1',
+          api,
+        );
 
-      final pulse =
-          await transport.triggerPersonaPulse(const PersonaPulseRequest());
+        final pulse = await transport.triggerPersonaPulse(
+          const PersonaPulseRequest(),
+        );
 
-      expect(pulse, isNotNull);
-      expect(pulse!.message, 'Good morning, teachers!');
-      expect(pulse.personaName, 'Priya');
-      expect(api.posts.single.path, '/api/community/persona-pulse');
-    });
+        expect(pulse, isNotNull);
+        expect(pulse!.message, 'Good morning, teachers!');
+        expect(pulse.personaName, 'Priya');
+        expect(api.posts.single.path, '/api/community/persona-pulse');
+      },
+    );
 
     test('a 503 (flag off) returns null — the documented stop signal, not '
         'an error', () async {
@@ -217,32 +229,41 @@ void main() {
           statusCode: 503,
         ),
       );
-      final transport =
-          FirestoreStaffroomTransport(FakeFirebaseFirestore(), 'u1', api);
+      final transport = FirestoreStaffroomTransport(
+        FakeFirebaseFirestore(),
+        'u1',
+        api,
+      );
 
-      final pulse =
-          await transport.triggerPersonaPulse(const PersonaPulseRequest());
+      final pulse = await transport.triggerPersonaPulse(
+        const PersonaPulseRequest(),
+      );
 
       expect(pulse, isNull);
     });
 
-    test('any other error (e.g. 401) propagates, is NOT swallowed to null',
-        () async {
-      final api = FakeApiClient(
-        postError: const ApiException(
-          ApiErrorKind.unauthorized,
-          'Please sign in again.',
-          statusCode: 401,
-        ),
-      );
-      final transport =
-          FirestoreStaffroomTransport(FakeFirebaseFirestore(), 'u1', api);
+    test(
+      'any other error (e.g. 401) propagates, is NOT swallowed to null',
+      () async {
+        final api = FakeApiClient(
+          postError: const ApiException(
+            ApiErrorKind.unauthorized,
+            'Please sign in again.',
+            statusCode: 401,
+          ),
+        );
+        final transport = FirestoreStaffroomTransport(
+          FakeFirebaseFirestore(),
+          'u1',
+          api,
+        );
 
-      await expectLater(
-        () => transport.triggerPersonaPulse(const PersonaPulseRequest()),
-        throwsA(isA<ApiException>()),
-      );
-    });
+        await expectLater(
+          () => transport.triggerPersonaPulse(const PersonaPulseRequest()),
+          throwsA(isA<ApiException>()),
+        );
+      },
+    );
   });
 
   group('FirestoreStaffroomTransport — everything else stays unavailable, '
@@ -295,10 +316,9 @@ void main() {
 
       await expectUnavailable(() => transport.joinGroup('g1'));
       await expectUnavailable(() => transport.leaveGroup('g1'));
-      await expectUnavailable(() => transport.sendGroupChatMessage(
-            'g1',
-            text: 'hi',
-          ));
+      await expectUnavailable(
+        () => transport.sendGroupChatMessage('g1', text: 'hi'),
+      );
       await expectUnavailable(() => transport.sendConnectionRequest('u2'));
       await expectUnavailable(() => transport.acceptConnectionRequest('r1'));
       await expectUnavailable(() => transport.declineConnectionRequest('r1'));

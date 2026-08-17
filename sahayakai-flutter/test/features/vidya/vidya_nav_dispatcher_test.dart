@@ -16,48 +16,72 @@ VidyaDirective _dir(VidyaFlow flow, [VidyaDirectiveParams? params]) =>
 void main() {
   group('flow → route map', () {
     test('every built flow maps to its tool route', () {
-      expect(VidyaNavDispatcher.routeForFlow(VidyaFlow.lessonPlan),
-          Routes.lessonPlan);
-      expect(VidyaNavDispatcher.routeForFlow(VidyaFlow.quizGenerator),
-          Routes.quizGenerator);
-      expect(VidyaNavDispatcher.routeForFlow(VidyaFlow.instantAnswer),
-          Routes.instantAnswer);
-      expect(VidyaNavDispatcher.routeForFlow(VidyaFlow.worksheetWizard),
-          Routes.worksheetWizard);
-      expect(VidyaNavDispatcher.routeForFlow(VidyaFlow.rubricGenerator),
-          Routes.rubricGenerator);
-      expect(VidyaNavDispatcher.routeForFlow(VidyaFlow.examPaper),
-          Routes.examPaper);
-      expect(VidyaNavDispatcher.routeForFlow(VidyaFlow.teacherTraining),
-          Routes.teacherTraining);
+      expect(
+        VidyaNavDispatcher.routeForFlow(VidyaFlow.lessonPlan),
+        Routes.lessonPlan,
+      );
+      expect(
+        VidyaNavDispatcher.routeForFlow(VidyaFlow.quizGenerator),
+        Routes.quizGenerator,
+      );
+      expect(
+        VidyaNavDispatcher.routeForFlow(VidyaFlow.instantAnswer),
+        Routes.instantAnswer,
+      );
+      expect(
+        VidyaNavDispatcher.routeForFlow(VidyaFlow.worksheetWizard),
+        Routes.worksheetWizard,
+      );
+      expect(
+        VidyaNavDispatcher.routeForFlow(VidyaFlow.rubricGenerator),
+        Routes.rubricGenerator,
+      );
+      expect(
+        VidyaNavDispatcher.routeForFlow(VidyaFlow.examPaper),
+        Routes.examPaper,
+      );
+      expect(
+        VidyaNavDispatcher.routeForFlow(VidyaFlow.teacherTraining),
+        Routes.teacherTraining,
+      );
     });
 
-    test(
-        'U9 regression: Visual Aid / Virtual Field Trip / Video Storyteller '
+    test('U9 regression: Visual Aid / Virtual Field Trip / Video Storyteller '
         'no longer map to null — all three are real, shipped tools the '
         'dispatcher used to silently drop', () {
-      expect(VidyaNavDispatcher.routeForFlow(VidyaFlow.visualAidDesigner),
-          Routes.visualAid);
-      expect(VidyaNavDispatcher.routeForFlow(VidyaFlow.virtualFieldTrip),
-          Routes.virtualFieldTrip);
-      expect(VidyaNavDispatcher.routeForFlow(VidyaFlow.videoStoryteller),
-          Routes.videoStoryteller);
+      expect(
+        VidyaNavDispatcher.routeForFlow(VidyaFlow.visualAidDesigner),
+        Routes.visualAid,
+      );
+      expect(
+        VidyaNavDispatcher.routeForFlow(VidyaFlow.virtualFieldTrip),
+        Routes.virtualFieldTrip,
+      );
+      expect(
+        VidyaNavDispatcher.routeForFlow(VidyaFlow.videoStoryteller),
+        Routes.videoStoryteller,
+      );
     });
   });
 
   group('prefill', () {
-    test('carries topic/grade/subject and normalises the language to ISO-2', () {
-      final prefill = VidyaNavDispatcher.prefillFor(const VidyaDirectiveParams(
-        topic: 'Fractions',
-        gradeLevel: 'Class 10',
-        subject: 'Science',
-        language: 'Hindi', // full name → normalised
-      ));
-      expect(prefill.topic, 'Fractions');
-      expect(prefill.gradeLevel, 'Class 10');
-      expect(prefill.subject, 'Science');
-      expect(prefill.language, 'hi');
-    });
+    test(
+      'carries topic/grade/subject and normalises the language to ISO-2',
+      () {
+        final prefill = VidyaNavDispatcher.prefillFor(
+          const VidyaDirectiveParams(
+            topic: 'Fractions',
+            gradeLevel: 'Class 10',
+            subject: 'Science',
+            language: 'Hindi', // full name → normalised
+          ),
+        );
+        expect(prefill.topic, 'Fractions');
+        expect(prefill.gradeLevel, 'Class 10');
+        expect(prefill.subject, 'Science');
+        expect(prefill.language, 'hi');
+      },
+    );
 
     test('drops an unknown language rather than poisoning the field', () {
       final prefill = VidyaNavDispatcher.prefillFor(
@@ -67,14 +91,17 @@ void main() {
     });
 
     test('an empty directive yields an empty prefill', () {
-      expect(VidyaNavDispatcher.prefillFor(const VidyaDirectiveParams()).isEmpty,
-          isTrue);
+      expect(
+        VidyaNavDispatcher.prefillFor(const VidyaDirectiveParams()).isEmpty,
+        isTrue,
+      );
     });
   });
 
   group('dispatch', () {
-    testWidgets('routes a built flow to its tool with the prefill in extra',
-        (tester) async {
+    testWidgets('routes a built flow to its tool with the prefill in extra', (
+      tester,
+    ) async {
       ToolPrefill? captured;
       var lessonBuilt = false;
       final router = GoRouter(
@@ -86,7 +113,9 @@ void main() {
               directive: _dir(
                 VidyaFlow.lessonPlan,
                 const VidyaDirectiveParams(
-                    topic: 'Fractions', gradeLevel: 'Class 10'),
+                  topic: 'Fractions',
+                  gradeLevel: 'Class 10',
+                ),
               ),
             ),
           ),
@@ -114,8 +143,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets(
-        'U9 regression: the three previously-dropped flows now really '
+    testWidgets('U9 regression: the three previously-dropped flows now really '
         'navigate, each to its own real route', (tester) async {
       for (final entry in {
         VidyaFlow.visualAidDesigner: Routes.visualAid,
@@ -152,8 +180,11 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(returned, isTrue, reason: '${entry.key} must dispatch');
-        expect(built, isTrue,
-            reason: '${entry.key} must reach ${entry.value}, not a 404');
+        expect(
+          built,
+          isTrue,
+          reason: '${entry.key} must reach ${entry.value}, not a 404',
+        );
         expect(tester.takeException(), isNull);
       }
     });

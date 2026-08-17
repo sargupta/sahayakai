@@ -86,8 +86,9 @@ void main() {
     expect(find.text('Try again'), findsOneWidget);
   });
 
-  testWidgets('a non-ApiException falls back to the generic error',
-      (tester) async {
+  testWidgets('a non-ApiException falls back to the generic error', (
+    tester,
+  ) async {
     await pump(tester, StateError('boom'));
     expect(find.byType(ErrorView), findsOneWidget);
     expect(find.textContaining('our side'), findsNothing);

@@ -43,25 +43,26 @@ Widget hostResult(Widget child, {Brightness brightness = Brightness.light}) {
 /// The three advice points, each carrying Indic probe strings; the first also
 /// carries an unbreakable compound word so wrapping is proven inside a card.
 List<TeacherAdvicePoint> _points() => <TeacherAdvicePoint>[
-      TeacherAdvicePoint(
-        strategy: 'Use think-pair-share to raise participation. $kTa $kLongWord',
-        pedagogy: 'Social Constructivism',
-        explanation:
-            'Learners build understanding through dialogue. $kMl Like a '
-            'village discussing before a decision.',
-      ),
-      TeacherAdvicePoint(
-        strategy: 'Break the lesson into short, checked steps. $kBn',
-        pedagogy: 'Scaffolding',
-        explanation: 'Each step supports the next until the support is removed. '
-            '$kTa',
-      ),
-      TeacherAdvicePoint(
-        strategy: 'Revisit key ideas across the week. $kMl',
-        pedagogy: 'Spaced Repetition',
-        explanation: 'Recall strengthens with spacing. $kBn',
-      ),
-    ];
+  const TeacherAdvicePoint(
+    strategy: 'Use think-pair-share to raise participation. $kTa $kLongWord',
+    pedagogy: 'Social Constructivism',
+    explanation:
+        'Learners build understanding through dialogue. $kMl Like a '
+        'village discussing before a decision.',
+  ),
+  const TeacherAdvicePoint(
+    strategy: 'Break the lesson into short, checked steps. $kBn',
+    pedagogy: 'Scaffolding',
+    explanation:
+        'Each step supports the next until the support is removed. '
+        '$kTa',
+  ),
+  const TeacherAdvicePoint(
+    strategy: 'Revisit key ideas across the week. $kMl',
+    pedagogy: 'Spaced Repetition',
+    explanation: 'Recall strengthens with spacing. $kBn',
+  ),
+];
 
 /// A fully-populated advice result. [empty] returns one the model gave no usable
 /// content for; [partial] returns one with an empty advice list, no conclusion,
@@ -69,7 +70,7 @@ List<TeacherAdvicePoint> _points() => <TeacherAdvicePoint>[
 TeacherAdvice buildAdvice({bool empty = false, bool partial = false}) {
   if (empty) return const TeacherAdvice(introduction: '', conclusion: '');
   if (partial) {
-    return TeacherAdvice(
+    return const TeacherAdvice(
       introduction: 'A fair question about classroom practice. $kBn',
       conclusion: '',
       gradeLevel: 'Class 6',

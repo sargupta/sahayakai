@@ -14,7 +14,8 @@ bool _isHorizontal(ScrollableState s) =>
     s.axisDirection == AxisDirection.right;
 
 bool _isVertical(ScrollableState s) =>
-    s.axisDirection == AxisDirection.up || s.axisDirection == AxisDirection.down;
+    s.axisDirection == AxisDirection.up ||
+    s.axisDirection == AxisDirection.down;
 
 List<ScrollableState> _scrollables(WidgetTester tester) =>
     tester.stateList<ScrollableState>(find.byType(Scrollable)).toList();
@@ -22,7 +23,9 @@ List<ScrollableState> _scrollables(WidgetTester tester) =>
 void main() {
   group('grid rendering', () {
     testWidgets('renders the header, criteria and level cells', (tester) async {
-      await tester.pumpWidget(hostResult(RubricResultView(rubric: buildRubric())));
+      await tester.pumpWidget(
+        hostResult(RubricResultView(rubric: buildRubric())),
+      );
       await tester.pumpAndSettle();
 
       // Header: the criterion-column key + the level headers with points.
@@ -33,14 +36,17 @@ void main() {
 
       // Criterion rows + a level description.
       expect(find.textContaining('Organisation'), findsOneWidget);
-      expect(find.textContaining('Meets the standard expectations'),
-          findsWidgets);
+      expect(
+        find.textContaining('Meets the standard expectations'),
+        findsWidgets,
+      );
 
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('an empty rubric shows the dignified empty state',
-        (tester) async {
+    testWidgets('an empty rubric shows the dignified empty state', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         hostResult(RubricResultView(rubric: buildRubric(empty: true))),
       );
@@ -51,36 +57,41 @@ void main() {
       expect(_scrollables(tester).where(_isHorizontal), isEmpty);
     });
 
-    testWidgets('a levels-less response falls back to a criteria list, no grid',
-        (tester) async {
+    testWidgets(
+      'a levels-less response falls back to a criteria list, no grid',
+      (tester) async {
+        tester.view.physicalSize = kNarrowPhone;
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
+
+        await tester.pumpWidget(
+          hostResult(RubricResultView(rubric: buildRubric(partial: true))),
+        );
+        await tester.pumpAndSettle();
+
+        // The criteria still render as full-width prose...
+        expect(find.textContaining('Research and Content'), findsOneWidget);
+        expect(find.textContaining('Presentation'), findsOneWidget);
+        // ...but with no level columns there is no horizontal scroller and no
+        // Table.
+        expect(find.byType(Table), findsNothing);
+        expect(_scrollables(tester).where(_isHorizontal), isEmpty);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  });
+
+  group('scroll contract', () {
+    testWidgets('the grid scrolls horizontally inside its own box', (
+      tester,
+    ) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
 
       await tester.pumpWidget(
-        hostResult(RubricResultView(rubric: buildRubric(partial: true))),
+        hostResult(RubricResultView(rubric: buildRubric())),
       );
-      await tester.pumpAndSettle();
-
-      // The criteria still render as full-width prose...
-      expect(find.textContaining('Research and Content'), findsOneWidget);
-      expect(find.textContaining('Presentation'), findsOneWidget);
-      // ...but with no level columns there is no horizontal scroller and no
-      // Table.
-      expect(find.byType(Table), findsNothing);
-      expect(_scrollables(tester).where(_isHorizontal), isEmpty);
-      expect(tester.takeException(), isNull);
-    });
-  });
-
-  group('scroll contract', () {
-    testWidgets('the grid scrolls horizontally inside its own box',
-        (tester) async {
-      tester.view.physicalSize = kNarrowPhone;
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
-
-      await tester.pumpWidget(hostResult(RubricResultView(rubric: buildRubric())));
       await tester.pumpAndSettle();
 
       // Exactly one horizontal scroller: the grid, and only the grid.
@@ -103,13 +114,16 @@ void main() {
       );
     });
 
-    testWidgets('the PAGE never scrolls sideways — only the grid does',
-        (tester) async {
+    testWidgets('the PAGE never scrolls sideways — only the grid does', (
+      tester,
+    ) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(hostResult(RubricResultView(rubric: buildRubric())));
+      await tester.pumpWidget(
+        hostResult(RubricResultView(rubric: buildRubric())),
+      );
       await tester.pumpAndSettle();
 
       final all = _scrollables(tester);

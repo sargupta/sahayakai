@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../features/dashboard/dashboard_fixtures.dart';
 import '../features/onboarding/onboarding_fixtures.dart';
+import '../support/app_harness.dart';
 
 /// Pixel baselines for the states every screen shares.
 ///
@@ -37,6 +38,7 @@ void main() {
     testWidgets('library empty — light', (tester) async {
       await pumpDashboard(
         tester,
+        extraOverrides: [fixedClock()],
         client: libraryClient(response: contentListResponse(items: [])),
         surface: kNarrowPhone,
       );
@@ -49,6 +51,7 @@ void main() {
     testWidgets('library empty — dark', (tester) async {
       await pumpDashboard(
         tester,
+        extraOverrides: [fixedClock()],
         client: libraryClient(response: contentListResponse(items: [])),
         surface: kNarrowPhone,
         brightness: Brightness.dark,
@@ -62,6 +65,7 @@ void main() {
     testWidgets('library populated — light', (tester) async {
       await pumpDashboard(
         tester,
+        extraOverrides: [fixedClock()],
         client: libraryClient(),
         surface: kNarrowPhone,
       );
@@ -74,6 +78,7 @@ void main() {
     testWidgets('library populated — dark', (tester) async {
       await pumpDashboard(
         tester,
+        extraOverrides: [fixedClock()],
         client: libraryClient(),
         surface: kNarrowPhone,
         brightness: Brightness.dark,
@@ -89,6 +94,7 @@ void main() {
       // first thing to clip when a teacher turns large text on.
       await pumpDashboard(
         tester,
+        extraOverrides: [fixedClock()],
         client: libraryClient(),
         surface: kNarrowPhone,
         textScale: 1.3,

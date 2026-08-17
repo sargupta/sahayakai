@@ -22,12 +22,9 @@ void main() {
     return container;
   }
 
-  final request = AssessmentScanRequest(
+  const request = AssessmentScanRequest(
     assessmentId: 'abcdef00-1111-4222-8333-444444444444',
-    pageDataUris: const [
-      'data:image/jpeg;base64,AAAA',
-      'data:image/png;base64,BBBB',
-    ],
+    pageDataUris: ['data:image/jpeg;base64,AAAA', 'data:image/png;base64,BBBB'],
     subject: 'Mathematics',
     gradeLevel: 'Class 5',
     language: 'English',
@@ -69,53 +66,63 @@ void main() {
 
       await expectLater(
         container.read(assessmentScannerRepositoryProvider).grade(request),
-        throwsA(isA<ApiException>()
-            .having((e) => e.kind, 'kind', ApiErrorKind.unauthorized)
-            .having((e) => e.statusCode, 'statusCode', 401)),
-      );
-    });
-
-    test('a 403 plan-upgrade surfaces as the typed forbidden exception',
-        () async {
-      final client = FakeApiClient(
-        postError: const ApiException(
-          ApiErrorKind.forbidden,
-          'PLAN_UPGRADE_REQUIRED',
-          statusCode: 403,
-          errorCode: 'PLAN_UPGRADE_REQUIRED',
+        throwsA(
+          isA<ApiException>()
+              .having((e) => e.kind, 'kind', ApiErrorKind.unauthorized)
+              .having((e) => e.statusCode, 'statusCode', 401),
         ),
       );
-      final container = containerWith(client);
-
-      await expectLater(
-        container.read(assessmentScannerRepositoryProvider).grade(request),
-        throwsA(isA<ApiException>()
-            .having((e) => e.kind, 'kind', ApiErrorKind.forbidden)
-            .having((e) => e.statusCode, 'statusCode', 403)),
-      );
     });
 
-    test('a 429 daily/monthly limit surfaces as the typed rate-limit exception',
-        () async {
-      // This is an image tool, so the daily image budget matters — the day cap
-      // arrives as a 429 the error view maps to the "come back tomorrow" state.
-      final client = FakeApiClient(
-        postError: const ApiException(
-          ApiErrorKind.rateLimited,
-          'DAILY_LIMIT_REACHED',
-          statusCode: 429,
-          errorCode: 'DAILY_LIMIT_REACHED',
-        ),
-      );
-      final container = containerWith(client);
+    test(
+      'a 403 plan-upgrade surfaces as the typed forbidden exception',
+      () async {
+        final client = FakeApiClient(
+          postError: const ApiException(
+            ApiErrorKind.forbidden,
+            'PLAN_UPGRADE_REQUIRED',
+            statusCode: 403,
+            errorCode: 'PLAN_UPGRADE_REQUIRED',
+          ),
+        );
+        final container = containerWith(client);
 
-      await expectLater(
-        container.read(assessmentScannerRepositoryProvider).grade(request),
-        throwsA(isA<ApiException>()
-            .having((e) => e.kind, 'kind', ApiErrorKind.rateLimited)
-            .having((e) => e.statusCode, 'statusCode', 429)),
-      );
-    });
+        await expectLater(
+          container.read(assessmentScannerRepositoryProvider).grade(request),
+          throwsA(
+            isA<ApiException>()
+                .having((e) => e.kind, 'kind', ApiErrorKind.forbidden)
+                .having((e) => e.statusCode, 'statusCode', 403),
+          ),
+        );
+      },
+    );
+
+    test(
+      'a 429 daily/monthly limit surfaces as the typed rate-limit exception',
+      () async {
+        // This is an image tool, so the daily image budget matters — the day cap
+        // arrives as a 429 the error view maps to the "come back tomorrow" state.
+        final client = FakeApiClient(
+          postError: const ApiException(
+            ApiErrorKind.rateLimited,
+            'DAILY_LIMIT_REACHED',
+            statusCode: 429,
+            errorCode: 'DAILY_LIMIT_REACHED',
+          ),
+        );
+        final container = containerWith(client);
+
+        await expectLater(
+          container.read(assessmentScannerRepositoryProvider).grade(request),
+          throwsA(
+            isA<ApiException>()
+                .having((e) => e.kind, 'kind', ApiErrorKind.rateLimited)
+                .having((e) => e.statusCode, 'statusCode', 429),
+          ),
+        );
+      },
+    );
 
     test('a 422 unreadable/empty-extraction surfaces as the typed 422', () async {
       // PAGE_UNREADABLE / EMPTY_EXTRACTION / SCAN_OUTPUT_MALFORMED all come back
@@ -132,8 +139,9 @@ void main() {
 
       await expectLater(
         container.read(assessmentScannerRepositoryProvider).grade(request),
-        throwsA(isA<ApiException>()
-            .having((e) => e.statusCode, 'statusCode', 422)),
+        throwsA(
+          isA<ApiException>().having((e) => e.statusCode, 'statusCode', 422),
+        ),
       );
     });
 
@@ -149,8 +157,13 @@ void main() {
 
       await expectLater(
         container.read(assessmentScannerRepositoryProvider).grade(request),
-        throwsA(isA<ApiException>()
-            .having((e) => e.kind, 'kind', ApiErrorKind.server)),
+        throwsA(
+          isA<ApiException>().having(
+            (e) => e.kind,
+            'kind',
+            ApiErrorKind.server,
+          ),
+        ),
       );
     });
   });
@@ -180,16 +193,16 @@ void main() {
           .read(assessmentScannerControllerProvider.notifier)
           .grade(request);
 
-      expect(container.read(assessmentScannerControllerProvider).hasError, isTrue);
+      expect(
+        container.read(assessmentScannerControllerProvider).hasError,
+        isTrue,
+      );
     });
 
     test('clear returns to the idle state', () {
       final container = containerWith(FakeApiClient());
       container.read(assessmentScannerControllerProvider.notifier).clear();
-      expect(
-        container.read(assessmentScannerControllerProvider).value,
-        isNull,
-      );
+      expect(container.read(assessmentScannerControllerProvider).value, isNull);
     });
   });
 }

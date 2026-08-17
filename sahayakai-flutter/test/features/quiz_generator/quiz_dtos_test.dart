@@ -9,35 +9,37 @@ import 'package:sahayakai/features/quiz_generator/domain/quiz.dart';
 /// the endpoint's field names, casing or enum members, these fail first.
 void main() {
   group('QuizRequestDto', () {
-    test('serializes every field with the exact names SCREEN_INVENTORY pins',
-        () {
-      final json = QuizRequestDto.fromDomain(
-        QuizRequest(
-          topic: '  Fractions  ',
-          questionTypes: const [
-            QuestionType.multipleChoice,
-            QuestionType.trueFalse,
-          ],
-          numQuestions: 7,
-          gradeLevel: 'Class 6',
-          subject: 'Mathematics',
-          language: AppLocale.kn.aiName,
-          targetDifficulty: QuizDifficulty.medium,
-          bloomsTaxonomyLevels: const ['Understand', 'Apply'],
-        ),
-      ).toJson();
+    test(
+      'serializes every field with the exact names SCREEN_INVENTORY pins',
+      () {
+        final json = QuizRequestDto.fromDomain(
+          QuizRequest(
+            topic: '  Fractions  ',
+            questionTypes: const [
+              QuestionType.multipleChoice,
+              QuestionType.trueFalse,
+            ],
+            numQuestions: 7,
+            gradeLevel: 'Class 6',
+            subject: 'Mathematics',
+            language: AppLocale.kn.aiName,
+            targetDifficulty: QuizDifficulty.medium,
+            bloomsTaxonomyLevels: const ['Understand', 'Apply'],
+          ),
+        ).toJson();
 
-      expect(json, {
-        'topic': 'Fractions', // trimmed
-        'questionTypes': ['multiple_choice', 'true_false'],
-        'numQuestions': 7,
-        'gradeLevel': 'Class 6',
-        'subject': 'Mathematics',
-        'language': 'Kannada', // AppLocale.aiName, not the code
-        'targetDifficulty': 'medium',
-        'bloomsTaxonomyLevels': ['Understand', 'Apply'],
-      });
-    });
+        expect(json, {
+          'topic': 'Fractions', // trimmed
+          'questionTypes': ['multiple_choice', 'true_false'],
+          'numQuestions': 7,
+          'gradeLevel': 'Class 6',
+          'subject': 'Mathematics',
+          'language': 'Kannada', // AppLocale.aiName, not the code
+          'targetDifficulty': 'medium',
+          'bloomsTaxonomyLevels': ['Understand', 'Apply'],
+        });
+      },
+    );
 
     test('never sends server-injected fields', () {
       // Middleware injects these from the verified Firebase token; a client
@@ -101,14 +103,17 @@ void main() {
     });
 
     test('every QuestionType and QuizDifficulty maps to its wire member', () {
-      expect(
-        QuestionType.values.map((t) => t.wire),
-        ['multiple_choice', 'fill_in_the_blanks', 'short_answer', 'true_false'],
-      );
-      expect(
-        QuizDifficulty.values.map((d) => d.wire),
-        ['easy', 'medium', 'hard'],
-      );
+      expect(QuestionType.values.map((t) => t.wire), [
+        'multiple_choice',
+        'fill_in_the_blanks',
+        'short_answer',
+        'true_false',
+      ]);
+      expect(QuizDifficulty.values.map((d) => d.wire), [
+        'easy',
+        'medium',
+        'hard',
+      ]);
     });
   });
 
@@ -125,12 +130,15 @@ void main() {
               'correctAnswer': 'a',
               'explanation': 'because',
               'difficultyLevel': 'easy',
-            }
+            },
           ],
           'teacherInstructions': 'Board it.',
         },
         'medium': null, // the model returned nothing
-        'hard': {'title': 'Hard', 'questions': <dynamic>[]}, // present but empty
+        'hard': {
+          'title': 'Hard',
+          'questions': <dynamic>[],
+        }, // present but empty
         'id': 'abc',
         'topic': 'Fractions',
         'isSaved': false,
@@ -151,11 +159,11 @@ void main() {
 
     test('keeps all three variants in easy -> medium -> hard order', () {
       Map<String, dynamic> variant(String title) => {
-            'title': title,
-            'questions': [
-              {'questionText': 'Q', 'correctAnswer': 'A'}
-            ],
-          };
+        'title': title,
+        'questions': [
+          {'questionText': 'Q', 'correctAnswer': 'A'},
+        ],
+      };
       final quiz = QuizResponseDto.fromJson(<String, dynamic>{
         // Deliberately out of order in the payload.
         'hard': variant('Hard'),
@@ -171,7 +179,9 @@ void main() {
     });
 
     test('tolerates an empty payload', () {
-      final quiz = QuizResponseDto.fromJson(const <String, dynamic>{}).toDomain();
+      final quiz = QuizResponseDto.fromJson(
+        const <String, dynamic>{},
+      ).toDomain();
       expect(quiz.variants, isEmpty);
       expect(quiz.isSaved, isFalse);
       expect(quiz.validationWarning, isNull);
@@ -206,21 +216,25 @@ void main() {
     });
 
     test('surfaces a validation warning only when it carries a message', () {
-      Quiz decode(Map<String, dynamic>? warning) =>
-          QuizResponseDto.fromJson(<String, dynamic>{
-            'validationWarning': warning,
-          }).toDomain();
+      Quiz decode(Map<String, dynamic>? warning) => QuizResponseDto.fromJson(
+        <String, dynamic>{'validationWarning': warning},
+      ).toDomain();
 
       expect(decode(null).validationWarning, isNull);
       expect(
-        decode({'invalid': false, 'lenient': true, 'message': '  '})
-            .validationWarning,
+        decode({
+          'invalid': false,
+          'lenient': true,
+          'message': '  ',
+        }).validationWarning,
         isNull,
       );
       expect(
-        decode({'invalid': false, 'lenient': true, 'message': 'Heads up.'})
-            .validationWarning
-            ?.message,
+        decode({
+          'invalid': false,
+          'lenient': true,
+          'message': 'Heads up.',
+        }).validationWarning?.message,
         'Heads up.',
       );
     });

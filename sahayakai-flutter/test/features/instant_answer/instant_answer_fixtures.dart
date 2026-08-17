@@ -60,8 +60,9 @@ Widget hostResult(
           child: reduceMotion
               ? Builder(
                   builder: (context) => MediaQuery(
-                    data: MediaQuery.of(context)
-                        .copyWith(disableAnimations: true),
+                    data: MediaQuery.of(
+                      context,
+                    ).copyWith(disableAnimations: true),
                     child: child,
                   ),
                 )
@@ -74,7 +75,8 @@ Widget hostResult(
 
 /// A markdown answer exercising every block the renderer supports, with Indic
 /// prose and an unbreakable compound word in the wrapping slots.
-const String kRichAnswerMarkdown = '''
+const String kRichAnswerMarkdown =
+    '''
 # Photosynthesis
 
 Plants make their own food using **sunlight**, water and air. $kBn
@@ -104,8 +106,9 @@ InstantAnswer buildAnswer({bool withVideo = true, bool empty = false}) {
   if (empty) return const InstantAnswer(answer: '');
   return InstantAnswer(
     answer: kRichAnswerMarkdown,
-    videoSuggestionUrl:
-        withVideo ? Uri.parse('https://www.youtube.com/watch?v=abc123') : null,
+    videoSuggestionUrl: withVideo
+        ? Uri.parse('https://www.youtube.com/watch?v=abc123')
+        : null,
     gradeLevel: 'Class 5',
     subject: 'Science',
   );

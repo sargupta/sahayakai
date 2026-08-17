@@ -11,21 +11,21 @@ class ExamPaperSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SkeletonShimmer(
+    return const SkeletonShimmer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SkeletonBar(height: SkeletonBar.title, widthFactor: 0.7),
-          const SizedBox(height: AppSpacing.space3),
-          const SkeletonBar(widthFactor: 0.9),
-          const SizedBox(height: AppSpacing.space2),
-          const SkeletonBar(widthFactor: 0.6),
-          const SizedBox(height: AppSpacing.space6),
+          SkeletonBar(height: SkeletonBar.title, widthFactor: 0.7),
+          SizedBox(height: AppSpacing.space3),
+          SkeletonBar(widthFactor: 0.9),
+          SizedBox(height: AppSpacing.space2),
+          SkeletonBar(widthFactor: 0.6),
+          SizedBox(height: AppSpacing.space6),
           // Two sections' worth of question cards.
-          const SkeletonBlock(),
-          const SizedBox(height: AppSpacing.space4),
-          const SkeletonBlock(),
+          SkeletonBlock(),
+          SizedBox(height: AppSpacing.space4),
+          SkeletonBlock(),
         ],
       ),
     );

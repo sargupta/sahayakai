@@ -41,66 +41,77 @@ void main() {
   );
 
   group('WorksheetRepository.save', () {
-    test('POSTs the worksheet shape to /api/content/save and returns the id',
-        () async {
-      final client = FakeApiClient(
-        postResponse: <String, dynamic>{'success': true, 'id': 'ws-1'},
-      );
-      final container = containerWith(client);
+    test(
+      'POSTs the worksheet shape to /api/content/save and returns the id',
+      () async {
+        final client = FakeApiClient(
+          postResponse: <String, dynamic>{'success': true, 'id': 'ws-1'},
+        );
+        final container = containerWith(client);
 
-      final id = await container.read(worksheetRepositoryProvider).save(
-            worksheet: worksheet,
-            prompt: 'Addition of two-digit numbers with regrouping',
-            gradeLevel: 'Class 3',
-            language: 'Bengali',
-          );
+        final id = await container
+            .read(worksheetRepositoryProvider)
+            .save(
+              worksheet: worksheet,
+              prompt: 'Addition of two-digit numbers with regrouping',
+              gradeLevel: 'Class 3',
+              language: 'Bengali',
+            );
 
-      expect(id, 'ws-1');
-      expect(client.posts.single.path, '/api/content/save');
+        expect(id, 'ws-1');
+        expect(client.posts.single.path, '/api/content/save');
 
-      final body = client.posts.single.data! as Map<String, dynamic>;
-      expect(body['type'], 'worksheet');
-      // Title is derived from the prompt and clipped to 30 chars; topic is the
-      // full prompt — matching the backend flow's dbAdapter.saveContent call.
-      final title = body['title'] as String;
-      expect(title, startsWith('Worksheet: '));
-      expect(title.length - 'Worksheet: '.length, lessThanOrEqualTo(30));
-      expect(body['topic'], 'Addition of two-digit numbers with regrouping');
-      // The model's own grade/subject win over the request.
-      expect(body['gradeLevel'], 'Class 2');
-      expect(body['subject'], 'Mathematics');
-      expect(body['language'], 'Bengali');
-      expect(body['isPublic'], false);
-      expect(body['isDraft'], false);
-      // The saved data is the verbatim model output the Library reads back.
-      expect(body['data'], worksheet.raw);
-      // A valid v4 UUID id is minted client-side (content/save requires one).
-      expect(
-        body['id'],
-        matches(RegExp(
-          r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
-        )),
-      );
-    });
+        final body = client.posts.single.data! as Map<String, dynamic>;
+        expect(body['type'], 'worksheet');
+        // Title is derived from the prompt and clipped to 30 chars; topic is the
+        // full prompt — matching the backend flow's dbAdapter.saveContent call.
+        final title = body['title'] as String;
+        expect(title, startsWith('Worksheet: '));
+        expect(title.length - 'Worksheet: '.length, lessThanOrEqualTo(30));
+        expect(body['topic'], 'Addition of two-digit numbers with regrouping');
+        // The model's own grade/subject win over the request.
+        expect(body['gradeLevel'], 'Class 2');
+        expect(body['subject'], 'Mathematics');
+        expect(body['language'], 'Bengali');
+        expect(body['isPublic'], false);
+        expect(body['isDraft'], false);
+        // The saved data is the verbatim model output the Library reads back.
+        expect(body['data'], worksheet.raw);
+        // A valid v4 UUID id is minted client-side (content/save requires one).
+        expect(
+          body['id'],
+          matches(
+            RegExp(
+              r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+            ),
+          ),
+        );
+      },
+    );
 
-    test('falls back to request grade and flow defaults when output omits them',
-        () async {
-      final client = FakeApiClient(
-        postResponse: <String, dynamic>{'success': true, 'id': 'ws-2'},
-      );
-      final container = containerWith(client);
-      const bare = Worksheet(title: 'x', raw: <String, dynamic>{'title': 'x'});
+    test(
+      'falls back to request grade and flow defaults when output omits them',
+      () async {
+        final client = FakeApiClient(
+          postResponse: <String, dynamic>{'success': true, 'id': 'ws-2'},
+        );
+        final container = containerWith(client);
+        const bare = Worksheet(
+          title: 'x',
+          raw: <String, dynamic>{'title': 'x'},
+        );
 
-      await container
-          .read(worksheetRepositoryProvider)
-          .save(worksheet: bare, prompt: 'short', gradeLevel: 'Class 4');
+        await container
+            .read(worksheetRepositoryProvider)
+            .save(worksheet: bare, prompt: 'short', gradeLevel: 'Class 4');
 
-      final body = client.posts.single.data! as Map<String, dynamic>;
-      expect(body['gradeLevel'], 'Class 4'); // from the request
-      expect(body['subject'], 'General'); // flow default
-      expect(body['language'], 'English'); // default when none passed
-      expect(body['title'], 'Worksheet: short');
-    });
+        final body = client.posts.single.data! as Map<String, dynamic>;
+        expect(body['gradeLevel'], 'Class 4'); // from the request
+        expect(body['subject'], 'General'); // flow default
+        expect(body['language'], 'English'); // default when none passed
+        expect(body['title'], 'Worksheet: short');
+      },
+    );
 
     test('a failed save surfaces as the typed exception', () async {
       final client = FakeApiClient(

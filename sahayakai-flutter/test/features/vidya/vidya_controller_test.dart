@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/core/network/api_exception.dart';
 import 'package:sahayakai/core/network/api_providers.dart';
@@ -6,7 +7,6 @@ import 'package:sahayakai/features/vidya/presentation/vidya_controller.dart';
 import 'package:sahayakai/shared/voice/audio_player_service.dart';
 import 'package:sahayakai/shared/voice/audio_recorder_service.dart';
 import 'package:sahayakai/shared/voice/mic_permission_service.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/fake_api_client.dart';
@@ -31,20 +31,20 @@ const _offline = ApiException(ApiErrorKind.network, 'No internet connection.');
 
 /// A single-action assistant reply (the auto-navigate case).
 Map<String, dynamic> _singleActionReply() => {
-      'response': 'Making your Class 10 Maths lesson plan.',
-      'plannedActions': [
-        {
-          'type': 'NAVIGATE_AND_FILL',
-          'flow': 'lesson-plan',
-          'params': {
-            'topic': 'Fractions',
-            'gradeLevel': 'Class 10',
-            'subject': 'Maths',
-            'language': 'hi',
-          },
-        },
-      ],
-    };
+  'response': 'Making your Class 10 Maths lesson plan.',
+  'plannedActions': [
+    {
+      'type': 'NAVIGATE_AND_FILL',
+      'flow': 'lesson-plan',
+      'params': {
+        'topic': 'Fractions',
+        'gradeLevel': 'Class 10',
+        'subject': 'Maths',
+        'language': 'hi',
+      },
+    },
+  ],
+};
 
 /// A fake wired for a full happy trip: STT → VIDYA → TTS → persist.
 FakeApiClient _happyClient({Map<String, dynamic>? assistant, Duration? delay}) {
@@ -69,12 +69,15 @@ ProviderContainer _container({
   final container = ProviderContainer(
     overrides: [
       apiClientProvider.overrideWithValue(client),
-      audioRecorderServiceProvider
-          .overrideWithValue(recorder ?? FakeAudioRecorderService()),
-      audioPlayerServiceProvider
-          .overrideWithValue(player ?? FakeAudioPlayerService()),
-      micPermissionServiceProvider
-          .overrideWithValue(permission ?? FakeMicPermissionService()),
+      audioRecorderServiceProvider.overrideWithValue(
+        recorder ?? FakeAudioRecorderService(),
+      ),
+      audioPlayerServiceProvider.overrideWithValue(
+        player ?? FakeAudioPlayerService(),
+      ),
+      micPermissionServiceProvider.overrideWithValue(
+        permission ?? FakeMicPermissionService(),
+      ),
     ],
   );
   addTearDown(container.dispose);
@@ -116,8 +119,10 @@ void main() {
       final vidya = container.read(vidyaControllerProvider.notifier);
 
       await vidya.onMicTap(); // idle → listening
-      expect(container.read(vidyaControllerProvider).status,
-          VidyaStatus.listening);
+      expect(
+        container.read(vidyaControllerProvider).status,
+        VidyaStatus.listening,
+      );
 
       await vidya.onMicTap(); // listening → … → idle
 
@@ -141,7 +146,10 @@ void main() {
       expect(state.conversation[0].role, ConversationRole.teacher);
       expect(state.conversation[0].text, 'lesson plan on fractions');
       expect(state.conversation[1].role, ConversationRole.vidya);
-      expect(state.conversation[1].text, 'Making your Class 10 Maths lesson plan.');
+      expect(
+        state.conversation[1].text,
+        'Making your Class 10 Maths lesson plan.',
+      );
 
       // The recorded WAV really was uploaded, and VIDYA spoke back.
       expect(client.multiparts.single.path, '/api/ai/voice-to-text');
@@ -149,62 +157,72 @@ void main() {
       expect(recorder.stopCount, 1);
     });
 
-    test('a single valid action becomes the pending navigation, no chips',
-        () async {
-      final container = _container(client: _happyClient());
-      final vidya = container.read(vidyaControllerProvider.notifier);
+    test(
+      'a single valid action becomes the pending navigation, no chips',
+      () async {
+        final container = _container(client: _happyClient());
+        final vidya = container.read(vidyaControllerProvider.notifier);
 
-      await vidya.onMicTap();
-      await vidya.onMicTap();
+        await vidya.onMicTap();
+        await vidya.onMicTap();
 
-      final state = container.read(vidyaControllerProvider);
-      expect(state.pendingNavigation, isNotNull);
-      expect(state.pendingNavigation!.flow, VidyaFlow.lessonPlan);
-      expect(state.pendingNavigation!.params.topic, 'Fractions');
-      // A single action auto-navigates; the reply block carries no confirm chip.
-      expect(state.conversation.last.directives, isEmpty);
+        final state = container.read(vidyaControllerProvider);
+        expect(state.pendingNavigation, isNotNull);
+        expect(state.pendingNavigation!.flow, VidyaFlow.lessonPlan);
+        expect(state.pendingNavigation!.params.topic, 'Fractions');
+        // A single action auto-navigates; the reply block carries no confirm chip.
+        expect(state.conversation.last.directives, isEmpty);
 
-      // The home consumes it and clears it.
-      vidya.consumeNavigation();
-      expect(container.read(vidyaControllerProvider).pendingNavigation, isNull);
-    });
+        // The home consumes it and clears it.
+        vidya.consumeNavigation();
+        expect(
+          container.read(vidyaControllerProvider).pendingNavigation,
+          isNull,
+        );
+      },
+    );
 
-    test('sends uiLanguage and learns grade/subject but NEVER the language',
-        () async {
-      final container = _container(client: _happyClient());
-      final client = container.read(apiClientProvider) as FakeApiClient;
-      final vidya = container.read(vidyaControllerProvider.notifier);
+    test(
+      'sends uiLanguage and learns grade/subject but NEVER the language',
+      () async {
+        final container = _container(client: _happyClient());
+        final client = container.read(apiClientProvider) as FakeApiClient;
+        final vidya = container.read(vidyaControllerProvider.notifier);
 
-      await vidya.onMicTap();
-      await vidya.onMicTap();
+        await vidya.onMicTap();
+        await vidya.onMicTap();
 
-      // STT bias + assistant both carry the explicit UI language (default en).
-      expect(
-        client.multiparts.single.data.fields
-            .firstWhere((f) => f.key == 'expectedLanguage')
-            .value,
-        'en',
-      );
-      final assistantBody = client.posts
-          .firstWhere((p) => p.path == '/api/assistant')
-          .data as Map<String, dynamic>;
-      expect(assistantBody['uiLanguage'], 'en');
-      expect(assistantBody['message'], 'lesson plan on fractions');
+        // STT bias + assistant both carry the explicit UI language (default en).
+        expect(
+          client.multiparts.single.data.fields
+              .firstWhere((f) => f.key == 'expectedLanguage')
+              .value,
+          'en',
+        );
+        final assistantBody =
+            client.posts.firstWhere((p) => p.path == '/api/assistant').data
+                as Map<String, dynamic>;
+        expect(assistantBody['uiLanguage'], 'en');
+        expect(assistantBody['message'], 'lesson plan on fractions');
 
-      // Profile learned grade/subject from the action — but the utterance's
-      // Hindi language never poisons the saved profile (SPEC §A.7).
-      final profile = container.read(vidyaControllerProvider).profile;
-      expect(profile?.preferredGrade, 'Class 10');
-      expect(profile?.preferredSubject, 'Maths');
-      expect(profile?.preferredLanguage, isNull);
-    });
+        // Profile learned grade/subject from the action — but the utterance's
+        // Hindi language never poisons the saved profile (SPEC §A.7).
+        final profile = container.read(vidyaControllerProvider).profile;
+        expect(profile?.preferredGrade, 'Class 10');
+        expect(profile?.preferredSubject, 'Maths');
+        expect(profile?.preferredLanguage, isNull);
+      },
+    );
   });
 
   group('the directive branches (0 / 1 / 2–3)', () {
     test('0 actions is a speak-only turn (no chips, no navigation)', () async {
       final container = _container(
         client: _happyClient(
-          assistant: {'response': 'Fractions are equal parts.', 'plannedActions': []},
+          assistant: {
+            'response': 'Fractions are equal parts.',
+            'plannedActions': [],
+          },
         ),
       );
       final vidya = container.read(vidyaControllerProvider.notifier);
@@ -218,38 +236,51 @@ void main() {
       expect(state.conversation.last.directives, isEmpty);
     });
 
-    test('2–3 actions render confirm chips; picking one routes + drops it',
-        () async {
-      final container = _container(
-        client: _happyClient(
-          assistant: {
-            'response': 'I can make both.',
-            'plannedActions': [
-              {'type': 'NAVIGATE_AND_FILL', 'flow': 'lesson-plan', 'params': {'topic': 'Fractions'}},
-              {'type': 'NAVIGATE_AND_FILL', 'flow': 'quiz-generator', 'params': {'topic': 'Fractions'}},
-            ],
-          },
-        ),
-      );
-      final vidya = container.read(vidyaControllerProvider.notifier);
+    test(
+      '2–3 actions render confirm chips; picking one routes + drops it',
+      () async {
+        final container = _container(
+          client: _happyClient(
+            assistant: {
+              'response': 'I can make both.',
+              'plannedActions': [
+                {
+                  'type': 'NAVIGATE_AND_FILL',
+                  'flow': 'lesson-plan',
+                  'params': {'topic': 'Fractions'},
+                },
+                {
+                  'type': 'NAVIGATE_AND_FILL',
+                  'flow': 'quiz-generator',
+                  'params': {'topic': 'Fractions'},
+                },
+              ],
+            },
+          ),
+        );
+        final vidya = container.read(vidyaControllerProvider.notifier);
 
-      await vidya.onMicTap();
-      await vidya.onMicTap();
+        await vidya.onMicTap();
+        await vidya.onMicTap();
 
-      var state = container.read(vidyaControllerProvider);
-      // A compound intent does NOT auto-navigate; it offers chips.
-      expect(state.pendingNavigation, isNull);
-      expect(state.conversation.last.directives, hasLength(2));
+        var state = container.read(vidyaControllerProvider);
+        // A compound intent does NOT auto-navigate; it offers chips.
+        expect(state.pendingNavigation, isNull);
+        expect(state.conversation.last.directives, hasLength(2));
 
-      final chosen = state.conversation.last.directives.first;
-      vidya.dispatchDirective(chosen);
+        final chosen = state.conversation.last.directives.first;
+        vidya.dispatchDirective(chosen);
 
-      state = container.read(vidyaControllerProvider);
-      expect(state.pendingNavigation, chosen);
-      // The chosen chip is removed; the other remains offered.
-      expect(state.conversation.last.directives, hasLength(1));
-      expect(state.conversation.last.directives.single.flow, VidyaFlow.quizGenerator);
-    });
+        state = container.read(vidyaControllerProvider);
+        expect(state.pendingNavigation, chosen);
+        // The chosen chip is removed; the other remains offered.
+        expect(state.conversation.last.directives, hasLength(1));
+        expect(
+          state.conversation.last.directives.single.flow,
+          VidyaFlow.quizGenerator,
+        );
+      },
+    );
 
     test('an unknown flow is dropped by the enum guard (no 404)', () async {
       final container = _container(
@@ -257,7 +288,11 @@ void main() {
           assistant: {
             'response': 'Done.',
             'plannedActions': [
-              {'type': 'NAVIGATE_AND_FILL', 'flow': 'teleport-machine', 'params': {}},
+              {
+                'type': 'NAVIGATE_AND_FILL',
+                'flow': 'teleport-machine',
+                'params': {},
+              },
             ],
           },
         ),
@@ -275,23 +310,26 @@ void main() {
   });
 
   group('typed error branches', () {
-    test('a 401 on VIDYA → signed-out, keeping what the teacher said', () async {
-      final container = _container(
-        client: FakeApiClient(
-          multipartResponse: {'text': 'plan a lesson', 'language': 'en'},
-          postErrorsByPath: {'/api/assistant': _unauthorized},
-        ),
-      );
-      final vidya = container.read(vidyaControllerProvider.notifier);
+    test(
+      'a 401 on VIDYA → signed-out, keeping what the teacher said',
+      () async {
+        final container = _container(
+          client: FakeApiClient(
+            multipartResponse: {'text': 'plan a lesson', 'language': 'en'},
+            postErrorsByPath: {'/api/assistant': _unauthorized},
+          ),
+        );
+        final vidya = container.read(vidyaControllerProvider.notifier);
 
-      await vidya.onMicTap();
-      await vidya.onMicTap();
+        await vidya.onMicTap();
+        await vidya.onMicTap();
 
-      final state = container.read(vidyaControllerProvider);
-      expect(state.status, VidyaStatus.signedOut);
-      // The teacher's words remain inked; VIDYA simply could not answer.
-      expect(state.conversation.single.role, ConversationRole.teacher);
-    });
+        final state = container.read(vidyaControllerProvider);
+        expect(state.status, VidyaStatus.signedOut);
+        // The teacher's words remain inked; VIDYA simply could not answer.
+        expect(state.conversation.single.role, ConversationRole.teacher);
+      },
+    );
 
     test('a 401 on STT → signed-out before anything is inked', () async {
       final container = _container(
@@ -319,8 +357,10 @@ void main() {
       await vidya.onMicTap();
       await vidya.onMicTap();
 
-      expect(container.read(vidyaControllerProvider).status,
-          VidyaStatus.limitReached);
+      expect(
+        container.read(vidyaControllerProvider).status,
+        VidyaStatus.limitReached,
+      );
     });
 
     test('a network failure → the retryable failed state', () async {
@@ -336,7 +376,9 @@ void main() {
       await vidya.onMicTap();
 
       expect(
-          container.read(vidyaControllerProvider).status, VidyaStatus.failed);
+        container.read(vidyaControllerProvider).status,
+        VidyaStatus.failed,
+      );
     });
   });
 
@@ -351,25 +393,32 @@ void main() {
       await vidya.onMicTap();
 
       expect(
-          container.read(vidyaControllerProvider).status, VidyaStatus.micDenied);
-    });
-
-    test('a soft denial returns to idle (the next tap can ask again)', () async {
-      final container = _container(
-        client: _happyClient(),
-        permission: FakeMicPermissionService(MicPermission.denied),
+        container.read(vidyaControllerProvider).status,
+        VidyaStatus.micDenied,
       );
-      final vidya = container.read(vidyaControllerProvider.notifier);
-
-      await vidya.onMicTap();
-
-      expect(container.read(vidyaControllerProvider).status, VidyaStatus.idle);
     });
+
+    test(
+      'a soft denial returns to idle (the next tap can ask again)',
+      () async {
+        final container = _container(
+          client: _happyClient(),
+          permission: FakeMicPermissionService(MicPermission.denied),
+        );
+        final vidya = container.read(vidyaControllerProvider.notifier);
+
+        await vidya.onMicTap();
+
+        expect(
+          container.read(vidyaControllerProvider).status,
+          VidyaStatus.idle,
+        );
+      },
+    );
   });
 
   group('unexpected plugin failures (silent-bounce regression, T1-U6)', () {
-    test(
-        'the permission plugin throwing (not a denial) lands on the '
+    test('the permission plugin throwing (not a denial) lands on the '
         'dignified failed state, never a silent idle bounce', () async {
       final container = _container(
         client: _happyClient(),
@@ -394,33 +443,43 @@ void main() {
       await vidya.onMicTap();
 
       expect(
-          container.read(vidyaControllerProvider).status, VidyaStatus.failed);
-    });
-
-    test('the recorder failing to stop/flush lands on the failed state',
-        () async {
-      final recorder = FakeAudioRecorderService()
-        ..throwOnStop = Exception('flush failed');
-      final container = _container(client: _happyClient(), recorder: recorder);
-      final vidya = container.read(vidyaControllerProvider.notifier);
-
-      await vidya.onMicTap(); // idle → listening
-      await vidya.onMicTap(); // listening → stop (throws) → failed
-
-      expect(
-          container.read(vidyaControllerProvider).status, VidyaStatus.failed);
+        container.read(vidyaControllerProvider).status,
+        VidyaStatus.failed,
+      );
     });
 
     test(
-        'regression: a permanent denial and a soft denial are untouched by '
+      'the recorder failing to stop/flush lands on the failed state',
+      () async {
+        final recorder = FakeAudioRecorderService()
+          ..throwOnStop = Exception('flush failed');
+        final container = _container(
+          client: _happyClient(),
+          recorder: recorder,
+        );
+        final vidya = container.read(vidyaControllerProvider.notifier);
+
+        await vidya.onMicTap(); // idle → listening
+        await vidya.onMicTap(); // listening → stop (throws) → failed
+
+        expect(
+          container.read(vidyaControllerProvider).status,
+          VidyaStatus.failed,
+        );
+      },
+    );
+
+    test('regression: a permanent denial and a soft denial are untouched by '
         'this fix', () async {
       final permanent = _container(
         client: _happyClient(),
         permission: FakeMicPermissionService(MicPermission.permanentlyDenied),
       );
       await permanent.read(vidyaControllerProvider.notifier).onMicTap();
-      expect(permanent.read(vidyaControllerProvider).status,
-          VidyaStatus.micDenied);
+      expect(
+        permanent.read(vidyaControllerProvider).status,
+        VidyaStatus.micDenied,
+      );
 
       final soft = _container(
         client: _happyClient(),
@@ -465,32 +524,35 @@ void main() {
       expect(state.conversation, isEmpty);
     });
 
-    test('cancel abandons an in-flight trip (a stale result never applies)',
-        () async {
-      final player = FakeAudioPlayerService();
-      // A delayed STT keeps the trip in flight while we cancel it.
-      final client = _happyClient(delay: const Duration(milliseconds: 60));
-      final container =
-          _container(client: client, player: player);
-      final vidya = container.read(vidyaControllerProvider.notifier);
+    test(
+      'cancel abandons an in-flight trip (a stale result never applies)',
+      () async {
+        final player = FakeAudioPlayerService();
+        // A delayed STT keeps the trip in flight while we cancel it.
+        final client = _happyClient(delay: const Duration(milliseconds: 60));
+        final container = _container(client: client, player: player);
+        final vidya = container.read(vidyaControllerProvider.notifier);
 
-      await vidya.onMicTap(); // listening
-      final trip = vidya.onMicTap(); // → transcribing (STT delayed 60ms)
-      await Future<void>.delayed(const Duration(milliseconds: 10));
-      await vidya.cancel();
-      await trip; // the delayed STT resolves stale and is discarded
+        await vidya.onMicTap(); // listening
+        final trip = vidya.onMicTap(); // → transcribing (STT delayed 60ms)
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        await vidya.cancel();
+        await trip; // the delayed STT resolves stale and is discarded
 
-      final state = container.read(vidyaControllerProvider);
-      expect(state.status, VidyaStatus.idle);
-      expect(state.conversation, isEmpty,
-          reason: 'the abandoned utterance must not ink a block');
-      expect(player.stopCount, greaterThanOrEqualTo(1));
-    });
+        final state = container.read(vidyaControllerProvider);
+        expect(state.status, VidyaStatus.idle);
+        expect(
+          state.conversation,
+          isEmpty,
+          reason: 'the abandoned utterance must not ink a block',
+        );
+        expect(player.stopCount, greaterThanOrEqualTo(1));
+      },
+    );
   });
 
   group('manual clear (U9 — the Trash2 "Clear conversation" action)', () {
-    test(
-        'clears the transcript/history/session/pending-nav but keeps the '
+    test('clears the transcript/history/session/pending-nav but keeps the '
         'learned profile', () async {
       final container = _container(client: _happyClient());
       final vidya = container.read(vidyaControllerProvider.notifier);
@@ -521,34 +583,38 @@ void main() {
       expect(after.profile?.preferredSubject, 'Maths');
     });
 
-    test('abandons an in-flight trip (a stale result never re-applies)',
-        () async {
-      final client = _happyClient(delay: const Duration(milliseconds: 60));
-      final container = _container(client: client);
-      final vidya = container.read(vidyaControllerProvider.notifier);
+    test(
+      'abandons an in-flight trip (a stale result never re-applies)',
+      () async {
+        final client = _happyClient(delay: const Duration(milliseconds: 60));
+        final container = _container(client: client);
+        final vidya = container.read(vidyaControllerProvider.notifier);
 
-      await vidya.onMicTap(); // listening
-      final trip = vidya.onMicTap(); // -> transcribing (STT delayed 60ms)
-      await Future<void>.delayed(const Duration(milliseconds: 10));
-      vidya.clearConversation();
-      await trip; // the delayed STT resolves stale and is discarded
+        await vidya.onMicTap(); // listening
+        final trip = vidya.onMicTap(); // -> transcribing (STT delayed 60ms)
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        vidya.clearConversation();
+        await trip; // the delayed STT resolves stale and is discarded
 
-      final state = container.read(vidyaControllerProvider);
-      expect(state.conversation, isEmpty);
-      expect(state.status, VidyaStatus.idle);
-    });
+        final state = container.read(vidyaControllerProvider);
+        expect(state.conversation, isEmpty);
+        expect(state.status, VidyaStatus.idle);
+      },
+    );
 
-    test('is a safe no-op shape on an already-idle, empty controller',
-        () async {
-      final container = _container(client: _happyClient());
-      final vidya = container.read(vidyaControllerProvider.notifier);
+    test(
+      'is a safe no-op shape on an already-idle, empty controller',
+      () async {
+        final container = _container(client: _happyClient());
+        final vidya = container.read(vidyaControllerProvider.notifier);
 
-      vidya.clearConversation();
+        vidya.clearConversation();
 
-      final state = container.read(vidyaControllerProvider);
-      expect(state.conversation, isEmpty);
-      expect(state.status, VidyaStatus.idle);
-    });
+        final state = container.read(vidyaControllerProvider);
+        expect(state.conversation, isEmpty);
+        expect(state.status, VidyaStatus.idle);
+      },
+    );
   });
 
   group('language mapping', () {
@@ -570,7 +636,10 @@ void main() {
 
     test('isLikelyTranscriptionRefusal is narrow', () {
       expect(isLikelyTranscriptionRefusal('cannot process the audio'), isTrue);
-      expect(isLikelyTranscriptionRefusal('Plan a lesson on fractions'), isFalse);
+      expect(
+        isLikelyTranscriptionRefusal('Plan a lesson on fractions'),
+        isFalse,
+      );
     });
   });
 }

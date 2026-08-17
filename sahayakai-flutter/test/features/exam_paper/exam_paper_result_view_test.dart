@@ -25,11 +25,16 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('CBSE Class 10 Mathematics Sample Paper'),
-          findsOneWidget);
+      expect(
+        find.textContaining('CBSE Class 10 Mathematics Sample Paper'),
+        findsOneWidget,
+      );
       expect(find.text('Section A'), findsOneWidget);
       expect(find.text('Multiple Choice Questions'), findsOneWidget);
-      expect(find.textContaining('What is the value of x here?'), findsOneWidget);
+      expect(
+        find.textContaining('What is the value of x here?'),
+        findsOneWidget,
+      );
       // The answer-key and marking-scheme blocks (the request toggles that came
       // back on).
       expect(find.text('Answer'), findsWidgets);
@@ -45,9 +50,7 @@ void main() {
     testWidgets('an empty paper shows the no-content state', (tester) async {
       await tester.pumpWidget(
         hostResult(
-          const ExamPaperResultView(
-            ready: _emptyReady,
-          ),
+          const ExamPaperResultView(ready: _emptyReady),
           overrides: [apiClientOverride(FakeApiClient())],
         ),
       );
@@ -56,10 +59,8 @@ void main() {
       expect(find.textContaining('No exam paper came back'), findsOneWidget);
     });
 
-    testWidgets(
-        'money bug: a title-only response (no sections) shows the '
-        'no-content state, never a fake-success Save button',
-        (tester) async {
+    testWidgets('money bug: a title-only response (no sections) shows the '
+        'no-content state, never a fake-success Save button', (tester) async {
       await tester.pumpWidget(
         hostResult(
           const ExamPaperResultView(ready: _titleOnlyReady, onRegenerate: null),
@@ -75,8 +76,9 @@ void main() {
   });
 
   group('save action', () {
-    testWidgets('a successful save shows the saved confirmation and PUTs paper',
-        (tester) async {
+    testWidgets('a successful save shows the saved confirmation and PUTs paper', (
+      tester,
+    ) async {
       final ready = buildReady();
       final client = FakeApiClient(
         putResponse: <String, dynamic>{'success': true, 'contentId': 'c-1'},
@@ -104,11 +106,7 @@ void main() {
 
     testWidgets('a failed save shows the failure and a retry', (tester) async {
       final client = FakeApiClient(
-        putError: const ApiException(
-          ApiErrorKind.server,
-          'x',
-          statusCode: 500,
-        ),
+        putError: const ApiException(ApiErrorKind.server, 'x', statusCode: 500),
       );
       await tester.pumpWidget(
         hostResult(
@@ -131,28 +129,30 @@ void main() {
 
   group('read-only from Library (money bug regression)', () {
     testWidgets(
-        'onRegenerate omitted (a saved item reopened from Library) hides the '
-        'ENTIRE footer — Save included, not just Regenerate/Copy',
-        (tester) async {
-      await tester.pumpWidget(
-        hostResult(
-          ExamPaperResultView(ready: buildReady()),
-          overrides: [apiClientOverride(FakeApiClient())],
-        ),
-      );
-      await tester.pumpAndSettle();
+      'onRegenerate omitted (a saved item reopened from Library) hides the '
+      'ENTIRE footer — Save included, not just Regenerate/Copy',
+      (tester) async {
+        await tester.pumpWidget(
+          hostResult(
+            ExamPaperResultView(ready: buildReady()),
+            overrides: [apiClientOverride(FakeApiClient())],
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      // The paper itself still renders...
-      expect(find.text('Section A'), findsOneWidget);
-      // ...but nothing that would PUT a duplicate to the library, or imply a
-      // live generate controller exists behind this render.
-      expect(find.text('Save to Library'), findsNothing);
-      expect(find.text('Regenerate'), findsNothing);
-      expect(find.text('Copy'), findsNothing);
-    });
+        // The paper itself still renders...
+        expect(find.text('Section A'), findsOneWidget);
+        // ...but nothing that would PUT a duplicate to the library, or imply a
+        // live generate controller exists behind this render.
+        expect(find.text('Save to Library'), findsNothing);
+        expect(find.text('Regenerate'), findsNothing);
+        expect(find.text('Copy'), findsNothing);
+      },
+    );
 
-    testWidgets('onRegenerate provided (the live generate screen) shows Save',
-        (tester) async {
+    testWidgets('onRegenerate provided (the live generate screen) shows Save', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         hostResult(
           ExamPaperResultView(ready: buildReady(), onRegenerate: () {}),

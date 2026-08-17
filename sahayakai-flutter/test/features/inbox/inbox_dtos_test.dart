@@ -31,8 +31,10 @@ void main() {
     });
 
     test('directPair recovers both uids from a DM id, null for a group id', () {
-      expect(const ConversationId('alpha_zeta').directPair,
-          (a: 'alpha', b: 'zeta'));
+      expect(const ConversationId('alpha_zeta').directPair, (
+        a: 'alpha',
+        b: 'zeta',
+      ));
       expect(const ConversationId('groupid123').directPair, isNull);
       expect(const ConversationId('a_').directPair, isNull);
     });
@@ -40,24 +42,24 @@ void main() {
 
   group('ConversationDto — conversations/{id} golden', () {
     Map<String, dynamic> body() => {
-          'id': 'u1_u2',
-          'type': 'direct',
-          'participantIds': ['u1', 'u2'],
-          'participants': {
-            'u1': {
-              'displayName': 'Asha Rao',
-              'photoURL': 'https://img/1',
-              'preferredLanguage': 'Kannada',
-            },
-            'u2': {'displayName': 'Bina Das', 'photoURL': null},
-          },
-          'lastMessage': 'See you at the workshop',
-          'lastMessageAt': '2026-07-18T10:00:00.000Z',
-          'lastMessageSenderId': 'u2',
-          'unreadCount': {'u1': 3, 'u2': 0},
-          'createdAt': '2026-07-01T09:00:00.000Z',
-          'updatedAt': '2026-07-18T10:00:00.000Z',
-        };
+      'id': 'u1_u2',
+      'type': 'direct',
+      'participantIds': ['u1', 'u2'],
+      'participants': {
+        'u1': {
+          'displayName': 'Asha Rao',
+          'photoURL': 'https://img/1',
+          'preferredLanguage': 'Kannada',
+        },
+        'u2': {'displayName': 'Bina Das', 'photoURL': null},
+      },
+      'lastMessage': 'See you at the workshop',
+      'lastMessageAt': '2026-07-18T10:00:00.000Z',
+      'lastMessageSenderId': 'u2',
+      'unreadCount': {'u1': 3, 'u2': 0},
+      'createdAt': '2026-07-01T09:00:00.000Z',
+      'updatedAt': '2026-07-18T10:00:00.000Z',
+    };
 
     test('decodes the full document', () {
       final c = ConversationDto.fromJson(body()).toDomain();
@@ -74,16 +76,20 @@ void main() {
       expect(c.unreadFor('u2'), 0);
     });
 
-    test('otherParticipant / otherParticipantId resolve the DM counterpart',
-        () {
-      final c = ConversationDto.fromJson(body()).toDomain();
-      expect(c.otherParticipantId('u1'), 'u2');
-      expect(c.otherParticipant('u1')!.displayName, 'Bina Das');
-      // A group has no single "other".
-      final g = ConversationDto.fromJson({...body(), 'type': 'group'})
-          .toDomain();
-      expect(g.otherParticipantId('u1'), isNull);
-    });
+    test(
+      'otherParticipant / otherParticipantId resolve the DM counterpart',
+      () {
+        final c = ConversationDto.fromJson(body()).toDomain();
+        expect(c.otherParticipantId('u1'), 'u2');
+        expect(c.otherParticipant('u1')!.displayName, 'Bina Das');
+        // A group has no single "other".
+        final g = ConversationDto.fromJson({
+          ...body(),
+          'type': 'group',
+        }).toDomain();
+        expect(g.otherParticipantId('u1'), isNull);
+      },
+    );
 
     test('a group conversation carries name + createdBy', () {
       final g = ConversationDto.fromJson({
@@ -109,17 +115,19 @@ void main() {
       expect(c.unreadCount, isEmpty);
     });
 
-    test('unreadCount tolerates num / numeric-string, drops junk & negatives',
-        () {
-      final c = ConversationDto.fromJson({
-        ...body(),
-        'unreadCount': {'u1': 2.0, 'u2': '5', 'u3': 'x', 'u4': -1},
-      }).toDomain();
-      expect(c.unreadFor('u1'), 2);
-      expect(c.unreadFor('u2'), 5);
-      expect(c.unreadCount.containsKey('u3'), isFalse);
-      expect(c.unreadCount.containsKey('u4'), isFalse);
-    });
+    test(
+      'unreadCount tolerates num / numeric-string, drops junk & negatives',
+      () {
+        final c = ConversationDto.fromJson({
+          ...body(),
+          'unreadCount': {'u1': 2.0, 'u2': '5', 'u3': 'x', 'u4': -1},
+        }).toDomain();
+        expect(c.unreadFor('u1'), 2);
+        expect(c.unreadFor('u2'), 5);
+        expect(c.unreadCount.containsKey('u3'), isFalse);
+        expect(c.unreadCount.containsKey('u4'), isFalse);
+      },
+    );
 
     test('a malformed participant entry is dropped, not thrown', () {
       final c = ConversationDto.fromJson({
@@ -187,18 +195,20 @@ void main() {
       expect(m.resource!.route, 'lesson-planner');
     });
 
-    test('a resource card missing id/route degrades to null (renders caption)',
-        () {
-      final m = MessageDto.fromJson({
-        'id': 'm3',
-        'type': 'resource',
-        'text': 'oops',
-        'senderId': 'u1',
-        'senderName': 'Asha',
-        'resource': {'type': 'quiz', 'title': 'No route'},
-      }).toDomain();
-      expect(m.resource, isNull);
-    });
+    test(
+      'a resource card missing id/route degrades to null (renders caption)',
+      () {
+        final m = MessageDto.fromJson({
+          'id': 'm3',
+          'type': 'resource',
+          'text': 'oops',
+          'senderId': 'u1',
+          'senderName': 'Asha',
+          'resource': {'type': 'quiz', 'title': 'No route'},
+        }).toDomain();
+        expect(m.resource, isNull);
+      },
+    );
 
     test('decodes an audio message', () {
       final m = MessageDto.fromJson({
@@ -296,8 +306,7 @@ void main() {
     });
 
     test('GetOrCreateDirectRequestDto sends only { otherUid }', () {
-      final json =
-          const GetOrCreateDirectRequestDto(otherUid: 'u2').toJson();
+      final json = const GetOrCreateDirectRequestDto(otherUid: 'u2').toJson();
       expect(json, {'otherUid': 'u2'});
       expect(json.containsKey('myUid'), isFalse);
     });
@@ -357,13 +366,13 @@ void main() {
 
     test('the open= parse is anchored on ?/& (no reopen= false-match)', () {
       NotificationItem withLink(String link) => NotificationDto.fromJson({
-            'id': 'n',
-            'recipientId': 'u1',
-            'type': 'MESSAGE',
-            'title': 't',
-            'message': 'm',
-            'link': link,
-          }).toDomain();
+        'id': 'n',
+        'recipientId': 'u1',
+        'type': 'MESSAGE',
+        'title': 't',
+        'message': 'm',
+        'link': link,
+      }).toDomain();
 
       // Real delimiters match.
       expect(withLink('/messages?open=abc').conversationId, 'abc');
@@ -409,10 +418,7 @@ void main() {
   group('PresenceDto.fromRtdbValue — RTDB onValue shapes', () {
     test('a bare boolean', () {
       expect(PresenceDto.fromRtdbValue('u1', true).presence, Presence.online);
-      expect(
-        PresenceDto.fromRtdbValue('u1', false).presence,
-        Presence.offline,
-      );
+      expect(PresenceDto.fromRtdbValue('u1', false).presence, Presence.offline);
     });
 
     test('the { online, lastChanged } object shape', () {
@@ -427,16 +433,20 @@ void main() {
 
     test('null / unknown node → unknown (no dot)', () {
       expect(PresenceDto.fromRtdbValue('u1', null).presence, Presence.unknown);
-      expect(PresenceDto.fromRtdbValue('u1', 'weird').presence,
-          Presence.unknown);
+      expect(
+        PresenceDto.fromRtdbValue('u1', 'weird').presence,
+        Presence.unknown,
+      );
       expect(PresenceDto.fromRtdbValue('u1', null).showsDot, isFalse);
     });
   });
 
   group('wireTimeToIso — normalises the timestamp shapes', () {
     test('ISO string passes through trimmed', () {
-      expect(wireTimeToIso('  2026-07-18T10:00:00.000Z '),
-          '2026-07-18T10:00:00.000Z');
+      expect(
+        wireTimeToIso('  2026-07-18T10:00:00.000Z '),
+        '2026-07-18T10:00:00.000Z',
+      );
     });
 
     test('epoch millis int → ISO', () {
@@ -444,10 +454,14 @@ void main() {
     });
 
     test('{seconds, nanoseconds} Firestore Timestamp shape → ISO', () {
-      expect(wireTimeToIso({'seconds': 0, 'nanoseconds': 0}),
-          '1970-01-01T00:00:00.000Z');
-      expect(wireTimeToIso({'_seconds': 1, '_nanoseconds': 0}),
-          '1970-01-01T00:00:01.000Z');
+      expect(
+        wireTimeToIso({'seconds': 0, 'nanoseconds': 0}),
+        '1970-01-01T00:00:00.000Z',
+      );
+      expect(
+        wireTimeToIso({'_seconds': 1, '_nanoseconds': 0}),
+        '1970-01-01T00:00:01.000Z',
+      );
     });
 
     test('null / blank / junk → null', () {

@@ -55,7 +55,7 @@ Widget hostResult(
 /// content for (the empty-result state).
 Worksheet buildWorksheet({bool empty = false}) {
   if (empty) return const Worksheet(title: '');
-  return Worksheet(
+  return const Worksheet(
     title: 'Counting mangoes $kBn',
     gradeLevel: 'Class 2',
     subject: 'Mathematics',
@@ -64,17 +64,24 @@ Worksheet buildWorksheet({bool empty = false}) {
     activities: <WorksheetActivity>[
       WorksheetActivity(
         type: WorksheetActivityType.question,
-        content: r'If there are $5$ mangoes and $3$ more, how many? ' '$kBn $kTa',
+        content:
+            r'If there are $5$ mangoes and $3$ more, how many? '
+            '$kBn $kTa',
         explanation: 'Uses local fruit to teach addition. $kMl',
         chalkboardNote: 'Draw two baskets with circles for mangoes. $kTa',
       ),
-      const WorksheetActivity(
+      WorksheetActivity(
         type: WorksheetActivityType.creativeTask,
         content: kLongWord,
       ),
     ],
     answerKey: <AnswerKeyEntry>[
-      AnswerKeyEntry(activityIndex: 0, answer: r'$8$ mangoes. ' '$kMl'),
+      AnswerKeyEntry(
+        activityIndex: 0,
+        answer:
+            r'$8$ mangoes. '
+            '$kMl',
+      ),
       AnswerKeyEntry(answer: 'Any labelled drawing is fine. $kTa'),
     ],
   );

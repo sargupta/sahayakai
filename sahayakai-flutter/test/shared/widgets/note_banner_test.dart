@@ -25,10 +25,7 @@ void main() {
   BoxDecoration decorationOf(WidgetTester tester) {
     final container = tester.widget<Container>(
       find
-          .ancestor(
-            of: find.text('Tip'),
-            matching: find.byType(Container),
-          )
+          .ancestor(of: find.text('Tip'), matching: find.byType(Container))
           .first,
     );
     return container.decoration! as BoxDecoration;
@@ -36,11 +33,13 @@ void main() {
 
   testWidgets('renders the label, body and leading glyph', (tester) async {
     await tester.pumpWidget(
-      host(const NoteBanner(
-        icon: LucideIcons.lightbulb,
-        label: 'Tip',
-        body: 'Read the question aloud first.',
-      )),
+      host(
+        const NoteBanner(
+          icon: LucideIcons.lightbulb,
+          label: 'Tip',
+          body: 'Read the question aloud first.',
+        ),
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -64,17 +63,20 @@ void main() {
     expect(find.byType(Icon), findsNothing);
   });
 
-  testWidgets('custom renders an arbitrary body child under the label',
-      (tester) async {
+  testWidgets('custom renders an arbitrary body child under the label', (
+    tester,
+  ) async {
     await tester.pumpWidget(
-      host(NoteBanner.custom(
-        icon: LucideIcons.alertTriangle,
-        label: 'Tip',
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: const [Text('one'), Text('two')],
+      host(
+        const NoteBanner.custom(
+          icon: LucideIcons.alertTriangle,
+          label: 'Tip',
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [Text('one'), Text('two')],
+          ),
         ),
-      )),
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -84,28 +86,32 @@ void main() {
     expect(find.byIcon(LucideIcons.alertTriangle), findsOneWidget);
   });
 
-  testWidgets('renders at 360dp, textScale 1.3, light and dark without overflow',
-      (tester) async {
-    for (final brightness in Brightness.values) {
-      tester.view.physicalSize = const Size(360, 900);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
+  testWidgets(
+    'renders at 360dp, textScale 1.3, light and dark without overflow',
+    (tester) async {
+      for (final brightness in Brightness.values) {
+        tester.view.physicalSize = const Size(360, 900);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(
-        MediaQuery(
-          data: const MediaQueryData(textScaler: TextScaler.linear(1.3)),
-          child: host(
-            const NoteBanner(
-              icon: LucideIcons.lightbulb,
-              label: 'A deliberately long note label that should wrap cleanly',
-              body: 'Supercalifragilisticexpialidociousphotosynthesisword body.',
+        await tester.pumpWidget(
+          MediaQuery(
+            data: const MediaQueryData(textScaler: TextScaler.linear(1.3)),
+            child: host(
+              const NoteBanner(
+                icon: LucideIcons.lightbulb,
+                label:
+                    'A deliberately long note label that should wrap cleanly',
+                body:
+                    'Supercalifragilisticexpialidociousphotosynthesisword body.',
+              ),
+              brightness: brightness,
             ),
-            brightness: brightness,
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull, reason: brightness.name);
-    }
-  });
+        );
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull, reason: brightness.name);
+      }
+    },
+  );
 }

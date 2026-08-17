@@ -210,8 +210,9 @@ class _SealBrandState extends State<_SealBrand>
                     Text(
                       context.l10n.splashTagline,
                       textAlign: TextAlign.center,
-                      style: text.bodyMedium
-                          ?.copyWith(color: scheme.onSurfaceVariant),
+                      style: text.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -254,7 +255,7 @@ class _HaloedSeal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return const SizedBox(
       width: 152,
       height: 152,
       child: Stack(
@@ -265,8 +266,8 @@ class _HaloedSeal extends StatelessWidget {
           // reads as a soft, almost-circular squircle behind the seal's true
           // circle, echoing it without needing a separate circular-clip code
           // path.
-          GlassSurface.flat(radius: 40, child: const SizedBox.expand()),
-          const _Seal(),
+          GlassSurface.flat(radius: 40, child: SizedBox.expand()),
+          _Seal(),
         ],
       ),
     );
@@ -296,11 +297,7 @@ class _Seal extends StatelessWidget {
         boxShadow: isDark ? null : AppShadows.e2,
       ),
       alignment: Alignment.center,
-      child: Icon(
-        LucideIcons.graduationCap,
-        size: 40,
-        color: scheme.onPrimary,
-      ),
+      child: Icon(LucideIcons.graduationCap, size: 40, color: scheme.onPrimary),
     );
   }
 }

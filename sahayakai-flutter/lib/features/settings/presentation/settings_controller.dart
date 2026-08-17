@@ -7,8 +7,8 @@ import '../../../core/auth/auth_providers.dart';
 import '../../../core/firebase/firebase_init.dart';
 import '../../../core/network/api_exception.dart';
 import '../../profile/data/profile_repository.dart';
-import '../../profile/presentation/profile_controller.dart';
 import '../../profile/domain/profile_settings.dart';
+import '../../profile/presentation/profile_controller.dart';
 import '../data/settings_repository.dart';
 import '../domain/account_deletion.dart';
 import '../domain/export_result.dart';
@@ -101,9 +101,7 @@ class DeleteAccountController extends _$DeleteAccountController {
 
       final token = await user.getIdToken(true);
       if (token == null || token.isEmpty) throw _reauthRequired;
-      return ref
-          .read(settingsRepositoryProvider)
-          .deleteAccount(idToken: token);
+      return ref.read(settingsRepositoryProvider).deleteAccount(idToken: token);
     });
   }
 }

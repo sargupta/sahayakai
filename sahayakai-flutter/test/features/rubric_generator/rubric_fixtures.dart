@@ -16,7 +16,8 @@ const String kMl = 'അധ്യാപകർക്കുള്ള നിർമ�
 /// A deliberately unbreakable compound word: DESIGN_RUBRIC §8 says long words
 /// must wrap, never scroll the body sideways. It lives in a grid CELL so the
 /// grid, not the page, absorbs it.
-const String kLongWord = 'A supercalifragilisticexpialidociousrubriccriterionword?';
+const String kLongWord =
+    'A supercalifragilisticexpialidociousrubriccriterionword?';
 
 /// The 360dp phone gate from DESIGN_RUBRIC §12.9.
 const Size kNarrowPhone = Size(360, 900);
@@ -43,27 +44,27 @@ Widget hostResult(Widget child, {Brightness brightness = Brightness.light}) {
 /// The four mandated performance levels, highest score first, carrying Indic
 /// probe strings and (in the top level) an unbreakable compound word.
 List<RubricLevel> _levels() => <RubricLevel>[
-      RubricLevel(
-        name: 'Exemplary',
-        description: 'Exceeds every expectation. $kTa $kLongWord',
-        points: 4,
-      ),
-      RubricLevel(
-        name: 'Proficient',
-        description: 'Meets the standard expectations. $kMl',
-        points: 3,
-      ),
-      RubricLevel(
-        name: 'Developing',
-        description: 'Shows some understanding. $kBn',
-        points: 2,
-      ),
-      const RubricLevel(
-        name: 'Beginning',
-        description: 'Minimal evidence of the skill.',
-        points: 1,
-      ),
-    ];
+  const RubricLevel(
+    name: 'Exemplary',
+    description: 'Exceeds every expectation. $kTa $kLongWord',
+    points: 4,
+  ),
+  const RubricLevel(
+    name: 'Proficient',
+    description: 'Meets the standard expectations. $kMl',
+    points: 3,
+  ),
+  const RubricLevel(
+    name: 'Developing',
+    description: 'Shows some understanding. $kBn',
+    points: 2,
+  ),
+  const RubricLevel(
+    name: 'Beginning',
+    description: 'Minimal evidence of the skill.',
+    points: 1,
+  ),
+];
 
 /// A fully-populated rubric (a 4x4 grid). [empty] returns one the model gave no
 /// usable content for; [partial] returns criteria with no levels (the grid's
@@ -71,14 +72,14 @@ List<RubricLevel> _levels() => <RubricLevel>[
 Rubric buildRubric({bool empty = false, bool partial = false}) {
   if (empty) return const Rubric(title: '');
   if (partial) {
-    return Rubric(
+    return const Rubric(
       title: 'Renewable Energy Project Rubric $kBn',
       description: 'Grades a Class 5 renewable-energy project. $kMl',
       gradeLevel: 'Class 5',
       subject: 'Science',
       criteria: <RubricCriterion>[
         RubricCriterion(name: 'Research and Content $kTa'),
-        const RubricCriterion(name: 'Presentation'),
+        RubricCriterion(name: 'Presentation'),
       ],
     );
   }

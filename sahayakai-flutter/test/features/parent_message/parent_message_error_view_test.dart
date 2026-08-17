@@ -77,8 +77,9 @@ void main() {
     expect(find.text('Try again'), findsNothing);
   });
 
-  testWidgets('429 -> limit-reached prompt with pricing, no retry',
-      (tester) async {
+  testWidgets('429 -> limit-reached prompt with pricing, no retry', (
+    tester,
+  ) async {
     await pump(
       tester,
       const ApiException(ApiErrorKind.rateLimited, 'x', statusCode: 429),
@@ -89,32 +90,37 @@ void main() {
   });
 
   testWidgets(
-      '400 Missing required fields -> a SPECIFIC fill-these-in message + retry',
-      (tester) async {
-    // The route returns 400 { error: 'Missing required fields' } when a required
-    // field is absent. It must read as a specific instruction, never a generic
-    // failure (task requirement).
-    await pump(
-      tester,
-      const ApiException(
-        ApiErrorKind.badResponse,
-        'Missing required fields',
-        statusCode: 400,
-      ),
-    );
-    expect(
-      find.textContaining(
-        "Please fill in the student, class, subject, reason and parent's language",
-      ),
-      findsOneWidget,
-    );
-    // It is NOT the generic error.
-    expect(find.text('Something went wrong. Please try again.'), findsNothing);
-    expect(find.text('Try again'), findsOneWidget);
-  });
+    '400 Missing required fields -> a SPECIFIC fill-these-in message + retry',
+    (tester) async {
+      // The route returns 400 { error: 'Missing required fields' } when a required
+      // field is absent. It must read as a specific instruction, never a generic
+      // failure (task requirement).
+      await pump(
+        tester,
+        const ApiException(
+          ApiErrorKind.badResponse,
+          'Missing required fields',
+          statusCode: 400,
+        ),
+      );
+      expect(
+        find.textContaining(
+          "Please fill in the student, class, subject, reason and parent's language",
+        ),
+        findsOneWidget,
+      );
+      // It is NOT the generic error.
+      expect(
+        find.text('Something went wrong. Please try again.'),
+        findsNothing,
+      );
+      expect(find.text('Try again'), findsOneWidget);
+    },
+  );
 
-  testWidgets('503 with no Retry-After -> generic busy message + retry',
-      (tester) async {
+  testWidgets('503 with no Retry-After -> generic busy message + retry', (
+    tester,
+  ) async {
     await pump(
       tester,
       const ApiException(ApiErrorKind.server, 'x', statusCode: 503),
@@ -135,8 +141,9 @@ void main() {
     expect(find.text('Try again'), findsOneWidget);
   });
 
-  testWidgets('a non-ApiException falls back to the generic error',
-      (tester) async {
+  testWidgets('a non-ApiException falls back to the generic error', (
+    tester,
+  ) async {
     await pump(tester, StateError('boom'));
     expect(find.byType(ErrorView), findsOneWidget);
     expect(find.textContaining('boom'), findsNothing);

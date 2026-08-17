@@ -53,69 +53,69 @@ Widget hostResult(
 /// route returns plus Indic probes and an unbreakable word. Pinned against
 /// `ExamPaperDataSchema` / the route handler in `sahayakai-main`.
 Map<String, dynamic> examPaperJson() => <String, dynamic>{
-      'title': 'CBSE Class 10 Mathematics Sample Paper $kBn',
-      'board': 'CBSE',
-      'subject': 'Mathematics',
-      'gradeLevel': 'Class 10',
-      'duration': '3 Hours',
-      'maxMarks': 80,
-      'generalInstructions': <String>[
-        'All questions are compulsory. $kTa',
-        'Section A carries one mark each. $kMl',
-      ],
-      'sections': <Map<String, dynamic>>[
+  'title': 'CBSE Class 10 Mathematics Sample Paper $kBn',
+  'board': 'CBSE',
+  'subject': 'Mathematics',
+  'gradeLevel': 'Class 10',
+  'duration': '3 Hours',
+  'maxMarks': 80,
+  'generalInstructions': <String>[
+    'All questions are compulsory. $kTa',
+    'Section A carries one mark each. $kMl',
+  ],
+  'sections': <Map<String, dynamic>>[
+    <String, dynamic>{
+      'name': 'Section A',
+      'label': 'Multiple Choice Questions',
+      'totalMarks': 20,
+      'questions': <Map<String, dynamic>>[
         <String, dynamic>{
-          'name': 'Section A',
-          'label': 'Multiple Choice Questions',
-          'totalMarks': 20,
-          'questions': <Map<String, dynamic>>[
-            <String, dynamic>{
-              'number': 1,
-              'text': 'What is the value of x here? $kBn $kLongWord',
-              'marks': 1,
-              'options': <String>['(a) 2', '(b) 3', '(c) 4', '(d) 5'],
-              'answerKey': '(c) 4',
-              'markingScheme': 'One mark for the correct option. $kTa',
-              'source': 'AI Generated',
-            },
-            <String, dynamic>{
-              'number': 2,
-              'text': 'Solve the quadratic equation shown. $kMl',
-              'marks': 3,
-              'internalChoice': 'Or, factorise the given expression. $kTa',
-              'answerKey': 'x equals 2 or x equals 3',
-              'markingScheme': 'One mark for each correct step.',
-              'source': 'PYQ 2019',
-            },
-          ],
+          'number': 1,
+          'text': 'What is the value of x here? $kBn $kLongWord',
+          'marks': 1,
+          'options': <String>['(a) 2', '(b) 3', '(c) 4', '(d) 5'],
+          'answerKey': '(c) 4',
+          'markingScheme': 'One mark for the correct option. $kTa',
+          'source': 'AI Generated',
+        },
+        <String, dynamic>{
+          'number': 2,
+          'text': 'Solve the quadratic equation shown. $kMl',
+          'marks': 3,
+          'internalChoice': 'Or, factorise the given expression. $kTa',
+          'answerKey': 'x equals 2 or x equals 3',
+          'markingScheme': 'One mark for each correct step.',
+          'source': 'PYQ 2019',
         },
       ],
-      'blueprintSummary': <String, dynamic>{
-        'chapterWise': <Map<String, dynamic>>[
-          <String, dynamic>{'chapter': 'Quadratic Equations $kBn', 'marks': 12},
-          <String, dynamic>{'chapter': 'Triangles', 'marks': 8},
-        ],
-        'difficultyWise': <Map<String, dynamic>>[
-          <String, dynamic>{'level': 'Easy', 'percentage': 40},
-          <String, dynamic>{'level': 'Hard', 'percentage': 20},
-        ],
-      },
-      'pyqSources': <Map<String, dynamic>>[
-        <String, dynamic>{
-          'id': 'pyq-1',
-          'year': 2019,
-          'chapter': 'Quadratic Equations',
-        },
-      ],
-    };
+    },
+  ],
+  'blueprintSummary': <String, dynamic>{
+    'chapterWise': <Map<String, dynamic>>[
+      <String, dynamic>{'chapter': 'Quadratic Equations $kBn', 'marks': 12},
+      <String, dynamic>{'chapter': 'Triangles', 'marks': 8},
+    ],
+    'difficultyWise': <Map<String, dynamic>>[
+      <String, dynamic>{'level': 'Easy', 'percentage': 40},
+      <String, dynamic>{'level': 'Hard', 'percentage': 20},
+    ],
+  },
+  'pyqSources': <Map<String, dynamic>>[
+    <String, dynamic>{
+      'id': 'pyq-1',
+      'year': 2019,
+      'chapter': 'Quadratic Equations',
+    },
+  ],
+};
 
 /// The verbatim **202 `generation_in_progress`** body.
 Map<String, dynamic> examPaperInProgressJson() => <String, dynamic>{
-      'error': 'generation_in_progress',
-      'message': 'Exam paper still generating. Check My Library in 1 minute.',
-      'budgetMs': 75000,
-      'elapsedMs': 75001,
-    };
+  'error': 'generation_in_progress',
+  'message': 'Exam paper still generating. Check My Library in 1 minute.',
+  'budgetMs': 75000,
+  'elapsedMs': 75001,
+};
 
 /// The success body decoded into the ready result (carries the raw JSON, so the
 /// save round-trip can be asserted).

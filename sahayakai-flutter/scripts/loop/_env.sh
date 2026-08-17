@@ -44,7 +44,7 @@ fi
 export LOOP_DIR="$APP_ROOT/docs/flutter/loop"
 export LOOP_STATE="$LOOP_DIR/LOOP_STATE.json"
 export WAKE_LOG="$LOOP_DIR/WAKE_LOG.jsonl"
-export CLAIMS_TSV="$LOOP_DIR/CLAIMS.tsv"
+export CLAIMS_TSV="${CLAIMS_TSV:-$LOOP_DIR/CLAIMS.tsv}"
 
 export UPLOAD_KEYSTORE="/Users/sargupta/SahayakAIV2/sahayakai/sahayakai-android/mobile/android/app/upload.keystore"
 export UPLOAD_KEYSTORE_PROPS="/Users/sargupta/SahayakAIV2/sahayakai/sahayakai-android/mobile/android/keystore.properties"

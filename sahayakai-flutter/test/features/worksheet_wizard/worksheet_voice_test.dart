@@ -51,15 +51,15 @@ class _AutoWorksheet extends WorksheetController {
 }
 
 Widget _host(Widget screen, List<Override> overrides) => ProviderScope(
-      overrides: overrides,
-      child: MaterialApp(
-        theme: AppTheme.light(),
-        locale: const Locale('en'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: screen,
-      ),
-    );
+  overrides: overrides,
+  child: MaterialApp(
+    theme: AppTheme.light(),
+    locale: const Locale('en'),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: screen,
+  ),
+);
 
 void _tallPhone(WidgetTester tester) {
   tester.view.physicalSize = const Size(420, 1600);
@@ -79,17 +79,23 @@ void main() {
       _tallPhone(tester);
       final log = <WorksheetRequest>[];
 
-      await tester.pumpWidget(_host(
-        const WorksheetWizardScreen(
-          prefill: ToolPrefill(
-            topic: 'Fractions practice',
-            gradeLevel: 'Class 6',
-            subject: 'Mathematics',
-            autoSubmit: true,
+      await tester.pumpWidget(
+        _host(
+          const WorksheetWizardScreen(
+            prefill: ToolPrefill(
+              topic: 'Fractions practice',
+              gradeLevel: 'Class 6',
+              subject: 'Mathematics',
+              autoSubmit: true,
+            ),
           ),
+          [
+            worksheetControllerProvider.overrideWith(
+              () => _RecordingWorksheet(log),
+            ),
+          ],
         ),
-        [worksheetControllerProvider.overrideWith(() => _RecordingWorksheet(log))],
-      ));
+      );
       await tester.pumpAndSettle();
 
       // The spoken description seeded the prompt, and the grade/subject applied.
@@ -97,36 +103,54 @@ void main() {
       expect(find.text('Class 6'), findsOneWidget);
       // But with no photo, the voice path must NOT auto-fire an invalid submit —
       // it lands on the form and waits for the teacher to add the textbook page.
-      expect(log, isEmpty,
-          reason: 'a photo-less worksheet directive must wait, not generate');
+      expect(
+        log,
+        isEmpty,
+        reason: 'a photo-less worksheet directive must wait, not generate',
+      );
     });
 
-    testWidgets('autoSubmit + an empty prompt does NOT auto-run', (tester) async {
+    testWidgets('autoSubmit + an empty prompt does NOT auto-run', (
+      tester,
+    ) async {
       _tallPhone(tester);
       final log = <WorksheetRequest>[];
 
-      await tester.pumpWidget(_host(
-        const WorksheetWizardScreen(
-          prefill: ToolPrefill(gradeLevel: 'Class 6', autoSubmit: true),
+      await tester.pumpWidget(
+        _host(
+          const WorksheetWizardScreen(
+            prefill: ToolPrefill(gradeLevel: 'Class 6', autoSubmit: true),
+          ),
+          [
+            worksheetControllerProvider.overrideWith(
+              () => _RecordingWorksheet(log),
+            ),
+          ],
         ),
-        [worksheetControllerProvider.overrideWith(() => _RecordingWorksheet(log))],
-      ));
+      );
       await tester.pumpAndSettle();
 
       expect(log, isEmpty);
     });
 
-    testWidgets('a manual open (autoSubmit: false) never auto-runs',
-        (tester) async {
+    testWidgets('a manual open (autoSubmit: false) never auto-runs', (
+      tester,
+    ) async {
       _tallPhone(tester);
       final log = <WorksheetRequest>[];
 
-      await tester.pumpWidget(_host(
-        const WorksheetWizardScreen(
-          prefill: ToolPrefill(topic: 'Fractions practice'),
+      await tester.pumpWidget(
+        _host(
+          const WorksheetWizardScreen(
+            prefill: ToolPrefill(topic: 'Fractions practice'),
+          ),
+          [
+            worksheetControllerProvider.overrideWith(
+              () => _RecordingWorksheet(log),
+            ),
+          ],
         ),
-        [worksheetControllerProvider.overrideWith(() => _RecordingWorksheet(log))],
-      ));
+      );
       await tester.pumpAndSettle();
 
       expect(log, isEmpty);
@@ -140,18 +164,21 @@ void main() {
       final client = FakeApiClient(postResponse: {'audioContent': _b64});
       final player = FakeAudioPlayerService();
 
-      await tester.pumpWidget(_host(
-        const WorksheetWizardScreen(
-          prefill: ToolPrefill(topic: 'Fractions practice', autoSubmit: true),
+      await tester.pumpWidget(
+        _host(
+          const WorksheetWizardScreen(
+            prefill: ToolPrefill(topic: 'Fractions practice', autoSubmit: true),
+          ),
+          [
+            worksheetControllerProvider.overrideWith(_AutoWorksheet.new),
+            imagePickerServiceProvider.overrideWithValue(
+              FakeImagePickerService(result: tinyRaw()),
+            ),
+            apiClientProvider.overrideWithValue(client),
+            audioPlayerServiceProvider.overrideWithValue(player),
+          ],
         ),
-        [
-          worksheetControllerProvider.overrideWith(_AutoWorksheet.new),
-          imagePickerServiceProvider
-              .overrideWithValue(FakeImagePickerService(result: tinyRaw())),
-          apiClientProvider.overrideWithValue(client),
-          audioPlayerServiceProvider.overrideWithValue(player),
-        ],
-      ));
+      );
       await tester.pumpAndSettle();
 
       // Nothing auto-ran yet (no photo), so nothing has spoken.
@@ -173,25 +200,29 @@ void main() {
       expect(spoken.length, lessThan(120));
     });
 
-    testWidgets('a manual open does NOT auto-speak when the worksheet lands',
-        (tester) async {
+    testWidgets('a manual open does NOT auto-speak when the worksheet lands', (
+      tester,
+    ) async {
       _tallPhone(tester);
       final client = FakeApiClient(postResponse: {'audioContent': _b64});
       final player = FakeAudioPlayerService();
 
-      await tester.pumpWidget(_host(
-        // autoSubmit defaults false — a tapped tile with the prompt pre-filled.
-        const WorksheetWizardScreen(
-          prefill: ToolPrefill(topic: 'Fractions practice'),
+      await tester.pumpWidget(
+        _host(
+          // autoSubmit defaults false — a tapped tile with the prompt pre-filled.
+          const WorksheetWizardScreen(
+            prefill: ToolPrefill(topic: 'Fractions practice'),
+          ),
+          [
+            worksheetControllerProvider.overrideWith(_AutoWorksheet.new),
+            imagePickerServiceProvider.overrideWithValue(
+              FakeImagePickerService(result: tinyRaw()),
+            ),
+            apiClientProvider.overrideWithValue(client),
+            audioPlayerServiceProvider.overrideWithValue(player),
+          ],
         ),
-        [
-          worksheetControllerProvider.overrideWith(_AutoWorksheet.new),
-          imagePickerServiceProvider
-              .overrideWithValue(FakeImagePickerService(result: tinyRaw())),
-          apiClientProvider.overrideWithValue(client),
-          audioPlayerServiceProvider.overrideWithValue(player),
-        ],
-      ));
+      );
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('Take photo'));

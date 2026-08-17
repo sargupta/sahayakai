@@ -75,13 +75,16 @@ void main() {
       expect(const TeacherProfile(subjects: ['Science']).isEmpty, isFalse);
       expect(const TeacherProfile(gradeLevels: ['Class 6']).isEmpty, isFalse);
       expect(
-        const TeacherProfile(settings: ProfileSettings(educationBoard: 'CBSE'))
-            .isEmpty,
+        const TeacherProfile(
+          settings: ProfileSettings(educationBoard: 'CBSE'),
+        ).isEmpty,
         isFalse,
       );
       expect(
         const TeacherProfile(
-          settings: ProfileSettings(administrativeRole: AdministrativeRole.none),
+          settings: ProfileSettings(
+            administrativeRole: AdministrativeRole.none,
+          ),
         ).isEmpty,
         isFalse,
       );
@@ -95,7 +98,10 @@ void main() {
       // The language is mirrored from the device picker, not something the
       // teacher told us about their teaching. Counting it would hide the empty
       // state from every teacher who merely opened the app.
-      expect(const TeacherProfile(preferredLanguage: AppLocale.bn).isEmpty, isTrue);
+      expect(
+        const TeacherProfile(preferredLanguage: AppLocale.bn).isEmpty,
+        isTrue,
+      );
     });
 
     test('copyWith leaves the untouched fields alone', () {
@@ -112,11 +118,14 @@ void main() {
       expect(next.district, 'Mysuru');
     });
 
-    test('clearState unsets the state, which copyWith(null) cannot express', () {
-      const base = TeacherProfile(state: 'Karnataka');
-      expect(base.copyWith(clearState: true).state, isNull);
-      expect(base.copyWith().state, 'Karnataka');
-    });
+    test(
+      'clearState unsets the state, which copyWith(null) cannot express',
+      () {
+        const base = TeacherProfile(state: 'Karnataka');
+        expect(base.copyWith(clearState: true).state, isNull);
+        expect(base.copyWith().state, 'Karnataka');
+      },
+    );
 
     test('equality is by value across the lists and the nested slice', () {
       const a = TeacherProfile(
@@ -146,9 +155,12 @@ void main() {
       expect(PlanBadge.fromClaim('premium'), PlanBadge.premium);
     });
 
-    test('the legacy institution claim maps to premium, as middleware does', () {
-      expect(PlanBadge.fromClaim('institution'), PlanBadge.premium);
-    });
+    test(
+      'the legacy institution claim maps to premium, as middleware does',
+      () {
+        expect(PlanBadge.fromClaim('institution'), PlanBadge.premium);
+      },
+    );
 
     test('an unrecognized claim resolves to free, matching the server', () {
       // Middleware resolves anything outside VALID_PLANS to 'free' and meters

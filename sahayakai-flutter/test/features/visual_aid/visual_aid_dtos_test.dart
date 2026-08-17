@@ -116,8 +116,9 @@ void main() {
         expect(aid.pedagogicalContext, 'notes');
       }
 
-      final absent =
-          VisualAidResponseDto.fromJson(const <String, dynamic>{}).toDomain();
+      final absent = VisualAidResponseDto.fromJson(
+        const <String, dynamic>{},
+      ).toDomain();
       expect(absent.hasImage, isFalse);
     });
 

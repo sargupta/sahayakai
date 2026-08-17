@@ -56,16 +56,19 @@ void main() {
     testWidgets('shows the prompt and both source buttons', (tester) async {
       await _pumpInput(tester, service: FakeImagePickerService());
 
-      expect(find.text('Add a clear photo of the textbook page.'),
-          findsOneWidget);
+      expect(
+        find.text('Add a clear photo of the textbook page.'),
+        findsOneWidget,
+      );
       expect(find.text('Take photo'), findsOneWidget);
       expect(find.text('Choose from gallery'), findsOneWidget);
     });
   });
 
   group('picking', () {
-    testWidgets('a camera pick reports a data-URI PickedImage upward',
-        (tester) async {
+    testWidgets('a camera pick reports a data-URI PickedImage upward', (
+      tester,
+    ) async {
       final service = FakeImagePickerService(result: tinyRaw());
       final host = await _pumpInput(tester, service: service);
 
@@ -90,8 +93,9 @@ void main() {
       expect(service.calls, [ImageInputSource.gallery]);
     });
 
-    testWidgets('cancelling the picker leaves the value untouched',
-        (tester) async {
+    testWidgets('cancelling the picker leaves the value untouched', (
+      tester,
+    ) async {
       // result == null models the user backing out of the picker.
       final service = FakeImagePickerService(result: null);
       final host = await _pumpInput(tester, service: service);
@@ -116,8 +120,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(host.value, isNull);
-      expect(find.text('Add a clear photo of the textbook page.'),
-          findsOneWidget);
+      expect(
+        find.text('Add a clear photo of the textbook page.'),
+        findsOneWidget,
+      );
     });
   });
 
@@ -136,8 +142,9 @@ void main() {
   });
 
   group('oversized-image rejection', () {
-    testWidgets('an image over the cap is rejected, not sent upward',
-        (tester) async {
+    testWidgets('an image over the cap is rejected, not sent upward', (
+      tester,
+    ) async {
       final service = FakeImagePickerService(result: oversizedRaw());
       final host = await _pumpInput(tester, service: service);
 
@@ -156,8 +163,9 @@ void main() {
   });
 
   group('permission denied', () {
-    testWidgets('shows the permission message and reports nothing upward',
-        (tester) async {
+    testWidgets('shows the permission message and reports nothing upward', (
+      tester,
+    ) async {
       final service = FakeImagePickerService(
         error: const ImageInputException(ImageInputErrorKind.permissionDenied),
       );
@@ -171,8 +179,9 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('a platform failure shows the generic failure message',
-        (tester) async {
+    testWidgets('a platform failure shows the generic failure message', (
+      tester,
+    ) async {
       final service = FakeImagePickerService(
         error: const ImageInputException(ImageInputErrorKind.failed),
       );
@@ -181,8 +190,10 @@ void main() {
       await tester.tap(find.text('Choose from gallery'));
       await tester.pumpAndSettle();
 
-      expect(find.text('We could not open that image. Please try again.'),
-          findsOneWidget);
+      expect(
+        find.text('We could not open that image. Please try again.'),
+        findsOneWidget,
+      );
     });
   });
 
@@ -194,15 +205,21 @@ void main() {
         errorText: 'Please add a photo of the textbook page.',
       );
 
-      expect(find.text('Please add a photo of the textbook page.'),
-          findsOneWidget);
+      expect(
+        find.text('Please add a photo of the textbook page.'),
+        findsOneWidget,
+      );
     });
 
-    testWidgets('a pick-time error outranks the form errorText', (tester) async {
+    testWidgets('a pick-time error outranks the form errorText', (
+      tester,
+    ) async {
       await _pumpInput(
         tester,
         service: FakeImagePickerService(
-          error: const ImageInputException(ImageInputErrorKind.permissionDenied),
+          error: const ImageInputException(
+            ImageInputErrorKind.permissionDenied,
+          ),
         ),
         errorText: 'Please add a photo of the textbook page.',
       );
@@ -211,53 +228,53 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('needs permission'), findsOneWidget);
-      expect(find.text('Please add a photo of the textbook page.'),
-          findsNothing);
+      expect(
+        find.text('Please add a photo of the textbook page.'),
+        findsNothing,
+      );
     });
   });
 
   group('overflow gates (DESIGN_RUBRIC §12.9, §12.10, §12.13)', () {
     for (final brightness in Brightness.values) {
       for (final scale in <double>[1.0, 1.3]) {
-        testWidgets(
-          'empty at 360dp, textScale $scale, ${brightness.name}',
-          (tester) async {
-            tester.view.physicalSize = _narrow;
-            tester.view.devicePixelRatio = 1.0;
-            addTearDown(tester.view.reset);
+        testWidgets('empty at 360dp, textScale $scale, ${brightness.name}', (
+          tester,
+        ) async {
+          tester.view.physicalSize = _narrow;
+          tester.view.devicePixelRatio = 1.0;
+          addTearDown(tester.view.reset);
 
-            await _pumpInput(
-              tester,
-              service: FakeImagePickerService(),
-              brightness: brightness,
-              textScale: scale,
-            );
+          await _pumpInput(
+            tester,
+            service: FakeImagePickerService(),
+            brightness: brightness,
+            textScale: scale,
+          );
 
-            expect(tester.takeException(), isNull);
-            expect(find.text('Take photo'), findsOneWidget);
-          },
-        );
+          expect(tester.takeException(), isNull);
+          expect(find.text('Take photo'), findsOneWidget);
+        });
 
-        testWidgets(
-          'picked at 360dp, textScale $scale, ${brightness.name}',
-          (tester) async {
-            tester.view.physicalSize = _narrow;
-            tester.view.devicePixelRatio = 1.0;
-            addTearDown(tester.view.reset);
+        testWidgets('picked at 360dp, textScale $scale, ${brightness.name}', (
+          tester,
+        ) async {
+          tester.view.physicalSize = _narrow;
+          tester.view.devicePixelRatio = 1.0;
+          addTearDown(tester.view.reset);
 
-            await _pumpInput(
-              tester,
-              service: FakeImagePickerService(),
-              brightness: brightness,
-              textScale: scale,
-              initialValue: tinyPicked(),
-            );
+          await _pumpInput(
+            tester,
+            service: FakeImagePickerService(),
+            brightness: brightness,
+            textScale: scale,
+            initialValue: tinyPicked(),
+          );
 
-            expect(tester.takeException(), isNull);
-            expect(find.text('Remove photo'), findsOneWidget);
-            expect(find.textContaining('of 14 MB'), findsOneWidget);
-          },
-        );
+          expect(tester.takeException(), isNull);
+          expect(find.text('Remove photo'), findsOneWidget);
+          expect(find.textContaining('of 14 MB'), findsOneWidget);
+        });
       }
     }
   });
@@ -277,14 +294,16 @@ Future<_HostState> _pumpInput(
     ProviderScope(
       overrides: [imagePickerServiceProvider.overrideWithValue(service)],
       child: MaterialApp(
-        theme:
-            brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+        theme: brightness == Brightness.dark
+            ? AppTheme.dark()
+            : AppTheme.light(),
         locale: const Locale('en'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context)
-              .copyWith(textScaler: TextScaler.linear(textScale)),
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(textScale)),
           child: child!,
         ),
         home: Scaffold(

@@ -38,10 +38,7 @@ void main() {
       expect(await transport.getAllTeachers(), isEmpty);
       expect(await transport.getPublicProfile('u1'), isNull);
       expect((await transport.getLikedItemIds()).groupPostIds, isEmpty);
-      expect(
-        (await transport.getMyConnectionData()).connectedUids,
-        isEmpty,
-      );
+      expect((await transport.getMyConnectionData()).connectedUids, isEmpty);
     });
 
     test('every write throws a typed TransportUnavailable', () async {
@@ -50,16 +47,20 @@ void main() {
 
       await expectUnavailable(() => transport.joinGroup('g1'));
       await expectUnavailable(() => transport.leaveGroup('g1'));
-      await expectUnavailable(() => transport.createGroupPost(
-            groupId: 'g1',
-            content: 'x',
-            postType: PostType.share,
-          ));
+      await expectUnavailable(
+        () => transport.createGroupPost(
+          groupId: 'g1',
+          content: 'x',
+          postType: PostType.share,
+        ),
+      );
       await expectUnavailable(() => transport.likeGroupPost('g1', 'p1'));
       await expectUnavailable(
-          () => transport.sendGroupChatMessage('g1', text: 'hi'));
+        () => transport.sendGroupChatMessage('g1', text: 'hi'),
+      );
       await expectUnavailable(
-          () => transport.sendCommunityChatMessage(text: 'hi'));
+        () => transport.sendCommunityChatMessage(text: 'hi'),
+      );
       await expectUnavailable(() => transport.sendConnectionRequest('u2'));
       await expectUnavailable(() => transport.acceptConnectionRequest('r1'));
       await expectUnavailable(() => transport.declineConnectionRequest('r1'));
@@ -67,24 +68,29 @@ void main() {
       await expectUnavailable(() => transport.followTeacher('u2'));
     });
 
-    test('triggerPersonaPulse returns null (503-equivalent stop, NOT an error)',
-        () async {
-      final result =
-          await transport.triggerPersonaPulse(const PersonaPulseRequest());
-      expect(result, isNull);
-    });
+    test(
+      'triggerPersonaPulse returns null (503-equivalent stop, NOT an error)',
+      () async {
+        final result = await transport.triggerPersonaPulse(
+          const PersonaPulseRequest(),
+        );
+        expect(result, isNull);
+      },
+    );
   });
 
   group('staffroomTransportProvider — binds the deferred impl', () {
-    test('resolves to DeferredStaffroomTransport (Firebase not configured)',
-        () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-      expect(
-        container.read(staffroomTransportProvider),
-        isA<DeferredStaffroomTransport>(),
-      );
-    });
+    test(
+      'resolves to DeferredStaffroomTransport (Firebase not configured)',
+      () {
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+        expect(
+          container.read(staffroomTransportProvider),
+          isA<DeferredStaffroomTransport>(),
+        );
+      },
+    );
 
     test('a UI unit can override with the fake', () async {
       final fake = FakeStaffroomTransport()
@@ -106,8 +112,9 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      final groups =
-          await container.read(staffroomTransportProvider).getMyGroups();
+      final groups = await container
+          .read(staffroomTransportProvider)
+          .getMyGroups();
       expect(groups.single.name, 'Class 8 Science');
     });
   });
@@ -122,7 +129,7 @@ void main() {
       await Future<void>.delayed(Duration.zero);
 
       fake.emitStaffRoomChat(
-        TransportSnapshot<List<ChatMessage>>.ready(const [
+        const TransportSnapshot<List<ChatMessage>>.ready([
           ChatMessage(
             id: 'c1',
             text: 'Namaste',
@@ -148,15 +155,17 @@ void main() {
       expect(fake.likes.single, (groupId: 'g1', postId: 'p1'));
     });
 
-    test('connection request records + returns the configured status',
-        () async {
-      final fake = FakeStaffroomTransport()
-        ..connectionRequestResult = ConnectionRequestResult.alreadyPending;
-      addTearDown(fake.dispose);
-      final status = await fake.sendConnectionRequest('u2');
-      expect(status, ConnectionRequestResult.alreadyPending);
-      expect(fake.connectionRequests, ['u2']);
-    });
+    test(
+      'connection request records + returns the configured status',
+      () async {
+        final fake = FakeStaffroomTransport()
+          ..connectionRequestResult = ConnectionRequestResult.alreadyPending;
+        addTearDown(fake.dispose);
+        final status = await fake.sendConnectionRequest('u2');
+        expect(status, ConnectionRequestResult.alreadyPending);
+        expect(fake.connectionRequests, ['u2']);
+      },
+    );
 
     test('community + group chat sends are distinguished by groupId', () async {
       final fake = FakeStaffroomTransport();
@@ -169,15 +178,18 @@ void main() {
       ]);
     });
 
-    test('persona pulse records the request + returns the configured result',
-        () async {
-      final fake = FakeStaffroomTransport()
-        ..personaPulseResult = const PersonaPulse(message: 'Hello teachers');
-      addTearDown(fake.dispose);
-      final result =
-          await fake.triggerPersonaPulse(const PersonaPulseRequest());
-      expect(result!.message, 'Hello teachers');
-      expect(fake.personaPulses, hasLength(1));
-    });
+    test(
+      'persona pulse records the request + returns the configured result',
+      () async {
+        final fake = FakeStaffroomTransport()
+          ..personaPulseResult = const PersonaPulse(message: 'Hello teachers');
+        addTearDown(fake.dispose);
+        final result = await fake.triggerPersonaPulse(
+          const PersonaPulseRequest(),
+        );
+        expect(result!.message, 'Hello teachers');
+        expect(fake.personaPulses, hasLength(1));
+      },
+    );
   });
 }

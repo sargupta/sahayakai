@@ -66,13 +66,16 @@ Future<void> pumpSignedInApp(
   Locale? locale,
   Size surface = kTallSurface,
   bool signedIn = true,
+
   /// Additional provider overrides layered on top of the standard set (e.g.
   /// `signInSucceedsOverride()` for a login test that needs `signIn()` to
   /// actually succeed without touching real Firebase).
   List<Override> extraOverrides = const [],
+
   /// False to observe an in-flight state. `pumpAndSettle` never terminates
   /// while a shimmer or a progress indicator is animating.
   bool settle = true,
+
   /// The landing is now the VIDYA home, whose Seal Mic breathes with a
   /// repeating controller. Disabling animations (the default) renders its
   /// composed still so `pumpAndSettle` never times out on the ambient motion —

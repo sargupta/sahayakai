@@ -76,8 +76,9 @@ void main() {
     expect(find.text('Try again'), findsNothing);
   });
 
-  testWidgets('429 -> limit-reached prompt with pricing, no retry',
-      (tester) async {
+  testWidgets('429 -> limit-reached prompt with pricing, no retry', (
+    tester,
+  ) async {
     await pump(
       tester,
       const ApiException(ApiErrorKind.rateLimited, 'x', statusCode: 429),
@@ -96,8 +97,9 @@ void main() {
     expect(find.text('Try again'), findsOneWidget);
   });
 
-  testWidgets('503 with no Retry-After -> generic busy message + retry',
-      (tester) async {
+  testWidgets('503 with no Retry-After -> generic busy message + retry', (
+    tester,
+  ) async {
     await pump(
       tester,
       const ApiException(ApiErrorKind.server, 'x', statusCode: 503),
@@ -118,8 +120,9 @@ void main() {
     expect(find.text('Try again'), findsOneWidget);
   });
 
-  testWidgets('a non-ApiException falls back to the generic error',
-      (tester) async {
+  testWidgets('a non-ApiException falls back to the generic error', (
+    tester,
+  ) async {
     await pump(tester, StateError('boom'));
     expect(find.byType(ErrorView), findsOneWidget);
     expect(find.textContaining('boom'), findsNothing);

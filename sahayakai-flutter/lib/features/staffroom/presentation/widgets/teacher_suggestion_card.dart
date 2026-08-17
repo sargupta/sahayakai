@@ -8,9 +8,9 @@ import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/secondary_button.dart';
 import '../../../inbox/data/block_c_transport.dart';
+import '../../data/staffroom_transport.dart';
 import '../../domain/connection.dart';
 import '../../domain/teacher.dart';
-import '../../data/staffroom_transport.dart';
 import 'staffroom_avatar.dart';
 
 /// A "People you may know" card (SPEC §A3.1): the teacher's avatar + name +
@@ -110,8 +110,9 @@ class _TeacherSuggestionCardState extends ConsumerState<TeacherSuggestionCard> {
                       const SizedBox(height: AppSpacing.space1),
                       Text(
                         teacher.schoolName!.trim(),
-                        style: text.bodyMedium
-                            ?.copyWith(color: scheme.onSurfaceVariant),
+                        style: text.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -139,8 +140,11 @@ class _TeacherSuggestionCardState extends ConsumerState<TeacherSuggestionCard> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(LucideIcons.check,
-                      size: AppIconSize.inline, color: saffronText),
+                  Icon(
+                    LucideIcons.check,
+                    size: AppIconSize.inline,
+                    color: saffronText,
+                  ),
                   const SizedBox(width: AppSpacing.space2),
                   Text(
                     l10n.staffroomConnectSent,

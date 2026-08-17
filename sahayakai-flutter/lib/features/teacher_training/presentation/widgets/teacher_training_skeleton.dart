@@ -12,26 +12,26 @@ class TeacherTrainingSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SkeletonShimmer(
+    return const SkeletonShimmer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
           // Grade / subject meta.
-          const SkeletonBar(height: SkeletonBar.subtitle, widthFactor: 0.5),
-          const SizedBox(height: AppSpacing.space4),
+          SkeletonBar(height: SkeletonBar.subtitle, widthFactor: 0.5),
+          SizedBox(height: AppSpacing.space4),
           // The introduction paragraph.
-          const SkeletonBar(widthFactor: 0.95),
-          const SizedBox(height: AppSpacing.space2),
-          const SkeletonBar(widthFactor: 0.75),
-          const SizedBox(height: AppSpacing.space6),
+          SkeletonBar(widthFactor: 0.95),
+          SizedBox(height: AppSpacing.space2),
+          SkeletonBar(widthFactor: 0.75),
+          SizedBox(height: AppSpacing.space6),
           // The "Strategies" label.
-          const SkeletonBar(height: SkeletonBar.title, widthFactor: 0.35),
-          const SizedBox(height: AppSpacing.space3),
+          SkeletonBar(height: SkeletonBar.title, widthFactor: 0.35),
+          SizedBox(height: AppSpacing.space3),
           // Two advice cards.
-          const SkeletonBlock(),
-          const SizedBox(height: AppSpacing.space3),
-          const SkeletonBlock(),
+          SkeletonBlock(),
+          SizedBox(height: AppSpacing.space3),
+          SkeletonBlock(),
         ],
       ),
     );

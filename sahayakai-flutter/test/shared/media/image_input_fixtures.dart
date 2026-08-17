@@ -44,8 +44,7 @@ class FakeImagePickerService implements ImagePickerService {
 RawPickedImage tinyRaw({
   String mimeType = 'image/jpeg',
   String? name = 'page.jpg',
-}) =>
-    RawPickedImage(bytes: kTinyPng, mimeType: mimeType, name: name);
+}) => RawPickedImage(bytes: kTinyPng, mimeType: mimeType, name: name);
 
 /// A valid [PickedImage] for seeding the preview state directly.
 PickedImage tinyPicked() => PickedImage.fromRaw(tinyRaw());
@@ -53,7 +52,7 @@ PickedImage tinyPicked() => PickedImage.fromRaw(tinyRaw());
 /// Raw bytes whose base64 data URI is over [kMaxImageDataUriBytes], to exercise
 /// the oversized-image reject path. ~10.6 MB of bytes -> ~14.1 MB of URI.
 RawPickedImage oversizedRaw() => RawPickedImage(
-      bytes: Uint8List(10600000),
-      mimeType: 'image/jpeg',
-      name: 'huge.jpg',
-    );
+  bytes: Uint8List(10600000),
+  mimeType: 'image/jpeg',
+  name: 'huge.jpg',
+);

@@ -31,8 +31,9 @@ void main() {
       final source = FakeProfileDocSource(doc: teacherDoc());
       final container = containerWith([docSourceOverride(source)]);
 
-      final profile =
-          await container.read(profileRepositoryProvider).fetchProfile();
+      final profile = await container
+          .read(profileRepositoryProvider)
+          .fetchProfile();
 
       expect(profile.displayName, 'Lakshmi Iyer');
       expect(profile.settings.administrativeRole, AdministrativeRole.hod);
@@ -46,8 +47,9 @@ void main() {
       final source = FakeProfileDocSource(doc: null);
       final container = containerWith([docSourceOverride(source)]);
 
-      final profile =
-          await container.read(profileRepositoryProvider).fetchProfile();
+      final profile = await container
+          .read(profileRepositoryProvider)
+          .fetchProfile();
 
       expect(profile, const TeacherProfile());
       expect(profile.isEmpty, isTrue);
@@ -57,8 +59,9 @@ void main() {
       final source = FakeProfileDocSource(doc: <String, dynamic>{});
       final container = containerWith([docSourceOverride(source)]);
 
-      final profile =
-          await container.read(profileRepositoryProvider).fetchProfile();
+      final profile = await container
+          .read(profileRepositoryProvider)
+          .fetchProfile();
 
       expect(profile.isEmpty, isTrue);
     });
@@ -70,55 +73,62 @@ void main() {
       expect(
         () => container.read(profileRepositoryProvider).fetchProfile(),
         throwsA(
-          isA<ApiException>()
-              .having((e) => e.kind, 'kind', ApiErrorKind.unauthorized),
+          isA<ApiException>().having(
+            (e) => e.kind,
+            'kind',
+            ApiErrorKind.unauthorized,
+          ),
         ),
       );
     });
   });
 
   group('ProfileRepository.saveProfile', () {
-    test('splits the profile across the two lanes, each getting its own half',
-        () async {
-      final source = FakeProfileDocSource(doc: teacherDoc());
-      final client = FakeApiClient();
-      final container = containerWith([
-        docSourceOverride(source),
-        apiClientOverride(client),
-      ]);
+    test(
+      'splits the profile across the two lanes, each getting its own half',
+      () async {
+        final source = FakeProfileDocSource(doc: teacherDoc());
+        final client = FakeApiClient();
+        final container = containerWith([
+          docSourceOverride(source),
+          apiClientOverride(client),
+        ]);
 
-      await container.read(profileRepositoryProvider).saveProfile(
-            const TeacherProfile(
-              displayName: 'Lakshmi Iyer',
-              state: 'Karnataka',
-              subjects: ['Science'],
-              preferredLanguage: AppLocale.kn,
-              settings: ProfileSettings(
-                educationBoard: 'CBSE',
-                administrativeRole: AdministrativeRole.hod,
+        await container
+            .read(profileRepositoryProvider)
+            .saveProfile(
+              const TeacherProfile(
+                displayName: 'Lakshmi Iyer',
+                state: 'Karnataka',
+                subjects: ['Science'],
+                preferredLanguage: AppLocale.kn,
+                settings: ProfileSettings(
+                  educationBoard: 'CBSE',
+                  administrativeRole: AdministrativeRole.hod,
+                ),
               ),
-            ),
-          );
+            );
 
-      // The document lane carries what REST strips (state) and what REST would
-      // clobber (name, subjects).
-      expect(source.merges.single, {
-        'displayName': 'Lakshmi Iyer',
-        'state': 'Karnataka',
-        'subjects': ['Science'],
-        'gradeLevels': <String>[],
-        'preferredLanguage': 'Kannada',
-      });
+        // The document lane carries what REST strips (state) and what REST would
+        // clobber (name, subjects).
+        expect(source.merges.single, {
+          'displayName': 'Lakshmi Iyer',
+          'state': 'Karnataka',
+          'subjects': ['Science'],
+          'gradeLevels': <String>[],
+          'preferredLanguage': 'Kannada',
+        });
 
-      // The PATCH lane carries what firestore.rules protects (administrative
-      // role) plus the board, under its renamed key.
-      expect(client.patches.single.path, '/api/user/profile');
-      expect(client.patches.single.data, {
-        'preferredBoard': 'CBSE',
-        'qualifications': <String>[],
-        'administrativeRole': 'hod',
-      });
-    });
+        // The PATCH lane carries what firestore.rules protects (administrative
+        // role) plus the board, under its renamed key.
+        expect(client.patches.single.path, '/api/user/profile');
+        expect(client.patches.single.data, {
+          'preferredBoard': 'CBSE',
+          'qualifications': <String>[],
+          'administrativeRole': 'hod',
+        });
+      },
+    );
 
     test('a failed document write does not reach the PATCH lane', () async {
       // Fail-fast: if the document merge is rejected, firing the REST call too
@@ -141,34 +151,41 @@ void main() {
       expect(client.patches, isEmpty);
     });
 
-    test('a failed PATCH surfaces, even though the document lane succeeded',
-        () async {
-      final source = FakeProfileDocSource(doc: teacherDoc());
-      final client = FakeApiClient(error: kUnauthorized);
-      final container = containerWith([
-        docSourceOverride(source),
-        apiClientOverride(client),
-      ]);
+    test(
+      'a failed PATCH surfaces, even though the document lane succeeded',
+      () async {
+        final source = FakeProfileDocSource(doc: teacherDoc());
+        final client = FakeApiClient(error: kUnauthorized);
+        final container = containerWith([
+          docSourceOverride(source),
+          apiClientOverride(client),
+        ]);
 
-      await expectLater(
-        container
-            .read(profileRepositoryProvider)
-            .saveProfile(const TeacherProfile(displayName: 'Lakshmi')),
-        throwsA(isA<ApiException>()),
-      );
+        await expectLater(
+          container
+              .read(profileRepositoryProvider)
+              .saveProfile(const TeacherProfile(displayName: 'Lakshmi')),
+          throwsA(isA<ApiException>()),
+        );
 
-      // Both merges are idempotent, so tapping Save again recovers; what must
-      // not happen is a partial save reported as success.
-      expect(source.merges, hasLength(1));
-      expect(client.patches, hasLength(1));
-    });
+        // Both merges are idempotent, so tapping Save again recovers; what must
+        // not happen is a partial save reported as success.
+        expect(source.merges, hasLength(1));
+        expect(client.patches, hasLength(1));
+      },
+    );
 
     test('savePatchableSlice is the exact lane Settings shares', () async {
       final client = FakeApiClient();
       final container = containerWith([apiClientOverride(client)]);
 
-      await container.read(profileRepositoryProvider).savePatchableSlice(
-            const ProfileSettings(educationBoard: 'CBSE', qualifications: ['B.Ed']),
+      await container
+          .read(profileRepositoryProvider)
+          .savePatchableSlice(
+            const ProfileSettings(
+              educationBoard: 'CBSE',
+              qualifications: ['B.Ed'],
+            ),
           );
 
       expect(client.patches.single.path, '/api/user/profile');
@@ -178,64 +195,78 @@ void main() {
       });
     });
 
-    test('a save never carries the qualifications it did not edit away', () async {
-      // The Profile screen has no qualifications editor (Settings owns it), so
-      // the fetched value must round-trip. If it did not, saving a phone
-      // number here would silently wipe the B.Ed set in Settings — the PATCH
-      // DTO sends an empty list as a deliberate "clear".
-      final source = FakeProfileDocSource(doc: teacherDoc());
-      final container = containerWith([docSourceOverride(source)]);
-      final repository = container.read(profileRepositoryProvider);
+    test(
+      'a save never carries the qualifications it did not edit away',
+      () async {
+        // The Profile screen has no qualifications editor (Settings owns it), so
+        // the fetched value must round-trip. If it did not, saving a phone
+        // number here would silently wipe the B.Ed set in Settings — the PATCH
+        // DTO sends an empty list as a deliberate "clear".
+        final source = FakeProfileDocSource(doc: teacherDoc());
+        final container = containerWith([docSourceOverride(source)]);
+        final repository = container.read(profileRepositoryProvider);
 
-      final fetched = await repository.fetchProfile();
-      final edited = fetched.copyWith(phoneNumber: '9000000000');
+        final fetched = await repository.fetchProfile();
+        final edited = fetched.copyWith(phoneNumber: '9000000000');
 
-      expect(edited.settings.qualifications, ['B.Ed']);
-      expect(
-        edited.patchableSlice.qualifications,
-        ['B.Ed'],
-        reason: 'the PATCH body must resend the qualifications it did not edit',
-      );
-    });
+        expect(edited.settings.qualifications, ['B.Ed']);
+        expect(
+          edited.patchableSlice.qualifications,
+          ['B.Ed'],
+          reason:
+              'the PATCH body must resend the qualifications it did not edit',
+        );
+      },
+    );
   });
 
   group('ProfileFormSaveController', () {
-    test('a successful save leaves the read state showing the saved values',
-        () async {
-      final container = containerWith([
-        docSourceOverride(FakeProfileDocSource(doc: teacherDoc())),
-        apiClientOverride(FakeApiClient()),
-      ]);
-      await container.read(profileControllerProvider.future);
+    test(
+      'a successful save leaves the read state showing the saved values',
+      () async {
+        final container = containerWith([
+          docSourceOverride(FakeProfileDocSource(doc: teacherDoc())),
+          apiClientOverride(FakeApiClient()),
+        ]);
+        await container.read(profileControllerProvider.future);
 
-      const edited = TeacherProfile(displayName: 'Lakshmi R Iyer');
-      final ok = await container
-          .read(profileFormSaveControllerProvider.notifier)
-          .save(edited);
+        const edited = TeacherProfile(displayName: 'Lakshmi R Iyer');
+        final ok = await container
+            .read(profileFormSaveControllerProvider.notifier)
+            .save(edited);
 
-      expect(ok, isTrue);
-      expect(container.read(profileControllerProvider).value, edited);
-      expect(container.read(profileFormSaveControllerProvider).hasError, isFalse);
-    });
+        expect(ok, isTrue);
+        expect(container.read(profileControllerProvider).value, edited);
+        expect(
+          container.read(profileFormSaveControllerProvider).hasError,
+          isFalse,
+        );
+      },
+    );
 
-    test('a failed save reports the error and does NOT touch the read state',
-        () async {
-      // The teacher is still looking at (and editing) the profile. Blowing the
-      // read state away on a failed write would throw their work off screen.
-      final container = containerWith([
-        docSourceOverride(FakeProfileDocSource(doc: teacherDoc())),
-        apiClientOverride(FakeApiClient(error: kUnauthorized)),
-      ]);
-      final loaded = await container.read(profileControllerProvider.future);
+    test(
+      'a failed save reports the error and does NOT touch the read state',
+      () async {
+        // The teacher is still looking at (and editing) the profile. Blowing the
+        // read state away on a failed write would throw their work off screen.
+        final container = containerWith([
+          docSourceOverride(FakeProfileDocSource(doc: teacherDoc())),
+          apiClientOverride(FakeApiClient(error: kUnauthorized)),
+        ]);
+        final loaded = await container.read(profileControllerProvider.future);
 
-      final ok = await container
-          .read(profileFormSaveControllerProvider.notifier)
-          .save(const TeacherProfile(displayName: 'Lakshmi R Iyer'));
+        final ok = await container
+            .read(profileFormSaveControllerProvider.notifier)
+            .save(const TeacherProfile(displayName: 'Lakshmi R Iyer'));
 
-      expect(ok, isFalse);
-      expect(container.read(profileFormSaveControllerProvider).hasError, isTrue);
-      expect(container.read(profileControllerProvider).value, loaded);
-    });
+        expect(ok, isFalse);
+        expect(
+          container.read(profileFormSaveControllerProvider).hasError,
+          isTrue,
+        );
+        expect(container.read(profileControllerProvider).value, loaded);
+      },
+    );
   });
 
   group('the signed-out document source (the pre-Firebase binding)', () {
@@ -276,19 +307,28 @@ void main() {
     });
 
     test('a token carrying the claim resolves to that plan', () async {
-      final container =
-          containerWith([tokenOverride(fakeJwt({'sub': 'u1', 'planType': 'gold'}))]);
+      final container = containerWith([
+        tokenOverride(fakeJwt({'sub': 'u1', 'planType': 'gold'})),
+      ]);
 
       expect(await container.read(planBadgeProvider.future), PlanBadge.gold);
     });
 
-    test('a verified token with NO claim is free, as middleware resolves it', () {
-      // New and pre-migration users have no claim yet, and the server meters
-      // them as free. Unlike the no-token case, this IS a known answer.
-      final container = containerWith([tokenOverride(fakeJwt({'sub': 'u1'}))]);
+    test(
+      'a verified token with NO claim is free, as middleware resolves it',
+      () {
+        // New and pre-migration users have no claim yet, and the server meters
+        // them as free. Unlike the no-token case, this IS a known answer.
+        final container = containerWith([
+          tokenOverride(fakeJwt({'sub': 'u1'})),
+        ]);
 
-      expect(container.read(planBadgeProvider.future), completion(PlanBadge.free));
-    });
+        expect(
+          container.read(planBadgeProvider.future),
+          completion(PlanBadge.free),
+        );
+      },
+    );
 
     test('the legacy institution claim reads as premium', () {
       final container = containerWith([
@@ -302,7 +342,12 @@ void main() {
     });
 
     test('a malformed token is unknown rather than a crash', () async {
-      for (final bad in ['not-a-jwt', 'a.b', 'a.b.c.d', 'x.!!!not-base64!!!.z']) {
+      for (final bad in [
+        'not-a-jwt',
+        'a.b',
+        'a.b.c.d',
+        'x.!!!not-base64!!!.z',
+      ]) {
         final container = containerWith([tokenOverride(bad)]);
         expect(
           await container.read(planBadgeProvider.future),
@@ -315,7 +360,9 @@ void main() {
 
   group('decodeJwtClaims', () {
     test('decodes an unpadded payload, which is what Firebase sends', () {
-      final claims = decodeJwtClaims(fakeJwt({'planType': 'pro', 'sub': 'abc'}));
+      final claims = decodeJwtClaims(
+        fakeJwt({'planType': 'pro', 'sub': 'abc'}),
+      );
       expect(claims, {'planType': 'pro', 'sub': 'abc'});
     });
 

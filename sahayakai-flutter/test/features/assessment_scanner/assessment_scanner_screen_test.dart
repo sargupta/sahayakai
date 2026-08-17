@@ -203,7 +203,7 @@ void main() {
       // ...and the request carried exactly the captured page as `pageUrls`.
       expect(client.posts.single.path, '/api/ai/assessment-scanner');
       final body = client.posts.single.data! as Map<String, dynamic>;
-      expect((body['pageUrls'] as List), hasLength(1));
+      expect(body['pageUrls'] as List, hasLength(1));
       expect(body['subject'], 'Mathematics');
       expect(body['gradeLevel'], 'Class 5');
     });

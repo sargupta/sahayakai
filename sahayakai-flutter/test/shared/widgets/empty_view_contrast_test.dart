@@ -17,7 +17,9 @@ import 'package:sahayakai/shared/widgets/empty_view.dart';
 /// here first.
 double _lin(int c) {
   final s = c / 255.0;
-  return s <= 0.03928 ? s / 12.92 : math.pow((s + 0.055) / 1.055, 2.4).toDouble();
+  return s <= 0.03928
+      ? s / 12.92
+      : math.pow((s + 0.055) / 1.055, 2.4).toDouble();
 }
 
 double _luminance(Color c) =>
@@ -58,14 +60,17 @@ void main() {
         final scheme = Theme.of(context).colorScheme;
         final ground = scheme.surfaceContainerLowest; // the scaffold background
 
-        final messageColor =
-            tester.widget<Text>(find.text(message)).style!.color!;
+        final messageColor = tester
+            .widget<Text>(find.text(message))
+            .style!
+            .color!;
 
         // The rendered body clears AA on the ground it actually sits on.
         expect(
           _ratio(messageColor, ground),
           greaterThanOrEqualTo(4.5),
-          reason: 'EmptyView body must clear AA on the scaffold ground '
+          reason:
+              'EmptyView body must clear AA on the scaffold ground '
               '(${brightness.name})',
         );
         // It IS the full-ink role now (the fix), aligned with the sibling panels.

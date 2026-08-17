@@ -57,7 +57,9 @@ Widget hostSettings(
   Locale locale = const Locale('en'),
   List<Override> overrides = const [],
 }) {
-  final base = brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light();
+  final base = brightness == Brightness.dark
+      ? AppTheme.dark()
+      : AppTheme.light();
   return ProviderScope(
     overrides: overrides,
     child: MaterialApp(
@@ -68,8 +70,9 @@ Widget hostSettings(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context)
-            .copyWith(textScaler: TextScaler.linear(textScale)),
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(textScale)),
         child: child!,
       ),
       home: child,

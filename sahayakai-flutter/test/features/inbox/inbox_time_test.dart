@@ -32,28 +32,40 @@ void main() {
   testWidgets('buckets: now / minutes / hours / days / weeks', (tester) async {
     final l10n = await _l10n(tester);
 
-    expect(inboxRelativeTime(at(const Duration(seconds: 5)), now, l10n),
-        l10n.inboxTimeNow);
-    expect(inboxRelativeTime(at(const Duration(minutes: 5)), now, l10n),
-        l10n.inboxTimeMinutes(5));
-    expect(inboxRelativeTime(at(const Duration(hours: 3)), now, l10n),
-        l10n.inboxTimeHours(3));
-    expect(inboxRelativeTime(at(const Duration(days: 2)), now, l10n),
-        l10n.inboxTimeDays(2));
-    expect(inboxRelativeTime(at(const Duration(days: 21)), now, l10n),
-        l10n.inboxTimeWeeks(3));
+    expect(
+      inboxRelativeTime(at(const Duration(seconds: 5)), now, l10n),
+      l10n.inboxTimeNow,
+    );
+    expect(
+      inboxRelativeTime(at(const Duration(minutes: 5)), now, l10n),
+      l10n.inboxTimeMinutes(5),
+    );
+    expect(
+      inboxRelativeTime(at(const Duration(hours: 3)), now, l10n),
+      l10n.inboxTimeHours(3),
+    );
+    expect(
+      inboxRelativeTime(at(const Duration(days: 2)), now, l10n),
+      l10n.inboxTimeDays(2),
+    );
+    expect(
+      inboxRelativeTime(at(const Duration(days: 21)), now, l10n),
+      l10n.inboxTimeWeeks(3),
+    );
   });
 
-  testWidgets('null / empty / unparseable → empty string (no fake time)',
-      (tester) async {
+  testWidgets('null / empty / unparseable → empty string (no fake time)', (
+    tester,
+  ) async {
     final l10n = await _l10n(tester);
     expect(inboxRelativeTime(null, now, l10n), '');
     expect(inboxRelativeTime('', now, l10n), '');
     expect(inboxRelativeTime('not-a-date', now, l10n), '');
   });
 
-  testWidgets('a small forward clock skew clamps to "now" (never negative)',
-      (tester) async {
+  testWidgets('a small forward clock skew clamps to "now" (never negative)', (
+    tester,
+  ) async {
     final l10n = await _l10n(tester);
     final future = now.add(const Duration(seconds: 8)).toIso8601String();
     expect(inboxRelativeTime(future, now, l10n), l10n.inboxTimeNow);

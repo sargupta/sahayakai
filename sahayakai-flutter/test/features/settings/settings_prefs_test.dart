@@ -20,20 +20,31 @@ void main() {
 
   group('ThemeModeController', () {
     test('defaults to following the device', () {
-      expect(makeContainer().read(themeModeControllerProvider), ThemeMode.system);
+      expect(
+        makeContainer().read(themeModeControllerProvider),
+        ThemeMode.system,
+      );
     });
 
-    test('set persists, and a fresh container hydrates it (round-trip)', () async {
-      final first = makeContainer();
-      await first.read(themeModeControllerProvider.notifier).set(ThemeMode.dark);
-      expect(first.read(themeModeControllerProvider), ThemeMode.dark);
+    test(
+      'set persists, and a fresh container hydrates it (round-trip)',
+      () async {
+        final first = makeContainer();
+        await first
+            .read(themeModeControllerProvider.notifier)
+            .set(ThemeMode.dark);
+        expect(first.read(themeModeControllerProvider), ThemeMode.dark);
 
-      // A new container is a new app launch reading the same store.
-      final second = makeContainer();
-      expect(second.read(themeModeControllerProvider), ThemeMode.system); // pre-hydration
-      await hydrate(second);
-      expect(second.read(themeModeControllerProvider), ThemeMode.dark);
-    });
+        // A new container is a new app launch reading the same store.
+        final second = makeContainer();
+        expect(
+          second.read(themeModeControllerProvider),
+          ThemeMode.system,
+        ); // pre-hydration
+        await hydrate(second);
+        expect(second.read(themeModeControllerProvider), ThemeMode.dark);
+      },
+    );
 
     test('round-trips every mode', () async {
       for (final mode in ThemeMode.values) {
@@ -49,20 +60,26 @@ void main() {
       }
     });
 
-    test('a corrupted stored value falls back to system, never throws', () async {
-      SharedPreferences.setMockInitialValues(
-        <String, Object>{'app_theme_mode': 'ultraviolet'},
-      );
-      final container = makeContainer();
-      await hydrate(container);
-      expect(container.read(themeModeControllerProvider), ThemeMode.system);
-      expect(themeModeFromName(null), ThemeMode.system);
-    });
+    test(
+      'a corrupted stored value falls back to system, never throws',
+      () async {
+        SharedPreferences.setMockInitialValues(<String, Object>{
+          'app_theme_mode': 'ultraviolet',
+        });
+        final container = makeContainer();
+        await hydrate(container);
+        expect(container.read(themeModeControllerProvider), ThemeMode.system);
+        expect(themeModeFromName(null), ThemeMode.system);
+      },
+    );
   });
 
   group('NotificationPrefsController', () {
     test('defaults to OFF (we cannot deliver notifications yet)', () {
-      expect(makeContainer().read(notificationPrefsControllerProvider), isFalse);
+      expect(
+        makeContainer().read(notificationPrefsControllerProvider),
+        isFalse,
+      );
     });
 
     test('set persists and hydrates (round-trip)', () async {
@@ -78,9 +95,9 @@ void main() {
     });
 
     test('switching back off persists too', () async {
-      SharedPreferences.setMockInitialValues(
-        <String, Object>{'notifications_enabled': true},
-      );
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'notifications_enabled': true,
+      });
       final container = makeContainer();
       await hydrate(container);
       expect(container.read(notificationPrefsControllerProvider), isTrue);
@@ -122,9 +139,9 @@ void main() {
     });
 
     test('a corrupted stored code falls back to English', () async {
-      SharedPreferences.setMockInitialValues(
-        <String, Object>{'app_locale_code': 'xx'},
-      );
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'app_locale_code': 'xx',
+      });
       final container = makeContainer();
       await hydrate(container);
       expect(container.read(localeControllerProvider), AppLocale.en);
@@ -151,9 +168,9 @@ void main() {
     test('a persisted choice still overrides the device locale', () async {
       // Returning teacher: the phone is Tamil but they previously picked Odia.
       // The device seed shows first, then their explicit choice wins.
-      SharedPreferences.setMockInitialValues(
-        <String, Object>{'app_locale_code': 'or'},
-      );
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'app_locale_code': 'or',
+      });
       final binding = TestWidgetsFlutterBinding.ensureInitialized();
       binding.platformDispatcher.localeTestValue = const Locale('ta');
       addTearDown(binding.platformDispatcher.clearLocaleTestValue);

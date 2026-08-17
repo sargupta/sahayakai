@@ -10,13 +10,14 @@ import 'package:sahayakai/shared/widgets/rich_markdown.dart';
 /// is consumed too, and that malformed input degrades to plain text rather than
 /// crashing the result view.
 Widget _host(String data) => MaterialApp(
-      theme: AppTheme.light(),
-      home: Scaffold(body: Center(child: RichMarkdown(data))),
-    );
+  theme: AppTheme.light(),
+  home: Scaffold(body: Center(child: RichMarkdown(data))),
+);
 
 void main() {
-  testWidgets(r'typesets inline $…$ math — the raw dollar markup never shows',
-      (tester) async {
+  testWidgets(r'typesets inline $…$ math — the raw dollar markup never shows', (
+    tester,
+  ) async {
     await tester.pumpWidget(_host(r'The area is $x^2$ square units.'));
     await tester.pumpAndSettle();
     // The surrounding prose still renders...
@@ -38,19 +39,23 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('renders markdown prose (bold + list), emphasis markers consumed',
-      (tester) async {
-    await tester
-        .pumpWidget(_host('**Photosynthesis** basics\n\n- leaf\n- root'));
-    await tester.pumpAndSettle();
-    expect(find.textContaining('Photosynthesis'), findsWidgets);
-    expect(find.textContaining('leaf'), findsWidgets);
-    expect(find.textContaining('**'), findsNothing);
-    expect(tester.takeException(), isNull);
-  });
+  testWidgets(
+    'renders markdown prose (bold + list), emphasis markers consumed',
+    (tester) async {
+      await tester.pumpWidget(
+        _host('**Photosynthesis** basics\n\n- leaf\n- root'),
+      );
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Photosynthesis'), findsWidgets);
+      expect(find.textContaining('leaf'), findsWidgets);
+      expect(find.textContaining('**'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
-  testWidgets('a malformed formula degrades to text, never crashes',
-      (tester) async {
+  testWidgets('a malformed formula degrades to text, never crashes', (
+    tester,
+  ) async {
     await tester.pumpWidget(_host(r'Bad: $\notarealcommand{$ and more.'));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);

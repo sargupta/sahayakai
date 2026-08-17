@@ -11,19 +11,19 @@ class RubricSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SkeletonShimmer(
+    return const SkeletonShimmer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SkeletonBar(height: SkeletonBar.title, widthFactor: 0.65),
-          const SizedBox(height: AppSpacing.space3),
-          const SkeletonBar(widthFactor: 0.9),
-          const SizedBox(height: AppSpacing.space2),
-          const SkeletonBar(widthFactor: 0.75),
-          const SizedBox(height: AppSpacing.space6),
+          SkeletonBar(height: SkeletonBar.title, widthFactor: 0.65),
+          SizedBox(height: AppSpacing.space3),
+          SkeletonBar(widthFactor: 0.9),
+          SizedBox(height: AppSpacing.space2),
+          SkeletonBar(widthFactor: 0.75),
+          SizedBox(height: AppSpacing.space6),
           // The criteria x levels grid.
-          const SkeletonBlock(),
+          SkeletonBlock(),
         ],
       ),
     );

@@ -23,7 +23,9 @@ import 'package:sahayakai/core/theme/app_colors.dart';
 
 double _lin(int c) {
   final s = c / 255.0;
-  return s <= 0.03928 ? s / 12.92 : math.pow((s + 0.055) / 1.055, 2.4).toDouble();
+  return s <= 0.03928
+      ? s / 12.92
+      : math.pow((s + 0.055) / 1.055, 2.4).toDouble();
 }
 
 double _luminance(Color c) =>
@@ -38,21 +40,23 @@ double _ratio(Color a, Color b) {
 }
 
 void main() {
-  group('educational-fact NoteBanner: full ink on the surfaceContainerHigh fill',
-      () {
-    test('light: onSurface on surfaceContainerHigh (>=4.5)', () {
-      expect(
-        _ratio(AppColors.lForeground, AppColors.lSurfaceContainerHigh),
-        greaterThanOrEqualTo(4.5),
-      );
-    });
-    test('dark: onSurface on surfaceContainerHigh (>=4.5)', () {
-      expect(
-        _ratio(AppColors.dForeground, AppColors.dSurfaceContainerHigh),
-        greaterThanOrEqualTo(4.5),
-      );
-    });
-  });
+  group(
+    'educational-fact NoteBanner: full ink on the surfaceContainerHigh fill',
+    () {
+      test('light: onSurface on surfaceContainerHigh (>=4.5)', () {
+        expect(
+          _ratio(AppColors.lForeground, AppColors.lSurfaceContainerHigh),
+          greaterThanOrEqualTo(4.5),
+        );
+      });
+      test('dark: onSurface on surfaceContainerHigh (>=4.5)', () {
+        expect(
+          _ratio(AppColors.dForeground, AppColors.dSurfaceContainerHigh),
+          greaterThanOrEqualTo(4.5),
+        );
+      });
+    },
+  );
 
   group('reflection inset: full ink on the surfaceContainerLow fill', () {
     test('light: onSurface on surfaceContainerLow (>=4.5)', () {
@@ -76,21 +80,24 @@ void main() {
     });
   });
 
-  group('analogy / explanation labels: muted, but on the white card surface', () {
-    test('light: onSurfaceVariant on the white card surface (>=4.5)', () {
-      expect(
-        _ratio(AppColors.lMutedForeground, AppColors.lCard),
-        greaterThanOrEqualTo(4.5),
-        reason: 'muted section labels must clear AA on the white card fill',
-      );
-    });
-    test('dark: onSurfaceVariant on the dark card surface (>=4.5)', () {
-      expect(
-        _ratio(AppColors.dMutedForeground, AppColors.dCard),
-        greaterThanOrEqualTo(4.5),
-      );
-    });
-  });
+  group(
+    'analogy / explanation labels: muted, but on the white card surface',
+    () {
+      test('light: onSurfaceVariant on the white card surface (>=4.5)', () {
+        expect(
+          _ratio(AppColors.lMutedForeground, AppColors.lCard),
+          greaterThanOrEqualTo(4.5),
+          reason: 'muted section labels must clear AA on the white card fill',
+        );
+      });
+      test('dark: onSurfaceVariant on the dark card surface (>=4.5)', () {
+        expect(
+          _ratio(AppColors.dMutedForeground, AppColors.dCard),
+          greaterThanOrEqualTo(4.5),
+        );
+      });
+    },
+  );
 
   group('stop medallion: onPrimaryContainer clears AA on its tint', () {
     test('light: onPrimaryContainer on primaryContainer (>=4.5)', () {

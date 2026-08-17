@@ -185,7 +185,7 @@ class AppTheme {
             RoundedRectangleBorder(borderRadius: AppRadius.rMd),
           ),
           elevation: const WidgetStatePropertyAll(1),
-          shadowColor: WidgetStatePropertyAll(AppColors.shadowBase),
+          shadowColor: const WidgetStatePropertyAll(AppColors.shadowBase),
           textStyle: WidgetStatePropertyAll(textTheme.labelLarge),
         ),
       ),

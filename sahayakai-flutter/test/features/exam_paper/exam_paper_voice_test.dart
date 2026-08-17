@@ -49,15 +49,15 @@ class _AutoExam extends ExamPaperController {
 }
 
 Widget _host(Widget screen, List<Override> overrides) => ProviderScope(
-      overrides: overrides,
-      child: MaterialApp(
-        theme: AppTheme.light(),
-        locale: const Locale('en'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: screen,
-      ),
-    );
+  overrides: overrides,
+  child: MaterialApp(
+    theme: AppTheme.light(),
+    locale: const Locale('en'),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: screen,
+  ),
+);
 
 void _tallPhone(WidgetTester tester) {
   tester.view.physicalSize = const Size(420, 1600);
@@ -91,55 +91,70 @@ void main() {
       _tallPhone(tester);
       final log = <ExamPaperRequest>[];
 
-      await tester.pumpWidget(_host(
-        const ExamPaperScreen(
-          prefill: ToolPrefill(
-            topic: 'Quadratic equations',
-            gradeLevel: 'Class 10',
-            subject: 'Mathematics',
-            autoSubmit: true,
+      await tester.pumpWidget(
+        _host(
+          const ExamPaperScreen(
+            prefill: ToolPrefill(
+              topic: 'Quadratic equations',
+              gradeLevel: 'Class 10',
+              subject: 'Mathematics',
+              autoSubmit: true,
+            ),
           ),
+          [examPaperControllerProvider.overrideWith(() => _RecordingExam(log))],
         ),
-        [examPaperControllerProvider.overrideWith(() => _RecordingExam(log))],
-      ));
+      );
       await tester.pumpAndSettle();
 
       // Grade + subject applied, and the spoken topic became a chapter chip.
       expect(find.text('Class 10'), findsOneWidget);
       expect(find.text('Mathematics'), findsOneWidget);
-      expect(find.widgetWithText(InputChip, 'Quadratic equations'),
-          findsOneWidget);
+      expect(
+        find.widgetWithText(InputChip, 'Quadratic equations'),
+        findsOneWidget,
+      );
       // But with no board, the voice path must NOT auto-fire an invalid submit —
       // it lands on the form and waits for the teacher to pick the board.
-      expect(log, isEmpty,
-          reason: 'a board-less exam directive must wait, not generate');
+      expect(
+        log,
+        isEmpty,
+        reason: 'a board-less exam directive must wait, not generate',
+      );
     });
 
-    testWidgets('autoSubmit + no usable fields does NOT auto-run',
-        (tester) async {
+    testWidgets('autoSubmit + no usable fields does NOT auto-run', (
+      tester,
+    ) async {
       _tallPhone(tester);
       final log = <ExamPaperRequest>[];
 
-      await tester.pumpWidget(_host(
-        const ExamPaperScreen(prefill: ToolPrefill(autoSubmit: true)),
-        [examPaperControllerProvider.overrideWith(() => _RecordingExam(log))],
-      ));
+      await tester.pumpWidget(
+        _host(const ExamPaperScreen(prefill: ToolPrefill(autoSubmit: true)), [
+          examPaperControllerProvider.overrideWith(() => _RecordingExam(log)),
+        ]),
+      );
       await tester.pumpAndSettle();
 
       expect(log, isEmpty);
     });
 
-    testWidgets('a manual open (autoSubmit: false) never auto-runs',
-        (tester) async {
+    testWidgets('a manual open (autoSubmit: false) never auto-runs', (
+      tester,
+    ) async {
       _tallPhone(tester);
       final log = <ExamPaperRequest>[];
 
-      await tester.pumpWidget(_host(
-        const ExamPaperScreen(
-          prefill: ToolPrefill(gradeLevel: 'Class 10', subject: 'Mathematics'),
+      await tester.pumpWidget(
+        _host(
+          const ExamPaperScreen(
+            prefill: ToolPrefill(
+              gradeLevel: 'Class 10',
+              subject: 'Mathematics',
+            ),
+          ),
+          [examPaperControllerProvider.overrideWith(() => _RecordingExam(log))],
         ),
-        [examPaperControllerProvider.overrideWith(() => _RecordingExam(log))],
-      ));
+      );
       await tester.pumpAndSettle();
 
       expect(log, isEmpty);
@@ -153,22 +168,24 @@ void main() {
       final client = FakeApiClient(postResponse: {'audioContent': _b64});
       final player = FakeAudioPlayerService();
 
-      await tester.pumpWidget(_host(
-        // CBSE Class 10 Mathematics is blueprinted, so no chapters are needed;
-        // only the board is missing after the voice seed.
-        const ExamPaperScreen(
-          prefill: ToolPrefill(
-            gradeLevel: 'Class 10',
-            subject: 'Mathematics',
-            autoSubmit: true,
+      await tester.pumpWidget(
+        _host(
+          // CBSE Class 10 Mathematics is blueprinted, so no chapters are needed;
+          // only the board is missing after the voice seed.
+          const ExamPaperScreen(
+            prefill: ToolPrefill(
+              gradeLevel: 'Class 10',
+              subject: 'Mathematics',
+              autoSubmit: true,
+            ),
           ),
+          [
+            examPaperControllerProvider.overrideWith(_AutoExam.new),
+            apiClientProvider.overrideWithValue(client),
+            audioPlayerServiceProvider.overrideWithValue(player),
+          ],
         ),
-        [
-          examPaperControllerProvider.overrideWith(_AutoExam.new),
-          apiClientProvider.overrideWithValue(client),
-          audioPlayerServiceProvider.overrideWithValue(player),
-        ],
-      ));
+      );
       await tester.pumpAndSettle();
 
       // Nothing auto-ran yet (no board), so nothing has spoken.
@@ -189,23 +206,29 @@ void main() {
       expect(spoken.length, lessThan(120));
     });
 
-    testWidgets('a manual open does NOT auto-speak when the paper lands',
-        (tester) async {
+    testWidgets('a manual open does NOT auto-speak when the paper lands', (
+      tester,
+    ) async {
       _tallPhone(tester);
       final client = FakeApiClient(postResponse: {'audioContent': _b64});
       final player = FakeAudioPlayerService();
 
-      await tester.pumpWidget(_host(
-        // autoSubmit defaults false — a tapped tile with grade/subject filled.
-        const ExamPaperScreen(
-          prefill: ToolPrefill(gradeLevel: 'Class 10', subject: 'Mathematics'),
+      await tester.pumpWidget(
+        _host(
+          // autoSubmit defaults false — a tapped tile with grade/subject filled.
+          const ExamPaperScreen(
+            prefill: ToolPrefill(
+              gradeLevel: 'Class 10',
+              subject: 'Mathematics',
+            ),
+          ),
+          [
+            examPaperControllerProvider.overrideWith(_AutoExam.new),
+            apiClientProvider.overrideWithValue(client),
+            audioPlayerServiceProvider.overrideWithValue(player),
+          ],
         ),
-        [
-          examPaperControllerProvider.overrideWith(_AutoExam.new),
-          apiClientProvider.overrideWithValue(client),
-          audioPlayerServiceProvider.overrideWithValue(player),
-        ],
-      ));
+      );
       await tester.pumpAndSettle();
 
       await _selectDropdown(tester, boardField, 'CBSE');
