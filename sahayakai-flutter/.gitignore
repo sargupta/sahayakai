@@ -50,3 +50,11 @@ app.*.map.json
 # tracked also created a self-referential trap: a recorded secret-scan failure
 # contains the offending line, so the next scan flags the log that reported it.
 docs/flutter/loop/last_gate_run.json
+
+# Golden-failure artefacts. `flutter test --tags golden` writes four PNGs per
+# failing baseline here (isolatedDiff / maskedDiff / masterImage / testImage).
+# They are debugging output for the run that produced them, they are large, and
+# committing them would put a stale "this is what broke" image next to the
+# baseline it disagrees with. The baselines themselves, under
+# test/golden/goldens/, stay tracked — they are the assertion.
+test/golden/failures/
