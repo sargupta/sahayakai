@@ -36,6 +36,22 @@ def _reset_settings_cache() -> Iterator[None]:
     get_settings.cache_clear()
 
 
+@pytest.fixture(autouse=True)
+def _reset_vidya_stream_guards() -> Iterator[None]:
+    """Clear the `/v1/vidya-voice/stream` cost guards between tests.
+
+    They are per-process module state on purpose — a burned token, an active uid
+    and an hourly counter all have to outlive the socket that created them — so
+    without this one test's successful open spends another's hourly budget, and
+    the failure lands in whichever test happens to open sixth.
+    """
+    from sahayakai_agents.agents.vidya_voice.router import reset_stream_guards
+
+    reset_stream_guards()
+    yield
+    reset_stream_guards()
+
+
 @pytest.fixture
 def test_api_key_pool() -> tuple[str, ...]:
     """Small key pool for resilience tests."""
