@@ -44,7 +44,8 @@
         "checkpoint"
       ],
       "parallelism": "Workflow fan-out where files are disjoint: B0 tail (U0.14/U0.15/U0.18), B1 sidecar vs Flutter client, B2 result-actions rollout. ARB files serialise — never two ARB units at once."
-    }
+    },
+    "$dependencySemantics": "dependsOn means the DEPENDENCY'S CODE EXISTS, not that it has been merged. A unit whose work is complete but awaiting a human merge is recorded `blocked`, and downstream units may still build on it by working on the same branch. U1.2-U1.5 build on feature/vidya-live-hardening, which already carries U1.1's commit 829b7866c. Treating `blocked` as a hard stop would idle the whole band on a human who is asleep."
   },
   "baselines": {
     "$note": "Captured at loop start from the real repo. Gates ratchet against these: a unit may not make any of them worse. Absolute targets live in bands[].exitCriteria.",
@@ -3045,7 +3046,8 @@
       "failure": null,
       "blockedBy": null,
       "notes": [
-        "Must land BEFORE U1.5 merges. Today anyone holding a 120s token can open a billable audio socket repeatedly, concurrently, without limit."
+        "Must land BEFORE U1.5 merges. Today anyone holding a 120s token can open a billable audio socket repeatedly, concurrently, without limit.",
+        "Builds on feature/vidya-live-hardening, which carries U1.1 (829b7866c). U1.1 is `blocked` on a human merge, not incomplete — its code is present on that branch."
       ]
     },
     {
@@ -3073,7 +3075,9 @@
       },
       "failure": null,
       "blockedBy": null,
-      "notes": []
+      "notes": [
+        "Builds on feature/vidya-live-hardening, which carries U1.1 (829b7866c). U1.1 is `blocked` on a human merge, not incomplete — its code is present on that branch."
+      ]
     },
     {
       "id": "U1.4",
@@ -3100,7 +3104,9 @@
       },
       "failure": null,
       "blockedBy": null,
-      "notes": []
+      "notes": [
+        "Builds on feature/vidya-live-hardening, which carries U1.1 (829b7866c). U1.1 is `blocked` on a human merge, not incomplete — its code is present on that branch."
+      ]
     },
     {
       "id": "U1.5",
@@ -3131,7 +3137,8 @@
         "detail": "H8 — merging the PR, and setting VIDYA_VOICE_LIVE_ENABLED on the prod web service."
       },
       "notes": [
-        "Leave the Developer-API mint endpoint in place: it is flag-dead, costs nothing, and is the only rollback target if Vertex Live has an outage."
+        "Leave the Developer-API mint endpoint in place: it is flag-dead, costs nothing, and is the only rollback target if Vertex Live has an outage.",
+        "Builds on feature/vidya-live-hardening, which carries U1.1 (829b7866c). U1.1 is `blocked` on a human merge, not incomplete — its code is present on that branch."
       ]
     },
     {
@@ -3297,7 +3304,9 @@
         "kind": "human",
         "detail": "H7 — a physical Android device with a working mic. Emulator audio cannot honestly test barge-in or echo."
       },
-      "notes": []
+      "notes": [
+        "Builds on feature/vidya-live-hardening, which carries U1.1 (829b7866c). U1.1 is `blocked` on a human merge, not incomplete — its code is present on that branch."
+      ]
     },
     {
       "id": "U2.1",
