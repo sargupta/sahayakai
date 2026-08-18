@@ -5,13 +5,13 @@
   "loop": {
     "id": "loop-2026-08-17T16-26+0530",
     "startedAtEpoch": 1786964217,
-    "landingModeAtEpoch": 1787021697,
-    "deadlineEpoch": 1787025297,
+    "landingModeAtEpoch": 1787058681,
+    "deadlineEpoch": 1787062281,
     "mode": "build",
     "wakeCount": 33,
     "consecutiveNoProgressWakes": 0,
     "haltReason": null,
-    "$deadlineNote": "The original 8h window was lifted by the founder on 2026-08-18: 'there is no such deadline of 8 hours, continue as long as you want, just remain focused on the goal'. Extended so the harness does not force a premature landing. Band order is unchanged — B0 still finishes before any feature work.",
+    "$deadlineNote": "Extended again at 12:41. The previous window was computed from a stale base and expired mid-run; landing fired ~4h ago while the founder's standing directive is to run to production-readiness. The directive supersedes the tracker clock, so the window moves rather than the loop landing early. Band order is unchanged.",
     "$plan": {
       "note": "Founder directive 2026-08-18: run 6-8h autonomously, use parallel workflows aggressively, land production-ready. Landing mode at +7h, hard stop +8h.",
       "phase1_B0_finish": [
@@ -72,21 +72,18 @@
     "$i18nNote": "Ratchet, downward only. 4760 at loop start; 0 after U0.7 (Hindi) + U0.8 (nine locales). All 11 locales now carry all 971 keys with zero audit defects."
   },
   "machine": {
-    "reconciledAtEpoch": 1787037013,
+    "reconciledAtEpoch": 1787037057,
     "git": {
       "appRoot": "/Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter",
       "gitPathPrefix": "sahayakai-flutter/",
       "branch": "feature/flutter-rebuild",
-      "head": "8a1d01bb47a3160ab90f859d43deeedcd77c51e3",
-      "headShort": "8a1d01bb4",
-      "headEpoch": 1787036983,
+      "head": "974847310ac95be5a1432e47a8337292b07c6024",
+      "headShort": "974847310",
+      "headEpoch": 1787037017,
       "remoteUrl": "https://github.com/sargupta/sahayakai.git",
-      "aheadOfOriginMain": 238,
+      "aheadOfOriginMain": 239,
       "behindOriginMain": 66,
-      "dirtyPaths": [
-        "ahayakai-flutter/docs/flutter/loop/LOOP_STATE.json",
-        "sahayakai-flutter/docs/flutter/loop/WAKE_LOG.jsonl"
-      ],
+      "dirtyPaths": [],
       "untrackedPaths": []
     },
     "code": {
@@ -148,8 +145,8 @@
     "status": "ok",
     "violations": [],
     "consecutiveViolationWakes": 0,
-    "checkedAtEpoch": 1787037013,
-    "checkedAtSha": "8a1d01bb47a3160ab90f859d43deeedcd77c51e3"
+    "checkedAtEpoch": 1787037057,
+    "checkedAtSha": "974847310ac95be5a1432e47a8337292b07c6024"
   },
   "measurements": {
     "analyze": {
