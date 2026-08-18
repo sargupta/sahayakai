@@ -12,9 +12,31 @@ google-genai issue #699.
 """
 from __future__ import annotations
 
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+
+# ---- Shared field bounds -------------------------------------------------
+#
+# Teacher personalisation reaches the Live model by TWO routes: the
+# `start-session` HTTP body (`SessionStartRequest`, below) and the `setup`
+# first frame on the `/stream` websocket (`StreamSetupFrame`, below). Both
+# end up as `build_vidya_voice_session(...)` arguments and therefore as text
+# inside the same system instruction, so they must be bounded IDENTICALLY —
+# otherwise the websocket becomes the soft way in for a `schoolContext` that
+# the HTTP route would have refused.
+#
+# The bounds live here once and are referenced by both. Re-declaring
+# `max_length=2000` in the second model would work today and drift the first
+# time either number is tuned. These aliases are exactly equivalent to the
+# `Field(max_length=...)` spellings they replace — the emitted JSON Schema
+# (and so `dist/types.generated.ts`) is byte-identical.
+Grade = Annotated[str, StringConstraints(max_length=50)]
+Subject = Annotated[str, StringConstraints(max_length=100)]
+LanguageCode = Annotated[str, StringConstraints(max_length=10)]
+SchoolContext = Annotated[str, StringConstraints(max_length=2000)]
+ScreenPath = Annotated[str, StringConstraints(min_length=1, max_length=500)]
+
 
 # ---- Allowed flow enum (must stay in sync with vidya/schemas.py) ---------
 
@@ -58,10 +80,10 @@ class TeacherProfileLite(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    preferredGrade: str | None = Field(default=None, max_length=50)
-    preferredSubject: str | None = Field(default=None, max_length=100)
-    preferredLanguage: str | None = Field(default=None, max_length=10)
-    schoolContext: str | None = Field(default=None, max_length=2000)
+    preferredGrade: Grade | None = None
+    preferredSubject: Subject | None = None
+    preferredLanguage: LanguageCode | None = None
+    schoolContext: SchoolContext | None = None
 
 
 class ScreenContextLite(BaseModel):
@@ -74,7 +96,7 @@ class ScreenContextLite(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    path: str = Field(min_length=1, max_length=500)
+    path: ScreenPath
     uiState: dict[str, str] | None = Field(default=None, max_length=20)
 
 
@@ -91,7 +113,57 @@ class SessionStartRequest(BaseModel):
 
     teacherProfile: TeacherProfileLite
     currentScreenContext: ScreenContextLite
-    detectedLanguage: str | None = Field(default=None, max_length=10)
+    detectedLanguage: LanguageCode | None = None
+
+
+# ---- Stream setup frame --------------------------------------------------
+
+
+class StreamSetupPayload(BaseModel):
+    """Teacher context for a `/v1/vidya-voice/stream` session.
+
+    The websocket proxy is the Vertex-funded sibling of `start-session`, and
+    until this model existed it had no way to receive a teacher profile at
+    all: the handler called `build_vidya_voice_session(grade=None,
+    subject=None, school_context=None)`, so the flagship voice path answered
+    a Class 8 science teacher exactly as it answered everyone. The HTTP route
+    had the profile all along.
+
+    Field names are the websocket's own (`grade`, not `preferredGrade`)
+    because this frame is not a teacher profile — it is the per-session
+    context, flattened, the shape the client already holds. The BOUNDS are
+    the `SessionStartRequest` bounds, shared not copied (see `Grade` &c.
+    above), so neither route can become the lenient one.
+
+    Every field is optional: this frame is an ENRICHMENT. A client that
+    sends nothing, or sends only a language, gets the same unpersonalised
+    session it got before, never an error.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    grade: Grade | None = None
+    subject: Subject | None = None
+    schoolContext: SchoolContext | None = None
+    language: LanguageCode | None = None
+    screenPath: ScreenPath | None = None
+
+
+class StreamSetupFrame(BaseModel):
+    """The optional first client frame: `{"setup": {...}}`.
+
+    Wrapped rather than bare so the frame is self-describing on a socket
+    that also carries `{"audio": ...}`, `{"text": ...}` and `{"end": true}`
+    — the handler dispatches on the `setup` key alone and never has to guess.
+
+    `extra="forbid"` on the wrapper is deliberate: a frame carrying both
+    `setup` and audio is a client bug, and accepting it would silently drop
+    one half of it.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    setup: StreamSetupPayload
 
 
 # ---- Response ------------------------------------------------------------

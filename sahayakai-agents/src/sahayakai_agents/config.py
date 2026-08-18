@@ -42,7 +42,13 @@ class Settings(BaseSettings):
     )
 
     # --- Runtime ---
-    env: Environment = Field(default="development", alias="SAHAYAKAI_AGENTS_ENV")
+    # REQUIRED — deliberately no default. `development` skips EVERY auth gate
+    # (see `auth.authenticate_request`), so a deploy path that forgets to set
+    # SAHAYAKAI_AGENTS_ENV used to serve wide open and silently. Without a
+    # default, a missing value raises at `Settings()` construction, the
+    # startup probe fails, and the revision crash-loops instead of shipping
+    # an unauthenticated sidecar.
+    env: Environment = Field(alias="SAHAYAKAI_AGENTS_ENV")
     port: int = Field(default=8080, alias="SAHAYAKAI_AGENTS_PORT")
     log_level: str = Field(default="INFO", alias="SAHAYAKAI_AGENTS_LOG_LEVEL")
 
@@ -228,6 +234,12 @@ def get_settings() -> Settings:
     Exception: tests that need to override should set env vars BEFORE the first
     call, or call `get_settings.cache_clear()` between cases.
     """
-    settings = Settings()
+    # `env` is required and has no default, so mypy (which synthesises
+    # `__init__` from the field list via `dataclass_transform`) sees a missing
+    # named argument. At runtime pydantic-settings supplies it from
+    # SAHAYAKAI_AGENTS_ENV — and raises `ValidationError` when it is absent,
+    # which is exactly the crash-loop we want. See
+    # tests/unit/test_config_env_required.py.
+    settings = Settings()  # type: ignore[call-arg]
     settings.assert_prod_invariants()
     return settings

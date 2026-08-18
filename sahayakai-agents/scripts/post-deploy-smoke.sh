@@ -3,7 +3,8 @@
 #
 # Verifies after a fresh `gcloud run services replace` that:
 #   1. /healthz returns 200 (basic liveness)
-#   2. /readyz returns 200 with key-pool counts (config sane)
+#   2. /readyz returns 200 (config loaded and validated). The body is
+#      deliberately opaque — /readyz is unauthenticated.
 #   3. /.well-known/agent-card.json returns the A2A card (v0.3 spec)
 #   4. POST /v1/parent-call/reply rejects with 401 when called WITHOUT
 #      an ID token (proves IAM invoker auth is on)

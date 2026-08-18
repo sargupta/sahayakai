@@ -77,15 +77,36 @@ steps:
         # fallback). Skipped when _STAGING_SUFFIX is empty (prod deploy).
         # See qa/results/lane-F/Q4_B_AUDIENCE_FIX.md.
         if [ -n "${_STAGING_SUFFIX}" ]; then
+          # INDENTATION BELOW IS LOAD-BEARING AND LOOKS WRONG ON PURPOSE.
+          # These two lines are the replacement text of sed's `c\` command,
+          # and GNU sed preserves their leading whitespace verbatim. But they
+          # also live inside this YAML block scalar, whose indentation
+          # indicator is set by the first content line (8 spaces) — YAML
+          # strips exactly 8 from every line before bash ever sees it. The
+          # env entry has to land at 12/14 spaces in the rendered service
+          # spec, so it must be written at 20/22 here.
+          #
+          # Written at the "natural" 12/14, they arrived at sed as 4/6 and
+          # `gcloud run services replace` failed with
+          #   "in service.rendered.yaml, line 80, column 5: expected <block
+          #    end>, but found '-'"
+          # — i.e. the env list item at the wrong nesting level. The old
+          # guards below did not catch it because they matched the value
+          # line anywhere on the line; they now anchor on the exact
+          # indentation, so this can only regress loudly.
           sed -i -e '/^            - name: SAHAYAKAI_AGENTS_AUDIENCE$/,/^                  key: latest$/c\
-            - name: SAHAYAKAI_AGENTS_AUDIENCE\
-              value: "${_STAGING_AUDIENCE_URL}"' /workspace/service.rendered.yaml
+                    - name: SAHAYAKAI_AGENTS_AUDIENCE\
+                      value: "${_STAGING_AUDIENCE_URL}"' /workspace/service.rendered.yaml
           if grep -q '^                  name: SAHAYAKAI_AGENTS_AUDIENCE$' /workspace/service.rendered.yaml; then
             echo "ERROR: SAHAYAKAI_AGENTS_AUDIENCE secretKeyRef still present after staging override" >&2
             exit 1
           fi
-          if ! grep -q "value: \"${_STAGING_AUDIENCE_URL}\"" /workspace/service.rendered.yaml; then
-            echo "ERROR: staging audience plain value not injected" >&2
+          if ! grep -q "^            - name: SAHAYAKAI_AGENTS_AUDIENCE$" /workspace/service.rendered.yaml; then
+            echo "ERROR: staging audience env key lost its 12-space indent" >&2
+            exit 1
+          fi
+          if ! grep -q "^              value: \"${_STAGING_AUDIENCE_URL}\"$" /workspace/service.rendered.yaml; then
+            echo "ERROR: staging audience plain value missing or wrongly indented" >&2
             exit 1
           fi
           echo "Staging audience override applied: ${_STAGING_AUDIENCE_URL}"

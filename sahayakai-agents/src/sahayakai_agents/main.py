@@ -172,22 +172,23 @@ async def healthz() -> dict[str, str]:
 
 
 @app.get("/readyz")
-async def readyz() -> dict[str, object]:
-    """Readiness: config is valid and Secret Manager is reachable.
+async def readyz() -> dict[str, str]:
+    """Readiness: config loaded and validated.
 
     A full-fat readiness check would ping Firestore too. We avoid that in
     Phase 1 to keep readiness cheap — Firestore unavailability surfaces in
     the first real request as a 5xx, which the Next.js circuit breaker
     already handles.
+
+    The body is deliberately opaque. `/readyz` is in `auth._PUBLIC_PATHS`, so
+    anything returned here is readable by any unauthenticated caller; it used
+    to leak `env`, `allowedInvokerCount`, `liveKeyCount` and `shadowKeyCount`
+    — a free reconnaissance read of our auth posture and key-pool depth.
+    Probes only need the status code; operators read config from the
+    `app.startup` log line and the Cloud Run revision spec instead.
     """
-    settings = get_settings()
-    return {
-        "status": "ok",
-        "env": settings.env,
-        "allowedInvokerCount": len(settings.allowed_invokers),
-        "liveKeyCount": len(settings.genai_keys),
-        "shadowKeyCount": len(settings.genai_shadow_keys),
-    }
+    get_settings()
+    return {"status": "ok"}
 
 
 # ---- A2A agent card (P1 #13) ----------------------------------------------
