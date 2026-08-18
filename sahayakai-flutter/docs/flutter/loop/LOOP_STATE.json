@@ -8,7 +8,7 @@
     "landingModeAtEpoch": 1787021697,
     "deadlineEpoch": 1787025297,
     "mode": "build",
-    "wakeCount": 27,
+    "wakeCount": 28,
     "consecutiveNoProgressWakes": 0,
     "haltReason": null,
     "$deadlineNote": "The original 8h window was lifted by the founder on 2026-08-18: 'there is no such deadline of 8 hours, continue as long as you want, just remain focused on the goal'. Extended so the harness does not force a premature landing. Band order is unchanged — B0 still finishes before any feature work.",
@@ -71,16 +71,16 @@
     "$i18nNote": "Ratchet, downward only. 4760 at loop start; 0 after U0.7 (Hindi) + U0.8 (nine locales). All 11 locales now carry all 971 keys with zero audit defects."
   },
   "machine": {
-    "reconciledAtEpoch": 1787030835,
+    "reconciledAtEpoch": 1787032001,
     "git": {
       "appRoot": "/Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter",
       "gitPathPrefix": "sahayakai-flutter/",
       "branch": "feature/flutter-rebuild",
-      "head": "9e67855d4ba9564e4a2c70ab43ee12b792056667",
-      "headShort": "9e67855d4",
-      "headEpoch": 1787030819,
+      "head": "5cca039b3c60bf204e25ad6e8c7849b2f0692193",
+      "headShort": "5cca039b3",
+      "headEpoch": 1787030839,
       "remoteUrl": "https://github.com/sargupta/sahayakai.git",
-      "aheadOfOriginMain": 232,
+      "aheadOfOriginMain": 233,
       "behindOriginMain": 66,
       "dirtyPaths": [
         "ahayakai-flutter/docs/flutter/loop/LOOP_STATE.json",
@@ -129,7 +129,7 @@
       "releaseConfigPresent": false,
       "keyPropertiesPresent": true,
       "aabPresent": true,
-      "aabBytes": 58618484,
+      "aabBytes": 62345709,
       "aabSignerVerified": true
     },
     "ci": {
@@ -147,8 +147,8 @@
     "status": "ok",
     "violations": [],
     "consecutiveViolationWakes": 0,
-    "checkedAtEpoch": 1787030835,
-    "checkedAtSha": "9e67855d4ba9564e4a2c70ab43ee12b792056667"
+    "checkedAtEpoch": 1787032001,
+    "checkedAtSha": "5cca039b3c60bf204e25ad6e8c7849b2f0692193"
   },
   "measurements": {
     "analyze": {
@@ -164,7 +164,7 @@
     {
       "id": "B0",
       "title": "Trust foundation + shippable build",
-      "status": "in_progress",
+      "status": "done",
       "isHardDeliverable": true,
       "exitCriteria": {
         "releaseAabSignatureVerified": true,
@@ -177,12 +177,12 @@
         "claimsRed": 0,
         "testsFailing": 0
       },
-      "exitVerifiedAtSha": null
+      "exitVerifiedAtSha": "5cca039b3c60bf204e25ad6e8c7849b2f0692193"
     },
     {
       "id": "B1",
       "title": "Live voice on Vertex via the hardened sidecar proxy",
-      "status": "pending",
+      "status": "in_progress",
       "exitCriteria": {},
       "exitVerifiedAtSha": null
     },
@@ -218,10 +218,10 @@
         "docs/flutter/pillars/PILLAR_BUILD_STATE.ARCHIVED.json"
       ],
       "dependsOn": [],
-      "status": "stale",
+      "status": "done",
       "attempts": 7,
       "reviewRounds": 0,
-      "verifiedAtSha": "745803d4b79aa72f91b42768bd35dea068e6fda6",
+      "verifiedAtSha": "5cca039b3c60bf204e25ad6e8c7849b2f0692193",
       "commit": "973b781c3",
       "evidence": {
         "gatesRun": [
@@ -313,7 +313,8 @@
         "re-affirmed at 1786980609 (was stale): 6 declared file(s) changed, but U0.12's 'native' gate passed at a23600d80 and runs the same ladder at equal-or-greater strength",
         "auto-demoted to stale at 1786994380: 3 declared file(s) changed since a23600d80 — re-gate required",
         "re-affirmed at 1786994622 (was stale): 3 declared file(s) changed, but U0.13's 'native' gate passed at 745803d4b and runs the same ladder at equal-or-greater strength",
-        "auto-demoted to stale at 1786997934: 1 declared file(s) changed since 745803d4b — re-gate required"
+        "auto-demoted to stale at 1786997934: 1 declared file(s) changed since 745803d4b — re-gate required",
+        "re-affirmed at 1787031980 (was stale): 1 declared file(s) changed, but U0.16's 'release' gate passed at 5cca039b3 and runs the same ladder at equal-or-greater strength"
       ]
     },
     {
@@ -337,10 +338,10 @@
       "dependsOn": [
         "U0.1"
       ],
-      "status": "stale",
+      "status": "done",
       "attempts": 1,
       "reviewRounds": 0,
-      "verifiedAtSha": "88c14f6b0f8b00cf58c6f82a42244bfbc38b726c",
+      "verifiedAtSha": "5cca039b3c60bf204e25ad6e8c7849b2f0692193",
       "commit": "88c14f6b0",
       "evidence": {
         "gatesRun": [
@@ -433,7 +434,8 @@
       "blockedBy": null,
       "notes": [
         "Drift was stale doc-comment copies: source comments had been corrected without a regen, so the generated files still asserted retracted claims about the auth stub. Regeneration removed them.",
-        "auto-demoted to stale at 1786998654: 2 declared file(s) changed since 88c14f6b0 — re-gate required"
+        "auto-demoted to stale at 1786998654: 2 declared file(s) changed since 88c14f6b0 — re-gate required",
+        "re-affirmed at 1787031980 (was stale): 2 declared file(s) changed, but U0.16's 'release' gate passed at 5cca039b3 and runs the same ladder at equal-or-greater strength"
       ]
     },
     {
@@ -812,10 +814,10 @@
       "dependsOn": [
         "U0.2"
       ],
-      "status": "stale",
+      "status": "done",
       "attempts": 2,
       "reviewRounds": 0,
-      "verifiedAtSha": "745803d4b79aa72f91b42768bd35dea068e6fda6",
+      "verifiedAtSha": "5cca039b3c60bf204e25ad6e8c7849b2f0692193",
       "commit": "3644a9df0",
       "evidence": {
         "gatesRun": [
@@ -935,7 +937,8 @@
         "Native re-gate after U0.5b touched pubspec; APK still builds with the bundled fonts.",
         "auto-demoted to stale at 1786994380: 3 declared file(s) changed since 3644a9df0 — re-gate required",
         "re-affirmed at 1786994622 (was stale): 3 declared file(s) changed, but U0.13's 'native' gate passed at 745803d4b and runs the same ladder at equal-or-greater strength",
-        "auto-demoted to stale at 1786998654: 2 declared file(s) changed since 745803d4b — re-gate required"
+        "auto-demoted to stale at 1786998654: 2 declared file(s) changed since 745803d4b — re-gate required",
+        "re-affirmed at 1787031980 (was stale): 2 declared file(s) changed, but U0.16's 'release' gate passed at 5cca039b3 and runs the same ladder at equal-or-greater strength"
       ]
     },
     {
@@ -955,10 +958,10 @@
       "dependsOn": [
         "U0.5"
       ],
-      "status": "stale",
+      "status": "done",
       "attempts": 1,
       "reviewRounds": 0,
-      "verifiedAtSha": "745803d4b79aa72f91b42768bd35dea068e6fda6",
+      "verifiedAtSha": "5cca039b3c60bf204e25ad6e8c7849b2f0692193",
       "commit": "90aaef196",
       "evidence": {
         "gatesRun": [
@@ -1075,7 +1078,8 @@
         "re-affirmed at 1786980609 (was stale): 23 declared file(s) changed, but U0.12's 'native' gate passed at a23600d80 and runs the same ladder at equal-or-greater strength",
         "auto-demoted to stale at 1786994380: 146 declared file(s) changed since a23600d80 — re-gate required",
         "re-affirmed at 1786994622 (was stale): 146 declared file(s) changed, but U0.13's 'native' gate passed at 745803d4b and runs the same ladder at equal-or-greater strength",
-        "auto-demoted to stale at 1786998654: 3 declared file(s) changed since 745803d4b — re-gate required"
+        "auto-demoted to stale at 1786998654: 3 declared file(s) changed since 745803d4b — re-gate required",
+        "re-affirmed at 1787031980 (was stale): 16 declared file(s) changed, but U0.16's 'release' gate passed at 5cca039b3 and runs the same ladder at equal-or-greater strength"
       ]
     },
     {
@@ -1094,10 +1098,10 @@
       "dependsOn": [
         "U0.1"
       ],
-      "status": "stale",
+      "status": "done",
       "attempts": 1,
       "reviewRounds": 0,
-      "verifiedAtSha": "a23600d80301e765b0946ffe9dfe966ad60b8b91",
+      "verifiedAtSha": "5cca039b3c60bf204e25ad6e8c7849b2f0692193",
       "commit": "65ef4f5a1",
       "evidence": {
         "gatesRun": [
@@ -1176,7 +1180,8 @@
         "Audit found zero quality defects in the 4950 existing translations; the gap is purely the 4760 missing. Two of my own rules were wrong on first run and were corrected, not allowlisted.",
         "auto-demoted to stale at 1786972599: 4 declared file(s) changed since 65ef4f5a1 — re-gate required",
         "re-affirmed at 1786980609 (was stale): 4 declared file(s) changed, but U0.12's 'native' gate passed at a23600d80 and runs the same ladder at equal-or-greater strength",
-        "auto-demoted to stale at 1787030661: 1 declared file(s) changed since a23600d80 — re-gate required"
+        "auto-demoted to stale at 1787030661: 1 declared file(s) changed since a23600d80 — re-gate required",
+        "re-affirmed at 1787031980 (was stale): 1 declared file(s) changed, but U0.16's 'release' gate passed at 5cca039b3 and runs the same ladder at equal-or-greater strength"
       ]
     },
     {
@@ -1199,10 +1204,10 @@
       "dependsOn": [
         "U0.6"
       ],
-      "status": "stale",
+      "status": "done",
       "attempts": 1,
       "reviewRounds": 0,
-      "verifiedAtSha": "a8a97c2595e1a268036dbbd88bae711374f7e455",
+      "verifiedAtSha": "5cca039b3c60bf204e25ad6e8c7849b2f0692193",
       "commit": "a8a97c259",
       "evidence": {
         "gatesRun": [
@@ -1308,7 +1313,8 @@
       "notes": [
         "Pilot found a systematic flaw that would have hit all 10 locales: the script-coverage rule had no notion of format-only strings, so the translator invented words to satisfy it. Now auto-detected rather than hand-allowlisted.",
         "Pilot caught a systematic rule flaw before it hit 10 locales — exactly what it was sequenced alone for.",
-        "auto-demoted to stale at 1787030661: 1 declared file(s) changed since a8a97c259 — re-gate required"
+        "auto-demoted to stale at 1787030661: 1 declared file(s) changed since a8a97c259 — re-gate required",
+        "re-affirmed at 1787031980 (was stale): 1 declared file(s) changed, but U0.16's 'release' gate passed at 5cca039b3 and runs the same ladder at equal-or-greater strength"
       ]
     },
     {
@@ -1333,10 +1339,10 @@
       "dependsOn": [
         "U0.7"
       ],
-      "status": "stale",
+      "status": "done",
       "attempts": 1,
       "reviewRounds": 0,
-      "verifiedAtSha": "3b82d70e6b4522d0663d6a73316fec0a38a5d6c3",
+      "verifiedAtSha": "5cca039b3c60bf204e25ad6e8c7849b2f0692193",
       "commit": "3b82d70e6",
       "evidence": {
         "gatesRun": [
@@ -1441,7 +1447,8 @@
       "blockedBy": null,
       "notes": [
         "9 locales via Workflow fan-out; 4 retried after transient 529s. All 11 locales audit-clean at 971 keys.",
-        "auto-demoted to stale at 1787030661: 2 declared file(s) changed since 3b82d70e6 — re-gate required"
+        "auto-demoted to stale at 1787030661: 2 declared file(s) changed since 3b82d70e6 — re-gate required",
+        "re-affirmed at 1787031980 (was stale): 2 declared file(s) changed, but U0.16's 'release' gate passed at 5cca039b3 and runs the same ladder at equal-or-greater strength"
       ]
     },
     {
@@ -1460,10 +1467,10 @@
         "U0.8",
         "U0.5"
       ],
-      "status": "stale",
+      "status": "done",
       "attempts": 1,
       "reviewRounds": 0,
-      "verifiedAtSha": "6c34d77da9bcabd043b1572cf8d79e54a7eef695",
+      "verifiedAtSha": "5cca039b3c60bf204e25ad6e8c7849b2f0692193",
       "commit": "6c34d77da",
       "evidence": {
         "gatesRun": [
@@ -1568,7 +1575,8 @@
       "blockedBy": null,
       "notes": [
         "Regen exposed a test that was only passing because of the i18n bug: it asserted English text while booting in Malayalam.",
-        "auto-demoted to stale at 1787030661: 2 declared file(s) changed since 6c34d77da — re-gate required"
+        "auto-demoted to stale at 1787030661: 2 declared file(s) changed since 6c34d77da — re-gate required",
+        "re-affirmed at 1787031980 (was stale): 2 declared file(s) changed, but U0.16's 'release' gate passed at 5cca039b3 and runs the same ladder at equal-or-greater strength"
       ]
     },
     {
@@ -1713,10 +1721,10 @@
       "dependsOn": [
         "U0.5"
       ],
-      "status": "stale",
+      "status": "done",
       "attempts": 1,
       "reviewRounds": 0,
-      "verifiedAtSha": "745803d4b79aa72f91b42768bd35dea068e6fda6",
+      "verifiedAtSha": "5cca039b3c60bf204e25ad6e8c7849b2f0692193",
       "commit": "b479e3961",
       "evidence": {
         "gatesRun": [
@@ -1818,7 +1826,8 @@
         "Font registration exposed 3 genuine Indic clipping bugs that Ahem had hidden. Kept the loader suite-wide rather than restoring the blindness.",
         "auto-demoted to stale at 1786994380: 13 declared file(s) changed since b479e3961 — re-gate required",
         "re-affirmed at 1786994622 (was stale): 13 declared file(s) changed, but U0.13's 'native' gate passed at 745803d4b and runs the same ladder at equal-or-greater strength",
-        "auto-demoted to stale at 1787030835: 12 declared file(s) changed since 745803d4b — re-gate required"
+        "auto-demoted to stale at 1787030835: 12 declared file(s) changed since 745803d4b — re-gate required",
+        "re-affirmed at 1787031980 (was stale): 12 declared file(s) changed, but U0.16's 'release' gate passed at 5cca039b3 and runs the same ladder at equal-or-greater strength"
       ]
     },
     {
@@ -2740,19 +2749,139 @@
         "U0.13",
         "U0.14"
       ],
-      "status": "pending",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "reviewRounds": 0,
-      "verifiedAtSha": null,
-      "commit": null,
+      "verifiedAtSha": "5cca039b3c60bf204e25ad6e8c7849b2f0692193",
+      "commit": "5cca039b3",
       "evidence": {
-        "gatesRun": [],
+        "gatesRun": [
+          {
+            "gate": "guard",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "GUARD NOTE: sibling tree has pre-existing changes (not caused by this wake):\n    ?? sahayakai-main/._fields.mjs\n    ?? sahayakai-main/._live.mjs\n    ?? sahayakai-main/.claude/launch.json\n    ?? sahayakai-main/.claude/skills/\n    ?? sahayakai-main/AI_Literacy_Drive_Women_Siliguri_INTERN_MARKETING_PLAYBOOK.md\nGUARD NOTE: the loop must not add to these. Web/sidecar units use a separate worktree.\nloop_guard: OK (branch=feature/flutter-rebuild head=5cca039b3)"
+          },
+          {
+            "gate": "selftest",
+            "exit": 0,
+            "durationSec": 5,
+            "tail": "selftest: planting violations to prove each guard can fail\n\n  ✓ secret_scan detects a planted keystore password\n  ✓ contradiction_guard detects a stub claim above real wiring\n  ✓ scope gate detects an undeclared changed file\n  ✓ scope gate refuses to run with UNIT_FILES unset\n  ✓ i18n_count reads real ARBs and agrees with the audit (untranslated=0)\n  ✓ template key count matches the audited value (971)\n  ✓ doc_truth_guard accounts for all 11 claims (11 green / 0 red)\n  ✓ doc_truth_guard --strict still fails on an unsatisfiable claim\n  ✓ verifiedAtSha ancestry check rejects a fabricated sha\n  ✓ record.py refuses another unit's gate as evidence\n  ✓ loop_guard passes on the real tree\n  ✓ reconcile passes on the real tree\n\nselftest: 12 passed, 0 failed\nselftest: every guard demonstrably fails when it should"
+          },
+          {
+            "gate": "reconcile",
+            "exit": 0,
+            "durationSec": 3,
+            "tail": "reconcile: head=5cca039b3 branch=feature/flutter-rebuild tests=1576 goldens=15 i18n_missing=0 claims=11g/0r\nreconcile: integrity OK"
+          },
+          {
+            "gate": "scope",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "all changes within the declared file list\n  (excluding 9 declared pre-existing dirty path(s))"
+          },
+          {
+            "gate": "format",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "no hand-written dart files changed"
+          },
+          {
+            "gate": "analyze",
+            "exit": 0,
+            "durationSec": 6,
+            "tail": "Analyzing sahayakai-flutter...                                  \nNo issues found! (ran in 5.0s)"
+          },
+          {
+            "gate": "token_guard",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "token-guard: PASS"
+          },
+          {
+            "gate": "secret_scan",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "secret_scan: OK"
+          },
+          {
+            "gate": "contradiction",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "contradiction_guard: OK"
+          },
+          {
+            "gate": "doc_truth",
+            "exit": 0,
+            "durationSec": 1,
+            "tail": "CLAIM                            ACTUAL   EXPECT   VERDICT\ngolden_gate_exists               15       >=12     GREEN\ni18n_zero_untranslated           0        ==0      GREEN\ni18n_zero_identical_english      0        ==0      GREEN\nfonts_bundled                    11       >=11     GREEN\nfonts_no_runtime_fetch           0        ==0      GREEN\nfonts_not_fetched_from_lib       0        ==0      GREEN\nrelease_signing_verified         1        ==1      GREEN\nflutter_ci_present               1        >=1      GREEN\nlints_enforced                   22       >=15     GREEN\nfirebase_wired                   1        >=1      GREEN\nturn_based_fallback_present      5        >=1      GREEN\n\ndoc_truth_guard: 11 green / 0 red"
+          },
+          {
+            "gate": "codegen_drift",
+            "exit": 0,
+            "durationSec": 3,
+            "tail": "codegen is idempotent against the working tree"
+          },
+          {
+            "gate": "custom_lint",
+            "exit": 0,
+            "durationSec": 23,
+            "tail": "Analyzing...\n\nNo issues found!"
+          },
+          {
+            "gate": "tests",
+            "exit": 0,
+            "durationSec": 253,
+            "tail": "  04:11 +1790: All tests passed!                                                                                                                                                                         \npassing=1790 failing=0 (baseline failing=0)"
+          },
+          {
+            "gate": "goldens",
+            "exit": 0,
+            "durationSec": 114,
+            "tail": "00:06 +5: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light prep desk — bn\n00:06 +6: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp home — dark\n00:07 +7: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/states_golden_test.dart: shared state baselines library populated — dark\n00:07 +8: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/states_golden_test.dart: shared state baselines library populated — dark\n00:07 +9: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light vidya home — ta\n00:07 +10: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp home at textScale 1.3 — dark\n00:08 +11: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/states_golden_test.dart: shared state baselines library populated at textScale 1.3 — light\n00:08 +12: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/states_golden_test.dart: shared state baselines library populated at textScale 1.3 — light\n00:08 +13: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/states_golden_test.dart: shared state baselines library populated at textScale 1.3 — light\n00:08 +14: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp home — light\n00:09 +15: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp home — light\n00:09 +16: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light vidya home — ml\n00:09 +17: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp login at textScale 1.3 — light\n00:09 +18: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light prep desk — ml\n00:10 +19: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light prep desk — ml\n00:10 +20: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 800dp login wide — dark\n00:10 +21: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 800dp home wide — dark\n00:11 +22: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 800dp login wide — light\n00:11 +23: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 800dp home wide — light\n00:19 +24: All tests passed!"
+          },
+          {
+            "gate": "i18n_full",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "untranslated=0 identical-to-english=0"
+          },
+          {
+            "gate": "build_apk_debug",
+            "exit": 0,
+            "durationSec": 68,
+            "tail": "\tat org.gradle.cache.internal.DefaultCacheCoordinator.useCache(DefaultCacheCoordinator.java:249)\n\tat org.gradle.cache.internal.DefaultCacheCoordinator.useCache(DefaultCacheCoordinator.java:223)\n\tat org.gradle.cache.internal.ExclusiveCacheAccessingWorker.flushOperations(ExclusiveCacheAccessingWorker.java:169)\n\tat org.gradle.cache.internal.ExclusiveCacheAccessingWorker.run(ExclusiveCacheAccessingWorker.java:139)\n\tat org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)\n\tat org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)\n\tat java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)\n\tat java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)\n\tat java.base/java.lang.Thread.run(Thread.java:840)\nCaused by: org.gradle.cache.internal.btree.CorruptedCacheException: Corrupted DataBlock 1659803 found in cache '/Users/sargupta/.gradle/caches/journal-1/file-access.bin'.\n\tat org.gradle.cache.internal.btree.FileBackedBlockStore$BlockImpl.blockCorruptedException(FileBackedBlockStore.java:267)\n\tat org.gradle.cache.internal.btree.FileBackedBlockStore$BlockImpl.read(FileBackedBlockStore.java:246)\n\tat org.gradle.cache.internal.btree.FileBackedBlockStore.read(FileBackedBlockStore.java:123)\n\tat org.gradle.cache.internal.btree.CachingBlockStore.read(CachingBlockStore.java:100)\n\tat org.gradle.cache.internal.btree.FreeListBlockStore.read(FreeListBlockStore.java:86)\n\tat org.gradle.cache.internal.btree.StateCheckBlockStore.read(StateCheckBlockStore.java:67)\n\tat org.gradle.cache.internal.btree.BTreePersistentIndexedCache.put(BTreePersistentIndexedCache.java:147)\n\t... 18 more\nRunning Gradle task 'assembleDebug'...                             64.2s\n✓ Built build/app/outputs/flutter-apk/app-debug.apk"
+          },
+          {
+            "gate": "build_aab_release",
+            "exit": 0,
+            "durationSec": 295,
+            "tail": "Running Gradle task 'bundleRelease'...                          \nFont asset \"CupertinoIcons.ttf\" was tree-shaken, reducing it from 257628 to 848 bytes (99.7% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.\nFont asset \"lucide.ttf\" was tree-shaken, reducing it from 413764 to 37888 bytes (90.8% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.\nFont asset \"MaterialIcons-Regular.otf\" was tree-shaken, reducing it from 1645184 to 2092 bytes (99.9% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.\nRunning Gradle task 'bundleRelease'...                            291.8s\n✓ Built build/app/outputs/bundle/release/app-release.aab (62.3MB)"
+          },
+          {
+            "gate": "signature",
+            "exit": 0,
+            "durationSec": 4,
+            "tail": "  using the local signing config (android/key.properties)\n  keystore cert SHA-256: 09:3E:4C:1A:71:2D:6D:40:A0:B6:A6:4B:56:F8:6F:67:00:10:16:C9:ED:44:6E:79:F2:DC:A8:DB:CF:E6:35:C3\n  AAB signer  SHA-256:   09:3E:4C:1A:71:2D:6D:40:A0:B6:A6:4B:56:F8:6F:67:00:10:16:C9:ED:44:6E:79:F2:DC:A8:DB:CF:E6:35:C3\nverify_aab_signer: MATCH — the AAB is signed with the upload key"
+          },
+          {
+            "gate": "build_apk_release",
+            "exit": 0,
+            "durationSec": 302,
+            "tail": "Running Gradle task 'assembleRelease'...                        \nFont asset \"lucide.ttf\" was tree-shaken, reducing it from 413764 to 37888 bytes (90.8% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.\nFont asset \"CupertinoIcons.ttf\" was tree-shaken, reducing it from 257628 to 848 bytes (99.7% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.\nFont asset \"MaterialIcons-Regular.otf\" was tree-shaken, reducing it from 1645184 to 2092 bytes (99.9% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.\nRunning Gradle task 'assembleRelease'...                          299.5s\n✓ Built build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk (31.9MB)\n✓ Built build/app/outputs/flutter-apk/app-arm64-v8a-release.apk (33.8MB)\n✓ Built build/app/outputs/flutter-apk/app-x86_64-release.apk (35.2MB)"
+          }
+        ],
         "reviewers": [],
-        "artifacts": []
+        "artifacts": [],
+        "gateProfile": "release",
+        "gateExit": 0,
+        "gateAtSha": "5cca039b3c60bf204e25ad6e8c7849b2f0692193"
       },
       "failure": null,
       "blockedBy": null,
-      "notes": []
+      "notes": [
+        "All 8 B0 exit criteria machine-true. Release ladder green: 1790 tests, 24 goldens, signed AAB 62.3MB with cert match verified independently of the gate."
+      ]
     },
     {
       "id": "U1.1",
