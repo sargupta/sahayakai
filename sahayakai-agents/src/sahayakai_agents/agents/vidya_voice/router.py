@@ -31,6 +31,7 @@ import contextlib
 import hashlib
 import hmac as hmaclib
 import json
+import os
 import time
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -39,6 +40,7 @@ from typing import Any
 import structlog
 from cachetools import TTLCache  # type: ignore[import-untyped]
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from pydantic import ValidationError
 
 from ...config import get_settings
 from ...shared.errors import AgentError
@@ -52,6 +54,8 @@ from .schemas import (
     LiveSessionConfig,
     SessionStartRequest,
     SessionStartResponse,
+    StreamSetupFrame,
+    StreamSetupPayload,
 )
 
 log = structlog.get_logger(__name__)
@@ -288,11 +292,47 @@ async def start_session(payload: SessionStartRequest) -> SessionStartResponse:
 # client-facing ephemeral token — so the sidecar terminates the client socket
 # and relays PCM frames to Vertex. The master credentials never leave Cloud Run.
 
-# A CURRENT Vertex Live model that accepts bidiGenerateContent (verified live
-# in us-central1). Override with SAHAYAKAI_VIDYA_VOICE_MODEL.
-VERTEX_LIVE_MODEL = "gemini-live-2.5-flash-native-audio"
-VERTEX_LIVE_LOCATION = "us-central1"
+# A CURRENT Vertex Live model that accepts bidiGenerateContent, and the region
+# it was verified working in. These are the DEFAULTS, not the values: Live
+# model availability moves per region on Google's schedule, not ours, so
+# needing a code change + build + deploy to point at a different model or move
+# out of a degraded region turns a five-minute mitigation into an hour.
+#
+# Unset behaviour is exactly the pre-existing behaviour — these two strings are
+# the ones proven working in production.
+_DEFAULT_VERTEX_LIVE_MODEL = "gemini-live-2.5-flash-native-audio"
+_DEFAULT_VERTEX_LIVE_LOCATION = "us-central1"
 _PCM_IN_MIME = "audio/pcm;rate=16000"
+
+
+def get_vertex_live_model() -> str:
+    """Vertex Live model for the `/stream` proxy.
+
+    Vertex uses its OWN model naming (`gemini-live-2.5-flash-native-audio`),
+    distinct from the Developer-API names `agent.get_voice_model()` returns
+    (`…-native-audio-latest`) and configured by a DIFFERENT variable — the two
+    routes talk to two different APIs and must be able to move independently.
+
+    Deliberately NOT `lru_cache`d, unlike `get_voice_model()`: the read is once
+    per socket, nowhere near hot, and a cache only buys a stale value plus a
+    `cache_clear()` every test has to remember.
+    """
+    return os.environ.get(
+        "SAHAYAKAI_VERTEX_LIVE_MODEL", _DEFAULT_VERTEX_LIVE_MODEL
+    )
+
+
+def get_vertex_live_location() -> str:
+    """Vertex region for the `/stream` proxy.
+
+    Not `settings.vertex_location` (`asia-south1`): that is where the turn-based
+    agents run, and Live is not offered in every region that serves
+    `generateContent`. Coupling them would silently break voice the next time
+    the turn-based fleet moves closer to its users.
+    """
+    return os.environ.get(
+        "SAHAYAKAI_VERTEX_LIVE_LOCATION", _DEFAULT_VERTEX_LIVE_LOCATION
+    )
 
 
 def mint_stream_token(uid: str, ttl_seconds: int = 120) -> str:
@@ -408,6 +448,30 @@ _GLOBAL_MAX_LIVE_SESSIONS = 24
 # a backgrounded tab holds the socket open indefinitely.
 _MAX_SESSION_SECONDS = 600
 _IDLE_INPUT_TIMEOUT_SECONDS = 30
+
+# How long the accepted socket waits for the optional `setup` first frame.
+#
+# Short on purpose. The frame is the client echoing state it already has in
+# memory, so a well-behaved client sends it in the same tick as the open and
+# never approaches this. The deadline exists only so a client that sends
+# NOTHING — old build, crashed mid-handshake, hostile — degrades to the
+# unpersonalised session it would have got anyway instead of hanging. Waiting
+# here costs nothing billable: the Vertex session is not opened until after it.
+_SETUP_FRAME_TIMEOUT_SECONDS = 5.0
+
+# Largest client frame we will parse. The frames are base64 PCM16LE 16kHz mono:
+# a full SECOND of audio is 32000 bytes raw, ~42.7 KiB base64, so 64 KiB leaves
+# generous headroom over any sane chunk size while keeping a hostile client from
+# handing us an arbitrarily large string to decode and forward to a metered API.
+# Oversized frames are dropped, not fatal — one bad frame must not end a lesson.
+_MAX_CLIENT_FRAME_BYTES = 64 * 1024
+
+# `_receive_client_frame` outcomes. An enum of four rather than exceptions
+# because three of the four are ordinary traffic, not errors.
+_FRAME_JSON = "json"
+_FRAME_TIMEOUT = "timeout"
+_FRAME_DISCONNECT = "disconnect"
+_FRAME_DROPPED = "dropped"
 
 _STREAM_TOKEN_BURN: TTLCache[str, bool] = TTLCache(
     maxsize=10_000, ttl=_TOKEN_BURN_TTL_SECONDS
@@ -582,6 +646,146 @@ class _StreamCounters:
     bytes_down: int = 0
     frames_up: int = 0
     frames_down: int = 0
+    # Frames received but never forwarded upstream: binary, malformed JSON,
+    # over the size bound, or not a JSON object. Counted separately from
+    # `frames_up` (which is everything that arrived) so a client quietly
+    # sending garbage is visible as a ratio rather than as silence.
+    frames_dropped: int = 0
+
+
+async def _receive_client_frame(  # noqa: PLR0911 — one return per way a frame can be bad; collapsing them hides the enumeration, which IS the function
+    ws: WebSocket, counters: _StreamCounters, *, timeout: float
+) -> tuple[str, Any]:
+    """Read and tally exactly one client frame. Returns `(outcome, payload)`.
+
+    The single place the client's bytes are trusted, and deliberately TOTAL:
+    every hostile or malformed shape a socket can produce leaves by one of the
+    four outcomes, never by an exception. That matters because the caller is
+    holding an open Vertex session — anything raised past the pumps unwinds
+    through `_relay_session`, and a leg that dies on a stray binary frame takes
+    a paid-for session with it and shows the teacher a hard error for a frame
+    the browser sent by accident.
+
+      `_FRAME_JSON`        payload is a parsed JSON object, size-checked
+      `_FRAME_TIMEOUT`     nothing arrived inside `timeout`
+      `_FRAME_DISCONNECT`  payload is the close code (may be None)
+      `_FRAME_DROPPED`     something arrived that we refuse to parse
+
+    `ws.receive()` rather than `ws.receive_text()`: the latter reaches straight
+    into `message["text"]`, so a client sending one BINARY frame raises KeyError
+    from inside the pump. Reading the raw ASGI message lets binary be a dropped
+    frame, which is what it is.
+
+    Bytes are tallied for everything that arrived, including dropped frames —
+    they crossed the wire and the reason for the tally is attribution, not
+    approval.
+    """
+    try:
+        message = await asyncio.wait_for(ws.receive(), timeout=timeout)
+    except TimeoutError:
+        return _FRAME_TIMEOUT, None
+    except WebSocketDisconnect as exc:
+        return _FRAME_DISCONNECT, exc.code
+    except RuntimeError:
+        # Starlette raises this ("Cannot call 'receive' once a disconnect
+        # message has been received") when a leg reads after the peer is gone.
+        # Same event, different spelling.
+        return _FRAME_DISCONNECT, None
+
+    if message["type"] != "websocket.receive":
+        return _FRAME_DISCONNECT, message.get("code")
+
+    raw = message.get("text")
+    if raw is None:
+        blob = message.get("bytes") or b""
+        counters.bytes_up += len(blob)
+        counters.frames_up += 1
+        counters.frames_dropped += 1
+        log.warning(
+            "vidya_voice.frame_dropped", reason="binary_frame", frame_bytes=len(blob)
+        )
+        return _FRAME_DROPPED, None
+
+    size = len(raw.encode("utf-8"))
+    counters.bytes_up += size
+    counters.frames_up += 1
+
+    if size > _MAX_CLIENT_FRAME_BYTES:
+        counters.frames_dropped += 1
+        log.warning(
+            "vidya_voice.frame_dropped", reason="frame_too_large", frame_bytes=size
+        )
+        return _FRAME_DROPPED, None
+
+    try:
+        frame = json.loads(raw)
+    except ValueError:
+        # `json.JSONDecodeError` subclasses `ValueError`; catching the parent
+        # also covers the recursion/NaN cases that raise plain ValueError.
+        counters.frames_dropped += 1
+        log.warning(
+            "vidya_voice.frame_dropped", reason="malformed_json", frame_bytes=size
+        )
+        return _FRAME_DROPPED, None
+
+    if not isinstance(frame, dict):
+        # `"null"`, `"[]"` and `"7"` are all valid JSON and none of them are a
+        # frame. Without this every `frame.get(...)` below is an AttributeError.
+        counters.frames_dropped += 1
+        log.warning(
+            "vidya_voice.frame_dropped", reason="not_an_object", frame_bytes=size
+        )
+        return _FRAME_DROPPED, None
+
+    return _FRAME_JSON, frame
+
+
+async def _await_setup_frame(
+    ws: WebSocket, counters: _StreamCounters
+) -> tuple[StreamSetupPayload | None, dict[str, Any] | None]:
+    """Read the optional `{"setup": {...}}` first frame.
+
+    Returns `(setup, pushback)`. `pushback` is a non-setup frame that arrived
+    first and must still be relayed — the teacher's opening audio chunk is not
+    ours to discard just because we were listening for something else.
+
+    Runs AFTER admission and BEFORE the Vertex session is opened. Both halves
+    matter: after admission means the frame cannot be used to slip past a limit
+    (every gate has already run on the token, and this frame carries no
+    identity); before the connect means the system instruction is built once,
+    with the profile in it, and the 5s worst-case wait is unbilled.
+
+    Never raises for a bad frame. A `setup` that fails validation is logged and
+    dropped, leaving the session unpersonalised — the same outcome as a client
+    that stayed silent, which is the right failure for an enrichment. Raising
+    would let a stale client field name take voice mode down entirely.
+    """
+    outcome, payload = await _receive_client_frame(
+        ws, counters, timeout=_SETUP_FRAME_TIMEOUT_SECONDS
+    )
+    if outcome == _FRAME_DISCONNECT:
+        # Bail before the Vertex session exists. Returning normally here would
+        # open — and bill — a live session for a socket that is already gone.
+        raise WebSocketDisconnect(code=payload or 1005)
+    if outcome in (_FRAME_TIMEOUT, _FRAME_DROPPED):
+        log.info("vidya_voice.setup_frame_absent", reason=outcome)
+        return None, None
+
+    frame: dict[str, Any] = payload
+    if "setup" not in frame:
+        return None, frame
+
+    try:
+        return StreamSetupFrame.model_validate(frame).setup, None
+    except ValidationError as exc:
+        # Field names/values only — `schoolContext` is teacher-authored text
+        # and has no business in a log line.
+        log.warning(
+            "vidya_voice.setup_frame_invalid",
+            error_count=exc.error_count(),
+            fields=sorted({str(e["loc"][-1]) for e in exc.errors() if e["loc"]}),
+        )
+        return None, None
 
 
 def _build_vertex_live_config(session_config: dict[str, Any]) -> Any:
@@ -625,7 +829,11 @@ def _build_vertex_live_config(session_config: dict[str, Any]) -> Any:
 
 
 async def _pump_client_to_vertex(
-    ws: WebSocket, session: Any, counters: _StreamCounters
+    ws: WebSocket,
+    session: Any,
+    counters: _StreamCounters,
+    *,
+    first_frame: dict[str, Any] | None = None,
 ) -> str:
     """Relay client frames (mic audio / text turns) up to Vertex Live.
 
@@ -633,33 +841,53 @@ async def _pump_client_to_vertex(
     close code. Reading is bounded by `_IDLE_INPUT_TIMEOUT_SECONDS`: a client
     that stops sending (backgrounded tab, teacher walked away, half-open TCP
     that never produced a FIN) keeps a metered Vertex session alive otherwise.
+
+    `first_frame` is the frame the setup handshake read off the wire and found
+    was not a setup frame. It is replayed here, already tallied, so a client
+    that starts talking immediately does not lose its opening chunk.
+
+    Every frame arrives via `_receive_client_frame`, so binary frames, junk
+    JSON, oversized frames and a mid-read disconnect are all ordinary control
+    flow here rather than exceptions escaping into `_relay_session`.
     """
     from google.genai import types as genai_types
 
+    pending = first_frame
     while True:
-        try:
-            raw = await asyncio.wait_for(
-                ws.receive_text(), timeout=_IDLE_INPUT_TIMEOUT_SECONDS
+        if pending is not None:
+            frame, pending = pending, None
+        else:
+            outcome, payload = await _receive_client_frame(
+                ws, counters, timeout=_IDLE_INPUT_TIMEOUT_SECONDS
             )
-        except TimeoutError:
-            return "idle_timeout"
+            if outcome == _FRAME_TIMEOUT:
+                return "idle_timeout"
+            if outcome == _FRAME_DISCONNECT:
+                return "client_disconnect"
+            if outcome == _FRAME_DROPPED:
+                # Already counted and logged. One malformed frame is not a
+                # reason to end a lesson.
+                continue
+            frame = payload
 
-        counters.bytes_up += len(raw.encode("utf-8"))
-        counters.frames_up += 1
-
-        frame = json.loads(raw)
         if frame.get("end"):
             return "client_end"
         if frame.get("audio"):
+            try:
+                audio = base64.b64decode(frame["audio"])
+            except (ValueError, TypeError):
+                # Well-formed JSON carrying a non-base64 payload. Same verdict
+                # as malformed JSON: drop it, keep the session.
+                counters.frames_dropped += 1
+                log.warning("vidya_voice.frame_dropped", reason="bad_base64_audio")
+                continue
             await session.send_realtime_input(
-                audio=genai_types.Blob(
-                    data=base64.b64decode(frame["audio"]), mime_type=_PCM_IN_MIME
-                )
+                audio=genai_types.Blob(data=audio, mime_type=_PCM_IN_MIME)
             )
         elif frame.get("text"):
             await session.send_client_content(
                 turns=genai_types.Content(
-                    role="user", parts=[genai_types.Part(text=frame["text"])]
+                    role="user", parts=[genai_types.Part(text=str(frame["text"]))]
                 ),
                 turn_complete=True,
             )
@@ -707,14 +935,20 @@ async def _pump_vertex_to_client(
 
 
 async def _relay_session(
-    ws: WebSocket, session: Any, counters: _StreamCounters
+    ws: WebSocket,
+    session: Any,
+    counters: _StreamCounters,
+    *,
+    first_frame: dict[str, Any] | None = None,
 ) -> tuple[int, str]:
     """Run both pumps until one leg ends or a session cap fires.
 
     Returns `(close_code, end_reason)`. Anything the pumps raise other than a
     client disconnect is re-raised for the handler's error path.
     """
-    up = asyncio.create_task(_pump_client_to_vertex(ws, session, counters))
+    up = asyncio.create_task(
+        _pump_client_to_vertex(ws, session, counters, first_frame=first_frame)
+    )
     down = asyncio.create_task(_pump_vertex_to_client(ws, session, counters))
     # The wall clock rides on `asyncio.wait` itself: an empty `done` set means
     # neither leg finished inside the budget.
@@ -749,6 +983,7 @@ async def vidya_voice_stream(ws: WebSocket) -> None:
     """Full-duplex bridge: OmniOrb client <-> sidecar <-> Vertex Live.
 
     Client -> sidecar frames (JSON text):
+        {"setup": {...}}                            OPTIONAL first frame; see below
         {"audio": "<base64 PCM16LE 16kHz mono>"}   one mic chunk
         {"text": "<utterance>"}                     a text turn (testing / fallback)
         {"end": true}                               end the session
@@ -776,47 +1011,87 @@ async def vidya_voice_stream(ws: WebSocket) -> None:
     open limit (4429) and a process-wide concurrency ceiling (4503); once open,
     the session is bounded by an idle-input timeout (4408) and a wall clock
     (4410). See the `Cost + abuse controls` block for the numbers and why.
+
+    Personalisation: the accepted socket waits up to
+    `_SETUP_FRAME_TIMEOUT_SECONDS` for an optional first frame
+
+        {"setup": {"grade","subject","schoolContext","language","screenPath"}}
+
+    bounded by the SAME limits as the `start-session` HTTP body (see
+    `schemas.Grade` and friends). Without it this route built its system
+    instruction with `grade=None, subject=None, school_context=None` while the
+    turn-based path had the teacher's real profile — voice mode, the flagship,
+    answered a Class 8 science teacher exactly as it answered everyone.
+
+    The frame arrives strictly AFTER admission, so it can neither carry
+    identity nor move any limit; and strictly BEFORE the Vertex connect, so the
+    profile is in the system instruction from the first token and the wait
+    itself is unbilled.
     """
     uid = await _admit_stream(ws)
     if uid is None:
         return
 
-    from google import genai
-
-    await ws.accept()
-    settings = get_settings()
     counters = _StreamCounters()
     started_at = time.monotonic()
     close_code = 1000
     end_reason = "unknown"
 
-    detected_language = ws.query_params.get("lang") or "en"
-    screen_path = ws.query_params.get("screen") or "/dashboard"
-    session_config = build_vidya_voice_session(
-        language=detected_language,
-        screen_path=screen_path,
-        grade=None,
-        subject=None,
-        school_context=None,
-    )
-    # Vertex uses its OWN model naming (`gemini-live-2.5-flash-native-audio`),
-    # distinct from the Developer-API names `get_voice_model()` returns
-    # (`…-native-audio-latest`). Always use the Vertex name for this path.
-    model = VERTEX_LIVE_MODEL
-
-    client = genai.Client(
-        vertexai=True,
-        project=settings.gcp_project,
-        location=VERTEX_LIVE_LOCATION,
-    )
-    config = _build_vertex_live_config(session_config)
-    log.info(
-        "vidya_voice.stream_open", uid=uid, model=model, language=detected_language
-    )
-
+    # The `try` opens HERE, immediately after the ladder handed us the uid slot
+    # and the global permit, so that every path out of this handler goes through
+    # the `finally` that gives them back. Anything raised between the reservation
+    # and the `try` — a failed `accept()`, a client that vanished during the
+    # setup wait, a `genai.Client` that could not be constructed — would
+    # otherwise strand a permit for the life of the process, and 24 of those
+    # bricks the instance.
     try:
+        await ws.accept()
+
+        setup, pushback = await _await_setup_frame(ws, counters)
+
+        # Query params stay the fallback: the shipped Flutter client sends
+        # `?lang=`/`?screen=` and no setup frame, and must keep working exactly
+        # as before until it is updated.
+        detected_language = (
+            (setup.language if setup else None) or ws.query_params.get("lang") or "en"
+        )
+        screen_path = (
+            (setup.screenPath if setup else None)
+            or ws.query_params.get("screen")
+            or "/dashboard"
+        )
+        session_config = build_vidya_voice_session(
+            language=detected_language,
+            screen_path=screen_path,
+            grade=setup.grade if setup else None,
+            subject=setup.subject if setup else None,
+            school_context=setup.schoolContext if setup else None,
+        )
+
+        model = get_vertex_live_model()
+        from google import genai
+
+        client = genai.Client(
+            vertexai=True,
+            project=get_settings().gcp_project,
+            location=get_vertex_live_location(),
+        )
+        config = _build_vertex_live_config(session_config)
+        log.info(
+            "vidya_voice.stream_open",
+            uid=uid,
+            model=model,
+            language=detected_language,
+            # Whether the regression is actually fixed in production is not
+            # answerable from the code — it depends on clients sending the
+            # frame. This field is how we find out.
+            personalised=setup is not None,
+        )
+
         async with client.aio.live.connect(model=model, config=config) as session:
-            close_code, end_reason = await _relay_session(ws, session, counters)
+            close_code, end_reason = await _relay_session(
+                ws, session, counters, first_frame=pushback
+            )
     except WebSocketDisconnect:
         end_reason = "client_disconnect"
     except Exception as exc:  # noqa: BLE001
@@ -846,6 +1121,7 @@ async def vidya_voice_stream(ws: WebSocket) -> None:
             bytes_down=counters.bytes_down,
             frames_up=counters.frames_up,
             frames_down=counters.frames_down,
+            frames_dropped=counters.frames_dropped,
         )
         with contextlib.suppress(Exception):
             await ws.close(code=close_code)
