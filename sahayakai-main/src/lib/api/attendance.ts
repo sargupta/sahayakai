@@ -10,7 +10,7 @@
 
 import { apiFetch } from '@/lib/api/client';
 import type {
-    ClassRecord, Student, DailyAttendanceRecord,
+    ClassRecord, Student, RosterStudent, DailyAttendanceRecord,
     ParentOutreach, StudentAttendanceSummary, AttendanceStatus, OutreachReason,
 } from '@/types/attendance';
 import type { Language, GradeLevel, Subject } from '@/types';
@@ -64,6 +64,16 @@ export async function addStudentAction(classId: string, data: {
 
 export async function getStudentsAction(classId: string): Promise<Student[]> {
     return apiFetch(`/api/attendance/classes/${encodeURIComponent(classId)}/students`);
+}
+
+/**
+ * Masked roster — same endpoint, `?projection=roster`. Returns only the six
+ * RosterStudent fields; the full parentPhone is dropped server-side and never
+ * reaches this process. Use this anywhere the full number isn't strictly
+ * needed; `getStudentsAction` stays for the student-manager edit form.
+ */
+export async function getStudentRosterAction(classId: string): Promise<RosterStudent[]> {
+    return apiFetch(`/api/attendance/classes/${encodeURIComponent(classId)}/students?projection=roster`);
 }
 
 export async function updateStudentAction(classId: string, studentId: string, data: {
