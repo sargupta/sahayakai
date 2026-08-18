@@ -178,6 +178,21 @@ dev_dependencies:
   # it. Pinned rather than left at the `any` the autofix wrote.
   fake_async: ^1.3.3
 
+  # ── SPIKE ONLY — delete with the spike ───────────────────────────────────
+  # `pdf` is here to answer one question and nothing else: can the Dart `pdf`
+  # package lay out India's scripts well enough to hand a teacher a worksheet?
+  #
+  # It is a DEV dependency on purpose, and dev-only is sufficient because `pdf`
+  # is pure Dart — no Flutter engine, no platform channel. So
+  # `dart run tool/spike/pdf_indic_spike.dart` produces the artefact without
+  # the package ever entering an app build. Nothing under lib/ imports it and
+  # no screen has an export button. If PDF export is ever shipped this line
+  # moves up into `dependencies:`; until the founder decides, it does not.
+  #
+  # The spike is confined to this block, tool/spike/, one test file, and
+  # docs/flutter/spike/pdf_indic/ — one `git revert` removes all of it.
+  pdf: ^3.11.1
+
 flutter:
   uses-material-design: true
   generate: true
