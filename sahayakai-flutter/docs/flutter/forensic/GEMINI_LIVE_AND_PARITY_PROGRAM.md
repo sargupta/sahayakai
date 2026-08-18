@@ -39,9 +39,34 @@ Each loop iteration is still ONE focused, gated, committed unit; rotate across t
 
 **Steps (verify-first each):** find the roster/classes/students **data source** the web attendance pages read (Firestore collection vs a REST route — check `firestore.rules` + `/api/attendance/*` + the attendance pages); build the mobile Attendance screens mirroring the web structure; wire the roster into `hotlineStudentRosterProvider` (currently the empty seam) so parent-hotline lists real students; add "call parent" from an attendance row. Flag any genuinely backend-only piece (e.g. a roster route that doesn't exist) rather than faking it.
 
-**FINDING (2026-07-29) — WS1 mobile build is BACKEND-BLOCKED; needs REST routes (owner work on `sahayakai-main`, out of scope this Android-only session).** The roster is entirely behind Next.js **server actions** (admin SDK): `getClassesAction` reads `classes` (fields incl. name/grade/section), `getStudentsAction` reads the `classes/{classId}/students` subcollection (each student carries a full `parentPhone` in E164), plus `createClassAction`/`addStudentAction`/`updateClassAction`/`deleteClassAction` (`src/app/actions/attendance.ts`). There is **no client-readable Firestore rule** for `classes`/`students` (verified — and there must not be one: it would expose parent-phone PII directly to clients, exactly what the server-action boundary prevents), and **no REST route** returns the roster (`/api/attendance/*` are all call/outreach mechanics: call, call-context, call-summary, outreach, twiml, transcript-sync — not roster CRUD). The parent-CALL path itself IS reachable (parent-hotline already drives `/api/attendance/*`); only the *who-to-call roster* is missing.
+**STATUS: UNBLOCKED (2026-08-18). The 2026-07-29 "backend-blocked" finding below is SUPERSEDED — the routes exist. Do not re-derive the block from it.**
 
-**Backend punch-list to unblock (for whoever owns `sahayakai-main` next):** authenticated REST wrappers of the existing server actions — `GET /api/attendance/classes` (→ `getClassesAction`), `GET /api/attendance/classes/{classId}/students` (→ `getStudentsAction`, returning a **masked** parent phone: last-4 only, mirroring the hotline's F9-001 rule — never the full number to the client), and `POST`/`PATCH` equivalents for create-class / add-student / mark-attendance if mobile is to write. Once those land, the mobile build is: an Attendance feature (class list → students → mark → "call parent") + feed the students into `hotlineStudentRosterProvider`. Until then WS1's mobile UI cannot be honestly built (a client-side roster read is neither available nor safe). **Status: blocked; rotate to WS2/WS3/WS4.**
+**CORRECTION (2026-08-18).** That finding was accurate the day it was written and is not accurate now. The server actions it described were moved behind an API boundary (tranche 5): `src/app/actions/attendance.ts` is deleted, the logic lives in `src/server/attendance.ts`, and the routes are thin auth → validate → call → JSON shells. **All of the following are on `origin/main` today**, verified by reading the route files rather than inferring from the old note:
+
+| Route | Method | Notes |
+| --- | --- | --- |
+| `/api/attendance/classes` | GET / POST | list; create is `requireProPlan` |
+| `/api/attendance/classes/{classId}` | GET / PATCH / DELETE | owner-checked |
+| `/api/attendance/classes/{classId}/students` | GET / POST | add is `requireProPlan` + the 40-cap transaction (F9-006) |
+| `/api/attendance/classes/{classId}/students/{studentId}` | PATCH / DELETE | |
+| `/api/attendance/classes/{classId}/students/{studentId}/absences` | GET | `?limitDays=` |
+| `/api/attendance/classes/{classId}/records` | GET / POST | `?date=` or `?year=&month=`; save is `requireProPlan` + the IST window (F9-004) + the H9 records-map validation |
+| `/api/attendance/classes/{classId}/summaries` | GET | `?year=&month=` |
+| `/api/attendance/classes/{classId}/behavioral-outreach` | GET | `?lookbackDays=` |
+| `/api/attendance/classes/{classId}/performance` | GET | recent-assessment rollups |
+| the call chain (`outreach`, `call`, `call-summary`, `outreach-latest`, …) | — | already bound by `parent_hotline` |
+
+**What is genuinely still open is the PII masking, not the roster.** `GET .../students` returns the whole student document, full E.164 `parentPhone` included — correct for the web student-manager, wrong for a handset. The masked `?projection=roster` (`{ id, name, rollNumber, parentLanguage, hasParentPhone, parentPhoneLast4 }`) is **draft PR #124 and not merged**. The Flutter data layer is written against the masked shape and **fails closed**: `RosterStudentDto.decodeList` refuses an unmasked reply with `RosterProjectionUnavailableException` instead of falling back to it, so the unmerged projection is a visible gap rather than a silent leak.
+
+`lib/features/attendance/` now ships the domain, DTOs and repository over these routes — the premium gate as a typed outcome, the markable window computed in IST through the `nowProvider` seam, and the 40-cap / roll numbers 1–40 mirrored client-side. Screens are a separate unit; **PR #124 must merge before a roster can actually render.**
+
+<details><summary>Superseded 2026-07-29 text, kept for the record</summary>
+
+~~**FINDING (2026-07-29) — WS1 mobile build is BACKEND-BLOCKED; needs REST routes (owner work on `sahayakai-main`, out of scope this Android-only session).** The roster is entirely behind Next.js **server actions** (admin SDK): `getClassesAction` reads `classes` (fields incl. name/grade/section), `getStudentsAction` reads the `classes/{classId}/students` subcollection (each student carries a full `parentPhone` in E164), plus `createClassAction`/`addStudentAction`/`updateClassAction`/`deleteClassAction` (`src/app/actions/attendance.ts`). There is **no client-readable Firestore rule** for `classes`/`students` (verified — and there must not be one: it would expose parent-phone PII directly to clients, exactly what the server-action boundary prevents), and **no REST route** returns the roster (`/api/attendance/*` are all call/outreach mechanics: call, call-context, call-summary, outreach, twiml, transcript-sync — not roster CRUD). The parent-CALL path itself IS reachable (parent-hotline already drives `/api/attendance/*`); only the *who-to-call roster* is missing.~~
+
+~~**Backend punch-list to unblock (for whoever owns `sahayakai-main` next):** authenticated REST wrappers of the existing server actions — `GET /api/attendance/classes` (→ `getClassesAction`), `GET /api/attendance/classes/{classId}/students` (→ `getStudentsAction`, returning a **masked** parent phone: last-4 only, mirroring the hotline's F9-001 rule — never the full number to the client), and `POST`/`PATCH` equivalents for create-class / add-student / mark-attendance if mobile is to write. Once those land, the mobile build is: an Attendance feature (class list → students → mark → "call parent") + feed the students into `hotlineStudentRosterProvider`. Until then WS1's mobile UI cannot be honestly built (a client-side roster read is neither available nor safe). **Status: blocked; rotate to WS2/WS3/WS4.**~~
+
+</details>
 
 ### WS2 — Worksheet math: critical review + LaTeX rendering
 
@@ -91,6 +116,8 @@ Each loop iteration is still ONE focused, gated, committed unit; rotate across t
 **Backend punch-list to unblock (owner work):** implement + deploy `POST /api/vidya-voice/start-session` (auth Bearer → mints an ephemeral Gemini Live token via the `vidya_voice` sidecar, returns wssUrl + sessionConfig + the tool/flow declarations), and deploy/reach the sidecar. Then the mobile client is: a Dart Live client behind a `voiceMode: live|classic` flag that calls that route, opens the WebSocket, streams mic PCM, plays audio, and dispatches tool-calls through `VidyaNavDispatcher` (falling back to the turn-based pipeline whenever the route/socket is unavailable). Opens with the mother-tongue greeting. **Status: blocked on backend; a blind, unverifiable client scaffold is deliberately NOT shipped (can't test the audio round-trip, and a wrong-protocol scaffold is worse than none).**
 
 **Consequence to surface to the founder:** BOTH headline asks — Gemini Live (WS4) and attendance→parent-call (WS1) — require backend work that the "Android only for now" choice excludes. To deliver either verifiably, the backend routes/sidecar must be built + deployed (owner), OR the Android-only constraint lifted so they can be built on a review branch alongside the mobile client. The clean, verifiable, Android-only work is now done: WS2 (worksheet math) shipped; WS3 (design parity) already aligned.
+
+> **Correction (2026-08-18) — the WS1 half of that consequence no longer holds.** Every attendance route WS1 needs is deployed on `origin/main` (see the WS1 table above); the Flutter domain + data layer is built against them. WS1's only remaining backend dependency is the masked roster projection, draft PR #124. The WS4 statement above is untouched and has not been re-verified here.
 
 ## Interleave order (rotate; one gated unit per iteration)
 
