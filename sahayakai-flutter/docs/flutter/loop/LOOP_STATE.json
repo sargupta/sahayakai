@@ -8,7 +8,7 @@
     "landingModeAtEpoch": 1787058681,
     "deadlineEpoch": 1787062281,
     "mode": "build",
-    "wakeCount": 44,
+    "wakeCount": 49,
     "consecutiveNoProgressWakes": 0,
     "haltReason": null,
     "$deadlineNote": "Extended again at 12:41. The previous window was computed from a stale base and expired mid-run; landing fired ~4h ago while the founder's standing directive is to run to production-readiness. The directive supersedes the tracker clock, so the window moves rather than the loop landing early. Band order is unchanged.",
@@ -72,16 +72,16 @@
     "$i18nNote": "Ratchet, downward only. 4760 at loop start; 0 after U0.7 (Hindi) + U0.8 (nine locales). All 11 locales now carry all 971 keys with zero audit defects."
   },
   "machine": {
-    "reconciledAtEpoch": 1787046116,
+    "reconciledAtEpoch": 1787054289,
     "git": {
       "appRoot": "/Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter",
       "gitPathPrefix": "sahayakai-flutter/",
       "branch": "feature/flutter-rebuild",
-      "head": "c364f68799efd3fcbdb64ef8b5832af6b8393026",
-      "headShort": "c364f6879",
-      "headEpoch": 1787045428,
+      "head": "780b237da21393f017b42f846b70f6db2ec0f893",
+      "headShort": "780b237da",
+      "headEpoch": 1787054274,
       "remoteUrl": "https://github.com/sargupta/sahayakai.git",
-      "aheadOfOriginMain": 245,
+      "aheadOfOriginMain": 250,
       "behindOriginMain": 66,
       "dirtyPaths": [
         "ahayakai-flutter/docs/flutter/loop/LOOP_STATE.json",
@@ -90,31 +90,31 @@
       "untrackedPaths": []
     },
     "code": {
-      "dartFiles": 329,
-      "dartLoc": 58988,
-      "features": 25,
+      "dartFiles": 333,
+      "dartLoc": 59916,
+      "features": 26,
       "routes": 36
     },
     "tests": {
-      "files": 161,
-      "declarations": 1798,
+      "files": 165,
+      "declarations": 1839,
       "skipped": 0,
-      "goldenCallSites": 15,
+      "goldenCallSites": 16,
       "goldenBaselinePngs": 24
     },
     "i18n": {
-      "templateKeys": 1059,
+      "templateKeys": 1066,
       "perLocaleKeys": {
-        "bn": 1059,
-        "gu": 1059,
-        "hi": 1059,
-        "kn": 1059,
-        "ml": 1059,
-        "mr": 1059,
-        "or": 1059,
-        "pa": 1059,
-        "ta": 1059,
-        "te": 1059
+        "bn": 1066,
+        "gu": 1066,
+        "hi": 1066,
+        "kn": 1066,
+        "ml": 1066,
+        "mr": 1066,
+        "or": 1066,
+        "pa": 1066,
+        "ta": 1066,
+        "te": 1066
       },
       "untranslatedTotal": 0,
       "identicalToEnglishTotal": 0
@@ -148,8 +148,8 @@
     "status": "ok",
     "violations": [],
     "consecutiveViolationWakes": 0,
-    "checkedAtEpoch": 1787046116,
-    "checkedAtSha": "c364f68799efd3fcbdb64ef8b5832af6b8393026"
+    "checkedAtEpoch": 1787054289,
+    "checkedAtSha": "780b237da21393f017b42f846b70f6db2ec0f893"
   },
   "measurements": {
     "analyze": {
@@ -219,7 +219,7 @@
         "docs/flutter/pillars/PILLAR_BUILD_STATE.ARCHIVED.json"
       ],
       "dependsOn": [],
-      "status": "done",
+      "status": "stale",
       "attempts": 7,
       "reviewRounds": 0,
       "verifiedAtSha": "b9427063001268c9b31d5fcee576561e6af40f34",
@@ -317,7 +317,8 @@
         "auto-demoted to stale at 1786997934: 1 declared file(s) changed since 745803d4b — re-gate required",
         "re-affirmed at 1787031980 (was stale): 1 declared file(s) changed, but U0.16's 'release' gate passed at 5cca039b3 and runs the same ladder at equal-or-greater strength",
         "auto-demoted to stale at 1787037013: 1 declared file(s) changed since 5cca039b3 — re-gate required",
-        "re-affirmed at 1787044972 (was stale): 2 declared file(s) changed, but U2.8's 'standard' gate passed at b94270630 and runs the same ladder at equal-or-greater strength"
+        "re-affirmed at 1787044972 (was stale): 2 declared file(s) changed, but U2.8's 'standard' gate passed at b94270630 and runs the same ladder at equal-or-greater strength",
+        "auto-demoted to stale at 1787054024: 1 declared file(s) changed since b94270630 — re-gate required"
       ]
     },
     {
@@ -821,7 +822,7 @@
       "dependsOn": [
         "U0.2"
       ],
-      "status": "done",
+      "status": "stale",
       "attempts": 2,
       "reviewRounds": 0,
       "verifiedAtSha": "5cca039b3c60bf204e25ad6e8c7849b2f0692193",
@@ -945,7 +946,8 @@
         "auto-demoted to stale at 1786994380: 3 declared file(s) changed since 3644a9df0 — re-gate required",
         "re-affirmed at 1786994622 (was stale): 3 declared file(s) changed, but U0.13's 'native' gate passed at 745803d4b and runs the same ladder at equal-or-greater strength",
         "auto-demoted to stale at 1786998654: 2 declared file(s) changed since 745803d4b — re-gate required",
-        "re-affirmed at 1787031980 (was stale): 2 declared file(s) changed, but U0.16's 'release' gate passed at 5cca039b3 and runs the same ladder at equal-or-greater strength"
+        "re-affirmed at 1787031980 (was stale): 2 declared file(s) changed, but U0.16's 'release' gate passed at 5cca039b3 and runs the same ladder at equal-or-greater strength",
+        "auto-demoted to stale at 1787053767: 2 declared file(s) changed since 5cca039b3 — re-gate required"
       ]
     },
     {
@@ -965,30 +967,30 @@
       "dependsOn": [
         "U0.5"
       ],
-      "status": "stale",
-      "attempts": 1,
+      "status": "done",
+      "attempts": 2,
       "reviewRounds": 0,
-      "verifiedAtSha": "073921ca035ca143b0a4ae00cc412b0847bb2d3e",
-      "commit": "90aaef196",
+      "verifiedAtSha": "780b237da21393f017b42f846b70f6db2ec0f893",
+      "commit": "780b237da",
       "evidence": {
         "gatesRun": [
           {
             "gate": "guard",
             "exit": 0,
             "durationSec": 0,
-            "tail": "GUARD NOTE: sibling tree has pre-existing changes (not caused by this wake):\n    ?? sahayakai-main/._fields.mjs\n    ?? sahayakai-main/._live.mjs\n    ?? sahayakai-main/.claude/launch.json\n    ?? sahayakai-main/.claude/skills/\n    ?? sahayakai-main/AI_Literacy_Drive_Women_Siliguri_INTERN_MARKETING_PLAYBOOK.md\nGUARD NOTE: the loop must not add to these. Web/sidecar units use a separate worktree.\nloop_guard: OK (branch=feature/flutter-rebuild head=5082c4333)"
+            "tail": "GUARD NOTE: sibling tree has pre-existing changes (not caused by this wake):\n    ?? sahayakai-main/._fields.mjs\n    ?? sahayakai-main/._live.mjs\n    ?? sahayakai-main/.claude/launch.json\n    ?? sahayakai-main/.claude/skills/\n    ?? sahayakai-main/AI_Literacy_Drive_Women_Siliguri_INTERN_MARKETING_PLAYBOOK.md\nGUARD NOTE: the loop must not add to these. Web/sidecar units use a separate worktree.\nloop_guard: OK (branch=feature/flutter-rebuild head=7bb3e68ce)"
           },
           {
             "gate": "selftest",
             "exit": 0,
             "durationSec": 6,
-            "tail": "selftest: planting violations to prove each guard can fail\n\n  ✓ secret_scan detects a planted keystore password\n  ✓ contradiction_guard detects a stub claim above real wiring\n  ✓ scope gate detects an undeclared changed file\n  ✓ scope gate refuses to run with UNIT_FILES unset\n  ✓ i18n_count reads real ARBs (untranslated=4760)\n  ✓ template key count matches the audited value (971)\n  ✓ doc_truth_guard reports 5 red claims (honest starting state)\n  ✓ doc_truth_guard --strict fails while any claim is red\n  ✓ verifiedAtSha ancestry check rejects a fabricated sha\n  ✓ record.py refuses another unit's gate as evidence\n  ✓ loop_guard passes on the real tree\n  ✓ reconcile passes on the real tree\n\nselftest: 12 passed, 0 failed\nselftest: every guard demonstrably fails when it should"
+            "tail": "selftest: planting violations to prove each guard can fail\n\n  ✓ secret_scan detects a planted keystore password\n  ✓ contradiction_guard detects a stub claim above real wiring\n  ✓ scope gate detects an undeclared changed file\n  ✓ scope gate refuses to run with UNIT_FILES unset\n  ✓ i18n_count reads real ARBs and agrees with the audit (untranslated=0)\n  ✓ app_en.arb and the audit agree on the template (1066 keys)\n  ✓ doc_truth_guard accounts for all 11 claims (11 green / 0 red)\n  ✓ doc_truth_guard --strict still fails on an unsatisfiable claim\n  ✓ verifiedAtSha ancestry check rejects a fabricated sha\n  ✓ record.py refuses another unit's gate as evidence\n  ✓ loop_guard passes on the real tree\n  ✓ reconcile passes on the real tree\n\nselftest: 12 passed, 0 failed\nselftest: every guard demonstrably fails when it should"
           },
           {
             "gate": "reconcile",
             "exit": 0,
-            "durationSec": 3,
-            "tail": "reconcile: head=5082c4333 branch=feature/flutter-rebuild tests=1552 goldens=0 i18n_missing=4760 claims=6g/5r\nreconcile: integrity OK"
+            "durationSec": 4,
+            "tail": "reconcile: head=7bb3e68ce branch=feature/flutter-rebuild tests=1839 goldens=16 i18n_missing=0 claims=11g/0r\nreconcile: integrity OK"
           },
           {
             "gate": "scope",
@@ -999,14 +1001,14 @@
           {
             "gate": "format",
             "exit": 0,
-            "durationSec": 1,
-            "tail": "Formatted 39 files (0 changed) in 0.12 seconds."
+            "durationSec": 0,
+            "tail": "no hand-written dart files changed"
           },
           {
             "gate": "analyze",
             "exit": 0,
-            "durationSec": 7,
-            "tail": "Analyzing sahayakai-flutter...                                  \nNo issues found! (ran in 6.2s)"
+            "durationSec": 9,
+            "tail": "Analyzing sahayakai-flutter...                                  \nNo issues found! (ran in 7.7s)"
           },
           {
             "gate": "token_guard",
@@ -1030,50 +1032,50 @@
             "gate": "doc_truth",
             "exit": 0,
             "durationSec": 2,
-            "tail": "CLAIM                            ACTUAL   EXPECT   VERDICT\ngolden_gate_exists               0        >=12     RED\ni18n_zero_untranslated           4760     ==0      RED\ni18n_zero_identical_english      40       ==0      RED\nfonts_bundled                    11       >=11     GREEN\nfonts_no_runtime_fetch           0        ==0      GREEN\nfonts_not_fetched_from_lib       0        ==0      GREEN\nrelease_signing_verified         1        ==1      GREEN\nflutter_ci_present               0        >=1      RED\nlints_enforced                   0        >=15     RED\nfirebase_wired                   1        >=1      GREEN\nturn_based_fallback_present      5        >=1      GREEN\n\ndoc_truth_guard: 6 green / 5 red\n  red: golden_gate_exists i18n_zero_untranslated i18n_zero_identical_english flutter_ci_present lints_enforced"
+            "tail": "CLAIM                            ACTUAL   EXPECT   VERDICT\ngolden_gate_exists               16       >=12     GREEN\ni18n_zero_untranslated           0        ==0      GREEN\ni18n_zero_identical_english      0        ==0      GREEN\nfonts_bundled                    11       >=11     GREEN\nfonts_no_runtime_fetch           0        ==0      GREEN\nfonts_not_fetched_from_lib       0        ==0      GREEN\nrelease_signing_verified         1        ==1      GREEN\nflutter_ci_present               1        >=1      GREEN\nlints_enforced                   22       >=15     GREEN\nfirebase_wired                   1        >=1      GREEN\nturn_based_fallback_present      5        >=1      GREEN\n\ndoc_truth_guard: 11 green / 0 red"
           },
           {
             "gate": "codegen_drift",
             "exit": 0,
-            "durationSec": 23,
+            "durationSec": 3,
             "tail": "codegen is idempotent against the working tree"
           },
           {
             "gate": "custom_lint",
-            "exit": null,
-            "skipped": true,
-            "reason": "no custom_lint block in analysis_options.yaml yet (unit U0.21)"
+            "exit": 0,
+            "durationSec": 25,
+            "tail": "Analyzing...\n\nNo issues found!"
           },
           {
             "gate": "tests",
             "exit": 0,
-            "durationSec": 86,
-            "tail": "  01:22 +1750: All tests passed!                                                                                                                                                                         \npassing=1750 failing=0 (baseline failing=0)"
+            "durationSec": 88,
+            "tail": "  01:26 +2053: All tests passed!                                                                                                                                                                         \npassing=2053 failing=0 (baseline failing=0)"
           },
           {
             "gate": "goldens",
-            "exit": null,
-            "skipped": true,
-            "reason": "no matchesGoldenFile call sites exist yet (units U0.18/U0.19)"
+            "exit": 0,
+            "durationSec": 62,
+            "tail": "00:01 +6: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp login — dark\n00:01 +7: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp login — dark\n00:01 +8: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp login — dark\n00:01 +9: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp login — dark\n00:02 +10: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp login — dark\n00:02 +11: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/pdf_indic_spike_render_test.dart: flutter reference render of the Indic spike lines\n00:02 +12: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/states_golden_test.dart: shared state baselines library populated at textScale 1.3 — light\n00:02 +13: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp home — dark\n00:02 +14: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp home — dark\n00:02 +15: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp login at textScale 1.3 — dark\n00:02 +16: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp home at textScale 1.3 — dark\n00:02 +17: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp login — light\n00:02 +18: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp home — light\n00:02 +19: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp login at textScale 1.3 — light\n00:02 +20: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp home at textScale 1.3 — light\n00:02 +21: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 800dp login wide — dark\n00:03 +22: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 800dp home wide — dark\n00:03 +23: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 800dp login wide — light\n00:03 +24: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 800dp home wide — light\n00:06 +25: All tests passed!"
           },
           {
             "gate": "i18n_full",
             "exit": 0,
-            "durationSec": 0,
-            "tail": "untranslated=4760 identical-to-english=40"
+            "durationSec": 1,
+            "tail": "untranslated=0 identical-to-english=0"
           },
           {
             "gate": "build_apk_debug",
             "exit": 0,
             "durationSec": 12,
-            "tail": "Running Gradle task 'assembleDebug'...                             10.6s\n✓ Built build/app/outputs/flutter-apk/app-debug.apk"
+            "tail": "Running Gradle task 'assembleDebug'...                             10.5s\n✓ Built build/app/outputs/flutter-apk/app-debug.apk"
           }
         ],
         "reviewers": [],
         "artifacts": [],
         "gateProfile": "native",
         "gateExit": 0,
-        "gateAtSha": "5082c4333d37937222a320fa297d585dc5b475a8"
+        "gateAtSha": "7bb3e68cedd93a5e21f8b9d4f9514c594f0f6b75"
       },
       "failure": null,
       "blockedBy": null,
@@ -1089,7 +1091,10 @@
         "re-affirmed at 1787031980 (was stale): 16 declared file(s) changed, but U0.16's 'release' gate passed at 5cca039b3 and runs the same ladder at equal-or-greater strength",
         "auto-demoted to stale at 1787034021: 1 declared file(s) changed since 5cca039b3 — re-gate required",
         "re-affirmed at 1787034308 (was stale): 1 declared file(s) changed, but U1.6's 'native' gate passed at 073921ca0 and runs the same ladder at equal-or-greater strength",
-        "auto-demoted to stale at 1787037013: 4 declared file(s) changed since 073921ca0 — re-gate required"
+        "auto-demoted to stale at 1787037013: 4 declared file(s) changed since 073921ca0 — re-gate required",
+        "Re-verification of a DECAYED B0 unit, not new work. The claim still holds: google_fonts has 0 occurrences in pubspec.lock and 0 imports across lib/ and test/; the single pubspec.yaml hit is the comment recording its removal. 11 families are declared and 11 TTFs are on disk, so no face can be fetched at runtime.",
+        "Gate 'native' PASS at 7bb3e68ce — includes a real flutter build apk --debug. 2053 tests, 0 failing.",
+        "The scope rung caught 32 untracked golden-failure PNGs from this run's re-baseline, one 'git add' away from being committed next to the baselines they disagree with. Now gitignored."
       ]
     },
     {
@@ -1214,7 +1219,7 @@
       "dependsOn": [
         "U0.6"
       ],
-      "status": "done",
+      "status": "stale",
       "attempts": 1,
       "reviewRounds": 0,
       "verifiedAtSha": "c364f68799efd3fcbdb64ef8b5832af6b8393026",
@@ -1326,7 +1331,8 @@
         "auto-demoted to stale at 1787030661: 1 declared file(s) changed since a8a97c259 — re-gate required",
         "re-affirmed at 1787031980 (was stale): 1 declared file(s) changed, but U0.16's 'release' gate passed at 5cca039b3 and runs the same ladder at equal-or-greater strength",
         "auto-demoted to stale at 1787037013: 2 declared file(s) changed since 5cca039b3 — re-gate required",
-        "re-affirmed at 1787045696 (was stale): 2 declared file(s) changed, but U2.4's 'i18n' gate passed at c364f6879 and runs the same ladder at equal-or-greater strength"
+        "re-affirmed at 1787045696 (was stale): 2 declared file(s) changed, but U2.4's 'i18n' gate passed at c364f6879 and runs the same ladder at equal-or-greater strength",
+        "auto-demoted to stale at 1787054024: 2 declared file(s) changed since c364f6879 — re-gate required"
       ]
     },
     {
@@ -1351,7 +1357,7 @@
       "dependsOn": [
         "U0.7"
       ],
-      "status": "done",
+      "status": "stale",
       "attempts": 1,
       "reviewRounds": 0,
       "verifiedAtSha": "c364f68799efd3fcbdb64ef8b5832af6b8393026",
@@ -1462,7 +1468,8 @@
         "auto-demoted to stale at 1787030661: 2 declared file(s) changed since 3b82d70e6 — re-gate required",
         "re-affirmed at 1787031980 (was stale): 2 declared file(s) changed, but U0.16's 'release' gate passed at 5cca039b3 and runs the same ladder at equal-or-greater strength",
         "auto-demoted to stale at 1787037013: 9 declared file(s) changed since 5cca039b3 — re-gate required",
-        "re-affirmed at 1787045696 (was stale): 9 declared file(s) changed, but U2.4's 'i18n' gate passed at c364f6879 and runs the same ladder at equal-or-greater strength"
+        "re-affirmed at 1787045696 (was stale): 9 declared file(s) changed, but U2.4's 'i18n' gate passed at c364f6879 and runs the same ladder at equal-or-greater strength",
+        "auto-demoted to stale at 1787054024: 9 declared file(s) changed since c364f6879 — re-gate required"
       ]
     },
     {
@@ -1481,7 +1488,7 @@
         "U0.8",
         "U0.5"
       ],
-      "status": "done",
+      "status": "stale",
       "attempts": 1,
       "reviewRounds": 0,
       "verifiedAtSha": "c364f68799efd3fcbdb64ef8b5832af6b8393026",
@@ -1592,7 +1599,8 @@
         "auto-demoted to stale at 1787030661: 2 declared file(s) changed since 6c34d77da — re-gate required",
         "re-affirmed at 1787031980 (was stale): 2 declared file(s) changed, but U0.16's 'release' gate passed at 5cca039b3 and runs the same ladder at equal-or-greater strength",
         "auto-demoted to stale at 1787037013: 12 declared file(s) changed since 5cca039b3 — re-gate required",
-        "re-affirmed at 1787045696 (was stale): 12 declared file(s) changed, but U2.4's 'i18n' gate passed at c364f6879 and runs the same ladder at equal-or-greater strength"
+        "re-affirmed at 1787045696 (was stale): 12 declared file(s) changed, but U2.4's 'i18n' gate passed at c364f6879 and runs the same ladder at equal-or-greater strength",
+        "auto-demoted to stale at 1787054024: 12 declared file(s) changed since c364f6879 — re-gate required"
       ]
     },
     {
@@ -1610,7 +1618,7 @@
       "dependsOn": [
         "U0.9"
       ],
-      "status": "done",
+      "status": "stale",
       "attempts": 1,
       "reviewRounds": 0,
       "verifiedAtSha": "c364f68799efd3fcbdb64ef8b5832af6b8393026",
@@ -1720,7 +1728,8 @@
         "Surfaced by the U0.8 fan-out. Pre-existing, so it does not block U0.8; recorded so it does not vanish.",
         "ml decision goes against corpus frequency on orthographic grounds — 11-to-2 recorded a typing habit, not a decision.",
         "auto-demoted to stale at 1787037013: 2 declared file(s) changed since 4ffc9ad4a — re-gate required",
-        "re-affirmed at 1787045696 (was stale): 2 declared file(s) changed, but U2.4's 'i18n' gate passed at c364f6879 and runs the same ladder at equal-or-greater strength"
+        "re-affirmed at 1787045696 (was stale): 2 declared file(s) changed, but U2.4's 'i18n' gate passed at c364f6879 and runs the same ladder at equal-or-greater strength",
+        "auto-demoted to stale at 1787054024: 2 declared file(s) changed since c364f6879 — re-gate required"
       ]
     },
     {
@@ -1739,7 +1748,7 @@
       "dependsOn": [
         "U0.5"
       ],
-      "status": "done",
+      "status": "stale",
       "attempts": 1,
       "reviewRounds": 0,
       "verifiedAtSha": "5cca039b3c60bf204e25ad6e8c7849b2f0692193",
@@ -1845,7 +1854,8 @@
         "auto-demoted to stale at 1786994380: 13 declared file(s) changed since b479e3961 — re-gate required",
         "re-affirmed at 1786994622 (was stale): 13 declared file(s) changed, but U0.13's 'native' gate passed at 745803d4b and runs the same ladder at equal-or-greater strength",
         "auto-demoted to stale at 1787030835: 12 declared file(s) changed since 745803d4b — re-gate required",
-        "re-affirmed at 1787031980 (was stale): 12 declared file(s) changed, but U0.16's 'release' gate passed at 5cca039b3 and runs the same ladder at equal-or-greater strength"
+        "re-affirmed at 1787031980 (was stale): 12 declared file(s) changed, but U0.16's 'release' gate passed at 5cca039b3 and runs the same ladder at equal-or-greater strength",
+        "auto-demoted to stale at 1787053498: 8 declared file(s) changed since 5cca039b3 — re-gate required"
       ]
     },
     {
@@ -1864,7 +1874,7 @@
       "dependsOn": [
         "U0.10"
       ],
-      "status": "done",
+      "status": "stale",
       "attempts": 1,
       "reviewRounds": 0,
       "verifiedAtSha": "b9427063001268c9b31d5fcee576561e6af40f34",
@@ -1980,7 +1990,8 @@
         "Found by U0.10. These probes passed for months against Ahem, which renders every glyph as a uniform box and cannot reproduce Indic line metrics.",
         "Root cause was a hard-coded SizedBox(height:116) in the group strip, not the feed card I guessed. Fix is content-derived, measured across 6 locale/scale combinations.",
         "auto-demoted to stale at 1787037013: 1 declared file(s) changed since 6229e1cfa — re-gate required",
-        "re-affirmed at 1787044972 (was stale): 1 declared file(s) changed, but U2.8's 'standard' gate passed at b94270630 and runs the same ladder at equal-or-greater strength"
+        "re-affirmed at 1787044972 (was stale): 1 declared file(s) changed, but U2.8's 'standard' gate passed at b94270630 and runs the same ladder at equal-or-greater strength",
+        "auto-demoted to stale at 1787054024: 1 declared file(s) changed since b94270630 — re-gate required"
       ]
     },
     {
@@ -2498,7 +2509,7 @@
       "dependsOn": [
         "U0.5"
       ],
-      "status": "done",
+      "status": "stale",
       "attempts": 1,
       "reviewRounds": 0,
       "verifiedAtSha": "ca4f3d932c2f8b6dcd2c0c12e4f591bc6737ff71",
@@ -2615,7 +2626,8 @@
       },
       "notes": [
         "Serialise against U0.5 — both edit pubspec.yaml.",
-        "Client half only; enforcement stays human-gated. APK link verified by dex extraction, not by exit code."
+        "Client half only; enforcement stays human-gated. APK link verified by dex extraction, not by exit code.",
+        "auto-demoted to stale at 1787053767: 1 declared file(s) changed since ca4f3d932 — re-gate required"
       ]
     },
     {
@@ -3705,23 +3717,126 @@
         "U1.6",
         "U1.4"
       ],
-      "status": "pending",
-      "attempts": 0,
+      "status": "blocked",
+      "attempts": 1,
       "reviewRounds": 0,
       "verifiedAtSha": null,
       "commit": null,
       "evidence": {
-        "gatesRun": [],
+        "gatesRun": [
+          {
+            "gate": "guard",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "GUARD NOTE: sibling tree has pre-existing changes (not caused by this wake):\n    ?? sahayakai-main/._fields.mjs\n    ?? sahayakai-main/._live.mjs\n    ?? sahayakai-main/.claude/launch.json\n    ?? sahayakai-main/.claude/skills/\n    ?? sahayakai-main/AI_Literacy_Drive_Women_Siliguri_INTERN_MARKETING_PLAYBOOK.md\nGUARD NOTE: the loop must not add to these. Web/sidecar units use a separate worktree.\nloop_guard: OK (branch=feature/flutter-rebuild head=7bb3e68ce)"
+          },
+          {
+            "gate": "selftest",
+            "exit": 0,
+            "durationSec": 6,
+            "tail": "selftest: planting violations to prove each guard can fail\n\n  ✓ secret_scan detects a planted keystore password\n  ✓ contradiction_guard detects a stub claim above real wiring\n  ✓ scope gate detects an undeclared changed file\n  ✓ scope gate refuses to run with UNIT_FILES unset\n  ✓ i18n_count reads real ARBs and agrees with the audit (untranslated=0)\n  ✓ app_en.arb and the audit agree on the template (1066 keys)\n  ✓ doc_truth_guard accounts for all 11 claims (11 green / 0 red)\n  ✓ doc_truth_guard --strict still fails on an unsatisfiable claim\n  ✓ verifiedAtSha ancestry check rejects a fabricated sha\n  ✓ record.py refuses another unit's gate as evidence\n  ✓ loop_guard passes on the real tree\n  ✓ reconcile passes on the real tree\n\nselftest: 12 passed, 0 failed\nselftest: every guard demonstrably fails when it should"
+          },
+          {
+            "gate": "reconcile",
+            "exit": 0,
+            "durationSec": 4,
+            "tail": "reconcile: head=7bb3e68ce branch=feature/flutter-rebuild tests=1839 goldens=16 i18n_missing=0 claims=11g/0r\nreconcile: integrity OK"
+          },
+          {
+            "gate": "scope",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "all changes within the declared file list\n  (excluding 9 declared pre-existing dirty path(s))"
+          },
+          {
+            "gate": "format",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "no hand-written dart files changed"
+          },
+          {
+            "gate": "analyze",
+            "exit": 0,
+            "durationSec": 9,
+            "tail": "Analyzing sahayakai-flutter...                                  \nNo issues found! (ran in 7.7s)"
+          },
+          {
+            "gate": "token_guard",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "token-guard: PASS"
+          },
+          {
+            "gate": "secret_scan",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "secret_scan: OK"
+          },
+          {
+            "gate": "contradiction",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "contradiction_guard: OK"
+          },
+          {
+            "gate": "doc_truth",
+            "exit": 0,
+            "durationSec": 2,
+            "tail": "CLAIM                            ACTUAL   EXPECT   VERDICT\ngolden_gate_exists               16       >=12     GREEN\ni18n_zero_untranslated           0        ==0      GREEN\ni18n_zero_identical_english      0        ==0      GREEN\nfonts_bundled                    11       >=11     GREEN\nfonts_no_runtime_fetch           0        ==0      GREEN\nfonts_not_fetched_from_lib       0        ==0      GREEN\nrelease_signing_verified         1        ==1      GREEN\nflutter_ci_present               1        >=1      GREEN\nlints_enforced                   22       >=15     GREEN\nfirebase_wired                   1        >=1      GREEN\nturn_based_fallback_present      5        >=1      GREEN\n\ndoc_truth_guard: 11 green / 0 red"
+          },
+          {
+            "gate": "codegen_drift",
+            "exit": 0,
+            "durationSec": 3,
+            "tail": "codegen is idempotent against the working tree"
+          },
+          {
+            "gate": "custom_lint",
+            "exit": 0,
+            "durationSec": 25,
+            "tail": "Analyzing...\n\nNo issues found!"
+          },
+          {
+            "gate": "tests",
+            "exit": 0,
+            "durationSec": 88,
+            "tail": "  01:26 +2053: All tests passed!                                                                                                                                                                         \npassing=2053 failing=0 (baseline failing=0)"
+          },
+          {
+            "gate": "goldens",
+            "exit": 0,
+            "durationSec": 62,
+            "tail": "00:01 +6: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp login — dark\n00:01 +7: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp login — dark\n00:01 +8: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp login — dark\n00:01 +9: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp login — dark\n00:02 +10: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp login — dark\n00:02 +11: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/pdf_indic_spike_render_test.dart: flutter reference render of the Indic spike lines\n00:02 +12: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/states_golden_test.dart: shared state baselines library populated at textScale 1.3 — light\n00:02 +13: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp home — dark\n00:02 +14: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp home — dark\n00:02 +15: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp login at textScale 1.3 — dark\n00:02 +16: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp home at textScale 1.3 — dark\n00:02 +17: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp login — light\n00:02 +18: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp home — light\n00:02 +19: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp login at textScale 1.3 — light\n00:02 +20: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp home at textScale 1.3 — light\n00:02 +21: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 800dp login wide — dark\n00:03 +22: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 800dp home wide — dark\n00:03 +23: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 800dp login wide — light\n00:03 +24: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 800dp home wide — light\n00:06 +25: All tests passed!"
+          },
+          {
+            "gate": "i18n_full",
+            "exit": 0,
+            "durationSec": 1,
+            "tail": "untranslated=0 identical-to-english=0"
+          },
+          {
+            "gate": "build_apk_debug",
+            "exit": 0,
+            "durationSec": 12,
+            "tail": "Running Gradle task 'assembleDebug'...                             10.5s\n✓ Built build/app/outputs/flutter-apk/app-debug.apk"
+          }
+        ],
         "reviewers": [],
-        "artifacts": []
+        "artifacts": [],
+        "gateProfile": "native",
+        "gateExit": 0,
+        "gateAtSha": "7bb3e68cedd93a5e21f8b9d4f9514c594f0f6b75"
       },
       "failure": null,
       "blockedBy": {
         "kind": "human",
-        "detail": "H7 — a physical Android device with a working mic. Emulator audio cannot honestly test barge-in or echo."
+        "detail": "Needs a physical Android device with a working microphone (gate H7). An emulator mic cannot test barge-in, which is the single highest-value behaviour in the protocol."
       },
       "notes": [
-        "Builds on feature/vidya-live-hardening, which carries U1.1 (829b7866c). U1.1 is `blocked` on a human merge, not incomplete — its code is present on that branch."
+        "Builds on feature/vidya-live-hardening, which carries U1.1 (829b7866c). U1.1 is `blocked` on a human merge, not incomplete — its code is present on that branch.",
+        "Not attempted rather than half-attempted. The diagnostics panel could be built blind, but its whole purpose is to report numbers observed on a real handset — frames up, bytes down, tool calls, WS close code, whether the fallback was taken. Building the panel without a device would ship an unread instrument and let the unit be recorded as progress.",
+        "The on-device protocol is written and ready in the plan: flag ON, speak the Hindi lesson-plan request, expect an audible reply AND navigation to /lesson-plan with fields prefilled; speak over the reply and expect playback to stop; airplane mode mid-session; flag OFF (turn-based still works end to end); server flag unset (503, silent fallback). Capture adb logcat -s flutter plus a screen recording.",
+        "Note for whoever runs it: the sidecar is already deployed and verified on STAGING (revision sahayakai-agents-staging-00038-mxt, probe 10/10), so the device test can run against staging without waiting for any PR to merge."
       ]
     },
     {
@@ -3866,7 +3981,7 @@
       "dependsOn": [
         "U2.1"
       ],
-      "status": "done",
+      "status": "stale",
       "attempts": 1,
       "reviewRounds": 0,
       "verifiedAtSha": "c364f68799efd3fcbdb64ef8b5832af6b8393026",
@@ -3970,7 +4085,8 @@
         "Gate 'standard' PASS at 752ccd06a with a DECLARED-WIDE scope: U2.10 was produced concurrently in this same worktree, so the gate judged both change sets together (1941 tests, 24 goldens, 0 failing, analyze 0, custom_lint 0, i18n 0 missing). U2.10 is gated separately at its own commit. Isolation of this unit checked independently: grep for 'features/attendance' returns zero hits outside lib/features/attendance and test/features/attendance.",
         "Roster reads FAIL CLOSED until PR #124 (masked ?projection=roster) merges — listRoster throws RosterProjectionUnavailableException against today's unmasked response rather than decoding parent phone numbers. The screens units will therefore see an honest error state, not students. That is the intended ordering: the PII gate precedes any roster wiring.",
         "auto-demoted to stale at 1787045472: 17 declared file(s) changed since 4b82af3ed — re-gate required",
-        "re-affirmed at 1787045696 (was stale): 17 declared file(s) changed, but U2.4's 'i18n' gate passed at c364f6879 and runs the same ladder at equal-or-greater strength"
+        "re-affirmed at 1787045696 (was stale): 17 declared file(s) changed, but U2.4's 'i18n' gate passed at c364f6879 and runs the same ladder at equal-or-greater strength",
+        "auto-demoted to stale at 1787053498: 11 declared file(s) changed since c364f6879 — re-gate required"
       ]
     },
     {
@@ -3989,7 +4105,7 @@
       "dependsOn": [
         "U2.2"
       ],
-      "status": "done",
+      "status": "stale",
       "attempts": 1,
       "reviewRounds": 0,
       "verifiedAtSha": "c364f68799efd3fcbdb64ef8b5832af6b8393026",
@@ -4102,7 +4218,8 @@
         "Gate 'i18n' PASS at b94270630 (stronger than the required 'standard'): 2013 tests, 24 goldens, 0 failing, untranslated=0, identical-to-english=0, 1059 template keys across 11 locales.",
         "U2.3-U2.6 were delivered as one coherent change in commit c364f6879. Each is gated separately under its own UNIT_ID so no unit borrows another's evidence.",
         "No class-EDIT screen was built: the ten shipped routes contain no update path (POST classes, GET classes/{id}, nothing between). A form that silently discarded edits would be worse than its absence. class_form_screen.dart is shaped to become the edit path unchanged when a PATCH route lands.",
-        "Nothing links to /attendance from the dashboard or Create palette yet — those surfaces were owned by a concurrent unit this round. One tile is all it needs; queued as a follow-up."
+        "Nothing links to /attendance from the dashboard or Create palette yet — those surfaces were owned by a concurrent unit this round. One tile is all it needs; queued as a follow-up.",
+        "auto-demoted to stale at 1787053498: 8 declared file(s) changed since c364f6879 — re-gate required"
       ]
     },
     {
@@ -4119,7 +4236,7 @@
       "dependsOn": [
         "U2.3"
       ],
-      "status": "done",
+      "status": "stale",
       "attempts": 1,
       "reviewRounds": 0,
       "verifiedAtSha": "c364f68799efd3fcbdb64ef8b5832af6b8393026",
@@ -4228,7 +4345,8 @@
       "notes": [
         "Shipped in commit c364f6879 with U2.3/U2.5/U2.6; gated at HEAD under its own UNIT_ID so the evidence binds to this unit. Gate 'i18n' PASS: 2013 tests, 24 goldens, 0 failing, untranslated=0.",
         "The 40-student cap and roll numbers 1-40 are enforced BEFORE a request exists: Add is withdrawn at capacity with the cap explained where the action was, and 0/41/41.5 are refused client-side. The roll field pre-fills from the first free number.",
-        "Roster reads fail closed until PR #124 merges; a test feeds the screen production's real unmasked document and asserts no parent phone digits reach the widget tree."
+        "Roster reads fail closed until PR #124 merges; a test feeds the screen production's real unmasked document and asserts no parent phone digits reach the widget tree.",
+        "auto-demoted to stale at 1787053498: 8 declared file(s) changed since c364f6879 — re-gate required"
       ]
     },
     {
@@ -4245,7 +4363,7 @@
       "dependsOn": [
         "U2.4"
       ],
-      "status": "done",
+      "status": "stale",
       "attempts": 1,
       "reviewRounds": 0,
       "verifiedAtSha": "c364f68799efd3fcbdb64ef8b5832af6b8393026",
@@ -4354,7 +4472,8 @@
       "notes": [
         "Shipped in commit c364f6879; gated at HEAD under its own UNIT_ID. Gate 'i18n' PASS: 2013 tests, 24 goldens, 0 failing.",
         "The date picker is CLAMPED, not post-validated: it is built from attendanceWindowProvider and offers exactly the eight IST days the repository accepts, so there is no pick-then-get-refused path. Tested with the clock pinned to 01:30 IST while the device UTC day is still yesterday — the case where a naive local-time computation sends the wrong date and collects a 400.",
-        "The register's student list comes from the summaries endpoint, not the roster: a summary carries studentId, name and roll number and no contact detail at all, and the server includes every student whether marked or not. That is why marking works today while the masked roster projection is still unmerged."
+        "The register's student list comes from the summaries endpoint, not the roster: a summary carries studentId, name and roll number and no contact detail at all, and the server includes every student whether marked or not. That is why marking works today while the masked roster projection is still unmerged.",
+        "auto-demoted to stale at 1787053498: 8 declared file(s) changed since c364f6879 — re-gate required"
       ]
     },
     {
@@ -4371,7 +4490,7 @@
       "dependsOn": [
         "U2.5"
       ],
-      "status": "done",
+      "status": "stale",
       "attempts": 1,
       "reviewRounds": 0,
       "verifiedAtSha": "c364f68799efd3fcbdb64ef8b5832af6b8393026",
@@ -4479,7 +4598,8 @@
       "blockedBy": null,
       "notes": [
         "Shipped in commit c364f6879; gated at HEAD under its own UNIT_ID. Gate 'i18n' PASS: 2013 tests, 24 goldens, 0 failing.",
-        "The month stepper's January-to-December year rollback is tested. Consecutive absences reuse the existing parentHotlineEvidenceAbsentDays plural rather than adding a twelfth wording of the same number."
+        "The month stepper's January-to-December year rollback is tested. Consecutive absences reuse the existing parentHotlineEvidenceAbsentDays plural rather than adding a twelfth wording of the same number.",
+        "auto-demoted to stale at 1787053498: 8 declared file(s) changed since c364f6879 — re-gate required"
       ]
     },
     {
@@ -4497,7 +4617,7 @@
       "dependsOn": [
         "U2.2"
       ],
-      "status": "done",
+      "status": "stale",
       "attempts": 1,
       "reviewRounds": 0,
       "verifiedAtSha": "b9427063001268c9b31d5fcee576561e6af40f34",
@@ -4600,7 +4720,8 @@
       "notes": [
         "Gate 'standard' PASS at HEAD b94270630 (2013 tests, 24 goldens, 0 failing). Re-run under this unit's own UNIT_ID after U2.8's run overwrote the earlier one — record.py refused the borrowed evidence, which is the binding working.",
         "Roster still fails closed against production, by design — PR #124 (masked ?projection=roster) is unmerged, so the decode refuses today's unmasked response rather than putting every parent's E.164 number on the handset. A test feeds the screen that real unmasked payload and asserts the number appears nowhere in the widget tree.",
-        "The client never needs the parent's phone number at all: the outreach route reads parentPhone off the student document and explicitly ignores a body-supplied one; the call route re-reads it from the record it created. Verified against both handlers on origin/main, so no un-masking was needed."
+        "The client never needs the parent's phone number at all: the outreach route reads parentPhone off the student document and explicitly ignores a body-supplied one; the call route re-reads it from the record it created. Verified against both handlers on origin/main, so no un-masking was needed.",
+        "auto-demoted to stale at 1787054024: 2 declared file(s) changed since b94270630 — re-gate required"
       ]
     },
     {
@@ -4617,7 +4738,7 @@
       "dependsOn": [
         "U2.7"
       ],
-      "status": "done",
+      "status": "stale",
       "attempts": 1,
       "reviewRounds": 0,
       "verifiedAtSha": "b9427063001268c9b31d5fcee576561e6af40f34",
@@ -4720,7 +4841,8 @@
       "notes": [
         "Shipped in the same commit as U2.7; gated separately at HEAD b94270630 with its own UNIT_ID so the evidence binds to this unit rather than borrowing U2.7's run. Gate 'standard' PASS: 2013 tests, 24 goldens, 0 failing.",
         "Every status was read from the actual route handler on origin/main, not assumed. The 403 upsell previously broke its own promise: the copy told the teacher a message could still be sent free over WhatsApp while the gate had replaced the entire screen, leaving no way to do it.",
-        "502 keeps the Call button because retrying IS the fix; 503 and 422-no-phone withdraw it because retrying cannot help. Previously 422/502/503/404/generic all rendered one identical red banner."
+        "502 keeps the Call button because retrying IS the fix; 503 and 422-no-phone withdraw it because retrying cannot help. Previously 422/502/503/404/generic all rendered one identical red banner.",
+        "auto-demoted to stale at 1787054024: 2 declared file(s) changed since b94270630 — re-gate required"
       ]
     },
     {
@@ -4739,7 +4861,7 @@
       "dependsOn": [
         "U0.16"
       ],
-      "status": "done",
+      "status": "stale",
       "attempts": 1,
       "reviewRounds": 0,
       "verifiedAtSha": "c364f68799efd3fcbdb64ef8b5832af6b8393026",
@@ -4848,7 +4970,8 @@
       "notes": [
         "Save treats a 200-without-id as failure, since the route echoes the id it stored. Also fixed the self-test's third snapshot-pinned assertion.",
         "auto-demoted to stale at 1787045472: 11 declared file(s) changed since 8a1d01bb4 — re-gate required",
-        "re-affirmed at 1787045696 (was stale): 11 declared file(s) changed, but U2.4's 'i18n' gate passed at c364f6879 and runs the same ladder at equal-or-greater strength"
+        "re-affirmed at 1787045696 (was stale): 11 declared file(s) changed, but U2.4's 'i18n' gate passed at c364f6879 and runs the same ladder at equal-or-greater strength",
+        "auto-demoted to stale at 1787054024: 11 declared file(s) changed since c364f6879 — re-gate required"
       ]
     },
     {
@@ -4864,7 +4987,7 @@
       "dependsOn": [
         "U2.9"
       ],
-      "status": "done",
+      "status": "stale",
       "attempts": 1,
       "reviewRounds": 0,
       "verifiedAtSha": "c364f68799efd3fcbdb64ef8b5832af6b8393026",
@@ -4977,7 +5100,8 @@
         "auto-demoted to stale at 1787044765: 4 declared file(s) changed since ef841b917 — re-gate required",
         "re-affirmed at 1787044972 (was stale): 4 declared file(s) changed, but U2.8's 'standard' gate passed at b94270630 and runs the same ladder at equal-or-greater strength",
         "auto-demoted to stale at 1787045472: 10 declared file(s) changed since b94270630 — re-gate required",
-        "re-affirmed at 1787045696 (was stale): 10 declared file(s) changed, but U2.4's 'i18n' gate passed at c364f6879 and runs the same ladder at equal-or-greater strength"
+        "re-affirmed at 1787045696 (was stale): 10 declared file(s) changed, but U2.4's 'i18n' gate passed at c364f6879 and runs the same ladder at equal-or-greater strength",
+        "auto-demoted to stale at 1787053498: 9 declared file(s) changed since c364f6879 — re-gate required"
       ]
     },
     {
@@ -4993,22 +5117,237 @@
       "dependsOn": [
         "U2.10"
       ],
-      "status": "pending",
-      "attempts": 0,
+      "status": "blocked",
+      "attempts": 1,
       "reviewRounds": 0,
       "verifiedAtSha": null,
-      "commit": null,
+      "commit": "f092ee4c8",
       "evidence": {
-        "gatesRun": [],
+        "gatesRun": [
+          {
+            "gate": "guard",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "GUARD NOTE: sibling tree has pre-existing changes (not caused by this wake):\n    ?? sahayakai-main/._fields.mjs\n    ?? sahayakai-main/._live.mjs\n    ?? sahayakai-main/.claude/launch.json\n    ?? sahayakai-main/.claude/skills/\n    ?? sahayakai-main/AI_Literacy_Drive_Women_Siliguri_INTERN_MARKETING_PLAYBOOK.md\nGUARD NOTE: the loop must not add to these. Web/sidecar units use a separate worktree.\nloop_guard: OK (branch=feature/flutter-rebuild head=5e3810baf)"
+          },
+          {
+            "gate": "selftest",
+            "exit": 0,
+            "durationSec": 7,
+            "tail": "selftest: planting violations to prove each guard can fail\n\n  ✓ secret_scan detects a planted keystore password\n  ✓ contradiction_guard detects a stub claim above real wiring\n  ✓ scope gate detects an undeclared changed file\n  ✓ scope gate refuses to run with UNIT_FILES unset\n  ✓ i18n_count reads real ARBs and agrees with the audit (untranslated=0)\n  ✓ app_en.arb and the audit agree on the template (1066 keys)\n  ✓ doc_truth_guard accounts for all 11 claims (11 green / 0 red)\n  ✓ doc_truth_guard --strict still fails on an unsatisfiable claim\n  ✓ verifiedAtSha ancestry check rejects a fabricated sha\n  ✓ record.py refuses another unit's gate as evidence\n  ✓ loop_guard passes on the real tree\n  ✓ reconcile passes on the real tree\n\nselftest: 12 passed, 0 failed\nselftest: every guard demonstrably fails when it should"
+          },
+          {
+            "gate": "reconcile",
+            "exit": 0,
+            "durationSec": 4,
+            "tail": "reconcile: head=5e3810baf branch=feature/flutter-rebuild tests=1839 goldens=16 i18n_missing=0 claims=11g/0r\nreconcile: integrity OK"
+          },
+          {
+            "gate": "scope",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "all changes within the declared file list\n  (excluding 9 declared pre-existing dirty path(s))"
+          },
+          {
+            "gate": "format",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "Formatted 19 files (0 changed) in 0.21 seconds."
+          },
+          {
+            "gate": "analyze",
+            "exit": 0,
+            "durationSec": 9,
+            "tail": "Analyzing sahayakai-flutter...                                  \nNo issues found! (ran in 7.6s)"
+          },
+          {
+            "gate": "token_guard",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "token-guard: PASS"
+          },
+          {
+            "gate": "secret_scan",
+            "exit": 0,
+            "durationSec": 1,
+            "tail": "secret_scan: OK"
+          },
+          {
+            "gate": "contradiction",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "contradiction_guard: OK"
+          },
+          {
+            "gate": "doc_truth",
+            "exit": 0,
+            "durationSec": 2,
+            "tail": "CLAIM                            ACTUAL   EXPECT   VERDICT\ngolden_gate_exists               16       >=12     GREEN\ni18n_zero_untranslated           0        ==0      GREEN\ni18n_zero_identical_english      0        ==0      GREEN\nfonts_bundled                    11       >=11     GREEN\nfonts_no_runtime_fetch           0        ==0      GREEN\nfonts_not_fetched_from_lib       0        ==0      GREEN\nrelease_signing_verified         1        ==1      GREEN\nflutter_ci_present               1        >=1      GREEN\nlints_enforced                   22       >=15     GREEN\nfirebase_wired                   1        >=1      GREEN\nturn_based_fallback_present      5        >=1      GREEN\n\ndoc_truth_guard: 11 green / 0 red"
+          },
+          {
+            "gate": "codegen_drift",
+            "exit": 0,
+            "durationSec": 3,
+            "tail": "codegen is idempotent against the working tree"
+          },
+          {
+            "gate": "custom_lint",
+            "exit": 0,
+            "durationSec": 24,
+            "tail": "Analyzing...\n\nNo issues found!"
+          },
+          {
+            "gate": "tests",
+            "exit": 0,
+            "durationSec": 92,
+            "tail": "  01:29 +2053: All tests passed!                                                                                                                                                                         \npassing=2053 failing=0 (baseline failing=0)"
+          },
+          {
+            "gate": "goldens",
+            "exit": 0,
+            "durationSec": 60,
+            "tail": "00:01 +6: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light vidya home — bn\n00:01 +7: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp home — dark\n00:01 +8: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/states_golden_test.dart: shared state baselines library populated at textScale 1.3 — light\n00:01 +9: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light prep desk — bn\n00:01 +10: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light prep desk — bn\n00:01 +11: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light prep desk — bn\n00:01 +12: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp home at textScale 1.3 — dark\n00:02 +13: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light vidya home — ta\n00:02 +14: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light vidya home — ta\n00:02 +15: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp home — light\n00:02 +16: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light prep desk — ta\n00:02 +17: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light prep desk — ta\n00:02 +18: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp home at textScale 1.3 — light\n00:02 +19: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light vidya home — ml\n00:02 +20: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 800dp login wide — dark\n00:02 +21: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light prep desk — ml\n00:02 +22: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 800dp home wide — dark\n00:02 +23: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 800dp login wide — light\n00:02 +24: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 800dp home wide — light\n00:05 +25: All tests passed!"
+          },
+          {
+            "gate": "i18n_full",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "untranslated=0 identical-to-english=0"
+          },
+          {
+            "gate": "build_apk_debug",
+            "exit": 0,
+            "durationSec": 28,
+            "tail": "\tat org.gradle.cache.internal.DefaultCacheCoordinator.useCache(DefaultCacheCoordinator.java:249)\n\tat org.gradle.cache.internal.DefaultCacheCoordinator.useCache(DefaultCacheCoordinator.java:223)\n\tat org.gradle.cache.internal.ExclusiveCacheAccessingWorker.flushOperations(ExclusiveCacheAccessingWorker.java:169)\n\tat org.gradle.cache.internal.ExclusiveCacheAccessingWorker.run(ExclusiveCacheAccessingWorker.java:139)\n\tat org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)\n\tat org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)\n\tat java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)\n\tat java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)\n\tat java.base/java.lang.Thread.run(Thread.java:840)\nCaused by: org.gradle.cache.internal.btree.CorruptedCacheException: Corrupted DataBlock 1659778 found in cache '/Users/sargupta/.gradle/caches/journal-1/file-access.bin'.\n\tat org.gradle.cache.internal.btree.FileBackedBlockStore$BlockImpl.blockCorruptedException(FileBackedBlockStore.java:267)\n\tat org.gradle.cache.internal.btree.FileBackedBlockStore$BlockImpl.read(FileBackedBlockStore.java:246)\n\tat org.gradle.cache.internal.btree.FileBackedBlockStore.read(FileBackedBlockStore.java:123)\n\tat org.gradle.cache.internal.btree.CachingBlockStore.read(CachingBlockStore.java:100)\n\tat org.gradle.cache.internal.btree.FreeListBlockStore.read(FreeListBlockStore.java:86)\n\tat org.gradle.cache.internal.btree.StateCheckBlockStore.read(StateCheckBlockStore.java:67)\n\tat org.gradle.cache.internal.btree.BTreePersistentIndexedCache.put(BTreePersistentIndexedCache.java:147)\n\t... 18 more\nRunning Gradle task 'assembleDebug'...                             25.8s\n✓ Built build/app/outputs/flutter-apk/app-debug.apk"
+          }
+        ],
         "reviewers": [],
-        "artifacts": []
+        "artifacts": [],
+        "gateProfile": "native",
+        "gateExit": 0,
+        "gateAtSha": "5e3810bafeca5e3867c65e2f192f99c17707f787"
       },
       "failure": null,
       "blockedBy": {
         "kind": "human",
-        "detail": "Founder reviews the 11-script golden PNG before any rollout decision."
+        "detail": "Founder decision: the spike is complete and the artefact is ready at docs/flutter/spike/pdf_indic/comparison.png. Ship-or-drop for PDF export is not the loop's call."
       },
-      "notes": []
+      "notes": [
+        "Gate 'native' PASS at 5e3810baf — includes a real flutter build apk --debug, so the pubspec change is proven not to break the Android build. 2053 tests, 0 failing.",
+        "VERDICT: package:pdf renders no boxes but is wrong in all 10 Indic scripts. Recommendation is to NOT ship PDF export on it. The failure mode is more dangerous than the expected one — output looks plausible and is mis-shaped, so a teacher would print it.",
+        "Cheapest route that actually works, per FINDINGS.md: render the shaped Flutter widget to an image via RenderRepaintBoundary.toImage and wrap the PNG in a PDF. Loses selectable text, keeps the offline promise, correct in all 11 by construction."
+      ]
+    },
+    {
+      "id": "U2.13",
+      "band": "B2",
+      "status": "done",
+      "attempts": 1,
+      "title": "Attendance entry point, and dart-format hygiene on the files it shipped",
+      "gateProfile": "standard",
+      "dependsOn": [
+        "U2.3"
+      ],
+      "commit": "5e3810baf",
+      "verifiedAtSha": "5e3810bafeca5e3867c65e2f192f99c17707f787",
+      "failure": null,
+      "$why": "c364f6879 shipped six attendance screens that nothing in the app linked to. A feature a teacher cannot reach is not shipped. Folded in with it: the eleven files from 4b82af3ed were not dart-format clean, which would have handed an unrelated gate failure to the next unit that touched one.",
+      "evidence": {
+        "gatesRun": [
+          {
+            "gate": "guard",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "GUARD NOTE: sibling tree has pre-existing changes (not caused by this wake):\n    ?? sahayakai-main/._fields.mjs\n    ?? sahayakai-main/._live.mjs\n    ?? sahayakai-main/.claude/launch.json\n    ?? sahayakai-main/.claude/skills/\n    ?? sahayakai-main/AI_Literacy_Drive_Women_Siliguri_INTERN_MARKETING_PLAYBOOK.md\nGUARD NOTE: the loop must not add to these. Web/sidecar units use a separate worktree.\nloop_guard: OK (branch=feature/flutter-rebuild head=09f860d2b)"
+          },
+          {
+            "gate": "selftest",
+            "exit": 0,
+            "durationSec": 7,
+            "tail": "selftest: planting violations to prove each guard can fail\n\n  ✓ secret_scan detects a planted keystore password\n  ✓ contradiction_guard detects a stub claim above real wiring\n  ✓ scope gate detects an undeclared changed file\n  ✓ scope gate refuses to run with UNIT_FILES unset\n  ✓ i18n_count reads real ARBs and agrees with the audit (untranslated=0)\n  ✓ app_en.arb and the audit agree on the template (1066 keys)\n  ✓ doc_truth_guard accounts for all 11 claims (11 green / 0 red)\n  ✓ doc_truth_guard --strict still fails on an unsatisfiable claim\n  ✓ verifiedAtSha ancestry check rejects a fabricated sha\n  ✓ record.py refuses another unit's gate as evidence\n  ✓ loop_guard passes on the real tree\n  ✓ reconcile passes on the real tree\n\nselftest: 12 passed, 0 failed\nselftest: every guard demonstrably fails when it should"
+          },
+          {
+            "gate": "reconcile",
+            "exit": 0,
+            "durationSec": 4,
+            "tail": "reconcile: head=09f860d2b branch=feature/flutter-rebuild tests=1839 goldens=16 i18n_missing=0 claims=11g/0r\nreconcile: integrity OK"
+          },
+          {
+            "gate": "scope",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "all changes within the declared file list\n  (excluding 9 declared pre-existing dirty path(s))"
+          },
+          {
+            "gate": "format",
+            "exit": 0,
+            "durationSec": 1,
+            "tail": "Formatted 33 files (0 changed) in 0.26 seconds."
+          },
+          {
+            "gate": "analyze",
+            "exit": 0,
+            "durationSec": 9,
+            "tail": "Analyzing sahayakai-flutter...                                  \nNo issues found! (ran in 8.3s)"
+          },
+          {
+            "gate": "token_guard",
+            "exit": 0,
+            "durationSec": 1,
+            "tail": "token-guard: PASS"
+          },
+          {
+            "gate": "secret_scan",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "secret_scan: OK"
+          },
+          {
+            "gate": "contradiction",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "contradiction_guard: OK"
+          },
+          {
+            "gate": "doc_truth",
+            "exit": 0,
+            "durationSec": 2,
+            "tail": "CLAIM                            ACTUAL   EXPECT   VERDICT\ngolden_gate_exists               16       >=12     GREEN\ni18n_zero_untranslated           0        ==0      GREEN\ni18n_zero_identical_english      0        ==0      GREEN\nfonts_bundled                    11       >=11     GREEN\nfonts_no_runtime_fetch           0        ==0      GREEN\nfonts_not_fetched_from_lib       0        ==0      GREEN\nrelease_signing_verified         1        ==1      GREEN\nflutter_ci_present               1        >=1      GREEN\nlints_enforced                   22       >=15     GREEN\nfirebase_wired                   1        >=1      GREEN\nturn_based_fallback_present      5        >=1      GREEN\n\ndoc_truth_guard: 11 green / 0 red"
+          },
+          {
+            "gate": "codegen_drift",
+            "exit": 0,
+            "durationSec": 3,
+            "tail": "codegen is idempotent against the working tree"
+          },
+          {
+            "gate": "custom_lint",
+            "exit": 0,
+            "durationSec": 27,
+            "tail": "Analyzing...\n\nNo issues found!"
+          },
+          {
+            "gate": "tests",
+            "exit": 0,
+            "durationSec": 98,
+            "tail": "  01:35 +2053: All tests passed!                                                                                                                                                                         \npassing=2053 failing=0 (baseline failing=0)"
+          },
+          {
+            "gate": "goldens",
+            "exit": 0,
+            "durationSec": 65,
+            "tail": "00:01 +6: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light vidya home — ta\n00:01 +7: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp home — dark\n00:01 +8: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp home — dark\n00:01 +9: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light prep desk — ta\n00:01 +10: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/states_golden_test.dart: shared state baselines library populated — dark\n00:01 +11: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/states_golden_test.dart: shared state baselines library populated — dark\n00:01 +12: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light vidya home — ml\n00:01 +13: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp home at textScale 1.3 — dark\n00:01 +14: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/states_golden_test.dart: shared state baselines library populated at textScale 1.3 — light\n00:01 +15: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light prep desk — ml\n00:01 +16: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light prep desk — ml\n00:01 +17: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/states_golden_test.dart: shared state baselines signed-out profile surface — light\n00:01 +18: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp home — light\n00:01 +19: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp login at textScale 1.3 — light\n00:01 +20: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp home at textScale 1.3 — light\n00:02 +21: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 800dp login wide — dark\n00:02 +22: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 800dp home wide — dark\n00:02 +23: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 800dp login wide — light\n00:02 +24: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 800dp home wide — light\n00:05 +25: All tests passed!"
+          }
+        ],
+        "gateProfile": "standard",
+        "gateExit": 0,
+        "gateAtSha": "09f860d2beb575b07759e4c7766f3d2bd9b50ac7"
+      },
+      "notes": [
+        "Gate 'standard' PASS at 09f860d2b with a declared-wide scope — U2.11 and U2.12 were produced concurrently in this worktree. 2053 tests, 0 failing.",
+        "Eight goldens re-blessed after an INTENDED UI change, not to make a gate green: the failing baselines all render the Prep desk via pumpDashboard (the 'library' names are misleading), and the blast radius was verified afterwards to be exactly those eight — no login, vidya-home or other screen baseline moved.",
+        "140 files remain dart-format unclean tree-wide, all pre-existing, deliberately untouched. A mechanical one-command fix, but a ~140-file diff that would bury this unit."
+      ]
     },
     {
       "id": "U2.12",
@@ -5025,19 +5364,118 @@
       "dependsOn": [
         "U0.16"
       ],
-      "status": "pending",
-      "attempts": 0,
+      "status": "done",
+      "attempts": 1,
       "reviewRounds": 0,
-      "verifiedAtSha": null,
-      "commit": null,
+      "verifiedAtSha": "7bb3e68cedd93a5e21f8b9d4f9514c594f0f6b75",
+      "commit": "7bb3e68ce",
       "evidence": {
-        "gatesRun": [],
+        "gatesRun": [
+          {
+            "gate": "guard",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "GUARD NOTE: sibling tree has pre-existing changes (not caused by this wake):\n    ?? sahayakai-main/._fields.mjs\n    ?? sahayakai-main/._live.mjs\n    ?? sahayakai-main/.claude/launch.json\n    ?? sahayakai-main/.claude/skills/\n    ?? sahayakai-main/AI_Literacy_Drive_Women_Siliguri_INTERN_MARKETING_PLAYBOOK.md\nGUARD NOTE: the loop must not add to these. Web/sidecar units use a separate worktree.\nloop_guard: OK (branch=feature/flutter-rebuild head=f092ee4c8)"
+          },
+          {
+            "gate": "selftest",
+            "exit": 0,
+            "durationSec": 7,
+            "tail": "selftest: planting violations to prove each guard can fail\n\n  ✓ secret_scan detects a planted keystore password\n  ✓ contradiction_guard detects a stub claim above real wiring\n  ✓ scope gate detects an undeclared changed file\n  ✓ scope gate refuses to run with UNIT_FILES unset\n  ✓ i18n_count reads real ARBs and agrees with the audit (untranslated=0)\n  ✓ app_en.arb and the audit agree on the template (1066 keys)\n  ✓ doc_truth_guard accounts for all 11 claims (11 green / 0 red)\n  ✓ doc_truth_guard --strict still fails on an unsatisfiable claim\n  ✓ verifiedAtSha ancestry check rejects a fabricated sha\n  ✓ record.py refuses another unit's gate as evidence\n  ✓ loop_guard passes on the real tree\n  ✓ reconcile passes on the real tree\n\nselftest: 12 passed, 0 failed\nselftest: every guard demonstrably fails when it should"
+          },
+          {
+            "gate": "reconcile",
+            "exit": 0,
+            "durationSec": 4,
+            "tail": "reconcile: head=f092ee4c8 branch=feature/flutter-rebuild tests=1839 goldens=16 i18n_missing=0 claims=11g/0r\nreconcile: integrity OK"
+          },
+          {
+            "gate": "scope",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "all changes within the declared file list\n  (excluding 9 declared pre-existing dirty path(s))"
+          },
+          {
+            "gate": "format",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "Formatted 18 files (0 changed) in 0.22 seconds."
+          },
+          {
+            "gate": "analyze",
+            "exit": 0,
+            "durationSec": 9,
+            "tail": "Analyzing sahayakai-flutter...                                  \nNo issues found! (ran in 8.1s)"
+          },
+          {
+            "gate": "token_guard",
+            "exit": 0,
+            "durationSec": 1,
+            "tail": "token-guard: PASS"
+          },
+          {
+            "gate": "secret_scan",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "secret_scan: OK"
+          },
+          {
+            "gate": "contradiction",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "contradiction_guard: OK"
+          },
+          {
+            "gate": "doc_truth",
+            "exit": 0,
+            "durationSec": 2,
+            "tail": "CLAIM                            ACTUAL   EXPECT   VERDICT\ngolden_gate_exists               16       >=12     GREEN\ni18n_zero_untranslated           0        ==0      GREEN\ni18n_zero_identical_english      0        ==0      GREEN\nfonts_bundled                    11       >=11     GREEN\nfonts_no_runtime_fetch           0        ==0      GREEN\nfonts_not_fetched_from_lib       0        ==0      GREEN\nrelease_signing_verified         1        ==1      GREEN\nflutter_ci_present               1        >=1      GREEN\nlints_enforced                   22       >=15     GREEN\nfirebase_wired                   1        >=1      GREEN\nturn_based_fallback_present      5        >=1      GREEN\n\ndoc_truth_guard: 11 green / 0 red"
+          },
+          {
+            "gate": "codegen_drift",
+            "exit": 0,
+            "durationSec": 3,
+            "tail": "codegen is idempotent against the working tree"
+          },
+          {
+            "gate": "custom_lint",
+            "exit": 0,
+            "durationSec": 26,
+            "tail": "Analyzing...\n\nNo issues found!"
+          },
+          {
+            "gate": "tests",
+            "exit": 0,
+            "durationSec": 93,
+            "tail": "  01:30 +2053: All tests passed!                                                                                                                                                                         \npassing=2053 failing=0 (baseline failing=0)"
+          },
+          {
+            "gate": "goldens",
+            "exit": 0,
+            "durationSec": 54,
+            "tail": "00:01 +6: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light vidya home — bn\n00:01 +7: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light vidya home — bn\n00:01 +8: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light vidya home — bn\n00:01 +9: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light vidya home — bn\n00:01 +10: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp login at textScale 1.3 — dark\n00:01 +11: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light prep desk — bn\n00:02 +12: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light prep desk — bn\n00:02 +13: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp login — light\n00:02 +14: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light vidya home — ta\n00:02 +15: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp home — light\n00:02 +16: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light prep desk — ta\n00:02 +17: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light prep desk — ta\n00:02 +18: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 360dp home at textScale 1.3 — light\n00:02 +19: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light vidya home — ml\n00:02 +20: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light vidya home — ml\n00:02 +21: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 800dp home wide — dark\n00:02 +22: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/indic_golden_test.dart: Indic baselines at 360dp, textScale 1.3, light prep desk — ml\n00:02 +23: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 800dp login wide — light\n00:02 +24: /Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter/test/golden/screens_golden_test.dart: screen baselines at 800dp home wide — light\n00:05 +25: All tests passed!"
+          },
+          {
+            "gate": "i18n_full",
+            "exit": 0,
+            "durationSec": 0,
+            "tail": "untranslated=0 identical-to-english=0"
+          }
+        ],
         "reviewers": [],
-        "artifacts": []
+        "artifacts": [],
+        "gateProfile": "i18n",
+        "gateExit": 0,
+        "gateAtSha": "f092ee4c8ec3e4d55035ca8744bfd02ade91276a"
       },
       "failure": null,
       "blockedBy": null,
-      "notes": []
+      "notes": [
+        "Gate 'i18n' PASS at f092ee4c8: 2053 tests, 0 failing, untranslated=0, identical-to-english=0, 1066 keys in every locale.",
+        "The existing GET /api/notifications was READ before designing, and rejected: its Notification type is a closed social union (follow/like/comment/badge/connect) and every writer is social. Binding the tab to it would have produced a surface incapable of showing any of the three things the tab exists for. The feed is therefore local-only and says so on screen, in both the list and the empty state.",
+        "Four candidate rows were deliberately NOT built: 'a parent called back' (no read route exposes an inbound call), a conversation whose AI summary never generated (the row would promise a summary that is not there), a WhatsApp copy (no call was placed), and exam-paper COMPLETION (the 202 carries no poll token and no route reports completion — the row says queued, never arrived).",
+        "The agent corrected my own count: NINE dead ARB keys, not eight. My wake-35 note said 'eight (examPaperSave*, parentMessageCopy/Share/Copied)' while examPaperSave* is six keys. Each of the nine was grepped across lib/ and test/ before removal."
+      ]
     },
     {
       "id": "U3.1",
