@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.sargvision.sahayakai",
+      "sha256_cert_fingerprints": [
+        "09:3E:4C:1A:71:2D:6D:40:A0:B6:A6:4B:56:F8:6F:67:00:10:16:C9:ED:44:6E:79:F2:DC:A8:DB:CF:E6:35:C3"
+      ]
+    }
+  }
+]

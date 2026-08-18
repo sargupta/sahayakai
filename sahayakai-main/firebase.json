@@ -3,8 +3,29 @@
         "source": ".",
         "ignore": [
             "firebase.json",
-            "**/.*",
-            "**/node_modules/**"
+            "**/node_modules/**",
+            ".git/**",
+            ".github/**",
+            ".claude/**",
+            ".agent/**",
+            ".gemini/**",
+            ".genkit/**",
+            ".idx/**",
+            ".next/**",
+            ".firebase/**",
+            ".gitignore",
+            ".dockerignore",
+            ".gcloudignore",
+            ".deployment-changelog.json",
+            ".modified",
+            "**/.env",
+            "**/.env.*",
+            "**/.npmrc",
+            "**/.netrc",
+            "**/.ssh/**",
+            "**/.aws/**",
+            "**/.gcloud/**",
+            "**/.DS_Store"
         ],
         "frameworksBackend": {
             "region": "asia-southeast1"

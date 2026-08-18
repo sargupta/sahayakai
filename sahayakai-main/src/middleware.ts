@@ -168,6 +168,12 @@ export async function middleware(request: NextRequest) {
         pathname === '/llms.txt' ||
         pathname === '/llms-full.txt' ||
         pathname === '/google8283f170c9f5e54d.html' ||
+        // Well-known URIs (RFC 8615) served from public/.well-known — machine-read
+        // by external verifiers that send no cookies and parse the body strictly.
+        // Android's App Links verifier fetches /.well-known/assetlinks.json; keep it
+        // off the auth/onboarding path so a future ONBOARDING_GATE_ENABLED flip can
+        // never redirect it, and out of the CSP/nonce block that decorates HTML.
+        pathname.startsWith('/.well-known/') ||
         // Firebase Auth helper paths reverse-proxied to *.firebaseapp.com
         // (see next.config.ts rewrites). Don't run auth verification or
         // attach security headers (e.g. X-Frame-Options: DENY would block
