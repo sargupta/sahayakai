@@ -98,9 +98,7 @@ void main() {
       expect(ClassCapacity.firstFreeRollNumber(<int>[]), 1);
       expect(ClassCapacity.firstFreeRollNumber(<int>[1, 2, 4]), 3);
       expect(
-        ClassCapacity.firstFreeRollNumber(
-          List<int>.generate(40, (i) => i + 1),
-        ),
+        ClassCapacity.firstFreeRollNumber(List<int>.generate(40, (i) => i + 1)),
         isNull,
       );
     });

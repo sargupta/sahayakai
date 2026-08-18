@@ -149,14 +149,14 @@ class AttendanceClass {
 
   @override
   int get hashCode => Object.hash(
-        id,
-        name,
-        subject,
-        gradeLevel,
-        academicYear,
-        section,
-        studentCount,
-        createdAt,
-        updatedAt,
-      );
+    id,
+    name,
+    subject,
+    gradeLevel,
+    academicYear,
+    section,
+    studentCount,
+    createdAt,
+    updatedAt,
+  );
 }

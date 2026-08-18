@@ -63,12 +63,12 @@ class CreateClassRequestDto {
   final String? section;
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'name': name,
-        'subject': subject,
-        'gradeLevel': gradeLevel,
-        'academicYear': academicYear,
-        if (section != null) 'section': section,
-      };
+    'name': name,
+    'subject': subject,
+    'gradeLevel': gradeLevel,
+    'academicYear': academicYear,
+    if (section != null) 'section': section,
+  };
 }
 
 /// Decodes the create route's `{ classId }` reply.
@@ -130,16 +130,16 @@ class AttendanceClassDto {
   final String? updatedAt;
 
   AttendanceClass toDomain() => AttendanceClass(
-        id: id?.trim() ?? '',
-        name: name?.trim() ?? '',
-        subject: subject?.trim() ?? '',
-        gradeLevel: gradeLevel?.trim() ?? '',
-        academicYear: academicYear?.trim() ?? '',
-        section: _clean(section),
-        studentCount: studentCount?.toInt() ?? 0,
-        createdAt: _clean(createdAt),
-        updatedAt: _clean(updatedAt),
-      );
+    id: id?.trim() ?? '',
+    name: name?.trim() ?? '',
+    subject: subject?.trim() ?? '',
+    gradeLevel: gradeLevel?.trim() ?? '',
+    academicYear: academicYear?.trim() ?? '',
+    section: _clean(section),
+    studentCount: studentCount?.toInt() ?? 0,
+    createdAt: _clean(createdAt),
+    updatedAt: _clean(updatedAt),
+  );
 
   /// Decodes a class-list body, dropping entries that carry no id (an entry
   /// with no id cannot address any nested route, so keeping it would only
@@ -215,11 +215,11 @@ class AddStudentRequestDto {
   final String parentLanguage;
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'name': name,
-        'rollNumber': rollNumber,
-        'parentPhone': parentPhone,
-        'parentLanguage': parentLanguage,
-      };
+    'name': name,
+    'rollNumber': rollNumber,
+    'parentPhone': parentPhone,
+    'parentLanguage': parentLanguage,
+  };
 }
 
 /// Decodes the add-student route's `{ studentId }` reply.
@@ -294,15 +294,15 @@ class RosterStudentDto {
   final String parentPhoneLast4;
 
   RosterStudent toDomain() => RosterStudent(
-        id: id.trim(),
-        name: name.trim(),
-        rollNumber: rollNumber.toInt(),
-        parentLanguage: parentLanguage.trim(),
-        hasParentPhone: hasParentPhone,
-        // '' means "nothing safe to show"; normalised to null so the UI has one
-        // absent case, not two.
-        parentPhoneLast4: _clean(parentPhoneLast4),
-      );
+    id: id.trim(),
+    name: name.trim(),
+    rollNumber: rollNumber.toInt(),
+    parentLanguage: parentLanguage.trim(),
+    hasParentPhone: hasParentPhone,
+    // '' means "nothing safe to show"; normalised to null so the UI has one
+    // absent case, not two.
+    parentPhoneLast4: _clean(parentPhoneLast4),
+  );
 
   /// Decodes a masked roster body, or throws
   /// [RosterProjectionUnavailableException]. Never returns a partially
@@ -381,11 +381,11 @@ class SaveAttendanceRequestDto {
   final Map<String, AttendanceStatus> statuses;
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'date': date.wire,
-        'records': <String, String>{
-          for (final entry in statuses.entries) entry.key: entry.value.wire,
-        },
-      };
+    'date': date.wire,
+    'records': <String, String>{
+      for (final entry in statuses.entries) entry.key: entry.value.wire,
+    },
+  };
 }
 
 /// Decodes one `DailyAttendanceRecord`.
@@ -447,8 +447,9 @@ class DailyAttendanceDto {
   /// when that day has not been marked.
   static DailyAttendance? decodeOne(dynamic json, {AttendanceDate? forDate}) {
     if (json is! Map) return null;
-    return DailyAttendanceDto.fromJson(json.cast<String, dynamic>())
-        .toDomain(fallbackDate: forDate);
+    return DailyAttendanceDto.fromJson(
+      json.cast<String, dynamic>(),
+    ).toDomain(fallbackDate: forDate);
   }
 
   /// Decodes `GET .../records?year=&month=` — an object keyed by `YYYY-MM-DD`.
@@ -460,8 +461,9 @@ class DailyAttendanceDto {
     json.forEach((key, value) {
       final on = AttendanceDate.tryParse(key is String ? key : null);
       if (on == null || value is! Map) return;
-      final record = DailyAttendanceDto.fromJson(value.cast<String, dynamic>())
-          .toDomain(fallbackDate: on);
+      final record = DailyAttendanceDto.fromJson(
+        value.cast<String, dynamic>(),
+      ).toDomain(fallbackDate: on);
       if (record != null) byDate[on] = record;
     });
     return Map<AttendanceDate, DailyAttendance>.unmodifiable(byDate);
@@ -509,26 +511,27 @@ class StudentAttendanceSummaryDto {
   final num? consecutiveAbsences;
 
   StudentAttendanceSummary toDomain() => StudentAttendanceSummary(
-        studentId: studentId?.trim() ?? '',
-        studentName: studentName?.trim() ?? '',
-        rollNumber: rollNumber?.toInt() ?? 0,
-        totalDays: totalDays?.toInt() ?? 0,
-        presentDays: presentDays?.toInt() ?? 0,
-        absentDays: absentDays?.toInt() ?? 0,
-        lateDays: lateDays?.toInt() ?? 0,
-        // The server defaults an empty month to 100, not 0 — an unmarked month
-        // must not read as "nobody attended".
-        attendanceRate: attendanceRate?.toInt() ?? 100,
-        consecutiveAbsences: consecutiveAbsences?.toInt() ?? 0,
-      );
+    studentId: studentId?.trim() ?? '',
+    studentName: studentName?.trim() ?? '',
+    rollNumber: rollNumber?.toInt() ?? 0,
+    totalDays: totalDays?.toInt() ?? 0,
+    presentDays: presentDays?.toInt() ?? 0,
+    absentDays: absentDays?.toInt() ?? 0,
+    lateDays: lateDays?.toInt() ?? 0,
+    // The server defaults an empty month to 100, not 0 — an unmarked month
+    // must not read as "nobody attended".
+    attendanceRate: attendanceRate?.toInt() ?? 100,
+    consecutiveAbsences: consecutiveAbsences?.toInt() ?? 0,
+  );
 
   static List<StudentAttendanceSummary> decodeList(dynamic json) {
     if (json is! List) return const <StudentAttendanceSummary>[];
     return json
         .whereType<Map>()
         .map(
-          (e) => StudentAttendanceSummaryDto.fromJson(e.cast<String, dynamic>())
-              .toDomain(),
+          (e) => StudentAttendanceSummaryDto.fromJson(
+            e.cast<String, dynamic>(),
+          ).toDomain(),
         )
         .where((s) => s.studentId.isNotEmpty)
         .toList(growable: false);

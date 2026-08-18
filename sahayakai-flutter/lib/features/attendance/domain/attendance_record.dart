@@ -97,14 +97,14 @@ class DailyAttendance {
 
   @override
   int get hashCode => Object.hash(
-        classId,
-        date,
-        Object.hashAllUnordered(
-          statuses.entries.map((e) => Object.hash(e.key, e.value)),
-        ),
-        submittedAt,
-        isFinalized,
-      );
+    classId,
+    date,
+    Object.hashAllUnordered(
+      statuses.entries.map((e) => Object.hash(e.key, e.value)),
+    ),
+    submittedAt,
+    isFinalized,
+  );
 }
 
 /// One student's monthly rollup, computed server-side and never stored
@@ -161,14 +161,14 @@ class StudentAttendanceSummary {
 
   @override
   int get hashCode => Object.hash(
-        studentId,
-        studentName,
-        rollNumber,
-        totalDays,
-        presentDays,
-        absentDays,
-        lateDays,
-        attendanceRate,
-        consecutiveAbsences,
-      );
+    studentId,
+    studentName,
+    rollNumber,
+    totalDays,
+    presentDays,
+    absentDays,
+    lateDays,
+    attendanceRate,
+    consecutiveAbsences,
+  );
 }

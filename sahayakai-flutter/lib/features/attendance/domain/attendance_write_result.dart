@@ -34,9 +34,9 @@ sealed class AttendanceWriteResult<T> {
   /// exhaustive `switch` over this — it exists for the call sites that only
   /// need "did it land".
   T? get valueOrNull => switch (this) {
-        AttendanceWriteAccepted<T>(:final value) => value,
-        AttendanceWriteBlockedByPlan<T>() => null,
-      };
+    AttendanceWriteAccepted<T>(:final value) => value,
+    AttendanceWriteBlockedByPlan<T>() => null,
+  };
 }
 
 /// The server accepted the write. [value] is whatever it returned — a new

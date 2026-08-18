@@ -65,8 +65,7 @@ class AttendanceDate implements Comparable<AttendanceDate> {
   final int day;
 
   /// The exact `YYYY-MM-DD` token every attendance route expects.
-  String get wire =>
-      '${_pad(year, 4)}-${_pad(month, 2)}-${_pad(day, 2)}';
+  String get wire => '${_pad(year, 4)}-${_pad(month, 2)}-${_pad(day, 2)}';
 
   /// The same calendar day shifted by [days]. Computed in UTC, which has no
   /// daylight saving, so a shift can never gain or lose an hour and land on the
@@ -78,9 +77,11 @@ class AttendanceDate implements Comparable<AttendanceDate> {
 
   /// Whole days from [other] to this date (positive when this is later).
   int differenceInDays(AttendanceDate other) {
-    return DateTime.utc(year, month, day)
-        .difference(DateTime.utc(other.year, other.month, other.day))
-        .inDays;
+    return DateTime.utc(
+      year,
+      month,
+      day,
+    ).difference(DateTime.utc(other.year, other.month, other.day)).inDays;
   }
 
   /// Lexicographic on the wire form is the same order as chronological for a
@@ -183,11 +184,10 @@ class AttendanceWindow {
 
   /// Every markable day, newest first — the date strip a register screen
   /// renders. Eight entries: today back to `today - 7`.
-  List<AttendanceDate> get markableDates => List<AttendanceDate>.unmodifiable(
-        <AttendanceDate>[
-          for (var back = 0; back <= markableDays; back++) today.addDays(-back),
-        ],
-      );
+  List<AttendanceDate> get markableDates =>
+      List<AttendanceDate>.unmodifiable(<AttendanceDate>[
+        for (var back = 0; back <= markableDays; back++) today.addDays(-back),
+      ]);
 
   @override
   bool operator ==(Object other) =>

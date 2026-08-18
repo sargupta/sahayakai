@@ -109,8 +109,9 @@ class AttendanceRepository {
       () => _client.get<AttendanceClass?>(
         _classPath(classId),
         decode: (json) => json is Map
-            ? AttendanceClassDto.fromJson(json.cast<String, dynamic>())
-                .toDomain()
+            ? AttendanceClassDto.fromJson(
+                json.cast<String, dynamic>(),
+              ).toDomain()
             : null,
       ),
     );
@@ -162,7 +163,10 @@ class AttendanceRepository {
       // does not know `roster` — which is the same fail-closed case as an
       // unmasked body, not a teacher-visible validation problem.
       if (e.statusCode == 400) {
-        throw RosterProjectionUnavailableException(reason: 'rejected', cause: e);
+        throw RosterProjectionUnavailableException(
+          reason: 'rejected',
+          cause: e,
+        );
       }
       throw AttendanceException.fromRoute(e) ?? e;
     }

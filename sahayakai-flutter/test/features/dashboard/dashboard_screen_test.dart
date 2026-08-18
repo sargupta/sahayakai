@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations_ml.dart';
+import 'package:sahayakai/features/attendance/presentation/attendance_classes_screen.dart';
 import 'package:sahayakai/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:sahayakai/features/instant_answer/presentation/instant_answer_screen.dart';
 import 'package:sahayakai/features/lesson_planner/presentation/lesson_plan_screen.dart';
 import 'package:sahayakai/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:sahayakai/features/quiz_generator/presentation/quiz_generator_screen.dart';
 import 'package:sahayakai/features/worksheet_wizard/presentation/worksheet_wizard_screen.dart';
+import 'package:sahayakai/shared/domain/tool_registry.dart';
 import 'package:sahayakai/shared/widgets/app_skeleton.dart';
 import 'package:sahayakai/shared/widgets/empty_view.dart';
 import 'package:sahayakai/shared/widgets/error_view.dart';
@@ -86,6 +88,34 @@ void main() {
       expect(find.text('Instant Answer'), findsOneWidget);
       // Worksheet (P1.1) now has a real screen, so its tile is live.
       expect(find.text('Worksheet'), findsOneWidget);
+    });
+
+    testWidgets('attendance is reachable, and opens the real class list', (
+      tester,
+    ) async {
+      // The six attendance screens shipped behind `/attendance` with nothing
+      // linking to them — a feature a teacher cannot reach is not shipped.
+      // This asserts the way in, not the destination's own behaviour.
+      await pumpDashboard(tester);
+
+      await tester.ensureVisible(find.text('Attendance'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Attendance'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AttendanceClassesScreen), findsOneWidget);
+    });
+
+    test('attendance is deliberately outside the Create palette registry', () {
+      // The palette and the VIDYA home quick-tools preview both walk
+      // `kToolRegistry`, so keeping attendance out of that list is what keeps a
+      // daily classroom routine off a "what do you want to create?" shelf.
+      // Asserted so a later "just add it to the registry" cannot quietly
+      // reverse the decision.
+      expect(
+        kToolRegistry.map((tool) => tool.id),
+        isNot(contains(kAttendanceEntry.id)),
+      );
     });
 
     testWidgets('the lesson plan tile opens the real lesson plan screen', (

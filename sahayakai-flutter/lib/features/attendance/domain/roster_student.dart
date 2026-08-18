@@ -96,11 +96,11 @@ class RosterStudent {
 
   @override
   int get hashCode => Object.hash(
-        id,
-        name,
-        rollNumber,
-        parentLanguage,
-        hasParentPhone,
-        parentPhoneLast4,
-      );
+    id,
+    name,
+    rollNumber,
+    parentLanguage,
+    hasParentPhone,
+    parentPhoneLast4,
+  );
 }

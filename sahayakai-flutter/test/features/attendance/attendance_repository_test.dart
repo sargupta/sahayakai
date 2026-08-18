@@ -60,36 +60,36 @@ void main() {
   );
 
   ApiException validation(String message) => ApiException(
-        ApiErrorKind.badResponse,
-        message,
-        statusCode: 400,
-        errorCode: message,
-      );
+    ApiErrorKind.badResponse,
+    message,
+    statusCode: 400,
+    errorCode: message,
+  );
 
   ApiException notFound(String message) => ApiException(
-        ApiErrorKind.notFound,
-        'Not found.',
-        statusCode: 404,
-        errorCode: message,
-      );
+    ApiErrorKind.notFound,
+    'Not found.',
+    statusCode: 404,
+    errorCode: message,
+  );
 
   AddStudentRequestDto studentRequest() => AddStudentRequestDto.build(
-        name: 'Asha Devi',
-        rollNumber: 7,
-        parentPhone: '9876543210',
-        parentLanguage: 'Hindi',
-      );
+    name: 'Asha Devi',
+    rollNumber: 7,
+    parentPhone: '9876543210',
+    parentLanguage: 'Hindi',
+  );
 
   List<Map<String, dynamic>> maskedRoster() => <Map<String, dynamic>>[
-        <String, dynamic>{
-          'id': 's1',
-          'name': 'Asha Devi',
-          'rollNumber': 1,
-          'parentLanguage': 'Hindi',
-          'hasParentPhone': true,
-          'parentPhoneLast4': '3210',
-        },
-      ];
+    <String, dynamic>{
+      'id': 's1',
+      'name': 'Asha Devi',
+      'rollNumber': 1,
+      'parentLanguage': 'Hindi',
+      'hasParentPhone': true,
+      'parentPhoneLast4': '3210',
+    },
+  ];
 
   // ── Classes ────────────────────────────────────────────────────────────────
 
@@ -127,12 +127,7 @@ void main() {
       final client = FakeApiClient(error: ownershipForbidden);
       await expectLater(
         repo(client).listClasses(),
-        throwsA(
-          allOf(
-            isA<ApiException>(),
-            isNot(isA<AttendanceException>()),
-          ),
-        ),
+        throwsA(allOf(isA<ApiException>(), isNot(isA<AttendanceException>()))),
       );
     });
   });
@@ -152,11 +147,11 @@ void main() {
 
   group('createClass — POST /api/attendance/classes (premium)', () {
     CreateClassRequestDto request() => CreateClassRequestDto.build(
-          name: 'Class 6A',
-          subject: 'Science',
-          gradeLevel: 'Class 6',
-          academicYear: '2026-27',
-        );
+      name: 'Class 6A',
+      subject: 'Science',
+      gradeLevel: 'Class 6',
+      academicYear: '2026-27',
+    );
 
     test('accepted write returns the new classId', () async {
       final client = FakeApiClient(postResponse: {'classId': 'c1'});
@@ -172,17 +167,22 @@ void main() {
       );
     });
 
-    test('a 200 with no classId is a malformed success, not an empty id',
-        () async {
-      final client = FakeApiClient(postResponse: {'classId': ''});
-      await expectLater(
-        repo(client).createClass(request()),
-        throwsA(
-          isA<ApiException>()
-              .having((e) => e.kind, 'kind', ApiErrorKind.badResponse),
-        ),
-      );
-    });
+    test(
+      'a 200 with no classId is a malformed success, not an empty id',
+      () async {
+        final client = FakeApiClient(postResponse: {'classId': ''});
+        await expectLater(
+          repo(client).createClass(request()),
+          throwsA(
+            isA<ApiException>().having(
+              (e) => e.kind,
+              'kind',
+              ApiErrorKind.badResponse,
+            ),
+          ),
+        );
+      },
+    );
 
     test(
       '403 PREMIUM_REQUIRED is RETURNED as a blocked write, not thrown',
@@ -217,16 +217,18 @@ void main() {
       );
     });
 
-    test('400 Class name is required → AttendanceValidationException',
-        () async {
-      final client = FakeApiClient(
-        postError: validation('Class name is required'),
-      );
-      await expectLater(
-        repo(client).createClass(request()),
-        throwsA(isA<AttendanceValidationException>()),
-      );
-    });
+    test(
+      '400 Class name is required → AttendanceValidationException',
+      () async {
+        final client = FakeApiClient(
+          postError: validation('Class name is required'),
+        );
+        await expectLater(
+          repo(client).createClass(request()),
+          throwsA(isA<AttendanceValidationException>()),
+        );
+      },
+    );
   });
 
   // ── Students ───────────────────────────────────────────────────────────────
@@ -238,10 +240,7 @@ void main() {
       final result = await repo(client).addStudent('c1', studentRequest());
 
       expect(result.valueOrNull, 's1');
-      expect(
-        client.posts.single.path,
-        '/api/attendance/classes/c1/students',
-      );
+      expect(client.posts.single.path, '/api/attendance/classes/c1/students');
       final body = client.posts.single.data! as Map<String, dynamic>;
       expect(body['rollNumber'], 7);
       expect(body['parentLanguage'], 'Hindi');
@@ -262,27 +261,32 @@ void main() {
       await expectLater(
         repo(client).addStudent('c1', studentRequest()),
         throwsA(
-          isA<ClassFullException>()
-              .having((e) => e.maxStudents, 'maxStudents', 40),
+          isA<ClassFullException>().having(
+            (e) => e.maxStudents,
+            'maxStudents',
+            40,
+          ),
         ),
       );
     });
 
-    test('400 Roll number … → RollNumberOutOfRangeException (either wording)',
-        () async {
-      // Matched by prefix, so the en-dash in `1–40` never has to survive a
-      // round trip through the client.
-      for (final message in <String>[
-        'Roll number must be 1–40',
-        'Roll number must be an integer',
-      ]) {
-        final client = FakeApiClient(postError: validation(message));
-        await expectLater(
-          repo(client).addStudent('c1', studentRequest()),
-          throwsA(isA<RollNumberOutOfRangeException>()),
-        );
-      }
-    });
+    test(
+      '400 Roll number … → RollNumberOutOfRangeException (either wording)',
+      () async {
+        // Matched by prefix, so the en-dash in `1–40` never has to survive a
+        // round trip through the client.
+        for (final message in <String>[
+          'Roll number must be 1–40',
+          'Roll number must be an integer',
+        ]) {
+          final client = FakeApiClient(postError: validation(message));
+          await expectLater(
+            repo(client).addStudent('c1', studentRequest()),
+            throwsA(isA<RollNumberOutOfRangeException>()),
+          );
+        }
+      },
+    );
 
     test('400 Invalid phone number → InvalidParentPhoneException', () async {
       final client = FakeApiClient(
@@ -374,26 +378,31 @@ void main() {
         await expectLater(
           repo(client).listRoster('c1'),
           throwsA(
-            isA<RosterProjectionUnavailableException>()
-                .having((e) => e.reason, 'reason', 'rejected'),
+            isA<RosterProjectionUnavailableException>().having(
+              (e) => e.reason,
+              'reason',
+              'rejected',
+            ),
           ),
         );
       },
     );
 
-    test('401 on the roster still surfaces as auth, not as the PII guard',
-        () async {
-      final client = FakeApiClient(error: unauthorized);
-      await expectLater(
-        repo(client).listRoster('c1'),
-        throwsA(
-          allOf(
-            isA<ApiException>().having((e) => e.isAuth, 'isAuth', isTrue),
-            isNot(isA<RosterProjectionUnavailableException>()),
+    test(
+      '401 on the roster still surfaces as auth, not as the PII guard',
+      () async {
+        final client = FakeApiClient(error: unauthorized);
+        await expectLater(
+          repo(client).listRoster('c1'),
+          throwsA(
+            allOf(
+              isA<ApiException>().having((e) => e.isAuth, 'isAuth', isTrue),
+              isNot(isA<RosterProjectionUnavailableException>()),
+            ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
 
     test('404 Class not found is still a class error', () async {
       final client = FakeApiClient(error: notFound('Class not found'));
@@ -416,20 +425,21 @@ void main() {
         },
       );
 
-      final record = await repo(client)
-          .attendanceOn('c1', const AttendanceDate(2026, 8, 19));
+      final record = await repo(
+        client,
+      ).attendanceOn('c1', const AttendanceDate(2026, 8, 19));
 
       expect(client.gets.single.path, '/api/attendance/classes/c1/records');
-      expect(client.gets.single.query, <String, dynamic>{
-        'date': '2026-08-19',
-      });
+      expect(client.gets.single.query, <String, dynamic>{'date': '2026-08-19'});
       expect(record!.statusFor('s1'), AttendanceStatus.present);
     });
 
     test('an unmarked day comes back null', () async {
       final client = FakeApiClient();
       expect(
-        await repo(client).attendanceOn('c1', const AttendanceDate(2026, 8, 19)),
+        await repo(
+          client,
+        ).attendanceOn('c1', const AttendanceDate(2026, 8, 19)),
         isNull,
       );
     });
@@ -444,8 +454,9 @@ void main() {
         },
       );
 
-      final month =
-          await repo(client).attendanceForMonth('c1', year: 2026, month: 8);
+      final month = await repo(
+        client,
+      ).attendanceForMonth('c1', year: 2026, month: 8);
 
       expect(client.gets.single.query, <String, dynamic>{
         'year': 2026,
@@ -516,8 +527,11 @@ void main() {
         ),
         throwsA(
           isA<AttendanceDateOutOfWindowException>()
-              .having((e) => e.rejection, 'rejection',
-                  AttendanceDateRejection.future)
+              .having(
+                (e) => e.rejection,
+                'rejection',
+                AttendanceDateRejection.future,
+              )
               .having((e) => e.isLocal, 'isLocal', isTrue),
         ),
       );
@@ -537,37 +551,45 @@ void main() {
         ),
         throwsA(
           isA<AttendanceDateOutOfWindowException>()
-              .having((e) => e.rejection, 'rejection',
-                  AttendanceDateRejection.tooOld)
+              .having(
+                (e) => e.rejection,
+                'rejection',
+                AttendanceDateRejection.tooOld,
+              )
               .having((e) => e.isLocal, 'isLocal', isTrue),
         ),
       );
       expect(client.posts, isEmpty);
     });
 
-    test('a server-side window 400 is still typed, and marked non-local',
-        () async {
-      // In-window for the client, refused by the server: the two clocks
-      // genuinely disagree (a stale handset clock). Distinguishable from the
-      // pre-flight refusal by isLocal.
-      final client = FakeApiClient(
-        postError: validation('Cannot mark attendance for future dates'),
-      );
+    test(
+      'a server-side window 400 is still typed, and marked non-local',
+      () async {
+        // In-window for the client, refused by the server: the two clocks
+        // genuinely disagree (a stale handset clock). Distinguishable from the
+        // pre-flight refusal by isLocal.
+        final client = FakeApiClient(
+          postError: validation('Cannot mark attendance for future dates'),
+        );
 
-      await expectLater(
-        repo(client).saveAttendance(
-          'c1',
-          date: const AttendanceDate(2026, 8, 19),
-          statuses: statuses,
-        ),
-        throwsA(
-          isA<AttendanceDateOutOfWindowException>()
-              .having((e) => e.rejection, 'rejection',
-                  AttendanceDateRejection.future)
-              .having((e) => e.isLocal, 'isLocal', isFalse),
-        ),
-      );
-    });
+        await expectLater(
+          repo(client).saveAttendance(
+            'c1',
+            date: const AttendanceDate(2026, 8, 19),
+            statuses: statuses,
+          ),
+          throwsA(
+            isA<AttendanceDateOutOfWindowException>()
+                .having(
+                  (e) => e.rejection,
+                  'rejection',
+                  AttendanceDateRejection.future,
+                )
+                .having((e) => e.isLocal, 'isLocal', isFalse),
+          ),
+        );
+      },
+    );
 
     test('a server-side "older than 7 days" 400 maps to tooOld', () async {
       final client = FakeApiClient(
@@ -582,7 +604,10 @@ void main() {
         ),
         throwsA(
           isA<AttendanceDateOutOfWindowException>().having(
-              (e) => e.rejection, 'rejection', AttendanceDateRejection.tooOld),
+            (e) => e.rejection,
+            'rejection',
+            AttendanceDateRejection.tooOld,
+          ),
         ),
       );
     });
@@ -635,8 +660,9 @@ void main() {
         ],
       );
 
-      final summaries =
-          await repo(client).studentSummaries('c1', year: 2026, month: 8);
+      final summaries = await repo(
+        client,
+      ).studentSummaries('c1', year: 2026, month: 8);
 
       expect(client.gets.single.path, '/api/attendance/classes/c1/summaries');
       expect(client.gets.single.query, <String, dynamic>{
@@ -683,8 +709,9 @@ void main() {
     test('decodes the studentId set', () async {
       final client = FakeApiClient(getResponse: <dynamic>['s1', 's2', 's1']);
 
-      final ids = await repo(client)
-          .behaviouralOutreachStudentIds('c1', lookbackDays: 15);
+      final ids = await repo(
+        client,
+      ).behaviouralOutreachStudentIds('c1', lookbackDays: 15);
 
       expect(
         client.gets.single.path,

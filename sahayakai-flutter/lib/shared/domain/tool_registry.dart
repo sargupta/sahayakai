@@ -165,3 +165,27 @@ final List<ToolEntry> kToolRegistry = <ToolEntry>[
     subtitle: (l10n) => l10n.contentCreatorTileSubtitle,
   ),
 ];
+
+/// Attendance (U12) — the class list, and through it the daily register, the
+/// roster and the monthly view.
+///
+/// DELIBERATELY NOT IN [kToolRegistry]. Everything in that list is something a
+/// teacher *makes* — a lesson plan, a quiz, a worksheet, a call — and the
+/// registry feeds the Create palette, whose whole promise is "what do you want
+/// to create?". Attendance creates nothing: it is the daily classroom routine a
+/// teacher runs before any of that, and filing it behind "Create" would put a
+/// morning register on the wrong shelf and pad the palette a teacher searches
+/// when they want a document.
+///
+/// It is a [ToolEntry] all the same so the Prep desk can render it with the
+/// exact row grammar the tool register already uses (icon well, name, subtitle,
+/// chevron) — one destination presented one way — without a second copy of that
+/// card chrome. The `users` glyph is the same one the attendance screens
+/// themselves use for a class, and it is claimed by no tool above.
+final ToolEntry kAttendanceEntry = ToolEntry(
+  id: 'attendance',
+  icon: LucideIcons.users,
+  route: Routes.attendance,
+  title: (l10n) => l10n.attendanceTitle,
+  subtitle: (l10n) => l10n.attendanceClassesIntro,
+);

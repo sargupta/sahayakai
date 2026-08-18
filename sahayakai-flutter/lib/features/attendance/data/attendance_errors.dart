@@ -213,7 +213,8 @@ final class AttendanceDateOutOfWindowException extends AttendanceException {
                 '${AttendanceWindow.markableDays} days',
         },
         statusCode: 400,
-        raw: '${date.wire} outside ${window.earliest.wire}..${window.today.wire}',
+        raw:
+            '${date.wire} outside ${window.earliest.wire}..${window.today.wire}',
       ),
       rejection: rejection,
       isLocal: true,
@@ -256,8 +257,10 @@ final class AttendanceValidationException extends AttendanceException {
 /// The offending body is never quoted in the message: an error string that
 /// carries the phone numbers is the same leak by a slower route.
 final class RosterProjectionUnavailableException extends AttendanceException {
-  RosterProjectionUnavailableException({this.reason = 'shape', ApiException? cause})
-      : super(cause ?? _fallbackCause);
+  RosterProjectionUnavailableException({
+    this.reason = 'shape',
+    ApiException? cause,
+  }) : super(cause ?? _fallbackCause);
 
   /// A short, PII-free tag for logs: which check failed (`shape`, `unmasked`,
   /// `rejected`).

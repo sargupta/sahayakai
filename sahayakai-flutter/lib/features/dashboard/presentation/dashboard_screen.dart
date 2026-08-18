@@ -59,6 +59,16 @@ class DashboardScreen extends ConsumerWidget {
           children: [
             const _AlmanacHeader(),
             const _SetupNudge(),
+            // Attendance sits ABOVE the tool register, not inside it: marking
+            // the register is the first thing a teacher does with a class in
+            // the morning, before they prepare anything. It is one row, in the
+            // register's own grammar, off `kAttendanceEntry` — see that
+            // constant for why it is not in `kToolRegistry` (and so not in the
+            // Create palette).
+            const SizedBox(height: AppSpacing.space8),
+            EditorialSectionHeader(l10n.attendanceClassesEyebrow),
+            const SizedBox(height: AppSpacing.space4),
+            inkSettle(context, _ToolRow(tool: kAttendanceEntry)),
             const SizedBox(height: AppSpacing.space8),
             EditorialSectionHeader(l10n.dashboardToolsTitle),
             const SizedBox(height: AppSpacing.space4),

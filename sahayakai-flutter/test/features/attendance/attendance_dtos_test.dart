@@ -201,10 +201,10 @@ void main() {
     });
 
     test('falls back to the requested date when the body omits it', () {
-      final record = DailyAttendanceDto.decodeOne(
-        <String, dynamic>{'classId': 'c1', 'records': <String, dynamic>{}},
-        forDate: const AttendanceDate(2026, 8, 19),
-      );
+      final record = DailyAttendanceDto.decodeOne(<String, dynamic>{
+        'classId': 'c1',
+        'records': <String, dynamic>{},
+      }, forDate: const AttendanceDate(2026, 8, 19));
       expect(record!.date.wire, '2026-08-19');
     });
 
@@ -282,39 +282,39 @@ void main() {
   group('RosterStudentDto — the masked projection fails closed', () {
     /// The exact six-field shape draft PR #124 returns.
     List<Map<String, dynamic>> maskedBody() => <Map<String, dynamic>>[
-          <String, dynamic>{
-            'id': 's1',
-            'name': 'Asha Devi',
-            'rollNumber': 1,
-            'parentLanguage': 'Hindi',
-            'hasParentPhone': true,
-            'parentPhoneLast4': '3210',
-          },
-          <String, dynamic>{
-            'id': 's2',
-            'name': 'Bikash Roy',
-            'rollNumber': 2,
-            'parentLanguage': 'Bengali',
-            'hasParentPhone': false,
-            'parentPhoneLast4': '',
-          },
-        ];
+      <String, dynamic>{
+        'id': 's1',
+        'name': 'Asha Devi',
+        'rollNumber': 1,
+        'parentLanguage': 'Hindi',
+        'hasParentPhone': true,
+        'parentPhoneLast4': '3210',
+      },
+      <String, dynamic>{
+        'id': 's2',
+        'name': 'Bikash Roy',
+        'rollNumber': 2,
+        'parentLanguage': 'Bengali',
+        'hasParentPhone': false,
+        'parentPhoneLast4': '',
+      },
+    ];
 
     /// What production returns TODAY for the same request, because the
     /// `projection` parameter is not merged yet and is therefore ignored: the
     /// whole student document, full E.164 number included.
     List<Map<String, dynamic>> unmaskedBody() => <Map<String, dynamic>>[
-          <String, dynamic>{
-            'id': 's1',
-            'classId': 'c1',
-            'name': 'Asha Devi',
-            'rollNumber': 1,
-            'parentPhone': '+919876543210',
-            'parentLanguage': 'Hindi',
-            'createdAt': '2026-06-01T00:00:00.000Z',
-            'updatedAt': '2026-06-01T00:00:00.000Z',
-          },
-        ];
+      <String, dynamic>{
+        'id': 's1',
+        'classId': 'c1',
+        'name': 'Asha Devi',
+        'rollNumber': 1,
+        'parentPhone': '+919876543210',
+        'parentLanguage': 'Hindi',
+        'createdAt': '2026-06-01T00:00:00.000Z',
+        'updatedAt': '2026-06-01T00:00:00.000Z',
+      },
+    ];
 
     test('decodes the masked shape', () {
       final roster = RosterStudentDto.decodeList(maskedBody());
@@ -424,10 +424,7 @@ void main() {
     test('one bad entry fails the whole read, never a partial roster', () {
       // A roster that silently dropped the students it could not mask is a
       // roster the teacher would act on as if it were complete.
-      final body = <Map<String, dynamic>>[
-        ...maskedBody(),
-        ...unmaskedBody(),
-      ];
+      final body = <Map<String, dynamic>>[...maskedBody(), ...unmaskedBody()];
 
       expect(
         () => RosterStudentDto.decodeList(body),
