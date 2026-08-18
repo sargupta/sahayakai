@@ -86,7 +86,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get loginValueLessons =>
-      'മിനിറ്റുകൾക്കുള്ളിൽ പൂർണ്ണമായ പാഠ പദ്ധതി തയ്യാറാക്കുക';
+      'മിനിറ്റുകൾക്കുള്ളിൽ പൂർണ്ണമായ പാഠപദ്ധതി തയ്യാറാക്കുക';
 
   @override
   String get loginValueQuizzes =>
@@ -125,7 +125,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get onboardingLanguageBody =>
-      'നിങ്ങൾ തിരഞ്ഞെടുക്കുന്ന ഭാഷയിൽ തന്നെ പാഠ പദ്ധതികളും ക്വിസുകളും ഉത്തരങ്ങളും ലഭിക്കും. നിങ്ങൾക്ക് ഇത് എപ്പോൾ വേണമെങ്കിലും മാറ്റാം.';
+      'നിങ്ങൾ തിരഞ്ഞെടുക്കുന്ന ഭാഷയിൽ തന്നെ പാഠപദ്ധതികളും ക്വിസുകളും ഉത്തരങ്ങളും ലഭിക്കും. നിങ്ങൾക്ക് ഇത് എപ്പോൾ വേണമെങ്കിലും മാറ്റാം.';
 
   @override
   String get onboardingProfileTitle =>
@@ -140,7 +140,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get onboardingReadyBody =>
-      'നിങ്ങളുടെ പാഠ പദ്ധതികളും ക്വിസുകളും ഉത്തരങ്ങളും ഇതിന് അനുസൃതമായിരിക്കും. പിന്നീട് എപ്പോൾ വേണമെങ്കിലും നിങ്ങളുടെ പ്രൊഫൈലിൽ നിന്ന് ഇത് മാറ്റാം.';
+      'നിങ്ങളുടെ പാഠപദ്ധതികളും ക്വിസുകളും ഉത്തരങ്ങളും ഇതിന് അനുസൃതമായിരിക്കും. പിന്നീട് എപ്പോൾ വേണമെങ്കിലും നിങ്ങളുടെ പ്രൊഫൈലിൽ നിന്ന് ഇത് മാറ്റാം.';
 
   @override
   String get onboardingSaveFailed =>
@@ -247,7 +247,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get dashboardSetupBody =>
-      'നിങ്ങളുടെ സ്കൂളും ക്ലാസുകളും ചേർക്കൂ, എല്ലാ പാഠ പദ്ധതികളും ക്വിസുകളും നിങ്ങളുടെ ക്ലാസ് മുറിക്ക് അനുയോജ്യമായി ലഭിക്കും.';
+      'നിങ്ങളുടെ സ്കൂളും ക്ലാസുകളും ചേർക്കൂ, എല്ലാ പാഠപദ്ധതികളും ക്വിസുകളും നിങ്ങളുടെ ക്ലാസ് മുറിക്ക് അനുയോജ്യമായി ലഭിക്കും.';
 
   @override
   String get dashboardSetupAction => 'എന്റെ പ്രൊഫൈൽ സജ്ജമാക്കുക';
@@ -256,7 +256,7 @@ class AppLocalizationsMl extends AppLocalizations {
   String get dashboardSetupDismiss => 'ഇപ്പോൾ വേണ്ട';
 
   @override
-  String get contentTypeLessonPlan => 'പാഠ പദ്ധതി';
+  String get contentTypeLessonPlan => 'പാഠപദ്ധതി';
 
   @override
   String get contentTypeQuiz => 'ക്വിസ്';
@@ -305,7 +305,7 @@ class AppLocalizationsMl extends AppLocalizations {
       'നിങ്ങൾ സംരക്ഷിച്ച പാഠപദ്ധതികളും ക്വിസുകളും ഇവിടെ കാണാം.';
 
   @override
-  String get libraryEmptyAction => 'ഒരു പാഠ പദ്ധതി ഉണ്ടാക്കുക';
+  String get libraryEmptyAction => 'ഒരു പാഠപദ്ധതി ഉണ്ടാക്കുക';
 
   @override
   String get librarySignedOut => 'സംരക്ഷിച്ച ജോലികൾ കാണാൻ സൈൻ ഇൻ ചെയ്യുക.';
@@ -351,14 +351,14 @@ class AppLocalizationsMl extends AppLocalizations {
   String get profileTitle => 'പ്രൊഫൈൽ';
 
   @override
-  String get lessonPlanTitle => 'പാഠ പദ്ധതി';
+  String get lessonPlanTitle => 'പാഠപദ്ധതി';
 
   @override
   String get lessonPlanSubtitle => 'പൂർണ്ണമായ 5E പാഠം ആസൂത്രണം ചെയ്യുക';
 
   @override
   String get lessonPlanEmpty =>
-      'ഒരു ടോപ്പിക് നൽകി 5E പാഠ പദ്ധതി ഉണ്ടാക്കാൻ സൃഷ്ടിക്കുക ടാപ്പ് ചെയ്യുക.';
+      'ഒരു ടോപ്പിക് നൽകി 5E പാഠപദ്ധതി ഉണ്ടാക്കാൻ സൃഷ്ടിക്കുക ടാപ്പ് ചെയ്യുക.';
 
   @override
   String get lessonPlanTopicLabel => 'ടോപ്പിക്';
@@ -453,7 +453,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get lessonPlanLimitBody =>
-      'ഇപ്പോഴത്തേക്കുള്ള നിങ്ങളുടെ പാഠ പദ്ധതികൾ ഉപയോഗിച്ചു കഴിഞ്ഞു. ദയവായി പിന്നീട് ശ്രമിക്കുക അല്ലെങ്കിൽ പ്ലാൻ അപ്ഗ്രേഡ് ചെയ്യുക.';
+      'ഇപ്പോഴത്തേക്കുള്ള നിങ്ങളുടെ പാഠപദ്ധതികൾ ഉപയോഗിച്ചു കഴിഞ്ഞു. ദയവായി പിന്നീട് ശ്രമിക്കുക അല്ലെങ്കിൽ പ്ലാൻ അപ്ഗ്രേഡ് ചെയ്യുക.';
 
   @override
   String get lessonPlanSeePricing => 'പ്ലാനുകളും വിലയും കാണുക';
@@ -855,7 +855,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get settingsDeleteDialogBody =>
-      'നിങ്ങളുടെ പാഠ പദ്ധതികളും ക്വിസുകളും പ്രൊഫൈലും ഇല്ലാതാക്കാൻ നിശ്ചയിക്കും. നീക്കം ചെയ്യുന്നതിന് മുൻപ് ജോലികൾ എക്സ്പോർട്ട് ചെയ്യാൻ 30 ദിവസമുണ്ട്.';
+      'നിങ്ങളുടെ പാഠപദ്ധതികളും ക്വിസുകളും പ്രൊഫൈലും ഇല്ലാതാക്കാൻ നിശ്ചയിക്കും. നീക്കം ചെയ്യുന്നതിന് മുൻപ് ജോലികൾ എക്സ്പോർട്ട് ചെയ്യാൻ 30 ദിവസമുണ്ട്.';
 
   @override
   String settingsDeleteConfirmPrompt(String word) {
@@ -1012,7 +1012,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get profileEmptyBody =>
-      'നിങ്ങളുടെ സ്കൂളും ക്ലാസുകളും ചേർക്കൂ, നിങ്ങൾ ഉണ്ടാക്കുന്ന എല്ലാ പാഠ പദ്ധതികളും ക്വിസുകളും ക്ലാസ് മുറിക്ക് അനുയോജ്യമായി ലഭിക്കും.';
+      'നിങ്ങളുടെ സ്കൂളും ക്ലാസുകളും ചേർക്കൂ, നിങ്ങൾ ഉണ്ടാക്കുന്ന എല്ലാ പാഠപദ്ധതികളും ക്വിസുകളും ക്ലാസ് മുറിക്ക് അനുയോജ്യമായി ലഭിക്കും.';
 
   @override
   String get profileLoadFailed =>

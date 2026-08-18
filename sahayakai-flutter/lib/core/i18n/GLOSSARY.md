@@ -455,3 +455,61 @@ Evidence: `actionSignIn` = 'Sign in'
 | Punjabi (pa) | ਸਾਈਨ ਇਨ ਕਰੋ |
 | Odia (or) | ସାଇନ୍ ଇନ୍ କରନ୍ତୁ |
 
+<!-- BEGIN HAND-AUTHORED — NOT GENERATED — PRESERVE ON REGENERATION -->
+
+## Locked decisions (hand-authored)
+
+**This section is written by hand. The generator above does not produce it.**
+`scripts/loop/i18n_extract_missing.py --glossary` prints only the generated
+rows to stdout, so the usual `--glossary > GLOSSARY.md` truncates this section
+away. When you regenerate, re-append this block verbatim to the end of the new
+file (or regenerate to a temp file and concatenate). Losing it re-opens the
+splits recorded below.
+
+A locked decision beats corpus frequency and beats a translator's preference.
+If a future string needs one of these nouns, use the locked form. Do not
+introduce the rejected variant, not even once, not even inflected.
+
+### Kannada (kn) — "quiz" → `ಕ್ವಿಜ್`
+
+- **Locked:** `ಕ್ವಿಜ್` (inflects with ZWNJ before a suffix: `ಕ್ವಿಜ್‌ಗಳು`,
+  `ಕ್ವಿಜ್‌ಗೆ`, `ಕ್ವಿಜ್‌ಗಳನ್ನು`).
+- **Rejected:** `ರಸಪ್ರಶ್ನೆ`.
+- **Why:** the shipped Kannada corpus already used `ಕ್ವಿಜ್` in 17 strings
+  against 4 for `ರಸಪ್ರಶ್ನೆ`, including every screen title and error string
+  (`quizTitle`, `contentTypeQuiz`, `quizSubtitle`, `quizEmpty`,
+  `quizTopicError`, `quizUpgradeBody`, `quizLimitBody`, `quizRephrase`).
+  Nine of the ten Indic locales localise "quiz" as the loanword in their own
+  script (hi `क्विज़`, te `క్విజ్`, bn `কুইজ`, mr `क्विझ`, gu `ક્વિઝ`,
+  pa `ਕਵਿਜ਼`, or `କୁଇଜ୍`, ml `ക്വിസ്`); only Tamil coins natively
+  (`வினாடி வினா`), which is the expected Tamil purist convention and not a
+  precedent for Kannada. `ಕ್ವಿಜ್` is also the word a Karnataka schoolteacher
+  actually says in the staffroom, and it sits in the same register as the rest
+  of the file (`ಪ್ರೊಫೈಲ್`, `ಟಾಪಿಕ್`, `ಡ್ಯಾಶ್‌ಬೋರ್ಡ್`, `ಅಪ್‌ಗ್ರೇಡ್`).
+  `ರಸಪ್ರಶ್ನೆ` is the formal written term for a quiz *competition*; used as a
+  UI label it reads like a notice board, not like the teacher's own tool.
+- **Applied:** `loginValueQuizzes`, `onboardingLanguageBody`,
+  `onboardingReadyBody`, `quizSectionQuiz`.
+
+### Malayalam (ml) — "lesson plan" → `പാഠപദ്ധതി` (unspaced)
+
+- **Locked:** `പാഠപദ്ധതി`, written as one word (plural `പാഠപദ്ധതികൾ`).
+- **Rejected:** `പാഠ പദ്ധതി` with a space.
+- **Why:** this one goes against corpus frequency on purpose. The spaced form
+  led 11 to 2, but frequency here records a typing habit, not a decision:
+  `പാഠം` + `പദ്ധതി` is a തത്പുരുഷ സമാസം, and Malayalam orthography writes a
+  compound as a single word. The spaced form is a misspelling that happens to
+  be legible, and it is the form a Kerala teacher would not see in an SCERT
+  circular or a textbook. Correct orthography wins over a majority of
+  identically-wrong strings; the majority is exactly what this pass exists to
+  correct. Note this is *lesson plan* the noun — `പാഠ ആസൂത്രണം`
+  ("lesson planning", `lessonPlanUpgradeBody`) is a different phrase and is
+  left alone.
+- **Applied:** `loginValueLessons`, `onboardingLanguageBody`,
+  `onboardingReadyBody`, `dashboardSetupBody`, `contentTypeLessonPlan`,
+  `libraryEmptyAction`, `lessonPlanTitle`, `lessonPlanEmpty`,
+  `lessonPlanLimitBody`, `settingsDeleteDialogBody`, `profileEmptyBody`
+  (`loginSubtitle` and `libraryEmpty` already carried the locked form).
+
+<!-- END HAND-AUTHORED -->
+

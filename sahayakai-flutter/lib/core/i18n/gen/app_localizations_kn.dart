@@ -86,7 +86,7 @@ class AppLocalizationsKn extends AppLocalizations {
   String get loginValueLessons => 'ನಿಮಿಷಗಳಲ್ಲಿ ಪೂರ್ಣ ಪಾಠ ಯೋಜನೆ ರೂಪಿಸಿ';
 
   @override
-  String get loginValueQuizzes => 'ಮೂರು ಕಠಿಣತೆಯ ಮಟ್ಟಗಳಲ್ಲಿ ರಸಪ್ರಶ್ನೆ ರಚಿಸಿ';
+  String get loginValueQuizzes => 'ಮೂರು ಕಠಿಣತೆಯ ಮಟ್ಟಗಳಲ್ಲಿ ಕ್ವಿಜ್ ರಚಿಸಿ';
 
   @override
   String get loginValueAnswers =>
@@ -120,7 +120,7 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get onboardingLanguageBody =>
-      'ನೀವು ಆಯ್ಕೆ ಮಾಡುವ ಭಾಷೆಯಲ್ಲೇ ಪಾಠ ಯೋಜನೆಗಳು, ರಸಪ್ರಶ್ನೆಗಳು ಮತ್ತು ಉತ್ತರಗಳು ಬರುತ್ತವೆ. ನೀವು ಇದನ್ನು ಯಾವಾಗ ಬೇಕಾದರೂ ಬದಲಾಯಿಸಬಹುದು.';
+      'ನೀವು ಆಯ್ಕೆ ಮಾಡುವ ಭಾಷೆಯಲ್ಲೇ ಪಾಠ ಯೋಜನೆಗಳು, ಕ್ವಿಜ್‌ಗಳು ಮತ್ತು ಉತ್ತರಗಳು ಬರುತ್ತವೆ. ನೀವು ಇದನ್ನು ಯಾವಾಗ ಬೇಕಾದರೂ ಬದಲಾಯಿಸಬಹುದು.';
 
   @override
   String get onboardingProfileTitle => 'ನಿಮ್ಮ ತರಗತಿಯ ಬಗ್ಗೆ ನಮಗೆ ತಿಳಿಸಿ';
@@ -134,7 +134,7 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get onboardingReadyBody =>
-      'ನಿಮ್ಮ ಪಾಠ ಯೋಜನೆಗಳು, ರಸಪ್ರಶ್ನೆಗಳು ಮತ್ತು ಉತ್ತರಗಳು ಇದಕ್ಕೆ ಹೊಂದುತ್ತವೆ. ನೀವು ಇದನ್ನು ನಂತರ ಯಾವಾಗ ಬೇಕಾದರೂ ನಿಮ್ಮ ಪ್ರೊಫೈಲ್‌ನಿಂದ ಬದಲಾಯಿಸಬಹುದು.';
+      'ನಿಮ್ಮ ಪಾಠ ಯೋಜನೆಗಳು, ಕ್ವಿಜ್‌ಗಳು ಮತ್ತು ಉತ್ತರಗಳು ಇದಕ್ಕೆ ಹೊಂದುತ್ತವೆ. ನೀವು ಇದನ್ನು ನಂತರ ಯಾವಾಗ ಬೇಕಾದರೂ ನಿಮ್ಮ ಪ್ರೊಫೈಲ್‌ನಿಂದ ಬದಲಾಯಿಸಬಹುದು.';
 
   @override
   String get onboardingSaveFailed =>
@@ -200,7 +200,7 @@ class AppLocalizationsKn extends AppLocalizations {
   String get lessonPlanSectionApproach => 'ಬೋಧನಾ ವಿಧಾನ';
 
   @override
-  String get quizSectionQuiz => 'ರಸಪ್ರಶ್ನೆ';
+  String get quizSectionQuiz => 'ಕ್ವಿಜ್';
 
   @override
   String get sectionForYourClass => 'ನಿಮ್ಮ ತರಗತಿಗಾಗಿ';
