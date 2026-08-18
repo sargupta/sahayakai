@@ -42,14 +42,19 @@ log = structlog.get_logger(__name__)
 def get_voice_model() -> str:
     """Default Gemini Live model for VIDYA.
 
-    `gemini-live-2.5-flash-preview` is the production-ready Live model
-    as of Apr 2026 (per the SDK reference and Track-S agent guidance).
-    Override via `SAHAYAKAI_VIDYA_VOICE_MODEL` to A/B test alternatives
-    (e.g. `gemini-2.0-flash-live-001` for cheaper sessions).
+    `gemini-2.5-flash-native-audio-latest` is a CURRENT Live model the
+    Developer API accepts for `bidiGenerateContent` (verified 2026-07-30
+    against a real session: the older `gemini-live-2.5-flash-preview` and
+    `gemini-2.0-flash-live-001` are RETIRED — they 1008 with "model not
+    found / not supported for bidiGenerateContent"). Native-audio is the
+    best fit for audio-to-audio. Other valid choices for this key:
+    `gemini-3.1-flash-live-preview`, `gemini-3.5-live-translate-preview`.
+    Override via `SAHAYAKAI_VIDYA_VOICE_MODEL`. Discover the live set with
+    `client.models.list()` filtered on supported_actions ~ bidiGenerateContent.
     """
     return os.environ.get(
         "SAHAYAKAI_VIDYA_VOICE_MODEL",
-        "gemini-live-2.5-flash-preview",
+        "gemini-2.5-flash-native-audio-latest",
     )
 
 

@@ -84,7 +84,7 @@ describe('generateAgentReply — withTimeout', () => {
         expect(mockRunResiliently).toHaveBeenCalledTimes(1);
     });
 
-    it('throws GenkitTimeoutError when runResiliently exceeds 10s', async () => {
+    it('throws GenkitTimeoutError when runResiliently exceeds the 13s ceiling', async () => {
         // Make runResiliently a promise that never resolves so only the
         // timeout race can complete. Using a never-resolving promise
         // simulates the real production failure mode (60s of 429
@@ -97,25 +97,27 @@ describe('generateAgentReply — withTimeout', () => {
         // guard while we advance the clock.
         const settled = promise.catch((err) => err);
 
-        // Advance fake clock past the 10s ceiling.
-        await jest.advanceTimersByTimeAsync(10_001);
+        // Advance fake clock past the 13s ceiling (raised from 10s after the
+        // 2026-08-11 prod call showed 7.6-17.7s replies killed mid-call while
+        // Twilio's own webhook budget is 15s).
+        await jest.advanceTimersByTimeAsync(13_001);
 
         const err = await settled;
         expect(err).toBeInstanceOf(GenkitTimeoutError);
         expect((err as GenkitTimeoutError).span).toBe('parentCall.agentReply');
-        expect((err as GenkitTimeoutError).elapsedMs).toBe(10_000);
+        expect((err as GenkitTimeoutError).elapsedMs).toBe(13_000);
     });
 
-    it('does NOT timeout if runResiliently resolves at 9.9s', async () => {
+    it('does NOT timeout if runResiliently resolves at 12.9s', async () => {
         mockRunResiliently.mockImplementation(
             () =>
                 new Promise<{ output: AgentReplyOutput }>((resolve) => {
-                    setTimeout(() => resolve({ output: FAST_REPLY }), 9_900);
+                    setTimeout(() => resolve({ output: FAST_REPLY }), 12_900);
                 }),
         );
 
         const promise = generateAgentReply(BASE_INPUT);
-        await jest.advanceTimersByTimeAsync(9_900);
+        await jest.advanceTimersByTimeAsync(12_900);
 
         const out = await promise;
         expect(out.reply).toBe(FAST_REPLY.reply);

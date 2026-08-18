@@ -36,8 +36,9 @@ but be explicit (`N/A`) rather than leaving them blank.
   - <!-- steps to verify locally / on preview -->
 - [ ] Automated tests added/updated:
   - <!-- list new tests or "no test coverage delta" -->
-- [ ] Preview smoke test:
-  - <!-- preview URL + key checks. For develop → preview PRs, preview is auto-built. For develop → main PRs, validate on preview first. -->
+- [ ] Class gate: this change includes a test/gate that catches the whole class of this bug (required for founder-reported bugs)
+- [ ] UAT smoke test:
+  - <!-- UAT URL + key checks. Merging to main auto-deploys the UAT tier (cloudbuild-uat.yaml) and runs uat-verify.yml; verify there before cutting a release. See docs/UAT_ENV.md. -->
 
 ## Cost impact
 
@@ -54,4 +55,5 @@ but be explicit (`N/A`) rather than leaving them blank.
 
 ## Co-authors
 
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+<!-- Human co-authors only, if any. No AI attribution in commits or PRs
+     (standing rule). -->

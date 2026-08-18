@@ -395,7 +395,12 @@ class TestVidyaRouter:
         assert res.status_code == 200, res.text
         body = res.json()
         assert body["intent"] == "instantAnswer"
-        assert body["action"] is None
+        # Root cause 2 (2026-07-28): instantAnswer now REPORTS its flow so the
+        # action matches Genkit, which emits flow='instant-answer' on 30/33
+        # ANSWER cells in production. Previously None, which failed every
+        # ANSWER cell in the parity harness. The answer is still produced
+        # inline — the action is a report, not an instruction.
+        assert body["action"]["flow"] == "instant-answer"
         assert "photosynthesis" in body["response"].lower()
         assert fake_genai.queue == []
 

@@ -2,8 +2,23 @@
 
 import { useLanguage } from "@/context/language-context";
 
+// English source copy. Locales translate these under the same keys in
+// src/locales/*.json; English has no dictionary, so t() returns the raw
+// key on a miss — fall back to the English string when that happens.
+const EN = {
+  "footer.tagline":
+    "The Operating System for Teaching in India. A product of SARGVISION Intelligence.",
+  "footer.copyright":
+    "© {year} SARGVISION Intelligence Pvt. Ltd. All rights reserved.",
+  "footer.byline": "SahayakAI is a product of SARGVISION Intelligence.",
+} as const;
+
 export function LandingFooter() {
   const { t } = useLanguage();
+  const tr = (key: keyof typeof EN) => {
+    const v = t(key);
+    return v === key ? EN[key] : v;
+  };
   return (
     <footer id="community" className="bg-[#fafafa] border-t border-neutral-200 px-6 sm:px-11 py-12 scroll-mt-24">
       <div className="max-w-[1040px] mx-auto grid gap-10 md:grid-cols-3 text-[13px] text-neutral-600">
@@ -17,7 +32,7 @@ export function LandingFooter() {
             SahayakAI
           </div>
           <p className="mt-3 max-w-[28ch] leading-[1.55]">
-            {t("footer.tagline")}
+            {tr("footer.tagline")}
           </p>
         </div>
 
@@ -62,8 +77,8 @@ export function LandingFooter() {
         </div>
       </div>
       <div className="max-w-[1040px] mx-auto mt-10 pt-6 border-t border-neutral-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-[11px] text-neutral-500">
-        <div>{t("footer.copyright").replace("{year}", String(new Date().getFullYear()))}</div>
-        <div className="tracking-wide">{t("footer.byline")}</div>
+        <div>{tr("footer.copyright").replace("{year}", String(new Date().getFullYear()))}</div>
+        <div className="tracking-wide">{tr("footer.byline")}</div>
       </div>
     </footer>
   );

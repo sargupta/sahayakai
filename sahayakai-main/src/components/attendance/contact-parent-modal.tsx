@@ -80,6 +80,7 @@ export function ContactParentModal({
     const [reason, setReason] = useState<OutreachReason | null>(null);
     const [note, setNote] = useState("");
     const [generatedMessage, setGeneratedMessage] = useState("");
+    const [spokenScript, setSpokenScript] = useState("");
     const [languageCode, setLanguageCode] = useState("en-IN");
     const [generating, setGenerating] = useState(false);
     const [calling, setCalling] = useState(false);
@@ -379,6 +380,7 @@ export function ContactParentModal({
             if (!res.ok) throw new Error('Failed to generate message');
             const data = await res.json();
             setGeneratedMessage(data.message);
+            setSpokenScript(typeof data.spokenScript === 'string' ? data.spokenScript : "");
             setLanguageCode(data.languageCode);
             setStep("review");
         } catch (err: any) {
@@ -402,6 +404,9 @@ export function ContactParentModal({
                 reason: reason!,
                 teacherNote: note || undefined,
                 generatedMessage,
+                // Phone-call rendition of the message — the twiml route speaks
+                // this instead of reading the written letter aloud.
+                spokenScript: spokenScript || undefined,
                 deliveryMethod,
                 performanceContext: performanceContext ?? undefined,
                 subject, // personalizes the Exotel voicebot greeting; ignored by Twilio path

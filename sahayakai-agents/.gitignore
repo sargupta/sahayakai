@@ -51,3 +51,6 @@ poetry.lock
 # `.gitkeep` is tracked. Operators commit promotion-gate baselines
 # explicitly via PR.
 evals/results/*.json
+
+# Parity harness run artifacts — keep PROGRESS.md and latest.json, drop timestamps
+qa/parity/*T*.json

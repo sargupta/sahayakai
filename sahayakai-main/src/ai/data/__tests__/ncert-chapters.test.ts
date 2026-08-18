@@ -165,23 +165,25 @@ describe('validateChapter — happy path (Class 10 Mathematics)', () => {
     });
 });
 
-describe('validateChapter — Class 8 Science (Force and Pressure)', () => {
+// NCF-2023 refresh (2026-08-13): Class 8 Science is now "Curiosity" —
+// "Force and Pressure"/"Friction" belong to the retired rationalized book.
+describe('validateChapter — Class 8 Science (Curiosity, NCF-2023)', () => {
     test('exact title → valid', () => {
-        const r = validateChapter('Class 8', 'Science', 'Force and Pressure');
+        const r = validateChapter('Class 8', 'Science', 'Exploring Forces');
         expect(r.valid).toBe(true);
-        expect(r.closestMatch?.title).toBe('Force and Pressure');
+        expect(r.closestMatch?.title).toBe('Exploring Forces');
     });
 
-    test('typo "Foce and Presure" → invalid + suggestion "Force and Pressure"', () => {
-        const r = validateChapter('Class 8', 'Sci', 'Foce and Presure');
+    test('typo "Exploring Foces" → invalid + suggestion "Exploring Forces"', () => {
+        const r = validateChapter('Class 8', 'Sci', 'Exploring Foces');
         expect(r.valid).toBe(false);
-        expect(r.suggestion).toMatch(/Force and Pressure/);
-        expect(r.closestMatch?.title).toBe('Force and Pressure');
+        expect(r.suggestion).toMatch(/Exploring Forces/);
+        expect(r.closestMatch?.title).toBe('Exploring Forces');
     });
 
-    test('"Friction" → valid', () => {
-        const r = validateChapter(8, 'Science', 'Friction');
-        expect(r.valid).toBe(true);
+    test('retired-book title "Force and Pressure" → no longer an exact match', () => {
+        const r = validateChapter(8, 'Science', 'Force and Pressure');
+        expect(r.valid).toBe(false);
     });
 });
 

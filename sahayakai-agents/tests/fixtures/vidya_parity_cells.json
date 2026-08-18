@@ -1,0 +1,1256 @@
+[
+  {
+    "cell": "en-ans-photosyn",
+    "lang": "en",
+    "intent": "ANSWER",
+    "message": "What is photosynthesis?",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "photosynthesis",
+      "photosynthesis"
+    ]
+  },
+  {
+    "cell": "en-ans-fractions",
+    "lang": "en",
+    "intent": "ANSWER",
+    "message": "Explain what a fraction is",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "fraction",
+      "fraction"
+    ]
+  },
+  {
+    "cell": "en-ans-democracy",
+    "lang": "en",
+    "intent": "ANSWER",
+    "message": "What is democracy?",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "democracy",
+      "democracy"
+    ]
+  },
+  {
+    "cell": "en-cre-lesson",
+    "lang": "en",
+    "intent": "CREATE",
+    "message": "Make a lesson plan on the water cycle for class 6",
+    "expectedFlow": "lessonPlan",
+    "genkitFlow": "lesson-plan",
+    "entities": [
+      "water cycle",
+      "जल चक्र",
+      "lesson"
+    ]
+  },
+  {
+    "cell": "en-cre-quiz",
+    "lang": "en",
+    "intent": "CREATE",
+    "message": "Create a quiz on photosynthesis for class 7",
+    "expectedFlow": "quiz",
+    "genkitFlow": "quiz-generator",
+    "entities": [
+      "photosynthesis",
+      "quiz",
+      "प्रकाश संश्लेषण"
+    ]
+  },
+  {
+    "cell": "en-cre-workshet",
+    "lang": "en",
+    "intent": "CREATE",
+    "message": "Make a worksheet on fractions for class 5",
+    "expectedFlow": "worksheet",
+    "genkitFlow": "worksheet-wizard",
+    "entities": [
+      "fraction",
+      "worksheet",
+      "भिन्न"
+    ]
+  },
+  {
+    "cell": "en-act-visual",
+    "lang": "en",
+    "intent": "ACTION",
+    "message": "Draw a diagram of the human digestive system for class 8",
+    "expectedFlow": "visualAid",
+    "genkitFlow": "visual-aid-designer",
+    "entities": [
+      "digestive",
+      "diagram",
+      "पाचन"
+    ]
+  },
+  {
+    "cell": "en-act-exam",
+    "lang": "en",
+    "intent": "ACTION",
+    "message": "Create a class 10 science exam paper",
+    "expectedFlow": "examPaper",
+    "genkitFlow": "exam-paper",
+    "entities": [
+      "exam",
+      "science",
+      "परीक्षा"
+    ]
+  },
+  {
+    "cell": "en-act-video",
+    "lang": "en",
+    "intent": "ACTION",
+    "message": "Find videos on the solar system for class 6",
+    "expectedFlow": "videoStoryteller",
+    "genkitFlow": "video-storyteller",
+    "entities": [
+      "solar system",
+      "video",
+      "सौर मंडल"
+    ]
+  },
+  {
+    "cell": "hi-ans-photosyn",
+    "lang": "hi",
+    "intent": "ANSWER",
+    "message": "प्रकाश संश्लेषण क्या है?",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "प्रकाश संश्लेषण",
+      "photosynthesis"
+    ]
+  },
+  {
+    "cell": "hi-ans-fractions",
+    "lang": "hi",
+    "intent": "ANSWER",
+    "message": "भिन्न क्या होती है, समझाइए",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "भिन्न",
+      "fraction"
+    ]
+  },
+  {
+    "cell": "hi-ans-democracy",
+    "lang": "hi",
+    "intent": "ANSWER",
+    "message": "लोकतंत्र क्या है?",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "लोकतंत्र",
+      "democracy"
+    ]
+  },
+  {
+    "cell": "hi-cre-lesson",
+    "lang": "hi",
+    "intent": "CREATE",
+    "message": "कक्षा 6 के लिए जल चक्र पर पाठ योजना बनाइए",
+    "expectedFlow": "lessonPlan",
+    "genkitFlow": "lesson-plan",
+    "entities": [
+      "water cycle",
+      "जल चक्र",
+      "lesson"
+    ]
+  },
+  {
+    "cell": "hi-cre-quiz",
+    "lang": "hi",
+    "intent": "CREATE",
+    "message": "कक्षा 7 के लिए प्रकाश संश्लेषण पर एक प्रश्नोत्तरी बनाइए",
+    "expectedFlow": "quiz",
+    "genkitFlow": "quiz-generator",
+    "entities": [
+      "photosynthesis",
+      "quiz",
+      "प्रकाश संश्लेषण"
+    ]
+  },
+  {
+    "cell": "hi-cre-workshet",
+    "lang": "hi",
+    "intent": "CREATE",
+    "message": "कक्षा 5 के लिए भिन्न पर कार्यपत्रक बनाइए",
+    "expectedFlow": "worksheet",
+    "genkitFlow": "worksheet-wizard",
+    "entities": [
+      "fraction",
+      "worksheet",
+      "भिन्न"
+    ]
+  },
+  {
+    "cell": "hi-act-visual",
+    "lang": "hi",
+    "intent": "ACTION",
+    "message": "कक्षा 8 के लिए मानव पाचन तंत्र का चित्र बनाइए",
+    "expectedFlow": "visualAid",
+    "genkitFlow": "visual-aid-designer",
+    "entities": [
+      "digestive",
+      "diagram",
+      "पाचन"
+    ]
+  },
+  {
+    "cell": "hi-act-exam",
+    "lang": "hi",
+    "intent": "ACTION",
+    "message": "कक्षा 10 का विज्ञान प्रश्न पत्र बनाइए",
+    "expectedFlow": "examPaper",
+    "genkitFlow": "exam-paper",
+    "entities": [
+      "exam",
+      "science",
+      "परीक्षा"
+    ]
+  },
+  {
+    "cell": "hi-act-video",
+    "lang": "hi",
+    "intent": "ACTION",
+    "message": "कक्षा 6 के लिए सौर मंडल पर वीडियो खोजिए",
+    "expectedFlow": "videoStoryteller",
+    "genkitFlow": "video-storyteller",
+    "entities": [
+      "solar system",
+      "video",
+      "सौर मंडल"
+    ]
+  },
+  {
+    "cell": "bn-ans-photosyn",
+    "lang": "bn",
+    "intent": "ANSWER",
+    "message": "সালোকসংশ্লেষ কী?",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "সালোকসংশ্লেষ",
+      "photosynthesis"
+    ]
+  },
+  {
+    "cell": "bn-ans-fractions",
+    "lang": "bn",
+    "intent": "ANSWER",
+    "message": "ভগ্নাংশ কী তা ব্যাখ্যা করুন",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "ভগ্নাংশ",
+      "fraction"
+    ]
+  },
+  {
+    "cell": "bn-ans-democracy",
+    "lang": "bn",
+    "intent": "ANSWER",
+    "message": "গণতন্ত্র কী?",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "গণতন্ত্র",
+      "democracy"
+    ]
+  },
+  {
+    "cell": "bn-cre-lesson",
+    "lang": "bn",
+    "intent": "CREATE",
+    "message": "ষষ্ঠ শ্রেণির জন্য জলচক্রের উপর একটি পাঠ পরিকল্পনা তৈরি করুন",
+    "expectedFlow": "lessonPlan",
+    "genkitFlow": "lesson-plan",
+    "entities": [
+      "water cycle",
+      "जल चक्र",
+      "lesson"
+    ]
+  },
+  {
+    "cell": "bn-cre-quiz",
+    "lang": "bn",
+    "intent": "CREATE",
+    "message": "সপ্তম শ্রেণির জন্য সালোকসংশ্লেষের উপর একটি কুইজ তৈরি করুন",
+    "expectedFlow": "quiz",
+    "genkitFlow": "quiz-generator",
+    "entities": [
+      "photosynthesis",
+      "quiz",
+      "प्रकाश संश्लेषण"
+    ]
+  },
+  {
+    "cell": "bn-cre-workshet",
+    "lang": "bn",
+    "intent": "CREATE",
+    "message": "পঞ্চম শ্রেণির জন্য ভগ্নাংশের উপর একটি ওয়ার্কশিট তৈরি করুন",
+    "expectedFlow": "worksheet",
+    "genkitFlow": "worksheet-wizard",
+    "entities": [
+      "fraction",
+      "worksheet",
+      "भिन्न"
+    ]
+  },
+  {
+    "cell": "bn-act-visual",
+    "lang": "bn",
+    "intent": "ACTION",
+    "message": "অষ্টম শ্রেণির জন্য মানব পরিপাকতন্ত্রের একটি চিত্র আঁকুন",
+    "expectedFlow": "visualAid",
+    "genkitFlow": "visual-aid-designer",
+    "entities": [
+      "digestive",
+      "diagram",
+      "पाचन"
+    ]
+  },
+  {
+    "cell": "bn-act-exam",
+    "lang": "bn",
+    "intent": "ACTION",
+    "message": "দশম শ্রেণির বিজ্ঞান পরীক্ষার প্রশ্নপত্র তৈরি করুন",
+    "expectedFlow": "examPaper",
+    "genkitFlow": "exam-paper",
+    "entities": [
+      "exam",
+      "science",
+      "परीक्षा"
+    ]
+  },
+  {
+    "cell": "bn-act-video",
+    "lang": "bn",
+    "intent": "ACTION",
+    "message": "ষষ্ঠ শ্রেণির জন্য সৌরজগতের উপর ভিডিও খুঁজুন",
+    "expectedFlow": "videoStoryteller",
+    "genkitFlow": "video-storyteller",
+    "entities": [
+      "solar system",
+      "video",
+      "सौर मंडल"
+    ]
+  },
+  {
+    "cell": "ta-ans-photosyn",
+    "lang": "ta",
+    "intent": "ANSWER",
+    "message": "ஒளிச்சேர்க்கை என்றால் என்ன?",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "ஒளிச்சேர்க்கை",
+      "photosynthesis"
+    ]
+  },
+  {
+    "cell": "ta-ans-fractions",
+    "lang": "ta",
+    "intent": "ANSWER",
+    "message": "பின்னம் என்றால் என்ன என்பதை விளக்குங்கள்",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "பின்னம்",
+      "fraction"
+    ]
+  },
+  {
+    "cell": "ta-ans-democracy",
+    "lang": "ta",
+    "intent": "ANSWER",
+    "message": "ஜனநாயகம் என்றால் என்ன?",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "ஜனநாயகம்",
+      "democracy"
+    ]
+  },
+  {
+    "cell": "ta-cre-lesson",
+    "lang": "ta",
+    "intent": "CREATE",
+    "message": "6ஆம் வகுப்புக்கு நீர்ச்சுழற்சி பற்றி பாடத் திட்டம் உருவாக்குங்கள்",
+    "expectedFlow": "lessonPlan",
+    "genkitFlow": "lesson-plan",
+    "entities": [
+      "water cycle",
+      "जल चक्र",
+      "lesson"
+    ]
+  },
+  {
+    "cell": "ta-cre-quiz",
+    "lang": "ta",
+    "intent": "CREATE",
+    "message": "7ஆம் வகுப்புக்கு ஒளிச்சேர்க்கை பற்றி வினாடி வினா உருவாக்குங்கள்",
+    "expectedFlow": "quiz",
+    "genkitFlow": "quiz-generator",
+    "entities": [
+      "photosynthesis",
+      "quiz",
+      "प्रकाश संश्लेषण"
+    ]
+  },
+  {
+    "cell": "ta-cre-workshet",
+    "lang": "ta",
+    "intent": "CREATE",
+    "message": "5ஆம் வகுப்புக்கு பின்னங்கள் பற்றி பயிற்சித்தாள் உருவாக்குங்கள்",
+    "expectedFlow": "worksheet",
+    "genkitFlow": "worksheet-wizard",
+    "entities": [
+      "fraction",
+      "worksheet",
+      "भिन्न"
+    ]
+  },
+  {
+    "cell": "ta-act-visual",
+    "lang": "ta",
+    "intent": "ACTION",
+    "message": "8ஆம் வகுப்புக்கு மனித செரிமான மண்டலத்தின் படம் வரையுங்கள்",
+    "expectedFlow": "visualAid",
+    "genkitFlow": "visual-aid-designer",
+    "entities": [
+      "digestive",
+      "diagram",
+      "पाचन"
+    ]
+  },
+  {
+    "cell": "ta-act-exam",
+    "lang": "ta",
+    "intent": "ACTION",
+    "message": "10ஆம் வகுப்பு அறிவியல் தேர்வுத் தாள் உருவாக்குங்கள்",
+    "expectedFlow": "examPaper",
+    "genkitFlow": "exam-paper",
+    "entities": [
+      "exam",
+      "science",
+      "परीक्षा"
+    ]
+  },
+  {
+    "cell": "ta-act-video",
+    "lang": "ta",
+    "intent": "ACTION",
+    "message": "6ஆம் வகுப்புக்கு சூரிய குடும்பம் பற்றிய வீடியோக்களைத் தேடுங்கள்",
+    "expectedFlow": "videoStoryteller",
+    "genkitFlow": "video-storyteller",
+    "entities": [
+      "solar system",
+      "video",
+      "सौर मंडल"
+    ]
+  },
+  {
+    "cell": "te-ans-photosyn",
+    "lang": "te",
+    "intent": "ANSWER",
+    "message": "కిరణజన్య సంయోగక్రియ అంటే ఏమిటి?",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "కిరణజన్య సంయోగక్రియ",
+      "photosynthesis"
+    ]
+  },
+  {
+    "cell": "te-ans-fractions",
+    "lang": "te",
+    "intent": "ANSWER",
+    "message": "భిన్నం అంటే ఏమిటో వివరించండి",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "భిన్నం",
+      "fraction"
+    ]
+  },
+  {
+    "cell": "te-ans-democracy",
+    "lang": "te",
+    "intent": "ANSWER",
+    "message": "ప్రజాస్వామ్యం అంటే ఏమిటి?",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "ప్రజాస్వామ్యం",
+      "democracy"
+    ]
+  },
+  {
+    "cell": "te-cre-lesson",
+    "lang": "te",
+    "intent": "CREATE",
+    "message": "6వ తరగతికి నీటి చక్రంపై పాఠ ప్రణాళిక తయారు చేయండి",
+    "expectedFlow": "lessonPlan",
+    "genkitFlow": "lesson-plan",
+    "entities": [
+      "water cycle",
+      "जल चक्र",
+      "lesson"
+    ]
+  },
+  {
+    "cell": "te-cre-quiz",
+    "lang": "te",
+    "intent": "CREATE",
+    "message": "7వ తరగతికి కిరణజన్య సంయోగక్రియపై క్విజ్ తయారు చేయండి",
+    "expectedFlow": "quiz",
+    "genkitFlow": "quiz-generator",
+    "entities": [
+      "photosynthesis",
+      "quiz",
+      "प्रकाश संश्लेषण"
+    ]
+  },
+  {
+    "cell": "te-cre-workshet",
+    "lang": "te",
+    "intent": "CREATE",
+    "message": "5వ తరగతికి భిన్నాలపై వర్క్‌షీట్ తయారు చేయండి",
+    "expectedFlow": "worksheet",
+    "genkitFlow": "worksheet-wizard",
+    "entities": [
+      "fraction",
+      "worksheet",
+      "भिन्न"
+    ]
+  },
+  {
+    "cell": "te-act-visual",
+    "lang": "te",
+    "intent": "ACTION",
+    "message": "8వ తరగతికి మానవ జీర్ణవ్యవస్థ చిత్రం గీయండి",
+    "expectedFlow": "visualAid",
+    "genkitFlow": "visual-aid-designer",
+    "entities": [
+      "digestive",
+      "diagram",
+      "पाचन"
+    ]
+  },
+  {
+    "cell": "te-act-exam",
+    "lang": "te",
+    "intent": "ACTION",
+    "message": "10వ తరగతి సైన్స్ పరీక్ష పత్రం తయారు చేయండి",
+    "expectedFlow": "examPaper",
+    "genkitFlow": "exam-paper",
+    "entities": [
+      "exam",
+      "science",
+      "परीक्षा"
+    ]
+  },
+  {
+    "cell": "te-act-video",
+    "lang": "te",
+    "intent": "ACTION",
+    "message": "6వ తరగతికి సౌర వ్యవస్థపై వీడియోలు వెతకండి",
+    "expectedFlow": "videoStoryteller",
+    "genkitFlow": "video-storyteller",
+    "entities": [
+      "solar system",
+      "video",
+      "सौर मंडल"
+    ]
+  },
+  {
+    "cell": "mr-ans-photosyn",
+    "lang": "mr",
+    "intent": "ANSWER",
+    "message": "प्रकाशसंश्लेषण म्हणजे काय?",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "प्रकाशसंश्लेषण",
+      "photosynthesis"
+    ]
+  },
+  {
+    "cell": "mr-ans-fractions",
+    "lang": "mr",
+    "intent": "ANSWER",
+    "message": "अपूर्णांक म्हणजे काय ते समजावून सांगा",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "अपूर्णांक",
+      "fraction"
+    ]
+  },
+  {
+    "cell": "mr-ans-democracy",
+    "lang": "mr",
+    "intent": "ANSWER",
+    "message": "लोकशाही म्हणजे काय?",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "लोकशाही",
+      "democracy"
+    ]
+  },
+  {
+    "cell": "mr-cre-lesson",
+    "lang": "mr",
+    "intent": "CREATE",
+    "message": "इयत्ता ६ वीसाठी जलचक्रावर पाठ योजना तयार करा",
+    "expectedFlow": "lessonPlan",
+    "genkitFlow": "lesson-plan",
+    "entities": [
+      "water cycle",
+      "जल चक्र",
+      "lesson"
+    ]
+  },
+  {
+    "cell": "mr-cre-quiz",
+    "lang": "mr",
+    "intent": "CREATE",
+    "message": "इयत्ता ७ वीसाठी प्रकाशसंश्लेषणावर प्रश्नमंजुषा तयार करा",
+    "expectedFlow": "quiz",
+    "genkitFlow": "quiz-generator",
+    "entities": [
+      "photosynthesis",
+      "quiz",
+      "प्रकाश संश्लेषण"
+    ]
+  },
+  {
+    "cell": "mr-cre-workshet",
+    "lang": "mr",
+    "intent": "CREATE",
+    "message": "इयत्ता ५ वीसाठी अपूर्णांकांवर कार्यपत्रिका तयार करा",
+    "expectedFlow": "worksheet",
+    "genkitFlow": "worksheet-wizard",
+    "entities": [
+      "fraction",
+      "worksheet",
+      "भिन्न"
+    ]
+  },
+  {
+    "cell": "mr-act-visual",
+    "lang": "mr",
+    "intent": "ACTION",
+    "message": "इयत्ता ८ वीसाठी मानवी पचनसंस्थेचे चित्र काढा",
+    "expectedFlow": "visualAid",
+    "genkitFlow": "visual-aid-designer",
+    "entities": [
+      "digestive",
+      "diagram",
+      "पाचन"
+    ]
+  },
+  {
+    "cell": "mr-act-exam",
+    "lang": "mr",
+    "intent": "ACTION",
+    "message": "इयत्ता १० वीचा विज्ञान प्रश्नपत्रिका तयार करा",
+    "expectedFlow": "examPaper",
+    "genkitFlow": "exam-paper",
+    "entities": [
+      "exam",
+      "science",
+      "परीक्षा"
+    ]
+  },
+  {
+    "cell": "mr-act-video",
+    "lang": "mr",
+    "intent": "ACTION",
+    "message": "इयत्ता ६ वीसाठी सौरमालेवर व्हिडिओ शोधा",
+    "expectedFlow": "videoStoryteller",
+    "genkitFlow": "video-storyteller",
+    "entities": [
+      "solar system",
+      "video",
+      "सौर मंडल"
+    ]
+  },
+  {
+    "cell": "gu-ans-photosyn",
+    "lang": "gu",
+    "intent": "ANSWER",
+    "message": "પ્રકાશસંશ્લેષણ શું છે?",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "પ્રકાશસંશ્લેષણ",
+      "photosynthesis"
+    ]
+  },
+  {
+    "cell": "gu-ans-fractions",
+    "lang": "gu",
+    "intent": "ANSWER",
+    "message": "અપૂર્ણાંક શું છે તે સમજાવો",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "અપૂર્ણાંક",
+      "fraction"
+    ]
+  },
+  {
+    "cell": "gu-ans-democracy",
+    "lang": "gu",
+    "intent": "ANSWER",
+    "message": "લોકશાહી શું છે?",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "લોકશાહી",
+      "democracy"
+    ]
+  },
+  {
+    "cell": "gu-cre-lesson",
+    "lang": "gu",
+    "intent": "CREATE",
+    "message": "ધોરણ 6 માટે જળચક્ર પર પાઠ યોજના બનાવો",
+    "expectedFlow": "lessonPlan",
+    "genkitFlow": "lesson-plan",
+    "entities": [
+      "water cycle",
+      "जल चक्र",
+      "lesson"
+    ]
+  },
+  {
+    "cell": "gu-cre-quiz",
+    "lang": "gu",
+    "intent": "CREATE",
+    "message": "ધોરણ 7 માટે પ્રકાશસંશ્લેષણ પર ક્વિઝ બનાવો",
+    "expectedFlow": "quiz",
+    "genkitFlow": "quiz-generator",
+    "entities": [
+      "photosynthesis",
+      "quiz",
+      "प्रकाश संश्लेषण"
+    ]
+  },
+  {
+    "cell": "gu-cre-workshet",
+    "lang": "gu",
+    "intent": "CREATE",
+    "message": "ધોરણ 5 માટે અપૂર્ણાંક પર વર્કશીટ બનાવો",
+    "expectedFlow": "worksheet",
+    "genkitFlow": "worksheet-wizard",
+    "entities": [
+      "fraction",
+      "worksheet",
+      "भिन्न"
+    ]
+  },
+  {
+    "cell": "gu-act-visual",
+    "lang": "gu",
+    "intent": "ACTION",
+    "message": "ધોરણ 8 માટે માનવ પાચનતંત્રનું ચિત્ર દોરો",
+    "expectedFlow": "visualAid",
+    "genkitFlow": "visual-aid-designer",
+    "entities": [
+      "digestive",
+      "diagram",
+      "पाचन"
+    ]
+  },
+  {
+    "cell": "gu-act-exam",
+    "lang": "gu",
+    "intent": "ACTION",
+    "message": "ધોરણ 10 નું વિજ્ઞાન પરીક્ષા પેપર બનાવો",
+    "expectedFlow": "examPaper",
+    "genkitFlow": "exam-paper",
+    "entities": [
+      "exam",
+      "science",
+      "परीक्षा"
+    ]
+  },
+  {
+    "cell": "gu-act-video",
+    "lang": "gu",
+    "intent": "ACTION",
+    "message": "ધોરણ 6 માટે સૌરમંડળ પર વિડિઓ શોધો",
+    "expectedFlow": "videoStoryteller",
+    "genkitFlow": "video-storyteller",
+    "entities": [
+      "solar system",
+      "video",
+      "सौर मंडल"
+    ]
+  },
+  {
+    "cell": "kn-ans-photosyn",
+    "lang": "kn",
+    "intent": "ANSWER",
+    "message": "ದ್ಯುತಿಸಂಶ್ಲೇಷಣೆ ಎಂದರೇನು?",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "ದ್ಯುತಿಸಂಶ್ಲೇಷಣೆ",
+      "photosynthesis"
+    ]
+  },
+  {
+    "cell": "kn-ans-fractions",
+    "lang": "kn",
+    "intent": "ANSWER",
+    "message": "ಭಿನ್ನರಾಶಿ ಎಂದರೇನು ಎಂದು ವಿವರಿಸಿ",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "ಭಿನ್ನರಾಶಿ",
+      "fraction"
+    ]
+  },
+  {
+    "cell": "kn-ans-democracy",
+    "lang": "kn",
+    "intent": "ANSWER",
+    "message": "ಪ್ರಜಾಪ್ರಭುತ್ವ ಎಂದರೇನು?",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "ಪ್ರಜಾಪ್ರಭುತ್ವ",
+      "democracy"
+    ]
+  },
+  {
+    "cell": "kn-cre-lesson",
+    "lang": "kn",
+    "intent": "CREATE",
+    "message": "6ನೇ ತರಗತಿಗೆ ಜಲಚಕ್ರದ ಬಗ್ಗೆ ಪಾಠ ಯೋಜನೆ ಮಾಡಿ",
+    "expectedFlow": "lessonPlan",
+    "genkitFlow": "lesson-plan",
+    "entities": [
+      "water cycle",
+      "जल चक्र",
+      "lesson"
+    ]
+  },
+  {
+    "cell": "kn-cre-quiz",
+    "lang": "kn",
+    "intent": "CREATE",
+    "message": "7ನೇ ತರಗತಿಗೆ ದ್ಯುತಿಸಂಶ್ಲೇಷಣೆ ಬಗ್ಗೆ ರಸಪ್ರಶ್ನೆ ಮಾಡಿ",
+    "expectedFlow": "quiz",
+    "genkitFlow": "quiz-generator",
+    "entities": [
+      "photosynthesis",
+      "quiz",
+      "प्रकाश संश्लेषण"
+    ]
+  },
+  {
+    "cell": "kn-cre-workshet",
+    "lang": "kn",
+    "intent": "CREATE",
+    "message": "5ನೇ ತರಗತಿಗೆ ಭಿನ್ನರಾಶಿಗಳ ಬಗ್ಗೆ ಕಾರ್ಯಹಾಳೆ ಮಾಡಿ",
+    "expectedFlow": "worksheet",
+    "genkitFlow": "worksheet-wizard",
+    "entities": [
+      "fraction",
+      "worksheet",
+      "भिन्न"
+    ]
+  },
+  {
+    "cell": "kn-act-visual",
+    "lang": "kn",
+    "intent": "ACTION",
+    "message": "8ನೇ ತರಗತಿಗೆ ಮಾನವ ಜೀರ್ಣಾಂಗ ವ್ಯವಸ್ಥೆಯ ಚಿತ್ರ ಬಿಡಿಸಿ",
+    "expectedFlow": "visualAid",
+    "genkitFlow": "visual-aid-designer",
+    "entities": [
+      "digestive",
+      "diagram",
+      "पाचन"
+    ]
+  },
+  {
+    "cell": "kn-act-exam",
+    "lang": "kn",
+    "intent": "ACTION",
+    "message": "10ನೇ ತರಗತಿಯ ವಿಜ್ಞಾನ ಪರೀಕ್ಷಾ ಪ್ರಶ್ನೆಪತ್ರಿಕೆ ಮಾಡಿ",
+    "expectedFlow": "examPaper",
+    "genkitFlow": "exam-paper",
+    "entities": [
+      "exam",
+      "science",
+      "परीक्षा"
+    ]
+  },
+  {
+    "cell": "kn-act-video",
+    "lang": "kn",
+    "intent": "ACTION",
+    "message": "6ನೇ ತರಗತಿಗೆ ಸೌರವ್ಯೂಹದ ಬಗ್ಗೆ ವೀಡಿಯೊಗಳನ್ನು ಹುಡುಕಿ",
+    "expectedFlow": "videoStoryteller",
+    "genkitFlow": "video-storyteller",
+    "entities": [
+      "solar system",
+      "video",
+      "सौर मंडल"
+    ]
+  },
+  {
+    "cell": "ml-ans-photosyn",
+    "lang": "ml",
+    "intent": "ANSWER",
+    "message": "പ്രകാശസംശ്ലേഷണം എന്താണ്?",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "പ്രകാശസംശ്ലേഷണം",
+      "photosynthesis"
+    ]
+  },
+  {
+    "cell": "ml-ans-fractions",
+    "lang": "ml",
+    "intent": "ANSWER",
+    "message": "ഭിന്നസംഖ്യ എന്താണെന്ന് വിശദീകരിക്കുക",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "ഭിന്നസംഖ്യ",
+      "fraction"
+    ]
+  },
+  {
+    "cell": "ml-ans-democracy",
+    "lang": "ml",
+    "intent": "ANSWER",
+    "message": "ജനാധിപത്യം എന്താണ്?",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "ജനാധിപത്യം",
+      "democracy"
+    ]
+  },
+  {
+    "cell": "ml-cre-lesson",
+    "lang": "ml",
+    "intent": "CREATE",
+    "message": "ആറാം ക്ലാസിന് ജലചക്രത്തെക്കുറിച്ച് പാഠ പദ്ധതി ഉണ്ടാക്കുക",
+    "expectedFlow": "lessonPlan",
+    "genkitFlow": "lesson-plan",
+    "entities": [
+      "water cycle",
+      "जल चक्र",
+      "lesson"
+    ]
+  },
+  {
+    "cell": "ml-cre-quiz",
+    "lang": "ml",
+    "intent": "CREATE",
+    "message": "ഏഴാം ക്ലാസിന് പ്രകാശസംശ്ലേഷണത്തെക്കുറിച്ച് ക്വിസ് ഉണ്ടാക്കുക",
+    "expectedFlow": "quiz",
+    "genkitFlow": "quiz-generator",
+    "entities": [
+      "photosynthesis",
+      "quiz",
+      "प्रकाश संश्लेषण"
+    ]
+  },
+  {
+    "cell": "ml-cre-workshet",
+    "lang": "ml",
+    "intent": "CREATE",
+    "message": "അഞ്ചാം ക്ലാസിന് ഭിന്നസംഖ്യകളെക്കുറിച്ച് വർക്ക്ഷീറ്റ് ഉണ്ടാക്കുക",
+    "expectedFlow": "worksheet",
+    "genkitFlow": "worksheet-wizard",
+    "entities": [
+      "fraction",
+      "worksheet",
+      "भिन्न"
+    ]
+  },
+  {
+    "cell": "ml-act-visual",
+    "lang": "ml",
+    "intent": "ACTION",
+    "message": "എട്ടാം ക്ലാസിന് മനുഷ്യ ദഹനവ്യവസ്ഥയുടെ ചിത്രം വരയ്ക്കുക",
+    "expectedFlow": "visualAid",
+    "genkitFlow": "visual-aid-designer",
+    "entities": [
+      "digestive",
+      "diagram",
+      "पाचन"
+    ]
+  },
+  {
+    "cell": "ml-act-exam",
+    "lang": "ml",
+    "intent": "ACTION",
+    "message": "പത്താം ക്ലാസ് സയൻസ് പരീക്ഷാ ചോദ്യപേപ്പർ ഉണ്ടാക്കുക",
+    "expectedFlow": "examPaper",
+    "genkitFlow": "exam-paper",
+    "entities": [
+      "exam",
+      "science",
+      "परीक्षा"
+    ]
+  },
+  {
+    "cell": "ml-act-video",
+    "lang": "ml",
+    "intent": "ACTION",
+    "message": "ആറാം ക്ലാസിന് സൗരയൂഥത്തെക്കുറിച്ചുള്ള വീഡിയോകൾ കണ്ടെത്തുക",
+    "expectedFlow": "videoStoryteller",
+    "genkitFlow": "video-storyteller",
+    "entities": [
+      "solar system",
+      "video",
+      "सौर मंडल"
+    ]
+  },
+  {
+    "cell": "pa-ans-photosyn",
+    "lang": "pa",
+    "intent": "ANSWER",
+    "message": "ਪ੍ਰਕਾਸ਼ ਸੰਸ਼ਲੇਸ਼ਣ ਕੀ ਹੈ?",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "ਪ੍ਰਕਾਸ਼ ਸੰਸ਼ਲੇਸ਼ਣ",
+      "photosynthesis"
+    ]
+  },
+  {
+    "cell": "pa-ans-fractions",
+    "lang": "pa",
+    "intent": "ANSWER",
+    "message": "ਭਿੰਨ ਕੀ ਹੁੰਦਾ ਹੈ, ਸਮਝਾਓ",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "ਭਿੰਨ",
+      "fraction"
+    ]
+  },
+  {
+    "cell": "pa-ans-democracy",
+    "lang": "pa",
+    "intent": "ANSWER",
+    "message": "ਲੋਕਤੰਤਰ ਕੀ ਹੈ?",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "ਲੋਕਤੰਤਰ",
+      "democracy"
+    ]
+  },
+  {
+    "cell": "pa-cre-lesson",
+    "lang": "pa",
+    "intent": "CREATE",
+    "message": "ਜਮਾਤ 6 ਲਈ ਜਲ ਚੱਕਰ ਉੱਤੇ ਪਾਠ ਯੋਜਨਾ ਬਣਾਓ",
+    "expectedFlow": "lessonPlan",
+    "genkitFlow": "lesson-plan",
+    "entities": [
+      "water cycle",
+      "जल चक्र",
+      "lesson"
+    ]
+  },
+  {
+    "cell": "pa-cre-quiz",
+    "lang": "pa",
+    "intent": "CREATE",
+    "message": "ਜਮਾਤ 7 ਲਈ ਪ੍ਰਕਾਸ਼ ਸੰਸ਼ਲੇਸ਼ਣ ਉੱਤੇ ਕੁਇਜ਼ ਬਣਾਓ",
+    "expectedFlow": "quiz",
+    "genkitFlow": "quiz-generator",
+    "entities": [
+      "photosynthesis",
+      "quiz",
+      "प्रकाश संश्लेषण"
+    ]
+  },
+  {
+    "cell": "pa-cre-workshet",
+    "lang": "pa",
+    "intent": "CREATE",
+    "message": "ਜਮਾਤ 5 ਲਈ ਭਿੰਨਾਂ ਉੱਤੇ ਵਰਕਸ਼ੀਟ ਬਣਾਓ",
+    "expectedFlow": "worksheet",
+    "genkitFlow": "worksheet-wizard",
+    "entities": [
+      "fraction",
+      "worksheet",
+      "भिन्न"
+    ]
+  },
+  {
+    "cell": "pa-act-visual",
+    "lang": "pa",
+    "intent": "ACTION",
+    "message": "ਜਮਾਤ 8 ਲਈ ਮਨੁੱਖੀ ਪਾਚਨ ਪ੍ਰਣਾਲੀ ਦਾ ਚਿੱਤਰ ਬਣਾਓ",
+    "expectedFlow": "visualAid",
+    "genkitFlow": "visual-aid-designer",
+    "entities": [
+      "digestive",
+      "diagram",
+      "पाचन"
+    ]
+  },
+  {
+    "cell": "pa-act-exam",
+    "lang": "pa",
+    "intent": "ACTION",
+    "message": "ਜਮਾਤ 10 ਦਾ ਵਿਗਿਆਨ ਪ੍ਰੀਖਿਆ ਪੇਪਰ ਬਣਾਓ",
+    "expectedFlow": "examPaper",
+    "genkitFlow": "exam-paper",
+    "entities": [
+      "exam",
+      "science",
+      "परीक्षा"
+    ]
+  },
+  {
+    "cell": "pa-act-video",
+    "lang": "pa",
+    "intent": "ACTION",
+    "message": "ਜਮਾਤ 6 ਲਈ ਸੂਰਜੀ ਮੰਡਲ ਉੱਤੇ ਵੀਡੀਓ ਲੱਭੋ",
+    "expectedFlow": "videoStoryteller",
+    "genkitFlow": "video-storyteller",
+    "entities": [
+      "solar system",
+      "video",
+      "सौर मंडल"
+    ]
+  },
+  {
+    "cell": "or-ans-photosyn",
+    "lang": "or",
+    "intent": "ANSWER",
+    "message": "ଆଲୋକ ସଂଶ୍ଳେଷଣ କ'ଣ?",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "ଆଲୋକ ସଂଶ୍ଳେଷଣ",
+      "photosynthesis"
+    ]
+  },
+  {
+    "cell": "or-ans-fractions",
+    "lang": "or",
+    "intent": "ANSWER",
+    "message": "ଭଗ୍ନାଂଶ କ'ଣ ବୁଝାନ୍ତୁ",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "ଭଗ୍ନାଂଶ",
+      "fraction"
+    ]
+  },
+  {
+    "cell": "or-ans-democracy",
+    "lang": "or",
+    "intent": "ANSWER",
+    "message": "ଗଣତନ୍ତ୍ର କ'ଣ?",
+    "expectedFlow": null,
+    "genkitFlow": "instant-answer",
+    "entities": [
+      "ଗଣତନ୍ତ୍ର",
+      "democracy"
+    ]
+  },
+  {
+    "cell": "or-cre-lesson",
+    "lang": "or",
+    "intent": "CREATE",
+    "message": "ଷଷ୍ଠ ଶ୍ରେଣୀ ପାଇଁ ଜଳଚକ୍ର ଉପରେ ପାଠ ଯୋଜନା ପ୍ରସ୍ତୁତ କରନ୍ତୁ",
+    "expectedFlow": "lessonPlan",
+    "genkitFlow": "lesson-plan",
+    "entities": [
+      "water cycle",
+      "जल चक्र",
+      "lesson"
+    ]
+  },
+  {
+    "cell": "or-cre-quiz",
+    "lang": "or",
+    "intent": "CREATE",
+    "message": "ସପ୍ତମ ଶ୍ରେଣୀ ପାଇଁ ଆଲୋକ ସଂଶ୍ଳେଷଣ ଉପରେ କୁଇଜ୍ ପ୍ରସ୍ତୁତ କରନ୍ତୁ",
+    "expectedFlow": "quiz",
+    "genkitFlow": "quiz-generator",
+    "entities": [
+      "photosynthesis",
+      "quiz",
+      "प्रकाश संश्लेषण"
+    ]
+  },
+  {
+    "cell": "or-cre-workshet",
+    "lang": "or",
+    "intent": "CREATE",
+    "message": "ପଞ୍ଚମ ଶ୍ରେଣୀ ପାଇଁ ଭଗ୍ନାଂଶ ଉପରେ ୱାର୍କସିଟ୍ ପ୍ରସ୍ତୁତ କରନ୍ତୁ",
+    "expectedFlow": "worksheet",
+    "genkitFlow": "worksheet-wizard",
+    "entities": [
+      "fraction",
+      "worksheet",
+      "भिन्न"
+    ]
+  },
+  {
+    "cell": "or-act-visual",
+    "lang": "or",
+    "intent": "ACTION",
+    "message": "ଅଷ୍ଟମ ଶ୍ରେଣୀ ପାଇଁ ମାନବ ପାଚନ ତନ୍ତ୍ରର ଚିତ୍ର ଅଙ୍କନ କରନ୍ତୁ",
+    "expectedFlow": "visualAid",
+    "genkitFlow": "visual-aid-designer",
+    "entities": [
+      "digestive",
+      "diagram",
+      "पाचन"
+    ]
+  },
+  {
+    "cell": "or-act-exam",
+    "lang": "or",
+    "intent": "ACTION",
+    "message": "ଦଶମ ଶ୍ରେଣୀର ବିଜ୍ଞାନ ପରୀକ୍ଷା ପ୍ରଶ୍ନପତ୍ର ପ୍ରସ୍ତୁତ କରନ୍ତୁ",
+    "expectedFlow": "examPaper",
+    "genkitFlow": "exam-paper",
+    "entities": [
+      "exam",
+      "science",
+      "परीक्षा"
+    ]
+  },
+  {
+    "cell": "or-act-video",
+    "lang": "or",
+    "intent": "ACTION",
+    "message": "ଷଷ୍ଠ ଶ୍ରେଣୀ ପାଇଁ ସୌରଜଗତ ଉପରେ ଭିଡିଓ ଖୋଜନ୍ତୁ",
+    "expectedFlow": "videoStoryteller",
+    "genkitFlow": "video-storyteller",
+    "entities": [
+      "solar system",
+      "video",
+      "सौर मंडल"
+    ]
+  }
+]

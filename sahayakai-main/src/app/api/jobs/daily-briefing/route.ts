@@ -429,7 +429,7 @@ Example: [{"headline":"...","summary":"...","sourceLabel":"...","url":"...","cat
         // Pin the model explicitly so this job does not silently drift
         // when the Genkit default changes. gemini-2.5-flash is the
         // intended cost/latency tier for batch curation.
-        model: 'googleai/gemini-2.5-flash',
+        model: 'vertexai/gemini-2.5-flash',
         output: { format: 'json' },
       });
     }, 'dailyBriefing.curate');
@@ -537,7 +537,7 @@ Example: {"Hindi": "...", "Kannada": "...", "Tamil": "..."}`;
         prompt,
         ...resilienceConfig,
         // Pin the model explicitly — see `curateWithGemini` above.
-        model: 'googleai/gemini-2.5-flash',
+        model: 'vertexai/gemini-2.5-flash',
         output: { format: 'json' },
       });
     }, 'dailyBriefing.translate');
@@ -620,7 +620,7 @@ Respond with a JSON array of 1-2 objects. No markdown.`;
           prompt,
           ...resilienceConfig,
           // Pin the model explicitly — see `curateWithGemini` above.
-          model: 'googleai/gemini-2.5-flash',
+          model: 'vertexai/gemini-2.5-flash',
           output: { format: 'json' },
         });
       }, `dailyBriefing.stateNews.${normalizeKey(state)}`);

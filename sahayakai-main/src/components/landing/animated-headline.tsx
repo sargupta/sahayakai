@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { pillars } from "./pillar-data";
+import { pillars, pillarText } from "./pillar-data";
 import { useLanguage } from "@/context/language-context";
 
 type Props = {
@@ -11,7 +11,7 @@ type Props = {
 export function AnimatedHeadline({ titleIndex }: Props) {
   const { t } = useLanguage();
   const current = pillars[titleIndex];
-  const rotating = t(`pillar.${current.id}.rotating`);
+  const rotating = pillarText(t, current, "rotating");
 
   return (
     <h1 className="font-headline font-bold text-[44px] leading-[1.02] sm:text-[56px] md:text-[68px] tracking-tight text-foreground text-center">

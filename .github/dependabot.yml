@@ -1,0 +1,36 @@
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /sahayakai-agents
+    schedule: { interval: weekly, day: monday, time: "06:00" }
+    open-pull-requests-limit: 5
+    commit-message: { prefix: "chore(deps)" }
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      # ADK majors have broken the output_schema/tools contract before.
+      - dependency-name: "google-adk"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: npm
+    directory: /sahayakai-main
+    schedule: { interval: weekly, day: monday, time: "06:00" }
+    open-pull-requests-limit: 5
+    commit-message: { prefix: "chore(deps)" }
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      # Framework majors need a human.
+      - dependency-name: "next"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: monthly }
+    commit-message: { prefix: "chore(ci)" }

@@ -186,6 +186,11 @@ export function NCERTChapterSelector({ onChapterSelect, selectedGrade, className
                                 ))}
                             </SelectContent>
                         </Select>
+                        {!isLoadingChapters && chapters.length === 0 && (
+                            <p className="text-xs text-muted-foreground pt-1">
+                                {t("Chapters for this class and subject haven't been added yet — you can still type the chapter name as your topic.")}
+                            </p>
+                        )}
                     </div>
                 )}
 

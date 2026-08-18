@@ -24,6 +24,7 @@ import {
   FileSignature,
   FileText,
   FlaskConical,
+  HeartPulse,
   Home,
   Library,
   Lightbulb,
@@ -455,6 +456,14 @@ export function AppSidebar() {
                   <Link href="/admin/log-dashboard" onClick={() => handleNavClick('/admin/log-dashboard')}>
                     <Terminal />
                     <span>{t("Log Dashboard")}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/admin/system-health')} tooltip={t("AI Health")}>
+                  <Link href="/admin/system-health" onClick={() => handleNavClick('/admin/system-health')}>
+                    <HeartPulse />
+                    <span>{t("AI Health")}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

@@ -176,7 +176,7 @@ const visualAidFlow = ai.defineFlow(
 
       const textResult = await runResiliently(async (overrideConfig) => {
         return await ai.generate({
-          model: 'googleai/gemini-2.5-flash',
+          model: 'vertexai/gemini-2.5-flash',
           ...overrideConfig,
           output: { schema: MetadataSchema },
           prompt: `

@@ -4,16 +4,23 @@ name: Quality Gates
 #   * commits authored with `--no-verify`
 #   * Zod/Pydantic schema drift between Genkit + sidecar
 #   * Cloud Run service.yaml drift vs the spec in lane-F
-#   * post-deploy regression where dispatcher falls back to genkit_fallback
 #   * `console.log` leaks
 #   * typecheck bypass
 #   * AppCheck-disabled regressions (warn-only today)
+#   * i18n regressions (missing keys / hard-coded strings ratchet)
+#   * Firestore queries that need an index missing from firestore.indexes.json
+# (post-deploy smoke superseded by the UAT pipeline — see Gate 4 note below)
 
 on:
   pull_request:
-    branches: [develop, main]
+    branches: [main, 'release/**']
   push:
-    branches: [develop, main]
+    branches: [main]
+  schedule:
+    # Nightly 02:30 UTC — drives the scheduled Gate 3 drift check (live
+    # Cloud Run spec drift is time-based, not PR-based) plus a fresh
+    # backlog report from the static ratchet gates.
+    - cron: '30 2 * * *'
   workflow_dispatch:
     inputs:
       run_live_checks:
@@ -87,7 +94,11 @@ jobs:
   service-yaml-drift:
     name: 'Gate 3: Cloud Run service.yaml drift'
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && inputs.run_live_checks
+    # Live drift is time-based, not PR-based — run nightly (schedule) as
+    # well as on explicit dispatch with run_live_checks.
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_live_checks)
     permissions:
       contents: read
       id-token: write
@@ -106,21 +117,10 @@ jobs:
           SERVICE: sahayakai-agents-staging
         run: bash scripts/ci/check-service-yaml-drift.sh
 
-  post-deploy-smoke:
-    name: 'Gate 4: post-deploy smoke'
-    runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && inputs.run_live_checks
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - name: Probe /api/health + per-agent canaries
-        env:
-          APP_BASE_URL: ${{ secrets.SMOKE_APP_BASE_URL }}
-          APP_BEARER_TOKEN: ${{ secrets.SMOKE_BEARER_TOKEN }}
-          STRICT: '1'
-        run: node scripts/ci/post-deploy-smoke.mjs
+  # Gate 4 (post-deploy smoke) superseded by the UAT pipeline's post-deploy
+  # verification (uat-verify.yml, arriving in the QA lane PR); Gate 4 was
+  # workflow_dispatch-only and never ran automatically. The probe script
+  # itself stays at scripts/ci/post-deploy-smoke.mjs.
 
   no-console-log:
     # Ratchet gate: 299 legacy console.log sites predate this gate ever
@@ -261,3 +261,38 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: node sahayakai-main/scripts/ci/check-design-tokens.mjs
+
+  i18n-ratchet:
+    # Ratchet gate: missing t() keys + hard-coded user-visible strings must
+    # never EXCEED the committed baseline (scripts/ci/i18n-baseline.json).
+    # Dropping below it prints a notice to ratchet the baseline down.
+    name: 'Gate 9: i18n keys (ratchet)'
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Compare i18n counts against committed baseline
+        working-directory: sahayakai-main
+        run: node scripts/ci/check-i18n-ratchet.mjs
+
+  firestore-index-drift:
+    # Static scan of Firestore query call sites (collectionGroup + composite
+    # where/orderBy chains) against firestore.indexes.json. Ratchet: only
+    # NEW unmatched query signatures fail (baseline:
+    # scripts/ci/firestore-queries-baseline.json). Per-line escape:
+    # `firestore-index-allow` comment marker.
+    name: 'Gate 12: firestore index drift'
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check query signatures against firestore.indexes.json
+        working-directory: sahayakai-main
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: node scripts/ci/check-firestore-indexes.mjs

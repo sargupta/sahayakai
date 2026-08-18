@@ -20,7 +20,8 @@ Local imports keep tests that don't exercise ADK fast — the heavy
 """
 from __future__ import annotations
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 
 def _resolve_model_name(template_model: Any) -> str:
@@ -64,6 +65,35 @@ def build_keyed_gemini_from_template(
     return build_keyed_gemini(model_name=model_name, api_key=api_key)
 
 
+def build_genai_client(api_key: str, **kwargs: Any) -> Any:
+    """The ONE place a raw `genai.Client` is constructed.
+
+    Five routers used to call `genai.Client(api_key=...)` directly
+    (assessment_scanner, instant_answer, parent_call, lesson_plan,
+    vidya_voice). On Vertex that raises
+
+        401 UNAUTHENTICATED — API keys are not supported by this API.
+        Expected OAuth2 access token
+
+    because the sentinel gets passed through as though it were a real key.
+    Routing every construction through here means a future transport change
+    is one edit, not six.
+    """
+    from google.genai import Client  # noqa: PLC0415
+
+    from .config import VERTEX_SENTINEL, get_settings  # noqa: PLC0415
+
+    if api_key == VERTEX_SENTINEL:
+        settings = get_settings()
+        return Client(
+            vertexai=True,
+            project=settings.gcp_project,
+            location=settings.vertex_location,
+            **kwargs,
+        )
+    return Client(api_key=api_key, **kwargs)
+
+
 def build_keyed_gemini(*, model_name: str, api_key: str) -> Any:
     """Build a `Gemini` model wrapper pinned to a specific api_key.
 
@@ -82,19 +112,38 @@ def build_keyed_gemini(*, model_name: str, api_key: str) -> Any:
     from google.genai import Client  # noqa: PLC0415
     from google.genai import types as genai_types  # noqa: PLC0415
 
+    from .config import VERTEX_SENTINEL, get_settings  # noqa: PLC0415
+
     class _KeyedGemini(Gemini):
         """Per-call Gemini wrapper with explicit api_key."""
 
     instance = _KeyedGemini(model=model_name)
+    http_options = genai_types.HttpOptions(headers=instance._tracking_headers())
+
     # Pre-populate the api_client cached_property. cached_property
     # writes to instance.__dict__ on first access; we just write
     # directly so the lazy construction never fires.
-    pinned_client = Client(
-        api_key=api_key,
-        http_options=genai_types.HttpOptions(
-            headers=instance._tracking_headers(),
-        ),
-    )
+    if api_key == VERTEX_SENTINEL:
+        # Vertex AI: credentials come from ADC — a service account on Cloud
+        # Run, `gcloud auth application-default login` locally. No key is
+        # passed or held anywhere.
+        #
+        # Worth knowing: on Vertex, ADK's
+        # `can_use_output_schema_with_tools` returns True, so the
+        # `output_schema` XOR `tools` constraint that forces VIDYA to run
+        # with `tools=[]` no longer applies. That unblocks registering
+        # `build_answerer_tool()` — see ADR-0001 "Forward-compatibility".
+        # Deliberately NOT done in this commit: it changes VIDYA's
+        # behaviour, and this change is a transport swap only.
+        settings = get_settings()
+        pinned_client = Client(
+            vertexai=True,
+            project=settings.gcp_project,
+            location=settings.vertex_location,
+            http_options=http_options,
+        )
+    else:
+        pinned_client = Client(api_key=api_key, http_options=http_options)
     object.__setattr__(
         instance,
         "__dict__",

@@ -11,7 +11,16 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { Logo } from "@/components/logo";
 import { AuthButton } from "@/components/auth/auth-button";
 import { GlobalHooks } from "@/components/global-hooks";
-import { OmniOrb } from "@/components/omni-orb";
+import dynamic from "next/dynamic";
+// OmniOrb (VIDYA) is a ~924-line floating widget with speech + jarvis-store +
+// action machinery. It is NOT needed for first paint, so we load it client-side
+// AFTER the page is interactive. This strips it (and its deps) out of the
+// initial bundle — the home page renders and reacts sooner, and VIDYA snaps in
+// a beat later. Its action/prefill contracts are unchanged. (perf, 2026-07-05)
+const OmniOrb = dynamic(() => import("@/components/omni-orb").then((m) => m.OmniOrb), {
+  ssr: false,
+  loading: () => null,
+});
 import { TamilKeyboard } from "@/components/tamil-keyboard";
 import { MotherTongueGreeting } from "@/components/mother-tongue-greeting";
 import { VoiceQuotaToastListener } from "@/components/voice-quota-toast-listener";

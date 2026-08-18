@@ -407,12 +407,23 @@ def assert_vidya_action_shape(action: object | None) -> None:
     """
     if action is None:
         return
+    # Validate against the WIRE enum (`AllowedFlow`, 10 entries), not the
+    # CLASSIFIER enum (`prompts.ALLOWED_FLOWS`, 9). They are deliberately
+    # different: `instant-answer` is not something the classifier routes TO —
+    # it is answered inline — but it IS a flow the client understands, and
+    # since root cause 2 VIDYA reports it so the action matches Genkit.
+    #
+    # Guarding on the 9-entry list here would 502 every ANSWER request.
     # Lazy import: avoids `_behavioural` ↔ `agents.vidya` import cycle.
-    from .agents.vidya.agent import ALLOWED_FLOWS as _ALLOWED_FLOWS  # noqa: PLC0415
+    from typing import get_args  # noqa: PLC0415
+
+    from .agents.vidya.schemas import AllowedFlow  # noqa: PLC0415
+
+    _WIRE_FLOWS = get_args(AllowedFlow)
 
     flow = getattr(action, "flow", None)
-    assert flow in _ALLOWED_FLOWS, (
-        f"VidyaAction.flow={flow!r} is not in ALLOWED_FLOWS"
+    assert flow in _WIRE_FLOWS, (
+        f"VidyaAction.flow={flow!r} is not in AllowedFlow"
     )
     action_type = getattr(action, "type", None)
     assert action_type == "NAVIGATE_AND_FILL", (
