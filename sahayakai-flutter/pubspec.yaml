@@ -1,100 +1,248 @@
 name: sahayakai
-description: "SahayakAI offline-capable mobile app — Firebase AI Logic hybrid inference."
-# The following line prevents the package from being accidentally published to
-# pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
-
-# The following defines the version and build number for your application.
-# A version number is three numbers separated by dots, like 1.2.43
-# followed by an optional build number separated by a +.
-# Both the version and the builder number may be overridden in flutter
-# build by specifying --build-name and --build-number, respectively.
-# In Android, build-name is used as versionName while build-number used as versionCode.
-# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
-# In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
-# Read more about iOS versioning at
-# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-# In Windows, build-name is used as the major, minor, and patch parts
-# of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+1
+description: "SahayakAI — native Android app (SARGVISION Intelligence)"
+publish_to: 'none'
+# versionName+versionCode. Starts at build 2, not 1: the Capacitor wrap at
+# sahayakai-android/ declares the same applicationId and built its AAB at
+# versionCode 1. That artifact was never uploaded — Play publish is still an
+# open handoff step there — so 1 is not actually burned, but two distinct
+# artifacts sharing an applicationId and a versionCode is an ambiguity with no
+# upside. Provisional until H3 confirms the highest versionCode Play has seen
+# for com.sargvision.sahayakai. See docs/flutter/RELEASE.md.
+version: 1.0.0+2
 
 environment:
   sdk: ^3.11.4
 
-# Dependencies specify other packages that your package needs in order to work.
-# To automatically upgrade your package dependencies to the latest versions
-# consider running `flutter pub upgrade --major-versions`. Alternatively,
-# dependencies can be manually updated by changing the version numbers below to
-# the latest version available on pub.dev. To see which dependencies have newer
-# versions available, run `flutter pub outdated`.
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
+  # State management (code-gen)
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # Routing
+  go_router: ^14.6.2
+
+  # Networking
+  dio: ^5.7.0
+
+  # web_socket_channel: the raw WebSocket transport for the Gemini Live voice
+  # path (VIDYA). The client opens a socket DIRECTLY to Google with the
+  # ephemeral session token from /api/vidya-voice/start-session (dio only talks
+  # to sahayakai.com). Promoted from a transitive dependency to a direct one;
+  # pinned to the already-resolved 3.x line so nothing else re-resolves.
+  web_socket_channel: ^3.0.0
+
+  # Real auth (replaces the U-SI0/foundation-v1 stub — HANDOFF.md §1).
+  # firebase_database/firebase_messaging (Block C presence, FCM) are still
+  # deliberately absent — that's a separate handoff.
+  firebase_core: ^3.8.0
+  firebase_auth: ^5.3.3
+  google_sign_in: ^6.2.2
+
+  # T1-U3: real `users/<uid>` document reads/writes (Profile/Settings/
+  # Onboarding) via the client SDK, matching firestore.rules's
+  # `isOwner(userId)` gate. Version pinned to what resolves against the
+  # firebase_core/firebase_auth pair already locked in pubspec.lock
+  # (firebase_core 3.15.2, firebase_auth 5.7.0).
+  cloud_firestore: ^5.6.0
+
+  # App Check attestation for the `X-Firebase-AppCheck` header the web
+  # middleware already reads (and hard-requires on /api/ai/* once the server
+  # sets APP_CHECK_REQUIRED=true). The client ships the header FIRST, on
+  # purpose: the token is attached best-effort and a failure never blocks a
+  # request, so a build in the field is already sending attestation by the time
+  # the founder registers Play Integrity and flips monitor -> enforce in the
+  # Firebase console. Nothing here enables enforcement.
+  #
+  # Pinned to the 0.3.2 line, NOT 0.4.x: firebase_app_check 0.4.x requires
+  # firebase_core ^4.x, and this app is locked to firebase_core 3.15.2 (the
+  # pair firebase_auth 5.7.0 / cloud_firestore 5.6.12 resolve against).
+  # 0.3.2+10 is the last 0.3.x, and its constraint is `firebase_core ^3.15.2` —
+  # exactly what is already in pubspec.lock, so nothing else re-resolves.
+  firebase_app_check: ^0.3.2+10
+
+  # Fonts: no package. All 11 families are bundled as assets under
+  # flutter.fonts below, so nothing can fetch a face at runtime.
+
+  # Icons (Lucide parity with the web app)
+  lucide_icons: ^0.257.0
+
+  # Serialization
+  json_annotation: ^4.9.0
+
+  # Local persistence (locale override)
+  shared_preferences: ^2.3.3
+
+  # UI / UX
+  shimmer: ^3.0.0
   cupertino_icons: ^1.0.8
 
-  # Firebase core + AI Logic SDK with on-device (Gemini Nano) hybrid inference.
-  # firebase_ai is the public name of the Firebase AI Logic Dart SDK as of
-  # Phase T scaffolding (2026-04). Pinned with caret ranges to allow patches.
-  firebase_core: ^3.6.0
-  firebase_app_check: ^0.3.1
-  firebase_ai: ^2.3.0
+  # Motion (the one new sanctioned dependency, PREMIUM_DESIGN_SPEC.md §4):
+  # declarative staggered entrances / the Ink-settle result reveal. Every use
+  # site is reduce-motion aware (context.motionEnabled) and degrades to the
+  # final composed frame.
+  flutter_animate: ^4.5.0
 
-  # Voice input — recorder for short utterances passed to hybrid speech model.
-  record: ^5.1.2
+  # i18n runtime helpers
+  intl: ^0.20.2
+  url_launcher: ^6.3.2
+
+  # Camera / gallery image capture (Worksheet Wizard, Assess Assignment).
+  # The standard, well-maintained Flutter first-party picker; wraps the native
+  # camera + system photo picker and returns an XFile we base64 into the
+  # backend's imageDataUri.
+  image_picker: ^1.1.2
+
+  # Native share sheet (Parent Message result -> "share to WhatsApp").
+  # share_plus is the standard Flutter community share plugin; it opens the OS
+  # share sheet so a teacher can send the drafted message to a parent over
+  # WhatsApp/SMS. Wrapped behind ShareService so tests fake it (never opens the
+  # real sheet).
+  share_plus: ^12.0.0
+
+  # ── Voice stack (Pillar 02 / VIDYA, U-V1) ────────────────────────────────
+  # The voice-first co-teacher: capture the teacher's spoken request, ship it
+  # to STT, and play VIDYA's TTS reply. All four are wrapped behind injectable
+  # service abstractions (lib/shared/voice/*) so unit tests never touch a real
+  # mic or speaker.
+  #
+  # record: capture -> WAV 16 kHz mono. WAV (not opus) unlocks the server-side
+  # Sarvam Saaras v3 Indic fast path (route only tries Sarvam when the upload
+  # MIME matches audio/(mpeg|mp3|wav); see /api/ai/voice-to-text). Exposes a
+  # live onAmplitudeChanged stream that drives the listening ring.
+  #
+  # Pinned to ^6.2.1 (NOT 5.x): record 5.2.1 caps its federated linux impl at
+  # `record_linux >=0.5.0 <1.0.0`, resolving the stale record_linux 0.7.2 whose
+  # `RecordLinux.hasPermission(String)` no longer satisfies the
+  # `hasPermission(String, {bool request})` signature in record_platform_interface
+  # 1.6.0 (dragged in by record_android 1.5.2). Flutter compiles EVERY federated
+  # platform package's Dart into the kernel snapshot even for an Android-only
+  # app, so that stale linux impl broke `flutter build apk`. record 6.2.1
+  # realigns the federation (record_linux ^1.3.1 + interface ^1.6.0) with no
+  # API change to the surface this app uses. 6.2.1 is the last 6.x before v7,
+  # which raises the floor to Flutter 3.44 / Dart 3.12 (this toolchain is 3.41).
+  record: ^6.2.1
+
+  # just_audio: playback of the base64-mp3 TTS the backend returns (bytes, not
+  # a URL) via a custom StreamAudioSource, in-memory, no temp file. Integrates
+  # with audio_session for clean ducking.
+  just_audio: ^0.9.42
+
+  # permission_handler: runtime RECORD_AUDIO permission + openAppSettings() on
+  # a permanent denial (dignified "Open settings" recovery, never a raw dialog).
+  permission_handler: ^11.3.1
+
+  # audio_session: configure the OS audio session (speech(), duck others) so
+  # TTS interrupts/ducks correctly. just_audio peer.
+  audio_session: ^0.1.21
+
+  # path_provider: a writable temp directory for the recorded WAV before it is
+  # multipart-POSTed. record needs a real on-device path; Dart's
+  # Directory.systemTemp is not app-writable on Android, so the first-party
+  # path_provider is the correct companion to the recorder (not a substitution
+  # for any of the four audio plugins above).
   path_provider: ^2.1.4
+  gpt_markdown: ^1.1.8
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
   flutter_lints: ^6.0.0
 
-# For information on the generic Dart part of this file, see the
-# following page: https://dart.dev/tools/pub/pubspec
+  # T1-U4: an in-memory fake of the cloud_firestore client SDK, test-only —
+  # proves FirestoreInboxTransport's queries/writes against the real
+  # cloud_firestore API surface (arrayContains/orderBy/limitToLast/
+  # runTransaction/batch) without a live project or the emulator.
+  fake_cloud_firestore: ^3.1.0
 
-# The following section is specific to Flutter packages.
-flutter:
+  # Code generation
+  build_runner: ^2.4.13
+  riverpod_generator: ^2.6.3
+  json_serializable: ^6.9.0
 
-  # The following line ensures that the Material Icons font is
-  # included with your application, so that you can use the icons in
-  # the material Icons class.
-  uses-material-design: true
+  # Lints
+  custom_lint: ^0.7.0
+  riverpod_lint: ^2.6.3
 
-  # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  # Native branding (icons + launch splash) — replaces the default Flutter logo
+  flutter_launcher_icons: ^0.14.1
+  flutter_native_splash: ^2.4.1
 
-  # An image asset can refer to one or more resolution-specific "variants", see
-  # https://flutter.dev/to/resolution-aware-images
+  # Two test files import package:fake_async while it was only a transitive
+  # dependency. `depend_on_referenced_packages` — now enforced, since U0.13
+  # made analyze a real gate — flagged that correctly, and `dart fix` promoted
+  # it. Pinned rather than left at the `any` the autofix wrote.
+  fake_async: ^1.3.3
 
-  # For details regarding adding assets from package dependencies, see
-  # https://flutter.dev/to/asset-from-package
-
-  # To add custom fonts to your application, add a fonts section here,
-  # in this "flutter" section. Each entry in this list should have a
-  # "family" key with the font family name, and a "fonts" key with a
-  # list giving the asset and other descriptors for the font. For
-  # example:
-  # fonts:
-  #   - family: Schyler
-  #     fonts:
-  #       - asset: fonts/Schyler-Regular.ttf
-  #       - asset: fonts/Schyler-Italic.ttf
-  #         style: italic
-  #   - family: Trajan Pro
-  #     fonts:
-  #       - asset: fonts/TrajanPro.ttf
-  #       - asset: fonts/TrajanPro_Bold.ttf
-  #         weight: 700
+  # ── SPIKE ONLY — delete with the spike ───────────────────────────────────
+  # `pdf` is here to answer one question and nothing else: can the Dart `pdf`
+  # package lay out India's scripts well enough to hand a teacher a worksheet?
   #
-  # For details regarding fonts from package dependencies,
-  # see https://flutter.dev/to/font-from-package
+  # It is a DEV dependency on purpose, and dev-only is sufficient because `pdf`
+  # is pure Dart — no Flutter engine, no platform channel. So
+  # `dart run tool/spike/pdf_indic_spike.dart` produces the artefact without
+  # the package ever entering an app build. Nothing under lib/ imports it and
+  # no screen has an export button. If PDF export is ever shipped this line
+  # moves up into `dependencies:`; until the founder decides, it does not.
+  #
+  # The spike is confined to this block, tool/spike/, one test file, and
+  # docs/flutter/spike/pdf_indic/ — one `git revert` removes all of it.
+  pdf: ^3.11.1
+
+flutter:
+  uses-material-design: true
+  generate: true
+
+  # Bundled offline. These were fetched at runtime by google_fonts until U0.5,
+  # which meant a teacher opening the app for the first time without
+  # connectivity — the exact teacher this product is for — saw fallback boxes
+  # instead of their own script. It also made golden tests impossible:
+  # `flutter test` has no network, so any baseline captured before bundling
+  # would have blessed those boxes as the correct rendering.
+  #
+  # Variable fonts (one file per family, all weights on the wght axis). Google
+  # Fonts no longer ships static instances for these families — ofl/*/static/
+  # returns 404 — so this is not a preference, it is what upstream publishes.
+  # 5.8MB total across 11 families, on a ~30MB release APK.
+  #
+  # Noto SERIF Indic is deliberately absent: kIndicSerifFallback was exported
+  # but never consumed as a fontFamilyFallback anywhere, so bundling 9 more
+  # families would have doubled the Indic payload to render exactly nothing.
+  fonts:
+    - family: Outfit
+      fonts:
+        - asset: assets/fonts/Outfit-Variable.ttf
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Variable.ttf
+    - family: Noto Sans Devanagari
+      fonts:
+        - asset: assets/fonts/NotoSansDevanagari-Variable.ttf
+    - family: Noto Sans Bengali
+      fonts:
+        - asset: assets/fonts/NotoSansBengali-Variable.ttf
+    - family: Noto Sans Tamil
+      fonts:
+        - asset: assets/fonts/NotoSansTamil-Variable.ttf
+    - family: Noto Sans Telugu
+      fonts:
+        - asset: assets/fonts/NotoSansTelugu-Variable.ttf
+    - family: Noto Sans Kannada
+      fonts:
+        - asset: assets/fonts/NotoSansKannada-Variable.ttf
+    - family: Noto Sans Malayalam
+      fonts:
+        - asset: assets/fonts/NotoSansMalayalam-Variable.ttf
+    - family: Noto Sans Gujarati
+      fonts:
+        - asset: assets/fonts/NotoSansGujarati-Variable.ttf
+    - family: Noto Sans Gurmukhi
+      fonts:
+        - asset: assets/fonts/NotoSansGurmukhi-Variable.ttf
+    - family: Noto Sans Oriya
+      fonts:
+        - asset: assets/fonts/NotoSansOriya-Variable.ttf

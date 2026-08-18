@@ -1,0 +1,676 @@
+# SahayakAI Flutter — Handoff (owner actions)
+
+Everything here needs your Google/Firebase accounts and cannot be automated. The app builds, tests,
+and renders without it; these unlock live auth + data.
+
+## 1. Firebase wiring (unblocks every network call) — ✅ DONE (2026-07-25)
+Real `firebase_auth` + `google_sign_in` are wired (commit `e873c66df`). `AuthController` mirrors
+`FirebaseAuth.instance.authStateChanges()`; `tokenProvider` returns the real ID token. Verified live:
+Firebase boots without crashing and "Continue with Google" opens the genuine account picker with zero
+DEVELOPER_ERROR — the SHA-1/package/OAuth-client chain is confirmed correct.
+
+What actually happened, since it diverged from the steps below in one important way: the Firebase
+console's ONLY registered Android app was `app.sahayakai.mobile` — a stale entry from an earlier
+attempt, NOT this app's real `com.sargvision.sahayakai`. A new app was registered for the real
+package (SHA-1 `2B:38:C2:3A:24:05:12:CD:89:B9:6D:A1:C7:E9:3B:43:B0:82:4D:13`, SHA-256
+`10:55:F2:93:B1:2F:73:BC:31:FA:F3:34:17:DC:CE:85:00:62:63:DD:DC:D5:80:D1:B9:7E:95:5B:53:27:38:43` —
+both from the shared debug keystore; **the release keystore's fingerprints still need registering
+before a signed release build can sign in**). `flutterfire configure` was skipped — Android-only, no
+`firebase_options.dart` needed; `google-services.json` alone is sufficient and is now committed at
+`android/app/google-services.json`. The stale `app.sahayakai.mobile` entry is untouched in the
+console — worth deleting once confirmed nothing else depends on it.
+
+**Still open, deliberately not done in this pass:**
+- **App Check enforcement** — the CLIENT half is now done: `firebase_app_check` is in `pubspec.yaml`,
+  `FirebaseInit` activates it (`AndroidProvider.debug` in debug builds, `playIntegrity` in release),
+  and `AuthInterceptor` attaches `X-Firebase-AppCheck` to every request — best effort, 3-second
+  timeout, a failure never blocks the request. Nothing is enforced. Registering Play Integrity in the
+  Firebase console, registering a debug token for each developer device, and choosing when to flip
+  the backend's `APP_CHECK_REQUIRED` monitor → enforce are still yours. Shipping the header first is
+  the point: by the time you flip it, builds in the field are already sending tokens, so the flip
+  does not lock a teacher out.
+- **The official Google branding asset** — the sign-in button still uses a Lucide glyph, not Google's
+  mark. Their branding terms require it; still a placeholder.
+- **Release-keystore SHA fingerprints** — only the shared **debug** keystore's are registered. A
+  signed release build's Google Sign-In will hit DEVELOPER_ERROR until the release keystore's SHA-1 +
+  SHA-256 are added the same way in Firebase console → Project settings → the `com.sargvision.sahayakai`
+  app.
+- **Block C (Firestore/RTDB/FCM)** — a separate handoff from auth; still deferred (`cloud_firestore` /
+  `firebase_database` / `firebase_messaging` are still absent from `pubspec.yaml`). Auth alone does not
+  make Staffroom/Inbox live — see `lib/core/firebase/firebase_init.dart`'s own doc comment.
+
+## 2. Delete-account needs REAL re-auth (not forceRefresh) — ✅ DONE (2026-07-25)
+`POST /api/user/delete-account` checks the ID token's **`auth_time` <= 5 minutes**.
+`getIdToken(forceRefresh: true)` mints a new token but **carries the original `auth_time`**, so it
+would still be rejected. `DeleteAccountController.confirmDelete()` (`lib/features/settings/presentation/
+settings_controller.dart`) now calls `reauthenticateWithCredential(...)` (re-running the Google picker)
+before deleting, per this section's original prescription — this was a latent bug only reachable once
+real auth existed, caught and fixed in the same pass as §1.
+- Re-auth failure surfaces as **401 `reauth_required`** (not 403). The route has **no 429**.
+- Not unit-tested past the `FirebaseInit.isConfigured`-false guard (`test/features/settings/
+  settings_controller_test.dart`) — the real credential-exchange branch needs a Firebase auth mocking
+  library this project doesn't have; it is structurally identical to the already-covered
+  `AuthController.signIn()`.
+
+## 3. Backend contract gotchas already handled (do not "fix" these)
+- **Profile board field is `preferredBoard`, NOT `educationBoard`.** The route's allowlist accepts
+  only `preferredBoard` and mirrors it into `educationBoard` server-side. Sending `educationBoard`
+  is **silently dropped** — the save appears to succeed and changes nothing. Pinned by a test.
+- **Quiz question field is `questionType`, not `type`** (per the backend Zod schema).
+- `EDUCATION_BOARDS` is **29** entries.
+- `targetDifficulty: null` on quiz is what returns all three difficulty variants.
+
+### Library / recent work (`GET /api/content/list`) — found while building P0.3, verified against `route.ts`
+
+The endpoint SCREEN_INVENTORY never names. §P0.3 says the dashboard reads "recent content (library
+list, see P1.9)" and there IS no P1.9 (the library is P1.7), and neither section gives a path or a
+contract. It is `GET /api/content/list`, and it is what the web's own `content-gallery.tsx` calls
+with a plain `Authorization: Bearer` header.
+
+- **`limit` is `.max(20)`, and the route's OWN swagger comment saying "max 50" is WRONG.** The Zod
+  schema is `z.coerce.number().min(1).max(20).default(20)`, and `.max()` does not clamp — it
+  **rejects**. `?limit=50` returns **400 Invalid Query Parameters**, not 20 items. A client that
+  trusted the documented maximum would break its own library screen. `LibraryRepository` clamps to
+  20; pinned by a test.
+- **The `type` enum has 11 members, not the 8 the swagger comment lists.** `ContentTypeSchema` adds
+  `teacher-training`, `exam-paper` and `assessment`. The Zod enum is the truth; all 11 are pinned by
+  a test.
+- **NOT wrapped in `withPlanCheck`** — unlike every AI endpoint. It reads `x-user-id` directly and
+  meters nothing, so there is **no 403 `PLAN_UPGRADE_REQUIRED` and no 429**. Only 401 / 400 / 500.
+  Reading your own work is not a metered feature; do not add upgrade or limit states to it.
+- Response is `{ items, count, nextCursor }`. `nextCursor` is an **explicit `null`** on the last
+  page, not an absent key. `count` is just `items.length` computed server-side — deliberately not
+  modelled, so the view cannot disagree with itself.
+- `createdAt` arrives as an **ISO 8601 string** (every item is run through `dbAdapter.serialize`,
+  which converts Firestore's `{_seconds, _nanoseconds}`), and `BaseContentSchema` marks it optional.
+- Soft-deleted items are filtered server-side, so the client needs no `deletedAt` handling.
+- **The list route DOES accept a `type` filter** (`ListContentQuerySchema.type = ContentTypeSchema.optional()`,
+  verified in `route.ts`), plus `gradeLevels` / `subjects` (comma-separated) and an opaque `cursor` (last
+  doc id). The Library screen's type filter is nonetheless **client-side** over the loaded newest-20, to
+  preserve the one-shared-read invariant the dashboard depends on (a per-chip re-query would fire a second
+  request; pinned by the `opening the tab fires no second request` test). Recorded so a future paginated
+  filter has the server param ready.
+
+### Per-item open (`GET /api/content/get?id=<id>`) — found while building P1.7, verified against `route.ts` + the adapter
+
+The row's earlier note said tap-to-open "needs `GET /api/content/get`, which is not wired." **The endpoint
+exists and is now wired** (`LibraryRepository.fetchItem`, `libraryItemDetailProvider`, `LibraryDetailScreen`).
+
+- **Same auth model as the list**: it reads `x-user-id` directly and is **NOT** wrapped in `withPlanCheck`,
+  so the only failures are **401** (no identity), **400** (missing `id`), **404** (deleted / soft-delete TTL
+  elapsed), **500**. No 403/429. It 401s on today's stub auth exactly like the list, so tap-to-open is
+  **built-pending-firebase**: the detail shows the item's metadata plus a clear "sign in to open" state.
+- **It returns the FULL stored document** (`dbAdapter.getContent` → the whole `BaseContent`), including a
+  **`data` payload typed `z.any()`** server-side (`SaveContentSchema.data`).
+- **NEW MISMATCH — a saved item cannot be re-rendered through its owning tool's result view without per-type
+  reshaping.** SCREEN_INVENTORY §P1.7 says "tapping an item re-renders the tool's result view." In reality
+  the stored `data` is untyped (`z.any()`), and the documented per-type saved shapes **diverge** from this
+  app's result-view models (which were built for the `POST /api/ai/*` **response** shapes):
+    - **quiz** is stored as a **single-variant** `QuizDataSchema` (`{ title, questions, teacherInstructions,
+      answerKey }`), NOT the tool's `{ easy, medium, hard }` triple the quiz result view renders;
+    - **worksheet** is stored as **markdown** (`WorksheetDataSchema = { worksheetContent }`, saved as a `.md`
+      file per `content/save/route.ts`), NOT the tool's structured `{ learningObjectives,
+      studentInstructions, activities, answerKey }`.
+  So a faithful per-type re-render would need reshaping the backend does not guarantee, and the whole read is
+  Firebase-gated anyway. **Decision:** `fetchItem` decodes only the item's metadata (via the same
+  `LibraryItemDto`), and the detail screen renders that metadata + the built-pending-firebase sign-in state,
+  rather than inventing a per-type re-render that would be a lie for quiz/worksheet. A future unit that wants
+  the full render can add per-type adapters off the `data` payload once Firebase auth lands — no contract
+  change needed (the endpoint already returns `data`).
+
+### Onboarding routing — found while building P0.2, verified against the handlers
+
+- **`GET /api/auth/profile-check?uid=<uid>` is PUBLIC and takes the uid as a QUERY PARAM**, not a
+  Bearer token. That is deliberate (it runs immediately after Firebase sign-in, before the app has a
+  session), and the route carries a written note accepting the account-enumeration tradeoff. It
+  returns `{exists, onboardingComplete}` and is the **only** read that can answer "is this teacher
+  new" — there is no `GET /api/user/profile`. It is the seam for sending a RETURNING teacher
+  straight to the dashboard instead of to setup; the TODO is on `LoginScreen.destinationFor`.
+- **Do NOT call `POST /api/profile/mark-complete` from Flutter.** Its primary effect is issuing the
+  httpOnly `sahayakai_profile_complete` cookie that feeds the **Next middleware page gate** — which
+  a dio client neither receives usefully nor needs, and which is default-off anyway
+  (`ONBOARDING_GATE_ENABLED`). It also **404s** for a teacher with no document and **422
+  `PROFILE_INCOMPLETE`** below its 80% threshold. Two ways to fail at something the app is not doing.
+- **The onboarding gate must never be re-created client-side.** `src/middleware.ts` still carries the
+  incident note: shipping it cookie-only on 2026-06-08 locked out the ENTIRE existing user base.
+  Pinned by the `no hard gate` group in `test/features/onboarding/onboarding_screen_test.dart`.
+- `computeProfileCompletion` scores **`gradeLevels`**, while `POST /api/user/profile` reads
+  **`teachingGradeLevels`** — another arm of the wire-name trap below. The document lane writes
+  `gradeLevels`, which is the key that scores. (Confirms the existing P0.8 decision.)
+
+### Login (P0.2) — Google branding asset still needed
+
+The sign-in button uses a Lucide `logIn` glyph as a placeholder. **Lucide has no Google mark**, and
+Google's branding terms require their own asset on a Google sign-in button. Ship the official asset
+together with the real `google_sign_in` wiring (§1).
+
+### Profile (`users/<uid>`) — found while building P0.8, all verified against the handlers
+
+- **There is NO `GET /api/user/profile`.** The route exposes only `POST` and `PATCH`. The web reads
+  the profile through the `getProfileData` **server action** (Next's RSC protocol — a build-specific
+  `Next-Action` id, not a stable HTTP contract), which Flutter cannot call. `/api/auth/profile-check`
+  returns `{exists, onboardingComplete}` only. So the read is a **direct `users/<uid>` client-SDK
+  read**, which `firestore.rules` explicitly allows (`allow read: if isOwner(userId)`). It is behind
+  the `ProfileDocSource` seam, pending Firebase.
+- **NEVER call `POST /api/user/profile` from the app.** It is unsafe for a profile editor on three
+  counts, all verified in `route.ts`:
+  1. It Zod-parses through `UserProfileSchema`, which has **no `state`, `district`, `pincode` or
+     `boardCategory` key**. Zod strips unknown keys, so those fields are dropped **silently**.
+  2. Its schema defaults are applied on every call and written through `dbAdapter.createUser` — a
+     `set(merge:true)` that, unlike `updateUser`, does **not** pass the client allowlist. A body
+     without `planType` writes `planType: 'free'`, plus `impactScore: 0` and
+     `contentSharedCount: 0`. **Saving a display name would downgrade a paying teacher and zero
+     their impact score.**
+  3. It reads grades from **`teachingGradeLevels`** only; sending `gradeLevels` wipes them to `[]`.
+- **`boardCategory` is not a persisted field.** Nothing writes it and nothing stores it (absent from
+  `UserProfileSchema`, the PATCH allowlist, `PROFILE_WRITABLE_FIELDS` and the adapter's
+  `CLIENT_EDITABLE_USER_FIELDS`); the web keeps it in local React state as a cascading-picker
+  helper. SCREEN_INVENTORY P0.2 listing it as a profile field is wrong. It is UI-only here
+  (`BoardCategory`, derived from the board on read).
+- **`administrativeRole` can only be written over PATCH.** It is in `firestore.rules`'
+  `protectedUserFields()`, so a client-SDK write carrying it is rejected — and would take the whole
+  merge down with it. Hence the profile save's two lanes (see `ProfileRepository`).
+- **`INDIAN_STATES` is 36, not 35.** SCREEN_INVENTORY §0's heading says "35 — 28 states + 7 UTs",
+  but the list it prints has 36, and so does the backend's `src/types/index.ts` (8 UTs). Pinned by a
+  test against the backend array.
+- **Plan badge reads the ID token's `planType` custom claim**, not the profile doc — that is what
+  middleware verifies into `x-user-plan` and what the metering enforces, and `planType` is
+  rules-protected so the doc can lag. No token (today's stub) renders **"Not available"**, never a
+  fabricated "Free".
+- Pre-existing **web-side** bug, not ours to fix but worth knowing: `pincode` is in the server
+  action's `PROFILE_WRITABLE_FIELDS` but **not** in the adapter's `CLIENT_EDITABLE_USER_FIELDS`, so
+  `updateProfileAction` drops it (with a warn log). Onboarding has been sending a pincode that never
+  lands. The Flutter document lane writes it directly, so it works here.
+
+### Worksheet Wizard (P1.1) — found while building it, verified against `route.ts` + the Zod schema
+
+`POST /api/ai/worksheet` was verified against `src/app/api/ai/worksheet/route.ts`,
+`WorksheetWizardInputSchema` / `WorksheetWizardOutputSchema` in
+`src/ai/flows/worksheet-wizard.ts`, and `src/lib/sidecar/worksheet-dispatch.ts` (the dispatcher
+does not reshape the payload; it returns the same seven fields).
+
+- **The response field is `learningObjectives`, NOT `objectives`.** SCREEN_INVENTORY §P1.1 prints
+  the response with an `objectives` key; the route actually returns `learningObjectives`
+  (and `title`, `gradeLevel`, `subject`, `studentInstructions`, `activities`, `answerKey`). The DTO
+  and a test pin `learningObjectives`.
+- **`answerKey` is `[{ activityIndex: number, answer: string }]`**, where `activityIndex` is
+  **0-based**. SCREEN_INVENTORY left the shape as `[ ... ]`. The result view renders it as a 1-based
+  "Activity N" (falling back to a bullet when the index is absent). Pinned by a test.
+- **`imageDataUri` is REQUIRED and capped by `z.string().max(14_000_000)`.** Zod's `.max()` on a
+  string measures the STRING LENGTH of the whole `data:` URI (characters, and a data URI is ASCII so
+  chars == bytes) and **rejects** (400) over the cap — it does not clamp. So the client enforces
+  `dataUri.length <= 14_000_000` (constant `kMaxImageDataUriBytes` in `lib/shared/media/image_input.dart`)
+  and the size counter measures that exact quantity. Because base64 inflates by ~4/3 plus the
+  `data:<mime>;base64,` prefix, ~14 MB of URI is ~10.5 MB of raw image. The image is sent verbatim
+  under `imageDataUri`; `prompt` is `.max(2000)`; `language` is `.max(50)`; `gradeLevel`/`subject`
+  are optional strings. `userId` and `teacherContext` are server-injected and never sent.
+- **No `validationWarning` on this endpoint** (unlike lesson-plan / quiz). The worksheet result view
+  has no note-banner.
+- **Any `data:<mime>;base64,...` is accepted** (the flow only checks the `data:` prefix; the mime is
+  passed to Gemini via `{{media url=imageDataUri}}`). The client derives the mime from the picked
+  file's extension, defaulting to `image/jpeg` (image_picker re-encodes to JPEG when `imageQuality`
+  is set).
+
+### Rubric Generator (P1.2) — verified, NO mismatch
+
+`POST /api/ai/rubric` was verified against `src/app/api/ai/rubric/route.ts`,
+`RubricGeneratorInputSchema` / `RubricGeneratorOutputSchema` in `src/ai/flows/rubric-generator.ts`,
+and `src/lib/sidecar/rubric-dispatch.ts`. **The SCREEN_INVENTORY §P1.2 contract is accurate this
+time** — no worksheet-style drift. Confirmed details worth pinning:
+
+- **Request** = `{ assignmentDescription, gradeLevel?, subject?, language? }`. `userId` and
+  `teacherContext` are server-injected (never sent). Pinned by a test.
+- **`assignmentDescription` is `z.string().max(2000)` — required (no `.optional()`) but has NO
+  `.min()`**, so the server would accept an empty string; the client still requires non-empty for a
+  useful result (form validator). `.max(2000)` REJECTS over-length (does not clamp), so the field is
+  capped at 2000 client-side.
+- **Response is exactly the five keys the route handler hand-picks**:
+  `{ title, description, criteria[{ name, description, levels[{ name, description, points }] }],
+  gradeLevel, subject }`. The route builds this object explicitly (`route.ts` lines 63–69), so it is
+  identical whether the genkit or the sidecar path served it (`sidecarToDispatched` maps the same
+  five). `gradeLevel`/`subject` are `string | null`.
+- **`points` is `z.number()`, i.e. a `num`, NOT an int** — a decimal is legal. The DTO reads it as
+  `num?` and the level's `pointsLabel` drops a trailing `.0` (so `4.0` → `4`, `2.5` → `2.5`). Pinned.
+- **Levels are mandated identical across criteria** (the prompt fixes Exemplary 4 / Proficient 3 /
+  Developing 2 / Beginning 1, highest first), so the grid derives its column headers from the widest
+  criterion and lines body cells up by index. A criterion that (rarely) returns fewer levels is
+  padded with blank cells; a response with NO levels anywhere falls back to a plain criteria list.
+
+**Grid layout decision (the §11 wide-grid / ToolScaffold-crash requirement).** The criteria x levels
+grid is a single `Table` (fixed column widths, content-driven row heights — no banned fixed text
+heights) wrapped in ONE horizontal `SingleChildScrollView` inside a card-grammar box. That
+bounded-height child is what keeps the horizontal scroller legal inside ToolScaffold's outer vertical
+scroll (an unbounded child there is the crash). The page therefore scrolls only vertically and the
+grid only within its own box; columns stay aligned because it is one table in one scroller. The
+criterion column is column 0 and scrolls with the grid — a *frozen* first column was NOT attempted,
+because pinning it cannot stay row-aligned with its wrapping, variable-height row without either the
+banned fixed row heights or a linked-scroll dependency. Proven by `rubric_grid_test.dart` (exactly
+one horizontal scroller with `maxScrollExtent > 0` at 360dp; the page scroller is vertical; no
+overflow at 360dp x textScale 1.3 in light + dark with Indic probes + an unbreakable compound word).
+
+### Exam Paper Generator (P1.3) — verified against `route.ts` + the Zod schemas + the dispatcher
+
+`POST` and `PUT /api/ai/exam-paper` were verified against
+`src/app/api/ai/exam-paper/route.ts`, `ExamPaperInputSchema` /
+`ExamPaperOutputSchema` in `src/ai/flows/exam-paper-generator.ts`,
+`ExamPaperDataSchema` in `src/ai/schemas/content-schemas.ts`,
+`src/lib/sidecar/exam-paper-dispatch.ts`, and `src/ai/data/board-blueprints.ts`.
+**The SCREEN_INVENTORY §P1.3 contract is accurate** — no worksheet-style drift.
+The confirmed specifics, plus three implementation gotchas the plan does not
+call out:
+
+- **Request** = `{ board, gradeLevel, subject, chapters[], difficulty?,
+  language?, includeAnswerKey?, includeMarkingScheme? }`. `board`/`gradeLevel`/
+  `subject` are required (400 `Missing required fields` otherwise). `userId` and
+  `teacherContext` are server-injected; `duration`/`maxMarks` default from the
+  blueprint. None of those four are ever sent. Pinned by a test.
+- **`difficulty`'s middle value is `moderate`, NOT `medium`** (the quiz endpoint
+  uses `medium`). The enum is `easy|moderate|hard|mixed`, default `mixed`. Sending
+  `medium` here is an invalid difficulty → 400. Modelled as `ExamDifficulty` and
+  pinned.
+- **The 202 `generation_in_progress` is a SUCCESS status to Dio (< 400), so it
+  does NOT throw** — it arrives on the normal decode path. The repository detects
+  it by the `error: 'generation_in_progress'` marker in the (otherwise
+  paper-shaped) body and returns a distinct `ExamPaperInProgress` result, which
+  the screen renders as a calm "we'll save it to your Library" state, never a red
+  retry. A real 200 never carries an `error` field. Body:
+  `{ error: 'generation_in_progress', message: 'Exam paper still generating.
+  Check My Library in 1 minute.', budgetMs, elapsedMs }`. There is **no poll
+  token**, so the UI points at the Library tab and does not busy-poll.
+- **422 `exam_paper_unstructured`** is a real thrown 4xx. Body is a superset of
+  the plan's: `{ error: 'exam_paper_unstructured', code: 'SCHEMA_VALIDATION_FAILED',
+  message: "We couldn't structure the exam paper — try fewer chapters or
+  regenerate." }`. The screen shows a distinct "try fewer chapters" guidance
+  (with a retry), not a generic failure. Branched on `statusCode == 422` /
+  `errorCode == 'exam_paper_unstructured'`.
+- **The blueprint rule (400 `chapters_required_for_unblueprinted_subject`).**
+  `chapters: []` ("all chapters") is only accepted when an official blueprint
+  exists; `findBlueprint` in `board-blueprints.ts` has exactly **four** combos:
+  **CBSE Class 9 / Class 10 × Mathematics / Science** (normalized, case- and
+  space-insensitive). For anything else, an empty chapter list 400s. The client
+  mirrors this in `examPaperNeedsChapters` and enforces `>= 1` chapter in the
+  form validator (better UX than round-tripping the 400). Pinned by a test.
+- **Response** (verbatim render source): `{ title, board, subject, gradeLevel,
+  duration (string, e.g. "3 Hours"), maxMarks (number), generalInstructions[],
+  sections[{ name, label, totalMarks, questions[{ number, text, marks, options?,
+  internalChoice?, answerKey?, markingScheme?, source }] }], blueprintSummary{
+  chapterWise[{ chapter, marks }], difficultyWise[{ level, percentage }] },
+  pyqSources[{ id, year?, chapter? }] }`. The response carries **no `language`
+  or `chapters` key** (the save handler reads `paper.language ?? 'English'` and
+  `paper.chapters` defensively). Rendered as a plain vertical column of
+  section/question cards (no nested scroller → no ToolScaffold crash).
+- **`PUT /api/ai/exam-paper` save** = body `{ paper: <object> }` → `{ success:
+  true, contentId }`. The client sends the **verbatim response JSON** as `paper`
+  (not a re-serialized domain object), so the saved paper is byte-identical to
+  what the model produced and the handler's `paper.title`/`paper.board`/... reads
+  all resolve. `400 { error: 'Missing required field: paper' }` if `paper` is
+  absent/not-an-object; `401` if no user; `500 { error: 'Failed to save exam
+  paper' }` on a persistence failure (no 403/429 on the PUT). Save is its own
+  controller so it never disturbs the rendered paper; success/saving/failed all
+  shown inline. Pinned by tests (success + failure) with a `FakeApiClient`.
+- **`ApiException` gained an `errorCode` field** (`lib/core/network/api_exception.dart`):
+  the body's machine-readable `error` code, kept separate from the user-facing
+  `message`, so a screen can branch on WHY a 4xx came back (here: 422
+  `exam_paper_unstructured`). Populated for every 4xx/5xx `badResponse`; null on
+  network/timeout/parse failures. No new `ApiErrorKind` value was added (that
+  would have broken every existing error view's exhaustive switch). `ApiClient`
+  also gained a `put<T>` method mirroring `post`/`patch`; `FakeApiClient` gained
+  stubbable `post`/`put` (un-stubbed still throw loudly, preserving the
+  no-network safety contract).
+
+### Teacher Training / Teaching Coach (P1.4) — verified, NO mismatch
+
+`POST /api/ai/teacher-training` was verified against
+`src/app/api/ai/teacher-training/route.ts`, `TeacherTrainingInputSchema` /
+`TeacherTrainingOutputSchema` in `src/ai/flows/teacher-training.ts`, and
+`src/lib/sidecar/teacher-training-dispatch.ts` (the dispatcher does not reshape
+the payload — `sidecarToDispatched` maps the identical five fields, and the
+route handler hand-picks exactly `{ introduction, advice, conclusion,
+gradeLevel, subject }`). **The SCREEN_INVENTORY §P1.4 contract is accurate** —
+no worksheet-style drift. Confirmed specifics worth pinning:
+
+- **Request** = `{ question, subject?, language? }`. `question` is
+  `z.string().max(2000)` — required (the route also 401s if the header carries
+  no `x-user-id`). `.max(2000)` REJECTS over-length (does not clamp), so the
+  form caps at 2000 client-side (`kMaxTeacherTrainingQuestionLength`). `userId`
+  is server-injected from the verified token and never sent.
+- **There is NO `gradeLevel` in the request.** `TeacherTrainingInputSchema` has
+  only `{ question, language?, subject?, userId }` — unlike lesson-plan / quiz /
+  instant-answer, this form offers no grade picker (the model infers grade for
+  the response). The request DTO does not model it, and a test pins that no
+  `gradeLevel` key is ever serialized.
+- **Response** (verbatim render source) = `{ introduction, advice[{ strategy,
+  pedagogy, explanation }], conclusion, gradeLevel, subject }`. `introduction`
+  and `conclusion` are non-nullable strings on the schema; `advice[]` is
+  `z.array(...)`; `gradeLevel` / `subject` are `.nullable().optional()`. The DTO
+  is defensive on every field anyway (the output is model-generated) and drops
+  any advice point with neither a strategy nor an explanation. Rendered as a
+  plain vertical column of AppCards (no nested scroller → no ToolScaffold
+  crash), so the page scrolls only vertically.
+- **Metered like every AI endpoint** (`withPlanCheck('teacher-training')`): 401 /
+  403 `PLAN_UPGRADE_REQUIRED` / 429 / 503+Retry-After / 400 all reachable. There
+  is **no daily-vs-monthly split** (unlike instant-answer's `DAILY_LIMIT_REACHED`),
+  so the 429 prompt is a single limit message. Pinned by the error-view test.
+
+### Parent Message (P1.5) — verified against `route.ts` + the Zod schema + the dispatcher
+
+`POST /api/ai/parent-message` was verified against
+`src/app/api/ai/parent-message/route.ts`, `ParentMessageInputSchema` /
+`ParentMessageOutputSchema` in `src/ai/flows/parent-message-generator.ts`, and
+`src/lib/sidecar/parent-message-dispatch.ts`. Confirmed specifics and one real
+mismatch worth pinning:
+
+- **Required fields (route 400s without them)** = `studentName`, `className`,
+  `subject`, `reason`, `parentLanguage`. The route validates exactly these five
+  (`if (!body.studentName || !body.className || !body.subject || !body.reason ||
+  !body.parentLanguage) return 400 { error: 'Missing required fields' }`), so
+  the form validates all five before it can submit and the client 400 path is
+  defensive. Its error copy is SPECIFIC ("fill in the student, class, subject,
+  reason and parent's language"), never generic. Pinned by a test.
+- **`reason` enum (4)** = `consecutive_absences` | `poor_performance` |
+  `behavioral_concern` | `positive_feedback` (`z.enum([...])`). Modelled as
+  `ParentMessageReason` with those exact wire tokens; pinned by a test. Note the
+  spelling is US `behavioral` (not `behavioural`).
+- **`parentLanguage` enum (11)** = the canonical LANGUAGES full English names
+  (`English, Hindi, Kannada, Tamil, Telugu, Marathi, Bengali, Gujarati, Punjabi,
+  Malayalam, Odia`) — identical to `AppLocale.aiName`, so the form sends
+  `AppLocale.aiName`, NOT a code. It is a REQUIRED select and deliberately
+  distinct from the app UI locale (it drives the OUTPUT language): the form
+  starts it unset and the validator blocks submit until a language is chosen.
+- **Response** = exactly `{ message, languageCode, wordCount }` (the route
+  hand-picks these three from `dispatched`). `languageCode` is a hard-coded
+  BCP-47 map keyed on `parentLanguage` (e.g. Tamil -> `ta-IN`), NOT the model's
+  guess; `wordCount` is a `number`. The message body is rendered through
+  `AiText` (line-height 1.7 + Indic height behaviour + the `kIndicFallback`
+  baked into `bodyMedium`), so a Tamil message drafted from an English UI shapes
+  correctly and no matra clips. Pinned by a test asserting the render style.
+- **MISMATCH — `reasonContext` is NOT required and is IGNORED on the default
+  path.** SCREEN_INVENTORY §P1.5 lists `reasonContext` as client "guidance text"
+  the teacher provides. In reality: (1) the route does NOT include it in the
+  required-field check, and (2) the default (Genkit) path is what production
+  runs — `SAHAYAKAI_PARENT_MESSAGE_MODE` defaults `off`, so the dispatcher calls
+  `generateParentMessage`, which **OVERWRITES** any client `reasonContext` with a
+  server-side `REASON_CONTEXT[reason]` template lookup
+  (`reasonContext: REASON_CONTEXT[input.reason] ?? ...`). So a client-sent
+  `reasonContext` only reaches the model on the sidecar path (currently off in
+  prod). The client models it as an OPTIONAL field (a blank value is omitted);
+  `teacherNote` is the free-text field that DOES influence the default-path
+  output (the prompt has `{{#if teacherNote}}`). Treat `reasonContext` as
+  optional / best-effort, never required.
+- **Server-injected / never sent**: `userId` (from the verified token),
+  `performanceContext` and `performanceSummary` (the web's Contact-Parent modal
+  populates these from a class's assessment records; `performanceSummary` is
+  derived server-side from `performanceContext` in the route). The DTO models
+  none of them; pinned by a test.
+- **`consecutiveAbsentDays`** is `z.number().optional()` and is only meaningful
+  for `consecutive_absences`; the form shows that numeric field only for the
+  absence reason and the DTO drops the value for any other reason.
+- **No `withPlanCheck` surprises**: the endpoint IS `withPlanCheck('parent-
+  message')` — 401 / 403 `PLAN_UPGRADE_REQUIRED` / 429 / 503+Retry-After / 400
+  all reachable and mapped. There is no daily-vs-monthly 429 split.
+- **New shared service**: `lib/core/platform/share_service.dart` wraps
+  `share_plus` (`SharePlus.instance.share(ShareParams(text:...))`) behind
+  `shareServiceProvider`, mirroring `LinkOpener`. The Parent Message result view
+  offers copy-to-clipboard AND share (the "share to WhatsApp" affordance via the
+  OS sheet). Tests override `shareServiceProvider` with a `FakeShareService` so
+  the real sheet never opens, and intercept the platform clipboard channel so
+  copy never touches the real pasteboard. `share_plus: ^12.0.0` resolved to
+  12.0.2 with no dependency conflicts.
+
+### Assess Assignment (P1.6) — verified against `route.ts` + the Zod schemas + the dispatcher
+
+`POST /api/ai/assess-assignment` was verified against
+`src/app/api/ai/assess-assignment/route.ts`, `AssessAssignmentInputSchema` /
+`AssessAssignmentOutputSchema` in `src/ai/flows/assignment-assessor.ts`,
+`src/lib/sidecar/assignment-assessor-dispatch.ts`, `src/lib/plan-guard.ts`,
+`src/lib/plan-config.ts`, `src/lib/server-safety.ts`, `src/lib/usage-tracker.ts`
+and `src/lib/ai-error-response.ts`. Confirmed specifics plus **two real
+mismatches** worth pinning:
+
+- **Request** = `{ imageDataUri (required), rubricSnapshot?, language?, subject?,
+  gradeLevel?, studentId?, editedTranscript?, mode? }`. `userId` and
+  `teacherContext` are server-injected; the client never sends them.
+- **`imageDataUri` is STRICTER than the Worksheet cap.** It is
+  `z.string().max(14_000_000)` **AND** `.regex(/^data:image\/(jpeg|png|webp);base64,/)`
+  — so beyond the same 14 MB length cap (reused `kMaxImageDataUriBytes`), only
+  **jpeg / png / webp** mimes are accepted; a `data:image/heic|gif;base64,...`
+  URI 400s here even though Worksheet accepts it (Worksheet only checks the
+  `data:` prefix). In practice the shared `image_picker` re-encodes camera/gallery
+  picks to JPEG (`imageQuality: 70`), so the produced URI is `image/jpeg` and
+  passes; the constraint only bites an exotic gallery mime that survives
+  re-encode. Not enforced client-side (the shared `ImageInput` is unchanged);
+  the server 400 (`INVALID_ARGUMENT`) maps to the "re-upload a clearer photo"
+  state. Recorded so a future device-specific report is not a surprise.
+- **PII: `studentName` is stripped server-side** (`delete raw.studentName` before
+  the Zod parse, and the schema has no `studentName` key). This client goes
+  further and **never collects or sends any student name OR the optional
+  `studentId` handle** — grading needs neither. Pinned by a DTO test asserting
+  none of `studentName` / `studentId` / `userId` / `teacherContext` is ever
+  serialized.
+- **`mode` enum = `['full','transcribe','score']`, default `full`** (verified
+  from the schema, NOT invented). `full` = transcribe + score; `transcribe` =
+  transcript stage only; `score` = grade `editedTranscript` without re-reading
+  the image. The client always sends `mode`, and offers an optional
+  `editedTranscript` field only in `score` mode (schema `.max(50_000)`).
+- **`rubricSnapshot` is OPTIONAL and, when present, is the FULL
+  `RubricGeneratorOutput` shape** (`{ title, description, criteria[{ name,
+  description, levels[{ name, description, points }] }], gradeLevel, subject }`).
+  When omitted the server grades against its own general 4-criterion
+  `DEFAULT_RUBRIC`. **Decision: the form does NOT ship a rubric picker** — there
+  is no client-readable store of saved rubrics yet (the rubric tool P1.2
+  generates but does not persist to a list the app can read; the Library is P1.7
+  and Firebase-gated). Wiring a real picker is heavy, so `rubricSnapshot` is
+  modelled as optional/omitted, the form shows a quiet note that a general rubric
+  is used, and the DTO plumbing + a test cover attaching one so a future picker
+  needs no contract change.
+- **Response** (verbatim render source) = `{ assessmentId, rawTranscript,
+  editedTranscript, language, overallScore (0–100), pointsEarned, pointsPossible,
+  perCriterionScores[{ criterionName, level, points, maxPoints, feedback,
+  confidence (0–1) }], strengths[], improvements[], nextSteps[], teacherNote,
+  confidenceOverall (0–1), warnings[], rubricSnapshot (echoed), studentId,
+  createdAtIso }`. Rendered as a **plain vertical Column of cards** (no nested
+  scroller → no ToolScaffold crash). Rendered **defensively per mode**: a
+  `transcribe`-only pass returns empty score-side fields, so `hasScore` reads
+  false and the view leads with the transcript and shows no score card. Points,
+  score and confidence are decoded as `num?`/`double?` and clamped (score 0–100,
+  confidence 0–1) against model drift. `confidence < 0.5` surfaces a
+  "Low confidence" tag per the schema note. `warnings` codes
+  (`page_appears_blank | low_contrast | partial_writing | language_mismatch`) map
+  to human copy; an unknown code is skipped, never shown raw.
+- **MISMATCH — there is NO distinct "day-budget 429".** The task/spec anticipated
+  the expensive-model per-day guard returning its own 429; it does not. This
+  route runs TWO per-day guards and neither is a 429:
+  1. `checkImageRateLimit(userId)` — 10 images/day (IST reset). On the cap it
+     throws `Error("Daily image limit reached...")`.
+  2. `checkUsage(userId, 'gemini_tokens')` — the expensive gemini-2.5-pro day
+     budget (free 500k tokens/day). On the cap it throws
+     `PlanLimitExceededError("Daily limit reached for gemini_tokens: N/N...")`.
+  **`handleAIError` classifies NEITHER** (its `errorStatus()` finds no status in
+  those messages — the token message even contains `"500000"`, which it reads as
+  a `500`), so both fall through to the generic **HTTP 500
+  `{ error: 'AI generation failed. Please try again.' }`**. So at runtime the
+  expensive-model day budget arrives as a **500**, and the client renders it in
+  the retryable "the grading model is busy / something went wrong" state, NOT a
+  limit state. This is a **backend gap** (the guards should surface a 429 the
+  client can distinguish), left for the backend team — this app must not edit the
+  backend.
+- **The only reliable 429 on this route is the MONTHLY plan quota**
+  `USAGE_LIMIT_REACHED` from `withPlanCheck('assess-assignment')` (free =
+  **5 assessments/month** per `plan-config.ts`; pro = 100; gold/premium = -1
+  unlimited). assess-assignment is **NOT in the plan-guard `dailyLimitMap`**
+  (only `instant-answer` + `assistant` are), so it **never** returns
+  `DAILY_LIMIT_REACHED`, and no plan sets its limit to `0`, so a 403
+  `PLAN_UPGRADE_REQUIRED` is not reachable in the shipped config either (both
+  still handled defensively). The error view keeps a distinct
+  `DAILY_LIMIT_REACHED` branch (kept for the day the backend wires assess into
+  the daily map / fixes the 429 gap) that reads its code from the raw body, but
+  the branch that actually fires today is the monthly `USAGE_LIMIT_REACHED`.
+  Pinned by `assess_assignment_error_view_test.dart` (DAILY vs USAGE render
+  distinctly; both retry-free; pricing opens externally).
+- **503 + Retry-After** is reachable from `checkServerRateLimit` (per-uid sliding
+  window, "Rate limit exceeded" → 429 → `handleAIError` 503) and from Gemini
+  quota / dispatcher timeouts. The view is Retry-After aware. **400** covers Zod
+  validation (incl. the mime-regex above) and Gemini bad-media
+  (`INVALID_MEDIA`). Model runs on the slowest SKU (gemini-2.5-pro) → the
+  skeleton loader matters; the controller drives the standard AsyncNotifier
+  loading state.
+
+## 4. Push notifications (FCM)
+The Settings notifications switch is **local-only and defaults OFF** (deliberate: defaulting a
+permission-bearing toggle on, or promising undeliverable notifications, is a dark pattern). Wiring
+FCM needs `google-services.json` (step 1) plus registering the device token against the existing
+`POST /api/fcm/register`. TODO left in the code.
+
+## 5. Fonts (deferred hardening)
+Currently `google_fonts` fetches at runtime. For rural/offline users, bundle the Inter/Outfit/Noto
+`.ttf`s into `assets/fonts/` and set `GoogleFonts.config.allowRuntimeFetching = false`.
+
+## 6. Device verification (worth a human eye)
+`flutter devices` finds none in this environment, so **contrast and dark-mode are verified by
+token-only color usage + clean renders in both brightnesses, not by on-device screenshots**. Run the
+app on a real handset and eyeball the saffron/dark surfaces before shipping.
+
+## 7. Camera & photo permissions (Worksheet Wizard / Assess Assignment)
+
+The shared `lib/shared/media/image_input.dart` uses `image_picker` (added at `^1.1.2`, resolved to
+1.2.3, no dependency conflicts). Owner/runtime items:
+
+- **Android manifest (done):** `android/app/src/main/AndroidManifest.xml` declares
+  `android.permission.CAMERA` plus `<uses-feature android:name="android.hardware.camera"
+  required="false"/>` (so gallery-only devices still install). Gallery goes through the Android
+  **system photo picker**, which needs no storage permission on modern SDKs.
+- **Runtime permission flow:** `image_picker` requests CAMERA at first use and surfaces a denial as a
+  `PlatformException`; the widget maps that to a dignified "needs permission … allow access in your
+  device settings" message (`imageInputPermissionDenied`) and does NOT report an image upward. There
+  is no in-app "open settings" deep link yet — if the teacher permanently denies, they must enable it
+  in OS settings. A future hardening could add `permission_handler` + an "Open settings" action.
+- **iOS (N/A now, needed when an iOS target is added):** add `NSCameraUsageDescription` and
+  `NSPhotoLibraryUsageDescription` to `ios/Runner/Info.plist`, or the app crashes on first pick. This
+  repo is Android-first; there is no iOS target wired yet.
+- **Tests never open a real camera:** the pick source is behind `imagePickerServiceProvider` and is
+  overridden with a `FakeImagePickerService` in every test.
+
+## 8. Microphone permission + the voice stack (Pillar 02 / VIDYA, U-V1)
+
+The voice foundation is built and unit-tested with fakes, but **the real voice loop cannot be
+exercised in this environment**: there is no device mic, and every backend voice route (STT / VIDYA /
+TTS) 401s on the stub token (see §1). Verification here is code + unit tests only.
+
+- **Plugins (resolved, no substitution):** `record` 5.2.1 (capture → WAV 16 kHz mono, amplitude
+  stream), `just_audio` 0.9.46 (base64-mp3 playback via `Base64Mp3Source`), `permission_handler`
+  11.4.0 (runtime mic permission), `audio_session` 0.1.25 (speech session / ducking). `path_provider`
+  2.1.6 was added as the companion that gives `record` a writable temp path (Dart's
+  `Directory.systemTemp` is not app-writable on Android) — it is not a substitute for any of the four.
+- **Android manifest (done):** `android/app/src/main/AndroidManifest.xml` now declares
+  `android.permission.RECORD_AUDIO` + `<uses-feature android:name="android.hardware.microphone"
+  required="false"/>`, and `android.permission.INTERNET` (previously only in the debug/profile
+  manifests — a release build would have had no network).
+- **Runtime permission flow (owner action, wired at U-V3):** request `Permission.microphone` at the
+  **first mic tap** via `permission_handler`. On permanent denial, show a dignified `EmptyView` +
+  `SecondaryButton "Open settings"` (`openAppSettings()`), never a raw error dialog. The
+  `AudioRecorderService.hasPermission()` seam already returns the grant state; the tap-time request +
+  settings deep-link UI lands with the Seal Mic (U-V4) / VIDYA home (U-V5).
+- **iOS (N/A now, needed when an iOS target is added):** add `NSMicrophoneUsageDescription` to
+  `ios/Runner/Info.plist` (localised across the 11 languages) or the app crashes on first record.
+  This repo is Android-first; there is no iOS target wired yet, so `Info.plist` was **not** touched.
+- **Tests never open a real mic or speaker:** capture is behind `audioRecorderServiceProvider` and
+  playback behind `audioPlayerServiceProvider`; both are overridden with fakes
+  (`FakeAudioRecorderService` / `FakeAudioPlayerService`) in every test.
+- **Capture format is load-bearing:** the recorder is pinned to `AudioEncoder.wav` because the STT
+  route only tries the cheap Sarvam Saaras v3 Indic path for `audio/(mpeg|mp3|wav)`. Do **not** switch
+  it to opus/aac — that silently drops every Indic utterance onto the slower Gemini fallback.
+
+## 9. Block C — Staffroom + Pro Inbox Firebase transport handoff (U-SI0)
+
+**This is the gate.** Block C (Pillar 04 Staffroom + Pillar 05 Pro Inbox) is the only part of
+the app that needs **Firebase in the Flutter client** — direct Firestore `onSnapshot` for the
+realtime surfaces, plus REST wrappers for the writes. U-SI0 landed the **seam** (DTOs, transport
+interfaces, a deferred no-Firebase implementation, a documented Firebase stub) so U-SI1..U-SI6 can
+build the UI against a stable contract **without** Firebase and **without breaking the APK**. Nothing
+in Block C goes live until the two handoffs below are done. Until then every surface renders its
+`EmptyView` "coming soon" and every write is disabled (a typed `TransportUnavailable`).
+
+### 9.1 What U-SI0 shipped (no Firebase, APK stays green)
+- **DTOs + domain**, mirroring `src/types/{messages,community,index}.ts` + the server-action return
+  shapes, tolerant-decoded (unknown enum → safe default, nullable fields):
+  - Inbox: `lib/features/inbox/domain/{conversation_id,inbox_models,notification_item,presence_status}.dart`
+    + `lib/features/inbox/data/dto/**` (conversation, message, notification, presence, `wire_time`).
+    `buildDirectConversationId(a,b) = ([a,b]..sort()).join('_')` is byte-identical to the web so a DM
+    opened from Flutter and web collide on the same doc.
+  - Staffroom: `lib/features/staffroom/domain/**` (group, chat_message, community_post/feed,
+    connection, teacher, persona_pulse, staffroom_results) + `lib/features/staffroom/data/dto/**`.
+    **Two connection graphs share the `connections` collection** — the directed `FollowEdge`
+    (`{followerId}_{followingId}`) and the mutual `MutualConnection` (sorted `{uids,initiatedBy}`,
+    the DM gate). They are modelled as **distinct** Dart types; do not conflate them.
+  - Notification `MESSAGE` type is modelled even though it is **absent from the `NotificationType`
+    union** in `src/types/index.ts` — `sendMessageAction` writes `type:'MESSAGE'` at runtime. (Worth
+    adding to the union server-side.)
+- **Transport interfaces** (the contract U-SI1..U-SI6 code against), each method doc-mapped to the
+  exact Firestore query / server action:
+  - `lib/features/inbox/data/inbox_transport.dart` — `InboxTransport`
+  - `lib/features/inbox/data/notifications_transport.dart` — `NotificationsTransport`
+  - `lib/features/inbox/data/presence_transport.dart` — `PresenceTransport` (RTDB, gated separately)
+  - `lib/features/staffroom/data/staffroom_transport.dart` — `StaffroomTransport`
+  - shared primitives in `lib/features/inbox/data/block_c_transport.dart`: `TransportSnapshot<T>`
+    (state ∈ {awaitingFirebase, signedOut, loading, ready, error} + payload — the `onSnapshot`
+    element type; **missing-index/permission-denied MUST surface as `error` → `ErrorView`, never a
+    hang**), `TransportUnavailable`, and the `BlockCGate` compile flags.
+- **Deferred implementations** (`Deferred*Transport`) bound to the Riverpod providers today: live
+  streams emit one `awaitingFirebase` snapshot, one-shot reads return empty/null, writes throw
+  `TransportUnavailable` (presence writes + persona-pulse are no-op/null so best-effort surfaces do
+  not crash). Reusable **fake** transports for U-SI1+ widget tests live in
+  `test/support/fake_block_c_transports.dart`.
+- **Firebase stub** `lib/core/firebase/firebase_init.dart` — no-op, **imports no Firebase package**,
+  exposes `FirebaseInit.isConfigured` (always `false` now). The transport providers read it: when it
+  flips `true` without the live impl wired, they **throw loudly** rather than silently stay deferred.
+
+### 9.2 Handoff A — Firebase SDK for the realtime reads (owner + eng)
+1. Add to `pubspec.yaml` (pin, do not float): `firebase_core`, `cloud_firestore`,
+   `firebase_database` (presence, U-SI6), `firebase_messaging` (FCM, U-SI6). **Run
+   `scripts/verify_build.sh` after** — analyze+test never compile the release kernel or invoke
+   Gradle, so only the APK build proves the native side survived a plugin add.
+2. Drop `android/app/google-services.json` (Firebase console → SahayakAI project) and apply the
+   Google-services Gradle plugin. Add the FlutterFire `firebase_options.dart` (`flutterfire configure`).
+3. Implement `FirebaseInit.ensureInitialized()` (call it in `main()` before `runApp`, gated) and make
+   `isConfigured` reflect it — see the TODO block in `firebase_init.dart`.
+4. Write the live transports (`FirestoreInboxTransport`, `FirestoreStaffroomTransport`,
+   `FirestoreNotificationsTransport`, `RtdbPresenceTransport`) implementing the same interfaces:
+   reads via `cloud_firestore` `snapshots()` (mapped through the existing DTOs with
+   `{ 'id': doc.id, ...doc.data() }`), writes via the REST wrappers from Handoff B. Bind them in the
+   `*Transport` providers (replace the `Deferred*` return). **No UI change** — U-SI1..U-SI6 already
+   code against the interface.
+5. Bridge auth: `lib/core/network/api_providers.dart::tokenProvider` is still the signed-out stub;
+   return `firebase_auth`'s `user?.getIdToken(forceRefresh)` so the REST-wrapper Bearer token works.
+6. Flip `BlockCGate.staffroomEnabled` / `proInboxEnabled` (via `--dart-define`) once live.
+
+**`firestore.rules` the reads assume (already deployed in `sahayakai-main`):**
+- `conversations` — read/update if `auth.uid in resource.data.participantIds` (drives the
+  `array-contains` inbox query); `conversations/{id}/messages` — read if participant.
+- `community_chat` — read if signed-in; `groups/{id}/chat` + `groups/{id}/posts` — read if group
+  member; `groups/{id}` metadata — read if signed-in.
+- `notifications` — read if `resource.data.recipientId == auth.uid`.
+- `connections` / `connection_requests` — read only if `auth.uid` is a participant.
+The inbox + notification `onSnapshot`s need Firestore **composite indexes**; a missing index throws —
+render `ErrorView`, never hang (the `TransportSnapshot.error` state exists for exactly this).
+
+### 9.3 Handoff B — REST wrappers for the writes (backend task, cross-repo)
+Server actions are Next RPC (`"use server"`), **not** REST — Dio cannot invoke them. Add thin REST
+routes that call the **existing** action bodies (reuse their authz/validation/transactions verbatim;
+do **not** reimplement auth in Flutter): `/api/messages/*` (get-or-create-direct, create-group, send,
+mark-read, ack-delivery, total-unread), `/api/community/*` + `/api/groups/*` (ensure-groups,
+my-groups, group, discover, group-posts, unified-feed, create-post, like-post, group-chat-send,
+community-chat-send, recommended, all-teachers, public-profile, liked-ids), `/api/connections/*`
+(send/accept/decline/disconnect, my-connection-data, follow), `/api/notifications/*` (list, mark-read,
+mark-all). Auth is the verified Bearer → `x-user-id`; the client never sends identity fields
+(`senderId`, `myUid`, `authorId` are all server-derived — the request DTOs already omit them).
+The request/response shapes each wrapper must speak are pinned by the U-SI0 DTOs + their golden tests.
+
+**Already real (no wrapper needed):** `POST /api/community/persona-pulse` (demo heartbeat; 503 = stop),
+`POST /api/teacher-activity` (engagement analytics), `POST /api/feedback` — reachable via the existing
+Dio `ApiClient` today. **Shared Resources row** (Staffroom §A3.1) reuses the existing Library pillar
+repository/DTOs, not a new Block-C type.
+
+### 9.4 Handoff C — FCM push + RTDB presence (U-SI6, hardest wall)
+`firebase_messaging` (APNs key for iOS, `POST_NOTIFICATIONS` runtime perm on Android 13+) and the RTDB
+presence node (`presence/{uid}/online` + rules) are the last mile. `PresenceTransport` is gated
+separately so the Inbox ships without them.

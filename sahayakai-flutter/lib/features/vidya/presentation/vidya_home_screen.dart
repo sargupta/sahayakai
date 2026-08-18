@@ -1,0 +1,500 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+
+import '../../../core/i18n/gen/app_localizations.dart';
+import '../../../core/i18n/l10n_ext.dart';
+import '../../../core/platform/clock.dart';
+import '../../../core/router/routes.dart';
+import '../../../core/theme/app_theme.dart';
+import '../../../shared/domain/tool_registry.dart';
+import '../../../shared/motion/animated_entrance.dart';
+import '../../../shared/widgets/app_badge.dart';
+import '../../../shared/widgets/editorial_section_header.dart';
+import '../../../shared/widgets/glass_app_bar.dart';
+import '../../../shared/widgets/secondary_button.dart';
+import '../../inbox/presentation/widgets/inbox_entry_button.dart';
+import 'vidya_controller.dart';
+import 'vidya_greeting.dart';
+import 'vidya_nav_dispatcher.dart';
+import 'vidya_status_ui.dart';
+import 'widgets/conversation_block.dart';
+import 'widgets/quick_tools_row.dart';
+import 'widgets/seal_mic.dart';
+
+/// "The Almanac Speaks" — the voice-first home (PREMIUM_DESIGN_SPEC §B). A
+/// nearly-empty warm-ivory page: a time-aware Fraunces greeting, a rotating
+/// prompt, and one large saffron Seal Mic at the optical centre. The teacher
+/// taps and speaks; each turn inks onto the page as a document block (never a
+/// chat thread). A single valid intent routes to its tool prefilled; a compound
+/// intent renders confirm chips. Signed-out (401 on the stub token) degrades to
+/// a dignified "Sign in to talk to VIDYA" state with the mic still present.
+///
+/// This replaces the form-first dashboard as the app's landing; the tool grid
+/// stays one tap away as the Prep desk (the app-bar action).
+class VidyaHomeScreen extends ConsumerStatefulWidget {
+  const VidyaHomeScreen({super.key});
+
+  @override
+  ConsumerState<VidyaHomeScreen> createState() => _VidyaHomeScreenState();
+}
+
+class _VidyaHomeScreenState extends ConsumerState<VidyaHomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Tell VIDYA which screen she is on, and restore the prior session — both
+    // once, after the first frame (so the state write does not run during
+    // build). The restore 401s on the stub token and degrades to a fresh empty
+    // session (U-V7).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final controller = ref.read(vidyaControllerProvider.notifier);
+      controller.registerScreenContext('/');
+      controller.restoreSession();
+      // Mother-tongue welcome: auto-spoken once per session in the teacher's
+      // language via the existing TTS, skipped under reduce-motion. Trigger is a
+      // founder UX call (auto vs tap) — see [maybeSpeakVidyaGreeting].
+      maybeSpeakVidyaGreeting(
+        ref,
+        motionEnabled: context.motionEnabled,
+        greeting: context.l10n.vidyaGreeting,
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final state = ref.watch(vidyaControllerProvider);
+    final controller = ref.read(vidyaControllerProvider.notifier);
+
+    // A single valid intent → route to its tool, prefilled, then clear it. The
+    // dispatcher owns the flow→route map and drops not-yet-built tools.
+    ref.listen(vidyaControllerProvider.select((s) => s.pendingNavigation), (
+      _,
+      directive,
+    ) {
+      if (directive == null) return;
+      // Only the topmost VIDYA surface routes: when a tool or the VIDYA sheet
+      // sits above the home, that surface owns the navigation (else the home
+      // would double-push the same intent). See U-V7.
+      if (!(ModalRoute.of(context)?.isCurrent ?? true)) return;
+      controller.consumeNavigation();
+      VidyaNavDispatcher.dispatch(context, directive);
+    });
+
+    return Scaffold(
+      appBar: GlassAppBar(
+        // `backgroundColor: Colors.transparent` used to be set explicitly
+        // here so the body's gradient (`AppGradients.darkVignette`/
+        // `lightPaper`) showed through the app bar's slot; `GlassAppBar`
+        // makes transparency (plus the real blur) its own baseline, so the
+        // call site no longer needs to ask for it.
+        title: Text(l10n.appTitle),
+        actions: [
+          // The Network hub entry (U-SI2): the Staffroom feed + Pro Inbox behind
+          // one surface. Sits next to the messages entry (SPEC option (a)).
+          IconButton(
+            icon: const Icon(LucideIcons.network),
+            tooltip: l10n.networkTooltip,
+            onPressed: () => context.push(Routes.network),
+          ),
+          // The Pro Inbox entry (U-SI1): a messages glyph with a live unread
+          // badge. Firebase-gated → the badge stays hidden (deferred unread = 0)
+          // until the transport goes live.
+          const InboxEntryButton(),
+          // U9 — the manual "Clear conversation" action (the app's analogue of
+          // the web's Trash2 "Clear Context" button): only offered once there
+          // is a transcript to clear, so the idle canvas never carries a
+          // dead-looking action.
+          if (state.hasConversation)
+            IconButton(
+              icon: const Icon(LucideIcons.trash2),
+              tooltip: l10n.vidyaClearConversation,
+              onPressed: controller.clearConversation,
+            ),
+          IconButton(
+            icon: const Icon(LucideIcons.layoutGrid),
+            tooltip: l10n.vidyaPrepDesk,
+            onPressed: () => context.push(Routes.prepDesk),
+          ),
+        ],
+      ),
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: isDark
+              ? AppGradients.darkVignette
+              : AppGradients.lightPaper,
+        ),
+        child: SafeArea(
+          child: state.hasConversation
+              ? _ActiveLayout(state: state, controller: controller)
+              : _EmptyLayout(state: state, controller: controller),
+        ),
+      ),
+    );
+  }
+}
+
+/// The nearly-empty first canvas: masthead pinned high-left, the Seal Mic
+/// beneath it, then a Quick Tools preview so the idle canvas reads as a
+/// populated product (matching the PWA's hero + tool grid) rather than an
+/// empty placeholder holding one mic.
+///
+/// A `SingleChildScrollView` over a top-down `Column`, NOT the earlier
+/// `Stack`-of-`Align`s: the old composition depended on the Stack being given
+/// the full viewport height (so its fractional `Alignment` could place the
+/// mic at the optical centre), which leaves no room to show the Quick Tools
+/// row without an extra full-screen scroll. A `Column` sized to its own
+/// content — scrollable so it NEVER overflows at 360dp × textScale 1.3 or on
+/// a Malayalam-length label — trades the exact fractional centring for
+/// content that is actually visible on the first screen, which is the
+/// specific gap this unit exists to close (DESIGN_PARITY_BLOCK DP-1).
+class _EmptyLayout extends StatelessWidget {
+  const _EmptyLayout({required this.state, required this.controller});
+
+  final VidyaState state;
+  final VidyaController controller;
+
+  /// How many of the registry's tools the idle canvas previews below the
+  /// mic. The rest stay one tap away at the Prep desk — this is a preview,
+  /// not a second copy of the full grid.
+  ///
+  /// Floored at 2 (one row), not 6: on the standard 390×844 test surface
+  /// (and smaller real phones) the content above this row — badge, eyebrow,
+  /// greeting, rule, deck, the 128dp mic, caption — already fills most of
+  /// the viewport height that remains once `AppShell`'s floating bottom nav
+  /// claims its ~72dp. Even a 2nd row still landed below the nav bar's top
+  /// edge in a real layout measurement, not just a guess — a 3rd/4th tile
+  /// rendered there with its label sliced off by the nav bar on first
+  /// paint: a half-visible, label-less tile reads as broken, not "scroll for
+  /// more" — the opposite of this unit's purpose. See
+  /// `test/features/vidya/vidya_home_screen_test.dart` ("Quick Tools tiles
+  /// clear the floating bottom nav on first paint"), which asserts this by
+  /// measuring real widget geometry, not by counting rows.
+  static const int _quickToolsCount = 2;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final tools = kToolRegistry.take(_quickToolsCount).toList();
+
+    return SingleChildScrollView(
+      padding: AppSpacing.pagePadding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const _Masthead(),
+          // Tightened from space10/space8/space4 (measured, not guessed): the
+          // Quick Tools row only clears the floating bottom nav on first
+          // paint with this rhythm reclaimed — see the geometry regression
+          // test above _quickToolsCount.
+          const SizedBox(height: AppSpacing.space5),
+          _MicCluster(state: state, controller: controller, big: true),
+          const SizedBox(height: AppSpacing.space4),
+          EditorialSectionHeader(l10n.dashboardToolsTitle),
+          const SizedBox(height: AppSpacing.space2),
+          QuickToolsRow(tools: tools),
+        ],
+      ),
+    );
+  }
+}
+
+/// Once turns land: the transcript scrolls above, the Seal Mic settles to a
+/// smaller anchored control at the bottom (thumb-reachable). The masthead fades
+/// out — the conversation is the page now.
+class _ActiveLayout extends StatelessWidget {
+  const _ActiveLayout({required this.state, required this.controller});
+
+  final VidyaState state;
+  final VidyaController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Expanded(
+          child: ListView.builder(
+            padding: AppSpacing.pagePadding,
+            itemCount: state.conversation.length,
+            itemBuilder: (context, index) {
+              final block = state.conversation[index];
+              // Only newly-appended blocks mount (ListView.builder preserves the
+              // earlier elements), so each inks in once instead of re-animating
+              // the whole transcript.
+              return Padding(
+                padding: EdgeInsets.only(
+                  bottom: index == state.conversation.length - 1
+                      ? 0
+                      : AppSpacing.space3,
+                ),
+                child: inkSettle(
+                  context,
+                  ConversationBlockView(
+                    block: block,
+                    onChipTap: controller.dispatchDirective,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(
+            left: AppSpacing.space4,
+            right: AppSpacing.space4,
+            bottom: AppSpacing.space4,
+            top: AppSpacing.space2,
+          ),
+          child: _MicCluster(state: state, controller: controller, big: false),
+        ),
+      ],
+    );
+  }
+}
+
+/// The idle masthead: saffron eyebrow → time-aware Fraunces greeting → a saffron
+/// masthead rule → the deck. Reuses the dashboard's time-aware l10n keys.
+class _Masthead extends ConsumerWidget {
+  const _Masthead();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final text = Theme.of(context).textTheme;
+    final extras = AppTextExtras.of(context);
+    final scheme = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(height: AppSpacing.space6),
+        AppBadge(
+          icon: LucideIcons.sparkles,
+          label: l10n.vidyaHeroBadge,
+          tone: AppBadgeTone.accent,
+        ),
+        const SizedBox(height: AppSpacing.space3),
+        EditorialSectionHeader(l10n.vidyaEyebrow, rule: false),
+        const SizedBox(height: AppSpacing.space3),
+        Text(
+          _salutation(l10n, ref.read(nowProvider)()),
+          style: text.displayLarge,
+        ),
+        const SizedBox(height: AppSpacing.space3),
+        const SizedBox(
+          width: 48,
+          height: 2,
+          child: DecoratedBox(
+            decoration: BoxDecoration(gradient: AppGradients.accentBar),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.space3),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Text(
+            l10n.vidyaDeck,
+            style: extras.lead.copyWith(color: scheme.onSurfaceVariant),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// The Seal Mic + its caption. In the empty state the idle caption trails a
+/// rotating prompt; the terminal error phases render a dignified panel instead.
+class _MicCluster extends StatelessWidget {
+  const _MicCluster({
+    required this.state,
+    required this.controller,
+    required this.big,
+  });
+
+  final VidyaState state;
+  final VidyaController controller;
+  final bool big;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final caption = vidyaStateCaption(state.status, l10n);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        SealMic(
+          state: sealStateForStatus(state.status),
+          amplitude: state.amplitude,
+          size: big ? 128 : 88,
+          onTap: controller.onMicTap,
+          semanticLabel: l10n.appTitle,
+          semanticHint: caption ?? vidyaTerminalTitle(state.status, l10n),
+        ),
+        const SizedBox(height: AppSpacing.space5),
+        if (isVidyaTerminal(state.status))
+          _TerminalPanel(status: state.status, controller: controller)
+        else ...[
+          Text(
+            caption ?? l10n.vidyaStateIdle,
+            style: Theme.of(context).textTheme.titleMedium,
+            textAlign: TextAlign.center,
+          ),
+          if (state.status == VidyaStatus.idle && big) ...[
+            const SizedBox(height: AppSpacing.space3),
+            const _RotatingPrompt(),
+          ],
+        ],
+      ],
+    );
+  }
+}
+
+/// A dignified panel for the terminal phases (signed-out / mic-off / limit /
+/// failed) — a title, a body, and a recovery action where one exists.
+class _TerminalPanel extends StatelessWidget {
+  const _TerminalPanel({required this.status, required this.controller});
+
+  final VidyaStatus status;
+  final VidyaController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+
+    final title = vidyaTerminalTitle(status, l10n);
+    final body = vidyaTerminalBody(status, l10n);
+    Widget? action;
+    if (status == VidyaStatus.micDenied) {
+      action = SecondaryButton(
+        label: l10n.vidyaOpenSettings,
+        icon: LucideIcons.settings,
+        onPressed: controller.openMicSettings,
+      );
+    } else if (status == VidyaStatus.failed) {
+      action = SecondaryButton(
+        label: l10n.actionRetry,
+        icon: LucideIcons.refreshCw,
+        onPressed: controller.onMicTap,
+      );
+    } else if (status == VidyaStatus.signedOut) {
+      action = SecondaryButton(
+        label: l10n.vidyaSignIn,
+        icon: LucideIcons.logIn,
+        // Real auth landed (core/auth/auth_providers.dart): the router's
+        // `authControllerProvider` and VIDYA's own 401-driven `signedOut`
+        // status now derive from the SAME Firebase session, so a plain push
+        // is correct — the earlier "clear a stub flag first" workaround is
+        // gone. (That workaround was masking a real bug in the stub, not a
+        // permanent pattern: forcibly signing a teacher out before every
+        // sign-in tap would be wrong the moment auth is real.)
+        onPressed: () => context.push(Routes.login),
+      );
+    }
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 360),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(title, style: text.titleMedium, textAlign: TextAlign.center),
+          const SizedBox(height: AppSpacing.space2),
+          Text(
+            body,
+            style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+            textAlign: TextAlign.center,
+          ),
+          if (action != null) ...[
+            const SizedBox(height: AppSpacing.space4),
+            action,
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// The rotating hint under an idle mic. Cycles a few real prompt examples via a
+/// gentle cross-fade — only when motion is enabled, so reduce-motion (and the
+/// test harness) shows a single static line and schedules no timer.
+class _RotatingPrompt extends StatefulWidget {
+  const _RotatingPrompt();
+
+  @override
+  State<_RotatingPrompt> createState() => _RotatingPromptState();
+}
+
+class _RotatingPromptState extends State<_RotatingPrompt> {
+  static const Duration _dwell = Duration(seconds: 4);
+  int _index = 0;
+  Timer? _timer;
+  bool _started = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_started) return;
+    _started = true;
+    if (context.motionEnabled) {
+      _timer = Timer.periodic(_dwell, (_) {
+        if (mounted) setState(() => _index++);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    final prompts = [
+      l10n.vidyaPromptLesson,
+      l10n.vidyaPromptQuiz,
+      l10n.vidyaPromptParent,
+    ];
+    final label = prompts[_index % prompts.length];
+    return AnimatedSwitcher(
+      duration: AppMotion.small,
+      switchInCurve: AppMotion.easeOutQuart,
+      switchOutCurve: AppMotion.easeOutQuart,
+      child: Text(
+        label,
+        key: ValueKey(label),
+        style: text.bodyMedium?.copyWith(
+          color: scheme.onSurfaceVariant,
+          fontStyle: FontStyle.italic,
+        ),
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+}
+
+// ─── Mappings ────────────────────────────────────────────────────────────────
+
+String _salutation(AppLocalizations l10n, DateTime now) {
+  final hour = now.hour;
+  if (hour < 12) return l10n.dashboardGreetingMorning;
+  if (hour < 17) return l10n.dashboardGreetingAfternoon;
+  return l10n.dashboardGreetingEvening;
+}
+
+// The seal-state / caption / terminal mappings moved to `vidya_status_ui.dart`,
+// and the flow→route map + prefill to `VidyaNavDispatcher` (U-V6/U-V7), so the
+// home and the everywhere VIDYA sheet render and route from one source of truth.

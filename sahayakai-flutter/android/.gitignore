@@ -12,3 +12,10 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# The Capacitor wrap at sahayakai-android/mobile/android/ names its credentials
+# file `keystore.properties`, not `key.properties`. This app reuses that
+# project's upload keystore (same applicationId), so copying that file across is
+# the likely path — and none of the template patterns above would have caught
+# it. Unanchored, so it matches at any depth under android/.
+keystore.properties

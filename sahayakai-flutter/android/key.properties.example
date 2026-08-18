@@ -1,0 +1,23 @@
+# Copy to android/key.properties and fill in. That file is GITIGNORED —
+# never commit it, and never commit the keystore it points at.
+#
+# This app signs with the SAME upload key as the Capacitor wrap at
+# sahayakai-android/, because both declare applicationId
+# com.sargvision.sahayakai and Play allows only one app per package name.
+# Keeping one key means one set of fingerprints to register in Firebase and one
+# assetlinks entry, rather than two that silently disagree.
+#
+# Source of truth for the key:
+#   sahayakai-android/mobile/android/app/upload.keystore
+#   sahayakai-android/mobile/android/keystore.properties
+# Copy the keystore to android/app/upload.keystore (gitignored by **/*.keystore).
+#
+# Upload certificate SHA-256:
+#   09:3E:4C:1A:71:2D:6D:40:A0:B6:A6:4B:56:F8:6F:67:00:10:16:C9:ED:44:6E:79:F2:DC:A8:DB:CF:E6:35:C3
+# Verify any build against it with:  bash scripts/loop/verify_aab_signer.sh
+
+# Relative to android/app/ — that is where build.gradle.kts resolves file() from.
+storeFile=upload.keystore
+storePassword=
+keyAlias=sahayakai
+keyPassword=

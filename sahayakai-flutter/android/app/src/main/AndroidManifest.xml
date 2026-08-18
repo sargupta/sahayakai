@@ -1,4 +1,26 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Network access for the Dio ApiClient (every /api/* call). The Flutter
+         tooling injects INTERNET into the debug/profile manifests only; a
+         release build needs it declared here or the app has no network. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- VIDYA voice capture (Pillar 02, U-V1). record needs RECORD_AUDIO; it is
+         requested at runtime via permission_handler at the first mic tap, with a
+         dignified "Open settings" recovery on a permanent denial. The mic is not
+         required to install (typed tools still work), so required="false". -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
+
+    <!-- Worksheet Wizard / Assess Assignment capture a textbook-page photo via
+         image_picker. CAMERA is requested at runtime by the plugin; declaring it
+         here keeps OEMs that require the manifest entry happy. The camera is not
+         required to install (gallery-only devices still work), so the feature is
+         flagged required="false". Gallery uses the Android system photo picker,
+         which needs no storage permission on modern SDKs. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+
     <application
         android:label="sahayakai"
         android:name="${applicationName}"

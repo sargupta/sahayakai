@@ -1,0 +1,191 @@
+import 'package:flutter/widgets.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+
+import '../../core/i18n/gen/app_localizations.dart';
+import '../../core/router/routes.dart';
+
+/// One AI tool a teacher can open. The SINGLE source of truth for the tools that
+/// appear BOTH on the dashboard tile grid and in the Create (command) palette.
+///
+/// Before this existed, the dashboard grid and the placeholder Create palette
+/// each hardcoded their own copy of the same nine tools — the same names, icons
+/// and routes, spelled out twice, already one step from drifting apart. Both now
+/// walk [kToolRegistry], so they cannot disagree about which tools exist or what
+/// they are called.
+///
+/// Names are NOT hardcoded English. [title]/[subtitle] resolve against the
+/// active [AppLocalizations], so a tool reads in the teacher's language across
+/// all 11 locales (DESIGN_RUBRIC §10). [icon] is the exact Lucide glyph the
+/// dashboard tile already used; [route] is a [Routes] constant the router
+/// registers.
+@immutable
+class ToolEntry {
+  const ToolEntry({
+    required this.id,
+    required this.icon,
+    required this.route,
+    required this.title,
+    required this.subtitle,
+  });
+
+  /// Stable kebab-case identifier, matching the web tool id. Used as a widget
+  /// key and in tests; never shown to the teacher.
+  final String id;
+
+  /// The Lucide glyph shown in the tool's icon well. Same family, same weight,
+  /// no emoji (DESIGN_RUBRIC §13).
+  final IconData icon;
+
+  /// The route this tool deep-links to — a [Routes] constant.
+  final String route;
+
+  /// The localized tool name, e.g. `(l10n) => l10n.lessonPlanTitle`.
+  final String Function(AppLocalizations l10n) title;
+
+  /// The localized one-line description under the name.
+  final String Function(AppLocalizations l10n) subtitle;
+}
+
+/// Every built AI tool, in the order the dashboard shows them. Adding a tool
+/// here lands it on the dashboard AND in the Create palette at once; there is no
+/// second list to keep in step.
+final List<ToolEntry> kToolRegistry = <ToolEntry>[
+  ToolEntry(
+    id: 'lesson-plan',
+    icon: LucideIcons.bookOpen,
+    route: Routes.lessonPlan,
+    title: (l10n) => l10n.lessonPlanTitle,
+    subtitle: (l10n) => l10n.lessonPlanSubtitle,
+  ),
+  ToolEntry(
+    id: 'quiz',
+    icon: LucideIcons.clipboardList,
+    route: Routes.quizGenerator,
+    title: (l10n) => l10n.quizTitle,
+    subtitle: (l10n) => l10n.quizSubtitle,
+  ),
+  ToolEntry(
+    id: 'instant-answer',
+    icon: LucideIcons.messageSquare,
+    route: Routes.instantAnswer,
+    title: (l10n) => l10n.instantAnswerTitle,
+    subtitle: (l10n) => l10n.instantAnswerSubtitle,
+  ),
+  ToolEntry(
+    id: 'worksheet',
+    icon: LucideIcons.fileText,
+    route: Routes.worksheetWizard,
+    title: (l10n) => l10n.worksheetTitle,
+    subtitle: (l10n) => l10n.worksheetSubtitle,
+  ),
+  ToolEntry(
+    id: 'rubric',
+    icon: LucideIcons.clipboardCheck,
+    route: Routes.rubricGenerator,
+    title: (l10n) => l10n.rubricTitle,
+    subtitle: (l10n) => l10n.rubricSubtitle,
+  ),
+  ToolEntry(
+    id: 'exam-paper',
+    icon: LucideIcons.scrollText,
+    route: Routes.examPaper,
+    title: (l10n) => l10n.examPaperTitle,
+    subtitle: (l10n) => l10n.examPaperSubtitle,
+  ),
+  ToolEntry(
+    id: 'teacher-training',
+    icon: LucideIcons.compass,
+    route: Routes.teacherTraining,
+    title: (l10n) => l10n.teacherTrainingTitle,
+    subtitle: (l10n) => l10n.teacherTrainingSubtitle,
+  ),
+  ToolEntry(
+    id: 'parent-message',
+    icon: LucideIcons.messageCircle,
+    route: Routes.parentMessage,
+    title: (l10n) => l10n.parentMessageTitle,
+    subtitle: (l10n) => l10n.parentMessageSubtitle,
+  ),
+  ToolEntry(
+    id: 'parent-hotline',
+    icon: LucideIcons.phoneCall,
+    route: Routes.parentHotline,
+    title: (l10n) => l10n.parentHotlineTitle,
+    subtitle: (l10n) => l10n.parentHotlineSubtitle,
+  ),
+  ToolEntry(
+    id: 'assess-assignment',
+    icon: LucideIcons.scanLine,
+    route: Routes.assessAssignment,
+    title: (l10n) => l10n.assessTitle,
+    subtitle: (l10n) => l10n.assessSubtitle,
+  ),
+  // U-PD5 — Assessment Scanner. A DISTINCT tool from 'assess-assignment'
+  // (single-image rubric scorecard): this grades a multi-page answer sheet
+  // question-by-question. A file-check glyph marks the answer-sheet grader,
+  // kept distinct from assess-assignment's scan-line.
+  ToolEntry(
+    id: 'assessment-scanner',
+    icon: LucideIcons.fileCheck,
+    route: Routes.assessmentScanner,
+    title: (l10n) => l10n.assessmentScannerTitle,
+    subtitle: (l10n) => l10n.assessmentScannerSubtitle,
+  ),
+  ToolEntry(
+    id: 'visual-aid',
+    icon: LucideIcons.image,
+    route: Routes.visualAid,
+    title: (l10n) => l10n.visualAidTitle,
+    subtitle: (l10n) => l10n.visualAidSubtitle,
+  ),
+  ToolEntry(
+    id: 'video-storyteller',
+    icon: LucideIcons.video,
+    route: Routes.videoStoryteller,
+    title: (l10n) => l10n.videoStorytellerTitle,
+    subtitle: (l10n) => l10n.videoStorytellerSubtitle,
+  ),
+  ToolEntry(
+    id: 'virtual-field-trip',
+    icon: LucideIcons.globe,
+    route: Routes.virtualFieldTrip,
+    title: (l10n) => l10n.virtualFieldTripTitle,
+    subtitle: (l10n) => l10n.virtualFieldTripSubtitle,
+  ),
+  // A HUB, not a leaf tool: opening it lands on the Content Creator Studio,
+  // which groups the three multimedia tools above and deep-links to each. It
+  // earns a registry entry so it is reachable from the Prep desk grid and the
+  // Create palette; a painter's palette glyph (unused elsewhere) marks it as a
+  // studio rather than one of the leaf tools.
+  ToolEntry(
+    id: 'content-creator',
+    icon: LucideIcons.palette,
+    route: Routes.contentCreator,
+    title: (l10n) => l10n.contentCreatorTitle,
+    subtitle: (l10n) => l10n.contentCreatorTileSubtitle,
+  ),
+];
+
+/// Attendance (U12) — the class list, and through it the daily register, the
+/// roster and the monthly view.
+///
+/// DELIBERATELY NOT IN [kToolRegistry]. Everything in that list is something a
+/// teacher *makes* — a lesson plan, a quiz, a worksheet, a call — and the
+/// registry feeds the Create palette, whose whole promise is "what do you want
+/// to create?". Attendance creates nothing: it is the daily classroom routine a
+/// teacher runs before any of that, and filing it behind "Create" would put a
+/// morning register on the wrong shelf and pad the palette a teacher searches
+/// when they want a document.
+///
+/// It is a [ToolEntry] all the same so the Prep desk can render it with the
+/// exact row grammar the tool register already uses (icon well, name, subtitle,
+/// chevron) — one destination presented one way — without a second copy of that
+/// card chrome. The `users` glyph is the same one the attendance screens
+/// themselves use for a class, and it is claimed by no tool above.
+final ToolEntry kAttendanceEntry = ToolEntry(
+  id: 'attendance',
+  icon: LucideIcons.users,
+  route: Routes.attendance,
+  title: (l10n) => l10n.attendanceTitle,
+  subtitle: (l10n) => l10n.attendanceClassesIntro,
+);

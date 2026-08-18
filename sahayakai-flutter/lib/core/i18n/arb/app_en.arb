@@ -1,0 +1,4669 @@
+{
+  "@@locale": "en",
+  "appTitle": "SahayakAI",
+  "@appTitle": {
+    "description": "Application name (brand)."
+  },
+  "navHome": "Home",
+  "@navHome": {
+    "description": "Bottom-nav label: dashboard home tab."
+  },
+  "navCreate": "Create",
+  "@navCreate": {
+    "description": "Bottom-nav label: opens the create/command palette."
+  },
+  "navLibrary": "Library",
+  "@navLibrary": {
+    "description": "Bottom-nav label: saved generations."
+  },
+  "navProfile": "Me",
+  "@navProfile": {
+    "description": "Bottom-nav label: profile / account tab."
+  },
+  "actionRetry": "Try again",
+  "@actionRetry": {
+    "description": "Retry a failed action."
+  },
+  "actionSignIn": "Sign in",
+  "@actionSignIn": {
+    "description": "Shared sign-in CTA for dead-end empty states (inbox / staffroom / network hub) that route to /login."
+  },
+  "actionSignOut": "Sign out",
+  "@actionSignOut": {
+    "description": "Sign out of the account."
+  },
+  "actionGenerate": "Generate",
+  "@actionGenerate": {
+    "description": "Submit an AI tool form."
+  },
+  "stateOfflineTitle": "You are offline",
+  "@stateOfflineTitle": {
+    "description": "Shown when the device has no network."
+  },
+  "stateOfflineBody": "Check your connection and try again.",
+  "@stateOfflineBody": {
+    "description": "Offline state helper text."
+  },
+  "errorGeneric": "Something went wrong. Please try again.",
+  "@errorGeneric": {
+    "description": "Generic error message."
+  },
+  "emptyDefault": "Fill in the form and tap Generate.",
+  "@emptyDefault": {
+    "description": "Default empty/idle state for a tool."
+  },
+  "languageLabel": "Language",
+  "@languageLabel": {
+    "description": "Label for the language switcher."
+  },
+  "splashTagline": "Teaching assistant for every classroom",
+  "@splashTagline": {
+    "description": "Splash-screen tagline under the brand mark."
+  },
+  "splashFailedTitle": "We could not start the app",
+  "@splashFailedTitle": {
+    "description": "Splash: heading when the first-run bootstrap (Firebase init / App Check / first auth snapshot) fails."
+  },
+  "splashFailedBody": "Please check your connection and try again.",
+  "@splashFailedBody": {
+    "description": "Splash: body when the bootstrap fails. The retry re-runs it."
+  },
+  "loginTitle": "Welcome to SahayakAI",
+  "@loginTitle": {
+    "description": "Login screen heading."
+  },
+  "loginSubtitle": "Sign in to plan lessons, quizzes and more.",
+  "@loginSubtitle": {
+    "description": "Login screen subheading."
+  },
+  "loginGoogle": "Continue with Google",
+  "@loginGoogle": {
+    "description": "Login: the Google sign-in button label."
+  },
+  "loginPrivacyNote": "We use your Google account only to sign you in. Your work stays yours.",
+  "@loginPrivacyNote": {
+    "description": "Login: reassurance under the sign-in button."
+  },
+  "loginLanguagePrompt": "Choose your language",
+  "@loginLanguagePrompt": {
+    "description": "Login: label above the language picker, which is step 0 of setup."
+  },
+  "loginLanguageHint": "SahayakAI works in your language, and writes your teaching material in it too.",
+  "@loginLanguageHint": {
+    "description": "Login: helper text under the language picker."
+  },
+  "loginValueLessons": "Plan a full lesson in minutes",
+  "@loginValueLessons": {
+    "description": "Login: one of three capability lines shown before sign-in."
+  },
+  "loginValueQuizzes": "Build a quiz at three difficulty levels",
+  "@loginValueQuizzes": {
+    "description": "Login: one of three capability lines shown before sign-in."
+  },
+  "loginValueAnswers": "Answer any classroom question, in your language",
+  "@loginValueAnswers": {
+    "description": "Login: one of three capability lines shown before sign-in."
+  },
+  "onboardingTitle": "Set up SahayakAI",
+  "@onboardingTitle": {
+    "description": "Onboarding: app bar title."
+  },
+  "onboardingSkip": "Skip for now",
+  "@onboardingSkip": {
+    "description": "Onboarding: skip action, present on every step. Onboarding is never a gate."
+  },
+  "onboardingStepLabel": "Step {current} of {total}",
+  "@onboardingStepLabel": {
+    "description": "Onboarding: step progress label.",
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "onboardingBack": "Back",
+  "@onboardingBack": {
+    "description": "Onboarding: previous-step action."
+  },
+  "onboardingNext": "Next",
+  "@onboardingNext": {
+    "description": "Onboarding: next-step action."
+  },
+  "onboardingSaveAndContinue": "Save and continue",
+  "@onboardingSaveAndContinue": {
+    "description": "Onboarding: saves the profile then moves to the last step."
+  },
+  "onboardingFinish": "Go to my dashboard",
+  "@onboardingFinish": {
+    "description": "Onboarding: final action on the last step."
+  },
+  "onboardingLanguageTitle": "Which language do you teach in?",
+  "@onboardingLanguageTitle": {
+    "description": "Onboarding step 0: language picker heading."
+  },
+  "onboardingLanguageBody": "Your lesson plans, quizzes and answers arrive in the language you choose. You can change it at any time.",
+  "@onboardingLanguageBody": {
+    "description": "Onboarding step 0: language picker body."
+  },
+  "onboardingProfileTitle": "Tell us about your classroom",
+  "@onboardingProfileTitle": {
+    "description": "Onboarding step 1: profile form heading."
+  },
+  "onboardingProfileBody": "Every field is optional. What you share is used to match your material to your board, your classes and your state.",
+  "@onboardingProfileBody": {
+    "description": "Onboarding step 1: profile form body."
+  },
+  "onboardingReadyTitle": "You are ready to begin",
+  "@onboardingReadyTitle": {
+    "description": "Onboarding step 2: closing heading."
+  },
+  "onboardingReadyBody": "Your lesson plans, quizzes and answers will match this. You can change any of it later from your profile.",
+  "@onboardingReadyBody": {
+    "description": "Onboarding step 2: body above the summary of what the teacher just set up."
+  },
+  "onboardingSaveFailed": "We could not save your profile. You can continue now and add it later from your profile.",
+  "@onboardingSaveFailed": {
+    "description": "Onboarding: save failure. It never blocks the teacher from continuing."
+  },
+  "onboardingSaveSignIn": "Please sign in again to save your profile. You can continue now and add it later.",
+  "@onboardingSaveSignIn": {
+    "description": "Onboarding: save failed with a 401."
+  },
+  "dashboardGreeting": "Welcome back",
+  "@dashboardGreeting": {
+    "description": "Dashboard greeting."
+  },
+  "dashboardGreetingNamed": "Welcome back, {name}",
+  "@dashboardGreetingNamed": {
+    "description": "Dashboard: greeting once the teacher name is known.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Lakshmi"
+      }
+    }
+  },
+  "dashboardGreetingMorning": "Good morning",
+  "@dashboardGreetingMorning": {
+    "description": "Dashboard hero eyebrow: time-aware salutation shown before noon."
+  },
+  "dashboardGreetingAfternoon": "Good afternoon",
+  "@dashboardGreetingAfternoon": {
+    "description": "Dashboard hero eyebrow: time-aware salutation shown from noon to evening."
+  },
+  "dashboardGreetingEvening": "Good evening",
+  "@dashboardGreetingEvening": {
+    "description": "Dashboard hero eyebrow: time-aware salutation shown in the evening."
+  },
+  "actionOpen": "Open",
+  "@actionOpen": {
+    "description": "Action label on the dashboard feature tile, opens the tool."
+  },
+  "actionRegenerate": "Regenerate",
+  "@actionRegenerate": {
+    "description": "Result action bar: generate a fresh version from the same form."
+  },
+  "actionCopy": "Copy",
+  "@actionCopy": {
+    "description": "Result action bar: copy the generated document to the clipboard."
+  },
+  "copyConfirmation": "Copied to clipboard",
+  "@copyConfirmation": {
+    "description": "Snackbar shown after a generated document is copied."
+  },
+  "readAloudListen": "Listen",
+  "@readAloudListen": {
+    "description": "Result action bar: read the generated document aloud through TTS."
+  },
+  "readAloudStop": "Stop",
+  "@readAloudStop": {
+    "description": "Result action bar: stop the read-aloud playback that is in progress."
+  },
+  "readAloudError": "Couldn't play the audio. Please try again.",
+  "@readAloudError": {
+    "description": "Snackbar shown when read-aloud text-to-speech fails."
+  },
+  "voiceResultReady": "Your {tool} is ready.",
+  "@voiceResultReady": {
+    "description": "Short spoken summary auto-played after a voice-originated generation lands, when no topic is known.",
+    "placeholders": {
+      "tool": {
+        "type": "String",
+        "example": "lesson plan"
+      }
+    }
+  },
+  "voiceResultReadyWithTopic": "Your {tool} on {topic} is ready.",
+  "@voiceResultReadyWithTopic": {
+    "description": "Short spoken summary auto-played after a voice-originated generation lands, naming the tool and topic.",
+    "placeholders": {
+      "tool": {
+        "type": "String",
+        "example": "lesson plan"
+      },
+      "topic": {
+        "type": "String",
+        "example": "photosynthesis"
+      }
+    }
+  },
+  "lessonPlanSectionLesson": "The lesson",
+  "@lessonPlanSectionLesson": {
+    "description": "Lesson plan form section header: what to teach (topic, grades, subject)."
+  },
+  "lessonPlanSectionApproach": "Teaching approach",
+  "@lessonPlanSectionApproach": {
+    "description": "Lesson plan form section header: how to teach it (language, level, difficulty)."
+  },
+  "quizSectionQuiz": "The quiz",
+  "@quizSectionQuiz": {
+    "description": "Quiz form section header: what the quiz is about (topic, number of questions, question types)."
+  },
+  "sectionForYourClass": "For your class",
+  "@sectionForYourClass": {
+    "description": "Form section header grouping the optional grade, subject and language a tool tailors its output to."
+  },
+  "instantAnswerResultTitle": "Answer",
+  "@instantAnswerResultTitle": {
+    "description": "Instant Answer result: the answer section heading, and the masthead title fallback when the asked question is unavailable."
+  },
+  "dashboardToolsTitle": "Your teaching tools",
+  "@dashboardToolsTitle": {
+    "description": "Dashboard tools section header."
+  },
+  "createPaletteSearchHint": "Search tools",
+  "@createPaletteSearchHint": {
+    "description": "Create palette: hint text in the tool search field."
+  },
+  "createPaletteEmpty": "No tools match your search",
+  "@createPaletteEmpty": {
+    "description": "Create palette: shown when the search matches no tools."
+  },
+  "dashboardRecentTitle": "Recent work",
+  "@dashboardRecentTitle": {
+    "description": "Dashboard: recent saved items section header."
+  },
+  "dashboardRecentEmpty": "Anything you make is saved here, ready to open again.",
+  "@dashboardRecentEmpty": {
+    "description": "Dashboard: recent list empty state."
+  },
+  "dashboardRecentFailed": "We could not open your recent work. Please try again.",
+  "@dashboardRecentFailed": {
+    "description": "Dashboard: recent list error state."
+  },
+  "dashboardRecentSignedOut": "Sign in to see your recent work.",
+  "@dashboardRecentSignedOut": {
+    "description": "Dashboard: recent list 401 state."
+  },
+  "dashboardUntitled": "Untitled",
+  "@dashboardUntitled": {
+    "description": "Dashboard: fallback for a saved item with no title."
+  },
+  "dashboardSetupTitle": "Finish setting up your profile",
+  "@dashboardSetupTitle": {
+    "description": "Dashboard: profile nudge heading. A nudge, never a gate."
+  },
+  "dashboardSetupBody": "Add your school and your classes, and every lesson plan and quiz will arrive ready for your classroom.",
+  "@dashboardSetupBody": {
+    "description": "Dashboard: profile nudge body."
+  },
+  "dashboardSetupAction": "Set up my profile",
+  "@dashboardSetupAction": {
+    "description": "Dashboard: profile nudge action, opens onboarding."
+  },
+  "dashboardSetupDismiss": "Not now",
+  "@dashboardSetupDismiss": {
+    "description": "Dashboard: dismisses the profile nudge."
+  },
+  "contentTypeLessonPlan": "Lesson plan",
+  "@contentTypeLessonPlan": {
+    "description": "Saved content type label: lesson-plan."
+  },
+  "contentTypeQuiz": "Quiz",
+  "@contentTypeQuiz": {
+    "description": "Saved content type label: quiz."
+  },
+  "contentTypeWorksheet": "Worksheet",
+  "@contentTypeWorksheet": {
+    "description": "Saved content type label: worksheet."
+  },
+  "contentTypeVisualAid": "Visual aid",
+  "@contentTypeVisualAid": {
+    "description": "Saved content type label: visual-aid."
+  },
+  "contentTypeRubric": "Rubric",
+  "@contentTypeRubric": {
+    "description": "Saved content type label: rubric."
+  },
+  "contentTypeMicroLesson": "Micro lesson",
+  "@contentTypeMicroLesson": {
+    "description": "Saved content type label: micro-lesson."
+  },
+  "contentTypeVirtualFieldTrip": "Virtual field trip",
+  "@contentTypeVirtualFieldTrip": {
+    "description": "Saved content type label: virtual-field-trip."
+  },
+  "contentTypeInstantAnswer": "Instant answer",
+  "@contentTypeInstantAnswer": {
+    "description": "Saved content type label: instant-answer."
+  },
+  "contentTypeTeacherTraining": "Teacher training",
+  "@contentTypeTeacherTraining": {
+    "description": "Saved content type label: teacher-training."
+  },
+  "contentTypeExamPaper": "Exam paper",
+  "@contentTypeExamPaper": {
+    "description": "Saved content type label: exam-paper."
+  },
+  "contentTypeAssessment": "Assessment",
+  "@contentTypeAssessment": {
+    "description": "Saved content type label: assessment."
+  },
+  "contentTypeAssessmentSubmission": "Scanned assessment",
+  "@contentTypeAssessmentSubmission": {
+    "description": "Saved content type label: assessment-submission (Assessment Scanner's saved grade — distinct from contentTypeAssessment, which is Assess Assignment)."
+  },
+  "contentTypeUnknown": "Saved work",
+  "@contentTypeUnknown": {
+    "description": "Saved content type label for a type this build does not know. The row still renders: it is the teacher own work."
+  },
+  "libraryTitle": "My Library",
+  "@libraryTitle": {
+    "description": "Library screen title."
+  },
+  "librarySectionSaved": "Saved work",
+  "@librarySectionSaved": {
+    "description": "Editorial section eyebrow over the teacher's saved-work list on the Library screen."
+  },
+  "libraryEmpty": "Your saved lesson plans and quizzes will appear here.",
+  "@libraryEmpty": {
+    "description": "Library empty state."
+  },
+  "libraryEmptyAction": "Create a lesson plan",
+  "@libraryEmptyAction": {
+    "description": "Action on the Library empty state; opens the lesson planner."
+  },
+  "librarySignedOut": "Sign in to see your saved work.",
+  "@librarySignedOut": {
+    "description": "Library state when the saved-work read has no identity (401)."
+  },
+  "libraryLoadFailed": "Your library could not be loaded.",
+  "@libraryLoadFailed": {
+    "description": "Library state when the saved-work read fails."
+  },
+  "libraryNewestOnly": "Showing your 20 most recent items.",
+  "@libraryNewestOnly": {
+    "description": "Library footer note. The list route takes a limit and no cursor, so there is no next page to offer."
+  },
+  "libraryFilterAll": "All",
+  "@libraryFilterAll": {
+    "description": "Library type-filter chip that clears the filter and shows every saved type."
+  },
+  "libraryFilterEmpty": "You have no saved items of this type yet.",
+  "@libraryFilterEmpty": {
+    "description": "Shown if the selected type filter matches nothing in the loaded list."
+  },
+  "libraryDetailTitle": "Saved item",
+  "@libraryDetailTitle": {
+    "description": "App-bar title for a saved item that has no title of its own."
+  },
+  "libraryDetailSavedOn": "Saved {date}",
+  "@libraryDetailSavedOn": {
+    "description": "The date a saved item was created, on its detail screen.",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "15 Jul 2026"
+      }
+    }
+  },
+  "libraryDetailSignedOut": "Sign in to open your saved work.",
+  "@libraryDetailSignedOut": {
+    "description": "Detail state when the per-item read has no identity (401); the read is built-pending-firebase."
+  },
+  "libraryDetailNotFound": "This item is no longer in your library.",
+  "@libraryDetailNotFound": {
+    "description": "Detail state when the per-item read returns 404 (deleted or expired)."
+  },
+  "libraryDetailLoadFailed": "We could not open this saved item. Please try again.",
+  "@libraryDetailLoadFailed": {
+    "description": "Detail state when the per-item read fails for a non-network reason."
+  },
+  "libraryDetailReady": "You are viewing your saved {type}.",
+  "@libraryDetailReady": {
+    "description": "Detail confirmation once the saved item has loaded.",
+    "placeholders": {
+      "type": {
+        "type": "String",
+        "example": "Lesson plan"
+      }
+    }
+  },
+  "profileTitle": "Profile",
+  "@profileTitle": {
+    "description": "Profile screen title."
+  },
+  "lessonPlanTitle": "Lesson Plan",
+  "@lessonPlanTitle": {
+    "description": "Lesson Plan tool title (app bar and dashboard tile)."
+  },
+  "lessonPlanSubtitle": "Plan a full 5E lesson",
+  "@lessonPlanSubtitle": {
+    "description": "Lesson Plan dashboard tile subtitle."
+  },
+  "lessonPlanEmpty": "Add a topic and tap Generate to build a 5E lesson plan.",
+  "@lessonPlanEmpty": {
+    "description": "Lesson Plan idle/empty state before generating."
+  },
+  "lessonPlanTopicLabel": "Topic",
+  "@lessonPlanTopicLabel": {
+    "description": "Label for the required lesson topic field."
+  },
+  "lessonPlanTopicHint": "For example, Photosynthesis",
+  "@lessonPlanTopicHint": {
+    "description": "Placeholder for the lesson topic field."
+  },
+  "lessonPlanTopicError": "Please enter a topic to plan.",
+  "@lessonPlanTopicError": {
+    "description": "Validation shown when the topic field is empty."
+  },
+  "lessonPlanGradeLabel": "Grade levels",
+  "@lessonPlanGradeLabel": {
+    "description": "Label for the multi-select grade levels chips."
+  },
+  "lessonPlanSubjectLabel": "Subject",
+  "@lessonPlanSubjectLabel": {
+    "description": "Label for the subject selector."
+  },
+  "lessonPlanSubjectAny": "Any subject",
+  "@lessonPlanSubjectAny": {
+    "description": "Default option meaning no specific subject was chosen."
+  },
+  "lessonPlanResourceLabel": "Classroom resources",
+  "@lessonPlanResourceLabel": {
+    "description": "Label for the resource-level segmented control."
+  },
+  "lessonPlanResourceLow": "Low",
+  "@lessonPlanResourceLow": {
+    "description": "Resource level: few materials available."
+  },
+  "lessonPlanResourceMedium": "Medium",
+  "@lessonPlanResourceMedium": {
+    "description": "Resource level: some materials available."
+  },
+  "lessonPlanResourceHigh": "High",
+  "@lessonPlanResourceHigh": {
+    "description": "Resource level: well-equipped classroom."
+  },
+  "lessonPlanDifficultyLabel": "Difficulty",
+  "@lessonPlanDifficultyLabel": {
+    "description": "Label for the difficulty segmented control."
+  },
+  "lessonPlanDifficultyRemedial": "Remedial",
+  "@lessonPlanDifficultyRemedial": {
+    "description": "Difficulty: for students who need extra support."
+  },
+  "lessonPlanDifficultyStandard": "Standard",
+  "@lessonPlanDifficultyStandard": {
+    "description": "Difficulty: grade-appropriate level."
+  },
+  "lessonPlanDifficultyAdvanced": "Advanced",
+  "@lessonPlanDifficultyAdvanced": {
+    "description": "Difficulty: for students ready to be stretched."
+  },
+  "lessonPlanRuralLabel": "Use local, everyday examples",
+  "@lessonPlanRuralLabel": {
+    "description": "Toggle label for grounding the plan in rural context."
+  },
+  "lessonPlanRuralHint": "Root activities in familiar rural and community settings.",
+  "@lessonPlanRuralHint": {
+    "description": "Helper text for the rural-context toggle."
+  },
+  "lessonPlanOptional": "Optional",
+  "@lessonPlanOptional": {
+    "description": "Marker on non-required form fields."
+  },
+  "lessonPlanObjectives": "Learning objectives",
+  "@lessonPlanObjectives": {
+    "description": "Result section heading for objectives."
+  },
+  "lessonPlanVocabulary": "Key vocabulary",
+  "@lessonPlanVocabulary": {
+    "description": "Result section heading for vocabulary."
+  },
+  "lessonPlanMaterials": "Materials",
+  "@lessonPlanMaterials": {
+    "description": "Result section heading for materials."
+  },
+  "lessonPlanActivities": "5E activities",
+  "@lessonPlanActivities": {
+    "description": "Result section heading for the 5E activities."
+  },
+  "lessonPlanAssessment": "Assessment",
+  "@lessonPlanAssessment": {
+    "description": "Result section heading for assessment."
+  },
+  "lessonPlanHomework": "Homework",
+  "@lessonPlanHomework": {
+    "description": "Result section heading for homework."
+  },
+  "lessonPlanTeacherTip": "Teacher tip",
+  "@lessonPlanTeacherTip": {
+    "description": "Label above an activity's teacher tip."
+  },
+  "lessonPlanUnderstandingCheck": "Check for understanding",
+  "@lessonPlanUnderstandingCheck": {
+    "description": "Label above an activity's understanding check."
+  },
+  "lessonPlanNoteLabel": "A note before you begin",
+  "@lessonPlanNoteLabel": {
+    "description": "Heading of the lenient validation-warning banner."
+  },
+  "lessonPlanUpgradeTitle": "A higher plan is needed",
+  "@lessonPlanUpgradeTitle": {
+    "description": "Title shown when the API returns 403 PLAN_UPGRADE_REQUIRED."
+  },
+  "lessonPlanUpgradeBody": "Lesson planning is part of a higher plan. Please upgrade to keep generating plans.",
+  "@lessonPlanUpgradeBody": {
+    "description": "Body for the upgrade-required state."
+  },
+  "lessonPlanLimitTitle": "You have reached your limit",
+  "@lessonPlanLimitTitle": {
+    "description": "Title shown when the API returns 429 usage/daily limit."
+  },
+  "lessonPlanLimitBody": "You have used your lesson plans for now. Please try again later or upgrade your plan.",
+  "@lessonPlanLimitBody": {
+    "description": "Body for the limit-reached state."
+  },
+  "lessonPlanSeePricing": "See plans and pricing",
+  "@lessonPlanSeePricing": {
+    "description": "Action on the upgrade / limit prompts, opening the pricing page."
+  },
+  "lessonPlanRephrase": "We could not build a plan from that. Please rephrase the topic and try again.",
+  "@lessonPlanRephrase": {
+    "description": "Shown on a 400 invalid-input response."
+  },
+  "lessonPlanBusy": "The assistant is busy right now. Please try again in a moment.",
+  "@lessonPlanBusy": {
+    "description": "Shown on a 503 busy/quota response."
+  },
+  "lessonPlanTimeout": "This is taking longer than expected. Please try again.",
+  "@lessonPlanTimeout": {
+    "description": "Shown when the request times out."
+  },
+  "lessonPlanSignIn": "Please sign in again to use this tool.",
+  "@lessonPlanSignIn": {
+    "description": "Shown on a 401 unauthorized response."
+  },
+  "quizTitle": "Quiz",
+  "@quizTitle": {
+    "description": "Quiz Generator screen title and tool-tile title."
+  },
+  "quizSubtitle": "Build a quiz in three difficulty levels",
+  "@quizSubtitle": {
+    "description": "Quiz tool-tile subtitle on the dashboard and create palette."
+  },
+  "quizEmpty": "Add a topic and tap Generate to build a quiz.",
+  "@quizEmpty": {
+    "description": "Quiz idle/empty state before generating."
+  },
+  "quizTopicLabel": "Topic",
+  "@quizTopicLabel": {
+    "description": "Label for the quiz topic field."
+  },
+  "quizTopicHint": "For example, Fractions",
+  "@quizTopicHint": {
+    "description": "Placeholder for the quiz topic field."
+  },
+  "quizTopicError": "Please enter a topic for the quiz.",
+  "@quizTopicError": {
+    "description": "Validation shown when the topic field is empty."
+  },
+  "quizNumQuestionsLabel": "Number of questions",
+  "@quizNumQuestionsLabel": {
+    "description": "Label for the question-count stepper."
+  },
+  "quizFewerQuestions": "Fewer questions",
+  "@quizFewerQuestions": {
+    "description": "Tooltip on the stepper decrement button."
+  },
+  "quizMoreQuestions": "More questions",
+  "@quizMoreQuestions": {
+    "description": "Tooltip on the stepper increment button."
+  },
+  "quizTypesLabel": "Question types",
+  "@quizTypesLabel": {
+    "description": "Label for the question-type chips."
+  },
+  "quizTypesError": "Please choose at least one question type.",
+  "@quizTypesError": {
+    "description": "Validation shown when no question type is selected."
+  },
+  "quizTypeMultipleChoice": "Multiple choice",
+  "@quizTypeMultipleChoice": {
+    "description": "Question type: multiple_choice."
+  },
+  "quizTypeFillInTheBlanks": "Fill in the blanks",
+  "@quizTypeFillInTheBlanks": {
+    "description": "Question type: fill_in_the_blanks."
+  },
+  "quizTypeShortAnswer": "Short answer",
+  "@quizTypeShortAnswer": {
+    "description": "Question type: short_answer."
+  },
+  "quizTypeTrueFalse": "True or false",
+  "@quizTypeTrueFalse": {
+    "description": "Question type: true_false."
+  },
+  "quizGradeLabel": "Grade level",
+  "@quizGradeLabel": {
+    "description": "Label for the quiz grade dropdown."
+  },
+  "quizGradeAny": "Any grade",
+  "@quizGradeAny": {
+    "description": "Dropdown entry that leaves the grade unset."
+  },
+  "quizSubjectLabel": "Subject",
+  "@quizSubjectLabel": {
+    "description": "Label for the quiz subject dropdown."
+  },
+  "quizSubjectAny": "Any subject",
+  "@quizSubjectAny": {
+    "description": "Dropdown entry that leaves the subject unset."
+  },
+  "quizDifficultyLabel": "Difficulty",
+  "@quizDifficultyLabel": {
+    "description": "Label for the target-difficulty chips."
+  },
+  "quizDifficultyHint": "Leave this on all levels to get an easy, a medium and a hard version.",
+  "@quizDifficultyHint": {
+    "description": "Explains what the difficulty selector does."
+  },
+  "quizDifficultyAll": "All levels",
+  "@quizDifficultyAll": {
+    "description": "Difficulty chip that sends no targetDifficulty, returning all three variants."
+  },
+  "quizDifficultyEasy": "Easy",
+  "@quizDifficultyEasy": {
+    "description": "Difficulty: easy."
+  },
+  "quizDifficultyMedium": "Medium",
+  "@quizDifficultyMedium": {
+    "description": "Difficulty: medium."
+  },
+  "quizDifficultyHard": "Hard",
+  "@quizDifficultyHard": {
+    "description": "Difficulty: hard."
+  },
+  "quizBloomsLabel": "Thinking skills",
+  "@quizBloomsLabel": {
+    "description": "Label for the Bloom's taxonomy chips."
+  },
+  "quizBloomsHint": "Choose the kinds of thinking the questions should ask for.",
+  "@quizBloomsHint": {
+    "description": "Explains the Bloom's taxonomy selector in plain language."
+  },
+  "quizOptional": "Optional",
+  "@quizOptional": {
+    "description": "Marks a quiz form field as optional."
+  },
+  "quizQuestionCount": "{count, plural, =1{1 question} other{{count} questions}}",
+  "@quizQuestionCount": {
+    "description": "Question count shown in the result header meta row.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "quizShowAnswer": "Show answer",
+  "@quizShowAnswer": {
+    "description": "Reveals one question’s correct answer."
+  },
+  "quizHideAnswer": "Hide answer",
+  "@quizHideAnswer": {
+    "description": "Hides one question’s correct answer again."
+  },
+  "quizShowAllAnswers": "Show all answers",
+  "@quizShowAllAnswers": {
+    "description": "Reveals every answer in the selected difficulty."
+  },
+  "quizHideAllAnswers": "Hide all answers",
+  "@quizHideAllAnswers": {
+    "description": "Hides every answer in the selected difficulty."
+  },
+  "quizCorrectAnswer": "Correct answer",
+  "@quizCorrectAnswer": {
+    "description": "Label above a revealed correct answer."
+  },
+  "quizExplanation": "Why",
+  "@quizExplanation": {
+    "description": "Label above a revealed answer explanation."
+  },
+  "quizTeacherInstructions": "How to run this in class",
+  "@quizTeacherInstructions": {
+    "description": "Heading of the model's teacher instructions block."
+  },
+  "quizNoteLabel": "A note before you begin",
+  "@quizNoteLabel": {
+    "description": "Heading of the lenient validation-warning banner."
+  },
+  "quizNoQuestions": "No questions came back for that topic. Please try a different topic.",
+  "@quizNoQuestions": {
+    "description": "Shown when the response carried no usable variants."
+  },
+  "quizUpgradeTitle": "A higher plan is needed",
+  "@quizUpgradeTitle": {
+    "description": "Title shown when the API returns 403 PLAN_UPGRADE_REQUIRED."
+  },
+  "quizUpgradeBody": "Quiz generation is part of a higher plan. Please upgrade to keep building quizzes.",
+  "@quizUpgradeBody": {
+    "description": "Body for the upgrade-required state."
+  },
+  "quizLimitTitle": "You have reached your limit",
+  "@quizLimitTitle": {
+    "description": "Title shown when the API returns 429 usage/daily limit."
+  },
+  "quizLimitBody": "You have used your quizzes for now. Please try again later or upgrade your plan.",
+  "@quizLimitBody": {
+    "description": "Body for the limit-reached state."
+  },
+  "quizSeePricing": "See plans and pricing",
+  "@quizSeePricing": {
+    "description": "Action on the upgrade / limit prompts, opening the pricing page."
+  },
+  "quizRephrase": "We could not build a quiz from that. Please rephrase the topic and try again.",
+  "@quizRephrase": {
+    "description": "Shown on a 400 invalid-input response."
+  },
+  "quizBusy": "The assistant is busy right now. Please try again in a moment.",
+  "@quizBusy": {
+    "description": "Shown on a 503 busy/quota response."
+  },
+  "quizTimeout": "This is taking longer than expected. Please try again.",
+  "@quizTimeout": {
+    "description": "Shown when the request times out."
+  },
+  "quizSignIn": "Please sign in again to use this tool.",
+  "@quizSignIn": {
+    "description": "Shown on a 401 unauthorized response."
+  },
+  "instantAnswerTitle": "Instant Answer",
+  "@instantAnswerTitle": {
+    "description": "Instant Answer screen title and tool-tile title."
+  },
+  "instantAnswerSubtitle": "Ask any classroom question",
+  "@instantAnswerSubtitle": {
+    "description": "Instant Answer tool-tile subtitle on the dashboard and create palette."
+  },
+  "instantAnswerAction": "Get answer",
+  "@instantAnswerAction": {
+    "description": "Submit button on the Instant Answer form."
+  },
+  "instantAnswerEmpty": "Ask a question and tap Get answer.",
+  "@instantAnswerEmpty": {
+    "description": "Instant Answer idle/empty state before asking."
+  },
+  "instantAnswerQuestionLabel": "Your question",
+  "@instantAnswerQuestionLabel": {
+    "description": "Label for the required question field."
+  },
+  "instantAnswerQuestionHint": "For example, Why does the moon change shape?",
+  "@instantAnswerQuestionHint": {
+    "description": "Placeholder for the question field."
+  },
+  "instantAnswerQuestionError": "Please enter a question.",
+  "@instantAnswerQuestionError": {
+    "description": "Validation shown when the question field is empty."
+  },
+  "instantAnswerGradeLabel": "Grade level",
+  "@instantAnswerGradeLabel": {
+    "description": "Label for the Instant Answer grade dropdown."
+  },
+  "instantAnswerGradeAny": "Any grade",
+  "@instantAnswerGradeAny": {
+    "description": "Dropdown entry that leaves the grade unset."
+  },
+  "instantAnswerSubjectLabel": "Subject",
+  "@instantAnswerSubjectLabel": {
+    "description": "Label for the Instant Answer subject dropdown."
+  },
+  "instantAnswerSubjectAny": "Any subject",
+  "@instantAnswerSubjectAny": {
+    "description": "Dropdown entry that leaves the subject unset."
+  },
+  "instantAnswerOptional": "Optional",
+  "@instantAnswerOptional": {
+    "description": "Marks an Instant Answer form field as optional."
+  },
+  "instantAnswerVideoTitle": "Watch a related video",
+  "@instantAnswerVideoTitle": {
+    "description": "Title of the card that opens the model's videoSuggestionUrl."
+  },
+  "instantAnswerVideoBody": "Opens in your browser, outside the app.",
+  "@instantAnswerVideoBody": {
+    "description": "Tells the teacher where the video card leads before they leave the app."
+  },
+  "instantAnswerNoAnswer": "No answer came back for that question. Please rephrase it and try again.",
+  "@instantAnswerNoAnswer": {
+    "description": "Shown when the response carried no usable answer text."
+  },
+  "instantAnswerSeePricing": "See plans and pricing",
+  "@instantAnswerSeePricing": {
+    "description": "Action on the limit and upgrade prompts; opens the pricing page."
+  },
+  "instantAnswerDailyLimitTitle": "That is all your questions for today",
+  "@instantAnswerDailyLimitTitle": {
+    "description": "Title shown when the API returns 429 DAILY_LIMIT_REACHED."
+  },
+  "instantAnswerDailyLimitBody": "Your plan includes a set number of instant answers each day. Your questions reset tomorrow, or you can raise the daily limit on a higher plan.",
+  "@instantAnswerDailyLimitBody": {
+    "description": "Body for the daily-limit state. Retrying cannot help, so no retry is offered."
+  },
+  "instantAnswerLimitTitle": "You have reached your limit",
+  "@instantAnswerLimitTitle": {
+    "description": "Title shown when the API returns 429 USAGE_LIMIT_REACHED."
+  },
+  "instantAnswerLimitBody": "You have used your instant answers for this month. Your questions reset next month, or you can raise the limit on a higher plan.",
+  "@instantAnswerLimitBody": {
+    "description": "Body for the monthly usage-limit state."
+  },
+  "instantAnswerUpgradeTitle": "A higher plan is needed",
+  "@instantAnswerUpgradeTitle": {
+    "description": "Title shown when the API returns 403 PLAN_UPGRADE_REQUIRED."
+  },
+  "instantAnswerUpgradeBody": "Instant answers are part of a higher plan. Please upgrade to keep asking questions.",
+  "@instantAnswerUpgradeBody": {
+    "description": "Body for the upgrade-required state."
+  },
+  "instantAnswerRephrase": "We could not answer that. Please rephrase the question and try again.",
+  "@instantAnswerRephrase": {
+    "description": "Shown on a 400 invalid-input response."
+  },
+  "instantAnswerBusy": "The assistant is busy right now. Please try again in a moment.",
+  "@instantAnswerBusy": {
+    "description": "Shown on a 503 busy response with no Retry-After."
+  },
+  "instantAnswerBusyRetryAfter": "{seconds, plural, =1{The assistant is busy right now. Please try again in about 1 second.} other{The assistant is busy right now. Please try again in about {seconds} seconds.}}",
+  "@instantAnswerBusyRetryAfter": {
+    "description": "Shown on a 503 busy response that carried Retry-After.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "instantAnswerTimeout": "This is taking longer than expected. Please try again.",
+  "@instantAnswerTimeout": {
+    "description": "Shown when the request times out."
+  },
+  "instantAnswerSignIn": "Please sign in again to use this tool.",
+  "@instantAnswerSignIn": {
+    "description": "Shown on a 401 unauthorized response."
+  },
+  "settingsTitle": "Settings",
+  "@settingsTitle": {
+    "description": "Settings screen title and the tooltip on the gear action."
+  },
+  "settingsAppearanceTitle": "Appearance",
+  "@settingsAppearanceTitle": {
+    "description": "Section header for the theme selector."
+  },
+  "settingsThemeSystem": "Match my device",
+  "@settingsThemeSystem": {
+    "description": "Theme option: follow the device light/dark setting."
+  },
+  "settingsThemeLight": "Light",
+  "@settingsThemeLight": {
+    "description": "Theme option: always light."
+  },
+  "settingsThemeDark": "Dark",
+  "@settingsThemeDark": {
+    "description": "Theme option: always dark."
+  },
+  "settingsLanguageHint": "Sets the app language and the language your teaching material is written in.",
+  "@settingsLanguageHint": {
+    "description": "Explains that the language choice drives both the UI and the AI output language."
+  },
+  "settingsNotificationsTitle": "Notifications",
+  "@settingsNotificationsTitle": {
+    "description": "Section header for the notifications switch."
+  },
+  "settingsNotificationsLabel": "Reminders and updates",
+  "@settingsNotificationsLabel": {
+    "description": "Label on the notifications switch."
+  },
+  "settingsNotificationsHint": "Hear about new teaching tools and your saved work.",
+  "@settingsNotificationsHint": {
+    "description": "Helper text under the notifications switch."
+  },
+  "settingsVoiceModeTitle": "Voice mode",
+  "@settingsVoiceModeTitle": {
+    "description": "Section header for the VIDYA voice-mode switch."
+  },
+  "settingsVoiceModeLabel": "Live voice (beta)",
+  "@settingsVoiceModeLabel": {
+    "description": "Label on the switch that turns on the real-time Gemini Live voice mode."
+  },
+  "settingsVoiceModeHint": "Speak with VIDYA in real time. When off, VIDYA listens, then replies one turn at a time.",
+  "@settingsVoiceModeHint": {
+    "description": "Helper text under the live voice switch explaining live vs turn-based voice."
+  },
+  "settingsProfileTitle": "Teaching profile",
+  "@settingsProfileTitle": {
+    "description": "Section header for the board, qualifications and role fields."
+  },
+  "settingsProfileHint": "This helps us match your material to your board and classroom.",
+  "@settingsProfileHint": {
+    "description": "Explains why the teaching profile fields are asked for."
+  },
+  "settingsBoardLabel": "Education board",
+  "@settingsBoardLabel": {
+    "description": "Label for the education board dropdown."
+  },
+  "settingsBoardNone": "Not set",
+  "@settingsBoardNone": {
+    "description": "Dropdown entry that leaves the education board unset."
+  },
+  "settingsQualificationsLabel": "Qualifications",
+  "@settingsQualificationsLabel": {
+    "description": "Label for the multi-select qualification chips."
+  },
+  "settingsQualificationsHint": "Choose every qualification you hold.",
+  "@settingsQualificationsHint": {
+    "description": "Helper text explaining the qualification chips are multi-select."
+  },
+  "settingsAdminRoleLabel": "Administrative role",
+  "@settingsAdminRoleLabel": {
+    "description": "Label for the administrative role dropdown."
+  },
+  "settingsAdminRoleNone": "Not set",
+  "@settingsAdminRoleNone": {
+    "description": "Dropdown entry that leaves the administrative role unset."
+  },
+  "settingsRoleHod": "Head of Department (HoD)",
+  "@settingsRoleHod": {
+    "description": "Administrative role: hod."
+  },
+  "settingsRoleCoordinator": "Academic Coordinator",
+  "@settingsRoleCoordinator": {
+    "description": "Administrative role: coordinator."
+  },
+  "settingsRoleExamController": "Exam Controller",
+  "@settingsRoleExamController": {
+    "description": "Administrative role: exam_controller."
+  },
+  "settingsRoleVicePrincipal": "Vice Principal",
+  "@settingsRoleVicePrincipal": {
+    "description": "Administrative role: vice_principal."
+  },
+  "settingsRolePrincipal": "Principal",
+  "@settingsRolePrincipal": {
+    "description": "Administrative role: principal."
+  },
+  "settingsRoleNone": "Teacher, no administrative role",
+  "@settingsRoleNone": {
+    "description": "Administrative role: none. A deliberate answer, unlike 'Not set'."
+  },
+  "settingsSaveProfile": "Save profile",
+  "@settingsSaveProfile": {
+    "description": "Submits the teaching profile fields."
+  },
+  "settingsProfileSaved": "Your teaching profile has been saved.",
+  "@settingsProfileSaved": {
+    "description": "Confirmation after a successful profile save."
+  },
+  "settingsSaveFailed": "We could not save your profile. Please try again.",
+  "@settingsSaveFailed": {
+    "description": "Shown when the profile save request fails."
+  },
+  "settingsSignedOutTitle": "You are signed out",
+  "@settingsSignedOutTitle": {
+    "description": "Title of the card shown in place of the account sections when signed out."
+  },
+  "settingsSignedOutBody": "Sign in to manage your teaching profile and your account. Your language and appearance choices are saved on this device either way.",
+  "@settingsSignedOutBody": {
+    "description": "Body of the signed-out prompt card."
+  },
+  "settingsSignIn": "Sign in",
+  "@settingsSignIn": {
+    "description": "Action on the signed-out prompt card."
+  },
+  "settingsDangerTitle": "Delete account",
+  "@settingsDangerTitle": {
+    "description": "Section header for the destructive account-deletion block."
+  },
+  "settingsDangerBody": "This closes your account and removes your saved work. You will have 30 days to export everything before it is deleted for good.",
+  "@settingsDangerBody": {
+    "description": "Explains the consequences of account deletion before the teacher opens the dialog."
+  },
+  "settingsDeleteAction": "Delete account",
+  "@settingsDeleteAction": {
+    "description": "The destructive button that opens the typed-confirmation dialog."
+  },
+  "settingsDeleteDialogTitle": "Delete your account?",
+  "@settingsDeleteDialogTitle": {
+    "description": "Title of the typed-confirmation dialog."
+  },
+  "settingsDeleteDialogBody": "Your lesson plans, quizzes and profile will be scheduled for deletion. You have 30 days to export your work before it is removed.",
+  "@settingsDeleteDialogBody": {
+    "description": "Body of the typed-confirmation dialog."
+  },
+  "settingsDeleteConfirmPrompt": "Type {word} below to confirm.",
+  "@settingsDeleteConfirmPrompt": {
+    "description": "Tells the teacher which word unlocks the confirm button. The word itself is a safety token and stays in English.",
+    "placeholders": {
+      "word": {
+        "type": "String",
+        "example": "DELETE"
+      }
+    }
+  },
+  "settingsDeleteConfirmLabel": "Confirmation",
+  "@settingsDeleteConfirmLabel": {
+    "description": "Accessible label for the typed-confirmation text field."
+  },
+  "settingsDeleteCancel": "Keep my account",
+  "@settingsDeleteCancel": {
+    "description": "Dismisses the delete dialog without deleting."
+  },
+  "settingsDeleteConfirm": "Delete account",
+  "@settingsDeleteConfirm": {
+    "description": "The destructive confirm button, enabled only once the word is typed."
+  },
+  "settingsDeleteScheduled": "Your account is scheduled for deletion. You have 30 days to export your work.",
+  "@settingsDeleteScheduled": {
+    "description": "Confirmation after the deletion request succeeds."
+  },
+  "settingsDeleteSuccessTitle": "Account scheduled for deletion",
+  "@settingsDeleteSuccessTitle": {
+    "description": "Title of the one-time confirmation dialog shown right after a successful delete-account call, before the teacher is signed out."
+  },
+  "settingsExportDataAction": "Export my data",
+  "@settingsExportDataAction": {
+    "description": "Button on the delete-success dialog that requests the real data export through the authenticated API client, when the delete-account response carried an export path. Shows a spinner while the request is in flight, then hands the returned archive to the OS share sheet."
+  },
+  "settingsExportQueuedMessage": "Your export is too large to prepare right away, so we've queued it instead. Please try again later, or contact support for a copy of your data.",
+  "@settingsExportQueuedMessage": {
+    "description": "Shown when POST /api/export returns a background job instead of the archive itself (only reachable for a very large individual export). Deliberately does not promise an email or an automatic download, because nothing in the backend currently completes that job."
+  },
+  "settingsExportFailedMessage": "Couldn't prepare your export. Please try again.",
+  "@settingsExportFailedMessage": {
+    "description": "Shown when the export request fails for a reason other than reauth (network error, server error, unexpected response shape)."
+  },
+  "settingsDeleteSuccessDone": "Done",
+  "@settingsDeleteSuccessDone": {
+    "description": "Dismisses the delete-success dialog; the teacher is signed out and navigated away immediately after."
+  },
+  "settingsDeleteFailed": "We could not delete your account. Please try again.",
+  "@settingsDeleteFailed": {
+    "description": "Shown when the deletion request fails for a non-auth reason."
+  },
+  "settingsReauthTitle": "Please sign in again",
+  "@settingsReauthTitle": {
+    "description": "Title shown when delete-account returns 401 reauth_required."
+  },
+  "settingsReauthBody": "For your security, deleting an account needs a fresh sign-in. Please sign out, sign in again, and delete within five minutes.",
+  "@settingsReauthBody": {
+    "description": "Body for the re-auth-required state on account deletion."
+  },
+  "profilePlanLabel": "Plan",
+  "@profilePlanLabel": {
+    "description": "Label for the plan badge on the Profile identity card."
+  },
+  "profilePlanFree": "Free",
+  "@profilePlanFree": {
+    "description": "Plan badge for the free tier."
+  },
+  "profilePlanPro": "Pro",
+  "@profilePlanPro": {
+    "description": "Plan badge for the pro tier."
+  },
+  "profilePlanGold": "Gold",
+  "@profilePlanGold": {
+    "description": "Plan badge for the gold tier."
+  },
+  "profilePlanPremium": "Premium",
+  "@profilePlanPremium": {
+    "description": "Plan badge for the premium tier."
+  },
+  "profilePlanUnknown": "Not available",
+  "@profilePlanUnknown": {
+    "description": "Plan badge when there is no signed-in token to read the plan claim from. Deliberately not 'Free': an unknown plan must not be stated as a fact."
+  },
+  "profileNoName": "Your profile",
+  "@profileNoName": {
+    "description": "Identity card heading when the teacher has not set a display name yet."
+  },
+  "profileSectionAbout": "About you",
+  "@profileSectionAbout": {
+    "description": "Section header for name and school fields."
+  },
+  "profileSectionTeaching": "What you teach",
+  "@profileSectionTeaching": {
+    "description": "Section header for board, subjects and classes."
+  },
+  "profileSectionLocation": "Where you teach",
+  "@profileSectionLocation": {
+    "description": "Section header for state, district and PIN code."
+  },
+  "profileSectionContact": "How we reach you",
+  "@profileSectionContact": {
+    "description": "Section header for the phone number field."
+  },
+  "profileNameLabel": "Your name",
+  "@profileNameLabel": {
+    "description": "Label for the display name field."
+  },
+  "profileNameHint": "This is the name other teachers see on work you share.",
+  "@profileNameHint": {
+    "description": "Helper text for the display name field."
+  },
+  "profileNameInvalid": "Please use a shorter name.",
+  "@profileNameInvalid": {
+    "description": "Validation error when the display name exceeds the length limit."
+  },
+  "profileSchoolLabel": "School name",
+  "@profileSchoolLabel": {
+    "description": "Label for the school name field."
+  },
+  "profileBoardCategoryLabel": "Board type",
+  "@profileBoardCategoryLabel": {
+    "description": "Label for the coarse board-family picker that narrows the board list."
+  },
+  "profileBoardCategoryHint": "Choose a board type to shorten the list below.",
+  "@profileBoardCategoryHint": {
+    "description": "Helper text for the board category chips."
+  },
+  "profileBoardCategoryState": "State board",
+  "@profileBoardCategoryState": {
+    "description": "The state-board option in the board type picker. CBSE and ICSE / ISC are proper nouns and are not translated."
+  },
+  "profileStateLabel": "State",
+  "@profileStateLabel": {
+    "description": "Label for the state picker."
+  },
+  "profileStateNone": "Not set",
+  "@profileStateNone": {
+    "description": "The unset option in the state picker."
+  },
+  "profileDistrictLabel": "District",
+  "@profileDistrictLabel": {
+    "description": "Label for the district field."
+  },
+  "profileDistrictHint": "The district your school is in.",
+  "@profileDistrictHint": {
+    "description": "Helper text for the district field."
+  },
+  "profileSubjectsLabel": "Subjects you teach",
+  "@profileSubjectsLabel": {
+    "description": "Label for the multi-select subject chips."
+  },
+  "profileSubjectsHint": "Choose as many as you need.",
+  "@profileSubjectsHint": {
+    "description": "Helper text for the subject chips."
+  },
+  "profileGradesLabel": "Classes you teach",
+  "@profileGradesLabel": {
+    "description": "Label for the multi-select grade-level chips."
+  },
+  "profileGradesHint": "Choose as many as you need.",
+  "@profileGradesHint": {
+    "description": "Helper text for the grade-level chips."
+  },
+  "profileLanguageHint": "This is the same language choice as the rest of the app, so changing it here changes it everywhere.",
+  "@profileLanguageHint": {
+    "description": "Explains that the profile language field is the app's single language source of truth, not a second setting."
+  },
+  "profilePhoneLabel": "Mobile number",
+  "@profilePhoneLabel": {
+    "description": "Label for the phone number field."
+  },
+  "profilePhoneHint": "Optional. Ten digits, with or without +91.",
+  "@profilePhoneHint": {
+    "description": "Helper text for the phone number field."
+  },
+  "profilePhoneInvalid": "Please enter a ten digit Indian mobile number.",
+  "@profilePhoneInvalid": {
+    "description": "Validation error for a phone number that is not a valid Indian mobile number."
+  },
+  "profilePincodeLabel": "PIN code",
+  "@profilePincodeLabel": {
+    "description": "Label for the PIN code field."
+  },
+  "profilePincodeHint": "Optional. Six digits.",
+  "@profilePincodeHint": {
+    "description": "Helper text for the PIN code field."
+  },
+  "profilePincodeInvalid": "Please enter a six digit PIN code.",
+  "@profilePincodeInvalid": {
+    "description": "Validation error for a PIN code that is not six digits."
+  },
+  "profileEmptyTitle": "Your profile is empty",
+  "@profileEmptyTitle": {
+    "description": "Title of the empty state, shown when the teacher has no saved profile yet."
+  },
+  "profileEmptyBody": "Add your school and your classes, and every lesson plan and quiz you make will arrive ready for your classroom.",
+  "@profileEmptyBody": {
+    "description": "Body of the empty state, explaining what filling in the profile is worth."
+  },
+  "profileLoadFailed": "We could not open your profile. Please try again.",
+  "@profileLoadFailed": {
+    "description": "Error state when the profile read fails for a non-auth, non-network reason."
+  },
+  "profileSignedOutTitle": "You are signed out",
+  "@profileSignedOutTitle": {
+    "description": "Title of the signed-out state on the Profile screen."
+  },
+  "profileSignedOutBody": "Sign in to see and edit your teaching profile.",
+  "@profileSignedOutBody": {
+    "description": "Body of the signed-out state on the Profile screen."
+  },
+  "profileSaveSignIn": "Please sign in again to save your profile.",
+  "@profileSaveSignIn": {
+    "description": "Shown when a save is rejected because the session has expired."
+  },
+  "meTitle": "Me",
+  "@meTitle": {
+    "description": "App bar title of the Me tab: the operating-system hub (profile summary, plan and usage, defaults, settings)."
+  },
+  "mePlanUsageTitle": "Plan & usage",
+  "@mePlanUsageTitle": {
+    "description": "Section header over the plan tier and per-feature monthly usage on the Me hub."
+  },
+  "mePlanUsageSubtitle": "How much you have used this month.",
+  "@mePlanUsageSubtitle": {
+    "description": "One-line explanation above the usage rows: the counts are for the current calendar month."
+  },
+  "meUsageValue": "{used} / {limit}",
+  "@meUsageValue": {
+    "description": "A metered feature's usage, e.g. '3 / 10' meaning 3 of 10 used this month. Keep the numbers and the slash; the server supplies the values.",
+    "placeholders": {
+      "used": {
+        "type": "int",
+        "example": "3"
+      },
+      "limit": {
+        "type": "int",
+        "example": "10"
+      }
+    }
+  },
+  "meUsageUnlimited": "Unlimited",
+  "@meUsageUnlimited": {
+    "description": "Shown in place of a count/bar for a feature with no monthly cap on the current plan."
+  },
+  "meUsageUnavailable": "We could not load your usage. Please try again.",
+  "@meUsageUnavailable": {
+    "description": "Shown inside the Plan & usage card when the usage read fails while the rest of the hub is signed in."
+  },
+  "meDefaultsTitle": "Defaults",
+  "@meDefaultsTitle": {
+    "description": "Section header over the education board and app language, which shape the material SahayakAI generates."
+  },
+  "mePrivacyTitle": "Privacy & settings",
+  "@mePrivacyTitle": {
+    "description": "Section header over the rows that link to Settings and to signing out."
+  },
+  "meRoleTeacher": "Teacher",
+  "@meRoleTeacher": {
+    "description": "Default role shown under the teacher's name on the Me hub when they hold no administrative role."
+  },
+  "usageFeatureAvatar": "AI avatars",
+  "@usageFeatureAvatar": {
+    "description": "Usage-row name for the AI teaching-avatar feature (a gated feature that is not one of the tool screens)."
+  },
+  "usageFeatureVoiceToText": "Voice to text",
+  "@usageFeatureVoiceToText": {
+    "description": "Usage-row name for the cloud voice-to-text (speech recognition) feature."
+  },
+  "usageFeatureAssistant": "VIDYA assistant",
+  "@usageFeatureAssistant": {
+    "description": "Usage-row name for the VIDYA chat assistant. 'VIDYA' is a product name; keep it as-is."
+  },
+  "imageInputHint": "Add a clear photo of the textbook page.",
+  "@imageInputHint": {
+    "description": "Empty-state prompt inside the image picker well."
+  },
+  "imageInputTakePhoto": "Take photo",
+  "@imageInputTakePhoto": {
+    "description": "Button that opens the camera to capture an image."
+  },
+  "imageInputChooseGallery": "Choose from gallery",
+  "@imageInputChooseGallery": {
+    "description": "Button that opens the photo gallery to choose an image."
+  },
+  "imageInputRetake": "Retake photo",
+  "@imageInputRetake": {
+    "description": "Camera button label once an image is already chosen; replaces it."
+  },
+  "imageInputChangeGallery": "Choose another",
+  "@imageInputChangeGallery": {
+    "description": "Gallery button label once an image is already chosen; replaces it."
+  },
+  "imageInputRemove": "Remove photo",
+  "@imageInputRemove": {
+    "description": "Clears the currently chosen image."
+  },
+  "imageInputPreviewLabel": "Chosen image preview",
+  "@imageInputPreviewLabel": {
+    "description": "Accessibility label for the thumbnail of the chosen image."
+  },
+  "imageInputSizeOfMax": "{used} of {max}",
+  "@imageInputSizeOfMax": {
+    "description": "Size counter under the image preview, e.g. '2.4 MB of 14 MB'.",
+    "placeholders": {
+      "used": {
+        "type": "String",
+        "example": "2.4 MB"
+      },
+      "max": {
+        "type": "String",
+        "example": "14 MB"
+      }
+    }
+  },
+  "imageInputTooLarge": "This photo is too large. Please choose one under {max}.",
+  "@imageInputTooLarge": {
+    "description": "Shown when the chosen image is over the backend size cap.",
+    "placeholders": {
+      "max": {
+        "type": "String",
+        "example": "14 MB"
+      }
+    }
+  },
+  "imageInputPermissionDenied": "SahayakAI needs permission to use your camera or photos. Please allow access in your device settings.",
+  "@imageInputPermissionDenied": {
+    "description": "Shown when the camera or photo-library permission is denied."
+  },
+  "imageInputFailed": "We could not open that image. Please try again.",
+  "@imageInputFailed": {
+    "description": "Shown when picking or reading the image fails."
+  },
+  "worksheetTitle": "Worksheet",
+  "@worksheetTitle": {
+    "description": "Worksheet Wizard screen title and tool-tile title."
+  },
+  "worksheetSubtitle": "Build a worksheet from a textbook photo",
+  "@worksheetSubtitle": {
+    "description": "Worksheet tool-tile subtitle on the dashboard and create palette."
+  },
+  "worksheetEmpty": "Add a textbook photo and a prompt, then tap Generate.",
+  "@worksheetEmpty": {
+    "description": "Worksheet idle/empty state before generating."
+  },
+  "worksheetImageLabel": "Textbook page photo",
+  "@worksheetImageLabel": {
+    "description": "Label for the required image input."
+  },
+  "worksheetImageHint": "The worksheet is built from this page.",
+  "@worksheetImageHint": {
+    "description": "Helper text under the image input label."
+  },
+  "toolImageOptionalLabel": "Textbook page photo (optional)",
+  "@toolImageOptionalLabel": {
+    "description": "Label for the optional textbook-page image input shared by Lesson Plan and Quiz."
+  },
+  "toolImageOptionalHint": "Add a page photo and it becomes the main source, or leave blank.",
+  "@toolImageOptionalHint": {
+    "description": "Helper text under the optional image input label."
+  },
+  "worksheetImageError": "Please add a photo of the textbook page.",
+  "@worksheetImageError": {
+    "description": "Validation shown when no image has been chosen."
+  },
+  "worksheetPromptLabel": "What worksheet do you need?",
+  "@worksheetPromptLabel": {
+    "description": "Label for the required prompt field."
+  },
+  "worksheetPromptHint": "For example, Make a multiplication worksheet from this page",
+  "@worksheetPromptHint": {
+    "description": "Placeholder for the worksheet prompt field."
+  },
+  "worksheetPromptError": "Please describe the worksheet you need.",
+  "@worksheetPromptError": {
+    "description": "Validation shown when the prompt field is empty."
+  },
+  "worksheetGradeLabel": "Grade level",
+  "@worksheetGradeLabel": {
+    "description": "Label for the worksheet grade dropdown."
+  },
+  "worksheetGradeAny": "Any grade",
+  "@worksheetGradeAny": {
+    "description": "Dropdown entry that leaves the grade unset."
+  },
+  "worksheetSubjectLabel": "Subject",
+  "@worksheetSubjectLabel": {
+    "description": "Label for the worksheet subject dropdown."
+  },
+  "worksheetSubjectAny": "Any subject",
+  "@worksheetSubjectAny": {
+    "description": "Dropdown entry that leaves the subject unset."
+  },
+  "worksheetOptional": "Optional",
+  "@worksheetOptional": {
+    "description": "Marks a worksheet form field as optional."
+  },
+  "worksheetObjectives": "Learning objectives",
+  "@worksheetObjectives": {
+    "description": "Result section heading for the worksheet's learning objectives."
+  },
+  "worksheetInstructions": "Instructions for students",
+  "@worksheetInstructions": {
+    "description": "Result section heading for the student instructions."
+  },
+  "worksheetActivities": "Activities",
+  "@worksheetActivities": {
+    "description": "Result section heading for the worksheet activities."
+  },
+  "worksheetActivityQuestion": "Question",
+  "@worksheetActivityQuestion": {
+    "description": "Activity type badge: question."
+  },
+  "worksheetActivityPuzzle": "Puzzle",
+  "@worksheetActivityPuzzle": {
+    "description": "Activity type badge: puzzle."
+  },
+  "worksheetActivityCreativeTask": "Creative task",
+  "@worksheetActivityCreativeTask": {
+    "description": "Activity type badge: creative_task."
+  },
+  "worksheetExplanation": "For the teacher",
+  "@worksheetExplanation": {
+    "description": "Label above an activity's pedagogical explanation."
+  },
+  "worksheetChalkboardNote": "On the blackboard",
+  "@worksheetChalkboardNote": {
+    "description": "Label above an activity's blackboard note."
+  },
+  "worksheetAnswerKey": "Answer key",
+  "@worksheetAnswerKey": {
+    "description": "Result section heading for the answer key."
+  },
+  "worksheetNoContent": "No worksheet came back for that page. Please try a clearer photo or a different prompt.",
+  "@worksheetNoContent": {
+    "description": "Shown when the response carried no usable worksheet."
+  },
+  "worksheetSave": "Save to Library",
+  "@worksheetSave": {
+    "description": "Label for the button that saves the worksheet to the library."
+  },
+  "worksheetSaving": "Saving",
+  "@worksheetSaving": {
+    "description": "Label while the save request is in flight."
+  },
+  "worksheetSaved": "Saved to your Library",
+  "@worksheetSaved": {
+    "description": "Confirmation shown once the worksheet is saved."
+  },
+  "worksheetSaveFailedTitle": "Could not save",
+  "@worksheetSaveFailedTitle": {
+    "description": "Title of the inline error shown when a save fails."
+  },
+  "worksheetSaveFailedBody": "We could not save this worksheet to your library. Please try again.",
+  "@worksheetSaveFailedBody": {
+    "description": "Body of the inline error shown when a save fails."
+  },
+  "worksheetSaveRetry": "Try saving again",
+  "@worksheetSaveRetry": {
+    "description": "Label for the retry button after a failed save."
+  },
+  "worksheetUpgradeTitle": "A higher plan is needed",
+  "@worksheetUpgradeTitle": {
+    "description": "Title shown when the API returns 403 PLAN_UPGRADE_REQUIRED."
+  },
+  "worksheetUpgradeBody": "Worksheet generation is part of a higher plan. Please upgrade to keep building worksheets.",
+  "@worksheetUpgradeBody": {
+    "description": "Body for the upgrade-required state."
+  },
+  "worksheetLimitTitle": "You have reached your limit",
+  "@worksheetLimitTitle": {
+    "description": "Title shown when the API returns 429 usage/daily limit."
+  },
+  "worksheetLimitBody": "You have used your worksheets for now. Please try again later or upgrade your plan.",
+  "@worksheetLimitBody": {
+    "description": "Body for the limit-reached state."
+  },
+  "worksheetSeePricing": "See plans and pricing",
+  "@worksheetSeePricing": {
+    "description": "Action on the upgrade / limit prompts, opening the pricing page."
+  },
+  "worksheetRephrase": "We could not build a worksheet from that. Please try a clearer photo or rephrase your prompt.",
+  "@worksheetRephrase": {
+    "description": "Shown on a 400 invalid-input response."
+  },
+  "worksheetBusy": "The assistant is busy right now. Please try again in a moment.",
+  "@worksheetBusy": {
+    "description": "Shown on a 503 busy/quota response."
+  },
+  "worksheetTimeout": "This is taking longer than expected. Please try again.",
+  "@worksheetTimeout": {
+    "description": "Shown when the request times out."
+  },
+  "worksheetSignIn": "Please sign in again to use this tool.",
+  "@worksheetSignIn": {
+    "description": "Shown on a 401 unauthorized response."
+  },
+  "rubricTitle": "Rubric",
+  "@rubricTitle": {
+    "description": "Title of the Rubric Generator tool."
+  },
+  "rubricSubtitle": "Build a grading rubric for an assignment",
+  "@rubricSubtitle": {
+    "description": "One-line description of the Rubric Generator tool."
+  },
+  "rubricEmpty": "Describe the assignment, then tap Generate.",
+  "@rubricEmpty": {
+    "description": "Idle/empty state before a rubric is generated."
+  },
+  "rubricAssignmentLabel": "What is the assignment?",
+  "@rubricAssignmentLabel": {
+    "description": "Label for the assignment description field."
+  },
+  "rubricAssignmentHint": "The rubric grades this assignment.",
+  "@rubricAssignmentHint": {
+    "description": "Helper line under the assignment field label."
+  },
+  "rubricAssignmentPlaceholder": "For example, A Class 5 project on renewable energy",
+  "@rubricAssignmentPlaceholder": {
+    "description": "Placeholder for the assignment description field."
+  },
+  "rubricAssignmentError": "Please describe the assignment.",
+  "@rubricAssignmentError": {
+    "description": "Validation error when the assignment description is empty."
+  },
+  "rubricGradeLabel": "Grade level",
+  "@rubricGradeLabel": {
+    "description": "Label for the rubric grade dropdown."
+  },
+  "rubricGradeAny": "Any grade",
+  "@rubricGradeAny": {
+    "description": "The no-grade-selected option in the rubric grade dropdown."
+  },
+  "rubricSubjectLabel": "Subject",
+  "@rubricSubjectLabel": {
+    "description": "Label for the rubric subject dropdown."
+  },
+  "rubricSubjectAny": "Any subject",
+  "@rubricSubjectAny": {
+    "description": "The no-subject-selected option in the rubric subject dropdown."
+  },
+  "rubricOptional": "Optional",
+  "@rubricOptional": {
+    "description": "Marks a rubric form field as optional."
+  },
+  "rubricCriteriaColumn": "Criteria",
+  "@rubricCriteriaColumn": {
+    "description": "Header of the first grid column, listing the criteria."
+  },
+  "rubricPoints": "{points} pts",
+  "@rubricPoints": {
+    "description": "Points badge on a performance level header (e.g. 4 pts).",
+    "placeholders": {
+      "points": {
+        "type": "String"
+      }
+    }
+  },
+  "rubricScrollHint": "Swipe across to see all levels.",
+  "@rubricScrollHint": {
+    "description": "Affordance telling the teacher the grid scrolls sideways."
+  },
+  "rubricNoContent": "No rubric came back for that. Please try a clearer assignment description.",
+  "@rubricNoContent": {
+    "description": "Shown when the response carried no usable rubric."
+  },
+  "rubricUpgradeTitle": "A higher plan is needed",
+  "@rubricUpgradeTitle": {
+    "description": "Title of the 403 upgrade prompt."
+  },
+  "rubricUpgradeBody": "Rubric generation is part of a higher plan. Please upgrade to keep building rubrics.",
+  "@rubricUpgradeBody": {
+    "description": "Body of the 403 upgrade prompt."
+  },
+  "rubricLimitTitle": "You have reached your limit",
+  "@rubricLimitTitle": {
+    "description": "Title of the 429 limit-reached prompt."
+  },
+  "rubricLimitBody": "You have used your rubrics for now. Please try again later or upgrade your plan.",
+  "@rubricLimitBody": {
+    "description": "Body of the 429 limit-reached prompt."
+  },
+  "rubricRephrase": "We could not build a rubric from that. Please rephrase the assignment and try again.",
+  "@rubricRephrase": {
+    "description": "Shown on a 400 invalid-input response."
+  },
+  "rubricBusy": "The assistant is busy right now. Please try again in a moment.",
+  "@rubricBusy": {
+    "description": "Shown on a 503 / server-busy response."
+  },
+  "rubricTimeout": "This is taking longer than expected. Please try again.",
+  "@rubricTimeout": {
+    "description": "Shown when the request times out."
+  },
+  "rubricSignIn": "Please sign in again to use this tool.",
+  "@rubricSignIn": {
+    "description": "Shown on a 401 unauthorized response."
+  },
+  "examPaperTitle": "Exam Paper",
+  "@examPaperTitle": {
+    "description": "Title of the Exam Paper Generator tool."
+  },
+  "examPaperSubtitle": "Build a board-pattern exam paper with answer key",
+  "@examPaperSubtitle": {
+    "description": "One-line description of the Exam Paper Generator tool."
+  },
+  "examPaperEmpty": "Choose a board, grade and subject, then tap Generate.",
+  "@examPaperEmpty": {
+    "description": "Idle/empty state before an exam paper is generated."
+  },
+  "examPaperBoardLabel": "Board",
+  "@examPaperBoardLabel": {
+    "description": "Label for the required education-board dropdown."
+  },
+  "examPaperBoardHint": "Select a board",
+  "@examPaperBoardHint": {
+    "description": "Placeholder shown before a board is chosen."
+  },
+  "examPaperBoardError": "Please choose a board.",
+  "@examPaperBoardError": {
+    "description": "Validation error when no board is selected."
+  },
+  "examPaperGradeLabel": "Grade level",
+  "@examPaperGradeLabel": {
+    "description": "Label for the required grade-level dropdown."
+  },
+  "examPaperGradeHint": "Select a grade",
+  "@examPaperGradeHint": {
+    "description": "Placeholder shown before a grade is chosen."
+  },
+  "examPaperGradeError": "Please choose a grade level.",
+  "@examPaperGradeError": {
+    "description": "Validation error when no grade is selected."
+  },
+  "examPaperSubjectLabel": "Subject",
+  "@examPaperSubjectLabel": {
+    "description": "Label for the required subject dropdown."
+  },
+  "examPaperSubjectHint": "Select a subject",
+  "@examPaperSubjectHint": {
+    "description": "Placeholder shown before a subject is chosen."
+  },
+  "examPaperSubjectError": "Please choose a subject.",
+  "@examPaperSubjectError": {
+    "description": "Validation error when no subject is selected."
+  },
+  "examPaperSubjectOther": "Other subject",
+  "@examPaperSubjectOther": {
+    "description": "Dropdown option that reveals a free-text subject field, for subjects not in the list (e.g. Economics, Business Studies, Political Science)."
+  },
+  "examPaperSubjectOtherLabel": "Subject name",
+  "@examPaperSubjectOtherLabel": {
+    "description": "Label for the free-text field shown when 'Other subject' is chosen."
+  },
+  "examPaperSubjectOtherHint": "For example, Economics",
+  "@examPaperSubjectOtherHint": {
+    "description": "Placeholder in the free-text subject field."
+  },
+  "examPaperSubjectOtherError": "Please enter a subject.",
+  "@examPaperSubjectOtherError": {
+    "description": "Validation error when 'Other subject' is chosen but no subject is typed."
+  },
+  "examPaperChaptersLabel": "Chapters",
+  "@examPaperChaptersLabel": {
+    "description": "Label for the chapters add-chip list."
+  },
+  "examPaperChaptersHint": "Add the chapters to cover. Leave empty for the full syllabus where an official blueprint exists.",
+  "@examPaperChaptersHint": {
+    "description": "Helper line under the chapters field label."
+  },
+  "examPaperChaptersPlaceholder": "For example, Quadratic Equations",
+  "@examPaperChaptersPlaceholder": {
+    "description": "Placeholder in the chapter text field."
+  },
+  "examPaperChaptersAdd": "Add chapter",
+  "@examPaperChaptersAdd": {
+    "description": "Tooltip on the add-chapter button."
+  },
+  "examPaperChaptersError": "Please add at least one chapter for this board, grade and subject.",
+  "@examPaperChaptersError": {
+    "description": "Validation error shown when a non-blueprinted combination has no chapters."
+  },
+  "examPaperDifficultyLabel": "Difficulty",
+  "@examPaperDifficultyLabel": {
+    "description": "Label for the difficulty segmented control."
+  },
+  "examPaperDifficultyEasy": "Easy",
+  "@examPaperDifficultyEasy": {
+    "description": "Easy difficulty option."
+  },
+  "examPaperDifficultyModerate": "Moderate",
+  "@examPaperDifficultyModerate": {
+    "description": "Moderate difficulty option."
+  },
+  "examPaperDifficultyHard": "Hard",
+  "@examPaperDifficultyHard": {
+    "description": "Hard difficulty option."
+  },
+  "examPaperDifficultyMixed": "Mixed",
+  "@examPaperDifficultyMixed": {
+    "description": "Mixed difficulty option (the default)."
+  },
+  "examPaperIncludeAnswerKey": "Include answer key",
+  "@examPaperIncludeAnswerKey": {
+    "description": "Toggle to include an answer key in the paper."
+  },
+  "examPaperIncludeMarkingScheme": "Include marking scheme",
+  "@examPaperIncludeMarkingScheme": {
+    "description": "Toggle to include a marking scheme in the paper."
+  },
+  "examPaperInProgressTitle": "Your paper is being prepared",
+  "@examPaperInProgressTitle": {
+    "description": "Title of the 202 generation-in-progress state."
+  },
+  "examPaperInProgressBody": "A full board paper takes a little longer to build. We are finishing it now and it will be saved for you.",
+  "@examPaperInProgressBody": {
+    "description": "Body of the 202 generation-in-progress state."
+  },
+  "examPaperInProgressLibraryHint": "Open the Library tab in a minute to find your finished paper.",
+  "@examPaperInProgressLibraryHint": {
+    "description": "Points the teacher to the Library tab for the finished paper."
+  },
+  "examPaperMaxMarks": "Max marks {marks}",
+  "@examPaperMaxMarks": {
+    "description": "Badge showing the paper's maximum marks.",
+    "placeholders": {
+      "marks": {
+        "type": "String"
+      }
+    }
+  },
+  "examPaperMarks": "{marks} marks",
+  "@examPaperMarks": {
+    "description": "Badge showing a question's or chapter's marks.",
+    "placeholders": {
+      "marks": {
+        "type": "String"
+      }
+    }
+  },
+  "examPaperSectionMarks": "{marks} marks",
+  "@examPaperSectionMarks": {
+    "description": "Badge showing a section's total marks.",
+    "placeholders": {
+      "marks": {
+        "type": "String"
+      }
+    }
+  },
+  "examPaperPercent": "{value} percent",
+  "@examPaperPercent": {
+    "description": "Badge showing a difficulty band's percentage of the paper.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "examPaperGeneralInstructions": "General instructions",
+  "@examPaperGeneralInstructions": {
+    "description": "Header for the paper's general instructions list."
+  },
+  "examPaperInternalChoice": "Or attempt",
+  "@examPaperInternalChoice": {
+    "description": "Label above an internal-choice (OR) alternative question."
+  },
+  "examPaperAnswerKey": "Answer",
+  "@examPaperAnswerKey": {
+    "description": "Label of the per-question answer block."
+  },
+  "examPaperMarkingScheme": "Marking scheme",
+  "@examPaperMarkingScheme": {
+    "description": "Label of the per-question marking-scheme block."
+  },
+  "examPaperBlueprintTitle": "Blueprint summary",
+  "@examPaperBlueprintTitle": {
+    "description": "Header for the blueprint summary card."
+  },
+  "examPaperBlueprintChapters": "Marks by chapter",
+  "@examPaperBlueprintChapters": {
+    "description": "Sub-header for the chapter-wise mark split."
+  },
+  "examPaperBlueprintDifficulty": "Difficulty split",
+  "@examPaperBlueprintDifficulty": {
+    "description": "Sub-header for the difficulty-wise split."
+  },
+  "examPaperPyqTitle": "Previous-year questions",
+  "@examPaperPyqTitle": {
+    "description": "Header for the prior-year-question sources card."
+  },
+  "examPaperPyqChapterYear": "{chapter} ({year})",
+  "@examPaperPyqChapterYear": {
+    "description": "A PYQ source row with both a chapter and a year.",
+    "placeholders": {
+      "chapter": {
+        "type": "String"
+      },
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "examPaperPyqYear": "Year {year}",
+  "@examPaperPyqYear": {
+    "description": "A PYQ source row with only a year.",
+    "placeholders": {
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "examPaperNoContent": "No exam paper came back for that. Please try fewer chapters or a different subject.",
+  "@examPaperNoContent": {
+    "description": "Shown when the response carried no usable paper."
+  },
+  "examPaperUnstructuredTitle": "We could not structure that paper",
+  "@examPaperUnstructuredTitle": {
+    "description": "Title of the 422 exam_paper_unstructured guidance state."
+  },
+  "examPaperUnstructuredBody": "The assistant could not lay this out as a full paper. Please remove a few chapters and generate again.",
+  "@examPaperUnstructuredBody": {
+    "description": "Body of the 422 exam_paper_unstructured guidance state."
+  },
+  "examPaperUpgradeTitle": "A higher plan is needed",
+  "@examPaperUpgradeTitle": {
+    "description": "Title of the 403 upgrade prompt."
+  },
+  "examPaperUpgradeBody": "Exam paper generation is part of a higher plan. Please upgrade to keep building papers.",
+  "@examPaperUpgradeBody": {
+    "description": "Body of the 403 upgrade prompt."
+  },
+  "examPaperLimitTitle": "You have reached your limit",
+  "@examPaperLimitTitle": {
+    "description": "Title of the 429 limit-reached prompt."
+  },
+  "examPaperLimitBody": "You have used your exam papers for now. Please try again later or upgrade your plan.",
+  "@examPaperLimitBody": {
+    "description": "Body of the 429 limit-reached prompt."
+  },
+  "examPaperRephrase": "We could not build a paper from that. Please adjust the chapters and try again.",
+  "@examPaperRephrase": {
+    "description": "Shown on a 400 invalid-input response."
+  },
+  "examPaperBusy": "The assistant is busy right now. Please try again in a moment.",
+  "@examPaperBusy": {
+    "description": "Shown on a 503 / server-busy response."
+  },
+  "examPaperTimeout": "This is taking longer than expected. Please try again.",
+  "@examPaperTimeout": {
+    "description": "Shown when the request times out."
+  },
+  "examPaperSignIn": "Please sign in again to use this tool.",
+  "@examPaperSignIn": {
+    "description": "Shown on a 401 unauthorized response."
+  },
+  "teacherTrainingTitle": "Teaching Coach",
+  "@teacherTrainingTitle": {
+    "description": "Title of the Teaching Coach (teacher-training) tool."
+  },
+  "teacherTrainingSubtitle": "Advice and strategy for a teaching question",
+  "@teacherTrainingSubtitle": {
+    "description": "Dashboard/Create subtitle for the Teaching Coach tool."
+  },
+  "teacherTrainingAction": "Get advice",
+  "@teacherTrainingAction": {
+    "description": "Submit button label on the Teaching Coach form."
+  },
+  "teacherTrainingEmpty": "Ask a teaching question to get strategies grounded in pedagogy.",
+  "@teacherTrainingEmpty": {
+    "description": "Idle/empty state before any advice is generated. An invitation, not a pitch."
+  },
+  "teacherTrainingQuestionLabel": "Your question",
+  "@teacherTrainingQuestionLabel": {
+    "description": "Label for the Teaching Coach question field."
+  },
+  "teacherTrainingQuestionHint": "Ask about lesson design, classroom practice or assessment.",
+  "@teacherTrainingQuestionHint": {
+    "description": "Helper line under the question field label."
+  },
+  "teacherTrainingQuestionPlaceholder": "For example, How can I keep a class of 40 engaged through a full lesson?",
+  "@teacherTrainingQuestionPlaceholder": {
+    "description": "Placeholder inside the question input."
+  },
+  "teacherTrainingQuestionError": "Please enter a question.",
+  "@teacherTrainingQuestionError": {
+    "description": "Validation error when the question field is empty."
+  },
+  "teacherTrainingSubjectLabel": "Subject",
+  "@teacherTrainingSubjectLabel": {
+    "description": "Label for the Teaching Coach subject dropdown."
+  },
+  "teacherTrainingSubjectAny": "Any subject",
+  "@teacherTrainingSubjectAny": {
+    "description": "The no-subject-selected option in the subject dropdown."
+  },
+  "teacherTrainingOptional": "Optional",
+  "@teacherTrainingOptional": {
+    "description": "Marks a Teaching Coach form field as optional."
+  },
+  "teacherTrainingStrategiesTitle": "Strategies",
+  "@teacherTrainingStrategiesTitle": {
+    "description": "Section label above the list of advice cards."
+  },
+  "teacherTrainingSectionQuestion": "The question",
+  "@teacherTrainingSectionQuestion": {
+    "description": "Editorial section header over the question field on the Teaching Coach form."
+  },
+  "teacherTrainingResultTitle": "Coaching notes",
+  "@teacherTrainingResultTitle": {
+    "description": "Masthead document title on the Teaching Coach result DocumentSheet."
+  },
+  "teacherTrainingNoContent": "No advice came back for that. Please try a clearer question.",
+  "@teacherTrainingNoContent": {
+    "description": "Shown when the response carried no usable advice."
+  },
+  "teacherTrainingUpgradeTitle": "A higher plan is needed",
+  "@teacherTrainingUpgradeTitle": {
+    "description": "Title of the 403 upgrade prompt."
+  },
+  "teacherTrainingUpgradeBody": "The Teaching Coach is part of a higher plan. Please upgrade to keep asking.",
+  "@teacherTrainingUpgradeBody": {
+    "description": "Body of the 403 upgrade prompt."
+  },
+  "teacherTrainingLimitTitle": "You have reached your limit",
+  "@teacherTrainingLimitTitle": {
+    "description": "Title of the 429 limit-reached prompt."
+  },
+  "teacherTrainingLimitBody": "You have used the Teaching Coach for now. Please try again later or upgrade your plan.",
+  "@teacherTrainingLimitBody": {
+    "description": "Body of the 429 limit-reached prompt."
+  },
+  "teacherTrainingSeePricing": "See plans and pricing",
+  "@teacherTrainingSeePricing": {
+    "description": "Action on the upgrade / limit prompts, opening the pricing page."
+  },
+  "teacherTrainingRephrase": "We could not build advice from that. Please rephrase the question and try again.",
+  "@teacherTrainingRephrase": {
+    "description": "Shown on a 400 invalid-input response."
+  },
+  "teacherTrainingBusy": "The assistant is busy right now. Please try again in a moment.",
+  "@teacherTrainingBusy": {
+    "description": "Shown on a 503 / server-busy response with no Retry-After."
+  },
+  "teacherTrainingBusyRetryAfter": "{seconds, plural, =1{The assistant is busy right now. Please try again in about 1 second.} other{The assistant is busy right now. Please try again in about {seconds} seconds.}}",
+  "@teacherTrainingBusyRetryAfter": {
+    "description": "Shown on a 503 that carries a Retry-After hint.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "teacherTrainingTimeout": "This is taking longer than expected. Please try again.",
+  "@teacherTrainingTimeout": {
+    "description": "Shown when the request times out."
+  },
+  "teacherTrainingSignIn": "Please sign in again to use this tool.",
+  "@teacherTrainingSignIn": {
+    "description": "Shown on a 401 unauthorized response."
+  },
+  "parentMessageTitle": "Parent Message",
+  "@parentMessageTitle": {
+    "description": "Title of the Parent Message tool."
+  },
+  "parentMessageSubtitle": "Draft a message home in the parent's language",
+  "@parentMessageSubtitle": {
+    "description": "Dashboard/Create subtitle for the Parent Message tool."
+  },
+  "parentMessageAction": "Draft message",
+  "@parentMessageAction": {
+    "description": "Submit button label on the Parent Message form."
+  },
+  "parentMessageEmpty": "Share the student and reason, and a caring message home will be drafted in the parent's language.",
+  "@parentMessageEmpty": {
+    "description": "Idle/empty state before any message is generated. An invitation to the teacher, not a pitch."
+  },
+  "parentMessageStudentLabel": "Student name",
+  "@parentMessageStudentLabel": {
+    "description": "Label for the student-name field."
+  },
+  "parentMessageStudentPlaceholder": "The student the message is about",
+  "@parentMessageStudentPlaceholder": {
+    "description": "Placeholder inside the student-name field."
+  },
+  "parentMessageStudentError": "Please enter the student's name.",
+  "@parentMessageStudentError": {
+    "description": "Validation error when the student-name field is empty."
+  },
+  "parentMessageClassLabel": "Class",
+  "@parentMessageClassLabel": {
+    "description": "Label for the class field."
+  },
+  "parentMessageClassPlaceholder": "For example, Class 6A",
+  "@parentMessageClassPlaceholder": {
+    "description": "Placeholder inside the class field."
+  },
+  "parentMessageClassError": "Please enter the class.",
+  "@parentMessageClassError": {
+    "description": "Validation error when the class field is empty."
+  },
+  "parentMessageSubjectLabel": "Subject",
+  "@parentMessageSubjectLabel": {
+    "description": "Label for the subject dropdown."
+  },
+  "parentMessageSubjectHint": "Choose a subject",
+  "@parentMessageSubjectHint": {
+    "description": "Placeholder shown in the subject dropdown before a choice is made."
+  },
+  "parentMessageSubjectError": "Please choose a subject.",
+  "@parentMessageSubjectError": {
+    "description": "Validation error when no subject is chosen."
+  },
+  "parentMessageReasonLabel": "Reason for the message",
+  "@parentMessageReasonLabel": {
+    "description": "Label for the reason dropdown."
+  },
+  "parentMessageReasonHint": "Choose a reason",
+  "@parentMessageReasonHint": {
+    "description": "Placeholder shown in the reason dropdown before a choice is made."
+  },
+  "parentMessageReasonError": "Please choose a reason.",
+  "@parentMessageReasonError": {
+    "description": "Validation error when no reason is chosen."
+  },
+  "parentMessageReasonAbsences": "Repeated absences",
+  "@parentMessageReasonAbsences": {
+    "description": "Reason option: the student has missed several school days."
+  },
+  "parentMessageReasonPerformance": "Academic support",
+  "@parentMessageReasonPerformance": {
+    "description": "Reason option: the student's performance has dipped and needs support."
+  },
+  "parentMessageReasonBehavior": "Behaviour in class",
+  "@parentMessageReasonBehavior": {
+    "description": "Reason option: a classroom behaviour to raise gently with the parent."
+  },
+  "parentMessageReasonPositive": "Good news to share",
+  "@parentMessageReasonPositive": {
+    "description": "Reason option: a positive achievement to celebrate with the parent."
+  },
+  "parentMessageAbsentDaysLabel": "Days absent",
+  "@parentMessageAbsentDaysLabel": {
+    "description": "Label for the consecutive-absent-days field (shown only for the absence reason)."
+  },
+  "parentMessageAbsentDaysHint": "How many days in a row the student has been away.",
+  "@parentMessageAbsentDaysHint": {
+    "description": "Helper line under the days-absent label."
+  },
+  "parentMessageAbsentDaysPlaceholder": "For example, 3",
+  "@parentMessageAbsentDaysPlaceholder": {
+    "description": "Placeholder inside the days-absent field."
+  },
+  "parentMessageParentLanguageLabel": "Parent's language",
+  "@parentMessageParentLanguageLabel": {
+    "description": "Label for the required parent-language dropdown."
+  },
+  "parentMessageParentLanguageHint": "The message is written in this language, which can differ from the app's.",
+  "@parentMessageParentLanguageHint": {
+    "description": "Helper line explaining that the parent language drives the output language."
+  },
+  "parentMessageParentLanguagePlaceholder": "Choose the parent's language",
+  "@parentMessageParentLanguagePlaceholder": {
+    "description": "Placeholder shown in the parent-language dropdown before a choice is made."
+  },
+  "parentMessageParentLanguageError": "Please choose the parent's language.",
+  "@parentMessageParentLanguageError": {
+    "description": "Validation error when no parent language is chosen (the field is required)."
+  },
+  "parentMessageContextLabel": "What is prompting this?",
+  "@parentMessageContextLabel": {
+    "description": "Label for the optional reason-context field."
+  },
+  "parentMessageContextHint": "A short note on the situation helps shape the message.",
+  "@parentMessageContextHint": {
+    "description": "Helper line under the reason-context label."
+  },
+  "parentMessageContextPlaceholder": "For example, missed the last two weeks of fractions",
+  "@parentMessageContextPlaceholder": {
+    "description": "Placeholder inside the reason-context field."
+  },
+  "parentMessageNoteLabel": "Anything specific to mention?",
+  "@parentMessageNoteLabel": {
+    "description": "Label for the optional teacher-note field."
+  },
+  "parentMessageNoteHint": "A detail here is woven into the message.",
+  "@parentMessageNoteHint": {
+    "description": "Helper line under the teacher-note label."
+  },
+  "parentMessageNotePlaceholder": "For example, doing well in group work",
+  "@parentMessageNotePlaceholder": {
+    "description": "Placeholder inside the teacher-note field."
+  },
+  "parentMessageTeacherNameLabel": "Your name",
+  "@parentMessageTeacherNameLabel": {
+    "description": "Label for the optional teacher-name (sign-off) field."
+  },
+  "parentMessageTeacherNameHint": "Signs off the message. Left blank, your profile name is used.",
+  "@parentMessageTeacherNameHint": {
+    "description": "Helper line under the teacher-name label."
+  },
+  "parentMessageTeacherNamePlaceholder": "For example, Mrs. Rao",
+  "@parentMessageTeacherNamePlaceholder": {
+    "description": "Placeholder inside the teacher-name field."
+  },
+  "parentMessageSchoolNameLabel": "School name",
+  "@parentMessageSchoolNameLabel": {
+    "description": "Label for the optional school-name field."
+  },
+  "parentMessageSchoolNamePlaceholder": "Your school's name",
+  "@parentMessageSchoolNamePlaceholder": {
+    "description": "Placeholder inside the school-name field."
+  },
+  "parentMessageOptional": "Optional",
+  "@parentMessageOptional": {
+    "description": "Marks a Parent Message form field as optional."
+  },
+  "parentMessageWordCount": "{count, plural, =1{1 word} other{{count} words}}",
+  "@parentMessageWordCount": {
+    "description": "Approximate length of the drafted message, shown as a meta badge.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "parentMessageSectionMessage": "The message",
+  "@parentMessageSectionMessage": {
+    "description": "Editorial section header over the core parent-message fields."
+  },
+  "parentMessageSectionDetails": "Extra details",
+  "@parentMessageSectionDetails": {
+    "description": "Editorial section header over the optional parent-message fields."
+  },
+  "parentMessageResultTitle": "Message home",
+  "@parentMessageResultTitle": {
+    "description": "Masthead document title on the Parent Message result DocumentSheet."
+  },
+  "parentMessageNoContent": "No message came back for that. Please add a little more context and try again.",
+  "@parentMessageNoContent": {
+    "description": "Shown when the response carried no usable message."
+  },
+  "parentMessageMissingFields": "Please fill in the student, class, subject, reason and parent's language, then try again.",
+  "@parentMessageMissingFields": {
+    "description": "Shown on the 400 Missing required fields response. Specific, not generic."
+  },
+  "parentMessageUpgradeTitle": "A higher plan is needed",
+  "@parentMessageUpgradeTitle": {
+    "description": "Title of the 403 upgrade prompt."
+  },
+  "parentMessageUpgradeBody": "Parent messages are part of a higher plan. Please upgrade to keep drafting them.",
+  "@parentMessageUpgradeBody": {
+    "description": "Body of the 403 upgrade prompt."
+  },
+  "parentMessageLimitTitle": "You have reached your limit",
+  "@parentMessageLimitTitle": {
+    "description": "Title of the 429 limit-reached prompt."
+  },
+  "parentMessageLimitBody": "You have drafted your parent messages for now. Please try again later or upgrade your plan.",
+  "@parentMessageLimitBody": {
+    "description": "Body of the 429 limit-reached prompt."
+  },
+  "parentMessageSeePricing": "See plans and pricing",
+  "@parentMessageSeePricing": {
+    "description": "Action on the upgrade / limit prompts, opening the pricing page."
+  },
+  "parentMessageBusy": "The assistant is busy right now. Please try again in a moment.",
+  "@parentMessageBusy": {
+    "description": "Shown on a 503 / server-busy response with no Retry-After."
+  },
+  "parentMessageBusyRetryAfter": "{seconds, plural, =1{The assistant is busy right now. Please try again in about 1 second.} other{The assistant is busy right now. Please try again in about {seconds} seconds.}}",
+  "@parentMessageBusyRetryAfter": {
+    "description": "Shown on a 503 that carries a Retry-After hint.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "parentMessageTimeout": "This is taking longer than expected. Please try again.",
+  "@parentMessageTimeout": {
+    "description": "Shown when the request times out."
+  },
+  "parentMessageSignIn": "Please sign in again to use this tool.",
+  "@parentMessageSignIn": {
+    "description": "Shown on a 401 unauthorized response."
+  },
+  "assessTitle": "Assess Assignment",
+  "@assessTitle": {
+    "description": "Assess Assignment tool title (app bar + dashboard tile)."
+  },
+  "assessSubtitle": "Grade a student's handwritten work from a photo",
+  "@assessSubtitle": {
+    "description": "Assess Assignment dashboard tile subtitle."
+  },
+  "assessEmpty": "Add a photo of the student's work, then tap Assess.",
+  "@assessEmpty": {
+    "description": "Idle/empty state before the teacher submits."
+  },
+  "assessSubmit": "Assess",
+  "@assessSubmit": {
+    "description": "The primary submit button label on the Assess Assignment form."
+  },
+  "assessImageLabel": "Student work photo",
+  "@assessImageLabel": {
+    "description": "Label for the required student-work photo field."
+  },
+  "assessImageHint": "Take a clear photo of the whole page.",
+  "@assessImageHint": {
+    "description": "Hint under the student-work photo field."
+  },
+  "assessImageError": "Please add a photo of the student's work.",
+  "@assessImageError": {
+    "description": "Validation error when no photo is chosen."
+  },
+  "assessModeLabel": "What do you need?",
+  "@assessModeLabel": {
+    "description": "Label for the mode selector (grade / read only / score a transcript)."
+  },
+  "assessModeHint": "Grade reads and scores the work. Read only returns the transcript. Score a transcript grades text you paste in.",
+  "@assessModeHint": {
+    "description": "Explains the three assessment modes."
+  },
+  "assessModeFull": "Grade",
+  "@assessModeFull": {
+    "description": "Mode option: transcribe and score the work (backend 'full')."
+  },
+  "assessModeTranscribe": "Read only",
+  "@assessModeTranscribe": {
+    "description": "Mode option: return only the transcript (backend 'transcribe')."
+  },
+  "assessModeScore": "Score a transcript",
+  "@assessModeScore": {
+    "description": "Mode option: grade a corrected transcript (backend 'score')."
+  },
+  "assessTranscriptLabel": "Corrected transcript",
+  "@assessTranscriptLabel": {
+    "description": "Label for the edited-transcript field, shown only in score mode."
+  },
+  "assessTranscriptHint": "Paste the corrected text to grade instead of re-reading the photo.",
+  "@assessTranscriptHint": {
+    "description": "Hint under the corrected-transcript field."
+  },
+  "assessTranscriptPlaceholder": "Type or paste the student's corrected answers",
+  "@assessTranscriptPlaceholder": {
+    "description": "Placeholder inside the corrected-transcript field."
+  },
+  "assessOptional": "Optional",
+  "@assessOptional": {
+    "description": "Marks the corrected-transcript field as optional."
+  },
+  "assessRubricNote": "Without a rubric, the work is graded on a general rubric: understanding, accuracy, presentation and completion.",
+  "@assessRubricNote": {
+    "description": "Explains the default rubric used when none is attached."
+  },
+  "assessPrivacyNote": "The student's name is never sent for grading.",
+  "@assessPrivacyNote": {
+    "description": "Reassures the teacher that student-name PII is not transmitted."
+  },
+  "assessScoreLabel": "Overall score",
+  "@assessScoreLabel": {
+    "description": "Header above the overall score."
+  },
+  "assessScoreOutOf": "out of 100",
+  "@assessScoreOutOf": {
+    "description": "Caption beside the big score number."
+  },
+  "assessPoints": "{earned} of {possible} points",
+  "@assessPoints": {
+    "description": "Points earned out of points possible.",
+    "placeholders": {
+      "earned": {
+        "type": "String",
+        "example": "12"
+      },
+      "possible": {
+        "type": "String",
+        "example": "16"
+      }
+    }
+  },
+  "assessConfidence": "Confidence {percent}%",
+  "@assessConfidence": {
+    "description": "The model's overall self-rated confidence as a percentage.",
+    "placeholders": {
+      "percent": {
+        "type": "String",
+        "example": "82"
+      }
+    }
+  },
+  "assessRubricUsed": "Graded against: {title}",
+  "@assessRubricUsed": {
+    "description": "Names the rubric the grade was measured against.",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "example": "Essay rubric"
+      }
+    }
+  },
+  "assessLowConfidence": "Low confidence",
+  "@assessLowConfidence": {
+    "description": "Tag on a criterion the model was unsure about (confidence below 0.5)."
+  },
+  "assessTranscriptSection": "What the student wrote",
+  "@assessTranscriptSection": {
+    "description": "Section heading for the transcript."
+  },
+  "assessCriteriaSection": "Scores by criterion",
+  "@assessCriteriaSection": {
+    "description": "Section heading for the per-criterion scores."
+  },
+  "assessCriterionPoints": "{points} / {max}",
+  "@assessCriterionPoints": {
+    "description": "A criterion's points out of its maximum.",
+    "placeholders": {
+      "points": {
+        "type": "String",
+        "example": "3"
+      },
+      "max": {
+        "type": "String",
+        "example": "4"
+      }
+    }
+  },
+  "assessStrengthsSection": "Strengths",
+  "@assessStrengthsSection": {
+    "description": "Section heading for what the student did well."
+  },
+  "assessImprovementsSection": "To work on",
+  "@assessImprovementsSection": {
+    "description": "Section heading for what the student should improve."
+  },
+  "assessNextStepsSection": "Next steps",
+  "@assessNextStepsSection": {
+    "description": "Section heading for concrete next-step practice tasks."
+  },
+  "assessTeacherNoteSection": "Note for the student",
+  "@assessTeacherNoteSection": {
+    "description": "Section heading for the paragraph the teacher can read aloud."
+  },
+  "assessWarningsSection": "Please check",
+  "@assessWarningsSection": {
+    "description": "Heading for the grader's advisories (blank page, faint photo, etc.)."
+  },
+  "assessWarningBlank": "This page looks blank. Please check the photo and try again.",
+  "@assessWarningBlank": {
+    "description": "Advisory for the page_appears_blank warning code."
+  },
+  "assessWarningLowContrast": "The photo is faint. A brighter photo will grade more accurately.",
+  "@assessWarningLowContrast": {
+    "description": "Advisory for the low_contrast warning code."
+  },
+  "assessWarningPartial": "Only part of the work could be read.",
+  "@assessWarningPartial": {
+    "description": "Advisory for the partial_writing warning code."
+  },
+  "assessWarningLanguageMismatch": "The writing may be in a different language than expected.",
+  "@assessWarningLanguageMismatch": {
+    "description": "Advisory for the language_mismatch warning code."
+  },
+  "assessNoContent": "No assessment came back. Please try a clearer photo.",
+  "@assessNoContent": {
+    "description": "Empty-result state when the model returned nothing usable."
+  },
+  "assessSignIn": "Please sign in again to grade an assignment.",
+  "@assessSignIn": {
+    "description": "Shown on a 401 unauthorized response."
+  },
+  "assessUpgradeTitle": "A higher plan is needed",
+  "@assessUpgradeTitle": {
+    "description": "Title of the 403 upgrade prompt."
+  },
+  "assessUpgradeBody": "Grading handwritten work is part of a higher plan. Upgrade to keep assessing.",
+  "@assessUpgradeBody": {
+    "description": "Body of the 403 upgrade prompt."
+  },
+  "assessDailyLimitTitle": "That is all your assessments for today",
+  "@assessDailyLimitTitle": {
+    "description": "Title of the daily-limit prompt (429 DAILY_LIMIT_REACHED)."
+  },
+  "assessDailyLimitBody": "Your plan includes a set number of assessments each day. They reset tomorrow, or you can raise the limit on a higher plan.",
+  "@assessDailyLimitBody": {
+    "description": "Body of the daily-limit prompt."
+  },
+  "assessLimitTitle": "You have reached your assessment limit",
+  "@assessLimitTitle": {
+    "description": "Title of the monthly-limit prompt (429 USAGE_LIMIT_REACHED)."
+  },
+  "assessLimitBody": "You have used all the assessments in your plan. They reset next month, or you can raise the limit on a higher plan.",
+  "@assessLimitBody": {
+    "description": "Body of the monthly-limit prompt."
+  },
+  "assessSeePricing": "See plans",
+  "@assessSeePricing": {
+    "description": "Action that opens the pricing page from a limit or upgrade prompt."
+  },
+  "assessBusy": "The grading model is busy right now. Please try again in a minute.",
+  "@assessBusy": {
+    "description": "Shown on a 503 busy response with no Retry-After."
+  },
+  "assessBusyRetryAfter": "{seconds, plural, =1{The grading model is busy right now. Please try again in about 1 second.} other{The grading model is busy right now. Please try again in about {seconds} seconds.}}",
+  "@assessBusyRetryAfter": {
+    "description": "Shown on a 503 busy response that carried Retry-After.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "assessTimeout": "Grading is taking longer than usual. Please try again.",
+  "@assessTimeout": {
+    "description": "Shown when the request times out."
+  },
+  "assessRephrase": "The photo could not be graded. Please re-upload a clearer photo.",
+  "@assessRephrase": {
+    "description": "Shown on a 400 bad-input response."
+  },
+  "assessSectionWork": "The student's work",
+  "@assessSectionWork": {
+    "description": "Editorial section header over the student-work fields on the Assess form."
+  },
+  "assessResultTitle": "Assessment",
+  "@assessResultTitle": {
+    "description": "Masthead document title on the Assess Assignment result DocumentSheet."
+  },
+  "worksheetSectionWorksheet": "The worksheet",
+  "@worksheetSectionWorksheet": {
+    "description": "Worksheet form section header: the textbook photo and prompt the worksheet is built from."
+  },
+  "rubricSectionAssignment": "The assignment",
+  "@rubricSectionAssignment": {
+    "description": "Rubric form section header: the assignment the rubric grades."
+  },
+  "examPaperSectionPaper": "The paper",
+  "@examPaperSectionPaper": {
+    "description": "Exam paper form section header: the board, grade, subject and chapters the paper covers."
+  },
+  "examPaperSectionFormat": "Format",
+  "@examPaperSectionFormat": {
+    "description": "Exam paper form section header: difficulty, language and what to include (answer key, marking scheme)."
+  },
+  "vidyaEyebrow": "Your co-teacher",
+  "@vidyaEyebrow": {
+    "description": "VIDYA home eyebrow above the greeting (co-teacher framing)."
+  },
+  "vidyaDeck": "Speak in your language, and I will prepare the work.",
+  "@vidyaDeck": {
+    "description": "VIDYA home deck/standfirst inviting the teacher to speak."
+  },
+  "vidyaGreeting": "Welcome, teacher. Speak in your language, and I will prepare your work.",
+  "@vidyaGreeting": {
+    "description": "Spoken mother-tongue welcome, auto-played once per session on the VIDYA voice home (skipped under reduce-motion). Non-English locales fall back to English until the translation backlog (P5) lands."
+  },
+  "vidyaHeroBadge": "Your AI co-teaching assistant",
+  "@vidyaHeroBadge": {
+    "description": "Accent pill above the VIDYA home eyebrow, echoing the PWA hero's AI badge."
+  },
+  "vidyaPromptLesson": "Ask me to plan a lesson",
+  "@vidyaPromptLesson": {
+    "description": "Rotating VIDYA prompt example: plan a lesson."
+  },
+  "vidyaPromptQuiz": "Ask me to make a quiz",
+  "@vidyaPromptQuiz": {
+    "description": "Rotating VIDYA prompt example: make a quiz."
+  },
+  "vidyaPromptParent": "Ask me to message a parent",
+  "@vidyaPromptParent": {
+    "description": "Rotating VIDYA prompt example: message a parent."
+  },
+  "vidyaStateIdle": "Tap to speak",
+  "@vidyaStateIdle": {
+    "description": "Seal-mic caption when idle."
+  },
+  "vidyaStateReady": "Getting ready",
+  "@vidyaStateReady": {
+    "description": "Seal-mic caption while requesting the microphone."
+  },
+  "vidyaStateListening": "I am listening",
+  "@vidyaStateListening": {
+    "description": "Seal-mic caption while recording."
+  },
+  "vidyaStateThinking": "Thinking",
+  "@vidyaStateThinking": {
+    "description": "Seal-mic caption while transcribing / thinking."
+  },
+  "vidyaStateSpeaking": "Speaking",
+  "@vidyaStateSpeaking": {
+    "description": "Seal-mic caption while VIDYA speaks the reply."
+  },
+  "vidyaYouSaid": "You said",
+  "@vidyaYouSaid": {
+    "description": "Overline above the teacher's transcript block."
+  },
+  "vidyaSignedOutTitle": "Sign in to talk to VIDYA",
+  "@vidyaSignedOutTitle": {
+    "description": "VIDYA signed-out state title (401 on the stub token)."
+  },
+  "vidyaSignedOutBody": "Sign in and VIDYA will plan lessons, quizzes and more in your language.",
+  "@vidyaSignedOutBody": {
+    "description": "VIDYA signed-out state body."
+  },
+  "vidyaMicOffTitle": "Turn on the microphone",
+  "@vidyaMicOffTitle": {
+    "description": "VIDYA permanent mic-denial state title."
+  },
+  "vidyaMicOffBody": "VIDYA needs the microphone to hear you. Enable it in Settings.",
+  "@vidyaMicOffBody": {
+    "description": "VIDYA permanent mic-denial state body."
+  },
+  "vidyaOpenSettings": "Open settings",
+  "@vidyaOpenSettings": {
+    "description": "Button that deep-links to OS settings to enable the mic."
+  },
+  "vidyaSignIn": "Sign in",
+  "@vidyaSignIn": {
+    "description": "VIDYA signed-out terminal panel action button, routes to the login screen."
+  },
+  "vidyaLimitTitle": "You have reached today's voice limit",
+  "@vidyaLimitTitle": {
+    "description": "VIDYA voice-quota (429) calm limit state title."
+  },
+  "vidyaLimitBody": "Your voice minutes will refresh. You can keep using the tools in the meantime.",
+  "@vidyaLimitBody": {
+    "description": "VIDYA voice-quota (429) calm limit state body."
+  },
+  "vidyaErrorTitle": "That did not go through",
+  "@vidyaErrorTitle": {
+    "description": "VIDYA failure state title — shared by network/timeout failures and unexpected mic/recorder plugin failures (T1-U6), so it must stay cause-agnostic."
+  },
+  "vidyaErrorBody": "Something went wrong. Tap the seal to try again.",
+  "@vidyaErrorBody": {
+    "description": "VIDYA failure state body — shared by network/timeout failures and unexpected mic/recorder plugin failures (T1-U6). Was network-specific (\"Check your connection...\"), which read as wrong guidance for a mic/recorder failure; kept cause-agnostic instead, matching errorGeneric's phrasing."
+  },
+  "vidyaPrepDesk": "Prep desk",
+  "@vidyaPrepDesk": {
+    "description": "App-bar action opening the Prep desk (teaching tools grid)."
+  },
+  "vidyaClearConversation": "Clear conversation",
+  "@vidyaClearConversation": {
+    "description": "App-bar action (shown only while a conversation is active) that clears VIDYA's transcript — the manual analogue of the web's Trash2 'Clear Context' button."
+  },
+  "vidyaFlowVisualAid": "Visual aid",
+  "@vidyaFlowVisualAid": {
+    "description": "Confirm-chip label for the Visual Aid flow."
+  },
+  "vidyaFlowVirtualFieldTrip": "Virtual field trip",
+  "@vidyaFlowVirtualFieldTrip": {
+    "description": "Confirm-chip label for the Virtual Field Trip flow."
+  },
+  "vidyaFlowVideoStoryteller": "Video story",
+  "@vidyaFlowVideoStoryteller": {
+    "description": "Confirm-chip label for the Video Storyteller flow."
+  },
+  "vidyaFieldMicLabel": "Dictate",
+  "@vidyaFieldMicLabel": {
+    "description": "Label/tooltip for the inline field mic that dictates one form field (topic/question) by voice."
+  },
+  "vidyaFieldMicFailed": "Didn't catch that. Try again or type it in.",
+  "@vidyaFieldMicFailed": {
+    "description": "Brief snackbar shown when the inline field mic's speech-to-text fails unexpectedly (network, 401, 413…)."
+  },
+  "vidyaOpen": "Ask VIDYA",
+  "@vidyaOpen": {
+    "description": "App-bar action + sheet title that opens VIDYA (the co-teacher) from any tool screen."
+  },
+  "parentHotlineTitle": "Parent Hotline",
+  "@parentHotlineTitle": {
+    "description": "Title of the Parent Hotline tool (U-PH3): an AI voice call to a student's parent."
+  },
+  "parentHotlineSubtitle": "Call a student's parent in their language",
+  "@parentHotlineSubtitle": {
+    "description": "Dashboard/Create subtitle for the Parent Hotline tool."
+  },
+  "parentHotlineEyebrow": "Parent hotline",
+  "@parentHotlineEyebrow": {
+    "description": "Saffron section eyebrow above the student picker on the Parent Hotline screen."
+  },
+  "parentHotlinePickStudentIntro": "Choose whose parent to call.",
+  "@parentHotlinePickStudentIntro": {
+    "description": "One-line intro under the eyebrow on the pick-student stage."
+  },
+  "parentHotlineClassLabel": "Class",
+  "@parentHotlineClassLabel": {
+    "description": "Label for the class filter above the student list."
+  },
+  "parentHotlineNoPhone": "No parent number saved",
+  "@parentHotlineNoPhone": {
+    "description": "Inline hint on a student row that has no parent phone on record (mirrors the server 422); the row is disabled."
+  },
+  "parentHotlineSignedOutTitle": "Sign in to see your students",
+  "@parentHotlineSignedOutTitle": {
+    "description": "Signed-out EmptyView title on the Parent Hotline (no roster without an identity)."
+  },
+  "parentHotlineSignedOutBody": "Your class roster loads once you're signed in. The parent hotline needs your account before it can place a call.",
+  "@parentHotlineSignedOutBody": {
+    "description": "Signed-out EmptyView body on the Parent Hotline."
+  },
+  "parentHotlineRosterUnavailableTitle": "Your class list isn't available yet",
+  "@parentHotlineRosterUnavailableTitle": {
+    "description": "EmptyView title on the pick-student stage when the teacher IS signed in but the student-roster API isn't on the app yet (distinct from the signed-out case)."
+  },
+  "parentHotlineRosterUnavailableBody": "We can't load your students here just yet. This is coming in a later update. You're already signed in, so there's nothing you need to fix.",
+  "@parentHotlineRosterUnavailableBody": {
+    "description": "EmptyView body on the pick-student stage when the teacher is signed in but the roster can't be fetched on the app yet."
+  },
+  "parentHotlineRosterEmptyTitle": "No students on your roster yet",
+  "@parentHotlineRosterEmptyTitle": {
+    "description": "Parent Hotline student picker, when the masked roster read SUCCEEDS and returns no students. Distinct from parentHotlineRosterUnavailableTitle, which is a server-side gap the teacher cannot act on."
+  },
+  "parentHotlineRosterEmptyBody": "Add students to a class and they will show up here, ready to call home.",
+  "@parentHotlineRosterEmptyBody": {
+    "description": "Body for parentHotlineRosterEmptyTitle."
+  },
+  "parentHotlineReasonEyebrow": "Why are you calling",
+  "@parentHotlineReasonEyebrow": {
+    "description": "Saffron eyebrow on the reason stage."
+  },
+  "parentHotlineReasonAbsencesLabel": "Repeated absences",
+  "@parentHotlineReasonAbsencesLabel": {
+    "description": "Reason card label — consecutive absences."
+  },
+  "parentHotlineReasonAbsencesDesc": "The student has missed several days in a row.",
+  "@parentHotlineReasonAbsencesDesc": {
+    "description": "Reason card description — consecutive absences."
+  },
+  "parentHotlineReasonPerformanceLabel": "Slipping in a subject",
+  "@parentHotlineReasonPerformanceLabel": {
+    "description": "Reason card label — poor performance."
+  },
+  "parentHotlineReasonPerformanceDesc": "Recent marks or classwork need attention.",
+  "@parentHotlineReasonPerformanceDesc": {
+    "description": "Reason card description — poor performance."
+  },
+  "parentHotlineReasonBehaviourLabel": "Behaviour in class",
+  "@parentHotlineReasonBehaviourLabel": {
+    "description": "Reason card label — behavioural concern."
+  },
+  "parentHotlineReasonBehaviourDesc": "Something happened the parent should know about.",
+  "@parentHotlineReasonBehaviourDesc": {
+    "description": "Reason card description — behavioural concern."
+  },
+  "parentHotlineReasonPositiveLabel": "Good news to share",
+  "@parentHotlineReasonPositiveLabel": {
+    "description": "Reason card label — positive feedback."
+  },
+  "parentHotlineReasonPositiveDesc": "Celebrate a win with the parent.",
+  "@parentHotlineReasonPositiveDesc": {
+    "description": "Reason card description — positive feedback."
+  },
+  "parentHotlineComposeEyebrow": "Prepare the call",
+  "@parentHotlineComposeEyebrow": {
+    "description": "Saffron eyebrow on the compose stage."
+  },
+  "parentHotlineNoteLabel": "Add a note",
+  "@parentHotlineNoteLabel": {
+    "description": "Label for the multiline teacher-note field on the compose stage."
+  },
+  "parentHotlineNoteHintAbsences": "Anything the parent should know about the days missed?",
+  "@parentHotlineNoteHintAbsences": {
+    "description": "Reason-specific placeholder for the teacher note — absences."
+  },
+  "parentHotlineNoteHintPerformance": "What would help the student improve?",
+  "@parentHotlineNoteHintPerformance": {
+    "description": "Reason-specific placeholder for the teacher note — poor performance."
+  },
+  "parentHotlineNoteHintBehaviour": "What happened, and what support would help at home?",
+  "@parentHotlineNoteHintBehaviour": {
+    "description": "Reason-specific placeholder for the teacher note — behaviour."
+  },
+  "parentHotlineNoteHintPositive": "What is the good news to share?",
+  "@parentHotlineNoteHintPositive": {
+    "description": "Reason-specific placeholder for the teacher note — positive feedback."
+  },
+  "parentHotlineDraftAction": "Draft the message",
+  "@parentHotlineDraftAction": {
+    "description": "Primary CTA on the compose stage that drafts the opening message."
+  },
+  "parentHotlineErrorTitle": "Something went wrong",
+  "@parentHotlineErrorTitle": {
+    "description": "Title of the inline error banner on the Parent Hotline."
+  },
+  "parentHotlineGenericError": "That didn't go through. Please try again.",
+  "@parentHotlineGenericError": {
+    "description": "Fallback message when the server gave no user-safe error text."
+  },
+  "parentHotlineTelephonyUnavailable": "Calling isn't available right now. You can still copy the message to send on WhatsApp.",
+  "@parentHotlineTelephonyUnavailable": {
+    "description": "Shown on the Parent Hotline review step when POST /api/attendance/call returns 503 (telephony not configured server-side). The teacher cannot fix this and retrying cannot help, so the Call button is withdrawn and WhatsApp copy is left as the working path."
+  },
+  "parentHotlineEvidenceAttendanceHeader": "Attendance",
+  "@parentHotlineEvidenceAttendanceHeader": {
+    "description": "Evidence panel header — absences reason."
+  },
+  "parentHotlineEvidenceMarksHeader": "Recent marks",
+  "@parentHotlineEvidenceMarksHeader": {
+    "description": "Evidence panel header — poor-performance reason."
+  },
+  "parentHotlineEvidenceBehaviourHeader": "What happened",
+  "@parentHotlineEvidenceBehaviourHeader": {
+    "description": "Evidence panel header — behavioural reason."
+  },
+  "parentHotlineEvidencePositiveHeader": "The good news",
+  "@parentHotlineEvidencePositiveHeader": {
+    "description": "Evidence panel header — positive-feedback reason."
+  },
+  "parentHotlineEvidenceAbsentDays": "{days, plural, =1{1 day absent in a row} other{{days} days absent in a row}}",
+  "@parentHotlineEvidenceAbsentDays": {
+    "description": "Absent-days badge in the evidence panel.",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "parentHotlineEvidenceAbsencePrompt": "Confirm the days missed so the parent hears the exact record.",
+  "@parentHotlineEvidenceAbsencePrompt": {
+    "description": "Evidence panel prompt — absences."
+  },
+  "parentHotlineEvidenceMarksPrompt": "The latest marks are ready to mention on the call.",
+  "@parentHotlineEvidenceMarksPrompt": {
+    "description": "Evidence panel prompt — poor performance when marks are on record."
+  },
+  "parentHotlineEvidenceMarksEmpty": "No recent marks on record yet. Add what the parent should know below.",
+  "@parentHotlineEvidenceMarksEmpty": {
+    "description": "Evidence panel prompt — poor performance when no marks are available (the performance read 401s in foundation-v1)."
+  },
+  "parentHotlineEvidenceBehaviourPrompt": "Describe what happened and the support that would help at home.",
+  "@parentHotlineEvidenceBehaviourPrompt": {
+    "description": "Evidence panel prompt — behavioural concern."
+  },
+  "parentHotlineEvidencePositivePrompt": "Share the win you'd like the parent to celebrate.",
+  "@parentHotlineEvidencePositivePrompt": {
+    "description": "Evidence panel prompt — positive feedback."
+  },
+  "parentHotlineReviewEyebrow": "Message home",
+  "@parentHotlineReviewEyebrow": {
+    "description": "Saffron eyebrow over the drafted message on the review stage."
+  },
+  "parentHotlineCall": "Call parent",
+  "@parentHotlineCall": {
+    "description": "Primary decision-bar action that places the AI voice call."
+  },
+  "parentHotlineWhatsApp": "Copy for WhatsApp",
+  "@parentHotlineWhatsApp": {
+    "description": "Decision-bar action that copies the message to paste in WhatsApp (the universal fallback)."
+  },
+  "parentHotlineCallAgainIn": "Call again in {time}",
+  "@parentHotlineCallAgainIn": {
+    "description": "Disabled Call label during the 5-minute dedup cool-down, showing the mm:ss countdown.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "parentHotlineUnsupportedLanguage": "Auto-call isn't available for {language} yet — copy for WhatsApp instead.",
+  "@parentHotlineUnsupportedLanguage": {
+    "description": "NoteBanner shown when the parent's language has no auto-call voice (mirrors the server 422).",
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "parentHotlinePhoneMask": "•••• {last4}",
+  "@parentHotlinePhoneMask": {
+    "description": "Masked parent phone in the review meta line — last 4 digits only (F9-001, never the full number).",
+    "placeholders": {
+      "last4": {
+        "type": "String"
+      }
+    }
+  },
+  "parentHotlineAiNotice": "The call opens with an automated AI voice notice.",
+  "@parentHotlineAiNotice": {
+    "description": "Honesty line in the review meta: the parent hears an automated AI notice (dignity + transparency)."
+  },
+  "parentHotlineCopied": "Message copied — paste it in WhatsApp to send.",
+  "@parentHotlineCopied": {
+    "description": "Snackbar confirming the message was copied to the clipboard for WhatsApp."
+  },
+  "parentHotlinePremiumTitle": "Parent Hotline needs an advanced plan",
+  "@parentHotlinePremiumTitle": {
+    "description": "Premium-gate panel title (the outreach route returns 403 PREMIUM_REQUIRED)."
+  },
+  "parentHotlinePremiumBody": "Placing an AI voice call to a parent is part of the advanced plan. You can still copy a message to send on WhatsApp for free.",
+  "@parentHotlinePremiumBody": {
+    "description": "Premium-gate panel body."
+  },
+  "parentHotlineComingSoonTitle": "The call view is on its way",
+  "@parentHotlineComingSoonTitle": {
+    "description": "Placeholder title for the calling/summary stages (U-PH4/U-PH5), not built in this unit."
+  },
+  "parentHotlineComingSoonBody": "Placing and following the call arrives in the next update.",
+  "@parentHotlineComingSoonBody": {
+    "description": "Placeholder body for the calling/summary stages."
+  },
+  "parentHotlineCallingTitle": "Calling {name}'s parent…",
+  "@parentHotlineCallingTitle": {
+    "description": "Display headline on the calling (waiting) stage while the AI voice call runs. {name} is the student whose parent is being called.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "parentHotlineCallingRinging": "Ringing…",
+  "@parentHotlineCallingRinging": {
+    "description": "Calling-stage status line while the call is placed but the parent has not started talking yet (callStatus initiated, no turns)."
+  },
+  "parentHotlineCallingInProgress": "Conversation in progress",
+  "@parentHotlineCallingInProgress": {
+    "description": "Calling-stage status line once the parent and the AI agent have started exchanging turns."
+  },
+  "parentHotlineCallingExchanges": "{count, plural, =1{1 exchange} other{{count} exchanges}}",
+  "@parentHotlineCallingExchanges": {
+    "description": "Live tabular pill on the calling stage counting the back-and-forth turns so far. Shown only once more than one exchange has happened.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "parentHotlineCallingReassurance": "You can leave this screen — the summary will be waiting for you.",
+  "@parentHotlineCallingReassurance": {
+    "description": "Quiet reassurance on the calling stage: leaving does not cancel the call; the summary is ready on return (backs the resume path)."
+  },
+  "parentHotlineSummaryDocType": "Parent call",
+  "@parentHotlineSummaryDocType": {
+    "description": "Summary masthead eyebrow doc-type (U-PH5); the reason word is appended after a middot, e.g. 'PARENT CALL · ABSENCES'."
+  },
+  "parentHotlineSummaryReasonAbsences": "Absences",
+  "@parentHotlineSummaryReasonAbsences": {
+    "description": "Short reason word in the summary eyebrow for the consecutive-absences reason."
+  },
+  "parentHotlineSummaryReasonPerformance": "Performance",
+  "@parentHotlineSummaryReasonPerformance": {
+    "description": "Short reason word in the summary eyebrow for the poor-performance reason."
+  },
+  "parentHotlineSummaryReasonBehaviour": "Behaviour",
+  "@parentHotlineSummaryReasonBehaviour": {
+    "description": "Short reason word in the summary eyebrow for the behavioural-concern reason."
+  },
+  "parentHotlineSummaryReasonPositive": "Good news",
+  "@parentHotlineSummaryReasonPositive": {
+    "description": "Short reason word in the summary eyebrow for the positive-feedback reason."
+  },
+  "parentHotlineSummaryTitle": "{name}'s parent",
+  "@parentHotlineSummaryTitle": {
+    "description": "Summary masthead title (U-PH5), the student whose parent was called.",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "parentHotlineSummaryDurationMin": "{minutes} min",
+  "@parentHotlineSummaryDurationMin": {
+    "description": "Call-duration meta badge on the summary masthead, in whole minutes.",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "parentHotlineSentimentCooperative": "Cooperative",
+  "@parentHotlineSentimentCooperative": {
+    "description": "Sentiment badge label: the parent was cooperative on the call."
+  },
+  "parentHotlineSentimentConcerned": "Concerned",
+  "@parentHotlineSentimentConcerned": {
+    "description": "Sentiment badge label: the parent sounded concerned."
+  },
+  "parentHotlineSentimentGrateful": "Grateful",
+  "@parentHotlineSentimentGrateful": {
+    "description": "Sentiment badge label: the parent was grateful."
+  },
+  "parentHotlineSentimentUpset": "Upset",
+  "@parentHotlineSentimentUpset": {
+    "description": "Sentiment badge label: the parent was upset."
+  },
+  "parentHotlineSentimentIndifferent": "Reserved",
+  "@parentHotlineSentimentIndifferent": {
+    "description": "Sentiment badge label for an indifferent/neutral parent. Use a dignified word (not 'indifferent') that reads as reserved/neutral."
+  },
+  "parentHotlineSentimentConfused": "Confused",
+  "@parentHotlineSentimentConfused": {
+    "description": "Sentiment badge label: the parent seemed confused."
+  },
+  "parentHotlineSummarySaidHeader": "What the parent said",
+  "@parentHotlineSummarySaidHeader": {
+    "description": "Summary section header over the AI recap of the parent's response."
+  },
+  "parentHotlineSummaryConcernsHeader": "Concerns raised",
+  "@parentHotlineSummaryConcernsHeader": {
+    "description": "Summary section header over the concerns the parent raised (hidden when none)."
+  },
+  "parentHotlineSummaryCommitmentsHeader": "Parent commitments",
+  "@parentHotlineSummaryCommitmentsHeader": {
+    "description": "Summary section header over what the parent committed to (hidden when none)."
+  },
+  "parentHotlineSummaryActionsHeader": "Your action items",
+  "@parentHotlineSummaryActionsHeader": {
+    "description": "Summary section header over the teacher's follow-up to-dos (the saffron block)."
+  },
+  "parentHotlineSummaryGuidanceHeader": "Guidance shared",
+  "@parentHotlineSummaryGuidanceHeader": {
+    "description": "Summary section header over the home-learning guidance the agent shared (hidden when none)."
+  },
+  "parentHotlineSummaryFollowUpHeader": "Follow-up",
+  "@parentHotlineSummaryFollowUpHeader": {
+    "description": "Summary section header over the suggested follow-up (shown only when follow-up is needed)."
+  },
+  "parentHotlineSummaryTranscript": "{count, plural, =1{View conversation · 1 message} other{View conversation · {count} messages}}",
+  "@parentHotlineSummaryTranscript": {
+    "description": "Collapsed transcript disclosure title on the summary; {count} is the number of turns.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "parentHotlineSummaryDone": "Done",
+  "@parentHotlineSummaryDone": {
+    "description": "Summary footer primary action — closes the summary and returns."
+  },
+  "parentHotlineSummaryCallAgain": "Call again later",
+  "@parentHotlineSummaryCallAgain": {
+    "description": "Summary footer ghost action — starts a fresh call (subject to the 5-minute dedup cool-down)."
+  },
+  "parentHotlineSummaryManualTitle": "Message copied",
+  "@parentHotlineSummaryManualTitle": {
+    "description": "Terminal panel title when the outreach was the WhatsApp-copy path (no call placed)."
+  },
+  "parentHotlineSummaryManualBody": "Paste it in WhatsApp to send it to the parent.",
+  "@parentHotlineSummaryManualBody": {
+    "description": "Terminal panel body for the WhatsApp-copy path."
+  },
+  "parentHotlineSummaryBusy": "The line was busy",
+  "@parentHotlineSummaryBusy": {
+    "description": "Terminal panel title when the call ended busy."
+  },
+  "parentHotlineSummaryNoAnswer": "No answer",
+  "@parentHotlineSummaryNoAnswer": {
+    "description": "Terminal panel title when the parent did not answer."
+  },
+  "parentHotlineSummaryFailed": "The call couldn't connect",
+  "@parentHotlineSummaryFailed": {
+    "description": "Terminal panel title when the call failed to connect."
+  },
+  "parentHotlineSummaryFailedBody": "The call didn't go through. You can try again, or copy the message to send on WhatsApp.",
+  "@parentHotlineSummaryFailedBody": {
+    "description": "Terminal panel body for a failed / no-answer / busy call."
+  },
+  "parentHotlineSummaryTryAgain": "Try again",
+  "@parentHotlineSummaryTryAgain": {
+    "description": "Terminal panel action that re-dials the same outreach."
+  },
+  "parentHotlineSummaryNoConversationTitle": "The call ended too soon",
+  "@parentHotlineSummaryNoConversationTitle": {
+    "description": "Terminal panel title when the call ended before a real conversation happened."
+  },
+  "parentHotlineSummaryNoConversationBody": "The call ended before a conversation could happen. You can try again, or send the message on WhatsApp.",
+  "@parentHotlineSummaryNoConversationBody": {
+    "description": "Terminal panel body when the call ended before a conversation could happen."
+  },
+  "parentHotlineSummaryUnavailableTitle": "Summary isn't available",
+  "@parentHotlineSummaryUnavailableTitle": {
+    "description": "Terminal panel title when the call finished but no AI summary was produced; the transcript is shown below."
+  },
+  "parentHotlineSummaryUnavailableBody": "We couldn't prepare a summary for this call. The conversation is below.",
+  "@parentHotlineSummaryUnavailableBody": {
+    "description": "Terminal panel body when the summary is unavailable but a transcript exists."
+  },
+  "contentCreatorTitle": "Content Creator Studio",
+  "@contentCreatorTitle": {
+    "description": "Content Creator Studio hub — the page/app-bar title and the dashboard tool-tile name for the multimedia hub that groups Visual Aid, Virtual Field Trip and Video Storyteller."
+  },
+  "contentCreatorTileSubtitle": "Create multimedia for your class",
+  "@contentCreatorTileSubtitle": {
+    "description": "One-line description under the Content Creator tool name on the dashboard tile and the Create palette."
+  },
+  "contentCreatorSubtitle": "Tools to help you create engaging multimedia content for your classroom.",
+  "@contentCreatorSubtitle": {
+    "description": "Intro line under the Content Creator Studio title, describing the hub."
+  },
+  "contentCreatorSectionEyebrow": "Choose a tool",
+  "@contentCreatorSectionEyebrow": {
+    "description": "Saffron section eyebrow above the three tool cards on the Content Creator Studio hub."
+  },
+  "contentCreatorVisualAidDesc": "Create simple line drawings and diagrams for your lessons.",
+  "@contentCreatorVisualAidDesc": {
+    "description": "Content Creator hub card description for the Visual Aid Designer tool."
+  },
+  "contentCreatorFieldTripDesc": "Plan exciting virtual tours using Google Earth.",
+  "@contentCreatorFieldTripDesc": {
+    "description": "Content Creator hub card description for the Virtual Field Trip tool."
+  },
+  "contentCreatorVideoDesc": "Discover curated educational videos for your lessons.",
+  "@contentCreatorVideoDesc": {
+    "description": "Content Creator hub card description for the Video Storyteller tool."
+  },
+  "visualAidTitle": "Visual Aid",
+  "@visualAidTitle": {
+    "description": "Visual Aid Designer tool name (dashboard tile, palette, screen app bar)."
+  },
+  "visualAidSubtitle": "Draw a teaching illustration",
+  "@visualAidSubtitle": {
+    "description": "One-line description under the Visual Aid tool name."
+  },
+  "visualAidEmpty": "Describe a drawing and tap Create.",
+  "@visualAidEmpty": {
+    "description": "Idle/empty message before any drawing is generated."
+  },
+  "visualAidPromptLabel": "What should the drawing show?",
+  "@visualAidPromptLabel": {
+    "description": "Label for the required prompt field."
+  },
+  "visualAidPromptHint": "For example, The parts of a plant cell",
+  "@visualAidPromptHint": {
+    "description": "Hint/example text in the prompt field."
+  },
+  "visualAidPromptError": "Please describe the drawing you need.",
+  "@visualAidPromptError": {
+    "description": "Validation error when the prompt is empty."
+  },
+  "visualAidGradeLabel": "Grade level",
+  "@visualAidGradeLabel": {
+    "description": "Label for the optional grade-level picker."
+  },
+  "visualAidGradeAny": "Any grade",
+  "@visualAidGradeAny": {
+    "description": "The 'no grade chosen' option in the grade picker."
+  },
+  "visualAidSubjectLabel": "Subject",
+  "@visualAidSubjectLabel": {
+    "description": "Label for the optional subject picker."
+  },
+  "visualAidSubjectAny": "Any subject",
+  "@visualAidSubjectAny": {
+    "description": "The 'no subject chosen' option in the subject picker."
+  },
+  "visualAidOptional": "Optional",
+  "@visualAidOptional": {
+    "description": "Inline 'optional' marker on optional fields."
+  },
+  "visualAidAction": "Create visual aid",
+  "@visualAidAction": {
+    "description": "The primary submit button that generates the drawing."
+  },
+  "visualAidResultTitle": "Visual aid",
+  "@visualAidResultTitle": {
+    "description": "Fallback masthead title when the prompt is unknown."
+  },
+  "visualAidHowToUse": "How to use this",
+  "@visualAidHowToUse": {
+    "description": "Section heading over the model's pedagogical guidance."
+  },
+  "visualAidDiscussionSpark": "Discussion spark",
+  "@visualAidDiscussionSpark": {
+    "description": "Callout label over the model's discussion question."
+  },
+  "visualAidImageLabel": "Generated teaching illustration",
+  "@visualAidImageLabel": {
+    "description": "Accessibility label for the generated image when no prompt is known."
+  },
+  "visualAidImageError": "This drawing could not be displayed.",
+  "@visualAidImageError": {
+    "description": "Shown when decoded bytes are not a renderable image."
+  },
+  "visualAidNoImage": "No drawing came back for that prompt. Please rephrase it and try again.",
+  "@visualAidNoImage": {
+    "description": "Empty-result copy when the server returned no usable image."
+  },
+  "visualAidSignIn": "Please sign in again to use this tool.",
+  "@visualAidSignIn": {
+    "description": "401 prompt: the token is stale, sign in again."
+  },
+  "visualAidUpgradeTitle": "A higher plan is needed",
+  "@visualAidUpgradeTitle": {
+    "description": "403 upgrade prompt title."
+  },
+  "visualAidUpgradeBody": "Visual aids are part of a higher plan. Please upgrade to keep creating drawings.",
+  "@visualAidUpgradeBody": {
+    "description": "403 upgrade prompt body."
+  },
+  "visualAidSeePricing": "See plans and pricing",
+  "@visualAidSeePricing": {
+    "description": "Action that opens the pricing page from a limit/upgrade prompt."
+  },
+  "visualAidDailyLimitTitle": "That is all your drawings for today",
+  "@visualAidDailyLimitTitle": {
+    "description": "429 daily image-budget title (resets tomorrow)."
+  },
+  "visualAidDailyLimitBody": "Your plan includes a set number of visual aids each day. Your drawings reset tomorrow, or you can raise the daily limit on a higher plan.",
+  "@visualAidDailyLimitBody": {
+    "description": "429 daily image-budget body."
+  },
+  "visualAidLimitTitle": "You have reached your limit",
+  "@visualAidLimitTitle": {
+    "description": "429 monthly usage-limit title."
+  },
+  "visualAidLimitBody": "You have used your visual aids for this month. Your drawings reset next month, or you can raise the limit on a higher plan.",
+  "@visualAidLimitBody": {
+    "description": "429 monthly usage-limit body."
+  },
+  "visualAidRephrase": "We could not create that drawing. Please rephrase it and try again.",
+  "@visualAidRephrase": {
+    "description": "400 safety/rephrase hint."
+  },
+  "visualAidEmptyGeneration": "The drawing came back empty. Try describing it with fewer labels.",
+  "@visualAidEmptyGeneration": {
+    "description": "422 IMAGE_GENERATION_EMPTY: the model produced no image; use fewer labels."
+  },
+  "visualAidBusy": "The assistant is busy right now. Please try again in a moment.",
+  "@visualAidBusy": {
+    "description": "503/5xx busy message without a Retry-After hint."
+  },
+  "visualAidBusyRetryAfter": "{seconds, plural, =1{The assistant is busy right now. Please try again in about 1 second.} other{The assistant is busy right now. Please try again in about {seconds} seconds.}}",
+  "@visualAidBusyRetryAfter": {
+    "description": "Shown on a 503 busy response that carried Retry-After.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "visualAidTimeout": "This is taking longer than expected. Please try again.",
+  "@visualAidTimeout": {
+    "description": "Client-side timeout message."
+  },
+  "videoStorytellerTitle": "Video Storyteller",
+  "@videoStorytellerTitle": {
+    "description": "Video Storyteller tool name (dashboard tile, palette, screen app bar)."
+  },
+  "videoStorytellerSubtitle": "Find teaching videos",
+  "@videoStorytellerSubtitle": {
+    "description": "One-line description under the Video Storyteller tool name."
+  },
+  "videoStorytellerEmpty": "Pick a subject or topic and tap Find videos.",
+  "@videoStorytellerEmpty": {
+    "description": "Idle/empty message before any search is run."
+  },
+  "videoStorytellerTopicLabel": "Topic or chapter",
+  "@videoStorytellerTopicLabel": {
+    "description": "Label for the optional topic/chapter search field."
+  },
+  "videoStorytellerTopicHint": "For example, The water cycle",
+  "@videoStorytellerTopicHint": {
+    "description": "Hint/example text in the topic field."
+  },
+  "videoStorytellerSubjectLabel": "Subject",
+  "@videoStorytellerSubjectLabel": {
+    "description": "Label for the optional subject picker."
+  },
+  "videoStorytellerSubjectAny": "Any subject",
+  "@videoStorytellerSubjectAny": {
+    "description": "The 'no subject chosen' option in the subject picker."
+  },
+  "videoStorytellerGradeLabel": "Grade level",
+  "@videoStorytellerGradeLabel": {
+    "description": "Label for the optional grade-level picker."
+  },
+  "videoStorytellerGradeAny": "Any grade",
+  "@videoStorytellerGradeAny": {
+    "description": "The 'no grade chosen' option in the grade picker."
+  },
+  "videoStorytellerOptional": "Optional",
+  "@videoStorytellerOptional": {
+    "description": "Inline 'optional' marker on optional fields."
+  },
+  "videoStorytellerAction": "Find videos",
+  "@videoStorytellerAction": {
+    "description": "The primary submit button that searches for videos."
+  },
+  "videoStorytellerNoResults": "No videos came back for that. Try a different subject or topic.",
+  "@videoStorytellerNoResults": {
+    "description": "Empty-result copy when no videos were found."
+  },
+  "videoStorytellerViewAll": "View all {count}",
+  "@videoStorytellerViewAll": {
+    "description": "Button that expands a video category beyond its first six cards to show the full ranked list. {count} is the total number of videos in that category.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "videoStorytellerOfficialSource": "Official source",
+  "@videoStorytellerOfficialSource": {
+    "description": "Badge on videos from official Indian education channels (NCERT, Ministry of Education, IGNOU, UGC)."
+  },
+  "videoStorytellerOpensExternally": "Opens in YouTube, outside the app.",
+  "@videoStorytellerOpensExternally": {
+    "description": "Accessibility hint on a video card: tapping opens YouTube outside the app."
+  },
+  "videoStorytellerCategoryTopRecommended": "Top recommended for you",
+  "@videoStorytellerCategoryTopRecommended": {
+    "description": "Section heading for the top-recommended videos bucket."
+  },
+  "videoStorytellerCategoryStorytelling": "Storytelling for your subjects",
+  "@videoStorytellerCategoryStorytelling": {
+    "description": "Section heading for the storytelling videos bucket."
+  },
+  "videoStorytellerCategoryPedagogy": "Pedagogy and teaching methods",
+  "@videoStorytellerCategoryPedagogy": {
+    "description": "Section heading for the pedagogy and teaching-methods videos bucket."
+  },
+  "videoStorytellerCategoryGovtUpdates": "Government updates",
+  "@videoStorytellerCategoryGovtUpdates": {
+    "description": "Section heading for the government-updates videos bucket."
+  },
+  "videoStorytellerCategoryCourses": "Teacher training courses",
+  "@videoStorytellerCategoryCourses": {
+    "description": "Section heading for the teacher-training-courses videos bucket."
+  },
+  "videoStorytellerSignIn": "Please sign in again to use this tool.",
+  "@videoStorytellerSignIn": {
+    "description": "401 prompt: the token is stale, sign in again."
+  },
+  "videoStorytellerTimeout": "This is taking longer than expected. Please try again.",
+  "@videoStorytellerTimeout": {
+    "description": "Client-side timeout message."
+  },
+  "videoStorytellerBusy": "The assistant is busy right now. Please try again in a moment.",
+  "@videoStorytellerBusy": {
+    "description": "503/5xx busy message without a Retry-After hint."
+  },
+  "videoStorytellerBusyRetryAfter": "{seconds, plural, =1{The assistant is busy right now. Please try again in about 1 second.} other{The assistant is busy right now. Please try again in about {seconds} seconds.}}",
+  "@videoStorytellerBusyRetryAfter": {
+    "description": "Shown on a 503 busy response that carried Retry-After.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "videoStorytellerRephrase": "We could not find videos for that. Please try a different topic.",
+  "@videoStorytellerRephrase": {
+    "description": "400/422 hint: rephrase or try a different topic."
+  },
+  "videoStorytellerLimit": "You have searched a lot recently. Please try again in a little while.",
+  "@videoStorytellerLimit": {
+    "description": "429 rate-limit message for repeated searches."
+  },
+  "actionDone": "Done",
+  "@actionDone": {
+    "description": "Generic done/dismiss action; closes a result back to the form."
+  },
+  "virtualFieldTripTitle": "Virtual Field Trip",
+  "@virtualFieldTripTitle": {
+    "description": "Virtual Field Trip tool name (dashboard tile, palette, screen app bar)."
+  },
+  "virtualFieldTripSubtitle": "Tour the world on Google Earth",
+  "@virtualFieldTripSubtitle": {
+    "description": "One-line description under the Virtual Field Trip tool name."
+  },
+  "virtualFieldTripEmpty": "Enter a topic and tap Plan the trip.",
+  "@virtualFieldTripEmpty": {
+    "description": "Idle/empty message before any trip is planned."
+  },
+  "virtualFieldTripTopicLabel": "Topic or theme",
+  "@virtualFieldTripTopicLabel": {
+    "description": "Label for the required topic/theme field."
+  },
+  "virtualFieldTripTopicHint": "For example, The Great Barrier Reef",
+  "@virtualFieldTripTopicHint": {
+    "description": "Hint/example text in the topic field."
+  },
+  "virtualFieldTripTopicError": "Please enter a topic for the trip.",
+  "@virtualFieldTripTopicError": {
+    "description": "Validation error when the required topic field is empty."
+  },
+  "virtualFieldTripGradeLabel": "Grade level",
+  "@virtualFieldTripGradeLabel": {
+    "description": "Label for the optional grade-level picker."
+  },
+  "virtualFieldTripGradeAny": "Any grade",
+  "@virtualFieldTripGradeAny": {
+    "description": "The 'no grade chosen' option in the grade picker."
+  },
+  "virtualFieldTripOptional": "Optional",
+  "@virtualFieldTripOptional": {
+    "description": "Inline 'optional' marker on optional fields."
+  },
+  "virtualFieldTripAction": "Plan the trip",
+  "@virtualFieldTripAction": {
+    "description": "The primary submit button that plans the field trip."
+  },
+  "virtualFieldTripDocType": "Virtual Field Trip",
+  "@virtualFieldTripDocType": {
+    "description": "The document-type eyebrow on the itinerary result masthead."
+  },
+  "virtualFieldTripStopCount": "{count, plural, =1{1 stop} other{{count} stops}}",
+  "@virtualFieldTripStopCount": {
+    "description": "Masthead badge showing how many stops the itinerary has.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "virtualFieldTripStopSemantics": "Stop {number}: {name}",
+  "@virtualFieldTripStopSemantics": {
+    "description": "Accessibility label for one numbered stop card.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "virtualFieldTripFactLabel": "Did you know?",
+  "@virtualFieldTripFactLabel": {
+    "description": "Heading on the educational-fact highlight in a stop card."
+  },
+  "virtualFieldTripReflectionLabel": "Think about this",
+  "@virtualFieldTripReflectionLabel": {
+    "description": "Heading on the reflection-prompt inset in a stop card."
+  },
+  "virtualFieldTripAnalogyLabel": "In our context",
+  "@virtualFieldTripAnalogyLabel": {
+    "description": "Heading on the Bharat-First cultural-analogy section in a stop card."
+  },
+  "virtualFieldTripExplanationLabel": "Why we visit",
+  "@virtualFieldTripExplanationLabel": {
+    "description": "Heading on the pedagogical-explanation section in a stop card."
+  },
+  "virtualFieldTripOpenEarth": "Open in Google Earth",
+  "@virtualFieldTripOpenEarth": {
+    "description": "Button that opens a stop's location in Google Earth, outside the app."
+  },
+  "virtualFieldTripOpensExternally": "Opens Google Earth, outside the app.",
+  "@virtualFieldTripOpensExternally": {
+    "description": "Accessibility hint on the Open in Google Earth action."
+  },
+  "virtualFieldTripPendingTitle": "Still planning your trip",
+  "@virtualFieldTripPendingTitle": {
+    "description": "Title of the calm panel shown for the benign 202 still-generating outcome."
+  },
+  "virtualFieldTripPendingBody": "Your field trip is still being planned. Check My Library in a minute.",
+  "@virtualFieldTripPendingBody": {
+    "description": "Body of the calm still-generating panel: the trip keeps saving server-side."
+  },
+  "virtualFieldTripNoStops": "No stops came back for that. Try a different topic.",
+  "@virtualFieldTripNoStops": {
+    "description": "Empty-result copy when a planned trip had no usable stops."
+  },
+  "virtualFieldTripSignIn": "Please sign in again to use this tool.",
+  "@virtualFieldTripSignIn": {
+    "description": "401 prompt: the token is stale, sign in again."
+  },
+  "virtualFieldTripUnavailable": "This tool is not part of your current plan.",
+  "@virtualFieldTripUnavailable": {
+    "description": "403 plan-gate message: the tool is not on the teacher's plan."
+  },
+  "virtualFieldTripTimeout": "This is taking longer than expected. Please try again.",
+  "@virtualFieldTripTimeout": {
+    "description": "Client-side timeout message."
+  },
+  "virtualFieldTripBusy": "The assistant is busy right now. Please try again in a moment.",
+  "@virtualFieldTripBusy": {
+    "description": "503/5xx busy message without a Retry-After hint."
+  },
+  "virtualFieldTripBusyRetryAfter": "{seconds, plural, =1{The assistant is busy right now. Please try again in about 1 second.} other{The assistant is busy right now. Please try again in about {seconds} seconds.}}",
+  "@virtualFieldTripBusyRetryAfter": {
+    "description": "Shown on a 503 busy response that carried Retry-After.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "virtualFieldTripRephrase": "We could not plan a trip for that. Please try a different topic.",
+  "@virtualFieldTripRephrase": {
+    "description": "400/422 hint: rephrase or try a different topic."
+  },
+  "virtualFieldTripLimit": "You have planned a lot of trips recently. Please try again in a little while.",
+  "@virtualFieldTripLimit": {
+    "description": "429 rate-limit message for repeated trips."
+  },
+  "assessmentScannerTitle": "Assessment Scanner",
+  "@assessmentScannerTitle": {
+    "description": "Assessment Scanner tool name (U-PD5)."
+  },
+  "assessmentScannerSubtitle": "Grade a student's answer sheet page by page",
+  "@assessmentScannerSubtitle": {
+    "description": "Assessment Scanner one-line description."
+  },
+  "assessmentScannerEmpty": "Add up to 3 photos of the answer sheet, then tap Grade.",
+  "@assessmentScannerEmpty": {
+    "description": "Idle/empty prompt on the Assessment Scanner."
+  },
+  "assessmentScannerSubmit": "Grade the answer sheet",
+  "@assessmentScannerSubmit": {
+    "description": "Primary action button on the Assessment Scanner."
+  },
+  "assessmentScannerResultTitle": "Assessment",
+  "@assessmentScannerResultTitle": {
+    "description": "Result document title on the Assessment Scanner scorecard."
+  },
+  "assessmentScannerSectionSheet": "The answer sheet",
+  "@assessmentScannerSectionSheet": {
+    "description": "Section header for the page-capture group."
+  },
+  "assessmentScannerPagesLabel": "Answer sheet pages",
+  "@assessmentScannerPagesLabel": {
+    "description": "Label for the multi-page capture field."
+  },
+  "assessmentScannerPagesHint": "Add up to 3 clear photos, one per page.",
+  "@assessmentScannerPagesHint": {
+    "description": "Hint under the pages field."
+  },
+  "assessmentScannerPagesEmpty": "Add a photo of the first page.",
+  "@assessmentScannerPagesEmpty": {
+    "description": "Prompt inside the empty page-capture well."
+  },
+  "assessmentScannerPageLabel": "Page {number}",
+  "@assessmentScannerPageLabel": {
+    "description": "Label for one captured page.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "assessmentScannerRemovePage": "Remove page {number}",
+  "@assessmentScannerRemovePage": {
+    "description": "Accessibility label for the per-page remove button.",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "assessmentScannerPageCounter": "{count} of {max} pages",
+  "@assessmentScannerPageCounter": {
+    "description": "Counter showing captured pages out of the cap.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "assessmentScannerPagesFull": "You can add up to {max} pages.",
+  "@assessmentScannerPagesFull": {
+    "description": "Note shown when the page cap is reached.",
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "assessmentScannerTakePhoto": "Take photo",
+  "@assessmentScannerTakePhoto": {
+    "description": "Camera button to add a page."
+  },
+  "assessmentScannerChooseGallery": "Choose from gallery",
+  "@assessmentScannerChooseGallery": {
+    "description": "Gallery button to add a page."
+  },
+  "assessmentScannerSubjectLabel": "Subject",
+  "@assessmentScannerSubjectLabel": {
+    "description": "Subject picker label."
+  },
+  "assessmentScannerSubjectHint": "Grading is tuned to the subject.",
+  "@assessmentScannerSubjectHint": {
+    "description": "Hint under the subject picker."
+  },
+  "assessmentScannerSubjectPlaceholder": "Choose a subject",
+  "@assessmentScannerSubjectPlaceholder": {
+    "description": "Placeholder in the subject dropdown."
+  },
+  "assessmentScannerSubjectError": "Please choose the subject.",
+  "@assessmentScannerSubjectError": {
+    "description": "Validation error when no subject is selected."
+  },
+  "assessmentScannerGradeLabel": "Grade level",
+  "@assessmentScannerGradeLabel": {
+    "description": "Grade picker label."
+  },
+  "assessmentScannerGradePlaceholder": "Choose a grade",
+  "@assessmentScannerGradePlaceholder": {
+    "description": "Placeholder in the grade dropdown."
+  },
+  "assessmentScannerGradeError": "Please choose the grade.",
+  "@assessmentScannerGradeError": {
+    "description": "Validation error when no grade is selected."
+  },
+  "assessmentScannerOptional": "Optional",
+  "@assessmentScannerOptional": {
+    "description": "Inline 'optional' tag on the answer-key field."
+  },
+  "assessmentScannerAnswerKeyLabel": "Answer key",
+  "@assessmentScannerAnswerKeyLabel": {
+    "description": "Optional answer-key field label."
+  },
+  "assessmentScannerAnswerKeyHint": "Paste the correct answers to grade against them.",
+  "@assessmentScannerAnswerKeyHint": {
+    "description": "Hint under the answer-key field."
+  },
+  "assessmentScannerAnswerKeyPlaceholder": "Type or paste the answer key",
+  "@assessmentScannerAnswerKeyPlaceholder": {
+    "description": "Placeholder in the answer-key text field."
+  },
+  "assessmentScannerPrivacyNote": "The student's name is never sent for grading.",
+  "@assessmentScannerPrivacyNote": {
+    "description": "Privacy note under the form."
+  },
+  "assessmentScannerScoreCaption": "{awarded} of {max} marks",
+  "@assessmentScannerScoreCaption": {
+    "description": "Raw-marks caption under the score ring.",
+    "placeholders": {
+      "awarded": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "assessmentScannerScoreOutOf": "out of 100",
+  "@assessmentScannerScoreOutOf": {
+    "description": "Suffix for the copied score line."
+  },
+  "assessmentScannerMarks": "{awarded}/{max}",
+  "@assessmentScannerMarks": {
+    "description": "Per-question marks badge, awarded over max.",
+    "placeholders": {
+      "awarded": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "assessmentScannerPagesMeta": "{count, plural, =1{1 page} other{{count} pages}}",
+  "@assessmentScannerPagesMeta": {
+    "description": "Masthead badge counting graded pages.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "assessmentScannerReviewBadge": "{count, plural, =1{1 to review} other{{count} to review}}",
+  "@assessmentScannerReviewBadge": {
+    "description": "Masthead badge counting questions needing a teacher's review.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "assessmentScannerQuestionsSection": "Question by question",
+  "@assessmentScannerQuestionsSection": {
+    "description": "Section header for the per-question list."
+  },
+  "assessmentScannerStudentAnswerLabel": "Student wrote",
+  "@assessmentScannerStudentAnswerLabel": {
+    "description": "Sub-label before the student's answer."
+  },
+  "assessmentScannerFeedbackLabel": "Feedback",
+  "@assessmentScannerFeedbackLabel": {
+    "description": "Sub-label before the per-question feedback."
+  },
+  "assessmentScannerExpectedLabel": "Expected answer",
+  "@assessmentScannerExpectedLabel": {
+    "description": "Sub-label before the reference answer."
+  },
+  "assessmentScannerNextStepsSection": "Recommended next steps",
+  "@assessmentScannerNextStepsSection": {
+    "description": "Section header for teacher-facing next steps."
+  },
+  "assessmentScannerStudentSection": "For the student",
+  "@assessmentScannerStudentSection": {
+    "description": "Section header for student-facing recommendations."
+  },
+  "assessmentScannerQualitySection": "Photo quality",
+  "@assessmentScannerQualitySection": {
+    "description": "Section header for photo-quality advisories."
+  },
+  "assessmentScannerNotScored": "Not scored",
+  "@assessmentScannerNotScored": {
+    "description": "Shown on a question that carries no marks scale."
+  },
+  "assessmentScannerNoContent": "No grades came back. Please try clearer photos.",
+  "@assessmentScannerNoContent": {
+    "description": "Empty-result message."
+  },
+  "assessmentScannerOutcomeCorrect": "Correct",
+  "@assessmentScannerOutcomeCorrect": {
+    "description": "Outcome chip: full marks."
+  },
+  "assessmentScannerOutcomePartial": "Partly correct",
+  "@assessmentScannerOutcomePartial": {
+    "description": "Outcome chip: partial marks."
+  },
+  "assessmentScannerOutcomeIncorrect": "Incorrect",
+  "@assessmentScannerOutcomeIncorrect": {
+    "description": "Outcome chip: no marks."
+  },
+  "assessmentScannerReviewChip": "Check this",
+  "@assessmentScannerReviewChip": {
+    "description": "Chip flagging a question that needs a teacher's review."
+  },
+  "assessmentScannerSignIn": "Please sign in again to grade an answer sheet.",
+  "@assessmentScannerSignIn": {
+    "description": "401 sign-in prompt."
+  },
+  "assessmentScannerUpgradeTitle": "A higher plan is needed",
+  "@assessmentScannerUpgradeTitle": {
+    "description": "403 upgrade title."
+  },
+  "assessmentScannerUpgradeBody": "Grading answer sheets is part of a higher plan. Upgrade to keep grading.",
+  "@assessmentScannerUpgradeBody": {
+    "description": "403 upgrade body."
+  },
+  "assessmentScannerSeePricing": "See plans",
+  "@assessmentScannerSeePricing": {
+    "description": "Pricing action label."
+  },
+  "assessmentScannerDailyLimitTitle": "That is all your answer sheets for today",
+  "@assessmentScannerDailyLimitTitle": {
+    "description": "429 daily-limit title."
+  },
+  "assessmentScannerDailyLimitBody": "Your plan includes a set number of answer sheets each day. They reset tomorrow, or you can raise the limit on a higher plan.",
+  "@assessmentScannerDailyLimitBody": {
+    "description": "429 daily-limit body."
+  },
+  "assessmentScannerLimitTitle": "You have reached your grading limit",
+  "@assessmentScannerLimitTitle": {
+    "description": "429 monthly-limit title."
+  },
+  "assessmentScannerLimitBody": "You have used all the answer sheets in your plan. They reset next month, or you can raise the limit on a higher plan.",
+  "@assessmentScannerLimitBody": {
+    "description": "429 monthly-limit body."
+  },
+  "assessmentScannerBusy": "The grading model is busy right now. Please try again in a minute.",
+  "@assessmentScannerBusy": {
+    "description": "503 busy message."
+  },
+  "assessmentScannerBusyRetryAfter": "{seconds, plural, =1{The grading model is busy right now. Please try again in about 1 second.} other{The grading model is busy right now. Please try again in about {seconds} seconds.}}",
+  "@assessmentScannerBusyRetryAfter": {
+    "description": "503 busy message with a retry countdown.",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "assessmentScannerTimeout": "Grading is taking longer than usual. Please try again.",
+  "@assessmentScannerTimeout": {
+    "description": "Timeout message."
+  },
+  "assessmentScannerRephrase": "The photos could not be graded. Please re-upload clearer pages.",
+  "@assessmentScannerRephrase": {
+    "description": "400/422 re-upload message."
+  },
+  "inboxTitle": "Messages",
+  "@inboxTitle": {
+    "description": "Pro Inbox title + messages-entry tooltip."
+  },
+  "inboxSignInTitle": "Your messages",
+  "@inboxSignInTitle": {
+    "description": "Inbox signed-out / awaiting-Firebase EmptyView title."
+  },
+  "inboxSignInBody": "Sign in to see your messages",
+  "@inboxSignInBody": {
+    "description": "Inbox signed-out / awaiting-Firebase EmptyView body (DM gate)."
+  },
+  "inboxEmptyTitle": "No conversations yet",
+  "@inboxEmptyTitle": {
+    "description": "Inbox EmptyView title when there are no conversations."
+  },
+  "inboxEmptyBody": "When you connect with teachers, your conversations will appear here.",
+  "@inboxEmptyBody": {
+    "description": "Inbox EmptyView body when there are no conversations."
+  },
+  "inboxErrorBody": "We couldn't load your messages. Please try again.",
+  "@inboxErrorBody": {
+    "description": "Inbox/thread ErrorView body (missing index / load failure)."
+  },
+  "inboxNoMessagesYet": "No messages yet",
+  "@inboxNoMessagesYet": {
+    "description": "Row preview placeholder for a conversation with no message yet."
+  },
+  "inboxThreadFallbackTitle": "Conversation",
+  "@inboxThreadFallbackTitle": {
+    "description": "Thread app-bar fallback title (deep link / missing participant)."
+  },
+  "inboxThreadEmptyTitle": "No messages yet",
+  "@inboxThreadEmptyTitle": {
+    "description": "Thread EmptyView title when the conversation has no messages."
+  },
+  "inboxThreadEmptyBody": "Say hello to start the conversation.",
+  "@inboxThreadEmptyBody": {
+    "description": "Thread EmptyView body when the conversation has no messages."
+  },
+  "inboxComposerHint": "Write a message",
+  "@inboxComposerHint": {
+    "description": "Thread composer text-field hint."
+  },
+  "inboxComposerSend": "Send",
+  "@inboxComposerSend": {
+    "description": "Thread composer send-button tooltip / accessibility label."
+  },
+  "inboxComposerTooLong": "Message too long. Please shorten it.",
+  "@inboxComposerTooLong": {
+    "description": "Inline composer hint shown when the message exceeds the 1000-byte server cap; send is blocked until it is shortened."
+  },
+  "inboxLoadOlder": "Load older messages",
+  "@inboxLoadOlder": {
+    "description": "Button to page in older messages above the live tail."
+  },
+  "inboxSendFailed": "Couldn't send your message.",
+  "@inboxSendFailed": {
+    "description": "Inline notice when an optimistic send rolled back."
+  },
+  "inboxResourceLabel": "Resource",
+  "@inboxResourceLabel": {
+    "description": "Badge label for a shared-resource message."
+  },
+  "inboxVoiceNoteLabel": "Voice note",
+  "@inboxVoiceNoteLabel": {
+    "description": "Badge label for a voice-note (audio) message."
+  },
+  "inboxUnreadLabel": "{count, plural, =1{1 unread} other{{count} unread}}",
+  "@inboxUnreadLabel": {
+    "description": "Accessibility label for the unread-count badge.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "inboxTickSending": "Sending",
+  "@inboxTickSending": {
+    "description": "Delivery tick accessibility label: send in flight."
+  },
+  "inboxTickSent": "Sent",
+  "@inboxTickSent": {
+    "description": "Delivery tick accessibility label: sent."
+  },
+  "inboxTickDelivered": "Delivered",
+  "@inboxTickDelivered": {
+    "description": "Delivery tick accessibility label: delivered."
+  },
+  "inboxTickRead": "Read",
+  "@inboxTickRead": {
+    "description": "Delivery tick accessibility label: read."
+  },
+  "inboxTickFailed": "Not sent",
+  "@inboxTickFailed": {
+    "description": "Delivery tick accessibility label: not sent."
+  },
+  "inboxTimeNow": "now",
+  "@inboxTimeNow": {
+    "description": "Relative time: under a minute ago."
+  },
+  "inboxTimeMinutes": "{count}m",
+  "@inboxTimeMinutes": {
+    "description": "Compact relative time, minutes.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "inboxTimeHours": "{count}h",
+  "@inboxTimeHours": {
+    "description": "Compact relative time, hours.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "inboxTimeDays": "{count}d",
+  "@inboxTimeDays": {
+    "description": "Compact relative time, days.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "inboxTimeWeeks": "{count}w",
+  "@inboxTimeWeeks": {
+    "description": "Compact relative time, weeks.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "networkTitle": "Network",
+  "@networkTitle": {
+    "description": "Network hub screen title (hosts the staffroom feed + Pro Inbox)."
+  },
+  "networkTooltip": "Network",
+  "@networkTooltip": {
+    "description": "Voice-home app-bar Network entry tooltip / accessibility label."
+  },
+  "networkTabStaffroom": "Staffroom",
+  "@networkTabStaffroom": {
+    "description": "Network hub segmented tab: the staffroom feed."
+  },
+  "networkTabMessages": "Messages",
+  "@networkTabMessages": {
+    "description": "Network hub segmented tab: the Pro Inbox conversation list."
+  },
+  "networkTabUpdates": "Updates",
+  "@networkTabUpdates": {
+    "description": "Network hub segmented tab: the on-device updates list (call outcomes, attendance signals, queued generations)."
+  },
+  "notificationsEmptyTitle": "Nothing new yet",
+  "@notificationsEmptyTitle": {
+    "description": "Updates tab empty state title, when the device has recorded nothing yet."
+  },
+  "notificationsEmptyBody": "Call outcomes, attendance alerts and finished papers appear here as they happen.",
+  "@notificationsEmptyBody": {
+    "description": "Updates tab empty state body: names the three kinds of update this surface records."
+  },
+  "notificationsLocalNote": "These appear when you open the app. SahayakAI cannot send phone notifications yet.",
+  "@notificationsLocalNote": {
+    "description": "Updates tab note. States plainly that this list is built on the device and that push notifications do not exist yet, so a teacher never assumes they will be alerted with the app closed."
+  },
+  "notificationsMarkAllRead": "Mark all as read",
+  "@notificationsMarkAllRead": {
+    "description": "Updates tab action that clears the unread state on every recorded update."
+  },
+  "notificationCallCompletedTitle": "Parent call finished for {student}",
+  "@notificationCallCompletedTitle": {
+    "description": "Updates row title: a Parent Hotline call reached a terminal state with a conversation.",
+    "placeholders": {
+      "student": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationCallCompletedBody": "The conversation summary is ready in the Parent Hotline.",
+  "@notificationCallCompletedBody": {
+    "description": "Body for notificationCallCompletedTitle. Points back at the Parent Hotline, where the summary sheet lives."
+  },
+  "notificationCallFailedTitle": "Parent call did not connect for {student}",
+  "@notificationCallFailedTitle": {
+    "description": "Updates row title: a Parent Hotline call ended as failed / no answer / busy.",
+    "placeholders": {
+      "student": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationCallFailedBody": "Try the call again, or send the message on WhatsApp instead.",
+  "@notificationCallFailedBody": {
+    "description": "Body for notificationCallFailedTitle. Names the two ways forward the hotline itself offers."
+  },
+  "notificationAbsenceTitle": "{student} has missed {count} days in a row",
+  "@notificationAbsenceTitle": {
+    "description": "Updates row title: the monthly rollup the teacher just read shows a consecutive-absence run at or past the threshold.",
+    "placeholders": {
+      "student": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationAbsenceBody": "Open {className} to see the days that were missed.",
+  "@notificationAbsenceBody": {
+    "description": "Body for notificationAbsenceTitle; the row opens that class's month view.",
+    "placeholders": {
+      "className": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationExamPaperTitle": "{subject} exam paper is on its way",
+  "@notificationExamPaperTitle": {
+    "description": "Updates row title: the exam-paper route answered 202 (still generating server-side).",
+    "placeholders": {
+      "subject": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationExamPaperBody": "It is still being written and will appear in your Library on its own.",
+  "@notificationExamPaperBody": {
+    "description": "Body for notificationExamPaperTitle. Says only what the 202 actually promises: the paper is queued and will be saved. There is no completion signal, so this never claims it has arrived."
+  },
+  "staffroomTitle": "Staffroom",
+  "@staffroomTitle": {
+    "description": "Staffroom screen title + hero eyebrow."
+  },
+  "staffroomHeroTitle": "The Staffroom",
+  "@staffroomHeroTitle": {
+    "description": "Staffroom hero greeting (serif display)."
+  },
+  "staffroomHeroDeck": "Teachers across Bharat, in one room",
+  "@staffroomHeroDeck": {
+    "description": "Staffroom hero deck line under the greeting."
+  },
+  "staffroomSectionGroups": "Your groups",
+  "@staffroomSectionGroups": {
+    "description": "Staffroom section header: the teacher's groups strip."
+  },
+  "staffroomSectionFeed": "From your groups",
+  "@staffroomSectionFeed": {
+    "description": "Staffroom section header: the unified feed."
+  },
+  "staffroomSectionDiscover": "Discover groups",
+  "@staffroomSectionDiscover": {
+    "description": "Staffroom section header: suggested groups to join."
+  },
+  "staffroomSectionPeople": "People you may know",
+  "@staffroomSectionPeople": {
+    "description": "Staffroom section header: recommended teachers."
+  },
+  "staffroomSignInTitle": "Join the staffroom",
+  "@staffroomSignInTitle": {
+    "description": "Staffroom signed-out / awaiting-Firebase EmptyView title."
+  },
+  "staffroomSignInBody": "Sign in to join the staffroom",
+  "@staffroomSignInBody": {
+    "description": "Staffroom signed-out / awaiting-Firebase EmptyView body."
+  },
+  "staffroomFeedEmptyTitle": "Your feed is quiet",
+  "@staffroomFeedEmptyTitle": {
+    "description": "Staffroom feed empty (ready, no items) EmptyView title."
+  },
+  "staffroomFeedEmptyBody": "Posts from your groups will appear here.",
+  "@staffroomFeedEmptyBody": {
+    "description": "Staffroom feed empty EmptyView body."
+  },
+  "staffroomErrorBody": "We couldn't load the staffroom. Please try again.",
+  "@staffroomErrorBody": {
+    "description": "Staffroom / group-detail ErrorView body."
+  },
+  "staffroomGroupsEmptyTitle": "No groups yet",
+  "@staffroomGroupsEmptyTitle": {
+    "description": "Staffroom 'Your groups' empty prompt title."
+  },
+  "staffroomGroupsEmptyBody": "Join a group to see its posts and chat.",
+  "@staffroomGroupsEmptyBody": {
+    "description": "Staffroom 'Your groups' empty prompt body."
+  },
+  "staffroomBrowseGroups": "Browse groups",
+  "@staffroomBrowseGroups": {
+    "description": "Button to browse / discover groups to join."
+  },
+  "staffroomMemberCount": "{count, plural, =1{1 member} other{{count} members}}",
+  "@staffroomMemberCount": {
+    "description": "Group member count (plural).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "staffroomJoin": "Join",
+  "@staffroomJoin": {
+    "description": "Join-group button label."
+  },
+  "staffroomJoined": "Joined",
+  "@staffroomJoined": {
+    "description": "Joined-group settled state label."
+  },
+  "staffroomJoinFailed": "Couldn't join. Tap to retry.",
+  "@staffroomJoinFailed": {
+    "description": "Inline hint when an optimistic join rolled back."
+  },
+  "staffroomGroupLockedTitle": "Members only",
+  "@staffroomGroupLockedTitle": {
+    "description": "Group detail locked (non-member, Forbidden posts) EmptyView title."
+  },
+  "staffroomGroupLockedBody": "Join this group to see its posts.",
+  "@staffroomGroupLockedBody": {
+    "description": "Group detail locked EmptyView body."
+  },
+  "staffroomGroupPostsEmptyTitle": "No posts yet",
+  "@staffroomGroupPostsEmptyTitle": {
+    "description": "Group detail posts empty title."
+  },
+  "staffroomGroupPostsEmptyBody": "Be the first to share here.",
+  "@staffroomGroupPostsEmptyBody": {
+    "description": "Group detail posts empty body."
+  },
+  "staffroomGroupNotFoundTitle": "Group not found",
+  "@staffroomGroupNotFoundTitle": {
+    "description": "Group detail not-found (null group) title."
+  },
+  "staffroomGroupNotFoundBody": "This group may have been removed.",
+  "@staffroomGroupNotFoundBody": {
+    "description": "Group detail not-found body."
+  },
+  "staffroomPostTypeShare": "Shared",
+  "@staffroomPostTypeShare": {
+    "description": "Post-type overline label: a share post."
+  },
+  "staffroomPostTypeAskHelp": "Needs help",
+  "@staffroomPostTypeAskHelp": {
+    "description": "Post-type overline label: an ask-for-help post."
+  },
+  "staffroomPostTypeCelebrate": "Celebrating",
+  "@staffroomPostTypeCelebrate": {
+    "description": "Post-type overline label: a celebrate post."
+  },
+  "staffroomPostTypeResource": "Resource",
+  "@staffroomPostTypeResource": {
+    "description": "Post-type overline label: a resource post."
+  },
+  "staffroomLike": "Like",
+  "@staffroomLike": {
+    "description": "Like button label / accessibility label when not yet liked."
+  },
+  "staffroomLiked": "Liked",
+  "@staffroomLiked": {
+    "description": "Like button label / accessibility label when liked."
+  },
+  "staffroomLikeCountLabel": "{count, plural, =0{No likes} =1{1 like} other{{count} likes}}",
+  "@staffroomLikeCountLabel": {
+    "description": "Accessibility label for a post's like count (plural).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "staffroomLikeFailed": "Couldn't update. Tap to retry.",
+  "@staffroomLikeFailed": {
+    "description": "Inline hint when an optimistic like rolled back."
+  },
+  "staffroomResourceShared": "Shared a resource",
+  "@staffroomResourceShared": {
+    "description": "Feed resource_share overline label."
+  },
+  "staffroomChatHighlight": "{count, plural, =1{1 new message} other{{count} new messages}}",
+  "@staffroomChatHighlight": {
+    "description": "Feed chat_highlight new-message count (plural).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "staffroomConnect": "Connect",
+  "@staffroomConnect": {
+    "description": "Connect-with-a-teacher button label (sends a connection request)."
+  },
+  "staffroomConnectSent": "Request sent",
+  "@staffroomConnectSent": {
+    "description": "Toast after a connection request is sent."
+  },
+  "staffroomConnectPending": "Request already pending",
+  "@staffroomConnectPending": {
+    "description": "Toast when a connection request is already pending."
+  },
+  "staffroomConnectConnected": "Already connected",
+  "@staffroomConnectConnected": {
+    "description": "Toast when already mutually connected."
+  },
+  "staffroomChatTitle": "Staff room",
+  "@staffroomChatTitle": {
+    "description": "Staff Room chat screen app-bar title and the home entry-tile title (the live community chat room)."
+  },
+  "staffroomChatEntryBody": "Chat with teachers across Bharat",
+  "@staffroomChatEntryBody": {
+    "description": "Subtitle on the Staff Room entry tile in the staffroom home / Network hub."
+  },
+  "staffroomChatSignInTitle": "Join the staff room",
+  "@staffroomChatSignInTitle": {
+    "description": "Staff Room chat signed-out / awaiting-Firebase EmptyView title."
+  },
+  "staffroomChatSignInBody": "Sign in to join the staff room",
+  "@staffroomChatSignInBody": {
+    "description": "Staff Room chat signed-out / awaiting-Firebase EmptyView body (Firebase-gated on-device)."
+  },
+  "staffroomChatEmptyTitle": "No messages yet",
+  "@staffroomChatEmptyTitle": {
+    "description": "Staff Room chat ready-but-empty EmptyView title."
+  },
+  "staffroomChatEmptyBody": "Be the first to say hello.",
+  "@staffroomChatEmptyBody": {
+    "description": "Staff Room chat ready-but-empty EmptyView body."
+  },
+  "staffroomChatAiBadge": "AI teacher",
+  "@staffroomChatAiBadge": {
+    "description": "Honest badge on an AI persona (persona-pulse) chat message — labels it AI, never posing as a real teacher."
+  },
+  "staffroomGroupChatEntry": "Group chat",
+  "@staffroomGroupChatEntry": {
+    "description": "Group-detail entry that opens the group's live chat."
+  },
+  "staffroomDirectoryTitle": "Find teachers",
+  "@staffroomDirectoryTitle": {
+    "description": "Teacher Directory (U-SI4) screen title + the Staffroom-home 'Find teachers' entry-tile title."
+  },
+  "staffroomDirectoryEntryBody": "Search the teacher directory",
+  "@staffroomDirectoryEntryBody": {
+    "description": "Subtitle on the 'Find teachers' entry tile in the Staffroom home."
+  },
+  "staffroomDirectorySearchHint": "Search by name or subject",
+  "@staffroomDirectorySearchHint": {
+    "description": "Placeholder in the Teacher Directory search field (client-side name/subject filter)."
+  },
+  "staffroomDirectoryErrorBody": "We couldn't load the directory. Please try again.",
+  "@staffroomDirectoryErrorBody": {
+    "description": "Teacher Directory load-error ErrorView body (with retry)."
+  },
+  "staffroomDirectoryEmptyTitle": "No teachers found",
+  "@staffroomDirectoryEmptyTitle": {
+    "description": "Teacher Directory empty-state title (no teachers, or no search matches)."
+  },
+  "staffroomDirectoryEmptyBody": "No teachers to show yet.",
+  "@staffroomDirectoryEmptyBody": {
+    "description": "Teacher Directory ready-but-empty EmptyView body."
+  },
+  "staffroomDirectorySearchEmpty": "No teachers match your search.",
+  "@staffroomDirectorySearchEmpty": {
+    "description": "Teacher Directory body shown when a search query matches no teachers."
+  },
+  "staffroomProfileTitle": "Teacher",
+  "@staffroomProfileTitle": {
+    "description": "Public profile app-bar fallback title before the name resolves."
+  },
+  "staffroomProfileErrorBody": "We couldn't load this profile. Please try again.",
+  "@staffroomProfileErrorBody": {
+    "description": "Public profile load-error ErrorView body (with retry)."
+  },
+  "staffroomProfileNotFoundTitle": "Profile unavailable",
+  "@staffroomProfileNotFoundTitle": {
+    "description": "Public profile not-found EmptyView title (removed / not found)."
+  },
+  "staffroomProfileNotFoundBody": "This teacher's profile could not be found.",
+  "@staffroomProfileNotFoundBody": {
+    "description": "Public profile not-found EmptyView body."
+  },
+  "staffroomProfileAboutLabel": "About",
+  "@staffroomProfileAboutLabel": {
+    "description": "Public profile section header above the teacher's bio."
+  },
+  "staffroomProfileBioEmpty": "No bio yet.",
+  "@staffroomProfileBioEmpty": {
+    "description": "Public profile shown when the teacher has written no bio."
+  },
+  "staffroomProfileVerified": "Verified",
+  "@staffroomProfileVerified": {
+    "description": "Badge on a verified teacher's profile masthead."
+  },
+  "staffroomProfileExperience": "{count, plural, =1{1 yr experience} other{{count} yrs experience}}",
+  "@staffroomProfileExperience": {
+    "description": "Public profile years-of-experience stat.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "staffroomProfileSubjectsLabel": "Subjects",
+  "@staffroomProfileSubjectsLabel": {
+    "description": "Public profile label above the subjects chips."
+  },
+  "staffroomProfileClassesLabel": "Classes",
+  "@staffroomProfileClassesLabel": {
+    "description": "Public profile label above the grade-levels (classes) chips."
+  },
+  "staffroomProfileLanguagesLabel": "Languages",
+  "@staffroomProfileLanguagesLabel": {
+    "description": "Public profile label above the languages chips."
+  },
+  "staffroomRequested": "Requested",
+  "@staffroomRequested": {
+    "description": "Connection state: an outgoing request is pending (disabled 'Requested' marker)."
+  },
+  "staffroomConnectionAccept": "Accept",
+  "@staffroomConnectionAccept": {
+    "description": "Accept an incoming connection request."
+  },
+  "staffroomConnectionDecline": "Decline",
+  "@staffroomConnectionDecline": {
+    "description": "Decline an incoming connection request."
+  },
+  "staffroomConnected": "Connected",
+  "@staffroomConnected": {
+    "description": "Connection state: mutually connected (marker label)."
+  },
+  "staffroomConnectionWants": "Wants to connect",
+  "@staffroomConnectionWants": {
+    "description": "Compact directory-row badge: this teacher sent the current user a connection request."
+  },
+  "staffroomMessage": "Message",
+  "@staffroomMessage": {
+    "description": "Open the direct-message thread — enabled ONLY for a mutual connection (the DM gate)."
+  },
+  "staffroomConnectToMessage": "Connect to message",
+  "@staffroomConnectToMessage": {
+    "description": "Hint shown wherever the Message action is gated: a mutual connection is required to DM."
+  },
+  "staffroomConnectionFailed": "Couldn't update. Tap to retry.",
+  "@staffroomConnectionFailed": {
+    "description": "Quiet inline hint after an optimistic connection action rolled back."
+  },
+  "staffroomDisconnect": "Disconnect",
+  "@staffroomDisconnect": {
+    "description": "Remove a mutual connection (also the confirm-dialog confirm label)."
+  },
+  "staffroomDisconnectConfirmTitle": "Disconnect?",
+  "@staffroomDisconnectConfirmTitle": {
+    "description": "Disconnect confirmation dialog title."
+  },
+  "staffroomDisconnectConfirmBody": "You'll no longer be connected or able to message each other.",
+  "@staffroomDisconnectConfirmBody": {
+    "description": "Disconnect confirmation dialog body (explains the DM gate closes)."
+  },
+  "staffroomDisconnectCancel": "Stay connected",
+  "@staffroomDisconnectCancel": {
+    "description": "Disconnect confirmation dialog cancel label."
+  },
+  "staffroomFollow": "Follow",
+  "@staffroomFollow": {
+    "description": "Follow a teacher (directed follow graph — INDEPENDENT of the connection/DM gate)."
+  },
+  "staffroomFollowing": "Following",
+  "@staffroomFollowing": {
+    "description": "Following state (tap to unfollow); independent of the connection/DM gate."
+  },
+  "staffroomFollowFailed": "Couldn't update. Tap to retry.",
+  "@staffroomFollowFailed": {
+    "description": "Quiet inline hint after an optimistic follow toggle rolled back."
+  },
+  "actionShare": "Share",
+  "@actionShare": {
+    "description": "Result action bar: share the generated document through the OS share sheet."
+  },
+  "resultSaveToLibrary": "Save to Library",
+  "@resultSaveToLibrary": {
+    "description": "Result action bar: label for the button that saves the result to the teacher's library."
+  },
+  "resultSaving": "Saving",
+  "@resultSaving": {
+    "description": "Result action bar: label while the save request is in flight."
+  },
+  "resultSaved": "Saved to your Library",
+  "@resultSaved": {
+    "description": "Result action bar: confirmation shown once the result is in the library."
+  },
+  "resultSaveFailedTitle": "Could not save",
+  "@resultSaveFailedTitle": {
+    "description": "Result action bar: title of the error shown when the save failed."
+  },
+  "resultSaveFailedBody": "We could not save this to your library. Please try again.",
+  "@resultSaveFailedBody": {
+    "description": "Result action bar: body of the error shown when the save failed."
+  },
+  "resultSaveRetry": "Try saving again",
+  "@resultSaveRetry": {
+    "description": "Result action bar: label for the button that retries a failed save."
+  },
+  "resultShareFailed": "Could not share. The text has been copied to your clipboard instead.",
+  "@resultShareFailed": {
+    "description": "Result action bar: snackbar shown when the OS share sheet could not open and the text was copied instead."
+  },
+  "actionCancel": "Cancel",
+  "@actionCancel": {
+    "description": "Generic action: dismisses a form or sheet without saving."
+  },
+  "attendanceTitle": "Attendance",
+  "@attendanceTitle": {
+    "description": "Title of the Attendance feature: the class list, register and monthly view."
+  },
+  "attendanceClassesEyebrow": "Your classes",
+  "@attendanceClassesEyebrow": {
+    "description": "Saffron section eyebrow above the class list on the Attendance screen."
+  },
+  "attendanceClassesIntro": "Pick a class to mark its register.",
+  "@attendanceClassesIntro": {
+    "description": "One-line intro under the eyebrow on the class list."
+  },
+  "attendanceClassesEmptyTitle": "No classes yet",
+  "@attendanceClassesEmptyTitle": {
+    "description": "EmptyView title when the teacher has no classes yet."
+  },
+  "attendanceClassesEmptyBody": "Create your first class, then add the students in it.",
+  "@attendanceClassesEmptyBody": {
+    "description": "EmptyView body when the teacher has no classes yet."
+  },
+  "attendanceClassesError": "We could not load your classes.",
+  "@attendanceClassesError": {
+    "description": "ErrorView message when the class list could not be read."
+  },
+  "attendanceClassFullBadge": "Full",
+  "@attendanceClassFullBadge": {
+    "description": "Badge on a class row that has reached the 40-student cap."
+  },
+  "attendanceNewClass": "New class",
+  "@attendanceNewClass": {
+    "description": "Action that opens the create-class form, and the title of that form."
+  },
+  "attendanceOpenRegister": "Mark register",
+  "@attendanceOpenRegister": {
+    "description": "Action on a class row that opens the daily register for marking."
+  },
+  "attendanceOpenRoster": "Students",
+  "@attendanceOpenRoster": {
+    "description": "Action on a class row that opens the student roster."
+  },
+  "attendanceOpenMonth": "This month",
+  "@attendanceOpenMonth": {
+    "description": "Action on a class row that opens the monthly attendance view."
+  },
+  "attendanceSignedOutTitle": "Sign in to see your classes",
+  "@attendanceSignedOutTitle": {
+    "description": "EmptyView title on Attendance when the teacher is signed out."
+  },
+  "attendanceSignedOutBody": "Your classes and registers are saved to your account. Sign in and they will be here.",
+  "@attendanceSignedOutBody": {
+    "description": "EmptyView body on Attendance when the teacher is signed out."
+  },
+  "attendanceClassNameLabel": "Class name",
+  "@attendanceClassNameLabel": {
+    "description": "Field label for the class name on the create-class form."
+  },
+  "attendanceClassNameHint": "For example, Class 6A",
+  "@attendanceClassNameHint": {
+    "description": "Hint under the class-name field showing an example."
+  },
+  "attendanceClassNameRequired": "Enter a class name.",
+  "@attendanceClassNameRequired": {
+    "description": "Field error when the class name is left blank."
+  },
+  "attendanceSubjectLabel": "Subject",
+  "@attendanceSubjectLabel": {
+    "description": "Field label for the subject on the create-class form."
+  },
+  "attendanceGradeLabel": "Grade",
+  "@attendanceGradeLabel": {
+    "description": "Field label for the grade level on the create-class form."
+  },
+  "attendanceAcademicYearLabel": "Academic year",
+  "@attendanceAcademicYearLabel": {
+    "description": "Field label for the academic year on the create-class form."
+  },
+  "attendanceAcademicYearHint": "For example, 2026-27",
+  "@attendanceAcademicYearHint": {
+    "description": "Hint under the academic-year field showing an example."
+  },
+  "attendanceAcademicYearRequired": "Enter an academic year.",
+  "@attendanceAcademicYearRequired": {
+    "description": "Field error when the academic year is left blank."
+  },
+  "attendanceSectionLabel": "Section",
+  "@attendanceSectionLabel": {
+    "description": "Field label for the optional class section on the create-class form."
+  },
+  "attendanceSectionHint": "For example, A",
+  "@attendanceSectionHint": {
+    "description": "Hint under the section field showing an example."
+  },
+  "attendanceCreateClassSubmit": "Create class",
+  "@attendanceCreateClassSubmit": {
+    "description": "Submit button on the create-class form."
+  },
+  "attendanceClassCreated": "Class created.",
+  "@attendanceClassCreated": {
+    "description": "Snackbar confirming a class was created."
+  },
+  "attendanceCreateClassFailed": "We could not create this class.",
+  "@attendanceCreateClassFailed": {
+    "description": "Inline error title when creating a class failed."
+  },
+  "attendanceRosterEyebrow": "Class roster",
+  "@attendanceRosterEyebrow": {
+    "description": "Saffron section eyebrow above the student roster."
+  },
+  "attendanceRosterUnavailableTitle": "The roster is not ready to show yet",
+  "@attendanceRosterUnavailableTitle": {
+    "description": "EmptyView title when the masked roster projection is not served yet, so the app refuses to download unmasked parent phone numbers. Not a teacher error."
+  },
+  "attendanceRosterUnavailableBody": "Parent contact details are moving to a masked form on our servers, and until that is live this app will not download them. Nothing is wrong with your class and nothing has been lost. Marking the register and the monthly view work as usual.",
+  "@attendanceRosterUnavailableBody": {
+    "description": "EmptyView body for the roster-unavailable state: the server change that masks parent phone numbers has not shipped, so the app deliberately refuses the unmasked list. Says plainly that nothing is wrong and the rest of the feature works."
+  },
+  "attendanceRosterEmptyTitle": "No students yet",
+  "@attendanceRosterEmptyTitle": {
+    "description": "EmptyView title when a class has no students yet."
+  },
+  "attendanceRosterEmptyBody": "Add the students in this class to start marking the register.",
+  "@attendanceRosterEmptyBody": {
+    "description": "EmptyView body when a class has no students yet."
+  },
+  "attendanceRosterError": "We could not load this roster.",
+  "@attendanceRosterError": {
+    "description": "ErrorView message when the roster could not be read."
+  },
+  "attendanceRollLabel": "Roll {roll}",
+  "@attendanceRollLabel": {
+    "description": "Roll-number prefix on a roster or register row.",
+    "placeholders": {
+      "roll": {
+        "type": "int"
+      }
+    }
+  },
+  "attendanceNoParentPhone": "No parent number saved",
+  "@attendanceNoParentPhone": {
+    "description": "Inline hint on a roster row that has no parent phone on record."
+  },
+  "attendanceParentPhoneMask": "•••• {last4}",
+  "@attendanceParentPhoneMask": {
+    "description": "Masked parent phone on a roster row: the last four digits only (F9-001, never the full number).",
+    "placeholders": {
+      "last4": {
+        "type": "String"
+      }
+    }
+  },
+  "attendanceAddStudent": "Add student",
+  "@attendanceAddStudent": {
+    "description": "Action that opens the add-student form, and the submit button on it."
+  },
+  "attendanceStudentNameLabel": "Student name",
+  "@attendanceStudentNameLabel": {
+    "description": "Field label for the student's name on the add-student form."
+  },
+  "attendanceStudentNameRequired": "Enter the student's name.",
+  "@attendanceStudentNameRequired": {
+    "description": "Field error when the student's name is left blank."
+  },
+  "attendanceRollNumberLabel": "Roll number",
+  "@attendanceRollNumberLabel": {
+    "description": "Field label for the roll number on the add-student form."
+  },
+  "attendanceRollNumberHint": "1 to 40",
+  "@attendanceRollNumberHint": {
+    "description": "Hint under the roll-number field naming the accepted range."
+  },
+  "attendanceRollNumberInvalid": "Roll number must be a whole number from 1 to 40.",
+  "@attendanceRollNumberInvalid": {
+    "description": "Field error when the roll number is not a whole number in 1 to 40 (mirrors the server's two 400s)."
+  },
+  "attendanceParentPhoneLabel": "Parent's mobile number",
+  "@attendanceParentPhoneLabel": {
+    "description": "Field label for the parent's mobile number on the add-student form."
+  },
+  "attendanceParentPhoneHint": "10-digit Indian mobile number",
+  "@attendanceParentPhoneHint": {
+    "description": "Hint under the parent-phone field naming the accepted format."
+  },
+  "attendanceParentPhoneRequired": "Enter the parent's mobile number.",
+  "@attendanceParentPhoneRequired": {
+    "description": "Field error when the parent's mobile number is left blank."
+  },
+  "attendanceParentPhoneInvalid": "Enter a 10-digit Indian mobile number.",
+  "@attendanceParentPhoneInvalid": {
+    "description": "Field error when the parent's mobile number is not a 10-digit Indian mobile (mirrors the server's E.164 normalizer)."
+  },
+  "attendanceParentLanguageLabel": "Parent's language",
+  "@attendanceParentLanguageLabel": {
+    "description": "Field label for the parent's language on the add-student form."
+  },
+  "attendanceParentPhonePrivacy": "This number is sent to SahayakAI so a call to this parent can be placed for you. It is never downloaded back onto this phone.",
+  "@attendanceParentPhonePrivacy": {
+    "description": "Privacy note under the parent-phone field: the number travels up so calls can be placed server-side, and is never downloaded back to the handset (F9-001)."
+  },
+  "attendanceStudentAdded": "Student added.",
+  "@attendanceStudentAdded": {
+    "description": "Snackbar confirming a student was added to the class."
+  },
+  "attendanceAddStudentFailed": "We could not add this student.",
+  "@attendanceAddStudentFailed": {
+    "description": "Inline error title when adding a student failed."
+  },
+  "attendanceClassFullTitle": "This class is full",
+  "@attendanceClassFullTitle": {
+    "description": "Title of the note shown when the class has reached the 40-student cap and Add student is disabled."
+  },
+  "attendanceClassFullBody": "A class can hold up to {max} students, so no more can be added.",
+  "@attendanceClassFullBody": {
+    "description": "Body of the class-full note; {max} is the server's per-class cap.",
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "attendanceMarkEyebrow": "Daily register",
+  "@attendanceMarkEyebrow": {
+    "description": "Saffron section eyebrow on the mark-attendance screen."
+  },
+  "attendanceMarkIntro": "Mark today, or any of the seven days before it.",
+  "@attendanceMarkIntro": {
+    "description": "One-line intro on the mark-attendance screen naming the markable window."
+  },
+  "attendanceDateToday": "Today",
+  "@attendanceDateToday": {
+    "description": "Label for today's chip in the date picker."
+  },
+  "attendanceDateYesterday": "Yesterday",
+  "@attendanceDateYesterday": {
+    "description": "Label for yesterday's chip in the date picker."
+  },
+  "attendanceWindowNote": "The register stays open for today and the seven days before it. Older days are closed.",
+  "@attendanceWindowNote": {
+    "description": "NoteBanner explaining why only eight days are offered in the date picker (the server's IST window)."
+  },
+  "attendanceStatusPresent": "Present",
+  "@attendanceStatusPresent": {
+    "description": "Attendance status: the student was in school."
+  },
+  "attendanceStatusAbsent": "Absent",
+  "@attendanceStatusAbsent": {
+    "description": "Attendance status: the student was not in school."
+  },
+  "attendanceStatusLate": "Late",
+  "@attendanceStatusLate": {
+    "description": "Attendance status: the student arrived late."
+  },
+  "attendanceStatusUnmarked": "Not marked",
+  "@attendanceStatusUnmarked": {
+    "description": "The fourth option in the per-student status picker: no mark recorded yet. The register is sparse until the teacher finishes it, so this is a real state, not a default."
+  },
+  "attendanceMarkProgress": "{marked} of {total} marked",
+  "@attendanceMarkProgress": {
+    "description": "Progress line above the register: how many students carry any mark.",
+    "placeholders": {
+      "marked": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "attendanceMarkAllPresent": "Mark everyone present",
+  "@attendanceMarkAllPresent": {
+    "description": "Action that marks every unmarked student present in one tap."
+  },
+  "attendanceSaveRegister": "Save register",
+  "@attendanceSaveRegister": {
+    "description": "Submit button that saves the day's register."
+  },
+  "attendanceRegisterSaved": "Register saved.",
+  "@attendanceRegisterSaved": {
+    "description": "Snackbar confirming the day's register was saved."
+  },
+  "attendanceSaveRegisterFailed": "We could not save this register.",
+  "@attendanceSaveRegisterFailed": {
+    "description": "Inline error title when saving the register failed."
+  },
+  "attendanceRegisterError": "We could not load this register.",
+  "@attendanceRegisterError": {
+    "description": "ErrorView message when the day's register could not be read."
+  },
+  "attendanceNoStudentsTitle": "No students in this class yet",
+  "@attendanceNoStudentsTitle": {
+    "description": "EmptyView title on the register when the class has no students to mark."
+  },
+  "attendanceNoStudentsBody": "Add a student before marking the register.",
+  "@attendanceNoStudentsBody": {
+    "description": "EmptyView body on the register when the class has no students to mark."
+  },
+  "attendanceMonthEyebrow": "Monthly attendance",
+  "@attendanceMonthEyebrow": {
+    "description": "Saffron section eyebrow on the monthly attendance screen."
+  },
+  "attendanceMonthError": "We could not load this month.",
+  "@attendanceMonthError": {
+    "description": "ErrorView message when the monthly summaries could not be read."
+  },
+  "attendanceMonthEmptyTitle": "Nothing marked this month",
+  "@attendanceMonthEmptyTitle": {
+    "description": "EmptyView title on the monthly view when nothing has been marked."
+  },
+  "attendanceMonthEmptyBody": "Each student's month appears here once you start marking the register.",
+  "@attendanceMonthEmptyBody": {
+    "description": "EmptyView body on the monthly view when nothing has been marked."
+  },
+  "attendanceMonthPrevious": "Previous month",
+  "@attendanceMonthPrevious": {
+    "description": "Tooltip on the button that steps the monthly view back one month."
+  },
+  "attendanceMonthNext": "Next month",
+  "@attendanceMonthNext": {
+    "description": "Tooltip on the button that steps the monthly view forward one month."
+  },
+  "attendanceAbsencesTitle": "Days absent",
+  "@attendanceAbsencesTitle": {
+    "description": "Heading above the list of dates a student was marked absent."
+  },
+  "attendanceAbsencesEmpty": "No absences this month.",
+  "@attendanceAbsencesEmpty": {
+    "description": "Shown in place of the absent-days list when the student missed no days."
+  },
+  "attendanceAbsencesError": "We could not load the absent days.",
+  "@attendanceAbsencesError": {
+    "description": "Shown in place of the absent-days list when that read failed."
+  },
+  "attendancePremiumTitle": "Marking needs a Pro plan",
+  "@attendancePremiumTitle": {
+    "description": "Title of the upsell shown when a write is refused by the plan gate (403 PREMIUM_REQUIRED). Never an error state."
+  },
+  "attendancePremiumBody": "Reading your classes, registers and monthly summaries stays free. Creating a class, adding a student and saving a register are part of the Pro plan.",
+  "@attendancePremiumBody": {
+    "description": "Body of the plan-gate upsell: reads stay free, the three writes are gated."
+  }
+}

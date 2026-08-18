@@ -1,0 +1,35 @@
+# CLAIMS.tsv — every checkable assertion this project's docs are allowed to make.
+#
+# WHY THIS FILE EXISTS
+# On 2026-08-17 an audit found four separate documents asserting that golden
+# tests were a universal acceptance gate. Zero golden tests existed. The same
+# audit found BUILD_STATE.json claiming Firebase was deferred (it was fully
+# wired), four built screens marked pending, and i18n reported as "262 keys /
+# 21 translated" when the real numbers were 971 / 495. Each false claim had
+# steered real work in the wrong direction for weeks.
+#
+# THE RULE
+# A doc may only assert something that has a row here, and a row is only true
+# when its command says so. doc_truth_guard.sh runs every command every wake.
+# Adding a claim to a doc without adding a row here is itself a gate failure.
+#
+# FORMAT (tab-separated, 4 columns)
+#   claim_id <TAB> assertion <TAB> verify_command <TAB> expected
+# expected: ==N | >=N | <=N   (the command must print a single integer)
+# Commands run with cwd = the Flutter app root.
+#
+# STATUS AT CREATION: 8 of 10 rows are RED. That is the correct honest starting
+# state, and Band B0 is literally "turn every red row green". The 2 green rows
+# are locks on things that are already true and must not regress.
+#
+golden_gate_exists	Golden tests are a universal acceptance gate	grep -rho matchesGoldenFile test 2>/dev/null | wc -l | tr -d ' '	>=12
+i18n_zero_untranslated	All 11 locales are fully translated	bash scripts/loop/i18n_count.sh untranslated	==0
+i18n_zero_identical_english	No locale ships an English string as its translation	bash scripts/loop/i18n_count.sh identical	==0
+fonts_bundled	Fonts ship inside the app, not fetched at runtime	bash scripts/loop/font_count.sh families	>=11
+fonts_no_runtime_fetch	The app cannot fetch a font at runtime	bash scripts/loop/font_count.sh google_fonts_dep	==0
+fonts_not_fetched_from_lib	No app code can trigger a runtime font fetch	bash scripts/loop/font_lib_refs.sh	==0
+release_signing_verified	Release builds are signed with the upload key	bash scripts/loop/verify_aab_signer.sh --quiet	==1
+flutter_ci_present	CI runs the Flutter gate ladder on this branch	grep -rl 'flutter analyze' ../.github/workflows/ 2>/dev/null | wc -l | tr -d ' '	>=1
+lints_enforced	Custom lint rules are enforced, not merely declared	bash scripts/loop/lint_count.sh	>=15
+firebase_wired	Firebase auth is wired and is NOT a stub	grep -c '^  firebase_auth:' pubspec.yaml	>=1
+turn_based_fallback_present	The turn-based voice pipeline survives as the Live fallback	grep -c '_begin()' lib/features/vidya/presentation/vidya_controller.dart	>=1
