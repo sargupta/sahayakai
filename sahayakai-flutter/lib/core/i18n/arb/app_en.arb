@@ -4266,5 +4266,348 @@
   "resultShareFailed": "Could not share. The text has been copied to your clipboard instead.",
   "@resultShareFailed": {
     "description": "Result action bar: snackbar shown when the OS share sheet could not open and the text was copied instead."
+  },
+  "actionCancel": "Cancel",
+  "@actionCancel": {
+    "description": "Generic action: dismisses a form or sheet without saving."
+  },
+  "attendanceTitle": "Attendance",
+  "@attendanceTitle": {
+    "description": "Title of the Attendance feature: the class list, register and monthly view."
+  },
+  "attendanceClassesEyebrow": "Your classes",
+  "@attendanceClassesEyebrow": {
+    "description": "Saffron section eyebrow above the class list on the Attendance screen."
+  },
+  "attendanceClassesIntro": "Pick a class to mark its register.",
+  "@attendanceClassesIntro": {
+    "description": "One-line intro under the eyebrow on the class list."
+  },
+  "attendanceClassesEmptyTitle": "No classes yet",
+  "@attendanceClassesEmptyTitle": {
+    "description": "EmptyView title when the teacher has no classes yet."
+  },
+  "attendanceClassesEmptyBody": "Create your first class, then add the students in it.",
+  "@attendanceClassesEmptyBody": {
+    "description": "EmptyView body when the teacher has no classes yet."
+  },
+  "attendanceClassesError": "We could not load your classes.",
+  "@attendanceClassesError": {
+    "description": "ErrorView message when the class list could not be read."
+  },
+  "attendanceClassFullBadge": "Full",
+  "@attendanceClassFullBadge": {
+    "description": "Badge on a class row that has reached the 40-student cap."
+  },
+  "attendanceNewClass": "New class",
+  "@attendanceNewClass": {
+    "description": "Action that opens the create-class form, and the title of that form."
+  },
+  "attendanceOpenRegister": "Mark register",
+  "@attendanceOpenRegister": {
+    "description": "Action on a class row that opens the daily register for marking."
+  },
+  "attendanceOpenRoster": "Students",
+  "@attendanceOpenRoster": {
+    "description": "Action on a class row that opens the student roster."
+  },
+  "attendanceOpenMonth": "This month",
+  "@attendanceOpenMonth": {
+    "description": "Action on a class row that opens the monthly attendance view."
+  },
+  "attendanceSignedOutTitle": "Sign in to see your classes",
+  "@attendanceSignedOutTitle": {
+    "description": "EmptyView title on Attendance when the teacher is signed out."
+  },
+  "attendanceSignedOutBody": "Your classes and registers are saved to your account. Sign in and they will be here.",
+  "@attendanceSignedOutBody": {
+    "description": "EmptyView body on Attendance when the teacher is signed out."
+  },
+  "attendanceClassNameLabel": "Class name",
+  "@attendanceClassNameLabel": {
+    "description": "Field label for the class name on the create-class form."
+  },
+  "attendanceClassNameHint": "For example, Class 6A",
+  "@attendanceClassNameHint": {
+    "description": "Hint under the class-name field showing an example."
+  },
+  "attendanceClassNameRequired": "Enter a class name.",
+  "@attendanceClassNameRequired": {
+    "description": "Field error when the class name is left blank."
+  },
+  "attendanceSubjectLabel": "Subject",
+  "@attendanceSubjectLabel": {
+    "description": "Field label for the subject on the create-class form."
+  },
+  "attendanceGradeLabel": "Grade",
+  "@attendanceGradeLabel": {
+    "description": "Field label for the grade level on the create-class form."
+  },
+  "attendanceAcademicYearLabel": "Academic year",
+  "@attendanceAcademicYearLabel": {
+    "description": "Field label for the academic year on the create-class form."
+  },
+  "attendanceAcademicYearHint": "For example, 2026-27",
+  "@attendanceAcademicYearHint": {
+    "description": "Hint under the academic-year field showing an example."
+  },
+  "attendanceAcademicYearRequired": "Enter an academic year.",
+  "@attendanceAcademicYearRequired": {
+    "description": "Field error when the academic year is left blank."
+  },
+  "attendanceSectionLabel": "Section",
+  "@attendanceSectionLabel": {
+    "description": "Field label for the optional class section on the create-class form."
+  },
+  "attendanceSectionHint": "For example, A",
+  "@attendanceSectionHint": {
+    "description": "Hint under the section field showing an example."
+  },
+  "attendanceCreateClassSubmit": "Create class",
+  "@attendanceCreateClassSubmit": {
+    "description": "Submit button on the create-class form."
+  },
+  "attendanceClassCreated": "Class created.",
+  "@attendanceClassCreated": {
+    "description": "Snackbar confirming a class was created."
+  },
+  "attendanceCreateClassFailed": "We could not create this class.",
+  "@attendanceCreateClassFailed": {
+    "description": "Inline error title when creating a class failed."
+  },
+  "attendanceRosterEyebrow": "Class roster",
+  "@attendanceRosterEyebrow": {
+    "description": "Saffron section eyebrow above the student roster."
+  },
+  "attendanceRosterUnavailableTitle": "The roster is not ready to show yet",
+  "@attendanceRosterUnavailableTitle": {
+    "description": "EmptyView title when the masked roster projection is not served yet, so the app refuses to download unmasked parent phone numbers. Not a teacher error."
+  },
+  "attendanceRosterUnavailableBody": "Parent contact details are moving to a masked form on our servers, and until that is live this app will not download them. Nothing is wrong with your class and nothing has been lost. Marking the register and the monthly view work as usual.",
+  "@attendanceRosterUnavailableBody": {
+    "description": "EmptyView body for the roster-unavailable state: the server change that masks parent phone numbers has not shipped, so the app deliberately refuses the unmasked list. Says plainly that nothing is wrong and the rest of the feature works."
+  },
+  "attendanceRosterEmptyTitle": "No students yet",
+  "@attendanceRosterEmptyTitle": {
+    "description": "EmptyView title when a class has no students yet."
+  },
+  "attendanceRosterEmptyBody": "Add the students in this class to start marking the register.",
+  "@attendanceRosterEmptyBody": {
+    "description": "EmptyView body when a class has no students yet."
+  },
+  "attendanceRosterError": "We could not load this roster.",
+  "@attendanceRosterError": {
+    "description": "ErrorView message when the roster could not be read."
+  },
+  "attendanceRollLabel": "Roll {roll}",
+  "@attendanceRollLabel": {
+    "description": "Roll-number prefix on a roster or register row.",
+    "placeholders": {
+      "roll": {
+        "type": "int"
+      }
+    }
+  },
+  "attendanceNoParentPhone": "No parent number saved",
+  "@attendanceNoParentPhone": {
+    "description": "Inline hint on a roster row that has no parent phone on record."
+  },
+  "attendanceParentPhoneMask": "•••• {last4}",
+  "@attendanceParentPhoneMask": {
+    "description": "Masked parent phone on a roster row: the last four digits only (F9-001, never the full number).",
+    "placeholders": {
+      "last4": {
+        "type": "String"
+      }
+    }
+  },
+  "attendanceAddStudent": "Add student",
+  "@attendanceAddStudent": {
+    "description": "Action that opens the add-student form, and the submit button on it."
+  },
+  "attendanceStudentNameLabel": "Student name",
+  "@attendanceStudentNameLabel": {
+    "description": "Field label for the student's name on the add-student form."
+  },
+  "attendanceStudentNameRequired": "Enter the student's name.",
+  "@attendanceStudentNameRequired": {
+    "description": "Field error when the student's name is left blank."
+  },
+  "attendanceRollNumberLabel": "Roll number",
+  "@attendanceRollNumberLabel": {
+    "description": "Field label for the roll number on the add-student form."
+  },
+  "attendanceRollNumberHint": "1 to 40",
+  "@attendanceRollNumberHint": {
+    "description": "Hint under the roll-number field naming the accepted range."
+  },
+  "attendanceRollNumberInvalid": "Roll number must be a whole number from 1 to 40.",
+  "@attendanceRollNumberInvalid": {
+    "description": "Field error when the roll number is not a whole number in 1 to 40 (mirrors the server's two 400s)."
+  },
+  "attendanceParentPhoneLabel": "Parent's mobile number",
+  "@attendanceParentPhoneLabel": {
+    "description": "Field label for the parent's mobile number on the add-student form."
+  },
+  "attendanceParentPhoneHint": "10-digit Indian mobile number",
+  "@attendanceParentPhoneHint": {
+    "description": "Hint under the parent-phone field naming the accepted format."
+  },
+  "attendanceParentPhoneRequired": "Enter the parent's mobile number.",
+  "@attendanceParentPhoneRequired": {
+    "description": "Field error when the parent's mobile number is left blank."
+  },
+  "attendanceParentPhoneInvalid": "Enter a 10-digit Indian mobile number.",
+  "@attendanceParentPhoneInvalid": {
+    "description": "Field error when the parent's mobile number is not a 10-digit Indian mobile (mirrors the server's E.164 normalizer)."
+  },
+  "attendanceParentLanguageLabel": "Parent's language",
+  "@attendanceParentLanguageLabel": {
+    "description": "Field label for the parent's language on the add-student form."
+  },
+  "attendanceParentPhonePrivacy": "This number is sent to SahayakAI so a call to this parent can be placed for you. It is never downloaded back onto this phone.",
+  "@attendanceParentPhonePrivacy": {
+    "description": "Privacy note under the parent-phone field: the number travels up so calls can be placed server-side, and is never downloaded back to the handset (F9-001)."
+  },
+  "attendanceStudentAdded": "Student added.",
+  "@attendanceStudentAdded": {
+    "description": "Snackbar confirming a student was added to the class."
+  },
+  "attendanceAddStudentFailed": "We could not add this student.",
+  "@attendanceAddStudentFailed": {
+    "description": "Inline error title when adding a student failed."
+  },
+  "attendanceClassFullTitle": "This class is full",
+  "@attendanceClassFullTitle": {
+    "description": "Title of the note shown when the class has reached the 40-student cap and Add student is disabled."
+  },
+  "attendanceClassFullBody": "A class can hold up to {max} students, so no more can be added.",
+  "@attendanceClassFullBody": {
+    "description": "Body of the class-full note; {max} is the server's per-class cap.",
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "attendanceMarkEyebrow": "Daily register",
+  "@attendanceMarkEyebrow": {
+    "description": "Saffron section eyebrow on the mark-attendance screen."
+  },
+  "attendanceMarkIntro": "Mark today, or any of the seven days before it.",
+  "@attendanceMarkIntro": {
+    "description": "One-line intro on the mark-attendance screen naming the markable window."
+  },
+  "attendanceDateToday": "Today",
+  "@attendanceDateToday": {
+    "description": "Label for today's chip in the date picker."
+  },
+  "attendanceDateYesterday": "Yesterday",
+  "@attendanceDateYesterday": {
+    "description": "Label for yesterday's chip in the date picker."
+  },
+  "attendanceWindowNote": "The register stays open for today and the seven days before it. Older days are closed.",
+  "@attendanceWindowNote": {
+    "description": "NoteBanner explaining why only eight days are offered in the date picker (the server's IST window)."
+  },
+  "attendanceStatusPresent": "Present",
+  "@attendanceStatusPresent": {
+    "description": "Attendance status: the student was in school."
+  },
+  "attendanceStatusAbsent": "Absent",
+  "@attendanceStatusAbsent": {
+    "description": "Attendance status: the student was not in school."
+  },
+  "attendanceStatusLate": "Late",
+  "@attendanceStatusLate": {
+    "description": "Attendance status: the student arrived late."
+  },
+  "attendanceStatusUnmarked": "Not marked",
+  "@attendanceStatusUnmarked": {
+    "description": "The fourth option in the per-student status picker: no mark recorded yet. The register is sparse until the teacher finishes it, so this is a real state, not a default."
+  },
+  "attendanceMarkProgress": "{marked} of {total} marked",
+  "@attendanceMarkProgress": {
+    "description": "Progress line above the register: how many students carry any mark.",
+    "placeholders": {
+      "marked": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "attendanceMarkAllPresent": "Mark everyone present",
+  "@attendanceMarkAllPresent": {
+    "description": "Action that marks every unmarked student present in one tap."
+  },
+  "attendanceSaveRegister": "Save register",
+  "@attendanceSaveRegister": {
+    "description": "Submit button that saves the day's register."
+  },
+  "attendanceRegisterSaved": "Register saved.",
+  "@attendanceRegisterSaved": {
+    "description": "Snackbar confirming the day's register was saved."
+  },
+  "attendanceSaveRegisterFailed": "We could not save this register.",
+  "@attendanceSaveRegisterFailed": {
+    "description": "Inline error title when saving the register failed."
+  },
+  "attendanceRegisterError": "We could not load this register.",
+  "@attendanceRegisterError": {
+    "description": "ErrorView message when the day's register could not be read."
+  },
+  "attendanceNoStudentsTitle": "No students in this class yet",
+  "@attendanceNoStudentsTitle": {
+    "description": "EmptyView title on the register when the class has no students to mark."
+  },
+  "attendanceNoStudentsBody": "Add a student before marking the register.",
+  "@attendanceNoStudentsBody": {
+    "description": "EmptyView body on the register when the class has no students to mark."
+  },
+  "attendanceMonthEyebrow": "Monthly attendance",
+  "@attendanceMonthEyebrow": {
+    "description": "Saffron section eyebrow on the monthly attendance screen."
+  },
+  "attendanceMonthError": "We could not load this month.",
+  "@attendanceMonthError": {
+    "description": "ErrorView message when the monthly summaries could not be read."
+  },
+  "attendanceMonthEmptyTitle": "Nothing marked this month",
+  "@attendanceMonthEmptyTitle": {
+    "description": "EmptyView title on the monthly view when nothing has been marked."
+  },
+  "attendanceMonthEmptyBody": "Each student's month appears here once you start marking the register.",
+  "@attendanceMonthEmptyBody": {
+    "description": "EmptyView body on the monthly view when nothing has been marked."
+  },
+  "attendanceMonthPrevious": "Previous month",
+  "@attendanceMonthPrevious": {
+    "description": "Tooltip on the button that steps the monthly view back one month."
+  },
+  "attendanceMonthNext": "Next month",
+  "@attendanceMonthNext": {
+    "description": "Tooltip on the button that steps the monthly view forward one month."
+  },
+  "attendanceAbsencesTitle": "Days absent",
+  "@attendanceAbsencesTitle": {
+    "description": "Heading above the list of dates a student was marked absent."
+  },
+  "attendanceAbsencesEmpty": "No absences this month.",
+  "@attendanceAbsencesEmpty": {
+    "description": "Shown in place of the absent-days list when the student missed no days."
+  },
+  "attendanceAbsencesError": "We could not load the absent days.",
+  "@attendanceAbsencesError": {
+    "description": "Shown in place of the absent-days list when that read failed."
+  },
+  "attendancePremiumTitle": "Marking needs a Pro plan",
+  "@attendancePremiumTitle": {
+    "description": "Title of the upsell shown when a write is refused by the plan gate (403 PREMIUM_REQUIRED). Never an error state."
+  },
+  "attendancePremiumBody": "Reading your classes, registers and monthly summaries stays free. Creating a class, adding a student and saving a register are part of the Pro plan.",
+  "@attendancePremiumBody": {
+    "description": "Body of the plan-gate upsell: reads stay free, the three writes are gated."
   }
 }

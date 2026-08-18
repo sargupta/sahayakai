@@ -100,6 +100,49 @@ class Routes {
   /// student picker, the U12 attendance hand-off will pass a studentId.
   static const String parentHotline = '/parent-hotline';
 
+  /// Attendance (U12) — the class list, and the entry to the register, the
+  /// roster and the monthly view. Pushed on top of the signed-in shell.
+  ///
+  /// The three nested paths take the `classId` as a path parameter so a deep
+  /// link resolves without the in-app `extra`; a row that pushes them also
+  /// hands the already-loaded `AttendanceClass` through `extra` so the title
+  /// and the 40-student cap check paint without a second read.
+  static const String attendance = '/attendance';
+
+  /// The create-class form. A literal second segment, so it can never collide
+  /// with the `:classId` patterns below (they are one segment deeper).
+  static const String attendanceNewClass = '/attendance/new';
+
+  /// The route pattern for one class's roster.
+  static const String attendanceRosterPattern = '/attendance/:classId/students';
+
+  /// The route pattern for the add-student form.
+  static const String attendanceAddStudentPattern =
+      '/attendance/:classId/students/new';
+
+  /// The route pattern for the daily register.
+  static const String attendanceMarkPattern = '/attendance/:classId/mark';
+
+  /// The route pattern for the monthly view.
+  static const String attendanceMonthPattern = '/attendance/:classId/month';
+
+  /// The concrete roster path for [classId], percent-encoded so a server id is
+  /// path-safe.
+  static String attendanceRosterPath(String classId) =>
+      '$attendance/${Uri.encodeComponent(classId)}/students';
+
+  /// The concrete add-student path for [classId].
+  static String attendanceAddStudentPath(String classId) =>
+      '${attendanceRosterPath(classId)}/new';
+
+  /// The concrete daily-register path for [classId].
+  static String attendanceMarkPath(String classId) =>
+      '$attendance/${Uri.encodeComponent(classId)}/mark';
+
+  /// The concrete monthly-view path for [classId].
+  static String attendanceMonthPath(String classId) =>
+      '$attendance/${Uri.encodeComponent(classId)}/month';
+
   /// Pro Inbox (Pillar 05 / U-SI1) — the conversation list. NOT `/messages`
   /// (that path is the Parent Message composer above). Pushed on top of the
   /// signed-in shell from the voice-home messages entry. The full Network tab

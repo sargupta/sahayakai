@@ -3467,4 +3467,264 @@ class AppLocalizationsPa extends AppLocalizations {
   @override
   String get resultShareFailed =>
       'ਸਾਂਝਾ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ। ਇਸ ਦੀ ਥਾਂ ਲਿਖਤ ਕਲਿੱਪਬੋਰਡ \'ਤੇ ਕਾਪੀ ਕਰ ਦਿੱਤੀ ਗਈ ਹੈ।';
+
+  @override
+  String get actionCancel => 'ਰੱਦ ਕਰੋ';
+
+  @override
+  String get attendanceTitle => 'ਹਾਜ਼ਰੀ';
+
+  @override
+  String get attendanceClassesEyebrow => 'ਤੁਹਾਡੀਆਂ ਜਮਾਤਾਂ';
+
+  @override
+  String get attendanceClassesIntro => 'ਹਾਜ਼ਰੀ ਰਜਿਸਟਰ ਭਰਨ ਲਈ ਜਮਾਤ ਚੁਣੋ।';
+
+  @override
+  String get attendanceClassesEmptyTitle => 'ਅਜੇ ਕੋਈ ਜਮਾਤ ਨਹੀਂ';
+
+  @override
+  String get attendanceClassesEmptyBody =>
+      'ਪਹਿਲਾਂ ਆਪਣੀ ਜਮਾਤ ਬਣਾਓ, ਫਿਰ ਉਸ ਵਿੱਚ ਵਿਦਿਆਰਥੀ ਜੋੜੋ।';
+
+  @override
+  String get attendanceClassesError => 'ਅਸੀਂ ਤੁਹਾਡੀਆਂ ਜਮਾਤਾਂ ਨਹੀਂ ਲਿਆ ਸਕੇ।';
+
+  @override
+  String get attendanceClassFullBadge => 'ਭਰੀ ਹੋਈ';
+
+  @override
+  String get attendanceNewClass => 'ਨਵੀਂ ਜਮਾਤ';
+
+  @override
+  String get attendanceOpenRegister => 'ਹਾਜ਼ਰੀ ਭਰੋ';
+
+  @override
+  String get attendanceOpenRoster => 'ਵਿਦਿਆਰਥੀ';
+
+  @override
+  String get attendanceOpenMonth => 'ਇਹ ਮਹੀਨਾ';
+
+  @override
+  String get attendanceSignedOutTitle => 'ਆਪਣੀਆਂ ਜਮਾਤਾਂ ਵੇਖਣ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ';
+
+  @override
+  String get attendanceSignedOutBody =>
+      'ਤੁਹਾਡੀਆਂ ਜਮਾਤਾਂ ਅਤੇ ਹਾਜ਼ਰੀ ਰਜਿਸਟਰ ਤੁਹਾਡੇ ਖਾਤੇ ਵਿੱਚ ਸੰਭਾਲੇ ਜਾਂਦੇ ਹਨ। ਸਾਈਨ ਇਨ ਕਰਦਿਆਂ ਹੀ ਉਹ ਇੱਥੇ ਦਿਸਣਗੇ।';
+
+  @override
+  String get attendanceClassNameLabel => 'ਜਮਾਤ ਦਾ ਨਾਂ';
+
+  @override
+  String get attendanceClassNameHint => 'ਜਿਵੇਂ, ਜਮਾਤ 6A';
+
+  @override
+  String get attendanceClassNameRequired => 'ਜਮਾਤ ਦਾ ਨਾਂ ਲਿਖੋ।';
+
+  @override
+  String get attendanceSubjectLabel => 'ਵਿਸ਼ਾ';
+
+  @override
+  String get attendanceGradeLabel => 'ਜਮਾਤ ਪੱਧਰ';
+
+  @override
+  String get attendanceAcademicYearLabel => 'ਵਿੱਦਿਅਕ ਸਾਲ';
+
+  @override
+  String get attendanceAcademicYearHint => 'ਜਿਵੇਂ, 2026-27';
+
+  @override
+  String get attendanceAcademicYearRequired => 'ਵਿੱਦਿਅਕ ਸਾਲ ਲਿਖੋ।';
+
+  @override
+  String get attendanceSectionLabel => 'ਸੈਕਸ਼ਨ';
+
+  @override
+  String get attendanceSectionHint => 'ਜਿਵੇਂ, A';
+
+  @override
+  String get attendanceCreateClassSubmit => 'ਜਮਾਤ ਬਣਾਓ';
+
+  @override
+  String get attendanceClassCreated => 'ਜਮਾਤ ਬਣ ਗਈ।';
+
+  @override
+  String get attendanceCreateClassFailed => 'ਅਸੀਂ ਇਹ ਜਮਾਤ ਨਹੀਂ ਬਣਾ ਸਕੇ।';
+
+  @override
+  String get attendanceRosterEyebrow => 'ਜਮਾਤ ਦੀ ਸੂਚੀ';
+
+  @override
+  String get attendanceRosterUnavailableTitle =>
+      'ਸੂਚੀ ਅਜੇ ਵਿਖਾਉਣ ਲਈ ਤਿਆਰ ਨਹੀਂ ਹੈ';
+
+  @override
+  String get attendanceRosterUnavailableBody =>
+      'ਮਾਪਿਆਂ ਦੇ ਸੰਪਰਕ ਵੇਰਵੇ ਸਾਡੇ ਸਰਵਰਾਂ ਉੱਤੇ ਢਕੇ ਹੋਏ ਰੂਪ ਵਿੱਚ ਲਿਜਾਏ ਜਾ ਰਹੇ ਹਨ, ਅਤੇ ਜਦ ਤੱਕ ਇਹ ਚਾਲੂ ਨਹੀਂ ਹੁੰਦਾ ਇਹ ਐਪ ਉਨ੍ਹਾਂ ਨੂੰ ਨਹੀਂ ਉਤਾਰੇਗੀ। ਤੁਹਾਡੀ ਜਮਾਤ ਵਿੱਚ ਕੁਝ ਵੀ ਗਲਤ ਨਹੀਂ ਹੈ ਅਤੇ ਕੁਝ ਵੀ ਗੁਆਚਿਆ ਨਹੀਂ। ਹਾਜ਼ਰੀ ਭਰਨਾ ਅਤੇ ਮਹੀਨੇ ਦਾ ਵੇਰਵਾ ਪਹਿਲਾਂ ਵਾਂਗ ਹੀ ਚੱਲਦੇ ਹਨ।';
+
+  @override
+  String get attendanceRosterEmptyTitle => 'ਅਜੇ ਕੋਈ ਵਿਦਿਆਰਥੀ ਨਹੀਂ';
+
+  @override
+  String get attendanceRosterEmptyBody =>
+      'ਹਾਜ਼ਰੀ ਭਰਨੀ ਸ਼ੁਰੂ ਕਰਨ ਲਈ ਇਸ ਜਮਾਤ ਦੇ ਵਿਦਿਆਰਥੀ ਜੋੜੋ।';
+
+  @override
+  String get attendanceRosterError => 'ਅਸੀਂ ਇਹ ਸੂਚੀ ਨਹੀਂ ਲਿਆ ਸਕੇ।';
+
+  @override
+  String attendanceRollLabel(int roll) {
+    return 'ਰੋਲ $roll';
+  }
+
+  @override
+  String get attendanceNoParentPhone => 'ਮਾਪਿਆਂ ਦਾ ਨੰਬਰ ਸੰਭਾਲਿਆ ਨਹੀਂ ਗਿਆ';
+
+  @override
+  String attendanceParentPhoneMask(String last4) {
+    return '•••• $last4';
+  }
+
+  @override
+  String get attendanceAddStudent => 'ਵਿਦਿਆਰਥੀ ਜੋੜੋ';
+
+  @override
+  String get attendanceStudentNameLabel => 'ਵਿਦਿਆਰਥੀ ਦਾ ਨਾਂ';
+
+  @override
+  String get attendanceStudentNameRequired => 'ਵਿਦਿਆਰਥੀ ਦਾ ਨਾਂ ਲਿਖੋ।';
+
+  @override
+  String get attendanceRollNumberLabel => 'ਰੋਲ ਨੰਬਰ';
+
+  @override
+  String get attendanceRollNumberHint => '1 ਤੋਂ 40';
+
+  @override
+  String get attendanceRollNumberInvalid =>
+      'ਰੋਲ ਨੰਬਰ 1 ਤੋਂ 40 ਵਿਚਕਾਰ ਪੂਰਾ ਅੰਕ ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ।';
+
+  @override
+  String get attendanceParentPhoneLabel => 'ਮਾਪਿਆਂ ਦਾ ਮੋਬਾਈਲ ਨੰਬਰ';
+
+  @override
+  String get attendanceParentPhoneHint => '10 ਅੰਕਾਂ ਦਾ ਭਾਰਤੀ ਮੋਬਾਈਲ ਨੰਬਰ';
+
+  @override
+  String get attendanceParentPhoneRequired => 'ਮਾਪਿਆਂ ਦਾ ਮੋਬਾਈਲ ਨੰਬਰ ਲਿਖੋ।';
+
+  @override
+  String get attendanceParentPhoneInvalid =>
+      '10 ਅੰਕਾਂ ਦਾ ਭਾਰਤੀ ਮੋਬਾਈਲ ਨੰਬਰ ਲਿਖੋ।';
+
+  @override
+  String get attendanceParentLanguageLabel => 'ਮਾਪਿਆਂ ਦੀ ਭਾਸ਼ਾ';
+
+  @override
+  String get attendanceParentPhonePrivacy =>
+      'ਤੁਹਾਡੇ ਵੱਲੋਂ ਇਨ੍ਹਾਂ ਮਾਪਿਆਂ ਨੂੰ ਕਾਲ ਕੀਤੀ ਜਾ ਸਕੇ, ਇਸ ਲਈ ਇਹ ਨੰਬਰ SahayakAI ਨੂੰ ਭੇਜਿਆ ਜਾਂਦਾ ਹੈ। ਇਹ ਕਦੇ ਵੀ ਇਸ ਫ਼ੋਨ ਉੱਤੇ ਵਾਪਸ ਨਹੀਂ ਉਤਾਰਿਆ ਜਾਂਦਾ।';
+
+  @override
+  String get attendanceStudentAdded => 'ਵਿਦਿਆਰਥੀ ਜੋੜ ਦਿੱਤਾ ਗਿਆ।';
+
+  @override
+  String get attendanceAddStudentFailed => 'ਅਸੀਂ ਇਸ ਵਿਦਿਆਰਥੀ ਨੂੰ ਨਹੀਂ ਜੋੜ ਸਕੇ।';
+
+  @override
+  String get attendanceClassFullTitle => 'ਇਹ ਜਮਾਤ ਭਰ ਗਈ ਹੈ';
+
+  @override
+  String attendanceClassFullBody(int max) {
+    return 'ਇੱਕ ਜਮਾਤ ਵਿੱਚ ਵੱਧ ਤੋਂ ਵੱਧ $max ਵਿਦਿਆਰਥੀ ਹੋ ਸਕਦੇ ਹਨ, ਇਸ ਲਈ ਹੋਰ ਨਹੀਂ ਜੋੜੇ ਜਾ ਸਕਦੇ।';
+  }
+
+  @override
+  String get attendanceMarkEyebrow => 'ਰੋਜ਼ਾਨਾ ਹਾਜ਼ਰੀ ਰਜਿਸਟਰ';
+
+  @override
+  String get attendanceMarkIntro =>
+      'ਅੱਜ, ਜਾਂ ਉਸ ਤੋਂ ਪਹਿਲਾਂ ਦੇ ਸੱਤ ਦਿਨਾਂ ਵਿੱਚੋਂ ਕੋਈ ਵੀ ਦਿਨ ਭਰੋ।';
+
+  @override
+  String get attendanceDateToday => 'ਅੱਜ';
+
+  @override
+  String get attendanceDateYesterday => 'ਕੱਲ੍ਹ';
+
+  @override
+  String get attendanceWindowNote =>
+      'ਹਾਜ਼ਰੀ ਰਜਿਸਟਰ ਅੱਜ ਅਤੇ ਉਸ ਤੋਂ ਪਹਿਲਾਂ ਦੇ ਸੱਤ ਦਿਨਾਂ ਲਈ ਖੁੱਲ੍ਹਾ ਰਹਿੰਦਾ ਹੈ। ਉਸ ਤੋਂ ਪੁਰਾਣੇ ਦਿਨ ਬੰਦ ਹੋ ਜਾਂਦੇ ਹਨ।';
+
+  @override
+  String get attendanceStatusPresent => 'ਹਾਜ਼ਰ';
+
+  @override
+  String get attendanceStatusAbsent => 'ਗ਼ੈਰਹਾਜ਼ਰ';
+
+  @override
+  String get attendanceStatusLate => 'ਦੇਰ ਨਾਲ';
+
+  @override
+  String get attendanceStatusUnmarked => 'ਦਰਜ ਨਹੀਂ';
+
+  @override
+  String attendanceMarkProgress(int marked, int total) {
+    return '$total ਵਿੱਚੋਂ $marked ਦਰਜ';
+  }
+
+  @override
+  String get attendanceMarkAllPresent => 'ਸਾਰਿਆਂ ਨੂੰ ਹਾਜ਼ਰ ਕਰੋ';
+
+  @override
+  String get attendanceSaveRegister => 'ਹਾਜ਼ਰੀ ਸੰਭਾਲੋ';
+
+  @override
+  String get attendanceRegisterSaved => 'ਹਾਜ਼ਰੀ ਸੰਭਾਲ ਲਈ ਗਈ।';
+
+  @override
+  String get attendanceSaveRegisterFailed => 'ਅਸੀਂ ਇਹ ਹਾਜ਼ਰੀ ਨਹੀਂ ਸੰਭਾਲ ਸਕੇ।';
+
+  @override
+  String get attendanceRegisterError => 'ਅਸੀਂ ਇਹ ਹਾਜ਼ਰੀ ਨਹੀਂ ਲਿਆ ਸਕੇ।';
+
+  @override
+  String get attendanceNoStudentsTitle => 'ਇਸ ਜਮਾਤ ਵਿੱਚ ਅਜੇ ਕੋਈ ਵਿਦਿਆਰਥੀ ਨਹੀਂ';
+
+  @override
+  String get attendanceNoStudentsBody => 'ਹਾਜ਼ਰੀ ਭਰਨ ਤੋਂ ਪਹਿਲਾਂ ਵਿਦਿਆਰਥੀ ਜੋੜੋ।';
+
+  @override
+  String get attendanceMonthEyebrow => 'ਮਹੀਨੇ ਦੀ ਹਾਜ਼ਰੀ';
+
+  @override
+  String get attendanceMonthError => 'ਅਸੀਂ ਇਸ ਮਹੀਨੇ ਦਾ ਵੇਰਵਾ ਨਹੀਂ ਲਿਆ ਸਕੇ।';
+
+  @override
+  String get attendanceMonthEmptyTitle => 'ਇਸ ਮਹੀਨੇ ਕੁਝ ਦਰਜ ਨਹੀਂ ਹੋਇਆ';
+
+  @override
+  String get attendanceMonthEmptyBody =>
+      'ਹਾਜ਼ਰੀ ਭਰਨੀ ਸ਼ੁਰੂ ਕਰਦਿਆਂ ਹੀ ਹਰ ਵਿਦਿਆਰਥੀ ਦਾ ਮਹੀਨਾ ਇੱਥੇ ਦਿਸੇਗਾ।';
+
+  @override
+  String get attendanceMonthPrevious => 'ਪਿਛਲਾ ਮਹੀਨਾ';
+
+  @override
+  String get attendanceMonthNext => 'ਅਗਲਾ ਮਹੀਨਾ';
+
+  @override
+  String get attendanceAbsencesTitle => 'ਗ਼ੈਰਹਾਜ਼ਰ ਦਿਨ';
+
+  @override
+  String get attendanceAbsencesEmpty => 'ਇਸ ਮਹੀਨੇ ਕੋਈ ਗ਼ੈਰਹਾਜ਼ਰੀ ਨਹੀਂ।';
+
+  @override
+  String get attendanceAbsencesError => 'ਅਸੀਂ ਗ਼ੈਰਹਾਜ਼ਰ ਦਿਨ ਨਹੀਂ ਲਿਆ ਸਕੇ।';
+
+  @override
+  String get attendancePremiumTitle => 'ਹਾਜ਼ਰੀ ਭਰਨ ਲਈ Pro ਪਲਾਨ ਚਾਹੀਦਾ ਹੈ';
+
+  @override
+  String get attendancePremiumBody =>
+      'ਆਪਣੀਆਂ ਜਮਾਤਾਂ, ਹਾਜ਼ਰੀ ਰਜਿਸਟਰ ਅਤੇ ਮਹੀਨੇ ਦਾ ਵੇਰਵਾ ਵੇਖਣਾ ਮੁਫ਼ਤ ਹੀ ਰਹਿੰਦਾ ਹੈ। ਜਮਾਤ ਬਣਾਉਣਾ, ਵਿਦਿਆਰਥੀ ਜੋੜਨਾ ਅਤੇ ਹਾਜ਼ਰੀ ਸੰਭਾਲਣਾ Pro ਪਲਾਨ ਦਾ ਹਿੱਸਾ ਹੈ।';
 }

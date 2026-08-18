@@ -3466,4 +3466,266 @@ class AppLocalizationsGu extends AppLocalizations {
   @override
   String get resultShareFailed =>
       'શેર કરી શકાયું નહીં. તેના બદલે લખાણ ક્લિપબોર્ડ પર કૉપિ થયું છે.';
+
+  @override
+  String get actionCancel => 'રદ કરો';
+
+  @override
+  String get attendanceTitle => 'હાજરી';
+
+  @override
+  String get attendanceClassesEyebrow => 'તમારા વર્ગો';
+
+  @override
+  String get attendanceClassesIntro => 'હાજરીપત્રક ભરવા માટે વર્ગ પસંદ કરો.';
+
+  @override
+  String get attendanceClassesEmptyTitle => 'હજી કોઈ વર્ગ નથી';
+
+  @override
+  String get attendanceClassesEmptyBody =>
+      'પહેલાં તમારો વર્ગ બનાવો, પછી તેમાં વિદ્યાર્થીઓ ઉમેરો.';
+
+  @override
+  String get attendanceClassesError => 'અમે તમારા વર્ગો લાવી શક્યા નહીં.';
+
+  @override
+  String get attendanceClassFullBadge => 'ભરાયેલો';
+
+  @override
+  String get attendanceNewClass => 'નવો વર્ગ';
+
+  @override
+  String get attendanceOpenRegister => 'હાજરી ભરો';
+
+  @override
+  String get attendanceOpenRoster => 'વિદ્યાર્થીઓ';
+
+  @override
+  String get attendanceOpenMonth => 'આ મહિનો';
+
+  @override
+  String get attendanceSignedOutTitle => 'તમારા વર્ગો જોવા માટે સાઇન ઇન કરો';
+
+  @override
+  String get attendanceSignedOutBody =>
+      'તમારા વર્ગો અને હાજરીપત્રકો તમારા ખાતામાં સાચવાય છે. સાઇન ઇન કરતાં જ તે અહીં દેખાશે.';
+
+  @override
+  String get attendanceClassNameLabel => 'વર્ગનું નામ';
+
+  @override
+  String get attendanceClassNameHint => 'ઉદાહરણ તરીકે, વર્ગ 6A';
+
+  @override
+  String get attendanceClassNameRequired => 'વર્ગનું નામ લખો.';
+
+  @override
+  String get attendanceSubjectLabel => 'વિષય';
+
+  @override
+  String get attendanceGradeLabel => 'ધોરણ';
+
+  @override
+  String get attendanceAcademicYearLabel => 'શૈક્ષણિક વર્ષ';
+
+  @override
+  String get attendanceAcademicYearHint => 'ઉદાહરણ તરીકે, 2026-27';
+
+  @override
+  String get attendanceAcademicYearRequired => 'શૈક્ષણિક વર્ષ લખો.';
+
+  @override
+  String get attendanceSectionLabel => 'વિભાગ';
+
+  @override
+  String get attendanceSectionHint => 'ઉદાહરણ તરીકે, A';
+
+  @override
+  String get attendanceCreateClassSubmit => 'વર્ગ બનાવો';
+
+  @override
+  String get attendanceClassCreated => 'વર્ગ બની ગયો.';
+
+  @override
+  String get attendanceCreateClassFailed => 'અમે આ વર્ગ બનાવી શક્યા નહીં.';
+
+  @override
+  String get attendanceRosterEyebrow => 'વર્ગની યાદી';
+
+  @override
+  String get attendanceRosterUnavailableTitle =>
+      'યાદી હજી બતાવવા માટે તૈયાર નથી';
+
+  @override
+  String get attendanceRosterUnavailableBody =>
+      'વાલીઓની સંપર્ક વિગતો અમારા સર્વર પર ઢાંકેલા સ્વરૂપમાં ખસેડાઈ રહી છે, અને તે અમલમાં ન આવે ત્યાં સુધી આ એપ તેને ઉતારશે નહીં. તમારા વર્ગમાં કશું ખોટું નથી અને કશું ખોવાયું નથી. હાજરીપત્રક ભરવું અને મહિનાની વિગત પહેલાંની જેમ જ ચાલે છે.';
+
+  @override
+  String get attendanceRosterEmptyTitle => 'હજી કોઈ વિદ્યાર્થી નથી';
+
+  @override
+  String get attendanceRosterEmptyBody =>
+      'હાજરીપત્રક ભરવાનું શરૂ કરવા આ વર્ગના વિદ્યાર્થીઓ ઉમેરો.';
+
+  @override
+  String get attendanceRosterError => 'અમે આ યાદી લાવી શક્યા નહીં.';
+
+  @override
+  String attendanceRollLabel(int roll) {
+    return 'રોલ $roll';
+  }
+
+  @override
+  String get attendanceNoParentPhone => 'વાલીનો નંબર સાચવેલો નથી';
+
+  @override
+  String attendanceParentPhoneMask(String last4) {
+    return '•••• $last4';
+  }
+
+  @override
+  String get attendanceAddStudent => 'વિદ્યાર્થી ઉમેરો';
+
+  @override
+  String get attendanceStudentNameLabel => 'વિદ્યાર્થીનું નામ';
+
+  @override
+  String get attendanceStudentNameRequired => 'વિદ્યાર્થીનું નામ લખો.';
+
+  @override
+  String get attendanceRollNumberLabel => 'રોલ નંબર';
+
+  @override
+  String get attendanceRollNumberHint => '1 થી 40';
+
+  @override
+  String get attendanceRollNumberInvalid =>
+      'રોલ નંબર 1 થી 40 વચ્ચેની પૂર્ણ સંખ્યા હોવો જોઈએ.';
+
+  @override
+  String get attendanceParentPhoneLabel => 'વાલીનો મોબાઇલ નંબર';
+
+  @override
+  String get attendanceParentPhoneHint => '10 અંકનો ભારતીય મોબાઇલ નંબર';
+
+  @override
+  String get attendanceParentPhoneRequired => 'વાલીનો મોબાઇલ નંબર લખો.';
+
+  @override
+  String get attendanceParentPhoneInvalid => '10 અંકનો ભારતીય મોબાઇલ નંબર લખો.';
+
+  @override
+  String get attendanceParentLanguageLabel => 'વાલીની ભાષા';
+
+  @override
+  String get attendanceParentPhonePrivacy =>
+      'તમારા વતી આ વાલીને કૉલ કરી શકાય તે માટે આ નંબર SahayakAI ને મોકલાય છે. તે ક્યારેય આ ફોન પર પાછો ઉતારવામાં આવતો નથી.';
+
+  @override
+  String get attendanceStudentAdded => 'વિદ્યાર્થી ઉમેરાયો.';
+
+  @override
+  String get attendanceAddStudentFailed =>
+      'અમે આ વિદ્યાર્થીને ઉમેરી શક્યા નહીં.';
+
+  @override
+  String get attendanceClassFullTitle => 'આ વર્ગ ભરાઈ ગયો છે';
+
+  @override
+  String attendanceClassFullBody(int max) {
+    return 'એક વર્ગમાં વધુમાં વધુ $max વિદ્યાર્થીઓ હોઈ શકે, તેથી હવે વધુ ઉમેરી શકાય નહીં.';
+  }
+
+  @override
+  String get attendanceMarkEyebrow => 'દૈનિક હાજરીપત્રક';
+
+  @override
+  String get attendanceMarkIntro =>
+      'આજે, અથવા તેની પહેલાંના સાત દિવસોમાંથી કોઈ પણ દિવસ ભરો.';
+
+  @override
+  String get attendanceDateToday => 'આજે';
+
+  @override
+  String get attendanceDateYesterday => 'ગઈકાલે';
+
+  @override
+  String get attendanceWindowNote =>
+      'હાજરીપત્રક આજ માટે અને તેની પહેલાંના સાત દિવસ માટે ખુલ્લું રહે છે. તેનાથી જૂના દિવસો બંધ થઈ જાય છે.';
+
+  @override
+  String get attendanceStatusPresent => 'હાજર';
+
+  @override
+  String get attendanceStatusAbsent => 'ગેરહાજર';
+
+  @override
+  String get attendanceStatusLate => 'મોડું';
+
+  @override
+  String get attendanceStatusUnmarked => 'નોંધ્યું નથી';
+
+  @override
+  String attendanceMarkProgress(int marked, int total) {
+    return '$total માંથી $marked નોંધાયા';
+  }
+
+  @override
+  String get attendanceMarkAllPresent => 'બધાને હાજર કરો';
+
+  @override
+  String get attendanceSaveRegister => 'હાજરીપત્રક સાચવો';
+
+  @override
+  String get attendanceRegisterSaved => 'હાજરીપત્રક સચવાયું.';
+
+  @override
+  String get attendanceSaveRegisterFailed =>
+      'અમે આ હાજરીપત્રક સાચવી શક્યા નહીં.';
+
+  @override
+  String get attendanceRegisterError => 'અમે આ હાજરીપત્રક લાવી શક્યા નહીં.';
+
+  @override
+  String get attendanceNoStudentsTitle => 'આ વર્ગમાં હજી કોઈ વિદ્યાર્થી નથી';
+
+  @override
+  String get attendanceNoStudentsBody =>
+      'હાજરીપત્રક ભરતાં પહેલાં વિદ્યાર્થી ઉમેરો.';
+
+  @override
+  String get attendanceMonthEyebrow => 'માસિક હાજરી';
+
+  @override
+  String get attendanceMonthError => 'અમે આ મહિનાની વિગત લાવી શક્યા નહીં.';
+
+  @override
+  String get attendanceMonthEmptyTitle => 'આ મહિને કશું નોંધાયું નથી';
+
+  @override
+  String get attendanceMonthEmptyBody =>
+      'હાજરીપત્રક ભરવાનું શરૂ કરતાં જ દરેક વિદ્યાર્થીનો મહિનો અહીં દેખાશે.';
+
+  @override
+  String get attendanceMonthPrevious => 'પાછલો મહિનો';
+
+  @override
+  String get attendanceMonthNext => 'આગલો મહિનો';
+
+  @override
+  String get attendanceAbsencesTitle => 'ગેરહાજર દિવસો';
+
+  @override
+  String get attendanceAbsencesEmpty => 'આ મહિને કોઈ ગેરહાજરી નથી.';
+
+  @override
+  String get attendanceAbsencesError => 'અમે ગેરહાજર દિવસો લાવી શક્યા નહીં.';
+
+  @override
+  String get attendancePremiumTitle => 'હાજરીપત્રક ભરવા માટે Pro પ્લાન જોઈએ';
+
+  @override
+  String get attendancePremiumBody =>
+      'તમારા વર્ગો, હાજરીપત્રકો અને માસિક વિગતો જોવાનું મફત જ રહે છે. વર્ગ બનાવવો, વિદ્યાર્થી ઉમેરવો અને હાજરીપત્રક સાચવવું Pro પ્લાનનો ભાગ છે.';
 }

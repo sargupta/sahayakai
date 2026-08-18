@@ -5,6 +5,13 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../features/assess_assignment/presentation/assess_assignment_screen.dart';
 import '../../features/assessment_scanner/presentation/assessment_scanner_screen.dart';
+import '../../features/attendance/domain/attendance_class.dart';
+import '../../features/attendance/presentation/add_student_screen.dart';
+import '../../features/attendance/presentation/attendance_classes_screen.dart';
+import '../../features/attendance/presentation/attendance_month_screen.dart';
+import '../../features/attendance/presentation/attendance_roster_screen.dart';
+import '../../features/attendance/presentation/class_form_screen.dart';
+import '../../features/attendance/presentation/mark_attendance_screen.dart';
 import '../../features/content_creator/presentation/content_creator_screen.dart';
 import '../../features/dashboard/presentation/app_shell.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
@@ -71,8 +78,7 @@ GoRouter appRouter(Ref ref) {
         return loc == Routes.splash ? null : Routes.splash;
       }
 
-      final signedIn =
-          ref.read(authControllerProvider) == AuthStatus.signedIn;
+      final signedIn = ref.read(authControllerProvider) == AuthStatus.signedIn;
       final isPublic = Routes.publicPaths.contains(loc);
 
       // Signed out on a protected route -> login (preserve intended dest).
@@ -103,10 +109,7 @@ GoRouter appRouter(Ref ref) {
         path: Routes.onboarding,
         builder: (context, state) => const OnboardingScreen(),
       ),
-      GoRoute(
-        path: Routes.home,
-        builder: (context, state) => const AppShell(),
-      ),
+      GoRoute(path: Routes.home, builder: (context, state) => const AppShell()),
       GoRoute(
         // The Prep desk (former dashboard) — the teaching-tools grid, now a
         // destination pushed on top of the shell from the VIDYA home rather than
@@ -173,6 +176,52 @@ GoRouter appRouter(Ref ref) {
         builder: (context, state) => const ParentHotlineScreen(),
       ),
       GoRoute(
+        // Attendance (U12) — the class list. Reads are ungated, so this lands
+        // for every teacher; the three writes behind it surface the plan gate
+        // as an upsell on their own forms.
+        path: Routes.attendance,
+        builder: (context, state) => const AttendanceClassesScreen(),
+      ),
+      GoRoute(
+        // The create-class form. Declared before the `:classId` patterns for
+        // readability only — it is one segment shallower, so nothing depends
+        // on the order.
+        path: Routes.attendanceNewClass,
+        builder: (context, state) => const ClassFormScreen(),
+      ),
+      GoRoute(
+        // One class's roster. The class row hands the loaded [AttendanceClass]
+        // through `extra` so the title and the 40-cap check paint without a
+        // second read; a cold deep link carries only the `:classId`.
+        path: Routes.attendanceRosterPattern,
+        builder: (context, state) => AttendanceRosterScreen(
+          classId: state.pathParameters['classId']!,
+          attendanceClass: _attendanceClassOf(state),
+        ),
+      ),
+      GoRoute(
+        path: Routes.attendanceAddStudentPattern,
+        builder: (context, state) => AddStudentScreen(
+          classId: state.pathParameters['classId']!,
+          attendanceClass: _attendanceClassOf(state),
+        ),
+      ),
+      GoRoute(
+        // The daily register, with the date picker clamped to the IST window.
+        path: Routes.attendanceMarkPattern,
+        builder: (context, state) => MarkAttendanceScreen(
+          classId: state.pathParameters['classId']!,
+          attendanceClass: _attendanceClassOf(state),
+        ),
+      ),
+      GoRoute(
+        path: Routes.attendanceMonthPattern,
+        builder: (context, state) => AttendanceMonthScreen(
+          classId: state.pathParameters['classId']!,
+          attendanceClass: _attendanceClassOf(state),
+        ),
+      ),
+      GoRoute(
         // The Pro Inbox list (U-SI1), pushed from the voice-home messages entry.
         path: Routes.inbox,
         builder: (context, state) => const InboxScreen(),
@@ -184,8 +233,9 @@ GoRouter appRouter(Ref ref) {
         path: Routes.conversationThreadPattern,
         builder: (context, state) => ConversationThreadScreen(
           conversationId: ConversationId(state.pathParameters['id']!),
-          conversation:
-              state.extra is Conversation ? state.extra! as Conversation : null,
+          conversation: state.extra is Conversation
+              ? state.extra! as Conversation
+              : null,
         ),
       ),
       GoRoute(
@@ -299,6 +349,12 @@ GoRouter appRouter(Ref ref) {
 /// open — so a tool route seeds its form only when voice navigated to it.
 ToolPrefill? _prefillOf(GoRouterState state) =>
     state.extra is ToolPrefill ? state.extra! as ToolPrefill : null;
+
+/// The [AttendanceClass] a class row pushed in `extra`, or null for a cold
+/// deep link — which carries only the `:classId` and lets the screen fall back
+/// to a generic title and to the server's own 40-student refusal.
+AttendanceClass? _attendanceClassOf(GoRouterState state) =>
+    state.extra is AttendanceClass ? state.extra! as AttendanceClass : null;
 
 class _RouteNotFound extends StatelessWidget {
   const _RouteNotFound();

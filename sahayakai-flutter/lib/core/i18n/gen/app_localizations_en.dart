@@ -3437,4 +3437,266 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get resultShareFailed =>
       'Could not share. The text has been copied to your clipboard instead.';
+
+  @override
+  String get actionCancel => 'Cancel';
+
+  @override
+  String get attendanceTitle => 'Attendance';
+
+  @override
+  String get attendanceClassesEyebrow => 'Your classes';
+
+  @override
+  String get attendanceClassesIntro => 'Pick a class to mark its register.';
+
+  @override
+  String get attendanceClassesEmptyTitle => 'No classes yet';
+
+  @override
+  String get attendanceClassesEmptyBody =>
+      'Create your first class, then add the students in it.';
+
+  @override
+  String get attendanceClassesError => 'We could not load your classes.';
+
+  @override
+  String get attendanceClassFullBadge => 'Full';
+
+  @override
+  String get attendanceNewClass => 'New class';
+
+  @override
+  String get attendanceOpenRegister => 'Mark register';
+
+  @override
+  String get attendanceOpenRoster => 'Students';
+
+  @override
+  String get attendanceOpenMonth => 'This month';
+
+  @override
+  String get attendanceSignedOutTitle => 'Sign in to see your classes';
+
+  @override
+  String get attendanceSignedOutBody =>
+      'Your classes and registers are saved to your account. Sign in and they will be here.';
+
+  @override
+  String get attendanceClassNameLabel => 'Class name';
+
+  @override
+  String get attendanceClassNameHint => 'For example, Class 6A';
+
+  @override
+  String get attendanceClassNameRequired => 'Enter a class name.';
+
+  @override
+  String get attendanceSubjectLabel => 'Subject';
+
+  @override
+  String get attendanceGradeLabel => 'Grade';
+
+  @override
+  String get attendanceAcademicYearLabel => 'Academic year';
+
+  @override
+  String get attendanceAcademicYearHint => 'For example, 2026-27';
+
+  @override
+  String get attendanceAcademicYearRequired => 'Enter an academic year.';
+
+  @override
+  String get attendanceSectionLabel => 'Section';
+
+  @override
+  String get attendanceSectionHint => 'For example, A';
+
+  @override
+  String get attendanceCreateClassSubmit => 'Create class';
+
+  @override
+  String get attendanceClassCreated => 'Class created.';
+
+  @override
+  String get attendanceCreateClassFailed => 'We could not create this class.';
+
+  @override
+  String get attendanceRosterEyebrow => 'Class roster';
+
+  @override
+  String get attendanceRosterUnavailableTitle =>
+      'The roster is not ready to show yet';
+
+  @override
+  String get attendanceRosterUnavailableBody =>
+      'Parent contact details are moving to a masked form on our servers, and until that is live this app will not download them. Nothing is wrong with your class and nothing has been lost. Marking the register and the monthly view work as usual.';
+
+  @override
+  String get attendanceRosterEmptyTitle => 'No students yet';
+
+  @override
+  String get attendanceRosterEmptyBody =>
+      'Add the students in this class to start marking the register.';
+
+  @override
+  String get attendanceRosterError => 'We could not load this roster.';
+
+  @override
+  String attendanceRollLabel(int roll) {
+    return 'Roll $roll';
+  }
+
+  @override
+  String get attendanceNoParentPhone => 'No parent number saved';
+
+  @override
+  String attendanceParentPhoneMask(String last4) {
+    return '•••• $last4';
+  }
+
+  @override
+  String get attendanceAddStudent => 'Add student';
+
+  @override
+  String get attendanceStudentNameLabel => 'Student name';
+
+  @override
+  String get attendanceStudentNameRequired => 'Enter the student\'s name.';
+
+  @override
+  String get attendanceRollNumberLabel => 'Roll number';
+
+  @override
+  String get attendanceRollNumberHint => '1 to 40';
+
+  @override
+  String get attendanceRollNumberInvalid =>
+      'Roll number must be a whole number from 1 to 40.';
+
+  @override
+  String get attendanceParentPhoneLabel => 'Parent\'s mobile number';
+
+  @override
+  String get attendanceParentPhoneHint => '10-digit Indian mobile number';
+
+  @override
+  String get attendanceParentPhoneRequired =>
+      'Enter the parent\'s mobile number.';
+
+  @override
+  String get attendanceParentPhoneInvalid =>
+      'Enter a 10-digit Indian mobile number.';
+
+  @override
+  String get attendanceParentLanguageLabel => 'Parent\'s language';
+
+  @override
+  String get attendanceParentPhonePrivacy =>
+      'This number is sent to SahayakAI so a call to this parent can be placed for you. It is never downloaded back onto this phone.';
+
+  @override
+  String get attendanceStudentAdded => 'Student added.';
+
+  @override
+  String get attendanceAddStudentFailed => 'We could not add this student.';
+
+  @override
+  String get attendanceClassFullTitle => 'This class is full';
+
+  @override
+  String attendanceClassFullBody(int max) {
+    return 'A class can hold up to $max students, so no more can be added.';
+  }
+
+  @override
+  String get attendanceMarkEyebrow => 'Daily register';
+
+  @override
+  String get attendanceMarkIntro =>
+      'Mark today, or any of the seven days before it.';
+
+  @override
+  String get attendanceDateToday => 'Today';
+
+  @override
+  String get attendanceDateYesterday => 'Yesterday';
+
+  @override
+  String get attendanceWindowNote =>
+      'The register stays open for today and the seven days before it. Older days are closed.';
+
+  @override
+  String get attendanceStatusPresent => 'Present';
+
+  @override
+  String get attendanceStatusAbsent => 'Absent';
+
+  @override
+  String get attendanceStatusLate => 'Late';
+
+  @override
+  String get attendanceStatusUnmarked => 'Not marked';
+
+  @override
+  String attendanceMarkProgress(int marked, int total) {
+    return '$marked of $total marked';
+  }
+
+  @override
+  String get attendanceMarkAllPresent => 'Mark everyone present';
+
+  @override
+  String get attendanceSaveRegister => 'Save register';
+
+  @override
+  String get attendanceRegisterSaved => 'Register saved.';
+
+  @override
+  String get attendanceSaveRegisterFailed => 'We could not save this register.';
+
+  @override
+  String get attendanceRegisterError => 'We could not load this register.';
+
+  @override
+  String get attendanceNoStudentsTitle => 'No students in this class yet';
+
+  @override
+  String get attendanceNoStudentsBody =>
+      'Add a student before marking the register.';
+
+  @override
+  String get attendanceMonthEyebrow => 'Monthly attendance';
+
+  @override
+  String get attendanceMonthError => 'We could not load this month.';
+
+  @override
+  String get attendanceMonthEmptyTitle => 'Nothing marked this month';
+
+  @override
+  String get attendanceMonthEmptyBody =>
+      'Each student\'s month appears here once you start marking the register.';
+
+  @override
+  String get attendanceMonthPrevious => 'Previous month';
+
+  @override
+  String get attendanceMonthNext => 'Next month';
+
+  @override
+  String get attendanceAbsencesTitle => 'Days absent';
+
+  @override
+  String get attendanceAbsencesEmpty => 'No absences this month.';
+
+  @override
+  String get attendanceAbsencesError => 'We could not load the absent days.';
+
+  @override
+  String get attendancePremiumTitle => 'Marking needs a Pro plan';
+
+  @override
+  String get attendancePremiumBody =>
+      'Reading your classes, registers and monthly summaries stays free. Creating a class, adding a student and saving a register are part of the Pro plan.';
 }

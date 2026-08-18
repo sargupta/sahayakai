@@ -5989,6 +5989,486 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not share. The text has been copied to your clipboard instead.'**
   String get resultShareFailed;
+
+  /// Generic action: dismisses a form or sheet without saving.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get actionCancel;
+
+  /// Title of the Attendance feature: the class list, register and monthly view.
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance'**
+  String get attendanceTitle;
+
+  /// Saffron section eyebrow above the class list on the Attendance screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Your classes'**
+  String get attendanceClassesEyebrow;
+
+  /// One-line intro under the eyebrow on the class list.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a class to mark its register.'**
+  String get attendanceClassesIntro;
+
+  /// EmptyView title when the teacher has no classes yet.
+  ///
+  /// In en, this message translates to:
+  /// **'No classes yet'**
+  String get attendanceClassesEmptyTitle;
+
+  /// EmptyView body when the teacher has no classes yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your first class, then add the students in it.'**
+  String get attendanceClassesEmptyBody;
+
+  /// ErrorView message when the class list could not be read.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load your classes.'**
+  String get attendanceClassesError;
+
+  /// Badge on a class row that has reached the 40-student cap.
+  ///
+  /// In en, this message translates to:
+  /// **'Full'**
+  String get attendanceClassFullBadge;
+
+  /// Action that opens the create-class form, and the title of that form.
+  ///
+  /// In en, this message translates to:
+  /// **'New class'**
+  String get attendanceNewClass;
+
+  /// Action on a class row that opens the daily register for marking.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark register'**
+  String get attendanceOpenRegister;
+
+  /// Action on a class row that opens the student roster.
+  ///
+  /// In en, this message translates to:
+  /// **'Students'**
+  String get attendanceOpenRoster;
+
+  /// Action on a class row that opens the monthly attendance view.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get attendanceOpenMonth;
+
+  /// EmptyView title on Attendance when the teacher is signed out.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to see your classes'**
+  String get attendanceSignedOutTitle;
+
+  /// EmptyView body on Attendance when the teacher is signed out.
+  ///
+  /// In en, this message translates to:
+  /// **'Your classes and registers are saved to your account. Sign in and they will be here.'**
+  String get attendanceSignedOutBody;
+
+  /// Field label for the class name on the create-class form.
+  ///
+  /// In en, this message translates to:
+  /// **'Class name'**
+  String get attendanceClassNameLabel;
+
+  /// Hint under the class-name field showing an example.
+  ///
+  /// In en, this message translates to:
+  /// **'For example, Class 6A'**
+  String get attendanceClassNameHint;
+
+  /// Field error when the class name is left blank.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a class name.'**
+  String get attendanceClassNameRequired;
+
+  /// Field label for the subject on the create-class form.
+  ///
+  /// In en, this message translates to:
+  /// **'Subject'**
+  String get attendanceSubjectLabel;
+
+  /// Field label for the grade level on the create-class form.
+  ///
+  /// In en, this message translates to:
+  /// **'Grade'**
+  String get attendanceGradeLabel;
+
+  /// Field label for the academic year on the create-class form.
+  ///
+  /// In en, this message translates to:
+  /// **'Academic year'**
+  String get attendanceAcademicYearLabel;
+
+  /// Hint under the academic-year field showing an example.
+  ///
+  /// In en, this message translates to:
+  /// **'For example, 2026-27'**
+  String get attendanceAcademicYearHint;
+
+  /// Field error when the academic year is left blank.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an academic year.'**
+  String get attendanceAcademicYearRequired;
+
+  /// Field label for the optional class section on the create-class form.
+  ///
+  /// In en, this message translates to:
+  /// **'Section'**
+  String get attendanceSectionLabel;
+
+  /// Hint under the section field showing an example.
+  ///
+  /// In en, this message translates to:
+  /// **'For example, A'**
+  String get attendanceSectionHint;
+
+  /// Submit button on the create-class form.
+  ///
+  /// In en, this message translates to:
+  /// **'Create class'**
+  String get attendanceCreateClassSubmit;
+
+  /// Snackbar confirming a class was created.
+  ///
+  /// In en, this message translates to:
+  /// **'Class created.'**
+  String get attendanceClassCreated;
+
+  /// Inline error title when creating a class failed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not create this class.'**
+  String get attendanceCreateClassFailed;
+
+  /// Saffron section eyebrow above the student roster.
+  ///
+  /// In en, this message translates to:
+  /// **'Class roster'**
+  String get attendanceRosterEyebrow;
+
+  /// EmptyView title when the masked roster projection is not served yet, so the app refuses to download unmasked parent phone numbers. Not a teacher error.
+  ///
+  /// In en, this message translates to:
+  /// **'The roster is not ready to show yet'**
+  String get attendanceRosterUnavailableTitle;
+
+  /// EmptyView body for the roster-unavailable state: the server change that masks parent phone numbers has not shipped, so the app deliberately refuses the unmasked list. Says plainly that nothing is wrong and the rest of the feature works.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent contact details are moving to a masked form on our servers, and until that is live this app will not download them. Nothing is wrong with your class and nothing has been lost. Marking the register and the monthly view work as usual.'**
+  String get attendanceRosterUnavailableBody;
+
+  /// EmptyView title when a class has no students yet.
+  ///
+  /// In en, this message translates to:
+  /// **'No students yet'**
+  String get attendanceRosterEmptyTitle;
+
+  /// EmptyView body when a class has no students yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Add the students in this class to start marking the register.'**
+  String get attendanceRosterEmptyBody;
+
+  /// ErrorView message when the roster could not be read.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load this roster.'**
+  String get attendanceRosterError;
+
+  /// Roll-number prefix on a roster or register row.
+  ///
+  /// In en, this message translates to:
+  /// **'Roll {roll}'**
+  String attendanceRollLabel(int roll);
+
+  /// Inline hint on a roster row that has no parent phone on record.
+  ///
+  /// In en, this message translates to:
+  /// **'No parent number saved'**
+  String get attendanceNoParentPhone;
+
+  /// Masked parent phone on a roster row: the last four digits only (F9-001, never the full number).
+  ///
+  /// In en, this message translates to:
+  /// **'•••• {last4}'**
+  String attendanceParentPhoneMask(String last4);
+
+  /// Action that opens the add-student form, and the submit button on it.
+  ///
+  /// In en, this message translates to:
+  /// **'Add student'**
+  String get attendanceAddStudent;
+
+  /// Field label for the student's name on the add-student form.
+  ///
+  /// In en, this message translates to:
+  /// **'Student name'**
+  String get attendanceStudentNameLabel;
+
+  /// Field error when the student's name is left blank.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the student\'s name.'**
+  String get attendanceStudentNameRequired;
+
+  /// Field label for the roll number on the add-student form.
+  ///
+  /// In en, this message translates to:
+  /// **'Roll number'**
+  String get attendanceRollNumberLabel;
+
+  /// Hint under the roll-number field naming the accepted range.
+  ///
+  /// In en, this message translates to:
+  /// **'1 to 40'**
+  String get attendanceRollNumberHint;
+
+  /// Field error when the roll number is not a whole number in 1 to 40 (mirrors the server's two 400s).
+  ///
+  /// In en, this message translates to:
+  /// **'Roll number must be a whole number from 1 to 40.'**
+  String get attendanceRollNumberInvalid;
+
+  /// Field label for the parent's mobile number on the add-student form.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent\'s mobile number'**
+  String get attendanceParentPhoneLabel;
+
+  /// Hint under the parent-phone field naming the accepted format.
+  ///
+  /// In en, this message translates to:
+  /// **'10-digit Indian mobile number'**
+  String get attendanceParentPhoneHint;
+
+  /// Field error when the parent's mobile number is left blank.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the parent\'s mobile number.'**
+  String get attendanceParentPhoneRequired;
+
+  /// Field error when the parent's mobile number is not a 10-digit Indian mobile (mirrors the server's E.164 normalizer).
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a 10-digit Indian mobile number.'**
+  String get attendanceParentPhoneInvalid;
+
+  /// Field label for the parent's language on the add-student form.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent\'s language'**
+  String get attendanceParentLanguageLabel;
+
+  /// Privacy note under the parent-phone field: the number travels up so calls can be placed server-side, and is never downloaded back to the handset (F9-001).
+  ///
+  /// In en, this message translates to:
+  /// **'This number is sent to SahayakAI so a call to this parent can be placed for you. It is never downloaded back onto this phone.'**
+  String get attendanceParentPhonePrivacy;
+
+  /// Snackbar confirming a student was added to the class.
+  ///
+  /// In en, this message translates to:
+  /// **'Student added.'**
+  String get attendanceStudentAdded;
+
+  /// Inline error title when adding a student failed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not add this student.'**
+  String get attendanceAddStudentFailed;
+
+  /// Title of the note shown when the class has reached the 40-student cap and Add student is disabled.
+  ///
+  /// In en, this message translates to:
+  /// **'This class is full'**
+  String get attendanceClassFullTitle;
+
+  /// Body of the class-full note; {max} is the server's per-class cap.
+  ///
+  /// In en, this message translates to:
+  /// **'A class can hold up to {max} students, so no more can be added.'**
+  String attendanceClassFullBody(int max);
+
+  /// Saffron section eyebrow on the mark-attendance screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily register'**
+  String get attendanceMarkEyebrow;
+
+  /// One-line intro on the mark-attendance screen naming the markable window.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark today, or any of the seven days before it.'**
+  String get attendanceMarkIntro;
+
+  /// Label for today's chip in the date picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get attendanceDateToday;
+
+  /// Label for yesterday's chip in the date picker.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get attendanceDateYesterday;
+
+  /// NoteBanner explaining why only eight days are offered in the date picker (the server's IST window).
+  ///
+  /// In en, this message translates to:
+  /// **'The register stays open for today and the seven days before it. Older days are closed.'**
+  String get attendanceWindowNote;
+
+  /// Attendance status: the student was in school.
+  ///
+  /// In en, this message translates to:
+  /// **'Present'**
+  String get attendanceStatusPresent;
+
+  /// Attendance status: the student was not in school.
+  ///
+  /// In en, this message translates to:
+  /// **'Absent'**
+  String get attendanceStatusAbsent;
+
+  /// Attendance status: the student arrived late.
+  ///
+  /// In en, this message translates to:
+  /// **'Late'**
+  String get attendanceStatusLate;
+
+  /// The fourth option in the per-student status picker: no mark recorded yet. The register is sparse until the teacher finishes it, so this is a real state, not a default.
+  ///
+  /// In en, this message translates to:
+  /// **'Not marked'**
+  String get attendanceStatusUnmarked;
+
+  /// Progress line above the register: how many students carry any mark.
+  ///
+  /// In en, this message translates to:
+  /// **'{marked} of {total} marked'**
+  String attendanceMarkProgress(int marked, int total);
+
+  /// Action that marks every unmarked student present in one tap.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark everyone present'**
+  String get attendanceMarkAllPresent;
+
+  /// Submit button that saves the day's register.
+  ///
+  /// In en, this message translates to:
+  /// **'Save register'**
+  String get attendanceSaveRegister;
+
+  /// Snackbar confirming the day's register was saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Register saved.'**
+  String get attendanceRegisterSaved;
+
+  /// Inline error title when saving the register failed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not save this register.'**
+  String get attendanceSaveRegisterFailed;
+
+  /// ErrorView message when the day's register could not be read.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load this register.'**
+  String get attendanceRegisterError;
+
+  /// EmptyView title on the register when the class has no students to mark.
+  ///
+  /// In en, this message translates to:
+  /// **'No students in this class yet'**
+  String get attendanceNoStudentsTitle;
+
+  /// EmptyView body on the register when the class has no students to mark.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a student before marking the register.'**
+  String get attendanceNoStudentsBody;
+
+  /// Saffron section eyebrow on the monthly attendance screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly attendance'**
+  String get attendanceMonthEyebrow;
+
+  /// ErrorView message when the monthly summaries could not be read.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load this month.'**
+  String get attendanceMonthError;
+
+  /// EmptyView title on the monthly view when nothing has been marked.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing marked this month'**
+  String get attendanceMonthEmptyTitle;
+
+  /// EmptyView body on the monthly view when nothing has been marked.
+  ///
+  /// In en, this message translates to:
+  /// **'Each student\'s month appears here once you start marking the register.'**
+  String get attendanceMonthEmptyBody;
+
+  /// Tooltip on the button that steps the monthly view back one month.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous month'**
+  String get attendanceMonthPrevious;
+
+  /// Tooltip on the button that steps the monthly view forward one month.
+  ///
+  /// In en, this message translates to:
+  /// **'Next month'**
+  String get attendanceMonthNext;
+
+  /// Heading above the list of dates a student was marked absent.
+  ///
+  /// In en, this message translates to:
+  /// **'Days absent'**
+  String get attendanceAbsencesTitle;
+
+  /// Shown in place of the absent-days list when the student missed no days.
+  ///
+  /// In en, this message translates to:
+  /// **'No absences this month.'**
+  String get attendanceAbsencesEmpty;
+
+  /// Shown in place of the absent-days list when that read failed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not load the absent days.'**
+  String get attendanceAbsencesError;
+
+  /// Title of the upsell shown when a write is refused by the plan gate (403 PREMIUM_REQUIRED). Never an error state.
+  ///
+  /// In en, this message translates to:
+  /// **'Marking needs a Pro plan'**
+  String get attendancePremiumTitle;
+
+  /// Body of the plan-gate upsell: reads stay free, the three writes are gated.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading your classes, registers and monthly summaries stays free. Creating a class, adding a student and saving a register are part of the Pro plan.'**
+  String get attendancePremiumBody;
 }
 
 class _AppLocalizationsDelegate
