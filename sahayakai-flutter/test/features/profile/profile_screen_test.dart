@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/core/auth/auth_providers.dart';
 import 'package:sahayakai/core/network/api_exception.dart';
+import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/profile/domain/plan_badge.dart';
 import 'package:sahayakai/features/profile/presentation/profile_screen.dart';
+import 'package:sahayakai/shared/motion/animated_entrance.dart';
 import 'package:sahayakai/shared/widgets/app_skeleton.dart';
 import 'package:sahayakai/shared/widgets/empty_view.dart';
 import 'package:sahayakai/shared/widgets/error_view.dart';
@@ -51,6 +53,29 @@ Future<void> _pumpScreen(
   if (settle) await tester.pumpAndSettle();
 }
 
+/// Finishes any block entrance the previous action started.
+///
+/// `inkSettle` wraps every top-level block in a `flutter_animate` entrance
+/// whose stagger is an ARMED TIMER, not a scheduled frame: internally it is
+/// `Future.delayed(AppMotion.stagger * index, play)`. `pumpAndSettle` settles
+/// frames, so it returns the moment the last frame-scheduling animation stops
+/// — with an unfired delay still sitting there.
+///
+/// On first mount that gap is invisible: block 0 plays immediately and its
+/// 320ms animation keeps frames coming long enough for every later block's
+/// delay to fire under cover. A block that the LAZY `ListView` only builds
+/// part-way down a drag has no such cover — it is the only thing animating,
+/// and when the scroll ballistic stops its delay is still armed.
+///
+/// This advances the clock past the longest delay `inkSettle` can arm, which
+/// FIRES those timers rather than outrunning them, then settles the animations
+/// they start. Both bounds are the screen's own motion tokens, so they cannot
+/// drift away from what the widget actually schedules.
+Future<void> _settleEntrances(WidgetTester tester) async {
+  await tester.pump(AppMotion.stagger * (kStaggerCap - 1));
+  await tester.pumpAndSettle();
+}
+
 /// Walks the profile list top to bottom, asserting no RenderFlex overflow at
 /// any scroll offset. An overflow below the fold is still an overflow, and this
 /// screen is taller than any phone.
@@ -62,6 +87,10 @@ Future<void> _scrollWholeList(WidgetTester tester) async {
   while (position.pixels < position.maxScrollExtent && guard++ < 60) {
     await tester.drag(find.byType(ListView), const Offset(0, -280));
     await tester.pumpAndSettle();
+    // The blocks this drag just brought into the lazy list are mid-entrance.
+    // Land them before asserting, so the gate reads the composed frame and no
+    // entrance is left half-run when the walk (and the test) ends.
+    await _settleEntrances(tester);
     expect(tester.takeException(), isNull);
   }
 }
