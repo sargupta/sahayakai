@@ -116,7 +116,7 @@ validated at import time so a misconfigured deploy fails fast.
 
 | Env var | Default | Purpose |
 |---|---|---|
-| `SAHAYAKAI_AGENTS_ENV` | `development` | One of `development`, `staging`, `production`. Production requires `assert_prod_invariants` to pass. |
+| `SAHAYAKAI_AGENTS_ENV` | **required** | One of `development`, `staging`, `production`. No default: `development` skips every auth gate, so a deploy that omits this must crash-loop rather than serve unauthenticated. Production also requires `assert_prod_invariants` to pass. |
 | `SAHAYAKAI_AGENTS_PORT` | `8080` | Uvicorn listen port. |
 | `SAHAYAKAI_AGENTS_LOG_LEVEL` | `INFO` | structlog level. |
 | `GOOGLE_CLOUD_PROJECT` | `sahayakai-b4248` | GCP project for Firestore + Secret Manager. |

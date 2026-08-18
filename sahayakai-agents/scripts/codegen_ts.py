@@ -40,6 +40,7 @@ OpenAPI declaration order (which Pydantic guarantees from `model_fields`).
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -49,6 +50,12 @@ _HERE = Path(__file__).resolve().parent
 _SRC = _HERE.parent / "src"
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
+
+# `SAHAYAKAI_AGENTS_ENV` is REQUIRED with no default (see config.py), and
+# importing the app constructs `Settings`. Codegen only walks the OpenAPI
+# schema — it never authenticates or calls GCP — so default it the same way
+# `compare_parity.py` does. `setdefault` keeps a real environment authoritative.
+os.environ.setdefault("SAHAYAKAI_AGENTS_ENV", "development")
 
 from sahayakai_agents.main import app  # noqa: E402
 

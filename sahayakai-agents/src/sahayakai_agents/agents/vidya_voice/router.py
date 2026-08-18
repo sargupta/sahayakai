@@ -445,17 +445,26 @@ async def vidya_voice_stream(ws: WebSocket) -> None:
     minted by the web `/api/vidya-voice/start-session` route. The socket is
     rejected (4401) before any billable Vertex session opens if the token is
     missing, malformed, expired, or fails the HMAC check.
+
+    The token check runs BEFORE `ws.accept()` and is the ONLY gate on this
+    route: Starlette's `BaseHTTPMiddleware` never wraps websocket scopes, so
+    the OIDC + HMAC + App Check chain in `auth.py` does not run here. ASGI
+    lets a `websocket.close` answer the handshake while the socket is still
+    CONNECTING, so an unauthenticated caller is refused outright — nothing
+    billable (not even the google-genai import) is constructed on that path.
     """
+    # Reject unauthenticated / expired sockets BEFORE accepting the handshake
+    # and BEFORE anything billable is constructed.
+    uid = verify_stream_token(ws.query_params.get("t"))
+    if not uid:
+        log.warning("vidya_voice.stream_rejected", reason="invalid_stream_token")
+        await ws.close(code=4401)
+        return
+
     from google import genai
 
     await ws.accept()
     settings = get_settings()
-
-    # Reject unauthenticated / expired sockets BEFORE opening a billable session.
-    uid = verify_stream_token(ws.query_params.get("t"))
-    if not uid:
-        await ws.close(code=4401)
-        return
 
     detected_language = ws.query_params.get("lang") or "en"
     screen_path = ws.query_params.get("screen") or "/dashboard"
