@@ -92,6 +92,7 @@ class Rubric {
     this.criteria = const <RubricCriterion>[],
     this.gradeLevel,
     this.subject,
+    this.raw,
   });
 
   final String title;
@@ -99,6 +100,15 @@ class Rubric {
   final List<RubricCriterion> criteria;
   final String? gradeLevel;
   final String? subject;
+
+  /// The verbatim `/api/ai/rubric` response body, kept so a later "Save to
+  /// Library" persists EXACTLY the object the server-side flow persists as
+  /// `data` (`src/ai/flows/rubric-generator.ts`) rather than a re-serialized
+  /// domain object that would quietly drop any field this app does not model.
+  /// Null for a rubric that did not come from a live generation (a Library item
+  /// re-rendered read-only, or a test fixture) — and the Save action is
+  /// withheld in exactly that case.
+  final Map<String, dynamic>? raw;
 
   /// True when the model returned nothing worth rendering — the view shows an
   /// empty result state rather than an unhelpful blank grid.

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/i18n/gen/app_localizations.dart';
@@ -12,8 +12,10 @@ import '../../../../shared/widgets/document_sheet.dart';
 import '../../../../shared/widgets/empty_view.dart';
 import '../../../../shared/widgets/note_banner.dart';
 import '../../../../shared/widgets/read_aloud_button.dart';
+import '../../../../shared/widgets/result_actions_bar.dart';
 import '../../../../shared/widgets/rich_markdown.dart';
 import '../../../../shared/widgets/secondary_button.dart';
+import '../../data/quiz_repository.dart';
 import '../../domain/quiz.dart';
 
 /// Renders a generated [Quiz] as a printed document, not a chat dump
@@ -26,13 +28,19 @@ import '../../domain/quiz.dart';
 /// is never drawn. Correct answers stay hidden behind a per-question reveal so
 /// the teacher can project or read a question aloud without spoiling it. Each
 /// block inks in on the Ink-settle reveal, and a footer action bar offers
-/// Regenerate / Copy.
+/// Regenerate / Read aloud over the shared [ResultActionsBar] (Save to Library
+/// / Copy / Share).
 ///
 /// All model-authored prose flows through [AiText] (line-height 1.7 + Indic
 /// height behaviour) so matras and vowel signs never clip, and long compound
 /// words wrap instead of scrolling. See DESIGN_RUBRIC §3 / §8.
 class QuizResultView extends StatefulWidget {
-  const QuizResultView({super.key, required this.quiz, this.onRegenerate});
+  const QuizResultView({
+    super.key,
+    required this.quiz,
+    this.onRegenerate,
+    this.saveRequest,
+  });
 
   final Quiz quiz;
 
@@ -40,6 +48,13 @@ class QuizResultView extends StatefulWidget {
   /// When null (e.g. a direct render in a test) the footer action bar is
   /// omitted.
   final VoidCallback? onRegenerate;
+
+  /// The request that produced [quiz]. Supplies the topic / grade / language
+  /// the `POST /api/content/save` body needs (the model output alone carries no
+  /// request topic). When null — or when the quiz carries no verbatim
+  /// [Quiz.raw] to persist — the Save action is withheld and the bar offers
+  /// Copy / Share only.
+  final QuizRequest? saveRequest;
 
   @override
   State<QuizResultView> createState() => _QuizResultViewState();
@@ -105,8 +120,7 @@ class _QuizResultViewState extends State<QuizResultView> {
           label: grade,
           tone: AppBadgeTone.accent,
         ),
-      if (subject != null)
-        AppBadge(icon: LucideIcons.bookOpen, label: subject),
+      if (subject != null) AppBadge(icon: LucideIcons.bookOpen, label: subject),
       AppBadge(
         icon: LucideIcons.listChecks,
         label: l10n.quizQuestionCount(quiz.variants.first.questions.length),
@@ -155,22 +169,28 @@ class _QuizResultViewState extends State<QuizResultView> {
               quiz: quiz,
               onRegenerate: onRegenerate,
               revealed: _revealed,
+              saveRequest: widget.saveRequest,
             ),
       children: revealed,
     );
   }
 }
 
-/// The document's action bar: Regenerate (secondary) over a Copy ghost. Copy
-/// exports the quiz as plain text to the clipboard — a presentation-only action
-/// with no controller involved. It honours the on-screen reveal state: only
-/// answers the teacher has revealed are included, so a teacher who hid the
-/// answers before projecting does not paste the answer key into WhatsApp.
-class _ActionBar extends StatelessWidget {
+/// The document's action bar: Regenerate (secondary) and Read aloud over the
+/// shared [ResultActionsBar] — Save to Library / Copy / Share.
+///
+/// Copy and Share both carry the quiz as plain text, and both honour the
+/// on-screen reveal state: only answers the teacher has revealed are included,
+/// so a teacher who hid the answers before projecting does not paste (or
+/// WhatsApp) the answer key. Save posts the verbatim model output and is
+/// offered only when there is a request behind the quiz AND a [Quiz.raw] to
+/// persist.
+class _ActionBar extends ConsumerWidget {
   const _ActionBar({
     required this.quiz,
     required this.onRegenerate,
     required this.revealed,
+    this.saveRequest,
   });
 
   final Quiz quiz;
@@ -179,22 +199,15 @@ class _ActionBar extends StatelessWidget {
   /// Revealed answer indices, per difficulty variant. See [_QuizResultViewState].
   final Map<QuizDifficulty, Set<int>> revealed;
 
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final text = Theme.of(context).textTheme;
-    final saffron = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
-    final messenger = ScaffoldMessenger.of(context);
+  final QuizRequest? saveRequest;
 
-    void copy() {
-      Clipboard.setData(
-        ClipboardData(text: _quizAsText(quiz, l10n, revealed: revealed)),
-      );
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(l10n.copyConfirmation)));
-    }
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final text = _quizAsText(quiz, l10n, revealed: revealed);
+    final request = saveRequest;
+    final canSave = request != null && quiz.raw != null;
+    final heading = quiz.topic ?? quiz.variants.first.title;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -206,21 +219,17 @@ class _ActionBar extends StatelessWidget {
           onPressed: onRegenerate,
         ),
         const SizedBox(height: AppSpacing.space2),
-        ReadAloudButton(
-          text: _quizAsText(quiz, l10n, revealed: revealed),
-        ),
-        const SizedBox(height: AppSpacing.space2),
-        SizedBox(
-          height: 48,
-          child: TextButton.icon(
-            onPressed: copy,
-            icon: const Icon(LucideIcons.copy, size: AppIconSize.inline),
-            label: Text(l10n.actionCopy),
-            style: TextButton.styleFrom(
-              foregroundColor: saffron,
-              textStyle: text.labelLarge,
-            ),
-          ),
+        ReadAloudButton(text: text),
+        const SizedBox(height: AppSpacing.space3),
+        ResultActionsBar(
+          text: text,
+          shareSubject: heading.isEmpty ? null : heading,
+          saveResetKey: quiz,
+          onSave: canSave
+              ? () => ref
+                    .read(quizRepositoryProvider)
+                    .save(quiz: quiz, request: request)
+              : null,
         ),
       ],
     );

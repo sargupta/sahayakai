@@ -57,6 +57,12 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
   /// the first voice-originated result lands (VOICE_FIRST_GAP §5.6).
   bool _spokeVoiceSummary = false;
 
+  /// The request behind the rubric currently on screen. "Save to Library" needs
+  /// the assignment description / grade / language the model output does not
+  /// carry, so the result view is handed the request that produced it. Null
+  /// until the first generation, which is exactly when there is nothing to save.
+  RubricRequest? _lastRequest;
+
   @override
   void initState() {
     super.initState();
@@ -106,6 +112,7 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
       subject: _subject,
       language: _language.aiName,
     );
+    _lastRequest = request;
     ref.read(rubricControllerProvider.notifier).generate(request);
   }
 
@@ -168,8 +175,11 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
             state: state,
             skeleton: const RubricSkeleton(),
             emptyMessage: l10n.rubricEmpty,
-            onData: (rubric) =>
-                RubricResultView(rubric: rubric, onRegenerate: _submit),
+            onData: (rubric) => RubricResultView(
+              rubric: rubric,
+              onRegenerate: _submit,
+              saveRequest: _lastRequest,
+            ),
           );
 
     return ToolScaffold(

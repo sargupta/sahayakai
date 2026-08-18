@@ -29,8 +29,9 @@ class QuizRequestDto {
         .toList(growable: false);
     return QuizRequestDto(
       topic: request.topic.trim(),
-      questionTypes:
-          request.questionTypes.map((t) => t.wire).toList(growable: false),
+      questionTypes: request.questionTypes
+          .map((t) => t.wire)
+          .toList(growable: false),
       numQuestions: request.numQuestions,
       gradeLevel: _blankToNull(request.gradeLevel),
       subject: _blankToNull(request.subject),
@@ -84,7 +85,10 @@ class QuizResponseDto {
   final bool? isSaved;
   final QuizValidationWarningDto? validationWarning;
 
-  Quiz toDomain() {
+  /// [raw] is the verbatim response body. Pass it on the live generate path so
+  /// a later Save persists the exact object the flow persists; omit it when
+  /// decoding an already-saved item, which has nothing left to save.
+  Quiz toDomain({Map<String, dynamic>? raw}) {
     final variants = <QuizVariant>[];
     for (final entry in <QuizDifficulty, QuizVariantDto?>{
       QuizDifficulty.easy: easy,
@@ -93,7 +97,9 @@ class QuizResponseDto {
     }.entries) {
       final variant = entry.value?.toDomain(entry.key);
       // A variant with no questions is not worth a tab.
-      if (variant != null && variant.questions.isNotEmpty) variants.add(variant);
+      if (variant != null && variant.questions.isNotEmpty) {
+        variants.add(variant);
+      }
     }
     return Quiz(
       variants: List<QuizVariant>.unmodifiable(variants),
@@ -103,6 +109,7 @@ class QuizResponseDto {
       topic: _clean(topic),
       isSaved: isSaved ?? false,
       validationWarning: validationWarning?.toDomain(),
+      raw: raw,
     );
   }
 }
@@ -127,16 +134,16 @@ class QuizVariantDto {
   final String? subject;
 
   QuizVariant toDomain(QuizDifficulty difficulty) => QuizVariant(
-        difficulty: difficulty,
-        title: _clean(title) ?? '',
-        questions: (questions ?? const <QuestionDto>[])
-            .map((q) => q.toDomain())
-            .where((q) => q.questionText.isNotEmpty)
-            .toList(growable: false),
-        teacherInstructions: _clean(teacherInstructions),
-        gradeLevel: _clean(gradeLevel),
-        subject: _clean(subject),
-      );
+    difficulty: difficulty,
+    title: _clean(title) ?? '',
+    questions: (questions ?? const <QuestionDto>[])
+        .map((q) => q.toDomain())
+        .where((q) => q.questionText.isNotEmpty)
+        .toList(growable: false),
+    teacherInstructions: _clean(teacherInstructions),
+    gradeLevel: _clean(gradeLevel),
+    subject: _clean(subject),
+  );
 }
 
 @JsonSerializable(createToJson: false)
@@ -161,13 +168,13 @@ class QuestionDto {
   final String? difficultyLevel;
 
   Question toDomain() => Question(
-        questionText: _clean(questionText) ?? '',
-        correctAnswer: _clean(correctAnswer) ?? '',
-        questionType: QuestionType.fromWire(questionType),
-        options: _cleanList(options),
-        explanation: _clean(explanation),
-        difficultyLevel: QuizDifficulty.fromWire(difficultyLevel),
-      );
+    questionText: _clean(questionText) ?? '',
+    correctAnswer: _clean(correctAnswer) ?? '',
+    questionType: QuestionType.fromWire(questionType),
+    options: _cleanList(options),
+    explanation: _clean(explanation),
+    difficultyLevel: QuizDifficulty.fromWire(difficultyLevel),
+  );
 }
 
 @JsonSerializable(createToJson: false)

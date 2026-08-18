@@ -91,8 +91,9 @@ void main() {
 
     expect(copied, hasLength(1));
     expect((copied.single.arguments as Map)['text'], message.message);
-    // The teacher gets clear feedback that it copied.
-    expect(find.text('Message copied'), findsOneWidget);
+    // The teacher gets clear feedback that it copied — now the shared bar's
+    // own confirmation, the same wording every other tool result shows.
+    expect(find.text('Copied to clipboard'), findsOneWidget);
   });
 
   testWidgets('Share hands the exact message to the share service (faked)', (

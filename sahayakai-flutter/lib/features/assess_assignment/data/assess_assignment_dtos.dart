@@ -32,8 +32,7 @@ class AssessAssignmentRequestDto {
       mode: r.mode.wire,
       language: _blankToNull(r.language),
       // Only meaningful in `score` mode; a blank value is omitted.
-      editedTranscript:
-          (edited == null || edited.isEmpty) ? null : edited,
+      editedTranscript: (edited == null || edited.isEmpty) ? null : edited,
       rubricSnapshot: r.rubric?.toJson(),
     );
   }
@@ -92,7 +91,10 @@ class AssessAssignmentResponseDto {
   final List<String>? warnings;
   final AssessmentRubricDto? rubricSnapshot;
 
-  Assessment toDomain() {
+  /// [raw] is the verbatim response body. Pass it on the live assess path so a
+  /// later Save persists the exact object the flow persists; omit it when
+  /// decoding an already-saved item, which has nothing left to save.
+  Assessment toDomain({Map<String, dynamic>? raw}) {
     return Assessment(
       rawTranscript: _clean(rawTranscript),
       editedTranscript: _clean(editedTranscript),
@@ -111,6 +113,7 @@ class AssessAssignmentResponseDto {
       confidenceOverall: _toUnit(confidenceOverall),
       warnings: _cleanList(warnings),
       rubric: rubricSnapshot?.toDomain(),
+      raw: raw,
     );
   }
 }
@@ -137,13 +140,13 @@ class CriterionScoreDto {
   final num? confidence;
 
   CriterionScore toDomain() => CriterionScore(
-        criterionName: _clean(criterionName) ?? '',
-        level: _clean(level),
-        points: points,
-        maxPoints: maxPoints,
-        feedback: _clean(feedback),
-        confidence: _toUnit(confidence),
-      );
+    criterionName: _clean(criterionName) ?? '',
+    level: _clean(level),
+    points: points,
+    maxPoints: maxPoints,
+    feedback: _clean(feedback),
+    confidence: _toUnit(confidence),
+  );
 }
 
 @JsonSerializable(createToJson: false)
@@ -166,15 +169,15 @@ class AssessmentRubricDto {
   final String? subject;
 
   AssessmentRubric toDomain() => AssessmentRubric(
-        title: _clean(title) ?? '',
-        description: _clean(description),
-        criteria: (criteria ?? const <AssessmentRubricCriterionDto>[])
-            .map((c) => c.toDomain())
-            .where((c) => c.name.isNotEmpty)
-            .toList(growable: false),
-        gradeLevel: _clean(gradeLevel),
-        subject: _clean(subject),
-      );
+    title: _clean(title) ?? '',
+    description: _clean(description),
+    criteria: (criteria ?? const <AssessmentRubricCriterionDto>[])
+        .map((c) => c.toDomain())
+        .where((c) => c.name.isNotEmpty)
+        .toList(growable: false),
+    gradeLevel: _clean(gradeLevel),
+    subject: _clean(subject),
+  );
 }
 
 @JsonSerializable(createToJson: false)
@@ -193,12 +196,12 @@ class AssessmentRubricCriterionDto {
   final List<AssessmentRubricLevelDto>? levels;
 
   AssessmentRubricCriterion toDomain() => AssessmentRubricCriterion(
-        name: _clean(name) ?? '',
-        description: _clean(description),
-        levels: (levels ?? const <AssessmentRubricLevelDto>[])
-            .map((l) => l.toDomain())
-            .toList(growable: false),
-      );
+    name: _clean(name) ?? '',
+    description: _clean(description),
+    levels: (levels ?? const <AssessmentRubricLevelDto>[])
+        .map((l) => l.toDomain())
+        .toList(growable: false),
+  );
 }
 
 @JsonSerializable(createToJson: false)
@@ -213,10 +216,10 @@ class AssessmentRubricLevelDto {
   final num? points;
 
   AssessmentRubricLevel toDomain() => AssessmentRubricLevel(
-        name: _clean(name) ?? '',
-        description: _clean(description),
-        points: points,
-      );
+    name: _clean(name) ?? '',
+    description: _clean(description),
+    points: points,
+  );
 }
 
 String? _clean(String? value) {

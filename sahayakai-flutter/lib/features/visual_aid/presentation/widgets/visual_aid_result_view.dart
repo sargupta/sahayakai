@@ -1,5 +1,6 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/i18n/l10n_ext.dart';
@@ -11,6 +12,7 @@ import '../../../../shared/widgets/document_sheet.dart';
 import '../../../../shared/widgets/empty_view.dart';
 import '../../../../shared/widgets/note_banner.dart';
 import '../../../../shared/widgets/read_aloud_button.dart';
+import '../../../../shared/widgets/result_actions_bar.dart';
 import '../../../../shared/widgets/secondary_button.dart';
 import '../../domain/visual_aid.dart';
 
@@ -23,7 +25,8 @@ import '../../domain/visual_aid.dart';
 /// image ([Image.memory] over the decoded bytes), a "How to use this" section
 /// carrying the model's pedagogical note, and a "Discussion spark" callout. Each
 /// block inks in on the Ink-settle reveal, and a footer action bar offers
-/// Regenerate / Copy.
+/// Regenerate / Read aloud over the shared [ResultActionsBar] (Copy / Share —
+/// see [_ActionBar] for why there is deliberately no Save here).
 ///
 /// All model-authored prose flows through [AiText] (line-height 1.7 + Indic
 /// height behaviour) so matras and vowel signs never clip. See DESIGN_RUBRIC
@@ -186,10 +189,24 @@ class _BrokenImage extends StatelessWidget {
   }
 }
 
-/// The document's action bar: Regenerate (secondary) over a Copy ghost. Copy
-/// exports the prompt and the teaching notes as plain text to the clipboard (the
-/// image itself cannot ride the clipboard) — a presentation-only action, no
-/// controller involved.
+/// The document's action bar: Regenerate (secondary) and Read aloud over the
+/// shared [ResultActionsBar] — Copy and Share.
+///
+/// NO SAVE, and that is a deliberate omission rather than an oversight. What
+/// this tool produces is a PICTURE; the text below it is a caption. Two things
+/// follow. First, `POST /api/content/save` for a `visual-aid` expects
+/// `data.imageDataUri` — the whole base64 PNG — as the payload, and the route
+/// then re-uploads it to Storage and strips it before writing Firestore. Asking
+/// a teacher on a 2G connection to re-upload an image the generation flow
+/// ALREADY uploaded server-side (`visual-aid-designer.ts` saves it and sets
+/// `storagePath` itself) is a minutes-long transfer for a duplicate row.
+/// Second, the saved row is not even re-openable here: `mapSavedVisualAid` in
+/// `library_result_mapper.dart` documents, verified against the writer, that
+/// every persisted visual-aid comes back with no pixels at all.
+///
+/// Copy and Share carry the prompt and the teaching notes — the part that IS
+/// text, and the part a colleague can actually act on. The drawing itself does
+/// not ride the clipboard, and this bar does not pretend otherwise.
 class _ActionBar extends StatelessWidget {
   const _ActionBar({
     required this.aid,
@@ -204,10 +221,6 @@ class _ActionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final text = Theme.of(context).textTheme;
-    final saffron = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
-    final messenger = ScaffoldMessenger.of(context);
 
     final buffer = StringBuffer();
     if (prompt != null) buffer.writeln('$prompt\n');
@@ -224,13 +237,6 @@ class _ActionBar extends StatelessWidget {
     }
     final spoken = buffer.toString().trimRight();
 
-    void copy() {
-      Clipboard.setData(ClipboardData(text: spoken));
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(l10n.copyConfirmation)));
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -242,19 +248,8 @@ class _ActionBar extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.space2),
         ReadAloudButton(text: spoken),
-        const SizedBox(height: AppSpacing.space2),
-        SizedBox(
-          height: 48,
-          child: TextButton.icon(
-            onPressed: copy,
-            icon: const Icon(LucideIcons.copy, size: AppIconSize.inline),
-            label: Text(l10n.actionCopy),
-            style: TextButton.styleFrom(
-              foregroundColor: saffron,
-              textStyle: text.labelLarge,
-            ),
-          ),
-        ),
+        const SizedBox(height: AppSpacing.space3),
+        ResultActionsBar(text: spoken, shareSubject: prompt),
       ],
     );
   }

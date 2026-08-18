@@ -99,8 +99,8 @@ class Question {
   /// True when the correct answer is one of the listed options, so the result
   /// view can mark the right choice instead of repeating it underneath.
   bool get hasMarkedOption => options.any(
-        (o) => o.trim().toLowerCase() == correctAnswer.trim().toLowerCase(),
-      );
+    (o) => o.trim().toLowerCase() == correctAnswer.trim().toLowerCase(),
+  );
 }
 
 /// A single difficulty variant of the quiz — the unit each tab renders.
@@ -146,6 +146,7 @@ class Quiz {
     this.topic,
     this.isSaved = false,
     this.validationWarning,
+    this.raw,
   });
 
   final List<QuizVariant> variants;
@@ -155,4 +156,13 @@ class Quiz {
   final String? topic;
   final bool isSaved;
   final QuizValidationWarning? validationWarning;
+
+  /// The verbatim `/api/ai/quiz` response body, kept so a later "Save to
+  /// Library" persists EXACTLY the multi-variant envelope the server-side flow
+  /// persists as `data` (`src/ai/flows/quiz-generator.ts`) rather than a
+  /// re-serialized domain object that would quietly drop any field this app
+  /// does not model. Null for a quiz that did not come from a live generation
+  /// (a Library item re-rendered read-only, or a test fixture) — and the Save
+  /// action is withheld in exactly that case.
+  final Map<String, dynamic>? raw;
 }

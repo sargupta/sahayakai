@@ -104,7 +104,10 @@ class VirtualFieldTripResponseDto {
   final String? gradeLevel;
   final String? subject;
 
-  FieldTrip toDomain() {
+  /// [raw] is the verbatim response body. Pass it on the live plan path so a
+  /// later Save persists the exact object the flow persists; omit it when
+  /// decoding an already-saved item, which has nothing left to save.
+  FieldTrip toDomain({Map<String, dynamic>? raw}) {
     final decoded = <FieldTripStop>[
       for (final dto in stops ?? const <FieldTripStopDto>[])
         if (dto.toDomain() case final FieldTripStop stop) stop,
@@ -115,6 +118,7 @@ class VirtualFieldTripResponseDto {
       stops: decoded,
       gradeLevel: _clean(gradeLevel) ?? '',
       subject: _clean(subject) ?? '',
+      raw: raw,
     );
   }
 }

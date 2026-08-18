@@ -58,7 +58,10 @@ class TeacherTrainingResponseDto {
   final String? gradeLevel;
   final String? subject;
 
-  TeacherAdvice toDomain() {
+  /// [raw] is the verbatim response body. Pass it on the live ask path so a
+  /// later Save persists the exact object the flow persists; omit it when
+  /// decoding an already-saved item, which has nothing left to save.
+  TeacherAdvice toDomain({Map<String, dynamic>? raw}) {
     return TeacherAdvice(
       introduction: _clean(introduction) ?? '',
       advice: (advice ?? const <TeacherAdvicePointDto>[])
@@ -70,6 +73,7 @@ class TeacherTrainingResponseDto {
       conclusion: _clean(conclusion) ?? '',
       gradeLevel: _clean(gradeLevel),
       subject: _clean(subject),
+      raw: raw,
     );
   }
 }
@@ -86,10 +90,10 @@ class TeacherAdvicePointDto {
   final String? explanation;
 
   TeacherAdvicePoint toDomain() => TeacherAdvicePoint(
-        strategy: _clean(strategy) ?? '',
-        pedagogy: _clean(pedagogy) ?? '',
-        explanation: _clean(explanation) ?? '',
-      );
+    strategy: _clean(strategy) ?? '',
+    pedagogy: _clean(pedagogy) ?? '',
+    explanation: _clean(explanation) ?? '',
+  );
 }
 
 String? _clean(String? value) {

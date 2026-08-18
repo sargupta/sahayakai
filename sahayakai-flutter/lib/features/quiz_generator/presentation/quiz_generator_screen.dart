@@ -71,6 +71,12 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
   /// the first voice-originated result lands (VOICE_FIRST_GAP §5.6).
   bool _spokeVoiceSummary = false;
 
+  /// The request behind the quiz currently on screen. "Save to Library" needs
+  /// the topic / grade / language the model output does not carry, so the
+  /// result view is handed the request that produced it. Null until the first
+  /// generation, which is exactly when there is nothing to save.
+  QuizRequest? _lastRequest;
+
   @override
   void initState() {
     super.initState();
@@ -126,6 +132,7 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
       bloomsTaxonomyLevels: _blooms.toList(growable: false),
       imageDataUri: _image?.dataUri,
     );
+    _lastRequest = request;
     ref.read(quizControllerProvider.notifier).generate(request);
   }
 
@@ -194,7 +201,11 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
             state: state,
             skeleton: const QuizSkeleton(),
             emptyMessage: l10n.quizEmpty,
-            onData: (quiz) => QuizResultView(quiz: quiz, onRegenerate: _submit),
+            onData: (quiz) => QuizResultView(
+              quiz: quiz,
+              onRegenerate: _submit,
+              saveRequest: _lastRequest,
+            ),
           );
 
     return ToolScaffold(

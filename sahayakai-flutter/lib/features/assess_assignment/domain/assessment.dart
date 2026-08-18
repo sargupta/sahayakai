@@ -86,26 +86,26 @@ class AssessmentRubric {
   /// `rubricSnapshot` (= `RubricGeneratorOutputSchema`) expects. Levels carry
   /// `points` verbatim; `gradeLevel`/`subject` are nullable.
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'title': title,
-        'description': description ?? '',
-        'criteria': [
-          for (final c in criteria)
-            <String, dynamic>{
-              'name': c.name,
-              'description': c.description ?? '',
-              'levels': [
-                for (final l in c.levels)
-                  <String, dynamic>{
-                    'name': l.name,
-                    'description': l.description ?? '',
-                    if (l.points != null) 'points': l.points,
-                  },
-              ],
-            },
-        ],
-        'gradeLevel': gradeLevel,
-        'subject': subject,
-      };
+    'title': title,
+    'description': description ?? '',
+    'criteria': [
+      for (final c in criteria)
+        <String, dynamic>{
+          'name': c.name,
+          'description': c.description ?? '',
+          'levels': [
+            for (final l in c.levels)
+              <String, dynamic>{
+                'name': l.name,
+                'description': l.description ?? '',
+                if (l.points != null) 'points': l.points,
+              },
+          ],
+        },
+    ],
+    'gradeLevel': gradeLevel,
+    'subject': subject,
+  };
 }
 
 /// Immutable input the teacher assembles on the form.
@@ -200,7 +200,18 @@ class Assessment {
     this.warnings = const <String>[],
     this.rubric,
     this.language,
+    this.raw,
   });
+
+  /// The verbatim `/api/ai/assess-assignment` response body, kept so a later
+  /// "Save to Library" persists EXACTLY the object the server-side flow
+  /// persists as `data` (`src/ai/flows/assignment-assessor.ts`) rather than a
+  /// re-serialized domain object that would quietly drop any field this app
+  /// does not model (`assessmentId`, `createdAtIso`, `studentId`, …). Null for
+  /// an assessment that did not come from a live run (a Library item re-rendered
+  /// read-only, or a test fixture) — and the Save action is withheld in exactly
+  /// that case.
+  final Map<String, dynamic>? raw;
 
   /// The literal transcription of the student's handwriting. May carry
   /// `[BLANK]` / `[???]` markers verbatim from the model.

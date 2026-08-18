@@ -6,6 +6,7 @@ import 'package:sahayakai/features/instant_answer/presentation/widgets/instant_a
 import 'package:sahayakai/features/instant_answer/presentation/widgets/instant_answer_skeleton.dart';
 import 'package:sahayakai/shared/widgets/document_sheet.dart';
 
+import '../../support/fake_clipboard.dart';
 import 'instant_answer_fixtures.dart';
 
 /// Result-layer gates from DESIGN_RUBRIC §12: no RenderFlex overflow at 360dp
@@ -333,6 +334,7 @@ void main() {
       tester.view.physicalSize = const Size(360, 2000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
+      final copied = interceptClipboard(tester);
 
       await tester.pumpWidget(
         hostResult(
@@ -349,8 +351,11 @@ void main() {
       await tester.ensureVisible(find.text('Copy'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Copy'));
-      await tester.pump(); // let the snackbar appear
+      // The shared bar awaits the clipboard write before confirming, so settle
+      // rather than a single pump — a bare pump lands before the snackbar.
+      await tester.pumpAndSettle();
 
+      expect(copied, hasLength(1));
       expect(find.text('Copied to clipboard'), findsOneWidget);
     });
 

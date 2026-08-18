@@ -74,6 +74,7 @@ class TeacherAdvice {
     required this.conclusion,
     this.gradeLevel,
     this.subject,
+    this.raw,
   });
 
   /// A brief, empathetic opener acknowledging the question.
@@ -87,6 +88,15 @@ class TeacherAdvice {
 
   final String? gradeLevel;
   final String? subject;
+
+  /// The verbatim `/api/ai/teacher-training` response body, kept so a later
+  /// "Save to Library" persists EXACTLY the object the server-side flow
+  /// persists as `data` (`src/ai/flows/teacher-training.ts`) rather than a
+  /// re-serialized domain object that would quietly drop any field this app
+  /// does not model. Null for advice that did not come from a live ask (a
+  /// Library item re-rendered read-only, or a test fixture) — and the Save
+  /// action is withheld in exactly that case.
+  final Map<String, dynamic>? raw;
 
   /// True when the model returned nothing worth rendering — the view shows a
   /// dignified empty state rather than a blank card.

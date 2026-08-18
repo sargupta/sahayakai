@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/i18n/gen/app_localizations.dart';
@@ -11,7 +11,9 @@ import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/document_sheet.dart';
 import '../../../../shared/widgets/empty_view.dart';
 import '../../../../shared/widgets/read_aloud_button.dart';
+import '../../../../shared/widgets/result_actions_bar.dart';
 import '../../../../shared/widgets/secondary_button.dart';
+import '../../data/teacher_training_repository.dart';
 import '../../domain/teacher_advice.dart';
 import 'advice_card.dart';
 
@@ -22,7 +24,8 @@ import 'advice_card.dart';
 /// COACH" eyebrow, a Fraunces title, saffron rule, grade/subject meta badges),
 /// the empathetic introduction prose, the strategies under a saffron-tick
 /// section as numbered inset cards, and the closing prose. Each block inks in on
-/// the Ink-settle reveal, and a footer action bar offers Regenerate / Copy.
+/// the Ink-settle reveal, and a footer action bar offers Regenerate / Read
+/// aloud over the shared [ResultActionsBar] (Save to Library / Copy / Share).
 ///
 /// All model-authored prose flows through [AiText] (line-height 1.7 + Indic
 /// height behaviour) so matras and vowel signs never clip, and long compound
@@ -34,6 +37,7 @@ class TeacherTrainingResultView extends StatelessWidget {
     super.key,
     required this.advice,
     this.onRegenerate,
+    this.saveRequest,
   });
 
   final TeacherAdvice advice;
@@ -41,6 +45,13 @@ class TeacherTrainingResultView extends StatelessWidget {
   /// Re-runs generation from the current form (the controller's `ask`). When
   /// null (e.g. a direct render in a test) the footer action bar is omitted.
   final VoidCallback? onRegenerate;
+
+  /// The request that produced [advice]. Supplies the question / subject /
+  /// language the `POST /api/content/save` body needs (the model output alone
+  /// carries no question, and the saved title is derived from it). When null —
+  /// or when the advice carries no verbatim [TeacherAdvice.raw] to persist —
+  /// the Save action is withheld and the bar offers Copy / Share only.
+  final TeacherTrainingRequest? saveRequest;
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +104,11 @@ class TeacherTrainingResultView extends StatelessWidget {
       meta: meta,
       footer: onRegenerate == null
           ? null
-          : _ActionBar(advice: advice, onRegenerate: onRegenerate!),
+          : _ActionBar(
+              advice: advice,
+              onRegenerate: onRegenerate!,
+              saveRequest: saveRequest,
+            ),
       children: revealed,
     );
   }
@@ -121,29 +136,31 @@ class _Strategies extends StatelessWidget {
   }
 }
 
-/// The document's action bar: Regenerate (secondary) over a Copy ghost. Copy
-/// exports the advice as plain text to the clipboard — a presentation-only
-/// action, no controller involved.
-class _ActionBar extends StatelessWidget {
-  const _ActionBar({required this.advice, required this.onRegenerate});
+/// The document's action bar: Regenerate (secondary) and Read aloud over the
+/// shared [ResultActionsBar] — Save to Library / Copy / Share.
+///
+/// Copy and Share both carry the advice as plain text, which is how a teacher
+/// passes a strategy to a colleague. Save posts the verbatim model output and
+/// is offered only when there is a request behind the advice AND a
+/// [TeacherAdvice.raw] to persist.
+class _ActionBar extends ConsumerWidget {
+  const _ActionBar({
+    required this.advice,
+    required this.onRegenerate,
+    this.saveRequest,
+  });
 
   final TeacherAdvice advice;
   final VoidCallback onRegenerate;
+  final TeacherTrainingRequest? saveRequest;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final text = Theme.of(context).textTheme;
-    final saffron = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
-    final messenger = ScaffoldMessenger.of(context);
-
-    void copy() {
-      Clipboard.setData(ClipboardData(text: _adviceAsText(advice, l10n)));
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(l10n.copyConfirmation)));
-    }
+    final text = _adviceAsText(advice, l10n);
+    final request = saveRequest;
+    final canSave = request != null && advice.raw != null;
+    final question = request?.question.trim();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -155,21 +172,19 @@ class _ActionBar extends StatelessWidget {
           onPressed: onRegenerate,
         ),
         const SizedBox(height: AppSpacing.space2),
-        ReadAloudButton(
-          text: _adviceAsText(advice, l10n),
-        ),
-        const SizedBox(height: AppSpacing.space2),
-        SizedBox(
-          height: 48,
-          child: TextButton.icon(
-            onPressed: copy,
-            icon: const Icon(LucideIcons.copy, size: AppIconSize.inline),
-            label: Text(l10n.actionCopy),
-            style: TextButton.styleFrom(
-              foregroundColor: saffron,
-              textStyle: text.labelLarge,
-            ),
-          ),
+        ReadAloudButton(text: text),
+        const SizedBox(height: AppSpacing.space3),
+        ResultActionsBar(
+          text: text,
+          shareSubject: (question == null || question.isEmpty)
+              ? l10n.teacherTrainingResultTitle
+              : question,
+          saveResetKey: advice,
+          onSave: canSave
+              ? () => ref
+                    .read(teacherTrainingRepositoryProvider)
+                    .save(advice: advice, request: request)
+              : null,
         ),
       ],
     );
@@ -179,8 +194,10 @@ class _ActionBar extends StatelessWidget {
 /// A plain-text export of the advice, for the clipboard.
 String _adviceAsText(TeacherAdvice advice, AppLocalizations l10n) {
   final b = StringBuffer();
-  final metaBits =
-      [advice.gradeLevel, advice.subject].whereType<String>().toList();
+  final metaBits = [
+    advice.gradeLevel,
+    advice.subject,
+  ].whereType<String>().toList();
   if (metaBits.isNotEmpty) b.writeln(metaBits.join(' · '));
   if (advice.introduction.isNotEmpty) {
     if (b.isNotEmpty) b.writeln();

@@ -61,6 +61,12 @@ class _VirtualFieldTripScreenState
   /// the first voice-originated itinerary lands (VOICE_FIRST_GAP §5.6).
   bool _spokeVoiceSummary = false;
 
+  /// The request behind the itinerary currently on screen. "Save to Library"
+  /// needs the topic / grade / language the model output does not carry, so the
+  /// result view is handed the request that produced it. Null until the first
+  /// plan, which is exactly when there is nothing to save.
+  VirtualFieldTripRequest? _lastRequest;
+
   @override
   void initState() {
     super.initState();
@@ -106,12 +112,12 @@ class _VirtualFieldTripScreenState
       gradeLevel: _grade,
       language: _language.aiName,
     );
+    _lastRequest = request;
     ref.read(virtualFieldTripControllerProvider.notifier).plan(request);
   }
 
   /// The footer's Done action: dismiss the itinerary back to the pristine form.
-  void _done() =>
-      ref.read(virtualFieldTripControllerProvider.notifier).clear();
+  void _done() => ref.read(virtualFieldTripControllerProvider.notifier).clear();
 
   /// Brings the result to the top of the viewport when a fresh outcome lands.
   /// Honours reduce-motion by jumping (no scroll tween).
@@ -135,7 +141,10 @@ class _VirtualFieldTripScreenState
   /// not a finished result and must not announce one. A manual open never
   /// speaks. The short VIDYA confirmation has finished well before this fires,
   /// so it is a single, non-overlapping utterance.
-  void _maybeSpeakVoiceSummary(AppLocalizations l10n, FieldTripOutcome? outcome) {
+  void _maybeSpeakVoiceSummary(
+    AppLocalizations l10n,
+    FieldTripOutcome? outcome,
+  ) {
     if (_spokeVoiceSummary || widget.prefill?.autoSubmit != true) return;
     if (outcome is! FieldTripResult || !outcome.trip.hasStops) return;
     _spokeVoiceSummary = true;
@@ -158,15 +167,19 @@ class _VirtualFieldTripScreenState
     // Auto-scroll to the result on a fresh outcome (loading -> data), whether
     // that is an itinerary or the calm still-generating panel.
     ref.listen<AsyncValue<FieldTripOutcome?>>(
-        virtualFieldTripControllerProvider, (prev, next) {
-      final wasLoading = prev?.isLoading ?? false;
-      final nowHasOutcome =
-          !next.isLoading && next.hasValue && next.valueOrNull != null;
-      if (wasLoading && nowHasOutcome) {
-        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToResult());
-        _maybeSpeakVoiceSummary(l10n, next.valueOrNull);
-      }
-    });
+      virtualFieldTripControllerProvider,
+      (prev, next) {
+        final wasLoading = prev?.isLoading ?? false;
+        final nowHasOutcome =
+            !next.isLoading && next.hasValue && next.valueOrNull != null;
+        if (wasLoading && nowHasOutcome) {
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _scrollToResult(),
+          );
+          _maybeSpeakVoiceSummary(l10n, next.valueOrNull);
+        }
+      },
+    );
 
     // Only a rendered itinerary WITH stops hands its actions to the footer and
     // hides the sticky button. A zero-stops itinerary is a by-design empty state
@@ -186,10 +199,11 @@ class _VirtualFieldTripScreenState
             emptyMessage: l10n.virtualFieldTripEmpty,
             onData: (outcome) => switch (outcome) {
               FieldTripResult(:final trip) => VirtualFieldTripResultView(
-                  trip: trip,
-                  onRegenerate: _submit,
-                  onDone: _done,
-                ),
+                trip: trip,
+                onRegenerate: _submit,
+                onDone: _done,
+                saveRequest: _lastRequest,
+              ),
               FieldTripStillGenerating() => const VirtualFieldTripPendingView(),
             },
           );

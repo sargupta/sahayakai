@@ -62,6 +62,12 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
   /// the first voice-originated result lands (VOICE_FIRST_GAP §5.6).
   bool _spokeVoiceSummary = false;
 
+  /// The request behind the answer currently on screen. "Save to Library" needs
+  /// the question / grade / language the model output does not carry, so the
+  /// result view is handed the request that produced it. Null until the first
+  /// ask, which is exactly when there is nothing to save.
+  InstantAnswerRequest? _lastRequest;
+
   @override
   void initState() {
     super.initState();
@@ -111,6 +117,7 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
       subject: _subject,
       language: _language.aiName,
     );
+    _lastRequest = request;
     ref.read(instantAnswerControllerProvider.notifier).ask(request);
   }
 
@@ -155,8 +162,10 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
     final state = ref.watch(instantAnswerControllerProvider);
 
     // Auto-scroll to the result header on a fresh success (loading -> data).
-    ref.listen<AsyncValue<InstantAnswer?>>(instantAnswerControllerProvider,
-        (prev, next) {
+    ref.listen<AsyncValue<InstantAnswer?>>(instantAnswerControllerProvider, (
+      prev,
+      next,
+    ) {
       final wasLoading = prev?.isLoading ?? false;
       final nowHasAnswer =
           !next.isLoading && next.hasValue && next.valueOrNull != null;
@@ -178,6 +187,7 @@ class _InstantAnswerScreenState extends ConsumerState<InstantAnswerScreen> {
               answer: answer,
               question: _submittedQuestion,
               onRegenerate: _submit,
+              saveRequest: _lastRequest,
             ),
           );
 

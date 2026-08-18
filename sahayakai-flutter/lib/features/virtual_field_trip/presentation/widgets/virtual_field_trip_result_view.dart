@@ -11,7 +11,9 @@ import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/document_sheet.dart';
 import '../../../../shared/widgets/empty_view.dart';
 import '../../../../shared/widgets/read_aloud_button.dart';
+import '../../../../shared/widgets/result_actions_bar.dart';
 import '../../../../shared/widgets/secondary_button.dart';
+import '../../data/virtual_field_trip_repository.dart';
 import '../../domain/virtual_field_trip.dart';
 import 'field_trip_stop_card.dart';
 
@@ -19,16 +21,18 @@ import 'field_trip_stop_card.dart';
 ///
 /// A [DocumentSheet] masthead ("VIRTUAL FIELD TRIP" eyebrow, the title, saffron
 /// rule, subject / grade / stop-count badges), then a numbered
-/// [FieldTripStopCard] per stop, and a Done / Regenerate footer. Each stop inks
-/// in on the reveal (reduce-motion degrades to the static frame). Every card
-/// opens its stop through the injected [linkOpenerProvider] seam — never a raw
-/// `launchUrl`.
+/// [FieldTripStopCard] per stop, then a Regenerate / Read aloud / Done footer
+/// over the shared [ResultActionsBar] (Save to Library / Copy / Share). Each
+/// stop inks in on the reveal (reduce-motion degrades to the static frame).
+/// Every card opens its stop through the injected [linkOpenerProvider] seam —
+/// never a raw `launchUrl`.
 class VirtualFieldTripResultView extends ConsumerWidget {
   const VirtualFieldTripResultView({
     super.key,
     required this.trip,
     required this.onRegenerate,
     required this.onDone,
+    this.saveRequest,
   });
 
   final FieldTrip trip;
@@ -39,6 +43,13 @@ class VirtualFieldTripResultView extends ConsumerWidget {
   /// Dismisses the result, returning to the pristine form (the controller's
   /// `clear`).
   final VoidCallback onDone;
+
+  /// The request that produced [trip]. Supplies the topic / grade / language
+  /// the `POST /api/content/save` body needs (the model output alone carries no
+  /// request topic). When null — or when the trip carries no verbatim
+  /// [FieldTrip.raw] to persist — the Save action is withheld and the bar
+  /// offers Copy / Share only.
+  final VirtualFieldTripRequest? saveRequest;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -90,12 +101,14 @@ class VirtualFieldTripResultView extends ConsumerWidget {
       title: trip.title,
       meta: meta,
       footer: _ActionBar(
+        trip: trip,
         onRegenerate: onRegenerate,
         onDone: onDone,
         spokenText: _tripAsText(trip),
         // FieldTrip carries no language on the result; the current UI locale is
         // the best available signal for the voice (it drove the form's default).
         language: ref.read(localeControllerProvider).code,
+        saveRequest: saveRequest,
       ),
       children: revealed,
     );
@@ -123,27 +136,64 @@ String _tripAsText(FieldTrip trip) {
   return b.toString().trimRight();
 }
 
-/// The itinerary's action bar: Regenerate (secondary) over a Done ghost. Done
-/// clears the result back to the form; Regenerate re-runs the plan.
-class _ActionBar extends StatelessWidget {
+/// A plain-text export of the itinerary for Copy and Share. Same body as
+/// [_tripAsText] plus each stop's Google Earth link, which is the part a
+/// colleague receiving this on WhatsApp actually needs — and exactly the part
+/// that must NOT be in the read-aloud text, where a URL is unspeakable noise.
+String _tripAsShareText(FieldTrip trip) {
+  final b = StringBuffer()..writeln(trip.title);
+  final metaBits = [
+    trip.gradeLevel,
+    trip.subject,
+  ].where((s) => s.isNotEmpty).toList();
+  if (metaBits.isNotEmpty) b.writeln(metaBits.join(' · '));
+  for (var i = 0; i < trip.stops.length; i++) {
+    final s = trip.stops[i];
+    b
+      ..writeln()
+      ..writeln('${i + 1}. ${s.name}');
+    for (final line in [
+      s.description,
+      s.educationalFact,
+      s.reflectionPrompt,
+      s.culturalAnalogy,
+    ]) {
+      if (line.trim().isNotEmpty) b.writeln(line.trim());
+    }
+    final url = s.googleEarthUrl;
+    if (url != null) b.writeln(url.toString());
+  }
+  return b.toString().trimRight();
+}
+
+/// The itinerary's action bar: Regenerate (secondary), Read aloud and a Done
+/// ghost over the shared [ResultActionsBar] — Save to Library / Copy / Share.
+/// Done clears the result back to the form; Regenerate re-runs the plan.
+class _ActionBar extends ConsumerWidget {
   const _ActionBar({
+    required this.trip,
     required this.onRegenerate,
     required this.onDone,
     required this.spokenText,
     this.language,
+    this.saveRequest,
   });
 
+  final FieldTrip trip;
   final VoidCallback onRegenerate;
   final VoidCallback onDone;
   final String spokenText;
   final String? language;
+  final VirtualFieldTripRequest? saveRequest;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final text = Theme.of(context).textTheme;
     final saffron = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
+    final request = saveRequest;
+    final canSave = request != null && trip.raw != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -168,6 +218,17 @@ class _ActionBar extends StatelessWidget {
               textStyle: text.labelLarge,
             ),
           ),
+        ),
+        const SizedBox(height: AppSpacing.space3),
+        ResultActionsBar(
+          text: _tripAsShareText(trip),
+          shareSubject: trip.title.isEmpty ? null : trip.title,
+          saveResetKey: trip,
+          onSave: canSave
+              ? () => ref
+                    .read(virtualFieldTripRepositoryProvider)
+                    .save(trip: trip, request: request)
+              : null,
         ),
       ],
     );

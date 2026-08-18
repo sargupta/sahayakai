@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -13,14 +12,13 @@ import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/bullet_dot.dart';
 import '../../../../shared/widgets/document_sheet.dart';
 import '../../../../shared/widgets/empty_view.dart';
-import '../../../../shared/widgets/inline_error.dart';
 import '../../../../shared/widgets/note_banner.dart';
-import '../../../../shared/widgets/primary_button.dart';
 import '../../../../shared/widgets/read_aloud_button.dart';
+import '../../../../shared/widgets/result_actions_bar.dart';
 import '../../../../shared/widgets/rich_markdown.dart';
 import '../../../../shared/widgets/secondary_button.dart';
+import '../../data/exam_paper_repository.dart';
 import '../../domain/exam_paper.dart';
-import '../exam_paper_controller.dart';
 
 /// Renders a generated [ExamPaper] as a printed document, not a chat dump
 /// (PREMIUM_DESIGN_SPEC.md §5 / §6b U8 — the reference every other tool copies).
@@ -29,8 +27,9 @@ import '../exam_paper_controller.dart';
 /// the paper title as a Fraunces title, saffron rule, board/grade/subject/
 /// duration/marks meta badges), the general instructions, each section's
 /// question cards (inset cards with saffron numeral medallions), the blueprint
-/// summary and any PYQ source attributions. A footer action bar carries the
-/// PUT-to-library Save (saffron [PrimaryButton]) over Regenerate / Copy.
+/// summary and any PYQ source attributions. A footer action bar carries
+/// Regenerate / Read aloud over the shared [ResultActionsBar] (Save to Library
+/// / Copy / Share).
 ///
 /// THE LAYOUT CONTRACT (DESIGN_RUBRIC §12 / the ToolScaffold-crash rule): a full
 /// board paper is TALL. It grows the page's own (vertical) scroll view — never a
@@ -39,7 +38,11 @@ import '../exam_paper_controller.dart';
 /// matras never clip and long compound words wrap. Each block inks in on the
 /// Ink-settle reveal.
 class ExamPaperResultView extends StatelessWidget {
-  const ExamPaperResultView({super.key, required this.ready, this.onRegenerate});
+  const ExamPaperResultView({
+    super.key,
+    required this.ready,
+    this.onRegenerate,
+  });
 
   final ExamPaperReady ready;
 
@@ -129,140 +132,51 @@ class ExamPaperResultView extends StatelessWidget {
   }
 }
 
-/// The document's action bar: the PUT-to-library Save (a saffron [PrimaryButton]
-/// that reflects saving / saved / failed) over Regenerate and a Copy ghost.
+/// The document's action bar: Regenerate (secondary) and Read aloud over the
+/// shared [ResultActionsBar] — Save to Library / Copy / Share.
+///
 /// Only built when the screen provided a regenerate callback — see
 /// [ExamPaperResultView.onRegenerate] — so a saved item re-opened read-only
 /// from the Library never gets a live Save action.
-class _ActionBar extends StatelessWidget {
+///
+/// Save is the one place this tool differs from its siblings: the paper is
+/// persisted through `PUT /api/ai/exam-paper`, which re-sends the verbatim
+/// [ExamPaperReady.raw] so the saved document stays byte-identical to what the
+/// model produced, rather than through `POST /api/content/save`. The bar does
+/// not care — [ResultActionsBar.onSave] is just "perform the save, return the
+/// id" — which is why the bespoke four-state save button this replaced, and the
+/// controller behind it, are gone rather than duplicated.
+class _ActionBar extends ConsumerWidget {
   const _ActionBar({required this.ready, required this.onRegenerate});
 
   final ExamPaperReady ready;
   final VoidCallback onRegenerate;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final text = Theme.of(context).textTheme;
-    final saffron = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
-    final messenger = ScaffoldMessenger.of(context);
-
-    void copy() {
-      Clipboard.setData(ClipboardData(text: _paperAsText(ready.paper, l10n)));
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(l10n.copyConfirmation)));
-    }
+    final text = _paperAsText(ready.paper, l10n);
+    final title = ready.paper.title;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _SaveBar(ready: ready),
-        const SizedBox(height: AppSpacing.space3),
         SecondaryButton(
           label: l10n.actionRegenerate,
           icon: LucideIcons.refreshCw,
           onPressed: onRegenerate,
         ),
         const SizedBox(height: AppSpacing.space2),
-        ReadAloudButton(
-          text: _paperAsText(ready.paper, l10n),
-        ),
-        const SizedBox(height: AppSpacing.space2),
-        SizedBox(
-          height: 48,
-          child: TextButton.icon(
-            onPressed: copy,
-            icon: const Icon(LucideIcons.copy, size: AppIconSize.inline),
-            label: Text(l10n.actionCopy),
-            style: TextButton.styleFrom(
-              foregroundColor: saffron,
-              textStyle: text.labelLarge,
-            ),
-          ),
+        ReadAloudButton(text: text),
+        const SizedBox(height: AppSpacing.space3),
+        ResultActionsBar(
+          text: text,
+          shareSubject: title.isEmpty ? null : title,
+          saveResetKey: ready,
+          onSave: () => ref.read(examPaperRepositoryProvider).save(ready),
         ),
       ],
-    );
-  }
-}
-
-/// The PUT-to-library save action. Reads the save controller so the button
-/// reflects saving / saved / failed without ever disturbing the rendered paper.
-class _SaveBar extends ConsumerWidget {
-  const _SaveBar({required this.ready});
-
-  final ExamPaperReady ready;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
-    final state = ref.watch(examPaperSaveControllerProvider);
-
-    Future<void> save() =>
-        ref.read(examPaperSaveControllerProvider.notifier).save(ready);
-
-    // Saved: a non-empty contentId came back.
-    final savedId = state.valueOrNull;
-    if (!state.isLoading &&
-        !state.hasError &&
-        savedId != null &&
-        savedId.isNotEmpty) {
-      return Row(
-        children: [
-          Icon(
-            LucideIcons.checkCircle,
-            size: AppIconSize.inline,
-            color: scheme.primary,
-          ),
-          const SizedBox(width: AppSpacing.space2),
-          Expanded(
-            child: Text(
-              l10n.examPaperSaved,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: scheme.onSurfaceVariant, height: 1.4),
-            ),
-          ),
-        ],
-      );
-    }
-
-    // Failed: show the reason and let the teacher try the save again.
-    if (state.hasError) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          InlineError(
-            title: l10n.examPaperSaveFailedTitle,
-            message: l10n.examPaperSaveFailedBody,
-          ),
-          const SizedBox(height: AppSpacing.space3),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: OutlinedButton.icon(
-              onPressed: save,
-              icon:
-                  const Icon(LucideIcons.refreshCw, size: AppIconSize.inline),
-              label: Text(l10n.examPaperSaveRetry),
-            ),
-          ),
-        ],
-      );
-    }
-
-    // Idle or saving — the primary action, a saffron CTA whose width holds while
-    // it spins.
-    final saving = state.isLoading;
-    return PrimaryButton(
-      label: saving ? l10n.examPaperSaving : l10n.examPaperSave,
-      icon: saving ? null : LucideIcons.save,
-      isBusy: saving,
-      onPressed: save,
     );
   }
 }
@@ -508,7 +422,9 @@ class _WeightRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(child: Text(label, style: text.bodyMedium?.copyWith(height: 1.4))),
+        Expanded(
+          child: Text(label, style: text.bodyMedium?.copyWith(height: 1.4)),
+        ),
         if (value != null) ...[
           const SizedBox(width: AppSpacing.space3),
           AppBadge(

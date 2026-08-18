@@ -157,8 +157,7 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
     final value = _chapterController.text.trim();
     if (value.isEmpty) return;
     // Case-insensitive de-dupe so "Triangles" and "triangles" are not both added.
-    final exists =
-        _chapters.any((c) => c.toLowerCase() == value.toLowerCase());
+    final exists = _chapters.any((c) => c.toLowerCase() == value.toLowerCase());
     if (!exists) {
       setState(() => _chapters.add(value));
     }
@@ -178,10 +177,10 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
     }
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    // A fresh generation starts a fresh save state, so the previous paper's
-    // "Saved" badge does not carry over onto the new result.
-    ref.read(examPaperSaveControllerProvider.notifier).reset();
-
+    // A fresh generation starts a fresh save state — the previous paper's
+    // "Saved" badge must not carry over onto the new result. That reset now
+    // rides on the result itself: `ResultActionsBar.saveResetKey` is the
+    // rendered ExamPaperReady, and a new generation is a new instance.
     final request = ExamPaperRequest(
       board: _board!,
       gradeLevel: _grade!,
@@ -242,8 +241,10 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
     // Auto-scroll to the masthead on a fresh rendered paper (loading -> Ready).
     // The 202 in-progress card and errors keep the sticky Generate button, so
     // only a Ready paper triggers the scroll.
-    ref.listen<AsyncValue<ExamPaperResult?>>(examPaperControllerProvider,
-        (prev, next) {
+    ref.listen<AsyncValue<ExamPaperResult?>>(examPaperControllerProvider, (
+      prev,
+      next,
+    ) {
       final wasLoading = prev?.isLoading ?? false;
       final nowReady = !next.isLoading && next.valueOrNull is ExamPaperReady;
       if (wasLoading && nowReady) {
@@ -264,10 +265,13 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
             skeleton: const ExamPaperSkeleton(),
             emptyMessage: l10n.examPaperEmpty,
             onData: (data) => switch (data) {
-              ExamPaperReady() =>
-                ExamPaperResultView(ready: data, onRegenerate: _submit),
-              ExamPaperInProgress(:final message) =>
-                ExamPaperInProgressView(message: message),
+              ExamPaperReady() => ExamPaperResultView(
+                ready: data,
+                onRegenerate: _submit,
+              ),
+              ExamPaperInProgress(:final message) => ExamPaperInProgressView(
+                message: message,
+              ),
             },
           );
 
@@ -325,8 +329,7 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
           for (final board in kEducationBoards)
             DropdownMenuItem<String?>(value: board, child: Text(board)),
         ],
-        validator: (value) =>
-            value == null ? l10n.examPaperBoardError : null,
+        validator: (value) => value == null ? l10n.examPaperBoardError : null,
         onChanged: (value) => setState(() => _board = value),
       ),
     );
@@ -344,8 +347,7 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
           for (final grade in kGradeLevels)
             DropdownMenuItem<String?>(value: grade, child: Text(grade)),
         ],
-        validator: (value) =>
-            value == null ? l10n.examPaperGradeError : null,
+        validator: (value) => value == null ? l10n.examPaperGradeError : null,
         onChanged: (value) => setState(() => _grade = value),
       ),
     );
@@ -370,8 +372,7 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
             child: Text(l10n.examPaperSubjectOther),
           ),
         ],
-        validator: (value) =>
-            value == null ? l10n.examPaperSubjectError : null,
+        validator: (value) => value == null ? l10n.examPaperSubjectError : null,
         onChanged: (value) => setState(() => _subject = value),
       ),
     );
@@ -456,8 +457,10 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
                       InputChip(
                         label: Text(chapter),
                         materialTapTargetSize: MaterialTapTargetSize.padded,
-                        deleteIcon:
-                            const Icon(LucideIcons.x, size: AppIconSize.inline),
+                        deleteIcon: const Icon(
+                          LucideIcons.x,
+                          size: AppIconSize.inline,
+                        ),
                         onDeleted: () {
                           _removeChapter(chapter);
                           field.didChange(_chapters);

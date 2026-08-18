@@ -60,6 +60,12 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
   /// the first voice-originated result lands (VOICE_FIRST_GAP §5.6).
   bool _spokeVoiceSummary = false;
 
+  /// The request behind the advice currently on screen. "Save to Library" needs
+  /// the question / subject / language the model output does not carry, so the
+  /// result view is handed the request that produced it. Null until the first
+  /// ask, which is exactly when there is nothing to save.
+  TeacherTrainingRequest? _lastRequest;
+
   @override
   void initState() {
     super.initState();
@@ -105,6 +111,7 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
       subject: _subject,
       language: _language.aiName,
     );
+    _lastRequest = request;
     ref.read(teacherTrainingControllerProvider.notifier).ask(request);
   }
 
@@ -149,8 +156,10 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
     final state = ref.watch(teacherTrainingControllerProvider);
 
     // Auto-scroll to the result header on a fresh success (loading -> data).
-    ref.listen<AsyncValue<TeacherAdvice?>>(teacherTrainingControllerProvider,
-        (prev, next) {
+    ref.listen<AsyncValue<TeacherAdvice?>>(teacherTrainingControllerProvider, (
+      prev,
+      next,
+    ) {
       final wasLoading = prev?.isLoading ?? false;
       final nowHasAdvice =
           !next.isLoading && next.hasValue && next.valueOrNull != null;
@@ -168,8 +177,11 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
             state: state,
             skeleton: const TeacherTrainingSkeleton(),
             emptyMessage: l10n.teacherTrainingEmpty,
-            onData: (advice) =>
-                TeacherTrainingResultView(advice: advice, onRegenerate: _submit),
+            onData: (advice) => TeacherTrainingResultView(
+              advice: advice,
+              onRegenerate: _submit,
+              saveRequest: _lastRequest,
+            ),
           );
 
     return ToolScaffold(
@@ -222,8 +234,9 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
         textInputAction: TextInputAction.newline,
         textCapitalization: TextCapitalization.sentences,
         keyboardType: TextInputType.multiline,
-        decoration:
-            InputDecoration(hintText: l10n.teacherTrainingQuestionPlaceholder),
+        decoration: InputDecoration(
+          hintText: l10n.teacherTrainingQuestionPlaceholder,
+        ),
         validator: (value) => (value == null || value.trim().isEmpty)
             ? l10n.teacherTrainingQuestionError
             : null,

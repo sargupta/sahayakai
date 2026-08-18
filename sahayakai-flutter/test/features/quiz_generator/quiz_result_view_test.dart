@@ -5,6 +5,7 @@ import 'package:sahayakai/features/quiz_generator/presentation/widgets/quiz_resu
 import 'package:sahayakai/features/quiz_generator/presentation/widgets/quiz_skeleton.dart';
 import 'package:sahayakai/shared/widgets/document_sheet.dart';
 
+import '../../support/fake_clipboard.dart';
 import 'quiz_fixtures.dart';
 
 /// Result-layer gates from DESIGN_RUBRIC §12: no RenderFlex overflow at 360dp
@@ -353,6 +354,7 @@ void main() {
       tester.view.physicalSize = const Size(360, 2000);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
+      final copied = interceptClipboard(tester);
 
       await tester.pumpWidget(
         hostResult(QuizResultView(quiz: buildQuiz(), onRegenerate: () {})),
@@ -362,8 +364,11 @@ void main() {
       await tester.ensureVisible(find.text('Copy'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Copy'));
-      await tester.pump(); // let the snackbar appear
+      // The shared bar awaits the clipboard write before confirming, so settle
+      // rather than a single pump — a bare pump lands before the snackbar.
+      await tester.pumpAndSettle();
 
+      expect(copied, hasLength(1));
       expect(find.text('Copied to clipboard'), findsOneWidget);
     });
 

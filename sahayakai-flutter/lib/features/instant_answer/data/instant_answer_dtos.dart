@@ -57,12 +57,16 @@ class InstantAnswerResponseDto {
   final String? gradeLevel;
   final String? subject;
 
-  InstantAnswer toDomain() => InstantAnswer(
-        answer: _clean(answer) ?? '',
-        videoSuggestionUrl: _safeExternalUri(videoSuggestionUrl),
-        gradeLevel: _clean(gradeLevel),
-        subject: _clean(subject),
-      );
+  /// [raw] is the verbatim response body. Pass it on the live ask path so a
+  /// later Save persists the exact object the flow persists; omit it when
+  /// decoding an already-saved item, which has nothing left to save.
+  InstantAnswer toDomain({Map<String, dynamic>? raw}) => InstantAnswer(
+    answer: _clean(answer) ?? '',
+    videoSuggestionUrl: _safeExternalUri(videoSuggestionUrl),
+    gradeLevel: _clean(gradeLevel),
+    subject: _clean(subject),
+    raw: raw,
+  );
 }
 
 String? _clean(String? value) {

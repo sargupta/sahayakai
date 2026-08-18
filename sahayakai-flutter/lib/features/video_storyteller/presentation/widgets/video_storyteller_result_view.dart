@@ -9,6 +9,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/motion/animated_entrance.dart';
 import '../../../../shared/widgets/empty_view.dart';
 import '../../../../shared/widgets/note_banner.dart';
+import '../../../../shared/widgets/result_actions_bar.dart';
 import '../../../../shared/widgets/section_label.dart';
 import '../../domain/video_storyteller.dart';
 import 'video_card.dart';
@@ -19,10 +20,12 @@ import 'video_card.dart';
 /// canonical order the web app uses (Top recommended, Storytelling, Pedagogy,
 /// Government updates, Teacher training).
 ///
-/// This is not a generated document — there is no masthead or copy/regenerate
-/// bar. Each section inks in on the reveal (reduce-motion degrades to a static
-/// frame), and every card opens its video through the injected
-/// [linkOpenerProvider] seam.
+/// This is not a generated document — there is no masthead and no regenerate
+/// action. Each section inks in on the reveal (reduce-motion degrades to a
+/// static frame), and every card opens its video through the injected
+/// [linkOpenerProvider] seam. The list closes with the shared
+/// [ResultActionsBar], carrying Copy and Share only — see [_shelfAsText] for
+/// what those export and the class doc there for why Save is absent.
 ///
 /// The per-section [_maxVideosPerCategory] cap keeps the eager scroll view
 /// bounded on first paint: the endpoint ranks each bucket and can return up to
@@ -75,9 +78,46 @@ class VideoStorytellerResultView extends ConsumerWidget {
           if (i > 0) const SizedBox(height: AppSpacing.sectionGap),
           inkSettle(context, blocks[i], index: i),
         ],
+        const SizedBox(height: AppSpacing.sectionGap),
+        ResultActionsBar(
+          text: _shelfAsText(recommendations, l10n),
+          shareSubject: l10n.videoStorytellerTitle,
+        ),
       ],
     );
   }
+}
+
+/// A plain-text export of the shelf for Copy and Share: the model's opening
+/// note, then each bucket's videos as "title — channel" plus the watch URL. The
+/// URL is the point — a teacher forwarding this to a colleague is forwarding
+/// links, not titles — so unlike the document tools it is written out in full.
+///
+/// NO SAVE COUNTERPART, and that is deliberate rather than an oversight. This
+/// result is a ranked shelf of third-party YouTube links, personalised per
+/// teacher and served partly from a server-side cache; it is not teaching
+/// content this app authored. `POST /api/content/save` has no content type for
+/// it either — `ContentTypeSchema` in
+/// `sahayakai-main/src/ai/schemas/content-schemas.ts` lists eleven types and
+/// none of them is a video shelf — so a Save button here would post a body the
+/// route rejects with a 400. Sharing the links is the whole job.
+String _shelfAsText(VideoRecommendations shelf, AppLocalizations l10n) {
+  final b = StringBuffer();
+  if (shelf.personalizedMessage.isNotEmpty) {
+    b.writeln(shelf.personalizedMessage);
+  }
+  for (final section in shelf.sections) {
+    b
+      ..writeln()
+      ..writeln(_categoryLabel(section.category, l10n));
+    for (final video in section.videos) {
+      final channel = video.channelTitle.trim();
+      b
+        ..writeln(channel.isEmpty ? video.title : '${video.title} — $channel')
+        ..writeln(video.watchUrl.toString());
+    }
+  }
+  return b.toString().trimRight();
 }
 
 /// One bucket: its localized label + glyph, then its ranked video cards. Shows
@@ -116,10 +156,7 @@ class _CategorySectionState extends State<_CategorySection> {
         ),
         for (var i = 0; i < videos.length; i++) ...[
           const SizedBox(height: AppSpacing.space4),
-          VideoCard(
-            video: videos[i],
-            onOpen: () => widget.onOpen(videos[i]),
-          ),
+          VideoCard(video: videos[i], onOpen: () => widget.onOpen(videos[i])),
         ],
         if (hasMore && !_expanded) ...[
           const SizedBox(height: AppSpacing.space4),

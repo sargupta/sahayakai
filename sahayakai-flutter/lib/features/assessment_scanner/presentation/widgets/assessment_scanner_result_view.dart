@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/i18n/gen/app_localizations.dart';
@@ -14,6 +13,7 @@ import '../../../../shared/widgets/document_sheet.dart';
 import '../../../../shared/widgets/empty_view.dart';
 import '../../../../shared/widgets/note_banner.dart';
 import '../../../../shared/widgets/read_aloud_button.dart';
+import '../../../../shared/widgets/result_actions_bar.dart';
 import '../../../../shared/widgets/score_ring.dart';
 import '../../../../shared/widgets/secondary_button.dart';
 import '../../domain/assessment_scan.dart';
@@ -310,8 +310,10 @@ class _MiniLabel extends StatelessWidget {
     final theme = Theme.of(context).textTheme;
     return Text(
       text,
-      style: theme.labelMedium
-          ?.copyWith(color: scheme.onSurface, fontWeight: FontWeight.w600),
+      style: theme.labelMedium?.copyWith(
+        color: scheme.onSurface,
+        fontWeight: FontWeight.w600,
+      ),
     );
   }
 }
@@ -334,26 +336,31 @@ class _OutcomeChip extends StatelessWidget {
 
     final (IconData icon, String label, Color bg, Color fg) = switch (outcome) {
       QuestionOutcome.correct => (
-          LucideIcons.checkCircle2,
-          l10n.assessmentScannerOutcomeCorrect,
-          scheme.secondaryContainer,
-          scheme.onSecondaryContainer,
-        ),
+        LucideIcons.checkCircle2,
+        l10n.assessmentScannerOutcomeCorrect,
+        scheme.secondaryContainer,
+        scheme.onSecondaryContainer,
+      ),
       QuestionOutcome.partial => (
-          LucideIcons.minusCircle,
-          l10n.assessmentScannerOutcomePartial,
-          scheme.surfaceContainerHigh,
-          scheme.onSurface,
-        ),
+        LucideIcons.minusCircle,
+        l10n.assessmentScannerOutcomePartial,
+        scheme.surfaceContainerHigh,
+        scheme.onSurface,
+      ),
       QuestionOutcome.incorrect => (
-          LucideIcons.xCircle,
-          l10n.assessmentScannerOutcomeIncorrect,
-          scheme.surfaceContainerHigh,
-          scheme.onSurface,
-        ),
+        LucideIcons.xCircle,
+        l10n.assessmentScannerOutcomeIncorrect,
+        scheme.surfaceContainerHigh,
+        scheme.onSurface,
+      ),
     };
 
-    return _StatusChip(icon: icon, label: label, background: bg, foreground: fg);
+    return _StatusChip(
+      icon: icon,
+      label: label,
+      background: bg,
+      foreground: fg,
+    );
   }
 }
 
@@ -409,8 +416,10 @@ class _StatusChip extends StatelessWidget {
           Flexible(
             child: Text(
               label,
-              style: text.labelMedium
-                  ?.copyWith(color: foreground, fontWeight: FontWeight.w600),
+              style: text.labelMedium?.copyWith(
+                color: foreground,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -447,9 +456,24 @@ class _Bullets extends StatelessWidget {
   }
 }
 
-/// The document's action bar: Regenerate (secondary) over a Copy ghost. Copy
-/// exports the scorecard as plain text to the clipboard — presentation-only, no
-/// controller involved and no student name (grading carries none).
+/// The document's action bar: Regenerate (secondary) and Read aloud over the
+/// shared [ResultActionsBar] — Copy and Share. The export carries no student
+/// name, because scanning collects none, so nothing identifying can leave the
+/// device through the share sheet.
+///
+/// NO SAVE, and that is a verified constraint rather than an oversight. The
+/// scanner's own backend persists its result under the content type
+/// `assessment-submission` (`persist()` in
+/// `sahayakai-main/src/ai/flows/assessment-scanner.ts`), and that string is NOT
+/// a member of `ContentTypeSchema` in
+/// `sahayakai-main/src/ai/schemas/content-schemas.ts` — the enum
+/// `POST /api/content/save` validates its body against. A client Save would
+/// therefore be rejected 400 by the route no matter how well-formed the rest of
+/// the body was; sending `assessment` instead would file a scanner payload
+/// under the assess-assignment shape, which `mapSavedAssessment` cannot decode,
+/// so the Library would show a permanently blank "Ready" row. Both options are
+/// worse than not offering the button. (The flow already files the scan
+/// server-side under the right type, so the scan is not lost.)
 class _ActionBar extends StatelessWidget {
   const _ActionBar({required this.result, required this.onRegenerate});
 
@@ -459,17 +483,7 @@ class _ActionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final text = Theme.of(context).textTheme;
-    final saffron = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
-    final messenger = ScaffoldMessenger.of(context);
-
-    void copy() {
-      Clipboard.setData(ClipboardData(text: _resultAsText(result, l10n)));
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(l10n.copyConfirmation)));
-    }
+    final text = _resultAsText(result, l10n);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -481,21 +495,11 @@ class _ActionBar extends StatelessWidget {
           onPressed: onRegenerate,
         ),
         const SizedBox(height: AppSpacing.space2),
-        ReadAloudButton(
-          text: _resultAsText(result, l10n),
-        ),
-        const SizedBox(height: AppSpacing.space2),
-        SizedBox(
-          height: 48,
-          child: TextButton.icon(
-            onPressed: copy,
-            icon: const Icon(LucideIcons.copy, size: AppIconSize.inline),
-            label: Text(l10n.actionCopy),
-            style: TextButton.styleFrom(
-              foregroundColor: saffron,
-              textStyle: text.labelLarge,
-            ),
-          ),
+        ReadAloudButton(text: text),
+        const SizedBox(height: AppSpacing.space3),
+        ResultActionsBar(
+          text: text,
+          shareSubject: l10n.assessmentScannerResultTitle,
         ),
       ],
     );
@@ -507,10 +511,12 @@ String _resultAsText(AssessmentResult result, AppLocalizations l10n) {
   final b = StringBuffer();
   b.writeln('${result.scorePercent} ${l10n.assessmentScannerScoreOutOf}');
   if (result.totalMaxMarks > 0) {
-    b.writeln(l10n.assessmentScannerScoreCaption(
-      _fmt(result.totalAwardedMarks),
-      _fmt(result.totalMaxMarks),
-    ));
+    b.writeln(
+      l10n.assessmentScannerScoreCaption(
+        _fmt(result.totalAwardedMarks),
+        _fmt(result.totalMaxMarks),
+      ),
+    );
   }
 
   if (result.questions.isNotEmpty) {
@@ -542,9 +548,13 @@ String _resultAsText(AssessmentResult result, AppLocalizations l10n) {
   }
 
   bulletSection(
-      l10n.assessmentScannerNextStepsSection, result.recommendedNextSteps);
+    l10n.assessmentScannerNextStepsSection,
+    result.recommendedNextSteps,
+  );
   bulletSection(
-      l10n.assessmentScannerStudentSection, result.studentRecommendations);
+    l10n.assessmentScannerStudentSection,
+    result.studentRecommendations,
+  );
   return b.toString().trimRight();
 }
 

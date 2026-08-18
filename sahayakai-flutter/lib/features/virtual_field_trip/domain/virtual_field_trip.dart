@@ -84,7 +84,16 @@ class FieldTrip {
     required this.stops,
     required this.gradeLevel,
     required this.subject,
+    this.raw,
   });
+
+  /// The verbatim `/api/ai/virtual-field-trip` response body, kept so a later
+  /// "Save to Library" persists EXACTLY the object the server-side flow
+  /// persists as `data` (`src/ai/flows/virtual-field-trip.ts`) rather than a
+  /// re-serialized domain object that would quietly drop any field this app
+  /// does not model. Null for a trip that did not come from a live plan (a test
+  /// fixture) — and the Save action is withheld in exactly that case.
+  final Map<String, dynamic>? raw;
 
   /// An engaging, adventurous title for the trip.
   final String title;

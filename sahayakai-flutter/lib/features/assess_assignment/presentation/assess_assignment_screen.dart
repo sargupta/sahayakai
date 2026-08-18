@@ -58,6 +58,12 @@ class _AssessAssignmentScreenState
   AssessmentMode _resultMode = AssessmentMode.full;
   late AppLocale _language;
 
+  /// The request behind the scorecard currently on screen. "Save to Library"
+  /// needs the language the model output does not reliably carry, so the result
+  /// view is handed the request that produced it. Null until the first run,
+  /// which is exactly when there is nothing to save.
+  AssessAssignmentRequest? _lastRequest;
+
   @override
   void initState() {
     super.initState();
@@ -84,6 +90,7 @@ class _AssessAssignmentScreenState
           ? _transcriptController.text
           : null,
     );
+    _lastRequest = request;
     ref.read(assessAssignmentControllerProvider.notifier).assess(request);
   }
 
@@ -108,8 +115,10 @@ class _AssessAssignmentScreenState
     final state = ref.watch(assessAssignmentControllerProvider);
 
     // Auto-scroll to the result header on a fresh success (loading -> data).
-    ref.listen<AsyncValue<Assessment?>>(assessAssignmentControllerProvider,
-        (prev, next) {
+    ref.listen<AsyncValue<Assessment?>>(assessAssignmentControllerProvider, (
+      prev,
+      next,
+    ) {
       final wasLoading = prev?.isLoading ?? false;
       final nowHasAssessment =
           !next.isLoading && next.hasValue && next.valueOrNull != null;
@@ -130,6 +139,7 @@ class _AssessAssignmentScreenState
               assessment: assessment,
               onRegenerate: _submit,
               mode: _resultMode,
+              saveRequest: _lastRequest,
             ),
           );
 
@@ -208,8 +218,9 @@ class _AssessAssignmentScreenState
         segments: [
           AppSegment(value: AssessmentMode.full, label: l10n.assessModeFull),
           AppSegment(
-              value: AssessmentMode.transcribe,
-              label: l10n.assessModeTranscribe),
+            value: AssessmentMode.transcribe,
+            label: l10n.assessModeTranscribe,
+          ),
           AppSegment(value: AssessmentMode.score, label: l10n.assessModeScore),
         ],
       ),

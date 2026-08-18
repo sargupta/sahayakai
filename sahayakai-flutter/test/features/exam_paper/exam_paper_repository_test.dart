@@ -138,41 +138,4 @@ void main() {
       expect(state.hasError, isFalse);
     });
   });
-
-  group('ExamPaperSaveController', () {
-    test('a successful save leaves the contentId in state', () async {
-      final client = FakeApiClient(
-        putResponse: <String, dynamic>{'success': true, 'contentId': 'abc'},
-      );
-      final container = containerWith(client);
-
-      await container
-          .read(examPaperSaveControllerProvider.notifier)
-          .save(buildReady());
-
-      final state = container.read(examPaperSaveControllerProvider);
-      expect(state.hasError, isFalse);
-      expect(state.value, 'abc');
-    });
-
-    test('a failed save reports the error', () async {
-      final client = FakeApiClient(
-        putError: const ApiException(ApiErrorKind.network, 'offline'),
-      );
-      final container = containerWith(client);
-
-      await container
-          .read(examPaperSaveControllerProvider.notifier)
-          .save(buildReady());
-
-      final state = container.read(examPaperSaveControllerProvider);
-      expect(state.hasError, isTrue);
-    });
-
-    test('reset returns to idle', () {
-      final container = containerWith(FakeApiClient());
-      container.read(examPaperSaveControllerProvider.notifier).reset();
-      expect(container.read(examPaperSaveControllerProvider).value, isNull);
-    });
-  });
 }

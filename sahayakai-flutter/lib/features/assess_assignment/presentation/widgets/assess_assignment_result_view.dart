@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/i18n/gen/app_localizations.dart';
@@ -14,8 +14,10 @@ import '../../../../shared/widgets/document_sheet.dart';
 import '../../../../shared/widgets/empty_view.dart';
 import '../../../../shared/widgets/note_banner.dart';
 import '../../../../shared/widgets/read_aloud_button.dart';
+import '../../../../shared/widgets/result_actions_bar.dart';
 import '../../../../shared/widgets/score_ring.dart';
 import '../../../../shared/widgets/secondary_button.dart';
+import '../../data/assess_assignment_repository.dart';
 import '../../domain/assessment.dart';
 
 /// Renders a graded [Assessment] as a printed scorecard, not a chat dump
@@ -40,6 +42,7 @@ class AssessAssignmentResultView extends StatelessWidget {
     required this.assessment,
     this.onRegenerate,
     this.mode = AssessmentMode.full,
+    this.saveRequest,
   });
 
   final Assessment assessment;
@@ -55,6 +58,13 @@ class AssessAssignmentResultView extends StatelessWidget {
   /// score-side sections are a false promise, so we suppress them here and lead
   /// with just the transcript. `full` and `score` show everything as before.
   final AssessmentMode mode;
+
+  /// The request that produced [assessment]. Supplies the language the
+  /// `POST /api/content/save` body needs; the grade and subject come off the
+  /// rubric the teacher attached, since the request carries neither. When null
+  /// — or when the assessment carries no verbatim [Assessment.raw] to persist —
+  /// the Save action is withheld and the bar offers Copy / Share only.
+  final AssessAssignmentRequest? saveRequest;
 
   @override
   Widget build(BuildContext context) {
@@ -152,6 +162,7 @@ class AssessAssignmentResultView extends StatelessWidget {
               assessment: assessment,
               onRegenerate: onRegenerate!,
               includeScore: !scoreSuppressed,
+              saveRequest: saveRequest,
             ),
       children: revealed,
     );
@@ -195,8 +206,10 @@ class _ScoreHero extends StatelessWidget {
               Expanded(
                 child: Text(
                   l10n.assessRubricUsed(rubric.title),
-                  style: text.bodySmall
-                      ?.copyWith(color: scheme.onSurfaceVariant, height: 1.4),
+                  style: text.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                    height: 1.4,
+                  ),
                 ),
               ),
             ],
@@ -366,14 +379,25 @@ class _Bullets extends StatelessWidget {
   }
 }
 
-/// The document's action bar: Regenerate (secondary) over a Copy ghost. Copy
-/// exports the scorecard as plain text to the clipboard — a presentation-only
-/// action, no controller involved and no student name (grading carries none).
-class _ActionBar extends StatelessWidget {
+/// The document's action bar: Regenerate (secondary) and Read aloud over the
+/// shared [ResultActionsBar] — Save to Library / Copy / Share.
+///
+/// Copy and Share carry the scorecard as plain text — no student name, because
+/// grading collects none, so nothing identifying can leave the device through
+/// the share sheet. Save posts the verbatim model output.
+///
+/// SAVE IS WITHHELD IN "READ ONLY" MODE ([includeScore] false), and that is
+/// deliberate rather than an oversight: the backend scores every request
+/// regardless of mode, so [Assessment.raw] carries a grade the teacher asked
+/// NOT to run. Filing that grade in the Library — where it would render with
+/// the full scorecard — would persist a judgement of a child's work the teacher
+/// never asked for and never saw.
+class _ActionBar extends ConsumerWidget {
   const _ActionBar({
     required this.assessment,
     required this.onRegenerate,
     this.includeScore = true,
+    this.saveRequest,
   });
 
   final Assessment assessment;
@@ -384,22 +408,18 @@ class _ActionBar extends StatelessWidget {
   /// feedback the teacher chose not to run.
   final bool includeScore;
 
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final text = Theme.of(context).textTheme;
-    final saffron = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
-    final messenger = ScaffoldMessenger.of(context);
+  final AssessAssignmentRequest? saveRequest;
 
-    void copy() {
-      Clipboard.setData(ClipboardData(
-        text: _assessmentAsText(assessment, l10n, includeScore: includeScore),
-      ));
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(l10n.copyConfirmation)));
-    }
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final text = _assessmentAsText(
+      assessment,
+      l10n,
+      includeScore: includeScore,
+    );
+    final request = saveRequest;
+    final canSave = includeScore && request != null && assessment.raw != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -411,22 +431,17 @@ class _ActionBar extends StatelessWidget {
           onPressed: onRegenerate,
         ),
         const SizedBox(height: AppSpacing.space2),
-        ReadAloudButton(
-          text: _assessmentAsText(assessment, l10n, includeScore: includeScore),
-          language: assessment.language,
-        ),
-        const SizedBox(height: AppSpacing.space2),
-        SizedBox(
-          height: 48,
-          child: TextButton.icon(
-            onPressed: copy,
-            icon: const Icon(LucideIcons.copy, size: AppIconSize.inline),
-            label: Text(l10n.actionCopy),
-            style: TextButton.styleFrom(
-              foregroundColor: saffron,
-              textStyle: text.labelLarge,
-            ),
-          ),
+        ReadAloudButton(text: text, language: assessment.language),
+        const SizedBox(height: AppSpacing.space3),
+        ResultActionsBar(
+          text: text,
+          shareSubject: l10n.assessResultTitle,
+          saveResetKey: assessment,
+          onSave: canSave
+              ? () => ref
+                    .read(assessAssignmentRepositoryProvider)
+                    .save(assessment: assessment, request: request)
+              : null,
         ),
       ],
     );
@@ -449,10 +464,12 @@ String _assessmentAsText(
       b.writeln('$percent ${l10n.assessScoreOutOf}');
     }
     if (assessment.pointsPossible != null && assessment.pointsPossible! > 0) {
-      b.writeln(l10n.assessPoints(
-        _formatNum(assessment.pointsEarned ?? 0),
-        _formatNum(assessment.pointsPossible!),
-      ));
+      b.writeln(
+        l10n.assessPoints(
+          _formatNum(assessment.pointsEarned ?? 0),
+          _formatNum(assessment.pointsPossible!),
+        ),
+      );
     }
   }
 

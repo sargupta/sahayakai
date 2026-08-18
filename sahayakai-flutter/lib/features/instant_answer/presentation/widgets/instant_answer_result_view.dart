@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -13,7 +12,9 @@ import '../../../../shared/widgets/document_sheet.dart';
 import '../../../../shared/widgets/empty_view.dart';
 import '../../../../shared/widgets/icon_well.dart';
 import '../../../../shared/widgets/read_aloud_button.dart';
+import '../../../../shared/widgets/result_actions_bar.dart';
 import '../../../../shared/widgets/secondary_button.dart';
+import '../../data/instant_answer_repository.dart';
 import '../../domain/instant_answer.dart';
 import 'answer_markdown_view.dart';
 
@@ -36,6 +37,7 @@ class InstantAnswerResultView extends ConsumerWidget {
     required this.answer,
     this.question,
     this.onRegenerate,
+    this.saveRequest,
   });
 
   final InstantAnswer answer;
@@ -48,6 +50,13 @@ class InstantAnswerResultView extends ConsumerWidget {
   /// Re-runs the ask from the current form (the controller's `ask`). When null
   /// the footer action bar is omitted.
   final VoidCallback? onRegenerate;
+
+  /// The request that produced [answer]. Supplies the question / grade /
+  /// language the `POST /api/content/save` body needs (the model output alone
+  /// carries no question). When null — or when the answer carries no verbatim
+  /// [InstantAnswer.raw] to persist — the Save action is withheld and the bar
+  /// offers Copy / Share only.
+  final InstantAnswerRequest? saveRequest;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -64,7 +73,9 @@ class InstantAnswerResultView extends ConsumerWidget {
 
     final video = answer.videoSuggestionUrl;
     final hasQuestion = question != null && question!.trim().isNotEmpty;
-    final title = hasQuestion ? question!.trim() : l10n.instantAnswerResultTitle;
+    final title = hasQuestion
+        ? question!.trim()
+        : l10n.instantAnswerResultTitle;
 
     final meta = <Widget>[
       if (answer.gradeLevel != null)
@@ -111,43 +122,41 @@ class InstantAnswerResultView extends ConsumerWidget {
               answer: answer,
               question: hasQuestion ? question!.trim() : null,
               onRegenerate: onRegenerate!,
+              saveRequest: saveRequest,
             ),
       children: revealed,
     );
   }
 }
 
-/// The document's action bar: Regenerate (secondary) over a Copy ghost. Copy
-/// exports the question (when known) and the answer's Markdown to the
-/// clipboard — a presentation-only action, no controller involved.
-class _ActionBar extends StatelessWidget {
+/// The document's action bar: Regenerate (secondary) and Read aloud over the
+/// shared [ResultActionsBar] — Save to Library / Copy / Share.
+///
+/// Copy and Share both carry the question (when known) followed by the answer's
+/// Markdown, which is what a teacher forwards to a colleague. Save posts the
+/// verbatim model output and is offered only when there is a request behind the
+/// answer AND an [InstantAnswer.raw] to persist.
+class _ActionBar extends ConsumerWidget {
   const _ActionBar({
     required this.answer,
     required this.question,
     required this.onRegenerate,
+    this.saveRequest,
   });
 
   final InstantAnswer answer;
   final String? question;
   final VoidCallback onRegenerate;
+  final InstantAnswerRequest? saveRequest;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final text = Theme.of(context).textTheme;
-    final saffron = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
-    final messenger = ScaffoldMessenger.of(context);
-
-    final spoken = (question != null ? '$question\n\n' : '') +
-        answer.answer.trim();
-
-    void copy() {
-      Clipboard.setData(ClipboardData(text: spoken.trimRight()));
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(l10n.copyConfirmation)));
-    }
+    final spoken =
+        ((question != null ? '$question\n\n' : '') + answer.answer.trim())
+            .trimRight();
+    final request = saveRequest;
+    final canSave = request != null && answer.raw != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -160,18 +169,16 @@ class _ActionBar extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.space2),
         ReadAloudButton(text: spoken),
-        const SizedBox(height: AppSpacing.space2),
-        SizedBox(
-          height: 48,
-          child: TextButton.icon(
-            onPressed: copy,
-            icon: const Icon(LucideIcons.copy, size: AppIconSize.inline),
-            label: Text(l10n.actionCopy),
-            style: TextButton.styleFrom(
-              foregroundColor: saffron,
-              textStyle: text.labelLarge,
-            ),
-          ),
+        const SizedBox(height: AppSpacing.space3),
+        ResultActionsBar(
+          text: spoken,
+          shareSubject: question,
+          saveResetKey: answer,
+          onSave: canSave
+              ? () => ref
+                    .read(instantAnswerRepositoryProvider)
+                    .save(answer: answer, request: request)
+              : null,
         ),
       ],
     );

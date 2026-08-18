@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/i18n/l10n_ext.dart';
-import '../../../../core/platform/share_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/motion/animated_entrance.dart';
 import '../../../../shared/widgets/ai_text.dart';
@@ -12,6 +9,7 @@ import '../../../../shared/widgets/app_badge.dart';
 import '../../../../shared/widgets/document_sheet.dart';
 import '../../../../shared/widgets/empty_view.dart';
 import '../../../../shared/widgets/read_aloud_button.dart';
+import '../../../../shared/widgets/result_actions_bar.dart';
 import '../../../../shared/widgets/secondary_button.dart';
 import '../../domain/parent_message.dart';
 
@@ -21,8 +19,8 @@ import '../../domain/parent_message.dart';
 /// The message is wrapped in a [DocumentSheet]: a masthead ("PARENT MESSAGE"
 /// eyebrow, a Fraunces "Message home" title, saffron rule, language/word-count
 /// meta badges), the parent-facing message body, and a footer action bar with
-/// the two result actions that are the point of this screen — copy-to-clipboard
-/// and share — plus an optional Regenerate.
+/// the shared [ResultActionsBar] — the two result actions that are the point of
+/// this screen, copy-to-clipboard and share — plus an optional Regenerate.
 ///
 /// THE MESSAGE IS IN THE PARENT'S LANGUAGE, whose script may differ from the
 /// app's UI locale (a Tamil message drafted from an English UI). It is rendered
@@ -90,12 +88,18 @@ class ParentMessageResultView extends StatelessWidget {
   }
 }
 
-/// The document's action bar: an optional Regenerate over Copy + Share — the
-/// reason this screen exists. Both actions are >= 48dp and wrap to two lines
-/// rather than clipping a long translated label at textScale 1.3. Share is
-/// behind [ShareService] so a test can assert it was invoked without popping the
-/// real OS sheet; Copy writes the system clipboard and confirms with a snackbar.
-class _ActionBar extends ConsumerWidget {
+/// The document's action bar: an optional Regenerate and Read aloud over the
+/// shared [ResultActionsBar] — Copy and Share, the reason this screen exists.
+///
+/// NO SAVE, and that is a deliberate omission rather than an oversight. A
+/// parent message is a one-off note addressed to one family; it is not one of
+/// the eleven content types `POST /api/content/save` accepts
+/// (`ContentTypeSchema` in `sahayakai-main/src/ai/schemas/content-schemas.ts`
+/// has no `parent-message` member), so a Save button here would send a body the
+/// route rejects with a 400 — and even if it did not, filing a note about a
+/// named child in a reusable teaching Library is the wrong home for it. Copy
+/// and Share are the whole job: the message leaves for WhatsApp and is done.
+class _ActionBar extends StatelessWidget {
   const _ActionBar({required this.message, this.language, this.onRegenerate});
 
   final String message;
@@ -103,21 +107,8 @@ class _ActionBar extends ConsumerWidget {
   final VoidCallback? onRegenerate;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = context.l10n;
-
-    Future<void> copy() async {
-      await Clipboard.setData(ClipboardData(text: message));
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context)
-        ..clearSnackBars()
-        ..showSnackBar(
-          SnackBar(content: Text(l10n.parentMessageCopied)),
-        );
-    }
-
-    Future<void> share() =>
-        ref.read(shareServiceProvider).shareText(message);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -133,24 +124,7 @@ class _ActionBar extends ConsumerWidget {
         ],
         ReadAloudButton(text: message, language: language),
         const SizedBox(height: AppSpacing.space3),
-        Wrap(
-          spacing: AppSpacing.space3,
-          runSpacing: AppSpacing.space3,
-          children: [
-            FilledButton.tonalIcon(
-              onPressed: copy,
-              style: FilledButton.styleFrom(minimumSize: const Size(0, 48)),
-              icon: const Icon(LucideIcons.copy, size: AppIconSize.inline),
-              label: Text(l10n.parentMessageCopy),
-            ),
-            FilledButton.tonalIcon(
-              onPressed: share,
-              style: FilledButton.styleFrom(minimumSize: const Size(0, 48)),
-              icon: const Icon(LucideIcons.share2, size: AppIconSize.inline),
-              label: Text(l10n.parentMessageShare),
-            ),
-          ],
-        ),
+        ResultActionsBar(text: message),
       ],
     );
   }

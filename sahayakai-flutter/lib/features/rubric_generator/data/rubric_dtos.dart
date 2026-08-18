@@ -58,7 +58,10 @@ class RubricResponseDto {
   final String? gradeLevel;
   final String? subject;
 
-  Rubric toDomain() {
+  /// [raw] is the verbatim response body. Pass it on the live generate path so
+  /// a later Save persists the exact object the flow persists; omit it when
+  /// decoding an already-saved item, which has nothing left to save.
+  Rubric toDomain({Map<String, dynamic>? raw}) {
     return Rubric(
       title: _clean(title) ?? '',
       description: _clean(description),
@@ -68,6 +71,7 @@ class RubricResponseDto {
           .toList(growable: false),
       gradeLevel: _clean(gradeLevel),
       subject: _clean(subject),
+      raw: raw,
     );
   }
 }
@@ -84,15 +88,15 @@ class RubricCriterionDto {
   final List<RubricLevelDto>? levels;
 
   RubricCriterion toDomain() => RubricCriterion(
-        name: _clean(name) ?? '',
-        description: _clean(description),
-        levels: (levels ?? const <RubricLevelDto>[])
-            .map((l) => l.toDomain())
-            // A level with no name AND no description carries nothing worth a
-            // grid column; drop it so the row does not gain a blank cell.
-            .where((l) => l.name.isNotEmpty || l.description.isNotEmpty)
-            .toList(growable: false),
-      );
+    name: _clean(name) ?? '',
+    description: _clean(description),
+    levels: (levels ?? const <RubricLevelDto>[])
+        .map((l) => l.toDomain())
+        // A level with no name AND no description carries nothing worth a
+        // grid column; drop it so the row does not gain a blank cell.
+        .where((l) => l.name.isNotEmpty || l.description.isNotEmpty)
+        .toList(growable: false),
+  );
 }
 
 @JsonSerializable(createToJson: false)
@@ -107,10 +111,10 @@ class RubricLevelDto {
   final num? points;
 
   RubricLevel toDomain() => RubricLevel(
-        name: _clean(name) ?? '',
-        description: _clean(description) ?? '',
-        points: points,
-      );
+    name: _clean(name) ?? '',
+    description: _clean(description) ?? '',
+    points: points,
+  );
 }
 
 String? _clean(String? value) {
