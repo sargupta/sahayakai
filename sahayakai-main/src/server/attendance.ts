@@ -19,7 +19,7 @@ import { getDb } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import { dbAdapter } from '@/lib/db/adapter';
 import type {
-    ClassRecord, Student, DailyAttendanceRecord,
+    ClassRecord, Student, RosterStudent, DailyAttendanceRecord,
     ParentOutreach, StudentAttendanceSummary, AttendanceStatus, OutreachReason,
 } from '@/types/attendance';
 import type { Language, GradeLevel, Subject } from '@/types';
@@ -304,6 +304,42 @@ export async function getStudents(uid: string, classId: string): Promise<Student
         logger.error('getStudents failed', err, 'ATTENDANCE', { userId: uid });
         throw err;
     }
+}
+
+/**
+ * Masked roster projection — `GET .../students?projection=roster`.
+ *
+ * PII gate. `getStudents` returns the whole student document, full E.164
+ * `parentPhone` included; that shape is fine for the teacher's own browser
+ * (which already owns the class and needs the number to edit it) but must not
+ * be handed to a mobile client, where it would put every parent's phone number
+ * on every teacher's handset.
+ *
+ * The masking is done HERE, on the server, not by asking the caller to drop
+ * fields: the full number never leaves the process on this path. The projection
+ * is built by naming each of the six fields explicitly — never by spreading the
+ * student and deleting `parentPhone`, which silently leaks any PII field added
+ * to `Student` later.
+ *
+ * Auth, ownership (`teacherUid`) and ordering are inherited verbatim by
+ * delegating to `getStudents`, so the two projections can never drift apart on
+ * who is allowed to see what.
+ */
+export function toRosterStudent(student: Student): RosterStudent {
+    const digits = (student.parentPhone ?? '').replace(/\D/g, '');
+    return {
+        id: student.id,
+        name: student.name,
+        rollNumber: student.rollNumber,
+        parentLanguage: student.parentLanguage,
+        hasParentPhone: digits.length > 0,
+        parentPhoneLast4: digits.length >= 4 ? digits.slice(-4) : '',
+    };
+}
+
+export async function getStudentRoster(uid: string, classId: string): Promise<RosterStudent[]> {
+    const students = await getStudents(uid, classId);
+    return students.map(toRosterStudent);
 }
 
 export async function updateStudent(uid: string, classId: string, studentId: string, data: {

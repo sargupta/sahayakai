@@ -40,6 +40,29 @@ export interface Student {
     updatedAt: string;
 }
 
+// ── Masked roster projection (?projection=roster) ────────────────────────────
+
+/**
+ * Masked projection of `Student` — the only student shape safe to hand to a
+ * device that isn't the teacher's browser.
+ *
+ * PII gate: the full E.164 `parentPhone` never appears here. A roster needs to
+ * show *whether* a parent is reachable and enough digits to recognise the right
+ * contact — not the number itself. Outreach calls are placed server-side, where
+ * the number is read from Firestore directly.
+ *
+ * Exactly these six fields. Adding `parentPhone` — or anything else derived
+ * from it beyond the last four digits — re-opens the leak this type closes.
+ */
+export interface RosterStudent {
+    id: string;
+    name: string;
+    rollNumber: number;
+    parentLanguage: Language;
+    hasParentPhone: boolean;
+    parentPhoneLast4: string;   // last 4 digits only; '' when there is no phone
+}
+
 // ── Firestore: attendance/{classId}/records/{YYYY-MM-DD} ─────────────────────
 // Parent doc attendance/{classId} is an empty container document.
 
