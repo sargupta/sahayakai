@@ -112,9 +112,13 @@ class _AlmanacHeader extends ConsumerWidget {
     // MaterialLocalizations, not intl's DateFormat: the date delegates are
     // wired for every supported locale and cannot throw on one whose symbols
     // aren't loaded (the same choice LibraryItemRow made).
+    //
+    // Read through `nowProvider`, exactly as the salutation above does — a raw
+    // `DateTime.now()` here is untestable and it silently baked the generation
+    // date into every dashboard golden, which then went red the next morning.
     final dateLine = MaterialLocalizations.of(
       context,
-    ).formatFullDate(DateTime.now());
+    ).formatFullDate(ref.read(nowProvider)());
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
