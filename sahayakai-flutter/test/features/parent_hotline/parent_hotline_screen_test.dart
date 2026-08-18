@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/core/auth/auth_providers.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
+import 'package:sahayakai/core/network/api_exception.dart';
+import 'package:sahayakai/core/network/api_providers.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/parent_hotline/data/parent_hotline_repository.dart';
 import 'package:sahayakai/features/parent_hotline/domain/call_summary.dart';
@@ -17,11 +19,13 @@ import 'package:sahayakai/features/parent_message/data/parent_message_repository
 import 'package:sahayakai/shared/widgets/app_skeleton.dart';
 import 'package:sahayakai/shared/widgets/document_sheet.dart';
 import 'package:sahayakai/shared/widgets/empty_view.dart';
+import 'package:sahayakai/shared/widgets/inline_error.dart';
 import 'package:sahayakai/shared/widgets/note_banner.dart';
 import 'package:sahayakai/shared/widgets/primary_button.dart';
 import 'package:sahayakai/shared/widgets/secondary_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../support/fake_api_client.dart';
 import 'fake_parent_hotline_repositories.dart';
 
 /// U-PH3 — the Parent Hotline screen (stages 1–4 + decision bar).
@@ -33,6 +37,51 @@ import 'fake_parent_hotline_repositories.dart';
 /// drive the REAL controller over the hand-written fake repositories so the UI
 /// transitions are exercised end to end. No test opens a socket; animations are
 /// disabled so `pumpAndSettle` returns.
+
+// ── Roster-route fixtures ────────────────────────────────────────────────────
+// The two paths `AttendanceRepository` reads to build the hotline roster.
+
+const String _classesPath = '/api/attendance/classes';
+const String _studentsPath = '/api/attendance/classes/c1/students';
+
+Map<String, dynamic> _classJson() => <String, dynamic>{
+  'id': 'c1',
+  'name': 'Class 6A',
+  'subject': 'Science',
+  'gradeLevel': '6',
+  'academicYear': '2025-26',
+  'studentCount': 2,
+};
+
+/// The MASKED `?projection=roster` shape — exactly the six fields, no more.
+Map<String, dynamic> _maskedStudentJson({
+  String id = 's1',
+  String name = 'Asha Rao',
+  int rollNumber = 7,
+  String parentLanguage = 'Kannada',
+  bool hasParentPhone = true,
+  String last4 = '4821',
+}) => <String, dynamic>{
+  'id': id,
+  'name': name,
+  'rollNumber': rollNumber,
+  'parentLanguage': parentLanguage,
+  'hasParentPhone': hasParentPhone,
+  'parentPhoneLast4': last4,
+};
+
+/// What `GET .../students` ACTUALLY returns on `origin/main` today: the whole
+/// student document, `parentPhone` included, because the route does not know the
+/// `projection` parameter and ignores it.
+Map<String, dynamic> _unmaskedStudentJson() => <String, dynamic>{
+  'id': 's1',
+  'name': 'Asha Rao',
+  'rollNumber': 7,
+  'parentLanguage': 'Kannada',
+  'parentPhone': '+919876543210',
+  'classId': 'c1',
+  'createdAt': '2026-08-01T10:00:00.000Z',
+};
 
 HotlineStudent _student({
   String id = 's1',
@@ -170,29 +219,37 @@ void main() {
       expect(fake.studentTaps, ['s1']);
     });
 
-    testWidgets('empty roster while SIGNED OUT shows the sign-in EmptyView '
-        '(no faked identity)', (tester) async {
+    testWidgets('SIGNED OUT shows the sign-in EmptyView and never fires the '
+        'roster request (no faked identity)', (tester) async {
+      // No roster is supplied, so the provider would read. A signed-out teacher
+      // has nothing to read WITH: the request must not go out, and the answer
+      // must be the sign-in prompt rather than a load failure.
+      final client = FakeApiClient();
       await _pump(
         tester,
         overrides: [
           parentHotlineControllerProvider.overrideWith(
             () => _FakeHotlineController(const ParentHotlineState()),
           ),
+          apiClientProvider.overrideWithValue(client),
           isSignedInProvider.overrideWithValue(false),
-          // Default roster is empty (foundation-v1 has no student-roster API).
         ],
       );
       expect(find.byType(EmptyView), findsOneWidget);
       expect(find.text('Sign in to see your students'), findsOneWidget);
+      expect(client.gets, isEmpty);
     });
 
     testWidgets(
-      'empty roster while SIGNED IN shows the honest "not available yet" copy, '
-      'never a false sign-in prompt',
+      'the UNMASKED roster reply fails closed to the "not available yet" copy, '
+      'never a silent empty list and never a false sign-in prompt',
       (tester) async {
-        // The teacher IS authenticated; the roster is empty only because the
-        // student-roster API isn't on the app yet (a future unit). Telling them to
-        // "sign in" would be a lie — the honest state must own the gap instead.
+        // This is production TODAY: `?projection=roster` is draft PR #124 and is
+        // not merged, so GET .../students ignores the parameter and answers with
+        // the whole student document — parentPhone and all. The decoder refuses
+        // it, and the screen must own the gap: the teacher IS signed in and has
+        // done nothing wrong, and an empty picker would read as "you have no
+        // students", which is false.
         await _pump(
           tester,
           overrides: [
@@ -200,6 +257,14 @@ void main() {
               () => _FakeHotlineController(const ParentHotlineState()),
             ),
             isSignedInProvider.overrideWithValue(true),
+            apiClientProvider.overrideWithValue(
+              FakeApiClient(
+                getResponsesByPath: <String, Object?>{
+                  _classesPath: [_classJson()],
+                  _studentsPath: [_unmaskedStudentJson()],
+                },
+              ),
+            ),
           ],
         );
         expect(find.byType(EmptyView), findsOneWidget);
@@ -208,10 +273,80 @@ void main() {
           findsOneWidget,
         );
         expect(find.textContaining("can't load your students"), findsOneWidget);
-        // Crucially, a signed-in teacher is NEVER told to sign in.
+        // Crucially, a signed-in teacher is NEVER told to sign in…
         expect(find.text('Sign in to see your students'), findsNothing);
+        // …and the full E.164 number that arrived is never rendered.
+        for (final t in tester.widgetList<Text>(find.byType(Text))) {
+          expect(t.data ?? '', isNot(contains('9876543210')));
+        }
       },
     );
+
+    testWidgets('the MASKED roster reply renders real rows from the six-field '
+        'projection', (tester) async {
+      await _pump(
+        tester,
+        overrides: [
+          parentHotlineControllerProvider.overrideWith(
+            () => _FakeHotlineController(const ParentHotlineState()),
+          ),
+          isSignedInProvider.overrideWithValue(true),
+          apiClientProvider.overrideWithValue(
+            FakeApiClient(
+              getResponsesByPath: <String, Object?>{
+                _classesPath: [_classJson()],
+                _studentsPath: [
+                  _maskedStudentJson(),
+                  _maskedStudentJson(
+                    id: 's2',
+                    name: 'Bhavya Nair',
+                    rollNumber: 8,
+                    parentLanguage: 'Malayalam',
+                    hasParentPhone: false,
+                    last4: '',
+                  ),
+                ],
+              },
+            ),
+          ),
+        ],
+      );
+
+      // The class name comes from the class record (the projection does not
+      // repeat it per student); the mask survives the RosterStudent bridge.
+      expect(find.text('Asha Rao'), findsOneWidget);
+      expect(find.text('Class 6A · Kannada'), findsOneWidget);
+      // hasParentPhone: false → the disabled row with the server-422 mirror.
+      expect(find.text('No parent number saved'), findsOneWidget);
+    });
+
+    testWidgets('a retryable roster failure offers Try again, not the '
+        '"coming later" copy', (tester) async {
+      final client = FakeApiClient(
+        getErrorsByPath: <String, Object>{
+          _classesPath: const ApiException(
+            ApiErrorKind.network,
+            'No internet connection.',
+          ),
+        },
+      );
+      await _pump(
+        tester,
+        overrides: [
+          parentHotlineControllerProvider.overrideWith(
+            () => _FakeHotlineController(const ParentHotlineState()),
+          ),
+          isSignedInProvider.overrideWithValue(true),
+          apiClientProvider.overrideWithValue(client),
+        ],
+      );
+
+      expect(find.text('Something went wrong'), findsOneWidget);
+      expect(find.text('No internet connection.'), findsOneWidget);
+      expect(find.text('Try again'), findsOneWidget);
+      // An offline read is NOT the fail-closed projection gap.
+      expect(find.text("Your class list isn't available yet"), findsNothing);
+    });
 
     testWidgets(
       'reason stage renders the four selectable reasons, pre-selected',
@@ -388,6 +523,123 @@ void main() {
       );
       expect(whatsApp.onPressed, isNotNull);
     });
+
+    testWidgets('the 429 countdown names the ACTUAL Retry-After wait', (
+      tester,
+    ) async {
+      // `attendance/outreach/route.ts` computes the remaining dedup window and
+      // returns it both as `{ retryAfterSeconds }` and as a `Retry-After`
+      // header. 245s must read as 4:05, not as "try again later".
+      await _pump(
+        tester,
+        overrides: _fixed(
+          const ParentHotlineState(
+            stage: HotlineStage.review,
+            parentLanguage: 'Kannada',
+            draftedMessage: 'Message body',
+            dedupRetryAfterSeconds: 245,
+          ),
+        ),
+      );
+      expect(find.text('Call again in 4:05'), findsOneWidget);
+      // A cool-down is not a failure — nothing red is shown for it.
+      expect(find.byType(InlineError), findsNothing);
+    });
+  });
+
+  // ── Error-path treatments (each status verified against the route) ─────────
+
+  group('call error facets', () {
+    ParentHotlineState reviewWith(HotlineError error, {String? message}) =>
+        ParentHotlineState(
+          stage: HotlineStage.review,
+          parentLanguage: 'Kannada',
+          draftedMessage: 'Message body',
+          error: error,
+          errorMessage: message,
+        );
+
+    testWidgets('422 no parent phone is a calm note, withdraws Call, and keeps '
+        'WhatsApp', (tester) async {
+      // `outreach` → 422 "Student has no parent phone on record";
+      // `call` → 422 "Outreach record has no valid parent phone".
+      await _pump(
+        tester,
+        overrides: _fixed(
+          reviewWith(
+            HotlineError.noParentPhone,
+            message: 'Student has no parent phone on record',
+          ),
+        ),
+      );
+
+      expect(find.byType(NoteBanner), findsOneWidget);
+      expect(find.text('No parent number saved'), findsOneWidget);
+      // Nothing to dial — the button is gone rather than left to fail again.
+      expect(find.text('Call parent'), findsNothing);
+      expect(find.byType(InlineError), findsNothing);
+      // The fallback that still works is offered.
+      expect(find.text('Copy for WhatsApp'), findsOneWidget);
+    });
+
+    testWidgets('503 telephony-not-configured withdraws Call (retrying cannot '
+        'help) and keeps WhatsApp', (tester) async {
+      // `call/route.ts` → 503 'Twilio not configured' when the credentials are
+      // absent, or 'Voice service not configured' when VOICE_PROVIDER=exotel
+      // without VOICE_EXOTEL_CALL_URL. ApiException does not surface 5xx server
+      // text, so the message is its safe generic line.
+      await _pump(
+        tester,
+        overrides: _fixed(
+          reviewWith(
+            HotlineError.telephonyUnavailable,
+            message: 'Something went wrong on our side.',
+          ),
+        ),
+      );
+
+      expect(find.byType(InlineError), findsOneWidget);
+      expect(find.text('Call parent'), findsNothing);
+      expect(find.text('Copy for WhatsApp'), findsOneWidget);
+    });
+
+    testWidgets('502 call-placement-failed KEEPS Call — it is the retry', (
+      tester,
+    ) async {
+      // `call/route.ts` → 502 when the provider refused to initiate. Transient,
+      // so the affordance that fixes it stays on screen.
+      await _pump(
+        tester,
+        overrides: _fixed(reviewWith(HotlineError.callFailed)),
+      );
+
+      expect(find.byType(InlineError), findsOneWidget);
+      expect(find.textContaining("The call didn't go through"), findsOneWidget);
+      final call = tester.widget<PrimaryButton>(find.byType(PrimaryButton));
+      expect(call.onPressed, isNotNull);
+      expect(find.text('Copy for WhatsApp'), findsOneWidget);
+    });
+
+    testWidgets('a facet banner outranks the standing unsupported-language '
+        'note', (tester) async {
+      // Both are true at once when a 422-language teacher then hits a 503. The
+      // news about the attempt wins; the standing note does not double up.
+      await _pump(
+        tester,
+        overrides: _fixed(
+          const ParentHotlineState(
+            stage: HotlineStage.review,
+            parentLanguage: 'Odia',
+            canAutoCall: false,
+            draftedMessage: 'Message body',
+            error: HotlineError.telephonyUnavailable,
+            errorMessage: 'Something went wrong on our side.',
+          ),
+        ),
+      );
+      expect(find.byType(InlineError), findsOneWidget);
+      expect(find.byType(NoteBanner), findsNothing);
+    });
   });
 
   // ── Terminal gates ─────────────────────────────────────────────────────────
@@ -420,6 +672,44 @@ void main() {
         find.text('Parent Hotline needs an advanced plan'),
         findsOneWidget,
       );
+      // 403 PREMIUM_REQUIRED is an upsell, not a failure: no error banner.
+      expect(find.byType(InlineError), findsNothing);
+    });
+
+    testWidgets('the premium gate keeps its promise: a drafted message can '
+        'still be copied for WhatsApp', (tester) async {
+      // The gate's own body says "You can still copy a message to send on
+      // WhatsApp for free". Until now it replaced the whole screen and left no
+      // way to do that.
+      await _pump(
+        tester,
+        overrides: _fixed(
+          const ParentHotlineState(
+            error: HotlineError.premiumRequired,
+            draftedMessage: 'Namaste, Asha ke baare mein baat karni thi.',
+          ),
+        ),
+      );
+
+      final copy = find.widgetWithText(SecondaryButton, 'Copy for WhatsApp');
+      expect(copy, findsOneWidget);
+      await tester.tap(copy);
+      await tester.pumpAndSettle();
+      // Copied to the clipboard — and NOT persisted, because the outreach route
+      // is the thing that just returned 403.
+      expect(clip['text'], 'Namaste, Asha ke baare mein baat karni thi.');
+    });
+
+    testWidgets('the premium gate offers no copy button without a draft', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        overrides: _fixed(
+          const ParentHotlineState(error: HotlineError.premiumRequired),
+        ),
+      );
+      expect(find.text('Copy for WhatsApp'), findsNothing);
     });
 
     testWidgets('the calling stage renders the U-PH4 breathing waiting state', (
@@ -743,7 +1033,7 @@ class _FakeHotlineController extends ParentHotlineController {
   }) async {}
 
   @override
-  void selectStudent({
+  Future<void> selectStudent({
     required String studentId,
     required String studentName,
     required String classId,
@@ -751,7 +1041,7 @@ class _FakeHotlineController extends ParentHotlineController {
     required String parentLanguage,
     String? subject,
     OutreachReason? suggestedReason,
-  }) {
+  }) async {
     studentTaps.add(studentId);
   }
 

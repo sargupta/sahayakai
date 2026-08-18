@@ -5,9 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../../core/auth/auth_providers.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
+import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/ai_text.dart';
@@ -23,6 +23,7 @@ import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/note_banner.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/secondary_button.dart';
+import '../../attendance/data/attendance_errors.dart';
 import '../../vidya/presentation/vidya_sheet.dart';
 import '../domain/hotline_student.dart';
 import '../domain/parent_outreach.dart';
@@ -50,12 +51,15 @@ import 'widgets/summary_sheet.dart';
 /// slideY 12→0), degrading to the final frame under reduce-motion.
 ///
 /// **No faked identity (SPEC §B.1 / §B.5).** The `pickStudent` roster comes from
-/// [hotlineStudentRosterProvider], which is empty in foundation-v1 (no student-
-/// roster API yet). An empty roster degrades HONESTLY on the cause: a signed-out
-/// teacher sees the sign-in `EmptyView`; a signed-in one (whose roster is empty
-/// only because the class list can't be fetched on the app yet) sees the "class
-/// list isn't available yet" `EmptyView` — never "sign in", which would be false.
-/// Neither path invents students. The controller's own terminal facets —
+/// [hotlineRosterProvider], which reads the MASKED `?projection=roster` shape
+/// and fails closed if anything else comes back. Every outcome of that read
+/// degrades on its own cause: signed out → the sign-in `EmptyView` (checked
+/// before the request, so no pointless 401); the fail-closed
+/// `RosterProjectionUnavailableException` → the "class list isn't available yet"
+/// `EmptyView`, which is the state on production today and is a server gap, not
+/// the teacher's problem; anything else → a retryable error with a Try-again.
+/// None of them is a silent empty list, which would read as "this teacher has no
+/// students", and none invents students. The controller's own terminal facets —
 /// `isSignedOut` (401) and `isPremiumGated` (403) — replace the whole body with
 /// a dignified gate.
 ///
@@ -228,23 +232,58 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
   // ── Stage 1 — pickStudent ──────────────────────────────────────────────────
 
   Widget _pickStudentStage(BuildContext context, AppLocalizations l10n) {
-    final roster = ref.watch(hotlineStudentRosterProvider);
+    return ref
+        .watch(hotlineRosterProvider)
+        .when(
+          loading: () => const AppSkeleton(lines: 5),
+          error: (error, _) => _rosterError(error, l10n),
+          data: (roster) => _rosterList(context, roster, l10n),
+        );
+  }
+
+  /// Why the roster could not be read. Each cause gets its own answer, because
+  /// they ask completely different things of the teacher.
+  Widget _rosterError(Object error, AppLocalizations l10n) {
+    // The PII fail-closed guard: the masked `?projection=roster` shape was not
+    // what came back, so the read was abandoned rather than decoding every
+    // parent's full phone number onto the handset. The projection is draft PR
+    // #124 and is not merged, so this is the state on production TODAY. It is a
+    // server-side gap the teacher cannot act on and has not caused — hence the
+    // "isn't available yet / nothing you need to fix" copy, and specifically NOT
+    // a retry button that would fail identically every time.
+    if (error is RosterProjectionUnavailableException) {
+      return _rosterUnavailable(l10n);
+    }
+    // A 401 anywhere in the read is the sign-in gate, not a load failure.
+    if (error is ApiException && error.isAuth) return _signedOut(l10n);
+    // Anything else — offline, a 5xx, an ownership 403 — is genuinely retryable.
+    return EmptyView(
+      icon: LucideIcons.alertTriangle,
+      title: l10n.parentHotlineErrorTitle,
+      message: error is ApiException ? error.message : l10n.errorGeneric,
+      action: SecondaryButton(
+        label: l10n.actionRetry,
+        icon: LucideIcons.refreshCw,
+        onPressed: () => ref.invalidate(hotlineRosterProvider),
+      ),
+    );
+  }
+
+  Widget _rosterList(
+    BuildContext context,
+    List<HotlineStudent> roster,
+    AppLocalizations l10n,
+  ) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
 
-    // An empty roster has two very different causes, and telling them apart is
-    // the difference between honest and misleading. foundation-v1 ships no
-    // student-roster API, so a signed-IN teacher's roster is empty not because
-    // of auth but because the class list simply cannot be fetched on the app
-    // yet — telling them to "sign in" would be a plain lie. Only a genuinely
-    // signed-OUT teacher gets the sign-in EmptyView; a signed-in one gets honest
-    // "your class list isn't available yet" copy. Neither path ever invents
-    // students (F9-001).
-    if (roster.isEmpty) {
-      return ref.watch(isSignedInProvider)
-          ? _rosterUnavailable(l10n)
-          : _signedOut(l10n);
-    }
+    // A genuinely empty roster — the read succeeded and the teacher has no
+    // students yet. Distinct from the fail-closed case above, which never
+    // reaches here.
+    // TODO(i18n): `parentHotlineRosterEmptyTitle` / `…Body` are proposed in
+    // docs/flutter/loop/pending_i18n/U2.7.json; a concurrent unit owns the ARB
+    // files this round, so the nearest existing copy stands in until they land.
+    if (roster.isEmpty) return _rosterUnavailable(l10n);
 
     final classes = _distinctClasses(roster);
     final selectedClassId =
@@ -367,14 +406,19 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
   void _pickStudent(HotlineStudent student) {
     setState(() => _selectedStudent = student);
     _noteController.clear();
-    _controller.selectStudent(
-      studentId: student.id,
-      studentName: student.name,
-      classId: student.classId,
-      className: student.className,
-      parentLanguage: student.parentLanguage,
-      subject: student.subject,
-      suggestedReason: student.suggestedReason,
+    // Advances to `reason` synchronously; the awaited part is the
+    // `outreach-latest` resume lookup, which may then land the flow on a call
+    // that is still running (SPEC §B.5.5).
+    unawaited(
+      _controller.selectStudent(
+        studentId: student.id,
+        studentName: student.name,
+        classId: student.classId,
+        className: student.className,
+        parentLanguage: student.parentLanguage,
+        subject: student.subject,
+        suggestedReason: student.suggestedReason,
+      ),
     );
   }
 
@@ -521,7 +565,16 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
     AppLocalizations l10n,
   ) {
     final scheme = Theme.of(context).colorScheme;
-    final canCall = state.canAutoCall;
+    // "Call parent" is offered only when the language is callable AND nothing
+    // has already told us this particular call cannot be placed. A 422 with no
+    // number on record and a 503 with telephony switched off server-side are
+    // both settled facts: leaving an enabled button on screen would invite the
+    // teacher to spend a round trip discovering that again. WhatsApp copy is
+    // always offered and is what remains in both cases.
+    final callOffered =
+        state.canAutoCall &&
+        state.error != HotlineError.noParentPhone &&
+        state.error != HotlineError.telephonyUnavailable;
     final blocked = state.isDedupBlocked;
     final errorBanner = _reviewErrorBanner(state, l10n);
 
@@ -530,8 +583,15 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
       const SizedBox(height: AppSpacing.space4),
     ];
 
-    if (!canCall) {
-      // Mirrors the server 422: auto-call unavailable for this language.
+    if (errorBanner != null) {
+      children
+        ..add(errorBanner)
+        ..add(const SizedBox(height: AppSpacing.space3));
+    } else if (!state.canAutoCall) {
+      // Mirrors the server 422: auto-call unavailable for this language. Second
+      // in the chain, not first: the language note is the standing explanation
+      // for a hidden Call button, while a facet banner is news about the attempt
+      // the teacher just made, and news wins.
       children
         ..add(
           NoteBanner(
@@ -540,16 +600,16 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
           ),
         )
         ..add(const SizedBox(height: AppSpacing.space3));
-    } else if (errorBanner != null) {
-      children
-        ..add(errorBanner)
-        ..add(const SizedBox(height: AppSpacing.space3));
     }
 
-    if (canCall) {
+    if (callOffered) {
       children
         ..add(
           PrimaryButton(
+            // The 429 treatment. The route returns `{ retryAfterSeconds }` plus
+            // a `Retry-After` header and the controller counts it down, so the
+            // button names the ACTUAL remaining wait — "Call again in 4:12" —
+            // rather than a vague "try later" or a retry that would 429 again.
             label: blocked
                 ? l10n.parentHotlineCallAgainIn(
                     _formatCountdown(state.dedupRetryAfterSeconds ?? 0),
@@ -667,15 +727,57 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
     );
   }
 
-  /// The in-review error banner for the retryable / configuration facets. The
-  /// signed-out and premium facets are handled at the page level, and the
-  /// unsupported-language facet is the NoteBanner above, so those are excluded
-  /// here.
+  /// The in-review banner for whichever facet is live. One switch, one answer
+  /// per facet — every one of these came back from a different route with a
+  /// different remedy, and collapsing them into one red "something went wrong"
+  /// tells the teacher nothing they can act on.
+  ///
+  /// Verified against the route handlers on `origin/main`:
+  ///   • **403 `PREMIUM_REQUIRED`** (`attendance/outreach/route.ts`) is not an
+  ///     error at all — it is handled a level up as the upsell card, so it
+  ///     returns null here.
+  ///   • **429** (`attendance/outreach/route.ts`, the 5-minute per-(teacher,
+  ///     student) dedup) is a countdown on the Call button, not a banner —
+  ///     nothing has gone wrong, the teacher simply called this parent minutes
+  ///     ago. Also null here.
+  ///   • **422 no phone** — `outreach` raises `Student has no parent phone on
+  ///     record`; `call` raises `Outreach record has no valid parent phone`. A
+  ///     calm note, not an alarm: nothing is broken, there is just no number,
+  ///     and WhatsApp copy is the way through. The Call button is withdrawn.
+  ///   • **422 unsupported language** (`call/route.ts`, no `TWILIO_LANGUAGE_MAP`
+  ///     entry) keeps its own standing note below, which names the language.
+  ///   • **502** (`call/route.ts`, the provider refused the call) is transient
+  ///     and genuinely retryable, so it says so and the Call button stays.
+  ///   • **503** (`Twilio not configured` / `Voice service not configured`)
+  ///     is telephony being off server-side. The teacher cannot fix it and
+  ///     retrying cannot help, so the Call button is withdrawn and WhatsApp
+  ///     copy is left as the working path. `ApiException` deliberately does not
+  ///     surface 5xx server text, so the message is the safe generic line.
+  ///   • **404** is a stale class / student / outreach id; the server's line is
+  ///     the useful one.
   Widget? _reviewErrorBanner(ParentHotlineState state, AppLocalizations l10n) {
     switch (state.error) {
-      case HotlineError.callFailed:
-      case HotlineError.telephonyUnavailable:
       case HotlineError.noParentPhone:
+        return NoteBanner(
+          icon: LucideIcons.phoneOff,
+          body: l10n.parentHotlineNoPhone,
+        );
+      case HotlineError.telephonyUnavailable:
+        // TODO(i18n): `parentHotlineTelephonyUnavailable` is proposed in
+        // docs/flutter/loop/pending_i18n/U2.7.json — "Calling isn't available
+        // right now. You can still copy the message to send on WhatsApp." A
+        // concurrent unit owns the ARB files this round, so the server-safe
+        // generic line stands in; the withdrawn Call button carries the meaning
+        // in the meantime.
+        return InlineError(
+          title: l10n.parentHotlineErrorTitle,
+          message: state.errorMessage ?? l10n.parentHotlineGenericError,
+        );
+      case HotlineError.callFailed:
+        return InlineError(
+          title: l10n.parentHotlineErrorTitle,
+          message: l10n.parentHotlineSummaryFailedBody,
+        );
       case HotlineError.notFound:
       case HotlineError.generic:
         return InlineError(
@@ -691,25 +793,29 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
   }
 
   Future<void> _onWhatsApp() async {
-    final message = ref.read(parentHotlineControllerProvider).draftedMessage;
-    if (message != null && message.trim().isNotEmpty) {
-      // The clipboard write is best-effort: a copy failure must never stop the
-      // outreach from being logged, so it is guarded and the persist always
-      // runs below.
-      try {
-        await Clipboard.setData(ClipboardData(text: message));
-        if (mounted) {
-          ScaffoldMessenger.of(context)
-            ..clearSnackBars()
-            ..showSnackBar(
-              SnackBar(content: Text(context.l10n.parentHotlineCopied)),
-            );
-        }
-      } catch (_) {
-        // A missing clipboard channel (or a denied write) is non-fatal.
-      }
-    }
+    await _copyDraftToClipboard();
     unawaited(_controller.copyForWhatsApp());
+  }
+
+  /// The clipboard half of the WhatsApp path, without the persist.
+  ///
+  /// Best-effort: a copy failure must never stop the outreach from being logged,
+  /// so it is guarded and the caller's persist still runs.
+  Future<void> _copyDraftToClipboard() async {
+    final message = ref.read(parentHotlineControllerProvider).draftedMessage;
+    if (message == null || message.trim().isEmpty) return;
+    try {
+      await Clipboard.setData(ClipboardData(text: message));
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..clearSnackBars()
+          ..showSnackBar(
+            SnackBar(content: Text(context.l10n.parentHotlineCopied)),
+          );
+      }
+    } catch (_) {
+      // A missing clipboard channel (or a denied write) is non-fatal.
+    }
   }
 
   // ── Gates ───────────────────────────────────────────────────────────────────
@@ -730,8 +836,20 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
     message: l10n.parentHotlineRosterUnavailableBody,
   );
 
+  /// The 403 `PREMIUM_REQUIRED` treatment (`attendance/outreach/route.ts`).
+  ///
+  /// An upsell, not an error: a feature card with the accent bar and the feature
+  /// glyph, no red, no alert triangle, and no implication the teacher did
+  /// something wrong. The plan gate is the server working as designed.
+  ///
+  /// It also KEEPS ITS PROMISE. The body says a message can still be copied for
+  /// WhatsApp for free, and until now the gate replaced the whole body and left
+  /// no way to do that — the one sentence offering a way out led nowhere. When a
+  /// draft exists it is offered here, as a clipboard copy only: `copyForWhatsApp`
+  /// would POST the outreach, and that route is exactly what just returned 403.
   Widget _premiumGate(ParentHotlineState state, AppLocalizations l10n) {
     final text = Theme.of(context).textTheme;
+    final drafted = state.draftedMessage?.trim() ?? '';
     return AppCard(
       accentBar: true,
       child: Column(
@@ -743,6 +861,14 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
           Text(l10n.parentHotlinePremiumTitle, style: text.titleLarge),
           const SizedBox(height: AppSpacing.space2),
           Text(l10n.parentHotlinePremiumBody, style: text.bodyMedium),
+          if (drafted.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.space4),
+            SecondaryButton(
+              label: l10n.parentHotlineWhatsApp,
+              icon: LucideIcons.messageCircle,
+              onPressed: () => unawaited(_copyDraftToClipboard()),
+            ),
+          ],
         ],
       ),
     );

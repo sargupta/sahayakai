@@ -491,6 +491,186 @@ void main() {
     },
   );
 
+  // ── 5b. Picking a student from the roster resumes too ──
+
+  test('selectStudent asks outreach-latest and resumes an in-flight call, so '
+      'reopening from the picker does not lose the run', () {
+    fakeAsync((async) {
+      // The standalone Dashboard entry opens on `pickStudent` with no launch
+      // studentId, so `init` never runs the resume lookup. Without the same
+      // lookup on the tap, a teacher whose call is still running and who
+      // re-opened the hotline would be dropped at `reason` — the run lost.
+      final hotline = FakeParentHotlineRepository(
+        latest: LatestOutreach(outreachId: 'o-live', result: initiated()),
+      );
+      final container = makeContainer(hotline: hotline);
+      final ctrl = container.read(parentHotlineControllerProvider.notifier);
+
+      unawaited(
+        ctrl.selectStudent(
+          studentId: 's1',
+          studentName: 'Asha',
+          classId: 'c1',
+          className: 'Class 6A',
+          parentLanguage: 'Kannada',
+        ),
+      );
+      // The tap is answered on the spot: `reason` before any network reply.
+      expect(
+        container.read(parentHotlineControllerProvider).stage,
+        HotlineStage.reason,
+      );
+
+      async.flushMicrotasks();
+      final s = container.read(parentHotlineControllerProvider);
+      expect(hotline.latestQueries, contains('s1'));
+      expect(s.stage, HotlineStage.calling);
+      expect(s.outreachId, 'o-live');
+      expect(hotline.createRequests, isEmpty, reason: 'never re-creates');
+      expect(hotline.placeCalls, isEmpty, reason: 'never re-dials');
+
+      async.elapse(const Duration(seconds: 3));
+      expect(hotline.pollCount, 1, reason: 'polling re-bound to o-live');
+    });
+  });
+
+  test(
+    'selectStudent with nothing to resume never drags the teacher back to the '
+    'reason stage',
+    () {
+      fakeAsync((async) {
+        // The teacher taps a student and picks a reason before the lookup
+        // answers. "Nothing to resume" must not re-assert a stage they left.
+        final hotline = FakeParentHotlineRepository(latest: null);
+        final container = makeContainer(hotline: hotline);
+        final ctrl = container.read(parentHotlineControllerProvider.notifier);
+
+        unawaited(
+          ctrl.selectStudent(
+            studentId: 's1',
+            studentName: 'Asha',
+            classId: 'c1',
+            className: 'Class 6A',
+            parentLanguage: 'Kannada',
+          ),
+        );
+        ctrl.selectReason(OutreachReason.poorPerformance);
+        expect(
+          container.read(parentHotlineControllerProvider).stage,
+          HotlineStage.compose,
+        );
+
+        async.flushMicrotasks();
+        expect(
+          container.read(parentHotlineControllerProvider).stage,
+          HotlineStage.compose,
+        );
+      });
+    },
+  );
+
+  test('a second selectStudent orphans the first resume lookup', () {
+    fakeAsync((async) {
+      // Two quick taps. The first student's reply must not drag the flow onto
+      // that student's call while the second student's name is on screen.
+      final hotline = FakeParentHotlineRepository(
+        latest: LatestOutreach(outreachId: 'o-first', result: initiated()),
+      );
+      final container = makeContainer(hotline: hotline);
+      final ctrl = container.read(parentHotlineControllerProvider.notifier);
+
+      unawaited(
+        ctrl.selectStudent(
+          studentId: 's1',
+          studentName: 'Asha',
+          classId: 'c1',
+          className: 'Class 6A',
+          parentLanguage: 'Kannada',
+        ),
+      );
+      hotline.latest = null; // the second student has nothing to resume
+      unawaited(
+        ctrl.selectStudent(
+          studentId: 's2',
+          studentName: 'Bhavya',
+          classId: 'c1',
+          className: 'Class 6A',
+          parentLanguage: 'Kannada',
+        ),
+      );
+      async.flushMicrotasks();
+
+      final s = container.read(parentHotlineControllerProvider);
+      expect(s.studentId, 's2');
+      expect(s.stage, HotlineStage.reason);
+      expect(s.outreachId, isNull, reason: "s1's outreach was orphaned");
+      async.elapse(const Duration(seconds: 10));
+      expect(hotline.pollCount, 0, reason: 'no poll bound to a stale outreach');
+    });
+  });
+
+  test(
+    'a 401 from the resume lookup on selectStudent is the signed-out gate',
+    () {
+      fakeAsync((async) {
+        final hotline = FakeParentHotlineRepository(
+          latestError: const ApiException(
+            ApiErrorKind.unauthorized,
+            'Please sign in again.',
+            statusCode: 401,
+          ),
+        );
+        final container = makeContainer(hotline: hotline);
+        final ctrl = container.read(parentHotlineControllerProvider.notifier);
+
+        unawaited(
+          ctrl.selectStudent(
+            studentId: 's1',
+            studentName: 'Asha',
+            classId: 'c1',
+            className: 'Class 6A',
+            parentLanguage: 'Kannada',
+          ),
+        );
+        async.flushMicrotasks();
+        expect(
+          container.read(parentHotlineControllerProvider).error,
+          HotlineError.signedOut,
+        );
+      });
+    },
+  );
+
+  test('a non-auth failure in the resume lookup leaves the flow usable', () {
+    fakeAsync((async) {
+      // Resume is a courtesy. A flaky network must not stand between a teacher
+      // and a call they can still place.
+      final hotline = FakeParentHotlineRepository(
+        latestError: const ApiException(
+          ApiErrorKind.network,
+          'No internet connection.',
+        ),
+      );
+      final container = makeContainer(hotline: hotline);
+      final ctrl = container.read(parentHotlineControllerProvider.notifier);
+
+      unawaited(
+        ctrl.selectStudent(
+          studentId: 's1',
+          studentName: 'Asha',
+          classId: 'c1',
+          className: 'Class 6A',
+          parentLanguage: 'Kannada',
+        ),
+      );
+      async.flushMicrotasks();
+
+      final s = container.read(parentHotlineControllerProvider);
+      expect(s.stage, HotlineStage.reason);
+      expect(s.error, HotlineError.none);
+    });
+  });
+
   // ── 6. Dedup countdown blocks callAgain until elapsed ──
 
   test('dedup 429 → 120s countdown; callAgain blocked until it elapses', () {

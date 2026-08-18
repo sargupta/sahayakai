@@ -78,8 +78,9 @@ class CallabilityPolicy {
   final Set<String> callableLanguages;
 
   /// The standard policy, seeded from [kDefaultCallableLanguages].
-  static const CallabilityPolicy standard =
-      CallabilityPolicy(kDefaultCallableLanguages);
+  static const CallabilityPolicy standard = CallabilityPolicy(
+    kDefaultCallableLanguages,
+  );
 
   bool canCall(String? language) {
     final key = language?.trim().toLowerCase();
@@ -330,12 +331,16 @@ class ParentHotlineState {
   }) {
     return ParentHotlineState(
       stage: stage ?? this.stage,
-      studentId: identical(studentId, _unset) ? this.studentId : studentId as String?,
-      studentName:
-          identical(studentName, _unset) ? this.studentName : studentName as String?,
+      studentId: identical(studentId, _unset)
+          ? this.studentId
+          : studentId as String?,
+      studentName: identical(studentName, _unset)
+          ? this.studentName
+          : studentName as String?,
       classId: identical(classId, _unset) ? this.classId : classId as String?,
-      className:
-          identical(className, _unset) ? this.className : className as String?,
+      className: identical(className, _unset)
+          ? this.className
+          : className as String?,
       parentLanguage: parentLanguage ?? this.parentLanguage,
       subject: identical(subject, _unset) ? this.subject : subject as String?,
       suggestedReason: identical(suggestedReason, _unset)
@@ -355,11 +360,13 @@ class ParentHotlineState {
           ? this.draftedMessage
           : draftedMessage as String?,
       canAutoCall: canAutoCall ?? this.canAutoCall,
-      outreachId:
-          identical(outreachId, _unset) ? this.outreachId : outreachId as String?,
+      outreachId: identical(outreachId, _unset)
+          ? this.outreachId
+          : outreachId as String?,
       deliveryMethod: deliveryMethod ?? this.deliveryMethod,
-      callResult:
-          identical(callResult, _unset) ? this.callResult : callResult as CallResult?,
+      callResult: identical(callResult, _unset)
+          ? this.callResult
+          : callResult as CallResult?,
       dedupRetryAfterSeconds: identical(dedupRetryAfterSeconds, _unset)
           ? this.dedupRetryAfterSeconds
           : dedupRetryAfterSeconds as int?,
@@ -401,6 +408,14 @@ class ParentHotlineController extends _$ParentHotlineController {
 
   Timer? _dedupTimer;
 
+  /// Bumped every time the flow re-targets a student (an [init], a
+  /// [selectStudent]). A resume lookup captures it and abandons its continuation
+  /// if it changed — the same discipline [_pollGen] gives the poll loop. Without
+  /// it, a teacher who taps student A then quickly taps student B could have A's
+  /// in-flight `outreach-latest` reply land afterwards and drag the flow onto
+  /// A's call while B's name is on screen.
+  int _contextGen = 0;
+
   /// Languages a runtime `422` proved uncallable this session (belt-and-
   /// suspenders on top of [CallabilityPolicy]).
   final Set<String> _runtimeUncallable = <String>{};
@@ -427,15 +442,10 @@ class ParentHotlineController extends _$ParentHotlineController {
   // ── Open / resume (SPEC §B.3 cases a/b/c) ──────────────────────────────────
 
   /// Called when the screen opens. Seeds the launch context, then — if a student
-  /// is known — asks `latestForStudent` whether there is anything to resume:
-  ///   (a) a terminal call with a `callSummary` → jump straight to `summary`;
-  ///   (b) an `initiated` call → resume `calling` and re-bind polling to it;
-  ///   (c) nothing (or `{ outreachId: null }`) → fresh flow — `reason` when a
-  ///       student was passed in, else `pickStudent`.
-  /// A non-initiated, non-summary terminal (e.g. failed / manual) resolves to
-  /// the `summary` stage's matching terminal outcome. A `401` on the lookup is
-  /// the signed-out gate; any other lookup error degrades to a fresh flow rather
-  /// than blocking the teacher.
+  /// is already known (the attendance "Call parent" hand-off) — hands off to
+  /// [_resumeOrStart], which decides between resuming an outreach and starting a
+  /// fresh one. With no student the flow opens on `pickStudent`, and the resume
+  /// happens on the tap instead (see [selectStudent]).
   Future<void> init({
     String? studentId,
     String? studentName,
@@ -469,25 +479,116 @@ class ParentHotlineController extends _$ParentHotlineController {
       return;
     }
 
+    // The flow is still on `pickStudent` here, so the nothing-to-resume answer
+    // has to place it.
+    await _resumeOrStart(
+      studentId,
+      gen: ++_contextGen,
+      fallbackStage: HotlineStage.reason,
+    );
+  }
+
+  // ── Stage intents ──────────────────────────────────────────────────────────
+
+  /// Pick a student (stage 1) → advances to the reason stage. Seeds the context
+  /// and (re)derives callability from the parent language.
+  ///
+  /// **Then it resumes, exactly as [init] does.** The screen only carries a
+  /// launch `studentId` when it was opened from an attendance row; the standalone
+  /// Dashboard entry opens on `pickStudent` with no student at all, so the resume
+  /// lookup in [init] never fires for it. A teacher whose call is in flight,
+  /// who backs out and re-opens the hotline from the Dashboard, therefore lands
+  /// on the picker — and without this, tapping the student they are already
+  /// calling would drop them at `reason` and lose the run. `outreach-latest` is
+  /// the same 24h (teacher, student) lookup either way; the entry point should
+  /// not decide whether the teacher gets their call back.
+  ///
+  /// The stage moves to `reason` SYNCHRONOUSLY so the tap is answered on the
+  /// frame it happened; the lookup only overrides it if there is genuinely
+  /// something to resume.
+  Future<void> selectStudent({
+    required String studentId,
+    required String studentName,
+    required String classId,
+    required String className,
+    required String parentLanguage,
+    String? subject,
+    OutreachReason? suggestedReason,
+  }) async {
+    final lang = parentLanguage.trim();
+    _runtimeUncallable.clear();
+    // Switching students resets the (teacher, student)-scoped dedup cool-down so
+    // a never-contacted student is never silently blocked (SPEC §B.5.2/§B.5.3).
+    _clearDedup();
+    _set(
+      stage: HotlineStage.reason,
+      studentId: studentId,
+      studentName: studentName,
+      classId: classId,
+      className: className,
+      parentLanguage: lang,
+      subject: subject,
+      suggestedReason: suggestedReason,
+      selectedReason: suggestedReason,
+      canAutoCall: _deriveCallable(lang),
+      draftedMessage: null,
+      outreachId: null,
+      callResult: null,
+      error: HotlineError.none,
+      errorMessage: null,
+    );
+
+    // No fallback stage: `reason` is already set above, and the teacher may well
+    // have moved on to `compose` by the time the lookup answers. Re-asserting a
+    // stage they have left would yank them backwards for no reason.
+    await _resumeOrStart(studentId, gen: ++_contextGen);
+  }
+
+  /// Asks `GET /api/attendance/outreach-latest?studentId=…` whether this student
+  /// has a resumable outreach in the server's 24h window, and lands the flow on
+  /// the right stage (SPEC §B.3 cases a/b/c):
+  ///   (a) a terminal call with a `callSummary` → jump straight to `summary`;
+  ///   (b) an `initiated` call → resume `calling` and re-bind polling to it;
+  ///   (c) nothing (or `{ outreachId: null }`) → a fresh flow at `reason`.
+  /// A non-initiated, non-summary terminal (failed / no_answer / busy / manual,
+  /// or a completed call whose summary never generated) resolves to the `summary`
+  /// stage's matching terminal outcome.
+  ///
+  /// A `401` is the signed-out gate. Every other lookup failure degrades to a
+  /// fresh flow rather than blocking the teacher: resume is a courtesy, and a
+  /// flaky network must not stand between a teacher and a call they can still
+  /// place. [gen] is the [_contextGen] captured by the caller — a newer target
+  /// abandons this continuation.
+  ///
+  /// [fallbackStage] is where case (c) lands, and is null when the caller has
+  /// already placed the flow itself. That distinction matters: a teacher who
+  /// taps a student and picks a reason before a slow reply arrives must not be
+  /// dragged back to the reason stage by a lookup that found nothing.
+  Future<void> _resumeOrStart(
+    String studentId, {
+    required int gen,
+    HotlineStage? fallbackStage,
+  }) async {
     LatestOutreach? latest;
     try {
       latest = await _repo.latestForStudent(studentId);
     } on ApiException catch (e) {
-      if (_disposed) return;
+      if (_disposed || gen != _contextGen) return;
       if (e.isAuth) {
         _set(error: HotlineError.signedOut, errorMessage: e.message);
         return;
       }
       latest = null; // non-auth lookup failure → fall through to a fresh flow
     } catch (_) {
-      if (_disposed) return;
+      if (_disposed || gen != _contextGen) return;
       latest = null;
     }
-    if (_disposed) return;
+    if (_disposed || gen != _contextGen) return;
 
     if (latest == null) {
-      // Case (c): nothing to resume — fresh flow at the reason stage.
-      _set(stage: HotlineStage.reason);
+      // Case (c): nothing to resume — a fresh flow, at the caller's fallback if
+      // it asked for one.
+      if (fallbackStage != null) _set(stage: fallbackStage);
       return;
     }
 
@@ -511,50 +612,12 @@ class ParentHotlineController extends _$ParentHotlineController {
       _beginPolling(latest.outreachId);
       return;
     }
-    // Terminal without a summary (failed / no_answer / busy / manual, or a
-    // completed call whose summary never generated) → the summary stage resolves
-    // the right terminal outcome.
+    // Terminal without a summary → the summary stage resolves the right
+    // terminal outcome.
     _set(
       stage: HotlineStage.summary,
       outreachId: latest.outreachId,
       callResult: result,
-    );
-  }
-
-  // ── Stage intents ──────────────────────────────────────────────────────────
-
-  /// Pick a student (stage 1) → advances to the reason stage. Seeds the context
-  /// and (re)derives callability from the parent language.
-  void selectStudent({
-    required String studentId,
-    required String studentName,
-    required String classId,
-    required String className,
-    required String parentLanguage,
-    String? subject,
-    OutreachReason? suggestedReason,
-  }) {
-    final lang = parentLanguage.trim();
-    _runtimeUncallable.clear();
-    // Switching students resets the (teacher, student)-scoped dedup cool-down so
-    // a never-contacted student is never silently blocked (SPEC §B.5.2/§B.5.3).
-    _clearDedup();
-    _set(
-      stage: HotlineStage.reason,
-      studentId: studentId,
-      studentName: studentName,
-      classId: classId,
-      className: className,
-      parentLanguage: lang,
-      subject: subject,
-      suggestedReason: suggestedReason,
-      selectedReason: suggestedReason,
-      canAutoCall: _deriveCallable(lang),
-      draftedMessage: null,
-      outreachId: null,
-      callResult: null,
-      error: HotlineError.none,
-      errorMessage: null,
     );
   }
 
@@ -587,7 +650,8 @@ class ParentHotlineController extends _$ParentHotlineController {
       isBusy: true,
       error: HotlineError.none,
       errorMessage: null,
-      consecutiveAbsentDays: consecutiveAbsentDays ?? state.consecutiveAbsentDays,
+      consecutiveAbsentDays:
+          consecutiveAbsentDays ?? state.consecutiveAbsentDays,
       performanceContext: performanceContext ?? state.performanceContext,
     );
 
@@ -599,7 +663,9 @@ class ParentHotlineController extends _$ParentHotlineController {
           : (state.className ?? ''),
       reason: _toMessageReason(reason),
       parentLanguage: state.parentLanguage,
-      teacherNote: state.teacherNote.trim().isEmpty ? null : state.teacherNote.trim(),
+      teacherNote: state.teacherNote.trim().isEmpty
+          ? null
+          : state.teacherNote.trim(),
       consecutiveAbsentDays:
           consecutiveAbsentDays ?? state.consecutiveAbsentDays,
     );
@@ -641,8 +707,9 @@ class ParentHotlineController extends _$ParentHotlineController {
 
     final String outreachId;
     try {
-      outreachId =
-          await _repo.createOutreach(_buildCreateDto(DeliveryMethod.twilioCall));
+      outreachId = await _repo.createOutreach(
+        _buildCreateDto(DeliveryMethod.twilioCall),
+      );
     } on ParentHotlineException catch (e) {
       if (_disposed) return;
       _mapCreateError(e);
@@ -697,7 +764,11 @@ class ParentHotlineController extends _$ParentHotlineController {
       return;
     } catch (_) {
       if (_disposed) return;
-      _set(isBusy: false, stage: HotlineStage.review, error: HotlineError.generic);
+      _set(
+        isBusy: false,
+        stage: HotlineStage.review,
+        error: HotlineError.generic,
+      );
       return;
     }
     if (_disposed) return;
@@ -751,8 +822,9 @@ class ParentHotlineController extends _$ParentHotlineController {
     _set(isBusy: true, error: HotlineError.none, errorMessage: null);
     final String outreachId;
     try {
-      outreachId = await _repo
-          .createOutreach(_buildCreateDto(DeliveryMethod.whatsappCopy));
+      outreachId = await _repo.createOutreach(
+        _buildCreateDto(DeliveryMethod.whatsappCopy),
+      );
     } on ParentHotlineException catch (e) {
       if (_disposed) return;
       _mapCreateError(e);
@@ -974,7 +1046,9 @@ class ParentHotlineController extends _$ParentHotlineController {
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   bool _deriveCallable(String language) {
-    if (_runtimeUncallable.contains(language.trim().toLowerCase())) return false;
+    if (_runtimeUncallable.contains(language.trim().toLowerCase())) {
+      return false;
+    }
     return _policy.canCall(language);
   }
 

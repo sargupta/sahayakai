@@ -1,0 +1,28 @@
+{
+  "_unit": "U2.7 — Parent Hotline: live roster + error-path audit",
+  "_why": "A concurrent unit owns lib/core/i18n/arb/* this round, so these keys were NOT added. Each entry names the interim existing key used in its place, so the swap is mechanical once the ARB files are free.",
+  "_target": "lib/core/i18n/arb/app_en.arb (+ the 10 translations)",
+  "keys": [
+    {
+      "key": "parentHotlineTelephonyUnavailable",
+      "en": "Calling isn't available right now. You can still copy the message to send on WhatsApp.",
+      "description": "Shown on the Parent Hotline review step when POST /api/attendance/call returns 503 — telephony is not configured server-side (missing Twilio credentials, or VOICE_EXOTEL_CALL_URL unset). The teacher cannot fix this and retrying cannot help, so the Call button is withdrawn and WhatsApp copy is left as the working path.",
+      "interim": "parentHotlineGenericError (via state.errorMessage, which for a 5xx is ApiException's safe 'Something went wrong on our side.')",
+      "usedIn": "lib/features/parent_hotline/presentation/parent_hotline_screen.dart — _reviewErrorBanner, HotlineError.telephonyUnavailable"
+    },
+    {
+      "key": "parentHotlineRosterEmptyTitle",
+      "en": "No students on your roster yet",
+      "description": "Parent Hotline student picker, when the masked roster read SUCCEEDS and returns no students — the teacher has classes but has not added anyone, or has no classes at all. Distinct from parentHotlineRosterUnavailableTitle, which is a server-side gap the teacher cannot act on.",
+      "interim": "parentHotlineRosterUnavailableTitle",
+      "usedIn": "lib/features/parent_hotline/presentation/parent_hotline_screen.dart — _rosterList, empty branch"
+    },
+    {
+      "key": "parentHotlineRosterEmptyBody",
+      "en": "Add students to a class and they will show up here, ready to call home.",
+      "description": "Body for parentHotlineRosterEmptyTitle.",
+      "interim": "parentHotlineRosterUnavailableBody",
+      "usedIn": "lib/features/parent_hotline/presentation/parent_hotline_screen.dart — _rosterList, empty branch"
+    }
+  ]
+}
