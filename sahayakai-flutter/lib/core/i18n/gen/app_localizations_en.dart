@@ -1455,25 +1455,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'No exam paper came back for that. Please try fewer chapters or a different subject.';
 
   @override
-  String get examPaperSave => 'Save to Library';
-
-  @override
-  String get examPaperSaving => 'Saving';
-
-  @override
-  String get examPaperSaved => 'Saved to your Library';
-
-  @override
-  String get examPaperSaveFailedTitle => 'Could not save';
-
-  @override
-  String get examPaperSaveFailedBody =>
-      'We could not save this paper to your library. Please try again.';
-
-  @override
-  String get examPaperSaveRetry => 'Try saving again';
-
-  @override
   String get examPaperUnstructuredTitle => 'We could not structure that paper';
 
   @override
@@ -1743,15 +1724,6 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
-
-  @override
-  String get parentMessageCopy => 'Copy';
-
-  @override
-  String get parentMessageShare => 'Share';
-
-  @override
-  String get parentMessageCopied => 'Message copied';
 
   @override
   String get parentMessageSectionMessage => 'The message';
@@ -2146,6 +2118,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'We can\'t load your students here just yet. This is coming in a later update. You\'re already signed in, so there\'s nothing you need to fix.';
 
   @override
+  String get parentHotlineRosterEmptyTitle => 'No students on your roster yet';
+
+  @override
+  String get parentHotlineRosterEmptyBody =>
+      'Add students to a class and they will show up here, ready to call home.';
+
+  @override
   String get parentHotlineReasonEyebrow => 'Why are you calling';
 
   @override
@@ -2206,6 +2185,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get parentHotlineGenericError =>
       'That didn\'t go through. Please try again.';
+
+  @override
+  String get parentHotlineTelephonyUnavailable =>
+      'Calling isn\'t available right now. You can still copy the message to send on WhatsApp.';
 
   @override
   String get parentHotlineEvidenceAttendanceHeader => 'Attendance';
@@ -3131,6 +3114,60 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get networkTabMessages => 'Messages';
+
+  @override
+  String get networkTabUpdates => 'Updates';
+
+  @override
+  String get notificationsEmptyTitle => 'Nothing new yet';
+
+  @override
+  String get notificationsEmptyBody =>
+      'Call outcomes, attendance alerts and finished papers appear here as they happen.';
+
+  @override
+  String get notificationsLocalNote =>
+      'These appear when you open the app. SahayakAI cannot send phone notifications yet.';
+
+  @override
+  String get notificationsMarkAllRead => 'Mark all as read';
+
+  @override
+  String notificationCallCompletedTitle(String student) {
+    return 'Parent call finished for $student';
+  }
+
+  @override
+  String get notificationCallCompletedBody =>
+      'The conversation summary is ready in the Parent Hotline.';
+
+  @override
+  String notificationCallFailedTitle(String student) {
+    return 'Parent call did not connect for $student';
+  }
+
+  @override
+  String get notificationCallFailedBody =>
+      'Try the call again, or send the message on WhatsApp instead.';
+
+  @override
+  String notificationAbsenceTitle(String student, int count) {
+    return '$student has missed $count days in a row';
+  }
+
+  @override
+  String notificationAbsenceBody(String className) {
+    return 'Open $className to see the days that were missed.';
+  }
+
+  @override
+  String notificationExamPaperTitle(String subject) {
+    return '$subject exam paper is on its way';
+  }
+
+  @override
+  String get notificationExamPaperBody =>
+      'It is still being written and will appear in your Library on its own.';
 
   @override
   String get staffroomTitle => 'Staffroom';

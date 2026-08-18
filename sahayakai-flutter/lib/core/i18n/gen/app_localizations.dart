@@ -2732,42 +2732,6 @@ abstract class AppLocalizations {
   /// **'No exam paper came back for that. Please try fewer chapters or a different subject.'**
   String get examPaperNoContent;
 
-  /// Button that saves the generated paper to the teacher's library.
-  ///
-  /// In en, this message translates to:
-  /// **'Save to Library'**
-  String get examPaperSave;
-
-  /// Shown on the save button while the save is in flight.
-  ///
-  /// In en, this message translates to:
-  /// **'Saving'**
-  String get examPaperSaving;
-
-  /// Confirmation shown after the paper is saved.
-  ///
-  /// In en, this message translates to:
-  /// **'Saved to your Library'**
-  String get examPaperSaved;
-
-  /// Title of the failed-save inline error.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not save'**
-  String get examPaperSaveFailedTitle;
-
-  /// Body of the failed-save inline error.
-  ///
-  /// In en, this message translates to:
-  /// **'We could not save this paper to your library. Please try again.'**
-  String get examPaperSaveFailedBody;
-
-  /// Retry button on a failed save.
-  ///
-  /// In en, this message translates to:
-  /// **'Try saving again'**
-  String get examPaperSaveRetry;
-
   /// Title of the 422 exam_paper_unstructured guidance state.
   ///
   /// In en, this message translates to:
@@ -3217,24 +3181,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 word} other{{count} words}}'**
   String parentMessageWordCount(int count);
-
-  /// Result action that copies the drafted message to the clipboard.
-  ///
-  /// In en, this message translates to:
-  /// **'Copy'**
-  String get parentMessageCopy;
-
-  /// Result action that opens the share sheet to send the message on (e.g. WhatsApp).
-  ///
-  /// In en, this message translates to:
-  /// **'Share'**
-  String get parentMessageShare;
-
-  /// Snackbar confirmation shown after the message is copied.
-  ///
-  /// In en, this message translates to:
-  /// **'Message copied'**
-  String get parentMessageCopied;
 
   /// Editorial section header over the core parent-message fields.
   ///
@@ -3896,6 +3842,18 @@ abstract class AppLocalizations {
   /// **'We can\'t load your students here just yet. This is coming in a later update. You\'re already signed in, so there\'s nothing you need to fix.'**
   String get parentHotlineRosterUnavailableBody;
 
+  /// Parent Hotline student picker, when the masked roster read SUCCEEDS and returns no students. Distinct from parentHotlineRosterUnavailableTitle, which is a server-side gap the teacher cannot act on.
+  ///
+  /// In en, this message translates to:
+  /// **'No students on your roster yet'**
+  String get parentHotlineRosterEmptyTitle;
+
+  /// Body for parentHotlineRosterEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add students to a class and they will show up here, ready to call home.'**
+  String get parentHotlineRosterEmptyBody;
+
   /// Saffron eyebrow on the reason stage.
   ///
   /// In en, this message translates to:
@@ -4003,6 +3961,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'That didn\'t go through. Please try again.'**
   String get parentHotlineGenericError;
+
+  /// Shown on the Parent Hotline review step when POST /api/attendance/call returns 503 (telephony not configured server-side). The teacher cannot fix this and retrying cannot help, so the Call button is withdrawn and WhatsApp copy is left as the working path.
+  ///
+  /// In en, this message translates to:
+  /// **'Calling isn\'t available right now. You can still copy the message to send on WhatsApp.'**
+  String get parentHotlineTelephonyUnavailable;
 
   /// Evidence panel header — absences reason.
   ///
@@ -5461,6 +5425,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Messages'**
   String get networkTabMessages;
+
+  /// Network hub segmented tab: the on-device updates list (call outcomes, attendance signals, queued generations).
+  ///
+  /// In en, this message translates to:
+  /// **'Updates'**
+  String get networkTabUpdates;
+
+  /// Updates tab empty state title, when the device has recorded nothing yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing new yet'**
+  String get notificationsEmptyTitle;
+
+  /// Updates tab empty state body: names the three kinds of update this surface records.
+  ///
+  /// In en, this message translates to:
+  /// **'Call outcomes, attendance alerts and finished papers appear here as they happen.'**
+  String get notificationsEmptyBody;
+
+  /// Updates tab note. States plainly that this list is built on the device and that push notifications do not exist yet, so a teacher never assumes they will be alerted with the app closed.
+  ///
+  /// In en, this message translates to:
+  /// **'These appear when you open the app. SahayakAI cannot send phone notifications yet.'**
+  String get notificationsLocalNote;
+
+  /// Updates tab action that clears the unread state on every recorded update.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all as read'**
+  String get notificationsMarkAllRead;
+
+  /// Updates row title: a Parent Hotline call reached a terminal state with a conversation.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent call finished for {student}'**
+  String notificationCallCompletedTitle(String student);
+
+  /// Body for notificationCallCompletedTitle. Points back at the Parent Hotline, where the summary sheet lives.
+  ///
+  /// In en, this message translates to:
+  /// **'The conversation summary is ready in the Parent Hotline.'**
+  String get notificationCallCompletedBody;
+
+  /// Updates row title: a Parent Hotline call ended as failed / no answer / busy.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent call did not connect for {student}'**
+  String notificationCallFailedTitle(String student);
+
+  /// Body for notificationCallFailedTitle. Names the two ways forward the hotline itself offers.
+  ///
+  /// In en, this message translates to:
+  /// **'Try the call again, or send the message on WhatsApp instead.'**
+  String get notificationCallFailedBody;
+
+  /// Updates row title: the monthly rollup the teacher just read shows a consecutive-absence run at or past the threshold.
+  ///
+  /// In en, this message translates to:
+  /// **'{student} has missed {count} days in a row'**
+  String notificationAbsenceTitle(String student, int count);
+
+  /// Body for notificationAbsenceTitle; the row opens that class's month view.
+  ///
+  /// In en, this message translates to:
+  /// **'Open {className} to see the days that were missed.'**
+  String notificationAbsenceBody(String className);
+
+  /// Updates row title: the exam-paper route answered 202 (still generating server-side).
+  ///
+  /// In en, this message translates to:
+  /// **'{subject} exam paper is on its way'**
+  String notificationExamPaperTitle(String subject);
+
+  /// Body for notificationExamPaperTitle. Says only what the 202 actually promises: the paper is queued and will be saved. There is no completion signal, so this never claims it has arrived.
+  ///
+  /// In en, this message translates to:
+  /// **'It is still being written and will appear in your Library on its own.'**
+  String get notificationExamPaperBody;
 
   /// Staffroom screen title + hero eyebrow.
   ///

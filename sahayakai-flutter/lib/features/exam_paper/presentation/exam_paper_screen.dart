@@ -6,6 +6,7 @@ import '../../../core/i18n/app_locale.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/i18n/locale_provider.dart';
+import '../../../core/platform/clock.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
 import '../../../shared/domain/tool_prefill.dart';
@@ -14,6 +15,8 @@ import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
+import '../../notifications/data/notifications_store.dart';
+import '../../notifications/domain/teacher_notification.dart';
 import '../domain/exam_paper.dart';
 import 'exam_paper_controller.dart';
 import 'widgets/exam_paper_error_view.dart';
@@ -71,6 +74,11 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
   /// Part-B once-guard: the voice-path spoken summary fires at most once, when
   /// the first voice-originated result lands (VOICE_FIRST_GAP §5.6).
   bool _spokeVoiceSummary = false;
+
+  /// The subject of the generation currently in flight, captured at submit so
+  /// the Updates row names the paper the teacher actually asked for even if
+  /// they change the form while the request is out.
+  String? _submittedSubject;
 
   @override
   void initState() {
@@ -191,7 +199,35 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
       includeAnswerKey: _includeAnswerKey,
       includeMarkingScheme: _includeMarkingScheme,
     );
+    _submittedSubject = request.subject;
     ref.read(examPaperControllerProvider.notifier).generate(request);
+  }
+
+  /// Writes the **202** to the Network hub's Updates tab.
+  ///
+  /// This is the one content event the app can honestly report, and it can only
+  /// report it this far: the 202 body carries no poll token, and no route
+  /// reports that a queued paper finished. So the row says the paper is queued
+  /// and will be saved — which is exactly what the server promised — and never
+  /// that it has arrived. A completion row needs a server change (a generation
+  /// event written where the job finishes).
+  void _recordQueuedPaper() {
+    final subject = _submittedSubject?.trim();
+    if (subject == null || subject.isEmpty) return;
+    final at = ref.read(nowProvider)();
+    ref
+        .read(notificationsProvider.notifier)
+        .record(
+          TeacherNotification(
+            // One generation, one row. The 202 has no server id to key on, so
+            // the request's own instant is the identity — and the listener that
+            // calls this fires once per loading -> in-progress transition.
+            id: 'exam-paper:${at.toIso8601String()}',
+            kind: TeacherNotificationKind.examPaperQueued,
+            at: at,
+            label: subject,
+          ),
+        );
   }
 
   /// Part B — closes "speak → generate → hear". When the landed paper was
@@ -250,6 +286,13 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
       if (wasLoading && nowReady) {
         WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToResult());
         _maybeSpeakVoiceSummary(l10n);
+      }
+      // The 202: the paper is queued server-side, so the teacher can leave this
+      // screen. Record it where they will look for it later.
+      if (wasLoading &&
+          !next.isLoading &&
+          next.valueOrNull is ExamPaperInProgress) {
+        _recordQueuedPaper();
       }
     });
 

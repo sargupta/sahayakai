@@ -1491,25 +1491,6 @@ class AppLocalizationsMl extends AppLocalizations {
       'അതിന് ചോദ്യപേപ്പറൊന്നും ലഭിച്ചില്ല. ദയവായി കുറച്ച് അധ്യായങ്ങൾ അല്ലെങ്കിൽ മറ്റൊരു വിഷയം പരീക്ഷിക്കുക.';
 
   @override
-  String get examPaperSave => 'ലൈബ്രറിയിലേക്ക് സേവ് ചെയ്യുക';
-
-  @override
-  String get examPaperSaving => 'സേവ് ചെയ്യുന്നു';
-
-  @override
-  String get examPaperSaved => 'നിങ്ങളുടെ ലൈബ്രറിയിൽ സേവ് ചെയ്തു';
-
-  @override
-  String get examPaperSaveFailedTitle => 'സേവ് ചെയ്യാനായില്ല';
-
-  @override
-  String get examPaperSaveFailedBody =>
-      'ഈ ചോദ്യപേപ്പർ നിങ്ങളുടെ ലൈബ്രറിയിൽ സേവ് ചെയ്യാനായില്ല. ദയവായി വീണ്ടും ശ്രമിക്കുക.';
-
-  @override
-  String get examPaperSaveRetry => 'വീണ്ടും സേവ് ചെയ്യാൻ ശ്രമിക്കുക';
-
-  @override
   String get examPaperUnstructuredTitle => 'ആ ചോദ്യപേപ്പർ ക്രമീകരിക്കാനായില്ല';
 
   @override
@@ -1781,15 +1762,6 @@ class AppLocalizationsMl extends AppLocalizations {
     );
     return '$_temp0';
   }
-
-  @override
-  String get parentMessageCopy => 'പകർത്തുക';
-
-  @override
-  String get parentMessageShare => 'പങ്കിടുക';
-
-  @override
-  String get parentMessageCopied => 'സന്ദേശം പകർത്തി';
 
   @override
   String get parentMessageSectionMessage => 'സന്ദേശം';
@@ -2190,6 +2162,14 @@ class AppLocalizationsMl extends AppLocalizations {
       'നിങ്ങളുടെ വിദ്യാർത്ഥികളെ ഇവിടെ ഇനിയും ലോഡ് ചെയ്യാൻ കഴിയുന്നില്ല. ഇത് വരാനിരിക്കുന്ന ഒരു അപ്ഡേറ്റിൽ വരും. നിങ്ങൾ ഇതിനകം സൈൻ ഇൻ ചെയ്തിട്ടുണ്ട്, അതിനാൽ നിങ്ങൾ ഒന്നും ശരിയാക്കേണ്ടതില്ല.';
 
   @override
+  String get parentHotlineRosterEmptyTitle =>
+      'നിങ്ങളുടെ പട്ടികയിൽ ഇതുവരെ വിദ്യാർത്ഥികളില്ല';
+
+  @override
+  String get parentHotlineRosterEmptyBody =>
+      'ഒരു ക്ലാസ്സിൽ വിദ്യാർത്ഥികളെ ചേർക്കൂ, അവർ ഇവിടെ കാണും, വീട്ടിലേക്ക് വിളിക്കാൻ തയ്യാറായി.';
+
+  @override
   String get parentHotlineReasonEyebrow => 'എന്തിനാണ് വിളിക്കുന്നത്';
 
   @override
@@ -2251,6 +2231,10 @@ class AppLocalizationsMl extends AppLocalizations {
   @override
   String get parentHotlineGenericError =>
       'അത് നടന്നില്ല. ദയവായി വീണ്ടും ശ്രമിക്കൂ.';
+
+  @override
+  String get parentHotlineTelephonyUnavailable =>
+      'ഇപ്പോൾ വിളിക്കൽ ലഭ്യമല്ല. സന്ദേശം പകർത്തി WhatsApp വഴി അയയ്ക്കാം.';
 
   @override
   String get parentHotlineEvidenceAttendanceHeader => 'ഹാജർ';
@@ -3190,6 +3174,60 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get networkTabMessages => 'സന്ദേശങ്ങൾ';
+
+  @override
+  String get networkTabUpdates => 'അപ്‌ഡേറ്റുകൾ';
+
+  @override
+  String get notificationsEmptyTitle => 'ഇതുവരെ പുതിയതായി ഒന്നുമില്ല';
+
+  @override
+  String get notificationsEmptyBody =>
+      'കോൾ ഫലങ്ങൾ, ഹാജർ മുന്നറിയിപ്പുകൾ, തയ്യാറായ ചോദ്യപേപ്പറുകൾ എന്നിവ സംഭവിക്കുന്ന മുറയ്ക്ക് ഇവിടെ വരും.';
+
+  @override
+  String get notificationsLocalNote =>
+      'നിങ്ങൾ ആപ്പ് തുറക്കുമ്പോൾ ഇവ കാണാം. SahayakAI ഇതുവരെ ഫോൺ അറിയിപ്പുകൾ അയയ്ക്കുന്നില്ല.';
+
+  @override
+  String get notificationsMarkAllRead => 'എല്ലാം വായിച്ചതായി അടയാളപ്പെടുത്തുക';
+
+  @override
+  String notificationCallCompletedTitle(String student) {
+    return '$student എന്ന വിദ്യാർത്ഥിയുടെ രക്ഷിതാവിനെ വിളിക്കൽ പൂർത്തിയായി';
+  }
+
+  @override
+  String get notificationCallCompletedBody =>
+      'സംഭാഷണത്തിന്റെ സംഗ്രഹം രക്ഷിതാവിനെ വിളിക്കൽ ഭാഗത്ത് തയ്യാറാണ്.';
+
+  @override
+  String notificationCallFailedTitle(String student) {
+    return '$student എന്ന വിദ്യാർത്ഥിയുടെ രക്ഷിതാവിനെ വിളിക്കൽ ബന്ധപ്പെട്ടില്ല';
+  }
+
+  @override
+  String get notificationCallFailedBody =>
+      'വീണ്ടും വിളിക്കൂ, അല്ലെങ്കിൽ സന്ദേശം WhatsApp വഴി അയയ്ക്കൂ.';
+
+  @override
+  String notificationAbsenceTitle(String student, int count) {
+    return '$student തുടർച്ചയായി $count ദിവസം ഹാജരായില്ല';
+  }
+
+  @override
+  String notificationAbsenceBody(String className) {
+    return 'നഷ്ടമായ ദിവസങ്ങൾ കാണാൻ $className തുറക്കൂ.';
+  }
+
+  @override
+  String notificationExamPaperTitle(String subject) {
+    return '$subject ചോദ്യപേപ്പർ തയ്യാറാകുന്നു';
+  }
+
+  @override
+  String get notificationExamPaperBody =>
+      'ഇത് ഇപ്പോഴും തയ്യാറാകുന്നു, തനിയെ നിങ്ങളുടെ ലൈബ്രറിയിൽ വന്നുചേരും.';
 
   @override
   String get staffroomTitle => 'സ്റ്റാഫ്‌റൂം';

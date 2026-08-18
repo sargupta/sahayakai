@@ -1866,30 +1866,6 @@
   "@examPaperNoContent": {
     "description": "Shown when the response carried no usable paper."
   },
-  "examPaperSave": "Save to Library",
-  "@examPaperSave": {
-    "description": "Button that saves the generated paper to the teacher's library."
-  },
-  "examPaperSaving": "Saving",
-  "@examPaperSaving": {
-    "description": "Shown on the save button while the save is in flight."
-  },
-  "examPaperSaved": "Saved to your Library",
-  "@examPaperSaved": {
-    "description": "Confirmation shown after the paper is saved."
-  },
-  "examPaperSaveFailedTitle": "Could not save",
-  "@examPaperSaveFailedTitle": {
-    "description": "Title of the failed-save inline error."
-  },
-  "examPaperSaveFailedBody": "We could not save this paper to your library. Please try again.",
-  "@examPaperSaveFailedBody": {
-    "description": "Body of the failed-save inline error."
-  },
-  "examPaperSaveRetry": "Try saving again",
-  "@examPaperSaveRetry": {
-    "description": "Retry button on a failed save."
-  },
   "examPaperUnstructuredTitle": "We could not structure that paper",
   "@examPaperUnstructuredTitle": {
     "description": "Title of the 422 exam_paper_unstructured guidance state."
@@ -2199,18 +2175,6 @@
         "type": "int"
       }
     }
-  },
-  "parentMessageCopy": "Copy",
-  "@parentMessageCopy": {
-    "description": "Result action that copies the drafted message to the clipboard."
-  },
-  "parentMessageShare": "Share",
-  "@parentMessageShare": {
-    "description": "Result action that opens the share sheet to send the message on (e.g. WhatsApp)."
-  },
-  "parentMessageCopied": "Message copied",
-  "@parentMessageCopied": {
-    "description": "Snackbar confirmation shown after the message is copied."
   },
   "parentMessageSectionMessage": "The message",
   "@parentMessageSectionMessage": {
@@ -2694,6 +2658,14 @@
   "@parentHotlineRosterUnavailableBody": {
     "description": "EmptyView body on the pick-student stage when the teacher is signed in but the roster can't be fetched on the app yet."
   },
+  "parentHotlineRosterEmptyTitle": "No students on your roster yet",
+  "@parentHotlineRosterEmptyTitle": {
+    "description": "Parent Hotline student picker, when the masked roster read SUCCEEDS and returns no students. Distinct from parentHotlineRosterUnavailableTitle, which is a server-side gap the teacher cannot act on."
+  },
+  "parentHotlineRosterEmptyBody": "Add students to a class and they will show up here, ready to call home.",
+  "@parentHotlineRosterEmptyBody": {
+    "description": "Body for parentHotlineRosterEmptyTitle."
+  },
   "parentHotlineReasonEyebrow": "Why are you calling",
   "@parentHotlineReasonEyebrow": {
     "description": "Saffron eyebrow on the reason stage."
@@ -2765,6 +2737,10 @@
   "parentHotlineGenericError": "That didn't go through. Please try again.",
   "@parentHotlineGenericError": {
     "description": "Fallback message when the server gave no user-safe error text."
+  },
+  "parentHotlineTelephonyUnavailable": "Calling isn't available right now. You can still copy the message to send on WhatsApp.",
+  "@parentHotlineTelephonyUnavailable": {
+    "description": "Shown on the Parent Hotline review step when POST /api/attendance/call returns 503 (telephony not configured server-side). The teacher cannot fix this and retrying cannot help, so the Call button is withdrawn and WhatsApp copy is left as the working path."
   },
   "parentHotlineEvidenceAttendanceHeader": "Attendance",
   "@parentHotlineEvidenceAttendanceHeader": {
@@ -3894,6 +3870,86 @@
   "networkTabMessages": "Messages",
   "@networkTabMessages": {
     "description": "Network hub segmented tab: the Pro Inbox conversation list."
+  },
+  "networkTabUpdates": "Updates",
+  "@networkTabUpdates": {
+    "description": "Network hub segmented tab: the on-device updates list (call outcomes, attendance signals, queued generations)."
+  },
+  "notificationsEmptyTitle": "Nothing new yet",
+  "@notificationsEmptyTitle": {
+    "description": "Updates tab empty state title, when the device has recorded nothing yet."
+  },
+  "notificationsEmptyBody": "Call outcomes, attendance alerts and finished papers appear here as they happen.",
+  "@notificationsEmptyBody": {
+    "description": "Updates tab empty state body: names the three kinds of update this surface records."
+  },
+  "notificationsLocalNote": "These appear when you open the app. SahayakAI cannot send phone notifications yet.",
+  "@notificationsLocalNote": {
+    "description": "Updates tab note. States plainly that this list is built on the device and that push notifications do not exist yet, so a teacher never assumes they will be alerted with the app closed."
+  },
+  "notificationsMarkAllRead": "Mark all as read",
+  "@notificationsMarkAllRead": {
+    "description": "Updates tab action that clears the unread state on every recorded update."
+  },
+  "notificationCallCompletedTitle": "Parent call finished for {student}",
+  "@notificationCallCompletedTitle": {
+    "description": "Updates row title: a Parent Hotline call reached a terminal state with a conversation.",
+    "placeholders": {
+      "student": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationCallCompletedBody": "The conversation summary is ready in the Parent Hotline.",
+  "@notificationCallCompletedBody": {
+    "description": "Body for notificationCallCompletedTitle. Points back at the Parent Hotline, where the summary sheet lives."
+  },
+  "notificationCallFailedTitle": "Parent call did not connect for {student}",
+  "@notificationCallFailedTitle": {
+    "description": "Updates row title: a Parent Hotline call ended as failed / no answer / busy.",
+    "placeholders": {
+      "student": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationCallFailedBody": "Try the call again, or send the message on WhatsApp instead.",
+  "@notificationCallFailedBody": {
+    "description": "Body for notificationCallFailedTitle. Names the two ways forward the hotline itself offers."
+  },
+  "notificationAbsenceTitle": "{student} has missed {count} days in a row",
+  "@notificationAbsenceTitle": {
+    "description": "Updates row title: the monthly rollup the teacher just read shows a consecutive-absence run at or past the threshold.",
+    "placeholders": {
+      "student": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notificationAbsenceBody": "Open {className} to see the days that were missed.",
+  "@notificationAbsenceBody": {
+    "description": "Body for notificationAbsenceTitle; the row opens that class's month view.",
+    "placeholders": {
+      "className": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationExamPaperTitle": "{subject} exam paper is on its way",
+  "@notificationExamPaperTitle": {
+    "description": "Updates row title: the exam-paper route answered 202 (still generating server-side).",
+    "placeholders": {
+      "subject": {
+        "type": "String"
+      }
+    }
+  },
+  "notificationExamPaperBody": "It is still being written and will appear in your Library on its own.",
+  "@notificationExamPaperBody": {
+    "description": "Body for notificationExamPaperTitle. Says only what the 202 actually promises: the paper is queued and will be saved. There is no completion signal, so this never claims it has arrived."
   },
   "staffroomTitle": "Staffroom",
   "@staffroomTitle": {

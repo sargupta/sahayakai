@@ -11,11 +11,14 @@ import 'package:sahayakai/features/inbox/data/inbox_transport.dart';
 import 'package:sahayakai/features/inbox/data/messages_stream_provider.dart';
 import 'package:sahayakai/features/inbox/domain/conversation_id.dart';
 import 'package:sahayakai/features/inbox/domain/inbox_models.dart';
+import 'package:sahayakai/features/notifications/data/notifications_store.dart';
+import 'package:sahayakai/features/notifications/domain/teacher_notification.dart';
 import 'package:sahayakai/features/staffroom/data/staffroom_providers.dart';
 import 'package:sahayakai/features/staffroom/data/staffroom_transport.dart';
 import 'package:sahayakai/features/staffroom/domain/community_post.dart';
 import 'package:sahayakai/features/staffroom/domain/group.dart';
 import 'package:sahayakai/features/staffroom/presentation/network_hub_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/fake_block_c_transports.dart';
 
@@ -75,11 +78,12 @@ Conversation _convo({String otherName = 'Bina Devi'}) => Conversation(
   lastMessageAt: '2026-07-19T11:55:00Z',
 );
 
-Future<void> _pumpHub(
+Future<ProviderContainer> _pumpHub(
   WidgetTester tester, {
   required FakeStaffroomTransport staffroom,
   required FakeInboxTransport inbox,
   bool router = false,
+  List<TeacherNotification> updates = const [],
 }) async {
   tester.view.physicalSize = const Size(390, 1400);
   tester.view.devicePixelRatio = 1.0;
@@ -91,12 +95,18 @@ Future<void> _pumpHub(
   addTearDown(staffroom.dispose);
   addTearDown(inbox.dispose);
 
-  final overrides = [
-    staffroomTransportProvider.overrideWithValue(staffroom),
-    currentStaffroomUserIdProvider.overrideWithValue(_me),
-    inboxTransportProvider.overrideWithValue(inbox),
-    currentInboxUserIdProvider.overrideWithValue(_me),
-  ];
+  final container = ProviderContainer(
+    overrides: [
+      staffroomTransportProvider.overrideWithValue(staffroom),
+      currentStaffroomUserIdProvider.overrideWithValue(_me),
+      inboxTransportProvider.overrideWithValue(inbox),
+      currentInboxUserIdProvider.overrideWithValue(_me),
+    ],
+  );
+  addTearDown(container.dispose);
+  for (final update in updates) {
+    container.read(notificationsProvider.notifier).record(update);
+  }
 
   if (router) {
     final config = GoRouter(
@@ -110,8 +120,8 @@ Future<void> _pumpHub(
       ],
     );
     await tester.pumpWidget(
-      ProviderScope(
-        overrides: overrides,
+      UncontrolledProviderScope(
+        container: container,
         child: MaterialApp.router(
           theme: AppTheme.light(),
           locale: const Locale('en'),
@@ -123,8 +133,8 @@ Future<void> _pumpHub(
     );
   } else {
     await tester.pumpWidget(
-      ProviderScope(
-        overrides: overrides,
+      UncontrolledProviderScope(
+        container: container,
         child: MaterialApp(
           theme: AppTheme.light(),
           locale: const Locale('en'),
@@ -136,6 +146,7 @@ Future<void> _pumpHub(
     );
   }
   await tester.pumpAndSettle();
+  return container;
 }
 
 AppLocalizations _en() => lookupAppLocalizations(const Locale('en'));
@@ -143,7 +154,10 @@ AppLocalizations _en() => lookupAppLocalizations(const Locale('en'));
 void main() {
   final l10n = _en();
 
-  testWidgets('renders both segments; defaults to the Staffroom feed', (
+  // The Updates pane reads the on-device store, which touches prefs on build.
+  setUp(() => SharedPreferences.setMockInitialValues(<String, Object>{}));
+
+  testWidgets('renders all three segments; defaults to the Staffroom feed', (
     tester,
   ) async {
     await _pumpHub(
@@ -154,9 +168,10 @@ void main() {
       ),
     );
 
-    // Both segment labels are present.
+    // All three segment labels are present — the reserved third tab is filled.
     expect(find.text(l10n.networkTabStaffroom), findsWidgets);
     expect(find.text(l10n.networkTabMessages), findsWidgets);
+    expect(find.text(l10n.networkTabUpdates), findsWidgets);
     // The Network hub title.
     expect(find.text(l10n.networkTitle), findsOneWidget);
     // The Staffroom tab is active → the feed body shows; the Messages tab is
@@ -254,5 +269,105 @@ void main() {
         expect(find.byIcon(LucideIcons.logIn), findsNothing);
       },
     );
+  });
+
+  group('U-SI5: the reserved third tab', () {
+    TeacherNotification callRow() => TeacherNotification(
+      id: 'hotline:o1:callCompleted',
+      kind: TeacherNotificationKind.callCompleted,
+      at: DateTime.utc(2026, 8, 18, 11),
+      label: 'Asha Devi',
+    );
+
+    testWidgets('switching to Updates surfaces the on-device rows', (
+      tester,
+    ) async {
+      await _pumpHub(
+        tester,
+        staffroom: FakeStaffroomTransport()
+          ..feed = [_feedPost('staffroom body')],
+        inbox: FakeInboxTransport(
+          initialInbox: TransportSnapshot<List<Conversation>>.ready([_convo()]),
+        ),
+        updates: [callRow()],
+      );
+
+      await tester.tap(find.text(l10n.networkTabUpdates));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(l10n.notificationCallCompletedTitle('Asha Devi')),
+        findsOneWidget,
+      );
+      // The other two panes stay warm but offstage, exactly as they do for the
+      // existing pair.
+      expect(find.text('staffroom body'), findsNothing);
+      expect(find.text('Bina Devi'), findsNothing);
+    });
+
+    testWidgets('an empty Updates tab shows its own empty state, not the '
+        "inbox's", (tester) async {
+      await _pumpHub(
+        tester,
+        staffroom: FakeStaffroomTransport(),
+        inbox: FakeInboxTransport(
+          initialInbox: const TransportSnapshot<List<Conversation>>.ready(
+            <Conversation>[],
+          ),
+        ),
+      );
+
+      await tester.tap(find.text(l10n.networkTabUpdates));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.notificationsEmptyTitle), findsOneWidget);
+      expect(find.text(l10n.notificationsLocalNote), findsOneWidget);
+      expect(find.text(l10n.inboxEmptyTitle), findsNothing);
+    });
+
+    testWidgets('the app-bar bell badges unread and selects the Updates pane', (
+      tester,
+    ) async {
+      await _pumpHub(
+        tester,
+        staffroom: FakeStaffroomTransport()
+          ..feed = [_feedPost('staffroom body')],
+        inbox: FakeInboxTransport(
+          initialInbox: const TransportSnapshot<List<Conversation>>.ready(
+            <Conversation>[],
+          ),
+        ),
+        updates: [callRow()],
+      );
+
+      // Unread → the ringing glyph, visible from the Staffroom tab.
+      expect(find.byIcon(LucideIcons.bellRing), findsOneWidget);
+      expect(find.text('staffroom body'), findsOneWidget);
+
+      await tester.tap(find.byIcon(LucideIcons.bellRing));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(l10n.notificationCallCompletedTitle('Asha Devi')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('with nothing unread the bell is the quiet glyph', (
+      tester,
+    ) async {
+      await _pumpHub(
+        tester,
+        staffroom: FakeStaffroomTransport(),
+        inbox: FakeInboxTransport(
+          initialInbox: const TransportSnapshot<List<Conversation>>.ready(
+            <Conversation>[],
+          ),
+        ),
+      );
+
+      expect(find.byIcon(LucideIcons.bell), findsOneWidget);
+      expect(find.byIcon(LucideIcons.bellRing), findsNothing);
+    });
   });
 }

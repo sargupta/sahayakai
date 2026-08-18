@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
+import '../../../core/platform/clock.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/app_badge.dart';
 import '../../../shared/widgets/app_card.dart';
@@ -12,6 +13,8 @@ import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/note_banner.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
+import '../../notifications/data/notifications_store.dart';
+import '../../notifications/domain/teacher_notification.dart';
 import '../domain/attendance_class.dart';
 import '../domain/attendance_date.dart';
 import '../domain/attendance_record.dart';
@@ -107,6 +110,16 @@ class _AttendanceMonthScreenState extends ConsumerState<AttendanceMonthScreen> {
     final l10n = context.l10n;
     final today = ref.watch(attendanceWindowProvider).today;
     final summaries = ref.watch(monthlySummariesProvider(_key));
+
+    // The one attendance signal worth carrying to the Network hub's Updates
+    // tab: a run of consecutive absences at or past the Parent Hotline's own
+    // threshold. It comes off the rollup THIS SCREEN just read — the arithmetic
+    // stays on the server (see the class doc) and nothing extra is fetched.
+    ref.listen<AsyncValue<List<StudentAttendanceSummary>>>(
+      monthlySummariesProvider(_key),
+      (_, next) => _recordAbsenceRuns(next.valueOrNull),
+    );
+
     // There is nothing to show past the current month, and the route would
     // only answer with an empty rollup.
     final canStepForward =
@@ -171,6 +184,41 @@ class _AttendanceMonthScreenState extends ConsumerState<AttendanceMonthScreen> {
         ],
       ),
     );
+  }
+
+  /// Writes one Updates row per student whose consecutive-absence run has
+  /// reached [kAbsenceRunThreshold] in the month on screen.
+  ///
+  /// The row's id carries the class, the month, the student AND the run length,
+  /// which is what makes this idempotent without being deaf: re-opening the
+  /// same month writes nothing new, while a run that grows from three days to
+  /// five is a genuinely new signal and earns its own row.
+  ///
+  /// Only what the teacher has actually looked at is recorded. That is the
+  /// honest limit of a local surface — there is no background sweep of every
+  /// class, and there is no server-side attendance notification to subscribe
+  /// to. A teacher who never opens a month gets no row for it.
+  void _recordAbsenceRuns(List<StudentAttendanceSummary>? items) {
+    if (items == null || items.isEmpty) return;
+    final store = ref.read(notificationsProvider.notifier);
+    final at = ref.read(nowProvider)();
+    final className = widget.attendanceClass?.name;
+    for (final item in items) {
+      if (item.consecutiveAbsences < kAbsenceRunThreshold) continue;
+      store.record(
+        TeacherNotification(
+          id:
+              'absence:${widget.classId}:$_year-$_month:${item.studentId}'
+              ':${item.consecutiveAbsences}',
+          kind: TeacherNotificationKind.absenceRun,
+          at: at,
+          label: item.studentName,
+          className: className,
+          classId: widget.classId,
+          count: item.consecutiveAbsences,
+        ),
+      );
+    }
   }
 
   /// Previous / next month, with the month name coming from

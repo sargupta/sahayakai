@@ -8,6 +8,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/platform/clock.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/ai_text.dart';
@@ -24,6 +25,8 @@ import '../../../shared/widgets/note_banner.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/secondary_button.dart';
 import '../../attendance/data/attendance_errors.dart';
+import '../../notifications/data/notifications_store.dart';
+import '../../notifications/domain/teacher_notification.dart';
 import '../../vidya/presentation/vidya_sheet.dart';
 import '../domain/hotline_student.dart';
 import '../domain/parent_outreach.dart';
@@ -143,6 +146,20 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
     final l10n = context.l10n;
     final state = ref.watch(parentHotlineControllerProvider);
 
+    // Write the call's terminal outcome to the Network hub's Updates tab. The
+    // listener sits here, on the screen, rather than inside the controller: the
+    // controller is `@riverpod`-generated and the parent serialises codegen, so
+    // touching its body would put the tree into codegen drift. It is also the
+    // right seam either way — this is a presentation concern about where the
+    // teacher will look for the outcome later, not part of the call machine.
+    ref.listen<ParentHotlineState>(parentHotlineControllerProvider, (
+      prev,
+      next,
+    ) {
+      if (prev?.summaryOutcome == next.summaryOutcome) return;
+      _recordCallOutcome(next);
+    });
+
     // Terminal gates outrank the stage: the whole feature is blocked.
     final (Widget body, String revealKey) = switch (state) {
       _ when state.isSignedOut => (_signedOut(l10n), 'gate-signed-out'),
@@ -184,6 +201,53 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
         ),
       ),
     );
+  }
+
+  /// Records a terminal call outcome, and only the two the app has honest copy
+  /// for.
+  ///
+  ///   • [HotlineSummaryOutcome.summary]  -> the call completed and a summary
+  ///     exists, which is exactly what the row's body points at;
+  ///   • [HotlineSummaryOutcome.callFailed] and
+  ///     [HotlineSummaryOutcome.endedNoConversation] -> no conversation
+  ///     happened, and both lead back to the same two ways forward (call again,
+  ///     or send it on WhatsApp).
+  ///
+  /// Deliberately NOT recorded: [HotlineSummaryOutcome.manual], where no call
+  /// was ever placed, so there is no outcome to report; and
+  /// [HotlineSummaryOutcome.summaryUnavailable], where a conversation DID
+  /// happen but the summary never generated — the completed row's body promises
+  /// a summary that is not there, and a row that lies about what is waiting is
+  /// worse than no row. Giving that branch its own honest line is a copy
+  /// addition, noted in the handoff rather than faked here.
+  void _recordCallOutcome(ParentHotlineState state) {
+    final outreachId = state.outreachId;
+    final student = state.studentName?.trim();
+    if (outreachId == null || student == null || student.isEmpty) return;
+
+    final kind = switch (state.summaryOutcome) {
+      HotlineSummaryOutcome.summary => TeacherNotificationKind.callCompleted,
+      HotlineSummaryOutcome.callFailed ||
+      HotlineSummaryOutcome.endedNoConversation =>
+        TeacherNotificationKind.callFailed,
+      HotlineSummaryOutcome.manual ||
+      HotlineSummaryOutcome.summaryUnavailable ||
+      null => null,
+    };
+    if (kind == null) return;
+
+    ref
+        .read(notificationsProvider.notifier)
+        .record(
+          TeacherNotification(
+            // Keyed on the outreach AND the outcome: one call yields one row,
+            // however many times the summary poll re-lands the same state.
+            id: 'hotline:$outreachId:${kind.wire}',
+            kind: kind,
+            at: ref.read(nowProvider)(),
+            label: student,
+          ),
+        );
   }
 
   Widget _stageBody(
@@ -279,11 +343,8 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
 
     // A genuinely empty roster — the read succeeded and the teacher has no
     // students yet. Distinct from the fail-closed case above, which never
-    // reaches here.
-    // TODO(i18n): `parentHotlineRosterEmptyTitle` / `…Body` are proposed in
-    // docs/flutter/loop/pending_i18n/U2.7.json; a concurrent unit owns the ARB
-    // files this round, so the nearest existing copy stands in until they land.
-    if (roster.isEmpty) return _rosterUnavailable(l10n);
+    // reaches here, and it now says so in its own words.
+    if (roster.isEmpty) return _rosterEmpty(l10n);
 
     final classes = _distinctClasses(roster);
     final selectedClassId =
@@ -763,15 +824,13 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
           body: l10n.parentHotlineNoPhone,
         );
       case HotlineError.telephonyUnavailable:
-        // TODO(i18n): `parentHotlineTelephonyUnavailable` is proposed in
-        // docs/flutter/loop/pending_i18n/U2.7.json — "Calling isn't available
-        // right now. You can still copy the message to send on WhatsApp." A
-        // concurrent unit owns the ARB files this round, so the server-safe
-        // generic line stands in; the withdrawn Call button carries the meaning
-        // in the meantime.
+        // The server-safe `errorMessage` for a 503 is ApiException's generic
+        // "Something went wrong on our side", which is true but useless: the
+        // teacher cannot fix it, retrying cannot help, and the Call button has
+        // already been withdrawn. Own copy names the one path that still works.
         return InlineError(
           title: l10n.parentHotlineErrorTitle,
-          message: state.errorMessage ?? l10n.parentHotlineGenericError,
+          message: l10n.parentHotlineTelephonyUnavailable,
         );
       case HotlineError.callFailed:
         return InlineError(
@@ -834,6 +893,16 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
     icon: LucideIcons.users,
     title: l10n.parentHotlineRosterUnavailableTitle,
     message: l10n.parentHotlineRosterUnavailableBody,
+  );
+
+  /// The read SUCCEEDED and returned nobody: this teacher has classes but no
+  /// students on them (or no classes at all). Distinct from [_rosterUnavailable]
+  /// above, which is a server gap the teacher cannot act on — here there IS
+  /// something they can do, and the copy says what it is.
+  Widget _rosterEmpty(AppLocalizations l10n) => EmptyView(
+    icon: LucideIcons.userPlus,
+    title: l10n.parentHotlineRosterEmptyTitle,
+    message: l10n.parentHotlineRosterEmptyBody,
   );
 
   /// The 403 `PREMIUM_REQUIRED` treatment (`attendance/outreach/route.ts`).

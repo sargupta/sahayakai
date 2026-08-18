@@ -1466,25 +1466,6 @@ class AppLocalizationsMr extends AppLocalizations {
       'त्यासाठी प्रश्नपत्रिका मिळाली नाही. कृपया कमी धडे किंवा वेगळा विषय वापरून पहा.';
 
   @override
-  String get examPaperSave => 'ग्रंथालयात जतन करा';
-
-  @override
-  String get examPaperSaving => 'जतन करत आहे';
-
-  @override
-  String get examPaperSaved => 'तुमच्या ग्रंथालयात जतन केले';
-
-  @override
-  String get examPaperSaveFailedTitle => 'जतन करता आले नाही';
-
-  @override
-  String get examPaperSaveFailedBody =>
-      'आम्ही ही प्रश्नपत्रिका तुमच्या ग्रंथालयात जतन करू शकलो नाही. कृपया पुन्हा प्रयत्न करा.';
-
-  @override
-  String get examPaperSaveRetry => 'पुन्हा जतन करून पहा';
-
-  @override
   String get examPaperUnstructuredTitle =>
       'आम्ही ती प्रश्नपत्रिका रचू शकलो नाही';
 
@@ -1754,15 +1735,6 @@ class AppLocalizationsMr extends AppLocalizations {
     );
     return '$_temp0';
   }
-
-  @override
-  String get parentMessageCopy => 'कॉपी करा';
-
-  @override
-  String get parentMessageShare => 'शेअर करा';
-
-  @override
-  String get parentMessageCopied => 'संदेश कॉपी झाला';
 
   @override
   String get parentMessageSectionMessage => 'संदेश';
@@ -2158,6 +2130,14 @@ class AppLocalizationsMr extends AppLocalizations {
       'आम्ही अजून येथे तुमच्या विद्यार्थ्यांची यादी लोड करू शकत नाही. ती पुढील एखाद्या अपडेटमध्ये येईल. तुम्ही आधीच साइन इन आहात, त्यामुळे तुम्हाला काहीही दुरुस्त करण्याची गरज नाही.';
 
   @override
+  String get parentHotlineRosterEmptyTitle =>
+      'तुमच्या यादीत अजून कोणी विद्यार्थी नाही';
+
+  @override
+  String get parentHotlineRosterEmptyBody =>
+      'एखाद्या वर्गात विद्यार्थी जोडा, ते इथे दिसतील आणि घरी कॉल करण्यासाठी तयार असतील.';
+
+  @override
   String get parentHotlineReasonEyebrow => 'तुम्ही का कॉल करत आहात';
 
   @override
@@ -2217,6 +2197,10 @@ class AppLocalizationsMr extends AppLocalizations {
   @override
   String get parentHotlineGenericError =>
       'ते पूर्ण झाले नाही. कृपया पुन्हा प्रयत्न करा.';
+
+  @override
+  String get parentHotlineTelephonyUnavailable =>
+      'सध्या कॉल करणे उपलब्ध नाही. तुम्ही संदेश कॉपी करून WhatsApp वर पाठवू शकता.';
 
   @override
   String get parentHotlineEvidenceAttendanceHeader => 'उपस्थिती';
@@ -3147,6 +3131,60 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get networkTabMessages => 'संदेश';
+
+  @override
+  String get networkTabUpdates => 'अपडेट';
+
+  @override
+  String get notificationsEmptyTitle => 'अजून काही नवीन नाही';
+
+  @override
+  String get notificationsEmptyBody =>
+      'कॉलचे निकाल, उपस्थितीचे इशारे आणि तयार झालेली प्रश्नपत्रिका इथे येत राहतील.';
+
+  @override
+  String get notificationsLocalNote =>
+      'तुम्ही ॲप उघडता तेव्हा हे दिसतात. SahayakAI अद्याप फोनवर सूचना पाठवत नाही.';
+
+  @override
+  String get notificationsMarkAllRead => 'सर्व वाचलेले म्हणून चिन्हांकित करा';
+
+  @override
+  String notificationCallCompletedTitle(String student) {
+    return '$student साठी पालकांना केलेला कॉल पूर्ण झाला';
+  }
+
+  @override
+  String get notificationCallCompletedBody =>
+      'संभाषणाचा सारांश पालकांना कॉल विभागात तयार आहे.';
+
+  @override
+  String notificationCallFailedTitle(String student) {
+    return '$student साठी पालकांना केलेला कॉल जोडला गेला नाही';
+  }
+
+  @override
+  String get notificationCallFailedBody =>
+      'पुन्हा कॉल करा, किंवा संदेश WhatsApp वर पाठवा.';
+
+  @override
+  String notificationAbsenceTitle(String student, int count) {
+    return '$student सलग $count दिवस अनुपस्थित';
+  }
+
+  @override
+  String notificationAbsenceBody(String className) {
+    return 'चुकलेले दिवस पाहण्यासाठी $className उघडा.';
+  }
+
+  @override
+  String notificationExamPaperTitle(String subject) {
+    return '$subject ची प्रश्नपत्रिका तयार होत आहे';
+  }
+
+  @override
+  String get notificationExamPaperBody =>
+      'हे अजून तयार होत आहे आणि आपोआप तुमच्या ग्रंथालयात येईल.';
 
   @override
   String get staffroomTitle => 'स्टाफरूम';

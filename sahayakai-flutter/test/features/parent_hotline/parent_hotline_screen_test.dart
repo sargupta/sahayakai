@@ -320,6 +320,30 @@ void main() {
       expect(find.text('No parent number saved'), findsOneWidget);
     });
 
+    testWidgets('a roster that read fine but holds nobody says SO — it is not '
+        'the "not available yet" server gap', (tester) async {
+      // U2.7's pending keys have landed. The two states were sharing one
+      // sentence, which told a teacher with an empty class that the feature was
+      // missing rather than that they have no students yet.
+      await _pump(
+        tester,
+        overrides: [
+          parentHotlineControllerProvider.overrideWith(
+            () => _FakeHotlineController(const ParentHotlineState()),
+          ),
+          isSignedInProvider.overrideWithValue(true),
+          hotlineStudentRosterProvider.overrideWithValue(
+            const <HotlineStudent>[],
+          ),
+        ],
+      );
+
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      expect(find.text(l10n.parentHotlineRosterEmptyTitle), findsOneWidget);
+      expect(find.text(l10n.parentHotlineRosterEmptyBody), findsOneWidget);
+      expect(find.text(l10n.parentHotlineRosterUnavailableTitle), findsNothing);
+    });
+
     testWidgets('a retryable roster failure offers Try again, not the '
         '"coming later" copy', (tester) async {
       final client = FakeApiClient(
@@ -601,6 +625,12 @@ void main() {
       expect(find.byType(InlineError), findsOneWidget);
       expect(find.text('Call parent'), findsNothing);
       expect(find.text('Copy for WhatsApp'), findsOneWidget);
+      // U2.7's pending key has landed: the banner carries its OWN copy now, not
+      // ApiException's generic 5xx line. The teacher cannot fix a server-side
+      // telephony gap, so the sentence names the path that still works.
+      final l10n = lookupAppLocalizations(const Locale('en'));
+      expect(find.text(l10n.parentHotlineTelephonyUnavailable), findsOneWidget);
+      expect(find.text('Something went wrong on our side.'), findsNothing);
     });
 
     testWidgets('502 call-placement-failed KEEPS Call — it is the retry', (

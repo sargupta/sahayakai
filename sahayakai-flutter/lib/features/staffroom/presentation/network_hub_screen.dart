@@ -14,6 +14,8 @@ import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/secondary_button.dart';
 import '../../inbox/data/messages_stream_provider.dart';
 import '../../inbox/presentation/widgets/conversation_row.dart';
+import '../../notifications/data/notifications_store.dart';
+import '../../notifications/presentation/notifications_view.dart';
 import '../../vidya/presentation/vidya_sheet.dart';
 import 'staffroom_screen.dart';
 
@@ -32,9 +34,14 @@ import 'staffroom_screen.dart';
 ///
 /// The segmented control sits at the top of the body (not in a fixed-height app-
 /// bar bottom), so its chip fallback in Indic locales at textScale 1.3 wraps
-/// instead of clipping. The **notifications** surface is the third Network tab
-/// and lands with U-SI5 (the notifications screen); the app-bar actions slot is
-/// reserved for its bell.
+/// instead of clipping.
+///
+/// The reserved third tab is now filled: **Updates** → [NotificationsView], the
+/// on-device record of call outcomes, absence runs and queued generations. The
+/// app-bar slot the reservation kept for its bell holds [_NotificationsBell],
+/// which badges the unread count and selects that tab — so the count is visible
+/// from the other two panes, which is the only thing a bell buys once the
+/// surface itself is a tab.
 class NetworkHubScreen extends StatefulWidget {
   const NetworkHubScreen({super.key});
 
@@ -45,13 +52,21 @@ class NetworkHubScreen extends StatefulWidget {
 class _NetworkHubScreenState extends State<NetworkHubScreen> {
   int _index = 0;
 
+  /// The Updates pane's index in both the segmented control and the pane stack.
+  static const int _updatesIndex = 2;
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return Scaffold(
       appBar: GlassAppBar(
         title: Text(l10n.networkTitle),
-        actions: const [VidyaAppBarAction()],
+        actions: [
+          _NotificationsBell(
+            onPressed: () => setState(() => _index = _updatesIndex),
+          ),
+          const VidyaAppBarAction(),
+        ],
       ),
       body: SafeArea(
         child: Column(
@@ -69,6 +84,10 @@ class _NetworkHubScreenState extends State<NetworkHubScreen> {
                 segments: [
                   AppSegment<int>(value: 0, label: l10n.networkTabStaffroom),
                   AppSegment<int>(value: 1, label: l10n.networkTabMessages),
+                  AppSegment<int>(
+                    value: _updatesIndex,
+                    label: l10n.networkTabUpdates,
+                  ),
                 ],
               ),
             ),
@@ -85,9 +104,66 @@ class _NetworkHubScreenState extends State<NetworkHubScreen> {
                     child: const StaffroomFeedView(),
                   ),
                   Offstage(offstage: _index != 1, child: const _MessagesTab()),
+                  Offstage(
+                    offstage: _index != _updatesIndex,
+                    child: const NotificationsView(),
+                  ),
                 ],
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The app-bar bell: a badged entry to the Updates pane, visible from all three
+/// tabs. The badge is a dot, not a number — the count already sits on every
+/// unread row, and a numeral in a 40dp app-bar target is the first thing to
+/// clip at textScale 1.3 in an Indic locale. Its accessible label carries the
+/// count instead, through the same `inboxUnreadLabel` plural the inbox uses.
+///
+/// The dot takes the saffron TEXT token, not `scheme.primary`: the brand fill
+/// on the app bar's glass ground is ~2.26:1, under the 3:1 floor for a
+/// meaningful non-text indicator.
+class _NotificationsBell extends ConsumerWidget {
+  const _NotificationsBell({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final unread = ref.watch(unreadNotificationCountProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return IconButton(
+      tooltip: l10n.networkTabUpdates,
+      onPressed: onPressed,
+      icon: Semantics(
+        label: unread > 0 ? l10n.inboxUnreadLabel(unread) : null,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Icon(unread > 0 ? LucideIcons.bellRing : LucideIcons.bell),
+            if (unread > 0)
+              PositionedDirectional(
+                top: -1,
+                end: -1,
+                child: SizedBox(
+                  width: 8,
+                  height: 8,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isDark
+                          ? AppColors.dPrimaryText
+                          : AppColors.lPrimaryText,
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),

@@ -1466,25 +1466,6 @@ class AppLocalizationsPa extends AppLocalizations {
       'ਉਸ ਲਈ ਕੋਈ ਪ੍ਰਸ਼ਨ ਪੱਤਰ ਨਹੀਂ ਆਇਆ। ਕਿਰਪਾ ਕਰਕੇ ਘੱਟ ਅਧਿਆਇ ਜਾਂ ਵੱਖਰਾ ਵਿਸ਼ਾ ਅਜ਼ਮਾਓ।';
 
   @override
-  String get examPaperSave => 'ਲਾਇਬ੍ਰੇਰੀ ਵਿੱਚ ਸੰਭਾਲੋ';
-
-  @override
-  String get examPaperSaving => 'ਸੰਭਾਲ ਰਹੇ ਹਾਂ';
-
-  @override
-  String get examPaperSaved => 'ਤੁਹਾਡੀ ਲਾਇਬ੍ਰੇਰੀ ਵਿੱਚ ਸੰਭਾਲਿਆ ਗਿਆ';
-
-  @override
-  String get examPaperSaveFailedTitle => 'ਸੰਭਾਲਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ';
-
-  @override
-  String get examPaperSaveFailedBody =>
-      'ਅਸੀਂ ਇਹ ਪੱਤਰ ਤੁਹਾਡੀ ਲਾਇਬ੍ਰੇਰੀ ਵਿੱਚ ਸੰਭਾਲ ਨਹੀਂ ਸਕੇ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
-
-  @override
-  String get examPaperSaveRetry => 'ਦੁਬਾਰਾ ਸੰਭਾਲੋ';
-
-  @override
   String get examPaperUnstructuredTitle =>
       'ਅਸੀਂ ਉਹ ਪੱਤਰ ਢਾਂਚੇ ਵਿੱਚ ਨਹੀਂ ਢਾਲ ਸਕੇ';
 
@@ -1755,15 +1736,6 @@ class AppLocalizationsPa extends AppLocalizations {
     );
     return '$_temp0';
   }
-
-  @override
-  String get parentMessageCopy => 'ਕਾਪੀ ਕਰੋ';
-
-  @override
-  String get parentMessageShare => 'ਸਾਂਝਾ ਕਰੋ';
-
-  @override
-  String get parentMessageCopied => 'ਸੁਨੇਹਾ ਕਾਪੀ ਹੋ ਗਿਆ';
 
   @override
   String get parentMessageSectionMessage => 'ਸੁਨੇਹਾ';
@@ -2161,6 +2133,14 @@ class AppLocalizationsPa extends AppLocalizations {
       'ਅਸੀਂ ਹਾਲੇ ਇੱਥੇ ਤੁਹਾਡੇ ਵਿਦਿਆਰਥੀ ਲੋਡ ਨਹੀਂ ਕਰ ਸਕਦੇ। ਇਹ ਕਿਸੇ ਆਉਣ ਵਾਲੇ ਅੱਪਡੇਟ ਵਿੱਚ ਆਵੇਗਾ। ਤੁਸੀਂ ਪਹਿਲਾਂ ਹੀ ਸਾਈਨ ਇਨ ਹੋ, ਇਸ ਲਈ ਤੁਹਾਨੂੰ ਕੁਝ ਠੀਕ ਕਰਨ ਦੀ ਲੋੜ ਨਹੀਂ ਹੈ।';
 
   @override
+  String get parentHotlineRosterEmptyTitle =>
+      'ਤੁਹਾਡੀ ਸੂਚੀ ਵਿੱਚ ਹਾਲੇ ਕੋਈ ਵਿਦਿਆਰਥੀ ਨਹੀਂ ਹੈ';
+
+  @override
+  String get parentHotlineRosterEmptyBody =>
+      'ਕਿਸੇ ਜਮਾਤ ਵਿੱਚ ਵਿਦਿਆਰਥੀ ਸ਼ਾਮਲ ਕਰੋ, ਉਹ ਇੱਥੇ ਦਿਸਣਗੇ ਅਤੇ ਘਰ ਕਾਲ ਕਰਨ ਲਈ ਤਿਆਰ ਹੋਣਗੇ।';
+
+  @override
   String get parentHotlineReasonEyebrow => 'ਤੁਸੀਂ ਕਿਉਂ ਕਾਲ ਕਰ ਰਹੇ ਹੋ';
 
   @override
@@ -2221,6 +2201,10 @@ class AppLocalizationsPa extends AppLocalizations {
   @override
   String get parentHotlineGenericError =>
       'ਇਹ ਨਹੀਂ ਹੋ ਸਕਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
+
+  @override
+  String get parentHotlineTelephonyUnavailable =>
+      'ਇਸ ਵੇਲੇ ਕਾਲ ਕਰਨਾ ਉਪਲਬਧ ਨਹੀਂ ਹੈ। ਤੁਸੀਂ ਸੁਨੇਹਾ ਕਾਪੀ ਕਰਕੇ WhatsApp ਉੱਤੇ ਭੇਜ ਸਕਦੇ ਹੋ।';
 
   @override
   String get parentHotlineEvidenceAttendanceHeader => 'ਹਾਜ਼ਰੀ';
@@ -3154,6 +3138,60 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get networkTabMessages => 'ਸੁਨੇਹੇ';
+
+  @override
+  String get networkTabUpdates => 'ਅੱਪਡੇਟ';
+
+  @override
+  String get notificationsEmptyTitle => 'ਹਾਲੇ ਕੁਝ ਨਵਾਂ ਨਹੀਂ';
+
+  @override
+  String get notificationsEmptyBody =>
+      'ਕਾਲ ਦੇ ਨਤੀਜੇ, ਹਾਜ਼ਰੀ ਦੀਆਂ ਚੇਤਾਵਨੀਆਂ ਅਤੇ ਤਿਆਰ ਹੋਏ ਪ੍ਰਸ਼ਨ-ਪੱਤਰ ਇੱਥੇ ਆਉਂਦੇ ਰਹਿਣਗੇ।';
+
+  @override
+  String get notificationsLocalNote =>
+      'ਜਦੋਂ ਤੁਸੀਂ ਐਪ ਖੋਲ੍ਹਦੇ ਹੋ ਤਾਂ ਇਹ ਦਿਸਦੇ ਹਨ। SahayakAI ਹਾਲੇ ਫ਼ੋਨ ਸੂਚਨਾਵਾਂ ਨਹੀਂ ਭੇਜ ਸਕਦਾ।';
+
+  @override
+  String get notificationsMarkAllRead => 'ਸਭ ਨੂੰ ਪੜ੍ਹਿਆ ਹੋਇਆ ਨਿਸ਼ਾਨ ਲਾਓ';
+
+  @override
+  String notificationCallCompletedTitle(String student) {
+    return '$student ਲਈ ਮਾਪਿਆਂ ਨੂੰ ਕਾਲ ਪੂਰੀ ਹੋਈ';
+  }
+
+  @override
+  String get notificationCallCompletedBody =>
+      'ਗੱਲਬਾਤ ਦਾ ਸਾਰ ਮਾਪਿਆਂ ਨੂੰ ਕਾਲ ਹਿੱਸੇ ਵਿੱਚ ਤਿਆਰ ਹੈ।';
+
+  @override
+  String notificationCallFailedTitle(String student) {
+    return '$student ਲਈ ਮਾਪਿਆਂ ਨੂੰ ਕਾਲ ਨਹੀਂ ਜੁੜੀ';
+  }
+
+  @override
+  String get notificationCallFailedBody =>
+      'ਦੁਬਾਰਾ ਕਾਲ ਕਰੋ, ਜਾਂ ਸੁਨੇਹਾ WhatsApp ਉੱਤੇ ਭੇਜੋ।';
+
+  @override
+  String notificationAbsenceTitle(String student, int count) {
+    return '$student ਲਗਾਤਾਰ $count ਦਿਨ ਗੈਰਹਾਜ਼ਰ ਰਹੇ';
+  }
+
+  @override
+  String notificationAbsenceBody(String className) {
+    return 'ਖੁੰਝੇ ਦਿਨ ਵੇਖਣ ਲਈ $className ਖੋਲ੍ਹੋ।';
+  }
+
+  @override
+  String notificationExamPaperTitle(String subject) {
+    return '$subject ਦਾ ਪ੍ਰਸ਼ਨ-ਪੱਤਰ ਤਿਆਰ ਹੋ ਰਿਹਾ ਹੈ';
+  }
+
+  @override
+  String get notificationExamPaperBody =>
+      'ਇਹ ਹਾਲੇ ਤਿਆਰ ਹੋ ਰਿਹਾ ਹੈ ਅਤੇ ਆਪਣੇ ਆਪ ਤੁਹਾਡੀ ਲਾਇਬ੍ਰੇਰੀ ਵਿੱਚ ਆ ਜਾਵੇਗਾ।';
 
   @override
   String get staffroomTitle => 'ਸਟਾਫ਼ਰੂਮ';
