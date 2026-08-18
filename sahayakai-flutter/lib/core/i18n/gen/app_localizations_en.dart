@@ -3411,4 +3411,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get staffroomFollowFailed => 'Couldn\'t update. Tap to retry.';
+
+  @override
+  String get actionShare => 'Share';
+
+  @override
+  String get resultSaveToLibrary => 'Save to Library';
+
+  @override
+  String get resultSaving => 'Saving';
+
+  @override
+  String get resultSaved => 'Saved to your Library';
+
+  @override
+  String get resultSaveFailedTitle => 'Could not save';
+
+  @override
+  String get resultSaveFailedBody =>
+      'We could not save this to your library. Please try again.';
+
+  @override
+  String get resultSaveRetry => 'Try saving again';
+
+  @override
+  String get resultShareFailed =>
+      'Could not share. The text has been copied to your clipboard instead.';
 }

@@ -3440,4 +3440,30 @@ class AppLocalizationsGu extends AppLocalizations {
   @override
   String get staffroomFollowFailed =>
       'અપડેટ થઈ શક્યું નથી. ફરી પ્રયાસ કરવા ટૅપ કરો.';
+
+  @override
+  String get actionShare => 'શેર કરો';
+
+  @override
+  String get resultSaveToLibrary => 'પુસ્તકાલયમાં સાચવો';
+
+  @override
+  String get resultSaving => 'સાચવી રહ્યા છીએ';
+
+  @override
+  String get resultSaved => 'તમારા પુસ્તકાલયમાં સાચવ્યું';
+
+  @override
+  String get resultSaveFailedTitle => 'સાચવી શકાયું નહીં';
+
+  @override
+  String get resultSaveFailedBody =>
+      'અમે આ તમારા પુસ્તકાલયમાં સાચવી શક્યા નહીં. કૃપા કરીને ફરી પ્રયાસ કરો.';
+
+  @override
+  String get resultSaveRetry => 'ફરી સાચવવાનો પ્રયાસ કરો';
+
+  @override
+  String get resultShareFailed =>
+      'શેર કરી શકાયું નહીં. તેના બદલે લખાણ ક્લિપબોર્ડ પર કૉપિ થયું છે.';
 }

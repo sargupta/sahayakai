@@ -3434,4 +3434,30 @@ class AppLocalizationsMr extends AppLocalizations {
   @override
   String get staffroomFollowFailed =>
       'अपडेट होऊ शकले नाही. पुन्हा प्रयत्न करण्यासाठी टॅप करा.';
+
+  @override
+  String get actionShare => 'शेअर करा';
+
+  @override
+  String get resultSaveToLibrary => 'ग्रंथालयात जतन करा';
+
+  @override
+  String get resultSaving => 'जतन करत आहे';
+
+  @override
+  String get resultSaved => 'तुमच्या ग्रंथालयात जतन केले';
+
+  @override
+  String get resultSaveFailedTitle => 'जतन करता आले नाही';
+
+  @override
+  String get resultSaveFailedBody =>
+      'आम्ही हे तुमच्या ग्रंथालयात जतन करू शकलो नाही. कृपया पुन्हा प्रयत्न करा.';
+
+  @override
+  String get resultSaveRetry => 'पुन्हा जतन करून पहा';
+
+  @override
+  String get resultShareFailed =>
+      'शेअर करता आले नाही. त्याऐवजी मजकूर क्लिपबोर्डवर कॉपी केला आहे.';
 }

@@ -3447,4 +3447,30 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get staffroomFollowFailed =>
       'আপডেট করা যায়নি। আবার চেষ্টা করতে ট্যাপ করুন।';
+
+  @override
+  String get actionShare => 'শেয়ার করুন';
+
+  @override
+  String get resultSaveToLibrary => 'লাইব্রেরিতে সংরক্ষণ করুন';
+
+  @override
+  String get resultSaving => 'সংরক্ষণ হচ্ছে';
+
+  @override
+  String get resultSaved => 'আপনার লাইব্রেরিতে সংরক্ষিত হয়েছে';
+
+  @override
+  String get resultSaveFailedTitle => 'সংরক্ষণ করা যায়নি';
+
+  @override
+  String get resultSaveFailedBody =>
+      'আমরা এটি আপনার লাইব্রেরিতে সংরক্ষণ করতে পারিনি। অনুগ্রহ করে আবার চেষ্টা করুন।';
+
+  @override
+  String get resultSaveRetry => 'আবার সংরক্ষণের চেষ্টা করুন';
+
+  @override
+  String get resultShareFailed =>
+      'শেয়ার করা যায়নি। তার বদলে লেখাটি ক্লিপবোর্ডে কপি করা হয়েছে।';
 }

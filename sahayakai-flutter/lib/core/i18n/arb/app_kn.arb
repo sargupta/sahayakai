@@ -970,5 +970,13 @@
   "staffroomDisconnectCancel": "ಕನೆಕ್ಟ್ ಆಗಿರಿ",
   "staffroomFollow": "ಫಾಲೋ ಮಾಡಿ",
   "staffroomFollowing": "ಫಾಲೋ ಮಾಡುತ್ತಿದ್ದೀರಿ",
-  "staffroomFollowFailed": "ಅಪ್‌ಡೇಟ್ ಮಾಡಲಾಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಲು ಟ್ಯಾಪ್ ಮಾಡಿ."
+  "staffroomFollowFailed": "ಅಪ್‌ಡೇಟ್ ಮಾಡಲಾಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಲು ಟ್ಯಾಪ್ ಮಾಡಿ.",
+  "actionShare": "ಹಂಚಿಕೊಳ್ಳಿ",
+  "resultSaveToLibrary": "ಗ್ರಂಥಾಲಯಕ್ಕೆ ಉಳಿಸಿ",
+  "resultSaving": "ಉಳಿಸಲಾಗುತ್ತಿದೆ",
+  "resultSaved": "ನಿಮ್ಮ ಗ್ರಂಥಾಲಯಕ್ಕೆ ಉಳಿಸಲಾಗಿದೆ",
+  "resultSaveFailedTitle": "ಉಳಿಸಲಾಗಲಿಲ್ಲ",
+  "resultSaveFailedBody": "ಇದನ್ನು ನಿಮ್ಮ ಗ್ರಂಥಾಲಯಕ್ಕೆ ಉಳಿಸಲಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+  "resultSaveRetry": "ಮತ್ತೆ ಉಳಿಸಲು ಪ್ರಯತ್ನಿಸಿ",
+  "resultShareFailed": "ಹಂಚಿಕೊಳ್ಳಲಾಗಲಿಲ್ಲ. ಬದಲಾಗಿ ಪಠ್ಯವನ್ನು ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ."
 }

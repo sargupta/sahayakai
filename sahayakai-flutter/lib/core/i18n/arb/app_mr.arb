@@ -970,5 +970,13 @@
   "staffroomDisconnectCancel": "कनेक्ट रहा",
   "staffroomFollow": "फॉलो करा",
   "staffroomFollowing": "फॉलो करत आहात",
-  "staffroomFollowFailed": "अपडेट होऊ शकले नाही. पुन्हा प्रयत्न करण्यासाठी टॅप करा."
+  "staffroomFollowFailed": "अपडेट होऊ शकले नाही. पुन्हा प्रयत्न करण्यासाठी टॅप करा.",
+  "actionShare": "शेअर करा",
+  "resultSaveToLibrary": "ग्रंथालयात जतन करा",
+  "resultSaving": "जतन करत आहे",
+  "resultSaved": "तुमच्या ग्रंथालयात जतन केले",
+  "resultSaveFailedTitle": "जतन करता आले नाही",
+  "resultSaveFailedBody": "आम्ही हे तुमच्या ग्रंथालयात जतन करू शकलो नाही. कृपया पुन्हा प्रयत्न करा.",
+  "resultSaveRetry": "पुन्हा जतन करून पहा",
+  "resultShareFailed": "शेअर करता आले नाही. त्याऐवजी मजकूर क्लिपबोर्डवर कॉपी केला आहे."
 }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -12,14 +11,13 @@ import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/bullet_dot.dart';
 import '../../../../shared/widgets/document_sheet.dart';
 import '../../../../shared/widgets/empty_view.dart';
-import '../../../../shared/widgets/inline_error.dart';
 import '../../../../shared/widgets/note_banner.dart';
-import '../../../../shared/widgets/primary_button.dart';
 import '../../../../shared/widgets/read_aloud_button.dart';
+import '../../../../shared/widgets/result_actions_bar.dart';
 import '../../../../shared/widgets/rich_markdown.dart';
 import '../../../../shared/widgets/secondary_button.dart';
+import '../../data/worksheet_repository.dart';
 import '../../domain/worksheet.dart';
-import '../worksheet_controller.dart';
 
 /// Renders a generated [Worksheet] as a printed document, not a chat dump
 /// (PREMIUM_DESIGN_SPEC.md §5 / §6b U8 — the reference every other tool copies).
@@ -29,7 +27,8 @@ import '../worksheet_controller.dart';
 /// grade/subject meta badges), then the learning objectives, student
 /// instructions, numbered activities (as inset cards with saffron numeral
 /// medallions) and the answer key. Each block inks in on the Ink-settle reveal,
-/// and a footer action bar offers Regenerate / Copy.
+/// and a footer action bar offers Regenerate / Read aloud over the shared
+/// [ResultActionsBar] (Save to Library / Copy / Share).
 ///
 /// All model-authored content flows through [RichMarkdown] — the worksheet flow is
 /// instructed to emit math as LaTeX (`$…$` / `$$…$$`) and may use markdown, so it
@@ -53,8 +52,8 @@ class WorksheetResultView extends StatelessWidget {
   /// The request that produced [worksheet]. Supplies the prompt / language the
   /// `POST /api/content/save` body needs (the model output alone carries no
   /// prompt or language). When null — or when [onRegenerate] is null, so there
-  /// is no live generation behind the result — the Save action is omitted and
-  /// the footer falls back to Regenerate / Copy only.
+  /// is no live generation behind the result — the Save action is withheld and
+  /// the bar offers Copy / Share only.
   final WorksheetRequest? saveRequest;
 
   @override
@@ -68,8 +67,9 @@ class WorksheetResultView extends StatelessWidget {
       );
     }
 
-    final title =
-        worksheet.title.isNotEmpty ? worksheet.title : l10n.worksheetTitle;
+    final title = worksheet.title.isNotEmpty
+        ? worksheet.title
+        : l10n.worksheetTitle;
 
     final meta = <Widget>[
       if (worksheet.gradeLevel != null)
@@ -130,11 +130,14 @@ class WorksheetResultView extends StatelessWidget {
   }
 }
 
-/// The document's action bar: the PUT-to-library Save (when a [saveRequest] is
-/// available) over Regenerate (secondary) and a Copy ghost. Copy exports the
-/// worksheet as plain text to the clipboard — a presentation-only action, no
-/// controller involved.
-class _ActionBar extends StatelessWidget {
+/// The document's action bar: Regenerate (secondary) and Read aloud over the
+/// shared [ResultActionsBar] — Save to Library / Copy / Share.
+///
+/// Copy exports the worksheet as plain text; Share hands that same text to the
+/// OS sheet (how a teacher passes a worksheet to a colleague on WhatsApp); Save
+/// POSTs it to the library and is offered only when a [saveRequest] supplies
+/// the prompt and language the model output does not carry.
+class _ActionBar extends ConsumerWidget {
   const _ActionBar({
     required this.worksheet,
     required this.onRegenerate,
@@ -146,137 +149,39 @@ class _ActionBar extends StatelessWidget {
   final WorksheetRequest? saveRequest;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final text = Theme.of(context).textTheme;
-    final saffron = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
-    final messenger = ScaffoldMessenger.of(context);
-
-    void copy() {
-      Clipboard.setData(ClipboardData(text: _worksheetAsText(worksheet, l10n)));
-      messenger
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text(l10n.copyConfirmation)));
-    }
+    final text = _worksheetAsText(worksheet, l10n);
+    final request = saveRequest;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (saveRequest != null) ...[
-          _SaveBar(worksheet: worksheet, request: saveRequest!),
-          const SizedBox(height: AppSpacing.space3),
-        ],
         SecondaryButton(
           label: l10n.actionRegenerate,
           icon: LucideIcons.refreshCw,
           onPressed: onRegenerate,
         ),
         const SizedBox(height: AppSpacing.space2),
-        ReadAloudButton(
-          text: _worksheetAsText(worksheet, l10n),
-        ),
-        const SizedBox(height: AppSpacing.space2),
-        SizedBox(
-          height: 48,
-          child: TextButton.icon(
-            onPressed: copy,
-            icon: const Icon(LucideIcons.copy, size: AppIconSize.inline),
-            label: Text(l10n.actionCopy),
-            style: TextButton.styleFrom(
-              foregroundColor: saffron,
-              textStyle: text.labelLarge,
-            ),
-          ),
+        ReadAloudButton(text: text),
+        const SizedBox(height: AppSpacing.space3),
+        ResultActionsBar(
+          text: text,
+          shareSubject: worksheet.title.isEmpty ? null : worksheet.title,
+          saveResetKey: worksheet,
+          onSave: request == null
+              ? null
+              : () => ref
+                    .read(worksheetRepositoryProvider)
+                    .save(
+                      worksheet: worksheet,
+                      prompt: request.prompt,
+                      gradeLevel: request.gradeLevel,
+                      language: request.language,
+                    ),
         ),
       ],
-    );
-  }
-}
-
-/// The POST-to-library save action. Reads the save controller so the button
-/// reflects saving / saved / failed without ever disturbing the rendered
-/// worksheet. Mirrors the exam-paper `_SaveBar`.
-class _SaveBar extends ConsumerWidget {
-  const _SaveBar({required this.worksheet, required this.request});
-
-  final Worksheet worksheet;
-  final WorksheetRequest request;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
-    final state = ref.watch(worksheetSaveControllerProvider);
-
-    Future<void> save() =>
-        ref.read(worksheetSaveControllerProvider.notifier).save(
-              worksheet: worksheet,
-              prompt: request.prompt,
-              gradeLevel: request.gradeLevel,
-              language: request.language,
-            );
-
-    // Saved: a non-empty contentId came back.
-    final savedId = state.valueOrNull;
-    if (!state.isLoading &&
-        !state.hasError &&
-        savedId != null &&
-        savedId.isNotEmpty) {
-      return Row(
-        children: [
-          Icon(
-            LucideIcons.checkCircle,
-            size: AppIconSize.inline,
-            color: scheme.primary,
-          ),
-          const SizedBox(width: AppSpacing.space2),
-          Expanded(
-            child: Text(
-              l10n.worksheetSaved,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: scheme.onSurfaceVariant, height: 1.4),
-            ),
-          ),
-        ],
-      );
-    }
-
-    // Failed: show the reason and let the teacher try the save again.
-    if (state.hasError) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          InlineError(
-            title: l10n.worksheetSaveFailedTitle,
-            message: l10n.worksheetSaveFailedBody,
-          ),
-          const SizedBox(height: AppSpacing.space3),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: OutlinedButton.icon(
-              onPressed: save,
-              icon:
-                  const Icon(LucideIcons.refreshCw, size: AppIconSize.inline),
-              label: Text(l10n.worksheetSaveRetry),
-            ),
-          ),
-        ],
-      );
-    }
-
-    // Idle or saving — the primary action, a saffron CTA whose width holds while
-    // it spins.
-    final saving = state.isLoading;
-    return PrimaryButton(
-      label: saving ? l10n.worksheetSaving : l10n.worksheetSave,
-      icon: saving ? null : LucideIcons.save,
-      isBusy: saving,
-      onPressed: save,
     );
   }
 }
@@ -285,9 +190,10 @@ class _SaveBar extends ConsumerWidget {
 String _worksheetAsText(Worksheet worksheet, AppLocalizations l10n) {
   final b = StringBuffer();
   if (worksheet.title.isNotEmpty) b.writeln(worksheet.title);
-  final metaBits = [worksheet.gradeLevel, worksheet.subject]
-      .whereType<String>()
-      .toList();
+  final metaBits = [
+    worksheet.gradeLevel,
+    worksheet.subject,
+  ].whereType<String>().toList();
   if (metaBits.isNotEmpty) b.writeln(metaBits.join(' · '));
 
   if (worksheet.learningObjectives.isNotEmpty) {

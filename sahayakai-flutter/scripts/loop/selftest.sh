@@ -110,9 +110,22 @@ else
   ok "i18n_count reads real ARBs and agrees with the audit (untranslated=$n)"
 fi
 
+# Assert the two READERS agree, not a pinned number. The count legitimately
+# GROWS whenever a unit adds a user-facing string — this case was hardcoded at
+# 971 and broke the moment U2.9 added eight. That is the third assertion in this
+# file to fail because it pinned a snapshot instead of an invariant (the other
+# two asserted untranslated > 0 and red claims > 0, both of which became false
+# the moment the work succeeded). The invariant here is that app_en.arb and the
+# audit see the same template.
 k="$(python3 -c "import json;print(len([x for x in json.load(open('lib/core/i18n/arb/app_en.arb')) if not x.startswith('@')]))")"
-if [ "$k" -eq 971 ]; then ok "template key count matches the audited value (971)"
-else nope "template keys = $k, audit said 971 — one of them is wrong, find out which"; fi
+ka="$(python3 scripts/loop/i18n_audit.py --json 2>/dev/null       | python3 -c 'import json,sys; print(json.load(sys.stdin)["templateKeys"])' 2>/dev/null)"
+if [ -z "${k:-}" ] || [ "${k:-0}" -lt 100 ]; then
+  nope "template key count is $k — app_en.arb is not being read"
+elif [ "$k" != "$ka" ]; then
+  nope "app_en.arb has $k keys but the audit reports $ka — the two readers disagree"
+else
+  ok "app_en.arb and the audit agree on the template ($k keys)"
+fi
 
 # ── 6. doc_truth_guard must report the honest red count, and --strict must exit 1
 # Proving doc_truth_guard works must NOT assume a claim is red. The original

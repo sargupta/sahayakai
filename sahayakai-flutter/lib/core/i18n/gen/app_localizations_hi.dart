@@ -3435,4 +3435,30 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get staffroomFollowFailed =>
       'अपडेट नहीं हो सका। पुनः प्रयास के लिए टैप करें।';
+
+  @override
+  String get actionShare => 'साझा करें';
+
+  @override
+  String get resultSaveToLibrary => 'लाइब्रेरी में सहेजें';
+
+  @override
+  String get resultSaving => 'सहेजा जा रहा है';
+
+  @override
+  String get resultSaved => 'आपकी लाइब्रेरी में सहेजा गया';
+
+  @override
+  String get resultSaveFailedTitle => 'सहेजा नहीं जा सका';
+
+  @override
+  String get resultSaveFailedBody =>
+      'हम इसे आपकी लाइब्रेरी में सहेज नहीं सके। कृपया फिर कोशिश करें।';
+
+  @override
+  String get resultSaveRetry => 'फिर से सहेजने की कोशिश करें';
+
+  @override
+  String get resultShareFailed =>
+      'साझा नहीं किया जा सका। पाठ इसके बजाय क्लिपबोर्ड पर कॉपी कर दिया गया है।';
 }

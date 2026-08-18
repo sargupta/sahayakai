@@ -970,5 +970,13 @@
   "staffroomDisconnectCancel": "कनेक्टेड रहें",
   "staffroomFollow": "फ़ॉलो करें",
   "staffroomFollowing": "फ़ॉलो कर रहे हैं",
-  "staffroomFollowFailed": "अपडेट नहीं हो सका। पुनः प्रयास के लिए टैप करें।"
+  "staffroomFollowFailed": "अपडेट नहीं हो सका। पुनः प्रयास के लिए टैप करें।",
+  "actionShare": "साझा करें",
+  "resultSaveToLibrary": "लाइब्रेरी में सहेजें",
+  "resultSaving": "सहेजा जा रहा है",
+  "resultSaved": "आपकी लाइब्रेरी में सहेजा गया",
+  "resultSaveFailedTitle": "सहेजा नहीं जा सका",
+  "resultSaveFailedBody": "हम इसे आपकी लाइब्रेरी में सहेज नहीं सके। कृपया फिर कोशिश करें।",
+  "resultSaveRetry": "फिर से सहेजने की कोशिश करें",
+  "resultShareFailed": "साझा नहीं किया जा सका। पाठ इसके बजाय क्लिपबोर्ड पर कॉपी कर दिया गया है।"
 }

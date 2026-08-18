@@ -85,8 +85,13 @@ class LessonPlanResponseDto {
   final String? language;
   final ValidationWarningDto? validationWarning;
 
-  LessonPlan toDomain() {
+  /// [raw] is the verbatim response body. The live generate path passes it, so
+  /// a later "Save to Library" persists the model's own object; the Library's
+  /// re-render path (`library_result_mapper.dart`) leaves it null, because a
+  /// saved item is already saved and offers no Save action to feed.
+  LessonPlan toDomain({Map<String, dynamic>? raw}) {
     return LessonPlan(
+      raw: raw,
       title: _clean(title) ?? '',
       language: _clean(language) ?? 'English',
       gradeLevel: _clean(gradeLevel),
@@ -145,13 +150,13 @@ class ActivityDto {
   final String? understandingCheck;
 
   LessonActivity toDomain() => LessonActivity(
-        phase: _clean(phase) ?? '',
-        name: _clean(name) ?? '',
-        description: _clean(description) ?? '',
-        duration: _clean(duration),
-        teacherTips: _clean(teacherTips),
-        understandingCheck: _clean(understandingCheck),
-      );
+    phase: _clean(phase) ?? '',
+    name: _clean(name) ?? '',
+    description: _clean(description) ?? '',
+    duration: _clean(duration),
+    teacherTips: _clean(teacherTips),
+    understandingCheck: _clean(understandingCheck),
+  );
 }
 
 @JsonSerializable(createToJson: false)

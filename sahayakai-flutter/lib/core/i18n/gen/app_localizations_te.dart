@@ -3454,4 +3454,30 @@ class AppLocalizationsTe extends AppLocalizations {
   @override
   String get staffroomFollowFailed =>
       'అప్‌డేట్ చేయలేకపోయాం. మళ్లీ ప్రయత్నించడానికి ట్యాప్ చేయండి.';
+
+  @override
+  String get actionShare => 'షేర్ చేయండి';
+
+  @override
+  String get resultSaveToLibrary => 'గ్రంథాలయంలో సేవ్ చేయండి';
+
+  @override
+  String get resultSaving => 'సేవ్ అవుతోంది';
+
+  @override
+  String get resultSaved => 'మీ గ్రంథాలయంలో సేవ్ చేయబడింది';
+
+  @override
+  String get resultSaveFailedTitle => 'సేవ్ చేయలేకపోయాము';
+
+  @override
+  String get resultSaveFailedBody =>
+      'దీన్ని మీ గ్రంథాలయంలో సేవ్ చేయలేకపోయాము. దయచేసి మళ్లీ ప్రయత్నించండి.';
+
+  @override
+  String get resultSaveRetry => 'మళ్లీ సేవ్ చేయడానికి ప్రయత్నించండి';
+
+  @override
+  String get resultShareFailed =>
+      'షేర్ చేయలేకపోయాము. బదులుగా వచనం క్లిప్‌బోర్డుకు కాపీ చేయబడింది.';
 }

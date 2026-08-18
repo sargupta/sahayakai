@@ -128,9 +128,10 @@ class _WorksheetWizardScreenState extends ConsumerState<WorksheetWizardScreen> {
       language: _language.aiName,
     );
     _lastRequest = request;
-    // A fresh generation starts a fresh save state, so the previous worksheet's
-    // "Saved" badge does not carry over onto the new result.
-    ref.read(worksheetSaveControllerProvider.notifier).reset();
+    // A fresh generation starts a fresh save state — the previous worksheet's
+    // "Saved" badge must not carry over onto the new result. That reset now
+    // rides on the result itself: `ResultActionsBar.saveResetKey` is the
+    // rendered Worksheet, and a new generation is a new instance.
     ref.read(worksheetControllerProvider.notifier).generate(request);
   }
 

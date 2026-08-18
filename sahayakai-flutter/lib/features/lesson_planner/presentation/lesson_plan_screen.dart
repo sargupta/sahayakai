@@ -64,6 +64,11 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
   /// the first voice-originated result lands (VOICE_FIRST_GAP §5.6).
   bool _spokeVoiceSummary = false;
 
+  /// The request behind the plan on screen. "Save to Library" needs the topic,
+  /// grade and language that the model output does not carry, so the submitted
+  /// request is held here exactly as the worksheet screen holds its own.
+  LessonPlanRequest? _lastRequest;
+
   @override
   void initState() {
     super.initState();
@@ -119,6 +124,7 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
       useRuralContext: _useRuralContext,
       imageDataUri: _image?.dataUri,
     );
+    _lastRequest = request;
     ref.read(lessonPlanControllerProvider.notifier).generate(request);
   }
 
@@ -163,8 +169,10 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
     final state = ref.watch(lessonPlanControllerProvider);
 
     // Auto-scroll to the result header on a fresh success (loading -> data).
-    ref.listen<AsyncValue<LessonPlan?>>(lessonPlanControllerProvider,
-        (prev, next) {
+    ref.listen<AsyncValue<LessonPlan?>>(lessonPlanControllerProvider, (
+      prev,
+      next,
+    ) {
       final wasLoading = prev?.isLoading ?? false;
       final nowHasPlan =
           !next.isLoading && next.hasValue && next.valueOrNull != null;
@@ -182,8 +190,11 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
             state: state,
             skeleton: const LessonPlanSkeleton(),
             emptyMessage: l10n.lessonPlanEmpty,
-            onData: (plan) =>
-                LessonPlanResultView(plan: plan, onRegenerate: _submit),
+            onData: (plan) => LessonPlanResultView(
+              plan: plan,
+              onRegenerate: _submit,
+              saveRequest: _lastRequest,
+            ),
           );
 
     return ToolScaffold(
@@ -341,11 +352,17 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
         onChanged: (value) => setState(() => _resource = value),
         segments: [
           AppSegment(
-              value: ResourceLevel.low, label: l10n.lessonPlanResourceLow),
+            value: ResourceLevel.low,
+            label: l10n.lessonPlanResourceLow,
+          ),
           AppSegment(
-              value: ResourceLevel.medium, label: l10n.lessonPlanResourceMedium),
+            value: ResourceLevel.medium,
+            label: l10n.lessonPlanResourceMedium,
+          ),
           AppSegment(
-              value: ResourceLevel.high, label: l10n.lessonPlanResourceHigh),
+            value: ResourceLevel.high,
+            label: l10n.lessonPlanResourceHigh,
+          ),
         ],
       ),
     );
@@ -360,14 +377,17 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
         onChanged: (value) => setState(() => _difficulty = value),
         segments: [
           AppSegment(
-              value: DifficultyLevel.remedial,
-              label: l10n.lessonPlanDifficultyRemedial),
+            value: DifficultyLevel.remedial,
+            label: l10n.lessonPlanDifficultyRemedial,
+          ),
           AppSegment(
-              value: DifficultyLevel.standard,
-              label: l10n.lessonPlanDifficultyStandard),
+            value: DifficultyLevel.standard,
+            label: l10n.lessonPlanDifficultyStandard,
+          ),
           AppSegment(
-              value: DifficultyLevel.advanced,
-              label: l10n.lessonPlanDifficultyAdvanced),
+            value: DifficultyLevel.advanced,
+            label: l10n.lessonPlanDifficultyAdvanced,
+          ),
         ],
       ),
     );

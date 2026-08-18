@@ -3498,4 +3498,30 @@ class AppLocalizationsTa extends AppLocalizations {
   @override
   String get staffroomFollowFailed =>
       'புதுப்பிக்க முடியவில்லை. மீண்டும் முயல தட்டவும்.';
+
+  @override
+  String get actionShare => 'பகிர்';
+
+  @override
+  String get resultSaveToLibrary => 'நூலகத்தில் சேமி';
+
+  @override
+  String get resultSaving => 'சேமிக்கிறது';
+
+  @override
+  String get resultSaved => 'உங்கள் நூலகத்தில் சேமிக்கப்பட்டது';
+
+  @override
+  String get resultSaveFailedTitle => 'சேமிக்க முடியவில்லை';
+
+  @override
+  String get resultSaveFailedBody =>
+      'இதை உங்கள் நூலகத்தில் சேமிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.';
+
+  @override
+  String get resultSaveRetry => 'மீண்டும் சேமிக்க முயற்சிக்கவும்';
+
+  @override
+  String get resultShareFailed =>
+      'பகிர முடியவில்லை. அதற்குப் பதிலாக உரை கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டது.';
 }

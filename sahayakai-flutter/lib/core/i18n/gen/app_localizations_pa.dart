@@ -3441,4 +3441,30 @@ class AppLocalizationsPa extends AppLocalizations {
   @override
   String get staffroomFollowFailed =>
       'ਅੱਪਡੇਟ ਨਹੀਂ ਹੋ ਸਕਿਆ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਲਈ ਟੈਪ ਕਰੋ।';
+
+  @override
+  String get actionShare => 'ਸਾਂਝਾ ਕਰੋ';
+
+  @override
+  String get resultSaveToLibrary => 'ਲਾਇਬ੍ਰੇਰੀ ਵਿੱਚ ਸੰਭਾਲੋ';
+
+  @override
+  String get resultSaving => 'ਸੰਭਾਲ ਰਹੇ ਹਾਂ';
+
+  @override
+  String get resultSaved => 'ਤੁਹਾਡੀ ਲਾਇਬ੍ਰੇਰੀ ਵਿੱਚ ਸੰਭਾਲਿਆ ਗਿਆ';
+
+  @override
+  String get resultSaveFailedTitle => 'ਸੰਭਾਲਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ';
+
+  @override
+  String get resultSaveFailedBody =>
+      'ਅਸੀਂ ਇਸਨੂੰ ਤੁਹਾਡੀ ਲਾਇਬ੍ਰੇਰੀ ਵਿੱਚ ਸੰਭਾਲ ਨਹੀਂ ਸਕੇ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
+
+  @override
+  String get resultSaveRetry => 'ਦੁਬਾਰਾ ਸੰਭਾਲੋ';
+
+  @override
+  String get resultShareFailed =>
+      'ਸਾਂਝਾ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ। ਇਸ ਦੀ ਥਾਂ ਲਿਖਤ ਕਲਿੱਪਬੋਰਡ \'ਤੇ ਕਾਪੀ ਕਰ ਦਿੱਤੀ ਗਈ ਹੈ।';
 }

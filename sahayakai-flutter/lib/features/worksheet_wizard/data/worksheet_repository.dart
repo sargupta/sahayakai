@@ -1,10 +1,9 @@
-import 'dart:math' as math;
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_providers.dart';
+import '../../../shared/data/content_id.dart';
 import '../domain/worksheet.dart';
 import 'worksheet_dtos.dart';
 
@@ -53,7 +52,7 @@ class WorksheetRepository {
         ? trimmedPrompt
         : trimmedPrompt.substring(0, 30);
     final body = <String, dynamic>{
-      'id': _uuidV4(),
+      'id': newContentId(),
       'type': 'worksheet',
       'title': 'Worksheet: $titleSeed',
       'gradeLevel': worksheet.gradeLevel ?? gradeLevel ?? 'Class 5',
@@ -73,19 +72,6 @@ class WorksheetRepository {
       decode: (json) => (json['id'] as String?)?.trim() ?? '',
     );
   }
-}
-
-/// A RFC-4122 version-4 UUID, generated without a package dependency. The
-/// `/api/content/save` schema requires `id` to be a valid UUID
-/// (`z.string().uuid()`), so the format (version + variant bits) matters.
-String _uuidV4() {
-  final rnd = math.Random.secure();
-  final bytes = List<int>.generate(16, (_) => rnd.nextInt(256));
-  bytes[6] = (bytes[6] & 0x0f) | 0x40; // version 4
-  bytes[8] = (bytes[8] & 0x3f) | 0x80; // variant 10xx
-  final hex = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
-  return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-'
-      '${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}';
 }
 
 @riverpod

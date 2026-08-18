@@ -970,5 +970,13 @@
   "staffroomDisconnectCancel": "ਕਨੈਕਟ ਰਹੋ",
   "staffroomFollow": "ਫਾਲੋ ਕਰੋ",
   "staffroomFollowing": "ਫਾਲੋ ਕਰ ਰਹੇ ਹੋ",
-  "staffroomFollowFailed": "ਅੱਪਡੇਟ ਨਹੀਂ ਹੋ ਸਕਿਆ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਲਈ ਟੈਪ ਕਰੋ।"
+  "staffroomFollowFailed": "ਅੱਪਡੇਟ ਨਹੀਂ ਹੋ ਸਕਿਆ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਲਈ ਟੈਪ ਕਰੋ।",
+  "actionShare": "ਸਾਂਝਾ ਕਰੋ",
+  "resultSaveToLibrary": "ਲਾਇਬ੍ਰੇਰੀ ਵਿੱਚ ਸੰਭਾਲੋ",
+  "resultSaving": "ਸੰਭਾਲ ਰਹੇ ਹਾਂ",
+  "resultSaved": "ਤੁਹਾਡੀ ਲਾਇਬ੍ਰੇਰੀ ਵਿੱਚ ਸੰਭਾਲਿਆ ਗਿਆ",
+  "resultSaveFailedTitle": "ਸੰਭਾਲਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ",
+  "resultSaveFailedBody": "ਅਸੀਂ ਇਸਨੂੰ ਤੁਹਾਡੀ ਲਾਇਬ੍ਰੇਰੀ ਵਿੱਚ ਸੰਭਾਲ ਨਹੀਂ ਸਕੇ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+  "resultSaveRetry": "ਦੁਬਾਰਾ ਸੰਭਾਲੋ",
+  "resultShareFailed": "ਸਾਂਝਾ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ। ਇਸ ਦੀ ਥਾਂ ਲਿਖਤ ਕਲਿੱਪਬੋਰਡ 'ਤੇ ਕਾਪੀ ਕਰ ਦਿੱਤੀ ਗਈ ਹੈ।"
 }

@@ -3455,4 +3455,30 @@ class AppLocalizationsOr extends AppLocalizations {
   @override
   String get staffroomFollowFailed =>
       'ଅପଡେଟ୍ ହୋଇପାରିଲା ନାହିଁ। ପୁଣି ଚେଷ୍ଟା କରିବାକୁ ଟ୍ୟାପ୍ କରନ୍ତୁ।';
+
+  @override
+  String get actionShare => 'ସେୟାର୍ କରନ୍ତୁ';
+
+  @override
+  String get resultSaveToLibrary => 'ଲାଇବ୍ରେରୀରେ ସେଭ୍ କରନ୍ତୁ';
+
+  @override
+  String get resultSaving => 'ସେଭ୍ ହେଉଛି';
+
+  @override
+  String get resultSaved => 'ଆପଣଙ୍କ ଲାଇବ୍ରେରୀରେ ସେଭ୍ ହେଲା';
+
+  @override
+  String get resultSaveFailedTitle => 'ସେଭ୍ ହୋଇପାରିଲା ନାହିଁ';
+
+  @override
+  String get resultSaveFailedBody =>
+      'ଆମେ ଏହାକୁ ଆପଣଙ୍କ ଲାଇବ୍ରେରୀରେ ସେଭ୍ କରିପାରିଲୁ ନାହିଁ। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
+
+  @override
+  String get resultSaveRetry => 'ପୁଣି ସେଭ୍ କରିବାକୁ ଚେଷ୍ଟା କରନ୍ତୁ';
+
+  @override
+  String get resultShareFailed =>
+      'ସେୟାର୍ କରାଯାଇପାରିଲା ନାହିଁ। ଏହା ବଦଳରେ ଲେଖା କ୍ଲିପବୋର୍ଡକୁ କପି କରାଗଲା।';
 }

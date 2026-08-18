@@ -113,6 +113,7 @@ class LessonPlan {
     this.assessment,
     this.homework,
     this.validationWarning,
+    this.raw,
   });
 
   final String title;
@@ -127,4 +128,14 @@ class LessonPlan {
   final String? assessment;
   final String? homework;
   final ValidationWarning? validationWarning;
+
+  /// The verbatim `/api/ai/lesson-plan` response body, kept so a later "Save to
+  /// Library" can persist EXACTLY the object the server-side flow persists as
+  /// `data` (`LessonPlanOutputSchema`, see
+  /// `sahayakai-main/src/ai/flows/lesson-plan-generator.ts`) rather than a
+  /// re-serialized domain object that would quietly drop any field this app
+  /// does not model. Null for a plan that did not come from a live generation
+  /// (a Library item re-rendered read-only, or a test fixture) — and the Save
+  /// action is withheld in exactly that case.
+  final Map<String, dynamic>? raw;
 }

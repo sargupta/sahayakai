@@ -970,5 +970,13 @@
   "staffroomDisconnectCancel": "కనెక్ట్‌గా ఉండండి",
   "staffroomFollow": "ఫాలో అవ్వండి",
   "staffroomFollowing": "ఫాలో అవుతున్నారు",
-  "staffroomFollowFailed": "అప్‌డేట్ చేయలేకపోయాం. మళ్లీ ప్రయత్నించడానికి ట్యాప్ చేయండి."
+  "staffroomFollowFailed": "అప్‌డేట్ చేయలేకపోయాం. మళ్లీ ప్రయత్నించడానికి ట్యాప్ చేయండి.",
+  "actionShare": "షేర్ చేయండి",
+  "resultSaveToLibrary": "గ్రంథాలయంలో సేవ్ చేయండి",
+  "resultSaving": "సేవ్ అవుతోంది",
+  "resultSaved": "మీ గ్రంథాలయంలో సేవ్ చేయబడింది",
+  "resultSaveFailedTitle": "సేవ్ చేయలేకపోయాము",
+  "resultSaveFailedBody": "దీన్ని మీ గ్రంథాలయంలో సేవ్ చేయలేకపోయాము. దయచేసి మళ్లీ ప్రయత్నించండి.",
+  "resultSaveRetry": "మళ్లీ సేవ్ చేయడానికి ప్రయత్నించండి",
+  "resultShareFailed": "షేర్ చేయలేకపోయాము. బదులుగా వచనం క్లిప్‌బోర్డుకు కాపీ చేయబడింది."
 }

@@ -3476,4 +3476,30 @@ class AppLocalizationsMl extends AppLocalizations {
   @override
   String get staffroomFollowFailed =>
       'അപ്ഡേറ്റ് ചെയ്യാനായില്ല. വീണ്ടും ശ്രമിക്കാൻ ടാപ്പ് ചെയ്യുക.';
+
+  @override
+  String get actionShare => 'പങ്കിടുക';
+
+  @override
+  String get resultSaveToLibrary => 'ലൈബ്രറിയിലേക്ക് സേവ് ചെയ്യുക';
+
+  @override
+  String get resultSaving => 'സേവ് ചെയ്യുന്നു';
+
+  @override
+  String get resultSaved => 'നിങ്ങളുടെ ലൈബ്രറിയിൽ സേവ് ചെയ്തു';
+
+  @override
+  String get resultSaveFailedTitle => 'സേവ് ചെയ്യാനായില്ല';
+
+  @override
+  String get resultSaveFailedBody =>
+      'ഇത് നിങ്ങളുടെ ലൈബ്രറിയിൽ സേവ് ചെയ്യാനായില്ല. ദയവായി വീണ്ടും ശ്രമിക്കുക.';
+
+  @override
+  String get resultSaveRetry => 'വീണ്ടും സേവ് ചെയ്യാൻ ശ്രമിക്കുക';
+
+  @override
+  String get resultShareFailed =>
+      'പങ്കിടാനായില്ല. പകരം വാചകം ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി.';
 }

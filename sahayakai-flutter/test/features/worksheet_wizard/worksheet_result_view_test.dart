@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sahayakai/core/platform/share_service.dart';
 import 'package:sahayakai/features/worksheet_wizard/domain/worksheet.dart';
 import 'package:sahayakai/features/worksheet_wizard/presentation/widgets/worksheet_result_view.dart';
 import 'package:sahayakai/shared/widgets/empty_view.dart';
@@ -7,6 +8,19 @@ import 'package:sahayakai/shared/widgets/empty_view.dart';
 import '../../support/app_harness.dart';
 import '../../support/fake_api_client.dart';
 import 'worksheet_fixtures.dart';
+
+/// Records instead of popping the real OS share sheet, which a widget test can
+/// neither drive nor dismiss.
+class _FakeShareService extends ShareService {
+  const _FakeShareService(this.calls);
+
+  final List<({String text, String? subject})> calls;
+
+  @override
+  Future<void> shareText(String text, {String? subject}) async {
+    calls.add((text: text, subject: subject));
+  }
+}
 
 /// Result-layer gates for the Worksheet Wizard. Renders a real worksheet inside
 /// the same scrolling, page-padded shell the screen uses, at the DESIGN_RUBRIC
@@ -158,6 +172,73 @@ void main() {
       expect(find.text('Save to Library'), findsNothing);
       expect(find.text('Regenerate'), findsOneWidget);
       expect(find.text('Copy'), findsOneWidget);
+    });
+
+    testWidgets('a failed save reports the failure, never a saved tick', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(360, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      final client = FakeApiClient(postError: StateError('offline'));
+      const request = WorksheetRequest(
+        imageDataUri: 'data:image/png;base64,AAAA',
+        prompt: 'Counting mangoes',
+        gradeLevel: 'Class 2',
+        language: 'English',
+      );
+
+      await tester.pumpWidget(
+        hostResult(
+          WorksheetResultView(
+            worksheet: buildWorksheet(),
+            onRegenerate: () {},
+            saveRequest: request,
+          ),
+          overrides: [apiClientOverride(client)],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('Save to Library'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Save to Library'));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Could not save'), findsOneWidget);
+      expect(find.text('Saved to your Library'), findsNothing);
+    });
+  });
+
+  group('share', () {
+    testWidgets('Share hands the worksheet text to the OS share sheet', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(360, 2400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      final calls = <({String text, String? subject})>[];
+
+      await tester.pumpWidget(
+        hostResult(
+          WorksheetResultView(worksheet: buildWorksheet(), onRegenerate: () {}),
+          overrides: [
+            shareServiceProvider.overrideWithValue(_FakeShareService(calls)),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('Share'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Share'));
+      await tester.pumpAndSettle();
+
+      expect(calls, hasLength(1));
+      expect(calls.single.text, contains('Counting mangoes'));
     });
   });
 

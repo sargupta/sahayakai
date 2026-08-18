@@ -5941,6 +5941,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t update. Tap to retry.'**
   String get staffroomFollowFailed;
+
+  /// Result action bar: share the generated document through the OS share sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get actionShare;
+
+  /// Result action bar: label for the button that saves the result to the teacher's library.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to Library'**
+  String get resultSaveToLibrary;
+
+  /// Result action bar: label while the save request is in flight.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving'**
+  String get resultSaving;
+
+  /// Result action bar: confirmation shown once the result is in the library.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to your Library'**
+  String get resultSaved;
+
+  /// Result action bar: title of the error shown when the save failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save'**
+  String get resultSaveFailedTitle;
+
+  /// Result action bar: body of the error shown when the save failed.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not save this to your library. Please try again.'**
+  String get resultSaveFailedBody;
+
+  /// Result action bar: label for the button that retries a failed save.
+  ///
+  /// In en, this message translates to:
+  /// **'Try saving again'**
+  String get resultSaveRetry;
+
+  /// Result action bar: snackbar shown when the OS share sheet could not open and the text was copied instead.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not share. The text has been copied to your clipboard instead.'**
+  String get resultShareFailed;
 }
 
 class _AppLocalizationsDelegate

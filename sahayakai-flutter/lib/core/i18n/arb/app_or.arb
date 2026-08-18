@@ -970,5 +970,13 @@
   "staffroomDisconnectCancel": "କନେକ୍ଟ ରୁହନ୍ତୁ",
   "staffroomFollow": "ଫଲୋ କରନ୍ତୁ",
   "staffroomFollowing": "ଫଲୋ କରୁଛନ୍ତି",
-  "staffroomFollowFailed": "ଅପଡେଟ୍ ହୋଇପାରିଲା ନାହିଁ। ପୁଣି ଚେଷ୍ଟା କରିବାକୁ ଟ୍ୟାପ୍ କରନ୍ତୁ।"
+  "staffroomFollowFailed": "ଅପଡେଟ୍ ହୋଇପାରିଲା ନାହିଁ। ପୁଣି ଚେଷ୍ଟା କରିବାକୁ ଟ୍ୟାପ୍ କରନ୍ତୁ।",
+  "actionShare": "ସେୟାର୍ କରନ୍ତୁ",
+  "resultSaveToLibrary": "ଲାଇବ୍ରେରୀରେ ସେଭ୍ କରନ୍ତୁ",
+  "resultSaving": "ସେଭ୍ ହେଉଛି",
+  "resultSaved": "ଆପଣଙ୍କ ଲାଇବ୍ରେରୀରେ ସେଭ୍ ହେଲା",
+  "resultSaveFailedTitle": "ସେଭ୍ ହୋଇପାରିଲା ନାହିଁ",
+  "resultSaveFailedBody": "ଆମେ ଏହାକୁ ଆପଣଙ୍କ ଲାଇବ୍ରେରୀରେ ସେଭ୍ କରିପାରିଲୁ ନାହିଁ। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।",
+  "resultSaveRetry": "ପୁଣି ସେଭ୍ କରିବାକୁ ଚେଷ୍ଟା କରନ୍ତୁ",
+  "resultShareFailed": "ସେୟାର୍ କରାଯାଇପାରିଲା ନାହିଁ। ଏହା ବଦଳରେ ଲେଖା କ୍ଲିପବୋର୍ଡକୁ କପି କରାଗଲା।"
 }

@@ -3441,4 +3441,30 @@ class AppLocalizationsKn extends AppLocalizations {
   @override
   String get staffroomFollowFailed =>
       'ಅಪ್‌ಡೇಟ್ ಮಾಡಲಾಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಲು ಟ್ಯಾಪ್ ಮಾಡಿ.';
+
+  @override
+  String get actionShare => 'ಹಂಚಿಕೊಳ್ಳಿ';
+
+  @override
+  String get resultSaveToLibrary => 'ಗ್ರಂಥಾಲಯಕ್ಕೆ ಉಳಿಸಿ';
+
+  @override
+  String get resultSaving => 'ಉಳಿಸಲಾಗುತ್ತಿದೆ';
+
+  @override
+  String get resultSaved => 'ನಿಮ್ಮ ಗ್ರಂಥಾಲಯಕ್ಕೆ ಉಳಿಸಲಾಗಿದೆ';
+
+  @override
+  String get resultSaveFailedTitle => 'ಉಳಿಸಲಾಗಲಿಲ್ಲ';
+
+  @override
+  String get resultSaveFailedBody =>
+      'ಇದನ್ನು ನಿಮ್ಮ ಗ್ರಂಥಾಲಯಕ್ಕೆ ಉಳಿಸಲಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.';
+
+  @override
+  String get resultSaveRetry => 'ಮತ್ತೆ ಉಳಿಸಲು ಪ್ರಯತ್ನಿಸಿ';
+
+  @override
+  String get resultShareFailed =>
+      'ಹಂಚಿಕೊಳ್ಳಲಾಗಲಿಲ್ಲ. ಬದಲಾಗಿ ಪಠ್ಯವನ್ನು ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ.';
 }

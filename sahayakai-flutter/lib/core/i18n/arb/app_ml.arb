@@ -970,5 +970,13 @@
   "staffroomDisconnectCancel": "കണക്റ്റ് ചെയ്തിരിക്കുക",
   "staffroomFollow": "ഫോളോ ചെയ്യുക",
   "staffroomFollowing": "ഫോളോ ചെയ്യുന്നു",
-  "staffroomFollowFailed": "അപ്ഡേറ്റ് ചെയ്യാനായില്ല. വീണ്ടും ശ്രമിക്കാൻ ടാപ്പ് ചെയ്യുക."
+  "staffroomFollowFailed": "അപ്ഡേറ്റ് ചെയ്യാനായില്ല. വീണ്ടും ശ്രമിക്കാൻ ടാപ്പ് ചെയ്യുക.",
+  "actionShare": "പങ്കിടുക",
+  "resultSaveToLibrary": "ലൈബ്രറിയിലേക്ക് സേവ് ചെയ്യുക",
+  "resultSaving": "സേവ് ചെയ്യുന്നു",
+  "resultSaved": "നിങ്ങളുടെ ലൈബ്രറിയിൽ സേവ് ചെയ്തു",
+  "resultSaveFailedTitle": "സേവ് ചെയ്യാനായില്ല",
+  "resultSaveFailedBody": "ഇത് നിങ്ങളുടെ ലൈബ്രറിയിൽ സേവ് ചെയ്യാനായില്ല. ദയവായി വീണ്ടും ശ്രമിക്കുക.",
+  "resultSaveRetry": "വീണ്ടും സേവ് ചെയ്യാൻ ശ്രമിക്കുക",
+  "resultShareFailed": "പങ്കിടാനായില്ല. പകരം വാചകം ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി."
 }

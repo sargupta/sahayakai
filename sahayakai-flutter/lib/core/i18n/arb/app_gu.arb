@@ -970,5 +970,13 @@
   "staffroomDisconnectCancel": "કનેક્ટેડ રહો",
   "staffroomFollow": "ફોલો કરો",
   "staffroomFollowing": "ફોલો કરી રહ્યા છો",
-  "staffroomFollowFailed": "અપડેટ થઈ શક્યું નથી. ફરી પ્રયાસ કરવા ટૅપ કરો."
+  "staffroomFollowFailed": "અપડેટ થઈ શક્યું નથી. ફરી પ્રયાસ કરવા ટૅપ કરો.",
+  "actionShare": "શેર કરો",
+  "resultSaveToLibrary": "પુસ્તકાલયમાં સાચવો",
+  "resultSaving": "સાચવી રહ્યા છીએ",
+  "resultSaved": "તમારા પુસ્તકાલયમાં સાચવ્યું",
+  "resultSaveFailedTitle": "સાચવી શકાયું નહીં",
+  "resultSaveFailedBody": "અમે આ તમારા પુસ્તકાલયમાં સાચવી શક્યા નહીં. કૃપા કરીને ફરી પ્રયાસ કરો.",
+  "resultSaveRetry": "ફરી સાચવવાનો પ્રયાસ કરો",
+  "resultShareFailed": "શેર કરી શકાયું નહીં. તેના બદલે લખાણ ક્લિપબોર્ડ પર કૉપિ થયું છે."
 }
