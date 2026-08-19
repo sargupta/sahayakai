@@ -85,15 +85,34 @@ export async function POST(req: NextRequest) {
         }
 
         // ── F9-003 fix: per-(teacher, student) dedup window ───────────────
+        //
+        // The window protects the PARENT from being called repeatedly. So a
+        // prior attempt only counts if it might actually have reached them.
+        // An outreach whose call provably never went out (`callStatus:
+        // 'failed'`, written by the call route when the provider refused) is
+        // skipped: on 2026-08-18 a rotated Twilio token made every call fail,
+        // and because those dead records still counted, teachers were locked
+        // out for five minutes per student while no parent had been disturbed
+        // at all.
+        //
+        // Only an EXPLICIT failure releases the window. A record with no
+        // callStatus yet is still in flight — treating absence as failure
+        // would let a double-tap place two real calls to the same parent.
         const cutoffIso = new Date(Date.now() - DEDUP_WINDOW_MS).toISOString();
-        const recent = await db.collection('parent_outreach')
+        const recentSnap = await db.collection('parent_outreach')
             .where('teacherUid', '==', userId)
             .where('studentId', '==', data.studentId)
             .where('createdAt', '>=', cutoffIso)
-            .limit(1)
+            .limit(10)
             .get();
-        if (!recent.empty) {
-            const last = recent.docs[0].data();
+        const recentDocs = recentSnap.docs.filter(
+            (d) => (d.data() as { callStatus?: string }).callStatus !== 'failed',
+        );
+        if (recentDocs.length > 0) {
+            // Most recent survivor decides the retry-after.
+            const last = recentDocs
+                .map((d) => d.data() as { createdAt: string })
+                .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))[0];
             const lastMs = new Date(last.createdAt).getTime();
             const elapsed = Date.now() - lastMs;
             const retryAfterSeconds = Math.max(1, Math.ceil((DEDUP_WINDOW_MS - elapsed) / 1000));
