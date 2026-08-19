@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/firebase-admin';
 import { TWILIO_LANGUAGE_MAP } from '@/types/attendance';
 import { isValidE164 } from '@/lib/twilio-validate';
+import { classifyTwilioFailure, releasesDedupWindow } from '@/lib/twilio-errors';
 import { getEffectiveMode } from '@/lib/voice-pipeline/health';
 import type { Language } from '@/types';
 
@@ -161,9 +162,45 @@ export async function POST(req: NextRequest) {
 
         if (!twilioRes.ok) {
             const err = await twilioRes.json().catch(() => ({}));
-            console.error('[attendance/call] Twilio error:', err);
-            // Don't leak internal Twilio error details (can contain account SIDs, tokens)
-            return NextResponse.json({ error: 'Failed to initiate call' }, { status: 502 });
+            const failure = classifyTwilioFailure(err?.code, twilioRes.status);
+
+            // Log the category explicitly so a misconfigured account is
+            // greppable and alertable instead of hiding inside a generic 502.
+            // The Twilio body is logged but NEVER returned — it can carry
+            // account identifiers.
+            console.error(
+                `[attendance/call] Twilio failure category=${failure.category} ` +
+                `httpStatus=${twilioRes.status}`,
+                err,
+            );
+            if (failure.category === 'provider_unconfigured') {
+                console.error(
+                    '[attendance/call] PROVIDER_MISCONFIGURED — no calls can be placed ' +
+                    'until the Twilio credentials or number are corrected. Operator ' +
+                    'action; retrying will not help.',
+                );
+            }
+
+            // Release the per-student dedup window when the attempt is
+            // definitively dead. That window exists to stop a parent being
+            // called repeatedly — but here no call was ever placed, so leaving
+            // the record "recent" locks the teacher out for five minutes to
+            // protect a parent who was never disturbed.
+            if (releasesDedupWindow(failure)) {
+                await db.collection('parent_outreach').doc(outreachId).update({
+                    callStatus: 'failed',
+                    callFailureCategory: failure.category,
+                    updatedAt: new Date().toISOString(),
+                }).catch((e: unknown) => {
+                    // Never let bookkeeping mask the error the teacher needs.
+                    console.error('[attendance/call] could not mark outreach failed:', e);
+                });
+            }
+
+            return NextResponse.json(
+                { error: failure.error, code: failure.code, retryable: failure.retryable },
+                { status: failure.status },
+            );
         }
 
         const twilioData = await twilioRes.json();
