@@ -5,7 +5,7 @@ export const maxDuration = 120;
 import { NextResponse } from 'next/server';
 import { VisualAidInputSchema } from '@/ai/flows/visual-aid-designer';
 import { dispatchVisualAid } from '@/lib/sidecar/visual-aid-dispatch';
-import { logAIError } from '@/lib/ai-error-response';
+import { handleAIError, logAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
 import { checkUsage, PlanLimitExceededError } from '@/lib/usage-tracker';
 
@@ -94,25 +94,36 @@ async function _handler(request: Request) {
             );
         }
 
-        logAIError(error, 'VISUAL_AID', { message: `Visual Aid API Failed for prompt: "${promptText}"`, userId: request.headers.get('x-user-id') });
+
+        // handleAIError (used for the fall-through below) logs internally, so
+        // logging unconditionally here would double-count every classified
+        // error. Each branch that returns before reaching it logs for itself.
+        const logHandled = () => logAIError(error, 'VISUAL_AID', {
+            message: `Visual Aid API Failed for prompt: "${promptText}"`,
+            userId: request.headers.get('x-user-id'),
+        });
 
         const errorMessage = error.message || 'Internal Server Error';
         const errorCode = error.errorCode || 'UNKNOWN_ERROR';
         const context = error.context || null;
 
         if (error instanceof PlanLimitExceededError) {
+            logHandled();
             return NextResponse.json({ error: error.message, code: 'PLAN_LIMIT_EXCEEDED', type: error.type, used: error.used, limit: error.limit }, { status: 429 });
         }
 
         if (errorMessage.includes('Daily image limit reached')) {
+            logHandled();
             return NextResponse.json({ error: errorMessage }, { status: 429 });
         }
 
         if (errorMessage.includes('Safety Violation')) {
+            logHandled();
             return NextResponse.json({ error: errorMessage }, { status: 400 });
         }
 
         if (errorMessage === 'IMAGE_GENERATION_TIMEOUT') {
+            logHandled();
             return NextResponse.json(
                 { error: 'Image generation timed out. Try a simpler diagram description or retry.' },
                 { status: 504 }
@@ -120,16 +131,25 @@ async function _handler(request: Request) {
         }
 
         if (errorMessage === 'IMAGE_GENERATION_EMPTY') {
+            logHandled();
             return NextResponse.json(
                 { error: 'The AI could not generate an image for this prompt. Try rephrasing with fewer labels.' },
                 { status: 422 }
             );
         }
 
-        return NextResponse.json(
-            { error: 'Image generation failed. Please try again.' },
-            { status: 500 }
-        );
+        // Everything not handled above goes through the shared classifier, the
+        // same one the other eight AI routes use. This route used to end at a
+        // blanket 500 "Image generation failed. Please try again.", which meant
+        // an upstream Gemini/Imagen 429 — already logged here as reason:'quota'
+        // by logAIError — reached the teacher as a generic server error telling
+        // them to retry something that would keep failing. handleAIError turns
+        // that into a 503 with Retry-After and an honest message, and stops it
+        // paging on-call as if it were a crash.
+        return handleAIError(error, 'VISUAL_AID', {
+            message: `Visual Aid API Failed for prompt: "${promptText}"`,
+            userId: request.headers.get('x-user-id'),
+        });
     }
 }
 
