@@ -82,8 +82,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({
-      ok: true,
+    const body = {
+      ok: result.errors.length === 0,
       runId: result.runId,
       durationMs: result.completedAt.getTime() - result.startedAt.getTime(),
       rzpSubscriptions: result.rzpSubscriptionsFetched,
@@ -91,13 +91,35 @@ export async function POST(request: NextRequest) {
       autoFixed: result.autoFixCount,
       flagged: result.flaggedCount,
       errors: result.errors.length,
+      errorMessages: result.errors,
       mismatches: result.mismatches.map((m) => ({
         type: m.type,
         userId: m.userId,
         action: m.action,
         fix: m.fixApplied || null,
       })),
-    });
+    };
+
+    // CLASS GATE: a run that recorded ANY error must fail loudly.
+    //
+    // This job spent 30+ days throwing on a missing Razorpay secret while
+    // reporting `ok: true` + HTTP 200, so Cloud Scheduler recorded an unbroken
+    // run of successes and nobody was paged. The failure was only ever visible
+    // to someone reading the INFO line by eye. Errors are collected rather than
+    // thrown (one bad subscription must not abort the sweep), so the collected
+    // count is the only signal there is — surface it as a non-2xx and let the
+    // scheduler's own alerting do its job. Guards every future error in this
+    // job, not just the secret that exposed it.
+    if (result.errors.length > 0) {
+      logger.error(
+        `Billing reconciliation ${result.runId} completed with ${result.errors.length} error(s): ${result.errors.join('; ')}`,
+        new Error('Reconciliation completed with errors'),
+        'BILLING_RECON_ALERT'
+      );
+      return NextResponse.json(body, { status: 500 });
+    }
+
+    return NextResponse.json(body);
   } catch (error) {
     logger.error('Billing reconciliation job failed', error, 'BILLING_RECON');
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
