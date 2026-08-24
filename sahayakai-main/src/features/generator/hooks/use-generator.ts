@@ -14,7 +14,10 @@
  *   - double-submit guard (submittingRef) — rapid clicks before React
  *     commits the loading state used to fire the API twice.
  *   - NCERT-demo 2026-05-19 malformed-response guard — a 200 with a
- *     garbage body must never render as "undefined undefined undefined".
+ *     garbage body must never render as "undefined undefined undefined",
+ *     and (2026-08-25) must never render as nothing at all: a
+ *     `parseResponse` that returns undefined is caught here too, because
+ *     only an explicit throw used to be.
  *   - 202 "still generating" branch — same demo, same day.
  *   - useLimitGuard wiring (403 PLAN_UPGRADE_REQUIRED / 429 limit / 503
  *     AI_SERVICE_BUSY) → UpgradePrompt instead of a generic toast.
@@ -47,7 +50,9 @@ export interface UseGeneratorConfig<TInput, TOutput> {
     /**
      * Turn the raw 200 JSON body into the typed output. Throw
      * `MalformedResponseError` when the body is unusable — the hook maps it
-     * to a MALFORMED_RESPONSE error instead of rendering garbage.
+     * to a MALFORMED_RESPONSE error instead of rendering garbage. Returning
+     * null/undefined is treated the same way, so a body that simply lacks
+     * the field a parser reaches for can't settle as a blank success.
      */
     parseResponse: (json: unknown, values: TInput) => TOutput;
     /**
@@ -66,6 +71,8 @@ export interface UseGeneratorConfig<TInput, TOutput> {
     authErrorMessage?: string;
     /** Fallback message when a 202 body carries no `message`. */
     stillGeneratingMessage?: string;
+    /** Message used when `parseResponse` yields nothing usable. */
+    malformedMessage?: string;
     /** Fallback message for generic request failures. */
     failureMessage?: string;
     /** Fired after a successful generation (checklist marks, snapshots…). */
@@ -250,6 +257,22 @@ export function useGenerator<TInput, TOutput>(
                     return;
                 }
                 throw parseError;
+            }
+
+            // The guard the header comment above has always claimed. Until
+            // 2026-08-25 only a thrown MalformedResponseError was caught, so a
+            // parser reaching for a field the body didn't carry returned
+            // undefined and the run settled as "done" with nothing in it —
+            // the result region renders empty and onSuccess fires, which reads
+            // to the teacher as the tool having quietly done nothing.
+            if (output === undefined || output === null) {
+                fail({
+                    code: "MALFORMED_RESPONSE",
+                    message:
+                        cfg.malformedMessage ||
+                        "The AI returned an incomplete response. Please try again.",
+                }, true);
+                return;
             }
 
             setResultState(output);

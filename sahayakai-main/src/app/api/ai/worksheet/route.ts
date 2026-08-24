@@ -3,7 +3,37 @@ import { NextResponse } from 'next/server';
 import { WorksheetWizardInputSchema } from '@/ai/flows/worksheet-wizard';
 import { handleAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
-import { dispatchWorksheet } from '@/lib/sidecar/worksheet-dispatch';
+import { dispatchWorksheet, type DispatchedWorksheet } from '@/lib/sidecar/worksheet-dispatch';
+
+/**
+ * The 200 wire payload. Declared explicitly, and built by `toPayload` below,
+ * so that dropping a field from the response is a build error rather than a
+ * silent change of contract: this route once served every structured field
+ * but not `worksheetContent`, which is the only one the client renders.
+ */
+interface WorksheetApiPayload {
+    title: string;
+    gradeLevel: string;
+    subject: string;
+    learningObjectives: string[];
+    studentInstructions: string;
+    activities: DispatchedWorksheet['activities'];
+    answerKey: DispatchedWorksheet['answerKey'];
+    worksheetContent: string;
+}
+
+function toPayload(dispatched: DispatchedWorksheet): WorksheetApiPayload {
+    return {
+        title: dispatched.title,
+        gradeLevel: dispatched.gradeLevel,
+        subject: dispatched.subject,
+        learningObjectives: dispatched.learningObjectives,
+        studentInstructions: dispatched.studentInstructions,
+        activities: dispatched.activities,
+        answerKey: dispatched.answerKey,
+        worksheetContent: dispatched.worksheetContent,
+    };
+}
 
 /**
  * @swagger
@@ -67,15 +97,19 @@ async function _handler(request: Request) {
             ...body,
             userId,
         });
-        return NextResponse.json({
-            title: dispatched.title,
-            gradeLevel: dispatched.gradeLevel,
-            subject: dispatched.subject,
-            learningObjectives: dispatched.learningObjectives,
-            studentInstructions: dispatched.studentInstructions,
-            activities: dispatched.activities,
-            answerKey: dispatched.answerKey,
-        });
+
+        // A worksheet with no Markdown body is not a worksheet. Serving it as
+        // 200 renders an empty page AND banks the teacher's plan quota, since
+        // withPlanCheck only refunds a non-2xx. Throwing here becomes a 500
+        // and the gate rolls the reservation back — a blank success is worse
+        // than an honest error.
+        if (!dispatched.worksheetContent?.trim()) {
+            throw new Error(
+                `Worksheet dispatch (${dispatched.source}) returned no worksheetContent`,
+            );
+        }
+
+        return NextResponse.json(toPayload(dispatched));
 
     } catch (error) {
         return handleAIError(error, 'WORKSHEET', {
