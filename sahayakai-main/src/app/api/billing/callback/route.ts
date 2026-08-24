@@ -19,10 +19,19 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(new URL('/pricing?status=error', request.url));
     }
 
-    // Verify signature
+    // Verify signature. Fail closed when the signing key is absent: an unset
+    // RAZORPAY_KEY_SECRET previously fell back to '', which still produced a
+    // well-formed HMAC and so verified callbacks against a key an attacker can
+    // guess. A missing key is a server misconfiguration, not a bad payment.
+    const keySecret = process.env.RAZORPAY_KEY_SECRET?.trim();
+    if (!keySecret) {
+        console.error('[Billing] RAZORPAY_KEY_SECRET is not configured — refusing to verify callback signature');
+        return NextResponse.redirect(new URL('/pricing?status=error', request.url));
+    }
+
     const crypto = require('crypto');
     const expectedSignature = crypto
-        .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || '')
+        .createHmac('sha256', keySecret)
         .update(`${paymentId}|${subscriptionId}`)
         .digest('hex');
 
