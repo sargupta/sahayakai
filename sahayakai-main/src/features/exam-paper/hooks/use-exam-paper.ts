@@ -43,7 +43,20 @@ export function useExamPaper() {
     // Form state
     const [board, setBoard] = useState("CBSE");
     const [gradeLevel, setGradeLevel] = useState("Class 10");
-    const [subject, setSubject] = useState("");
+    // `subject` has two kinds of writer and they do NOT rank equally: the
+    // teacher (typing, picking from the list, or arriving on a VIDYA deep
+    // link) versus the blueprint defaulting effect below. Teacher writes go
+    // through `chooseSubject`, which records the choice; the effect writes
+    // `setSubjectState` directly so it never mistakes its own default for
+    // one. See the reconciliation effect for what this guard prevents.
+    const [subject, setSubjectState] = useState("");
+    const subjectChosenRef = React.useRef(false);
+    const chooseSubject = useCallback((value: string) => {
+        // Emptying the field is the absence of a choice, not a choice — the
+        // blueprint default is welcome again on the next board/grade change.
+        subjectChosenRef.current = value.trim().length > 0;
+        setSubjectState(value);
+    }, []);
     const [chapters, setChapters] = useState<string[]>([]);
     const [chaptersInput, setChaptersInput] = useState(""); // free-text fallback
     const [difficulty, setDifficulty] = useState("mixed");
@@ -146,7 +159,10 @@ export function useExamPaper() {
 
         const normalisedGrade = normaliseVidyaGradeLevel(gradeLevelParam);
         if (normalisedGrade) setGradeLevel(normalisedGrade);
-        if (subjectParam) setSubject(subjectParam);
+        // A deep-linked subject is the teacher's choice, made in VIDYA rather
+        // than in this form — `chooseSubject`, not a bare state write, so the
+        // blueprint default cannot overrule it a tick later.
+        if (subjectParam) chooseSubject(subjectParam);
 
         // Map ISO → display name; fall back to "English" if unknown.
         const iso = normaliseVidyaLanguage(languageParam);
@@ -161,29 +177,62 @@ export function useExamPaper() {
             setChaptersInput((prev) => prev || topicParam);
         }
          
-    }, [searchParams]);
+    }, [searchParams, chooseSubject]);
 
     // ── Blueprint lookup ───────────────────────────────────────────────────
 
     const availableBlueprints = useMemo(() => getAvailableBlueprints(), []);
 
-    const availableSubjects = useMemo(() => {
+    // The subjects an official blueprint exists for, scoped to the chosen
+    // board + grade. Memoised on board/gradeLevel, so its identity changes on
+    // exactly the transition the reconciliation effect below cares about.
+    const blueprintSubjects = useMemo(() => {
         const subjects = availableBlueprints
             .filter((bp) => bp.board === board && bp.gradeLevel === gradeLevel)
             .map((bp) => bp.subject);
         return [...new Set(subjects)];
     }, [board, gradeLevel, availableBlueprints]);
 
-    // Reset subject + chapters when board/grade changes if current subject not available
+    // What the subject picker offers. The blueprint list supplies the options,
+    // but a subject the teacher chose that isn't on it — a VIDYA deep link
+    // into a board we have no blueprint for — still has to be selectable: a
+    // <Select> whose value is missing from its items falls back to the
+    // placeholder, so keeping "History" while showing an empty box would be
+    // its own silent lie.
+    const availableSubjects = useMemo(() => {
+        if (blueprintSubjects.length === 0) return blueprintSubjects;
+        if (!subject || blueprintSubjects.includes(subject)) return blueprintSubjects;
+        return [...blueprintSubjects, subject];
+    }, [blueprintSubjects, subject]);
+
+    // Reconcile subject + chapters when the board/grade changes.
+    //
+    // Founder bug 2026-08-25 (WBBSE Class 10, no blueprint): this effect used
+    // to list `subject` among its dependencies while also writing `subject`,
+    // so it re-ran on every keystroke in the free-text subject field and the
+    // empty-blueprint branch cleared the character that had just been typed.
+    // The field could never hold anything, and Generate — disabled while
+    // `!subject` — never enabled. The same override silently replaced a VIDYA
+    // `?subject=History` deep link with blueprintSubjects[0], "Mathematics".
+    //
+    // Dropping `subject` from the dependencies is only half of it. What the
+    // effect is actually for is supplying a *default* when the blueprint set
+    // changes under a subject nobody chose: the teacher moves from CBSE
+    // Class 10 to Class 9 and the auto-filled "Mathematics" has to be
+    // re-derived against the new list. It was never meant to overrule a
+    // subject the teacher typed or deep-linked, which is what
+    // `subjectChosenRef` now records. So: keyed on the blueprint set alone
+    // (board + grade), and silent once there is a real choice to respect.
     useEffect(() => {
-        if (availableSubjects.length > 0 && !availableSubjects.includes(subject)) {
-            setSubject(availableSubjects[0]);
-            setChapters([]);
-        } else if (availableSubjects.length === 0) {
-            setSubject("");
-            setChapters([]);
-        }
-    }, [availableSubjects, subject]);
+        // Chapter chips are blueprint-scoped — a Class 10 chapter is not a
+        // Class 9 one — and handleGenerate prefers `chapters` over the
+        // free-text fallback, so a stale selection would ride along unseen.
+        setChapters((prev) => (prev.length > 0 ? [] : prev));
+        if (subjectChosenRef.current) return;
+        setSubjectState((current) =>
+            blueprintSubjects.includes(current) ? current : (blueprintSubjects[0] ?? ""),
+        );
+    }, [blueprintSubjects]);
 
     // Reset chapters when subject changes
     const prevSubjectRef = React.useRef(subject);
@@ -310,7 +359,7 @@ export function useExamPaper() {
         // form state
         board, setBoard,
         gradeLevel, setGradeLevel,
-        subject, setSubject,
+        subject, setSubject: chooseSubject,
         chapters, setChapters,
         chaptersInput, setChaptersInput,
         difficulty, setDifficulty,
