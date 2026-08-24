@@ -1,0 +1,83 @@
+# ──────────────────────────────────────────────────────────────────────────
+# cloudbuild-ci.yaml — the test gate.
+#
+# WHY THIS EXISTS
+# The repo carries 2,170 passing tests, 80% coverage thresholds on the money
+# and auth paths, and several class gates written after real outages. Until
+# this file, none of them ran automatically: `.github/workflows/` is empty on
+# main (a commit named `ci(gates): resurrect inert workflows` exists in
+# history, so this has been built and lost before) and GitHub Actions billing
+# is disabled on the account. The tests protected nothing.
+#
+# Cloud Build is the substrate because it already works, already deploys this
+# service, and does not depend on the disabled Actions billing.
+#
+# WHAT IT GATES
+# Runs on every push to `develop` and `master`. A non-zero exit anywhere fails
+# the build, which is the whole point — the previous CI "swallowed jest exit
+# codes", which is indistinguishable from having no CI at all.
+#
+# Deliberately NOT a deploy pipeline. This only decides whether a commit is
+# allowed to become a deploy; cloudbuild.yaml and cloudbuild-preview.yaml do
+# the shipping.
+# ──────────────────────────────────────────────────────────────────────────
+
+steps:
+  # ── 1. Install ────────────────────────────────────────────────────────────
+  # `npm ci` (not `npm install`) so the lockfile is authoritative and a
+  # drifting transitive dep fails here rather than in production.
+  - id: install
+    name: node:20
+    dir: sahayakai-main
+    entrypoint: npm
+    args: ['ci', '--no-audit', '--no-fund']
+
+  # ── 2. Typecheck ──────────────────────────────────────────────────────────
+  # Fastest real signal, so it runs first and fails the build early.
+  - id: typecheck
+    name: node:20
+    dir: sahayakai-main
+    entrypoint: npm
+    args: ['run', 'typecheck']
+    waitFor: [install]
+
+  # ── 3. Lint ───────────────────────────────────────────────────────────────
+  - id: lint
+    name: node:20
+    dir: sahayakai-main
+    entrypoint: npm
+    args: ['run', 'lint']
+    waitFor: [install]
+
+  # ── 4. Tests + coverage thresholds ────────────────────────────────────────
+  # `--ci` makes snapshot writes fail instead of silently passing.
+  # Coverage thresholds live in jest.config.ts (40% global, 80% on
+  # payments / auth / moderation / billing-reconciliation). Jest exits
+  # non-zero when a threshold is missed, so the gate needs no extra logic —
+  # it only needs to not swallow the exit code.
+  - id: test
+    name: node:20
+    dir: sahayakai-main
+    entrypoint: npm
+    args: ['test', '--', '--ci', '--coverage', '--maxWorkers=2']
+    waitFor: [typecheck, lint]
+
+  # ── 5. Production build ───────────────────────────────────────────────────
+  # A commit that type-checks and tests green can still fail `next build`.
+  # Catching that here keeps a broken build out of the deploy pipeline.
+  - id: build
+    name: node:20
+    dir: sahayakai-main
+    entrypoint: npm
+    args: ['run', 'build']
+    env:
+      - 'NEXT_TELEMETRY_DISABLED=1'
+      - 'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248-mumbai'
+    waitFor: [test]
+
+options:
+  machineType: E2_HIGHCPU_8
+  logging: CLOUD_LOGGING_ONLY
+
+# Generous but bounded: the suite is ~2,200 tests and a full Next build.
+timeout: 2400s
