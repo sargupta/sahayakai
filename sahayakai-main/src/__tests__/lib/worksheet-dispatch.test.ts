@@ -234,6 +234,66 @@ describe('dispatchWorksheet — sidecar success persists to library', () => {
     });
 });
 
+describe('dispatchWorksheet — every path carries the Markdown body', () => {
+    // `worksheetContent` is the only field the worksheet UI renders. The
+    // sidecar wire type (types.generated.ts) has no such field, so the agent
+    // path used to return a worksheet made entirely of metadata — served as
+    // 200, rendered as an empty page, and filed to My Library the same way.
+
+    it('sidecar success → worksheetContent rendered from the structured fields', async () => {
+        setMode('canary');
+        mockSidecar.mockResolvedValue(SIDECAR_OUTPUT);
+
+        const out = await dispatchWorksheet(BASE_INPUT);
+
+        expect(out.source).toBe('sidecar');
+        expect(typeof out.worksheetContent).toBe('string');
+        expect(out.worksheetContent.trim()).not.toBe('');
+        expect(out.worksheetContent).toContain(SIDECAR_OUTPUT.title);
+        expect(out.worksheetContent).toContain(SIDECAR_OUTPUT.studentInstructions);
+        expect(out.worksheetContent).toContain(SIDECAR_OUTPUT.activities[0].content);
+        expect(out.worksheetContent).toContain(SIDECAR_OUTPUT.answerKey[0].answer);
+    });
+
+    it('sidecar success → the persisted record carries the body too', async () => {
+        setMode('canary');
+        mockSidecar.mockResolvedValue(SIDECAR_OUTPUT);
+
+        const out = await dispatchWorksheet(BASE_INPUT);
+
+        // WorksheetDataSchema requires it, and My Library restores from it —
+        // a record without it reopens blank.
+        const persisted = mockPersist.mock.calls[0][0].output as { worksheetContent?: string };
+        expect(persisted.worksheetContent).toEqual(expect.stringContaining(SIDECAR_OUTPUT.title));
+        expect(persisted.worksheetContent).toBe(out.worksheetContent);
+    });
+
+    it('genkit output missing worksheetContent → derived rather than passed through', async () => {
+        // The field is optional on WorksheetWizardOutputSchema, so the
+        // dispatcher re-derives instead of trusting the flow to have filled it.
+        setMode('off');
+        mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
+
+        const out = await dispatchWorksheet(BASE_INPUT);
+
+        expect(out.source).toBe('genkit');
+        expect(out.worksheetContent).toContain(GENKIT_OUTPUT.title);
+        expect(out.worksheetContent).toContain(GENKIT_OUTPUT.activities[0].content);
+    });
+
+    it('genkit output with worksheetContent → preserved verbatim', async () => {
+        setMode('off');
+        mockGenkit.mockResolvedValue({
+            ...GENKIT_OUTPUT,
+            worksheetContent: '# Hand-written body',
+        });
+
+        const out = await dispatchWorksheet(BASE_INPUT);
+
+        expect(out.worksheetContent).toBe('# Hand-written body');
+    });
+});
+
 describe('dispatchWorksheet — sidecar failure does not persist', () => {
     it('genkit fallback path skips persist (Genkit owns its own persistence)', async () => {
         setMode('canary');

@@ -212,9 +212,12 @@ const worksheetWizardFlow = ai.defineFlow(
           );
         }
 
-        // Generate worksheetContent (Markdown) for legacy support/PDF
+        // Generate worksheetContent (Markdown) for legacy support/PDF.
+        // Shared with the sidecar dispatch path via renderWorksheetMarkdown —
+        // see worksheet-markdown.ts for why it no longer lives inline here.
         if (!sanitizedOutput.worksheetContent) {
-          sanitizedOutput.worksheetContent = `# ${sanitizedOutput.title}\n\n**Class**: ${sanitizedOutput.gradeLevel} | **Subject**: ${sanitizedOutput.subject}\n\n## I. Learning Objectives\n${sanitizedOutput.learningObjectives.map((o: string) => `- ${o}`).join('\n')}\n\n## II. Student Instructions\n${sanitizedOutput.studentInstructions}\n\n---\n\n## III. Activities\n${sanitizedOutput.activities.map((a: any, i: number) => `### Activity ${i + 1}\n${a.content}\n\n*${a.explanation}*`).join('\n\n')}\n\n---\n\n## IV. Answer Key\n${sanitizedOutput.answerKey.map((ak: any) => `**Activity ${ak.activityIndex + 1}**: ${ak.answer}`).join('\n')}`;
+          const { renderWorksheetMarkdown } = await import('./worksheet-markdown');
+          sanitizedOutput.worksheetContent = renderWorksheetMarkdown(sanitizedOutput);
         }
 
         worksheetContent = sanitizedOutput.worksheetContent;

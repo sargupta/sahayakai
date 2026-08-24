@@ -19,7 +19,7 @@ import { useLanguage } from "@/context/language-context";
 import { LANGUAGE_TO_ISO } from "@/types";
 import { auth } from "@/lib/firebase";
 import { normaliseVidyaLanguage, normaliseVidyaGradeLevel } from "@/lib/vidya-action-normalizer";
-import { useGenerator } from "@/features/generator";
+import { MalformedResponseError, useGenerator } from "@/features/generator";
 import { worksheetTranslations } from "../i18n";
 import { formSchema, type FormValues, type WorksheetResult } from "../types";
 
@@ -60,7 +60,19 @@ export function useWorksheetWizard() {
             language: values.language && values.language.trim() ? values.language : "en",
             subject: values.subject && values.subject !== "General" ? values.subject : undefined,
         }),
-        parseResponse: (json) => (json as { worksheetContent: string }).worksheetContent,
+        // `worksheetContent` (Markdown) is the whole result — WorksheetDisplay
+        // renders nothing without it. A 200 that omits it is a malformed
+        // response, not an empty worksheet, so say so instead of showing the
+        // teacher a blank page under a "done" state.
+        parseResponse: (json) => {
+            const content = (json as { worksheetContent?: string }).worksheetContent;
+            if (typeof content !== "string" || !content.trim()) {
+                throw new MalformedResponseError(
+                    translate("The AI returned an incomplete worksheet. Please try again."),
+                );
+            }
+            return content;
+        },
         authErrorMessage: translate("Please sign in to generate worksheets"),
         onSuccess: () => {
             clearFormSnapshot("worksheet-wizard");
@@ -125,7 +137,24 @@ export function useWorksheetWizard() {
                     if (res.ok) {
                         const content = await res.json();
                         if (content.data) {
-                            generator.setResult(content.data.worksheetContent || content.data);
+                            // Records written by the sidecar path before the
+                            // dispatcher filled worksheetContent have every
+                            // structured field and no body. The old fallback
+                            // installed that object AS the result, and the
+                            // display then rendered an object as a React
+                            // child. Restore only a real Markdown body, and
+                            // say so when there isn't one rather than
+                            // reopening the page silently blank.
+                            const saved = content.data.worksheetContent;
+                            if (typeof saved === "string" && saved.trim()) {
+                                generator.setResult(saved);
+                            } else {
+                                toast({
+                                    title: translate("Load Failed"),
+                                    description: translate("Could not load the saved worksheet."),
+                                    variant: "destructive",
+                                });
+                            }
                             form.reset({
                                 prompt: content.topic || content.title,
                                 gradeLevel: content.gradeLevel,
