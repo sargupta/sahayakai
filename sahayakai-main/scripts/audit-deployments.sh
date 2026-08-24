@@ -151,16 +151,25 @@ for REGION in $REGIONS; do
     echo "── Feature probes against $REGION ───────────────────────────────"
 
     # API endpoints — present/absent is a hard signal regardless of auth.
-    probe "$URL" "/api/jobs/grow-persona-pool exists"          POST  "/api/jobs/grow-persona-pool?count=1"  "200"  status
-    probe "$URL" "/api/jobs/ai-community-agent exists"         POST  "/api/jobs/ai-community-agent"         "200"  status
+    #
+    # The cron routes expect 401, not 200. They sit behind a CRON_SECRET gate,
+    # so 401 proves two things at once: the route is deployed, AND it is still
+    # protected. The previous expectation of 200 was not merely stale — a 200
+    # from an unauthenticated caller would mean the cron endpoints had been
+    # left open, so the old probe would have gone green on a real security
+    # regression and red on correct behaviour.
+    probe "$URL" "/api/jobs/grow-persona-pool (unauth -> 401)"  POST  "/api/jobs/grow-persona-pool?count=1"  "401"  status
+    probe "$URL" "/api/jobs/ai-community-agent (unauth -> 401)" POST  "/api/jobs/ai-community-agent"         "401"  status
     probe "$URL" "/api/jobs/daily-briefing exists (GET=405)"   GET   "/api/jobs/daily-briefing"             "405"  status
 
     # UI strings — these MUST be in the SSR HTML even for unauthenticated
     # users. The action tiles render unconditionally inside the page
     # component, so missing here means the latest community/page.tsx did
     # not get deployed.
-    probe "$URL" "Community: 'Open chat with every teacher'"   GET   "/community"                           "Open chat with every teacher"  body
-    probe "$URL" "Community: 'Search by subject'"              GET   "/community"                           "Search by subject"             body
+    # Copy updated 2026-08: the tiles now read "Open Staff Room" / "Find
+    # Teachers". Probing the superseded strings made this permanently red.
+    probe "$URL" "Community: Staff Room tile"                  GET   "/community"                           "Open Staff Room"               body
+    probe "$URL" "Community: Find Teachers tile"               GET   "/community"                           "Find Teachers"                 body
 
     # Served by the app, not the CDN, and among the assets that silently
     # diverged in Aug 2026 — a 404 here means this region is behind.
