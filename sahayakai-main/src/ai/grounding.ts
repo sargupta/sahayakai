@@ -112,9 +112,18 @@ export function sanitizeVideoSuggestionUrl(
     return `${YOUTUBE_SEARCH_PREFIX}${encodeURIComponent(query)}`;
 }
 
-const MARKDOWN_IMAGE = /!\[([^\]]*)\]\([^()]*\)/g;
-const MARKDOWN_LINK = /\[([^\]]*)\]\([^()]*\)/g;
-const REFERENCE_DEFINITION = /^[ \t]*\[[^\]]+\]:[ \t]*\S+.*$/gm;
+// A link target only counts as a source when it really is a URL. Without the
+// scheme this shape matched any prose that happened to put a bracket beside a
+// paren: `arr[i](x)` became `arri`, and `Ca[OH](aq)` became `CaOH`.
+const URL_SCHEME = String.raw`(?:[a-z][a-z0-9+.\-]*:\/\/|mailto:|www\.)`;
+const LINK_TARGET_URL = String.raw`\s*<?${URL_SCHEME}[^()]*`;
+
+const MARKDOWN_IMAGE = new RegExp(String.raw`!\[([^\]]*)\]\(${LINK_TARGET_URL}\)`, 'gi');
+const MARKDOWN_LINK = new RegExp(String.raw`\[([^\]]*)\]\(${LINK_TARGET_URL}\)`, 'gi');
+const REFERENCE_DEFINITION = new RegExp(
+    String.raw`^[ \t]*\[[^\]]+\]:[ \t]*<?${URL_SCHEME}\S*.*$`,
+    'gim',
+);
 const REFERENCE_LINK = /\[([^\]]*)\]\[[^\]]*\]/g;
 // "(see https://…)" — a whole parenthetical whose only purpose was the URL.
 // Run after the markdown-link forms, so what is left inside brackets here is
@@ -124,31 +133,180 @@ const AUTOLINK = /<https?:\/\/[^>\s]*>/gi;
 const BARE_URL = /\bhttps?:\/\/[^\s<>()[\]"'`]+/gi;
 
 /**
+ * Applied to every region, code included: an invented URL is invented
+ * wherever it sits. Nothing else is rewritten inside code — see
+ * `stripSourceLinks`.
+ */
+function stripUrls(text: string): string {
+    return text.replace(AUTOLINK, '').replace(BARE_URL, '');
+}
+
+/** The link shapes that only mean "source" in prose. */
+function stripLinkForms(text: string): string {
+    return stripUrls(
+        text
+            .replace(MARKDOWN_IMAGE, '$1')
+            .replace(MARKDOWN_LINK, '$1')
+            .replace(REFERENCE_DEFINITION, '')
+            .replace(REFERENCE_LINK, '$1')
+            .replace(PARENTHETICAL_WITH_URL, ''),
+    );
+}
+
+/**
+ * Close the hole a removal left: "(see )", a doubled space, a space stranded
+ * before punctuation, a run of blank lines.
+ *
+ * Every pass here is anchored to preceding visible text. Leading whitespace is
+ * markdown structure — two spaces are what make a nested list nested, four are
+ * what make a block code — so a tidy-up that collapses it silently reflows the
+ * answer it was only supposed to clean up after.
+ */
+function tidyAfterRemoval(text: string): string {
+    return text
+        .replace(/\([^\S\n]*\)/g, '')
+        .replace(/(\S)[ \t]{2,}/g, '$1 ')
+        .replace(/(\S)[ \t]+([,.;:!?])/g, '$1$2')
+        .replace(/\n{3,}/g, '\n\n');
+}
+
+type Segment = { code: boolean; text: string };
+
+const FENCE_OPEN = /^ {0,3}(`{3,}|~{3,})/;
+const INDENTED_CODE = /^(?: {4}|\t)/;
+const INLINE_CODE = /(`+)(?:(?!\1)[\s\S])*?\1/g;
+
+/**
+ * Which lines belong to a code block — fenced (``` or ~~~) or indented by four
+ * spaces after a blank line, which is the other way CommonMark makes a block
+ * code. Blank lines inside an indented run stay with it.
+ */
+function markCodeLines(lines: string[]): boolean[] {
+    const isCode = lines.map(() => false);
+    let fence: string | null = null;
+    let indentedRun = false;
+    let pendingBlanks: number[] = [];
+
+    lines.forEach((line, i) => {
+        if (fence) {
+            isCode[i] = true;
+            const close = new RegExp(`^ {0,3}${fence[0]}{${fence.length},}[ \\t]*$`);
+            if (close.test(line)) fence = null;
+            return;
+        }
+
+        const opened = FENCE_OPEN.exec(line);
+        if (opened) {
+            fence = opened[1];
+            isCode[i] = true;
+            indentedRun = false;
+            pendingBlanks = [];
+            return;
+        }
+
+        if (line.trim() === '') {
+            // Provisional: these belong to the run only if it continues.
+            if (indentedRun) pendingBlanks.push(i);
+            return;
+        }
+
+        // An indented line that interrupts a paragraph, or continues a list
+        // item, is not a code block — so a run may only start after a blank.
+        if (INDENTED_CODE.test(line) && (indentedRun || i === 0 || lines[i - 1].trim() === '')) {
+            pendingBlanks.forEach((blank) => {
+                isCode[blank] = true;
+            });
+            pendingBlanks = [];
+            isCode[i] = true;
+            indentedRun = true;
+            return;
+        }
+
+        indentedRun = false;
+        pendingBlanks = [];
+    });
+
+    return isCode;
+}
+
+/** Inline spans, so `arr[i][j]` is read as code a teacher typed. */
+function splitInlineCode(text: string): Segment[] {
+    const segments: Segment[] = [];
+    let cursor = 0;
+
+    INLINE_CODE.lastIndex = 0;
+    let match: RegExpExecArray | null = INLINE_CODE.exec(text);
+    while (match !== null) {
+        if (match.index > cursor) {
+            segments.push({ code: false, text: text.slice(cursor, match.index) });
+        }
+        segments.push({ code: true, text: match[0] });
+        cursor = match.index + match[0].length;
+        match = INLINE_CODE.exec(text);
+    }
+
+    if (cursor < text.length) segments.push({ code: false, text: text.slice(cursor) });
+    return segments.length > 0 ? segments : [{ code: false, text }];
+}
+
+/** The body cut into code and prose runs; concatenating them restores it byte for byte. */
+function splitCodeRegions(markdown: string): Segment[] {
+    const lines = markdown.split('\n');
+    const isCode = markCodeLines(lines);
+    const blocks: Segment[] = [];
+
+    let start = 0;
+    for (let i = 1; i <= lines.length; i += 1) {
+        if (i === lines.length || isCode[i] !== isCode[start]) {
+            const body = lines.slice(start, i).join('\n');
+            blocks.push({
+                code: isCode[start],
+                // The newline that separated this run from the next belongs to
+                // it, so `join('')` is lossless.
+                text: i === lines.length ? body : `${body}\n`,
+            });
+            start = i;
+        }
+    }
+
+    return blocks.flatMap((block) => (block.code ? [block] : splitInlineCode(block.text)));
+}
+
+/**
  * Strip every URL out of an ungrounded answer body, keeping the prose.
  *
  * Called only when nothing grounded the answer. In that state any link the
  * model produced is a citation it invented, and the markdown renderer would
  * present it to a teacher exactly as it presents a real one. Link labels
  * survive as plain text so the sentence still reads.
+ *
+ * Two things bound how far it may reach, because `grounded` is false in every
+ * environment this build ships to — so this runs over *every* answer the
+ * Genkit path produces, cited or not:
+ *
+ *  - Code is left alone apart from URLs. Inside a fence, an indented block or
+ *    a backtick span every space is load-bearing, and `[i][j]` is an index and
+ *    not a reference link.
+ *  - The tidy-up passes only touch a region a removal actually happened in. An
+ *    answer that never cited anything comes back byte for byte as written.
  */
 export function stripSourceLinks(markdown: string): string {
     if (!markdown) return markdown;
 
-    return markdown
-        .replace(MARKDOWN_IMAGE, '$1')
-        .replace(MARKDOWN_LINK, '$1')
-        .replace(REFERENCE_DEFINITION, '')
-        .replace(REFERENCE_LINK, '$1')
-        .replace(PARENTHETICAL_WITH_URL, '')
-        .replace(AUTOLINK, '')
-        .replace(BARE_URL, '')
-        // Tidy the holes the removals leave: "(see )", doubled spaces, a
-        // space stranded before punctuation, runs of blank lines.
-        .replace(/\([^\S\n]*\)/g, '')
-        .replace(/[ \t]{2,}/g, ' ')
-        .replace(/[ \t]+([,.;:!?])/g, '$1')
-        .replace(/\n{3,}/g, '\n\n')
-        .trim();
+    const segments = splitCodeRegions(markdown);
+    let removedSomething = false;
+
+    const rebuilt = segments.map((segment) => {
+        const stripped = segment.code ? stripUrls(segment.text) : stripLinkForms(segment.text);
+        if (stripped === segment.text) return segment.text;
+
+        removedSomething = true;
+        return segment.code ? stripped : tidyAfterRemoval(stripped);
+    });
+
+    if (!removedSomething) return markdown;
+
+    return rebuilt.join('').trim();
 }
 
 /** True when a body still carries a URL — the invariant the guard owes. */

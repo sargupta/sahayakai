@@ -209,8 +209,15 @@ const instantAnswerFlow = ai.defineFlow(
           if (usage) {
             UsageTracker.trackGemini(normalizedInput.userId, usage.totalTokens || 0, 'gemini-2.5-flash');
           }
-          // Since this prompt has googleSearch tool, we count it as a grounding call
-          UsageTracker.trackGrounding(normalizedInput.userId, normalizedInput.question);
+          // A grounding call is a billable retrieval, and attaching the
+          // `googleSearch` tool is not one: it returns `searchAvailable:
+          // false` with no results in every environment, so counting one per
+          // answer billed teachers for a call that provably never happened.
+          // A future provider reports per call whether it fired; until one
+          // exists this counts nothing rather than approximating.
+          if (isWebSearchGrounded()) {
+            UsageTracker.trackGrounding(normalizedInput.userId, normalizedInput.question);
+          }
         }
       } catch (genkitError: any) {
         // Genkit throws INVALID_ARGUMENT when the model returns a wrong field name

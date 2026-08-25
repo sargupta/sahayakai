@@ -26,6 +26,10 @@
  *     teacher can run — never as a claim about a specific video.
  *   3. An ungrounded answer body carries no URL of any form, and the flow
  *      reports `grounded: false` rather than leaving it to the model to say.
+ *   4. The guard costs nothing it did not have to. `grounded` is false in
+ *      every environment, so the strip runs over every answer: one that cited
+ *      nothing comes back byte for byte, code and list nesting included, and
+ *      no billable grounding call is counted for a retrieval that never ran.
  */
 
 // The `mock` prefix is required so Jest's hoisting allows the reference
@@ -105,11 +109,15 @@ import { googleSearch } from '@/ai/tools/google-search';
 import { instantAnswer } from '@/ai/flows/instant-answer';
 import { logger } from '@/lib/logger';
 import { StructuredLogger } from '@/lib/logger/structured-logger';
+import { UsageTracker } from '@/lib/usage-tracker';
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const genkitMock = require('@/ai/genkit') as {
     __mockPromptFn: jest.Mock;
-    __mockPromptConfigs: Array<{ output: { schema: { shape: Record<string, unknown> } } }>;
+    __mockPromptConfigs: Array<{
+        prompt: string;
+        output: { schema: { shape: Record<string, unknown> } };
+    }>;
 };
 /* eslint-enable @typescript-eslint/no-require-imports */
 
@@ -286,6 +294,92 @@ describe('stripSourceLinks', () => {
             'Plants use sunlight.',
         );
     });
+
+    // `grounded` is false in every environment, so this function sees every
+    // answer the Genkit path produces — almost all of which cite nothing. An
+    // answer with no source in it must come back byte for byte: the tidy-up
+    // passes exist to close a hole a removal left, and with no removal there
+    // is no hole. Each body below is one the guard used to damage.
+    const UNTOUCHED: Array<[string, string]> = [
+        [
+            'a fenced code block',
+            'Here is the loop:\n\n```python\nfor i in range(3):\n    if i:\n' +
+                '        print(i)\n    else:\n        pass\n```\n\nThat prints 1 and 2.',
+        ],
+        // CommonMark needs two spaces to nest; collapsing them made the child
+        // a sibling.
+        ['a nested list', 'Plants need:\n\n- Sunlight\n  - From the sun\n- Water'],
+        ['an indented code block', 'Example:\n\n    def f():\n        return 1\n\nDone.'],
+        // `](` is not a link unless what follows it is a URL.
+        ['an array index beside a call', 'Use arr[i](x) to call.'],
+        ['a chemical formula', 'Ca[OH](aq) dissolves.'],
+        ['empty parentheses in link-free prose', 'Area = ( ) is empty'],
+        [
+            'a Bengali answer carrying both',
+            'সালোকসংশ্লেষ কীভাবে হয়:\n\n- সূর্যালোক\n  - সূর্য থেকে আসে\n- জল\n\n' +
+                '```python\nfor i in range(3):\n    print(i)\n```',
+        ],
+    ];
+
+    it.each(UNTOUCHED)('leaves %s byte for byte', (_label, body) => {
+        expect(stripSourceLinks(body)).toBe(body);
+    });
+
+    it('keeps a list nested when a link elsewhere in the answer is stripped', () => {
+        const body =
+            'Plants need, per [the NCERT text](https://en.wikipedia.org/wiki/Example):\n\n' +
+            '- Sunlight\n  - From the sun\n- Water';
+
+        const stripped = stripSourceLinks(body);
+
+        expect(containsUrl(stripped)).toBe(false);
+        expect(stripped).toBe(
+            'Plants need, per the NCERT text:\n\n- Sunlight\n  - From the sun\n- Water',
+        );
+    });
+
+    it('keeps a fenced code block intact when a link elsewhere is stripped', () => {
+        const code =
+            '```python\nfor i in range(3):\n    if i:\n        print(i)\n' +
+            '    else:\n        pass\n```';
+        const stripped = stripSourceLinks(`Read more at https://example.com/loops.\n\n${code}`);
+
+        expect(containsUrl(stripped)).toBe(false);
+        expect(stripped).toContain(code);
+    });
+
+    it('strips an invented Bengali citation without reflowing the list beneath it', () => {
+        const body =
+            'সালোকসংশ্লেষ কীভাবে হয়, আরও পড়ুন [এখানে](https://example.com/bn)।\n\n' +
+            '- সূর্যালোক\n  - সূর্য থেকে আসে\n- জল';
+
+        const stripped = stripSourceLinks(body);
+
+        expect(containsUrl(stripped)).toBe(false);
+        expect(stripped).toBe(body.replace('[এখানে](https://example.com/bn)', 'এখানে'));
+    });
+
+    it('does not read an index in a code span as a reference link', () => {
+        const stripped = stripSourceLinks('Use `arr[i][j]`, not https://example.com/arrays.');
+
+        expect(stripped).toContain('`arr[i][j]`');
+        expect(containsUrl(stripped)).toBe(false);
+    });
+
+    // The trade the guard makes: an invented URL is invented wherever it sits,
+    // including inside a fence, so it still goes — but nothing else in there
+    // is touched.
+    it('still removes a URL from inside code, and removes only the URL', () => {
+        const stripped = stripSourceLinks(
+            '```python\nimport requests\n\nresp = requests.get("https://example.com/api")\n' +
+                'print(resp)\n```',
+        );
+
+        expect(containsUrl(stripped)).toBe(false);
+        expect(stripped).toContain('resp = requests.get("")');
+        expect(stripped).toContain('import requests');
+        expect(stripped).toContain('print(resp)');
+    });
 });
 
 describe('instantAnswer output guard', () => {
@@ -402,6 +496,44 @@ describe('instantAnswer output guard', () => {
         );
         expect(warned.some((call) => /ungrounded sources/i.test(call))).toBe(false);
     });
+
+    it('hands back a code sample exactly as the model wrote it', async () => {
+        const answer =
+            'Here is the loop:\n\n```python\nfor i in range(3):\n    if i:\n        print(i)\n' +
+            '    else:\n        pass\n```\n\nThat prints 1 and 2.';
+        mockPromptFn.mockResolvedValue({
+            output: { answer, videoSuggestionUrl: null, gradeLevel: 'Class 8', subject: 'Computer Science' },
+        });
+
+        const out = await instantAnswer(ASK);
+
+        expect(out.answer).toBe(answer);
+    });
+
+    it('counts no grounding call, because no retrieval happens on this path', async () => {
+        mockPromptFn.mockResolvedValue({
+            output: {
+                answer: 'Plants make food using sunlight.',
+                videoSuggestionUrl: null,
+                gradeLevel: 'Class 5',
+                subject: 'Science',
+            },
+            usage: { totalTokens: 120 },
+        });
+
+        await instantAnswer(ASK);
+
+        // The model call is still billed; the retrieval that never ran is not.
+        expect(UsageTracker.trackGemini).toHaveBeenCalled();
+        expect(UsageTracker.trackGrounding).not.toHaveBeenCalled();
+    });
+
+    it('tells the model what an unavailable search means, in the prompt that ships', () => {
+        const promptConfig = genkitMock.__mockPromptConfigs.at(-1);
+
+        expect(promptConfig?.prompt).toMatch(/searchAvailable/);
+        expect(promptConfig?.prompt).toMatch(/No Invented Sources/i);
+    });
 });
 
 describe('no tool may fabricate a source (class gate)', () => {
@@ -466,4 +598,41 @@ describe('no tool may fabricate a source (class gate)', () => {
     function stripComments(source: string): string {
         return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
     }
+});
+
+describe('no prompt file may promise a search that cannot happen (class gate)', () => {
+    /* eslint-disable @typescript-eslint/no-require-imports */
+    const fs = require('fs') as typeof import('fs');
+    const path = require('path') as typeof import('path');
+    /* eslint-enable @typescript-eslint/no-require-imports */
+
+    const PROMPT_DIR = path.resolve(__dirname, '../../ai/prompts');
+
+    const promptFiles = fs
+        .readdirSync(PROMPT_DIR)
+        .filter((file) => file.endsWith('.prompt'))
+        .map((file) => ({
+            file,
+            source: fs.readFileSync(path.join(PROMPT_DIR, file), 'utf8'),
+        }));
+
+    it('finds prompt files to check', () => {
+        expect(promptFiles.length).toBeGreaterThan(0);
+    });
+
+    // `promptDir` is commented out in src/ai/genkit.ts, so these files are not
+    // loaded and a stale one changes no behaviour — it is just the copy the
+    // next flow is written from. A file that still describes `googleSearch` as
+    // a working search is that copy.
+    it('every prompt offering googleSearch also says what to do when it returns nothing', () => {
+        const stale = promptFiles
+            .filter(({ source }) => /googleSearch/.test(source))
+            .filter(
+                ({ source }) =>
+                    !/searchAvailable/.test(source) || !/No Invented Sources/i.test(source),
+            )
+            .map(({ file }) => file);
+
+        expect(stale).toEqual([]);
+    });
 });
