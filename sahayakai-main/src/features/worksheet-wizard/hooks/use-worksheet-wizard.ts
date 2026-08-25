@@ -51,6 +51,9 @@ export function useWorksheetWizard() {
     // The deep link this hook has already acted on, not merely "some deep
     // link has been acted on". See vidyaDeepLinkKey().
     const handledDeepLink = useRef<string | null>(null);
+    /** Pending deep-link auto-submit, so a newer link can supersede it. */
+    const autoSubmitTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+    useEffect(() => () => clearTimeout(autoSubmitTimerRef.current), []);
     const [isRestoring, setIsRestoring] = useState(false);
 
     // Default the Language field to the user's profile language, not
@@ -249,7 +252,17 @@ export function useWorksheetWizard() {
             // form the teacher has not touched yet. Read the value inside the
             // timer rather than when scheduling it, so an upload that lands
             // during those 300 ms still gets the free run.
-            setTimeout(() => {
+            // A second deep link arriving inside these 300 ms would otherwise
+            // leave the first timer pending: both then fire against the form's
+            // newer values, so the second request generates twice and the first
+            // is dropped. Reachable because OmniOrb renders a compound request
+            // as one-shot chips (omni-orb.tsx:738-744) and survives the
+            // client-side navigation. Cancel any superseded timer here rather
+            // than in an effect cleanup — the effect re-runs on `form`/`toast`
+            // identity and the per-query guard then declines to reschedule, so
+            // a blanket cleanup cancels the auto-submit outright.
+            clearTimeout(autoSubmitTimerRef.current);
+            autoSubmitTimerRef.current = setTimeout(() => {
                 const image = form.getValues("imageDataUri");
                 if (!image || !image.trim()) return;
                 form.handleSubmit(onSubmit)();

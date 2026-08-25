@@ -69,7 +69,9 @@ const DESTINATIONS: Record<string, { consumer: string; aliases: string[] }> = {
     'quiz-generator': { consumer: 'src/features/quiz-generator/hooks/use-quiz-generator.ts', aliases: [] },
     'visual-aid-designer': { consumer: 'src/app/visual-aid-designer/page.tsx', aliases: ['prompt'] },
     'worksheet-wizard': { consumer: 'src/features/worksheet-wizard/hooks/use-worksheet-wizard.ts', aliases: ['prompt'] },
-    'virtual-field-trip': { consumer: 'src/app/virtual-field-trip/page.tsx', aliases: [] },
+    // Moved out of app/virtual-field-trip/page.tsx when the 202-crash fix put this
+    // flow on useGenerator (2026-08-25). The contract is unchanged; only the file is.
+    'virtual-field-trip': { consumer: 'src/features/virtual-field-trip/hooks/use-virtual-field-trip.ts', aliases: [] },
     'teacher-training': { consumer: 'src/app/teacher-training/page.tsx', aliases: ['question'] },
     'rubric-generator': { consumer: 'src/features/rubric-generator/hooks/use-rubric-generator.ts', aliases: ['assignmentDescription'] },
     'video-storyteller': { consumer: 'src/app/video-storyteller/page.tsx', aliases: [] },
