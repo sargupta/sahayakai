@@ -454,6 +454,29 @@ export function ContactParentModal({
         }
     };
 
+    /**
+     * Re-dial the same parent after a failed attempt.
+     *
+     * Deliberately routes back through handleCall rather than duplicating the
+     * fetch: a second copy would drift from the original the first time either
+     * changed. Clearing callResult/outreachId first is the actual fix for the
+     * stuck modal — the failed state is derived from the LAST outreach record,
+     * so without clearing it the UI keeps rendering the old failure even while
+     * a new call is in flight.
+     *
+     * Quiet hours are not checked here. The server refuses out-of-hours calls
+     * with OUTSIDE_CALLING_HOURS and handleCall surfaces that message, so the
+     * rule holds even if this button is ever reached some other way.
+     */
+    const handleRetryCall = async () => {
+        setCallResult(null);
+        setOutreachId(null);
+        // "review" is the step handleCall expects to run from; there is no
+        // "preview" in the Step union.
+        setStep("review");
+        await handleCall();
+    };
+
     const handleCopyWhatsApp = async () => {
         try {
             await saveOutreach('whatsapp_copy');
@@ -480,7 +503,7 @@ export function ContactParentModal({
                 {step === "calling" ? (
                     <CallingView student={student} callResult={callResult} />
                 ) : step === "summary" ? (
-                    <SummaryView callResult={callResult} student={student} onClose={handleClose} pollExhausted={pollExhausted} />
+                    <SummaryView callResult={callResult} student={student} onClose={handleClose} pollExhausted={pollExhausted} onRetry={handleRetryCall} onWhatsApp={handleCopyWhatsApp} retrying={calling} />
                 ) : step === "reason" ? (
                     <div className="space-y-3 mt-2">
                         <p className="text-xs text-muted-foreground font-medium">{t("Select reason for outreach:")}</p>
@@ -856,7 +879,16 @@ function CallingView({ student, callResult }: { student: Student; callResult: Ca
 
 // ── Call summary view ───────────────────────────────────────────────────────
 
-function SummaryView({ callResult, student, onClose, pollExhausted = false }: { callResult: CallResult | null; student: Student; onClose: () => void; pollExhausted?: boolean }) {
+function SummaryView({ callResult, student, onClose, pollExhausted = false, onRetry, onWhatsApp, retrying = false }: {
+    callResult: CallResult | null;
+    student: Student;
+    onClose: () => void;
+    pollExhausted?: boolean;
+    /** Re-dial the same parent. Absent when a retry makes no sense. */
+    onRetry?: () => void;
+    onWhatsApp?: () => void;
+    retrying?: boolean;
+}) {
     const { t } = useLanguage();
     const summary = callResult?.callSummary;
     const transcript = callResult?.transcript ?? [];
@@ -886,8 +918,22 @@ function SummaryView({ callResult, student, onClose, pollExhausted = false }: { 
                     {callResult?.callStatus === 'busy' ? 'Line was busy' :
                      callResult?.callStatus === 'no_answer' ? 'No answer' : 'Call could not connect'}
                 </p>
-                <p className="text-xs text-muted-foreground">{t("You can try again later or use WhatsApp instead.")}</p>
-                <Button className="mt-2" variant="outline" onClick={onClose}>Close</Button>
+                <p className="text-xs text-muted-foreground">{t("Parents often miss the first call. You can try again now, or send it on WhatsApp instead.")}</p>
+                {/* A failed outreach used to be terminal here: the only control was
+                    Close, so a teacher whose call did not connect had no way to try
+                    the same parent again without rebuilding the whole message. That
+                    is the common case, not the edge case — parents miss calls. */}
+                <div className="mt-2 flex items-center gap-2">
+                    {onRetry && (
+                        <Button variant="default" onClick={onRetry} disabled={retrying}>
+                            {retrying ? t("Calling…") : t("Try again")}
+                        </Button>
+                    )}
+                    {onWhatsApp && (
+                        <Button variant="outline" onClick={onWhatsApp}>{t("Send on WhatsApp")}</Button>
+                    )}
+                    <Button variant="ghost" onClick={onClose}>{t("Close")}</Button>
+                </div>
             </div>
         );
     }

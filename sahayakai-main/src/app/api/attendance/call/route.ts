@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/firebase-admin';
 import { TWILIO_LANGUAGE_MAP } from '@/types/attendance';
 import { isValidE164 } from '@/lib/twilio-validate';
+import { checkCallingWindow } from '@/lib/calling-hours';
+import { logger } from '@/lib/logger';
 import { classifyTwilioFailure, releasesDedupWindow } from '@/lib/twilio-errors';
 import { getEffectiveMode } from '@/lib/voice-pipeline/health';
 import type { Language } from '@/types';
@@ -65,6 +67,27 @@ export async function POST(req: NextRequest) {
     };
     if (!outreachId || !parentLanguage) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // Quiet hours. Enforced HERE, ahead of the provider switch, so it binds every
+    // caller equally — the modal's Try again, a scheduled retry, a cron sweep, or
+    // a direct POST. Hiding a button is a courtesy; this is the guarantee.
+    // A parent should never be phoned about their child's attendance at 2am.
+    const window = checkCallingWindow();
+    if (!window.allowed) {
+        logger.warn(
+            `Parent call refused outside calling hours (${window.istTime})`,
+            'ATTENDANCE',
+            { userId, outreachId, istHour: window.istHour },
+        );
+        return NextResponse.json(
+            {
+                error: window.reason,
+                code: 'OUTSIDE_CALLING_HOURS',
+                nextAllowedAt: window.nextAllowedAt?.toISOString() ?? null,
+            },
+            { status: 409 },
+        );
     }
 
     // Provider switch. Default 'twilio' preserves the existing batch TwiML path.

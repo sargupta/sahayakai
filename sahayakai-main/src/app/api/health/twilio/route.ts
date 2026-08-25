@@ -32,6 +32,8 @@ type Verdict =
     | 'unconfigured'
     | 'malformed_credentials'
     | 'credentials_rejected'
+    | 'from_number_not_owned'
+    | 'trial_account_restricted'
     | 'account_suspended'
     | 'provider_unreachable';
 
@@ -175,9 +177,74 @@ export async function GET(request: NextRequest) {
         );
     }
 
+    // Credentials being valid is NOT the same as a call being placeable, and
+    // conflating the two is exactly how this endpoint's first version gave a
+    // confident "ok" while every call still failed. Twilio rejected the call
+    // with 21210 — the configured FROM number belonged to a DIFFERENT account,
+    // because phone numbers do not move when you switch accounts. Checking that
+    // the variable was merely *set* proved nothing.
+    const owned = await fetch(
+        `https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(sid)}/IncomingPhoneNumbers.json?PageSize=100`,
+        { headers: { Authorization: `Basic ${auth}` }, signal: AbortSignal.timeout(10_000) },
+    )
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null);
+
+    const ownedNumbers: string[] = (owned?.incoming_phone_numbers ?? [])
+        .map((n: any) => n?.phone_number)
+        .filter(Boolean);
+
+    if (ownedNumbers.length > 0 && !ownedNumbers.includes(from)) {
+        logger.error(
+            `Twilio preflight: FROM number ${from} is not owned by this account — calls will fail 21210`,
+            new Error('Twilio from-number not owned'),
+            'TWILIO_PREFLIGHT',
+        );
+        return NextResponse.json(
+            body(
+                'from_number_not_owned',
+                `TWILIO_PHONE_NUMBER (${from}) is not owned by this account, so Twilio will reject every call with 21210. Numbers do not transfer between accounts. Owned: ${ownedNumbers.join(', ') || 'none'}.`,
+                { ownedNumbers, accountStatus: account.status ?? 'unknown' },
+            ),
+            { status: 502 },
+        );
+    }
+
+    // A trial account authenticates, owns its number, and still cannot call a
+    // parent: it may only dial numbers that have been verified on it. Reporting
+    // "ok" here would be true about the credentials and useless in practice.
+    const isTrial = String((account as any).type ?? '').toLowerCase() === 'trial';
+    if (isTrial) {
+        const callerIds = await fetch(
+            `https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(sid)}/OutgoingCallerIds.json?PageSize=100`,
+            { headers: { Authorization: `Basic ${auth}` }, signal: AbortSignal.timeout(10_000) },
+        )
+            .then((r) => (r.ok ? r.json() : null))
+            .catch(() => null);
+
+        const verified: string[] = (callerIds?.outgoing_caller_ids ?? [])
+            .map((c: any) => c?.phone_number)
+            .filter(Boolean);
+
+        logger.error(
+            `Twilio preflight: account is a TRIAL — calls only reach verified numbers (${verified.length} verified)`,
+            new Error('Twilio trial account'),
+            'TWILIO_PREFLIGHT',
+        );
+        return NextResponse.json(
+            body(
+                'trial_account_restricted',
+                `Credentials are valid and the FROM number is owned, but this is a TRIAL account: Twilio will only connect calls to numbers verified on it. Calls to real parents will be rejected. Verified: ${verified.join(', ') || 'none'}. Upgrade the account to call arbitrary numbers.`,
+                { accountType: 'Trial', verifiedNumbers: verified, ownedNumbers, accountStatus: account.status ?? 'unknown' },
+            ),
+            { status: 502 },
+        );
+    }
+
     return NextResponse.json(
-        body('ok', 'Twilio accepted the credentials and the account is active.', {
+        body('ok', 'Twilio accepted the credentials, the FROM number is owned by this account, and the account is not on trial.', {
             accountStatus: account.status ?? 'unknown',
+            ownedNumbers,
         }),
     );
 }

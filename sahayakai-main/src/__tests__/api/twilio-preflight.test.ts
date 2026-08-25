@@ -69,14 +69,56 @@ describe('GET /api/health/twilio — credential preflight', () => {
         expect(fetchSpy).not.toHaveBeenCalled();
     });
 
-    it('reports ok when Twilio accepts the pair and the account is active', async () => {
-        fetchSpy.mockResolvedValueOnce({
-            ok: true, status: 200, json: async () => ({ status: 'active' }),
-        } as any);
+    // The ok path now makes TWO calls: the account fetch, then the owned-numbers
+    // fetch. Credentials being valid is not sufficient — the FROM number has to
+    // belong to this account, which is the check that was missing when this
+    // endpoint first reported a confident "ok" while every call failed 21210.
+    it('reports ok when the pair is accepted, the account is full, and the FROM number is owned', async () => {
+        fetchSpy
+            .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ status: 'active', type: 'Full' }) } as any)
+            .mockResolvedValueOnce({
+                ok: true, status: 200,
+                json: async () => ({ incoming_phone_numbers: [{ phone_number: '+15550001111' }] }),
+            } as any);
 
         await GET(makeRequest());
         expect(lastCall().body.verdict).toBe('ok');
         expect(lastCall().body.ok).toBe(true);
+    });
+
+    it('refuses to say ok when the FROM number belongs to another account', async () => {
+        // The exact 21210 production failure: valid credentials, wrong number.
+        fetchSpy
+            .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ status: 'active', type: 'Full' }) } as any)
+            .mockResolvedValueOnce({
+                ok: true, status: 200,
+                json: async () => ({ incoming_phone_numbers: [{ phone_number: '+19998887777' }] }),
+            } as any);
+
+        await GET(makeRequest());
+        const { body } = lastCall();
+        expect(body.verdict).toBe('from_number_not_owned');
+        expect(body.ok).toBe(false);
+        expect(body.ownedNumbers).toEqual(['+19998887777']);
+    });
+
+    it('refuses to say ok on a trial account, which can only reach verified numbers', async () => {
+        fetchSpy
+            .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ status: 'active', type: 'Trial' }) } as any)
+            .mockResolvedValueOnce({
+                ok: true, status: 200,
+                json: async () => ({ incoming_phone_numbers: [{ phone_number: '+15550001111' }] }),
+            } as any)
+            .mockResolvedValueOnce({
+                ok: true, status: 200,
+                json: async () => ({ outgoing_caller_ids: [{ phone_number: '+916363740720' }] }),
+            } as any);
+
+        await GET(makeRequest());
+        const { body } = lastCall();
+        expect(body.verdict).toBe('trial_account_restricted');
+        expect(body.ok).toBe(false);
+        expect(body.verifiedNumbers).toEqual(['+916363740720']);
     });
 
     // The exact production failure, caught before a teacher hits it.
