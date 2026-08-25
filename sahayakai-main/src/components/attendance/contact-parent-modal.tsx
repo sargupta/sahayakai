@@ -26,7 +26,10 @@ interface ContactParentModalProps {
     classId: string;
     className: string;
     subject: string;
-    consecutiveAbsences?: number;
+    /** Unbroken run of absences the student is CURRENTLY on. Not the month's
+     *  longest run — everything below phrases this in the present tense and
+     *  it is read out to the parent on the call. */
+    currentAbsenceStreak?: number;
     twilioConfigured: boolean;
     /** Optional pre-fill: when the class page already knows the most likely
      *  reason for this student (e.g. opened from the "Consecutive absences"
@@ -65,7 +68,7 @@ interface CallResult {
 
 export function ContactParentModal({
     open, onOpenChange,
-    student, classId, className, subject, consecutiveAbsences, twilioConfigured,
+    student, classId, className, subject, currentAbsenceStreak, twilioConfigured,
     suggestedReason, absenceDates, attendanceRate,
 }: ContactParentModalProps) {
     const { user } = useAuth();
@@ -371,7 +374,7 @@ export function ContactParentModal({
                     reason,
                     teacherNote: note || undefined,
                     parentLanguage: student.parentLanguage,
-                    consecutiveAbsentDays: consecutiveAbsences,
+                    consecutiveAbsentDays: currentAbsenceStreak,
                     performanceContext: performanceContext ?? undefined,
                     userId: user?.uid,
                 }),
@@ -533,7 +536,7 @@ export function ContactParentModal({
                             reason={reason}
                             performanceContext={performanceContext}
                             absenceDates={absenceDates}
-                            consecutiveAbsences={consecutiveAbsences}
+                            currentAbsenceStreak={currentAbsenceStreak}
                             attendanceRate={attendanceRate}
                             loadingPerf={loadingPerf}
                         />
@@ -648,13 +651,13 @@ interface ReasonContextPanelProps {
     reason: OutreachReason | null;
     performanceContext: PerformanceContext | null;
     absenceDates?: string[];
-    consecutiveAbsences?: number;
+    currentAbsenceStreak?: number;
     attendanceRate?: number;
     loadingPerf: boolean;
 }
 
 function ReasonContextPanel({
-    reason, performanceContext, absenceDates, consecutiveAbsences, attendanceRate, loadingPerf,
+    reason, performanceContext, absenceDates, currentAbsenceStreak, attendanceRate, loadingPerf,
 }: ReasonContextPanelProps) {
     const { t } = useLanguage();
     if (!reason) return null;
@@ -662,7 +665,7 @@ function ReasonContextPanel({
     // ── Consecutive absences: list absent dates, no marks ───────────────────
     if (reason === "consecutive_absences") {
         const dates = absenceDates ?? [];
-        const streak = consecutiveAbsences ?? 0;
+        const streak = currentAbsenceStreak ?? 0;
         if (dates.length === 0 && streak === 0) {
             return (
                 <div className="rounded-lg border border-dashed border-border bg-muted/20 p-3 text-xs text-muted-foreground">

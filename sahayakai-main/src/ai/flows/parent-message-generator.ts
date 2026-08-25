@@ -65,7 +65,7 @@ const ParentMessageInputSchema = z.object({
         'English', 'Hindi', 'Kannada', 'Tamil', 'Telugu', 'Marathi',
         'Bengali', 'Gujarati', 'Punjabi', 'Malayalam', 'Odia',
     ]).describe('Language to write the message in, e.g. "Hindi" — must match the canonical LANGUAGES list in src/types/index.ts'),
-    consecutiveAbsentDays:    z.number().optional().describe('Number of consecutive absent days (for absence reason)'),
+    consecutiveAbsentDays:    z.number().optional().describe('Length of the absence run the student is CURRENTLY on, counted back from the most recently marked day. Never the month\'s longest run — this is spoken to the parent in the present tense.'),
     teacherName:              z.string().optional().describe('Teacher\'s name for the sign-off'),
     schoolName:               z.string().optional().describe('School name for context'),
     /** Snapshot of the student's recent academic performance so the AI can
@@ -109,7 +109,7 @@ You are a caring and professional school teacher writing a message to a student'
 - Reason for outreach: {{reason}}
 - Specific guidance: {{reasonContext}}
 {{#if consecutiveAbsentDays}}
-- Days absent consecutively: {{consecutiveAbsentDays}}
+- Currently on an unbroken run of {{consecutiveAbsentDays}} absent school days (the most recently marked day was an absence, so the child is still away)
 {{/if}}
 {{#if teacherNote}}
 - Teacher's note: <user_input field="teacher_note">{{teacherNote}}</user_input>

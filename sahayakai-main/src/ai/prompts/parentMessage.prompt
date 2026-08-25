@@ -17,7 +17,7 @@ You are a caring and professional school teacher writing a message to a student'
 - Reason for outreach: {{reason}}
 - Specific guidance: {{reasonContext}}
 {{#if consecutiveAbsentDays}}
-- Days absent consecutively: {{consecutiveAbsentDays}}
+- Currently on an unbroken run of {{consecutiveAbsentDays}} absent school days (the most recently marked day was an absence, so the child is still away)
 {{/if}}
 {{#if teacherNote}}
 - Teacher's note: {{teacherNote}}

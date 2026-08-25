@@ -178,7 +178,9 @@ Note: `attendance/{classId}` is an empty container document. Actual records are 
 | `absentDays` | `number` | |
 | `lateDays` | `number` | |
 | `attendanceRate` | `number` | 0–100, `round(present/total * 100)` |
-| `consecutiveAbsences` | `number` | Max streak of consecutive absent days in the month |
+| `currentAbsenceStreak` | `number` | Unbroken run of absences ending on the most recent marked day. The only figure stated in the present tense to a teacher or a parent |
+| `longestAbsenceStreak` | `number` | Longest run anywhere in the month. Retrospective; monthly report card only |
+| `consecutiveAbsences` | `number` | Deprecated wire alias of `currentAbsenceStreak`, added back at the route boundary for the Flutter client. Not a field on `StudentAttendanceSummary` |
 
 ---
 
@@ -518,7 +520,7 @@ interface ContactParentModalProps {
     classId: string;
     className: string;
     subject: string;
-    consecutiveAbsences?: number;
+    currentAbsenceStreak?: number;
     twilioConfigured: boolean;
 }
 ```
@@ -584,13 +586,21 @@ On mount, loads in parallel:
 
 Then sequentially loads current-month summaries via `getStudentSummariesAction` for the at-risk alert banner.
 
-### Consecutive Absence Calculation
+### Absence Streak Calculation
 
-Computed server-side in `getStudentSummariesAction`:
-- Iterates all attendance records for the month in date order
-- Tracks a running streak (`currentStreak`) — incremented on `absent`, reset on `present` or `late`
-- `consecutiveAbsences = max streak seen`
-- Students with >= 2 consecutive absences appear in the at-risk alert banner
+Computed server-side in `getStudentSummaries`. Two separate numbers, because
+"absent 3 days this month" and "absent for the last 3 days" are different claims
+and only one of them may be spoken in the present tense:
+- Iterates all attendance records for the month in ascending date order
+- Tracks a running counter — incremented on `absent`, reset to 0 on `present` or `late`
+- `currentAbsenceStreak` = whatever the counter holds after the last marked day, i.e. the run the student is still on
+- `longestAbsenceStreak` = the highest value the counter reached, i.e. the month's high-water mark
+- Students with >= 2 **current** consecutive absences appear in the at-risk alert banner, and the Contact Parent modal sends `currentAbsenceStreak` into the call script
+
+The route serializes a third key, `consecutiveAbsences`, as a deprecated alias of
+`currentAbsenceStreak`. It exists so the Flutter client keeps decoding a live
+number, and is pinned to the current streak — never the longest — in
+`src/__tests__/api/attendance/attendance-summaries-wire-alias.test.ts`.
 
 ### Attendance Date Validation
 

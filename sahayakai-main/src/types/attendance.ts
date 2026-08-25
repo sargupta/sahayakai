@@ -173,7 +173,19 @@ export interface StudentAttendanceSummary {
     absentDays: number;
     lateDays: number;
     attendanceRate: number;        // 0–100
-    consecutiveAbsences: number;   // current streak
+    /**
+     * Unbroken run of absences ending on the most recent marked day of the
+     * month — "absent for the last N school days, and still absent". This is
+     * the ONLY figure that may be phrased in the present tense to a teacher
+     * or spoken to a parent on a call.
+     */
+    currentAbsenceStreak: number;
+    /**
+     * Longest run of absences anywhere in the month. Retrospective, for the
+     * monthly report card only — it says nothing about where the student is
+     * today. Never feed this into outreach copy.
+     */
+    longestAbsenceStreak: number;
 }
 
 // ── Twilio language codes for <Say> ──────────────────────────────────────────
