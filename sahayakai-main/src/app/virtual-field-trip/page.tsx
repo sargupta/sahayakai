@@ -1,392 +1,42 @@
 
 "use client";
-import type { VirtualFieldTripOutput } from "@/ai/flows/virtual-field-trip";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useToast } from "@/hooks/use-toast";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Globe2, Send, MapPin, Save } from "lucide-react";
-import { useState, useEffect, useRef, Suspense } from "react";
-import { useForm } from "react-hook-form";
-import { useSearchParams } from "next/navigation";
-import { z } from "zod";
+import { Loader2, Globe2 } from "lucide-react";
+import { Suspense } from "react";
+import Link from "next/link";
 import { Textarea } from "@/components/ui/textarea";
 import { MicrophoneInput } from "@/components/microphone-input";
 import { ExamplePrompts } from "@/components/example-prompts";
 import { LanguageSelector } from "@/components/language-selector";
 import { GradeLevelSelector } from "@/components/grade-level-selector";
-import Link from "next/link";
-import { auth } from "@/lib/firebase";
-import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
-import { LANGUAGE_TO_ISO } from "@/types";
 import { VirtualFieldTripDisplay } from "@/components/virtual-field-trip-display";
 import { SubjectSelector } from "@/components/subject-selector";
-import { useJarvisStore } from "@/store/jarvisStore";
-import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
-import { useNetworkAware } from "@/hooks/use-network-aware";
-import { normaliseVidyaLanguage, normaliseVidyaGradeLevel } from "@/lib/vidya-action-normalizer";
-
-
-
-const translations: Record<string, Record<string, string>> = {
-  en: {
-    pageTitle: "Virtual Field Trip",
-    pageDescription: "Plan exciting virtual tours for your students using Google Earth.",
-    topicLabel: "Trip Topic",
-    speakLabel: "Speak your trip idea...",
-    placeholder: "e.g., 'A tour of the major centers of the Harappan Civilization...'",
-    gradeLabel: "Class",
-    languageLabel: "Language",
-    submitButton: "Generate",
-    generating: "Generating Itinerary...",
-    planningText: "Planning your virtual adventure...",
-    saveButton: "Save to Library",
-    visitButton: "Visit on Google Earth",
-    subjectLabel: "Subject"
-  },
-  hi: {
-    pageTitle: "आभासी क्षेत्र भ्रमण",
-    pageDescription: "Google Earth का उपयोग करके अपने छात्रों के लिए रोमांचक आभासी दौरों की योजना बनाएं।",
-    topicLabel: "यात्रा का विषय",
-    speakLabel: "अपनी यात्रा का विचार बोलें...",
-    placeholder: "जैसे, 'हड़प्पा सभ्यता के प्रमुख केंद्रों का दौरा...'",
-    gradeLabel: "कक्षा स्तर",
-    languageLabel: "भाषा",
-    submitButton: "उत्पन्न करें",
-    generating: "यात्रा कार्यक्रम बना रहा है...",
-    planningText: "आपकी आभासी साहसिक यात्रा की योजना बना रहा है...",
-    saveButton: "लाइब्रेरी में सहेजें",
-    visitButton: "Google Earth पर जाएँ",
-    subjectLabel: "विषय"
-  },
-  bn: {
-    pageTitle: "ভার্চুয়াল ফিল্ড ট্রিপ",
-    pageDescription: "Google Earth ব্যবহার করে আপনার ছাত্রদের জন্য উত্তেজনাপূর্ণ ভার্চুয়াল ট্যুরের পরিকল্পনা করুন।",
-    topicLabel: "ভ্রমণের বিষয়",
-    speakLabel: "আপনার ভ্রমণের ধারণা বলুন...",
-    placeholder: "যেমন, 'হরপ্পা সভ্যতার প্রধান কেন্দ্রগুলি ভ্রমণ...'",
-    gradeLabel: "শ্রেণী",
-    languageLabel: "ভাষা",
-    submitButton: "তৈরি করুন",
-    generating: "ভ্রমণসূচী তৈরি করা হচ্ছে...",
-    planningText: "আপনার ভার্চুয়াল অভিযানের পরিকল্পনা করা হচ্ছে...",
-    saveButton: "লাইব্রেরিতে সংরক্ষণ করুন",
-    visitButton: "Google Earth এ যান"
-  },
-  te: {
-    pageTitle: "వర్చువల్ ఫీల్డ్ ట్రిప్",
-    pageDescription: "Google Earth ఉపయోగించి మీ విద్యార్థుల కోసం ఉత్తేజకరమైన వర్చువల్ పర్యటనలను ప్లాన్ చేయండి.",
-    topicLabel: "పర్యటన అంశం",
-    speakLabel: "మీ పర్యటన ఆలోచనను చెప్పండి...",
-    placeholder: "ఉదా., 'హరప్పా నాగరికత యొక్క ప్రధాన కేంద్రాల పర్యటన...'",
-    gradeLabel: "తరగతి స్థాయి",
-    languageLabel: "భాష",
-    submitButton: "సృష్టించు",
-    generating: "ప్రయాణ ప్రణాళికను సృష్టిస్తోంది...",
-    planningText: "మీ వర్చువల్ అడ్వెంచర్‌ను ప్లాన్ చేస్తోంది...",
-    saveButton: "లైబ్రరీలో సేవ్ చేయండి",
-    visitButton: "Google Earth లో సందర్శించండి"
-  },
-  mr: {
-    pageTitle: "आभासी क्षेत्र सहल",
-    pageDescription: "Google Earth वापरून आपल्या विद्यार्थ्यांसाठी रोमांचक आभासी सहलींचे नियोजन करा.",
-    topicLabel: "सहलीचा विषय",
-    speakLabel: "आपली सहल कल्पना बोला...",
-    placeholder: "उदा., 'हडप्पा संस्कृतीच्या प्रमुख केंद्रांचा दौरा...'",
-    gradeLabel: "इयत्ता",
-    languageLabel: "भाषा",
-    submitButton: "तयार करा",
-    generating: "प्रवास कार्यक्रम तयार करत आहे...",
-    planningText: "तुमच्या आभासी साहसाचे नियोजन करत आहे...",
-    saveButton: "लायब्ररीमध्ये जतन करा",
-    visitButton: "Google Earth वर भेट द्या"
-  },
-  ta: {
-    pageTitle: "மெய்நிகர் களப்பயணம்",
-    pageDescription: "Google Earth ஐப் பயன்படுத்தி உங்கள் மாணவர்களுக்கு அற்புதமான மெய்நிகர் சுற்றுப்பயணங்களைத் திட்டமிடுங்கள்.",
-    topicLabel: "பயணத் தலைப்பு",
-    speakLabel: "உங்கள் பயண யோசனையைப் பேசுங்கள்...",
-    placeholder: "எ.கா., 'ஹரப்பா நாகரிகத்தின் முக்கிய மையங்களுக்கு ஒரு பயணம்...'",
-    gradeLabel: "வகுப்பு நிலை",
-    languageLabel: "மொழி",
-    submitButton: "உருவாக்கு",
-    generating: "பயணத்திட்டத்தை உருவாக்குகிறது...",
-    planningText: "உங்கள் மெய்நிகர் சாகசத்தைத் திட்டமிடுகிறது...",
-    saveButton: "நூலகத்தில் சேமிக்கவும்",
-    visitButton: "Google Earth இல் பார்வையிடவும்"
-  },
-  gu: {
-    pageTitle: "વર્ચ્યુઅલ ફીલ્ડ ટ્રિપ",
-    pageDescription: "Google Earth નો ઉપયોગ કરીને તમારા વિદ્યાર્થીઓ માટે આકર્ષક વર્ચ્યુઅલ ટુરની યોજના બનાવો.",
-    topicLabel: "ટ્રિપ વિષય",
-    speakLabel: "તમારો ટ્રિપ વિચાર બોલો...",
-    placeholder: "દા.ત., 'હડપ્પીય સંસ્કૃતિના મુખ્ય કેન્દ્રોની મુલાકાત...'",
-    gradeLabel: "ધોરણ",
-    languageLabel: "ભાષા",
-    submitButton: "બનાવો",
-    generating: "પ્રવાસ કાર્યક્રમ બનાવી રહ્યું છે...",
-    planningText: "તમારા વર્ચ્યુઅલ સાહસનું આયોજન કરી રહ્યું છે...",
-    saveButton: "લાઇબ્રેરીમાં સાચવો",
-    visitButton: "Google Earth પર મુલાકાત લો"
-  },
-  kn: {
-    pageTitle: "ವರ್ಚುವಲ್ ಫೀಲ್ಡ್ ಟ್ರಿಪ್",
-    pageDescription: "Google Earth ಬಳಸಿಕೊಂಡು ನಿಮ್ಮ ವಿದ್ಯಾರ್ಥಿಗಳಿಗೆ ರೋಮಾಂಚಕಾರಿ ವರ್ಚುವಲ್ ಪ್ರವಾಸಗಳನ್ನು ಯೋಜಿಸಿ.",
-    topicLabel: "ಪ್ರವಾಸದ ವಿಷಯ",
-    speakLabel: "ನಿಮ್ಮ ಪ್ರವಾಸ ಕಲ್ಪನೆಯನ್ನು ಮಾತನಾಡಿ...",
-    placeholder: "ಉದಾ., 'ಹರಪ್ಪನ್ ನಾಗರೀಕತೆಯ ಪ್ರಮುಖ ಕೇಂದ್ರಗಳ ಪ್ರವಾಸ...'",
-    gradeLabel: "ದರ್ಜೆ ಮಟ್ಟ",
-    languageLabel: "ಭಾೆ",
-    submitButton: "ರಚಿಸಿ",
-    generating: "ಪ್ರವಾಸದ ವಿವರವನ್ನು ರಚಿಸಲಾಗುತ್ತಿದೆ...",
-    planningText: "ನಿಮ್ಮ ವರ್ಚುವಲ್ ಸಾಹಸವನ್ನು ಯೋಜಿಸುತ್ತಿದೆ...",
-    saveButton: "ಲೈಬ್ರರಿಯಲ್ಲಿ ಉಳಿಸಿ",
-    visitButton: "Google Earth ನಲ್ಲಿ ಭೇಟಿ ನೀಡಿ"
-  },
-  pa: {
-    pageTitle: "ਵਰਚੁਅਲ ਫੀਲਡ ਟ੍ਰਿਪ",
-    pageDescription: "Google Earth ਦੀ ਵਰਤੋਂ ਕਰਕੇ ਆਪਣੇ ਵਿਦਿਆਰਥੀਆਂ ਲਈ ਰੋਮਾਂਚਕ ਵਰਚੁਅਲ ਟੂਰਾਂ ਦੀ ਯੋਜਨਾ ਬਣਾਓ।",
-    topicLabel: "ਟ੍ਰਿਪ ਵਿਸ਼ਾ",
-    speakLabel: "ਆਪਣਾ ਟ੍ਰਿਪ ਵਿਚਾਰ ਬੋਲੋ...",
-    placeholder: "ਉਦਾਹਰਣ: 'ਹੜੱਪਾ ਸੱਭਿਅਤਾ ਦੇ ਮੁੱਖ ਕੇਂਦਰਾਂ ਦਾ ਟੂਰ...'",
-    gradeLabel: "ਜਮਾਤ",
-    languageLabel: "ਭਾਸ਼ਾ",
-    submitButton: "ਬਣਾਓ",
-    generating: "ਯਾਤਰਾ ਯੋਜਨਾ ਬਣਾ ਰਿਹਾ ਹੈ...",
-    planningText: "ਤੁਹਾਡੇ ਵਰਚੁਅਲ ਸਾਹਸ ਦੀ ਯੋਜਨਾ ਬਣਾ ਰਿਹਾ ਹੈ...",
-    saveButton: "ਲਾਇਬ੍ਰੇਰੀ ਵਿੱਚ ਸੁਰੱਖਿਅਤ ਕਰੋ",
-    visitButton: "Google Earth 'ਤੇ ਜਾਓ"
-  },
-  ml: {
-    pageTitle: "വെർച്വൽ ഫീൽഡ് ട്രിപ്പ്",
-    pageDescription: "Google Earth ഉപയോഗിച്ച് നിങ്ങളുടെ വിദ്യാർത്ഥികൾക്കായി ആവേശകരമായ വെർച്വൽ ടൂറുകൾ ആസൂത്രണം ചെയ്യുക.",
-    topicLabel: "യാത്രാ വിഷയം",
-    speakLabel: "നിങ്ങളുടെ യാത്രാ ആശയം പറയുക...",
-    placeholder: "ഉദാ: 'ഹാരപ്പൻ സംസ്കാരത്തിൻ്റെ പ്രധാന കേന്ദ്രങ്ങളിലേക്കുള്ള ഒരു യാത്ര...'",
-    gradeLabel: "ക്ലാസ്",
-    languageLabel: "ഭാഷ",
-    submitButton: "സൃഷ്ടിക്കുക",
-    generating: "യാത്രാ പദ്ധതി തയ്യാറാക്കുന്നു...",
-    planningText: "നിങ്ങളുടെ വെർച്വൽ സാഹസികത ആസൂത്രണം ചെയ്യുന്നു...",
-    saveButton: "ലൈബ്രറിയിൽ സേവ് ചെയ്യുക",
-    visitButton: "Google Earth സന്ദർശിക്കുക"
-  },
-  or: {
-    pageTitle: "ଭର୍ଚୁଆଲ୍ ଫିଲ୍ଡ ଟ୍ରିପ୍",
-    pageDescription: "Google Earth ବ୍ୟବହାର କରି ଆପଣଙ୍କ ଛାତ୍ରମାନଙ୍କ ପାଇଁ ରୋମାଞ୍ଚକର ଭର୍ଚୁଆଲ୍ ଟୁର୍ ଯୋଜନା କରନ୍ତୁ |",
-    topicLabel: "ଯାତ୍ରା ବିଷୟ",
-    speakLabel: "ଆପଣଙ୍କ ଯାତ୍ରା ଧାରଣା କୁହନ୍ତୁ...",
-    placeholder: "ଉଦାହରଣ: 'ହରପ୍ପା ସଭ୍ୟତାର ପ୍ରମୁଖ କେନ୍ଦ୍ରଗୁଡିକର ଏକ ଯାତ୍ରା...'",
-    gradeLabel: "ଶ୍ରେଣୀ",
-    languageLabel: "ଭାଷା",
-    submitButton: "ତିଆରି କରନ୍ତୁ",
-    generating: "ଯାତ୍ରା ଯୋଜନା ତିଆରି ଚାଲିଛି...",
-    planningText: "ଆପଣଙ୍କ ଭର୍ଚୁଆଲ୍ ଦୁଃସାହସିକ ଯାତ୍ରା ଯୋଜନା କରାଯାଉଛି...",
-    saveButton: "ଲାଇବ୍ରେରୀରେ ସଂରକ୍ଷଣ କରନ୍ତୁ",
-    visitButton: "Google Earth ରେ ଦେଖନ୍ତୁ"
-  },
-};
-
-const formSchema = z.object({
-  topic: z.string().min(10, { message: "Topic must be at least 10 characters." }),
-  language: z.string().optional(),
-  gradeLevel: z.string().optional(),
-  subject: z.string().optional(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import { UpgradePrompt } from "@/components/upgrade-prompt";
+import { useVirtualFieldTrip } from "@/features/virtual-field-trip";
 
 function VirtualFieldTripContent() {
-  const { requireAuth, openAuthModal } = useAuth();
-  const { t: translate, language: uiLanguage } = useLanguage();
-  const [trip, setTrip] = useState<VirtualFieldTripOutput | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
-  const { canUseAI, aiUnavailableReason } = useNetworkAware();
-  const { clearFormSnapshot } = useJarvisStore();
+  const { t: translate } = useLanguage();
+  const {
+    form,
+    onSubmit,
+    t,
+    uiLangCode,
+    selectedLanguage,
+    handlePromptClick,
+    trip,
+    isGenerating,
+    isRestoring,
+    limitState,
+    stillGenerating,
+    canUseAI,
+    aiUnavailableReason,
+  } = useVirtualFieldTrip();
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      topic: "",
-      language: LANGUAGE_TO_ISO[uiLanguage] ?? "en",
-      gradeLevel: "Class 8",
-      subject: "General",
-    },
-  });
-
-  // ── VIDYA Form Sync ───────────────────────────────────────────────────────
-  const watchedTopic   = form.watch("topic");
-  const watchedGrade   = form.watch("gradeLevel");
-  const watchedSubject = form.watch("subject");
-  const watchedLang    = form.watch("language");
-  const savedSnapshot  = useVidyaFormSync("virtual-field-trip", {
-    topic: watchedTopic,
-    gradeLevel: watchedGrade,
-    subject: watchedSubject,
-    language: watchedLang,
-  });
-
-  const selectedLanguage = form.watch("language") || 'en';
-  // UI chrome (taglines, placeholders, labels) follows the global UI language,
-  // NOT the AI-output language form field. Without this, switching the app
-  // language leaves chrome in the previous language until a hard refresh.
-  const uiLangCode = LANGUAGE_TO_ISO[uiLanguage] || 'en';
-  const t = translations[uiLangCode] || translations.en;
-  const searchParams = useSearchParams();
-
-  // Restore snapshot on mount — only when no URL params are present
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    const topicParam = searchParams.get("topic");
-    const id = searchParams.get("id");
-    if (topicParam || id || !savedSnapshot) return;
-    if (savedSnapshot.topic)      form.setValue("topic",      savedSnapshot.topic);
-    if (savedSnapshot.gradeLevel) form.setValue("gradeLevel", savedSnapshot.gradeLevel);
-    if (savedSnapshot.subject)    form.setValue("subject",    savedSnapshot.subject);
-    if (savedSnapshot.language)   form.setValue("language",   savedSnapshot.language);
-  }, []); // runs once on mount only
-
-  useEffect(() => {
-    const id = searchParams.get("id");
-    const topicParam = searchParams.get("topic");
-
-    if (id) {
-      const fetchSavedContent = async () => {
-        setIsLoading(true);
-        try {
-          const token = await auth.currentUser?.getIdToken();
-          const headers: Record<string, string> = {
-            "Content-Type": "application/json",
-          };
-
-          if (token) {
-            headers["Authorization"] = `Bearer ${token}`;
-          } else if (auth.currentUser?.uid === "dev-user") {
-            headers["x-user-id"] = "dev-user";
-          }
-
-          const res = await fetch(`/api/content/get?id=${id}`, {
-            headers: headers
-          });
-          if (res.ok) {
-            const content = await res.json();
-            if (content.data) {
-              setTrip(content.data);
-              form.reset({
-                topic: content.topic || content.title,
-                gradeLevel: content.gradeLevel,
-                language: content.language,
-              });
-            }
-          }
-        } catch (err) {
-          console.error("Failed to load saved field trip:", err);
-          toast({
-            title: translate("Load Failed"),
-            description: translate("Could not load the saved field trip."),
-            variant: "destructive"
-          });
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      fetchSavedContent();
-    } else if (topicParam) {
-      // ── VIDYA Action: Pre-fill all fields from URL params ──────────────
-      // NCERT-demo 2026-05-19 pattern (see use-lesson-plan.ts):
-      //   - SET_OPTS forces controlled selectors to re-render with the
-      //     incoming value before the 300ms auto-submit fires.
-      //   - VIDYA emits language/grade in display-name form; normalise
-      //     to ISO ("en") / "Class N" before writing.
-      const subjectParam = searchParams.get("subject");
-      const gradeLevelParam = searchParams.get("gradeLevel");
-      const languageParam = searchParams.get("language");
-
-      const SET_OPTS = { shouldDirty: true, shouldTouch: true, shouldValidate: true } as const;
-
-      form.setValue("topic", topicParam, SET_OPTS);
-      if (subjectParam) form.setValue("subject", subjectParam, SET_OPTS);
-      const normalisedGrade = normaliseVidyaGradeLevel(gradeLevelParam);
-      if (normalisedGrade) form.setValue("gradeLevel", normalisedGrade, SET_OPTS);
-      const normalisedLang = normaliseVidyaLanguage(languageParam);
-      if (normalisedLang) form.setValue("language", normalisedLang, SET_OPTS);
-      // ────────────────────────────────────────────────────────────────────
-      setTimeout(() => {
-        form.handleSubmit(onSubmit)();
-      }, 300);
-    }
-  }, [searchParams, form, toast]);
-
-  const submittingRef = useRef(false);
-  const onSubmit = async (values: FormValues) => {
-    if (submittingRef.current) return;
-    submittingRef.current = true;
-    setIsLoading(true);
-    setTrip(null);
-    try {
-      const token = await auth.currentUser?.getIdToken();
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
-
-      // NCERT-demo 2026-05-19 hardening (same pattern as use-lesson-plan.ts):
-      // ALWAYS send a non-empty `language`; strip the "General" subject
-      // placeholder so the model isn't misled by a meaningless default.
-      const submittedLanguage = values.language && values.language.trim()
-        ? values.language
-        : 'en';
-      const submittedSubject = values.subject && values.subject !== 'General'
-        ? values.subject
-        : undefined;
-
-      const res = await fetch("/api/ai/virtual-field-trip", {
-        method: "POST",
-        headers: headers,
-        body: JSON.stringify({
-          topic: values.topic,
-          language: submittedLanguage,
-          gradeLevel: values.gradeLevel,
-          subject: submittedSubject,
-        })
-      });
-
-      if (!res.ok) {
-        if (res.status === 401) {
-          openAuthModal();
-          throw new Error("Please sign in to generate virtual field trips");
-        }
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to generate virtual field trip");
-      }
-
-      const result = await res.json();
-      setTrip(result);
-      clearFormSnapshot("virtual-field-trip");
-    } catch (error) {
-      console.error("Failed to plan trip:", error);
-      toast({
-        title: translate("Planning Failed"),
-        description: translate("There was an error planning the virtual trip. Please try again."),
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-      submittingRef.current = false;
-    }
-  };
-
-  const handlePromptClick = (prompt: string) => {
-    form.setValue("topic", prompt);
-    // form.trigger("topic"); // Removed to prevent premature interaction
-  };
-
+  const isLoading = isGenerating || isRestoring;
+  const showLimitPrompt = limitState.limitReached || limitState.upgradeRequired;
 
   return (
     <div className="flex flex-col items-center gap-8 w-full max-w-2xl">
@@ -403,7 +53,31 @@ function VirtualFieldTripContent() {
             {t.pageDescription}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {showLimitPrompt && (
+            <UpgradePrompt
+              feature="virtual-field-trip"
+              used={limitState.used ?? 0}
+              limit={limitState.limit ?? 0}
+            />
+          )}
+          {limitState.serviceBusy && limitState.message && (
+            <p className="text-xs text-amber-600 text-center" role="status">{limitState.message}</p>
+          )}
+          {/* A 202 means the trip is still being written, not that it failed.
+              The teacher needs somewhere to go, so the notice stays on screen
+              with the link — a toast would be gone before they read it. */}
+          {stillGenerating && (
+            <div
+              role="status"
+              className="rounded-xl border border-amber-200/60 bg-amber-50/80 px-4 py-3 text-sm text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/80 dark:text-amber-200"
+            >
+              <span>{stillGenerating}</span>{" "}
+              <Link href="/my-library" className="font-medium underline underline-offset-2">
+                {translate("Open My Library")}
+              </Link>
+            </div>
+          )}
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField

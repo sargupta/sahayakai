@@ -56,8 +56,11 @@ const FORMS: FormFix[] = [
         apiPath: '/api/ai/visual-aid',
     },
     {
+        // Migrated to the generator spine (2026-08-25) — the page had kept a
+        // pre-spine copy of the submit state machine, which is why it never
+        // learned to read the 202 the route can answer.
         name: 'virtual-field-trip',
-        file: 'src/app/virtual-field-trip/page.tsx',
+        file: 'src/features/virtual-field-trip/hooks/use-virtual-field-trip.ts',
         usesRhf: true,
         hasGradeLevel: true,
         apiPath: '/api/ai/virtual-field-trip',

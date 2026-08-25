@@ -40,9 +40,25 @@ paths:
             application/json:
               schema:
                 type: object
+                required: [stops]
                 properties:
                   title: {type: string}
-                  stops: {type: array, items: {type: object}}
+                  stops: {type: array, minItems: 1, items: {type: object}}
+        '202':
+          description: >
+            Still generating. The dispatcher budget expired while the flow kept
+            running; the trip lands in My Library. Carries no trip fields, so a
+            client must branch on the status before reading the body.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error, message]
+                properties:
+                  error: {type: string, enum: [still_generating]}
+                  message: {type: string}
+                  budgetMs: {type: integer}
+                  elapsedMs: {type: integer}
       security: [{bearerAuth: []}]
 
 components:
