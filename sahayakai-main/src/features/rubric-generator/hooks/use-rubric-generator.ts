@@ -3,8 +3,9 @@
 /**
  * useRubricGenerator — all rubric-generator logic, zero markup.
  * Composes the shared useGenerator spine; keeps rubric-specific behavior:
- * VIDYA form sync + snapshot restore, restore-from-`?id` (user-gated with
- * a hasLoaded ref), VIDYA URL prefill + 300ms auto-submit.
+ * VIDYA form sync + snapshot restore, restore-from-`?id` (user-gated, and
+ * guarded per param set rather than per mount), VIDYA URL prefill + 300ms
+ * auto-submit.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -19,9 +20,27 @@ import { useJarvisStore } from "@/store/jarvisStore";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
 import { LANGUAGE_TO_ISO } from "@/types";
-import { normaliseVidyaLanguage, normaliseVidyaGradeLevel } from "@/lib/vidya-action-normalizer";
+import {
+    normaliseVidyaLanguage,
+    normaliseVidyaGradeLevel,
+    vidyaDeepLinkKey,
+} from "@/lib/vidya-action-normalizer";
 import { useGenerator } from "@/features/generator";
 import { formSchema, type FormValues } from "../types";
+
+/**
+ * Every URL param the deep-link effect below reads. The guard is keyed over
+ * this exact list, so a param added to the effect must be added here too or
+ * a link that differs only in that param reads as already-handled.
+ */
+const DEEP_LINK_PARAMS = [
+    "id",
+    "assignmentDescription",
+    "topic",
+    "subject",
+    "gradeLevel",
+    "language",
+] as const;
 
 export function useRubricGenerator() {
     const { user } = useAuth();
@@ -29,7 +48,9 @@ export function useRubricGenerator() {
     const { t: translate, language: uiLanguage } = useLanguage();
     const { canUseAI, aiUnavailableReason } = useNetworkAware();
     const searchParams = useSearchParams();
-    const hasLoaded = useRef(false);
+    // The deep link this hook has already acted on, not merely "some deep
+    // link has been acted on". See vidyaDeepLinkKey().
+    const handledDeepLink = useRef<string | null>(null);
     const { clearFormSnapshot } = useJarvisStore();
     const [isRestoring, setIsRestoring] = useState(false);
 
@@ -107,7 +128,23 @@ export function useRubricGenerator() {
     const uiLangCode = LANGUAGE_TO_ISO[uiLanguage] || "en";
 
     useEffect(() => {
-        if (!user || hasLoaded.current) return;
+        // `user` gates the whole effect, so test it BEFORE claiming anything:
+        // the first render has no user yet, and claiming there would burn the
+        // key for a run that never happened.
+        if (!user) return;
+
+        // Run the URL branch once PER PARAM SET. A guard keyed to the mount
+        // drops a SECOND rubric request from a teacher already standing on
+        // this page: VIDYA is mounted app-wide (app-shell.tsx) and pushes
+        // client-side into this same route segment, and page.tsx does not key
+        // its <Suspense>, so the query changes without a remount and a bare
+        // boolean is still set from the first link. Claim the key, not the
+        // mount. Claiming here rather than after the `?id=` fetch resolves
+        // also keeps the round trip guarded — same reasoning as
+        // use-worksheet-wizard.ts.
+        const deepLinkKey = vidyaDeepLinkKey(searchParams, DEEP_LINK_PARAMS);
+        if (handledDeepLink.current === deepLinkKey) return;
+        handledDeepLink.current = deepLinkKey;
 
         const id = searchParams.get("id");
         // Every producer that can navigate here emits `topic`: the intent
@@ -172,7 +209,6 @@ export function useRubricGenerator() {
                     });
                 } finally {
                     setIsRestoring(false);
-                    hasLoaded.current = true;
                 }
             };
             fetchSavedContent();
@@ -196,7 +232,6 @@ export function useRubricGenerator() {
             const normalisedLang = normaliseVidyaLanguage(languageParam);
             if (normalisedLang) form.setValue("language", normalisedLang, SET_OPTS);
             // ────────────────────────────────────────────────────────────────────
-            hasLoaded.current = true;
             setTimeout(() => {
                 form.handleSubmit(onSubmit)();
             }, 300);

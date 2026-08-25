@@ -261,4 +261,132 @@ describe('useWorksheetWizard — restore from ?id=', () => {
 
         expect(global.fetch).toHaveBeenCalledTimes(1);
     });
+
+    // The same defect as the deep-link suite below, seen from the restore
+    // side: opening a second saved worksheet from the Library while already
+    // on this page is a query-only push, so a mount-scoped guard swallowed it
+    // and the page went on showing the record opened before.
+    it('refetches when a different ?id= arrives without a remount', async () => {
+        const { rerender } = renderWorksheetWizard();
+        await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+
+        mockSearchParams({ id: 'worksheet-456' });
+        await act(async () => {
+            rerender();
+        });
+
+        await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
+        expect(String((global.fetch as jest.Mock).mock.calls[1][0])).toContain('worksheet-456');
+    });
+});
+
+/**
+ * A SECOND VIDYA request while the teacher is already standing here.
+ *
+ * The restore guard added with the auto-submit fix was a bare boolean claimed
+ * for the lifetime of the MOUNT. Nothing remounts this page between two voice
+ * requests: the OmniOrb lives in the app shell (src/app/app-shell.tsx),
+ * executeAction ends in a client-side router.push (src/components/omni-orb.tsx),
+ * and src/app/worksheet-wizard/page.tsx wraps the content in an unkeyed
+ * <Suspense>. So the query changes, useSearchParams updates, the effect
+ * re-fires — and the mount-scoped guard returns early. Measured on the hook
+ * as shipped: after asking for Photosynthesis the prompt was still "Fractions
+ * for class 5", with subject "General" and gradeLevel "Class 4", i.e. the
+ * second link never ran at all.
+ *
+ * The class gate is stated over the param list, not over `topic`: EVERY param
+ * the effect reads has to take part in the guard key, so a param added to the
+ * effect and forgotten in DEEP_LINK_PARAMS fails here rather than silently
+ * making links that differ only in that param look already-handled.
+ */
+describe('useWorksheetWizard — a second deep link, same mount', () => {
+    /** What the teacher asked for first. */
+    const FIRST = { topic: 'Fractions for class 5' };
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        jest.useFakeTimers();
+        mockSearchParams();
+    });
+
+    afterEach(() => {
+        jest.useRealTimers();
+    });
+
+    /** Arrive on FIRST, then have VIDYA push `second` into the same mount. */
+    async function thenAsksFor(second: Record<string, string>) {
+        mockSearchParams(FIRST);
+        const { result, rerender } = renderWorksheetWizard();
+        await act(async () => {
+            jest.advanceTimersByTime(300);
+        });
+        expect(result.current.form.getValues('prompt')).toBe(FIRST.topic);
+
+        // Two acts, not one: effects flush at the END of act, so advancing
+        // the clock in the same act would run before the second link had
+        // scheduled its timer.
+        mockSearchParams(second);
+        await act(async () => {
+            rerender();
+        });
+        await act(async () => {
+            jest.advanceTimersByTime(300);
+        });
+        return result;
+    }
+
+    it('honours the whole second param set', async () => {
+        const result = await thenAsksFor({
+            topic: 'Photosynthesis practice questions',
+            subject: 'Science',
+            gradeLevel: 'Class 7',
+        });
+
+        expect(result.current.form.getValues('prompt')).toBe('Photosynthesis practice questions');
+        expect(result.current.form.getValues('subject')).toBe('Science');
+        expect(result.current.form.getValues('gradeLevel')).toBe('Class 7');
+    });
+
+    // Class gate: one row per param the effect reads.
+    it.each([
+        ['topic', { topic: 'Photosynthesis practice questions' }, 'prompt', 'Photosynthesis practice questions'],
+        ['subject', { ...FIRST, subject: 'Science' }, 'subject', 'Science'],
+        ['gradeLevel', { ...FIRST, gradeLevel: '7th Grade' }, 'gradeLevel', 'Class 7'],
+        ['language', { ...FIRST, language: 'Bengali' }, 'language', 'bn'],
+    ] as [string, Record<string, string>, 'prompt' | 'subject' | 'gradeLevel' | 'language', string][])(
+        'honours a second link that differs only in ?%s=',
+        async (_param, second, field, expected) => {
+            const result = await thenAsksFor(second);
+
+            expect(result.current.form.getValues(field)).toBe(expected);
+        },
+    );
+
+    // The other half of the contract, and the reason the guard exists at all.
+    // Next hands back a fresh ReadonlyURLSearchParams on every render, and
+    // that identity change is in this effect's dependency array.
+    it('does not re-apply an identical param set over what the teacher typed', async () => {
+        mockSearchParams(FIRST);
+        const { result, rerender } = renderWorksheetWizard();
+        await act(async () => {
+            jest.advanceTimersByTime(300);
+        });
+
+        act(() => {
+            result.current.form.setValue('prompt', 'Fractions for class 5, with word problems');
+        });
+
+        // Same params, new object — exactly what a re-render looks like.
+        mockSearchParams(FIRST);
+        await act(async () => {
+            rerender();
+        });
+        await act(async () => {
+            jest.advanceTimersByTime(300);
+        });
+
+        expect(result.current.form.getValues('prompt')).toBe(
+            'Fractions for class 5, with word problems',
+        );
+    });
 });

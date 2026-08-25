@@ -223,4 +223,150 @@ describe('useRubricGenerator — restore from ?id=', () => {
         expect(result.current.form.getValues('subject')).toBe('General');
         expect(result.current.form.getValues('gradeLevel')).toBe('Class 7');
     });
+
+    // The restore ran behind a ref claimed for the lifetime of the mount, so
+    // opening a second saved rubric from the Library while already on this
+    // page — a query-only push, no remount — was dropped.
+    it('refetches when a different ?id= arrives without a remount', async () => {
+        const { rerender } = renderHook(() => useRubricGenerator());
+        await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+
+        mockSearchParams({ id: 'rubric-456' });
+        await act(async () => {
+            rerender();
+        });
+
+        await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
+        expect(String((global.fetch as jest.Mock).mock.calls[1][0])).toContain('rubric-456');
+    });
+});
+
+/**
+ * A SECOND VIDYA request while the teacher is already standing here.
+ *
+ * Same defect and same reachability as use-worksheet-wizard.test.ts: the
+ * OmniOrb is mounted in the app shell, executeAction ends in a client-side
+ * router.push, and src/app/rubric-generator/page.tsx wraps its content in an
+ * unkeyed <Suspense>. A second rubric request therefore changes the query
+ * without remounting, and a guard keyed to the mount returns early — leaving
+ * the teacher looking at the answer to the request before last.
+ *
+ * Class gate stated over the param list, not over `topic`: every param the
+ * effect reads must take part in the guard key.
+ */
+describe('useRubricGenerator — a second deep link, same mount', () => {
+    /** What the teacher asked for first. */
+    const FIRST = { topic: 'Write a formal letter to the editor about plastic waste' };
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        jest.useFakeTimers();
+        mockSearchParams();
+    });
+
+    afterEach(() => {
+        jest.useRealTimers();
+    });
+
+    /** Arrive on FIRST, then have VIDYA push `second` into the same mount. */
+    async function thenAsksFor(second: Record<string, string>) {
+        mockSearchParams(FIRST);
+        const { result, rerender } = renderHook(() => useRubricGenerator());
+        await act(async () => {
+            jest.advanceTimersByTime(300);
+        });
+        expect(result.current.form.getValues('assignmentDescription')).toBe(FIRST.topic);
+
+        // Two acts, not one: effects flush at the END of act, so advancing
+        // the clock in the same act would run before the second link had
+        // scheduled its timer.
+        mockSearchParams(second);
+        await act(async () => {
+            rerender();
+        });
+        await act(async () => {
+            jest.advanceTimersByTime(300);
+        });
+        return result;
+    }
+
+    it('honours the whole second param set, and generates from it', async () => {
+        const result = await thenAsksFor({
+            topic: 'Build a working model of the solar system and present it',
+            subject: 'Science',
+            gradeLevel: '8th Grade',
+        });
+
+        expect(result.current.form.getValues('assignmentDescription')).toBe(
+            'Build a working model of the solar system and present it',
+        );
+        expect(result.current.form.getValues('subject')).toBe('Science');
+        expect(result.current.form.getValues('gradeLevel')).toBe('Class 8');
+        expect(generate).toHaveBeenCalledTimes(2);
+        expect(generate.mock.calls[1][0]).toMatchObject({
+            assignmentDescription: 'Build a working model of the solar system and present it',
+            subject: 'Science',
+            gradeLevel: 'Class 8',
+        });
+    });
+
+    // Class gate: one row per param the effect reads.
+    it.each([
+        [
+            'topic',
+            { topic: 'Build a working model of the solar system and present it' },
+            'assignmentDescription',
+            'Build a working model of the solar system and present it',
+        ],
+        [
+            'assignmentDescription',
+            { ...FIRST, assignmentDescription: 'Design a poster on Every Drop Counts' },
+            'assignmentDescription',
+            'Design a poster on Every Drop Counts',
+        ],
+        ['subject', { ...FIRST, subject: 'Science' }, 'subject', 'Science'],
+        ['gradeLevel', { ...FIRST, gradeLevel: '8th Grade' }, 'gradeLevel', 'Class 8'],
+        ['language', { ...FIRST, language: 'Bengali' }, 'language', 'bn'],
+    ] as [
+        string,
+        Record<string, string>,
+        'assignmentDescription' | 'subject' | 'gradeLevel' | 'language',
+        string,
+    ][])('honours a second link that differs only in ?%s=', async (_param, second, field, expected) => {
+        const result = await thenAsksFor(second);
+
+        expect(result.current.form.getValues(field)).toBe(expected);
+    });
+
+    // The other half of the contract: a re-render carrying identical params
+    // must still run once. Next hands back a fresh ReadonlyURLSearchParams on
+    // every render and that identity change is in this effect's deps.
+    it('does not re-apply an identical param set over what the teacher typed', async () => {
+        mockSearchParams(FIRST);
+        const { result, rerender } = renderHook(() => useRubricGenerator());
+        await act(async () => {
+            jest.advanceTimersByTime(300);
+        });
+
+        act(() => {
+            result.current.form.setValue(
+                'assignmentDescription',
+                'Write a formal letter to the editor about plastic waste, 150 words',
+            );
+        });
+
+        // Same params, new object — exactly what a re-render looks like.
+        mockSearchParams(FIRST);
+        await act(async () => {
+            rerender();
+        });
+        await act(async () => {
+            jest.advanceTimersByTime(300);
+        });
+
+        expect(result.current.form.getValues('assignmentDescription')).toBe(
+            'Write a formal letter to the editor about plastic waste, 150 words',
+        );
+        expect(generate).toHaveBeenCalledTimes(1);
+    });
 });

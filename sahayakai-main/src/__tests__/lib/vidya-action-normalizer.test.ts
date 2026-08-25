@@ -8,6 +8,7 @@
 import {
     normaliseVidyaLanguage,
     normaliseVidyaGradeLevel,
+    vidyaDeepLinkKey,
 } from '@/lib/vidya-action-normalizer';
 
 describe('normaliseVidyaLanguage', () => {
@@ -79,5 +80,63 @@ describe('normaliseVidyaGradeLevel', () => {
         expect(normaliseVidyaGradeLevel('Nursery')).toBe('Nursery');
         expect(normaliseVidyaGradeLevel('LKG')).toBe('LKG');
         expect(normaliseVidyaGradeLevel('UKG')).toBe('UKG');
+    });
+});
+
+/**
+ * The destination hooks key their run-once guard on this value. Two different
+ * links that produce the same key are a dropped VIDYA request; one link that
+ * produces two different keys across renders is a re-fetch over what the
+ * teacher has typed. Both are teacher-visible, so pin the contract here.
+ */
+describe('vidyaDeepLinkKey', () => {
+    const NAMES = ['id', 'topic', 'subject', 'gradeLevel', 'language'] as const;
+
+    /** Stand-in for ReadonlyURLSearchParams over a fixed param map. */
+    const reader = (params: Record<string, string>) => ({
+        get: (name: string) => params[name] ?? null,
+    });
+
+    it('is stable for the same params across separate reader objects', () => {
+        const params = { topic: 'Fractions for class 5', subject: 'Maths' };
+
+        expect(vidyaDeepLinkKey(reader(params), NAMES)).toBe(
+            vidyaDeepLinkKey(reader({ ...params }), NAMES),
+        );
+    });
+
+    it('changes when any single named param changes', () => {
+        const base = { topic: 'Fractions for class 5' };
+        const baseKey = vidyaDeepLinkKey(reader(base), NAMES);
+
+        for (const name of NAMES) {
+            const changed = { ...base, [name]: 'something-else' };
+            expect(vidyaDeepLinkKey(reader(changed), NAMES)).not.toBe(baseKey);
+        }
+    });
+
+    it('ignores params outside the named list', () => {
+        const base = { topic: 'Fractions for class 5' };
+
+        expect(vidyaDeepLinkKey(reader({ ...base, utm_source: 'whatsapp' }), NAMES)).toBe(
+            vidyaDeepLinkKey(reader(base), NAMES),
+        );
+    });
+
+    // A teacher can dictate anything into a topic. Without encoding, a topic
+    // containing the separators would forge the key of a different param set
+    // and the next genuine request would be dropped.
+    it('cannot be forged by a value containing the separators', () => {
+        const forged = { topic: 'water&subject=Science' };
+        const real = { topic: 'water', subject: 'Science' };
+
+        expect(vidyaDeepLinkKey(reader(forged), NAMES)).not.toBe(
+            vidyaDeepLinkKey(reader(real), NAMES),
+        );
+    });
+
+    it('never returns null, so an unclaimed ref cannot match a real link', () => {
+        expect(vidyaDeepLinkKey(reader({}), NAMES)).not.toBeNull();
+        expect(typeof vidyaDeepLinkKey(reader({}), NAMES)).toBe('string');
     });
 });

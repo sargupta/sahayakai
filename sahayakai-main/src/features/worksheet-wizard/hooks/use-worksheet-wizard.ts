@@ -4,8 +4,8 @@
  * useWorksheetWizard — all worksheet-wizard logic, zero markup.
  * Composes the shared useGenerator spine; keeps worksheet-specific
  * behavior: VIDYA form sync + snapshot restore, restore-from-`?id`
- * (guarded with a hasLoaded ref), VIDYA URL prefill + 300ms auto-submit
- * gated on the required image, markdown download.
+ * (guarded per param set, not per mount), VIDYA URL prefill + 300ms
+ * auto-submit gated on the required image, markdown download.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -19,10 +19,28 @@ import { useJarvisStore } from "@/store/jarvisStore";
 import { useLanguage } from "@/context/language-context";
 import { LANGUAGE_TO_ISO } from "@/types";
 import { auth } from "@/lib/firebase";
-import { normaliseVidyaLanguage, normaliseVidyaGradeLevel } from "@/lib/vidya-action-normalizer";
+import {
+    normaliseVidyaLanguage,
+    normaliseVidyaGradeLevel,
+    vidyaDeepLinkKey,
+} from "@/lib/vidya-action-normalizer";
 import { MalformedResponseError, useGenerator } from "@/features/generator";
 import { worksheetTranslations } from "../i18n";
 import { formSchema, type FormValues, type WorksheetResult } from "../types";
+
+/**
+ * Every URL param the deep-link effect below reads. The guard is keyed over
+ * this exact list, so a param added to the effect must be added here too or
+ * a link that differs only in that param reads as already-handled.
+ */
+const DEEP_LINK_PARAMS = [
+    "id",
+    "prompt",
+    "topic",
+    "subject",
+    "gradeLevel",
+    "language",
+] as const;
 
 export function useWorksheetWizard() {
     const { language: userLanguage, t: translate } = useLanguage();
@@ -30,7 +48,9 @@ export function useWorksheetWizard() {
     const { canUseAI, aiUnavailableReason } = useNetworkAware();
     const { clearFormSnapshot } = useJarvisStore();
     const searchParams = useSearchParams();
-    const hasLoaded = useRef(false);
+    // The deep link this hook has already acted on, not merely "some deep
+    // link has been acted on". See vidyaDeepLinkKey().
+    const handledDeepLink = useRef<string | null>(null);
     const [isRestoring, setIsRestoring] = useState(false);
 
     // Default the Language field to the user's profile language, not
@@ -119,11 +139,20 @@ export function useWorksheetWizard() {
     }, []); // empty array: runs once on mount only
 
     useEffect(() => {
-        // Run the URL branch once. Without this the effect re-fires on every
-        // searchParams identity change and re-runs the restore fetch (or the
-        // pre-fill) over whatever the teacher has since typed. Same guard
-        // use-rubric-generator.ts carries.
-        if (hasLoaded.current) return;
+        // Run the URL branch once PER PARAM SET. Without a guard the effect
+        // re-fires on every searchParams identity change and re-runs the
+        // restore fetch (or the pre-fill) over whatever the teacher has since
+        // typed. With a guard keyed to the mount instead of to the query, the
+        // opposite failure: VIDYA is mounted app-wide and pushes client-side
+        // into this same route segment, so a SECOND worksheet request from a
+        // teacher already standing here would be dropped and the page would
+        // keep answering the request before it. Claim the key, not the mount.
+        const deepLinkKey = vidyaDeepLinkKey(searchParams, DEEP_LINK_PARAMS);
+        if (handledDeepLink.current === deepLinkKey) return;
+        // Claim BEFORE the branches: the `?id=` restore awaits a fetch, and
+        // setting the claim after it resolves leaves the whole round trip
+        // unguarded — any re-render in that window starts a second request.
+        handledDeepLink.current = deepLinkKey;
 
         const id = searchParams.get("id");
         // The intent route, the agent router and the voice assistant all build
@@ -134,10 +163,6 @@ export function useWorksheetWizard() {
         const promptParam = searchParams.get("prompt") || searchParams.get("topic");
 
         if (id) {
-            // Claim the run BEFORE awaiting. Setting the flag after the fetch
-            // resolves leaves the whole round trip unguarded, and any re-render
-            // in that window starts a second request.
-            hasLoaded.current = true;
             const fetchSavedContent = async () => {
                 setIsRestoring(true);
                 try {
@@ -214,7 +239,6 @@ export function useWorksheetWizard() {
             if (normalisedGrade) form.setValue("gradeLevel", normalisedGrade, SET_OPTS);
             const normalisedLang = normaliseVidyaLanguage(languageParam);
             if (normalisedLang) form.setValue("language", normalisedLang, SET_OPTS);
-            hasLoaded.current = true;
             // ── Auto-generate when VIDYA navigates here with a pre-filled prompt,
             // but ONLY once the image the schema requires is actually present.
             // Worksheet is the one deep-link destination with a mandatory
