@@ -30,6 +30,7 @@ export const maxDuration = 20;
 type Verdict =
     | 'ok'
     | 'unconfigured'
+    | 'malformed_credentials'
     | 'credentials_rejected'
     | 'account_suspended'
     | 'provider_unreachable';
@@ -71,6 +72,42 @@ export async function GET(request: NextRequest) {
             'TWILIO_PREFLIGHT',
         );
         return NextResponse.json(body('unconfigured', `Missing: ${missing.join(', ')}`), { status: 503 });
+    }
+
+    // Shape check BEFORE asking Twilio, because the failure that actually
+    // happened here was not a rotated key — it was the wrong value pasted into
+    // the right secret. TWILIO_AUTH_TOKEN held, in successive versions, a
+    // 20-char `PA…` identifier and then a 34-char `AC…` Account SID. Twilio
+    // answers both with a flat 401, which reads as "your token is wrong" and
+    // sends an operator off to rotate a key that was never the problem.
+    //
+    // Twilio's formats are fixed: an Account SID is `AC` + 32 hex (34 chars); an
+    // auth token is 32 hex with no prefix. Checking that locally names the fault
+    // exactly, and costs nothing.
+    const SID_RE = /^AC[0-9a-f]{32}$/i;
+    const TOKEN_RE = /^[0-9a-f]{32}$/i;
+    const shapeProblems: string[] = [];
+
+    if (!SID_RE.test(sid)) {
+        shapeProblems.push(
+            `TWILIO_ACCOUNT_SID is ${sid.length} chars starting "${sid.slice(0, 2)}" — expected 34 chars starting "AC".`,
+        );
+    }
+    if (!TOKEN_RE.test(token)) {
+        const looksLikeSid = /^AC/i.test(token);
+        shapeProblems.push(
+            `TWILIO_AUTH_TOKEN is ${token.length} chars starting "${token.slice(0, 2)}" — expected 32 hex chars.` +
+                (looksLikeSid ? ' That is an Account SID, not an auth token — the SID was stored in the token secret.' : ''),
+        );
+    }
+
+    if (shapeProblems.length > 0) {
+        logger.error(
+            `Twilio preflight: credentials are malformed — ${shapeProblems.join(' ')}`,
+            new Error('Twilio credentials malformed'),
+            'TWILIO_PREFLIGHT',
+        );
+        return NextResponse.json(body('malformed_credentials', shapeProblems.join(' ')), { status: 503 });
     }
 
     // Account fetch: read-only, places no call, sends nothing, costs nothing.

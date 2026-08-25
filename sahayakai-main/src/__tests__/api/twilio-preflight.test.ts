@@ -35,8 +35,10 @@ function lastCall(): { body: any; status: number } {
 }
 
 const CRON_SECRET = 'test-cron-secret';
-const SID = 'ACtest0000000000000000000000000001';
-const TOKEN = 'super-secret-auth-token-value';
+// Real Twilio shapes: SID is `AC` + 32 hex (34 chars); token is 32 hex.
+// The fixtures must be shape-valid or every test trips the new shape gate.
+const SID = 'AC0000000000000000000000000000abcd'.slice(0, 34);
+const TOKEN = 'a1b2c3d4e5f60718293a4b5c6d7e8f90';
 
 function makeRequest(auth = `Bearer ${CRON_SECRET}`) {
     return { headers: { get: (h: string) => (h === 'authorization' ? auth : null) } } as any;
@@ -137,6 +139,55 @@ describe('GET /api/health/twilio — credential preflight', () => {
             // accounts — but the full SID must not ship either.
             expect(JSON.stringify(body)).not.toContain(SID);
         }
+    });
+
+    // The fault that actually cost the week: right secret, wrong value in it.
+    // Twilio answers both of these with a flat 401, which reads as "rotate your
+    // token" and sends an operator after a key that was never the problem.
+    describe('malformed credentials — named locally, before Twilio is asked', () => {
+        it('spots an Account SID stored in the auth-token secret', async () => {
+            process.env.TWILIO_AUTH_TOKEN = 'AC1111111111111111111111111111abcd'.slice(0, 34);
+
+            await GET(makeRequest());
+            const { body } = lastCall();
+
+            expect(body.verdict).toBe('malformed_credentials');
+            expect(body.detail).toMatch(/Account SID, not an auth token/);
+            // Never asked Twilio — the shape alone settles it.
+            expect(fetchSpy).not.toHaveBeenCalled();
+        });
+
+        it('spots a non-token identifier such as a PA… SID', async () => {
+            process.env.TWILIO_AUTH_TOKEN = 'PA11111111111111111a';
+
+            await GET(makeRequest());
+            const { body } = lastCall();
+
+            expect(body.verdict).toBe('malformed_credentials');
+            expect(body.detail).toMatch(/expected 32 hex/);
+            expect(fetchSpy).not.toHaveBeenCalled();
+        });
+
+        it('spots a malformed account SID', async () => {
+            process.env.TWILIO_ACCOUNT_SID = 'not-a-sid';
+
+            await GET(makeRequest());
+            const { body } = lastCall();
+
+            expect(body.verdict).toBe('malformed_credentials');
+            expect(body.detail).toMatch(/TWILIO_ACCOUNT_SID/);
+            expect(fetchSpy).not.toHaveBeenCalled();
+        });
+
+        it('still reports the value itself, never its contents', async () => {
+            const secretish = 'AC9999999999999999999999999999abcd'.slice(0, 34);
+            process.env.TWILIO_AUTH_TOKEN = secretish;
+
+            await GET(makeRequest());
+            const { body } = lastCall();
+
+            expect(JSON.stringify(body)).not.toContain(secretish);
+        });
     });
 
     it('uses the read-only account endpoint, so no call is ever placed', async () => {
