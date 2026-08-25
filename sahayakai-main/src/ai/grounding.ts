@@ -130,14 +130,31 @@ const TARGET_PATH = String.raw`\.{0,2}\/`;
 // more letters is the part that keeps `1.5`, `e.g` and `i.e.` out.
 const TARGET_HOST = String.raw`[a-z0-9_\-]+(?:\.[a-z0-9_\-]+)*\.[a-z]{2,}`;
 const LINK_TARGET = String.raw`(?:${URL_SCHEME}|www\.|${TARGET_PATH}|${TARGET_HOST})`;
-const LINK_TARGET_URL = String.raw`\s*<?${LINK_TARGET}[^()]*`;
+// The destination tail. `[^()]*` cannot cross a "(", so a CommonMark
+// destination containing balanced parens — the single most common citation
+// shape in school answers, e.g. en.wikipedia.org/wiki/Mercury_(planet) —
+// escaped the guard entirely and rendered as a live anchor. A regex cannot
+// count, so balance is unrolled to two levels of nesting, which covers every
+// real disambiguation URL. `arr[i](x)` and `Ca[OH](aq)` are still safe: their
+// targets are bare words with no dot and no slash, so LINK_TARGET rejects them
+// before this tail is ever consulted.
+const BALANCED_TAIL = String.raw`(?:[^()\s]|\((?:[^()]|\([^()]*\))*\))*`;
+const LINK_TARGET_URL = String.raw`\s*<?${LINK_TARGET}${BALANCED_TAIL}`;
 
 const MARKDOWN_IMAGE = new RegExp(String.raw`!\[([^\]]*)\]\(${LINK_TARGET_URL}\)`, 'gi');
 const MARKDOWN_LINK = new RegExp(String.raw`\[([^\]]*)\]\(${LINK_TARGET_URL}\)`, 'gi');
 // `[1]: ncert.nic.in/ch6` is a footnote a renderer resolves into an anchor on
 // the `[1]` above it, so it is a citation in exactly the way an inline link is.
+// Only a line that is ACTUALLY a reference definition — label, colon,
+// destination, optional title, end of line. The previous `.*$` swallowed the
+// rest of the line, so a line whose trailing prose makes it an INVALID
+// definition ("[JPEG]: image.jpg is the usual extension for photographs.")
+// renders as ordinary paragraph text yet was deleted whole. react-markdown
+// draws no anchor for it either way, so that was pure content loss for no
+// safety gain.
 const REFERENCE_DEFINITION = new RegExp(
-    String.raw`^[ \t]*\[[^\]]+\]:[ \t]*<?${LINK_TARGET}\S*.*$`,
+    String.raw`^[ \t]*\[[^\]]+\]:[ \t]*<?${LINK_TARGET}${BALANCED_TAIL}>?` +
+        String.raw`(?:[ \t]+(?:"[^"]*"|'[^']*'|\([^)]*\)))?[ \t]*$`,
     'gim',
 );
 const REFERENCE_LINK = /\[([^\]]*)\]\[[^\]]*\]/g;
