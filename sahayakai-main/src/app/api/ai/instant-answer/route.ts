@@ -57,20 +57,24 @@ async function _handler(request: Request) {
         // Phase B §B.6: dispatcher routes Genkit vs ADK sidecar based
         // on `SAHAYAKAI_INSTANT_ANSWER_MODE` env (default: off → Genkit
         // only, zero traffic-impact on merge). Sidecar uses Gemini's
-        // native Google Search grounding; Genkit uses the legacy mock
-        // googleSearch tool. Sidecar dispatcher returns the same wire
-        // shape plus optional `source / decision / sidecarTelemetry`
-        // fields that we strip before responding to keep the wire shape
-        // backward-compatible.
+        // native Google Search grounding; the Genkit path has no search
+        // backend at all and answers from the model's own knowledge.
+        // Sidecar dispatcher returns the same wire shape plus optional
+        // `source / decision / sidecarTelemetry` fields that we strip
+        // before responding to keep the wire shape backward-compatible.
         const dispatched = await dispatchInstantAnswer(body);
 
         // Strip dispatcher-only metadata; legacy clients only know
-        // `{answer, videoSuggestionUrl, gradeLevel, subject}`.
+        // `{answer, videoSuggestionUrl, gradeLevel, subject}` and ignore
+        // `grounded`. `grounded` is normalised to a hard boolean here so an
+        // absent or unknown value reads as ungrounded rather than as an
+        // absent field the client might treat as "fine".
         return NextResponse.json({
             answer: dispatched.answer,
             videoSuggestionUrl: dispatched.videoSuggestionUrl,
             gradeLevel: dispatched.gradeLevel,
             subject: dispatched.subject,
+            grounded: dispatched.grounded === true,
         });
 
     } catch (error) {

@@ -9,7 +9,7 @@
 
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
-import { Loader2, Save, Wand2, Youtube } from "lucide-react";
+import { AlertTriangle, Loader2, Save, Wand2, Youtube } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +31,11 @@ import { GeneratorPage, GeneratorSubmitBar } from "@/features/generator";
 import { useInstantAnswer } from "../hooks/use-instant-answer";
 
 type InstantAnswerViewProps = ReturnType<typeof useInstantAnswer>;
+
+// Third-party brand colour on a third-party glyph — it carries no status
+// meaning, so none of the status tokens (success/warning/info/destructive)
+// is the right home for it.
+const YOUTUBE_GLYPH = "h-10 w-10 text-red-600"; // design-token-allow
 
 export function InstantAnswerView({
     form,
@@ -86,6 +91,29 @@ export function InstantAnswerView({
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-6">
+                            {/*
+                              * Provenance, stated before the answer is read.
+                              * `grounded` is true only when a real search
+                              * backend supplied sources; the Genkit path has
+                              * none, so today it is always false there. An
+                              * older saved answer carries no flag at all,
+                              * which reads as ungrounded — the honest
+                              * rendering of "we never recorded it".
+                              */}
+                            {answer.grounded !== true && (
+                                <div className="flex items-start gap-3 rounded-xl border border-border bg-muted/40 p-3">
+                                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+                                    <div>
+                                        <p className="text-sm font-semibold text-foreground">
+                                            {translate("Not checked against web sources")}
+                                        </p>
+                                        <p className="mt-1 text-xs text-muted-foreground">
+                                            {translate("Sahayak answered from its own knowledge, not from a web search. Please verify the facts before teaching or sharing them.")}
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="prose prose-lg prose-headings:font-headline max-w-none text-foreground">
                                 <ReactMarkdown>{answer.answer}</ReactMarkdown>
                             </div>
@@ -99,7 +127,7 @@ export function InstantAnswerView({
                                         rel="noopener noreferrer"
                                         className="flex items-center gap-3 p-3 rounded-xl bg-accent/30 hover:bg-accent/50 transition-colors"
                                     >
-                                        <Youtube className="h-10 w-10 text-red-600" />
+                                        <Youtube className={YOUTUBE_GLYPH} />
                                         <div className="flex-1">
                                             <p className="font-semibold">{t.videoButton}</p>
                                             <p className="text-xs text-muted-foreground truncate">{answer.videoSuggestionUrl}</p>
@@ -209,7 +237,7 @@ export function InstantAnswerView({
                             </Button>
                         </GeneratorSubmitBar>
                         {aiUnavailableReason && (
-                            <p className="text-xs text-amber-600 mt-1.5 text-center">{aiUnavailableReason}</p>
+                            <p className="text-xs text-warning mt-1.5 text-center">{aiUnavailableReason}</p>
                         )}
                     </form>
                 </Form>

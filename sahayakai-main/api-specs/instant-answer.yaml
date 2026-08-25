@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: SahayakAI Instant Answer API
   version: 1.0.0
-  description: Get quick educational answers augmented by Google Search with optional video suggestions
+  description: Get quick educational answers with an optional YouTube search suggestion. Answers come from the model's own knowledge unless the response says otherwise — see `grounded`.
   contact:
     name: SahayakAI Team
     email: support@sahayakai.in
@@ -89,22 +89,37 @@ paths:
                     type: string
                     nullable: true
                     format: uri
-                    description: YouTube video URL for visual learning
-                    example: "https://www.youtube.com/watch?v=..."
+                    description: >-
+                      A YouTube SEARCH URL for visual learning. Never a specific
+                      video — the model cannot verify that a given video exists
+                      or is relevant, so anything other than
+                      `youtube.com/results?search_query=...` is dropped and this
+                      field comes back null.
+                    example: "https://www.youtube.com/results?search_query=photosynthesis%20for%20class%205"
                   gradeLevel:
                     type: string
                     nullable: true
                   subject:
                     type: string
                     nullable: true
+                  grounded:
+                    type: boolean
+                    description: >-
+                      Whether a real search backend supplied sources for this
+                      answer. False means the answer came from the model's own
+                      knowledge and carries no citations — clients must show
+                      that to the reader rather than imply the answer was
+                      verified.
+                    example: false
               examples:
                 success:
-                  summary: Successful answer with video
+                  summary: Successful answer with a video search suggestion
                   value:
                     answer: "Photosynthesis is the process by which green plants make their own food. Plants use sunlight, water from soil, and carbon dioxide from air to produce glucose (food) and oxygen. The green pigment chlorophyll in leaves captures sunlight energy."
-                    videoSuggestionUrl: "https://www.youtube.com/watch?v=example"
+                    videoSuggestionUrl: "https://www.youtube.com/results?search_query=photosynthesis%20for%20class%206"
                     gradeLevel: "Class 6"
                     subject: "Science"
+                    grounded: false
         
         '401':
           description: Unauthorized

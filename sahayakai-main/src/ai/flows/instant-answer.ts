@@ -1,14 +1,25 @@
 /**
- * @fileOverview Provides instant answers to user questions using a knowledge base augmented by Google Search.
+ * @fileOverview Provides instant answers to user questions from the model's own
+ * knowledge, offering a web-search tool that this deployment cannot yet serve.
  *
  * - instantAnswer - A function that takes a question and returns a direct answer, potentially with a video suggestion.
  * - InstantAnswerInput - The input type for the instantAnswer function.
  * - InstantAnswerOutput - The return type for the instantAnswer function.
+ *
+ * `googleSearch` returns no results in every environment (see
+ * `@/ai/tools/google-search`), so every answer this flow produces is
+ * ungrounded. It says so on the wire via `grounded`, and it strips the links
+ * a model reaches for when it wants to look grounded anyway.
  */
 
 import { ai, runResiliently } from '@/ai/genkit';
 import { z } from 'genkit';
 import { googleSearch } from '@/ai/tools/google-search';
+import {
+  isWebSearchGrounded,
+  sanitizeVideoSuggestionUrl,
+  stripSourceLinks,
+} from '@/ai/grounding';
 import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { format } from 'date-fns';
 import { LANGUAGE_CODE_MAP } from '@/types/index';
@@ -53,11 +64,21 @@ function normalizeInput(input: InstantAnswerInput): InstantAnswerInput {
 }
 export type InstantAnswerInput = z.infer<typeof InstantAnswerInputSchema>;
 
-const InstantAnswerOutputSchema = z.object({
+// What the model is allowed to decide. `grounded` is deliberately absent:
+// whether an answer rests on a retrieved source is a fact about this
+// deployment's search backend, and a model asked to self-report it will
+// simply claim it was grounded.
+const InstantAnswerModelOutputSchema = z.object({
   answer: z.string().describe('The generated answer to the question.'),
-  videoSuggestionUrl: z.string().nullable().optional().describe('A URL to a relevant YouTube video.'),
+  videoSuggestionUrl: z.string().nullable().optional().describe('A YouTube SEARCH URL, never a specific video.'),
   gradeLevel: z.string().nullable().optional().describe('The target grade level.'),
   subject: z.string().nullable().optional().describe('The academic subject.'),
+});
+
+type InstantAnswerModelOutput = z.infer<typeof InstantAnswerModelOutputSchema>;
+
+const InstantAnswerOutputSchema = InstantAnswerModelOutputSchema.extend({
+  grounded: z.boolean().optional().describe('Whether a real search backend supplied sources for this answer. Set by the flow, never by the model; absent means ungrounded.'),
 });
 export type InstantAnswerOutput = z.infer<typeof InstantAnswerOutputSchema>;
 
@@ -109,7 +130,7 @@ import { INJECTION_GUARD, neutralizeUserInput } from '@/ai/prompt-hardening';
 const instantAnswerPrompt = ai.definePrompt({
   name: 'instantAnswerPrompt',
   input: { schema: InstantAnswerInputSchema },
-  output: { schema: InstantAnswerOutputSchema },
+  output: { schema: InstantAnswerModelOutputSchema },
   tools: [googleSearch],
   prompt: `${SAHAYAK_SOUL_PROMPT}${STRUCTURED_OUTPUT_OVERRIDE}
 ${INJECTION_GUARD}
@@ -117,11 +138,11 @@ ${INJECTION_GUARD}
 You are an expert educator and knowledge base. Your goal is to answer questions accurately and concisely.
 
 **Instructions:**
-1.  **Use Tools:** If the question requires current information or facts, use the \`googleSearch\` tool to get up-to-date information.
+1.  **Use Tools:** If the question requires current information or facts, use the \`googleSearch\` tool to get up-to-date information. If it returns \`searchAvailable: false\`, you have NO sources: answer from your own knowledge, follow its \`notice\` exactly, never say or imply that you looked anything up, and never substitute a source you have not been given.
 2.  **Tailor the Answer:** Adjust the complexity and vocabulary of your answer based on the provided \`gradeLevel\`. If no grade level is given, answer for a general audience.
 3.  **Language:** Respond ONLY in the specified \`language\`.
 4.  **Analogies:** For complex topics, use simple analogies, especially for younger grade levels.
-5.  **Video Suggestions:** If the user's question implies they want a visual explanation (e.g., "show me," "explain how"), or if a video would be a great supplement, provide a YouTube Search URL in the \`videoSuggestionUrl\` field. The format MUST be: \`https://www.youtube.com/results?search_query=\` followed by a concise, relevant search query (e.g., "photosynthesis for class 5"). Do NOT try to guess a specific video ID (like watch?v=xyz) as it might be fake. Always use the search results URL.
+5.  **Video Suggestions:** If the user's question implies they want a visual explanation (e.g., "show me," "explain how"), or if a video would be a great supplement, provide a YouTube Search URL in the \`videoSuggestionUrl\` field. The format MUST be: \`https://www.youtube.com/results?search_query=\` followed by a concise, relevant search query (e.g., "photosynthesis for class 5"). Do NOT try to guess a specific video ID (like watch?v=xyz) as it might be fake. Always use the search results URL — anything else is discarded before the teacher sees it.
 6.  **Be Direct:** Provide the answer directly without conversational filler.
 7.  **Metadata:** Identify the most appropriate \`subject\` (e.g., Science, Math) and \`gradeLevel\` if not explicitly provided.
 
@@ -130,6 +151,7 @@ You are an expert educator and knowledge base. Your goal is to answer questions 
 - **Native Script Mandate (CRITICAL)**: When {{{language}}} is an Indic language, the answer MUST be written entirely in that language's NATIVE SCRIPT — Hindi/Marathi in Devanagari, Bengali in Bengali script, Punjabi in Gurmukhi, Gujarati in Gujarati script, Odia in Odia script, Tamil in Tamil script, Telugu in Telugu script, Kannada in Kannada script, Malayalam in Malayalam script. NEVER use Latin transliteration. For example, for Bengali you MUST write "পোঙ্গল কীভাবে তৈরি হয়" and NEVER "Pongal kibhabe taeri hoy". Romanized or transliterated output is a critical failure.
 - **No Repetition Loop**: Monitor your output for repetitive phrases or characters. If you detect a loop, break it immediately.
 - **Scope Integrity**: Stay strictly within the scope of the educational task assigned.
+- **No Invented Sources (CRITICAL)**: Put NO links, URLs, citations, footnotes or "read more at ..." references in the \`answer\` field. A teacher reads a link as something you verified, and you have verified nothing. The only URL you may ever emit is the YouTube search URL in \`videoSuggestionUrl\`. Links in the answer are stripped out before the teacher sees them, so writing one only breaks your own sentence.
 - **Schema Compliance (CRITICAL)**: You MUST always return your response in the \`answer\` field. Even when declining a request (e.g., off-topic, inappropriate), put your polite refusal in the \`answer\` field. NEVER use field names like \`response\`, \`message\`, or \`text\` — only \`answer\`.
 
 **User's Question:**
@@ -170,7 +192,7 @@ const instantAnswerFlow = ai.defineFlow(
         }
       });
 
-      let output: InstantAnswerOutput | null = null;
+      let output: InstantAnswerModelOutput | null = null;
 
       try {
         const result = await runResiliently(async (resilienceConfig) => {
@@ -205,6 +227,7 @@ const instantAnswerFlow = ai.defineFlow(
             videoSuggestionUrl: null,
             gradeLevel: normalizedInput.gradeLevel ?? null,
             subject: normalizedInput.subject ?? null,
+            grounded: false,
           };
         }
         throw genkitError;
@@ -222,24 +245,58 @@ const instantAnswerFlow = ai.defineFlow(
 
       // Validate schema explicitly as a final safety net
       try {
-        InstantAnswerOutputSchema.parse(output);
+        InstantAnswerModelOutputSchema.parse(output);
       } catch (validationError: any) {
         throw new SchemaValidationError(
           `Schema validation failed: ${validationError.message}`,
           {
             parseErrors: validationError.errors,
             rawOutput: output,
-            expectedSchema: 'InstantAnswerOutputSchema'
+            expectedSchema: 'InstantAnswerModelOutputSchema'
           }
         );
       }
 
-      // Sanitize output
+      // Sanitize output.
+      //
+      // `grounded` is read from the deployment, not from the model — no
+      // search backend exists, so it is false everywhere today. While it is
+      // false the answer may not carry a source: every link in it is one the
+      // model invented, and the teacher's markdown view renders an invented
+      // link exactly like a real one. Labels survive as plain text.
+      const grounded = isWebSearchGrounded();
+      const rawAnswer = output.answer || 'Unable to generate an answer at this time.';
+      const strippedAnswer = grounded ? rawAnswer : stripSourceLinks(rawAnswer);
+      // An answer that was nothing but a link leaves nothing behind; the
+      // teacher gets the same message as an empty generation rather than a
+      // blank card.
+      const guardedAnswer = strippedAnswer || 'Unable to generate an answer at this time.';
+      const guardedVideoUrl = sanitizeVideoSuggestionUrl(output.videoSuggestionUrl);
+
+      if (strippedAnswer !== rawAnswer || (output.videoSuggestionUrl && !guardedVideoUrl)) {
+        // Loud on purpose: the model reaching for a citation it cannot have
+        // is the failure this flow exists to contain, and it is invisible
+        // once the guard has done its work.
+        StructuredLogger.warn('Dropped ungrounded sources from instant answer', {
+          service: 'instant-answer-flow',
+          operation: 'guardCitations',
+          userId: input.userId,
+          requestId,
+          metadata: {
+            grounded,
+            answerLinksStripped: strippedAnswer !== rawAnswer,
+            videoUrlRejected: !!output.videoSuggestionUrl && !guardedVideoUrl,
+            rejectedVideoUrl: guardedVideoUrl ? undefined : output.videoSuggestionUrl,
+          },
+        });
+      }
+
       const sanitizedOutput: InstantAnswerOutput = {
-        answer: output.answer || 'Unable to generate an answer at this time.',
-        videoSuggestionUrl: output.videoSuggestionUrl || null,
+        answer: guardedAnswer,
+        videoSuggestionUrl: guardedVideoUrl,
         gradeLevel: output.gradeLevel,
-        subject: output.subject
+        subject: output.subject,
+        grounded,
       };
 
       // Persistence with error handling

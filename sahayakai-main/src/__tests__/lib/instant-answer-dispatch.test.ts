@@ -514,3 +514,66 @@ describe('dispatchInstantAnswer — Q4C canary/full observation', () => {
         expect(mockShadowDiff).toHaveBeenCalledTimes(1);
     });
 });
+
+// ── grounding provenance ───────────────────────────────────────────────────
+//
+// The Genkit path has no search backend at all, so its answers are stripped
+// of sources inside the flow. The sidecar can genuinely ground an answer, and
+// it says per call whether it did. When it did not, the same rule applies
+// here — an ungrounded answer carries no source, whichever process wrote it.
+
+describe('dispatchInstantAnswer — grounding provenance', () => {
+    const UNGROUNDED_SIDECAR: SidecarInstantAnswerResponse = {
+        ...SIDECAR_OUTPUT,
+        answer: 'Photosynthesis, roughly. Read more at https://example.com/photosynthesis.',
+        videoSuggestionUrl: 'https://www.youtube.com/watch?v=example',
+        groundingUsed: false,
+    };
+
+    it('carries the sidecar grounding signal onto the wire', async () => {
+        setMode('canary');
+        mockSidecar.mockResolvedValue(SIDECAR_OUTPUT);
+
+        const out = await dispatchInstantAnswer(BASE_INPUT);
+
+        expect(out.grounded).toBe(true);
+    });
+
+    it('leaves a genuinely grounded answer untouched', async () => {
+        setMode('canary');
+        mockSidecar.mockResolvedValue(SIDECAR_OUTPUT);
+
+        const out = await dispatchInstantAnswer(BASE_INPUT);
+
+        expect(out.answer).toBe(SIDECAR_OUTPUT.answer);
+        expect(out.videoSuggestionUrl).toBe(SIDECAR_OUTPUT.videoSuggestionUrl);
+    });
+
+    it('strips sources from an ungrounded sidecar answer', async () => {
+        setMode('canary');
+        mockSidecar.mockResolvedValue(UNGROUNDED_SIDECAR);
+
+        const out = await dispatchInstantAnswer(BASE_INPUT);
+
+        expect(out.grounded).toBe(false);
+        expect(out.answer).not.toMatch(/https?:\/\//);
+        expect(out.videoSuggestionUrl).toBeNull();
+    });
+
+    it('persists exactly what it served, sources and all', async () => {
+        setMode('canary');
+        mockSidecar.mockResolvedValue(UNGROUNDED_SIDECAR);
+
+        const out = await dispatchInstantAnswer(BASE_INPUT);
+
+        expect(mockPersist).toHaveBeenCalledTimes(1);
+        const persisted = mockPersist.mock.calls[0][0].output as {
+            answer: string;
+            videoSuggestionUrl?: string | null;
+            grounded?: boolean;
+        };
+        expect(persisted.answer).toBe(out.answer);
+        expect(persisted.videoSuggestionUrl).toBe(out.videoSuggestionUrl);
+        expect(persisted.grounded).toBe(false);
+    });
+});
