@@ -85,7 +85,12 @@ export function useRubricGenerator() {
     // Restore snapshot on mount — only when no URL params are present
      
     useEffect(() => {
-        const descParam = searchParams.get("assignmentDescription");
+        // `topic` is the param every VIDYA producer actually emits (see the
+        // note on the pre-fill effect below); read it here too, or a deep
+        // link would be treated as "no URL params" and get overwritten by
+        // the last snapshot.
+        const descParam =
+            searchParams.get("assignmentDescription") || searchParams.get("topic");
         const id = searchParams.get("id");
         if (descParam || id || !savedSnapshot) return;
         if (savedSnapshot.assignmentDescription) form.setValue("assignmentDescription", savedSnapshot.assignmentDescription);
@@ -105,7 +110,19 @@ export function useRubricGenerator() {
         if (!user || hasLoaded.current) return;
 
         const id = searchParams.get("id");
-        const descParam = searchParams.get("assignmentDescription");
+        // Every producer that can navigate here emits `topic`: the intent
+        // route and the agent router build one shared query string for all
+        // nine flows (src/app/api/ai/intent/route.ts, src/ai/flows/agent-router.ts),
+        // the voice assistant's VidyaAction params have no other text field,
+        // and the Gemini Live tool declaration only exposes topic/gradeLevel/
+        // subject/language. Only the OmniOrb supervisor also emits the richer
+        // `assignmentDescription`, which the SOUL prompt reserves for this one
+        // flow — so prefer it when present and fall back to `topic`. Same
+        // most-specific-first alias shape as use-instant-answer.ts
+        // (`question || topic || prompt`) and visual-aid-designer
+        // (`prompt || topic`).
+        const descParam =
+            searchParams.get("assignmentDescription") || searchParams.get("topic");
 
         if (id) {
             const fetchSavedContent = async () => {
@@ -119,10 +136,30 @@ export function useRubricGenerator() {
                         const content = await res.json();
                         if (content.data) {
                             generator.setResult(content.data);
+                            // `reset` REPLACES the whole form state — any key
+                            // missing from the payload becomes undefined
+                            // rather than being left alone. Seed it from the
+                            // live values so a field the saved record has
+                            // nothing to say about (or a field added to the
+                            // schema later) survives the restore instead of
+                            // being blanked.
+                            const current = form.getValues();
                             form.reset({
-                                assignmentDescription: content.topic || content.title,
-                                gradeLevel: content.gradeLevel,
-                                language: content.language,
+                                ...current,
+                                assignmentDescription:
+                                    content.topic || content.title || current.assignmentDescription,
+                                gradeLevel: content.gradeLevel || current.gradeLevel,
+                                subject: content.subject || current.subject,
+                                // Saved rubrics store the language DISPLAY name
+                                // ("English", "Bengali"): generateRubric runs
+                                // normalizeLanguage() before the flow persists,
+                                // so the ISO code the form sent never reaches
+                                // Firestore. <LanguageSelector> is driven by ISO
+                                // codes, so writing the display name back matches
+                                // no option and the control renders empty. Map it
+                                // back through the shared normaliser.
+                                language:
+                                    normaliseVidyaLanguage(content.language) || current.language,
                             });
                         }
                     }

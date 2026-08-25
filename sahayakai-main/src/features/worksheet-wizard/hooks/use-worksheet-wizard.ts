@@ -105,7 +105,9 @@ export function useWorksheetWizard() {
     // Restore snapshot on mount — only when no URL params are present
      
     useEffect(() => {
-        const promptParam = searchParams.get("prompt");
+        // Read `topic` as well — see the pre-fill effect below — or a VIDYA
+        // deep link reads as "no URL params" and the snapshot overwrites it.
+        const promptParam = searchParams.get("prompt") || searchParams.get("topic");
         const id = searchParams.get("id");
         if (promptParam || id || !savedSnapshot) return;
         if (savedSnapshot.prompt) form.setValue("prompt", savedSnapshot.prompt);
@@ -116,7 +118,12 @@ export function useWorksheetWizard() {
 
     useEffect(() => {
         const id = searchParams.get("id");
-        const promptParam = searchParams.get("prompt");
+        // The intent route, the agent router and the voice assistant all build
+        // `/worksheet-wizard?topic=...`; the SOUL prompt reserves `prompt` for
+        // visual-aid-designer, so nothing upstream ever emitted the name this
+        // form used to read. Accept both, most specific first — same shape as
+        // visual-aid-designer (`prompt || topic`).
+        const promptParam = searchParams.get("prompt") || searchParams.get("topic");
 
         if (id) {
             const fetchSavedContent = async () => {
