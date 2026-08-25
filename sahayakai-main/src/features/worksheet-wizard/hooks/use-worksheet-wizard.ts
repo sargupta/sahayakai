@@ -3,11 +3,12 @@
 /**
  * useWorksheetWizard — all worksheet-wizard logic, zero markup.
  * Composes the shared useGenerator spine; keeps worksheet-specific
- * behavior: VIDYA form sync + snapshot restore, restore-from-`?id`,
- * VIDYA URL prefill + 300ms auto-submit, markdown download.
+ * behavior: VIDYA form sync + snapshot restore, restore-from-`?id`
+ * (guarded per param set, not per mount), VIDYA URL prefill + 300ms
+ * auto-submit gated on the required image, markdown download.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSearchParams } from "next/navigation";
@@ -18,10 +19,28 @@ import { useJarvisStore } from "@/store/jarvisStore";
 import { useLanguage } from "@/context/language-context";
 import { LANGUAGE_TO_ISO } from "@/types";
 import { auth } from "@/lib/firebase";
-import { normaliseVidyaLanguage, normaliseVidyaGradeLevel } from "@/lib/vidya-action-normalizer";
+import {
+    normaliseVidyaLanguage,
+    normaliseVidyaGradeLevel,
+    vidyaDeepLinkKey,
+} from "@/lib/vidya-action-normalizer";
 import { MalformedResponseError, useGenerator } from "@/features/generator";
 import { worksheetTranslations } from "../i18n";
 import { formSchema, type FormValues, type WorksheetResult } from "../types";
+
+/**
+ * Every URL param the deep-link effect below reads. The guard is keyed over
+ * this exact list, so a param added to the effect must be added here too or
+ * a link that differs only in that param reads as already-handled.
+ */
+const DEEP_LINK_PARAMS = [
+    "id",
+    "prompt",
+    "topic",
+    "subject",
+    "gradeLevel",
+    "language",
+] as const;
 
 export function useWorksheetWizard() {
     const { language: userLanguage, t: translate } = useLanguage();
@@ -29,6 +48,9 @@ export function useWorksheetWizard() {
     const { canUseAI, aiUnavailableReason } = useNetworkAware();
     const { clearFormSnapshot } = useJarvisStore();
     const searchParams = useSearchParams();
+    // The deep link this hook has already acted on, not merely "some deep
+    // link has been acted on". See vidyaDeepLinkKey().
+    const handledDeepLink = useRef<string | null>(null);
     const [isRestoring, setIsRestoring] = useState(false);
 
     // Default the Language field to the user's profile language, not
@@ -105,7 +127,9 @@ export function useWorksheetWizard() {
     // Restore snapshot on mount — only when no URL params are present
      
     useEffect(() => {
-        const promptParam = searchParams.get("prompt");
+        // Read `topic` as well — see the pre-fill effect below — or a VIDYA
+        // deep link reads as "no URL params" and the snapshot overwrites it.
+        const promptParam = searchParams.get("prompt") || searchParams.get("topic");
         const id = searchParams.get("id");
         if (promptParam || id || !savedSnapshot) return;
         if (savedSnapshot.prompt) form.setValue("prompt", savedSnapshot.prompt);
@@ -115,8 +139,28 @@ export function useWorksheetWizard() {
     }, []); // empty array: runs once on mount only
 
     useEffect(() => {
+        // Run the URL branch once PER PARAM SET. Without a guard the effect
+        // re-fires on every searchParams identity change and re-runs the
+        // restore fetch (or the pre-fill) over whatever the teacher has since
+        // typed. With a guard keyed to the mount instead of to the query, the
+        // opposite failure: VIDYA is mounted app-wide and pushes client-side
+        // into this same route segment, so a SECOND worksheet request from a
+        // teacher already standing here would be dropped and the page would
+        // keep answering the request before it. Claim the key, not the mount.
+        const deepLinkKey = vidyaDeepLinkKey(searchParams, DEEP_LINK_PARAMS);
+        if (handledDeepLink.current === deepLinkKey) return;
+        // Claim BEFORE the branches: the `?id=` restore awaits a fetch, and
+        // setting the claim after it resolves leaves the whole round trip
+        // unguarded — any re-render in that window starts a second request.
+        handledDeepLink.current = deepLinkKey;
+
         const id = searchParams.get("id");
-        const promptParam = searchParams.get("prompt");
+        // The intent route, the agent router and the voice assistant all build
+        // `/worksheet-wizard?topic=...`; the SOUL prompt reserves `prompt` for
+        // visual-aid-designer, so nothing upstream ever emitted the name this
+        // form used to read. Accept both, most specific first — same shape as
+        // visual-aid-designer (`prompt || topic`).
+        const promptParam = searchParams.get("prompt") || searchParams.get("topic");
 
         if (id) {
             const fetchSavedContent = async () => {
@@ -195,8 +239,21 @@ export function useWorksheetWizard() {
             if (normalisedGrade) form.setValue("gradeLevel", normalisedGrade, SET_OPTS);
             const normalisedLang = normaliseVidyaLanguage(languageParam);
             if (normalisedLang) form.setValue("language", normalisedLang, SET_OPTS);
-            // ── FIX: auto-generate when VIDYA navigates here with a pre-filled prompt
-            setTimeout(() => form.handleSubmit(onSubmit)(), 300);
+            // ── Auto-generate when VIDYA navigates here with a pre-filled prompt,
+            // but ONLY once the image the schema requires is actually present.
+            // Worksheet is the one deep-link destination with a mandatory
+            // upload (types.ts: imageDataUri, min 1, "Please upload an image."),
+            // and no producer can put a photo of the teacher's textbook page in
+            // a query string. Submitting regardless just runs handleSubmit into
+            // the resolver and paints a red "Please upload an image." over a
+            // form the teacher has not touched yet. Read the value inside the
+            // timer rather than when scheduling it, so an upload that lands
+            // during those 300 ms still gets the free run.
+            setTimeout(() => {
+                const image = form.getValues("imageDataUri");
+                if (!image || !image.trim()) return;
+                form.handleSubmit(onSubmit)();
+            }, 300);
             // ────────────────────────────────────────────────────────────────────
         }
          
