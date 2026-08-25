@@ -1,4 +1,4 @@
 {
   "comment": "Gate 11 repo-wide budget (scripts/ci/check-design-tokens.mjs). Seeded 2026-08-14 from main HEAD: 934 total banned-pattern hits across src/**/*.tsx after widening the ban list with raw Tailwind palette classes. maxHits may only go DOWN — when a PR reduces the total, ratchet this number in the same PR.",
-  "maxHits": 934
+  "maxHits": 931
 }

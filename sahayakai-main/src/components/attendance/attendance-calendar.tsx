@@ -99,9 +99,12 @@ export function AttendanceCalendar({ classId, initialSummaries }: AttendanceCale
                         >
                             <div className="min-w-0">
                                 <p className="text-sm font-semibold text-foreground truncate">{s.studentName}</p>
-                                {s.consecutiveAbsences >= 2 && (
-                                    <p className="text-[10px] text-red-500 font-semibold mt-0.5">
-                                        {s.consecutiveAbsences} days absent in a row
+                                {/* This tab is a monthly report and pages back through
+                                    past months, so the honest figure here is the month's
+                                    longest run, labelled as such — not a live status. */}
+                                {s.longestAbsenceStreak >= 2 && (
+                                    <p className="text-xs text-destructive font-semibold mt-0.5">
+                                        {s.longestAbsenceStreak} {t("days absent in a row (longest this month)")}
                                     </p>
                                 )}
                             </div>
