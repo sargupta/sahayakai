@@ -488,6 +488,10 @@ function AssessmentScannerPageInner() {
                     result={result}
                     subject={resultMeta.subject}
                     gradeLevel={resultMeta.gradeLevel}
+                    // A record re-opened from My Library is saved by definition
+                    // (`savedToLibrary` is undefined on stored data); a fresh
+                    // scan reports whether its Firestore write actually landed.
+                    isSaved={result.savedToLibrary !== false}
                     onResultUpdated={(next) => setResult(next)}
                 />
             )}

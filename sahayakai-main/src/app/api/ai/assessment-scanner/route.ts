@@ -32,8 +32,10 @@ import {
     ASSESSMENT_SUPPORTED_SUBJECTS,
     AssessmentScannerInputSchema,
 } from '@/ai/schemas/assessment-scanner-schemas';
+import { isGradedResult } from '@/ai/schemas/assessment-scanner-utils';
 import { handleAIError } from '@/lib/ai-error-response';
 import { isFeatureEnabled } from '@/lib/feature-flags';
+import { logger } from '@/lib/logger';
 import { withPlanCheck } from '@/lib/plan-guard';
 import { dbAdapter } from '@/lib/db/adapter';
 import { dispatchAssessmentScanner } from '@/lib/sidecar/assessment-scanner-dispatch';
@@ -42,6 +44,15 @@ import { dispatchAssessmentScanner } from '@/lib/sidecar/assessment-scanner-disp
 export const maxDuration = 120;
 
 const SUPPORTED_SUBJECT_SET = new Set<string>(ASSESSMENT_SUPPORTED_SUBJECTS);
+
+/**
+ * Single wording for "the scan read nothing", shared by the typed-error path
+ * (the Genkit flow throws `AssessmentEmptyExtractionError`) and the
+ * defensive result check below (the Python sidecar returns `status: 'failed'`
+ * rather than throwing). Same cause, same message, same 422.
+ */
+const EMPTY_EXTRACTION_MESSAGE =
+    'We could not read any questions or answers from the uploaded pages. Please re-upload clearer photos and try again.';
 
 /**
  * Normalise the request body so older clients that still send `pageUrl`
@@ -168,6 +179,43 @@ async function _handler(request: Request) {
         // parity scoring. The flag is flipped per-rollout-step from the
         // Firestore feature_flags doc.
         const result = await dispatchAssessmentScanner(body);
+
+        // A scan that graded nothing is not a result — it is a failure that
+        // happens to be shaped like a result. `status: 'failed'` carries
+        // `scorePct: 0` and `letterGrade: 'E'` because 0 of 0 marks is 0%, and
+        // returning that over HTTP 200 put a real-looking failing grade for a
+        // child in the teacher's hands, one tap from WhatsApp. It also billed
+        // the teacher's plan: withPlanCheck only refunds the reserved quota on
+        // a non-2xx response.
+        //
+        // The Genkit flow now throws AssessmentEmptyExtractionError before it
+        // can build such a result. The sidecar has its own grading loop and
+        // reports the same condition as `status: 'failed'`, so the wire
+        // boundary checks it too, whichever backend served the request.
+        if (!isGradedResult(result)) {
+            logger.error(
+                'Assessment Scanner: scan produced no grades',
+                undefined,
+                'ASSESSMENT_SCANNER',
+                {
+                    userId,
+                    assessmentId,
+                    status: result.status,
+                    source: result.source,
+                    pageCount: result.pageCount,
+                    reason: 'empty_extraction',
+                },
+            );
+            return NextResponse.json(
+                {
+                    error: 'empty_extraction',
+                    code: 'EMPTY_EXTRACTION',
+                    message: EMPTY_EXTRACTION_MESSAGE,
+                },
+                { status: 422 },
+            );
+        }
+
         return NextResponse.json(result);
     } catch (error) {
         // BUG #3 hardening: map KNOWN, user-fixable failure causes to a
@@ -198,8 +246,7 @@ async function _handler(request: Request) {
                     error: 'empty_extraction',
                     code: 'EMPTY_EXTRACTION',
                     message:
-                        (error as { message?: string }).message ??
-                        'We could not read any questions or answers from the uploaded pages. Please re-upload clearer photos and try again.',
+                        (error as { message?: string }).message ?? EMPTY_EXTRACTION_MESSAGE,
                 },
                 { status: 422 },
             );

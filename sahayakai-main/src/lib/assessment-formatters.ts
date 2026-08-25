@@ -10,10 +10,17 @@
  *
  * Style: plain text, no emojis, no em dashes. Per project memory:
  * `feedback_no_double_dash.md` + `feedback_teacher_tone.md`.
+ *
+ * Both formatters refuse a scan that graded nothing. A `status: 'failed'`
+ * result carries `scorePct: 0` / `letterGrade: 'E'` as arithmetic on an empty
+ * question set, and rendering that reads as "your child scored 0%" to the one
+ * audience least able to tell the difference. The refusal lives here, in the
+ * pure function every caller goes through, rather than only in the button that
+ * calls it today.
  */
 
 import type { AssessmentScannerOutput } from '@/ai/schemas/assessment-scanner-schemas';
-import { effectiveQuestion } from '@/ai/schemas/assessment-scanner-utils';
+import { effectiveQuestion, isGradedResult } from '@/ai/schemas/assessment-scanner-utils';
 
 interface SummaryContext {
     subject?: string;
@@ -21,10 +28,27 @@ interface SummaryContext {
     studentName?: string;
 }
 
+/**
+ * Thrown when a caller asks for shareable text from a scan that produced no
+ * grades. Callers should gate on `isGradedResult` and disable the action; this
+ * error is the backstop for the caller that forgets.
+ */
+export class AssessmentNotGradedError extends Error {
+    readonly code = 'NOT_GRADED' as const;
+    constructor() {
+        super(
+            'This scan did not grade any questions, so there is no result to share.',
+        );
+        this.name = 'AssessmentNotGradedError';
+    }
+}
+
 export function formatParentSummary(
     result: AssessmentScannerOutput,
     ctx: SummaryContext = {},
 ): string {
+    if (!isGradedResult(result)) throw new AssessmentNotGradedError();
+
     const lines: string[] = [];
 
     lines.push('Assessment Result');
@@ -81,6 +105,8 @@ export function formatStudentHandout(
     result: AssessmentScannerOutput,
     ctx: SummaryContext = {},
 ): string {
+    if (!isGradedResult(result)) throw new AssessmentNotGradedError();
+
     const lines: string[] = [];
 
     lines.push('Your Assessment');

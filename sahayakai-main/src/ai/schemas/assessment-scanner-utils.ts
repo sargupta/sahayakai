@@ -81,3 +81,26 @@ export function withRecomputedTotals(
     const totals = recomputeTotals(result.questions, result.totalMaxMarks);
     return { ...result, ...totals };
 }
+
+/**
+ * True when the scan actually graded something.
+ *
+ * `status: 'failed'` means the grading pass returned zero gradable questions —
+ * nothing on the paper was read. The aggregate still carries `scorePct: 0` and
+ * `letterGrade: 'E'`, because those are arithmetic on an empty set (0 of 0
+ * marks), not a judgement about the child. Every consumer that turns a result
+ * into a grade a human will read — the parent summary, the student handout,
+ * the copy/share actions, the HTTP status of the scan route — gates on this so
+ * a scan that graded nothing can never be presented as a failing grade.
+ *
+ * Checks the status flag AND the question array on purpose: the Python sidecar
+ * sets its own status, and an empty question list is the ground truth either
+ * way.
+ */
+export function isGradedResult(
+    result: Pick<AssessmentScannerOutput, 'status' | 'questions'> | null | undefined,
+): boolean {
+    if (!result) return false;
+    if (result.status === 'failed') return false;
+    return Array.isArray(result.questions) && result.questions.length > 0;
+}
