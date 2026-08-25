@@ -41,7 +41,16 @@ export const maxDuration = 120;
  *                 example: "English"
  *     responses:
  *       200:
- *         description: Planned Virtual Field Trip
+ *         description: >
+ *           Planned Virtual Field Trip. Always carries a non-empty `stops`
+ *           array — the client maps over it unconditionally.
+ *       202:
+ *         description: >
+ *           Generation exceeded the dispatcher budget and is still running in
+ *           the background; the trip will appear in My Library. The body is an
+ *           `{ error: "still_generating" }` envelope and carries NO trip
+ *           fields, so a client must branch on the 202 before touching it —
+ *           `res.ok` is true here.
  *       400:
  *         description: Invalid input
  *       500:
@@ -66,6 +75,14 @@ async function _handler(request: Request) {
             ...body,
             userId,
         });
+        // `stops` is the entire trip as far as the client is concerned — the
+        // display maps over it and renders nothing else. Serving a 200 without
+        // stops would spend a plan credit on a blank page (withPlanCheck only
+        // refunds a non-2xx), so throw instead and let the gate roll back.
+        if (!Array.isArray(dispatched.stops) || dispatched.stops.length === 0) {
+            throw new Error('Virtual field trip generation produced no stops');
+        }
+
         return NextResponse.json({
             title: dispatched.title,
             stops: dispatched.stops,
