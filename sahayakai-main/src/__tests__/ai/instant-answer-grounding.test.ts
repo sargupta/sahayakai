@@ -275,6 +275,44 @@ describe('stripSourceLinks', () => {
         expect(containsUrl(stripSourceLinks(body))).toBe(false);
     });
 
+    // A target does not need a scheme to become an anchor. CommonMark links a
+    // bare host, `//host`, `/path` and a `[1]: target` footnote exactly as it
+    // links `https://`, and react-markdown draws every one of them for the
+    // teacher. While the guard asked for `://` these survived, and because
+    // `containsUrl` asked only for `https?://` the invariant above them stayed
+    // green the whole time — so each is pinned here twice: stripped, and
+    // reported as a link while it is still there.
+    const RENDERABLE_TARGETS: Array<[string, string, string]> = [
+        [
+            'a bare host',
+            'Read the chapter at [NCERT](ncert.nic.in/textbook/pdf/hesc106.pdf) for more.',
+            'Read the chapter at NCERT for more.',
+        ],
+        [
+            'a reference-style footnote',
+            'Plants use sunlight[1].\n\n[1]: ncert.nic.in/ch6',
+            'Plants use sunlight[1].',
+        ],
+        ['a root-relative path', 'See [Chapter 6](/textbook/ch6).', 'See Chapter 6.'],
+        ['a protocol-relative host', 'See [source](//example.com/a).', 'See source.'],
+        [
+            'a bare host carrying a path',
+            'See [this page](example.com/photosynthesis).',
+            'See this page.',
+        ],
+    ];
+
+    it.each(RENDERABLE_TARGETS)('strips %s', (_label, body, expected) => {
+        const stripped = stripSourceLinks(body);
+
+        expect(stripped).toBe(expected);
+        expect(containsUrl(stripped)).toBe(false);
+    });
+
+    it.each(RENDERABLE_TARGETS)('reports %s as a link before it is stripped', (_label, body) => {
+        expect(containsUrl(body)).toBe(true);
+    });
+
     it('keeps the sentence readable by preserving link labels', () => {
         const stripped = stripSourceLinks(
             'See [the Wikipedia article](https://en.wikipedia.org/wiki/Example) for details.',
@@ -314,6 +352,18 @@ describe('stripSourceLinks', () => {
         ['an array index beside a call', 'Use arr[i](x) to call.'],
         ['a chemical formula', 'Ca[OH](aq) dissolves.'],
         ['empty parentheses in link-free prose', 'Area = ( ) is empty'],
+        // A tab is the other spelling of an indented block, and a table is all
+        // structural whitespace.
+        ['a tab-indented code block', 'Example:\n\n\tdef f():\n\t\treturn 1\n\nDone.'],
+        [
+            'a markdown table',
+            'Key terms:\n\n| Term | Meaning |\n| --- | --- |\n' +
+                '| Photosynthesis | Food from light |\n',
+        ],
+        // The other side of the widened test: a unit and a decimal look like
+        // neither a host nor a path, so they are not targets either.
+        ['a unit in parentheses', 'Speed [v](m/s) is measured.'],
+        ['a decimal in parentheses', 'Value [x](1.5) here.'],
         [
             'a Bengali answer carrying both',
             'সালোকসংশ্লেষ কীভাবে হয়:\n\n- সূর্যালোক\n  - সূর্য থেকে আসে\n- জল\n\n' +

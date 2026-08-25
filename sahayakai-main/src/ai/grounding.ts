@@ -112,16 +112,32 @@ export function sanitizeVideoSuggestionUrl(
     return `${YOUTUBE_SEARCH_PREFIX}${encodeURIComponent(query)}`;
 }
 
-// A link target only counts as a source when it really is a URL. Without the
-// scheme this shape matched any prose that happened to put a bracket beside a
-// paren: `arr[i](x)` became `arri`, and `Ca[OH](aq)` became `CaOH`.
-const URL_SCHEME = String.raw`(?:[a-z][a-z0-9+.\-]*:\/\/|mailto:|www\.)`;
-const LINK_TARGET_URL = String.raw`\s*<?${URL_SCHEME}[^()]*`;
+// A link target counts as a source when the teacher's markdown view would
+// really render it as one. "Carries a scheme" is too small a bar for that:
+// CommonMark links a bare host, a protocol-relative `//host` and a
+// root-relative `/path` exactly as readily as `https://`, so
+// `[NCERT](ncert.nic.in/textbook/pdf/hesc106.pdf)` survived the guard and
+// reached the teacher as a clickable citation of a source nothing retrieved.
+//
+// The bar that does hold is "looks like a host or a path", which is still what
+// separates a citation from prose that happens to put a bracket beside a
+// paren. The target in `arr[i](x)` and `Ca[OH](aq)` is a bare word with no dot
+// and no slash, so it is neither, and those stay whole.
+const URL_SCHEME = String.raw`(?:[a-z][a-z0-9+.\-]*:\/\/|mailto:)`;
+// `/path` and `//host/path`, plus the `./` and `../` spellings of the same.
+const TARGET_PATH = String.raw`\.{0,2}\/`;
+// `example.com`, `ncert.nic.in`, `www.youtube.com`. The trailing run of two or
+// more letters is the part that keeps `1.5`, `e.g` and `i.e.` out.
+const TARGET_HOST = String.raw`[a-z0-9_\-]+(?:\.[a-z0-9_\-]+)*\.[a-z]{2,}`;
+const LINK_TARGET = String.raw`(?:${URL_SCHEME}|www\.|${TARGET_PATH}|${TARGET_HOST})`;
+const LINK_TARGET_URL = String.raw`\s*<?${LINK_TARGET}[^()]*`;
 
 const MARKDOWN_IMAGE = new RegExp(String.raw`!\[([^\]]*)\]\(${LINK_TARGET_URL}\)`, 'gi');
 const MARKDOWN_LINK = new RegExp(String.raw`\[([^\]]*)\]\(${LINK_TARGET_URL}\)`, 'gi');
+// `[1]: ncert.nic.in/ch6` is a footnote a renderer resolves into an anchor on
+// the `[1]` above it, so it is a citation in exactly the way an inline link is.
 const REFERENCE_DEFINITION = new RegExp(
-    String.raw`^[ \t]*\[[^\]]+\]:[ \t]*<?${URL_SCHEME}\S*.*$`,
+    String.raw`^[ \t]*\[[^\]]+\]:[ \t]*<?${LINK_TARGET}\S*.*$`,
     'gim',
 );
 const REFERENCE_LINK = /\[([^\]]*)\]\[[^\]]*\]/g;
@@ -309,7 +325,27 @@ export function stripSourceLinks(markdown: string): string {
     return rebuilt.join('').trim();
 }
 
-/** True when a body still carries a URL — the invariant the guard owes. */
+/**
+ * Every shape that still reaches the teacher as an anchor: a URL standing on
+ * its own, an inline link or image, and a reference definition.
+ */
+const RENDERABLE_LINK = new RegExp(
+    [
+        URL_SCHEME,
+        String.raw`\[[^\]]*\]\(${LINK_TARGET_URL}\)`,
+        String.raw`^[ \t]*\[[^\]]+\]:[ \t]*<?${LINK_TARGET}`,
+    ].join('|'),
+    'im',
+);
+
+/**
+ * True when a body still carries a link — the invariant the guard owes.
+ *
+ * It has to ask the same question the guard asks, or it certifies bodies the
+ * guard never cleaned. Asking only for `https?://` is how a bare-host citation
+ * came to render as an anchor with every test above it still green: nothing
+ * here can pass while a link the renderer will draw is still in the answer.
+ */
 export function containsUrl(text: string): boolean {
-    return /https?:\/\//i.test(text);
+    return RENDERABLE_LINK.test(text);
 }
