@@ -98,7 +98,14 @@ const AgentReplyInputSchema = z.object({
 
 const AgentReplyOutputSchema = z.object({
     reply: z.string().describe('Agent response in parent\'s language. Max 3-4 sentences. Spoken aloud.'),
-    shouldEndCall: z.boolean().describe('True if conversation has reached natural conclusion'),
+    // Defaulted, NOT required. A prod call on 2026-08-25 died here: the model
+    // ran out of output tokens partway through `reply`, so it never emitted this
+    // field, Zod rejected the whole object, and the parent — who had just asked
+    // "what can we do at home to help him?" — heard "sorry, I didn't catch that"
+    // instead of an answer. A missing terminal boolean is not a reason to throw
+    // away a reply the model already produced. Defaulting to false is also the
+    // safe direction: it continues the conversation rather than hanging up.
+    shouldEndCall: z.boolean().default(false).describe('True if conversation has reached natural conclusion'),
     followUpQuestion: z.string().optional().describe('Optional gentle follow-up to keep conversation going'),
 });
 
@@ -109,10 +116,22 @@ const agentReplyPrompt = ai.definePrompt({
     name: 'parentCallAgentReply',
     input: { schema: AgentReplyInputSchema },
     output: { schema: AgentReplyOutputSchema },
-    // The reply is 3-4 spoken sentences; capping generation keeps the
-    // phone turn inside REPLY_TIMEOUT_MS. 512 tokens is ~3x the largest
-    // legitimate reply even in Indic scripts.
-    config: { maxOutputTokens: 512 },
+    // The reply is 3-4 spoken sentences; capping generation keeps the phone
+    // turn inside REPLY_TIMEOUT_MS.
+    //
+    // Raised 512 -> 1024 on 2026-08-25. The old ceiling was sized against
+    // English and the comment claimed it was "~3x the largest legitimate reply
+    // even in Indic scripts" — measurement says otherwise. Devanagari and the
+    // other Indic scripts tokenize several times more densely per character, so
+    // an ordinary Hindi reply overran 512 and was truncated MID-JSON, taking
+    // the closing `shouldEndCall` with it. Ten of the eleven languages this
+    // product exists to serve were on the wrong side of that cap.
+    //
+    // Time budget is not the constraint here: the failing turn spent 5.4s of
+    // its 13s allowance across three attempts, so it died on tokens with ~7s
+    // unused. At the observed generation rate 1024 tokens still lands well
+    // inside REPLY_TIMEOUT_MS.
+    config: { maxOutputTokens: 1024 },
     prompt: `You are a warm, caring school representative making a phone call to a parent about their child. You are NOT a robot — you are having a real conversation.
 ${INJECTION_GUARD}
 
