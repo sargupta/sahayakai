@@ -13,6 +13,11 @@
  * `/worksheet-wizard` read only `prompt`; neither name is emitted by the
  * routers at all.
  *
+ * The AI routers are not the only producers. The community feed's "Use this"
+ * button builds the same four params by hand and pushes a teacher at a flow
+ * page, so a rename on the consumer side breaks that button just as silently.
+ * It is enumerated below alongside the routers.
+ *
  * The producer's flow list is parsed out of the route source rather than
  * hard-coded, so adding a tenth flow to the switch fails here until its
  * destination is listed and honours the contract. Reading sources (instead
@@ -29,11 +34,27 @@ function read(file: string): string {
     return readFileSync(resolve(REPO_ROOT, file), 'utf8');
 }
 
-/** Both producers build `/<flow>?${queryString}` from one shared builder. */
+/**
+ * Everything that builds this query string and navigates a teacher to a flow.
+ *
+ * The two AI routers share one builder (`queryParams` → `/<flow>?${queryString}`)
+ * and a switch of literal destinations, so their flow list can be parsed out of
+ * the source. The community feed's "Use this" button builds its own
+ * (`params` → `/${c.route}?${params.toString()}`) and takes the destination from
+ * a TYPE_CONFIG table keyed by resource type, so `routesLiteralFlows` is false
+ * for it: what is pinned there is the param contract, which is what a rename on
+ * the consumer side would break. Its destinations are NOT asserted, and they do
+ * not all resolve today — the table sends `lesson-plan` to `/lesson-planner`,
+ * which is not a route. That is its own defect with its own fix, not this one.
+ */
 const PRODUCERS = [
-    'src/app/api/ai/intent/route.ts',
-    'src/ai/flows/agent-router.ts',
+    { file: 'src/app/api/ai/intent/route.ts', builder: 'queryParams', routesLiteralFlows: true },
+    { file: 'src/ai/flows/agent-router.ts', builder: 'queryParams', routesLiteralFlows: true },
+    { file: 'src/components/community/resource-feed.tsx', builder: 'params', routesLiteralFlows: false },
 ];
+
+/** The subset whose destinations are literal `/<flow>?${queryString}` templates. */
+const FLOW_ROUTERS = PRODUCERS.filter((p) => p.routesLiteralFlows);
 
 /** The text param the shared query string carries. */
 const CANONICAL_TEXT_PARAM = 'topic';
@@ -61,9 +82,11 @@ function navigableFlows(source: string): string[] {
     return [...matches].map((m) => m[1]);
 }
 
-/** Param names the producer writes into the shared query string. */
-function emittedParams(source: string): string[] {
-    const matches = source.matchAll(/queryParams\.set\(\s*['"]([a-zA-Z]+)['"]/g);
+/** Param names a producer writes into its query string, via `<builder>.set`. */
+function emittedParams(source: string, builder: string): string[] {
+    const matches = source.matchAll(
+        new RegExp(String.raw`${builder}\.set\(\s*['"]([a-zA-Z]+)['"]`, 'g'),
+    );
     return [...new Set([...matches].map((m) => m[1]))];
 }
 
@@ -74,22 +97,26 @@ function readParams(source: string): string[] {
 }
 
 describe('VIDYA deep-link param contract', () => {
-    describe.each(PRODUCERS)('%s', (file) => {
+    describe.each(PRODUCERS)('$file', ({ file, builder, routesLiteralFlows }) => {
         const source = read(file);
 
         it(`emits '${CANONICAL_TEXT_PARAM}' as the text param`, () => {
-            expect(emittedParams(source)).toContain(CANONICAL_TEXT_PARAM);
+            expect(emittedParams(source, builder)).toContain(CANONICAL_TEXT_PARAM);
         });
 
-        it('routes only to flows the destination table knows about', () => {
-            const unlisted = navigableFlows(source).filter((flow) => !DESTINATIONS[flow]);
-            expect(unlisted).toEqual([]);
-        });
+        if (routesLiteralFlows) {
+            it('routes only to flows the destination table knows about', () => {
+                const unlisted = navigableFlows(source).filter((flow) => !DESTINATIONS[flow]);
+                expect(unlisted).toEqual([]);
+            });
+        }
     });
 
-    it('both producers emit the same param names', () => {
-        const [intent, router] = PRODUCERS.map((f) => emittedParams(read(f)).sort());
-        expect(intent).toEqual(router);
+    it('every producer emits the same param names', () => {
+        const [first, ...rest] = PRODUCERS.map((p) =>
+            emittedParams(read(p.file), p.builder).sort(),
+        );
+        for (const other of rest) expect(other).toEqual(first);
     });
 
     describe.each(Object.entries(DESTINATIONS))('%s', (flow, { consumer, aliases }) => {
@@ -106,7 +133,7 @@ describe('VIDYA deep-link param contract', () => {
         }
 
         it('is reachable from at least one producer', () => {
-            const reachable = PRODUCERS.some((f) => navigableFlows(read(f)).includes(flow));
+            const reachable = FLOW_ROUTERS.some((p) => navigableFlows(read(p.file)).includes(flow));
             expect(reachable).toBe(true);
         });
     });

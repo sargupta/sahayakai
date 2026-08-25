@@ -3,11 +3,12 @@
 /**
  * useWorksheetWizard — all worksheet-wizard logic, zero markup.
  * Composes the shared useGenerator spine; keeps worksheet-specific
- * behavior: VIDYA form sync + snapshot restore, restore-from-`?id`,
- * VIDYA URL prefill + 300ms auto-submit, markdown download.
+ * behavior: VIDYA form sync + snapshot restore, restore-from-`?id`
+ * (guarded with a hasLoaded ref), VIDYA URL prefill + 300ms auto-submit
+ * gated on the required image, markdown download.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSearchParams } from "next/navigation";
@@ -29,6 +30,7 @@ export function useWorksheetWizard() {
     const { canUseAI, aiUnavailableReason } = useNetworkAware();
     const { clearFormSnapshot } = useJarvisStore();
     const searchParams = useSearchParams();
+    const hasLoaded = useRef(false);
     const [isRestoring, setIsRestoring] = useState(false);
 
     // Default the Language field to the user's profile language, not
@@ -117,6 +119,12 @@ export function useWorksheetWizard() {
     }, []); // empty array: runs once on mount only
 
     useEffect(() => {
+        // Run the URL branch once. Without this the effect re-fires on every
+        // searchParams identity change and re-runs the restore fetch (or the
+        // pre-fill) over whatever the teacher has since typed. Same guard
+        // use-rubric-generator.ts carries.
+        if (hasLoaded.current) return;
+
         const id = searchParams.get("id");
         // The intent route, the agent router and the voice assistant all build
         // `/worksheet-wizard?topic=...`; the SOUL prompt reserves `prompt` for
@@ -126,6 +134,10 @@ export function useWorksheetWizard() {
         const promptParam = searchParams.get("prompt") || searchParams.get("topic");
 
         if (id) {
+            // Claim the run BEFORE awaiting. Setting the flag after the fetch
+            // resolves leaves the whole round trip unguarded, and any re-render
+            // in that window starts a second request.
+            hasLoaded.current = true;
             const fetchSavedContent = async () => {
                 setIsRestoring(true);
                 try {
@@ -202,8 +214,22 @@ export function useWorksheetWizard() {
             if (normalisedGrade) form.setValue("gradeLevel", normalisedGrade, SET_OPTS);
             const normalisedLang = normaliseVidyaLanguage(languageParam);
             if (normalisedLang) form.setValue("language", normalisedLang, SET_OPTS);
-            // ── FIX: auto-generate when VIDYA navigates here with a pre-filled prompt
-            setTimeout(() => form.handleSubmit(onSubmit)(), 300);
+            hasLoaded.current = true;
+            // ── Auto-generate when VIDYA navigates here with a pre-filled prompt,
+            // but ONLY once the image the schema requires is actually present.
+            // Worksheet is the one deep-link destination with a mandatory
+            // upload (types.ts: imageDataUri, min 1, "Please upload an image."),
+            // and no producer can put a photo of the teacher's textbook page in
+            // a query string. Submitting regardless just runs handleSubmit into
+            // the resolver and paints a red "Please upload an image." over a
+            // form the teacher has not touched yet. Read the value inside the
+            // timer rather than when scheduling it, so an upload that lands
+            // during those 300 ms still gets the free run.
+            setTimeout(() => {
+                const image = form.getValues("imageDataUri");
+                if (!image || !image.trim()) return;
+                form.handleSubmit(onSubmit)();
+            }, 300);
             // ────────────────────────────────────────────────────────────────────
         }
          
