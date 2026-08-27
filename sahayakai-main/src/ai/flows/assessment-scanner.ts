@@ -618,7 +618,12 @@ function aggregate(
     const needsReviewCount = gradableQuestions.filter((q) => q.needsTeacherReview).length;
     const imageQualityWarnings = buildImageQualityWarnings(pages);
 
-    // Status: 'partial' if any page was unreadable or any question needs review
+    // Status: 'partial' if any page was unreadable or any question needs review.
+    // 'failed' is unreachable from here — gradeAssessment throws
+    // AssessmentEmptyExtractionError before aggregating an empty question set,
+    // precisely so no caller ever receives a 0%/E result for a scan that
+    // graded nothing. The branch stays as a belt-and-braces label in case a
+    // future caller aggregates directly.
     const anyUnreadable = pages.some((p) => p.pageType === 'unreadable');
     const status: 'graded' | 'partial' | 'failed' =
         gradableQuestions.length === 0 ? 'failed' : anyUnreadable ? 'partial' : 'graded';
@@ -641,7 +646,16 @@ function aggregate(
     };
 }
 
-async function persist(input: AssessmentScannerInput, output: AssessmentScannerOutput) {
+/**
+ * Write the graded result to My Library. Returns whether the write landed —
+ * the result card tells the teacher "Saved to My Library", and that claim has
+ * to be answerable. A failure is still non-fatal: the teacher keeps the grades
+ * on screen, they just are not in the library this time, and the card says so.
+ */
+async function persist(
+    input: AssessmentScannerInput,
+    output: AssessmentScannerOutput,
+): Promise<boolean> {
     try {
         const { dbAdapter } = await import('@/lib/db/adapter');
         const { Timestamp } = await import('firebase-admin/firestore');
@@ -661,6 +675,7 @@ async function persist(input: AssessmentScannerInput, output: AssessmentScannerO
             updatedAt: Timestamp.fromDate(now),
             data: output,
         });
+        return true;
     } catch (err) {
         // Persistence failure must not fail the user-visible response. Log
         // and let the result come through; the teacher will see results but
@@ -672,6 +687,7 @@ async function persist(input: AssessmentScannerInput, output: AssessmentScannerO
             'ASSESSMENT_SCANNER',
             { userId: input.userId, assessmentId: input.assessmentId },
         );
+        return false;
     }
 }
 
@@ -687,7 +703,8 @@ export async function gradeAssessment(
     // Idempotency: re-submitting the same assessmentId returns the cached
     // result without burning AI quota or re-running the model.
     const cached = await checkIdempotency(input.userId, input.assessmentId);
-    if (cached) return cached;
+    // A cache hit was read back out of My Library, so it is saved by definition.
+    if (cached) return { ...cached, savedToLibrary: true };
 
     // PASS 1: extract every page in parallel
     const pageResults = await Promise.allSettled(
@@ -728,14 +745,19 @@ export async function gradeAssessment(
     // PASS 2: score against rubric + NCERT context
     const pass2 = await scoreAssessment(pages, input);
 
-    // BUG #3 hardening: if every page came back unreadable AND Pass-2 produced
-    // no gradable questions, the scan extracted nothing — surface a specific,
-    // actionable "re-upload clearer photos" message rather than returning a
-    // hollow 200 (empty questions array) that the UI can't render, or letting
-    // the route fall through to a generic "AI generation failed".
-    const allPagesUnreadable =
-        pages.length > 0 && pages.every((p) => p.pageType === 'unreadable');
-    if (pass2.questions.length === 0 && allPagesUnreadable) {
+    // If Pass-2 produced no gradable questions, the scan graded nothing —
+    // surface the specific, actionable "re-upload clearer photos" message.
+    //
+    // This used to fire only when EVERY page was also flagged unreadable. That
+    // conjunct was wrong: a page can be perfectly legible (a cover sheet, a
+    // question paper with no answers written, a photo of the wrong page) and
+    // still yield zero gradable questions. Those scans fell through to
+    // aggregate(), which labelled them `status: 'failed'` and — because 0 of 0
+    // marks is 0% — handed back `scorePct: 0, letterGrade: 'E'` over HTTP 200.
+    // A grade for a child, from a scan that never read the paper.
+    if (pass2.questions.length === 0) {
+        const allPagesUnreadable =
+            pages.length > 0 && pages.every((p) => p.pageType === 'unreadable');
         const { logger } = await import('@/lib/logger');
         logger.error(
             'Assessment Scanner: no readable content extracted from any page',
@@ -745,6 +767,8 @@ export async function gradeAssessment(
                 userId: input.userId,
                 assessmentId: input.assessmentId,
                 pageCount: pages.length,
+                allPagesUnreadable,
+                pageTypes: pages.map((p) => p.pageType),
                 reason: 'empty_extraction',
             },
         );
@@ -754,8 +778,9 @@ export async function gradeAssessment(
     // Aggregate + validate
     const output = AssessmentScannerOutputSchema.parse(aggregate(input, pages, pass2));
 
-    // Persist (fire-and-forget — don't block the response on Firestore)
-    void persist(input, output);
-
-    return output;
+    // Persist. This used to be fire-and-forget with a swallowed error, while
+    // the result card unconditionally told the teacher "Saved to My Library".
+    // One Firestore write costs a fraction of the two Gemini passes we just
+    // paid for, so we wait for the answer and report it instead of guessing.
+    return { ...output, savedToLibrary: await persist(input, output) };
 }

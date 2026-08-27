@@ -50,6 +50,7 @@ import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { shouldRunCanaryShadowDiff } from './canary-shadow-diff';
 import { WithTimeoutError, withTimeout } from './with-timeout';
 import { toIsoLanguage } from './lang';
+import { sanitizeVideoSuggestionUrl, stripSourceLinks } from '@/ai/grounding';
 import { logger } from '@/lib/logger';
 
 // Bumped from 10s — instant-answer uses Google Search grounding which
@@ -168,11 +169,24 @@ function sidecarToDispatched(
     res: SidecarInstantAnswerResponse,
     decision: InstantAnswerSidecarDecision,
 ): DispatchedInstantAnswer {
+    // The sidecar is the only path that can currently ground an answer
+    // (Gemini's native Google Search grounding), and it has always reported
+    // whether grounding fired. Until now the dispatcher kept that in
+    // telemetry only, so the teacher-facing wire could not tell a grounded
+    // answer from an ungrounded one — and an ungrounded sidecar answer went
+    // out with whatever links the model had written, same as the Genkit path
+    // did. When grounding did fire the links came from a real retrieval and
+    // are left alone.
+    const grounded = res.groundingUsed;
+
     return {
-        answer: res.answer,
-        videoSuggestionUrl: res.videoSuggestionUrl,
+        answer: grounded ? res.answer : stripSourceLinks(res.answer),
+        videoSuggestionUrl: grounded
+            ? res.videoSuggestionUrl
+            : sanitizeVideoSuggestionUrl(res.videoSuggestionUrl),
         gradeLevel: res.gradeLevel,
         subject: res.subject,
+        grounded,
         source: 'sidecar',
         decision,
         sidecarTelemetry: {
@@ -375,15 +389,21 @@ async function _dispatchInstantAnswerInner(
     const sidecar = await runSidecarSafe(sidecarRequest);
 
     if (sidecar.ok) {
+        // Guard once, here, so what is persisted is exactly what is served —
+        // a library entry re-opened later must not carry a source the served
+        // answer had stripped.
+        const dispatched = sidecarToDispatched(sidecar.res, decision);
+
         // Phase K — persist sidecar output to Storage + Firestore so
         // the teacher's library mirrors the Genkit-served entries.
         // Fail-soft inside `persistSidecarJSON`.
         if (input.userId) {
             const sanitized: InstantAnswerOutput = {
-                answer: sidecar.res.answer,
-                videoSuggestionUrl: sidecar.res.videoSuggestionUrl,
-                gradeLevel: sidecar.res.gradeLevel,
-                subject: sidecar.res.subject,
+                answer: dispatched.answer,
+                videoSuggestionUrl: dispatched.videoSuggestionUrl,
+                gradeLevel: dispatched.gradeLevel,
+                subject: dispatched.subject,
+                grounded: dispatched.grounded,
             };
             await persistSidecarJSON({
                 uid: input.userId,
@@ -429,7 +449,7 @@ async function _dispatchInstantAnswerInner(
                 });
             });
         }
-                return sidecarToDispatched(sidecar.res, decision);
+                return dispatched;
     }
 
     // Sidecar failed — fall back to Genkit. Behavioural-fail also

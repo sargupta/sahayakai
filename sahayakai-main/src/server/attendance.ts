@@ -565,16 +565,25 @@ export async function getStudentSummaries(
         let presentDays = 0;
         let absentDays = 0;
         let lateDays = 0;
-        let consecutiveAbsences = 0;
-        let currentStreak = 0;
+        // Two different numbers, deliberately kept apart. `currentAbsenceStreak`
+        // is a running counter: because sortedDates is ascending and every
+        // present/late day zeroes it, whatever it holds after the last marked
+        // day IS the trailing run — the child is still absent. `longestAbsenceStreak`
+        // is the high-water mark over the whole month and is history, not status.
+        let currentAbsenceStreak = 0;
+        let longestAbsenceStreak = 0;
 
         const sortedDates = Object.keys(attendanceMap).sort();
         for (const date of sortedDates) {
             const status = attendanceMap[date].records[student.id];
             if (!status) continue;
-            if (status === 'present') { presentDays++; currentStreak = 0; }
-            else if (status === 'absent') { absentDays++; currentStreak++; consecutiveAbsences = Math.max(consecutiveAbsences, currentStreak); }
-            else if (status === 'late') { lateDays++; currentStreak = 0; }
+            if (status === 'present') { presentDays++; currentAbsenceStreak = 0; }
+            else if (status === 'absent') {
+                absentDays++;
+                currentAbsenceStreak++;
+                longestAbsenceStreak = Math.max(longestAbsenceStreak, currentAbsenceStreak);
+            }
+            else if (status === 'late') { lateDays++; currentAbsenceStreak = 0; }
         }
 
         const totalDays = presentDays + absentDays + lateDays;
@@ -589,7 +598,8 @@ export async function getStudentSummaries(
             absentDays,
             lateDays,
             attendanceRate,
-            consecutiveAbsences,
+            currentAbsenceStreak,
+            longestAbsenceStreak,
         };
     });
 

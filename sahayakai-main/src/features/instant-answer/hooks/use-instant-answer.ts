@@ -131,6 +131,11 @@ export function useInstantAnswer() {
                                 question: content.topic,
                                 answer: content.data.answer,
                                 videoSuggestionUrl: content.data.videoSuggestionUrl,
+                                // Answers saved before grounding was recorded
+                                // have no flag; undefined reads as ungrounded,
+                                // which is the honest reading of "we never
+                                // knew".
+                                grounded: content.data.grounded,
                             } as Answer);
                         }
                     }
@@ -179,6 +184,10 @@ export function useInstantAnswer() {
                 {
                     answer: answer.answer,
                     videoSuggestionUrl: answer.videoSuggestionUrl,
+                    // Provenance travels with the answer — a saved answer
+                    // re-opened months later must still say whether anything
+                    // grounded it.
+                    grounded: answer.grounded === true,
                     // Preserve form context so a re-open shows the same params
                     language: form.getValues("language"),
                     gradeLevel: form.getValues("gradeLevel"),

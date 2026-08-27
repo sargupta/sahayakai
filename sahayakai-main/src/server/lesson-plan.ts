@@ -7,8 +7,27 @@
  * middleware-verified x-user-id header.
  */
 
+import { createHash } from 'crypto';
+
 import type { LessonPlanOutput } from '@/ai/flows/lesson-plan-generator';
 import { logger } from '@/lib/logger';
+
+/**
+ * Cache-key scheme version, carried as a prefix on every document id.
+ *
+ * v1 built the id by slugifying `topic-grade-language` down to [a-z0-9-].
+ * That threw away every Devanagari / Bengali / Tamil / Telugu / Kannada
+ * character, so for ten of the eleven supported languages the id encoded
+ * nothing but the topic's character count and unrelated topics shared one
+ * document. Those v1 documents are poisoned — they hold whichever plan was
+ * written last, under a key that never identified it.
+ *
+ * The separator is load-bearing: v1 ids can never contain '_' (normalizeKey
+ * strips it as punctuation and the slug pass rewrote anything left to '-'),
+ * so a v2 id can never resolve to a poisoned v1 document. Bump this if the
+ * normalisation below ever changes meaning again.
+ */
+const CACHE_KEY_VERSION = 'v2';
 
 /**
  * Normalizes the topic string for consistent cache keys.
@@ -17,7 +36,10 @@ import { logger } from '@/lib/logger';
  */
 function normalizeKey(str: string): string {
     const stopWords = ['teach', 'me', 'about', 'how', 'to', 'explain', 'lesson', 'plan', 'for', 'the', 'a', 'an'];
-    let normalized = str.trim().toLowerCase();
+    // NFC first: Indic scripts are full of combining marks, and the same
+    // word typed on two different keyboards can arrive as two different
+    // code-point sequences. Without this, identical topics miss the cache.
+    let normalized = str.normalize('NFC').trim().toLowerCase();
 
     // Remove punctuation
     normalized = normalized.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "");
@@ -44,18 +66,33 @@ function containsPII(text: string): boolean {
 /**
  * Generates a unique cache ID based on inputs.
  * Returns null if PII is detected to prevent unsafe caching.
+ *
+ * Hashes rather than slugifies. `cached_lesson_plans` is a SHARED cache —
+ * the id is the only thing separating one teacher's plan from another's —
+ * so it has to survive every script the app supports, not just Latin.
+ * Exported so the collision gate can assert on the id directly.
  */
-function generateCacheId(topic: string, grade: string, language: string): string | null {
+export function generateCacheId(topic: string, grade: string, language: string): string | null {
     if (containsPII(topic)) {
         logger.warn(`PII detected in topic. Skipping cache generation.`, 'CACHE', { topic: "REDACTED" });
         return null; // Do not generate a cache ID for PII content
     }
 
-    const normTopic = normalizeKey(topic);
-    const normGrade = normalizeKey(grade);
-    const normLang = normalizeKey(language);
-    // Create a deterministic ID
-    return `${normTopic}-${normGrade}-${normLang}`.replace(/[^a-z0-9-]/g, '-');
+    const parts = [
+        normalizeKey(topic),
+        normalizeKey(grade),
+        normalizeKey(language),
+    ];
+
+    // Length-prefix each field before joining, so a separator sitting inside
+    // a topic can't shift the field boundaries and forge another teacher's
+    // key. Then sha256 the lot: deterministic, script-agnostic, and the full
+    // digest is nowhere near Firestore's 1500-byte id limit.
+    const digest = createHash('sha256')
+        .update(parts.map(part => `${part.length}:${part}`).join('|'))
+        .digest('hex');
+
+    return `${CACHE_KEY_VERSION}_${digest}`;
 }
 
 /**

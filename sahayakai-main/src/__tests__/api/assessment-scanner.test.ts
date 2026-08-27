@@ -73,6 +73,10 @@ function lastWireBody<T = Record<string, unknown>>(): T {
     return jsonSpy.mock.calls[jsonSpy.mock.calls.length - 1][0] as T;
 }
 
+// A graded scan carries at least one graded question — `aggregate()` cannot
+// label a scan 'graded' with an empty question array, and the route now
+// rejects an empty one as an ungraded scan (422). This fixture used to claim
+// `questions: []`, a shape the system never produces.
 const successPayload = {
     assessmentId: VALID_UUID,
     status: 'graded' as const,
@@ -81,7 +85,25 @@ const successPayload = {
     totalMaxMarks: 10,
     scorePct: 80,
     letterGrade: 'A',
-    questions: [],
+    questions: [
+        {
+            questionId: 'p0-q1',
+            pageIndex: 0,
+            questionText: 'Solve 12 x 4',
+            studentAnswer: '48',
+            expectedAnswer: '48',
+            marksAwarded: 8,
+            marksMax: 10,
+            partialCreditBreakdown: [],
+            feedback: 'Method is right; check the final carry.',
+            studentFacingFeedback: 'Good work, recheck the last step.',
+            conceptTested: 'Multiplication',
+            ncertChapterId: null,
+            mistakePattern: null,
+            needsTeacherReview: false,
+            confidence: 0.9,
+        },
+    ],
     classAverageAtScan: null,
     conceptMastery: [],
     recommendedNextSteps: [],

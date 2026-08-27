@@ -57,10 +57,14 @@ steps:
       - asia-southeast1-docker.pkg.dev/$PROJECT_ID/${_PROD_REGISTRY}/sahayakai-preview:latest
     waitFor: [build]
 
-  # ── 3. Deploy to preview with traffic. ───────────────────────────────────
-  # Preview is low-stakes — no --no-traffic ceremony. Latest develop tip
-  # always serves on the preview URL. Use the tagged revision URL
-  # (`dev-<sha>`) if you need to test a specific develop SHA.
+  # ── 3. Deploy to preview. ────────────────────────────────────────────────
+  # NOTE (2026-08-24): the previous comment here claimed "no --no-traffic
+  # ceremony, latest tip always serves". That was never true. Passing
+  # `--tag=` makes gcloud imply --no-traffic, so every build landed a ready
+  # revision at 0% and the preview URL stayed frozen — it served a 2026-08-11
+  # revision for two weeks while the trigger kept building happily. Same
+  # builds-but-never-promotes failure as the prod split-brain. Step 4 now
+  # promotes explicitly; the `dev-<sha>` tag URL still reaches a specific SHA.
   - id: deploy
     name: gcr.io/google.com/cloudsdktool/cloud-sdk
     entrypoint: gcloud
@@ -77,6 +81,31 @@ steps:
       - --update-env-vars=DEMO_MODE=true,NODE_ENV=production,NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL=https://sahayakai-agents-zwydpvyuca-as.a.run.app,SAHAYAKAI_AGENTS_URL=https://sahayakai-agents-zwydpvyuca-as.a.run.app,SAHAYAKAI_AGENTS_AUDIENCE=https://sahayakai-agents-zwydpvyuca-as.a.run.app
       - --quiet
     waitFor: [push-sha]
+
+  # ── 4. Promote, then prove the URL actually serves it. ───────────────────
+  # Promotion is explicit because step 3 cannot take traffic on its own.
+  # The smoke check is what stops a green build from claiming a demo URL
+  # that returns 5xx — the URL is the deliverable, not the revision.
+  - id: promote-and-smoke
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        gcloud run services update-traffic sahayakai-preview \
+          --region=asia-southeast1 --project=$PROJECT_ID --to-latest --quiet
+        url=$$(gcloud run services describe sahayakai-preview \
+                 --region=asia-southeast1 --project=$PROJECT_ID \
+                 --format="value(status.url)")
+        fail=0
+        for path in / /lesson-plan /quiz-generator /attendance /community; do
+          code=$$(curl -s -o /dev/null -m 45 -w '%{http_code}' "$$url$$path")
+          echo "  $$code $$url$$path"
+          [ "$$code" = "200" ] || fail=1
+        done
+        exit $$fail
+    waitFor: [deploy]
 
 options:
   machineType: E2_HIGHCPU_8

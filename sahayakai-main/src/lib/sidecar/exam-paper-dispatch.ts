@@ -45,8 +45,14 @@ import { logger } from '@/lib/logger';
 // same budget as the sidecar. We now intentionally diverge: the
 // sidecar has its own 30 s cap, but when we fall *back* to Genkit
 // we accept a longer wait rather than hand the user a 500.
+// 2026-08-25: raised 75s -> 110s. Measured on prod, CBSE Class 10 Mathematics
+// (the default selection): generation lands between roughly 66s and 80s, so a
+// 75s budget was a coin flip. Losing it returns 202 `generation_in_progress`
+// and the teacher sees a spinner that never resolves — reproduced 3 times.
+// 110s sits under the route's maxDuration (120s), which is itself well under
+// the Cloud Run request timeout of 300s, so the headroom was always there.
 const EXAM_PAPER_TIMEOUT_MS =
-    Number(process.env.EXAM_PAPER_GENKIT_TIMEOUT_MS) || 75_000;
+    Number(process.env.EXAM_PAPER_GENKIT_TIMEOUT_MS) || 110_000;
 const FALLBACK_TIMEOUT_MS = EXAM_PAPER_TIMEOUT_MS;
 
 // Sentinel thrown when the Genkit fallback exceeds budget. The route

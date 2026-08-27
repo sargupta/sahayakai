@@ -68,3 +68,43 @@ export function normaliseVidyaGradeLevel(val?: string | null): string | null {
     if (match) return `Class ${match[1]}`;
     return trimmed;
 }
+
+/**
+ * The slice of `ReadonlyURLSearchParams` the destination hooks read. Typed
+ * structurally so a plain `URLSearchParams` also satisfies it.
+ */
+export interface DeepLinkParamReader {
+    get(name: string): string | null;
+}
+
+/**
+ * Identity of ONE deep link, over exactly the params the caller consumes.
+ *
+ * The destination hooks run their URL branch behind a ref so a re-render does
+ * not re-fetch a saved record or overwrite what the teacher has since typed.
+ * A bare boolean ref states that as "this MOUNT has been handled", which is
+ * the wrong claim. The OmniOrb is mounted app-wide (app-shell.tsx), its
+ * executeAction ends in a client-side `router.push` (omni-orb.tsx), and
+ * neither destination page keys its <Suspense> — so a second VIDYA request
+ * made while the teacher is already standing on the page changes the query
+ * WITHOUT remounting. The boolean is still set from the first link, so the
+ * second request is silently dropped and the teacher keeps looking at the
+ * answer to the question before last.
+ *
+ * Keying the ref to this value makes the claim the true one — "these PARAMS
+ * have been handled" — so a genuinely new set is honoured while a re-render
+ * carrying identical params still runs once. Identical-URL repeats are not
+ * this function's problem: omni-orb.tsx already forces a remount with
+ * router.refresh() for those.
+ *
+ * Values are percent-encoded, so a param whose text contains `&` or `=`
+ * cannot forge the key of a different param set.
+ */
+export function vidyaDeepLinkKey(
+    searchParams: DeepLinkParamReader,
+    names: readonly string[],
+): string {
+    return names
+        .map((name) => `${name}=${encodeURIComponent(searchParams.get(name) ?? '')}`)
+        .join('&');
+}

@@ -142,7 +142,7 @@ function ClassDetailContent() {
     for (const student of students) {
         const summary = summaryById.get(student.id);
         const perf = perfById.get(student.id);
-        const streak = summary?.consecutiveAbsences ?? 0;
+        const streak = summary?.currentAbsenceStreak ?? 0;
         const attendanceRate = summary?.attendanceRate ?? 100;
         const latest = perf?.latestPercentage;
         const isBehavioral = behavioralSet.has(student.id);
@@ -176,7 +176,7 @@ function ClassDetailContent() {
 
     // Sort each group: absences by streak desc, academic by latestPercentage asc,
     // celebrate by latestPercentage desc.
-    absenceGroup.sort((a, b) => (b.summary?.consecutiveAbsences ?? 0) - (a.summary?.consecutiveAbsences ?? 0));
+    absenceGroup.sort((a, b) => (b.summary?.currentAbsenceStreak ?? 0) - (a.summary?.currentAbsenceStreak ?? 0));
     academicGroup.sort((a, b) => (a.perf?.latestPercentage ?? 100) - (b.perf?.latestPercentage ?? 100));
     celebrateGroup.sort((a, b) => (b.perf?.latestPercentage ?? 0) - (a.perf?.latestPercentage ?? 0));
 
@@ -205,7 +205,7 @@ function ClassDetailContent() {
     });
 
     // Kept for backward compat with the existing red banner below.
-    const atRisk = summaries.filter((s) => s.consecutiveAbsences >= 2);
+    const atRisk = summaries.filter((s) => s.currentAbsenceStreak >= 2);
 
     return (
         <div className="w-full max-w-2xl mx-auto space-y-5">
@@ -346,8 +346,8 @@ function ClassDetailContent() {
                                                 {summary && (
                                                     <p className="text-xs text-muted-foreground mt-0.5">
                                                         {summary.attendanceRate}% {t("attendance this month")}
-                                                        {summary.consecutiveAbsences >= 2 && (
-                                                            <span className="text-red-500 font-semibold ml-2">· {summary.consecutiveAbsences} {t("absent in a row")}</span>
+                                                        {summary.currentAbsenceStreak >= 2 && (
+                                                            <span className="text-destructive font-semibold ml-2">· {summary.currentAbsenceStreak} {t("absent in a row")}</span>
                                                         )}
                                                         {!isAbsence && isAcademic && typeof perf?.latestPercentage === 'number' && (
                                                             <span className="text-rose-600 font-semibold ml-2">· {Math.round(perf.latestPercentage)}% {t("avg · at-risk")}</span>
@@ -403,7 +403,7 @@ function ClassDetailContent() {
                     classId={classId}
                     className={cls.name}
                     subject={cls.subject}
-                    consecutiveAbsences={summaries.find((s) => s.studentId === contactStudent.id)?.consecutiveAbsences}
+                    currentAbsenceStreak={summaries.find((s) => s.studentId === contactStudent.id)?.currentAbsenceStreak}
                     twilioConfigured={twilioConfigured}
                     suggestedReason={contactSuggestedReason}
                     absenceDates={contactAbsenceDates}

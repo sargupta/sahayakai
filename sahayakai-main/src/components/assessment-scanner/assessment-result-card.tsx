@@ -48,6 +48,7 @@ import type {
 } from "@/ai/schemas/assessment-scanner-schemas";
 import {
     effectiveQuestion,
+    isGradedResult,
     recomputeTotals,
 } from "@/ai/schemas/assessment-scanner-utils";
 import {
@@ -65,7 +66,12 @@ export interface AssessmentResultCardProps {
     subject?: string;
     gradeLevel?: string;
     studentName?: string;
-    /** When true, the action bar shows "Saved" as a confirmed chip. */
+    /**
+     * When true, the action bar shows "Saved" as a confirmed chip and the
+     * footer links to My Library. Defaults to true because the other caller is
+     * My Library itself re-opening a stored record. A fresh scan passes the
+     * flow's `savedToLibrary` so the claim matches what Firestore actually did.
+     */
     isSaved?: boolean;
     /** Called after a successful PATCH so the parent can update its state. */
     onResultUpdated?: (next: AssessmentScannerOutput) => void;
@@ -92,6 +98,15 @@ export function AssessmentResultCard({
 
     const isFailed = edited.status === "failed";
     const isPartial = edited.status === "partial";
+
+    // A scan that graded nothing has no score to copy, send or print. Its
+    // scorePct/letterGrade are 0%/E only because 0 of 0 marks is 0%, and the
+    // parent summary would render that as a real failing grade for the child.
+    // Everything that turns this result into something a parent or student
+    // reads is gated on this. Old records saved with status 'failed' reach
+    // this card through My Library, so the gate lives here and not only on
+    // the scan response.
+    const isShareable = isGradedResult(edited);
 
     // Re-derive header score from the (possibly overridden) questions so the
     // teacher sees the new percentage instantly as they edit marks.
@@ -189,6 +204,7 @@ export function AssessmentResultCard({
     }, [edited, isSaving, onResultUpdated, t, toast, user]);
 
     const handleCopySummary = useCallback(async () => {
+        if (!isGradedResult(edited)) return;
         try {
             const text = formatParentSummary(edited, {
                 subject,
@@ -207,6 +223,7 @@ export function AssessmentResultCard({
     }, [edited, gradeLevel, studentName, subject, t, toast]);
 
     const handleSendToParent = useCallback(async () => {
+        if (!isGradedResult(edited)) return;
         const text = formatParentSummary(edited, {
             subject,
             gradeLevel,
@@ -290,18 +307,21 @@ export function AssessmentResultCard({
                 label: t("Edit"),
                 icon: <Pencil className="h-4 w-4" />,
                 onClick: () => setIsEditing(true),
+                disabled: !isShareable,
                 variant: "outline" as const,
             },
             {
                 label: t("Copy summary"),
                 icon: <Copy className="h-4 w-4" />,
                 onClick: handleCopySummary,
+                disabled: !isShareable,
                 variant: "outline" as const,
             },
             {
                 label: t("Send to parent"),
                 icon: <MessageCircle className="h-4 w-4" />,
                 onClick: handleSendToParent,
+                disabled: !isShareable,
                 variant: "outline" as const,
             },
             {
@@ -312,7 +332,7 @@ export function AssessmentResultCard({
                     <Printer className="h-4 w-4" />
                 ),
                 onClick: handlePrintPdf,
-                disabled: pdfBusy,
+                disabled: pdfBusy || !isShareable,
                 variant: "outline" as const,
                 loading: pdfBusy,
             },
@@ -333,6 +353,7 @@ export function AssessmentResultCard({
         isEditing,
         isSaved,
         isSaving,
+        isShareable,
         pdfBusy,
         t,
     ]);
@@ -376,8 +397,11 @@ export function AssessmentResultCard({
             actions={actions}
         >
             <div className="space-y-5">
-                {/* Score header — re-derived live in edit mode. */}
-                {!isFailed && (
+                {/* Score header — re-derived live in edit mode. Gated on
+                    isShareable, not isFailed: a result with no graded
+                    questions has no percentage to show whatever its status
+                    label says. */}
+                {isShareable && (
                     <div className="flex items-end justify-between gap-4 rounded-xl border border-border bg-muted/30 px-4 py-3">
                         <div>
                             <div className="text-xs uppercase tracking-wide text-muted-foreground">
@@ -400,6 +424,20 @@ export function AssessmentResultCard({
                             </Badge>
                         )}
                     </div>
+                )}
+
+                {/* Nothing was graded — say so, and say what to do next. The
+                    action bar's share buttons are disabled in this state. */}
+                {!isShareable && (
+                    <Alert variant="destructive">
+                        <XCircle className="h-4 w-4" />
+                        <AlertTitle>{t("Nothing to share")}</AlertTitle>
+                        <AlertDescription>
+                            {t(
+                                "This scan did not grade any questions, so there is no score to send. Re-upload clearer photos and scan again.",
+                            )}
+                        </AlertDescription>
+                    </Alert>
                 )}
 
                 {/* Image quality warnings (hidden from print/PDF). */}
@@ -476,19 +514,31 @@ export function AssessmentResultCard({
                     </div>
                 )}
 
-                {/* Footer link to library — hidden from print. */}
-                {isSaved && !isEditing && (
+                {/* Footer link to library — hidden from print. The card used to
+                    assert "Saved to My Library" unconditionally while the flow
+                    persisted fire-and-forget and swallowed the error, so a
+                    dropped write read as a successful one. */}
+                {!isEditing && (
                     <div className="flex items-center justify-between gap-3 border-t border-border/30 pt-4 text-xs text-muted-foreground print:hidden">
-                        <span className="inline-flex items-center gap-1.5">
-                            <BookmarkCheck className="h-3.5 w-3.5 text-green-600" />
-                            {t("Saved to My Library")}
-                        </span>
-                        <Link
-                            href="/my-library"
-                            className="text-primary hover:underline font-medium"
-                        >
-                            {t("View in My Library")}
-                        </Link>
+                        {isSaved ? (
+                            <>
+                                <span className="inline-flex items-center gap-1.5">
+                                    <BookmarkCheck className="h-3.5 w-3.5 text-success" />
+                                    {t("Saved to My Library")}
+                                </span>
+                                <Link
+                                    href="/my-library"
+                                    className="text-primary hover:underline font-medium"
+                                >
+                                    {t("View in My Library")}
+                                </Link>
+                            </>
+                        ) : (
+                            <span className="inline-flex items-center gap-1.5 text-destructive">
+                                <AlertCircle className="h-3.5 w-3.5" />
+                                {t("Not saved to My Library")}
+                            </span>
+                        )}
                     </div>
                 )}
 

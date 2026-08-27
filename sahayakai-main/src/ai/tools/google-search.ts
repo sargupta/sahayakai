@@ -1,45 +1,87 @@
 'use server';
 /**
- * @fileOverview Defines a tool for performing Google searches.
+ * @fileOverview The web-search tool offered to teacher-facing flows.
+ *
+ * This tool used to return a hardcoded fixture — "This is the top search
+ * result for your query: ${query}" pointing at example.com, a Wikipedia
+ * /wiki/Example page and a `watch?v=example` video — and it was attached to
+ * `instantAnswerPrompt`, which is the default production path. The model
+ * received invented sources indistinguishable from retrieved ones and passed
+ * them on to teachers as grounding.
+ *
+ * It now reports what it can actually do. No backend is wired to any
+ * environment, so every call returns `searchAvailable: false` with zero
+ * results and an instruction not to fill the gap by invention. Wiring a real
+ * provider is a new variant in `@/ai/grounding` plus its client; the fixture
+ * is gone so no flag or environment can bring it back.
  */
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
+import {
+  WEB_SEARCH_UNAVAILABLE_NOTICE,
+  resolveWebSearchProvider,
+} from '@/ai/grounding';
+
+// One ERROR per process, WARN for the rest. The first line is what pages an
+// operator (and reaches Sentry outside development); repeating it on every
+// question would bury the signal in its own noise.
+let unavailableCalls = 0;
 
 export const googleSearch = ai.defineTool(
   {
     name: 'googleSearch',
-    description: 'Performs a Google search to get up-to-date information or find videos.',
+    description:
+      'Searches the web for up-to-date information. May report that search is unavailable, in which case it returns NO results and you must answer without citing any source.',
     inputSchema: z.object({
       query: z.string().describe('The search query.'),
     }),
     outputSchema: z.object({
+      searchAvailable: z
+        .boolean()
+        .describe('True only when a real search backend answered this query.'),
+      notice: z
+        .string()
+        .describe('What to do when searchAvailable is false. Follow it exactly.'),
       results: z.array(z.object({
         title: z.string(),
         link: z.string(),
         snippet: z.string(),
-      })).describe('A list of search results.'),
-      videoUrl: z.string().optional().describe('The URL of a relevant YouTube video if found.'),
+      })).describe('Retrieved results. Empty whenever searchAvailable is false.'),
     }),
   },
   async ({ query }) => {
-    // In a real implementation, this would call the Google Search API.
-    // For this environment, we'll return a mocked response.
-    logger.info(`Performing mock Google search for: ${query}`, 'GoogleSearch', { query });
-    if (query.toLowerCase().includes('video') || query.toLowerCase().includes('explain')) {
-         return {
-            results: [
-                { title: `Explanation of ${query}`, link: `https://www.youtube.com/watch?v=example`, snippet: `A video explaining ${query}.` },
-                { title: `Article about ${query}`, link: `https://en.wikipedia.org/wiki/Example`, snippet: `A Wikipedia article about ${query}.` },
-            ],
-            videoUrl: `https://www.youtube.com/watch?v=example`,
-        };
+    const provider = resolveWebSearchProvider();
+
+    // `none` is the only provider that exists. When a real one lands, branch
+    // here and return its results — never synthesise them.
+    unavailableCalls += 1;
+    const detail = {
+      provider: provider.kind,
+      reason: provider.reason,
+      queryLength: query.length,
+      callsThisProcess: unavailableCalls,
+    };
+
+    if (unavailableCalls === 1) {
+      logger.error(
+        'Web search is unavailable — instant answers are ungrounded',
+        undefined,
+        'GoogleSearch',
+        detail,
+      );
+    } else {
+      logger.warn(
+        'Web search is unavailable — answering without retrieval',
+        'GoogleSearch',
+        detail,
+      );
     }
+
     return {
-      results: [
-        { title: `Top result for ${query}`, link: `https://example.com/search?q=${query}`, snippet: `This is the top search result for your query: ${query}.` },
-        { title: `Second result for ${query}`, link: `https://example.com/search2?q=${query}`, snippet: `This is another relevant search result for ${query}.` },
-      ],
+      searchAvailable: false,
+      notice: WEB_SEARCH_UNAVAILABLE_NOTICE,
+      results: [],
     };
   }
 );

@@ -6,6 +6,7 @@ import {
     type WorksheetWizardInput,
     type WorksheetWizardOutput,
 } from '@/ai/flows/worksheet-wizard';
+import { renderWorksheetMarkdown } from '@/ai/flows/worksheet-markdown';
 import { getFeatureFlags } from '@/lib/feature-flags';
 import {
     callSidecarWorksheet,
@@ -67,6 +68,13 @@ export async function decideWorksheetDispatch(uid: string): Promise<WorksheetSid
 export type WorksheetDispatchSource = 'genkit' | 'sidecar' | 'genkit_fallback';
 
 export interface DispatchedWorksheet extends WorksheetWizardOutput {
+    /**
+     * The Markdown body of the worksheet. Optional on
+     * `WorksheetWizardOutputSchema` because the model is allowed to omit it —
+     * NEVER optional once dispatched. It is the only field the worksheet UI
+     * renders, so a dispatch that could not fill it has produced nothing.
+     */
+    worksheetContent: string;
     source: WorksheetDispatchSource;
     decision: WorksheetSidecarDecision;
     sidecarTelemetry?: { sidecarVersion: string; latencyMs: number; modelUsed: string };
@@ -93,22 +101,35 @@ function sidecarToDispatched(
     res: SidecarWorksheetResponse,
     decision: WorksheetSidecarDecision,
 ): DispatchedWorksheet {
+    const activities = res.activities.map((a) => ({
+        type: a.type,
+        content: a.content,
+        explanation: a.explanation,
+        // Codegen `chalkboardNote?: string | null`; downstream Genkit
+        // `WorksheetWizardOutput.activities[i].chalkboardNote` is
+        // `?: string` (optional, not nullable). Coerce null→undefined.
+        chalkboardNote: a.chalkboardNote ?? undefined,
+    }));
     return {
         title: res.title,
         gradeLevel: res.gradeLevel,
         subject: res.subject,
         learningObjectives: res.learningObjectives,
         studentInstructions: res.studentInstructions,
-        // Codegen `chalkboardNote?: string | null`; downstream Genkit
-        // `WorksheetWizardOutput.activities[i].chalkboardNote` is
-        // `?: string` (optional, not nullable). Coerce null→undefined.
-        activities: res.activities.map((a) => ({
-            type: a.type,
-            content: a.content,
-            explanation: a.explanation,
-            chalkboardNote: a.chalkboardNote ?? undefined,
-        })),
+        activities,
         answerKey: res.answerKey,
+        // The sidecar wire type has no `worksheetContent` field at all — the
+        // agent returns structured fields only. Render it here or the agent
+        // path serves a worksheet the UI draws as an empty page.
+        worksheetContent: renderWorksheetMarkdown({
+            title: res.title,
+            gradeLevel: res.gradeLevel,
+            subject: res.subject,
+            learningObjectives: res.learningObjectives,
+            studentInstructions: res.studentInstructions,
+            activities,
+            answerKey: res.answerKey,
+        }),
         source: 'sidecar',
         decision,
         sidecarTelemetry: {
@@ -124,7 +145,13 @@ function genkitToDispatched(
     source: 'genkit' | 'genkit_fallback',
     decision: WorksheetSidecarDecision,
 ): DispatchedWorksheet {
-    return { ...out, source, decision };
+    // The flow fills `worksheetContent` after validation, but the field is
+    // optional on its schema — re-derive rather than trust, so no dispatch
+    // source can hand the route a bodyless worksheet.
+    const worksheetContent = out.worksheetContent?.trim()
+        ? out.worksheetContent
+        : renderWorksheetMarkdown(out);
+    return { ...out, worksheetContent, source, decision };
 }
 
 async function runGenkitSafe(input: WorksheetWizardInput) {
@@ -266,6 +293,10 @@ export async function dispatchWorksheet(
                     studentInstructions: dispatched.studentInstructions,
                     activities: dispatched.activities,
                     answerKey: dispatched.answerKey,
+                    // Required by WorksheetDataSchema, and the field My
+                    // Library restores from — a record without it reopens
+                    // as a blank worksheet.
+                    worksheetContent: dispatched.worksheetContent,
                 },
                 metadata: {
                     gradeLevel: dispatched.gradeLevel || input.gradeLevel || 'Class 5',

@@ -313,6 +313,12 @@ export const AssessmentScannerOutputSchema = z.object({
         .describe(
             'Human-readable per-page warnings the UI can show before render (e.g. "Page 1: blurry").',
         ),
+    savedToLibrary: z
+        .boolean()
+        .optional()
+        .describe(
+            'Whether the Firestore write to My Library actually landed. Set by the flow after the write, NOT stored on the record itself (a record you can read back is saved by definition). The result card renders its "Saved to My Library" line from this instead of asserting it unconditionally.',
+        ),
     teacherEditedAt: z
         .string()
         .optional()

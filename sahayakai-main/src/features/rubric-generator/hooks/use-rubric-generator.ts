@@ -3,8 +3,9 @@
 /**
  * useRubricGenerator — all rubric-generator logic, zero markup.
  * Composes the shared useGenerator spine; keeps rubric-specific behavior:
- * VIDYA form sync + snapshot restore, restore-from-`?id` (user-gated with
- * a hasLoaded ref), VIDYA URL prefill + 300ms auto-submit.
+ * VIDYA form sync + snapshot restore, restore-from-`?id` (user-gated, and
+ * guarded per param set rather than per mount), VIDYA URL prefill + 300ms
+ * auto-submit.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -19,9 +20,27 @@ import { useJarvisStore } from "@/store/jarvisStore";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
 import { LANGUAGE_TO_ISO } from "@/types";
-import { normaliseVidyaLanguage, normaliseVidyaGradeLevel } from "@/lib/vidya-action-normalizer";
+import {
+    normaliseVidyaLanguage,
+    normaliseVidyaGradeLevel,
+    vidyaDeepLinkKey,
+} from "@/lib/vidya-action-normalizer";
 import { useGenerator } from "@/features/generator";
 import { formSchema, type FormValues } from "../types";
+
+/**
+ * Every URL param the deep-link effect below reads. The guard is keyed over
+ * this exact list, so a param added to the effect must be added here too or
+ * a link that differs only in that param reads as already-handled.
+ */
+const DEEP_LINK_PARAMS = [
+    "id",
+    "assignmentDescription",
+    "topic",
+    "subject",
+    "gradeLevel",
+    "language",
+] as const;
 
 export function useRubricGenerator() {
     const { user } = useAuth();
@@ -29,7 +48,12 @@ export function useRubricGenerator() {
     const { t: translate, language: uiLanguage } = useLanguage();
     const { canUseAI, aiUnavailableReason } = useNetworkAware();
     const searchParams = useSearchParams();
-    const hasLoaded = useRef(false);
+    // The deep link this hook has already acted on, not merely "some deep
+    // link has been acted on". See vidyaDeepLinkKey().
+    const handledDeepLink = useRef<string | null>(null);
+    /** Pending deep-link auto-submit, so a newer link can supersede it. */
+    const autoSubmitTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+    useEffect(() => () => clearTimeout(autoSubmitTimerRef.current), []);
     const { clearFormSnapshot } = useJarvisStore();
     const [isRestoring, setIsRestoring] = useState(false);
 
@@ -85,7 +109,12 @@ export function useRubricGenerator() {
     // Restore snapshot on mount — only when no URL params are present
      
     useEffect(() => {
-        const descParam = searchParams.get("assignmentDescription");
+        // `topic` is the param every VIDYA producer actually emits (see the
+        // note on the pre-fill effect below); read it here too, or a deep
+        // link would be treated as "no URL params" and get overwritten by
+        // the last snapshot.
+        const descParam =
+            searchParams.get("assignmentDescription") || searchParams.get("topic");
         const id = searchParams.get("id");
         if (descParam || id || !savedSnapshot) return;
         if (savedSnapshot.assignmentDescription) form.setValue("assignmentDescription", savedSnapshot.assignmentDescription);
@@ -102,10 +131,38 @@ export function useRubricGenerator() {
     const uiLangCode = LANGUAGE_TO_ISO[uiLanguage] || "en";
 
     useEffect(() => {
-        if (!user || hasLoaded.current) return;
+        // `user` gates the whole effect, so test it BEFORE claiming anything:
+        // the first render has no user yet, and claiming there would burn the
+        // key for a run that never happened.
+        if (!user) return;
+
+        // Run the URL branch once PER PARAM SET. A guard keyed to the mount
+        // drops a SECOND rubric request from a teacher already standing on
+        // this page: VIDYA is mounted app-wide (app-shell.tsx) and pushes
+        // client-side into this same route segment, and page.tsx does not key
+        // its <Suspense>, so the query changes without a remount and a bare
+        // boolean is still set from the first link. Claim the key, not the
+        // mount. Claiming here rather than after the `?id=` fetch resolves
+        // also keeps the round trip guarded — same reasoning as
+        // use-worksheet-wizard.ts.
+        const deepLinkKey = vidyaDeepLinkKey(searchParams, DEEP_LINK_PARAMS);
+        if (handledDeepLink.current === deepLinkKey) return;
+        handledDeepLink.current = deepLinkKey;
 
         const id = searchParams.get("id");
-        const descParam = searchParams.get("assignmentDescription");
+        // Every producer that can navigate here emits `topic`: the intent
+        // route and the agent router build one shared query string for all
+        // nine flows (src/app/api/ai/intent/route.ts, src/ai/flows/agent-router.ts),
+        // the voice assistant's VidyaAction params have no other text field,
+        // and the Gemini Live tool declaration only exposes topic/gradeLevel/
+        // subject/language. Only the OmniOrb supervisor also emits the richer
+        // `assignmentDescription`, which the SOUL prompt reserves for this one
+        // flow — so prefer it when present and fall back to `topic`. Same
+        // most-specific-first alias shape as use-instant-answer.ts
+        // (`question || topic || prompt`) and visual-aid-designer
+        // (`prompt || topic`).
+        const descParam =
+            searchParams.get("assignmentDescription") || searchParams.get("topic");
 
         if (id) {
             const fetchSavedContent = async () => {
@@ -119,10 +176,30 @@ export function useRubricGenerator() {
                         const content = await res.json();
                         if (content.data) {
                             generator.setResult(content.data);
+                            // `reset` REPLACES the whole form state — any key
+                            // missing from the payload becomes undefined
+                            // rather than being left alone. Seed it from the
+                            // live values so a field the saved record has
+                            // nothing to say about (or a field added to the
+                            // schema later) survives the restore instead of
+                            // being blanked.
+                            const current = form.getValues();
                             form.reset({
-                                assignmentDescription: content.topic || content.title,
-                                gradeLevel: content.gradeLevel,
-                                language: content.language,
+                                ...current,
+                                assignmentDescription:
+                                    content.topic || content.title || current.assignmentDescription,
+                                gradeLevel: content.gradeLevel || current.gradeLevel,
+                                subject: content.subject || current.subject,
+                                // Saved rubrics store the language DISPLAY name
+                                // ("English", "Bengali"): generateRubric runs
+                                // normalizeLanguage() before the flow persists,
+                                // so the ISO code the form sent never reaches
+                                // Firestore. <LanguageSelector> is driven by ISO
+                                // codes, so writing the display name back matches
+                                // no option and the control renders empty. Map it
+                                // back through the shared normaliser.
+                                language:
+                                    normaliseVidyaLanguage(content.language) || current.language,
                             });
                         }
                     }
@@ -135,7 +212,6 @@ export function useRubricGenerator() {
                     });
                 } finally {
                     setIsRestoring(false);
-                    hasLoaded.current = true;
                 }
             };
             fetchSavedContent();
@@ -159,8 +235,17 @@ export function useRubricGenerator() {
             const normalisedLang = normaliseVidyaLanguage(languageParam);
             if (normalisedLang) form.setValue("language", normalisedLang, SET_OPTS);
             // ────────────────────────────────────────────────────────────────────
-            hasLoaded.current = true;
-            setTimeout(() => {
+            // A second deep link arriving inside these 300 ms would otherwise
+            // leave the first timer pending: both then fire against the form's
+            // newer values, so the second request generates twice and the first
+            // is dropped. Reachable because OmniOrb renders a compound request
+            // as one-shot chips (omni-orb.tsx:738-744) and survives the
+            // client-side navigation. Cancel any superseded timer here rather
+            // than in an effect cleanup — the effect re-runs on `form`/`toast`
+            // identity and the per-query guard then declines to reschedule, so
+            // a blanket cleanup cancels the auto-submit outright.
+            clearTimeout(autoSubmitTimerRef.current);
+            autoSubmitTimerRef.current = setTimeout(() => {
                 form.handleSubmit(onSubmit)();
             }, 300);
         }

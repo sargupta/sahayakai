@@ -111,6 +111,112 @@ steps:
       - --quiet
     waitFor: [push-sha]
 
+  # ── 3b. Mirror the image into the Mumbai registry ─────────────────────────
+  # Each region has its own Artifact Registry, so a Singapore-only push left
+  # Mumbai with nothing to deploy. That is why Mumbai sat on a 2026-08-13
+  # build while Singapore moved on — the 11-day split-brain of 2026-08.
+  - id: tag-mumbai
+    name: gcr.io/cloud-builders/docker
+    args: [tag, 'asia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sahayakai-hotfix-resilience:$SHORT_SHA', 'asia-south1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sahayakai-hotfix-resilience:$SHORT_SHA']
+    waitFor: [build]
+  - id: push-mumbai
+    name: gcr.io/cloud-builders/docker
+    args: [push, 'asia-south1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sahayakai-hotfix-resilience:$SHORT_SHA']
+    waitFor: [tag-mumbai]
+
+  # ── 4b. Deploy Mumbai, NO traffic ─────────────────────────────────────────
+  # Identical secrets and env to Singapore. They had drifted: Mumbai was
+  # missing DEMO_CALL_PEPPER / DEMO_CALL_ENC_KEY entirely, so the demo-call
+  # feature was silently dead in one region only.
+  - id: deploy-mumbai
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - sahayakai-hotfix-resilience
+      - --image=asia-south1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sahayakai-hotfix-resilience:$SHORT_SHA
+      - --region=asia-south1
+      - --project=$PROJECT_ID
+      - --no-traffic
+      - --tag=sha-$SHORT_SHA
+      - --update-secrets=TWILIO_ACCOUNT_SID=TWILIO_ACCOUNT_SID:latest,TWILIO_AUTH_TOKEN=TWILIO_AUTH_TOKEN:latest,SAHAYAKAI_AGENTS_AUDIENCE=SAHAYAKAI_AGENTS_AUDIENCE:latest,PROFILE_COMPLETE_COOKIE_SECRET=PROFILE_COMPLETE_COOKIE_SECRET:latest,DEMO_CALL_PEPPER=DEMO_CALL_PEPPER:latest,DEMO_CALL_ENC_KEY=DEMO_CALL_ENC_KEY:latest
+      - --update-env-vars=NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL=https://sahayakai-agents-zwydpvyuca-as.a.run.app,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248-mumbai,VIDYA_VOICE_LIVE_ENABLED=true,DEMO_CALL_ENABLED=true,DEMO_CALL_DAILY_CAP=50
+      - --quiet
+    waitFor: [push-mumbai]
+
+  # ── 5. Smoke both tagged revisions BEFORE either takes traffic ────────────
+  # The revision-scoped tag URL reaches the new build directly while live
+  # traffic still sits on the old one, so a broken build never gets promoted.
+  - id: smoke-both
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        fail=0
+        for region in asia-southeast1 asia-south1; do
+          url=$$(gcloud run services describe sahayakai-hotfix-resilience \
+                   --region="$$region" --project=$PROJECT_ID \
+                   --format="value(status.traffic)" 2>/dev/null \
+                 | tr ';' '\n' | grep -F "sha-$SHORT_SHA" \
+                 | grep -oE 'https://[^"'"'"']+' | head -1)
+          if [ -z "$$url" ]; then
+            echo "FAIL $$region: no tag URL for sha-$SHORT_SHA"; fail=1; continue
+          fi
+          code=$$(curl -s -o /dev/null -m 45 -w '%{http_code}' "$$url/api/health")
+          echo "  $$region $$code $$url"
+          [ "$$code" = "200" ] || fail=1
+        done
+        exit $$fail
+    waitFor: [deploy, deploy-mumbai]
+
+  # ── 6. Promote BOTH regions together ──────────────────────────────────────
+  # Promotion was previously a manual step an operator had to remember for
+  # each region separately. Forgetting one is precisely the split-brain, so
+  # it is automated here and both flip in the same build.
+  - id: promote-both
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        for region in asia-southeast1 asia-south1; do
+          gcloud run services update-traffic sahayakai-hotfix-resilience \
+            --region="$$region" --project=$PROJECT_ID --to-latest --quiet
+        done
+    waitFor: [smoke-both]
+
+  # ── 7. Parity gate — the build fails if the regions disagree ──────────────
+  # Next.js keys static chunks on a per-build hash, so two regions serving
+  # different builds means a user gets HTML from one and 404s its chunks on
+  # the other. Comparing the served hash is the direct test for that.
+  - id: parity-gate
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        hashes=""
+        for region in asia-southeast1 asia-south1; do
+          base=$$(gcloud run services describe sahayakai-hotfix-resilience \
+                    --region="$$region" --project=$PROJECT_ID \
+                    --format="value(status.url)")
+          h=$$(curl -s -m 45 "$$base/" | grep -o 'webpack-[a-z0-9]*\.js' | head -1)
+          echo "  $$region -> $${h:-UNREACHABLE}"
+          hashes="$$hashes $$h"
+        done
+        uniq_count=$$(echo $$hashes | tr ' ' '\n' | grep -v '^$$' | sort -u | wc -l)
+        if [ "$$uniq_count" != "1" ]; then
+          echo "PARITY FAIL: regions are serving different builds"; exit 1
+        fi
+        echo "PARITY OK"
+    waitFor: [promote-both]
+
+
 # Build options
 options:
   # Use higher-CPU machine to keep Next.js build under 10 min.
@@ -121,9 +227,10 @@ options:
   # (Setting CONCURRENCY=1 happens at the trigger level, not here.)
 
 # Hard cap so a hung build never blocks the queue forever.
-timeout: 1800s
+timeout: 3000s
 
 # Image list for Cloud Build artifact tracking.
 images:
   - asia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sahayakai-hotfix-resilience:$SHORT_SHA
   - asia-southeast1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sahayakai-hotfix-resilience:latest
+  - asia-south1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/sahayakai-hotfix-resilience:$SHORT_SHA
