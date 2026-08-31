@@ -88,6 +88,20 @@ export interface NCERTChapter {
 /** Board of a chapter, resolving the omitted-means-CBSE default. */
 export const boardOf = (c: Pick<NCERTChapter, 'board'>): ChapterBoard => c.board ?? DEFAULT_BOARD;
 
+/**
+ * Teacher-facing chapter order: by book, then by chapter number within it.
+ *
+ * Sorting on `number` alone is wrong for any subject that spans volumes.
+ * Class 10 Social Science has four books that each start at Chapter 1, so a
+ * number-only sort interleaves four indistinguishable "Chapter 1"s. Both the
+ * bundled data and the Firestore reader use this comparator, so the two
+ * sources are interchangeable rather than merely equivalent as sets.
+ */
+export const compareChapters = (a: NCERTChapter, b: NCERTChapter): number =>
+    a.textbookName === b.textbookName
+        ? a.number - b.number
+        : (a.textbookName ?? '').localeCompare(b.textbookName ?? '');
+
 export interface NCERTTextbook {
     id: string;
     name: string;
@@ -169,7 +183,7 @@ export const getChaptersForGrade = (grade: number, subject?: string, board?: Cha
     if (board) {
         chapters = chapters.filter(c => boardOf(c) === board);
     }
-    return chapters;
+    return [...chapters].sort(compareChapters);
 };
 
 /** Boards that actually prescribe something at this (grade × subject) cell. */
