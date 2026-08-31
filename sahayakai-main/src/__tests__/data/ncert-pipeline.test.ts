@@ -215,6 +215,51 @@ describe('Board-aware chapter queries (class gate)', () => {
         // whole phase exists to prevent.
         expect(getChaptersForGrade(6, 'Kannada', 'Kerala State Board (SCERT)')).toEqual([]);
     });
+
+    it('a multi-book subject is never ordered by chapter number alone', () => {
+        // Class 9 and 10 Social Science span four books that each number from 1.
+        // Any ordering keyed only on `number` interleaves four "Chapter 1"s, so
+        // the read path must group by book first. This asserts the data really
+        // does reuse numbers, which is what makes the naive sort wrong.
+        for (const grade of [9, 10]) {
+            const chapters = getChaptersForGrade(grade, 'Social Studies');
+            const books = new Set(chapters.map((c) => c.textbookName));
+            expect(books.size).toBeGreaterThan(1);
+
+            const perNumber = new Map<number, number>();
+            for (const c of chapters) perNumber.set(c.number, (perNumber.get(c.number) ?? 0) + 1);
+            expect([...perNumber.values()].some((n) => n > 1)).toBe(true);
+        }
+
+        // Both sources must use the one comparator, so a cell served from
+        // Firestore and the same cell served from the bundle are in the same
+        // order — not merely the same set.
+        const reader = fs.readFileSync(path.join(SRC, 'server/ncert.ts'), 'utf8');
+        expect(reader).not.toMatch(/\.sort\(\(a, b\) => a\.number - b\.number\)/);
+        expect(reader).toMatch(/\.sort\(compareChapters\)/);
+
+        for (const grade of [9, 10]) {
+            const ordered = getChaptersForGrade(grade, 'Social Studies');
+            // Chapters of one book must be contiguous and ascending.
+            const seen = new Set<string>();
+            let current = '';
+            for (const c of ordered) {
+                if (c.textbookName !== current) {
+                    expect(seen.has(c.textbookName)).toBe(false); // book not revisited
+                    seen.add(c.textbookName);
+                    current = c.textbookName;
+                }
+            }
+            const byBook = new Map<string, number[]>();
+            for (const c of ordered) {
+                if (!byBook.has(c.textbookName)) byBook.set(c.textbookName, []);
+                byBook.get(c.textbookName)!.push(c.number);
+            }
+            for (const nums of byBook.values()) {
+                expect(nums).toEqual([...nums].sort((a, b) => a - b));
+            }
+        }
+    });
 });
 
 describe('The bundled dataset outranks remote data in the UI (class gate)', () => {

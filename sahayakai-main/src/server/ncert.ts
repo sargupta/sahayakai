@@ -13,7 +13,7 @@
  */
 
 import { getDb } from '@/lib/firebase-admin';
-import { NCERTChapter, type ChapterBoard } from '@/data/ncert';
+import { NCERTChapter, compareChapters, type ChapterBoard } from '@/data/ncert';
 import { NCERT_CHAPTERS } from '@/lib/ncert/collections';
 import { logger } from '@/lib/logger';
 
@@ -49,7 +49,10 @@ export async function getNCERTChapters(
         return snapshot.docs
             .map(doc => doc.data() as NCERTChapter)
             .filter(c => c.isActive !== false)
-            .sort((a, b) => a.number - b.number);
+            // Same comparator as the bundled data, so the two sources are
+            // interchangeable. Sorting on `number` alone interleaves the four
+            // "Chapter 1"s of a multi-book subject — see compareChapters.
+            .sort(compareChapters);
 
     } catch (error) {
         logger.error("Error fetching NCERT chapters from DB", error, 'NCERT', { grade, subject, board });
