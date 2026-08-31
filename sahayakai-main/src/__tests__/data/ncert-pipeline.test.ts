@@ -12,10 +12,10 @@
  *
  *  2. Board inferred from subject. `enrich()` hardcoded a set of eight
  *     "regional" subjects and stamped them `State-SCERT`, everything else
- *     `NCERT`. That is wrong in both directions — NCERT publishes a Class 9
- *     Kannada reader, and Karnataka prints its own Kannada edition of the
- *     NCERT Ganita Prakash — so no chapter could state which board prescribed
- *     it.
+ *     `NCERT`. Karnataka prints its own Kannada edition of the NCERT Ganita
+ *     Prakash, so Mathematics is not always CBSE; and KTBS publishes three
+ *     Kannada readers for one grade (Siri, Tili, Nudi), so the subject does not
+ *     even determine the book. No chapter could state which board prescribed it.
  *
  *  3. Stale server data outranking the build. The chapter selector took
  *     Firestore whenever it returned *at least as many* chapters as the bundle.
@@ -30,12 +30,18 @@
  *     reader and a writer can never again drift apart unnoticed;
  *   - every chapter must carry a board that is a real board, and the board must
  *     not be derivable from the subject alone;
- *   - the bundled dataset must outrank a remote one in the UI merge rule.
+ *   - the bundled dataset must outrank a remote one in the UI merge rule;
+ *   - a flatten may not overwrite what a chapter declares. Three of them
+ *     hardcoded `isActive: true` (Mathematics, Science, Information
+ *     Technology), so no chapter in those subjects could ever be retired, and
+ *     the Mathematics one also replaced `textbookName` with a grade→name
+ *     lookup — which is how Classes 1–5 displayed "Maths Mela 3" over chapters
+ *     the data itself labels "Ganita ka Jadu / Math Magic 3".
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { allNCERTChapters, getChaptersForGrade, getBoardsForCell, boardOf, DEFAULT_BOARD } from '@/data/ncert';
+import { allNCERTChapters, getChaptersForGrade, getBoardsForCell, boardOf, DEFAULT_BOARD, type NCERTChapter } from '@/data/ncert';
 import { NCERT_CHAPTERS, NCERT_TEXTBOOKS, NCERT_CHAPTERS_LEGACY } from '@/lib/ncert/collections';
 import { EDUCATION_BOARDS } from '@/types';
 
@@ -221,14 +227,47 @@ describe('Board-aware chapter queries (class gate)', () => {
         // Any ordering keyed only on `number` interleaves four "Chapter 1"s, so
         // the read path must group by book first. This asserts the data really
         // does reuse numbers, which is what makes the naive sort wrong.
-        for (const grade of [9, 10]) {
-            const chapters = getChaptersForGrade(grade, 'Social Studies');
-            const books = new Set(chapters.map((c) => c.textbookName));
-            expect(books.size).toBeGreaterThan(1);
+        // Find the multi-book cells rather than naming them: which grades span
+        // volumes changes as books are replaced (Class 9 Social Science became
+        // a single integrated volume in 2026-27), but the ordering rule does not.
+        const cells = new Map<string, NCERTChapter[]>();
+        for (const c of allNCERTChapters) {
+            if (c.isActive === false) continue;
+            const k = `${c.grade}|${c.subject}`;
+            if (!cells.has(k)) cells.set(k, []);
+            cells.get(k)!.push(c);
+        }
+        const multiBook = [...cells.entries()].filter(
+            ([, cs]) => new Set(cs.map((c) => c.textbookName)).size > 1,
+        );
+        expect(multiBook.length).toBeGreaterThan(0);
 
+        for (const [key, cs] of multiBook) {
             const perNumber = new Map<number, number>();
-            for (const c of chapters) perNumber.set(c.number, (perNumber.get(c.number) ?? 0) + 1);
-            expect([...perNumber.values()].some((n) => n > 1)).toBe(true);
+            for (const c of cs) perNumber.set(c.number, (perNumber.get(c.number) ?? 0) + 1);
+            if (![...perNumber.values()].some((n) => n > 1)) continue; // numbered continuously across volumes
+
+            const [grade, subject] = key.split('|');
+            const ordered = getChaptersForGrade(Number(grade), subject);
+            const seen = new Set<string>();
+            let current = '';
+            for (const c of ordered) {
+                if (c.textbookName !== current) {
+                    expect(`${key}: ${c.textbookName}`).toBe(
+                        seen.has(c.textbookName) ? 'not revisited' : `${key}: ${c.textbookName}`,
+                    );
+                    seen.add(c.textbookName);
+                    current = c.textbookName;
+                }
+            }
+            const byBook = new Map<string, number[]>();
+            for (const c of ordered) {
+                if (!byBook.has(c.textbookName)) byBook.set(c.textbookName, []);
+                byBook.get(c.textbookName)!.push(c.number);
+            }
+            for (const nums of byBook.values()) {
+                expect(nums).toEqual([...nums].sort((a, b) => a - b));
+            }
         }
 
         // Both sources must use the one comparator, so a cell served from
@@ -258,6 +297,81 @@ describe('Board-aware chapter queries (class gate)', () => {
             for (const nums of byBook.values()) {
                 expect(nums).toEqual([...nums].sort((a, b) => a - b));
             }
+        }
+    });
+});
+
+describe('A flatten may not overwrite what a chapter declares (class gate)', () => {
+    // Mathematics and Science are stored as NCERTGrade[] and flattened into
+    // NCERTChapter[]. Both flattens hardcoded `isActive: true` and derived
+    // `textbookEdition` from the grade, which meant no chapter in either
+    // subject could be retired — the mechanism every other subject uses to
+    // supersede a book — and a grade holding both a retired and a current book
+    // got one edition stamped across both. The Mathematics flatten also
+    // replaced `textbookName` with a grade→name lookup, which is what let
+    // Classes 1–5 display "Maths Mela 3" over chapters that the data itself
+    // labels "Ganita ka Jadu / Math Magic 3".
+
+    it('no flatten in the data layer hardcodes isActive', () => {
+        const offenders: string[] = [];
+        for (const file of sourceFiles().filter((f) => f.includes(`${path.sep}data${path.sep}ncert${path.sep}`))) {
+            const src = fs.readFileSync(file, 'utf8');
+            if (!src.includes('flatMap')) continue;
+            src.split('\n').forEach((line, i) => {
+                if (/^\s*isActive:\s*(true|false)\s*,\s*$/.test(line)) {
+                    offenders.push(`${path.relative(SRC, file)}:${i + 1}`);
+                }
+            });
+        }
+        expect(offenders).toEqual([]);
+    });
+
+    it('a declared retirement survives the flatten', () => {
+        // Every subject that superseded a book at Class 9 must expose both the
+        // new chapters and the retired ones. A flatten that drops `isActive`
+        // silently republishes the old book.
+        for (const subject of ['Mathematics', 'English', 'Science', 'Hindi', 'Social Studies']) {
+            const all = allNCERTChapters.filter((c) => c.grade === 9 && c.subject === subject);
+            const active = all.filter((c) => c.isActive !== false);
+            const retired = all.filter((c) => c.isActive === false);
+            expect(`${subject} retired`).toBe(retired.length > 0 ? `${subject} retired` : 'none — flatten dropped it');
+            expect(new Set(active.map((c) => c.textbookName)).size).toBe(1);
+        }
+    });
+
+    it('no retired Class 9 book leaks back into the active list', () => {
+        const retiredBooks = [
+            'Mathematics (NCERT)', 'Ganit / Mathematics (NCERT)', 'Beehive', 'Science (NCERT)',
+            'Kshitij Bhag I', 'India and the Contemporary World I', 'Contemporary India I',
+            'Democratic Politics I', 'Economics',
+        ];
+        for (const subject of ['Mathematics', 'English', 'Science', 'Hindi', 'Social Studies']) {
+            const active = getChaptersForGrade(9, subject);
+            for (const c of active) {
+                expect(`${c.id}: ${c.textbookName}`).toBe(
+                    retiredBooks.includes(c.textbookName) ? 'a current book' : `${c.id}: ${c.textbookName}`,
+                );
+            }
+        }
+    });
+
+    it('Class 9 signature chapters of the retired books are gone from the active list', () => {
+        const retired: Array<[string, string]> = [
+            ['Mathematics', 'Number Systems'],
+            ['English', 'The Fun They Had'],
+            ['Science', 'Matter in Our Surroundings'],
+            ['Hindi', 'दो बैलों की कथा'],           // Kshitij; Ganga reprints it, see below
+            ['Social Studies', 'The French Revolution'],
+        ];
+        for (const [subject, title] of retired) {
+            const active = getChaptersForGrade(9, subject);
+            if (subject === 'Hindi') {
+                // Ganga carries दो बैलों की कथा as its own chapter 1, so the title
+                // is not a marker here — assert on the book instead.
+                expect(active.every((c) => c.textbookName === 'Ganga')).toBe(true);
+                continue;
+            }
+            expect(active.map((c) => c.title)).not.toContain(title);
         }
     });
 });
