@@ -56,9 +56,12 @@ export type NCERTTextbookEdition = 'NCF-2023' | 'Rationalized-2022' | 'State-SCE
  *
  *  This is a property of the (board × grade × subject) cell, NOT of the subject.
  *  Deriving it from the subject name — the pre-2026-08 behaviour in
- *  seed-ncert.ts — breaks in both directions: NCERT publishes a Class 9 Kannada
- *  reader (ತಿಳಿ ಕನ್ನಡ), and Karnataka prints its own Kannada edition of the
- *  NCERT Ganita Prakash. Every chapter must state its board explicitly.
+ *  seed-ncert.ts — assumed every "regional" subject is state-board and every
+ *  other subject is NCERT. Karnataka prints its own Kannada edition of the
+ *  NCERT Ganita Prakash, so Mathematics is not always CBSE; and one board can
+ *  prescribe several books for the same subject and grade (KTBS publishes Siri,
+ *  Tili and Nudi Kannada as first, second and third language readers), so the
+ *  subject does not even determine the book. Every chapter states its board.
  */
 export type ChapterBoard = EducationBoard;
 
