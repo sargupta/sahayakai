@@ -64,9 +64,9 @@ describe('NCF-2023 textbook data (Classes 6-8)', () => {
     const expectations: Array<[number, string, number, string, string]> = [
         // [grade, subject, count, first chapter, book name]
         [6, 'Mathematics',    10, 'Patterns in Mathematics',            'Ganita Prakash 6'],
-        // index.ts overrides math textbookName via getMathTextbookName(),
-        // so the flattened name has no "(Part 1)" suffix.
-        [7, 'Mathematics',    15, 'Large Numbers Around Us',            'Ganita Prakash 7'],
+        // The flatten now respects the per-chapter textbookName, so the real
+        // Part 1 / Part 2 split survives instead of being collapsed.
+        [7, 'Mathematics',    15, 'Large Numbers Around Us',            'Ganita Prakash 7 (Part 1)'],
         [6, 'Science',        12, 'The Wonderful World of Science',     'Curiosity 6'],
         [7, 'Science',        12, 'The Ever-Evolving World of Science', 'Curiosity 7'],
         [6, 'Social Studies', 14, 'Locating Places on the Earth',       'Exploring Society: India and Beyond 6'],
@@ -77,7 +77,7 @@ describe('NCF-2023 textbook data (Classes 6-8)', () => {
         [7, 'Hindi',          10, 'माँ, कह एक कहानी',                    'Malhar 7'],
         [6, 'Sanskrit',       15, 'वयं वर्णमालां पठामः',                  'Deepakam 6'],
         [7, 'Sanskrit',       12, 'वन्दे भारतमातरम्',                     'Deepakam 7'],
-        [8, 'Mathematics',    14, 'A Square and A Cube',                 'Ganita Prakash 8'],
+        [8, 'Mathematics',    14, 'A Square and A Cube',                 'Ganita Prakash 8 (Part 1)'],
         [8, 'Science',        13, 'Exploring the Investigative World of Science', 'Curiosity 8'],
         // Part 2 = the revised June-2026 edition (8 ch); the recalled Feb-2026
         // print had 9 — total must stay 15, not 16.

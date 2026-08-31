@@ -117,34 +117,44 @@ export interface NCERTTextbook {
     board: ChapterBoard;
 }
 
-function getMathTextbookName(grade: number): string {
-    if (grade <= 2) return `Joyful Mathematics ${grade}`;
-    if (grade <= 5) return `Maths Mela ${grade}`;
-    if (grade <= 8) return `Ganita Prakash ${grade}`;
-    if (grade <= 10) return 'Mathematics (NCERT)';
-    return 'Mathematics Part I & II (NCERT)';
-}
-
-// Flatten Math (NCERTGrade[] → NCERTChapter[])
+/**
+ * Flatten Math (NCERTGrade[] → NCERTChapter[]).
+ *
+ * Every field the chapter declares wins. This used to overwrite three of them
+ * unconditionally, and each overwrite hid something true:
+ *
+ *  - `textbookName` was replaced by a grade→name lookup. Grades 1–5 declare
+ *    themselves as `Ganita ka Jadu / Math Magic N` — the retired book, which is
+ *    what their chapter titles actually are — and the lookup relabelled them
+ *    `Joyful Mathematics N` / `Maths Mela N`. The data was honest; the flatten
+ *    made it lie. It also erased the real `(Part 1)` / `(Part 2)` split on the
+ *    Ganita Prakash 7 and 8 volumes.
+ *  - `isActive` was hardcoded true, so no Mathematics chapter could ever be
+ *    retired — the mechanism every other subject uses to supersede a book.
+ *  - `textbookEdition` was derived from the grade, which stops being true the
+ *    moment one grade holds both a retired and a current book, as Class 9 does.
+ */
 const mathematicsChapters: NCERTChapter[] = NCERTMathematics.flatMap(g =>
     g.chapters.map(c => ({
         ...c,
         grade: g.grade,
         subject: 'Mathematics' as const,
-        textbookName: getMathTextbookName(g.grade),
-        textbookEdition: (g.grade <= 8 ? 'NCF-2023' : 'Rationalized-2022') as NCERTTextbookEdition,
-        isActive: true,
-        dataVersion: g.grade <= 8 ? '2025-ncert-ncf' : '2025-ncert-rationalized',
+        textbookName: c.textbookName,
+        textbookEdition: (c.textbookEdition
+            ?? (g.grade <= 8 ? 'NCF-2023' : 'Rationalized-2022')) as NCERTTextbookEdition,
+        isActive: c.isActive ?? true,
+        dataVersion: c.dataVersion ?? (g.grade <= 8 ? '2025-ncert-ncf' : '2025-ncert-rationalized'),
     }))
 );
 
-// Flatten IT
+// Flatten IT — like the Mathematics and Science flattens, what the chapter
+// declares wins, so an IT chapter can be retired when the book is superseded.
 const informationTechnologyChapters: NCERTChapter[] = itChapters.map(c => ({
     ...c,
     subject: 'Information Technology' as const,
-    textbookEdition: 'Rationalized-2022' as NCERTTextbookEdition,
-    isActive: true,
-    dataVersion: '2025-ncert-rationalized',
+    textbookEdition: (c.textbookEdition ?? 'Rationalized-2022') as NCERTTextbookEdition,
+    isActive: c.isActive ?? true,
+    dataVersion: c.dataVersion ?? '2025-ncert-rationalized',
 }));
 
 export const allNCERTChapters: NCERTChapter[] = [
