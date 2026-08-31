@@ -41,7 +41,8 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { allNCERTChapters, getChaptersForGrade, getBoardsForCell, boardOf, DEFAULT_BOARD, type NCERTChapter } from '@/data/ncert';
+import { allNCERTChapters, getChaptersForGrade, getBoardsForCell, getStreamsForCell, boardOf, DEFAULT_BOARD, type NCERTChapter } from '@/data/ncert';
+import { findBlueprint } from '@/ai/data/board-blueprints';
 import { NCERT_CHAPTERS, NCERT_TEXTBOOKS, NCERT_CHAPTERS_LEGACY } from '@/lib/ncert/collections';
 import { EDUCATION_BOARDS } from '@/types';
 
@@ -138,12 +139,17 @@ describe('Every chapter states its board (class gate)', () => {
         const BOARD_LITERALS = [...EDUCATION_BOARDS, 'NCERT', 'State-SCERT'];
         const isBoardLiteral = (s: string) => BOARD_LITERALS.includes(s);
 
+        // Must be a ternary whose *result* is assigned to a board field — not
+        // merely a line that mentions a board and happens to contain a question
+        // mark. A Kannada chapter title ending in "?" alongside
+        // `textbookEdition: 'State-SCERT'` is not a conditional board.
+        const BOARD_TERNARY = /\bboard\s*:\s*[^,;]*\?[^,;]*:/i;
+
         const offenders: string[] = [];
         for (const file of sourceFiles()) {
             const lines = fs.readFileSync(file, 'utf8').split('\n');
             lines.forEach((line, i) => {
-                if (!/\bboard\b/i.test(line)) return;
-                if (!line.includes('?') || !line.includes(':')) return;
+                if (!BOARD_TERNARY.test(line)) return;
                 const literals = [...line.matchAll(/'([^']*)'/g)].map((m) => m[1]).filter(isBoardLiteral);
                 if (new Set(literals).size >= 2) {
                     offenders.push(`${path.relative(SRC, file)}:${i + 1}`);
@@ -445,6 +451,114 @@ describe('No retired book is served at any grade (class gate)', () => {
         const byId = new Map<string, number>();
         for (const c of allNCERTChapters) byId.set(c.id, (byId.get(c.id) ?? 0) + 1);
         expect([...byId.entries()].filter(([, n]) => n > 1).map(([id]) => id)).toEqual([]);
+    });
+});
+
+describe('Placeholder curriculum is never served (class gate)', () => {
+    // 264 regional-language chapters were invented topic labels — "ನಮ್ಮ ಶಾಲೆ",
+    // "ಅಮ್ಮ", "ಹಣ್ಣುಗಳು" — that appear in no prescribed textbook. Serving a
+    // fabricated chapter list is worse than serving none: a teacher cannot tell
+    // it is wrong. The class is "no cell may be live while its content is
+    // unsourced", enforced by requiring a dataVersion that names a real source.
+
+    // The dataVersions that were only ever attached to invented content. A
+    // chapter carrying one of these must not be live.
+    const PLACEHOLDER_VERSIONS = [
+        '2025-kannada-ktbs', '2025-tamil-tnscert', '2025-telugu-tscert',
+        '2025-marathi-balbharati', '2025-bengali-wbbse', '2025-gujarati-gsstb',
+        '2025-punjabi-pseb', '2025-malayalam-kscert',
+    ];
+
+    it('every active chapter declares a dataVersion', () => {
+        const offenders = allNCERTChapters
+            .filter((c) => c.isActive !== false)
+            .filter((c) => !c.dataVersion)
+            .map((c) => c.id);
+
+        expect(offenders).toEqual([]);
+    });
+
+    it('no chapter from a placeholder dataVersion is live', () => {
+        const offenders = allNCERTChapters
+            .filter((c) => c.isActive !== false)
+            .filter((c) => PLACEHOLDER_VERSIONS.includes(c.dataVersion ?? ''))
+            .map((c) => `${c.id}: ${c.dataVersion}`);
+
+        expect(offenders).toEqual([]);
+    });
+
+    it('the quarantined languages serve nothing at all', () => {
+        // Not "serve less" — serve nothing, so the UI takes its empty-state path.
+        for (const subject of ['Tamil', 'Telugu', 'Marathi', 'Bengali', 'Gujarati', 'Punjabi', 'Malayalam']) {
+            const live = allNCERTChapters.filter((c) => c.subject === subject && c.isActive !== false);
+            expect(`${subject}: ${live.length}`).toBe(`${subject}: 0`);
+        }
+    });
+
+    it('Kannada serves the sourced KTBS books, not the invented set', () => {
+        const live = allNCERTChapters.filter((c) => c.subject === 'Kannada' && c.isActive !== false);
+        expect(live.length).toBeGreaterThan(0);
+        for (const c of live) expect(c.dataVersion).toBe('2026-ktbs-kannada');
+
+        // Titles unique to the invented set — deliberately not 'ಅಮ್ಮ', which is
+        // a real Siri Kannada 8 chapter and would make this assert a coincidence
+        // rather than the thing it means to check.
+        for (const title of ['ನಮ್ಮ ಶಾಲೆ', 'ಹಣ್ಣುಗಳು', 'ಪ್ರಾಣಿಗಳು', 'ನೀರಿನ ಮಹತ್ವ']) {
+            expect(live.map((c) => c.title)).not.toContain(title);
+        }
+    });
+});
+
+describe('A language stream selects the right reader (class gate)', () => {
+    // KTBS prescribes three Kannada readers at one grade — ಸಿರಿ (first), ತಿಳಿ
+    // (second), ನುಡಿ (third). Before `languageStream`, a second-language teacher
+    // and a first-language teacher got the same list and at most one was right.
+
+    it('Kannada chapters declare their stream', () => {
+        const live = getChaptersForGrade(9, 'Kannada', 'Karnataka State Board (KSEEB)');
+        expect(live.length).toBeGreaterThan(0);
+        for (const c of live) expect(c.languageStream).toBe('first');
+    });
+
+    it('asking for a stream we do not hold returns nothing, not the wrong book', () => {
+        // We hold only the first-language readers. A second-language teacher
+        // must get the empty-state, never Siri Kannada mislabelled as Tili.
+        const second = getChaptersForGrade(9, 'Kannada', 'Karnataka State Board (KSEEB)', 'second');
+        expect(second).toEqual([]);
+    });
+
+    it('a single-book language cell is returned for every stream', () => {
+        // Chapters with no stream belong to all of them — filtering must not
+        // empty a cell that simply has one book.
+        for (const stream of ['first', 'second', 'third'] as const) {
+            expect(getChaptersForGrade(9, 'Hindi', undefined, stream).length).toBeGreaterThan(0);
+        }
+    });
+
+    it('getStreamsForCell reports only streams that exist', () => {
+        expect(getStreamsForCell(9, 'Kannada', 'Karnataka State Board (KSEEB)')).toEqual(['first']);
+        expect(getStreamsForCell(9, 'Hindi')).toEqual([]);
+    });
+});
+
+describe('Every supported board has an exam blueprint (class gate)', () => {
+    // A board with correct chapters and a CBSE exam pattern is still the wrong
+    // deliverable. findBlueprint() falls through silently, so a KSEEB teacher
+    // used to get a CBSE-shaped paper carrying a KSEEB label.
+    it('every board that has chapters at Class 10 has a Class 10 blueprint', () => {
+        const boardsWithChapters = new Set(
+            allNCERTChapters
+                .filter((c) => c.grade === 10 && c.isActive !== false)
+                .map((c) => boardOf(c)),
+        );
+        const missing: string[] = [];
+        for (const board of boardsWithChapters) {
+            const hasAny = ['Mathematics', 'Science', 'Social Studies'].some(
+                (subject) => findBlueprint(board, 'Class 10', subject) !== undefined,
+            );
+            if (!hasAny) missing.push(board);
+        }
+        expect(missing).toEqual([]);
     });
 });
 
