@@ -90,13 +90,14 @@ export function NCERTChapterSelector({ onChapterSelect, selectedGrade, className
                 try {
                     const staticChapters = getChaptersForGrade(selectedGrade, subject);
                     const serverChapters = await getNCERTChapters(selectedGrade, subject);
-                    // Use whichever source has more chapters — Firestore may be
-                    // partially seeded for some subjects (e.g. regional languages)
-                    if (serverChapters && serverChapters.length >= staticChapters.length) {
-                        setChapters(serverChapters);
-                    } else {
-                        setChapters(staticChapters);
-                    }
+                    // The bundled data is authoritative: it ships with the build,
+                    // is pinned by CI, and is what the syllabus PRs correct.
+                    // Firestore is only consulted for cells the build has no data
+                    // for. Preferring Firestore on a larger chapter count — the
+                    // pre-2026-08 rule — meant a stale seed silently outranked a
+                    // corrected book, which is how Vasant chapters kept being
+                    // served for Class 6 Hindi months after PR #111 replaced them.
+                    setChapters(staticChapters.length > 0 ? staticChapters : (serverChapters ?? []));
                 } catch (e) {
                     setChapters(getChaptersForGrade(selectedGrade, subject));
                 } finally {
