@@ -126,8 +126,8 @@ describe('Every chapter states its board (class gate)', () => {
         //
         // (Today every subject happens to sit on a single board, so no
         // data-level assertion could catch a reintroduction. This can. The
-        // data-level version becomes possible once Class 9 Kannada lands:
-        // NCERT's ತಿಳಿ ಕನ್ನಡ and Karnataka's ಸಿರಿ ಕನ್ನಡ put one subject on
+        // data-level version becomes possible once the Karnataka lane lands:
+        // Karnataka's Kannada edition of Ganita Prakash puts Mathematics on
         // two boards, and `boardOf` must then distinguish them.)
         const BOARD_LITERALS = [...EDUCATION_BOARDS, 'NCERT', 'State-SCERT'];
         const isBoardLiteral = (s: string) => BOARD_LITERALS.includes(s);
