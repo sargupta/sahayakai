@@ -23,6 +23,7 @@ import { gujaratiChapters } from './gujarati';
 import { punjabiChapters } from './punjabi';
 import { malayalamChapters } from './malayalam';
 import { urduChapters } from './urdu';
+import { type EducationBoard } from '@/types';
 
 export type NCERTSubject =
     | 'Mathematics'
@@ -51,6 +52,19 @@ export type NCERTSubject =
  *  State-SCERT: State board textbook (KTBS/TNSCERT/Balbharati/WBBSE/GSSTB/PSEB/SCERT-Kerala/TSCERT/APSCERT). */
 export type NCERTTextbookEdition = 'NCF-2023' | 'Rationalized-2022' | 'State-SCERT';
 
+/** The board that prescribes a textbook.
+ *
+ *  This is a property of the (board × grade × subject) cell, NOT of the subject.
+ *  Deriving it from the subject name — the pre-2026-08 behaviour in
+ *  seed-ncert.ts — breaks in both directions: NCERT publishes a Class 9 Kannada
+ *  reader (ತಿಳಿ ಕನ್ನಡ), and Karnataka prints its own Kannada edition of the
+ *  NCERT Ganita Prakash. Every chapter must state its board explicitly.
+ */
+export type ChapterBoard = EducationBoard;
+
+/** Chapters with no explicit `board` belong to this one. */
+export const DEFAULT_BOARD: ChapterBoard = 'CBSE';
+
 export interface NCERTChapter {
     id: string;
     title: string;
@@ -62,12 +76,17 @@ export interface NCERTChapter {
     textbookName: string;
     textbookCode?: string;           // official NCERT book code e.g. '402' for IT
     textbookEdition?: NCERTTextbookEdition;   // set by each file; defaults in seed script
+    /** Prescribing board. Omitted means DEFAULT_BOARD ('CBSE') — see ChapterBoard. */
+    board?: ChapterBoard;
     learningOutcomes: string[];
     keywords: string[];
     estimatedPeriods: number;
     isActive?: boolean;              // false = rationalized-out; undefined treated as true
     dataVersion?: string;            // '2025-ncert-ncf' | '2025-ncert-rationalized'
 }
+
+/** Board of a chapter, resolving the omitted-means-CBSE default. */
+export const boardOf = (c: Pick<NCERTChapter, 'board'>): ChapterBoard => c.board ?? DEFAULT_BOARD;
 
 export interface NCERTTextbook {
     id: string;
@@ -78,7 +97,7 @@ export interface NCERTTextbook {
     edition: NCERTTextbookEdition;
     language: 'English' | 'Hindi' | 'Regional';
     coverImageUrl?: string;
-    board: 'NCERT';
+    board: ChapterBoard;
 }
 
 function getMathTextbookName(grade: number): string {
@@ -134,12 +153,32 @@ export const allNCERTChapters: NCERTChapter[] = [
     ...biologyChapters,
 ];
 
-export const getChaptersForGrade = (grade: number, subject?: string) => {
+/**
+ * Chapters a teacher should see for a grade.
+ *
+ * `board` narrows to that board's prescribed books. Omit it to get every
+ * board's chapters for the cell — correct for the curriculum browser, wrong
+ * for anything generating material for one teacher, which should pass the
+ * teacher's `preferredBoard`.
+ */
+export const getChaptersForGrade = (grade: number, subject?: string, board?: ChapterBoard) => {
     let chapters = allNCERTChapters.filter(c => c.grade === grade && c.isActive !== false);
     if (subject) {
         chapters = chapters.filter(c => c.subject === subject);
     }
+    if (board) {
+        chapters = chapters.filter(c => boardOf(c) === board);
+    }
     return chapters;
+};
+
+/** Boards that actually prescribe something at this (grade × subject) cell. */
+export const getBoardsForCell = (grade: number, subject: string): ChapterBoard[] => {
+    const boards = new Set<ChapterBoard>();
+    for (const c of allNCERTChapters) {
+        if (c.grade === grade && c.subject === subject && c.isActive !== false) boards.add(boardOf(c));
+    }
+    return [...boards].sort();
 };
 
 export const getChapterById = (id: string) => {
