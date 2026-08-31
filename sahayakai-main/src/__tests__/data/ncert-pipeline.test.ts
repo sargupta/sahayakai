@@ -376,6 +376,78 @@ describe('A flatten may not overwrite what a chapter declares (class gate)', () 
     });
 });
 
+describe('No retired book is served at any grade (class gate)', () => {
+    // The half-migration class, generalised: a current book name may never sit
+    // over a retired book's chapter list. PR #111 gated this for Classes 6-8 by
+    // listing signature titles; that list has to grow every time a book changes
+    // and says nothing about the grades nobody remembered. Assert on the book
+    // name instead — every active chapter must name a book that is currently
+    // prescribed, so a stale list cannot hide behind a fresh label.
+    // Retirement is per grade, not per title: `Ganit / Mathematics (NCERT)` is
+    // retired at Class 9 and still prescribed at Class 10, and `Science
+    // (NCERT)` likewise. A flat title blocklist would either miss the Class 9
+    // regression or falsely condemn Class 10.
+    const RETIRED_BOOKS: Array<[RegExp, number[]]> = [
+        // Pre-NCF primary — retired everywhere they appeared
+        [/^Marigold/i, [1, 2, 3, 4, 5]],
+        [/^Rimjhim/i, [1, 2, 3, 4, 5]],
+        [/Math Magic|Ganita ka Jadu/i, [1, 2, 3, 4, 5]],
+        [/^Looking Around/i, [3, 4, 5]],
+        // Pre-NCF middle — retired by PR #111
+        [/^Honeysuckle|^Honeydew|^Vasant|^Ruchira/i, [6, 7, 8]],
+        // Superseded at Class 9 in 2026-27 only
+        [/^Beehive$|^Moments$/, [9]],
+        [/^Kshitij Bhag I$/, [9]],
+        [/^Science \(NCERT\)$/, [9]],
+        [/^Ganit \/ Mathematics \(NCERT\)$|^Mathematics \(NCERT\)$/, [9]],
+        [/^India and the Contemporary World I$|^Contemporary India I$/, [9]],
+        [/^Democratic Politics I$|^Economics$/, [9]],
+    ];
+
+    it('no active chapter names a book retired at its grade', () => {
+        const offenders = allNCERTChapters
+            .filter((c) => c.isActive !== false)
+            .filter((c) => RETIRED_BOOKS.some(([re, grades]) => grades.includes(c.grade) && re.test(c.textbookName)))
+            .map((c) => `${c.id} (G${c.grade} ${c.subject}): ${c.textbookName}`);
+
+        expect(offenders).toEqual([]);
+    });
+
+    it('every grade that replaced a book still holds the retired chapters', () => {
+        // Retire, do not delete — saved lesson plans reference the old ids.
+        const replaced: Array<[number, string]> = [
+            [1, 'Mathematics'], [2, 'Mathematics'], [3, 'Mathematics'], [4, 'Mathematics'], [5, 'Mathematics'],
+            [1, 'English'], [2, 'English'], [3, 'English'], [4, 'English'], [5, 'English'],
+            [1, 'Hindi'], [2, 'Hindi'], [3, 'Hindi'], [4, 'Hindi'], [5, 'Hindi'],
+            [3, 'EVS'], [4, 'EVS'], [5, 'EVS'],
+            [9, 'Mathematics'], [9, 'English'], [9, 'Science'], [9, 'Hindi'], [9, 'Social Studies'],
+        ];
+        for (const [grade, subject] of replaced) {
+            const retired = allNCERTChapters.filter(
+                (c) => c.grade === grade && c.subject === subject && c.isActive === false,
+            );
+            expect(`G${grade} ${subject}: ${retired.length}`).not.toBe(`G${grade} ${subject}: 0`);
+        }
+    });
+
+    it('each replaced cell serves exactly one current book', () => {
+        for (const grade of [1, 2, 3, 4, 5]) {
+            for (const subject of ['Mathematics', 'English', 'Hindi']) {
+                const books = new Set(getChaptersForGrade(grade, subject).map((c) => c.textbookName));
+                expect(`G${grade} ${subject}: ${[...books].join(', ')}`).toBe(
+                    `G${grade} ${subject}: ${[...books][0]}`,
+                );
+            }
+        }
+    });
+
+    it('no chapter id is reused between a retired and a current book', () => {
+        const byId = new Map<string, number>();
+        for (const c of allNCERTChapters) byId.set(c.id, (byId.get(c.id) ?? 0) + 1);
+        expect([...byId.entries()].filter(([, n]) => n > 1).map(([id]) => id)).toEqual([]);
+    });
+});
+
 describe('The bundled dataset outranks remote data in the UI (class gate)', () => {
     const selector = fs.readFileSync(path.join(SRC, 'components/ncert-chapter-selector.tsx'), 'utf8');
 
