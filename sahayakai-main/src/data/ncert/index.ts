@@ -125,10 +125,17 @@ export const LANGUAGE_STREAM_LABEL: Record<LanguageStream, string> = {
  * bundled data and the Firestore reader use this comparator, so the two
  * sources are interchangeable rather than merely equivalent as sets.
  */
-export const compareChapters = (a: NCERTChapter, b: NCERTChapter): number =>
-    a.textbookName === b.textbookName
-        ? a.number - b.number
-        : (a.textbookName ?? '').localeCompare(b.textbookName ?? '');
+export const compareChapters = (a: NCERTChapter, b: NCERTChapter): number => {
+    if (a.textbookName !== b.textbookName) {
+        return (a.textbookName ?? '').localeCompare(b.textbookName ?? '');
+    }
+    if (a.number !== b.number) return a.number - b.number;
+    // Same book, same chapter number: a prose piece and the poems printed
+    // inside it. NCERT numbers the chapter, not the pieces — First Flight has
+    // nine numbered chapters and Amanda! sits inside chapter 4 rather than
+    // being chapter 10. Ids are suffixed so the prose sorts before its poems.
+    return a.id.localeCompare(b.id);
+};
 
 export interface NCERTTextbook {
     id: string;

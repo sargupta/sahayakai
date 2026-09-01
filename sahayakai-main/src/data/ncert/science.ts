@@ -229,7 +229,7 @@ export const NCERTScience: NCERTGrade[] = [
             // Replaces the rationalized Science (NCERT). Earth Science appears at
             // this grade for the first time (ch 13) and Reproduction moves down
             // from Class 10 (ch 11). Chapter list agreed by the syllabus sheet and
-            // two independent sources. Retired chapters stay inactive.
+            // the official NCERT catalogue (iesc1=0-13). Retired chapters stay inactive.
             { id: 'sci-9-exp-1', title: 'Exploration: Entering the World of Secondary Science', titleHindi: 'विज्ञान की दुनिया में प्रवेश', textbookName: 'Exploration', textbookEdition: 'NCF-2023', number: 1, learningOutcomes: ['Scientific method and enquiry', 'Observation, hypothesis, evidence'], keywords: ['scientific method', 'enquiry', 'evidence'], estimatedPeriods: 8, isActive: true, dataVersion: '2026-ncert-ncf-class9' },
             { id: 'sci-9-exp-2', title: 'Cell: The Building Block of Life', titleHindi: 'कोशिका', textbookName: 'Exploration', textbookEdition: 'NCF-2023', number: 2, learningOutcomes: ['Cell structure and organelles', 'Prokaryotic vs eukaryotic cells'], keywords: ['cell', 'organelle', 'microscope'], estimatedPeriods: 12, isActive: true, dataVersion: '2026-ncert-ncf-class9' },
             { id: 'sci-9-exp-3', title: 'Tissues in Action', titleHindi: 'ऊतक', textbookName: 'Exploration', textbookEdition: 'NCF-2023', number: 3, learningOutcomes: ['Plant and animal tissue types', 'Structure related to function'], keywords: ['tissue', 'epithelial', 'meristem'], estimatedPeriods: 12, isActive: true, dataVersion: '2026-ncert-ncf-class9' },
