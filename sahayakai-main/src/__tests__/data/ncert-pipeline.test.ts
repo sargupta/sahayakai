@@ -562,6 +562,120 @@ describe('Every supported board has an exam blueprint (class gate)', () => {
     });
 });
 
+describe('Chapter numbers match the printed book (class gate)', () => {
+    // A chapter's `number` is what a teacher reads off the spine of their own
+    // copy. It is not our index into a list. Two ways it drifted:
+    //
+    //  - Splitting. First Flight prints NINE numbered chapters, each carrying
+    //    its poems unnumbered inside it. Numbering the pieces 1-19 made every
+    //    reference past the first disagree with the book — "Chapter 5" returned
+    //    A Tiger in the Zoo instead of Glimpses of India. Same for Kaveri (8).
+    //  - Gaps. Retiring five rationalised-out Kshitij chapters left the
+    //    survivors numbered 1,2,4,5,6,9… while the printed edition renumbers
+    //    contiguously, so "Chapter 3" resolved to nothing.
+    //
+    // Counts here are from the official NCERT catalogue at ncert.nic.in, whose
+    // book code carries the chapter count (jeff1=0-9), cross-checked by probing
+    // which per-chapter PDFs exist (jhks101..jhks112 → twelve).
+
+    const OFFICIAL_CHAPTER_COUNT: Array<[string, number]> = [
+        ['First Flight', 9],
+        ['Kaveri', 8],
+        ['Kshitij Bhag II', 12],
+        ['Ganita Manjari (Part 1)', 8],
+        ['Exploration', 13],
+        ['Ganga', 12],
+        ['Understanding Society: India and Beyond 9 (Part 1)', 9],
+        ['Kritika Bhag 2', 3],
+        ['Sanchayan Bhag 2', 3],
+        ['Joyful Mathematics 1', 13],
+        ['Joyful Mathematics 2', 11],
+        ['Maths Mela 3', 14],
+        ['Sarangi 1', 19],
+        ['Sarangi 2', 26],
+        ['Mridang 2', 13],
+        ['Santoor 3', 12],
+        ['Santoor 4', 12],
+        ['Santoor 5', 10],
+        ['Veena 3', 18],
+        ['Veena 4', 13],
+        ['Veena 5', 12],
+        ['Our Wondrous World 3', 12],
+        ['Our Wondrous World 4', 10],
+    ];
+
+    it.each(OFFICIAL_CHAPTER_COUNT)(
+        '%s has exactly %i numbered chapters',
+        (book, expected) => {
+            const live = allNCERTChapters.filter((c) => c.textbookName === book && c.isActive !== false);
+            expect(live.length).toBeGreaterThan(0);
+            expect(new Set(live.map((c) => c.number)).size).toBe(expected);
+        },
+    );
+
+    // Books we KNOW are incomplete, with the official count. Listed rather than
+    // excluded so the debt is visible and the gate cannot go green on a lie.
+    // Both are Class 11 English — outside the 2026 syllabus sheet's scope
+    // (Classes 1-10), so they were never sourced. Renumbering them contiguously
+    // would only replace one wrong set of numbers with another; they need the
+    // missing chapters first.
+    const KNOWN_INCOMPLETE: Array<[string, number]> = [
+        ['Hornbill', 14],    // we hold 6, numbered 1,2,3,5,7,8
+        ['Snapshots', 5],    // we hold 3, numbered 1,2,5
+    ];
+
+    it('every book numbers its chapters contiguously from 1', () => {
+        // A multi-volume book numbers straight through: Ganita Prakash 7
+        // (Part 2) starts at chapter 9 because Part 1 ended at 8. Group the
+        // parts back together before checking.
+        const baseName = (n: string) => n.replace(/\s*\(Part \d+\)\s*$/, '');
+        const byBook = new Map<string, Set<number>>();
+        for (const c of allNCERTChapters) {
+            if (c.isActive === false) continue;
+            const k = baseName(c.textbookName);
+            if (!byBook.has(k)) byBook.set(k, new Set());
+            byBook.get(k)!.add(c.number);
+        }
+
+        const known = new Set(KNOWN_INCOMPLETE.map(([b]) => b));
+        const gaps: string[] = [];
+        for (const [book, nums] of byBook) {
+            if (known.has(book)) continue;
+            const sorted = [...nums].sort((a, b) => a - b);
+            const expected = Array.from({ length: sorted.length }, (_, i) => i + 1);
+            if (JSON.stringify(sorted) !== JSON.stringify(expected)) {
+                gaps.push(`${book}: ${sorted.join(',')}`);
+            }
+        }
+        expect(gaps).toEqual([]);
+    });
+
+    it('the known-incomplete books are still incomplete — remove from the list when fixed', () => {
+        // Inverted on purpose: if someone completes Hornbill, this fails and
+        // forces the exemption to be deleted, so the list cannot rot into a
+        // permanent excuse.
+        for (const [book, official] of KNOWN_INCOMPLETE) {
+            const live = allNCERTChapters.filter(
+                (c) => c.textbookName === book && c.isActive !== false,
+            );
+            expect(`${book}: ${live.length}/${official}`).not.toBe(`${book}: ${official}/${official}`);
+        }
+    });
+
+    it('a piece printed inside a chapter carries that chapter’s number', () => {
+        // Poems live under their parent chapter, distinguished by an id suffix.
+        for (const [book, prose, poem, chapter] of [
+            ['First Flight', 'A Letter to God', 'Dust of Snow', 1],
+            ['First Flight', 'From the Diary of Anne Frank', 'Amanda!', 4],
+            ['Kaveri', 'Winds of Change', 'Canvas of Soil', 3],
+        ] as Array<[string, string, string, number]>) {
+            const live = allNCERTChapters.filter((c) => c.textbookName === book && c.isActive !== false);
+            expect(live.find((c) => c.title === prose)?.number).toBe(chapter);
+            expect(live.find((c) => c.title === poem)?.number).toBe(chapter);
+        }
+    });
+});
+
 describe('The bundled dataset outranks remote data in the UI (class gate)', () => {
     const selector = fs.readFileSync(path.join(SRC, 'components/ncert-chapter-selector.tsx'), 'utf8');
 

@@ -284,9 +284,9 @@ export const NCERTMathematics: NCERTGrade[] = [
             // ── Ganita Manjari (Part 1) — NCF-2023, prescribed from 2026-27 ──
             // Replaces the rationalized Mathematics (NCERT) book below, whose
             // chapters are kept inactive so saved lesson plans still resolve.
-            // Verified against the syllabus sheet and two independent sources;
-            // NCERT has published Part 1 only for 2026-27, so this is the whole
-            // book at this grade — not a first half awaiting a second.
+            // Verified against the official NCERT catalogue (ncert.nic.in,
+            // code iemh1=0-8): eight chapters, Part 1 only for 2026-27, so this
+            // is the whole book at this grade — not a first half awaiting a second.
             { id: 'math-9-gm-1', number: 1, title: 'Orienting Yourself: The Use of Coordinates', titleHindi: 'निर्देशांकों का उपयोग', textbookName: 'Ganita Manjari (Part 1)', textbookEdition: 'NCF-2023', dataVersion: '2026-ncert-ncf-class9', learningOutcomes: ['Locate points using coordinates', 'Read and plot on the Cartesian plane'], keywords: ['coordinates', 'cartesian plane', 'plotting'], estimatedPeriods: 12 },
             { id: 'math-9-gm-2', number: 2, title: 'Introduction to Linear Polynomials', titleHindi: 'रैखिक बहुपदों का परिचय', textbookName: 'Ganita Manjari (Part 1)', textbookEdition: 'NCF-2023', dataVersion: '2026-ncert-ncf-class9', learningOutcomes: ['Recognise linear polynomials', 'Relate a polynomial to its graph'], keywords: ['polynomial', 'linear', 'degree'], estimatedPeriods: 12 },
             { id: 'math-9-gm-3', number: 3, title: 'The World of Numbers', titleHindi: 'संख्याओं का संसार', textbookName: 'Ganita Manjari (Part 1)', textbookEdition: 'NCF-2023', dataVersion: '2026-ncert-ncf-class9', learningOutcomes: ['Classify rational and irrational numbers', 'Represent real numbers on the number line'], keywords: ['real numbers', 'irrational', 'number line'], estimatedPeriods: 14 },
