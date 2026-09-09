@@ -27,9 +27,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     {
       url: `${baseUrl}/pricing`,
-      lastModified: '2026-05-01',
+      lastModified: '2026-09-09',
       changeFrequency: 'monthly',
       priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/school-pricing`,
+      lastModified: '2026-09-09',
+      changeFrequency: 'monthly',
+      priority: 0.8,
     },
     {
       url: `${baseUrl}/faq`,
