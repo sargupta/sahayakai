@@ -15,98 +15,34 @@ import { LandingFooter } from "@/components/landing/landing-footer";
 import { ScriptMarks } from "@/components/landing/script-marks";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
-
-/**
- * School / chain pricing calculator (marketing, public).
- *
- * This is an ESTIMATOR and deliberately NOT the billing source of truth. The
- * canonical billed amounts live in src/lib/plan-config.ts; while pricing is
- * custom-quoted, the public tier prices are hidden and this page produces an
- * indicative annual figure a school can take into a formal quote.
- *
- * Pricing model (confirmed with founder, 2026-09-09):
- *   - Standard school annual rate : ₹10,000 / teacher / year (after the annual
- *     discount — roughly 48% off paying month-to-month).
- *   - Month-to-month list rate    : ₹1,600 / teacher / month.
- *   - Parent calls                : ₹4 / minute, sized by the school from
- *     student count × calls per student per year × average call length.
- *
- * Chain volume discount steps down the per-teacher annual rate for larger
- * rollouts. These steps are indicative — the final rate is set in the quote.
- */
-const ANNUAL_PER_TEACHER = 10000; // ₹/teacher/year
-const MONTHLY_PER_TEACHER = 1600; // ₹/teacher/month
-const PARENT_CALL_RATE_PER_MIN = 4; // ₹/minute
-
-type VolumeTier = { min: number; max: number | null; discount: number; label: string };
-
-// Indicative chain volume discount off the standard annual per-teacher rate.
-const VOLUME_TIERS: VolumeTier[] = [
-    { min: 1, max: 49, discount: 0, label: "1–49 teachers" },
-    { min: 50, max: 199, discount: 0.1, label: "50–199 teachers" },
-    { min: 200, max: 499, discount: 0.15, label: "200–499 teachers" },
-    { min: 500, max: null, discount: 0.2, label: "500+ teachers" },
-];
+import { estimateSchoolCost, SCHOOL_PRICING, type Billing } from "@/lib/school-pricing";
 
 const inr = (n: number) => Math.round(n).toLocaleString("en-IN");
-
-function tierFor(teachers: number): VolumeTier {
-    return (
-        VOLUME_TIERS.find((tier) => teachers >= tier.min && (tier.max === null || teachers <= tier.max)) ??
-        VOLUME_TIERS[0]
-    );
-}
+const GST_PCT = Math.round(SCHOOL_PRICING.gstRate * 100);
 
 export function SchoolPricingClient() {
     const { openAuthModal } = useAuth();
     const { t } = useLanguage();
 
     const [teachers, setTeachers] = useState(25);
-    const [billing, setBilling] = useState<"annual" | "monthly">("annual");
+    const [billing, setBilling] = useState<Billing>("annual");
     const [includeCalls, setIncludeCalls] = useState(true);
     const [students, setStudents] = useState(400);
     const [callsPerYear, setCallsPerYear] = useState(6);
     const [avgMinutes, setAvgMinutes] = useState(3);
 
-    const calc = useMemo(() => {
-        const safeTeachers = Math.max(0, Math.floor(teachers) || 0);
-        const tier = tierFor(safeTeachers || 1);
-        const effAnnualPerTeacher = Math.round(ANNUAL_PER_TEACHER * (1 - tier.discount));
-
-        // Annualise both cadences so totals are comparable.
-        const teacherAnnual = safeTeachers * effAnnualPerTeacher;
-        const teacherMonthlyAnnualised = safeTeachers * MONTHLY_PER_TEACHER * 12;
-        const teacherSubtotal = billing === "annual" ? teacherAnnual : teacherMonthlyAnnualised;
-
-        const safeStudents = Math.max(0, Math.floor(students) || 0);
-        const safeCalls = Math.max(0, Math.floor(callsPerYear) || 0);
-        const safeAvg = Math.max(0, avgMinutes || 0);
-        const callMinutesPerYear = includeCalls ? safeStudents * safeCalls * safeAvg : 0;
-        const callCostPerYear = callMinutesPerYear * PARENT_CALL_RATE_PER_MIN;
-
-        const totalPerYear = teacherSubtotal + callCostPerYear;
-
-        // Annual saving vs paying month-to-month for the same teacher count.
-        const annualSavingVsMonthly = Math.max(0, teacherMonthlyAnnualised - teacherAnnual);
-        const annualSavingPct =
-            teacherMonthlyAnnualised > 0
-                ? Math.round((annualSavingVsMonthly / teacherMonthlyAnnualised) * 100)
-                : 0;
-
-        return {
-            safeTeachers,
-            tier,
-            effAnnualPerTeacher,
-            teacherSubtotal,
-            teacherAnnual,
-            teacherMonthlyAnnualised,
-            callMinutesPerYear,
-            callCostPerYear,
-            totalPerYear,
-            annualSavingVsMonthly,
-            annualSavingPct,
-        };
-    }, [teachers, billing, includeCalls, students, callsPerYear, avgMinutes]);
+    const calc = useMemo(
+        () =>
+            estimateSchoolCost({
+                teachers,
+                billing,
+                includeParentCalls: includeCalls,
+                students,
+                callsPerStudentPerYear: callsPerYear,
+                avgMinutesPerCall: avgMinutes,
+            }),
+        [teachers, billing, includeCalls, students, callsPerYear, avgMinutes]
+    );
 
     const quoteHref = useMemo(() => {
         const lines = [
@@ -114,18 +50,18 @@ export function SchoolPricingClient() {
             "",
             "We would like a formal quote for SahayakAI. Our estimate from the calculator:",
             "",
-            `Teachers: ${calc.safeTeachers}`,
-            `Billing: ${billing === "annual" ? "Annual" : "Monthly"}`,
-            `Effective rate: ₹${inr(calc.effAnnualPerTeacher)}/teacher/year (${calc.tier.label})`,
-            `Teacher subtotal: ₹${inr(calc.teacherSubtotal)}/year`,
+            `Teachers: ${calc.teachers}`,
+            `Billing: ${billing === "annual" ? "Annual (Rs 10,000/teacher/year)" : "Monthly (Rs 1,600/teacher/month)"}`,
+            `Teacher subtotal: Rs ${inr(calc.teacherSubtotal)}/year`,
             includeCalls
-                ? `Parent calls: ${students} students × ${callsPerYear} calls/yr × ${avgMinutes} min = ${inr(
-                      calc.callMinutesPerYear
-                  )} min/yr → ₹${inr(calc.callCostPerYear)}/year`
+                ? `Parent calls: ${students} students x ${callsPerYear} calls/yr x ${avgMinutes} min = ${inr(
+                      calc.parentCallMinutesPerYear
+                  )} min/yr -> Rs ${inr(calc.parentCallCostPerYear)}/year`
                 : "Parent calls: not included",
-            `Estimated total: ₹${inr(calc.totalPerYear)}/year`,
+            `Subtotal: Rs ${inr(calc.subtotalPerYear)}/year (excl. GST)`,
+            `With ${GST_PCT}% GST: Rs ${inr(calc.totalPerYearInclGst)}/year`,
             "",
-            "Please share a formal quote and next steps.",
+            "We understand chains and large schools are quoted a further discount. Please share a formal quote and next steps.",
         ];
         return `mailto:contact@sargvision.com?subject=${encodeURIComponent(
             "SahayakAI school quote request"
@@ -157,7 +93,7 @@ export function SchoolPricingClient() {
                             <span className="italic font-normal text-saffron-700">{t("or your whole chain.")}</span>
                         </h1>
                         <p className="font-body text-base sm:text-lg text-muted-foreground leading-[1.6] max-w-[56ch] mt-5 mx-auto">
-                            {t("Per-teacher pricing with volume discounts, plus optional AI parent calls billed by the minute. This is an indicative figure — your final rate is confirmed in a written quote.")}
+                            {t("Standard pricing is ₹10,000 per teacher per year, or ₹1,600 per teacher per month. Add AI parent calls at ₹4/minute. This is an indicative figure — chains and large schools are quoted a further discount.")}
                         </p>
                     </section>
 
@@ -171,6 +107,7 @@ export function SchoolPricingClient() {
                                     <SectionHeader icon={Users} label={t("Teachers")} />
                                     <NumberSlider
                                         id="teachers"
+                                        ariaLabel={t("Number of teachers")}
                                         value={teachers}
                                         onChange={setTeachers}
                                         min={1}
@@ -187,18 +124,20 @@ export function SchoolPricingClient() {
                                             <TogglePill
                                                 active={billing === "annual"}
                                                 onClick={() => setBilling("annual")}
-                                                label={t("Annual")}
+                                                label={`${t("Annual")} · ₹${inr(SCHOOL_PRICING.annualPerTeacher)}`}
                                             />
                                             <TogglePill
                                                 active={billing === "monthly"}
                                                 onClick={() => setBilling("monthly")}
-                                                label={t("Monthly")}
+                                                label={`${t("Monthly")} · ₹${inr(SCHOOL_PRICING.monthlyPerTeacher)}`}
                                             />
                                         </div>
                                         <p className="mt-2 text-sm text-muted-foreground leading-[1.5]">
                                             {billing === "annual"
-                                                ? `${t("Standard school rate")}: ₹${inr(ANNUAL_PER_TEACHER)}${t("/teacher/year")}`
-                                                : `${t("Month-to-month rate")}: ₹${inr(MONTHLY_PER_TEACHER)}${t("/teacher/month")}`}
+                                                ? `₹${inr(SCHOOL_PRICING.annualPerTeacher)}${t("/teacher/year")} · ≈ ₹${inr(
+                                                      SCHOOL_PRICING.annualPerTeacher / 12
+                                                  )}${t("/month, billed annually")}`
+                                                : `₹${inr(SCHOOL_PRICING.monthlyPerTeacher)}${t("/teacher/month")} · ${t("no annual commitment")}`}
                                         </p>
                                     </div>
                                 </div>
@@ -218,7 +157,7 @@ export function SchoolPricingClient() {
                                         </label>
                                     </div>
                                     <p className="mt-1 text-sm text-muted-foreground leading-[1.5]">
-                                        {`${t("AI parent calls are billed at")} ₹${PARENT_CALL_RATE_PER_MIN}${t("/minute")}. ${t("Size them from your student count.")}`}
+                                        {`${t("AI parent calls are billed on usage at")} ₹${SCHOOL_PRICING.parentCallRatePerMin}${t("/minute")}. ${t("Size them from your student count.")}`}
                                     </p>
 
                                     <div
@@ -257,7 +196,7 @@ export function SchoolPricingClient() {
                                         <p className="mt-4 text-sm text-muted-foreground leading-[1.5]">
                                             {`${inr(students)} × ${callsPerYear} × ${avgMinutes} = `}
                                             <span className="font-semibold text-foreground">
-                                                {`${inr(calc.callMinutesPerYear)} ${t("minutes / year")}`}
+                                                {`${inr(calc.parentCallMinutesPerYear)} ${t("minutes / year")}`}
                                             </span>
                                         </p>
                                     )}
@@ -271,19 +210,21 @@ export function SchoolPricingClient() {
                                     </div>
                                     <dl className="space-y-2 text-sm text-muted-foreground leading-[1.5]">
                                         <Row
-                                            label={t("Your volume tier")}
-                                            value={`${calc.tier.label}${
-                                                calc.tier.discount > 0 ? ` · ${Math.round(calc.tier.discount * 100)}% ${t("off")}` : ""
-                                            }`}
+                                            label={t("Annual rate")}
+                                            value={`₹${inr(SCHOOL_PRICING.annualPerTeacher)}${t("/teacher/year")}`}
                                         />
                                         <Row
-                                            label={t("Effective per-teacher rate")}
-                                            value={`₹${inr(calc.effAnnualPerTeacher)}${t("/teacher/year")}`}
+                                            label={t("Monthly rate")}
+                                            value={`₹${inr(SCHOOL_PRICING.monthlyPerTeacher)}${t("/teacher/month")}`}
                                         />
-                                        <Row label={t("Parent-call rate")} value={`₹${PARENT_CALL_RATE_PER_MIN}${t("/minute")}`} />
+                                        <Row
+                                            label={t("Parent-call rate")}
+                                            value={`₹${SCHOOL_PRICING.parentCallRatePerMin}${t("/minute")}`}
+                                        />
+                                        <Row label={t("GST")} value={`${GST_PCT}%`} />
                                     </dl>
                                     <p className="mt-3 text-xs text-muted-foreground leading-[1.5]">
-                                        {t("Volume tiers are indicative. Larger chains and government tenders are quoted individually.")}
+                                        {t("Chains and large schools are quoted a further discount off the annual rate. The final figure is set in your written quote.")}
                                     </p>
                                 </div>
                             </div>
@@ -296,35 +237,40 @@ export function SchoolPricingClient() {
                                     </div>
 
                                     <SummaryLine
-                                        label={`${inr(calc.safeTeachers)} ${t("teachers")} × ₹${inr(
-                                            billing === "annual" ? calc.effAnnualPerTeacher : MONTHLY_PER_TEACHER * 12
-                                        )}`}
+                                        label={`${inr(calc.teachers)} ${t("teachers")} × ₹${inr(calc.perTeacherPerYear)}`}
                                         value={`₹${inr(calc.teacherSubtotal)}`}
                                     />
-                                    {billing === "annual" && calc.annualSavingPct > 0 && (
+                                    {billing === "monthly" && calc.annualSavingVsMonthly > 0 && (
                                         <p className="mt-1 text-sm text-saffron-700 font-medium">
-                                            {`${t("Saves")} ₹${inr(calc.annualSavingVsMonthly)} (${calc.annualSavingPct}%) ${t("vs paying monthly")}`}
+                                            {`${t("Pay annually and save")} ₹${inr(calc.annualSavingVsMonthly)}${t("/year")}`}
                                         </p>
                                     )}
 
                                     {includeCalls && (
                                         <div className="mt-3">
                                             <SummaryLine
-                                                label={`${t("Parent calls")} · ${inr(calc.callMinutesPerYear)} ${t("min")}`}
-                                                value={`₹${inr(calc.callCostPerYear)}`}
+                                                label={`${t("Parent calls")} · ${inr(calc.parentCallMinutesPerYear)} ${t("min")}`}
+                                                value={`₹${inr(calc.parentCallCostPerYear)}`}
                                             />
                                         </div>
                                     )}
 
-                                    <div className="mt-5 pt-5 border-t border-border">
+                                    <div className="mt-3 pt-3 border-t border-border">
+                                        <SummaryLine label={t("Subtotal (excl. GST)")} value={`₹${inr(calc.subtotalPerYear)}`} />
+                                        <div className="mt-1.5">
+                                            <SummaryLine label={`${t("GST")} ${GST_PCT}%`} value={`₹${inr(calc.gst)}`} />
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-4 pt-4 border-t border-border">
                                         <div className="flex items-baseline justify-between gap-3">
                                             <span className="text-sm font-medium text-muted-foreground">{t("Total per year")}</span>
                                             <span className="font-headline font-extrabold tracking-tight text-4xl text-saffron-700 leading-none">
-                                                ₹{inr(calc.totalPerYear)}
+                                                ₹{inr(calc.totalPerYearInclGst)}
                                             </span>
                                         </div>
                                         <p className="mt-2 text-sm text-muted-foreground">
-                                            {`≈ ₹${inr(calc.totalPerYear / 12)} ${t("/ month")}`}
+                                            {`${t("incl. GST")} · ≈ ₹${inr(calc.totalPerYearInclGst / 12)} ${t("/ month")}`}
                                         </p>
                                     </div>
 
@@ -376,6 +322,7 @@ function SectionHeader({ icon: Icon, label }: { icon: React.ComponentType<{ clas
 
 function NumberSlider({
     id,
+    ariaLabel,
     value,
     onChange,
     min,
@@ -384,6 +331,7 @@ function NumberSlider({
     unit,
 }: {
     id: string;
+    ariaLabel: string;
     value: number;
     onChange: (n: number) => void;
     min: number;
@@ -399,6 +347,7 @@ function NumberSlider({
                         id={id}
                         type="number"
                         inputMode="numeric"
+                        aria-label={ariaLabel}
                         min={min}
                         value={Number.isFinite(value) ? value : ""}
                         onChange={(e) => onChange(Number(e.target.value))}
@@ -409,7 +358,7 @@ function NumberSlider({
             </div>
             <input
                 type="range"
-                aria-label={id}
+                aria-label={ariaLabel}
                 min={min}
                 max={max}
                 step={step}

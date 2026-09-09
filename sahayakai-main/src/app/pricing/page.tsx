@@ -198,12 +198,12 @@ function PricingContent() {
                         </div>
 
                         <h1 className="font-headline font-extrabold tracking-tight text-4xl sm:text-5xl leading-tight max-w-[22ch] text-foreground">
-                            {t('Pricing built around your school.')}{' '}
-                            <span className="italic font-normal text-saffron-700">{t('Not a number on a page.')}</span>
+                            {t('Simple pricing,')}{' '}
+                            <span className="italic font-normal text-saffron-700">{t('per teacher.')}</span>
                         </h1>
 
                         <p className="font-body text-base sm:text-lg text-muted-foreground leading-[1.6] max-w-[56ch] mt-6 mx-auto">
-                            {t('Every school and every chain runs differently. We size the plan to your teacher count, your rollout, and the support you need, then put it in writing. No public per-seat sticker, no surprises at renewal.')}
+                            {t('₹10,000 per teacher per year, or ₹1,600 per teacher per month. Add AI parent calls at ₹4/minute. Chains and large schools get a further discount, confirmed in a written quote.')}
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-3 mt-8 justify-center w-full sm:w-auto">
@@ -225,7 +225,7 @@ function PricingContent() {
                             </a>
                         </div>
                         <p className="mt-4 text-sm font-medium text-muted-foreground">
-                            {t('Individual teachers: talk to us for a personal plan.')}
+                            {t('Individual teachers pay the same per-teacher rate. Talk to us to get started.')}
                         </p>
                     </section>
 
