@@ -241,8 +241,11 @@ export const hindiChapters: NCERTChapter[] = [
     // One integrated volume replacing all four of Kshitij + Kritika
     // (Course A) and Sparsh + Sanchayan (Course B). Seven prose chapters
     // (गद्य खंड, 1-7) then five poems (काव्य खंड, 8-12).
-    // NOTE: the syllabus sheet gives ch 8 as 'पद'; the corroborating source
-    // gives 'रैदास के पद'. Using the fuller title. The book also carries two
+    // ch 8 is 'पद' (poet रैदास), confirmed against NCERT's own विषय-क्रम in
+    // ihga1ps.pdf, not just the syllabus sheet: the contents page prints the
+    // title 'पद' with रैदास in the author column. An aggregator gives the
+    // fuller 'रैदास के पद' and the chapter's display header shows the poet name
+    // 'रैदास' — but the official title is 'पद'. The book also carries two
     // साथ-साथ पढ़ें supplementary readings not yet recorded here.
     { id: 'hin-9-ganga-1', title: 'दो बैलों की कथा', textbookName: 'Ganga', textbookEdition: 'NCF-2023', subject: 'Hindi', grade: 9, number: 1, learningOutcomes: ['पशु-मानव संबंध', 'प्रेमचंद की कथा-शैली'], keywords: ['कहानी', 'प्रेमचंद', 'पशु'], estimatedPeriods: 6, isActive: true, dataVersion: '2026-ncert-ncf-class9' },
     { id: 'hin-9-ganga-2', title: 'क्या लिखूँ?', textbookName: 'Ganga', textbookEdition: 'NCF-2023', subject: 'Hindi', grade: 9, number: 2, learningOutcomes: ['लेखन-प्रक्रिया पर चिंतन', 'आत्मपरक गद्य'], keywords: ['लेखन', 'निबंध'], estimatedPeriods: 5, isActive: true, dataVersion: '2026-ncert-ncf-class9' },
@@ -251,7 +254,7 @@ export const hindiChapters: NCERTChapter[] = [
     { id: 'hin-9-ganga-5', title: 'आखिरी चट्टान तक', textbookName: 'Ganga', textbookEdition: 'NCF-2023', subject: 'Hindi', grade: 9, number: 5, learningOutcomes: ['यात्रा-वृत्तांत', 'भूगोल और संस्कृति'], keywords: ['यात्रा', 'वृत्तांत'], estimatedPeriods: 5, isActive: true, dataVersion: '2026-ncert-ncf-class9' },
     { id: 'hin-9-ganga-6', title: 'रीढ़ की हड्डी', textbookName: 'Ganga', textbookEdition: 'NCF-2023', subject: 'Hindi', grade: 9, number: 6, learningOutcomes: ['एकांकी विधा', 'स्त्री-शिक्षा का प्रश्न'], keywords: ['एकांकी', 'स्त्री शिक्षा'], estimatedPeriods: 6, isActive: true, dataVersion: '2026-ncert-ncf-class9' },
     { id: 'hin-9-ganga-7', title: 'मैं और मेरा देश', textbookName: 'Ganga', textbookEdition: 'NCF-2023', subject: 'Hindi', grade: 9, number: 7, learningOutcomes: ['देशप्रेम', 'नागरिक कर्तव्य'], keywords: ['देश', 'नागरिकता'], estimatedPeriods: 5, isActive: true, dataVersion: '2026-ncert-ncf-class9' },
-    { id: 'hin-9-ganga-8', title: 'रैदास के पद', textbookName: 'Ganga', textbookEdition: 'NCF-2023', subject: 'Hindi', grade: 9, number: 8, learningOutcomes: ['भक्तिकालीन काव्य', 'रैदास की सामाजिक दृष्टि'], keywords: ['भक्ति', 'पद', 'रैदास'], estimatedPeriods: 5, isActive: true, dataVersion: '2026-ncert-ncf-class9' },
+    { id: 'hin-9-ganga-8', title: 'पद', textbookName: 'Ganga', textbookEdition: 'NCF-2023', subject: 'Hindi', grade: 9, number: 8, learningOutcomes: ['भक्तिकालीन काव्य', 'रैदास की सामाजिक दृष्टि'], keywords: ['भक्ति', 'पद', 'रैदास'], estimatedPeriods: 5, isActive: true, dataVersion: '2026-ncert-ncf-class9' },
     { id: 'hin-9-ganga-9', title: 'राम-लक्ष्मण-परशुराम संवाद', textbookName: 'Ganga', textbookEdition: 'NCF-2023', subject: 'Hindi', grade: 9, number: 9, learningOutcomes: ['तुलसीदास का काव्य', 'संवाद में चरित्र-चित्रण'], keywords: ['तुलसीदास', 'संवाद'], estimatedPeriods: 6, isActive: true, dataVersion: '2026-ncert-ncf-class9' },
     { id: 'hin-9-ganga-10', title: 'भारति, जय, विजय करे!', textbookName: 'Ganga', textbookEdition: 'NCF-2023', subject: 'Hindi', grade: 9, number: 10, learningOutcomes: ['राष्ट्रीय भावबोध', 'छंद और लय'], keywords: ['राष्ट्र', 'कविता'], estimatedPeriods: 4, isActive: true, dataVersion: '2026-ncert-ncf-class9' },
     { id: 'hin-9-ganga-11', title: 'झाँसी की रानी', textbookName: 'Ganga', textbookEdition: 'NCF-2023', subject: 'Hindi', grade: 9, number: 11, learningOutcomes: ['वीर रस', 'सुभद्राकुमारी चौहान'], keywords: ['वीर रस', 'इतिहास'], estimatedPeriods: 5, isActive: true, dataVersion: '2026-ncert-ncf-class9' },
