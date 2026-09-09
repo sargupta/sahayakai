@@ -35,7 +35,7 @@ import { LabsBanner } from "@/components/labs/labs-banner";
 import { Search } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 
-const MARKETING_PATHS = ["/for-schools", "/pricing", "/privacy-for-teachers", "/terms", "/about"];
+const MARKETING_PATHS = ["/for-schools", "/pricing", "/school-pricing", "/privacy-for-teachers", "/terms", "/about"];
 
 function isMarketingPath(pathname: string | null): boolean {
   if (!pathname) return false;

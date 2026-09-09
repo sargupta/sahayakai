@@ -188,6 +188,22 @@ export const PLAN_DISPLAY_NAMES: Record<PlanType, string> = {
 };
 
 /**
+ * ⚠ PUBLIC PRICING NORM CHANGED (2026-09). The public per-teacher norm is now
+ * ₹10,000/teacher/year (annual) or ₹1,600/teacher/month, with AI parent calls
+ * at ₹4/minute — see `src/lib/school-pricing.ts` (the estimator's source of
+ * truth) and the `/school-pricing` calculator. Schools/chains are quoted; the
+ * public tier grid has been removed from `/pricing` in favour of custom pricing.
+ *
+ * The `PLAN_PRICING` amounts BELOW are the (currently hidden) Razorpay
+ * self-serve tiers. They are intentionally left UNCHANGED because
+ * `src/lib/billing-reconciliation.ts` derives its expected charges from them,
+ * so editing the paise here without updating the Razorpay dashboard plans would
+ * make reconciliation reject legitimate existing subscriptions. Treat these as
+ * legacy/dormant until the custom-quote billing path is built; do not surface
+ * them publicly.
+ */
+
+/**
  * Premium Anchored Pricing Ladder (SARGVISION, 2026).
  *
  * Positioning: SahayakAI is an Enterprise AI Teacher Copilot. Sticker anchors
