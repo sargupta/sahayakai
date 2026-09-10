@@ -97,3 +97,118 @@ export function estimateSchoolCost(input: SchoolPricingInput): SchoolPricingResu
         totalPerYearInclGst: subtotalPerYear + gst,
     };
 }
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * Value / savings model — "what the school gets back".
+ *
+ * Source of truth is the founder-approved, sourced methodology (v1.0, Jul 2026;
+ * company/proposals/elevate_karnataka/methodology.md). We reproduce its numbers
+ * exactly so the on-page figure and the proposal never diverge:
+ *   - 9 capabilities save 10.8 hrs/teacher/week (itemised below).
+ *   - × 38 teaching weeks (deliberately conservative, not 44–46) ≈ 410 hrs/yr.
+ *   - Hourly cost = monthly salary ÷ 176 paid hrs (22 days × 8 hrs).
+ *   - Value/teacher/yr = hours × hourly cost. At ₹30k/mo this is ~₹69,900,
+ *     matching the methodology's published band (₹20k→₹46,600 … ₹60k→₹1,39,800).
+ * ROI and payback are computed against the CURRENT annual price
+ * (SCHOOL_PRICING.annualPerTeacher), not the methodology's older price column.
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+export const SAVINGS_MODEL = {
+    /** Teaching weeks per year — conservative (methodology uses 38, not 44–46). */
+    weeksPerYear: 38,
+    /** Paid hours per month (22 working days × 8 hrs) for the hourly rate. */
+    paidHoursPerMonth: 176,
+    /** Hours in one teacher-FTE-year, for the "= N full teachers" framing. */
+    fteHoursPerYear: 1900,
+} as const;
+
+export interface SavingsCapability {
+    /** English label (UI wraps in t()). */
+    name: string;
+    hoursPerWeek: number;
+}
+
+/** Hours saved per teacher per week, by capability (methodology §1). Sums to 10.8. */
+export const SAVINGS_CAPABILITIES: readonly SavingsCapability[] = [
+    { name: 'Lesson planning', hoursPerWeek: 3.0 },
+    { name: 'Grading (assessment scanner)', hoursPerWeek: 2.5 },
+    { name: 'Quizzes & worksheets', hoursPerWeek: 1.2 },
+    { name: 'AI parent calls', hoursPerWeek: 1.0 },
+    { name: 'Board practice sets', hoursPerWeek: 0.8 },
+    { name: 'VIDYA co-teacher & visual aids', hoursPerWeek: 0.8 },
+    { name: 'Professional messaging', hoursPerWeek: 0.6 },
+    { name: 'Teacher community', hoursPerWeek: 0.5 },
+    { name: 'Built-in AI training', hoursPerWeek: 0.4 },
+] as const;
+
+/** Total hours saved per teacher per week across all capabilities (≈ 10.8). */
+export const SAVINGS_WEEKLY_HOURS = SAVINGS_CAPABILITIES.reduce((s, c) => s + c.hoursPerWeek, 0);
+
+/** Hours reclaimed per teacher per year (≈ 410), rounded to a whole hour. */
+export const SAVINGS_HOURS_PER_TEACHER_YEAR = Math.round(SAVINGS_WEEKLY_HOURS * SAVINGS_MODEL.weeksPerYear);
+
+export interface SchoolSavingsInput {
+    teachers: number;
+    /** Average teacher salary per month, in ₹. */
+    salaryPerMonth: number;
+}
+
+export interface SchoolSavingsResult {
+    teachers: number;
+    salaryPerMonth: number;
+    /** ₹ per teacher-hour (salary ÷ 176). */
+    hourlyCost: number;
+    hoursPerTeacherPerYear: number;
+    /** Total hours reclaimed across the school per year. */
+    hoursReclaimedSchool: number;
+    /** ₹ value of time reclaimed, per teacher per year. */
+    valuePerTeacherPerYear: number;
+    /** ₹ value of time reclaimed, whole school per year. */
+    valueSchoolPerYear: number;
+    /** ₹ the school pays SahayakAI per year (teachers × annual rate). */
+    sahayakaiCostPerYear: number;
+    /** ₹ value reclaimed minus what the school pays, per year. */
+    netSavingsPerYear: number;
+    /** value ÷ price, per teacher (how many ₹ back per ₹1 spent). */
+    roiMultiple: number;
+    /** Months for the reclaimed value to cover the annual price. */
+    paybackMonths: number;
+    /** Reclaimed hours expressed as full-time-teacher-years. */
+    fteEquivalent: number;
+}
+
+/**
+ * Estimate the annual value a school gets back from the time SahayakAI reclaims.
+ * Pure; clamps bad input to zero so a blank field never yields NaN on the page.
+ */
+export function estimateSchoolSavings(input: SchoolSavingsInput): SchoolSavingsResult {
+    const teachers = nonNegInt(input.teachers);
+    const salaryPerMonth = nonNeg(input.salaryPerMonth);
+    const hourlyCost = salaryPerMonth / SAVINGS_MODEL.paidHoursPerMonth;
+    const hoursPerTeacherPerYear = SAVINGS_HOURS_PER_TEACHER_YEAR;
+    const hoursReclaimedSchool = teachers * hoursPerTeacherPerYear;
+    const valuePerTeacherPerYear = hoursPerTeacherPerYear * hourlyCost;
+    const valueSchoolPerYear = teachers * valuePerTeacherPerYear;
+    const sahayakaiCostPerYear = teachers * SCHOOL_PRICING.annualPerTeacher;
+    const netSavingsPerYear = valueSchoolPerYear - sahayakaiCostPerYear;
+    const roiMultiple =
+        valuePerTeacherPerYear > 0 ? valuePerTeacherPerYear / SCHOOL_PRICING.annualPerTeacher : 0;
+    const paybackMonths =
+        valuePerTeacherPerYear > 0 ? (12 * SCHOOL_PRICING.annualPerTeacher) / valuePerTeacherPerYear : 0;
+    const fteEquivalent = hoursReclaimedSchool / SAVINGS_MODEL.fteHoursPerYear;
+
+    return {
+        teachers,
+        salaryPerMonth,
+        hourlyCost,
+        hoursPerTeacherPerYear,
+        hoursReclaimedSchool,
+        valuePerTeacherPerYear,
+        valueSchoolPerYear,
+        sahayakaiCostPerYear,
+        netSavingsPerYear,
+        roiMultiple,
+        paybackMonths,
+        fteEquivalent,
+    };
+}

@@ -5,7 +5,14 @@
  * Locks the arithmetic and the input clamping so a future edit to the rates or
  * the formula fails loudly instead of silently misquoting a school.
  */
-import { estimateSchoolCost, SCHOOL_PRICING } from '@/lib/school-pricing';
+import {
+    estimateSchoolCost,
+    SCHOOL_PRICING,
+    estimateSchoolSavings,
+    SAVINGS_WEEKLY_HOURS,
+    SAVINGS_HOURS_PER_TEACHER_YEAR,
+    SAVINGS_CAPABILITIES,
+} from '@/lib/school-pricing';
 
 const base = {
     teachers: 25,
@@ -72,5 +79,44 @@ describe('estimateSchoolCost', () => {
         expect(r.subtotalPerYear).toBe(0);
         expect(r.gst).toBe(0);
         expect(r.totalPerYearInclGst).toBe(0);
+    });
+});
+
+/**
+ * Regression gate for the value/savings model (methodology v1.0). Locks the
+ * itemised hours, the 410 hrs/teacher/yr total, and the published salary-band
+ * values so the on-page ROI can never silently drift from the proposal.
+ */
+describe('estimateSchoolSavings', () => {
+    it('uses the methodology hours (10.8/wk across 9 tools → 410/yr)', () => {
+        expect(SAVINGS_CAPABILITIES).toHaveLength(9);
+        expect(SAVINGS_WEEKLY_HOURS).toBeCloseTo(10.8, 5);
+        expect(SAVINGS_HOURS_PER_TEACHER_YEAR).toBe(410);
+    });
+
+    it('reproduces the published per-teacher value bands (salary ÷ 176 × 410)', () => {
+        const band = (salaryPerMonth: number) =>
+            Math.round(estimateSchoolSavings({ teachers: 1, salaryPerMonth }).valuePerTeacherPerYear / 100) * 100;
+        expect(band(20000)).toBe(46600);
+        expect(band(30000)).toBe(69900);
+        expect(band(40000)).toBe(93200);
+        expect(band(50000)).toBe(116500);
+        expect(band(60000)).toBe(139800);
+    });
+
+    it('computes a 30-teacher school at ₹30k against the current ₹10,000 price', () => {
+        const r = estimateSchoolSavings({ teachers: 30, salaryPerMonth: 30000 });
+        expect(r.hoursReclaimedSchool).toBe(12300); // 30 × 410
+        expect(r.sahayakaiCostPerYear).toBe(300000); // 30 × 10,000
+        expect(Math.round(r.netSavingsPerYear)).toBe(1796591); // ≈ ₹18L net
+        expect(r.roiMultiple).toBeCloseTo(6.99, 1); // ~7× at the new price
+        expect(r.paybackMonths).toBeCloseTo(1.72, 1);
+        expect(r.fteEquivalent).toBeCloseTo(6.47, 2);
+    });
+
+    it('clamps bad input to zero (no NaN on the page)', () => {
+        expect(estimateSchoolSavings({ teachers: -5, salaryPerMonth: 30000 }).valueSchoolPerYear).toBe(0);
+        expect(estimateSchoolSavings({ teachers: 10, salaryPerMonth: NaN }).valuePerTeacherPerYear).toBe(0);
+        expect(estimateSchoolSavings({ teachers: 10, salaryPerMonth: 0 }).roiMultiple).toBe(0);
     });
 });
