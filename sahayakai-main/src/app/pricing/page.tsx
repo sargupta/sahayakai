@@ -40,8 +40,8 @@ type Feature = { icon: ComponentType<{ className?: string }>; text: string };
 // estimator + a demo, rather than publishing per-seat numbers.
 const INCLUDED: Feature[] = [
     { icon: BookOpen, text: 'Lesson plans, quizzes, worksheets and rubrics' },
-    { icon: Mic, text: 'Voice-first input in 11 Indian languages' },
-    { icon: ClipboardList, text: 'NCERT and 28 state boards' },
+    { icon: Mic, text: 'Your language — voice-first in 11 Indian languages' },
+    { icon: ClipboardList, text: 'Your board — NCERT, CBSE and 28 state boards' },
     { icon: MessageCircle, text: 'AI parent messages and parent calls' },
     { icon: BarChart3, text: 'Principal and chain-level impact dashboards' },
     { icon: Shield, text: 'Teacher onboarding, training and priority support' },
@@ -203,7 +203,7 @@ function PricingContent() {
                         </h1>
 
                         <p className="font-body text-base sm:text-lg text-muted-foreground leading-[1.6] max-w-[56ch] mt-6 mx-auto">
-                            {t('₹10,000 per teacher per year, or ₹1,600 per teacher per month. Add AI parent calls at ₹4/minute. Chains and large schools get a further discount, confirmed in a written quote.')}
+                            {t('₹10,000 per teacher a year — about ₹833 a month, billed annually. Prefer month-to-month, no commitment? ₹1,600 per teacher a month. AI parent calls are billed only for the minutes you use, at ₹4 a minute. Chains and larger schools get a further discount, confirmed in a written quote.')}
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-3 mt-8 justify-center w-full sm:w-auto">
@@ -260,10 +260,10 @@ function PricingContent() {
                                         {t('Schools and chains')}
                                     </div>
                                     <div className="font-headline font-semibold text-lg text-foreground leading-tight">
-                                        {t('Estimate your school or chain in under a minute')}
+                                        {t('See your cost — and what your school gets back')}
                                     </div>
                                     <div className="mt-1.5 text-sm text-muted-foreground leading-[1.55]">
-                                        {t('Enter your teacher count and, if you want parent calls, your student count. The calculator gives an indicative annual figure you can take to a formal quote.')}
+                                        {t('Enter your teacher count and average salary. The calculator shows your annual cost next to the far larger value your teachers get back in reclaimed time.')}
                                     </div>
                                 </div>
                             </div>
