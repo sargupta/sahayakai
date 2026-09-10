@@ -27,7 +27,7 @@ export function LandingNav({ onAuthClick }: Props) {
       </div>
 
       <div className="hidden md:flex gap-7 text-[13px] text-neutral-600 font-medium">
-        <a href="#product" className="hover:text-foreground transition-colors">
+        <a href="/#product" className="hover:text-foreground transition-colors">
           {t("Product")}
         </a>
         <a href="/pricing" className="hover:text-foreground transition-colors">
