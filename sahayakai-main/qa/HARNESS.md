@@ -55,6 +55,48 @@ node scripts/qa/cleanup-test-users.mjs --dryRun   # preview only
 
 Idempotent. Drops both Auth users and `users/{uid}` Firestore docs.
 
+## Visual Regression (@visual)
+
+`qa/e2e/visual.spec.ts` screenshots 10 canonical pages in light and dark mode
+(20 baselines) and runs an axe-core WCAG 2.1 AA scan per page. Baselines live
+in `qa/e2e/__screenshots__/` (see `snapshotPathTemplate` in
+`qa/playwright.config.ts`).
+
+**Baselines are linux-CI-generated ONLY.** Font rasterisation and
+anti-aliasing differ per OS, so snapshots generated on macOS will never match
+a linux CI render — never commit darwin-generated screenshots. The snapshot
+path template deliberately omits `{platform}` so there is exactly one baseline
+set: linux.
+
+### Bootstrapping baselines (first run)
+
+1. Trigger the **UAT Verify** workflow via `workflow_dispatch` with
+   `update_snapshots: true`. The visual job runs with `--update-snapshots`
+   and uploads the regenerated linux snapshots as the
+   `visual-baselines-linux` artifact.
+2. Download the artifact, unpack it into `qa/e2e/__screenshots__/`, and
+   commit the PNGs.
+3. Subsequent pushes to main compare against these committed baselines.
+
+### Updating after an intentional design change
+
+Same flow: dispatch **UAT Verify** with `update_snapshots: true` **after the
+design change is live on UAT**, download `visual-baselines-linux`, replace the
+files under `qa/e2e/__screenshots__/`, and commit them alongside (or right
+after) the design PR. Review the image diffs in the PR like any other code —
+they ARE the review surface for visual changes.
+
+Local macOS runs are still useful for mechanics (does the page render, does
+axe pass): run with `--update-snapshots` to generate throwaway local
+baselines, but **delete them before committing**.
+
+### Axe enforcement
+
+Serious/critical `color-contrast` violations are soft (console.warn + report
+attachment) by default because production carries known baseline contrast
+issues. Set `AXE_ENFORCE=1` to make them fail the run — T2 flips this on in
+CI once the baseline issues are fixed.
+
 ## Files
 
 - `scripts/qa/provision-test-user.mjs` — Admin SDK provisioner + idToken minter
