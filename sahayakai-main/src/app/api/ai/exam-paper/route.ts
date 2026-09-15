@@ -3,13 +3,17 @@ import { NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { handleAIError, logAIError } from '@/lib/ai-error-response';
 import { withPlanCheck } from '@/lib/plan-guard';
+import { isFeatureEnabled } from '@/lib/feature-flags';
 import {
     dispatchExamPaper,
     ExamPaperGenerationInProgressError,
 } from '@/lib/sidecar/exam-paper-dispatch';
 
-// Allow up to 120s for AI generation (hot path can be slow under load)
-export const maxDuration = 120;
+// M4 (2026-07-16): the fallback path runs sidecar TIMEOUT_MS (90s) then the
+// Genkit FALLBACK_TIMEOUT_MS (75s) sequentially = up to 165s. A 120s
+// maxDuration made the platform 504 before the friendly 202 could map.
+// Raised to 180 (Cloud Run has 300s headroom).
+export const maxDuration = 180;
 
 /**
  * @swagger
@@ -73,9 +77,25 @@ const VALID_DIFFICULTIES = ['easy', 'moderate', 'hard', 'mixed'] as const;
 async function _handler(request: Request) {
     let paperDesc = 'Unknown Paper';
     try {
+        // L11: `x-user-id` is trusted here because middleware.ts:156-157 strips
+        // any client-supplied copy of this header and re-injects the verified
+        // identity — that middleware is the trust boundary, not this handler.
         const userId = request.headers.get('x-user-id');
         if (!userId) {
             return NextResponse.json({ error: 'Unauthorized: Missing User Identity' }, { status: 401 });
+        }
+
+        // H5 (forensic EPG-2026-07-17): master kill switch for exam-paper
+        // generation. Per-repair-pass flags exist, but there was no single lever
+        // to pause the whole feature if core generation misbehaves — only a code
+        // change. Unconfigured → enabled (zero-config; current behavior). A
+        // non-2xx here refunds any reserved quota via withPlanCheck.
+        const featureFlag = await isFeatureEnabled('examPaperEnabled', userId);
+        if (!featureFlag.enabled) {
+            return NextResponse.json(
+                { error: 'Feature disabled', reason: featureFlag.reason },
+                { status: 503 },
+            );
         }
 
         let body: Record<string, unknown>;
@@ -113,16 +133,27 @@ async function _handler(request: Request) {
         // generator has SOMETHING to anchor on.
         if ((body.chapters as string[]).length === 0) {
             const { findBlueprint } = await import('@/ai/data/board-blueprints');
-            const blueprint = findBlueprint(
+            const blueprint = await findBlueprint(
                 String(body.board),
                 String(body.gradeLevel),
                 String(body.subject),
             );
-            if (!blueprint) {
+            // Whole-syllabus (empty chapters) is fine as long as the flow can expand []→a concrete
+            // chapter list: from the blueprint's chapterWeightage, or from the NCERT seed. Only a
+            // subject we can anchor NEITHER way leaves Gemini with two open-ended constraints
+            // (invent-structure + invent-syllabus) → timeout. Reject just that case.
+            let canAnchor = !!blueprint;
+            if (!canAnchor) {
+                const { canonicaliseGrade, canonicaliseSubject, getChaptersForCell } = await import('@/ai/data/ncert-chapters');
+                const grade = canonicaliseGrade(String(body.gradeLevel));
+                const subject = canonicaliseSubject(String(body.subject));
+                canAnchor = grade != null && !!subject && getChaptersForCell(grade, subject).length > 0;
+            }
+            if (!canAnchor) {
                 return NextResponse.json(
                     {
                         error: 'chapters_required_for_unblueprinted_subject',
-                        message: `Please add at least one chapter for ${body.board} ${body.gradeLevel} ${body.subject}. We only have official blueprints for CBSE Class 9 and Class 10 Mathematics and Science — for everything else, the AI needs a chapter list to anchor the paper.`,
+                        message: `Please add at least one chapter for ${body.board} ${body.gradeLevel} ${body.subject}, or pick a subject we have a blueprint/syllabus for. The AI needs a chapter list to anchor the paper.`,
                     },
                     { status: 400 },
                 );
@@ -136,6 +167,13 @@ async function _handler(request: Request) {
             );
         }
 
+        if (body.pyqRatio !== undefined && (typeof body.pyqRatio !== 'number' || body.pyqRatio < 0 || body.pyqRatio > 100)) {
+            return NextResponse.json(
+                { error: 'Invalid pyqRatio. Must be a number between 0 and 100.' },
+                { status: 400 }
+            );
+        }
+
         // Phase E.2: dispatcher routes Genkit vs ADK sidecar based on
         // SAHAYAKAI_EXAM_PAPER_MODE env (default: off → Genkit only).
         const dispatched = await dispatchExamPaper({
@@ -143,6 +181,10 @@ async function _handler(request: Request) {
             userId,
         } as Parameters<typeof dispatchExamPaper>[0]);
         return NextResponse.json({
+            // H3 (2026-07-16): generate is the canonical writer — surface the
+            // persisted content id so the client can Save (PUT) as an upsert by
+            // id instead of writing a duplicate row.
+            contentId: dispatched.contentId,
             title: dispatched.title,
             board: dispatched.board,
             subject: dispatched.subject,
@@ -153,6 +195,17 @@ async function _handler(request: Request) {
             sections: dispatched.sections,
             blueprintSummary: dispatched.blueprintSummary,
             pyqSources: dispatched.pyqSources,
+            // Phase 1 marks-reconcile (2026-07-09): forward the drift report.
+            // Also forward validationWarnings — this explicit field list had
+            // been silently dropping them since the NCERT warnings shipped.
+            marksReconciliation: dispatched.marksReconciliation,
+            // Phase 2 (2026-07-10): forward the answer-key/marking-scheme
+            // completeness report, mirroring marksReconciliation.
+            answerKeyCompleteness: dispatched.answerKeyCompleteness,
+            validationWarnings: dispatched.validationWarnings,
+            // C7/H1: novelty report — the one report field previously dropped
+            // from this allow-list, so the UI can flag relabeled "New" questions.
+            newVerification: dispatched.newVerification,
         });
 
     } catch (error) {
@@ -261,40 +314,54 @@ async function _saveHandler(request: Request) {
             return NextResponse.json({ error: 'Unauthorized: Missing User Identity' }, { status: 401 });
         }
 
+        // L10: cheap DoS guard — reject oversized bodies before parsing.
+        const contentLength = Number(request.headers.get('content-length') || 0);
+        if (contentLength > 1_000_000) {
+            return NextResponse.json({ error: 'Payload too large' }, { status: 413 });
+        }
+
         const body = await request.json();
-        if (!body.paper || typeof body.paper !== 'object') {
-            return NextResponse.json({ error: 'Missing required field: paper' }, { status: 400 });
+        // L10: `typeof [] === 'object'` means the old check let an array (or a
+        // shapeless object) through. Require a real paper object with the
+        // fields we persist.
+        const paper = body.paper;
+        if (
+            !paper ||
+            typeof paper !== 'object' ||
+            Array.isArray(paper) ||
+            !paper.title ||
+            !Array.isArray(paper.sections)
+        ) {
+            return NextResponse.json(
+                { error: 'Missing or invalid required field: paper (must be an object with title and sections)' },
+                { status: 400 },
+            );
         }
 
         const { dbAdapter } = await import('@/lib/db/adapter');
-        const { getStorageInstance } = await import('@/lib/firebase-admin');
         const { Timestamp } = await import('firebase-admin/firestore');
         const { v4: uuidv4 } = await import('uuid');
-        const { format } = await import('date-fns');
+        const { toExamPaperContentFields } = await import('@/ai/data/exam-paper-content-fields');
 
-        const paper = body.paper;
-        const contentId = uuidv4();
+        // H3 (2026-07-16): generate already persisted this paper and returned
+        // its id. Reuse it so saveContent upserts the existing row instead of
+        // creating a duplicate. Fall back to a fresh id for legacy clients that
+        // don't echo it back.
+        const contentId = body.contentId || uuidv4();
         const now = new Date();
-        const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
-        const fileName = `${timestamp}-${contentId}.json`;
-        const filePath = `users/${userId}/exam-papers/${fileName}`;
 
-        const storage = await getStorageInstance();
-        const file = storage.bucket().file(filePath);
-        await file.save(JSON.stringify(paper), { contentType: 'application/json' });
-
+        // Persist to Firestore `data` only — no redundant Storage JSON blob
+        // (papers are viewed and downloaded straight from `data`).
         await dbAdapter.saveContent(userId, {
             id: contentId,
             type: 'exam-paper' as const,
             title: paper.title || `${paper.board || ''} ${paper.gradeLevel || ''} ${paper.subject || ''} Exam Paper`.trim(),
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            gradeLevel: (paper.gradeLevel || 'Class 10') as any,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            subject: (paper.subject || 'General') as any,
+            ...toExamPaperContentFields({
+                gradeLevel: paper.gradeLevel,
+                subject: paper.subject,
+                language: paper.language,
+            }),
             topic: Array.isArray(paper.chapters) ? paper.chapters.join(', ') : (paper.subject || ''),
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            language: (paper.language ?? 'English') as any,
-            storagePath: filePath,
             isPublic: false,
             isDraft: false,
             createdAt: Timestamp.fromDate(now),
@@ -304,9 +371,16 @@ async function _saveHandler(request: Request) {
 
         return NextResponse.json({ success: true, contentId });
     } catch (error) {
-        logger.error('Exam Paper Save Failed', error, 'EXAM_PAPER_SAVE', { userId: request.headers.get('x-user-id') });
-        return NextResponse.json({ error: 'Failed to save exam paper' }, { status: 500 });
+        // L10: route through the shared mapper so quota/safety/schema failures
+        // get their specific codes instead of a blanket 500.
+        return handleAIError(error, 'EXAM_PAPER_SAVE', {
+            message: 'Exam Paper Save Failed',
+            userId: request.headers.get('x-user-id'),
+        });
     }
 }
 
-export const PUT = withPlanCheck('exam-paper')(_saveHandler);
+// H2 (2026-07-16): NO withPlanCheck here. Save persists an already-generated
+// (and already-charged) paper — it is not a new generation, so gating it
+// double-charged the user's quota. _saveHandler keeps its own 401 auth check.
+export const PUT = _saveHandler;

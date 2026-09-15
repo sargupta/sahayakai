@@ -1,7 +1,8 @@
 /**
  * Assessment Scanner — Zod schemas.
  *
- * Phase-2 scope: up to 3 pages per scan, six subject families (Mathematics,
+ * Phase-2 scope: up to ASSESSMENT_DEMO_PAGE_CAP pages per scan (schema ceiling
+ * ASSESSMENT_MAX_PAGES = 15), six subject families (Mathematics,
  * Science, EVS, Social Science, Hindi, English) plus an "Other" generic
  * fallback. Multi-student rosters and class analytics still land in Phase 3+.
  *
@@ -55,6 +56,7 @@ export const IMAGE_QUALITY_ISSUES = [
     'glare',
     'low_light',
     'rotated',
+    'folded',
     'partial_crop',
     'multiple_handwriting',
     'none',
@@ -65,6 +67,7 @@ export const PAGE_TYPES = [
     'answer_only',
     'mixed',
     'cover',
+    'blank',
     'unreadable',
 ] as const;
 
@@ -126,6 +129,14 @@ export const PageScanSchema = z.object({
     questions: z
         .array(ExtractedQuestionSchema)
         .describe('All extracted questions on this page. Empty for a cover/unreadable page.'),
+    visibleQuestionCount: z
+        .number()
+        .int()
+        .min(0)
+        .optional()
+        .describe(
+            'Your honest count of DISTINCT questions visible on this page (top to bottom, counting each sub-part), even ones you could not fully transcribe. The flow compares this to `questions.length` to detect a page that was only partially read and re-extract it. Omit only for cover/blank/unreadable pages.',
+        ),
 });
 export type PageScan = z.infer<typeof PageScanSchema>;
 export type ExtractedQuestion = z.infer<typeof ExtractedQuestionSchema>;
@@ -152,6 +163,12 @@ const PartialCreditStepSchema = z.object({
 export const GradedQuestionSchema = z.object({
     questionId: z.string(),
     pageIndex: z.number().int().min(0),
+    questionType: z
+        .enum(QUESTION_TYPES)
+        .optional()
+        .describe(
+            'Copied verbatim from the Pass-1 extraction. Drives UI: the reference answer is only shown for `mcq` (a definite correct option), not for descriptive answers.',
+        ),
     questionText: z.string(),
     studentAnswer: z.string().describe('The interpreted student answer (post-Pass-1).'),
     expectedAnswer: z
@@ -166,11 +183,21 @@ export const GradedQuestionSchema = z.object({
         .describe('Step-wise marks for math; empty array for non-math.'),
     feedback: z
         .string()
-        .describe('Teacher-facing feedback in `language`. ~1-2 sentences. Specific and actionable.'),
-    studentFacingFeedback: z
-        .string()
+        .default('')
         .describe(
-            'Gentler, age-appropriate feedback addressed to the student in `language`. Encouraging tone for low scores.',
+            'INTERNAL teacher note, not shown in the normal result. Empty for a normal answer; used only for the subject-mismatch re-scan warning.',
+        ),
+    improvementPoints: z
+        .array(z.string())
+        .default([])
+        .describe(
+            'Short, scannable bullets (1–4) naming exactly what was MISSING and how to earn the remaining marks — e.g. "Add one example", "Use a heading", "Label the diagram", "Add units", "This is a 5-mark question — add 2 more points". Each bullet is one concrete action, in `language`. Empty [] when the answer earned full marks.',
+        ),
+    whyCorrect: z
+        .string()
+        .optional()
+        .describe(
+            'One-line reason the expected answer is correct (the "because…"), in `language`, age-appropriate. Teaches the reasoning, not just the value.',
         ),
     conceptTested: z
         .string()
@@ -193,8 +220,9 @@ export const GradedQuestionSchema = z.object({
     teacherOverrides: z
         .object({
             marksAwarded: z.number().min(0).optional(),
+            marksMax: z.number().min(0).optional(),
             feedback: z.string().optional(),
-            studentFacingFeedback: z.string().optional(),
+            improvementPoints: z.array(z.string()).optional(),
             studentAnswer: z.string().optional(),
             editedAt: z.string().optional(),
         })
@@ -256,7 +284,7 @@ export const AssessmentScannerInputSchema = z.object({
         .min(1)
         .max(ASSESSMENT_MAX_PAGES)
         .describe(
-            'HTTPS URLs (Firebase Storage download URLs) OR data URIs. The flow normalises both. Schema ceiling is 15; the route currently caps demo traffic at ASSESSMENT_DEMO_PAGE_CAP (3) for cost + latency control.',
+            'HTTPS URLs (Firebase Storage download URLs) OR data URIs. The flow normalises both. Schema ceiling is ASSESSMENT_MAX_PAGES (15); the route caps demo traffic at ASSESSMENT_DEMO_PAGE_CAP for cost + latency control.',
         ),
     ncertChapterIds: z
         .array(z.string().max(200))
@@ -303,6 +331,12 @@ export const AssessmentScannerOutputSchema = z.object({
     studentRecommendations: z
         .array(z.string())
         .describe('Student-facing guidance, in `language`. Read aloud via TTS on the result page.'),
+    teacherParentNote: z
+        .array(z.string())
+        .default([])
+        .describe(
+            'Short bullet points (2–4) from the teacher to the parent, in `language`, each a concrete observation of the student\'s pattern — handwriting legibility, concept understanding, answer length/completeness, accuracy — plus ONE clear "what to do at home". Only bullets that actually apply; no filler. The teacher edits before sharing; leads the parent summary.',
+        ),
     needsReviewCount: z
         .number()
         .int()
@@ -313,11 +347,11 @@ export const AssessmentScannerOutputSchema = z.object({
         .describe(
             'Human-readable per-page warnings the UI can show before render (e.g. "Page 1: blurry").',
         ),
-    savedToLibrary: z
-        .boolean()
-        .optional()
+    skippedPageNotices: z
+        .array(z.string())
+        .default([])
         .describe(
-            'Whether the Firestore write to My Library actually landed. Set by the flow after the write, NOT stored on the record itself (a record you can read back is saved by definition). The result card renders its "Saved to My Library" line from this instead of asserting it unconditionally.',
+            'Human-readable notices for pages that were read fine but had nothing to grade (blank / cover pages), so a skipped page is surfaced to the teacher instead of silently vanishing — e.g. "Page 2: blank — nothing to grade, so it was skipped." Empty when every page had gradable content.',
         ),
     teacherEditedAt: z
         .string()

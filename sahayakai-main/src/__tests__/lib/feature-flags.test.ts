@@ -117,3 +117,41 @@ describe('isFeatureEnabled — defensive handling of undefined features map', ()
         expect(result.reason).toBe('feature_disabled');
     });
 });
+
+describe('isFeatureEnabled — M3: billingKillSwitch must not re-enable operational flags', () => {
+    it('leaves an exam-paper operational flag DISABLED under the kill switch', async () => {
+        // Operator deliberately turned off a misbehaving exam-paper repair pass.
+        // A billing incident flips billingKillSwitch — the repair must stay off.
+        mockGet.mockResolvedValueOnce(
+            snapshot({
+                billingKillSwitch: true,
+                maintenanceMode: false,
+                features: {
+                    examPaperMarksRepair: { enabled: false },
+                },
+            } as Partial<FeatureFlagsConfig>),
+        );
+
+        const result = await isFeatureEnabled('examPaperMarksRepair', 'user-5');
+
+        expect(result.enabled).toBe(false);
+        expect(result.reason).toBe('feature_disabled');
+    });
+
+    it('still force-enables a non-exempt paid feature under the kill switch', async () => {
+        mockGet.mockResolvedValueOnce(
+            snapshot({
+                billingKillSwitch: true,
+                maintenanceMode: false,
+                features: {
+                    someNormalPaidFeature: { enabled: false },
+                },
+            } as Partial<FeatureFlagsConfig>),
+        );
+
+        const result = await isFeatureEnabled('someNormalPaidFeature', 'user-6');
+
+        expect(result.enabled).toBe(true);
+        expect(result.reason).toBe('billing_kill_switch_all_free');
+    });
+});
