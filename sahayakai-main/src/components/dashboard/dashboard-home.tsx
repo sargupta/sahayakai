@@ -236,6 +236,20 @@ export function DashboardHome() {
         voiceHandledRef.current = true;
         form.setValue("topic", voiceTranscript);
         form.handleSubmit(onSubmit)();
+      } else {
+        // Check for voice transcript stored by GlobalVoiceInterface for
+        // unauthenticated visitors who signed in after speaking.
+        try {
+          const storedTranscript = sessionStorage.getItem("sahayakai-voice-intent");
+          if (storedTranscript) {
+            sessionStorage.removeItem("sahayakai-voice-intent");
+            voiceHandledRef.current = true;
+            form.setValue("topic", storedTranscript);
+            form.handleSubmit(onSubmit)();
+          }
+        } catch {
+          // ignore storage errors
+        }
       }
     }
   }, [form, t]);

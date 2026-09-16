@@ -90,5 +90,7 @@ export default function HomePage() {
     return <LandingPage onAuthClick={openAuthModal} />;
   }
 
+  // Authenticated user — proceed to dashboard
+  // DashboardHome will check for stored voice intent in its effect
   return <DashboardHome />;
 }
