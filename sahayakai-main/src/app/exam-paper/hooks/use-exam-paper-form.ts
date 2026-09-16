@@ -116,16 +116,25 @@ export function useExamPaperForm(preferredBoard: string | null) {
     return [...new Set(subjects)];
   }, [board, gradeLevel, allBlueprints]);
 
-// Reset subject + chapters when board/grade changes.
-// When no blueprint exists, keep free-text subject input intact.
-useEffect(() => {
-  if (availableSubjects.length > 0 && !availableSubjects.includes(subject)) {
-    setSubject(availableSubjects[0]);
-    setChapters([]);
-  } else if (availableSubjects.length === 0) {
-    setChapters([]);
-  }
-}, [availableSubjects]);
+  // Reset subject + chapters when board/grade changes if current subject not available
+  useEffect(() => {
+    if (availableSubjects.length > 0 && !availableSubjects.includes(subject)) {
+      setSubject(availableSubjects[0]);
+      setChapters([]);
+    } else if (availableSubjects.length === 0) {
+      setSubject("");
+      setChapters([]);
+    }
+  }, [availableSubjects, subject]);
+
+  // Reset chapters when subject changes
+  const prevSubjectRef = useRef(subject);
+  useEffect(() => {
+    if (prevSubjectRef.current !== subject) {
+      prevSubjectRef.current = subject;
+      setChapters([]);
+    }
+  }, [subject]);
 
   const matchedBlueprint: ExamBlueprint | undefined = useMemo(() => {
     if (!board || !gradeLevel || !subject) return undefined;

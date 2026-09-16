@@ -11,6 +11,8 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { computeTotalMarks } from '@/ai/data/exam-paper-marks';
+import { resolveChapterId } from '@/ai/data/ncert-chapters';
 
 ai.defineEvaluator(
   {
@@ -39,9 +41,9 @@ ai.defineEvaluator(
       questions?: Array<{ marks?: number; text?: string }>;
     }>;
 
-    // ─── 1. Blueprint Adherence (heuristic, 0-1) ────────────────────────
+    // ─── 1. Blueprint Adherence (heuristic, 0-1 | null when unmeasurable) ─
 
-    let blueprintAdherence = 1;
+    let blueprintAdherence: number | null = null;
 
     const expectedSectionCount = reference.expectedSectionCount as number | undefined;
     const expectedQuestionCounts = reference.expectedQuestionCounts as number[] | undefined;
@@ -67,83 +69,108 @@ ai.defineEvaluator(
       }
     }
 
-    // ─── 2. Marks Total (arithmetic, 0-1) ────────────────────────────────
+    // ─── 2. Marks Total (arithmetic, 0-1 | null when unmeasurable) ────────
 
-    let marksTotal = 1;
+    let marksTotal: number | null = null;
 
-    const actualTotalMarks = sections.reduce((sum, section) => {
-      const questions = section.questions ?? [];
-      return sum + questions.reduce((qSum, q) => qSum + (q.marks ?? 0), 0);
-    }, 0);
+    // Shared with the flow's runtime reconcile step (2026-07-09, Phase 1) so
+    // the evaluator's measurement and the flow's enforcement cannot diverge.
+    const actualTotalMarks = computeTotalMarks(sections);
 
     const expectedTotalMarks =
       (reference.expectedTotalMarks as number | undefined) ??
       (input?.maxMarks as number | undefined);
 
     if (expectedTotalMarks != null && expectedTotalMarks > 0) {
-      if (actualTotalMarks === expectedTotalMarks) {
-        marksTotal = 1;
-      } else {
-        const deviation = Math.abs(actualTotalMarks - expectedTotalMarks) / expectedTotalMarks;
-        marksTotal = deviation <= 0.1 ? 0.5 : 0;
-      }
+      // Binary-exact against hard invariant #1 — any drift is a failure; the old
+      // 0.5-for-≤10% tolerance band masked real marks drift (M6, 2026-07-16).
+      marksTotal = actualTotalMarks === expectedTotalMarks ? 1 : 0;
     }
 
-    // ─── 3. Chapter Coverage (set check, 0-1) ────────────────────────────
+    // ─── 3. Chapter Coverage (set check, 0-1 | null when unmeasurable) ────
 
-    let chapterCoverage = 1;
+    let chapterCoverage: number | null = null;
 
     const requestedChapters = (input?.chapters as string[] | undefined) ?? [];
+    const gradeLevel = input?.gradeLevel as string | undefined;
+    const subject = input?.subject as string | undefined;
 
     if (requestedChapters.length > 0) {
-      // Collect all question texts to check for chapter mentions.
+      // Collect all question texts to check for chapter mentions (fallback path).
       const allQuestionTexts = sections.flatMap((s) =>
-        (s.questions ?? []).map((q) => (q.text ?? '').toLowerCase()),
+        (s.questions ?? []).map((q) => q.text ?? ''),
       );
 
-      // Also check the blueprintSummary.chapterWise for chapter names.
+      // Covered chapters per the blueprintSummary (marks > 0).
       const chapterWise = (output.blueprintSummary as Record<string, unknown>)?.chapterWise as
         | Array<{ chapter?: string; marks?: number }>
         | undefined;
-      const coveredChaptersInSummary = new Set(
-        (chapterWise ?? []).filter((c) => (c.marks ?? 0) > 0).map((c) => (c.chapter ?? '').toLowerCase()),
-      );
+      const coveredTitles = (chapterWise ?? [])
+        .filter((c) => (c.marks ?? 0) > 0)
+        .map((c) => c.chapter ?? '');
+
+      // Primary signal: resolve requested + covered summary chapters to canonical
+      // chapter ids and intersect by id — survives em-dash/rename drift, same join
+      // key the pipeline trusts (M7, 2026-07-16). Needs grade+subject to resolve.
+      const coveredIds = new Set<string>();
+      if (gradeLevel && subject) {
+        for (const title of coveredTitles) {
+          const id = resolveChapterId(gradeLevel, subject, title);
+          if (id) coveredIds.add(id);
+        }
+      }
 
       let coveredCount = 0;
       for (const chapter of requestedChapters) {
-        const chapterLower = chapter.toLowerCase();
+        const requestedId =
+          gradeLevel && subject ? resolveChapterId(gradeLevel, subject, chapter) : null;
+        const coveredBySummary = requestedId != null && coveredIds.has(requestedId);
 
-        // A chapter is "covered" if any question text mentions it OR the blueprintSummary lists it with marks > 0.
-        const mentionedInQuestions = allQuestionTexts.some((text) => text.includes(chapterLower));
-        const mentionedInSummary = coveredChaptersInSummary.has(chapterLower);
+        // Fallback (id didn't resolve or no summary): word-boundary regex over the
+        // ESCAPED title so "Light" no longer matches "delight".
+        const escaped = chapter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const wordBoundary = new RegExp(`\\b${escaped}\\b`, 'i');
+        const mentionedInText = allQuestionTexts.some((text) => wordBoundary.test(text));
 
-        if (mentionedInQuestions || mentionedInSummary) {
+        if (coveredBySummary || mentionedInText) {
           coveredCount++;
         }
       }
 
-      chapterCoverage = requestedChapters.length > 0 ? coveredCount / requestedChapters.length : 1;
+      chapterCoverage = coveredCount / requestedChapters.length;
     }
 
-    // ─── Composite Score ─────────────────────────────────────────────────
+    // ─── Composite Score (weight-renormalised over measurable sub-scores) ─
 
-    const composite = blueprintAdherence * 0.4 + marksTotal * 0.3 + chapterCoverage * 0.3;
+    const parts: Array<{ score: number; weight: number }> = [];
+    if (blueprintAdherence != null) parts.push({ score: blueprintAdherence, weight: 0.4 });
+    if (marksTotal != null) parts.push({ score: marksTotal, weight: 0.3 });
+    if (chapterCoverage != null) parts.push({ score: chapterCoverage, weight: 0.3 });
+
+    const weightSum = parts.reduce((s, p) => s + p.weight, 0);
+    const composite =
+      weightSum > 0 ? parts.reduce((s, p) => s + p.score * p.weight, 0) / weightSum : null;
+
+    const fmt = (v: number | null) => (v == null ? 'N/A' : v.toFixed(2));
 
     return {
       testCaseId: datapoint.testCaseId,
       evaluation: [
-        { id: 'blueprintAdherence', score: blueprintAdherence },
-        { id: 'marksTotal', score: marksTotal },
-        { id: 'chapterCoverage', score: chapterCoverage },
+        // Genkit's Score.score rejects null → omit (undefined) when unmeasurable.
+        { id: 'blueprintAdherence', score: blueprintAdherence ?? undefined },
+        { id: 'marksTotal', score: marksTotal ?? undefined },
+        { id: 'chapterCoverage', score: chapterCoverage ?? undefined },
         {
           id: 'composite',
-          score: composite,
+          score: composite ?? undefined,
           details: {
             reasoning:
-              `blueprintAdherence=${blueprintAdherence.toFixed(2)}, ` +
-              `marksTotal=${marksTotal.toFixed(2)} (actual=${actualTotalMarks}, expected=${expectedTotalMarks ?? 'N/A'}), ` +
-              `chapterCoverage=${chapterCoverage.toFixed(2)}. ` +
-              `Composite = ${blueprintAdherence.toFixed(2)}*0.4 + ${marksTotal.toFixed(2)}*0.3 + ${chapterCoverage.toFixed(2)}*0.3 = ${composite.toFixed(2)}.`,
+              composite == null
+                ? 'No measurable reference — no sub-score could be evaluated (blueprint, marks total, and chapters all absent).'
+                : `blueprintAdherence=${fmt(blueprintAdherence)}, ` +
+                  `marksTotal=${fmt(marksTotal)} (actual=${actualTotalMarks}, expected=${expectedTotalMarks ?? 'N/A'}), ` +
+                  `chapterCoverage=${fmt(chapterCoverage)}. ` +
+                  `Composite = weighted avg over measurable sub-scores = ${composite.toFixed(2)}.`,
           },
         },
       ],
