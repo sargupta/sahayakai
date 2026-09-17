@@ -29,7 +29,7 @@ export interface ValidationWarning {
     message: string;
     /** When the suggestion is high-confidence, the canonical chapter we would
      *  auto-correct to (caller decides whether to apply). */
-    autoCorrectTo?: { number: number; title: string };
+    autoCorrectTo?: { id: string; number: number; title: string };
     /** Echo of the raw inputs for trace correlation. */
     input: { gradeLevel: string; subject: string; chapter: string };
 }
