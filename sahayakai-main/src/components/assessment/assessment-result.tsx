@@ -15,6 +15,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ResultShell } from "@/components/ui/result-shell";
+import { buildArtifactActions, omit, OMIT_REASONS } from "@/lib/artifact-actions";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/language-context";
@@ -179,32 +180,51 @@ export function AssessmentResult({
         { value: result.rubricSnapshot.subject || "—" },
         { value: result.rubricSnapshot.gradeLevel || "—" },
       ]}
-      actions={[
+      actions={buildArtifactActions(
         {
-          label: audioPlaying ? t("Stop playback") : audioLoading ? t("Loading audio…") : t("Play feedback"),
-          icon: audioLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : audioPlaying ? (
-            <Pause className="h-4 w-4" />
-          ) : (
-            <Volume2 className="h-4 w-4" />
-          ),
-          onClick: handlePlayAudio,
-          disabled: audioLoading,
-          variant: "default",
+          copy: omit(OMIT_REASONS.TODO_NEEDS_SERIALISER),
+          // The assessment flow auto-persists, so this is a confirmation chip.
+          save: {
+            onClick: () => undefined,
+            label: t("Saved to library"),
+            disabled: true,
+          },
+          download: {
+            onClick: handleDownloadPdf,
+            label: pdfBusy ? t("Preparing PDF…") : t("Download PDF"),
+            disabled: pdfBusy,
+          },
+          // NOTE: this shares a named student's marked script. It predates this
+          // module; 07-06 §5 flags the DPDP question it raises. Left as-is here
+          // rather than silently changed, but it is the one share worth reviewing.
+          share: { onClick: handleShare },
+          regenerate: omit(OMIT_REASONS.NO_GENERATOR),
+          edit: omit(OMIT_REASONS.NOT_EDITABLE),
         },
-        {
-          label: pdfBusy ? t("Preparing PDF…") : t("Download PDF"),
-          icon: pdfBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />,
-          onClick: handleDownloadPdf,
-          disabled: pdfBusy,
-          variant: "outline",
-        },
-        // Save is always-on: the assessment flow auto-persists to the user's
-        // library, so this is a confirmation chip rather than an action.
-        { label: t("Saved to library"), icon: <CheckCircle className="h-4 w-4" />, onClick: () => undefined, disabled: true, variant: "outline" },
-        { label: t("Share"), icon: <Share2 className="h-4 w-4" />, onClick: handleShare, variant: "outline" },
-      ]}
+        // This view translates through the language context rather than the
+        // result-shell dictionary; every slot above carries its own label, so
+        // these are defaults that are never reached.
+        { copy: t("Copy"), save: t("Save"), pdf: t("Download PDF"), edit: t("Edit"), regenerate: t("Regenerate"), share: t("Share") },
+        [
+          {
+            label: audioPlaying
+              ? t("Stop playback")
+              : audioLoading
+                ? t("Loading audio…")
+                : t("Play feedback"),
+            icon: audioLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : audioPlaying ? (
+              <Pause className="h-4 w-4" />
+            ) : (
+              <Volume2 className="h-4 w-4" />
+            ),
+            onClick: handlePlayAudio,
+            disabled: audioLoading,
+            variant: "default",
+          },
+        ],
+      )}
     >
       <div className="space-y-6">
         {/* Verification banner — always visible. */}

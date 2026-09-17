@@ -15,11 +15,14 @@ import { ResultShell } from "@/components/ui/result-shell";
 import { QuickShareButton } from "@/components/quick-share-button";
 import { exportElementToPdf } from "@/lib/export-pdf";
 import { getResultShellDict } from "@/lib/result-shell-i18n";
+import { buildArtifactActions, omit, OMIT_REASONS } from "@/lib/artifact-actions";
 
 type TeacherTrainingDisplayProps = {
     advice: TeacherTrainingOutput;
     title?: string;
     selectedLanguage?: string;
+    /** Re-run the generator with the same inputs; absent when viewing a saved artifact. */
+    onRegenerate?: () => void;
 };
 
 const PDF_ID = "teacher-training-card";
@@ -28,6 +31,7 @@ export const TeacherTrainingDisplay: FC<TeacherTrainingDisplayProps> = ({
     advice,
     title,
     selectedLanguage,
+    onRegenerate,
 }) => {
     const { toast } = useToast();
     const t = getResultShellDict(selectedLanguage);
@@ -102,10 +106,19 @@ export const TeacherTrainingDisplay: FC<TeacherTrainingDisplayProps> = ({
             icon={<GraduationCap />}
             size="compact"
             variant="glass"
-            actions={[
-                { label: t.save, icon: <Save />, onClick: handleSave },
-                { label: t.pdf, icon: <Download />, onClick: handleDownload },
-            ]}
+            actions={buildArtifactActions(
+                {
+                    copy: omit(OMIT_REASONS.TODO_NEEDS_SERIALISER),
+                    save: { onClick: handleSave },
+                    download: { onClick: handleDownload },
+                    share: omit(OMIT_REASONS.VIA_QUICK_SHARE),
+                    regenerate: onRegenerate
+                        ? { onClick: onRegenerate }
+                        : omit(OMIT_REASONS.NO_GENERATOR),
+                    edit: omit(OMIT_REASONS.NOT_EDITABLE),
+                },
+                t,
+            )}
             extraActions={
                 <QuickShareButton
                     contentType="teacher-training"
