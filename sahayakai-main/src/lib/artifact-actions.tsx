@@ -92,6 +92,7 @@ export interface ArtifactActionDict {
     pdf: string;
     edit: string;
     regenerate: string;
+    share: string;
     [key: string]: string;
 }
 
@@ -117,9 +118,11 @@ function labelFor(key: (typeof ORDER)[number], dict: ArtifactActionDict): string
         case "download": return dict.pdf;
         case "edit": return dict.edit;
         case "regenerate": return dict.regenerate;
-        // `share` predates this module as its own button and has no dictionary
-        // entry; it is translated at the call site via the language context.
-        case "share": return dict.share ?? "Share";
+        // No English fallback here. `share` is now a real key in
+        // result-shell-i18n across all eleven languages, because a `??  "Share"`
+        // default would have leaked English into a translated bar the first time
+        // anyone wired a share button the obvious way.
+        case "share": return dict.share;
     }
 }
 
@@ -132,16 +135,25 @@ export function buildArtifactActions(
     dict: ArtifactActionDict,
     /**
      * Artifact-specific controls that are not part of the canonical six —
-     * quiz's answer-key toggle, for example. They are appended after the six so
-     * the shared bar stays in the same order on every artifact and the special
-     * case is visibly the special case.
+     * quiz's answer-key toggle, assessment's audio playback.
+     *
+     * These render BEFORE the six, not after. The first version appended them,
+     * which silently demoted "Show answer key" and "Play feedback" from the
+     * leading control to the trailing one — the two things a teacher reaches for
+     * most on those artifacts. The contextual action for an artifact is the
+     * primary one; copy/save/download are the shared utilities behind it. The
+     * six keep a fixed order relative to each other, which is what makes the bar
+     * learnable; what precedes them is by definition artifact-specific.
      */
     extra: ResultShellAction[] = [],
 ): ResultShellAction[] {
     const out: ResultShellAction[] = [];
     for (const key of ORDER) {
         const slot = set[key];
-        if (isOmitted(slot)) continue;
+        if (isOmitted(slot)) {
+            assertReasonFitsSlot(key, slot.omitted);
+            continue;
+        }
         out.push({
             label: slot.label ?? labelFor(key, dict),
             icon: ICONS[key],
@@ -153,7 +165,7 @@ export function buildArtifactActions(
             variant: slot.variant ?? "outline",
         });
     }
-    return [...out, ...extra];
+    return [...extra, ...out];
 }
 
 /**
@@ -184,3 +196,38 @@ export const OMIT_REASONS = {
      */
     TODO_NEEDS_SERIALISER: "TODO: structured artifact needs a per-schema text serialiser",
 } as const;
+
+/**
+ * Which slots each reason may legitimately excuse.
+ *
+ * Without this, any named reason could excuse any slot: writing
+ * `share: omit(OMIT_REASONS.NOT_TEXT)` passed every check and quietly deleted
+ * the share button, which is exactly the drift this module exists to stop. The
+ * reason has to fit the hole it is filling.
+ */
+const REASON_SLOTS: Record<string, readonly (keyof ArtifactActionSet)[]> = {
+    [OMIT_REASONS.NOT_TEXT]: ["copy"],
+    [OMIT_REASONS.STUDENT_DATA]: ["share"],
+    [OMIT_REASONS.NO_GENERATOR]: ["regenerate"],
+    [OMIT_REASONS.NOT_EDITABLE]: ["edit"],
+    [OMIT_REASONS.VIA_QUICK_SHARE]: ["share"],
+    [OMIT_REASONS.TODO_NEEDS_SERIALISER]: ["copy"],
+};
+
+/** Throws on a reason used to excuse a slot it does not apply to. */
+export function assertReasonFitsSlot(slot: keyof ArtifactActionSet, reason: string): void {
+    const allowed = REASON_SLOTS[reason];
+    if (!allowed) {
+        throw new Error(
+            `artifact-actions: "${reason}" is not a known OMIT_REASONS constant. ` +
+            "Add it to OMIT_REASONS and REASON_SLOTS rather than passing a free-text excuse.",
+        );
+    }
+    if (!allowed.includes(slot)) {
+        throw new Error(
+            `artifact-actions: cannot omit "${slot}" with reason "${reason}" — ` +
+            `that reason only applies to ${allowed.join(", ")}. ` +
+            "Pick the reason that is actually true, or implement the action.",
+        );
+    }
+}

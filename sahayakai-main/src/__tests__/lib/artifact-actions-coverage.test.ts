@@ -31,7 +31,9 @@ const COMPONENTS = join(ROOT, "src/components");
 
 /**
  * The result views. Discovered rather than hardcoded so a new `*-display.tsx`
- * is in scope the moment it lands, plus the two that live outside that naming.
+ * is in scope the moment it lands, plus assessment-result, which renders an
+ * artifact but does not follow that naming. exam-paper-preview is excluded and
+ * the reason is stated inline below.
  */
 function resultViews(): string[] {
     const discovered = readdirSync(COMPONENTS)
@@ -92,6 +94,30 @@ describe("buildArtifactActions", () => {
         for (const a of buildArtifactActions(full(), dict)) {
             expect(a.icon).toBeTruthy();
         }
+    });
+
+    it("puts artifact-specific controls BEFORE the six, not after", () => {
+        // The first version appended them, which demoted quiz's "Show answer key"
+        // and assessment's "Play feedback" from the leading control to the
+        // trailing one. The contextual action is the primary one.
+        const out = buildArtifactActions(full(), dict, [
+            { label: "Show answer key", onClick: () => {} },
+        ]);
+        expect(out[0].label).toBe("Show answer key");
+        expect(out.map((a) => a.label).slice(1)).toEqual([
+            "Copy", "Save", "PDF", "Share", "Regenerate", "Edit",
+        ]);
+    });
+
+    it("rejects a reason that does not fit the slot it excuses", () => {
+        // `share: omit(NOT_TEXT)` used to pass every check and silently delete
+        // the share button — the precise drift this module exists to prevent.
+        expect(() =>
+            buildArtifactActions({ ...full(), share: omit(OMIT_REASONS.NOT_TEXT) }, dict),
+        ).toThrow(/only applies to copy/);
+        expect(() =>
+            buildArtifactActions({ ...full(), copy: omit("just because") }, dict),
+        ).toThrow(/not a known OMIT_REASONS constant/);
     });
 
     it("lets a view override a label without escaping the set", () => {
