@@ -26,6 +26,24 @@ import { join } from "node:path";
 
 const ROOT = process.cwd();
 const ICONS_DIR = join(ROOT, "public/icons");
+
+/**
+ * True if any pixel is not fully opaque. Palette PNGs carry transparency in a
+ * tRNS chunk whose entries are per-index alpha bytes; a value below 255 means
+ * some index is see-through. Truecolour+alpha is reported by colour type.
+ */
+function hasTransparentPixel(b: Buffer): boolean {
+    const colourType = b.readUInt8(25);
+    if (colourType === 6 || colourType === 4) return true; // carries a real alpha channel
+    const i = b.indexOf(Buffer.from("tRNS", "ascii"));
+    if (i === -1) return false;
+    const len = b.readUInt32BE(i - 4);
+    for (let k = 0; k < len; k++) {
+        if (b.readUInt8(i + 4 + k) < 255) return true;
+    }
+    return false;
+}
+
 const LOCK = JSON.parse(readFileSync(join(ICONS_DIR, "icons.lock.json"), "utf8")) as {
     source: string;
     sourceSha256: string;
@@ -78,6 +96,22 @@ describe("the icons are the format their extension claims", () => {
         // and why the maskable icons could never be masked.
         const b = readFileSync(join(ICONS_DIR, file));
         expect(b.subarray(0, 8)).toEqual(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+    });
+
+    it.each(["icon-48x48", "icon-72x72", "icon-96x96", "icon-144x144", "icon-192x192", "icon-512x512", "apple-touch-icon"])(
+        "%s.png is fully opaque — a purpose:any icon must not bake in its own corners",
+        (name) => {
+            // Shipped 2026-09-17 with rounded corners, so the four corners were
+            // alpha 0. Android composites a purpose:"any" icon onto the launcher's
+            // own backing plate, so transparent corners render as a rounded square
+            // inside a second square. The platform owns the radius, not us.
+            const b = readFileSync(join(ICONS_DIR, `${name}.png`));
+            expect(hasTransparentPixel(b)).toBe(false);
+        },
+    );
+
+    it("mark.png is the one that stays transparent — it sits on a translucent nav", () => {
+        expect(hasTransparentPixel(readFileSync(join(ICONS_DIR, "mark.png")))).toBe(true);
     });
 
     it("the transparent mark really is transparent", () => {

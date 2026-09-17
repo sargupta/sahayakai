@@ -80,14 +80,25 @@ def save(im: Image.Image, path: Path) -> None:
     because the header logo sits on a translucent nav.
     """
     path.parent.mkdir(parents=True, exist_ok=True)
-    im.quantize(colors=256, method=Image.FASTOCTREE).save(path, "PNG", optimize=True)
+    # An icon with no transparent pixel is flattened to RGB before quantising, so
+    # it carries no tRNS chunk at all. Quantising RGBA leaves a tRNS table covering
+    # unused palette indices, which makes the file *claim* transparency it never
+    # uses — enough to fail an honest byte-level check and, more importantly, to
+    # leave a launcher guessing. Opaque means opaque, in the bytes.
+    flat = im if im.split()[3].getextrema()[0] < 255 else im.convert("RGB")
+    flat.quantize(colors=256, method=Image.FASTOCTREE).save(path, "PNG", optimize=True)
     print(f"  {path.relative_to(ROOT)}  {im.width}x{im.height}  {path.stat().st_size // 1024}KB")
 
 
 def main() -> None:
-    print("any-purpose icons (white rounded tile):")
+    # Square, NOT rounded. A `purpose: "any"` icon is composited by the launcher
+    # onto its own backing plate, so transparent corners produce a rounded square
+    # sitting inside a second launcher-drawn square — a visible double frame on
+    # Android. The platform applies the corner radius; we must not bake one in.
+    # (The pre-2026-09 icons were opaque JPEGs and so never hit this.)
+    print("any-purpose icons (opaque square tile; the launcher rounds it):")
     for s in (48, 72, 96, 144, 192, 512):
-        save(tile(s, 0.17, 0.22), ICONS / f"icon-{s}x{s}.png")
+        save(tile(s, 0.17, None), ICONS / f"icon-{s}x{s}.png")
 
     print("apple-touch (square; iOS applies its own mask):")
     save(tile(180, 0.17, None), ICONS / "apple-touch-icon.png")
