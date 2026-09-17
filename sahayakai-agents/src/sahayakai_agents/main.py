@@ -50,6 +50,7 @@ from .logging_config import configure_logging
 from .shared.errors import AgentError
 from .shared.genai_patch import apply_genai_schema_patch
 from .telemetry import init_telemetry
+from .telephony.router import telephony_router
 
 # Strip `additionalProperties` from every schema we hand to Gemini. Pydantic
 # emits it from `extra="forbid"` configs but Gemini's structured-output API
@@ -228,6 +229,11 @@ app.include_router(voice_to_text_router)
 # Phase S spike — Gemini Live API for VIDYA voice mode. Parallel to
 # `vidya_router`, NOT a replacement. See spikes/gemini_live_voice/SPIKE.md.
 app.include_router(vidya_voice_router)
+# Carrier media streams. A WebSocket route: Starlette's BaseHTTPMiddleware
+# does not wrap websocket scopes, so `auth_middleware` never runs here and
+# the route gates itself on a signed, single-use, domain-scoped token
+# before `accept()` (see telephony/tokens.py).
+app.include_router(telephony_router)
 # Assessment scanner — multimodal OCR + grading (phase-w.alpha).
 app.include_router(assessment_scanner_router)
 app.include_router(assignment_assessor_router)

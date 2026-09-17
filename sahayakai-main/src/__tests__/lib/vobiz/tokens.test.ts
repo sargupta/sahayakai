@@ -152,3 +152,28 @@ describe('lifetimes', () => {
         expect(VOBIZ_TOKEN_TTL_SECONDS).toBeGreaterThan(30);
     });
 });
+
+describe('cross-language wire contract', () => {
+    /**
+     * The mirror of `TestCrossLanguageContract` in the sidecar's
+     * `tests/unit/test_telephony_tokens.py`. That file verifies these exact
+     * strings; this one proves we still MINT them. Together they stop the two
+     * HMAC implementations drifting apart — a drift whose only symptom in
+     * production is every real parent call being refused at the media socket.
+     */
+    const GOLDEN: Record<string, string> = {
+        'vobiz-answer': 'outreach123.1800000000.ask7khW1H9Lo-JxtHCCwDVACvBzN3MFU32ZRNvcnsJA',
+        'vobiz-call': 'outreach123.1800000000.KmcHAMBzSYe3TprTBG9q2ze6sDkYyNcwoJPLz4HEZyY',
+        'vobiz-status': 'outreach123.1800000000.tKiScWp9XnJMggkzYDUQgYyoFT6brSbtdJvQojPJ8c0',
+    };
+
+    it('mints exactly the bytes the sidecar pins', () => {
+        for (const [domain, expected] of Object.entries(GOLDEN)) {
+            const sig = crypto
+                .createHmac('sha256', KEY)
+                .update(`${domain}.outreach123.1800000000`, 'utf8')
+                .digest('base64url');
+            expect(`outreach123.1800000000.${sig}`).toBe(expected);
+        }
+    });
+});
