@@ -214,20 +214,31 @@ const REASON_SLOTS: Record<string, readonly (keyof ArtifactActionSet)[]> = {
     [OMIT_REASONS.TODO_NEEDS_SERIALISER]: ["copy"],
 };
 
-/** Throws on a reason used to excuse a slot it does not apply to. */
+/**
+ * Rejects a reason used to excuse a slot it does not apply to.
+ *
+ * Loud in development and test, where it should stop a bad omission before it
+ * is ever committed, and where the class gate runs. Quiet in production: this
+ * runs inside a React render, and a throw there white-screens the whole result
+ * view. A teacher losing her lesson plan to a mislabelled omission is far worse
+ * than a teacher missing one button, so production logs and carries on.
+ */
 export function assertReasonFitsSlot(slot: keyof ArtifactActionSet, reason: string): void {
     const allowed = REASON_SLOTS[reason];
-    if (!allowed) {
-        throw new Error(
-            `artifact-actions: "${reason}" is not a known OMIT_REASONS constant. ` +
-            "Add it to OMIT_REASONS and REASON_SLOTS rather than passing a free-text excuse.",
-        );
+    const problem = !allowed
+        ? `"${reason}" is not a known OMIT_REASONS constant. Add it to OMIT_REASONS ` +
+          "and REASON_SLOTS rather than passing a free-text excuse."
+        : !allowed.includes(slot)
+          ? `cannot omit "${slot}" with reason "${reason}" — that reason only applies to ` +
+            `${allowed.join(", ")}. Pick the reason that is actually true, or implement the action.`
+          : null;
+
+    if (!problem) return;
+
+    if (process.env.NODE_ENV === "production") {
+        // eslint-disable-next-line no-console
+        console.error(`artifact-actions: ${problem}`);
+        return;
     }
-    if (!allowed.includes(slot)) {
-        throw new Error(
-            `artifact-actions: cannot omit "${slot}" with reason "${reason}" — ` +
-            `that reason only applies to ${allowed.join(", ")}. ` +
-            "Pick the reason that is actually true, or implement the action.",
-        );
-    }
+    throw new Error(`artifact-actions: ${problem}`);
 }
