@@ -77,4 +77,4 @@ export function validateChapterForFlow(args: {
     return warning;
 }
 
-export { validateChapter } from '@/ai/data/ncert-chapters';
+export { validateChapter, resolveChapterId } from '@/ai/data/ncert-chapters';

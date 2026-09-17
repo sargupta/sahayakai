@@ -42,6 +42,7 @@ export interface ResultShellMeta {
 
 export type ResultShellSize = "compact" | "default";
 export type ResultShellVariant = "solid" | "glass";
+export type ResultShellActionsLayout = "inline" | "stacked";
 
 export interface ResultShellProps {
     /** Stable DOM id used by exportElementToPdf (e.g. "lesson-plan-pdf"). */
@@ -78,6 +79,15 @@ export interface ResultShellProps {
      *   visual (images, maps, answers with callouts).
      */
     variant?: ResultShellVariant;
+    /**
+     * How the action buttons sit relative to the title block.
+     * - `inline` (default): actions float top-right, beside the title on ≥640px.
+     *   Best for 1–3 actions.
+     * - `stacked`: title/meta span the full width and the actions drop onto their
+     *   own full-width row beneath. Use when there are enough actions to starve
+     *   the title column in `inline` mode (e.g. the scanner's 5-button bar).
+     */
+    actionsLayout?: ResultShellActionsLayout;
     /** Main body. */
     children: React.ReactNode;
     /** Optional footer (FeedbackDialog etc.). */
@@ -113,11 +123,13 @@ export function ResultShell({
     extraActions,
     size = "default",
     variant = "solid",
+    actionsLayout = "inline",
     children,
     footer,
     className,
     contentClassName,
 }: ResultShellProps) {
+    const stacked = actionsLayout === "stacked";
     return (
         <Card
             id={id}
@@ -131,7 +143,9 @@ export function ResultShell({
             <CardHeader
                 className={cn(
                     "gap-4 border-b border-border",
-                    "flex flex-col sm:flex-row sm:items-start sm:justify-between",
+                    stacked
+                        ? "flex flex-col"
+                        : "flex flex-col sm:flex-row sm:items-start sm:justify-between",
                     "p-4 sm:p-6",
                     variantHeaderClass[variant],
                 )}
@@ -174,7 +188,14 @@ export function ResultShell({
                 </div>
 
                 {(actions && actions.length > 0) || extraActions ? (
-                    <div className="no-print flex flex-wrap items-center gap-2 sm:ml-4 sm:flex-shrink-0">
+                    <div
+                        className={cn(
+                            "no-print flex flex-wrap items-center gap-2",
+                            stacked
+                                ? "w-full border-t border-border/40 pt-4"
+                                : "sm:ml-4 sm:flex-shrink-0",
+                        )}
+                    >
                         {actions?.map((a, i) => (
                             <Button
                                 key={i}

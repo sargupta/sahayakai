@@ -8,6 +8,8 @@
  * https://cbseacademic.nic.in/SQP_CLASSXII_2024-25.html
  */
 
+import { StructuredLogger } from '@/lib/logger/structured-logger';
+
 export interface QuestionTypeSpec {
     type: 'mcq' | 'very_short' | 'short' | 'long' | 'case_study' | 'assertion_reason' | 'map_based' | 'source_based';
     marksPerQuestion: number;
@@ -286,6 +288,7 @@ export const CBSE_CLASS9_SCIENCE: ExamBlueprint = {
 // BLUEPRINT LOOKUP
 // ═══════════════════════════════════════════════════════════
 
+// Bundled blueprints — the fallback when Firestore is empty/unavailable.
 const ALL_BLUEPRINTS: ExamBlueprint[] = [
     CBSE_CLASS10_MATH,
     CBSE_CLASS10_SCIENCE,
@@ -294,10 +297,85 @@ const ALL_BLUEPRINTS: ExamBlueprint[] = [
 ];
 
 /**
- * Find a blueprint by board, grade, and subject.
- * Returns undefined if no matching blueprint exists.
+ * Firestore doc id for a blueprint: normalized {board}_{gradeLevel}_{subject}
+ * (lowercased, spaces → hyphens), e.g. `cbse_class-10_science`.
+ * Shared with src/scripts/seed-blueprints.ts so seed and lookup can't drift.
  */
-export function findBlueprint(board: string, gradeLevel: string, subject: string): ExamBlueprint | undefined {
+export function blueprintDocId(board: string, gradeLevel: string, subject: string): string {
+    const n = (s: string) => s.trim().toLowerCase().replace(/\s+/g, '-');
+    return `${n(board)}_${n(gradeLevel)}_${n(subject)}`;
+}
+
+// ─── In-memory cache (server-side, 5-min TTL) — mirrors feature-flags.ts ──────
+const BLUEPRINT_CACHE_TTL_MS = 5 * 60 * 1000;
+let cachedBlueprints: Map<string, ExamBlueprint> | null = null;
+let blueprintCacheTimestamp = 0;
+let blueprintFetchPromise: Promise<Map<string, ExamBlueprint>> | null = null;
+
+function fallbackMap(): Map<string, ExamBlueprint> {
+    const map = new Map<string, ExamBlueprint>();
+    for (const bp of ALL_BLUEPRINTS) {
+        map.set(blueprintDocId(bp.board, bp.gradeLevel, bp.subject), bp);
+    }
+    return map;
+}
+
+/**
+ * Load the `exam_blueprints` collection into a docId→blueprint Map, cached for
+ * 5 min with single-in-flight dedup. On Firestore error/empty, falls back to the
+ * bundled TS constants so lookups never hard-fail.
+ */
+async function loadBlueprints(): Promise<Map<string, ExamBlueprint>> {
+    const now = Date.now();
+    if (cachedBlueprints && now - blueprintCacheTimestamp < BLUEPRINT_CACHE_TTL_MS) {
+        return cachedBlueprints;
+    }
+    if (blueprintFetchPromise) return blueprintFetchPromise;
+
+    blueprintFetchPromise = (async () => {
+        try {
+            const { getDb } = await import('@/lib/firebase-admin');
+            const db = await getDb();
+            const snap = await db.collection('exam_blueprints').get();
+            const map = new Map<string, ExamBlueprint>();
+            for (const doc of snap.docs) {
+                map.set(doc.id, doc.data() as ExamBlueprint);
+            }
+            if (map.size === 0) {
+                StructuredLogger.warn('[Blueprints] exam_blueprints empty — using TS-constant fallback', {
+                    service: 'board-blueprints',
+                    operation: 'loadBlueprints',
+                });
+                cachedBlueprints = fallbackMap();
+            } else {
+                cachedBlueprints = map;
+            }
+            blueprintCacheTimestamp = Date.now();
+            return cachedBlueprints;
+        } catch (err) {
+            StructuredLogger.error('[Blueprints] Failed to read exam_blueprints', {
+                service: 'board-blueprints',
+                operation: 'loadBlueprints',
+            }, err instanceof Error ? err : new Error(String(err)));
+            if (cachedBlueprints) return cachedBlueprints; // stale beats nothing
+            return fallbackMap(); // not cached — retry next call
+        } finally {
+            blueprintFetchPromise = null;
+        }
+    })();
+
+    return blueprintFetchPromise;
+}
+
+/**
+ * Find a blueprint by board, grade, and subject (Firestore-first, cached).
+ * Returns undefined if no match exists in Firestore or the bundled fallback.
+ */
+export async function findBlueprint(board: string, gradeLevel: string, subject: string): Promise<ExamBlueprint | undefined> {
+    const map = await loadBlueprints();
+    const hit = map.get(blueprintDocId(board, gradeLevel, subject));
+    if (hit) return hit;
+    // Per-key fallback: DB may hold some blueprints but not this one.
     const norm = (s: string) => s.trim().toLowerCase();
     return ALL_BLUEPRINTS.find(
         bp =>
@@ -307,9 +385,13 @@ export function findBlueprint(board: string, gradeLevel: string, subject: string
     );
 }
 
-/**
- * Get all available blueprint combinations for UI display.
- */
+/** All blueprints (full objects), Firestore-first + cached. For the API route. */
+export async function getAllBlueprints(): Promise<ExamBlueprint[]> {
+    const map = await loadBlueprints();
+    return [...map.values()];
+}
+
+/** Get the bundled blueprint combinations synchronously for UI consumers. */
 export function getAvailableBlueprints(): { board: string; gradeLevel: string; subject: string }[] {
     return ALL_BLUEPRINTS.map(bp => ({
         board: bp.board,

@@ -51,11 +51,17 @@ export interface PersistJSONInput<T> {
         topic: string;
         language: Language | string;
     };
+    /**
+     * Skip the redundant Storage JSON blob and persist to Firestore `data`
+     * only. Used by content types (e.g. exam-paper) that are viewed/downloaded
+     * straight from `data`. Default false → all other types keep the blob.
+     */
+    skipStorageBlob?: boolean;
 }
 
 export interface PersistJSONResult {
     contentId: string;
-    storagePath: string;
+    storagePath?: string;
 }
 
 /** yyyyMMdd_HHmmss timestamp matching the Genkit flows' Storage paths. */
@@ -89,23 +95,24 @@ export async function persistSidecarJSON<T>(
 ): Promise<PersistJSONResult | null> {
     try {
         const { v4: uuidv4 } = await import('uuid');
-        const { getStorageInstance } = await import('@/lib/firebase-admin');
         const { dbAdapter } = await import('@/lib/db/adapter');
         const { Timestamp } = await import('firebase-admin/firestore');
 
         const now = new Date();
-        const timestamp = formatTimestamp(now);
         const contentId = uuidv4();
-        const slug = slugify(input.title);
-        const fileName = `${timestamp}_${slug}.json`;
-        const storagePath = `users/${input.uid}/${input.collection}/${fileName}`;
 
-        const storage = await getStorageInstance();
-        const file = storage.bucket().file(storagePath);
-        await file.save(JSON.stringify(input.output, null, 2), {
-            resumable: false,
-            metadata: { contentType: 'application/json' },
-        });
+        let storagePath: string | undefined;
+        if (!input.skipStorageBlob) {
+            const { getStorageInstance } = await import('@/lib/firebase-admin');
+            const fileName = `${formatTimestamp(now)}_${slugify(input.title)}.json`;
+            storagePath = `users/${input.uid}/${input.collection}/${fileName}`;
+            const storage = await getStorageInstance();
+            const file = storage.bucket().file(storagePath);
+            await file.save(JSON.stringify(input.output, null, 2), {
+                resumable: false,
+                metadata: { contentType: 'application/json' },
+            });
+        }
 
         const contentDoc: BaseContent<T> = {
             id: contentId,
@@ -118,7 +125,7 @@ export async function persistSidecarJSON<T>(
             topic: input.metadata.topic,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             language: input.metadata.language as any,
-            storagePath,
+            ...(storagePath ? { storagePath } : {}),
             isPublic: false,
             isDraft: false,
             createdAt: Timestamp.fromDate(now),

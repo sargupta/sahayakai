@@ -964,7 +964,7 @@ async function reconcileMarks(
       // touch per-question marks: blueprints fix marksPerQuestion per
       // section and markingScheme strings encode the split, so mutating
       // marks would desynchronize both.
-            parsed.maxMarks = effectiveMaxMarks;
+      parsed.maxMarks = effectiveMaxMarks;
       for (const section of parsed.sections) {
         section.totalMarks = computeSectionMarks(section);
         // Renumber questions sequentially to fix duplicate or out-of-sequence numbers

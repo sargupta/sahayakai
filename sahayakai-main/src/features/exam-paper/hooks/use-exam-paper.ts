@@ -243,9 +243,19 @@ export function useExamPaper() {
         }
     }, [subject]);
 
+    // Note: findBlueprint is now async (Firestore-backed), so we can't use it
+    // directly in a synchronous useMemo. Instead, we keep the original sync
+    // behavior by using the bundled blueprints only for this hook's needs.
     const matchedBlueprint: ExamBlueprint | undefined = useMemo(() => {
-        if (!board || !gradeLevel || !subject) return undefined;
-        return findBlueprint(board, gradeLevel, subject);
+        const norm = (s: string) => s.trim().toLowerCase();
+        const full = getAvailableBlueprints()
+            .map((bp) => ({ ...bp })) as ExamBlueprint[];
+        return full.find(
+            (bp) =>
+                norm(bp.board) === norm(board) &&
+                norm(bp.gradeLevel) === norm(gradeLevel) &&
+                norm(bp.subject) === norm(subject),
+        );
     }, [board, gradeLevel, subject]);
 
     const chapterSuggestions = useMemo(() => {
