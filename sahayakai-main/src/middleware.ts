@@ -205,6 +205,7 @@ export async function middleware(request: NextRequest) {
         pathname.startsWith('/api/metrics') ||
         pathname.startsWith('/api/auth/') ||
         pathname.startsWith('/api/attendance/twiml') ||  // Twilio callbacks — no auth header
+        pathname.startsWith('/api/attendance/vobiz/') ||  // Vobiz callbacks — provider does not sign webhooks, so each URL carries a purpose-scoped HMAC token verified in-handler (src/lib/vobiz/tokens.ts)
         pathname.startsWith('/api/jobs/') ||  // Cloud Scheduler cron jobs — OIDC validated by Cloud Run
         pathname.startsWith('/api/migrate-ncert') ||  // manual migration — gated in-handler by CRON_SECRET (constant-time)
         pathname.startsWith('/api/webhooks/') ||  // Payment webhooks — verified via HMAC signature
