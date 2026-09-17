@@ -21,6 +21,7 @@ import { ResultShell } from "@/components/ui/result-shell";
 import { QuickShareButton } from "@/components/quick-share-button";
 import { exportElementToPdf } from "@/lib/export-pdf";
 import { getResultShellDict } from "@/lib/result-shell-i18n";
+import { buildArtifactActions, omit, OMIT_REASONS } from "@/lib/artifact-actions";
 import { useLanguage } from "@/context/language-context";
 
 // Simple markdown to HTML converter for basic formatting
@@ -40,6 +41,8 @@ const renderMarkdown = (text: string | null | undefined) => {
 type LessonPlanDisplayProps = {
   lessonPlan: LessonPlanOutput;
   selectedLanguage?: string;
+  /** Re-run the generator with the same inputs; absent when viewing a saved plan. */
+  onRegenerate?: () => void;
 };
 
 const displayTranslations: Record<string, any> = {
@@ -208,7 +211,7 @@ const displayTranslations: Record<string, any> = {
 
 const PDF_ID = "lesson-plan-pdf";
 
-export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan, selectedLanguage = 'en' }) => {
+export const LessonPlanDisplay: FC<LessonPlanDisplayProps> = ({ lessonPlan, selectedLanguage = 'en', onRegenerate }) => {
   const { toast } = useToast();
   const { canExport } = useSubscription();
   const { t: translate } = useLanguage();
@@ -379,17 +382,27 @@ ${editablePlan.assessment}
       ? handleDownload()
       : toast({ title: translate("Pro Feature"), description: translate("Upgrade to Pro to download PDF.") });
 
+  // While editing, the bar is a commit/cancel bar rather than an artifact bar,
+  // so it deliberately sits outside the canonical set. Everywhere else the six
+  // apply, and `buildArtifactActions` forces each of them to be accounted for.
   const actions = isEditing
     ? [
         { label: rs.cancel, icon: <X />, onClick: handleCancelEdit, variant: "outline" as const },
         { label: rs.save, icon: <Check />, onClick: handleSaveEdit, variant: "default" as const },
       ]
-    : [
-        { label: rs.edit, icon: <Edit />, onClick: () => setIsEditing(true) },
-        { label: rs.copy, icon: canExport ? <Copy /> : <Lock />, onClick: proGatedCopy },
-        { label: rs.save, icon: <Save />, onClick: handleSave },
-        { label: rs.pdf, icon: canExport ? <Download /> : <Lock />, onClick: proGatedDownload },
-      ];
+    : buildArtifactActions(
+        {
+          copy: { onClick: proGatedCopy },
+          save: { onClick: handleSave },
+          download: { onClick: proGatedDownload },
+          share: omit(OMIT_REASONS.VIA_QUICK_SHARE),
+          regenerate: onRegenerate
+            ? { onClick: onRegenerate }
+            : omit(OMIT_REASONS.NO_GENERATOR),
+          edit: { onClick: () => setIsEditing(true) },
+        },
+        rs,
+      );
 
   return (
     <ResultShell

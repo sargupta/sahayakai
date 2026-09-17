@@ -43,6 +43,7 @@ import { ResultShell } from "@/components/ui/result-shell";
 import { QuickShareButton } from "@/components/quick-share-button";
 import { exportElementToPdf } from "@/lib/export-pdf";
 import { getResultShellDict } from "@/lib/result-shell-i18n";
+import { buildArtifactActions, omit, OMIT_REASONS } from "@/lib/artifact-actions";
 import { useLanguage } from "@/context/language-context";
 
 type QuizDisplayProps = {
@@ -459,45 +460,33 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
                                 variant: "outline",
                             },
                         ]}
-                        actions={[
+                        actions={buildArtifactActions(
                             {
-                                label: showAnswers
-                                    ? t.hideAnswerKey
-                                    : t.showAnswerKey,
-                                icon: showAnswers ? <EyeOff /> : <Eye />,
-                                onClick: () => setShowAnswers(!showAnswers),
-                                variant: showAnswers ? "default" : "outline",
+                                copy: { onClick: handleCopyText },
+                                save: { onClick: handleSaveToLibrary },
+                                download: { onClick: handleDownloadPDF },
+                                share: omit(OMIT_REASONS.VIA_QUICK_SHARE),
+                                regenerate: onRegenerate
+                                    ? { onClick: onRegenerate }
+                                    : omit(OMIT_REASONS.NO_GENERATOR),
+                                edit: {
+                                    onClick: handleEditToggle,
+                                    label: editState.isEditing ? t.save : t.edit,
+                                    variant: editState.isEditing ? "default" : "outline",
+                                },
                             },
-                            {
-                                label: editState.isEditing
-                                    ? t.save
-                                    : t.edit,
-                                icon: editState.isEditing ? (
-                                    <Check />
-                                ) : (
-                                    <Edit2 />
-                                ),
-                                onClick: handleEditToggle,
-                                variant: editState.isEditing
-                                    ? "default"
-                                    : "outline",
-                            },
-                            {
-                                label: t.copy,
-                                icon: <Copy />,
-                                onClick: handleCopyText,
-                            },
-                            {
-                                label: t.save,
-                                icon: <Save />,
-                                onClick: handleSaveToLibrary,
-                            },
-                            {
-                                label: t.pdf,
-                                icon: <Download />,
-                                onClick: handleDownloadPDF,
-                            },
-                        ]}
+                            t,
+                            [
+                                // Quiz-specific: the answer key is not one of the
+                                // canonical six, so it sits after them.
+                                {
+                                    label: showAnswers ? t.hideAnswerKey : t.showAnswerKey,
+                                    icon: showAnswers ? <EyeOff /> : <Eye />,
+                                    onClick: () => setShowAnswers(!showAnswers),
+                                    variant: showAnswers ? "default" : "outline",
+                                },
+                            ],
+                        )}
                         extraActions={
                             editState.isEditing ? null : (
                                 <QuickShareButton

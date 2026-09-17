@@ -10,6 +10,7 @@ import { ResultShell } from "@/components/ui/result-shell";
 import { QuickShareButton } from "@/components/quick-share-button";
 import { exportElementToPdf } from "@/lib/export-pdf";
 import { getResultShellDict } from "@/lib/result-shell-i18n";
+import { buildArtifactActions, omit, OMIT_REASONS } from "@/lib/artifact-actions";
 import { useLanguage } from "@/context/language-context";
 
 type VisualAidDisplayProps = {
@@ -17,6 +18,8 @@ type VisualAidDisplayProps = {
     title: string;
     gradeLevel?: string;
     language?: string;
+    /** Re-run the generator with the same inputs; absent when viewing a saved artifact. */
+    onRegenerate?: () => void;
 };
 
 const PDF_ID = "visual-aid-card";
@@ -26,6 +29,7 @@ export const VisualAidDisplay: FC<VisualAidDisplayProps> = ({
     title,
     gradeLevel,
     language,
+    onRegenerate,
 }) => {
     const { toast } = useToast();
     const { t: translate } = useLanguage();
@@ -106,10 +110,19 @@ export const VisualAidDisplay: FC<VisualAidDisplayProps> = ({
             icon={<Images />}
             size="compact"
             variant="glass"
-            actions={[
-                { label: t.save, icon: <Save />, onClick: handleSave },
-                { label: t.pdf, icon: <Download />, onClick: handleDownload },
-            ]}
+            actions={buildArtifactActions(
+                {
+                    copy: omit(OMIT_REASONS.TODO_NEEDS_SERIALISER),
+                    save: { onClick: handleSave },
+                    download: { onClick: handleDownload },
+                    share: omit(OMIT_REASONS.VIA_QUICK_SHARE),
+                    regenerate: onRegenerate
+                        ? { onClick: onRegenerate }
+                        : omit(OMIT_REASONS.NO_GENERATOR),
+                    edit: omit(OMIT_REASONS.NOT_EDITABLE),
+                },
+                t,
+            )}
             extraActions={
                 <QuickShareButton contentType="visual-aid" onSave={handleSave} />
             }

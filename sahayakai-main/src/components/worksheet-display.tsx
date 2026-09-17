@@ -12,6 +12,7 @@ import { ResultShell } from "@/components/ui/result-shell";
 import { QuickShareButton } from "@/components/quick-share-button";
 import { exportElementToPdf } from "@/lib/export-pdf";
 import { getResultShellDict } from "@/lib/result-shell-i18n";
+import { buildArtifactActions, omit, OMIT_REASONS } from "@/lib/artifact-actions";
 
 type WorksheetDisplayProps = {
     worksheet: {
@@ -22,6 +23,12 @@ type WorksheetDisplayProps = {
         activities?: any[];
         learningObjectives?: string[];
     };
+    /**
+     * Re-run the generator with the same inputs. Optional because a worksheet
+     * opened from My Library has no generation context to repeat; the action is
+     * then omitted with OMIT_REASONS.NO_GENERATOR rather than shown dead.
+     */
+    onRegenerate?: () => void;
     title?: string;
     selectedLanguage?: string;
 };
@@ -32,6 +39,7 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({
     worksheet,
     title,
     selectedLanguage,
+    onRegenerate,
 }) => {
     const { toast } = useToast();
     const t = getResultShellDict(selectedLanguage);
@@ -111,11 +119,19 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({
             id={PDF_ID}
             title={displayTitle}
             icon={<FileText />}
-            actions={[
-                { label: t.copy, icon: <Copy />, onClick: handleCopy },
-                { label: t.save, icon: <Save />, onClick: handleSave },
-                { label: t.pdf, icon: <Download />, onClick: handleDownload },
-            ]}
+            actions={buildArtifactActions(
+                {
+                    copy: { onClick: handleCopy },
+                    save: { onClick: handleSave },
+                    download: { onClick: handleDownload },
+                    share: omit(OMIT_REASONS.VIA_QUICK_SHARE),
+                    regenerate: onRegenerate
+                        ? { onClick: onRegenerate }
+                        : omit(OMIT_REASONS.NO_GENERATOR),
+                    edit: omit(OMIT_REASONS.NOT_EDITABLE),
+                },
+                t,
+            )}
             extraActions={
                 <QuickShareButton contentType="worksheet" onSave={handleSave} />
             }
