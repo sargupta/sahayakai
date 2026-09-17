@@ -183,9 +183,73 @@ steps:
       - -c
       - |
         set -euo pipefail
+
+        # ── Stale-build guard ────────────────────────────────────────────
+        # 2026-09-17: five PRs merged in quick succession started five
+        # concurrent builds against this one service. Four failed with
+        #   ABORTED: Conflict for resource 'sahayakai-hotfix-resilience':
+        #   version 'X' was specified but current version is 'Y'
+        # and, worse, every build had already created a revision, so the
+        # build that happened to finish LAST won — which was not the newest
+        # commit. Traffic follows latest, so production came up green while
+        # serving neither old main nor new main. The site was healthy and
+        # wrong, which is the hardest kind of wrong to notice.
+        #
+        # A build that is no longer the newest for this trigger has nothing
+        # useful to promote: a newer one is on its way and will promote the
+        # newer code. So it exits early rather than racing.
+        #
+        # This is NOT solved by promoting our own tagged revision instead of
+        # --to-latest: pinning traffic to a named revision is what caused the
+        # 11-day split-brain in August, where fresh revisions landed at 0%.
+        # --to-latest stays; the guard is on who is allowed to call it.
+        # NOTE: `2>/dev/null` on both gcloud calls below is load-bearing, not
+        # tidiness. When the filter matches nothing gcloud prints
+        #   WARNING: The following filter keys were not present in any resource
+        # on stderr. Merging that into the result with 2>&1 makes `newer`
+        # non-empty for EVERY build, so every build skips and nothing is ever
+        # promoted again. Verified against real build history before shipping.
+        mine=$$(gcloud builds describe $BUILD_ID --project=$PROJECT_ID \
+                  --format='value(createTime)' 2>/dev/null || echo "")
+        if [ -n "$$mine" ]; then
+          newer=$$(gcloud builds list --project=$PROJECT_ID --limit=20 \
+                    --filter="substitutions.TRIGGER_NAME=$TRIGGER_NAME AND createTime>\"$$mine\" AND (status=SUCCESS OR status=WORKING OR status=QUEUED)" \
+                    --format='value(id)' 2>/dev/null | head -1)
+          if [ -n "$$newer" ]; then
+            echo "SKIP PROMOTE: build $$newer is newer than this one ($BUILD_ID)."
+            echo "It will promote the newer commit. Exiting 0 so this build does"
+            echo "not overwrite newer code with older."
+            echo
+            echo "If that newer build then FAILS, nothing gets promoted and prod"
+            echo "stays on the previous revision — safe, but the new code is not"
+            echo "live. Re-run this trigger on main to deploy it."
+            exit 0
+          fi
+        else
+          echo "WARN: could not read this build's createTime; promoting without"
+          echo "the stale-build guard. Check Cloud Build permissions."
+        fi
+
+        # ── Promote, retrying the optimistic-concurrency conflict ─────────
+        # update-traffic sends the resource version it read. If anything else
+        # touched the service in between, Cloud Run returns ABORTED. That is
+        # transient and safe to retry; other errors are not, so they fail.
         for region in asia-southeast1 asia-south1; do
-          gcloud run services update-traffic sahayakai-hotfix-resilience \
-            --region="$$region" --project=$PROJECT_ID --to-latest --quiet
+          for attempt in 1 2 3 4 5; do
+            if out=$$(gcloud run services update-traffic sahayakai-hotfix-resilience \
+                        --region="$$region" --project=$PROJECT_ID --to-latest --quiet 2>&1); then
+              echo "  $$region promoted (attempt $$attempt)"
+              break
+            fi
+            if ! echo "$$out" | grep -q "ABORTED"; then
+              echo "$$out"; exit 1
+            fi
+            if [ "$$attempt" = "5" ]; then
+              echo "  $$region: still conflicting after 5 attempts"; echo "$$out"; exit 1
+            fi
+            echo "  $$region: conflict, retrying in $$((attempt * 5))s"
+            sleep $$((attempt * 5))
+          done
         done
     waitFor: [smoke-both]
 
