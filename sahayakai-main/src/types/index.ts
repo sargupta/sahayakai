@@ -241,6 +241,7 @@ export interface BaseContent<T = any> {
     // Status
     isPublic: boolean;
     isDraft: boolean;
+    status?: 'generating' | 'ready' | 'error';
     deletedAt?: Timestamp | null;  // null = active, set = soft-deleted
     expiresAt?: Timestamp | null;  // TTL field: Firestore auto-purges 30 days after soft-delete
 

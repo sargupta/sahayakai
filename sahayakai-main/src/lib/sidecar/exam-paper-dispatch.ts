@@ -6,9 +6,11 @@
  * server-side rate limiter. Before Phase K, sidecar-served exam papers
  * silently bypassed the user's library and the daily rate limit.
  *
- * Note: the Genkit `generateExamPaper` does not call `validateTopicSafety`
- * (the topic is structured: board / grade / subject / chapters), so the
- * dispatcher only lifts the rate-limit gate, not the topic-safety gate.
+ * Topic-safety gate (H8, forensic EPG-2026-07-17): the dispatcher now runs
+ * `validateTopicSafety` on the free-text inputs. The old assumption that these
+ * fields are "structured/safe" was wrong — board / grade / subject / chapters /
+ * teacherContext are unrestricted teacher-typed text, so this flow must run the
+ * same content-safety check every sibling AI flow does.
  */
 import {
     generateExamPaper,
@@ -16,6 +18,7 @@ import {
     type ExamPaperOutput,
 } from '@/ai/flows/exam-paper-generator';
 import { getFeatureFlags } from '@/lib/feature-flags';
+import { validateTopicSafety } from '@/lib/safety';
 import {
     callSidecarExamPaper,
     ExamPaperSidecarBehaviouralError,
@@ -30,7 +33,8 @@ import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { shouldRunCanaryShadowDiff } from './canary-shadow-diff';
 import { withTimeout, WithTimeoutError } from './with-timeout';
 import { toLanguageLabel } from './lang';
-import { logger } from '@/lib/logger';
+import { computeTotalMarks } from '@/ai/data/exam-paper-marks';
+import { StructuredLogger } from '@/lib/logger/structured-logger';
 
 // NCERT demo hot-fix (2026-05-19): exam-paper is the most token-heavy
 // flow we run (full paper + answer key + marking scheme + sections).
@@ -45,14 +49,8 @@ import { logger } from '@/lib/logger';
 // same budget as the sidecar. We now intentionally diverge: the
 // sidecar has its own 30 s cap, but when we fall *back* to Genkit
 // we accept a longer wait rather than hand the user a 500.
-// 2026-08-25: raised 75s -> 110s. Measured on prod, CBSE Class 10 Mathematics
-// (the default selection): generation lands between roughly 66s and 80s, so a
-// 75s budget was a coin flip. Losing it returns 202 `generation_in_progress`
-// and the teacher sees a spinner that never resolves — reproduced 3 times.
-// 110s sits under the route's maxDuration (120s), which is itself well under
-// the Cloud Run request timeout of 300s, so the headroom was always there.
 const EXAM_PAPER_TIMEOUT_MS =
-    Number(process.env.EXAM_PAPER_GENKIT_TIMEOUT_MS) || 110_000;
+    Number(process.env.EXAM_PAPER_GENKIT_TIMEOUT_MS) || 75_000;
 const FALLBACK_TIMEOUT_MS = EXAM_PAPER_TIMEOUT_MS;
 
 // Sentinel thrown when the Genkit fallback exceeds budget. The route
@@ -118,6 +116,11 @@ export interface DispatchedExamPaper extends ExamPaperOutput {
     source: ExamPaperDispatchSource;
     decision: ExamPaperSidecarDecision;
     sidecarTelemetry?: { sidecarVersion: string; latencyMs: number; modelUsed: string };
+    // H3 (2026-07-16): the persisted content id. Genkit path carries it via
+    // ExamPaperOutput.contentId (spread through genkitToDispatched); sidecar
+    // path sets it from persistSidecarJSON's result. Exposed so the route can
+    // return it and the client's Save upserts by id instead of duplicating.
+    contentId?: string;
 }
 
 export interface ExamPaperDispatchInput extends ExamPaperInput {
@@ -147,8 +150,38 @@ function inputToSidecarRequest(input: ExamPaperDispatchInput): SidecarExamPaperR
 function sidecarToDispatched(
     res: SidecarExamPaperResponse,
     decision: ExamPaperSidecarDecision,
+    requested: { includeAnswerKey: boolean; includeMarkingScheme: boolean },
 ): DispatchedExamPaper {
+    // H4 (2026-07-16): recompute the invariant reports the route forwards to
+    // the UI — the sidecar branch used to drop them, so a sidecar-served paper
+    // showed no marks-drift / completeness signal at all.
+    // ponytail: sidecar REPORTS only, it does not repair (repaired:false,
+    // filledBy*=0). Sidecar mode is `off` by default; wire repair here if it is
+    // ever promoted to the primary path.
+    let missingBefore = 0;
+    for (const s of res.sections) {
+        for (const q of s.questions) {
+            if (requested.includeAnswerKey && !q.answerKey) missingBefore++;
+            if (requested.includeMarkingScheme && !q.markingScheme) missingBefore++;
+        }
+    }
     return {
+        marksReconciliation: {
+            expected: res.maxMarks,
+            actual: computeTotalMarks(res.sections),
+            repaired: false,
+            attempts: 1,
+        },
+        answerKeyCompleteness: {
+            requestedAnswerKey: requested.includeAnswerKey,
+            requestedMarkingScheme: requested.includeMarkingScheme,
+            missingBefore,
+            filledByStamp: 0,
+            filledByReprompt: 0,
+            filledByPlaceholder: 0,
+        },
+        // validationWarnings stays undefined — the sidecar has no NCERT
+        // chapter-validation input to produce them.
         title: res.title,
         board: res.board,
         subject: res.subject,
@@ -165,6 +198,11 @@ function sidecarToDispatched(
                 text: q.text,
                 marks: q.marks,
                 options: q.options ?? undefined,
+                // The sidecar schema has no `correctOption`; it emits answerKey/
+                // markingScheme directly. The Genkit-shaped `ExamPaperOutput`
+                // requires the field, so default to '' (non-objective sentinel —
+                // MCQ stamping is a Genkit-path concern only).
+                correctOption: '',
                 internalChoice: q.internalChoice ?? undefined,
                 answerKey: q.answerKey ?? undefined,
                 markingScheme: q.markingScheme ?? undefined,
@@ -199,50 +237,15 @@ function genkitToDispatched(
 }
 
 /**
- * Run the Genkit `generateExamPaper` flow under the `FALLBACK_TIMEOUT_MS`
- * budget and emit structured logs at the timeout boundary on both the
- * success and timeout paths. Caller-side (shadow mode) wraps the whole
- * Promise.all so we never let an unhandled `WithTimeoutError` reach the
- * user — we swallow it into `{ ok: false }`.
+ * Shared core for `runGenkitSafe` / `runGenkitOrThrow`: run the Genkit
+ * `generateExamPaper` flow under the `FALLBACK_TIMEOUT_MS` budget and emit
+ * structured logs at the timeout boundary on both the success and timeout
+ * paths. On timeout it logs via `StructuredLogger.error` then RE-THROWS the original
+ * error unchanged — mapping (to `ExamPaperGenerationInProgressError`) and
+ * swallowing (to `{ ok: false }`) are the wrappers' concern, so each keeps
+ * its distinct error outcome while sharing identical work + logging.
  */
-async function runGenkitSafe(input: ExamPaperInput, source: ExamPaperDispatchSource) {
-    const startedAt = Date.now();
-    try {
-        const out = await withTimeout(
-            generateExamPaper(input),
-            FALLBACK_TIMEOUT_MS,
-            'exam-paper genkit fallback',
-        );
-        logger.info('complete', 'exam-paper.dispatch', {
-            durationMs: Date.now() - startedAt,
-            source,
-            budgetMs: FALLBACK_TIMEOUT_MS,
-        });
-        return { ok: true as const, out };
-    } catch (err) {
-        const e = err instanceof Error ? err : new Error(String(err));
-        if (e.name === 'AbortError') throw e;
-        if (e instanceof WithTimeoutError) {
-            // eslint-disable-next-line no-console
-            console.error('[exam-paper.dispatch] timeout', {
-                budgetMs: FALLBACK_TIMEOUT_MS,
-                elapsedMs: e.elapsedMs,
-                source,
-                // Redact prompt — board/grade/subject only.
-                prompt: redactExamPaperInput(input),
-            });
-        }
-        return { ok: false as const, error: e };
-    }
-}
-
-/**
- * Same as `runGenkitSafe` but throws instead of swallowing — used on
- * the `off` and `genkit_fallback` paths where we want the failure to
- * surface to the route handler, which then maps `WithTimeoutError` to
- * the structured `generation_in_progress` response.
- */
-async function runGenkitOrThrow(
+async function runGenkitCore(
     input: ExamPaperInput,
     source: ExamPaperDispatchSource,
 ): Promise<ExamPaperOutput> {
@@ -253,21 +256,65 @@ async function runGenkitOrThrow(
             FALLBACK_TIMEOUT_MS,
             'exam-paper genkit fallback',
         );
-        logger.info('complete', 'exam-paper.dispatch', {
-            durationMs: Date.now() - startedAt,
-            source,
-            budgetMs: FALLBACK_TIMEOUT_MS,
+        StructuredLogger.info('[exam-paper.dispatch] complete', {
+            service: 'exam-paper-dispatch',
+            operation: 'runGenkitCore',
+            metadata: {
+                durationMs: Date.now() - startedAt,
+                source,
+                budgetMs: FALLBACK_TIMEOUT_MS,
+            },
         });
         return out;
     } catch (err) {
         if (err instanceof WithTimeoutError) {
-            // eslint-disable-next-line no-console
-            console.error('[exam-paper.dispatch] timeout', {
-                budgetMs: FALLBACK_TIMEOUT_MS,
-                elapsedMs: err.elapsedMs,
-                source,
-                prompt: redactExamPaperInput(input),
+            StructuredLogger.error('[exam-paper.dispatch] timeout', {
+                service: 'exam-paper-dispatch',
+                operation: 'runGenkitCore',
+                metadata: {
+                    budgetMs: FALLBACK_TIMEOUT_MS,
+                    elapsedMs: err.elapsedMs,
+                    source,
+                    // Redact prompt — board/grade/subject only.
+                    prompt: redactExamPaperInput(input),
+                },
             });
+        }
+        throw err;
+    }
+}
+
+/**
+ * Thin wrapper over `runGenkitCore` that swallows failures into
+ * `{ ok: false }`. Caller-side (shadow mode) wraps the whole Promise.all
+ * so we never let an unhandled `WithTimeoutError` reach the user. Returns
+ * the RAW error (e.g. `WithTimeoutError`) — the `generation_in_progress`
+ * mapping lives only in `runGenkitOrThrow`.
+ */
+async function runGenkitSafe(input: ExamPaperInput, source: ExamPaperDispatchSource) {
+    try {
+        return { ok: true as const, out: await runGenkitCore(input, source) };
+    } catch (err) {
+        const e = err instanceof Error ? err : new Error(String(err));
+        if (e.name === 'AbortError') throw e;
+        return { ok: false as const, error: e };
+    }
+}
+
+/**
+ * Thin wrapper over `runGenkitCore` that throws instead of swallowing —
+ * used on the `off` and `genkit_fallback` paths where we want the failure
+ * to surface to the route handler. Maps `WithTimeoutError` to the
+ * structured `generation_in_progress` response.
+ */
+async function runGenkitOrThrow(
+    input: ExamPaperInput,
+    source: ExamPaperDispatchSource,
+): Promise<ExamPaperOutput> {
+    try {
+        return await runGenkitCore(input, source);
+    } catch (err) {
+        if (err instanceof WithTimeoutError) {
             throw new ExamPaperGenerationInProgressError(
                 FALLBACK_TIMEOUT_MS,
                 err.elapsedMs,
@@ -290,6 +337,7 @@ function redactExamPaperInput(input: ExamPaperInput): Record<string, unknown> {
         subject: input.subject,
         language: input.language,
         difficulty: input.difficulty,
+        pyqRatio: input.pyqRatio,
         chapterCount: input.chapters?.length ?? 0,
         hasTeacherContext: Boolean(input.teacherContext),
     };
@@ -308,17 +356,58 @@ async function runSidecarSafe(request: SidecarExamPaperRequest) {
 }
 
 function logDispatch(decision: ExamPaperSidecarDecision, payload: Record<string, unknown>): void {
-    logger.info('exam_paper.dispatch', 'exam_paper.dispatch', {
-        mode: decision.mode,
-        reason: decision.reason,
-        bucket: decision.bucket,
-        ...payload,
+    StructuredLogger.info('[exam-paper.dispatch] decision', {
+        service: 'exam-paper-dispatch',
+        operation: 'dispatchExamPaper',
+        metadata: {
+            event: 'exam_paper.dispatch',
+            mode: decision.mode,
+            reason: decision.reason,
+            bucket: decision.bucket,
+            ...payload,
+        },
     });
 }
 
 export async function dispatchExamPaper(
     input: ExamPaperDispatchInput,
 ): Promise<DispatchedExamPaper> {
+    // H8 (forensic EPG-2026-07-17): exam-paper previously skipped the
+    // content-safety check every sibling flow runs, because these fields were
+    // assumed structured/safe. They are unrestricted teacher-typed free text,
+    // so gate them here — the single chokepoint both routes call, before any
+    // genkit/sidecar dispatch. Routes already map `Safety Violation:` errors.
+    const safetyText = [
+        input.board,
+        input.gradeLevel,
+        input.subject,
+        ...(input.chapters ?? []),
+        input.teacherContext,
+    ]
+        .filter(Boolean)
+        .join(' \n');
+    const safety = validateTopicSafety(safetyText);
+    if (!safety.safe) {
+        throw new Error(`Safety Violation: ${safety.reason}`);
+    }
+
+    // M8 (forensic EPG-2026-07-17): the sidecar request builder below forwards
+    // teacherContext verbatim, and the safe server summary was only applied INSIDE
+    // the Genkit flow (after this request is built) — so raw client text could reach
+    // the sidecar model. Replace it HERE, the single chokepoint both the sidecar
+    // request and the genkit fallback flow inherit. Best-effort: on failure drop it
+    // rather than block generation (mirrors the flow's own non-blocking derivation).
+    if (input.userId) {
+        try {
+            const { getTeacherContextLine } = await import('@/lib/teacher-context');
+            input.teacherContext = await getTeacherContextLine(input.userId);
+        } catch {
+            input.teacherContext = undefined;
+        }
+    } else {
+        input.teacherContext = undefined;
+    }
+
     const decision = await decideExamPaperDispatch(input.userId);
     const sidecarRequest = inputToSidecarRequest(input);
 
@@ -346,7 +435,9 @@ export async function dispatchExamPaper(
                     sidecarOk: sc.ok,
                     sidecarError: sc.ok ? undefined : sc.error.message,
                 });
-            });
+                // L7: runSidecarSafe rethrows AbortError — swallow it so a
+                // background shadow-diff never becomes an unhandled rejection.
+            }).catch(() => {});
         }
                 return genkitToDispatched(out, 'genkit', decision);
     }
@@ -375,7 +466,17 @@ export async function dispatchExamPaper(
             sidecarOk: sidecar.ok,
             sidecarError: sidecar.ok ? undefined : sidecar.error.message,
         });
-        if (!genkit.ok) throw genkit.error;
+        if (!genkit.ok) {
+            // L8: unify with the other paths — a genkit timeout in the shadow
+            // branch maps to a 202 in-progress, not a 503.
+            if (genkit.error instanceof WithTimeoutError) {
+                throw new ExamPaperGenerationInProgressError(
+                    FALLBACK_TIMEOUT_MS,
+                    genkit.error.elapsedMs,
+                );
+            }
+            throw genkit.error;
+        }
         return genkitToDispatched(genkit.out, 'genkit', decision);
     }
 
@@ -412,6 +513,8 @@ export async function dispatchExamPaper(
                       topic: topicForLibrary,
                       language: input.language || 'English',
                   },
+                  // Papers are viewed/downloaded from Firestore `data` — no blob.
+                  skipStorageBlob: true,
               })
             : null;
         logDispatch(decision, {
@@ -439,9 +542,17 @@ export async function dispatchExamPaper(
                     sidecarLatencyMs: sidecar.latencyMs,
                     sidecarOk: true,
                 });
-            });
+                // L7: runGenkitSafe rethrows AbortError — swallow it here.
+            }).catch(() => {});
         }
-                return sidecarToDispatched(sidecar.res, decision);
+                return {
+                    ...sidecarToDispatched(sidecar.res, decision, {
+                        includeAnswerKey: input.includeAnswerKey ?? true,
+                        includeMarkingScheme: input.includeMarkingScheme ?? true,
+                    }),
+                    // H3: expose the persisted id so Save upserts by id.
+                    contentId: persistResult?.contentId,
+                };
     }
 
     const errorClass =

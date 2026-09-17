@@ -29,12 +29,23 @@
  */
 
 import { allNCERTChapters, type NCERTChapter as RichNCERTChapter } from '@/data/ncert';
+import { RATIONALIZED_OUT } from '@/data/ncert/rationalized-out';
+import { CHAPTER_TOPIC_IDS, getTopicById } from '@/data/ncert/topics';
 
 // ─── Public types ────────────────────────────────────────────────────────────
 
 export interface SeedChapter {
+    /** Stable chapter id from the rich taxonomy (e.g. 'math-10-1'). This is the
+     *  rename-proof join key PYQ retrieval uses — carried through from
+     *  `src/data/ncert/*` so `resolveChapterId` can return it. */
+    id: string;
     number: number;
     title: string;
+    /** Former / variant titles that resolve to this chapter (Phase 2). */
+    aliases?: string[];
+    /** MEMBERSHIP (Phase 4): first-class topic ids this chapter contains, or
+     *  undefined for unseeded chapters (chapter-level retrieval only). */
+    topicIds?: string[];
     topics: string[];
     /** 'ncert-existing-seed' = sourced from src/data/ncert/* (NCF-2023 aligned).
      *  'pending'              = placeholder; not yet reconciled with official NCERT TOC. */
@@ -44,12 +55,20 @@ export interface SeedChapter {
 export interface ChapterValidationResult {
     valid: boolean;
     suggestion?: string;
-    closestMatch?: { number: number; title: string };
+    closestMatch?: { id: string; number: number; title: string };
     reason?: string;
     /** When true, the validator deferred because the (class, subject) cell was
      *  marked `verifiedSource: 'pending'`. Callers should treat lenient passes
      *  as low-confidence and may still surface a "verifying" UI hint. */
     lenient?: boolean;
+    /** How trustworthy the `closestMatch` is (H7):
+     *  - 'exact'  numeric-unique / exact-title / alias hit — safe to commit as a
+     *             stable join key or accept silently.
+     *  - 'fuzzy'  small Levenshtein typo (dist ≤ 2) — good enough to *suggest* an
+     *             auto-correct, but NOT to persist as an id.
+     *  - 'weak'   substring / token-overlap / dist-3 guess — surface as a hint
+     *             only; never auto-correct, never persist. */
+    confidence?: 'exact' | 'fuzzy' | 'weak';
 }
 
 // ─── Canonical aliases ───────────────────────────────────────────────────────
@@ -75,10 +94,15 @@ export function canonicaliseSubject(input: string): string | null {
     if (['social science', 'social studies', 'sst', 'social', 'सामाजिक विज्ञान', 'samajik vigyan'].includes(norm)) {
         return 'Social Studies';
     }
-    // History / Geography / Civics — within Social Science but valid sub-domains
-    if (['history', 'इतिहास', 'itihaas'].includes(norm)) return 'History';
-    if (['geography', 'भूगोल', 'bhugol'].includes(norm)) return 'Geography';
-    if (['civics', 'political science', 'नागरिक शास्त्र'].includes(norm)) return 'Civics';
+    // History / Geography / Civics — sub-domains of Social Science. The seed
+    // indexes them under the single 'Social Studies' cell (rich subject), so
+    // fold them there; emitting the sub-domain names left them in a dead lenient
+    // branch that never resolved a chapter (L13).
+    if (['history', 'इतिहास', 'itihaas',
+         'geography', 'भूगोल', 'bhugol',
+         'civics', 'political science', 'नागरिक शास्त्र'].includes(norm)) {
+        return 'Social Studies';
+    }
     // English
     if (['english', 'eng', 'अंग्रेज़ी', 'angrezi'].includes(norm)) return 'English';
     // Hindi
@@ -136,7 +160,17 @@ type IndexKey = string;
 const indexKey = (grade: number, subject: string): IndexKey => `${grade}:${subject}`;
 
 function topicsFor(c: RichNCERTChapter): string[] {
-    // Topics = keywords + first few learning outcomes (lower-cased, deduped).
+    // Phase 4: when a chapter has authored first-class topics, `topics` mirrors
+    // their titles (incl. retained-inactive — the classification menu needs
+    // them). Otherwise fall back to the keyword ∪ learning-outcome bag so every
+    // chapter that had a non-empty `topics` before still does.
+    const topicIds = CHAPTER_TOPIC_IDS[c.id];
+    if (topicIds && topicIds.length > 0) {
+        const titles = topicIds
+            .map(id => getTopicById(id)?.title)
+            .filter((t): t is string => Boolean(t));
+        return [...new Set(titles)];
+    }
     const merged = [...(c.keywords ?? []), ...(c.learningOutcomes ?? [])]
         .map(t => t.toLowerCase().trim())
         .filter(Boolean);
@@ -157,8 +191,11 @@ const CHAPTERS_INDEX: Map<IndexKey, SeedChapter[]> = (() => {
         const key = indexKey(c.grade, canonical);
         const list = m.get(key) ?? [];
         list.push({
+            id: c.id,
             number: c.number,
             title: c.title,
+            ...(c.aliases && c.aliases.length > 0 ? { aliases: c.aliases } : {}),
+            ...(CHAPTER_TOPIC_IDS[c.id] ? { topicIds: CHAPTER_TOPIC_IDS[c.id] } : {}),
             topics: topicsFor(c),
             verifiedSource: 'ncert-existing-seed',
         });
@@ -190,6 +227,44 @@ export function listCoveredCells(): Array<{ grade: number; subject: string; chap
         cells.push({ grade: parseInt(gradeStr, 10), subject, chapterCount: list.length });
     }
     return cells.sort((a, b) => a.grade - b.grade || a.subject.localeCompare(b.subject));
+}
+
+// ─── Topic accessors (Phase 4) ───────────────────────────────────────────────
+// The contract retrieval + backfill code consumes. Chapter membership and topic
+// currency are authored in `src/data/ncert/topics.ts`; these adapt it to the
+// stable-id shape those flows need.
+
+/**
+ * Ordered classification menu for a chapter (the LLM picks from this at
+ * ingestion). Includes retained-inactive topics so old PYQs can still map to
+ * what they test. Empty `[]` when the chapter has no authored topics.
+ */
+export function getTopicMenu(chapterId: string): { topicId: string; title: string; titleHindi?: string; isActive: boolean }[] {
+    const ids = CHAPTER_TOPIC_IDS[chapterId] ?? [];
+    const menu: { topicId: string; title: string; titleHindi?: string; isActive: boolean }[] = [];
+    for (const id of ids) {
+        const t = getTopicById(id);
+        if (t) menu.push({ topicId: t.topicId, title: t.title, titleHindi: t.titleHindi, isActive: t.isActive !== false });
+    }
+    return menu;
+}
+
+/**
+ * Active topic ids for a chapter — retrieval query leg (b)
+ * (`array-contains-any`). Excludes `isActive:false`. Empty `[]` when the chapter
+ * has no authored / no active topics (retrieval falls back to the chapterId leg).
+ */
+export function getActiveTopicIds(chapterId: string): string[] {
+    return (CHAPTER_TOPIC_IDS[chapterId] ?? []).filter(id => getTopicById(id)?.isActive !== false);
+}
+
+/**
+ * Live currency check for the retrieval filter. Unknown topicId → false
+ * (conservative: an untaggable/removed topic is treated as off-syllabus).
+ */
+export function isTopicActive(topicId: string): boolean {
+    const t = getTopicById(topicId);
+    return t !== undefined && t.isActive !== false;
 }
 
 // ─── Fuzzy matcher ───────────────────────────────────────────────────────────
@@ -281,16 +356,28 @@ export function validateChapter(
         };
     }
 
-    // Numeric chapter input: validate as chapter number.
+    // Numeric chapter input: validate as chapter number. A cell can hold several
+    // chapters sharing a number (e.g. Class 10 Social Studies numbers History,
+    // Geography, Civics & Economics books all from 1) — so a bare number is only
+    // unambiguous when exactly one chapter carries it (H9).
     if (typeof chapter === 'number' || /^\d+$/.test(String(chapter).trim())) {
         const num = typeof chapter === 'number' ? chapter : parseInt(String(chapter).trim(), 10);
-        const match = chapters.find(c => c.number === num);
-        if (match) {
-            return { valid: true, closestMatch: { number: match.number, title: match.title } };
+        const matches = chapters.filter(c => c.number === num);
+        if (matches.length === 1) {
+            const m = matches[0];
+            return { valid: true, confidence: 'exact', closestMatch: { id: m.id, number: m.number, title: m.title } };
         }
+        if (matches.length > 1) {
+            const titles = matches.map(m => `"${m.title}"`).join(', ');
+            return {
+                valid: false,
+                reason: `Chapter ${num} is ambiguous for Class ${grade} ${canonSubject} — it spans multiple textbooks (${titles}); specify by title.`,
+            };
+        }
+        const maxNumber = chapters.reduce((mx, c) => Math.max(mx, c.number), 0);
         return {
             valid: false,
-            reason: `Chapter ${num} does not exist for Class ${grade} ${canonSubject} (only chapters 1-${chapters.length} are defined).`,
+            reason: `Chapter ${num} does not exist for Class ${grade} ${canonSubject} (only chapters 1-${maxNumber} are defined).`,
         };
     }
 
@@ -305,7 +392,17 @@ export function validateChapter(
     // Pass 1: exact (case-insensitive) match
     for (const c of chapters) {
         if (normaliseTitle(c.title) === normInput) {
-            return { valid: true, closestMatch: { number: c.number, title: c.title } };
+            return { valid: true, confidence: 'exact', closestMatch: { id: c.id, number: c.number, title: c.title } };
+        }
+    }
+
+    // Pass 1b: alias match (Phase 2). A former/variant title recorded on the
+    // chapter resolves deterministically to it — this is how known renames and
+    // common PYQ spelling variants map without relying on fuzzy heuristics.
+    // Treated as a confident hit: valid + closestMatch (the canonical chapter).
+    for (const c of chapters) {
+        if (c.aliases?.some(a => normaliseTitle(a) === normInput)) {
+            return { valid: true, confidence: 'exact', closestMatch: { id: c.id, number: c.number, title: c.title } };
         }
     }
 
@@ -315,8 +412,9 @@ export function validateChapter(
         if (normTitle.includes(normInput) || normInput.includes(normTitle)) {
             return {
                 valid: false,
+                confidence: 'weak',
                 suggestion: `Did you mean "${c.title}"?`,
-                closestMatch: { number: c.number, title: c.title },
+                closestMatch: { id: c.id, number: c.number, title: c.title },
             };
         }
     }
@@ -331,10 +429,13 @@ export function validateChapter(
     }
 
     if (best && best.dist <= 3) {
+        // dist ≤ 2 is a trustworthy typo (auto-correctable); dist === 3 is a
+        // weaker guess we only surface as a hint (H7).
         return {
             valid: false,
+            confidence: best.dist <= 2 ? 'fuzzy' : 'weak',
             suggestion: `Did you mean "${best.chapter.title}"?`,
-            closestMatch: { number: best.chapter.number, title: best.chapter.title },
+            closestMatch: { id: best.chapter.id, number: best.chapter.number, title: best.chapter.title },
         };
     }
 
@@ -347,8 +448,9 @@ export function validateChapter(
         if (overlap >= 1 && inputTokens.size <= 3) {
             return {
                 valid: false,
+                confidence: 'weak',
                 suggestion: `Did you mean "${c.title}"?`,
-                closestMatch: { number: c.number, title: c.title },
+                closestMatch: { id: c.id, number: c.number, title: c.title },
             };
         }
     }
@@ -360,10 +462,66 @@ export function validateChapter(
 }
 
 /** Convenience: should the caller auto-correct based on suggestion?
- *  Returns true only when fuzzy distance was small enough to trust. */
+ *  Returns true only for a small-typo ('fuzzy') match — substring / token-overlap
+ *  / dist-3 ('weak') guesses are surfaced as hints but not silently applied (H7). */
 export function shouldAutoCorrect(result: ChapterValidationResult): boolean {
     if (result.valid) return false;
-    if (!result.closestMatch || !result.suggestion) return false;
-    // The suggestion exists only when we found a close match in passes 2-3.
-    return true;
+    return result.confidence === 'fuzzy';
+}
+
+/**
+ * Resolve a (possibly messy or outdated) chapter title to the STABLE chapter id
+ * (`NCERTChapter.id`, e.g. 'math-10-1') — the rename-proof join key PYQ retrieval
+ * and ingestion use instead of the volatile display title (Phase 1).
+ *
+ * Reuses `validateChapter`'s 4-pass match but commits ONLY an `'exact'` hit
+ * (numeric-unique / exact-title / alias) as the persisted id — a fuzzy typo or
+ * a substring/token-overlap guess is too weak to bake into a rename-proof join
+ * key and would silently mis-bind PYQs (H7/M8). Returns null otherwise (caller
+ * treats as unmappable → title fallback / orphan report; never blocks). Alias
+ * resolution (Phase 2) rides for free here — aliases resolve as 'exact'.
+ */
+export function resolveChapterId(
+    gradeLevel: string | number,
+    subject: string,
+    title: string | number,
+): string | null {
+    if (title === null || title === undefined || String(title).trim() === '') return null;
+    const result = validateChapter(gradeLevel, subject, title);
+    return result.confidence === 'exact' ? (result.closestMatch?.id ?? null) : null;
+}
+
+// ─── Currency (rationalized-out) check ───────────────────────────────────────
+
+/** Removed chapters indexed by cell → normalized title/alias set (Phase 3). */
+const REMOVED_INDEX: Map<IndexKey, string[]> = (() => {
+    const m = new Map<IndexKey, string[]>();
+    for (const c of RATIONALIZED_OUT) {
+        const canon = canonicaliseSubject(c.subject) ?? c.subject;
+        const key = indexKey(c.grade, canon);
+        const forms = [c.title, ...(c.aliases ?? [])].map(normaliseTitle);
+        m.set(key, [...(m.get(key) ?? []), ...forms]);
+    }
+    return m;
+})();
+
+/**
+ * Is this (gradeLevel, subject, chapter) a chapter the board REMOVED from the
+ * current syllabus (Phase 3)? Lets retrieval distinguish "off-syllabus → do not
+ * serve" from "unknown chapter → title fallback". Matches on normalized title or
+ * a recorded alias. Never throws; unknown grade/subject → false.
+ */
+export function isChapterRemoved(
+    gradeLevel: string | number,
+    subject: string,
+    chapter: string | number | null | undefined,
+): boolean {
+    const grade = canonicaliseGrade(gradeLevel);
+    const canonSubject = canonicaliseSubject(subject);
+    if (grade === null || canonSubject === null) return false;
+    const chapterStr = String(chapter ?? '').trim();
+    if (!chapterStr) return false;
+    const removed = REMOVED_INDEX.get(indexKey(grade, canonSubject));
+    if (!removed) return false;
+    return removed.includes(normaliseTitle(chapterStr));
 }

@@ -13,7 +13,7 @@
  *   2. Validates the body against the GradedQuestion schema.
  *   3. Merges each incoming question onto the saved AI version, **only**
  *      replacing `teacherOverrides`. The AI fields (marksAwarded, feedback,
- *      studentFacingFeedback, studentAnswer, confidence, …) stay untouched so
+ *      studentAnswer, confidence, …) stay untouched so
  *      we can compare AI vs human judgement later and improve the prompt.
  *   4. Recomputes totals (totalAwardedMarks, scorePct, letterGrade,
  *      needsReviewCount) server-side. Never trusts client totals.
@@ -36,6 +36,7 @@ import {
 
 const PatchBodySchema = z.object({
     questions: z.array(GradedQuestionSchema).min(1),
+    teacherParentNote: z.array(z.string().max(1000)).max(20).optional(),
 });
 
 interface RouteContext {
@@ -115,8 +116,9 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
             const overrides = incoming.teacherOverrides ?? {};
             const hasAnyOverride =
                 overrides.marksAwarded !== undefined ||
+                overrides.marksMax !== undefined ||
                 overrides.feedback !== undefined ||
-                overrides.studentFacingFeedback !== undefined ||
+                overrides.improvementPoints !== undefined ||
                 overrides.studentAnswer !== undefined;
 
             if (!hasAnyOverride) {
@@ -136,12 +138,19 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
             };
         });
 
-        const totals = recomputeTotals(mergedQuestions, existingData.totalMaxMarks);
+        // Omit the stored total override so an edited per-question marksMax
+        // flows into the denominator (mirrors the client's live preview).
+        const totals = recomputeTotals(mergedQuestions);
 
         const nextData: AssessmentScannerOutput = {
             ...existingData,
             questions: mergedQuestions,
             ...totals,
+            // undefined = teacher didn't touch the note this save; [] = cleared.
+            teacherParentNote:
+                parsedBody.teacherParentNote !== undefined
+                    ? parsedBody.teacherParentNote
+                    : existingData.teacherParentNote,
             teacherEditedAt: editedAt,
         };
 

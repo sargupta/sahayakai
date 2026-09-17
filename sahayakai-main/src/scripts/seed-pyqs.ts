@@ -1,9 +1,10 @@
 /**
  * PYQ Seeder Script
  *
- * Reads all JSON files from src/ai/data/pyq/, generates Vertex AI embeddings
- * for each question, and writes the documents to the `pyq_questions` Firestore
- * collection (idempotent — existing docs are skipped).
+ * Reads all JSON files from src/ai/data/pyq/ and writes each question as a plain
+ * tagged document to the `pyq_questions` Firestore collection (idempotent — existing
+ * docs are skipped). Retrieval is exact-match on tags (subject/class/chapter), so no
+ * embeddings are generated.
  *
  * Usage:
  *   npx ts-node --project tsconfig.json src/scripts/seed-pyqs.ts
@@ -12,15 +13,16 @@
  *
  * Requirements:
  *   - .env.local with FIREBASE_SERVICE_ACCOUNT_KEY (or Secret Manager access)
- *   - The service account must have roles/aiplatform.user in GCP project
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
 import { getDb } from '@/lib/firebase-admin';
-import { FieldValue } from 'firebase-admin/firestore';
-import { generateEmbedding } from '@/lib/services/pyq-retrieval-service';
+import { derivePYQDocId } from '@/lib/services/pyq-retrieval-service';
 import type { PYQQuestion } from '@/lib/services/pyq-retrieval-service';
+import { resolveChapterId } from '@/lib/ncert/validate-chapter';
+import { classifyQuestionTopicsBatch } from '@/lib/services/topic-classifier';
+import { validate, normaliseSubject, normaliseClass, normaliseType, canonicaliseBoard } from '@/lib/pyq/normalize';
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -29,78 +31,6 @@ const PYQ_DATA_DIR = path.resolve(__dirname, '../ai/data/pyq');
 
 // Firestore batch limit
 const BATCH_SIZE = 500;
-
-// Pause between embedding API calls (ms) to avoid rate-limit bursts.
-// 200ms = 5 QPS — leaves 50% headroom below the 10 QPS Vertex AI default quota.
-const EMBED_DELAY_MS = 200;
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/**
- * Build the text that will be embedded for a question.
- * Includes board/subject/class as prefix so cross-class/cross-subject questions
- * produce distinct vectors even when the question text is identical.
- * Format: "{board} {subject} Class {class} — {chapter} {topic}: {question}"
- */
-function buildEmbedText(q: Omit<PYQQuestion, 'id'>): string {
-  const topic = q.topic ?? ''; // guard against undefined rendering as "undefined"
-  return `${q.board} ${q.subject} Class ${q.class} — ${q.chapter}${topic ? ` ${topic}` : ''}: ${q.question}`;
-}
-
-/**
- * Retry an async operation with exponential backoff.
- * Treats HTTP 429 responses (rate limit) as retryable.
- */
-async function withRetry<T>(
-  fn: () => Promise<T>,
-  maxAttempts = 4,
-  baseDelayMs = 500
-): Promise<T> {
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      return await fn();
-    } catch (err: unknown) {
-      const isRateLimit =
-        err instanceof Error &&
-        (err.message.includes('429') || err.message.toLowerCase().includes('quota') || err.message.toLowerCase().includes('rate'));
-      if (!isRateLimit || attempt === maxAttempts) throw err;
-      const delay = baseDelayMs * Math.pow(2, attempt - 1);
-      console.warn(`[seed-pyqs]   Rate-limited (attempt ${attempt}/${maxAttempts}). Retrying in ${delay}ms...`);
-      await sleep(delay);
-    }
-  }
-  // unreachable but satisfies TypeScript
-  throw new Error('withRetry: exhausted retries');
-}
-
-/**
- * Derive a stable document ID from the question so the script is idempotent.
- * Uses board-subject-class-chapter-type-year-marks-question hash.
- */
-function deriveDocId(q: Omit<PYQQuestion, 'id'>): string {
-  const raw = [
-    q.board,
-    q.subject,
-    String(q.class),
-    q.chapter,
-    q.type,
-    String(q.year ?? 'null'),
-    String(q.marks),
-    q.question.slice(0, 80),
-  ].join('|');
-
-  // Simple djb2-style hash — good enough for dedup; not crypto
-  let hash = 5381;
-  for (let i = 0; i < raw.length; i++) {
-    hash = ((hash << 5) + hash) ^ raw.charCodeAt(i);
-    hash = hash >>> 0; // keep unsigned 32-bit
-  }
-  return `${q.board}_${q.subject}_c${q.class}_${hash.toString(16)}`;
-}
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
@@ -150,6 +80,40 @@ async function main() {
 
   console.log(`[seed-pyqs] Total questions to process: ${allQuestions.length}`);
 
+  // Validate + normalise (M10) BEFORE anything else — skip invalid rows with a
+  // WARN (never process.exit; one bad row must not abort the whole seed) and
+  // canonicalise subject/class/type/question so the write and the doc-id derived
+  // here match what ingest/consolidate produce for the same logical question.
+  const validQuestions: Array<Omit<PYQQuestion, 'id'>> = [];
+  let invalidCount = 0;
+  for (const q of allQuestions) {
+    const result = validate(q);
+    if (!result.valid) {
+      invalidCount++;
+      console.warn(`[seed-pyqs] ⚠ SKIP invalid question — ${result.reasons.join('; ')}`);
+      continue;
+    }
+    q.subject = normaliseSubject(String(q.subject))!;
+    q.class = normaliseClass(q.class)!;
+    q.type = normaliseType(String(q.type))!;
+    q.question = q.question.trim();
+    validQuestions.push(q);
+  }
+  console.log(`[seed-pyqs] Valid: ${validQuestions.length} | Invalid (skipped): ${invalidCount}`);
+
+  // Enrich with the stable chapterId (rename-proof join key, Phase 1) BEFORE
+  // deriving doc ids, so both the dedup check and the write use the chapterId-
+  // based id. Unmappable titles keep chapterId undefined → title fallback.
+  let resolvedCount = 0;
+  for (const q of validQuestions) {
+    const cid = resolveChapterId(`Class ${q.class}`, q.subject, q.chapter);
+    if (cid) {
+      q.chapterId = cid;
+      resolvedCount++;
+    }
+  }
+  console.log(`[seed-pyqs] Resolved chapterId for ${resolvedCount}/${validQuestions.length} question(s).`);
+
   const db = await getDb();
   const collectionRef = db.collection(COLLECTION);
 
@@ -163,8 +127,8 @@ async function main() {
   console.log(`[seed-pyqs] ${existingIds.size} existing document(s) found.`);
 
   // Filter to questions that need seeding
-  const toSeed = allQuestions.filter((q) => {
-    const id = deriveDocId(q);
+  const toSeed = validQuestions.filter((q) => {
+    const id = derivePYQDocId(q);
     if (existingIds.has(id)) return false;
     return true;
   });
@@ -176,9 +140,30 @@ async function main() {
     return;
   }
 
+  // Tag first-class topics (Phase 4) — ONE batched call per chapter, not per
+  // question. Group by chapterId, classify, key results by doc id. Graceful: a
+  // chapter's classify failing leaves those docs topicIds:[] (retry next run).
+  const topicByDocId = new Map<string, { topicIds: string[]; topicClassVersion: string }>();
+  {
+    const byChapter = new Map<string, { id: string; question: string }[]>();
+    for (const q of toSeed) {
+      if (!q.chapterId) continue;
+      const list = byChapter.get(q.chapterId) ?? [];
+      list.push({ id: derivePYQDocId(q), question: q.question });
+      byChapter.set(q.chapterId, list);
+    }
+    for (const [chapterId, qs] of byChapter) {
+      try {
+        for (const [id, r] of await classifyQuestionTopicsBatch({ chapterId, questions: qs })) topicByDocId.set(id, r);
+      } catch (err) {
+        console.warn(`[seed-pyqs] ⚠ topic classification failed for chapter ${chapterId} (${qs.length} q): ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+    console.log(`[seed-pyqs] Classified topics for ${topicByDocId.size} question(s) across ${byChapter.size} chapter(s).`);
+  }
+
   // Process in batches
   let batchCount = 0;
-  let skippedCount = 0;
   let writtenCount = 0;
 
   for (let batchStart = 0; batchStart < toSeed.length; batchStart += BATCH_SIZE) {
@@ -191,21 +176,12 @@ async function main() {
         `(items ${batchStart + 1}–${batchStart + batchItems.length})...`
     );
 
-    for (let i = 0; i < batchItems.length; i++) {
-      const q = batchItems[i];
-      const docId = deriveDocId(q);
+    for (const q of batchItems) {
+      const docId = derivePYQDocId(q);
 
-      let embedding: number[];
-      try {
-        embedding = await withRetry(() => generateEmbedding(buildEmbedText(q)));
-      } catch (err) {
-        console.error(
-          `[seed-pyqs]   ERROR generating embedding for doc ${docId} (all retries exhausted):`,
-          err
-        );
-        skippedCount++;
-        continue;
-      }
+      // Topics were classified per-chapter above; look up by doc id (default []).
+      const topicIds = topicByDocId.get(docId)?.topicIds ?? [];
+      const topicClassVersion = topicByDocId.get(docId)?.topicClassVersion;
 
       const docData = {
         question: q.question,
@@ -213,30 +189,20 @@ async function main() {
         class: q.class,
         year: q.year ?? null,
         chapter: q.chapter,
-        topic: q.topic,
+        ...(q.chapterId !== undefined && { chapterId: q.chapterId }),
+        topicIds,
+        ...(topicClassVersion ? { topicClassVersion } : {}),
         marks: q.marks,
         type: q.type,
-        board: q.board,
+        board: canonicaliseBoard(q.board ?? ''),
         ...(q.answer !== undefined && { answer: q.answer }),
         ...(q.frequency !== undefined && { frequency: q.frequency }),
         ...(q.section !== undefined && { section: q.section }),
-        embedding: FieldValue.vector(embedding),
         seededAt: new Date().toISOString(),
       };
 
       firestoreBatch.set(collectionRef.doc(docId), docData);
       writtenCount++;
-
-      if (i % 10 === 9) {
-        console.log(
-          `[seed-pyqs]   Embedded ${i + 1}/${batchItems.length} in batch ${batchCount}`
-        );
-      }
-
-      // Rate-limit: small pause between embedding calls
-      if (i < batchItems.length - 1) {
-        await sleep(EMBED_DELAY_MS);
-      }
     }
 
     await firestoreBatch.commit();
@@ -245,7 +211,6 @@ async function main() {
 
   console.log('\n[seed-pyqs] Seeding complete.');
   console.log(`  Written : ${writtenCount}`);
-  console.log(`  Skipped (embedding error): ${skippedCount}`);
   console.log(`  Already existed: ${existingIds.size}`);
 }
 

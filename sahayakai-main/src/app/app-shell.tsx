@@ -34,6 +34,13 @@ import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { LabsBanner } from "@/components/labs/labs-banner";
 import { Search } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
+// GlobalVoiceInterface (voice input for unauthenticated visitors) is loaded
+// client-side only on the landing page to avoid adding its dependencies to
+// the initial bundle unnecessarily. Its action/prefill contracts are unchanged.
+const GlobalVoiceInterface = dynamic(() => import("@/components/global-voice-interface").then((m) => m.GlobalVoiceInterface), {
+  ssr: false,
+  loading: () => null,
+});
 
 const MARKETING_PATHS = ["/for-schools", "/pricing", "/school-pricing", "/privacy-for-teachers", "/terms", "/about"];
 
@@ -72,11 +79,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // Cold visitor on the home route OR any visitor on a marketing surface
   // → landing layout, no app chrome. Marketing pages always stay chrome-free
   // regardless of auth state since they are for cold buyers and sales demos.
+  // GlobalVoiceInterface is shown on the home landing page for voice input
+  // from unauthenticated visitors (stores transcript for post-auth submission).
   if ((isHome && !user) || isMarketing) {
     return (
       <>
         {children}
         <PWAInstallPrompt />
+        <GlobalVoiceInterface />
       </>
     );
   }

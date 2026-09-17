@@ -411,6 +411,19 @@ export async function isSubscriptionEnabled(uid: string): Promise<FlagEvaluation
   return { enabled: false, reason: `rollout_bucket_${bucket}_over_${cfg.subscriptionRolloutPercent}` };
 }
 
+// M3 (forensic EPG-2026-07-17): billingKillSwitch exists to DROP THE PAYWALL
+// during a billing incident (make paid features free) — but it also force-
+// enabled every operational toggle, silently re-enabling an exam-paper repair
+// pass an operator had deliberately turned off for misbehaving. These flags are
+// operational kill-switches, not paid features, so the billing switch must not
+// force-enable them; they fall through to their normal configured value.
+const NEVER_FORCE_ENABLE = new Set<string>([
+  'examPaperEnabled',
+  'examPaperPyqRatioRepair',
+  'examPaperMarksRepair',
+  'examPaperKeyBackfill',
+]);
+
 /**
  * Is a specific feature enabled for this user?
  *
@@ -420,8 +433,9 @@ export async function isSubscriptionEnabled(uid: string): Promise<FlagEvaluation
 export async function isFeatureEnabled(featureName: string, uid: string): Promise<FlagEvaluation> {
   const cfg = await readConfig();
 
-  // Kill switch overrides everything — all features available
-  if (cfg.billingKillSwitch) {
+  // Kill switch drops the paywall — force-enable paid features, but NOT the
+  // operational kill-switches in NEVER_FORCE_ENABLE (see comment above).
+  if (cfg.billingKillSwitch && !NEVER_FORCE_ENABLE.has(featureName)) {
     return { enabled: true, reason: 'billing_kill_switch_all_free' };
   }
 
