@@ -15,6 +15,7 @@ Review trace:
 """
 from __future__ import annotations
 
+import os
 import uuid
 from contextlib import asynccontextmanager
 
@@ -83,15 +84,30 @@ async def _lifespan(app: FastAPI):  # type: ignore[no-untyped-def]
     log.info("app.shutdown")
 
 
+# `SAHAYAKAI_TELEPHONY_ONLY` selects the route surface (see "Route surface"
+# below). Read from the environment rather than Settings because it decides
+# which routes exist at import time, before any request is served, and before
+# `app` is constructed.
+TELEPHONY_ONLY = os.environ.get("SAHAYAKAI_TELEPHONY_ONLY", "").strip().lower() in (
+    "1",
+    "true",
+    "yes",
+    "on",
+)
+
 app = FastAPI(
     title="sahayakai-agents",
     version="0.1.0",
     description="Python sidecar for SahayakAI stateful and voice AI agents.",
     lifespan=_lifespan,
     # Docs are on in non-prod; we never want them on a publicly reachable
-    # prod URL because they leak schema surface.
-    docs_url="/docs" if get_settings().env != "production" else None,
-    redoc_url="/redoc" if get_settings().env != "production" else None,
+    # prod URL because they leak schema surface. The telephony service is
+    # publicly INVOKABLE in every environment, so it publishes no docs and no
+    # schema regardless of env: they would describe an API it does not serve,
+    # and a public OpenAPI document is free reconnaissance.
+    docs_url="/docs" if (get_settings().env != "production" and not TELEPHONY_ONLY) else None,
+    redoc_url="/redoc" if (get_settings().env != "production" and not TELEPHONY_ONLY) else None,
+    openapi_url=None if TELEPHONY_ONLY else "/openapi.json",
 )
 
 
@@ -195,7 +211,6 @@ async def readyz() -> dict[str, str]:
 # ---- A2A agent card (P1 #13) ----------------------------------------------
 
 
-@app.get("/.well-known/agent.json")
 async def agent_card() -> dict[str, object]:
     """Publish an A2A-compatible agent card.
 
@@ -209,32 +224,58 @@ async def agent_card() -> dict[str, object]:
     return build_agent_card(audience=settings.audience)
 
 
+if not TELEPHONY_ONLY:
+    # The public telephony service serves no agent card.
+    app.get("/.well-known/agent.json")(agent_card)
+
+
 # ---- Sub-routers -----------------------------------------------------------
 
-app.include_router(parent_call_router)
-app.include_router(lesson_plan_router)
-app.include_router(vidya_router)
-app.include_router(instant_answer_router)
-app.include_router(parent_message_router)
-app.include_router(rubric_router)
-app.include_router(teacher_training_router)
-app.include_router(virtual_field_trip_router)
-app.include_router(worksheet_router)
-app.include_router(quiz_router)
-app.include_router(exam_paper_router)
-app.include_router(visual_aid_router)
-app.include_router(video_storyteller_router)
-app.include_router(avatar_generator_router)
-app.include_router(voice_to_text_router)
-# Phase S spike — Gemini Live API for VIDYA voice mode. Parallel to
-# `vidya_router`, NOT a replacement. See spikes/gemini_live_voice/SPIKE.md.
-app.include_router(vidya_voice_router)
-# Carrier media streams. A WebSocket route: Starlette's BaseHTTPMiddleware
-# does not wrap websocket scopes, so `auth_middleware` never runs here and
-# the route gates itself on a signed, single-use, domain-scoped token
-# before `accept()` (see telephony/tokens.py).
-app.include_router(telephony_router)
-# Assessment scanner — multimodal OCR + grading (phase-w.alpha).
-app.include_router(assessment_scanner_router)
-app.include_router(assignment_assessor_router)
-app.include_router(community_persona_message_router)
+# ---------------------------------------------------------------------------
+# Route surface.
+#
+# Cloud Run IAM is the outer gate for this service: `roles/run.invoker` is
+# granted to the Next.js runtime SA and to nobody else, so every agent route
+# below is unreachable without a Google-signed identity token.
+#
+# The telephony media socket cannot live behind that gate. Vobiz dials it
+# directly from the public internet and has no way to mint a Google token, so
+# reaching it requires `allUsers` — which on THIS service would also expose
+# every agent endpoint above and undo that P1 fix.
+#
+# `SAHAYAKAI_TELEPHONY_ONLY` resolves it. The same image deployed with the flag
+# set registers ONLY the telephony router and the health probes, so a second,
+# publicly-invokable Cloud Run service can carry phone calls while exposing
+# nothing else. The agent service keeps its IAM gate untouched.
+#
+if TELEPHONY_ONLY:
+    # Public service: the token-gated media socket and nothing else.
+    app.include_router(telephony_router)
+else:
+    app.include_router(parent_call_router)
+    app.include_router(lesson_plan_router)
+    app.include_router(vidya_router)
+    app.include_router(instant_answer_router)
+    app.include_router(parent_message_router)
+    app.include_router(rubric_router)
+    app.include_router(teacher_training_router)
+    app.include_router(virtual_field_trip_router)
+    app.include_router(worksheet_router)
+    app.include_router(quiz_router)
+    app.include_router(exam_paper_router)
+    app.include_router(visual_aid_router)
+    app.include_router(video_storyteller_router)
+    app.include_router(avatar_generator_router)
+    app.include_router(voice_to_text_router)
+    # Phase S spike — Gemini Live API for VIDYA voice mode. Parallel to
+    # `vidya_router`, NOT a replacement. See spikes/gemini_live_voice/SPIKE.md.
+    app.include_router(vidya_voice_router)
+    # Carrier media streams. A WebSocket route: Starlette's BaseHTTPMiddleware
+    # does not wrap websocket scopes, so `auth_middleware` never runs here and
+    # the route gates itself on a signed, single-use, domain-scoped token
+    # before `accept()` (see telephony/tokens.py).
+    app.include_router(telephony_router)
+    # Assessment scanner — multimodal OCR + grading (phase-w.alpha).
+    app.include_router(assessment_scanner_router)
+    app.include_router(assignment_assessor_router)
+    app.include_router(community_persona_message_router)
