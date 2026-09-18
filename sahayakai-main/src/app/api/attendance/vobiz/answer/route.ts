@@ -52,12 +52,21 @@ async function handle(req: NextRequest): Promise<NextResponse> {
         return xml(EMPTY_RESPONSE, 403);
     }
 
-    const sidecarBase = process.env.NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL;
-    const wsOrigin = sidecarBase ? toWebSocketOrigin(sidecarBase) : null;
+    // The media socket does NOT live on the agent service. `sahayakai-agents`
+    // grants roles/run.invoker to the Next.js runtime SA and nobody else, so
+    // Cloud Run refuses the carrier before the app ever sees it; telephony runs
+    // as a separate, publicly-invokable deployment of the same image. The
+    // fallback keeps single-service setups working, but the two are different
+    // hosts in production and pointing at the wrong one fails at the carrier
+    // with nothing in our logs.
+    const streamBase =
+        process.env.VOBIZ_STREAM_BASE_URL || process.env.NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL;
+    const wsOrigin = streamBase ? toWebSocketOrigin(streamBase) : null;
     if (!wsOrigin) {
         logger.error(
-            'Vobiz answer webhook cannot build a stream URL — NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL ' +
-                'is unset or not http(s). The parent hears silence and the call ends.',
+            'Vobiz answer webhook cannot build a stream URL — neither ' +
+                'VOBIZ_STREAM_BASE_URL nor NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL is set to an ' +
+                'http(s) URL. The parent hears silence and the call ends.',
             undefined,
             'ATTENDANCE',
             { outreachId },
