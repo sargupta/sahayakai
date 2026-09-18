@@ -10,9 +10,46 @@ by. A model that opens by reciting attendance statistics reads as a summons.
 
 from __future__ import annotations
 
-__all__ = ["build_parent_call_instruction", "CallContext"]
+__all__ = ["build_parent_call_instruction", "CallContext", "stt_language_hints"]
 
 from dataclasses import dataclass
+
+#: BCP-47 codes per app language, mirroring TWILIO_LANGUAGE_MAP in the web
+#: runtime. Odia maps to Hindi there because it has no dedicated voice; the same
+#: substitution is kept here so recognition behaves consistently with the rest
+#: of the app rather than diverging on one language.
+_LANGUAGE_CODES: dict[str, str] = {
+    "English": "en-IN",
+    "Hindi": "hi-IN",
+    "Kannada": "kn-IN",
+    "Tamil": "ta-IN",
+    "Telugu": "te-IN",
+    "Malayalam": "ml-IN",
+    "Bengali": "bn-IN",
+    "Marathi": "mr-IN",
+    "Gujarati": "gu-IN",
+    "Punjabi": "pa-IN",
+    "Odia": "hi-IN",
+}
+
+
+def stt_language_hints(language: str) -> list[str]:
+    """Which languages to tell the recogniser to expect on this call.
+
+    Without hints, the Live model's own transcription decodes short, code-mixed
+    utterances over an 8 kHz phone line as more or less random languages — the
+    Suraksha build logged Telugu, German and Portuguese coming back from Bengali
+    speakers. The parent then gets answered as though they said something else
+    entirely, which is heard as the agent being broken rather than as a
+    recognition problem.
+
+    Hindi and English ride along with every language because Indian parents
+    code-mix as a matter of course: an English number or an English school word
+    inside a Kannada sentence is normal speech, not an exception.
+    """
+    hints = [_LANGUAGE_CODES.get(language, "en-IN"), "hi-IN", "en-IN"]
+    # Ordered, de-duplicated: the parent's own language must come first.
+    return list(dict.fromkeys(hints))
 
 
 @dataclass(frozen=True)

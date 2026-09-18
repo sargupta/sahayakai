@@ -41,7 +41,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from ..agents.vidya_voice.router import get_vertex_live_location, get_vertex_live_model
 from ..config import get_settings
 from .audio import ULAW_SILENCE, pcm24k_to_ulaw8k, ulaw8k_to_pcm16k
-from .prompt import CallContext, build_parent_call_instruction
+from .prompt import CallContext, build_parent_call_instruction, stt_language_hints
 from .tokens import VobizDomain, verify_vobiz_token
 from .vobiz_frames import InboundKind, build_clear_audio, build_play_audio, parse_inbound
 
@@ -123,6 +123,33 @@ _IDLE_SECONDS = int(os.environ.get("VOBIZ_IDLE_SECONDS", "45"))
 #: 20 ms of mu-law at 8 kHz. Carriers expect a steady frame cadence.
 _FRAME_BYTES = 160
 _FRAME_SECONDS = 0.02
+
+#: One frame of silence, sent to hold the cadence when the model has not
+#: produced audio yet. Built once: it is emitted on most idle ticks.
+_SILENCE_FRAME = bytes([ULAW_SILENCE]) * _FRAME_BYTES
+
+#: Keep the cadence for this long after the model stops producing (1s). Long
+#: enough to bridge the gaps between bursts inside one utterance, short enough
+#: that a quiet line is not flooded with silence frames.
+_COMFORT_TICKS = 50
+
+#: Resync rather than burst-catch-up beyond this much lag.
+_MAX_PACING_LAG = 0.5
+
+#: Run this far ahead of real time so the carrier holds a jitter buffer.
+#:
+#: Sending in exact real time sounds right and is wrong: it leaves the carrier
+#: with nothing in hand, so ANY stall on our side becomes a hole in the parent's
+#: ear. Server telemetry showed ~0.1% of ticks late but a single stall of ~343ms
+#: per call — inaudible if the carrier is holding half a second, an obvious
+#: break if it is holding nothing.
+#:
+#: The cost is latency: audio is queued this far in advance, so an interruption
+#: has this much already committed. 400ms is the usual telephony compromise —
+#: comfortably more than our worst observed stall, and short enough that
+#: barge-in still feels immediate, especially since `clearAudio` tells the
+#: carrier to drop exactly this buffer.
+_PREBUFFER_SECONDS = 0.4
 
 _CLOSE_BAD_TOKEN = 4401
 _CLOSE_AT_CAPACITY = 4503
@@ -264,6 +291,15 @@ class _Bridge:
         self.bytes_up = 0
         self.bytes_down = 0
         self.t_ready: float | None = None
+        #: How often the sender fell so far behind that it had to resync. Any
+        #: non-zero value here is audible, so it is worth a log field.
+        self.pacing_resyncs = 0
+        self.ticks = 0
+        self.ticks_late = 0
+        self.worst_lateness_ms = 0.0
+        #: Carry-over audio that did not fill a whole frame. Padding it per
+        #: chunk instead would put silence inside words.
+        self.pending = b""
         self.opener_queued_at: float | None = None
         #: When the parent would first have heard the model. Measured, not
         #: assumed — this is the number that decides whether the call feels
@@ -290,12 +326,32 @@ def _kickoff_text(opener_played: bool) -> str:
 
 
 def _queue_ulaw(bridge: _Bridge, ulaw: bytes) -> None:
-    """Split carrier-ready audio into 20 ms frames and hand them to the pacer."""
-    for start in range(0, len(ulaw), _FRAME_BYTES):
-        chunk = ulaw[start : start + _FRAME_BYTES]
-        if len(chunk) < _FRAME_BYTES:
-            chunk = chunk + bytes([ULAW_SILENCE]) * (_FRAME_BYTES - len(chunk))
-        bridge.out.put_nowait((bridge.generation, chunk))
+    """Split carrier-ready audio into 20 ms frames and hand them to the pacer.
+
+    A model chunk is almost never an exact multiple of 160 bytes, and the first
+    version zero-padded every chunk up to a frame boundary. That injected up to
+    19ms of silence into the middle of continuous speech at EVERY chunk
+    boundary — a rasp through the vowels rather than an obvious break, which is
+    the kind of defect that gets described as "it sounds a bit off" and never
+    diagnosed.
+
+    The remainder is carried instead, so padding happens once per utterance
+    rather than once per chunk. `_flush_ulaw` pads the true tail.
+    """
+    data = bridge.pending + ulaw
+    complete = len(data) - (len(data) % _FRAME_BYTES)
+    for start in range(0, complete, _FRAME_BYTES):
+        bridge.out.put_nowait((bridge.generation, data[start : start + _FRAME_BYTES]))
+    bridge.pending = data[complete:]
+
+
+def _flush_ulaw(bridge: _Bridge) -> None:
+    """Emit the final partial frame of an utterance, padded to the frame size."""
+    if not bridge.pending:
+        return
+    tail = bridge.pending + bytes([ULAW_SILENCE]) * (_FRAME_BYTES - len(bridge.pending))
+    bridge.out.put_nowait((bridge.generation, tail))
+    bridge.pending = b""
 
 
 async def _greet_and_drain(bridge: _Bridge, language: str) -> None:
@@ -385,6 +441,9 @@ async def _pump_live_to_carrier(bridge: _Bridge, session: Any) -> str:
                 # tell the carrier to discard what it has buffered; doing only the
                 # first still leaves a second of stale speech in the parent's ear.
                 bridge.generation += 1
+                # Half a frame of abandoned speech must not be prepended to the
+                # next thing VIDYA says.
+                bridge.pending = b""
                 while not bridge.out.empty():
                     with contextlib.suppress(asyncio.QueueEmpty):
                         bridge.out.get_nowait()
@@ -398,6 +457,8 @@ async def _pump_live_to_carrier(bridge: _Bridge, session: Any) -> str:
                     bridge.first_audio_at = time.monotonic()
                 ulaw, bridge.tail = pcm24k_to_ulaw8k(data, bridge.tail)
                 _queue_ulaw(bridge, ulaw)
+        # The turn is over: the carry-over is a true tail now, not a chunk seam.
+        _flush_ulaw(bridge)
         if not turn_had_output:
             # The generator returned without yielding anything. That is the
             # session really being gone, not a completed turn; re-entering it
@@ -407,30 +468,84 @@ async def _pump_live_to_carrier(bridge: _Bridge, session: Any) -> str:
 
 
 async def _pace_outbound(bridge: _Bridge) -> None:
-    """Emit one 20 ms frame every 20 ms.
+    """The single writer to the carrier. Emits one 20 ms frame every 20 ms.
 
-    A single sender task, never concurrent writes. Dumping the model's audio as
-    fast as it arrives overruns the carrier's jitter buffer and the parent hears
-    speech that speeds up and then stutters.
+    WHY THIS IS NOT JUST `await queue.get()` THEN `sleep(20ms)`
+
+    That is the obvious shape, and it is what the Suraksha agent does, but it
+    produces audibly broken speech for two separate reasons. Measured against
+    the deployed service before this rewrite: p99 inter-frame gap 110ms, eleven
+    frames more than 100ms late, and 15% of frames arriving less than 5ms apart.
+
+    1. Blocking on an empty queue puts HOLES in the middle of an utterance. The
+       model streams in bursts, so the queue empties between them; a sender that
+       simply waits sends nothing, the carrier's playout buffer drains, and the
+       parent hears a break inside a word. Telephony is constant-bitrate by
+       nature: the fix is to keep the cadence and send silence, not to stop.
+
+    2. Sleeping a fixed period AFTER the send makes the true period
+       `send_time + 20ms`, so the stream runs slower than real time and drifts
+       further behind for the length of the call. The deadline below is absolute,
+       so a slow send is absorbed rather than accumulated.
+
+    Frames from a superseded generation are discarded WITHOUT spending a tick,
+    which is what makes barge-in feel immediate instead of merely queued.
     """
-    next_at = time.monotonic()
+    #: How long to keep the cadence going once the model stops producing. Covers
+    #: the gaps between bursts inside a turn without emitting silence forever on
+    #: a call where nobody is speaking.
+    comfort_ticks_remaining = 0
+    # Start in the past so the first frames go out as fast as they are produced,
+    # filling the carrier's jitter buffer before steady-state pacing begins.
+    next_at = time.monotonic() - _PREBUFFER_SECONDS
+
     while not bridge.stop:
-        generation, chunk = await bridge.out.get()
-        if chunk is None:
-            return
-        # Queued before the parent interrupted: no longer wanted.
-        if generation != bridge.generation or not bridge.stream_id:
-            continue
-        now = time.monotonic()
-        next_at = max(next_at, now)
-        await asyncio.sleep(max(0.0, next_at - now))
         next_at += _FRAME_SECONDS
-        try:
-            await bridge.ws.send_text(build_play_audio(bridge.stream_id, chunk))
-            bridge.bytes_down += len(chunk)
-        except Exception:  # noqa: BLE001
-            bridge.stop = True
-            return
+
+        # Take the first frame that is still current. Stale ones are dropped
+        # here rather than played, and dropping them costs no time.
+        chunk: bytes | None = None
+        while True:
+            try:
+                generation, candidate = bridge.out.get_nowait()
+            except asyncio.QueueEmpty:
+                break
+            if generation == bridge.generation:
+                chunk = candidate
+                break
+
+        if chunk is not None:
+            comfort_ticks_remaining = _COMFORT_TICKS
+        elif comfort_ticks_remaining > 0:
+            # Mid-utterance gap: hold the line with silence so the carrier's
+            # buffer never runs dry.
+            comfort_ticks_remaining -= 1
+            chunk = _SILENCE_FRAME
+
+        if chunk is not None and bridge.stream_id:
+            try:
+                await bridge.ws.send_text(build_play_audio(bridge.stream_id, chunk))
+                bridge.bytes_down += len(chunk)
+            except Exception:  # noqa: BLE001 — the carrier is gone; the handler decides what that means
+                bridge.stop = True
+                return
+
+        now = time.monotonic()
+        # Self-measurement. Client-observed jitter mixes our pacing with the
+        # internet path to the carrier; this is the part we actually own, so it
+        # is the part worth reporting.
+        lateness = now - next_at
+        if lateness > 0:
+            bridge.ticks_late += 1
+            bridge.worst_lateness_ms = max(bridge.worst_lateness_ms, lateness * 1000)
+        bridge.ticks += 1
+        if next_at < now - _MAX_PACING_LAG:
+            # So far behind that catching up would mean dumping a burst into the
+            # carrier, which is its own kind of stutter. Resync instead and take
+            # the loss once.
+            bridge.pacing_resyncs += 1
+            next_at = now
+        await asyncio.sleep(max(0.0, next_at - now))
 
 
 async def _prepare_live_session(
@@ -472,6 +587,16 @@ async def _prepare_live_session(
                 )
             )
         ),
+        # Tell the recogniser what to expect. Without this the model decodes
+        # short code-mixed speech over an 8 kHz line as more or less arbitrary
+        # languages, and the parent gets answered as though they said something
+        # else — heard as the agent being broken, not as a recognition problem.
+        input_audio_transcription=genai_types.AudioTranscriptionConfig(
+            language_codes=stt_language_hints(context.language),
+        ),
+        # What VIDYA actually said, so a call can be reviewed afterwards without
+        # storing the audio.
+        output_audio_transcription=genai_types.AudioTranscriptionConfig(),
     )
     model = os.environ.get("VOBIZ_LIVE_MODEL") or get_vertex_live_model()
 
@@ -598,6 +723,14 @@ async def vobiz_stream(ws: WebSocket) -> None:
             seconds=round(time.monotonic() - started, 1),
             bytes_up=bridge.bytes_up if bridge else 0,
             bytes_down=bridge.bytes_down if bridge else 0,
+            pacing_resyncs=bridge.pacing_resyncs if bridge else 0,
+            ticks=bridge.ticks if bridge else 0,
+            ticks_late_pct=(
+                round(100 * bridge.ticks_late / bridge.ticks, 1)
+                if bridge and bridge.ticks
+                else None
+            ),
+            worst_lateness_ms=round(bridge.worst_lateness_ms) if bridge else None,
             # Two different numbers, and conflating them hides the fix. The
             # opener is what the PARENT hears first; the model's own first audio
             # lands seconds later and is what the recording exists to cover.

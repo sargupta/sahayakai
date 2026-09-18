@@ -16,6 +16,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import { checkCallingWindow } from '@/lib/calling-hours';
 import { getDb } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import { buildVobizAnswerXml, toWebSocketOrigin } from '@/lib/vobiz/answer-xml';
@@ -50,6 +51,31 @@ async function handle(req: NextRequest): Promise<NextResponse> {
         // whether the record exists or the token merely expired.
         logger.warn('Vobiz answer webhook rejected — bad or expired token', 'ATTENDANCE');
         return xml(EMPTY_RESPONSE, 403);
+    }
+
+    // Quiet hours, enforced AGAIN here.
+    //
+    // The dial route already refuses outside the window, and that is where a
+    // teacher's "Call now" is stopped. But that check only binds callers who go
+    // through the app: anything reaching the carrier another way — a script, a
+    // scheduler, a retry queue, a future integration — skips it entirely. That
+    // is not hypothetical. This route was tested by a call placed at 23:55 IST,
+    // which rang a real phone, because the test script talked to the carrier
+    // directly and the only guard lived somewhere it never went.
+    //
+    // This is the last server-side point before a parent is in a conversation,
+    // so the guarantee is repeated here. A call that somehow rings out of hours
+    // is then answered with silence and ended, rather than with VIDYA opening a
+    // conversation about someone's child at midnight.
+    const callingWindow = checkCallingWindow();
+    if (!callingWindow.allowed) {
+        logger.warn(
+            `Vobiz call refused at the answer webhook — outside calling hours (${callingWindow.istTime}). ` +
+                'Something reached the carrier without passing through /api/attendance/call.',
+            'ATTENDANCE',
+            { outreachId, istHour: callingWindow.istHour },
+        );
+        return xml(EMPTY_RESPONSE, 200);
     }
 
     // The media socket does NOT live on the agent service. `sahayakai-agents`
