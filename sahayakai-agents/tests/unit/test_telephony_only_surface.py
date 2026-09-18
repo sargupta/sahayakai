@@ -81,3 +81,65 @@ class TestPublicSurface:
             assert any(r.startswith("/v1/") for r in _routes(SAHAYAKAI_TELEPHONY_ONLY=value))
         for value in ("1", "true", "TRUE", "yes", "on"):
             assert set(_routes(SAHAYAKAI_TELEPHONY_ONLY=value)) == HEALTH | {SOCKET}
+
+
+_INVARIANT_PROBE = """
+import os
+from sahayakai_agents.config import Settings
+s = Settings()
+try:
+    s.assert_prod_invariants()
+    print("OK")
+except RuntimeError as e:
+    print("RAISED:" + str(e).replace("\\n", " | "))
+"""
+
+
+def _invariants(**extra: str) -> str:
+    import os
+
+    env = {
+        **os.environ,
+        "SAHAYAKAI_AGENTS_ENV": "production",
+        "SAHAYAKAI_REQUEST_SIGNING_KEY": "k" * 64,
+        "PYTHONPATH": SRC,
+        **extra,
+    }
+    for drop in ("SAHAYAKAI_AGENTS_AUDIENCE", "SAHAYAKAI_AGENTS_ALLOWED_INVOKERS"):
+        env.pop(drop, None)
+    out = subprocess.run(
+        [sys.executable, "-c", _INVARIANT_PROBE], env=env, capture_output=True, text=True, check=True
+    )
+    return out.stdout.strip().splitlines()[-1]
+
+
+class TestProdInvariantsAreScopedNotWeakened:
+    def test_agent_service_still_demands_audience_and_invokers(self) -> None:
+        # The guard rail that must not move: on the agent service these remain
+        # boot-blocking, because its routes authenticate callers by ID token.
+        result = _invariants()
+        assert result.startswith("RAISED:")
+        assert "SAHAYAKAI_AGENTS_AUDIENCE" in result
+        assert "SAHAYAKAI_AGENTS_ALLOWED_INVOKERS" in result
+
+    def test_telephony_service_does_not_need_them(self) -> None:
+        # Its only peer is a carrier that cannot mint a Google token, so an
+        # audience and an invoker list would have to be invented to satisfy a
+        # check that protects routes this deployment does not serve.
+        assert _invariants(SAHAYAKAI_TELEPHONY_ONLY="1") == "OK"
+
+    def test_telephony_service_still_demands_a_real_signing_key(self) -> None:
+        # The exemption is narrow. The signing key IS the telephony gate, so
+        # weakening these would hand out the media socket.
+        dev_default = _invariants(
+            SAHAYAKAI_TELEPHONY_ONLY="1",
+            SAHAYAKAI_REQUEST_SIGNING_KEY="dev-only-change-me",
+        )
+        assert dev_default.startswith("RAISED:")
+        assert "dev default" in dev_default
+
+        too_short = _invariants(
+            SAHAYAKAI_TELEPHONY_ONLY="1", SAHAYAKAI_REQUEST_SIGNING_KEY="short"
+        )
+        assert too_short.startswith("RAISED:")
+        assert "32 characters" in too_short

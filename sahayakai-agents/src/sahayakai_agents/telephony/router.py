@@ -32,16 +32,20 @@ import contextlib
 import os
 import time
 from array import array
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 import structlog
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
+from ..agents.vidya_voice.router import get_vertex_live_location, get_vertex_live_model
 from ..config import get_settings
 from .audio import ULAW_SILENCE, pcm24k_to_ulaw8k, ulaw8k_to_pcm16k
 from .prompt import CallContext, build_parent_call_instruction
 from .tokens import VobizDomain, verify_vobiz_token
 from .vobiz_frames import InboundKind, build_clear_audio, build_play_audio, parse_inbound
+
+if TYPE_CHECKING:
+    from google.cloud.firestore import DocumentSnapshot
 
 log = structlog.get_logger(__name__)
 
@@ -127,11 +131,25 @@ async def _load_context(outreach_id: str, language: str) -> CallContext:
     than a parent hearing dead air because a read timed out.
     """
     try:
-        from firebase_admin import firestore  # imported lazily: not needed to serve other agents
+        # `google.cloud.firestore`, matching `session_store` — NOT firebase_admin,
+        # which nothing in this service initialises. The first version used
+        # firebase_admin and every call silently fell back to a generic prompt
+        # with "The default Firebase app does not exist" in the logs.
+        from google.cloud import firestore
 
-        client = firestore.client()
-        snap = await asyncio.to_thread(
-            lambda: client.collection("parent_outreach").document(outreach_id).get()
+        client = firestore.Client(
+            project=get_settings().gcp_project,
+            database=get_settings().firestore_database,
+        )
+        # `to_thread` keeps the blocking Firestore read off the event loop, which
+        # is relaying audio. The cast is because the sync and async clients share
+        # a return annotation; this is the sync client, so the snapshot is not
+        # awaitable.
+        snap = cast(
+            "DocumentSnapshot",
+            await asyncio.to_thread(
+                lambda: client.collection("parent_outreach").document(outreach_id).get()
+            ),
         )
         data = snap.to_dict() if snap.exists else None
         if not data:
@@ -230,32 +248,51 @@ async def _pump_carrier_to_live(bridge: _Bridge, session: Any) -> str:
 
 
 async def _pump_live_to_carrier(bridge: _Bridge, session: Any) -> str:
-    """The model's audio -> the parent, plus interruption handling."""
-    async for resp in session.receive():
-        if bridge.stop:
-            break
-        server = getattr(resp, "server_content", None)
-        if server is not None and getattr(server, "interrupted", False):
-            # The parent started speaking. Drop everything already queued AND
-            # tell the carrier to discard what it has buffered; doing only the
-            # first still leaves a second of stale speech in the parent's ear.
-            bridge.generation += 1
-            while not bridge.out.empty():
-                with contextlib.suppress(asyncio.QueueEmpty):
-                    bridge.out.get_nowait()
-            if bridge.stream_id:
-                with contextlib.suppress(Exception):
-                    await bridge.ws.send_text(build_clear_audio(bridge.stream_id))
+    """The model's audio -> the parent, plus interruption handling.
 
-        data = getattr(resp, "data", None)
-        if data:
-            ulaw, bridge.tail = pcm24k_to_ulaw8k(data, bridge.tail)
-            # Split into carrier-sized frames here so the sender only paces.
-            for start in range(0, len(ulaw), _FRAME_BYTES):
-                chunk = ulaw[start : start + _FRAME_BYTES]
-                if len(chunk) < _FRAME_BYTES:
-                    chunk = chunk + bytes([ULAW_SILENCE]) * (_FRAME_BYTES - len(chunk))
-                bridge.out.put_nowait((bridge.generation, chunk))
+    `session.receive()` is a PER-TURN generator: it ends when the model finishes
+    speaking, not when the session closes. Treating it as the lifetime of the
+    call — which the obvious `async for resp in session.receive()` does — hangs
+    up as soon as the greeting finishes. A real parent would hear one sentence
+    and then a dead line, and the logs would say `live_stream_end`, which reads
+    like the model quit rather than like we stopped listening.
+
+    So the generator is re-entered for each subsequent turn, and only the
+    caller's own guards (parent hung up, idle, max duration) end the call.
+    """
+    while not bridge.stop:
+        turn_had_output = False
+        async for resp in session.receive():
+            if bridge.stop:
+                break
+            turn_had_output = True
+            server = getattr(resp, "server_content", None)
+            if server is not None and getattr(server, "interrupted", False):
+                # The parent started speaking. Drop everything already queued AND
+                # tell the carrier to discard what it has buffered; doing only the
+                # first still leaves a second of stale speech in the parent's ear.
+                bridge.generation += 1
+                while not bridge.out.empty():
+                    with contextlib.suppress(asyncio.QueueEmpty):
+                        bridge.out.get_nowait()
+                if bridge.stream_id:
+                    with contextlib.suppress(Exception):
+                        await bridge.ws.send_text(build_clear_audio(bridge.stream_id))
+
+            data = getattr(resp, "data", None)
+            if data:
+                ulaw, bridge.tail = pcm24k_to_ulaw8k(data, bridge.tail)
+                # Split into carrier-sized frames here so the sender only paces.
+                for start in range(0, len(ulaw), _FRAME_BYTES):
+                    chunk = ulaw[start : start + _FRAME_BYTES]
+                    if len(chunk) < _FRAME_BYTES:
+                        chunk = chunk + bytes([ULAW_SILENCE]) * (_FRAME_BYTES - len(chunk))
+                    bridge.out.put_nowait((bridge.generation, chunk))
+        if not turn_had_output:
+            # The generator returned without yielding anything. That is the
+            # session really being gone, not a completed turn; re-entering it
+            # would spin.
+            break
     return "live_stream_end"
 
 
@@ -310,10 +347,15 @@ async def vobiz_stream(ws: WebSocket) -> None:
         from google.genai import types as genai_types
 
         settings = get_settings()
+        # Model and location come from the app-facing voice route rather than
+        # from constants of our own. The first version hardcoded the model name
+        # the Suraksha agent uses, which does not exist on Vertex — every call
+        # died with "Publisher model ... was not found". One source of truth for
+        # which Live model actually exists is worth the import.
         client = genai.Client(
             vertexai=True,
             project=settings.gcp_project,
-            location=os.environ.get("VOBIZ_LIVE_LOCATION", "us-central1"),
+            location=os.environ.get("VOBIZ_LIVE_LOCATION") or get_vertex_live_location(),
         )
         config = genai_types.LiveConnectConfig(
             response_modalities=[genai_types.Modality.AUDIO],
@@ -328,7 +370,7 @@ async def vobiz_stream(ws: WebSocket) -> None:
                 )
             ),
         )
-        model = os.environ.get("VOBIZ_LIVE_MODEL", "gemini-live-2.5-flash")
+        model = os.environ.get("VOBIZ_LIVE_MODEL") or get_vertex_live_model()
 
         log.info(
             "telephony.call_open",
