@@ -32,6 +32,7 @@ import contextlib
 import os
 import time
 from array import array
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
 import structlog
@@ -52,6 +53,57 @@ log = structlog.get_logger(__name__)
 telephony_router = APIRouter(tags=["telephony"])
 
 _PCM_IN_MIME = "audio/pcm;rate=16000"
+
+# ---- The recorded opener --------------------------------------------------
+#
+# Measured on the deployed bridge, first audio from the Live model lands ~3.4s
+# after the socket opens: Firestore context ~490ms, client construction ~345ms,
+# the Vertex handshake ~1.7s, the first token ~840ms. Overlapping everything
+# that can overlap still leaves ~2.5s, because the handshake and the first token
+# dominate and neither is ours to speed up.
+#
+# Two and a half seconds of silence after a parent says "hello" is how a call
+# gets hung up on. So VIDYA greets them from a recording at ~0ms while the live
+# session warms behind it. Same voice, so the handover is not audible.
+#
+# Stored as raw mu-law 8 kHz — the carrier's own wire format — so the most
+# latency-critical bytes on the route need no conversion at all.
+_OPENER_DIR = Path(__file__).parent / "openers"
+_DEFAULT_OPENER_LANGUAGE = "English"
+
+
+def _load_openers() -> dict[str, bytes]:
+    """Read every rendered opener once, at import."""
+    if not _OPENER_DIR.is_dir():
+        return {}
+    return {f.stem: f.read_bytes() for f in _OPENER_DIR.glob("*.ulaw")}
+
+
+_OPENERS = _load_openers()
+
+if not _OPENERS:
+    # Loud on purpose. If the recordings do not ship with the image, every call
+    # silently reverts to ~3.4s of dead air before the model speaks — the exact
+    # failure they exist to prevent, and one that looks like a slow model rather
+    # than like a packaging mistake.
+    log.error(
+        "telephony.openers_missing",
+        directory=str(_OPENER_DIR),
+        detail="no recorded openers found; every call will open with silence",
+    )
+else:
+    log.info("telephony.openers_loaded", count=len(_OPENERS), languages=sorted(_OPENERS))
+
+
+def opener_for(language: str) -> bytes:
+    """The recording for this language, falling back rather than to silence.
+
+    A missing language must never mean dead air: an English greeting a parent
+    does not speak is still better than nothing, and it is recoverable — they
+    hear a human-sounding voice and stay on the line long enough for the model
+    to take over in their own language.
+    """
+    return _OPENERS.get(language) or _OPENERS.get(_DEFAULT_OPENER_LANGUAGE, b"")
 
 # ---- Limits -------------------------------------------------------------
 #
@@ -211,6 +263,67 @@ class _Bridge:
         self.last_voice = time.monotonic()
         self.bytes_up = 0
         self.bytes_down = 0
+        self.t_ready: float | None = None
+        self.opener_queued_at: float | None = None
+        #: When the parent would first have heard the model. Measured, not
+        #: assumed — this is the number that decides whether the call feels
+        #: like a person picking up or like a robocall.
+        self.first_audio_at: float | None = None
+
+
+def _kickoff_text(opener_played: bool) -> str:
+    """What we say to the model to make it start talking.
+
+    When the recording has already introduced VIDYA, the model is joining a
+    conversation in progress. Saying so is what stops it introducing itself a
+    second time, which is the single most obviously robotic thing this call
+    could do.
+    """
+    if opener_played:
+        return (
+            "(The parent has just answered and has already heard your recorded "
+            "greeting introducing you as Vidya calling from their child's school. "
+            "Do NOT greet them again or repeat who you are. Continue naturally "
+            "from there: say why you are calling, briefly and warmly, then listen.)"
+        )
+    return "(The parent has just answered. Greet them now.)"
+
+
+def _queue_ulaw(bridge: _Bridge, ulaw: bytes) -> None:
+    """Split carrier-ready audio into 20 ms frames and hand them to the pacer."""
+    for start in range(0, len(ulaw), _FRAME_BYTES):
+        chunk = ulaw[start : start + _FRAME_BYTES]
+        if len(chunk) < _FRAME_BYTES:
+            chunk = chunk + bytes([ULAW_SILENCE]) * (_FRAME_BYTES - len(chunk))
+        bridge.out.put_nowait((bridge.generation, chunk))
+
+
+async def _greet_and_drain(bridge: _Bridge, language: str) -> None:
+    """Play the recorded opener, then hold the socket until the model is ready.
+
+    Runs CONCURRENTLY with the Live connect, which is the whole point: the
+    greeting has to be queued before the thing it exists to cover.
+
+    It also keeps reading from the carrier and discarding what it reads. The
+    socket would otherwise buffer the parent's first words and replay them into
+    the model the instant the real pump starts — the model would answer
+    something said several seconds earlier, over its own greeting.
+    """
+    greeted = False
+    while True:
+        try:
+            raw = await bridge.ws.receive_text()
+        except Exception:  # noqa: BLE001 — the caller owns the socket's lifetime
+            return
+        frame = parse_inbound(raw)
+        if frame.stream_id and not bridge.stream_id:
+            bridge.stream_id = frame.stream_id
+        if not greeted and bridge.stream_id:
+            opener = opener_for(language)
+            if opener:
+                _queue_ulaw(bridge, opener)
+                bridge.opener_queued_at = time.monotonic()
+            greeted = True
 
 
 async def _pump_carrier_to_live(bridge: _Bridge, session: Any) -> str:
@@ -281,13 +394,10 @@ async def _pump_live_to_carrier(bridge: _Bridge, session: Any) -> str:
 
             data = getattr(resp, "data", None)
             if data:
+                if bridge.first_audio_at is None:
+                    bridge.first_audio_at = time.monotonic()
                 ulaw, bridge.tail = pcm24k_to_ulaw8k(data, bridge.tail)
-                # Split into carrier-sized frames here so the sender only paces.
-                for start in range(0, len(ulaw), _FRAME_BYTES):
-                    chunk = ulaw[start : start + _FRAME_BYTES]
-                    if len(chunk) < _FRAME_BYTES:
-                        chunk = chunk + bytes([ULAW_SILENCE]) * (_FRAME_BYTES - len(chunk))
-                    bridge.out.put_nowait((bridge.generation, chunk))
+                _queue_ulaw(bridge, ulaw)
         if not turn_had_output:
             # The generator returned without yielding anything. That is the
             # session really being gone, not a completed turn; re-entering it
@@ -323,6 +433,64 @@ async def _pace_outbound(bridge: _Bridge) -> None:
             return
 
 
+async def _prepare_live_session(
+    outreach_id: str, language: str, started: float
+) -> tuple[Any, Any, str, CallContext]:
+    """Load the call's context and build the Live client, config and model.
+
+    Split out of the handler so the handler reads as the shape of a call rather
+    than as a setup script, and so the warm-up timings sit next to the work they
+    measure.
+    """
+    from google import genai
+    from google.genai import types as genai_types
+
+    t_accept = time.monotonic()
+    context = await _load_context(outreach_id, language)
+    t_context = time.monotonic()
+
+    settings = get_settings()
+    # Model and location come from the app-facing voice route rather than from
+    # constants of our own. The first version hardcoded the model name the
+    # Suraksha agent uses, which does not exist on Vertex — every call died with
+    # "Publisher model ... was not found". One source of truth for which Live
+    # model actually exists is worth the import.
+    client = genai.Client(
+        vertexai=True,
+        project=settings.gcp_project,
+        location=os.environ.get("VOBIZ_LIVE_LOCATION") or get_vertex_live_location(),
+    )
+    config = genai_types.LiveConnectConfig(
+        response_modalities=[genai_types.Modality.AUDIO],
+        system_instruction=genai_types.Content(
+            parts=[genai_types.Part(text=build_parent_call_instruction(context))]
+        ),
+        speech_config=genai_types.SpeechConfig(
+            voice_config=genai_types.VoiceConfig(
+                prebuilt_voice_config=genai_types.PrebuiltVoiceConfig(
+                    voice_name=os.environ.get("VOBIZ_LIVE_VOICE", "Aoede")
+                )
+            )
+        ),
+    )
+    model = os.environ.get("VOBIZ_LIVE_MODEL") or get_vertex_live_model()
+
+    # The gap between a parent saying "hello" and hearing a voice is the single
+    # most important number on this route, and it is made of separable pieces.
+    # Logging them apart is the difference between optimising the right one and
+    # guessing which one is slow.
+    log.info(
+        "telephony.warmup",
+        outreach_id=outreach_id,
+        model=model,
+        language=context.language,
+        context_ms=round((t_context - t_accept) * 1000),
+        client_ms=round((time.monotonic() - t_context) * 1000),
+        since_open_ms=round((time.monotonic() - started) * 1000),
+    )
+    return client, config, model, context
+
+
 @telephony_router.websocket("/telephony/vobiz/stream")
 async def vobiz_stream(ws: WebSocket) -> None:
     """One phone call, bridged to one Live session."""
@@ -341,55 +509,48 @@ async def vobiz_stream(ws: WebSocket) -> None:
             outreach_id,
             call_uuid=ws.query_params.get("cuid", ""),
         )
-        context = await _load_context(outreach_id, ws.query_params.get("lang", "English"))
+        language = ws.query_params.get("lang", "English")
 
-        from google import genai
+        # The pacer and the greeting start FIRST, before anything that blocks.
+        # The recorded opener exists to cover the Live warm-up, so queueing it
+        # after that warm-up would be pointless — the parent would hear the
+        # silence anyway and then be greeted twice.
+        pacer = asyncio.create_task(_pace_outbound(bridge))
+        greeter = asyncio.create_task(_greet_and_drain(bridge, language))
+
+        client, config, model, context = await _prepare_live_session(
+            outreach_id, language, started
+        )
+
         from google.genai import types as genai_types
 
-        settings = get_settings()
-        # Model and location come from the app-facing voice route rather than
-        # from constants of our own. The first version hardcoded the model name
-        # the Suraksha agent uses, which does not exist on Vertex — every call
-        # died with "Publisher model ... was not found". One source of truth for
-        # which Live model actually exists is worth the import.
-        client = genai.Client(
-            vertexai=True,
-            project=settings.gcp_project,
-            location=os.environ.get("VOBIZ_LIVE_LOCATION") or get_vertex_live_location(),
-        )
-        config = genai_types.LiveConnectConfig(
-            response_modalities=[genai_types.Modality.AUDIO],
-            system_instruction=genai_types.Content(
-                parts=[genai_types.Part(text=build_parent_call_instruction(context))]
-            ),
-            speech_config=genai_types.SpeechConfig(
-                voice_config=genai_types.VoiceConfig(
-                    prebuilt_voice_config=genai_types.PrebuiltVoiceConfig(
-                        voice_name=os.environ.get("VOBIZ_LIVE_VOICE", "Aoede")
-                    )
-                )
-            ),
-        )
-        model = os.environ.get("VOBIZ_LIVE_MODEL") or get_vertex_live_model()
-
-        log.info(
-            "telephony.call_open",
-            outreach_id=outreach_id,
-            model=model,
-            language=context.language,
-        )
-
         async with client.aio.live.connect(model=model, config=config) as session:
-            # VIDYA speaks first: the parent answered an unknown number and is
-            # waiting. Silence here reads as a spam call and they hang up.
+            bridge.t_ready = time.monotonic()
+            log.info(
+                "telephony.live_connected",
+                outreach_id=outreach_id,
+                connect_ms=round((bridge.t_ready - started) * 1000),
+                opener_lead_ms=(
+                    round((bridge.t_ready - bridge.opener_queued_at) * 1000)
+                    if bridge.opener_queued_at
+                    else None
+                ),
+            )
+
+            # Hand the socket over: the greeter has been draining it so the
+            # parent's first words could not pile up and be replayed into a
+            # model that was not listening yet.
+            greeter.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await greeter
+
+            # The model takes over mid-conversation. Telling it the recording
+            # already played is what stops it introducing itself a second time,
+            # which is the single most obviously robotic thing this call could do.
             await session.send_client_content(
                 turns=genai_types.Content(
                     role="user",
-                    parts=[
-                        genai_types.Part(
-                            text="(The parent has just answered. Greet them now.)"
-                        )
-                    ],
+                    parts=[genai_types.Part(text=_kickoff_text(bool(bridge.opener_queued_at)))],
                 ),
                 turn_complete=True,
             )
@@ -397,7 +558,7 @@ async def vobiz_stream(ws: WebSocket) -> None:
             tasks = [
                 asyncio.create_task(_pump_carrier_to_live(bridge, session)),
                 asyncio.create_task(_pump_live_to_carrier(bridge, session)),
-                asyncio.create_task(_pace_outbound(bridge)),
+                pacer,
             ]
             guard = asyncio.create_task(asyncio.sleep(_MAX_CALL_SECONDS))
             done, pending = await asyncio.wait({*tasks, guard}, return_when=asyncio.FIRST_COMPLETED)
@@ -437,6 +598,19 @@ async def vobiz_stream(ws: WebSocket) -> None:
             seconds=round(time.monotonic() - started, 1),
             bytes_up=bridge.bytes_up if bridge else 0,
             bytes_down=bridge.bytes_down if bridge else 0,
+            # Two different numbers, and conflating them hides the fix. The
+            # opener is what the PARENT hears first; the model's own first audio
+            # lands seconds later and is what the recording exists to cover.
+            opener_ms=(
+                round((bridge.opener_queued_at - started) * 1000)
+                if bridge and bridge.opener_queued_at
+                else None
+            ),
+            first_model_audio_ms=(
+                round((bridge.first_audio_at - started) * 1000)
+                if bridge and bridge.first_audio_at
+                else None
+            ),
         )
         with contextlib.suppress(Exception):
             code = {
