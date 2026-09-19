@@ -30,6 +30,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import os
+import re
 import time
 from array import array
 from pathlib import Path
@@ -41,6 +42,16 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from ..agents.vidya_voice.router import get_vertex_live_location, get_vertex_live_model
 from ..config import get_settings
 from .audio import ULAW_SILENCE, pcm24k_to_ulaw8k, ulaw8k_to_pcm16k
+from .flow import (
+    CLOSE,
+    KICKOFF_AFTER_OPENER,
+    KICKOFF_NO_OPENER,
+    NO_RESPONSE_CLOSE,
+    OPTOUT_CLOSE,
+    POST_OPENER_NUDGE,
+    SILENCE_NUDGE,
+    is_optout,
+)
 from .prompt import CallContext, build_parent_call_instruction, stt_language_hints
 from .tokens import VobizDomain, verify_vobiz_token
 from .vobiz_frames import InboundKind, build_clear_audio, build_play_audio, parse_inbound
@@ -132,6 +143,48 @@ _SILENCE_FRAME = bytes([ULAW_SILENCE]) * _FRAME_BYTES
 #: enough to bridge the gaps between bursts inside one utterance, short enough
 #: that a quiet line is not flooded with silence frames.
 _COMFORT_TICKS = 50
+
+#: The recording asked "do you have a minute?" — wait this long for an answer
+#: before checking in. Long enough not to talk over a parent who is drawing
+#: breath, short enough that the line does not feel dead.
+_POST_OPENER_SILENCE = 5.0
+#: If they never respond at all, stop rather than keep talking at an empty line.
+_UNANSWERED_GIVE_UP = 12.0
+#: A lull once the conversation is under way.
+_CONVERSATION_SILENCE = 9.0
+#: After this many unanswered nudges, close warmly instead of nagging.
+_MAX_SILENCE_NUDGES = 2
+#: The parent must have spoken at least this many times before the model is
+#: allowed to end the call. Below this it was not a conversation, it was a
+#: delivery, and ending reads as being hung up on.
+_MIN_PARENT_TURNS_BEFORE_END = 3
+
+#: A question in the parent's last words vetoes an end. Deliberately broad: a
+#: missed veto hangs up on someone mid-question, a spurious one merely keeps a
+#: warm call alive a few seconds longer.
+_ENDS_IN_QUESTION = re.compile(
+    r"\?|\b(what|why|when|how|where|can|could|should|is|are|will|do)\b"
+    r"|क्या|कैसे|कब|कहाँ|क्यों|चाहिए"
+    r"|কি|কীভাবে|কখন|কোথায়|কেন",
+    re.IGNORECASE,
+)
+
+#: How much of the parent's recent speech to keep for phrase matching. Long
+#: enough to span a sentence split across fragments, short enough that a
+#: goodbye said five minutes ago cannot fire now.
+_SPEECH_TAIL_CHARS = 160
+
+#: Log the parent's transcript. Debug only — it is their speech about their
+#: child, so it stays off unless someone is actively diagnosing a call.
+_TRANSCRIPT_DEBUG = os.environ.get("VOBIZ_LOG_TRANSCRIPT", "").strip().lower() in (
+    "1",
+    "true",
+    "yes",
+    "on",
+)
+
+#: How long to let a closing line play before hanging up.
+_CLOSING_GRACE_SECONDS = 12.0
 
 #: Resync rather than burst-catch-up beyond this much lag.
 _MAX_PACING_LAG = 0.5
@@ -300,6 +353,19 @@ class _Bridge:
         #: Carry-over audio that did not fill a whole frame. Padding it per
         #: chunk instead would put silence inside words.
         self.pending = b""
+        #: The parent has spoken at least once. Until then we must not assume
+        #: they agreed to talk — the recording only asked.
+        self.engaged = False
+        #: A closing line has been sent; nothing further should be said.
+        self.closing = False
+        #: Last time either side made a sound, for the silence watchdog.
+        self.last_activity = time.monotonic()
+        #: What the parent said, for the record and for goodbye detection.
+        self.parent_said: list[str] = []
+        self.opted_out = False
+        #: Rolling tail of what the parent said, for phrase detection across
+        #: transcription fragments.
+        self.recent_speech = ""
         self.opener_queued_at: float | None = None
         #: When the parent would first have heard the model. Measured, not
         #: assumed — this is the number that decides whether the call feels
@@ -308,21 +374,13 @@ class _Bridge:
 
 
 def _kickoff_text(opener_played: bool) -> str:
-    """What we say to the model to make it start talking.
+    """The first stage direction of the call.
 
     When the recording has already introduced VIDYA, the model is joining a
     conversation in progress. Saying so is what stops it introducing itself a
-    second time, which is the single most obviously robotic thing this call
-    could do.
+    second time, which is the most obviously robotic thing this call could do.
     """
-    if opener_played:
-        return (
-            "(The parent has just answered and has already heard your recorded "
-            "greeting introducing you as Vidya calling from their child's school. "
-            "Do NOT greet them again or repeat who you are. Continue naturally "
-            "from there: say why you are calling, briefly and warmly, then listen.)"
-        )
-    return "(The parent has just answered. Greet them now.)"
+    return KICKOFF_AFTER_OPENER if opener_played else KICKOFF_NO_OPENER
 
 
 def _queue_ulaw(bridge: _Bridge, ulaw: bytes) -> None:
@@ -382,6 +440,94 @@ async def _greet_and_drain(bridge: _Bridge, language: str) -> None:
             greeted = True
 
 
+async def _send_director(session: Any, text: str) -> None:
+    """Give the model a stage direction and let it speak.
+
+    Never spoken verbatim: the model renders it in the parent's language, in its
+    own words. This is the mechanism that gives the call a shape instead of
+    leaving the model waiting for something to react to.
+    """
+    from google.genai import types as genai_types
+
+    await session.send_client_content(
+        turns=genai_types.Content(role="user", parts=[genai_types.Part(text=text)]),
+        turn_complete=True,
+    )
+
+
+async def _begin_close(bridge: _Bridge, session: Any, reason: str) -> None:
+    """Say one warm closing line, then end the call for real.
+
+    Ending matters as much as starting. Without this the parent says goodbye,
+    VIDYA says nothing, and the line stays open until a timeout kills it —
+    which from their side is a call that died for no reason.
+    """
+    if bridge.closing or bridge.stop:
+        return
+    bridge.closing = True
+    log.info("telephony.closing", outreach_id=bridge.outreach_id, reason=reason)
+    cue = {
+        "opt_out": OPTOUT_CLOSE,
+        # A parent who never spoke has still HEARD the teacher's message; the
+        # shipped flow closes by saying exactly that rather than apologising.
+        "never_engaged": NO_RESPONSE_CLOSE,
+    }.get(reason, CLOSE)
+    with contextlib.suppress(Exception):
+        await _send_director(session, cue)
+
+    async def _end_after_goodbye() -> None:
+        # Let the closing line actually reach the parent before hanging up.
+        # Cutting the line mid-goodbye is its own small rudeness.
+        deadline = time.monotonic() + _CLOSING_GRACE_SECONDS
+        while time.monotonic() < deadline:
+            await asyncio.sleep(0.25)
+            if bridge.out.empty() and not bridge.pending:
+                # Queue drained; give the carrier its buffered audio time to play.
+                await asyncio.sleep(_PREBUFFER_SECONDS + 0.3)
+                break
+        bridge.stop = True
+
+    asyncio.create_task(_end_after_goodbye())
+
+
+async def _conversation_watchdog(bridge: _Bridge, session: Any) -> None:
+    """Keep the call from dying of silence.
+
+    Two different silences. Before the parent has spoken at all, the recording's
+    "do you have a minute?" is still unanswered, so we check in gently rather
+    than assume consent. Afterwards, a long lull usually means they are waiting
+    for us, or are done.
+    """
+    nudged_after_opener = False
+    nudges = 0
+    while not bridge.stop and not bridge.closing:
+        await asyncio.sleep(0.5)
+        quiet_for = time.monotonic() - bridge.last_activity
+
+        if not bridge.engaged:
+            if not nudged_after_opener and quiet_for > _POST_OPENER_SILENCE:
+                nudged_after_opener = True
+                bridge.last_activity = time.monotonic()
+                with contextlib.suppress(Exception):
+                    await _send_director(session, POST_OPENER_NUDGE)
+                log.info("telephony.nudge", outreach_id=bridge.outreach_id, kind="post_opener")
+            elif nudged_after_opener and quiet_for > _UNANSWERED_GIVE_UP:
+                # Nobody is there, or they cannot hear us. Ending quietly is
+                # kinder than talking at an empty line.
+                await _begin_close(bridge, session, "never_engaged")
+            continue
+
+        if quiet_for > _CONVERSATION_SILENCE:
+            nudges += 1
+            bridge.last_activity = time.monotonic()
+            if nudges > _MAX_SILENCE_NUDGES:
+                await _begin_close(bridge, session, "silence")
+                return
+            with contextlib.suppress(Exception):
+                await _send_director(session, SILENCE_NUDGE)
+            log.info("telephony.nudge", outreach_id=bridge.outreach_id, kind="silence", n=nudges)
+
+
 async def _pump_carrier_to_live(bridge: _Bridge, session: Any) -> str:
     """Parent's audio -> the model."""
     from google.genai import types as genai_types
@@ -414,6 +560,132 @@ async def _pump_carrier_to_live(bridge: _Bridge, session: Any) -> str:
         elif frame.kind is InboundKind.STOP:
             return "carrier_stop"
     return "stopped"
+
+
+async def _handle_parent_speech(bridge: _Bridge, session: Any, server: Any) -> None:
+    """React to what the parent just said.
+
+    Their transcript is the only signal we have for whether they are engaged,
+    finished, or asking not to be called. Without reading it the call cannot
+    respond to any of those, which is why the first version simply talked until
+    a timeout stopped it.
+    """
+    if server is None:
+        return
+    heard = getattr(server, "input_transcription", None)
+    said = (getattr(heard, "text", "") or "").strip() if heard else ""
+    if not said:
+        return
+
+    bridge.engaged = True
+    bridge.last_activity = time.monotonic()
+    bridge.parent_said.append(said)
+
+    # Match on the ACCUMULATED tail, not on this fragment.
+    #
+    # Input transcription arrives in pieces — "theek hai", "thank", "you so
+    # much" — so a phrase almost never lands inside one fragment. Matching per
+    # fragment silently never fires: the first live test said "thank you so
+    # much, namaskar" and the call did not close, because no single fragment
+    # contained a goodbye. Keeping a short rolling tail is what makes detection
+    # work on speech as people actually produce it.
+    bridge.recent_speech = f"{bridge.recent_speech} {said}".strip()[-_SPEECH_TAIL_CHARS:]
+
+    if _TRANSCRIPT_DEBUG:
+        # Off by default and must stay off in production: this is a parent's
+        # own speech about their child.
+        log.info("telephony.heard", outreach_id=bridge.outreach_id, text=said)
+
+    # SAFETY NET ONLY. The model ending the call itself (the `end_call` tool) is
+    # the real mechanism, because it understands the audio regardless of which
+    # script the recogniser transliterates it into. These patterns catch the case
+    # where the model misses an explicit opt-out, which is the one refusal we
+    # must never sit through — so opt-out is checked and a plain goodbye is left
+    # to the model, where a false positive cannot hang up on a parent mid-question.
+    if is_optout(bridge.recent_speech):
+        bridge.opted_out = True
+        await _begin_close(bridge, session, "opt_out")
+
+
+def _may_end_yet(bridge: _Bridge) -> bool:
+    """Has the call actually run its course?
+
+    Two conditions, both about not cutting a parent off. They must have spoken
+    enough for this to have been a conversation rather than a delivery, and they
+    must not have just asked something — a question is the clearest possible
+    signal that they are not finished.
+    """
+    if len(bridge.parent_said) < _MIN_PARENT_TURNS_BEFORE_END:
+        return False
+    # The veto looks at the LAST thing they said, not the rolling window.
+    #
+    # Checking the whole window was wrong in a way that only showed up live: a
+    # parent asked "is there anything I should do at home?", got an answer, then
+    # said "theek hai, thank you so much, namaskar" — and the end was declined
+    # three times, because their earlier question was still inside the buffer.
+    # A question they have already had answered is not a reason to keep them on
+    # the phone.
+    latest = bridge.parent_said[-1] if bridge.parent_said else ""
+    return not _ENDS_IN_QUESTION.search(latest)
+
+
+async def _handle_tool_call(bridge: _Bridge, session: Any, tool_call: Any) -> None:
+    """The model has decided the call is over."""
+    if tool_call is None or not getattr(tool_call, "function_calls", None):
+        return
+    from google.genai import types as genai_types
+
+    for fc in tool_call.function_calls:
+        if fc.name != "end_call":
+            continue
+        reason = str((dict(fc.args or {})).get("reason") or "parent_finished")
+
+        # The model proposes; we dispose.
+        #
+        # Left unchecked it ends calls too eagerly: in testing it hung up 16
+        # seconds in, immediately after the parent asked "is there anything I
+        # should do at home?" — reading their "achha, that's good to hear" as a
+        # sign-off. Hanging up on a parent who has just asked a question about
+        # their child is worse than staying on the line too long, so an early
+        # `parent_finished` is declined and the model simply carries on.
+        #
+        # A refusal is NEVER declined. If a parent asks not to be called again,
+        # that is honoured immediately, whatever turn it arrives on.
+        if reason != "opt_out" and not _may_end_yet(bridge):
+            log.info(
+                "telephony.end_call_declined",
+                outreach_id=bridge.outreach_id,
+                reason=reason,
+                parent_turns=len(bridge.parent_said),
+            )
+            continue
+
+        if reason == "opt_out":
+            bridge.opted_out = True
+        log.info("telephony.end_call_tool", outreach_id=bridge.outreach_id, reason=reason)
+        # The model says its closing line BEFORE calling this, so there is
+        # nothing left to say — end without sending another closing cue.
+        bridge.closing = True
+        asyncio.create_task(_drain_then_stop(bridge))
+
+    with contextlib.suppress(Exception):
+        await session.send_tool_response(
+            function_responses=[
+                genai_types.FunctionResponse(id=fc.id, name=fc.name, response={"status": "ok"})
+                for fc in tool_call.function_calls
+            ]
+        )
+
+
+async def _drain_then_stop(bridge: _Bridge) -> None:
+    """Let whatever is queued reach the parent, then end the call."""
+    deadline = time.monotonic() + _CLOSING_GRACE_SECONDS
+    while time.monotonic() < deadline:
+        await asyncio.sleep(0.25)
+        if bridge.out.empty() and not bridge.pending:
+            await asyncio.sleep(_PREBUFFER_SECONDS + 0.3)
+            break
+    bridge.stop = True
 
 
 async def _pump_live_to_carrier(bridge: _Bridge, session: Any) -> str:
@@ -451,8 +723,12 @@ async def _pump_live_to_carrier(bridge: _Bridge, session: Any) -> str:
                     with contextlib.suppress(Exception):
                         await bridge.ws.send_text(build_clear_audio(bridge.stream_id))
 
+            await _handle_parent_speech(bridge, session, server)
+            await _handle_tool_call(bridge, session, getattr(resp, "tool_call", None))
+
             data = getattr(resp, "data", None)
             if data:
+                bridge.last_activity = time.monotonic()
                 if bridge.first_audio_at is None:
                     bridge.first_audio_at = time.monotonic()
                 ulaw, bridge.tail = pcm24k_to_ulaw8k(data, bridge.tail)
@@ -594,9 +870,50 @@ async def _prepare_live_session(
         input_audio_transcription=genai_types.AudioTranscriptionConfig(
             language_codes=stt_language_hints(context.language),
         ),
-        # What VIDYA actually said, so a call can be reviewed afterwards without
-        # storing the audio.
+        # What the school actually said, so a call can be reviewed afterwards
+        # without storing the audio.
         output_audio_transcription=genai_types.AudioTranscriptionConfig(),
+        # Let the MODEL decide the call is over.
+        #
+        # The first version matched regexes against the parent's transcript, and
+        # it could not work: the recogniser returns speech transliterated into
+        # the hinted script, so "thank you so much" comes back as
+        # "थैंक यू सो मच" and an English pattern never fires. Chasing that with
+        # more patterns means maintaining goodbye spellings for eleven languages
+        # times every script they might be transliterated into.
+        #
+        # The model already understands the audio directly, in any language and
+        # any mixture of them. This mirrors `shouldEndCall` in the shipped
+        # parent-call prompt, which is how this decision has always been made
+        # here — it was only ever the mechanism that was missing.
+        tools=[
+            genai_types.Tool(
+                function_declarations=[
+                    genai_types.FunctionDeclaration(
+                        name="end_call",
+                        description=(
+                            "Call this the moment the parent has finished: they say goodbye or "
+                            "thank you as a sign-off, say they have nothing more, ask not to be "
+                            "called again, or the conversation has naturally run its course. "
+                            "Say your one short closing line FIRST, then call this."
+                        ),
+                        parameters=genai_types.Schema(
+                            type=genai_types.Type.OBJECT,
+                            properties={
+                                "reason": genai_types.Schema(
+                                    type=genai_types.Type.STRING,
+                                    description=(
+                                        "One of: parent_finished, opt_out, wrong_number, "
+                                        "call_back_later"
+                                    ),
+                                ),
+                            },
+                            required=["reason"],
+                        ),
+                    )
+                ]
+            )
+        ],
     )
     model = os.environ.get("VOBIZ_LIVE_MODEL") or get_vertex_live_model()
 
@@ -614,6 +931,39 @@ async def _prepare_live_session(
         since_open_ms=round((time.monotonic() - started) * 1000),
     )
     return client, config, model, context
+
+
+async def _run_call(bridge: _Bridge, session: Any, pacer: asyncio.Task[None]) -> str:
+    """Run the four concurrent halves of a call until one of them ends it.
+
+    Returns the reason the call ended, for the closing log line.
+    """
+    tasks = [
+        asyncio.create_task(_pump_carrier_to_live(bridge, session)),
+        asyncio.create_task(_pump_live_to_carrier(bridge, session)),
+        asyncio.create_task(_conversation_watchdog(bridge, session)),
+        pacer,
+    ]
+    guard = asyncio.create_task(asyncio.sleep(_MAX_CALL_SECONDS))
+    done, pending = await asyncio.wait({*tasks, guard}, return_when=asyncio.FIRST_COMPLETED)
+
+    bridge.stop = True
+    if guard in done:
+        reason = "max_duration"
+    elif bridge.closing:
+        # A warm goodbye was said and the call ended on purpose. Reporting that
+        # as "carrier_disconnect" would make a good call look like a dropped one.
+        reason = "opt_out" if bridge.opted_out else "closed"
+    else:
+        finished = next(iter(done))
+        result = finished.result() if not finished.cancelled() else None
+        reason = result if isinstance(result, str) else "ended"
+
+    for task in pending:
+        task.cancel()
+    with contextlib.suppress(Exception):
+        await asyncio.gather(*pending, return_exceptions=True)
+    return reason
 
 
 @telephony_router.websocket("/telephony/vobiz/stream")
@@ -680,25 +1030,8 @@ async def vobiz_stream(ws: WebSocket) -> None:
                 turn_complete=True,
             )
 
-            tasks = [
-                asyncio.create_task(_pump_carrier_to_live(bridge, session)),
-                asyncio.create_task(_pump_live_to_carrier(bridge, session)),
-                pacer,
-            ]
-            guard = asyncio.create_task(asyncio.sleep(_MAX_CALL_SECONDS))
-            done, pending = await asyncio.wait({*tasks, guard}, return_when=asyncio.FIRST_COMPLETED)
-
-            bridge.stop = True
-            if guard in done:
-                reason = "max_duration"
-            else:
-                finished = next(iter(done))
-                result = finished.result() if not finished.cancelled() else None
-                reason = result if isinstance(result, str) else "ended"
-            for task in pending:
-                task.cancel()
-            with contextlib.suppress(Exception):
-                await asyncio.gather(*pending, return_exceptions=True)
+            bridge.last_activity = time.monotonic()
+            reason = await _run_call(bridge, session, pacer)
     except WebSocketDisconnect:
         reason = "carrier_disconnect"
     except Exception as exc:  # noqa: BLE001
@@ -731,6 +1064,9 @@ async def vobiz_stream(ws: WebSocket) -> None:
                 else None
             ),
             worst_lateness_ms=round(bridge.worst_lateness_ms) if bridge else None,
+            engaged=bridge.engaged if bridge else False,
+            parent_turns=len(bridge.parent_said) if bridge else 0,
+            opted_out=bridge.opted_out if bridge else False,
             # Two different numbers, and conflating them hides the fix. The
             # opener is what the PARENT hears first; the model's own first audio
             # lands seconds later and is what the recording exists to cover.

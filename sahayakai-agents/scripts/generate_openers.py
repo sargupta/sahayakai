@@ -28,6 +28,7 @@ a re-run.
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -41,23 +42,34 @@ from sahayakai_agents.telephony.audio import (  # noqa: E402
 
 OUT = Path(__file__).resolve().parents[1] / "src" / "sahayakai_agents" / "telephony" / "openers"
 
-# A greeting, not a question. The parent's reply during the opener cannot be
-# heard — the Live session is still connecting — so asking something here would
-# mean ignoring their answer, which is worse than the silence it replaces.
+# THE OPENER TEXT IS NOT WRITTEN HERE.
+#
+# It comes from `CALL_MENU_PROMPTS` in the web runtime
+# (sahayakai-main/src/types/attendance.ts), exported to call_prompts.json. That
+# copy is already translated into every language the app calls in, and it has
+# already been spoken to real parents on the Twilio path.
+#
+# The first version of this file invented its own English lines and had them
+# machine-translated by the TTS model, which was wrong twice over: it produced a
+# second, unreviewed set of words for the most sensitive moment of the call, and
+# it introduced a persona name ("This is Vidya") that the shipped prompt
+# explicitly forbids — the caller is THE SCHOOL, never a named assistant.
+#
+# To change what a parent hears, edit CALL_MENU_PROMPTS and re-export. One
+# source of truth, already reviewed.
+PROMPTS = json.loads((Path(__file__).resolve().parents[1] / "src" / "sahayakai_agents"
+                      / "telephony" / "call_prompts.json").read_text())
+
+#: App language -> the BCP-47 key CALL_MENU_PROMPTS is indexed by. Odia has no
+#: entry and falls back to Hindi, exactly as TWILIO_LANGUAGE_MAP does.
+LANG_KEYS: dict[str, str] = {
+    "English": "en-IN", "Hindi": "hi-IN", "Kannada": "kn-IN", "Tamil": "ta-IN",
+    "Telugu": "te-IN", "Malayalam": "ml-IN", "Bengali": "bn-IN", "Marathi": "mr-IN",
+    "Gujarati": "gu-IN", "Punjabi": "pa-IN", "Odia": "hi-IN",
+}
+
 OPENERS: dict[str, str] = {
-    "English": "Namaste. This is Vidya, calling on behalf of your child's school.",
-    "Hindi": "नमस्ते। मैं विद्या बोल रही हूँ, आपके बच्चे के स्कूल की ओर से।",
-    "Bengali": "নমস্কার। আমি বিদ্যা বলছি, আপনার সন্তানের স্কুলের পক্ষ থেকে।",
-    "Marathi": "नमस्कार. मी विद्या बोलत आहे, आपल्या मुलाच्या शाळेकडून.",
-    "Gujarati": "નમસ્તે. હું વિદ્યા બોલું છું, તમારા બાળકની શાળા તરફથી.",
-    "Punjabi": "ਸਤ ਸ੍ਰੀ ਅਕਾਲ। ਮੈਂ ਵਿੱਦਿਆ ਬੋਲ ਰਹੀ ਹਾਂ, ਤੁਹਾਡੇ ਬੱਚੇ ਦੇ ਸਕੂਲ ਵੱਲੋਂ।",
-    "Kannada": "ನಮಸ್ಕಾರ. ನಾನು ವಿದ್ಯಾ ಮಾತನಾಡುತ್ತಿದ್ದೇನೆ, ನಿಮ್ಮ ಮಗುವಿನ ಶಾಲೆಯಿಂದ.",
-    "Tamil": "வணக்கம். நான் வித்யா பேசுகிறேன், உங்கள் குழந்தையின் பள்ளியிலிருந்து.",
-    "Telugu": "నమస్కారం. నేను విద్య మాట్లాడుతున్నాను, మీ పిల్లల పాఠశాల నుండి.",
-    "Malayalam": "നമസ്കാരം. ഞാൻ വിദ്യ സംസാരിക്കുന്നു, നിങ്ങളുടെ കുട്ടിയുടെ സ്കൂളിൽ നിന്ന്.",
-    # Odia has no dedicated TTS voice in several stacks; the app's standing
-    # substitution is the Hindi voice over Odia text, matching TWILIO_LANGUAGE_MAP.
-    "Odia": "ନମସ୍କାର। ମୁଁ ବିଦ୍ୟା କହୁଛି, ଆପଣଙ୍କ ପିଲାର ବିଦ୍ୟାଳୟ ତରଫରୁ।",
+    language: PROMPTS[key]["greeting"] for language, key in LANG_KEYS.items()
 }
 
 VOICE = "Aoede"  # the same voice the live session uses, so the handover is seamless
