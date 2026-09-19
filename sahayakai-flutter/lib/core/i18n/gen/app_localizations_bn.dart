@@ -3830,4 +3830,14 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get settingsOrbHandHint =>
       'আপনার বুড়ো আঙুল যেখানে পৌঁছায় সেখানে VIDYA রাখুন';
+
+  @override
+  String get scanRemedialBody =>
+      'যেসব ধারণায় সমস্যা হয়েছে, সেগুলোর জন্য আমি একটি অনুশীলন পত্র তৈরি করতে পারি।';
+
+  @override
+  String get scanRemedialBuild => 'অনুশীলন পত্র তৈরি করুন';
+
+  @override
+  String get scanRemedialMessageParents => 'অভিভাবকদের বার্তা পাঠান';
 }

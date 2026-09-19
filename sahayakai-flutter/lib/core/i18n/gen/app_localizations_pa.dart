@@ -3821,4 +3821,14 @@ class AppLocalizationsPa extends AppLocalizations {
   @override
   String get settingsOrbHandHint =>
       'ਜਿੱਥੇ ਤੁਹਾਡਾ ਅੰਗੂਠਾ ਪਹੁੰਚੇ ਉੱਥੇ VIDYA ਰੱਖੋ';
+
+  @override
+  String get scanRemedialBody =>
+      'ਜਿਨ੍ਹਾਂ ਸੰਕਲਪਾਂ ਵਿੱਚ ਮੁਸ਼ਕਲ ਆਈ, ਉਨ੍ਹਾਂ ਲਈ ਮੈਂ ਇੱਕ ਅਭਿਆਸ ਸ਼ੀਟ ਬਣਾ ਸਕਦੀ ਹਾਂ।';
+
+  @override
+  String get scanRemedialBuild => 'ਅਭਿਆਸ ਸ਼ੀਟ ਬਣਾਓ';
+
+  @override
+  String get scanRemedialMessageParents => 'ਮਾਪਿਆਂ ਨੂੰ ਸੁਨੇਹਾ ਭੇਜੋ';
 }

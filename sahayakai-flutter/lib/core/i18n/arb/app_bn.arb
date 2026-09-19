@@ -1083,5 +1083,8 @@
   "deliverReadAloudMeta": "ক্লাসের জন্য",
   "settingsOrbHandTitle": "ভাসমান সহায়ক",
   "settingsOrbHandLabel": "বাঁ দিকে",
-  "settingsOrbHandHint": "আপনার বুড়ো আঙুল যেখানে পৌঁছায় সেখানে VIDYA রাখুন"
+  "settingsOrbHandHint": "আপনার বুড়ো আঙুল যেখানে পৌঁছায় সেখানে VIDYA রাখুন",
+  "scanRemedialBody": "যেসব ধারণায় সমস্যা হয়েছে, সেগুলোর জন্য আমি একটি অনুশীলন পত্র তৈরি করতে পারি।",
+  "scanRemedialBuild": "অনুশীলন পত্র তৈরি করুন",
+  "scanRemedialMessageParents": "অভিভাবকদের বার্তা পাঠান"
 }

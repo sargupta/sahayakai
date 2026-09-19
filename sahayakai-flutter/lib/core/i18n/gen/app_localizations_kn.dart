@@ -3831,4 +3831,14 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get settingsOrbHandHint => 'ನಿಮ್ಮ ಹೆಬ್ಬೆರಳು ತಲುಪುವ ಕಡೆ VIDYA ಇರಿಸಿ';
+
+  @override
+  String get scanRemedialBody =>
+      'ಕಷ್ಟವಾದ ಪರಿಕಲ್ಪನೆಗಳಿಗೆ ನಾನು ಒಂದು ಅಭ್ಯಾಸ ಹಾಳೆ ರಚಿಸಬಲ್ಲೆ.';
+
+  @override
+  String get scanRemedialBuild => 'ಅಭ್ಯಾಸ ಹಾಳೆ ರಚಿಸಿ';
+
+  @override
+  String get scanRemedialMessageParents => 'ಪೋಷಕರಿಗೆ ಸಂದೇಶ ಕಳುಹಿಸಿ';
 }

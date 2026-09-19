@@ -1083,5 +1083,8 @@
   "deliverReadAloudMeta": "વર્ગ માટે",
   "settingsOrbHandTitle": "તરતો સહાયક",
   "settingsOrbHandLabel": "ડાબી બાજુ",
-  "settingsOrbHandHint": "તમારો અંગૂઠો પહોંચે ત્યાં VIDYA રાખો"
+  "settingsOrbHandHint": "તમારો અંગૂઠો પહોંચે ત્યાં VIDYA રાખો",
+  "scanRemedialBody": "જે ખ્યાલોમાં મુશ્કેલી પડી, તેમના માટે હું એક અભ્યાસ પત્રક બનાવી શકું છું.",
+  "scanRemedialBuild": "અભ્યાસ પત્રક બનાવો",
+  "scanRemedialMessageParents": "વાલીઓને સંદેશ મોકલો"
 }

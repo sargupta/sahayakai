@@ -3846,4 +3846,14 @@ class AppLocalizationsOr extends AppLocalizations {
   @override
   String get settingsOrbHandHint =>
       'ଆପଣଙ୍କ ବୁଢ଼ା ଆଙ୍ଗୁଠି ପହଞ୍ଚୁଥିବା ସ୍ଥାନରେ VIDYA ରଖନ୍ତୁ';
+
+  @override
+  String get scanRemedialBody =>
+      'ଯେଉଁ ଧାରଣାରେ ଅସୁବିଧା ହେଲା, ସେଥିପାଇଁ ମୁଁ ଏକ ଅଭ୍ୟାସ ପତ୍ର ତିଆରି କରିପାରିବି।';
+
+  @override
+  String get scanRemedialBuild => 'ଅଭ୍ୟାସ ପତ୍ର ତିଆରି କରନ୍ତୁ';
+
+  @override
+  String get scanRemedialMessageParents => 'ଅଭିଭାବକଙ୍କୁ ବାର୍ତ୍ତା ପଠାନ୍ତୁ';
 }

@@ -1083,5 +1083,8 @@
   "deliverReadAloudMeta": "வகுப்பிற்கு",
   "settingsOrbHandTitle": "மிதக்கும் உதவியாளர்",
   "settingsOrbHandLabel": "இடதுபுறம்",
-  "settingsOrbHandHint": "உங்கள் கட்டைவிரல் எட்டும் இடத்தில் VIDYA-வை வையுங்கள்"
+  "settingsOrbHandHint": "உங்கள் கட்டைவிரல் எட்டும் இடத்தில் VIDYA-வை வையுங்கள்",
+  "scanRemedialBody": "சிரமப்பட்ட கருத்துகளுக்கு நான் ஒரு பயிற்சித் தாள் உருவாக்க முடியும்.",
+  "scanRemedialBuild": "பயிற்சித் தாள் உருவாக்கு",
+  "scanRemedialMessageParents": "பெற்றோருக்கு செய்தி அனுப்பு"
 }

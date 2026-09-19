@@ -1083,5 +1083,8 @@
   "deliverReadAloudMeta": "वर्गासाठी",
   "settingsOrbHandTitle": "तरंगणारा सहाय्यक",
   "settingsOrbHandLabel": "डाव्या हाताकडे",
-  "settingsOrbHandHint": "तुमचा अंगठा पोहोचेल तिथे VIDYA ठेवा"
+  "settingsOrbHandHint": "तुमचा अंगठा पोहोचेल तिथे VIDYA ठेवा",
+  "scanRemedialBody": "ज्या संकल्पनांमध्ये अडचण आली, त्यांसाठी मी एक सराव पत्रक तयार करू शकते.",
+  "scanRemedialBuild": "सराव पत्रक तयार करा",
+  "scanRemedialMessageParents": "पालकांना संदेश पाठवा"
 }

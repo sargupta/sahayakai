@@ -1083,5 +1083,8 @@
   "deliverReadAloudMeta": "कक्षा के लिए",
   "settingsOrbHandTitle": "तैरता सहायक",
   "settingsOrbHandLabel": "बाएँ हाथ की ओर",
-  "settingsOrbHandHint": "जहाँ आपका अंगूठा पहुँचे वहाँ VIDYA रखें"
+  "settingsOrbHandHint": "जहाँ आपका अंगूठा पहुँचे वहाँ VIDYA रखें",
+  "scanRemedialBody": "जिन अवधारणाओं में कठिनाई हुई, उनके लिए मैं एक अभ्यास पत्रक बना सकती हूँ।",
+  "scanRemedialBuild": "अभ्यास पत्रक बनाएँ",
+  "scanRemedialMessageParents": "अभिभावकों को संदेश भेजें"
 }

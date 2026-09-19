@@ -3890,4 +3890,14 @@ class AppLocalizationsTa extends AppLocalizations {
   @override
   String get settingsOrbHandHint =>
       'உங்கள் கட்டைவிரல் எட்டும் இடத்தில் VIDYA-வை வையுங்கள்';
+
+  @override
+  String get scanRemedialBody =>
+      'சிரமப்பட்ட கருத்துகளுக்கு நான் ஒரு பயிற்சித் தாள் உருவாக்க முடியும்.';
+
+  @override
+  String get scanRemedialBuild => 'பயிற்சித் தாள் உருவாக்கு';
+
+  @override
+  String get scanRemedialMessageParents => 'பெற்றோருக்கு செய்தி அனுப்பு';
 }

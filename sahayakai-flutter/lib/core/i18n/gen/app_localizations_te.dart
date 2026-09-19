@@ -3840,4 +3840,14 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get settingsOrbHandHint => 'మీ బొటనవేలు అందే చోట VIDYAను ఉంచండి';
+
+  @override
+  String get scanRemedialBody =>
+      'ఇబ్బంది పడిన భావనల కోసం నేను ఒక అభ్యాస పత్రాన్ని తయారు చేయగలను.';
+
+  @override
+  String get scanRemedialBuild => 'అభ్యాస పత్రం తయారు చేయండి';
+
+  @override
+  String get scanRemedialMessageParents => 'తల్లిదండ్రులకు సందేశం పంపండి';
 }

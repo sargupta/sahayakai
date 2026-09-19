@@ -1083,5 +1083,8 @@
   "deliverReadAloudMeta": "ਕਲਾਸ ਲਈ",
   "settingsOrbHandTitle": "ਤੈਰਦਾ ਸਹਾਇਕ",
   "settingsOrbHandLabel": "ਖੱਬੇ ਪਾਸੇ",
-  "settingsOrbHandHint": "ਜਿੱਥੇ ਤੁਹਾਡਾ ਅੰਗੂਠਾ ਪਹੁੰਚੇ ਉੱਥੇ VIDYA ਰੱਖੋ"
+  "settingsOrbHandHint": "ਜਿੱਥੇ ਤੁਹਾਡਾ ਅੰਗੂਠਾ ਪਹੁੰਚੇ ਉੱਥੇ VIDYA ਰੱਖੋ",
+  "scanRemedialBody": "ਜਿਨ੍ਹਾਂ ਸੰਕਲਪਾਂ ਵਿੱਚ ਮੁਸ਼ਕਲ ਆਈ, ਉਨ੍ਹਾਂ ਲਈ ਮੈਂ ਇੱਕ ਅਭਿਆਸ ਸ਼ੀਟ ਬਣਾ ਸਕਦੀ ਹਾਂ।",
+  "scanRemedialBuild": "ਅਭਿਆਸ ਸ਼ੀਟ ਬਣਾਓ",
+  "scanRemedialMessageParents": "ਮਾਪਿਆਂ ਨੂੰ ਸੁਨੇਹਾ ਭੇਜੋ"
 }

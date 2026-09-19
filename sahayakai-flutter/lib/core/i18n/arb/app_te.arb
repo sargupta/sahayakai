@@ -1083,5 +1083,8 @@
   "deliverReadAloudMeta": "తరగతికి",
   "settingsOrbHandTitle": "తేలియాడే సహాయకుడు",
   "settingsOrbHandLabel": "ఎడమవైపు",
-  "settingsOrbHandHint": "మీ బొటనవేలు అందే చోట VIDYAను ఉంచండి"
+  "settingsOrbHandHint": "మీ బొటనవేలు అందే చోట VIDYAను ఉంచండి",
+  "scanRemedialBody": "ఇబ్బంది పడిన భావనల కోసం నేను ఒక అభ్యాస పత్రాన్ని తయారు చేయగలను.",
+  "scanRemedialBuild": "అభ్యాస పత్రం తయారు చేయండి",
+  "scanRemedialMessageParents": "తల్లిదండ్రులకు సందేశం పంపండి"
 }

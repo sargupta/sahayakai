@@ -3791,4 +3791,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsOrbHandHint => 'Park VIDYA where your thumb reaches';
+
+  @override
+  String get scanRemedialBody =>
+      'I can build a remedial worksheet for the concepts they struggled with.';
+
+  @override
+  String get scanRemedialBuild => 'Build a remedial worksheet';
+
+  @override
+  String get scanRemedialMessageParents => 'Message parents';
 }

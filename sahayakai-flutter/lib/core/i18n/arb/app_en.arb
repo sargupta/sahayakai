@@ -4701,5 +4701,11 @@
   "settingsOrbHandLabel": "On the left hand",
   "@settingsOrbHandLabel": { "description": "Orb hand setting" },
   "settingsOrbHandHint": "Park VIDYA where your thumb reaches",
-  "@settingsOrbHandHint": { "description": "Orb hand setting" }
+  "@settingsOrbHandHint": { "description": "Orb hand setting" },
+  "scanRemedialBody": "I can build a remedial worksheet for the concepts they struggled with.",
+  "@scanRemedialBody": { "description": "Scan remedial prompt" },
+  "scanRemedialBuild": "Build a remedial worksheet",
+  "@scanRemedialBuild": { "description": "Scan remedial prompt" },
+  "scanRemedialMessageParents": "Message parents",
+  "@scanRemedialMessageParents": { "description": "Scan remedial prompt" }
 }

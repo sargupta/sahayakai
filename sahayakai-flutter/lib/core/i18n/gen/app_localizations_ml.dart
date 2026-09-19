@@ -3868,4 +3868,14 @@ class AppLocalizationsMl extends AppLocalizations {
   @override
   String get settingsOrbHandHint =>
       'നിങ്ങളുടെ പെരുവിരൽ എത്തുന്നിടത്ത് VIDYA വെക്കുക';
+
+  @override
+  String get scanRemedialBody =>
+      'ബുദ്ധിമുട്ടിയ ആശയങ്ങൾക്കായി എനിക്ക് ഒരു അഭ്യാസ ഷീറ്റ് ഉണ്ടാക്കാം.';
+
+  @override
+  String get scanRemedialBuild => 'അഭ്യാസ ഷീറ്റ് ഉണ്ടാക്കുക';
+
+  @override
+  String get scanRemedialMessageParents => 'രക്ഷിതാക്കൾക്ക് സന്ദേശം അയയ്ക്കുക';
 }

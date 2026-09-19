@@ -1083,5 +1083,8 @@
   "deliverReadAloudMeta": "ക്ലാസ്സിനായി",
   "settingsOrbHandTitle": "ഒഴുകുന്ന സഹായി",
   "settingsOrbHandLabel": "ഇടതുവശത്ത്",
-  "settingsOrbHandHint": "നിങ്ങളുടെ പെരുവിരൽ എത്തുന്നിടത്ത് VIDYA വെക്കുക"
+  "settingsOrbHandHint": "നിങ്ങളുടെ പെരുവിരൽ എത്തുന്നിടത്ത് VIDYA വെക്കുക",
+  "scanRemedialBody": "ബുദ്ധിമുട്ടിയ ആശയങ്ങൾക്കായി എനിക്ക് ഒരു അഭ്യാസ ഷീറ്റ് ഉണ്ടാക്കാം.",
+  "scanRemedialBuild": "അഭ്യാസ ഷീറ്റ് ഉണ്ടാക്കുക",
+  "scanRemedialMessageParents": "രക്ഷിതാക്കൾക്ക് സന്ദേശം അയയ്ക്കുക"
 }

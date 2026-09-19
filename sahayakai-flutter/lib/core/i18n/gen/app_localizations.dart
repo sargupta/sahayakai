@@ -6619,6 +6619,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Park VIDYA where your thumb reaches'**
   String get settingsOrbHandHint;
+
+  /// Scan remedial prompt
+  ///
+  /// In en, this message translates to:
+  /// **'I can build a remedial worksheet for the concepts they struggled with.'**
+  String get scanRemedialBody;
+
+  /// Scan remedial prompt
+  ///
+  /// In en, this message translates to:
+  /// **'Build a remedial worksheet'**
+  String get scanRemedialBuild;
+
+  /// Scan remedial prompt
+  ///
+  /// In en, this message translates to:
+  /// **'Message parents'**
+  String get scanRemedialMessageParents;
 }
 
 class _AppLocalizationsDelegate
