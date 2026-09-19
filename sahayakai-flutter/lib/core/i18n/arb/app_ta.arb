@@ -1080,5 +1080,8 @@
   "deliverDownloadPdf": "PDF பதிவிறக்கு",
   "deliverDownloadPdfMeta": "ஆஃப்லைனில் இயங்கும்",
   "deliverReadAloud": "உரக்கப் படி",
-  "deliverReadAloudMeta": "வகுப்பிற்கு"
+  "deliverReadAloudMeta": "வகுப்பிற்கு",
+  "settingsOrbHandTitle": "மிதக்கும் உதவியாளர்",
+  "settingsOrbHandLabel": "இடதுபுறம்",
+  "settingsOrbHandHint": "உங்கள் கட்டைவிரல் எட்டும் இடத்தில் VIDYA-வை வையுங்கள்"
 }

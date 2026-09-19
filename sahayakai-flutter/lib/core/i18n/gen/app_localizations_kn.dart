@@ -3822,4 +3822,13 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get deliverReadAloudMeta => 'ತರಗತಿಗೆ';
+
+  @override
+  String get settingsOrbHandTitle => 'ತೇಲುವ ಸಹಾಯಕ';
+
+  @override
+  String get settingsOrbHandLabel => 'ಎಡಗಡೆ';
+
+  @override
+  String get settingsOrbHandHint => 'ನಿಮ್ಮ ಹೆಬ್ಬೆರಳು ತಲುಪುವ ಕಡೆ VIDYA ಇರಿಸಿ';
 }

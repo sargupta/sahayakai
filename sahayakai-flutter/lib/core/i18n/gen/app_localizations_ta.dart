@@ -3880,4 +3880,14 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get deliverReadAloudMeta => 'வகுப்பிற்கு';
+
+  @override
+  String get settingsOrbHandTitle => 'மிதக்கும் உதவியாளர்';
+
+  @override
+  String get settingsOrbHandLabel => 'இடதுபுறம்';
+
+  @override
+  String get settingsOrbHandHint =>
+      'உங்கள் கட்டைவிரல் எட்டும் இடத்தில் VIDYA-வை வையுங்கள்';
 }

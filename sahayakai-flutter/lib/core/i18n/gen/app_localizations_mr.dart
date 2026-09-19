@@ -3807,4 +3807,13 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get deliverReadAloudMeta => 'वर्गासाठी';
+
+  @override
+  String get settingsOrbHandTitle => 'तरंगणारा सहाय्यक';
+
+  @override
+  String get settingsOrbHandLabel => 'डाव्या हाताकडे';
+
+  @override
+  String get settingsOrbHandHint => 'तुमचा अंगठा पोहोचेल तिथे VIDYA ठेवा';
 }

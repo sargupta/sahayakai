@@ -3858,4 +3858,14 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get deliverReadAloudMeta => 'ക്ലാസ്സിനായി';
+
+  @override
+  String get settingsOrbHandTitle => 'ഒഴുകുന്ന സഹായി';
+
+  @override
+  String get settingsOrbHandLabel => 'ഇടതുവശത്ത്';
+
+  @override
+  String get settingsOrbHandHint =>
+      'നിങ്ങളുടെ പെരുവിരൽ എത്തുന്നിടത്ത് VIDYA വെക്കുക';
 }

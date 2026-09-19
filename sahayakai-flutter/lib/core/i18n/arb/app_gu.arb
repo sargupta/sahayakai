@@ -1080,5 +1080,8 @@
   "deliverDownloadPdf": "PDF ડાઉનલોડ કરો",
   "deliverDownloadPdfMeta": "ઑફલાઇન કામ કરે છે",
   "deliverReadAloud": "મોટેથી વાંચો",
-  "deliverReadAloudMeta": "વર્ગ માટે"
+  "deliverReadAloudMeta": "વર્ગ માટે",
+  "settingsOrbHandTitle": "તરતો સહાયક",
+  "settingsOrbHandLabel": "ડાબી બાજુ",
+  "settingsOrbHandHint": "તમારો અંગૂઠો પહોંચે ત્યાં VIDYA રાખો"
 }

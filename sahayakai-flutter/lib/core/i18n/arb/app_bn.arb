@@ -1080,5 +1080,8 @@
   "deliverDownloadPdf": "PDF ডাউনলোড করুন",
   "deliverDownloadPdfMeta": "অফলাইনে কাজ করে",
   "deliverReadAloud": "সরবে পড়ুন",
-  "deliverReadAloudMeta": "ক্লাসের জন্য"
+  "deliverReadAloudMeta": "ক্লাসের জন্য",
+  "settingsOrbHandTitle": "ভাসমান সহায়ক",
+  "settingsOrbHandLabel": "বাঁ দিকে",
+  "settingsOrbHandHint": "আপনার বুড়ো আঙুল যেখানে পৌঁছায় সেখানে VIDYA রাখুন"
 }

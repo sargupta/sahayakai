@@ -3782,4 +3782,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deliverReadAloudMeta => 'To the class';
+
+  @override
+  String get settingsOrbHandTitle => 'Floating assistant';
+
+  @override
+  String get settingsOrbHandLabel => 'On the left hand';
+
+  @override
+  String get settingsOrbHandHint => 'Park VIDYA where your thumb reaches';
 }

@@ -4695,5 +4695,11 @@
   "deliverReadAloud": "Read aloud",
   "@deliverReadAloud": { "description": "Deliver tray label" },
   "deliverReadAloudMeta": "To the class",
-  "@deliverReadAloudMeta": { "description": "Deliver tray label" }
+  "@deliverReadAloudMeta": { "description": "Deliver tray label" },
+  "settingsOrbHandTitle": "Floating assistant",
+  "@settingsOrbHandTitle": { "description": "Orb hand setting" },
+  "settingsOrbHandLabel": "On the left hand",
+  "@settingsOrbHandLabel": { "description": "Orb hand setting" },
+  "settingsOrbHandHint": "Park VIDYA where your thumb reaches",
+  "@settingsOrbHandHint": { "description": "Orb hand setting" }
 }

@@ -3807,4 +3807,13 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get deliverReadAloudMeta => 'कक्षा के लिए';
+
+  @override
+  String get settingsOrbHandTitle => 'तैरता सहायक';
+
+  @override
+  String get settingsOrbHandLabel => 'बाएँ हाथ की ओर';
+
+  @override
+  String get settingsOrbHandHint => 'जहाँ आपका अंगूठा पहुँचे वहाँ VIDYA रखें';
 }

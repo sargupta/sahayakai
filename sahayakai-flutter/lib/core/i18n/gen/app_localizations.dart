@@ -6601,6 +6601,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'To the class'**
   String get deliverReadAloudMeta;
+
+  /// Orb hand setting
+  ///
+  /// In en, this message translates to:
+  /// **'Floating assistant'**
+  String get settingsOrbHandTitle;
+
+  /// Orb hand setting
+  ///
+  /// In en, this message translates to:
+  /// **'On the left hand'**
+  String get settingsOrbHandLabel;
+
+  /// Orb hand setting
+  ///
+  /// In en, this message translates to:
+  /// **'Park VIDYA where your thumb reaches'**
+  String get settingsOrbHandHint;
 }
 
 class _AppLocalizationsDelegate

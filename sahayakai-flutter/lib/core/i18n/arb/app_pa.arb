@@ -1080,5 +1080,8 @@
   "deliverDownloadPdf": "PDF ਡਾਊਨਲੋਡ ਕਰੋ",
   "deliverDownloadPdfMeta": "ਆਫਲਾਈਨ ਕੰਮ ਕਰਦਾ ਹੈ",
   "deliverReadAloud": "ਉੱਚੀ ਆਵਾਜ਼ ਵਿੱਚ ਪੜ੍ਹੋ",
-  "deliverReadAloudMeta": "ਕਲਾਸ ਲਈ"
+  "deliverReadAloudMeta": "ਕਲਾਸ ਲਈ",
+  "settingsOrbHandTitle": "ਤੈਰਦਾ ਸਹਾਇਕ",
+  "settingsOrbHandLabel": "ਖੱਬੇ ਪਾਸੇ",
+  "settingsOrbHandHint": "ਜਿੱਥੇ ਤੁਹਾਡਾ ਅੰਗੂਠਾ ਪਹੁੰਚੇ ਉੱਥੇ VIDYA ਰੱਖੋ"
 }

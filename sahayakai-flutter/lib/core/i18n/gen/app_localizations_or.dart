@@ -3836,4 +3836,14 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get deliverReadAloudMeta => 'ଶ୍ରେଣୀ ପାଇଁ';
+
+  @override
+  String get settingsOrbHandTitle => 'ଭାସମାନ ସହାୟକ';
+
+  @override
+  String get settingsOrbHandLabel => 'ବାମ ପାଖରେ';
+
+  @override
+  String get settingsOrbHandHint =>
+      'ଆପଣଙ୍କ ବୁଢ଼ା ଆଙ୍ଗୁଠି ପହଞ୍ଚୁଥିବା ସ୍ଥାନରେ VIDYA ରଖନ୍ତୁ';
 }

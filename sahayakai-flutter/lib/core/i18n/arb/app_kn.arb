@@ -1080,5 +1080,8 @@
   "deliverDownloadPdf": "PDF ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ",
   "deliverDownloadPdfMeta": "ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿ ಕೆಲಸ ಮಾಡುತ್ತದೆ",
   "deliverReadAloud": "ಜೋರಾಗಿ ಓದಿ",
-  "deliverReadAloudMeta": "ತರಗತಿಗೆ"
+  "deliverReadAloudMeta": "ತರಗತಿಗೆ",
+  "settingsOrbHandTitle": "ತೇಲುವ ಸಹಾಯಕ",
+  "settingsOrbHandLabel": "ಎಡಗಡೆ",
+  "settingsOrbHandHint": "ನಿಮ್ಮ ಹೆಬ್ಬೆರಳು ತಲುಪುವ ಕಡೆ VIDYA ಇರಿಸಿ"
 }

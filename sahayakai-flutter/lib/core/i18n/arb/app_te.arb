@@ -1080,5 +1080,8 @@
   "deliverDownloadPdf": "PDF డౌన్‌లోడ్ చేయండి",
   "deliverDownloadPdfMeta": "ఆఫ్‌లైన్‌లో పనిచేస్తుంది",
   "deliverReadAloud": "బిగ్గరగా చదవండి",
-  "deliverReadAloudMeta": "తరగతికి"
+  "deliverReadAloudMeta": "తరగతికి",
+  "settingsOrbHandTitle": "తేలియాడే సహాయకుడు",
+  "settingsOrbHandLabel": "ఎడమవైపు",
+  "settingsOrbHandHint": "మీ బొటనవేలు అందే చోట VIDYAను ఉంచండి"
 }

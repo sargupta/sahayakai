@@ -1080,5 +1080,8 @@
   "deliverDownloadPdf": "PDF डाउनलोड करें",
   "deliverDownloadPdfMeta": "ऑफ़लाइन काम करता है",
   "deliverReadAloud": "ज़ोर से पढ़ें",
-  "deliverReadAloudMeta": "कक्षा के लिए"
+  "deliverReadAloudMeta": "कक्षा के लिए",
+  "settingsOrbHandTitle": "तैरता सहायक",
+  "settingsOrbHandLabel": "बाएँ हाथ की ओर",
+  "settingsOrbHandHint": "जहाँ आपका अंगूठा पहुँचे वहाँ VIDYA रखें"
 }

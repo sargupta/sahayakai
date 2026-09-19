@@ -1080,5 +1080,8 @@
   "deliverDownloadPdf": "PDF ଡାଉନଲୋଡ୍ କରନ୍ତୁ",
   "deliverDownloadPdfMeta": "ଅଫଲାଇନରେ କାମ କରେ",
   "deliverReadAloud": "ଉଚ୍ଚ ସ୍ୱରରେ ପଢ଼ନ୍ତୁ",
-  "deliverReadAloudMeta": "ଶ୍ରେଣୀ ପାଇଁ"
+  "deliverReadAloudMeta": "ଶ୍ରେଣୀ ପାଇଁ",
+  "settingsOrbHandTitle": "ଭାସମାନ ସହାୟକ",
+  "settingsOrbHandLabel": "ବାମ ପାଖରେ",
+  "settingsOrbHandHint": "ଆପଣଙ୍କ ବୁଢ଼ା ଆଙ୍ଗୁଠି ପହଞ୍ଚୁଥିବା ସ୍ଥାନରେ VIDYA ରଖନ୍ତୁ"
 }

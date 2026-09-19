@@ -3811,4 +3811,14 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get deliverReadAloudMeta => 'ਕਲਾਸ ਲਈ';
+
+  @override
+  String get settingsOrbHandTitle => 'ਤੈਰਦਾ ਸਹਾਇਕ';
+
+  @override
+  String get settingsOrbHandLabel => 'ਖੱਬੇ ਪਾਸੇ';
+
+  @override
+  String get settingsOrbHandHint =>
+      'ਜਿੱਥੇ ਤੁਹਾਡਾ ਅੰਗੂਠਾ ਪਹੁੰਚੇ ਉੱਥੇ VIDYA ਰੱਖੋ';
 }

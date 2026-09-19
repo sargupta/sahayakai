@@ -3831,4 +3831,13 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get deliverReadAloudMeta => 'తరగతికి';
+
+  @override
+  String get settingsOrbHandTitle => 'తేలియాడే సహాయకుడు';
+
+  @override
+  String get settingsOrbHandLabel => 'ఎడమవైపు';
+
+  @override
+  String get settingsOrbHandHint => 'మీ బొటనవేలు అందే చోట VIDYAను ఉంచండి';
 }

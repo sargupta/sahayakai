@@ -3820,4 +3820,14 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get deliverReadAloudMeta => 'ক্লাসের জন্য';
+
+  @override
+  String get settingsOrbHandTitle => 'ভাসমান সহায়ক';
+
+  @override
+  String get settingsOrbHandLabel => 'বাঁ দিকে';
+
+  @override
+  String get settingsOrbHandHint =>
+      'আপনার বুড়ো আঙুল যেখানে পৌঁছায় সেখানে VIDYA রাখুন';
 }

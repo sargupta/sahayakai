@@ -3812,4 +3812,13 @@ class AppLocalizationsGu extends AppLocalizations {
 
   @override
   String get deliverReadAloudMeta => 'વર્ગ માટે';
+
+  @override
+  String get settingsOrbHandTitle => 'તરતો સહાયક';
+
+  @override
+  String get settingsOrbHandLabel => 'ડાબી બાજુ';
+
+  @override
+  String get settingsOrbHandHint => 'તમારો અંગૂઠો પહોંચે ત્યાં VIDYA રાખો';
 }
