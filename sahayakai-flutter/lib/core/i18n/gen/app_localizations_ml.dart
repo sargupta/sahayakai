@@ -3878,4 +3878,16 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get scanRemedialMessageParents => 'രക്ഷിതാക്കൾക്ക് സന്ദേശം അയയ്ക്കുക';
+
+  @override
+  String get communityFilterAll => 'എല്ലാം';
+
+  @override
+  String get communityFilterPosts => 'പോസ്റ്റുകൾ';
+
+  @override
+  String get communityFilterResources => 'വിഭവങ്ങൾ';
+
+  @override
+  String get communityFilterHighlights => 'പ്രധാന ഭാഗങ്ങൾ';
 }

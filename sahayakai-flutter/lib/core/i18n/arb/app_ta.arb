@@ -1086,5 +1086,9 @@
   "settingsOrbHandHint": "உங்கள் கட்டைவிரல் எட்டும் இடத்தில் VIDYA-வை வையுங்கள்",
   "scanRemedialBody": "சிரமப்பட்ட கருத்துகளுக்கு நான் ஒரு பயிற்சித் தாள் உருவாக்க முடியும்.",
   "scanRemedialBuild": "பயிற்சித் தாள் உருவாக்கு",
-  "scanRemedialMessageParents": "பெற்றோருக்கு செய்தி அனுப்பு"
+  "scanRemedialMessageParents": "பெற்றோருக்கு செய்தி அனுப்பு",
+  "communityFilterAll": "அனைத்தும்",
+  "communityFilterPosts": "இடுகைகள்",
+  "communityFilterResources": "வளங்கள்",
+  "communityFilterHighlights": "சிறப்பம்சங்கள்"
 }

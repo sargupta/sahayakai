@@ -3841,4 +3841,16 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get scanRemedialMessageParents => 'ಪೋಷಕರಿಗೆ ಸಂದೇಶ ಕಳುಹಿಸಿ';
+
+  @override
+  String get communityFilterAll => 'ಎಲ್ಲಾ';
+
+  @override
+  String get communityFilterPosts => 'ಪೋಸ್ಟ್‌ಗಳು';
+
+  @override
+  String get communityFilterResources => 'ಸಂಪನ್ಮೂಲಗಳು';
+
+  @override
+  String get communityFilterHighlights => 'ಮುಖ್ಯಾಂಶಗಳು';
 }

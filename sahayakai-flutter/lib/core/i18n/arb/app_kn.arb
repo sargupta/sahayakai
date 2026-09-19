@@ -1086,5 +1086,9 @@
   "settingsOrbHandHint": "ನಿಮ್ಮ ಹೆಬ್ಬೆರಳು ತಲುಪುವ ಕಡೆ VIDYA ಇರಿಸಿ",
   "scanRemedialBody": "ಕಷ್ಟವಾದ ಪರಿಕಲ್ಪನೆಗಳಿಗೆ ನಾನು ಒಂದು ಅಭ್ಯಾಸ ಹಾಳೆ ರಚಿಸಬಲ್ಲೆ.",
   "scanRemedialBuild": "ಅಭ್ಯಾಸ ಹಾಳೆ ರಚಿಸಿ",
-  "scanRemedialMessageParents": "ಪೋಷಕರಿಗೆ ಸಂದೇಶ ಕಳುಹಿಸಿ"
+  "scanRemedialMessageParents": "ಪೋಷಕರಿಗೆ ಸಂದೇಶ ಕಳುಹಿಸಿ",
+  "communityFilterAll": "ಎಲ್ಲಾ",
+  "communityFilterPosts": "ಪೋಸ್ಟ್‌ಗಳು",
+  "communityFilterResources": "ಸಂಪನ್ಮೂಲಗಳು",
+  "communityFilterHighlights": "ಮುಖ್ಯಾಂಶಗಳು"
 }

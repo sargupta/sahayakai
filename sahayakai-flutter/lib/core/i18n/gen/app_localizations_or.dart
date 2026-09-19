@@ -3856,4 +3856,16 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get scanRemedialMessageParents => 'ଅଭିଭାବକଙ୍କୁ ବାର୍ତ୍ତା ପଠାନ୍ତୁ';
+
+  @override
+  String get communityFilterAll => 'ସବୁ';
+
+  @override
+  String get communityFilterPosts => 'ପୋଷ୍ଟଗୁଡ଼ିକ';
+
+  @override
+  String get communityFilterResources => 'ଉତ୍ସଗୁଡ଼ିକ';
+
+  @override
+  String get communityFilterHighlights => 'ମୁଖ୍ୟାଂଶ';
 }

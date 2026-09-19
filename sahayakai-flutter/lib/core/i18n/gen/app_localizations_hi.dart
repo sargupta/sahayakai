@@ -3826,4 +3826,16 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get scanRemedialMessageParents => 'अभिभावकों को संदेश भेजें';
+
+  @override
+  String get communityFilterAll => 'सभी';
+
+  @override
+  String get communityFilterPosts => 'पोस्ट';
+
+  @override
+  String get communityFilterResources => 'संसाधन';
+
+  @override
+  String get communityFilterHighlights => 'मुख्य अंश';
 }

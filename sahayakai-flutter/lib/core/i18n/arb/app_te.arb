@@ -1086,5 +1086,9 @@
   "settingsOrbHandHint": "మీ బొటనవేలు అందే చోట VIDYAను ఉంచండి",
   "scanRemedialBody": "ఇబ్బంది పడిన భావనల కోసం నేను ఒక అభ్యాస పత్రాన్ని తయారు చేయగలను.",
   "scanRemedialBuild": "అభ్యాస పత్రం తయారు చేయండి",
-  "scanRemedialMessageParents": "తల్లిదండ్రులకు సందేశం పంపండి"
+  "scanRemedialMessageParents": "తల్లిదండ్రులకు సందేశం పంపండి",
+  "communityFilterAll": "అన్నీ",
+  "communityFilterPosts": "పోస్ట్‌లు",
+  "communityFilterResources": "వనరులు",
+  "communityFilterHighlights": "ముఖ్యాంశాలు"
 }

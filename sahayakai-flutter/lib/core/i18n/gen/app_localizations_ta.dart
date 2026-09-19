@@ -3900,4 +3900,16 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get scanRemedialMessageParents => 'பெற்றோருக்கு செய்தி அனுப்பு';
+
+  @override
+  String get communityFilterAll => 'அனைத்தும்';
+
+  @override
+  String get communityFilterPosts => 'இடுகைகள்';
+
+  @override
+  String get communityFilterResources => 'வளங்கள்';
+
+  @override
+  String get communityFilterHighlights => 'சிறப்பம்சங்கள்';
 }

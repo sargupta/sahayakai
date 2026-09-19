@@ -1086,5 +1086,9 @@
   "settingsOrbHandHint": "ଆପଣଙ୍କ ବୁଢ଼ା ଆଙ୍ଗୁଠି ପହଞ୍ଚୁଥିବା ସ୍ଥାନରେ VIDYA ରଖନ୍ତୁ",
   "scanRemedialBody": "ଯେଉଁ ଧାରଣାରେ ଅସୁବିଧା ହେଲା, ସେଥିପାଇଁ ମୁଁ ଏକ ଅଭ୍ୟାସ ପତ୍ର ତିଆରି କରିପାରିବି।",
   "scanRemedialBuild": "ଅଭ୍ୟାସ ପତ୍ର ତିଆରି କରନ୍ତୁ",
-  "scanRemedialMessageParents": "ଅଭିଭାବକଙ୍କୁ ବାର୍ତ୍ତା ପଠାନ୍ତୁ"
+  "scanRemedialMessageParents": "ଅଭିଭାବକଙ୍କୁ ବାର୍ତ୍ତା ପଠାନ୍ତୁ",
+  "communityFilterAll": "ସବୁ",
+  "communityFilterPosts": "ପୋଷ୍ଟଗୁଡ଼ିକ",
+  "communityFilterResources": "ଉତ୍ସଗୁଡ଼ିକ",
+  "communityFilterHighlights": "ମୁଖ୍ୟାଂଶ"
 }

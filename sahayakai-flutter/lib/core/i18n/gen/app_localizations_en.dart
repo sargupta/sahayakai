@@ -3801,4 +3801,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scanRemedialMessageParents => 'Message parents';
+
+  @override
+  String get communityFilterAll => 'All';
+
+  @override
+  String get communityFilterPosts => 'Posts';
+
+  @override
+  String get communityFilterResources => 'Resources';
+
+  @override
+  String get communityFilterHighlights => 'Highlights';
 }

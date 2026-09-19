@@ -3850,4 +3850,16 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get scanRemedialMessageParents => 'తల్లిదండ్రులకు సందేశం పంపండి';
+
+  @override
+  String get communityFilterAll => 'అన్నీ';
+
+  @override
+  String get communityFilterPosts => 'పోస్ట్‌లు';
+
+  @override
+  String get communityFilterResources => 'వనరులు';
+
+  @override
+  String get communityFilterHighlights => 'ముఖ్యాంశాలు';
 }

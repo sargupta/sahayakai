@@ -3831,4 +3831,16 @@ class AppLocalizationsGu extends AppLocalizations {
 
   @override
   String get scanRemedialMessageParents => 'વાલીઓને સંદેશ મોકલો';
+
+  @override
+  String get communityFilterAll => 'બધું';
+
+  @override
+  String get communityFilterPosts => 'પોસ્ટ';
+
+  @override
+  String get communityFilterResources => 'સંસાધનો';
+
+  @override
+  String get communityFilterHighlights => 'મુખ્ય અંશો';
 }

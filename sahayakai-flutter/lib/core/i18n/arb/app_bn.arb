@@ -1086,5 +1086,9 @@
   "settingsOrbHandHint": "আপনার বুড়ো আঙুল যেখানে পৌঁছায় সেখানে VIDYA রাখুন",
   "scanRemedialBody": "যেসব ধারণায় সমস্যা হয়েছে, সেগুলোর জন্য আমি একটি অনুশীলন পত্র তৈরি করতে পারি।",
   "scanRemedialBuild": "অনুশীলন পত্র তৈরি করুন",
-  "scanRemedialMessageParents": "অভিভাবকদের বার্তা পাঠান"
+  "scanRemedialMessageParents": "অভিভাবকদের বার্তা পাঠান",
+  "communityFilterAll": "সব",
+  "communityFilterPosts": "পোস্ট",
+  "communityFilterResources": "রিসোর্স",
+  "communityFilterHighlights": "হাইলাইট"
 }

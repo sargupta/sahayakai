@@ -4707,5 +4707,13 @@
   "scanRemedialBuild": "Build a remedial worksheet",
   "@scanRemedialBuild": { "description": "Scan remedial prompt" },
   "scanRemedialMessageParents": "Message parents",
-  "@scanRemedialMessageParents": { "description": "Scan remedial prompt" }
+  "@scanRemedialMessageParents": { "description": "Scan remedial prompt" },
+  "communityFilterAll": "All",
+  "@communityFilterAll": { "description": "Community feed filter" },
+  "communityFilterPosts": "Posts",
+  "@communityFilterPosts": { "description": "Community feed filter" },
+  "communityFilterResources": "Resources",
+  "@communityFilterResources": { "description": "Community feed filter" },
+  "communityFilterHighlights": "Highlights",
+  "@communityFilterHighlights": { "description": "Community feed filter" }
 }

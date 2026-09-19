@@ -3840,4 +3840,16 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get scanRemedialMessageParents => 'অভিভাবকদের বার্তা পাঠান';
+
+  @override
+  String get communityFilterAll => 'সব';
+
+  @override
+  String get communityFilterPosts => 'পোস্ট';
+
+  @override
+  String get communityFilterResources => 'রিসোর্স';
+
+  @override
+  String get communityFilterHighlights => 'হাইলাইট';
 }

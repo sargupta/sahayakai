@@ -3831,4 +3831,16 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get scanRemedialMessageParents => 'ਮਾਪਿਆਂ ਨੂੰ ਸੁਨੇਹਾ ਭੇਜੋ';
+
+  @override
+  String get communityFilterAll => 'ਸਾਰੇ';
+
+  @override
+  String get communityFilterPosts => 'ਪੋਸਟਾਂ';
+
+  @override
+  String get communityFilterResources => 'ਸਰੋਤ';
+
+  @override
+  String get communityFilterHighlights => 'ਮੁੱਖ ਗੱਲਾਂ';
 }

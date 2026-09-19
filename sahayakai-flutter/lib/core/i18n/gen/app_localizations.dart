@@ -6637,6 +6637,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Message parents'**
   String get scanRemedialMessageParents;
+
+  /// Community feed filter
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get communityFilterAll;
+
+  /// Community feed filter
+  ///
+  /// In en, this message translates to:
+  /// **'Posts'**
+  String get communityFilterPosts;
+
+  /// Community feed filter
+  ///
+  /// In en, this message translates to:
+  /// **'Resources'**
+  String get communityFilterResources;
+
+  /// Community feed filter
+  ///
+  /// In en, this message translates to:
+  /// **'Highlights'**
+  String get communityFilterHighlights;
 }
 
 class _AppLocalizationsDelegate
