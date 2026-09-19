@@ -286,11 +286,92 @@ export const CBSE_CLASS9_SCIENCE: ExamBlueprint = {
 // BLUEPRINT LOOKUP
 // ═══════════════════════════════════════════════════════════
 
+
+// ═══════════════════════════════════════════════════════════
+// KARNATAKA (KSEEB) SSLC BLUEPRINTS — Class 10, 2026 pattern
+//
+// Added 2026-08-31. Until now every blueprint was CBSE, so a Karnataka teacher
+// who set preferredBoard to KSEEB fell through findBlueprint() to the generic
+// "no official blueprint found" prompt and got a CBSE-shaped paper carrying a
+// KSEEB label. The SSLC pattern differs materially from CBSE: 80 marks over
+// 3 hours 15 minutes (CBSE gives 3 hours), 38 questions weighted 1/2/3/4, and
+// no case-study section.
+// ═══════════════════════════════════════════════════════════
+
+export const KSEEB_CLASS10_MATH: ExamBlueprint = {
+    board: 'Karnataka State Board (KSEEB)',
+    gradeLevel: 'Class 10',
+    subject: 'Mathematics',
+    duration: 195,
+    maxMarks: 80,
+    generalInstructions: [
+        'This question paper has 38 questions. All questions are compulsory.',
+        'Follow the alternatives wherever internal choice is given.',
+        'Section A carries 8 multiple choice questions of 1 mark each.',
+        'Section B carries 8 very short answer questions of 1 mark each.',
+        'Section C carries 8 short answer questions of 2 marks each.',
+        'Section D carries 9 questions of 3 marks each.',
+        'Section E carries 4 long answer questions of 4 marks each.',
+        'Draw diagrams wherever necessary. Use of calculators is not permitted.',
+    ],
+    sections: [
+        { name: 'Section A', label: 'Multiple choice questions', questionType: { type: 'mcq', marksPerQuestion: 1, internalChoice: false }, questionCount: 8, totalMarks: 8, instructions: 'Multiple choice questions' },
+        { name: 'Section B', label: 'One-mark direct questions', questionType: { type: 'very_short', marksPerQuestion: 1, internalChoice: false }, questionCount: 8, totalMarks: 8, instructions: 'One-mark direct questions' },
+        { name: 'Section C', label: 'Two-mark problems', questionType: { type: 'short', marksPerQuestion: 2, internalChoice: true }, questionCount: 8, totalMarks: 16, instructions: 'Two-mark problems' },
+        { name: 'Section D', label: 'Three-mark problems', questionType: { type: 'short', marksPerQuestion: 3, internalChoice: true }, questionCount: 9, totalMarks: 27, instructions: 'Three-mark problems' },
+        { name: 'Section E', label: 'Four-mark problems including constructions and proofs', questionType: { type: 'long', marksPerQuestion: 4, internalChoice: true }, questionCount: 4, totalMarks: 16, instructions: 'Four-mark problems including constructions and proofs' },
+    ],
+};
+
+export const KSEEB_CLASS10_SCIENCE: ExamBlueprint = {
+    board: 'Karnataka State Board (KSEEB)',
+    gradeLevel: 'Class 10',
+    subject: 'Science',
+    duration: 195,
+    maxMarks: 80,
+    generalInstructions: [
+        'This question paper has 38 questions covering Physics, Chemistry and Biology.',
+        'All questions are compulsory. Follow the alternatives wherever internal choice is given.',
+        'Draw labelled diagrams wherever required.',
+        'Write chemical equations in balanced form.',
+    ],
+    sections: [
+        { name: 'Section A', label: 'Multiple choice questions', questionType: { type: 'mcq', marksPerQuestion: 1, internalChoice: false }, questionCount: 8, totalMarks: 8, instructions: 'Multiple choice questions' },
+        { name: 'Section B', label: 'One-mark direct questions', questionType: { type: 'very_short', marksPerQuestion: 1, internalChoice: false }, questionCount: 8, totalMarks: 8, instructions: 'One-mark direct questions' },
+        { name: 'Section C', label: 'Two-mark questions', questionType: { type: 'short', marksPerQuestion: 2, internalChoice: true }, questionCount: 8, totalMarks: 16, instructions: 'Two-mark questions' },
+        { name: 'Section D', label: 'Three-mark questions including diagrams', questionType: { type: 'short', marksPerQuestion: 3, internalChoice: true }, questionCount: 9, totalMarks: 27, instructions: 'Three-mark questions including diagrams' },
+        { name: 'Section E', label: 'Four-mark questions', questionType: { type: 'long', marksPerQuestion: 4, internalChoice: true }, questionCount: 4, totalMarks: 16, instructions: 'Four-mark questions' },
+    ],
+};
+
+export const KSEEB_CLASS10_SOCIAL_SCIENCE: ExamBlueprint = {
+    board: 'Karnataka State Board (KSEEB)',
+    gradeLevel: 'Class 10',
+    subject: 'Social Studies',
+    duration: 195,
+    maxMarks: 80,
+    generalInstructions: [
+        'This question paper covers History, Political Science, Sociology, Geography, Economics and Business Studies.',
+        'All questions are compulsory. Follow the alternatives wherever internal choice is given.',
+        'Answer map-based questions on the outline map supplied.',
+    ],
+    sections: [
+        { name: 'Section A', label: 'Multiple choice questions', questionType: { type: 'mcq', marksPerQuestion: 1, internalChoice: false }, questionCount: 8, totalMarks: 8, instructions: 'Multiple choice questions' },
+        { name: 'Section B', label: 'One-mark direct questions', questionType: { type: 'very_short', marksPerQuestion: 1, internalChoice: false }, questionCount: 8, totalMarks: 8, instructions: 'One-mark direct questions' },
+        { name: 'Section C', label: 'Two-mark questions', questionType: { type: 'short', marksPerQuestion: 2, internalChoice: true }, questionCount: 8, totalMarks: 16, instructions: 'Two-mark questions' },
+        { name: 'Section D', label: 'Three-mark questions', questionType: { type: 'short', marksPerQuestion: 3, internalChoice: true }, questionCount: 9, totalMarks: 27, instructions: 'Three-mark questions' },
+        { name: 'Section E', label: 'Four-mark questions including the map question', questionType: { type: 'long', marksPerQuestion: 4, internalChoice: true }, questionCount: 4, totalMarks: 16, instructions: 'Four-mark questions including the map question' },
+    ],
+};
+
 const ALL_BLUEPRINTS: ExamBlueprint[] = [
     CBSE_CLASS10_MATH,
     CBSE_CLASS10_SCIENCE,
     CBSE_CLASS9_MATH,
     CBSE_CLASS9_SCIENCE,
+    KSEEB_CLASS10_MATH,
+    KSEEB_CLASS10_SCIENCE,
+    KSEEB_CLASS10_SOCIAL_SCIENCE,
 ];
 
 /**
