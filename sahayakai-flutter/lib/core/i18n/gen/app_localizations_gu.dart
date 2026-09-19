@@ -3766,4 +3766,50 @@ class AppLocalizationsGu extends AppLocalizations {
   @override
   String get attendancePremiumBody =>
       'તમારા વર્ગો, હાજરીપત્રકો અને માસિક વિગતો જોવાનું મફત જ રહે છે. વર્ગ બનાવવો, વિદ્યાર્થી ઉમેરવો અને હાજરીપત્રક સાચવવું Pro પ્લાનનો ભાગ છે.';
+
+  @override
+  String get deliverTrayTitle => 'પહોંચાડો';
+
+  @override
+  String get deliverPrivacyNote =>
+      'તમે મોકલો દબાવો નહીં ત્યાં સુધી ફોનમાંથી કંઈ બહાર જતું નથી.';
+
+  @override
+  String get deliverSend => 'મોકલો';
+
+  @override
+  String get deliverParentGroup => 'વાલી જૂથ';
+
+  @override
+  String get deliverParentGroupMeta => 'WhatsApp પર શેર કરો';
+
+  @override
+  String get deliverPrint => 'પ્રિન્ટ કરો';
+
+  @override
+  String get deliverPrintMeta => 'પ્રિન્ટરને મોકલો';
+
+  @override
+  String get deliverSaveToClass => 'વર્ગમાં સાચવો';
+
+  @override
+  String get deliverSaveToClassMeta => 'તમારી લાઇબ્રેરીમાં રાખો';
+
+  @override
+  String get deliverPostCommunity => 'સમુદાયમાં પોસ્ટ કરો';
+
+  @override
+  String get deliverPostCommunityMeta => 'સંસાધન તરીકે શેર કરો';
+
+  @override
+  String get deliverDownloadPdf => 'PDF ડાઉનલોડ કરો';
+
+  @override
+  String get deliverDownloadPdfMeta => 'ઑફલાઇન કામ કરે છે';
+
+  @override
+  String get deliverReadAloud => 'મોટેથી વાંચો';
+
+  @override
+  String get deliverReadAloudMeta => 'વર્ગ માટે';
 }

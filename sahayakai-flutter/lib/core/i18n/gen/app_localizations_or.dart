@@ -3790,4 +3790,50 @@ class AppLocalizationsOr extends AppLocalizations {
   @override
   String get attendancePremiumBody =>
       'ଆପଣଙ୍କ ଶ୍ରେଣୀ, ହାଜିରା ଖାତା ଏବଂ ମାସିକ ବିବରଣୀ ଦେଖିବା ମାଗଣା ରହିବ। ଶ୍ରେଣୀ ତିଆରି କରିବା, ଛାତ୍ର ଯୋଡ଼ିବା ଏବଂ ହାଜିରା ସଞ୍ଚୟ କରିବା Pro ଯୋଜନାର ଅଂଶ।';
+
+  @override
+  String get deliverTrayTitle => 'ପହଞ୍ଚାନ୍ତୁ';
+
+  @override
+  String get deliverPrivacyNote =>
+      'ଆପଣ ପଠାନ୍ତୁ ଦବାଇବା ପର୍ଯ୍ୟନ୍ତ କିଛି ବି ଫୋନରୁ ବାହାରକୁ ଯାଏ ନାହିଁ।';
+
+  @override
+  String get deliverSend => 'ପଠାନ୍ତୁ';
+
+  @override
+  String get deliverParentGroup => 'ଅଭିଭାବକ ଗୋଷ୍ଠୀ';
+
+  @override
+  String get deliverParentGroupMeta => 'WhatsApp ରେ ସେୟାର କରନ୍ତୁ';
+
+  @override
+  String get deliverPrint => 'ପ୍ରିଣ୍ଟ କରନ୍ତୁ';
+
+  @override
+  String get deliverPrintMeta => 'ପ୍ରିଣ୍ଟରକୁ ପଠାନ୍ତୁ';
+
+  @override
+  String get deliverSaveToClass => 'ଶ୍ରେଣୀରେ ସେଭ୍ କରନ୍ତୁ';
+
+  @override
+  String get deliverSaveToClassMeta => 'ଆପଣଙ୍କ ଲାଇବ୍ରେରୀରେ ରଖନ୍ତୁ';
+
+  @override
+  String get deliverPostCommunity => 'ସମୁଦାୟରେ ପୋଷ୍ଟ କରନ୍ତୁ';
+
+  @override
+  String get deliverPostCommunityMeta => 'ଉତ୍ସ ଭାବେ ସେୟାର କରନ୍ତୁ';
+
+  @override
+  String get deliverDownloadPdf => 'PDF ଡାଉନଲୋଡ୍ କରନ୍ତୁ';
+
+  @override
+  String get deliverDownloadPdfMeta => 'ଅଫଲାଇନରେ କାମ କରେ';
+
+  @override
+  String get deliverReadAloud => 'ଉଚ୍ଚ ସ୍ୱରରେ ପଢ଼ନ୍ତୁ';
+
+  @override
+  String get deliverReadAloudMeta => 'ଶ୍ରେଣୀ ପାଇଁ';
 }

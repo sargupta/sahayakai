@@ -6,6 +6,8 @@ import '../../../core/auth/auth_providers.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
+import 'deliver_tray.dart';
+import 'deliverables_controller.dart';
 import 'vidya_controller.dart';
 import 'vidya_orb_placement_controller.dart';
 import 'widgets/vidya_orb.dart';
@@ -69,7 +71,10 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
             final placement = ref.watch(vidyaOrbPlacementControllerProvider);
             final placementNotifier =
                 ref.read(vidyaOrbPlacementControllerProvider.notifier);
-            final visual = _visualFor(status, placement);
+            final readyCount = ref.watch(
+              deliverablesControllerProvider.select((d) => d.length),
+            );
+            final visual = _visualFor(status, placement, readyCount);
 
             final media = MediaQuery.of(context);
             final screen = media.size;
@@ -133,10 +138,10 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
                     },
                     child: VidyaOrb(
                       state: visual,
-                      readyCount: placement.readyCount,
+                      readyCount: readyCount,
                       semanticLabel: context.l10n.appTitle,
                       semanticHint: _hintFor(context, visual, status),
-                      onTap: () => _onTap(ref, visual),
+                      onTap: () => _onTap(context, ref, visual),
                     ),
                   ),
                 ),
@@ -161,7 +166,11 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
 
   // ── State mapping ────────────────────────────────────────────────────────
 
-  VidyaOrbVisual _visualFor(VidyaStatus status, VidyaOrbPlacement placement) {
+  VidyaOrbVisual _visualFor(
+    VidyaStatus status,
+    VidyaOrbPlacement placement,
+    int readyCount,
+  ) {
     if (placement.dragging) return VidyaOrbVisual.dragging;
     switch (status) {
       case VidyaStatus.requestingPermission:
@@ -176,9 +185,7 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
       case VidyaStatus.signedOut:
       case VidyaStatus.limitReached:
       case VidyaStatus.failed:
-        return placement.readyCount > 0
-            ? VidyaOrbVisual.ready
-            : VidyaOrbVisual.resting;
+        return readyCount > 0 ? VidyaOrbVisual.ready : VidyaOrbVisual.resting;
     }
   }
 
@@ -201,10 +208,13 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
 
   // ── Interaction ────────────────────────────────────────────────────────────
 
-  void _onTap(WidgetRef ref, VidyaOrbVisual visual) {
+  void _onTap(BuildContext context, WidgetRef ref, VidyaOrbVisual visual) {
     if (visual == VidyaOrbVisual.ready) {
-      // Acknowledge the waiting results; a later unit routes to the deliver tray.
-      ref.read(vidyaOrbPlacementControllerProvider.notifier).clearReady();
+      // Green orb → open the one deliver tray for the latest ready result.
+      final latest = ref.read(deliverablesControllerProvider.notifier).latest;
+      if (latest != null) {
+        showDeliverTray(context, latest);
+      }
       return;
     }
     ref.read(vidyaControllerProvider.notifier).onMicTap();

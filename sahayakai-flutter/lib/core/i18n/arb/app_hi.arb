@@ -1065,5 +1065,20 @@
   "attendanceAbsencesEmpty": "इस महीने कोई अनुपस्थिति नहीं।",
   "attendanceAbsencesError": "हम अनुपस्थित दिन नहीं ला सके।",
   "attendancePremiumTitle": "रजिस्टर भरने के लिए Pro प्लान चाहिए",
-  "attendancePremiumBody": "अपनी कक्षाएँ, रजिस्टर और महीने का विवरण देखना मुफ़्त रहता है। कक्षा बनाना, विद्यार्थी जोड़ना और रजिस्टर सहेजना Pro प्लान का हिस्सा है।"
+  "attendancePremiumBody": "अपनी कक्षाएँ, रजिस्टर और महीने का विवरण देखना मुफ़्त रहता है। कक्षा बनाना, विद्यार्थी जोड़ना और रजिस्टर सहेजना Pro प्लान का हिस्सा है।",
+  "deliverTrayTitle": "पहुँचाएँ",
+  "deliverPrivacyNote": "जब तक आप भेजें न दबाएँ, कुछ भी फ़ोन से बाहर नहीं जाता।",
+  "deliverSend": "भेजें",
+  "deliverParentGroup": "अभिभावक समूह",
+  "deliverParentGroupMeta": "WhatsApp पर साझा करें",
+  "deliverPrint": "प्रिंट करें",
+  "deliverPrintMeta": "प्रिंटर पर भेजें",
+  "deliverSaveToClass": "कक्षा में सहेजें",
+  "deliverSaveToClassMeta": "अपनी लाइब्रेरी में रखें",
+  "deliverPostCommunity": "समुदाय में पोस्ट करें",
+  "deliverPostCommunityMeta": "संसाधन के रूप में साझा करें",
+  "deliverDownloadPdf": "PDF डाउनलोड करें",
+  "deliverDownloadPdfMeta": "ऑफ़लाइन काम करता है",
+  "deliverReadAloud": "ज़ोर से पढ़ें",
+  "deliverReadAloudMeta": "कक्षा के लिए"
 }

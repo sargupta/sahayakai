@@ -6511,6 +6511,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reading your classes, registers and monthly summaries stays free. Creating a class, adding a student and saving a register are part of the Pro plan.'**
   String get attendancePremiumBody;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Deliver'**
+  String get deliverTrayTitle;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing leaves the phone until you tap send.'**
+  String get deliverPrivacyNote;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get deliverSend;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Parent group'**
+  String get deliverParentGroup;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Share on WhatsApp'**
+  String get deliverParentGroupMeta;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Print'**
+  String get deliverPrint;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Send to a printer'**
+  String get deliverPrintMeta;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Save to class'**
+  String get deliverSaveToClass;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Keep in your library'**
+  String get deliverSaveToClassMeta;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Post to Community'**
+  String get deliverPostCommunity;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Share as a resource'**
+  String get deliverPostCommunityMeta;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Download PDF'**
+  String get deliverDownloadPdf;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Works offline'**
+  String get deliverDownloadPdfMeta;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Read aloud'**
+  String get deliverReadAloud;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'To the class'**
+  String get deliverReadAloudMeta;
 }
 
 class _AppLocalizationsDelegate

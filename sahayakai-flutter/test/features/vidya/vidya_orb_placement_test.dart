@@ -60,7 +60,6 @@ void main() {
       expect(placement.perch, VidyaPerch.bottomRight);
       expect(placement.hand, VidyaHand.right);
       expect(placement.dragging, isFalse);
-      expect(placement.readyCount, 0);
     });
   });
 
@@ -123,39 +122,6 @@ void main() {
       expect(
         container.read(vidyaOrbPlacementControllerProvider).hand,
         VidyaHand.left,
-      );
-    });
-  });
-
-  group('ready badge', () {
-    test('addReady accumulates, clearReady resets', () {
-      final container = _container();
-      final notifier = container.read(
-        vidyaOrbPlacementControllerProvider.notifier,
-      );
-      notifier.addReady();
-      notifier.addReady(2);
-      expect(
-        container.read(vidyaOrbPlacementControllerProvider).readyCount,
-        3,
-      );
-      notifier.clearReady();
-      expect(
-        container.read(vidyaOrbPlacementControllerProvider).readyCount,
-        0,
-      );
-    });
-
-    test('addReady ignores non-positive counts', () {
-      final container = _container();
-      final notifier = container.read(
-        vidyaOrbPlacementControllerProvider.notifier,
-      );
-      notifier.addReady(0);
-      notifier.addReady(-3);
-      expect(
-        container.read(vidyaOrbPlacementControllerProvider).readyCount,
-        0,
       );
     });
   });

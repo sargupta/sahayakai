@@ -3761,4 +3761,50 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get attendancePremiumBody =>
       'अपनी कक्षाएँ, रजिस्टर और महीने का विवरण देखना मुफ़्त रहता है। कक्षा बनाना, विद्यार्थी जोड़ना और रजिस्टर सहेजना Pro प्लान का हिस्सा है।';
+
+  @override
+  String get deliverTrayTitle => 'पहुँचाएँ';
+
+  @override
+  String get deliverPrivacyNote =>
+      'जब तक आप भेजें न दबाएँ, कुछ भी फ़ोन से बाहर नहीं जाता।';
+
+  @override
+  String get deliverSend => 'भेजें';
+
+  @override
+  String get deliverParentGroup => 'अभिभावक समूह';
+
+  @override
+  String get deliverParentGroupMeta => 'WhatsApp पर साझा करें';
+
+  @override
+  String get deliverPrint => 'प्रिंट करें';
+
+  @override
+  String get deliverPrintMeta => 'प्रिंटर पर भेजें';
+
+  @override
+  String get deliverSaveToClass => 'कक्षा में सहेजें';
+
+  @override
+  String get deliverSaveToClassMeta => 'अपनी लाइब्रेरी में रखें';
+
+  @override
+  String get deliverPostCommunity => 'समुदाय में पोस्ट करें';
+
+  @override
+  String get deliverPostCommunityMeta => 'संसाधन के रूप में साझा करें';
+
+  @override
+  String get deliverDownloadPdf => 'PDF डाउनलोड करें';
+
+  @override
+  String get deliverDownloadPdfMeta => 'ऑफ़लाइन काम करता है';
+
+  @override
+  String get deliverReadAloud => 'ज़ोर से पढ़ें';
+
+  @override
+  String get deliverReadAloudMeta => 'कक्षा के लिए';
 }

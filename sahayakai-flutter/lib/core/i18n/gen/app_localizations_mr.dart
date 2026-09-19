@@ -3761,4 +3761,50 @@ class AppLocalizationsMr extends AppLocalizations {
   @override
   String get attendancePremiumBody =>
       'तुमचे वर्ग, हजेरीपट आणि महिन्याचा तपशील पाहणे मोफतच राहते. वर्ग तयार करणे, विद्यार्थी जोडणे आणि हजेरीपट जतन करणे Pro योजनेचा भाग आहे.';
+
+  @override
+  String get deliverTrayTitle => 'पोहोचवा';
+
+  @override
+  String get deliverPrivacyNote =>
+      'तुम्ही पाठवा दाबेपर्यंत काहीही फोनमधून बाहेर जात नाही.';
+
+  @override
+  String get deliverSend => 'पाठवा';
+
+  @override
+  String get deliverParentGroup => 'पालक गट';
+
+  @override
+  String get deliverParentGroupMeta => 'WhatsApp वर सामायिक करा';
+
+  @override
+  String get deliverPrint => 'प्रिंट करा';
+
+  @override
+  String get deliverPrintMeta => 'प्रिंटरला पाठवा';
+
+  @override
+  String get deliverSaveToClass => 'वर्गात जतन करा';
+
+  @override
+  String get deliverSaveToClassMeta => 'तुमच्या ग्रंथालयात ठेवा';
+
+  @override
+  String get deliverPostCommunity => 'समुदायात पोस्ट करा';
+
+  @override
+  String get deliverPostCommunityMeta => 'संसाधन म्हणून सामायिक करा';
+
+  @override
+  String get deliverDownloadPdf => 'PDF डाउनलोड करा';
+
+  @override
+  String get deliverDownloadPdfMeta => 'ऑफलाइन चालते';
+
+  @override
+  String get deliverReadAloud => 'मोठ्याने वाचा';
+
+  @override
+  String get deliverReadAloudMeta => 'वर्गासाठी';
 }

@@ -3812,4 +3812,50 @@ class AppLocalizationsMl extends AppLocalizations {
   @override
   String get attendancePremiumBody =>
       'നിങ്ങളുടെ ക്ലാസുകൾ, ഹാജർ പുസ്തകങ്ങൾ, മാസവിവരങ്ങൾ കാണുന്നത് സൗജന്യമായി തുടരും. ക്ലാസ് ഉണ്ടാക്കുന്നതും വിദ്യാർത്ഥിയെ ചേർക്കുന്നതും ഹാജർ സൂക്ഷിക്കുന്നതും Pro പ്ലാനിന്റെ ഭാഗമാണ്.';
+
+  @override
+  String get deliverTrayTitle => 'എത്തിക്കുക';
+
+  @override
+  String get deliverPrivacyNote =>
+      'നിങ്ങൾ അയയ്ക്കുക അമർത്തുന്നതുവരെ ഒന്നും ഫോണിൽ നിന്ന് പുറത്തുപോകില്ല.';
+
+  @override
+  String get deliverSend => 'അയയ്ക്കുക';
+
+  @override
+  String get deliverParentGroup => 'രക്ഷിതാക്കളുടെ ഗ്രൂപ്പ്';
+
+  @override
+  String get deliverParentGroupMeta => 'WhatsApp-ൽ പങ്കിടുക';
+
+  @override
+  String get deliverPrint => 'പ്രിന്റ് ചെയ്യുക';
+
+  @override
+  String get deliverPrintMeta => 'പ്രിന്ററിലേക്ക് അയയ്ക്കുക';
+
+  @override
+  String get deliverSaveToClass => 'ക്ലാസ്സിൽ സേവ് ചെയ്യുക';
+
+  @override
+  String get deliverSaveToClassMeta => 'നിങ്ങളുടെ ലൈബ്രറിയിൽ സൂക്ഷിക്കുക';
+
+  @override
+  String get deliverPostCommunity => 'കമ്മ്യൂണിറ്റിയിൽ പോസ്റ്റ് ചെയ്യുക';
+
+  @override
+  String get deliverPostCommunityMeta => 'ഒരു വിഭവമായി പങ്കിടുക';
+
+  @override
+  String get deliverDownloadPdf => 'PDF ഡൗൺലോഡ് ചെയ്യുക';
+
+  @override
+  String get deliverDownloadPdfMeta => 'ഓഫ്‌ലൈനിൽ പ്രവർത്തിക്കും';
+
+  @override
+  String get deliverReadAloud => 'ഉറക്കെ വായിക്കുക';
+
+  @override
+  String get deliverReadAloudMeta => 'ക്ലാസ്സിനായി';
 }

@@ -3774,4 +3774,50 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get attendancePremiumBody =>
       'আপনার ক্লাস, রেজিস্টার ও মাসিক হিসাব দেখা বিনামূল্যেই থাকে। ক্লাস তৈরি করা, শিক্ষার্থী যোগ করা ও রেজিস্টার সংরক্ষণ করা Pro প্ল্যানের অংশ।';
+
+  @override
+  String get deliverTrayTitle => 'পৌঁছে দিন';
+
+  @override
+  String get deliverPrivacyNote =>
+      'আপনি পাঠান-এ চাপ না দেওয়া পর্যন্ত ফোন থেকে কিছুই বের হয় না।';
+
+  @override
+  String get deliverSend => 'পাঠান';
+
+  @override
+  String get deliverParentGroup => 'অভিভাবক গোষ্ঠী';
+
+  @override
+  String get deliverParentGroupMeta => 'WhatsApp-এ শেয়ার করুন';
+
+  @override
+  String get deliverPrint => 'প্রিন্ট করুন';
+
+  @override
+  String get deliverPrintMeta => 'প্রিন্টারে পাঠান';
+
+  @override
+  String get deliverSaveToClass => 'ক্লাসে সংরক্ষণ করুন';
+
+  @override
+  String get deliverSaveToClassMeta => 'আপনার লাইব্রেরিতে রাখুন';
+
+  @override
+  String get deliverPostCommunity => 'কমিউনিটিতে পোস্ট করুন';
+
+  @override
+  String get deliverPostCommunityMeta => 'রিসোর্স হিসেবে শেয়ার করুন';
+
+  @override
+  String get deliverDownloadPdf => 'PDF ডাউনলোড করুন';
+
+  @override
+  String get deliverDownloadPdfMeta => 'অফলাইনে কাজ করে';
+
+  @override
+  String get deliverReadAloud => 'সরবে পড়ুন';
+
+  @override
+  String get deliverReadAloudMeta => 'ক্লাসের জন্য';
 }

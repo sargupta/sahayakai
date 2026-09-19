@@ -3765,4 +3765,50 @@ class AppLocalizationsPa extends AppLocalizations {
   @override
   String get attendancePremiumBody =>
       'ਆਪਣੀਆਂ ਜਮਾਤਾਂ, ਹਾਜ਼ਰੀ ਰਜਿਸਟਰ ਅਤੇ ਮਹੀਨੇ ਦਾ ਵੇਰਵਾ ਵੇਖਣਾ ਮੁਫ਼ਤ ਹੀ ਰਹਿੰਦਾ ਹੈ। ਜਮਾਤ ਬਣਾਉਣਾ, ਵਿਦਿਆਰਥੀ ਜੋੜਨਾ ਅਤੇ ਹਾਜ਼ਰੀ ਸੰਭਾਲਣਾ Pro ਪਲਾਨ ਦਾ ਹਿੱਸਾ ਹੈ।';
+
+  @override
+  String get deliverTrayTitle => 'ਪਹੁੰਚਾਓ';
+
+  @override
+  String get deliverPrivacyNote =>
+      'ਜਦੋਂ ਤੱਕ ਤੁਸੀਂ ਭੇਜੋ ਨਹੀਂ ਦਬਾਉਂਦੇ, ਕੁਝ ਵੀ ਫ਼ੋਨ ਤੋਂ ਬਾਹਰ ਨਹੀਂ ਜਾਂਦਾ।';
+
+  @override
+  String get deliverSend => 'ਭੇਜੋ';
+
+  @override
+  String get deliverParentGroup => 'ਮਾਪੇ ਸਮੂਹ';
+
+  @override
+  String get deliverParentGroupMeta => 'WhatsApp ਤੇ ਸਾਂਝਾ ਕਰੋ';
+
+  @override
+  String get deliverPrint => 'ਪ੍ਰਿੰਟ ਕਰੋ';
+
+  @override
+  String get deliverPrintMeta => 'ਪ੍ਰਿੰਟਰ ਨੂੰ ਭੇਜੋ';
+
+  @override
+  String get deliverSaveToClass => 'ਕਲਾਸ ਵਿੱਚ ਸੰਭਾਲੋ';
+
+  @override
+  String get deliverSaveToClassMeta => 'ਆਪਣੀ ਲਾਇਬ੍ਰੇਰੀ ਵਿੱਚ ਰੱਖੋ';
+
+  @override
+  String get deliverPostCommunity => 'ਕਮਿਊਨਿਟੀ ਵਿੱਚ ਪੋਸਟ ਕਰੋ';
+
+  @override
+  String get deliverPostCommunityMeta => 'ਸਰੋਤ ਵਜੋਂ ਸਾਂਝਾ ਕਰੋ';
+
+  @override
+  String get deliverDownloadPdf => 'PDF ਡਾਊਨਲੋਡ ਕਰੋ';
+
+  @override
+  String get deliverDownloadPdfMeta => 'ਆਫਲਾਈਨ ਕੰਮ ਕਰਦਾ ਹੈ';
+
+  @override
+  String get deliverReadAloud => 'ਉੱਚੀ ਆਵਾਜ਼ ਵਿੱਚ ਪੜ੍ਹੋ';
+
+  @override
+  String get deliverReadAloudMeta => 'ਕਲਾਸ ਲਈ';
 }

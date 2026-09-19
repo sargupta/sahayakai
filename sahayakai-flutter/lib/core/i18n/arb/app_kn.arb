@@ -1065,5 +1065,20 @@
   "attendanceAbsencesEmpty": "ಈ ತಿಂಗಳು ಗೈರುಹಾಜರಿ ಇಲ್ಲ.",
   "attendanceAbsencesError": "ಗೈರುಹಾಜರಾದ ದಿನಗಳನ್ನು ನಮಗೆ ತರಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
   "attendancePremiumTitle": "ಹಾಜರಾತಿ ಬರೆಯಲು Pro ಯೋಜನೆ ಬೇಕು",
-  "attendancePremiumBody": "ನಿಮ್ಮ ತರಗತಿಗಳು, ಹಾಜರಾತಿ ಪುಸ್ತಕಗಳು ಮತ್ತು ತಿಂಗಳ ವಿವರಗಳನ್ನು ನೋಡುವುದು ಉಚಿತವಾಗಿಯೇ ಇರುತ್ತದೆ. ತರಗತಿ ರಚಿಸುವುದು, ವಿದ್ಯಾರ್ಥಿಯನ್ನು ಸೇರಿಸುವುದು ಮತ್ತು ಹಾಜರಾತಿ ಉಳಿಸುವುದು Pro ಯೋಜನೆಯ ಭಾಗ."
+  "attendancePremiumBody": "ನಿಮ್ಮ ತರಗತಿಗಳು, ಹಾಜರಾತಿ ಪುಸ್ತಕಗಳು ಮತ್ತು ತಿಂಗಳ ವಿವರಗಳನ್ನು ನೋಡುವುದು ಉಚಿತವಾಗಿಯೇ ಇರುತ್ತದೆ. ತರಗತಿ ರಚಿಸುವುದು, ವಿದ್ಯಾರ್ಥಿಯನ್ನು ಸೇರಿಸುವುದು ಮತ್ತು ಹಾಜರಾತಿ ಉಳಿಸುವುದು Pro ಯೋಜನೆಯ ಭಾಗ.",
+  "deliverTrayTitle": "ತಲುಪಿಸಿ",
+  "deliverPrivacyNote": "ನೀವು ಕಳುಹಿಸಿ ಒತ್ತುವವರೆಗೆ ಫೋನ್‌ನಿಂದ ಏನೂ ಹೊರಹೋಗುವುದಿಲ್ಲ.",
+  "deliverSend": "ಕಳುಹಿಸಿ",
+  "deliverParentGroup": "ಪೋಷಕರ ಗುಂಪು",
+  "deliverParentGroupMeta": "WhatsApp ನಲ್ಲಿ ಹಂಚಿಕೊಳ್ಳಿ",
+  "deliverPrint": "ಮುದ್ರಿಸಿ",
+  "deliverPrintMeta": "ಪ್ರಿಂಟರ್‌ಗೆ ಕಳುಹಿಸಿ",
+  "deliverSaveToClass": "ತರಗತಿಗೆ ಉಳಿಸಿ",
+  "deliverSaveToClassMeta": "ನಿಮ್ಮ ಗ್ರಂಥಾಲಯದಲ್ಲಿ ಇರಿಸಿ",
+  "deliverPostCommunity": "ಸಮುದಾಯದಲ್ಲಿ ಪೋಸ್ಟ್ ಮಾಡಿ",
+  "deliverPostCommunityMeta": "ಸಂಪನ್ಮೂಲವಾಗಿ ಹಂಚಿಕೊಳ್ಳಿ",
+  "deliverDownloadPdf": "PDF ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ",
+  "deliverDownloadPdfMeta": "ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿ ಕೆಲಸ ಮಾಡುತ್ತದೆ",
+  "deliverReadAloud": "ಜೋರಾಗಿ ಓದಿ",
+  "deliverReadAloudMeta": "ತರಗತಿಗೆ"
 }

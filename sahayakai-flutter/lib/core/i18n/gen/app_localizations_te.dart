@@ -3785,4 +3785,50 @@ class AppLocalizationsTe extends AppLocalizations {
   @override
   String get attendancePremiumBody =>
       'మీ తరగతులు, పట్టీలు, నెలవారీ వివరాలు చూడటం ఉచితంగానే ఉంటుంది. తరగతిని సృష్టించడం, విద్యార్థిని చేర్చడం, పట్టీని భద్రపరచడం Pro ప్లాన్‌లో భాగం.';
+
+  @override
+  String get deliverTrayTitle => 'అందించు';
+
+  @override
+  String get deliverPrivacyNote =>
+      'మీరు పంపు నొక్కే వరకు ఫోన్ నుండి ఏదీ బయటకు వెళ్లదు.';
+
+  @override
+  String get deliverSend => 'పంపండి';
+
+  @override
+  String get deliverParentGroup => 'తల్లిదండ్రుల గుంపు';
+
+  @override
+  String get deliverParentGroupMeta => 'WhatsAppలో పంచుకోండి';
+
+  @override
+  String get deliverPrint => 'ప్రింట్';
+
+  @override
+  String get deliverPrintMeta => 'ప్రింటర్‌కు పంపండి';
+
+  @override
+  String get deliverSaveToClass => 'తరగతిలో సేవ్ చేయండి';
+
+  @override
+  String get deliverSaveToClassMeta => 'మీ లైబ్రరీలో ఉంచండి';
+
+  @override
+  String get deliverPostCommunity => 'కమ్యూనిటీలో పోస్ట్ చేయండి';
+
+  @override
+  String get deliverPostCommunityMeta => 'వనరుగా పంచుకోండి';
+
+  @override
+  String get deliverDownloadPdf => 'PDF డౌన్‌లోడ్ చేయండి';
+
+  @override
+  String get deliverDownloadPdfMeta => 'ఆఫ్‌లైన్‌లో పనిచేస్తుంది';
+
+  @override
+  String get deliverReadAloud => 'బిగ్గరగా చదవండి';
+
+  @override
+  String get deliverReadAloudMeta => 'తరగతికి';
 }

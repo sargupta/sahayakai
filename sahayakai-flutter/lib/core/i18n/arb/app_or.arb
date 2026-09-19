@@ -1065,5 +1065,20 @@
   "attendanceAbsencesEmpty": "ଏହି ମାସରେ କୌଣସି ଅନୁପସ୍ଥିତି ନାହିଁ।",
   "attendanceAbsencesError": "ଆମେ ଅନୁପସ୍ଥିତ ଦିନଗୁଡ଼ିକ ଆଣିପାରିଲୁ ନାହିଁ।",
   "attendancePremiumTitle": "ହାଜିରା ଲେଖିବା ପାଇଁ Pro ଯୋଜନା ଦରକାର",
-  "attendancePremiumBody": "ଆପଣଙ୍କ ଶ୍ରେଣୀ, ହାଜିରା ଖାତା ଏବଂ ମାସିକ ବିବରଣୀ ଦେଖିବା ମାଗଣା ରହିବ। ଶ୍ରେଣୀ ତିଆରି କରିବା, ଛାତ୍ର ଯୋଡ଼ିବା ଏବଂ ହାଜିରା ସଞ୍ଚୟ କରିବା Pro ଯୋଜନାର ଅଂଶ।"
+  "attendancePremiumBody": "ଆପଣଙ୍କ ଶ୍ରେଣୀ, ହାଜିରା ଖାତା ଏବଂ ମାସିକ ବିବରଣୀ ଦେଖିବା ମାଗଣା ରହିବ। ଶ୍ରେଣୀ ତିଆରି କରିବା, ଛାତ୍ର ଯୋଡ଼ିବା ଏବଂ ହାଜିରା ସଞ୍ଚୟ କରିବା Pro ଯୋଜନାର ଅଂଶ।",
+  "deliverTrayTitle": "ପହଞ୍ଚାନ୍ତୁ",
+  "deliverPrivacyNote": "ଆପଣ ପଠାନ୍ତୁ ଦବାଇବା ପର୍ଯ୍ୟନ୍ତ କିଛି ବି ଫୋନରୁ ବାହାରକୁ ଯାଏ ନାହିଁ।",
+  "deliverSend": "ପଠାନ୍ତୁ",
+  "deliverParentGroup": "ଅଭିଭାବକ ଗୋଷ୍ଠୀ",
+  "deliverParentGroupMeta": "WhatsApp ରେ ସେୟାର କରନ୍ତୁ",
+  "deliverPrint": "ପ୍ରିଣ୍ଟ କରନ୍ତୁ",
+  "deliverPrintMeta": "ପ୍ରିଣ୍ଟରକୁ ପଠାନ୍ତୁ",
+  "deliverSaveToClass": "ଶ୍ରେଣୀରେ ସେଭ୍ କରନ୍ତୁ",
+  "deliverSaveToClassMeta": "ଆପଣଙ୍କ ଲାଇବ୍ରେରୀରେ ରଖନ୍ତୁ",
+  "deliverPostCommunity": "ସମୁଦାୟରେ ପୋଷ୍ଟ କରନ୍ତୁ",
+  "deliverPostCommunityMeta": "ଉତ୍ସ ଭାବେ ସେୟାର କରନ୍ତୁ",
+  "deliverDownloadPdf": "PDF ଡାଉନଲୋଡ୍ କରନ୍ତୁ",
+  "deliverDownloadPdfMeta": "ଅଫଲାଇନରେ କାମ କରେ",
+  "deliverReadAloud": "ଉଚ୍ଚ ସ୍ୱରରେ ପଢ଼ନ୍ତୁ",
+  "deliverReadAloudMeta": "ଶ୍ରେଣୀ ପାଇଁ"
 }

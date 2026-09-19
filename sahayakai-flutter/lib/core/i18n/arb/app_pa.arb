@@ -1065,5 +1065,20 @@
   "attendanceAbsencesEmpty": "ਇਸ ਮਹੀਨੇ ਕੋਈ ਗ਼ੈਰਹਾਜ਼ਰੀ ਨਹੀਂ।",
   "attendanceAbsencesError": "ਅਸੀਂ ਗ਼ੈਰਹਾਜ਼ਰ ਦਿਨ ਨਹੀਂ ਲਿਆ ਸਕੇ।",
   "attendancePremiumTitle": "ਹਾਜ਼ਰੀ ਭਰਨ ਲਈ Pro ਪਲਾਨ ਚਾਹੀਦਾ ਹੈ",
-  "attendancePremiumBody": "ਆਪਣੀਆਂ ਜਮਾਤਾਂ, ਹਾਜ਼ਰੀ ਰਜਿਸਟਰ ਅਤੇ ਮਹੀਨੇ ਦਾ ਵੇਰਵਾ ਵੇਖਣਾ ਮੁਫ਼ਤ ਹੀ ਰਹਿੰਦਾ ਹੈ। ਜਮਾਤ ਬਣਾਉਣਾ, ਵਿਦਿਆਰਥੀ ਜੋੜਨਾ ਅਤੇ ਹਾਜ਼ਰੀ ਸੰਭਾਲਣਾ Pro ਪਲਾਨ ਦਾ ਹਿੱਸਾ ਹੈ।"
+  "attendancePremiumBody": "ਆਪਣੀਆਂ ਜਮਾਤਾਂ, ਹਾਜ਼ਰੀ ਰਜਿਸਟਰ ਅਤੇ ਮਹੀਨੇ ਦਾ ਵੇਰਵਾ ਵੇਖਣਾ ਮੁਫ਼ਤ ਹੀ ਰਹਿੰਦਾ ਹੈ। ਜਮਾਤ ਬਣਾਉਣਾ, ਵਿਦਿਆਰਥੀ ਜੋੜਨਾ ਅਤੇ ਹਾਜ਼ਰੀ ਸੰਭਾਲਣਾ Pro ਪਲਾਨ ਦਾ ਹਿੱਸਾ ਹੈ।",
+  "deliverTrayTitle": "ਪਹੁੰਚਾਓ",
+  "deliverPrivacyNote": "ਜਦੋਂ ਤੱਕ ਤੁਸੀਂ ਭੇਜੋ ਨਹੀਂ ਦਬਾਉਂਦੇ, ਕੁਝ ਵੀ ਫ਼ੋਨ ਤੋਂ ਬਾਹਰ ਨਹੀਂ ਜਾਂਦਾ।",
+  "deliverSend": "ਭੇਜੋ",
+  "deliverParentGroup": "ਮਾਪੇ ਸਮੂਹ",
+  "deliverParentGroupMeta": "WhatsApp ਤੇ ਸਾਂਝਾ ਕਰੋ",
+  "deliverPrint": "ਪ੍ਰਿੰਟ ਕਰੋ",
+  "deliverPrintMeta": "ਪ੍ਰਿੰਟਰ ਨੂੰ ਭੇਜੋ",
+  "deliverSaveToClass": "ਕਲਾਸ ਵਿੱਚ ਸੰਭਾਲੋ",
+  "deliverSaveToClassMeta": "ਆਪਣੀ ਲਾਇਬ੍ਰੇਰੀ ਵਿੱਚ ਰੱਖੋ",
+  "deliverPostCommunity": "ਕਮਿਊਨਿਟੀ ਵਿੱਚ ਪੋਸਟ ਕਰੋ",
+  "deliverPostCommunityMeta": "ਸਰੋਤ ਵਜੋਂ ਸਾਂਝਾ ਕਰੋ",
+  "deliverDownloadPdf": "PDF ਡਾਊਨਲੋਡ ਕਰੋ",
+  "deliverDownloadPdfMeta": "ਆਫਲਾਈਨ ਕੰਮ ਕਰਦਾ ਹੈ",
+  "deliverReadAloud": "ਉੱਚੀ ਆਵਾਜ਼ ਵਿੱਚ ਪੜ੍ਹੋ",
+  "deliverReadAloudMeta": "ਕਲਾਸ ਲਈ"
 }

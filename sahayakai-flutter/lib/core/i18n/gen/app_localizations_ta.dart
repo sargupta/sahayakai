@@ -3834,4 +3834,50 @@ class AppLocalizationsTa extends AppLocalizations {
   @override
   String get attendancePremiumBody =>
       'உங்கள் வகுப்புகள், பதிவேடுகள், மாதக் கணக்குகளைப் பார்ப்பது இலவசமாகவே இருக்கும். வகுப்பை உருவாக்குவது, மாணவரைச் சேர்ப்பது, பதிவேட்டைச் சேமிப்பது Pro திட்டத்தின் பகுதி.';
+
+  @override
+  String get deliverTrayTitle => 'வழங்கு';
+
+  @override
+  String get deliverPrivacyNote =>
+      'நீங்கள் அனுப்பு என்பதைத் தட்டும் வரை எதுவும் தொலைபேசியை விட்டு வெளியேறாது.';
+
+  @override
+  String get deliverSend => 'அனுப்பு';
+
+  @override
+  String get deliverParentGroup => 'பெற்றோர் குழு';
+
+  @override
+  String get deliverParentGroupMeta => 'WhatsApp இல் பகிரவும்';
+
+  @override
+  String get deliverPrint => 'அச்சிடு';
+
+  @override
+  String get deliverPrintMeta => 'அச்சுப்பொறிக்கு அனுப்பு';
+
+  @override
+  String get deliverSaveToClass => 'வகுப்பில் சேமி';
+
+  @override
+  String get deliverSaveToClassMeta => 'உங்கள் நூலகத்தில் வைக்கவும்';
+
+  @override
+  String get deliverPostCommunity => 'சமூகத்தில் இடுகையிடு';
+
+  @override
+  String get deliverPostCommunityMeta => 'வளமாகப் பகிரவும்';
+
+  @override
+  String get deliverDownloadPdf => 'PDF பதிவிறக்கு';
+
+  @override
+  String get deliverDownloadPdfMeta => 'ஆஃப்லைனில் இயங்கும்';
+
+  @override
+  String get deliverReadAloud => 'உரக்கப் படி';
+
+  @override
+  String get deliverReadAloudMeta => 'வகுப்பிற்கு';
 }

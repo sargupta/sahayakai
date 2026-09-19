@@ -1065,5 +1065,20 @@
   "attendanceAbsencesEmpty": "ఈ నెలలో గైర్హాజరు లేదు.",
   "attendanceAbsencesError": "గైర్హాజరు రోజులను మేము తీసుకురాలేకపోయాము.",
   "attendancePremiumTitle": "పట్టీ నింపడానికి Pro ప్లాన్ కావాలి",
-  "attendancePremiumBody": "మీ తరగతులు, పట్టీలు, నెలవారీ వివరాలు చూడటం ఉచితంగానే ఉంటుంది. తరగతిని సృష్టించడం, విద్యార్థిని చేర్చడం, పట్టీని భద్రపరచడం Pro ప్లాన్‌లో భాగం."
+  "attendancePremiumBody": "మీ తరగతులు, పట్టీలు, నెలవారీ వివరాలు చూడటం ఉచితంగానే ఉంటుంది. తరగతిని సృష్టించడం, విద్యార్థిని చేర్చడం, పట్టీని భద్రపరచడం Pro ప్లాన్‌లో భాగం.",
+  "deliverTrayTitle": "అందించు",
+  "deliverPrivacyNote": "మీరు పంపు నొక్కే వరకు ఫోన్ నుండి ఏదీ బయటకు వెళ్లదు.",
+  "deliverSend": "పంపండి",
+  "deliverParentGroup": "తల్లిదండ్రుల గుంపు",
+  "deliverParentGroupMeta": "WhatsAppలో పంచుకోండి",
+  "deliverPrint": "ప్రింట్",
+  "deliverPrintMeta": "ప్రింటర్‌కు పంపండి",
+  "deliverSaveToClass": "తరగతిలో సేవ్ చేయండి",
+  "deliverSaveToClassMeta": "మీ లైబ్రరీలో ఉంచండి",
+  "deliverPostCommunity": "కమ్యూనిటీలో పోస్ట్ చేయండి",
+  "deliverPostCommunityMeta": "వనరుగా పంచుకోండి",
+  "deliverDownloadPdf": "PDF డౌన్‌లోడ్ చేయండి",
+  "deliverDownloadPdfMeta": "ఆఫ్‌లైన్‌లో పనిచేస్తుంది",
+  "deliverReadAloud": "బిగ్గరగా చదవండి",
+  "deliverReadAloudMeta": "తరగతికి"
 }

@@ -1065,5 +1065,20 @@
   "attendanceAbsencesEmpty": "या महिन्यात एकही अनुपस्थिती नाही.",
   "attendanceAbsencesError": "आम्ही अनुपस्थित दिवस आणू शकलो नाही.",
   "attendancePremiumTitle": "हजेरीपट भरण्यासाठी Pro योजना लागते",
-  "attendancePremiumBody": "तुमचे वर्ग, हजेरीपट आणि महिन्याचा तपशील पाहणे मोफतच राहते. वर्ग तयार करणे, विद्यार्थी जोडणे आणि हजेरीपट जतन करणे Pro योजनेचा भाग आहे."
+  "attendancePremiumBody": "तुमचे वर्ग, हजेरीपट आणि महिन्याचा तपशील पाहणे मोफतच राहते. वर्ग तयार करणे, विद्यार्थी जोडणे आणि हजेरीपट जतन करणे Pro योजनेचा भाग आहे.",
+  "deliverTrayTitle": "पोहोचवा",
+  "deliverPrivacyNote": "तुम्ही पाठवा दाबेपर्यंत काहीही फोनमधून बाहेर जात नाही.",
+  "deliverSend": "पाठवा",
+  "deliverParentGroup": "पालक गट",
+  "deliverParentGroupMeta": "WhatsApp वर सामायिक करा",
+  "deliverPrint": "प्रिंट करा",
+  "deliverPrintMeta": "प्रिंटरला पाठवा",
+  "deliverSaveToClass": "वर्गात जतन करा",
+  "deliverSaveToClassMeta": "तुमच्या ग्रंथालयात ठेवा",
+  "deliverPostCommunity": "समुदायात पोस्ट करा",
+  "deliverPostCommunityMeta": "संसाधन म्हणून सामायिक करा",
+  "deliverDownloadPdf": "PDF डाउनलोड करा",
+  "deliverDownloadPdfMeta": "ऑफलाइन चालते",
+  "deliverReadAloud": "मोठ्याने वाचा",
+  "deliverReadAloudMeta": "वर्गासाठी"
 }

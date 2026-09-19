@@ -79,33 +79,30 @@ enum VidyaPerch {
 
 /// Where the floating orb lives and what it is doing to itself right now.
 /// [perch] and [hand] persist across launches; [dragging] is transient (the
-/// teacher's finger is on it) and [readyCount] is session state (results waiting
-/// to be delivered), so neither is written to prefs.
+/// teacher's finger is on it), so it is not written to prefs. The green "ready"
+/// count is NOT here — it is derived from `deliverablesControllerProvider`, the
+/// single source of truth for results waiting to be delivered.
 @immutable
 class VidyaOrbPlacement {
   const VidyaOrbPlacement({
     this.perch = VidyaPerch.bottomRight,
     this.hand = VidyaHand.right,
     this.dragging = false,
-    this.readyCount = 0,
   });
 
   final VidyaPerch perch;
   final VidyaHand hand;
   final bool dragging;
-  final int readyCount;
 
   VidyaOrbPlacement copyWith({
     VidyaPerch? perch,
     VidyaHand? hand,
     bool? dragging,
-    int? readyCount,
   }) {
     return VidyaOrbPlacement(
       perch: perch ?? this.perch,
       hand: hand ?? this.hand,
       dragging: dragging ?? this.dragging,
-      readyCount: readyCount ?? this.readyCount,
     );
   }
 
@@ -114,11 +111,10 @@ class VidyaOrbPlacement {
       other is VidyaOrbPlacement &&
       other.perch == perch &&
       other.hand == hand &&
-      other.dragging == dragging &&
-      other.readyCount == readyCount;
+      other.dragging == dragging;
 
   @override
-  int get hashCode => Object.hash(perch, hand, dragging, readyCount);
+  int get hashCode => Object.hash(perch, hand, dragging);
 }
 
 /// Owns the floating orb's placement and its ready-badge count, held alive so it
@@ -183,20 +179,6 @@ class VidyaOrbPlacementController extends Notifier<VidyaOrbPlacement> {
     if (state.hand == hand) return;
     state = state.copyWith(hand: hand, perch: VidyaPerch.of(hand, state.perch.band));
     await _persist();
-  }
-
-  /// A result finished and is waiting to be delivered — turns the orb green and
-  /// bumps its badge. Producers (a tool output screen) call this; the deliver
-  /// surface calls [clearReady] once the teacher acts on it.
-  void addReady([int count = 1]) {
-    if (count <= 0) return;
-    state = state.copyWith(readyCount: state.readyCount + count);
-  }
-
-  /// Clear the ready badge (the teacher opened / dismissed the waiting results).
-  void clearReady() {
-    if (state.readyCount == 0) return;
-    state = state.copyWith(readyCount: 0);
   }
 
   Future<void> _persist() async {

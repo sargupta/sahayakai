@@ -3736,4 +3736,50 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get attendancePremiumBody =>
       'Reading your classes, registers and monthly summaries stays free. Creating a class, adding a student and saving a register are part of the Pro plan.';
+
+  @override
+  String get deliverTrayTitle => 'Deliver';
+
+  @override
+  String get deliverPrivacyNote =>
+      'Nothing leaves the phone until you tap send.';
+
+  @override
+  String get deliverSend => 'Send';
+
+  @override
+  String get deliverParentGroup => 'Parent group';
+
+  @override
+  String get deliverParentGroupMeta => 'Share on WhatsApp';
+
+  @override
+  String get deliverPrint => 'Print';
+
+  @override
+  String get deliverPrintMeta => 'Send to a printer';
+
+  @override
+  String get deliverSaveToClass => 'Save to class';
+
+  @override
+  String get deliverSaveToClassMeta => 'Keep in your library';
+
+  @override
+  String get deliverPostCommunity => 'Post to Community';
+
+  @override
+  String get deliverPostCommunityMeta => 'Share as a resource';
+
+  @override
+  String get deliverDownloadPdf => 'Download PDF';
+
+  @override
+  String get deliverDownloadPdfMeta => 'Works offline';
+
+  @override
+  String get deliverReadAloud => 'Read aloud';
+
+  @override
+  String get deliverReadAloudMeta => 'To the class';
 }

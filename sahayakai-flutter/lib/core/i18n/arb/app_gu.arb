@@ -1065,5 +1065,20 @@
   "attendanceAbsencesEmpty": "આ મહિને કોઈ ગેરહાજરી નથી.",
   "attendanceAbsencesError": "અમે ગેરહાજર દિવસો લાવી શક્યા નહીં.",
   "attendancePremiumTitle": "હાજરીપત્રક ભરવા માટે Pro પ્લાન જોઈએ",
-  "attendancePremiumBody": "તમારા વર્ગો, હાજરીપત્રકો અને માસિક વિગતો જોવાનું મફત જ રહે છે. વર્ગ બનાવવો, વિદ્યાર્થી ઉમેરવો અને હાજરીપત્રક સાચવવું Pro પ્લાનનો ભાગ છે."
+  "attendancePremiumBody": "તમારા વર્ગો, હાજરીપત્રકો અને માસિક વિગતો જોવાનું મફત જ રહે છે. વર્ગ બનાવવો, વિદ્યાર્થી ઉમેરવો અને હાજરીપત્રક સાચવવું Pro પ્લાનનો ભાગ છે.",
+  "deliverTrayTitle": "પહોંચાડો",
+  "deliverPrivacyNote": "તમે મોકલો દબાવો નહીં ત્યાં સુધી ફોનમાંથી કંઈ બહાર જતું નથી.",
+  "deliverSend": "મોકલો",
+  "deliverParentGroup": "વાલી જૂથ",
+  "deliverParentGroupMeta": "WhatsApp પર શેર કરો",
+  "deliverPrint": "પ્રિન્ટ કરો",
+  "deliverPrintMeta": "પ્રિન્ટરને મોકલો",
+  "deliverSaveToClass": "વર્ગમાં સાચવો",
+  "deliverSaveToClassMeta": "તમારી લાઇબ્રેરીમાં રાખો",
+  "deliverPostCommunity": "સમુદાયમાં પોસ્ટ કરો",
+  "deliverPostCommunityMeta": "સંસાધન તરીકે શેર કરો",
+  "deliverDownloadPdf": "PDF ડાઉનલોડ કરો",
+  "deliverDownloadPdfMeta": "ઑફલાઇન કામ કરે છે",
+  "deliverReadAloud": "મોટેથી વાંચો",
+  "deliverReadAloudMeta": "વર્ગ માટે"
 }

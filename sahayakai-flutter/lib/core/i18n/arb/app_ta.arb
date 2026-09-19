@@ -1065,5 +1065,20 @@
   "attendanceAbsencesEmpty": "இந்த மாதம் வராத நாட்கள் இல்லை.",
   "attendanceAbsencesError": "வராத நாட்களை எங்களால் ஏற்ற முடியவில்லை.",
   "attendancePremiumTitle": "பதிவேடு நிரப்ப Pro திட்டம் தேவை",
-  "attendancePremiumBody": "உங்கள் வகுப்புகள், பதிவேடுகள், மாதக் கணக்குகளைப் பார்ப்பது இலவசமாகவே இருக்கும். வகுப்பை உருவாக்குவது, மாணவரைச் சேர்ப்பது, பதிவேட்டைச் சேமிப்பது Pro திட்டத்தின் பகுதி."
+  "attendancePremiumBody": "உங்கள் வகுப்புகள், பதிவேடுகள், மாதக் கணக்குகளைப் பார்ப்பது இலவசமாகவே இருக்கும். வகுப்பை உருவாக்குவது, மாணவரைச் சேர்ப்பது, பதிவேட்டைச் சேமிப்பது Pro திட்டத்தின் பகுதி.",
+  "deliverTrayTitle": "வழங்கு",
+  "deliverPrivacyNote": "நீங்கள் அனுப்பு என்பதைத் தட்டும் வரை எதுவும் தொலைபேசியை விட்டு வெளியேறாது.",
+  "deliverSend": "அனுப்பு",
+  "deliverParentGroup": "பெற்றோர் குழு",
+  "deliverParentGroupMeta": "WhatsApp இல் பகிரவும்",
+  "deliverPrint": "அச்சிடு",
+  "deliverPrintMeta": "அச்சுப்பொறிக்கு அனுப்பு",
+  "deliverSaveToClass": "வகுப்பில் சேமி",
+  "deliverSaveToClassMeta": "உங்கள் நூலகத்தில் வைக்கவும்",
+  "deliverPostCommunity": "சமூகத்தில் இடுகையிடு",
+  "deliverPostCommunityMeta": "வளமாகப் பகிரவும்",
+  "deliverDownloadPdf": "PDF பதிவிறக்கு",
+  "deliverDownloadPdfMeta": "ஆஃப்லைனில் இயங்கும்",
+  "deliverReadAloud": "உரக்கப் படி",
+  "deliverReadAloudMeta": "வகுப்பிற்கு"
 }

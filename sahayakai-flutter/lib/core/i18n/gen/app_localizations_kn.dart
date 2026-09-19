@@ -3776,4 +3776,50 @@ class AppLocalizationsKn extends AppLocalizations {
   @override
   String get attendancePremiumBody =>
       'ನಿಮ್ಮ ತರಗತಿಗಳು, ಹಾಜರಾತಿ ಪುಸ್ತಕಗಳು ಮತ್ತು ತಿಂಗಳ ವಿವರಗಳನ್ನು ನೋಡುವುದು ಉಚಿತವಾಗಿಯೇ ಇರುತ್ತದೆ. ತರಗತಿ ರಚಿಸುವುದು, ವಿದ್ಯಾರ್ಥಿಯನ್ನು ಸೇರಿಸುವುದು ಮತ್ತು ಹಾಜರಾತಿ ಉಳಿಸುವುದು Pro ಯೋಜನೆಯ ಭಾಗ.';
+
+  @override
+  String get deliverTrayTitle => 'ತಲುಪಿಸಿ';
+
+  @override
+  String get deliverPrivacyNote =>
+      'ನೀವು ಕಳುಹಿಸಿ ಒತ್ತುವವರೆಗೆ ಫೋನ್‌ನಿಂದ ಏನೂ ಹೊರಹೋಗುವುದಿಲ್ಲ.';
+
+  @override
+  String get deliverSend => 'ಕಳುಹಿಸಿ';
+
+  @override
+  String get deliverParentGroup => 'ಪೋಷಕರ ಗುಂಪು';
+
+  @override
+  String get deliverParentGroupMeta => 'WhatsApp ನಲ್ಲಿ ಹಂಚಿಕೊಳ್ಳಿ';
+
+  @override
+  String get deliverPrint => 'ಮುದ್ರಿಸಿ';
+
+  @override
+  String get deliverPrintMeta => 'ಪ್ರಿಂಟರ್‌ಗೆ ಕಳುಹಿಸಿ';
+
+  @override
+  String get deliverSaveToClass => 'ತರಗತಿಗೆ ಉಳಿಸಿ';
+
+  @override
+  String get deliverSaveToClassMeta => 'ನಿಮ್ಮ ಗ್ರಂಥಾಲಯದಲ್ಲಿ ಇರಿಸಿ';
+
+  @override
+  String get deliverPostCommunity => 'ಸಮುದಾಯದಲ್ಲಿ ಪೋಸ್ಟ್ ಮಾಡಿ';
+
+  @override
+  String get deliverPostCommunityMeta => 'ಸಂಪನ್ಮೂಲವಾಗಿ ಹಂಚಿಕೊಳ್ಳಿ';
+
+  @override
+  String get deliverDownloadPdf => 'PDF ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ';
+
+  @override
+  String get deliverDownloadPdfMeta => 'ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿ ಕೆಲಸ ಮಾಡುತ್ತದೆ';
+
+  @override
+  String get deliverReadAloud => 'ಜೋರಾಗಿ ಓದಿ';
+
+  @override
+  String get deliverReadAloudMeta => 'ತರಗತಿಗೆ';
 }
