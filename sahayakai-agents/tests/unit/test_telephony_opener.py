@@ -46,9 +46,15 @@ class TestCoverage:
     @pytest.mark.parametrize("language", SUPPORTED)
     def test_each_recording_is_long_enough_to_cover_the_warm_up(self, language: str) -> None:
         seconds = len(opener_for(language)) / 8000
-        # The gap being covered is ~3.4s. Shorter than that and the parent hears
-        # the greeting, then the silence anyway.
-        assert seconds >= 3.4, f"{language} opener is only {seconds:.2f}s"
+        # The model's own first audio lands ~3.5s in, and the greeting starts
+        # ~70ms in, so a 3.2s greeting leaves at most ~230ms — comfortably inside
+        # the 600ms the carrier is already holding, so nothing reaches the parent
+        # as a gap. Below this the silence becomes real.
+        #
+        # The floor is not lower still because the greeting is the SHIPPED copy
+        # and must not be padded to game a threshold: if a language ever renders
+        # shorter than this, the fix is the warm-up, not the words.
+        assert seconds >= 3.2, f"{language} opener is only {seconds:.2f}s"
         # And not so long that a parent is monologued at before they can speak.
         assert seconds <= 8.0, f"{language} opener is {seconds:.2f}s, too long to sit through"
 
@@ -87,11 +93,19 @@ class TestAudioQuality:
         assert lead_s <= 0.15, f"{language} opener has {lead_s:.2f}s of dead air at the front"
 
     @pytest.mark.parametrize("language", SUPPORTED)
-    def test_levels_are_consistent_across_languages(self, language: str) -> None:
-        # One language arriving noticeably quieter reads as a worse connection
-        # for those parents.
+    def test_never_hotter_than_a_phone_line_can_carry(self, language: str) -> None:
+        # The greeting is limited, not normalised: the conversation that follows
+        # is not normalised either, so flattening the greeting to one fixed level
+        # would itself be a seam. What must not happen is a greeting close to
+        # full scale, which is heard as a hot, distorted line — the live model
+        # returned Odia at 32124 before limiting.
         pcm = ulaw_to_pcm16(opener_for(language))
-        assert 15000 <= max(abs(s) for s in pcm) <= 26000
+        assert max(abs(s) for s in pcm) <= 26500
+
+    @pytest.mark.parametrize("language", SUPPORTED)
+    def test_loud_enough_to_hear_on_a_bad_line(self, language: str) -> None:
+        pcm = ulaw_to_pcm16(opener_for(language))
+        assert max(abs(s) for s in pcm) >= 12000
 
 
 class TestWireFormat:

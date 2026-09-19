@@ -32,7 +32,6 @@ import contextlib
 import os
 import re
 import time
-from array import array
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
@@ -41,7 +40,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from ..agents.vidya_voice.router import get_vertex_live_location, get_vertex_live_model
 from ..config import get_settings
-from .audio import ULAW_SILENCE, pcm24k_to_ulaw8k, ulaw8k_to_pcm16k
+from .audio import ULAW_SILENCE, DecimatorState, pcm24k_to_ulaw8k, ulaw8k_to_pcm16k
 from .flow import (
     CLOSE,
     KICKOFF_AFTER_OPENER,
@@ -198,31 +197,30 @@ _CLOSING_GRACE_SECONDS = 12.0
 
 #: Resync rather than burst-catch-up beyond this much lag.
 #:
-#: MUST stay larger than `_PREBUFFER_SECONDS`. The pacer starts deliberately
-#: "behind" in order to build the carrier's jitter buffer; if this threshold is
-#: tighter than that lead, the very first tick reads it as lag and resyncs the
-#: buffer away before a single frame goes out. Raising the prebuffer to 0.6
-#: without raising this did exactly that, and the gate below caught it.
-_MAX_PACING_LAG = 0.9
+#: With no deliberate lead, this is purely about recovering from a real stall.
+#: Catching up by more than this would mean dumping a burst into the carrier,
+#: which is the same fast-playback problem the lead caused.
+_MAX_PACING_LAG = 0.3
 
-#: Run this far ahead of real time so the carrier holds a jitter buffer.
+#: How far ahead of real time to run. ZERO, deliberately.
 #:
-#: Sending in exact real time sounds right and is wrong: it leaves the carrier
-#: with nothing in hand, so ANY stall on our side becomes a hole in the parent's
-#: ear. Server telemetry showed ~0.1% of ticks late but a single stall of ~343ms
-#: per call — inaudible if the carrier is holding half a second, an obvious
-#: break if it is holding nothing.
+#: I added a 400ms, then 600ms, lead so the carrier would hold a jitter buffer
+#: that could absorb our occasional stall. It made things worse in the only way
+#: that counts: the founder reported the voice "fast and weird" and "changing",
+#: on the build that introduced it, having reported holes on the build before.
 #:
-#: The cost is latency: audio is queued this far in advance, so an interruption
-#: has this much already committed. 400ms is the usual telephony compromise —
-#: comfortably more than our worst observed stall, and short enough that
-#: barge-in still feels immediate, especially since `clearAudio` tells the
-#: carrier to drop exactly this buffer.
+#: The lead is sent as a burst — about thirty frames back to back at call start,
+#: which is exactly the recorded greeting. A carrier that plays frames at the
+#: rate they arrive, rather than to its own clock, plays that greeting FAST and
+#: then plays the conversation at normal speed. One voice that sounds rushed and
+#: high followed by one that does not is heard as the voice changing, which is
+#: precisely the complaint.
 #:
-#: 600ms rather than 400: a real call showed a worst-case stall of 493ms, which
-#: a 400ms buffer does not cover — the tail of it reaches the parent as a gap.
-#: Sized to observed behaviour rather than to a round number.
-_PREBUFFER_SECONDS = 0.6
+#: The proven reference agrees: the Suraksha sender has no lead at all and paces
+#: strictly. Holes are handled by the comfort silence below, which keeps the
+#: carrier fed continuously WITHOUT ever sending faster than real time — that is
+#: the right tool for the job, and the lead was never needed once it existed.
+_PREBUFFER_SECONDS = 0.0
 
 _CLOSE_BAD_TOKEN = 4401
 _CLOSE_AT_CAPACITY = 4503
@@ -359,7 +357,7 @@ class _Bridge:
         #: instant instead of "it finishes its sentence first".
         self.generation = 0
         self.out: asyncio.Queue[tuple[int, bytes | None]] = asyncio.Queue()
-        self.tail: array[int] | None = None
+        self.decimator: DecimatorState | None = None
         self.last_voice = time.monotonic()
         self.bytes_up = 0
         self.bytes_down = 0
@@ -751,7 +749,7 @@ async def _pump_live_to_carrier(bridge: _Bridge, session: Any) -> str:
                 bridge.last_activity = time.monotonic()
                 if bridge.first_audio_at is None:
                     bridge.first_audio_at = time.monotonic()
-                ulaw, bridge.tail = pcm24k_to_ulaw8k(data, bridge.tail)
+                ulaw, bridge.decimator = pcm24k_to_ulaw8k(data, bridge.decimator)
                 _queue_ulaw(bridge, ulaw)
         # The turn is over: the carry-over is a true tail now, not a chunk seam.
         _flush_ulaw(bridge)

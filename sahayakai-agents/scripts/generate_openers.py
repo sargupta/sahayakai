@@ -28,7 +28,9 @@ a re-run.
 
 from __future__ import annotations
 
+import asyncio
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -72,7 +74,27 @@ OPENERS: dict[str, str] = {
     language: PROMPTS[key]["greeting"] for language, key in LANG_KEYS.items()
 }
 
-VOICE = "Aoede"  # the same voice the live session uses, so the handover is seamless
+VOICE = "Aoede"
+
+#: Rendered by the SAME model that will carry the conversation.
+#:
+#: The first version used the batch TTS model with the same voice NAME, on the
+#: assumption that "Aoede" is one voice. It is not: measured on the same
+#: sentence, batch TTS came back at rms 2486 / zcr 1487 Hz and the live model at
+#: rms 4580 / zcr 1077 Hz — nearly twice as loud and audibly darker. The parent
+#: heard one person say hello and a different person start talking, which is
+#: exactly what "the voice keeps changing" meant.
+#:
+#: Rendering through the live model makes the handover identical by
+#: construction, and it stays identical if the voice or model is ever changed,
+#: because both come from the same two constants.
+LIVE_MODEL = os.environ.get("VOBIZ_LIVE_MODEL", "gemini-live-2.5-flash-native-audio")
+LIVE_LOCATION = os.environ.get("VOBIZ_LIVE_LOCATION", "us-central1")
+
+_ECHO_INSTRUCTION = (
+    "Repeat the user's text back EXACTLY, word for word, in the same language "
+    "and script. Add nothing, omit nothing, and say nothing else."
+)
 
 #: Leave this much silence at the very front. The whole point of the recording
 #: is that the parent hears a voice immediately; a quarter second of nothing is
@@ -80,14 +102,23 @@ VOICE = "Aoede"  # the same voice the live session uses, so the handover is seam
 LEAD_SILENCE_S = 0.05
 #: A little tail keeps the handover from sounding clipped.
 TAIL_SILENCE_S = 0.10
-#: Peak-normalise so no language arrives noticeably quieter than another. Well
-#: under full scale: mu-law has no headroom to spare and a clipped greeting
-#: sounds like a bad line.
-TARGET_PEAK = 22000
 
 
-def _trim_and_normalise(ulaw: bytes) -> bytes:
-    """Strip the render's lead-in, even the levels out, re-encode."""
+#: Ceiling for the greeting. mu-law has little headroom and the live model's own
+#: output ranges from ~18k to ~32k peak between languages — Odia came back at
+#: 32124, a whisker from full scale, which on a phone is heard as a hot,
+#: slightly distorted line.
+#:
+#: This LIMITS rather than normalises: anything above the ceiling is brought
+#: down, anything below is left exactly as the model produced it. Normalising
+#: everything to one level was the old behaviour and it is wrong here, because
+#: the conversation that follows is not normalised either — matching the voice
+#: means leaving its natural dynamics alone.
+PEAK_CEILING = 26000
+
+
+def _trim_only(ulaw: bytes) -> bytes:
+    """Strip the lead-in and tail, and limit anything too hot for a phone line."""
     import math
     from array import array
 
@@ -108,32 +139,48 @@ def _trim_and_normalise(ulaw: bytes) -> bytes:
     trimmed = pcm[start:end]
 
     peak = max((abs(x) for x in trimmed), default=0)
-    if peak:
-        gain = TARGET_PEAK / peak
-        trimmed = array("h", [max(-32768, min(32767, int(x * gain))) for x in trimmed])
+    if peak > PEAK_CEILING:
+        gain = PEAK_CEILING / peak
+        trimmed = array("h", [int(x * gain) for x in trimmed])
     return pcm16_to_ulaw(trimmed)
 
 
-def render(language: str, text: str) -> int:
+async def _speak_via_live(text: str) -> bytes:
+    """Have the live conversation model say this line, and capture the audio."""
     from google import genai
     from google.genai import types
 
-    client = genai.Client(vertexai=True, project="sahayakai-b4248", location="us-central1")
-    resp = client.models.generate_content(
-        model="gemini-2.5-flash-preview-tts",
-        contents=text,
-        config=types.GenerateContentConfig(
-            response_modalities=["AUDIO"],
-            speech_config=types.SpeechConfig(
-                voice_config=types.VoiceConfig(
-                    prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=VOICE)
-                )
-            ),
+    client = genai.Client(vertexai=True, project="sahayakai-b4248", location=LIVE_LOCATION)
+    config = types.LiveConnectConfig(
+        response_modalities=[types.Modality.AUDIO],
+        speech_config=types.SpeechConfig(
+            voice_config=types.VoiceConfig(
+                prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=VOICE)
+            )
         ),
+        system_instruction=types.Content(parts=[types.Part(text=_ECHO_INSTRUCTION)]),
     )
-    pcm = resp.candidates[0].content.parts[0].inline_data.data
+    pcm = b""
+    async with client.aio.live.connect(model=LIVE_MODEL, config=config) as session:
+        await session.send_client_content(
+            turns=types.Content(role="user", parts=[types.Part(text=text)]),
+            turn_complete=True,
+        )
+        async for resp in session.receive():
+            if getattr(resp, "data", None):
+                pcm += resp.data
+    return pcm
+
+
+def render(language: str, text: str) -> int:
+    pcm = asyncio.run(_speak_via_live(text))
+    if not pcm:
+        raise RuntimeError(f"{language}: live model returned no audio")
     ulaw, _ = pcm24k_to_ulaw8k(pcm)
-    ulaw = _trim_and_normalise(ulaw)
+    # Trim the lead-in only. Level is left exactly as the model produced it:
+    # normalising here would make the greeting a different loudness from the
+    # conversation that follows, reintroducing the seam this is meant to remove.
+    ulaw = _trim_only(ulaw)
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / f"{language}.ulaw").write_bytes(ulaw)
     return len(ulaw)

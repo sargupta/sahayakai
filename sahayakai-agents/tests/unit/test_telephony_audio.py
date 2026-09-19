@@ -100,22 +100,48 @@ class TestDownsampleAntiAliasing:
         out, _ = downsample_24k_to_8k(array("h", [0] * 2400))
         assert 780 <= len(out) <= 800  # 2400/3, minus the filter warm-up
 
-    def test_carries_filter_state_across_chunk_boundaries(self) -> None:
-        # Streaming the same tone in chunks must give essentially the same
-        # result as filtering it whole. Without the tail, each chunk restarts
-        # the filter at zero and the speech acquires a stutter at the chunk rate.
-        tone = self._tone(500, 24000, 2400)
+    def test_streaming_is_bit_identical_to_processing_it_whole(self) -> None:
+        """The property that was missing, and it cost a bad call to find.
+
+        Two things must survive a chunk boundary: the filter history, and the
+        DECIMATION PHASE — which of every three samples is kept. The first
+        version carried only the history and restarted the phase on every chunk,
+        so any chunk whose length was not a multiple of three resumed on the
+        wrong foot, dropping or repeating a sample and stepping the waveform.
+
+        Measured at 2 ms of drift per second plus a discontinuity at every
+        boundary: speech that is subtly fast and warbly. It also looked like two
+        separate faults, because the recorded greeting is generated as ONE chunk
+        and came out clean while the live conversation arrives as many chunks
+        and came out wrong — which is heard as the voice changing mid-call.
+
+        Chunk sizes here are deliberately NOT multiples of three.
+        """
+        tone = self._tone(500, 24000, 24000)
         whole, _ = downsample_24k_to_8k(tone)
 
         streamed = array("h")
-        tail = None
-        for start in range(0, len(tone), 480):
-            part, tail = downsample_24k_to_8k(tone[start : start + 480], tail)
+        state = None
+        for start in range(0, len(tone), 500):
+            part, state = downsample_24k_to_8k(tone[start : start + 500], state)
             streamed.extend(part)
 
-        # Compare the steady-state region, past the warm-up of both paths.
-        a, b = whole[40:400], streamed[40:400]
-        assert self._rms(array("h", [x - y for x, y in zip(a, b, strict=True)])) < 0.05 * self._rms(a)
+        assert len(streamed) == len(whole), (
+            f"streaming produced {len(streamed)} samples against {len(whole)} — "
+            "the output drifts against real time"
+        )
+        assert streamed.tobytes() == whole.tobytes(), "streaming differs from whole-file output"
+
+    @pytest.mark.parametrize("chunk", [160, 250, 500, 961, 1000, 1441])
+    def test_no_drift_at_any_chunk_size(self, chunk: int) -> None:
+        # The Live model does not pick tidy chunk sizes, so none may drift.
+        tone = self._tone(440, 24000, 24000)
+        whole, _ = downsample_24k_to_8k(tone)
+        streamed, state = array("h"), None
+        for start in range(0, len(tone), chunk):
+            part, state = downsample_24k_to_8k(tone[start : start + chunk], state)
+            streamed.extend(part)
+        assert len(streamed) == len(whole), f"chunk={chunk} drifted"
 
     def test_never_wraps_a_sample_on_overshoot(self) -> None:
         # A filter overshoot that wraps int16 turns into a full-scale click.
@@ -136,6 +162,7 @@ class TestWireHelpers:
         out, _ = pcm24k_to_ulaw8k(b"\x00" * 481)
         assert isinstance(out, bytes)
 
-    def test_outbound_threads_its_tail_for_the_next_call(self) -> None:
-        _, tail = pcm24k_to_ulaw8k(b"\x00\x01" * 480)
-        assert len(tail) == 30  # taps - 1
+    def test_outbound_threads_its_state_for_the_next_call(self) -> None:
+        _, state = pcm24k_to_ulaw8k(b"\x00\x01" * 480)
+        assert len(state.tail) == 30  # taps - 1
+        assert state.phase in (0, 1, 2)

@@ -59,9 +59,10 @@ KICKOFF_AFTER_OPENER = (
 #: Used only when no recording could be played, so the model must greet.
 KICKOFF_NO_OPENER = (
     "(The parent has just answered and has heard nothing yet. Greet them warmly, say "
-    "this is an important message from their child's school, then give the teacher's "
-    "message in your own words naming the child, and invite them to ask or share "
-    "anything. Do not use any assistant or product name. Then stop and listen.)"
+    "this is an important message from their child's school, then say the teacher's "
+    "message ESSENTIALLY AS WRITTEN, naming the child, and invite them to ask or "
+    "share anything. Do not summarise the message and do not use any assistant or "
+    "product name. Then stop and listen.)"
 )
 
 #: The parent has not spoken since the greeting. Never assume consent — check in.

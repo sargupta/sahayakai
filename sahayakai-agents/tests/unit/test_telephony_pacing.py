@@ -152,30 +152,41 @@ class TestPacing:
 
 
 @pytest.mark.asyncio
-class TestPrebuffer:
-    async def test_fills_the_carrier_s_buffer_before_pacing(self) -> None:
-        # Sending in exact real time leaves the carrier holding nothing, so any
-        # stall on our side is a hole in the parent's ear. The first frames go
-        # out fast on purpose.
+class TestNeverFasterThanRealTime:
+    """Audio must leave at exactly one 20 ms frame per 20 ms — never in a burst.
+
+    A deliberate lead was added so the carrier would hold a jitter buffer. It
+    made the call worse: the lead is delivered as a burst of about thirty frames
+    at call start, which is exactly the recorded greeting, and a carrier that
+    plays frames as they arrive plays that greeting FAST and the conversation
+    that follows at normal speed. A rushed, high-pitched greeting followed by a
+    normal voice is heard as the voice changing — which is what was reported.
+
+    Holes are the comfort silence's job, and it fills them without ever sending
+    faster than real time.
+    """
+
+    async def test_does_not_burst_a_backlog_at_the_start_of_a_call(self) -> None:
         bridge = _bridge()
-        _queue_ulaw(bridge, b"\x01" * _FRAME_BYTES * 40)
+        # A whole greeting queued at once, as really happens.
+        _queue_ulaw(bridge, b"\x01" * _FRAME_BYTES * 180)
         task = asyncio.create_task(telephony._pace_outbound(bridge))
-        await asyncio.sleep(0.12)
+        await asyncio.sleep(0.2)
         bridge.stop = True
         await asyncio.wait_for(task, timeout=2)
 
         sink: _Sink = bridge.ws  # type: ignore[assignment]
-        # In 120ms of real time, strict pacing would send ~6 frames. With the
-        # lead, the carrier should already hold appreciably more.
-        assert len(sink.frames) > 12, f"only {len(sink.frames)} frames buffered"
+        # 200 ms of real time is 10 frames. Allow scheduling slack, but nothing
+        # close to the 30+ a lead would have pushed out.
+        assert len(sink.frames) <= 16, (
+            f"sent {len(sink.frames)} frames in 200ms — the carrier would play that fast"
+        )
 
-    async def test_the_lead_is_bounded(self) -> None:
-        # Too much lead and an interruption has seconds of speech already
-        # committed to the carrier, so barge-in stops feeling immediate.
-        assert 0.2 <= telephony._PREBUFFER_SECONDS <= 1.0
-        # And it must cover the worst stall actually observed on a real call
-        # (493ms), or the tail of that stall is a gap in the parent's ear.
-        assert telephony._PREBUFFER_SECONDS >= 0.5
-        # And the resync threshold must not be tighter than the lead, or every
-        # call would resync away the buffer it just built.
-        assert telephony._MAX_PACING_LAG >= telephony._PREBUFFER_SECONDS
+    async def test_there_is_no_deliberate_lead(self) -> None:
+        # Stated as a constant so it cannot creep back in as a "small" value.
+        assert telephony._PREBUFFER_SECONDS == 0.0
+
+    async def test_recovery_from_a_stall_cannot_become_a_burst(self) -> None:
+        # Catching up too aggressively is the same fast-playback defect wearing
+        # a different hat.
+        assert telephony._MAX_PACING_LAG <= 0.5

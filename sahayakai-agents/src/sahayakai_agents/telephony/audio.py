@@ -35,6 +35,7 @@ __all__ = [
     "pcm16_to_ulaw",
     "upsample_8k_to_16k",
     "downsample_24k_to_8k",
+    "DecimatorState",
     "ulaw8k_to_pcm16k",
     "pcm24k_to_ulaw8k",
 ]
@@ -159,38 +160,68 @@ _DECIMATE_TAPS = 31
 _LOWPASS_24K = _build_lowpass(_DECIMATE_TAPS, 3400.0, 24000)
 
 
-def downsample_24k_to_8k(
-    samples: array[int], tail: array[int] | None = None
-) -> tuple[array[int], array[int]]:
-    """Low-pass then take every third sample.
+class DecimatorState:
+    """Streaming state for the 24 kHz -> 8 kHz decimator.
 
-    `tail` carries the last taps-1 samples of the previous chunk back in, so the
-    filter does not restart at zero on every chunk. Without it each chunk
-    boundary gets its own little fade-in and the speech acquires a periodic
-    stutter at the chunk rate — audible, and maddening to diagnose, because each
-    chunk sounds correct in isolation.
+    Two things must survive a chunk boundary, and missing either one is audible.
 
-    Returns the decimated samples and the new tail to pass to the next call.
+    `tail` is the filter's history, so the FIR does not restart from zero on
+    every chunk and give each one its own little fade-in.
+
+    `phase` is the one I originally left out, and it is the more damaging. The
+    decimator keeps one sample in three; WHICH one is a position on a grid that
+    runs for the whole utterance. Restarting that grid at a fixed offset on
+    every chunk means that whenever a chunk length is not a multiple of three —
+    which is almost always — the next chunk resumes on the wrong foot, dropping
+    or repeating a sample and stepping the waveform. Measured with 500-sample
+    chunks that was 2 ms of drift per second plus a discontinuity at every
+    boundary, heard as speech that is subtly fast and warbly.
+
+    It also explains a symptom that looked like two different problems: the
+    recorded greeting is generated as ONE chunk and comes out clean, while the
+    live conversation arrives as many chunks and comes out distorted. One voice
+    sounding right and the next sounding wrong reads as the voice changing.
     """
-    history = tail if tail is not None else array("h", bytes(2 * (_DECIMATE_TAPS - 1)))
-    buf = array("h", history)
+
+    __slots__ = ("tail", "phase")
+
+    def __init__(self, tail: array[int] | None = None, phase: int = 0) -> None:
+        self.tail = tail if tail is not None else array("h", bytes(2 * (_DECIMATE_TAPS - 1)))
+        self.phase = phase
+
+
+def downsample_24k_to_8k(
+    samples: array[int], state: DecimatorState | None = None
+) -> tuple[array[int], DecimatorState]:
+    """Low-pass, then keep every third sample, continuously across chunks.
+
+    Returns the decimated samples and the state to pass to the next call.
+    """
+    st = state if state is not None else DecimatorState()
+    buf = array("h", st.tail)
     buf.extend(samples)
 
     out = array("h")
     kernel = _LOWPASS_24K
-    # Start where a full window is available, and step by 3 to decimate.
-    for centre in range(_DECIMATE_TAPS - 1, len(buf), 3):
+    taps = _DECIMATE_TAPS
+
+    # The first output of this chunk sits `phase` samples into the grid, which
+    # is where the previous chunk left off.
+    centre = (taps - 1) + st.phase
+    while centre < len(buf):
         acc = 0.0
-        base = centre - (_DECIMATE_TAPS - 1)
-        for k in range(_DECIMATE_TAPS):
+        base = centre - (taps - 1)
+        for k in range(taps):
             acc += buf[base + k] * kernel[k]
         value = int(acc)
-        # Clamp: the filter can overshoot slightly on transients, and wrapping a
-        # 16-bit sample turns an overshoot into a loud click.
+        # Clamp: the filter can overshoot on transients, and wrapping a 16-bit
+        # sample turns an overshoot into a loud click.
         out.append(32767 if value > 32767 else (-32768 if value < -32768 else value))
+        centre += 3
 
-    new_tail = buf[-(_DECIMATE_TAPS - 1):] if len(buf) >= _DECIMATE_TAPS - 1 else buf
-    return out, array("h", new_tail)
+    # Carry the filter history and where the grid resumes.
+    new_tail = buf[-(taps - 1):] if len(buf) >= taps - 1 else buf
+    return out, DecimatorState(array("h", new_tail), centre - len(buf))
 
 
 def ulaw8k_to_pcm16k(payload: bytes) -> bytes:
@@ -199,12 +230,12 @@ def ulaw8k_to_pcm16k(payload: bytes) -> bytes:
 
 
 def pcm24k_to_ulaw8k(
-    pcm: bytes, tail: array[int] | None = None
-) -> tuple[bytes, array[int]]:
+    pcm: bytes, state: DecimatorState | None = None
+) -> tuple[bytes, DecimatorState]:
     """Live outbound -> what the carrier expects, without aliasing."""
     samples = array("h")
     # An odd trailing byte would raise; a short read on the socket is not worth
     # dropping a frame of speech over, so the dangling byte is discarded.
     samples.frombytes(pcm[: len(pcm) - (len(pcm) % 2)])
-    decimated, new_tail = downsample_24k_to_8k(samples, tail)
-    return pcm16_to_ulaw(decimated), new_tail
+    decimated, new_state = downsample_24k_to_8k(samples, state)
+    return pcm16_to_ulaw(decimated), new_state
