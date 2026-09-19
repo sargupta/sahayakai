@@ -728,6 +728,48 @@ abstract class AppLocalizations {
   /// **'Lesson Plan'**
   String get lessonPlanTitle;
 
+  /// Lesson composer: label for the optional Include chips (v3 05).
+  ///
+  /// In en, this message translates to:
+  /// **'Include'**
+  String get lessonPlanIncludeLabel;
+
+  /// Include chip: emphasise a hands-on activity.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get lessonPlanIncludeActivity;
+
+  /// Include chip: emphasise board work.
+  ///
+  /// In en, this message translates to:
+  /// **'Board work'**
+  String get lessonPlanIncludeBoardWork;
+
+  /// Include chip: emphasise a homework task.
+  ///
+  /// In en, this message translates to:
+  /// **'Homework'**
+  String get lessonPlanIncludeHomework;
+
+  /// Include chip: emphasise a story hook.
+  ///
+  /// In en, this message translates to:
+  /// **'Story hook'**
+  String get lessonPlanIncludeStoryHook;
+
+  /// Lesson composer NCERT-alignment banner title (v3 05).
+  ///
+  /// In en, this message translates to:
+  /// **'NCERT-aligned'**
+  String get lessonPlanNcertTitle;
+
+  /// NCERT banner body; {grade} is the chosen class.
+  ///
+  /// In en, this message translates to:
+  /// **'Your plan is checked against the NCERT syllabus for {grade}.'**
+  String lessonPlanNcertBody(String grade);
+
   /// Lesson Plan dashboard tile subtitle.
   ///
   /// In en, this message translates to:

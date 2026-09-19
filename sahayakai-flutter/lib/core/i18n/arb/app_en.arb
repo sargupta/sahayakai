@@ -447,6 +447,39 @@
     "description": "Profile screen title."
   },
   "lessonPlanTitle": "Lesson Plan",
+  "lessonPlanIncludeLabel": "Include",
+  "@lessonPlanIncludeLabel":   {
+    "description": "Lesson composer: label for the optional Include chips (v3 05)."
+  },
+  "lessonPlanIncludeActivity": "Activity",
+  "@lessonPlanIncludeActivity":   {
+    "description": "Include chip: emphasise a hands-on activity."
+  },
+  "lessonPlanIncludeBoardWork": "Board work",
+  "@lessonPlanIncludeBoardWork":   {
+    "description": "Include chip: emphasise board work."
+  },
+  "lessonPlanIncludeHomework": "Homework",
+  "@lessonPlanIncludeHomework":   {
+    "description": "Include chip: emphasise a homework task."
+  },
+  "lessonPlanIncludeStoryHook": "Story hook",
+  "@lessonPlanIncludeStoryHook":   {
+    "description": "Include chip: emphasise a story hook."
+  },
+  "lessonPlanNcertTitle": "NCERT-aligned",
+  "@lessonPlanNcertTitle":   {
+    "description": "Lesson composer NCERT-alignment banner title (v3 05)."
+  },
+  "lessonPlanNcertBody": "Your plan is checked against the NCERT syllabus for {grade}.",
+  "@lessonPlanNcertBody":   {
+    "description": "NCERT banner body; {grade} is the chosen class.",
+    "placeholders": {
+      "grade": {
+        "type": "String"
+      }
+    }
+  },
   "@lessonPlanTitle": {
     "description": "Lesson Plan tool title (app bar and dashboard tile)."
   },

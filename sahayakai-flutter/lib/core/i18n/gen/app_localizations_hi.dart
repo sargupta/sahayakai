@@ -345,6 +345,29 @@ class AppLocalizationsHi extends AppLocalizations {
   String get lessonPlanTitle => 'पाठ योजना';
 
   @override
+  String get lessonPlanIncludeLabel => 'शामिल करें';
+
+  @override
+  String get lessonPlanIncludeActivity => 'गतिविधि';
+
+  @override
+  String get lessonPlanIncludeBoardWork => 'बोर्ड कार्य';
+
+  @override
+  String get lessonPlanIncludeHomework => 'गृहकार्य';
+
+  @override
+  String get lessonPlanIncludeStoryHook => 'कहानी की शुरुआत';
+
+  @override
+  String get lessonPlanNcertTitle => 'NCERT-अनुरूप';
+
+  @override
+  String lessonPlanNcertBody(String grade) {
+    return 'आपकी योजना $grade के NCERT पाठ्यक्रम के अनुसार जाँची जाती है।';
+  }
+
+  @override
   String get lessonPlanSubtitle => 'पूरा 5E पाठ तैयार करें';
 
   @override

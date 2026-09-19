@@ -345,6 +345,29 @@ class AppLocalizationsBn extends AppLocalizations {
   String get lessonPlanTitle => 'পাঠ পরিকল্পনা';
 
   @override
+  String get lessonPlanIncludeLabel => 'অন্তর্ভুক্ত করুন';
+
+  @override
+  String get lessonPlanIncludeActivity => 'কার্যকলাপ';
+
+  @override
+  String get lessonPlanIncludeBoardWork => 'বোর্ডের কাজ';
+
+  @override
+  String get lessonPlanIncludeHomework => 'বাড়ির কাজ';
+
+  @override
+  String get lessonPlanIncludeStoryHook => 'গল্পের সূচনা';
+
+  @override
+  String get lessonPlanNcertTitle => 'NCERT-সঙ্গতিপূর্ণ';
+
+  @override
+  String lessonPlanNcertBody(String grade) {
+    return 'আপনার পরিকল্পনা $grade-এর NCERT পাঠ্যক্রমের সাথে যাচাই করা হয়।';
+  }
+
+  @override
   String get lessonPlanSubtitle => 'সম্পূর্ণ 5E পাঠ পরিকল্পনা করুন';
 
   @override

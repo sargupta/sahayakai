@@ -348,6 +348,29 @@ class AppLocalizationsKn extends AppLocalizations {
   String get lessonPlanTitle => 'ಪಾಠ ಯೋಜನೆ';
 
   @override
+  String get lessonPlanIncludeLabel => 'ಸೇರಿಸಿ';
+
+  @override
+  String get lessonPlanIncludeActivity => 'ಚಟುವಟಿಕೆ';
+
+  @override
+  String get lessonPlanIncludeBoardWork => 'ಬೋರ್ಡ್ ಕೆಲಸ';
+
+  @override
+  String get lessonPlanIncludeHomework => 'ಮನೆಕೆಲಸ';
+
+  @override
+  String get lessonPlanIncludeStoryHook => 'ಕಥೆಯ ಆರಂಭ';
+
+  @override
+  String get lessonPlanNcertTitle => 'NCERT-ಅನುಗುಣ';
+
+  @override
+  String lessonPlanNcertBody(String grade) {
+    return 'ನಿಮ್ಮ ಯೋಜನೆಯನ್ನು $grade ನ NCERT ಪಠ್ಯಕ್ರಮದ ವಿರುದ್ಧ ಪರಿಶೀಲಿಸಲಾಗುತ್ತದೆ.';
+  }
+
+  @override
   String get lessonPlanSubtitle => 'ಪೂರ್ಣ 5E ಪಾಠವನ್ನು ಯೋಜಿಸಿ';
 
   @override

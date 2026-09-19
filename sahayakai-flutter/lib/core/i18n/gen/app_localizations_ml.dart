@@ -354,6 +354,29 @@ class AppLocalizationsMl extends AppLocalizations {
   String get lessonPlanTitle => 'പാഠപദ്ധതി';
 
   @override
+  String get lessonPlanIncludeLabel => 'ഉൾപ്പെടുത്തുക';
+
+  @override
+  String get lessonPlanIncludeActivity => 'പ്രവർത്തനം';
+
+  @override
+  String get lessonPlanIncludeBoardWork => 'ബോർഡ് വർക്ക്';
+
+  @override
+  String get lessonPlanIncludeHomework => 'ഗൃഹപാഠം';
+
+  @override
+  String get lessonPlanIncludeStoryHook => 'കഥാ തുടക്കം';
+
+  @override
+  String get lessonPlanNcertTitle => 'NCERT-അനുസൃതം';
+
+  @override
+  String lessonPlanNcertBody(String grade) {
+    return 'നിങ്ങളുടെ പ്ലാൻ $grade-ന്റെ NCERT സിലബസുമായി പരിശോധിക്കുന്നു.';
+  }
+
+  @override
   String get lessonPlanSubtitle => 'പൂർണ്ണമായ 5E പാഠം ആസൂത്രണം ചെയ്യുക';
 
   @override

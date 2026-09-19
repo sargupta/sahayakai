@@ -340,6 +340,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lessonPlanTitle => 'Lesson Plan';
 
   @override
+  String get lessonPlanIncludeLabel => 'Include';
+
+  @override
+  String get lessonPlanIncludeActivity => 'Activity';
+
+  @override
+  String get lessonPlanIncludeBoardWork => 'Board work';
+
+  @override
+  String get lessonPlanIncludeHomework => 'Homework';
+
+  @override
+  String get lessonPlanIncludeStoryHook => 'Story hook';
+
+  @override
+  String get lessonPlanNcertTitle => 'NCERT-aligned';
+
+  @override
+  String lessonPlanNcertBody(String grade) {
+    return 'Your plan is checked against the NCERT syllabus for $grade.';
+  }
+
+  @override
   String get lessonPlanSubtitle => 'Plan a full 5E lesson';
 
   @override

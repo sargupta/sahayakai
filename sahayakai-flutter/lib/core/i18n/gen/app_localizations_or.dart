@@ -348,6 +348,29 @@ class AppLocalizationsOr extends AppLocalizations {
   String get lessonPlanTitle => 'ପାଠ ଯୋଜନା';
 
   @override
+  String get lessonPlanIncludeLabel => 'ଅନ୍ତର୍ଭୁକ୍ତ କରନ୍ତୁ';
+
+  @override
+  String get lessonPlanIncludeActivity => 'କାର୍ଯ୍ୟକଳାପ';
+
+  @override
+  String get lessonPlanIncludeBoardWork => 'ବୋର୍ଡ କାମ';
+
+  @override
+  String get lessonPlanIncludeHomework => 'ଗୃହକାର୍ଯ୍ୟ';
+
+  @override
+  String get lessonPlanIncludeStoryHook => 'କାହାଣୀ ଆରମ୍ଭ';
+
+  @override
+  String get lessonPlanNcertTitle => 'NCERT-ଅନୁରୂପ';
+
+  @override
+  String lessonPlanNcertBody(String grade) {
+    return 'ଆପଣଙ୍କ ଯୋଜନା $gradeର NCERT ପାଠ୍ୟକ୍ରମ ସହିତ ଯାଞ୍ଚ କରାଯାଏ।';
+  }
+
+  @override
   String get lessonPlanSubtitle => 'ଏକ ସମ୍ପୂର୍ଣ୍ଣ 5E ପାଠ ଯୋଜନା କରନ୍ତୁ';
 
   @override

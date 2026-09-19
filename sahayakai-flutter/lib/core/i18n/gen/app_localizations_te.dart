@@ -348,6 +348,29 @@ class AppLocalizationsTe extends AppLocalizations {
   String get lessonPlanTitle => 'పాఠ ప్రణాళిక';
 
   @override
+  String get lessonPlanIncludeLabel => 'చేర్చండి';
+
+  @override
+  String get lessonPlanIncludeActivity => 'కార్యకలాపం';
+
+  @override
+  String get lessonPlanIncludeBoardWork => 'బోర్డు పని';
+
+  @override
+  String get lessonPlanIncludeHomework => 'ఇంటి పని';
+
+  @override
+  String get lessonPlanIncludeStoryHook => 'కథా ప్రారంభం';
+
+  @override
+  String get lessonPlanNcertTitle => 'NCERT-అనుగుణం';
+
+  @override
+  String lessonPlanNcertBody(String grade) {
+    return 'మీ ప్రణాళిక $grade కోసం NCERT సిలబస్‌తో సరిచూడబడుతుంది.';
+  }
+
+  @override
   String get lessonPlanSubtitle => 'పూర్తి 5E పాఠాన్ని ప్లాన్ చేయండి';
 
   @override

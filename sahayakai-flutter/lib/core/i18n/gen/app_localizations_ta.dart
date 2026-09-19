@@ -355,6 +355,29 @@ class AppLocalizationsTa extends AppLocalizations {
   String get lessonPlanTitle => 'பாடத் திட்டம்';
 
   @override
+  String get lessonPlanIncludeLabel => 'சேர்க்கவும்';
+
+  @override
+  String get lessonPlanIncludeActivity => 'செயல்பாடு';
+
+  @override
+  String get lessonPlanIncludeBoardWork => 'பலகை வேலை';
+
+  @override
+  String get lessonPlanIncludeHomework => 'வீட்டுப்பாடம்';
+
+  @override
+  String get lessonPlanIncludeStoryHook => 'கதைத் தொடக்கம்';
+
+  @override
+  String get lessonPlanNcertTitle => 'NCERT-இணக்கம்';
+
+  @override
+  String lessonPlanNcertBody(String grade) {
+    return 'உங்கள் திட்டம் $grade-க்கான NCERT பாடத்திட்டத்துடன் சரிபார்க்கப்படுகிறது.';
+  }
+
+  @override
   String get lessonPlanSubtitle => 'முழு 5E பாடத்தைத் திட்டமிடுங்கள்';
 
   @override

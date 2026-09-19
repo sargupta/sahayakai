@@ -124,4 +124,66 @@ void main() {
 
     expect(find.byType(InlineFieldMic), findsOneWidget);
   });
+
+  group('v3 screen 05 composer refinements', () {
+    final l10n = lookupAppLocalizations(const Locale('en'));
+
+    testWidgets('the Include chips render and default to none selected', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(420, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(_host());
+      await tester.pumpAndSettle();
+
+      // All four v3 components are offered.
+      for (final label in [
+        l10n.lessonPlanIncludeActivity,
+        l10n.lessonPlanIncludeBoardWork,
+        l10n.lessonPlanIncludeHomework,
+        l10n.lessonPlanIncludeStoryHook,
+      ]) {
+        expect(find.widgetWithText(FilterChip, label), findsOneWidget);
+      }
+      // None preselected — a plain plan sends exactly the typed topic.
+      expect(
+        tester
+            .widget<FilterChip>(
+              find.widgetWithText(
+                FilterChip,
+                l10n.lessonPlanIncludeActivity,
+              ),
+            )
+            .selected,
+        isFalse,
+      );
+    });
+
+    testWidgets('no NCERT banner until a grade is chosen', (tester) async {
+      tester.view.physicalSize = const Size(420, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(_host());
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.lessonPlanNcertTitle), findsNothing);
+    });
+
+    testWidgets('a chosen grade brings the NCERT banner in, naming the class', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(420, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        _host(prefill: const ToolPrefill(gradeLevel: 'Class 7')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.lessonPlanNcertTitle), findsOneWidget);
+      expect(find.text(l10n.lessonPlanNcertBody('Class 7')), findsOneWidget);
+    });
+  });
 }

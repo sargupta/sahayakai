@@ -346,6 +346,29 @@ class AppLocalizationsPa extends AppLocalizations {
   String get lessonPlanTitle => 'ਪਾਠ ਯੋਜਨਾ';
 
   @override
+  String get lessonPlanIncludeLabel => 'ਸ਼ਾਮਲ ਕਰੋ';
+
+  @override
+  String get lessonPlanIncludeActivity => 'ਗਤੀਵਿਧੀ';
+
+  @override
+  String get lessonPlanIncludeBoardWork => 'ਬੋਰਡ ਕੰਮ';
+
+  @override
+  String get lessonPlanIncludeHomework => 'ਘਰ ਦਾ ਕੰਮ';
+
+  @override
+  String get lessonPlanIncludeStoryHook => 'ਕਹਾਣੀ ਦੀ ਸ਼ੁਰੂਆਤ';
+
+  @override
+  String get lessonPlanNcertTitle => 'NCERT-ਅਨੁਸਾਰ';
+
+  @override
+  String lessonPlanNcertBody(String grade) {
+    return 'ਤੁਹਾਡੀ ਯੋਜਨਾ $grade ਦੇ NCERT ਪਾਠਕ੍ਰਮ ਨਾਲ ਜਾਂਚੀ ਜਾਂਦੀ ਹੈ।';
+  }
+
+  @override
   String get lessonPlanSubtitle => 'ਪੂਰਾ 5E ਪਾਠ ਯੋਜਨਾਬੱਧ ਕਰੋ';
 
   @override
