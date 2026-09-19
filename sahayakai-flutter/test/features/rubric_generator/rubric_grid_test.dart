@@ -4,11 +4,12 @@ import 'package:sahayakai/features/rubric_generator/presentation/widgets/rubric_
 
 import 'rubric_fixtures.dart';
 
-/// The load-bearing gate for P1.2: the criteria x levels grid scrolls sideways
-/// inside its OWN box while the page never does (DESIGN_RUBRIC §8, and the known
-/// ToolScaffold crash). Rendered inside the same vertical-scrolling, page-padded
-/// shell the real screen uses, so a stray horizontal page scroll would show up
-/// here.
+/// The load-bearing gate for P1.2, re-cut for v3 screen 10: the rubric is now
+/// STACKED — one card per criterion, its performance levels listed vertically
+/// inside — so nothing scrolls sideways at all. The old contract (a criteria ×
+/// levels `Table` in its own horizontal scroller) is retired: on a 360dp phone
+/// that forced a sideways scroll the design dropped. These tests pin the new
+/// contract — real content, no `Table`, no horizontal scroller, no overflow.
 bool _isHorizontal(ScrollableState s) =>
     s.axisDirection == AxisDirection.left ||
     s.axisDirection == AxisDirection.right;
@@ -21,26 +22,34 @@ List<ScrollableState> _scrollables(WidgetTester tester) =>
     tester.stateList<ScrollableState>(find.byType(Scrollable)).toList();
 
 void main() {
-  group('grid rendering', () {
-    testWidgets('renders the header, criteria and level cells', (tester) async {
+  group('stacked rendering', () {
+    testWidgets('renders each criterion, its levels and their points', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         hostResult(RubricResultView(rubric: buildRubric())),
       );
       await tester.pumpAndSettle();
 
-      // Header: the criterion-column key + the level headers with points.
-      expect(find.text('Criteria'), findsOneWidget);
-      expect(find.text('Exemplary'), findsWidgets);
-      expect(find.text('4 pts'), findsWidgets);
-      expect(find.text('1 pts'), findsWidgets);
-
-      // Criterion rows + a level description.
+      // Every criterion is present (all four, stacked — not one representative
+      // header row).
       expect(find.textContaining('Organisation'), findsOneWidget);
+      expect(find.textContaining('Teamwork'), findsOneWidget);
+
+      // Level names and their point chips render for each criterion (4 criteria
+      // × 4 levels), and a level description shows.
+      expect(find.text('Exemplary'), findsWidgets);
+      expect(find.text('Beginning'), findsWidgets);
+      expect(find.text('4'), findsWidgets); // the top level's point chip
+      expect(find.text('1'), findsWidgets); // the bottom level's point chip
       expect(
         find.textContaining('Meets the standard expectations'),
         findsWidgets,
       );
 
+      // The stacked layout uses no Table and no sideways scroller.
+      expect(find.byType(Table), findsNothing);
+      expect(_scrollables(tester).where(_isHorizontal), isEmpty);
       expect(tester.takeException(), isNull);
     });
 
@@ -53,36 +62,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('No rubric came back'), findsOneWidget);
-      // No grid, so nothing scrolls sideways.
       expect(_scrollables(tester).where(_isHorizontal), isEmpty);
     });
 
-    testWidgets(
-      'a levels-less response falls back to a criteria list, no grid',
-      (tester) async {
-        tester.view.physicalSize = kNarrowPhone;
-        tester.view.devicePixelRatio = 1.0;
-        addTearDown(tester.view.reset);
-
-        await tester.pumpWidget(
-          hostResult(RubricResultView(rubric: buildRubric(partial: true))),
-        );
-        await tester.pumpAndSettle();
-
-        // The criteria still render as full-width prose...
-        expect(find.textContaining('Research and Content'), findsOneWidget);
-        expect(find.textContaining('Presentation'), findsOneWidget);
-        // ...but with no level columns there is no horizontal scroller and no
-        // Table.
-        expect(find.byType(Table), findsNothing);
-        expect(_scrollables(tester).where(_isHorizontal), isEmpty);
-        expect(tester.takeException(), isNull);
-      },
-    );
-  });
-
-  group('scroll contract', () {
-    testWidgets('the grid scrolls horizontally inside its own box', (
+    testWidgets('a levels-less response still stacks the criteria', (
       tester,
     ) async {
       tester.view.physicalSize = kNarrowPhone;
@@ -90,31 +73,20 @@ void main() {
       addTearDown(tester.view.reset);
 
       await tester.pumpWidget(
-        hostResult(RubricResultView(rubric: buildRubric())),
+        hostResult(RubricResultView(rubric: buildRubric(partial: true))),
       );
       await tester.pumpAndSettle();
 
-      // Exactly one horizontal scroller: the grid, and only the grid.
-      final horizontal = _scrollables(tester).where(_isHorizontal).toList();
-      expect(horizontal, hasLength(1));
-
-      // At 360dp the grid (criterion column + four level columns) is wider than
-      // its box, so there is real content to scroll to.
-      final grid = horizontal.single;
-      expect(grid.position.maxScrollExtent, greaterThan(0));
-
-      // And it actually moves when dragged. The header corner cell is visible at
-      // top-left, so it is a safe drag handle.
-      final before = grid.position.pixels;
-      await tester.drag(find.text('Criteria'), const Offset(-240, 0));
-      await tester.pumpAndSettle();
-      expect(
-        _scrollables(tester).firstWhere(_isHorizontal).position.pixels,
-        greaterThan(before),
-      );
+      expect(find.textContaining('Research and Content'), findsOneWidget);
+      expect(find.textContaining('Presentation'), findsOneWidget);
+      expect(find.byType(Table), findsNothing);
+      expect(_scrollables(tester).where(_isHorizontal), isEmpty);
+      expect(tester.takeException(), isNull);
     });
+  });
 
-    testWidgets('the PAGE never scrolls sideways — only the grid does', (
+  group('scroll contract', () {
+    testWidgets('the page scrolls only vertically — nothing sideways', (
       tester,
     ) async {
       tester.view.physicalSize = kNarrowPhone;
@@ -127,13 +99,8 @@ void main() {
       await tester.pumpAndSettle();
 
       final all = _scrollables(tester);
-      // The one horizontal scroller is the grid; the page scroller is vertical.
-      expect(all.where(_isHorizontal), hasLength(1));
+      expect(all.where(_isHorizontal), isEmpty);
       expect(all.where(_isVertical), isNotEmpty);
-      for (final page in all.where(_isVertical)) {
-        // A vertical scroller has no sideways travel by construction.
-        expect(page.axisDirection, anyOf(AxisDirection.up, AxisDirection.down));
-      }
       expect(tester.takeException(), isNull);
     });
   });

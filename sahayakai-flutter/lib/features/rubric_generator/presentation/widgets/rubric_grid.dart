@@ -1,70 +1,58 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/i18n/l10n_ext.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/ai_text.dart';
-import '../../../../shared/widgets/app_badge.dart';
 import '../../domain/rubric.dart';
 
-/// The rubric grid: criteria (rows) x performance levels (columns).
+/// The rubric, rendered STACKED — one card per criterion, its performance
+/// levels listed vertically inside it, highest score first (v3 screen 10:
+/// "stacked, no sideways table"). This replaces the earlier criteria × levels
+/// `Table` that scrolled sideways: on a 360dp phone a four-column grid forced a
+/// horizontal scroller the design explicitly retired.
 ///
 /// THE LAYOUT CONTRACT (DESIGN_RUBRIC §8, and the known ToolScaffold crash):
-///  - The grid can be WIDE (a criterion column plus one column per level). It
-///    lives inside ITS OWN bounded, horizontally-scrolling box, so the page (the
-///    ToolScaffold's vertical `SingleChildScrollView`) never scrolls sideways.
-///  - The single horizontal [SingleChildScrollView] wraps a [Table]. A `Table`
-///    with fixed column widths has a definite width (it scrolls) and a
-///    content-driven height (it does NOT — no banned fixed row heights, so Indic
-///    wrapping and textScale 1.3 grow rows safely). That bounded-height child is
-///    what keeps the horizontal scroller legal inside the outer vertical column
-///    (an unbounded child there is the crash).
-///  - Columns stay aligned across every criterion because it is ONE table in ONE
-///    scroller, not a per-row scroller. The criterion column is column 0 and
-///    scrolls with the grid; a frozen column is not attempted because pinning it
-///    without banned fixed row heights (or a linked-scroll dependency) cannot
-///    keep the pinned cell aligned with its wrapping, variable-height row.
+///  - Everything is a vertical [Column]; there is NO horizontal scroller and no
+///    `Table`, so the page's own vertical `SingleChildScrollView` is the only
+///    scroller and the sideways-scroll crash class simply cannot occur.
+///  - Every height is content-driven (no banned fixed row heights), so Indic
+///    wrapping and textScale 1.3 grow each level row safely.
+///  - Rank reads through a green→saffron→red colour ramp on each level's number
+///    chip (4 = strongest, down to 1), derived from theme roles by lerp so it
+///    needs no off-token colours and adapts to any level count.
 class RubricGrid extends StatelessWidget {
   const RubricGrid({super.key, required this.rubric});
 
   final Rubric rubric;
 
-  /// The criterion (first) column. Wide enough to read a criterion name and its
-  /// short description without cramping; content-driven height wraps within it.
-  static const double _criterionWidth = 168;
+  @override
+  Widget build(BuildContext context) {
+    final criteria = rubric.criteria;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < criteria.length; i++) ...[
+          if (i > 0) const SizedBox(height: AppSpacing.space3),
+          _CriterionBlock(criterion: criteria[i]),
+        ],
+      ],
+    );
+  }
+}
 
-  /// Each performance-level column. Fixed WIDTH only (never height): a fixed
-  /// text height is what DESIGN_RUBRIC §7 bans, not a fixed column width.
-  static const double _levelWidth = 188;
+/// One criterion as a card: its name and description, then each performance
+/// level as a colour-ranked row.
+class _CriterionBlock extends StatelessWidget {
+  const _CriterionBlock({required this.criterion});
+
+  final RubricCriterion criterion;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final headerLevels = rubric.headerLevels;
+    final text = Theme.of(context).textTheme;
+    final levels = criterion.levels;
 
-    // No levels at all (a partial response) — a grid is meaningless, so fall
-    // back to a readable, full-width stack of the criteria that DID arrive.
-    if (headerLevels.isEmpty) {
-      return _CriteriaFallback(criteria: rubric.criteria);
-    }
-
-    final levelCount = rubric.levelCount;
-
-    final columnWidths = <int, TableColumnWidth>{
-      0: const FixedColumnWidth(_criterionWidth),
-      for (var i = 1; i <= levelCount; i++)
-        i: const FixedColumnWidth(_levelWidth),
-    };
-
-    final rows = <TableRow>[
-      _headerRow(context, headerLevels),
-      for (final criterion in rubric.criteria)
-        _criterionRow(context, criterion, levelCount),
-    ];
-
-    // Card grammar (§5): surface, radius 12, 1dp outline, shadowSoft. The outer
-    // border is the crisp rounded edge; the Table draws only the INNER grid
-    // lines, so the two never double up. ClipRRect keeps the scrolled content
-    // inside the rounded corners.
     return DecoratedBox(
       decoration: BoxDecoration(
         color: scheme.surface,
@@ -72,154 +60,104 @@ class RubricGrid extends StatelessWidget {
         border: Border.all(color: scheme.outline, width: 1),
         boxShadow: AppShadows.soft,
       ),
-      child: ClipRRect(
-        borderRadius: AppRadius.rLg,
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Table(
-            columnWidths: columnWidths,
-            defaultVerticalAlignment: TableCellVerticalAlignment.top,
-            border: TableBorder(
-              horizontalInside: BorderSide(color: scheme.outlineVariant),
-              verticalInside: BorderSide(color: scheme.outlineVariant),
-            ),
-            children: rows,
-          ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.space4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (criterion.name.isNotEmpty)
+              Text(criterion.name, style: text.titleSmall),
+            if (criterion.name.isNotEmpty && criterion.description != null)
+              const SizedBox(height: AppSpacing.space2),
+            if (criterion.description != null)
+              AiText(criterion.description!, muted: true),
+            if (levels.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.space3),
+              for (var i = 0; i < levels.length; i++) ...[
+                if (i > 0) const SizedBox(height: AppSpacing.space2),
+                _LevelRow(
+                  level: levels[i],
+                  color: _rankColor(scheme, i, levels.length),
+                  fallbackRank: levels.length - i,
+                ),
+              ],
+            ],
+          ],
         ),
       ),
     );
   }
 
-  TableRow _headerRow(BuildContext context, List<RubricLevel> headerLevels) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return TableRow(
-      // A tinted header row reads as the column key without a saffron flood.
-      decoration: BoxDecoration(color: scheme.surfaceContainerHigh),
-      children: [
-        _Cell(
-          child: Text(
-            context.l10n.rubricCriteriaColumn,
-            style: text.labelSmall?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
-          ),
-        ),
-        for (final level in headerLevels) _LevelHeader(level: level),
-      ],
-    );
-  }
-
-  TableRow _criterionRow(
-    BuildContext context,
-    RubricCriterion criterion,
-    int levelCount,
-  ) {
-    return TableRow(
-      children: [
-        _CriterionCell(criterion: criterion),
-        for (var i = 0; i < levelCount; i++)
-          _Cell(
-            child: i < criterion.levels.length
-                ? AiText(criterion.levels[i].description)
-                : const SizedBox.shrink(),
-          ),
-      ],
-    );
+  /// The rank ramp: strongest level green, weakest red, through saffron in the
+  /// middle. Built by lerping theme roles so it stays on-token and scales to any
+  /// level count. `i` is 0 for the top level.
+  Color _rankColor(ColorScheme scheme, int i, int count) {
+    final f = count <= 1 ? 0.0 : i / (count - 1);
+    if (f <= 0.5) {
+      return Color.lerp(scheme.secondary, scheme.primary, f / 0.5)!;
+    }
+    return Color.lerp(scheme.primary, scheme.error, (f - 0.5) / 0.5)!;
   }
 }
 
-/// A grid cell: the one padding used everywhere in the table.
-class _Cell extends StatelessWidget {
-  const _Cell({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.space3),
-      child: child,
-    );
-  }
-}
-
-class _LevelHeader extends StatelessWidget {
-  const _LevelHeader({required this.level});
+/// One performance level: a colour-ranked number chip, the level name, and what
+/// performance at that level looks like.
+class _LevelRow extends StatelessWidget {
+  const _LevelRow({
+    required this.level,
+    required this.color,
+    required this.fallbackRank,
+  });
 
   final RubricLevel level;
+  final Color color;
+
+  /// Shown on the chip when the model gave no points (descending rank).
+  final int fallbackRank;
 
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final points = level.pointsLabel;
-    return _Cell(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (level.name.isNotEmpty)
-            Text(
-              level.name,
-              style: text.titleSmall?.copyWith(letterSpacing: 0.2),
-            ),
-          if (points != null) ...[
-            const SizedBox(height: AppSpacing.space2),
-            AppBadge(
-              label: context.l10n.rubricPoints(points),
-              tone: AppBadgeTone.accent,
-              size: AppBadgeSize.small,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
+    final scheme = Theme.of(context).colorScheme;
+    // Darken the ramp colour for the chip fill so a WHITE numeral is legible
+    // across the whole range (saffron-on-white alone would not clear contrast).
+    final fill = Color.alphaBlend(Colors.black.withValues(alpha: 0.2), color);
+    final label = level.pointsLabel ?? '$fallbackRank';
 
-class _CriterionCell extends StatelessWidget {
-  const _CriterionCell({required this.criterion});
-
-  final RubricCriterion criterion;
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    return _Cell(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (criterion.name.isNotEmpty)
-            Text(criterion.name, style: text.titleSmall),
-          if (criterion.name.isNotEmpty && criterion.description != null)
-            const SizedBox(height: AppSpacing.space2),
-          if (criterion.description != null)
-            AiText(criterion.description!, muted: true),
-        ],
-      ),
-    );
-  }
-}
-
-/// When the model returned criteria but no performance levels, a grid has
-/// nothing to array. The criteria still carry value, so they are shown as a
-/// plain full-width stack rather than an empty table.
-class _CriteriaFallback extends StatelessWidget {
-  const _CriteriaFallback({required this.criteria});
-
-  final List<RubricCriterion> criteria;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (var i = 0; i < criteria.length; i++) ...[
-          if (i > 0) const SizedBox(height: AppSpacing.space3),
-          _CriterionCell(criterion: criteria[i]),
-        ],
+        Container(
+          constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.space2,
+            vertical: 3,
+          ),
+          decoration: BoxDecoration(color: fill, borderRadius: AppRadius.rSm),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: text.labelSmall?.copyWith(
+              color: scheme.onPrimary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.space3),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (level.name.isNotEmpty) ...[
+                Text(level.name, style: text.labelMedium),
+                const SizedBox(height: AppSpacing.space1),
+              ],
+              AiText(level.description),
+            ],
+          ),
+        ),
       ],
     );
   }
