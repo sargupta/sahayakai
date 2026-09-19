@@ -119,6 +119,23 @@ class AppLocalizationsKn extends AppLocalizations {
   String get onboardingLanguageTitle => 'ನೀವು ಯಾವ ಭಾಷೆಯಲ್ಲಿ ಬೋಧಿಸುತ್ತೀರಿ?';
 
   @override
+  String get onboardingVidyaGreeting => 'ನಮಸ್ತೆ, ನಾನು VIDYA';
+
+  @override
+  String get onboardingVidyaIntro =>
+      'ನೀವು ಏನು ಕಲಿಸುತ್ತೀರಿ ಎಂದು ಹೇಳಿ. ನಾನು ಪ್ರತಿ ಪರದೆಯಲ್ಲೂ ಒಂದು ಟ್ಯಾಪ್ ದೂರದಲ್ಲಿ ಇರುತ್ತೇನೆ.';
+
+  @override
+  String get onboardingVidyaHandHint =>
+      'ನನ್ನನ್ನು ಎಲ್ಲಿಗಾದರೂ ಎಳೆಯಿರಿ. ಎಡ ಅಥವಾ ಬಲ, ನನಗೆ ನೆನಪಿರುತ್ತದೆ.';
+
+  @override
+  String get onboardingHandLeft => 'ಎಡ';
+
+  @override
+  String get onboardingHandRight => 'ಬಲ';
+
+  @override
   String get onboardingLanguageBody =>
       'ನೀವು ಆಯ್ಕೆ ಮಾಡುವ ಭಾಷೆಯಲ್ಲೇ ಪಾಠ ಯೋಜನೆಗಳು, ಕ್ವಿಜ್‌ಗಳು ಮತ್ತು ಉತ್ತರಗಳು ಬರುತ್ತವೆ. ನೀವು ಇದನ್ನು ಯಾವಾಗ ಬೇಕಾದರೂ ಬದಲಾಯಿಸಬಹುದು.';
 

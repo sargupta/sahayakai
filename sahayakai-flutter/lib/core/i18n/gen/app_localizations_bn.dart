@@ -119,6 +119,23 @@ class AppLocalizationsBn extends AppLocalizations {
   String get onboardingLanguageTitle => 'আপনি কোন ভাষায় পড়ান?';
 
   @override
+  String get onboardingVidyaGreeting => 'নমস্তে, আমি VIDYA';
+
+  @override
+  String get onboardingVidyaIntro =>
+      'আপনি কী পড়ান বলুন। আমি প্রতিটি স্ক্রিনে এক ট্যাপ দূরে থাকব।';
+
+  @override
+  String get onboardingVidyaHandHint =>
+      'আমাকে যেকোনো জায়গায় টেনে নিন। বাঁ বা ডান, আমি মনে রাখব।';
+
+  @override
+  String get onboardingHandLeft => 'বাঁ';
+
+  @override
+  String get onboardingHandRight => 'ডান';
+
+  @override
   String get onboardingLanguageBody =>
       'আপনার বেছে নেওয়া ভাষাতেই পাঠ পরিকল্পনা, কুইজ ও উত্তর তৈরি হবে। আপনি যেকোনো সময় এটি বদলাতে পারেন।';
 

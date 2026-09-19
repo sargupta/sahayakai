@@ -141,6 +141,16 @@
     "description": "Onboarding: final action on the last step."
   },
   "onboardingLanguageTitle": "Which language do you teach in?",
+  "onboardingVidyaGreeting": "Namaste, I'm VIDYA",
+  "@onboardingVidyaGreeting": { "description": "v3 01 onboarding: VIDYA's self-introduction heading." },
+  "onboardingVidyaIntro": "Tell me what you teach. I'll stay a tap away on every screen.",
+  "@onboardingVidyaIntro": { "description": "v3 01 onboarding: VIDYA's promise to stay a tap away." },
+  "onboardingVidyaHandHint": "Drag me anywhere. Left or right, I'll remember.",
+  "@onboardingVidyaHandHint": { "description": "v3 01 onboarding: the drag/remember-per-hand hint." },
+  "onboardingHandLeft": "Left",
+  "@onboardingHandLeft": { "description": "v3 01 onboarding: left-hand orb choice." },
+  "onboardingHandRight": "Right",
+  "@onboardingHandRight": { "description": "v3 01 onboarding: right-hand orb choice." },
   "@onboardingLanguageTitle": {
     "description": "Onboarding step 0: language picker heading."
   },

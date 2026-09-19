@@ -124,6 +124,23 @@ class AppLocalizationsMl extends AppLocalizations {
       'നിങ്ങൾ ഏത് ഭാഷയിലാണ് പഠിപ്പിക്കുന്നത്?';
 
   @override
+  String get onboardingVidyaGreeting => 'നമസ്തേ, ഞാൻ VIDYA';
+
+  @override
+  String get onboardingVidyaIntro =>
+      'നിങ്ങൾ എന്താണ് പഠിപ്പിക്കുന്നതെന്ന് പറയൂ. ഞാൻ എല്ലാ സ്ക്രീനിലും ഒരു ടാപ്പ് അകലെ ഉണ്ടാകും.';
+
+  @override
+  String get onboardingVidyaHandHint =>
+      'എന്നെ എവിടെയും വലിക്കൂ. ഇടത്തോ വലത്തോ, ഞാൻ ഓർത്തുവയ്ക്കും.';
+
+  @override
+  String get onboardingHandLeft => 'ഇടത്';
+
+  @override
+  String get onboardingHandRight => 'വലത്';
+
+  @override
   String get onboardingLanguageBody =>
       'നിങ്ങൾ തിരഞ്ഞെടുക്കുന്ന ഭാഷയിൽ തന്നെ പാഠപദ്ധതികളും ക്വിസുകളും ഉത്തരങ്ങളും ലഭിക്കും. നിങ്ങൾക്ക് ഇത് എപ്പോൾ വേണമെങ്കിലും മാറ്റാം.';
 

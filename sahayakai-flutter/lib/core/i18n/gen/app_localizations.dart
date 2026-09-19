@@ -320,6 +320,36 @@ abstract class AppLocalizations {
   /// **'Which language do you teach in?'**
   String get onboardingLanguageTitle;
 
+  /// v3 01 onboarding: VIDYA's self-introduction heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Namaste, I\'m VIDYA'**
+  String get onboardingVidyaGreeting;
+
+  /// v3 01 onboarding: VIDYA's promise to stay a tap away.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell me what you teach. I\'ll stay a tap away on every screen.'**
+  String get onboardingVidyaIntro;
+
+  /// v3 01 onboarding: the drag/remember-per-hand hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag me anywhere. Left or right, I\'ll remember.'**
+  String get onboardingVidyaHandHint;
+
+  /// v3 01 onboarding: left-hand orb choice.
+  ///
+  /// In en, this message translates to:
+  /// **'Left'**
+  String get onboardingHandLeft;
+
+  /// v3 01 onboarding: right-hand orb choice.
+  ///
+  /// In en, this message translates to:
+  /// **'Right'**
+  String get onboardingHandRight;
+
   /// Onboarding step 0: language picker body.
   ///
   /// In en, this message translates to:

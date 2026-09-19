@@ -118,6 +118,23 @@ class AppLocalizationsMr extends AppLocalizations {
   String get onboardingLanguageTitle => 'तुम्ही कोणत्या भाषेत शिकवता?';
 
   @override
+  String get onboardingVidyaGreeting => 'नमस्कार, मी VIDYA आहे';
+
+  @override
+  String get onboardingVidyaIntro =>
+      'तुम्ही काय शिकवता ते सांगा. मी प्रत्येक स्क्रीनवर एका टॅपवर राहीन.';
+
+  @override
+  String get onboardingVidyaHandHint =>
+      'मला कुठेही ओढा. डावीकडे किंवा उजवीकडे, मला लक्षात राहील.';
+
+  @override
+  String get onboardingHandLeft => 'डावा';
+
+  @override
+  String get onboardingHandRight => 'उजवा';
+
+  @override
   String get onboardingLanguageBody =>
       'तुम्ही निवडलेल्या भाषेतच धडा योजना, क्विझ आणि उत्तरे मिळतील. तुम्ही ते केव्हाही बदलू शकता.';
 

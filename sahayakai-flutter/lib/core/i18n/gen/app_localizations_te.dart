@@ -120,6 +120,23 @@ class AppLocalizationsTe extends AppLocalizations {
   String get onboardingLanguageTitle => 'మీరు ఏ భాషలో బోధిస్తారు?';
 
   @override
+  String get onboardingVidyaGreeting => 'నమస్తే, నేను VIDYA';
+
+  @override
+  String get onboardingVidyaIntro =>
+      'మీరు ఏమి బోధిస్తారో చెప్పండి. నేను ప్రతి స్క్రీన్‌లో ఒక ట్యాప్ దూరంలో ఉంటాను.';
+
+  @override
+  String get onboardingVidyaHandHint =>
+      'నన్ను ఎక్కడికైనా లాగండి. ఎడమ లేదా కుడి, నేను గుర్తుంచుకుంటాను.';
+
+  @override
+  String get onboardingHandLeft => 'ఎడమ';
+
+  @override
+  String get onboardingHandRight => 'కుడి';
+
+  @override
   String get onboardingLanguageBody =>
       'మీరు ఎంచుకున్న భాషలోనే పాఠ ప్రణాళికలు, క్విజ్‌లు మరియు సమాధానాలు వస్తాయి. మీరు దీన్ని ఎప్పుడైనా మార్చుకోవచ్చు.';
 

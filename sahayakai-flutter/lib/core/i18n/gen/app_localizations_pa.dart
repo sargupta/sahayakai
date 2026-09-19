@@ -118,6 +118,23 @@ class AppLocalizationsPa extends AppLocalizations {
   String get onboardingLanguageTitle => 'ਤੁਸੀਂ ਕਿਸ ਭਾਸ਼ਾ ਵਿੱਚ ਪੜ੍ਹਾਉਂਦੇ ਹੋ?';
 
   @override
+  String get onboardingVidyaGreeting => 'ਸਤ ਸ੍ਰੀ ਅਕਾਲ, ਮੈਂ VIDYA ਹਾਂ';
+
+  @override
+  String get onboardingVidyaIntro =>
+      'ਦੱਸੋ ਤੁਸੀਂ ਕੀ ਪੜ੍ਹਾਉਂਦੇ ਹੋ। ਮੈਂ ਹਰ ਸਕ੍ਰੀਨ \'ਤੇ ਇੱਕ ਟੈਪ ਦੂਰ ਰਹਾਂਗੀ।';
+
+  @override
+  String get onboardingVidyaHandHint =>
+      'ਮੈਨੂੰ ਕਿਤੇ ਵੀ ਖਿੱਚੋ। ਖੱਬੇ ਜਾਂ ਸੱਜੇ, ਮੈਨੂੰ ਯਾਦ ਰਹੇਗਾ।';
+
+  @override
+  String get onboardingHandLeft => 'ਖੱਬੇ';
+
+  @override
+  String get onboardingHandRight => 'ਸੱਜੇ';
+
+  @override
   String get onboardingLanguageBody =>
       'ਤੁਹਾਡੀ ਚੁਣੀ ਭਾਸ਼ਾ ਵਿੱਚ ਹੀ ਪਾਠ ਯੋਜਨਾਵਾਂ, ਕਵਿਜ਼ ਅਤੇ ਜਵਾਬ ਮਿਲਣਗੇ। ਤੁਸੀਂ ਇਸਨੂੰ ਕਿਸੇ ਵੀ ਸਮੇਂ ਬਦਲ ਸਕਦੇ ਹੋ।';
 

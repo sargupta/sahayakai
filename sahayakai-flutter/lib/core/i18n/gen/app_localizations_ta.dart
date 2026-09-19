@@ -122,6 +122,23 @@ class AppLocalizationsTa extends AppLocalizations {
       'நீங்கள் எந்த மொழியில் கற்பிக்கிறீர்கள்?';
 
   @override
+  String get onboardingVidyaGreeting => 'வணக்கம், நான் VIDYA';
+
+  @override
+  String get onboardingVidyaIntro =>
+      'நீங்கள் எதைக் கற்பிக்கிறீர்கள் என்று சொல்லுங்கள். ஒவ்வொரு திரையிலும் நான் ஒரு தட்டு தூரத்தில் இருப்பேன்.';
+
+  @override
+  String get onboardingVidyaHandHint =>
+      'என்னை எங்கு வேண்டுமானாலும் இழுங்கள். இடது அல்லது வலது, நான் நினைவில் வைத்துக்கொள்வேன்.';
+
+  @override
+  String get onboardingHandLeft => 'இடது';
+
+  @override
+  String get onboardingHandRight => 'வலது';
+
+  @override
   String get onboardingLanguageBody =>
       'நீங்கள் தேர்ந்தெடுக்கும் மொழியில் தான் பாட திட்டங்கள், வினாடி வினாக்கள் மற்றும் பதில்கள் கிடைக்கும். நீங்கள் இதை எப்போது வேண்டுமானாலும் மாற்றலாம்.';
 

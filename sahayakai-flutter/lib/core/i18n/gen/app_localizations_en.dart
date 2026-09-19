@@ -116,6 +116,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingLanguageTitle => 'Which language do you teach in?';
 
   @override
+  String get onboardingVidyaGreeting => 'Namaste, I\'m VIDYA';
+
+  @override
+  String get onboardingVidyaIntro =>
+      'Tell me what you teach. I\'ll stay a tap away on every screen.';
+
+  @override
+  String get onboardingVidyaHandHint =>
+      'Drag me anywhere. Left or right, I\'ll remember.';
+
+  @override
+  String get onboardingHandLeft => 'Left';
+
+  @override
+  String get onboardingHandRight => 'Right';
+
+  @override
   String get onboardingLanguageBody =>
       'Your lesson plans, quizzes and answers arrive in the language you choose. You can change it at any time.';
 
