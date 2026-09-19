@@ -122,6 +122,23 @@ class AppLocalizationsTa extends AppLocalizations {
       'நீங்கள் எந்த மொழியில் கற்பிக்கிறீர்கள்?';
 
   @override
+  String get onboardingVidyaGreeting => 'வணக்கம், நான் VIDYA';
+
+  @override
+  String get onboardingVidyaIntro =>
+      'நீங்கள் எதைக் கற்பிக்கிறீர்கள் என்று சொல்லுங்கள். ஒவ்வொரு திரையிலும் நான் ஒரு தட்டு தூரத்தில் இருப்பேன்.';
+
+  @override
+  String get onboardingVidyaHandHint =>
+      'என்னை எங்கு வேண்டுமானாலும் இழுங்கள். இடது அல்லது வலது, நான் நினைவில் வைத்துக்கொள்வேன்.';
+
+  @override
+  String get onboardingHandLeft => 'இடது';
+
+  @override
+  String get onboardingHandRight => 'வலது';
+
+  @override
   String get onboardingLanguageBody =>
       'நீங்கள் தேர்ந்தெடுக்கும் மொழியில் தான் பாட திட்டங்கள், வினாடி வினாக்கள் மற்றும் பதில்கள் கிடைக்கும். நீங்கள் இதை எப்போது வேண்டுமானாலும் மாற்றலாம்.';
 
@@ -353,6 +370,29 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get lessonPlanTitle => 'பாடத் திட்டம்';
+
+  @override
+  String get lessonPlanIncludeLabel => 'சேர்க்கவும்';
+
+  @override
+  String get lessonPlanIncludeActivity => 'செயல்பாடு';
+
+  @override
+  String get lessonPlanIncludeBoardWork => 'பலகை வேலை';
+
+  @override
+  String get lessonPlanIncludeHomework => 'வீட்டுப்பாடம்';
+
+  @override
+  String get lessonPlanIncludeStoryHook => 'கதைத் தொடக்கம்';
+
+  @override
+  String get lessonPlanNcertTitle => 'NCERT-இணக்கம்';
+
+  @override
+  String lessonPlanNcertBody(String grade) {
+    return 'உங்கள் திட்டம் $grade-க்கான NCERT பாடத்திட்டத்துடன் சரிபார்க்கப்படுகிறது.';
+  }
 
   @override
   String get lessonPlanSubtitle => 'முழு 5E பாடத்தைத் திட்டமிடுங்கள்';
@@ -2069,6 +2109,19 @@ class AppLocalizationsTa extends AppLocalizations {
   String get vidyaStateReady => 'தயாராகிறது';
 
   @override
+  String get vidyaWorkingTitle => 'இதில் வேலை செய்கிறேன்';
+
+  @override
+  String get vidyaWorkingBody =>
+      'செயலியைத் தொடர்ந்து பயன்படுத்துங்கள். நான் பின்னணியில் முடிக்கிறேன்.';
+
+  @override
+  String get vidyaWorkingMinimise => 'VIDYA-வில் சுருக்கு';
+
+  @override
+  String get vidyaWorkingStop => 'நிறுத்து';
+
+  @override
   String get vidyaStateListening => 'நான் கேட்கிறேன்';
 
   @override
@@ -2297,6 +2350,25 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get parentHotlineCall => 'பெற்றோரை அழைக்கவும்';
+
+  @override
+  String get parentHotlineCoverTitle => 'இந்த அழைப்பு எதை உள்ளடக்கும்';
+
+  @override
+  String get parentHotlineCoverPoint1 =>
+      'பெற்றோரின் மொழியில் அன்பாக தொடங்குகிறது, குற்றம் சாட்டாமல்.';
+
+  @override
+  String get parentHotlineCoverPoint2 =>
+      'முதலில் கேட்கிறது, பிறகு குடும்பத்துக்கு என்ன உதவி தேவை என்று கேட்கிறது.';
+
+  @override
+  String get parentHotlineCoverPoint3 =>
+      'குழந்தைக்கான தெளிவான ஒரு அடுத்த படியுடன் முடிகிறது.';
+
+  @override
+  String get parentHotlineCoverAfter =>
+      'பிறகு, VIDYA முடிவைப் பதிவு செய்து, நீங்கள் பரிசீலிக்க ஒரு தொடர்நடவடிக்கையை உருவாக்குகிறது.';
 
   @override
   String get parentHotlineWhatsApp => 'WhatsApp-க்கு நகலெடுக்கவும்';
@@ -2881,6 +2953,14 @@ class AppLocalizationsTa extends AppLocalizations {
   @override
   String get assessmentScannerPagesEmpty =>
       'முதல் பக்கத்தின் ஒரு புகைப்படத்தைச் சேர்க்கவும்.';
+
+  @override
+  String get assessmentScannerFrameGuide =>
+      'முழு தாளையும் சட்டகத்திற்குள் வையுங்கள்';
+
+  @override
+  String get assessmentScannerFrameHint =>
+      'ஒவ்வொரு அடையாளமும் படிக்கப்பட, பிரகாசமான, சீரான வெளிச்சத்தில் தட்டையாக வையுங்கள்.';
 
   @override
   String assessmentScannerPageLabel(int number) {
@@ -3834,4 +3914,122 @@ class AppLocalizationsTa extends AppLocalizations {
   @override
   String get attendancePremiumBody =>
       'உங்கள் வகுப்புகள், பதிவேடுகள், மாதக் கணக்குகளைப் பார்ப்பது இலவசமாகவே இருக்கும். வகுப்பை உருவாக்குவது, மாணவரைச் சேர்ப்பது, பதிவேட்டைச் சேமிப்பது Pro திட்டத்தின் பகுதி.';
+
+  @override
+  String get deliverTrayTitle => 'வழங்கு';
+
+  @override
+  String get deliverPrivacyNote =>
+      'நீங்கள் அனுப்பு என்பதைத் தட்டும் வரை எதுவும் தொலைபேசியை விட்டு வெளியேறாது.';
+
+  @override
+  String get deliverSend => 'அனுப்பு';
+
+  @override
+  String get deliverParentGroup => 'பெற்றோர் குழு';
+
+  @override
+  String get deliverParentGroupMeta => 'WhatsApp இல் பகிரவும்';
+
+  @override
+  String get deliverPrint => 'அச்சிடு';
+
+  @override
+  String get deliverPrintMeta => 'அச்சுப்பொறிக்கு அனுப்பு';
+
+  @override
+  String get deliverSaveToClass => 'வகுப்பில் சேமி';
+
+  @override
+  String get deliverSaveToClassMeta => 'உங்கள் நூலகத்தில் வைக்கவும்';
+
+  @override
+  String get deliverPostCommunity => 'சமூகத்தில் இடுகையிடு';
+
+  @override
+  String get deliverPostCommunityMeta => 'வளமாகப் பகிரவும்';
+
+  @override
+  String get deliverDownloadPdf => 'PDF பதிவிறக்கு';
+
+  @override
+  String get deliverDownloadPdfMeta => 'ஆஃப்லைனில் இயங்கும்';
+
+  @override
+  String get deliverReadAloud => 'உரக்கப் படி';
+
+  @override
+  String get deliverReadAloudMeta => 'வகுப்பிற்கு';
+
+  @override
+  String get settingsOrbHandTitle => 'மிதக்கும் உதவியாளர்';
+
+  @override
+  String get settingsOrbHandLabel => 'இடதுபுறம்';
+
+  @override
+  String get settingsOrbHandHint =>
+      'உங்கள் கட்டைவிரல் எட்டும் இடத்தில் VIDYA-வை வையுங்கள்';
+
+  @override
+  String get scanRemedialBody =>
+      'சிரமப்பட்ட கருத்துகளுக்கு நான் ஒரு பயிற்சித் தாள் உருவாக்க முடியும்.';
+
+  @override
+  String get scanRemedialBuild => 'பயிற்சித் தாள் உருவாக்கு';
+
+  @override
+  String get scanRemedialMessageParents => 'பெற்றோருக்கு செய்தி அனுப்பு';
+
+  @override
+  String get communityFilterAll => 'அனைத்தும்';
+
+  @override
+  String get communityFilterPosts => 'இடுகைகள்';
+
+  @override
+  String get communityFilterResources => 'வளங்கள்';
+
+  @override
+  String get communityFilterHighlights => 'சிறப்பம்சங்கள்';
+
+  @override
+  String get attendanceVoiceRollCall => 'பெயர்களை உரக்கப் படியுங்கள்';
+
+  @override
+  String get attendanceVoiceListeningTitle => 'கேட்கிறேன்…';
+
+  @override
+  String get attendanceVoiceListeningBody =>
+      'உங்கள் வகுப்பு வருகைப் பட்டியலை உரக்கப் படியுங்கள். ஒவ்வொரு பெயரையும் வந்ததாக நான் குறிப்பேன்; ஒன்றை மாற்ற \'வரவில்லை\' அல்லது \'தாமதம்\' எனச் சொல்லுங்கள்.';
+
+  @override
+  String get attendanceVoiceWorking => 'ஒரு கணம்…';
+
+  @override
+  String get attendanceVoiceWorkingBody =>
+      'நீங்கள் சொன்னதிலிருந்து வருகையைக் குறிக்கிறேன்.';
+
+  @override
+  String get attendanceVoiceMicOffTitle => 'ஒலிவாங்கி தேவை';
+
+  @override
+  String get attendanceVoiceMicOffBody =>
+      'குரலால் வருகை எடுக்க ஒலிவாங்கிக்கு அனுமதி அளிக்கவும்.';
+
+  @override
+  String get attendanceVoiceFailedTitle => 'புரியவில்லை';
+
+  @override
+  String get attendanceVoiceFailedBody =>
+      'ஏதோ தவறு நடந்தது. மீண்டும் முயற்சிக்கவும்.';
+
+  @override
+  String get attendanceVoiceNone =>
+      'எந்தப் பெயரும் புரியவில்லை. மீண்டும் முயற்சிக்கவும்.';
+
+  @override
+  String attendanceVoiceMarked(int count) {
+    return '$count பெயர்கள் குறிக்கப்பட்டன.';
+  }
 }

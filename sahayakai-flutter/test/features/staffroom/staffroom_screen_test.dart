@@ -291,6 +291,34 @@ void main() {
         expect(find.byIcon(LucideIcons.heart), findsOneWidget);
       },
     );
+
+    testWidgets('feed filter chips narrow the feed by real post type', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        fake: FakeStaffroomTransport()..feed = [_feedPost(_post())],
+      );
+
+      // The chip row over the real feed types (v2 Group H "Community").
+      expect(find.text('All'), findsOneWidget);
+      expect(find.text('Posts'), findsOneWidget);
+      expect(find.text('Resources'), findsOneWidget);
+      expect(find.text('Highlights'), findsOneWidget);
+
+      // The seeded group_post shows under All and under Posts.
+      expect(find.text('hello staffroom'), findsOneWidget);
+
+      // Filtering to Resources hides the (group_post) item.
+      await tester.tap(find.text('Resources'));
+      await tester.pumpAndSettle();
+      expect(find.text('hello staffroom'), findsNothing);
+
+      // Back to All restores it.
+      await tester.tap(find.text('All'));
+      await tester.pumpAndSettle();
+      expect(find.text('hello staffroom'), findsOneWidget);
+    });
   });
 
   group('optimistic like', () {

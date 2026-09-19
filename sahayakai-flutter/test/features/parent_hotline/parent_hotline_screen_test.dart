@@ -451,6 +451,31 @@ void main() {
       expect(find.textContaining('automated AI voice notice'), findsOneWidget);
     });
 
+    testWidgets('review shows the honest "what this call covers" plan (v3 14)', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        overrides: _fixed(
+          const ParentHotlineState(
+            stage: HotlineStage.review,
+            parentLanguage: 'Kannada',
+            draftedMessage: 'Message body',
+          ),
+        ),
+      );
+      // A truthful plan of the AI call, not a fake live "say this / mute" script.
+      expect(find.text('What this call covers'), findsOneWidget);
+      expect(
+        find.textContaining("Opens warmly in the parent's language"),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('logs the outcome and drafts a follow-up'),
+        findsOneWidget,
+      );
+    });
+
     testWidgets(
       'the decision bar is pinned in the footer, not the scroll body',
       (tester) async {

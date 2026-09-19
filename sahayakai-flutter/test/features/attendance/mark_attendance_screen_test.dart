@@ -120,6 +120,19 @@ void main() {
       expect(find.text(l10n.attendanceStatusUnmarked), findsNWidgets(2));
     });
 
+    testWidgets('offers the voice roll-call action (v3 screen 13)', (
+      tester,
+    ) async {
+      await pumpScreen(
+        tester,
+        screen(),
+        client: FakeApiClient(getResponsesByPath: classBody()),
+      );
+
+      final l10n = strings(tester, MarkAttendanceScreen);
+      expect(find.text(l10n.attendanceVoiceRollCall), findsOneWidget);
+    });
+
     testWidgets('a saved mark shows without any local seeding', (tester) async {
       await pumpScreen(
         tester,

@@ -320,6 +320,36 @@ abstract class AppLocalizations {
   /// **'Which language do you teach in?'**
   String get onboardingLanguageTitle;
 
+  /// v3 01 onboarding: VIDYA's self-introduction heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Namaste, I\'m VIDYA'**
+  String get onboardingVidyaGreeting;
+
+  /// v3 01 onboarding: VIDYA's promise to stay a tap away.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell me what you teach. I\'ll stay a tap away on every screen.'**
+  String get onboardingVidyaIntro;
+
+  /// v3 01 onboarding: the drag/remember-per-hand hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag me anywhere. Left or right, I\'ll remember.'**
+  String get onboardingVidyaHandHint;
+
+  /// v3 01 onboarding: left-hand orb choice.
+  ///
+  /// In en, this message translates to:
+  /// **'Left'**
+  String get onboardingHandLeft;
+
+  /// v3 01 onboarding: right-hand orb choice.
+  ///
+  /// In en, this message translates to:
+  /// **'Right'**
+  String get onboardingHandRight;
+
   /// Onboarding step 0: language picker body.
   ///
   /// In en, this message translates to:
@@ -727,6 +757,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Lesson Plan'**
   String get lessonPlanTitle;
+
+  /// Lesson composer: label for the optional Include chips (v3 05).
+  ///
+  /// In en, this message translates to:
+  /// **'Include'**
+  String get lessonPlanIncludeLabel;
+
+  /// Include chip: emphasise a hands-on activity.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get lessonPlanIncludeActivity;
+
+  /// Include chip: emphasise board work.
+  ///
+  /// In en, this message translates to:
+  /// **'Board work'**
+  String get lessonPlanIncludeBoardWork;
+
+  /// Include chip: emphasise a homework task.
+  ///
+  /// In en, this message translates to:
+  /// **'Homework'**
+  String get lessonPlanIncludeHomework;
+
+  /// Include chip: emphasise a story hook.
+  ///
+  /// In en, this message translates to:
+  /// **'Story hook'**
+  String get lessonPlanIncludeStoryHook;
+
+  /// Lesson composer NCERT-alignment banner title (v3 05).
+  ///
+  /// In en, this message translates to:
+  /// **'NCERT-aligned'**
+  String get lessonPlanNcertTitle;
+
+  /// NCERT banner body; {grade} is the chosen class.
+  ///
+  /// In en, this message translates to:
+  /// **'Your plan is checked against the NCERT syllabus for {grade}.'**
+  String lessonPlanNcertBody(String grade);
 
   /// Lesson Plan dashboard tile subtitle.
   ///
@@ -3650,6 +3722,30 @@ abstract class AppLocalizations {
   /// **'Getting ready'**
   String get vidyaStateReady;
 
+  /// Working bar title while a generation runs (v3 06).
+  ///
+  /// In en, this message translates to:
+  /// **'Working on it'**
+  String get vidyaWorkingTitle;
+
+  /// Working bar body: reassures the teacher they can leave.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep using the app. I\'ll finish in the background.'**
+  String get vidyaWorkingBody;
+
+  /// Working bar action: hand the generation to the orb.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimise to orb'**
+  String get vidyaWorkingMinimise;
+
+  /// Working bar action: abandon the running generation.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get vidyaWorkingStop;
+
   /// Seal-mic caption while recording.
   ///
   /// In en, this message translates to:
@@ -4039,6 +4135,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Call parent'**
   String get parentHotlineCall;
+
+  /// v3 14 pre-call plan: card title.
+  ///
+  /// In en, this message translates to:
+  /// **'What this call covers'**
+  String get parentHotlineCoverTitle;
+
+  /// v3 14 pre-call plan: warm opening point.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens warmly in the parent\'s language, with no blame.'**
+  String get parentHotlineCoverPoint1;
+
+  /// v3 14 pre-call plan: listen-first point.
+  ///
+  /// In en, this message translates to:
+  /// **'Listens first, then asks what support the family needs.'**
+  String get parentHotlineCoverPoint2;
+
+  /// v3 14 pre-call plan: clear next-step point.
+  ///
+  /// In en, this message translates to:
+  /// **'Ends with one clear next step for the child.'**
+  String get parentHotlineCoverPoint3;
+
+  /// v3 14 pre-call plan: after-call log + follow-up note.
+  ///
+  /// In en, this message translates to:
+  /// **'Afterwards, VIDYA logs the outcome and drafts a follow-up for you to review.'**
+  String get parentHotlineCoverAfter;
 
   /// Decision-bar action that copies the message to paste in WhatsApp (the universal fallback).
   ///
@@ -4945,6 +5071,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add a photo of the first page.'**
   String get assessmentScannerPagesEmpty;
+
+  /// Scanner framing guide headline (v3 11).
+  ///
+  /// In en, this message translates to:
+  /// **'Fit the whole sheet inside the frame'**
+  String get assessmentScannerFrameGuide;
+
+  /// Scanner framing quality tip (v3 11).
+  ///
+  /// In en, this message translates to:
+  /// **'Lay it flat in bright, even light so every mark is read.'**
+  String get assessmentScannerFrameHint;
 
   /// Label for one captured page.
   ///
@@ -6511,6 +6649,222 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reading your classes, registers and monthly summaries stays free. Creating a class, adding a student and saving a register are part of the Pro plan.'**
   String get attendancePremiumBody;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Deliver'**
+  String get deliverTrayTitle;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing leaves the phone until you tap send.'**
+  String get deliverPrivacyNote;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get deliverSend;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Parent group'**
+  String get deliverParentGroup;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Share on WhatsApp'**
+  String get deliverParentGroupMeta;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Print'**
+  String get deliverPrint;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Send to a printer'**
+  String get deliverPrintMeta;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Save to class'**
+  String get deliverSaveToClass;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Keep in your library'**
+  String get deliverSaveToClassMeta;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Post to Community'**
+  String get deliverPostCommunity;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Share as a resource'**
+  String get deliverPostCommunityMeta;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Download PDF'**
+  String get deliverDownloadPdf;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Works offline'**
+  String get deliverDownloadPdfMeta;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'Read aloud'**
+  String get deliverReadAloud;
+
+  /// Deliver tray label
+  ///
+  /// In en, this message translates to:
+  /// **'To the class'**
+  String get deliverReadAloudMeta;
+
+  /// Orb hand setting
+  ///
+  /// In en, this message translates to:
+  /// **'Floating assistant'**
+  String get settingsOrbHandTitle;
+
+  /// Orb hand setting
+  ///
+  /// In en, this message translates to:
+  /// **'On the left hand'**
+  String get settingsOrbHandLabel;
+
+  /// Orb hand setting
+  ///
+  /// In en, this message translates to:
+  /// **'Park VIDYA where your thumb reaches'**
+  String get settingsOrbHandHint;
+
+  /// Scan remedial prompt
+  ///
+  /// In en, this message translates to:
+  /// **'I can build a remedial worksheet for the concepts they struggled with.'**
+  String get scanRemedialBody;
+
+  /// Scan remedial prompt
+  ///
+  /// In en, this message translates to:
+  /// **'Build a remedial worksheet'**
+  String get scanRemedialBuild;
+
+  /// Scan remedial prompt
+  ///
+  /// In en, this message translates to:
+  /// **'Message parents'**
+  String get scanRemedialMessageParents;
+
+  /// Community feed filter
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get communityFilterAll;
+
+  /// Community feed filter
+  ///
+  /// In en, this message translates to:
+  /// **'Posts'**
+  String get communityFilterPosts;
+
+  /// Community feed filter
+  ///
+  /// In en, this message translates to:
+  /// **'Resources'**
+  String get communityFilterResources;
+
+  /// Community feed filter
+  ///
+  /// In en, this message translates to:
+  /// **'Highlights'**
+  String get communityFilterHighlights;
+
+  /// Voice roll call
+  ///
+  /// In en, this message translates to:
+  /// **'Read the names aloud'**
+  String get attendanceVoiceRollCall;
+
+  /// Voice roll call
+  ///
+  /// In en, this message translates to:
+  /// **'Listening…'**
+  String get attendanceVoiceListeningTitle;
+
+  /// Voice roll call
+  ///
+  /// In en, this message translates to:
+  /// **'Read your class register aloud. I\'ll mark each name present; say \'absent\' or \'late\' to change one.'**
+  String get attendanceVoiceListeningBody;
+
+  /// Voice roll call
+  ///
+  /// In en, this message translates to:
+  /// **'One moment…'**
+  String get attendanceVoiceWorking;
+
+  /// Voice roll call
+  ///
+  /// In en, this message translates to:
+  /// **'Marking the register from what you said.'**
+  String get attendanceVoiceWorkingBody;
+
+  /// Voice roll call
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone needed'**
+  String get attendanceVoiceMicOffTitle;
+
+  /// Voice roll call
+  ///
+  /// In en, this message translates to:
+  /// **'Allow microphone access to call the register by voice.'**
+  String get attendanceVoiceMicOffBody;
+
+  /// Voice roll call
+  ///
+  /// In en, this message translates to:
+  /// **'Didn\'t catch that'**
+  String get attendanceVoiceFailedTitle;
+
+  /// Voice roll call
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get attendanceVoiceFailedBody;
+
+  /// Voice roll call
+  ///
+  /// In en, this message translates to:
+  /// **'I didn\'t catch any names. Try again.'**
+  String get attendanceVoiceNone;
+
+  /// No description provided for @attendanceVoiceMarked.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked {count} names.'**
+  String attendanceVoiceMarked(int count);
 }
 
 class _AppLocalizationsDelegate

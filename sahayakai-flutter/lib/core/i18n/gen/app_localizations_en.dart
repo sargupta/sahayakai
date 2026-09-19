@@ -116,6 +116,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingLanguageTitle => 'Which language do you teach in?';
 
   @override
+  String get onboardingVidyaGreeting => 'Namaste, I\'m VIDYA';
+
+  @override
+  String get onboardingVidyaIntro =>
+      'Tell me what you teach. I\'ll stay a tap away on every screen.';
+
+  @override
+  String get onboardingVidyaHandHint =>
+      'Drag me anywhere. Left or right, I\'ll remember.';
+
+  @override
+  String get onboardingHandLeft => 'Left';
+
+  @override
+  String get onboardingHandRight => 'Right';
+
+  @override
   String get onboardingLanguageBody =>
       'Your lesson plans, quizzes and answers arrive in the language you choose. You can change it at any time.';
 
@@ -338,6 +355,29 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get lessonPlanTitle => 'Lesson Plan';
+
+  @override
+  String get lessonPlanIncludeLabel => 'Include';
+
+  @override
+  String get lessonPlanIncludeActivity => 'Activity';
+
+  @override
+  String get lessonPlanIncludeBoardWork => 'Board work';
+
+  @override
+  String get lessonPlanIncludeHomework => 'Homework';
+
+  @override
+  String get lessonPlanIncludeStoryHook => 'Story hook';
+
+  @override
+  String get lessonPlanNcertTitle => 'NCERT-aligned';
+
+  @override
+  String lessonPlanNcertBody(String grade) {
+    return 'Your plan is checked against the NCERT syllabus for $grade.';
+  }
 
   @override
   String get lessonPlanSubtitle => 'Plan a full 5E lesson';
@@ -2013,6 +2053,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get vidyaStateReady => 'Getting ready';
 
   @override
+  String get vidyaWorkingTitle => 'Working on it';
+
+  @override
+  String get vidyaWorkingBody =>
+      'Keep using the app. I\'ll finish in the background.';
+
+  @override
+  String get vidyaWorkingMinimise => 'Minimise to orb';
+
+  @override
+  String get vidyaWorkingStop => 'Stop';
+
+  @override
   String get vidyaStateListening => 'I am listening';
 
   @override
@@ -2238,6 +2291,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get parentHotlineCall => 'Call parent';
+
+  @override
+  String get parentHotlineCoverTitle => 'What this call covers';
+
+  @override
+  String get parentHotlineCoverPoint1 =>
+      'Opens warmly in the parent\'s language, with no blame.';
+
+  @override
+  String get parentHotlineCoverPoint2 =>
+      'Listens first, then asks what support the family needs.';
+
+  @override
+  String get parentHotlineCoverPoint3 =>
+      'Ends with one clear next step for the child.';
+
+  @override
+  String get parentHotlineCoverAfter =>
+      'Afterwards, VIDYA logs the outcome and drafts a follow-up for you to review.';
 
   @override
   String get parentHotlineWhatsApp => 'Copy for WhatsApp';
@@ -2805,6 +2877,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get assessmentScannerPagesEmpty => 'Add a photo of the first page.';
+
+  @override
+  String get assessmentScannerFrameGuide =>
+      'Fit the whole sheet inside the frame';
+
+  @override
+  String get assessmentScannerFrameHint =>
+      'Lay it flat in bright, even light so every mark is read.';
 
   @override
   String assessmentScannerPageLabel(int number) {
@@ -3736,4 +3816,120 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get attendancePremiumBody =>
       'Reading your classes, registers and monthly summaries stays free. Creating a class, adding a student and saving a register are part of the Pro plan.';
+
+  @override
+  String get deliverTrayTitle => 'Deliver';
+
+  @override
+  String get deliverPrivacyNote =>
+      'Nothing leaves the phone until you tap send.';
+
+  @override
+  String get deliverSend => 'Send';
+
+  @override
+  String get deliverParentGroup => 'Parent group';
+
+  @override
+  String get deliverParentGroupMeta => 'Share on WhatsApp';
+
+  @override
+  String get deliverPrint => 'Print';
+
+  @override
+  String get deliverPrintMeta => 'Send to a printer';
+
+  @override
+  String get deliverSaveToClass => 'Save to class';
+
+  @override
+  String get deliverSaveToClassMeta => 'Keep in your library';
+
+  @override
+  String get deliverPostCommunity => 'Post to Community';
+
+  @override
+  String get deliverPostCommunityMeta => 'Share as a resource';
+
+  @override
+  String get deliverDownloadPdf => 'Download PDF';
+
+  @override
+  String get deliverDownloadPdfMeta => 'Works offline';
+
+  @override
+  String get deliverReadAloud => 'Read aloud';
+
+  @override
+  String get deliverReadAloudMeta => 'To the class';
+
+  @override
+  String get settingsOrbHandTitle => 'Floating assistant';
+
+  @override
+  String get settingsOrbHandLabel => 'On the left hand';
+
+  @override
+  String get settingsOrbHandHint => 'Park VIDYA where your thumb reaches';
+
+  @override
+  String get scanRemedialBody =>
+      'I can build a remedial worksheet for the concepts they struggled with.';
+
+  @override
+  String get scanRemedialBuild => 'Build a remedial worksheet';
+
+  @override
+  String get scanRemedialMessageParents => 'Message parents';
+
+  @override
+  String get communityFilterAll => 'All';
+
+  @override
+  String get communityFilterPosts => 'Posts';
+
+  @override
+  String get communityFilterResources => 'Resources';
+
+  @override
+  String get communityFilterHighlights => 'Highlights';
+
+  @override
+  String get attendanceVoiceRollCall => 'Read the names aloud';
+
+  @override
+  String get attendanceVoiceListeningTitle => 'Listening…';
+
+  @override
+  String get attendanceVoiceListeningBody =>
+      'Read your class register aloud. I\'ll mark each name present; say \'absent\' or \'late\' to change one.';
+
+  @override
+  String get attendanceVoiceWorking => 'One moment…';
+
+  @override
+  String get attendanceVoiceWorkingBody =>
+      'Marking the register from what you said.';
+
+  @override
+  String get attendanceVoiceMicOffTitle => 'Microphone needed';
+
+  @override
+  String get attendanceVoiceMicOffBody =>
+      'Allow microphone access to call the register by voice.';
+
+  @override
+  String get attendanceVoiceFailedTitle => 'Didn\'t catch that';
+
+  @override
+  String get attendanceVoiceFailedBody =>
+      'Something went wrong. Please try again.';
+
+  @override
+  String get attendanceVoiceNone => 'I didn\'t catch any names. Try again.';
+
+  @override
+  String attendanceVoiceMarked(int count) {
+    return 'Marked $count names.';
+  }
 }

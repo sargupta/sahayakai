@@ -25,6 +25,25 @@ enum DifficultyLevel {
   final String wire;
 }
 
+/// A component the teacher asks the plan to emphasise (v3 screen 05 "Include").
+///
+/// The `/api/ai/lesson-plan` endpoint has no first-class field for these, so
+/// they are NOT a dead filter: [LessonPlanRequestDto] folds the chosen ones
+/// into a short natural-language emphasis line appended to the topic the model
+/// actually reads, so the choice genuinely shapes the generated plan. The plain
+/// [emphasis] text is the single source of truth for that line.
+enum LessonInclude {
+  activity('a hands-on activity'),
+  boardWork('board work for the blackboard'),
+  homework('a homework task'),
+  storyHook('a story hook to open the lesson');
+
+  const LessonInclude(this.emphasis);
+
+  /// The clause added to the model prompt when this component is selected.
+  final String emphasis;
+}
+
 /// Immutable input the teacher assembles on the form. The repository turns
 /// this into the request DTO; `userId`, `state` and `district` are injected by
 /// the server from the profile and are deliberately NOT part of this model.
@@ -39,6 +58,7 @@ class LessonPlanRequest {
     this.difficultyLevel = DifficultyLevel.standard,
     this.useRuralContext = true,
     this.imageDataUri,
+    this.includes = const <LessonInclude>{},
   });
 
   final String topic;
@@ -56,6 +76,11 @@ class LessonPlanRequest {
   /// When present the flow treats it as the primary content to plan from (the
   /// rural "photograph the page" path); omitted from the request when null.
   final String? imageDataUri;
+
+  /// Components the teacher asked the plan to emphasise (v3 05 "Include").
+  /// Empty by default, so a plain generation sends exactly the topic typed —
+  /// the emphasis line is added only when the teacher opts in.
+  final Set<LessonInclude> includes;
 }
 
 /// A single vocabulary term and its plain-language meaning.

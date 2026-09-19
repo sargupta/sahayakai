@@ -159,7 +159,14 @@ String _formatMaxBytes() {
   return '$trimmed MB';
 }
 
-/// The empty state: a bordered well with a prompt, or a spinner while picking.
+/// The empty state: a dark "scan framing" guide (v3 screen 11), or a spinner
+/// while picking.
+///
+/// HONESTY: the app captures through the OS camera app (`image_picker`), not a
+/// live in-app preview — so this is a *framing guide*, not a viewfinder feed. It
+/// carries the v3 dark frame with corner brackets and a scan line because good
+/// framing genuinely improves grading (the route returns `imageQualityWarnings`
+/// when a sheet is skewed or dim), and it never pretends to show a live camera.
 class _EmptyWell extends StatelessWidget {
   const _EmptyWell({required this.busy});
 
@@ -169,46 +176,131 @@ class _EmptyWell extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    // The v3 dark viewfinder ground, from theme roles (never raw hex): the
+    // inverse surface reads near-black in light mode and light in dark mode,
+    // with the orb's saffron as the scan accent.
+    final ground = scheme.inverseSurface;
+    final onGround = scheme.onInverseSurface;
+    final accent = scheme.primary;
+
     return Container(
-      // Wraps content (min constraint, not fixed) so Indic hint text and font
-      // scaling never clip. DESIGN_RUBRIC §7.
-      constraints: const BoxConstraints(minHeight: 128),
-      padding: const EdgeInsets.all(AppSpacing.space6),
+      // Wraps content (min constraint, not fixed) so Indic guidance text and
+      // font scaling never clip. DESIGN_RUBRIC §7.
+      constraints: const BoxConstraints(minHeight: 168),
       decoration: BoxDecoration(
-        color: scheme.surfaceContainerHigh,
+        color: ground,
         borderRadius: AppRadius.rLg,
-        border: Border.all(color: scheme.outlineVariant),
       ),
-      alignment: Alignment.center,
-      child: busy
-          ? SizedBox(
-              width: AppIconSize.standalone,
-              height: AppIconSize.standalone,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: scheme.primary,
-              ),
-            )
-          : Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  LucideIcons.imagePlus,
-                  size: AppIconSize.standalone,
-                  color: scheme.onSurfaceVariant,
-                ),
-                const SizedBox(height: AppSpacing.space3),
-                Text(
-                  context.l10n.assessmentScannerPagesEmpty,
-                  textAlign: TextAlign.center,
-                  // Full ink: the well's surfaceContainerHigh fill makes the
-                  // muted onSurfaceVariant only ~3.86:1 — under the AA floor.
-                  style: text.bodyMedium?.copyWith(color: scheme.onSurface),
-                ),
-              ],
-            ),
+      child: CustomPaint(
+        painter: _ViewfinderPainter(
+          frame: onGround.withValues(alpha: 0.34),
+          scanLine: accent,
+          showScanLine: !busy,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.space6),
+          child: Center(
+            child: busy
+                ? SizedBox(
+                    width: AppIconSize.standalone,
+                    height: AppIconSize.standalone,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: accent,
+                    ),
+                  )
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        LucideIcons.scanLine,
+                        size: AppIconSize.standalone,
+                        color: onGround,
+                      ),
+                      const SizedBox(height: AppSpacing.space3),
+                      Text(
+                        context.l10n.assessmentScannerFrameGuide,
+                        textAlign: TextAlign.center,
+                        style: text.titleSmall?.copyWith(color: onGround),
+                      ),
+                      const SizedBox(height: AppSpacing.space2),
+                      Text(
+                        context.l10n.assessmentScannerFrameHint,
+                        textAlign: TextAlign.center,
+                        style: text.bodySmall?.copyWith(
+                          color: onGround.withValues(alpha: 0.78),
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+      ),
     );
   }
+}
+
+/// Paints the v3 viewfinder: four corner brackets inset from the edges and a
+/// single horizontal scan line. Static (no animation) so it never defeats
+/// `pumpAndSettle` and needs no reduce-motion branch — it is a framing guide,
+/// not a live feed.
+class _ViewfinderPainter extends CustomPainter {
+  _ViewfinderPainter({
+    required this.frame,
+    required this.scanLine,
+    required this.showScanLine,
+  });
+
+  final Color frame;
+  final Color scanLine;
+  final bool showScanLine;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const inset = 12.0;
+    const arm = 22.0;
+    final rect = Rect.fromLTWH(
+      inset,
+      inset,
+      size.width - inset * 2,
+      size.height - inset * 2,
+    );
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round
+      ..color = frame;
+
+    // Four L-shaped corner brackets.
+    void corner(Offset o, double dx, double dy) {
+      canvas.drawLine(o, o.translate(dx, 0), paint);
+      canvas.drawLine(o, o.translate(0, dy), paint);
+    }
+
+    corner(rect.topLeft, arm, arm);
+    corner(rect.topRight, -arm, arm);
+    corner(rect.bottomLeft, arm, -arm);
+    corner(rect.bottomRight, -arm, -arm);
+
+    if (showScanLine) {
+      final y = rect.top + rect.height * 0.46;
+      canvas.drawLine(
+        Offset(rect.left + arm, y),
+        Offset(rect.right - arm, y),
+        Paint()
+          ..strokeWidth = 2
+          ..strokeCap = StrokeCap.round
+          ..color = scanLine.withValues(alpha: 0.85),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_ViewfinderPainter old) =>
+      old.frame != frame ||
+      old.scanLine != scanLine ||
+      old.showScanLine != showScanLine;
 }
 
 /// The captured pages, one row each: a thumbnail, the page number, and a

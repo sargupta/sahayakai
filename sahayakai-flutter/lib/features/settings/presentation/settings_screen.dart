@@ -24,6 +24,7 @@ import '../../../shared/widgets/offline_view.dart';
 import '../../profile/domain/profile_settings.dart';
 import '../../profile/domain/teacher_profile.dart';
 import '../../profile/presentation/profile_controller.dart';
+import '../../vidya/presentation/vidya_orb_placement_controller.dart';
 import '../data/notification_prefs_provider.dart';
 import '../data/voice_mode_provider.dart';
 import 'settings_controller.dart';
@@ -128,6 +129,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       const _LanguageSection(),
       const _NotificationSection(),
       const _VoiceModeSection(),
+      const _OrbHandSection(),
       if (signedIn) ...[
         _profileSection(l10n),
         _dangerSection(l10n),
@@ -507,6 +509,40 @@ class _VoiceModeSection extends ConsumerWidget {
           title: Text(l10n.settingsVoiceModeLabel, style: text.bodyLarge),
           subtitle: Text(
             l10n.settingsVoiceModeHint,
+            style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Which hand VIDYA's floating orb parks under (v3 screen 16 "Orb on the left
+/// hand"). Flipping it moves the orb to that side's perch and remembers it.
+class _OrbHandSection extends ConsumerWidget {
+  const _OrbHandSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    final hand = ref.watch(
+      vidyaOrbPlacementControllerProvider.select((p) => p.hand),
+    );
+
+    return _SettingsGroup(
+      title: l10n.settingsOrbHandTitle,
+      child: AppCard(
+        padding: EdgeInsets.zero,
+        child: SwitchListTile.adaptive(
+          value: hand == VidyaHand.left,
+          onChanged: (value) => ref
+              .read(vidyaOrbPlacementControllerProvider.notifier)
+              .setHand(value ? VidyaHand.left : VidyaHand.right),
+          title: Text(l10n.settingsOrbHandLabel, style: text.bodyLarge),
+          subtitle: Text(
+            l10n.settingsOrbHandHint,
             style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
           ),
         ),

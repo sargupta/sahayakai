@@ -6,6 +6,8 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../core/i18n/l10n_ext.dart';
 import '../../core/platform/share_service.dart';
 import '../../core/theme/app_theme.dart';
+import '../../features/vidya/domain/deliverable.dart';
+import '../../features/vidya/presentation/deliverables_controller.dart';
 import 'inline_error.dart';
 import 'primary_button.dart';
 
@@ -83,6 +85,35 @@ class ResultActionsBar extends ConsumerStatefulWidget {
 class _ResultActionsBarState extends ConsumerState<ResultActionsBar> {
   ResultSaveStatus _status = ResultSaveStatus.idle;
 
+  /// While a result view is on screen its export is a [Deliverable] VIDYA is
+  /// holding — this is what turns the floating orb green and fills the deliver
+  /// tray (v3 07 → 08). One id per on-screen result, removed when it leaves.
+  late final String _deliverableId =
+      'deliver-${DateTime.now().microsecondsSinceEpoch}-${identityHashCode(this)}';
+
+  /// Cached in initState because `ref` cannot be used in [dispose]; the keepAlive
+  /// deliverables store outlives this widget, so the reference stays valid.
+  DeliverablesController? _deliverables;
+
+  @override
+  void initState() {
+    super.initState();
+    // Best-effort: registering the deliverable lights the floating orb, but the
+    // bar must still build when pumped in isolation without a ProviderScope
+    // (some widget tests do). No scope → the orb wiring is simply a no-op.
+    try {
+      _deliverables = ref.read(deliverablesControllerProvider.notifier);
+    } catch (_) {
+      _deliverables = null;
+    }
+    if (_deliverables != null) {
+      // After the first frame — never modify a provider during build.
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _registerDeliverable(),
+      );
+    }
+  }
+
   @override
   void didUpdateWidget(covariant ResultActionsBar oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -90,7 +121,50 @@ class _ResultActionsBarState extends ConsumerState<ResultActionsBar> {
     // setState — the rebuild that delivered the new widget is already running.
     if (oldWidget.saveResetKey != widget.saveResetKey) {
       _status = ResultSaveStatus.idle;
+      // The export changed with it — refresh what the deliver tray holds.
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _registerDeliverable(),
+      );
     }
+  }
+
+  @override
+  void dispose() {
+    // The result left the screen — stop holding it. Deferred to a post-frame
+    // callback: dispose can run during a parent's rebuild (e.g. a result view
+    // clearing itself back to its form), and modifying a provider mid-build is
+    // illegal. Uses the cached notifier because ref is unavailable in dispose.
+    final notifier = _deliverables;
+    final id = _deliverableId;
+    if (notifier != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        try {
+          notifier.remove(id);
+        } catch (_) {
+          // The container was torn down first (test teardown) — nothing to do.
+        }
+      });
+    }
+    super.dispose();
+  }
+
+  /// Publish (or refresh) this result as the current deliverable. Idempotent on
+  /// the id, so a rebuild never double-counts the orb badge.
+  void _registerDeliverable() {
+    final notifier = _deliverables;
+    if (!mounted || notifier == null || widget.text.trim().isEmpty) return;
+    // Refresh: drop the prior payload for this slot, then add the current one.
+    notifier.remove(_deliverableId);
+    notifier.add(
+      Deliverable(
+        id: _deliverableId,
+        title: widget.shareSubject ?? context.l10n.deliverTrayTitle,
+        subtitle: widget.shareSubject,
+        text: widget.text,
+        shareSubject: widget.shareSubject,
+        onSave: widget.onSave,
+      ),
+    );
   }
 
   Future<void> _copy() async {

@@ -29,9 +29,20 @@
 
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR GIT_OBJECT_DIRECTORY
 
-export APP_ROOT="/Users/sargupta/SahayakAIV2/wt-flutter-rebuild/sahayakai-flutter"
-export WT_TOPLEVEL="/Users/sargupta/SahayakAIV2/wt-flutter-rebuild"
-export GITPFX="sahayakai-flutter/"
+# Derive the roots from THIS file's location, never a hardcoded path: the loop
+# scripts must run identically on a laptop, in CI (ubuntu-latest), and in a
+# remote container. This file lives at <APP_ROOT>/scripts/loop/_env.sh, so the
+# app root is two directories up. WT_TOPLEVEL is the git worktree root, and
+# GITPFX is the app root's path relative to it (with a trailing slash) — the
+# asymmetric prefix the comment above depends on, computed rather than pinned so
+# it stays correct wherever the repo is checked out.
+_ENV_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export APP_ROOT="$(cd "$_ENV_DIR/../.." && pwd)"
+export WT_TOPLEVEL="$(git -C "$APP_ROOT" rev-parse --show-toplevel 2>/dev/null || echo "$APP_ROOT")"
+_APP_REL="${APP_ROOT#"$WT_TOPLEVEL"}"
+_APP_REL="${_APP_REL#/}"
+export GITPFX="${_APP_REL:+$_APP_REL/}"
+unset _ENV_DIR _APP_REL
 export LOOP_BRANCH="feature/flutter-rebuild"
 
 export ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"

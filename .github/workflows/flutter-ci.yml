@@ -84,7 +84,15 @@ jobs:
       - name: i18n audit (11 locales, 5 checks)
         run: python3 scripts/loop/i18n_audit.py
 
+      # The loop selftest proves the AUTONOMOUS-LOOP guards can fail, and those
+      # guards are bound to the loop's own branch and ledger: loop_guard requires
+      # the branch be `feature/flutter-rebuild`, and reconcile validates that
+      # branch's verifiedAtSha ledger. They cannot pass on a PR branch by design,
+      # so this meta-check runs only on the loop branch, where it is meaningful.
+      # The real code gates above (codegen, analyze, tokens, i18n) still run on
+      # every PR.
       - name: guards can still fail
+        if: github.ref == 'refs/heads/feature/flutter-rebuild'
         run: bash scripts/loop/selftest.sh
 
   test:

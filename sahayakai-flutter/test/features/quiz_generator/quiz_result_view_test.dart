@@ -44,10 +44,10 @@ void main() {
           expect(tester.takeException(), isNull);
           expect(find.text('Correct answer'), findsWidgets);
 
-          // Switching variants must not overflow either. Scope to the tab
-          // bar: 'Hard' also appears as a per-question difficulty badge.
+          // Switching variants must not overflow either. Scope to the
+          // segmented control: 'Hard' also appears as a difficulty badge.
           final hardTab = find.descendant(
-            of: find.byType(TabBar),
+            of: find.byType(QuizDifficultySegmented),
             matching: find.text('Hard'),
           );
           await tester.ensureVisible(hardTab);
@@ -71,7 +71,7 @@ void main() {
   });
 
   group('difficulty variants', () {
-    testWidgets('three variants get three tabs', (tester) async {
+    testWidgets('three variants get three segments', (tester) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -79,14 +79,17 @@ void main() {
       await tester.pumpWidget(hostResult(QuizResultView(quiz: buildQuiz())));
       await tester.pumpAndSettle();
 
-      expect(find.byType(TabBar), findsOneWidget);
+      expect(find.byType(QuizDifficultySegmented), findsOneWidget);
       expect(
-        find.descendant(of: find.byType(TabBar), matching: find.byType(Tab)),
+        find.descendant(
+          of: find.byType(QuizDifficultySegmented),
+          matching: find.byType(Text),
+        ),
         findsNWidgets(3),
       );
     });
 
-    testWidgets('a single variant renders without a tab bar', (tester) async {
+    testWidgets('a single variant renders without a segmented control', (tester) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -97,11 +100,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      expect(find.byType(TabBar), findsNothing);
+      expect(find.byType(QuizDifficultySegmented), findsNothing);
       expect(find.text('Show all answers'), findsOneWidget);
     });
 
-    testWidgets('no variants shows the empty view, never an empty tab', (
+    testWidgets('no variants shows the empty view, never an empty segment', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -110,11 +113,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      expect(find.byType(TabBar), findsNothing);
+      expect(find.byType(QuizDifficultySegmented), findsNothing);
       expect(find.textContaining('No questions came back'), findsOneWidget);
     });
 
-    testWidgets('switching tabs re-hides the answers', (tester) async {
+    testWidgets('switching segments re-hides the answers', (tester) async {
       tester.view.physicalSize = kNarrowPhone;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -127,7 +130,7 @@ void main() {
       expect(find.text('Correct answer'), findsWidgets);
 
       await tester.tap(
-        find.descendant(of: find.byType(TabBar), matching: find.text('Hard')),
+        find.descendant(of: find.byType(QuizDifficultySegmented), matching: find.text('Hard')),
       );
       await tester.pumpAndSettle();
 
@@ -281,7 +284,7 @@ void main() {
 
       expect(find.text('A gentle note.'), findsOneWidget);
       // The quiz still renders alongside it.
-      expect(find.byType(TabBar), findsOneWidget);
+      expect(find.byType(QuizDifficultySegmented), findsOneWidget);
     });
 
     testWidgets('teacher instructions render', (tester) async {
@@ -316,7 +319,7 @@ void main() {
       expect(find.text('Mathematics'), findsOneWidget);
       expect(find.text('3 questions'), findsOneWidget);
       // The variants still render in the body.
-      expect(find.byType(TabBar), findsOneWidget);
+      expect(find.byType(QuizDifficultySegmented), findsOneWidget);
     });
 
     testWidgets('the action bar offers Regenerate and Copy, wired', (
@@ -471,7 +474,7 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.byType(DocumentSheet), findsOneWidget);
       expect(find.text('Fractions'), findsOneWidget);
-      expect(find.byType(TabBar), findsOneWidget);
+      expect(find.byType(QuizDifficultySegmented), findsOneWidget);
     });
   });
 }

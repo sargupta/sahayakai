@@ -43,4 +43,43 @@ void main() {
       expect(json.containsKey('imageDataUri'), isFalse);
     });
   });
+
+  group('Include emphasis (v3 05) folds into the topic the model reads', () {
+    String topicFor(Set<LessonInclude> includes) =>
+        LessonPlanRequestDto.fromDomain(
+          LessonPlanRequest(
+            topic: 'Fractions',
+            language: AppLocale.en.aiName,
+            includes: includes,
+          ),
+        ).toJson()['topic'] as String;
+
+    test('no selection leaves the topic byte-for-byte unchanged', () {
+      // The whole point of defaulting to none: a plain plan is exactly as
+      // before, so the server-side NCERT chapter match is never disturbed.
+      expect(topicFor(const <LessonInclude>{}), 'Fractions');
+    });
+
+    test('selected components become one plain emphasis line', () {
+      final topic = topicFor({
+        LessonInclude.activity,
+        LessonInclude.boardWork,
+      });
+      expect(topic, startsWith('Fractions'));
+      expect(topic, contains('Please include:'));
+      expect(topic, contains(LessonInclude.activity.emphasis));
+      expect(topic, contains(LessonInclude.boardWork.emphasis));
+    });
+
+    test('the emphasis order is stable regardless of set iteration order', () {
+      final a = topicFor({LessonInclude.homework, LessonInclude.activity});
+      final b = topicFor({LessonInclude.activity, LessonInclude.homework});
+      expect(a, b);
+      // Declaration order: activity before homework.
+      expect(
+        a.indexOf(LessonInclude.activity.emphasis),
+        lessThan(a.indexOf(LessonInclude.homework.emphasis)),
+      );
+    });
+  });
 }
