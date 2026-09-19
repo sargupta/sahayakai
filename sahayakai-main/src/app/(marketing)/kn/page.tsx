@@ -54,26 +54,26 @@ export default function KannadaPage() {
             />
 
             <header className="mb-12 text-center">
-                <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl mb-4">
+                <h1 className="text-3xl font-bold text-foreground sm:text-4xl mb-4">
                     ಸಹಾಯಕ AI (SahayakAI)
                 </h1>
-                <p className="text-xl text-orange-600 font-semibold mb-2">
+                <p className="text-xl text-primary font-semibold mb-2">
                     ಭಾರತೀಯ ಶಿಕ್ಷಕರಿಗಾಗಿ AI-ಚಾಲಿತ ಬೋಧನಾ ಸಹಾಯಕ
                 </p>
-                <p className="text-gray-600 max-w-2xl mx-auto">
+                <p className="text-muted-foreground max-w-2xl mx-auto">
                     ವಾಯ್ಸ್-ಫರ್ಸ್ಟ್ | ೧೧ ಭಾರತೀಯ ಭಾಷೆಗಳು | ೩೦ ವೈಶಿಷ್ಟ್ಯಗಳು | ಕಡಿಮೆ ಬ್ಯಾಂಡ್‌ವಿಡ್ತ್‌ನಲ್ಲಿ ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತದೆ
                 </p>
             </header>
 
             <section className="mb-10">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">ಸಹಾಯಕ AI ಎಂದರೇನು?</h2>
-                <p className="text-gray-700 mb-4">
+                <h2 className="text-2xl font-bold text-foreground mb-4">ಸಹಾಯಕ AI ಎಂದರೇನು?</h2>
+                <p className="text-foreground mb-4">
                     ಸಹಾಯಕ AI (SahayakAI) ಭಾರತೀಯ K-12 ಶಿಕ್ಷಕರಿಗಾಗಿ AI-ಚಾಲಿತ ಬೋಧನಾ ವೇದಿಕೆ. 
                     ಇದು ಪಾಠ ತಯಾರಿಯ ಸಮಯವನ್ನು ೯೦% ಕಡಿಮೆ ಮಾಡುತ್ತದೆ — ೪೫ ನಿಮಿಷದಿಂದ ಕೇವಲ ೫ ನಿಮಿಷಕ್ಕೆ. 
                     NCERT, CBSE, ICSE ಮತ್ತು ಕರ್ನಾಟಕ ರಾಜ್ಯ ಬೋರ್ಡ್ ಸೇರಿದಂತೆ ೨೮ ರಾಜ್ಯ ಬೋರ್ಡ್‌ಗಳ 
                     ಪಠ್ಯಕ್ರಮಕ್ಕೆ ಹೊಂದಿಕೊಂಡಿದೆ.
                 </p>
-                <p className="text-gray-700 mb-4">
+                <p className="text-foreground mb-4">
                     ಕರ್ನಾಟಕದ ೧೫೦ ಶಿಕ್ಷಕರ ಪೈಲಟ್ ಕಾರ್ಯಕ್ರಮದಲ್ಲಿ ೭೮% ಧಾರಣ ದರ ಸಾಧಿಸಲಾಗಿದೆ. 
                     ಸಹಾಯಕ AI ಕನ್ನಡ ಸೇರಿದಂತೆ ೧೧ ಭಾರತೀಯ ಭಾಷೆಗಳಲ್ಲಿ ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತದೆ. 
                     ನೀವು ಕನ್ನಡದಲ್ಲಿ ಮಾತನಾಡಬಹುದು ಅಥವಾ ಟೈಪ್ ಮಾಡಬಹುದು ಮತ್ತು AI ತಕ್ಷಣವೇ 
@@ -82,47 +82,47 @@ export default function KannadaPage() {
             </section>
 
             <section className="mb-10">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">ಪ್ರಮುಖ ವೈಶಿಷ್ಟ್ಯಗಳು</h2>
+                <h2 className="text-2xl font-bold text-foreground mb-4">ಪ್ರಮುಖ ವೈಶಿಷ್ಟ್ಯಗಳು</h2>
                 <div className="space-y-4">
-                    <div className="border-l-4 border-orange-500 pl-4">
-                        <h3 className="font-semibold text-gray-900">AI ಪಾಠ ಯೋಜನೆ</h3>
-                        <p className="text-gray-600">
+                    <div className="border-l-4 border-primary pl-4">
+                        <h3 className="font-semibold text-foreground">AI ಪಾಠ ಯೋಜನೆ</h3>
+                        <p className="text-muted-foreground">
                             NCERT ಮತ್ತು ಕರ್ನಾಟಕ ರಾಜ್ಯ ಬೋರ್ಡ್ ಪಠ್ಯಕ್ರಮಕ್ಕೆ ಅನುಗುಣವಾಗಿ ಪಾಠ ಯೋಜನೆ ರಚಿಸಿ. 
                             ೫೦,೦೦೦+ ಪಠ್ಯಕ್ರಮ ಮ್ಯಾಪಿಂಗ್‌ಗಳು.
                         </p>
                     </div>
-                    <div className="border-l-4 border-blue-500 pl-4">
-                        <h3 className="font-semibold text-gray-900">ಕ್ವಿಜ್ ಜನರೇಟರ್</h3>
-                        <p className="text-gray-600">
+                    <div className="border-l-4 border-info pl-4">
+                        <h3 className="font-semibold text-foreground">ಕ್ವಿಜ್ ಜನರೇಟರ್</h3>
+                        <p className="text-muted-foreground">
                             ಬ್ಲೂಮ್ಸ್ ಟ್ಯಾಕ್ಸಾನಮಿ ಪ್ರಕಾರ MCQ, ಸಣ್ಣ ಉತ್ತರ ಮತ್ತು ದೀರ್ಘ ಉತ್ತರ ಪ್ರಶ್ನೆಗಳನ್ನು ರಚಿಸಿ.
                         </p>
                     </div>
-                    <div className="border-l-4 border-green-500 pl-4">
-                        <h3 className="font-semibold text-gray-900">ವರ್ಕ್‌ಶೀಟ್ ರಚನೆ</h3>
-                        <p className="text-gray-600">
+                    <div className="border-l-4 border-success pl-4">
+                        <h3 className="font-semibold text-foreground">ವರ್ಕ್‌ಶೀಟ್ ರಚನೆ</h3>
+                        <p className="text-muted-foreground">
                             ವಿಷಯಾಧಾರಿತ ವರ್ಕ್‌ಶೀಟ್‌ಗಳು — ಗಣಿತ, ವಿಜ್ಞಾನ, ಇಂಗ್ಲಿಷ್, ಕನ್ನಡ ಸೇರಿದಂತೆ ಎಲ್ಲಾ ವಿಷಯಗಳು.
                         </p>
                     </div>
-                    <div className="border-l-4 border-purple-500 pl-4">
-                        <h3 className="font-semibold text-gray-900">ವಾಯ್ಸ್ ಇನ್‌ಪುಟ್</h3>
-                        <p className="text-gray-600">
+                    <div className="border-l-4 border-accent pl-4">
+                        <h3 className="font-semibold text-foreground">ವಾಯ್ಸ್ ಇನ್‌ಪುಟ್</h3>
+                        <p className="text-muted-foreground">
                             ಕನ್ನಡದಲ್ಲಿ ಮಾತನಾಡಾ, AI ಅರ್ಥಮಾಡಿಕೊಳ್ಳುತ್ತದೆ. ಟೈಪ್ ಮಾಡುವ ಅಗತ್ಯವಿಲ್ಲ — ನಿಮಗೆ ಏನು ಬೇಕು ಎಂದು ಹೇಳಿ.
                         </p>
                     </div>
                 </div>
             </section>
 
-            <section className="mb-10 bg-orange-50 rounded-lg p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-3">ಸಹಾಯಕ AI ಉಚಿತವಾಗಿ ಬಳಸಿ</h2>
-                <p className="text-gray-700 mb-4">
+            <section className="mb-10 bg-saffron-50 rounded-lg p-6">
+                <h2 className="text-xl font-bold text-foreground mb-3">ಸಹಾಯಕ AI ಉಚಿತವಾಗಿ ಬಳಸಿ</h2>
+                <p className="text-foreground mb-4">
                     ಪ್ರತಿ ತಿಂಗಳು ೫೦ ಉಚಿತ ಕ್ರೆಡಿಟ್‌ಗಳನ್ನು ಪಡೆಯಿರಿ. ಸರ್ಕಾರಿ ಮತ್ತು ಖಾಸಗಿ ಶಾಲೆಗಳ 
                     ಶಿಕ್ಷಕರಿಗೆ Gold ಯೋಜನೆ ₹೧೪೯/ತಿಂಗಳು ಮತ್ತು Premium ಯೋಜನೆ ₹೩೪೯/ತಿಂಗಳು.
                 </p>
             </section>
 
             <section className="mb-10">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">ಕರ್ನಾಟಕ ಪೈಲಟ್ ಫಲಿತಾಂಶಗಳು</h2>
-                <p className="text-gray-700 mb-4">
+                <h2 className="text-2xl font-bold text-foreground mb-4">ಕರ್ನಾಟಕ ಪೈಲಟ್ ಫಲಿತಾಂಶಗಳು</h2>
+                <p className="text-foreground mb-4">
                     ಕರ್ನಾಟಕದಲ್ಲಿ ೧೫೦ ಶಿಕ್ಷಕರೊಂದಿಗೆ ನಡೆಸಿದ ಪೈಲಟ್ ಕಾರ್ಯಕ್ರಮದಲ್ಲಿ ೭೮% ಧಾರಣ ದರ 
                     ದಾಖಲಾಗಿದೆ. ಶಿಕ್ಷಕರು ತಮ್ಮ ಪಾಠ ತಯಾರಿ ಸಮಯವನ್ನು ೯೦% ಕಡಿಮೆ ಮಾಡಿದ್ದಾರೆ. 
                     ೩೦ ವೈಶಿಷ್ಟ್ಯಗಳು ಪ್ರಸ್ತುತ ಉತ್ಪಾದನೆಯಲ್ಲಿವೆ, NPS ೭೧+.
@@ -130,12 +130,12 @@ export default function KannadaPage() {
             </section>
 
             <nav className="border-t pt-8 mt-8">
-                <p className="text-sm text-gray-500 mb-4">ಇತರ ಭಾಷೆಗಳಲ್ಲಿ ಓದಿ:</p>
+                <p className="text-sm text-muted-foreground mb-4">ಇತರ ಭಾಷೆಗಳಲ್ಲಿ ಓದಿ:</p>
                 <div className="flex gap-4">
-                    <Link href="/" className="text-orange-600 hover:underline">English</Link>
-                    <Link href="/hi" className="text-orange-600 hover:underline">हिंदी</Link>
-                    <Link href="/bn" className="text-orange-600 hover:underline">বাংলা</Link>
-                    <Link href="/ta" className="text-orange-600 hover:underline">தமிழ்</Link>
+                    <Link href="/" className="text-primary hover:underline">English</Link>
+                    <Link href="/hi" className="text-primary hover:underline">हिंदी</Link>
+                    <Link href="/bn" className="text-primary hover:underline">বাংলা</Link>
+                    <Link href="/ta" className="text-primary hover:underline">தமிழ்</Link>
                 </div>
             </nav>
         </>
