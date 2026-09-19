@@ -2025,6 +2025,18 @@ class AppLocalizationsHi extends AppLocalizations {
   String get vidyaStateReady => 'तैयार हो रहा है';
 
   @override
+  String get vidyaWorkingTitle => 'इस पर काम कर रही हूँ';
+
+  @override
+  String get vidyaWorkingBody => 'ऐप चलाते रहिए। मैं पीछे से पूरा कर दूँगी।';
+
+  @override
+  String get vidyaWorkingMinimise => 'VIDYA में समेटें';
+
+  @override
+  String get vidyaWorkingStop => 'रोकें';
+
+  @override
   String get vidyaStateListening => 'मैं सुन रही हूँ';
 
   @override

@@ -2069,6 +2069,19 @@ class AppLocalizationsTa extends AppLocalizations {
   String get vidyaStateReady => 'தயாராகிறது';
 
   @override
+  String get vidyaWorkingTitle => 'இதில் வேலை செய்கிறேன்';
+
+  @override
+  String get vidyaWorkingBody =>
+      'செயலியைத் தொடர்ந்து பயன்படுத்துங்கள். நான் பின்னணியில் முடிக்கிறேன்.';
+
+  @override
+  String get vidyaWorkingMinimise => 'VIDYA-வில் சுருக்கு';
+
+  @override
+  String get vidyaWorkingStop => 'நிறுத்து';
+
+  @override
   String get vidyaStateListening => 'நான் கேட்கிறேன்';
 
   @override

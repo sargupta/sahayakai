@@ -6,6 +6,7 @@ import '../../../core/auth/auth_providers.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
+import 'background_generation_controller.dart';
 import 'deliver_tray.dart';
 import 'deliverables_controller.dart';
 import 'vidya_controller.dart';
@@ -60,9 +61,6 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
           builder: (context, ref, _) {
             final signedIn =
                 ref.watch(authControllerProvider) == AuthStatus.signedIn;
-            if (!_visibleAt(info.uri.path, signedIn)) {
-              return const SizedBox.shrink();
-            }
 
             // Only the phase drives the orb — not the per-frame amplitude, which
             // would rebuild the overlay on every listening tick.
@@ -74,7 +72,17 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
             final readyCount = ref.watch(
               deliverablesControllerProvider.select((d) => d.length),
             );
-            final visual = _visualFor(status, placement, readyCount);
+            // VIDYA is finishing a minimised generation off-screen (v3 06): the
+            // orb rides on to show its progress, even onto the voice home.
+            final bgActive =
+                ref.watch(backgroundGenerationControllerProvider) != null;
+            final hasWork = bgActive || readyCount > 0;
+
+            if (!_visibleAt(info.uri.path, signedIn, hasWork)) {
+              return const SizedBox.shrink();
+            }
+
+            final visual = _visualFor(status, placement, readyCount, bgActive);
 
             final media = MediaQuery.of(context);
             final screen = media.size;
@@ -157,11 +165,15 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
 
   /// The orb shows only when signed in and away from the surfaces that own their
   /// own VIDYA affordance or predate auth: splash, login, onboarding, and the
-  /// voice home (`/`), where the SealMic hero is the mic.
-  bool _visibleAt(String location, bool signedIn) {
+  /// voice home (`/`), where the SealMic hero is the mic — except the home makes
+  /// an exception for [hasWork] (a background generation running or a ready
+  /// result), so the teacher can always see and reach VIDYA's off-screen work.
+  bool _visibleAt(String location, bool signedIn, bool hasWork) {
     if (!signedIn) return false;
-    const hidden = {Routes.splash, Routes.login, Routes.onboarding, Routes.home};
-    return !hidden.contains(location);
+    const preAuth = {Routes.splash, Routes.login, Routes.onboarding};
+    if (preAuth.contains(location)) return false;
+    if (location == Routes.home) return hasWork;
+    return true;
   }
 
   // ── State mapping ────────────────────────────────────────────────────────
@@ -170,6 +182,7 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
     VidyaStatus status,
     VidyaOrbPlacement placement,
     int readyCount,
+    bool bgActive,
   ) {
     if (placement.dragging) return VidyaOrbVisual.dragging;
     switch (status) {
@@ -185,6 +198,9 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
       case VidyaStatus.signedOut:
       case VidyaStatus.limitReached:
       case VidyaStatus.failed:
+        // A minimised generation still running shows the working orb even while
+        // VIDYA's own turn is idle; a finished one shows the green ready badge.
+        if (bgActive) return VidyaOrbVisual.working;
         return readyCount > 0 ? VidyaOrbVisual.ready : VidyaOrbVisual.resting;
     }
   }

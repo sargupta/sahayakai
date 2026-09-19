@@ -2055,6 +2055,19 @@ class AppLocalizationsMl extends AppLocalizations {
   String get vidyaStateReady => 'തയ്യാറാകുന്നു';
 
   @override
+  String get vidyaWorkingTitle => 'ഇതിൽ പ്രവർത്തിക്കുന്നു';
+
+  @override
+  String get vidyaWorkingBody =>
+      'ആപ്പ് ഉപയോഗിച്ചുകൊണ്ടിരിക്കൂ. ഞാൻ പശ്ചാത്തലത്തിൽ പൂർത്തിയാക്കാം.';
+
+  @override
+  String get vidyaWorkingMinimise => 'VIDYA-യിലേക്ക് ചെറുതാക്കുക';
+
+  @override
+  String get vidyaWorkingStop => 'നിർത്തുക';
+
+  @override
   String get vidyaStateListening => 'ഞാൻ കേൾക്കുന്നു';
 
   @override

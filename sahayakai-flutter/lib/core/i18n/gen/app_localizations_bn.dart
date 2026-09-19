@@ -2035,6 +2035,19 @@ class AppLocalizationsBn extends AppLocalizations {
   String get vidyaStateReady => 'প্রস্তুত হচ্ছে';
 
   @override
+  String get vidyaWorkingTitle => 'এটি নিয়ে কাজ করছি';
+
+  @override
+  String get vidyaWorkingBody =>
+      'অ্যাপ ব্যবহার করতে থাকুন। আমি নেপথ্যে শেষ করে দেব।';
+
+  @override
+  String get vidyaWorkingMinimise => 'VIDYA-তে ছোট করুন';
+
+  @override
+  String get vidyaWorkingStop => 'থামান';
+
+  @override
   String get vidyaStateListening => 'আমি শুনছি';
 
   @override

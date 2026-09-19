@@ -2013,6 +2013,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get vidyaStateReady => 'Getting ready';
 
   @override
+  String get vidyaWorkingTitle => 'Working on it';
+
+  @override
+  String get vidyaWorkingBody =>
+      'Keep using the app. I\'ll finish in the background.';
+
+  @override
+  String get vidyaWorkingMinimise => 'Minimise to orb';
+
+  @override
+  String get vidyaWorkingStop => 'Stop';
+
+  @override
   String get vidyaStateListening => 'I am listening';
 
   @override

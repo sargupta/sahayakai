@@ -1,11 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/app_locale.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/i18n/locale_provider.dart';
+import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
 import '../../../shared/domain/tool_prefill.dart';
@@ -16,7 +20,11 @@ import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
+import '../../vidya/domain/deliverable.dart';
+import '../../vidya/presentation/background_generation_controller.dart';
+import '../../vidya/presentation/deliverables_controller.dart';
 import '../../vidya/presentation/widgets/inline_field_mic.dart';
+import '../data/lesson_plan_repository.dart';
 import '../domain/lesson_plan.dart';
 import 'lesson_plan_controller.dart';
 import 'widgets/lesson_plan_error_view.dart';
@@ -128,6 +136,56 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
     ref.read(lessonPlanControllerProvider.notifier).generate(request);
   }
 
+  /// v3 screen 06 — hand the running generation to VIDYA and leave: she finishes
+  /// it off-screen (the orb rides along, working) and drops the plan into the
+  /// deliver tray when done (the orb turns green). Keeps the tool provider alive
+  /// across the pop with a subscription, then resets it so a later visit starts
+  /// on a blank form.
+  void _minimise() {
+    final l10n = context.l10n;
+    final container = ProviderScope.containerOf(context, listen: false);
+    final request = _lastRequest;
+    final keepAlive = container.listen<AsyncValue<LessonPlan?>>(
+      lessonPlanControllerProvider,
+      (_, _) {},
+    );
+    // Fire-and-forget: it outlives this screen by design.
+    unawaited(
+      runMinimisedGeneration<LessonPlan>(
+        controller: container.read(
+          backgroundGenerationControllerProvider.notifier,
+        ),
+        deliverables: container.read(deliverablesControllerProvider.notifier),
+        label: l10n.lessonPlanTitle,
+        awaitResult: () =>
+            container.read(lessonPlanControllerProvider.future),
+        toDeliverable: (plan) => Deliverable(
+          id: 'bg-lesson-${DateTime.now().microsecondsSinceEpoch}',
+          title: plan.title.isEmpty ? l10n.lessonPlanTitle : plan.title,
+          subtitle: plan.title.isEmpty ? null : plan.title,
+          text: lessonPlanAsPlainText(plan, l10n),
+          shareSubject: plan.title.isEmpty ? null : plan.title,
+          language: plan.language,
+          onSave: (request != null && plan.raw != null)
+              ? () => container
+                    .read(lessonPlanRepositoryProvider)
+                    .save(plan: plan, request: request)
+              : null,
+        ),
+        keepAlive: keepAlive,
+        onReset: () => container.invalidate(lessonPlanControllerProvider),
+      ),
+    );
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go(Routes.home);
+    }
+  }
+
+  /// Abandon the running generation and return to the form.
+  void _stop() => ref.read(lessonPlanControllerProvider.notifier).clear();
+
   /// Brings the result masthead to the top of the viewport when a fresh plan
   /// lands. Honours reduce-motion by jumping (no scroll tween).
   void _scrollToResult() {
@@ -204,6 +262,10 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
       // Hide the sticky Generate button once a plan is on screen — the
       // document's own action bar (Regenerate / Copy) takes over.
       onSubmit: (state.isLoading || hasResult) ? null : _submit,
+      // While generating, the busy button becomes "Minimise to orb / Stop"
+      // (v3 06) so the teacher can leave and let VIDYA finish.
+      onMinimise: _minimise,
+      onStop: _stop,
       result: KeyedSubtree(key: _resultKey, child: result),
       child: Form(
         key: _formKey,

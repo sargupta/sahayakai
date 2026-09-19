@@ -2027,6 +2027,19 @@ class AppLocalizationsKn extends AppLocalizations {
   String get vidyaStateReady => 'ಸಿದ್ಧವಾಗುತ್ತಿದೆ';
 
   @override
+  String get vidyaWorkingTitle => 'ಇದರ ಮೇಲೆ ಕೆಲಸ ಮಾಡುತ್ತಿದ್ದೇನೆ';
+
+  @override
+  String get vidyaWorkingBody =>
+      'ಬಳಕೆ ಮುಂದುವರಿಸಿ. ನಾನು ಹಿನ್ನೆಲೆಯಲ್ಲಿ ಮುಗಿಸುತ್ತೇನೆ.';
+
+  @override
+  String get vidyaWorkingMinimise => 'VIDYA ಗೆ ಸಂಕುಚಿಸಿ';
+
+  @override
+  String get vidyaWorkingStop => 'ನಿಲ್ಲಿಸಿ';
+
+  @override
   String get vidyaStateListening => 'ನಾನು ಕೇಳುತ್ತಿದ್ದೇನೆ';
 
   @override

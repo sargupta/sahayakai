@@ -2027,6 +2027,18 @@ class AppLocalizationsPa extends AppLocalizations {
   String get vidyaStateReady => 'ਤਿਆਰ ਹੋ ਰਿਹਾ ਹੈ';
 
   @override
+  String get vidyaWorkingTitle => 'ਇਸ \'ਤੇ ਕੰਮ ਕਰ ਰਹੀ ਹਾਂ';
+
+  @override
+  String get vidyaWorkingBody => 'ਐਪ ਵਰਤਦੇ ਰਹੋ। ਮੈਂ ਪਿੱਛੇ ਪੂਰਾ ਕਰ ਦਿਆਂਗੀ।';
+
+  @override
+  String get vidyaWorkingMinimise => 'VIDYA ਵਿੱਚ ਸਮੇਟੋ';
+
+  @override
+  String get vidyaWorkingStop => 'ਰੋਕੋ';
+
+  @override
   String get vidyaStateListening => 'ਮੈਂ ਸੁਣ ਰਹੀ ਹਾਂ';
 
   @override

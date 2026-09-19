@@ -3650,6 +3650,30 @@ abstract class AppLocalizations {
   /// **'Getting ready'**
   String get vidyaStateReady;
 
+  /// Working bar title while a generation runs (v3 06).
+  ///
+  /// In en, this message translates to:
+  /// **'Working on it'**
+  String get vidyaWorkingTitle;
+
+  /// Working bar body: reassures the teacher they can leave.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep using the app. I\'ll finish in the background.'**
+  String get vidyaWorkingBody;
+
+  /// Working bar action: hand the generation to the orb.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimise to orb'**
+  String get vidyaWorkingMinimise;
+
+  /// Working bar action: abandon the running generation.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get vidyaWorkingStop;
+
   /// Seal-mic caption while recording.
   ///
   /// In en, this message translates to:

@@ -2028,6 +2028,18 @@ class AppLocalizationsGu extends AppLocalizations {
   String get vidyaStateReady => 'તૈયાર થઈ રહ્યું છે';
 
   @override
+  String get vidyaWorkingTitle => 'આના પર કામ કરી રહી છું';
+
+  @override
+  String get vidyaWorkingBody => 'એપ વાપરતા રહો. હું પાછળથી પૂરું કરી દઈશ.';
+
+  @override
+  String get vidyaWorkingMinimise => 'VIDYA માં સંકેલો';
+
+  @override
+  String get vidyaWorkingStop => 'રોકો';
+
+  @override
   String get vidyaStateListening => 'હું સાંભળી રહી છું';
 
   @override

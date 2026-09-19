@@ -154,7 +154,7 @@ class _ActionBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final text = _planAsText(plan, l10n);
+    final text = lessonPlanAsPlainText(plan, l10n);
     final request = saveRequest;
     final canSave = request != null && plan.raw != null;
 
@@ -185,8 +185,10 @@ class _ActionBar extends ConsumerWidget {
   }
 }
 
-/// A plain-text export of the plan, for the clipboard.
-String _planAsText(LessonPlan plan, AppLocalizations l10n) {
+/// A plain-text export of the plan — for the clipboard, the OS share sheet, and
+/// the deliver tray (including when the plan is finished in the background and
+/// its result view never mounts). One serialiser, so every path reads alike.
+String lessonPlanAsPlainText(LessonPlan plan, AppLocalizations l10n) {
   final b = StringBuffer()..writeln(plan.title);
   final metaBits = [
     plan.gradeLevel,

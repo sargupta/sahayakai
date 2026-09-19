@@ -2527,6 +2527,22 @@
     "description": "Seal-mic caption when idle."
   },
   "vidyaStateReady": "Getting ready",
+  "vidyaWorkingTitle": "Working on it",
+  "@vidyaWorkingTitle": {
+    "description": "Working bar title while a generation runs (v3 06)."
+  },
+  "vidyaWorkingBody": "Keep using the app. I'll finish in the background.",
+  "@vidyaWorkingBody": {
+    "description": "Working bar body: reassures the teacher they can leave."
+  },
+  "vidyaWorkingMinimise": "Minimise to orb",
+  "@vidyaWorkingMinimise": {
+    "description": "Working bar action: hand the generation to the orb."
+  },
+  "vidyaWorkingStop": "Stop",
+  "@vidyaWorkingStop": {
+    "description": "Working bar action: abandon the running generation."
+  },
   "@vidyaStateReady": {
     "description": "Seal-mic caption while requesting the microphone."
   },
