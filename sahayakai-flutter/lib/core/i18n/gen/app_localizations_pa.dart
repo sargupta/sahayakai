@@ -2308,6 +2308,25 @@ class AppLocalizationsPa extends AppLocalizations {
   String get parentHotlineCall => 'ਮਾਪਿਆਂ ਨੂੰ ਕਾਲ ਕਰੋ';
 
   @override
+  String get parentHotlineCoverTitle => 'ਇਹ ਕਾਲ ਕੀ ਕੁਝ ਕਵਰ ਕਰਦੀ ਹੈ';
+
+  @override
+  String get parentHotlineCoverPoint1 =>
+      'ਮਾਪੇ ਦੀ ਭਾਸ਼ਾ ਵਿੱਚ ਨਿੱਘ ਨਾਲ ਸ਼ੁਰੂਆਤ, ਬਿਨਾਂ ਕਿਸੇ ਦੋਸ਼ ਦੇ।';
+
+  @override
+  String get parentHotlineCoverPoint2 =>
+      'ਪਹਿਲਾਂ ਸੁਣਦੀ ਹੈ, ਫਿਰ ਪੁੱਛਦੀ ਹੈ ਕਿ ਪਰਿਵਾਰ ਨੂੰ ਕੀ ਮਦਦ ਚਾਹੀਦੀ ਹੈ।';
+
+  @override
+  String get parentHotlineCoverPoint3 =>
+      'ਬੱਚੇ ਲਈ ਇੱਕ ਸਪਸ਼ਟ ਅਗਲੇ ਕਦਮ ਨਾਲ ਖ਼ਤਮ ਹੁੰਦੀ ਹੈ।';
+
+  @override
+  String get parentHotlineCoverAfter =>
+      'ਬਾਅਦ ਵਿੱਚ, VIDYA ਨਤੀਜਾ ਦਰਜ ਕਰਦੀ ਹੈ ਅਤੇ ਤੁਹਾਡੀ ਸਮੀਖਿਆ ਲਈ ਇੱਕ ਫਾਲੋ-ਅੱਪ ਤਿਆਰ ਕਰਦੀ ਹੈ।';
+
+  @override
   String get parentHotlineWhatsApp => 'WhatsApp ਲਈ ਕਾਪੀ ਕਰੋ';
 
   @override
@@ -2880,6 +2899,13 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get assessmentScannerPagesEmpty => 'ਪਹਿਲੇ ਸਫ਼ੇ ਦੀ ਇੱਕ ਫੋਟੋ ਸ਼ਾਮਲ ਕਰੋ।';
+
+  @override
+  String get assessmentScannerFrameGuide => 'ਪੂਰੀ ਸ਼ੀਟ ਨੂੰ ਫ੍ਰੇਮ ਦੇ ਅੰਦਰ ਰੱਖੋ';
+
+  @override
+  String get assessmentScannerFrameHint =>
+      'ਹਰ ਨਿਸ਼ਾਨ ਪੜ੍ਹਿਆ ਜਾ ਸਕੇ, ਇਸ ਲਈ ਇਸਨੂੰ ਚਮਕਦਾਰ, ਇੱਕਸਾਰ ਰੌਸ਼ਨੀ ਵਿੱਚ ਸਮਤਲ ਰੱਖੋ।';
 
   @override
   String assessmentScannerPageLabel(int number) {

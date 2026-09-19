@@ -4136,6 +4136,36 @@ abstract class AppLocalizations {
   /// **'Call parent'**
   String get parentHotlineCall;
 
+  /// v3 14 pre-call plan: card title.
+  ///
+  /// In en, this message translates to:
+  /// **'What this call covers'**
+  String get parentHotlineCoverTitle;
+
+  /// v3 14 pre-call plan: warm opening point.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens warmly in the parent\'s language, with no blame.'**
+  String get parentHotlineCoverPoint1;
+
+  /// v3 14 pre-call plan: listen-first point.
+  ///
+  /// In en, this message translates to:
+  /// **'Listens first, then asks what support the family needs.'**
+  String get parentHotlineCoverPoint2;
+
+  /// v3 14 pre-call plan: clear next-step point.
+  ///
+  /// In en, this message translates to:
+  /// **'Ends with one clear next step for the child.'**
+  String get parentHotlineCoverPoint3;
+
+  /// v3 14 pre-call plan: after-call log + follow-up note.
+  ///
+  /// In en, this message translates to:
+  /// **'Afterwards, VIDYA logs the outcome and drafts a follow-up for you to review.'**
+  String get parentHotlineCoverAfter;
+
   /// Decision-bar action that copies the message to paste in WhatsApp (the universal fallback).
   ///
   /// In en, this message translates to:
@@ -5041,6 +5071,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add a photo of the first page.'**
   String get assessmentScannerPagesEmpty;
+
+  /// Scanner framing guide headline (v3 11).
+  ///
+  /// In en, this message translates to:
+  /// **'Fit the whole sheet inside the frame'**
+  String get assessmentScannerFrameGuide;
+
+  /// Scanner framing quality tip (v3 11).
+  ///
+  /// In en, this message translates to:
+  /// **'Lay it flat in bright, even light so every mark is read.'**
+  String get assessmentScannerFrameHint;
 
   /// Label for one captured page.
   ///

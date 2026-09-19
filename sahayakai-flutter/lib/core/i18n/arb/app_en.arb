@@ -2851,6 +2851,16 @@
     "description": "Saffron eyebrow over the drafted message on the review stage."
   },
   "parentHotlineCall": "Call parent",
+  "parentHotlineCoverTitle": "What this call covers",
+  "@parentHotlineCoverTitle": { "description": "v3 14 pre-call plan: card title." },
+  "parentHotlineCoverPoint1": "Opens warmly in the parent's language, with no blame.",
+  "@parentHotlineCoverPoint1": { "description": "v3 14 pre-call plan: warm opening point." },
+  "parentHotlineCoverPoint2": "Listens first, then asks what support the family needs.",
+  "@parentHotlineCoverPoint2": { "description": "v3 14 pre-call plan: listen-first point." },
+  "parentHotlineCoverPoint3": "Ends with one clear next step for the child.",
+  "@parentHotlineCoverPoint3": { "description": "v3 14 pre-call plan: clear next-step point." },
+  "parentHotlineCoverAfter": "Afterwards, VIDYA logs the outcome and drafts a follow-up for you to review.",
+  "@parentHotlineCoverAfter": { "description": "v3 14 pre-call plan: after-call log + follow-up note." },
   "@parentHotlineCall": {
     "description": "Primary decision-bar action that places the AI voice call."
   },
@@ -3528,6 +3538,10 @@
     "description": "Hint under the pages field."
   },
   "assessmentScannerPagesEmpty": "Add a photo of the first page.",
+  "assessmentScannerFrameGuide": "Fit the whole sheet inside the frame",
+  "@assessmentScannerFrameGuide": { "description": "Scanner framing guide headline (v3 11)." },
+  "assessmentScannerFrameHint": "Lay it flat in bright, even light so every mark is read.",
+  "@assessmentScannerFrameHint": { "description": "Scanner framing quality tip (v3 11)." },
   "@assessmentScannerPagesEmpty": {
     "description": "Prompt inside the empty page-capture well."
   },

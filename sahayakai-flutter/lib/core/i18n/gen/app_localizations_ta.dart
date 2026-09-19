@@ -2352,6 +2352,25 @@ class AppLocalizationsTa extends AppLocalizations {
   String get parentHotlineCall => 'பெற்றோரை அழைக்கவும்';
 
   @override
+  String get parentHotlineCoverTitle => 'இந்த அழைப்பு எதை உள்ளடக்கும்';
+
+  @override
+  String get parentHotlineCoverPoint1 =>
+      'பெற்றோரின் மொழியில் அன்பாக தொடங்குகிறது, குற்றம் சாட்டாமல்.';
+
+  @override
+  String get parentHotlineCoverPoint2 =>
+      'முதலில் கேட்கிறது, பிறகு குடும்பத்துக்கு என்ன உதவி தேவை என்று கேட்கிறது.';
+
+  @override
+  String get parentHotlineCoverPoint3 =>
+      'குழந்தைக்கான தெளிவான ஒரு அடுத்த படியுடன் முடிகிறது.';
+
+  @override
+  String get parentHotlineCoverAfter =>
+      'பிறகு, VIDYA முடிவைப் பதிவு செய்து, நீங்கள் பரிசீலிக்க ஒரு தொடர்நடவடிக்கையை உருவாக்குகிறது.';
+
+  @override
   String get parentHotlineWhatsApp => 'WhatsApp-க்கு நகலெடுக்கவும்';
 
   @override
@@ -2934,6 +2953,14 @@ class AppLocalizationsTa extends AppLocalizations {
   @override
   String get assessmentScannerPagesEmpty =>
       'முதல் பக்கத்தின் ஒரு புகைப்படத்தைச் சேர்க்கவும்.';
+
+  @override
+  String get assessmentScannerFrameGuide =>
+      'முழு தாளையும் சட்டகத்திற்குள் வையுங்கள்';
+
+  @override
+  String get assessmentScannerFrameHint =>
+      'ஒவ்வொரு அடையாளமும் படிக்கப்பட, பிரகாசமான, சீரான வெளிச்சத்தில் தட்டையாக வையுங்கள்.';
 
   @override
   String assessmentScannerPageLabel(int number) {
