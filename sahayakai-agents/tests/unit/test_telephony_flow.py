@@ -264,6 +264,13 @@ class TestEndingIsGuarded:
         assert not telephony._may_end_yet(self._Bridge(1, "haan"))
         assert not telephony._may_end_yet(self._Bridge(0, ""))
 
+    def test_allows_a_genuinely_short_call_to_end(self) -> None:
+        # Live failure this encodes: the parent said "haan, boliye", heard the
+        # message, said "achha, theek hai, thank you" — complete and satisfied
+        # in two turns — and the guard refused to let it end, so the school kept
+        # talking and THEY had to hang up.
+        assert telephony._may_end_yet(self._Bridge(2, "achha theek hai, thank you"))
+
     def test_an_already_answered_question_does_not_block_the_goodbye(self) -> None:
         # Live failure this encodes: the parent asked something, got an answer,
         # then said goodbye — and the end was declined three times because the

@@ -155,9 +155,19 @@ _CONVERSATION_SILENCE = 9.0
 #: After this many unanswered nudges, close warmly instead of nagging.
 _MAX_SILENCE_NUDGES = 2
 #: The parent must have spoken at least this many times before the model is
-#: allowed to end the call. Below this it was not a conversation, it was a
-#: delivery, and ending reads as being hung up on.
-_MIN_PARENT_TURNS_BEFORE_END = 3
+#: allowed to end the call. One turn is not a conversation — ending there is a
+#: delivery that hangs up, which is what people resent about robocalls.
+#:
+#: Two, not three. Three was wrong on a real call: the parent said "haan,
+#: boliye", heard the message, said "achha, theek hai, thank you" — a complete
+#: and satisfied call in two turns — and the guard refused to let it end, so the
+#: school kept talking and THEY had to hang up. Being talked at after you have
+#: said goodbye is precisely the rudeness this was meant to prevent.
+#:
+#: The real protection against ending early is the question veto below, not this
+#: count: the premature end it caught came after a question, not after a short
+#: call.
+_MIN_PARENT_TURNS_BEFORE_END = 2
 
 #: A question in the parent's last words vetoes an end. Deliberately broad: a
 #: missed veto hangs up on someone mid-question, a spurious one merely keeps a
@@ -187,7 +197,13 @@ _TRANSCRIPT_DEBUG = os.environ.get("VOBIZ_LOG_TRANSCRIPT", "").strip().lower() i
 _CLOSING_GRACE_SECONDS = 12.0
 
 #: Resync rather than burst-catch-up beyond this much lag.
-_MAX_PACING_LAG = 0.5
+#:
+#: MUST stay larger than `_PREBUFFER_SECONDS`. The pacer starts deliberately
+#: "behind" in order to build the carrier's jitter buffer; if this threshold is
+#: tighter than that lead, the very first tick reads it as lag and resyncs the
+#: buffer away before a single frame goes out. Raising the prebuffer to 0.6
+#: without raising this did exactly that, and the gate below caught it.
+_MAX_PACING_LAG = 0.9
 
 #: Run this far ahead of real time so the carrier holds a jitter buffer.
 #:
@@ -202,7 +218,11 @@ _MAX_PACING_LAG = 0.5
 #: comfortably more than our worst observed stall, and short enough that
 #: barge-in still feels immediate, especially since `clearAudio` tells the
 #: carrier to drop exactly this buffer.
-_PREBUFFER_SECONDS = 0.4
+#:
+#: 600ms rather than 400: a real call showed a worst-case stall of 493ms, which
+#: a 400ms buffer does not cover — the tail of it reaches the parent as a gap.
+#: Sized to observed behaviour rather than to a round number.
+_PREBUFFER_SECONDS = 0.6
 
 _CLOSE_BAD_TOKEN = 4401
 _CLOSE_AT_CAPACITY = 4503

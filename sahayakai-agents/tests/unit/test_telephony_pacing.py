@@ -172,7 +172,10 @@ class TestPrebuffer:
     async def test_the_lead_is_bounded(self) -> None:
         # Too much lead and an interruption has seconds of speech already
         # committed to the carrier, so barge-in stops feeling immediate.
-        assert 0.2 <= telephony._PREBUFFER_SECONDS <= 0.8
+        assert 0.2 <= telephony._PREBUFFER_SECONDS <= 1.0
+        # And it must cover the worst stall actually observed on a real call
+        # (493ms), or the tail of that stall is a gap in the parent's ear.
+        assert telephony._PREBUFFER_SECONDS >= 0.5
         # And the resync threshold must not be tighter than the lead, or every
         # call would resync away the buffer it just built.
         assert telephony._MAX_PACING_LAG >= telephony._PREBUFFER_SECONDS
