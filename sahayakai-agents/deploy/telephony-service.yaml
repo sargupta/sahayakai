@@ -1,0 +1,109 @@
+# Cloud Run service declaration — sahayakai-telephony.
+#
+# The SAME image as sahayakai-agents, deployed with SAHAYAKAI_TELEPHONY_ONLY=1
+# so it registers only the token-gated media socket and the health probes.
+#
+# WHY IT IS A SEPARATE SERVICE
+#
+# sahayakai-agents grants roles/run.invoker to the Next.js runtime SA and nobody
+# else, so Cloud Run refuses unauthenticated traffic before it reaches the app.
+# Vobiz dials the media socket straight from the public internet and cannot mint
+# a Google identity token. Making that work on the agent service would mean
+# granting allUsers there, which would expose every agent endpoint too. This
+# service takes the allUsers grant instead, and has almost no surface to expose.
+#
+# Apply via:
+#   gcloud run services replace deploy/telephony-service.yaml \
+#     --region=asia-southeast1 --project=sahayakai-b4248
+# then grant public invocation (the whole point of the split):
+#   gcloud run services add-iam-policy-binding sahayakai-telephony \
+#     --member=allUsers --role=roles/run.invoker --region=asia-southeast1
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: sahayakai-telephony
+  annotations:
+    run.googleapis.com/ingress: all
+spec:
+  template:
+    metadata:
+      annotations:
+        # A cold start during an answered call is DEAD AIR in a parent's ear.
+        # The instance must already be warm when Vobiz opens the socket.
+        autoscaling.knative.dev/minScale: "1"
+        autoscaling.knative.dev/maxScale: "4"
+        # Audio relay is latency-critical and runs continuously for the whole
+        # call; a throttled CPU between requests stutters the stream.
+        run.googleapis.com/cpu-throttling: "false"
+        run.googleapis.com/execution-environment: gen2
+        run.googleapis.com/startup-cpu-boost: "true"
+    spec:
+      serviceAccountName: sahayakai-agents-runtime@sahayakai-b4248.iam.gserviceaccount.com
+      # A media socket stays open for the length of the call. The app caps a
+      # session at 600s (VOBIZ_MAX_CALL_SECONDS); this is the outer bound and
+      # must exceed it, or Cloud Run cuts the call mid-sentence.
+      timeoutSeconds: 900
+      # Each connection is a live audio relay plus a metered Live session, so
+      # concurrency is a spend and quality ceiling rather than a throughput knob.
+      containerConcurrency: 8
+      containers:
+        - image: ${IMAGE}
+          ports:
+            - name: http1
+              containerPort: 8080
+          resources:
+            limits:
+              cpu: "2"
+              memory: "1Gi"
+          env:
+            - name: SAHAYAKAI_TELEPHONY_ONLY
+              value: "1"
+            - name: SAHAYAKAI_AGENTS_ENV
+              value: production
+            - name: GOOGLE_CLOUD_PROJECT
+              value: sahayakai-b4248
+            - name: GOOGLE_CLOUD_REGION
+              value: asia-southeast1
+            # Verifies the media-stream token. Same secret the web runtime mints
+            # with; the domain tag in the signature keeps the two surfaces apart.
+            - name: SAHAYAKAI_REQUEST_SIGNING_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: SAHAYAKAI_REQUEST_SIGNING_KEY
+                  key: latest
+            # Needed to end the leg: keepCallAlive means closing the socket does
+            # not hang up, so the app calls the carrier's REST API.
+            - name: VOBIZ_AUTH_ID
+              valueFrom:
+                secretKeyRef:
+                  name: VOBIZ_AUTH_ID
+                  key: latest
+            - name: VOBIZ_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: VOBIZ_AUTH_TOKEN
+                  key: latest
+            - name: SAHAYAKAI_PROMPTS_DIR
+              value: /srv/prompts
+            # No App Check gate here: the peer is a telephony carrier, not a
+            # Firebase client. The signed single-use token is the gate.
+            - name: SAHAYAKAI_REQUIRE_APP_CHECK
+              value: "false"
+          startupProbe:
+            httpGet:
+              path: /readyz
+              port: 8080
+            initialDelaySeconds: 0
+            periodSeconds: 2
+            timeoutSeconds: 1
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+  traffic:
+    - percent: 100
+      latestRevision: true
