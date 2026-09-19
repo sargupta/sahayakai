@@ -144,7 +144,7 @@ class _QuizResultViewState extends State<QuizResultView> {
           onToggleAll: () => _toggleAll(quiz.variants.first),
         )
       else
-        _DifficultyTabs(
+        _DifficultyVariants(
           variants: quiz.variants,
           revealedOf: _revealedOf,
           onToggle: _toggle,
@@ -279,13 +279,14 @@ String _quizAsText(
   return b.toString().trimRight();
 }
 
-/// The Easy / Medium / Hard switcher. Deliberately NOT a `TabBarView`: this
-/// result lives inside the [DocumentSheet], itself inside the [ToolScaffold]'s
-/// scroll view, where a TabBarView's unbounded height would blow up. A TabBar
-/// drives an [AnimatedSwitcher] instead, so each variant is laid out at its
-/// natural height.
-class _DifficultyTabs extends StatefulWidget {
-  const _DifficultyTabs({
+/// The Easy / Medium / Hard switcher — a segmented control (v3 screen 09), the
+/// selected segment filled saffron. Deliberately NOT a `TabBarView`: this result
+/// lives inside the [DocumentSheet], itself inside the [ToolScaffold]'s scroll
+/// view, where a TabBarView's unbounded height would blow up. The segmented
+/// control drives an [AnimatedSwitcher] instead, so each variant is laid out at
+/// its natural height.
+class _DifficultyVariants extends StatefulWidget {
+  const _DifficultyVariants({
     required this.variants,
     required this.revealedOf,
     required this.onToggle,
@@ -301,92 +302,138 @@ class _DifficultyTabs extends StatefulWidget {
   final void Function(QuizVariant) onToggleAll;
 
   @override
-  State<_DifficultyTabs> createState() => _DifficultyTabsState();
+  State<_DifficultyVariants> createState() => _DifficultyVariantsState();
 }
 
-class _DifficultyTabsState extends State<_DifficultyTabs>
-    with SingleTickerProviderStateMixin {
-  late final TabController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TabController(length: widget.variants.length, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+class _DifficultyVariantsState extends State<_DifficultyVariants> {
+  int _index = 0;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
+    final variant = widget.variants[_index];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: scheme.surfaceContainer,
-            borderRadius: AppRadius.rMd,
-          ),
-          child: TabBar(
-            controller: _controller,
-            // A short label set (three words); a fixed bar keeps them evenly
-            // weighted and cannot overflow at 360dp.
-            dividerColor: Colors.transparent,
-            indicatorSize: TabBarIndicatorSize.tab,
-            indicator: BoxDecoration(
-              color: scheme.primary.withValues(alpha: 0.12),
-              borderRadius: AppRadius.rMd,
-              border: Border.all(color: scheme.primary),
-            ),
-            labelColor: scheme.primary,
-            unselectedLabelColor: scheme.onSurfaceVariant,
-            splashBorderRadius: AppRadius.rMd,
-            tabs: [
-              for (final variant in widget.variants)
-                Tab(
-                  height: 48,
-                  child: Text(
-                    _difficultyLabel(l10n, variant.difficulty),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-            ],
-          ),
+        QuizDifficultySegmented(
+          labels: [
+            for (final v in widget.variants)
+              _difficultyLabel(l10n, v.difficulty),
+          ],
+          selectedIndex: _index,
+          onSelected: (i) => setState(() => _index = i),
         ),
         const SizedBox(height: AppSpacing.space6),
-        AnimatedBuilder(
-          animation: _controller,
-          builder: (context, _) {
-            final variant = widget.variants[_controller.index];
-            return AnimatedSwitcher(
-              duration: AppMotion.small,
-              switchInCurve: AppMotion.easeOutQuart,
-              switchOutCurve: AppMotion.easeOutQuart,
-              // Cross-fade in place; a size transition would fight the outer
-              // scroll view on long quizzes.
-              layoutBuilder: (current, previous) => Stack(
-                alignment: Alignment.topLeft,
-                children: [...previous, ?current],
-              ),
-              child: _VariantView(
-                key: ValueKey<QuizDifficulty>(variant.difficulty),
-                variant: variant,
-                revealed: widget.revealedOf(variant),
-                onToggle: (i) => widget.onToggle(variant, i),
-                onToggleAll: () => widget.onToggleAll(variant),
-              ),
-            );
-          },
+        AnimatedSwitcher(
+          duration: AppMotion.small,
+          switchInCurve: AppMotion.easeOutQuart,
+          switchOutCurve: AppMotion.easeOutQuart,
+          // Cross-fade in place; a size transition would fight the outer scroll
+          // view on long quizzes.
+          layoutBuilder: (current, previous) => Stack(
+            alignment: Alignment.topLeft,
+            children: [...previous, ?current],
+          ),
+          child: _VariantView(
+            key: ValueKey<QuizDifficulty>(variant.difficulty),
+            variant: variant,
+            revealed: widget.revealedOf(variant),
+            onToggle: (i) => widget.onToggle(variant, i),
+            onToggleAll: () => widget.onToggleAll(variant),
+          ),
         ),
       ],
+    );
+  }
+}
+
+/// A saffron-filled segmented control (v3 screen 09): one rounded track, the
+/// selected segment filled `scheme.primary` with `onPrimary` text (the app's
+/// button fill contract), the rest plain on the track. Public so the quiz result
+/// tests can target it (its labels also appear as per-question difficulty
+/// badges, so tests scope finders to this widget).
+class QuizDifficultySegmented extends StatelessWidget {
+  const QuizDifficultySegmented({
+    super.key,
+    required this.labels,
+    required this.selectedIndex,
+    required this.onSelected,
+  });
+
+  final List<String> labels;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainer,
+        borderRadius: AppRadius.rMd,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.space1),
+        child: Row(
+          children: [
+            for (var i = 0; i < labels.length; i++)
+              Expanded(
+                child: _Segment(
+                  label: labels[i],
+                  selected: i == selectedIndex,
+                  onTap: () => onSelected(i),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Segment extends StatelessWidget {
+  const _Segment({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    return Material(
+      color: Colors.transparent,
+      borderRadius: AppRadius.rSm,
+      child: InkWell(
+        borderRadius: AppRadius.rSm,
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: AppMotion.micro,
+          curve: AppMotion.easeOutQuart,
+          height: 44,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: selected ? scheme.primary : Colors.transparent,
+            borderRadius: AppRadius.rSm,
+          ),
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: text.labelLarge?.copyWith(
+              color: selected ? scheme.onPrimary : scheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
