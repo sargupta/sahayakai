@@ -3868,4 +3868,44 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get communityFilterHighlights => 'ମୁଖ୍ୟାଂଶ';
+
+  @override
+  String get attendanceVoiceRollCall => 'ନାମଗୁଡ଼ିକ ଉଚ୍ଚ ସ୍ୱରରେ ପଢ଼ନ୍ତୁ';
+
+  @override
+  String get attendanceVoiceListeningTitle => 'ଶୁଣୁଛି…';
+
+  @override
+  String get attendanceVoiceListeningBody =>
+      'ଆପଣଙ୍କ ଶ୍ରେଣୀର ହାଜିରା ଉଚ୍ଚ ସ୍ୱରରେ ପଢ଼ନ୍ତୁ। ମୁଁ ପ୍ରତ୍ୟେକ ନାମକୁ ଉପସ୍ଥିତ ଭାବେ ଚିହ୍ନଟ କରିବି; ଗୋଟିଏ ବଦଳାଇବାକୁ \'ଅନୁପସ୍ଥିତ\' କିମ୍ବା \'ବିଳମ୍ବ\' କୁହନ୍ତୁ।';
+
+  @override
+  String get attendanceVoiceWorking => 'ଏକ ମୁହୂର୍ତ୍ତ…';
+
+  @override
+  String get attendanceVoiceWorkingBody =>
+      'ଆପଣ କହିଥିବା ଅନୁସାରେ ହାଜିରା ଚିହ୍ନଟ କରୁଛି।';
+
+  @override
+  String get attendanceVoiceMicOffTitle => 'ମାଇକ୍ରୋଫୋନ୍ ଆବଶ୍ୟକ';
+
+  @override
+  String get attendanceVoiceMicOffBody =>
+      'ସ୍ୱରରେ ହାଜିରା ନେବାକୁ ମାଇକ୍ରୋଫୋନ୍ ଅନୁମତି ଦିଅନ୍ତୁ।';
+
+  @override
+  String get attendanceVoiceFailedTitle => 'ବୁଝିପାରିଲି ନାହିଁ';
+
+  @override
+  String get attendanceVoiceFailedBody =>
+      'କିଛି ଭୁଲ ହୋଇଗଲା। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
+
+  @override
+  String get attendanceVoiceNone =>
+      'ମୋତେ କୌଣସି ନାମ ବୁଝାପଡ଼ିଲା ନାହିଁ। ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।';
+
+  @override
+  String attendanceVoiceMarked(int count) {
+    return '$countଟି ନାମ ଚିହ୍ନଟ ହେଲା।';
+  }
 }

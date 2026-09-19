@@ -1090,5 +1090,16 @@
   "communityFilterAll": "सर्व",
   "communityFilterPosts": "पोस्ट",
   "communityFilterResources": "संसाधने",
-  "communityFilterHighlights": "ठळक मुद्दे"
+  "communityFilterHighlights": "ठळक मुद्दे",
+  "attendanceVoiceRollCall": "नावे मोठ्याने वाचा",
+  "attendanceVoiceListeningTitle": "ऐकत आहे…",
+  "attendanceVoiceListeningBody": "तुमच्या वर्गाची हजेरी मोठ्याने वाचा. मी प्रत्येक नाव उपस्थित म्हणून नोंदवेन; एखादे बदलण्यासाठी 'अनुपस्थित' किंवा 'उशीरा' म्हणा.",
+  "attendanceVoiceWorking": "एक क्षण…",
+  "attendanceVoiceWorkingBody": "तुम्ही सांगितल्यानुसार हजेरी नोंदवत आहे.",
+  "attendanceVoiceMicOffTitle": "मायक्रोफोन आवश्यक",
+  "attendanceVoiceMicOffBody": "आवाजाने हजेरी घेण्यासाठी मायक्रोफोनला परवानगी द्या.",
+  "attendanceVoiceFailedTitle": "समजले नाही",
+  "attendanceVoiceFailedBody": "काहीतरी चूक झाली. कृपया पुन्हा प्रयत्न करा.",
+  "attendanceVoiceNone": "मला कोणतेही नाव समजले नाही. पुन्हा प्रयत्न करा.",
+  "attendanceVoiceMarked": "{count} नावे नोंदवली."
 }

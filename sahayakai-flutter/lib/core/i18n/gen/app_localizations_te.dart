@@ -3862,4 +3862,44 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get communityFilterHighlights => 'ముఖ్యాంశాలు';
+
+  @override
+  String get attendanceVoiceRollCall => 'పేర్లను బిగ్గరగా చదవండి';
+
+  @override
+  String get attendanceVoiceListeningTitle => 'వింటున్నాను…';
+
+  @override
+  String get attendanceVoiceListeningBody =>
+      'మీ తరగతి హాజరును బిగ్గరగా చదవండి. ప్రతి పేరును హాజరుగా గుర్తిస్తాను; ఒకదాన్ని మార్చడానికి \'గైర్హాజరు\' లేదా \'ఆలస్యం\' అని చెప్పండి.';
+
+  @override
+  String get attendanceVoiceWorking => 'ఒక్క క్షణం…';
+
+  @override
+  String get attendanceVoiceWorkingBody =>
+      'మీరు చెప్పిన దాన్నుంచి హాజరును గుర్తిస్తున్నాను.';
+
+  @override
+  String get attendanceVoiceMicOffTitle => 'మైక్రోఫోన్ అవసరం';
+
+  @override
+  String get attendanceVoiceMicOffBody =>
+      'వాయిస్‌తో హాజరు తీసుకోవడానికి మైక్రోఫోన్‌కు అనుమతి ఇవ్వండి.';
+
+  @override
+  String get attendanceVoiceFailedTitle => 'అర్థం కాలేదు';
+
+  @override
+  String get attendanceVoiceFailedBody =>
+      'ఏదో తప్పు జరిగింది. దయచేసి మళ్లీ ప్రయత్నించండి.';
+
+  @override
+  String get attendanceVoiceNone =>
+      'నాకు ఏ పేరూ అర్థం కాలేదు. మళ్లీ ప్రయత్నించండి.';
+
+  @override
+  String attendanceVoiceMarked(int count) {
+    return '$count పేర్లు గుర్తించబడ్డాయి.';
+  }
 }

@@ -3912,4 +3912,44 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get communityFilterHighlights => 'சிறப்பம்சங்கள்';
+
+  @override
+  String get attendanceVoiceRollCall => 'பெயர்களை உரக்கப் படியுங்கள்';
+
+  @override
+  String get attendanceVoiceListeningTitle => 'கேட்கிறேன்…';
+
+  @override
+  String get attendanceVoiceListeningBody =>
+      'உங்கள் வகுப்பு வருகைப் பட்டியலை உரக்கப் படியுங்கள். ஒவ்வொரு பெயரையும் வந்ததாக நான் குறிப்பேன்; ஒன்றை மாற்ற \'வரவில்லை\' அல்லது \'தாமதம்\' எனச் சொல்லுங்கள்.';
+
+  @override
+  String get attendanceVoiceWorking => 'ஒரு கணம்…';
+
+  @override
+  String get attendanceVoiceWorkingBody =>
+      'நீங்கள் சொன்னதிலிருந்து வருகையைக் குறிக்கிறேன்.';
+
+  @override
+  String get attendanceVoiceMicOffTitle => 'ஒலிவாங்கி தேவை';
+
+  @override
+  String get attendanceVoiceMicOffBody =>
+      'குரலால் வருகை எடுக்க ஒலிவாங்கிக்கு அனுமதி அளிக்கவும்.';
+
+  @override
+  String get attendanceVoiceFailedTitle => 'புரியவில்லை';
+
+  @override
+  String get attendanceVoiceFailedBody =>
+      'ஏதோ தவறு நடந்தது. மீண்டும் முயற்சிக்கவும்.';
+
+  @override
+  String get attendanceVoiceNone =>
+      'எந்தப் பெயரும் புரியவில்லை. மீண்டும் முயற்சிக்கவும்.';
+
+  @override
+  String attendanceVoiceMarked(int count) {
+    return '$count பெயர்கள் குறிக்கப்பட்டன.';
+  }
 }

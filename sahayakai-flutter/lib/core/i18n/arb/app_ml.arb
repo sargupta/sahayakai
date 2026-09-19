@@ -1090,5 +1090,16 @@
   "communityFilterAll": "എല്ലാം",
   "communityFilterPosts": "പോസ്റ്റുകൾ",
   "communityFilterResources": "വിഭവങ്ങൾ",
-  "communityFilterHighlights": "പ്രധാന ഭാഗങ്ങൾ"
+  "communityFilterHighlights": "പ്രധാന ഭാഗങ്ങൾ",
+  "attendanceVoiceRollCall": "പേരുകൾ ഉറക്കെ വായിക്കുക",
+  "attendanceVoiceListeningTitle": "കേൾക്കുന്നു…",
+  "attendanceVoiceListeningBody": "നിങ്ങളുടെ ക്ലാസ്സിന്റെ ഹാജർ ഉറക്കെ വായിക്കുക. ഓരോ പേരും ഹാജരായി ഞാൻ അടയാളപ്പെടുത്തും; ഒന്ന് മാറ്റാൻ 'ഹാജരില്ല' അല്ലെങ്കിൽ 'വൈകി' എന്ന് പറയുക.",
+  "attendanceVoiceWorking": "ഒരു നിമിഷം…",
+  "attendanceVoiceWorkingBody": "നിങ്ങൾ പറഞ്ഞതിൽ നിന്ന് ഹാജർ അടയാളപ്പെടുത്തുന്നു.",
+  "attendanceVoiceMicOffTitle": "മൈക്രോഫോൺ വേണം",
+  "attendanceVoiceMicOffBody": "ശബ്ദത്തിലൂടെ ഹാജർ എടുക്കാൻ മൈക്രോഫോണിന് അനുമതി നൽകുക.",
+  "attendanceVoiceFailedTitle": "മനസ്സിലായില്ല",
+  "attendanceVoiceFailedBody": "എന്തോ പിഴച്ചു. വീണ്ടും ശ്രമിക്കുക.",
+  "attendanceVoiceNone": "എനിക്ക് ഒരു പേരും മനസ്സിലായില്ല. വീണ്ടും ശ്രമിക്കുക.",
+  "attendanceVoiceMarked": "{count} പേരുകൾ അടയാളപ്പെടുത്തി."
 }

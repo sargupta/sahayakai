@@ -1090,5 +1090,16 @@
   "communityFilterAll": "அனைத்தும்",
   "communityFilterPosts": "இடுகைகள்",
   "communityFilterResources": "வளங்கள்",
-  "communityFilterHighlights": "சிறப்பம்சங்கள்"
+  "communityFilterHighlights": "சிறப்பம்சங்கள்",
+  "attendanceVoiceRollCall": "பெயர்களை உரக்கப் படியுங்கள்",
+  "attendanceVoiceListeningTitle": "கேட்கிறேன்…",
+  "attendanceVoiceListeningBody": "உங்கள் வகுப்பு வருகைப் பட்டியலை உரக்கப் படியுங்கள். ஒவ்வொரு பெயரையும் வந்ததாக நான் குறிப்பேன்; ஒன்றை மாற்ற 'வரவில்லை' அல்லது 'தாமதம்' எனச் சொல்லுங்கள்.",
+  "attendanceVoiceWorking": "ஒரு கணம்…",
+  "attendanceVoiceWorkingBody": "நீங்கள் சொன்னதிலிருந்து வருகையைக் குறிக்கிறேன்.",
+  "attendanceVoiceMicOffTitle": "ஒலிவாங்கி தேவை",
+  "attendanceVoiceMicOffBody": "குரலால் வருகை எடுக்க ஒலிவாங்கிக்கு அனுமதி அளிக்கவும்.",
+  "attendanceVoiceFailedTitle": "புரியவில்லை",
+  "attendanceVoiceFailedBody": "ஏதோ தவறு நடந்தது. மீண்டும் முயற்சிக்கவும்.",
+  "attendanceVoiceNone": "எந்தப் பெயரும் புரியவில்லை. மீண்டும் முயற்சிக்கவும்.",
+  "attendanceVoiceMarked": "{count} பெயர்கள் குறிக்கப்பட்டன."
 }

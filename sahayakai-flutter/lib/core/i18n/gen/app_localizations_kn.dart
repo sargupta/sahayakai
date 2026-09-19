@@ -3853,4 +3853,44 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get communityFilterHighlights => 'ಮುಖ್ಯಾಂಶಗಳು';
+
+  @override
+  String get attendanceVoiceRollCall => 'ಹೆಸರುಗಳನ್ನು ಜೋರಾಗಿ ಓದಿ';
+
+  @override
+  String get attendanceVoiceListeningTitle => 'ಕೇಳುತ್ತಿದ್ದೇನೆ…';
+
+  @override
+  String get attendanceVoiceListeningBody =>
+      'ನಿಮ್ಮ ತರಗತಿಯ ಹಾಜರಾತಿಯನ್ನು ಜೋರಾಗಿ ಓದಿ. ಪ್ರತಿ ಹೆಸರನ್ನೂ ಹಾಜರ್ ಎಂದು ಗುರುತಿಸುತ್ತೇನೆ; ಒಂದನ್ನು ಬದಲಿಸಲು \'ಗೈರುಹಾಜರ್\' ಅಥವಾ \'ತಡ\' ಎನ್ನಿ.';
+
+  @override
+  String get attendanceVoiceWorking => 'ಒಂದು ಕ್ಷಣ…';
+
+  @override
+  String get attendanceVoiceWorkingBody =>
+      'ನೀವು ಹೇಳಿದ್ದರಿಂದ ಹಾಜರಾತಿಯನ್ನು ಗುರುತಿಸುತ್ತಿದ್ದೇನೆ.';
+
+  @override
+  String get attendanceVoiceMicOffTitle => 'ಮೈಕ್ರೊಫೋನ್ ಬೇಕು';
+
+  @override
+  String get attendanceVoiceMicOffBody =>
+      'ಧ್ವನಿಯಿಂದ ಹಾಜರಾತಿ ತೆಗೆದುಕೊಳ್ಳಲು ಮೈಕ್ರೊಫೋನ್‌ಗೆ ಅನುಮತಿ ನೀಡಿ.';
+
+  @override
+  String get attendanceVoiceFailedTitle => 'ಅರ್ಥವಾಗಲಿಲ್ಲ';
+
+  @override
+  String get attendanceVoiceFailedBody =>
+      'ಏನೋ ತಪ್ಪಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.';
+
+  @override
+  String get attendanceVoiceNone =>
+      'ನನಗೆ ಯಾವ ಹೆಸರೂ ಅರ್ಥವಾಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.';
+
+  @override
+  String attendanceVoiceMarked(int count) {
+    return '$count ಹೆಸರುಗಳನ್ನು ಗುರುತಿಸಲಾಗಿದೆ.';
+  }
 }

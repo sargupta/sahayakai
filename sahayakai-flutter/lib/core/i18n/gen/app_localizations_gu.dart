@@ -3843,4 +3843,42 @@ class AppLocalizationsGu extends AppLocalizations {
 
   @override
   String get communityFilterHighlights => 'મુખ્ય અંશો';
+
+  @override
+  String get attendanceVoiceRollCall => 'નામ મોટેથી વાંચો';
+
+  @override
+  String get attendanceVoiceListeningTitle => 'સાંભળી રહી છું…';
+
+  @override
+  String get attendanceVoiceListeningBody =>
+      'તમારા વર્ગની હાજરી મોટેથી વાંચો. હું દરેક નામ હાજર તરીકે નોંધીશ; કોઈ એક બદલવા \'ગેરહાજર\' અથવા \'મોડું\' કહો.';
+
+  @override
+  String get attendanceVoiceWorking => 'એક ક્ષણ…';
+
+  @override
+  String get attendanceVoiceWorkingBody =>
+      'તમે કહ્યું તેમાંથી હાજરી નોંધી રહી છું.';
+
+  @override
+  String get attendanceVoiceMicOffTitle => 'માઇક્રોફોન જરૂરી';
+
+  @override
+  String get attendanceVoiceMicOffBody =>
+      'અવાજથી હાજરી લેવા માઇક્રોફોનની પરવાનગી આપો.';
+
+  @override
+  String get attendanceVoiceFailedTitle => 'સમજાયું નહીં';
+
+  @override
+  String get attendanceVoiceFailedBody => 'કંઈક ખોટું થયું. ફરી પ્રયાસ કરો.';
+
+  @override
+  String get attendanceVoiceNone => 'મને કોઈ નામ સમજાયું નહીં. ફરી પ્રયાસ કરો.';
+
+  @override
+  String attendanceVoiceMarked(int count) {
+    return '$count નામ નોંધ્યાં.';
+  }
 }

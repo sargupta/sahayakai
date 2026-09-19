@@ -3890,4 +3890,43 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get communityFilterHighlights => 'പ്രധാന ഭാഗങ്ങൾ';
+
+  @override
+  String get attendanceVoiceRollCall => 'പേരുകൾ ഉറക്കെ വായിക്കുക';
+
+  @override
+  String get attendanceVoiceListeningTitle => 'കേൾക്കുന്നു…';
+
+  @override
+  String get attendanceVoiceListeningBody =>
+      'നിങ്ങളുടെ ക്ലാസ്സിന്റെ ഹാജർ ഉറക്കെ വായിക്കുക. ഓരോ പേരും ഹാജരായി ഞാൻ അടയാളപ്പെടുത്തും; ഒന്ന് മാറ്റാൻ \'ഹാജരില്ല\' അല്ലെങ്കിൽ \'വൈകി\' എന്ന് പറയുക.';
+
+  @override
+  String get attendanceVoiceWorking => 'ഒരു നിമിഷം…';
+
+  @override
+  String get attendanceVoiceWorkingBody =>
+      'നിങ്ങൾ പറഞ്ഞതിൽ നിന്ന് ഹാജർ അടയാളപ്പെടുത്തുന്നു.';
+
+  @override
+  String get attendanceVoiceMicOffTitle => 'മൈക്രോഫോൺ വേണം';
+
+  @override
+  String get attendanceVoiceMicOffBody =>
+      'ശബ്ദത്തിലൂടെ ഹാജർ എടുക്കാൻ മൈക്രോഫോണിന് അനുമതി നൽകുക.';
+
+  @override
+  String get attendanceVoiceFailedTitle => 'മനസ്സിലായില്ല';
+
+  @override
+  String get attendanceVoiceFailedBody => 'എന്തോ പിഴച്ചു. വീണ്ടും ശ്രമിക്കുക.';
+
+  @override
+  String get attendanceVoiceNone =>
+      'എനിക്ക് ഒരു പേരും മനസ്സിലായില്ല. വീണ്ടും ശ്രമിക്കുക.';
+
+  @override
+  String attendanceVoiceMarked(int count) {
+    return '$count പേരുകൾ അടയാളപ്പെടുത്തി.';
+  }
 }

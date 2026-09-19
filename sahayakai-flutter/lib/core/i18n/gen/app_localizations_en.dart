@@ -3813,4 +3813,43 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get communityFilterHighlights => 'Highlights';
+
+  @override
+  String get attendanceVoiceRollCall => 'Read the names aloud';
+
+  @override
+  String get attendanceVoiceListeningTitle => 'Listening…';
+
+  @override
+  String get attendanceVoiceListeningBody =>
+      'Read your class register aloud. I\'ll mark each name present; say \'absent\' or \'late\' to change one.';
+
+  @override
+  String get attendanceVoiceWorking => 'One moment…';
+
+  @override
+  String get attendanceVoiceWorkingBody =>
+      'Marking the register from what you said.';
+
+  @override
+  String get attendanceVoiceMicOffTitle => 'Microphone needed';
+
+  @override
+  String get attendanceVoiceMicOffBody =>
+      'Allow microphone access to call the register by voice.';
+
+  @override
+  String get attendanceVoiceFailedTitle => 'Didn\'t catch that';
+
+  @override
+  String get attendanceVoiceFailedBody =>
+      'Something went wrong. Please try again.';
+
+  @override
+  String get attendanceVoiceNone => 'I didn\'t catch any names. Try again.';
+
+  @override
+  String attendanceVoiceMarked(int count) {
+    return 'Marked $count names.';
+  }
 }

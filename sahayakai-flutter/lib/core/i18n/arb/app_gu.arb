@@ -1090,5 +1090,16 @@
   "communityFilterAll": "બધું",
   "communityFilterPosts": "પોસ્ટ",
   "communityFilterResources": "સંસાધનો",
-  "communityFilterHighlights": "મુખ્ય અંશો"
+  "communityFilterHighlights": "મુખ્ય અંશો",
+  "attendanceVoiceRollCall": "નામ મોટેથી વાંચો",
+  "attendanceVoiceListeningTitle": "સાંભળી રહી છું…",
+  "attendanceVoiceListeningBody": "તમારા વર્ગની હાજરી મોટેથી વાંચો. હું દરેક નામ હાજર તરીકે નોંધીશ; કોઈ એક બદલવા 'ગેરહાજર' અથવા 'મોડું' કહો.",
+  "attendanceVoiceWorking": "એક ક્ષણ…",
+  "attendanceVoiceWorkingBody": "તમે કહ્યું તેમાંથી હાજરી નોંધી રહી છું.",
+  "attendanceVoiceMicOffTitle": "માઇક્રોફોન જરૂરી",
+  "attendanceVoiceMicOffBody": "અવાજથી હાજરી લેવા માઇક્રોફોનની પરવાનગી આપો.",
+  "attendanceVoiceFailedTitle": "સમજાયું નહીં",
+  "attendanceVoiceFailedBody": "કંઈક ખોટું થયું. ફરી પ્રયાસ કરો.",
+  "attendanceVoiceNone": "મને કોઈ નામ સમજાયું નહીં. ફરી પ્રયાસ કરો.",
+  "attendanceVoiceMarked": "{count} નામ નોંધ્યાં."
 }

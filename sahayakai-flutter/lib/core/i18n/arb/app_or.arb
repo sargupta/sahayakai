@@ -1090,5 +1090,16 @@
   "communityFilterAll": "ସବୁ",
   "communityFilterPosts": "ପୋଷ୍ଟଗୁଡ଼ିକ",
   "communityFilterResources": "ଉତ୍ସଗୁଡ଼ିକ",
-  "communityFilterHighlights": "ମୁଖ୍ୟାଂଶ"
+  "communityFilterHighlights": "ମୁଖ୍ୟାଂଶ",
+  "attendanceVoiceRollCall": "ନାମଗୁଡ଼ିକ ଉଚ୍ଚ ସ୍ୱରରେ ପଢ଼ନ୍ତୁ",
+  "attendanceVoiceListeningTitle": "ଶୁଣୁଛି…",
+  "attendanceVoiceListeningBody": "ଆପଣଙ୍କ ଶ୍ରେଣୀର ହାଜିରା ଉଚ୍ଚ ସ୍ୱରରେ ପଢ଼ନ୍ତୁ। ମୁଁ ପ୍ରତ୍ୟେକ ନାମକୁ ଉପସ୍ଥିତ ଭାବେ ଚିହ୍ନଟ କରିବି; ଗୋଟିଏ ବଦଳାଇବାକୁ 'ଅନୁପସ୍ଥିତ' କିମ୍ବା 'ବିଳମ୍ବ' କୁହନ୍ତୁ।",
+  "attendanceVoiceWorking": "ଏକ ମୁହୂର୍ତ୍ତ…",
+  "attendanceVoiceWorkingBody": "ଆପଣ କହିଥିବା ଅନୁସାରେ ହାଜିରା ଚିହ୍ନଟ କରୁଛି।",
+  "attendanceVoiceMicOffTitle": "ମାଇକ୍ରୋଫୋନ୍ ଆବଶ୍ୟକ",
+  "attendanceVoiceMicOffBody": "ସ୍ୱରରେ ହାଜିରା ନେବାକୁ ମାଇକ୍ରୋଫୋନ୍ ଅନୁମତି ଦିଅନ୍ତୁ।",
+  "attendanceVoiceFailedTitle": "ବୁଝିପାରିଲି ନାହିଁ",
+  "attendanceVoiceFailedBody": "କିଛି ଭୁଲ ହୋଇଗଲା। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।",
+  "attendanceVoiceNone": "ମୋତେ କୌଣସି ନାମ ବୁଝାପଡ଼ିଲା ନାହିଁ। ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।",
+  "attendanceVoiceMarked": "{count}ଟି ନାମ ଚିହ୍ନଟ ହେଲା।"
 }

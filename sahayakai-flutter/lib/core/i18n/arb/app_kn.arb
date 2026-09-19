@@ -1090,5 +1090,16 @@
   "communityFilterAll": "ಎಲ್ಲಾ",
   "communityFilterPosts": "ಪೋಸ್ಟ್‌ಗಳು",
   "communityFilterResources": "ಸಂಪನ್ಮೂಲಗಳು",
-  "communityFilterHighlights": "ಮುಖ್ಯಾಂಶಗಳು"
+  "communityFilterHighlights": "ಮುಖ್ಯಾಂಶಗಳು",
+  "attendanceVoiceRollCall": "ಹೆಸರುಗಳನ್ನು ಜೋರಾಗಿ ಓದಿ",
+  "attendanceVoiceListeningTitle": "ಕೇಳುತ್ತಿದ್ದೇನೆ…",
+  "attendanceVoiceListeningBody": "ನಿಮ್ಮ ತರಗತಿಯ ಹಾಜರಾತಿಯನ್ನು ಜೋರಾಗಿ ಓದಿ. ಪ್ರತಿ ಹೆಸರನ್ನೂ ಹಾಜರ್ ಎಂದು ಗುರುತಿಸುತ್ತೇನೆ; ಒಂದನ್ನು ಬದಲಿಸಲು 'ಗೈರುಹಾಜರ್' ಅಥವಾ 'ತಡ' ಎನ್ನಿ.",
+  "attendanceVoiceWorking": "ಒಂದು ಕ್ಷಣ…",
+  "attendanceVoiceWorkingBody": "ನೀವು ಹೇಳಿದ್ದರಿಂದ ಹಾಜರಾತಿಯನ್ನು ಗುರುತಿಸುತ್ತಿದ್ದೇನೆ.",
+  "attendanceVoiceMicOffTitle": "ಮೈಕ್ರೊಫೋನ್ ಬೇಕು",
+  "attendanceVoiceMicOffBody": "ಧ್ವನಿಯಿಂದ ಹಾಜರಾತಿ ತೆಗೆದುಕೊಳ್ಳಲು ಮೈಕ್ರೊಫೋನ್‌ಗೆ ಅನುಮತಿ ನೀಡಿ.",
+  "attendanceVoiceFailedTitle": "ಅರ್ಥವಾಗಲಿಲ್ಲ",
+  "attendanceVoiceFailedBody": "ಏನೋ ತಪ್ಪಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+  "attendanceVoiceNone": "ನನಗೆ ಯಾವ ಹೆಸರೂ ಅರ್ಥವಾಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+  "attendanceVoiceMarked": "{count} ಹೆಸರುಗಳನ್ನು ಗುರುತಿಸಲಾಗಿದೆ."
 }

@@ -6661,6 +6661,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Highlights'**
   String get communityFilterHighlights;
+
+  /// Voice roll call
+  ///
+  /// In en, this message translates to:
+  /// **'Read the names aloud'**
+  String get attendanceVoiceRollCall;
+
+  /// Voice roll call
+  ///
+  /// In en, this message translates to:
+  /// **'Listening…'**
+  String get attendanceVoiceListeningTitle;
+
+  /// Voice roll call
+  ///
+  /// In en, this message translates to:
+  /// **'Read your class register aloud. I\'ll mark each name present; say \'absent\' or \'late\' to change one.'**
+  String get attendanceVoiceListeningBody;
+
+  /// Voice roll call
+  ///
+  /// In en, this message translates to:
+  /// **'One moment…'**
+  String get attendanceVoiceWorking;
+
+  /// Voice roll call
+  ///
+  /// In en, this message translates to:
+  /// **'Marking the register from what you said.'**
+  String get attendanceVoiceWorkingBody;
+
+  /// Voice roll call
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone needed'**
+  String get attendanceVoiceMicOffTitle;
+
+  /// Voice roll call
+  ///
+  /// In en, this message translates to:
+  /// **'Allow microphone access to call the register by voice.'**
+  String get attendanceVoiceMicOffBody;
+
+  /// Voice roll call
+  ///
+  /// In en, this message translates to:
+  /// **'Didn\'t catch that'**
+  String get attendanceVoiceFailedTitle;
+
+  /// Voice roll call
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Please try again.'**
+  String get attendanceVoiceFailedBody;
+
+  /// Voice roll call
+  ///
+  /// In en, this message translates to:
+  /// **'I didn\'t catch any names. Try again.'**
+  String get attendanceVoiceNone;
+
+  /// No description provided for @attendanceVoiceMarked.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked {count} names.'**
+  String attendanceVoiceMarked(int count);
 }
 
 class _AppLocalizationsDelegate

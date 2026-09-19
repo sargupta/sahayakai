@@ -1090,5 +1090,16 @@
   "communityFilterAll": "সব",
   "communityFilterPosts": "পোস্ট",
   "communityFilterResources": "রিসোর্স",
-  "communityFilterHighlights": "হাইলাইট"
+  "communityFilterHighlights": "হাইলাইট",
+  "attendanceVoiceRollCall": "নামগুলো সরবে পড়ুন",
+  "attendanceVoiceListeningTitle": "শুনছি…",
+  "attendanceVoiceListeningBody": "আপনার ক্লাসের হাজিরা সরবে পড়ুন। আমি প্রতিটি নাম উপস্থিত হিসেবে চিহ্নিত করব; কোনোটি বদলাতে 'অনুপস্থিত' বা 'দেরি' বলুন।",
+  "attendanceVoiceWorking": "এক মুহূর্ত…",
+  "attendanceVoiceWorkingBody": "আপনি যা বলেছেন তা থেকে হাজিরা চিহ্নিত করছি।",
+  "attendanceVoiceMicOffTitle": "মাইক্রোফোন দরকার",
+  "attendanceVoiceMicOffBody": "কণ্ঠে হাজিরা নিতে মাইক্রোফোনের অনুমতি দিন।",
+  "attendanceVoiceFailedTitle": "বুঝতে পারিনি",
+  "attendanceVoiceFailedBody": "কিছু একটা ভুল হয়েছে। আবার চেষ্টা করুন।",
+  "attendanceVoiceNone": "আমি কোনো নাম বুঝতে পারিনি। আবার চেষ্টা করুন।",
+  "attendanceVoiceMarked": "{count}টি নাম চিহ্নিত করা হয়েছে।"
 }

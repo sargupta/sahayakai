@@ -3843,4 +3843,44 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get communityFilterHighlights => 'ਮੁੱਖ ਗੱਲਾਂ';
+
+  @override
+  String get attendanceVoiceRollCall => 'ਨਾਂ ਉੱਚੀ ਆਵਾਜ਼ ਵਿੱਚ ਪੜ੍ਹੋ';
+
+  @override
+  String get attendanceVoiceListeningTitle => 'ਸੁਣ ਰਹੀ ਹਾਂ…';
+
+  @override
+  String get attendanceVoiceListeningBody =>
+      'ਆਪਣੀ ਜਮਾਤ ਦੀ ਹਾਜ਼ਰੀ ਉੱਚੀ ਆਵਾਜ਼ ਵਿੱਚ ਪੜ੍ਹੋ। ਮੈਂ ਹਰ ਨਾਂ ਨੂੰ ਹਾਜ਼ਰ ਲਗਾਵਾਂਗੀ; ਕਿਸੇ ਨੂੰ ਬਦਲਣ ਲਈ \'ਗੈਰਹਾਜ਼ਰ\' ਜਾਂ \'ਲੇਟ\' ਕਹੋ।';
+
+  @override
+  String get attendanceVoiceWorking => 'ਇੱਕ ਪਲ…';
+
+  @override
+  String get attendanceVoiceWorkingBody =>
+      'ਜੋ ਤੁਸੀਂ ਕਿਹਾ ਉਸ ਤੋਂ ਹਾਜ਼ਰੀ ਲਗਾ ਰਹੀ ਹਾਂ।';
+
+  @override
+  String get attendanceVoiceMicOffTitle => 'ਮਾਈਕ੍ਰੋਫੋਨ ਲੋੜੀਂਦਾ';
+
+  @override
+  String get attendanceVoiceMicOffBody =>
+      'ਆਵਾਜ਼ ਨਾਲ ਹਾਜ਼ਰੀ ਲੈਣ ਲਈ ਮਾਈਕ੍ਰੋਫੋਨ ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ।';
+
+  @override
+  String get attendanceVoiceFailedTitle => 'ਸਮਝ ਨਹੀਂ ਆਈ';
+
+  @override
+  String get attendanceVoiceFailedBody =>
+      'ਕੁਝ ਗਲਤ ਹੋ ਗਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਫਿਰ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
+
+  @override
+  String get attendanceVoiceNone =>
+      'ਮੈਨੂੰ ਕੋਈ ਨਾਂ ਸਮਝ ਨਹੀਂ ਆਇਆ। ਫਿਰ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
+
+  @override
+  String attendanceVoiceMarked(int count) {
+    return '$count ਨਾਂ ਲਗਾਏ ਗਏ।';
+  }
 }

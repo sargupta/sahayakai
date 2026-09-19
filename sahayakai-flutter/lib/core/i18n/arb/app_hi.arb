@@ -1090,5 +1090,16 @@
   "communityFilterAll": "सभी",
   "communityFilterPosts": "पोस्ट",
   "communityFilterResources": "संसाधन",
-  "communityFilterHighlights": "मुख्य अंश"
+  "communityFilterHighlights": "मुख्य अंश",
+  "attendanceVoiceRollCall": "नाम ज़ोर से पढ़ें",
+  "attendanceVoiceListeningTitle": "सुन रही हूँ…",
+  "attendanceVoiceListeningBody": "अपनी कक्षा की हाज़िरी ज़ोर से पढ़ें। मैं हर नाम को उपस्थित लगाऊँगी; किसी को बदलने के लिए 'अनुपस्थित' या 'देर' कहें।",
+  "attendanceVoiceWorking": "एक पल…",
+  "attendanceVoiceWorkingBody": "आपने जो कहा उससे हाज़िरी लगा रही हूँ।",
+  "attendanceVoiceMicOffTitle": "माइक्रोफ़ोन चाहिए",
+  "attendanceVoiceMicOffBody": "आवाज़ से हाज़िरी लेने के लिए माइक्रोफ़ोन की अनुमति दें।",
+  "attendanceVoiceFailedTitle": "समझ नहीं पाई",
+  "attendanceVoiceFailedBody": "कुछ गड़बड़ हो गई। कृपया फिर से कोशिश करें।",
+  "attendanceVoiceNone": "मुझे कोई नाम समझ नहीं आया। फिर से कोशिश करें।",
+  "attendanceVoiceMarked": "{count} नाम लगाए गए।"
 }

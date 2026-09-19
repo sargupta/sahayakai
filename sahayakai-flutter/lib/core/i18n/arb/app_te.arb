@@ -1090,5 +1090,16 @@
   "communityFilterAll": "అన్నీ",
   "communityFilterPosts": "పోస్ట్‌లు",
   "communityFilterResources": "వనరులు",
-  "communityFilterHighlights": "ముఖ్యాంశాలు"
+  "communityFilterHighlights": "ముఖ్యాంశాలు",
+  "attendanceVoiceRollCall": "పేర్లను బిగ్గరగా చదవండి",
+  "attendanceVoiceListeningTitle": "వింటున్నాను…",
+  "attendanceVoiceListeningBody": "మీ తరగతి హాజరును బిగ్గరగా చదవండి. ప్రతి పేరును హాజరుగా గుర్తిస్తాను; ఒకదాన్ని మార్చడానికి 'గైర్హాజరు' లేదా 'ఆలస్యం' అని చెప్పండి.",
+  "attendanceVoiceWorking": "ఒక్క క్షణం…",
+  "attendanceVoiceWorkingBody": "మీరు చెప్పిన దాన్నుంచి హాజరును గుర్తిస్తున్నాను.",
+  "attendanceVoiceMicOffTitle": "మైక్రోఫోన్ అవసరం",
+  "attendanceVoiceMicOffBody": "వాయిస్‌తో హాజరు తీసుకోవడానికి మైక్రోఫోన్‌కు అనుమతి ఇవ్వండి.",
+  "attendanceVoiceFailedTitle": "అర్థం కాలేదు",
+  "attendanceVoiceFailedBody": "ఏదో తప్పు జరిగింది. దయచేసి మళ్లీ ప్రయత్నించండి.",
+  "attendanceVoiceNone": "నాకు ఏ పేరూ అర్థం కాలేదు. మళ్లీ ప్రయత్నించండి.",
+  "attendanceVoiceMarked": "{count} పేర్లు గుర్తించబడ్డాయి."
 }

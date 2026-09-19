@@ -21,10 +21,12 @@ import '../domain/attendance_class.dart';
 import '../domain/attendance_date.dart';
 import '../domain/attendance_record.dart';
 import '../domain/attendance_write_result.dart';
+import '../domain/roll_call_resolver.dart';
 import 'attendance_failure.dart';
 import 'attendance_providers.dart';
 import 'widgets/attendance_failure_view.dart';
 import 'widgets/attendance_premium_card.dart';
+import 'widgets/roll_call_voice_sheet.dart';
 
 /// The daily register: one day, one class, one mark per student.
 ///
@@ -121,6 +123,37 @@ class _MarkAttendanceScreenState extends ConsumerState<MarkAttendanceScreen> {
         edits[student.studentId] = AttendanceStatus.present;
       }
     });
+  }
+
+  /// Voice roll call (v3 screen 13): capture the teacher reading the register,
+  /// resolve the transcript into per-student marks and apply them. Present by
+  /// default; "absent"/"late" spoken next to a name override just that one.
+  Future<void> _voiceRollCall(List<StudentAttendanceSummary> students) async {
+    final l10n = context.l10n;
+    final messenger = ScaffoldMessenger.of(context);
+    final transcript = await showRollCallVoiceSheet(context);
+    if (!mounted || transcript == null || transcript.trim().isEmpty) return;
+
+    final marks = RollCallResolver.resolve(
+      transcript: transcript,
+      roster: [
+        for (final s in students) (id: s.studentId, name: s.studentName),
+      ],
+    );
+    messenger.clearSnackBars();
+    if (marks.isEmpty) {
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.attendanceVoiceNone)),
+      );
+      return;
+    }
+    setState(() {
+      final edits = _edits[_date] ??= <String, AttendanceStatus?>{};
+      edits.addAll(marks);
+    });
+    messenger.showSnackBar(
+      SnackBar(content: Text(l10n.attendanceVoiceMarked(marks.length))),
+    );
   }
 
   Future<void> _save(
@@ -335,6 +368,12 @@ class _MarkAttendanceScreenState extends ConsumerState<MarkAttendanceScreen> {
         Text(
           l10n.attendanceMarkProgress(marked, roll.length),
           style: Theme.of(context).textTheme.titleSmall,
+        ),
+        const SizedBox(height: AppSpacing.space3),
+        SecondaryButton(
+          label: l10n.attendanceVoiceRollCall,
+          icon: LucideIcons.mic,
+          onPressed: _isBusy ? null : () => unawaited(_voiceRollCall(roll)),
         ),
         const SizedBox(height: AppSpacing.space3),
         SecondaryButton(

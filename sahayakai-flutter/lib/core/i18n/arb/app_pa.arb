@@ -1090,5 +1090,16 @@
   "communityFilterAll": "ਸਾਰੇ",
   "communityFilterPosts": "ਪੋਸਟਾਂ",
   "communityFilterResources": "ਸਰੋਤ",
-  "communityFilterHighlights": "ਮੁੱਖ ਗੱਲਾਂ"
+  "communityFilterHighlights": "ਮੁੱਖ ਗੱਲਾਂ",
+  "attendanceVoiceRollCall": "ਨਾਂ ਉੱਚੀ ਆਵਾਜ਼ ਵਿੱਚ ਪੜ੍ਹੋ",
+  "attendanceVoiceListeningTitle": "ਸੁਣ ਰਹੀ ਹਾਂ…",
+  "attendanceVoiceListeningBody": "ਆਪਣੀ ਜਮਾਤ ਦੀ ਹਾਜ਼ਰੀ ਉੱਚੀ ਆਵਾਜ਼ ਵਿੱਚ ਪੜ੍ਹੋ। ਮੈਂ ਹਰ ਨਾਂ ਨੂੰ ਹਾਜ਼ਰ ਲਗਾਵਾਂਗੀ; ਕਿਸੇ ਨੂੰ ਬਦਲਣ ਲਈ 'ਗੈਰਹਾਜ਼ਰ' ਜਾਂ 'ਲੇਟ' ਕਹੋ।",
+  "attendanceVoiceWorking": "ਇੱਕ ਪਲ…",
+  "attendanceVoiceWorkingBody": "ਜੋ ਤੁਸੀਂ ਕਿਹਾ ਉਸ ਤੋਂ ਹਾਜ਼ਰੀ ਲਗਾ ਰਹੀ ਹਾਂ।",
+  "attendanceVoiceMicOffTitle": "ਮਾਈਕ੍ਰੋਫੋਨ ਲੋੜੀਂਦਾ",
+  "attendanceVoiceMicOffBody": "ਆਵਾਜ਼ ਨਾਲ ਹਾਜ਼ਰੀ ਲੈਣ ਲਈ ਮਾਈਕ੍ਰੋਫੋਨ ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ।",
+  "attendanceVoiceFailedTitle": "ਸਮਝ ਨਹੀਂ ਆਈ",
+  "attendanceVoiceFailedBody": "ਕੁਝ ਗਲਤ ਹੋ ਗਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਫਿਰ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+  "attendanceVoiceNone": "ਮੈਨੂੰ ਕੋਈ ਨਾਂ ਸਮਝ ਨਹੀਂ ਆਇਆ। ਫਿਰ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+  "attendanceVoiceMarked": "{count} ਨਾਂ ਲਗਾਏ ਗਏ।"
 }
