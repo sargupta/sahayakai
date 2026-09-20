@@ -31,6 +31,7 @@ from __future__ import annotations
 import math
 from array import array
 from collections.abc import Callable
+from typing import Any
 
 __all__ = ["ConformanceFailure", "assert_conformant", "CHECKS"]
 
@@ -74,7 +75,7 @@ def _median_f0(pcm: array[int], rate: int, lo: float = 120, hi: float = 400) -> 
     return values[len(values) // 2]
 
 
-def check_resampler_is_phase_continuous(resample: Callable) -> None:
+def check_resampler_is_phase_continuous(resample: Callable[..., Any]) -> None:
     """Streaming must equal whole-file, at EVERY chunk size.
 
     SYMPTOM WHEN BROKEN: "the pitch is so fast and weird", and — because a
@@ -107,7 +108,9 @@ def check_resampler_is_phase_continuous(resample: Callable) -> None:
             )
 
 
-def check_pitch_survives_the_pipeline(to_wire: Callable, from_wire: Callable) -> None:
+def check_pitch_survives_the_pipeline(
+    to_wire: Callable[..., Any], from_wire: Callable[..., Any]
+) -> None:
     """A voice must come out at the pitch it went in at.
 
     SYMPTOM WHEN BROKEN: the speaker sounds fast and high, or slow and deep —
@@ -128,7 +131,7 @@ def check_pitch_survives_the_pipeline(to_wire: Callable, from_wire: Callable) ->
         )
 
 
-def check_no_padding_mid_stream(queue_chunk: Callable, frame_bytes: int) -> None:
+def check_no_padding_mid_stream(queue_chunk: Callable[[int], int], frame_bytes: int) -> None:
     """A partial frame must be carried, not padded.
 
     SYMPTOM WHEN BROKEN: a rasp through the vowels. Padding every chunk up to a
@@ -163,7 +166,9 @@ def check_never_faster_than_real_time(frame_bytes: int, frame_seconds: float, le
         )
 
 
-def check_one_voice_per_call(opener_bytes: bytes, decode: Callable, live_f0: float) -> None:
+def check_one_voice_per_call(
+    opener_bytes: bytes, decode: Callable[..., Any], live_f0: float
+) -> None:
     """The recorded greeting must be the same voice as the conversation.
 
     SYMPTOM WHEN BROKEN: "the voice keeps changing". Rendering the greeting with
@@ -181,6 +186,34 @@ def check_one_voice_per_call(opener_bytes: bytes, decode: Callable, live_f0: flo
         )
 
 
+def check_voice_is_stable_across_turns(f0_per_turn: list[float], limit: float = 1.15) -> None:
+    """One call must be one voice, turn after turn.
+
+    SYMPTOM WHEN BROKEN: "voice is still not consistent" — reported twice, after
+    the resampling and rendering causes had both been fixed, because this one is
+    a property of the MODEL rather than of our code.
+
+    Measured across six turns of a single session:
+        gemini-live-2.5-flash-native-audio   182-233 Hz   1.28x   stdev 16.1
+        gemini-live-2.5-flash  (global)      185-197 Hz   1.07x   stdev  5.3
+
+    A browser session can wear the drift as character. A phone call cannot: the
+    person you are speaking to appears to change partway through. Any model
+    considered for a call must be measured this way BEFORE it carries one,
+    because it is invisible in a single-utterance test.
+    """
+    usable = [f for f in f0_per_turn if f > 0]
+    if len(usable) < 3:
+        raise ConformanceFailure("need at least three measurable turns to judge drift")
+    spread = max(usable) / min(usable)
+    if spread > limit:
+        raise ConformanceFailure(
+            f"voice drifts {spread:.2f}x across turns "
+            f"({min(usable):.0f}-{max(usable):.0f} Hz). A parent hears the speaker "
+            "change partway through the call. Choose a steadier model."
+        )
+
+
 #: Every check, with the human complaint that each one exists to prevent.
 CHECKS = {
     "resampler_phase_continuity": (
@@ -189,27 +222,30 @@ CHECKS = {
     "pitch_preserved": "the speaker sounds fast and high, or slow and deep",
     "no_padding_mid_stream": "a rasp through the vowels nobody can quite name",
     "never_faster_than_real_time": "\"fast and weird\" on the greeting specifically",
-    "one_voice_per_call": "\"the voice keeps changing\"",
+    "one_voice_per_call": '"the voice keeps changing" between greeting and conversation',
+    "voice_stable_across_turns": '"voice is still not consistent" — model drift within one call',
 }
 
 
-def assert_conformant(**wiring: Callable | bytes | float | int) -> None:
+def assert_conformant(**wiring: Any) -> None:
     """Run every applicable check against one integration's own functions.
 
     Pass only what applies; anything missing is skipped rather than guessed at,
     so a partial pipeline can still be checked for the parts it does have.
     """
     if "resample" in wiring:
-        check_resampler_is_phase_continuous(wiring["resample"])  # type: ignore[arg-type]
+        check_resampler_is_phase_continuous(wiring["resample"])
     if "to_wire" in wiring and "from_wire" in wiring:
-        check_pitch_survives_the_pipeline(wiring["to_wire"], wiring["from_wire"])  # type: ignore[arg-type]
+        check_pitch_survives_the_pipeline(wiring["to_wire"], wiring["from_wire"])
     if "queue_chunk" in wiring and "frame_bytes" in wiring:
-        check_no_padding_mid_stream(wiring["queue_chunk"], int(wiring["frame_bytes"]))  # type: ignore[arg-type]
+        check_no_padding_mid_stream(wiring["queue_chunk"], int(wiring["frame_bytes"]))
     if {"frame_bytes", "frame_seconds", "lead"} <= wiring.keys():
         check_never_faster_than_real_time(
-            int(wiring["frame_bytes"]), float(wiring["frame_seconds"]), float(wiring["lead"])  # type: ignore[arg-type]
+            int(wiring["frame_bytes"]), float(wiring["frame_seconds"]), float(wiring["lead"])
         )
+    if "f0_per_turn" in wiring:
+        check_voice_is_stable_across_turns(wiring["f0_per_turn"])
     if {"opener_bytes", "decode", "live_f0"} <= wiring.keys():
         check_one_voice_per_call(
-            wiring["opener_bytes"], wiring["decode"], float(wiring["live_f0"])  # type: ignore[arg-type]
+            wiring["opener_bytes"], wiring["decode"], float(wiring["live_f0"])
         )

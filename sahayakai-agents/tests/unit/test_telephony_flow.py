@@ -289,3 +289,136 @@ class TestEndingIsGuarded:
         # Too high and a parent who genuinely wants off the phone has to repeat
         # themselves. The opt-out path is exempt from this guard entirely.
         assert 2 <= telephony._MIN_PARENT_TURNS_BEFORE_END <= 4
+
+
+class TestTranscriptIsKept:
+    """A call nobody can review is a call nobody can improve.
+
+    The Twilio path has always written `transcript` to the outreach record, and
+    the rest of the app reads it. This route kept its turns in memory and dropped
+    them at hangup, so a 125-second conversation — including a message the
+    founder spoke specifically so it would be read back — left nothing behind.
+    """
+
+    class _B:
+        def __init__(self) -> None:
+            self.transcript: list[dict[str, str]] = []
+            self.transcript_saved_at = 99_999  # never triggers a background flush
+            self.outreach_id = "test"
+
+    def test_records_both_sides(self) -> None:
+        b = self._B()
+        telephony._record_turn(b, "agent", "Namaste.")       # type: ignore[arg-type]
+        telephony._record_turn(b, "parent", "Haan ji.")      # type: ignore[arg-type]
+        assert [t["role"] for t in b.transcript] == ["agent", "parent"]
+
+    def test_merges_fragments_into_readable_turns(self) -> None:
+        # Transcription arrives in pieces; appending each one gives a transcript
+        # of broken half-sentences that nobody can read.
+        b = self._B()
+        for frag in ("theek", "hai thank", "you so much"):
+            telephony._record_turn(b, "parent", frag)        # type: ignore[arg-type]
+        assert len(b.transcript) == 1
+        assert b.transcript[0]["text"] == "theek hai thank you so much"
+
+    def test_a_speaker_change_starts_a_new_turn(self) -> None:
+        b = self._B()
+        telephony._record_turn(b, "parent", "haan")          # type: ignore[arg-type]
+        telephony._record_turn(b, "agent", "achha")          # type: ignore[arg-type]
+        telephony._record_turn(b, "parent", "theek hai")     # type: ignore[arg-type]
+        assert len(b.transcript) == 3
+
+    def test_every_turn_is_timestamped(self) -> None:
+        b = self._B()
+        telephony._record_turn(b, "parent", "hello")         # type: ignore[arg-type]
+        assert b.transcript[0]["timestamp"].endswith("Z")
+
+
+class TestItSoundsLikeAPerson:
+    """The prompt rules that separate a call a parent is glad they took from one
+    they endure. Asserted because they are the first things to get edited away."""
+
+    INSTRUCTION = None
+
+    @classmethod
+    def setup_class(cls) -> None:
+        from sahayakai_agents.telephony.prompt import CallContext, build_parent_call_instruction
+
+        cls.INSTRUCTION = build_parent_call_instruction(
+            CallContext(student_name="Aarav", language="Hindi", message="Doing well.")
+        )
+
+    def test_forbids_the_two_phrases_that_give_away_a_machine(self) -> None:
+        assert "I understand your concern" in self.INSTRUCTION
+        assert "thank you for sharing that" in self.INSTRUCTION
+
+    def test_forbids_a_question_every_turn(self) -> None:
+        # An interview, not a conversation.
+        assert "DO NOT ask a question at the end of every turn" in self.INSTRUCTION
+
+    def test_allows_a_short_reply(self) -> None:
+        assert "four-word reply" in self.INSTRUCTION
+
+    def test_forbids_summarising_back(self) -> None:
+        assert "Do not summarise the conversation back" in self.INSTRUCTION
+
+    def test_keeps_the_message_verbatim_rule(self) -> None:
+        # Naturalness must not be allowed to erode the one thing that has to be
+        # said exactly: the teacher's own words.
+        assert "ESSENTIALLY AS WRITTEN" in self.INSTRUCTION
+
+    def test_tells_the_model_the_call_is_short(self) -> None:
+        assert "at most six exchanges" in self.INSTRUCTION
+
+    def test_covers_the_missing_keypad(self) -> None:
+        # There is no "press 2" on this carrier, so a spoken request to go is
+        # the parent's only exit and must be obeyed at once.
+        assert "NO KEYPAD ESCAPE" in self.INSTRUCTION
+
+    def test_handles_an_answering_machine(self) -> None:
+        assert "ANSWERING MACHINE" in self.INSTRUCTION
+
+
+class TestIndicWordBoundaries:
+    r"""`\b` cannot be used to match a whole word in an Indic script.
+
+    Python defines `\w` by `str.isalnum()`, and Devanagari vowel signs are
+    combining marks — `'ा'.isalnum()` is False — so the engine sees a word
+    boundary in the MIDDLE of a word. The Marathi question word `का\b` matched
+    inside `नमस्कार`, so a parent saying "namaskar" as a farewell was read as
+    asking a question. The goodbye was vetoed and they stayed on the phone.
+
+    This is a whole class of bug for an app that speaks eleven Indic languages,
+    not one bad pattern.
+    """
+
+    def test_a_question_word_does_not_match_inside_another_word(self) -> None:
+        import re
+
+        from sahayakai_agents.telephony.flow import indic_word
+
+        # The exact false positive, and the reason \b cannot be trusted here.
+        assert re.search(r"का\b", "नमस्कार"), "\\b is still broken, as expected"
+        assert not re.search(indic_word("का"), "नमस्कार")
+
+    def test_it_still_matches_the_real_standalone_word(self) -> None:
+        import re
+
+        from sahayakai_agents.telephony.flow import indic_word
+
+        for sentence in ("मी काय करू", "हे का झाले", "का"):
+            if "का" in sentence.split() or sentence == "का":
+                assert re.search(indic_word("का"), sentence), sentence
+
+    def test_the_farewell_that_was_being_missed(self) -> None:
+        assert is_goodbye("ठीक है। थैंक यू सो मच। नमस्कार।")
+        assert is_goodbye("नमस्कार")
+
+    def test_a_marathi_question_is_still_not_a_goodbye(self) -> None:
+        assert not is_goodbye("मी काय करू?")
+
+    def test_transliterated_english_goodbyes_are_caught(self) -> None:
+        # The recogniser returns speech in the hinted script, so an English
+        # goodbye on a Hindi-hinted call arrives in Devanagari.
+        for said in ("थैंक यू", "थैंक्स", "ओके बाय"):
+            assert is_goodbye(said), said

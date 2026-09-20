@@ -97,6 +97,27 @@ OPTOUT_CLOSE = (
 )
 
 
+#: Every character that can be part of an Indic word: the letters themselves
+#: plus the combining marks that attach to them.
+_INDIC = r"\u0900-\u0DFF"
+
+
+def indic_word(word: str) -> str:
+    r"""A standalone-word match that actually works in Indic scripts.
+
+    `\b` cannot be used here. Python's `\w` is defined by `str.isalnum()`, and
+    Devanagari vowel signs are combining marks — `'ा'.isalnum()` is False — so
+    the regex engine sees a word boundary in the MIDDLE of a word. The Marathi
+    question word `का\b` therefore matched inside `नमस्कार`, and a parent saying
+    "namaskar" as a farewell was read as asking a question, which vetoed the
+    goodbye and kept them on the phone.
+
+    Guarding on "no Indic letter or mark either side" gives the boundary
+    `\b` is supposed to give.
+    """
+    return rf"(?<![{_INDIC}]){word}(?![{_INDIC}])"
+
+
 def _compile(*parts: str) -> re.Pattern[str]:
     return re.compile("|".join(parts), re.IGNORECASE)
 
@@ -107,6 +128,14 @@ def _compile(*parts: str) -> re.Pattern[str]:
 # letting the conversation run its course.
 _GOODBYE = _compile(
     r"\b(bye|good ?bye|thank you|thanks|see you)\b",
+    # The recogniser returns speech transliterated into the hinted script, so an
+    # English goodbye on a Hindi-hinted call arrives in Devanagari. Without
+    # these the phrase is invisible: a live call ended with "थैंक यू सो मच।
+    # नमस्कार।" and nothing matched, so the school asked another question.
+    r"(थैंक\s*यू|थैंक्स|बा[यी]\b|गुड\s*बाय|ओके\s*बाय)",
+    # Namaskar/namaste is a greeting AND a farewell. Only ever reached here
+    # after the minimum-turns guard, by which point it is a farewell.
+    r"(नमस्कार|नमस्ते)",
     r"(धन्यवाद|शुक्रिया|अलविदा|रखता हूँ|रखती हूँ|ठीक है ठीक है)",
     r"(ধন্যবাদ|রাখছি|রাখি|আসি|চলি|বিদায়)",
     r"(धन्यवाद|ठेवते|ठेवतो|येतो|येते)",
@@ -141,8 +170,8 @@ _QUESTION = _compile(
     r"\?",
     r"\b(what|why|when|how|where|can you|could you|is it|are you|will you)\b",
     r"(क्या|कैसे|कब|कहाँ|क्यों)",
-    r"(কি\b|কীভাবে|কখন|কোথায়|কেন)",
-    r"(काय|कसं|कधी|कुठे|का\b)",
+    r"(কীভাবে|কখন|কোথায়|কেন)|" + indic_word("কি"),
+    r"(काय|कसं|कधी|कुठे)|" + indic_word("का"),
     r"(શું|કેવી રીતે|ક્યારે)",
     r"(ਕੀ\b|ਕਿਵੇਂ|ਕਦੋਂ)",
     r"(ಏನು|ಹೇಗೆ|ಯಾವಾಗ)",

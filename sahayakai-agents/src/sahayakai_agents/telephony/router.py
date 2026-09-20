@@ -32,13 +32,13 @@ import contextlib
 import os
 import re
 import time
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
 import structlog
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from ..agents.vidya_voice.router import get_vertex_live_location, get_vertex_live_model
 from ..config import get_settings
 from .audio import ULAW_SILENCE, DecimatorState, pcm24k_to_ulaw8k, ulaw8k_to_pcm16k
 from .flow import (
@@ -49,6 +49,7 @@ from .flow import (
     OPTOUT_CLOSE,
     POST_OPENER_NUDGE,
     SILENCE_NUDGE,
+    is_goodbye,
     is_optout,
 )
 from .prompt import CallContext, build_parent_call_instruction, stt_language_hints
@@ -63,6 +64,27 @@ log = structlog.get_logger(__name__)
 telephony_router = APIRouter(tags=["telephony"])
 
 _PCM_IN_MIME = "audio/pcm;rate=16000"
+
+# ---- Which Live model carries a phone call -------------------------------
+#
+# NOT the same choice as the app-facing voice route, and the difference is
+# deliberate. That route uses `gemini-live-2.5-flash-native-audio`, which is
+# excellent but whose VOICE DRIFTS within a session — measured across six turns
+# of one session at 182-233 Hz, a 1.28x spread with 16.1 Hz of deviation. Over a
+# browser session that is character; on a phone call it is heard as the person
+# you are speaking to changing partway through, which is what the founder
+# reported twice.
+#
+# `gemini-live-2.5-flash` at location `global` came in at 185-197 Hz over the
+# same six turns — a 1.07x spread, 5.3 Hz deviation. Three times steadier, and
+# it is the model the Suraksha agent already runs in production, whose own notes
+# recorded that native audio "voice can drift" before I measured it.
+#
+# The two routes may diverge here: the app can prefer the newer model's
+# expressiveness, while a call needs one consistent voice for ninety seconds.
+# `conformance.check_voice_is_stable_across_turns` is what keeps this honest.
+_LIVE_MODEL = "gemini-live-2.5-flash"
+_LIVE_LOCATION = "global"
 
 # ---- The recorded opener --------------------------------------------------
 #
@@ -146,11 +168,14 @@ _COMFORT_TICKS = 50
 #: The recording asked "do you have a minute?" — wait this long for an answer
 #: before checking in. Long enough not to talk over a parent who is drawing
 #: breath, short enough that the line does not feel dead.
-_POST_OPENER_SILENCE = 5.0
+_POST_OPENER_SILENCE = 6.0
 #: If they never respond at all, stop rather than keep talking at an empty line.
 _UNANSWERED_GIVE_UP = 12.0
 #: A lull once the conversation is under way.
-_CONVERSATION_SILENCE = 9.0
+#: A parent thinking about their own child pauses longer than a stranger would.
+#: Nine seconds cut across that; twelve leaves room to think without the line
+#: feeling dead.
+_CONVERSATION_SILENCE = 12.0
 #: After this many unanswered nudges, close warmly instead of nagging.
 _MAX_SILENCE_NUDGES = 2
 #: The parent must have spoken at least this many times before the model is
@@ -168,6 +193,12 @@ _MAX_SILENCE_NUDGES = 2
 #: call.
 _MIN_PARENT_TURNS_BEFORE_END = 2
 
+#: Hard ceiling on parent turns, matching `MAX_TURNS = 6` in the shipped Twilio
+#: flow. This is a short call about one message, not a meeting; past six
+#: exchanges it has stopped being that. Without it the only limit was a
+#: 600-second wall clock, and a real call ran to eighteen turns.
+_MAX_PARENT_TURNS = 6
+
 #: A question in the parent's last words vetoes an end. Deliberately broad: a
 #: missed veto hangs up on someone mid-question, a spurious one merely keeps a
 #: warm call alive a few seconds longer.
@@ -177,6 +208,17 @@ _ENDS_IN_QUESTION = re.compile(
     r"|কি|কীভাবে|কখন|কোথায়|কেন",
     re.IGNORECASE,
 )
+
+#: App language -> the two-letter code the parent-call schemas expect.
+_ISO_LANGUAGE = {
+    "English": "en", "Hindi": "hi", "Kannada": "kn", "Tamil": "ta", "Telugu": "te",
+    "Malayalam": "ml", "Bengali": "bn", "Marathi": "mr", "Gujarati": "gu",
+    "Punjabi": "pa", "Odia": "or",
+}
+
+#: Flush the transcript every this many turns. Small enough that a dropped call
+#: loses at most a turn or two, large enough not to write on every fragment.
+_TRANSCRIPT_FLUSH_EVERY = 2
 
 #: How much of the parent's recent speech to keep for phrase matching. Long
 #: enough to span a sentence split across fragments, short enough that a
@@ -304,10 +346,25 @@ async def _load_context(outreach_id: str, language: str) -> CallContext:
         data = snap.to_dict() if snap.exists else None
         if not data:
             return CallContext(language=language)
+        # Marks, formatted the way the June flow formatted them: at most three
+        # subjects, quoted only if the parent asks.
+        perf = data.get("performanceContext") or {}
+        breakdown = perf.get("subjectBreakdown") or []
+        marks = ", ".join(
+            f"{a.get('subject')}: {a.get('marksObtained')}/{a.get('maxMarks')}"
+            for a in breakdown[:3]
+        ) or None
+        if marks and isinstance(perf.get("latestPercentage"), (int, float)):
+            marks = f"{marks} · overall {round(perf['latestPercentage'])}%"
+
         return CallContext(
             student_name=data.get("studentName"),
             teacher_name=data.get("teacherName"),
             class_name=data.get("className"),
+            school_name=data.get("schoolName"),
+            reason=data.get("reason"),
+            subject=data.get("subject"),
+            performance_summary=marks,
             language=data.get("parentLanguage") or language,
             # `spokenScript` is the phrasing written for speech; `message` is the
             # written form. Prefer the spoken one when it exists.
@@ -380,6 +437,12 @@ class _Bridge:
         self.last_activity = time.monotonic()
         #: What the parent said, for the record and for goodbye detection.
         self.parent_said: list[str] = []
+        #: The conversation, in the shape the rest of the app already stores.
+        #: Kept for BOTH sides: a transcript with only one voice in it cannot be
+        #: reviewed, and reviewing calls is the whole point of keeping one.
+        self.transcript: list[dict[str, str]] = []
+        self.transcript_saved_at = 0
+        self.context: CallContext | None = None
         self.opted_out = False
         #: Rolling tail of what the parent said, for phrase detection across
         #: transcription fragments.
@@ -535,6 +598,10 @@ async def _conversation_watchdog(bridge: _Bridge, session: Any) -> None:
                 await _begin_close(bridge, session, "never_engaged")
             continue
 
+        if _must_end_now(bridge):
+            await _begin_close(bridge, session, "max_turns")
+            return
+
         if quiet_for > _CONVERSATION_SILENCE:
             nudges += 1
             bridge.last_activity = time.monotonic()
@@ -580,6 +647,161 @@ async def _pump_carrier_to_live(bridge: _Bridge, session: Any) -> str:
     return "stopped"
 
 
+def _record_turn(bridge: _Bridge, role: str, text: str) -> None:
+    """Append to the running transcript, merging consecutive fragments.
+
+    Transcription arrives in pieces, so appending each one would produce a
+    transcript of broken half-sentences that nobody can read. Consecutive
+    fragments from the same speaker are joined into one turn, which is the shape
+    the rest of the app already stores and the shape a teacher can actually
+    review.
+    """
+    if bridge.transcript and bridge.transcript[-1]["role"] == role:
+        bridge.transcript[-1]["text"] = f"{bridge.transcript[-1]['text']} {text}".strip()
+        return
+    bridge.transcript.append(
+        {
+            "role": role,
+            "text": text,
+            "timestamp": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+        }
+    )
+    # Write as we go, not only at hangup.
+    #
+    # The June flow appended every turn as it happened, transaction-safe, so a
+    # crash cost nothing. Writing once at the end meant a dropped call took the
+    # whole conversation with it — including a message the founder spoke
+    # specifically so it would be read back afterwards.
+    if len(bridge.transcript) - bridge.transcript_saved_at >= _TRANSCRIPT_FLUSH_EVERY:
+        bridge.transcript_saved_at = len(bridge.transcript)
+        asyncio.create_task(_persist_transcript(bridge))
+
+
+async def _persist_transcript(bridge: _Bridge) -> None:
+    """Write the conversation to the outreach record.
+
+    The Twilio path has always done this — `transcript` is a field the rest of
+    the app reads, and a call nobody can review is a call nobody can improve.
+    This route kept its turns in memory and dropped them at hangup, so a
+    125-second conversation left nothing behind at all.
+
+    Never fatal: losing the record must not also lose the call.
+    """
+    if not bridge.transcript:
+        return
+    try:
+        from google.cloud import firestore
+
+        client = firestore.Client(
+            project=get_settings().gcp_project,
+            database=get_settings().firestore_database,
+        )
+        ref = client.collection("parent_outreach").document(bridge.outreach_id)
+        await asyncio.to_thread(
+            ref.update,
+            {
+                "transcript": bridge.transcript,
+                "turnCount": len(bridge.transcript),
+                "voicePipelineMode": "vobiz_live",
+                "updatedAt": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+            },
+        )
+        log.info(
+            "telephony.transcript_saved",
+            outreach_id=bridge.outreach_id,
+            turns=len(bridge.transcript),
+        )
+    except Exception as exc:  # noqa: BLE001
+        log.error(
+            "telephony.transcript_lost",
+            outreach_id=bridge.outreach_id,
+            turns=len(bridge.transcript),
+            error=str(exc),
+        )
+
+
+async def _generate_call_summary(bridge: _Bridge, context: CallContext, seconds: int) -> None:
+    """Produce the structured post-call summary a teacher actually reads.
+
+    The Twilio flow has generated one after every completed call since before
+    June, using `prompts/parent-call/summary.handlebars`. This route produced
+    none at all, so a teacher learned nothing about what the parent said beyond
+    a raw transcript.
+
+    The SAME prompt and the SAME output schema are used here, rather than a
+    second summariser written for this path — the point of the shipped prompt is
+    that it has already been tuned on real calls.
+
+    Never fatal. A missing summary is a gap; a failed call is a parent who was
+    phoned for nothing.
+    """
+    if len(bridge.transcript) < 2:
+        return
+    try:
+        from google import genai
+        from google.genai import types as genai_types
+
+        from ..agents.parent_call.agent import (
+            CallSummaryCore,
+            build_summary_context,
+            render_summary_prompt,
+        )
+        from ..agents.parent_call.schemas import TranscriptTurn
+
+        prompt = render_summary_prompt(
+            build_summary_context(
+                student_name=context.student_name or "the student",
+                class_name=context.class_name or "",
+                subject=context.subject or "",
+                reason=context.reason or "",
+                teacher_message=context.message or "",
+                teacher_name=context.teacher_name,
+                school_name=context.school_name,
+                parent_language=cast("Any", _ISO_LANGUAGE.get(context.language, "en")),
+                transcript=[
+                    TranscriptTurn(role=cast("Any", t["role"]), text=t["text"])
+                    for t in bridge.transcript
+                ],
+                call_duration_seconds=seconds,
+            )
+        )
+        client = genai.Client(
+            vertexai=True,
+            project=get_settings().gcp_project,
+            location=os.environ.get("VOBIZ_SUMMARY_LOCATION", "asia-south1"),
+        )
+        resp = await client.aio.models.generate_content(
+            model=os.environ.get("VOBIZ_SUMMARY_MODEL", "gemini-2.5-flash"),
+            contents=prompt,
+            config=genai_types.GenerateContentConfig(
+                response_mime_type="application/json",
+                response_schema=CallSummaryCore,
+            ),
+        )
+        summary = CallSummaryCore.model_validate_json(resp.text or "{}")
+
+        from google.cloud import firestore
+
+        fs = firestore.Client(
+            project=get_settings().gcp_project, database=get_settings().firestore_database
+        )
+        await asyncio.to_thread(
+            fs.collection("parent_outreach").document(bridge.outreach_id).update,
+            {
+                "callSummary": summary.model_dump(),
+                "callSummaryGeneratedAt": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+            },
+        )
+        log.info(
+            "telephony.summary_saved",
+            outreach_id=bridge.outreach_id,
+            sentiment=summary.parentSentiment,
+            follow_up=summary.followUpNeeded,
+        )
+    except Exception as exc:  # noqa: BLE001
+        log.error("telephony.summary_failed", outreach_id=bridge.outreach_id, error=str(exc))
+
+
 async def _handle_parent_speech(bridge: _Bridge, session: Any, server: Any) -> None:
     """React to what the parent just said.
 
@@ -598,6 +820,7 @@ async def _handle_parent_speech(bridge: _Bridge, session: Any, server: Any) -> N
     bridge.engaged = True
     bridge.last_activity = time.monotonic()
     bridge.parent_said.append(said)
+    _record_turn(bridge, "parent", said)
 
     # Match on the ACCUMULATED tail, not on this fragment.
     #
@@ -614,15 +837,26 @@ async def _handle_parent_speech(bridge: _Bridge, session: Any, server: Any) -> N
         # own speech about their child.
         log.info("telephony.heard", outreach_id=bridge.outreach_id, text=said)
 
-    # SAFETY NET ONLY. The model ending the call itself (the `end_call` tool) is
-    # the real mechanism, because it understands the audio regardless of which
-    # script the recogniser transliterates it into. These patterns catch the case
-    # where the model misses an explicit opt-out, which is the one refusal we
-    # must never sit through — so opt-out is checked and a plain goodbye is left
-    # to the model, where a false positive cannot hang up on a parent mid-question.
+    # SAFETY NET. The model ending the call itself is still the main mechanism,
+    # but it cannot be the only one: on a live call the parent said "theek hai,
+    # thank you so much, namaskar" and the model replied "is there anything else
+    # I can help with?", only ending 35 seconds later after two silence nudges.
+    # Being asked another question after you have said goodbye is exactly the
+    # thing that makes a call feel like a machine.
+    #
+    # A false positive here would hang up on someone mid-sentence, so this runs
+    # ONLY through `_may_end_yet`: at least two parent turns, and their latest
+    # utterance must not be a question.
     if is_optout(bridge.recent_speech):
         bridge.opted_out = True
         await _begin_close(bridge, session, "opt_out")
+    elif is_goodbye(said) and _may_end_yet(bridge):
+        await _begin_close(bridge, session, "goodbye")
+
+
+def _must_end_now(bridge: _Bridge) -> bool:
+    """Has the call reached its ceiling regardless of what the model wants?"""
+    return len(bridge.parent_said) >= _MAX_PARENT_TURNS
 
 
 def _may_end_yet(bridge: _Bridge) -> bool:
@@ -669,7 +903,14 @@ async def _handle_tool_call(bridge: _Bridge, session: Any, tool_call: Any) -> No
         #
         # A refusal is NEVER declined. If a parent asks not to be called again,
         # that is honoured immediately, whatever turn it arrives on.
-        if reason != "opt_out" and not _may_end_yet(bridge):
+        # A parent asking to stop, or a voicemail, is honoured at once. On this
+        # carrier DTMF is not delivered inside a bidirectional <Stream> — only a
+        # separate <Gather> verb carries it — so the "press 2 to end" escape
+        # hatch of the Twilio flow does not exist here. Spoken words are the
+        # ONLY way a parent can end this call, which makes refusing one a
+        # much more serious thing than it was in June.
+        honour_immediately = reason in ("opt_out", "call_back_later", "wrong_number", "voicemail")
+        if not honour_immediately and not _may_end_yet(bridge):
             log.info(
                 "telephony.end_call_declined",
                 outreach_id=bridge.outreach_id,
@@ -742,6 +983,11 @@ async def _pump_live_to_carrier(bridge: _Bridge, session: Any) -> str:
                         await bridge.ws.send_text(build_clear_audio(bridge.stream_id))
 
             await _handle_parent_speech(bridge, session, server)
+            if server is not None:
+                spoken = getattr(server, "output_transcription", None)
+                text = (getattr(spoken, "text", "") or "").strip() if spoken else ""
+                if text:
+                    _record_turn(bridge, "agent", text)
             await _handle_tool_call(bridge, session, getattr(resp, "tool_call", None))
 
             data = getattr(resp, "data", None)
@@ -867,7 +1113,7 @@ async def _prepare_live_session(
     client = genai.Client(
         vertexai=True,
         project=settings.gcp_project,
-        location=os.environ.get("VOBIZ_LIVE_LOCATION") or get_vertex_live_location(),
+        location=os.environ.get("VOBIZ_LIVE_LOCATION") or _LIVE_LOCATION,
     )
     config = genai_types.LiveConnectConfig(
         response_modalities=[genai_types.Modality.AUDIO],
@@ -933,7 +1179,7 @@ async def _prepare_live_session(
             )
         ],
     )
-    model = os.environ.get("VOBIZ_LIVE_MODEL") or get_vertex_live_model()
+    model = os.environ.get("VOBIZ_LIVE_MODEL") or _LIVE_MODEL
 
     # The gap between a parent saying "hello" and hearing a voice is the single
     # most important number on this route, and it is made of separable pieces.
@@ -1014,6 +1260,7 @@ async def vobiz_stream(ws: WebSocket) -> None:
         client, config, model, context = await _prepare_live_session(
             outreach_id, language, started
         )
+        bridge.context = context
 
         from google.genai import types as genai_types
 
@@ -1065,6 +1312,15 @@ async def vobiz_stream(ws: WebSocket) -> None:
         # way out cannot strand a slot for the life of the process.
         _SESSION_SEM.release()
         if bridge is not None:
+            # Save what was said BEFORE hanging up: a failure in the hangup path
+            # must not take the conversation with it.
+            await _persist_transcript(bridge)
+            # Then the summary, which is what a teacher actually opens. It runs
+            # after the parent is off the line, so its latency costs them nothing.
+            if bridge.context is not None:
+                await _generate_call_summary(
+                    bridge, bridge.context, int(time.monotonic() - started)
+                )
             # The leg outlives this socket by design; end it explicitly.
             await _hangup(bridge.call_uuid)
         log.info(
@@ -1083,6 +1339,7 @@ async def vobiz_stream(ws: WebSocket) -> None:
             ),
             worst_lateness_ms=round(bridge.worst_lateness_ms) if bridge else None,
             engaged=bridge.engaged if bridge else False,
+            transcript_turns=len(bridge.transcript) if bridge else 0,
             parent_turns=len(bridge.parent_said) if bridge else 0,
             opted_out=bridge.opted_out if bridge else False,
             # Two different numbers, and conflating them hides the fix. The
