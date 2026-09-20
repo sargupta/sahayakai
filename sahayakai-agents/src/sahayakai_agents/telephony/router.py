@@ -40,7 +40,13 @@ import structlog
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from ..config import get_settings
-from .audio import ULAW_SILENCE, DecimatorState, pcm24k_to_ulaw8k, ulaw8k_to_pcm16k
+from .audio import (
+    ULAW_SILENCE,
+    DecimatorState,
+    pcm24k_to_ulaw8k,
+    ulaw8k_to_pcm16k,
+    ulaw_to_pcm16,
+)
 from .flow import (
     CLOSE,
     KICKOFF_AFTER_OPENER,
@@ -215,6 +221,18 @@ _ISO_LANGUAGE = {
     "Malayalam": "ml", "Bengali": "bn", "Marathi": "mr", "Gujarati": "gu",
     "Punjabi": "pa", "Odia": "or",
 }
+
+#: Mean absolute sample level that counts as speech rather than line noise.
+#: mu-law silence decodes to zero, so a real voice clears this comfortably.
+_PARENT_SPEECH_LEVEL = 400
+#: Consecutive frames required, so a click or a crackle is not a conversation.
+#: Five frames is 100ms.
+_PARENT_SPEECH_FRAMES = 5
+
+#: How long after the model's last audio the line counts as quiet. Covers the
+#: gap between the model finishing generation and the pacer finishing playout,
+#: so a nudge cannot arrive while the parent is still hearing the last sentence.
+_MODEL_SETTLE_SECONDS = 1.5
 
 #: Flush the transcript every this many turns. Small enough that a dropped call
 #: loses at most a turn or two, large enough not to write on every fragment.
@@ -443,6 +461,14 @@ class _Bridge:
         self.transcript: list[dict[str, str]] = []
         self.transcript_saved_at = 0
         self.context: CallContext | None = None
+        #: The model has produced audio at least once. Until then it is still
+        #: composing its opening, and nudging it is nudging mid-sentence.
+        self.model_has_spoken = False
+        #: When the model last produced audio, so "quiet" means the LINE is
+        #: quiet, not merely that the parent has not interrupted.
+        self.model_last_audio = 0.0
+        #: Consecutive inbound frames above the noise floor.
+        self.loud_frames = 0
         self.opted_out = False
         #: Rolling tail of what the parent said, for phrase detection across
         #: transcription fragments.
@@ -585,6 +611,22 @@ async def _conversation_watchdog(bridge: _Bridge, session: Any) -> None:
         await asyncio.sleep(0.5)
         quiet_for = time.monotonic() - bridge.last_activity
 
+        # Never nudge while the school is still talking.
+        #
+        # The nudge is a director turn, so if it lands mid-utterance the model
+        # simply continues into it — on a live call the parent heard a 55-word
+        # monologue that ended "...Please go ahead, I am listening", which is
+        # this cue's own words welded onto the end of the opening. The line is
+        # only quiet when the model has actually spoken, has stopped, and has
+        # nothing queued to play.
+        speaking = (
+            not bridge.model_has_spoken
+            or not bridge.out.empty()
+            or (time.monotonic() - bridge.model_last_audio) < _MODEL_SETTLE_SECONDS
+        )
+        if speaking:
+            continue
+
         if not bridge.engaged:
             if not nudged_after_opener and quiet_for > _POST_OPENER_SILENCE:
                 nudged_after_opener = True
@@ -637,6 +679,7 @@ async def _pump_carrier_to_live(bridge: _Bridge, session: Any) -> str:
             bridge.stream_id = bridge.stream_id or frame.stream_id
             bridge.bytes_up += len(frame.audio)
             bridge.last_voice = time.monotonic()
+            _note_parent_audio(bridge, frame.audio)
             await session.send_realtime_input(
                 audio=genai_types.Blob(
                     data=ulaw8k_to_pcm16k(frame.audio), mime_type=_PCM_IN_MIME
@@ -800,6 +843,31 @@ async def _generate_call_summary(bridge: _Bridge, context: CallContext, seconds:
         )
     except Exception as exc:  # noqa: BLE001
         log.error("telephony.summary_failed", outreach_id=bridge.outreach_id, error=str(exc))
+
+
+def _note_parent_audio(bridge: _Bridge, ulaw: bytes) -> None:
+    """Notice the parent is talking from the AUDIO, not from the transcript.
+
+    Transcription lags speech by a second or two. Waiting for it to decide
+    whether anyone is there meant the line looked silent while the parent was
+    mid-sentence: on a probe the parent spoke at 7.0s and the post-opener nudge
+    still fired at 9.5s, so the school told a talking parent "please go ahead,
+    I am listening".
+
+    The carrier is already sending us their audio. A frame or two above the
+    noise floor is all the evidence needed, and it costs a table lookup.
+    """
+    pcm = ulaw_to_pcm16(ulaw)
+    if not pcm:
+        return
+    level = sum(abs(s) for s in pcm) / len(pcm)
+    if level < _PARENT_SPEECH_LEVEL:
+        bridge.loud_frames = 0
+        return
+    bridge.loud_frames += 1
+    if bridge.loud_frames >= _PARENT_SPEECH_FRAMES:
+        bridge.engaged = True
+        bridge.last_activity = time.monotonic()
 
 
 async def _handle_parent_speech(bridge: _Bridge, session: Any, server: Any) -> None:
@@ -993,6 +1061,8 @@ async def _pump_live_to_carrier(bridge: _Bridge, session: Any) -> str:
             data = getattr(resp, "data", None)
             if data:
                 bridge.last_activity = time.monotonic()
+                bridge.model_has_spoken = True
+                bridge.model_last_audio = bridge.last_activity
                 if bridge.first_audio_at is None:
                     bridge.first_audio_at = time.monotonic()
                 ulaw, bridge.decimator = pcm24k_to_ulaw8k(data, bridge.decimator)

@@ -14,6 +14,8 @@ conversation run its course, and the tests are weighted accordingly.
 
 from __future__ import annotations
 
+import asyncio
+
 import pytest
 
 from sahayakai_agents.telephony import router as telephony
@@ -422,3 +424,212 @@ class TestIndicWordBoundaries:
         # goodbye on a Hindi-hinted call arrives in Devanagari.
         for said in ("थैंक यू", "थैंक्स", "ओके बाय"):
             assert is_goodbye(said), said
+
+
+@pytest.mark.asyncio
+class TestTheWatchdogDoesNotTalkOverTheSchool:
+    """A director cue delivered mid-utterance becomes part of that utterance.
+
+    On a live call the parent heard one 55-word block ending "...Please go
+    ahead, I am listening" — the post-opener nudge's own words, welded onto the
+    end of the opening because the cue fired while the model was still
+    composing. Their verdict, recorded in the transcript, was "This is very
+    bad."
+    """
+
+    class _B:
+        def __init__(self, **kw: object) -> None:
+            import asyncio as _a
+
+            self.stop = False
+            self.closing = False
+            self.engaged = False
+            self.outreach_id = "t"
+            self.parent_said: list[str] = []
+            self.recent_speech = ""
+            self.out: _a.Queue = _a.Queue()
+            self.model_has_spoken = False
+            self.model_last_audio = 0.0
+            self.last_activity = 0.0
+            for k, v in kw.items():
+                setattr(self, k, v)
+
+    async def _nudges_sent(self, bridge: object, seconds: float = 1.6) -> int:
+        sent: list[str] = []
+
+        class _S:
+            async def send_client_content(self, **kw: object) -> None:
+                sent.append("cue")
+
+        task = asyncio.create_task(telephony._conversation_watchdog(bridge, _S()))  # type: ignore[arg-type]
+        await asyncio.sleep(seconds)
+        bridge.stop = True  # type: ignore[attr-defined]
+        await asyncio.wait_for(task, timeout=2)
+        return len(sent)
+
+    async def test_stays_silent_while_the_model_has_not_spoken_yet(self) -> None:
+        # Composing the opening is not silence.
+        bridge = self._B(last_activity=0.0, model_has_spoken=False)
+        assert await self._nudges_sent(bridge) == 0
+
+    async def test_stays_silent_while_audio_is_still_queued(self) -> None:
+        bridge = self._B(last_activity=0.0, model_has_spoken=True, model_last_audio=0.0)
+        bridge.out.put_nowait((0, b"\x01" * 160))
+        assert await self._nudges_sent(bridge) == 0
+
+    async def test_stays_silent_immediately_after_the_model_stops(self) -> None:
+        # The parent is still hearing the last sentence through the pacer.
+        import time as _t
+
+        bridge = self._B(last_activity=0.0, model_has_spoken=True, model_last_audio=_t.monotonic())
+        # Watch for less than the settle window: the point is that the cue is
+        # held back while the parent is still hearing the last sentence, not
+        # that it is suppressed forever.
+        assert await self._nudges_sent(bridge, seconds=telephony._MODEL_SETTLE_SECONDS - 0.6) == 0
+
+    async def test_nudges_once_the_line_is_genuinely_quiet(self) -> None:
+        import time as _t
+
+        now = _t.monotonic()
+        bridge = self._B(
+            last_activity=now - telephony._POST_OPENER_SILENCE - 1,
+            model_has_spoken=True,
+            model_last_audio=now - telephony._MODEL_SETTLE_SECONDS - 1,
+        )
+        assert await self._nudges_sent(bridge) >= 1
+
+
+class TestDoesNotRepeatTheMessage:
+    """"Haan ji, boliye" is how Indian parents answer a call, not a request.
+
+    A probe caught the model delivering the teacher's message, hearing the
+    parent say "haan ji, boliye" — go ahead — and delivering the entire message
+    a second time. Repeating what someone just heard is the clearest possible
+    sign that nobody is really on the line.
+    """
+
+    @staticmethod
+    def _instruction() -> str:
+        """The prompt with newlines flattened.
+
+        Prompt text is hard-wrapped, so a phrase almost always spans a line
+        break and a literal `in` check fails on text that is plainly present.
+        """
+        import re
+
+        from sahayakai_agents.telephony.prompt import CallContext, build_parent_call_instruction
+
+        text = build_parent_call_instruction(
+            CallContext(student_name="Aarav", language="Hindi", message="Doing well.")
+        )
+        return re.sub(r"\s+", " ", text)
+
+    def test_names_the_phrases_parents_actually_use(self) -> None:
+        text = self._instruction()
+        for phrase in ("boliye", "bolo", "haan"):
+            assert phrase in text, phrase
+
+    def test_says_plainly_it_is_not_a_request_to_repeat(self) -> None:
+        assert "NOT asking for it again" in self._instruction()
+
+    def test_says_what_to_do_instead(self) -> None:
+        # A rule that only forbids leaves the model with nothing to say.
+        assert "moves the conversation on" in self._instruction()
+
+
+class TestEngagementComesFromAudioNotTranscript:
+    """Transcription lags speech by a second or two.
+
+    Deciding "is anyone there" from the transcript meant the line looked silent
+    while the parent was mid-sentence: on a probe the parent spoke at 7.0s and
+    the post-opener nudge still fired at 9.5s, so the school told a talking
+    parent "please go ahead, I am listening".
+    """
+
+    class _B:
+        engaged = False
+        last_activity = 0.0
+        loud_frames = 0
+
+    @staticmethod
+    def _ulaw(level: int) -> bytes:
+        import math
+        from array import array
+
+        from sahayakai_agents.telephony.audio import pcm16_to_ulaw
+
+        return pcm16_to_ulaw(
+            array("h", [int(level * math.sin(2 * math.pi * 200 * i / 8000)) for i in range(160)])
+        )
+
+    def test_silence_is_not_engagement(self) -> None:
+        b = self._B()
+        for _ in range(50):
+            telephony._note_parent_audio(b, self._ulaw(0))  # type: ignore[arg-type]
+        assert not b.engaged
+
+    def test_a_voice_is_noticed_within_about_a_tenth_of_a_second(self) -> None:
+        b = self._B()
+        for _ in range(telephony._PARENT_SPEECH_FRAMES):
+            telephony._note_parent_audio(b, self._ulaw(6000))  # type: ignore[arg-type]
+        assert b.engaged
+        # Five 20ms frames. Fast enough to beat the nudge, slow enough to
+        # ignore a click.
+        assert telephony._PARENT_SPEECH_FRAMES * 0.02 <= 0.2
+
+    def test_an_isolated_click_is_not_a_conversation(self) -> None:
+        b = self._B()
+        for _ in range(telephony._PARENT_SPEECH_FRAMES - 1):
+            telephony._note_parent_audio(b, self._ulaw(6000))  # type: ignore[arg-type]
+        telephony._note_parent_audio(b, self._ulaw(0))  # type: ignore[arg-type]
+        assert not b.engaged
+
+    def test_it_beats_the_nudge(self) -> None:
+        # Audio detection must be faster than the post-opener wait, or the
+        # nudge still lands on a talking parent.
+        assert telephony._PARENT_SPEECH_FRAMES * 0.02 < telephony._POST_OPENER_SILENCE
+
+
+class TestTheOpeningIsSplitInTwo:
+    """The message comes AFTER the parent invites it, not before.
+
+    A parent answering a call says "haan ji, boliye" — go ahead. Delivering
+    everything first leaves that invitation nowhere to land, and the model
+    answers it by repeating the message. Two probes in a row showed exactly
+    that, and re-stating what someone just heard is unmistakably a machine.
+    """
+
+    @staticmethod
+    def _instruction() -> str:
+        import re
+
+        from sahayakai_agents.telephony.prompt import CallContext, build_parent_call_instruction
+
+        return re.sub(
+            r"\s+",
+            " ",
+            build_parent_call_instruction(
+                CallContext(student_name="Aarav", language="English", message="Doing well.")
+            ),
+        )
+
+    def test_the_first_turn_is_a_check_not_the_message(self) -> None:
+        text = self._instruction()
+        assert "TWO STEPS, NOT ONE" in text
+        assert "Then STOP and wait" in text
+
+    def test_the_kickoff_cue_withholds_the_message(self) -> None:
+        import re
+
+        cue = re.sub(r"\s+", " ", KICKOFF_AFTER_OPENER)
+        assert "do NOT deliver the teacher's message yet" in cue
+
+    def test_the_message_is_still_delivered_verbatim_at_step_two(self) -> None:
+        # Splitting the opening must not weaken the one rule that matters most.
+        assert "ESSENTIALLY AS WRITTEN" in self._instruction()
+
+    def test_it_forbids_inventing_a_family_name(self) -> None:
+        # A probe had the school call a parent "Mr. Kumar", which nobody said.
+        text = self._instruction()
+        assert "NAMES YOU WERE NOT GIVEN" in text
+        assert "worse than using none" in text

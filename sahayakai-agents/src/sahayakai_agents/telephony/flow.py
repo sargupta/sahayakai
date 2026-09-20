@@ -50,10 +50,10 @@ __all__ = [
 KICKOFF_AFTER_OPENER = (
     "(The parent has just answered and has already heard the recorded line telling "
     "them this is an important message from their child's school. Do NOT greet them "
-    "again and do NOT repeat that line. React briefly to anything they said, then "
-    "give the teacher's message warmly in your own words, naming the child, and "
-    "invite them to ask or share anything. Three or four short sentences, then stop "
-    "and listen.)"
+    "again, do NOT repeat that line, and do NOT deliver the teacher's message yet. "
+    "Say ONE short sentence checking you are speaking with the child's parent and "
+    "that now is a workable moment. Then stop and wait — their 'haan ji, boliye' is "
+    "the invitation you speak into, and the message comes after it.)"
 )
 
 #: Used only when no recording could be played, so the model must greet.
