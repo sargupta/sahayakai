@@ -583,14 +583,32 @@ async def _begin_close(bridge: _Bridge, session: Any, reason: str) -> None:
         await _send_director(session, cue)
 
     async def _end_after_goodbye() -> None:
-        # Let the closing line actually reach the parent before hanging up.
-        # Cutting the line mid-goodbye is its own small rudeness.
-        deadline = time.monotonic() + _CLOSING_GRACE_SECONDS
+        """Let the closing line actually reach the parent before hanging up.
+
+        The obvious loop — wait until the queue is empty — is wrong, and it is a
+        race we won only by luck on a real call. The cue has just been SENT; the
+        model has not generated the closing line yet, so the queue is empty at
+        the first check and the hangup fires about a second later, cutting the
+        goodbye off before it is spoken.
+
+        So wait for audio to APPEAR after the cue first, and only then wait for
+        it to drain. If nothing ever appears the grace period still ends the
+        call, because a silent line is worse than a missing goodbye.
+        """
+        cue_sent = time.monotonic()
+        deadline = cue_sent + _CLOSING_GRACE_SECONDS
+
+        # Phase one: the model starts speaking the closing line.
+        while time.monotonic() < deadline:
+            if bridge.model_last_audio > cue_sent or not bridge.out.empty():
+                break
+            await asyncio.sleep(0.1)
+
+        # Phase two: it finishes, and the carrier finishes playing it.
         while time.monotonic() < deadline:
             await asyncio.sleep(0.25)
             if bridge.out.empty() and not bridge.pending:
-                # Queue drained; give the carrier its buffered audio time to play.
-                await asyncio.sleep(_PREBUFFER_SECONDS + 0.3)
+                await asyncio.sleep(_PREBUFFER_SECONDS + 0.5)
                 break
         bridge.stop = True
 

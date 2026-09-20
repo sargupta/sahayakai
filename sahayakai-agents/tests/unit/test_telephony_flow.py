@@ -15,6 +15,7 @@ conversation run its course, and the tests are weighted accordingly.
 from __future__ import annotations
 
 import asyncio
+import time
 
 import pytest
 
@@ -708,3 +709,55 @@ class TestTheCallEndsBeforeTheBookkeeping:
         summary = source.index("await _generate_call_summary")
         assert hangup < transcript, "the parent waits on a Firestore write"
         assert hangup < summary, "the parent waits on an LLM summary"
+
+
+@pytest.mark.asyncio
+class TestTheGoodbyeIsSpokenBeforeTheLineDrops:
+    """Waiting for an empty queue is a race, and we won it only by luck.
+
+    `_begin_close` sends the closing cue and the model has not generated the
+    line yet, so the queue is empty at the first check and the hangup fires a
+    second later — cutting the goodbye off before it is spoken. On a real call
+    the DELETE landed 0.75s after the close began, which only worked because
+    the model had already started speaking for its own reasons.
+    """
+
+    class _B:
+        def __init__(self) -> None:
+            import asyncio as _a
+
+            self.stop = False
+            self.closing = False
+            self.opted_out = False
+            self.outreach_id = "t"
+            self.pending = b""
+            self.out: _a.Queue = _a.Queue()
+            self.model_last_audio = 0.0
+            self.call_uuid = ""
+
+    async def test_waits_for_the_closing_line_to_be_produced(self) -> None:
+        bridge = self._B()
+
+        sent: list[str] = []
+
+        class _S:
+            async def send_client_content(self, **kw: object) -> None:
+                sent.append("cue")
+
+        await telephony._begin_close(bridge, _S(), "goodbye")  # type: ignore[arg-type]
+        # The model has produced nothing yet, so the call must still be open.
+        await asyncio.sleep(0.4)
+        assert not bridge.stop, "hung up before the goodbye was even generated"
+
+        # The model now speaks, and the audio drains.
+        bridge.model_last_audio = time.monotonic()
+        bridge.out.put_nowait((0, b"\x01" * 160))
+        await asyncio.sleep(0.2)
+        bridge.out.get_nowait()
+        await asyncio.sleep(1.4)
+        assert bridge.stop, "never hung up after the goodbye finished"
+
+    async def test_gives_up_rather_than_holding_a_silent_line(self) -> None:
+        # If the model never speaks, the grace period must still end the call:
+        # a silent open line is worse than a missing goodbye.
+        assert telephony._CLOSING_GRACE_SECONDS <= 15
