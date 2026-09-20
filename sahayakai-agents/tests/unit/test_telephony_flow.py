@@ -142,7 +142,12 @@ class TestDirectorTurns:
         assert "go ahead" in POST_OPENER_NUDGE
 
     def test_the_kickoff_after_a_recording_forbids_greeting_twice(self) -> None:
-        assert "NOT greet" in KICKOFF_AFTER_OPENER
+        # The recording already said namaste; saying it again is the first
+        # thing that makes a call sound automated.
+        import re
+
+        cue = re.sub(r"\s+", " ", KICKOFF_AFTER_OPENER)
+        assert "do not say namaste again" in cue
 
     def test_the_optout_close_does_not_argue(self) -> None:
         assert "not ask why" in OPTOUT_CLOSE and "not try to continue" in OPTOUT_CLOSE
@@ -633,3 +638,73 @@ class TestTheOpeningIsSplitInTwo:
         text = self._instruction()
         assert "NAMES YOU WERE NOT GIVEN" in text
         assert "worse than using none" in text
+
+
+class TestTheParentIsToldWhoIsCalling:
+    """The recording says "a message from your child's school" and names nobody.
+
+    A parent who does not know who is on the line is right to be suspicious: an
+    unknown number with a message about their child is exactly what a scam
+    sounds like. Suppressing the introduction to avoid greeting twice removed
+    the introduction altogether.
+    """
+
+    @staticmethod
+    def _instruction() -> str:
+        import re
+
+        from sahayakai_agents.telephony.prompt import CallContext, build_parent_call_instruction
+
+        return re.sub(
+            r"\s+",
+            " ",
+            build_parent_call_instruction(
+                CallContext(
+                    student_name="Aarav",
+                    teacher_name="Mrs Rao",
+                    school_name="Darjeeling Public School",
+                    language="English",
+                    message="Doing well.",
+                )
+            ),
+        )
+
+    def test_names_the_school_and_the_teacher(self) -> None:
+        text = self._instruction()
+        assert "the school by name" in text
+        assert "the teacher by name" in text
+
+    def test_does_not_impersonate_the_teacher(self) -> None:
+        # Calling FOR the teacher is honest; being her is not.
+        assert "never claim to be the teacher" in self._instruction()
+
+    def test_takes_no_personal_name_of_its_own(self) -> None:
+        # The shipped prompt forbids an assistant persona; an invented human
+        # name would be worse.
+        assert "Never give yourself a personal name" in self._instruction()
+
+    def test_the_cue_also_asks_for_the_introduction(self) -> None:
+        import re
+
+        cue = re.sub(r"\s+", " ", KICKOFF_AFTER_OPENER)
+        assert "name the school" in cue and "name the teacher" in cue
+
+
+class TestTheCallEndsBeforeTheBookkeeping:
+    """Hanging up must not wait on Firestore or an LLM.
+
+    The teardown ran transcript-write, then summary generation, then hangup —
+    with a comment claiming the summary ran "after the parent is off the line".
+    Measured on a real call the line stayed open and silent for 5.3 seconds
+    after the goodbye. From the parent's side, the call would not end.
+    """
+
+    def test_hangup_is_issued_before_transcript_and_summary(self) -> None:
+        from pathlib import Path
+
+        source = Path(telephony.__file__).read_text()
+        hangup = source.index("await _hangup(bridge.call_uuid)")
+        transcript = source.index("await _persist_transcript(bridge)\n            if bridge.context")
+        summary = source.index("await _generate_call_summary")
+        assert hangup < transcript, "the parent waits on a Firestore write"
+        assert hangup < summary, "the parent waits on an LLM summary"

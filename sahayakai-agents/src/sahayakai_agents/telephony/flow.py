@@ -48,12 +48,13 @@ __all__ = [
 #: minute?". The recording asked permission but did not say why we called, so
 #: this is where the call actually begins.
 KICKOFF_AFTER_OPENER = (
-    "(The parent has just answered and has already heard the recorded line telling "
-    "them this is an important message from their child's school. Do NOT greet them "
-    "again, do NOT repeat that line, and do NOT deliver the teacher's message yet. "
-    "Say ONE short sentence checking you are speaking with the child's parent and "
-    "that now is a workable moment. Then stop and wait — their 'haan ji, boliye' is "
-    "the invitation you speak into, and the message comes after it.)"
+    "(The parent has just answered. A recording has already said this is an "
+    "important message from their child's school, but it did NOT say who is "
+    "calling. So do not say namaste again, and do NOT deliver the teacher's "
+    "message yet. In one or two short sentences: name the school, name the "
+    "teacher, say you are calling on that teacher's behalf, and check you are "
+    "speaking with the child's parent. Then stop and wait — their 'haan ji, "
+    "boliye' is the invitation you speak into, and the message comes after it.)"
 )
 
 #: Used only when no recording could be played, so the model must greet.

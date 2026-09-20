@@ -1382,17 +1382,23 @@ async def vobiz_stream(ws: WebSocket) -> None:
         # way out cannot strand a slot for the life of the process.
         _SESSION_SEM.release()
         if bridge is not None:
-            # Save what was said BEFORE hanging up: a failure in the hangup path
-            # must not take the conversation with it.
+            # HANG UP FIRST. Everything else is bookkeeping and the parent must
+            # not be held on the line for it.
+            #
+            # This used to run transcript-write then LLM summary then hangup,
+            # with a comment claiming the summary "runs after the parent is off
+            # the line". It did not: measured on a real call, the line stayed
+            # open and silent for 5.3 seconds after the goodbye while Firestore
+            # was written and a summary was generated. From the parent's side
+            # that is a call that would not end.
+            await _hangup(bridge.call_uuid)
+
+            # Now the record, with the parent already gone.
             await _persist_transcript(bridge)
-            # Then the summary, which is what a teacher actually opens. It runs
-            # after the parent is off the line, so its latency costs them nothing.
             if bridge.context is not None:
                 await _generate_call_summary(
                     bridge, bridge.context, int(time.monotonic() - started)
                 )
-            # The leg outlives this socket by design; end it explicitly.
-            await _hangup(bridge.call_uuid)
         log.info(
             "telephony.call_closed",
             outreach_id=outreach_id,
