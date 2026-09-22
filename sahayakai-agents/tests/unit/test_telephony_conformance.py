@@ -29,6 +29,7 @@ from sahayakai_agents.telephony.conformance import (
     check_no_padding_mid_stream,
     check_pitch_survives_the_pipeline,
     check_resampler_is_phase_continuous,
+    check_voice_is_stable_across_turns,
 )
 from sahayakai_agents.telephony.router import _FRAME_BYTES, _queue_ulaw
 
@@ -120,3 +121,33 @@ def test_every_check_names_the_complaint_it_prevents() -> None:
     assert len(CHECKS) >= 5
     for symptom in CHECKS.values():
         assert len(symptom) > 20
+
+
+class TestVoiceStability:
+    """Model drift within a call — the cause that was neither resampling nor rendering.
+
+    Reported twice as "the voice keeps changing" and then "voice is still not
+    consistent", after both of our own causes were fixed. It is a property of
+    the model, and invisible in a single-utterance test: you have to measure
+    several turns of ONE session.
+    """
+
+    def test_accepts_a_steady_voice(self) -> None:
+        # gemini-live-2.5-flash @ global, measured.
+        check_voice_is_stable_across_turns([192.0, 196.7, 196.7, 184.6, 184.6, 186.0])
+
+    def test_rejects_the_drift_that_was_actually_reported(self) -> None:
+        # gemini-live-2.5-flash-native-audio @ us-central1, measured.
+        with pytest.raises(ConformanceFailure, match="drifts"):
+            check_voice_is_stable_across_turns([233.0, 201.7, 218.2, 198.3, 181.8, 210.5])
+
+    def test_refuses_to_judge_on_too_little_evidence(self) -> None:
+        # A single utterance looks perfect no matter how badly a model drifts,
+        # which is exactly why this went unnoticed for two calls.
+        with pytest.raises(ConformanceFailure, match="three"):
+            check_voice_is_stable_across_turns([200.0])
+
+    def test_the_call_path_uses_the_steady_model(self) -> None:
+        assert telephony._LIVE_MODEL == "gemini-live-2.5-flash"
+        assert telephony._LIVE_LOCATION == "global"
+        assert "native-audio" not in telephony._LIVE_MODEL

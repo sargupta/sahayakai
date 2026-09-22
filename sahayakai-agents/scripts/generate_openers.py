@@ -88,8 +88,8 @@ VOICE = "Aoede"
 #: Rendering through the live model makes the handover identical by
 #: construction, and it stays identical if the voice or model is ever changed,
 #: because both come from the same two constants.
-LIVE_MODEL = os.environ.get("VOBIZ_LIVE_MODEL", "gemini-live-2.5-flash-native-audio")
-LIVE_LOCATION = os.environ.get("VOBIZ_LIVE_LOCATION", "us-central1")
+LIVE_MODEL = os.environ.get("VOBIZ_LIVE_MODEL", "gemini-live-2.5-flash")
+LIVE_LOCATION = os.environ.get("VOBIZ_LIVE_LOCATION", "global")
 
 _ECHO_INSTRUCTION = (
     "Repeat the user's text back EXACTLY, word for word, in the same language "
