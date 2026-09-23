@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { getProfileData } from "@/app/actions/profile";
+import { getProfileData } from "@/lib/api/profile";
 import { EDUCATION_BOARDS } from "@/types";
 
 export interface ExamPaperAuthState {

@@ -41,6 +41,10 @@ jest.mock('@/hooks/use-toast', () => ({
 const mockShare = jest.fn();
 const mockFormatParentSummary = jest.fn();
 jest.mock('@/lib/assessment-formatters', () => ({
+    // Keep the real helpers (latexToReadable etc.) — the card formats question
+    // text with latexToReadable at render — and only spy the two the failed-scan
+    // gate test asserts on.
+    ...jest.requireActual('@/lib/assessment-formatters'),
     formatParentSummary: (...args: unknown[]) => mockFormatParentSummary(...args),
     shareViaNativeOrWhatsapp: (...args: unknown[]) => mockShare(...args),
 }));

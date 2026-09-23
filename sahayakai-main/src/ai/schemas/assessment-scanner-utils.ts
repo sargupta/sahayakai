@@ -104,3 +104,17 @@ export function recomputeTotals(
         needsReviewCount,
     };
 }
+
+/**
+ * Failed-scan gate (migrated from production). A scan "graded something" only if
+ * it has a non-failed status AND at least one question. The Python sidecar sets
+ * its own status, and an empty question list is the ground truth either way — so
+ * a 0% "score" from an empty extraction must never be presented as a real grade.
+ */
+export function isGradedResult(
+    result: { status?: string; questions?: unknown[] } | null | undefined,
+): boolean {
+    if (!result) return false;
+    if (result.status === 'failed') return false;
+    return Array.isArray(result.questions) && result.questions.length > 0;
+}

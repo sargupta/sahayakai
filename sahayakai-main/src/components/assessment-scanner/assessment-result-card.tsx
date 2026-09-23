@@ -56,6 +56,7 @@ import type {
 } from "@/ai/schemas/assessment-scanner-schemas";
 import {
     effectiveQuestion,
+    isGradedResult,
     recomputeTotals,
 } from "@/ai/schemas/assessment-scanner-utils";
 import { resolveSubjectFamily } from "@/ai/schemas/assessment-scanner-constants";
@@ -112,6 +113,10 @@ export function AssessmentResultCard({
 
     const isFailed = edited.status === "failed";
     const isPartial = edited.status === "partial";
+    // Failed-scan gate (migrated from prod): a scan that graded nothing has no
+    // grade to copy, send, print or edit into. Every content action is disabled
+    // so a 0% empty extraction can never be turned into a real-looking grade.
+    const isShareable = isGradedResult(edited);
 
     // Re-derive header score from the (possibly overridden) questions so the
     // teacher sees the new percentage instantly as they edit marks.
@@ -415,24 +420,28 @@ export function AssessmentResultCard({
                 label: t("Edit"),
                 icon: <Pencil className="h-4 w-4" />,
                 onClick: () => setIsEditing(true),
+                disabled: !isShareable,
                 variant: "outline" as const,
             },
             {
                 label: t("Copy summary"),
                 icon: <Copy className="h-4 w-4" />,
                 onClick: handleCopySummary,
+                disabled: !isShareable,
                 variant: "outline" as const,
             },
             {
                 label: t("Copy for student"),
                 icon: <Copy className="h-4 w-4" />,
                 onClick: handleCopyStudentHandout,
+                disabled: !isShareable,
                 variant: "outline" as const,
             },
             {
                 label: t("Send to parent"),
                 icon: <MessageCircle className="h-4 w-4" />,
                 onClick: handleSendToParent,
+                disabled: !isShareable,
                 variant: "outline" as const,
             },
             {
@@ -443,7 +452,7 @@ export function AssessmentResultCard({
                     <Printer className="h-4 w-4" />
                 ),
                 onClick: handlePrintPdf,
-                disabled: pdfBusy,
+                disabled: pdfBusy || !isShareable,
                 variant: "outline" as const,
                 loading: pdfBusy,
             },
@@ -461,6 +470,7 @@ export function AssessmentResultCard({
         handleSendToParent,
         isEditing,
         isSaving,
+        isShareable,
         pdfBusy,
         t,
     ]);
@@ -506,8 +516,10 @@ export function AssessmentResultCard({
             actions={actions}
         >
             <div className="space-y-5">
-                {/* Score header + summary tiles — re-derived live in edit mode. */}
-                {!isFailed && (
+                {/* Score header + summary tiles — re-derived live in edit mode.
+                    Gated on isGradedResult (migrated from prod): a scan that graded
+                    nothing must never render the 0% / E figures as a real score. */}
+                {isShareable && (
                     <div className="rounded-xl border border-border bg-muted/30 p-4">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-stretch sm:justify-between">
                             {/* Overall score */}
@@ -561,14 +573,16 @@ export function AssessmentResultCard({
                     </div>
                 )}
 
-                {/* Failed / partial banner — a failed card must never be visually empty. */}
-                {isFailed && (
+                {/* Nothing-to-share gate (migrated from prod): a scan that graded
+                    nothing must SAY so — never render as an empty or 0% result, the
+                    parent being the audience least able to tell the difference. */}
+                {!isShareable && (
                     <Alert variant="destructive">
                         <XCircle className="h-4 w-4" />
-                        <AlertTitle>{t("Grading could not be completed")}</AlertTitle>
+                        <AlertTitle>{t("Nothing to share")}</AlertTitle>
                         <AlertDescription className="space-y-2">
                             <p>
-                                {t("We couldn't grade this scan. This usually means the photos were too blurry, cropped, or didn't contain gradable answers.")}
+                                {t("This scan did not grade any questions, so there is no score to send. Re-upload clearer photos and scan again.")}
                             </p>
                             <p className="font-medium">
                                 {t("Re-take the photos in good light with the whole page in frame, then scan again.")}
@@ -721,19 +735,32 @@ export function AssessmentResultCard({
                     </div>
                 )}
 
-                {/* Footer link to library — hidden from print. */}
-                {isSaved && !isEditing && (
+                {/* Library-save truth (migrated from prod): show the real state.
+                    Never claim "Saved to My Library" when the write did not land —
+                    say "Not saved" instead. Only shown for a graded, non-editing card. */}
+                {isShareable && !isEditing && (
                     <div className="flex items-center justify-between gap-3 border-t border-border/30 pt-4 text-xs text-muted-foreground print:hidden">
                         <span className="inline-flex items-center gap-1.5">
-                            <BookmarkCheck className="h-3.5 w-3.5 text-green-600" />
-                            {t("Saved to My Library")}
+                            {isSaved ? (
+                                <>
+                                    <BookmarkCheck className="h-3.5 w-3.5 text-green-600" />
+                                    {t("Saved to My Library")}
+                                </>
+                            ) : (
+                                <>
+                                    <AlertCircle className="h-3.5 w-3.5 text-amber-600" />
+                                    {t("Not saved to My Library")}
+                                </>
+                            )}
                         </span>
-                        <Link
-                            href="/my-library"
-                            className="text-primary hover:underline font-medium"
-                        >
-                            {t("View in My Library")}
-                        </Link>
+                        {isSaved && (
+                            <Link
+                                href="/my-library"
+                                className="text-primary hover:underline font-medium"
+                            >
+                                {t("View in My Library")}
+                            </Link>
+                        )}
                     </div>
                 )}
 

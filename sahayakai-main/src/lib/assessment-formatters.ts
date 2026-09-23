@@ -13,7 +13,7 @@
  */
 
 import type { AssessmentScannerOutput } from '@/ai/schemas/assessment-scanner-schemas';
-import { effectiveQuestion } from '@/ai/schemas/assessment-scanner-utils';
+import { effectiveQuestion, isGradedResult } from '@/ai/schemas/assessment-scanner-utils';
 
 interface SummaryContext {
     subject?: string;
@@ -21,10 +21,28 @@ interface SummaryContext {
     studentName?: string;
 }
 
+/**
+ * Thrown when a caller asks for shareable text from a scan that produced no
+ * grades (migrated from prod). Callers should gate on `isGradedResult` and
+ * disable the action; this error is the backstop for the caller that forgets,
+ * so a 0% empty extraction can never be emitted as "Score: 0% (E)".
+ */
+export class AssessmentNotGradedError extends Error {
+    readonly code = 'NOT_GRADED' as const;
+    constructor() {
+        super(
+            'This scan did not grade any questions, so there is no result to share.',
+        );
+        this.name = 'AssessmentNotGradedError';
+    }
+}
+
 export function formatParentSummary(
     result: AssessmentScannerOutput,
     ctx: SummaryContext = {},
 ): string {
+    if (!isGradedResult(result)) throw new AssessmentNotGradedError();
+
     const lines: string[] = [];
 
     lines.push('Assessment Result');
@@ -86,6 +104,8 @@ export function formatStudentHandout(
     result: AssessmentScannerOutput,
     ctx: SummaryContext = {},
 ): string {
+    if (!isGradedResult(result)) throw new AssessmentNotGradedError();
+
     const lines: string[] = [];
 
     lines.push('Your Assessment');
