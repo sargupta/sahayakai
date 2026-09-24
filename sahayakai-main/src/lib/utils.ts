@@ -37,3 +37,27 @@ export function calculateEditPercentage(original: string, modified: string): num
   // Edit Percentage = 1 - Similarity
   return Math.round((1 - similarity) * 100);
 }
+
+/**
+ * Milliseconds-since-epoch from a timestamp of unknown wire shape.
+ */
+export function timestampToMillis(ts: unknown): number {
+  if (!ts) return 0;
+  if (typeof ts === "number") return ts;
+  if (typeof ts === "string") {
+    const m = Date.parse(ts);
+    return isNaN(m) ? 0 : m;
+  }
+  if (ts instanceof Date) return ts.getTime();
+  const o = ts as { seconds?: number; _seconds?: number };
+  const s = o.seconds ?? o._seconds;
+  return typeof s === "number" ? s * 1000 : 0;
+}
+
+/** True when a generating entry is old enough to be considered stuck. */
+export const GENERATING_STALE_MS = 6 * 60 * 1000;
+
+export function isGenerationStale(updatedAt: unknown): boolean {
+  const ms = timestampToMillis(updatedAt);
+  return ms > 0 && Date.now() - ms > GENERATING_STALE_MS;
+}

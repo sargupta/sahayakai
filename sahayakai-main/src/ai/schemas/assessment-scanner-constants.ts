@@ -14,10 +14,13 @@
  */
 
 /**
- * Demo / Phase-2 cap on pages per scan. Held to 3 (not the schema ceiling of
- * 15) for the NCERT demo so token cost + latency stay bounded.
+ * Demo cap on pages per scan. Raised 3 → 10 for the batch-scale work: Pass 1 is
+ * now a single multi-image call and Pass 2 a single weighted-budget call, so a
+ * ~10-page mixed paper fits the raised (110s) request budget. The schema ceiling
+ * (15) is still the hard limit. Phase 0 measurement may tune this down if a
+ * heavy (all-essay) 10-page scan can't hold latency on the live key.
  */
-export const ASSESSMENT_DEMO_PAGE_CAP = 3;
+export const ASSESSMENT_DEMO_PAGE_CAP = 10;
 
 /**
  * Back-compat alias for the old Phase-1 single-page cap. Kept exported only

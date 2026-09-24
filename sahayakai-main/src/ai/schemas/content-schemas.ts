@@ -58,6 +58,7 @@ export const BaseContentSchema = z.object({
     // Status
     isPublic: z.boolean().default(false),
     isDraft: z.boolean().default(false),
+    status: z.enum(['generating', 'ready', 'error']).optional(),
 
     createdAt: z.string().or(z.date()).optional(),
     updatedAt: z.string().or(z.date()).optional(),

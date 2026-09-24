@@ -32,27 +32,17 @@ import {
     ASSESSMENT_SUPPORTED_SUBJECTS,
     AssessmentScannerInputSchema,
 } from '@/ai/schemas/assessment-scanner-schemas';
-import { isGradedResult } from '@/ai/schemas/assessment-scanner-utils';
 import { handleAIError } from '@/lib/ai-error-response';
 import { isFeatureEnabled } from '@/lib/feature-flags';
-import { logger } from '@/lib/logger';
 import { withPlanCheck } from '@/lib/plan-guard';
 import { dbAdapter } from '@/lib/db/adapter';
 import { dispatchAssessmentScanner } from '@/lib/sidecar/assessment-scanner-dispatch';
+import { isGradedResult } from '@/ai/schemas/assessment-scanner-utils';
 
 // Allow up to 120s for AI scanning (multi-page OCR + grading can be slow)
 export const maxDuration = 120;
 
 const SUPPORTED_SUBJECT_SET = new Set<string>(ASSESSMENT_SUPPORTED_SUBJECTS);
-
-/**
- * Single wording for "the scan read nothing", shared by the typed-error path
- * (the Genkit flow throws `AssessmentEmptyExtractionError`) and the
- * defensive result check below (the Python sidecar returns `status: 'failed'`
- * rather than throwing). Same cause, same message, same 422.
- */
-const EMPTY_EXTRACTION_MESSAGE =
-    'We could not read any questions or answers from the uploaded pages. Please re-upload clearer photos and try again.';
 
 /**
  * Normalise the request body so older clients that still send `pageUrl`
@@ -85,7 +75,38 @@ async function _handler(request: Request) {
             );
         }
 
-        const rawJson = await request.json();
+        // Read + parse the body defensively. When pages are sent as inline base64
+        // (local upload mode) a large multi-page scan can exceed the request-body
+        // ceiling (experimental.middlewareClientMaxBodySize); Next then truncates
+        // the body and request.json() throws a SyntaxError ("Unterminated string
+        // in JSON at position N"). Surface that as a clean 413 the UI can act on,
+        // rather than a generic 500 that reads as an AI/grading failure.
+        //
+        // BUT an empty or small malformed body throws the SAME SyntaxError class
+        // ("Unexpected end of JSON input" / "Unexpected token …") — that's a
+        // client bug, NOT a size problem, and must be a 400. Distinguish by the
+        // truncation signature: a cut base64 string reports "Unterminated string"
+        // deep into the payload, so require either that phrasing or a large byte
+        // position; anything else (empty body, position 0) falls through to 400.
+        let rawJson: unknown;
+        try {
+            rawJson = await request.json();
+        } catch (parseErr) {
+            const truncated =
+                parseErr instanceof SyntaxError &&
+                (/unterminated/i.test(parseErr.message) ||
+                    Number(/position (\d+)/i.exec(parseErr.message)?.[1] ?? 0) > 100_000);
+            return NextResponse.json(
+                {
+                    error: truncated ? 'PAYLOAD_TOO_LARGE' : 'INVALID_INPUT',
+                    message: truncated
+                        ? 'Your upload is too large. Please scan fewer pages at once or reduce the image quality, then try again.'
+                        : 'The request body could not be read. Please try again.',
+                    code: truncated ? 'PAYLOAD_TOO_LARGE' : 'BAD_REQUEST_BODY',
+                },
+                { status: truncated ? 413 : 400 },
+            );
+        }
         const normalised = normalisePagePayload(rawJson);
         if (normalised && typeof normalised === 'object') {
             assessmentId =
@@ -132,7 +153,7 @@ async function _handler(request: Request) {
             );
         }
         // Feature flag: assessmentScannerDemoMode
-        //   ENABLED (default) — cap at ASSESSMENT_DEMO_PAGE_CAP (3, demo)
+        //   ENABLED (default) — cap at ASSESSMENT_DEMO_PAGE_CAP (10, demo)
         //   DISABLED          — cap at ASSESSMENT_MAX_PAGES (15, schema)
         // Flip in Firestore: system_config/feature_flags.features
         //   .assessmentScannerDemoMode.enabled = false
@@ -179,43 +200,21 @@ async function _handler(request: Request) {
         // parity scoring. The flag is flipped per-rollout-step from the
         // Firestore feature_flags doc.
         const result = await dispatchAssessmentScanner(body);
-
-        // A scan that graded nothing is not a result — it is a failure that
-        // happens to be shaped like a result. `status: 'failed'` carries
-        // `scorePct: 0` and `letterGrade: 'E'` because 0 of 0 marks is 0%, and
-        // returning that over HTTP 200 put a real-looking failing grade for a
-        // child in the teacher's hands, one tap from WhatsApp. It also billed
-        // the teacher's plan: withPlanCheck only refunds the reserved quota on
-        // a non-2xx response.
-        //
-        // The Genkit flow now throws AssessmentEmptyExtractionError before it
-        // can build such a result. The sidecar has its own grading loop and
-        // reports the same condition as `status: 'failed'`, so the wire
-        // boundary checks it too, whichever backend served the request.
+        // Failed-scan gate (migrated from prod). A scan that graded nothing —
+        // status 'failed' or an empty question array — must NOT be returned as a
+        // 2xx result: a 0% "score" reads as a real failing grade downstream. Gate
+        // it to 422 EMPTY_EXTRACTION, mirroring the thrown-error path below.
         if (!isGradedResult(result)) {
-            logger.error(
-                'Assessment Scanner: scan produced no grades',
-                undefined,
-                'ASSESSMENT_SCANNER',
-                {
-                    userId,
-                    assessmentId,
-                    status: result.status,
-                    source: result.source,
-                    pageCount: result.pageCount,
-                    reason: 'empty_extraction',
-                },
-            );
             return NextResponse.json(
                 {
                     error: 'empty_extraction',
                     code: 'EMPTY_EXTRACTION',
-                    message: EMPTY_EXTRACTION_MESSAGE,
+                    message:
+                        'We could not read any questions or answers from the uploaded pages. Please re-upload clearer photos and try again.',
                 },
                 { status: 422 },
             );
         }
-
         return NextResponse.json(result);
     } catch (error) {
         // BUG #3 hardening: map KNOWN, user-fixable failure causes to a
@@ -240,13 +239,33 @@ async function _handler(request: Request) {
             );
         }
 
+        if (code === 'BLANK_SCAN') {
+            // Not an error the teacher needs to "fix" — the photo was fine, the
+            // page is just empty. Return a friendly, actionable message (and the
+            // blank page numbers) instead of the misleading "re-upload clearer
+            // photos". No AI grading call was spent (the flow short-circuits
+            // before Pass 2), which is the whole point of detecting blank early.
+            return NextResponse.json(
+                {
+                    error: 'blank_scan',
+                    code: 'BLANK_SCAN',
+                    message:
+                        (error as { message?: string }).message ??
+                        "This page looks blank — there's nothing to grade. Please upload the student's written answer page.",
+                    blankPages: (error as { blankPages?: number[] }).blankPages,
+                },
+                { status: 422 },
+            );
+        }
+
         if (code === 'EMPTY_EXTRACTION') {
             return NextResponse.json(
                 {
                     error: 'empty_extraction',
                     code: 'EMPTY_EXTRACTION',
                     message:
-                        (error as { message?: string }).message ?? EMPTY_EXTRACTION_MESSAGE,
+                        (error as { message?: string }).message ??
+                        'We could not read any questions or answers from the uploaded pages. Please re-upload clearer photos and try again.',
                 },
                 { status: 422 },
             );

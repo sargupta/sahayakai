@@ -1,7 +1,11 @@
 
-import { dispatchExamPaper } from '@/lib/sidecar/exam-paper-dispatch';
+import {
+  dispatchExamPaper,
+  ExamPaperGenerationInProgressError,
+} from '@/lib/sidecar/exam-paper-dispatch';
 import { logger } from '@/lib/logger';
 import { reservePlanQuota } from '@/lib/plan-guard';
+import { isFeatureEnabled } from '@/lib/feature-flags';
 import { logAIError, classifyAIError } from '@/lib/ai-error-response';
 
 /**
@@ -17,6 +21,13 @@ import { logAIError, classifyAIError } from '@/lib/ai-error-response';
  *   data: {"type":"complete","data":{...}}\n\n
  *   data: {"type":"error","message":"..."}\n\n
  */
+
+// L5 / H4 (forensic EPG-2026-07-17): match the non-stream sibling's budget so
+// a slow-but-successful run isn't killed by the platform mid-stream. The 120s
+// here was stale — it predated the sibling's M4 bump to 180 (the fallback path
+// runs sidecar 90s + Genkit 75s = up to 165s worst case). At 120s the platform
+// 504'd the SSE connection before the in-progress event could be sent.
+export const maxDuration = 180;
 
 const VALID_DIFFICULTIES = ['easy', 'moderate', 'hard', 'mixed'] as const;
 
@@ -38,6 +49,25 @@ async function _handler(request: Request) {
             'Content-Type': 'text/event-stream',
             'Cache-Control': 'no-cache',
             Connection: 'keep-alive',
+          },
+        },
+      );
+    }
+
+    // H5 (forensic EPG-2026-07-17): master kill switch, mirroring the non-stream
+    // sibling. Checked BEFORE reservePlanQuota so a disabled feature never
+    // consumes quota. Unconfigured → enabled (zero-config; current behavior).
+    const featureFlag = await isFeatureEnabled('examPaperEnabled', userId);
+    if (!featureFlag.enabled) {
+      return new Response(
+        sseEvent({ type: 'error', code: 'feature_disabled', message: 'Exam paper generation is temporarily disabled.', reason: featureFlag.reason }),
+        {
+          status: 503,
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            Connection: 'keep-alive',
+            'Retry-After': '60',
           },
         },
       );
@@ -103,6 +133,48 @@ async function _handler(request: Request) {
       );
     }
 
+    // H3.1 (forensic EPG-2026-07-17): the same anchor guard the non-stream
+    // sibling has (route.ts, "NCERT demo hot-fix 2026-05-19"). With NO blueprint
+    // AND no chapters, Gemini gets two open-ended constraints at once
+    // ("invent the structure" + "invent the syllabus") and routinely exceeds the
+    // 75s budget. This route was missing the check entirely — it didn't even
+    // normalize `chapters` to []. Require SOMETHING to anchor on.
+    if (!Array.isArray(body.chapters)) {
+      body.chapters = [];
+    }
+    if ((body.chapters as string[]).length === 0) {
+      const { findBlueprint } = await import('@/ai/data/board-blueprints');
+      const blueprint = await findBlueprint(
+        String(body.board),
+        String(body.gradeLevel),
+        String(body.subject),
+      );
+      let canAnchor = !!blueprint;
+      if (!canAnchor) {
+        const { canonicaliseGrade, canonicaliseSubject, getChaptersForCell } = await import('@/ai/data/ncert-chapters');
+        const grade = canonicaliseGrade(String(body.gradeLevel));
+        const subject = canonicaliseSubject(String(body.subject));
+        canAnchor = grade != null && !!subject && getChaptersForCell(grade, subject).length > 0;
+      }
+      if (!canAnchor) {
+        return new Response(
+          sseEvent({
+            type: 'error',
+            code: 'chapters_required_for_unblueprinted_subject',
+            message: `Please add at least one chapter for ${body.board} ${body.gradeLevel} ${body.subject}, or pick a subject we have a blueprint/syllabus for. The AI needs a chapter list to anchor the paper.`,
+          }),
+          {
+            status: 400,
+            headers: {
+              'Content-Type': 'text/event-stream',
+              'Cache-Control': 'no-cache',
+              Connection: 'keep-alive',
+            },
+          },
+        );
+      }
+    }
+
     // Plan/quota gate AFTER input validation (so a 400 never consumes quota),
     // BEFORE streaming. SSE returns a native Response so we use the shared
     // reservePlanQuota() rather than the withPlanCheck() HOF.
@@ -121,12 +193,34 @@ async function _handler(request: Request) {
       );
     }
 
+    // L6: track close/cancel so a late enqueue (heartbeat firing or a
+    // dispatcher result arriving after the client disconnected) is a no-op
+    // instead of throwing "Controller is already closed".
+    let closed = false;
+    let heartbeat: ReturnType<typeof setInterval> | undefined;
+
     const stream = new ReadableStream({
       async start(controller) {
         const encoder = new TextEncoder();
         const send = (payload: Record<string, unknown>) => {
-          controller.enqueue(encoder.encode(sseEvent(payload)));
+          if (closed) return;
+          try {
+            controller.enqueue(encoder.encode(sseEvent(payload)));
+          } catch {
+            // Controller closed under us (client gone) — drop the event.
+          }
         };
+
+        // L5: 15s keepalive comment so intermediary proxies don't drop an
+        // otherwise-idle SSE connection during a long generation.
+        heartbeat = setInterval(() => {
+          if (closed) return;
+          try {
+            controller.enqueue(encoder.encode(': keepalive\n\n'));
+          } catch {
+            /* closed */
+          }
+        }, 15_000);
 
         try {
           // --- Phase 1: Blueprint loading ---
@@ -163,6 +257,8 @@ async function _handler(request: Request) {
           send({
             type: 'complete',
             data: {
+              // H3: surface the persisted id so the client Save upserts by id.
+              contentId: output.contentId,
               title: output.title,
               board: output.board,
               subject: output.subject,
@@ -173,9 +269,40 @@ async function _handler(request: Request) {
               sections: output.sections,
               blueprintSummary: output.blueprintSummary,
               pyqSources: output.pyqSources,
+              // Phase 1 marks-reconcile (2026-07-09): forward the drift
+              // report + previously-dropped NCERT warnings, mirroring the
+              // non-stream sibling route.
+              marksReconciliation: output.marksReconciliation,
+              // Phase 2 (2026-07-10): forward the answer-key/marking-scheme
+              // completeness report, mirroring the non-stream sibling route.
+              answerKeyCompleteness: output.answerKeyCompleteness,
+              validationWarnings: output.validationWarnings,
+              // C7/H1: novelty report — forward it too (route.ts allow-list mirror).
+              newVerification: output.newVerification,
             },
           });
         } catch (error) {
+          // H3.2 (forensic EPG-2026-07-17): a generation that blew the timeout
+          // budget is STILL running in the background and may land in My Library.
+          // The non-stream sibling maps this to a friendly 202; here it was
+          // indistinguishable from a hard failure AND it refunded the quota for
+          // a paper that will still be produced. Send a distinct in-progress
+          // event and do NOT roll back the reservation.
+          if (error instanceof ExamPaperGenerationInProgressError) {
+            logger.warn(
+              'Exam paper stream generation exceeded timeout budget',
+              'EXAM_PAPER_STREAM',
+              { budgetMs: error.budgetMs, elapsedMs: error.elapsedMs, paperDesc },
+            );
+            send({
+              type: 'in_progress',
+              message: 'Exam paper still generating. Check My Library in 1 minute.',
+              budgetMs: error.budgetMs,
+              elapsedMs: error.elapsedMs,
+            });
+            return; // finally still runs: heartbeat cleared, controller closed.
+          }
+
           // Generation failed — refund the reserved quota.
           if (gate?.ok) await gate.rollback();
 
@@ -199,8 +326,20 @@ async function _handler(request: Request) {
             message: classified.message,
           });
         } finally {
-          controller.close();
+          if (heartbeat) clearInterval(heartbeat);
+          closed = true;
+          try {
+            controller.close();
+          } catch {
+            /* already closed */
+          }
         }
+      },
+      // L6: client disconnected — stop the heartbeat and mark closed so any
+      // in-flight send() becomes a no-op.
+      cancel() {
+        closed = true;
+        if (heartbeat) clearInterval(heartbeat);
       },
     });
 

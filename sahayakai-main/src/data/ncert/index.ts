@@ -62,6 +62,7 @@ export interface NCERTChapter {
     textbookName: string;
     textbookCode?: string;           // official NCERT book code e.g. '402' for IT
     textbookEdition?: NCERTTextbookEdition;   // set by each file; defaults in seed script
+    aliases?: string[];              // former / variant titles that resolve to this chapter (Phase 2)
     learningOutcomes: string[];
     keywords: string[];
     estimatedPeriods: number;

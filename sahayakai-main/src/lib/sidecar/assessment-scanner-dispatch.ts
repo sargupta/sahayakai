@@ -29,6 +29,7 @@ import type {
 } from '@/ai/schemas/assessment-scanner-schemas';
 import { getChapterById, getChaptersForGrade } from '@/data/ncert';
 import { getFeatureFlags, type SidecarMode } from '@/lib/feature-flags';
+import { logger } from '@/lib/logger';
 
 import {
     callSidecarAssessmentScanner,
@@ -41,7 +42,6 @@ import {
 import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { shouldRunCanaryShadowDiff } from './canary-shadow-diff';
 import { withTimeout } from './with-timeout';
-import { logger } from '@/lib/logger';
 
 const FALLBACK_TIMEOUT_MS =
     Number(process.env.ASSESSMENT_SCANNER_FALLBACK_TIMEOUT_MS) || 90_000;
