@@ -896,7 +896,24 @@ async def _pump_client_to_vertex(
 async def _pump_vertex_to_client(
     ws: WebSocket, session: Any, counters: _StreamCounters
 ) -> str:
-    """Relay Vertex responses (audio / tool-calls / turn markers) down to client."""
+    """Relay Vertex responses (audio / tool-calls / turn markers) down to client.
+
+    `session.receive()` is a PER-TURN async generator: it ends when the model
+    finishes speaking, not when the session closes. Because `_relay_session`
+    waits with FIRST_COMPLETED, letting this function return after one pass tore
+    down the whole socket as soon as VIDYA finished her first answer — voice
+    mode could not hold a conversation, and the close reason read
+    "vertex_stream_end", as though the model had quit rather than as though we
+    had stopped listening.
+
+    Confirmed on the telephony bridge, which copied this shape: a live call
+    ended after 5.4s, right after the greeting. Same fix both places — re-enter
+    the generator per turn, and stop only when a turn yields nothing at all,
+    which is a genuinely closed session rather than a finished turn.
+
+    The session caps (`_MAX_SESSION_SECONDS`, the idle timeout, the per-uid and
+    global permits) still bound the call; this loop does not outlive them.
+    """
     from google.genai import types as genai_types
 
     async def send(payload: dict[str, Any]) -> None:
@@ -905,32 +922,39 @@ async def _pump_vertex_to_client(
         counters.frames_down += 1
         await ws.send_text(text)
 
-    async for resp in session.receive():
-        if getattr(resp, "data", None):
-            await send({"audio": base64.b64encode(resp.data).decode()})
-        tc = getattr(resp, "tool_call", None)
-        if tc and tc.function_calls:
-            for fc in tc.function_calls:
-                await send({
-                    "toolCall": {
-                        "name": fc.name,
-                        "args": dict(fc.args or {}),
-                        "id": fc.id,
-                    }
-                })
-            await session.send_tool_response(
-                function_responses=[
-                    genai_types.FunctionResponse(
-                        id=fc.id, name=fc.name, response={"status": "dispatched"}
-                    )
-                    for fc in tc.function_calls
-                ]
-            )
-        sc = getattr(resp, "server_content", None)
-        if sc and getattr(sc, "interrupted", False):
-            await send({"interrupted": True})
-        if sc and getattr(sc, "turn_complete", False):
-            await send({"turnComplete": True})
+    while True:
+        turn_had_output = False
+        async for resp in session.receive():
+            turn_had_output = True
+            if getattr(resp, "data", None):
+                await send({"audio": base64.b64encode(resp.data).decode()})
+            tc = getattr(resp, "tool_call", None)
+            if tc and tc.function_calls:
+                for fc in tc.function_calls:
+                    await send({
+                        "toolCall": {
+                            "name": fc.name,
+                            "args": dict(fc.args or {}),
+                            "id": fc.id,
+                        }
+                    })
+                await session.send_tool_response(
+                    function_responses=[
+                        genai_types.FunctionResponse(
+                            id=fc.id, name=fc.name, response={"status": "dispatched"}
+                        )
+                        for fc in tc.function_calls
+                    ]
+                )
+            sc = getattr(resp, "server_content", None)
+            if sc and getattr(sc, "interrupted", False):
+                await send({"interrupted": True})
+            if sc and getattr(sc, "turn_complete", False):
+                await send({"turnComplete": True})
+        if not turn_had_output:
+            # Nothing at all from this pass: the session is really gone, not a
+            # turn that finished. Re-entering would spin on a dead socket.
+            break
     return "vertex_stream_end"
 
 
