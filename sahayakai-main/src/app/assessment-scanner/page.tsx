@@ -503,7 +503,7 @@ function AssessmentScannerPageInner() {
                                                 />
                                             </FormControl>
                                         ) : (
-                                            <Alert variant="default" className="border-amber-500/40 bg-amber-500/5">
+                                            <Alert variant="default" className="border-warning/40 bg-warning/5">
                                                 <Info className="h-4 w-4" />
                                                 <AlertDescription>
                                                     {t(
@@ -523,7 +523,7 @@ function AssessmentScannerPageInner() {
                                         {pdfNotice && (
                                             <Alert
                                                 variant="default"
-                                                className="mt-3 border-amber-500/40 bg-amber-500/5"
+                                                className="mt-3 border-warning/40 bg-warning/5"
                                             >
                                                 <Info className="h-4 w-4" />
                                                 <AlertDescription>{pdfNotice}</AlertDescription>
@@ -653,7 +653,7 @@ function AssessmentScannerPageInner() {
                                             </span>
                                         ) : (
                                             <span className="flex items-center gap-1">
-                                                <Info className="h-3 w-3 text-amber-600" />
+                                                <Info className="h-3 w-3 text-warning" />
                                                 {t("Pilot — review grades")}
                                             </span>
                                         )}
@@ -669,7 +669,7 @@ function AssessmentScannerPageInner() {
                             type="submit"
                             size="lg"
                             disabled={isLoading || pageUrls.length === 0}
-                            className="w-full h-12 text-base font-semibold bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-elevated hover:from-orange-600 hover:to-amber-600 transition-all disabled:opacity-60 disabled:shadow-none"
+                            className="w-full h-12 text-base font-semibold bg-gradient-to-r from-saffron-500 to-warning text-white shadow-elevated hover:from-saffron-600 hover:to-warning transition-all disabled:opacity-60 disabled:shadow-none"
                         >
                             {isLoading ? (
                                 <>
@@ -726,7 +726,7 @@ function AssessmentScannerPageInner() {
 
             {/* Saved-load failure — link back to the library, not a bare page. */}
             {scan.kind === "error" && scan.origin === "saved" && (
-                <Alert className="w-full border-amber-500/40 bg-amber-500/5">
+                <Alert className="w-full border-warning/40 bg-warning/5">
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>{t("Couldn't open this assessment")}</AlertTitle>
                     <AlertDescription className="space-y-3">

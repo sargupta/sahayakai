@@ -54,9 +54,9 @@ export function PaperQualityBanner({ paper }: { paper: GeneratedPaper }) {
   if (messages.length === 0 && chapterWarnings.length === 0) return null;
 
   return (
-    <Card className="border-amber-500/50 bg-amber-500/5">
+    <Card className="border-warning/50 bg-warning/5">
       <CardContent className="pt-6 space-y-2 text-sm">
-        <div className="flex items-center gap-2 font-medium text-amber-700 dark:text-amber-400">
+        <div className="flex items-center gap-2 font-medium text-warning dark:text-warning">
           <AlertTriangle className="w-4 h-4 shrink-0" />
           {t("Review this paper")}
         </div>

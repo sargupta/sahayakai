@@ -157,9 +157,9 @@ export function AssessmentResultCard({
 
     const scoreTone =
         totals.scorePct >= 80
-            ? "text-green-600"
+            ? "text-success"
             : totals.scorePct >= 50
-              ? "text-amber-600"
+              ? "text-warning"
               : "text-destructive";
 
     const encouragement =
@@ -507,9 +507,9 @@ export function AssessmentResultCard({
                 isFailed ? (
                     <XCircle className="h-6 w-6 text-destructive" />
                 ) : isPartial ? (
-                    <AlertCircle className="h-6 w-6 text-amber-600" />
+                    <AlertCircle className="h-6 w-6 text-warning" />
                 ) : (
-                    <CheckCircle2 className="h-6 w-6 text-green-600" />
+                    <CheckCircle2 className="h-6 w-6 text-success" />
                 )
             }
             meta={meta}
@@ -537,7 +537,7 @@ export function AssessmentResultCard({
                                     {t("marks")} · {totals.letterGrade}
                                 </div>
                                 <div className="mt-2 flex flex-wrap items-center gap-2">
-                                    <span className="inline-flex items-center rounded-full bg-green-500/10 px-2.5 py-0.5 text-xs font-medium text-green-700">
+                                    <span className="inline-flex items-center rounded-full bg-success/10 px-2.5 py-0.5 text-xs font-medium text-success">
                                         {encouragement}
                                     </span>
                                     {hasOverrides && (
@@ -564,7 +564,7 @@ export function AssessmentResultCard({
                                     value={String(summary.attempted)}
                                 />
                                 <SummaryTile
-                                    icon={<CheckCircle2 className="h-4 w-4 text-green-600" />}
+                                    icon={<CheckCircle2 className="h-4 w-4 text-success" />}
                                     label={t("Correct")}
                                     value={String(summary.correct)}
                                 />
@@ -594,7 +594,7 @@ export function AssessmentResultCard({
                 {isPartial && (
                     <Alert
                         variant="default"
-                        className="border-amber-500/50 bg-amber-500/5"
+                        className="border-warning/50 bg-warning/5"
                     >
                         <AlertCircle className="h-4 w-4" />
                         <AlertTitle>{t("Partial result — some pages couldn't be read")}</AlertTitle>
@@ -608,7 +608,7 @@ export function AssessmentResultCard({
                 {(edited.imageQualityWarnings ?? []).length > 0 && (
                     <Alert
                         variant="default"
-                        className="border-amber-500/50 bg-amber-500/5 print:hidden"
+                        className="border-warning/50 bg-warning/5 print:hidden"
                     >
                         <AlertCircle className="h-4 w-4" />
                         <AlertTitle>{t("Image quality")}</AlertTitle>
@@ -626,7 +626,7 @@ export function AssessmentResultCard({
                 {(edited.skippedPageNotices ?? []).length > 0 && (
                     <Alert
                         variant="default"
-                        className="border-blue-500/40 bg-blue-500/5 print:hidden"
+                        className="border-info/40 bg-info/5 print:hidden"
                     >
                         <Info className="h-4 w-4" />
                         <AlertTitle>{t("Some pages were blank")}</AlertTitle>
@@ -643,7 +643,7 @@ export function AssessmentResultCard({
                 {totals.needsReviewCount > 0 && (
                     <Alert
                         variant="default"
-                        className="border-amber-500/50 bg-amber-500/5 print:hidden"
+                        className="border-warning/50 bg-warning/5 print:hidden"
                     >
                         <Info className="h-4 w-4" />
                         <AlertTitle>{t("Teacher review suggested")}</AlertTitle>
@@ -743,12 +743,12 @@ export function AssessmentResultCard({
                         <span className="inline-flex items-center gap-1.5">
                             {isSaved ? (
                                 <>
-                                    <BookmarkCheck className="h-3.5 w-3.5 text-green-600" />
+                                    <BookmarkCheck className="h-3.5 w-3.5 text-success" />
                                     {t("Saved to My Library")}
                                 </>
                             ) : (
                                 <>
-                                    <AlertCircle className="h-3.5 w-3.5 text-amber-600" />
+                                    <AlertCircle className="h-3.5 w-3.5 text-warning" />
                                     {t("Not saved to My Library")}
                                 </>
                             )}
@@ -819,32 +819,32 @@ const MISTAKE_PATTERN_LABELS: Record<
 > = {
     none: {
         label: "Correct approach",
-        className: "bg-green-500/10 text-green-700 border-green-500/30",
+        className: "bg-success/10 text-success border-success/30",
         Icon: CheckCircle2,
     },
     computational: {
         label: "Small calculation slip — the idea is right",
-        className: "bg-amber-500/10 text-amber-700 border-amber-500/30",
+        className: "bg-warning/10 text-warning border-warning/30",
         Icon: Calculator,
     },
     transcription: {
         label: "You knew it — just copied it down wrong",
-        className: "bg-amber-500/10 text-amber-700 border-amber-500/30",
+        className: "bg-warning/10 text-warning border-warning/30",
         Icon: PenLine,
     },
     incomplete: {
         label: "Good start — it just needs finishing",
-        className: "bg-blue-500/10 text-blue-700 border-blue-500/30",
+        className: "bg-info/10 text-info border-info/30",
         Icon: Hourglass,
     },
     conceptual: {
         label: "Let's revisit this idea together",
-        className: "bg-violet-500/10 text-violet-700 border-violet-500/30",
+        className: "bg-violet-500/10 text-violet-700 border-violet-500/30", // design-token-allow: distinct category hue, no semantic token
         Icon: Lightbulb,
     },
     off_topic: {
         label: "Re-read the question — check what it asks",
-        className: "bg-slate-500/10 text-slate-700 border-slate-500/30",
+        className: "bg-muted/10 text-muted border-muted/30",
         Icon: Compass,
     },
 };
@@ -889,9 +889,9 @@ function QuestionRow({
     const tone = !isGradable
         ? "text-muted-foreground"
         : pct >= 80
-          ? "text-green-600"
+          ? "text-success"
           : pct >= 50
-            ? "text-amber-600"
+            ? "text-warning"
             : "text-destructive";
 
     const isOverridden = Boolean(question.teacherOverrides);
@@ -907,9 +907,9 @@ function QuestionRow({
     const statusIcon = !isGradable ? (
         <Info className="h-4 w-4 shrink-0 text-muted-foreground" />
     ) : pct >= 80 ? (
-        <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600" />
+        <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
     ) : pct >= 50 ? (
-        <AlertCircle className="h-4 w-4 shrink-0 text-amber-600" />
+        <AlertCircle className="h-4 w-4 shrink-0 text-warning" />
     ) : (
         <XCircle className="h-4 w-4 shrink-0 text-destructive" />
     );
@@ -945,7 +945,7 @@ function QuestionRow({
                     {question.needsTeacherReview && (
                         <Badge
                             variant="secondary"
-                            className="bg-amber-500/10 text-amber-700 border-amber-500/30"
+                            className="bg-warning/10 text-warning border-warning/30"
                         >
                             {t("Needs review")}
                         </Badge>

@@ -248,7 +248,7 @@ describe('validateChapter — soft / lenient behavior', () => {
 
 describe('shouldAutoCorrect', () => {
     test('returns true for high-confidence suggestion', () => {
-        const r = validateChapter('Class 8', 'Sci', 'Foce and Presure');
+        const r = validateChapter('Class 8', 'Sci', 'Exploring Forcs');
         expect(shouldAutoCorrect(r)).toBe(true);
     });
 
