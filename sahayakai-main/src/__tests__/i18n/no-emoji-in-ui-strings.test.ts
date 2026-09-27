@@ -10,7 +10,7 @@
  * whose bottom two rungs had none, so the inconsistency shipped as well.
  *
  * Removing those two strings does not stop the third from being added, so the
- * gate scans the source of truth — every `t("…")` literal and every locale
+ * gate scans the source of truth — every translatable literal and every locale
  * value — rather than a list someone remembers to update.
  */
 import { readFileSync, readdirSync, statSync } from 'node:fs';
@@ -57,10 +57,13 @@ describe('UI strings carry no emoji', () => {
     expect(readdirSync(LOCALES).filter((f) => f.endsWith('.json')).length).toBeGreaterThan(5);
   });
 
-  it('has no emoji inside a t("…") literal', () => {
+  it('has no emoji inside a translatable literal', () => {
     const offenders: string[] = [];
-    // Matches t('…') and t("…") with no embedded quote of the same kind, which
-    // covers every translatable literal in this codebase.
+    // Matches a single- or double-quoted argument to t(, with no embedded quote
+    // of the same kind, which covers every translatable literal in this codebase.
+    // Written as a regex rather than spelled out in prose on purpose: the repo's
+    // own key scanner reads a quoted literal after t( as a key, so writing the
+    // pattern out registers this test file as a caller and invents a missing key.
     const CALL = /\bt\(\s*(['"])((?:(?!\1).)*)\1/gs;
 
     for (const file of sourceFiles(SRC)) {
