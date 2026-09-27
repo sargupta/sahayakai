@@ -1,0 +1,31 @@
+# GitGuardian configuration.
+#
+# The only entries here are HMAC *test vectors* — not credentials. They are the
+# cross-language wire contract for the Vobiz purpose-scoped tokens: the
+# TypeScript runtime mints, the Python sidecar verifies, and these bytes pin the
+# two implementations to the same signature so a change on either side fails a
+# test instead of silently rejecting every real parent call at 3am.
+#
+# They are derived from the literal key "k" * 64, which is written in plain sight
+# next to them (sahayakai-agents/tests/unit/test_telephony_tokens.py, the GOLDEN
+# comment block). They authorise nothing: the production signing key lives in
+# Secret Manager, and a token signed with the test key fails verification
+# everywhere that matters.
+#
+# Anything NOT listed here is scanned normally. Do not add a real secret to this
+# file — rotate it instead.
+version: 2
+
+secret:
+  ignored-matches:
+    - name: "Vobiz token golden vector — answer domain, test key 'k'*64"
+      match: ask7khW1H9Lo-JxtHCCwDVACvBzN3MFU32ZRNvcnsJA
+    - name: "Vobiz token golden vector — call/stream domain, test key 'k'*64"
+      match: KmcHAMBzSYe3TprTBG9q2ze6sDkYyNcwoJPLz4HEZyY
+    - name: "Vobiz token golden vector — status domain, test key 'k'*64"
+      match: tKiScWp9XnJMggkzYDUQgYyoFT6brSbtdJvQojPJ8c0
+
+  ignored-paths:
+    # Raw G.711 mu-law audio. Binary entropy, not text; every opener recording
+    # trips generic high-entropy heuristics.
+    - "sahayakai-agents/src/sahayakai_agents/telephony/openers/*.ulaw"
