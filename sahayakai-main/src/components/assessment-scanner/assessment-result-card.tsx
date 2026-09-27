@@ -164,9 +164,9 @@ export function AssessmentResultCard({
 
     const encouragement =
         totals.scorePct >= 90
-            ? t("Excellent work! 🎉")
+            ? t("Excellent work")
             : totals.scorePct >= 70
-              ? t("Well done 👍")
+              ? t("Well done")
               : totals.scorePct >= 50
                 ? t("Good effort")
                 : t("Keep practising");
