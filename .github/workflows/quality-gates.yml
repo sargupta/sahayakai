@@ -91,14 +91,43 @@ jobs:
       - name: Diff schemas (fail if > 10 constraints drift / agent)
         run: node scripts/ci/check-schema-drift.mjs --threshold=10
 
+  # Every live job below needs a GCP credential. GCP_SA_READ_ONLY_KEY has never
+  # been created, so from 2026-07 until 2026-09-27 the nightly schedule turned
+  # `main` red every single day inside google-github-actions/auth, and the real
+  # signal — actual Cloud Run drift — was never checked even once. A missing
+  # credential is a MISSING CHECK, not a failed one, so it now reports as a
+  # skip with a notice. Deliberately does NOT fall back to the full-access
+  # GCP_SA_KEY: widening a credential to turn a gate green is how a read-only
+  # drift probe quietly becomes a deploy-capable one.
+  live-checks-preflight:
+    name: 'Live checks: credential preflight'
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_live_checks)
+    outputs:
+      have_creds: ${{ steps.probe.outputs.have_creds }}
+    steps:
+      - id: probe
+        env:
+          # `secrets` is unavailable in a job-level `if:`, so the presence test
+          # has to happen in a step and travel as an output.
+          CREDS: ${{ secrets.GCP_SA_READ_ONLY_KEY }}
+        run: |
+          if [ -n "$CREDS" ]; then
+            echo 'have_creds=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'have_creds=false' >> "$GITHUB_OUTPUT"
+            echo '::notice title=Live checks skipped::GCP_SA_READ_ONLY_KEY is not set on this repository, so Cloud Run drift (Gate 3) and the AppCheck env probe (Gate 7) did not run. Create it as a read-only service-account key — see .github/REQUIRED_SECRETS.md — to turn these checks back on.'
+          fi
+
   service-yaml-drift:
     name: 'Gate 3: Cloud Run service.yaml drift'
     runs-on: ubuntu-latest
     # Live drift is time-based, not PR-based — run nightly (schedule) as
     # well as on explicit dispatch with run_live_checks.
-    if: >-
-      github.event_name == 'schedule' ||
-      (github.event_name == 'workflow_dispatch' && inputs.run_live_checks)
+    needs: live-checks-preflight
+    if: needs.live-checks-preflight.outputs.have_creds == 'true'
     permissions:
       contents: read
       id-token: write
@@ -186,7 +215,11 @@ jobs:
   appcheck-env:
     name: 'Gate 7: AppCheck env (warn-only)'
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && inputs.run_live_checks
+    needs: live-checks-preflight
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      inputs.run_live_checks &&
+      needs.live-checks-preflight.outputs.have_creds == 'true'
     permissions:
       contents: read
       id-token: write
@@ -214,7 +247,7 @@ jobs:
       - name: Install deps
         run: npm ci
       - name: Run jest on CI script tests
-        run: npx jest src/__tests__/scripts/ci-no-verify-check.test.ts --runInBand --coverage=false
+        run: npx jest src/__tests__/scripts/ci-no-verify-check.test.ts src/__tests__/scripts/workflow-secrets-declared.test.ts --runInBand --coverage=false
 
 # NOTE: the full unit suite gates PRs via test.yml (Test Suite workflow).
 # Its exit code is only meaningful because the `| tee` pipe was removed
