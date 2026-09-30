@@ -30,6 +30,7 @@ import {
   Lightbulb,
   MessageCircle,
   PencilRuler,
+  PhoneCall,
   Settings,
   ShieldCheck,
   Terminal,
@@ -284,7 +285,7 @@ export function AppSidebar() {
                       <span>{t("Community")}</span>
                     </span>
                     {showCommunityNew && (
-                      <span className="ml-auto h-[18px] px-1.5 rounded-pill bg-orange-500 text-white text-[10px] font-black flex items-center justify-center">
+                      <span className="ml-auto h-[18px] px-1.5 rounded-pill bg-primary text-primary-foreground text-xs font-black flex items-center justify-center">
                         New
                       </span>
                     )}
@@ -332,7 +333,7 @@ export function AppSidebar() {
                         <span>{t("Messages")}</span>
                       </span>
                       {totalUnread > 0 && (
-                        <span className="ml-auto h-[18px] min-w-[18px] px-1.5 rounded-pill bg-primary text-white text-[10px] font-black flex items-center justify-center">
+                        <span className="ml-auto h-[18px] min-w-[18px] px-1.5 rounded-pill bg-primary text-primary-foreground text-xs font-black flex items-center justify-center">
                           {totalUnread > 9 ? "9+" : totalUnread}
                         </span>
                       )}
@@ -357,7 +358,7 @@ export function AppSidebar() {
                       <span
                         data-testid="notifications-badge"
                         aria-label={`${unreadNotifications} unread notifications`}
-                        className="ml-auto h-[18px] min-w-[18px] px-1.5 rounded-pill bg-red-500 text-white text-[10px] font-black flex items-center justify-center"
+                        className="ml-auto h-[18px] min-w-[18px] px-1.5 rounded-pill bg-destructive text-destructive-foreground text-xs font-black flex items-center justify-center"
                       >
                         {unreadNotifications > 9 ? "9+" : unreadNotifications}
                       </span>
@@ -443,6 +444,16 @@ export function AppSidebar() {
           <SidebarGroup>
             <SidebarGroupLabel>{t("Admin")}</SidebarGroupLabel>
             <SidebarMenu>
+              {/* School calls (Sampark): shown to every signed-in user like the
+                  rest of this group; the API admits org admins only. */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname.startsWith('/sampark')} tooltip={t("School calls")}>
+                  <Link href="/sampark" onClick={() => handleNavClick('/sampark')}>
+                    <PhoneCall />
+                    <span>{t("School calls")}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={pathname.startsWith('/admin/cost-dashboard')} tooltip={t("Mission Control")}>
                   <Link href="/admin/cost-dashboard" onClick={() => handleNavClick('/admin/cost-dashboard')}>
