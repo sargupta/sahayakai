@@ -2,7 +2,7 @@
 
 > The Operating System for Teaching in India
 
-SahayakAI is an AI-powered teaching assistant built for India's 1.01 crore (10.1 million) K-12 teachers. It is a product of SARGVISION, founded by Sarit Arora.
+SahayakAI is an AI-powered teaching assistant built for India's 1.01 crore (10.1 million) K-12 teachers. It is a product of SARGVISION, founded by Abhishek Gupta.
 
 ## What SahayakAI Does
 
@@ -75,5 +75,5 @@ SahayakAI works natively (not translated) in 11 Indian languages: English, Hindi
 ## Contact
 
 - Company: SARGVISION
-- Founder: Sarit Arora, Founder & CEO
+- Founder: Abhishek Gupta, Founder & CEO
 - Location: India
