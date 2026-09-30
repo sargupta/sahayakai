@@ -41,6 +41,10 @@ export function useCampaignSummary() {
     const audience = useCallback(
         (a: CampaignAudience): string => {
             if (a.sections.length === 0) return t("Whole school");
+            if (a.sections.length === 1) {
+                const [only] = a.sections;
+                return fmt(t("Class {grade}{section}"), { grade: only.grade, section: only.section });
+            }
             const labels = [...a.sections]
                 .sort((x, y) => x.grade - y.grade || x.section.localeCompare(y.section))
                 .map((s) => `${s.grade}${s.section}`);

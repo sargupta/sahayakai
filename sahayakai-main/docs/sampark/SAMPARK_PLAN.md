@@ -234,6 +234,8 @@ So the engine is chosen per language, all four use the same voice name ("Kore" e
 
 *Drafts for the school's native-speaker review. Numbers are written as words where they sit next to letters.*
 
+*Update 30 Sep 2026: these are the review-round drafts. The current wording (warmer and more conversational, same facts and keys) lives in `src/locales/call-scripts/{english,hindi,bengali,nepali}.json`, and `scripts/sampark/verify-voice.ts` proves every clip against the live voices. The voice's style prompt shapes delivery only — an earlier prompt that asked it to "say the date clearly" made it invent a date in a Nepali confirmation, so every clip a parent can hear is now transcribed back and length-checked before it can be used.*
+
 **PTM invitation** — class-level, names no child, ~22 seconds.
 
 - **EN** — Namaste. This is a recorded message from Hillview Demo School for parents of Class 7, section B. The parent–teacher meeting is on Saturday, 10 October, at 10 in the morning, in the school hall. If you will come, press 1. If this time does not suit you, press 2. To stop these calls, press 9.
