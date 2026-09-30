@@ -142,7 +142,7 @@ async function runLanguage(language: ParentLanguage, args: Args, getAccessToken:
             text: clip.text,
         };
         try {
-            const result = await synthesizeClip(deps, clip, { verifyAll: true, retries: clip.kind === 'message' ? 1 : 0 });
+            const result = await synthesizeClip(deps, clip, { retries: 1 }); // production behaviour: verify every clip, one re-render
             fs.writeFileSync(file, result.audio);
             const speechSeconds = Math.round((result.durationSeconds - (clip.kind === 'message' ? MESSAGE_LEAD_IN_SECONDS : 0)) * 100) / 100;
             const similarity = result.verification.similarity;

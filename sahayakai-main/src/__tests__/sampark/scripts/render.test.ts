@@ -35,14 +35,14 @@ describe('audienceLabelFor', () => {
 });
 
 describe('renderNoticeScript', () => {
-    it('renders the plan §5.1 PTM draft (message + menu as one clip)', () => {
+    it('renders the PTM invitation as one warm, flowing clip (message + menu)', () => {
         const r = renderNoticeScript({ ...base, purpose: 'ptm_invite', facts: SAMPLE_PTM, language: 'Hindi', variant: 'default' });
         expect(r.clips[0]).toEqual({
             kind: 'message',
             text:
-                'नमस्ते। यह हिलव्यू डेमो स्कूल की ओर से कक्षा सात, सेक्शन बी के अभिभावकों के लिए रिकॉर्ड किया हुआ संदेश है। ' +
-                'पैरेंट-टीचर मीटिंग शनिवार, दस अक्टूबर को सुबह दस बजे स्कूल हॉल में होगी। ' +
-                'अगर आप आएँगे, तो एक दबाएँ। अगर यह समय ठीक न हो, तो दो दबाएँ। ऐसी कॉल बंद करने के लिए नौ दबाएँ।',
+                'नमस्ते! यह हिलव्यू डेमो स्कूल की ओर से कक्षा सात, सेक्शन बी के अभिभावकों के लिए एक रिकॉर्ड किया हुआ संदेश है। ' +
+                'पैरेंट-टीचर मीटिंग शनिवार, दस अक्टूबर को सुबह दस बजे स्कूल हॉल में होगी, और हमें आपसे मिलकर बहुत ख़ुशी होगी। ' +
+                'अगर आप आ सकें, तो कृपया एक दबाएँ। अगर यह समय ठीक न बैठे, तो दो दबाएँ। और अगर ऐसी कॉल आपको नहीं चाहिए, तो नौ दबाएँ।',
         });
         expect(r.clips.map((c) => c.kind)).toEqual(['message', 'confirm_1', 'confirm_2', 'opt_out_confirm', 'opt_out_done', 'no_input', 'fallback_office']);
     });
@@ -59,7 +59,7 @@ describe('renderNoticeScript', () => {
             language: 'English',
             variant: 'today',
         });
-        expect(running.clips[0].text).toContain('School buses will still run.');
+        expect(running.clips[0].text).toContain('School buses will still run as usual.');
         // Closure menu has no key 2, so no confirm_2 clip.
         expect(today.clips.map((c) => c.kind)).not.toContain('confirm_2');
     });

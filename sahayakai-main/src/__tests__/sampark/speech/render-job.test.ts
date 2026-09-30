@@ -10,7 +10,8 @@
 import type { AudioStore, SamparkRepo, SpeechSynthesizer, SpeechVerifier } from '@/lib/sampark/ports';
 import { SAMPLE_CLOSURE, SAMPLE_PTM, SAMPLE_SCHOOL } from '@/lib/sampark/scripts/samples';
 import { clipKey } from '@/lib/sampark/speech/clip-key';
-import { MESSAGE_LEAD_IN_SECONDS, neededClips, runRenderStep } from '@/lib/sampark/speech/render-job';
+import { isRunaway, MESSAGE_LEAD_IN_SECONDS, neededClips, runRenderStep } from '@/lib/sampark/speech/render-job';
+import { estimateSeconds } from '@/lib/sampark/scripts/render';
 import { buildMulawWav, mulawSamples, parseWav } from '@/lib/sampark/speech/wav';
 import type { Campaign, CampaignFacts, ParentLanguage, PurposeId, RenderedClip } from '@/types/sampark';
 
@@ -88,7 +89,7 @@ function fakeSynth() {
 }
 
 /** A verifier that "hears" the text in the fake audio, unless told to mishear a language. */
-function fakeVerifier(mishear: (language: ParentLanguage) => string | null = () => null) {
+function fakeVerifier(mishear: (language: ParentLanguage, spoken: string) => string | null = () => null) {
     const calls: ParentLanguage[] = [];
     const verifier: SpeechVerifier = {
         async transcribe({ audio, language }) {
@@ -96,7 +97,8 @@ function fakeVerifier(mishear: (language: ParentLanguage) => string | null = () 
             const samples = mulawSamples(audio);
             let i = 0;
             while (i < samples.length && samples[i] === 0xff) i++;
-            return { transcript: mishear(language) ?? samples.subarray(i).toString('utf8'), confidence: 0.9 };
+            const spoken = samples.subarray(i).toString('utf8');
+            return { transcript: mishear(language, spoken) ?? spoken, confidence: 0.9 };
         },
     };
     return { verifier, calls };
@@ -118,7 +120,7 @@ describe('neededClips', () => {
 });
 
 describe('runRenderStep', () => {
-    it('renders everything once, verifies only message clips, and is idempotent', async () => {
+    it('renders everything once, verifies EVERY clip a parent can hear, and is idempotent', async () => {
         const c = campaign('ptm_invite', SAMPLE_PTM);
         const { repo, clips, current } = fakeRepo(c);
         const { store, files } = fakeStore();
@@ -129,7 +131,7 @@ describe('runRenderStep', () => {
         const first = await runRenderStep(deps, c.orgId, c.id, LANGS, { maxClips: 100, concurrency: 3 });
         expect(first).toEqual({ done: 28, total: 28, failures: [], finished: true });
         expect(s.calls).toHaveLength(28);
-        expect(v.calls).toHaveLength(4); // one message clip per language
+        expect(v.calls).toHaveLength(28); // every clip, not only the message
         expect(files.size).toBe(28);
         expect(s.maxInFlight()).toBeLessThanOrEqual(3);
         expect(current().renderProgress).toEqual({ done: 28, total: 28, failures: [] });
@@ -147,13 +149,13 @@ describe('runRenderStep', () => {
         expect(info.dataBytes).toBe(Math.round(MESSAGE_LEAD_IN_SECONDS * 8000) + Buffer.byteLength(message.text, 'utf8'));
         expect(message.durationSeconds).toBeCloseTo(Array.from(message.text).length / 12 + MESSAGE_LEAD_IN_SECONDS, 1);
         const confirm = [...clips.values()].find((x) => x.kind === 'confirm_1' && x.language === 'Bengali')!;
-        expect(confirm.verification.status).toBe('skipped');
+        expect(confirm.verification.status).toBe('passed'); // confirmations are heard too
         expect(confirm.engine).toBe('chirp3-hd');
 
         const second = await runRenderStep(deps, c.orgId, c.id, LANGS, { maxClips: 100, concurrency: 3 });
         expect(second).toEqual({ done: 28, total: 28, failures: [], finished: true });
         expect(s.calls).toHaveLength(28); // nothing re-synthesised
-        expect(v.calls).toHaveLength(4);
+        expect(v.calls).toHaveLength(28);
     });
 
     it('works in bounded steps with maxClips and reports finished only at the end', async () => {
@@ -178,15 +180,15 @@ describe('runRenderStep', () => {
         const { repo, clips, current } = fakeRepo(c);
         const { store, files } = fakeStore();
         const s = fakeSynth();
-        const v = fakeVerifier((language) => (language === 'Bengali' ? 'সম্পূর্ণ অন্য কথা' : null));
+        const v = fakeVerifier((language, spoken) => (language === 'Bengali' && spoken.includes('অভিভাবক-শিক্ষক সভা') ? 'সম্পূর্ণ অন্য কথা' : null));
         const deps = { repo, synth: s.synth, verifier: v.verifier, store, clock };
 
         const r = await runRenderStep(deps, c.orgId, c.id, LANGS, { maxClips: 100, concurrency: 4 });
         expect(r.finished).toBe(true);
         expect(r.done).toBe(27);
         expect(r.failures).toHaveLength(1);
-        expect(r.failures[0]).toMatch(/^Bengali default message: similarity 0\.\d+ — heard "সম্পূর্ণ অন্য কথা"/);
-        expect(v.calls.filter((l) => l === 'Bengali')).toHaveLength(2); // one retry
+        expect(r.failures[0]).toMatch(/^Bengali default message: similarity 0\.\d+, [\d.]+ s spoken — heard "সম্পূর্ণ অন্য কথা"/);
+        expect(v.calls.filter((l) => l === 'Bengali')).toHaveLength(7 + 1); // every Bengali clip once, plus one retry of the message
         const failed = [...clips.values()].find((x) => x.language === 'Bengali' && x.kind === 'message')!;
         expect(failed.verification).toMatchObject({ status: 'failed', transcript: 'সম্পূর্ণ অন্য কথা' });
         expect(files.has(failed.key)).toBe(true); // kept for a person to listen to
@@ -199,13 +201,48 @@ describe('runRenderStep', () => {
         expect(s.calls.length - before).toBe(2);
     });
 
+    it('class gate: a clip whose voice added or repeated words fails even when the words it should say are all there', async () => {
+        // Seen live on 2026-09-30: short confirmations spoken twice, and one Nepali confirmation that
+        // invented a date. The transcript can still contain the right words, so length is checked too.
+        const c = campaign('emergency_closure', SAMPLE_CLOSURE);
+        const { repo } = fakeRepo(c);
+        const { store } = fakeStore();
+        const s = fakeSynth();
+        const doubled: SpeechSynthesizer = {
+            async synthesize(req) {
+                const r = await s.synth.synthesize(req);
+                return req.language === 'English' && req.text.startsWith('Thank you. Please take care')
+                    ? { ...r, durationSeconds: r.durationSeconds * 2 + 2 } // spoken twice, plus a pause
+                    : r;
+            },
+        };
+        const v = fakeVerifier();
+        const r = await runRenderStep({ repo, synth: doubled, verifier: v.verifier, store, clock }, c.orgId, c.id, ['English'], { maxClips: 100, concurrency: 2 });
+        expect(r.failures).toEqual([expect.stringMatching(/^English (today|tomorrow|default) confirm_1: similarity 1, [\d.]+ s spoken/)]);
+    });
+
+    it('isRunaway allows natural speech but not a doubled clip', () => {
+        const text = 'Thank you. Please take care, and stay safe.';
+        const estimate = estimateSeconds(text, 'English');
+        expect(isRunaway(estimate * 0.8, text, 'English')).toBe(false);
+        expect(isRunaway(estimate, text, 'English')).toBe(false);
+        expect(isRunaway(estimate * 2 + 2, text, 'English')).toBe(true);
+    });
+
     it('a synthesis error is a failure for that clip only', async () => {
         const c = campaign('ptm_invite', SAMPLE_PTM);
         const { repo } = fakeRepo(c);
         const { store } = fakeStore();
         const s = fakeSynth();
+        // Fail exactly the two Hindi confirmation clips, whatever their current wording.
+        const hindiConfirms = new Set(
+            neededClips('ptm_invite', SAMPLE_PTM, SAMPLE_SCHOOL, { kind: 'section', grade: 7, section: 'B' }, ['Hindi'])
+                .filter((n) => n.kind === 'confirm_1' || n.kind === 'confirm_2')
+                .map((n) => n.text),
+        );
+        expect(hindiConfirms.size).toBe(2);
         const failing: SpeechSynthesizer = {
-            synthesize: (req) => (req.language === 'Hindi' && req.text.startsWith('धन्यवाद। स्कूल ने') ? Promise.reject(new Error('HTTP 503')) : s.synth.synthesize(req)),
+            synthesize: (req) => (req.language === 'Hindi' && hindiConfirms.has(req.text) ? Promise.reject(new Error('HTTP 503')) : s.synth.synthesize(req)),
         };
         const v = fakeVerifier();
         const r = await runRenderStep({ repo, synth: failing, verifier: v.verifier, store, clock }, c.orgId, c.id, LANGS, { maxClips: 100, concurrency: 2 });
