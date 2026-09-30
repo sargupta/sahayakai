@@ -1,0 +1,75 @@
+{
+  "id": "hillview-demo",
+  "name": "Hillview Demo School, Siliguri",
+  "udise": null,
+  "board": "CBSE",
+  "city": "Siliguri",
+  "academicYear": "2026-27",
+  "timezone": "Asia/Kolkata",
+  "rubricScale": {
+    "id": "bpa",
+    "labels": [
+      "Beginner",
+      "Proficient",
+      "Advanced"
+    ]
+  },
+  "holidays": [
+    {
+      "date": "2026-08-15",
+      "name": "Independence Day"
+    },
+    {
+      "date": "2026-09-04",
+      "name": "Janmashtami"
+    },
+    {
+      "date": "2026-09-17",
+      "name": "Vishwakarma Puja"
+    },
+    {
+      "date": "2026-10-02",
+      "name": "Gandhi Jayanti"
+    },
+    {
+      "date": "2026-10-16",
+      "name": "Durga Puja break"
+    },
+    {
+      "date": "2026-10-19",
+      "name": "Durga Puja break"
+    },
+    {
+      "date": "2026-10-20",
+      "name": "Durga Puja break (Vijaya Dashami)"
+    },
+    {
+      "date": "2026-10-21",
+      "name": "Durga Puja break"
+    },
+    {
+      "date": "2026-10-22",
+      "name": "Durga Puja break"
+    },
+    {
+      "date": "2026-10-23",
+      "name": "Durga Puja break"
+    },
+    {
+      "date": "2026-11-09",
+      "name": "Kali Puja and Tihar"
+    },
+    {
+      "date": "2026-11-10",
+      "name": "Bhai Tika"
+    },
+    {
+      "date": "2026-12-25",
+      "name": "Christmas"
+    },
+    {
+      "date": "2027-01-26",
+      "name": "Republic Day"
+    }
+  ]
+}
