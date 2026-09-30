@@ -20,7 +20,7 @@
 import { purposeSpec } from '@/lib/sampark/catalogue';
 import { languageInfo, type SpeechEngineConfig } from '@/lib/sampark/languages';
 import type { AudioStore, Clock, SamparkRepo, SpeechSynthesizer, SpeechVerifier } from '@/lib/sampark/ports';
-import { audienceLabelFor, COMMON_CLIP_KINDS, renderNoticeScript, variantsFor, type ScriptVariant } from '@/lib/sampark/scripts/render';
+import { audienceLabelFor, COMMON_CLIP_KINDS, estimateSeconds, renderNoticeScript, variantsFor, type ScriptVariant } from '@/lib/sampark/scripts/render';
 import type { ClipKind, ParentLanguage, RenderedClip } from '@/types/sampark';
 
 import { clipKey } from './clip-key';
@@ -65,26 +65,37 @@ function failureLabel(c: Pick<NeededClip, 'language' | 'variant' | 'kind'>): str
 }
 
 /**
+ * A clip whose audio runs this far past its estimate has almost certainly had
+ * words added or repeated by the voice model (seen live: a Nepali confirmation
+ * that invented a date ran 15.5 s against a 9 s estimate). Estimates use the
+ * slowest measured speaking rate, so real speech normally lands UNDER them.
+ */
+export const RUNAWAY_FACTOR = 1.5;
+export const RUNAWAY_GRACE_SECONDS = 1;
+
+export function isRunaway(spokenSeconds: number, text: string, language: ParentLanguage): boolean {
+    return spokenSeconds > estimateSeconds(text, language) * RUNAWAY_FACTOR + RUNAWAY_GRACE_SECONDS;
+}
+
+/**
  * Synthesise one clip exactly as the render job stores it: lead-in silence on
- * `message` clips, transcribe-back on `message` clips (or on every clip with
- * `verifyAll`, which the verify-voice script uses), one retry on a mismatch.
+ * `message` clips, then EVERY clip is transcribed back and length-checked,
+ * with one re-render on a mismatch. Confirmations, the opt-out step and the
+ * goodbye are all heard by parents, so none of them is exempt (class gate:
+ * no clip may carry words that are not in its reviewed template).
  */
 export async function synthesizeClip(
     deps: Pick<RenderStepDeps, 'synth' | 'verifier' | 'clock'>,
     clip: Pick<NeededClip, 'kind' | 'text' | 'language' | 'speech'>,
-    opts: { verifyAll?: boolean; retries?: number } = {},
+    opts: { retries?: number } = {},
 ): Promise<ClipAudio> {
-    const verify = clip.kind === 'message' || opts.verifyAll === true;
-    const attempts = verify ? 1 + (opts.retries ?? 1) : 1;
+    const attempts = 1 + (opts.retries ?? 1);
     let last: ClipAudio | null = null;
     for (let attempt = 0; attempt < attempts; attempt++) {
         const synthesized = await deps.synth.synthesize({ text: clip.text, language: clip.language, speech: clip.speech });
         const audio = clip.kind === 'message' ? prependSilence(synthesized.audio, MESSAGE_LEAD_IN_SECONDS) : synthesized.audio;
         const durationSeconds =
             Math.round((synthesized.durationSeconds + (clip.kind === 'message' ? MESSAGE_LEAD_IN_SECONDS : 0)) * 100) / 100;
-        if (!verify) {
-            return { audio, durationSeconds, verification: { status: 'skipped', transcript: null, similarity: null, checkedAt: null } };
-        }
         const { transcript } = await deps.verifier.transcribe({
             audio,
             mimeType: 'audio/wav',
@@ -92,7 +103,8 @@ export async function synthesizeClip(
             sttLanguageCode: clip.speech.sttLanguageCode,
         });
         const similarity = transcriptSimilarity(clip.text, transcript, clip.language);
-        const status = similarity >= VERIFY_THRESHOLD ? 'passed' : 'failed';
+        const runaway = isRunaway(synthesized.durationSeconds, clip.text, clip.language);
+        const status = similarity >= VERIFY_THRESHOLD && !runaway ? 'passed' : 'failed';
         last = { audio, durationSeconds, verification: { status, transcript, similarity, checkedAt: deps.clock.now().toISOString() } };
         if (status === 'passed') return last;
     }
@@ -197,7 +209,7 @@ export async function runRenderStep(
             await deps.repo.saveClip(record);
             if (result.verification.status === 'failed') {
                 state.status = 'failed';
-                state.failure = `${failureLabel(clip)}: similarity ${result.verification.similarity} — heard "${result.verification.transcript ?? ''}"`;
+                state.failure = `${failureLabel(clip)}: similarity ${result.verification.similarity}, ${result.durationSeconds} s spoken — heard "${result.verification.transcript ?? ''}"`;
             } else {
                 state.status = 'ok';
                 state.failure = undefined;

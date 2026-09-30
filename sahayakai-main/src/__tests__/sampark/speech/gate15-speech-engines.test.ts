@@ -16,6 +16,7 @@ import {
     GEMINI_TTS_STYLE_PROMPT,
     recognizeUrl,
     TTS_ENDPOINT,
+    isTransientFetchError,
 } from '@/lib/sampark/speech/google-speech';
 import { PARENT_LANGUAGES } from '@/types/sampark';
 
@@ -120,6 +121,33 @@ describe('Gate 15 — speech engine per language', () => {
         const synth = createGoogleSynthesizer({ fetchImpl: impl, getAccessToken: token, maxRetries: 2, sleep: async () => undefined });
         await expect(synth.synthesize({ text: 'x', language: 'Hindi', speech: languageInfo('Hindi').speech })).rejects.toThrow(/HTTP 503/);
         expect(requests).toHaveLength(3);
+    });
+
+    it('retries a timeout or dropped connection like a 503, then succeeds', async () => {
+        let n = 0;
+        const requests: unknown[] = [];
+        const impl = (async (_url: string, init: RequestInit) => {
+            requests.push(init);
+            n += 1;
+            if (n === 1) throw Object.assign(new Error('This operation was aborted'), { name: 'AbortError' });
+            if (n === 2) throw new TypeError('fetch failed');
+            return { ok: true, status: 200, headers: new Headers(), json: async () => ({ audioContent: fakeMulawWav(1).toString('base64') }), text: async () => '' };
+        }) as unknown as typeof fetch;
+        const waits: number[] = [];
+        const synth = createGoogleSynthesizer({ fetchImpl: impl, getAccessToken: token, backoffMs: 100, sleep: async (ms) => void waits.push(ms) });
+        const out = await synth.synthesize({ text: 'x', language: 'English', speech: languageInfo('English').speech });
+        expect(out.durationSeconds).toBe(1);
+        expect(requests).toHaveLength(3);
+        expect(waits).toHaveLength(2);
+    });
+
+    it('does not retry a programming error, and stops after maxRetries timeouts', async () => {
+        expect(isTransientFetchError(new Error('boom'))).toBe(false);
+        const impl = (async () => {
+            throw Object.assign(new Error('This operation was aborted'), { name: 'AbortError' });
+        }) as unknown as typeof fetch;
+        const synth = createGoogleSynthesizer({ fetchImpl: impl, getAccessToken: token, maxRetries: 2, sleep: async () => undefined });
+        await expect(synth.synthesize({ text: 'x', language: 'Hindi', speech: languageInfo('Hindi').speech })).rejects.toThrow(/aborted/);
     });
 
     it('rejects audio that is not 8 kHz mono μ-law', async () => {

@@ -252,35 +252,35 @@
     }
   },
   "common": {
-    "opt_out_confirm": "To stop these calls, press 9 again. Emergency closure notices will still reach you.",
-    "opt_out_done": "Thank you. The school will not send you these calls any more. Emergency closure notices will still reach you.",
-    "no_input": "Thank you for listening. Goodbye.",
-    "fallback_office": "Namaste. This is a call from {schoolName}. Please contact the school office. Thank you."
+    "opt_out_confirm": "Just to be sure, press 9 once more to stop these calls. You will still hear from us if the school ever has to close in an emergency.",
+    "opt_out_done": "All right, we won't send you these calls any more. You will still hear from us if the school has to close in an emergency. Thank you, and take care.",
+    "no_input": "Thank you for listening. Have a good day.",
+    "fallback_office": "Namaste, this is {schoolName}. We couldn't play our message just now, so please get in touch with the school office. Thank you."
   },
   "purposes": {
     "ptm_invite": {
-      "message": "Namaste. This is a recorded message from {schoolName} for {audience}. The parent-teacher meeting is on {date}, at {time}, {venue}.",
-      "menu": "If you will come, press 1. If this time does not suit you, press 2. To stop these calls, press 9.",
-      "confirm_1": "Thank you. The school has noted that you will come.",
-      "confirm_2": "Thank you. The school has noted that this time does not suit you. Please speak to the class teacher or the school office about another time."
+      "message": "Namaste! This is a recorded message from {schoolName} for {audience}. The parent-teacher meeting is on {date}, at {time}, {venue}, and we'd love to see you.",
+      "menu": "If you can come, please press 1. If it doesn't suit you, press 2. If you'd rather not get these calls, press 9.",
+      "confirm_1": "Thank you! We've let the school know you're coming. We look forward to seeing you.",
+      "confirm_2": "Thank you for letting us know. Please have a word with the class teacher or the school office, and they will help you find another time."
     },
     "event_invite": {
-      "message": "Namaste. This is a recorded message from {schoolName} for {audience}. You are warmly invited to the school's {eventName} on {date}, at {time}, {venue}.",
-      "menu": "If you will come, press 1. If you cannot come, press 2. To stop these calls, press 9.",
-      "confirm_1": "Thank you. The school has noted that you will come.",
-      "confirm_2": "Thank you. The school has noted that you cannot come."
+      "message": "Namaste! This is a recorded message from {schoolName} for {audience}. You and your family are warmly invited to our {eventName} on {date}, at {time}, {venue}.",
+      "menu": "If you can come, please press 1. If you can't make it, press 2. If you'd rather not get these calls, press 9.",
+      "confirm_1": "Thank you! We've let the school know you're coming. See you there.",
+      "confirm_2": "Thank you for letting us know. We hope to see you at the next one."
     },
     "emergency_closure": {
       "message": {
-        "today": "Namaste. This is an urgent recorded notice from {schoolName}. Because of {reason}, the school is closed today, {date}. {buses}",
-        "tomorrow": "Namaste. This is an urgent recorded notice from {schoolName}. Because of {reason}, the school will be closed tomorrow, {date}. {buses}"
+        "today": "Namaste. This is an urgent recorded message from {schoolName}. Because of {reason}, the school will stay closed today, {date}. {buses}",
+        "tomorrow": "Namaste. This is an urgent recorded message from {schoolName}. Because of {reason}, the school will stay closed tomorrow, {date}. {buses}"
       },
       "buses": {
-        "running": "School buses will still run.",
-        "notRunning": "School buses will not run."
+        "running": "School buses will still run as usual.",
+        "notRunning": "School buses will not run either."
       },
-      "menu": "If you have heard this message, press 1. To stop these calls, press 9.",
-      "confirm_1": "Thank you. Please stay safe."
+      "menu": "Please press 1 to let us know you've heard this message. If you'd rather not get these calls, press 9.",
+      "confirm_1": "Thank you. Please take care, and stay safe."
     }
   }
 }

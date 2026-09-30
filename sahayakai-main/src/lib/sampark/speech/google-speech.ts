@@ -30,9 +30,20 @@ export const STT_LOCATION = 'asia-southeast1';
 export const STT_MODEL = 'chirp_2';
 export const DEFAULT_GCP_PROJECT = 'sahayakai-b4248';
 
-/** Style prompt for Gemini-TTS (ignored by Chirp 3 HD, so not sent to it). */
+/**
+ * Style prompt for Gemini-TTS (ignored by Chirp 3 HD, so not sent to it).
+ *
+ * It shapes DELIVERY only. An earlier, more "human" prompt that also asked the
+ * voice to "say the date, time and place clearly" made the model improvise on
+ * short clips: it repeated sentences and, in one Nepali confirmation, invented
+ * a date that was not in the text (verify-voice run, 2026-09-30). The words a
+ * parent hears come from reviewed templates, so the prompt now forbids adding,
+ * repeating or skipping anything, and every clip is transcribed back.
+ */
 export const GEMINI_TTS_STYLE_PROMPT =
-    'Speak warmly and clearly, like a polite school office staff member making a recorded announcement to parents; unhurried pace.';
+    'Read the text exactly as written, word for word: do not add, repeat, skip or change anything. ' +
+    'Voice: a warm, friendly member of the school office speaking naturally to a parent on the phone, ' +
+    'calm and unhurried, with natural pauses between sentences.';
 
 const CLOUD_PLATFORM_SCOPE = 'https://www.googleapis.com/auth/cloud-platform';
 const REQUEST_TIMEOUT_MS = 60_000;
@@ -56,6 +67,12 @@ export interface GoogleSpeechDeps {
 }
 
 const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
+
+/** Timeouts (AbortError from our own timer) and network failures (fetch rejects with TypeError). */
+export function isTransientFetchError(err: unknown): boolean {
+    if (!(err instanceof Error)) return false;
+    return err.name === 'AbortError' || err.name === 'TimeoutError' || err instanceof TypeError;
+}
 const defaultSleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 let adcProvider: AccessTokenProvider | null = null;
@@ -93,16 +110,27 @@ async function postJson(
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
         try {
-            const res = await fetchImpl(url, {
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json; charset=utf-8',
-                    'x-goog-user-project': projectOf(deps),
-                },
-                body: payload,
-                signal: controller.signal,
-            });
+            let res: Response;
+            try {
+                res = await fetchImpl(url, {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json; charset=utf-8',
+                        'x-goog-user-project': projectOf(deps),
+                    },
+                    body: payload,
+                    signal: controller.signal,
+                });
+            } catch (err) {
+                // A timeout (our AbortController) or a dropped connection is as transient as a 503:
+                // the verify-voice run on 2026-09-30 lost 12 clips to 60 s timeouts during a burst.
+                if (isTransientFetchError(err) && attempt < maxRetries) {
+                    await sleep(backoffMs * 2 ** attempt + Math.floor(Math.random() * 250));
+                    continue;
+                }
+                throw err;
+            }
             if (res.ok) return (await res.json()) as Record<string, unknown>;
             const detail = (await res.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 500);
             if (RETRYABLE_STATUS.has(res.status) && attempt < maxRetries) {
