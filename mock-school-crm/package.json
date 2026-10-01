@@ -1,0 +1,25 @@
+{
+  "name": "mock-school-crm",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A standalone dummy school CRM (Hillview Demo School, Siliguri) serving the school-CRM wire contract v1 over REST and CSV, with a demo page and signed webhook hints.",
+  "type": "module",
+  "engines": {
+    "node": ">=20.6"
+  },
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "seed": "tsx src/seed.ts",
+    "export-fixtures": "tsx src/export-fixtures.ts",
+    "test": "node --import tsx --test test/*.test.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "tsx": "^4.23.15",
+    "typescript": "~5.9.3"
+  }
+}

@@ -1,0 +1,2656 @@
+[
+  {
+    "id": "stu_0121",
+    "admissionNo": "HV/2023/0221",
+    "apaarId": "992208615469",
+    "fullName": "Aarav Chhetri",
+    "spokenFirstName": {
+      "en": "Aarav",
+      "hi": "आरव",
+      "bn": "আরভ",
+      "ne": "आरव"
+    },
+    "grade": 4,
+    "section": "A",
+    "rollNo": 1,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0267",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0268",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-07-29T05:52:29.000Z"
+  },
+  {
+    "id": "stu_0122",
+    "admissionNo": "HV/2023/0222",
+    "apaarId": "990271319113",
+    "fullName": "Ayan Saha",
+    "spokenFirstName": {
+      "en": "Ayan",
+      "hi": "अयान",
+      "bn": "অয়ন",
+      "ne": "अयन"
+    },
+    "grade": 4,
+    "section": "A",
+    "rollNo": 2,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R3",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0037",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0038",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-08-17T06:20:26.000Z"
+  },
+  {
+    "id": "stu_0123",
+    "admissionNo": "HV/2026/0223",
+    "apaarId": "998854699567",
+    "fullName": "Daniel Thomas",
+    "spokenFirstName": {
+      "en": "Daniel",
+      "hi": "डैनियल",
+      "bn": "ড্যানিয়েল",
+      "ne": "डेनियल"
+    },
+    "grade": 4,
+    "section": "A",
+    "rollNo": 3,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R1",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0251",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0252",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-10T07:49:16.000Z"
+  },
+  {
+    "id": "stu_0124",
+    "admissionNo": "HV/2023/0224",
+    "apaarId": "994176186134",
+    "fullName": "Kavya Sharma",
+    "spokenFirstName": {
+      "en": "Kavya",
+      "hi": "काव्या",
+      "bn": "কাব্যা",
+      "ne": "काव्या"
+    },
+    "grade": 4,
+    "section": "A",
+    "rollNo": 4,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0261",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-02T11:24:57.000Z"
+  },
+  {
+    "id": "stu_0125",
+    "admissionNo": "HV/2023/0225",
+    "apaarId": "998377531256",
+    "fullName": "Kripa Rai",
+    "spokenFirstName": {
+      "en": "Kripa",
+      "hi": "कृपा",
+      "bn": "কৃপা",
+      "ne": "कृपा"
+    },
+    "grade": 4,
+    "section": "A",
+    "rollNo": 5,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R6",
+    "sensitiveFlags": [
+      "custody_restriction"
+    ],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0007",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-04T03:33:11.000Z"
+  },
+  {
+    "id": "stu_0126",
+    "admissionNo": "HV/2023/0226",
+    "apaarId": "995382742953",
+    "fullName": "Nischal Limbu",
+    "spokenFirstName": {
+      "en": "Nischal",
+      "hi": "निश्चल",
+      "bn": "নিশ্চল",
+      "ne": "निश्चल"
+    },
+    "grade": 4,
+    "section": "A",
+    "rollNo": 6,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0259",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-08T06:37:17.000Z"
+  },
+  {
+    "id": "stu_0127",
+    "admissionNo": "HV/2023/0227",
+    "apaarId": "992236154244",
+    "fullName": "Nischal Pradhan",
+    "spokenFirstName": {
+      "en": "Nischal",
+      "hi": "निश्चल",
+      "bn": "নিশ্চল"
+    },
+    "grade": 4,
+    "section": "A",
+    "rollNo": 7,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0021",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0022",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-10T10:43:26.000Z"
+  },
+  {
+    "id": "stu_0128",
+    "admissionNo": "HV/2023/0228",
+    "apaarId": "995053909958",
+    "fullName": "Pema Gurung",
+    "spokenFirstName": {
+      "en": "Pema",
+      "hi": "पेमा",
+      "bn": "পেমা",
+      "ne": "पेमा"
+    },
+    "grade": 4,
+    "section": "A",
+    "rollNo": 8,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R5",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0001",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0002",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-09-25T05:14:04.000Z"
+  },
+  {
+    "id": "stu_0129",
+    "admissionNo": "HV/2023/0229",
+    "apaarId": null,
+    "fullName": "Prajwal Das",
+    "spokenFirstName": {
+      "en": "Prajwal",
+      "hi": "प्रज्वल",
+      "bn": "প্রজ্বল",
+      "ne": "प्रज्वल"
+    },
+    "grade": 4,
+    "section": "A",
+    "rollNo": 9,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R1",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0266",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-02T04:02:30.000Z"
+  },
+  {
+    "id": "stu_0130",
+    "admissionNo": "HV/2023/0230",
+    "apaarId": "994177372765",
+    "fullName": "Pratiksha Subba",
+    "spokenFirstName": {
+      "en": "Pratiksha",
+      "hi": "प्रतीक्षा",
+      "bn": "প্রতীক্ষা",
+      "ne": "प्रतीक्षा"
+    },
+    "grade": 4,
+    "section": "A",
+    "rollNo": 10,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R2",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0264",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0265",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-07T06:00:10.000Z"
+  },
+  {
+    "id": "stu_0131",
+    "admissionNo": "HV/2023/0231",
+    "apaarId": null,
+    "fullName": "Pritam Ghosh",
+    "spokenFirstName": {
+      "en": "Pritam",
+      "hi": "प्रीतम",
+      "bn": "প্রীতম",
+      "ne": "प्रीतम"
+    },
+    "grade": 4,
+    "section": "A",
+    "rollNo": 11,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R6",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0257",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0258",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-02T05:29:44.000Z"
+  },
+  {
+    "id": "stu_0132",
+    "admissionNo": "HV/2023/0232",
+    "apaarId": "995765831931",
+    "fullName": "Rebecca Rai",
+    "spokenFirstName": {
+      "en": "Rebecca",
+      "hi": "रेबेका",
+      "bn": "রেবেকা",
+      "ne": "रेबेका"
+    },
+    "grade": 4,
+    "section": "A",
+    "rollNo": 12,
+    "gender": "female",
+    "feeCategory": "rte",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0262",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0263",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-04T03:59:30.000Z"
+  },
+  {
+    "id": "stu_0133",
+    "admissionNo": "HV/2026/0233",
+    "apaarId": null,
+    "fullName": "Roshan Chhetri",
+    "spokenFirstName": {
+      "en": "Roshan",
+      "hi": "रोशन",
+      "bn": "রোশন",
+      "ne": "रोशन"
+    },
+    "grade": 4,
+    "section": "A",
+    "rollNo": 13,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0260",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-06-01T05:43:15.000Z"
+  },
+  {
+    "id": "stu_0134",
+    "admissionNo": "HV/2023/0234",
+    "apaarId": "992108984296",
+    "fullName": "Sagar Limbu",
+    "spokenFirstName": {
+      "en": "Sagar",
+      "hi": "सागर",
+      "bn": "সাগর",
+      "ne": "सागर"
+    },
+    "grade": 4,
+    "section": "A",
+    "rollNo": 14,
+    "gender": "male",
+    "feeCategory": "rte",
+    "boarding": false,
+    "transportRoute": "R6",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0018",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0019",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-05-22T06:15:09.000Z"
+  },
+  {
+    "id": "stu_0135",
+    "admissionNo": "HV/2023/0235",
+    "apaarId": "995329764471",
+    "fullName": "Saurabh Singh",
+    "spokenFirstName": {
+      "en": "Saurabh",
+      "hi": "सौरभ",
+      "bn": "সৌরভ",
+      "ne": "सौरभ"
+    },
+    "grade": 4,
+    "section": "A",
+    "rollNo": 15,
+    "gender": "male",
+    "feeCategory": "scholarship",
+    "boarding": false,
+    "transportRoute": "R4",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0214",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0215",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-10T05:33:54.000Z"
+  },
+  {
+    "id": "stu_0136",
+    "admissionNo": "HV/2023/0236",
+    "apaarId": "992957511432",
+    "fullName": "Soham Sarkar",
+    "spokenFirstName": {
+      "en": "Soham",
+      "hi": "सोहम",
+      "bn": "সোহম",
+      "ne": "सोहम"
+    },
+    "grade": 4,
+    "section": "A",
+    "rollNo": 16,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0069",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0070",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-09T07:04:05.000Z"
+  },
+  {
+    "id": "stu_0137",
+    "admissionNo": "HV/2023/0237",
+    "apaarId": "995447710759",
+    "fullName": "Sonam Rai",
+    "spokenFirstName": {
+      "en": "Sonam",
+      "hi": "सोनम",
+      "bn": "সোনম",
+      "ne": "सोनम"
+    },
+    "grade": 4,
+    "section": "A",
+    "rollNo": 17,
+    "gender": "male",
+    "feeCategory": "rte",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0255",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0256",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-08T07:38:38.000Z"
+  },
+  {
+    "id": "stu_0138",
+    "admissionNo": "HV/2023/0238",
+    "apaarId": null,
+    "fullName": "Sonam Tamang",
+    "spokenFirstName": {
+      "en": "Sonam",
+      "hi": "सोनम",
+      "bn": "সোনম",
+      "ne": "सोनम"
+    },
+    "grade": 4,
+    "section": "A",
+    "rollNo": 18,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0010",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0011",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-10T07:46:29.000Z"
+  },
+  {
+    "id": "stu_0139",
+    "admissionNo": "HV/2023/0239",
+    "apaarId": "996588157014",
+    "fullName": "Suraj Subba",
+    "spokenFirstName": {
+      "en": "Suraj",
+      "hi": "सूरज",
+      "bn": "সূরজ",
+      "ne": "सुरज"
+    },
+    "grade": 4,
+    "section": "A",
+    "rollNo": 19,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0253",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0254",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-03T09:03:34.000Z"
+  },
+  {
+    "id": "stu_0140",
+    "admissionNo": "HV/2024/0240",
+    "apaarId": "991161571410",
+    "fullName": "Tanushree Saha",
+    "spokenFirstName": {
+      "en": "Tanushree",
+      "hi": "तनुश्री",
+      "bn": "তনুশ্রী",
+      "ne": "तनुश्री"
+    },
+    "grade": 4,
+    "section": "A",
+    "rollNo": 20,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0269",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0270",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-15T05:42:54.000Z"
+  },
+  {
+    "id": "stu_0141",
+    "admissionNo": "HV/2023/0241",
+    "apaarId": null,
+    "fullName": "Aarav Das",
+    "spokenFirstName": {
+      "en": "Aarav",
+      "hi": "आरव",
+      "bn": "আরভ",
+      "ne": "आरव"
+    },
+    "grade": 4,
+    "section": "B",
+    "rollNo": 1,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R4",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0272",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0273",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-10T11:20:40.000Z"
+  },
+  {
+    "id": "stu_0142",
+    "admissionNo": "HV/2023/0242",
+    "apaarId": "995425079844",
+    "fullName": "Ananya Jha",
+    "spokenFirstName": {
+      "en": "Ananya",
+      "hi": "अनन्या",
+      "bn": "অনন্যা",
+      "ne": "अनन्या"
+    },
+    "grade": 4,
+    "section": "B",
+    "rollNo": 2,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R4",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0278",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0279",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-08T10:09:18.000Z"
+  },
+  {
+    "id": "stu_0143",
+    "admissionNo": "HV/2023/0243",
+    "apaarId": "995073014539",
+    "fullName": "Arnab Sarkar",
+    "spokenFirstName": {
+      "en": "Arnab",
+      "hi": "अर्नब",
+      "bn": "অর্ণব",
+      "ne": "अर्नब"
+    },
+    "grade": 4,
+    "section": "B",
+    "rollNo": 3,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0284",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0285",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-10T09:06:13.000Z"
+  },
+  {
+    "id": "stu_0144",
+    "admissionNo": "HV/2023/0244",
+    "apaarId": "999832469238",
+    "fullName": "Bibek Gurung",
+    "spokenFirstName": {
+      "en": "Bibek",
+      "hi": "विवेक",
+      "bn": "বিবেক",
+      "ne": "विवेक"
+    },
+    "grade": 4,
+    "section": "B",
+    "rollNo": 4,
+    "gender": "male",
+    "feeCategory": "staff_ward",
+    "boarding": false,
+    "transportRoute": "R5",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0291",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0292",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-04T08:18:23.000Z"
+  },
+  {
+    "id": "stu_0145",
+    "admissionNo": "HV/2025/0245",
+    "apaarId": null,
+    "fullName": "Diki Limbu",
+    "spokenFirstName": {
+      "en": "Diki",
+      "hi": "डिकी",
+      "bn": "ডিকি",
+      "ne": "डिकी"
+    },
+    "grade": 4,
+    "section": "B",
+    "rollNo": 5,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0274",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0275",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-08T05:58:29.000Z"
+  },
+  {
+    "id": "stu_0146",
+    "admissionNo": "HV/2023/0246",
+    "apaarId": "995260337358",
+    "fullName": "Grace Lepcha",
+    "spokenFirstName": {
+      "en": "Grace",
+      "hi": "ग्रेस",
+      "bn": "গ্রেস",
+      "ne": "ग्रेस"
+    },
+    "grade": 4,
+    "section": "B",
+    "rollNo": 6,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R5",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0039",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0040",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-03T04:05:31.000Z"
+  },
+  {
+    "id": "stu_0147",
+    "admissionNo": "HV/2023/0247",
+    "apaarId": "997539633330",
+    "fullName": "Ishita Ghosh",
+    "spokenFirstName": {
+      "en": "Ishita",
+      "hi": "इशिता",
+      "bn": "ঈশিতা",
+      "ne": "इशिता"
+    },
+    "grade": 4,
+    "section": "B",
+    "rollNo": 7,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R4",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0003",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0004",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-09T07:53:33.000Z"
+  },
+  {
+    "id": "stu_0148",
+    "admissionNo": "HV/2023/0248",
+    "apaarId": "996953186211",
+    "fullName": "Karma Tamang",
+    "spokenFirstName": {
+      "en": "Karma",
+      "hi": "कर्मा",
+      "bn": "কর্মা",
+      "ne": "कर्मा"
+    },
+    "grade": 4,
+    "section": "B",
+    "rollNo": 8,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R1",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0293",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0294",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-07T08:14:18.000Z"
+  },
+  {
+    "id": "stu_0149",
+    "admissionNo": "HV/2026/0249",
+    "apaarId": null,
+    "fullName": "Kavya Jha",
+    "spokenFirstName": {
+      "en": "Kavya",
+      "hi": "काव्या",
+      "bn": "কাব্যা",
+      "ne": "काव्या"
+    },
+    "grade": 4,
+    "section": "B",
+    "rollNo": 9,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R4",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0012",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0013",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-02T06:55:26.000Z"
+  },
+  {
+    "id": "stu_0150",
+    "admissionNo": "HV/2023/0250",
+    "apaarId": "990679566797",
+    "fullName": "Khushi Yadav",
+    "spokenFirstName": {
+      "en": "Khushi",
+      "hi": "ख़ुशी",
+      "bn": "খুশি",
+      "ne": "खुसी"
+    },
+    "grade": 4,
+    "section": "B",
+    "rollNo": 10,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R5",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0280",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0281",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-04T05:51:28.000Z"
+  },
+  {
+    "id": "stu_0151",
+    "admissionNo": "HV/2025/0251",
+    "apaarId": null,
+    "fullName": "Neha Jha",
+    "spokenFirstName": {
+      "en": "Neha",
+      "hi": "नेहा",
+      "bn": "নেহা",
+      "ne": "नेहा"
+    },
+    "grade": 4,
+    "section": "B",
+    "rollNo": 11,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R1",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0271",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-06T07:50:16.000Z"
+  },
+  {
+    "id": "stu_0152",
+    "admissionNo": "HV/2023/0252",
+    "apaarId": "992360155838",
+    "fullName": "Oindrila Roy",
+    "spokenFirstName": {
+      "en": "Oindrila",
+      "hi": "ऐंद्रिला",
+      "bn": "ঐন্দ্রিলা",
+      "ne": "ऐन्द्रिला"
+    },
+    "grade": 4,
+    "section": "B",
+    "rollNo": 12,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0287",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0288",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-06T06:55:31.000Z"
+  },
+  {
+    "id": "stu_0153",
+    "admissionNo": "HV/2023/0253",
+    "apaarId": "997861756128",
+    "fullName": "Prakriti Thapa",
+    "spokenFirstName": {
+      "en": "Prakriti",
+      "hi": "प्रकृति",
+      "bn": "প্রকৃতি",
+      "ne": "प्रकृति"
+    },
+    "grade": 4,
+    "section": "B",
+    "rollNo": 13,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R3",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0027",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0028",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-02T05:59:44.000Z"
+  },
+  {
+    "id": "stu_0154",
+    "admissionNo": "HV/2023/0254",
+    "apaarId": "999331824488",
+    "fullName": "Sarah Mukhia",
+    "spokenFirstName": {
+      "en": "Sarah",
+      "hi": "सारा",
+      "bn": "সারা",
+      "ne": "सारा"
+    },
+    "grade": 4,
+    "section": "B",
+    "rollNo": 14,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R4",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0286",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-08-13T07:41:19.000Z"
+  },
+  {
+    "id": "stu_0155",
+    "admissionNo": "HV/2026/0255",
+    "apaarId": null,
+    "fullName": "Saurabh Prasad",
+    "spokenFirstName": {
+      "en": "Saurabh",
+      "hi": "सौरभ",
+      "bn": "সৌরভ",
+      "ne": "सौरभ"
+    },
+    "grade": 4,
+    "section": "B",
+    "rollNo": 15,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0297",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-05T07:40:06.000Z"
+  },
+  {
+    "id": "stu_0156",
+    "admissionNo": "HV/2023/0256",
+    "apaarId": "997352071288",
+    "fullName": "Smriti Pradhan",
+    "spokenFirstName": {
+      "en": "Smriti",
+      "hi": "स्मृति",
+      "bn": "স্মৃতি",
+      "ne": "स्मृति"
+    },
+    "grade": 4,
+    "section": "B",
+    "rollNo": 16,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0282",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0283",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-05T05:14:10.000Z"
+  },
+  {
+    "id": "stu_0157",
+    "admissionNo": "HV/2023/0257",
+    "apaarId": null,
+    "fullName": "Sujan Rai",
+    "spokenFirstName": {
+      "en": "Sujan",
+      "hi": "सुजन",
+      "bn": "সুজন",
+      "ne": "सुजन"
+    },
+    "grade": 4,
+    "section": "B",
+    "rollNo": 17,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R4",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0276",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0277",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-05-18T11:26:44.000Z"
+  },
+  {
+    "id": "stu_0158",
+    "admissionNo": "HV/2023/0258",
+    "apaarId": "992208050058",
+    "fullName": "Tanushree Roy",
+    "spokenFirstName": {
+      "en": "Tanushree",
+      "hi": "तनुश्री",
+      "bn": "তনুশ্রী",
+      "ne": "तनुश्री"
+    },
+    "grade": 4,
+    "section": "B",
+    "rollNo": 18,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0289",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0290",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-05T03:43:07.000Z"
+  },
+  {
+    "id": "stu_0159",
+    "admissionNo": "HV/2023/0259",
+    "apaarId": "995940973004",
+    "fullName": "Tanya Das",
+    "spokenFirstName": {
+      "en": "Tanya",
+      "hi": "तान्या",
+      "bn": "তানিয়া",
+      "ne": "तान्या"
+    },
+    "grade": 4,
+    "section": "B",
+    "rollNo": 19,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0295",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0296",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-03T10:48:15.000Z"
+  },
+  {
+    "id": "stu_0160",
+    "deleted": true,
+    "admissionNo": "HV/2023/0260",
+    "apaarId": "996166729058",
+    "fullName": "Sayan Dey",
+    "spokenFirstName": {
+      "en": "Sayan",
+      "hi": "सायन",
+      "bn": "সায়ন",
+      "ne": "सायन"
+    },
+    "grade": 4,
+    "section": "B",
+    "rollNo": 20,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R6",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0017",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-09-29T05:45:00.000Z"
+  },
+  {
+    "id": "stu_0241",
+    "admissionNo": "HV/2022/0341",
+    "apaarId": "997576418444",
+    "fullName": "Aakriti Thapa",
+    "spokenFirstName": {
+      "en": "Aakriti",
+      "hi": "आकृति",
+      "bn": "আকৃতি",
+      "ne": "आकृति"
+    },
+    "grade": 7,
+    "section": "A",
+    "rollNo": 1,
+    "gender": "female",
+    "feeCategory": "staff_ward",
+    "boarding": false,
+    "transportRoute": "R5",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0429",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0430",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-04T07:01:28.000Z"
+  },
+  {
+    "id": "stu_0242",
+    "admissionNo": "HV/2020/0342",
+    "apaarId": "990723052453",
+    "fullName": "Aarav Sharma",
+    "spokenFirstName": {
+      "en": "Aarav",
+      "hi": "आरव",
+      "bn": "আরভ",
+      "ne": "आरव"
+    },
+    "grade": 7,
+    "section": "A",
+    "rollNo": 2,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R6",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0437",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-08-13T07:54:06.000Z"
+  },
+  {
+    "id": "stu_0243",
+    "admissionNo": "HV/2020/0343",
+    "apaarId": "990237695167",
+    "fullName": "Aniket Ghosh",
+    "spokenFirstName": {
+      "en": "Aniket",
+      "hi": "अनिकेत",
+      "bn": "অনিকেত",
+      "ne": "अनिकेत"
+    },
+    "grade": 7,
+    "section": "A",
+    "rollNo": 3,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R2",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0443",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0444",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-06T08:51:11.000Z"
+  },
+  {
+    "id": "stu_0244",
+    "admissionNo": "HV/2020/0344",
+    "apaarId": "991992532247",
+    "fullName": "Anirban Sarkar",
+    "spokenFirstName": {
+      "en": "Anirban",
+      "hi": "अनिर्बान",
+      "bn": "অনির্বাণ",
+      "ne": "अनिर्बाण"
+    },
+    "grade": 7,
+    "section": "A",
+    "rollNo": 4,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0431",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-09T08:25:40.000Z"
+  },
+  {
+    "id": "stu_0245",
+    "admissionNo": "HV/2020/0345",
+    "apaarId": null,
+    "fullName": "Arnab Chakraborty",
+    "spokenFirstName": {
+      "en": "Arnab",
+      "hi": "अर्नब",
+      "bn": "অর্ণব",
+      "ne": "अर्नब"
+    },
+    "grade": 7,
+    "section": "A",
+    "rollNo": 5,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R5",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0031",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0032",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-06T07:50:33.000Z"
+  },
+  {
+    "id": "stu_0246",
+    "admissionNo": "HV/2021/0346",
+    "apaarId": "998049315521",
+    "fullName": "Ayan Bose",
+    "spokenFirstName": {
+      "en": "Ayan",
+      "hi": "अयान",
+      "bn": "অয়ন",
+      "ne": "अयन"
+    },
+    "grade": 7,
+    "section": "A",
+    "rollNo": 6,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R5",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0432",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-06T04:04:51.000Z"
+  },
+  {
+    "id": "stu_0247",
+    "admissionNo": "HV/2020/0347",
+    "apaarId": "994573256892",
+    "fullName": "Bibek Chhetri",
+    "spokenFirstName": {
+      "en": "Bibek",
+      "hi": "विवेक",
+      "bn": "বিবেক",
+      "ne": "विवेक"
+    },
+    "grade": 7,
+    "section": "A",
+    "rollNo": 7,
+    "gender": "male",
+    "feeCategory": "rte",
+    "boarding": false,
+    "transportRoute": "R2",
+    "sensitiveFlags": [],
+    "status": "left",
+    "guardians": [
+      {
+        "guardianId": "gdn_0015",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0016",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-09-11T07:45:00.000Z"
+  },
+  {
+    "id": "stu_0248",
+    "admissionNo": "HV/2020/0348",
+    "apaarId": "991934288968",
+    "fullName": "Diki Lepcha",
+    "spokenFirstName": {
+      "en": "Diki",
+      "hi": "डिकी",
+      "bn": "ডিকি",
+      "ne": "डिकी"
+    },
+    "grade": 7,
+    "section": "A",
+    "rollNo": 8,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R5",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0440",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0441",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-10T08:51:23.000Z"
+  },
+  {
+    "id": "stu_0249",
+    "admissionNo": "HV/2021/0349",
+    "apaarId": "992506124225",
+    "fullName": "Diki Lepcha",
+    "spokenFirstName": {
+      "en": "Diki",
+      "hi": "डिकी",
+      "bn": "ডিকি",
+      "ne": "डिकी"
+    },
+    "grade": 7,
+    "section": "A",
+    "rollNo": 9,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0103",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0104",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-07-17T06:09:11.000Z"
+  },
+  {
+    "id": "stu_0250",
+    "admissionNo": "HV/2020/0350",
+    "apaarId": "990172049168",
+    "fullName": "Harsh Yadav",
+    "spokenFirstName": {
+      "en": "Harsh",
+      "hi": "हर्ष",
+      "bn": "হর্ষ",
+      "ne": "हर्ष"
+    },
+    "grade": 7,
+    "section": "A",
+    "rollNo": 10,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R6",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0029",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0030",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-01T10:12:14.000Z"
+  },
+  {
+    "id": "stu_0251",
+    "admissionNo": "HV/2020/0351",
+    "apaarId": "990210802161",
+    "fullName": "Kunal Agarwal",
+    "spokenFirstName": {
+      "en": "Kunal",
+      "hi": "कुणाल",
+      "bn": "কুণাল",
+      "ne": "कुणाल"
+    },
+    "grade": 7,
+    "section": "A",
+    "rollNo": 11,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R5",
+    "sensitiveFlags": [
+      "counsellor_referral"
+    ],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0005",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0006",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-05T06:40:30.000Z"
+  },
+  {
+    "id": "stu_0252",
+    "admissionNo": "HV/2020/0352",
+    "apaarId": "990869107071",
+    "fullName": "Nathan Lepcha",
+    "spokenFirstName": {
+      "en": "Nathan",
+      "hi": "नेथन",
+      "bn": "নেথান",
+      "ne": "नेथन"
+    },
+    "grade": 7,
+    "section": "A",
+    "rollNo": 12,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R1",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0360",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0361",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-05T07:20:09.000Z"
+  },
+  {
+    "id": "stu_0253",
+    "admissionNo": "HV/2021/0353",
+    "apaarId": null,
+    "fullName": "Neha Yadav",
+    "spokenFirstName": {
+      "en": "Neha",
+      "hi": "नेहा",
+      "ne": "नेहा"
+    },
+    "grade": 7,
+    "section": "A",
+    "rollNo": 13,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R6",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0435",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0436",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-09T09:50:31.000Z"
+  },
+  {
+    "id": "stu_0254",
+    "admissionNo": "HV/2020/0354",
+    "apaarId": "994181915207",
+    "fullName": "Ritwik Das",
+    "spokenFirstName": {
+      "en": "Ritwik",
+      "hi": "ऋत्विक",
+      "bn": "ঋত্বিক",
+      "ne": "ऋत्विक"
+    },
+    "grade": 7,
+    "section": "A",
+    "rollNo": 14,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R3",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0003",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0004",
+        "isPrimary": false,
+        "isGuardianOfRecord": false
+      }
+    ],
+    "updatedAt": "2026-04-03T06:46:48.000Z"
+  },
+  {
+    "id": "stu_0255",
+    "admissionNo": "HV/2020/0355",
+    "apaarId": null,
+    "fullName": "Riya Sarkar",
+    "spokenFirstName": {
+      "en": "Riya",
+      "hi": "रिया",
+      "bn": "রিয়া",
+      "ne": "रिया"
+    },
+    "grade": 7,
+    "section": "A",
+    "rollNo": 15,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R3",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0438",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0439",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-06-05T09:31:17.000Z"
+  },
+  {
+    "id": "stu_0256",
+    "admissionNo": "HV/2020/0356",
+    "apaarId": null,
+    "fullName": "Shruti Sharma",
+    "spokenFirstName": {
+      "en": "Shruti",
+      "hi": "श्रुति",
+      "bn": "শ্রুতি",
+      "ne": "श्रुति"
+    },
+    "grade": 7,
+    "section": "A",
+    "rollNo": 16,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R3",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0261",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-03T10:01:20.000Z"
+  },
+  {
+    "id": "stu_0257",
+    "admissionNo": "HV/2020/0357",
+    "apaarId": "993415104034",
+    "fullName": "Soham Bose",
+    "spokenFirstName": {
+      "en": "Soham",
+      "hi": "सोहम",
+      "bn": "সোহম",
+      "ne": "सोहम"
+    },
+    "grade": 7,
+    "section": "A",
+    "rollNo": 17,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R6",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0014",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-05T05:38:16.000Z"
+  },
+  {
+    "id": "stu_0258",
+    "admissionNo": "HV/2020/0358",
+    "apaarId": "993084381171",
+    "fullName": "Sonam Rai",
+    "spokenFirstName": {
+      "en": "Sonam",
+      "hi": "सोनम",
+      "bn": "সোনম",
+      "ne": "सोनम"
+    },
+    "grade": 7,
+    "section": "A",
+    "rollNo": 18,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R6",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0442",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-04T06:01:29.000Z"
+  },
+  {
+    "id": "stu_0259",
+    "admissionNo": "HV/2023/0359",
+    "apaarId": null,
+    "fullName": "Sushmita Subba",
+    "spokenFirstName": {
+      "en": "Sushmita",
+      "hi": "सुष्मिता",
+      "bn": "সুস্মিতা",
+      "ne": "सुस्मिता"
+    },
+    "grade": 7,
+    "section": "A",
+    "rollNo": 19,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0433",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0434",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-06T06:41:32.000Z"
+  },
+  {
+    "id": "stu_0260",
+    "admissionNo": "HV/2020/0360",
+    "apaarId": "997603207286",
+    "fullName": "Tenzing Sherpa",
+    "spokenFirstName": {
+      "en": "Tenzing",
+      "hi": "तेनज़िंग",
+      "bn": "তেনজিং",
+      "ne": "तेन्जिङ"
+    },
+    "grade": 7,
+    "section": "A",
+    "rollNo": 20,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": true,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0025",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0026",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-08-26T04:05:10.000Z"
+  },
+  {
+    "id": "stu_0261",
+    "admissionNo": "HV/2022/0361",
+    "apaarId": "996448789702",
+    "fullName": "Aarav Gurung",
+    "spokenFirstName": {
+      "en": "Aarav",
+      "hi": "आरव",
+      "bn": "আরভ",
+      "ne": "आरव"
+    },
+    "grade": 7,
+    "section": "B",
+    "rollNo": 1,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R6",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0001",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0002",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-07-01T10:50:09.000Z"
+  },
+  {
+    "id": "stu_0262",
+    "admissionNo": "HV/2020/0362",
+    "apaarId": "998213227442",
+    "fullName": "Aarav Pradhan",
+    "spokenFirstName": {
+      "en": "Aarav",
+      "hi": "आरव",
+      "bn": "আরভ",
+      "ne": "आरव"
+    },
+    "grade": 7,
+    "section": "B",
+    "rollNo": 2,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R5",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0458",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0459",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-05-14T11:35:26.000Z"
+  },
+  {
+    "id": "stu_0263",
+    "admissionNo": "HV/2020/0363",
+    "apaarId": "993446205123",
+    "fullName": "Aditya Agarwal",
+    "spokenFirstName": {
+      "en": "Aditya",
+      "hi": "आदित्य",
+      "bn": "আদিত্য",
+      "ne": "आदित्य"
+    },
+    "grade": 7,
+    "section": "B",
+    "rollNo": 3,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0454",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0455",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-09T10:50:45.000Z"
+  },
+  {
+    "id": "stu_0264",
+    "admissionNo": "HV/2020/0364",
+    "apaarId": "997628239907",
+    "fullName": "Aniket Sarkar",
+    "spokenFirstName": {
+      "en": "Aniket",
+      "hi": "अनिकेत",
+      "bn": "অনিকেত",
+      "ne": "अनिकेत"
+    },
+    "grade": 7,
+    "section": "B",
+    "rollNo": 4,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": true,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0460",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0461",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-08T05:27:22.000Z"
+  },
+  {
+    "id": "stu_0265",
+    "admissionNo": "HV/2021/0365",
+    "apaarId": "991062340456",
+    "fullName": "Ankit Agarwal",
+    "spokenFirstName": {
+      "en": "Ankit",
+      "hi": "अंकित",
+      "bn": "অঙ্কিত",
+      "ne": "अङ्कित"
+    },
+    "grade": 7,
+    "section": "B",
+    "rollNo": 5,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0445",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0446",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-06-02T12:18:05.000Z"
+  },
+  {
+    "id": "stu_0266",
+    "admissionNo": "HV/2020/0366",
+    "apaarId": "997013034396",
+    "fullName": "Daniel Mukhia",
+    "spokenFirstName": {
+      "en": "Daniel"
+    },
+    "grade": 7,
+    "section": "B",
+    "rollNo": 6,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R6",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0023",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0024",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-04T04:52:48.000Z"
+  },
+  {
+    "id": "stu_0267",
+    "admissionNo": "HV/2024/0367",
+    "apaarId": "992081418167",
+    "fullName": "Grace Thomas",
+    "spokenFirstName": {
+      "en": "Grace",
+      "hi": "ग्रेस",
+      "bn": "গ্রেস",
+      "ne": "ग्रेस"
+    },
+    "grade": 7,
+    "section": "B",
+    "rollNo": 7,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R6",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0456",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0457",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-08T03:31:17.000Z"
+  },
+  {
+    "id": "stu_0268",
+    "admissionNo": "HV/2020/0368",
+    "apaarId": "990136765455",
+    "fullName": "Joel Gurung",
+    "spokenFirstName": {
+      "en": "Joel",
+      "hi": "जोएल",
+      "bn": "জোয়েল",
+      "ne": "जोएल"
+    },
+    "grade": 7,
+    "section": "B",
+    "rollNo": 8,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0447",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0448",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-02T08:26:01.000Z"
+  },
+  {
+    "id": "stu_0269",
+    "admissionNo": "HV/2020/0369",
+    "apaarId": "994254016855",
+    "fullName": "Joel Thomas",
+    "spokenFirstName": {
+      "en": "Joel",
+      "hi": "जोएल",
+      "bn": "জোয়েল",
+      "ne": "जोएल"
+    },
+    "grade": 7,
+    "section": "B",
+    "rollNo": 9,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R5",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0008",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0009",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-04T06:43:39.000Z"
+  },
+  {
+    "id": "stu_0270",
+    "admissionNo": "HV/2020/0370",
+    "apaarId": "997277726256",
+    "fullName": "Kripa Limbu",
+    "spokenFirstName": {
+      "en": "Kripa",
+      "hi": "कृपा",
+      "bn": "কৃপা"
+    },
+    "grade": 7,
+    "section": "B",
+    "rollNo": 10,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0464",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-01T05:24:16.000Z"
+  },
+  {
+    "id": "stu_0271",
+    "admissionNo": "HV/2020/0371",
+    "apaarId": null,
+    "fullName": "Kunal Prasad",
+    "spokenFirstName": {
+      "en": "Kunal",
+      "hi": "कुणाल",
+      "bn": "কুণাল",
+      "ne": "कुणाल"
+    },
+    "grade": 7,
+    "section": "B",
+    "rollNo": 11,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": true,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0297",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-05-04T05:58:38.000Z"
+  },
+  {
+    "id": "stu_0272",
+    "admissionNo": "HV/2020/0372",
+    "apaarId": null,
+    "fullName": "Nandini Agarwal",
+    "spokenFirstName": {
+      "en": "Nandini",
+      "hi": "नंदिनी",
+      "bn": "নন্দিনী",
+      "ne": "नन्दिनी"
+    },
+    "grade": 7,
+    "section": "B",
+    "rollNo": 12,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R4",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0462",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0463",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-03T06:34:39.000Z"
+  },
+  {
+    "id": "stu_0273",
+    "admissionNo": "HV/2022/0373",
+    "apaarId": null,
+    "fullName": "Neha Prasad",
+    "spokenFirstName": {
+      "en": "Neha",
+      "hi": "नेहा",
+      "bn": "নেহা",
+      "ne": "नेहा"
+    },
+    "grade": 7,
+    "section": "B",
+    "rollNo": 13,
+    "gender": "female",
+    "feeCategory": "rte",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0020",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-07T04:51:28.000Z"
+  },
+  {
+    "id": "stu_0274",
+    "admissionNo": "HV/2020/0374",
+    "apaarId": "995725701053",
+    "fullName": "Rahul Singh",
+    "spokenFirstName": {
+      "en": "Rahul",
+      "hi": "राहुल",
+      "bn": "রাহুল",
+      "ne": "राहुल"
+    },
+    "grade": 7,
+    "section": "B",
+    "rollNo": 14,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R2",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0035",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0036",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-04T11:00:44.000Z"
+  },
+  {
+    "id": "stu_0275",
+    "admissionNo": "HV/2020/0375",
+    "apaarId": "991954051938",
+    "fullName": "Roshan Gurung",
+    "spokenFirstName": {
+      "en": "Roshan",
+      "hi": "रोशन",
+      "bn": "রোশন",
+      "ne": "रोशन"
+    },
+    "grade": 7,
+    "section": "B",
+    "rollNo": 15,
+    "gender": "male",
+    "feeCategory": "rte",
+    "boarding": false,
+    "transportRoute": "R2",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0453",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-01T08:09:44.000Z"
+  },
+  {
+    "id": "stu_0276",
+    "admissionNo": "HV/2020/0376",
+    "apaarId": "991821408311",
+    "fullName": "Sabina Subba",
+    "spokenFirstName": {
+      "en": "Sabina",
+      "hi": "सबीना",
+      "bn": "সাবিনা",
+      "ne": "सबिना"
+    },
+    "grade": 7,
+    "section": "B",
+    "rollNo": 16,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0033",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0034",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-09T04:44:43.000Z"
+  },
+  {
+    "id": "stu_0277",
+    "admissionNo": "HV/2020/0377",
+    "apaarId": "995422715626",
+    "fullName": "Smriti Gurung",
+    "spokenFirstName": {
+      "en": "Smriti",
+      "hi": "स्मृति",
+      "bn": "স্মৃতি",
+      "ne": "स्मृति"
+    },
+    "grade": 7,
+    "section": "B",
+    "rollNo": 17,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R4",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0351",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-09-11T04:56:27.000Z"
+  },
+  {
+    "id": "stu_0278",
+    "admissionNo": "HV/2020/0378",
+    "apaarId": "996305078873",
+    "fullName": "Sonam Lepcha",
+    "spokenFirstName": {
+      "en": "Sonam",
+      "hi": "सोनम",
+      "bn": "সোনম",
+      "ne": "सोनम"
+    },
+    "grade": 7,
+    "section": "B",
+    "rollNo": 18,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0451",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0452",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-05T09:27:12.000Z"
+  },
+  {
+    "id": "stu_0279",
+    "admissionNo": "HV/2024/0379",
+    "apaarId": "992492942498",
+    "fullName": "Srijana Subba",
+    "spokenFirstName": {
+      "en": "Srijana",
+      "hi": "सृजना",
+      "bn": "সৃজনা",
+      "ne": "सृजना"
+    },
+    "grade": 7,
+    "section": "B",
+    "rollNo": 19,
+    "gender": "female",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": "R1",
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0449",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0450",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-04T05:41:10.000Z"
+  },
+  {
+    "id": "stu_0280",
+    "admissionNo": "HV/2022/0380",
+    "apaarId": null,
+    "fullName": "Suraj Subba",
+    "spokenFirstName": {
+      "en": "Suraj",
+      "hi": "सूरज",
+      "bn": "সূরজ",
+      "ne": "सुरज"
+    },
+    "grade": 7,
+    "section": "B",
+    "rollNo": 20,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0465",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0466",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-04-01T07:37:29.000Z"
+  },
+  {
+    "id": "stu_0281",
+    "deleted": true,
+    "admissionNo": "HV/2020/0381",
+    "apaarId": "994944544504",
+    "fullName": "Aarav Gurung",
+    "spokenFirstName": {
+      "en": "Aarav",
+      "hi": "आरव",
+      "bn": "আরভ",
+      "ne": "आरव"
+    },
+    "grade": 7,
+    "section": "B",
+    "rollNo": 21,
+    "gender": "male",
+    "feeCategory": "regular",
+    "boarding": false,
+    "transportRoute": null,
+    "sensitiveFlags": [],
+    "status": "active",
+    "guardians": [
+      {
+        "guardianId": "gdn_0001",
+        "isPrimary": true,
+        "isGuardianOfRecord": true
+      },
+      {
+        "guardianId": "gdn_0002",
+        "isPrimary": false,
+        "isGuardianOfRecord": true
+      }
+    ],
+    "updatedAt": "2026-09-28T06:45:00.000Z"
+  }
+]
