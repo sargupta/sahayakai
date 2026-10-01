@@ -158,6 +158,24 @@ describe('runRenderStep', () => {
         expect(v.calls).toHaveLength(28);
     });
 
+    it('only the main message is rendered with the style hint; every short clip is plain', async () => {
+        const c = campaign('ptm_invite', SAMPLE_PTM);
+        const { repo, clips } = fakeRepo(c);
+        const { store } = fakeStore();
+        const s = fakeSynth();
+        const seen: { text: string; delivery?: string }[] = [];
+        const recording: SpeechSynthesizer = {
+            synthesize: (req) => {
+                seen.push({ text: req.text, delivery: req.delivery });
+                return s.synth.synthesize(req);
+            },
+        };
+        await runRenderStep({ repo, synth: recording, verifier: fakeVerifier().verifier, store, clock }, c.orgId, c.id, LANGS, { maxClips: 100, concurrency: 3 });
+        const kindOf = new Map([...clips.values()].map((x) => [x.text, x.kind]));
+        expect(seen.length).toBe(28);
+        for (const r of seen) expect(r.delivery).toBe(kindOf.get(r.text) === 'message' ? 'styled' : 'plain');
+    });
+
     it('works in bounded steps with maxClips and reports finished only at the end', async () => {
         const c = campaign('emergency_closure', SAMPLE_CLOSURE);
         const { repo } = fakeRepo(c);
@@ -188,7 +206,7 @@ describe('runRenderStep', () => {
         expect(r.done).toBe(27);
         expect(r.failures).toHaveLength(1);
         expect(r.failures[0]).toMatch(/^Bengali default message: similarity 0\.\d+, [\d.]+ s spoken — heard "সম্পূর্ণ অন্য কথা"/);
-        expect(v.calls.filter((l) => l === 'Bengali')).toHaveLength(7 + 1); // every Bengali clip once, plus one retry of the message
+        expect(v.calls.filter((l) => l === 'Bengali')).toHaveLength(7 + 2); // every Bengali clip once, plus two re-renders of the message
         const failed = [...clips.values()].find((x) => x.language === 'Bengali' && x.kind === 'message')!;
         expect(failed.verification).toMatchObject({ status: 'failed', transcript: 'সম্পূর্ণ অন্য কথা' });
         expect(files.has(failed.key)).toBe(true); // kept for a person to listen to
@@ -198,7 +216,7 @@ describe('runRenderStep', () => {
         const before = s.calls.length;
         const again = await runRenderStep(deps, c.orgId, c.id, LANGS, { maxClips: 100, concurrency: 4 });
         expect(again.failures).toHaveLength(1);
-        expect(s.calls.length - before).toBe(2);
+        expect(s.calls.length - before).toBe(3);
     });
 
     it('class gate: a clip whose voice added or repeated words fails even when the words it should say are all there', async () => {
