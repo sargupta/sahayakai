@@ -2032,5 +2032,8 @@
   "{reachable} of {total} families can be called": "{total} కుటుంబాలలో {reachable} కుటుంబాలకు కాల్ చేయవచ్చు",
   "{seconds} s": "{seconds} సె",
   "{start} to {end} IST": "IST {start} నుండి {end} వరకు",
-  "{students} students, {guardians} guardians, {rejected} rejected rows": "{students} విద్యార్థులు, {guardians} సంరక్షకులు, {rejected} తిరస్కరించిన వరుసలు"
+  "{students} students, {guardians} guardians, {rejected} rejected rows": "{students} విద్యార్థులు, {guardians} సంరక్షకులు, {rejected} తిరస్కరించిన వరుసలు",
+  "Try preparing the audio again": "ఆడియోను మళ్ళీ సిద్ధం చేయండి",
+  "Preparing the audio again.": "ఆడియో మళ్ళీ సిద్ధమవుతోంది.",
+  "Could not restart the audio": "ఆడియోను మళ్ళీ ప్రారంభించడం సాధ్యం కాలేదు"
 }

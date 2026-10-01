@@ -2032,5 +2032,8 @@
   "{reachable} of {total} families can be called": "{total} குடும்பங்களில் {reachable} குடும்பங்களை அழைக்கலாம்",
   "{seconds} s": "{seconds} வி",
   "{start} to {end} IST": "IST {start} முதல் {end} வரை",
-  "{students} students, {guardians} guardians, {rejected} rejected rows": "{students} மாணவர்கள், {guardians} பாதுகாவலர்கள், {rejected} நிராகரிக்கப்பட்ட வரிசைகள்"
+  "{students} students, {guardians} guardians, {rejected} rejected rows": "{students} மாணவர்கள், {guardians} பாதுகாவலர்கள், {rejected} நிராகரிக்கப்பட்ட வரிசைகள்",
+  "Try preparing the audio again": "ஆடியோவை மீண்டும் தயார் செய்யவும்",
+  "Preparing the audio again.": "ஆடியோ மீண்டும் தயாராகிறது.",
+  "Could not restart the audio": "ஆடியோவை மீண்டும் தொடங்க முடியவில்லை"
 }

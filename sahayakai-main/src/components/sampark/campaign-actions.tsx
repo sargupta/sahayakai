@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/language-context";
 import { useToast } from "@/hooks/use-toast";
 import { purposeSpec } from "@/lib/sampark/catalogue";
-import { approveCampaign, cancelCampaign, type CampaignAudienceSummary } from "@/lib/api/sampark";
+import { approveCampaign, cancelCampaign, retryCampaignAudio, type CampaignAudienceSummary } from "@/lib/api/sampark";
 import type { Campaign, SamparkSchool } from "@/types/sampark";
 import { hourLabel } from "./format";
 import { CANCELLABLE_CAMPAIGN_STATUSES, fmt, modeLabel } from "./labels";
@@ -42,11 +42,12 @@ export function CampaignActions({
     const { toast } = useToast();
     const [approveOpen, setApproveOpen] = useState(false);
     const [cancelOpen, setCancelOpen] = useState(false);
-    const [busy, setBusy] = useState<"approve" | "cancel" | null>(null);
+    const [busy, setBusy] = useState<"approve" | "cancel" | "retry" | null>(null);
 
     const canApprove = campaign.status === "draft";
     const canCancel = CANCELLABLE_CAMPAIGN_STATUSES.includes(campaign.status);
-    if (!canApprove && !canCancel) return null;
+    const canRetryAudio = campaign.status === "render_failed";
+    if (!canApprove && !canCancel && !canRetryAudio) return null;
 
     const emergency = (() => {
         try {
@@ -73,6 +74,19 @@ export function CampaignActions({
         }
     };
 
+    const retryAudio = async () => {
+        setBusy("retry");
+        try {
+            const next = await retryCampaignAudio(campaign.orgId, campaign.id);
+            onChange(next);
+            toast({ title: t("Preparing the audio again.") });
+        } catch (err) {
+            toast({ title: t("Could not restart the audio"), description: errorMessage(t, err), variant: "destructive" });
+        } finally {
+            setBusy(null);
+        }
+    };
+
     const cancel = async () => {
         setBusy("cancel");
         try {
@@ -92,6 +106,12 @@ export function CampaignActions({
             {canApprove && (
                 <Button type="button" onClick={() => setApproveOpen(true)} disabled={busy !== null}>
                     {t("Approve")}
+                </Button>
+            )}
+            {canRetryAudio && (
+                <Button type="button" onClick={() => void retryAudio()} disabled={busy !== null}>
+                    {busy === "retry" && <Loader2 aria-hidden="true" className="animate-spin" />}
+                    {t("Try preparing the audio again")}
                 </Button>
             )}
             {canCancel && (

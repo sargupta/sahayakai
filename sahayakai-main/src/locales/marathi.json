@@ -2032,5 +2032,8 @@
   "{reachable} of {total} families can be called": "{total} पैकी {reachable} कुटुंबांना कॉल करता येईल",
   "{seconds} s": "{seconds} सेकंद",
   "{start} to {end} IST": "{start} ते {end} IST",
-  "{students} students, {guardians} guardians, {rejected} rejected rows": "{students} विद्यार्थी, {guardians} पालक, {rejected} नाकारलेल्या ओळी"
+  "{students} students, {guardians} guardians, {rejected} rejected rows": "{students} विद्यार्थी, {guardians} पालक, {rejected} नाकारलेल्या ओळी",
+  "Try preparing the audio again": "ऑडिओ पुन्हा तयार करा",
+  "Preparing the audio again.": "ऑडिओ पुन्हा तयार केला जात आहे.",
+  "Could not restart the audio": "ऑडिओ पुन्हा सुरू करता आला नाही"
 }

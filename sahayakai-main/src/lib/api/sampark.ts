@@ -254,6 +254,11 @@ export function cancelCampaign(orgId: string, campaignId: string): Promise<Campa
     return apiFetch<Campaign>(orgPath(orgId, `/campaigns/${encodeURIComponent(campaignId)}/cancel`), { method: 'POST' });
 }
 
+/** POST /api/sampark/[orgId]/campaigns/[id]/retry-audio — only from 'render_failed'. */
+export function retryCampaignAudio(orgId: string, campaignId: string): Promise<Campaign> {
+    return apiFetch<Campaign>(orgPath(orgId, `/campaigns/${encodeURIComponent(campaignId)}/retry-audio`), { method: 'POST' });
+}
+
 // ── Calls ────────────────────────────────────────────────────────────────────
 
 /** GET /api/sampark/[orgId]/calls?campaignId=&limit= */

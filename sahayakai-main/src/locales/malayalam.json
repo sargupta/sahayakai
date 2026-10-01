@@ -2032,5 +2032,8 @@
   "{reachable} of {total} families can be called": "{total} കുടുംബങ്ങളിൽ {reachable} കുടുംബങ്ങളെ വിളിക്കാം",
   "{seconds} s": "{seconds} സെക്കൻഡ്",
   "{start} to {end} IST": "IST {start} മുതൽ {end} വരെ",
-  "{students} students, {guardians} guardians, {rejected} rejected rows": "{students} വിദ്യാർഥികൾ, {guardians} രക്ഷിതാക്കൾ, {rejected} നിരസിച്ച വരികൾ"
+  "{students} students, {guardians} guardians, {rejected} rejected rows": "{students} വിദ്യാർഥികൾ, {guardians} രക്ഷിതാക്കൾ, {rejected} നിരസിച്ച വരികൾ",
+  "Try preparing the audio again": "ഓഡിയോ വീണ്ടും തയ്യാറാക്കുക",
+  "Preparing the audio again.": "ഓഡിയോ വീണ്ടും തയ്യാറാക്കുന്നു.",
+  "Could not restart the audio": "ഓഡിയോ വീണ്ടും ആരംഭിക്കാനായില്ല"
 }
