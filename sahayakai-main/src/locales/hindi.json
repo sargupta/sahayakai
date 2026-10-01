@@ -2058,5 +2058,8 @@
   "{reachable} of {total} families can be called": "{total} में से {reachable} परिवारों को कॉल किया जा सकता है",
   "{seconds} s": "{seconds} सेकंड",
   "{start} to {end} IST": "{start} से {end} IST",
-  "{students} students, {guardians} guardians, {rejected} rejected rows": "{students} छात्र, {guardians} अभिभावक, {rejected} अस्वीकृत पंक्तियाँ"
+  "{students} students, {guardians} guardians, {rejected} rejected rows": "{students} छात्र, {guardians} अभिभावक, {rejected} अस्वीकृत पंक्तियाँ",
+  "Try preparing the audio again": "ऑडियो फिर से तैयार करें",
+  "Preparing the audio again.": "ऑडियो फिर से तैयार किया जा रहा है।",
+  "Could not restart the audio": "ऑडियो फिर से शुरू नहीं हो सका"
 }

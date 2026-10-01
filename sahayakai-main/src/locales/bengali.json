@@ -2032,5 +2032,8 @@
   "{reachable} of {total} families can be called": "{total}টি পরিবারের মধ্যে {reachable}টিকে কল করা যাবে",
   "{seconds} s": "{seconds} সেকেন্ড",
   "{start} to {end} IST": "{start} থেকে {end} IST",
-  "{students} students, {guardians} guardians, {rejected} rejected rows": "{students} জন শিক্ষার্থী, {guardians} জন অভিভাবক, {rejected}টি বাতিল সারি"
+  "{students} students, {guardians} guardians, {rejected} rejected rows": "{students} জন শিক্ষার্থী, {guardians} জন অভিভাবক, {rejected}টি বাতিল সারি",
+  "Try preparing the audio again": "অডিও আবার তৈরি করুন",
+  "Preparing the audio again.": "অডিও আবার তৈরি করা হচ্ছে।",
+  "Could not restart the audio": "অডিও আবার শুরু করা গেল না"
 }

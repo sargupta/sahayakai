@@ -85,6 +85,7 @@ const R = {
     preview: () => import('@/app/api/sampark/[orgId]/campaigns/[id]/preview/route'),
     approve: () => import('@/app/api/sampark/[orgId]/campaigns/[id]/approve/route'),
     cancel: () => import('@/app/api/sampark/[orgId]/campaigns/[id]/cancel/route'),
+    retryAudio: () => import('@/app/api/sampark/[orgId]/campaigns/[id]/retry-audio/route'),
     calls: () => import('@/app/api/sampark/[orgId]/calls/route'),
     audio: () => import('@/app/api/sampark/[orgId]/audio/[key]/route'),
     renderJob: () => import('@/app/api/jobs/sampark-render/route'),
@@ -180,6 +181,7 @@ const ORG_ROUTES: OrgRouteCase[] = [
     { name: 'POST preview', route: 'preview', method: 'POST', params: { id: 'c1' }, body: {} },
     { name: 'POST approve', route: 'approve', method: 'POST', params: { id: 'c1' } },
     { name: 'POST cancel', route: 'cancel', method: 'POST', params: { id: 'c1' } },
+    { name: 'POST retry-audio', route: 'retryAudio', method: 'POST', params: { id: 'c1' } },
     { name: 'GET calls', route: 'calls', method: 'GET' },
     { name: 'GET audio', route: 'audio', method: 'GET', params: { key: 'a'.repeat(40) } },
 ];
@@ -414,6 +416,9 @@ describe('campaigns', () => {
         const cancel = await h('cancel', 'POST');
         expect(await invoke(cancel, { params: { orgId: ORG, id: c.id } })).toMatchObject({ status: 200, body: { status: 'cancelled' } });
         expect(await invoke(cancel, { params: { orgId: ORG, id: c.id } })).toMatchObject({ status: 409, body: { error: 'CAMPAIGN_FINISHED' } });
+        // Retrying audio is only for a render that failed its check.
+        const retry = await h('retryAudio', 'POST');
+        expect(await invoke(retry, { params: { orgId: ORG, id: c.id } })).toMatchObject({ status: 409, body: { error: 'CAMPAIGN_AUDIO_NOT_FAILED' } });
     });
 });
 

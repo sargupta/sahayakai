@@ -375,6 +375,40 @@ export async function approveCampaign(ctx: SamparkCtx, orgId: string, campaignId
     return { ...campaign, ...patch };
 }
 
+/**
+ * Re-run audio preparation for a campaign whose render failed its check.
+ *
+ * Voice-model slips (a repeated line, a leaked instruction) are random, so a
+ * fresh render usually passes; without this a principal's only way out was to
+ * cancel and recreate the campaign. Clips that already passed are kept (the
+ * render job skips them), only the failed ones are rendered again, and the
+ * check that failed them still applies.
+ */
+export async function retryCampaignAudio(ctx: SamparkCtx, orgId: string, campaignId: string, uid: string): Promise<Campaign> {
+    await getSchoolOrThrow(ctx, orgId);
+    const campaign = await getCampaignOrThrow(ctx, orgId, campaignId);
+    if (campaign.status !== 'render_failed') {
+        throw conflict('CAMPAIGN_AUDIO_NOT_FAILED', 'Only a campaign whose audio failed its check can be prepared again');
+    }
+    const now = ctx.clock.now();
+    if (new Date(campaign.expiresAt).getTime() <= now.getTime()) throw conflict('CAMPAIGN_EXPIRED', 'This campaign has expired');
+    const nowIso = now.toISOString();
+    const patch: Partial<Campaign> = {
+        status: 'rendering',
+        renderProgress: { ...campaign.renderProgress, failures: [] },
+        updatedAt: nowIso,
+    };
+    await ctx.repo.updateCampaign(orgId, campaignId, patch);
+    await ctx.repo.appendAudit(orgId, {
+        at: nowIso,
+        actor: uid,
+        action: 'campaign.retry_audio',
+        target: `campaign/${campaignId}`,
+        detail: { previousFailures: campaign.renderProgress.failures.slice(0, 20) },
+    });
+    return { ...campaign, ...patch };
+}
+
 const CANCELLABLE_INTENT_STATUSES = new Set(['approved', 'retry_wait']);
 
 export async function cancelCampaign(ctx: SamparkCtx, orgId: string, campaignId: string, uid: string): Promise<Campaign> {

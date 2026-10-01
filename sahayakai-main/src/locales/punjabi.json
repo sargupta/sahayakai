@@ -2032,5 +2032,8 @@
   "{reachable} of {total} families can be called": "{total} ਵਿੱਚੋਂ {reachable} ਪਰਿਵਾਰਾਂ ਨੂੰ ਕਾਲ ਕੀਤੀ ਜਾ ਸਕਦੀ ਹੈ",
   "{seconds} s": "{seconds} ਸਕਿੰਟ",
   "{start} to {end} IST": "{start} ਤੋਂ {end} IST",
-  "{students} students, {guardians} guardians, {rejected} rejected rows": "{students} ਵਿਦਿਆਰਥੀ, {guardians} ਸਰਪ੍ਰਸਤ, {rejected} ਰੱਦ ਕੀਤੀਆਂ ਕਤਾਰਾਂ"
+  "{students} students, {guardians} guardians, {rejected} rejected rows": "{students} ਵਿਦਿਆਰਥੀ, {guardians} ਸਰਪ੍ਰਸਤ, {rejected} ਰੱਦ ਕੀਤੀਆਂ ਕਤਾਰਾਂ",
+  "Try preparing the audio again": "ਆਡੀਓ ਦੁਬਾਰਾ ਤਿਆਰ ਕਰੋ",
+  "Preparing the audio again.": "ਆਡੀਓ ਦੁਬਾਰਾ ਤਿਆਰ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ।",
+  "Could not restart the audio": "ਆਡੀਓ ਦੁਬਾਰਾ ਸ਼ੁਰੂ ਨਹੀਂ ਹੋ ਸਕਿਆ"
 }

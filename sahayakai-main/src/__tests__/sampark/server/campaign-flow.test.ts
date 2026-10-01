@@ -15,7 +15,7 @@ import type { CrmSource } from '@/lib/sampark/ports';
 import { createMemorySamparkRepo } from '@/lib/sampark/repo/memory';
 import { getClipAudio } from '@/server/sampark/audio';
 import { listCallLog } from '@/server/sampark/calls';
-import { approveCampaign, cancelCampaign, createCampaign, getCampaignDetail, previewCampaign } from '@/server/sampark/campaigns';
+import { approveCampaign, cancelCampaign, createCampaign, getCampaignDetail, previewCampaign, retryCampaignAudio } from '@/server/sampark/campaigns';
 import { listGuardianRows, updateGuardianPreferences } from '@/server/sampark/guardians';
 import type { SamparkCtx } from '@/server/sampark/http';
 import { dispatchJob, renderJob } from '@/server/sampark/jobs';
@@ -236,6 +236,35 @@ describe('slice 1 campaign flow', () => {
         expect(await env.repo.listIntentsByCampaign(ORG, campaign.id)).toEqual([]);
         const tick = await dispatchJob({ repo: env.repo, clock: env.clock });
         expect(tick.dialed).toBe(0);
+    });
+
+    it('after a voice slip fails the render, "try again" re-renders only the failed clips and the campaign goes on', async () => {
+        const env = await setup();
+        let slipping = true; // the voice model slips on the first render, then behaves
+        env.speech = fakeSpeech({ mishear: (text) => (slipping && /[ঀ-৿]/.test(text) && text.length > 60 ? 'কিছু একটা ভুল' : null) });
+        const campaign = await createCampaign(env.ctx, ORG, ADMIN, {
+            purpose: 'ptm_invite',
+            facts: { kind: 'ptm_invite', date: '2026-10-08', time: { hour: 10, minute: 0 }, venueId: 'school_hall' },
+            audience: { sections: [] },
+        });
+        // Only a failed render can be retried.
+        await expect(retryCampaignAudio(env.ctx, ORG, campaign.id, ADMIN)).rejects.toMatchObject({ code: 'CAMPAIGN_AUDIO_NOT_FAILED' });
+        await approveCampaign(env.ctx, ORG, campaign.id, ADMIN);
+        const failed = await renderUntilSettled(env, campaign.id);
+        expect(failed.status).toBe('render_failed');
+
+        slipping = false;
+        const callsBefore = env.speech.synth.calls;
+        const retried = await retryCampaignAudio(env.ctx, ORG, campaign.id, ADMIN);
+        expect(retried).toMatchObject({ status: 'rendering', renderProgress: { failures: [] } });
+        const settled = await renderUntilSettled(env, campaign.id);
+        expect(settled.status).toBe('scheduled');
+        // Clips that passed the first time were kept: only the failed one(s) were rendered again.
+        const rerendered = env.speech.synth.calls - callsBefore;
+        expect(rerendered).toBeGreaterThan(0);
+        expect(rerendered).toBeLessThan(settled.renderProgress.total);
+        expect((await env.repo.listIntentsByCampaign(ORG, campaign.id)).length).toBeGreaterThan(0);
+        await expect(retryCampaignAudio(env.ctx, ORG, campaign.id, ADMIN)).rejects.toMatchObject({ code: 'CAMPAIGN_AUDIO_NOT_FAILED' });
     });
 
     it('cancelling a scheduled campaign cancels its waiting intents; the dispatcher places nothing', async () => {
