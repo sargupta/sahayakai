@@ -183,7 +183,12 @@ export interface SynthesisResult {
 }
 
 export interface SpeechSynthesizer {
-    synthesize(req: { text: string; language: ParentLanguage; speech: SpeechEngineConfig }): Promise<SynthesisResult>;
+    /**
+     * `delivery: 'styled'` attaches the short delivery hint (Gemini-TTS only) and is used for the
+     * MAIN MESSAGE alone. Short clips are always 'plain': with any instruction attached, Gemini-TTS
+     * has repeated sentences and even read the instruction aloud on them (2026-09-30 / 10-01).
+     */
+    synthesize(req: { text: string; language: ParentLanguage; speech: SpeechEngineConfig; delivery?: 'styled' | 'plain' }): Promise<SynthesisResult>;
 }
 
 export interface SpeechVerifier {

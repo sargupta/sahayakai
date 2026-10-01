@@ -89,10 +89,17 @@ export async function synthesizeClip(
     clip: Pick<NeededClip, 'kind' | 'text' | 'language' | 'speech'>,
     opts: { retries?: number } = {},
 ): Promise<ClipAudio> {
-    const attempts = 1 + (opts.retries ?? 1);
+    // Two re-renders: voice-model slips (a repeated line, a leaked instruction) are
+    // random, so a fresh render usually comes back clean.
+    const attempts = 1 + (opts.retries ?? 2);
     let last: ClipAudio | null = null;
     for (let attempt = 0; attempt < attempts; attempt++) {
-        const synthesized = await deps.synth.synthesize({ text: clip.text, language: clip.language, speech: clip.speech });
+        const synthesized = await deps.synth.synthesize({
+            text: clip.text,
+            language: clip.language,
+            speech: clip.speech,
+            delivery: clip.kind === 'message' ? 'styled' : 'plain',
+        });
         const audio = clip.kind === 'message' ? prependSilence(synthesized.audio, MESSAGE_LEAD_IN_SECONDS) : synthesized.audio;
         const durationSeconds =
             Math.round((synthesized.durationSeconds + (clip.kind === 'message' ? MESSAGE_LEAD_IN_SECONDS : 0)) * 100) / 100;

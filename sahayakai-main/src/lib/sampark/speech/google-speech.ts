@@ -31,19 +31,21 @@ export const STT_MODEL = 'chirp_2';
 export const DEFAULT_GCP_PROJECT = 'sahayakai-b4248';
 
 /**
- * Style prompt for Gemini-TTS (ignored by Chirp 3 HD, so not sent to it).
+ * Delivery hint for Gemini-TTS, sent ONLY with a campaign's main message
+ * (`delivery: 'styled'`) and never to Chirp 3 HD, which ignores it.
  *
- * It shapes DELIVERY only. An earlier, more "human" prompt that also asked the
- * voice to "say the date, time and place clearly" made the model improvise on
- * short clips: it repeated sentences and, in one Nepali confirmation, invented
- * a date that was not in the text (verify-voice run, 2026-09-30). The words a
- * parent hears come from reviewed templates, so the prompt now forbids adding,
- * repeating or skipping anything, and every clip is transcribed back.
+ * History, because each step was learned live:
+ *   - A longer "human" prompt that also asked to "say the date, time and place
+ *     clearly" made the voice repeat sentences and invent a date in a Nepali
+ *     confirmation (2026-09-30).
+ *   - A strict prompt ("read exactly as written … natural pauses between
+ *     sentences") still leaked: on 2026-10-01 the voice READ THE PROMPT ALOUD,
+ *     transliterated into Nepali, inside a one-line confirmation.
+ * Short clips are where the instruction outweighs the text, so they now get no
+ * instruction at all, and this hint is a few words with nothing worth reading
+ * out. Every clip is still transcribed back and length-checked before use.
  */
-export const GEMINI_TTS_STYLE_PROMPT =
-    'Read the text exactly as written, word for word: do not add, repeat, skip or change anything. ' +
-    'Voice: a warm, friendly member of the school office speaking naturally to a parent on the phone, ' +
-    'calm and unhurried, with natural pauses between sentences.';
+export const GEMINI_TTS_STYLE_PROMPT = 'Warm, calm and unhurried.';
 
 const CLOUD_PLATFORM_SCOPE = 'https://www.googleapis.com/auth/cloud-platform';
 const REQUEST_TIMEOUT_MS = 60_000;
@@ -147,12 +149,16 @@ async function postJson(
 }
 
 /** The exact Cloud TTS request body for a text and engine (exported for class gate 15). */
-export function buildSynthesizeRequest(text: string, speech: SpeechEngineConfig): Record<string, unknown> {
+export function buildSynthesizeRequest(
+    text: string,
+    speech: SpeechEngineConfig,
+    delivery: 'styled' | 'plain' = 'plain',
+): Record<string, unknown> {
     const audioConfig = { audioEncoding: 'MULAW', sampleRateHertz: TELEPHONY_SAMPLE_RATE };
     if (speech.engine === 'gemini-tts') {
         if (!speech.model) throw new Error(`Gemini-TTS for ${speech.ttsLanguageCode} needs a pinned model`);
         return {
-            input: { text, prompt: GEMINI_TTS_STYLE_PROMPT },
+            input: delivery === 'styled' ? { text, prompt: GEMINI_TTS_STYLE_PROMPT } : { text },
             voice: { languageCode: speech.ttsLanguageCode, name: speech.voice, modelName: speech.model },
             audioConfig,
         };
@@ -174,9 +180,9 @@ export function toTelephonyWav(audio: Buffer): SynthesisResult {
 
 export function createGoogleSynthesizer(deps: GoogleSpeechDeps = {}): SpeechSynthesizer {
     return {
-        async synthesize({ text, speech }) {
+        async synthesize({ text, speech, delivery }) {
             if (!text.trim()) throw new Error('Cannot synthesise empty text');
-            const json = await postJson(deps, TTS_ENDPOINT, buildSynthesizeRequest(text, speech), `TTS ${speech.engine} ${speech.ttsLanguageCode}`);
+            const json = await postJson(deps, TTS_ENDPOINT, buildSynthesizeRequest(text, speech, delivery ?? 'plain'), `TTS ${speech.engine} ${speech.ttsLanguageCode}`);
             const content = json.audioContent;
             if (typeof content !== 'string' || content.length === 0) throw new Error('TTS response had no audioContent');
             return toTelephonyWav(Buffer.from(content, 'base64'));

@@ -47,7 +47,7 @@ describe('Gate 15 — speech engine per language', () => {
     it('the Nepali request carries exactly ne-NP, the voice, the pinned model, MULAW 8 kHz and the style prompt', async () => {
         const { impl, requests } = fakeFetch(() => ({ json: { audioContent: fakeMulawWav(1.5).toString('base64') } }));
         const synth = createGoogleSynthesizer({ fetchImpl: impl, getAccessToken: token, project: 'proj-x' });
-        const out = await synth.synthesize({ text: 'नमस्ते, यो सूचना हो।', language: 'Nepali', speech: languageInfo('Nepali').speech });
+        const out = await synth.synthesize({ text: 'नमस्ते, यो सूचना हो।', language: 'Nepali', speech: languageInfo('Nepali').speech, delivery: 'styled' });
 
         expect(requests).toHaveLength(1);
         expect(requests[0].url).toBe(TTS_ENDPOINT);
@@ -60,6 +60,16 @@ describe('Gate 15 — speech engine per language', () => {
         });
         expect(out.mimeType).toBe('audio/wav');
         expect(out.durationSeconds).toBeCloseTo(1.5, 3);
+    });
+
+    it('class gate: a short clip never carries a style instruction (Gemini-TTS read one aloud on 2026-10-01)', async () => {
+        const { impl, requests } = fakeFetch(() => ({ json: { audioContent: fakeMulawWav(1).toString('base64') } }));
+        const synth = createGoogleSynthesizer({ fetchImpl: impl, getAccessToken: token });
+        await synth.synthesize({ text: 'धन्यवाद, सबैजना सुरक्षित रहनुहोस्।', language: 'Nepali', speech: languageInfo('Nepali').speech });
+        await synth.synthesize({ text: 'Thank you.', language: 'English', speech: languageInfo('English').speech, delivery: 'plain' });
+        for (const r of requests) expect((r.body as { input: Record<string, unknown> }).input).not.toHaveProperty('prompt');
+        // The hint that IS sent with a message is a few words, with nothing worth reading out.
+        expect(GEMINI_TTS_STYLE_PROMPT.split(/\s+/).length).toBeLessThanOrEqual(6);
     });
 
     it('the Bengali request is Chirp 3 HD: no model, no prompt', () => {
