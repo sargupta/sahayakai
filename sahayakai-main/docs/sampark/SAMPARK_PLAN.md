@@ -538,3 +538,27 @@ Five independent reviewers read v1, each with one lens, and were told to verify 
 ### Could not be verified — carried as open items
 
 The Gazette text and commencement of TRAI's September 2026 amendment; whether Vobiz is a licensed operator; whether voice templates need DLT registration; whether private schools can obtain 1600-series numbers; whether West Bengal applies RTE 12(1)(c) in private schools; Vertex Live availability in `asia-south1`; Vobiz's billing unit on our account; Azure `ne-NP` voices as a second vendor.
+
+---
+
+## 17. First client: Delhi Public School Siliguri (added 1 Oct 2026)
+
+The first school is **DPS Siliguri**, which runs **Entab CampusCare 10X** as its records system and **Knowlarity SuperReceptionist** as its phone line. Both facts change the plan in concrete ways; everything below comes from public sources checked on 1 Oct 2026, and the unverified points are listed at the end.
+
+**The records system.** DPS Siliguri's site links its "ERP Login" to CampusCare 10X (school code `DPSSLG`), and its fee portal is still the older CampusCare portal; its sister school DPS Fulbari is on Entab too, so one connector would serve the group. Entab publishes **no API, webhooks or SFTP**. What it does document is report export (Excel, CSV, PDF) and Excel import (registrations, fee dues, marks, transport), and it has built custom APIs for partners such as banks and payment gateways. The private APIs behind the 10X app are undocumented and need a login, so they are off limits without Entab's agreement. In 10X a parent signs in with their registered mobile and an OTP, which makes that number the best-verified one to call; no preferred-language field was found, so Sampark's own preferences registry (and the onboarding language drive) carries language.
+
+So the connector for this school is **a scheduled CampusCare export uploaded to Sampark**, not the REST pull the dummy CRM serves today. The CSV importer already validates and quarantines row by row; what it needs is a **saved column mapping** from Entab's export headings to the canonical fields (admission number, class-section, registered mobile, father's and mother's mobiles, transport, fee category), set up once per school. Answers go back the same way, as a file in an Entab import format or a report the office keys in, until Entab offers a scoped, read-only partner API, which is the request to make of them.
+
+**The phone line.** The number DPS parents already know is the school's own, and TRAI wants the school as the registered sender, so the Knowlarity line matters for three things:
+
+- **Call-backs.** "Press 2 to talk to the school" should not transfer the parent live into a menu. It records the request and creates a task; a staff member returns the call through Knowlarity's click-to-call, so the parent sees the familiar school number. This is the cheapest and most valuable integration, and it needs nothing from Knowlarity beyond its documented API.
+- **Outbound notices.** Knowlarity can place calls from the school's number (on its enterprise plan), but every audio file must be **manually approved by Knowlarity support** before use, and its own text-to-speech covers only English and Hindi. That rules it out for per-parent audio and same-day emergencies, so **Vobiz stays the dialer** for Sampark's notices, and a `KnowlarityCarrier` adapter is reserved for calls that must show the school number with pre-approved audio (for example, closure clips approved in advance in all four languages).
+- **Inbound (phase 5).** Parents keep calling the existing number; an option in the school's IVR ("press 9 to reply to today's call") forwards to Sampark, and Knowlarity's per-call webhook can route a parent with an open request to their class teacher.
+
+**Questions for the school.** Which number is the SuperReceptionist number, and which one do parents recognise; which Knowlarity plan; who holds the Entab and Knowlarity admin logins; whether guardian mobiles are complete for every child; whether the school is DLT-registered as a sender and will file the robo-call declaration; office hours for call-backs; and whether DPS Fulbari is in scope.
+
+**Questions for Entab.** Whether a scoped partner API is possible, and at what cost; whether exports can be scheduled or emailed; the import templates that can carry answers back; how the holistic progress card's parent section is stored and whether it can be imported; and whether Entab will sign data-processing terms with SahayakAI as a sub-processor.
+
+**Questions for Knowlarity.** Whether the school's number can be the caller ID for automated service calls and who the originating telco is; how long audio approval takes and whether it can be expedited for emergencies; whether keypad presses can arrive as a live webhook; whether their audio-streaming WebSocket is generally available; and 2026 rates.
+
+**Not verified.** Any Entab–Knowlarity integration (none found); which of DPS Siliguri's published numbers, if any, is on Knowlarity; current Knowlarity rates (the public figures date from 2022); and whether TRAI's AI-voice amendment has been finalised (one source cites a September 2026 announcement, another describes it as still a draft).
