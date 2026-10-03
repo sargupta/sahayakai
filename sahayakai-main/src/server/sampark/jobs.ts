@@ -23,7 +23,7 @@ import os from 'node:os';
 
 import { recomputeCampaignCounts, runDispatchTick, type DispatchReport } from '@/lib/sampark/dispatch/dispatcher';
 import { materialiseCampaignIntents } from '@/lib/sampark/audience';
-import { languageInfo } from '@/lib/sampark/languages';
+import { speechFor } from '@/lib/sampark/languages';
 import { decryptPhone } from '@/lib/sampark/phone';
 import type { Clock, SamparkRepo } from '@/lib/sampark/ports';
 import { audienceLabelFor, renderNoticeScript, ScriptRenderError } from '@/lib/sampark/scripts/render';
@@ -183,7 +183,7 @@ export function makeAudioSecondsFor(repo: SamparkRepo) {
                     });
                     const message = script.clips.find((c) => c.kind === 'message');
                     if (!message) return null;
-                    const clip = await repo.getClip(school.orgId, clipKey(languageInfo(intent.language).speech, message.text));
+                    const clip = await repo.getClip(school.orgId, clipKey(speechFor(intent.language, campaign.purpose), message.text));
                     return clip ? clip.durationSeconds : null;
                 } catch {
                     return null;

@@ -20,7 +20,7 @@ import { bundleAudience } from '@/lib/sampark/audience';
 import { isDialable, PURPOSE_CATALOGUE, purposeSpec } from '@/lib/sampark/catalogue';
 import { chooseClosureVariant, closureExpiry, istDateString } from '@/lib/sampark/closure';
 import { emptyCounts } from '@/lib/sampark/dispatch/counts';
-import { languageInfo } from '@/lib/sampark/languages';
+import { speechFor } from '@/lib/sampark/languages';
 import { evaluateGate } from '@/lib/sampark/policy/gate';
 import { resolveLanguage } from '@/lib/sampark/policy/language';
 import { audienceLabelFor, renderNoticeScript, ScriptRenderError, variantsFor } from '@/lib/sampark/scripts/render';
@@ -314,7 +314,7 @@ export async function previewCampaign(
     const wanted = PARENT_LANGUAGES.filter((l) => languages.includes(l));
     const previews: ScriptPreview[] = [];
     for (const language of wanted) {
-        const speech = languageInfo(language).speech;
+        const speech = speechFor(language, campaign.purpose);
         for (const variant of variantsFor(campaign.purpose)) {
             let rendered;
             try {

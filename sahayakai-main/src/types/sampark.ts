@@ -481,7 +481,7 @@ export interface RenderedClip {
     variant: 'default' | 'today' | 'tomorrow';
     kind: ClipKind;
     text: string;
-    engine: 'gemini-tts' | 'chirp3-hd';
+    engine: 'gemini-tts' | 'chirp3-hd' | 'sarvam-bulbul';
     voice: string;
     model: string;
     languageCode: string;
