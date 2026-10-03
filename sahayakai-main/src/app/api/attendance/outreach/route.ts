@@ -3,6 +3,7 @@ import { getDb } from '@/lib/firebase-admin';
 import { dbAdapter } from '@/lib/db/adapter';
 import type { OutreachReason, CallStatus, PerformanceContext } from '@/types/attendance';
 import type { Language, Subject } from '@/types';
+import { refuseIfParentOptedOut } from '@/lib/call-suppression';
 import { hasAdvancedPlan } from '@/lib/plan-utils';
 
 // Per-(teacher,student) dedup window — protects against accidental floods
@@ -11,6 +12,11 @@ import { hasAdvancedPlan } from '@/lib/plan-utils';
 // Twilio call gateway. 5 minutes matches normal teacher cadence (no realistic
 // reason to retry the same parent twice in <5min).
 const DEDUP_WINDOW_MS = 5 * 60 * 1000;
+
+// A record still `pending` (created, no call placed yet) only counts for this
+// long. It exists to catch a double-tap — two outreach POSTs a moment apart —
+// not to lock a teacher out because a dial never happened.
+const PENDING_GRACE_MS = 30 * 1000;
 
 export async function POST(req: NextRequest) {
     const userId = req.headers.get('x-user-id');
@@ -84,6 +90,14 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Student has no parent phone on record' }, { status: 422 });
         }
 
+        // A parent who told us on a call not to phone them again is not called
+        // again, however many new outreach docs the teacher creates. Refused
+        // here (before a doc exists) AND in /api/attendance/call.
+        if (data.deliveryMethod === 'twilio_call') {
+            const suppressed = await refuseIfParentOptedOut(db, parentPhone);
+            if (suppressed) return suppressed;
+        }
+
         // ── F9-003 fix: per-(teacher, student) dedup window ───────────────
         //
         // The window protects the PARENT from being called repeatedly. So a
@@ -95,9 +109,15 @@ export async function POST(req: NextRequest) {
         // out for five minutes per student while no parent had been disturbed
         // at all.
         //
-        // Only an EXPLICIT failure releases the window. A record with no
-        // callStatus yet is still in flight — treating absence as failure
-        // would let a double-tap place two real calls to the same parent.
+        // The window only counts outreaches that placed, or are placing, a call:
+        //   - `failed`   never counted (the call route writes it on EVERY refusal:
+        //                calling hours, opted out, bad phone, provider error...).
+        //   - `pending`  created but no call placed yet. Counts only for
+        //                PENDING_GRACE_MS, so a double-tap is still caught but an
+        //                abandoned/refused attempt cannot hold the window for 5
+        //                minutes. (It used to be created as 'initiated', which
+        //                made every refusal look like a call in flight.)
+        //   - anything else (`initiated`, `completed`, `manual`...) counts.
         const cutoffIso = new Date(Date.now() - DEDUP_WINDOW_MS).toISOString();
         const recentSnap = await db.collection('parent_outreach')
             .where('teacherUid', '==', userId)
@@ -105,17 +125,24 @@ export async function POST(req: NextRequest) {
             .where('createdAt', '>=', cutoffIso)
             .limit(10)
             .get();
-        const recentDocs = recentSnap.docs.filter(
-            (d) => (d.data() as { callStatus?: string }).callStatus !== 'failed',
-        );
+        const nowMs = Date.now();
+        const recentDocs = recentSnap.docs.filter((d) => {
+            const r = d.data() as { callStatus?: string; createdAt: string };
+            if (r.callStatus === 'failed') return false;
+            if (r.callStatus === 'pending') {
+                return nowMs - new Date(r.createdAt).getTime() < PENDING_GRACE_MS;
+            }
+            return true;
+        });
         if (recentDocs.length > 0) {
             // Most recent survivor decides the retry-after.
             const last = recentDocs
-                .map((d) => d.data() as { createdAt: string })
+                .map((d) => d.data() as { createdAt: string; callStatus?: string })
                 .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))[0];
             const lastMs = new Date(last.createdAt).getTime();
             const elapsed = Date.now() - lastMs;
-            const retryAfterSeconds = Math.max(1, Math.ceil((DEDUP_WINDOW_MS - elapsed) / 1000));
+            const windowMs = last.callStatus === 'pending' ? PENDING_GRACE_MS : DEDUP_WINDOW_MS;
+            const retryAfterSeconds = Math.max(1, Math.ceil((windowMs - elapsed) / 1000));
             const resp = NextResponse.json(
                 { error: 'Recent outreach already exists for this student', retryAfterSeconds },
                 { status: 429 },
@@ -140,7 +167,7 @@ export async function POST(req: NextRequest) {
             reason: data.reason,
             generatedMessage: data.generatedMessage,
             deliveryMethod: data.deliveryMethod,
-            callStatus: (data.deliveryMethod === 'twilio_call' ? 'initiated' : 'manual') as CallStatus,
+            callStatus: (data.deliveryMethod === 'twilio_call' ? 'pending' : 'manual') as CallStatus,
             createdAt: now,
             updatedAt: now,
         };

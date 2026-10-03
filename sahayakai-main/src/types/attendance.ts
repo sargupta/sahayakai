@@ -10,7 +10,15 @@ export type OutreachReason =
     | 'behavioral_concern'
     | 'positive_feedback';
 
-export type CallStatus = 'initiated' | 'completed' | 'failed' | 'no_answer' | 'busy' | 'manual';
+/**
+ * - `pending`   outreach record created, NO call placed yet (the teacher has not
+ *               dialled, or the dial is still being set up).
+ * - `initiated` a provider accepted the call. Only the call route (or the
+ *               provider's webhooks) may set this.
+ * - `failed`    the call was refused or never placed; `callFailureCategory` says
+ *               why (calling hours, opted out, provider error, ...).
+ */
+export type CallStatus = 'pending' | 'initiated' | 'completed' | 'failed' | 'no_answer' | 'busy' | 'manual';
 
 // ── Firestore: classes/{classId} ─────────────────────────────────────────────
 

@@ -59,6 +59,7 @@ from .flow import (
     is_optout,
 )
 from .prompt import CallContext, build_parent_call_instruction, stt_language_hints
+from .suppression import SUPPRESSION_COLLECTION, phone_suppression_id
 from .tokens import VobizDomain, verify_vobiz_token
 from .vobiz_frames import InboundKind, build_clear_audio, build_play_audio, parse_inbound
 
@@ -758,6 +759,59 @@ def _record_turn(bridge: _Bridge, role: str, text: str) -> None:
         asyncio.create_task(_persist_transcript(bridge))
 
 
+async def _persist_opt_out(bridge: _Bridge) -> bool:
+    """Record that this parent asked not to be called again.
+
+    Two writes: `optedOut`/`optedOutAt` on the outreach doc (what the teacher's
+    UI reads) and a durable `call_suppressions/{sha256(E.164)}` record that
+    survives new outreach docs and covers siblings sharing the number. The web
+    routes refuse with 409 PARENT_OPTED_OUT when that record exists.
+
+    Never fatal, but loud: a lost opt-out means a parent who was told "it has
+    been noted" gets called again. Returns True when the suppression record was
+    written.
+    """
+    try:
+        from google.cloud import firestore
+
+        client = firestore.Client(
+            project=get_settings().gcp_project,
+            database=get_settings().firestore_database,
+        )
+        ref = client.collection("parent_outreach").document(bridge.outreach_id)
+        snap = await asyncio.to_thread(ref.get)
+        data = (snap.to_dict() if snap.exists else None) or {}
+        now = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+        await asyncio.to_thread(
+            ref.update, {"optedOut": True, "optedOutAt": now, "updatedAt": now}
+        )
+        phone = data.get("parentPhone")
+        if not isinstance(phone, str) or not phone.strip():
+            log.error("telephony.opt_out_no_phone", outreach_id=bridge.outreach_id)
+            return False
+        suppression = client.collection(SUPPRESSION_COLLECTION).document(
+            phone_suppression_id(phone)
+        )
+        await asyncio.to_thread(
+            suppression.set,
+            {
+                "teacherUid": data.get("teacherUid"),
+                "classId": data.get("classId"),
+                "studentId": data.get("studentId"),
+                "outreachId": bridge.outreach_id,
+                "reason": "opt_out",
+                "createdAt": now,
+            },
+        )
+        log.info("telephony.opt_out_saved", outreach_id=bridge.outreach_id)
+        return True
+    except Exception as exc:  # noqa: BLE001
+        log.error(
+            "telephony.opt_out_lost", outreach_id=bridge.outreach_id, error=str(exc)
+        )
+        return False
+
+
 async def _persist_transcript(bridge: _Bridge) -> None:
     """Write the conversation to the outreach record.
 
@@ -1431,7 +1485,10 @@ async def vobiz_stream(ws: WebSocket) -> None:
             # that is a call that would not end.
             await _hangup(bridge.call_uuid)
 
-            # Now the record, with the parent already gone.
+            # Now the record, with the parent already gone. The opt-out goes
+            # first: it is the one write whose loss re-dials someone who said no.
+            if bridge.opted_out:
+                await _persist_opt_out(bridge)
             await _persist_transcript(bridge)
             if bridge.context is not None:
                 await _generate_call_summary(
