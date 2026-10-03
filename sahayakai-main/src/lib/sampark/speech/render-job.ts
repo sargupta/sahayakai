@@ -18,7 +18,7 @@
  */
 
 import { purposeSpec } from '@/lib/sampark/catalogue';
-import { languageInfo, type SpeechEngineConfig } from '@/lib/sampark/languages';
+import { speechFor, type SpeechEngineConfig } from '@/lib/sampark/languages';
 import type { AudioStore, Clock, SamparkRepo, SpeechSynthesizer, SpeechVerifier } from '@/lib/sampark/ports';
 import { audienceLabelFor, COMMON_CLIP_KINDS, estimateSeconds, renderNoticeScript, variantsFor, type ScriptVariant } from '@/lib/sampark/scripts/render';
 import type { ClipKind, ParentLanguage, RenderedClip } from '@/types/sampark';
@@ -128,7 +128,7 @@ export function neededClips(
 ): NeededClip[] {
     const byKey = new Map<string, NeededClip>();
     for (const language of [...new Set(languages)]) {
-        const speech = languageInfo(language).speech;
+        const speech = speechFor(language, purpose);
         for (const variant of variantsFor(purpose)) {
             const script = renderNoticeScript({ purpose, facts, school, language, variant, audience });
             for (const clip of script.clips) {

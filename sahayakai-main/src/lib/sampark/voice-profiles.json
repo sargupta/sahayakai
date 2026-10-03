@@ -1,0 +1,613 @@
+{
+  "schemaVersion": 1,
+  "profiles": [
+    {
+      "id": "en-class-teacher-request-current",
+      "language": "en",
+      "group": "class_teacher_request",
+      "status": "current",
+      "provider": "gemini-tts",
+      "model": "gemini-2.5-flash-tts",
+      "voice": "Kore",
+      "localeCode": "en-IN",
+      "sttLanguageCode": "en-IN",
+      "speakingRate": null,
+      "stylePrompt": "Warm, calm and unhurried.",
+      "notes": "Shipped engine.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      }
+    },
+    {
+      "id": "en-recognition-current",
+      "language": "en",
+      "group": "recognition",
+      "status": "current",
+      "provider": "gemini-tts",
+      "model": "gemini-2.5-flash-tts",
+      "voice": "Kore",
+      "localeCode": "en-IN",
+      "sttLanguageCode": "en-IN",
+      "speakingRate": null,
+      "stylePrompt": "Warm, calm and unhurried.",
+      "notes": "Shipped engine.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      }
+    },
+    {
+      "id": "en-fees-accounts-current",
+      "language": "en",
+      "group": "fees_accounts",
+      "status": "current",
+      "provider": "gemini-tts",
+      "model": "gemini-2.5-flash-tts",
+      "voice": "Kore",
+      "localeCode": "en-IN",
+      "sttLanguageCode": "en-IN",
+      "speakingRate": null,
+      "stylePrompt": "Warm, calm and unhurried.",
+      "notes": "Shipped engine.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      }
+    },
+    {
+      "id": "en-closure-emergency-current",
+      "language": "en",
+      "group": "closure_emergency",
+      "status": "current",
+      "provider": "gemini-tts",
+      "model": "gemini-2.5-flash-tts",
+      "voice": "Kore",
+      "localeCode": "en-IN",
+      "sttLanguageCode": "en-IN",
+      "speakingRate": null,
+      "stylePrompt": "Warm, calm and unhurried.",
+      "notes": "Shipped engine.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      }
+    },
+    {
+      "id": "en-ptm-event-invite-current",
+      "language": "en",
+      "group": "ptm_event_invite",
+      "status": "current",
+      "provider": "gemini-tts",
+      "model": "gemini-2.5-flash-tts",
+      "voice": "Kore",
+      "localeCode": "en-IN",
+      "sttLanguageCode": "en-IN",
+      "speakingRate": null,
+      "stylePrompt": "Warm, calm and unhurried.",
+      "notes": "Shipped engine.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      }
+    },
+    {
+      "id": "hi-class-teacher-request-current",
+      "language": "hi",
+      "group": "class_teacher_request",
+      "status": "current",
+      "provider": "gemini-tts",
+      "model": "gemini-2.5-flash-tts",
+      "voice": "Kore",
+      "localeCode": "hi-IN",
+      "sttLanguageCode": "hi-IN",
+      "speakingRate": null,
+      "stylePrompt": "Warm, calm and unhurried.",
+      "notes": "Shipped engine.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      }
+    },
+    {
+      "id": "hi-recognition-current",
+      "language": "hi",
+      "group": "recognition",
+      "status": "current",
+      "provider": "gemini-tts",
+      "model": "gemini-2.5-flash-tts",
+      "voice": "Kore",
+      "localeCode": "hi-IN",
+      "sttLanguageCode": "hi-IN",
+      "speakingRate": null,
+      "stylePrompt": "Warm, calm and unhurried.",
+      "notes": "Shipped engine.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      }
+    },
+    {
+      "id": "hi-fees-accounts-current",
+      "language": "hi",
+      "group": "fees_accounts",
+      "status": "current",
+      "provider": "gemini-tts",
+      "model": "gemini-2.5-flash-tts",
+      "voice": "Kore",
+      "localeCode": "hi-IN",
+      "sttLanguageCode": "hi-IN",
+      "speakingRate": null,
+      "stylePrompt": "Warm, calm and unhurried.",
+      "notes": "Shipped engine.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      }
+    },
+    {
+      "id": "hi-closure-emergency-current",
+      "language": "hi",
+      "group": "closure_emergency",
+      "status": "current",
+      "provider": "gemini-tts",
+      "model": "gemini-2.5-flash-tts",
+      "voice": "Kore",
+      "localeCode": "hi-IN",
+      "sttLanguageCode": "hi-IN",
+      "speakingRate": null,
+      "stylePrompt": "Warm, calm and unhurried.",
+      "notes": "Shipped engine.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      }
+    },
+    {
+      "id": "hi-ptm-event-invite-current",
+      "language": "hi",
+      "group": "ptm_event_invite",
+      "status": "current",
+      "provider": "gemini-tts",
+      "model": "gemini-2.5-flash-tts",
+      "voice": "Kore",
+      "localeCode": "hi-IN",
+      "sttLanguageCode": "hi-IN",
+      "speakingRate": null,
+      "stylePrompt": "Warm, calm and unhurried.",
+      "notes": "Shipped engine.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      }
+    },
+    {
+      "id": "bn-class-teacher-request-current",
+      "language": "bn",
+      "group": "class_teacher_request",
+      "status": "current",
+      "provider": "chirp3-hd",
+      "model": null,
+      "voice": "bn-IN-Chirp3-HD-Kore",
+      "localeCode": "bn-IN",
+      "sttLanguageCode": "bn-IN",
+      "speakingRate": null,
+      "stylePrompt": null,
+      "notes": "Gemini-TTS has no bn-IN voice (plan section 5); Chirp 3 HD bn-IN is the shipped engine.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      }
+    },
+    {
+      "id": "bn-recognition-current",
+      "language": "bn",
+      "group": "recognition",
+      "status": "current",
+      "provider": "chirp3-hd",
+      "model": null,
+      "voice": "bn-IN-Chirp3-HD-Kore",
+      "localeCode": "bn-IN",
+      "sttLanguageCode": "bn-IN",
+      "speakingRate": null,
+      "stylePrompt": null,
+      "notes": "Gemini-TTS has no bn-IN voice (plan section 5); Chirp 3 HD bn-IN is the shipped engine.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      }
+    },
+    {
+      "id": "bn-fees-accounts-current",
+      "language": "bn",
+      "group": "fees_accounts",
+      "status": "current",
+      "provider": "chirp3-hd",
+      "model": null,
+      "voice": "bn-IN-Chirp3-HD-Kore",
+      "localeCode": "bn-IN",
+      "sttLanguageCode": "bn-IN",
+      "speakingRate": null,
+      "stylePrompt": null,
+      "notes": "Gemini-TTS has no bn-IN voice (plan section 5); Chirp 3 HD bn-IN is the shipped engine.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      }
+    },
+    {
+      "id": "bn-closure-emergency-current",
+      "language": "bn",
+      "group": "closure_emergency",
+      "status": "current",
+      "provider": "chirp3-hd",
+      "model": null,
+      "voice": "bn-IN-Chirp3-HD-Kore",
+      "localeCode": "bn-IN",
+      "sttLanguageCode": "bn-IN",
+      "speakingRate": null,
+      "stylePrompt": null,
+      "notes": "Gemini-TTS has no bn-IN voice (plan section 5); Chirp 3 HD bn-IN is the shipped engine.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      }
+    },
+    {
+      "id": "bn-ptm-event-invite-current",
+      "language": "bn",
+      "group": "ptm_event_invite",
+      "status": "current",
+      "provider": "chirp3-hd",
+      "model": null,
+      "voice": "bn-IN-Chirp3-HD-Kore",
+      "localeCode": "bn-IN",
+      "sttLanguageCode": "bn-IN",
+      "speakingRate": null,
+      "stylePrompt": null,
+      "notes": "Gemini-TTS has no bn-IN voice (plan section 5); Chirp 3 HD bn-IN is the shipped engine.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      }
+    },
+    {
+      "id": "ne-class-teacher-request-current",
+      "language": "ne",
+      "group": "class_teacher_request",
+      "status": "current",
+      "provider": "gemini-tts",
+      "model": "gemini-2.5-flash-tts",
+      "voice": "Kore",
+      "localeCode": "ne-NP",
+      "sttLanguageCode": "ne-NP",
+      "speakingRate": null,
+      "stylePrompt": "Warm, calm and unhurried.",
+      "notes": "Pinned to ne-NP on the fixed Gemini-TTS model; Preview status, no SLA. Verified live 2026-09-30.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      }
+    },
+    {
+      "id": "ne-recognition-current",
+      "language": "ne",
+      "group": "recognition",
+      "status": "current",
+      "provider": "gemini-tts",
+      "model": "gemini-2.5-flash-tts",
+      "voice": "Kore",
+      "localeCode": "ne-NP",
+      "sttLanguageCode": "ne-NP",
+      "speakingRate": null,
+      "stylePrompt": "Warm, calm and unhurried.",
+      "notes": "Pinned to ne-NP on the fixed Gemini-TTS model; Preview status, no SLA. Verified live 2026-09-30.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      }
+    },
+    {
+      "id": "ne-fees-accounts-current",
+      "language": "ne",
+      "group": "fees_accounts",
+      "status": "current",
+      "provider": "gemini-tts",
+      "model": "gemini-2.5-flash-tts",
+      "voice": "Kore",
+      "localeCode": "ne-NP",
+      "sttLanguageCode": "ne-NP",
+      "speakingRate": null,
+      "stylePrompt": "Warm, calm and unhurried.",
+      "notes": "Pinned to ne-NP on the fixed Gemini-TTS model; Preview status, no SLA. Verified live 2026-09-30.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      }
+    },
+    {
+      "id": "ne-closure-emergency-current",
+      "language": "ne",
+      "group": "closure_emergency",
+      "status": "current",
+      "provider": "gemini-tts",
+      "model": "gemini-2.5-flash-tts",
+      "voice": "Kore",
+      "localeCode": "ne-NP",
+      "sttLanguageCode": "ne-NP",
+      "speakingRate": null,
+      "stylePrompt": "Warm, calm and unhurried.",
+      "notes": "Pinned to ne-NP on the fixed Gemini-TTS model; Preview status, no SLA. Verified live 2026-09-30.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      }
+    },
+    {
+      "id": "ne-ptm-event-invite-current",
+      "language": "ne",
+      "group": "ptm_event_invite",
+      "status": "current",
+      "provider": "gemini-tts",
+      "model": "gemini-2.5-flash-tts",
+      "voice": "Kore",
+      "localeCode": "ne-NP",
+      "sttLanguageCode": "ne-NP",
+      "speakingRate": null,
+      "stylePrompt": "Warm, calm and unhurried.",
+      "notes": "Pinned to ne-NP on the fixed Gemini-TTS model; Preview status, no SLA. Verified live 2026-09-30.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      }
+    },
+    {
+      "group": "*",
+      "status": "candidate",
+      "speakingRate": null,
+      "stylePrompt": null,
+      "notes": "Same school voice name on the faster Chirp 3 HD engine.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      },
+      "id": "en-chirp3-hd-kore",
+      "language": "en",
+      "provider": "chirp3-hd",
+      "model": null,
+      "voice": "en-IN-Chirp3-HD-Kore",
+      "localeCode": "en-IN",
+      "sttLanguageCode": "en-IN"
+    },
+    {
+      "group": "*",
+      "status": "candidate",
+      "speakingRate": null,
+      "stylePrompt": "Warm, calm and unhurried.",
+      "notes": "Pro TTS model: higher quality, higher latency and cost.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      },
+      "id": "en-gemini-pro-kore",
+      "language": "en",
+      "provider": "gemini-tts",
+      "model": "gemini-2.5-pro-tts",
+      "voice": "Kore",
+      "localeCode": "en-IN",
+      "sttLanguageCode": "en-IN"
+    },
+    {
+      "group": "*",
+      "status": "candidate",
+      "speakingRate": 1,
+      "stylePrompt": null,
+      "notes": "UNVERIFIED against the live Sarvam API.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      },
+      "id": "en-sarvam-priya",
+      "language": "en",
+      "provider": "sarvam-bulbul",
+      "model": "bulbul:v3",
+      "voice": "priya",
+      "localeCode": "en-IN",
+      "sttLanguageCode": "en-IN"
+    },
+    {
+      "group": "*",
+      "status": "candidate",
+      "speakingRate": null,
+      "stylePrompt": null,
+      "notes": "Chirp 3 HD hi-IN at default pace.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      },
+      "id": "hi-chirp3-hd-kore",
+      "language": "hi",
+      "provider": "chirp3-hd",
+      "model": null,
+      "voice": "hi-IN-Chirp3-HD-Kore",
+      "localeCode": "hi-IN",
+      "sttLanguageCode": "hi-IN"
+    },
+    {
+      "group": "*",
+      "status": "candidate",
+      "speakingRate": 0.9,
+      "stylePrompt": null,
+      "notes": "Slightly slower for phone clarity.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      },
+      "id": "hi-chirp3-hd-kore-slow",
+      "language": "hi",
+      "provider": "chirp3-hd",
+      "model": null,
+      "voice": "hi-IN-Chirp3-HD-Kore",
+      "localeCode": "hi-IN",
+      "sttLanguageCode": "hi-IN"
+    },
+    {
+      "group": "*",
+      "status": "candidate",
+      "speakingRate": null,
+      "stylePrompt": "Warm, calm and unhurried.",
+      "notes": "Pro TTS model.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      },
+      "id": "hi-gemini-pro-kore",
+      "language": "hi",
+      "provider": "gemini-tts",
+      "model": "gemini-2.5-pro-tts",
+      "voice": "Kore",
+      "localeCode": "hi-IN",
+      "sttLanguageCode": "hi-IN"
+    },
+    {
+      "group": "*",
+      "status": "candidate",
+      "speakingRate": 1,
+      "stylePrompt": null,
+      "notes": "UNVERIFIED against the live Sarvam API.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      },
+      "id": "hi-sarvam-priya",
+      "language": "hi",
+      "provider": "sarvam-bulbul",
+      "model": "bulbul:v3",
+      "voice": "priya",
+      "localeCode": "hi-IN",
+      "sttLanguageCode": "hi-IN"
+    },
+    {
+      "group": "*",
+      "status": "candidate",
+      "speakingRate": 1,
+      "stylePrompt": null,
+      "notes": "UNVERIFIED against the live Sarvam API.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      },
+      "id": "hi-sarvam-ritu",
+      "language": "hi",
+      "provider": "sarvam-bulbul",
+      "model": "bulbul:v3",
+      "voice": "ritu",
+      "localeCode": "hi-IN",
+      "sttLanguageCode": "hi-IN"
+    },
+    {
+      "group": "*",
+      "status": "candidate",
+      "speakingRate": 0.9,
+      "stylePrompt": null,
+      "notes": "Current Bengali voice at a slightly slower pace.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      },
+      "id": "bn-chirp3-hd-kore-slow",
+      "language": "bn",
+      "provider": "chirp3-hd",
+      "model": null,
+      "voice": "bn-IN-Chirp3-HD-Kore",
+      "localeCode": "bn-IN",
+      "sttLanguageCode": "bn-IN"
+    },
+    {
+      "group": "*",
+      "status": "candidate",
+      "speakingRate": null,
+      "stylePrompt": "Warm, calm and unhurried.",
+      "notes": "Plan section 5: Gemini-TTS had only bn-BD at the voice test. Included so the bake-off records what the API says now. Newer Flash TTS models are reported to list Bangla: put the exact model id here once confirmed in the Cloud TTS docs.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      },
+      "id": "bn-gemini-pro-kore",
+      "language": "bn",
+      "provider": "gemini-tts",
+      "model": "gemini-2.5-pro-tts",
+      "voice": "Kore",
+      "localeCode": "bn-IN",
+      "sttLanguageCode": "bn-IN"
+    },
+    {
+      "group": "*",
+      "status": "candidate",
+      "speakingRate": 1,
+      "stylePrompt": null,
+      "notes": "UNVERIFIED against the live Sarvam API.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      },
+      "id": "bn-sarvam-priya",
+      "language": "bn",
+      "provider": "sarvam-bulbul",
+      "model": "bulbul:v3",
+      "voice": "priya",
+      "localeCode": "bn-IN",
+      "sttLanguageCode": "bn-IN"
+    },
+    {
+      "group": "*",
+      "status": "candidate",
+      "speakingRate": null,
+      "stylePrompt": "Warm, calm and unhurried.",
+      "notes": "Must beat the current Nepali profile AND carry Nepali reviewer sign-off.",
+      "review": {
+        "reviewer": "",
+        "date": "",
+        "verdict": ""
+      },
+      "id": "ne-gemini-pro-kore",
+      "language": "ne",
+      "provider": "gemini-tts",
+      "model": "gemini-2.5-pro-tts",
+      "voice": "Kore",
+      "localeCode": "ne-NP",
+      "sttLanguageCode": "ne-NP"
+    }
+  ]
+}

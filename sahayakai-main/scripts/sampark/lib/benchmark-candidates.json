@@ -1,0 +1,50 @@
+{
+  "_comment": "BENCHMARK ONLY (ELEVENLABS_BENCHMARK_ONLY=1). Never production. Replace each REPLACE_* voice with a voice id from your ElevenLabs library before running. No Nepali.",
+  "profiles": [
+    {
+      "id": "en-elevenlabs-benchmark",
+      "language": "en",
+      "group": "*",
+      "status": "candidate",
+      "provider": "elevenlabs",
+      "model": "eleven_multilingual_v2",
+      "voice": "REPLACE_EN_VOICE_ID",
+      "localeCode": "en-IN",
+      "sttLanguageCode": "en-IN",
+      "speakingRate": null,
+      "stylePrompt": null,
+      "notes": "Benchmark-only: calibrates what a premium voice sounds like.",
+      "review": { "reviewer": "", "date": "", "verdict": "" }
+    },
+    {
+      "id": "hi-elevenlabs-benchmark",
+      "language": "hi",
+      "group": "*",
+      "status": "candidate",
+      "provider": "elevenlabs",
+      "model": "eleven_multilingual_v2",
+      "voice": "REPLACE_HI_VOICE_ID",
+      "localeCode": "hi-IN",
+      "sttLanguageCode": "hi-IN",
+      "speakingRate": null,
+      "stylePrompt": null,
+      "notes": "Benchmark-only.",
+      "review": { "reviewer": "", "date": "", "verdict": "" }
+    },
+    {
+      "id": "bn-elevenlabs-benchmark",
+      "language": "bn",
+      "group": "*",
+      "status": "candidate",
+      "provider": "elevenlabs",
+      "model": "eleven_multilingual_v2",
+      "voice": "REPLACE_BN_VOICE_ID",
+      "localeCode": "bn-IN",
+      "sttLanguageCode": "bn-IN",
+      "speakingRate": null,
+      "stylePrompt": null,
+      "notes": "Benchmark-only.",
+      "review": { "reviewer": "", "date": "", "verdict": "" }
+    }
+  ]
+}

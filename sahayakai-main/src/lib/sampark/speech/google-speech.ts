@@ -148,17 +148,26 @@ async function postJson(
     }
 }
 
-/** The exact Cloud TTS request body for a text and engine (exported for class gate 15). */
+/**
+ * The exact Cloud TTS request body for a text and engine (exported for class gate 15).
+ * Everything that varies per voice (locale, voice, model, pace, style hint) comes from the
+ * engine config, which comes from the voice profile (voice-profile.ts); nothing here is
+ * hard-coded per language. With the default profile the payload is byte-identical to the
+ * pre-profile renderer (tested).
+ */
 export function buildSynthesizeRequest(
     text: string,
     speech: SpeechEngineConfig,
     delivery: 'styled' | 'plain' = 'plain',
 ): Record<string, unknown> {
-    const audioConfig = { audioEncoding: 'MULAW', sampleRateHertz: TELEPHONY_SAMPLE_RATE };
+    if (speech.engine === 'sarvam-bulbul') throw new Error('sarvam-bulbul is not a Google Cloud TTS engine');
+    const audioConfig: Record<string, unknown> = { audioEncoding: 'MULAW', sampleRateHertz: TELEPHONY_SAMPLE_RATE };
+    if (typeof speech.speakingRate === 'number') audioConfig.speakingRate = speech.speakingRate;
     if (speech.engine === 'gemini-tts') {
         if (!speech.model) throw new Error(`Gemini-TTS for ${speech.ttsLanguageCode} needs a pinned model`);
+        const prompt = speech.stylePrompt === undefined ? GEMINI_TTS_STYLE_PROMPT : speech.stylePrompt;
         return {
-            input: delivery === 'styled' ? { text, prompt: GEMINI_TTS_STYLE_PROMPT } : { text },
+            input: delivery === 'styled' && prompt ? { text, prompt } : { text },
             voice: { languageCode: speech.ttsLanguageCode, name: speech.voice, modelName: speech.model },
             audioConfig,
         };

@@ -10,10 +10,13 @@
  * All four share the voice name "Kore" so parents hear one school voice.
  */
 
-import type { ParentLanguage, ParentLanguageCode } from '@/types/sampark';
+import type { ParentLanguage, ParentLanguageCode, PurposeId } from '@/types/sampark';
+
+import { BASELINE_GROUP, currentProfile, purposeGroup, type VoiceProfile } from './voice-profile';
 
 export interface SpeechEngineConfig {
-    engine: 'gemini-tts' | 'chirp3-hd';
+    /** 'sarvam-bulbul' exists only for bake-off candidates; the production renderer is Google-only (voice-profile.ts enforces it). */
+    engine: 'gemini-tts' | 'chirp3-hd' | 'sarvam-bulbul';
     /** BCP-47 code sent to the TTS API. */
     ttsLanguageCode: string;
     /** Voice name. For chirp3-hd this is the full name, e.g. "bn-IN-Chirp3-HD-Kore". */
@@ -22,6 +25,34 @@ export interface SpeechEngineConfig {
     model: string | null;
     /** Language code for the transcribe-back check (Chirp 2). */
     sttLanguageCode: string;
+    /** Provider-native pace; null/absent = not sent. Optional so older literals stay valid. */
+    speakingRate?: number | null;
+    /** Gemini-TTS delivery hint for `styled` clips; undefined = the legacy default, null = none. */
+    stylePrompt?: string | null;
+}
+
+/** The engine config a voice profile describes. The profile is the source of truth. */
+export function toSpeechConfig(
+    p: Pick<VoiceProfile, 'provider' | 'localeCode' | 'voice' | 'model' | 'sttLanguageCode' | 'speakingRate' | 'stylePrompt'>,
+): SpeechEngineConfig {
+    return {
+        engine: p.provider,
+        ttsLanguageCode: p.localeCode,
+        voice: p.voice,
+        model: p.model,
+        sttLanguageCode: p.sttLanguageCode,
+        speakingRate: p.speakingRate,
+        stylePrompt: p.stylePrompt,
+    };
+}
+
+/** The engine that speaks `purpose` to `language` today (its purpose group's current voice profile). */
+export function speechFor(language: ParentLanguage, purpose: PurposeId): SpeechEngineConfig {
+    return toSpeechConfig(currentProfile(languageCodeFor(language), purposeGroup(purpose)));
+}
+
+function languageCodeFor(language: ParentLanguage): ParentLanguageCode {
+    return BY_LANGUAGE[language];
 }
 
 export interface ParentLanguageInfo {
@@ -36,34 +67,41 @@ export interface ParentLanguageInfo {
 export const GEMINI_TTS_MODEL = 'gemini-2.5-flash-tts';
 export const SCHOOL_VOICE = 'Kore';
 
+const BY_LANGUAGE: Readonly<Record<ParentLanguage, ParentLanguageCode>> = { English: 'en', Hindi: 'hi', Bengali: 'bn', Nepali: 'ne' };
+
+/** Language-level engine for call sites that do not know the purpose: the baseline group's current profile. */
+function baseline(code: ParentLanguageCode): SpeechEngineConfig {
+    return toSpeechConfig(currentProfile(code, BASELINE_GROUP));
+}
+
 export const PARENT_LANGUAGE_INFO: Readonly<Record<ParentLanguage, ParentLanguageInfo>> = Object.freeze({
     English: {
         language: 'English',
         code: 'en',
         scriptFile: 'english',
         nativeLabel: 'English',
-        speech: { engine: 'gemini-tts', ttsLanguageCode: 'en-IN', voice: SCHOOL_VOICE, model: GEMINI_TTS_MODEL, sttLanguageCode: 'en-IN' },
+        speech: baseline('en'),
     },
     Hindi: {
         language: 'Hindi',
         code: 'hi',
         scriptFile: 'hindi',
         nativeLabel: 'हिन्दी',
-        speech: { engine: 'gemini-tts', ttsLanguageCode: 'hi-IN', voice: SCHOOL_VOICE, model: GEMINI_TTS_MODEL, sttLanguageCode: 'hi-IN' },
+        speech: baseline('hi'),
     },
     Bengali: {
         language: 'Bengali',
         code: 'bn',
         scriptFile: 'bengali',
         nativeLabel: 'বাংলা',
-        speech: { engine: 'chirp3-hd', ttsLanguageCode: 'bn-IN', voice: `bn-IN-Chirp3-HD-${SCHOOL_VOICE}`, model: null, sttLanguageCode: 'bn-IN' },
+        speech: baseline('bn'),
     },
     Nepali: {
         language: 'Nepali',
         code: 'ne',
         scriptFile: 'nepali',
         nativeLabel: 'नेपाली',
-        speech: { engine: 'gemini-tts', ttsLanguageCode: 'ne-NP', voice: SCHOOL_VOICE, model: GEMINI_TTS_MODEL, sttLanguageCode: 'ne-NP' },
+        speech: baseline('ne'),
     },
 });
 
