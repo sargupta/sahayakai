@@ -55,6 +55,28 @@ const REASONS: { value: OutreachReason; labelKey: string; descriptionKey: string
     { value: "positive_feedback",    labelKey: "Positive Feedback",    descriptionKey: "Share an achievement or good news",         icon: Star },
 ];
 
+/** A refusal the server explained; `code` is its stable machine-readable reason. */
+class CallRefusedError extends Error {
+    code?: string;
+    constructor(message: string, code?: string) {
+        super(message);
+        this.code = code;
+    }
+}
+
+/** Teacher-facing text for a non-2xx from the outreach or call routes. */
+function refusalMessage(
+    body: { error?: string; retryAfterSeconds?: number } | null,
+    fallback: string,
+    status: number,
+): string {
+    if (status === 429 && typeof body?.retryAfterSeconds === 'number') {
+        const mins = Math.max(1, Math.ceil(body.retryAfterSeconds / 60));
+        return `A call to this parent was just started. Please wait about ${mins} minute${mins > 1 ? 's' : ''} before trying again.`;
+    }
+    return body?.error ?? fallback;
+}
+
 type Step = "reason" | "note" | "review" | "calling" | "summary";
 
 interface CallResult {
@@ -87,6 +109,10 @@ export function ContactParentModal({
     const [languageCode, setLanguageCode] = useState("en-IN");
     const [generating, setGenerating] = useState(false);
     const [calling, setCalling] = useState(false);
+    // Why the last dial attempt was refused (calling hours, parent opted out,
+    // provider down...). Shown inline so the teacher is never left with a
+    // spinner or a toast that has already faded.
+    const [callError, setCallError] = useState<{ message: string; code?: string } | null>(null);
     const [outreachId, setOutreachId] = useState<string | null>(null);
     const [callResult, setCallResult] = useState<CallResult | null>(null);
     const [performanceContext, setPerformanceContext] = useState<PerformanceContext | null>(null);
@@ -115,6 +141,7 @@ export function ContactParentModal({
             setGeneratedMessage("");
             setOutreachId(null);
             setCallResult(null);
+            setCallError(null);
             setPerformanceContext(null);
         }, 300);
     };
@@ -416,8 +443,11 @@ export function ContactParentModal({
             }),
         });
         if (!res.ok) {
-            const err = await res.json();
-            throw new Error(err.error ?? 'Failed to save outreach record');
+            const err = await res.json().catch(() => ({}));
+            throw new CallRefusedError(
+                refusalMessage(err, 'Failed to save outreach record', res.status),
+                err?.code,
+            );
         }
         return res.json() as Promise<{ outreachId: string }>;
     };
@@ -425,6 +455,7 @@ export function ContactParentModal({
     const handleCall = async () => {
         if (!generatedMessage) return;
         setCalling(true);
+        setCallError(null);
         try {
             const { outreachId: oid } = await saveOutreach('twilio_call');
             setOutreachId(oid);
@@ -441,13 +472,21 @@ export function ContactParentModal({
             });
 
             if (!res.ok) {
-                const err = await res.json();
-                throw new Error(err.error ?? 'Call failed');
+                const err = await res.json().catch(() => ({}));
+                throw new CallRefusedError(refusalMessage(err, 'Call failed', res.status), err?.code);
             }
 
             setStep("calling");
             pollForSummary(oid);
         } catch (err: any) {
+            // The dial never happened (the server marks the record failed), so
+            // make sure nothing here keeps spinning or polling: back to the
+            // review step with the reason on screen.
+            stopPolling();
+            setOutreachId(null);
+            setCallResult(null);
+            setStep("review");
+            setCallError({ message: err.message, code: err?.code });
             toast({ title: t("Call failed"), description: err.message, variant: "destructive" });
         } finally {
             setCalling(false);
@@ -603,6 +642,16 @@ export function ContactParentModal({
                                 : <><RefreshCw className="h-3 w-3 mr-1" /> {t("Regenerate")}</>
                             }
                         </Button>
+
+                        {callError && (
+                            <p
+                                role="alert"
+                                data-testid="call-refusal-reason"
+                                className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg border border-destructive/20"
+                            >
+                                {callError.message}
+                            </p>
+                        )}
 
                         {unsupportedForCall && (
                             <p className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg border border-amber-100">

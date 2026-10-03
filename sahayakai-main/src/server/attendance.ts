@@ -657,7 +657,8 @@ export async function saveOutreachRecord(uid: string, data: {  // premium gate e
         reason: data.reason,
         generatedMessage: data.generatedMessage,
         deliveryMethod: data.deliveryMethod,
-        callStatus: data.deliveryMethod === 'twilio_call' ? 'initiated' : 'manual',
+        // 'pending', not 'initiated': no call exists until the call route places one.
+        callStatus: data.deliveryMethod === 'twilio_call' ? 'pending' : 'manual',
         createdAt: now,
         updatedAt: now,
     };

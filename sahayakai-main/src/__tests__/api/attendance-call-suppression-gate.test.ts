@@ -86,12 +86,18 @@ describe('call-suppression gate (static)', () => {
                 offenders.push(`${rel}: reaches a provider but has no POST handler to gate`);
                 continue;
             }
-            const post = src.slice(postAt);
-            const check = post.search(/refuseIfParentOptedOut\s*\(/);
+            // Provider helper bodies (forwardTo*) are definitions, not call
+            // sites; drop them so what remains is the order of the live path:
+            // the suppression check must come before any provider reference.
+            const live = src
+                .replace(/\/\*[\s\S]*?\*\//g, '') // block comments
+                .replace(/^\s*\/\/.*$/gm, '') // line comments
+                .replace(/async function forwardTo\w+[\s\S]*?\n}\n/g, '');
+            const check = live.search(/refuseIfParentOptedOut\s*\(/);
             const firstProvider = Math.min(
-                ...PROVIDER_MARKERS.map((m) => post.search(m)).filter((i) => i >= 0),
+                ...PROVIDER_MARKERS.map((m) => live.search(m)).filter((i) => i >= 0),
             );
-            if (check < 0) offenders.push(`${rel}: POST never calls refuseIfParentOptedOut`);
+            if (check < 0) offenders.push(`${rel}: never calls refuseIfParentOptedOut`);
             else if (check > firstProvider) {
                 offenders.push(`${rel}: suppression is checked AFTER a provider is referenced`);
             }
