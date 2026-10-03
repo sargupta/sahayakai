@@ -326,6 +326,8 @@ async function processIntent(ctx: SchoolContext, intent: Intent): Promise<boolea
         guardianId: guardian.id,
         phoneHash: guardian.phoneHash,
         phoneLast4: guardian.phoneLast4,
+        // The number parents would see, recorded with the call so the log stays true if the setting changes later.
+        callerId: school.carrier?.callerId ?? null,
         // The language the audio was rendered in at materialisation.
         language: intent.language,
         variant,

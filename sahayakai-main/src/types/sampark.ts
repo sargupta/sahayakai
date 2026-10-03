@@ -16,6 +16,8 @@
  * suppressions, API responses) carries `phoneHash` and/or `phoneLast4` only.
  */
 
+import type { CrmMapping } from '@/lib/sampark/crm/mapping';
+
 // ── Languages ────────────────────────────────────────────────────────────────
 
 /**
@@ -139,18 +141,40 @@ export interface SamparkSchool {
     testPhoneEnc?: string | null;
     testPhoneLast4?: string | null;
     crm: CrmConnectionConfig | null;
+    /**
+     * The dedicated number parents see and the provider that would place real calls (R2-6). Absent on schools
+     * saved before it existed; absent behaves as "nothing set" (no real carrier can ever dispatch).
+     */
+    carrier?: SchoolCarrierSettings | null;
     /** Whether an emergency closure may reach guardians without `notices` consent. Default false until counsel rules (plan §15.5). */
     emergencyBypassConsent: boolean;
     createdAt: string;
     updatedAt: string;
 }
 
+/** Which provider would place this school's real calls. 'simulated' = practice only. */
+export type CarrierProvider = 'simulated' | 'vobiz' | 'knowlarity';
+
+export interface SchoolCarrierSettings {
+    /** E.164 caller id the school's parents see. Null until the school supplies it. */
+    callerId: string | null;
+    /** The school (the TRAI-registered sender) holds this number. A real carrier never dials while false. */
+    registeredToSchool: boolean;
+    provider: CarrierProvider;
+}
+
 export interface CrmConnectionConfig {
-    kind: 'rest' | 'csv';
-    /** https only; validated against SSRF on save (plan §4①). Null for csv. */
+    kind: 'rest' | 'mcp' | 'csv';
+    /** https only; validated against SSRF on save (plan §4①). The REST base URL or the MCP endpoint URL. Null for csv. */
     baseUrl: string | null;
     /** Name of the Secret Manager secret (or env var in dev) holding the API key. Never the key itself. */
     apiKeySecretName: string | null;
+    /**
+     * Saved field mapping (R2-4): the real tool's endpoint paths / MCP tool names, pagination parameters and field
+     * names mapped onto the canonical contract (crm/schema.ts). Validated by CrmMappingSchema on save AND on use.
+     * Absent = the canonical contract as-is.
+     */
+    mapping?: CrmMapping | null;
     lastImportAt: string | null;
     lastImportId: string | null;
 }
@@ -255,7 +279,7 @@ export interface Suppression {
 // ── Imports ─────────────────────────────────────────────────────────────────
 
 export interface ImportRejectedRow {
-    entity: 'student' | 'guardian';
+    entity: 'student' | 'guardian' | 'consent';
     crmId: string | null;
     /** Row number for CSV; null for REST. */
     row: number | null;
@@ -265,7 +289,7 @@ export interface ImportRejectedRow {
 export interface ImportRun {
     id: string;
     orgId: string;
-    source: 'rest' | 'csv';
+    source: 'rest' | 'mcp' | 'csv';
     startedAt: string;
     finishedAt: string | null;
     status: 'running' | 'succeeded' | 'failed';
@@ -365,6 +389,7 @@ export type BlockReason =
     | 'human_only_purpose'
     | 'frequency_cap'
     | 'mode_forbids_dialing'
+    | 'caller_id_not_ready'
     | 'synthetic_number_not_allowed'
     | 'purpose_not_available'
     | 'school_not_enabled';
@@ -427,7 +452,7 @@ export interface CallOutcome {
     optOut: 'none' | 'requested' | 'confirmed';
 }
 
-export type CarrierKind = 'simulated' | 'vobiz';
+export type CarrierKind = 'simulated' | 'vobiz' | 'knowlarity';
 
 export interface SamparkCall {
     /** = hash(intentId, attempt) — one record per attempt, created inside the claim transaction. */
@@ -439,6 +464,8 @@ export interface SamparkCall {
     guardianId: string;
     phoneHash: string;
     phoneLast4: string;
+    /** The school's calling number as parents would see it when this call was claimed (school.carrier.callerId); null = not set. */
+    callerId?: string | null;
     language: ParentLanguage;
     /** For D4: which audio variant was chosen at dial time. */
     variant: 'default' | 'today' | 'tomorrow';
@@ -520,7 +547,7 @@ export interface ScriptPreview {
 
 export interface CallLogEntry extends Pick<SamparkCall,
     'id' | 'campaignId' | 'purpose' | 'language' | 'variant' | 'attempt' | 'state' | 'outcome' |
-    'durationSeconds' | 'billedSeconds' | 'costPaise' | 'phoneLast4' | 'createdAt' | 'endedAt' | 'carrier'> {
+    'durationSeconds' | 'billedSeconds' | 'costPaise' | 'phoneLast4' | 'createdAt' | 'endedAt' | 'carrier' | 'callerId'> {
     guardianDisplayName: string;
     studentDisplayNames: string[];
 }

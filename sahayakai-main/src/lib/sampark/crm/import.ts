@@ -22,11 +22,15 @@
  *     current source is 'crm' are refreshed — an office, parent-form or keypad
  *     decision is never overwritten by an import.
  *
+ * R2-4: a source may also offer a consent LIST (crm/consent.ts); its rows are applied over the guardians' own
+ * consent before the preferences registry is bootstrapped, and rows that match nobody are rejected with a reason.
+ *
  * Slice 1 always pulls a full snapshot (updatedSince = null).
  */
 
 import crypto from 'node:crypto';
 
+import { applyConsentRows } from '@/lib/sampark/crm/consent';
 import { CSV_ERROR_KEY, CSV_ROW_KEY } from '@/lib/sampark/crm/csv-source';
 import {
     type CrmGuardian,
@@ -208,6 +212,14 @@ export async function runImport(
             validGuardians.set(parsed.data.id, { crm: parsed.data, e164, phoneClass });
         }
 
+        // ── Consent list (feed tool or consent CSV) over the guardians' own consent ──
+        let consentApplied = 0;
+        if (source.fetchConsent) {
+            const applied = applyConsentRows(await source.fetchConsent(), validGuardians, validStudents);
+            rejected.push(...applied.rejected);
+            consentApplied = applied.applied;
+        }
+
         // ── Existing snapshot (for tombstones and link integrity) ────────
         const [existingStudents, existingGuardians] = await Promise.all([repo.listStudents(orgId), repo.listGuardians(orgId)]);
         const knownGuardianIds = new Set<string>([
@@ -332,7 +344,7 @@ export async function runImport(
             actor: startedBy,
             action: 'import.run',
             target: `import/${run.id}`,
-            detail: { source: source.kind, ...done.counts },
+            detail: { source: source.kind, ...done.counts, consentRowsApplied: consentApplied },
         });
         logger.info('Sampark import finished', 'SAMPARK_IMPORT', { orgId, importId: run.id, source: source.kind, ...done.counts });
         return done;
@@ -349,5 +361,7 @@ export async function runImport(
         };
         await repo.updateImportRun(failed);
         return failed;
+    } finally {
+        await source.close?.().catch(() => undefined);
     }
 }

@@ -9,8 +9,9 @@ import { timingSafeEqual } from 'node:crypto';
 
 import type { CrmGuardian, CrmStudent } from './contract/crm-schema';
 import { addDays, istDate, istInstant, isValidDate, schoolDaysBetween } from './calendar';
-import { guardiansCsv, studentsCsv } from './csv';
+import { encodeCsv, guardiansCsv, studentsCsv } from './csv';
 import { renderDemoPage } from './demo-page';
+import { consentRows, handleMcpMessage, type JsonRpcRequest } from './mcp';
 import { stageForGrade } from './generate';
 import { BadRequest, paginate, parsePageQuery } from './pagination';
 import {
@@ -43,6 +44,7 @@ import { createWebhookSender, type EntityKind, type WebhookSender } from './webh
 import type { WebhookEventType } from './schemas';
 import type { z } from 'zod';
 
+export const CONSENT_CSV_COLUMNS = ['guardian', 'phone', 'studentAdmissionNo', 'purposeGroup', 'status', 'recordedAt', 'method', 'noticeVersion'] as const;
 export const DEFAULT_API_KEY = 'mock-crm-dev-key';
 const MAX_BODY_BYTES = 64 * 1024;
 
@@ -234,6 +236,39 @@ export function createApp(options: AppOptions): CrmApp {
         return guardian;
     };
 
+    const consentCsv = () =>
+        encodeCsv([
+            [...CONSENT_CSV_COLUMNS],
+            ...consentRows(state.guardians).map((r) => CONSENT_CSV_COLUMNS.map((c) => (r[c] === null || r[c] === undefined ? '' : String(r[c])))),
+        ]);
+
+    async function handleMcp(method: string, req: IncomingMessage, res: ServerResponse): Promise<void> {
+        if (method !== 'POST') {
+            res.setHeader('allow', 'POST');
+            throw new HttpError(405, 'use POST (this server offers no SSE stream)');
+        }
+        let message: unknown;
+        try {
+            message = JSON.parse(await readBody(req));
+        } catch (err) {
+            if (err instanceof HttpError) throw err;
+            return sendJson(res, 400, { jsonrpc: '2.0', id: null, error: { code: -32700, message: 'parse error' } });
+        }
+        const reply = handleMcpMessage(state, message as JsonRpcRequest);
+        if (reply === null) {
+            res.writeHead(202, { 'cache-control': 'no-store' });
+            res.end();
+            return;
+        }
+        const initialising = (message as JsonRpcRequest)?.method === 'initialize';
+        res.writeHead(200, {
+            'content-type': 'application/json; charset=utf-8',
+            'cache-control': 'no-store',
+            ...(initialising ? { 'mcp-session-id': 'mock-crm-session' } : {}),
+        });
+        res.end(JSON.stringify(reply));
+    }
+
     async function handleV1(method: string, pathname: string, params: URLSearchParams, req: IncomingMessage, res: ServerResponse): Promise<void> {
         const seg = pathname.split('/').filter(Boolean).slice(1).map(decodeURIComponent); // drop 'v1'
         const [a, b, c] = seg;
@@ -262,6 +297,10 @@ export function createApp(options: AppOptions): CrmApp {
                 const rows = includeMalformed ? [...state.guardians, ...state.malformed.guardians] : state.guardians;
                 return sendText(res, 200, 'text/csv; charset=utf-8', guardiansCsv(rows), { 'content-disposition': 'attachment; filename="guardians.csv"' });
             }
+        }
+        if (a === 'consent' && seg.length === 1 && get) return sendJson(res, 200, paginate(consentRows(state.guardians), parsePageQuery(params)));
+        if (a === 'export' && seg.length === 2 && b === 'consent.csv' && get) {
+            return sendText(res, 200, 'text/csv; charset=utf-8', consentCsv(), { 'content-disposition': 'attachment; filename="consent.csv"' });
         }
         if (a === 'hpc' && b === 'entries' && seg.length === 2 && get) {
             const studentId = params.get('studentId');
@@ -567,6 +606,13 @@ export function createApp(options: AppOptions): CrmApp {
                     return sendJson(res, 401, { error: 'unauthorized: send Authorization: Bearer <api key>' });
                 }
                 return await handleV1(method, pathname, searchParams, req, res);
+            }
+            if (pathname === '/mcp') {
+                if (!authorised(req, apiKey)) {
+                    res.setHeader('www-authenticate', 'Bearer');
+                    return sendJson(res, 401, { error: 'unauthorized: send Authorization: Bearer <api key>' });
+                }
+                return await handleMcp(method, req, res);
             }
             throw new HttpError(404, 'not found');
         } catch (err) {

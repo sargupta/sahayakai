@@ -48,6 +48,12 @@ curl -H "$KEY" -H 'content-type: application/json' localhost:4700/v1/communicati
   -d '{"externalId":"call-001","channel":"voice_call","guardianId":"gdn_0001","purpose":"ptm_invite","language":"ne","outcome":"answered","keysPressed":["1"],"occurredAt":"2026-10-05T05:00:00Z"}'
 ```
 
+### MCP face and consent list
+
+`POST /mcp` (same bearer key) is an MCP server over the SAME data: JSON-RPC 2.0, streamable-HTTP transport with plain JSON responses (`initialize`, `notifications/initialized`, `ping`, `tools/list`, `tools/call`; no SSE stream). Tools: `get_school`, `list_students`, `list_guardians`, `list_consent`, `list_attendance`, `list_hpc_entries`, `list_assessments`, `list_meetings`, `list_incidents`; each list tool returns the same `{ data, nextCursor }` page as its REST twin. It exists so the app's deterministic MCP client (`sahayakai-main/src/lib/sampark/crm/mcp-source.ts`) is tested end to end; see `src/mcp.ts`.
+
+The consent list (one row per guardian per purpose group) is served as `GET /v1/consent` and `GET /v1/export/consent.csv` (columns `guardian,phone,studentAdmissionNo,purposeGroup,status,recordedAt,method,noticeVersion`).
+
 ### Slice-1 contract (`src/contract/crm-schema.ts`)
 
 | Route | Returns |

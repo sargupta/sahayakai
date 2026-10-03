@@ -34,6 +34,15 @@ export function normalizeIndianPhone(raw: string): string | null {
     return null;
 }
 
+/**
+ * A dedicated caller id the school supplies: a full E.164 number (leading +, 10-15 digits) that the
+ * normaliser leaves unchanged. Landlines, toll-free and virtual numbers are fine here (unlike guardian
+ * numbers); whether it may be used for a real carrier is decided by policy/carrier-readiness.ts.
+ */
+export function isValidCallerId(value: string): boolean {
+    return /^\+\d{10,15}$/.test(value) && normalizeIndianPhone(value) === value;
+}
+
 export function classifyPhone(e164: string): PhoneClass {
     if (IN_SYNTHETIC.test(e164)) return 'synthetic';
     if (IN_MOBILE.test(e164)) return 'mobile';

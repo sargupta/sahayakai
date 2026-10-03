@@ -27,6 +27,9 @@ export const ORG = 'hillview-demo';
 export const WED_11_IST = new Date('2026-10-07T05:30:00Z');
 export const FAR_FUTURE = '2027-12-31T18:29:59.999Z';
 
+/** A dedicated number that satisfies the real-carrier readiness rule (R2-6). A dummy: no such line exists. */
+export const READY_VOBIZ = { callerId: '+918000012345', registeredToSchool: true, provider: 'vobiz' } as const;
+
 export function school(overrides: Partial<SamparkSchool> = {}): SamparkSchool {
     return {
         orgId: ORG,

@@ -51,6 +51,7 @@ export async function listCallLog(ctx: SamparkCtx, orgId: string, query: CallQue
             createdAt: c.createdAt,
             endedAt: c.endedAt,
             carrier: c.carrier,
+            callerId: c.callerId ?? null,
             guardianDisplayName: guardianById.get(c.guardianId)?.displayName ?? 'Unknown guardian',
             studentDisplayNames: studentIds.map((id) => studentById.get(id)?.displayName).filter((n): n is string => !!n),
         };

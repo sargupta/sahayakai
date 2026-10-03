@@ -64,6 +64,9 @@ function Family({ call }: { call: CallLogEntry }) {
                 {fmt(t("Phone ending {last4}"), { last4: call.phoneLast4 })}
                 {call.carrier === "simulated" && <> · {t("Simulated")}</>}
             </p>
+            <p className="text-xs leading-normal text-muted-foreground">
+                {call.callerId ? fmt(t("Parent sees {number}"), { number: call.callerId }) : t("Calling number not set")}
+            </p>
         </div>
     );
 }

@@ -48,6 +48,8 @@ export function carrierKindForDryRun(school: SamparkSchool): CarrierKind {
     try {
         return carrierKindFor(school);
     } catch {
-        return 'vobiz';
+        // The school's saved provider when it is a real one, so the summary can say the number is not set up.
+        const provider = school.carrier?.provider;
+        return provider === 'knowlarity' ? 'knowlarity' : 'vobiz';
     }
 }

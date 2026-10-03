@@ -3,7 +3,7 @@
  * and every adapter is swappable and testable:
  *
  *   SamparkRepo       Firestore in the app, in-memory in tests (repo/)
- *   CrmSource         REST (mock CRM or a real one) or CSV (crm/)
+ *   CrmSource         REST, MCP (deterministic tool calls) or CSV (crm/)
  *   Carrier           simulated now, Vobiz in phase 2 (dispatch/)
  *   SpeechSynthesizer Gemini-TTS / Chirp 3 HD (speech/)
  *   SpeechVerifier    Chirp 2 transcribe-back (speech/)
@@ -135,7 +135,7 @@ export interface SamparkRepo {
  * a malformed record is never half-imported.
  */
 export interface CrmSource {
-    kind: 'rest' | 'csv';
+    kind: 'rest' | 'mcp' | 'csv';
     fetchSchool(): Promise<unknown>;
     fetchStudents(updatedSince: string | null): Promise<unknown[]>;
     fetchGuardians(updatedSince: string | null): Promise<unknown[]>;
@@ -144,6 +144,14 @@ export interface CrmSource {
      * Optional: the CSV source has no such endpoint.
      */
     fetchRecords?(path: string): Promise<unknown[]>;
+    /**
+     * R2-4: the school's consent LIST — one raw row per guardian per purpose group (see crm/consent.ts). Optional:
+     * a feed whose guardians already carry `consent.*` needs none. When present, the importer applies it over the
+     * guardians' own consent, rejecting rows that match no guardian with a reason.
+     */
+    fetchConsent?(): Promise<unknown[]>;
+    /** Release any connection (e.g. an MCP session). Best effort; the importer calls it once per run. */
+    close?(): Promise<void>;
 }
 
 // ── Carrier ─────────────────────────────────────────────────────────────────

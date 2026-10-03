@@ -81,6 +81,7 @@ export const BLOCK_REASON_PLAIN: Readonly<Record<BlockReason, string>> = Object.
     human_only_purpose: 'is for a person to handle, not a machine',
     frequency_cap: 'has already had the most calls this month',
     mode_forbids_dialing: 'cannot be called in this mode (practice mode places no real calls)',
+    caller_id_not_ready: 'cannot be called until the school registers its own calling number',
     synthetic_number_not_allowed: 'has a demo number that can never be dialled',
     purpose_not_available: 'cannot be called for this purpose yet',
     school_not_enabled: 'is at a school that has not enabled calling',
