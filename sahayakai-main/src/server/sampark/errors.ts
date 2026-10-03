@@ -7,7 +7,7 @@
  * contract fixes); `message` is safe to show.
  */
 
-export type SamparkErrorStatus = 400 | 404 | 409;
+export type SamparkErrorStatus = 400 | 403 | 404 | 409;
 
 export class SamparkServiceError extends Error {
     constructor(
@@ -21,6 +21,7 @@ export class SamparkServiceError extends Error {
 }
 
 export const badRequest = (code: string, message: string) => new SamparkServiceError(code, message, 400);
+export const forbidden = (code: string, message: string) => new SamparkServiceError(code, message, 403);
 export const notFound = (code: string, message: string) => new SamparkServiceError(code, message, 404);
 export const conflict = (code: string, message: string) => new SamparkServiceError(code, message, 409);
 

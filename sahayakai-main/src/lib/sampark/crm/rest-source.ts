@@ -265,6 +265,11 @@ export function createRestSource(opts: RestSourceOptions): CrmSource {
         fetchSchool: async () => getJson(endpoint(await base(), '/v1/school', {})),
         fetchStudents: (updatedSince) => paginate('/v1/students', updatedSince),
         fetchGuardians: (updatedSince) => paginate('/v1/guardians', updatedSince),
+        // Only the paths under /v1/ the slice-2 signals adapter names; the base URL stays SSRF-checked.
+        fetchRecords: (path) => {
+            if (!/^\/v1\/[a-z0-9/_-]+$/.test(path)) throw new CrmFetchError(`Refusing to fetch an unexpected CRM path: ${path}`);
+            return paginate(path, null);
+        },
     };
 }
 

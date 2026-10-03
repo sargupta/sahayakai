@@ -63,6 +63,8 @@ export interface GateInput {
     carrierKind: CarrierKind;
     now: Date;
     stage: 'materialise' | 'dispatch';
+    /** True only for an intent created from an approved rule proposal; rule-driven purposes are refused without it. */
+    viaProposal?: boolean;
 }
 
 export type GateVerdict =
@@ -102,7 +104,9 @@ export function evaluateGate(input: GateInput): GateVerdict {
 
     // 1–2. Purpose
     if (!purposeIsDialable(spec)) return block('human_only_purpose');
-    if (spec.status !== 'available') return block('purpose_not_available');
+    if (spec.status === 'rule_driven') {
+        if (!input.viaProposal) return block('purpose_not_available');
+    } else if (spec.status !== 'available') return block('purpose_not_available');
 
     // 3–4. Do-not-contact
     if (!guardian.active || guardian.crmDoNotContact) return block('crm_do_not_contact');

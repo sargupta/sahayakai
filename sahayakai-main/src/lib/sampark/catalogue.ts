@@ -54,7 +54,14 @@ export interface PurposeSpec {
     maxAttempts: number;
     /** Minutes to wait after no-answer / busy before the next attempt. */
     retryAfterMinutes: number;
-    status: 'available' | 'planned';
+    /**
+     * available   = reviewed templates exist and a CAMPAIGN may use it (class-wide notices);
+     * rule_driven = child-specific; dialable only via an approved proposal from an adopted rule (slice 2, plan §2A/§2C);
+     * planned     = not usable yet.
+     */
+    status: 'available' | 'rule_driven' | 'planned';
+    /** Routine purposes only: the IST hour the purpose's window closes, if earlier than the school's (fees: 19, plan §2C). */
+    windowEndHour?: number;
 }
 
 const NOTICE_MENU_CONFIRM: MenuSpec = { key1: 'confirm', key2: 'decline', optOut: true };
@@ -115,13 +122,13 @@ function humanOnly(id: PurposeId, code: string): PurposeSpec {
 
 const SPECS: PurposeSpec[] = [
     // A — progress & holistic card. Concerns become REQUESTS TO TALK (plan §2A).
-    notice('attendance_talk', 'A1', 'progress', 'child', 'class_teacher', 'progress', NOTICE_MENU_CALL_ME, { channel: 'call_first', noFridaySaturday: true }),
+    notice('attendance_talk', 'A1', 'progress', 'child', 'class_teacher', 'progress', NOTICE_MENU_CALL_ME, { channel: 'call_first', noFridaySaturday: true, status: 'rule_driven' }),
     notice('absence_today', 'A2', 'progress', 'child', 'class_teacher', 'progress',
         { key1: 'child_with_me', key2: 'did_not_know', optOut: true },
-        { channel: 'call_first', maxAttempts: 2, retryAfterMinutes: 15 }),
-    notice('academic_talk', 'A3', 'progress', 'child', 'class_teacher', 'progress', NOTICE_MENU_CALL_ME, { channel: 'call_first', noFridaySaturday: true }),
-    notice('conduct_talk', 'A4', 'progress', 'child', 'coordinator', 'progress', NOTICE_MENU_CALL_ME, { channel: 'call_first', noFridaySaturday: true }),
-    notice('recognition', 'A5', 'progress', 'child', 'class_teacher', 'progress', NOTICE_MENU_HEARD, { channel: 'call_first' }),
+        { channel: 'call_first', maxAttempts: 2, retryAfterMinutes: 15, status: 'rule_driven' }),
+    notice('academic_talk', 'A3', 'progress', 'child', 'class_teacher', 'progress', NOTICE_MENU_CALL_ME, { channel: 'call_first', noFridaySaturday: true, status: 'rule_driven' }),
+    notice('conduct_talk', 'A4', 'progress', 'child', 'coordinator', 'progress', NOTICE_MENU_CALL_ME, { channel: 'call_first', noFridaySaturday: true, status: 'rule_driven' }),
+    notice('recognition', 'A5', 'progress', 'child', 'class_teacher', 'progress', NOTICE_MENU_HEARD, { channel: 'call_first', status: 'rule_driven' }),
     notice('term_summary', 'A6', 'progress', 'child', 'coordinator', 'progress', NOTICE_MENU_CALL_ME),
     { ...notice('hpc_parent_input', 'A7', 'progress', 'child', 'coordinator', 'hpc_input', NOTICE_MENU_HEARD), mode: 'conversation', menu: null },
 
@@ -133,10 +140,10 @@ const SPECS: PurposeSpec[] = [
     // C — fees (accounts). Listener check first, amount only after (plan §2C).
     notice('fee_due', 'C1', 'fees', 'child', 'accounts', 'notices',
         { key1: 'already_paid', key2: 'talk_to_accounts', optOut: true },
-        { excludesFeeWaived: true, maxAttempts: 2 }),
+        { excludesFeeWaived: true, maxAttempts: 2, windowEndHour: 19, status: 'rule_driven' }),
     notice('fee_overdue', 'C2', 'fees', 'child', 'accounts', 'notices',
         { key1: 'already_paid', key2: 'talk_to_accounts', optOut: true },
-        { excludesFeeWaived: true, maxAttempts: 2 }),
+        { excludesFeeWaived: true, maxAttempts: 2, windowEndHour: 19, status: 'rule_driven' }),
     notice('documents_pending', 'C4', 'fees', 'child', 'office', 'notices', NOTICE_MENU_HEARD),
     notice('re_enrolment', 'C5', 'fees', 'child', 'office', 'notices', NOTICE_MENU_CONFIRM),
     notice('deadline_notice', 'C6', 'fees', 'child', 'office', 'notices', NOTICE_MENU_HEARD),
@@ -177,6 +184,11 @@ export function purposeSpec(id: PurposeId): PurposeSpec {
     const spec = PURPOSE_CATALOGUE[id];
     if (!spec) throw new Error(`Unknown Sampark purpose: ${id}`);
     return spec;
+}
+
+/** Child-specific purposes that exist only as the output of an adopted rule (slice 2). */
+export function ruleDrivenPurposes(): PurposeSpec[] {
+    return SPECS.filter((s) => s.status === 'rule_driven');
 }
 
 /** Purposes with reviewed templates that a campaign may use today. */

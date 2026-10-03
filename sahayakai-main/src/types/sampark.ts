@@ -375,6 +375,11 @@ export interface Intent {
     dedupeKey: string;
     orgId: string;
     campaignId: string | null;
+    /**
+     * Set when the intent was created from an approved rule proposal (slice 2). Rule-driven purposes
+     * (catalogue status 'rule_driven') are dialable ONLY through such an intent.
+     */
+    proposalId?: string | null;
     purpose: PurposeId;
     guardianId: string;
     /** Guardian-of-record children this call concerns (bundled siblings share one intent per campaign). */

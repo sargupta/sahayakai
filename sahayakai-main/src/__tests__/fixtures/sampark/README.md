@@ -12,6 +12,7 @@ Seed `hillview-demo-v1`, anchored to 2026-09-30. School: Hillview Demo School, S
 | malformed.json | the 3 raw malformed records (`students`, `guardians`) and why each fails |
 | students.csv, guardians.csv | the same records in the contract CSV shape |
 | students-with-malformed.csv, guardians-with-malformed.csv | as above plus the malformed rows (what `?includeMalformed=true` returns) |
+| signals.json | attendance, holistic-card entries, assessments, meeting requests, incidents and fee dues for these students, in Sampark's `CrmSignals` shape (slice 2 rules and backtest). Fee dues are planted by the exporter; the mock CRM does not serve them |
 | planted.json | machine-readable ids of every planted case |
 
 Every record in students.json and guardians.json validates against `src/lib/sampark/crm/schema.ts`; every record in malformed.json fails it.
