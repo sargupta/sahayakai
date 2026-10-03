@@ -268,6 +268,8 @@ const TOKEN_SHAPE = /[A-Za-z0-9_-]+\.\d{9,11}\.[A-Za-z0-9_-]{20,}/g;
 export interface EventLog {
     events: TestCallEvent[];
     log: (type: string, fields?: Record<string, unknown>) => void;
+    /** Same scrubbing the log applies, for any other text that leaves the process. */
+    scrub: (text: string) => string;
 }
 
 /**
@@ -279,12 +281,16 @@ export function createEventLog(
 ): EventLog {
     const events: TestCallEvent[] = [];
     const needles = secrets.filter((s) => s && s.length >= 4);
+    const scrub = (text: string): string => {
+        let t = text;
+        for (const s of needles) t = t.split(s).join('[redacted]');
+        return t.replace(TOKEN_SHAPE, '[token]');
+    };
     return {
         events,
+        scrub,
         log(type, fields = {}) {
-            let line = JSON.stringify({ ts: now().toISOString(), type, ...fields });
-            for (const s of needles) line = line.split(s).join('[redacted]');
-            line = line.replace(TOKEN_SHAPE, '[token]');
+            const line = scrub(JSON.stringify({ ts: now().toISOString(), type, ...fields }));
             events.push(JSON.parse(line) as TestCallEvent);
             sink?.(line);
         },
@@ -299,6 +305,7 @@ export function fileSink(path: string): (line: string) => void {
 
 export interface RunState {
     callUuid: string;
+    requestUuid: string;
     answered: boolean;
     answerAtMs: number | null;
     firstAudioAtMs: number | null;
@@ -316,7 +323,7 @@ export interface RunState {
 
 export function newRunState(): RunState {
     return {
-        callUuid: '', answered: false, answerAtMs: null, firstAudioAtMs: null, digits: [], digit: null,
+        callUuid: '', requestUuid: '', answered: false, answerAtMs: null, firstAudioAtMs: null, digits: [], digit: null,
         invalidGathers: 0, audioFetched: new Set(), rawNames: { answer: new Set(), gather: new Set(), status: new Set(), ring: new Set() },
         hangupCause: null, hangupDurationSec: null, hangupSeen: false, dialCategory: null, dialled: false,
     };
@@ -503,7 +510,7 @@ export function runTestCall(opts: RunOptions): RunHandle {
     if (!results.every((r) => r.ok) || !config) {
         const failed = results.filter((r) => !r.ok);
         events.log('shutdown', { reason: 'guards_refused', failed: failed.map((f) => f.guard) });
-        finish({ outcome: 'refused', guards: results, state, events: events.events, summary: summarize(state, events.events, 'refused', opts.audioLabel, failed) });
+        finish({ outcome: 'refused', guards: results, state, events: events.events, summary: events.scrub(summarize(state, events.events, 'refused', opts.audioLabel, failed)) });
         listening(-1);
         return { done, ready, abort: () => {} };
     }
@@ -523,9 +530,9 @@ export function runTestCall(opts: RunOptions): RunHandle {
         ended = true;
         outcome = why;
         if (timer) clearTimeout(timer);
-        if ((why === 'timeout' || why === 'aborted') && state.callUuid && !state.hangupSeen) {
+        if ((why === 'timeout' || why === 'aborted') && (state.callUuid || state.requestUuid) && !state.hangupSeen) {
             events.log('hangup_requested', { reason });
-            const ok = await hangupVobizCall(config as VobizConfig, state.callUuid, fetchImpl);
+            const ok = await hangupVobizCall(config as VobizConfig, state.callUuid || state.requestUuid, fetchImpl);
             events.log('hangup_result', { ok });
         }
         events.log('shutdown', { reason, outcome: why });
@@ -534,7 +541,7 @@ export function runTestCall(opts: RunOptions): RunHandle {
             server = null;
             await new Promise<void>((r) => { s.close(() => r()); s.closeAllConnections?.(); });
         }
-        finish({ outcome: why, guards: results, state, events: events.events, summary: summarize(state, events.events, why, opts.audioLabel, failed) });
+        finish({ outcome: why, guards: results, state, events: events.events, summary: events.scrub(summarize(state, events.events, why, opts.audioLabel, failed)) });
     };
 
     const deps: ServerDeps = {
@@ -568,7 +575,7 @@ export function runTestCall(opts: RunOptions): RunHandle {
                 events.log('dial_result', { ok: false, category: result.failure.category, status: result.failure.status ?? null });
                 return shutdown('dial_failed', 'dial_failed');
             }
-            if (!state.callUuid) state.callUuid = result.handle.requestUuid;
+            state.requestUuid = result.handle.requestUuid;
             events.log('dial_result', { ok: true, hasRequestUuid: result.handle.requestUuid !== '' });
             timer = setTimeout(() => void shutdown('timeout', 'max_duration'), maxMs);
         })();

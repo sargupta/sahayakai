@@ -39,7 +39,7 @@ export function mulawToLinear(byte: number): number {
     const mantissa = u & 0x0f;
     let sample = ((mantissa << 3) + 0x84) << exponent;
     sample -= 0x84;
-    return sign ? -sample : sample;
+    return sign && sample !== 0 ? -sample : sample;
 }
 
 /** mu-law bytes -> little-endian 16-bit PCM bytes. */
