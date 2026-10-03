@@ -7,7 +7,8 @@ Everything about Entab and Knowlarity comes from public sources checked on
 **DRAFT** is for counsel and native-speaker review. It is not final copy.
 
 Contents: 1 School questions, 2 Entab questions, 3 Knowlarity questions,
-4 Consent-and-language drive kit, 5 Native-reviewer brief, 6 First Entab export.
+4 Parked items, 5 Native-reviewer brief, 6 First Entab export, 7 The school's
+holistic-development tool interface.
 
 ---
 
@@ -57,8 +58,8 @@ Who answers: principal (A), office/admin (B), accounts (C), IT/ERP admin (D).
     how are they recorded? (A)
 17. What does the school already send by WhatsApp, SMS or the Entab app, so
     Sampark calls only families not reached? (B)
-18. Will you run the consent-and-language drive (section 4) and who owns it?
-    Target 70% coverage before live calls. (A, B)
+18. Parked until a DPS agreement (section 4): the consent-and-language
+    drive. Do not ask yet. (A, B)
 19. Can you give one anonymised term of data (section 6) for the rule backtest? (D)
 20. Whether closure calls may reach families who have not consented is a legal
     question for counsel; does the school's own counsel have a view? (A)
@@ -114,101 +115,11 @@ reseller.
 
 ---
 
-## 4. Consent-and-language drive kit
+## 4. Parked until a DPS agreement
 
-### 4.1 Admission-packet consent line (DRAFT for counsel and native-speaker review)
-
-Plain wording, four languages. Intent: one itemised notice, per purpose group,
-never a condition of admission, withdrawal as easy as giving. Counsel should
-settle the legal wording, the notice version number and whether this is
-enough for DPDP purposes. Native reviewers should settle register and
-vocabulary. Do not print any of this until both reviews are done.
-
-**English (DRAFT)**
-> Delhi Public School Siliguri may phone the mobile number(s) I give below with
-> recorded or AI-voice messages about my child: school notices and meetings,
-> attendance, progress and fee reminders. I choose which kinds below. Calls
-> will be in the language I choose. I can stop these calls at any time by
-> pressing 9 on a call or telling the school office. Saying no will not affect
-> my child's admission or education. Emergency closure notices may still be
-> sent.
-> [ ] School notices and events  [ ] Attendance, progress, conduct
-> [ ] Fee and admin reminders  [ ] Conversation with an AI voice assistant, which may be recorded
-> Preferred language: [ ] English [ ] Hindi [ ] Bengali [ ] Nepali
-> Name / relation / mobile / signature / date
-
-**Hindi (DRAFT)**
-> दिल्ली पब्लिक स्कूल सिलीगुड़ी मेरे नीचे दिए मोबाइल नंबर पर मेरे बच्चे के बारे में रिकॉर्ड किए हुए या एआई आवाज़ वाले संदेश के लिए फ़ोन कर सकता है: स्कूल की सूचनाएँ और बैठकें, उपस्थिति, प्रगति और फ़ीस की याद। किस तरह की कॉल चाहिए, यह मैं नीचे चुनता/चुनती हूँ। कॉल मेरी चुनी हुई भाषा में होंगी। मैं किसी भी समय कॉल पर 9 दबाकर या स्कूल कार्यालय को बताकर ये कॉल बंद करा सकता/सकती हूँ। मना करने से मेरे बच्चे के दाख़िले या पढ़ाई पर कोई असर नहीं पड़ेगा। आपातकालीन बंदी की सूचना फिर भी भेजी जा सकती है।
-
-**Bengali (DRAFT)**
-> ডেলহি পাবলিক স্কুল শিলিগুড়ি আমার নিচে দেওয়া মোবাইল নম্বরে আমার সন্তানের বিষয়ে রেকর্ড করা বা এআই কণ্ঠের বার্তা দিয়ে ফোন করতে পারে: স্কুলের বিজ্ঞপ্তি ও সভা, উপস্থিতি, অগ্রগতি এবং ফি-এর মনে করিয়ে দেওয়া। কোন ধরনের ফোন চাই, তা আমি নিচে বেছে দিচ্ছি। ফোন আমার বেছে নেওয়া ভাষায় হবে। আমি যেকোনো সময় ফোনে নয় টিপে বা স্কুল অফিসকে জানিয়ে এই ফোন বন্ধ করতে পারি। না বললে আমার সন্তানের ভর্তি বা পড়াশোনায় কোনো প্রভাব পড়বে না। জরুরি ছুটির বিজ্ঞপ্তি তবুও পাঠানো হতে পারে।
-
-**Nepali (DRAFT)**
-> डेल्ही पब्लिक स्कुल सिलिगुडीले मैले तल दिएको मोबाइल नम्बरमा मेरो बच्चाको बारेमा रेकर्ड गरिएको वा एआई आवाजको सूचना दिन फोन गर्न सक्छ: स्कुलका सूचना र बैठक, उपस्थिति, प्रगति र फी सम्झना। कस्ता फोन चाहिन्छ भनेर म तल छान्छु। फोन मैले छानेको भाषामा हुनेछ। म जुनसुकै बेला फोनमा नौ थिचेर वा स्कुल कार्यालयलाई भनेर यी फोन बन्द गराउन सक्छु। नभनेकोमा मेरो बच्चाको भर्ना वा पढाइमा कुनै असर पर्दैन। आपतकालीन बन्दको सूचना भने पठाइन सक्छ।
-
-Open points for counsel (not decided here): whether a paper tick on an
-admission packet is valid consent for each purpose group; verifiable parental
-consent for children's data (DPDP) and whether the school-exemption covers any
-of these calls; wording on recording; wording on emergency closures to
-non-consenting families; notice version and retention statement.
-
-### 4.2 QR-form field list
-
-Mobile web form, four-language toggle at top, under 2 minutes, no login.
-
-| Field | Type | Notes |
-|---|---|---|
-| Form language | toggle EN/HI/BN/NE | defaults to the browser language, parent can change |
-| Child admission number | text | validated against the Entab export; mismatch goes to a review queue |
-| Child name | text | for confirmation only; never machine-transliterated |
-| Class and section | dropdown | |
-| Respondent name | text | |
-| Relationship to child | dropdown | mother, father, other guardian of record, other |
-| Is this person a guardian of record? | yes/no | blocks bundling for non-guardians |
-| Mobile number to call | tel (+91) | validated; second box to confirm |
-| Is this the number registered for the school app? | yes/no | |
-| Preferred call language | radio EN/HI/BN/NE | "other" free text, goes to the office |
-| Language spoken at home | radio/free text | helps Nepali vs Hindi vs Bengali decisions |
-| Consent: notices and events | checkbox, unticked by default | |
-| Consent: attendance, progress, conduct | checkbox, unticked | |
-| Consent: fee and admin reminders | checkbox, unticked | |
-| Consent: AI-voice conversation, may be recorded | checkbox, unticked | |
-| Best time to call (informational) | dropdown | does not widen the allowed window |
-| Request not to be called | checkbox | writes to suppression list |
-| Notice version shown | hidden | stored with the answer |
-| Timestamp, form language, source (QR/WhatsApp/paper) | hidden | audit |
-| Office-use: data-entry initials, paper form scan id | text | paper packet entries |
-
-### 4.3 70% coverage tracking sheet (columns)
-
-One row per child. Coverage = children with at least one guardian who has a
-recorded answer on language AND a consent decision (yes or explicit no), out
-of all children in scope. Report it overall, per class-section and per
-language.
-
-| Column | Meaning |
-|---|---|
-| admission_no | key |
-| child_name, class_section | |
-| guardian_1_name, relation, mobile_last4 | full numbers stay in the encrypted store |
-| guardian_2_name, relation, mobile_last4 | |
-| is_guardian_of_record | yes/no per guardian |
-| language_preferred | EN/HI/BN/NE/other/unknown |
-| language_source | form, paper, phone, school record |
-| consent_notices | yes/no/blank |
-| consent_progress | yes/no/blank |
-| consent_fee_admin | yes/no/blank |
-| consent_conversation | yes/no/blank |
-| notice_version | |
-| answered_on, channel | QR, packet, WhatsApp group, PTM desk, phone |
-| opt_out | yes/no, date |
-| status | not contacted / reminded 1 / reminded 2 / answered / refused / unreachable |
-| last_reminder_on, owner | |
-| covered | formula: language known AND consent decision present |
-| flags | RTE/fee-waived, sensitive flag, no mobile, number invalid |
-
-Weekly roll-up: covered children, total children, % (target 70%), split by
-language, list of classes below 50%.
+Parked until a DPS agreement: consent drive kit and TRAI note (see git history, commit cf24523).
+The founder parked both; nothing in this pack depends on them. Recover the kit wording, QR form fields
+and coverage sheet with `git show cf24523` if the agreement is signed.
 
 ---
 
@@ -330,3 +241,30 @@ section; coordinator names. (No staff phone numbers needed.)
 **Metadata:** export date and time, Entab report name and version, row counts,
 the column headings exactly as they appear (we build the saved mapping from
 them), and whether any filter was applied.
+
+---
+
+## 7. Interface of the school's existing holistic-development tool
+
+DPS data is to come from the school's existing holistic-development tool, by
+API or by an MCP server, not from a one-off export. Ask the school's technical
+contact:
+
+1. Is it exposed through a REST API or an MCP server? Is there written
+   documentation or a schema (OpenAPI, tool list)?
+2. Authentication method: API key, OAuth, signed tokens, IP allow-list? Who
+   issues and rotates credentials, and can a read-only credential be scoped to
+   our school?
+3. Pagination and change feed: how do we page through large lists, and is there
+   an "updated since" filter, a webhook or a change log, so we pull only what
+   changed?
+4. Which fields are available: students; guardians with phone numbers;
+   attendance; holistic card entries; assessments; fee dues; consent status;
+   preferred language. Say which are missing or held elsewhere.
+5. Tool or endpoint names for each of the above (the exact paths, or MCP tool
+   names and their arguments).
+6. Rate limits and quotas, and any hours when pulls are discouraged.
+7. Is a sandbox or a test school available, with synthetic data?
+8. Who is the technical contact, and how quickly can they answer?
+9. The dedicated calling number DPS will provide: number, carrier, registered
+   to the school?

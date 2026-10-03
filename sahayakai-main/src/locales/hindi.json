@@ -1896,7 +1896,6 @@
   "Not heard": "नहीं सुना",
   "Not now": "अभी नहीं",
   "Not recorded": "दर्ज नहीं",
-  "Not sent to RTE or fee-waived families": "RTE या शुल्क-माफ़ी वाले परिवारों को नहीं भेजा जाता",
   "Not switched on": "चालू नहीं",
   "Nothing is sent yet. After you create the campaign you can hear the message in every language, and calls start only when you approve.": "अभी कुछ भी नहीं भेजा गया है। अभियान बनाने के बाद आप हर भाषा में संदेश सुन सकते हैं, और कॉल तभी शुरू होते हैं जब आप स्वीकृत करते हैं।",
   "Off days (no routine calls)": "अवकाश के दिन (कोई नियमित कॉल नहीं)",
@@ -2171,5 +2170,11 @@
   "a teacher already knew": "शिक्षक को पहले से पता था",
   "{count} children left out, with the reason": "{count} बच्चे छोड़े गए, कारण सहित",
   "{count} children would have been flagged. Teachers already knew about {known}.": "{count} बच्चे चिह्नित होते। शिक्षकों को {known} के बारे में पहले से पता था।",
-  "{count} unexplained absences seen. Same-day absence calls are not replayed because they need the class teacher on the day.": "{count} बिना कारण की अनुपस्थितियाँ दिखीं। उसी दिन की अनुपस्थिति की कॉल दोहराई नहीं जातीं, क्योंकि उनके लिए उसी दिन क्लास टीचर चाहिए।"
+  "{count} unexplained absences seen. Same-day absence calls are not replayed because they need the class teacher on the day.": "{count} बिना कारण की अनुपस्थितियाँ दिखीं। उसी दिन की अनुपस्थिति की कॉल दोहराई नहीं जातीं, क्योंकि उनके लिए उसी दिन क्लास टीचर चाहिए।",
+  "Not sent to RTE, fee-waived, scholarship or staff-ward families": "RTE, शुल्क-माफ़ी, छात्रवृत्ति या स्टाफ़ के बच्चों वाले परिवारों को नहीं भेजा जाता",
+  "Wait before proposing the same child again": "उसी बच्चे को दोबारा प्रस्तावित करने से पहले इंतज़ार",
+  "7 days": "7 दिन",
+  "14 days": "14 दिन",
+  "A child can be proposed again after a week.": "एक हफ़्ते बाद बच्चे को फिर से प्रस्तावित किया जा सकता है।",
+  "A child can be proposed again after two weeks, so fewer repeat requests.": "दो हफ़्ते बाद बच्चे को फिर से प्रस्तावित किया जा सकता है, इसलिए दोहराए गए अनुरोध कम होते हैं।"
 }

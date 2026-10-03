@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useLanguage } from "@/context/language-context";
 import { useToast } from "@/hooks/use-toast";
 import { adoptRule, listRules, withdrawRule, type RuleView } from "@/lib/api/sampark";
@@ -15,6 +16,8 @@ import { StatusPill } from "./status-pill";
 import { useSamparkQuery } from "./use-sampark-query";
 import { useSamparkFormat } from "./format";
 import { fmt, purposeLabel, roleLabel, ruleDescription, thresholdLabel } from "./labels";
+
+const COOLDOWN_KEY = "reproposalCooldownDays";
 
 /** One rule: what it does, its thresholds, and the written adoption (or its withdrawal). */
 function RuleCard({ orgId, rule, statement, onChanged }: { orgId: string; rule: RuleView; statement: string; onChanged: () => void }) {
@@ -25,7 +28,10 @@ function RuleCard({ orgId, rule, statement, onChanged }: { orgId: string; rule: 
     const [name, setName] = useState("");
     const [agreed, setAgreed] = useState(false);
     const [busy, setBusy] = useState<null | "adopt" | "withdraw">(null);
-    const keys = Object.keys(rule.defaults);
+    const keys = Object.keys(rule.defaults).filter((k) => k !== COOLDOWN_KEY);
+    const hasCooldown = COOLDOWN_KEY in rule.defaults;
+    // A record adopted before this choice existed carries no value: it reads as 14.
+    const cooldown = values[COOLDOWN_KEY] === 7 ? 7 : 14;
 
     async function adopt() {
         setBusy("adopt");
@@ -89,6 +95,35 @@ function RuleCard({ orgId, rule, statement, onChanged }: { orgId: string; rule: 
                     );
                 })}
             </div>
+
+            {hasCooldown && (
+                <fieldset className="space-y-2">
+                    <legend className="type-body font-semibold text-foreground">{thresholdLabel(t, COOLDOWN_KEY)}</legend>
+                    <RadioGroup
+                        value={String(cooldown)}
+                        onValueChange={(v) => setValues((s) => ({ ...s, [COOLDOWN_KEY]: v === "7" ? 7 : 14 }))}
+                        disabled={rule.adopted}
+                        aria-label={thresholdLabel(t, COOLDOWN_KEY)}
+                    >
+                        {([7, 14] as const).map((days) => {
+                            const id = `${rule.ruleId}-cooldown-${days}`;
+                            return (
+                                <div key={days} className="flex min-h-11 items-start gap-3 rounded-surface-sm border border-border p-3">
+                                    <RadioGroupItem id={id} value={String(days)} className="mt-0.5 shrink-0" />
+                                    <Label htmlFor={id} className="min-w-0 flex-1 leading-normal">
+                                        <span className="block font-semibold">{days === 7 ? t("7 days") : t("14 days")}</span>
+                                        <span className="block font-normal text-muted-foreground">
+                                            {days === 7
+                                                ? t("A child can be proposed again after a week.")
+                                                : t("A child can be proposed again after two weeks, so fewer repeat requests.")}
+                                        </span>
+                                    </Label>
+                                </div>
+                            );
+                        })}
+                    </RadioGroup>
+                </fieldset>
+            )}
 
             {rule.adopted ? (
                 <div className="space-y-2">

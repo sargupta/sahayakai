@@ -1896,7 +1896,6 @@
   "Not heard": "ಕೇಳಿಲ್ಲ",
   "Not now": "ಈಗ ಬೇಡ",
   "Not recorded": "ದಾಖಲಾಗಿಲ್ಲ",
-  "Not sent to RTE or fee-waived families": "RTE ಅಥವಾ ಶುಲ್ಕ ವಿನಾಯಿತಿ ಪಡೆದ ಕುಟುಂಬಗಳಿಗೆ ಕಳುಹಿಸಲಾಗುವುದಿಲ್ಲ",
   "Not switched on": "ಆನ್ ಮಾಡಿಲ್ಲ",
   "Nothing is sent yet. After you create the campaign you can hear the message in every language, and calls start only when you approve.": "ಇನ್ನೂ ಏನನ್ನೂ ಕಳುಹಿಸಲಾಗಿಲ್ಲ. ಅಭಿಯಾನವನ್ನು ರಚಿಸಿದ ನಂತರ ನೀವು ಪ್ರತಿ ಭಾಷೆಯಲ್ಲಿ ಸಂದೇಶವನ್ನು ಕೇಳಬಹುದು, ಮತ್ತು ನೀವು ಅನುಮೋದಿಸಿದಾಗ ಮಾತ್ರ ಕರೆಗಳು ಪ್ರಾರಂಭವಾಗುತ್ತವೆ.",
   "Off days (no routine calls)": "ವಿರಾಮ ದಿನಗಳು (ಸಾಮಾನ್ಯ ಕರೆಗಳಿಲ್ಲ)",
@@ -2171,5 +2170,11 @@
   "a teacher already knew": "a teacher already knew",
   "{count} children left out, with the reason": "{count} children left out, with the reason",
   "{count} children would have been flagged. Teachers already knew about {known}.": "{count} children would have been flagged. Teachers already knew about {known}.",
-  "{count} unexplained absences seen. Same-day absence calls are not replayed because they need the class teacher on the day.": "{count} unexplained absences seen. Same-day absence calls are not replayed because they need the class teacher on the day."
+  "{count} unexplained absences seen. Same-day absence calls are not replayed because they need the class teacher on the day.": "{count} unexplained absences seen. Same-day absence calls are not replayed because they need the class teacher on the day.",
+  "Not sent to RTE, fee-waived, scholarship or staff-ward families": "Not sent to RTE, fee-waived, scholarship or staff-ward families",
+  "Wait before proposing the same child again": "Wait before proposing the same child again",
+  "7 days": "7 days",
+  "14 days": "14 days",
+  "A child can be proposed again after a week.": "A child can be proposed again after a week.",
+  "A child can be proposed again after two weeks, so fewer repeat requests.": "A child can be proposed again after two weeks, so fewer repeat requests."
 }

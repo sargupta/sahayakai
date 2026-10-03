@@ -219,12 +219,12 @@ describe('C1 and C2 fee rules', () => {
         expect(c1([due('d1', 'a', '2026-10-05', 12500, 'paid')]).drafts).toHaveLength(0);
         expect(c1([due('d1', 'a', '2026-10-05', 12500, 'waived')]).excluded[0].code).toBe('fee_waived_due');
     });
-    it('RTE-quota and fee-waived families are excluded with a plain reason', () => {
-        for (const feeCategory of ['rte', 'waived'] as const) {
+    it('concession families (RTE, waiver, scholarship, staff ward) are excluded with a plain reason', () => {
+        for (const feeCategory of ['rte', 'waived', 'scholarship', 'staff_ward'] as const) {
             const out = evaluateRule('fee_due', ctxFor([stu('a', { feeCategory })], signals({ feeDues: [due('d1', 'a', '2026-10-05')] })), DEFAULT_THRESHOLDS.fee_due);
             expect(out.drafts).toHaveLength(0);
-            expect(out.excluded[0]).toMatchObject({ code: 'fee_category_excluded' });
-            expect(out.excluded[0].plain).toMatch(/exempt from fees/);
+            expect(out.excluded[0]).toMatchObject({ code: `fee_category_${feeCategory}` });
+            expect(out.excluded[0].plain).toMatch(/no fee call is proposed/);
         }
     });
     it('no due gets more than two automated calls across C1 and C2', () => {

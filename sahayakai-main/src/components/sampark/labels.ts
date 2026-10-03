@@ -142,7 +142,7 @@ export function blockReasonLabel(t: Translate, reason: BlockReason): string {
         case 'crm_do_not_contact': return t("Marked do-not-contact in the school records");
         case 'invalid_number': return t("The phone number is not valid");
         case 'language_unknown': return t("No language recorded, and the school asks families first");
-        case 'fee_category_excluded': return t("Not sent to RTE or fee-waived families");
+        case 'fee_category_excluded': return t("Not sent to RTE, fee-waived, scholarship or staff-ward families");
         case 'sensitive_flag': return t("A sensitive flag on the child stops automated calls");
         case 'human_only_purpose': return t("A member of staff must make this call");
         case 'frequency_cap': return t("Already called four times in the last 30 days");
@@ -476,6 +476,7 @@ export function thresholdLabel(t: Translate, key: string): string {
         case 'minRespondents': return t("Different people needed");
         case 'rubricLevelUp': return t("Also count a move up a level on the card");
         case 'autoApprove': return t("Approve without a person");
+        case 'reproposalCooldownDays': return t("Wait before proposing the same child again");
         case 'daysBeforeDue': return t("Days before the due date");
         case 'overdueAfterDays': return t("Days overdue before the first call");
         case 'stopAfterDays': return t("Days overdue before the accounts officer takes over");

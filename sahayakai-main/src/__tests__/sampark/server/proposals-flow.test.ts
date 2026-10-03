@@ -235,7 +235,7 @@ describe('proposals: routed to the right person, each with evidence', () => {
         const reasons = new Map(run.excluded.map((e) => [`${e.purpose}:${e.studentId}`, e]));
         expect(reasons.get('academic_talk:s-flag')).toMatchObject({ code: 'sensitive_flag', studentName: 'Student s-flag' });
         expect(reasons.get('academic_talk:s-flag')!.plain).toMatch(/counsellor referral/);
-        expect(reasons.get('fee_due:s-rte')).toMatchObject({ code: 'fee_category_excluded' });
+        expect(reasons.get('fee_due:s-rte')).toMatchObject({ code: 'fee_category_rte' });
         expect(reasons.get('absence_today:s-abs')).toMatchObject({ code: 'awaiting_class_confirmation' });
         for (const e of run.excluded) expect(e.plain.length).toBeGreaterThan(20);
         // and nothing was proposed for the flagged child, at all

@@ -18,7 +18,7 @@
  *   8. non-simulated carrier while SAMPARK_LIVE_DIAL_ENABLED !== 'true',
  *      or while the school is in practice mode                            → mode_forbids_dialing
  *   9. child-audience purpose and any student carries a sensitive flag    → sensitive_flag                 (class gate 10)
- *  10. purpose excludes fee-waived and any student is RTE / waived        → fee_category_excluded          (class gate 12)
+ *  10. purpose excludes fee-waived and any student is RTE/waived/scholarship/staff → fee_category_excluded          (class gate 12)
  *  11. consent for the purpose group: denied → consent_denied, otherwise
  *      not granted → no_consent. An emergency purpose at a school that set
  *      emergencyBypassConsent may reach a family whose consent is merely
@@ -29,6 +29,7 @@
  */
 
 import { isDialable, type PurposeSpec } from '@/lib/sampark/catalogue';
+import { isFeeCallable } from '@/lib/sampark/rules/fee-categories';
 import { resolveLanguage } from '@/lib/sampark/policy/language';
 import { samparkWindowVerdict } from '@/lib/sampark/policy/window';
 import type {
@@ -123,7 +124,7 @@ export function evaluateGate(input: GateInput): GateVerdict {
     if (spec.audience === 'child' && students.some((s) => (s.sensitiveFlags ?? []).length > 0)) {
         return block('sensitive_flag');
     }
-    if (spec.excludesFeeWaived && students.some((s) => s.feeCategory === 'rte' || s.feeCategory === 'waived')) {
+    if (spec.excludesFeeWaived && students.some((s) => !isFeeCallable(s.feeCategory))) {
         return block('fee_category_excluded');
     }
 
