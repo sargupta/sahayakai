@@ -47,10 +47,16 @@ export async function saveToLibrary(
     type: ContentType,
     title: string,
     data: any,
+    /**
+     * Stable Library id of this artifact. Pass the generation's id so a Save
+     * updates the row the server already filed (or creates it once) instead
+     * of adding a duplicate; repeated Saves with the same id are idempotent.
+     */
+    id?: string | null,
 ): Promise<{ success: boolean; id?: string; error?: string }> {
     void _userId;
     try {
-        return await apiFetch('/api/content/library', { method: 'POST', body: { type, title, data } });
+        return await apiFetch('/api/content/library', { method: 'POST', body: { type, title, data, ...(id ? { id } : {}) } });
     } catch (err) {
         return {
             success: false,

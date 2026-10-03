@@ -45,6 +45,16 @@ import { OnboardingChecklist } from "@/components/onboarding/onboarding-checklis
 import { ProfileCompletionCard } from "@/components/onboarding/profile-completion-card";
 import { FeatureSpotlight, SPOTLIGHT_IDS } from "@/components/onboarding/feature-spotlight";
 import { RecentWorkStrip } from "@/components/dashboard/recent-work-strip";
+import { VidyaPresence } from "@/components/vidya/vidya-presence";
+import { useVidyaLiveSession } from "@/components/vidya/vidya-live-provider";
+import { vidyaStatusKey } from "@/lib/vidya-live/use-vidya-live";
+
+// Quiet conversation starters under VIDYA. Spoken into the live session.
+const VOICE_STARTERS = [
+  "Plan a lesson for Class 8 science",
+  "Make a quiz on fractions",
+  "Ideas to engage a large class",
+] as const;
 import type { ContextualSuggestion } from "@/lib/contextual-suggestions";
 
 const formSchema = z.object({
@@ -259,129 +269,179 @@ export function DashboardHome() {
     form.handleSubmit(onSubmit)();
   };
 
+  // ── VIDYA live voice (the app-wide session from VidyaLiveProvider) ──
+  const live = useVidyaLiveSession();
+  const pendingSayRef = useRef<string | null>(null);
+
+  // A starter/typed line tapped before the session is live is queued and
+  // spoken into the session the moment it is ready.
+  const liveState = live?.state;
+  const liveSend = live?.sendText;
+  useEffect(() => {
+    if (liveState === "listening" && pendingSayRef.current && liveSend) {
+      const text = pendingSayRef.current;
+      pendingSayRef.current = null;
+      liveSend(text);
+    }
+  }, [liveState, liveSend]);
+
+  const sayToVidya = (text: string) => {
+    if (!live) return;
+    if (live.sendText(text)) return;
+    pendingSayRef.current = text;
+    if (!live.active) void live.start();
+  };
+
+  const onTypedSubmit = (values: FormValues) => {
+    const text = values.topic?.trim();
+    if (!text) return;
+    if (live && live.state !== "error") {
+      form.setValue("topic", "");
+      sayToVidya(text);
+      return;
+    }
+    // Voice unavailable (flag off / error) → the existing Genkit text path.
+    void onSubmit(values);
+  };
+
   return (
-    <div className="flex flex-col items-center justify-start min-h-[80vh] w-full container-wide py-8 md:py-12 gap-8 md:gap-10 relative">
-      {/* Greeting — restrained scale so the input, not the headline, dominates */}
-      <div className="text-center space-y-3 max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-medium">
-        <h1 className="font-headline text-3xl md:text-5xl font-bold text-foreground tracking-tight indic-text leading-[1.15]">
+    <div className="flex flex-col items-center justify-start min-h-[80vh] w-full container-wide pt-6 pb-8 md:pt-10 md:pb-12 gap-10 md:gap-12 relative">
+      {/* ── VIDYA WORKSPACE ────────────────────────────────────────────
+          Assistant-first: the greeting, then VIDYA herself as the primary
+          control. One tap opens a continuous real voice session (ADK /
+          Gemini Live via the app-wide VidyaLiveProvider — the same session
+          the compact VIDYA on tool pages shows). Typing is a quiet fallback. */}
+      <section className="w-full max-w-3xl flex flex-col items-center text-center animate-in fade-in duration-medium" aria-label={t("Talk to VIDYA")}>
+        <h1 className="font-headline text-2xl md:text-4xl font-semibold text-foreground tracking-tight indic-text leading-[1.2]">
           {greeting}, <span className="text-primary">{teacherName}.</span>
         </h1>
-        {showNewUserHome && suggestions.length > 0 ? (
-          <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4 indic-text">
-            {t("Ideas for your classes")}
-          </p>
-        ) : (
-          <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4 indic-text">
-            {t("I am SahayakAI, your personal AI companion. I can help you create lesson plans, quizzes, and engaging content in seconds.")}
-          </p>
-        )}
-      </div>
 
-      {/* PRIMARY — voice-first input, the prep loop's entry point */}
-      <div className="w-full max-w-2xl animate-in fade-in slide-in-from-bottom-6 duration-medium delay-75 z-10 flex flex-col items-center gap-8">
-
-        {/* BIG MIC BUTTON */}
-        <FeatureSpotlight
-          id={SPOTLIGHT_IDS.HOME_VOICE_INPUT}
-          message={t("Tap the mic and speak in any language. SahayakAI understands Hindi, Kannada, Tamil and more!")}
-          seenSpotlights={spotlightsSeen}
-          onDismiss={markSpotlightSeen}
-          position="bottom"
-        >
-          <div className="flex flex-col items-center gap-4">
-            <MicrophoneInput
-              onTranscriptChange={handleTranscript}
-              iconSize="xl"
-              label={t("Speak your topic")}
-              className=""
-            />
-            <p className="text-muted-foreground text-sm md:text-sm">
-              {t("Tap the microphone and tell Sahayak what you want to teach today")}
-            </p>
-          </div>
-        </FeatureSpotlight>
-
-        {/* OR TEXT INPUT (SECONDARY) */}
-        <div className="w-full">
-          <Card className="border-none rounded-surface-md shadow-elevated bg-card/95 backdrop-blur-sm ring-1 ring-border/80 transition-shadow duration-micro ease-out-quart focus-within:ring-primary/40 focus-within:ring-2">
-            <CardContent className="p-2">
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-2">
-                  <div className="relative flex-1">
-                    <AutoCompleteInput
-                      placeholder={t("Type a topic, e.g. 'Photosynthesis for Class 8'")}
-                      {...form.register("topic")}
-                      value={form.watch("topic")}
-                      selectedLanguage={userLanguage || "English"}
-                      onSuggestionClick={(value) => {
-                        form.setValue("topic", value);
-                        form.handleSubmit(onSubmit)();
-                      }}
-                      className="border-none shadow-none focus-visible:ring-0 text-sm md:text-base py-2 pl-4 bg-transparent"
-                    />
-                  </div>
-
-                  <Button
-                    type="submit"
-                    size="icon"
-                    className="h-10 w-10 shrink-0 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all active:scale-95"
-                    aria-label={t("Generate Lesson Plan")}
-                  >
-                    <ArrowRight className="h-5 w-5" />
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="flex flex-col items-center gap-2">
-          <p className="text-center text-xs text-muted-foreground px-4 indic-text">
-            {t("try: \"Quiz about photosynthesis\" or \"Lesson plan for solar system\"")}
-          </p>
-          <p className="text-xs text-muted-foreground indic-text leading-relaxed text-center px-4">
-            {t("Works in Hindi, Kannada, Tamil + 8 more languages")}
-          </p>
-
-          {/* Thinking Indicator */}
-          {isThinking && (
-            <div className="flex items-center gap-2 text-primary font-medium mt-2">
-              <span className="flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:0ms]" />
-                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:150ms]" />
-                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:300ms]" />
-                <span className="ml-2">{t("Thinking")}</span>
-              </span>
-            </div>
-          )}
-
-          {/* Instant Answer — uses SectionCard for consistent surface treatment */}
-          {answer && (
-            <SectionCard
-              className="w-full max-w-2xl mt-4 border-l-4 border-l-primary shadow-elevated animate-in fade-in slide-in-from-bottom-2 relative"
-              action={
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-muted-foreground hover:text-muted-foreground"
-                  onClick={() => setAnswer(null)}
-                  aria-label={t("Close answer")}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              }
+        {live ? (
+          <>
+            {/* Block wrapper: the section centres its children (items-center),
+                which would shrink-wrap VIDYA's full-width stage to nothing. */}
+            <div className="w-full">
+            <FeatureSpotlight
+              id={SPOTLIGHT_IDS.HOME_VOICE_INPUT}
+              message={t("Tap VIDYA once and just talk — in any language.")}
+              seenSpotlights={spotlightsSeen}
+              onDismiss={markSpotlightSeen}
+              position="bottom"
             >
-              <div className="prose prose-sm max-w-none text-foreground">
-                <h3 className="text-primary font-bold mb-2 text-lg flex items-center gap-2"><Lightbulb className="h-5 w-5" />{t("Answer")}</h3>
-                <div className="whitespace-pre-wrap">{answer}</div>
-                <p className="text-xs text-muted-foreground mt-3 not-prose">
-                  {t("Sahayak can make mistakes. Please review generated content.")}
-                </p>
-              </div>
-            </SectionCard>
-          )}
-        </div>
-      </div>
+              <VidyaPresence
+                size="workspace"
+                state={live.state}
+                getLevel={live.getLevel}
+                onActivate={live.error ? () => { live.dismissError(); void live.start(); } : live.toggle}
+                label={live.active ? t("End voice conversation") : t("Talk to VIDYA")}
+                className="mx-auto -mt-2 md:-mt-4"
+              />
+            </FeatureSpotlight>
+            </div>
+
+            <div
+              role="status"
+              aria-live="polite"
+              data-state={live.state}
+              data-testid="vidya-home-status"
+              className="vidya-status -mt-4 inline-flex items-center gap-2.5 rounded-full border border-saffron-200/80 bg-card/90 px-5 py-2 text-[14px] font-medium text-foreground shadow-soft"
+            >
+              <span aria-hidden className="vidya-status-dot" />
+              <span className="indic-text">{live.error ? t(live.error) : t(vidyaStatusKey(live.state, live.hasAnswered))}</span>
+              {live.active && (
+                <button
+                  type="button"
+                  onClick={live.stop}
+                  className="ml-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  data-testid="vidya-home-end"
+                >
+                  <X className="h-3 w-3" /> {t("End")}
+                </button>
+              )}
+            </div>
+
+            {/* Live caption — read-only, never needs submitting */}
+            <p className="mt-3 min-h-[1.5rem] max-w-[46ch] text-sm leading-relaxed text-muted-foreground indic-text" data-testid="vidya-home-caption">
+              {live.caption && live.active ? live.caption.text.slice(-160) : ""}
+            </p>
+
+            {/* A few quiet starters — spoken into the same session */}
+            <div className="mt-2 flex flex-wrap justify-center gap-2">
+              {VOICE_STARTERS.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => sayToVidya(t(s))}
+                  className="rounded-full border border-border bg-card/80 px-3.5 py-1.5 text-[13px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground indic-text"
+                >
+                  {t(s)}
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="mt-8 flex flex-col items-center gap-4">
+            <MicrophoneInput onTranscriptChange={handleTranscript} iconSize="xl" label={t("Speak your topic")} />
+          </div>
+        )}
+
+        {/* Typed fallback — deliberately secondary */}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onTypedSubmit)} className="mt-6 flex w-full max-w-xl items-center gap-2 rounded-full border border-border/80 bg-card/70 py-1 pl-4 pr-1 transition-shadow focus-within:border-primary/40 focus-within:shadow-soft">
+            <div className="relative flex-1">
+              <AutoCompleteInput
+                placeholder={t("Or type to VIDYA…")}
+                {...form.register("topic")}
+                value={form.watch("topic")}
+                selectedLanguage={userLanguage || "English"}
+                onSuggestionClick={(value) => {
+                  form.setValue("topic", value);
+                  form.handleSubmit(onTypedSubmit)();
+                }}
+                className="border-none bg-transparent py-2 text-sm shadow-none focus-visible:ring-0"
+              />
+            </div>
+            <Button
+              type="submit"
+              size="icon"
+              variant="ghost"
+              className="h-9 w-9 shrink-0 rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary"
+              aria-label={t("Send to VIDYA")}
+            >
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </form>
+        </Form>
+
+        {/* Text-path result (Genkit intent router) — only when voice is off/unavailable */}
+        {isThinking && (
+          <p className="mt-4 text-sm font-medium text-primary">{t("Thinking")}…</p>
+        )}
+        {answer && (
+          <SectionCard
+            className="w-full max-w-2xl mt-4 border-l-4 border-l-primary shadow-elevated animate-in fade-in slide-in-from-bottom-2 relative text-left"
+            action={
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 text-muted-foreground hover:text-muted-foreground"
+                onClick={() => setAnswer(null)}
+                aria-label={t("Close answer")}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            }
+          >
+            <div className="prose prose-sm max-w-none text-foreground">
+              <h3 className="text-primary font-bold mb-2 text-lg flex items-center gap-2"><Lightbulb className="h-5 w-5" />{t("Answer")}</h3>
+              <div className="whitespace-pre-wrap">{answer}</div>
+              <p className="text-xs text-muted-foreground mt-3 not-prose">
+                {t("Sahayak can make mistakes. Please review generated content.")}
+              </p>
+            </div>
+          </SectionCard>
+        )}
+      </section>
 
       {/* RECENTS — "continue where you left off"; renders nothing when empty */}
       <div className="w-full flex justify-center animate-in fade-in slide-in-from-bottom-4 duration-medium delay-100">

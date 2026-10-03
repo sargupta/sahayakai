@@ -34,6 +34,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { useLimitGuard } from "@/hooks/use-limit-guard";
+import { useVidyaScreenContext } from "@/hooks/use-vidya-app-context";
 import {
     GeneratorError,
     GeneratorStatus,
@@ -75,6 +76,14 @@ export interface UseGeneratorConfig<TInput, TOutput> {
     malformedMessage?: string;
     /** Fallback message for generic request failures. */
     failureMessage?: string;
+    /**
+     * The endpoint persists its output as a My Library artifact. When set,
+     * the hook mints one `contentId` per user-initiated submit, sends it in
+     * the body, and exposes it as `contentId` so the page's Save button
+     * upserts the SAME Library row instead of creating a second one (see
+     * `@/lib/content-id`). Endpoints that do not persist leave this off.
+     */
+    persistsArtifact?: boolean;
     /** Fired after a successful generation (checklist marks, snapshots…). */
     onSuccess?: (output: TOutput, values: TInput) => void;
     /**
@@ -100,10 +109,17 @@ export interface UseGeneratorReturn<TInput, TOutput> {
     /** Back to idle; clears result + error. */
     reset: () => void;
     /**
+     * Library id of the current result: minted per submit when
+     * `persistsArtifact` is set, or the restored id passed to `setResult`.
+     * Null when the result has no Library identity yet.
+     */
+    contentId: string | null;
+    /**
      * Escape hatch for restore-from-`?id` flows: pages fetch saved content
      * themselves and install it as the result (status becomes "done").
+     * Pass the restored item's id so a later Save updates that item.
      */
-    setResult: (result: TOutput | null) => void;
+    setResult: (result: TOutput | null, contentId?: string | null) => void;
     limitState: ReturnType<typeof useLimitGuard>["limitState"];
     clearLimit: () => void;
 }
@@ -117,6 +133,7 @@ export function useGenerator<TInput, TOutput>(
     const [status, setStatus] = useState<GeneratorStatus>("idle");
     const [result, setResultState] = useState<TOutput | null>(null);
     const [error, setError] = useState<GeneratorError | null>(null);
+    const [contentId, setContentId] = useState<string | null>(null);
 
     // Double-submit guard: setState is async, so two clicks inside React's
     // batch window both pass an `if (isLoading)` check. A ref commits
@@ -141,12 +158,14 @@ export function useGenerator<TInput, TOutput>(
         setStatus("idle");
         setResultState(null);
         setError(null);
+        setContentId(null);
     }, []);
 
-    const setResult = useCallback((next: TOutput | null) => {
+    const setResult = useCallback((next: TOutput | null, restoredId?: string | null) => {
         setResultState(next);
         setStatus(next ? "done" : "idle");
         setError(null);
+        setContentId(next ? restoredId ?? null : null);
     }, []);
 
     const fail = useCallback((err: GeneratorError, notify: boolean) => {
@@ -176,6 +195,13 @@ export function useGenerator<TInput, TOutput>(
 
             setStatus("generating");
             setResultState(null);
+            setContentId(null);
+
+            // One id per user-initiated submit: the server files the
+            // artifact under it, and Save upserts it.
+            const submitContentId = cfg.persistsArtifact ? crypto.randomUUID() : null;
+            const requestBody = cfg.buildRequest(values);
+            if (submitContentId) requestBody.contentId = submitContentId;
 
             abortRef.current?.abort();
             const controller = new AbortController();
@@ -190,7 +216,7 @@ export function useGenerator<TInput, TOutput>(
             const res = await fetch(cfg.endpoint, {
                 method: "POST",
                 headers,
-                body: JSON.stringify(cfg.buildRequest(values)),
+                body: JSON.stringify(requestBody),
                 signal: controller.signal,
             });
 
@@ -276,6 +302,7 @@ export function useGenerator<TInput, TOutput>(
             }
 
             setResultState(output);
+            setContentId(submitContentId);
             setStatus("done");
             cfg.onSuccess?.(output, values);
         } catch (err) {
@@ -299,11 +326,21 @@ export function useGenerator<TInput, TOutput>(
         }
     }, [requireAuth, openAuthModal, checkResponse, clearLimit, fail]);
 
+    // VIDYA: which tool this is, where the generation stands, and whether
+    // the result is already in My Library (read by OmniOrb at request time).
+    useVidyaScreenContext(`generator.${config.feature}`, {
+        generatorTool: config.feature,
+        generationStatus: status,
+        hasResult: result !== null,
+        savedToLibrary: contentId !== null,
+    });
+
     return {
         status,
         isGenerating:
             status === "validating" || status === "generating" || status === "streaming",
         result,
+        contentId,
         error,
         generate,
         abort,

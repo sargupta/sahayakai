@@ -1,6 +1,7 @@
 "use client";
 
 import type { FC } from "react";
+import { useLibraryId } from "@/hooks/use-library-id";
 import type { QuizVariantsOutput } from "@/ai/schemas/quiz-generator-schemas";
 import { Button } from "./ui/button";
 import {
@@ -77,6 +78,9 @@ export const QuizDisplay: FC<QuizDisplayProps> = ({
     const { toast } = useToast();
     const t = getResultShellDict(selectedLanguage);
     const { t: tr } = useLanguage();
+    // One quiz = one Library row. `quiz.id` is the id the server filed the
+    // generation under (or the restored item's id), so Save updates that row.
+    const libraryId = useLibraryId(quiz.id, quiz);
 
     useEffect(() => {
         setEditState({
@@ -173,7 +177,7 @@ export const QuizDisplay: FC<QuizDisplayProps> = ({
             }
             const saveTitle = currentQuiz.title || "General Quiz";
             const payload = {
-                id: crypto.randomUUID(),
+                id: libraryId,
                 type: "quiz",
                 title: saveTitle,
                 gradeLevel: quiz.gradeLevel || "Class 5",
@@ -322,7 +326,7 @@ ${showAnswers ? `\n${t.correctAnswer}: ${q.correctAnswer}\n${t.explanation}: ${q
             }
             const saveTitle = currentQuiz.title || "General Quiz";
             const payload = {
-                id: crypto.randomUUID(),
+                id: libraryId,
                 type: "quiz",
                 title: saveTitle,
                 gradeLevel: quiz.gradeLevel || "Class 5",

@@ -3,9 +3,14 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { pillars, pillarText } from "./pillar-data";
 import { useLanguage } from "@/context/language-context";
+import { cn } from "@/lib/utils";
 
 type Props = {
   titleIndex: number;
+  /** "responsive" centres on mobile and left-aligns from lg (two-column hero). */
+  align?: "center" | "responsive";
+  /** Overrides the default headline size/leading classes. */
+  className?: string;
 };
 
 /**
@@ -32,7 +37,7 @@ type Props = {
  * The invisible sizers are aria-hidden so a screen reader hears the live
  * phrase once, not all six.
  */
-export function AnimatedHeadline({ titleIndex }: Props) {
+export function AnimatedHeadline({ titleIndex, align = "center", className }: Props) {
   const { t } = useLanguage();
   const reduceMotion = useReducedMotion();
   const current = pillars[titleIndex];
@@ -44,13 +49,24 @@ export function AnimatedHeadline({ titleIndex }: Props) {
   const underline = "border-b-[4px] border-saffron pb-[2px]";
 
   return (
-    <h1 className="font-headline font-bold text-[44px] leading-[1.02] sm:text-[56px] md:text-[68px] tracking-tight text-foreground text-center">
+    <h1
+      className={cn(
+        "font-headline font-bold tracking-tight text-foreground",
+        align === "center" ? "text-center" : "text-center lg:text-left",
+        className ?? "text-[44px] leading-[1.02] sm:text-[56px] md:text-[68px]",
+      )}
+    >
       <span className="block">{t("Give your teachers")}</span>
 
       {/* grid + justify-items-center: every child occupies the same cell and
           is sized to its own content, so the cell is as large as the biggest
           phrase while each phrase keeps its own underline width. */}
-      <span className="mt-1 grid justify-items-center">
+      <span
+        className={cn(
+          "mt-1 grid",
+          align === "center" ? "justify-items-center" : "justify-items-center lg:justify-items-start",
+        )}
+      >
         {allPhrases.map((phrase) => (
           <span
             key={phrase}

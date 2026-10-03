@@ -237,11 +237,13 @@ describe('useWorksheetWizard — restore from ?id=', () => {
         }) as unknown as typeof fetch;
     });
 
-    it('restores the saved markdown body', async () => {
+    it('restores the saved markdown body under its own Library id', async () => {
         renderWorksheetWizard();
 
+        // The restored id travels with the result so a later Save updates
+        // this Library row instead of creating a duplicate.
         await waitFor(() =>
-            expect(setResult).toHaveBeenCalledWith(SAVED_WORKSHEET.data.worksheetContent),
+            expect(setResult).toHaveBeenCalledWith(SAVED_WORKSHEET.data.worksheetContent, 'worksheet-123'),
         );
     });
 

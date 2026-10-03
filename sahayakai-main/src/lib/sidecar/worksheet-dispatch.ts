@@ -282,6 +282,7 @@ export async function dispatchWorksheet(
         try {
             await persistSidecarJSON({
                 uid: input.userId,
+                contentId: input.contentId,
                 collection: 'worksheets',
                 contentType: 'worksheet',
                 title: `Worksheet: ${input.prompt.substring(0, 30)}`,

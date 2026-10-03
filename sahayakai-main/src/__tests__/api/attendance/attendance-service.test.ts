@@ -233,3 +233,19 @@ describe('attendance service — F9 fixes', () => {
         });
     });
 });
+
+// ── VIDYA controlled actions rely on THIS check, not on UI visibility ──────
+// "Mark everyone present" / "submit attendance" via VIDYA runs the grid's own
+// handler → saveAttendanceAction → this service. A class that is not the
+// caller's must be refused here regardless of what the screen exposed.
+describe('saveAttendance — backend ownership is authoritative', () => {
+    it("refuses to write another teacher's class", async () => {
+        fakeClasses['c-other'] = { teacherUid: 'teacher-B', students: ['s1'] };
+        const before = writes.length;
+        const { saveAttendance } = await import('@/server/attendance');
+        const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+
+        await expect(saveAttendance(UID, 'c-other', today, { s1: 'present' as any })).rejects.toThrow('Unauthorized');
+        expect(writes.slice(before).some((w) => w.path.startsWith('attendance/c-other'))).toBe(false);
+    });
+});

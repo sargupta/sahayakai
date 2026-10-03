@@ -52,6 +52,18 @@ def _reset_vidya_stream_guards() -> Iterator[None]:
     reset_stream_guards()
 
 
+@pytest.fixture(autouse=True)
+def _legacy_voice_engine_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Pin `/stream` tests to the raw google-genai relay they fake.
+
+    Production default is the ADK engine (`adk_live.py`); the pre-existing
+    stream tests stub `google.genai.Client(...).aio.live.connect`, which the
+    ADK engine does not call. ADK-engine tests opt in with
+    `monkeypatch.setenv("SAHAYAKAI_VIDYA_VOICE_ENGINE", "adk")`.
+    """
+    monkeypatch.setenv("SAHAYAKAI_VIDYA_VOICE_ENGINE", "genai")
+
+
 def _capture_shipped_setup_deadline() -> float:
     """Read `_SETUP_FRAME_TIMEOUT_SECONDS` once, before anything can patch it.
 

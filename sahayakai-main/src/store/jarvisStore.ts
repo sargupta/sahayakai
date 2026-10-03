@@ -63,7 +63,20 @@ interface JarvisState {
     lastQueryAt: number | null;
     lastQueryPath: string | null;
 
+    // ── Owner of the persisted memory ────────────────────────────────────
+    // `chatHistory`, `teacherProfile` and `formSnapshots` live in this
+    // browser's localStorage. They belong to ONE teacher: on a shared school
+    // device, teacher B signing in must never inherit teacher A's VIDYA
+    // memory. `bindOwner` wipes them whenever the signed-in uid changes.
+    ownerUid: string | null;
+
     // ── Actions ───────────────────────────────────────────────────────────
+    /**
+     * Tie the persisted memory to the signed-in teacher. A different uid
+     * (or sign-out) wipes chat history, profile memory and form drafts
+     * before anything else reads them. Same uid is a no-op.
+     */
+    bindOwner: (uid: string | null) => void;
     addMessage: (role: 'user' | 'model', text: string) => void;
     setScreenContext: (context: ScreenContext) => void;
     setStructuredData: (data: Record<string, any>) => void;
@@ -113,6 +126,19 @@ export const useJarvisStore = create<JarvisState>()(
             voiceDialogOpen: false,
             lastQueryAt: null,
             lastQueryPath: null,
+            ownerUid: null,
+
+            bindOwner: (uid) =>
+                set((state) => (state.ownerUid === uid ? {} : {
+                    ownerUid: uid,
+                    chatHistory: [],
+                    teacherProfile: DEFAULT_PROFILE,
+                    formSnapshots: {},
+                    structuredData: {},
+                    currentScreenContext: null,
+                    lastQueryAt: null,
+                    lastQueryPath: null,
+                })),
 
             setVoiceDialogOpen: (open) => set({ voiceDialogOpen: open }),
 
@@ -199,6 +225,7 @@ export const useJarvisStore = create<JarvisState>()(
             version: 1,
             // Explicitly list keys to persist so future additions don't auto-persist sensitive data
             partialize: (state) => ({
+                ownerUid: state.ownerUid,
                 chatHistory: state.chatHistory,
                 teacherProfile: state.teacherProfile,
                 formSnapshots: state.formSnapshots,

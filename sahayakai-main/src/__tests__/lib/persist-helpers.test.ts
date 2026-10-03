@@ -159,3 +159,39 @@ describe('persistSidecarJSON', () => {
         expect(result?.storagePath).toMatch(/untitled\.json$/);
     });
 });
+
+// ── Stable artifact ids (one generation = one Library row) ──────────────────
+
+describe('persist helpers — stable contentId + ready status', () => {
+    const STABLE_ID = '6f1c2d3e-4b5a-4c6d-8e7f-0123456789ab';
+
+    it('files the artifact under the caller-supplied contentId', async () => {
+        const result = await persistSidecarJSON({ ...BASE_INPUT, contentId: STABLE_ID });
+
+        expect(result?.contentId).toBe(STABLE_ID);
+        const [, doc] = mockSaveContent.mock.calls[0] as unknown as [string, { id: string }];
+        expect(doc.id).toBe(STABLE_ID);
+    });
+
+    it('two writes of the same generation address the same row (no duplicate)', async () => {
+        await persistSidecarJSON({ ...BASE_INPUT, contentId: STABLE_ID });
+        await persistSidecarJSON({ ...BASE_INPUT, contentId: STABLE_ID });
+
+        const ids = (mockSaveContent.mock.calls as unknown as Array<[string, { id: string }]>).map(([, d]) => d.id);
+        expect(new Set(ids)).toEqual(new Set([STABLE_ID]));
+    });
+
+    it('replaces a malformed contentId with a fresh UUID', async () => {
+        const result = await persistSidecarJSON({ ...BASE_INPUT, contentId: 'saved_community_pointer' });
+
+        expect(result?.contentId).not.toBe('saved_community_pointer');
+        expect(result?.contentId).toMatch(/^[0-9a-f-]{36}$/);
+    });
+
+    it("stamps status 'ready' — this write is the artifact-created boundary", async () => {
+        await persistSidecarJSON(BASE_INPUT);
+
+        const [, doc] = mockSaveContent.mock.calls[0] as unknown as [string, { status?: string }];
+        expect(doc.status).toBe('ready');
+    });
+});

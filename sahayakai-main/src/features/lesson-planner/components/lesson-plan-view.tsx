@@ -300,6 +300,7 @@ export function LessonPlanView({
     form,
     onSubmit,
     lessonPlan,
+    lessonPlanContentId,
     isLoading,
     selectedChapter,
     setSelectedChapter,
@@ -417,7 +418,7 @@ export function LessonPlanView({
                         tone="muted"
                         className="rounded-surface-md border-l-4 border-l-primary/70 bg-primary/5 animate-in fade-in slide-in-from-bottom-8 duration-medium indic-text"
                     >
-                        <LessonPlanDisplay lessonPlan={lessonPlan} selectedLanguage={selectedLanguage} />
+                        <LessonPlanDisplay lessonPlan={lessonPlan} selectedLanguage={selectedLanguage} contentId={lessonPlanContentId} />
                     </SectionCard>
                     <ShareToCommunityCTA contentType="lesson-plan" />
                 </>

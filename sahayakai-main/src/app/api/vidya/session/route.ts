@@ -18,17 +18,93 @@ import { logger } from '@/lib/logger';
  *   screenPaths: string[]                      — pages visited in this session
  * }
  *
- * Max 10 sessions retained per user (older ones pruned asynchronously).
+ *   saved?:   boolean   — teacher bookmarked it (kept forever, starred in My Library)
+ *   savedAt?: Timestamp
+ *   title?:   string    — the teacher's first message, trimmed
+ * }
+ *
+ * Every VIDYA conversation (text, turn-based voice and Live Voice) is retained
+ * here AUTOMATICALLY and listed under My Library → Conversations — no bookmark
+ * needed. The 10 most recent UNSAVED sessions are kept (older ones pruned
+ * asynchronously); bookmarked conversations are never pruned.
+ *
+ * A conversation stays a conversation: it lives here, never in
+ * `users/{uid}/content` (the artifacts / Generations store).
+ *
+ * GET   /api/vidya/session?list=1  — all of the teacher's conversations (summaries)
+ * GET   /api/vidya/session?saved=1 — only the bookmarked ones (summaries)
+ * GET   /api/vidya/session?id=X    — one of the teacher's own sessions (messages)
+ * PATCH /api/vidya/session         — { sessionId, saved } bookmark / un-bookmark
  *
  * Auth: middleware verifies the Firebase ID token and injects x-user-id.
+ * Every read/write is under users/{uid}, so a teacher can only ever reach
+ * their own sessions.
  */
+
+const MAX_TITLE = 120;
+
+function titleFrom(messages: unknown): string {
+    const list = Array.isArray(messages) ? messages : [];
+    const first = list.find((m) => m?.role === 'user');
+    const text = String(first?.parts?.map((p: { text?: string }) => p?.text ?? '').join(' ') ?? '').trim();
+    return text.length > MAX_TITLE ? `${text.slice(0, MAX_TITLE - 1)}…` : text;
+}
+
+function toIso(value: unknown): string | null {
+    const v = value as { toDate?: () => Date } | null;
+    return v && typeof v.toDate === 'function' ? v.toDate().toISOString() : null;
+}
 
 export async function GET(request: NextRequest) {
     const uid = request.headers.get('x-user-id');
     if (!uid) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+    const params = request.nextUrl?.searchParams ?? new URL(request.url).searchParams;
     try {
         const db = await getDb();
+        const sessions = db.collection('users').doc(uid).collection('vidya_sessions');
+
+        const listAll = params.get('list') === '1';
+        if (listAll || params.get('saved') === '1') {
+            // Retention keeps this small (10 unsaved + bookmarked), so no
+            // composite index: plain read / single-field filter, sorted here.
+            const snap = listAll
+                ? await sessions.limit(200).get()
+                : await sessions.where('saved', '==', true).limit(100).get();
+            const items = snap.docs
+                .map((doc) => {
+                    const data = doc.data();
+                    const messages = Array.isArray(data.messages) ? data.messages : [];
+                    return {
+                        id: doc.id,
+                        title: data.title || titleFrom(messages),
+                        saved: data.saved === true,
+                        savedAt: toIso(data.savedAt),
+                        updatedAt: toIso(data.updatedAt),
+                        messageCount: messages.length,
+                    };
+                })
+                // A session with no teacher message yet is not a conversation.
+                .filter((item) => item.messageCount > 0 && item.title !== '')
+                .sort((a, b) => listAll
+                    ? String(b.updatedAt ?? '').localeCompare(String(a.updatedAt ?? ''))
+                    : String(b.savedAt ?? '').localeCompare(String(a.savedAt ?? '')));
+            return NextResponse.json({ items });
+        }
+
+        const id = params.get('id');
+        if (id) {
+            const doc = await sessions.doc(id).get();
+            if (!doc.exists) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+            const data = doc.data() ?? {};
+            return NextResponse.json({
+                sessionId: doc.id,
+                title: data.title || titleFrom(data.messages),
+                saved: data.saved === true,
+                messages: data.messages ?? [],
+            });
+        }
+
         const snapshot = await db
             .collection('users').doc(uid)
             .collection('vidya_sessions')
@@ -98,19 +174,50 @@ export async function POST(request: NextRequest) {
     }
 }
 
-/** Retain only the 10 most recent sessions; silently delete anything older.
- *  Reads at most 15 documents (10 to keep + 5 buffer) to avoid an unbounded
- *  full-collection scan that grows linearly with a teacher's session history.
+/**
+ * Bookmark / un-bookmark one of the teacher's own conversations.
+ * Body: { sessionId: string, saved: boolean }. Only an existing session can
+ * be saved; the title is derived from its first teacher message.
+ */
+export async function PATCH(request: NextRequest) {
+    const uid = request.headers.get('x-user-id');
+    if (!uid) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    try {
+        const body = await request.json().catch(() => ({}));
+        const { sessionId, saved } = body ?? {};
+        if (typeof sessionId !== 'string' || !sessionId || sessionId.length > 200 || typeof saved !== 'boolean') {
+            return NextResponse.json({ error: 'sessionId and saved:boolean required' }, { status: 400 });
+        }
+        const db = await getDb();
+        const ref = db.collection('users').doc(uid).collection('vidya_sessions').doc(sessionId);
+        const doc = await ref.get();
+        if (!doc.exists) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+        await ref.set(saved
+            ? { saved: true, savedAt: FieldValue.serverTimestamp(), title: titleFrom(doc.data()?.messages) }
+            : { saved: false, savedAt: FieldValue.delete() },
+        { merge: true });
+        return NextResponse.json({ success: true, saved });
+    } catch (error) {
+        logger.error('Failed to update VIDYA session bookmark', error, 'VIDYA');
+        return NextResponse.json({ error: 'Failed to update session' }, { status: 500 });
+    }
+}
+
+/** Retain only the 10 most recent UNSAVED sessions; silently delete older
+ *  unsaved ones. Saved conversations are never pruned. Reads at most 15
+ *  documents to avoid an unbounded full-collection scan.
  */
 async function pruneOldSessions(db: any, uid: string) {
     const snapshot = await db
         .collection('users').doc(uid)
         .collection('vidya_sessions')
         .orderBy('updatedAt', 'desc')
-        .limit(15)   // read only top 15 — delete docs beyond index 10
+        .limit(15)   // read only top 15 — delete unsaved docs beyond the 10th
         .get();
 
-    const toDelete = snapshot.docs.slice(10);
+    const toDelete = snapshot.docs.filter((doc: any) => doc.data()?.saved !== true).slice(10);
     if (toDelete.length === 0) return;
 
     const batch = db.batch();

@@ -7,6 +7,7 @@
  */
 
 import { ai, runResiliently } from '@/ai/genkit';
+import { resolveContentId } from '@/lib/content-id';
 import { z } from 'genkit';
 import { getIndianContextPrompt } from '@/lib/indian-context';
 import { renderRegionalContextBlock, getRegionalAnchors } from '@/lib/regional-examples';
@@ -32,6 +33,7 @@ export const LessonPlanInputSchema = z.object({
   // Middleware always injects x-user-id from the Firebase ID token,
   // so this is required at the schema level — matches the Py sidecar.
   userId: z.string().describe('The ID of the user for whom the lesson plan is being generated.'),
+  contentId: z.string().max(64).optional().describe('Stable Library artifact id minted by the client once per generation (idempotency key). Invalid values are replaced server-side.'),
   teacherContext: z.string().optional().describe('Career-stage context for personalising AI output tone and depth.'),
   useRuralContext: z.boolean().optional().describe('Use Indian rural context with local examples (farming, monsoon, Indian festivals, etc.). Defaults to true.'),
   ncertChapter: z.object({
@@ -441,7 +443,7 @@ const lessonPlanFlow = ai.defineFlow(
                 const storage = await getStorageInstance();
                 const now = new Date();
                 const timestamp = format(now, 'yyyyMMdd_HHmmss');
-                const contentId = crypto.randomUUID();
+                const contentId = resolveContentId(input.contentId);
                 const safeTitle = (cached.title || input.topic).replace(/[^a-z0-9]+/gi, '_').toLowerCase().replace(/^_|_$/g, '');
                 const fileName = `${timestamp}_${safeTitle}.json`;
                 const filePath = `users/${userId}/lesson-plans/${fileName}`;
@@ -582,7 +584,7 @@ const lessonPlanFlow = ai.defineFlow(
               const storage = await getStorageInstance();
               const now = new Date();
               const timestamp = format(now, 'yyyyMMdd_HHmmss');
-              const contentId = crypto.randomUUID();
+              const contentId = resolveContentId(input.contentId);
               const safeTitle = (output.title || input.topic).replace(/[^a-z0-9]+/gi, '_').toLowerCase().replace(/^_|_$/g, '');
               const fileName = `${timestamp}_${safeTitle}.json`;
               const filePath = `users/${userId}/lesson-plans/${fileName}`;

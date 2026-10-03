@@ -502,6 +502,7 @@ export async function dispatchExamPaper(
         const persistResult = input.userId
             ? await persistSidecarJSON({
                   uid: input.userId,
+                  contentId: input.contentId,
                   collection: 'exam-papers',
                   contentType: 'exam-paper',
                   title: titleForLibrary,

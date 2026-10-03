@@ -264,6 +264,7 @@ export async function dispatchVisualAid(
         if (input.userId) {
             await persistSidecarImage({
                 uid: input.userId,
+                contentId: input.contentId,
                 contentType: 'visual-aid',
                 collection: 'visual-aids',
                 title: input.prompt,
