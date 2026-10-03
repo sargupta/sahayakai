@@ -139,6 +139,11 @@ export interface CrmSource {
     fetchSchool(): Promise<unknown>;
     fetchStudents(updatedSince: string | null): Promise<unknown[]>;
     fetchGuardians(updatedSince: string | null): Promise<unknown[]>;
+    /**
+     * Slice 2: page through any list endpoint of the CRM (e.g. '/v1/attendance') and return its raw records.
+     * Optional: the CSV source has no such endpoint.
+     */
+    fetchRecords?(path: string): Promise<unknown[]>;
 }
 
 // ── Carrier ─────────────────────────────────────────────────────────────────
