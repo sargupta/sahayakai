@@ -2,9 +2,10 @@
  * POST /api/sampark/[orgId]/imports — import the school's students and
  * guardians from its CRM.
  *
- * Input:  { source: 'rest' } — pull from the saved CRM (school.crm.baseUrl,
- *         key via getSecret(school.crm.apiKeySecretName));
- *         { source: 'csv', studentsCsv, guardiansCsv } — the two exports (≤5 MB each).
+ * Input:  { source: 'rest' | 'mcp' } — pull from the saved connection (school.crm.baseUrl,
+ *         key via getSecret(school.crm.apiKeySecretName)); must match school.crm.kind;
+ *         { source: 'csv', studentsCsv, guardiansCsv, consentCsv? } — the exports (≤5 MB each);
+ *         the optional consent list fills each guardian's consent.* fields.
  * Output: ImportRun — status 'succeeded' with counts and quarantined rows
  *         (each with a reason), or 'failed' with a safe error message.
  * Auth:   x-user-id (401) + requireOrgAdmin (403).

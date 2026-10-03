@@ -18,12 +18,16 @@
  * number of cells is returned with CSV_ERROR_KEY set and is quarantined as-is.
  */
 
-import { parseCsvRecords } from '@/lib/sampark/crm/csv';
+import { CsvParseError, parseCsvRecords } from '@/lib/sampark/crm/csv';
 import { CSV_COLUMNS } from '@/lib/sampark/crm/schema';
 import type { CrmSource } from '@/lib/sampark/ports';
 
 export const CSV_ROW_KEY = '__csvRow';
 export const CSV_ERROR_KEY = '__csvError';
+
+/** The consent list CSV (R2-4d): see crm/consent.ts for the meaning of each column. */
+export const CONSENT_CSV_REQUIRED_COLUMNS = ['purposeGroup', 'status'] as const;
+export const CONSENT_CSV_COLUMNS = ['guardian', 'phone', 'studentAdmissionNo', 'purposeGroup', 'status', 'recordedAt', 'method', 'noticeVersion'] as const;
 
 type Json = Record<string, unknown>;
 
@@ -137,15 +141,50 @@ function mapRecords(text: string, columns: readonly string[], toJson: (v: Record
 }
 
 /**
+ * Map a consent CSV (header row required) into raw consent rows. Rows with the wrong number of cells carry
+ * CSV_ERROR_KEY and are quarantined by the importer like any other bad row. The header must contain purposeGroup,
+ * status and at least one of guardian / phone / studentAdmissionNo (aliases guardianId, admissionNo).
+ */
+export function consentCsvToRows(text: string): Json[] {
+    const { records } = parseCsvRecords(text, CONSENT_CSV_REQUIRED_COLUMNS);
+    const sample = records[0]?.values ?? {};
+    const hasIdentifier = ['guardian', 'guardianId', 'phone', 'studentAdmissionNo', 'admissionNo'].some((c) => c in sample);
+    if (records.length > 0 && !hasIdentifier) throw new CsvParseError('missing column(s): guardian, phone or studentAdmissionNo', 1);
+    return records.map((r) => {
+        if (r.error) return { [CSV_ROW_KEY]: r.row, [CSV_ERROR_KEY]: r.error };
+        const v = r.values;
+        const cell = (...names: string[]): string | null => {
+            for (const n of names) if ((v[n] ?? '').trim() !== '') return (v[n] as string).trim();
+            return null;
+        };
+        return {
+            guardian: cell('guardian', 'guardianId'),
+            phone: cell('phone'),
+            studentAdmissionNo: cell('studentAdmissionNo', 'admissionNo'),
+            purposeGroup: v.purposeGroup?.trim() ?? '',
+            status: v.status?.trim() ?? '',
+            recordedAt: cell('recordedAt'),
+            method: cell('method'),
+            noticeVersion: cell('noticeVersion'),
+            [CSV_ROW_KEY]: r.row,
+        };
+    });
+}
+
+/**
  * A CSV import is a full snapshot: `updatedSince` is ignored. There is no
  * school record in a CSV export, so fetchSchool() returns null and the
- * importer leaves the school's holidays as they are.
+ * importer leaves the school's holidays as they are. A consent CSV is optional;
+ * without one the guardians' own `consent.*` columns decide.
  */
-export function createCsvSource(input: { studentsCsv: string; guardiansCsv: string }): CrmSource {
-    return {
+export function createCsvSource(input: { studentsCsv: string; guardiansCsv: string; consentCsv?: string | null }): CrmSource {
+    const source: CrmSource = {
         kind: 'csv',
         fetchSchool: async () => null,
         fetchStudents: async () => mapRecords(input.studentsCsv, CSV_COLUMNS.students, csvRowToStudent),
         fetchGuardians: async () => mapRecords(input.guardiansCsv, CSV_COLUMNS.guardians, csvRowToGuardian),
     };
+    const consentCsv = input.consentCsv;
+    if (consentCsv && consentCsv.trim() !== '') source.fetchConsent = async () => consentCsvToRows(consentCsv);
+    return source;
 }

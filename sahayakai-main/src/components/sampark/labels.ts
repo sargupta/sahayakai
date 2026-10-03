@@ -147,6 +147,7 @@ export function blockReasonLabel(t: Translate, reason: BlockReason): string {
         case 'human_only_purpose': return t("A member of staff must make this call");
         case 'frequency_cap': return t("Already called four times in the last 30 days");
         case 'mode_forbids_dialing': return t("The current mode does not allow calls");
+        case 'caller_id_not_ready': return t("The school's calling number is not set up for real calls");
         case 'synthetic_number_not_allowed': return t("A test number, reachable only in Practice mode");
         case 'purpose_not_available': return t("This kind of call is not available yet");
         case 'school_not_enabled': return t("School calls are not switched on for this school");
@@ -411,7 +412,8 @@ export function importStatusTone(status: ImportRun['status']): Tone {
     }
 }
 
-export function entityLabel(t: Translate, entity: 'student' | 'guardian'): string {
+export function entityLabel(t: Translate, entity: 'student' | 'guardian' | 'consent'): string {
+    if (entity === 'consent') return t("Consent");
     return entity === 'student' ? t("Student") : t("Guardian");
 }
 

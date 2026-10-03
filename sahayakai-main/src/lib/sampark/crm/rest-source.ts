@@ -27,29 +27,16 @@
 import { lookup as dnsLookup } from 'node:dns/promises';
 import net from 'node:net';
 
-import { z } from 'zod';
-
 import { getSecret } from '@/lib/secrets';
+import { CrmFetchError, CrmUrlError } from '@/lib/sampark/crm/errors';
+import { createMappedSource, type MappedSourceIO, type PageParams } from '@/lib/sampark/crm/mapped-source';
+import { CANONICAL_REST_PATHS, type CrmEntity, type CrmMapping, identityMapping, parseMapping } from '@/lib/sampark/crm/mapping';
 import type { CrmSource } from '@/lib/sampark/ports';
 import type { SamparkSchool } from '@/types/sampark';
 
 export const CRM_REQUEST_TIMEOUT_MS = 15_000;
-const PAGE_LIMIT = 200;
-const MAX_PAGES = 1_000;
 
-export class CrmUrlError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = 'CrmUrlError';
-    }
-}
-
-export class CrmFetchError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = 'CrmFetchError';
-    }
-}
+export { CrmFetchError, CrmUrlError };
 
 type NodeEnv = string | undefined;
 
@@ -184,11 +171,11 @@ export async function assertCrmUrlSafe(
 
 // ── Source ──────────────────────────────────────────────────────────────────
 
-const PageEnvelope = z.object({ data: z.array(z.unknown()), nextCursor: z.string().nullable() });
-
 export interface RestSourceOptions {
     baseUrl: string;
     apiKey: string;
+    /** The saved field mapping (endpoint paths, pagination, field names). Absent = the canonical contract. */
+    mapping?: CrmMapping | null;
     fetchImpl?: typeof fetch;
     lookup?: LookupFn;
     nodeEnv?: NodeEnv;
@@ -200,16 +187,17 @@ export interface RestSourceOptions {
  * query parameters (e.g. `http://localhost:4700/?includeMalformed=true` makes
  * every request carry the dummy CRM's quarantine switch).
  */
-function endpoint(base: URL, path: string, params: Record<string, string | null>): URL {
+function endpoint(base: URL, path: string, params: Record<string, string | number | null>): URL {
     const u = new URL(base.toString());
     u.pathname = `${u.pathname.replace(/\/+$/, '')}${path}`;
-    for (const [k, v] of Object.entries(params)) if (v !== null) u.searchParams.set(k, v);
+    for (const [k, v] of Object.entries(params)) if (v !== null) u.searchParams.set(k, String(v));
     return u;
 }
 
 export function createRestSource(opts: RestSourceOptions): CrmSource {
     const doFetch = opts.fetchImpl ?? fetch;
     const timeoutMs = opts.timeoutMs ?? CRM_REQUEST_TIMEOUT_MS;
+    const mapping = opts.mapping ? parseMapping(opts.mapping) : identityMapping();
     let checked: Promise<URL> | null = null;
     const base = () => {
         if (!checked) checked = assertCrmUrlSafe(opts.baseUrl, { nodeEnv: opts.nodeEnv ?? process.env.NODE_ENV, lookup: opts.lookup });
@@ -242,35 +230,39 @@ export function createRestSource(opts: RestSourceOptions): CrmSource {
         }
     }
 
-    async function paginate(path: string, updatedSince: string | null): Promise<unknown[]> {
-        const b = await base();
-        const out: unknown[] = [];
-        const seen = new Set<string>();
-        let cursor: string | null = null;
-        for (let page = 0; page < MAX_PAGES; page++) {
-            const body = await getJson(endpoint(b, path, { updatedSince, cursor, limit: String(PAGE_LIMIT) }));
-            const parsed = PageEnvelope.safeParse(body);
-            if (!parsed.success) throw new CrmFetchError(`CRM page for ${path} is not { data, nextCursor }`);
-            out.push(...parsed.data.data);
-            cursor = parsed.data.nextCursor;
-            if (!cursor) return out;
-            if (seen.has(cursor)) throw new CrmFetchError(`CRM pagination loop on ${path}`);
-            seen.add(cursor);
-        }
-        throw new CrmFetchError(`CRM pagination exceeded ${MAX_PAGES} pages on ${path}`);
-    }
+    const pathFor = (entity: CrmEntity): string | undefined => mapping.rest.endpoints[entity] ?? CANONICAL_REST_PATHS[entity];
 
-    return {
+    const io: MappedSourceIO = {
         kind: 'rest',
-        fetchSchool: async () => getJson(endpoint(await base(), '/v1/school', {})),
-        fetchStudents: (updatedSince) => paginate('/v1/students', updatedSince),
-        fetchGuardians: (updatedSince) => paginate('/v1/guardians', updatedSince),
+        hasEntity: (entity) => pathFor(entity) !== undefined,
+        fetchBody: async (entity, params: PageParams | null) => getJson(endpoint(await base(), pathFor(entity) as string, params ?? {})),
         // Only the paths under /v1/ the slice-2 signals adapter names; the base URL stays SSRF-checked.
-        fetchRecords: (path) => {
+        fetchRawPath: (path) => {
             if (!/^\/v1\/[a-z0-9/_-]+$/.test(path)) throw new CrmFetchError(`Refusing to fetch an unexpected CRM path: ${path}`);
-            return paginate(path, null);
+            return crawlRaw(path);
         },
     };
+    async function crawlRaw(path: string): Promise<unknown[]> {
+        const { dataPath, nextCursorPath, limitParam, cursorParam, pageSize } = mapping.pagination;
+        const out: unknown[] = [];
+        const b = await base();
+        const seen = new Set<string>();
+        let cursor: string | null = null;
+        for (let page = 0; page < 1_000; page++) {
+            const body = await getJson(endpoint(b, path, { [limitParam]: pageSize, ...(cursor ? { [cursorParam]: cursor } : {}) }));
+            const rec = body as Record<string, unknown> | null;
+            const list = dataPath === '$' ? body : rec?.[dataPath];
+            if (!Array.isArray(list)) throw new CrmFetchError(`CRM page for ${path} is not { data, nextCursor }`);
+            out.push(...list);
+            const next: unknown = nextCursorPath && nextCursorPath !== '$' ? rec?.[nextCursorPath] : null;
+            if (typeof next !== 'string' || next === '') return out;
+            if (seen.has(next)) throw new CrmFetchError(`CRM pagination loop on ${path}`);
+            seen.add(next);
+            cursor = next;
+        }
+        throw new CrmFetchError(`CRM pagination exceeded 1000 pages on ${path}`);
+    }
+    return createMappedSource(io, mapping);
 }
 
 /** Build the REST source for a school from its saved CRM config. */
@@ -282,5 +274,5 @@ export async function createRestSourceForSchool(
     if (!crm || crm.kind !== 'rest' || !crm.baseUrl) throw new CrmUrlError('No REST CRM is configured for this school');
     if (!crm.apiKeySecretName) throw new CrmUrlError('No CRM API key secret is configured for this school');
     const apiKey = await getSecret(crm.apiKeySecretName);
-    return createRestSource({ baseUrl: crm.baseUrl, apiKey, ...overrides });
+    return createRestSource({ baseUrl: crm.baseUrl, apiKey, mapping: crm.mapping ?? null, ...overrides });
 }

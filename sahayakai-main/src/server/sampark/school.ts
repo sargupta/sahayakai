@@ -15,7 +15,9 @@
 
 import { z } from 'zod';
 
+import { CrmMappingSchema } from '@/lib/sampark/crm/mapping';
 import { assertCrmUrlSafe, CrmUrlError } from '@/lib/sampark/crm/rest-source';
+import { isValidCallerId } from '@/lib/sampark/phone';
 import { callScripts } from '@/lib/sampark/scripts/templates';
 import { PARENT_LANGUAGES, type ParentLanguage, type SamparkMode, type SamparkSchool, type SchoolVenue } from '@/types/sampark';
 import { badRequest, conflict, schoolNotEnabled } from '@/server/sampark/errors';
@@ -55,14 +57,42 @@ export const VenueSchema = z.object({
 /** Secret names a school may point its CRM key at. See the module comment for why this is an allowlist. */
 export const CRM_SECRET_NAME = /^(SAMPARK_CRM_[A-Z0-9_]{1,64}|MOCK_CRM_API_KEY)$/;
 
+const CrmSecretName = z.string().regex(CRM_SECRET_NAME, 'apiKeySecretName must be SAMPARK_CRM_<NAME> (or MOCK_CRM_API_KEY for the dummy CRM)');
+
 const CrmInputSchema = z.discriminatedUnion('kind', [
     z.object({
         kind: z.literal('rest'),
         baseUrl: z.string().trim().min(1).max(2048),
-        apiKeySecretName: z.string().regex(CRM_SECRET_NAME, 'apiKeySecretName must be SAMPARK_CRM_<NAME> (or MOCK_CRM_API_KEY for the dummy CRM)'),
+        apiKeySecretName: CrmSecretName,
+        /** Omitted keeps the saved mapping; null clears it (the canonical contract as-is). */
+        mapping: CrmMappingSchema.nullable().optional(),
+    }),
+    z.object({
+        kind: z.literal('mcp'),
+        /** The MCP endpoint URL (streamable HTTP). */
+        baseUrl: z.string().trim().min(1).max(2048),
+        apiKeySecretName: CrmSecretName,
+        mapping: CrmMappingSchema.refine((m) => Boolean(m.mcp.tools.students && m.mcp.tools.guardians), {
+            message: 'an MCP connection needs the tool names for students and guardians (mapping.mcp.tools)',
+            path: ['mcp', 'tools'],
+        }),
     }),
     z.object({ kind: z.literal('csv') }),
 ]);
+
+/** Where a school's real calls would come from (R2-6). Editing it never enables dialling by itself. */
+export const CarrierSettingsSchema = z
+    .object({
+        callerId: z
+            .string()
+            .trim()
+            .nullable()
+            .transform((v) => (v === '' ? null : v))
+            .refine((v) => v === null || isValidCallerId(v), 'callerId must be a full number in E.164 form, e.g. +919876543210'),
+        registeredToSchool: z.boolean(),
+        provider: z.enum(['simulated', 'vobiz', 'knowlarity']),
+    })
+    .strict();
 
 export const UpdateSchoolSchema = z
     .object({
@@ -77,6 +107,7 @@ export const UpdateSchoolSchema = z
             .optional(),
         defaultLanguage: LanguageEnum.nullable().optional(),
         crm: CrmInputSchema.nullable().optional(),
+        carrier: CarrierSettingsSchema.nullable().optional(),
     })
     .strict();
 export type UpdateSchoolInput = z.infer<typeof UpdateSchoolSchema>;
@@ -169,15 +200,20 @@ export async function updateSchool(ctx: SamparkCtx, orgId: string, uid: string, 
                 if (err instanceof CrmUrlError) throw badRequest('CRM_URL_REJECTED', err.message);
                 throw err;
             }
+            const kind = input.crm.kind;
+            // An omitted mapping keeps the one already saved for the same kind of connection.
+            const mapping = input.crm.mapping === undefined ? (school.crm?.kind === kind ? (school.crm.mapping ?? null) : null) : input.crm.mapping;
             next.crm = {
-                kind: 'rest',
+                kind,
                 baseUrl: input.crm.baseUrl,
                 apiKeySecretName: input.crm.apiKeySecretName,
+                mapping,
                 lastImportAt: school.crm?.lastImportAt ?? null,
                 lastImportId: school.crm?.lastImportId ?? null,
             };
         }
     }
+    if (input.carrier !== undefined) next.carrier = input.carrier;
     const now = ctx.clock.now().toISOString();
     next.updatedAt = now;
     await ctx.repo.upsertSchool(next);

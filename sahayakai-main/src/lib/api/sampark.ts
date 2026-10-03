@@ -13,6 +13,7 @@
  */
 import { auth } from '@/lib/firebase';
 import { apiFetch, ApiError } from '@/lib/api/client';
+import type { CrmMappingInput } from '@/lib/sampark/crm/mapping';
 import type {
     BlockReason,
     Campaign,
@@ -31,6 +32,7 @@ import type {
     SamparkMode,
     SamparkOverview,
     SamparkSchool,
+    SchoolCarrierSettings,
     SchoolVenue,
     ScriptPreview,
     Suppression,
@@ -73,7 +75,8 @@ export interface CampaignDetail {
  * for the dummy CRM), never the key itself.
  */
 export type CrmConnectionInput =
-    | { kind: 'rest'; baseUrl: string; apiKeySecretName: string }
+    | { kind: 'rest'; baseUrl: string; apiKeySecretName: string; mapping?: CrmMappingInput | null }
+    | { kind: 'mcp'; baseUrl: string; apiKeySecretName: string; mapping: CrmMappingInput }
     | { kind: 'csv' };
 
 export interface UpdateSchoolInput {
@@ -84,11 +87,13 @@ export interface UpdateSchoolInput {
     venues?: SchoolVenue[];
     defaultLanguage?: ParentLanguage | null;
     crm?: CrmConnectionInput | null;
+    /** The dedicated calling number parents see (org admins only). */
+    carrier?: SchoolCarrierSettings | null;
 }
 
 export type StartImportInput =
-    | { source: 'rest' }
-    | { source: 'csv'; studentsCsv: string; guardiansCsv: string };
+    | { source: 'rest' | 'mcp' }
+    | { source: 'csv'; studentsCsv: string; guardiansCsv: string; consentCsv?: string };
 
 export interface CreateCampaignInput {
     purpose: PurposeId;

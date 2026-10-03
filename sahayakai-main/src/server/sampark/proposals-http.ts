@@ -12,7 +12,6 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { logger } from '@/lib/logger';
-import { createRestSourceForSchool } from '@/lib/sampark/crm/rest-source';
 import { getSamparkRepo, getSamparkClock } from '@/lib/sampark/repo/factory';
 import { getSamparkRulesRepo } from '@/lib/sampark/rules/factory';
 import { CrmSignalsSchema } from '@/lib/sampark/rules/signals';
@@ -20,6 +19,7 @@ import { createRestSignalsSource, createStaticSignalsSource, type SignalsLoad } 
 import { RULE_IDS } from '@/lib/sampark/rules/types';
 import type { SamparkSchool } from '@/types/sampark';
 import { requireOrgAdmin } from '@/server/sampark/auth';
+import { crmSourceForSchool, hasConnectedCrm } from '@/server/sampark/crm-source';
 import { conflict } from '@/server/sampark/errors';
 import { OrgIdSchema, errorResponse, guardOrgRoute, invalidRequest, samparkDisabledResponse } from '@/server/sampark/http';
 import type { ProposalCtx } from '@/server/sampark/proposals';
@@ -27,7 +27,7 @@ import type { ProposalCtx } from '@/server/sampark/proposals';
 export async function signalsForSchool(school: SamparkSchool): Promise<SignalsLoad> {
     // Development only: a CRM-less demo school can read a fixture file of signals (never in production).
     const fixture = process.env.SAMPARK_SIGNALS_FIXTURE;
-    const hasRestCrm = !!school.crm && school.crm.kind === 'rest' && !!school.crm.baseUrl;
+    const hasRestCrm = hasConnectedCrm(school); // rest or mcp: the signals read the same canonical shapes either way
     if (fixture && process.env.NODE_ENV !== 'production' && !hasRestCrm) {
         const fs = await import('node:fs/promises');
         const parsed = CrmSignalsSchema.parse(JSON.parse(await fs.readFile(fixture, 'utf8')));
@@ -36,7 +36,7 @@ export async function signalsForSchool(school: SamparkSchool): Promise<SignalsLo
     if (!hasRestCrm) {
         throw conflict('NO_REST_CRM', 'Connect a REST CRM in Settings first: the rules read attendance, the holistic card and assessments from it.');
     }
-    return createRestSignalsSource(await createRestSourceForSchool(school)).load();
+    return createRestSignalsSource(await crmSourceForSchool(school, null)).load();
 }
 
 export async function proposalContext(): Promise<ProposalCtx> {
