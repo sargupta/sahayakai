@@ -3,6 +3,7 @@ import { getDb } from '@/lib/firebase-admin';
 import { dbAdapter } from '@/lib/db/adapter';
 import type { OutreachReason, CallStatus, PerformanceContext } from '@/types/attendance';
 import type { Language, Subject } from '@/types';
+import { refuseIfParentOptedOut } from '@/lib/call-suppression';
 import { hasAdvancedPlan } from '@/lib/plan-utils';
 
 // Per-(teacher,student) dedup window — protects against accidental floods
@@ -82,6 +83,14 @@ export async function POST(req: NextRequest) {
         const parentPhone: string | undefined = student.parentPhone;
         if (!parentPhone) {
             return NextResponse.json({ error: 'Student has no parent phone on record' }, { status: 422 });
+        }
+
+        // A parent who told us on a call not to phone them again is not called
+        // again, however many new outreach docs the teacher creates. Refused
+        // here (before a doc exists) AND in /api/attendance/call.
+        if (data.deliveryMethod === 'twilio_call') {
+            const suppressed = await refuseIfParentOptedOut(db, parentPhone);
+            if (suppressed) return suppressed;
         }
 
         // ── F9-003 fix: per-(teacher, student) dedup window ───────────────
