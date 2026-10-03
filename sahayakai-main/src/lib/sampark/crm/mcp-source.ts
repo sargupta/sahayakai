@@ -62,8 +62,9 @@ export interface HttpMcpTransportOptions {
 
 /** Replace the secret (and anything that looks like a bearer header carrying it) in text that may be shown. */
 export function scrubSecret(text: string, secret: string): string {
-    if (secret.length < 4) return text;
-    return text.split(secret).join('[redacted]');
+    const exact = secret.length < 4 ? text : text.split(secret).join('[redacted]');
+    // Defence in depth: any other bearer-looking token a tool echoes back is removed as well.
+    return exact.replace(/Bearer\s+[A-Za-z0-9._~+/=-]{6,}/gi, 'Bearer [redacted]');
 }
 
 async function readCapped(res: Response, maxBytes: number): Promise<string> {
