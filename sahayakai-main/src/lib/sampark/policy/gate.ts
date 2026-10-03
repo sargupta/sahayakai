@@ -17,6 +17,8 @@
  *   7. demo school on any non-simulated carrier                           → synthetic_number_not_allowed   (class gate 4)
  *   8. non-simulated carrier while SAMPARK_LIVE_DIAL_ENABLED !== 'true',
  *      or while the school is in practice mode                            → mode_forbids_dialing
+ *   8b. non-simulated carrier and the school's dedicated number is not ready: no caller id, not
+ *      registered to the school, a synthetic caller id, or a different provider  → caller_id_not_ready   (R2-6)
  *   9. child-audience purpose and any student carries a sensitive flag    → sensitive_flag                 (class gate 10)
  *  10. purpose excludes fee-waived and any student is RTE / waived        → fee_category_excluded          (class gate 12)
  *  11. consent for the purpose group: denied → consent_denied, otherwise
@@ -29,6 +31,7 @@
  */
 
 import { isDialable, type PurposeSpec } from '@/lib/sampark/catalogue';
+import { callerIdReady } from '@/lib/sampark/policy/carrier-readiness';
 import { resolveLanguage } from '@/lib/sampark/policy/language';
 import { samparkWindowVerdict } from '@/lib/sampark/policy/window';
 import type {
@@ -118,6 +121,7 @@ export function evaluateGate(input: GateInput): GateVerdict {
     if (realCarrier && guardian.phoneClass !== 'mobile') return block('synthetic_number_not_allowed');
     if (realCarrier && school.isDemo) return block('synthetic_number_not_allowed');
     if (realCarrier && !liveDialPermitted(school)) return block('mode_forbids_dialing');
+    if (realCarrier && !callerIdReady(school, carrierKind)) return block('caller_id_not_ready');
 
     // 9–10. The children this call concerns
     if (spec.audience === 'child' && students.some((s) => (s.sensitiveFlags ?? []).length > 0)) {

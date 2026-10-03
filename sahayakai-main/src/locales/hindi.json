@@ -2171,5 +2171,20 @@
   "a teacher already knew": "शिक्षक को पहले से पता था",
   "{count} children left out, with the reason": "{count} बच्चे छोड़े गए, कारण सहित",
   "{count} children would have been flagged. Teachers already knew about {known}.": "{count} बच्चे चिह्नित होते। शिक्षकों को {known} के बारे में पहले से पता था।",
-  "{count} unexplained absences seen. Same-day absence calls are not replayed because they need the class teacher on the day.": "{count} बिना कारण की अनुपस्थितियाँ दिखीं। उसी दिन की अनुपस्थिति की कॉल दोहराई नहीं जातीं, क्योंकि उनके लिए उसी दिन क्लास टीचर चाहिए।"
+  "{count} unexplained absences seen. Same-day absence calls are not replayed because they need the class teacher on the day.": "{count} बिना कारण की अनुपस्थितियाँ दिखीं। उसी दिन की अनुपस्थिति की कॉल दोहराई नहीं जातीं, क्योंकि उनके लिए उसी दिन क्लास टीचर चाहिए।",
+  "Calling number": "कॉलिंग नंबर",
+  "The number parents see when the school calls. It must be a number registered to the school. Saving it does not start real calls: real calls also need the phase 2 approvals.": "वह नंबर जो स्कूल के कॉल करने पर अभिभावकों को दिखता है। यह स्कूल के नाम पर पंजीकृत नंबर होना चाहिए। इसे सहेजने से असली कॉल शुरू नहीं होतीं: असली कॉल के लिए चरण 2 की मंज़ूरियाँ भी चाहिए।",
+  "Number parents will see (with country code)": "अभिभावकों को दिखने वाला नंबर (देश कोड सहित)",
+  "Enter the full number with country code, for example +919876543210.": "देश कोड सहित पूरा नंबर लिखें, जैसे +919876543210।",
+  "This number is registered to the school": "यह नंबर स्कूल के नाम पर पंजीकृत है",
+  "Calling service": "कॉलिंग सेवा",
+  "Practice only (no real calls)": "केवल अभ्यास (कोई असली कॉल नहीं)",
+  "Real calls stay blocked until a number is set, confirmed as registered to the school, and live calling is approved.": "असली कॉल तब तक रुकी रहती हैं जब तक नंबर तय न हो, स्कूल के नाम पर पंजीकृत होने की पुष्टि न हो और लाइव कॉलिंग को मंज़ूरी न मिले।",
+  "Save calling number": "कॉलिंग नंबर सहेजें",
+  "Parent sees {number}": "अभिभावक को दिखता है {number}",
+  "Calling number not set": "कॉलिंग नंबर तय नहीं है",
+  "The school's calling number is not set up for real calls": "स्कूल का कॉलिंग नंबर असली कॉल के लिए तैयार नहीं है",
+  "Consent file (consent.csv), optional": "सहमति फ़ाइल (consent.csv), वैकल्पिक",
+  "One row per parent and kind of call: who agreed or declined, when, and how.": "हर अभिभावक और कॉल के प्रकार की एक पंक्ति: किसने सहमति दी या मना किया, कब और कैसे।",
+  "Connected through MCP. The tool names and field mapping were set up with your SahayakAI contact.": "MCP के ज़रिए जुड़ा है। टूल के नाम और फ़ील्ड मैपिंग आपके SahayakAI संपर्क के साथ तय की गई थी।"
 }

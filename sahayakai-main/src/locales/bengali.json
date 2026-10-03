@@ -2147,5 +2147,20 @@
   "{count} children would have been flagged. Teachers already knew about {known}.": "{count} জন শিশু চিহ্নিত হত। শিক্ষকেরা {known} জনের কথা আগেই জানতেন।",
   "{count} unexplained absences seen. Same-day absence calls are not replayed because they need the class teacher on the day.": "{count}টি কারণ-ছাড়া অনুপস্থিতি দেখা গেছে। একই দিনের অনুপস্থিতির কল পুনরায় চালানো হয় না, কারণ তার জন্য সেদিনই ক্লাস টিচারকে দরকার।",
   "Principal": "প্রিন্সিপাল",
-  "Coordinator": "কোঅর্ডিনেটর"
+  "Coordinator": "কোঅর্ডিনেটর",
+  "Calling number": "কলিং নম্বর",
+  "The number parents see when the school calls. It must be a number registered to the school. Saving it does not start real calls: real calls also need the phase 2 approvals.": "স্কুল কল করলে অভিভাবকরা যে নম্বর দেখেন। এটি স্কুলের নামে নিবন্ধিত নম্বর হতে হবে। সেভ করলে আসল কল শুরু হয় না: আসল কলের জন্য পর্যায় ২-এর অনুমোদনও লাগে।",
+  "Number parents will see (with country code)": "অভিভাবকরা যে নম্বর দেখবেন (দেশের কোডসহ)",
+  "Enter the full number with country code, for example +919876543210.": "দেশের কোডসহ পুরো নম্বর লিখুন, যেমন +919876543210।",
+  "This number is registered to the school": "এই নম্বর স্কুলের নামে নিবন্ধিত",
+  "Calling service": "কলিং পরিষেবা",
+  "Practice only (no real calls)": "শুধু অনুশীলন (কোনো আসল কল নয়)",
+  "Real calls stay blocked until a number is set, confirmed as registered to the school, and live calling is approved.": "নম্বর ঠিক না হওয়া, স্কুলের নামে নিবন্ধনের নিশ্চিতকরণ এবং লাইভ কলিংয়ের অনুমোদন না হওয়া পর্যন্ত আসল কল বন্ধ থাকে।",
+  "Save calling number": "কলিং নম্বর সেভ করুন",
+  "Parent sees {number}": "অভিভাবক দেখেন {number}",
+  "Calling number not set": "কলিং নম্বর ঠিক করা হয়নি",
+  "The school's calling number is not set up for real calls": "স্কুলের কলিং নম্বর আসল কলের জন্য প্রস্তুত নয়",
+  "Consent file (consent.csv), optional": "সম্মতির ফাইল (consent.csv), ঐচ্ছিক",
+  "One row per parent and kind of call: who agreed or declined, when, and how.": "প্রতিটি অভিভাবক ও কলের ধরনের জন্য একটি সারি: কে সম্মতি দিয়েছেন বা না করেছেন, কখন এবং কীভাবে।",
+  "Connected through MCP. The tool names and field mapping were set up with your SahayakAI contact.": "MCP-র মাধ্যমে যুক্ত। টুলের নাম ও ফিল্ড ম্যাপিং আপনার SahayakAI যোগাযোগের সঙ্গে ঠিক করা হয়েছে।"
 }

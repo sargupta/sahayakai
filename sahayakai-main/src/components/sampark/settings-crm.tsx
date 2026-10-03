@@ -64,12 +64,15 @@ export function CrmSection() {
     const { orgId, school, setSchool, reloadSchool } = useSamparkSchool();
 
     const restSaved = school.crm?.kind === "rest" ? school.crm : null;
+    // An MCP connection is set up with the school's tool team (tool names and field mapping), not typed here.
+    const mcpSaved = school.crm?.kind === "mcp" ? school.crm : null;
     const [baseUrl, setBaseUrl] = useState(restSaved?.baseUrl ?? "");
     const [secretName, setSecretName] = useState(restSaved?.apiKeySecretName ?? "");
     const [savingConn, setSavingConn] = useState(false);
-    const [importing, setImporting] = useState<"rest" | "csv" | null>(null);
+    const [importing, setImporting] = useState<"rest" | "mcp" | "csv" | null>(null);
     const [studentsFile, setStudentsFile] = useState<File | null>(null);
     const [guardiansFile, setGuardiansFile] = useState<File | null>(null);
+    const [consentFile, setConsentFile] = useState<File | null>(null);
     const [fileKey, setFileKey] = useState(0);
 
     const [pollMs, setPollMs] = useState<number | null>(null);
@@ -115,6 +118,7 @@ export function CrmSection() {
             if (input.source === "csv") {
                 setStudentsFile(null);
                 setGuardiansFile(null);
+                setConsentFile(null);
                 setFileKey((k) => k + 1);
             }
         } catch (err) {
@@ -126,12 +130,12 @@ export function CrmSection() {
 
     const importCsv = async () => {
         if (!studentsFile || !guardiansFile) return;
-        if (studentsFile.size > MAX_CSV_BYTES || guardiansFile.size > MAX_CSV_BYTES) {
+        if (studentsFile.size > MAX_CSV_BYTES || guardiansFile.size > MAX_CSV_BYTES || (consentFile?.size ?? 0) > MAX_CSV_BYTES) {
             toast({ title: t("Each file must be 5 MB or smaller."), variant: "destructive" });
             return;
         }
-        const [studentsCsv, guardiansCsv] = await Promise.all([studentsFile.text(), guardiansFile.text()]);
-        await runImport({ source: "csv", studentsCsv, guardiansCsv });
+        const [studentsCsv, guardiansCsv, consentCsv] = await Promise.all([studentsFile.text(), guardiansFile.text(), consentFile ? consentFile.text() : Promise.resolve("")]);
+        await runImport({ source: "csv", studentsCsv, guardiansCsv, ...(consentCsv.trim() !== "" ? { consentCsv } : {}) });
     };
 
     const busy = importing !== null || running;
@@ -139,6 +143,16 @@ export function CrmSection() {
     return (
         <SectionCard title={t("School records")} icon={Database} description={t("Sampark reads classes, students and guardians from your school records. It never changes them.")}>
             <div className="space-y-6">
+                {mcpSaved && (
+                    <div className="space-y-3">
+                        <h3 className="type-body font-semibold text-foreground">{t("Connected through MCP. The tool names and field mapping were set up with your SahayakAI contact.")}</h3>
+                        <Button type="button" onClick={() => runImport({ source: "mcp" })} disabled={busy}>
+                            {importing === "mcp" ? <Loader2 aria-hidden="true" className="animate-spin" /> : <RefreshCw aria-hidden="true" />}
+                            {t("Import now")}
+                        </Button>
+                    </div>
+                )}
+                {!mcpSaved && (
                 <div className="space-y-3">
                     <h3 className="type-body font-semibold text-foreground">{t("Connect to your school records system")}</h3>
                     <div className="space-y-2">
@@ -180,6 +194,7 @@ export function CrmSection() {
                     </div>
                     {connDirty && restSaved && <p className="type-body text-muted-foreground">{t("Save the connection before importing.")}</p>}
                 </div>
+                )}
 
                 <div className="space-y-3 border-t border-border pt-6">
                     <h3 className="type-body font-semibold text-foreground">{t("Or upload CSV files")}</h3>
@@ -202,6 +217,16 @@ export function CrmSection() {
                                 accept=".csv,text/csv"
                                 onChange={(e) => setGuardiansFile(e.target.files?.[0] ?? null)}
                             />
+                        </div>
+                        <div className="space-y-2 md:col-span-2">
+                            <Label htmlFor="csv-consent">{t("Consent file (consent.csv), optional")}</Label>
+                            <Input
+                                id="csv-consent"
+                                type="file"
+                                accept=".csv,text/csv"
+                                onChange={(e) => setConsentFile(e.target.files?.[0] ?? null)}
+                            />
+                            <p className="type-body text-muted-foreground">{t("One row per parent and kind of call: who agreed or declined, when, and how.")}</p>
                         </div>
                     </div>
                     <Button type="button" onClick={importCsv} disabled={!studentsFile || !guardiansFile || busy}>

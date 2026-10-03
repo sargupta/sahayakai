@@ -2147,5 +2147,20 @@
   "{count} children would have been flagged. Teachers already knew about {known}.": "{count} children would have been flagged. Teachers already knew about {known}.",
   "{count} unexplained absences seen. Same-day absence calls are not replayed because they need the class teacher on the day.": "{count} unexplained absences seen. Same-day absence calls are not replayed because they need the class teacher on the day.",
   "Principal": "Principal",
-  "Coordinator": "Coordinator"
+  "Coordinator": "Coordinator",
+  "Calling number": "Calling number",
+  "The number parents see when the school calls. It must be a number registered to the school. Saving it does not start real calls: real calls also need the phase 2 approvals.": "The number parents see when the school calls. It must be a number registered to the school. Saving it does not start real calls: real calls also need the phase 2 approvals.",
+  "Number parents will see (with country code)": "Number parents will see (with country code)",
+  "Enter the full number with country code, for example +919876543210.": "Enter the full number with country code, for example +919876543210.",
+  "This number is registered to the school": "This number is registered to the school",
+  "Calling service": "Calling service",
+  "Practice only (no real calls)": "Practice only (no real calls)",
+  "Real calls stay blocked until a number is set, confirmed as registered to the school, and live calling is approved.": "Real calls stay blocked until a number is set, confirmed as registered to the school, and live calling is approved.",
+  "Save calling number": "Save calling number",
+  "Parent sees {number}": "Parent sees {number}",
+  "Calling number not set": "Calling number not set",
+  "The school's calling number is not set up for real calls": "The school's calling number is not set up for real calls",
+  "Consent file (consent.csv), optional": "Consent file (consent.csv), optional",
+  "One row per parent and kind of call: who agreed or declined, when, and how.": "One row per parent and kind of call: who agreed or declined, when, and how.",
+  "Connected through MCP. The tool names and field mapping were set up with your SahayakAI contact.": "Connected through MCP. The tool names and field mapping were set up with your SahayakAI contact."
 }

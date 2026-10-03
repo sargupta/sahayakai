@@ -12,7 +12,7 @@ import { evaluateGate, type GateInput } from '@/lib/sampark/policy/gate';
 import { createMemorySamparkRepo } from '@/lib/sampark/repo/memory';
 import type { SamparkMode } from '@/types/sampark';
 
-import { campaign, DEFAULT_OPTS, deps, guardian, ORG, prefs, school, scriptedCarrier, seedFamilies, student, testClock, WED_11_IST } from './_fixtures';
+import { campaign, DEFAULT_OPTS, deps, guardian, ORG, prefs, READY_VOBIZ, school, scriptedCarrier, seedFamilies, student, testClock, WED_11_IST } from './_fixtures';
 
 jest.mock('@/lib/logger', () => ({ logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn() } }));
 
@@ -64,7 +64,7 @@ describe('class gate 4 — the gate', () => {
     });
 
     it('positive control: a real mobile at a non-demo school in live mode passes only when the flag is exactly "true"', () => {
-        const live = { school: school({ mode: 'live' }), guardian: guardian('g1', { phoneClass: 'mobile' }) };
+        const live = { school: school({ mode: 'live', carrier: READY_VOBIZ }), guardian: guardian('g1', { phoneClass: 'mobile' }) };
         delete process.env.SAMPARK_LIVE_DIAL_ENABLED;
         expect(evaluateGate(input(live))).toEqual({ kind: 'block', reason: 'mode_forbids_dialing' });
         process.env.SAMPARK_LIVE_DIAL_ENABLED = 'true';

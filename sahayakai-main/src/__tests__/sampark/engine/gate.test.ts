@@ -8,7 +8,7 @@ import { evaluateGate, FREQUENCY_CAP, type GateInput } from '@/lib/sampark/polic
 import { istInstant } from '@/lib/sampark/policy/ist';
 import type { Suppression } from '@/types/sampark';
 
-import { guardian, prefs, school, student, WED_11_IST } from './_fixtures';
+import { guardian, prefs, READY_VOBIZ, school, student, WED_11_IST } from './_fixtures';
 
 const PTM = purposeSpec('ptm_invite');
 const D4 = purposeSpec('emergency_closure');
@@ -112,7 +112,7 @@ describe('evaluateGate — each block reason', () => {
 
     it('8. vobiz while SAMPARK_LIVE_DIAL_ENABLED is not "true" → mode_forbids_dialing', () => {
         delete process.env.SAMPARK_LIVE_DIAL_ENABLED;
-        const live = { carrierKind: 'vobiz' as const, school: school({ mode: 'live' }), guardian: guardian('g1', { phoneClass: 'mobile' }) };
+        const live = { carrierKind: 'vobiz' as const, school: school({ mode: 'live', carrier: READY_VOBIZ }), guardian: guardian('g1', { phoneClass: 'mobile' }) };
         expect(blockReason(input(live))).toBe('mode_forbids_dialing');
         process.env.SAMPARK_LIVE_DIAL_ENABLED = 'TRUE';
         expect(blockReason(input(live))).toBe('mode_forbids_dialing');
