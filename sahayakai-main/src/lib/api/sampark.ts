@@ -295,4 +295,156 @@ export async function fetchAudioBlob(orgId: string, key: string, opts: Opts = {}
     return res.blob();
 }
 
+// ── Slice 2: rules, roles, proposals, pages, backtest ────────────────────────
+
+export type RuleIdDto = 'attendance_talk' | 'absence_today' | 'academic_talk' | 'conduct_talk' | 'recognition' | 'fee_due' | 'fee_overdue';
+
+export interface RuleView {
+    ruleId: RuleIdDto;
+    code: string;
+    approver: string;
+    adopted: boolean;
+    version: number | null;
+    thresholds: Record<string, number | boolean>;
+    defaults: Record<string, number | boolean>;
+    adoptedBy: string | null;
+    adopterName: string | null;
+    adoptedAt: string | null;
+    statementVersion: string | null;
+}
+
+export interface EvidenceItemDto {
+    kind: 'attendance' | 'assessment' | 'note' | 'rubric' | 'fee' | 'summary';
+    date: string | null;
+    text: string;
+    source?: string;
+}
+
+export type ProposalStatusDto = 'pending' | 'approved' | 'dismissed' | 'handled_by_person' | 'needs_attention' | 'expired';
+
+export interface ProposalDto {
+    id: string;
+    purpose: RuleIdDto;
+    studentId: string;
+    section: { grade: number; section: string };
+    summary: string;
+    evidence: EvidenceItemDto[];
+    approverRole: string;
+    routingNote: string | null;
+    alreadyKnown: boolean;
+    status: ProposalStatusDto;
+    notBefore: string | null;
+    expiresAt: string;
+    decidedBy: string | null;
+    decidedAt: string | null;
+    decisionNote: string | null;
+    createdAt: string;
+}
+
+export interface ProposalViewDto {
+    proposal: ProposalDto;
+    studentName: string;
+    section: string;
+    approverLabel: string;
+    previews: { language: ParentLanguage; clips: { kind: string; text: string }[] | null; problem: string | null }[];
+}
+
+export interface ApprovalOutcomeDto {
+    proposal: ProposalDto;
+    dialable: number;
+    blocked: { guardianLabel: string; reason: BlockReason; plain: string }[];
+    needsAttention: string | null;
+}
+
+export interface PageDto {
+    id: string;
+    proposalId: string | null;
+    studentId: string;
+    reason: 'parent_said_did_not_know' | 'no_answer';
+    targets: ('class_teacher' | 'principal')[];
+    status: 'open' | 'acknowledged';
+    createdAt: string;
+}
+
+export interface RoleAssignmentDto {
+    uid: string;
+    role: string;
+    sections: { grade: number; section: string }[];
+    displayName: string;
+    grantedAt: string;
+}
+
+export interface BacktestDto {
+    asOfDates: string[];
+    attendanceWindow: { from: string; to: string } | null;
+    results: {
+        ruleId: RuleIdDto;
+        flaggedChildren: number;
+        alreadyKnown: number;
+        excludedByCode: Record<string, number>;
+        excluded: { studentId: string; code: string; plain: string }[];
+        children: { studentId: string; displayName: string; section: string; firstFlaggedOn: string; summary: string; reasons: string[]; alreadyKnown: boolean }[];
+        note: string | null;
+    }[];
+    weeks: { weekStart: string; byPurpose: Record<string, number>; byApprover: Record<string, number> }[];
+    unexplainedAbsenceDays: number;
+    headlines: string[];
+}
+
+export interface PreviewRulesDto {
+    wouldPropose: { purpose: RuleIdDto; studentName: string; section: string; summary: string }[];
+    excluded: { studentId: string; studentName: string; section: string; purpose: RuleIdDto; code: string; plain: string }[];
+    evaluated: RuleIdDto[];
+    inert: RuleIdDto[];
+}
+
+export function listRules(orgId: string, opts: Opts = {}): Promise<{ statement: string; rules: RuleView[] }> {
+    return apiFetch(orgPath(orgId, '/rules'), { signal: opts.signal });
+}
+export function adoptRule(orgId: string, ruleId: RuleIdDto, body: { thresholds: Record<string, number | boolean>; adopterName: string; acknowledged: true }): Promise<unknown> {
+    return apiFetch(orgPath(orgId, `/rules/${encodeURIComponent(ruleId)}`), { method: 'PUT', body });
+}
+export function withdrawRule(orgId: string, ruleId: RuleIdDto): Promise<unknown> {
+    return apiFetch(orgPath(orgId, `/rules/${encodeURIComponent(ruleId)}`), { method: 'DELETE' });
+}
+export function previewRules(orgId: string, opts: Opts = {}): Promise<PreviewRulesDto> {
+    return apiFetch(orgPath(orgId, '/rules/preview'), { signal: opts.signal });
+}
+export function runRulesNow(orgId: string): Promise<{ created: number; existing: number }> {
+    return apiFetch(orgPath(orgId, '/rules/run'), { method: 'POST' });
+}
+export function runBacktestReport(orgId: string, body: { weeks?: number; endDate?: string } = {}, opts: Opts = {}): Promise<BacktestDto> {
+    return apiFetch(orgPath(orgId, '/rules/backtest'), { method: 'POST', body, signal: opts.signal });
+}
+export async function listRoleAssignments(orgId: string, opts: Opts = {}): Promise<RoleAssignmentDto[]> {
+    return (await apiFetch<{ roles: RoleAssignmentDto[] }>(orgPath(orgId, '/roles'), { signal: opts.signal })).roles;
+}
+export function grantRoleAssignment(orgId: string, body: { uid: string; role: string; sections: { grade: number; section: string }[]; displayName: string }): Promise<RoleAssignmentDto> {
+    return apiFetch(orgPath(orgId, '/roles'), { method: 'POST', body });
+}
+export function revokeRoleAssignment(orgId: string, body: { uid: string; role: string }): Promise<unknown> {
+    return apiFetch(orgPath(orgId, '/roles'), { method: 'DELETE', body });
+}
+export async function listProposalViews(orgId: string, status?: ProposalStatusDto, opts: Opts = {}): Promise<ProposalViewDto[]> {
+    return (await apiFetch<{ proposals: ProposalViewDto[] }>(orgPath(orgId, `/proposals${qs({ status })}`), { signal: opts.signal })).proposals;
+}
+export function approveProposalRequest(orgId: string, id: string): Promise<ApprovalOutcomeDto> {
+    return apiFetch(orgPath(orgId, `/proposals/${encodeURIComponent(id)}/approve`), { method: 'POST' });
+}
+export function dismissProposalRequest(orgId: string, id: string): Promise<unknown> {
+    return apiFetch(orgPath(orgId, `/proposals/${encodeURIComponent(id)}/dismiss`), { method: 'POST', body: {} });
+}
+export function handleProposalRequest(orgId: string, id: string): Promise<unknown> {
+    return apiFetch(orgPath(orgId, `/proposals/${encodeURIComponent(id)}/handle`), { method: 'POST' });
+}
+export function confirmClassAbsencesRequest(orgId: string, body: { grade: number; section: string }): Promise<{ confirmed: boolean; summary: { created: number } }> {
+    return apiFetch(orgPath(orgId, '/absences/confirm'), { method: 'POST', body });
+}
+export async function listPageTasks(orgId: string, opts: Opts = {}): Promise<PageDto[]> {
+    return (await apiFetch<{ pages: PageDto[] }>(orgPath(orgId, '/pages?status=open'), { signal: opts.signal })).pages;
+}
+export function acknowledgePageRequest(orgId: string, id: string): Promise<unknown> {
+    return apiFetch(orgPath(orgId, `/pages/${encodeURIComponent(id)}/acknowledge`), { method: 'POST' });
+}
+
 export { ApiError };

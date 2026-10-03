@@ -38,9 +38,11 @@ function Tabs({ orgId }: { orgId: string }) {
     const base = `/sampark/${encodeURIComponent(orgId)}`;
     const tabs = [
         { href: base, label: t("Today"), exact: true },
+        { href: `${base}/approvals`, label: t("Approvals"), exact: false },
         { href: `${base}/campaigns`, label: t("Campaigns"), exact: false },
         { href: `${base}/calls`, label: t("Calls"), exact: false },
         { href: `${base}/families`, label: t("Families"), exact: false },
+        { href: `${base}/rules`, label: t("Rules"), exact: false },
         { href: `${base}/settings`, label: t("Settings"), exact: false },
     ];
     const decoded = safeDecode(pathname);

@@ -45,6 +45,13 @@ export function purposeLabel(t: Translate, id: PurposeId): string {
         case 'ptm_invite': return t("PTM invitation");
         case 'event_invite': return t("Event invitation");
         case 'emergency_closure': return t("Emergency closure");
+        case 'attendance_talk': return t("Request to talk: attendance");
+        case 'absence_today': return t("Same-day absence");
+        case 'academic_talk': return t("Request to talk: progress");
+        case 'conduct_talk': return t("Request to talk: conduct");
+        case 'recognition': return t("Good news about a child");
+        case 'fee_due': return t("Fee due soon");
+        case 'fee_overdue': return t("Fee overdue");
         default: return id;
     }
 }
@@ -416,4 +423,91 @@ export function serverErrorText(t: Translate, message: string): string {
         case 'LIVE_DIAL_DISABLED': return t("Only Practice mode is available until the phase 2 approvals are in place.");
         default: return message;
     }
+}
+
+
+// ── Slice 2: rules, roles and approvals ──────────────────────────────────────
+
+export type RuleLabelId = 'attendance_talk' | 'absence_today' | 'academic_talk' | 'conduct_talk' | 'recognition' | 'fee_due' | 'fee_overdue';
+
+/** What makes a rule fire, in the school's words. Shown beside the thresholds the school adopts. */
+export function ruleDescription(t: Translate, id: RuleLabelId): string {
+    switch (id) {
+        case 'attendance_talk': return t("A child is absent for several school days in a row, or attendance for the session falls below a set percentage.");
+        case 'absence_today': return t("A child is marked absent by 10 am with no leave note. Only after the class teacher confirms that no message came through.");
+        case 'academic_talk': return t("The average of at least two assessments is low, or results fall across at least two assessments. Never one test, and a missed test is never scored as zero.");
+        case 'conduct_talk': return t("At least two concern notes in two weeks, at least one from a teacher. Notes from other staff can support but never start this.");
+        case 'recognition': return t("At least two positive notes from at least two people in two weeks, or a move up a level on the progress card.");
+        case 'fee_due': return t("A fee is due within a set number of days. The amount is only said after the parent confirms they are the child's parent.");
+        case 'fee_overdue': return t("A fee is overdue. At most two automated calls per fee; after that the accounts officer takes over.");
+        default: return '';
+    }
+}
+
+export function roleLabel(t: Translate, role: string): string {
+    switch (role) {
+        case 'principal': return t("Principal");
+        case 'coordinator': return t("Coordinator");
+        case 'class_teacher': return t("Class teacher");
+        case 'accounts': return t("Accounts");
+        case 'transport': return t("Transport desk");
+        case 'office': return t("Office");
+        case 'counsellor': return t("Counsellor");
+        default: return role;
+    }
+}
+
+export const ASSIGNABLE_ROLE_IDS = ['principal', 'coordinator', 'class_teacher', 'accounts', 'transport', 'office', 'counsellor'] as const;
+
+export function thresholdLabel(t: Translate, key: string): string {
+    switch (key) {
+        case 'minConsecutiveAbsentDays': return t("School days in a row absent");
+        case 'minSessionDaysElapsed': return t("School days before the attendance percentage counts");
+        case 'sessionAttendancePercentBelow': return t("Attendance below (%)");
+        case 'absentByHour': return t("Absent by (hour, IST)");
+        case 'latestProposalHour': return t("Latest hour to propose (IST)");
+        case 'minAssessments': return t("Assessments averaged");
+        case 'averagePercentBelow': return t("Average below (%)");
+        case 'dropAssessments': return t("Successive falling assessments");
+        case 'minTotalDropPoints': return t("Total fall (percentage points)");
+        case 'windowDays': return t("Window (days)");
+        case 'minConcernNotes': return t("Concern notes needed");
+        case 'minPositiveNotes': return t("Positive notes needed");
+        case 'minRespondents': return t("Different people needed");
+        case 'rubricLevelUp': return t("Also count a move up a level on the card");
+        case 'autoApprove': return t("Approve without a person");
+        case 'daysBeforeDue': return t("Days before the due date");
+        case 'overdueAfterDays': return t("Days overdue before the first call");
+        case 'stopAfterDays': return t("Days overdue before the accounts officer takes over");
+        default: return key;
+    }
+}
+
+export type ProposalStatusLabelId = 'pending' | 'approved' | 'dismissed' | 'handled_by_person' | 'needs_attention' | 'expired';
+
+export function proposalStatusLabel(t: Translate, status: ProposalStatusLabelId): string {
+    switch (status) {
+        case 'pending': return t("Waiting for you");
+        case 'approved': return t("Approved");
+        case 'dismissed': return t("Not now");
+        case 'handled_by_person': return t("A person is calling");
+        case 'needs_attention': return t("Needs a person");
+        case 'expired': return t("Expired");
+        default: return status;
+    }
+}
+
+export function proposalStatusTone(status: ProposalStatusLabelId): Tone {
+    switch (status) {
+        case 'pending': return 'info';
+        case 'approved': return 'success';
+        case 'needs_attention': return 'warning';
+        default: return 'neutral';
+    }
+}
+
+export function pageReasonLabel(t: Translate, reason: 'parent_said_did_not_know' | 'no_answer'): string {
+    return reason === 'parent_said_did_not_know'
+        ? t("The parent pressed 2: they did not know the child was absent")
+        : t("Nobody answered the call about the absence");
 }
