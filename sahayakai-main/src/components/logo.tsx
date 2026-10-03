@@ -11,9 +11,9 @@ export const Logo: FC = () => {
   return (
     <div className="flex items-center gap-2">
       <img
-        src="/icons/icon-192x192.png"
+        src="/icons/mark.png"
         alt="SahayakAI logo"
-        className="h-10 w-10 rounded-lg object-cover shrink-0"
+        className="h-10 w-10 object-contain shrink-0"
       />
       <div className="flex flex-col transition-all group-data-[collapsible=icon]:-ml-12 group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:opacity-0">
         <h1 className="font-headline text-2xl font-bold text-foreground leading-none">

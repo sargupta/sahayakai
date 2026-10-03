@@ -1,11 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/app_locale.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/i18n/locale_provider.dart';
+import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
 import '../../../shared/domain/tool_prefill.dart';
@@ -16,7 +20,11 @@ import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
+import '../../vidya/domain/deliverable.dart';
+import '../../vidya/presentation/background_generation_controller.dart';
+import '../../vidya/presentation/deliverables_controller.dart';
 import '../../vidya/presentation/widgets/inline_field_mic.dart';
+import '../data/lesson_plan_repository.dart';
 import '../domain/lesson_plan.dart';
 import 'lesson_plan_controller.dart';
 import 'widgets/lesson_plan_error_view.dart';
@@ -50,6 +58,7 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
   final _resultKey = GlobalKey();
 
   final Set<String> _grades = <String>{};
+  final Set<LessonInclude> _includes = <LessonInclude>{};
   String? _subject;
   late AppLocale _language;
   ResourceLevel _resource = ResourceLevel.low;
@@ -123,10 +132,61 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
       difficultyLevel: _difficulty,
       useRuralContext: _useRuralContext,
       imageDataUri: _image?.dataUri,
+      includes: _includes,
     );
     _lastRequest = request;
     ref.read(lessonPlanControllerProvider.notifier).generate(request);
   }
+
+  /// v3 screen 06 — hand the running generation to VIDYA and leave: she finishes
+  /// it off-screen (the orb rides along, working) and drops the plan into the
+  /// deliver tray when done (the orb turns green). Keeps the tool provider alive
+  /// across the pop with a subscription, then resets it so a later visit starts
+  /// on a blank form.
+  void _minimise() {
+    final l10n = context.l10n;
+    final container = ProviderScope.containerOf(context, listen: false);
+    final request = _lastRequest;
+    final keepAlive = container.listen<AsyncValue<LessonPlan?>>(
+      lessonPlanControllerProvider,
+      (_, _) {},
+    );
+    // Fire-and-forget: it outlives this screen by design.
+    unawaited(
+      runMinimisedGeneration<LessonPlan>(
+        controller: container.read(
+          backgroundGenerationControllerProvider.notifier,
+        ),
+        deliverables: container.read(deliverablesControllerProvider.notifier),
+        label: l10n.lessonPlanTitle,
+        awaitResult: () =>
+            container.read(lessonPlanControllerProvider.future),
+        toDeliverable: (plan) => Deliverable(
+          id: 'bg-lesson-${DateTime.now().microsecondsSinceEpoch}',
+          title: plan.title.isEmpty ? l10n.lessonPlanTitle : plan.title,
+          subtitle: plan.title.isEmpty ? null : plan.title,
+          text: lessonPlanAsPlainText(plan, l10n),
+          shareSubject: plan.title.isEmpty ? null : plan.title,
+          language: plan.language,
+          onSave: (request != null && plan.raw != null)
+              ? () => container
+                    .read(lessonPlanRepositoryProvider)
+                    .save(plan: plan, request: request)
+              : null,
+        ),
+        keepAlive: keepAlive,
+        onReset: () => container.invalidate(lessonPlanControllerProvider),
+      ),
+    );
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go(Routes.home);
+    }
+  }
+
+  /// Abandon the running generation and return to the form.
+  void _stop() => ref.read(lessonPlanControllerProvider.notifier).clear();
 
   /// Brings the result masthead to the top of the viewport when a fresh plan
   /// lands. Honours reduce-motion by jumping (no scroll tween).
@@ -204,6 +264,10 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
       // Hide the sticky Generate button once a plan is on screen — the
       // document's own action bar (Regenerate / Copy) takes over.
       onSubmit: (state.isLoading || hasResult) ? null : _submit,
+      // While generating, the busy button becomes "Minimise to orb / Stop"
+      // (v3 06) so the teacher can leave and let VIDYA finish.
+      onMinimise: _minimise,
+      onStop: _stop,
       result: KeyedSubtree(key: _resultKey, child: result),
       child: Form(
         key: _formKey,
@@ -219,6 +283,12 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
             _gradeField(l10n),
             const SizedBox(height: AppSpacing.space6),
             _subjectField(l10n),
+            if (_grades.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.space4),
+              _ncertBanner(l10n),
+            ],
+            const SizedBox(height: AppSpacing.space6),
+            _includeField(l10n),
             const SizedBox(height: AppSpacing.space6),
             _imageField(l10n),
             const SizedBox(height: AppSpacing.space8),
@@ -305,6 +375,115 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
             DropdownMenuItem<String?>(value: subject, child: Text(subject)),
         ],
         onChanged: (value) => setState(() => _subject = value),
+      ),
+    );
+  }
+
+  /// v3 05 "Include" — optional components the teacher asks the plan to
+  /// emphasise. Genuinely wired: selected chips fold into the model prompt (see
+  /// [LessonPlanRequestDto]). Empty by default, so a plain plan is unchanged.
+  Widget _includeField(AppLocalizations l10n) {
+    return LabeledField(
+      label: l10n.lessonPlanIncludeLabel,
+      optionalLabel: l10n.lessonPlanOptional,
+      leadingIcon: LucideIcons.listChecks,
+      child: Wrap(
+        spacing: AppSpacing.space2,
+        runSpacing: AppSpacing.space2,
+        children: [
+          for (final item in LessonInclude.values)
+            FilterChip(
+              label: Text(_includeLabel(l10n, item)),
+              selected: _includes.contains(item),
+              showCheckmark: false,
+              materialTapTargetSize: MaterialTapTargetSize.padded,
+              onSelected: (selected) => setState(() {
+                if (selected) {
+                  _includes.add(item);
+                } else {
+                  _includes.remove(item);
+                }
+              }),
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _includeLabel(AppLocalizations l10n, LessonInclude item) {
+    switch (item) {
+      case LessonInclude.activity:
+        return l10n.lessonPlanIncludeActivity;
+      case LessonInclude.boardWork:
+        return l10n.lessonPlanIncludeBoardWork;
+      case LessonInclude.homework:
+        return l10n.lessonPlanIncludeHomework;
+      case LessonInclude.storyHook:
+        return l10n.lessonPlanIncludeStoryHook;
+    }
+  }
+
+  /// v3 05 NCERT-alignment reassurance. Honest: the plan really is checked
+  /// against the NCERT syllabus for the chosen class server-side (the flow runs
+  /// `validateChapterForFlow(grade, subject, topic)` and returns any warning,
+  /// which the result view already surfaces). Shown once a grade is picked; it
+  /// promises alignment for that class, never a chapter number the app has not
+  /// been given.
+  Widget _ncertBanner(AppLocalizations l10n) {
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    final grade = kGradeLevels.firstWhere(
+      _grades.contains,
+      orElse: () => _grades.first,
+    );
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.space3),
+      decoration: BoxDecoration(
+        color: scheme.tertiary.withValues(alpha: 0.08),
+        borderRadius: AppRadius.rMd,
+        border: Border.all(color: scheme.tertiary.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 26,
+            height: 26,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: scheme.tertiary,
+              borderRadius: AppRadius.rSm,
+            ),
+            child: Text(
+              'N',
+              style: text.labelMedium?.copyWith(
+                color: scheme.onTertiary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.space3),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l10n.lessonPlanNcertTitle,
+                  style: text.labelLarge?.copyWith(color: scheme.tertiary),
+                ),
+                const SizedBox(height: AppSpacing.space1),
+                Text(
+                  l10n.lessonPlanNcertBody(grade),
+                  style: text.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

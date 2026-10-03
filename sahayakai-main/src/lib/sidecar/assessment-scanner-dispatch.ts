@@ -29,6 +29,7 @@ import type {
 } from '@/ai/schemas/assessment-scanner-schemas';
 import { getChapterById, getChaptersForGrade } from '@/data/ncert';
 import { getFeatureFlags, type SidecarMode } from '@/lib/feature-flags';
+import { logger } from '@/lib/logger';
 
 import {
     callSidecarAssessmentScanner,
@@ -223,16 +224,12 @@ function logDispatch(
     decision: AssessmentScannerSidecarDecision,
     payload: Record<string, unknown>,
 ): void {
-    // eslint-disable-next-line no-console
-    console.log(
-        JSON.stringify({
-            event: 'assessment_scanner.dispatch',
-            mode: decision.mode,
-            reason: decision.reason,
-            bucket: decision.bucket,
-            ...payload,
-        }),
-    );
+    logger.info('assessment_scanner.dispatch', 'assessment_scanner.dispatch', {
+        mode: decision.mode,
+        reason: decision.reason,
+        bucket: decision.bucket,
+        ...payload,
+    });
 }
 
 export async function dispatchAssessmentScanner(

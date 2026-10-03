@@ -609,6 +609,13 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
                   ),
                 ),
         ),
+        // v3 screen 14 — an honest "what this call covers" plan. Not a live
+        // in-call script (the AI, not the teacher, is on the line): it describes
+        // truthfully how the warm outreach call goes and what happens after.
+        if (!state.isBusy) ...[
+          const SizedBox(height: AppSpacing.space5),
+          const _CallPlanCard(),
+        ],
         // The decision bar is NOT here — it is pinned as the Scaffold footer
         // (see `_stickyDecisionBar`) so it stays visible while this body scrolls.
       ],
@@ -1078,6 +1085,78 @@ class _ClassPicker extends StatelessWidget {
       ],
       value: value,
       onChanged: onChanged,
+    );
+  }
+}
+
+/// v3 screen 14 — an honest pre-call plan. The parent call is placed by VIDYA
+/// server-side (the teacher is not on the line), so this is NOT a live "say this
+/// / mute / end call" script: it truthfully describes how the warm outreach call
+/// goes, and what VIDYA does after it. Each point matches the real agent flow
+/// (warm tone, parent's language, a post-call summary + follow-up draft).
+class _CallPlanCard extends StatelessWidget {
+  const _CallPlanCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+
+    Widget point(String label) => Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.space2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(LucideIcons.check, size: AppIconSize.inline, color: scheme.secondary),
+          const SizedBox(width: AppSpacing.space3),
+          Expanded(
+            child: Text(
+              label,
+              style: text.bodyMedium?.copyWith(height: 1.4),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return AppCard(
+      variant: AppCardVariant.inset,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            l10n.parentHotlineCoverTitle,
+            style: text.labelLarge?.copyWith(color: scheme.primary),
+          ),
+          const SizedBox(height: AppSpacing.space3),
+          point(l10n.parentHotlineCoverPoint1),
+          point(l10n.parentHotlineCoverPoint2),
+          point(l10n.parentHotlineCoverPoint3),
+          const SizedBox(height: AppSpacing.space1),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                LucideIcons.clipboardCheck,
+                size: AppIconSize.inline,
+                color: scheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: AppSpacing.space3),
+              Expanded(
+                child: Text(
+                  l10n.parentHotlineCoverAfter,
+                  style: text.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

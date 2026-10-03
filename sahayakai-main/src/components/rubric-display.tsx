@@ -18,12 +18,15 @@ import { ResultShell } from "@/components/ui/result-shell";
 import { QuickShareButton } from "@/components/quick-share-button";
 import { exportElementToPdf } from "@/lib/export-pdf";
 import { getResultShellDict } from "@/lib/result-shell-i18n";
+import { buildArtifactActions, omit, OMIT_REASONS } from "@/lib/artifact-actions";
 
 type RubricDisplayProps = {
     rubric: RubricGeneratorOutput;
     selectedLanguage?: string;
     /** Library id of this artifact (useGenerator().contentId); Save upserts it. */
     contentId?: string | null;
+    /** Re-run the generator with the same inputs; absent when viewing a saved artifact. */
+    onRegenerate?: () => void;
 };
 
 const PDF_ID = "rubric-pdf";
@@ -32,6 +35,7 @@ export const RubricDisplay: FC<RubricDisplayProps> = ({
     rubric,
     contentId,
     selectedLanguage,
+    onRegenerate,
 }) => {
     const { toast } = useToast();
     const libraryId = useLibraryId(contentId, rubric);
@@ -140,11 +144,19 @@ ${criterion.levels
             title={rubric.title}
             description={rubric.description}
             icon={<ClipboardCheck />}
-            actions={[
-                { label: t.copy, icon: <Copy />, onClick: handleCopy },
-                { label: t.save, icon: <Save />, onClick: handleSave },
-                { label: t.pdf, icon: <Download />, onClick: handleDownload },
-            ]}
+            actions={buildArtifactActions(
+                {
+                    copy: { onClick: handleCopy },
+                    save: { onClick: handleSave },
+                    download: { onClick: handleDownload },
+                    share: omit(OMIT_REASONS.VIA_QUICK_SHARE),
+                    regenerate: onRegenerate
+                        ? { onClick: onRegenerate }
+                        : omit(OMIT_REASONS.NO_GENERATOR),
+                    edit: omit(OMIT_REASONS.NOT_EDITABLE),
+                },
+                t,
+            )}
             extraActions={
                 <QuickShareButton contentType="rubric" onSave={handleSave} />
             }

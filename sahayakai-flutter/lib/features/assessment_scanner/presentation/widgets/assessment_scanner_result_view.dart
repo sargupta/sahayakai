@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/i18n/gen/app_localizations.dart';
 import '../../../../core/i18n/l10n_ext.dart';
+import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/domain/tool_prefill.dart';
 import '../../../../shared/motion/animated_entrance.dart';
 import '../../../../shared/widgets/ai_text.dart';
 import '../../../../shared/widgets/app_badge.dart';
@@ -12,6 +15,7 @@ import '../../../../shared/widgets/bullet_dot.dart';
 import '../../../../shared/widgets/document_sheet.dart';
 import '../../../../shared/widgets/empty_view.dart';
 import '../../../../shared/widgets/note_banner.dart';
+import '../../../../shared/widgets/primary_button.dart';
 import '../../../../shared/widgets/read_aloud_button.dart';
 import '../../../../shared/widgets/result_actions_bar.dart';
 import '../../../../shared/widgets/score_ring.dart';
@@ -77,8 +81,14 @@ class AssessmentScannerResultView extends StatelessWidget {
         ),
     ];
 
+    final weakConcepts = _weakConcepts(result);
+
     final blocks = <Widget>[
       _ScoreHero(result: result),
+      // VIDYA reads the scorecard and offers the obvious next move (v3 screen
+      // 12): a remedial worksheet on the concepts the student missed, or a
+      // message home. Only when there are weak concepts to act on.
+      if (weakConcepts.isNotEmpty) _RemedialPrompt(concepts: weakConcepts),
       if (result.imageQualityWarnings.isNotEmpty)
         _QualityCard(warnings: result.imageQualityWarnings),
       if (result.questions.isNotEmpty)
@@ -113,6 +123,107 @@ class AssessmentScannerResultView extends StatelessWidget {
           ? null
           : _ActionBar(result: result, onRegenerate: onRegenerate!),
       children: revealed,
+    );
+  }
+}
+
+/// The distinct concepts the student did NOT get full marks on — the weak
+/// spots, in first-seen order. Drives the remedial prompt.
+List<String> _weakConcepts(AssessmentResult result) {
+  final seen = <String>{};
+  final out = <String>[];
+  for (final q in result.questions) {
+    if (q.outcome == QuestionOutcome.correct) continue;
+    final concept = q.conceptTested?.trim();
+    if (concept == null || concept.isEmpty) continue;
+    if (seen.add(concept.toLowerCase())) out.add(concept);
+  }
+  return out;
+}
+
+/// VIDYA's contextual next-move card (v3 screen 12): a saffron-tinted panel that
+/// reads the weak concepts back as chips and offers to build a remedial
+/// worksheet on them (pushing the Worksheet Wizard with them prefilled) or to
+/// message the parent. A [StatelessWidget] using `context.push`, so it needs no
+/// controller.
+class _RemedialPrompt extends StatelessWidget {
+  const _RemedialPrompt({required this.concepts});
+
+  final List<String> concepts;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.space4),
+      decoration: BoxDecoration(
+        color: scheme.primaryContainer.withValues(alpha: 0.5),
+        borderRadius: AppRadius.rLg,
+        border: Border.all(color: scheme.primary.withValues(alpha: 0.4)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              // A small saffron orb — VIDYA speaking from context.
+              Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    center: const Alignment(-0.35, -0.4),
+                    radius: 0.95,
+                    colors: [
+                      Color.lerp(scheme.primary, Colors.white, 0.6)!,
+                      scheme.primary,
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.space2),
+              Text(
+                l10n.vidyaEyebrow,
+                style: text.labelSmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                  letterSpacing: 0.6,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.space2),
+          Text(l10n.scanRemedialBody, style: text.bodyMedium),
+          const SizedBox(height: AppSpacing.space3),
+          Wrap(
+            spacing: AppSpacing.space2,
+            runSpacing: AppSpacing.space2,
+            children: [
+              for (final concept in concepts)
+                AppBadge(label: concept, size: AppBadgeSize.small),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.space4),
+          PrimaryButton(
+            label: l10n.scanRemedialBuild,
+            icon: LucideIcons.filePlus,
+            onPressed: () => context.push(
+              Routes.worksheetWizard,
+              extra: ToolPrefill(topic: concepts.join(', ')),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.space2),
+          SecondaryButton(
+            label: l10n.scanRemedialMessageParents,
+            icon: LucideIcons.messageCircle,
+            onPressed: () => context.push(Routes.parentMessage),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -14,6 +14,7 @@ type ResultShellKey =
     | "edit"
     | "cancel"
     | "save"
+    | "share"
     | "copy"
     | "download"
     | "pdf"
@@ -85,6 +86,7 @@ export const RESULT_SHELL_I18N: Record<string, Dict> = {
         edit: "Edit",
         cancel: "Cancel",
         save: "Save",
+        share: "Share",
         copy: "Copy",
         download: "Download",
         pdf: "PDF",
@@ -150,6 +152,7 @@ export const RESULT_SHELL_I18N: Record<string, Dict> = {
         edit: "संपादित करें",
         cancel: "रद्द करें",
         save: "सहेजें",
+        share: "साझा करें",
         copy: "कॉपी करें",
         download: "डाउनलोड",
         pdf: "PDF",
@@ -215,6 +218,7 @@ export const RESULT_SHELL_I18N: Record<string, Dict> = {
         edit: "সম্পাদনা",
         cancel: "বাতিল",
         save: "সংরক্ষণ",
+        share: "শেয়ার করুন",
         copy: "কপি",
         download: "ডাউনলোড",
         pdf: "PDF",
@@ -280,6 +284,7 @@ export const RESULT_SHELL_I18N: Record<string, Dict> = {
         edit: "సవరించండి",
         cancel: "రద్దు చేయి",
         save: "సేవ్ చేయండి",
+        share: "షేర్ చేయండి",
         copy: "కాపీ",
         download: "డౌన్‌లోడ్",
         pdf: "PDF",
@@ -345,6 +350,7 @@ export const RESULT_SHELL_I18N: Record<string, Dict> = {
         edit: "संपादित करा",
         cancel: "रद्द करा",
         save: "जतन करा",
+        share: "शेअर करा",
         copy: "कॉपी",
         download: "डाउनलोड",
         pdf: "PDF",
@@ -410,6 +416,7 @@ export const RESULT_SHELL_I18N: Record<string, Dict> = {
         edit: "திருத்து",
         cancel: "ரத்து",
         save: "சேமி",
+        share: "பகிர்",
         copy: "நகலெடு",
         download: "பதிவிறக்கம்",
         pdf: "PDF",
@@ -475,6 +482,7 @@ export const RESULT_SHELL_I18N: Record<string, Dict> = {
         edit: "સંપાદિત કરો",
         cancel: "રદ કરો",
         save: "સાચવો",
+        share: "શેર કરો",
         copy: "કૉપિ",
         download: "ડાઉનલોડ",
         pdf: "PDF",
@@ -540,6 +548,7 @@ export const RESULT_SHELL_I18N: Record<string, Dict> = {
         edit: "ಸಂಪಾದಿಸಿ",
         cancel: "ರದ್ದುಮಾಡಿ",
         save: "ಉಳಿಸಿ",
+        share: "ಹಂಚಿಕೊಳ್ಳಿ",
         copy: "ನಕಲಿಸಿ",
         download: "ಡೌನ್‌ಲೋಡ್",
         pdf: "PDF",
@@ -605,6 +614,7 @@ export const RESULT_SHELL_I18N: Record<string, Dict> = {
         edit: "ਸੰਪਾਦਿਤ ਕਰੋ",
         cancel: "ਰੱਦ ਕਰੋ",
         save: "ਸੰਭਾਲੋ",
+        share: "ਸਾਂਝਾ ਕਰੋ",
         copy: "ਕਾਪੀ",
         download: "ਡਾਊਨਲੋਡ",
         pdf: "PDF",
@@ -670,6 +680,7 @@ export const RESULT_SHELL_I18N: Record<string, Dict> = {
         edit: "എഡിറ്റ് ചെയ്യുക",
         cancel: "റദ്ദാക്കുക",
         save: "സേവ് ചെയ്യുക",
+        share: "പങ്കിടുക",
         copy: "പകർത്തുക",
         download: "ഡൗൺലോഡ്",
         pdf: "PDF",
@@ -735,6 +746,7 @@ export const RESULT_SHELL_I18N: Record<string, Dict> = {
         edit: "ସମ୍ପାଦନ",
         cancel: "ବାତିଲ",
         save: "ସଞ୍ଚୟ",
+        share: "ସେୟାର କରନ୍ତୁ",
         copy: "କପି",
         download: "ଡାଉନଲୋଡ୍",
         pdf: "PDF",

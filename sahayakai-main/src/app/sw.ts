@@ -13,8 +13,9 @@
  *   - runtimeCaching: api-config SWR, Google Fonts, app icons
  */
 import type { PrecacheEntry, RuntimeCaching, SerwistGlobalConfig } from "serwist";
-import { CacheFirst, ExpirationPlugin, Serwist, StaleWhileRevalidate } from "serwist";
+import { CacheFirst, ExpirationPlugin, NetworkOnly, Serwist, StaleWhileRevalidate } from "serwist";
 import { defaultCache } from "@serwist/next/worker";
+import { apiNetworkOnlyMatcher, buildRuntimeCaching } from "@/lib/pwa/runtime-caching";
 
 declare global {
     interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -25,19 +26,12 @@ declare global {
 declare const self: ServiceWorkerGlobalScope;
 
 // Custom entries come BEFORE defaultCache so they win route matching.
-const runtimeCaching: RuntimeCaching[] = [
-    {
-        matcher: /\/api\/(config|user|health)/,
-        handler: new StaleWhileRevalidate({
-            cacheName: "api-config-cache",
-            plugins: [
-                new ExpirationPlugin({
-                    maxEntries: 32,
-                    maxAgeSeconds: 24 * 60 * 60,
-                }),
-            ],
-        }),
-    },
+//
+// The API rule is first and deliberately absolute: same-origin /api/** is
+// never written to a cache. See src/lib/pwa/runtime-caching.ts for why the
+// previous StaleWhileRevalidate "api-config-cache" rule (which, being an
+// unanchored regex, also swallowed /api/user/profile) had to go.
+const assetCaching: RuntimeCaching[] = [
     {
         matcher: /^https:\/\/fonts\.googleapis\.com/,
         handler: new StaleWhileRevalidate({
@@ -74,8 +68,17 @@ const runtimeCaching: RuntimeCaching[] = [
             ],
         }),
     },
-    ...defaultCache,
 ];
+
+// The API rule goes first and nothing may be inserted ahead of it. Serwist is
+// first-match-wins, so this is what stops serwist's own NetworkFirst "apis"
+// entry (further down defaultCache) from ever seeing an API request.
+// `findApiCachingViolations` in the test suite enforces the ordering.
+const runtimeCaching: RuntimeCaching[] = buildRuntimeCaching(
+    { matcher: apiNetworkOnlyMatcher, handler: new NetworkOnly() },
+    assetCaching,
+    defaultCache,
+);
 
 const serwist = new Serwist({
     precacheEntries: self.__SW_MANIFEST,
@@ -96,3 +99,21 @@ const serwist = new Serwist({
 });
 
 serwist.addEventListeners();
+
+// Recovery for installs that already hold poisoned API responses. Clients
+// running the old worker cached authenticated GET /api/** under these names,
+// with a 24h expiry; without this they keep serving that data until it ages
+// out. Deleting the caches is safe — every entry is re-fetchable, and the
+// new rules never write to them again. Remove once the fleet has rolled over.
+const POISONED_CACHES = ["apis", "api-config-cache"];
+
+self.addEventListener("activate", (event) => {
+    event.waitUntil(
+        (async () => {
+            const names = await caches.keys();
+            await Promise.all(
+                names.filter((n) => POISONED_CACHES.includes(n)).map((n) => caches.delete(n)),
+            );
+        })(),
+    );
+});

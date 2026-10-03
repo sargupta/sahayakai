@@ -85,7 +85,7 @@ steps:
       - --project=$PROJECT_ID
       - --no-traffic
       - --tag=sha-$SHORT_SHA
-      - --update-secrets=TWILIO_ACCOUNT_SID=TWILIO_ACCOUNT_SID:latest,TWILIO_AUTH_TOKEN=TWILIO_AUTH_TOKEN:latest,SAHAYAKAI_AGENTS_AUDIENCE=SAHAYAKAI_AGENTS_AUDIENCE:latest,PROFILE_COMPLETE_COOKIE_SECRET=PROFILE_COMPLETE_COOKIE_SECRET:latest,DEMO_CALL_PEPPER=DEMO_CALL_PEPPER:latest,DEMO_CALL_ENC_KEY=DEMO_CALL_ENC_KEY:latest
+      - --update-secrets=TWILIO_ACCOUNT_SID=TWILIO_ACCOUNT_SID:latest,TWILIO_AUTH_TOKEN=TWILIO_AUTH_TOKEN:latest,SAHAYAKAI_AGENTS_AUDIENCE=SAHAYAKAI_AGENTS_AUDIENCE:latest,PROFILE_COMPLETE_COOKIE_SECRET=PROFILE_COMPLETE_COOKIE_SECRET:latest,DEMO_CALL_PEPPER=DEMO_CALL_PEPPER:latest,DEMO_CALL_ENC_KEY=DEMO_CALL_ENC_KEY:latest,VOBIZ_AUTH_ID=VOBIZ_AUTH_ID:latest,VOBIZ_AUTH_TOKEN=VOBIZ_AUTH_TOKEN:latest,VOBIZ_FROM_NUMBER=VOBIZ_FROM_NUMBER:latest
       # Sidecar URL — pinned to PROD service so a fresh deploy cannot
       # silently inherit a staging URL from a previous ad-hoc env override.
       # 2026-06-06 (parent-call attendance diagnosis): the live revision was
@@ -107,7 +107,23 @@ steps:
       # DAILY_CAP=50 = conservative soft-launch spend ceiling (code default
       # is 500); raise once abuse patterns are understood. Pepper + enc-key
       # bound via --update-secrets above; Twilio creds already present.
-      - --update-env-vars=NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL=https://sahayakai-agents-zwydpvyuca-as.a.run.app,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248-mumbai,VIDYA_VOICE_LIVE_ENABLED=true,DEMO_CALL_ENABLED=true,DEMO_CALL_DAILY_CAP=50
+      # VOICE_PROVIDER: the outbound parent-call carrier. Twilio until
+      # 2026-09-27, when it moved to Vobiz. The Twilio account is on TRIAL and a
+      # trial account refuses every destination except one verified number, so
+      # in practice parent calls to real numbers had not worked at all; Vobiz
+      # placed and completed a real 34s call on 2026-09-18. Twilio credentials
+      # stay bound above deliberately — /api/health/twilio and the demo-call
+      # lead magnet still use them, and leaving them in place makes reverting
+      # this one value the whole rollback.
+      # This value had never been declared here and was only ever set ad hoc on
+      # the live service, which is exactly what the note above warns against:
+      # any deploy that reset env would have silently changed the carrier.
+      # VOBIZ_STREAM_BASE_URL: the telephony sidecar that terminates the media
+      # socket — a DIFFERENT service from NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL. The
+      # answer webhook falls back to the agents URL when this is unset, which
+      # reaches a service with no /telephony/stream route, and the parent hears
+      # silence with nothing in our logs.
+      - --update-env-vars=NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL=https://sahayakai-agents-zwydpvyuca-as.a.run.app,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248-mumbai,VIDYA_VOICE_LIVE_ENABLED=true,DEMO_CALL_ENABLED=true,DEMO_CALL_DAILY_CAP=50,VOICE_PROVIDER=vobiz,VOBIZ_STREAM_BASE_URL=https://sahayakai-telephony-zwydpvyuca-as.a.run.app
       - --quiet
     waitFor: [push-sha]
 
@@ -140,8 +156,8 @@ steps:
       - --project=$PROJECT_ID
       - --no-traffic
       - --tag=sha-$SHORT_SHA
-      - --update-secrets=TWILIO_ACCOUNT_SID=TWILIO_ACCOUNT_SID:latest,TWILIO_AUTH_TOKEN=TWILIO_AUTH_TOKEN:latest,SAHAYAKAI_AGENTS_AUDIENCE=SAHAYAKAI_AGENTS_AUDIENCE:latest,PROFILE_COMPLETE_COOKIE_SECRET=PROFILE_COMPLETE_COOKIE_SECRET:latest,DEMO_CALL_PEPPER=DEMO_CALL_PEPPER:latest,DEMO_CALL_ENC_KEY=DEMO_CALL_ENC_KEY:latest
-      - --update-env-vars=NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL=https://sahayakai-agents-zwydpvyuca-as.a.run.app,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248-mumbai,VIDYA_VOICE_LIVE_ENABLED=true,DEMO_CALL_ENABLED=true,DEMO_CALL_DAILY_CAP=50
+      - --update-secrets=TWILIO_ACCOUNT_SID=TWILIO_ACCOUNT_SID:latest,TWILIO_AUTH_TOKEN=TWILIO_AUTH_TOKEN:latest,SAHAYAKAI_AGENTS_AUDIENCE=SAHAYAKAI_AGENTS_AUDIENCE:latest,PROFILE_COMPLETE_COOKIE_SECRET=PROFILE_COMPLETE_COOKIE_SECRET:latest,DEMO_CALL_PEPPER=DEMO_CALL_PEPPER:latest,DEMO_CALL_ENC_KEY=DEMO_CALL_ENC_KEY:latest,VOBIZ_AUTH_ID=VOBIZ_AUTH_ID:latest,VOBIZ_AUTH_TOKEN=VOBIZ_AUTH_TOKEN:latest,VOBIZ_FROM_NUMBER=VOBIZ_FROM_NUMBER:latest
+      - --update-env-vars=NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL=https://sahayakai-agents-zwydpvyuca-as.a.run.app,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248-mumbai,VIDYA_VOICE_LIVE_ENABLED=true,DEMO_CALL_ENABLED=true,DEMO_CALL_DAILY_CAP=50,VOICE_PROVIDER=vobiz,VOBIZ_STREAM_BASE_URL=https://sahayakai-telephony-zwydpvyuca-as.a.run.app
       - --quiet
     waitFor: [push-mumbai]
 
@@ -183,9 +199,73 @@ steps:
       - -c
       - |
         set -euo pipefail
+
+        # ── Stale-build guard ────────────────────────────────────────────
+        # 2026-09-17: five PRs merged in quick succession started five
+        # concurrent builds against this one service. Four failed with
+        #   ABORTED: Conflict for resource 'sahayakai-hotfix-resilience':
+        #   version 'X' was specified but current version is 'Y'
+        # and, worse, every build had already created a revision, so the
+        # build that happened to finish LAST won — which was not the newest
+        # commit. Traffic follows latest, so production came up green while
+        # serving neither old main nor new main. The site was healthy and
+        # wrong, which is the hardest kind of wrong to notice.
+        #
+        # A build that is no longer the newest for this trigger has nothing
+        # useful to promote: a newer one is on its way and will promote the
+        # newer code. So it exits early rather than racing.
+        #
+        # This is NOT solved by promoting our own tagged revision instead of
+        # --to-latest: pinning traffic to a named revision is what caused the
+        # 11-day split-brain in August, where fresh revisions landed at 0%.
+        # --to-latest stays; the guard is on who is allowed to call it.
+        # NOTE: `2>/dev/null` on both gcloud calls below is load-bearing, not
+        # tidiness. When the filter matches nothing gcloud prints
+        #   WARNING: The following filter keys were not present in any resource
+        # on stderr. Merging that into the result with 2>&1 makes `newer`
+        # non-empty for EVERY build, so every build skips and nothing is ever
+        # promoted again. Verified against real build history before shipping.
+        mine=$$(gcloud builds describe $BUILD_ID --project=$PROJECT_ID \
+                  --format='value(createTime)' 2>/dev/null || echo "")
+        if [ -n "$$mine" ]; then
+          newer=$$(gcloud builds list --project=$PROJECT_ID --limit=20 \
+                    --filter="substitutions.TRIGGER_NAME=$TRIGGER_NAME AND createTime>\"$$mine\" AND (status=SUCCESS OR status=WORKING OR status=QUEUED)" \
+                    --format='value(id)' 2>/dev/null | head -1)
+          if [ -n "$$newer" ]; then
+            echo "SKIP PROMOTE: build $$newer is newer than this one ($BUILD_ID)."
+            echo "It will promote the newer commit. Exiting 0 so this build does"
+            echo "not overwrite newer code with older."
+            echo
+            echo "If that newer build then FAILS, nothing gets promoted and prod"
+            echo "stays on the previous revision — safe, but the new code is not"
+            echo "live. Re-run this trigger on main to deploy it."
+            exit 0
+          fi
+        else
+          echo "WARN: could not read this build's createTime; promoting without"
+          echo "the stale-build guard. Check Cloud Build permissions."
+        fi
+
+        # ── Promote, retrying the optimistic-concurrency conflict ─────────
+        # update-traffic sends the resource version it read. If anything else
+        # touched the service in between, Cloud Run returns ABORTED. That is
+        # transient and safe to retry; other errors are not, so they fail.
         for region in asia-southeast1 asia-south1; do
-          gcloud run services update-traffic sahayakai-hotfix-resilience \
-            --region="$$region" --project=$PROJECT_ID --to-latest --quiet
+          for attempt in 1 2 3 4 5; do
+            if out=$$(gcloud run services update-traffic sahayakai-hotfix-resilience \
+                        --region="$$region" --project=$PROJECT_ID --to-latest --quiet 2>&1); then
+              echo "  $$region promoted (attempt $$attempt)"
+              break
+            fi
+            if ! echo "$$out" | grep -q "ABORTED"; then
+              echo "$$out"; exit 1
+            fi
+            if [ "$$attempt" = "5" ]; then
+              echo "  $$region: still conflicting after 5 attempts"; echo "$$out"; exit 1
+            fi
+            echo "  $$region: conflict, retrying in $$((attempt * 5))s"
+            sleep $$((attempt * 5))
+          done
         done
     waitFor: [smoke-both]
 

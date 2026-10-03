@@ -118,6 +118,23 @@ class AppLocalizationsPa extends AppLocalizations {
   String get onboardingLanguageTitle => 'ਤੁਸੀਂ ਕਿਸ ਭਾਸ਼ਾ ਵਿੱਚ ਪੜ੍ਹਾਉਂਦੇ ਹੋ?';
 
   @override
+  String get onboardingVidyaGreeting => 'ਸਤ ਸ੍ਰੀ ਅਕਾਲ, ਮੈਂ VIDYA ਹਾਂ';
+
+  @override
+  String get onboardingVidyaIntro =>
+      'ਦੱਸੋ ਤੁਸੀਂ ਕੀ ਪੜ੍ਹਾਉਂਦੇ ਹੋ। ਮੈਂ ਹਰ ਸਕ੍ਰੀਨ \'ਤੇ ਇੱਕ ਟੈਪ ਦੂਰ ਰਹਾਂਗੀ।';
+
+  @override
+  String get onboardingVidyaHandHint =>
+      'ਮੈਨੂੰ ਕਿਤੇ ਵੀ ਖਿੱਚੋ। ਖੱਬੇ ਜਾਂ ਸੱਜੇ, ਮੈਨੂੰ ਯਾਦ ਰਹੇਗਾ।';
+
+  @override
+  String get onboardingHandLeft => 'ਖੱਬੇ';
+
+  @override
+  String get onboardingHandRight => 'ਸੱਜੇ';
+
+  @override
   String get onboardingLanguageBody =>
       'ਤੁਹਾਡੀ ਚੁਣੀ ਭਾਸ਼ਾ ਵਿੱਚ ਹੀ ਪਾਠ ਯੋਜਨਾਵਾਂ, ਕਵਿਜ਼ ਅਤੇ ਜਵਾਬ ਮਿਲਣਗੇ। ਤੁਸੀਂ ਇਸਨੂੰ ਕਿਸੇ ਵੀ ਸਮੇਂ ਬਦਲ ਸਕਦੇ ਹੋ।';
 
@@ -344,6 +361,29 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get lessonPlanTitle => 'ਪਾਠ ਯੋਜਨਾ';
+
+  @override
+  String get lessonPlanIncludeLabel => 'ਸ਼ਾਮਲ ਕਰੋ';
+
+  @override
+  String get lessonPlanIncludeActivity => 'ਗਤੀਵਿਧੀ';
+
+  @override
+  String get lessonPlanIncludeBoardWork => 'ਬੋਰਡ ਕੰਮ';
+
+  @override
+  String get lessonPlanIncludeHomework => 'ਘਰ ਦਾ ਕੰਮ';
+
+  @override
+  String get lessonPlanIncludeStoryHook => 'ਕਹਾਣੀ ਦੀ ਸ਼ੁਰੂਆਤ';
+
+  @override
+  String get lessonPlanNcertTitle => 'NCERT-ਅਨੁਸਾਰ';
+
+  @override
+  String lessonPlanNcertBody(String grade) {
+    return 'ਤੁਹਾਡੀ ਯੋਜਨਾ $grade ਦੇ NCERT ਪਾਠਕ੍ਰਮ ਨਾਲ ਜਾਂਚੀ ਜਾਂਦੀ ਹੈ।';
+  }
 
   @override
   String get lessonPlanSubtitle => 'ਪੂਰਾ 5E ਪਾਠ ਯੋਜਨਾਬੱਧ ਕਰੋ';
@@ -2027,6 +2067,18 @@ class AppLocalizationsPa extends AppLocalizations {
   String get vidyaStateReady => 'ਤਿਆਰ ਹੋ ਰਿਹਾ ਹੈ';
 
   @override
+  String get vidyaWorkingTitle => 'ਇਸ \'ਤੇ ਕੰਮ ਕਰ ਰਹੀ ਹਾਂ';
+
+  @override
+  String get vidyaWorkingBody => 'ਐਪ ਵਰਤਦੇ ਰਹੋ। ਮੈਂ ਪਿੱਛੇ ਪੂਰਾ ਕਰ ਦਿਆਂਗੀ।';
+
+  @override
+  String get vidyaWorkingMinimise => 'VIDYA ਵਿੱਚ ਸਮੇਟੋ';
+
+  @override
+  String get vidyaWorkingStop => 'ਰੋਕੋ';
+
+  @override
   String get vidyaStateListening => 'ਮੈਂ ਸੁਣ ਰਹੀ ਹਾਂ';
 
   @override
@@ -2254,6 +2306,25 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get parentHotlineCall => 'ਮਾਪਿਆਂ ਨੂੰ ਕਾਲ ਕਰੋ';
+
+  @override
+  String get parentHotlineCoverTitle => 'ਇਹ ਕਾਲ ਕੀ ਕੁਝ ਕਵਰ ਕਰਦੀ ਹੈ';
+
+  @override
+  String get parentHotlineCoverPoint1 =>
+      'ਮਾਪੇ ਦੀ ਭਾਸ਼ਾ ਵਿੱਚ ਨਿੱਘ ਨਾਲ ਸ਼ੁਰੂਆਤ, ਬਿਨਾਂ ਕਿਸੇ ਦੋਸ਼ ਦੇ।';
+
+  @override
+  String get parentHotlineCoverPoint2 =>
+      'ਪਹਿਲਾਂ ਸੁਣਦੀ ਹੈ, ਫਿਰ ਪੁੱਛਦੀ ਹੈ ਕਿ ਪਰਿਵਾਰ ਨੂੰ ਕੀ ਮਦਦ ਚਾਹੀਦੀ ਹੈ।';
+
+  @override
+  String get parentHotlineCoverPoint3 =>
+      'ਬੱਚੇ ਲਈ ਇੱਕ ਸਪਸ਼ਟ ਅਗਲੇ ਕਦਮ ਨਾਲ ਖ਼ਤਮ ਹੁੰਦੀ ਹੈ।';
+
+  @override
+  String get parentHotlineCoverAfter =>
+      'ਬਾਅਦ ਵਿੱਚ, VIDYA ਨਤੀਜਾ ਦਰਜ ਕਰਦੀ ਹੈ ਅਤੇ ਤੁਹਾਡੀ ਸਮੀਖਿਆ ਲਈ ਇੱਕ ਫਾਲੋ-ਅੱਪ ਤਿਆਰ ਕਰਦੀ ਹੈ।';
 
   @override
   String get parentHotlineWhatsApp => 'WhatsApp ਲਈ ਕਾਪੀ ਕਰੋ';
@@ -2828,6 +2899,13 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get assessmentScannerPagesEmpty => 'ਪਹਿਲੇ ਸਫ਼ੇ ਦੀ ਇੱਕ ਫੋਟੋ ਸ਼ਾਮਲ ਕਰੋ।';
+
+  @override
+  String get assessmentScannerFrameGuide => 'ਪੂਰੀ ਸ਼ੀਟ ਨੂੰ ਫ੍ਰੇਮ ਦੇ ਅੰਦਰ ਰੱਖੋ';
+
+  @override
+  String get assessmentScannerFrameHint =>
+      'ਹਰ ਨਿਸ਼ਾਨ ਪੜ੍ਹਿਆ ਜਾ ਸਕੇ, ਇਸ ਲਈ ਇਸਨੂੰ ਚਮਕਦਾਰ, ਇੱਕਸਾਰ ਰੌਸ਼ਨੀ ਵਿੱਚ ਸਮਤਲ ਰੱਖੋ।';
 
   @override
   String assessmentScannerPageLabel(int number) {
@@ -3765,4 +3843,122 @@ class AppLocalizationsPa extends AppLocalizations {
   @override
   String get attendancePremiumBody =>
       'ਆਪਣੀਆਂ ਜਮਾਤਾਂ, ਹਾਜ਼ਰੀ ਰਜਿਸਟਰ ਅਤੇ ਮਹੀਨੇ ਦਾ ਵੇਰਵਾ ਵੇਖਣਾ ਮੁਫ਼ਤ ਹੀ ਰਹਿੰਦਾ ਹੈ। ਜਮਾਤ ਬਣਾਉਣਾ, ਵਿਦਿਆਰਥੀ ਜੋੜਨਾ ਅਤੇ ਹਾਜ਼ਰੀ ਸੰਭਾਲਣਾ Pro ਪਲਾਨ ਦਾ ਹਿੱਸਾ ਹੈ।';
+
+  @override
+  String get deliverTrayTitle => 'ਪਹੁੰਚਾਓ';
+
+  @override
+  String get deliverPrivacyNote =>
+      'ਜਦੋਂ ਤੱਕ ਤੁਸੀਂ ਭੇਜੋ ਨਹੀਂ ਦਬਾਉਂਦੇ, ਕੁਝ ਵੀ ਫ਼ੋਨ ਤੋਂ ਬਾਹਰ ਨਹੀਂ ਜਾਂਦਾ।';
+
+  @override
+  String get deliverSend => 'ਭੇਜੋ';
+
+  @override
+  String get deliverParentGroup => 'ਮਾਪੇ ਸਮੂਹ';
+
+  @override
+  String get deliverParentGroupMeta => 'WhatsApp ਤੇ ਸਾਂਝਾ ਕਰੋ';
+
+  @override
+  String get deliverPrint => 'ਪ੍ਰਿੰਟ ਕਰੋ';
+
+  @override
+  String get deliverPrintMeta => 'ਪ੍ਰਿੰਟਰ ਨੂੰ ਭੇਜੋ';
+
+  @override
+  String get deliverSaveToClass => 'ਕਲਾਸ ਵਿੱਚ ਸੰਭਾਲੋ';
+
+  @override
+  String get deliverSaveToClassMeta => 'ਆਪਣੀ ਲਾਇਬ੍ਰੇਰੀ ਵਿੱਚ ਰੱਖੋ';
+
+  @override
+  String get deliverPostCommunity => 'ਕਮਿਊਨਿਟੀ ਵਿੱਚ ਪੋਸਟ ਕਰੋ';
+
+  @override
+  String get deliverPostCommunityMeta => 'ਸਰੋਤ ਵਜੋਂ ਸਾਂਝਾ ਕਰੋ';
+
+  @override
+  String get deliverDownloadPdf => 'PDF ਡਾਊਨਲੋਡ ਕਰੋ';
+
+  @override
+  String get deliverDownloadPdfMeta => 'ਆਫਲਾਈਨ ਕੰਮ ਕਰਦਾ ਹੈ';
+
+  @override
+  String get deliverReadAloud => 'ਉੱਚੀ ਆਵਾਜ਼ ਵਿੱਚ ਪੜ੍ਹੋ';
+
+  @override
+  String get deliverReadAloudMeta => 'ਕਲਾਸ ਲਈ';
+
+  @override
+  String get settingsOrbHandTitle => 'ਤੈਰਦਾ ਸਹਾਇਕ';
+
+  @override
+  String get settingsOrbHandLabel => 'ਖੱਬੇ ਪਾਸੇ';
+
+  @override
+  String get settingsOrbHandHint =>
+      'ਜਿੱਥੇ ਤੁਹਾਡਾ ਅੰਗੂਠਾ ਪਹੁੰਚੇ ਉੱਥੇ VIDYA ਰੱਖੋ';
+
+  @override
+  String get scanRemedialBody =>
+      'ਜਿਨ੍ਹਾਂ ਸੰਕਲਪਾਂ ਵਿੱਚ ਮੁਸ਼ਕਲ ਆਈ, ਉਨ੍ਹਾਂ ਲਈ ਮੈਂ ਇੱਕ ਅਭਿਆਸ ਸ਼ੀਟ ਬਣਾ ਸਕਦੀ ਹਾਂ।';
+
+  @override
+  String get scanRemedialBuild => 'ਅਭਿਆਸ ਸ਼ੀਟ ਬਣਾਓ';
+
+  @override
+  String get scanRemedialMessageParents => 'ਮਾਪਿਆਂ ਨੂੰ ਸੁਨੇਹਾ ਭੇਜੋ';
+
+  @override
+  String get communityFilterAll => 'ਸਾਰੇ';
+
+  @override
+  String get communityFilterPosts => 'ਪੋਸਟਾਂ';
+
+  @override
+  String get communityFilterResources => 'ਸਰੋਤ';
+
+  @override
+  String get communityFilterHighlights => 'ਮੁੱਖ ਗੱਲਾਂ';
+
+  @override
+  String get attendanceVoiceRollCall => 'ਨਾਂ ਉੱਚੀ ਆਵਾਜ਼ ਵਿੱਚ ਪੜ੍ਹੋ';
+
+  @override
+  String get attendanceVoiceListeningTitle => 'ਸੁਣ ਰਹੀ ਹਾਂ…';
+
+  @override
+  String get attendanceVoiceListeningBody =>
+      'ਆਪਣੀ ਜਮਾਤ ਦੀ ਹਾਜ਼ਰੀ ਉੱਚੀ ਆਵਾਜ਼ ਵਿੱਚ ਪੜ੍ਹੋ। ਮੈਂ ਹਰ ਨਾਂ ਨੂੰ ਹਾਜ਼ਰ ਲਗਾਵਾਂਗੀ; ਕਿਸੇ ਨੂੰ ਬਦਲਣ ਲਈ \'ਗੈਰਹਾਜ਼ਰ\' ਜਾਂ \'ਲੇਟ\' ਕਹੋ।';
+
+  @override
+  String get attendanceVoiceWorking => 'ਇੱਕ ਪਲ…';
+
+  @override
+  String get attendanceVoiceWorkingBody =>
+      'ਜੋ ਤੁਸੀਂ ਕਿਹਾ ਉਸ ਤੋਂ ਹਾਜ਼ਰੀ ਲਗਾ ਰਹੀ ਹਾਂ।';
+
+  @override
+  String get attendanceVoiceMicOffTitle => 'ਮਾਈਕ੍ਰੋਫੋਨ ਲੋੜੀਂਦਾ';
+
+  @override
+  String get attendanceVoiceMicOffBody =>
+      'ਆਵਾਜ਼ ਨਾਲ ਹਾਜ਼ਰੀ ਲੈਣ ਲਈ ਮਾਈਕ੍ਰੋਫੋਨ ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ।';
+
+  @override
+  String get attendanceVoiceFailedTitle => 'ਸਮਝ ਨਹੀਂ ਆਈ';
+
+  @override
+  String get attendanceVoiceFailedBody =>
+      'ਕੁਝ ਗਲਤ ਹੋ ਗਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਫਿਰ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
+
+  @override
+  String get attendanceVoiceNone =>
+      'ਮੈਨੂੰ ਕੋਈ ਨਾਂ ਸਮਝ ਨਹੀਂ ਆਇਆ। ਫਿਰ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
+
+  @override
+  String attendanceVoiceMarked(int count) {
+    return '$count ਨਾਂ ਲਗਾਏ ਗਏ।';
+  }
 }

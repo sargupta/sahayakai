@@ -118,6 +118,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
                 overrides.marksAwarded !== undefined ||
                 overrides.marksMax !== undefined ||
                 overrides.feedback !== undefined ||
+                overrides.studentFacingFeedback !== undefined ||
                 overrides.improvementPoints !== undefined ||
                 overrides.studentAnswer !== undefined;
 

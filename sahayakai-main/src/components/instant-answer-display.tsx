@@ -16,11 +16,14 @@ import { ResultShell } from "@/components/ui/result-shell";
 import { QuickShareButton } from "@/components/quick-share-button";
 import { exportElementToPdf } from "@/lib/export-pdf";
 import { getResultShellDict } from "@/lib/result-shell-i18n";
+import { buildArtifactActions, omit, OMIT_REASONS } from "@/lib/artifact-actions";
 
 type InstantAnswerDisplayProps = {
     answer: InstantAnswerOutput & { videoSuggestionUrl?: string | null };
     title?: string;
     selectedLanguage?: string;
+    /** Re-run the generator with the same inputs; absent when viewing a saved artifact. */
+    onRegenerate?: () => void;
 };
 
 const PDF_ID = "instant-answer-card";
@@ -29,6 +32,7 @@ export const InstantAnswerDisplay: FC<InstantAnswerDisplayProps> = ({
     answer,
     title,
     selectedLanguage,
+    onRegenerate,
 }) => {
     const { toast } = useToast();
     const t = getResultShellDict(selectedLanguage);
@@ -109,11 +113,19 @@ export const InstantAnswerDisplay: FC<InstantAnswerDisplayProps> = ({
             title={displayTitle}
             icon={<MessageSquareQuote />}
             variant="glass"
-            actions={[
-                { label: t.copy, icon: <Copy />, onClick: handleCopy },
-                { label: t.save, icon: <Save />, onClick: handleSave },
-                { label: t.pdf, icon: <Download />, onClick: handleDownload },
-            ]}
+            actions={buildArtifactActions(
+                {
+                    copy: { onClick: handleCopy },
+                    save: { onClick: handleSave },
+                    download: { onClick: handleDownload },
+                    share: omit(OMIT_REASONS.VIA_QUICK_SHARE),
+                    regenerate: onRegenerate
+                        ? { onClick: onRegenerate }
+                        : omit(OMIT_REASONS.NO_GENERATOR),
+                    edit: omit(OMIT_REASONS.NOT_EDITABLE),
+                },
+                t,
+            )}
             extraActions={
                 <QuickShareButton
                     contentType="instant-answer"

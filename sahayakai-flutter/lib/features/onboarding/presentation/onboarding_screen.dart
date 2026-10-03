@@ -13,6 +13,7 @@ import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/app_segmented.dart';
 import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/inline_error.dart';
 import '../../../shared/widgets/labeled_field.dart';
@@ -21,6 +22,8 @@ import '../../../shared/widgets/section_label.dart';
 import '../../profile/domain/board_category.dart';
 import '../../profile/domain/profile_validators.dart';
 import '../../profile/domain/teacher_profile.dart';
+import '../../vidya/presentation/vidya_orb_placement_controller.dart';
+import '../../vidya/presentation/widgets/vidya_orb.dart';
 import 'onboarding_controller.dart';
 
 /// P0.2 — Onboarding.
@@ -516,6 +519,91 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 }
 
+/// v3 screen 01 — the orb-first welcome. VIDYA greets the teacher, promises to
+/// stay a tap away, and lets them pick the hand the orb lives on. The hand
+/// choice is real: it writes [VidyaOrbPlacementController.setHand], which
+/// persists, so "I'll remember" is literally true when they reach the app.
+class _VidyaIntro extends ConsumerWidget {
+  const _VidyaIntro();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    final hand = ref.watch(
+      vidyaOrbPlacementControllerProvider.select((p) => p.hand),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        VidyaOrb(
+          state: VidyaOrbVisual.resting,
+          size: 64,
+          semanticLabel: l10n.appTitle,
+          semanticHint: l10n.onboardingVidyaIntro,
+        ),
+        const SizedBox(height: AppSpacing.space4),
+        Text(l10n.onboardingVidyaGreeting, style: text.headlineSmall),
+        const SizedBox(height: AppSpacing.space2),
+        Text(
+          l10n.onboardingVidyaIntro,
+          style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+        ),
+        const SizedBox(height: AppSpacing.space5),
+        AppCard(
+          variant: AppCardVariant.inset,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    LucideIcons.hand,
+                    size: AppIconSize.inline,
+                    color: scheme.primary,
+                  ),
+                  const SizedBox(width: AppSpacing.space3),
+                  Expanded(
+                    child: Text(
+                      l10n.onboardingVidyaHandHint,
+                      style: text.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.space3),
+              AppSegmented<VidyaHand>(
+                value: hand,
+                onChanged: (value) => ref
+                    .read(vidyaOrbPlacementControllerProvider.notifier)
+                    .setHand(value),
+                segments: [
+                  AppSegment(
+                    value: VidyaHand.left,
+                    label: l10n.onboardingHandLeft,
+                  ),
+                  AppSegment(
+                    value: VidyaHand.right,
+                    label: l10n.onboardingHandRight,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 /// Step 0. All ELEVEN languages, inline and each in its own script.
 ///
 /// Inline rather than behind the shared `LanguageSwitcher` sheet on purpose:
@@ -538,6 +626,10 @@ class _LanguageStep extends ConsumerWidget {
     return ListView(
       padding: AppSpacing.pagePadding,
       children: [
+        // v3 screen 01 — VIDYA introduces herself before anything is asked, so
+        // the very first thing a teacher meets is the assistant, not a form.
+        const _VidyaIntro(),
+        const SizedBox(height: AppSpacing.space6),
         Text(l10n.onboardingLanguageTitle, style: text.headlineSmall),
         const SizedBox(height: AppSpacing.space2),
         Text(

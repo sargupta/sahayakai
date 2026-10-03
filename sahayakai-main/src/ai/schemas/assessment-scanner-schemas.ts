@@ -222,6 +222,7 @@ export const GradedQuestionSchema = z.object({
             marksAwarded: z.number().min(0).optional(),
             marksMax: z.number().min(0).optional(),
             feedback: z.string().optional(),
+            studentFacingFeedback: z.string().optional(),
             improvementPoints: z.array(z.string()).optional(),
             studentAnswer: z.string().optional(),
             editedAt: z.string().optional(),

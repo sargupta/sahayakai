@@ -6,6 +6,12 @@ import { checkCallingWindow } from '@/lib/calling-hours';
 import { logger } from '@/lib/logger';
 import { classifyTwilioFailure, releasesDedupWindow } from '@/lib/twilio-errors';
 import { getEffectiveMode } from '@/lib/voice-pipeline/health';
+import { placeVobizCall, readVobizConfig } from '@/lib/vobiz/client';
+import {
+    VOBIZ_DOMAINS,
+    VOBIZ_STATUS_TTL_SECONDS,
+    mintVobizToken,
+} from '@/lib/vobiz/tokens';
 import type { Language } from '@/types';
 
 /**
@@ -51,6 +57,138 @@ async function forwardToExotel(userId: string, outreachId: string): Promise<Next
         console.error('[attendance/call] Exotel forward failed:', error);
         return NextResponse.json({ error: 'Failed to initiate call' }, { status: 502 });
     }
+}
+
+
+/**
+ * Ownership + destination for one outreach record.
+ *
+ * SECURITY: the parent's phone number is read from the server-stored document,
+ * never from the request body. A teacher who could supply the destination could
+ * dial any number on the company's telephony account.
+ *
+ * Shared by both providers on purpose. These four checks are the security
+ * boundary of the whole feature, and when the Twilio path owned its own copy
+ * there was nothing stopping a second provider from shipping with three of them.
+ */
+type TargetResolution =
+    | { ok: true; parentPhone: string; data: FirebaseFirestore.DocumentData }
+    | { ok: false; response: NextResponse };
+
+async function resolveOutreachTarget(
+    db: FirebaseFirestore.Firestore,
+    outreachId: string,
+    userId: string,
+): Promise<TargetResolution> {
+    const snap = await db.collection('parent_outreach').doc(outreachId).get();
+    if (!snap.exists) {
+        return { ok: false, response: NextResponse.json({ error: 'Outreach record not found' }, { status: 404 }) };
+    }
+    const data = snap.data()!;
+    if (data.teacherUid !== userId) {
+        return { ok: false, response: NextResponse.json({ error: 'Unauthorized' }, { status: 403 }) };
+    }
+    const parentPhone: string | undefined = data.parentPhone;
+    if (!parentPhone || !isValidE164(parentPhone)) {
+        return {
+            ok: false,
+            response: NextResponse.json({ error: 'Outreach record has no valid parent phone' }, { status: 422 }),
+        };
+    }
+    return { ok: true, parentPhone, data };
+}
+
+/**
+ * Place the call through Vobiz, which streams the parent into a live
+ * conversation with VIDYA rather than reading a script at them.
+ *
+ * Unlike the Twilio path there is no per-language TTS voice to select here: the
+ * conversation is spoken by the Live model in the sidecar, so language travels
+ * as context on the stream URL instead of as a voice id.
+ */
+async function forwardToVobiz(
+    req: NextRequest,
+    db: FirebaseFirestore.Firestore,
+    userId: string,
+    outreachId: string,
+): Promise<NextResponse> {
+    const config = readVobizConfig();
+    if (!config) {
+        console.error(
+            '[attendance/call] PROVIDER_MISCONFIGURED — VOICE_PROVIDER=vobiz but ' +
+            'VOBIZ_AUTH_ID / VOBIZ_AUTH_TOKEN / VOBIZ_FROM_NUMBER are not all set. ' +
+            'Operator action; retrying will not help.',
+        );
+        return NextResponse.json({ error: 'Voice service not configured' }, { status: 503 });
+    }
+
+    const target = await resolveOutreachTarget(db, outreachId, userId);
+    if (!target.ok) return target.response;
+
+    // Same escape hatch the Twilio path has: lets a teacher exercise the flow
+    // without dialling a real parent. Unset it to go live.
+    const callTo = process.env.VOBIZ_TEST_OVERRIDE_NUMBER || target.parentPhone;
+
+    const host = req.headers.get('host');
+    const protocol = host?.includes('localhost') ? 'http' : 'https';
+    const base = `${protocol}://${host}`;
+
+    // Two purpose-scoped tokens. The status token lives far longer because its
+    // webhook fires when the call ENDS, not when it starts.
+    const [answer, status] = await Promise.all([
+        mintVobizToken(VOBIZ_DOMAINS.ANSWER, outreachId),
+        mintVobizToken(VOBIZ_DOMAINS.STATUS, outreachId, VOBIZ_STATUS_TTL_SECONDS),
+    ]);
+
+    const result = await placeVobizCall(config, {
+        to: callTo,
+        answerUrl: `${base}/api/attendance/vobiz/answer?t=${encodeURIComponent(answer.token)}`,
+        hangupUrl: `${base}/api/attendance/vobiz/status?kind=hangup&t=${encodeURIComponent(status.token)}`,
+        ringUrl: `${base}/api/attendance/vobiz/status?kind=ring&t=${encodeURIComponent(status.token)}`,
+    });
+
+    if (!result.ok) {
+        console.error(
+            `[attendance/call] Vobiz failure category=${result.failure.category} ` +
+            `httpStatus=${result.failure.status ?? 'none'}`,
+        );
+        if (result.failure.category === 'provider_unconfigured') {
+            console.error(
+                '[attendance/call] PROVIDER_MISCONFIGURED — Vobiz rejected our credentials. ' +
+                'No calls can be placed until they are corrected. Operator action.',
+            );
+        }
+        // No call was placed, so the per-student dedup window is released for
+        // the same reason the Twilio path releases it: the parent was never
+        // disturbed, and holding the record "recent" only locks the teacher out.
+        await db.collection('parent_outreach').doc(outreachId).update({
+            callStatus: 'failed',
+            callFailureCategory: result.failure.category,
+            updatedAt: new Date().toISOString(),
+        }).catch((e: unknown) => {
+            console.error('[attendance/call] could not mark outreach failed:', e);
+        });
+        const retryable = result.failure.category === 'network' || result.failure.category === 'provider_rejected';
+        return NextResponse.json(
+            {
+                error: result.failure.category === 'invalid_destination'
+                    ? 'Parent phone number is not callable'
+                    : 'Failed to initiate call',
+                code: result.failure.category.toUpperCase(),
+                retryable,
+            },
+            { status: result.failure.category === 'invalid_destination' ? 422 : 502 },
+        );
+    }
+
+    await db.collection('parent_outreach').doc(outreachId).update({
+        callSid: result.handle.requestUuid,
+        callStatus: 'initiated',
+        deliveryMethod: 'vobiz_call',
+        updatedAt: new Date().toISOString(),
+    });
+
+    return NextResponse.json({ callSid: result.handle.requestUuid });
 }
 
 export async function POST(req: NextRequest) {
@@ -100,6 +238,12 @@ export async function POST(req: NextRequest) {
     if (provider === 'exotel') {
         return forwardToExotel(userId, outreachId);
     }
+    // Vobiz owns a real Indian origination number, so unlike the Twilio TRIAL
+    // account it can actually reach a parent. It streams the leg into a live
+    // conversation with VIDYA rather than reading a fixed script.
+    if (provider === 'vobiz') {
+        return forwardToVobiz(req, await getDb(), userId, outreachId);
+    }
 
     const { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER } = process.env;
     if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
@@ -108,19 +252,12 @@ export async function POST(req: NextRequest) {
 
     try {
 
-        // Verify ownership of the outreach record AND get the server-stored parent phone.
-        // SECURITY: Never trust a phone number from the request body — a teacher could
-        // otherwise call any arbitrary number using our Twilio account.
+        // Ownership + server-stored destination. Shared with the Vobiz path so
+        // the two providers cannot drift apart on the security checks.
         const db = await getDb();
-        const outreachDoc = await db.collection('parent_outreach').doc(outreachId).get();
-        if (!outreachDoc.exists) return NextResponse.json({ error: 'Outreach record not found' }, { status: 404 });
-        const outreach = outreachDoc.data()!;
-        if (outreach.teacherUid !== userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-
-        const parentPhone: string | undefined = outreach.parentPhone;
-        if (!parentPhone || !isValidE164(parentPhone)) {
-            return NextResponse.json({ error: 'Outreach record has no valid parent phone' }, { status: 422 });
-        }
+        const target = await resolveOutreachTarget(db, outreachId, userId);
+        if (!target.ok) return target.response;
+        const parentPhone = target.parentPhone;
 
         // In test mode, override the destination number so all teachers can test
         // without calling real parents. Remove this env var to go live.

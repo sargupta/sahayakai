@@ -5,10 +5,12 @@ import 'package:sahayakai/shared/widgets/empty_view.dart';
 import 'rubric_fixtures.dart';
 
 /// Result-layer composition for the Rubric Generator: the header (title + grade
-/// / subject badges), the assignment description, the swipe affordance, and the
-/// empty-result path. The grid's scroll mechanics live in rubric_grid_test.dart.
+/// / subject badges), the assignment description, and the empty-result path. The
+/// rubric now renders stacked (v3 screen 10) — one card per criterion, no
+/// sideways scroller and no swipe affordance. The stacked layout mechanics live
+/// in rubric_grid_test.dart.
 void main() {
-  testWidgets('renders the header, meta badges, description and scroll hint', (
+  testWidgets('renders the header, meta badges and description', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -24,17 +26,17 @@ void main() {
     expect(find.text('Class 5'), findsOneWidget);
     expect(find.text('Science'), findsOneWidget);
 
-    // The assignment description and the horizontal-scroll affordance.
+    // The assignment description. The retired swipe affordance is gone.
     expect(
       find.textContaining('Grades a Class 5 renewable-energy project'),
       findsOneWidget,
     );
-    expect(find.text('Swipe across to see all levels.'), findsOneWidget);
+    expect(find.text('Swipe across to see all levels.'), findsNothing);
 
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('the empty result shows the dignified empty state, no hint', (
+  testWidgets('the empty result shows the dignified empty state', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -44,23 +46,20 @@ void main() {
 
     expect(find.byType(EmptyView), findsOneWidget);
     expect(find.textContaining('No rubric came back'), findsOneWidget);
-    expect(find.text('Swipe across to see all levels.'), findsNothing);
   });
 
-  testWidgets(
-    'a levels-less rubric keeps the header but drops the scroll hint',
-    (tester) async {
-      await tester.pumpWidget(
-        hostResult(RubricResultView(rubric: buildRubric(partial: true))),
-      );
-      await tester.pumpAndSettle();
+  testWidgets('a levels-less rubric still renders its criteria', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      hostResult(RubricResultView(rubric: buildRubric(partial: true))),
+    );
+    await tester.pumpAndSettle();
 
-      expect(
-        find.textContaining('Renewable Energy Project Rubric'),
-        findsOneWidget,
-      );
-      // With no level columns, the swipe affordance would be a lie.
-      expect(find.text('Swipe across to see all levels.'), findsNothing);
-    },
-  );
+    expect(
+      find.textContaining('Renewable Energy Project Rubric'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Research and Content'), findsOneWidget);
+  });
 }

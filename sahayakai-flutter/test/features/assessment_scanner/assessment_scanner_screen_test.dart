@@ -95,7 +95,8 @@ void main() {
       await tester.pumpWidget(_host());
       await tester.pumpAndSettle();
 
-      expect(find.text('Add a photo of the first page.'), findsOneWidget);
+      // v3 11 — the dark scan-framing guide is the empty prompt.
+      expect(find.text('Fit the whole sheet inside the frame'), findsOneWidget);
       expect(find.text('Choose a subject'), findsOneWidget);
       expect(find.text('Choose a grade'), findsOneWidget);
       // The Grade button is gated until at least one page is captured.

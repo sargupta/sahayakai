@@ -12,6 +12,7 @@ import { ResultShell } from "@/components/ui/result-shell";
 import { QuickShareButton } from "@/components/quick-share-button";
 import { exportElementToPdf } from "@/lib/export-pdf";
 import { getResultShellDict } from "@/lib/result-shell-i18n";
+import { buildArtifactActions, omit, OMIT_REASONS } from "@/lib/artifact-actions";
 
 type VirtualFieldTripDisplayProps = {
     trip: VirtualFieldTripOutput;
@@ -20,6 +21,8 @@ type VirtualFieldTripDisplayProps = {
     language?: string;
     /** Library id of this artifact (useGenerator().contentId); Save upserts it. */
     contentId?: string | null;
+    /** Re-run the generator with the same inputs; absent when viewing a saved artifact. */
+    onRegenerate?: () => void;
 };
 
 const PDF_ID = "field-trip-card";
@@ -30,6 +33,7 @@ export const VirtualFieldTripDisplay: FC<VirtualFieldTripDisplayProps> = ({
     topic,
     gradeLevel,
     language,
+    onRegenerate,
 }) => {
     const { toast } = useToast();
     const libraryId = useLibraryId(contentId, trip);
@@ -103,10 +107,19 @@ export const VirtualFieldTripDisplay: FC<VirtualFieldTripDisplayProps> = ({
             icon={<Globe2 />}
             size="compact"
             variant="glass"
-            actions={[
-                { label: t.save, icon: <Save />, onClick: handleSave },
-                { label: t.pdf, icon: <Download />, onClick: handleDownload },
-            ]}
+            actions={buildArtifactActions(
+                {
+                    copy: omit(OMIT_REASONS.TODO_NEEDS_SERIALISER),
+                    save: { onClick: handleSave },
+                    download: { onClick: handleDownload },
+                    share: omit(OMIT_REASONS.VIA_QUICK_SHARE),
+                    regenerate: onRegenerate
+                        ? { onClick: onRegenerate }
+                        : omit(OMIT_REASONS.NO_GENERATOR),
+                    edit: omit(OMIT_REASONS.NOT_EDITABLE),
+                },
+                t,
+            )}
             extraActions={
                 <QuickShareButton
                     contentType="virtual-field-trip"

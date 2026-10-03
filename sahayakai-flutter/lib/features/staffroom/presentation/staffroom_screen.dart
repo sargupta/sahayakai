@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
@@ -86,12 +87,32 @@ class StaffroomFeedView extends ConsumerWidget {
 /// The ready scroll: hero + groups + discover + feed + people. Each secondary
 /// section watches its own provider and degrades to nothing on loading/error, so
 /// a failed groups read never breaks the feed.
-class _StaffroomReady extends ConsumerWidget {
+///
+/// Stateful for the feed filter chips (v2 Group H "Community"): the row filters
+/// the unified feed by the app's REAL post types (Posts / Resources /
+/// Highlights) — never invented categories the backend does not tag.
+class _StaffroomReady extends ConsumerStatefulWidget {
   const _StaffroomReady({required this.feed});
 
   final List<FeedItem> feed;
 
-  Future<void> _refresh(WidgetRef ref) async {
+  @override
+  ConsumerState<_StaffroomReady> createState() => _StaffroomReadyState();
+}
+
+class _StaffroomReadyState extends ConsumerState<_StaffroomReady> {
+  /// null = "All". Otherwise the one feed type the chips have narrowed to.
+  FeedItemType? _filter;
+
+  /// The chips, in order — each a real [FeedItemType] the feed can carry.
+  static const _chips = <(FeedItemType?,)>[
+    (null,),
+    (FeedItemType.groupPost,),
+    (FeedItemType.resourceShare,),
+    (FeedItemType.chatHighlight,),
+  ];
+
+  Future<void> _refresh() async {
     ref
       ..invalidate(unifiedFeedProvider)
       ..invalidate(myGroupsProvider)
@@ -101,9 +122,26 @@ class _StaffroomReady extends ConsumerWidget {
     await ref.read(unifiedFeedProvider.future);
   }
 
+  String _chipLabel(AppLocalizations l10n, FeedItemType? type) {
+    switch (type) {
+      case null:
+        return l10n.communityFilterAll;
+      case FeedItemType.groupPost:
+        return l10n.communityFilterPosts;
+      case FeedItemType.resourceShare:
+        return l10n.communityFilterResources;
+      case FeedItemType.chatHighlight:
+        return l10n.communityFilterHighlights;
+      case FeedItemType.connectionSuggestion:
+      case FeedItemType.groupSuggestion:
+        return l10n.communityFilterAll; // not offered as a chip
+    }
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final feed = widget.feed;
     final likedIds =
         ref.watch(likedItemIdsProvider).valueOrNull ?? const LikedItemIds();
     final myGroups = ref.watch(myGroupsProvider).valueOrNull ?? const <Group>[];
@@ -113,8 +151,12 @@ class _StaffroomReady extends ConsumerWidget {
         ref.watch(recommendedTeachersProvider).valueOrNull ??
         const <TeacherSuggestion>[];
 
+    final shown = _filter == null
+        ? feed
+        : [for (final item in feed) if (item.type == _filter) item];
+
     return RefreshIndicator(
-      onRefresh: () => _refresh(ref),
+      onRefresh: _refresh,
       child: ListView(
         padding: AppSpacing.pagePadding,
         children: [
@@ -147,22 +189,43 @@ class _StaffroomReady extends ConsumerWidget {
             const SizedBox(height: AppSpacing.space6),
           ],
 
-          // From your groups — the unified feed.
+          // From your groups — the unified feed, with type filter chips.
           EditorialSectionHeader(l10n.staffroomSectionFeed),
           const SizedBox(height: AppSpacing.space3),
           if (feed.isEmpty)
             _FeedEmpty()
-          else
-            ...feed.map(
-              (item) => Padding(
-                padding: const EdgeInsets.only(bottom: AppSpacing.space3),
-                child: FeedItemView(
-                  key: ValueKey<String>('feed-${item.id}'),
-                  item: item,
-                  likedIds: likedIds,
-                ),
+          else ...[
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              clipBehavior: Clip.none,
+              child: Row(
+                spacing: AppSpacing.space2,
+                children: [
+                  for (final (type,) in _chips)
+                    ChoiceChip(
+                      label: Text(_chipLabel(l10n, type)),
+                      selected: _filter == type,
+                      materialTapTargetSize: MaterialTapTargetSize.padded,
+                      onSelected: (_) => setState(() => _filter = type),
+                    ),
+                ],
               ),
             ),
+            const SizedBox(height: AppSpacing.space3),
+            if (shown.isEmpty)
+              _FeedEmpty()
+            else
+              ...shown.map(
+                (item) => Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.space3),
+                  child: FeedItemView(
+                    key: ValueKey<String>('feed-${item.id}'),
+                    item: item,
+                    likedIds: likedIds,
+                  ),
+                ),
+              ),
+          ],
 
           // People you may know (only when there are recommendations).
           if (people.isNotEmpty) ...[

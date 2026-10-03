@@ -1,0 +1,18 @@
+{
+  "source": "assets/brand/sahayakai-mark-source.png",
+  "sourceSha256": "5c569799948f1722a5e512480ac40ef98a6dd2928b48f6817d88fbe1e87f18cd",
+  "generator": "scripts/brand/generate-icons.py",
+  "files": {
+    "public/icons/apple-touch-icon.png": "80217e1a46c93c3cbecad07cfbffa59993baac8201d357e8f03e356f0fce369e",
+    "public/icons/icon-144x144.png": "68fc8a8f8a654767ce555082505cb5980edd3d811fdf31941244831658b9131e",
+    "public/icons/icon-192x192.png": "4b9e2d62606957d2cd2ee85e06f7a361ef203d4fe4dcc0ee64cff27da3a2f3cd",
+    "public/icons/icon-48x48.png": "54f4aa61e56f85d0c5e192e92e09e46510ddefe0c68a7140396aa69ed6530543",
+    "public/icons/icon-512x512.png": "b58e7ed69c20ca9467d5bb652b7d8de0be2cfc0b3e82683cbd4fc6cf6e5288b0",
+    "public/icons/icon-72x72.png": "89c595fc3e315097f9926db72ce5c761228bc40eb64a2ade35128a0d88b98b3d",
+    "public/icons/icon-96x96.png": "41883c33c6b4a5160fd299fd8f77e5e97931d2924ff661227261bb9e73ec7c0c",
+    "public/icons/mark.png": "4482e22d745b80ed4e096bdb2935c4335b9d7f3df890365dfee0f8cc95160454",
+    "public/icons/maskable-192x192.png": "4af9f01cde8366d50a2e275025347cbe8d33ad1a5bd8030e96e5cdddd6266e3e",
+    "public/icons/maskable-512x512.png": "5905c9a417a5b28c2e868466d66c6c148ddc726d66c75d72699ed1419c6cd4f5",
+    "src/app/favicon.ico": "aac9712a39af2b1310d9df7cfe9ba99fe840a4ef681419a17324cdddd4d2c08a"
+  }
+}

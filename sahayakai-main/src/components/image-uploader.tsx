@@ -69,7 +69,7 @@ async function downscaleImage(
   canvas.height = height;
   const ctx = canvas.getContext("2d");
   if (!ctx) return file;
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = "#ffffff"; // design-token-allow: canvas fillStyle needs a literal color, not a Tailwind token
   ctx.fillRect(0, 0, width, height);
   ctx.drawImage(img, 0, 0, width, height);
 

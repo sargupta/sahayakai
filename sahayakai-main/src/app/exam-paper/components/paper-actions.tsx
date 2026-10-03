@@ -33,7 +33,7 @@ export function PaperActions({ saving, saved, onSave, paper }: PaperActionsProps
           {saving ? (
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
           ) : saved ? (
-            <CheckCircle2 className="w-4 h-4 mr-2 text-green-600" />
+            <CheckCircle2 className="w-4 h-4 mr-2 text-success" />
           ) : (
             <Save className="w-4 h-4 mr-2" />
           )}

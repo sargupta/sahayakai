@@ -37,6 +37,7 @@ import { isFeatureEnabled } from '@/lib/feature-flags';
 import { withPlanCheck } from '@/lib/plan-guard';
 import { dbAdapter } from '@/lib/db/adapter';
 import { dispatchAssessmentScanner } from '@/lib/sidecar/assessment-scanner-dispatch';
+import { isGradedResult } from '@/ai/schemas/assessment-scanner-utils';
 
 // Allow up to 120s for AI scanning (multi-page OCR + grading can be slow)
 export const maxDuration = 120;
@@ -199,6 +200,21 @@ async function _handler(request: Request) {
         // parity scoring. The flag is flipped per-rollout-step from the
         // Firestore feature_flags doc.
         const result = await dispatchAssessmentScanner(body);
+        // Failed-scan gate (migrated from prod). A scan that graded nothing —
+        // status 'failed' or an empty question array — must NOT be returned as a
+        // 2xx result: a 0% "score" reads as a real failing grade downstream. Gate
+        // it to 422 EMPTY_EXTRACTION, mirroring the thrown-error path below.
+        if (!isGradedResult(result)) {
+            return NextResponse.json(
+                {
+                    error: 'empty_extraction',
+                    code: 'EMPTY_EXTRACTION',
+                    message:
+                        'We could not read any questions or answers from the uploaded pages. Please re-upload clearer photos and try again.',
+                },
+                { status: 422 },
+            );
+        }
         return NextResponse.json(result);
     } catch (error) {
         // BUG #3 hardening: map KNOWN, user-fixable failure causes to a

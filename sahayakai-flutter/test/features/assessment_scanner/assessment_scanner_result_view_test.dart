@@ -260,4 +260,40 @@ void main() {
       );
     }
   });
+
+  group('remedial prompt (v3 screen 12)', () {
+    testWidgets('offers a remedial worksheet on the weak concepts', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        hostResult(AssessmentScannerResultView(result: buildResult())),
+      );
+      await tester.pumpAndSettle();
+
+      // The VIDYA suggestion body + both actions.
+      expect(
+        find.textContaining('remedial worksheet'),
+        findsWidgets,
+      );
+      expect(find.text('Build a remedial worksheet'), findsOneWidget);
+      expect(find.text('Message parents'), findsOneWidget);
+
+      // The weak concepts (partial + incorrect) surface as chips; the fully
+      // correct one (Addition) does not.
+      expect(find.text('Fractions'), findsWidgets);
+      expect(find.text('Water cycle'), findsWidgets);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('is absent when the empty result has no concepts to act on', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        hostResult(AssessmentScannerResultView(result: buildEmptyResult())),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Build a remedial worksheet'), findsNothing);
+    });
+  });
 }

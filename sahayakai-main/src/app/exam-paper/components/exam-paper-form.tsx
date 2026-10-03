@@ -262,7 +262,7 @@ export function ExamPaperForm({
           )}
         </Button>
         {aiUnavailableReason && (
-          <p className="text-xs text-amber-600 mt-1.5 text-center">{aiUnavailableReason}</p>
+          <p className="text-xs text-warning mt-1.5 text-center">{aiUnavailableReason}</p>
         )}
 
         {error && (

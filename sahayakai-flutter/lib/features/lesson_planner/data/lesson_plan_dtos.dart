@@ -26,7 +26,7 @@ class LessonPlanRequestDto {
         .toList(growable: false);
     final subject = request.subject?.trim();
     return LessonPlanRequestDto(
-      topic: request.topic.trim(),
+      topic: _topicWithEmphasis(request.topic.trim(), request.includes),
       gradeLevels: grades.isEmpty ? null : grades,
       subject: (subject == null || subject.isEmpty) ? null : subject,
       language: request.language,
@@ -47,6 +47,23 @@ class LessonPlanRequestDto {
   final String? imageDataUri;
 
   Map<String, dynamic> toJson() => _$LessonPlanRequestDtoToJson(this);
+}
+
+/// Folds the teacher's chosen "Include" components (v3 05) into the topic the
+/// model reads, as one plain emphasis line. The endpoint has no dedicated field
+/// for them, so this is the honest channel — the model genuinely acts on it.
+/// When nothing is selected the topic is returned untouched, so a plain
+/// generation is byte-for-byte what it always was (no behaviour change, no
+/// interference with the server-side NCERT chapter match).
+String _topicWithEmphasis(String topic, Set<LessonInclude> includes) {
+  if (includes.isEmpty) return topic;
+  // Emit in a stable order so the wire body is deterministic (and testable),
+  // regardless of the set's iteration order.
+  final clauses = LessonInclude.values
+      .where(includes.contains)
+      .map((i) => i.emphasis)
+      .join('; ');
+  return '$topic\n\nPlease include: $clauses.';
 }
 
 /// The `/api/ai/lesson-plan` 200 payload. Every field is nullable/defensive

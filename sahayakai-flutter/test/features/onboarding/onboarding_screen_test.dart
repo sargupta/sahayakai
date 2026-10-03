@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/core/i18n/app_locale.dart';
+import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/i18n/locale_provider.dart';
 import 'package:sahayakai/core/router/routes.dart';
 import 'package:sahayakai/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:sahayakai/features/vidya/presentation/vidya_home_screen.dart';
+import 'package:sahayakai/features/vidya/presentation/vidya_orb_placement_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/fake_api_client.dart';
@@ -183,6 +185,35 @@ void main() {
         );
       },
     );
+  });
+
+  group('v3 01 — VIDYA introduces herself first', () {
+    final l10n = lookupAppLocalizations(const Locale('en'));
+
+    testWidgets('the first screen greets the teacher as VIDYA', (tester) async {
+      await pumpOnboarding(tester);
+      expect(find.text(l10n.onboardingVidyaGreeting), findsOneWidget);
+      expect(find.text(l10n.onboardingVidyaIntro), findsOneWidget);
+    });
+
+    testWidgets('the hand choice persists to the orb placement', (tester) async {
+      await pumpOnboarding(tester);
+      final container = containerOf(tester);
+
+      // Default is the right hand.
+      expect(
+        container.read(vidyaOrbPlacementControllerProvider).hand,
+        VidyaHand.right,
+      );
+
+      await tester.tap(find.text(l10n.onboardingHandLeft));
+      await tester.pumpAndSettle();
+      expect(
+        container.read(vidyaOrbPlacementControllerProvider).hand,
+        VidyaHand.left,
+        reason: '"I\'ll remember" is real: it writes the persisted hand',
+      );
+    });
   });
 
   group('steps', () {

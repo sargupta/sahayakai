@@ -124,6 +124,23 @@ class AppLocalizationsMl extends AppLocalizations {
       'നിങ്ങൾ ഏത് ഭാഷയിലാണ് പഠിപ്പിക്കുന്നത്?';
 
   @override
+  String get onboardingVidyaGreeting => 'നമസ്തേ, ഞാൻ VIDYA';
+
+  @override
+  String get onboardingVidyaIntro =>
+      'നിങ്ങൾ എന്താണ് പഠിപ്പിക്കുന്നതെന്ന് പറയൂ. ഞാൻ എല്ലാ സ്ക്രീനിലും ഒരു ടാപ്പ് അകലെ ഉണ്ടാകും.';
+
+  @override
+  String get onboardingVidyaHandHint =>
+      'എന്നെ എവിടെയും വലിക്കൂ. ഇടത്തോ വലത്തോ, ഞാൻ ഓർത്തുവയ്ക്കും.';
+
+  @override
+  String get onboardingHandLeft => 'ഇടത്';
+
+  @override
+  String get onboardingHandRight => 'വലത്';
+
+  @override
   String get onboardingLanguageBody =>
       'നിങ്ങൾ തിരഞ്ഞെടുക്കുന്ന ഭാഷയിൽ തന്നെ പാഠപദ്ധതികളും ക്വിസുകളും ഉത്തരങ്ങളും ലഭിക്കും. നിങ്ങൾക്ക് ഇത് എപ്പോൾ വേണമെങ്കിലും മാറ്റാം.';
 
@@ -352,6 +369,29 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get lessonPlanTitle => 'പാഠപദ്ധതി';
+
+  @override
+  String get lessonPlanIncludeLabel => 'ഉൾപ്പെടുത്തുക';
+
+  @override
+  String get lessonPlanIncludeActivity => 'പ്രവർത്തനം';
+
+  @override
+  String get lessonPlanIncludeBoardWork => 'ബോർഡ് വർക്ക്';
+
+  @override
+  String get lessonPlanIncludeHomework => 'ഗൃഹപാഠം';
+
+  @override
+  String get lessonPlanIncludeStoryHook => 'കഥാ തുടക്കം';
+
+  @override
+  String get lessonPlanNcertTitle => 'NCERT-അനുസൃതം';
+
+  @override
+  String lessonPlanNcertBody(String grade) {
+    return 'നിങ്ങളുടെ പ്ലാൻ $grade-ന്റെ NCERT സിലബസുമായി പരിശോധിക്കുന്നു.';
+  }
 
   @override
   String get lessonPlanSubtitle => 'പൂർണ്ണമായ 5E പാഠം ആസൂത്രണം ചെയ്യുക';
@@ -2055,6 +2095,19 @@ class AppLocalizationsMl extends AppLocalizations {
   String get vidyaStateReady => 'തയ്യാറാകുന്നു';
 
   @override
+  String get vidyaWorkingTitle => 'ഇതിൽ പ്രവർത്തിക്കുന്നു';
+
+  @override
+  String get vidyaWorkingBody =>
+      'ആപ്പ് ഉപയോഗിച്ചുകൊണ്ടിരിക്കൂ. ഞാൻ പശ്ചാത്തലത്തിൽ പൂർത്തിയാക്കാം.';
+
+  @override
+  String get vidyaWorkingMinimise => 'VIDYA-യിലേക്ക് ചെറുതാക്കുക';
+
+  @override
+  String get vidyaWorkingStop => 'നിർത്തുക';
+
+  @override
   String get vidyaStateListening => 'ഞാൻ കേൾക്കുന്നു';
 
   @override
@@ -2284,6 +2337,25 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get parentHotlineCall => 'രക്ഷിതാവിനെ വിളിക്കൂ';
+
+  @override
+  String get parentHotlineCoverTitle => 'ഈ കോൾ എന്തെല്ലാം ഉൾക്കൊള്ളുന്നു';
+
+  @override
+  String get parentHotlineCoverPoint1 =>
+      'രക്ഷിതാവിന്റെ ഭാഷയിൽ ഊഷ്മളമായി തുടങ്ങുന്നു, കുറ്റപ്പെടുത്തലില്ലാതെ.';
+
+  @override
+  String get parentHotlineCoverPoint2 =>
+      'ആദ്യം കേൾക്കുന്നു, പിന്നെ കുടുംബത്തിന് എന്ത് സഹായം വേണമെന്ന് ചോദിക്കുന്നു.';
+
+  @override
+  String get parentHotlineCoverPoint3 =>
+      'കുട്ടിക്കായി വ്യക്തമായ ഒരു അടുത്ത ചുവടോടെ അവസാനിക്കുന്നു.';
+
+  @override
+  String get parentHotlineCoverAfter =>
+      'അതിനുശേഷം, VIDYA ഫലം രേഖപ്പെടുത്തി നിങ്ങൾ പരിശോധിക്കാൻ ഒരു ഫോളോ-അപ്പ് തയ്യാറാക്കുന്നു.';
 
   @override
   String get parentHotlineWhatsApp => 'WhatsApp-നായി പകർത്തൂ';
@@ -2862,6 +2934,14 @@ class AppLocalizationsMl extends AppLocalizations {
   @override
   String get assessmentScannerPagesEmpty =>
       'ആദ്യ പേജിന്റെ ഒരു ഫോട്ടോ ചേർക്കുക.';
+
+  @override
+  String get assessmentScannerFrameGuide =>
+      'മുഴുവൻ ഷീറ്റും ഫ്രെയിമിനുള്ളിൽ വയ്ക്കൂ';
+
+  @override
+  String get assessmentScannerFrameHint =>
+      'ഓരോ അടയാളവും വായിക്കാൻ തിളക്കമുള്ള, ഒരേപോലുള്ള വെളിച്ചത്തിൽ പരത്തി വയ്ക്കൂ.';
 
   @override
   String assessmentScannerPageLabel(int number) {
@@ -3812,4 +3892,121 @@ class AppLocalizationsMl extends AppLocalizations {
   @override
   String get attendancePremiumBody =>
       'നിങ്ങളുടെ ക്ലാസുകൾ, ഹാജർ പുസ്തകങ്ങൾ, മാസവിവരങ്ങൾ കാണുന്നത് സൗജന്യമായി തുടരും. ക്ലാസ് ഉണ്ടാക്കുന്നതും വിദ്യാർത്ഥിയെ ചേർക്കുന്നതും ഹാജർ സൂക്ഷിക്കുന്നതും Pro പ്ലാനിന്റെ ഭാഗമാണ്.';
+
+  @override
+  String get deliverTrayTitle => 'എത്തിക്കുക';
+
+  @override
+  String get deliverPrivacyNote =>
+      'നിങ്ങൾ അയയ്ക്കുക അമർത്തുന്നതുവരെ ഒന്നും ഫോണിൽ നിന്ന് പുറത്തുപോകില്ല.';
+
+  @override
+  String get deliverSend => 'അയയ്ക്കുക';
+
+  @override
+  String get deliverParentGroup => 'രക്ഷിതാക്കളുടെ ഗ്രൂപ്പ്';
+
+  @override
+  String get deliverParentGroupMeta => 'WhatsApp-ൽ പങ്കിടുക';
+
+  @override
+  String get deliverPrint => 'പ്രിന്റ് ചെയ്യുക';
+
+  @override
+  String get deliverPrintMeta => 'പ്രിന്ററിലേക്ക് അയയ്ക്കുക';
+
+  @override
+  String get deliverSaveToClass => 'ക്ലാസ്സിൽ സേവ് ചെയ്യുക';
+
+  @override
+  String get deliverSaveToClassMeta => 'നിങ്ങളുടെ ലൈബ്രറിയിൽ സൂക്ഷിക്കുക';
+
+  @override
+  String get deliverPostCommunity => 'കമ്മ്യൂണിറ്റിയിൽ പോസ്റ്റ് ചെയ്യുക';
+
+  @override
+  String get deliverPostCommunityMeta => 'ഒരു വിഭവമായി പങ്കിടുക';
+
+  @override
+  String get deliverDownloadPdf => 'PDF ഡൗൺലോഡ് ചെയ്യുക';
+
+  @override
+  String get deliverDownloadPdfMeta => 'ഓഫ്‌ലൈനിൽ പ്രവർത്തിക്കും';
+
+  @override
+  String get deliverReadAloud => 'ഉറക്കെ വായിക്കുക';
+
+  @override
+  String get deliverReadAloudMeta => 'ക്ലാസ്സിനായി';
+
+  @override
+  String get settingsOrbHandTitle => 'ഒഴുകുന്ന സഹായി';
+
+  @override
+  String get settingsOrbHandLabel => 'ഇടതുവശത്ത്';
+
+  @override
+  String get settingsOrbHandHint =>
+      'നിങ്ങളുടെ പെരുവിരൽ എത്തുന്നിടത്ത് VIDYA വെക്കുക';
+
+  @override
+  String get scanRemedialBody =>
+      'ബുദ്ധിമുട്ടിയ ആശയങ്ങൾക്കായി എനിക്ക് ഒരു അഭ്യാസ ഷീറ്റ് ഉണ്ടാക്കാം.';
+
+  @override
+  String get scanRemedialBuild => 'അഭ്യാസ ഷീറ്റ് ഉണ്ടാക്കുക';
+
+  @override
+  String get scanRemedialMessageParents => 'രക്ഷിതാക്കൾക്ക് സന്ദേശം അയയ്ക്കുക';
+
+  @override
+  String get communityFilterAll => 'എല്ലാം';
+
+  @override
+  String get communityFilterPosts => 'പോസ്റ്റുകൾ';
+
+  @override
+  String get communityFilterResources => 'വിഭവങ്ങൾ';
+
+  @override
+  String get communityFilterHighlights => 'പ്രധാന ഭാഗങ്ങൾ';
+
+  @override
+  String get attendanceVoiceRollCall => 'പേരുകൾ ഉറക്കെ വായിക്കുക';
+
+  @override
+  String get attendanceVoiceListeningTitle => 'കേൾക്കുന്നു…';
+
+  @override
+  String get attendanceVoiceListeningBody =>
+      'നിങ്ങളുടെ ക്ലാസ്സിന്റെ ഹാജർ ഉറക്കെ വായിക്കുക. ഓരോ പേരും ഹാജരായി ഞാൻ അടയാളപ്പെടുത്തും; ഒന്ന് മാറ്റാൻ \'ഹാജരില്ല\' അല്ലെങ്കിൽ \'വൈകി\' എന്ന് പറയുക.';
+
+  @override
+  String get attendanceVoiceWorking => 'ഒരു നിമിഷം…';
+
+  @override
+  String get attendanceVoiceWorkingBody =>
+      'നിങ്ങൾ പറഞ്ഞതിൽ നിന്ന് ഹാജർ അടയാളപ്പെടുത്തുന്നു.';
+
+  @override
+  String get attendanceVoiceMicOffTitle => 'മൈക്രോഫോൺ വേണം';
+
+  @override
+  String get attendanceVoiceMicOffBody =>
+      'ശബ്ദത്തിലൂടെ ഹാജർ എടുക്കാൻ മൈക്രോഫോണിന് അനുമതി നൽകുക.';
+
+  @override
+  String get attendanceVoiceFailedTitle => 'മനസ്സിലായില്ല';
+
+  @override
+  String get attendanceVoiceFailedBody => 'എന്തോ പിഴച്ചു. വീണ്ടും ശ്രമിക്കുക.';
+
+  @override
+  String get attendanceVoiceNone =>
+      'എനിക്ക് ഒരു പേരും മനസ്സിലായില്ല. വീണ്ടും ശ്രമിക്കുക.';
+
+  @override
+  String attendanceVoiceMarked(int count) {
+    return '$count പേരുകൾ അടയാളപ്പെടുത്തി.';
+  }
 }

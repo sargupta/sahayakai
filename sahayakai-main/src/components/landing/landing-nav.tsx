@@ -14,9 +14,9 @@ export function LandingNav({ onAuthClick }: Props) {
     <nav className="sticky top-0 z-30 flex items-center justify-between px-6 sm:px-11 py-[22px] bg-white/70 backdrop-blur-md border-b border-black/5">
       <div className="flex items-center gap-2.5 font-headline font-bold text-[18px] tracking-tight text-foreground">
         <img
-          src="/icons/icon-192x192.png"
+          src="/icons/mark.png"
           alt={t("SahayakAI logo")}
-          className="h-8 w-8 rounded-lg object-cover"
+          className="h-8 w-8 object-contain"
         />
         <span className="flex items-baseline gap-1.5">
           SahayakAI

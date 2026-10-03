@@ -22,13 +22,13 @@ import 'rubric_grid.dart';
 ///
 /// The rubric is wrapped in a [DocumentSheet]: a masthead ("RUBRIC" eyebrow, the
 /// rubric title as a Fraunces title, saffron rule, grade/subject meta badges),
-/// the assignment description, and the criteria x performance-levels grid.
+/// the assignment description, and the stacked criterion cards.
 ///
 /// THE LAYOUT CONTRACT (DESIGN_RUBRIC §8, and the known ToolScaffold crash): the
-/// grid owns the ONLY sideways scroll on the page (see [RubricGrid]); it lives
-/// inside its own bounded, horizontally-scrolling box INSIDE the DocumentSheet,
-/// so the page (the ToolScaffold's vertical scroll view) never scrolls sideways.
-/// Everything above the grid is full-width, left-aligned prose.
+/// rubric is stacked vertically (see [RubricGrid], v3 screen 10) — one card per
+/// criterion with its levels listed inside — so nothing scrolls sideways and the
+/// page (the ToolScaffold's vertical scroll view) is the only scroller.
+/// Everything is full-width, left-aligned prose.
 ///
 /// All model-authored prose flows through [AiText] (line-height 1.7 + Indic
 /// height behaviour) so matras and vowel signs never clip. Each block inks in on
@@ -69,9 +69,6 @@ class RubricResultView extends StatelessWidget {
 
     final title = rubric.title.isNotEmpty ? rubric.title : l10n.rubricTitle;
     final hasGrid = rubric.criteria.isNotEmpty;
-    // The swipe affordance is only honest when the grid is actually a wide,
-    // scrollable table (it has level columns to scroll through).
-    final showScrollHint = rubric.levelCount > 0;
 
     final meta = <Widget>[
       if (rubric.gradeLevel != null)
@@ -84,24 +81,13 @@ class RubricResultView extends StatelessWidget {
         AppBadge(icon: LucideIcons.bookOpen, label: rubric.subject!),
     ];
 
-    // The document blocks, in reading order. Content is unchanged from the flat
-    // renderer — only the composition around it is new. The grid keeps its own
-    // bounded horizontal scroller.
+    // The document blocks, in reading order. The rubric now renders as a stacked
+    // set of criterion cards (v3 screen 10), so there is no sideways scroller and
+    // no swipe affordance to explain.
     final blocks = <Widget>[
       if (rubric.description != null)
         RichMarkdown(rubric.description!, muted: true),
-      if (hasGrid)
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (showScrollHint) ...[
-              const _ScrollHint(),
-              const SizedBox(height: AppSpacing.space3),
-            ],
-            RubricGrid(rubric: rubric),
-          ],
-        ),
+      if (hasGrid) RubricGrid(rubric: rubric),
     ];
 
     // Ink-settle: each block fades + rises in turn. Degrades to the static
@@ -210,30 +196,3 @@ String _rubricAsText(Rubric rubric, AppLocalizations l10n) {
   return b.toString().trimRight();
 }
 
-/// A muted "swipe across to see all levels" affordance: the grid scrolls
-/// horizontally within its own box, and this tells the teacher so.
-class _ScrollHint extends StatelessWidget {
-  const _ScrollHint();
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    return Row(
-      children: [
-        Icon(
-          LucideIcons.moveHorizontal,
-          size: AppIconSize.inline,
-          color: scheme.onSurfaceVariant,
-        ),
-        const SizedBox(width: AppSpacing.space2),
-        Flexible(
-          child: Text(
-            context.l10n.rubricScrollHint,
-            style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-          ),
-        ),
-      ],
-    );
-  }
-}

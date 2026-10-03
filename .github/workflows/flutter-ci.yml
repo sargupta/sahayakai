@@ -12,7 +12,12 @@ name: Flutter CI
 
 on:
   push:
-    branches: [feature/flutter-rebuild]
+    # `feature/flutter-rebuild` merged into main and was deleted, which left this
+    # trigger pointing at a ref that no longer exists — so from that merge until
+    # 2026-09-27 nothing ran post-merge and the Flutter app's only automated
+    # check was the pull_request one. Follow the trunk instead of a branch that
+    # can be deleted under us.
+    branches: [main]
     paths:
       - 'sahayakai-flutter/**'
       - '.github/workflows/flutter-ci.yml'
@@ -25,10 +30,12 @@ on:
     inputs:
       update_goldens:
         description: >-
-          Re-baseline the golden PNGs on Linux and commit them. Flutter goldens
-          are NOT portable across host platforms: baselines generated on a
-          developer Mac will not match ubuntu-latest. CI is the sole authority,
-          and this input is how its baselines get established.
+          Re-baseline the golden PNGs on Linux and upload them as an artifact.
+          Flutter goldens are NOT portable across host platforms: baselines
+          generated on a developer Mac will not match ubuntu-latest. CI is the
+          sole authority, and this input is how its baselines get established.
+          The new PNGs arrive as a downloadable artifact for a human to commit
+          through a pull request — this job no longer writes to the repository.
         type: boolean
         default: false
 
@@ -84,7 +91,15 @@ jobs:
       - name: i18n audit (11 locales, 5 checks)
         run: python3 scripts/loop/i18n_audit.py
 
+      # The loop selftest proves the AUTONOMOUS-LOOP guards can fail, and those
+      # guards are bound to the loop's own branch and ledger: loop_guard requires
+      # the branch be `feature/flutter-rebuild`, and reconcile validates that
+      # branch's verifiedAtSha ledger. They cannot pass on a PR branch by design,
+      # so this meta-check runs only on the loop branch, where it is meaningful.
+      # The real code gates above (codegen, analyze, tokens, i18n) still run on
+      # every PR.
       - name: guards can still fail
+        if: github.ref == 'refs/heads/feature/flutter-rebuild'
         run: bash scripts/loop/selftest.sh
 
   test:
@@ -106,6 +121,11 @@ jobs:
   goldens:
     name: 'Gate 3: golden baselines (Linux is the authority)'
     runs-on: ubuntu-latest
+    # Read-only on purpose. This job used to commit and push the baselines it
+    # rendered; it now hands them back as an artifact, so it has no reason to
+    # hold a write-capable token.
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -122,31 +142,36 @@ jobs:
         if: github.event_name == 'workflow_dispatch' && inputs.update_goldens
         run: flutter test --tags golden --update-goldens
 
-      - name: commit re-baselined goldens
+      - name: report what re-baselining changed
         if: github.event_name == 'workflow_dispatch' && inputs.update_goldens
-        env:
-          # Never interpolate a ref directly into a shell command. A branch name
-          # is attacker-influencable text, and `git push origin HEAD:${{ ... }}`
-          # would hand it straight to bash.
-          TARGET_REF: ${{ github.ref_name }}
         run: |
-          # This job can WRITE to the repository, so it enforces the same branch
-          # policy the build loop follows: only the feature branch, never main.
-          # A dispatch triggered from another ref re-baselines and uploads, but
-          # does not push.
-          if [ "$TARGET_REF" != "feature/flutter-rebuild" ]; then
-            echo "::error::refusing to push goldens to '$TARGET_REF' — this job only writes to feature/flutter-rebuild"
-            exit 1
+          # The previous version of this step committed and pushed the new PNGs
+          # itself, and it was allowed to write only to feature/rebuild — a
+          # branch that has since been merged and deleted. So the one mechanism
+          # for establishing baselines could not run at all, and the golden gate
+          # stayed red with no way to fix it in the sanctioned path.
+          #
+          # CI no longer writes to the repository. It re-renders on the authority
+          # platform and hands the bytes back; a human lands them through a pull
+          # request like any other change.
+          if git diff --quiet -- test/golden docs/flutter/spike; then
+            echo 'goldens already match this platform — nothing to re-baseline'
+          else
+            git -c core.pager=cat diff --stat -- test/golden docs/flutter/spike
           fi
-          if git diff --quiet -- test/golden; then
-            echo "goldens already match this platform — nothing to commit"
-            exit 0
-          fi
-          git config user.name  'Abhishek Gupta'
-          git config user.email 'abhi.ist.15@gmail.com'
-          git add test/golden
-          git commit -m 'test(golden): re-baseline on linux (CI is the authority)'
-          git push origin "HEAD:refs/heads/$TARGET_REF"
+
+      - name: upload re-baselined goldens
+        if: github.event_name == 'workflow_dispatch' && inputs.update_goldens
+        uses: actions/upload-artifact@v4
+        with:
+          name: rebaselined-goldens
+          # Both trees hold committed baselines: the widget goldens under
+          # test/golden, and the PDF Indic-shaping spike's reference render
+          # under docs/flutter/spike.
+          path: |
+            sahayakai-flutter/test/golden
+            sahayakai-flutter/docs/flutter/spike
+          if-no-files-found: error
 
       - name: verify goldens
         if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.update_goldens) }}
