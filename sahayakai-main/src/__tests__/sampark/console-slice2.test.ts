@@ -38,7 +38,7 @@ const LOCALES = fs.readdirSync(path.join(ROOT, 'src/locales')).filter((f) => f.e
 const locale = (f: string) => JSON.parse(fs.readFileSync(path.join(ROOT, 'src/locales', f), 'utf8')) as Record<string, string>;
 const read = (rel: string) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 
-/** Every t("…") literal in a source string (double-quoted, apostrophes allowed). */
+/** Every double-quoted translator-call literal in a source string (apostrophes allowed). */
 function tKeys(code: string): string[] {
     return [...code.matchAll(/\bt\(\s*"((?:[^"\\\n]|\\.)+)"\s*\)/g)].map((m) => m[1].replace(/\\"/g, '"'));
 }
