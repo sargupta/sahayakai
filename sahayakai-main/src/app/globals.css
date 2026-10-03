@@ -60,6 +60,136 @@
   .mark-float-c { animation: mark-float-c 15s ease-in-out infinite; }
 }
 
+/* ========================================
+   VIDYA orb (vidya-presence.tsx) — product-native, from the SahayakAI
+   website design reference (2026-10). ONE warm radial fill, ONE soft
+   shadow, ONE state ring. No glow field, orbits, sheen or particles:
+   colour + ring carry state, so motion always means something.
+   State arrives as data-state on .vidya-stage:
+   idle | connecting | listening | processing | speaking | error.
+   Live mic / playback level arrives as --vidya-level (0–1). All motion is
+   gated on prefers-reduced-motion: no-preference.
+   ======================================== */
+.vidya-stage {
+  --vidya-level: 0;
+  /* Fill = radial highlight → body (the design's orb recipe). */
+  --vidya-hi: 32 100% 84%;   /* #FFD9AE */
+  --vidya-lo: 25 67% 47%;    /* #C96A28 = --primary */
+  --vidya-ring: 25 67% 47%;
+}
+.vidya-stage[data-state="listening"],
+.vidya-stage[data-state="speaking"] { --vidya-hi: 33 100% 88%; } /* #FFE3C2 */
+.vidya-stage[data-state="connecting"],
+.vidya-stage[data-state="processing"] {
+  --vidya-hi: 228 76% 92%;   /* #DCE2FA — the design's "working" indigo */
+  --vidya-lo: 230 55% 36%;   /* #2A3B8F */
+  --vidya-ring: 230 55% 36%;
+}
+.vidya-stage[data-state="error"] {
+  --vidya-hi: 30 30% 90%;
+  --vidya-lo: 25 25% 55%;    /* desaturated: unavailable, not alarming */
+  --vidya-ring: 6 63% 46%;   /* #C0392B */
+}
+
+/* The orb button — it IS the control. */
+.vidya-sphere {
+  position: relative;
+  width: 30%;
+  aspect-ratio: 1;
+  border-radius: 9999px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transform: scale(calc(1 + var(--vidya-level) * 0.04));
+  transition: transform 0.12s linear;
+}
+.vidya-stage[data-size="compact"] .vidya-sphere { width: 100%; }
+@media (max-width: 640px) {
+  .vidya-stage[data-size="hero"] .vidya-sphere,
+  .vidya-stage[data-size="workspace"] .vidya-sphere { width: 38%; }
+}
+.vidya-sphere:focus { outline: none; }
+.vidya-sphere:focus-visible { outline: 3px solid hsl(var(--saffron-700)); outline-offset: 5px; }
+
+.vidya-core {
+  position: relative;
+  display: flex;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  color: hsl(0 0% 100%);
+  background: radial-gradient(circle at 34% 30%, hsl(var(--vidya-hi)), hsl(var(--vidya-lo)) 72%);
+  box-shadow: 0 8px 20px -4px hsl(var(--vidya-lo) / 0.42);
+  transition: background 0.5s ease, box-shadow 0.5s ease, transform 0.18s ease;
+}
+.vidya-sphere:hover .vidya-core { box-shadow: 0 10px 24px -4px hsl(var(--vidya-lo) / 0.48); }
+.vidya-sphere:active .vidya-core { transform: scale(0.97); }
+
+/* State ring: hidden at rest; follows the REAL level while listening /
+   speaking; a slow breath while connecting / thinking; static on error. */
+.vidya-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  pointer-events: none;
+  box-shadow: 0 0 0 0 hsl(var(--vidya-ring) / 0);
+  transition: box-shadow 0.2s ease;
+}
+.vidya-stage[data-state="listening"] .vidya-ring,
+.vidya-stage[data-state="speaking"] .vidya-ring {
+  box-shadow: 0 0 0 calc(5px + var(--vidya-level) * 12px) hsl(var(--vidya-ring) / 0.18);
+}
+.vidya-stage[data-state="connecting"] .vidya-ring,
+.vidya-stage[data-state="processing"] .vidya-ring { box-shadow: 0 0 0 6px hsl(var(--vidya-ring) / 0.14); }
+.vidya-stage[data-state="error"] .vidya-ring { box-shadow: 0 0 0 3px hsl(var(--vidya-ring) / 0.35); }
+
+.vidya-icon {
+  width: clamp(22px, 26%, 36px);
+  height: auto;
+  aspect-ratio: 1;
+}
+.vidya-stage[data-size="compact"] .vidya-icon { width: 24px; }
+.vidya-wordmark {
+  font-family: var(--font-bricolage), var(--font-outfit), system-ui, sans-serif;
+  font-size: clamp(10px, 7%, 13px);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  margin-right: -0.22em;
+}
+
+/* Status pill dot (home / tool-page status line) mirrors the orb colour. */
+.vidya-status-dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 9999px;
+  background: hsl(var(--muted-foreground) / 0.6);
+}
+.vidya-status[data-state="listening"] .vidya-status-dot,
+.vidya-status[data-state="interrupted"] .vidya-status-dot,
+.vidya-status[data-state="speaking"] .vidya-status-dot { background: hsl(25 67% 47%); }
+.vidya-status[data-state="connecting"] .vidya-status-dot,
+.vidya-status[data-state="thinking"] .vidya-status-dot { background: hsl(230 55% 36%); }
+.vidya-status[data-state="error"] .vidya-status-dot { background: hsl(6 63% 46%); }
+
+@keyframes vidya-rest   { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes vidya-breath { 0%, 100% { box-shadow: 0 0 0 4px hsl(var(--vidya-ring) / 0.10); } 50% { box-shadow: 0 0 0 9px hsl(var(--vidya-ring) / 0.16); } }
+@keyframes vidya-dot    { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .vidya-stage[data-state="idle"] .vidya-core { animation: vidya-rest 5s ease-in-out infinite; }
+  .vidya-stage[data-state="connecting"] .vidya-ring,
+  .vidya-stage[data-state="processing"] .vidya-ring { animation: vidya-breath 1.8s ease-in-out infinite; }
+  .vidya-status[data-state="listening"] .vidya-status-dot,
+  .vidya-status[data-state="thinking"] .vidya-status-dot,
+  .vidya-status[data-state="speaking"] .vidya-status-dot { animation: vidya-dot 1.4s ease-in-out infinite; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vidya-sphere, .vidya-core, .vidya-ring { transition: none; }
+  .vidya-sphere { transform: none; }
+}
+
 @layer utilities {
   .animate-bounce-subtle {
     animation: bounce-subtle 3s infinite;
@@ -105,14 +235,14 @@
      single source (planned; do not restructure it by hand now).
      ======================================== */
   .force-light {
-    --background: 40 20% 99.5%;
-    --foreground: 222 47% 11%;
+    --background: 38 50% 97%;
+    --foreground: 30 17% 9%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card: 40 100% 99%;
+    --card-foreground: 30 17% 9%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover: 40 100% 99%;
+    --popover-foreground: 30 17% 9%;
 
     --primary: 24 65% 47%;
     --primary-foreground: 0 0% 100%;
@@ -120,8 +250,8 @@
     --secondary: 123 37% 25%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 37 45% 93%;
+    --muted-foreground: 30 9% 40%;
 
     --accent: 240 100% 25%;
     --accent-foreground: 0 0% 100%;
@@ -129,8 +259,8 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 16% 93%;
-    --input: 220 16% 90%;
+    --border: 36 20% 89%;
+    --input: 36 18% 85%;
     --ring: 24 65% 47%;
 
     --chart-1: 24 65% 47%;
@@ -139,13 +269,13 @@
     --chart-4: 43 96% 56%;
     --chart-5: 340 82% 52%;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-background: 38 45% 96%;
+    --sidebar-foreground: 30 10% 24%;
     --sidebar-primary: 240 5.9% 10%;
     --sidebar-primary-foreground: 0 0% 98%;
     --sidebar-accent: 28 70% 96%;
     --sidebar-accent-foreground: 24 65% 47%;
-    --sidebar-border: 220 13% 91%;
+    --sidebar-border: 36 20% 89%;
     --sidebar-ring: 24 65% 47%;
 
     /* Paint this subtree's own surface light too, so any element that
@@ -257,29 +387,29 @@
     --accent-foreground: 0 0% 100%;
 
     /* Background - Warm, Welcoming */
-    --background: 40 20% 99.5%;
+    --background: 38 50% 97%;
     /* Warm Off-White */
-    --foreground: 222 47% 11%;
+    --foreground: 30 17% 9%;
     /* Dark Gray #1F2937 */
 
     /* Card - Glassmorphism with Saffron accent */
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card: 40 100% 99%;
+    --card-foreground: 30 17% 9%;
 
     /* Popover */
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover: 40 100% 99%;
+    --popover-foreground: 30 17% 9%;
 
     /* Muted - Warm Neutrals */
-    --muted: 210 40% 96%;
+    --muted: 37 45% 93%;
     /* #F9FAFB */
-    --muted-foreground: 215 16% 47%;
+    --muted-foreground: 30 9% 40%;
     /* #6B7280 */
 
     /* Borders - Warm, soft */
-    --border: 220 16% 93%;
+    --border: 36 20% 89%;
     /* Warm light gray */
-    --input: 220 16% 90%;
+    --input: 36 18% 85%;
     /* Slightly darker for input affordance */
     --ring: 24 65% 47%;
     /* Saffron focus ring — matches --primary (AA tone) */
@@ -344,9 +474,9 @@
     /* Rose */
 
     /* Sidebar - Solid & Clean */
-    --sidebar-background: 0 0% 98%;
+    --sidebar-background: 38 45% 96%;
     /* Off-white for distinct sidebar */
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-foreground: 30 10% 24%;
     --sidebar-primary: 240 5.9% 10%;
     --sidebar-primary-foreground: 0 0% 98%;
     --sidebar-accent: 28 70% 96%;
@@ -355,7 +485,7 @@
     /* Saffron text — 3.57:1 measured on the 96% tint (AA for large
        text / UI components; the old #B35609 note claiming 4.54:1 was
        stale) */
-    --sidebar-border: 220 13% 91%;
+    --sidebar-border: 36 20% 89%;
     --sidebar-ring: 24 65% 47%;
   }
 
@@ -475,39 +605,39 @@
      leading-* utilities still override per element.
      ======================================== */
   :lang(hi), :lang(mr) {
-    font-family: var(--font-inter), var(--font-noto-devanagari), sans-serif;
+    font-family: var(--font-instrument), var(--font-inter), var(--font-noto-devanagari), sans-serif;
     line-height: 1.7;
   }
   :lang(bn) {
-    font-family: var(--font-inter), var(--font-noto-bengali), sans-serif;
+    font-family: var(--font-instrument), var(--font-inter), var(--font-noto-bengali), sans-serif;
     line-height: 1.7;
   }
   :lang(ta) {
-    font-family: var(--font-inter), var(--font-noto-tamil), sans-serif;
+    font-family: var(--font-instrument), var(--font-inter), var(--font-noto-tamil), sans-serif;
     line-height: 1.7;
   }
   :lang(te) {
-    font-family: var(--font-inter), var(--font-noto-telugu), sans-serif;
+    font-family: var(--font-instrument), var(--font-inter), var(--font-noto-telugu), sans-serif;
     line-height: 1.7;
   }
   :lang(kn) {
-    font-family: var(--font-inter), var(--font-noto-kannada), sans-serif;
+    font-family: var(--font-instrument), var(--font-inter), var(--font-noto-kannada), sans-serif;
     line-height: 1.7;
   }
   :lang(ml) {
-    font-family: var(--font-inter), var(--font-noto-malayalam), sans-serif;
+    font-family: var(--font-instrument), var(--font-inter), var(--font-noto-malayalam), sans-serif;
     line-height: 1.7;
   }
   :lang(gu) {
-    font-family: var(--font-inter), var(--font-noto-gujarati), sans-serif;
+    font-family: var(--font-instrument), var(--font-inter), var(--font-noto-gujarati), sans-serif;
     line-height: 1.7;
   }
   :lang(pa) {
-    font-family: var(--font-inter), var(--font-noto-gurmukhi), sans-serif;
+    font-family: var(--font-instrument), var(--font-inter), var(--font-noto-gurmukhi), sans-serif;
     line-height: 1.7;
   }
   :lang(or) {
-    font-family: var(--font-inter), var(--font-noto-oriya), sans-serif;
+    font-family: var(--font-instrument), var(--font-inter), var(--font-noto-oriya), sans-serif;
     line-height: 1.7;
   }
 }

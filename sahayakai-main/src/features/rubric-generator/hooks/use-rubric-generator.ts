@@ -70,6 +70,7 @@ export function useRubricGenerator() {
     const generator = useGenerator<FormValues, RubricGeneratorOutput>({
         feature: "rubric",
         endpoint: "/api/ai/rubric",
+        persistsArtifact: true,
         // NCERT-demo 2026-05-19 hardening (same pattern as use-lesson-plan.ts):
         // ALWAYS send a non-empty `language`; strip the "General" subject
         // placeholder so the model isn't misled by a meaningless default.
@@ -175,7 +176,7 @@ export function useRubricGenerator() {
                     if (res.ok) {
                         const content = await res.json();
                         if (content.data) {
-                            generator.setResult(content.data);
+                            generator.setResult(content.data, id);
                             // `reset` REPLACES the whole form state — any key
                             // missing from the payload becomes undefined
                             // rather than being left alone. Seed it from the
@@ -267,6 +268,7 @@ export function useRubricGenerator() {
         canUseAI,
         aiUnavailableReason,
         rubric: generator.result,
+        contentId: generator.contentId,
         status: generator.status,
         isGenerating: generator.isGenerating,
         limitState: generator.limitState,

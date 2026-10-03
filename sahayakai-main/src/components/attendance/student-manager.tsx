@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,11 +25,21 @@ interface StudentManagerProps {
     classId: string;
     students: Student[];
     onRefresh: () => void;
+    /**
+     * Open the Add Student form on mount / when set (VIDYA "open Add
+     * Student"). The parent clears it via `onAutoOpenHandled` so a later
+     * remount of this tab does not reopen the form.
+     */
+    autoOpenAdd?: boolean;
+    onAutoOpenHandled?: () => void;
 }
+
+/** Per-class roster cap enforced by the Add Student button. */
+export const MAX_STUDENTS_PER_CLASS = 40;
 
 const BLANK_FORM = { name: "", rollNumber: "", parentPhone: "", parentLanguage: "Hindi" as any };
 
-export function StudentManager({ classId, students, onRefresh }: StudentManagerProps) {
+export function StudentManager({ classId, students, onRefresh, autoOpenAdd, onAutoOpenHandled }: StudentManagerProps) {
     const { toast } = useToast();
     const { t } = useLanguage();
     const [sheetOpen, setSheetOpen] = useState(false);
@@ -43,6 +53,13 @@ export function StudentManager({ classId, students, onRefresh }: StudentManagerP
         setForm({ ...BLANK_FORM, rollNumber: String(students.length + 1) });
         setSheetOpen(true);
     };
+
+    useEffect(() => {
+        if (!autoOpenAdd) return;
+        if (students.length < MAX_STUDENTS_PER_CLASS) openAdd();
+        onAutoOpenHandled?.();
+        // Only reacts to a new request, not to roster changes.
+    }, [autoOpenAdd]);
 
     const openEdit = (s: Student) => {
         setEditing(s);
@@ -105,11 +122,11 @@ export function StudentManager({ classId, students, onRefresh }: StudentManagerP
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">{students.length}/40 students</p>
+                <p className="text-sm text-muted-foreground">{students.length}/{MAX_STUDENTS_PER_CLASS} students</p>
                 <Button
                     size="sm"
                     onClick={openAdd}
-                    disabled={students.length >= 40}
+                    disabled={students.length >= MAX_STUDENTS_PER_CLASS}
                     className="bg-orange-500 hover:bg-orange-600 text-white gap-2"
                 >
                     <UserPlus className="h-4 w-4" />

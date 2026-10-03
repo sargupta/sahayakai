@@ -1,6 +1,7 @@
 "use client";
 
 import type { FC } from "react";
+import { useLibraryId } from "@/hooks/use-library-id";
 import type { RubricGeneratorOutput } from "@/ai/flows/rubric-generator";
 import {
     Table,
@@ -21,15 +22,19 @@ import { getResultShellDict } from "@/lib/result-shell-i18n";
 type RubricDisplayProps = {
     rubric: RubricGeneratorOutput;
     selectedLanguage?: string;
+    /** Library id of this artifact (useGenerator().contentId); Save upserts it. */
+    contentId?: string | null;
 };
 
 const PDF_ID = "rubric-pdf";
 
 export const RubricDisplay: FC<RubricDisplayProps> = ({
     rubric,
+    contentId,
     selectedLanguage,
 }) => {
     const { toast } = useToast();
+    const libraryId = useLibraryId(contentId, rubric);
     const t = getResultShellDict(selectedLanguage);
 
     if (!rubric || !rubric.criteria || rubric.criteria.length === 0) {
@@ -67,7 +72,7 @@ export const RubricDisplay: FC<RubricDisplayProps> = ({
             }
             const token = await user.getIdToken();
             const payload = {
-                id: crypto.randomUUID(),
+                id: libraryId,
                 type: "rubric",
                 title: rubric.title,
                 gradeLevel: rubric.gradeLevel || "Class 5",

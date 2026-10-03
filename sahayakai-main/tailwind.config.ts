@@ -19,6 +19,7 @@ export default {
         // Order matters: Inter/Outfit first so Latin characters still use
         // them when mixed with Indic script (code-switching Hinglish).
         body: [
+          'var(--font-instrument)',
           'var(--font-inter)',
           'var(--font-noto-devanagari)',
           'var(--font-noto-tamil)',
@@ -32,6 +33,7 @@ export default {
           'sans-serif',
         ],
         headline: [
+          'var(--font-bricolage)',
           'var(--font-outfit)',
           'var(--font-noto-devanagari)',
           'var(--font-noto-tamil)',

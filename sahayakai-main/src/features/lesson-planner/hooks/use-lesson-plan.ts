@@ -25,12 +25,17 @@ import { usePerformanceTracking } from "@/hooks/use-performance-tracking";
 import { useAnalytics } from "@/hooks/use-analytics";
 import { useJarvisStore } from "@/store/jarvisStore";
 import { useLimitGuard } from "@/hooks/use-limit-guard";
+import { useVidyaScreenContext } from "@/hooks/use-vidya-app-context";
 import { normaliseVidyaLanguage, normaliseVidyaGradeLevel } from "@/lib/vidya-action-normalizer";
 
 export function useLessonPlan() {
     const { requireAuth, openAuthModal } = useAuth();
     const { language: userLanguage } = useLanguage();
     const [lessonPlan, setLessonPlan] = useState<LessonPlanOutput | null>(null);
+    // Library id of the shown plan: minted per server generation (the flow
+    // files the plan under it) or the restored item's id. Null for plans
+    // served from the local caches, which the server never saved.
+    const [lessonPlanContentId, setLessonPlanContentId] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [loadingMessage, setLoadingMessage] = useState("");
     const { limitState, checkResponse, clearLimit } = useLimitGuard();
@@ -221,6 +226,7 @@ export function useLessonPlan() {
                         const content = await res.json();
                         if (content.data) {
                             setLessonPlan(content.data);
+                            setLessonPlanContentId(id);
                             form.reset({
                                 topic: content.topic || content.title,
                                 language: content.language,
@@ -298,6 +304,7 @@ export function useLessonPlan() {
         }
         setIsLoading(true);
         setLessonPlan(null);
+        setLessonPlanContentId(null);
 
         // 0. SAFETY CHECKS
         const rateLimit = checkRateLimit();
@@ -458,10 +465,14 @@ export function useLessonPlan() {
                 ? values.subject
                 : undefined;
 
+            // One id per server generation: the flow files the plan under it
+            // and the display's Save upserts it (no duplicate Library row).
+            const submitContentId = crypto.randomUUID();
             const res = await fetch("/api/ai/lesson-plan", {
                 method: "POST",
                 headers: headers,
                 body: JSON.stringify({
+                    contentId: submitContentId,
                     topic: values.topic,
                     language: submittedLanguage,
                     gradeLevels: values.gradeLevels,
@@ -496,6 +507,7 @@ export function useLessonPlan() {
             const apiDuration = Date.now() - apiStartTime;
 
             setLessonPlan(result);
+            setLessonPlanContentId(submitContentId);
             clearFormSnapshot("lesson-plan");
 
             // Mark onboarding checklist item
@@ -602,10 +614,20 @@ export function useLessonPlan() {
         });
     };
 
+    // VIDYA: which tool this is, where the generation stands, and whether
+    // the shown plan is already in My Library.
+    useVidyaScreenContext("generator.lesson-plan", {
+        generatorTool: "lesson-plan",
+        generationStatus: isLoading ? "generating" : lessonPlan ? "done" : "idle",
+        hasResult: lessonPlan !== null,
+        savedToLibrary: lessonPlanContentId !== null,
+    });
+
     return {
         form,
         onSubmit,
         lessonPlan,
+        lessonPlanContentId,
         isLoading,
         loadingMessage,
         isOffline,

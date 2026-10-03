@@ -23,6 +23,7 @@ export const QuizGeneratorInputSchema = z.object({
   // Middleware always injects x-user-id from the Firebase ID token,
   // so this is required at the schema level — matches the Py sidecar.
   userId: z.string().describe('The ID of the user for whom the quiz is being generated.'),
+  contentId: z.string().max(64).optional().describe('Stable Library artifact id minted by the client once per generation (idempotency key). Invalid values are replaced server-side.'),
   targetDifficulty: z.enum(['easy', 'medium', 'hard']).optional().describe('The specific difficulty level to generate.'),
   subject: z.string().optional().describe('The academic subject of the quiz.'),
   teacherContext: z.string().optional().describe('Career-stage context for personalising AI output tone and depth.'),

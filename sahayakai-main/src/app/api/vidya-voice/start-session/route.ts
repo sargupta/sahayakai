@@ -139,7 +139,12 @@ export async function POST(request: NextRequest) {
   // 3. Canary allowlist. Same 503 as the flag being off — a teacher who
   //    is not in the cohort should see the ordinary "not available"
   //    fallback, not an access-denied that invites probing.
-  if (!parseAllowlist(process.env[ALLOWLIST_ENV]).has(uid)) {
+  const allowlist = parseAllowlist(process.env[ALLOWLIST_ENV]);
+  // `*` is a LOCAL-DEVELOPMENT convenience only (any signed-in uid on this
+  // machine). Production builds ignore it, so the deployed gate stays an
+  // exact-match, fail-closed allowlist.
+  const devWildcard = process.env.NODE_ENV !== 'production' && allowlist.has('*');
+  if (!devWildcard && !allowlist.has(uid)) {
     return NextResponse.json(
       { error: 'Live voice is not available right now' },
       { status: 503 },

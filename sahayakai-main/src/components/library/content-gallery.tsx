@@ -20,6 +20,13 @@ import { cn } from "@/lib/utils";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
+import { useVidyaCapability, useVidyaScreenContext } from "@/hooks/use-vidya-app-context";
+
+// Types the Library type filter can show (matches the filter Select + CONTENT_TYPES).
+const LIBRARY_FILTER_TYPES: readonly ContentType[] = [
+    "lesson-plan", "quiz", "worksheet", "visual-aid", "rubric", "virtual-field-trip",
+    "exam-paper", "teacher-training", "instant-answer",
+];
 
 // Escape untrusted content before interpolating into the exported/printed
 // HTML document. Library content can be AI-generated OR community-imported
@@ -314,6 +321,28 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
         }
     };
 
+    // VIDYA: what My Library shows (the teacher's own items, already loaded
+    // by /api/content/list) and the real actions it offers — the same
+    // filter select and card-open handler the UI uses.
+    useVidyaScreenContext("my-library", loading ? null : {
+        typeFilter,
+        itemsShown: filteredItems.length,
+        recentItems: filteredItems.slice(0, 8).map((i) => `${i.title} [${i.type}]`),
+    });
+    useVidyaCapability("library.filter", ({ type }) => {
+        if (type !== "all" && !LIBRARY_FILTER_TYPES.includes(type as ContentType)) throw new Error("unknown_type");
+        setTypeFilter(type);
+    });
+    useVidyaCapability("library.open_item", ({ title }) => {
+        const wanted = (title || "").trim().toLowerCase();
+        const match = wanted
+            ? items.find((i) => (i.title || "").trim().toLowerCase() === wanted)
+                ?? items.find((i) => (i.title || "").toLowerCase().includes(wanted))
+            : undefined;
+        if (!match) throw new Error("item_not_found");
+        handleOpen(match);
+    }, { enabled: items.length > 0 });
+
     const createDownloadableContent = (content: any, type: string): Blob => {
         // Create HTML content for download
         let htmlContent = `
@@ -447,6 +476,9 @@ export function ContentGallery({ userId, initialType, onCountChange }: ContentGa
                             <SelectItem value="visual-aid">{t("Visual Aids")}</SelectItem>
                             <SelectItem value="rubric">{t("Rubrics")}</SelectItem>
                             <SelectItem value="virtual-field-trip">{t("Field Trips")}</SelectItem>
+                            <SelectItem value="exam-paper">{t("Exam Paper")}</SelectItem>
+                            <SelectItem value="teacher-training">{t("Teacher Training")}</SelectItem>
+                            <SelectItem value="instant-answer">{t("Instant Answer")}</SelectItem>
                         </SelectContent>
                     </Select>
 

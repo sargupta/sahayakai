@@ -20,6 +20,13 @@ import { ai, runResiliently } from '@/ai/genkit';
 import { SAHAYAK_SOUL_PROMPT } from '@/ai/soul';
 import { INJECTION_GUARD, frameUserInput } from '@/ai/prompt-hardening';
 import { logger } from '@/lib/logger';
+import { getCapability, locateScreen, renderManifestForPrompt } from '@/lib/vidya/app-manifest';
+import {
+    sanitizeAppContext,
+    validateAppAction,
+    type VidyaAppAction,
+    type VidyaAppContext,
+} from '@/lib/vidya/app-context-contract';
 
 /**
  * NCERT-demo 2026-05-19 — chapter validation hook.
@@ -79,6 +86,12 @@ export interface AssistantTeacherProfile {
 export interface AssistantScreenContext {
     path?: string | null;
     uiState?: Record<string, unknown> | null;
+    /**
+     * Live application context (screen, visible state, offered actions) —
+     * untrusted client input, re-validated by `sanitizeAppContext`. See
+     * `@/lib/vidya/app-context-contract`.
+     */
+    app?: unknown;
 }
 
 export interface AssistantInput {
@@ -151,9 +164,57 @@ export interface AssistantOutput {
      * the legacy single-action shape until δ's wire migration lands.
      */
     plannedActions?: VidyaPlannedAction[];
+    /**
+     * In-app action (navigate to a section / invoke an action the current
+     * screen offered). Validated server-side against the manifest and the
+     * screen's advertised capabilities; null when none. Separate from
+     * `action` so the NAVIGATE_AND_FILL wire contract shared with the
+     * Python sidecar is untouched.
+     */
+    appAction?: VidyaAppAction | null;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
+
+/**
+ * App-awareness block: static product knowledge (manifest) + the live
+ * screen the teacher is on + the actions that screen really offers.
+ * Screen state is app-generated but may contain teacher-typed text (class
+ * names, titles), so it is framed as untrusted data.
+ */
+function buildAppAwarenessBlock(path: string | null | undefined, app: VidyaAppContext | null): string {
+    const { section, screenId } = locateScreen(path);
+    const where = section ? `${section.label} (section "${section.id}", screen "${app?.screenId || screenId}")` : 'unknown';
+    const entities = app && Object.keys(app.entities).length > 0
+        ? frameUserInput('app_screen_state', JSON.stringify(app.entities))
+        : 'none published';
+    const actions = app && app.capabilities.length > 0
+        ? app.capabilities
+            .map((c) => {
+                const def = getCapability(c.id);
+                const params = def?.params?.length ? ` params: ${def.params.join(', ')}` : '';
+                const state = c.enabled ? 'enabled' : `disabled${c.reason ? `: ${c.reason}` : ''}`;
+                return `- ${c.id} — ${def?.description ?? ''}${params} [${state}]`;
+            })
+            .join('\n')
+        : '- none on this screen';
+
+    return `### 12. YOU ARE INSIDE THE SAHAYAKAI APP
+${renderManifestForPrompt()}
+
+Teacher is currently on: ${where}
+What this screen shows (from the app itself — the ONLY source of truth about the screen): ${entities}
+Actions this screen offers right now:
+${actions}
+
+APP RULES (these override "when in doubt route to a tool"):
+- Questions about the app itself ("where is the Library?", "where do I add students?", "how do I take attendance?", "what can I do here?", "which screen am I on?") are answered in \`response\` from the sections and workflows above, using the real button/tab names. For these, set \`action\` to null — NEVER route them to instant-answer.
+- Questions about the current screen ("which class is this?", "is attendance complete?", "who is absent?") are answered ONLY from "What this screen shows". If it is not there, say you cannot see it from here. Never guess or invent data.
+- If the teacher asks you to go to / open / take them to a section, set \`"appAction": {"type": "NAVIGATE", "destination": "<section id>"}\` and \`action\` to null.
+- If the teacher asks you to DO something that matches an ENABLED action listed above, set \`"appAction": {"type": "INVOKE", "capability": "<id>", "params": {…}}\` and \`action\` to null. Say in \`response\` what you are doing. Actions that save data are confirmed by the teacher on screen before they run.
+- If the matching action is disabled or not listed on this screen, do NOT set appAction: explain why and how to do it (navigate first if another section offers it).
+- Never invent sections, actions or params. Otherwise set \`"appAction": null\`.`;
+}
 
 function buildSystemPrompt(input: AssistantInput): string {
     const profileContext = (() => {
@@ -195,6 +256,8 @@ Current User Screen path: ${screen?.path || 'unknown'}
 Active form fields (what the teacher is currently working on): ${JSON.stringify(screen?.uiState || {})}${profileContext}${languageInstruction}
 
 ${VIDYA_INTENT_DISAMBIGUATION_BLOCK}
+
+${buildAppAwarenessBlock(screen?.path, sanitizeAppContext(screen?.app))}
     `;
 }
 
@@ -311,6 +374,7 @@ interface LegacyVidyaShape {
     action?: AssistantAction | null;
     plannedActions?: VidyaPlannedAction[];
     followUpSuggestion?: string | null;
+    appAction?: unknown;
 }
 
 function normalisePlannedActions(parsed: LegacyVidyaShape): VidyaPlannedAction[] {
@@ -439,10 +503,17 @@ export async function runGenkitVidya(
             const plannedActions = await annotateAssistantValidation(
                 normalisePlannedActions(parsed),
             );
+            // Only a manifest section, or an action the current screen
+            // advertised as enabled, survives; anything else is dropped.
+            const appAction = validateAppAction(
+                parsed.appAction,
+                sanitizeAppContext(input.currentScreenContext?.app),
+            );
             const out: AssistantOutput = {
                 response: parsed.response ?? '',
                 action: parsed.action ?? null,
                 plannedActions,
+                appAction,
             };
             // [VIDYA Genkit] one-line structured trace so we can confirm
             // every voice utterance produced a valid intent at the LLM
@@ -453,6 +524,7 @@ export async function runGenkitVidya(
                 actionType: out.action?.type ?? null,
                 actionFlow: (out.action as { flow?: string } | null)?.flow ?? null,
                 plannedCount: out.plannedActions?.length ?? 0,
+                appActionType: out.appAction?.type ?? null,
             });
             return out;
         } catch (err) {

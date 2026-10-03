@@ -354,6 +354,7 @@ export async function dispatchLessonPlan(
             input.userId && input.userId !== 'anonymous_user'
                 ? await persistSidecarJSON({
                       uid: input.userId,
+                      contentId: input.contentId,
                       collection: 'lesson-plans',
                       contentType: 'lesson-plan',
                       title: titleForLibrary,

@@ -211,15 +211,18 @@ export async function POST(request: NextRequest) {
       logger.error('Failed to delete teacher_analytics during account deletion', err, 'ACCOUNT_DELETE', { userId });
     }
 
-    // vidya_sessions owned by this user — paged in chunks of 500.
+    // users/{uid}/vidya_sessions/* — VIDYA conversation history (turns +
+    // actionsTriggered), written by /api/vidya/session. Paged in chunks of 500.
+    // Firestore does not cascade a parent-doc delete to subcollections, and
+    // this previously queried a top-level `vidya_sessions` collection that
+    // nothing writes — so every teacher's transcripts survived account
+    // deletion.
     try {
       let deletedSessions = 0;
+      const sessionsCol = db.collection('users').doc(userId).collection('vidya_sessions');
       // eslint-disable-next-line no-constant-condition
       while (true) {
-        const snap = await db.collection('vidya_sessions')
-          .where('userId', '==', userId)
-          .limit(500)
-          .get();
+        const snap = await sessionsCol.limit(500).get();
         if (snap.empty) break;
         const batch = db.batch();
         for (const doc of snap.docs) batch.delete(doc.ref);

@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import {
   Inter,
   Outfit,
+  Bricolage_Grotesque,
+  Instrument_Sans,
   Noto_Sans_Devanagari,
   Noto_Sans_Bengali,
   Noto_Sans_Tamil,
@@ -28,6 +30,21 @@ import './globals.css';
 // Per-language application: LanguageContext syncs <html lang>, and
 // globals.css maps :lang() -> the right --font-noto-* variable.
 // ========================================
+// 2026-10 design system (SahayakAI website reference): Instrument Sans for UI
+// and body copy, Bricolage Grotesque for display headings. Inter / Outfit stay
+// registered as fallbacks so nothing renders in a generic system font.
+const instrumentSans = Instrument_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-instrument',
+  display: 'swap',
+});
+const bricolage = Bricolage_Grotesque({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-bricolage',
+  display: 'swap',
+});
 const inter = Inter({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
@@ -97,6 +114,8 @@ const notoOriya = Noto_Sans_Oriya({
 });
 
 const fontVariables = [
+  instrumentSans.variable,
+  bricolage.variable,
   inter.variable,
   outfit.variable,
   notoDevanagari.variable,

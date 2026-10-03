@@ -1,6 +1,7 @@
 "use client";
 
 import type { FC } from "react";
+import { useLibraryId } from "@/hooks/use-library-id";
 import { Download, Copy, FileText, Save } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
@@ -24,16 +25,20 @@ type WorksheetDisplayProps = {
     };
     title?: string;
     selectedLanguage?: string;
+    /** Library id of this artifact (useGenerator().contentId); Save upserts it. */
+    contentId?: string | null;
 };
 
 const PDF_ID = "worksheet-pdf";
 
 export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({
     worksheet,
+    contentId,
     title,
     selectedLanguage,
 }) => {
     const { toast } = useToast();
+    const libraryId = useLibraryId(contentId, worksheet.worksheetContent);
     const t = getResultShellDict(selectedLanguage);
 
     if (!worksheet || !worksheet.worksheetContent) return null;
@@ -72,7 +77,7 @@ export const WorksheetDisplay: FC<WorksheetDisplayProps> = ({
             }
             const token = await user.getIdToken();
             const payload = {
-                id: crypto.randomUUID(),
+                id: libraryId,
                 type: "worksheet",
                 title: displayTitle,
                 gradeLevel: worksheet.gradeLevel || "Class 5",

@@ -3,7 +3,7 @@
 import { useLandingTitleIndex } from "@/hooks/use-landing-title-index";
 import { LandingNav } from "./landing-nav";
 import { LandingHero } from "./landing-hero";
-import { LandingPillarStrip } from "./landing-pillar-strip";
+import { LandingFeatures } from "./landing-features";
 import { LandingQuote } from "./landing-quote";
 import { LandingFooter } from "./landing-footer";
 import { ScriptMarks } from "./script-marks";
@@ -28,7 +28,7 @@ export function LandingPage({ onAuthClick }: Props) {
         <ScriptMarks />
         <div className="ambient-grain" aria-hidden />
         <LandingHero titleIndex={titleIndex} onAuthClick={onAuthClick} />
-        <LandingPillarStrip titleIndex={titleIndex} />
+        <LandingFeatures />
         <LandingQuote />
       </div>
 
