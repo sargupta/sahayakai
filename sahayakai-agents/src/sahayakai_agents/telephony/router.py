@@ -334,6 +334,49 @@ async def _admit(ws: WebSocket) -> str | None:
     return outreach_id
 
 
+def context_from_outreach(data: dict[str, Any], language: str) -> CallContext:
+    """Build the call context from a `parent_outreach` document.
+
+    Pure, so the field names the web app writes can be pinned by a test: this
+    function and `src/server/attendance.ts` / `outreach/route.ts` are two halves
+    of one contract, and the half in this file once read a field (`message`)
+    the other half never wrote.
+    """
+    # Marks, formatted the way the June flow formatted them: at most three
+    # subjects, quoted only if the parent asks.
+    perf = data.get("performanceContext") or {}
+    breakdown = perf.get("subjectBreakdown") or []
+    marks = ", ".join(
+        f"{a.get('subject')}: {a.get('marksObtained')}/{a.get('maxMarks')}"
+        for a in breakdown[:3]
+    ) or None
+    if marks and isinstance(perf.get("latestPercentage"), (int, float)):
+        marks = f"{marks} · overall {round(perf['latestPercentage'])}%"
+
+    return CallContext(
+        student_name=data.get("studentName"),
+        teacher_name=data.get("teacherName"),
+        class_name=data.get("className"),
+        school_name=data.get("schoolName"),
+        reason=data.get("reason"),
+        subject=data.get("subject"),
+        performance_summary=marks,
+        language=data.get("parentLanguage") or language,
+        # `spokenScript` is the phrasing written for speech; `generatedMessage`
+        # is the written letter, and is what EVERY outreach record carries (see
+        # `/api/attendance/outreach` and `saveOutreachRecord`). The first version
+        # of this read `message`, a field nothing writes, so a call whose record
+        # lacked a `spokenScript` told the model "no specific message" while the
+        # letter sat unread on the same document. `message` stays as a last
+        # resort for any older record that used it.
+        message=(
+            data.get("spokenScript")
+            or data.get("generatedMessage")
+            or data.get("message")
+        ),
+    )
+
+
 async def _load_context(outreach_id: str, language: str) -> CallContext:
     """Read the teacher's message and the child's details for this call.
 
@@ -364,30 +407,7 @@ async def _load_context(outreach_id: str, language: str) -> CallContext:
         data = snap.to_dict() if snap.exists else None
         if not data:
             return CallContext(language=language)
-        # Marks, formatted the way the June flow formatted them: at most three
-        # subjects, quoted only if the parent asks.
-        perf = data.get("performanceContext") or {}
-        breakdown = perf.get("subjectBreakdown") or []
-        marks = ", ".join(
-            f"{a.get('subject')}: {a.get('marksObtained')}/{a.get('maxMarks')}"
-            for a in breakdown[:3]
-        ) or None
-        if marks and isinstance(perf.get("latestPercentage"), (int, float)):
-            marks = f"{marks} · overall {round(perf['latestPercentage'])}%"
-
-        return CallContext(
-            student_name=data.get("studentName"),
-            teacher_name=data.get("teacherName"),
-            class_name=data.get("className"),
-            school_name=data.get("schoolName"),
-            reason=data.get("reason"),
-            subject=data.get("subject"),
-            performance_summary=marks,
-            language=data.get("parentLanguage") or language,
-            # `spokenScript` is the phrasing written for speech; `message` is the
-            # written form. Prefer the spoken one when it exists.
-            message=data.get("spokenScript") or data.get("message"),
-        )
+        return context_from_outreach(data, language)
     except Exception as exc:  # noqa: BLE001
         log.warning("telephony.context_unavailable", outreach_id=outreach_id, error=str(exc))
         return CallContext(language=language)
