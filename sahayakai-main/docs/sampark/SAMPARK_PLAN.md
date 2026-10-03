@@ -470,6 +470,18 @@ Real calls of any kind; conversation mode for new purposes; changes to the Pytho
 9. **P0 business actions:** CRM vendor and a real export; the consent drive; the dedicated number; named reviewers.
 10. **Go-ahead for Phase 1 slice 1**, built on the reserved branch and shown to you working before anything merges.
 
+### Decisions taken 3 Oct 2026
+
+1. **Fee calls (C1, C2):** `scholarship` and `staff_ward` are excluded, in addition to `rte` and `waived`. All four concession categories get no fee call, because the school may not want a machine reminding these families. Excluded children stay visible in the backtest and the console with a plain reason, so the school can ask for a change.
+2. **Re-proposal cooldown:** the school chooses 7 or 14 days when it adopts a rule (default 14; 7 is the floor, a school may be stricter, never looser). Proposal expiry stays 7 days.
+3. **Extra suppression triggers kept:** an open bullying report, an open wellbeing meeting and any counsellor involvement suppress automated calls about that child, beyond the plan's flag list.
+4. **A5 (recognition) auto-approval:** default off. A school may opt in when it adopts the rule.
+5. **A2 (absent today):** the policy stays as built (class-teacher confirmation first, then paging).
+6. **Number lexicon:** stays 0 to 60; amounts it cannot say are handed to the accounts officer.
+7. **Native review:** done by the founder's team.
+8. **TRAI note and consent drive:** parked until a DPS agreement. The documents are in git history (commit cf24523).
+9. **DPS data:** comes from the school's existing holistic-development tool, by API or MCP server; the dedicated calling number comes from DPS. The questions to ask are in section 7 of `DPS_SILIGURI_ASK_PACK.md`.
+
 ---
 
 ## 16. Critical review log
