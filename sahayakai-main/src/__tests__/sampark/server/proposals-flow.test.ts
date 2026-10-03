@@ -19,6 +19,7 @@ import { createMemoryRulesRepo } from '@/lib/sampark/rules/memory-repo';
 import type { CrmSignals } from '@/lib/sampark/rules/signals';
 import { RULE_IDS } from '@/lib/sampark/rules/types';
 import { DEFAULT_THRESHOLDS } from '@/lib/sampark/rules/thresholds';
+import { dispatchJob } from '@/server/sampark/jobs';
 import { enableSchool } from '@/server/sampark/school';
 import {
     acknowledgePage,
@@ -315,6 +316,28 @@ describe('approval: who may approve, then intents the existing dispatcher dials'
         expect(again.dialed).toBe(0);
         expect(carrier.requests).toHaveLength(1); // at most once
         expect(await env.repo.listCalls(ORG, { limit: 10 })).toHaveLength(1);
+    });
+
+    it('the production job path (dispatchJob with the real simulated carrier) places proposal intents too, and only simulated', async () => {
+        const env = await setup();
+        await adoptAll(env, ['academic_talk', 'fee_due']);
+        await runRules(env.ctx, ORG);
+        for (const [studentId, purpose, who] of [['s-acad', 'academic_talk', T7B], ['s-fee', 'fee_due', ACCT]] as const) {
+            await approveProposal(env.ctx, ORG, (await proposalFor(env, studentId, purpose))!.id, who);
+        }
+        const report = await dispatchJob({ repo: env.repo, clock: env.clock });
+        expect(report).toMatchObject({ dialed: 2, errors: [] });
+        const calls = await env.repo.listCalls(ORG, { limit: 10 });
+        expect(calls.map((c) => c.purpose).sort()).toEqual(['academic_talk', 'fee_due']);
+        for (const c of calls) {
+            expect(c.carrier).toBe('simulated');
+            expect(c.campaignId).toBeNull();
+            expect(['completed', 'no_answer', 'busy', 'failed']).toContain(c.state);
+        }
+        // and the school is in practice mode: a non-practice mode makes the same intents unreachable
+        const school = (await env.repo.getSchool(ORG))!;
+        await env.repo.upsertSchool({ ...school, mode: 'live' });
+        expect((await dispatchJob({ repo: env.repo, clock: env.clock })).dialed).toBe(0);
     });
 
     it('a crash right after the claim never produces a second dial', async () => {
