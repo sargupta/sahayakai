@@ -13,7 +13,15 @@
 #       --invoker-sa sahayakai-hotfix-resilience-runtime@sahayakai-b4248.iam.gserviceaccount.com
 #
 # Gates checked:
-#   1. Both deploy paths' SA flag is wired (read .github/workflows/cloud-run.yml + apphosting.yaml)
+#   1. Both deploy paths run as the sidecar-invoker SA
+#      1a. sahayakai-main/apphosting.yaml (Firebase App Hosting path) sets
+#          serviceAccount + the sidecar secrets (in-repo check)
+#      1b. the live Cloud Run service `sahayakai-hotfix-resilience` (Cloud
+#          Run path) runs as that SA. There is no in-repo file to grep for
+#          this path: sahayakai-main/scripts/safe-deploy.sh passes no
+#          --service-account (the service keeps its configured SA) and
+#          .github/workflows/google-cloudrun-docker.yml is workflow_dispatch
+#          only and also sets none, so the live service is the source of truth.
 #   2. Sidecar Cloud Run service exists and is reachable
 #   3. /healthz, /readyz, /.well-known/agent-card.json all return 200
 #   4. POST /v1/parent-call/reply WITHOUT auth → 401 (IAM enforced)
@@ -25,9 +33,10 @@
 #  10. auto-abort Cloud Function `parent-call-auto-abort` is deployed
 #  11. shadow-diff aggregator function is deployed
 #  12. parent-call-auto-abort Pub/Sub topic exists
-#  13. All 6 alert policies in auto_abort/policy_templates/ are applied
+#  13. All 6 alert policies in cloud_functions/auto_abort/policy_templates/ are applied
 #  14. Cloud Scheduler job for shadow-diff aggregator is enabled
-#  15. tests/fixtures/parent_call_turns.json is present and ≥ 22 entries
+#  15. sahayakai-agents/tests/fixtures/parent_call_turns.json is present and ≥ 22 entries
+#      (generated, needs live Gemini: cd sahayakai-main && npm run record:parent-call-fixtures)
 #
 # Round-2 audit reference: P0 PREFLIGHT-1 (every gate must be green
 # BEFORE the first flag flip).
@@ -73,13 +82,27 @@ gate() {
 }
 
 # ── Gate 1: deploy paths ────────────────────────────────────────────────
-check_deploy_paths() {
-  grep -q "service-account=sahayakai-hotfix-resilience-runtime" \
-    "${ROOT}/sahayakai-main/.github/workflows/cloud-run.yml" || return 1
-  grep -q "serviceAccount: sahayakai-hotfix-resilience-runtime" \
-    "${ROOT}/sahayakai-main/apphosting.yaml" || return 1
+# 1a: App Hosting path, checked from the repo.
+check_deploy_paths_apphosting() {
+  local f="${ROOT}/sahayakai-main/apphosting.yaml"
+  grep -q "serviceAccount: sahayakai-hotfix-resilience-runtime" "$f" || return 1
+  for v in SAHAYAKAI_AGENTS_AUDIENCE SAHAYAKAI_REQUEST_SIGNING_KEY; do
+    grep -q "secret: ${v}" "$f" || return 1
+  done
 }
-gate "deploy paths wired with sidecar SA" check_deploy_paths
+gate "1a apphosting.yaml wired with sidecar SA + secrets" check_deploy_paths_apphosting
+
+# 1b: Cloud Run path. No repo file wires the SA (safe-deploy.sh and
+# google-cloudrun-docker.yml pass no --service-account), so verify the
+# live service, which is what actually mints the ID tokens.
+check_deploy_paths_cloudrun() {
+  local sa
+  sa=$(gcloud run services describe sahayakai-hotfix-resilience \
+    --region="${REGION}" --project="${PROJECT_ID}" \
+    --format='value(spec.template.spec.serviceAccountName)' 2>/dev/null) || return 1
+  [[ "$sa" == "${INVOKER_SA}" ]]
+}
+gate "1b live Cloud Run sahayakai-hotfix-resilience runs as --invoker-sa" check_deploy_paths_cloudrun
 
 # ── Gate 2: sidecar Cloud Run service exists ────────────────────────────
 check_service() {
@@ -225,11 +248,26 @@ check_scheduler() {
 gate "parent-call-shadow-rollup-cron scheduler job exists" check_scheduler
 
 # ── Gate 15: parity fixtures committed and >= 22 entries ───────────────
+# The fixtures are GENERATED (2 turns x 11 languages through the production
+# Genkit flow) and need live Gemini access, so they cannot be produced by
+# this script or in CI. Make the failure actionable instead of silent.
+FIXTURES_REL="sahayakai-agents/tests/fixtures/parent_call_turns.json"
 check_fixtures() {
-  fix="${ROOT}/sahayakai-agents/tests/fixtures/parent_call_turns.json"
-  [[ -f "$fix" ]] || return 1
+  fix="${ROOT}/${FIXTURES_REL}"
+  if [[ ! -f "$fix" ]]; then
+    echo "    missing ${FIXTURES_REL}" >&2
+    echo "    generate (needs live Gemini access, GOOGLE_GENAI_API_KEY in" >&2
+    echo "    .env.local (in sahayakai-main) or the environment; spends API quota):" >&2
+    echo "      cd sahayakai-main && GOOGLE_GENAI_API_KEY=... npm run record:parent-call-fixtures" >&2
+    echo "    then review and commit the file (expected: >= 22 entries)." >&2
+    return 1
+  fi
   count=$(python3 -c "import json; d = json.load(open('${fix}')); print(len(d) if isinstance(d, list) else 0)")
-  (( count >= 22 ))
+  if (( count < 22 )); then
+    echo "    ${FIXTURES_REL} has ${count} entries, need >= 22; re-run" >&2
+    echo "    cd sahayakai-main && npm run record:parent-call-fixtures" >&2
+    return 1
+  fi
 }
 gate "tests/fixtures/parent_call_turns.json has ≥ 22 entries" check_fixtures
 
@@ -244,8 +282,8 @@ if [[ "${FAIL}" -gt 0 ]]; then
   echo "Fix the failed gates before flipping parentCallSidecarMode to"
   echo "shadow. Each failure above has a specific remedy:"
   echo
-  echo "  - deploy paths        → re-run cloud-run.yml + apphosting.yaml"
-  echo "                          per fc91ee49a"
+  echo "  - deploy paths        → 1a: fix sahayakai-main/apphosting.yaml"
+  echo "                          1b: gcloud run services update sahayakai-hotfix-resilience --service-account=<invoker-sa>"
   echo "  - service exists      → cd sahayakai-agents && gcloud builds submit"
   echo "  - endpoints           → bash scripts/post-deploy-smoke.sh ..."
   echo "  - signing key         → bash scripts/generate-signing-key.sh ..."
@@ -253,12 +291,12 @@ if [[ "${FAIL}" -gt 0 ]]; then
   echo "  - shadow key          → manual: gcloud secrets create + add disjoint key"
   echo "  - feature flags       → bash scripts/seed-feature-flags.sh ..."
   echo "  - TTL                 → bash scripts/apply-firestore-ttl.sh ..."
-  echo "  - auto-abort fn       → cd cloud_functions/auto_abort && gcloud functions deploy"
-  echo "  - shadow-rollup fn    → cd cloud_functions/shadow_diff_aggregator && gcloud functions deploy"
+  echo "  - auto-abort fn       → cd sahayakai-agents/cloud_functions/auto_abort && gcloud functions deploy"
+  echo "  - shadow-rollup fn    → cd sahayakai-agents/cloud_functions/shadow_diff_aggregator && gcloud functions deploy"
   echo "  - Pub/Sub topic       → gcloud pubsub topics create parent-call-auto-abort"
-  echo "  - alert policies      → bash auto_abort/README.md apply loop"
-  echo "  - scheduler           → see shadow_diff_aggregator/README.md"
-  echo "  - fixtures            → cd sahayakai-main && npm run record:parent-call-fixtures"
+  echo "  - alert policies      → apply loop in cloud_functions/auto_abort/README.md"
+  echo "  - scheduler           → see cloud_functions/shadow_diff_aggregator/README.md"
+  echo "  - fixtures            → cd sahayakai-main && GOOGLE_GENAI_API_KEY=... npm run record:parent-call-fixtures (live Gemini; then commit)"
   exit 1
 fi
 
