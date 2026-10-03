@@ -33,6 +33,81 @@ interface FixtureSet {
 
 const json = (value: unknown) => `${JSON.stringify(value, null, 2)}\n`;
 
+/** One record per line, so the fixture stays diff-friendly without pretty-printing every field. */
+const jsonLines = (value: Record<string, unknown[]>) =>
+    `{\n${Object.entries(value)
+        .map(([key, list]) => `  ${JSON.stringify(key)}: [\n${list.map((row) => `    ${JSON.stringify(row)}`).join(',\n')}\n  ]`)
+        .join(',\n')}\n}\n`;
+
+/**
+ * The signals Sampark's rules read (attendance, holistic-card entries, assessments, meeting requests,
+ * incidents, fee dues), in the app's `CrmSignals` shape (src/lib/sampark/rules/signals.ts), for the
+ * students in the fixture set. FEE DUES are NOT served by the mock CRM: a handful are planted here,
+ * relative to the anchor date, to exercise the C1/C2 rules, and are labelled as such in the README.
+ */
+export function buildSignals(state: CrmState, students: CrmStudent[]) {
+    const ids = new Set(students.map((s) => s.id));
+    const addDays = (date: string, days: number) => {
+        const [y, m, d] = date.split('-').map(Number);
+        return new Date(Date.UTC(y!, m! - 1, d! + days)).toISOString().slice(0, 10);
+    };
+    const anchor = state.anchorDate;
+    const due = (id: string, studentId: string, offsetDays: number, amountRupees: number, label: string) => ({
+        id,
+        studentId,
+        label,
+        dueDate: addDays(anchor, offsetDays),
+        amountRupees,
+        status: 'open' as const,
+    });
+    const feeDues = [
+        due('fee_t2_stu_0128', 'stu_0128', 5, 12500, 'Second instalment'), // regular family, due in 5 days (C1)
+        due('fee_t2_stu_0261', 'stu_0261', -5, 12500, 'Second instalment'), // overdue by 5 days (C2)
+        due('fee_t2_stu_0273', 'stu_0273', 5, 12500, 'Second instalment'), // RTE-quota: excluded
+        due('fee_t2_stu_0251', 'stu_0251', 5, 12500, 'Second instalment'), // counsellor referral: suppressed
+        due('fee_t2_stu_0125', 'stu_0125', -3, 12500, 'Second instalment'), // custody restriction: suppressed
+        due('fee_t2_stu_0153', 'stu_0153', 4, 75000, 'Second instalment'), // amount the scripts cannot say yet
+        due('fee_t2_stu_0245', 'stu_0245', -40, 12500, 'Second instalment'), // overdue beyond the hand-over limit
+    ].filter((d) => ids.has(d.studentId));
+    return {
+        attendance: state.attendance
+            .filter((a) => ids.has(a.studentId))
+            .map((a) => ({ studentId: a.studentId, date: a.date, status: a.status, leaveNote: a.leaveNote, markedAt: a.markedAt })),
+        hpc: state.hpcEntries
+            .filter((h) => ids.has(h.studentId))
+            .map((h) => ({
+                id: h.id,
+                studentId: h.studentId,
+                observedOn: h.observedOn,
+                respondentType: h.respondent.type,
+                sentiment: h.sentiment,
+                note: h.note,
+                confidential: h.confidential,
+                reasonCode: h.reasonCode,
+                unitId: h.unit ? h.unit.id : null,
+                ability: h.ability,
+                rubric: h.rubric ? { level: h.rubric.level, label: h.rubric.label } : null,
+            })),
+        assessments: state.assessments
+            .filter((a) => ids.has(a.studentId))
+            .map((a) => ({
+                studentId: a.studentId,
+                assessmentId: a.assessmentId,
+                assessmentName: a.assessmentName,
+                subjectId: a.subjectId,
+                date: a.date,
+                maxMarks: a.maxMarks,
+                marks: a.marks,
+                status: a.status,
+            })),
+        meetings: state.meetings.filter((m) => ids.has(m.studentId)).map((m) => ({ studentId: m.studentId, reasonCode: m.reasonCode, status: m.status })),
+        incidents: state.incidents
+            .filter((i) => ids.has(i.studentId))
+            .map((i) => ({ studentId: i.studentId, reasonCode: i.reasonCode, severity: i.severity, status: i.status })),
+        feeDues,
+    };
+}
+
 function build(state: CrmState, students: CrmStudent[], guardians: CrmGuardian[], subset: boolean): FixtureSet {
     const studentIds = new Set(students.map((s) => s.id));
     const guardianIds = new Set(guardians.map((g) => g.id));
@@ -48,6 +123,7 @@ function build(state: CrmState, students: CrmStudent[], guardians: CrmGuardian[]
         'students.json': json(students),
         'guardians.json': json(guardians),
         'malformed.json': json({ ...state.malformed, reasons: state.planted.malformed.reasons }),
+        'signals.json': jsonLines(buildSignals(state, students.filter((s) => !s.deleted))),
         'planted.json': json({ seed: state.seed, anchorDate: state.anchorDate, subset: subset ? { grades: SUBSET_GRADES } : null, planted }),
         'students.csv': studentsCsv(students),
         'guardians.csv': guardiansCsv(guardians),
@@ -100,6 +176,7 @@ ${subset ? `**Subset:** the full roster exceeds the fixture size budget, so thes
 | malformed.json | the 3 raw malformed records (\`students\`, \`guardians\`) and why each fails |
 | students.csv, guardians.csv | the same records in the contract CSV shape |
 | students-with-malformed.csv, guardians-with-malformed.csv | as above plus the malformed rows (what \`?includeMalformed=true\` returns) |
+| signals.json | attendance, holistic-card entries, assessments, meeting requests, incidents and fee dues for these students, in Sampark's \`CrmSignals\` shape (slice 2 rules and backtest). Fee dues are planted by the exporter; the mock CRM does not serve them |
 | planted.json | machine-readable ids of every planted case |
 
 Every record in students.json and guardians.json validates against \`src/lib/sampark/crm/schema.ts\`; every record in malformed.json fails it.
