@@ -1870,7 +1870,6 @@
   "Not heard": "వినలేదు",
   "Not now": "ఇప్పుడు కాదు",
   "Not recorded": "నమోదు కాలేదు",
-  "Not sent to RTE or fee-waived families": "RTE లేదా ఫీజు మినహాయింపు పొందిన కుటుంబాలకు పంపబడదు",
   "Not switched on": "ఆన్ చేయబడలేదు",
   "Nothing is sent yet. After you create the campaign you can hear the message in every language, and calls start only when you approve.": "ఇంకా ఏదీ పంపబడలేదు. ప్రచారాన్ని సృష్టించిన తర్వాత మీరు ప్రతి భాషలో సందేశాన్ని వినవచ్చు, మీరు ఆమోదించినప్పుడు మాత్రమే కాల్‌లు ప్రారంభమవుతాయి.",
   "Off days (no routine calls)": "విరామ దినాలు (సాధారణ కాల్‌లు ఉండవు)",
@@ -2147,5 +2146,11 @@
   "{count} children would have been flagged. Teachers already knew about {known}.": "{count} children would have been flagged. Teachers already knew about {known}.",
   "{count} unexplained absences seen. Same-day absence calls are not replayed because they need the class teacher on the day.": "{count} unexplained absences seen. Same-day absence calls are not replayed because they need the class teacher on the day.",
   "Principal": "Principal",
-  "Coordinator": "Coordinator"
+  "Coordinator": "Coordinator",
+  "Not sent to RTE, fee-waived, scholarship or staff-ward families": "Not sent to RTE, fee-waived, scholarship or staff-ward families",
+  "Wait before proposing the same child again": "Wait before proposing the same child again",
+  "7 days": "7 days",
+  "14 days": "14 days",
+  "A child can be proposed again after a week.": "A child can be proposed again after a week.",
+  "A child can be proposed again after two weeks, so fewer repeat requests.": "A child can be proposed again after two weeks, so fewer repeat requests."
 }

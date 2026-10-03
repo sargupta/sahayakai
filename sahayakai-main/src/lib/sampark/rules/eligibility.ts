@@ -24,6 +24,7 @@ import { purposeSpec } from '@/lib/sampark/catalogue';
 import type { PurposeId, SamparkStudent, SensitiveFlag } from '@/types/sampark';
 
 import type { ExcludedChild, ExclusionCode, RuleId } from './types';
+import { FEE_CATEGORY_POLICY } from './fee-categories';
 import { CONFIDENTIAL_RESPONDENT_TYPES, type CrmSignals } from './signals';
 
 /** What the principal may read about WHY, in neutral words (never the underlying detail). */
@@ -90,15 +91,17 @@ export function suppressionFor(
     return null;
 }
 
-/** RTE-quota and fee-waived families are excluded from fee calls (plan §2C, class gate 12). */
+/**
+ * Concession families (RTE quota, fee waiver, scholarship, staff ward) are excluded from fee
+ * calls (plan §2C, class gate 12; founder decision 2026-10-03). Unknown categories fail closed.
+ */
 export function feeExclusionFor(student: Pick<SamparkStudent, 'feeCategory'>): SuppressionResult | null {
-    if (student.feeCategory === 'rte' || student.feeCategory === 'waived') {
-        return {
-            code: 'fee_category_excluded',
-            plain: 'This family is exempt from fees (RTE quota or fee waiver), so no fee call is proposed.',
-        };
+    const policy = FEE_CATEGORY_POLICY[student.feeCategory];
+    if (policy?.callable === true) return null;
+    if (!policy) {
+        return { code: 'fee_category_unknown', plain: "This child's fee category is not recognised, so no fee call is proposed." };
     }
-    return null;
+    return { code: policy.code, plain: policy.plain };
 }
 
 export function excluded(studentId: string, purpose: RuleId, r: SuppressionResult): ExcludedChild {

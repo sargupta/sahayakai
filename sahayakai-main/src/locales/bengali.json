@@ -1870,7 +1870,6 @@
   "Not heard": "শোনেননি",
   "Not now": "এখন নয়",
   "Not recorded": "নথিভুক্ত নয়",
-  "Not sent to RTE or fee-waived families": "RTE বা ফি-মকুব পাওয়া পরিবারগুলিকে পাঠানো হয় না",
   "Not switched on": "চালু নেই",
   "Nothing is sent yet. After you create the campaign you can hear the message in every language, and calls start only when you approve.": "এখনও কিছুই পাঠানো হয়নি। অভিযান তৈরি করার পরে আপনি প্রতিটি ভাষায় বার্তাটি শুনতে পারবেন, এবং আপনি অনুমোদন করলেই কেবল কল শুরু হবে।",
   "Off days (no routine calls)": "বিরতির দিন (নিয়মিত কল নয়)",
@@ -2147,5 +2146,11 @@
   "{count} children would have been flagged. Teachers already knew about {known}.": "{count} জন শিশু চিহ্নিত হত। শিক্ষকেরা {known} জনের কথা আগেই জানতেন।",
   "{count} unexplained absences seen. Same-day absence calls are not replayed because they need the class teacher on the day.": "{count}টি কারণ-ছাড়া অনুপস্থিতি দেখা গেছে। একই দিনের অনুপস্থিতির কল পুনরায় চালানো হয় না, কারণ তার জন্য সেদিনই ক্লাস টিচারকে দরকার।",
   "Principal": "প্রিন্সিপাল",
-  "Coordinator": "কোঅর্ডিনেটর"
+  "Coordinator": "কোঅর্ডিনেটর",
+  "Not sent to RTE, fee-waived, scholarship or staff-ward families": "RTE, ফি-মকুব, বৃত্তি বা কর্মীর সন্তানের পরিবারগুলিকে পাঠানো হয় না",
+  "Wait before proposing the same child again": "একই শিশুকে আবার প্রস্তাব করার আগে অপেক্ষা",
+  "7 days": "৭ দিন",
+  "14 days": "১৪ দিন",
+  "A child can be proposed again after a week.": "এক সপ্তাহ পরে শিশুকে আবার প্রস্তাব করা যেতে পারে।",
+  "A child can be proposed again after two weeks, so fewer repeat requests.": "দুই সপ্তাহ পরে শিশুকে আবার প্রস্তাব করা যেতে পারে, তাই বারবার অনুরোধ কম হয়।"
 }

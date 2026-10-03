@@ -34,7 +34,7 @@ import type { SamparkRulesRepo } from '@/lib/sampark/rules/ports';
 import { approverRoleFor, canApprove, resolveApprovers, validateRoleAssignment, type ApprovalActor, type ApprovalVia } from '@/lib/sampark/rules/roles';
 import { earliestDialAt } from '@/lib/sampark/rules/schedule';
 import type { SignalsLoad } from '@/lib/sampark/rules/signals-source';
-import { DEFAULT_THRESHOLDS, parseThresholds } from '@/lib/sampark/rules/thresholds';
+import { cooldownDaysOf, DEFAULT_THRESHOLDS, parseThresholds } from '@/lib/sampark/rules/thresholds';
 import {
     ADOPTION_STATEMENT_V1,
     RULE_IDS,
@@ -65,8 +65,7 @@ export interface ProposalCtx {
     loadSignals(school: SamparkSchool): Promise<SignalsLoad>;
 }
 
-/** Concern and recognition proposals for the same child and purpose are not re-proposed within this many days. */
-export const PROPOSAL_COOLDOWN_DAYS = 14;
+/** Concern and recognition proposals for the same child and purpose are not re-proposed within the school's adopted cooldown (7 or 14 days, default 14). */
 const COOLDOWN_PURPOSES: readonly RuleId[] = ['attendance_talk', 'academic_talk', 'conduct_talk', 'recognition'];
 
 /** Plain-language reasons for a gate refusal, for the approver (never a code). */
@@ -77,7 +76,7 @@ export const BLOCK_REASON_PLAIN: Readonly<Record<BlockReason, string>> = Object.
     crm_do_not_contact: 'is marked do-not-contact in the school records',
     invalid_number: 'has a phone number that cannot be called',
     language_unknown: 'has no language on record, so the school should ask the family',
-    fee_category_excluded: 'is exempt from fees',
+    fee_category_excluded: 'is in a fee-concession category (RTE, waiver, scholarship or staff ward)',
     sensitive_flag: 'belongs to a child with a sensitive flag',
     human_only_purpose: 'is for a person to handle, not a machine',
     frequency_cap: 'has already had the most calls this month',
@@ -342,7 +341,7 @@ export async function runRules(ctx: ProposalCtx, orgId: string, opts: { only?: R
         const adoption = adoptions.find((a) => a.ruleId === draft.purpose)!;
         // A child who was just proposed the same thing is not proposed again every day.
         if (COOLDOWN_PURPOSES.includes(draft.purpose)) {
-            const cutoff = now.getTime() - PROPOSAL_COOLDOWN_DAYS * 86_400_000;
+            const cutoff = now.getTime() - cooldownDaysOf(adoption.thresholds) * 86_400_000;
             const recent = inputs.proposals.some((p) => p.studentId === draft.studentId && p.purpose === draft.purpose && p.dedupeKey !== draft.dedupeKey && Date.parse(p.createdAt) >= cutoff);
             if (recent) {
                 summary.skippedCooldown++;

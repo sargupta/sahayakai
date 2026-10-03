@@ -154,10 +154,12 @@ describe('counsellor involvement, open wellbeing matters and enrolment', () => {
     it('a child who has left is never called about', () => {
         expect(suppressionFor('attendance_talk', stu('x', { active: false }), EMPTY)).toMatchObject({ code: 'left_school' });
     });
-    it('RTE and fee-waived families are excluded from fee calls only', () => {
-        expect(feeExclusionFor(stu('x', { feeCategory: 'rte' }))).toMatchObject({ code: 'fee_category_excluded' });
-        expect(feeExclusionFor(stu('x', { feeCategory: 'waived' }))).toMatchObject({ code: 'fee_category_excluded' });
-        expect(feeExclusionFor(stu('x', { feeCategory: 'scholarship' }))).toBeNull();
+    it('RTE, fee-waived, scholarship and staff-ward families are excluded from fee calls only', () => {
+        expect(feeExclusionFor(stu('x', { feeCategory: 'rte' }))).toMatchObject({ code: 'fee_category_rte' });
+        expect(feeExclusionFor(stu('x', { feeCategory: 'waived' }))).toMatchObject({ code: 'fee_category_waived' });
+        expect(feeExclusionFor(stu('x', { feeCategory: 'scholarship' }))).toMatchObject({ code: 'fee_category_scholarship' });
+        expect(feeExclusionFor(stu('x', { feeCategory: 'staff_ward' }))).toMatchObject({ code: 'fee_category_staff_ward' });
+        expect(feeExclusionFor(stu('x', { feeCategory: 'regular' }))).toBeNull();
         expect(suppressionFor('attendance_talk', stu('x', { feeCategory: 'rte' }), EMPTY)).toBeNull();
     });
 });
@@ -219,7 +221,7 @@ describe('the mock CRM planted cases', () => {
     });
     it('the RTE-quota child with a due (Neha) gets no fee call, with a reason', () => {
         expect(r.drafts.filter((d) => d.studentId === 'stu_0273' && d.purpose === 'fee_due')).toEqual([]);
-        expect(r.excluded.find((e) => e.studentId === 'stu_0273' && e.purpose === 'fee_due')).toMatchObject({ code: 'fee_category_excluded' });
+        expect(r.excluded.find((e) => e.studentId === 'stu_0273' && e.purpose === 'fee_due')).toMatchObject({ code: expect.stringMatching(/^fee_category_/) });
     });
     it('every excluded child has a non-empty plain reason', () => {
         expect(r.excluded.length).toBeGreaterThan(3);

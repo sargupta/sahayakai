@@ -11,17 +11,27 @@
 
 import { z } from 'zod';
 
-import type { RuleId, ThresholdsByRule } from './types';
+import { DEFAULT_REPROPOSAL_COOLDOWN_DAYS, type ReproposalCooldownDays, type RuleId, type ThresholdsByRule } from './types';
 
 export const DEFAULT_THRESHOLDS: Readonly<ThresholdsByRule> = Object.freeze({
-    attendance_talk: { minConsecutiveAbsentDays: 3, minSessionDaysElapsed: 20, sessionAttendancePercentBelow: 75 },
+    attendance_talk: { minConsecutiveAbsentDays: 3, minSessionDaysElapsed: 20, sessionAttendancePercentBelow: 75, reproposalCooldownDays: DEFAULT_REPROPOSAL_COOLDOWN_DAYS },
     absence_today: { absentByHour: 10, latestProposalHour: 14 },
-    academic_talk: { minAssessments: 2, averagePercentBelow: 35, dropAssessments: 2, minTotalDropPoints: 20 },
-    conduct_talk: { windowDays: 14, minConcernNotes: 2 },
-    recognition: { windowDays: 14, minPositiveNotes: 2, minRespondents: 2, rubricLevelUp: true, autoApprove: false },
+    academic_talk: { minAssessments: 2, averagePercentBelow: 35, dropAssessments: 2, minTotalDropPoints: 20, reproposalCooldownDays: DEFAULT_REPROPOSAL_COOLDOWN_DAYS },
+    conduct_talk: { windowDays: 14, minConcernNotes: 2, reproposalCooldownDays: DEFAULT_REPROPOSAL_COOLDOWN_DAYS },
+    recognition: { windowDays: 14, minPositiveNotes: 2, minRespondents: 2, rubricLevelUp: true, autoApprove: false, reproposalCooldownDays: DEFAULT_REPROPOSAL_COOLDOWN_DAYS },
     fee_due: { daysBeforeDue: 7 },
     fee_overdue: { overdueAfterDays: 1, stopAfterDays: 30 },
 });
+
+/**
+ * How long before the same child can be proposed again for the same purpose. Only 7 or 14 are
+ * allowed: 7 is the floor (stricter is fine, looser never), so 5, 10 or 30 are refused. A record
+ * adopted before this choice existed has no value and reads as the default, 14.
+ */
+const cooldownDays = z
+    .number({ invalid_type_error: 'Re-proposal wait must be 7 or 14 days' })
+    .refine((v) => v === 7 || v === 14, { message: 'Re-proposal wait must be 7 or 14 days (7 is the shortest allowed)' })
+    .default(DEFAULT_REPROPOSAL_COOLDOWN_DAYS);
 
 const int = (min: number, max: number, what: string) =>
     z.number({ invalid_type_error: `${what} must be a number` }).int(`${what} must be a whole number`).min(min, `${what} cannot be below ${min}`).max(max, `${what} cannot be above ${max}`);
@@ -32,6 +42,7 @@ export const THRESHOLD_SCHEMAS = {
             minConsecutiveAbsentDays: int(3, 30, 'Consecutive school days absent'),
             minSessionDaysElapsed: int(10, 200, 'School days elapsed before session attendance counts'),
             sessionAttendancePercentBelow: int(50, 75, 'Session attendance percentage'),
+            reproposalCooldownDays: cooldownDays,
         })
         .strict(),
     absence_today: z
@@ -47,12 +58,14 @@ export const THRESHOLD_SCHEMAS = {
             averagePercentBelow: int(10, 35, 'Average percentage'),
             dropAssessments: int(2, 5, 'Successive falling assessments'),
             minTotalDropPoints: int(10, 80, 'Total drop in percentage points'),
+            reproposalCooldownDays: cooldownDays,
         })
         .strict(),
     conduct_talk: z
         .object({
             windowDays: int(7, 14, 'Window in days'),
             minConcernNotes: int(2, 10, 'Concern notes'),
+            reproposalCooldownDays: cooldownDays,
         })
         .strict(),
     recognition: z
@@ -62,6 +75,7 @@ export const THRESHOLD_SCHEMAS = {
             minRespondents: int(2, 5, 'Different respondents'),
             rubricLevelUp: z.boolean(),
             autoApprove: z.boolean(),
+            reproposalCooldownDays: cooldownDays,
         })
         .strict(),
     fee_due: z.object({ daysBeforeDue: int(1, 14, 'Days before the due date') }).strict(),
@@ -81,4 +95,13 @@ export function parseThresholds<R extends RuleId>(rule: R, raw: unknown): Thresh
     const parsed = THRESHOLD_SCHEMAS[rule].safeParse(raw);
     if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? 'Invalid thresholds' };
     return { ok: true, value: parsed.data as ThresholdsByRule[R] };
+}
+
+/**
+ * The re-proposal cooldown an adoption record carries. Anything other than 7 or 14 (including a
+ * record adopted before the choice existed) reads as the default, 14: fail toward fewer calls.
+ */
+export function cooldownDaysOf(thresholds: unknown): ReproposalCooldownDays {
+    const v = (thresholds as { reproposalCooldownDays?: unknown } | null | undefined)?.reproposalCooldownDays;
+    return v === 7 ? 7 : DEFAULT_REPROPOSAL_COOLDOWN_DAYS;
 }

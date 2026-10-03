@@ -45,7 +45,7 @@ describe('backtest over the mock CRM term (no adoption needed, nothing written)'
     it('counts the suppressed children per rule with plain reasons', () => {
         const fee = rule('fee_due');
         expect(fee.excludedByCode.sensitive_flag).toBe(2); // Kunal (counsellor referral) and Kripa (custody restriction, whose due was still ahead on the earlier sample dates)
-        expect(fee.excludedByCode.fee_category_excluded).toBe(1);
+        expect(fee.excludedByCode.fee_category_rte).toBe(1);
         expect(fee.excludedByCode.fee_amount_not_sayable).toBe(1);
         for (const r of bt.results) for (const e of r.excluded) expect(e.plain.length).toBeGreaterThan(20);
     });

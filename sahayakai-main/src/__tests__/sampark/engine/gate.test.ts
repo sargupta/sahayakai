@@ -135,10 +135,12 @@ describe('evaluateGate — each block reason', () => {
         expect(evaluateGate(input({ students: flagged })).kind).toBe('allow');
     });
 
-    it('10. fee-excluding purpose with an RTE or waived child → fee_category_excluded', () => {
+    it('10. fee-excluding purpose with an RTE, waived, scholarship or staff-ward child → fee_category_excluded', () => {
         expect(blockReason(input({ spec: FEE_DUE, students: [student('s1', { feeCategory: 'rte' })] }))).toBe('fee_category_excluded');
         expect(blockReason(input({ spec: FEE_DUE, students: [student('s1', { feeCategory: 'waived' })] }))).toBe('fee_category_excluded');
-        expect(evaluateGate(input({ spec: FEE_DUE, students: [student('s1', { feeCategory: 'scholarship' })] })).kind).toBe('allow');
+        expect(blockReason(input({ spec: FEE_DUE, students: [student('s1', { feeCategory: 'scholarship' })] }))).toBe('fee_category_excluded');
+        expect(blockReason(input({ spec: FEE_DUE, students: [student('s1', { feeCategory: 'staff_ward' })] }))).toBe('fee_category_excluded');
+        expect(evaluateGate(input({ spec: FEE_DUE, students: [student('s1', { feeCategory: 'regular' })] })).kind).toBe('allow');
         // PTM does not exclude RTE families.
         expect(evaluateGate(input({ students: [student('s1', { feeCategory: 'rte' })] })).kind).toBe('allow');
     });

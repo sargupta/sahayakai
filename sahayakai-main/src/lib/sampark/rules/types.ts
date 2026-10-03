@@ -48,7 +48,17 @@ export interface RoleAssignment {
 
 // ── Adoption (plan §2A "Rules ship switched off", §6) ───────────────────────
 
+/** The only cooldown values a school may adopt: 7 (floor) or 14 (default). */
+export const REPROPOSAL_COOLDOWN_OPTIONS = [7, 14] as const;
+export type ReproposalCooldownDays = (typeof REPROPOSAL_COOLDOWN_OPTIONS)[number];
+export const DEFAULT_REPROPOSAL_COOLDOWN_DAYS: ReproposalCooldownDays = 14;
+
 export interface AttendanceThresholds {
+    /**
+     * A child proposed for this purpose is not proposed again for this many days. 7 is the floor
+     * (a school may be stricter, never looser); the school chooses 7 or 14 when it adopts (default 14).
+     */
+    reproposalCooldownDays: ReproposalCooldownDays;
     /** Consecutive school days absent that triggers A1 (plan: >= 3). */
     minConsecutiveAbsentDays: number;
     /** Session attendance only counts once this many marked school days have elapsed. */
@@ -57,6 +67,11 @@ export interface AttendanceThresholds {
     sessionAttendancePercentBelow: number;
 }
 export interface AcademicThresholds {
+    /**
+     * A child proposed for this purpose is not proposed again for this many days. 7 is the floor
+     * (a school may be stricter, never looser); the school chooses 7 or 14 when it adopts (default 14).
+     */
+    reproposalCooldownDays: ReproposalCooldownDays;
     /** Scored assessments averaged for the "below" test (plan: >= 2). */
     minAssessments: number;
     averagePercentBelow: number;
@@ -65,10 +80,20 @@ export interface AcademicThresholds {
     minTotalDropPoints: number;
 }
 export interface ConductThresholds {
+    /**
+     * A child proposed for this purpose is not proposed again for this many days. 7 is the floor
+     * (a school may be stricter, never looser); the school chooses 7 or 14 when it adopts (default 14).
+     */
+    reproposalCooldownDays: ReproposalCooldownDays;
     windowDays: number;
     minConcernNotes: number;
 }
 export interface RecognitionThresholds {
+    /**
+     * A child proposed for this purpose is not proposed again for this many days. 7 is the floor
+     * (a school may be stricter, never looser); the school chooses 7 or 14 when it adopts (default 14).
+     */
+    reproposalCooldownDays: ReproposalCooldownDays;
     windowDays: number;
     minPositiveNotes: number;
     minRespondents: number;
@@ -198,7 +223,11 @@ export type ExclusionCode =
     | 'sensitive_flag'
     | 'counsellor_involved'
     | 'open_wellbeing_matter'
-    | 'fee_category_excluded'
+    | 'fee_category_rte'
+    | 'fee_category_waived'
+    | 'fee_category_scholarship'
+    | 'fee_category_staff_ward'
+    | 'fee_category_unknown'
     | 'left_school'
     | 'awaiting_class_confirmation'
     | 'fee_call_budget_spent'
