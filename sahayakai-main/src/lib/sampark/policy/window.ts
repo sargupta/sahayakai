@@ -59,10 +59,15 @@ function clampHour(value: unknown, fallback: number): number {
 }
 
 /** The school's window after clamping into [10, 20) IST. `startHour >= endHour` means the window is empty. */
-export function effectiveRoutineWindow(window: CallingWindow | null | undefined): { startHour: number; endHour: number } {
+export function effectiveRoutineWindow(
+    window: CallingWindow | null | undefined,
+    purposeEndHour?: number,
+): { startHour: number; endHour: number } {
+    const end = Math.floor(clampHour(window?.endHour, ROUTINE_END_CEILING_HOUR));
     return {
         startHour: Math.ceil(clampHour(window?.startHour, ROUTINE_START_FLOOR_HOUR)),
-        endHour: Math.floor(clampHour(window?.endHour, ROUTINE_END_CEILING_HOUR)),
+        // A purpose may close its own window earlier than the school's (fee calls end at 19:00, plan §2C); never later.
+        endHour: typeof purposeEndHour === 'number' ? Math.min(end, Math.floor(purposeEndHour)) : end,
     };
 }
 
@@ -102,7 +107,7 @@ function emergencyVerdict(at: Date): WindowVerdict {
 }
 
 function routineVerdict(school: SamparkSchool, spec: PurposeSpec, at: Date): WindowVerdict {
-    const { startHour, endHour } = effectiveRoutineWindow(school.callingWindow);
+    const { startHour, endHour } = effectiveRoutineWindow(school.callingWindow, spec.windowEndHour);
     if (startHour >= endHour) {
         return {
             allowed: false,

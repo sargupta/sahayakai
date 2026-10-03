@@ -295,6 +295,7 @@ async function processIntent(ctx: SchoolContext, intent: Intent): Promise<boolea
         carrierKind: ctx.carrier.kind,
         now,
         stage: 'dispatch',
+        viaProposal: !!intent.proposalId,
     });
 
     if (verdict.kind === 'block') {
