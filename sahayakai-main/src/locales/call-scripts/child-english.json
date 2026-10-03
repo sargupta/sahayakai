@@ -1,0 +1,68 @@
+{
+  "_meta": {
+    "language": "English",
+    "reviewStatus": "draft — needs native-speaker sign-off",
+    "reviewedBy": null,
+    "notes": [
+      "Child-specific notices (slice 2). Every call begins with the listener check, which names the child and nothing else; everything specific is said only after the parent presses 1.",
+      "A1, A3 and A4 share ONE wording on purpose: a parent cannot tell which of them triggered the call, and none states a concern. The reason lives only in the approver's evidence.",
+      "Fee scripts never threaten, never mention a consequence, never ask for a number or a payment on the call, and always carry the OTP warning."
+    ]
+  },
+  "amount": {
+    "pattern": "{words} rupees",
+    "lakh": "lakh",
+    "thousand": "thousand",
+    "hundred": "hundred"
+  },
+  "purposes": {
+    "attendance_talk": {
+      "listenerCheck": "Namaste. This is a recorded message from {schoolName} for the parent of {childName}. If you are {childName}'s parent or guardian, please press 1.",
+      "message": "Thank you. {childName}'s class teacher would like to speak with you this week about how {childName} is doing at school.",
+      "menu": "If you would like the school to call you to fix a time, press 1. If you'd rather not get these calls, press 9.",
+      "confirm_1": "Thank you. We've let the class teacher know, and the school will call you to fix a time."
+    },
+    "academic_talk": {
+      "listenerCheck": "Namaste. This is a recorded message from {schoolName} for the parent of {childName}. If you are {childName}'s parent or guardian, please press 1.",
+      "message": "Thank you. {childName}'s class teacher would like to speak with you this week about how {childName} is doing at school.",
+      "menu": "If you would like the school to call you to fix a time, press 1. If you'd rather not get these calls, press 9.",
+      "confirm_1": "Thank you. We've let the class teacher know, and the school will call you to fix a time."
+    },
+    "conduct_talk": {
+      "listenerCheck": "Namaste. This is a recorded message from {schoolName} for the parent of {childName}. If you are {childName}'s parent or guardian, please press 1.",
+      "message": "Thank you. {childName}'s class teacher would like to speak with you this week about how {childName} is doing at school.",
+      "menu": "If you would like the school to call you to fix a time, press 1. If you'd rather not get these calls, press 9.",
+      "confirm_1": "Thank you. We've let the class teacher know, and the school will call you to fix a time."
+    },
+    "recognition": {
+      "listenerCheck": "Namaste. This is a recorded message from {schoolName} for the parent of {childName}. If you are {childName}'s parent or guardian, please press 1.",
+      "message": "Thank you. {childName}'s class teacher has some good news to share: {childName} has been doing really well at school lately.",
+      "menu": "To let us know you've heard this, press 1. If you'd rather not get these calls, press 9.",
+      "confirm_1": "Thank you. Your support means a lot to us."
+    },
+    "absence_today": {
+      "listenerCheck": "Namaste. This is a recorded message from {schoolName} for the parent of {childName}. If you are {childName}'s parent or guardian, please press 1.",
+      "message": "Thank you. {childName} has not been marked present in class today, and we have not received a message about it.",
+      "menu": "If you know, and {childName} is with you, press 1. If you did not know, press 2. If you'd rather not get these calls, press 9.",
+      "confirm_1": "Thank you. We've let the class teacher know. Please also send the school a note in writing.",
+      "confirm_2": "Thank you for telling us. The class teacher and the principal have been informed, and someone from the school will contact you right away."
+    },
+    "fee_due": {
+      "listenerCheck": "Namaste. This is a recorded message from {schoolName} for the parent of {childName}. If you are {childName}'s parent or guardian, please press 1.",
+      "message": "Thank you. {childName}'s school fee instalment of {amount} is due by {date}. Please pay only at the school counter or in its app, and never share an OTP.",
+      "menu": "If you've already paid, press 1. To speak with the accounts office, even if paying on time is hard, press 2. If you'd rather not get these calls, press 9.",
+      "confirm_1": "Thank you. The accounts office will check and update the record.",
+      "confirm_2": "Thank you. The accounts office will get in touch with you."
+    },
+    "fee_overdue": {
+      "listenerCheck": "Namaste. This is a recorded message from {schoolName} for the parent of {childName}. If you are {childName}'s parent or guardian, please press 1.",
+      "message": "Thank you. {childName}'s school fee instalment of {amount}, due on {date}, is still pending. Please pay only at the school counter or in its app, and never share an OTP.",
+      "menu": "If you've already paid, press 1. To speak with the accounts office, even if paying on time is hard, press 2. If you'd rather not get these calls, press 9.",
+      "confirm_1": "Thank you. The accounts office will check and update the record.",
+      "confirm_2": "Thank you. The accounts office will get in touch with you."
+    }
+  },
+  "common": {
+    "listener_no_input": "Thank you for your time. If you are the parent and would like to speak with us, please contact the school office."
+  }
+}

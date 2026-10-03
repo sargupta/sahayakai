@@ -1,0 +1,43 @@
+{
+  "_about": "Review manifest for the child-specific call scripts (child-english/hindi/bengali/nepali.json). Nothing here is signed off. Every language is listed as needing review; Nepali and Bengali were written by a non-native author and are flagged most strongly. A class-gate test fails if a template purpose is missing from this manifest or if any entry claims a reviewer.",
+  "purposes": ["attendance_talk", "academic_talk", "conduct_talk", "recognition", "absence_today", "fee_due", "fee_overdue"],
+  "languages": {
+    "English": {
+      "status": "needs native review",
+      "reviewedBy": null,
+      "concerns": ["Tone of the request-to-talk wording: does \"how {childName} is doing at school\" read as neutral to a parent?"]
+    },
+    "Hindi": {
+      "status": "needs native review",
+      "reviewedBy": null,
+      "concerns": [
+        "Gender-neutral phrasing around the child's name (हाज़िरी नहीं लगी है, ने ... काम किया है): confirm it reads naturally.",
+        "Teacher referred to as plural/honorific (चाहेंगे, चाहते हैं): confirm register for a class teacher of either gender.",
+        "फ़ीस/फ़ोन with nukta are intentional Hindi spellings (the Nepali gate would reject them in Nepali text)."
+      ]
+    },
+    "Bengali": {
+      "status": "needs native review",
+      "reviewedBy": null,
+      "concerns": [
+        "Genitive of the child's name written -এর with a hyphen after any name; a West Bengal reader should say whether -র after a vowel sounds more natural.",
+        "হাজিরা পড়েনি for \"was not marked present\": confirm the school idiom.",
+        "ফি-এর কিস্তি and {date} পর্যন্ত for \"due by\": confirm; the plan draft used a different construction.",
+        "Amount words use the शো-style suffix শো for hundred with a space (পাঁচ শো): confirm TTS and reader naturalness.",
+        "The whole file was written by a non-native author."
+      ]
+    },
+    "Nepali": {
+      "status": "needs native review",
+      "reviewedBy": null,
+      "concerns": [
+        "Every sentence passes the mechanical Hindi-vs-Nepali gate, which proves it is not Hindi but NOT that it is natural Darjeeling Nepali; a native speaker must read every line.",
+        "{childName}का अभिभावकलाई / {childName}को बारेमा: confirm the case endings after a name.",
+        "तिर्नुपर्ने थियो ... आइपुगेको छैन for an overdue fee: confirm the register is neutral and not accusatory.",
+        "स्कुल (short u) and फी are the spellings the recogniser writes; confirm.",
+        "Amount words: बाह्र हजार पाँच सय रुपैयाँ pattern; numbers above 60 thousand are not spoken yet.",
+        "The whole file was written by a non-native author."
+      ]
+    }
+  }
+}
