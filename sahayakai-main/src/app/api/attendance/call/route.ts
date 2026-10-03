@@ -129,13 +129,22 @@ async function forwardToExotel(
 /**
  * Ownership + destination for one outreach record.
  *
- * SECURITY: the parent's phone number is read from the server-stored document,
- * never from the request body. A teacher who could supply the destination could
- * dial any number on the company's telephony account.
+ * SECURITY: the number dialled is the one on the STUDENT'S RECORD now
+ * (`classes/{classId}/students/{studentId}.parentPhone`), re-read at dial time
+ * — never the request body, and never trusted merely because it was copied
+ * onto the outreach doc. `POST /api/attendance/outreach-records` once stored a
+ * client-supplied phone on the doc, which let a teacher make the company's
+ * telephony account ring any number; fixing that one writer closed the
+ * instance, and re-deriving the destination here closes the class: whatever a
+ * present or future writer puts on the doc, a phone that does not match the
+ * student record is refused before any provider is contacted.
  *
- * Shared by both providers on purpose. These four checks are the security
- * boundary of the whole feature, and when the Twilio path owned its own copy
- * there was nothing stopping a second provider from shipping with three of them.
+ * The class is re-checked too, so a teacher who has lost the class can no
+ * longer call from an outreach they created while they owned it.
+ *
+ * Shared by every provider on purpose. These checks are the security boundary
+ * of the whole feature, and when the Twilio path owned its own copy there was
+ * nothing stopping a second provider from shipping with only some of them.
  */
 type ResolvedTarget = { parentPhone: string; data: FirebaseFirestore.DocumentData };
 type TargetResolution =
@@ -157,11 +166,59 @@ async function resolveOutreachTarget(
     if (data.teacherUid !== userId) {
         return { ok: false, response: NextResponse.json({ error: 'Unauthorized' }, { status: 403 }) };
     }
-    const parentPhone: string | undefined = data.parentPhone;
-    if (!parentPhone || !isValidE164(parentPhone)) {
+
+    const classId = typeof data.classId === 'string' ? data.classId : '';
+    const studentId = typeof data.studentId === 'string' ? data.studentId : '';
+    if (!classId || !studentId) {
         return {
             ok: false,
-            response: refuse({ error: 'Outreach record has no valid parent phone' }, 422, 'invalid_destination'),
+            response: refuse({ error: 'Outreach record is missing its class or student' }, 422, 'invalid_destination'),
+            owned: data,
+        };
+    }
+    const classRef = db.collection('classes').doc(classId);
+    const classDoc = await classRef.get();
+    if (!classDoc.exists || classDoc.data()?.teacherUid !== userId) {
+        // The teacher owned the outreach but no longer owns the class: refuse,
+        // and let the caller release the record so they are not locked out.
+        return { ok: false, response: refuse({ error: 'Unauthorized' }, 403, 'class_not_owned'), owned: data };
+    }
+    const studentDoc = await classRef.collection('students').doc(studentId).get();
+    if (!studentDoc.exists) {
+        return {
+            ok: false,
+            response: refuse({ error: 'Student not found in this class' }, 404, 'student_not_found'),
+            owned: data,
+        };
+    }
+
+    const parentPhone: unknown = studentDoc.data()?.parentPhone;
+    if (typeof parentPhone !== 'string' || !isValidE164(parentPhone)) {
+        return {
+            ok: false,
+            response: refuse({ error: 'Student has no valid parent phone on record' }, 422, 'invalid_destination'),
+            owned: data,
+        };
+    }
+    if (data.parentPhone !== parentPhone) {
+        // Either the record was written with a number that is not the parent's,
+        // or the teacher edited the student's phone since. Both are refused: the
+        // first is the attack this function exists to stop, and the second only
+        // costs the teacher a fresh outreach. The number itself is never logged.
+        logger.warn('Parent call refused — outreach phone does not match the student record', 'ATTENDANCE', {
+            userId,
+            outreachId,
+        });
+        return {
+            ok: false,
+            response: refuse(
+                {
+                    error: "The parent's phone on this outreach no longer matches the student record. Start a new outreach.",
+                    code: 'PHONE_MISMATCH',
+                },
+                409,
+                'phone_mismatch',
+            ),
             owned: data,
         };
     }

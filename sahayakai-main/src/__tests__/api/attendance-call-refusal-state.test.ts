@@ -83,6 +83,8 @@ interface Scenario {
     /** Mutate the world after the outreach doc exists, before the call. */
     arrange?: (outreachId: string) => void;
     callBody?: (outreachId: string) => Record<string, unknown>;
+    /** What an immediate retry of outreach creation returns, if not 200 (never 429). */
+    retryStatus?: number;
 }
 
 const twilioFails = (status: number, code?: number): Scenario['arrange'] => () =>
@@ -96,7 +98,10 @@ const SCENARIOS: Scenario[] = [
     { name: 'parent opted out (twilio)', category: 'opted_out', status: 409, env: TWILIO_ENV, arrange: () => { store.call_suppressions = { [phoneSuppressionId(PHONE)]: { reason: 'opt_out' } }; } },
     { name: 'parent opted out (vobiz)', category: 'opted_out', status: 409, env: VOBIZ_ENV, arrange: () => { store.call_suppressions = { [phoneSuppressionId(PHONE)]: { reason: 'opt_out' } }; } },
     { name: 'parent opted out (exotel)', category: 'opted_out', status: 409, env: EXOTEL_ENV, arrange: () => { store.call_suppressions = { [phoneSuppressionId(PHONE)]: { reason: 'opt_out' } }; } },
-    { name: 'stored phone is not E.164', category: 'invalid_destination', status: 422, env: TWILIO_ENV, arrange: (id) => { store.parent_outreach[id].parentPhone = '12345'; } },
+    { name: 'student record phone is not E.164', category: 'invalid_destination', status: 422, env: TWILIO_ENV, arrange: () => { store['classes/c1/students'].s1.parentPhone = '12345'; store.parent_outreach[Object.keys(store.parent_outreach)[0]].parentPhone = '12345'; } },
+    { name: 'outreach phone does not match the student record (spoofed or edited)', category: 'phone_mismatch', status: 409, env: TWILIO_ENV, arrange: (id) => { store.parent_outreach[id].parentPhone = '+919999999999'; } },
+    { name: 'teacher no longer owns the class', category: 'class_not_owned', status: 403, env: TWILIO_ENV, retryStatus: 403, arrange: () => { store.classes.c1.teacherUid = 'teacher-B'; } },
+    { name: 'student has left the class', category: 'student_not_found', status: 404, env: TWILIO_ENV, retryStatus: 404, arrange: () => { delete store['classes/c1/students'].s1; } },
     { name: 'missing parentLanguage', category: 'invalid_request', status: 400, env: TWILIO_ENV, callBody: (id) => ({ outreachId: id }) },
     // ── twilio ─────────────────────────────────────────────────────────────
     { name: 'twilio not configured', category: 'provider_unconfigured', status: 503, env: { VOICE_PROVIDER: 'twilio' } },
@@ -183,7 +188,7 @@ describe('every non-2xx exit of /api/attendance/call leaves the doc truthful and
         expect(retry.status).not.toBe(429);
         // An opted-out parent is still (correctly) refused on retry, but by the
         // opt-out rule, never by the dedup window.
-        expect(retry.status).toBe(sc.category === 'opted_out' ? 409 : 200);
+        expect(retry.status).toBe(sc.retryStatus ?? (sc.category === 'opted_out' ? 409 : 200));
     });
 
     it('control: a successful dial IS recorded as initiated and DOES hold the dedup window', async () => {
