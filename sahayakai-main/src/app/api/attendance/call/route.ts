@@ -7,6 +7,7 @@ import { logger } from '@/lib/logger';
 import { classifyTwilioFailure, releasesDedupWindow } from '@/lib/twilio-errors';
 import { getEffectiveMode } from '@/lib/voice-pipeline/health';
 import { placeVobizCall, readVobizConfig } from '@/lib/vobiz/client';
+import { warmTelephony } from '@/lib/vobiz/warm';
 import {
     VOBIZ_DOMAINS,
     VOBIZ_STATUS_TTL_SECONDS,
@@ -121,6 +122,9 @@ async function forwardToVobiz(
         );
         return NextResponse.json({ error: 'Voice service not configured' }, { status: 503 });
     }
+
+    // Start the sidecar's cold start now so it overlaps the ring (see warm.ts).
+    warmTelephony();
 
     const target = await resolveOutreachTarget(db, outreachId, userId);
     if (!target.ok) return target.response;
