@@ -11,7 +11,9 @@
  *               campaigns scheduled → dispatching → completed, expires intents
  *               past their campaign's expiry and keeps counts current; this
  *               module only supplies the carrier, the destination and the
- *               audio length.
+ *               audio length. In test mode the dispatcher itself caps a school
+ *               at one call in flight (TEST_MODE_MAX_IN_FLIGHT), whatever
+ *               DISPATCH_OPTIONS says, so the test phone rings one call at a time.
  *
  * Both are idempotent and safe to overlap: rendering skips clips that exist
  * and runs under its own lease; the dispatcher's at-most-once guarantee is in
@@ -21,10 +23,10 @@
 import crypto from 'node:crypto';
 import os from 'node:os';
 
-import { recomputeCampaignCounts, runDispatchTick, type DispatchReport } from '@/lib/sampark/dispatch/dispatcher';
+import { recomputeCampaignCounts, runDispatchTick, type DialDestination, type DispatchReport } from '@/lib/sampark/dispatch/dispatcher';
 import { materialiseCampaignIntents } from '@/lib/sampark/audience';
 import { languageInfo } from '@/lib/sampark/languages';
-import { decryptPhone } from '@/lib/sampark/phone';
+import { decryptPhone, hashPhone } from '@/lib/sampark/phone';
 import type { Clock, SamparkRepo } from '@/lib/sampark/ports';
 import { audienceLabelFor, renderNoticeScript, ScriptRenderError } from '@/lib/sampark/scripts/render';
 import { clipKey } from '@/lib/sampark/speech/clip-key';
@@ -150,13 +152,25 @@ async function renderOne(deps: JobDeps & { speech: SpeechDeps }, school: Sampark
 // ── Dispatch ────────────────────────────────────────────────────────────────
 
 /**
- * The number a call goes to. Practice and live: the guardian's own number,
- * decrypted only here, at the moment of dialling. Test mode (every call to the
- * school's test phone) arrives in phase 2 and is refused until then.
+ * The number a call goes to, decrypted only here, at the moment of dialling.
+ *
+ *   practice → the guardian's own number (the simulated carrier never dials it)
+ *   test     → the school's test phone, never the guardian (phase 2a contract §3).
+ *              Its hash must match `testPhoneHash`, the identity the call was
+ *              recorded under, or nothing is dialled.
+ *   live     → refused: no parent is dialled on a real carrier in phase 2a.
+ *
+ * Errors never carry the number.
  */
-export async function destinationFor(school: SamparkSchool, guardian: SamparkGuardian): Promise<string> {
-    if (school.mode === 'test') throw new Error('Test mode is not available in this release');
-    return decryptPhone(guardian.phoneEnc);
+export async function destinationFor(school: SamparkSchool, guardian: SamparkGuardian): Promise<DialDestination> {
+    if (school.mode === 'practice') return { e164: decryptPhone(guardian.phoneEnc), kind: 'guardian' };
+    if (school.mode === 'test') {
+        if (!school.testPhoneEnc || !school.testPhoneHash) throw new Error('TEST_PHONE_MISSING: the school has no test phone');
+        const e164 = decryptPhone(school.testPhoneEnc);
+        if (hashPhone(e164) !== school.testPhoneHash) throw new Error('TEST_PHONE_MISMATCH: the test phone does not match its recorded hash');
+        return { e164, kind: 'test_phone' };
+    }
+    throw new Error('LIVE_MODE_NOT_AVAILABLE: live dialling is not available in this release');
 }
 
 /** Seconds of the rendered 'message' clip for this intent's language and variant, memoised per tick. */

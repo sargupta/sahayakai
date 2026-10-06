@@ -8,7 +8,7 @@ import { evaluateGate, FREQUENCY_CAP, type GateInput } from '@/lib/sampark/polic
 import { istInstant } from '@/lib/sampark/policy/ist';
 import type { Suppression } from '@/types/sampark';
 
-import { guardian, prefs, school, student, WED_11_IST } from './_fixtures';
+import { guardian, prefs, school, student, testModeSchool, WED_11_IST } from './_fixtures';
 
 const PTM = purposeSpec('ptm_invite');
 const D4 = purposeSpec('emergency_closure');
@@ -232,5 +232,48 @@ describe('evaluateGate — precedence (first rule wins)', () => {
 
     it('any block beats the window: a blocked call is not merely deferred', () => {
         expect(blockReason(input({ now: istInstant('2026-10-07', 22), recentCallsToPhone: 9 }))).toBe('frequency_cap');
+    });
+});
+
+describe('evaluateGate — destination (phase 2a test mode)', () => {
+    /** A test-mode school dialling the test phone on the real carrier, flag on: allowed by default. */
+    const testInput = (overrides: Partial<GateInput> = {}) => input({ school: school(testModeSchool()), carrierKind: 'vobiz', ...overrides });
+
+    beforeEach(() => {
+        process.env.SAMPARK_LIVE_DIAL_ENABLED = 'true';
+    });
+
+    it('test mode defaults to the test phone, so a synthetic guardian at a demo school may rehearse; an explicit guardian destination may not', () => {
+        expect(evaluateGate(testInput())).toEqual({ kind: 'allow', language: 'Nepali' });
+        expect(evaluateGate(testInput({ school: school(testModeSchool({ isDemo: true })) })).kind).toBe('allow');
+        expect(blockReason(testInput({ destination: 'guardian' }))).toBe('synthetic_number_not_allowed');
+        expect(blockReason(testInput({ destination: 'guardian', school: school(testModeSchool({ isDemo: true })), guardian: guardian('g1', { phoneClass: 'mobile' }) }))).toBe('synthetic_number_not_allowed');
+    });
+
+    it('every other rule still applies to a test-phone call, judged on the guardian', () => {
+        expect(blockReason(testInput({ spec: purposeSpec('safeguarding') }))).toBe('human_only_purpose');
+        expect(blockReason(testInput({ guardian: guardian('g1', { crmDoNotContact: true }) }))).toBe('crm_do_not_contact');
+        expect(blockReason(testInput({ suppression: suppression() }))).toBe('suppressed');
+        expect(blockReason(testInput({ guardian: guardian('g1', { phoneClass: 'invalid' }) }))).toBe('invalid_number');
+        expect(blockReason(testInput({ spec: FEE_DUE, students: [student('s1', { sensitiveFlags: ['custody_restriction'] })] }))).toBe('sensitive_flag');
+        expect(blockReason(testInput({ spec: FEE_DUE, students: [student('s1', { feeCategory: 'rte' })] }))).toBe('fee_category_excluded');
+        expect(blockReason(testInput({ preferences: prefs('g1', { notices: 'denied' }) }))).toBe('consent_denied');
+        expect(blockReason(testInput({ preferences: null }))).toBe('no_consent');
+        expect(blockReason(testInput({ guardian: guardian('g1', { crmLanguage: null }) }))).toBe('language_unknown');
+        expect(blockReason(testInput({ recentCallsToPhone: FREQUENCY_CAP }))).toBe('frequency_cap');
+        expect(evaluateGate(testInput({ now: istInstant('2026-10-07', 21) })).kind).toBe('defer');
+    });
+
+    it('a test-phone call still needs SAMPARK_LIVE_DIAL_ENABLED exactly "true" for the real carrier', () => {
+        delete process.env.SAMPARK_LIVE_DIAL_ENABLED;
+        expect(blockReason(testInput())).toBe('mode_forbids_dialing');
+        process.env.SAMPARK_LIVE_DIAL_ENABLED = 'TRUE';
+        expect(blockReason(testInput())).toBe('mode_forbids_dialing');
+    });
+
+    it('the carve-out needs BOTH test mode and the test-phone destination', () => {
+        for (const mode of ['practice', 'live'] as const) {
+            expect(blockReason(input({ school: school({ mode }), carrierKind: 'vobiz', destination: 'test_phone' }))).toBe('synthetic_number_not_allowed');
+        }
     });
 });
