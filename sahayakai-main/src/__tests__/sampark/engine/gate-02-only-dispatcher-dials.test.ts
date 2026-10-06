@@ -9,8 +9,15 @@
  *        src/lib/sampark/dispatch/<the carrier module itself>
  *        src/server/sampark/carrier.ts          (the carrier factory)
  *        tests
- *  (b) Under every Sampark source tree, `.place(` — a call to Carrier.place —
+ *  (b) Under every Sampark source tree (including the phase 2a voice webhooks,
+ *      src/app/api/webhooks/sampark-voice/), `.place(` — a call to Carrier.place —
  *      appears only in those same (non-test) files.
+ *  (c) Phase 2a: the raw Vobiz dialler `placeVobizCall` is named, in any Sampark
+ *      tree, only by the Vobiz carrier module — a webhook or service that dialled
+ *      Vobiz directly would bypass the dispatcher (and its claim) entirely.
+ *  (d) Phase 2a: the Vobiz carrier module is imported only by the carrier factory
+ *      (and tests) — not even the dispatcher, which receives carriers through
+ *      `carrierFor`, so the factory's mode/flag/test-phone checks cannot be skipped.
  *
  * The scanner is exercised against planted violations first, so the gate is
  * proven to fail when broken, not just to pass on today's tree.
@@ -26,11 +33,14 @@ const DIALER_FILES = new Set([
     'src/server/sampark/carrier.ts',
 ]);
 const CARRIER_MODULE = /^src\/lib\/sampark\/dispatch\/[^/]+-carrier(?:\/index)?$/;
+const VOBIZ_CARRIER = 'src/lib/sampark/dispatch/vobiz-carrier';
+const CARRIER_FACTORY = 'src/server/sampark/carrier.ts';
 const SAMPARK_TREES = [
     'src/lib/sampark/',
     'src/server/sampark/',
     'src/app/api/sampark/',
     'src/app/api/jobs/sampark-',
+    'src/app/api/webhooks/sampark-voice/',
     'src/app/sampark/',
     'src/components/sampark/',
 ];
@@ -77,9 +87,16 @@ function violations(files: { rel: string; code: string }[]): string[] {
         for (const spec of specifiers(clean)) {
             const target = resolveSpecifier(rel, spec);
             if (target && CARRIER_MODULE.test(target) && !allowed) found.push(`${rel} imports carrier module ${spec}`);
+            else if (target === VOBIZ_CARRIER && rel !== CARRIER_FACTORY && !isOwnCarrierModule(rel)) {
+                found.push(`${rel} imports the Vobiz carrier outside the carrier factory`);
+            }
         }
-        if (SAMPARK_TREES.some((t) => rel.startsWith(t)) && !allowed && /\.place\s*\(/.test(clean)) {
+        const inSampark = SAMPARK_TREES.some((t) => rel.startsWith(t));
+        if (inSampark && !allowed && /\.place\s*\(/.test(clean)) {
             found.push(`${rel} calls .place(`);
+        }
+        if (inSampark && rel !== `${VOBIZ_CARRIER}.ts` && /\bplaceVobizCall\b/.test(clean)) {
+            found.push(`${rel} names placeVobizCall`);
         }
     }
     return found;
@@ -121,6 +138,30 @@ describe('class gate 2 — the scanner catches every shape of violation', () => 
         expect(planted('src/app/api/jobs/sampark-dispatch/route.ts', 'await c.place (req)')).toHaveLength(1);
     });
 
+    it('scans the phase 2a voice webhooks too', () => {
+        expect(planted('src/app/api/webhooks/sampark-voice/answer/route.ts', 'await carrier.place(req);')).toEqual([
+            'src/app/api/webhooks/sampark-voice/answer/route.ts calls .place(',
+        ]);
+        expect(planted('src/app/api/webhooks/sampark-voice/status/route.ts', "import { createVobizNoticeCarrier } from '@/lib/sampark/dispatch/vobiz-carrier';")).toHaveLength(1);
+    });
+
+    it('flags any Sampark module other than the Vobiz carrier that names placeVobizCall', () => {
+        const direct = "import { placeVobizCall } from '@/lib/vobiz/client'; await placeVobizCall(config, opts);";
+        expect(planted('src/server/sampark/voice.ts', direct)).toEqual(['src/server/sampark/voice.ts names placeVobizCall']);
+        expect(planted('src/app/api/webhooks/sampark-voice/gather/route.ts', direct)).toHaveLength(1);
+        expect(planted('src/server/sampark/carrier.ts', direct)).toEqual(['src/server/sampark/carrier.ts names placeVobizCall']);
+        expect(planted('src/lib/sampark/dispatch/vobiz-carrier.ts', direct)).toEqual([]);
+        // Outside the Sampark trees (the teacher parent-call path) it is not this gate's business.
+        expect(planted('src/app/api/attendance/call/route.ts', direct)).toEqual([]);
+    });
+
+    it('flags the dispatcher importing the Vobiz carrier: carriers reach it only through carrierFor', () => {
+        expect(planted('src/lib/sampark/dispatch/dispatcher.ts', "import { createVobizNoticeCarrier } from './vobiz-carrier';")).toEqual([
+            'src/lib/sampark/dispatch/dispatcher.ts imports the Vobiz carrier outside the carrier factory',
+        ]);
+        expect(planted('src/server/sampark/carrier.ts', "import { createVobizNoticeCarrier } from '@/lib/sampark/dispatch/vobiz-carrier';")).toEqual([]);
+    });
+
     it('allows the dispatcher, the carrier module itself, the carrier factory and tests', () => {
         const ok = "import { createSimulatedCarrier } from '@/lib/sampark/dispatch/simulated-carrier'; await carrier.place(req);";
         expect(planted('src/lib/sampark/dispatch/dispatcher.ts', ok)).toEqual([]);
@@ -147,5 +188,12 @@ describe('class gate 2 — the source tree', () => {
     it('the dispatcher really is where .place( happens (the gate is not vacuous)', () => {
         const code = stripComments(fs.readFileSync(path.join(SRC, 'lib/sampark/dispatch/dispatcher.ts'), 'utf8'));
         expect(code).toMatch(/\.place\s*\(/);
+    });
+
+    it('the Vobiz carrier exists, dials through placeVobizCall, and the factory is what constructs it', () => {
+        const carrier = stripComments(fs.readFileSync(path.join(ROOT, `${VOBIZ_CARRIER}.ts`), 'utf8'));
+        expect(carrier).toMatch(/\bplaceVobizCall\b/);
+        const factory = stripComments(fs.readFileSync(path.join(ROOT, CARRIER_FACTORY), 'utf8'));
+        expect(factory).toMatch(/\bcreateVobizNoticeCarrier\s*\(/);
     });
 });

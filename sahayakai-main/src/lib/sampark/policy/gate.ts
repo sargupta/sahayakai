@@ -13,8 +13,9 @@
  *   3. guardian inactive or CRM do-not-contact                            → crm_do_not_contact
  *   4. suppression (scope 'all'; or 'routine' for a non-emergency purpose) → suppressed
  *   5. phone invalid                                                      → invalid_number
- *   6. synthetic phone on any non-simulated carrier                       → synthetic_number_not_allowed   (class gate 4)
- *   7. demo school on any non-simulated carrier                           → synthetic_number_not_allowed   (class gate 4)
+ *   6. synthetic phone on any non-simulated carrier, unless the call rings
+ *      the school's own test phone in test mode                           → synthetic_number_not_allowed   (class gate 4)
+ *   7. demo school on any non-simulated carrier, same test-phone exception → synthetic_number_not_allowed   (class gate 4)
  *   8. non-simulated carrier while SAMPARK_LIVE_DIAL_ENABLED !== 'true',
  *      or while the school is in practice mode                            → mode_forbids_dialing
  *   9. child-audience purpose and any student carries a sensitive flag    → sensitive_flag                 (class gate 10)
@@ -26,6 +27,16 @@
  *  12. no language resolvable                                            → language_unknown
  *  13. non-emergency and ≥ 4 calls to this phone in 30 days               → frequency_cap
  *  14. (dispatch stage only) outside the calling window                   → defer until the next opening
+ *
+ * DESTINATION (phase 2a contract §3). In test mode every call rings the school's
+ * own, verified test phone instead of the guardian. Rules 6 and 7 exist so a
+ * synthetic or demo number never reaches a real phone; when the number dialled
+ * is the test phone they do not describe the call, so they are skipped. Every
+ * other rule still runs against the guardian — consent, suppression, sensitive
+ * flags, frequency and hours — so a test campaign rehearses exactly what a live
+ * one would do. The carve-out holds ONLY in test mode: a 'test_phone' destination
+ * claimed in any other mode is judged as a guardian call, and class gate 4 still
+ * holds for every guardian destination.
  */
 
 import { isDialable, type PurposeSpec } from '@/lib/sampark/catalogue';
@@ -33,6 +44,7 @@ import { resolveLanguage } from '@/lib/sampark/policy/language';
 import { samparkWindowVerdict } from '@/lib/sampark/policy/window';
 import type {
     BlockReason,
+    CallDestination,
     CarrierKind,
     GuardianPreferences,
     ParentLanguage,
@@ -63,6 +75,11 @@ export interface GateInput {
     carrierKind: CarrierKind;
     now: Date;
     stage: 'materialise' | 'dispatch';
+    /**
+     * Whose phone the call would ring. Defaults to the test phone in test mode and the guardian
+     * otherwise, so materialise, dry run and dispatch are right without passing it.
+     */
+    destination?: CallDestination;
 }
 
 export type GateVerdict =
@@ -111,8 +128,11 @@ export function evaluateGate(input: GateInput): GateVerdict {
     // 5–8. Number and carrier
     if (guardian.phoneClass === 'invalid') return block('invalid_number');
     const realCarrier = carrierKind !== 'simulated';
-    if (realCarrier && guardian.phoneClass !== 'mobile') return block('synthetic_number_not_allowed');
-    if (realCarrier && school.isDemo) return block('synthetic_number_not_allowed');
+    const destination = input.destination ?? (school.mode === 'test' ? 'test_phone' : 'guardian');
+    // Scoped to test mode: outside it, a call is always judged as ringing the guardian.
+    const ringsTestPhone = destination === 'test_phone' && school.mode === 'test';
+    if (realCarrier && !ringsTestPhone && guardian.phoneClass !== 'mobile') return block('synthetic_number_not_allowed');
+    if (realCarrier && !ringsTestPhone && school.isDemo) return block('synthetic_number_not_allowed');
     if (realCarrier && !liveDialPermitted(school)) return block('mode_forbids_dialing');
 
     // 9–10. The children this call concerns

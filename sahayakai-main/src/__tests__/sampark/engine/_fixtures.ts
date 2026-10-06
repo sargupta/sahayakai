@@ -214,13 +214,29 @@ export function scriptedCarrier(
 
 export const DEFAULT_OPTS: DispatchOptions = { maxDialsPerSchoolPerTick: 50, maxInFlightPerSchool: 20, leaseMs: 120_000 };
 
+/** The test-mode school's own phone: a real-format Indian mobile (test value only). */
+export const TEST_PHONE = '+919800000001';
+export const TEST_PHONE_HASH = 'hash:test-phone';
+export const TEST_PHONE_LAST4 = '0001';
+
+/** A school in test mode with its test phone set (encrypted value is a placeholder: deps() never decrypts). */
+export function testModeSchool(overrides: Partial<SamparkSchool> = {}): Partial<SamparkSchool> {
+    return { mode: 'test', testPhoneEnc: 'enc:test-phone', testPhoneHash: TEST_PHONE_HASH, testPhoneLast4: TEST_PHONE_LAST4, ...overrides };
+}
+
+/** The guardian's (synthetic) number, as the fixture CRM would hold it. */
+export function guardianPhone(g: SamparkGuardian): string {
+    return `+915${g.id.replace(/\D/g, '').padStart(9, '0')}`;
+}
+
 export function deps(repo: SamparkRepo, clock: Clock, carrier: Carrier, overrides: Partial<DispatchDeps> = {}): DispatchDeps {
     return {
         repo,
         clock,
         holder: 'test-holder',
         carrierFor: () => carrier,
-        destinationFor: async (_school, g) => `+915${g.id.replace(/\D/g, '').padStart(9, '0')}`,
+        // Mirrors src/server/sampark/jobs.ts: the test phone in test mode, the guardian otherwise.
+        destinationFor: async (s, g) => (s.mode === 'test' ? { e164: TEST_PHONE, kind: 'test_phone' } : { e164: guardianPhone(g), kind: 'guardian' }),
         audioSecondsFor: async () => 40,
         ...overrides,
     };
