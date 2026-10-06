@@ -147,6 +147,21 @@ export interface SamparkSchool {
     updatedAt: string;
 }
 
+/** Why a deployment cannot place real (Test-mode) calls. */
+export type LiveDialBlocker = 'LIVE_DIAL_DISABLED' | 'PUBLIC_BASE_URL_MISSING' | 'CARRIER_UNCONFIGURED';
+
+/**
+ * What the console is sent for a school (GET/PUT school, PUT mode, enable). The stored
+ * test-phone ciphertext and hash never leave the server; `testPhoneLast4` is always
+ * present (null when no phone is saved), with the deployment's ability to place
+ * Test-mode calls and, when it cannot, why.
+ */
+export type SamparkSchoolView = Omit<SamparkSchool, 'testPhoneEnc' | 'testPhoneHash' | 'testPhoneLast4'> & {
+    testPhoneLast4: string | null;
+    liveDialAvailable: boolean;
+    liveDialBlocker: LiveDialBlocker | null;
+};
+
 export interface CrmConnectionConfig {
     kind: 'rest' | 'csv';
     /** https only; validated against SSRF on save (plan §4①). Null for csv. */

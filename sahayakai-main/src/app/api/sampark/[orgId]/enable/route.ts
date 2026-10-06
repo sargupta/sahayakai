@@ -3,7 +3,7 @@
  *
  * Input:  { displayName: string, spokenName?: Record<ParentLanguage, string> }
  *         (spokenName is an optional addition; Indic names must be in their own script)
- * Output: SamparkSchool — created in PRACTICE mode if absent (simulated
+ * Output: SamparkSchoolView — created in PRACTICE mode if absent (simulated
  *         carrier only), returned unchanged if it already exists. `isDemo` is
  *         copied from organizations/{orgId}.isDemoData (class gate 4: a demo
  *         org can never reach a real carrier).
@@ -17,7 +17,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 import { getOrganizationFacts } from '@/server/sampark/auth';
 import { errorResponse, guardOrgRoute, parseBody, samparkContext } from '@/server/sampark/http';
-import { EnableSchoolSchema, enableSchool } from '@/server/sampark/school';
+import { EnableSchoolSchema, enableSchool, schoolView } from '@/server/sampark/school';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -32,7 +32,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ org
         if (!org) return NextResponse.json({ error: 'ORG_NOT_FOUND', message: 'Organisation not found' }, { status: 404 });
         const ctx = await samparkContext();
         const school = await enableSchool(ctx, guard.orgId, guard.uid, { displayName: body.data.displayName, spokenName: body.data.spokenName, isDemo: org.isDemo });
-        return NextResponse.json(school);
+        // Never the raw record: it carries the test phone's ciphertext and hash.
+        return NextResponse.json(schoolView(school));
     } catch (err) {
         return errorResponse(err, 'SAMPARK_ENABLE');
     }

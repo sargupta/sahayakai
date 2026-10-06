@@ -7,6 +7,7 @@
  * falls back to the code itself only as a last resort.
  */
 import { purposeSpec } from '@/lib/sampark/catalogue';
+import type { SamparkSchoolView } from '@/lib/api/sampark';
 import type {
     BlockReason,
     CallLogEntry,
@@ -362,12 +363,34 @@ export function modeLabel(t: Translate, mode: SamparkMode): string {
     }
 }
 
-export function modeBannerText(t: Translate, mode: SamparkMode): string {
+/** The banner's headline. In Test mode it names the phone that rings (last four digits only). */
+export function modeBannerText(t: Translate, mode: SamparkMode, testPhoneLast4?: string | null): string {
     switch (mode) {
         case 'practice': return t("Practice — no real calls are made");
-        case 'test': return t("Test — every call goes to the school test phone");
+        case 'test':
+            return testPhoneLast4
+                ? fmt(t("Test — every call rings only the phone ending {last4}"), { last4: testPhoneLast4 })
+                : t("Test — every call goes to the school test phone");
         case 'live': return t("Live — families receive real calls");
         default: return mode;
+    }
+}
+
+/**
+ * Why this deployment cannot place Test-mode calls, in a principal's words.
+ * These are facts about how SahayakAI is set up, not school settings, so each
+ * one says who can change it.
+ */
+export function liveDialBlockerText(t: Translate, blocker: NonNullable<SamparkSchoolView['liveDialBlocker']>): string {
+    switch (blocker) {
+        case 'LIVE_DIAL_DISABLED':
+            return t("Real calls have not been switched on yet. Your SahayakAI contact switches them on when your school is ready to test.");
+        case 'PUBLIC_BASE_URL_MISSING':
+            return t("The phone company cannot reach SahayakAI yet, so a call could not play the message or record key presses. Your SahayakAI contact will set this up.");
+        case 'CARRIER_UNCONFIGURED':
+            return t("The phone line that places school calls has not been set up yet. Your SahayakAI contact will set this up.");
+        default:
+            return t("Test mode is not available yet.");
     }
 }
 
@@ -413,7 +436,13 @@ export function entityLabel(t: Translate, entity: 'student' | 'guardian'): strin
 /** Turn a server `{ error }` code into words; plain messages pass through. */
 export function serverErrorText(t: Translate, message: string): string {
     switch (message) {
-        case 'LIVE_DIAL_DISABLED': return t("Only Practice mode is available until the phase 2 approvals are in place.");
+        case 'LIVE_DIAL_DISABLED':
+        case 'PUBLIC_BASE_URL_MISSING':
+        case 'CARRIER_UNCONFIGURED':
+            return liveDialBlockerText(t, message);
+        case 'TEST_PHONE_MISSING': return t("Save a test phone first. In Test mode every call rings that phone.");
+        case 'TEST_PHONE_INVALID': return t("Enter an Indian mobile number: 10 digits starting with 6, 7, 8 or 9.");
+        case 'LIVE_MODE_NOT_AVAILABLE': return t("Live mode, calling families, is not available yet.");
         default: return message;
     }
 }

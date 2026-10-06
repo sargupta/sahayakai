@@ -132,7 +132,9 @@ export function CampaignActions({
                                     <li>
                                         {school.mode === "practice"
                                             ? t("Calls go out in Practice mode only. No real phone rings; the results are simulated and appear in the call log.")
-                                            : fmt(t("Calls go out in {mode} mode."), { mode: modeLabel(t, school.mode) })}
+                                            : school.mode === "test" && school.testPhoneLast4
+                                              ? fmt(t("Calls go out in Test mode: every call rings only the phone ending {last4}, never a family."), { last4: school.testPhoneLast4 })
+                                              : fmt(t("Calls go out in {mode} mode."), { mode: modeLabel(t, school.mode) })}
                                     </li>
                                     <li>
                                         {emergency

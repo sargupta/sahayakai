@@ -280,16 +280,78 @@ describe('school settings', () => {
         expect(res).toMatchObject({ status: 400, body: { error: 'CRM_URL_REJECTED' } });
     });
 
-    it('PUT mode: practice is accepted; test and live are 409 LIVE_DIAL_DISABLED, even with the live flag on', async () => {
+    it('PUT mode: practice is accepted; test is 409 LIVE_DIAL_DISABLED while the deployment cannot dial; live is always 409 LIVE_MODE_NOT_AVAILABLE', async () => {
         await enabledSchool();
         const put = await h('mode', 'PUT');
         expect((await invoke(put, { params: { orgId: ORG }, body: { mode: 'practice' } })).body).toMatchObject({ mode: 'practice' });
-        for (const mode of ['test', 'live']) {
-            expect(await invoke(put, { params: { orgId: ORG }, body: { mode } })).toMatchObject({ status: 409, body: { error: 'LIVE_DIAL_DISABLED' } });
-        }
+        expect(await invoke(put, { params: { orgId: ORG }, body: { mode: 'test' } })).toMatchObject({ status: 409, body: { error: 'LIVE_DIAL_DISABLED' } });
+        expect(await invoke(put, { params: { orgId: ORG }, body: { mode: 'live' } })).toMatchObject({ status: 409, body: { error: 'LIVE_MODE_NOT_AVAILABLE' } });
         process.env.SAMPARK_LIVE_DIAL_ENABLED = 'true';
-        expect(await invoke(put, { params: { orgId: ORG }, body: { mode: 'live' } })).toMatchObject({ status: 409, body: { error: 'LIVE_DIAL_DISABLED' } });
+        expect(await invoke(put, { params: { orgId: ORG }, body: { mode: 'test' } })).toMatchObject({ status: 409, body: { error: 'PUBLIC_BASE_URL_MISSING' } });
+        expect(await invoke(put, { params: { orgId: ORG }, body: { mode: 'live' } })).toMatchObject({ status: 409, body: { error: 'LIVE_MODE_NOT_AVAILABLE' } });
         expect((await invoke(put, { params: { orgId: ORG }, body: { mode: 'party' } })).status).toBe(400);
+    });
+
+    describe('test phone and Test mode, through the routes (phase 2a §5)', () => {
+        const LIVE_ENV: Record<string, string> = {
+            SAMPARK_LIVE_DIAL_ENABLED: 'true',
+            SAMPARK_PUBLIC_BASE_URL: 'https://example.test',
+            VOBIZ_AUTH_ID: 'test-auth-id',
+            VOBIZ_AUTH_TOKEN: 'test-auth-token',
+            VOBIZ_FROM_NUMBER: '+918000000001',
+        };
+        beforeEach(() => {
+            for (const k of [...Object.keys(LIVE_ENV), 'VOBIZ_BASE_URL']) delete process.env[k];
+        });
+        afterEach(() => {
+            for (const k of [...Object.keys(LIVE_ENV), 'VOBIZ_BASE_URL']) delete process.env[k];
+        });
+
+        it('PUT school { testPhone } saves an Indian mobile and answers with the last four only; bad numbers are 400 TEST_PHONE_INVALID', async () => {
+            await enabledSchool();
+            const put = await h('school', 'PUT');
+            for (const testPhone of ['+91 33 2222 3333', '+915123456789', 'call me', '']) {
+                const res = await invoke(put, { params: { orgId: ORG }, body: { testPhone } });
+                expect(res.status).toBe(400);
+                if (testPhone !== '') expect(res.body).toMatchObject({ error: 'TEST_PHONE_INVALID' });
+            }
+            const ok = await invoke(put, { params: { orgId: ORG }, body: { testPhone: '98765 43210' } });
+            expect(ok).toMatchObject({ status: 200, body: { testPhoneLast4: '3210', liveDialAvailable: false, liveDialBlocker: 'LIVE_DIAL_DISABLED' } });
+            expect(ok.body).not.toHaveProperty('testPhoneEnc');
+            expect(ok.body).not.toHaveProperty('testPhoneHash');
+            expect(JSON.stringify(ok.body)).not.toContain('9876543210');
+
+            const got = await invoke(await h('school', 'GET'), { params: { orgId: ORG } });
+            expect(got.body).toMatchObject({ testPhoneLast4: '3210' });
+            expect(Object.keys(got.body)).not.toEqual(expect.arrayContaining(['testPhoneEnc']));
+            expect(Object.keys(got.body)).not.toEqual(expect.arrayContaining(['testPhoneHash']));
+            expect(JSON.stringify(got.body)).not.toContain('9876543210');
+        });
+
+        it('Test mode needs the deployment AND a phone; overview reports liveDialAvailable; removing the phone drops back to Practice', async () => {
+            await enabledSchool();
+            const mode = await h('mode', 'PUT');
+            const school = await h('school', 'PUT');
+            const overview = await h('overview', 'GET');
+            Object.assign(process.env, LIVE_ENV);
+
+            expect(await invoke(mode, { params: { orgId: ORG }, body: { mode: 'test' } })).toMatchObject({ status: 409, body: { error: 'TEST_PHONE_MISSING' } });
+            expect((await invoke(overview, { params: { orgId: ORG } })).body.school).toMatchObject({ liveDialAvailable: true, testPhoneLast4: null });
+
+            await invoke(school, { params: { orgId: ORG }, body: { testPhone: '+91 98765 43210' } });
+            const test = await invoke(mode, { params: { orgId: ORG }, body: { mode: 'test' } });
+            expect(test).toMatchObject({ status: 200, body: { mode: 'test', testPhoneLast4: '3210', liveDialAvailable: true, liveDialBlocker: null } });
+            expect(test.body).not.toHaveProperty('testPhoneEnc');
+            expect(await invoke(mode, { params: { orgId: ORG }, body: { mode: 'live' } })).toMatchObject({ status: 409, body: { error: 'LIVE_MODE_NOT_AVAILABLE' } });
+
+            const o = await invoke(overview, { params: { orgId: ORG } });
+            expect(o.body.school).toMatchObject({ mode: 'test', liveDialAvailable: true, testPhoneLast4: '3210' });
+            expect(JSON.stringify(o.body)).not.toContain('9876543210');
+
+            const removed = await invoke(school, { params: { orgId: ORG }, body: { testPhone: null } });
+            expect(removed).toMatchObject({ status: 200, body: { mode: 'practice', testPhoneLast4: null } });
+            expect((await repo.getSchool(ORG))?.mode).toBe('practice');
+        });
     });
 
     it('GET overview', async () => {

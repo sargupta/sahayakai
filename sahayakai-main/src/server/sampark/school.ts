@@ -10,17 +10,63 @@
  *     name must be a Sampark CRM secret — never an arbitrary app secret, or a
  *     school admin could make the server send e.g. the Firebase service
  *     account to a URL of their choosing as a Bearer token;
- *   - mode: only 'practice' in slice 1 (409 LIVE_DIAL_DISABLED otherwise).
+ *   - testPhone: an Indian MOBILE only (never a landline, a synthetic `+915…`
+ *     demo number or a foreign number). Stored as ciphertext + peppered hash +
+ *     last four; the full number is never returned, logged or audited.
+ *     Removing it — or changing it — while the school is in Test mode returns
+ *     the school to Practice, so Test is only ever on for a number the admin
+ *     confirmed when switching (phase 2a contract §5);
+ *   - mode: practice always; test only when this deployment can place real
+ *     calls (`liveDialBlocker() === null`) and a test phone is saved; live is
+ *     refused in phase 2a (409 LIVE_MODE_NOT_AVAILABLE).
+ *
+ * Responses go through `schoolView`, never the raw record: the console sees
+ * `testPhoneLast4` and whether Test mode is possible here, never the stored
+ * ciphertext or hash.
  */
 
 import { z } from 'zod';
 
 import { assertCrmUrlSafe, CrmUrlError } from '@/lib/sampark/crm/rest-source';
+import { classifyPhone, encryptPhone, hashPhone, normalizeIndianPhone, phoneLast4 } from '@/lib/sampark/phone';
 import { callScripts } from '@/lib/sampark/scripts/templates';
-import { PARENT_LANGUAGES, type ParentLanguage, type SamparkMode, type SamparkSchool, type SchoolVenue } from '@/types/sampark';
+import { PARENT_LANGUAGES, type ParentLanguage, type SamparkMode, type SamparkSchool, type SamparkSchoolView, type SchoolVenue, type LiveDialBlocker } from '@/types/sampark';
+
+export type { SamparkSchoolView };
 import { badRequest, conflict, schoolNotEnabled } from '@/server/sampark/errors';
 import type { SamparkCtx } from '@/server/sampark/http';
-import { LIVE_DIAL_DISABLED } from '@/server/sampark/carrier';
+import { LIVE_MODE_NOT_AVAILABLE, liveDialBlocker, TEST_PHONE_MISSING } from '@/server/sampark/carrier';
+
+export { LIVE_MODE_NOT_AVAILABLE, TEST_PHONE_MISSING };
+
+/** Error code this module adds (the console maps it to a sentence). */
+export const TEST_PHONE_INVALID = 'TEST_PHONE_INVALID';
+
+
+export function schoolView(school: SamparkSchool, env: NodeJS.ProcessEnv = process.env): SamparkSchoolView {
+    const { testPhoneEnc: _enc, testPhoneHash: _hash, testPhoneLast4, ...rest } = school;
+    const blocker = liveDialBlocker(env);
+    return { ...rest, testPhoneLast4: testPhoneLast4 ?? null, liveDialAvailable: blocker === null, liveDialBlocker: blocker };
+}
+
+function hasTestPhone(school: SamparkSchool): boolean {
+    return !!school.testPhoneEnc && !!school.testPhoneHash && !!school.testPhoneLast4;
+}
+
+/** Normalise and check a typed test phone. Throws 400 TEST_PHONE_INVALID; the message never repeats the number. */
+function parseTestPhone(raw: string): string {
+    const e164 = normalizeIndianPhone(raw);
+    const kind = e164 ? classifyPhone(e164) : 'invalid';
+    if (!e164 || kind !== 'mobile') {
+        throw badRequest(
+            TEST_PHONE_INVALID,
+            kind === 'synthetic'
+                ? 'That is a demo number, which can never ring a phone. Enter a real Indian mobile number.'
+                : 'Enter an Indian mobile number: 10 digits starting with 6, 7, 8 or 9.',
+        );
+    }
+    return e164;
+}
 
 const LanguageEnum = z.enum(PARENT_LANGUAGES);
 
@@ -77,6 +123,8 @@ export const UpdateSchoolSchema = z
             .optional(),
         defaultLanguage: LanguageEnum.nullable().optional(),
         crm: CrmInputSchema.nullable().optional(),
+        /** The Test-mode destination as typed (normalised server-side), or null to remove it. */
+        testPhone: z.string().trim().min(1).max(32).nullable().optional(),
     })
     .strict();
 export type UpdateSchoolInput = z.infer<typeof UpdateSchoolSchema>;
@@ -178,6 +226,26 @@ export async function updateSchool(ctx: SamparkCtx, orgId: string, uid: string, 
             };
         }
     }
+    // Test phone. Changing or removing it while in Test mode returns the school to
+    // Practice: Test is only ever on for the number the admin confirmed.
+    let modeChange: { from: SamparkMode; to: SamparkMode; reason: string } | null = null;
+    if (input.testPhone !== undefined) {
+        if (input.testPhone === null) {
+            next.testPhoneEnc = null;
+            next.testPhoneHash = null;
+            next.testPhoneLast4 = null;
+            if (school.mode === 'test') modeChange = { from: 'test', to: 'practice', reason: 'test_phone_removed' };
+        } else {
+            const e164 = parseTestPhone(input.testPhone);
+            const hash = hashPhone(e164);
+            const changed = hash !== school.testPhoneHash;
+            next.testPhoneEnc = changed || !school.testPhoneEnc ? encryptPhone(e164) : school.testPhoneEnc;
+            next.testPhoneHash = hash;
+            next.testPhoneLast4 = phoneLast4(e164);
+            if (changed && school.mode === 'test') modeChange = { from: 'test', to: 'practice', reason: 'test_phone_changed' };
+        }
+        if (modeChange) next.mode = modeChange.to;
+    }
     const now = ctx.clock.now().toISOString();
     next.updatedAt = now;
     await ctx.repo.upsertSchool(next);
@@ -186,18 +254,47 @@ export async function updateSchool(ctx: SamparkCtx, orgId: string, uid: string, 
         actor: uid,
         action: 'school.update',
         target: `school/${orgId}`,
-        detail: { fields: Object.keys(input) },
+        // Field names only — plus the test phone's last four, never the number.
+        detail: input.testPhone !== undefined ? { fields: Object.keys(input), testPhoneLast4: next.testPhoneLast4 ?? null } : { fields: Object.keys(input) },
     });
+    if (modeChange) {
+        await ctx.repo.appendAudit(orgId, { at: now, actor: uid, action: 'school.mode', target: `school/${orgId}`, detail: { ...modeChange } });
+    }
     return next;
 }
 
+const BLOCKER_MESSAGE: Record<LiveDialBlocker, string> = {
+    LIVE_DIAL_DISABLED: 'Real calls are switched off for this deployment',
+    PUBLIC_BASE_URL_MISSING: 'This deployment has no public https address for the phone company to call back on',
+    CARRIER_UNCONFIGURED: 'No phone company account is configured for this deployment',
+};
+
+/**
+ * practice → always allowed. test → only when this deployment can place real
+ * calls (409 with the `liveDialBlocker()` code) and a test phone is saved (409
+ * TEST_PHONE_MISSING). live → 409 LIVE_MODE_NOT_AVAILABLE in phase 2a. A demo
+ * school may use Test: the number dialled is the verified test phone, never a
+ * synthetic guardian number (contract §3, gate destination semantics).
+ * Every change is audited; asking for the current mode changes nothing.
+ */
 export async function setSchoolMode(ctx: SamparkCtx, orgId: string, uid: string, mode: SamparkMode): Promise<SamparkSchool> {
     const school = await getSchoolOrThrow(ctx, orgId);
-    if (mode !== 'practice') throw conflict(LIVE_DIAL_DISABLED, 'Only practice mode is available in this release');
-    if (school.mode === 'practice') return school;
+    if (mode === 'live') throw conflict(LIVE_MODE_NOT_AVAILABLE, 'Live mode (calling families) is not available in this release');
+    if (mode === 'test') {
+        const blocker = liveDialBlocker();
+        if (blocker) throw conflict(blocker, BLOCKER_MESSAGE[blocker]);
+        if (!hasTestPhone(school)) throw conflict(TEST_PHONE_MISSING, 'Save a test phone before switching to Test mode');
+    }
+    if (school.mode === mode) return school;
     const now = ctx.clock.now().toISOString();
-    const next: SamparkSchool = { ...school, mode: 'practice', updatedAt: now };
+    const next: SamparkSchool = { ...school, mode, updatedAt: now };
     await ctx.repo.upsertSchool(next);
-    await ctx.repo.appendAudit(orgId, { at: now, actor: uid, action: 'school.mode', target: `school/${orgId}`, detail: { from: school.mode, to: 'practice' } });
+    await ctx.repo.appendAudit(orgId, {
+        at: now,
+        actor: uid,
+        action: 'school.mode',
+        target: `school/${orgId}`,
+        detail: mode === 'test' ? { from: school.mode, to: mode, testPhoneLast4: school.testPhoneLast4 ?? null } : { from: school.mode, to: mode },
+    });
     return next;
 }

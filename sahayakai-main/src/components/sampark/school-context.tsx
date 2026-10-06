@@ -1,13 +1,14 @@
 "use client";
 
 import { createContext, useContext, type ReactNode } from "react";
-import type { SamparkSchool } from "@/types/sampark";
+import type { SamparkSchoolView } from "@/lib/api/sampark";
 
 export interface SamparkSchoolContextValue {
     orgId: string;
-    school: SamparkSchool;
+    /** The school as the server sends it to the console: test phone last four only, plus whether Test mode is possible here. */
+    school: SamparkSchoolView;
     /** Replace the school after a successful update (keeps the header in step). */
-    setSchool: (school: SamparkSchool) => void;
+    setSchool: (school: SamparkSchoolView) => void;
     reloadSchool: () => void;
 }
 

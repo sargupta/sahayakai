@@ -31,10 +31,13 @@ import type {
     SamparkMode,
     SamparkOverview,
     SamparkSchool,
+    SamparkSchoolView,
     SchoolVenue,
     ScriptPreview,
     Suppression,
 } from '@/types/sampark';
+
+export type { SamparkSchoolView };
 
 // ── DTOs defined by the contract table (not in src/types/sampark.ts) ─────────
 
@@ -84,6 +87,13 @@ export interface UpdateSchoolInput {
     venues?: SchoolVenue[];
     defaultLanguage?: ParentLanguage | null;
     crm?: CrmConnectionInput | null;
+    /**
+     * The Test-mode phone as typed (the server normalises it and accepts an Indian
+     * mobile only — 400 TEST_PHONE_INVALID otherwise), or null to remove it. Changing
+     * or removing it while in Test mode returns the school to Practice. The response
+     * carries only `testPhoneLast4`.
+     */
+    testPhone?: string | null;
 }
 
 export type StartImportInput =
@@ -147,8 +157,8 @@ export async function getMySchools(opts: Opts = {}): Promise<SamparkMeSchool[]> 
 }
 
 /** POST /api/sampark/[orgId]/enable — creates the practice-mode record if absent. */
-export function enableSampark(orgId: string, displayName: string): Promise<SamparkSchool> {
-    return apiFetch<SamparkSchool>(orgPath(orgId, '/enable'), { method: 'POST', body: { displayName } });
+export function enableSampark(orgId: string, displayName: string): Promise<SamparkSchoolView> {
+    return apiFetch<SamparkSchoolView>(orgPath(orgId, '/enable'), { method: 'POST', body: { displayName } });
 }
 
 /** GET /api/sampark/[orgId]/overview */
@@ -156,19 +166,23 @@ export function getOverview(orgId: string, opts: Opts = {}): Promise<SamparkOver
     return apiFetch<SamparkOverview>(orgPath(orgId, '/overview'), { signal: opts.signal });
 }
 
-/** GET /api/sampark/[orgId]/school */
-export function getSchool(orgId: string, opts: Opts = {}): Promise<SamparkSchool> {
-    return apiFetch<SamparkSchool>(orgPath(orgId, '/school'), { signal: opts.signal });
+/** GET /api/sampark/[orgId]/school — the school as the console sees it (no stored phone secrets). */
+export function getSchool(orgId: string, opts: Opts = {}): Promise<SamparkSchoolView> {
+    return apiFetch<SamparkSchoolView>(orgPath(orgId, '/school'), { signal: opts.signal });
 }
 
 /** PUT /api/sampark/[orgId]/school — partial update; send only the fields that changed. */
-export function updateSchool(orgId: string, input: UpdateSchoolInput): Promise<SamparkSchool> {
-    return apiFetch<SamparkSchool>(orgPath(orgId, '/school'), { method: 'PUT', body: input });
+export function updateSchool(orgId: string, input: UpdateSchoolInput): Promise<SamparkSchoolView> {
+    return apiFetch<SamparkSchoolView>(orgPath(orgId, '/school'), { method: 'PUT', body: input });
 }
 
-/** PUT /api/sampark/[orgId]/mode — slice 1 answers 409 LIVE_DIAL_DISABLED for anything but practice. */
-export function setMode(orgId: string, mode: SamparkMode): Promise<SamparkSchool> {
-    return apiFetch<SamparkSchool>(orgPath(orgId, '/mode'), { method: 'PUT', body: { mode } });
+/**
+ * PUT /api/sampark/[orgId]/mode. practice is always allowed; test answers 409 with
+ * the deployment's blocker (LIVE_DIAL_DISABLED, PUBLIC_BASE_URL_MISSING,
+ * CARRIER_UNCONFIGURED) or TEST_PHONE_MISSING; live answers 409 LIVE_MODE_NOT_AVAILABLE.
+ */
+export function setMode(orgId: string, mode: SamparkMode): Promise<SamparkSchoolView> {
+    return apiFetch<SamparkSchoolView>(orgPath(orgId, '/mode'), { method: 'PUT', body: { mode } });
 }
 
 // ── Imports ──────────────────────────────────────────────────────────────────

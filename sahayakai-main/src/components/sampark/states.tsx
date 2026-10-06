@@ -19,6 +19,11 @@ function serverMessage(error: ApiError): string {
 /** A plain sentence for a failed request, by HTTP status. */
 export function describeError(t: Translate, error: Error): { title: string; detail: string | null } {
     if (error instanceof ApiError) {
+        // Known Sampark codes (400 TEST_PHONE_INVALID, 409 mode refusals) read as one plain sentence.
+        if (error.status === 400 || error.status === 409) {
+            const known = serverErrorText(t, error.message);
+            if (known !== error.message) return { title: known, detail: null };
+        }
         switch (error.status) {
             case 401:
                 return { title: t("Please sign in again."), detail: null };
@@ -27,9 +32,7 @@ export function describeError(t: Translate, error: Error): { title: string; deta
             case 404:
                 return { title: t("Not found. School calls may not be switched on for this school yet."), detail: null };
             case 409:
-                return error.message === 'LIVE_DIAL_DISABLED'
-                    ? { title: serverErrorText(t, error.message), detail: null }
-                    : { title: serverMessage(error), detail: null };
+                return { title: serverMessage(error), detail: null };
             default:
                 return { title: t("Something went wrong"), detail: serverMessage(error) };
         }
