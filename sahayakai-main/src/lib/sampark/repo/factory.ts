@@ -73,9 +73,43 @@ export function setSamparkRepoForTests(repo: SamparkRepo | null): void {
 
 let clockOverride: Clock | null = null;
 
+/**
+ * The rehearsal clock lives on globalThis, not in this module: Next bundles every route
+ * separately, so a module-level cache would give each route its own clock anchored at its
+ * own first request (a call could then "end" before it started).
+ */
+const DEV_CLOCK_KEY = Symbol.for('sahayakai.sampark.devClock');
+type DevClockSlot = { raw: string; clock: Clock };
+
+/**
+ * Local rehearsal at any hour: `SAMPARK_DEV_NOW=2026-10-07T11:00:00+05:30` starts this
+ * process's Sampark clock at that instant and lets it run forward in real time, so the
+ * calling-window rules can be exercised end to end at night. Honoured ONLY outside
+ * production AND against the Firestore emulator — never with real data, never in a
+ * deployment, whatever else is set. Pure over `env` and `realNow` for the test.
+ */
+export function devClockFromEnv(env: Env = process.env, realNow: () => number = Date.now): Clock | null {
+    const raw = env.SAMPARK_DEV_NOW?.trim();
+    if (!raw) return null;
+    if (env.NODE_ENV === 'production' || !env.FIRESTORE_EMULATOR_HOST?.trim()) return null;
+    const start = Date.parse(raw);
+    if (!Number.isFinite(start)) return null;
+    const offsetMs = start - realNow();
+    return { now: () => new Date(realNow() + offsetMs) };
+}
+
 /** The clock routes and jobs use. Tests pin it so window/expiry logic is deterministic. */
 export function getSamparkClock(): Clock {
-    return clockOverride ?? systemClock;
+    if (clockOverride) return clockOverride;
+    const raw = process.env.SAMPARK_DEV_NOW?.trim() ?? '';
+    if (!raw) return systemClock;
+    const slots = globalThis as unknown as Record<symbol, DevClockSlot | undefined>;
+    let slot = slots[DEV_CLOCK_KEY];
+    if (slot?.raw !== raw) {
+        slot = { raw, clock: devClockFromEnv() ?? systemClock };
+        slots[DEV_CLOCK_KEY] = slot;
+    }
+    return slot.clock;
 }
 
 export function setSamparkClockForTests(clock: Clock | null): void {
