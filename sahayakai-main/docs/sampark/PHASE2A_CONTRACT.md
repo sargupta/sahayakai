@@ -121,3 +121,23 @@ Service `src/server/sampark/voice.ts` (all functions take `{ repo, clock }` + pa
 - All existing tests still pass; new tests per stream; `npx tsc --noEmit`, eslint on touched files, the i18n ratchet and design-token gate pass.
 - With `SAMPARK_LIVE_DIAL_ENABLED` unset, nothing changes: practice mode works exactly as today and every voice webhook returns `EMPTY_HANGUP_XML` / 404.
 - Locally (integrator): emulator + dev server + `cloudflared` tunnel as `SAMPARK_PUBLIC_BASE_URL` + Vobiz config from Secret Manager → a Test-mode campaign rings the admin's phone once per family in the audience, one at a time, inside calling hours; keypresses and hangups land in the call log and settle the intents.
+
+## 7. Integration record (2026-10-07)
+
+Built by three parallel streams against this contract, integrated and verified:
+
+- 2,000 unit/route tests green (Sampark, attendance, deploy, lib suites) plus the Firestore-emulator repo suite (single-use burns and the widened sweep on real Firestore semantics).
+- **Rehearsed end to end without a phone ringing:** `scripts/sampark/fake-vobiz.ts` stood in for Vobiz and the answering parent, reaching the dev server through a `cloudflared` quick tunnel exactly as Vobiz would. A 35-family PTM campaign in four languages: 52 clips rendered and verified; calls placed one at a time; ring → answer → message WAV (32–34 s) → keys → confirmation → hangup → settled; 99 on the test phone audited and no parent suppressed; a no-answer scheduled for retry; the 9 families blocked by consent/language never dialled.
+- Integration fixes: the enable route returned the raw school (test-phone ciphertext and hash) — fixed, with a class gate over every route; the demo-school banner sentence contradicted Test mode — reworded; the dev clock was anchored per route bundle — moved to a process-wide slot.
+
+**Local rehearsal at any hour.** `SAMPARK_DEV_NOW=<ISO instant>` starts the Sampark clock at that instant (`getSamparkClock`), honoured only outside production AND against the Firestore emulator. Real calls never use it: the real-call launcher leaves it unset, and a real phone is only ever rung inside the true calling window.
+
+**Deviations accepted from the streams** (each documented in its file header): the carrier also refuses any call not addressed to the test phone (`guardian_dial_not_enabled`, a third independent block until phase 2b); the status webhook answers 500 only when our own storage fails, so Vobiz's retry can finish the write; on the opt-out step any key plays `opt_out_done` (the first 9 already stands); a call answered without verified audio is failed and settled as not retryable.
+
+**Follow-ups before Live (phase 2b), not blocking Test mode:**
+1. Repair path for an intent stuck in `dialing` when the hangup was recorded but `settleCall` failed on every Vobiz retry (the sweep only lists open calls).
+2. A Firestore TTL policy on `sampark_token_burns.expiresAt` (ops, one command).
+3. Treat a `network` failure from Vobiz as ambiguous (left for the sweep, never retried) before any parent is dialled.
+4. `classifyPhone` accepts landlines whose STD code starts 6–9 (e.g. Bengaluru 80…); fine for an admin's own test phone, not for parents.
+5. `settleCall`'s once-only check is not transactional; a simultaneous duplicate hangup could double-write (near-harmless today).
+6. The audio route builds the full speech deps to reach the store; a plain `getAudioStore()` would trim cold starts.

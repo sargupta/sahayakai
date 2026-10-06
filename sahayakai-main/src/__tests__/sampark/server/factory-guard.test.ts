@@ -16,6 +16,7 @@ jest.mock('firebase-admin/firestore', () => ({ getFirestore: (...args: unknown[]
 
 import {
     assertSamparkEnvironmentSafe,
+    devClockFromEnv,
     getSamparkRepo,
     SAMPARK_NONPROD_DATABASE,
     setSamparkRepoForTests,
@@ -91,5 +92,24 @@ describe('getSamparkRepo', () => {
         const memory = createMemorySamparkRepo();
         setSamparkRepoForTests(memory);
         await expect(getSamparkRepo()).resolves.toBe(memory);
+    });
+});
+
+describe('devClockFromEnv (local rehearsal clock)', () => {
+    const real = Date.parse('2026-10-07T20:45:00.000Z'); // 02:15 IST
+    const realNow = () => real;
+    const at11Ist = '2026-10-07T11:00:00+05:30';
+
+    it('starts the clock at SAMPARK_DEV_NOW against the emulator outside production', () => {
+        const clock = devClockFromEnv({ SAMPARK_DEV_NOW: at11Ist, FIRESTORE_EMULATOR_HOST: '127.0.0.1:8080', NODE_ENV: 'development' }, realNow);
+        expect(clock?.now().toISOString()).toBe('2026-10-07T05:30:00.000Z');
+    });
+
+    it('is never honoured in production, without the emulator, or with a bad instant', () => {
+        expect(devClockFromEnv({ SAMPARK_DEV_NOW: at11Ist, FIRESTORE_EMULATOR_HOST: '127.0.0.1:8080', NODE_ENV: 'production' }, realNow)).toBeNull();
+        expect(devClockFromEnv({ SAMPARK_DEV_NOW: at11Ist, NODE_ENV: 'development' }, realNow)).toBeNull();
+        expect(devClockFromEnv({ SAMPARK_DEV_NOW: at11Ist, SAMPARK_FIRESTORE_DATABASE: 'sampark-nonprod', NODE_ENV: 'development' }, realNow)).toBeNull();
+        expect(devClockFromEnv({ SAMPARK_DEV_NOW: 'eleven', FIRESTORE_EMULATOR_HOST: '127.0.0.1:8080' }, realNow)).toBeNull();
+        expect(devClockFromEnv({ FIRESTORE_EMULATOR_HOST: '127.0.0.1:8080' }, realNow)).toBeNull();
     });
 });
