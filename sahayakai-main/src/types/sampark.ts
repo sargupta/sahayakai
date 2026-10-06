@@ -138,6 +138,8 @@ export interface SamparkSchool {
     /** Test-mode destination (phase 2). Stored encrypted; console sees last4 only. */
     testPhoneEnc?: string | null;
     testPhoneLast4?: string | null;
+    /** Peppered hash of the test phone: a test call is recorded against THIS, never the guardian's, so it can neither count towards a parent's frequency cap nor suppress a parent. */
+    testPhoneHash?: string | null;
     crm: CrmConnectionConfig | null;
     /** Whether an emergency closure may reach guardians without `notices` consent. Default false until counsel rules (plan §15.5). */
     emergencyBypassConsent: boolean;
@@ -424,6 +426,9 @@ export interface CallOutcome {
 
 export type CarrierKind = 'simulated' | 'vobiz';
 
+/** Who the dialled number belongs to. In test mode every call rings the school's own test phone, never a parent. */
+export type CallDestination = 'guardian' | 'test_phone';
+
 export interface SamparkCall {
     /** = hash(intentId, attempt) — one record per attempt, created inside the claim transaction. */
     id: string;
@@ -442,7 +447,18 @@ export interface SamparkCall {
     /** A 'dialing' call whose lease has passed is swept to 'unknown', never re-dialled. */
     leaseUntil: string;
     carrier: CarrierKind;
+    /** Missing on records written before phase 2a = 'guardian'. */
+    destination?: CallDestination;
+    /** The id returned when the call was PLACED (Vobiz: request_uuid). */
     providerCallId: string | null;
+    /** The id Vobiz reports on the live leg (answer/gather/hangup `CallUUID`); differs from the request id. */
+    vobizCallUuid?: string | null;
+    /**
+     * Set exactly once, when this call's terminal state was applied to its intent, the
+     * suppression list and the campaign counts (dispatch/settle.ts). Guards against a
+     * retried or duplicated hangup webhook settling twice.
+     */
+    settledAt?: string | null;
     outcome: CallOutcome;
     /** Seconds from answer to hangup. */
     durationSeconds: number | null;
@@ -494,7 +510,13 @@ export interface RenderedClip {
 // ── Console / API DTOs ──────────────────────────────────────────────────────
 
 export interface SamparkOverview {
-    school: Pick<SamparkSchool, 'orgId' | 'displayName' | 'mode' | 'isDemo' | 'callingWindow'> & { crm: CrmConnectionConfig | null };
+    school: Pick<SamparkSchool, 'orgId' | 'displayName' | 'mode' | 'isDemo' | 'callingWindow'> & {
+        crm: CrmConnectionConfig | null;
+        /** True when this deployment can place real calls in Test mode (flag + public base URL + carrier config). */
+        liveDialAvailable: boolean;
+        /** Last four digits of the school's test phone; the full number never leaves the server. */
+        testPhoneLast4: string | null;
+    };
     windowOpenNow: boolean;
     nextWindowOpensAt: string | null;
     guardians: { total: number; byLanguage: Record<ParentLanguage | 'unknown', number>; withNoticesConsent: number; suppressed: number };
@@ -515,7 +537,7 @@ export interface ScriptPreview {
 
 export interface CallLogEntry extends Pick<SamparkCall,
     'id' | 'campaignId' | 'purpose' | 'language' | 'variant' | 'attempt' | 'state' | 'outcome' |
-    'durationSeconds' | 'billedSeconds' | 'costPaise' | 'phoneLast4' | 'createdAt' | 'endedAt' | 'carrier'> {
+    'durationSeconds' | 'billedSeconds' | 'costPaise' | 'phoneLast4' | 'createdAt' | 'endedAt' | 'carrier' | 'destination'> {
     guardianDisplayName: string;
     studentDisplayNames: string[];
 }

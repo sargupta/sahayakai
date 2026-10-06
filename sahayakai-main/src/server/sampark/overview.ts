@@ -52,6 +52,8 @@ export async function getOverview(ctx: SamparkCtx, orgId: string): Promise<Sampa
             isDemo: school.isDemo,
             callingWindow: school.callingWindow,
             crm: school.crm,
+            liveDialAvailable: false, // stream U: real availability check
+            testPhoneLast4: school.testPhoneLast4 ?? null,
         },
         windowOpenNow: verdict.allowed,
         nextWindowOpensAt: verdict.allowed ? null : verdict.nextAllowedAt?.toISOString() ?? null,

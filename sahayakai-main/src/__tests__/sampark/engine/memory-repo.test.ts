@@ -191,6 +191,24 @@ describe('memory repo — claimIntentForDial (the at-most-once primitive)', () =
 });
 
 describe('memory repo — calls', () => {
+    it('sweeps ringing and in-progress calls past their lease too, but never a terminal one', async () => {
+        const repo = createMemorySamparkRepo();
+        for (const id of ['r', 'p', 't']) await repo.createIntentIfAbsent(intent(id));
+        for (const id of ['r', 'p', 't']) await repo.claimIntentForDial(ORG, id, call(id, 1, { leaseUntil: '2026-10-07T05:31:00.000Z' }), WED_11_IST);
+        await repo.updateCall(ORG, callIdFor('r', 1), { state: 'ringing' });
+        await repo.updateCall(ORG, callIdFor('p', 1), { state: 'in_progress' });
+        await repo.updateCall(ORG, callIdFor('t', 1), { state: 'completed' });
+        const later = new Date('2026-10-07T05:35:00.000Z');
+        expect((await repo.listExpiredOpenCalls(ORG, later)).map((c) => c.intentId).sort()).toEqual(['p', 'r']);
+    });
+
+    it('burns a token exactly once', async () => {
+        const repo = createMemorySamparkRepo();
+        expect(await repo.burnToken('k1', '2026-10-07T06:00:00.000Z')).toBe(true);
+        expect(await repo.burnToken('k1', '2026-10-07T06:00:00.000Z')).toBe(false);
+        expect(await repo.burnToken('k2', '2026-10-07T06:00:00.000Z')).toBe(true);
+    });
+
     it('lists expired dialing calls, counts non-terminal calls, and counts calls to a phone', async () => {
         const repo = createMemorySamparkRepo();
         for (const id of ['a', 'b', 'c', 'd']) await repo.createIntentIfAbsent(intent(id));
@@ -201,7 +219,7 @@ describe('memory repo — calls', () => {
         await repo.updateCall(ORG, callIdFor('d', 1), { state: 'completed' });
 
         const later = new Date('2026-10-07T05:35:00.000Z');
-        expect((await repo.listExpiredDialingCalls(ORG, later)).map((c) => c.intentId)).toEqual(['a', 'c']);
+        expect((await repo.listExpiredOpenCalls(ORG, later)).map((c) => c.intentId)).toEqual(['a', 'c']);
         expect(await repo.countNonTerminalCalls(ORG)).toBe(3);
         const since = new Date('2026-10-01T00:00:00.000Z');
         expect(await repo.countCallsToPhoneSince(ORG, 'hash:g1', since, false)).toBe(3);

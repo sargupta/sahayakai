@@ -16,6 +16,7 @@
  *     sampark_clips/{key}                           RenderedClip
  *     sampark_audit/{auto}                          AuditEntry
  *   sampark_locks/{name}                            single-flight lease
+ *   sampark_token_burns/{sha256(token)}             single-use voice webhook tokens (TTL on expiresAt)
  *
  * Timestamps are stored as ISO strings, exactly as the domain types declare
  * them, so a document read back IS the domain object (no Timestamp mapping).
@@ -29,6 +30,7 @@
  */
 
 import type { DocumentReference, Firestore, WriteBatch } from 'firebase-admin/firestore';
+import { Timestamp } from 'firebase-admin/firestore';
 
 import { purposeSpec } from '@/lib/sampark/catalogue';
 import type { AuditEntry, CallListFilter, ClaimResult, SamparkRepo } from '@/lib/sampark/ports';
@@ -311,6 +313,20 @@ export class FirestoreSamparkRepo implements SamparkRepo {
         await this.schoolRef(orgId).collection('sampark_calls').doc(callId).update(clean(patch) as Record<string, unknown>);
     }
 
+    async mutateCall(orgId: string, callId: string, mutate: (current: SamparkCall) => SamparkCall | null): Promise<SamparkCall | null> {
+        const ref = this.schoolRef(orgId).collection('sampark_calls').doc(callId);
+        return this.db.runTransaction(async (tx) => {
+            const snap = await tx.get(ref);
+            if (!snap.exists) return null;
+            const current = snap.data() as SamparkCall;
+            const next = mutate(clean(current));
+            if (!next) return current;
+            const stored = clean({ ...next, id: current.id, orgId: current.orgId });
+            tx.set(ref, stored);
+            return stored;
+        });
+    }
+
     async listCalls(orgId: string, filter: CallListFilter): Promise<SamparkCall[]> {
         const snap = filter.campaignId
             ? await this.schoolRef(orgId).collection('sampark_calls')
@@ -325,9 +341,9 @@ export class FirestoreSamparkRepo implements SamparkRepo {
         return snap.docs.map((d) => d.data() as SamparkCall);
     }
 
-    async listExpiredDialingCalls(orgId: string, now: Date): Promise<SamparkCall[]> {
+    async listExpiredOpenCalls(orgId: string, now: Date): Promise<SamparkCall[]> {
         const snap = await this.schoolRef(orgId).collection('sampark_calls')
-            .where('state', '==', 'dialing')
+            .where('state', 'in', NON_TERMINAL_CALL_STATES)
             .where('leaseUntil', '<', now.toISOString())
             .get();
         return snap.docs.map((d) => d.data() as SamparkCall);
@@ -375,6 +391,19 @@ export class FirestoreSamparkRepo implements SamparkRepo {
     }
 
     // ── Single-flight lease ─────────────────────────────────────────────────
+
+    async burnToken(key: string, expiresAt: string): Promise<boolean> {
+        try {
+            // create() fails with ALREADY_EXISTS on a second burn: the check and the write are one operation.
+            // expiresAt is a real Timestamp (not an ISO string like the domain records) so a Firestore
+            // TTL policy on sampark_token_burns.expiresAt can delete old burns.
+            await this.db.collection('sampark_token_burns').doc(key).create({ expiresAt: Timestamp.fromDate(new Date(expiresAt)) });
+            return true;
+        } catch (err) {
+            if (isAlreadyExists(err)) return false;
+            throw err;
+        }
+    }
 
     async acquireLock(name: string, holder: string, now: Date, ttlMs: number): Promise<boolean> {
         const ref = this.db.collection('sampark_locks').doc(name);
