@@ -1,6 +1,9 @@
 /**
  * The call log (plan §4⑪): every attempt with its outcome, joined to the
  * guardian's and children's display names. Last-4 only — never a number.
+ * `destination` says whose phone rang: in Test mode it is the school's test
+ * phone (and `phoneLast4` is that phone's), never the family's. Records written
+ * before phase 2a carry no destination and were all to guardians.
  */
 
 import { z } from 'zod';
@@ -51,6 +54,7 @@ export async function listCallLog(ctx: SamparkCtx, orgId: string, query: CallQue
             createdAt: c.createdAt,
             endedAt: c.endedAt,
             carrier: c.carrier,
+            destination: c.destination ?? 'guardian',
             guardianDisplayName: guardianById.get(c.guardianId)?.displayName ?? 'Unknown guardian',
             studentDisplayNames: studentIds.map((id) => studentById.get(id)?.displayName).filter((n): n is string => !!n),
         };

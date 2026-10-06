@@ -8,8 +8,7 @@ import { PageShell } from "@/components/layout";
 import { SamparkAuthGate } from "@/components/sampark/sampark-auth-gate";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
-import { getSchool } from "@/lib/api/sampark";
-import type { SamparkSchool } from "@/types/sampark";
+import { getSchool, type SamparkSchoolView } from "@/lib/api/sampark";
 import { ModeBanner } from "./mode-banner";
 import { SamparkSchoolProvider } from "./school-context";
 import { ErrorPanel, LoadingBlock } from "./states";
@@ -17,7 +16,7 @@ import { useSamparkQuery } from "./use-sampark-query";
 import { safeDecode, useSamparkFormat } from "./format";
 import { fmt } from "./labels";
 
-function CrmStatus({ school }: { school: SamparkSchool }) {
+function CrmStatus({ school }: { school: SamparkSchoolView }) {
     const { t } = useLanguage();
     const f = useSamparkFormat();
     let text: string;
@@ -82,13 +81,13 @@ function OrgShellInner({ children }: { children: ReactNode }) {
     const params = useParams<{ orgId: string }>();
     const orgId = params?.orgId ? safeDecode(params.orgId) : "";
 
-    const schoolQuery = useSamparkQuery<SamparkSchool>(
+    const schoolQuery = useSamparkQuery<SamparkSchoolView>(
         orgId ? (signal) => getSchool(orgId, { signal }) : null,
         [orgId],
     );
     const { data: school, error, loading, reload, setData } = schoolQuery;
 
-    const setSchool = useCallback((s: SamparkSchool) => setData(s), [setData]);
+    const setSchool = useCallback((s: SamparkSchoolView) => setData(s), [setData]);
     const ctx = useMemo(
         () => (school ? { orgId, school, setSchool, reloadSchool: reload } : null),
         [orgId, school, setSchool, reload],
@@ -115,7 +114,7 @@ function OrgShellInner({ children }: { children: ReactNode }) {
                     </header>
                 )}
 
-                {school && <ModeBanner mode={school.mode} isDemo={school.isDemo} />}
+                {school && <ModeBanner mode={school.mode} isDemo={school.isDemo} testPhoneLast4={school.testPhoneLast4} />}
                 {orgId && <Tabs orgId={orgId} />}
             </div>
 

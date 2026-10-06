@@ -54,9 +54,17 @@ function Outcome({ call }: { call: CallLogEntry }) {
 
 function Family({ call }: { call: CallLogEntry }) {
     const { t } = useLanguage();
+    const testPhone = call.destination === "test_phone";
     return (
         <div className="min-w-0">
-            <p className="text-foreground break-words">{call.guardianDisplayName}</p>
+            <p className="flex flex-wrap items-center gap-2 text-foreground break-words">
+                <span className="min-w-0 break-words">{call.guardianDisplayName}</span>
+                {testPhone && (
+                    <StatusPill tone="warning" title={t("This call rang the school test phone, not the family.")}>
+                        {t("Test phone")}
+                    </StatusPill>
+                )}
+            </p>
             {call.studentDisplayNames.length > 0 && (
                 <p className="text-muted-foreground break-words">{call.studentDisplayNames.join(", ")}</p>
             )}

@@ -2,7 +2,9 @@
  * The console's landing numbers (SamparkOverview): school, whether the calling
  * window is open right now (routine purposes — ptm_invite is the reference
  * routine spec), guardians by language and consent, today's calls (IST), active
- * campaigns and the last import.
+ * campaigns and the last import. `school.liveDialAvailable` says whether this
+ * deployment can place Test-mode calls at all; only the test phone's last four
+ * digits are ever included.
  */
 
 import { purposeSpec } from '@/lib/sampark/catalogue';
@@ -10,6 +12,7 @@ import { istDateString } from '@/lib/sampark/closure';
 import { samparkWindowVerdict } from '@/lib/sampark/policy/window';
 import type { CampaignStatus, ParentLanguage, SamparkOverview } from '@/types/sampark';
 import { effectiveLanguage, isActiveSuppression } from '@/server/sampark/guardians';
+import { liveDialBlocker } from '@/server/sampark/carrier';
 import type { SamparkCtx } from '@/server/sampark/http';
 import { getSchoolOrThrow } from '@/server/sampark/school';
 
@@ -52,7 +55,7 @@ export async function getOverview(ctx: SamparkCtx, orgId: string): Promise<Sampa
             isDemo: school.isDemo,
             callingWindow: school.callingWindow,
             crm: school.crm,
-            liveDialAvailable: false, // stream U: real availability check
+            liveDialAvailable: liveDialBlocker() === null,
             testPhoneLast4: school.testPhoneLast4 ?? null,
         },
         windowOpenNow: verdict.allowed,
