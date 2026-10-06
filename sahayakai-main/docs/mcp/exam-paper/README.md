@@ -66,7 +66,7 @@ Where Sahayak has the official board blueprint (CBSE Class 9–10), the paper fo
 
 | Tool | Use it when |
 |---|---|
-| `create_exam_paper` | A teacher needs a test or exam paper (unit test, half-yearly, board practice). **Not** for a quick quiz or a lesson plan (use the Lesson Planner MCP). |
+| `create_exam_paper` | A teacher needs a test or exam paper (unit test, half-yearly, board practice). **Not** for a quick quiz (use the Quiz MCP) or a lesson plan (use the Lesson Planner MCP). |
 
 ## 4. Schemas
 
@@ -169,6 +169,7 @@ Fewer chapters and lower `max_marks` generate faster.
 |---|---|---|
 | Lesson Planner | `/api/mcp/lesson-planner` | `lesson-planner` |
 | Exam Paper Generator | `/api/mcp/exam-paper` | `exam-paper` |
+| Quiz Generator | `/api/mcp/quiz` | `quiz` |
 
 A key without `exam-paper` receives **403** here. An `exam-paper` key cannot call the other servers, and each server exposes only its own tool.
 

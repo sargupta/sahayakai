@@ -193,6 +193,7 @@ Each key carries scopes, and each MCP server requires exactly one:
 |---|---|---|
 | Lesson Planner | `/api/mcp/lesson-planner` | `lesson-planner` |
 | Exam Paper Generator | `/api/mcp/exam-paper` | `exam-paper` (see [../exam-paper/README.md](../exam-paper/README.md)) |
+| Quiz Generator | `/api/mcp/quiz` | `quiz` (see [../quiz/README.md](../quiz/README.md)) |
 
 A valid key without the scope receives **403**, so a school can be granted only the capabilities it uses. A key for one server cannot call another server's tool.
 
@@ -257,7 +258,7 @@ npm run typecheck
 
 - is honoured **only by `next dev`** (`NODE_ENV=development`), and never by `next start` or a deployed server;
 - is never written to Firestore;
-- acts for the organisation `local-dev-org` with every MCP scope (`lesson-planner`, `exam-paper`).
+- acts for the organisation `local-dev-org` with every MCP scope (`lesson-planner`, `exam-paper`, `quiz`).
 
 Set `MCP_LOCAL_DEV_SCOPES=exam-paper` (comma-separated) to narrow it, e.g. to see the 403 path on this server locally.
 

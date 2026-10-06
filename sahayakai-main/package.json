@@ -13,6 +13,7 @@
     "mcp:dev-key": "node scripts/mcp/dev-key.mjs",
     "mcp:lesson-planner:demo": "node scripts/mcp/demo.mjs lesson-planner",
     "mcp:exam-paper:demo": "node scripts/mcp/demo.mjs exam-paper",
+    "mcp:quiz:demo": "node scripts/mcp/demo.mjs quiz",
     "predeploy": "npm run typecheck && npm run build",
     "test": "jest",
     "test:coverage": "jest --coverage",

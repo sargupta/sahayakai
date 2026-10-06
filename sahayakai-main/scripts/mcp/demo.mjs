@@ -6,6 +6,7 @@
  *
  *   npm run mcp:lesson-planner:demo        (= node scripts/mcp/demo.mjs lesson-planner)
  *   npm run mcp:exam-paper:demo            (= node scripts/mcp/demo.mjs exam-paper)
+ *   npm run mcp:quiz:demo                  (= node scripts/mcp/demo.mjs quiz)
  *   PORT=3100 npm run mcp:exam-paper:demo  # local dev on another port
  *   SAHAYAK_MCP_URL=https://<host>/api/mcp/exam-paper SAHAYAK_MCP_API_KEY=sk_sahayak_… npm run mcp:exam-paper:demo
  *
@@ -51,6 +52,21 @@ const DEMOS = {
                 : null;
         },
         failure: 'the response did not contain an exam paper with questions and answers.',
+    },
+    quiz: {
+        name: 'Quiz Generator',
+        tool: 'create_quiz',
+        input: { topic: 'Fractions', grade: 7, subject: 'Mathematics', difficulty: 'medium', num_questions: 5, language: 'English' },
+        expect: 'usually 15–40 s',
+        check(result) {
+            const quiz = result?.quizzes?.[0];
+            const questions = quiz?.questions ?? [];
+            const complete = questions.filter((q) => q.correct_answer && q.explanation).length;
+            const ok = quiz?.difficulty === 'medium' && result.grade === 7 && questions.length === 5 && complete === 5;
+            if (ok) console.log(`\nAnswer key:\n${questions.map((q) => `${q.number}. ${q.correct_answer} — ${q.explanation}`).join('\n')}`);
+            return ok ? `"${quiz.title}" (Class ${result.grade}, ${quiz.difficulty}, ${questions.length} questions, each with answer and explanation)` : null;
+        },
+        failure: 'the response did not contain a 5-question medium quiz with answers and explanations.',
     },
 };
 

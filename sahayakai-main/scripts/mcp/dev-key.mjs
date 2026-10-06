@@ -35,5 +35,5 @@ if (lines.length === 0) {
     const prefix = current === '' || current.endsWith('\n') ? '' : '\n';
     appendFileSync(envFile, `${prefix}# Sahayak MCP — local development only (npm run mcp:dev-key)\n${lines.join('\n')}\n`);
     console.log(`Added ${lines.map((l) => l.split('=')[0]).join(' and ')} to ${envFile}.`);
-    console.log('Restart `npm run dev`, then run `npm run mcp:lesson-planner:demo` (or mcp:exam-paper:demo). The dev key holds every MCP scope.');
+    console.log('Restart `npm run dev`, then run `npm run mcp:lesson-planner:demo` (or mcp:exam-paper:demo, mcp:quiz:demo). The dev key holds every MCP scope.');
 }
