@@ -3,6 +3,7 @@ import { timingSafeEqual } from 'crypto';
 import {
     getKeyPepper,
     MCP_API_KEYS_COLLECTION,
+    MCP_SCOPES,
     parseApiKey,
     secretMatches,
     type McpApiKeyRecord,
@@ -58,7 +59,7 @@ export function localDevKeyPrincipal(presented: string): McpPrincipal | null {
     const a = Buffer.from(presented);
     const b = Buffer.from(devKey);
     if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
-    const scopes = (process.env.MCP_LOCAL_DEV_SCOPES ?? 'lesson-planner')
+    const scopes = (process.env.MCP_LOCAL_DEV_SCOPES ?? MCP_SCOPES.join(','))
         .split(',').map((s) => s.trim()).filter(Boolean);
     return { keyId: `local-dev-${parsed.keyId}`, orgId: LOCAL_DEV_ORG_ID, scopes };
 }

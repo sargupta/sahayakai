@@ -16,6 +16,8 @@ export type McpErrorCategory =
     | 'rate_limited'        // too many requests for this API key
     | 'upstream_unavailable'// model / backend busy or temporarily down
     | 'timeout'             // generation took too long
+    | 'generation_failed'   // the model could not produce a usable result (retry / simplify)
+    | 'capability_disabled' // Sahayak has switched this capability off (kill switch)
     | 'not_configured'      // server-side MCP configuration missing
     | 'internal';           // anything else (details logged, never returned)
 
@@ -28,6 +30,8 @@ const RETRYABLE: Record<McpErrorCategory, boolean> = {
     rate_limited: true,
     upstream_unavailable: true,
     timeout: true,
+    generation_failed: true,
+    capability_disabled: false,
     not_configured: false,
     internal: true,
 };
@@ -63,7 +67,7 @@ export function classifyError(err: unknown): McpCapabilityError {
     if (/^Safety Violation/i.test(message)) {
         return new McpCapabilityError(
             'content_policy',
-            'This topic cannot be used for a classroom lesson plan under Sahayak\'s safety policy. Choose a different, age-appropriate topic.',
+            'This request cannot be used under Sahayak\'s classroom safety policy. Choose a different, age-appropriate topic or chapter.',
         );
     }
     const wait = message.match(/Rate limit exceeded\. Please wait (\d+) minutes?/i);

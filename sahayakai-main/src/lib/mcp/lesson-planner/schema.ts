@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SAHAYAK_LANGUAGES } from '../shared/schema';
 
 /**
  * Public contract of the `create_lesson_plan` MCP tool.
@@ -9,10 +10,8 @@ import { z } from 'zod';
  * are rejected rather than silently ignored.
  */
 
-export const LESSON_PLAN_LANGUAGES = [
-    'English', 'Hindi', 'Bengali', 'Gujarati', 'Kannada', 'Malayalam',
-    'Marathi', 'Odia', 'Punjabi', 'Tamil', 'Telugu',
-] as const;
+/** Shared with every Sahayak MCP server (src/lib/mcp/shared/schema.ts). */
+export const LESSON_PLAN_LANGUAGES = SAHAYAK_LANGUAGES;
 
 /**
  * Canonical service levels plus the everyday words agents naturally use.
