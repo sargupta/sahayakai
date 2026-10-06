@@ -192,8 +192,9 @@ Each key carries scopes, and each MCP server requires exactly one:
 | MCP server | Endpoint | Required scope |
 |---|---|---|
 | Lesson Planner | `/api/mcp/lesson-planner` | `lesson-planner` |
+| Exam Paper Generator | `/api/mcp/exam-paper` | `exam-paper` (see [../exam-paper/README.md](../exam-paper/README.md)) |
 
-A valid key without the scope receives **403**, so a school can be granted only the capabilities it uses.
+A valid key without the scope receives **403**, so a school can be granted only the capabilities it uses. A key for one server cannot call another server's tool.
 
 ## 8. Example agent workflow
 
@@ -256,9 +257,9 @@ npm run typecheck
 
 - is honoured **only by `next dev`** (`NODE_ENV=development`), and never by `next start` or a deployed server;
 - is never written to Firestore;
-- acts for the organisation `local-dev-org` with the `lesson-planner` scope.
+- acts for the organisation `local-dev-org` with every MCP scope (`lesson-planner`, `exam-paper`).
 
-Set `MCP_LOCAL_DEV_SCOPES=some-other-capability` to see the 403 path locally.
+Set `MCP_LOCAL_DEV_SCOPES=exam-paper` (comma-separated) to narrow it, e.g. to see the 403 path on this server locally.
 
 **Production keys** are issued per school by an operator. The script is dry-run by default; `--apply` writes the hashed key to Firestore and prints the key once:
 

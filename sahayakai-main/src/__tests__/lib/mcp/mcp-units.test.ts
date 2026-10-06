@@ -2,11 +2,13 @@
  * @jest-environment node
  *
  * Unit tests for the shared MCP building blocks (keys, errors) and the
- * lesson-planner adapter (schema + mapping), independent of transport.
+ * lesson-planner and exam-paper adapters (schema + mapping), independent of transport.
  */
 jest.mock('server-only', () => ({}));
 
-import { hashSecret, mintApiKey, parseApiKey, secretMatches } from '@/lib/mcp/api-keys';
+import { hashSecret, MCP_SCOPES, mintApiKey, parseApiKey, secretMatches } from '@/lib/mcp/api-keys';
+import { CreateExamPaperInput } from '@/lib/mcp/exam-paper/schema';
+import { durationMinutes, toDispatchInput as toExamPaperDispatchInput, toExamPaperResult } from '@/lib/mcp/exam-paper/service';
 import { classifyError, McpCapabilityError, toToolErrorResult } from '@/lib/mcp/errors';
 import { CreateLessonPlanInput } from '@/lib/mcp/lesson-planner/schema';
 import { HEADLESS_SERVICE_CALLER, toDispatchInput, toLessonPlanResult } from '@/lib/mcp/lesson-planner/service';
@@ -129,5 +131,63 @@ describe('curriculum_note matches the documented contract', () => {
     it('is set when the given ncert_chapter does not match the syllabus', () => {
         const input = CreateLessonPlanInput.parse({ topic: 'Photosynthesis', grade: 7, ncert_chapter: { number: 1, title: 'Photosynthesis' } });
         expect(toLessonPlanResult(plan, input).curriculum_note).toBe(warning.message);
+    });
+});
+
+describe('local dev key scopes (shared by every MCP server)', () => {
+    const env = process.env as Record<string, string | undefined>;
+    const original = { NODE_ENV: env.NODE_ENV };
+    afterEach(() => { env.NODE_ENV = original.NODE_ENV; delete env.MCP_LOCAL_DEV_API_KEY; delete env.MCP_LOCAL_DEV_SCOPES; });
+
+    it('defaults to every MCP scope and can be narrowed', () => {
+        const { localDevKeyPrincipal } = jest.requireActual('@/lib/mcp/auth');
+        const key = mintApiKey({ orgId: 'x', label: 'dev', scopes: ['lesson-planner'], createdBy: 'jest', pepper: PEPPER }).apiKey;
+        env.NODE_ENV = 'development';
+        env.MCP_LOCAL_DEV_API_KEY = key;
+        expect(localDevKeyPrincipal(key).scopes).toEqual([...MCP_SCOPES]);
+        env.MCP_LOCAL_DEV_SCOPES = 'exam-paper';
+        expect(localDevKeyPrincipal(key).scopes).toEqual(['exam-paper']);
+    });
+});
+
+describe('exam-paper adapter', () => {
+    it('maps onto the existing service input as the headless caller, with documented defaults', () => {
+        const input = CreateExamPaperInput.parse({ grade: 8, subject: ' Science ', chapters: ['Force and Pressure'] });
+        expect(input).toMatchObject({ board: 'CBSE', difficulty: 'mixed', language: 'English', include_answer_key: true, include_marking_scheme: true });
+        expect(toExamPaperDispatchInput(input)).toEqual({
+            userId: '', board: 'CBSE', gradeLevel: 'Class 8', subject: 'Science', chapters: ['Force and Pressure'], language: 'English',
+            difficulty: 'mixed', includeAnswerKey: true, includeMarkingScheme: true,
+        });
+    });
+
+    it('accepts the agent-natural "medium" as the service\'s "moderate"', () => {
+        expect(toExamPaperDispatchInput(CreateExamPaperInput.parse({ grade: 8, subject: 'Science', difficulty: 'medium' })).difficulty).toBe('moderate');
+        expect(toExamPaperDispatchInput(CreateExamPaperInput.parse({ grade: 8, subject: 'Science', difficulty: 'hard', pyq_percent: 30, max_marks: 40, duration_minutes: 90 })))
+            .toMatchObject({ difficulty: 'hard', pyqRatio: 30, maxMarks: 40, duration: 90 });
+    });
+
+    it.each([
+        ['1 Hour', 60], ['45 Minutes', 45], ['1 hour 30 minutes', 90], ['3 Hrs', 180], ['90 min', 90], ['2.5 hours', 150], ['As per board', null],
+    ])('reads the printed duration %s as %s minutes', (display, minutes) => {
+        expect(durationMinutes(display)).toBe(minutes);
+    });
+
+    it('normalises messy service output and drops empty questions and sections', () => {
+        const input = CreateExamPaperInput.parse({ grade: 8, subject: 'Science' });
+        const out = toExamPaperResult({
+            title: '  ', maxMarks: 3, duration: '30 Minutes', generalInstructions: ['', ' Attempt all. '],
+            sections: [
+                { name: 'A', label: '', totalMarks: 3, questions: [{ number: 1, text: ' Q1 ', marks: 3, source: 'PYQ 2019', correctOption: 'a', options: [], answerKey: 'x' }, { number: 2, text: '' }] },
+                { name: 'B', label: 'empty', totalMarks: 0, questions: [] },
+            ],
+        } as any, input);
+        expect(out.title).toBe('CBSE Class 8 Science');
+        expect(out.general_instructions).toEqual(['Attempt all.']);
+        expect(out.sections).toHaveLength(1);
+        expect(out.sections[0].questions).toEqual([{
+            number: 1, text: 'Q1', marks: 3, origin: 'previous_year', source_note: 'PYQ 2019', options: [], correct_option: null,
+            internal_choice: null, answer_key: 'x', marking_scheme: null,
+        }]);
+        expect(out.review_notes).toEqual([]);
     });
 });
