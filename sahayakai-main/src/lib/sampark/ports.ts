@@ -106,9 +106,23 @@ export interface SamparkRepo {
     // Calls
     getCall(orgId: string, callId: string): Promise<SamparkCall | null>;
     updateCall(orgId: string, callId: string, patch: Partial<SamparkCall>): Promise<void>;
+    /**
+     * Transactional read-modify-write of one call. `mutate` receives the current record and
+     * returns the record to store, or null to leave it unchanged; the stored (or unchanged)
+     * record is returned, null if the call does not exist. Carrier webhooks (ring, answer,
+     * keypad, hangup) arrive concurrently, and the reducer is only forward-only if each
+     * event is applied to the latest state, not to a stale read.
+     */
+    mutateCall(orgId: string, callId: string, mutate: (current: SamparkCall) => SamparkCall | null): Promise<SamparkCall | null>;
     listCalls(orgId: string, filter: CallListFilter): Promise<SamparkCall[]>;
-    /** Calls still in 'dialing' whose lease has passed — swept to 'unknown', never re-dialled. */
-    listExpiredDialingCalls(orgId: string, now: Date): Promise<SamparkCall[]>;
+    /**
+     * Open calls ('dialing', 'ringing' or 'in_progress') whose lease has passed — swept to
+     * 'unknown', never re-dialled. The simulated carrier settles inside the tick, so for it the
+     * lease only matters while 'dialing'; a real carrier's call stays open until its hangup
+     * webhook, so the dispatcher extends the lease when the carrier accepts the call and a call
+     * whose hangup never arrives is handed to a person instead of staying open forever.
+     */
+    listExpiredOpenCalls(orgId: string, now: Date): Promise<SamparkCall[]>;
     /** Calls in a non-terminal state (for the concurrency cap — computed from records, not a counter). */
     countNonTerminalCalls(orgId: string): Promise<number>;
     /** Calls to this phone hash created at or after `since` (frequency cap). Emergency purposes excluded when asked. */
@@ -118,6 +132,13 @@ export interface SamparkRepo {
     saveClip(clip: RenderedClip): Promise<void>;
     getClip(orgId: string, key: string): Promise<RenderedClip | null>;
     listClipsForCampaign(orgId: string, campaignId: string): Promise<RenderedClip[]>;
+
+    /**
+     * Single-use tokens (voice webhooks): create-only record of `key` (a hash of the token).
+     * Returns true the FIRST time a key is burned and false ever after, so a replayed keypad
+     * URL cannot record a second opt-out. `expiresAt` lets a TTL policy delete old burns.
+     */
+    burnToken(key: string, expiresAt: string): Promise<boolean>;
 
     // Single-flight lease for the dispatcher tick
     acquireLock(name: string, holder: string, now: Date, ttlMs: number): Promise<boolean>;

@@ -146,6 +146,17 @@ d('FirestoreSamparkRepo (emulator)', () => {
         expect(await repo.claimIntentForDial(ORG, 'no-such-intent', call('call-x'), T0)).toBe('not_claimable');
     });
 
+    it('burns a single-use token exactly once, and sweeps a ringing call past its lease', async () => {
+        const key = `burn-${Date.now()}`;
+        expect(await repo.burnToken(key, iso(60_000))).toBe(true);
+        expect(await repo.burnToken(key, iso(60_000))).toBe(false);
+
+        await repo.createIntentIfAbsent(intent('i-ring'));
+        await repo.claimIntentForDial(ORG, 'i-ring', call('ring1', { intentId: 'i-ring', leaseUntil: iso(-1000) }), T0);
+        await repo.updateCall(ORG, 'ring1', { state: 'ringing' });
+        expect((await repo.listExpiredOpenCalls(ORG, T0)).map((c) => c.id)).toContain('ring1');
+    });
+
     it('call queries: expired leases, non-terminal count, per-phone count, campaign log', async () => {
         await repo.createIntentIfAbsent(intent('i-q1'));
         await repo.createIntentIfAbsent(intent('i-q2'));
@@ -155,8 +166,8 @@ d('FirestoreSamparkRepo (emulator)', () => {
         await repo.claimIntentForDial(ORG, 'i-q3', call('q3', { intentId: 'i-q3', campaignId: 'log', phoneHash: 'h-q', purpose: 'emergency_closure', createdAt: iso(-3000) }), T0);
         await repo.updateCall(ORG, 'q2', { state: 'completed', endedAt: iso(), failureReason: undefined });
 
-        expect((await repo.listExpiredDialingCalls(ORG, T0)).map((c) => c.id)).toContain('q1');
-        expect((await repo.listExpiredDialingCalls(ORG, T0)).map((c) => c.id)).not.toContain('q3');
+        expect((await repo.listExpiredOpenCalls(ORG, T0)).map((c) => c.id)).toContain('q1');
+        expect((await repo.listExpiredOpenCalls(ORG, T0)).map((c) => c.id)).not.toContain('q3');
         expect(await repo.countNonTerminalCalls(ORG)).toBeGreaterThanOrEqual(2);
         expect(await repo.countCallsToPhoneSince(ORG, 'h-q', new Date(T0.getTime() - 60_000), false)).toBe(3);
         expect(await repo.countCallsToPhoneSince(ORG, 'h-q', new Date(T0.getTime() - 60_000), true)).toBe(2);

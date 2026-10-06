@@ -102,7 +102,7 @@ const DISPATCHABLE_CAMPAIGN: ReadonlySet<Campaign['status']> = new Set(['schedul
 // ── Sweep ────────────────────────────────────────────────────────────────────
 
 async function sweepSchool(repo: SamparkRepo, orgId: string, now: Date, touched: Set<string>): Promise<number> {
-    const expired = await repo.listExpiredDialingCalls(orgId, now);
+    const expired = await repo.listExpiredOpenCalls(orgId, now);
     const nowIso = now.toISOString();
     for (const call of expired) {
         await repo.updateCall(orgId, call.id, {

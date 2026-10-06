@@ -50,6 +50,8 @@ function clone<T>(value: T): T {
     return out as T;
 }
 
+const OPEN_CALL_STATES: readonly CallState[] = ['dialing', 'ringing', 'in_progress'];
+
 function ms(iso: string | null | undefined): number {
     const t = iso ? Date.parse(iso) : NaN;
     return Number.isFinite(t) ? t : NaN;
@@ -117,6 +119,7 @@ export function createMemorySamparkRepo(opts?: { faults?: { failAfterClaim?: (in
     const calls = new OrgTable<SamparkCall>();
     const clips = new OrgTable<RenderedClip>();
     const locks = new Map<string, { holder: string; expiresAtMs: number }>();
+    const burned = new Set<string>();
     const audit = new Map<string, AuditEntry[]>();
 
     const repo: SamparkRepo = {
@@ -273,6 +276,14 @@ export function createMemorySamparkRepo(opts?: { faults?: { failAfterClaim?: (in
             if (!current) throw new Error(`NOT_FOUND: call ${callId}`);
             calls.set(orgId, callId, applyPatch(current, patch));
         },
+        async mutateCall(orgId, callId, mutate) {
+            const current = calls.get(orgId, callId);
+            if (!current) return null;
+            const next = mutate(clone(current));
+            if (!next) return clone(current);
+            calls.set(orgId, callId, { ...clone(next), id: current.id, orgId: current.orgId });
+            return clone(calls.get(orgId, callId) ?? null);
+        },
         async listCalls(orgId, filter: CallListFilter) {
             return calls
                 .values(orgId)
@@ -281,11 +292,11 @@ export function createMemorySamparkRepo(opts?: { faults?: { failAfterClaim?: (in
                 .slice(0, Math.max(0, filter.limit))
                 .map(clone);
         },
-        async listExpiredDialingCalls(orgId, now) {
+        async listExpiredOpenCalls(orgId, now) {
             const nowMs = now.getTime();
             return calls
                 .values(orgId)
-                .filter((c) => c.state === 'dialing' && ms(c.leaseUntil) <= nowMs)
+                .filter((c) => OPEN_CALL_STATES.includes(c.state) && ms(c.leaseUntil) <= nowMs)
                 .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
                 .map(clone);
         },
@@ -316,6 +327,12 @@ export function createMemorySamparkRepo(opts?: { faults?: { failAfterClaim?: (in
         },
 
         // ── Single-flight lease ─────────────────────────────────────────────
+        async burnToken(key) {
+            if (burned.has(key)) return false;
+            burned.add(key);
+            return true;
+        },
+
         async acquireLock(name, holder, now, ttlMs) {
             const nowMs = now.getTime();
             const existing = locks.get(name);
