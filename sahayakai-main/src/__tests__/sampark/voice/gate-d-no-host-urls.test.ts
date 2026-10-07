@@ -108,7 +108,7 @@ describe('class gate (d) — the voice runtime source', () => {
             'src/app/api/webhooks/sampark-voice/answer/route.ts',
             'src/app/api/webhooks/sampark-voice/gather/route.ts',
             'src/app/api/webhooks/sampark-voice/status/route.ts',
-            'src/app/api/webhooks/sampark-voice/audio.wav/route.ts',
+            'src/app/api/webhooks/sampark-voice/clip/[file]/route.ts',
             'src/server/sampark/voice.ts',
             'src/lib/sampark/voice/xml.ts',
         ]) {

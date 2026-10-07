@@ -61,7 +61,7 @@ const R = {
     answer: () => import('@/app/api/webhooks/sampark-voice/answer/route'),
     gather: () => import('@/app/api/webhooks/sampark-voice/gather/route'),
     status: () => import('@/app/api/webhooks/sampark-voice/status/route'),
-    audio: () => import('@/app/api/webhooks/sampark-voice/audio.wav/route'),
+    audio: () => import('@/app/api/webhooks/sampark-voice/clip/[file]/route'),
 };
 
 interface FakeRequestInit {
@@ -103,6 +103,12 @@ async function call(handler: Handler, init: FakeRequestInit = {}): Promise<Recor
 }
 
 const form = (fields: Record<string, string>) => new URLSearchParams(fields).toString();
+
+/** GET the clip route for `<file>` (the token plus `.wav`, exactly as it appears in a <Play> URL). */
+async function clip(file: string): Promise<Recorded> {
+    const mod = (await R.audio()) as unknown as { GET: (req: never, ctx: { params: Promise<{ file: string }> }) => Promise<unknown> };
+    return (await mod.GET(fakeRequest({ method: 'GET' }) as never, { params: Promise.resolve({ file }) })) as Recorded;
+}
 
 let w: World;
 
@@ -157,7 +163,7 @@ describe('SAMPARK_ENABLED off', () => {
 
     it('audio 404s', async () => {
         const token = await mintSamparkVoiceToken('sampark-audio', voicePrincipal(ORG, w.keys.message as string));
-        expect((await call((await R.audio()).GET, { method: 'GET', query: { t: token } })).status).toBe(404);
+        expect((await clip(`${token}.wav`)).status).toBe(404);
     });
 });
 
@@ -284,7 +290,7 @@ describe('status route', () => {
 describe('audio route', () => {
     it('serves a verified clip as audio/wav (16-bit PCM) with its length', async () => {
         const token = await mintSamparkVoiceToken('sampark-audio', voicePrincipal(ORG, w.keys.message as string));
-        const res = await call((await R.audio()).GET, { method: 'GET', query: { t: token } });
+        const res = await clip(`${token}.wav`);
         expect(res.status).toBe(200);
         expect(res.headers['content-type']).toBe('audio/wav');
         const bytes = Buffer.from(res.body as Uint8Array);
@@ -294,12 +300,12 @@ describe('audio route', () => {
     });
 
     it('404s a bad token and an unverified clip', async () => {
-        expect((await call((await R.audio()).GET, { method: 'GET', query: { t: 'nope' } })).status).toBe(404);
+        expect((await clip(`${'nope'}.wav`)).status).toBe(404);
         const failed = await world({ clips: (k) => (k === 'message' ? 'failed' : 'passed') });
         setSamparkRepoForTests(failed.repo);
         setSpeechDepsForTests({ synth: {} as SpeechSynthesizer, verifier: {} as SpeechVerifier, store: failed.store });
         const token = await mintSamparkVoiceToken('sampark-audio', voicePrincipal(ORG, failed.keys.message as string));
-        expect((await call((await R.audio()).GET, { method: 'GET', query: { t: token } })).status).toBe(404);
+        expect((await clip(`${token}.wav`)).status).toBe(404);
     });
 });
 

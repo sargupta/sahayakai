@@ -66,7 +66,8 @@ export const SAMPARK_VOICE_PATHS = {
     answer: '/api/webhooks/sampark-voice/answer',
     gather: '/api/webhooks/sampark-voice/gather',
     status: '/api/webhooks/sampark-voice/status',
-    audio: '/api/webhooks/sampark-voice/audio.wav',
+    /** `${audio}/<token>.wav` — the URL must END in .wav (no query string): see the clip route. */
+    audio: '/api/webhooks/sampark-voice/clip',
 } as const;
 
 /** Seconds Vobiz waits for a key after the prompt has finished playing. */
@@ -212,7 +213,23 @@ async function verifiedClipKeys(
 
 async function audioUrl(base: string, orgId: string, key: string): Promise<string> {
     const token = await mintSamparkVoiceToken('sampark-audio', voicePrincipal(orgId, key));
-    return `${base}${SAMPARK_VOICE_PATHS.audio}?t=${encodeURIComponent(token)}`;
+    return `${base}${SAMPARK_VOICE_PATHS.audio}/${encodeURIComponent(token)}${CLIP_FILE_SUFFIX}`;
+}
+
+const CLIP_FILE_SUFFIX = '.wav';
+
+/** `<token>.wav` (as routed, possibly still percent-encoded) → the token, or null. */
+export function tokenFromClipFile(file: string | null | undefined): string | null {
+    if (!file) return null;
+    let decoded: string;
+    try {
+        decoded = decodeURIComponent(file);
+    } catch {
+        return null;
+    }
+    if (!decoded.endsWith(CLIP_FILE_SUFFIX)) return null;
+    const token = decoded.slice(0, -CLIP_FILE_SUFFIX.length);
+    return token || null;
 }
 
 async function gatherUrl(base: string, domain: Extract<SamparkVoiceDomain, 'sampark-gather-menu' | 'sampark-gather-optout'>, orgId: string, callId: string): Promise<string> {

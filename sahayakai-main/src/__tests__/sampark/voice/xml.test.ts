@@ -9,8 +9,8 @@
 import { EMPTY_HANGUP_XML, noticeAnswerXml, optOutConfirmXml, playThenHangupXml } from '@/lib/sampark/voice/xml';
 
 const PROLOG = '<?xml version="1.0" encoding="UTF-8"?>';
-const MESSAGE = 'https://sampark.example.test/api/webhooks/sampark-voice/audio.wav?t=org~key1.123.sig';
-const NO_INPUT = 'https://sampark.example.test/api/webhooks/sampark-voice/audio.wav?t=org~key2.123.sig';
+const MESSAGE = 'https://sampark.example.test/api/webhooks/sampark-voice/clip/org~key1.123.sig.wav';
+const NO_INPUT = 'https://sampark.example.test/api/webhooks/sampark-voice/clip/org~key2.123.sig.wav';
 const GATHER = 'https://sampark.example.test/api/webhooks/sampark-voice/gather?t=org~call.123.sig';
 
 describe('EMPTY_HANGUP_XML', () => {
