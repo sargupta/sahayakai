@@ -6,10 +6,12 @@
     "reviewedBy": null,
     "charsPerSecond": 9.8,
     "notes": [
-      "Gender-neutral throughout: the listener is addressed as आप with plural/honorific verb forms (आएँगे, आ पाएँगे), never a masculine singular.",
-      "Event names in names.eventTypes must be masculine nouns: the event sentence agrees with होगा.",
+      "Spoken register of Hindi-speaking parents in Siliguri: क्लास सेवन बी, पेरेंट्स, पेरेंट टीचर मीटिंग, मैसेज, एनुअल डे, स्पोर्ट्स डे, क्लास टीचर — not office Hindi (कक्षा, अभिभावक, संदेश, सादर आमंत्रित, भूस्खलन).",
+      "Gender-neutral throughout: the listener is आप, with forms that do not mark gender (आ सकें, न आ पाएँ, आइएगा, आपके आने की ख़बर), never a gendered verb about the listener.",
+      "Meeting and event sentences end in है (\"… स्कूल हॉल में एनुअल डे है\"), so an event name of either gender fits.",
       "names.venues and closureReasons are written in the oblique form, because they are always followed by a postposition (में, की वजह से).",
       "Keypad keys are words (एक, दो, नौ), not digits, so the render is deterministic.",
+      "Keep the message short: the Hindi PTM clip was the longest of the four (32.5 s on the 7 Oct test call).",
       "charsPerSecond is the slowest message+menu rate measured by scripts/sampark/verify-voice.ts on 2026-09-30 with the live voice and style prompt (conservative, so the 38 s budget warning fires early)."
     ]
   },
@@ -196,20 +198,20 @@
       "special": {}
     },
     "grade": {
-      "pattern": "कक्षा {grade}, सेक्शन {section}",
+      "pattern": "क्लास {grade} {section}",
       "gradeWords": {
-        "1": "एक",
-        "2": "दो",
-        "3": "तीन",
-        "4": "चार",
-        "5": "पाँच",
-        "6": "छह",
-        "7": "सात",
-        "8": "आठ",
-        "9": "नौ",
-        "10": "दस",
-        "11": "ग्यारह",
-        "12": "बारह"
+        "1": "वन",
+        "2": "टू",
+        "3": "थ्री",
+        "4": "फ़ोर",
+        "5": "फ़ाइव",
+        "6": "सिक्स",
+        "7": "सेवन",
+        "8": "एट",
+        "9": "नाइन",
+        "10": "टेन",
+        "11": "इलेवन",
+        "12": "ट्वेल्व"
       }
     },
     "sectionLetters": {
@@ -237,17 +239,17 @@
   },
   "names": {
     "eventTypes": {
-      "annual_day": "वार्षिक उत्सव",
-      "sports_day": "खेल दिवस",
-      "science_fair": "विज्ञान मेला",
-      "cultural_programme": "सांस्कृतिक कार्यक्रम",
-      "parent_workshop": "अभिभावक प्रशिक्षण कार्यक्रम"
+      "annual_day": "एनुअल डे",
+      "sports_day": "स्पोर्ट्स डे",
+      "science_fair": "साइंस फ़ेयर",
+      "cultural_programme": "कल्चरल प्रोग्राम",
+      "parent_workshop": "पेरेंट्स वर्कशॉप"
     },
     "closureReasons": {
-      "rain_landslide": "भारी बारिश और भूस्खलन के ख़तरे",
+      "rain_landslide": "भारी बारिश और लैंडस्लाइड के ख़तरे",
       "heavy_rain": "भारी बारिश",
       "bandh": "बंद",
-      "local_emergency": "स्थानीय आपात स्थिति"
+      "local_emergency": "इलाक़े में इमरजेंसी"
     },
     "venues": {
       "school_hall": "स्कूल हॉल",
@@ -255,39 +257,39 @@
       "auditorium": "स्कूल ऑडिटोरियम"
     },
     "audience": {
-      "section": "{class} के अभिभावकों",
-      "school": "सभी अभिभावकों"
+      "section": "{class} के पेरेंट्स",
+      "school": "सभी पेरेंट्स"
     }
   },
   "common": {
-    "opt_out_confirm": "अगर ये कॉल बंद करनी हों, तो एक बार फिर नौ दबाएँ। स्कूल अचानक बंद होने की ज़रूरी सूचना आपको फिर भी मिलती रहेगी।",
-    "opt_out_done": "ठीक है, अब आपको ये कॉल नहीं आएँगी। अगर कभी स्कूल अचानक बंद करना पड़े, तो उसकी सूचना आपको फिर भी मिलेगी। धन्यवाद।",
-    "no_input": "सुनने के लिए धन्यवाद। आपका दिन शुभ हो।",
-    "fallback_office": "नमस्ते, यह {schoolName} है। अभी हम अपना संदेश नहीं सुना पाए, इसलिए कृपया स्कूल ऑफ़िस से संपर्क कर लें। धन्यवाद।"
+    "opt_out_confirm": "ये कॉल बंद करनी हों, तो एक बार और नौ दबाएँ। पर अगर अचानक स्कूल बंद हुआ, तो उसकी ख़बर आपको फिर भी मिलेगी।",
+    "opt_out_done": "ठीक है, अब आपको ये कॉल नहीं आएँगी। पर अगर अचानक स्कूल बंद हुआ, तो उसकी ख़बर आपको फिर भी मिलेगी। धन्यवाद।",
+    "no_input": "सुनने के लिए धन्यवाद। नमस्ते।",
+    "fallback_office": "नमस्ते, यह {schoolName} है। अभी हम अपना मैसेज नहीं सुना पाए। कृपया एक बार स्कूल ऑफ़िस से बात कर लें। धन्यवाद।"
   },
   "purposes": {
     "ptm_invite": {
-      "message": "नमस्ते! यह {schoolName} की ओर से {audience} के लिए एक रिकॉर्ड किया हुआ संदेश है। पैरेंट-टीचर मीटिंग {date} को {time} {venue} होगी, और हमें आपसे मिलकर बहुत ख़ुशी होगी।",
-      "menu": "अगर आप आ सकें, तो कृपया एक दबाएँ। अगर यह समय ठीक न बैठे, तो दो दबाएँ। और अगर ऐसी कॉल आपको नहीं चाहिए, तो नौ दबाएँ।",
-      "confirm_1": "धन्यवाद! हमने स्कूल को आपके आने की सूचना दे दी है। आपसे मिलने का इंतज़ार रहेगा।",
-      "confirm_2": "बताने के लिए धन्यवाद। दूसरा समय तय करने के लिए कृपया क्लास टीचर या स्कूल ऑफ़िस से बात कर लें, वे आपकी मदद करेंगे।"
+      "message": "नमस्ते! {schoolName} से {audience} के लिए यह एक रिकॉर्डेड मैसेज है। पेरेंट टीचर मीटिंग {date} को {time} {venue} है। आप ज़रूर आइएगा।",
+      "menu": "आ सकें, तो एक दबाएँ। इस समय आना मुश्किल हो, तो दो दबाएँ। ऐसी कॉल नहीं चाहिए, तो नौ दबाएँ।",
+      "confirm_1": "धन्यवाद! हमने स्कूल को आपके आने की ख़बर दे दी है। मीटिंग में मिलते हैं।",
+      "confirm_2": "बताने के लिए धन्यवाद। कोई दूसरा समय तय करने के लिए क्लास टीचर या स्कूल ऑफ़िस से बात कर लें, वे आपकी मदद करेंगे।"
     },
     "event_invite": {
-      "message": "नमस्ते! यह {schoolName} की ओर से {audience} के लिए एक रिकॉर्ड किया हुआ संदेश है। {date} को {time} {venue} {eventName} होगा, और इसमें आप सपरिवार सादर आमंत्रित हैं।",
-      "menu": "अगर आप आ सकें, तो कृपया एक दबाएँ। अगर आना संभव न हो, तो दो दबाएँ। और अगर ऐसी कॉल आपको नहीं चाहिए, तो नौ दबाएँ।",
-      "confirm_1": "धन्यवाद! हमने स्कूल को आपके आने की सूचना दे दी है। वहीं मिलते हैं।",
+      "message": "नमस्ते! {schoolName} से {audience} के लिए यह एक रिकॉर्डेड मैसेज है। {date} को {time} {venue} {eventName} है। आप परिवार के साथ ज़रूर आइएगा।",
+      "menu": "आ सकें, तो एक दबाएँ। न आ पाएँ, तो दो दबाएँ। ऐसी कॉल नहीं चाहिए, तो नौ दबाएँ।",
+      "confirm_1": "धन्यवाद! हमने स्कूल को आपके आने की ख़बर दे दी है। वहीं मिलते हैं।",
       "confirm_2": "बताने के लिए धन्यवाद। अगली बार आपसे ज़रूर मुलाक़ात होगी।"
     },
     "emergency_closure": {
       "message": {
-        "today": "नमस्ते। यह {schoolName} की ओर से एक ज़रूरी रिकॉर्ड किया हुआ संदेश है। {reason} की वजह से आज, {date} को स्कूल बंद रहेगा। {buses}",
-        "tomorrow": "नमस्ते। यह {schoolName} की ओर से एक ज़रूरी रिकॉर्ड किया हुआ संदेश है। {reason} की वजह से कल, {date} को स्कूल बंद रहेगा। {buses}"
+        "today": "नमस्ते। {schoolName} से यह एक ज़रूरी रिकॉर्डेड मैसेज है। {reason} की वजह से आज, {date} को स्कूल बंद रहेगा। {buses}",
+        "tomorrow": "नमस्ते। {schoolName} से यह एक ज़रूरी रिकॉर्डेड मैसेज है। {reason} की वजह से कल, {date} को स्कूल बंद रहेगा। {buses}"
       },
       "buses": {
         "running": "स्कूल बसें रोज़ की तरह चलेंगी।",
         "notRunning": "स्कूल बसें भी नहीं चलेंगी।"
       },
-      "menu": "संदेश सुन लिया हो, तो कृपया एक दबाएँ। और अगर ऐसी कॉल आपको नहीं चाहिए, तो नौ दबाएँ।",
+      "menu": "मैसेज सुन लिया हो, तो एक दबाएँ। ऐसी कॉल नहीं चाहिए, तो नौ दबाएँ।",
       "confirm_1": "धन्यवाद। अपना और बच्चों का ध्यान रखें।"
     }
   }

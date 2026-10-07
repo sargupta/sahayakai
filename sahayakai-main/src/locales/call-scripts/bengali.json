@@ -6,11 +6,14 @@
     "reviewedBy": null,
     "charsPerSecond": 11.3,
     "notes": [
-      "West Bengal usage: \"টিপুন\" for press, class numbers said as English words in Bengali script (\"ক্লাস সেভেন\"), dates in the date forms (পয়লা, দোসরা, দশই, উনিশে).",
+      "Siliguri spoken Bengali, the way a school office talks to parents: প্যারেন্ট টিচার মিটিং, মেসেজ, অ্যানুয়াল ডে, স্পোর্টস ডে, ক্লাস টিচার, \"আপনি এলে আমরা খুব খুশি হব\". Not bookish or translated forms (অভিভাবক-শিক্ষক সভা, বার্তা, বার্ষিক ক্রীড়া প্রতিযোগিতা, সাদর আমন্ত্রণ) and no Bangladeshi words (পানি, দাওয়াত, গোসল).",
+      "Keypad keys always take নম্বর: \"এক নম্বর টিপুন\", \"নয় নম্বর টিপুন\". নয় on its own also means \"is not\", so a bare \"নয় টিপুন\" is ambiguous.",
+      "Class numbers are said as English words in Bengali script, with the letter before সেকশন: \"ক্লাস সেভেন, বি সেকশন\"; the genitive is \"বি সেকশনের\" (lexicon.grade.genitivePattern), never a suffix hyphenated onto a letter (\"বি-র\").",
+      "Dates use the date forms (পয়লা, দোসরা, দশই, উনিশে).",
       "Times are the locative clock forms (দশটায়, সাড়ে দশটায়, দেড়টায়, আড়াইটায়), so the template adds no postposition after {time}.",
       "The school name is followed by থেকে, never a genitive, so any school name works without inflecting it.",
       "names.venues are plain nouns; the locative (হলে, মাঠে, লাইব্রেরিতে) is formed from lexicon.locative.",
-      "names.closureReasons are genitive, because the template says \"{reason} জন্য\".",
+      "names.closureReasons carry their own postposition (ভারী বৃষ্টির জন্য, ধসের ভয়ে), because the template puts {reason} straight before আজ / আগামীকাল.",
       "charsPerSecond is the slowest message+menu rate measured by scripts/sampark/verify-voice.ts on 2026-09-30 with the live voice and style prompt (conservative, so the 38 s budget warning fires early).",
       "Short clips do not open with \"ধন্যবাদ\": the word is identical in Hindi, and the recogniser then transcribed a 4-second Bengali clip as Hindi. Thanks go last."
     ]
@@ -207,7 +210,8 @@
       "special": {}
     },
     "grade": {
-      "pattern": "ক্লাস {grade}, সেকশন {section}",
+      "pattern": "ক্লাস {grade}, {section} সেকশন",
+      "genitivePattern": "ক্লাস {grade}, {section} সেকশনের",
       "gradeWords": {
         "1": "ওয়ান",
         "2": "টু",
@@ -234,14 +238,14 @@
       "H": "এইচ"
     },
     "sectionLettersGenitive": {
-      "A": "এ-র",
-      "B": "বি-র",
-      "C": "সি-র",
-      "D": "ডি-র",
-      "E": "ই-র",
-      "F": "এফ-এর",
-      "G": "জি-র",
-      "H": "এইচ-এর"
+      "A": "এ",
+      "B": "বি",
+      "C": "সি",
+      "D": "ডি",
+      "E": "ই",
+      "F": "এফ",
+      "G": "জি",
+      "H": "এইচ"
     },
     "venuePhrase": "{venueLocative}",
     "locative": {
@@ -251,17 +255,17 @@
   },
   "names": {
     "eventTypes": {
-      "annual_day": "বার্ষিক অনুষ্ঠান",
-      "sports_day": "বার্ষিক ক্রীড়া প্রতিযোগিতা",
+      "annual_day": "অ্যানুয়াল ডে",
+      "sports_day": "স্পোর্টস ডে",
       "science_fair": "বিজ্ঞান মেলা",
-      "cultural_programme": "সাংস্কৃতিক অনুষ্ঠান",
-      "parent_workshop": "অভিভাবকদের কর্মশালা"
+      "cultural_programme": "কালচারাল প্রোগ্রাম",
+      "parent_workshop": "প্যারেন্টস ওয়ার্কশপ"
     },
     "closureReasons": {
-      "rain_landslide": "ভারী বৃষ্টি আর ধসের আশঙ্কার",
-      "heavy_rain": "ভারী বৃষ্টির",
-      "bandh": "বনধের",
-      "local_emergency": "স্থানীয় জরুরি পরিস্থিতির"
+      "rain_landslide": "ভারী বৃষ্টি আর ধসের ভয়ে",
+      "heavy_rain": "ভারী বৃষ্টির জন্য",
+      "bandh": "বনধের জন্য",
+      "local_emergency": "এলাকার জরুরি পরিস্থিতির জন্য"
     },
     "venues": {
       "school_hall": "স্কুলের হল",
@@ -274,34 +278,34 @@
     }
   },
   "common": {
-    "opt_out_confirm": "নিশ্চিত করতে আর একবার নয় টিপুন, তাহলে এই ধরনের কল বন্ধ হয়ে যাবে। হঠাৎ স্কুল বন্ধের জরুরি খবর অবশ্য আপনার কাছে পৌঁছবে।",
-    "opt_out_done": "ঠিক আছে, আপনাকে আর এই ধরনের কল করা হবে না। হঠাৎ স্কুল বন্ধ হলে সেই খবর অবশ্য পৌঁছবে। ভালো থাকবেন, ধন্যবাদ।",
+    "opt_out_confirm": "এরকম কল বন্ধ করতে আর একবার নয় নম্বর টিপুন। তবে হঠাৎ স্কুল বন্ধ থাকলে সেই খবর আপনি পাবেন।",
+    "opt_out_done": "ঠিক আছে, আপনাকে আর এরকম কল করা হবে না। তবে হঠাৎ স্কুল বন্ধ থাকলে সেই খবর আপনি পাবেন। ভালো থাকবেন, ধন্যবাদ।",
     "no_input": "শোনার জন্য ধন্যবাদ। ভালো থাকবেন।",
-    "fallback_office": "নমস্কার, এটা {schoolName}। এই মুহূর্তে আমাদের বার্তাটা শোনানো গেল না, তাই দয়া করে স্কুলের অফিসে একবার যোগাযোগ করে নেবেন। ধন্যবাদ।"
+    "fallback_office": "নমস্কার, এটা {schoolName}। এখন আমাদের মেসেজটা শোনানো গেল না। দয়া করে স্কুল অফিসে একবার ফোন করে নেবেন। ধন্যবাদ।"
   },
   "purposes": {
     "ptm_invite": {
-      "message": "নমস্কার! এটা {schoolName} থেকে {audience} জন্য একটা রেকর্ড করা বার্তা। অভিভাবক-শিক্ষক সভা হবে {date}, {time}, {venue}। আপনার সঙ্গে দেখা হলে আমরা খুব খুশি হব।",
-      "menu": "আপনি আসতে পারলে এক টিপুন। এই সময়টা অসুবিধার হলে দুই টিপুন। আর এই ধরনের কল না চাইলে নয় টিপুন।",
+      "message": "নমস্কার। {schoolName} থেকে {audience} জন্য এটা একটা রেকর্ড করা মেসেজ। {date}, {time} {venue} প্যারেন্ট টিচার মিটিং আছে। আপনি এলে আমরা খুব খুশি হব।",
+      "menu": "আসতে পারলে এক নম্বর টিপুন। ওই সময়ে আসতে অসুবিধা হলে দুই নম্বর টিপুন। আর এরকম কল না চাইলে নয় নম্বর টিপুন।",
       "confirm_1": "আপনি আসছেন, সেটা স্কুলকে জানিয়ে দিলাম। দেখা হবে, ধন্যবাদ।",
-      "confirm_2": "জানানোর জন্য ধন্যবাদ। অন্য সময় ঠিক করতে ক্লাস টিচার বা স্কুলের অফিসের সঙ্গে একটু কথা বলে নেবেন, ওঁরা সাহায্য করবেন।"
+      "confirm_2": "জানানোর জন্য ধন্যবাদ। অন্য সময় ঠিক করতে ক্লাস টিচার বা স্কুল অফিসের সঙ্গে একটু কথা বলে নেবেন, ওঁরা সাহায্য করবেন।"
     },
     "event_invite": {
-      "message": "নমস্কার! এটা {schoolName} থেকে {audience} জন্য একটা রেকর্ড করা বার্তা। স্কুলের {eventName} হবে {date}, {time}, {venue}। সপরিবারে আপনাকে সাদর আমন্ত্রণ জানাই।",
-      "menu": "আপনি আসতে পারলে এক টিপুন। আসতে না পারলে দুই টিপুন। আর এই ধরনের কল না চাইলে নয় টিপুন।",
+      "message": "নমস্কার। {schoolName} থেকে {audience} জন্য এটা একটা রেকর্ড করা মেসেজ। {date}, {time} {venue} আমাদের {eventName} হবে। বাড়ির সবাইকে নিয়ে আসবেন, আমরা খুব খুশি হব।",
+      "menu": "আসতে পারলে এক নম্বর টিপুন। আসতে না পারলে দুই নম্বর টিপুন। আর এরকম কল না চাইলে নয় নম্বর টিপুন।",
       "confirm_1": "আপনি আসছেন, সেটা স্কুলকে জানিয়ে দিলাম। দেখা হবে, ধন্যবাদ।",
       "confirm_2": "জানানোর জন্য ধন্যবাদ। পরের অনুষ্ঠানে নিশ্চয়ই দেখা হবে।"
     },
     "emergency_closure": {
       "message": {
-        "today": "নমস্কার। এটা {schoolName} থেকে একটা জরুরি রেকর্ড করা বার্তা। {reason} জন্য আজ, {date}, স্কুল বন্ধ থাকবে। {buses}",
-        "tomorrow": "নমস্কার। এটা {schoolName} থেকে একটা জরুরি রেকর্ড করা বার্তা। {reason} জন্য আগামীকাল, {date}, স্কুল বন্ধ থাকবে। {buses}"
+        "today": "নমস্কার। {schoolName} থেকে এটা একটা জরুরি রেকর্ড করা মেসেজ। {reason} আজ, {date}, স্কুল বন্ধ থাকবে। {buses}",
+        "tomorrow": "নমস্কার। {schoolName} থেকে এটা একটা জরুরি রেকর্ড করা মেসেজ। {reason} আগামীকাল, {date}, স্কুল বন্ধ থাকবে। {buses}"
       },
       "buses": {
         "running": "স্কুল বাস অবশ্য রোজকার মতোই চলবে।",
         "notRunning": "স্কুল বাসও চলবে না।"
       },
-      "menu": "বার্তাটা শুনে থাকলে এক টিপুন। আর এই ধরনের কল না চাইলে নয় টিপুন।",
+      "menu": "মেসেজটা শুনে থাকলে এক নম্বর টিপুন। আর এরকম কল না চাইলে নয় নম্বর টিপুন।",
       "confirm_1": "সবাই সাবধানে থাকবেন, ধন্যবাদ।"
     }
   }
