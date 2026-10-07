@@ -72,6 +72,7 @@ const RETIRED_SOURCE: Readonly<Record<ParentLanguage, readonly RetiredForm[]>> =
         { pattern: bareKeypad('Bengali', 'টিপুন'), why: 'a bare number before টিপুন ("নয় টিপুন" also means "is not"): "নয় নম্বর টিপুন"' },
         { pattern: word('পানি|দাওয়াত|গোসল'), why: 'Bangladeshi usage, not Siliguri Bengali (জল, নেমন্তন্ন, স্নান)' },
         { pattern: word('তুমি|তুই|তোমার|তোর'), why: 'honorific forms only (আপনি)' },
+        { pattern: /রেকর্ড/u, why: 'founder, 7 Oct 2026: never announce a "recorded message"; the call speaks like the school office' },
     ],
     Hindi: [
         { pattern: /कक्षा/u, why: 'parents say क्लास ("क्लास सेवन बी")' },
@@ -87,10 +88,12 @@ const RETIRED_SOURCE: Readonly<Record<ParentLanguage, readonly RetiredForm[]>> =
         { pattern: /दिन शुभ/u, why: 'translated "have a good day"' },
         { pattern: INDIC_HYPHEN, why: 'no hyphenated compounds ("पैरेंट-टीचर"): "पेरेंट टीचर मीटिंग"' },
         { pattern: word('तुम|तू|तुम्हें|तुम्हारा|तुम्हारी|तेरा|तेरी'), why: 'honorific forms only (आप)' },
+        { pattern: /रिकॉर्ड/u, why: 'founder, 7 Oct 2026: never announce a "recorded message"; the call speaks like the school office' },
     ],
     English: [
         { pattern: /half past|quarter (?:past|to)/i, why: 'British; Indian English says "ten thirty"' },
         { pattern: /Class \w+, section/i, why: 'parents say "Class Seven B"' },
+        { pattern: /record(?:ed|ing)/i, why: 'founder, 7 Oct 2026: never announce a "recorded message"; the call speaks like the school office' },
     ],
     Nepali: [
         { pattern: /स्कूल/u, why: 'Nepali spelling is स्कुल (short u), always' },
@@ -105,6 +108,7 @@ const RETIRED_SOURCE: Readonly<Record<ParentLanguage, readonly RetiredForm[]>> =
         { pattern: INDIC_HYPHEN, why: 'no hyphenated compounds ("प्यारेन्ट-टिचर"): "प्यारेन्ट टिचर मिटिङ"' },
         { pattern: bareKeypad('Nepali', 'थिच्नुहोस्'), why: 'keypad keys take नम्बर: "एक नम्बर थिच्नुहोस्"' },
         { pattern: word('तिमी|तँ|तिम्रो|तेरो'), why: 'honorific forms only (तपाईं)' },
+        { pattern: /रेकर्ड/u, why: 'founder, 7 Oct 2026: never announce a "recorded message"; the call speaks like the school office' },
     ],
 };
 
