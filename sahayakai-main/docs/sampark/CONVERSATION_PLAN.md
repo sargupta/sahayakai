@@ -175,8 +175,28 @@ flowchart LR
 
 ## 6. Voice and language quality — native, not translated
 
-### 6.1 Diagnosis
-*(Research R2 — filled when the voice investigation completes.)*
+### 6.1 Diagnosis (research R2, 7 Oct 2026; samples in `qa/sampark-voice-eval/`, not committed)
+- **Bengali: the engine, not the phone line.** Today's Bengali is Google Chirp 3 HD `bn-IN`, and that model mispronounces Bengali. All 30 of its voices scored lowest on native accent: about 2.6/5 on an AI listening judge, against 4.8 for Gemini-TTS, 4.2 for Sarvam Bulbul and 5 for WaveNet.
+  - Two independent recognisers (Google Chirp 2 and Sarvam Saarika) both stumble on the same words, and only on Chirp. সকাল comes back as "skal"/"কাল", আটই as "আটি", and "আপনি আসছেন" as "আপনি আশ্চর্য".
+  - Better wording on the same engine reproduces the errors.
+- **Why the gate missed it.** Transcribe-back passed at 0.954. It measures intelligibility, not accent.
+  - **New gate (V phase):** a fixed hard-word sentence per language must come back word-for-word from two independent recognisers before a voice can be locked.
+- **Why Chirp was chosen.** Google's TTS API refuses `bn-IN` for every Gemini model. The same models called through Vertex AI generateContent accept `bn-IN` and sound native.
+- **Not the phone line.** About 1% of the energy sits above 3.4 kHz, and wideband and 8 kHz renders give identical recognition errors.
+- **Loudness is uneven:** −20.7 to −15.2 LUFS, with peaks near full scale. `render-job.ts` does not normalise, contrary to the plan. To fix in phase V.
+- **Script wording.**
+  - Bengali is bookish ("অভিভাবক-শিক্ষক সভা" should be "প্যারেন্ট টিচার মিটিং"), and "নয় টিপুন" is ambiguous.
+  - Hindi mixes formal and English words ("कक्षा सात, सेक्शन बी").
+  - English says "half past ten", which is British.
+  - Nepali reads as translated.
+  - Drafts are in the eval manifest, pending native sign-off.
+- **Candidates.**
+  - **Bengali:** Gemini 3.8 Flash TTS via Vertex (Kore, `bn-IN`; Preview) or Gemini 2.5 Flash via Vertex; Sarvam Bulbul v3 "roopa" (fastest streaming, ~0.5 s first byte, native 8 kHz); WaveNet C as a fallback.
+  - **Hindi, English, Nepali:** keep Gemini 2.5 Flash Kore and fix the text.
+  - Always send the language code and never prefix an English instruction: without the code, Gemini 3.8 read English and some Hindi with an American accent.
+- **Untested.** Azure and ElevenLabs (no keys). Sarvam's Nepali and Bulbul v4 (both need beta access).
+- **Listening test.** 23 loudness-matched, phone-quality samples across the 4 languages, blind, including today's production clip and a Hindi-voice-reading-Nepali attention check. It is on the design page, with ratings stored per rater.
+- **Side finding.** `sahayakai-voice-call/src/lib/sarvam.ts` still calls `bulbul:v2` (now deprecated, HTTP 400) and the "anushka" voice, so Sarvam speech in that repo is broken.
 
 ### 6.2 What changes
 - **Native writers, a written dialect spec, and the right register.**
