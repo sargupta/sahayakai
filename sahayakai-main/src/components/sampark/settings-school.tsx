@@ -166,7 +166,11 @@ export function CallingWindowSection() {
     const [startHour, setStartHour] = useState(school.callingWindow.startHour);
     const [endHour, setEndHour] = useState(school.callingWindow.endHour);
     const [offDays, setOffDays] = useState<number[]>([...school.callingWindow.offDays]);
-    const [holidays, setHolidays] = useState<string[]>([...school.holidays].sort());
+    // The school's own holidays (H10). A school from before the split has only `holidays`,
+    // which then counts as its own. Holidays from the school records are shown apart and
+    // cannot be removed here: the next import would bring them back.
+    const [holidays, setHolidays] = useState<string[]>([...(school.manualHolidays ?? school.holidays)].sort());
+    const crmHolidays = [...(school.crmHolidays ?? [])].filter((h) => !holidays.includes(h)).sort();
     const [newHoliday, setNewHoliday] = useState("");
 
     const windowValid = startHour < endHour;
@@ -246,6 +250,21 @@ export function CallingWindowSection() {
                                 </li>
                             ))}
                         </ul>
+                    )}
+                    {crmHolidays.length > 0 && (
+                        <div className="space-y-2">
+                            <p className="type-body font-medium text-foreground">{t("From your school records")}</p>
+                            <ul className="flex flex-wrap gap-2">
+                                {crmHolidays.map((h) => (
+                                    <li key={h} className="inline-flex items-center rounded-pill border border-border bg-muted/30 px-3 py-1 type-body text-foreground">
+                                        {f.day(h)}
+                                    </li>
+                                ))}
+                            </ul>
+                            <p className="type-body text-muted-foreground">
+                                {t("These come from your school records and are updated by each import. Holidays you add here are kept through every import.")}
+                            </p>
+                        </div>
                     )}
                     <div className="flex flex-wrap items-end gap-2">
                         <div className="space-y-2">

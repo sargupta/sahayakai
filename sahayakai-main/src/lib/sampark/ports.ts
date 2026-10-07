@@ -207,7 +207,16 @@ export type PlaceCallResult =
            */
           events: CallEvent[];
       }
-    | { ok: false; reason: string; retryable: boolean };
+    | {
+          ok: false;
+          reason: string;
+          retryable: boolean;
+          /**
+           * The carrier refused for capacity (429, channel full): nothing rang, and the family's
+           * attempt is not spent; the intent is requeued shortly (H7). Implies retryable.
+           */
+          requeue?: boolean;
+      };
 
 export interface Carrier {
     kind: CarrierKind;

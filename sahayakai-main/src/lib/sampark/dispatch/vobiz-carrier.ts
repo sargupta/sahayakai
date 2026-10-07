@@ -21,13 +21,21 @@
  * voice webhooks, which feed the same reducer and settle the intent. The
  * dispatcher keeps the call open with a longer lease meanwhile.
  *
- * Failure mapping (VobizFailure category → outcome):
+ * Placing goes through `placeVobizCallDetailed` (hardening H7): the teacher path's
+ * `placeVobizCall` is left exactly as it is, and the detailed variant adds the
+ * categories below and an 8-second timeout.
+ *
+ * Failure mapping (VobizDetailedFailure category → outcome):
+ *   rate_limited                               → requeue: Vobiz refused for capacity and nothing
+ *       rang, so the family's attempt is not spent; the dispatcher requeues the intent a minute
+ *       or so later under a new call id (dispatch/settle.ts, up to MAX_CARRIER_REQUEUES times)
  *   provider_rejected                          → retryable (Vobiz answered and refused: nothing rang)
+ *   dnd_blocked                                → not retryable (the number cannot take these calls)
  *   provider_unconfigured, invalid_destination → not retryable (an operator problem)
- *   network                                    → THROWS. The request may have reached Vobiz before
- *       the connection dropped, so whether the phone rang is unknown. A thrown place leaves the
- *       call 'dialing' for the sweep, which hands it to a person and never re-dials (plan §4⑦).
- *       Retrying here could ring a family twice.
+ *   provider_error, network                    → THROW. A 5xx, a dropped connection or the timeout:
+ *       the request may have reached Vobiz and the call been placed, so whether the phone rang is
+ *       unknown. A thrown place leaves the call 'dialing' for the sweep, which hands it to a person
+ *       and never re-dials (plan §4⑦). Retrying here could ring a family twice.
  *
  * The number dialled is never logged. Class gate 2: only the carrier factory
  * (src/server/sampark/carrier.ts) constructs this; only the dispatcher calls `place`.
@@ -37,7 +45,7 @@ import { logger } from '@/lib/logger';
 import { classifyPhone } from '@/lib/sampark/phone';
 import type { Carrier, PlaceCallRequest, PlaceCallResult } from '@/lib/sampark/ports';
 import { voicePrincipal, type SamparkVoiceDomain } from '@/lib/sampark/voice/tokens';
-import { placeVobizCall, type VobizConfig, type VobizFailureCategory } from '@/lib/vobiz/client';
+import { placeVobizCallDetailed, type VobizConfig, type VobizDetailedFailureCategory } from '@/lib/vobiz/client';
 
 /** Seconds Vobiz lets the phone ring before giving up (matches the teacher parent-call path). */
 export const VOBIZ_RING_TIMEOUT_SECONDS = 30;
@@ -52,12 +60,17 @@ export interface VobizNoticeCarrierDeps {
     /** Stream V's mintSamparkVoiceToken. */
     mintToken: (domain: SamparkVoiceDomain, principal: string, ttlSeconds?: number) => Promise<string>;
     /** Injectable for tests. Named placeCall (not place) so class gate 2's `.place(` scan stays precise. */
-    placeCall?: typeof placeVobizCall;
+    placeCall?: typeof placeVobizCallDetailed;
 }
 
-/** Only for categories where Vobiz provably did not place the call; `network` never reaches this table. */
-const RETRYABLE: Record<Exclude<VobizFailureCategory, 'network'>, boolean> = {
+/** Categories whose outcome is unknown: the call may have been placed, so it is never retried. */
+type UnknownOutcome = 'network' | 'provider_error';
+
+/** Only for categories where Vobiz provably did not place the call; the unknown outcomes never reach this table. */
+const RETRYABLE: Record<Exclude<VobizDetailedFailureCategory, UnknownOutcome>, boolean> = {
+    rate_limited: true,
     provider_rejected: true,
+    dnd_blocked: false,
     provider_unconfigured: false,
     invalid_destination: false,
 };
@@ -86,7 +99,7 @@ export function createVobizNoticeCarrier(deps: VobizNoticeCarrierDeps): Carrier 
         throw new Error('Vobiz notice carrier: SAMPARK_LIVE_DIAL_ENABLED is not "true"');
     }
     const base = callbackOrigin(deps.publicBaseUrl);
-    const placeCall = deps.placeCall ?? placeVobizCall;
+    const placeCall = deps.placeCall ?? placeVobizCallDetailed;
 
     return {
         kind: 'vobiz',
@@ -121,11 +134,12 @@ export function createVobizNoticeCarrier(deps: VobizNoticeCarrierDeps): Carrier 
             if (result.ok) return { ok: true, providerCallId: result.handle.requestUuid, events: [] };
 
             const { category, status: httpStatus } = result.failure;
-            if (category === 'network') {
-                logger.warn('Sampark Vobiz place outcome unknown (network); leaving the call for the sweep', LOG_CONTEXT, { orgId: call.orgId, callId: call.id });
-                throw new Error('vobiz_network_outcome_unknown');
+            if (category === 'network' || category === 'provider_error') {
+                logger.warn('Sampark Vobiz place outcome unknown; leaving the call for the sweep', LOG_CONTEXT, { orgId: call.orgId, callId: call.id, category, httpStatus: httpStatus ?? null });
+                throw new Error(`vobiz_${category}_outcome_unknown`);
             }
             logger.warn('Sampark Vobiz call was not placed', LOG_CONTEXT, { orgId: call.orgId, callId: call.id, category, httpStatus: httpStatus ?? null });
+            if (category === 'rate_limited') return { ok: false, reason: 'vobiz_rate_limited', retryable: true, requeue: true };
             return { ok: false, reason: `vobiz_${category}`, retryable: RETRYABLE[category] };
         },
     };

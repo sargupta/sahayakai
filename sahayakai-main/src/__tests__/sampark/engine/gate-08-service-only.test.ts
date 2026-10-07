@@ -82,7 +82,7 @@ describe('class gate 8 — a promotional purpose is never schedulable', () => {
         const repo = createMemorySamparkRepo();
         const clock = testClock();
         await seedFamilies(repo, 2);
-        const c = campaign();
+        const c = campaign({ mode: 'practice' }); // approved in the school's mode (H2)
         await repo.createCampaign(c);
         await materialiseCampaignIntents({ repo, clock }, c, school(), 'simulated');
         mockPromotional.add('ptm_invite');

@@ -10,12 +10,23 @@
  *
  * The audience dry-run evaluates the SAME gate the materialiser uses (stage
  * 'materialise') and writes nothing.
+ *
+ * Hardening sprint (7 Oct 2026, docs/sampark/EDGE_CASES.md §3):
+ *   - approval pins the school's mode on the campaign (H2), so flipping the
+ *     school's mode later can never turn a rehearsal into real calls;
+ *   - invitations stop INVITE_LEAD_MINUTES before the event starts (H5): a
+ *     family must never be invited to something that has already begun;
+ *   - cancelling hangs up the campaign's calls that are still ringing (H4); one
+ *     answered anyway hears the withdrawn line (voice.ts), never silence;
+ *   - `campaignClipKeys` is the one definition of the clip keys a campaign's
+ *     calls play, frozen on the campaign when it is scheduled (H4, jobs.ts).
  */
 
 import crypto from 'node:crypto';
 
 import { z } from 'zod';
 
+import { logger } from '@/lib/logger';
 import { bundleAudience } from '@/lib/sampark/audience';
 import { isDialable, PURPOSE_CATALOGUE, purposeSpec } from '@/lib/sampark/catalogue';
 import { chooseClosureVariant, closureExpiry, istDateString } from '@/lib/sampark/closure';
@@ -23,12 +34,13 @@ import { emptyCounts } from '@/lib/sampark/dispatch/counts';
 import { languageInfo } from '@/lib/sampark/languages';
 import { evaluateGate } from '@/lib/sampark/policy/gate';
 import { resolveLanguage } from '@/lib/sampark/policy/language';
-import { audienceLabelFor, renderNoticeScript, ScriptRenderError, variantsFor } from '@/lib/sampark/scripts/render';
+import { audienceLabelFor, renderNoticeScript, ScriptRenderError, variantsFor, type ScriptVariant } from '@/lib/sampark/scripts/render';
 import { clipKey } from '@/lib/sampark/speech/clip-key';
 import {
     type BlockReason,
     type Campaign,
     type CampaignFacts,
+    type ClipKind,
     type GuardianPreferences,
     PARENT_LANGUAGES,
     type ParentLanguage,
@@ -40,6 +52,7 @@ import {
 } from '@/types/sampark';
 import { carrierKindForDryRun } from '@/server/sampark/carrier';
 import { badRequest, conflict, notFound } from '@/server/sampark/errors';
+import { hangupRingingCalls, type LegHangup } from '@/server/sampark/hangup';
 import type { SamparkCtx } from '@/server/sampark/http';
 import { getSchoolOrThrow, IsoDateSchema } from '@/server/sampark/school';
 
@@ -47,7 +60,10 @@ import { getSchoolOrThrow, IsoDateSchema } from '@/server/sampark/school';
 
 const SpokenTimeSchema = z
     .object({
-        hour: z.number().int().min(6, 'time must be between 06:00 and 21:00').max(21, 'time must be between 06:00 and 21:00'),
+        // Every language's day periods name school hours up to 19:30; a later time could be created
+        // and then refused at approval (SCRIPT_UNAVAILABLE), so it is refused here instead
+        // (gate-h5-every-accepted-time-is-sayable).
+        hour: z.number().int().min(6, 'time must be between 06:00 and 19:30').max(19, 'time must be between 06:00 and 19:30'),
         minute: z.union([z.literal(0), z.literal(30)], { errorMap: () => ({ message: 'minute must be 0 or 30' }) }),
     })
     .strict();
@@ -103,10 +119,23 @@ function istInstant(date: string, hour: number, minute: number, second = 0, ms =
     return new Date(`${date}T${pad(hour)}:${pad(minute)}:${pad(second)}.${pad(ms, 3)}+05:30`);
 }
 
-/** End of the event day in IST; for D4 the closure-day expiry from the engine. */
+/**
+ * Minutes before an invitation's start time after which no new call starts (H5). Until
+ * 7 Oct 2026 invitations ran to 23:59 on the event day, so a family could be rung about a
+ * meeting that had already begun; two hours leaves time to get there.
+ */
+export const INVITE_LEAD_MINUTES = 120;
+
+/**
+ * The last instant at which a new attempt may start (the dispatcher expires an intent once
+ * `now > expiresAt`, and the closure's expiry is 23:59:59.999 IST for the same reason). For an
+ * invitation that is the millisecond before the event start minus INVITE_LEAD_MINUTES, so no
+ * call ever starts AT the lead either; for D4, the closure-day expiry from the engine.
+ */
 export function campaignExpiry(facts: CampaignFacts): Date {
     if (facts.kind === 'emergency_closure') return closureExpiry(facts.date);
-    return istInstant(facts.date, 23, 59, 59, 999);
+    const start = istInstant(facts.date, facts.time.hour, facts.time.minute);
+    return new Date(start.getTime() - INVITE_LEAD_MINUTES * 60_000 - 1);
 }
 
 function validateFacts(facts: CampaignFacts, school: SamparkSchool, now: Date): void {
@@ -119,6 +148,9 @@ function validateFacts(facts: CampaignFacts, school: SamparkSchool, now: Date): 
     if (facts.date < istDateString(now)) throw badRequest('DATE_IN_PAST', 'The date is in the past');
     if (istInstant(facts.date, facts.time.hour, facts.time.minute).getTime() <= now.getTime()) {
         throw badRequest('DATE_IN_PAST', 'The time has already passed');
+    }
+    if (campaignExpiry(facts).getTime() <= now.getTime()) {
+        throw badRequest('TOO_LATE_TO_CALL', `Invitation calls stop ${INVITE_LEAD_MINUTES / 60} hours before the start, so it is too late to call about this`);
     }
     if (!school.venues.some((v) => v.id === facts.venueId)) {
         throw badRequest('UNKNOWN_VENUE', 'Choose one of the school venues');
@@ -158,6 +190,41 @@ export async function resolveCampaignAudience(ctx: SamparkCtx, orgId: string, ca
         ? await ctx.repo.getPreferences(orgId, guardians.map((g) => g.id))
         : new Map<string, GuardianPreferences>();
     return { students, guardians, prefs, studentsByGuardian };
+}
+
+// ── Frozen clip keys (H4) ───────────────────────────────────────────────────
+
+/** The `Campaign.clipKeys` slot of one language and audio variant. */
+export function clipKeySlot(language: ParentLanguage, variant: ScriptVariant): string {
+    return `${language}|${variant}`;
+}
+
+/**
+ * The key of every clip a campaign's calls can play, per language × variantsFor(purpose):
+ * the render job's own texts (renderNoticeScript on the same purpose, facts, school,
+ * language, variant and audience label) hashed with the same clipKey. Computed once, when
+ * the audio has passed its checks, and frozen on the campaign, so a later edit to the
+ * school's settings can no longer change what an answered call looks up (EDGE_CASES.md
+ * gap 3: the re-rendered key missed, and the parent heard silence). Throws
+ * ScriptRenderError for a script that cannot be said.
+ */
+export function campaignClipKeys(
+    campaign: Pick<Campaign, 'purpose' | 'facts' | 'audience'>,
+    school: SamparkSchool,
+    languages: readonly ParentLanguage[],
+): NonNullable<Campaign['clipKeys']> {
+    const frozen: NonNullable<Campaign['clipKeys']> = {};
+    const audience = audienceLabelFor(campaign);
+    for (const language of languages) {
+        const speech = languageInfo(language).speech;
+        for (const variant of variantsFor(campaign.purpose)) {
+            const script = renderNoticeScript({ purpose: campaign.purpose, facts: campaign.facts, school, language, variant, audience });
+            const byKind: Partial<Record<ClipKind, string>> = {};
+            for (const clip of script.clips) byKind[clip.kind] = clipKey(speech, clip.text);
+            frozen[clipKeySlot(language, variant)] = byKind;
+        }
+    }
+    return frozen;
 }
 
 /** Distinct languages the audience's guardians resolve to — what must be rendered. */
@@ -200,6 +267,9 @@ export async function summariseAudience(ctx: SamparkCtx, school: SamparkSchool, 
     for (const c of recentCalls) {
         if (new Date(c.createdAt).getTime() < since) continue;
         if (purposeSpec(c.purpose).emergency) continue;
+        // The cap's own rule (H1, B6): only real calls to a guardian count. A Practice call rang
+        // nobody, and a Test call rang the school's own phone.
+        if (c.carrier === 'simulated' || (c.destination ?? 'guardian') !== 'guardian') continue;
         recentByHash.set(c.phoneHash, (recentByHash.get(c.phoneHash) ?? 0) + 1);
     }
 
@@ -362,15 +432,17 @@ export async function approveCampaign(ctx: SamparkCtx, orgId: string, campaignId
         }
     }
     const nowIso = now.toISOString();
-    const patch: Partial<Campaign> = { status: 'rendering', approvedBy: uid, approvedAt: nowIso, updatedAt: nowIso };
+    // The mode is pinned here (H2): the dispatcher and the answer webhook only let this campaign
+    // speak while the school is still in the mode the approver saw.
+    const patch: Partial<Campaign> = { status: 'rendering', approvedBy: uid, approvedAt: nowIso, mode: school.mode, updatedAt: nowIso };
     await ctx.repo.updateCampaign(orgId, campaignId, patch);
-    // Audit what the approver saw (plan §4⑤): purpose, facts, audience, expiry.
+    // Audit what the approver saw (plan §4⑤): purpose, facts, audience, expiry and mode.
     await ctx.repo.appendAudit(orgId, {
         at: nowIso,
         actor: uid,
         action: 'campaign.approve',
         target: `campaign/${campaignId}`,
-        detail: { purpose: campaign.purpose, facts: campaign.facts, audience: campaign.audience, expiresAt: campaign.expiresAt },
+        detail: { purpose: campaign.purpose, facts: campaign.facts, audience: campaign.audience, expiresAt: campaign.expiresAt, mode: school.mode },
     });
     return { ...campaign, ...patch };
 }
@@ -411,7 +483,27 @@ export async function retryCampaignAudio(ctx: SamparkCtx, orgId: string, campaig
 
 const CANCELLABLE_INTENT_STATUSES = new Set(['approved', 'retry_wait']);
 
-export async function cancelCampaign(ctx: SamparkCtx, orgId: string, campaignId: string, uid: string): Promise<Campaign> {
+/** What happened to the campaign's calls that were already out when it was cancelled (H4). */
+export interface CancelCallsReport {
+    /** Phones that were still ringing and that the carrier confirmed it stopped. */
+    ringingStopped: number;
+    /** Calls a parent had already answered, left to finish their sentence. */
+    stillSpeaking: number;
+}
+
+export type CancelledCampaign = Campaign & { calls: CancelCallsReport | null };
+
+/**
+ * Cancel a campaign: nothing waiting is dialled, and every phone of it still ringing is hung
+ * up through the carrier (H4). A call already speaking finishes (cutting a parent off
+ * mid-sentence is worse), and a call answered before its hang-up lands hears the withdrawn
+ * line instead of the message (voice.ts). The response and the audit entry say how many
+ * phones were stopped and how many calls were still speaking; `calls` is null when the
+ * hang-up step itself failed (the cancel still stands, and the audit says so).
+ *
+ * `legHangup` is injectable for tests; it defaults to the Vobiz hang-up.
+ */
+export async function cancelCampaign(ctx: SamparkCtx, orgId: string, campaignId: string, uid: string, legHangup?: LegHangup | null): Promise<CancelledCampaign> {
     await getSchoolOrThrow(ctx, orgId);
     const campaign = await getCampaignOrThrow(ctx, orgId, campaignId);
     if (campaign.status === 'completed' || campaign.status === 'cancelled') {
@@ -420,7 +512,7 @@ export async function cancelCampaign(ctx: SamparkCtx, orgId: string, campaignId:
     const nowIso = ctx.clock.now().toISOString();
     const patch: Partial<Campaign> = { status: 'cancelled', updatedAt: nowIso };
     await ctx.repo.updateCampaign(orgId, campaignId, patch);
-    // A call already 'dialing' is left to finish; everything still waiting stops.
+    // Everything still waiting stops; a call already 'dialing' has its phone hung up below if it rings.
     const intents = await ctx.repo.listIntentsByCampaign(orgId, campaignId);
     let cancelled = 0;
     for (const intent of intents) {
@@ -428,12 +520,23 @@ export async function cancelCampaign(ctx: SamparkCtx, orgId: string, campaignId:
         await ctx.repo.updateIntent(orgId, intent.id, { status: 'cancelled', updatedAt: nowIso });
         cancelled++;
     }
+    // The campaign is cancelled and the queue emptied before the carrier is asked anything, so a
+    // carrier fault can never leave the cancel half done.
+    let calls: CancelCallsReport | null = null;
+    let hangupError: string | null = null;
+    try {
+        const report = await hangupRingingCalls(ctx, orgId, { campaignId, reason: 'campaign_cancelled', actor: uid }, legHangup);
+        calls = { ringingStopped: report.hungUp, stillSpeaking: report.stillSpeaking };
+    } catch (err) {
+        hangupError = err instanceof Error ? err.message.slice(0, 200) : 'unknown error';
+        logger.error('Sampark cancel: hanging up ringing calls failed', err, 'SAMPARK_CAMPAIGNS', { orgId, campaignId });
+    }
     await ctx.repo.appendAudit(orgId, {
         at: nowIso,
         actor: uid,
         action: 'campaign.cancel',
         target: `campaign/${campaignId}`,
-        detail: { from: campaign.status, intentsCancelled: cancelled },
+        detail: { from: campaign.status, intentsCancelled: cancelled, ...(calls ?? { hangupError }) },
     });
-    return { ...campaign, ...patch };
+    return { ...campaign, ...patch, calls };
 }

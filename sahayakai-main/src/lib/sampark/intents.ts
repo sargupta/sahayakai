@@ -6,6 +6,13 @@
  * be resurrected by re-running materialisation. A call's id is the hash of
  * (intent id, attempt), so a second dispatcher that races to claim the same
  * attempt collides on the call record and loses the claim.
+ *
+ * A carrier refusal for capacity (a 429) does not spend the family's attempt
+ * (H7): the intent is requeued with the SAME attempt number, so the next dial
+ * needs a different call id or its claim would collide with the refused call's
+ * record for ever (EDGE_CASES telephony S23). The requeue number is therefore
+ * part of the id, and requeue 0 hashes exactly as before, so every call id
+ * written before the hardening sprint is unchanged.
  */
 
 import crypto from 'node:crypto';
@@ -24,6 +31,14 @@ export function intentIdFor(dedupeKey: string): string {
     return hashId(dedupeKey);
 }
 
-export function callIdFor(intentId: string, attempt: number): string {
-    return hashId(`${intentId}#${attempt}`);
+/**
+ * Carrier refusals (429, channel full) one attempt may absorb without spending it (H7). The
+ * refusal after these is settled as an ordinary retryable failure, which spends the attempt,
+ * so a carrier that keeps refusing cannot hold an intent in a requeue loop for ever.
+ */
+export const MAX_CARRIER_REQUEUES = 3;
+
+/** Requeue 0 (every call before the hardening sprint) keeps the original `${intentId}#${attempt}` id. */
+export function callIdFor(intentId: string, attempt: number, requeue = 0): string {
+    return hashId(requeue === 0 ? `${intentId}#${attempt}` : `${intentId}#${attempt}#r${requeue}`);
 }

@@ -15,7 +15,8 @@
       "names.venues are plain nouns; the locative (হলে, মাঠে, লাইব্রেরিতে) is formed from lexicon.locative.",
       "names.closureReasons carry their own postposition (ভারী বৃষ্টির জন্য, ধসের ভয়ে), because the template puts {reason} straight before আজ / আগামীকাল.",
       "charsPerSecond is the slowest message+menu rate measured by scripts/sampark/verify-voice.ts on 2026-09-30 with the live voice and style prompt (conservative, so the 38 s budget warning fires early).",
-      "Short clips do not open with \"ধন্যবাদ\": the word is identical in Hindi, and the recogniser then transcribed a 4-second Bengali clip as Hindi. Thanks go last."
+      "Short clips do not open with \"ধন্যবাদ\": the word is identical in Hindi, and the recogniser then transcribed a 4-second Bengali clip as Hindi. Thanks go last.",
+      "common.withdrawn is played instead of the message when a parent picks up a call whose campaign was cancelled while it rang (hardening H4): the school's name, \"আমাদের মেসেজটা তুলে নেওয়া হয়েছে\", an apology and a goodbye, in about ten seconds. It never says the call is recorded."
     ]
   },
   "lexicon": {
@@ -281,7 +282,8 @@
     "opt_out_confirm": "এরকম কল বন্ধ করতে আর একবার নয় নম্বর টিপুন। তবে হঠাৎ স্কুল বন্ধ থাকলে সেই খবর আপনি পাবেন।",
     "opt_out_done": "ঠিক আছে, আপনাকে আর এরকম কল করা হবে না। তবে হঠাৎ স্কুল বন্ধ থাকলে সেই খবর আপনি পাবেন। ভালো থাকবেন, ধন্যবাদ।",
     "no_input": "শোনার জন্য ধন্যবাদ। ভালো থাকবেন।",
-    "fallback_office": "নমস্কার, এটা {schoolName}। এখন আমাদের মেসেজটা শোনানো গেল না। দয়া করে স্কুল অফিসে একবার ফোন করে নেবেন। ধন্যবাদ।"
+    "fallback_office": "নমস্কার, এটা {schoolName}। এখন আমাদের মেসেজটা শোনানো গেল না। দয়া করে স্কুল অফিসে একবার ফোন করে নেবেন। ধন্যবাদ।",
+    "withdrawn": "নমস্কার, আমি {schoolName} থেকে বলছি। আমাদের মেসেজটা তুলে নেওয়া হয়েছে, ওটা নিয়ে আর ভাববেন না। বিরক্ত করার জন্য দুঃখিত, নমস্কার।"
   },
   "purposes": {
     "ptm_invite": {

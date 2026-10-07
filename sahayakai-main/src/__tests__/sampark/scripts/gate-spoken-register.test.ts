@@ -17,6 +17,10 @@
  *   3. The English time speller can never say "half past", for any hour.
  *   4. The Hindi PTM message (the longest clip on the 7 Oct test call, 32.5 s)
  *      stays within 28 s by estimate for the test-call facts.
+ *   5. The withdrawn line (H4) is rendered for every purpose, opens by naming
+ *      the school the way the messages do, offers no key, stays short, and ends
+ *      with a goodbye, in every language. (Rules 1–2 already cover it: the
+ *      walk above reads every string of every file, and every rendered clip.)
  *
  * Each detector is proven against the production wording it replaced
  * (negative controls), so the gate has teeth. A native reviewer who wants a
@@ -225,6 +229,49 @@ describe('Class gate — the Hindi message stays short', () => {
         });
         expect(r.estimatedSeconds).toBeLessThanOrEqual(28);
         expect(estimateSeconds(r.clips[0].text, 'Hindi')).toBe(r.estimatedSeconds);
+    });
+});
+
+describe('Class gate — the withdrawn line (H4) sounds like the school office and stays short', () => {
+    /** How each language opens a message and says goodbye (the ptm_invite register). */
+    const OPENING: Record<ParentLanguage, string> = {
+        English: "Namaste, I'm calling from {schoolName}.",
+        Hindi: 'नमस्ते, मैं {schoolName} से बोल रही हूँ।',
+        Bengali: 'নমস্কার, আমি {schoolName} থেকে বলছি।',
+        Nepali: 'नमस्ते, म {schoolName}बाट बोल्दैछु।',
+    };
+    const GOODBYE: Record<ParentLanguage, RegExp> = {
+        English: /Namaste\.$/u,
+        Hindi: /नमस्ते।$/u,
+        Bengali: /নমস্কার।$/u,
+        Nepali: /नमस्ते।$/u,
+    };
+    /** By the conservative estimate (the slowest measured rate), about ten seconds as actually spoken. */
+    const MAX_ESTIMATED_SECONDS = 14;
+
+    it.each(PARENT_LANGUAGES)('%s: opens like the messages, names only the school, ends with a goodbye', (language) => {
+        const line = callScripts(language).common.withdrawn;
+        expect(line.startsWith(OPENING[language].normalize('NFC'))).toBe(true);
+        // The same greeting and self-introduction the PTM message opens with, up to the school's name.
+        const introduction = OPENING[language].normalize('NFC').split('{schoolName}')[0] + '{schoolName}';
+        expect(String(callScripts(language).purposes.ptm_invite?.message).startsWith(introduction)).toBe(true);
+        expect([...line.matchAll(/\{([^{}]*)\}/g)].map((m) => m[1])).toEqual(['schoolName']);
+        expect(line).toMatch(GOODBYE[language]);
+    });
+
+    it.each(PARENT_LANGUAGES)('%s: every purpose renders it, with the school name and no keypad instruction, within the short-clip budget', (language) => {
+        const keys = new Set(['1', '2', '9'].map((d) => callScripts(language).lexicon.numbers[d]));
+        for (const c of renderMatrix()) {
+            const clips = renderNoticeScript({ ...c, school: MATRIX_SCHOOL, language }).clips;
+            const withdrawn = clips.filter((k) => k.kind === 'withdrawn');
+            expect(withdrawn).toHaveLength(1);
+            expect(withdrawn[0].text).toContain(MATRIX_SCHOOL.spokenName[language]);
+            const words = withdrawn[0].text.split(/[\s,।.!?]+/u);
+            expect(words.filter((w) => w === 'press' || keys.has(w) || /^\d$/.test(w))).toEqual([]);
+        }
+        const sample = renderNoticeScript({ purpose: 'ptm_invite', facts: SAMPLE_PTM, school: SAMPLE_SCHOOL, audience: SAMPLE_SECTION_AUDIENCE, language, variant: 'default' });
+        const text = sample.clips.find((k) => k.kind === 'withdrawn')?.text ?? '';
+        expect({ language, seconds: estimateSeconds(text, language) <= MAX_ESTIMATED_SECONDS }).toEqual({ language, seconds: true });
     });
 });
 

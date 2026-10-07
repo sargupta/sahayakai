@@ -12,7 +12,7 @@ import { logger as mockedLogger } from '@/lib/logger';
 import { createVobizNoticeCarrier, VOBIZ_RING_TIMEOUT_SECONDS, type VobizNoticeCarrierDeps } from '@/lib/sampark/dispatch/vobiz-carrier';
 import type { PlaceCallRequest } from '@/lib/sampark/ports';
 import { mintSamparkVoiceToken, verifySamparkVoiceToken, voicePrincipal, type SamparkVoiceDomain } from '@/lib/sampark/voice/tokens';
-import type { PlaceCallOptions, VobizConfig, VobizFailureCategory, VobizResult } from '@/lib/vobiz/client';
+import type { PlaceCallOptions, VobizConfig, VobizDetailedFailureCategory, VobizDetailedResult } from '@/lib/vobiz/client';
 import type { SamparkCall } from '@/types/sampark';
 
 import { ORG, TEST_PHONE, TEST_PHONE_HASH, TEST_PHONE_LAST4 } from './_fixtures';
@@ -71,7 +71,7 @@ function request(overrides: Partial<PlaceCallRequest> = {}, callOverrides: Parti
     return { call: call(callOverrides), destinationE164: TEST_PHONE, audioSeconds: 40, ...overrides };
 }
 
-function fakeVobiz(result: VobizResult = { ok: true, handle: { requestUuid: 'req-uuid-1' } }) {
+function fakeVobiz(result: VobizDetailedResult = { ok: true, handle: { requestUuid: 'req-uuid-1' } }) {
     const sent: { config: VobizConfig; options: PlaceCallOptions }[] = [];
     const placeCall = jest.fn(async (config: VobizConfig, options: PlaceCallOptions) => {
         sent.push({ config, options });
@@ -192,21 +192,29 @@ describe('createVobizNoticeCarrier — place', () => {
         expect(placeCall).not.toHaveBeenCalled();
     });
 
-    it.each<[Exclude<VobizFailureCategory, 'network'>, boolean]>([
-        ['provider_rejected', true],
-        ['provider_unconfigured', false],
-        ['invalid_destination', false],
-    ])('maps a %s failure to retryable=%p', async (category, retryable) => {
-        const fake = fakeVobiz({ ok: false, failure: { category, status: category === 'provider_rejected' ? 503 : undefined } });
+    it.each<[Exclude<VobizDetailedFailureCategory, 'network' | 'provider_error' | 'rate_limited'>, boolean, number | undefined]>([
+        ['provider_rejected', true, 400],
+        ['provider_unconfigured', false, 401],
+        ['invalid_destination', false, undefined],
+        // H7: a DND / NDNC refusal is never retried like an ordinary rejection.
+        ['dnd_blocked', false, 400],
+    ])('maps a %s failure to retryable=%p', async (category, retryable, status) => {
+        const fake = fakeVobiz({ ok: false, failure: { category, status } });
         const c = createVobizNoticeCarrier({ config: CONFIG, publicBaseUrl: BASE, mintToken: mintSamparkVoiceToken, placeCall: fake.placeCall });
         expect(await c.place(request())).toEqual({ ok: false, reason: `vobiz_${category}`, retryable });
     });
 
-    it('a network failure is an UNKNOWN outcome: it throws (left for the sweep), never a retryable failure', async () => {
-        // The request may have reached Vobiz before the connection dropped; retrying could ring twice.
-        const fake = fakeVobiz({ ok: false, failure: { category: 'network' } });
+    it('a 429 (rate_limited) is a requeue: nothing rang, so the family’s attempt is not spent (H7)', async () => {
+        const fake = fakeVobiz({ ok: false, failure: { category: 'rate_limited', status: 429 } });
         const c = createVobizNoticeCarrier({ config: CONFIG, publicBaseUrl: BASE, mintToken: mintSamparkVoiceToken, placeCall: fake.placeCall });
-        await expect(c.place(request())).rejects.toThrow('vobiz_network_outcome_unknown');
+        expect(await c.place(request())).toEqual({ ok: false, reason: 'vobiz_rate_limited', retryable: true, requeue: true });
+    });
+
+    it.each(['network', 'provider_error'] as const)('a %s failure is an UNKNOWN outcome: it throws (left for the sweep), never a retryable failure', async (category) => {
+        // The request may have reached Vobiz (a dropped connection, a timeout, a 5xx after placing); retrying could ring twice.
+        const fake = fakeVobiz({ ok: false, failure: { category, status: category === 'provider_error' ? 502 : undefined } });
+        const c = createVobizNoticeCarrier({ config: CONFIG, publicBaseUrl: BASE, mintToken: mintSamparkVoiceToken, placeCall: fake.placeCall });
+        await expect(c.place(request())).rejects.toThrow(`vobiz_${category}_outcome_unknown`);
     });
 
     it('a token that cannot be minted is a clean, retryable failure: Vobiz is never contacted', async () => {
@@ -229,7 +237,7 @@ describe('createVobizNoticeCarrier — place', () => {
         const spies = (['log', 'info', 'warn', 'error'] as const).map((m) => jest.spyOn(console, m).mockImplementation(() => undefined));
         try {
             await carrier().carrier.place(request());
-            for (const category of ['network', 'provider_rejected', 'provider_unconfigured', 'invalid_destination'] as const) {
+            for (const category of ['network', 'provider_error', 'rate_limited', 'dnd_blocked', 'provider_rejected', 'provider_unconfigured', 'invalid_destination'] as const) {
                 const fake = fakeVobiz({ ok: false, failure: { category, status: 500 } });
                 await createVobizNoticeCarrier({ config: CONFIG, publicBaseUrl: BASE, mintToken: mintSamparkVoiceToken, placeCall: fake.placeCall })
                     .place(request())

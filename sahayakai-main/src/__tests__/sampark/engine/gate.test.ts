@@ -130,12 +130,21 @@ describe('evaluateGate — each block reason', () => {
         expect(blockReason(input({ spec: FEE_DUE, students: flagged }))).toBe('sensitive_flag');
     });
 
-    it('9. class-audience purposes are NOT blocked by sensitive flags', () => {
-        const flagged = [student('s1', { sensitiveFlags: ['domestic_issue'] })];
-        expect(evaluateGate(input({ students: flagged })).kind).toBe('allow');
+    it('9. class-audience purposes are NOT blocked by sensitive flags other than custody', () => {
+        for (const flag of ['domestic_issue', 'severe_illness', 'counsellor_referral', 'safeguarding_open'] as const) {
+            expect(evaluateGate(input({ students: [student('s1', { sensitiveFlags: [flag] })] })).kind).toBe('allow');
+        }
     });
 
-    it('10. fee-excluding purpose with an RTE or waived child → fee_category_excluded', () => {
+    it('10. a custody restriction blocks a class-wide notice too, emergencies included → custody_restricted', () => {
+        const restricted = [student('s1', { sensitiveFlags: ['custody_restriction'] })];
+        expect(blockReason(input({ students: restricted }))).toBe('custody_restricted');
+        expect(blockReason(input({ spec: D4, students: restricted, now: istInstant('2026-10-07', 7), school: school({ emergencyBypassConsent: true }) }))).toBe('custody_restricted');
+        // One restricted sibling blocks the whole bundled call: the office informs that family by hand.
+        expect(blockReason(input({ students: [student('s1'), student('s2', { sensitiveFlags: ['custody_restriction'] })] }))).toBe('custody_restricted');
+    });
+
+    it('11. fee-excluding purpose with an RTE or waived child → fee_category_excluded', () => {
         expect(blockReason(input({ spec: FEE_DUE, students: [student('s1', { feeCategory: 'rte' })] }))).toBe('fee_category_excluded');
         expect(blockReason(input({ spec: FEE_DUE, students: [student('s1', { feeCategory: 'waived' })] }))).toBe('fee_category_excluded');
         expect(evaluateGate(input({ spec: FEE_DUE, students: [student('s1', { feeCategory: 'scholarship' })] })).kind).toBe('allow');
@@ -143,7 +152,7 @@ describe('evaluateGate — each block reason', () => {
         expect(evaluateGate(input({ students: [student('s1', { feeCategory: 'rte' })] })).kind).toBe('allow');
     });
 
-    it('11. consent denied → consent_denied; unknown or missing → no_consent', () => {
+    it('12. consent denied → consent_denied; unknown or missing → no_consent', () => {
         expect(blockReason(input({ preferences: prefs('g1', { notices: 'denied' }) }))).toBe('consent_denied');
         expect(blockReason(input({ preferences: prefs('g1', { notices: 'unknown' }) }))).toBe('no_consent');
         expect(blockReason(input({ preferences: null, guardian: guardian('g1') }))).toBe('no_consent');
@@ -151,7 +160,7 @@ describe('evaluateGate — each block reason', () => {
         expect(blockReason(input({ preferences: prefs('g1', { progress: 'granted' }) }))).toBe('no_consent');
     });
 
-    it('11. emergency closure bypasses UNRECORDED consent only when the school set emergencyBypassConsent', () => {
+    it('12. emergency closure bypasses UNRECORDED consent only when the school set emergencyBypassConsent', () => {
         const at = istInstant('2026-10-07', 7);
         expect(blockReason(input({ spec: D4, now: at, preferences: null }))).toBe('no_consent');
         const bypass = school({ emergencyBypassConsent: true });
@@ -162,11 +171,11 @@ describe('evaluateGate — each block reason', () => {
         expect(blockReason(input({ preferences: null, school: bypass }))).toBe('no_consent');
     });
 
-    it('12. no language anywhere → language_unknown', () => {
+    it('13. no language anywhere → language_unknown', () => {
         expect(blockReason(input({ guardian: guardian('g1', { crmLanguage: null }) }))).toBe('language_unknown');
     });
 
-    it('13. ≥ 4 routine calls in 30 days → frequency_cap; emergencies are exempt', () => {
+    it('14. ≥ 4 routine calls in 30 days → frequency_cap; emergencies are exempt', () => {
         expect(evaluateGate(input({ recentCallsToPhone: FREQUENCY_CAP - 1 })).kind).toBe('allow');
         expect(blockReason(input({ recentCallsToPhone: FREQUENCY_CAP }))).toBe('frequency_cap');
         expect(evaluateGate(input({ spec: D4, recentCallsToPhone: 40, now: istInstant('2026-10-07', 7) })).kind).toBe('allow');
@@ -220,6 +229,14 @@ describe('evaluateGate — precedence (first rule wins)', () => {
         expect(
             blockReason(input({ spec: FEE_DUE, carrierKind: 'vobiz', students: [student('s1', { sensitiveFlags: ['safeguarding_open'], feeCategory: 'rte' })], preferences: null })),
         ).toBe('synthetic_number_not_allowed');
+    });
+
+    it('for a child-audience purpose the sensitive flag (rule 9) is recorded before custody (rule 10); custody beats fee exclusion and consent', () => {
+        const custody = [student('s1', { sensitiveFlags: ['custody_restriction'], feeCategory: 'rte' })];
+        expect(blockReason(input({ spec: FEE_DUE, students: custody }))).toBe('sensitive_flag');
+        expect(blockReason(input({ students: custody, preferences: null }))).toBe('custody_restricted');
+        // …and carrier safety still comes first.
+        expect(blockReason(input({ students: custody, carrierKind: 'vobiz' }))).toBe('synthetic_number_not_allowed');
     });
 
     it('sensitive flag beats fee exclusion; fee exclusion beats consent; consent beats language; language beats frequency', () => {

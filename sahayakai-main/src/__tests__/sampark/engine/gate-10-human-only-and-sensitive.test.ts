@@ -4,7 +4,8 @@
  * CLASS GATE 10 (partial, slice 1) — a human-only purpose, or a child-specific
  * purpose about a child with a sensitive flag, never produces a dialable
  * ('approved') intent. Class-wide notices are the one deliberate exception for
- * sensitive flags (plan §2E): they name no child.
+ * sensitive flags (plan §2E): they name no child. The exception does not cover
+ * a custody restriction, which blocks every purpose (gate h8, its own file).
  */
 import { materialiseCampaignIntents } from '@/lib/sampark/audience';
 import { PURPOSE_CATALOGUE, type PurposeSpec } from '@/lib/sampark/catalogue';
@@ -99,7 +100,9 @@ describe('class gate 10 — sensitive flags', () => {
     });
 
     it.each(CLASS_AVAILABLE.map((p) => [p.id] as const))('class-wide %s still reaches the family of a flagged child (names no child)', async (id) => {
-        const intents = await materialiseAll(id, ['domestic_issue']);
-        expect(intents.find((i) => i.studentIds.includes('s1'))?.status).toBe('approved');
+        for (const flag of FLAGS.filter((f) => f !== 'custody_restriction')) {
+            const intents = await materialiseAll(id, [flag]);
+            expect(intents.find((i) => i.studentIds.includes('s1'))?.status).toBe('approved');
+        }
     });
 });

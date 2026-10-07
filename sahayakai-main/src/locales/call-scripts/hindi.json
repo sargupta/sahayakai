@@ -12,7 +12,8 @@
       "names.venues and closureReasons are written in the oblique form, because they are always followed by a postposition (में, की वजह से).",
       "Keypad keys are words (एक, दो, नौ), not digits, so the render is deterministic.",
       "Keep the message short: the Hindi PTM clip was the longest of the four (32.5 s on the 7 Oct test call).",
-      "charsPerSecond is the slowest message+menu rate measured by scripts/sampark/verify-voice.ts on 2026-09-30 with the live voice and style prompt (conservative, so the 38 s budget warning fires early)."
+      "charsPerSecond is the slowest message+menu rate measured by scripts/sampark/verify-voice.ts on 2026-09-30 with the live voice and style prompt (conservative, so the 38 s budget warning fires early).",
+      "common.withdrawn is played instead of the message when a parent picks up a call whose campaign was cancelled while it rang (hardening H4): the school's name, \"हमारा मैसेज वापस ले लिया गया है\", an apology and a goodbye, in about ten seconds. It never says the call is recorded."
     ]
   },
   "lexicon": {
@@ -265,7 +266,8 @@
     "opt_out_confirm": "ये कॉल बंद करनी हों, तो एक बार और नौ दबाएँ। पर अगर अचानक स्कूल बंद हुआ, तो उसकी ख़बर आपको फिर भी मिलेगी।",
     "opt_out_done": "ठीक है, अब आपको ये कॉल नहीं आएँगी। पर अगर अचानक स्कूल बंद हुआ, तो उसकी ख़बर आपको फिर भी मिलेगी। धन्यवाद।",
     "no_input": "सुनने के लिए धन्यवाद। नमस्ते।",
-    "fallback_office": "नमस्ते, यह {schoolName} है। अभी हम अपना मैसेज नहीं सुना पाए। कृपया एक बार स्कूल ऑफ़िस से बात कर लें। धन्यवाद।"
+    "fallback_office": "नमस्ते, यह {schoolName} है। अभी हम अपना मैसेज नहीं सुना पाए। कृपया एक बार स्कूल ऑफ़िस से बात कर लें। धन्यवाद।",
+    "withdrawn": "नमस्ते, मैं {schoolName} से बोल रही हूँ। हमारा मैसेज वापस ले लिया गया है, उस पर ध्यान न दें। परेशानी के लिए माफ़ी, नमस्ते।"
   },
   "purposes": {
     "ptm_invite": {

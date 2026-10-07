@@ -123,6 +123,14 @@ describe('applyCallEvent', () => {
         expect(busy.state).toBe('busy');
     });
 
+    it('a hangup stores the carrier’s raw cause when it sent one (H7), and only then', () => {
+        const ended = run(call(), [{ type: 'hangup', at: at(30), cause: 'failed', durationSeconds: 0, billedSeconds: 0, hangupCause: 'UNALLOCATED_NUMBER' }]);
+        expect(ended).toMatchObject({ state: 'failed', hangupCause: 'UNALLOCATED_NUMBER' });
+        expect(run(call(), [{ type: 'hangup', at: at(30), cause: 'no_answer', durationSeconds: 0, billedSeconds: 0 }])).not.toHaveProperty('hangupCause');
+        // A late, duplicated hangup never rewrites the cause of an ended call.
+        expect(applyCallEvent(ended, { type: 'hangup', at: at(40), cause: 'completed', durationSeconds: 9, billedSeconds: 60, hangupCause: 'NORMAL_CLEARING' }).hangupCause).toBe('UNALLOCATED_NUMBER');
+    });
+
     it('hangup failed → failed with a default reason', () => {
         expect(applyCallEvent(call(), { type: 'hangup', at: at(3), cause: 'failed', durationSeconds: 0, billedSeconds: 0 }).failureReason).toBe('carrier_failed');
     });

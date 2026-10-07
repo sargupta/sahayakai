@@ -10,8 +10,8 @@
  *
  *  (a) every route under src/app/api/sampark/ that obtains a school from the
  *      school service (enableSchool, getSchoolOrThrow, updateSchool,
- *      setSchoolMode) must pass it through schoolView() — proven to fail on a
- *      planted violation first;
+ *      setSchoolMode, setSchoolPause) must pass it through schoolView() — proven
+ *      to fail on a planted violation first;
  *  (b) schoolView() itself never carries testPhoneEnc or testPhoneHash.
  */
 import fs from 'node:fs';
@@ -22,7 +22,7 @@ import type { SamparkSchool } from '@/types/sampark';
 
 const ROOT = path.resolve(__dirname, '../../../..');
 const ROUTES = path.join(ROOT, 'src/app/api/sampark');
-const SCHOOL_GETTERS = ['enableSchool', 'getSchoolOrThrow', 'updateSchool', 'setSchoolMode'];
+const SCHOOL_GETTERS = ['enableSchool', 'getSchoolOrThrow', 'updateSchool', 'setSchoolMode', 'setSchoolPause'];
 
 function routeFiles(dir: string): string[] {
     return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
@@ -46,6 +46,10 @@ describe('class gate: school records reach the console only through schoolView()
         const planted = `import { enableSchool } from '@/server/sampark/school';\nexport async function POST() { return NextResponse.json(await enableSchool(ctx, o, u, i)); }`;
         expect(violates(planted)).toBe(true);
         expect(violates(planted.replace('NextResponse.json(await enableSchool(ctx, o, u, i))', 'NextResponse.json(schoolView(await enableSchool(ctx, o, u, i)))').replace('{ enableSchool }', '{ enableSchool, schoolView }'))).toBe(false);
+    });
+
+    it('the pause route is one of the routes scanned', () => {
+        expect(routeFiles(ROUTES).map((f) => path.relative(ROUTES, f))).toContain(path.join('[orgId]', 'pause', 'route.ts'));
     });
 
     it('no Sampark route returns a raw school', () => {

@@ -19,14 +19,24 @@
  *   8. non-simulated carrier while SAMPARK_LIVE_DIAL_ENABLED !== 'true',
  *      or while the school is in practice mode                            → mode_forbids_dialing
  *   9. child-audience purpose and any student carries a sensitive flag    → sensitive_flag                 (class gate 10)
- *  10. purpose excludes fee-waived and any student is RTE / waived        → fee_category_excluded          (class gate 12)
- *  11. consent for the purpose group: denied → consent_denied, otherwise
+ *  10. ANY purpose, class-wide included, and any student carries
+ *      custody_restriction                                               → custody_restricted             (gate h8)
+ *  11. purpose excludes fee-waived and any student is RTE / waived        → fee_category_excluded          (class gate 12)
+ *  12. consent for the purpose group: denied → consent_denied, otherwise
  *      not granted → no_consent. An emergency purpose at a school that set
  *      emergencyBypassConsent may reach a family whose consent is merely
  *      UNRECORDED — never one that explicitly said no                    → consent_denied / no_consent
- *  12. no language resolvable                                            → language_unknown
- *  13. non-emergency and ≥ 4 calls to this phone in 30 days               → frequency_cap
- *  14. (dispatch stage only) outside the calling window                   → defer until the next opening
+ *  13. no language resolvable                                            → language_unknown
+ *  14. non-emergency and ≥ 4 calls to this phone in 30 days               → frequency_cap
+ *  15. (dispatch stage only) outside the calling window                   → defer until the next opening
+ *
+ * CUSTODY (rule 10, hardening H8). Every other sensitive flag lets a class-wide
+ * notice through, because such a notice names no child. A custody restriction is
+ * different: a closure, an early dismissal or an event tells the listener when and
+ * where the child will be, which is exactly what a restricted guardian must not
+ * learn from an automated call. So it blocks every purpose, emergencies included,
+ * and the office informs that family by hand. For a child-audience purpose rule 9
+ * fires first and records the broader 'sensitive_flag'.
  *
  * DESTINATION (phase 2a contract §3). In test mode every call rings the school's
  * own, verified test phone instead of the guardian. Rules 6 and 7 exist so a
@@ -135,15 +145,17 @@ export function evaluateGate(input: GateInput): GateVerdict {
     if (realCarrier && !ringsTestPhone && school.isDemo) return block('synthetic_number_not_allowed');
     if (realCarrier && !liveDialPermitted(school)) return block('mode_forbids_dialing');
 
-    // 9–10. The children this call concerns
+    // 9–11. The children this call concerns
     if (spec.audience === 'child' && students.some((s) => (s.sensitiveFlags ?? []).length > 0)) {
         return block('sensitive_flag');
     }
+    // 10. Custody, for every purpose: see CUSTODY above.
+    if (students.some((s) => (s.sensitiveFlags ?? []).includes('custody_restriction'))) return block('custody_restricted');
     if (spec.excludesFeeWaived && students.some((s) => s.feeCategory === 'rte' || s.feeCategory === 'waived')) {
         return block('fee_category_excluded');
     }
 
-    // 11. Consent, per purpose group
+    // 12. Consent, per purpose group
     // A dialable purpose without a consent group is a catalogue error: fail closed.
     if (!spec.consentGroup) return block('no_consent');
     const consentStatus = preferences?.consent?.[spec.consentGroup]?.status ?? 'unknown';
@@ -153,14 +165,14 @@ export function evaluateGate(input: GateInput): GateVerdict {
     const consentBypassed = spec.emergency && school.emergencyBypassConsent === true;
     if (consentStatus !== 'granted' && !consentBypassed) return block('no_consent');
 
-    // 12. Language
+    // 13. Language
     const language = resolveLanguage(guardian, preferences, school);
     if (!language) return block('language_unknown');
 
-    // 13. Frequency (emergencies are exempt from the cap only)
+    // 14. Frequency (emergencies are exempt from the cap only)
     if (!spec.emergency && input.recentCallsToPhone >= FREQUENCY_CAP) return block('frequency_cap');
 
-    // 14. Hours — at dispatch only; materialisation happens whenever the campaign is approved.
+    // 15. Hours — at dispatch only; materialisation happens whenever the campaign is approved.
     if (stage === 'dispatch') {
         const window = samparkWindowVerdict(school, spec, now);
         if (!window.allowed) {

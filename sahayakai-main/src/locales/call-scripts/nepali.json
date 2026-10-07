@@ -11,7 +11,8 @@
       "Postpositions attach to the slot with no space ({schoolName}बाट, {date}मा, {venue} via lexicon.venuePhrase \"{venue}मा\", {reason}ले गर्दा).",
       "Keypad keys are words followed by नम्बर (\"एक नम्बर थिच्नुहोस्\"), not digits.",
       "charsPerSecond is the slowest message+menu rate measured by scripts/sampark/verify-voice.ts on 2026-09-30 with the live voice and style prompt (conservative, so the 38 s budget warning fires early).",
-      "Spelling: स्कुल (short u), the standard Nepali form and what the recogniser writes — never स्कूल (a class gate enforces it)."
+      "Spelling: स्कुल (short u), the standard Nepali form and what the recogniser writes — never स्कूल (a class gate enforces it).",
+      "common.withdrawn is played instead of the message when a parent picks up a call whose campaign was cancelled while it rang (hardening H4): the school's name, \"हाम्रो मेसेज फिर्ता लिइएको छ\", an apology and a goodbye, in about ten seconds. The goodbye is joined to the apology with a comma, because नमस्ते on its own carries no Nepali marker."
     ]
   },
   "lexicon": {
@@ -261,7 +262,8 @@
     "opt_out_confirm": "यस्ता कल बन्द गर्न फेरि एक पटक नौ नम्बर थिच्नुहोस्। तर स्कुल अचानक बन्द भयो भने, त्यसको खबर तपाईंलाई आउँछ।",
     "opt_out_done": "हुन्छ, अब तपाईंलाई यस्ता कल आउँदैन। तर स्कुल अचानक बन्द भयो भने, त्यसको खबर आउँछ। धन्यवाद, राम्रोसँग बस्नुहोस्।",
     "no_input": "सुन्नुभएकोमा धन्यवाद, नमस्ते।",
-    "fallback_office": "नमस्ते, यो {schoolName} हो। अहिले हाम्रो मेसेज सुनाउन सकिएको छैन। कृपया स्कुलको अफिसमा एक पटक फोन गर्नुहोस्, धन्यवाद।"
+    "fallback_office": "नमस्ते, यो {schoolName} हो। अहिले हाम्रो मेसेज सुनाउन सकिएको छैन। कृपया स्कुलको अफिसमा एक पटक फोन गर्नुहोस्, धन्यवाद।",
+    "withdrawn": "नमस्ते, म {schoolName}बाट बोल्दैछु। हाम्रो मेसेज फिर्ता लिइएको छ, त्यसलाई वास्ता नगर्नुहोस्। माफ गर्नुहोस्, नमस्ते।"
   },
   "purposes": {
     "ptm_invite": {

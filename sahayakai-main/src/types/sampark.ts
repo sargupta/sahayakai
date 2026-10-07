@@ -143,8 +143,28 @@ export interface SamparkSchool {
     crm: CrmConnectionConfig | null;
     /** Whether an emergency closure may reach guardians without `notices` consent. Default false until counsel rules (plan §15.5). */
     emergencyBypassConsent: boolean;
+    /**
+     * School-level pause (hardening H3, EDGE_CASES.md §3). While set, no new call starts
+     * (scope 'all'), or none but emergency closures (scope 'routine'); calls still ringing
+     * when it was set are hung up. Null or missing = not paused.
+     */
+    pause?: SchoolPause | null;
+    /** Holidays the school entered in the console. A CRM import never removes these (H10). */
+    manualHolidays?: string[];
+    /** Holidays from the last CRM import. `holidays` is always the sorted union of both lists. */
+    crmHolidays?: string[];
     createdAt: string;
     updatedAt: string;
+}
+
+/** A school-level pause (H3): who set it, why, and whether emergency closures still go out. */
+export interface SchoolPause {
+    at: string;
+    by: string;
+    /** Free text for staff only (never spoken), at most 200 characters. */
+    reason: string;
+    /** 'all' stops every call; 'routine' lets emergency closures (D4) continue. */
+    scope: 'routine' | 'all';
 }
 
 /** Why a deployment cannot place real (Test-mode) calls. */
@@ -202,6 +222,11 @@ export interface SamparkStudent {
     transportRoute: string | null;
     /** Guardians of RECORD for this child (bundling uses this, never a shared phone number). */
     guardianIds: string[];
+    /**
+     * The guardians of record the CRM marks primary for this child (H6: one call per family,
+     * primary guardian first). Missing on records imported before 7 Oct 2026.
+     */
+    primaryGuardianIds?: string[];
     active: boolean;
     crmUpdatedAt: string;
     importedAt: string;
@@ -262,7 +287,11 @@ export interface Suppression {
     phoneLast4: string;
     /** routine = stops everything except emergency notices; all = stops everything. */
     scope: 'routine' | 'all';
-    source: 'keypad' | 'keypad_unconfirmed' | 'office' | 'crm';
+    /**
+     * 'carrier_invalid_number': the carrier reported the number unallocated, invalid or changed
+     * (H7); written with scope 'all' so no purpose dials it until the office corrects it.
+     */
+    source: 'keypad' | 'keypad_unconfirmed' | 'office' | 'crm' | 'carrier_invalid_number';
     /** Office must confirm with the family within two school days (plan §5.1). */
     officeVerification: 'pending' | 'confirmed' | 'reversed';
     createdAt: string;
@@ -338,6 +367,9 @@ export interface CampaignCounts {
     optOuts: number;
 }
 
+/** Why a dispatchable campaign is on hold (H2, H3). */
+export type CampaignHoldReason = 'mode_changed' | 'mode_not_pinned' | 'school_paused';
+
 export interface Campaign {
     id: string;
     orgId: string;
@@ -355,6 +387,20 @@ export interface Campaign {
     approvedAt: string | null;
     renderProgress: { done: number; total: number; failures: string[] };
     counts: CampaignCounts;
+    /**
+     * The school's mode when the campaign was approved (H2). The dispatcher dials only while
+     * the school is still in this mode. Missing on campaigns approved before 7 Oct 2026: such
+     * a campaign is never dialled (holdReason 'mode_not_pinned').
+     */
+    mode?: SamparkMode;
+    /** Why a scheduled or dispatching campaign is not dialling right now; null or missing when it is. */
+    holdReason?: CampaignHoldReason | null;
+    /**
+     * The verified clip keys, frozen when the campaign's audio passed its checks (H4):
+     * `${language}|${variant}` → clip kind → key. A call plays exactly what was approved;
+     * later edits to the school's settings never change it. Missing on older campaigns.
+     */
+    clipKeys?: Record<string, Partial<Record<ClipKind, string>>>;
     updatedAt: string;
 }
 
@@ -384,7 +430,12 @@ export type BlockReason =
     | 'mode_forbids_dialing'
     | 'synthetic_number_not_allowed'
     | 'purpose_not_available'
-    | 'school_not_enabled';
+    | 'school_not_enabled'
+    // Hardening sprint, 7 Oct 2026 (EDGE_CASES.md §3)
+    | 'student_inactive'          // H6: every child on the intent has left the school
+    | 'not_guardian_of_record'    // H6: the guardian is no longer of record for any child on the intent
+    | 'custody_restricted'        // H8: a child on the intent has a custody restriction; the office informs the family
+    | 'test_mode_sample';         // H9: Test mode rings the test phone for one family per language; the rest are not called
 
 export interface Intent {
     /** = hash of dedupeKey. Created with a create-only write (class gate 13). */
@@ -404,6 +455,11 @@ export interface Intent {
     notBefore: string | null;
     expiresAt: string;
     lastCallId: string | null;
+    /**
+     * Carrier refusals (429, congestion) within the current attempt (H7). They never spend the
+     * family's attempt; after MAX_CARRIER_REQUEUES the next refusal does. Reset when an attempt is spent.
+     */
+    carrierRequeues?: number;
     createdAt: string;
     updatedAt: string;
 }
@@ -486,6 +542,10 @@ export interface SamparkCall {
     updatedAt: string;
     endedAt: string | null;
     failureReason: string | null;
+    /** The carrier's raw hangup cause (Q.850 name, upper case), when it sent one (H7). */
+    hangupCause?: string | null;
+    /** Which carrier requeue of this attempt this dial is: 0 (or missing) = the first (H7). */
+    requeue?: number;
 }
 
 /** Events a carrier (real webhooks in phase 2, the simulator now) feeds into the call reducer. */
@@ -495,12 +555,13 @@ export type CallEvent =
     | { type: 'ringing'; at: string }
     | { type: 'answered'; at: string }
     | { type: 'digit'; at: string; digit: string }
-    | { type: 'hangup'; at: string; cause: 'completed' | 'no_answer' | 'busy' | 'failed'; durationSeconds: number; billedSeconds: number };
+    | { type: 'hangup'; at: string; cause: 'completed' | 'no_answer' | 'busy' | 'failed'; durationSeconds: number; billedSeconds: number; hangupCause?: string };
 
 // ── Rendered audio ──────────────────────────────────────────────────────────
 
 /** Named pieces of a notice call. `message` is played inside the keypad gather. */
-export type ClipKind = 'message' | 'confirm_1' | 'confirm_2' | 'opt_out_confirm' | 'opt_out_done' | 'no_input' | 'fallback_office';
+/** `withdrawn` (H4): played instead of the message when a call is answered after its campaign was cancelled. */
+export type ClipKind = 'message' | 'confirm_1' | 'confirm_2' | 'opt_out_confirm' | 'opt_out_done' | 'no_input' | 'fallback_office' | 'withdrawn';
 
 export interface RenderedClip {
     /** Content hash of (engine, voice, language, text) — also the storage key. */
@@ -524,6 +585,8 @@ export interface RenderedClip {
 
 // ── Console / API DTOs ──────────────────────────────────────────────────────
 
+export interface TodayCallCounts { calls: number; heardKeyFact: number; confirmedYes: number; optOuts: number }
+
 export interface SamparkOverview {
     school: Pick<SamparkSchool, 'orgId' | 'displayName' | 'mode' | 'isDemo' | 'callingWindow'> & {
         crm: CrmConnectionConfig | null;
@@ -535,7 +598,12 @@ export interface SamparkOverview {
     windowOpenNow: boolean;
     nextWindowOpensAt: string | null;
     guardians: { total: number; byLanguage: Record<ParentLanguage | 'unknown', number>; withNoticesConsent: number; suppressed: number };
-    today: { calls: number; heardKeyFact: number; confirmedYes: number; optOuts: number };
+    /** Real calls to families today (Live mode only; always zero in this release). Rehearsals are counted apart (H9). */
+    today: TodayCallCounts;
+    /** Today's rehearsals: Practice (simulated, nothing rang) and Test (rang only the school's test phone). */
+    rehearsal: { practice: TodayCallCounts; test: TodayCallCounts };
+    /** Set while the school is paused (H3). */
+    pause: SchoolPause | null;
     activeCampaigns: number;
     lastImport: Pick<ImportRun, 'id' | 'status' | 'finishedAt' | 'counts'> | null;
 }

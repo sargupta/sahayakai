@@ -3,9 +3,10 @@
  *
  * renderJob   — for every campaign in 'rendering': render the clips its
  *               audience needs (stream C's runRenderStep, bounded per tick);
- *               when finished with no failures, materialise one intent per
- *               guardian of record (stream B) and move to 'scheduled'; any
- *               failed clip → 'render_failed' and nothing is dispatched.
+ *               when finished with no failures, freeze the verified clip keys
+ *               on the campaign (H4), materialise one intent per guardian of
+ *               record (stream B) and move to 'scheduled'; any failed clip →
+ *               'render_failed' and nothing is dispatched.
  * dispatchJob — one dispatcher tick (stream B's runDispatchTick: single-flight
  *               lease, sweep, gate, claim-then-dial). The tick itself moves
  *               campaigns scheduled → dispatching → completed, expires intents
@@ -27,14 +28,14 @@ import { recomputeCampaignCounts, runDispatchTick, type DialDestination, type Di
 import { materialiseCampaignIntents } from '@/lib/sampark/audience';
 import { languageInfo } from '@/lib/sampark/languages';
 import { decryptPhone, hashPhone } from '@/lib/sampark/phone';
-import type { Clock, SamparkRepo } from '@/lib/sampark/ports';
+import type { AudioStore, Clock, SamparkRepo } from '@/lib/sampark/ports';
 import { audienceLabelFor, renderNoticeScript, ScriptRenderError } from '@/lib/sampark/scripts/render';
 import { clipKey } from '@/lib/sampark/speech/clip-key';
 import { runRenderStep } from '@/lib/sampark/speech/render-job';
 import type { SpeechDeps } from '@/lib/sampark/repo/factory';
 import { logger } from '@/lib/logger';
 import type { Campaign, Intent, SamparkGuardian, SamparkSchool } from '@/types/sampark';
-import { audienceLanguages, resolveCampaignAudience } from '@/server/sampark/campaigns';
+import { audienceLanguages, campaignClipKeys, clipKeySlot, resolveCampaignAudience } from '@/server/sampark/campaigns';
 import { carrierFor, carrierKindFor } from '@/server/sampark/carrier';
 
 export const RENDER_LOCK = 'sampark-render';
@@ -136,17 +137,57 @@ async function renderOne(deps: JobDeps & { speech: SpeechDeps }, school: Sampark
     // Re-read: the campaign may have been cancelled while clips rendered.
     const current = await repo.getCampaign(school.orgId, campaign.id);
     if (!current || current.status !== 'rendering') return;
+
+    // Freeze the clip keys (H4). They are computed from the school as it is now and then checked
+    // against what the render step stored: if the school's settings changed while the clips
+    // rendered (the step read the school before), a key misses, and the campaign stays in
+    // 'rendering' so the next tick renders the new text and freezes that. A frozen key is
+    // therefore always a clip that was rendered and checked.
+    const latestSchool = (await repo.getSchool(school.orgId)) ?? school;
+    let clipKeys: NonNullable<Campaign['clipKeys']>;
+    try {
+        clipKeys = campaignClipKeys(current, latestSchool, languages);
+    } catch (err) {
+        // The next tick's render step fails the campaign with this reason.
+        if (!(err instanceof ScriptRenderError)) throw err;
+        return;
+    }
+    const unrendered = await unrenderedClipKeys(repo, speech.store, school.orgId, clipKeys);
+    if (unrendered > 0) {
+        logger.warn('Sampark render: settings changed while rendering; rendering the new text next tick', 'SAMPARK_JOBS', {
+            orgId: school.orgId,
+            campaignId: campaign.id,
+            unrendered,
+        });
+        return;
+    }
+
     const materialised = await materialiseCampaignIntents({ repo, clock }, current, school, carrierKindFor(school));
     const counts = await recomputeCampaignCounts(repo, school.orgId, campaign.id);
-    await repo.updateCampaign(school.orgId, campaign.id, { status: 'scheduled', counts, updatedAt: clock.now().toISOString() });
+    await repo.updateCampaign(school.orgId, campaign.id, { status: 'scheduled', counts, clipKeys, updatedAt: clock.now().toISOString() });
     await repo.appendAudit(school.orgId, {
         at: nowIso,
         actor: 'system',
         action: 'campaign.scheduled',
         target: `campaign/${campaign.id}`,
-        detail: { languages, created: materialised.created, existing: materialised.existing, blocked: materialised.blocked },
+        detail: { languages, created: materialised.created, existing: materialised.existing, blocked: materialised.blocked, clipSlots: Object.keys(clipKeys) },
     });
     report.scheduled++;
+}
+
+/**
+ * How many of the keys have no usable clip: none stored for this org, no audio, or a failed
+ * check. The same test the render step uses to call a clip done, so the two cannot disagree.
+ */
+async function unrenderedClipKeys(repo: SamparkRepo, store: AudioStore, orgId: string, clipKeys: NonNullable<Campaign['clipKeys']>): Promise<number> {
+    const keys = [...new Set(Object.values(clipKeys).flatMap((byKind) => Object.values(byKind)))];
+    const usable = await Promise.all(
+        keys.map(async (key) => {
+            const [clip, hasAudio] = await Promise.all([repo.getClip(orgId, key), store.exists(key)]);
+            return Boolean(clip && clip.orgId === orgId && hasAudio && clip.verification?.status !== 'failed');
+        }),
+    );
+    return usable.filter((ok) => !ok).length;
 }
 
 // ── Dispatch ────────────────────────────────────────────────────────────────
@@ -173,7 +214,11 @@ export async function destinationFor(school: SamparkSchool, guardian: SamparkGua
     throw new Error('LIVE_MODE_NOT_AVAILABLE: live dialling is not available in this release');
 }
 
-/** Seconds of the rendered 'message' clip for this intent's language and variant, memoised per tick. */
+/**
+ * Seconds of the rendered 'message' clip for this intent's language and variant, memoised per
+ * tick. The campaign's frozen message key is used when it has one (H4); older campaigns
+ * re-render the script to find it.
+ */
 export function makeAudioSecondsFor(repo: SamparkRepo) {
     const campaigns = new Map<string, Promise<Campaign | null>>();
     const seconds = new Map<string, Promise<number | null>>();
@@ -186,6 +231,11 @@ export function makeAudioSecondsFor(repo: SamparkRepo) {
                 if (!campaigns.has(ck)) campaigns.set(ck, repo.getCampaign(school.orgId, intent.campaignId as string));
                 const campaign = await campaigns.get(ck);
                 if (!campaign) return null;
+                const frozen = campaign.clipKeys?.[clipKeySlot(intent.language, variant)]?.message;
+                if (frozen) {
+                    const clip = await repo.getClip(school.orgId, frozen);
+                    return clip ? clip.durationSeconds : null;
+                }
                 try {
                     const script = renderNoticeScript({
                         purpose: campaign.purpose,

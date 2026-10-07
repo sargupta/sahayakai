@@ -46,6 +46,29 @@
  * is left in 'dialing' for the sweep — never retried. If the destination cannot
  * be resolved, the carrier was provably never contacted, so the call is marked
  * 'failed' and the intent follows the ordinary retry rule.
+ *
+ * HARDENING (7 Oct 2026, docs/sampark/HARDENING_CONTRACT.md stream A):
+ *   - Holds (H2, H3). A campaign dials only while the school is still in the mode
+ *     it was approved in (`campaign.mode`; missing = 'mode_not_pinned', different =
+ *     'mode_changed'), and nothing dials while the school is paused ('school_paused':
+ *     every purpose for scope 'all', all but emergency closures for 'routine'). A
+ *     held intent is never dialled and keeps its status and attempts; the campaign carries
+ *     the reason in `holdReason`, written (and audited) only when it changes, and cleared
+ *     when the condition clears. The sweep and the repair run whatever the hold.
+ *     Due intents are listed oldest first, so a held campaign's intents would sit at the
+ *     front of every tick's list and starve every newer campaign (a Practice campaign held
+ *     after the school moved to Test would block the Test campaign). A held intent is
+ *     therefore PARKED: its notBefore moves to HOLD_PARKED_NOT_BEFORE, out of the due list.
+ *     On resume the campaign's parked intents are due again at once; a held campaign past
+ *     its expiry has its waiting intents expired, so it completes.
+ *   - Of record (H6). The gate is given only the intent's children who are still
+ *     active and still list this guardian (or another guardian on the same number)
+ *     in `guardianIds`. None left → blocked 'student_inactive' (every child left or is
+ *     gone) or 'not_guardian_of_record'.
+ *   - Carrier requeue (H7). A capacity refusal (PlaceCallResult.requeue) is settled
+ *     through settle.ts's requeue path: the attempt is not spent, and the next dial
+ *     of the same attempt carries `requeue` and a new call id (callIdFor), so its
+ *     claim never collides with the refused call's record.
  */
 
 import { logger } from '@/lib/logger';
@@ -55,14 +78,18 @@ import { finishCampaign, repairUnsettledCall, SETTLE_REPAIR_GRACE_MS, settleCall
 import { applyCallEvent, isTerminal } from '@/lib/sampark/dispatch/state';
 import { callIdFor } from '@/lib/sampark/intents';
 import { evaluateGate, FREQUENCY_WINDOW_MS } from '@/lib/sampark/policy/gate';
+import { pauseStopsPurpose } from '@/lib/sampark/policy/pause';
 import { addDays, isDateString, istInstant } from '@/lib/sampark/policy/ist';
 import { EMERGENCY_START_HOUR } from '@/lib/sampark/policy/window';
 import type { Carrier, Clock, SamparkRepo } from '@/lib/sampark/ports';
 import type {
+    BlockReason,
     CallDestination,
     Campaign,
+    CampaignHoldReason,
     Intent,
     IntentStatus,
+    PurposeId,
     SamparkCall,
     SamparkGuardian,
     SamparkSchool,
@@ -133,6 +160,73 @@ function errorMessage(e: unknown): string {
 
 /** Campaign statuses whose intents may be dialled. */
 const DISPATCHABLE_CAMPAIGN: ReadonlySet<Campaign['status']> = new Set(['scheduled', 'dispatching']);
+
+// ── Holds (H2, H3) ──────────────────────────────────────────────────────────
+
+/**
+ * The notBefore of an intent parked by a hold: never due, so it leaves the due list (which is
+ * ordered oldest first) to the campaigns that can dial. Set on a held intent the first time the
+ * dispatcher sees it due; cleared (back to null, due at once) when its campaign resumes.
+ */
+export const HOLD_PARKED_NOT_BEFORE = '9999-12-31T23:59:59.999Z';
+
+/** Intent statuses still waiting to be dialled. */
+const WAITING_STATUSES: ReadonlySet<IntentStatus> = new Set(['approved', 'retry_wait']);
+
+/**
+ * Why this campaign may not dial right now, or null. The mode checks come first: they hold the
+ * campaign whatever else happens, so after a pause is lifted the reason the console shows is
+ * still the true one.
+ */
+export function campaignHoldReason(school: Pick<SamparkSchool, 'mode' | 'pause'>, campaign: Pick<Campaign, 'mode' | 'purpose'>): CampaignHoldReason | null {
+    if (!campaign.mode) return 'mode_not_pinned';
+    if (campaign.mode !== school.mode) return 'mode_changed';
+    if (pauseStopsPurpose(school.pause, campaign.purpose)) return 'school_paused';
+    return null;
+}
+
+/**
+ * Store the campaign's hold reason when it changed, and only then, with an audit entry
+ * ('campaign.hold' or 'campaign.resume'). Every tick re-evaluates every dispatchable campaign,
+ * so writing unconditionally would rewrite and re-audit each held campaign once a minute.
+ */
+async function syncCampaignHold(repo: SamparkRepo, orgId: string, campaign: Campaign, hold: CampaignHoldReason | null, now: Date): Promise<void> {
+    const previous = campaign.holdReason ?? null;
+    if (previous === hold) return;
+    const nowIso = now.toISOString();
+    if (!hold) await unparkCampaignIntents(repo, orgId, campaign.id, nowIso);
+    await repo.updateCampaign(orgId, campaign.id, { holdReason: hold, updatedAt: nowIso });
+    campaign.holdReason = hold;
+    await repo.appendAudit(orgId, {
+        at: nowIso,
+        actor: 'dispatcher',
+        action: hold ? 'campaign.hold' : 'campaign.resume',
+        target: `campaign/${campaign.id}`,
+        detail: hold ? { reason: hold, from: previous } : { from: previous },
+    });
+}
+
+/** Resume: every intent a hold parked is due again now. Compare-and-set, so a cancel racing it wins. */
+async function unparkCampaignIntents(repo: SamparkRepo, orgId: string, campaignId: string, nowIso: string): Promise<void> {
+    for (const intent of await repo.listIntentsByCampaign(orgId, campaignId)) {
+        if (!WAITING_STATUSES.has(intent.status) || intent.notBefore !== HOLD_PARKED_NOT_BEFORE) continue;
+        await repo.updateIntentIf(orgId, intent.id, { status: intent.status, lastCallId: intent.lastCallId }, { notBefore: null, updatedAt: nowIso });
+    }
+}
+
+/** Park one held intent (see HOLD_PARKED_NOT_BEFORE). Status, attempts and history are untouched. */
+async function parkIntent(repo: SamparkRepo, orgId: string, intent: Intent, nowIso: string): Promise<void> {
+    if (intent.notBefore === HOLD_PARKED_NOT_BEFORE) return;
+    await repo.updateIntentIf(orgId, intent.id, { status: intent.status, lastCallId: intent.lastCallId }, { notBefore: HOLD_PARKED_NOT_BEFORE, updatedAt: nowIso });
+}
+
+/** A held campaign past its expiry can never dial again: expire what is still waiting, so it completes. */
+async function expireHeldCampaign(repo: SamparkRepo, orgId: string, campaignId: string, nowIso: string): Promise<void> {
+    for (const intent of await repo.listIntentsByCampaign(orgId, campaignId)) {
+        if (!WAITING_STATUSES.has(intent.status)) continue;
+        await repo.updateIntentIf(orgId, intent.id, { status: intent.status, lastCallId: intent.lastCallId }, { status: 'expired', updatedAt: nowIso });
+    }
+}
 
 // ── Sweep ────────────────────────────────────────────────────────────────────
 
@@ -248,6 +342,35 @@ async function studentsFor(ctx: SchoolContext, ids: string[]): Promise<SamparkSt
     return ids.map((id) => ctx.students!.get(id)).filter((s): s is SamparkStudent => !!s);
 }
 
+/**
+ * The intent's children this call may still be about (H6): active, and still listing this
+ * guardian in `guardianIds`, or another active guardian with the same number. The second case
+ * is the bundle merged by phone number (one call per family, H6 audience side): one guardian
+ * id speaks for every child whose record names the same mobile under another id, and those
+ * children's flags must still reach the gate. When none remain, the block reason says why.
+ */
+async function studentsOfRecord(
+    ctx: SchoolContext,
+    intent: Intent,
+    guardian: SamparkGuardian,
+): Promise<{ students: SamparkStudent[] } | { blocked: BlockReason }> {
+    const found = await studentsFor(ctx, intent.studentIds);
+    const active = found.filter((s) => s.active);
+    const otherIds = [...new Set(active.flatMap((s) => s.guardianIds ?? []).filter((id) => id !== guardian.id))].sort();
+    const sameNumber = new Set(
+        otherIds.length
+            ? (await ctx.deps.repo.listGuardians(ctx.school.orgId, otherIds))
+                  .filter((g) => g.active && g.phoneHash === guardian.phoneHash)
+                  .map((g) => g.id)
+            : [],
+    );
+    const students = active.filter((s) => (s.guardianIds ?? []).some((id) => id === guardian.id || sameNumber.has(id)));
+    if (students.length > 0) return { students };
+    // Every child on the intent has left (or is gone from the snapshot) → student_inactive;
+    // some child is still at the school, but no longer this guardian's → not_guardian_of_record.
+    return { blocked: active.length === 0 ? 'student_inactive' : 'not_guardian_of_record' };
+}
+
 async function setIntentStatus(ctx: SchoolContext, intent: Intent, status: IntentStatus, extra: Partial<Intent> = {}): Promise<void> {
     await ctx.deps.repo.updateIntent(ctx.school.orgId, intent.id, { status, updatedAt: ctx.now.toISOString(), ...extra });
     if (intent.campaignId) ctx.touched.add(intent.campaignId);
@@ -276,6 +399,22 @@ async function processIntent(ctx: SchoolContext, intent: Intent): Promise<boolea
         }
     }
 
+    // Past its expiry an intent can never be dialled, held or not, so it is closed even while held.
+    if (now.getTime() > Date.parse(intent.expiresAt)) {
+        await setIntentStatus(ctx, intent, 'expired');
+        return false;
+    }
+
+    // Holds (H2, H3): nothing is dialled; the intent is parked out of the due list until the
+    // hold clears, so it cannot starve other campaigns, and its status and attempts are untouched.
+    const hold = campaign ? campaignHoldReason(school, campaign) : pauseStopsPurpose(school.pause, intent.purpose) ? 'school_paused' : null;
+    if (campaign) await syncCampaignHold(deps.repo, orgId, campaign, hold, now);
+    if (hold) {
+        if (campaign) await parkIntent(deps.repo, orgId, intent, now.toISOString());
+        report.skipped += 1;
+        return false;
+    }
+
     const spec = purposeSpec(intent.purpose);
 
     // D4: the audio variant is chosen now, from the IST calendar; no variant = the closure day is over (or not yet near).
@@ -299,10 +438,6 @@ async function processIntent(ctx: SchoolContext, intent: Intent): Promise<boolea
         }
         variant = chosen;
     }
-    if (now.getTime() > Date.parse(intent.expiresAt)) {
-        await setIntentStatus(ctx, intent, 'expired');
-        return false;
-    }
     if (intent.attempts >= intent.maxAttempts) {
         await setIntentStatus(ctx, intent, 'done');
         return false;
@@ -315,15 +450,22 @@ async function processIntent(ctx: SchoolContext, intent: Intent): Promise<boolea
         report.blocked += 1;
         return false;
     }
-    const students = await studentsFor(ctx, intent.studentIds);
+    const ofRecord = await studentsOfRecord(ctx, intent, guardian);
+    if ('blocked' in ofRecord) {
+        // A child who left, or a guardian no longer of record, is never dialled (H6).
+        await setIntentStatus(ctx, intent, 'blocked', { blockReason: ofRecord.blocked });
+        report.blocked += 1;
+        return false;
+    }
+    const { students } = ofRecord;
     const preferences = (await deps.repo.getPreferences(orgId, [guardian.id])).get(guardian.id) ?? null;
     const { plan } = ctx;
     const suppression = await deps.repo.getSuppression(orgId, guardian.phoneHash);
     // The cap is counted on the GUARDIAN's number even in test mode, so a test campaign rehearses
     // the real rule. This intent's own earlier attempts must not count against its own retries —
-    // but only guardian calls are recorded under the guardian's hash (test calls carry the test
-    // phone's), so only then are they in the count to take back out.
-    const ownAttemptsInCount = plan.destination === 'guardian' ? intent.attempts : 0;
+    // but only real guardian calls are in the count to take back out: test calls carry the test
+    // phone's hash, and simulated (Practice) calls are never counted at all (H1).
+    const ownAttemptsInCount = plan.destination === 'guardian' && ctx.carrier.kind !== 'simulated' ? intent.attempts : 0;
     const recentCallsToPhone = spec.emergency
         ? 0
         : Math.max(
@@ -363,10 +505,12 @@ async function processIntent(ctx: SchoolContext, intent: Intent): Promise<boolea
 
     // ── allow: claim BEFORE the carrier is contacted ────────────────────────
     const attempt = intent.attempts + 1;
+    // A requeued attempt (H7) is dialled again under the next requeue's call id; 0 = today's id.
+    const requeue = intent.carrierRequeues ?? 0;
     const audioSeconds = await deps.audioSecondsFor(school, intent, variant);
     const nowIso = now.toISOString();
     const call: SamparkCall = {
-        id: callIdFor(intent.id, attempt),
+        id: callIdFor(intent.id, attempt, requeue),
         orgId,
         intentId: intent.id,
         campaignId: intent.campaignId,
@@ -395,6 +539,7 @@ async function processIntent(ctx: SchoolContext, intent: Intent): Promise<boolea
         failureReason: null,
         // Explicit null (not absent) so the repair sweep's `settledAt == null` query can find it.
         settledAt: null,
+        requeue,
     };
 
     const claim = await deps.repo.claimIntentForDial(orgId, intent.id, call, now);
@@ -427,10 +572,12 @@ async function processIntent(ctx: SchoolContext, intent: Intent): Promise<boolea
     const result = await ctx.carrier.place({ call, destinationE164: target.e164, audioSeconds: audioSeconds ?? DEFAULT_AUDIO_SECONDS });
 
     let retryable = true;
+    let requeueRefused = false;
     let current: SamparkCall | null;
     if (!result.ok) {
         current = applyCallEvent(call, { type: 'place_failed', at: nowIso, reason: result.reason });
-        retryable = result.retryable;
+        retryable = result.retryable || result.requeue === true;
+        requeueRefused = result.requeue === true;
         await deps.repo.updateCall(orgId, call.id, current);
     } else if (result.events.length > 0) {
         // The simulated carrier: the whole lifecycle, up front, through the same reducer webhooks use.
@@ -447,7 +594,8 @@ async function processIntent(ctx: SchoolContext, intent: Intent): Promise<boolea
     }
 
     // A call still open (a real carrier's) leaves the intent 'dialing' for the hangup webhook to settle.
-    if (isTerminal(current.state)) await settleCall(deps, orgId, call.id, { retryable, recompute: false });
+    // A capacity refusal settles through the requeue path, which does not spend the attempt (H7).
+    if (isTerminal(current.state)) await settleCall(deps, orgId, call.id, { retryable, requeue: requeueRefused, recompute: false });
     return true;
 }
 
@@ -485,8 +633,21 @@ async function dispatchSchool(deps: DispatchDeps, opts: DispatchOptions, school:
 
     // Campaigns that are scheduled or dispatching get their completion checked every tick,
     // including ones with nothing due (e.g. every intent was blocked at materialisation).
+    // Their hold reason is brought up to date here too, so a held campaign shows why even
+    // when none of its intents is due, and even when the school cannot dial at all.
+    const campaigns = new Map<string, Campaign | null>();
     for (const c of await deps.repo.listCampaigns(orgId, 200)) {
-        if (DISPATCHABLE_CAMPAIGN.has(c.status)) touched.add(c.id);
+        if (!DISPATCHABLE_CAMPAIGN.has(c.status)) continue;
+        touched.add(c.id);
+        campaigns.set(c.id, c);
+        try {
+            const hold = campaignHoldReason(school, c);
+            await syncCampaignHold(deps.repo, orgId, c, hold, now);
+            if (hold && now.getTime() > Date.parse(c.expiresAt)) await expireHeldCampaign(deps.repo, orgId, c.id, now.toISOString());
+        } catch (e) {
+            // Bookkeeping only: processIntent re-checks the hold before anything is dialled.
+            report.errors.push(`${orgId}/${c.id}: hold update failed: ${errorMessage(e)}`);
+        }
     }
 
     try {
@@ -508,7 +669,7 @@ async function dispatchSchool(deps: DispatchDeps, opts: DispatchOptions, school:
         if (budget <= 0) return;
 
         const carrier = deps.carrierFor(school);
-        const ctx: SchoolContext = { deps, opts, school, plan: dial.plan, carrier, now, report, touched, campaigns: new Map(), students: null };
+        const ctx: SchoolContext = { deps, opts, school, plan: dial.plan, carrier, now, report, touched, campaigns, students: null };
         const due = await deps.repo.listDueIntents(orgId, now, Math.min(500, budget * 5));
 
         for (const intent of due) {

@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { getSchool, type SamparkSchoolView } from "@/lib/api/sampark";
 import { ModeBanner } from "./mode-banner";
+import { PauseBanner } from "./school-pause";
 import { SamparkSchoolProvider } from "./school-context";
 import { ErrorPanel, LoadingBlock } from "./states";
 import { useSamparkQuery } from "./use-sampark-query";
@@ -115,6 +116,7 @@ function OrgShellInner({ children }: { children: ReactNode }) {
                 )}
 
                 {school && <ModeBanner mode={school.mode} isDemo={school.isDemo} testPhoneLast4={school.testPhoneLast4} />}
+                {school?.pause && <PauseBanner orgId={orgId} pause={school.pause} onChange={setSchool} />}
                 {orgId && <Tabs orgId={orgId} />}
             </div>
 
@@ -125,7 +127,7 @@ function OrgShellInner({ children }: { children: ReactNode }) {
     );
 }
 
-/** Frame for every /sampark/[orgId] screen: header, permanent mode banner, CRM status, tabs. */
+/** Frame for every /sampark/[orgId] screen: header, permanent mode banner, pause banner while paused, CRM status, tabs. */
 export function SamparkOrgShell({ children }: { children: ReactNode }) {
     const { t } = useLanguage();
     return (
