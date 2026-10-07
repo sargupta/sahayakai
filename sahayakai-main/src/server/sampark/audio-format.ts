@@ -6,8 +6,11 @@
  * reliably decode it (Firefox refuses format 7 outright). The console asks for
  * `?format=pcm` and gets the same samples expanded to 16-bit linear PCM — the
  * sound is identical, only the encoding changes, so the principal still hears
- * exactly what a parent will hear.
+ * exactly what a parent will hear. The μ-law table is the shared G.711 codec in
+ * speech/dsp.ts, so the console and the render pipeline decode identically.
  */
+
+import { mulawDecode } from '@/lib/sampark/speech/dsp';
 
 const WAVE_FORMAT_PCM = 1;
 const WAVE_FORMAT_MULAW = 7;
@@ -50,14 +53,6 @@ export function parseWav(buf: Buffer): WavLayout {
     throw new Error('no data chunk');
 }
 
-/** ITU-T G.711 μ-law → 16-bit linear. */
-function ulawToLinear(value: number): number {
-    const u = ~value & 0xff;
-    let t = ((u & 0x0f) << 3) + 0x84;
-    t <<= (u & 0x70) >> 4;
-    return u & 0x80 ? 0x84 - t : t - 0x84;
-}
-
 function pcmHeader(dataLength: number, sampleRate: number, channels: number): Buffer {
     const h = Buffer.alloc(44);
     h.write('RIFF', 0, 'ascii');
@@ -85,7 +80,7 @@ export function toPcm16Wav(buf: Buffer): Buffer {
     }
     const out = Buffer.alloc(wav.dataLength * 2);
     for (let i = 0; i < wav.dataLength; i++) {
-        out.writeInt16LE(ulawToLinear(buf[wav.dataOffset + i]), i * 2);
+        out.writeInt16LE(mulawDecode(buf[wav.dataOffset + i]), i * 2);
     }
     return Buffer.concat([pcmHeader(out.length, wav.sampleRate, wav.channels), out]);
 }

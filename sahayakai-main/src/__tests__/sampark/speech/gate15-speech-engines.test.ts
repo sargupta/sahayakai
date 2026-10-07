@@ -1,15 +1,25 @@
 /**
  * @jest-environment node
  *
- * CLASS GATE 15 — the Nepali render uses ne-NP and the pinned Gemini-TTS model
- * (plan §5, §13); Bengali uses Chirp 3 HD bn-IN (Gemini-TTS has no bn-IN, only
- * the Bangladesh locale); and the synthesizer sends exactly those fields, in
- * μ-law at 8 kHz, with the style prompt only where the engine accepts one.
+ * CLASS GATE 15 — every language renders on its pinned engine, model, voice and
+ * language code, and the synthesizer sends exactly those fields:
+ *   - English, Hindi, Nepali: Cloud TTS Gemini-TTS, μ-law at 8 kHz, the short
+ *     style hint only with a campaign's main message (plan §5, §13).
+ *   - Bengali: Gemini-TTS through Vertex AI, bn-IN (voice phase, 7 Oct 2026 —
+ *     Chirp 3 HD bn-IN mispronounced Bengali on real calls; Cloud TTS refuses
+ *     bn-IN for Gemini; never the bn-BD locale). On this route NO prompt or
+ *     instruction is ever sent, for any clip or delivery: an English instruction
+ *     made the voice English-accented, and prompts have been read aloud before.
+ *   - Every request carries its language's code (without one, Gemini read
+ *     English and some Hindi with an American accent).
  */
 
-import { GEMINI_TTS_MODEL, languageInfo, SCHOOL_VOICE } from '@/lib/sampark/languages';
+import { availablePurposes } from '@/lib/sampark/catalogue';
+import { GEMINI_TTS_MODEL, languageInfo, SCHOOL_VOICE, type SpeechEngineConfig } from '@/lib/sampark/languages';
+import { SAMPLE_SCHOOL, SAMPLE_SECTION_AUDIENCE, sampleFactsFor } from '@/lib/sampark/scripts/samples';
 import {
     buildSynthesizeRequest,
+    buildVertexTtsRequest,
     createChirpVerifier,
     createGoogleSynthesizer,
     DEFAULT_GCP_PROJECT,
@@ -18,13 +28,51 @@ import {
     TTS_ENDPOINT,
     isTransientFetchError,
 } from '@/lib/sampark/speech/google-speech';
-import { PARENT_LANGUAGES } from '@/types/sampark';
+import { neededClips } from '@/lib/sampark/speech/render-job';
+import { PARENT_LANGUAGES, type ClipKind, type ParentLanguage } from '@/types/sampark';
 
-import { fakeFetch, fakeMulawWav } from './helpers';
+import { fakeFetch, fakeMulawWav, type RecordedRequest } from './helpers';
 
 const token = async () => 'test-token';
 
+/** The language code each language must send — literal on purpose: changing one is a deliberate edit here. */
+const LANGUAGE_CODES: Record<ParentLanguage, string> = { English: 'en-IN', Hindi: 'hi-IN', Bengali: 'bn-IN', Nepali: 'ne-NP' };
+
+/** Every clip kind (a Record so a new ClipKind fails to compile until it is listed). */
+const CLIP_KINDS: Record<ClipKind, true> = {
+    message: true,
+    confirm_1: true,
+    confirm_2: true,
+    opt_out_confirm: true,
+    opt_out_done: true,
+    no_input: true,
+    fallback_office: true,
+};
+
+/** A Vertex generateContent answer: 0.1 s of 24 kHz PCM silence. */
+const VERTEX_AUDIO = {
+    candidates: [{ content: { role: 'model', parts: [{ inlineData: { mimeType: 'audio/L16;codec=pcm;rate=24000', data: Buffer.alloc(4800).toString('base64') } }] } }],
+};
+
+/** Answers Vertex and Cloud TTS requests each in their own shape. */
+const answerEither = (req: RecordedRequest) =>
+    req.url.includes('aiplatform.googleapis.com') ? { json: VERTEX_AUDIO } : { json: { audioContent: fakeMulawWav(0.1).toString('base64') } };
+
+/** The language code a request actually carries, on either route. */
+function languageCodeSent(req: RecordedRequest): string | undefined {
+    return req.url.includes('aiplatform.googleapis.com') ? req.body.generationConfig?.speechConfig?.languageCode : req.body.voice?.languageCode;
+}
+
 describe('Gate 15 — speech engine per language', () => {
+    it('pins every language\'s speech configuration', () => {
+        expect(Object.fromEntries(PARENT_LANGUAGES.map((l) => [l, languageInfo(l).speech]))).toEqual({
+            English: { engine: 'gemini-tts', ttsLanguageCode: 'en-IN', voice: 'Kore', model: 'gemini-2.5-flash-tts', sttLanguageCode: 'en-IN' },
+            Hindi: { engine: 'gemini-tts', ttsLanguageCode: 'hi-IN', voice: 'Kore', model: 'gemini-2.5-flash-tts', sttLanguageCode: 'hi-IN' },
+            Bengali: { engine: 'gemini-tts-vertex', ttsLanguageCode: 'bn-IN', voice: 'Kore', model: 'gemini-3.8-flash-tts', sttLanguageCode: 'bn-IN' },
+            Nepali: { engine: 'gemini-tts', ttsLanguageCode: 'ne-NP', voice: 'Kore', model: 'gemini-2.5-flash-tts', sttLanguageCode: 'ne-NP' },
+        });
+    });
+
     it('Nepali is Gemini-TTS ne-NP on the pinned model', () => {
         const s = languageInfo('Nepali').speech;
         expect(s.engine).toBe('gemini-tts');
@@ -33,11 +81,13 @@ describe('Gate 15 — speech engine per language', () => {
         expect(s.sttLanguageCode).toBe('ne-NP');
     });
 
-    it('Bengali is Chirp 3 HD bn-IN (never the bn-BD Gemini voice)', () => {
+    it('Bengali is Gemini-TTS on Vertex, bn-IN, on a pinned model (never Chirp 3 HD, never bn-BD)', () => {
         const s = languageInfo('Bengali').speech;
-        expect(s.engine).toBe('chirp3-hd');
+        expect(s.engine).toBe('gemini-tts-vertex');
         expect(s.ttsLanguageCode).toBe('bn-IN');
-        expect(s.voice).toBe(`bn-IN-Chirp3-HD-${SCHOOL_VOICE}`);
+        expect(s.sttLanguageCode).toBe('bn-IN');
+        expect(s.voice).toBe(SCHOOL_VOICE);
+        expect(s.model).toMatch(/^gemini-[\d.]+-flash(-lite)?-tts$/);
     });
 
     it('every language uses the one school voice', () => {
@@ -72,11 +122,72 @@ describe('Gate 15 — speech engine per language', () => {
         expect(GEMINI_TTS_STYLE_PROMPT.split(/\s+/).length).toBeLessThanOrEqual(6);
     });
 
-    it('the Bengali request is Chirp 3 HD: no model, no prompt', () => {
-        expect(buildSynthesizeRequest('নমস্কার।', languageInfo('Bengali').speech)).toEqual({
+    it('the Bengali request is the Vertex body: text, voice, bn-IN and nothing else', () => {
+        expect(buildVertexTtsRequest('নমস্কার।', languageInfo('Bengali').speech)).toEqual({
+            contents: [{ role: 'user', parts: [{ text: 'নমস্কার।' }] }],
+            generationConfig: {
+                responseModalities: ['AUDIO'],
+                speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } }, languageCode: 'bn-IN' },
+            },
+        });
+    });
+
+    it('a Chirp 3 HD config (no language uses one today) still gets no model and no prompt', () => {
+        const chirp: SpeechEngineConfig = { engine: 'chirp3-hd', ttsLanguageCode: 'bn-IN', voice: 'bn-IN-Chirp3-HD-Kore', model: null, sttLanguageCode: 'bn-IN' };
+        expect(buildSynthesizeRequest('নমস্কার।', chirp, 'styled')).toEqual({
             input: { text: 'নমস্কার।' },
             voice: { languageCode: 'bn-IN', name: 'bn-IN-Chirp3-HD-Kore' },
             audioConfig: { audioEncoding: 'MULAW', sampleRateHertz: 8000 },
+        });
+    });
+
+    it('class gate: the Vertex route never sends a prompt or instruction — every clip of every purpose, both deliveries', async () => {
+        const vertexLanguages = PARENT_LANGUAGES.filter((l) => languageInfo(l).speech.engine === 'gemini-tts-vertex');
+        expect(vertexLanguages.length).toBeGreaterThan(0);
+        const { impl, requests } = fakeFetch(answerEither);
+        const synth = createGoogleSynthesizer({ fetchImpl: impl, getAccessToken: token });
+        const sent: { text: string; language: ParentLanguage }[] = [];
+        const kinds = new Set<ClipKind>();
+        for (const language of vertexLanguages) {
+            for (const spec of availablePurposes()) {
+                for (const clip of neededClips(spec.id, sampleFactsFor(spec.id), SAMPLE_SCHOOL, SAMPLE_SECTION_AUDIENCE, [language])) {
+                    kinds.add(clip.kind);
+                    for (const delivery of ['styled', 'plain'] as const) {
+                        await synth.synthesize({ text: clip.text, language, speech: clip.speech, delivery });
+                        sent.push({ text: clip.text, language });
+                    }
+                }
+            }
+        }
+        expect([...kinds].sort()).toEqual(Object.keys(CLIP_KINDS).sort());
+        expect(requests).toHaveLength(sent.length);
+        requests.forEach((r, i) => {
+            const speech = languageInfo(sent[i].language).speech;
+            // Exactly the text as content, and exactly voice + language code as configuration.
+            expect(r.body).toEqual(buildVertexTtsRequest(sent[i].text, speech));
+            expect(Object.keys(r.body).sort()).toEqual(['contents', 'generationConfig']);
+            expect(Object.keys(r.body.generationConfig).sort()).toEqual(['responseModalities', 'speechConfig']);
+            const wire = JSON.stringify(r.body);
+            expect(wire).not.toContain(GEMINI_TTS_STYLE_PROMPT);
+            expect(wire).not.toMatch(/prompt|instruction/i);
+        });
+    });
+
+    it('class gate: every language\'s request carries its own language code, for both deliveries', async () => {
+        const { impl, requests } = fakeFetch(answerEither);
+        const synth = createGoogleSynthesizer({ fetchImpl: impl, getAccessToken: token });
+        const order: ParentLanguage[] = [];
+        for (const language of PARENT_LANGUAGES) {
+            for (const delivery of ['styled', 'plain'] as const) {
+                await synth.synthesize({ text: 'x', language, speech: languageInfo(language).speech, delivery });
+                order.push(language);
+            }
+        }
+        expect(Object.keys(LANGUAGE_CODES).sort()).toEqual([...PARENT_LANGUAGES].sort());
+        requests.forEach((r, i) => {
+            expect(languageCodeSent(r)).toBe(LANGUAGE_CODES[order[i]]);
+            expect(languageCodeSent(r)).toBe(languageInfo(order[i]).speech.ttsLanguageCode);
+            expect(JSON.stringify(r.body)).not.toContain('bn-BD');
         });
     });
 
