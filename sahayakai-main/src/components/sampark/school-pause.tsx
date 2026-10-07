@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { CirclePause, Loader2, Play } from "lucide-react";
-import { SectionCard } from "@/components/layout";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -20,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/context/auth-context";
 import { useLanguage } from "@/context/language-context";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import { setPause, type SamparkSchoolView } from "@/lib/api/sampark";
 import type { SchoolPause } from "@/types/sampark";
 import { useSamparkSchool } from "./school-context";
@@ -121,11 +121,12 @@ export function PauseBanner({
 }
 
 /**
- * "Pause all calls" for the Today screen: one button, then a confirmation that asks
- * why (staff-only text) and what to stop — every call, or everything except
- * emergency closures. Hidden while paused; the banner then offers Resume.
+ * "Pause all calls": one button, then a confirmation that asks why (staff-only text)
+ * and what to stop — every call, or everything except emergency closures. Renders
+ * nothing while paused; the banner then offers Resume. Used in the console's rail,
+ * its compact header on small screens, and on a campaign that is calling.
  */
-export function PauseCallsCard() {
+export function PauseCallsButton({ className, size }: { className?: string; size?: "default" | "sm" }) {
     const { t } = useLanguage();
     const { toast } = useToast();
     const { orgId, school, setSchool } = useSamparkSchool();
@@ -133,6 +134,7 @@ export function PauseCallsCard() {
     const [reason, setReason] = useState("");
     const [scope, setScope] = useState<SchoolPause["scope"]>("all");
     const [busy, setBusy] = useState(false);
+    const reasonId = useId();
 
     if (school.pause) return null;
     const trimmed = reason.trim();
@@ -154,12 +156,8 @@ export function PauseCallsCard() {
     };
 
     return (
-        <SectionCard
-            title={t("Pause all calls")}
-            icon={CirclePause}
-            description={t("Stop the school's calls straight away, for example after a bereavement or a complaint. Phones that are still ringing are hung up. You can resume at any time.")}
-        >
-            <Button type="button" variant="outline" className="self-start" onClick={() => setOpen(true)}>
+        <>
+            <Button type="button" variant="outline" size={size} className={cn("min-h-11", className)} onClick={() => setOpen(true)}>
                 <CirclePause aria-hidden="true" />
                 {t("Pause all calls")}
             </Button>
@@ -174,17 +172,17 @@ export function PauseCallsCard() {
                     </AlertDialogHeader>
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="sampark-pause-reason">{t("Why are you pausing calls?")}</Label>
+                            <Label htmlFor={`${reasonId}-reason`}>{t("Why are you pausing calls?")}</Label>
                             <Textarea
-                                id="sampark-pause-reason"
+                                id={`${reasonId}-reason`}
                                 value={reason}
                                 maxLength={MAX_REASON}
                                 rows={3}
                                 className="min-h-20"
-                                aria-describedby="sampark-pause-reason-help"
+                                aria-describedby={`${reasonId}-help`}
                                 onChange={(e) => setReason(e.target.value)}
                             />
-                            <p id="sampark-pause-reason-help" className="type-body text-muted-foreground">
+                            <p id={`${reasonId}-help`} className="type-body text-muted-foreground">
                                 {t("Staff see this reason. Families never hear it.")}
                             </p>
                         </div>
@@ -193,8 +191,8 @@ export function PauseCallsCard() {
                             <RadioGroup value={scope} onValueChange={(v) => setScope(v as SchoolPause["scope"])}>
                                 {SCOPES.map((s) => (
                                     <div key={s} className="flex items-center gap-2">
-                                        <RadioGroupItem id={`sampark-pause-scope-${s}`} value={s} />
-                                        <Label htmlFor={`sampark-pause-scope-${s}`} className="font-normal">
+                                        <RadioGroupItem id={`${reasonId}-scope-${s}`} value={s} />
+                                        <Label htmlFor={`${reasonId}-scope-${s}`} className="font-normal">
                                             {pauseScopeLabel(t, s)}
                                         </Label>
                                     </div>
@@ -218,6 +216,6 @@ export function PauseCallsCard() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
-        </SectionCard>
+        </>
     );
 }

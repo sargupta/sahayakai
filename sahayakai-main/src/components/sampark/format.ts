@@ -8,7 +8,7 @@
  * in the teacher's UI language (Intl does the translation of month and
  * weekday names — no locale keys needed).
  */
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { BCP47_MAP, useLanguage } from '@/context/language-context';
 import type { SpokenTime } from '@/types/sampark';
 
@@ -17,6 +17,37 @@ export const IST = 'Asia/Kolkata';
 /** YYYY-MM-DD for an instant, in IST. */
 export function istDate(at: Date): string {
     return new Intl.DateTimeFormat('en-CA', { timeZone: IST, year: 'numeric', month: '2-digit', day: '2-digit' }).format(at);
+}
+
+/** The IST hour (0–23) of an instant. */
+export function istHour(at: Date): number {
+    return Number(new Intl.DateTimeFormat('en-GB', { timeZone: IST, hour: '2-digit', hourCycle: 'h23' }).format(at)) % 24;
+}
+
+/** The current time, re-read every `intervalMs` (for countdowns and "now" markers). */
+export function useNow(intervalMs = 30_000): Date {
+    const [now, setNow] = useState(() => new Date());
+    useEffect(() => {
+        const id = setInterval(() => setNow(new Date()), intervalMs);
+        return () => clearInterval(id);
+    }, [intervalMs]);
+    return now;
+}
+
+/**
+ * "Now" on the server's clock: `asOf` is the server time an API response was computed at. The
+ * offset from this device's clock is taken when it arrives and the result ticks every
+ * `intervalMs`, so a wrong device clock never moves the calling window or the current hour.
+ * Before the first response, the device clock.
+ */
+export function useServerNow(asOf: string | null | undefined, intervalMs = 30_000): Date {
+    const [offsetMs, setOffsetMs] = useState(0);
+    useEffect(() => {
+        const server = asOf ? Date.parse(asOf) : NaN;
+        if (Number.isFinite(server)) setOffsetMs(server - Date.now());
+    }, [asOf]);
+    const device = useNow(intervalMs);
+    return new Date(device.getTime() + offsetMs);
 }
 
 export function istToday(): string {
@@ -78,6 +109,18 @@ export function useSamparkFormat() {
             () => new Intl.DateTimeFormat(locale, { timeZone: 'UTC', weekday: 'long' }),
             new Intl.DateTimeFormat('en-IN', { timeZone: 'UTC', weekday: 'long' }),
         );
+        const longDateFmt = safe(
+            () => new Intl.DateTimeFormat(locale, { timeZone: IST, weekday: 'long', day: 'numeric', month: 'long' }),
+            new Intl.DateTimeFormat('en-IN', { timeZone: IST, weekday: 'long', day: 'numeric', month: 'long' }),
+        );
+        const monthFmt = safe(
+            () => new Intl.DateTimeFormat(locale, { timeZone: 'UTC', month: 'short' }),
+            new Intl.DateTimeFormat('en-IN', { timeZone: 'UTC', month: 'short' }),
+        );
+        const shortDayFmt = safe(
+            () => new Intl.DateTimeFormat(locale, { timeZone: 'UTC', day: 'numeric', month: 'short' }),
+            new Intl.DateTimeFormat('en-IN', { timeZone: 'UTC', day: 'numeric', month: 'short' }),
+        );
         const relFmt = safe(
             () => new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }),
             new Intl.RelativeTimeFormat('en-IN', { numeric: 'auto' }),
@@ -107,6 +150,27 @@ export function useSamparkFormat() {
             spokenTime(time: SpokenTime | null | undefined): string {
                 if (!time) return '';
                 return spokenTimeFmt.format(new Date(Date.UTC(2000, 0, 1, time.hour, time.minute)));
+            },
+            /** An instant's IST calendar day in full: "Wednesday, 7 October". */
+            longDate(at: Date | string): string {
+                const d = typeof at === 'string' ? new Date(at) : at;
+                return Number.isNaN(d.getTime()) ? '' : longDateFmt.format(d);
+            },
+            /** A calendar date "YYYY-MM-DD" as its short month name, for a calendar chip. */
+            month(date: string): string {
+                const d = new Date(`${date}T00:00:00Z`);
+                return Number.isNaN(d.getTime()) ? '' : monthFmt.format(d);
+            },
+            /** A calendar date "YYYY-MM-DD" as "16 Oct" (no weekday, no year). */
+            shortDay(date: string): string {
+                const d = new Date(`${date}T00:00:00Z`);
+                return Number.isNaN(d.getTime()) ? date : shortDayFmt.format(d);
+            },
+            /** Seconds as m:ss ("0:41"); an em dash when unknown. */
+            clock(seconds: number | null | undefined): string {
+                if (seconds === null || seconds === undefined || Number.isNaN(seconds)) return '—';
+                const s = Math.max(0, Math.round(seconds));
+                return `${Math.floor(s / 60)}:${pad2(s % 60)}`;
             },
             /** 0 = Sunday … 6 = Saturday, as a weekday name. 2023-01-01 was a Sunday. */
             weekday(day: number): string {

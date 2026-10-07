@@ -2,13 +2,16 @@
  * GET /api/sampark/[orgId]/overview — the console landing numbers.
  *
  * Input:  none.
- * Output: SamparkOverview (window open now, guardians by language/consent,
- *         today's calls in IST, active campaigns, last import). Last-4 only.
+ * Output: SamparkOverview (window open now and today's band, guardians by
+ *         language/consent, today's real calls in IST, the current mode's
+ *         charts and feed, the campaign to show first, what is coming up,
+ *         active campaigns, last import). Last-4 only.
  * Auth:   x-user-id (401) + requireOrgAdmin (403).
  * Flags:  SAMPARK_ENABLED==='true' else 404 (checked first). 404
  *         SAMPARK_NOT_ENABLED if the school has no Sampark record.
  * Cost:   5 collection reads (guardians, suppressions, ≤1000 calls,
- *         ≤200 campaigns, latest import) + preferences getAll.
+ *         ≤200 campaigns, latest import) + preferences getAll + at most 8
+ *         intent reads (feed calls that may be waiting to retry).
  * Done:   numbers match the imported snapshot and the call log.
  */
 

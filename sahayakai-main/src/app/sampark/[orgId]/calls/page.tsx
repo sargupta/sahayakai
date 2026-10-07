@@ -102,7 +102,8 @@ function CallsTable({ calls }: { calls: CallLogEntry[] }) {
     return (
         <>
             {/* Desktop: table */}
-            <div className="hidden overflow-x-auto rounded-surface-md border border-border md:block">
+            {/* w-0 min-w-full: scrolls here rather than widening the page (see campaign-detail.tsx). */}
+            <div className="hidden w-0 min-w-full overflow-x-auto rounded-surface-md border border-border md:block">
                 <table className="w-full text-left type-body">
                     <caption className="sr-only">{t("Call log")}</caption>
                     <thead className="bg-muted/30">

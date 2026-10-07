@@ -24,6 +24,7 @@ const TONE_CLASS: Record<Tone, string> = {
     success: "border-success/30 bg-success/10 text-foreground",
     warning: "border-warning/40 bg-warning/10 text-foreground",
     danger: "border-destructive/40 bg-destructive/10 text-foreground",
+    brand: "border-primary/30 bg-primary/10 text-foreground",
 };
 
 const DOT_CLASS: Record<Tone, string> = {
@@ -32,6 +33,7 @@ const DOT_CLASS: Record<Tone, string> = {
     success: "bg-success",
     warning: "bg-warning",
     danger: "bg-destructive",
+    brand: "bg-primary",
 };
 
 /**

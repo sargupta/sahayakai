@@ -124,7 +124,23 @@ Receivers should reject a `t` more than five minutes from their clock and de-dup
 
 ## Demo page
 
-`GET /` is server-rendered HTML with no scripts or external assets, readable on a phone. It shows the school summary (students, guardians, language mix, consent, absences today), and has forms to add a holistic-card observation, mark a student absent today, publish an event, declare an emergency closure (today or tomorrow), request a meeting, log an incident, and toggle a guardian's do-not-contact. Below them are upcoming events, the communications written back, the latest card observations and, when hints are on, recent deliveries. Every change persists to the state file.
+`GET /` is the school office's own records screen, deliberately not SahayakAI's look (deep-teal app bar, IBM Plex named with system fallbacks). It is server-rendered HTML with no scripts and no external assets (no fonts, stylesheets or images are fetched), and readable on a phone: the module rail turns into a scrolling strip and wide tables scroll inside their card. Everything on it is read from the live state:
+
+- **App bar:** the school crest, name, board and city, the "Synthetic data · numbers cannot ring" badge, and a search box. `GET /?q=<text>` lists up to eight students (by name, admission no. or id) and guardians (by name, id or phone) that match.
+- **Module rail:** Dashboard, then counts for students, guardians, absences, upcoming events, card observations, written-back calls and the one integration. The links jump within the page.
+- **Header:** today's date (IST), the academic year and, once the calling system has pulled, "SahayakAI pulled these records at HH:MM".
+- **Six tiles:** active students, guardians (and how many are do-not-contact), consent to notices, absent today (and how many without a leave note), calls written back today, card observations.
+- **Attendance today:** present / on roll per class and section, with absences and missing leave notes. Absent and on-leave marks count as away; everyone else on roll counts as present, so a day where the office has only marked absentees reads correctly. The seed's register ends on the anchor date, so until a mark exists for today the card shows the last marked day and says so.
+- **Office actions:** one tab per demo action (declare a closure, mark a student absent today, publish an event, request a meeting, log an incident, set a guardian's do-not-contact, add a holistic-card observation). The tabs are CSS only: each tab links to its panel's id (`#act-closure`, `#act-absent`, ...) and `:target` shows it; with no fragment the default panel shows (`?tab=<action>`, else closure). After a submit the page reopens the same tab with the result banner. Without CSS every form is stacked under its heading.
+- **Upcoming events** with the school's next holidays, consecutive days (or days a weekend apart) grouped, e.g. "Holidays 16 and 19 to 23 Oct".
+- **Guardian languages:** the share of each preferred language, and how many are not recorded.
+- **Records to check:** the malformed rows that fail the contract, guardians without notices consent recorded, custody restrictions on file, students who left, and do-not-contact guardians (with ids when there are only a few).
+- **Calls written back by SahayakAI:** the latest eight from `POST /v1/communications`.
+- **SahayakAI connection:** contract v1, the API key with all but its last four characters masked, the last pull (time and record counts), webhook hints sent today with the last delivery's status, and the endpoints.
+
+The **last pull** is the latest authenticated `GET` of `/v1/students`, `/v1/guardians` or a CSV export. A paged crawl counts as one pull (a page without a cursor starts it; each cursor page adds its records), an `updatedSince` pull reads as "changed" records, and by-id reads, rejected requests and unauthenticated calls do not count. It is kept in memory only, never in the state file, so a restart shows "not pulled yet" until the next pull.
+
+Every change made on the page persists to the state file.
 
 ## Data model
 
@@ -202,7 +218,8 @@ src/names.ts                 name pools with per-script spellings
 src/csv.ts                   RFC 4180 encode/parse, contract flattening
 src/pagination.ts            keyset pagination
 src/server.ts                routes, auth, write-back, demo actions
-src/demo-page.ts             the demo page
+src/demo-page.ts             the demo page (office dashboard)
+src/pulls.ts                 in-memory record of the calling system's last pull
 src/webhooks.ts              signing, verification, delivery
 src/store.ts                 atomic persistence
 src/export-fixtures.ts       fixtures for the app's tests

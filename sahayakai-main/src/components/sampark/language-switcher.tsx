@@ -24,7 +24,7 @@ export function LanguageSwitcher({
 }) {
     const { t } = useLanguage();
     return (
-        <div role="group" aria-label={t("Language the parent hears")} className="flex flex-wrap gap-2">
+        <div role="group" aria-label={t("Language the parent hears")} className="flex flex-wrap gap-1 rounded-surface-md bg-muted p-1">
             {languages.map((lang) => {
                 const info = PARENT_LANGUAGE_INFO[lang];
                 const active = lang === value;
@@ -36,18 +36,16 @@ export function LanguageSwitcher({
                         aria-pressed={active}
                         onClick={() => onChange(lang)}
                         className={cn(
-                            "inline-flex min-h-10 items-center gap-2 rounded-surface-md border px-3 py-2 text-sm font-medium leading-normal",
+                            "inline-flex min-h-11 items-center gap-2 rounded-surface-md px-3 py-2 text-sm leading-normal",
                             "transition-colors duration-micro ease-out-quart",
                             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                             active
-                                ? "border-primary bg-primary/10 text-foreground"
-                                : "border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted",
+                                ? "bg-card font-semibold text-foreground shadow-soft"
+                                : "font-medium text-muted-foreground hover:text-foreground",
                         )}
                     >
                         <span lang={info.code}>{info.nativeLabel}</span>
-                        {count !== undefined && (
-                            <span className="rounded-pill bg-muted px-2 text-xs text-muted-foreground">{count}</span>
-                        )}
+                        {count !== undefined && <span className="text-xs text-muted-foreground">{count}</span>}
                     </button>
                 );
             })}

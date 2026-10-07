@@ -587,6 +587,62 @@ export interface RenderedClip {
 
 export interface TodayCallCounts { calls: number; heardKeyFact: number; confirmedYes: number; optOuts: number }
 
+/**
+ * How one call ended, as a single class the console colours and words the same way
+ * everywhere (Today feed, campaign call table). `hung_up`: answered, but the key fact
+ * was not heard and no key was pressed. `failed` covers failed, lost and cancelled calls.
+ */
+export type CallOutcomeClass = 'on_call' | 'confirmed' | 'declined' | 'heard' | 'hung_up' | 'no_answer' | 'opted_out' | 'failed';
+
+/** Calls in one IST hour of today: how many, and how many heard the key fact (or pressed 1 or 2). */
+export interface HourActivity { hour: number; calls: number; heard: number }
+
+/** One IST day of calls, for the 7-day sparklines. */
+export interface TrendDay {
+    /** YYYY-MM-DD, IST. */
+    date: string;
+    calls: number;
+    heard: number;
+    confirmed: number;
+    optOuts: number;
+    /**
+     * False when the overview's call window (the latest 1000 calls) may not reach back over
+     * the whole day, so the day's numbers can be short. The console shows such a day as unknown.
+     */
+    complete: boolean;
+}
+
+/** One of today's latest calls, for the Today feed. Last four digits only, never a number. */
+export interface RecentCall {
+    id: string;
+    createdAt: string;
+    guardianDisplayName: string;
+    /** In Test mode this is the test phone's last four, since that is the phone that rang. */
+    phoneLast4: string;
+    purpose: PurposeId;
+    language: ParentLanguage;
+    campaignId: string | null;
+    state: CallState;
+    outcome: CallOutcome;
+    outcomeClass: CallOutcomeClass;
+    destination: CallDestination;
+    carrier: CarrierKind;
+    /** When the family is called again, if this was the intent's latest call and it is waiting to retry. */
+    retryAt: string | null;
+}
+
+/** The campaign the Today hero card shows: one calling now, else one about to call, else one preparing audio. */
+export interface SamparkLiveCampaign extends Pick<Campaign, 'id' | 'purpose' | 'status' | 'facts' | 'audience' | 'expiresAt' | 'counts' | 'renderProgress'> {
+    /** The mode it was approved for (H2); null on campaigns approved before 7 Oct 2026. */
+    mode: SamparkMode | null;
+    holdReason: CampaignHoldReason | null;
+}
+
+/** Something on the school calendar: a run of consecutive school holidays, or an active campaign's date. */
+export type UpcomingItem =
+    | { kind: 'holidays'; from: string; to: string; days: number }
+    | { kind: 'campaign'; date: string; campaignId: string; purpose: PurposeId; status: CampaignStatus; facts: CampaignFacts };
+
 export interface SamparkOverview {
     school: Pick<SamparkSchool, 'orgId' | 'displayName' | 'mode' | 'isDemo' | 'callingWindow'> & {
         crm: CrmConnectionConfig | null;
@@ -597,11 +653,52 @@ export interface SamparkOverview {
     };
     windowOpenNow: boolean;
     nextWindowOpensAt: string | null;
-    guardians: { total: number; byLanguage: Record<ParentLanguage | 'unknown', number>; withNoticesConsent: number; suppressed: number };
+    /**
+     * Today's routine calling band (the school's window clamped into 10:00–20:00 IST), or null
+     * when today is an off-day or a school holiday, or the window is empty.
+     */
+    windowToday: { opensAt: string; closesAt: string } | null;
+    /**
+     * The server's clock when this overview was computed. The console runs its "now" from this,
+     * not from the viewer's device clock, so the time left in the calling window and the current
+     * hour on the chart agree with the rules the server applies (a phone or PC clock can be off).
+     */
+    asOf: string;
+    guardians: {
+        total: number;
+        byLanguage: Record<ParentLanguage | 'unknown', number>;
+        withNoticesConsent: number;
+        /** Families whose number is on the stop list for any reason, including a number the carrier reported invalid. */
+        suppressed: number;
+        /** Families whose number is on the stop list because the family (or the office or the school records for them) asked. */
+        askedToStop: number;
+    };
+    /** Active stop-list entries the carrier wrote because a number is not in use (H7): numbers the office must correct. */
+    numbersFlagged: number;
     /** Real calls to families today (Live mode only; always zero in this release). Rehearsals are counted apart (H9). */
     today: TodayCallCounts;
+    /** The last 7 IST days of real calls to families, oldest first, ending today — the KPI sparklines. Same calls as `today`. */
+    familyTrend: TrendDay[];
     /** Today's rehearsals: Practice (simulated, nothing rang) and Test (rang only the school's test phone). */
     rehearsal: { practice: TodayCallCounts; test: TodayCallCounts };
+    /**
+     * Which calls `hours`, `todayByLanguage`, `recent` and `trend` show: the school's current mode.
+     * live = real calls to families; test = calls that rang the school's test phone; practice =
+     * simulated calls. The console labels the charts by it and never as families reached (H9).
+     */
+    activityMode: SamparkMode;
+    /** Today's calls (activityMode) per IST hour, covering the calling window and any hour that had a call. */
+    hours: HourActivity[];
+    /** Today's calls (activityMode) per parent language. */
+    todayByLanguage: Record<ParentLanguage, { calls: number; heard: number }>;
+    /** Today's latest calls (activityMode), newest first, at most 8. */
+    recent: RecentCall[];
+    /** The last 7 IST days of calls (activityMode), oldest first, ending today. */
+    trend: TrendDay[];
+    /** The campaign to show first, or null when none is calling, scheduled or preparing audio. */
+    liveCampaign: SamparkLiveCampaign | null;
+    /** The next holidays and active campaigns' dates, soonest first, at most 5. */
+    upcoming: UpcomingItem[];
     /** Set while the school is paused (H3). */
     pause: SchoolPause | null;
     activeCampaigns: number;
