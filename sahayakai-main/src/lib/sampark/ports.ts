@@ -18,6 +18,7 @@ import type {
     GuardianPreferences,
     ImportRun,
     Intent,
+    IntentStatus,
     ParentLanguage,
     RenderedClip,
     SamparkCall,
@@ -88,6 +89,13 @@ export interface SamparkRepo {
     createIntentIfAbsent(intent: Intent): Promise<boolean>;
     getIntent(orgId: string, intentId: string): Promise<Intent | null>;
     updateIntent(orgId: string, intentId: string, patch: Partial<Intent>): Promise<void>;
+    /**
+     * Transactional compare-and-set: applies `patch` only if the intent is still in
+     * `expect.status` with `lastCallId === expect.lastCallId`; returns whether it did.
+     * Settling a call uses it so two concurrent settlements of the same call (a retried
+     * hangup racing the sweep) can never both move the intent.
+     */
+    updateIntentIf(orgId: string, intentId: string, expect: { status: IntentStatus; lastCallId: string | null }, patch: Partial<Intent>): Promise<boolean>;
     /** Intents in 'approved' or 'retry_wait' whose notBefore is null or <= now, oldest first. */
     listDueIntents(orgId: string, now: Date, limit: number): Promise<Intent[]>;
     listIntentsByCampaign(orgId: string, campaignId: string): Promise<Intent[]>;
@@ -123,6 +131,13 @@ export interface SamparkRepo {
      * whose hangup never arrives is handed to a person instead of staying open forever.
      */
     listExpiredOpenCalls(orgId: string, now: Date): Promise<SamparkCall[]>;
+    /**
+     * Ended calls never settled (`settledAt === null`, terminal state) that ended at or before
+     * `endedBefore`, oldest first, at most `limit`. The repair sweep: a hangup was recorded but
+     * every attempt to settle it failed, which would otherwise leave its intent 'dialing' forever.
+     * Records written before phase 2a carry no `settledAt` field and are never listed.
+     */
+    listUnsettledEndedCalls(orgId: string, endedBefore: Date, limit: number): Promise<SamparkCall[]>;
     /** Calls in a non-terminal state (for the concurrency cap — computed from records, not a counter). */
     countNonTerminalCalls(orgId: string): Promise<number>;
     /** Calls to this phone hash created at or after `since` (frequency cap). Emergency purposes excluded when asked. */

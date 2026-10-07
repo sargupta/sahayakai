@@ -10,7 +10,9 @@
  *      NEVER re-dialled — a process may have died after the carrier accepted the
  *      call, or the carrier's hangup callback was lost, so the only safe move is
  *      to hand it to a person. The sweep stamps `settledAt`, so a hangup that
- *      arrives afterwards cannot settle the intent into a retry.
+ *      arrives afterwards cannot settle the intent into a retry. It also repairs
+ *      any call that ended more than 5 minutes ago but was never settled, so no
+ *      intent stays 'dialing' for ever (settle.ts `repairUnsettledCall`).
  *   3. Per school (an error in one school never stops the others):
  *        - refuse the school outright in live mode (phase 2a dials parents never),
  *          and in test mode without a test phone;
@@ -49,7 +51,7 @@
 import { logger } from '@/lib/logger';
 import { purposeSpec } from '@/lib/sampark/catalogue';
 import { chooseClosureVariant, istDateString } from '@/lib/sampark/closure';
-import { settleCall, finishCampaign } from '@/lib/sampark/dispatch/settle';
+import { finishCampaign, repairUnsettledCall, SETTLE_REPAIR_GRACE_MS, settleCall } from '@/lib/sampark/dispatch/settle';
 import { applyCallEvent, isTerminal } from '@/lib/sampark/dispatch/state';
 import { callIdFor } from '@/lib/sampark/intents';
 import { evaluateGate, FREQUENCY_WINDOW_MS } from '@/lib/sampark/policy/gate';
@@ -175,6 +177,23 @@ async function sweepSchool(deps: DispatchDeps, orgId: string, now: Date, touched
             action: 'call.swept_unknown',
             target: `call/${stored.id}`,
             detail: { intentId: stored.intentId, attempt: stored.attempt, from: listed.state },
+        });
+    }
+
+    // Repair: an ended call whose settlement never completed (every hangup retry failed after
+    // the call was recorded, or the process died mid-settle) would leave its intent 'dialing'
+    // for ever and its campaign never complete.
+    const unsettled = await repo.listUnsettledEndedCalls(orgId, new Date(now.getTime() - SETTLE_REPAIR_GRACE_MS), 50);
+    for (const call of unsettled) {
+        const result = await repairUnsettledCall(deps, orgId, call.id);
+        if (result === 'noop') continue;
+        if (call.campaignId) touched.add(call.campaignId);
+        await repo.appendAudit(orgId, {
+            at: nowIso,
+            actor: 'dispatcher',
+            action: 'call.settle_repaired',
+            target: `call/${call.id}`,
+            detail: { intentId: call.intentId, result },
         });
     }
     return swept;
@@ -374,6 +393,8 @@ async function processIntent(ctx: SchoolContext, intent: Intent): Promise<boolea
         updatedAt: nowIso,
         endedAt: null,
         failureReason: null,
+        // Explicit null (not absent) so the repair sweep's `settledAt == null` query can find it.
+        settledAt: null,
     };
 
     const claim = await deps.repo.claimIntentForDial(orgId, intent.id, call, now);

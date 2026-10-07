@@ -18,7 +18,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 import { logger } from '@/lib/logger';
-import { getSpeechDeps } from '@/lib/sampark/repo/factory';
+import { getAudioStore } from '@/lib/sampark/repo/factory';
 import { samparkContext, samparkDisabledResponse } from '@/server/sampark/http';
 import { readSamparkVoiceAudio, voiceAudioResponse } from '@/server/sampark/voice';
 
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const disabled = samparkDisabledResponse();
     if (disabled) return disabled;
     try {
-        const [{ repo }, { store }] = await Promise.all([samparkContext(), getSpeechDeps()]);
+        const [{ repo }, store] = await Promise.all([samparkContext(), getAudioStore()]);
         const wav = await readSamparkVoiceAudio({ repo, store }, { token: req.nextUrl.searchParams.get('t') });
         if (!wav) return NextResponse.json({ error: 'Not found' }, { status: 404 });
         return voiceAudioResponse(wav);

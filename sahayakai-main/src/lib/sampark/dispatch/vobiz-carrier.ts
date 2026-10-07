@@ -21,13 +21,13 @@
  * voice webhooks, which feed the same reducer and settle the intent. The
  * dispatcher keeps the call open with a longer lease meanwhile.
  *
- * Failure mapping (VobizFailure category → retryable):
- *   network, provider_rejected            → true   (a transient fault; the intent retries later)
- *   provider_unconfigured, invalid_destination → false (an operator problem; retrying never helps)
- * NOTE for phase 2b: a `network` failure can be ambiguous — the request may have
- * reached Vobiz before the connection dropped. For the test phone a rare second
- * ring is harmless; before parents are dialled it must be treated like a thrown
- * place (left 'dialing' for the sweep), per plan §4⑦.
+ * Failure mapping (VobizFailure category → outcome):
+ *   provider_rejected                          → retryable (Vobiz answered and refused: nothing rang)
+ *   provider_unconfigured, invalid_destination → not retryable (an operator problem)
+ *   network                                    → THROWS. The request may have reached Vobiz before
+ *       the connection dropped, so whether the phone rang is unknown. A thrown place leaves the
+ *       call 'dialing' for the sweep, which hands it to a person and never re-dials (plan §4⑦).
+ *       Retrying here could ring a family twice.
  *
  * The number dialled is never logged. Class gate 2: only the carrier factory
  * (src/server/sampark/carrier.ts) constructs this; only the dispatcher calls `place`.
@@ -55,8 +55,8 @@ export interface VobizNoticeCarrierDeps {
     placeCall?: typeof placeVobizCall;
 }
 
-const RETRYABLE: Record<VobizFailureCategory, boolean> = {
-    network: true,
+/** Only for categories where Vobiz provably did not place the call; `network` never reaches this table. */
+const RETRYABLE: Record<Exclude<VobizFailureCategory, 'network'>, boolean> = {
     provider_rejected: true,
     provider_unconfigured: false,
     invalid_destination: false,
@@ -121,6 +121,10 @@ export function createVobizNoticeCarrier(deps: VobizNoticeCarrierDeps): Carrier 
             if (result.ok) return { ok: true, providerCallId: result.handle.requestUuid, events: [] };
 
             const { category, status: httpStatus } = result.failure;
+            if (category === 'network') {
+                logger.warn('Sampark Vobiz place outcome unknown (network); leaving the call for the sweep', LOG_CONTEXT, { orgId: call.orgId, callId: call.id });
+                throw new Error('vobiz_network_outcome_unknown');
+            }
             logger.warn('Sampark Vobiz call was not placed', LOG_CONTEXT, { orgId: call.orgId, callId: call.id, category, httpStatus: httpStatus ?? null });
             return { ok: false, reason: `vobiz_${category}`, retryable: RETRYABLE[category] };
         },

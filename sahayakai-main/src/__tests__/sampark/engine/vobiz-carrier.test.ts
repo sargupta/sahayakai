@@ -192,8 +192,7 @@ describe('createVobizNoticeCarrier — place', () => {
         expect(placeCall).not.toHaveBeenCalled();
     });
 
-    it.each<[VobizFailureCategory, boolean]>([
-        ['network', true],
+    it.each<[Exclude<VobizFailureCategory, 'network'>, boolean]>([
         ['provider_rejected', true],
         ['provider_unconfigured', false],
         ['invalid_destination', false],
@@ -201,6 +200,13 @@ describe('createVobizNoticeCarrier — place', () => {
         const fake = fakeVobiz({ ok: false, failure: { category, status: category === 'provider_rejected' ? 503 : undefined } });
         const c = createVobizNoticeCarrier({ config: CONFIG, publicBaseUrl: BASE, mintToken: mintSamparkVoiceToken, placeCall: fake.placeCall });
         expect(await c.place(request())).toEqual({ ok: false, reason: `vobiz_${category}`, retryable });
+    });
+
+    it('a network failure is an UNKNOWN outcome: it throws (left for the sweep), never a retryable failure', async () => {
+        // The request may have reached Vobiz before the connection dropped; retrying could ring twice.
+        const fake = fakeVobiz({ ok: false, failure: { category: 'network' } });
+        const c = createVobizNoticeCarrier({ config: CONFIG, publicBaseUrl: BASE, mintToken: mintSamparkVoiceToken, placeCall: fake.placeCall });
+        await expect(c.place(request())).rejects.toThrow('vobiz_network_outcome_unknown');
     });
 
     it('a token that cannot be minted is a clean, retryable failure: Vobiz is never contacted', async () => {
@@ -225,7 +231,9 @@ describe('createVobizNoticeCarrier — place', () => {
             await carrier().carrier.place(request());
             for (const category of ['network', 'provider_rejected', 'provider_unconfigured', 'invalid_destination'] as const) {
                 const fake = fakeVobiz({ ok: false, failure: { category, status: 500 } });
-                await createVobizNoticeCarrier({ config: CONFIG, publicBaseUrl: BASE, mintToken: mintSamparkVoiceToken, placeCall: fake.placeCall }).place(request());
+                await createVobizNoticeCarrier({ config: CONFIG, publicBaseUrl: BASE, mintToken: mintSamparkVoiceToken, placeCall: fake.placeCall })
+                    .place(request())
+                    .catch(() => undefined); // network throws by design
             }
             await carrier({ mintToken: async () => { throw new Error('x'); } }).carrier.place(request());
             await carrier().carrier.place(request({ destinationE164: '+915000000123' }));

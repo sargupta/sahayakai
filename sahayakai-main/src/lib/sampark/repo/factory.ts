@@ -155,4 +155,25 @@ export async function getSpeechDeps(): Promise<SpeechDeps> {
 export function setSpeechDepsForTests(deps: SpeechDeps | null): void {
     speechOverride = deps;
     speechPromise = null;
+    storePromise = null;
+}
+
+let storePromise: Promise<AudioStore> | null = null;
+
+/**
+ * Just the audio store, for routes that only READ rendered audio (the console preview and the
+ * Vobiz `<Play>` fetch). Building the full speech deps would load the Google auth clients on a
+ * cold start for nothing — and Vobiz wants the audio within seconds of answering.
+ */
+export async function getAudioStore(): Promise<AudioStore> {
+    if (speechOverride) return speechOverride.store;
+    if (!storePromise) {
+        storePromise = import('@/lib/sampark/speech/local-audio-store')
+            .then(({ createLocalAudioStore }) => createLocalAudioStore(process.env.SAMPARK_AUDIO_DIR ?? '.sampark-audio'))
+            .catch((err) => {
+                storePromise = null;
+                throw err;
+            });
+    }
+    return storePromise;
 }

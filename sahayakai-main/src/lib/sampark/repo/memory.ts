@@ -225,6 +225,12 @@ export function createMemorySamparkRepo(opts?: { faults?: { failAfterClaim?: (in
             if (!current) throw new Error(`NOT_FOUND: intent ${intentId}`);
             intents.set(orgId, intentId, applyPatch(current, patch));
         },
+        async updateIntentIf(orgId, intentId, expect, patch) {
+            const current = intents.get(orgId, intentId);
+            if (!current || current.status !== expect.status || current.lastCallId !== expect.lastCallId) return false;
+            intents.set(orgId, intentId, applyPatch(current, patch));
+            return true;
+        },
         async listDueIntents(orgId, now, limit) {
             const nowMs = now.getTime();
             return intents
@@ -298,6 +304,16 @@ export function createMemorySamparkRepo(opts?: { faults?: { failAfterClaim?: (in
                 .values(orgId)
                 .filter((c) => OPEN_CALL_STATES.includes(c.state) && ms(c.leaseUntil) <= nowMs)
                 .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+                .map(clone);
+        },
+        async listUnsettledEndedCalls(orgId, endedBefore, limit) {
+            const cutoff = endedBefore.getTime();
+            return calls
+                .values(orgId)
+                .filter((c) => c.settledAt === null && (TERMINAL_CALL_STATES as readonly CallState[]).includes(c.state))
+                .filter((c) => c.endedAt !== null && ms(c.endedAt) <= cutoff)
+                .sort((a, b) => (a.endedAt ?? '').localeCompare(b.endedAt ?? ''))
+                .slice(0, Math.max(0, limit))
                 .map(clone);
         },
         async countNonTerminalCalls(orgId) {
