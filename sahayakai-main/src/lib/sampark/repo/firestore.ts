@@ -17,6 +17,7 @@
  *     sampark_audit/{auto}                          AuditEntry
  *   sampark_locks/{name}                            single-flight lease
  *   sampark_token_burns/{sha256(token)}             single-use voice webhook tokens (TTL on expiresAt)
+ *   sampark_voice_probes/{voiceProbeKey}            VoiceProbeRecord (hard-word probe; voice configs are global)
  *
  * Timestamps are stored as ISO strings, exactly as the domain types declare
  * them, so a document read back IS the domain object (no Timestamp mapping).
@@ -34,6 +35,7 @@ import { Timestamp } from 'firebase-admin/firestore';
 
 import { purposeSpec } from '@/lib/sampark/catalogue';
 import type { AuditEntry, CallListFilter, ClaimResult, SamparkRepo } from '@/lib/sampark/ports';
+import type { VoiceProbeRecord } from '@/lib/sampark/speech/probe';
 import type {
     Campaign,
     CallState,
@@ -420,6 +422,17 @@ export class FirestoreSamparkRepo implements SamparkRepo {
     async listClipsForCampaign(orgId: string, campaignId: string): Promise<RenderedClip[]> {
         const snap = await this.schoolRef(orgId).collection('sampark_clips').where('campaignId', '==', campaignId).get();
         return snap.docs.map((d) => d.data() as RenderedClip);
+    }
+
+    // ── Hard-word voice probes (global, keyed by voiceProbeKey) ─────────────
+
+    async getVoiceProbe(key: string): Promise<VoiceProbeRecord | null> {
+        const snap = await this.db.collection('sampark_voice_probes').doc(key).get();
+        return snap.exists ? (snap.data() as VoiceProbeRecord) : null;
+    }
+
+    async saveVoiceProbe(record: VoiceProbeRecord): Promise<void> {
+        await this.db.collection('sampark_voice_probes').doc(record.key).set(clean(record));
     }
 
     // ── Single-flight lease ─────────────────────────────────────────────────

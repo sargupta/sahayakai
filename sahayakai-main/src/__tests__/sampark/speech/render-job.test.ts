@@ -10,7 +10,10 @@
 import type { AudioStore, SamparkRepo, SpeechSynthesizer, SpeechVerifier } from '@/lib/sampark/ports';
 import { SAMPLE_CLOSURE, SAMPLE_PTM, SAMPLE_SCHOOL } from '@/lib/sampark/scripts/samples';
 import { clipKey } from '@/lib/sampark/speech/clip-key';
-import { isRunaway, MESSAGE_LEAD_IN_SECONDS, neededClips, runRenderStep } from '@/lib/sampark/speech/render-job';
+import { isRunaway, MESSAGE_LEAD_IN_SECONDS, neededClips, runRenderStep, synthesizeClip } from '@/lib/sampark/speech/render-job';
+import { integratedLoudness, mulawDecode, mulawEncode, TELEPHONY_TARGET_LUFS } from '@/lib/sampark/speech/dsp';
+import { PROBES, type VoiceProbeRecord } from '@/lib/sampark/speech/probe';
+import { languageInfo } from '@/lib/sampark/languages';
 import { estimateSeconds } from '@/lib/sampark/scripts/render';
 import { buildMulawWav, mulawSamples, parseWav } from '@/lib/sampark/speech/wav';
 import type { Campaign, CampaignFacts, ParentLanguage, PurposeId, RenderedClip } from '@/types/sampark';
@@ -42,6 +45,7 @@ function campaign(purpose: PurposeId, facts: CampaignFacts): Campaign {
 function fakeRepo(c: Campaign) {
     const clips = new Map<string, RenderedClip>();
     const updates: Partial<Campaign>[] = [];
+    const probes = new Map<string, VoiceProbeRecord>();
     let current = { ...c };
     const repo = {
         getCampaign: async (orgId: string, id: string) => (orgId === c.orgId && id === c.id ? current : null),
@@ -52,6 +56,8 @@ function fakeRepo(c: Campaign) {
             updates.push(patch);
             current = { ...current, ...patch };
         },
+        getVoiceProbe: async (key: string) => probes.get(key) ?? null,
+        saveVoiceProbe: async (record: VoiceProbeRecord) => void probes.set(record.key, record),
     } as unknown as SamparkRepo;
     return { repo, clips, updates, current: () => current };
 }
@@ -71,6 +77,29 @@ function fakeStore() {
  * never contains 0xFF, so the lead-in silence strips off cleanly), reporting
  * 1 s of speech per 12 characters.
  */
+/** The fake audio here is text bytes, not speech: loudness normalisation is exercised in its own test below. */
+const identity = (wav: Buffer): Buffer => wav;
+
+/**
+ * A hard-word probe whose voice is perfect: its own synth and recognisers (so the render
+ * synth/verifier call counts below stay exact), hearing back exactly the probe sentence.
+ */
+function passingVoiceCheck(dropFor?: { language: ParentLanguage; word: string }) {
+    const synth: SpeechSynthesizer = {
+        async synthesize({ text }) {
+            return { audio: buildMulawWav(Buffer.from(text, 'utf8')), mimeType: 'audio/wav', durationSeconds: 1 };
+        },
+    };
+    const hear = (name: string): SpeechVerifier => ({
+        async transcribe({ audio, language }) {
+            const text = mulawSamples(audio).toString('utf8');
+            const drop = name === 'fake-secondary' && dropFor && dropFor.language === language;
+            return { transcript: drop ? text.split(dropFor.word).join('') : text, confidence: 1 };
+        },
+    });
+    return { synth, primary: { name: 'fake-primary', verifier: hear('fake-primary') }, secondaryFor: () => ({ name: 'fake-secondary', verifier: hear('fake-secondary') }) };
+}
+
 function fakeSynth() {
     let inFlight = 0;
     let maxInFlight = 0;
@@ -126,7 +155,7 @@ describe('runRenderStep', () => {
         const { store, files } = fakeStore();
         const s = fakeSynth();
         const v = fakeVerifier();
-        const deps = { repo, synth: s.synth, verifier: v.verifier, store, clock };
+        const deps = { repo, synth: s.synth, verifier: v.verifier, store, clock, normalise: identity, voiceCheck: passingVoiceCheck() };
 
         const first = await runRenderStep(deps, c.orgId, c.id, LANGS, { maxClips: 100, concurrency: 3 });
         expect(first).toEqual({ done: 28, total: 28, failures: [], finished: true });
@@ -150,7 +179,7 @@ describe('runRenderStep', () => {
         expect(message.durationSeconds).toBeCloseTo(Array.from(message.text).length / 12 + MESSAGE_LEAD_IN_SECONDS, 1);
         const confirm = [...clips.values()].find((x) => x.kind === 'confirm_1' && x.language === 'Bengali')!;
         expect(confirm.verification.status).toBe('passed'); // confirmations are heard too
-        expect(confirm.engine).toBe('chirp3-hd');
+        expect(confirm.engine).toBe('gemini-tts-vertex');
 
         const second = await runRenderStep(deps, c.orgId, c.id, LANGS, { maxClips: 100, concurrency: 3 });
         expect(second).toEqual({ done: 28, total: 28, failures: [], finished: true });
@@ -170,7 +199,7 @@ describe('runRenderStep', () => {
                 return s.synth.synthesize(req);
             },
         };
-        await runRenderStep({ repo, synth: recording, verifier: fakeVerifier().verifier, store, clock }, c.orgId, c.id, LANGS, { maxClips: 100, concurrency: 3 });
+        await runRenderStep({ repo, synth: recording, verifier: fakeVerifier().verifier, store, clock, normalise: identity, voiceCheck: passingVoiceCheck() }, c.orgId, c.id, LANGS, { maxClips: 100, concurrency: 3 });
         const kindOf = new Map([...clips.values()].map((x) => [x.text, x.kind]));
         expect(seen.length).toBe(28);
         for (const r of seen) expect(r.delivery).toBe(kindOf.get(r.text) === 'message' ? 'styled' : 'plain');
@@ -182,7 +211,7 @@ describe('runRenderStep', () => {
         const { store } = fakeStore();
         const s = fakeSynth();
         const v = fakeVerifier();
-        const deps = { repo, synth: s.synth, verifier: v.verifier, store, clock };
+        const deps = { repo, synth: s.synth, verifier: v.verifier, store, clock, normalise: identity, voiceCheck: passingVoiceCheck() };
 
         const r1 = await runRenderStep(deps, c.orgId, c.id, ['Hindi', 'Nepali'], { maxClips: 5, concurrency: 2 });
         expect(r1).toMatchObject({ done: 5, total: 14, finished: false });
@@ -198,8 +227,8 @@ describe('runRenderStep', () => {
         const { repo, clips, current } = fakeRepo(c);
         const { store, files } = fakeStore();
         const s = fakeSynth();
-        const v = fakeVerifier((language, spoken) => (language === 'Bengali' && spoken.includes('অভিভাবক-শিক্ষক সভা') ? 'সম্পূর্ণ অন্য কথা' : null));
-        const deps = { repo, synth: s.synth, verifier: v.verifier, store, clock };
+        const v = fakeVerifier((language, spoken) => (language === 'Bengali' && spoken.includes('প্যারেন্ট টিচার মিটিং') ? 'সম্পূর্ণ অন্য কথা' : null));
+        const deps = { repo, synth: s.synth, verifier: v.verifier, store, clock, normalise: identity, voiceCheck: passingVoiceCheck() };
 
         const r = await runRenderStep(deps, c.orgId, c.id, LANGS, { maxClips: 100, concurrency: 4 });
         expect(r.finished).toBe(true);
@@ -235,7 +264,7 @@ describe('runRenderStep', () => {
             },
         };
         const v = fakeVerifier();
-        const r = await runRenderStep({ repo, synth: doubled, verifier: v.verifier, store, clock }, c.orgId, c.id, ['English'], { maxClips: 100, concurrency: 2 });
+        const r = await runRenderStep({ repo, synth: doubled, verifier: v.verifier, store, clock, normalise: identity, voiceCheck: passingVoiceCheck() }, c.orgId, c.id, ['English'], { maxClips: 100, concurrency: 2 });
         expect(r.failures).toEqual([expect.stringMatching(/^English (today|tomorrow|default) confirm_1: similarity 1, [\d.]+ s spoken/)]);
     });
 
@@ -263,7 +292,7 @@ describe('runRenderStep', () => {
             synthesize: (req) => (req.language === 'Hindi' && hindiConfirms.has(req.text) ? Promise.reject(new Error('HTTP 503')) : s.synth.synthesize(req)),
         };
         const v = fakeVerifier();
-        const r = await runRenderStep({ repo, synth: failing, verifier: v.verifier, store, clock }, c.orgId, c.id, LANGS, { maxClips: 100, concurrency: 2 });
+        const r = await runRenderStep({ repo, synth: failing, verifier: v.verifier, store, clock, normalise: identity, voiceCheck: passingVoiceCheck() }, c.orgId, c.id, LANGS, { maxClips: 100, concurrency: 2 });
         expect(r.failures).toEqual([expect.stringMatching(/^Hindi default confirm_1: HTTP 503/), expect.stringMatching(/^Hindi default confirm_2: HTTP 503/)]);
         expect(r.done).toBe(26);
         expect(r.finished).toBe(true);
@@ -273,8 +302,67 @@ describe('runRenderStep', () => {
         const c = campaign('ptm_invite', SAMPLE_PTM);
         const { repo } = fakeRepo(c);
         const { store } = fakeStore();
-        const deps = { repo, synth: fakeSynth().synth, verifier: fakeVerifier().verifier, store, clock };
+        const deps = { repo, synth: fakeSynth().synth, verifier: fakeVerifier().verifier, store, clock, normalise: identity, voiceCheck: passingVoiceCheck() };
         await expect(runRenderStep(deps, c.orgId, 'nope', LANGS, { maxClips: 1, concurrency: 1 })).rejects.toThrow(/not found/);
         await expect(runRenderStep(deps, 'other-org', c.id, LANGS, { maxClips: 1, concurrency: 1 })).rejects.toThrow(/not found/);
+    });
+});
+
+describe('loudness normalisation in the render job', () => {
+    it('by default every stored clip is levelled to the telephony target before it is verified', async () => {
+        // A real tone (not text bytes), far quieter than the target.
+        const quiet = Buffer.from(Array.from({ length: 8000 * 3 }, (_, i) => mulawEncode(Math.round(1200 * Math.sin((2 * Math.PI * 440 * i) / 8000)))));
+        const heard: Buffer[] = [];
+        const result = await synthesizeClip(
+            {
+                synth: { async synthesize() { return { audio: buildMulawWav(quiet), mimeType: 'audio/wav', durationSeconds: 3 }; } },
+                verifier: { async transcribe({ audio }) { heard.push(audio); return { transcript: 'नमस्ते', confidence: 1 }; } },
+                clock,
+            },
+            { kind: 'confirm_1', text: 'नमस्ते', language: 'Hindi', speech: languageInfo('Hindi').speech },
+            { retries: 0 },
+        );
+        const before = integratedLoudness(Float32Array.from(mulawSamples(buildMulawWav(quiet)), (c) => mulawDecode(c) / 32768), 8000);
+        const after = integratedLoudness(Float32Array.from(mulawSamples(result.audio), (c) => mulawDecode(c) / 32768), 8000);
+        expect(before).toBeLessThan(TELEPHONY_TARGET_LUFS - 6);
+        expect(Math.abs(after - TELEPHONY_TARGET_LUFS)).toBeLessThan(0.5);
+        expect(heard[0].equals(result.audio)).toBe(true); // the verifier heard exactly what is stored
+    });
+});
+
+describe('class gate: the hard-word probe guards every language before any audio is made (founder bug, 7 Oct 2026)', () => {
+    it('a voice that mishears one hard word renders nothing in its language, and the reason names the word', async () => {
+        const c = campaign('ptm_invite', SAMPLE_PTM);
+        const { repo } = fakeRepo(c);
+        const { store } = fakeStore();
+        const s = fakeSynth();
+        const v = fakeVerifier();
+        const word = PROBES.Bengali.hardWords.find((w) => w === 'সকাল') ?? PROBES.Bengali.hardWords[0];
+        const deps = { repo, synth: s.synth, verifier: v.verifier, store, clock, normalise: identity, voiceCheck: passingVoiceCheck({ language: 'Bengali', word }) };
+        const r = await runRenderStep(deps, c.orgId, c.id, LANGS, { maxClips: 100, concurrency: 3 });
+        expect(r.finished).toBe(true);
+        const bengali = r.failures.filter((f) => f.startsWith('Bengali'));
+        expect(bengali.length).toBeGreaterThan(0);
+        expect(r.failures.every((f) => f.startsWith('Bengali'))).toBe(true);
+        expect(bengali[0]).toContain('hard-word check');
+        expect(bengali[0]).toContain(word);
+        expect(s.calls.some((t) => /[\u0980-\u09FF]/.test(t))).toBe(false); // not one Bengali clip was synthesised
+    });
+
+    it('a passing probe is stored and reused: the next step does not probe again', async () => {
+        const c = campaign('ptm_invite', SAMPLE_PTM);
+        const { repo } = fakeRepo(c);
+        const { store } = fakeStore();
+        const s = fakeSynth();
+        const v = fakeVerifier();
+        const check = passingVoiceCheck();
+        let probeSyntheses = 0;
+        const counted = { ...check, synth: { synthesize: async (req: Parameters<SpeechSynthesizer['synthesize']>[0]) => { probeSyntheses++; return check.synth.synthesize(req); } } };
+        const deps = { repo, synth: s.synth, verifier: v.verifier, store, clock, normalise: identity, voiceCheck: counted };
+        await runRenderStep(deps, c.orgId, c.id, LANGS, { maxClips: 5, concurrency: 2 });
+        const first = probeSyntheses;
+        await runRenderStep(deps, c.orgId, c.id, LANGS, { maxClips: 100, concurrency: 2 });
+        expect(first).toBeGreaterThan(0);
+        expect(probeSyntheses).toBe(new Set(LANGS).size); // one probe per language, ever, for this voice config
     });
 });

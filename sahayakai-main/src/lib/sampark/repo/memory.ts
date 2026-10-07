@@ -23,6 +23,7 @@
 
 import { purposeSpec } from '@/lib/sampark/catalogue';
 import type { AuditEntry, CallListFilter, ClaimResult, SamparkRepo } from '@/lib/sampark/ports';
+import type { VoiceProbeRecord } from '@/lib/sampark/speech/probe';
 import type {
     Campaign,
     CallState,
@@ -120,6 +121,7 @@ export function createMemorySamparkRepo(opts?: { faults?: { failAfterClaim?: (in
     const clips = new OrgTable<RenderedClip>();
     const locks = new Map<string, { holder: string; expiresAtMs: number }>();
     const burned = new Set<string>();
+    const voiceProbes = new Map<string, VoiceProbeRecord>();
     const audit = new Map<string, AuditEntry[]>();
 
     const repo: SamparkRepo = {
@@ -340,6 +342,14 @@ export function createMemorySamparkRepo(opts?: { faults?: { failAfterClaim?: (in
                 .filter((c) => c.campaignId === campaignId)
                 .sort((a, b) => a.key.localeCompare(b.key))
                 .map(clone);
+        },
+
+        // ── Hard-word voice probes (global) ─────────────────────────────────
+        async getVoiceProbe(key) {
+            return clone(voiceProbes.get(key) ?? null);
+        },
+        async saveVoiceProbe(record) {
+            voiceProbes.set(record.key, clone(record));
         },
 
         // ── Single-flight lease ─────────────────────────────────────────────

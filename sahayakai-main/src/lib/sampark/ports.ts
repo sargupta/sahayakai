@@ -28,6 +28,7 @@ import type {
     Suppression,
 } from '@/types/sampark';
 import type { SpeechEngineConfig } from '@/lib/sampark/languages';
+import type { VoiceProbeRecord } from '@/lib/sampark/speech/probe';
 
 export interface Clock {
     now(): Date;
@@ -147,6 +148,14 @@ export interface SamparkRepo {
     saveClip(clip: RenderedClip): Promise<void>;
     getClip(orgId: string, key: string): Promise<RenderedClip | null>;
     listClipsForCampaign(orgId: string, campaignId: string): Promise<RenderedClip[]>;
+
+    /**
+     * Hard-word probe results (speech/probe.ts), keyed by voiceProbeKey. Global, not per
+     * school: a voice configuration either says the hard words or it does not, whoever uses it.
+     */
+    getVoiceProbe(key: string): Promise<VoiceProbeRecord | null>;
+    /** Upsert: a later run of the same key (a re-probe after a failure) replaces the record. */
+    saveVoiceProbe(record: VoiceProbeRecord): Promise<void>;
 
     /**
      * Single-use tokens (voice webhooks): create-only record of `key` (a hash of the token).

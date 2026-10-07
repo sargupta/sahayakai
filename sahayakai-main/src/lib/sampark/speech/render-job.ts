@@ -7,7 +7,10 @@
  * — is rendered once per language. Then, bounded by `maxClips` per step and
  * `concurrency` in flight:
  *   - clips whose audio and metadata already exist and are not failed are skipped;
- *   - the rest are synthesised; a `message` clip gets a short lead-in silence
+ *   - before anything is synthesised in a language, its voice must pass the hard-word probe
+ *     (two independent recognisers hear a fixed sentence of known-hard words exactly);
+ *     a voice that fails makes every clip in that language fail with the words it missed;
+ *   - the rest are synthesised and loudness-normalised; a `message` clip gets a short lead-in silence
  *     and is transcribed back (number-normalised similarity ≥ 0.85), retried
  *     once on a mismatch (TTS is not deterministic), and recorded as failed
  *     with its transcript if it still does not match;
@@ -24,6 +27,8 @@ import { audienceLabelFor, COMMON_CLIP_KINDS, estimateSeconds, renderNoticeScrip
 import type { ClipKind, ParentLanguage, RenderedClip } from '@/types/sampark';
 
 import { clipKey } from './clip-key';
+import { normaliseTelephonyWav } from './dsp';
+import { ensureVoiceProbe } from './probe';
 import { transcriptSimilarity, VERIFY_THRESHOLD } from './verify';
 import { prependSilence } from './wav';
 
@@ -36,7 +41,22 @@ export interface RenderStepDeps {
     verifier: SpeechVerifier;
     store: AudioStore;
     clock: Clock;
+    /** Loudness normalisation of every clip; defaults to normaliseTelephonyWav. Tests whose fake audio is not speech inject identity. */
+    normalise?: (wav: Buffer) => Buffer;
+    /**
+     * The hard-word probe (speech/probe.ts) — required, never optional: no audio is rendered
+     * for a language until its voice passes. `synth` defaults to the render synthesizer.
+     */
+    voiceCheck: VoiceCheckDeps;
 }
+
+export interface VoiceCheckDeps {
+    synth?: SpeechSynthesizer;
+    primary: { name: string; verifier: SpeechVerifier };
+    secondaryFor(language: ParentLanguage): { name: string; verifier: SpeechVerifier };
+}
+
+const defaultNormalise = (wav: Buffer): Buffer => normaliseTelephonyWav(wav).wav;
 
 export interface RenderStepResult {
     done: number;
@@ -85,7 +105,7 @@ export function isRunaway(spokenSeconds: number, text: string, language: ParentL
  * no clip may carry words that are not in its reviewed template).
  */
 export async function synthesizeClip(
-    deps: Pick<RenderStepDeps, 'synth' | 'verifier' | 'clock'>,
+    deps: Pick<RenderStepDeps, 'synth' | 'verifier' | 'clock' | 'normalise'>,
     clip: Pick<NeededClip, 'kind' | 'text' | 'language' | 'speech'>,
     opts: { retries?: number } = {},
 ): Promise<ClipAudio> {
@@ -100,7 +120,11 @@ export async function synthesizeClip(
             speech: clip.speech,
             delivery: clip.kind === 'message' ? 'styled' : 'plain',
         });
-        const audio = clip.kind === 'message' ? prependSilence(synthesized.audio, MESSAGE_LEAD_IN_SECONDS) : synthesized.audio;
+        // Every clip is brought to the same loudness BEFORE it is verified and stored, so the
+        // parent hears what was checked and no language is quieter than another (it was: −20.7
+        // to −15.2 LUFS across the four languages on 7 Oct 2026).
+        const levelled = (deps.normalise ?? defaultNormalise)(synthesized.audio);
+        const audio = clip.kind === 'message' ? prependSilence(levelled, MESSAGE_LEAD_IN_SECONDS) : levelled;
         const durationSeconds =
             Math.round((synthesized.durationSeconds + (clip.kind === 'message' ? MESSAGE_LEAD_IN_SECONDS : 0)) * 100) / 100;
         const { transcript } = await deps.verifier.transcribe({
@@ -191,7 +215,46 @@ export async function runRenderStep(
     );
     const attempted = new Set<State>(queue);
 
-    await mapBounded(queue, opts.concurrency, async (state) => {
+    // Class gate (founder-observed bug, 7 Oct 2026): no clip is rendered in a language until
+    // its voice passes the hard-word probe — a fixed sentence of known-hard words heard back
+    // exactly by two independent recognisers. Transcribe-back alone passed a Bengali voice
+    // that mispronounced সকাল and আটই (similarity 0.954).
+    const refused = new Map<ParentLanguage, string>();
+    for (const language of [...new Set(queue.map((s) => s.clip.language))]) {
+        const speech = queue.find((s) => s.clip.language === language)!.clip.speech;
+        try {
+            const record = await ensureVoiceProbe(
+                {
+                    repo: deps.repo,
+                    synth: deps.voiceCheck.synth ?? deps.synth,
+                    primary: deps.voiceCheck.primary,
+                    secondary: deps.voiceCheck.secondaryFor(language),
+                    clock: deps.clock,
+                    normalise: deps.normalise ?? defaultNormalise,
+                },
+                language,
+                speech,
+            );
+            if (record.status !== 'passed') {
+                const heard = record.recognizers
+                    .filter((r) => r.missing.length > 0)
+                    .map((r) => `${r.name} did not hear ${r.missing.join(', ')}`)
+                    .join('; ');
+                refused.set(language, `the ${language} voice failed the hard-word check (${heard}); no ${language} audio is made until a voice passes`);
+            }
+        } catch (err) {
+            refused.set(language, `the ${language} voice check could not run (${err instanceof Error ? err.message.slice(0, 160) : String(err)}); try preparing the audio again`);
+        }
+    }
+    for (const state of queue) {
+        const why = refused.get(state.clip.language);
+        if (why) {
+            state.status = 'failed';
+            state.failure = `${failureLabel(state.clip)}: ${why}`;
+        }
+    }
+
+    await mapBounded(queue.filter((s) => !refused.has(s.clip.language)), opts.concurrency, async (state) => {
         const { clip } = state;
         try {
             const result = await synthesizeClip(deps, clip);

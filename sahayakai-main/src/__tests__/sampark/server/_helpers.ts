@@ -11,6 +11,7 @@ import crypto from 'node:crypto';
 
 import type { AudioStore, Clock, SamparkRepo, SpeechSynthesizer, SpeechVerifier } from '@/lib/sampark/ports';
 import { buildMulawWav, mulawSamples } from '@/lib/sampark/speech/wav';
+import type { VoiceCheckDeps } from '@/lib/sampark/speech/render-job';
 
 export const ORG = 'hillview-demo';
 export const ADMIN = 'dev-user-123';
@@ -138,6 +139,8 @@ export function fakeSpeech(opts: { secondsPerClip?: number; mishear?: (text: str
     synth: SpeechSynthesizer & { calls: number };
     verifier: SpeechVerifier;
     store: AudioStore & { keys(): string[] };
+    voiceCheck: VoiceCheckDeps;
+    normalise: (wav: Buffer) => Buffer;
 } {
     const seconds = opts.secondsPerClip ?? 2;
     const synth = {
@@ -175,7 +178,24 @@ export function fakeSpeech(opts: { secondsPerClip?: number; mishear?: (text: str
         },
         keys: () => [...blobs.keys()],
     };
-    return { synth, verifier, store };
+    // The hard-word probe: its own perfect voice and two recognisers, so synth.calls counts only
+    // campaign clips. Audio here is text bytes, so loudness normalisation is identity.
+    const probeSynth: SpeechSynthesizer = {
+        async synthesize(req) {
+            return { audio: buildMulawWav(Buffer.from(req.text, 'utf8')), mimeType: 'audio/wav' as const, durationSeconds: 1 };
+        },
+    };
+    const hear = (): SpeechVerifier => ({
+        async transcribe(req) {
+            return { transcript: mulawSamples(req.audio).toString('utf8'), confidence: 1 };
+        },
+    });
+    const voiceCheck: VoiceCheckDeps = {
+        synth: probeSynth,
+        primary: { name: 'fake-primary', verifier: hear() },
+        secondaryFor: () => ({ name: 'fake-secondary', verifier: hear() }),
+    };
+    return { synth, verifier, store, voiceCheck, normalise: (wav: Buffer) => wav };
 }
 
 // ── Fake Firestore for the org-admin rule (organizations / members / users) ─

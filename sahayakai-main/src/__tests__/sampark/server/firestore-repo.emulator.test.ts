@@ -16,6 +16,7 @@ import { deleteApp, initializeApp, type App } from 'firebase-admin/app';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 
 import { FirestoreSamparkRepo } from '@/lib/sampark/repo/firestore';
+import { PROBE_VERSION, voiceProbeKey, type VoiceProbeRecord } from '@/lib/sampark/speech/probe';
 import type {
     Campaign,
     ImportRun,
@@ -247,6 +248,29 @@ d('FirestoreSamparkRepo (emulator)', () => {
         await repo.appendAudit(ORG, { at: iso(), actor: 'u', action: 'campaign.approve', target: 'campaign/camp-1' });
         const audit = await db.collection('sampark_schools').doc(ORG).collection('sampark_audit').get();
         expect(audit.size).toBe(1);
+    });
+
+    it('hard-word voice probes: global sampark_voice_probes/{key}, round-trip, re-probe replaces', async () => {
+        // A per-run voice name keeps this test independent of earlier runs on the same emulator.
+        const speech = { engine: 'gemini-tts' as const, ttsLanguageCode: 'bn-IN', voice: `Kore-${ORG}`, model: 'gemini-x-tts', sttLanguageCode: 'bn-IN' };
+        const key = voiceProbeKey(speech);
+        expect(await repo.getVoiceProbe(key)).toBeNull();
+
+        const failed: VoiceProbeRecord = {
+            key, language: 'Bengali', speech, probeVersion: PROBE_VERSION, status: 'failed', checkedAt: iso(),
+            recognizers: [
+                { name: 'chirp_2', transcript: 'এই বৃহস্পতিবার আটি অক্টোবর', missing: ['আটই'] },
+                { name: 'sarvam', transcript: 'কাল সাড়ে দশটায়', missing: ['সকাল'] },
+            ],
+        };
+        await repo.saveVoiceProbe(failed);
+        expect(await repo.getVoiceProbe(key)).toEqual(failed);
+        expect((await db.collection('sampark_voice_probes').doc(key).get()).exists).toBe(true);
+
+        const passed: VoiceProbeRecord = { ...failed, status: 'passed', checkedAt: iso(60_000), recognizers: failed.recognizers.map((r) => ({ ...r, missing: [] })) };
+        await repo.saveVoiceProbe(passed);
+        expect(await repo.getVoiceProbe(key)).toEqual(passed);
+        expect(await repo.getVoiceProbe(voiceProbeKey({ ...speech, model: 'other-model' }))).toBeNull();
     });
 });
 

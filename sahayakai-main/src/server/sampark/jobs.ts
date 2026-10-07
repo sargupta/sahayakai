@@ -100,7 +100,7 @@ async function renderOne(deps: JobDeps & { speech: SpeechDeps }, school: Sampark
     let result: { done: number; total: number; failures: string[]; finished: boolean };
     try {
         result = await runRenderStep(
-            { repo, synth: speech.synth, verifier: speech.verifier, store: speech.store, clock },
+            { repo, synth: speech.synth, verifier: speech.verifier, store: speech.store, clock, voiceCheck: speech.voiceCheck, normalise: speech.normalise },
             school.orgId,
             campaign.id,
             languages,
