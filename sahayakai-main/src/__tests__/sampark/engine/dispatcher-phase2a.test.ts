@@ -293,14 +293,90 @@ describe('real carrier: the call stays open until its hangup webhook settles it'
         expect(await repo.getIntent(ORG, idFor('g001'))).toMatchObject({ status: 'retry_wait' });
     });
 
-    it('a provider failure is a clean failure: retryable categories retry, operator ones close the intent', async () => {
-        for (const [category, status] of [['network', 'retry_wait'], ['provider_unconfigured', 'done']] as const) {
+    it('a provider failure is a clean failure: a refusal retries, an operator problem closes the intent', async () => {
+        for (const [category, status] of [['provider_rejected', 'retry_wait'], ['provider_unconfigured', 'done']] as const) {
             const { repo, clock } = await testModeSetup(1);
             const vobiz = fakeVobizCarrier(undefined, { ok: false, failure: { category } });
             await runDispatchTick(deps(repo, clock, vobiz.carrier), DEFAULT_OPTS);
             expect(await onlyCall(repo)).toMatchObject({ state: 'failed', failureReason: `vobiz_${category}` });
             expect(await repo.getIntent(ORG, idFor('g001'))).toMatchObject({ status });
         }
+    });
+
+    it('a network failure is an unknown outcome: never retried, swept to a person after the lease (class gate 3)', async () => {
+        const { repo, clock } = await testModeSetup(1);
+        const vobiz = fakeVobizCarrier(undefined, { ok: false, failure: { category: 'network' } });
+        const d = deps(repo, clock, vobiz.carrier);
+        const report = await runDispatchTick(d, DEFAULT_OPTS);
+        expect(report.errors.join(' ')).toContain('vobiz_network_outcome_unknown');
+        expect(await onlyCall(repo)).toMatchObject({ state: 'dialing' });
+        expect(await repo.getIntent(ORG, idFor('g001'))).toMatchObject({ status: 'dialing' });
+
+        clock.advance(DEFAULT_OPTS.leaseMs + 1000);
+        expect((await runDispatchTick(d, DEFAULT_OPTS)).swept).toBe(1);
+        expect(await onlyCall(repo)).toMatchObject({ state: 'unknown' });
+        expect(await repo.getIntent(ORG, idFor('g001'))).toMatchObject({ status: 'needs_review' });
+        clock.advance(6 * HOUR);
+        await runDispatchTick(d, DEFAULT_OPTS);
+        expect(vobiz.sent).toHaveLength(1); // never dialled again
+    });
+});
+
+describe('settlement is once-only and self-repairing', () => {
+    it('two settlements racing on the same ended call move the intent once and write one opt-out', async () => {
+        const { repo, clock } = await testModeSetup(1);
+        await runDispatchTick(deps(repo, clock, fakeVobizCarrier().carrier), DEFAULT_OPTS);
+        const callId = callIdFor(idFor('g001'), 1);
+        await webhook(repo, callId, { type: 'answered', at: clock.now().toISOString() });
+        await webhook(repo, callId, { type: 'digit', at: clock.now().toISOString(), digit: '9' });
+        await webhook(repo, callId, { type: 'hangup', at: clock.now().toISOString(), cause: 'completed', durationSeconds: 40, billedSeconds: 60 });
+        const updateIntentIf = jest.spyOn(repo, 'updateIntentIf');
+        const audits = jest.spyOn(repo, 'appendAudit');
+        const results = await Promise.all([settleCall({ repo, clock }, ORG, callId), settleCall({ repo, clock }, ORG, callId)]);
+        expect(results.sort()).toEqual(['noop', 'settled']);
+        expect((await Promise.all(updateIntentIf.mock.results.map((r) => r.value))).filter(Boolean)).toHaveLength(1);
+        expect(audits.mock.calls.filter(([, e]) => e.action === 'test_call.opt_out_pressed')).toHaveLength(1);
+        expect(await repo.getIntent(ORG, idFor('g001'))).toMatchObject({ status: 'done', attempts: 1 });
+    });
+
+    it('an ended call whose settlement never ran is settled by the repair sweep after 5 minutes, and only once', async () => {
+        const { repo, clock } = await testModeSetup(1);
+        const d = deps(repo, clock, fakeVobizCarrier().carrier);
+        await runDispatchTick(d, DEFAULT_OPTS);
+        const callId = callIdFor(idFor('g001'), 1);
+        // The hangup was recorded, but every settle attempt failed (no settleCall here).
+        await webhook(repo, callId, { type: 'hangup', at: clock.now().toISOString(), cause: 'no_answer', durationSeconds: 0, billedSeconds: 0 });
+        clock.advance(2 * MIN);
+        await runDispatchTick(d, DEFAULT_OPTS);
+        expect(await repo.getIntent(ORG, idFor('g001'))).toMatchObject({ status: 'dialing' }); // inside the grace period
+        clock.advance(4 * MIN);
+        const audits = jest.spyOn(repo, 'appendAudit');
+        await runDispatchTick(d, DEFAULT_OPTS);
+        expect(await repo.getIntent(ORG, idFor('g001'))).toMatchObject({ status: 'retry_wait' });
+        expect((await repo.getCall(ORG, callId))?.settledAt).toBe(clock.now().toISOString());
+        expect(audits.mock.calls.filter(([, e]) => e.action === 'call.settle_repaired')).toHaveLength(1);
+        await runDispatchTick(d, DEFAULT_OPTS);
+        expect(audits.mock.calls.filter(([, e]) => e.action === 'call.settle_repaired')).toHaveLength(1);
+    });
+
+    it('a settlement that moved the intent but died before stamping is closed by the repair sweep without acting twice', async () => {
+        const { repo, clock } = await testModeSetup(1);
+        const d = deps(repo, clock, fakeVobizCarrier().carrier);
+        await runDispatchTick(d, DEFAULT_OPTS);
+        const callId = callIdFor(idFor('g001'), 1);
+        await webhook(repo, callId, { type: 'hangup', at: clock.now().toISOString(), cause: 'no_answer', durationSeconds: 0, billedSeconds: 0 });
+        jest.spyOn(repo, 'mutateCall').mockImplementationOnce(async () => {
+            throw new Error('process died before the stamp');
+        });
+        await expect(settleCall({ repo, clock }, ORG, callId)).rejects.toThrow('process died');
+        const moved = await repo.getIntent(ORG, idFor('g001'));
+        expect(moved).toMatchObject({ status: 'retry_wait' });
+        clock.advance(6 * MIN);
+        const updateIntentIf = jest.spyOn(repo, 'updateIntentIf');
+        await runDispatchTick(d, { ...DEFAULT_OPTS, maxDialsPerSchoolPerTick: 0 });
+        expect((await repo.getCall(ORG, callId))?.settledAt).toBe(clock.now().toISOString());
+        expect(await updateIntentIf.mock.results[0]?.value).toBeUndefined(); // the intent was never moved again
+        expect(await repo.getIntent(ORG, idFor('g001'))).toMatchObject({ status: 'retry_wait', notBefore: moved?.notBefore });
     });
 });
 

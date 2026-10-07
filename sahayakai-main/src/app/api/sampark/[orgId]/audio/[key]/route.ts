@@ -12,7 +12,7 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 
-import { getSpeechDeps } from '@/lib/sampark/repo/factory';
+import { getAudioStore } from '@/lib/sampark/repo/factory';
 import { AudioKeySchema, getClipAudio } from '@/server/sampark/audio';
 import { toPcm16Wav } from '@/server/sampark/audio-format';
 import { errorResponse, guardOrgRoute, invalidRequest, samparkContext } from '@/server/sampark/http';
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ orgI
     const key = AudioKeySchema.safeParse(p.key);
     if (!key.success) return invalidRequest(key.error);
     try {
-        const { store } = await getSpeechDeps();
+        const store = await getAudioStore();
         const { audio: stored } = await getClipAudio(await samparkContext(), store, guard.orgId, key.data);
         // Browsers cannot all decode μ-law WAV; the console asks for ?format=pcm (same samples, 16-bit).
         const audio = req.nextUrl.searchParams.get('format') === 'pcm' ? toPcm16Wav(stored) : stored;

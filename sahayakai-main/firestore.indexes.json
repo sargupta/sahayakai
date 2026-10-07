@@ -597,6 +597,20 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "sampark_calls",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "settledAt",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "state",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [
@@ -771,6 +785,12 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "sampark_token_burns",
+      "fieldPath": "expiresAt",
+      "ttl": true,
+      "indexes": []
     }
   ]
 }

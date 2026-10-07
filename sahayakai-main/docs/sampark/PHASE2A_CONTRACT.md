@@ -134,10 +134,10 @@ Built by three parallel streams against this contract, integrated and verified:
 
 **Deviations accepted from the streams** (each documented in its file header): the carrier also refuses any call not addressed to the test phone (`guardian_dial_not_enabled`, a third independent block until phase 2b); the status webhook answers 500 only when our own storage fails, so Vobiz's retry can finish the write; on the opt-out step any key plays `opt_out_done` (the first 9 already stands); a call answered without verified audio is failed and settled as not retryable.
 
-**Follow-ups before Live (phase 2b), not blocking Test mode:**
-1. Repair path for an intent stuck in `dialing` when the hangup was recorded but `settleCall` failed on every Vobiz retry (the sweep only lists open calls).
-2. A Firestore TTL policy on `sampark_token_burns.expiresAt` (ops, one command).
-3. Treat a `network` failure from Vobiz as ambiguous (left for the sweep, never retried) before any parent is dialled.
-4. `classifyPhone` accepts landlines whose STD code starts 6–9 (e.g. Bengaluru 80…); fine for an admin's own test phone, not for parents.
-5. `settleCall`'s once-only check is not transactional; a simultaneous duplicate hangup could double-write (near-harmless today).
-6. The audio route builds the full speech deps to reach the store; a plain `getAudioStore()` would trim cold starts.
+**Follow-ups before Live — status (2026-10-07):**
+1. **Done.** Repair sweep: every dispatcher tick settles any call that ended more than 5 minutes ago without a settlement (`listUnsettledEndedCalls` + `repairUnsettledCall`, audited `call.settle_repaired`); new calls carry an explicit `settledAt: null` so the query finds them. Composite index `(settledAt, state)` declared.
+2. **Done (declarative).** TTL on `sampark_token_burns.expiresAt` is declared in `firestore.indexes.json` `fieldOverrides`; it takes effect with the next `firebase deploy --only firestore:indexes`.
+3. **Done.** A Vobiz `network` failure now THROWS (`vobiz_network_outcome_unknown`): the call stays `dialing`, the sweep hands it to a person, it is never retried. Only `provider_rejected` (Vobiz answered and refused) retries.
+4. **Not a code change.** Indian mobile and landline numbers cannot be told apart by leading digits (mobile series and STD codes overlap, e.g. 80…); `classifyPhone` means "dialable Indian number with a mobile-series first digit". A landline is still a real phone, so the failure mode is a call to the right family's landline, not a stranger. Parents' numbers come from the school's records.
+5. **Done.** Settlement moves the intent by compare-and-set (`updateIntentIf`): two settlements racing on one call (retried hangup vs repair sweep) move it once and write one opt-out; a settlement that dies after moving the intent is closed by the repair sweep without acting twice.
+6. **Done.** `getAudioStore()` serves both audio routes without loading the Google speech clients.

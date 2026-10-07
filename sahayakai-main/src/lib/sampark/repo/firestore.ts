@@ -40,6 +40,7 @@ import type {
     GuardianPreferences,
     ImportRun,
     Intent,
+    IntentStatus,
     RenderedClip,
     SamparkCall,
     SamparkGuardian,
@@ -47,6 +48,7 @@ import type {
     SamparkStudent,
     Suppression,
 } from '@/types/sampark';
+import { TERMINAL_CALL_STATES } from '@/types/sampark';
 
 /** Firestore allows 500 writes per batch; stay well under it. */
 export const MAX_BATCH_WRITES = 400;
@@ -54,6 +56,7 @@ export const MAX_BATCH_WRITES = 400;
 const MAX_GET_ALL = 300;
 
 const NON_TERMINAL_CALL_STATES: CallState[] = ['dialing', 'ringing', 'in_progress'];
+const TERMINAL_CALL_STATES_LIST: CallState[] = [...TERMINAL_CALL_STATES];
 const DUE_INTENT_STATUSES = ['approved', 'retry_wait'];
 
 /** gRPC ALREADY_EXISTS — what `.create()` throws when the document exists. */
@@ -240,6 +243,18 @@ export class FirestoreSamparkRepo implements SamparkRepo {
         await this.schoolRef(orgId).collection('sampark_intents').doc(intentId).update(clean(patch) as Record<string, unknown>);
     }
 
+    async updateIntentIf(orgId: string, intentId: string, expect: { status: IntentStatus; lastCallId: string | null }, patch: Partial<Intent>): Promise<boolean> {
+        const ref = this.schoolRef(orgId).collection('sampark_intents').doc(intentId);
+        return this.db.runTransaction(async (tx) => {
+            const snap = await tx.get(ref);
+            if (!snap.exists) return false;
+            const current = snap.data() as Intent;
+            if (current.status !== expect.status || (current.lastCallId ?? null) !== expect.lastCallId) return false;
+            tx.update(ref, clean(patch) as Record<string, unknown>);
+            return true;
+        });
+    }
+
     /**
      * 'approved' | 'retry_wait' with notBefore null or <= now, oldest (createdAt) first.
      * Firestore cannot express "null OR <= now" in one query, so two bounded
@@ -347,6 +362,23 @@ export class FirestoreSamparkRepo implements SamparkRepo {
             .where('leaseUntil', '<', now.toISOString())
             .get();
         return snap.docs.map((d) => d.data() as SamparkCall);
+    }
+
+    async listUnsettledEndedCalls(orgId: string, endedBefore: Date, limit: number): Promise<SamparkCall[]> {
+        // Equality on settledAt (null, never a missing field) + state: the composite index
+        // (settledAt, state) is declared in firestore.indexes.json. The cut-off is applied in
+        // memory — unsettled ended calls are rare, so the read is small.
+        const snap = await this.schoolRef(orgId).collection('sampark_calls')
+            .where('settledAt', '==', null)
+            .where('state', 'in', TERMINAL_CALL_STATES_LIST)
+            .limit(Math.max(1, limit * 2))
+            .get();
+        const cutoff = endedBefore.toISOString();
+        return snap.docs
+            .map((d) => d.data() as SamparkCall)
+            .filter((c) => c.endedAt !== null && c.endedAt <= cutoff)
+            .sort((a, b) => (a.endedAt ?? '').localeCompare(b.endedAt ?? ''))
+            .slice(0, limit);
     }
 
     async countNonTerminalCalls(orgId: string): Promise<number> {

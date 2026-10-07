@@ -202,6 +202,31 @@ describe('memory repo — calls', () => {
         expect((await repo.listExpiredOpenCalls(ORG, later)).map((c) => c.intentId).sort()).toEqual(['p', 'r']);
     });
 
+    it('updateIntentIf moves an intent only from the expected status and call', async () => {
+        const repo = createMemorySamparkRepo();
+        await repo.createIntentIfAbsent(intent('i1'));
+        await repo.claimIntentForDial(ORG, 'i1', call('i1', 1), WED_11_IST);
+        const cid = callIdFor('i1', 1);
+        expect(await repo.updateIntentIf(ORG, 'i1', { status: 'dialing', lastCallId: 'other' }, { status: 'done' })).toBe(false);
+        expect(await repo.updateIntentIf(ORG, 'i1', { status: 'dialing', lastCallId: cid }, { status: 'done' })).toBe(true);
+        expect(await repo.updateIntentIf(ORG, 'i1', { status: 'dialing', lastCallId: cid }, { status: 'retry_wait' })).toBe(false);
+        expect(await repo.getIntent(ORG, 'i1')).toMatchObject({ status: 'done' });
+        expect(await repo.updateIntentIf(ORG, 'missing', { status: 'dialing', lastCallId: cid }, { status: 'done' })).toBe(false);
+    });
+
+    it('lists ended-but-unsettled calls past the cut-off, never open, settled or pre-2a (no field) ones', async () => {
+        const repo = createMemorySamparkRepo();
+        for (const id of ['a', 'b', 'c', 'd', 'e']) await repo.createIntentIfAbsent(intent(id));
+        for (const id of ['a', 'b', 'c', 'd', 'e']) await repo.claimIntentForDial(ORG, id, call(id, 1, { settledAt: null }), WED_11_IST);
+        await repo.updateCall(ORG, callIdFor('a', 1), { state: 'no_answer', endedAt: '2026-10-07T05:31:00.000Z' });
+        await repo.updateCall(ORG, callIdFor('b', 1), { state: 'completed', endedAt: '2026-10-07T05:40:00.000Z' }); // after the cut-off
+        await repo.updateCall(ORG, callIdFor('c', 1), { state: 'busy', endedAt: '2026-10-07T05:31:00.000Z', settledAt: '2026-10-07T05:31:01.000Z' });
+        await repo.updateCall(ORG, callIdFor('e', 1), { state: 'failed', endedAt: '2026-10-07T05:30:30.000Z', settledAt: undefined });
+        // d stays open
+        const cutoff = new Date('2026-10-07T05:35:00.000Z');
+        expect((await repo.listUnsettledEndedCalls(ORG, cutoff, 10)).map((c) => c.intentId)).toEqual(['a']);
+    });
+
     it('burns a token exactly once', async () => {
         const repo = createMemorySamparkRepo();
         expect(await repo.burnToken('k1', '2026-10-07T06:00:00.000Z')).toBe(true);

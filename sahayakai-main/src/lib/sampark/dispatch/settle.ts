@@ -119,8 +119,12 @@ export async function finishCampaign(repo: SamparkRepo, orgId: string, campaignI
 
 /**
  * Idempotent: a no-op ('noop') unless the call is terminal, `settledAt` is unset, and its
- * intent is still 'dialing' on exactly this call. Otherwise updates the intent, records a
- * keypad opt-out, stamps `settledAt`, and (unless told not to) refreshes the campaign.
+ * intent is still 'dialing' on exactly this call. The intent moves by compare-and-set
+ * (`updateIntentIf`), so two settlements racing on the same call (a retried hangup and the
+ * repair sweep) can never both move it, schedule two retries or write two opt-outs. Then
+ * records a keypad opt-out, stamps `settledAt`, and (unless told not to) refreshes the campaign.
+ * If the process dies between the intent update and the stamp, the repair sweep
+ * (`repairUnsettledCall`) finds the call and closes it without acting twice.
  */
 export async function settleCall(deps: SettleDeps, orgId: string, callId: string, opts: SettleOptions = {}): Promise<'settled' | 'noop'> {
     const { repo, clock } = deps;
@@ -130,19 +134,43 @@ export async function settleCall(deps: SettleDeps, orgId: string, callId: string
     if (!intent || intent.status !== 'dialing' || intent.lastCallId !== call.id) return 'noop';
 
     const now = clock.now();
-    let spec: PurposeSpec;
+    let patch: Partial<Intent>;
     try {
-        spec = purposeSpec(call.purpose);
+        patch = settleIntentPatch(call, intent, purposeSpec(call.purpose), now, opts.retryable ?? true);
     } catch {
         // A purpose that no longer exists cannot be retried: close the intent.
-        await repo.updateIntent(orgId, intent.id, { status: 'done', attempts: call.attempt, lastCallId: call.id, updatedAt: now.toISOString() });
-        await repo.updateCall(orgId, call.id, { settledAt: now.toISOString() });
-        return 'settled';
+        patch = { status: 'done', attempts: call.attempt, lastCallId: call.id, updatedAt: now.toISOString() };
     }
+    const moved = await repo.updateIntentIf(orgId, intent.id, { status: 'dialing', lastCallId: call.id }, patch);
+    if (!moved) return 'noop';
 
-    await repo.updateIntent(orgId, intent.id, settleIntentPatch(call, intent, spec, now, opts.retryable ?? true));
     await recordOptOut(repo, call, now, call.carrier === 'simulated' ? 'dispatcher' : 'carrier');
-    await repo.updateCall(orgId, call.id, { settledAt: now.toISOString() });
+    await stampSettled(repo, orgId, call.id, now);
     if (call.campaignId && (opts.recompute ?? true)) await finishCampaign(repo, orgId, call.campaignId, now);
     return 'settled';
+}
+
+/** Sets settledAt once, on a terminal call; never overwrites an earlier stamp. */
+async function stampSettled(repo: SamparkRepo, orgId: string, callId: string, now: Date): Promise<void> {
+    await repo.mutateCall(orgId, callId, (current) =>
+        current.settledAt || !isTerminal(current.state) ? null : { ...current, settledAt: now.toISOString() },
+    );
+}
+
+/** How long after a call ended the repair sweep waits, so it never races a hangup webhook still settling it. */
+export const SETTLE_REPAIR_GRACE_MS = 5 * 60_000;
+
+/**
+ * The repair sweep for one ended-but-unsettled call: settle it now if its intent is still
+ * waiting on it ('settled'); otherwise its intent already moved on — the settlement got as far
+ * as the intent and then failed, or a person or the sweep took over — so only the stamp is
+ * missing ('closed'). Either way the call is never listed again.
+ */
+export async function repairUnsettledCall(deps: SettleDeps, orgId: string, callId: string): Promise<'settled' | 'closed' | 'noop'> {
+    const settled = await settleCall(deps, orgId, callId, { recompute: false });
+    if (settled === 'settled') return 'settled';
+    const call = await deps.repo.getCall(orgId, callId);
+    if (!call || !isTerminal(call.state) || call.settledAt) return 'noop';
+    await stampSettled(deps.repo, orgId, callId, deps.clock.now());
+    return 'closed';
 }

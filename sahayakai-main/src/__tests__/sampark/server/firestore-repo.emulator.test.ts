@@ -146,6 +146,22 @@ d('FirestoreSamparkRepo (emulator)', () => {
         expect(await repo.claimIntentForDial(ORG, 'no-such-intent', call('call-x'), T0)).toBe('not_claimable');
     });
 
+    it('compare-and-set intent updates and the unsettled-ended-call query work on real Firestore', async () => {
+        await repo.createIntentIfAbsent(intent('i-cas'));
+        await repo.claimIntentForDial(ORG, 'i-cas', call('cas1', { intentId: 'i-cas', settledAt: null }), T0);
+        expect(await repo.updateIntentIf(ORG, 'i-cas', { status: 'dialing', lastCallId: 'nope' }, { status: 'done' })).toBe(false);
+        const [a, b] = await Promise.all([
+            repo.updateIntentIf(ORG, 'i-cas', { status: 'dialing', lastCallId: 'cas1' }, { status: 'done' }),
+            repo.updateIntentIf(ORG, 'i-cas', { status: 'dialing', lastCallId: 'cas1' }, { status: 'retry_wait' }),
+        ]);
+        expect([a, b].filter(Boolean)).toHaveLength(1);
+
+        await repo.updateCall(ORG, 'cas1', { state: 'no_answer', endedAt: iso(-10 * 60_000) });
+        expect((await repo.listUnsettledEndedCalls(ORG, new Date(T0.getTime() - 5 * 60_000), 10)).map((c) => c.id)).toContain('cas1');
+        await repo.updateCall(ORG, 'cas1', { settledAt: iso() });
+        expect((await repo.listUnsettledEndedCalls(ORG, new Date(T0.getTime() - 5 * 60_000), 10)).map((c) => c.id)).not.toContain('cas1');
+    });
+
     it('burns a single-use token exactly once, and sweeps a ringing call past its lease', async () => {
         const key = `burn-${Date.now()}`;
         expect(await repo.burnToken(key, iso(60_000))).toBe(true);
