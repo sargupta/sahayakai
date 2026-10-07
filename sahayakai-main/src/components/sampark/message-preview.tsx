@@ -192,7 +192,13 @@ export function WhatParentsHear({ detail }: { detail: CampaignDetail }) {
         .filter((p) => p.language === language)
         .sort((a, b) => VARIANT_ORDER[a.variant] - VARIANT_ORDER[b.variant]);
     // The dispatcher only schedules a campaign whose every clip passed the listening check (H4).
-    const verified = ["scheduled", "dispatching", "completed"].includes(campaign.status);
+    // Claim the check only when every clip shown actually has audio: the status alone says the
+    // render job finished, not that recordings exist for every language and clip on this screen.
+    const verified =
+        ["scheduled", "dispatching", "completed"].includes(campaign.status) &&
+        !!previewQuery.data &&
+        previewQuery.data.length > 0 &&
+        previewQuery.data.every((p) => p.clips.length > 0 && p.clips.every((c) => !!c.audioKey));
 
     return (
         <SectionCard
