@@ -50,7 +50,9 @@ The three reviews overlap; the list below counts each defect once and names its 
 
 ## 3. The hardening sprint (H), in order
 
-These are the cases fixed in today's code next, each shipped with its gate (repo law 2). Their order puts the defects that could touch a real family first:
+**Done 7 Oct 2026** (commit f8c6eff33, contract `HARDENING_CONTRACT.md`): all eleven, each with a class gate that fails when its fix is reverted. Item 11 shipped in its interim form: an unknown key replays the message once, and the announced repeat key waits for decision 4. Integration found and fixed one more bug of the same family: a held campaign's intents sat at the front of the due list and starved every newer campaign (`gate-h2-hold-never-starves`).
+
+These were the cases, each shipped with its gate (repo law 2). Their order puts the defects that could touch a real family first:
 
 1. Practice rehearsals write nothing real: no opt-outs, and no count toward the frequency cap (gap 1).
 2. The mode is pinned on the campaign at approval. The dispatcher dials only when the campaign's mode equals the school's current mode, and pauses the campaign with a reason when they differ (gap 2).
@@ -63,6 +65,15 @@ These are the cases fixed in today's code next, each shipped with its gate (repo
 9. The overview separates Practice, Test and Live. Test mode rings the test phone only for one sample per language and audience variant, and simulates the rest (gap 11).
 10. A REST import merges the CRM's holidays with the school's own instead of replacing them (gap 12).
 11. In the keyed notice, an unknown key replays the menu once instead of ending the call. A **repeat key** lets a parent who spoke over the start hear the message again (gap 17, interim). This adds one recorded line per language, which needs native sign-off.
+
+**Follow-ups found while building it** (not yet done):
+- If the primary guardian is blocked (for example, no consent), the other guardian of record is not called, so the family gets no call. A fallback to the next guardian at dial time belongs to live readiness (L).
+- In Live mode, carrier-requeued calls would count toward a family's 30-day cap. This needs a `requeued` flag on the call record before Live mode (L).
+- The approval dialog's audience count does not yet show the Test-mode sample.
+- A CSV import that would mark more than 5% of the school inactive should ask staff to confirm first (O).
+- The pause banner names "you" or "another administrator", because the pause stores a user id and no name (O).
+- A custody restriction now blocks emergency closures too, and the office calls that family by hand. This is a policy choice for the founder.
+- The withdrawn line needs native sign-off in four languages.
 
 ## 4. Diagrams
 
