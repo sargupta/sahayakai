@@ -123,7 +123,12 @@ steps:
       # answer webhook falls back to the agents URL when this is unset, which
       # reaches a service with no /telephony/stream route, and the parent hears
       # silence with nothing in our logs.
-      - --update-env-vars=NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL=https://sahayakai-agents-zwydpvyuca-as.a.run.app,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248-mumbai,VIDYA_VOICE_LIVE_ENABLED=true,DEMO_CALL_ENABLED=true,DEMO_CALL_DAILY_CAP=50,VOICE_PROVIDER=vobiz,VOBIZ_STREAM_BASE_URL=https://sahayakai-telephony-zwydpvyuca-as.a.run.app
+      # SAMPARK_ENABLED / SAMPARK_LIVE_DIAL_ENABLED: school-to-parent calling
+      # (docs/sampark/SAMPARK_PLAN.md). Declared false in BOTH regions so every
+      # /api/sampark/** and /api/jobs/sampark-* route 404s and no non-simulated
+      # carrier can be constructed. Turning either on is one reviewed PR here,
+      # never a Firestore flag (those default ON when missing).
+      - --update-env-vars=NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL=https://sahayakai-agents-zwydpvyuca-as.a.run.app,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248-mumbai,VIDYA_VOICE_LIVE_ENABLED=true,DEMO_CALL_ENABLED=true,DEMO_CALL_DAILY_CAP=50,VOICE_PROVIDER=vobiz,VOBIZ_STREAM_BASE_URL=https://sahayakai-telephony-zwydpvyuca-as.a.run.app,SAMPARK_ENABLED=false,SAMPARK_LIVE_DIAL_ENABLED=false
       - --quiet
     waitFor: [push-sha]
 
@@ -157,7 +162,7 @@ steps:
       - --no-traffic
       - --tag=sha-$SHORT_SHA
       - --update-secrets=TWILIO_ACCOUNT_SID=TWILIO_ACCOUNT_SID:latest,TWILIO_AUTH_TOKEN=TWILIO_AUTH_TOKEN:latest,SAHAYAKAI_AGENTS_AUDIENCE=SAHAYAKAI_AGENTS_AUDIENCE:latest,PROFILE_COMPLETE_COOKIE_SECRET=PROFILE_COMPLETE_COOKIE_SECRET:latest,DEMO_CALL_PEPPER=DEMO_CALL_PEPPER:latest,DEMO_CALL_ENC_KEY=DEMO_CALL_ENC_KEY:latest,VOBIZ_AUTH_ID=VOBIZ_AUTH_ID:latest,VOBIZ_AUTH_TOKEN=VOBIZ_AUTH_TOKEN:latest,VOBIZ_FROM_NUMBER=VOBIZ_FROM_NUMBER:latest
-      - --update-env-vars=NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL=https://sahayakai-agents-zwydpvyuca-as.a.run.app,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248-mumbai,VIDYA_VOICE_LIVE_ENABLED=true,DEMO_CALL_ENABLED=true,DEMO_CALL_DAILY_CAP=50,VOICE_PROVIDER=vobiz,VOBIZ_STREAM_BASE_URL=https://sahayakai-telephony-zwydpvyuca-as.a.run.app
+      - --update-env-vars=NEXT_PUBLIC_SAHAYAKAI_AGENTS_URL=https://sahayakai-agents-zwydpvyuca-as.a.run.app,NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248-mumbai,VIDYA_VOICE_LIVE_ENABLED=true,DEMO_CALL_ENABLED=true,DEMO_CALL_DAILY_CAP=50,VOICE_PROVIDER=vobiz,VOBIZ_STREAM_BASE_URL=https://sahayakai-telephony-zwydpvyuca-as.a.run.app,SAMPARK_ENABLED=false,SAMPARK_LIVE_DIAL_ENABLED=false
       - --quiet
     waitFor: [push-mumbai]
 
