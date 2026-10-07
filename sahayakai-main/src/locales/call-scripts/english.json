@@ -260,21 +260,21 @@
   },
   "purposes": {
     "ptm_invite": {
-      "message": "Namaste! This is a recorded message from {schoolName} for {audience}. The parent-teacher meeting is on {date}, at {time}, {venue}. We hope to see you there.",
+      "message": "Namaste, I'm calling from {schoolName} for {audience}. The parent-teacher meeting is on {date}, at {time}, {venue}. We'd love to see you there.",
       "menu": "If you can come, please press 1. If this time does not suit you, press 2. To stop these calls, press 9.",
       "confirm_1": "Thank you! We have told the school that you are coming. See you at the meeting.",
       "confirm_2": "Thank you for letting us know. Please speak to the class teacher or the school office, and they will help you with another time."
     },
     "event_invite": {
-      "message": "Namaste! This is a recorded message from {schoolName} for {audience}. Our {eventName} is on {date}, at {time}, {venue}. You and your family are most welcome.",
+      "message": "Namaste, I'm calling from {schoolName} for {audience}. Our {eventName} is on {date}, at {time}, {venue}. You and your family are most welcome.",
       "menu": "If you can come, please press 1. If you cannot come, press 2. To stop these calls, press 9.",
       "confirm_1": "Thank you! We have told the school that you are coming. See you there.",
       "confirm_2": "Thank you for letting us know. We hope to see you next time."
     },
     "emergency_closure": {
       "message": {
-        "today": "Namaste. This is an urgent recorded message from {schoolName}. Because of {reason}, the school will be closed today, {date}. {buses}",
-        "tomorrow": "Namaste. This is an urgent recorded message from {schoolName}. Because of {reason}, the school will be closed tomorrow, {date}. {buses}"
+        "today": "Namaste, I'm calling from {schoolName} with an urgent update. Because of {reason}, the school will be closed today, {date}. {buses}",
+        "tomorrow": "Namaste, I'm calling from {schoolName} with an urgent update. Because of {reason}, the school will be closed tomorrow, {date}. {buses}"
       },
       "buses": {
         "running": "School buses will still run as usual.",
