@@ -213,6 +213,16 @@ describe('slice 1 campaign flow', () => {
         expect(overview.rehearsal.practice.calls).toBe(12);
         expect(overview.guardians.total).toBe(15);
         expect(overview.lastImport?.status).toBe('succeeded');
+        // The Today charts show the Practice calls, labelled as such; the families' trend stays empty.
+        expect(overview.activityMode).toBe('practice');
+        expect(overview.hours.reduce((s, h) => s + h.calls, 0)).toBe(12);
+        expect(Object.values(overview.todayByLanguage).reduce((s, l) => s + l.calls, 0)).toBe(12);
+        expect(overview.recent).toHaveLength(8);
+        expect(overview.recent.every((r) => r.carrier === 'simulated' && r.campaignId === campaign.id)).toBe(true);
+        expect(overview.trend[overview.trend.length - 1].calls).toBe(12);
+        expect(overview.familyTrend.every((d) => d.calls === 0)).toBe(true);
+        expect(overview.liveCampaign?.id ?? null).toBe(campaignNow.status === 'dispatching' ? campaign.id : null);
+        expect(overview.windowToday).not.toBeNull();
     });
 
     it('emergency closure previews today/tomorrow variants and schedules', async () => {

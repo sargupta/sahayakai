@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, XCircle } from "lucide-react";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -104,18 +104,25 @@ export function CampaignActions({
     return (
         <div className="flex flex-wrap gap-3">
             {canApprove && (
-                <Button type="button" onClick={() => setApproveOpen(true)} disabled={busy !== null}>
+                <Button type="button" className="min-h-11" onClick={() => setApproveOpen(true)} disabled={busy !== null}>
                     {t("Approve")}
                 </Button>
             )}
             {canRetryAudio && (
-                <Button type="button" onClick={() => void retryAudio()} disabled={busy !== null}>
+                <Button type="button" className="min-h-11" onClick={() => void retryAudio()} disabled={busy !== null}>
                     {busy === "retry" && <Loader2 aria-hidden="true" className="animate-spin" />}
                     {t("Try preparing the audio again")}
                 </Button>
             )}
             {canCancel && (
-                <Button type="button" variant="outline" onClick={() => setCancelOpen(true)} disabled={busy !== null}>
+                <Button
+                    type="button"
+                    variant="outline"
+                    className="min-h-11 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => setCancelOpen(true)}
+                    disabled={busy !== null}
+                >
+                    <XCircle aria-hidden="true" />
                     {t("Cancel campaign")}
                 </Button>
             )}

@@ -14,7 +14,8 @@ export function RejectedRowsTable({ rows }: { rows: ImportRejectedRow[] }) {
         return <p className="type-body text-muted-foreground">{t("No rows were rejected.")}</p>;
     }
     return (
-        <div className="overflow-x-auto rounded-surface-md border border-border">
+        <div className="w-0 min-w-full overflow-x-auto rounded-surface-md border border-border">
+            {/* w-0 min-w-full: scrolls here rather than widening the page (see campaign-detail.tsx). */}
             <table className="w-full text-left type-body">
                 <caption className="sr-only">{t("Rejected rows")}</caption>
                 <thead className="bg-muted/30">

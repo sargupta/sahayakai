@@ -7,10 +7,12 @@
  * falls back to the code itself only as a last resort.
  */
 import { purposeSpec } from '@/lib/sampark/catalogue';
+import { callOutcomeClass } from '@/lib/sampark/call-outcome';
 import type { SamparkSchoolView } from '@/lib/api/sampark';
 import type {
     BlockReason,
     CallLogEntry,
+    CallOutcomeClass,
     CallState,
     Campaign,
     CampaignHoldReason,
@@ -40,7 +42,8 @@ export function fmt(template: string, vars: Record<string, string | number>): st
     );
 }
 
-export type Tone = 'neutral' | 'info' | 'success' | 'warning' | 'danger';
+/** `brand` is the saffron of a call in progress; every other tone is a status token. */
+export type Tone = 'neutral' | 'info' | 'success' | 'warning' | 'danger' | 'brand';
 
 // ── Purposes ─────────────────────────────────────────────────────────────────
 
@@ -296,6 +299,37 @@ export function outcomeLabel(t: Translate, entry: Pick<CallLogEntry, 'purpose' |
     }
     if (outcome.declined) return { label: t("Cannot come (pressed 2)"), tone: 'neutral' };
     return null;
+}
+
+/**
+ * One short phrase for how a call ended (CallOutcomeClass), in the purpose's own words
+ * for keys 1, 2 and 9, and the call's own state for calls that did not connect.
+ */
+export function outcomeClassLabel(t: Translate, call: Pick<CallLogEntry, 'purpose' | 'state' | 'outcome'>): string {
+    const cls = callOutcomeClass(call);
+    switch (cls) {
+        case 'on_call': return t("On a call now");
+        case 'opted_out':
+        case 'confirmed':
+        case 'declined': return outcomeLabel(t, call)?.label ?? t("Heard the key fact");
+        case 'heard': return t("Heard the key fact");
+        case 'hung_up': return heardLabel(t, call.outcome.heard);
+        case 'no_answer':
+        case 'failed': return callStateLabel(t, call.state);
+        default: return cls;
+    }
+}
+
+export function outcomeClassTone(cls: CallOutcomeClass): Tone {
+    switch (cls) {
+        case 'on_call': return 'brand';
+        case 'confirmed': return 'success';
+        case 'declined': return 'warning';
+        case 'heard': return 'info';
+        case 'opted_out':
+        case 'failed': return 'danger';
+        default: return 'neutral';
+    }
 }
 
 export function clipKindLabel(t: Translate, kind: ClipKind): string {

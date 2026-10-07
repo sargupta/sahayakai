@@ -13,6 +13,7 @@ import { guardiansCsv, studentsCsv } from './csv';
 import { renderDemoPage } from './demo-page';
 import { stageForGrade } from './generate';
 import { BadRequest, paginate, parsePageQuery } from './pagination';
+import { createPullTracker, type PullKind, type PullSnapshot } from './pulls';
 import {
     CLOSURE_REASONS,
     CommunicationInputSchema,
@@ -63,6 +64,8 @@ export interface CrmApp {
     flushWebhooks(): Promise<void>;
     /** Resolves when the latest state write has finished. */
     flushSaves(): Promise<void>;
+    /** The last authenticated pulls of students and guardians (in memory only; shown on the demo page). */
+    lastPull(): PullSnapshot;
 }
 
 class HttpError extends Error {
@@ -129,6 +132,12 @@ function authorised(req: IncomingMessage, apiKey: string): boolean {
 
 const pad = (n: number, width: number) => String(n).padStart(width, '0');
 
+/** The demo page is unauthenticated, so it only ever sees the key's last four characters. */
+function maskApiKey(key: string): string {
+    const tail = key.length > 8 ? key.slice(-4) : '';
+    return `••••••••${tail}${key === DEFAULT_API_KEY ? ' (default dev key)' : ''}`;
+}
+
 // ── App ──────────────────────────────────────────────────────────────────────
 
 export function createApp(options: AppOptions): CrmApp {
@@ -139,6 +148,7 @@ export function createApp(options: AppOptions): CrmApp {
     const save = createSaver(options.statePath, () => state);
     let lastSave: Promise<void> = Promise.resolve();
     const pending = new Set<Promise<unknown>>();
+    const pulls = createPullTracker(now);
 
     const persist = async () => {
         lastSave = save();
@@ -160,19 +170,22 @@ export function createApp(options: AppOptions): CrmApp {
 
     // ── /v1 handlers ─────────────────────────────────────────────────────────
 
-    const listStudents = (params: URLSearchParams) => {
+    /** A student or guardian list page; a GET of one is recorded as (part of) a pull. */
+    const listPage = (kind: PullKind, params: URLSearchParams, method: string) => {
         const q = parsePageQuery(params);
-        const records: (CrmStudent | Record<string, unknown>)[] = q.includeMalformed
-            ? [...state.students, ...state.malformed.students]
-            : state.students;
-        return paginate(records, q);
-    };
-    const listGuardians = (params: URLSearchParams) => {
-        const q = parsePageQuery(params);
-        const records: (CrmGuardian | Record<string, unknown>)[] = q.includeMalformed
-            ? [...state.guardians, ...state.malformed.guardians]
-            : state.guardians;
-        return paginate(records, q);
+        const records: (CrmStudent | CrmGuardian | Record<string, unknown>)[] =
+            kind === 'students'
+                ? q.includeMalformed
+                    ? [...state.students, ...state.malformed.students]
+                    : state.students
+                : q.includeMalformed
+                  ? [...state.guardians, ...state.malformed.guardians]
+                  : state.guardians;
+        const page = paginate(records, q);
+        if (method === 'GET') {
+            pulls.page(kind, { records: page.data.length, continued: q.after !== null, incremental: q.since !== null, complete: page.nextCursor === null });
+        }
+        return page;
     };
     const findWithMalformed = (id: string, list: readonly { id: string }[], malformed: readonly Record<string, unknown>[], params: URLSearchParams) => {
         const hit = list.find((r) => r.id === id);
@@ -240,11 +253,11 @@ export function createApp(options: AppOptions): CrmApp {
         const get = method === 'GET' || method === 'HEAD';
 
         if (a === 'school' && seg.length === 1 && get) return sendJson(res, 200, state.school);
-        if (a === 'students' && seg.length === 1 && get) return sendJson(res, 200, listStudents(params));
+        if (a === 'students' && seg.length === 1 && get) return sendJson(res, 200, listPage('students', params, method));
         if (a === 'students' && seg.length === 2 && get && b) {
             return sendJson(res, 200, findWithMalformed(b, state.students, state.malformed.students, params));
         }
-        if (a === 'guardians' && seg.length === 1 && get) return sendJson(res, 200, listGuardians(params));
+        if (a === 'guardians' && seg.length === 1 && get) return sendJson(res, 200, listPage('guardians', params, method));
         if (a === 'guardians' && seg.length === 2 && get && b) {
             return sendJson(res, 200, findWithMalformed(b, state.guardians, state.malformed.guardians, params));
         }
@@ -256,10 +269,12 @@ export function createApp(options: AppOptions): CrmApp {
             const includeMalformed = params.get('includeMalformed') === 'true';
             if (b === 'students.csv') {
                 const rows = includeMalformed ? [...state.students, ...state.malformed.students] : state.students;
+                if (method === 'GET') pulls.csv('students', rows.length);
                 return sendText(res, 200, 'text/csv; charset=utf-8', studentsCsv(rows), { 'content-disposition': 'attachment; filename="students.csv"' });
             }
             if (b === 'guardians.csv') {
                 const rows = includeMalformed ? [...state.guardians, ...state.malformed.guardians] : state.guardians;
+                if (method === 'GET') pulls.csv('guardians', rows.length);
                 return sendText(res, 200, 'text/csv; charset=utf-8', guardiansCsv(rows), { 'content-disposition': 'attachment; filename="guardians.csv"' });
             }
         }
@@ -541,23 +556,29 @@ export function createApp(options: AppOptions): CrmApp {
                         today: istDate(now()),
                         flash: searchParams.get('done'),
                         error: searchParams.get('error'),
+                        query: searchParams.get('q'),
+                        tab: searchParams.get('tab'),
                         webhookEnabled: webhook.enabled,
-                        deliveries: webhook.recent(),
+                        deliveries: webhook.recent(100),
                         venues: VENUES,
+                        pulls: pulls.snapshot(),
+                        apiKeyHint: maskApiKey(apiKey),
                     }),
                 );
             }
             const demo = /^\/demo\/([a-z]+)$/.exec(pathname);
             if (demo) {
-                const action = demoActions[demo[1] ?? ''];
+                const name = demo[1] ?? '';
+                const action = demoActions[name];
                 if (!action) throw new HttpError(404, 'not found');
                 if (method !== 'POST') throw new HttpError(405, 'use POST');
                 const form = new URLSearchParams(await readBody(req));
                 try {
                     const message = await action(form);
-                    return redirect(res, `/?done=${encodeURIComponent(message)}`);
+                    // `tab` reopens the same office-action tab on the page the browser lands on.
+                    return redirect(res, `/?done=${encodeURIComponent(message)}&tab=${name}`);
                 } catch (err) {
-                    if (err instanceof BadRequest) return redirect(res, `/?error=${encodeURIComponent(err.message)}`);
+                    if (err instanceof BadRequest) return redirect(res, `/?error=${encodeURIComponent(err.message)}&tab=${name}`);
                     throw err;
                 }
             }
@@ -587,6 +608,7 @@ export function createApp(options: AppOptions): CrmApp {
         async flushSaves() {
             await lastSave.catch(() => undefined);
         },
+        lastPull: () => pulls.snapshot(),
     };
 }
 

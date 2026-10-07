@@ -53,7 +53,8 @@ export interface DeliveryRecord {
 export interface WebhookSender {
     readonly enabled: boolean;
     send(type: WebhookEventType, entity: { kind: EntityKind; id: string }): Promise<DeliveryRecord | null>;
-    recent(): readonly DeliveryRecord[];
+    /** The latest deliveries, newest first (default 20; the log keeps the last 100). */
+    recent(limit?: number): readonly DeliveryRecord[];
 }
 
 export function createWebhookSender(opts: {
@@ -72,7 +73,7 @@ export function createWebhookSender(opts: {
 
     return {
         enabled,
-        recent: () => log.slice(-20).reverse(),
+        recent: (limit = 20) => (limit > 0 ? log.slice(-limit).reverse() : []),
         async send(type, entity) {
             if (!url || !secret) return null;
             const at = now();
