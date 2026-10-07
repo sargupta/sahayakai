@@ -32,6 +32,7 @@ import type {
     SamparkOverview,
     SamparkSchool,
     SamparkSchoolView,
+    SchoolPause,
     SchoolVenue,
     ScriptPreview,
     Suppression,
@@ -83,6 +84,7 @@ export interface UpdateSchoolInput {
     displayName?: string;
     spokenName?: Record<ParentLanguage, string>;
     callingWindow?: CallingWindow;
+    /** The school's OWN holidays (YYYY-MM-DD). Holidays from the school records are kept and merged in by the server. */
     holidays?: string[];
     venues?: SchoolVenue[];
     defaultLanguage?: ParentLanguage | null;
@@ -183,6 +185,19 @@ export function updateSchool(orgId: string, input: UpdateSchoolInput): Promise<S
  */
 export function setMode(orgId: string, mode: SamparkMode): Promise<SamparkSchoolView> {
     return apiFetch<SamparkSchoolView>(orgPath(orgId, '/mode'), { method: 'PUT', body: { mode } });
+}
+
+export type SetPauseInput =
+    | { paused: true; reason: string; scope: SchoolPause['scope'] }
+    | { paused: false };
+
+/**
+ * PUT /api/sampark/[orgId]/pause — stop every call (or every call but emergency closures)
+ * with a reason, or resume. Pausing also hangs up calls still ringing. The response's
+ * `pause` says who paused, when and why, or is null once resumed.
+ */
+export function setPause(orgId: string, input: SetPauseInput): Promise<SamparkSchoolView> {
+    return apiFetch<SamparkSchoolView>(orgPath(orgId, '/pause'), { method: 'PUT', body: input });
 }
 
 // ── Imports ──────────────────────────────────────────────────────────────────

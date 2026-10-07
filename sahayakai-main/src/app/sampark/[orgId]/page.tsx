@@ -7,8 +7,10 @@ import {
     Clock,
     Database,
     Ear,
+    FlaskConical,
     Megaphone,
     PhoneCall,
+    PhoneForwarded,
     PhoneOff,
     ShieldCheck,
     Users,
@@ -20,6 +22,7 @@ import { getOverview } from "@/lib/api/sampark";
 import { PARENT_LANGUAGE_INFO } from "@/lib/sampark/languages";
 import { PARENT_LANGUAGES, type SamparkOverview } from "@/types/sampark";
 import { KpiTile } from "@/components/sampark/kpi-tile";
+import { PauseCallsCard } from "@/components/sampark/school-pause";
 import { ImportStatusBadge, StatusPill } from "@/components/sampark/status-pill";
 import { ErrorPanel, LoadingBlock } from "@/components/sampark/states";
 import { useSamparkQuery } from "@/components/sampark/use-sampark-query";
@@ -103,8 +106,11 @@ export default function SamparkTodayPage() {
                 </SectionCard>
             )}
 
-            <section aria-label={t("Today")} className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                <KpiTile icon={PhoneCall} label={t("Calls today")} value={f.number(o.today.calls)} />
+            <PauseCallsCard />
+
+            {/* Real calls to families only (H9): rehearsals are counted apart, below, and never as families reached. */}
+            <section aria-label={t("Calls to families today")} className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                <KpiTile icon={PhoneCall} label={t("Calls to families today")} value={f.number(o.today.calls)} />
                 <KpiTile
                     icon={Ear}
                     label={t("Heard the key fact")}
@@ -120,6 +126,17 @@ export default function SamparkTodayPage() {
                     emphasis={o.today.optOuts > 0 ? "warning" : "default"}
                 />
             </section>
+
+            <SectionCard
+                title={t("Rehearsals today")}
+                icon={FlaskConical}
+                description={t("Rehearsal calls never reach a family, so they are not counted as families reached.")}
+            >
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <KpiTile icon={FlaskConical} label={t("Practice: simulated, no phone rang")} value={f.number(o.rehearsal.practice.calls)} emphasis="info" />
+                    <KpiTile icon={PhoneForwarded} label={t("Test: rang only your test phone")} value={f.number(o.rehearsal.test.calls)} emphasis="info" />
+                </div>
+            </SectionCard>
 
             <div className="grid gap-6 md:grid-cols-2">
                 <SectionCard title={t("Calling window")} icon={Clock}>

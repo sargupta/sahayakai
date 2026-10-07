@@ -334,7 +334,7 @@ export function ModeSection() {
                                         end: hourLabel(w.endHour),
                                     })}
                                 </p>
-                                <p>{t("No family is called. A campaign makes one call to this phone for every family it would reach, one call at a time, so try it with one class first.")}</p>
+                                <p>{t("No family is called. A campaign rings this phone once for each language its families speak, so you hear each version once.")}</p>
                             </div>
                         </AlertDialogDescription>
                     </AlertDialogHeader>

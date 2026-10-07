@@ -10,6 +10,8 @@
  * never reaches a <Play>; the key is still recorded.
  * And: a 9 is never lost — a 9 that lands after the hangup still opts the
  * family out (or, on a test-phone call, is audited and suppresses nobody).
+ * And (H11, interim): a key the menu does not offer replays the message and its
+ * menu once; the second such key gets the no-input goodbye.
  */
 
 jest.mock('@/lib/logger', () => ({ logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() } }));
@@ -39,6 +41,12 @@ async function hangupNow(w: World, fields: Record<string, string> = { HangupCaus
     return handleSamparkStatus(w, { token, kind: 'hangup', fields });
 }
 
+/** The clips a replayed answer document plays (message inside the gather, then no-input), as clip keys. */
+async function replayedClips(xml: string): Promise<string[]> {
+    const urls = playUrls(xml);
+    return Promise.all(urls.map(async (u) => ((await verifySamparkVoiceToken('sampark-audio', tokenOf(u))) ?? '').split('~')[1]));
+}
+
 /** The single clip a play-then-hangup document plays, as a clip key. */
 async function playedClip(xml: string): Promise<string> {
     const urls = playUrls(xml);
@@ -64,17 +72,28 @@ describe('menu step', () => {
         expect((await w.repo.getCall(ORG, CALL_ID))?.outcome).toMatchObject({ digits: '2', declined: true });
     });
 
-    it('2 on a purpose with no key 2 (emergency closure) is treated as no input', async () => {
+    it('2 on a purpose with no key 2 (emergency closure) is an unknown key: the message is replayed, never read as "declined"', async () => {
         const w = await world({
             campaign: { purpose: 'emergency_closure', facts: { kind: 'emergency_closure', date: '2026-10-07', reason: 'heavy_rain', busesRunning: false }, audience: { sections: [] } },
             call: { purpose: 'emergency_closure', variant: 'today' },
         });
         const result = await press(w, await answered(w), '2');
-        expect(await playedClip(result.xml)).toBe(w.keys.no_input);
+        expect(result.outcome).toBe('menu_repeated');
+        expect(await replayedClips(result.xml)).toEqual([w.keys.message, w.keys.no_input]);
         expect((await w.repo.getCall(ORG, CALL_ID))?.outcome).toMatchObject({ digits: '2', declined: false });
+        // A second 2 is the second unknown key: goodbye.
+        expect(await playedClip((await press(w, tokenOf(gatherAction(result.xml) as string), '2')).xml)).toBe(w.keys.no_input);
     });
 
-    it.each([['5'], ['*'], ['#'], [''], [null], ['x']])('%j → the no-input clip, then hang up', async (digits) => {
+    it.each([['5'], ['*'], ['#'], ['0']])('%j (a key the menu does not offer) → the message and its menu once more', async (digits) => {
+        const w = await world();
+        const result = await press(w, await answered(w), digits);
+        expect(result.outcome).toBe('menu_repeated');
+        expect(await replayedClips(result.xml)).toEqual([w.keys.message, w.keys.no_input]);
+        expect((await w.repo.getCall(ORG, CALL_ID))?.outcome.digits).toBe(digits);
+    });
+
+    it.each([[''], [null], ['x']])('%j (no key at all) → the no-input clip, then hang up', async (digits) => {
         const w = await world();
         const result = await press(w, await answered(w), digits);
         expect(await playedClip(result.xml)).toBe(w.keys.no_input);
@@ -85,6 +104,48 @@ describe('menu step', () => {
         expect(parseDigit(' 9')).toBe('9');
         expect(parseDigit('a1')).toBeNull();
         expect(parseDigit(undefined)).toBeNull();
+    });
+});
+
+describe('H11 (interim) — one replay on an unknown key, then the goodbye', () => {
+    it('unknown key → replay with a FRESH menu token; a second unknown key → no-input goodbye', async () => {
+        const w = await world();
+        const firstToken = await answered(w);
+        const replay = await press(w, firstToken, '5');
+        expect(replay.outcome).toBe('menu_repeated');
+        expect(replay.xml).toMatch(/<Gather [^>]*executionTimeout="8"[^>]*><Play>[^<]+<\/Play><\/Gather><Play>[^<]+<\/Play><Wait length="1"\/><Hangup\/><\/Response>$/);
+        const replayToken = tokenOf(gatherAction(replay.xml) as string);
+        expect(replayToken).not.toBe(firstToken);
+        expect(await verifySamparkVoiceToken('sampark-gather-menu', replayToken)).toBe(voicePrincipal(ORG, CALL_ID));
+        // The burned token stays burned.
+        expect(await press(w, firstToken, '1')).toEqual({ xml: EMPTY_HANGUP_XML, outcome: 'replayed' });
+
+        const goodbye = await press(w, replayToken, '7');
+        expect(goodbye.outcome).toBe('played');
+        expect(await playedClip(goodbye.xml)).toBe(w.keys.no_input);
+        expect((await w.repo.getCall(ORG, CALL_ID))?.outcome).toMatchObject({ digits: '57', confirmed: false, declined: false, optOut: 'none' });
+    });
+
+    it('after the replay, a real key works as usual: 1 confirms, 9 starts the opt-out', async () => {
+        const w = await world();
+        const replay = await press(w, await answered(w), '#');
+        const confirmed = await press(w, tokenOf(gatherAction(replay.xml) as string), '1');
+        expect(await playedClip(confirmed.xml)).toBe(w.keys.confirm_1);
+        expect((await w.repo.getCall(ORG, CALL_ID))?.outcome).toMatchObject({ digits: '#1', confirmed: true });
+
+        const v = await world();
+        const again = await press(v, await answered(v), '0');
+        const optOut = await press(v, tokenOf(gatherAction(again.xml) as string), '9');
+        expect(playUrls(optOut.xml)).toHaveLength(2);
+        expect(await verifySamparkVoiceToken('sampark-gather-optout', tokenOf(gatherAction(optOut.xml) as string))).toBe(voicePrincipal(ORG, CALL_ID));
+        expect((await v.repo.getCall(ORG, CALL_ID))?.outcome).toMatchObject({ digits: '09', optOut: 'requested' });
+    });
+
+    it('the replay never plays unverified audio: a failed message clip hangs up (the key is still recorded)', async () => {
+        const w = await world({ clips: (k) => (k === 'message' ? 'failed' : 'passed') });
+        const token = await mintSamparkVoiceToken('sampark-gather-menu', voicePrincipal(ORG, CALL_ID));
+        expect(await press(w, token, '5')).toEqual({ xml: EMPTY_HANGUP_XML, outcome: 'audio_unavailable' });
+        expect((await w.repo.getCall(ORG, CALL_ID))?.outcome.digits).toBe('5');
     });
 });
 

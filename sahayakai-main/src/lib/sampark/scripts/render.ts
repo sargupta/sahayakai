@@ -45,7 +45,7 @@ export const MESSAGE_AND_MENU_BUDGET_SECONDS = 38;
 export const MESSAGE_BODY_BUDGET_SECONDS = 28;
 
 /** Clip kinds shared by every purpose in a language (rendered once per language, not per variant). */
-export const COMMON_CLIP_KINDS: readonly ClipKind[] = ['opt_out_confirm', 'opt_out_done', 'no_input', 'fallback_office'];
+export const COMMON_CLIP_KINDS: readonly ClipKind[] = ['opt_out_confirm', 'opt_out_done', 'no_input', 'fallback_office', 'withdrawn'];
 
 const LATIN = /[A-Za-z]/;
 
@@ -158,6 +158,9 @@ export function renderNoticeScript(input: RenderNoticeInput): RenderedScript {
     }
     clips.push({ kind: 'no_input', text: fillPattern(file.common.no_input, values) });
     clips.push({ kind: 'fallback_office', text: fillPattern(file.common.fallback_office, values) });
+    // Every purpose renders its withdrawn line with the rest (H4), so it is synthesised and
+    // transcribe-back checked like any other clip: a call answered after a cancel is never silent.
+    clips.push({ kind: 'withdrawn', text: fillPattern(file.common.withdrawn, values) });
 
     for (const clip of clips) {
         clip.text = clip.text.normalize('NFC').replace(/\s+/g, ' ').trim();

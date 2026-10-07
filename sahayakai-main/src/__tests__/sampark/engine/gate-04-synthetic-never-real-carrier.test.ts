@@ -124,9 +124,9 @@ describe('class gate 4 — end to end through the dispatcher', () => {
             const repo = createMemorySamparkRepo();
             const clock = testClock();
             await seedFamilies(repo, 3, setup);
-            await repo.createCampaign(campaign());
+            await repo.createCampaign(campaign({ mode: 'practice' }));
             // Approved by a simulated-carrier materialisation; dispatch must re-check against the real one.
-            await materialiseCampaignIntents({ repo, clock }, campaign(), school(setup.school), 'simulated');
+            await materialiseCampaignIntents({ repo, clock }, campaign({ mode: 'practice' }), school(setup.school), 'simulated');
             const fakeVobiz = scriptedCarrier(() => 'full', 'vobiz');
             const report = await runDispatchTick(deps(repo, clock, fakeVobiz), DEFAULT_OPTS);
             expect(fakeVobiz.requests).toHaveLength(0);
@@ -157,8 +157,11 @@ describe('class gate 4 — end to end through the dispatcher', () => {
         const repo = createMemorySamparkRepo();
         const clock = testClock();
         await seedFamilies(repo, 2, { school: testModeSchool({ isDemo: true }) }); // synthetic guardians, demo school
-        await repo.createCampaign(campaign());
-        const res = await materialiseCampaignIntents({ repo, clock }, campaign(), school(testModeSchool({ isDemo: true })), 'vobiz');
+        // Two languages, so both families are Test mode's per-language sample (H9).
+        await repo.upsertGuardians(ORG, [guardian('g002', { studentIds: ['s002'], crmLanguage: 'Hindi' })]);
+        const c = campaign({ mode: 'test' }); // approved in the school's mode (H2)
+        await repo.createCampaign(c);
+        const res = await materialiseCampaignIntents({ repo, clock }, c, school(testModeSchool({ isDemo: true })), 'vobiz');
         expect(res.blocked).toEqual({});
         const fakeVobiz = scriptedCarrier(() => 'full', 'vobiz');
         for (let i = 0; i < 2; i++) {
@@ -176,8 +179,8 @@ describe('class gate 4 — end to end through the dispatcher', () => {
         const repo = createMemorySamparkRepo();
         const clock = testClock();
         await seedFamilies(repo, 3, { school: { isDemo: true } });
-        await repo.createCampaign(campaign());
-        await materialiseCampaignIntents({ repo, clock }, campaign(), school({ isDemo: true }), 'simulated');
+        await repo.createCampaign(campaign({ mode: 'practice' }));
+        await materialiseCampaignIntents({ repo, clock }, campaign({ mode: 'practice' }), school({ isDemo: true }), 'simulated');
         const sim = scriptedCarrier(() => 'full');
         expect((await runDispatchTick(deps(repo, clock, sim), DEFAULT_OPTS)).dialed).toBe(3);
     });

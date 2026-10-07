@@ -2,11 +2,13 @@
  * The call-control XML a Sampark notice call runs on (contract §4, plan §5.1).
  *
  * A notice call is pre-rendered audio plus one keypad step, so the whole call
- * flow is three documents:
+ * flow is a handful of documents built from three builders:
  *
  *   answer      <Gather><Play>message + menu</Play></Gather> <Play>no_input</Play> <Hangup/>
- *   key 1/2/…   <Play>confirmation</Play> <Hangup/>
+ *   key 1/2     <Play>confirmation</Play> <Hangup/>
  *   key 9       <Gather><Play>opt_out_confirm</Play></Gather> <Play>opt_out_done</Play> <Hangup/>
+ *   other key   the answer document again, once (H11); a second one gets <Play>no_input</Play> <Hangup/>
+ *   cancelled   <Play>withdrawn</Play> <Hangup/>, when the campaign was cancelled while it rang (H4)
  *
  * Vobiz starts the Gather's `executionTimeout` only after the nested Play ends,
  * and with no key pressed it carries on with the next element — which is why
@@ -28,7 +30,6 @@ const PROLOG = '<?xml version="1.0" encoding="UTF-8"?>';
 export const GATHER_TIMEOUT_MIN_SECONDS = 5;
 export const GATHER_TIMEOUT_MAX_SECONDS = 60;
 
-/** End the call now. Returned for every refusal, so a call in flight always hangs up cleanly. */
 /**
  * One second of quiet after the last line, before hanging up. Indian goodbyes are reciprocal
  * ("achha ji, namaste"); cutting the line the instant the last word ends felt like a dropped
@@ -36,6 +37,7 @@ export const GATHER_TIMEOUT_MAX_SECONDS = 60;
  */
 export const GOODBYE_PAUSE = '<Wait length="1"/>';
 
+/** End the call now. Returned for every refusal, so a call in flight always hangs up cleanly. */
 export const EMPTY_HANGUP_XML = `${PROLOG}<Response><Hangup/></Response>`;
 
 function clampTimeout(seconds: number): number {
@@ -61,12 +63,12 @@ function document(body: string): string {
     return `${PROLOG}<Response>${body}</Response>`;
 }
 
-/** The answer document: the message (with its menu) inside the keypad Gather, then the no-input goodbye. */
+/** The answer document: the message (with its menu) inside the keypad Gather, then the no-input goodbye. Also the one replay after a key the menu does not offer. */
 export function noticeAnswerXml(o: { messageAudioUrl: string; gatherUrl: string; noInputAudioUrl: string; timeoutSeconds: number }): string {
     return document(gather(o.gatherUrl, o.timeoutSeconds, o.messageAudioUrl) + play(o.noInputAudioUrl) + GOODBYE_PAUSE + '<Hangup/>');
 }
 
-/** Play one clip and end the call (a confirmation, the opt-out goodbye, or the no-input goodbye). */
+/** Play one clip and end the call (a confirmation, the opt-out goodbye, the no-input goodbye, or the withdrawn line). */
 export function playThenHangupXml(audioUrl: string): string {
     return document(play(audioUrl) + GOODBYE_PAUSE + '<Hangup/>');
 }

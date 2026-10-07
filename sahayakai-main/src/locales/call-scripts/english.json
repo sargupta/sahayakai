@@ -9,7 +9,8 @@
       "Indian English, the way a school office speaks to parents: \"Class Seven B\", \"ten o'clock in the morning\", \"ten thirty in the morning\" (never the British \"half past ten\"), \"Saturday, the tenth of October\".",
       "Dates say the day of the month as an ordinal word (lexicon.dayOfMonth), so the voice never has to guess how to read a numeral.",
       "Keypad keys are written as numerals (\"press 1\"); every Indic file writes them as words.",
-      "charsPerSecond is the slowest message+menu rate measured by scripts/sampark/verify-voice.ts on 2026-09-30 with the live voice and style prompt (conservative, so the 38 s budget warning fires early)."
+      "charsPerSecond is the slowest message+menu rate measured by scripts/sampark/verify-voice.ts on 2026-09-30 with the live voice and style prompt (conservative, so the 38 s budget warning fires early).",
+      "common.withdrawn is played instead of the message when a parent picks up a call whose campaign was cancelled while it rang (hardening H4). It names the school, asks the parent to ignore the message, apologises and says goodbye in about ten seconds; like every line here it never says the call is recorded."
     ]
   },
   "lexicon": {
@@ -256,7 +257,8 @@
     "opt_out_confirm": "Just to be sure, press 9 once more to stop these calls. You will still hear from us if the school ever has to close in an emergency.",
     "opt_out_done": "All right, we won't send you these calls any more. You will still hear from us if the school has to close in an emergency. Thank you, and take care.",
     "no_input": "Thank you for listening. Have a good day.",
-    "fallback_office": "Namaste, this is {schoolName}. We couldn't play our message just now, so please get in touch with the school office. Thank you."
+    "fallback_office": "Namaste, this is {schoolName}. We couldn't play our message just now, so please get in touch with the school office. Thank you.",
+    "withdrawn": "Namaste, I'm calling from {schoolName}. Our message has been withdrawn, so please ignore it. Sorry for the trouble. Namaste."
   },
   "purposes": {
     "ptm_invite": {

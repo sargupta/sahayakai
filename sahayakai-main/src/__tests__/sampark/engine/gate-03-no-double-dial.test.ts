@@ -23,7 +23,7 @@ const idFor = (gid: string) => intentIdFor(campaignDedupeKey('camp-ptm', gid));
 async function materialised(repo: SamparkRepo, n: number) {
     const clock = testClock();
     await seedFamilies(repo, n);
-    const c = campaign();
+    const c = campaign({ mode: 'practice' }); // approved in the school's mode (H2)
     await repo.createCampaign(c);
     await materialiseCampaignIntents({ repo, clock }, c, school(), 'simulated');
     return clock;

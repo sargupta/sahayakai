@@ -24,6 +24,12 @@ describe('HangupCause (form-bodied callback)', () => {
         ['INVALID_NUMBER_FORMAT', 'failed'],
         ['ORIGINATOR_CANCEL', 'failed'],
         ['normal_clearing', 'completed'],
+        // Added with the cause table (H7); gate-h7-hangup-cause-table checks every row.
+        ['ALLOTTED_TIMEOUT', 'no_answer'],
+        ['SUBSCRIBER_ABSENT', 'no_answer'],
+        ['NORMAL_CIRCUIT_CONGESTION', 'failed'],
+        ['NUMBER_CHANGED', 'failed'],
+        ['INCOMPATIBLE_DESTINATION', 'failed'],
     ])('%s → %s', (cause, expected) => {
         expect(hangupCauseFromVobiz({ HangupCause: cause, Duration: '12' })).toBe(expected);
     });
@@ -38,14 +44,26 @@ describe('HangupCause (form-bodied callback)', () => {
         expect(hangupCauseFromVobiz({ HangupCause: 'SOMETHING_NEW' })).toBe('failed');
     });
 
-    it('reads the full form: BillDuration as reported', () => {
+    it('reads the full form: BillDuration as reported, and the raw cause', () => {
         expect(hangupEventFromVobiz({ CallUUID: 'u', HangupCause: 'NORMAL_CLEARING', Duration: '47', BillDuration: '60' }, AT)).toEqual({
             type: 'hangup',
             at: AT,
             cause: 'completed',
             durationSeconds: 47,
             billedSeconds: 60,
+            hangupCause: 'NORMAL_CLEARING',
         });
+    });
+
+    it('keeps the raw cause upper case, even one the table does not know, and bounded in length', () => {
+        expect(hangupEventFromVobiz({ HangupCause: ' unallocated_number ' }, AT)).toMatchObject({ cause: 'failed', hangupCause: 'UNALLOCATED_NUMBER' });
+        expect(hangupEventFromVobiz({ hangup_cause: 'Something_New', Duration: '3' }, AT)).toMatchObject({ cause: 'completed', hangupCause: 'SOMETHING_NEW' });
+        expect(hangupEventFromVobiz({ HangupCause: 'X'.repeat(500) }, AT).hangupCause).toHaveLength(64);
+    });
+
+    it('carries no hangupCause when the carrier sent none', () => {
+        expect(hangupEventFromVobiz({ Status: 'completed', Duration: 12 }, AT)).not.toHaveProperty('hangupCause');
+        expect(hangupEventFromVobiz({ HangupCause: '   ', Status: 'busy' }, AT)).not.toHaveProperty('hangupCause');
     });
 });
 

@@ -325,7 +325,8 @@ export function createMemorySamparkRepo(opts?: { faults?: { failAfterClaim?: (in
             const sinceMs = since.getTime();
             return calls
                 .values(orgId)
-                .filter((c) => c.phoneHash === phoneHash && ms(c.createdAt) >= sinceMs)
+                // A simulated (Practice) call rang nobody, so it never counts towards a frequency cap (H1).
+                .filter((c) => c.phoneHash === phoneHash && c.carrier !== 'simulated' && ms(c.createdAt) >= sinceMs)
                 .filter((c) => !excludeEmergency || !isEmergencyPurpose(c)).length;
         },
 

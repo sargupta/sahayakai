@@ -16,6 +16,7 @@
  *   optOuts          intents on which the parent pressed 9 (confirmed or not)
  */
 
+import { MAX_CARRIER_REQUEUES } from '@/lib/sampark/intents';
 import type { SamparkRepo } from '@/lib/sampark/ports';
 import type { CampaignCounts, Intent, IntentStatus, SamparkCall } from '@/types/sampark';
 
@@ -60,7 +61,8 @@ export function tallyCampaign(intents: Intent[], calls: SamparkCall[]): Campaign
         if (intent.status === 'approved' || intent.status === 'retry_wait') counts.queued += 1;
         if (intent.status === 'dialing') counts.inFlight += 1;
 
-        const own = (callsByIntent.get(intent.id) ?? []).slice().sort((a, b) => a.attempt - b.attempt);
+        // Within one attempt, a carrier requeue (H7) dials again later: the highest requeue is the latest call.
+        const own = (callsByIntent.get(intent.id) ?? []).slice().sort((a, b) => a.attempt - b.attempt || (a.requeue ?? 0) - (b.requeue ?? 0));
         const reached = own.some(heardKeyFact);
         if (reached) counts.heardKeyFact += 1;
         const confirmed = own.some((c) => c.outcome.confirmed);
@@ -82,7 +84,8 @@ export function tallyCampaign(intents: Intent[], calls: SamparkCall[]): Campaign
 /** Recompute a campaign's counts from its records and store them on the campaign. */
 export async function recomputeCampaignCounts(repo: SamparkRepo, orgId: string, campaignId: string): Promise<CampaignCounts> {
     const intents = await repo.listIntentsByCampaign(orgId, campaignId);
-    const limit = Math.max(1000, intents.reduce((n, i) => n + Math.max(1, i.attempts), 0) + 100);
+    // Every attempt may carry up to MAX_CARRIER_REQUEUES refused dials besides the one that counted.
+    const limit = Math.max(1000, intents.reduce((n, i) => n + Math.max(1, i.attempts) * (1 + MAX_CARRIER_REQUEUES), 0) + 100);
     const calls = await repo.listCalls(orgId, { campaignId, limit });
     const counts = tallyCampaign(intents, calls);
     const campaign = await repo.getCampaign(orgId, campaignId);

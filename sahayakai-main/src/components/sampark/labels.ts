@@ -12,6 +12,8 @@ import type {
     BlockReason,
     CallLogEntry,
     CallState,
+    Campaign,
+    CampaignHoldReason,
     CampaignStatus,
     ClipKind,
     ClosureReason,
@@ -25,6 +27,7 @@ import type {
     PurposeId,
     SamparkGuardian,
     SamparkMode,
+    SchoolPause,
     Suppression,
 } from '@/types/sampark';
 
@@ -91,6 +94,52 @@ export function campaignStatusTone(status: CampaignStatus): Tone {
     }
 }
 
+/**
+ * Why a campaign is not calling right now, in a principal's words (H2, H3), with what
+ * to do about it. `campaign.mode` is the mode it was approved for.
+ */
+export function holdReasonText(t: Translate, reason: CampaignHoldReason, campaign: Pick<Campaign, 'mode'>): string {
+    switch (reason) {
+        case 'mode_changed':
+            return campaign.mode
+                ? fmt(t("On hold: the school's mode has changed since this campaign was approved for {mode}. Switch back to that mode to continue, or cancel the campaign and create a new one."), { mode: modeLabel(t, campaign.mode) })
+                : t("On hold: the school's mode has changed since this campaign was approved. Cancel the campaign and create a new one.");
+        case 'school_paused':
+            return t("On hold: school calls are paused. The campaign continues when calls are resumed.");
+        case 'mode_not_pinned':
+            return t("On hold: this campaign was approved before this version of school calls, so it does not record which mode it was approved for. Cancel it and create it again to send it.");
+        default:
+            return reason;
+    }
+}
+
+/**
+ * The hold to show for a campaign that is still meant to be calling: the one the
+ * dispatcher recorded, or — between a pause and the dispatcher's next pass — the
+ * school's pause, so the page never says "Calling" while nothing can ring.
+ */
+export function effectiveHoldReason(
+    campaign: Pick<Campaign, 'status' | 'purpose' | 'holdReason'>,
+    pause: SchoolPause | null | undefined,
+): CampaignHoldReason | null {
+    if (!HOLDABLE_CAMPAIGN_STATUSES.includes(campaign.status)) return null;
+    if (campaign.holdReason) return campaign.holdReason;
+    return pauseApplies(pause, campaign.purpose) ? 'school_paused' : null;
+}
+
+/** Statuses in which the dispatcher dials a campaign, and so can hold it. */
+export const HOLDABLE_CAMPAIGN_STATUSES: readonly CampaignStatus[] = ['scheduled', 'dispatching'];
+
+/** Whether a school pause stops this purpose: every purpose for scope 'all', all but emergency closures for 'routine'. */
+export function pauseApplies(pause: SchoolPause | null | undefined, purpose: PurposeId): boolean {
+    if (!pause) return false;
+    return pause.scope === 'all' || purpose !== 'emergency_closure';
+}
+
+export function pauseScopeLabel(t: Translate, scope: SchoolPause['scope']): string {
+    return scope === 'all' ? t("All calls, including emergency closures") : t("Everything except emergency closures");
+}
+
 /** Statuses in which the campaign is still moving and the page should refresh itself. */
 export const LIVE_CAMPAIGN_STATUSES: readonly CampaignStatus[] = ['rendering', 'scheduled', 'dispatching'];
 
@@ -144,6 +193,10 @@ export function blockReasonLabel(t: Translate, reason: BlockReason): string {
         case 'synthetic_number_not_allowed': return t("A test number, reachable only in Practice mode");
         case 'purpose_not_available': return t("This kind of call is not available yet");
         case 'school_not_enabled': return t("School calls are not switched on for this school");
+        case 'student_inactive': return t("The child has left the school");
+        case 'not_guardian_of_record': return t("No longer the child's guardian in the school records");
+        case 'custody_restricted': return t("A custody restriction on the child: the office informs this family by hand");
+        case 'test_mode_sample': return t("Test mode: only one family per language rings the test phone");
         default: return reason;
     }
 }
@@ -254,6 +307,7 @@ export function clipKindLabel(t: Translate, kind: ClipKind): string {
         case 'opt_out_done': return t("After the parent confirms stopping calls");
         case 'no_input': return t("If no key is pressed");
         case 'fallback_office': return t("If something goes wrong");
+        case 'withdrawn': return t("If the campaign was cancelled before the family answered");
         default: return kind;
     }
 }
@@ -326,6 +380,7 @@ export function suppressionSourceLabel(t: Translate, source: Suppression['source
         case 'keypad_unconfirmed': return t("Keypad, not confirmed");
         case 'office': return t("School office");
         case 'crm': return t("School records");
+        case 'carrier_invalid_number': return t("The phone company says this number is not in use");
         default: return source;
     }
 }

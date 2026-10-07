@@ -236,12 +236,15 @@ describe('memory repo — calls', () => {
 
     it('lists expired dialing calls, counts non-terminal calls, and counts calls to a phone', async () => {
         const repo = createMemorySamparkRepo();
-        for (const id of ['a', 'b', 'c', 'd']) await repo.createIntentIfAbsent(intent(id));
-        await repo.claimIntentForDial(ORG, 'a', call('a', 1, { leaseUntil: '2026-10-07T05:31:00.000Z' }), WED_11_IST);
-        await repo.claimIntentForDial(ORG, 'b', call('b', 1, { leaseUntil: '2026-10-07T05:40:00.000Z' }), WED_11_IST);
-        await repo.claimIntentForDial(ORG, 'c', call('c', 1, { purpose: 'emergency_closure', phoneHash: 'hash:g1' }), WED_11_IST);
-        await repo.claimIntentForDial(ORG, 'd', call('d', 1, { phoneHash: 'hash:other' }), WED_11_IST);
+        for (const id of ['a', 'b', 'c', 'd', 'e']) await repo.createIntentIfAbsent(intent(id));
+        // Real-carrier calls count towards the frequency cap; a simulated (Practice) call never does (H1).
+        await repo.claimIntentForDial(ORG, 'a', call('a', 1, { carrier: 'vobiz', leaseUntil: '2026-10-07T05:31:00.000Z' }), WED_11_IST);
+        await repo.claimIntentForDial(ORG, 'b', call('b', 1, { carrier: 'vobiz', leaseUntil: '2026-10-07T05:40:00.000Z' }), WED_11_IST);
+        await repo.claimIntentForDial(ORG, 'c', call('c', 1, { carrier: 'vobiz', purpose: 'emergency_closure', phoneHash: 'hash:g1' }), WED_11_IST);
+        await repo.claimIntentForDial(ORG, 'd', call('d', 1, { carrier: 'vobiz', phoneHash: 'hash:other' }), WED_11_IST);
+        await repo.claimIntentForDial(ORG, 'e', call('e', 1, { carrier: 'simulated', leaseUntil: '2026-10-07T05:40:00.000Z' }), WED_11_IST);
         await repo.updateCall(ORG, callIdFor('d', 1), { state: 'completed' });
+        await repo.updateCall(ORG, callIdFor('e', 1), { state: 'completed' });
 
         const later = new Date('2026-10-07T05:35:00.000Z');
         expect((await repo.listExpiredOpenCalls(ORG, later)).map((c) => c.intentId)).toEqual(['a', 'c']);

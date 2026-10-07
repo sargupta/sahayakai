@@ -47,6 +47,7 @@ const CLIP_KINDS: Record<ClipKind, true> = {
     opt_out_done: true,
     no_input: true,
     fallback_office: true,
+    withdrawn: true,
 };
 
 /** A Vertex generateContent answer: 0.1 s of 24 kHz PCM silence. */

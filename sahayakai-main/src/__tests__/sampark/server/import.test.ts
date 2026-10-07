@@ -82,8 +82,11 @@ describe('runImport', () => {
         expect(guardian!.phoneHash).toBe(hashPhone(String(g1.phone)));
         expect(decryptPhone(guardian!.phoneEnc)).toBe(g1.phone);
 
+        // H10: the CRM's holidays are merged with the school's own (here the pre-split list), never replacing them.
         const updated = await repo.getSchool(ORG);
-        expect(updated!.holidays).toEqual(['2026-10-19', '2026-10-20']);
+        expect(updated!.holidays).toEqual(['2026-01-26', '2026-10-19', '2026-10-20']);
+        expect(updated!.manualHolidays).toEqual(['2026-01-26']);
+        expect(updated!.crmHolidays).toEqual(['2026-10-19', '2026-10-20']);
         expect(updated!.crm).toMatchObject({ lastImportId: run.id });
         await expect(repo.getLatestImportRun(ORG)).resolves.toMatchObject({ id: run.id, status: 'succeeded' });
     });
@@ -282,5 +285,139 @@ describe('runImport', () => {
         // CSV has no school record: holidays are left as they were.
         expect((await repo.getSchool(ORG))!.holidays).toEqual(['2026-01-26']);
         expect(JSON.stringify(repo.writes)).not.toContain('+915000000077');
+    });
+    it('records the primary guardians of record for each child (H6), ignoring a primary link that is not of record', async () => {
+        const repo = await setup();
+        await runImport(
+            { repo, clock: testClock() },
+            ORG,
+            source(
+                [
+                    crmStudent('s1', {
+                        guardians: [
+                            { guardianId: 'mum', isPrimary: true, isGuardianOfRecord: true },
+                            { guardianId: 'dad', isPrimary: false, isGuardianOfRecord: true },
+                            { guardianId: 'step', isPrimary: true, isGuardianOfRecord: false },
+                        ],
+                    }),
+                    crmStudent('s2', { guardians: [{ guardianId: 'dad', isPrimary: false, isGuardianOfRecord: true }] }),
+                ],
+                [crmGuardian('mum'), crmGuardian('dad', { relation: 'father' }), crmGuardian('step', { relation: 'guardian' })],
+            ),
+            ADMIN,
+        );
+        const byId = new Map((await repo.listStudents(ORG)).map((s) => [s.id, s]));
+        expect(byId.get('s1')).toMatchObject({ guardianIds: ['mum', 'dad'], primaryGuardianIds: ['mum'] });
+        expect(byId.get('s2')).toMatchObject({ guardianIds: ['dad'], primaryGuardianIds: [] });
+    });
+});
+
+// ── H6: a child who left is inactive after a full CSV import ────────────────
+
+describe('runImport — absence from a full export (H6)', () => {
+    const esc = (v: string) => (/[",\n|]/.test(v) && !v.includes(':') ? `"${v.replace(/"/g, '""')}"` : v);
+    const studentRow = (id: string, guardianId: string) =>
+        [id, '', `ADM-${id}`, '', `Student ${id}`, 'Asha', '', '', '', '7', 'B', '1', 'female', 'regular', 'false', '', '', 'active', `${guardianId}:true:true`, '2026-09-01T10:00:00+05:30'].map(esc).join(',');
+    const guardianRow = (id: string, phone: string) =>
+        [id, '', `Guardian ${id}`, 'mother', phone, 'ne', 'granted;2026-06-01T10:00:00+05:30;admission_form;dpdp-v1', '', '', '', 'false', 'true', '2026-09-01T10:00:00+05:30'].map(esc).join(',');
+    const csv = (students: string[], guardians: string[]) =>
+        createCsvSource({
+            studentsCsv: [CSV_COLUMNS.students.join(','), ...students].join('\r\n'),
+            guardiansCsv: [CSV_COLUMNS.guardians.join(','), ...guardians].join('\r\n'),
+        });
+    const PHONES = { g1: '+915000000101', g2: '+915000000102', g3: '+915000000103' };
+
+    /** Three families imported from a full CSV export. */
+    async function seeded() {
+        const repo = await setup();
+        const run = await runImport(
+            { repo, clock: testClock() },
+            ORG,
+            csv([studentRow('s1', 'g1'), studentRow('s2', 'g2'), studentRow('s3', 'g3')], [guardianRow('g1', PHONES.g1), guardianRow('g2', PHONES.g2), guardianRow('g3', PHONES.g3)]),
+            ADMIN,
+        );
+        expect(run.status).toBe('succeeded');
+        return repo;
+    }
+
+    const activeIds = async (repo: SamparkRepo) => ({
+        students: (await repo.listStudents(ORG)).filter((s) => s.active).map((s) => s.id),
+        guardians: (await repo.listGuardians(ORG)).filter((g) => g.active).map((g) => g.id),
+    });
+
+    it('a student or guardian missing from the next CSV export is marked inactive, and counted as tombstoned', async () => {
+        const repo = await seeded();
+        // s2 left the school; their guardian g2 is no longer in the guardians export either.
+        const run = await runImport({ repo, clock: testClock() }, ORG, csv([studentRow('s1', 'g1'), studentRow('s3', 'g3')], [guardianRow('g1', PHONES.g1), guardianRow('g3', PHONES.g3)]), ADMIN);
+        expect(run).toMatchObject({ status: 'succeeded', counts: { students: 2, guardians: 2, tombstoned: 2 } });
+        expect(await activeIds(repo)).toEqual({ students: ['s1', 's3'], guardians: ['g1', 'g3'] });
+        // Through the tombstone path: the record is kept, only made inactive.
+        expect((await repo.listStudents(ORG)).find((s) => s.id === 's2')).toMatchObject({ active: false, guardianIds: ['g2'] });
+        const audit = repo.writes.filter((w) => w.method === 'appendAudit').map((w) => w.args[1] as { action: string; detail: Record<string, unknown> });
+        expect(audit[audit.length - 1].detail).toMatchObject({ absentMarkedInactive: { students: 1, guardians: 1 }, absenceSkipped: [] });
+    });
+
+    it('a guardian absent from the export loses the link from a child who is still there', async () => {
+        const repo = await seeded();
+        // s2 now lists g1 (the family's other record); g2 is gone from the export.
+        await runImport({ repo, clock: testClock() }, ORG, csv([studentRow('s1', 'g1'), studentRow('s2', 'g1'), studentRow('s3', 'g3')], [guardianRow('g1', PHONES.g1), guardianRow('g3', PHONES.g3)]), ADMIN);
+        expect(await activeIds(repo)).toEqual({ students: ['s1', 's2', 's3'], guardians: ['g1', 'g3'] });
+        expect((await repo.listStudents(ORG)).find((s) => s.id === 's2')!.guardianIds).toEqual(['g1']);
+    });
+
+    it('a child who comes back in a later export is active again', async () => {
+        const repo = await seeded();
+        await runImport({ repo, clock: testClock() }, ORG, csv([studentRow('s1', 'g1'), studentRow('s3', 'g3')], [guardianRow('g1', PHONES.g1), guardianRow('g2', PHONES.g2), guardianRow('g3', PHONES.g3)]), ADMIN);
+        expect((await activeIds(repo)).students).toEqual(['s1', 's3']);
+        await runImport({ repo, clock: testClock() }, ORG, csv([studentRow('s1', 'g1'), studentRow('s2', 'g2'), studentRow('s3', 'g3')], [guardianRow('g1', PHONES.g1), guardianRow('g2', PHONES.g2), guardianRow('g3', PHONES.g3)]), ADMIN);
+        expect((await activeIds(repo)).students).toEqual(['s1', 's2', 's3']);
+    });
+
+    it('a quarantined row that still carries its id counts as present: a malformed record is not a child who left', async () => {
+        const repo = await seeded();
+        const badGrade = studentRow('s2', 'g2').replace(',7,B,', ',seven,B,');
+        const run = await runImport({ repo, clock: testClock() }, ORG, csv([studentRow('s1', 'g1'), badGrade, studentRow('s3', 'g3')], [guardianRow('g1', PHONES.g1), guardianRow('g2', PHONES.g2), guardianRow('g3', PHONES.g3)]), ADMIN);
+        expect(run.counts).toMatchObject({ rejected: 1, tombstoned: 0 });
+        expect((await activeIds(repo)).students).toEqual(['s1', 's2', 's3']);
+    });
+
+    it('a file that cannot be trusted as the whole list marks nobody inactive: a row without a usable id, or no valid row at all', async () => {
+        const repo = await seeded();
+        // A row of the wrong shape (its first cell may not be an id) in the students file.
+        let run = await runImport({ repo, clock: testClock() }, ORG, csv([studentRow('s1', 'g1'), 'truncated,,row'], [guardianRow('g1', PHONES.g1), guardianRow('g2', PHONES.g2), guardianRow('g3', PHONES.g3)]), ADMIN);
+        expect(run.counts.tombstoned).toBe(0);
+        // An empty guardians file (header only) next to a good students file.
+        run = await runImport({ repo, clock: testClock() }, ORG, csv([studentRow('s1', 'g1'), studentRow('s2', 'g2'), studentRow('s3', 'g3')], []), ADMIN);
+        expect(run.counts.tombstoned).toBe(0);
+        expect(await activeIds(repo)).toEqual({ students: ['s1', 's2', 's3'], guardians: ['g1', 'g2', 'g3'] });
+        const audit = repo.writes.filter((w) => w.method === 'appendAudit').map((w) => w.args[1] as { detail: Record<string, unknown> });
+        expect(audit[audit.length - 1].detail).toMatchObject({ absenceSkipped: ['guardians'] });
+    });
+
+    it('a REST pull never tombstones by absence: a record it does not list stays as it was', async () => {
+        const repo = await setup();
+        await runImport({ repo, clock: testClock() }, ORG, source([crmStudent('s1'), crmStudent('s2')], [crmGuardian('g-s1'), crmGuardian('g-s2')]), ADMIN);
+        const run = await runImport({ repo, clock: testClock() }, ORG, source([crmStudent('s1')], [crmGuardian('g-s1')]), ADMIN);
+        expect(run.counts.tombstoned).toBe(0);
+        expect(await activeIds(repo)).toEqual({ students: ['s1', 's2'], guardians: ['g-s1', 'g-s2'] });
+    });
+
+    it('a REST pull asks for everything (updatedSince null), so an incremental page can never be read as the whole school', async () => {
+        const repo = await setup();
+        const asked: (string | null)[] = [];
+        const spy: CrmSource = {
+            kind: 'rest',
+            fetchSchool: async () => null,
+            fetchStudents: async (since) => {
+                asked.push(since);
+                return [crmStudent('s1')];
+            },
+            fetchGuardians: async (since) => {
+                asked.push(since);
+                return [crmGuardian('g-s1')];
+            },
+        };
+        await runImport({ repo, clock: testClock() }, ORG, spy, ADMIN);
+        expect(asked).toEqual([null, null]);
     });
 });

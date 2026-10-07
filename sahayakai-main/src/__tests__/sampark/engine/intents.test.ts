@@ -3,7 +3,7 @@
  */
 import crypto from 'node:crypto';
 
-import { callIdFor, campaignDedupeKey, hashId, intentIdFor } from '@/lib/sampark/intents';
+import { callIdFor, campaignDedupeKey, hashId, intentIdFor, MAX_CARRIER_REQUEUES } from '@/lib/sampark/intents';
 
 describe('sampark intents ids', () => {
     it('hashId is the first 32 hex chars of sha256', () => {
@@ -27,5 +27,24 @@ describe('sampark intents ids', () => {
         const id = intentIdFor('k');
         expect(callIdFor(id, 1)).toBe(hashId(`${id}#1`));
         expect(callIdFor(id, 1)).not.toBe(callIdFor(id, 2));
+    });
+
+    it('requeue 0 is exactly the pre-H7 id, so no call id written before the hardening sprint changes', () => {
+        const id = intentIdFor('k');
+        // Pinned literally: sha256('<id>#1') — not recomputed through hashId, so a change to either breaks this.
+        const legacy = crypto.createHash('sha256').update(`${id}#1`).digest('hex').slice(0, 32);
+        expect(callIdFor(id, 1, 0)).toBe(legacy);
+        expect(callIdFor(id, 1)).toBe(legacy);
+    });
+
+    it('every (attempt, requeue) pair gets its own id (no claim collides with a refused call, EDGE_CASES S23)', () => {
+        const id = intentIdFor('k');
+        const ids = new Set<string>();
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            for (let requeue = 0; requeue <= MAX_CARRIER_REQUEUES; requeue++) ids.add(callIdFor(id, attempt, requeue));
+        }
+        expect(ids.size).toBe(3 * (MAX_CARRIER_REQUEUES + 1));
+        expect(callIdFor(id, 1, 1)).not.toBe(callIdFor(intentIdFor('other'), 1, 1));
+        expect(MAX_CARRIER_REQUEUES).toBe(3);
     });
 });

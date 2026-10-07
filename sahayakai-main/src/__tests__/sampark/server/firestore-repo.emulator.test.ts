@@ -178,9 +178,12 @@ d('FirestoreSamparkRepo (emulator)', () => {
         await repo.createIntentIfAbsent(intent('i-q1'));
         await repo.createIntentIfAbsent(intent('i-q2'));
         await repo.createIntentIfAbsent(intent('i-q3'));
-        await repo.claimIntentForDial(ORG, 'i-q1', call('q1', { intentId: 'i-q1', campaignId: 'log', phoneHash: 'h-q', leaseUntil: iso(-1000), createdAt: iso(-5000) }), T0);
-        await repo.claimIntentForDial(ORG, 'i-q2', call('q2', { intentId: 'i-q2', campaignId: 'log', phoneHash: 'h-q', createdAt: iso(-4000) }), T0);
-        await repo.claimIntentForDial(ORG, 'i-q3', call('q3', { intentId: 'i-q3', campaignId: 'log', phoneHash: 'h-q', purpose: 'emergency_closure', createdAt: iso(-3000) }), T0);
+        await repo.createIntentIfAbsent(intent('i-q4'));
+        // Real-carrier calls count toward the frequency cap; a Practice (simulated) call never does (H1).
+        await repo.claimIntentForDial(ORG, 'i-q1', call('q1', { intentId: 'i-q1', campaignId: 'log', phoneHash: 'h-q', carrier: 'vobiz', leaseUntil: iso(-1000), createdAt: iso(-5000) }), T0);
+        await repo.claimIntentForDial(ORG, 'i-q2', call('q2', { intentId: 'i-q2', campaignId: 'log', phoneHash: 'h-q', carrier: 'vobiz', createdAt: iso(-4000) }), T0);
+        await repo.claimIntentForDial(ORG, 'i-q3', call('q3', { intentId: 'i-q3', campaignId: 'log', phoneHash: 'h-q', carrier: 'vobiz', purpose: 'emergency_closure', createdAt: iso(-3000) }), T0);
+        await repo.claimIntentForDial(ORG, 'i-q4', call('q4', { intentId: 'i-q4', campaignId: 'practice', phoneHash: 'h-q', carrier: 'simulated', createdAt: iso(-2000) }), T0);
         await repo.updateCall(ORG, 'q2', { state: 'completed', endedAt: iso(), failureReason: undefined });
 
         expect((await repo.listExpiredOpenCalls(ORG, T0)).map((c) => c.id)).toContain('q1');

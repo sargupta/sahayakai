@@ -16,7 +16,28 @@
  *   - guardians of RECORD only: SamparkStudent.guardianIds and
  *     SamparkGuardian.studentIds follow `isGuardianOfRecord`, never a shared
  *     phone number (plan §4⑦ bundling).
+ *   - primary guardians (H6): `primaryGuardianIds` lists the links that are
+ *     both `isPrimary` and `isGuardianOfRecord`, so the audience calls the
+ *     primary parent first instead of every parent on file.
  *   - tombstones (`deleted: true`) mark the existing record inactive.
+ *   - absence (H6, CSV only): a CSV import is a FULL export — createCsvSource
+ *     ignores `updatedSince`, and the school uploads the whole students and
+ *     guardians lists — so a child or guardian of this school who is missing
+ *     from the file has left, and is marked inactive through the same path as
+ *     a tombstone (Entab exports carry no deletion markers). A REST pull never
+ *     tombstones by absence: a page with `updatedSince` lists only what changed,
+ *     and REST CRMs send deletions as tombstones. Absence is applied per file
+ *     only when that file can be trusted to be the whole list: it must hold at
+ *     least one valid record, and no row in it may have been quarantined without
+ *     a usable id (a row of the wrong shape, or one with no id, could be any of
+ *     the "missing" children). Otherwise the absence step is skipped for that
+ *     file, logged and audited, and nobody is marked inactive by it.
+ *   - holidays (H10): the CRM's list is stored as `crmHolidays`; the school's
+ *     own (`manualHolidays`, entered in the console) is never touched, and
+ *     `holidays` is the sorted union of both. A school from before the split
+ *     keeps its whole current list as its own, so nothing is lost. When the CRM
+ *     sends no holidays (CSV, or a school record that fails validation) all
+ *     three lists are left as they are.
  *   - the preferences registry is bootstrapped from CRM consent for guardians
  *     that have no registry entry; for existing entries only groups whose
  *     current source is 'crm' are refreshed — an office, parent-form or keypad
@@ -48,6 +69,7 @@ import type {
     ParentLanguage,
     PhoneClass,
     SamparkGuardian,
+    SamparkSchool,
     SamparkStudent,
 } from '@/types/sampark';
 import type { ZodError } from 'zod';
@@ -111,6 +133,52 @@ function sameConsent(a: ConsentRecord, b: ConsentRecord): boolean {
     return a.status === b.status && a.noticeVersion === b.noticeVersion && a.recordedAt === b.recordedAt && a.source === b.source;
 }
 
+/** The sorted, de-duplicated union of holiday lists (YYYY-MM-DD sorts as a string). */
+export function unionHolidays(...lists: (readonly string[] | null | undefined)[]): string[] {
+    return [...new Set(lists.flatMap((l) => l ?? []))].sort();
+}
+
+/**
+ * The school's holiday fields after an import (H10). `crmHolidays` null = the CRM sent
+ * none, and nothing changes. Otherwise the CRM's list replaces the previous CRM list
+ * only; the school's own list is kept (for a school from before the split, its whole
+ * current list counts as its own), and `holidays` is the union of the two.
+ */
+export function holidaysAfterImport(
+    school: Pick<SamparkSchool, 'holidays' | 'manualHolidays' | 'crmHolidays'>,
+    crmHolidays: string[] | null,
+): Partial<Pick<SamparkSchool, 'holidays' | 'manualHolidays' | 'crmHolidays'>> {
+    if (crmHolidays === null) return {};
+    const manualHolidays = school.manualHolidays ?? unionHolidays(school.holidays);
+    const crm = unionHolidays(crmHolidays);
+    return { manualHolidays, crmHolidays: crm, holidays: unionHolidays(manualHolidays, crm) };
+}
+
+/**
+ * What one file of a full export says about who is still at the school: the ids it
+ * mentions (valid, quarantined or tombstoned), and whether it can be trusted to be
+ * the whole list (see "absence" in the module comment).
+ */
+interface ExportPresence {
+    ids: Set<string>;
+    valid: number;
+    unidentified: number;
+}
+
+function newPresence(): ExportPresence {
+    return { ids: new Set(), valid: 0, unidentified: 0 };
+}
+
+function notePresence(p: ExportPresence, meta: { crmId: string | null; csvError: string | null }): void {
+    // A row of the wrong shape cannot be trusted to carry its id in the id column.
+    if (meta.csvError || meta.crmId === null) p.unidentified += 1;
+    else p.ids.add(meta.crmId);
+}
+
+function trustedAsWholeList(p: ExportPresence): boolean {
+    return p.valid > 0 && p.unidentified === 0;
+}
+
 export async function runImport(
     deps: ImportDeps,
     orgId: string,
@@ -158,10 +226,15 @@ export async function runImport(
         const [rawStudents, rawGuardians] = await Promise.all([source.fetchStudents(null), source.fetchGuardians(null)]);
 
         // ── Validate every record independently ──────────────────────────
+        const fullExport = source.kind === 'csv';
+        const studentPresence = newPresence();
+        const guardianPresence = newPresence();
+
         const validStudents = new Map<string, CrmStudent>();
         const studentTombstones = new Set<string>();
         for (const raw of rawStudents) {
             const meta = rawMeta(raw);
+            notePresence(studentPresence, meta);
             if (meta.csvError) {
                 rejected.push({ entity: 'student', crmId: meta.crmId, row: meta.row, reason: meta.csvError });
                 continue;
@@ -177,12 +250,14 @@ export async function runImport(
                 continue;
             }
             validStudents.set(parsed.data.id, parsed.data);
+            studentPresence.valid += 1;
         }
 
         const validGuardians = new Map<string, { crm: CrmGuardian; e164: string; phoneClass: PhoneClass }>();
         const guardianTombstones = new Set<string>();
         for (const raw of rawGuardians) {
             const meta = rawMeta(raw);
+            notePresence(guardianPresence, meta);
             if (meta.csvError) {
                 rejected.push({ entity: 'guardian', crmId: meta.crmId, row: meta.row, reason: meta.csvError });
                 continue;
@@ -206,10 +281,39 @@ export async function runImport(
             // Fail closed: a CRM that says "synthetic" is believed even for a mobile-looking number.
             const phoneClass: PhoneClass = parsed.data.synthetic ? 'synthetic' : cls;
             validGuardians.set(parsed.data.id, { crm: parsed.data, e164, phoneClass });
+            guardianPresence.valid += 1;
         }
 
         // ── Existing snapshot (for tombstones and link integrity) ────────
         const [existingStudents, existingGuardians] = await Promise.all([repo.listStudents(orgId), repo.listGuardians(orgId)]);
+
+        // ── Absence from a full export (CSV only) ────────────────────────
+        // Active records the file does not mention have left; they join the tombstones.
+        const absence = { students: 0, guardians: 0, skipped: [] as ('students' | 'guardians')[] };
+        if (fullExport) {
+            const sides = [
+                { entity: 'students' as const, presence: studentPresence, existing: existingStudents, tombstones: studentTombstones },
+                { entity: 'guardians' as const, presence: guardianPresence, existing: existingGuardians, tombstones: guardianTombstones },
+            ];
+            for (const side of sides) {
+                if (!trustedAsWholeList(side.presence)) {
+                    absence.skipped.push(side.entity);
+                    continue;
+                }
+                for (const record of side.existing) {
+                    if (!record.active || side.presence.ids.has(record.id) || side.tombstones.has(record.id)) continue;
+                    side.tombstones.add(record.id);
+                    absence[side.entity] += 1;
+                }
+            }
+            if (absence.skipped.length > 0) {
+                logger.warn('CSV import not trusted as a full list; nobody marked inactive by absence', 'SAMPARK_IMPORT', {
+                    orgId,
+                    skipped: absence.skipped,
+                });
+            }
+        }
+
         const knownGuardianIds = new Set<string>([
             ...validGuardians.keys(),
             ...existingGuardians.filter((g) => !guardianTombstones.has(g.id)).map((g) => g.id),
@@ -219,10 +323,9 @@ export async function runImport(
         const students: SamparkStudent[] = [];
         const studentIdsByGuardian = new Map<string, string[]>();
         for (const s of validStudents.values()) {
-            const ofRecord = s.guardians
-                .filter((l) => l.isGuardianOfRecord && knownGuardianIds.has(l.guardianId))
-                .map((l) => l.guardianId);
-            const guardianIds = [...new Set(ofRecord)];
+            const ofRecord = s.guardians.filter((l) => l.isGuardianOfRecord && knownGuardianIds.has(l.guardianId));
+            const guardianIds = [...new Set(ofRecord.map((l) => l.guardianId))];
+            const primaryGuardianIds = [...new Set(ofRecord.filter((l) => l.isPrimary).map((l) => l.guardianId))];
             for (const gid of guardianIds) {
                 const list = studentIdsByGuardian.get(gid) ?? [];
                 list.push(s.id);
@@ -240,6 +343,7 @@ export async function runImport(
                 boarding: s.boarding,
                 transportRoute: s.transportRoute,
                 guardianIds,
+                primaryGuardianIds,
                 active: s.status === 'active',
                 crmUpdatedAt: s.updatedAt,
                 importedAt: now,
@@ -305,9 +409,10 @@ export async function runImport(
 
         const finishedAt = clock.now().toISOString();
         const latestSchool = (await repo.getSchool(orgId)) ?? school;
+        // H10: the CRM's holidays are kept apart from the school's own and merged, never replacing them.
         await repo.upsertSchool({
             ...latestSchool,
-            holidays: holidays ?? latestSchool.holidays,
+            ...holidaysAfterImport(latestSchool, holidays),
             crm: latestSchool.crm
                 ? { ...latestSchool.crm, lastImportAt: finishedAt, lastImportId: run.id }
                 : { kind: source.kind, baseUrl: null, apiKeySecretName: null, lastImportAt: finishedAt, lastImportId: run.id },
@@ -332,7 +437,9 @@ export async function runImport(
             actor: startedBy,
             action: 'import.run',
             target: `import/${run.id}`,
-            detail: { source: source.kind, ...done.counts },
+            detail: fullExport
+                ? { source: source.kind, ...done.counts, absentMarkedInactive: { students: absence.students, guardians: absence.guardians }, absenceSkipped: absence.skipped }
+                : { source: source.kind, ...done.counts },
         });
         logger.info('Sampark import finished', 'SAMPARK_IMPORT', { orgId, importId: run.id, source: source.kind, ...done.counts });
         return done;

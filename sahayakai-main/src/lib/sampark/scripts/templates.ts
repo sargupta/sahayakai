@@ -114,7 +114,14 @@ const callScriptFileSchema = z
             })
             .strict(),
         common: z
-            .object({ opt_out_confirm: text, opt_out_done: text, no_input: text, fallback_office: text })
+            .object({
+                opt_out_confirm: text,
+                opt_out_done: text,
+                no_input: text,
+                fallback_office: text,
+                /** Played instead of the message when a call is answered after its campaign was cancelled (H4). */
+                withdrawn: text,
+            })
             .strict(),
         purposes: z.record(z.string(), purposeTemplateSchema),
     })
@@ -162,4 +169,4 @@ export function callScripts(language: ParentLanguage): CallScriptFile {
 }
 
 /** The common clip kinds every notice call can play, in a stable order. */
-export const COMMON_CLIP_KEYS: readonly CommonClipKey[] = ['opt_out_confirm', 'opt_out_done', 'no_input', 'fallback_office'];
+export const COMMON_CLIP_KEYS: readonly CommonClipKey[] = ['opt_out_confirm', 'opt_out_done', 'no_input', 'fallback_office', 'withdrawn'];

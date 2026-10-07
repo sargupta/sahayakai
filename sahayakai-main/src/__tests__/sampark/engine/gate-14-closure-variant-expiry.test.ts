@@ -58,6 +58,7 @@ describe('class gate 14 — through the dispatcher', () => {
         await seedFamilies(repo, 1);
         const c: Campaign = campaign({
             id: 'camp-d4',
+            mode: 'practice', // approved in the school's mode (H2)
             purpose: 'emergency_closure',
             facts: { kind: 'emergency_closure', date: CLOSURE, reason: 'rain_landslide', busesRunning: false },
             expiresAt: closureExpiry(CLOSURE).toISOString(),

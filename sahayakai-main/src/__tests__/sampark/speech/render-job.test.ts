@@ -136,13 +136,14 @@ function fakeVerifier(mishear: (language: ParentLanguage, spoken: string) => str
 const LANGS: ParentLanguage[] = ['English', 'Hindi', 'Bengali', 'Nepali'];
 
 describe('neededClips', () => {
-    it('PTM: 7 clips per language; closure: message + confirm per variant plus the common clips once', () => {
+    it('PTM: 8 clips per language; closure: message + confirm per variant plus the common clips once', () => {
         const aud = { kind: 'section', grade: 7, section: 'B' } as const;
-        expect(neededClips('ptm_invite', SAMPLE_PTM, SAMPLE_SCHOOL, aud, LANGS)).toHaveLength(28);
+        // 8 = message, confirm_1, confirm_2 and the five common clips (the withdrawn line, H4, is one of them).
+        expect(neededClips('ptm_invite', SAMPLE_PTM, SAMPLE_SCHOOL, aud, LANGS)).toHaveLength(32);
         const closure = neededClips('emergency_closure', SAMPLE_CLOSURE, SAMPLE_SCHOOL, aud, ['Nepali', 'Nepali']);
-        // today + tomorrow messages, one shared confirm_1, four common clips.
+        // today + tomorrow messages, one shared confirm_1, five common clips.
         expect(closure.map((c) => `${c.variant}:${c.kind}`).sort()).toEqual(
-            ['today:message', 'tomorrow:message', 'today:confirm_1', 'default:opt_out_confirm', 'default:opt_out_done', 'default:no_input', 'default:fallback_office'].sort(),
+            ['today:message', 'tomorrow:message', 'today:confirm_1', 'default:opt_out_confirm', 'default:opt_out_done', 'default:no_input', 'default:fallback_office', 'default:withdrawn'].sort(),
         );
         for (const c of closure) expect(c.key).toBe(clipKey(c.speech, c.text));
     });
@@ -158,12 +159,12 @@ describe('runRenderStep', () => {
         const deps = { repo, synth: s.synth, verifier: v.verifier, store, clock, normalise: identity, voiceCheck: passingVoiceCheck() };
 
         const first = await runRenderStep(deps, c.orgId, c.id, LANGS, { maxClips: 100, concurrency: 3 });
-        expect(first).toEqual({ done: 28, total: 28, failures: [], finished: true });
-        expect(s.calls).toHaveLength(28);
-        expect(v.calls).toHaveLength(28); // every clip, not only the message
-        expect(files.size).toBe(28);
+        expect(first).toEqual({ done: 32, total: 32, failures: [], finished: true });
+        expect(s.calls).toHaveLength(32);
+        expect(v.calls).toHaveLength(32); // every clip, not only the message
+        expect(files.size).toBe(32);
         expect(s.maxInFlight()).toBeLessThanOrEqual(3);
-        expect(current().renderProgress).toEqual({ done: 28, total: 28, failures: [] });
+        expect(current().renderProgress).toEqual({ done: 32, total: 32, failures: [] });
         expect(current().status).toBe('rendering'); // never changes status
 
         const message = [...clips.values()].find((x) => x.kind === 'message' && x.language === 'Nepali')!;
@@ -182,9 +183,9 @@ describe('runRenderStep', () => {
         expect(confirm.engine).toBe('gemini-tts-vertex');
 
         const second = await runRenderStep(deps, c.orgId, c.id, LANGS, { maxClips: 100, concurrency: 3 });
-        expect(second).toEqual({ done: 28, total: 28, failures: [], finished: true });
-        expect(s.calls).toHaveLength(28); // nothing re-synthesised
-        expect(v.calls).toHaveLength(28);
+        expect(second).toEqual({ done: 32, total: 32, failures: [], finished: true });
+        expect(s.calls).toHaveLength(32); // nothing re-synthesised
+        expect(v.calls).toHaveLength(32);
     });
 
     it('only the main message is rendered with the style hint; every short clip is plain', async () => {
@@ -201,7 +202,7 @@ describe('runRenderStep', () => {
         };
         await runRenderStep({ repo, synth: recording, verifier: fakeVerifier().verifier, store, clock, normalise: identity, voiceCheck: passingVoiceCheck() }, c.orgId, c.id, LANGS, { maxClips: 100, concurrency: 3 });
         const kindOf = new Map([...clips.values()].map((x) => [x.text, x.kind]));
-        expect(seen.length).toBe(28);
+        expect(seen.length).toBe(32);
         for (const r of seen) expect(r.delivery).toBe(kindOf.get(r.text) === 'message' ? 'styled' : 'plain');
     });
 
@@ -214,12 +215,14 @@ describe('runRenderStep', () => {
         const deps = { repo, synth: s.synth, verifier: v.verifier, store, clock, normalise: identity, voiceCheck: passingVoiceCheck() };
 
         const r1 = await runRenderStep(deps, c.orgId, c.id, ['Hindi', 'Nepali'], { maxClips: 5, concurrency: 2 });
-        expect(r1).toMatchObject({ done: 5, total: 14, finished: false });
+        expect(r1).toMatchObject({ done: 5, total: 16, finished: false });
         const r2 = await runRenderStep(deps, c.orgId, c.id, ['Hindi', 'Nepali'], { maxClips: 5, concurrency: 2 });
-        expect(r2).toMatchObject({ done: 10, total: 14, finished: false });
+        expect(r2).toMatchObject({ done: 10, total: 16, finished: false });
         const r3 = await runRenderStep(deps, c.orgId, c.id, ['Hindi', 'Nepali'], { maxClips: 5, concurrency: 2 });
-        expect(r3).toEqual({ done: 14, total: 14, failures: [], finished: true });
-        expect(s.calls).toHaveLength(14);
+        expect(r3).toMatchObject({ done: 15, total: 16, finished: false });
+        const r4 = await runRenderStep(deps, c.orgId, c.id, ['Hindi', 'Nepali'], { maxClips: 5, concurrency: 2 });
+        expect(r4).toEqual({ done: 16, total: 16, failures: [], finished: true });
+        expect(s.calls).toHaveLength(16);
     });
 
     it('a message that transcribes back wrong is retried once, then recorded as failed with the transcript', async () => {
@@ -232,10 +235,10 @@ describe('runRenderStep', () => {
 
         const r = await runRenderStep(deps, c.orgId, c.id, LANGS, { maxClips: 100, concurrency: 4 });
         expect(r.finished).toBe(true);
-        expect(r.done).toBe(27);
+        expect(r.done).toBe(31);
         expect(r.failures).toHaveLength(1);
         expect(r.failures[0]).toMatch(/^Bengali default message: similarity 0\.\d+, [\d.]+ s spoken — heard "সম্পূর্ণ অন্য কথা"/);
-        expect(v.calls.filter((l) => l === 'Bengali')).toHaveLength(7 + 2); // every Bengali clip once, plus two re-renders of the message
+        expect(v.calls.filter((l) => l === 'Bengali')).toHaveLength(8 + 2); // every Bengali clip once, plus two re-renders of the message
         const failed = [...clips.values()].find((x) => x.language === 'Bengali' && x.kind === 'message')!;
         expect(failed.verification).toMatchObject({ status: 'failed', transcript: 'সম্পূর্ণ অন্য কথা' });
         expect(files.has(failed.key)).toBe(true); // kept for a person to listen to
@@ -294,7 +297,7 @@ describe('runRenderStep', () => {
         const v = fakeVerifier();
         const r = await runRenderStep({ repo, synth: failing, verifier: v.verifier, store, clock, normalise: identity, voiceCheck: passingVoiceCheck() }, c.orgId, c.id, LANGS, { maxClips: 100, concurrency: 2 });
         expect(r.failures).toEqual([expect.stringMatching(/^Hindi default confirm_1: HTTP 503/), expect.stringMatching(/^Hindi default confirm_2: HTTP 503/)]);
-        expect(r.done).toBe(26);
+        expect(r.done).toBe(30);
         expect(r.finished).toBe(true);
     });
 

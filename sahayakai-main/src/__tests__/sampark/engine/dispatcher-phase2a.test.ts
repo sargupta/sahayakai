@@ -27,7 +27,7 @@ import { callIdFor, campaignDedupeKey, intentIdFor } from '@/lib/sampark/intents
 import type { SamparkRepo } from '@/lib/sampark/ports';
 import { createMemorySamparkRepo } from '@/lib/sampark/repo/memory';
 import type { PlaceCallOptions, VobizConfig, VobizResult } from '@/lib/vobiz/client';
-import type { CallEvent, SamparkCall } from '@/types/sampark';
+import type { CallEvent, ParentLanguage, SamparkCall } from '@/types/sampark';
 
 import {
     campaign,
@@ -104,11 +104,21 @@ function fakeVobizCarrier(onPlace?: (callId: string) => Promise<void>, result?: 
     return { carrier, sent, callIds, placesFor: (intentId: string) => callIds.filter((c) => [1, 2, 3].some((a) => callIdFor(intentId, a) === c)).length };
 }
 
+/**
+ * Test mode rings the test phone for one family per language (H9, audience.ts), so each family
+ * here speaks a different language: that keeps every one of them a sample the dispatcher dials.
+ */
+const SAMPLE_LANGUAGES: ParentLanguage[] = ['Nepali', 'Hindi', 'Bengali', 'English'];
+
 async function testModeSetup(n: number, overrides: Partial<Parameters<typeof testModeSchool>[0]> = {}) {
+    expect(n).toBeLessThanOrEqual(SAMPLE_LANGUAGES.length);
     const repo = createMemorySamparkRepo();
     const clock = testClock();
     await seedFamilies(repo, n, { school: testModeSchool(overrides) });
-    const camp = campaign();
+    const seeded = await repo.listGuardians(ORG);
+    await repo.upsertGuardians(ORG, seeded.map((g, i) => ({ ...g, crmLanguage: SAMPLE_LANGUAGES[i] })));
+    // Approved while the school was in Test mode (H2: the campaign dials only in that mode).
+    const camp = campaign({ mode: 'test' });
     await repo.createCampaign(camp);
     const res = await materialiseCampaignIntents({ repo, clock }, camp, school(testModeSchool(overrides)), 'vobiz');
     expect(res.created).toBe(n);
@@ -129,8 +139,8 @@ describe('the simulated path settles through settleCall', () => {
         const repo = createMemorySamparkRepo();
         const clock = testClock();
         await seedFamilies(repo, 3);
-        await repo.createCampaign(campaign());
-        await materialiseCampaignIntents({ repo, clock }, campaign(), school(), 'simulated');
+        await repo.createCampaign(campaign({ mode: 'practice' }));
+        await materialiseCampaignIntents({ repo, clock }, campaign({ mode: 'practice' }), school(), 'simulated');
         const fates: Record<string, ScriptedFate> = { g001: 'key1', g002: 'no_answer', g003: 'fail_final' };
         await runDispatchTick(deps(repo, clock, scriptedCarrier((r) => fates[r.call.guardianId])), DEFAULT_OPTS);
 
@@ -415,14 +425,14 @@ describe('test mode rings only the school’s test phone, one call at a time', (
 
     it('the cap is TEST_MODE_MAX_IN_FLIGHT (1) whatever the options say; practice mode keeps the configured cap', async () => {
         expect(TEST_MODE_MAX_IN_FLIGHT).toBe(1);
-        const { repo, clock } = await testModeSetup(5);
+        const { repo, clock } = await testModeSetup(4);
         const opts = { ...DEFAULT_OPTS, maxInFlightPerSchool: 50, maxDialsPerSchoolPerTick: 50 };
         expect((await runDispatchTick(deps(repo, clock, fakeVobizCarrier().carrier), opts)).dialed).toBe(1);
 
         const practice = createMemorySamparkRepo();
         await seedFamilies(practice, 5);
-        await practice.createCampaign(campaign());
-        await materialiseCampaignIntents({ repo: practice, clock }, campaign(), school(), 'simulated');
+        await practice.createCampaign(campaign({ mode: 'practice' }));
+        await materialiseCampaignIntents({ repo: practice, clock }, campaign({ mode: 'practice' }), school(), 'simulated');
         expect((await runDispatchTick(deps(practice, clock, scriptedCarrier(() => 'full')), opts)).dialed).toBe(5);
     });
 

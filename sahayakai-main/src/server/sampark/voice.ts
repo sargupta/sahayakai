@@ -3,8 +3,10 @@
  * between "the phone was answered" and "the line went dead".
  *
  *   answer  → is this call still allowed to speak? If so, mark it answered and
- *             hand Vobiz the message + keypad menu.
- *   gather  → one key from the parent: record it, play the matching clip.
+ *             hand Vobiz the message + keypad menu. A call whose campaign was
+ *             cancelled while it rang plays the withdrawn line instead (H4).
+ *   gather  → one key from the parent: record it, play the matching clip. A key
+ *             the menu does not offer replays the message once (H11, interim).
  *   status  → ring / hangup: move the call forward, then settle it.
  *   audio   → the WAV bytes behind every <Play>.
  *
@@ -23,7 +25,9 @@
  *     holds if each event is applied to the latest state.
  *   - Callbacks are retried, so everything is idempotent; keypad tokens are
  *     single-use (repo.burnToken), so a replayed URL cannot press 9 twice.
- *   - Only a clip whose transcribe-back check PASSED is ever put in a <Play>.
+ *   - Only a clip whose transcribe-back check PASSED is ever put in a <Play>, and
+ *     only one the campaign froze when it was scheduled (H4), so an edit to the
+ *     school's settings never silences an answered call.
  *   - Every URL handed to Vobiz is built from SAMPARK_PUBLIC_BASE_URL, never
  *     from the request's Host header (plan §16 row 21; class gate (d)).
  *   - A 9 is never lost: a keypress that lands after the hangup still opts the
@@ -39,6 +43,7 @@ import { recordOptOut, settleCall } from '@/lib/sampark/dispatch/settle';
 import { applyCallEvent, isTerminal } from '@/lib/sampark/dispatch/state';
 import { languageInfo } from '@/lib/sampark/languages';
 import { suppressionApplies } from '@/lib/sampark/policy/gate';
+import { pauseStopsPurpose } from '@/lib/sampark/policy/pause';
 import { samparkWindowVerdict } from '@/lib/sampark/policy/window';
 import type { AudioStore, Clock, SamparkRepo } from '@/lib/sampark/ports';
 import { audienceLabelFor, renderNoticeScript } from '@/lib/sampark/scripts/render';
@@ -55,9 +60,10 @@ import {
 } from '@/lib/sampark/voice/tokens';
 import { hangupEventFromVobiz } from '@/lib/sampark/voice/vobiz-events';
 import { EMPTY_HANGUP_XML, noticeAnswerXml, optOutConfirmXml, playThenHangupXml } from '@/lib/sampark/voice/xml';
-import type { Campaign, CallOutcome, ClipKind, SamparkCall, SamparkSchool } from '@/types/sampark';
+import type { Campaign, CallOutcome, ClipKind, PurposeId, SamparkCall, SamparkSchool, SchoolPause } from '@/types/sampark';
 import { mulawSamples } from '@/lib/sampark/speech/wav';
 import { toPcm16Wav } from '@/server/sampark/audio-format';
+import { clipKeySlot } from '@/server/sampark/campaigns';
 import { samparkPublicBaseUrl } from '@/server/sampark/carrier';
 
 const LOG = 'SAMPARK_VOICE';
@@ -87,6 +93,10 @@ export type VoiceStep = 'menu' | 'optout';
 
 export type VoiceOutcome =
     | 'played'
+    /** The campaign was cancelled while the phone rang: the withdrawn line was played (H4). */
+    | 'withdrawn'
+    /** A key the menu does not offer: the message and its menu were played again, once (H11). */
+    | 'menu_repeated'
     | 'bad_token'
     | 'replayed'
     | 'disabled'
@@ -97,6 +107,10 @@ export type VoiceOutcome =
     | 'call_missing'
     | 'call_terminal'
     | 'campaign_closed'
+    /** The campaign's pinned mode is not 'test' (or it has none): it was approved for another mode (H2). */
+    | 'campaign_mode_mismatch'
+    /** The school is paused, and the pause covers this call's purpose (H3). */
+    | 'school_paused'
     | 'purpose_unknown'
     | 'window_closed'
     | 'suppressed'
@@ -148,6 +162,7 @@ function campaignOpen(campaign: Campaign | null, now: Date): campaign is Campaig
     return Number.isFinite(expires) && expires > now.getTime();
 }
 
+
 const OPT_OUT_RANK: Record<CallOutcome['optOut'], number> = { none: 0, requested: 1, confirmed: 2 };
 
 function strongerOptOut(a: CallOutcome['optOut'], b: CallOutcome['optOut']): CallOutcome['optOut'] {
@@ -165,21 +180,11 @@ async function auditQuietly(repo: SamparkRepo, orgId: string, action: string, ca
 // ── Audio lookup and URLs ───────────────────────────────────────────────────
 
 /**
- * The clip keys this call may play, by kind — ONLY clips whose transcribe-back
- * check passed. Found exactly the way the dispatcher sizes audio
- * (makeAudioSecondsFor in jobs.ts): render the script for the call's language
- * and variant, hash each clip's text. A setting changed since rendering changes
- * the text, so the key misses and the clip is treated as unavailable.
+ * The clip keys a campaign without frozen keys (scheduled before 7 Oct 2026) would play: render
+ * the script for the call's language and variant and hash each clip's text, the way the render
+ * job did. A setting changed since rendering changes the text, so such a key misses.
  */
-async function verifiedClipKeys(
-    repo: SamparkRepo,
-    school: SamparkSchool,
-    campaign: Campaign,
-    call: SamparkCall,
-    kinds: readonly ClipKind[],
-): Promise<Partial<Record<ClipKind, string>>> {
-    let texts: Partial<Record<ClipKind, string>>;
-    let speech: ReturnType<typeof languageInfo>['speech'];
+function reRenderedClipKeys(school: SamparkSchool, campaign: Campaign, call: SamparkCall): Partial<Record<ClipKind, string>> {
     try {
         const script = renderNoticeScript({
             purpose: campaign.purpose,
@@ -189,8 +194,8 @@ async function verifiedClipKeys(
             variant: call.variant,
             audience: audienceLabelFor(campaign),
         });
-        texts = Object.fromEntries(script.clips.map((c) => [c.kind, c.text]));
-        speech = languageInfo(call.language).speech;
+        const speech = languageInfo(call.language).speech;
+        return Object.fromEntries(script.clips.map((c) => [c.kind, clipKey(speech, c.text)]));
     } catch (err) {
         logger.warn('Sampark voice: the call script cannot be rendered', LOG, {
             orgId: call.orgId,
@@ -199,12 +204,30 @@ async function verifiedClipKeys(
         });
         return {};
     }
+}
+
+/**
+ * The clip keys this call may play, by kind — ONLY clips that exist for this
+ * org and whose transcribe-back check passed. The keys come from the campaign's
+ * `clipKeys`, frozen when its audio passed (H4), so renaming a venue or the
+ * school's spoken name after scheduling changes nothing a parent hears. Only a
+ * campaign without frozen keys falls back to re-rendering the script.
+ */
+async function verifiedClipKeys(
+    repo: SamparkRepo,
+    school: SamparkSchool,
+    campaign: Campaign,
+    call: SamparkCall,
+    kinds: readonly ClipKind[],
+): Promise<Partial<Record<ClipKind, string>>> {
+    const keys = campaign.clipKeys
+        ? (campaign.clipKeys[clipKeySlot(call.language, call.variant)] ?? {})
+        : reRenderedClipKeys(school, campaign, call);
     const found: Partial<Record<ClipKind, string>> = {};
     await Promise.all(
         kinds.map(async (kind) => {
-            const text = texts[kind];
-            if (!text) return;
-            const key = clipKey(speech, text);
+            const key = keys[kind];
+            if (!key) return;
             const clip = await repo.getClip(call.orgId, key);
             if (clip && clip.orgId === call.orgId && clip.verification?.status === 'passed') found[kind] = key;
         }),
@@ -233,8 +256,14 @@ export function tokenFromClipFile(file: string | null | undefined): string | nul
     return token || null;
 }
 
-async function gatherUrl(base: string, domain: Extract<SamparkVoiceDomain, 'sampark-gather-menu' | 'sampark-gather-optout'>, orgId: string, callId: string): Promise<string> {
-    const token = await mintSamparkVoiceToken(domain, voicePrincipal(orgId, callId));
+async function gatherUrl(
+    base: string,
+    domain: Extract<SamparkVoiceDomain, 'sampark-gather-menu' | 'sampark-gather-optout'>,
+    orgId: string,
+    callId: string,
+    ttlSeconds?: number,
+): Promise<string> {
+    const token = await mintSamparkVoiceToken(domain, voicePrincipal(orgId, callId), ttlSeconds);
     return `${base}${SAMPARK_VOICE_PATHS.gather}?t=${encodeURIComponent(token)}`;
 }
 
@@ -279,9 +308,17 @@ export async function handleSamparkAnswer(deps: VoiceDeps, input: AnswerInput): 
     if (school.mode !== 'test') return refuse('not_test_mode', { mode: school.mode });
     if (!call) return refuse('call_missing');
     if (isTerminal(call.state)) return refuse('call_terminal', { state: call.state });
+    // A school pause (H3) covers a call that was already ringing when it was set.
+    if (pauseStopsPurpose(school.pause, call.purpose)) return refuse('school_paused', { scope: school.pause?.scope ?? null });
     const campaign = call.campaignId ? await repo.getCampaign(orgId, call.campaignId) : null;
     const campaignStatus = campaign?.status ?? null;
-    if (!campaignOpen(campaign, now)) return refuse('campaign_closed', { status: campaignStatus });
+    // Cancelled while the phone rang (H4): the parent has picked up, so they are told the
+    // message was withdrawn rather than left in silence (checked below, after every other rule).
+    const withdrawn = campaign?.status === 'cancelled';
+    if (!campaign || (!withdrawn && !campaignOpen(campaign, now))) return refuse('campaign_closed', { status: campaignStatus });
+    // The mode was pinned at approval (H2). Only a campaign approved for Test mode may speak on a
+    // Test-mode call; one approved in Practice, or before modes were pinned, never does.
+    if (campaign.mode !== 'test') return refuse('campaign_mode_mismatch', { campaignMode: campaign.mode ?? null, schoolMode: school.mode });
     const spec = specFor(call.purpose);
     if (!spec || !spec.menu) return refuse('purpose_unknown');
     const hours = samparkWindowVerdict(school, spec, now);
@@ -291,6 +328,8 @@ export async function handleSamparkAnswer(deps: VoiceDeps, input: AnswerInput): 
         // since this one was dialled must silence it. (A test-phone call is never recorded against a parent.)
         if (suppressionApplies(await repo.getSuppression(orgId, call.phoneHash), spec)) return refuse('suppressed');
     }
+
+    if (withdrawn) return answerWithdrawn(deps, { school, campaign, call, base, callUuid: input.callUuid, now, refuse });
 
     const clips = await verifiedClipKeys(repo, school, campaign, call, ['message', 'no_input']);
     const messageKey = clips.message;
@@ -340,6 +379,43 @@ export async function handleSamparkAnswer(deps: VoiceDeps, input: AnswerInput): 
     };
 }
 
+/**
+ * A call answered after its campaign was cancelled (H4). With a verified withdrawn clip, the
+ * answer is recorded exactly as on the play path (so the hangup callback settles the call
+ * normally) and the parent hears the withdrawn line, then goodbye. Without one (a campaign
+ * rendered before the line existed), it hangs up as before, as 'campaign_closed'.
+ */
+async function answerWithdrawn(
+    deps: VoiceDeps,
+    o: {
+        school: SamparkSchool;
+        campaign: Campaign;
+        call: SamparkCall;
+        base: string;
+        callUuid: string | null;
+        now: Date;
+        refuse: (outcome: VoiceOutcome, detail?: Record<string, unknown>) => Promise<VoiceXmlResult>;
+    },
+): Promise<VoiceXmlResult> {
+    const { repo } = deps;
+    const { orgId, id: callId } = o.call;
+    const { withdrawn: withdrawnKey } = await verifiedClipKeys(repo, o.school, o.campaign, o.call, ['withdrawn']);
+    if (!withdrawnKey) return o.refuse('campaign_closed', { status: o.campaign.status, withdrawnClip: 'unavailable' });
+    // Mint before writing anything, as on the play path.
+    const url = await audioUrl(o.base, orgId, withdrawnKey);
+    const nowIso = o.now.toISOString();
+    const updated = await repo.mutateCall(orgId, callId, (current) => {
+        if (isTerminal(current.state)) return null;
+        const next = applyCallEvent(current, { type: 'answered', at: nowIso });
+        if (o.callUuid && !next.vobizCallUuid) next.vobizCallUuid = o.callUuid;
+        return next;
+    });
+    if (!updated) return o.refuse('call_missing');
+    if (isTerminal(updated.state)) return o.refuse('call_terminal', { state: updated.state });
+    await auditQuietly(repo, orgId, 'call.withdrawn_played', callId, o.now, { campaignId: o.campaign.id });
+    return { xml: playThenHangupXml(url), outcome: 'withdrawn' };
+}
+
 // ── Gather ──────────────────────────────────────────────────────────────────
 
 export interface GatherInput {
@@ -370,9 +446,22 @@ async function recordLateDigit(repo: SamparkRepo, call: SamparkCall, digit: stri
     await recordOptOut(repo, { ...call, outcome: { ...call.outcome, optOut } }, now, 'carrier');
 }
 
-type GatherPlan = { play: ClipKind } | { optOutPrompt: true };
+type GatherPlan = { play: ClipKind } | { optOutPrompt: true } | { replay: true };
 
-function gatherPlan(step: VoiceStep, digit: string | null, menu: MenuSpec): GatherPlan {
+/** How many times a key the menu does not offer replays the message before the call ends (H11, interim). */
+export const MENU_REPLAYS = 1;
+
+/** Whether the menu offers this key: 1 and 2 only when the purpose has them, 9 when it allows an opt-out. */
+function isMenuKey(digit: string, menu: MenuSpec): boolean {
+    return (digit === '1' && menu.key1 !== null) || (digit === '2' && menu.key2 !== null) || (digit === '9' && menu.optOut);
+}
+
+/** Keys pressed on this call that the menu does not offer. Only the menu step records any key but 9, so they all came from it. */
+export function unknownMenuKeys(digits: string, menu: MenuSpec): number {
+    return [...digits].filter((d) => !isMenuKey(d, menu)).length;
+}
+
+function gatherPlan(step: VoiceStep, digit: string | null, menu: MenuSpec, unknownKeys: number): GatherPlan {
     if (step === 'optout') {
         // The first 9 already stands (plan §5.1: an unconfirmed opt-out is applied anyway), so whatever
         // follows the confirmation prompt, the parent is told the truth: these calls will stop.
@@ -381,6 +470,10 @@ function gatherPlan(step: VoiceStep, digit: string | null, menu: MenuSpec): Gath
     if (digit === '1' && menu.key1) return { play: 'confirm_1' };
     if (digit === '2' && menu.key2) return { play: 'confirm_2' };
     if (digit === '9' && menu.optOut) return { optOutPrompt: true };
+    // A parent who pressed a key the menu does not offer often missed the start of the message
+    // (they said "Hello?" over it). Play it once more with its menu instead of hanging up; a second
+    // such key gets the no-input goodbye. `unknownKeys` already counts this key.
+    if (digit !== null && unknownKeys <= MENU_REPLAYS) return { replay: true };
     return { play: 'no_input' };
 }
 
@@ -434,8 +527,8 @@ export async function handleSamparkGather(deps: VoiceDeps, input: GatherInput): 
     if (!base) return hangup('base_url_missing');
     if (!menu) return hangup('purpose_unknown');
 
-    const plan = gatherPlan(step, digit, menu);
-    const kinds: ClipKind[] = 'play' in plan ? [plan.play] : ['opt_out_confirm', 'opt_out_done'];
+    const plan = gatherPlan(step, digit, menu, unknownMenuKeys(updated.outcome.digits, menu));
+    const kinds: ClipKind[] = 'play' in plan ? [plan.play] : 'replay' in plan ? ['message', 'no_input'] : ['opt_out_confirm', 'opt_out_done'];
     const [school, campaign] = await Promise.all([
         repo.getSchool(orgId),
         updated.campaignId ? repo.getCampaign(orgId, updated.campaignId) : Promise.resolve(null),
@@ -449,6 +542,22 @@ export async function handleSamparkGather(deps: VoiceDeps, input: GatherInput): 
 
     if ('play' in plan) {
         return { xml: playThenHangupXml(await audioUrl(base, orgId, clips[plan.play] as string)), outcome: 'played' };
+    }
+    if ('replay' in plan) {
+        // The answer document again, with a fresh single-use menu token (this one is burned). A token
+        // is fixed by its principal and its expiry in whole seconds, so one minted in the same second
+        // as the answer's (a parent who pressed a key at once) would BE the burned token, and the
+        // replay's keypad would be refused. One extra second of life per replay makes it distinct.
+        const ttl = SAMPARK_VOICE_TTL_SECONDS['sampark-gather-menu'] + unknownMenuKeys(updated.outcome.digits, menu);
+        const [messageAudioUrl, noInputAudioUrl, menuGather] = await Promise.all([
+            audioUrl(base, orgId, clips.message as string),
+            audioUrl(base, orgId, clips.no_input as string),
+            gatherUrl(base, 'sampark-gather-menu', orgId, callId, ttl),
+        ]);
+        return {
+            xml: noticeAnswerXml({ messageAudioUrl, gatherUrl: menuGather, noInputAudioUrl, timeoutSeconds: GATHER_TIMEOUT_SECONDS }),
+            outcome: 'menu_repeated',
+        };
     }
     const [promptAudioUrl, doneAudioUrl, optOutGather] = await Promise.all([
         audioUrl(base, orgId, clips.opt_out_confirm as string),

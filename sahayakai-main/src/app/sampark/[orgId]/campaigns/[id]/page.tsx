@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { AlertTriangle, ArrowLeft, Headphones, ListChecks, PhoneCall, Users } from "lucide-react";
+import { AlertTriangle, ArrowLeft, CirclePause, Headphones, ListChecks, PhoneCall, Users } from "lucide-react";
 import { SectionCard } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -15,7 +15,7 @@ import { CampaignActions } from "@/components/sampark/campaign-actions";
 import { KpiTile } from "@/components/sampark/kpi-tile";
 import { LanguageSwitcher } from "@/components/sampark/language-switcher";
 import { ScriptPreviewCard } from "@/components/sampark/script-preview-card";
-import { CampaignStatusBadge } from "@/components/sampark/status-pill";
+import { CampaignStatusBadge, StatusPill } from "@/components/sampark/status-pill";
 import { ErrorPanel, InlineSpinner, LoadingBlock } from "@/components/sampark/states";
 import { useAuthedAudio } from "@/components/sampark/use-authed-audio";
 import { useSamparkQuery } from "@/components/sampark/use-sampark-query";
@@ -25,7 +25,9 @@ import { useCampaignSummary } from "@/components/sampark/campaign-summary";
 import {
     LIVE_CAMPAIGN_STATUSES,
     blockReasonLabel,
+    effectiveHoldReason,
     fmt,
+    holdReasonText,
     languageName,
     purposeLabel,
 } from "@/components/sampark/labels";
@@ -196,6 +198,7 @@ export default function SamparkCampaignPage() {
     const rp = campaign.renderProgress;
     const showRender = campaign.status === "rendering" || campaign.status === "render_failed" || rp.failures.length > 0;
     const started = !["draft", "rendering", "render_failed"].includes(campaign.status);
+    const hold = effectiveHoldReason(campaign, school.pause);
 
     return (
         <div className="space-y-6">
@@ -213,6 +216,7 @@ export default function SamparkCampaignPage() {
                         <div className="flex flex-wrap items-center gap-2">
                             <h2 className="type-h2 text-foreground">{purposeLabel(t, campaign.purpose)}</h2>
                             <CampaignStatusBadge status={campaign.status} />
+                            {hold && <StatusPill tone="warning">{t("On hold")}</StatusPill>}
                         </div>
                         <p className="type-body-lg text-foreground">{d.facts}</p>
                         <p className="type-body text-muted-foreground">
@@ -233,6 +237,13 @@ export default function SamparkCampaignPage() {
                         }}
                     />
                 </div>
+
+                {hold && (
+                    <p role="status" className="flex items-start gap-2 rounded-surface-md border border-warning/40 bg-warning/10 p-3 type-body text-foreground">
+                        <CirclePause aria-hidden="true" className="mt-1 h-4 w-4 shrink-0 text-warning" />
+                        <span>{holdReasonText(t, hold, campaign)}</span>
+                    </p>
+                )}
 
                 {live && (
                     <p className="type-body text-muted-foreground" aria-live="polite">

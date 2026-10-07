@@ -395,10 +395,13 @@ export class FirestoreSamparkRepo implements SamparkRepo {
         const snap = await this.schoolRef(orgId).collection('sampark_calls')
             .where('phoneHash', '==', phoneHash)
             .where('createdAt', '>=', since.toISOString())
-            .select('purpose')
+            .select('purpose', 'carrier')
             .get();
-        if (!excludeEmergency) return snap.size;
         return snap.docs.filter((d) => {
+            // A simulated (Practice) call rang nobody, so it never counts towards a frequency cap (H1).
+            // Filtered here, not in the query: an inequality on `carrier` would need its own index.
+            if ((d.get('carrier') as SamparkCall['carrier'] | undefined) === 'simulated') return false;
+            if (!excludeEmergency) return true;
             const purpose = d.get('purpose') as SamparkCall['purpose'];
             try {
                 return !purposeSpec(purpose).emergency;

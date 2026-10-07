@@ -3,10 +3,11 @@
  */
 import { materialiseCampaignIntents } from '@/lib/sampark/audience';
 import { runDispatchTick, recomputeCampaignCounts, DISPATCH_LOCK_NAME } from '@/lib/sampark/dispatch/dispatcher';
+import { recordOptOut } from '@/lib/sampark/dispatch/settle';
 import { callIdFor, campaignDedupeKey, intentIdFor } from '@/lib/sampark/intents';
 import { istInstant } from '@/lib/sampark/policy/ist';
 import { createMemorySamparkRepo } from '@/lib/sampark/repo/memory';
-import type { Campaign } from '@/types/sampark';
+import type { Campaign, SamparkCall } from '@/types/sampark';
 
 import { campaign, DEFAULT_OPTS, deps, ORG, prefs, school, scriptedCarrier, seedFamilies, testClock, type ScriptedFate } from './_fixtures';
 
@@ -19,7 +20,8 @@ async function setup(n: number, fates: Record<string, ScriptedFate> = {}, c: Par
     const repo = createMemorySamparkRepo();
     const clock = testClock();
     const gids = await seedFamilies(repo, n);
-    const camp = campaign(c);
+    // Approved in Practice mode, like the school (H2: a campaign dials only in the mode it was approved in).
+    const camp = campaign({ mode: 'practice', ...c });
     await repo.createCampaign(camp);
     await materialiseCampaignIntents({ repo, clock }, camp, school(), 'simulated');
     const carrier = scriptedCarrier((req) => fates[req.call.guardianId] ?? 'full');
@@ -89,33 +91,56 @@ describe('runDispatchTick — outcomes and retries', () => {
     });
 });
 
-describe('runDispatchTick — opt-outs become suppressions', () => {
-    it('99 → confirmed keypad opt-out; 9 then hang-up → unconfirmed; both routine, pending office verification', async () => {
+describe('opt-outs: Practice audits them, a real guardian call suppresses (H1)', () => {
+    /** The same call as if it had rung the guardian on the real carrier (Live mode, not dialled in this release). */
+    const asRealGuardianCall = (c: SamparkCall): SamparkCall => ({ ...c, carrier: 'vobiz', destination: 'guardian' });
+
+    it('in Practice mode a 99 or a 9 is counted and audited, but suppresses nobody', async () => {
         const { repo, camp, d } = await setup(3, { g001: 'key99', g002: 'key9', g003: 'key2' });
+        const audits = jest.spyOn(repo, 'appendAudit');
         await runDispatchTick(d, DEFAULT_OPTS);
+        expect(await repo.listSuppressions(ORG)).toEqual([]);
+        const pressed = audits.mock.calls.filter(([, e]) => e.action === 'practice_call.opt_out_pressed').map(([, e]) => e.detail?.optOut);
+        expect(pressed.sort()).toEqual(['confirmed', 'requested']);
+        expect(audits.mock.calls.filter(([, e]) => e.action === 'suppression.add')).toEqual([]);
+        for (const g of ['g001', 'g002', 'g003']) expect((await repo.getIntent(ORG, idFor(camp.id, g)))?.status).toBe('done');
+        expect((await repo.getCampaign(ORG, camp.id))?.counts).toMatchObject({ optOuts: 2, declinedOrOther: 1 });
+    });
+
+    it('a real guardian call: 99 → confirmed keypad opt-out; 9 then hang-up → unconfirmed; both routine, pending office verification', async () => {
+        const { repo, clock, camp, d } = await setup(3, { g001: 'key99', g002: 'key9', g003: 'key2' });
+        await runDispatchTick(d, DEFAULT_OPTS);
+        for (const g of ['g001', 'g002', 'g003']) {
+            const call = await repo.getCall(ORG, callIdFor(idFor(camp.id, g), 1));
+            await recordOptOut(repo, asRealGuardianCall(call!), clock.now(), 'carrier');
+        }
         const s1 = await repo.getSuppression(ORG, 'hash:g001');
         const s2 = await repo.getSuppression(ORG, 'hash:g002');
         expect(s1).toMatchObject({ scope: 'routine', source: 'keypad', officeVerification: 'pending', callId: callIdFor(idFor(camp.id, 'g001'), 1) });
         expect(s2).toMatchObject({ scope: 'routine', source: 'keypad_unconfirmed', officeVerification: 'pending' });
         expect(await repo.getSuppression(ORG, 'hash:g003')).toBeNull();
-        for (const g of ['g001', 'g002', 'g003']) expect((await repo.getIntent(ORG, idFor(camp.id, g)))?.status).toBe('done');
-        expect((await repo.getCampaign(ORG, camp.id))?.counts).toMatchObject({ optOuts: 2, declinedOrOther: 1 });
     });
 
     it('a suppression created by one campaign blocks the same phone in the next routine campaign', async () => {
-        const { repo, clock, d } = await setup(1, { g001: 'key99' });
+        const { repo, clock, camp, d } = await setup(1, { g001: 'key99' });
         await runDispatchTick(d, DEFAULT_OPTS);
-        const next = campaign({ id: 'camp-event', purpose: 'event_invite', facts: { kind: 'event_invite', eventType: 'annual_day', date: '2026-11-01', time: { hour: 10, minute: 0 }, venueId: 'hall' } });
+        const call = await repo.getCall(ORG, callIdFor(idFor(camp.id, 'g001'), 1));
+        await recordOptOut(repo, asRealGuardianCall(call!), clock.now(), 'carrier');
+        const next = campaign({ id: 'camp-event', mode: 'practice', purpose: 'event_invite', facts: { kind: 'event_invite', eventType: 'annual_day', date: '2026-11-01', time: { hour: 10, minute: 0 }, venueId: 'hall' } });
         await repo.createCampaign(next);
         const res = await materialiseCampaignIntents({ repo, clock }, next, school(), 'simulated');
         expect(res.blocked).toEqual({ suppressed: 1 });
     });
 
     it('an emergency-call 9 never overwrites an effective (office-confirmed) routine suppression', async () => {
-        const { repo, d } = await setup(1, { g001: 'key9' }, { purpose: 'emergency_closure', facts: { kind: 'emergency_closure', date: '2026-10-07', reason: 'heavy_rain', busesRunning: false } });
-        await repo.upsertSuppression({ orgId: ORG, phoneHash: 'hash:g001', phoneLast4: '0000', scope: 'routine', source: 'office', officeVerification: 'confirmed', createdAt: '2026-09-01T00:00:00.000Z', callId: null });
+        const { repo, clock, camp, d } = await setup(1, { g001: 'key9' }, { purpose: 'emergency_closure', facts: { kind: 'emergency_closure', date: '2026-10-07', reason: 'heavy_rain', busesRunning: false } });
+        const office = { orgId: ORG, phoneHash: 'hash:g001', phoneLast4: '0000', scope: 'routine' as const, source: 'office' as const, officeVerification: 'confirmed' as const, createdAt: '2026-09-01T00:00:00.000Z', callId: null };
+        await repo.upsertSuppression(office);
         await runDispatchTick(d, DEFAULT_OPTS);
-        expect(await repo.getSuppression(ORG, 'hash:g001')).toMatchObject({ source: 'office', officeVerification: 'confirmed' });
+        const call = await repo.getCall(ORG, callIdFor(idFor(camp.id, 'g001'), 1));
+        expect(call?.outcome.optOut).toBe('requested');
+        await recordOptOut(repo, asRealGuardianCall(call!), clock.now(), 'carrier');
+        expect(await repo.getSuppression(ORG, 'hash:g001')).toEqual(office);
     });
 });
 
@@ -140,15 +165,17 @@ describe('runDispatchTick — gating at dispatch', () => {
         expect(carrier.requests.map((r) => r.call.guardianId)).toEqual(['g001']);
     });
 
-    it('frequency cap at dispatch does not count the intent’s own earlier attempts', async () => {
+    it('frequency cap at dispatch: Practice attempts are never in the count (H1), so none are taken back out', async () => {
         const { repo, clock, camp, carrier, d } = await setup(1, { g001: 'no_answer' });
         const id = idFor(camp.id, 'g001');
         await runDispatchTick(d, DEFAULT_OPTS);
-        const count = jest.spyOn(repo, 'countCallsToPhoneSince').mockResolvedValue(4); // 3 other calls + this intent's 1st attempt
+        // The repo really leaves the practice attempt out of the count.
+        expect(await repo.countCallsToPhoneSince(ORG, 'hash:g001', new Date(0), true)).toBe(0);
+        const count = jest.spyOn(repo, 'countCallsToPhoneSince').mockResolvedValue(3); // 3 real calls from elsewhere
         clock.advance(2 * HOUR);
         await runDispatchTick(d, DEFAULT_OPTS);
         expect(carrier.placesFor(id)).toBe(2);
-        count.mockResolvedValue(6); // 4 others + 2 own → capped
+        count.mockResolvedValue(4); // 4 real calls from elsewhere → capped, whatever this intent's practice attempts
         clock.advance(2 * HOUR);
         await runDispatchTick(d, DEFAULT_OPTS);
         expect(await repo.getIntent(ORG, id)).toMatchObject({ status: 'blocked', blockReason: 'frequency_cap' });
@@ -178,7 +205,7 @@ describe('runDispatchTick — gating at dispatch', () => {
         const clock = testClock();
         await seedFamilies(repo, 2);
         await repo.upsertPreferences([prefs('g001', {}), prefs('g002', {})]);
-        const camp = campaign();
+        const camp = campaign({ mode: 'practice' });
         await repo.createCampaign(camp);
         await materialiseCampaignIntents({ repo, clock }, camp, school(), 'simulated');
         const carrier = scriptedCarrier(() => 'full');
@@ -233,12 +260,12 @@ describe('runDispatchTick — capacity, lock and isolation', () => {
         await seedFamilies(repo, 2);
         const other = 'z-other-school';
         await repo.upsertSchool(school({ orgId: other }));
-        const camp = campaign();
+        const camp = campaign({ mode: 'practice' });
         await repo.createCampaign(camp);
         await materialiseCampaignIntents({ repo, clock }, camp, school(), 'simulated');
         // The failing school sorts first.
         await repo.upsertSchool(school({ orgId: 'a-broken-school' }));
-        await repo.createCampaign(campaign({ orgId: 'a-broken-school' }));
+        await repo.createCampaign(campaign({ orgId: 'a-broken-school', mode: 'practice' }));
         await repo.createIntentIfAbsent({ ...(await repo.getIntent(ORG, idFor(camp.id, 'g001')))!, orgId: 'a-broken-school' });
         const carrier = scriptedCarrier(() => 'full');
         const d = deps(repo, clock, carrier, {

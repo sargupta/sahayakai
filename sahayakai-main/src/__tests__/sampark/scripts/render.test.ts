@@ -44,7 +44,7 @@ describe('renderNoticeScript', () => {
                 'पेरेंट टीचर मीटिंग शनिवार, दस अक्टूबर को सुबह दस बजे स्कूल हॉल में है। आप ज़रूर आइएगा। ' +
                 'आ सकें, तो एक दबाएँ। इस समय आना मुश्किल हो, तो दो दबाएँ। ऐसी कॉल नहीं चाहिए, तो नौ दबाएँ।',
         });
-        expect(r.clips.map((c) => c.kind)).toEqual(['message', 'confirm_1', 'confirm_2', 'opt_out_confirm', 'opt_out_done', 'no_input', 'fallback_office']);
+        expect(r.clips.map((c) => c.kind)).toEqual(['message', 'confirm_1', 'confirm_2', 'opt_out_confirm', 'opt_out_done', 'no_input', 'fallback_office', 'withdrawn']);
     });
 
     it('renders the Nepali closure draft with today / tomorrow and the bus sentence', () => {

@@ -8,13 +8,13 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/language-context";
 import { listCampaigns } from "@/lib/api/sampark";
 import type { Campaign } from "@/types/sampark";
-import { CampaignStatusBadge } from "@/components/sampark/status-pill";
+import { CampaignStatusBadge, StatusPill } from "@/components/sampark/status-pill";
 import { ErrorPanel, LoadingBlock } from "@/components/sampark/states";
 import { useSamparkQuery } from "@/components/sampark/use-sampark-query";
 import { useSamparkSchool } from "@/components/sampark/school-context";
 import { useSamparkFormat } from "@/components/sampark/format";
 import { useCampaignSummary } from "@/components/sampark/campaign-summary";
-import { LIVE_CAMPAIGN_STATUSES, fmt, purposeLabel } from "@/components/sampark/labels";
+import { LIVE_CAMPAIGN_STATUSES, effectiveHoldReason, fmt, holdReasonText, purposeLabel } from "@/components/sampark/labels";
 
 function CampaignRow({ campaign, href }: { campaign: Campaign; href: string }) {
     const { t } = useLanguage();
@@ -24,6 +24,7 @@ function CampaignRow({ campaign, href }: { campaign: Campaign; href: string }) {
     const d = describe(campaign, school);
     const c = campaign.counts;
     const started = campaign.status !== "draft";
+    const hold = effectiveHoldReason(campaign, school.pause);
 
     return (
         <li>
@@ -35,6 +36,11 @@ function CampaignRow({ campaign, href }: { campaign: Campaign; href: string }) {
                     <div className="flex flex-wrap items-center gap-2">
                         <span className="type-body-lg text-foreground">{purposeLabel(t, campaign.purpose)}</span>
                         <CampaignStatusBadge status={campaign.status} />
+                        {hold && (
+                            <StatusPill tone="warning" title={holdReasonText(t, hold, campaign)}>
+                                {t("On hold")}
+                            </StatusPill>
+                        )}
                     </div>
                     <p className="type-body text-foreground">{d.facts}</p>
                     <p className="type-body text-muted-foreground">

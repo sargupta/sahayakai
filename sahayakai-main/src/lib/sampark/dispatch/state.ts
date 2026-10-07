@@ -130,6 +130,8 @@ export function applyCallEvent(call: SamparkCall, event: CallEvent): SamparkCall
             next.updatedAt = event.at;
             next.outcome.heard = classifyHeard(next.durationSeconds, next.audioSeconds);
             if (event.cause === 'failed' && !next.failureReason) next.failureReason = 'carrier_failed';
+            // The carrier's own cause (H7): settling reads it to decide retry and number health.
+            if (typeof event.hangupCause === 'string' && event.hangupCause !== '') next.hangupCause = event.hangupCause;
             return next;
         }
 

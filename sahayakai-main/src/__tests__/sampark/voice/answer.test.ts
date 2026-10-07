@@ -12,11 +12,16 @@
  * CLASS GATE (e), answer half: a clip that is missing, failed its
  * transcribe-back check, or was never checked, never reaches a <Play>; the
  * call is failed with `audio_unavailable` and settled without a retry.
+ *
+ * Hardening (7 Oct 2026): the campaign's pinned mode must be 'test' (H2), and a
+ * school pause that covers the call's purpose refuses it (H3). A cancelled
+ * campaign with a withdrawn clip is covered by gate-h4-cancel-never-silent.
  */
 
 jest.mock('@/lib/logger', () => ({ logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() } }));
 
 import { mintSamparkVoiceToken, verifySamparkVoiceToken, voicePrincipal } from '@/lib/sampark/voice/tokens';
+import type { SchoolPause } from '@/types/sampark';
 import { EMPTY_HANGUP_XML } from '@/lib/sampark/voice/xml';
 import type { ClipKind } from '@/types/sampark';
 import { handleSamparkAnswer, type VoiceOutcome } from '@/server/sampark/voice';
@@ -25,6 +30,10 @@ import { BASE_URL, CALL_ID, INTENT_ID, ORG, VOBIZ_CALL_UUID, WED_23_IST, gatherA
 
 async function answerToken(): Promise<string> {
     return mintSamparkVoiceToken('sampark-answer', voicePrincipal(ORG, CALL_ID));
+}
+
+function pause(scope: SchoolPause['scope']): SchoolPause {
+    return { at: '2026-10-07T05:20:00.000Z', by: 'dev-user-123', reason: 'Exam week', scope };
 }
 
 beforeEach(() => setVoiceEnv());
@@ -80,10 +89,25 @@ describe('class gate (a) — the answer refuses unless every condition still hol
         ['the live-dial flag is anything but "true"', 'live_dial_disabled', () => setVoiceEnv({ SAMPARK_LIVE_DIAL_ENABLED: 'TRUE' })],
         ['Sampark itself is off', 'disabled', () => setVoiceEnv({ SAMPARK_ENABLED: 'false' })],
         ['there is no https public base URL', 'base_url_missing', () => setVoiceEnv({ SAMPARK_PUBLIC_BASE_URL: 'http://insecure.example.test' })],
-        ['the campaign was cancelled', 'campaign_closed', async (w) => w.repo.updateCampaign(ORG, w.campaign.id, { status: 'cancelled' })],
+        [
+            'the campaign was cancelled and has no verified withdrawn line (rendered before it existed)',
+            'campaign_closed',
+            async (w) => {
+                await w.repo.updateCampaign(ORG, w.campaign.id, { status: 'cancelled' });
+                const clip = await w.repo.getClip(ORG, w.keys.withdrawn as string);
+                await w.repo.saveClip({ ...(clip as NonNullable<typeof clip>), verification: { status: 'skipped', transcript: null, similarity: null, checkedAt: null } });
+            },
+        ],
         ['the campaign has completed', 'campaign_closed', async (w) => w.repo.updateCampaign(ORG, w.campaign.id, { status: 'completed' })],
         ['the campaign has expired', 'campaign_closed', async (w) => w.repo.updateCampaign(ORG, w.campaign.id, { expiresAt: '2026-10-07T05:00:00.000Z' })],
         ['the call already ended', 'call_terminal', async (w) => w.repo.updateCall(ORG, CALL_ID, { state: 'no_answer' })],
+        // H2: the mode is pinned at approval.
+        ['the campaign was approved in practice mode', 'campaign_mode_mismatch', async (w) => w.repo.updateCampaign(ORG, w.campaign.id, { mode: 'practice' })],
+        ['the campaign was approved in live mode', 'campaign_mode_mismatch', async (w) => w.repo.updateCampaign(ORG, w.campaign.id, { mode: 'live' })],
+        ['the campaign has no pinned mode (approved before 7 Oct 2026)', 'campaign_mode_mismatch', async (w) => w.repo.updateCampaign(ORG, w.campaign.id, { mode: undefined })],
+        // H3: a school pause covers calls already ringing.
+        ['the school is paused (scope all)', 'school_paused', async (w) => w.repo.upsertSchool({ ...w.school, pause: pause('all') })],
+        ['the school is paused for routine calls and this is a PTM', 'school_paused', async (w) => w.repo.upsertSchool({ ...w.school, pause: pause('routine') })],
     ];
 
     it.each(rows)('refuses when %s', async (_label, outcome, breakIt) => {
@@ -102,6 +126,19 @@ describe('class gate (a) — the answer refuses unless every condition still hol
         expect(await handleSamparkAnswer(w, { token: noSchool, callUuid: null })).toEqual({ xml: EMPTY_HANGUP_XML, outcome: 'school_missing' });
         const noCall = await mintSamparkVoiceToken('sampark-answer', voicePrincipal(ORG, 'no-such-call'));
         expect(await handleSamparkAnswer(w, { token: noCall, callUuid: null })).toEqual({ xml: EMPTY_HANGUP_XML, outcome: 'call_missing' });
+    });
+
+    it('a routine-only pause still lets an emergency closure speak; a pause of scope all does not', async () => {
+        const closure = {
+            clock: '2026-10-07T01:30:00Z', // 07:00 IST
+            campaign: { purpose: 'emergency_closure' as const, facts: { kind: 'emergency_closure' as const, date: '2026-10-07', reason: 'heavy_rain' as const, busesRunning: false }, audience: { sections: [] } },
+            call: { purpose: 'emergency_closure' as const, variant: 'today' as const },
+        };
+        const routine = await world({ ...closure, school: { pause: pause('routine') } });
+        expect((await handleSamparkAnswer(routine, { token: await answerToken(), callUuid: null })).outcome).toBe('played');
+        const all = await world({ ...closure, school: { pause: pause('all') } });
+        expect(await handleSamparkAnswer(all, { token: await answerToken(), callUuid: null })).toEqual({ xml: EMPTY_HANGUP_XML, outcome: 'school_paused' });
+        expect(all.audits).toEqual([expect.objectContaining({ action: 'call.answer_refused', detail: expect.objectContaining({ reason: 'school_paused', scope: 'all' }) })]);
     });
 
     it('records why it refused (except when Sampark is off entirely)', async () => {
@@ -196,8 +233,9 @@ describe('class gate (e) — unverified or missing audio never reaches <Play> (a
         expect(result.outcome).toBe('audio_unavailable');
     });
 
-    it('a school whose spoken name changed since rendering finds no clip (the text, and so the key, differ)', async () => {
+    it('a campaign WITHOUT frozen clip keys (scheduled before 7 Oct 2026) still re-renders: a changed spoken name finds no clip', async () => {
         const w = await world();
+        expect(w.campaign.clipKeys).toBeUndefined(); // the frozen path is gate-h4-clip-keys-frozen
         await w.repo.upsertSchool({ ...w.school, spokenName: { ...w.school.spokenName, English: 'Hillview School' } });
         const result = await handleSamparkAnswer(w, { token: await answerToken(), callUuid: null });
         expect(result.outcome).toBe('audio_unavailable');

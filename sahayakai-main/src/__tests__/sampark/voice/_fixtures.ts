@@ -3,7 +3,8 @@
  * `.test.`), so jest only loads it when a test imports it.
  *
  * The world they build: one school in TEST mode, one PTM campaign that is
- * dispatching, one intent claimed for dial, and one call in 'dialing' to the
+ * dispatching (approved in Test mode, so its pinned mode matches), one intent
+ * claimed for dial, and one call in 'dialing' to the
  * school's test phone — exactly what the dispatcher leaves behind after Vobiz
  * accepted the call. Clips are rendered from the real call scripts and stored
  * with a verification status the test chooses, so the clip-lookup path the
@@ -95,6 +96,8 @@ export function testCampaign(overrides: Partial<Campaign> = {}): Campaign {
         facts: { kind: 'ptm_invite', date: '2026-10-10', time: { hour: 10, minute: 0 }, venueId: 'school_hall' },
         audience: { sections: [{ grade: 7, section: 'B' }] },
         status: 'dispatching',
+        // Approved while the school was in Test mode (H2: approval pins the mode).
+        mode: 'test',
         notBefore: null,
         expiresAt: FAR_FUTURE,
         createdBy: 'dev-user-123',

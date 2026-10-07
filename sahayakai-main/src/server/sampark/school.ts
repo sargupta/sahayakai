@@ -1,5 +1,5 @@
 /**
- * Sampark school (tenant) settings: enable, read, update, mode.
+ * Sampark school (tenant) settings: enable, read, update, mode, pause.
  *
  * Validation lives here, at the boundary, so no route can write a school the
  * engine would misread:
@@ -18,7 +18,15 @@
  *     confirmed when switching (phase 2a contract §5);
  *   - mode: practice always; test only when this deployment can place real
  *     calls (`liveDialBlocker() === null`) and a test phone is saved; live is
- *     refused in phase 2a (409 LIVE_MODE_NOT_AVAILABLE).
+ *     refused in phase 2a (409 LIVE_MODE_NOT_AVAILABLE);
+ *   - holidays (H10): the console edits the school's OWN list, stored as
+ *     `manualHolidays`; `holidays` (what the window reads) is always the sorted
+ *     union of that list and the CRM's (`crmHolidays`), so neither the console
+ *     nor an import can remove the other's days;
+ *   - pause (H3): a principal can stop every call (scope 'all') or every call
+ *     but emergency closures (scope 'routine') with a reason, and resume. The
+ *     dispatcher holds while the pause applies; pausing also hangs up calls
+ *     that are still ringing. Both directions are audited and idempotent.
  *
  * Responses go through `schoolView`, never the raw record: the console sees
  * `testPhoneLast4` and whether Test mode is possible here, never the stored
@@ -27,15 +35,19 @@
 
 import { z } from 'zod';
 
+import { logger } from '@/lib/logger';
+import { unionHolidays } from '@/lib/sampark/crm/import';
 import { assertCrmUrlSafe, CrmUrlError } from '@/lib/sampark/crm/rest-source';
 import { classifyPhone, encryptPhone, hashPhone, normalizeIndianPhone, phoneLast4 } from '@/lib/sampark/phone';
 import { callScripts } from '@/lib/sampark/scripts/templates';
-import { PARENT_LANGUAGES, type ParentLanguage, type SamparkMode, type SamparkSchool, type SamparkSchoolView, type SchoolVenue, type LiveDialBlocker } from '@/types/sampark';
+import { PARENT_LANGUAGES, type ParentLanguage, type SamparkCall, type SamparkMode, type SamparkSchool, type SamparkSchoolView, type SchoolPause, type SchoolVenue, type LiveDialBlocker } from '@/types/sampark';
 
 export type { SamparkSchoolView };
 import { badRequest, conflict, schoolNotEnabled } from '@/server/sampark/errors';
 import type { SamparkCtx } from '@/server/sampark/http';
 import { LIVE_MODE_NOT_AVAILABLE, liveDialBlocker, TEST_PHONE_MISSING } from '@/server/sampark/carrier';
+import { hangupRingingCalls } from '@/server/sampark/hangup';
+import { pauseStopsPurpose } from '@/lib/sampark/policy/pause';
 
 export { LIVE_MODE_NOT_AVAILABLE, TEST_PHONE_MISSING };
 
@@ -46,7 +58,14 @@ export const TEST_PHONE_INVALID = 'TEST_PHONE_INVALID';
 export function schoolView(school: SamparkSchool, env: NodeJS.ProcessEnv = process.env): SamparkSchoolView {
     const { testPhoneEnc: _enc, testPhoneHash: _hash, testPhoneLast4, ...rest } = school;
     const blocker = liveDialBlocker(env);
-    return { ...rest, testPhoneLast4: testPhoneLast4 ?? null, liveDialAvailable: blocker === null, liveDialBlocker: blocker };
+    return {
+        ...rest,
+        // Always present, so the console's pause banner never has to guess.
+        pause: school.pause ?? null,
+        testPhoneLast4: testPhoneLast4 ?? null,
+        liveDialAvailable: blocker === null,
+        liveDialBlocker: blocker,
+    };
 }
 
 function hasTestPhone(school: SamparkSchool): boolean {
@@ -115,6 +134,7 @@ export const UpdateSchoolSchema = z
         displayName: z.string().trim().min(1).max(120).optional(),
         spokenName: spokenRecord.optional(),
         callingWindow: CallingWindowSchema.optional(),
+        /** The school's OWN holidays (stored as manualHolidays); the CRM's are merged in, never replaced (H10). */
         holidays: z.array(IsoDateSchema).max(366).optional(),
         venues: z
             .array(VenueSchema)
@@ -133,6 +153,21 @@ export type UpdateSchoolInput = z.infer<typeof UpdateSchoolSchema>;
 export const EnableSchoolSchema = z.object({ displayName: z.string().trim().min(1).max(120), spokenName: spokenRecord.optional() }).strict();
 
 export const ModeSchema = z.object({ mode: z.enum(['practice', 'test', 'live']) }).strict();
+
+/** PUT pause: pausing needs a reason (staff-only text, never spoken); scope defaults to 'all'. */
+export const PauseSchema = z
+    .object({
+        paused: z.boolean(),
+        reason: z.string().trim().min(1).max(200).optional(),
+        scope: z.enum(['routine', 'all']).optional(),
+    })
+    .strict()
+    .superRefine((v, ctx) => {
+        if (v.paused && v.reason === undefined) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['reason'], message: 'a reason is required to pause calls' });
+        }
+    });
+export type PauseInput = z.infer<typeof PauseSchema>;
 
 /**
  * A new school starts with the venues the call-script templates already name
@@ -196,7 +231,10 @@ export async function updateSchool(ctx: SamparkCtx, orgId: string, uid: string, 
     if (input.displayName !== undefined) next.displayName = input.displayName;
     if (input.spokenName !== undefined) next.spokenName = input.spokenName;
     if (input.callingWindow !== undefined) next.callingWindow = input.callingWindow;
-    if (input.holidays !== undefined) next.holidays = [...new Set(input.holidays)].sort();
+    if (input.holidays !== undefined) {
+        next.manualHolidays = unionHolidays(input.holidays);
+        next.holidays = unionHolidays(next.manualHolidays, school.crmHolidays);
+    }
     if (input.venues !== undefined) next.venues = input.venues;
     if (input.defaultLanguage !== undefined) next.defaultLanguage = input.defaultLanguage;
     if (input.crm !== undefined) {
@@ -297,4 +335,70 @@ export async function setSchoolMode(ctx: SamparkCtx, orgId: string, uid: string,
         detail: mode === 'test' ? { from: school.mode, to: mode, testPhoneLast4: school.testPhoneLast4 ?? null } : { from: school.mode, to: mode },
     });
     return next;
+}
+
+/**
+ * Pause or resume every call the school makes (H3).
+ *
+ * Pausing records who, when, why and the scope, audits `school.pause`, and then asks
+ * the carrier to hang up calls still ringing — every one for scope 'all', every one
+ * but an emergency closure for scope 'routine'. A call already speaking finishes its
+ * message (see hangup.ts). The hang-up is best effort: the pause is already in force
+ * at the dispatcher and the answer webhook, so a failure there is logged rather than
+ * reported as a failed pause. Asking again for the same pause changes nothing and
+ * writes no audit, but still hangs up anything ringing, since a retry is exactly when
+ * a principal needs that to happen. A new reason or scope replaces the pause.
+ *
+ * Resuming clears the pause and audits `school.resume`; resuming a school that is not
+ * paused changes nothing.
+ */
+export async function setSchoolPause(ctx: SamparkCtx, orgId: string, uid: string, input: PauseInput): Promise<SamparkSchool> {
+    const school = await getSchoolOrThrow(ctx, orgId);
+    const now = ctx.clock.now().toISOString();
+
+    if (!input.paused) {
+        if (!school.pause) return school;
+        const next: SamparkSchool = { ...school, pause: null, updatedAt: now };
+        await ctx.repo.upsertSchool(next);
+        await ctx.repo.appendAudit(orgId, {
+            at: now,
+            actor: uid,
+            action: 'school.resume',
+            target: `school/${orgId}`,
+            detail: { pausedAt: school.pause.at, pausedBy: school.pause.by, scope: school.pause.scope },
+        });
+        return next;
+    }
+
+    const reason = (input.reason ?? '').trim();
+    const scope = input.scope ?? 'all';
+    let next = school;
+    if (!school.pause || school.pause.reason !== reason || school.pause.scope !== scope) {
+        const pause: SchoolPause = { at: now, by: uid, reason, scope };
+        next = { ...school, pause, updatedAt: now };
+        await ctx.repo.upsertSchool(next);
+        await ctx.repo.appendAudit(orgId, {
+            at: now,
+            actor: uid,
+            action: 'school.pause',
+            target: `school/${orgId}`,
+            detail: { scope, reason, previous: school.pause ? { at: school.pause.at, scope: school.pause.scope } : null },
+        });
+    }
+
+    try {
+        const report = await hangupRingingCalls(ctx, orgId, { reason: 'school_paused', actor: uid, include: pauseHangupFilter(scope) });
+        logger.info('Sampark school paused', 'SAMPARK_PAUSE', { orgId, scope, ...report });
+    } catch (err) {
+        logger.error('Sampark pause could not hang up ringing calls', err, 'SAMPARK_PAUSE', { orgId });
+    }
+    return next;
+}
+
+/**
+ * Which ringing calls a pause hangs up: all of them, or, for a routine pause, all but
+ * emergency purposes: the shared rule in policy/pause.ts, so it matches the dispatcher and the answer webhook.
+ */
+export function pauseHangupFilter(scope: SchoolPause['scope']): (call: SamparkCall) => boolean {
+    return (call) => pauseStopsPurpose({ at: '', by: '', reason: '', scope }, call.purpose);
 }

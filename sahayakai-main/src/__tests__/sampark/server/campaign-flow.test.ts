@@ -6,6 +6,11 @@
  * scheduled → dispatch job (simulated carrier) refused outside the window and
  * placing calls inside it → call log with outcomes; plus the D4 closure's
  * today/tomorrow variants, render failure, and cancellation.
+ *
+ * Hardening (7 Oct 2026): approval pins the school's mode (H2); scheduling
+ * freezes the verified clip keys (H4); invitations expire INVITE_LEAD_MINUTES
+ * before the start (H5); cancelling reports the calls it stopped (H4); and the
+ * dry run counts toward the cap only real calls to a guardian (B6).
  */
 
 jest.mock('@/lib/logger', () => ({ logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() } }));
@@ -15,13 +20,15 @@ import type { CrmSource } from '@/lib/sampark/ports';
 import { createMemorySamparkRepo } from '@/lib/sampark/repo/memory';
 import { getClipAudio } from '@/server/sampark/audio';
 import { listCallLog } from '@/server/sampark/calls';
-import { approveCampaign, cancelCampaign, createCampaign, getCampaignDetail, previewCampaign, retryCampaignAudio } from '@/server/sampark/campaigns';
+import { FREQUENCY_CAP } from '@/lib/sampark/policy/gate';
+import type { AuditEntry, SamparkRepo } from '@/lib/sampark/ports';
+import { approveCampaign, cancelCampaign, clipKeySlot, createCampaign, getCampaignDetail, previewCampaign, retryCampaignAudio } from '@/server/sampark/campaigns';
 import { listGuardianRows, updateGuardianPreferences } from '@/server/sampark/guardians';
 import type { SamparkCtx } from '@/server/sampark/http';
 import { dispatchJob, renderJob } from '@/server/sampark/jobs';
 import { getOverview } from '@/server/sampark/overview';
 import { enableSchool } from '@/server/sampark/school';
-import type { Campaign } from '@/types/sampark';
+import { PARENT_LANGUAGES, type Campaign, type CarrierKind, type CallDestination, type SamparkGuardian } from '@/types/sampark';
 
 import { ADMIN, CRM_SCHOOL, crmConsent, crmGuardian, crmStudent, fakeSpeech, MON_08_IST, MON_11_IST, ORG, setPhoneEnv, testClock } from './_helpers';
 
@@ -61,6 +68,37 @@ async function setup(start: Date = MON_11_IST) {
     return { clock, repo, ctx, speech, school };
 }
 
+/** Capture every audit entry the services write from now on. */
+function captureAudits(repo: SamparkRepo): AuditEntry[] {
+    const audits: AuditEntry[] = [];
+    const original = repo.appendAudit.bind(repo);
+    repo.appendAudit = async (orgId, entry) => {
+        audits.push(entry);
+        await original(orgId, entry);
+    };
+    return audits;
+}
+
+/** Plant `n` past calls to a guardian's number, each through its own intent, as the dispatcher writes them. */
+async function plantCalls(repo: SamparkRepo, guardian: SamparkGuardian, n: number, carrier: CarrierKind, destination: CallDestination, at: Date): Promise<void> {
+    for (let i = 0; i < n; i++) {
+        const id = `planted-${guardian.id}-${carrier}-${destination}-${i}`;
+        const iso = at.toISOString();
+        await repo.createIntentIfAbsent({
+            id, dedupeKey: id, orgId: ORG, campaignId: null, purpose: 'ptm_invite', guardianId: guardian.id, studentIds: [], language: 'English',
+            status: 'approved', blockReason: null, attempts: 0, maxAttempts: 3, notBefore: null, expiresAt: '2027-01-01T00:00:00.000Z',
+            lastCallId: null, createdAt: iso, updatedAt: iso,
+        });
+        const claimed = await repo.claimIntentForDial(ORG, id, {
+            id, orgId: ORG, intentId: id, campaignId: null, purpose: 'ptm_invite', guardianId: guardian.id, phoneHash: guardian.phoneHash,
+            phoneLast4: guardian.phoneLast4, language: 'English', variant: 'default', attempt: 1, state: 'dialing', leaseUntil: iso, carrier, destination,
+            providerCallId: null, outcome: { heard: 'none', digits: '', confirmed: false, declined: false, optOut: 'none' }, durationSeconds: null,
+            billedSeconds: null, costPaise: null, audioSeconds: null, createdAt: iso, updatedAt: iso, endedAt: null, failureReason: null,
+        }, at);
+        expect(claimed).toBe('claimed');
+    }
+}
+
 async function renderUntilSettled(env: Awaited<ReturnType<typeof setup>>, campaignId: string): Promise<Campaign> {
     for (let i = 0; i < 6; i++) {
         await renderJob({ repo: env.repo, clock: env.clock, speech: env.speech });
@@ -85,7 +123,7 @@ describe('slice 1 campaign flow', () => {
             audience: { sections: [] },
         });
         expect(campaign).toMatchObject({ status: 'draft', notBefore: null });
-        expect(campaign.expiresAt).toBe('2026-10-08T18:29:59.999Z'); // end of the event day, IST
+        expect(campaign.expiresAt).toBe('2026-10-08T02:59:59.999Z'); // H5: the last instant before 08:30 IST, two hours before the 10:30 start
 
         // Dry run: every guardian of record, languages, and the planted refusals. No writes.
         const detail = await getCampaignDetail(ctx, ORG, campaign.id);
@@ -103,9 +141,13 @@ describe('slice 1 campaign flow', () => {
             expect(p.clips.every((c) => c.audioKey === null)).toBe(true);
         }
 
-        // Approve → rendering, with an audit entry of what was approved.
+        // Approve → rendering, with an audit entry of what was approved, the school's mode pinned (H2).
+        expect(campaign.mode).toBeUndefined();
+        const audits = captureAudits(repo);
         const approved = await approveCampaign(ctx, ORG, campaign.id, ADMIN);
-        expect(approved).toMatchObject({ status: 'rendering', approvedBy: ADMIN });
+        expect(approved).toMatchObject({ status: 'rendering', approvedBy: ADMIN, mode: 'practice' });
+        expect((await repo.getCampaign(ORG, campaign.id))?.mode).toBe('practice');
+        expect(audits.find((a) => a.action === 'campaign.approve')?.detail).toMatchObject({ mode: 'practice' });
         await expect(approveCampaign(ctx, ORG, campaign.id, ADMIN)).rejects.toMatchObject({ code: 'CAMPAIGN_NOT_DRAFT', status: 409 });
 
         // Render job: clips rendered + verified, intents materialised, scheduled.
@@ -113,6 +155,13 @@ describe('slice 1 campaign flow', () => {
         expect(scheduled.status).toBe('scheduled');
         expect(scheduled.renderProgress.failures).toEqual([]);
         expect(scheduled.renderProgress.done).toBe(scheduled.renderProgress.total);
+        // H4: the verified clip keys are frozen on the campaign, one slot per language rendered, every
+        // kind of clip a call can play, each a stored clip that passed its check.
+        expect(Object.keys(scheduled.clipKeys ?? {}).sort()).toEqual(PARENT_LANGUAGES.map((l) => clipKeySlot(l, 'default')).sort());
+        for (const byKind of Object.values(scheduled.clipKeys ?? {})) {
+            expect(Object.keys(byKind).sort()).toEqual(['confirm_1', 'confirm_2', 'fallback_office', 'message', 'no_input', 'opt_out_confirm', 'opt_out_done', 'withdrawn']);
+            for (const key of Object.values(byKind)) expect((await repo.getClip(ORG, key as string))?.verification.status).toBe('passed');
+        }
         const intents = await repo.listIntentsByCampaign(ORG, campaign.id);
         expect(intents.length).toBeGreaterThanOrEqual(12);
         expect(intents.filter((i) => i.status === 'approved')).toHaveLength(12);
@@ -157,10 +206,11 @@ describe('slice 1 campaign flow', () => {
         const campaignNow = (await repo.getCampaign(ORG, campaign.id))!;
         expect(['dispatching', 'completed']).toContain(campaignNow.status);
 
-        // Overview reflects the day's calls.
+        // Overview reflects the day's calls: Practice calls rang nobody, so they are rehearsals (H9).
         const overview = await getOverview(ctx, ORG);
         expect(overview.windowOpenNow).toBe(true);
-        expect(overview.today.calls).toBe(12);
+        expect(overview.today.calls).toBe(0);
+        expect(overview.rehearsal.practice.calls).toBe(12);
         expect(overview.guardians.total).toBe(15);
         expect(overview.lastImport?.status).toBe('succeeded');
     });
@@ -172,14 +222,20 @@ describe('slice 1 campaign flow', () => {
             facts: { kind: 'emergency_closure', date: '2026-10-06', reason: 'heavy_rain', busesRunning: false },
             audience: { sections: [{ grade: 7, section: 'A' }] },
         });
-        expect(campaign.expiresAt).toBe('2026-10-06T18:29:59.999Z');
+        expect(campaign.expiresAt).toBe('2026-10-06T18:29:59.999Z'); // a closure still runs to the end of its day
+        // Both variants are frozen (H4).
         const previews = await previewCampaign(env.ctx, ORG, campaign.id);
         expect(previews.map((p) => `${p.language}:${p.variant}`)).toEqual([
             'English:today', 'English:tomorrow', 'Hindi:today', 'Hindi:tomorrow',
             'Bengali:today', 'Bengali:tomorrow', 'Nepali:today', 'Nepali:tomorrow',
         ]);
         await approveCampaign(env.ctx, ORG, campaign.id, ADMIN);
-        expect((await renderUntilSettled(env, campaign.id)).status).toBe('scheduled');
+        const scheduled = await renderUntilSettled(env, campaign.id);
+        expect(scheduled.status).toBe('scheduled');
+        const slots = Object.keys(scheduled.clipKeys ?? {});
+        expect(slots.filter((k) => k.endsWith('|today'))).toHaveLength(slots.length / 2);
+        expect(slots.filter((k) => k.endsWith('|tomorrow'))).toHaveLength(slots.length / 2);
+        expect(slots.length).toBeGreaterThan(0);
     });
 
     it('refuses dates the facts cannot carry', async () => {
@@ -203,6 +259,10 @@ describe('slice 1 campaign flow', () => {
         await expect(
             createCampaign(env.ctx, ORG, ADMIN, { ...base, purpose: 'event_invite', facts: { kind: 'ptm_invite', date: '2026-10-09', time: { hour: 10, minute: 0 }, venueId: 'school_hall' } }),
         ).rejects.toMatchObject({ code: 'FACTS_MISMATCH' });
+        // H5: an invitation for 12:30 today (it is 11:00) is too late to call about, though it has not started.
+        await expect(
+            createCampaign(env.ctx, ORG, ADMIN, { ...base, purpose: 'ptm_invite', facts: { kind: 'ptm_invite', date: '2026-10-05', time: { hour: 12, minute: 30 }, venueId: 'school_hall' } }),
+        ).rejects.toMatchObject({ code: 'TOO_LATE_TO_CALL', status: 400 });
     });
 
     it('a Latin spoken name is reported per language in preview and refused at approval', async () => {
@@ -276,13 +336,33 @@ describe('slice 1 campaign flow', () => {
         });
         await approveCampaign(env.ctx, ORG, campaign.id, ADMIN);
         expect((await renderUntilSettled(env, campaign.id)).status).toBe('scheduled');
+        const audits = captureAudits(env.repo);
         const cancelled = await cancelCampaign(env.ctx, ORG, campaign.id, ADMIN);
         expect(cancelled.status).toBe('cancelled');
+        // Nothing was out yet, and the response and the audit say so (H4).
+        expect(cancelled.calls).toEqual({ ringingStopped: 0, stillSpeaking: 0 });
+        expect(audits.find((a) => a.action === 'campaign.cancel')?.detail).toMatchObject({ ringingStopped: 0, stillSpeaking: 0 });
         const intents = await env.repo.listIntentsByCampaign(ORG, campaign.id);
         expect(intents.some((i) => i.status === 'approved')).toBe(false);
         expect(intents.filter((i) => i.status === 'cancelled').length).toBeGreaterThan(0);
         expect((await dispatchJob({ repo: env.repo, clock: env.clock })).dialed).toBe(0);
         await expect(cancelCampaign(env.ctx, ORG, campaign.id, ADMIN)).rejects.toMatchObject({ code: 'CAMPAIGN_FINISHED' });
+    });
+
+    it('B6: the dry run counts toward the cap only real calls to a guardian, like the cap itself', async () => {
+        const env = await setup();
+        const campaign = await createCampaign(env.ctx, ORG, ADMIN, {
+            purpose: 'ptm_invite',
+            facts: { kind: 'ptm_invite', date: '2026-10-08', time: { hour: 10, minute: 30 }, venueId: 'school_hall' },
+            audience: { sections: [] },
+        });
+        const [g0, g1, g2] = await env.repo.listGuardians(ORG, ['g0', 'g1', 'g2']);
+        const yesterday = new Date(MON_11_IST.getTime() - 24 * 60 * 60 * 1000);
+        await plantCalls(env.repo, g0, FREQUENCY_CAP, 'simulated', 'guardian', yesterday); // Practice: rang nobody
+        await plantCalls(env.repo, g1, FREQUENCY_CAP, 'vobiz', 'test_phone', yesterday); // Test: rang the school's phone
+        await plantCalls(env.repo, g2, FREQUENCY_CAP, 'vobiz', 'guardian', yesterday); // real calls to the family
+        const detail = await getCampaignDetail(env.ctx, ORG, campaign.id);
+        expect(detail.audience.blocked.frequency_cap).toBe(1);
     });
 
     it('office preference edits show in the guardian list and survive the next import', async () => {
