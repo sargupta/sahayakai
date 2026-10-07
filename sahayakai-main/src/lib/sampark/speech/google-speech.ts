@@ -1,10 +1,17 @@
 /**
  * Google Cloud speech adapters for Sampark notice calls.
  *
- *   createGoogleSynthesizer — Cloud Text-to-Speech v1 REST. Gemini-TTS for
- *     en-IN / hi-IN / ne-NP (model pinned in languages.ts), Chirp 3 HD for
- *     bn-IN (Gemini-TTS has no bn-IN, plan §5). Audio is requested as 8 kHz
- *     μ-law (audioEncoding MULAW) so it is telephony-ready with no transcoder.
+ *   createGoogleSynthesizer — one synthesizer that dispatches on `speech.engine`
+ *     (the engine per language is pinned in languages.ts):
+ *       'gemini-tts' / 'chirp3-hd' → Cloud Text-to-Speech v1 REST, audio
+ *         requested as 8 kHz μ-law (audioEncoding MULAW), telephony-ready as is.
+ *       'gemini-tts-vertex' → Gemini-TTS through Vertex AI generateContent.
+ *         Cloud TTS refuses `bn-IN` for every Gemini model, while the same models
+ *         on Vertex accept it and sound native (CONVERSATION_PLAN.md §6.1). Vertex
+ *         returns 24 kHz 16-bit PCM, converted here with dsp.ts (low-pass +
+ *         decimate to 8 kHz, G.711 μ-law). This route NEVER sends a style prompt
+ *         or any instruction text: an English instruction made the voice
+ *         English-accented, and prompts have been read aloud into audio before.
  *   createChirpVerifier — Speech-to-Text v2, model chirp_2 in asia-southeast1,
  *     for the transcribe-back check (plan §4⑥).
  *
@@ -23,7 +30,8 @@
 import type { SpeechEngineConfig } from '@/lib/sampark/languages';
 import type { SpeechSynthesizer, SpeechVerifier, SynthesisResult } from '@/lib/sampark/ports';
 
-import { buildMulawWav, isRiffWave, mulawSamples, TELEPHONY_SAMPLE_RATE } from './wav';
+import { mulawEncode, resampleTo8k } from './dsp';
+import { buildMulawWav, isRiffWave, mulawSamples, parseWav, TELEPHONY_SAMPLE_RATE } from './wav';
 
 export const TTS_ENDPOINT = 'https://texttospeech.googleapis.com/v1/text:synthesize';
 export const STT_LOCATION = 'asia-southeast1';
@@ -31,8 +39,9 @@ export const STT_MODEL = 'chirp_2';
 export const DEFAULT_GCP_PROJECT = 'sahayakai-b4248';
 
 /**
- * Delivery hint for Gemini-TTS, sent ONLY with a campaign's main message
- * (`delivery: 'styled'`) and never to Chirp 3 HD, which ignores it.
+ * Delivery hint for Gemini-TTS on Cloud TTS, sent ONLY with a campaign's main
+ * message (`delivery: 'styled'`); never to Chirp 3 HD, which ignores it, and
+ * never on the Vertex route, where nothing but the text is sent.
  *
  * History, because each step was learned live:
  *   - A longer "human" prompt that also asked to "say the date, time and place
@@ -49,6 +58,13 @@ export const GEMINI_TTS_STYLE_PROMPT = 'Warm, calm and unhurried.';
 
 const CLOUD_PLATFORM_SCOPE = 'https://www.googleapis.com/auth/cloud-platform';
 const REQUEST_TIMEOUT_MS = 60_000;
+/**
+ * Vertex generateContent is not streamed: R2 measured 35–55 s for 27 s of
+ * Bengali audio, so a long message needs far more than Cloud TTS's 60 s.
+ */
+export const VERTEX_TTS_TIMEOUT_MS = 180_000;
+/** Vertex location for Gemini-TTS; 'global' unless SAMPARK_TTS_VERTEX_LOCATION is set. */
+export const DEFAULT_VERTEX_TTS_LOCATION = 'global';
 
 export type AccessTokenProvider = () => Promise<string>;
 
@@ -101,6 +117,7 @@ async function postJson(
     url: string,
     body: unknown,
     what: string,
+    timeoutMs = REQUEST_TIMEOUT_MS,
 ): Promise<Record<string, unknown>> {
     const fetchImpl = deps.fetchImpl ?? fetch;
     const maxRetries = deps.maxRetries ?? 5;
@@ -110,7 +127,7 @@ async function postJson(
     for (let attempt = 0; ; attempt++) {
         const token = await (deps.getAccessToken ?? adcAccessTokenProvider())();
         const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
         try {
             let res: Response;
             try {
@@ -154,6 +171,9 @@ export function buildSynthesizeRequest(
     speech: SpeechEngineConfig,
     delivery: 'styled' | 'plain' = 'plain',
 ): Record<string, unknown> {
+    if (speech.engine === 'gemini-tts-vertex') {
+        throw new Error(`${speech.ttsLanguageCode} is a Vertex voice; Cloud TTS cannot render it (use buildVertexTtsRequest)`);
+    }
     const audioConfig = { audioEncoding: 'MULAW', sampleRateHertz: TELEPHONY_SAMPLE_RATE };
     if (speech.engine === 'gemini-tts') {
         if (!speech.model) throw new Error(`Gemini-TTS for ${speech.ttsLanguageCode} needs a pinned model`);
@@ -178,11 +198,133 @@ export function toTelephonyWav(audio: Buffer): SynthesisResult {
     return { audio: wav, mimeType: 'audio/wav', durationSeconds: samples.length / TELEPHONY_SAMPLE_RATE };
 }
 
+// ── Gemini-TTS through Vertex AI ────────────────────────────────────────────
+
+/** The Vertex generateContent request body: the text, the voice and the language code, and nothing else. */
+export interface VertexTtsRequest {
+    contents: [{ role: 'user'; parts: [{ text: string }] }];
+    generationConfig: {
+        responseModalities: ['AUDIO'];
+        speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: string } }; languageCode: string };
+    };
+}
+
+export function vertexTtsLocation(): string {
+    return process.env.SAMPARK_TTS_VERTEX_LOCATION?.trim() || DEFAULT_VERTEX_TTS_LOCATION;
+}
+
+/** generateContent URL. 'global' is served from aiplatform.googleapis.com, a region from its own host. */
+export function vertexTtsUrl(project: string, model: string, location: string = vertexTtsLocation()): string {
+    const host = location === 'global' ? 'aiplatform.googleapis.com' : `${location}-aiplatform.googleapis.com`;
+    return `https://${host}/v1/projects/${project}/locations/${location}/publishers/google/models/${model}:generateContent`;
+}
+
+/** The pinned model of a Vertex voice; throws for any other engine or an unpinned model. */
+function pinnedVertexModel(speech: SpeechEngineConfig): string {
+    if (speech.engine !== 'gemini-tts-vertex') throw new Error(`${speech.engine} is not a Vertex voice`);
+    if (!speech.model) throw new Error(`Gemini-TTS on Vertex for ${speech.ttsLanguageCode} needs a pinned model`);
+    return speech.model;
+}
+
+/**
+ * The exact Vertex request body (exported for class gate 15). There is no
+ * `delivery` parameter on purpose: nothing but the text itself is ever sent as
+ * content, for any clip, so no instruction can colour the accent or be read out.
+ */
+export function buildVertexTtsRequest(text: string, speech: SpeechEngineConfig): VertexTtsRequest {
+    pinnedVertexModel(speech);
+    return {
+        contents: [{ role: 'user', parts: [{ text }] }],
+        generationConfig: {
+            responseModalities: ['AUDIO'],
+            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: speech.voice } }, languageCode: speech.ttsLanguageCode },
+        },
+    };
+}
+
+/** Sample rate of raw 16-bit PCM from its MIME type, e.g. "audio/L16;codec=pcm;rate=24000" → 24000. */
+export function pcmRateFromMimeType(mimeType: string): number {
+    const [type, ...params] = mimeType.split(';').map((p) => p.trim().toLowerCase());
+    if (type !== 'audio/l16' && type !== 'audio/pcm') throw new Error(`Vertex TTS returned unsupported audio "${mimeType}"`);
+    const rate = Number(params.find((p) => p.startsWith('rate='))?.slice(5));
+    if (!Number.isInteger(rate) || rate < TELEPHONY_SAMPLE_RATE) throw new Error(`Vertex TTS audio "${mimeType}" has no usable sample rate`);
+    return rate;
+}
+
+interface GenerateContentResponse {
+    candidates?: { content?: { parts?: { text?: string; inlineData?: { mimeType?: string; data?: string } }[] }; finishReason?: string }[];
+    promptFeedback?: { blockReason?: string };
+}
+
+/** One audio part → 16-bit PCM samples and their rate. Raw L16/PCM, or a WAV container (gemini-3.8-flash-tts returns `audio/wav`). */
+function decodeAudioPart(part: { mimeType?: string; data?: string }): { rate: number; pcm: Int16Array } {
+    const bytes = Buffer.from(part.data ?? '', 'base64');
+    const type = (part.mimeType ?? '').split(';')[0].trim().toLowerCase();
+    if (type === 'audio/wav' || type === 'audio/x-wav' || type === 'audio/wave' || isRiffWave(bytes)) {
+        const info = parseWav(bytes);
+        if (info.audioFormat !== 1 || info.bitsPerSample !== 16 || info.channels < 1) {
+            throw new Error(`Vertex TTS returned a WAV that is not 16-bit PCM (format ${info.audioFormat}, ${info.bitsPerSample}-bit, ${info.channels} ch)`);
+        }
+        if (info.sampleRate < TELEPHONY_SAMPLE_RATE) throw new Error(`Vertex TTS WAV rate ${info.sampleRate} is below telephony rate`);
+        const frames = Math.floor(info.dataBytes / (2 * info.channels));
+        const pcm = new Int16Array(frames);
+        for (let i = 0; i < frames; i++) {
+            // Mixed down to mono if a model ever returns more than one channel.
+            let sum = 0;
+            for (let c = 0; c < info.channels; c++) sum += bytes.readInt16LE(info.dataOffset + (i * info.channels + c) * 2);
+            pcm[i] = Math.round(sum / info.channels);
+        }
+        return { rate: info.sampleRate, pcm };
+    }
+    const rate = pcmRateFromMimeType(part.mimeType ?? '');
+    const pcm = new Int16Array(bytes.length >> 1);
+    for (let i = 0; i < pcm.length; i++) pcm[i] = bytes.readInt16LE(i * 2);
+    return { rate, pcm };
+}
+
+/**
+ * A generateContent response → an 8 kHz μ-law WAV. Every audio part is joined
+ * in order (long text can come back in several), at the rate its MIME type or
+ * WAV header states. Gemini's raw PCM is little-endian, whatever RFC 2586 says
+ * about L16; newer models wrap it in a WAV container instead.
+ */
+export function vertexResponseToTelephonyWav(json: unknown): SynthesisResult {
+    const res = json as GenerateContentResponse;
+    const candidate = res.candidates?.[0];
+    const audioParts = (candidate?.content?.parts ?? []).flatMap((p) => (p.inlineData?.data ? [p.inlineData] : []));
+    if (audioParts.length === 0) {
+        const why = res.promptFeedback?.blockReason ?? candidate?.finishReason ?? 'no candidate';
+        throw new Error(`Vertex TTS response had no audio (${why})`);
+    }
+    const decoded = audioParts.map(decodeAudioPart);
+    const rates = new Set(decoded.map((d) => d.rate));
+    if (rates.size !== 1) throw new Error(`Vertex TTS returned audio parts at different rates: ${[...rates].join(', ')}`);
+    const [rate] = rates;
+    const total = decoded.reduce((n, d) => n + d.pcm.length, 0);
+    const pcm = new Int16Array(total);
+    let at = 0;
+    for (const d of decoded) {
+        pcm.set(d.pcm, at);
+        at += d.pcm.length;
+    }
+    const narrow = resampleTo8k(pcm, rate);
+    const mulaw = Buffer.alloc(narrow.length);
+    for (let i = 0; i < narrow.length; i++) mulaw[i] = mulawEncode(narrow[i]);
+    return toTelephonyWav(buildMulawWav(mulaw));
+}
+
 export function createGoogleSynthesizer(deps: GoogleSpeechDeps = {}): SpeechSynthesizer {
     return {
         async synthesize({ text, speech, delivery }) {
             if (!text.trim()) throw new Error('Cannot synthesise empty text');
-            const json = await postJson(deps, TTS_ENDPOINT, buildSynthesizeRequest(text, speech, delivery ?? 'plain'), `TTS ${speech.engine} ${speech.ttsLanguageCode}`);
+            const what = `TTS ${speech.engine} ${speech.ttsLanguageCode}`;
+            if (speech.engine === 'gemini-tts-vertex') {
+                // `delivery` is deliberately not read on this route (see buildVertexTtsRequest).
+                const url = vertexTtsUrl(projectOf(deps), pinnedVertexModel(speech));
+                const json = await postJson(deps, url, buildVertexTtsRequest(text, speech), what, VERTEX_TTS_TIMEOUT_MS);
+                return vertexResponseToTelephonyWav(json);
+            }
+            const json = await postJson(deps, TTS_ENDPOINT, buildSynthesizeRequest(text, speech, delivery ?? 'plain'), what);
             const content = json.audioContent;
             if (typeof content !== 'string' || content.length === 0) throw new Error('TTS response had no audioContent');
             return toTelephonyWav(Buffer.from(content, 'base64'));

@@ -512,7 +512,7 @@ export interface RenderedClip {
     variant: 'default' | 'today' | 'tomorrow';
     kind: ClipKind;
     text: string;
-    engine: 'gemini-tts' | 'chirp3-hd';
+    engine: 'gemini-tts' | 'gemini-tts-vertex' | 'chirp3-hd';
     voice: string;
     model: string;
     languageCode: string;

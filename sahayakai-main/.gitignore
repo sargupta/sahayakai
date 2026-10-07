@@ -79,3 +79,6 @@ public/swe-worker-*.js
 # eval runner artifacts
 eval-results/
 live-eval.log
+
+# Sampark voice listening-test samples (large, regenerable; see CONVERSATION_PLAN.md §6.1)
+qa/sampark-voice-eval/
