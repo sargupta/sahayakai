@@ -29,6 +29,13 @@ export const GATHER_TIMEOUT_MIN_SECONDS = 5;
 export const GATHER_TIMEOUT_MAX_SECONDS = 60;
 
 /** End the call now. Returned for every refusal, so a call in flight always hangs up cleanly. */
+/**
+ * One second of quiet after the last line, before hanging up. Indian goodbyes are reciprocal
+ * ("achha ji, namaste"); cutting the line the instant the last word ends felt like a dropped
+ * call to the founder on the 7 Oct 2026 Bengali test.
+ */
+export const GOODBYE_PAUSE = '<Wait length="1"/>';
+
 export const EMPTY_HANGUP_XML = `${PROLOG}<Response><Hangup/></Response>`;
 
 function clampTimeout(seconds: number): number {
@@ -56,15 +63,15 @@ function document(body: string): string {
 
 /** The answer document: the message (with its menu) inside the keypad Gather, then the no-input goodbye. */
 export function noticeAnswerXml(o: { messageAudioUrl: string; gatherUrl: string; noInputAudioUrl: string; timeoutSeconds: number }): string {
-    return document(gather(o.gatherUrl, o.timeoutSeconds, o.messageAudioUrl) + play(o.noInputAudioUrl) + '<Hangup/>');
+    return document(gather(o.gatherUrl, o.timeoutSeconds, o.messageAudioUrl) + play(o.noInputAudioUrl) + GOODBYE_PAUSE + '<Hangup/>');
 }
 
 /** Play one clip and end the call (a confirmation, the opt-out goodbye, or the no-input goodbye). */
 export function playThenHangupXml(audioUrl: string): string {
-    return document(play(audioUrl) + '<Hangup/>');
+    return document(play(audioUrl) + GOODBYE_PAUSE + '<Hangup/>');
 }
 
 /** After a 9: ask for a second 9; with no second key the opt-out still stands, so `opt_out_done` plays either way. */
 export function optOutConfirmXml(o: { promptAudioUrl: string; gatherUrl: string; doneAudioUrl: string; timeoutSeconds: number }): string {
-    return document(gather(o.gatherUrl, o.timeoutSeconds, o.promptAudioUrl) + play(o.doneAudioUrl) + '<Hangup/>');
+    return document(gather(o.gatherUrl, o.timeoutSeconds, o.promptAudioUrl) + play(o.doneAudioUrl) + GOODBYE_PAUSE + '<Hangup/>');
 }

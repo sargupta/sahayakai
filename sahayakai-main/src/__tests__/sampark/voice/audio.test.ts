@@ -21,13 +21,15 @@ async function audioToken(orgId: string, key: string): Promise<string> {
 }
 
 describe('readSamparkVoiceAudio', () => {
-    it('serves a verified clip as 16-bit PCM WAV (never μ-law)', async () => {
+    it('serves the stored 8 kHz μ-law WAV as is: telephone audio, half the bytes of 16-bit PCM', async () => {
+        // Founder, 7 Oct 2026: ~19 s of silence before a 26 s Bengali message. Vobiz downloads the
+        // whole file before playing it; serving 16-bit PCM doubled the bytes over a slow uplink.
         const w = await world();
         const wav = await readSamparkVoiceAudio(w, { token: await audioToken(ORG, w.keys.message as string) });
         expect(wav).not.toBeNull();
         const layout = parseWav(wav as Buffer);
-        expect(layout).toMatchObject({ formatTag: 1, bitsPerSample: 16, sampleRate: 8000, channels: 1 });
-        expect(layout.dataLength).toBe(2000 * 2);
+        expect(layout).toMatchObject({ formatTag: 7, bitsPerSample: 8, sampleRate: 8000, channels: 1 });
+        expect(layout.dataLength).toBe(2000);
     });
 
     it.each([['failed'], ['skipped']] as const)('never serves a clip whose check is %s', async (fate) => {

@@ -35,7 +35,7 @@ describe('noticeAnswerXml', () => {
         expect(xml).toBe(
             `${PROLOG}<Response>` +
                 `<Gather action="${GATHER}" method="POST" inputType="dtmf" numDigits="1" executionTimeout="8" finishOnKey="none">` +
-                `<Play>${MESSAGE}</Play></Gather><Play>${NO_INPUT}</Play><Hangup/></Response>`,
+                `<Play>${MESSAGE}</Play></Gather><Play>${NO_INPUT}</Play><Wait length="1"/><Hangup/></Response>`,
         );
     });
 
@@ -70,7 +70,7 @@ describe('escaping — no interpolated value can break out of its element or att
 
 describe('playThenHangupXml', () => {
     it('plays one clip and hangs up', () => {
-        expect(playThenHangupXml(MESSAGE)).toBe(`${PROLOG}<Response><Play>${MESSAGE}</Play><Hangup/></Response>`);
+        expect(playThenHangupXml(MESSAGE)).toBe(`${PROLOG}<Response><Play>${MESSAGE}</Play><Wait length="1"/><Hangup/></Response>`);
     });
 });
 
@@ -82,6 +82,6 @@ describe('optOutConfirmXml', () => {
     });
 
     it('with no second key still plays opt_out_done (the opt-out stands, plan §5.1), then hangs up', () => {
-        expect(xml.endsWith(`</Gather><Play>${NO_INPUT}</Play><Hangup/></Response>`)).toBe(true);
+        expect(xml.endsWith(`</Gather><Play>${NO_INPUT}</Play><Wait length="1"/><Hangup/></Response>`)).toBe(true);
     });
 });

@@ -288,15 +288,15 @@ describe('status route', () => {
 });
 
 describe('audio route', () => {
-    it('serves a verified clip as audio/wav (16-bit PCM) with its length', async () => {
+    it('serves a verified clip as audio/wav (8 kHz μ-law, as stored) with its length', async () => {
         const token = await mintSamparkVoiceToken('sampark-audio', voicePrincipal(ORG, w.keys.message as string));
         const res = await clip(`${token}.wav`);
         expect(res.status).toBe(200);
         expect(res.headers['content-type']).toBe('audio/wav');
         const bytes = Buffer.from(res.body as Uint8Array);
         expect(res.headers['content-length']).toBe(String(bytes.length));
-        expect(bytes.readUInt16LE(20)).toBe(1); // WAVE_FORMAT_PCM
-        expect(bytes.readUInt16LE(34)).toBe(16); // bits per sample
+        expect(bytes.readUInt16LE(20)).toBe(7); // WAVE_FORMAT_MULAW
+        expect(bytes.readUInt16LE(34)).toBe(8); // bits per sample
     });
 
     it('404s a bad token and an unverified clip', async () => {

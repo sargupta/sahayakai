@@ -56,6 +56,7 @@ import {
 import { hangupEventFromVobiz } from '@/lib/sampark/voice/vobiz-events';
 import { EMPTY_HANGUP_XML, noticeAnswerXml, optOutConfirmXml, playThenHangupXml } from '@/lib/sampark/voice/xml';
 import type { Campaign, CallOutcome, ClipKind, SamparkCall, SamparkSchool } from '@/types/sampark';
+import { mulawSamples } from '@/lib/sampark/speech/wav';
 import { toPcm16Wav } from '@/server/sampark/audio-format';
 import { samparkPublicBaseUrl } from '@/server/sampark/carrier';
 
@@ -544,7 +545,12 @@ export async function readSamparkVoiceAudio(deps: { repo: SamparkRepo; store: Au
     const stored = await deps.store.get(ids.id);
     if (!stored) return null;
     try {
-        return toPcm16Wav(stored.audio);
+        // The stored 8 kHz G.711 μ-law WAV, as is: telephone audio's native format and HALF the
+        // bytes of 16-bit PCM. Vobiz downloads a whole file before playing it, so size is delay:
+        // on 7 Oct 2026 a 26 s message served as 16-bit PCM (~420 KB) left a parent hearing ~19 s
+        // of silence over a slow uplink. (The console's browser preview still converts to PCM.)
+        mulawSamples(stored.audio); // throws unless 8 kHz mono μ-law
+        return stored.audio;
     } catch (err) {
         logger.error('Sampark voice audio is not a playable WAV', err, LOG, { orgId: ids.orgId, key: ids.id });
         return null;
