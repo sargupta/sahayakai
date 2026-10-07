@@ -55,7 +55,18 @@ const lexiconSchema = z.object({
         /** "H:MM" (24-hour) → complete phrase, overriding everything else (e.g. 12:00 "twelve noon"). */
         special: z.record(z.string().regex(/^\d{1,2}:\d{2}$/), text),
     }),
-    grade: z.object({ pattern: text, gradeWords: numberKeyed }),
+    grade: z
+        .object({
+            pattern: text,
+            /**
+             * The genitive class phrase, where the case falls on a noun rather than on the
+             * section letter (Bengali "ক্লাস সেভেন, বি সেকশনের" — never a suffix hyphenated
+             * onto the letter, "বি-র"). Filled with sectionLettersGenitive. Absent → `pattern`.
+             */
+            genitivePattern: text.optional(),
+            gradeWords: numberKeyed,
+        })
+        .strict(),
     sectionLetters: z.record(z.string().regex(/^[A-Z]$/), text),
     sectionLettersGenitive: z.record(z.string().regex(/^[A-Z]$/), text),
     /** How a venue is said after the time: "in {venue}", "{venue} में", "{venue}मा", "{venueLocative}". */

@@ -6,7 +6,8 @@
     "reviewedBy": null,
     "charsPerSecond": 9.5,
     "notes": [
-      "Dates keep the day of the month as a numeral (\"10 October\"): en-IN voices read it naturally.",
+      "Indian English, the way a school office speaks to parents: \"Class Seven B\", \"ten o'clock in the morning\", \"ten thirty in the morning\" (never the British \"half past ten\"), \"Saturday, the tenth of October\".",
+      "Dates say the day of the month as an ordinal word (lexicon.dayOfMonth), so the voice never has to guess how to read a numeral.",
       "Keypad keys are written as numerals (\"press 1\"); every Indic file writes them as words.",
       "charsPerSecond is the slowest message+menu rate measured by scripts/sampark/verify-voice.ts on 2026-09-30 with the live voice and style prompt (conservative, so the 38 s budget warning fires early)."
     ]
@@ -112,39 +113,39 @@
       "December"
     ],
     "dayOfMonth": {
-      "1": "1",
-      "2": "2",
-      "3": "3",
-      "4": "4",
-      "5": "5",
-      "6": "6",
-      "7": "7",
-      "8": "8",
-      "9": "9",
-      "10": "10",
-      "11": "11",
-      "12": "12",
-      "13": "13",
-      "14": "14",
-      "15": "15",
-      "16": "16",
-      "17": "17",
-      "18": "18",
-      "19": "19",
-      "20": "20",
-      "21": "21",
-      "22": "22",
-      "23": "23",
-      "24": "24",
-      "25": "25",
-      "26": "26",
-      "27": "27",
-      "28": "28",
-      "29": "29",
-      "30": "30",
-      "31": "31"
+      "1": "first",
+      "2": "second",
+      "3": "third",
+      "4": "fourth",
+      "5": "fifth",
+      "6": "sixth",
+      "7": "seventh",
+      "8": "eighth",
+      "9": "ninth",
+      "10": "tenth",
+      "11": "eleventh",
+      "12": "twelfth",
+      "13": "thirteenth",
+      "14": "fourteenth",
+      "15": "fifteenth",
+      "16": "sixteenth",
+      "17": "seventeenth",
+      "18": "eighteenth",
+      "19": "nineteenth",
+      "20": "twentieth",
+      "21": "twenty-first",
+      "22": "twenty-second",
+      "23": "twenty-third",
+      "24": "twenty-fourth",
+      "25": "twenty-fifth",
+      "26": "twenty-sixth",
+      "27": "twenty-seventh",
+      "28": "twenty-eighth",
+      "29": "twenty-ninth",
+      "30": "thirtieth",
+      "31": "thirty-first"
     },
-    "dateFormat": "{weekday}, {day} {month}",
+    "dateFormat": "{weekday}, the {day} of {month}",
     "dayPeriods": [
       {
         "id": "morning",
@@ -180,28 +181,28 @@
         "11": "eleven",
         "12": "twelve"
       },
-      "whole": "{hour} in the {period}",
-      "half": "half past {hour} in the {period}",
+      "whole": "{hour} o'clock in the {period}",
+      "half": "{hour} thirty in the {period}",
       "halfSpecial": {},
       "special": {
         "12:00": "twelve noon"
       }
     },
     "grade": {
-      "pattern": "Class {grade}, section {section}",
+      "pattern": "Class {grade} {section}",
       "gradeWords": {
-        "1": "one",
-        "2": "two",
-        "3": "three",
-        "4": "four",
-        "5": "five",
-        "6": "six",
-        "7": "seven",
-        "8": "eight",
-        "9": "nine",
-        "10": "ten",
-        "11": "eleven",
-        "12": "twelve"
+        "1": "One",
+        "2": "Two",
+        "3": "Three",
+        "4": "Four",
+        "5": "Five",
+        "6": "Six",
+        "7": "Seven",
+        "8": "Eight",
+        "9": "Nine",
+        "10": "Ten",
+        "11": "Eleven",
+        "12": "Twelve"
       }
     },
     "sectionLetters": {
@@ -247,7 +248,7 @@
       "auditorium": "the school auditorium"
     },
     "audience": {
-      "section": "parents of {class}",
+      "section": "the parents of {class}",
       "school": "all parents"
     }
   },
@@ -259,27 +260,27 @@
   },
   "purposes": {
     "ptm_invite": {
-      "message": "Namaste! This is a recorded message from {schoolName} for {audience}. The parent-teacher meeting is on {date}, at {time}, {venue}, and we'd love to see you.",
-      "menu": "If you can come, please press 1. If it doesn't suit you, press 2. If you'd rather not get these calls, press 9.",
-      "confirm_1": "Thank you! We've let the school know you're coming. We look forward to seeing you.",
-      "confirm_2": "Thank you for letting us know. Please have a word with the class teacher or the school office, and they will help you find another time."
+      "message": "Namaste! This is a recorded message from {schoolName} for {audience}. The parent-teacher meeting is on {date}, at {time}, {venue}. We hope to see you there.",
+      "menu": "If you can come, please press 1. If this time does not suit you, press 2. To stop these calls, press 9.",
+      "confirm_1": "Thank you! We have told the school that you are coming. See you at the meeting.",
+      "confirm_2": "Thank you for letting us know. Please speak to the class teacher or the school office, and they will help you with another time."
     },
     "event_invite": {
-      "message": "Namaste! This is a recorded message from {schoolName} for {audience}. You and your family are warmly invited to our {eventName} on {date}, at {time}, {venue}.",
-      "menu": "If you can come, please press 1. If you can't make it, press 2. If you'd rather not get these calls, press 9.",
-      "confirm_1": "Thank you! We've let the school know you're coming. See you there.",
-      "confirm_2": "Thank you for letting us know. We hope to see you at the next one."
+      "message": "Namaste! This is a recorded message from {schoolName} for {audience}. Our {eventName} is on {date}, at {time}, {venue}. You and your family are most welcome.",
+      "menu": "If you can come, please press 1. If you cannot come, press 2. To stop these calls, press 9.",
+      "confirm_1": "Thank you! We have told the school that you are coming. See you there.",
+      "confirm_2": "Thank you for letting us know. We hope to see you next time."
     },
     "emergency_closure": {
       "message": {
-        "today": "Namaste. This is an urgent recorded message from {schoolName}. Because of {reason}, the school will stay closed today, {date}. {buses}",
-        "tomorrow": "Namaste. This is an urgent recorded message from {schoolName}. Because of {reason}, the school will stay closed tomorrow, {date}. {buses}"
+        "today": "Namaste. This is an urgent recorded message from {schoolName}. Because of {reason}, the school will be closed today, {date}. {buses}",
+        "tomorrow": "Namaste. This is an urgent recorded message from {schoolName}. Because of {reason}, the school will be closed tomorrow, {date}. {buses}"
       },
       "buses": {
         "running": "School buses will still run as usual.",
         "notRunning": "School buses will not run either."
       },
-      "menu": "Please press 1 to let us know you've heard this message. If you'd rather not get these calls, press 9.",
+      "menu": "If you have heard this message, please press 1. To stop these calls, press 9.",
       "confirm_1": "Thank you. Please take care, and stay safe."
     }
   }

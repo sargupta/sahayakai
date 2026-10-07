@@ -6,12 +6,12 @@
     "reviewedBy": null,
     "charsPerSecond": 8.8,
     "notes": [
-      "Darjeeling register, not Kathmandu office Nepali: रेकर्ड गरिएको सूचना, थिच्नुहोस्, तपाईं with -नुहुन्छ forms (gender-neutral).",
-      "Every sentence must pass the per-sentence Nepali gate (src/lib/sampark/scripts/purity.ts): no Hindi-only word, no nukta, no ॉ, and at least one Nepali marker. That is why the greeting is joined to the next sentence with a comma (\"नमस्ते, यो …\") and \"धन्यवाद\" never stands alone.",
+      "Darjeeling register, not Kathmandu office Nepali, with the loanwords parents use: स्कुल, क्लास सेभेन, सेक्सन बी, प्यारेन्ट टिचर मिटिङ, क्लास टिचर, मेसेज, एनुअल डे. तपाईं with -नुहुन्छ / -नुहोस् forms (gender-neutral). Short sentences, not one long comma chain.",
+      "Every sentence must pass the per-sentence Nepali gate (src/lib/sampark/scripts/purity.ts): no Hindi-only word, no nukta, no ॉ, and at least one Nepali marker. That is why the greeting is joined to the next sentence with a comma (\"नमस्ते, यो …\"), \"धन्यवाद\" never stands alone, and the invitation ends in -नुहोस् (\"कृपया आइदिनुहोस्\"; the softer \"कृपया आइदिनुहोला\" carries no marker).",
       "Postpositions attach to the slot with no space ({schoolName}बाट, {date}मा, {venue} via lexicon.venuePhrase \"{venue}मा\", {reason}ले गर्दा).",
-      "Keypad keys are words (एक, दुई, नौ), not digits.",
+      "Keypad keys are words followed by नम्बर (\"एक नम्बर थिच्नुहोस्\"), not digits.",
       "charsPerSecond is the slowest message+menu rate measured by scripts/sampark/verify-voice.ts on 2026-09-30 with the live voice and style prompt (conservative, so the 38 s budget warning fires early).",
-      "Spelling: स्कुल (short u), the standard Nepali form and what the recogniser writes; the plan draft had स्कूल."
+      "Spelling: स्कुल (short u), the standard Nepali form and what the recogniser writes — never स्कूल (a class gate enforces it)."
     ]
   },
   "lexicon": {
@@ -194,20 +194,20 @@
       "special": {}
     },
     "grade": {
-      "pattern": "कक्षा {grade}, सेक्सन {section}",
+      "pattern": "क्लास {grade}, सेक्सन {section}",
       "gradeWords": {
-        "1": "एक",
-        "2": "दुई",
-        "3": "तीन",
-        "4": "चार",
-        "5": "पाँच",
-        "6": "छ",
-        "7": "सात",
-        "8": "आठ",
-        "9": "नौ",
-        "10": "दस",
-        "11": "एघार",
-        "12": "बाह्र"
+        "1": "वान",
+        "2": "टु",
+        "3": "थ्री",
+        "4": "फोर",
+        "5": "फाइभ",
+        "6": "सिक्स",
+        "7": "सेभेन",
+        "8": "एट",
+        "9": "नाइन",
+        "10": "टेन",
+        "11": "इलेभेन",
+        "12": "ट्वेल्भ"
       }
     },
     "sectionLetters": {
@@ -235,17 +235,17 @@
   },
   "names": {
     "eventTypes": {
-      "annual_day": "वार्षिक उत्सव",
-      "sports_day": "खेलकुद दिवस",
-      "science_fair": "विज्ञान मेला",
-      "cultural_programme": "सांस्कृतिक कार्यक्रम",
-      "parent_workshop": "अभिभावक कार्यशाला"
+      "annual_day": "एनुअल डे",
+      "sports_day": "स्पोर्ट्स डे",
+      "science_fair": "साइन्स फेयर",
+      "cultural_programme": "कल्चरल प्रोग्राम",
+      "parent_workshop": "प्यारेन्ट्स वर्कसप"
     },
     "closureReasons": {
       "rain_landslide": "धेरै पानी परेको र पहिरोको खतरा",
       "heavy_rain": "धेरै पानी परेको",
       "bandh": "बन्द",
-      "local_emergency": "स्थानीय आपतकालीन अवस्था"
+      "local_emergency": "इलाकाको इमर्जेन्सी"
     },
     "venues": {
       "school_hall": "स्कुलको हल",
@@ -253,39 +253,39 @@
       "auditorium": "स्कुलको अडिटोरियम"
     },
     "audience": {
-      "section": "{class} का अभिभावकहरू",
-      "school": "सबै अभिभावकहरू"
+      "section": "{class} का प्यारेन्टहरू",
+      "school": "सबै प्यारेन्टहरू"
     }
   },
   "common": {
-    "opt_out_confirm": "पक्का गर्न फेरि एक पटक नौ थिच्नुहोस्, अनि यस्ता कल बन्द हुनेछन्। स्कुल अचानक बन्द हुने जरुरी सूचना भने तपाईंलाई आइरहनेछ।",
-    "opt_out_done": "हुन्छ, अब तपाईंलाई यस्ता कल आउने छैन। स्कुल अचानक बन्द गर्नुपरे त्यसको सूचना भने आइरहनेछ। धन्यवाद, राम्रोसँग बस्नुहोस्।",
-    "no_input": "हाम्रो सूचना सुन्नुभएकोमा धन्यवाद, तपाईंको दिन शुभ रहोस्।",
-    "fallback_office": "नमस्ते, यो {schoolName} हो। अहिले हाम्रो सूचना सुनाउन सकिएन, त्यसैले कृपया स्कुलको अफिसमा सम्पर्क गर्नुहोस्, धन्यवाद।"
+    "opt_out_confirm": "यस्ता कल बन्द गर्न फेरि एक पटक नौ नम्बर थिच्नुहोस्। तर स्कुल अचानक बन्द भयो भने, त्यसको खबर तपाईंलाई आउँछ।",
+    "opt_out_done": "हुन्छ, अब तपाईंलाई यस्ता कल आउँदैन। तर स्कुल अचानक बन्द भयो भने, त्यसको खबर आउँछ। धन्यवाद, राम्रोसँग बस्नुहोस्।",
+    "no_input": "सुन्नुभएकोमा धन्यवाद, नमस्ते।",
+    "fallback_office": "नमस्ते, यो {schoolName} हो। अहिले हाम्रो मेसेज सुनाउन सकिएको छैन। कृपया स्कुलको अफिसमा एक पटक फोन गर्नुहोस्, धन्यवाद।"
   },
   "purposes": {
     "ptm_invite": {
-      "message": "नमस्ते, यो {schoolName}बाट {audience}का लागि रेकर्ड गरिएको सूचना हो। प्यारेन्ट-टिचर मिटिङ {date}, {time} {venue} हुन्छ, तपाईंलाई भेट्न पाए हामी खुसी हुनेछौं।",
-      "menu": "आउन सक्नुहुन्छ भने एक थिच्नुहोस्। यो समय मिल्दैन भने दुई थिच्नुहोस्। यस्ता कल नचाहिए नौ थिच्नुहोस्।",
-      "confirm_1": "धन्यवाद, तपाईं आउनुहुन्छ भनेर स्कुललाई खबर गरिदिएका छौं। तपाईंलाई भेट्ने आशा छ।",
-      "confirm_2": "जानकारी दिनुभएकोमा धन्यवाद। अर्को समय मिलाउन कृपया कक्षा शिक्षक वा स्कुलको अफिसमा कुरा गर्नुहोस्, उहाँहरूले मद्दत गर्नुहुनेछ।"
+      "message": "नमस्ते, यो {schoolName}बाट {audience}का लागि रेकर्ड गरिएको मेसेज हो। {date}, {time} {venue} प्यारेन्ट टिचर मिटिङ हुन्छ। कृपया आइदिनुहोस्।",
+      "menu": "आउन सक्नुहुन्छ भने एक नम्बर थिच्नुहोस्। यो समय मिल्दैन भने दुई नम्बर थिच्नुहोस्। यस्ता कल नचाहिए नौ नम्बर थिच्नुहोस्।",
+      "confirm_1": "धन्यवाद, तपाईं आउनुहुन्छ भनेर स्कुललाई खबर गरिदियौं। मिटिङमा भेटौंला।",
+      "confirm_2": "बताइदिनुभएकोमा धन्यवाद। अर्को समय मिलाउन क्लास टिचर वा स्कुलको अफिससँग कुरा गर्नुहोस्, उहाँहरूले मिलाइदिनुहुन्छ।"
     },
     "event_invite": {
-      "message": "नमस्ते, यो {schoolName}बाट {audience}का लागि रेकर्ड गरिएको सूचना हो। {date}, {time} {venue} {eventName} हुन्छ, परिवारसहित तपाईंलाई हार्दिक निमन्त्रणा छ।",
-      "menu": "आउन सक्नुहुन्छ भने एक थिच्नुहोस्। आउन सक्नुहुन्न भने दुई थिच्नुहोस्। यस्ता कल नचाहिए नौ थिच्नुहोस्।",
-      "confirm_1": "धन्यवाद, तपाईं आउनुहुन्छ भनेर स्कुललाई खबर गरिदिएका छौं। कार्यक्रममा भेटौंला।",
-      "confirm_2": "जानकारी दिनुभएकोमा धन्यवाद। अर्को कार्यक्रममा पक्कै भेटौंला।"
+      "message": "नमस्ते, यो {schoolName}बाट {audience}का लागि रेकर्ड गरिएको मेसेज हो। {date}, {time} {venue} {eventName} हुन्छ। परिवारसँगै आइदिनुहोस्।",
+      "menu": "आउन सक्नुहुन्छ भने एक नम्बर थिच्नुहोस्। आउन सक्नुहुन्न भने दुई नम्बर थिच्नुहोस्। यस्ता कल नचाहिए नौ नम्बर थिच्नुहोस्।",
+      "confirm_1": "धन्यवाद, तपाईं आउनुहुन्छ भनेर स्कुललाई खबर गरिदियौं। कार्यक्रममा भेटौंला।",
+      "confirm_2": "बताइदिनुभएकोमा धन्यवाद। अर्को कार्यक्रममा पक्कै भेटौंला।"
     },
     "emergency_closure": {
       "message": {
-        "today": "नमस्ते, यो {schoolName}को जरुरी रेकर्ड गरिएको सूचना हो। {reason}ले गर्दा आज, {date}मा स्कुल बन्द रहनेछ। {buses}",
-        "tomorrow": "नमस्ते, यो {schoolName}को जरुरी रेकर्ड गरिएको सूचना हो। {reason}ले गर्दा भोलि, {date}मा स्कुल बन्द रहनेछ। {buses}"
+        "today": "नमस्ते, यो {schoolName}बाट रेकर्ड गरिएको जरुरी मेसेज हो। {reason}ले गर्दा आज, {date}मा स्कुल बन्द रहन्छ। {buses}",
+        "tomorrow": "नमस्ते, यो {schoolName}बाट रेकर्ड गरिएको जरुरी मेसेज हो। {reason}ले गर्दा भोलि, {date}मा स्कुल बन्द रहन्छ। {buses}"
       },
       "buses": {
-        "running": "स्कुल बस भने सधैंझैं चल्नेछ।",
+        "running": "स्कुल बस भने सधैं जस्तै चल्छ।",
         "notRunning": "स्कुल बस पनि चल्दैन।"
       },
-      "menu": "सूचना सुन्नुभयो भने एक थिच्नुहोस्। यस्ता कल नचाहिए नौ थिच्नुहोस्।",
+      "menu": "मेसेज सुन्नुभयो भने एक नम्बर थिच्नुहोस्। यस्ता कल नचाहिए नौ नम्बर थिच्नुहोस्।",
       "confirm_1": "धन्यवाद, सबैजना सुरक्षित रहनुहोस्।"
     }
   }

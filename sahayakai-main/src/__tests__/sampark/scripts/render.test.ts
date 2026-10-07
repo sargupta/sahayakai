@@ -35,21 +35,21 @@ describe('audienceLabelFor', () => {
 });
 
 describe('renderNoticeScript', () => {
-    it('renders the PTM invitation as one warm, flowing clip (message + menu)', () => {
+    it('renders the PTM invitation as one short clip (message + menu) in the spoken register', () => {
         const r = renderNoticeScript({ ...base, purpose: 'ptm_invite', facts: SAMPLE_PTM, language: 'Hindi', variant: 'default' });
         expect(r.clips[0]).toEqual({
             kind: 'message',
             text:
-                'नमस्ते! यह हिलव्यू डेमो स्कूल की ओर से कक्षा सात, सेक्शन बी के अभिभावकों के लिए एक रिकॉर्ड किया हुआ संदेश है। ' +
-                'पैरेंट-टीचर मीटिंग शनिवार, दस अक्टूबर को सुबह दस बजे स्कूल हॉल में होगी, और हमें आपसे मिलकर बहुत ख़ुशी होगी। ' +
-                'अगर आप आ सकें, तो कृपया एक दबाएँ। अगर यह समय ठीक न बैठे, तो दो दबाएँ। और अगर ऐसी कॉल आपको नहीं चाहिए, तो नौ दबाएँ।',
+                'नमस्ते! हिलव्यू डेमो स्कूल से क्लास सेवन बी के पेरेंट्स के लिए यह एक रिकॉर्डेड मैसेज है। ' +
+                'पेरेंट टीचर मीटिंग शनिवार, दस अक्टूबर को सुबह दस बजे स्कूल हॉल में है। आप ज़रूर आइएगा। ' +
+                'आ सकें, तो एक दबाएँ। इस समय आना मुश्किल हो, तो दो दबाएँ। ऐसी कॉल नहीं चाहिए, तो नौ दबाएँ।',
         });
         expect(r.clips.map((c) => c.kind)).toEqual(['message', 'confirm_1', 'confirm_2', 'opt_out_confirm', 'opt_out_done', 'no_input', 'fallback_office']);
     });
 
     it('renders the Nepali closure draft with today / tomorrow and the bus sentence', () => {
         const today = renderNoticeScript({ ...base, purpose: 'emergency_closure', facts: SAMPLE_CLOSURE, language: 'Nepali', variant: 'today' });
-        expect(today.clips[0].text).toContain('आज, बिहीबार, आठ अक्टोबरमा स्कुल बन्द रहनेछ। स्कुल बस पनि चल्दैन।');
+        expect(today.clips[0].text).toContain('आज, बिहीबार, आठ अक्टोबरमा स्कुल बन्द रहन्छ। स्कुल बस पनि चल्दैन।');
         const tomorrow = renderNoticeScript({ ...base, purpose: 'emergency_closure', facts: SAMPLE_CLOSURE, language: 'Nepali', variant: 'tomorrow' });
         expect(tomorrow.clips[0].text).toContain('भोलि, बिहीबार, आठ अक्टोबरमा');
         const running = renderNoticeScript({

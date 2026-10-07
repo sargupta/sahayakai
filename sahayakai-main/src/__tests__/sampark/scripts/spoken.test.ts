@@ -21,7 +21,7 @@ const t = (hour: number, minute: 0 | 30): SpokenTime => ({ hour, minute });
 
 describe('formatDate', () => {
     it('says the weekday, day and month — never the year', () => {
-        expect(formatDate('2026-10-10', 'English')).toBe('Saturday, 10 October');
+        expect(formatDate('2026-10-10', 'English')).toBe('Saturday, the tenth of October');
         expect(formatDate('2026-10-10', 'Hindi')).toBe('शनिवार, दस अक्टूबर');
         expect(formatDate('2026-10-10', 'Bengali')).toBe('শনিবার, দশই অক্টোবর');
         expect(formatDate('2026-10-10', 'Nepali')).toBe('शनिबार, दस अक्टोबर');
@@ -40,7 +40,7 @@ describe('formatDate', () => {
 
     it('computes the weekday from the calendar date, not the clock', () => {
         expect(parseCalendarDate('2026-10-08').weekday).toBe(4);
-        expect(formatDate('2028-02-29', 'English')).toBe('Tuesday, 29 February');
+        expect(formatDate('2028-02-29', 'English')).toBe('Tuesday, the twenty-ninth of February');
     });
 
     it('refuses impossible or malformed dates', () => {
@@ -59,8 +59,10 @@ describe('formatTime', () => {
         expect(formatTime(t(10, 30), 'Nepali')).toBe('बिहान साढे दस बजे');
         expect(formatTime(t(10, 0), 'Bengali')).toBe('সকাল দশটায়');
         expect(formatTime(t(10, 30), 'Bengali')).toBe('সকাল সাড়ে দশটায়');
-        expect(formatTime(t(10, 0), 'English')).toBe('ten in the morning');
-        expect(formatTime(t(10, 30), 'English')).toBe('half past ten in the morning');
+        // Indian English: "ten thirty", never the British "half past ten".
+        expect(formatTime(t(10, 0), 'English')).toBe("ten o'clock in the morning");
+        expect(formatTime(t(10, 30), 'English')).toBe('ten thirty in the morning');
+        expect(formatTime(t(18, 30), 'English')).toBe('six thirty in the evening');
     });
 
     it('1:30 and 2:30 have their own words', () => {
@@ -91,21 +93,28 @@ describe('formatTime', () => {
 });
 
 describe('formatGrade and formatAudience', () => {
-    it('says classes and sections as words', () => {
-        expect(formatGrade(7, 'B', 'Hindi')).toBe('कक्षा सात, सेक्शन बी');
-        expect(formatGrade(7, 'B', 'Bengali')).toBe('ক্লাস সেভেন, সেকশন বি');
-        expect(formatGrade(7, 'B', 'Nepali')).toBe('कक्षा सात, सेक्सन बी');
-        expect(formatGrade(7, 'b', 'English')).toBe('Class seven, section B');
-        expect(formatGrade(7, 'B', 'Bengali', { genitive: true })).toBe('ক্লাস সেভেন, সেকশন বি-র');
+    it('says classes and sections as words, the way parents say them', () => {
+        expect(formatGrade(7, 'B', 'Hindi')).toBe('क्लास सेवन बी');
+        expect(formatGrade(7, 'B', 'Bengali')).toBe('ক্লাস সেভেন, বি সেকশন');
+        expect(formatGrade(7, 'B', 'Nepali')).toBe('क्लास सेभेन, सेक्सन बी');
+        expect(formatGrade(7, 'b', 'English')).toBe('Class Seven B');
+        expect(formatGrade(12, 'F', 'Nepali')).toBe('क्लास ट्वेल्भ, सेक्सन एफ');
+    });
+
+    it('Bengali genitive falls on সেকশন, never a suffix hyphenated onto the letter', () => {
+        expect(formatGrade(7, 'B', 'Bengali', { genitive: true })).toBe('ক্লাস সেভেন, বি সেকশনের');
+        expect(formatGrade(12, 'F', 'Bengali', { genitive: true })).toBe('ক্লাস টুয়েলভ, এফ সেকশনের');
+        // Languages without a genitivePattern use the plain pattern.
+        expect(formatGrade(7, 'B', 'Hindi', { genitive: true })).toBe('क्लास सेवन बी');
     });
 
     it('builds the audience phrase in the case the template needs, naming no child', () => {
         const section = { kind: 'section', grade: 7, section: 'B' } as const;
-        expect(formatAudience(section, 'English', 'X')).toBe('parents of Class seven, section B');
-        expect(formatAudience(section, 'Hindi', 'X')).toBe('कक्षा सात, सेक्शन बी के अभिभावकों');
-        expect(formatAudience(section, 'Bengali', 'X')).toBe('ক্লাস সেভেন, সেকশন বি-র অভিভাবকদের');
-        expect(formatAudience(section, 'Nepali', 'X')).toBe('कक्षा सात, सेक्सन बी का अभिभावकहरू');
-        expect(formatAudience({ kind: 'school' }, 'Nepali', 'X')).toBe('सबै अभिभावकहरू');
+        expect(formatAudience(section, 'English', 'X')).toBe('the parents of Class Seven B');
+        expect(formatAudience(section, 'Hindi', 'X')).toBe('क्लास सेवन बी के पेरेंट्स');
+        expect(formatAudience(section, 'Bengali', 'X')).toBe('ক্লাস সেভেন, বি সেকশনের অভিভাবকদের');
+        expect(formatAudience(section, 'Nepali', 'X')).toBe('क्लास सेभेन, सेक्सन बी का प्यारेन्टहरू');
+        expect(formatAudience({ kind: 'school' }, 'Nepali', 'X')).toBe('सबै प्यारेन्टहरू');
     });
 
     it('refuses a class or section it cannot say', () => {
