@@ -176,12 +176,16 @@ export function useSamparkFormat() {
             weekday(day: number): string {
                 return weekdayFmt.format(new Date(Date.UTC(2023, 0, 1 + day)));
             },
-            /** "5 minutes ago" / "in 2 hours". */
+            /**
+             * "5 minutes ago", for a moment that has already happened (a sync, an import). The
+             * server stamped it, so a device clock running behind would otherwise say "in 12
+             * hours": a moment ahead of this device's clock reads as now.
+             */
             relative(iso: string | null | undefined): string {
                 if (!iso) return '';
                 const d = new Date(iso);
                 if (Number.isNaN(d.getTime())) return iso;
-                const diffSec = Math.round((d.getTime() - Date.now()) / 1000);
+                const diffSec = Math.min(0, Math.round((d.getTime() - Date.now()) / 1000));
                 const abs = Math.abs(diffSec);
                 if (abs < 60) return relFmt.format(diffSec, 'second');
                 if (abs < 3600) return relFmt.format(Math.round(diffSec / 60), 'minute');
