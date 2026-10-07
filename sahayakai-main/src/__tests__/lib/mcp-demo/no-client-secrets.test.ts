@@ -1,0 +1,37 @@
+/**
+ * @jest-environment node
+ *
+ * CLASS GATE — the MCP demo's browser code can never hold or reach for the
+ * MCP API key. Browser modules may only call /api/mcp-demo/* (server-side
+ * MCP client); they must not read MCP env vars, embed key material, call the
+ * MCP server directly, or import the server-only MCP client.
+ */
+import { readdirSync, readFileSync, statSync } from 'fs';
+import { join } from 'path';
+
+const ROOT = join(__dirname, '..', '..', '..', '..');
+const BROWSER_DIRS = ['src/features/mcp-demo', 'src/app/mcp-demo'];
+
+function files(dir: string): string[] {
+    return readdirSync(dir).flatMap((name) => {
+        const p = join(dir, name);
+        return statSync(p).isDirectory() ? files(p) : /\.(ts|tsx)$/.test(name) ? [p] : [];
+    });
+}
+const browserFiles = BROWSER_DIRS.flatMap((d) => files(join(ROOT, d)));
+
+it('covers the demo browser modules', () => {
+    expect(browserFiles.length).toBeGreaterThanOrEqual(5);
+});
+
+it.each(browserFiles.map((f) => [f.slice(ROOT.length + 1), f]))('%s holds no MCP secret and never calls the MCP server directly', (_rel, file) => {
+    const src = readFileSync(file, 'utf8');
+    expect(src).not.toMatch(/process\.env/);
+    expect(src).not.toMatch(/MCP_(DEMO_)?API_KEY|MCP_LOCAL_DEV_API_KEY|MCP_API_KEY_PEPPER|sk_sahayak_/);
+    expect(src).not.toMatch(/['"`]\/api\/mcp\//); // only /api/mcp-demo/...
+    expect(src).not.toMatch(/lesson-planner-client|@modelcontextprotocol\/sdk/);
+});
+
+it('the server-side MCP client is marked server-only', () => {
+    expect(readFileSync(join(ROOT, 'src/lib/mcp-demo/lesson-planner-client.ts'), 'utf8')).toMatch(/^import 'server-only';/);
+});
