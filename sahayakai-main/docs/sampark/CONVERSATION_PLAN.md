@@ -34,7 +34,7 @@ flowchart TD
     A[Pacer dials: account channel free, calling hours, per-school share] --> B{Answered?}
     B -- no / busy / operator announcement --> R[Not reached: retry per purpose rule]
     B -- yes --> W[Wait up to 1.2 s for the parent's 'Hello?']
-    W --> C[Beat 1, 6 s or less: 'Namaste ji, DPS Siliguri ki AI sahayak bol rahi hoon, PTM ke baare mein.'\nschool name before 'AI'; recording notice only if recording]
+    W --> C[Beat 1, 6 s or less, the way the school office would open: 'Namaste ji, main DPS Siliguri se bol rahi hoon, PTM ke baare mein.'\nnever 'recorded message'. Proactive AI wording: decision 6]
     C --> LQ{Family's language confirmed?}
     LQ -- no --> LO[Offer once: 'Bangla-y kotha bolte Bangla bolun; Nepali-ma kura garna Nepali bhannus']
     LO --> D
@@ -73,8 +73,10 @@ flowchart TD
     Z --> X[Settle: retries never re-call a family that already answered]
 ```
 
+**Edge cases.** The flow above is the skeleton. [`EDGE_CASES.md`](EDGE_CASES.md) indexes 446 edge cases from three reviews, assigns each to an owner (hardening sprint, conversation engine, live readiness or operations), and draws the same flow with every edge-case branch (§4.1). It adds four more diagrams: interruptions and turn-taking (§4.2), today's keyed notice with its failure branches (§4.3), the PTM call (§4.4) and the A2 call with paging (§4.5). The call lifecycle with failure branches, retry and settle, the campaign lifecycle and the pre-dial checks are drawn in the catalogues under `edge-cases/`.
+
 **Rules for every stage**
-1. **Disclosure first.** The first beat names the school and says "AI sahayak / AI assistant" (the word parents use, never "কৃত্রিম বুদ্ধিমত্তা"). Asked "are you a robot?", it says yes, kindly. It never claims to be a person or a named teacher, never uses a personal name. Two disclosure wordings per language are A/B-tested on the hang-up rate in the first 10 seconds.
+1. **The school first, honest always.** The first beat names the school and the reason for the call, the way the school office would open. Founder direction (7 Oct 2026): it never says "recorded message" or anything like it. Asked "are you a robot?" or "is this a person?", it says kindly that it is the school's AI assistant ("AI sahayak", the word parents use, never "কৃত্রিম বুদ্ধিমত্তা"). It never claims to be a person or a named teacher, and never uses a personal name. Whether the first beat also says "AI assistant" unprompted is decision 6 (§12); if it does, two wordings per language are A/B-tested on the hang-up rate in the first 10 seconds.
 2. **The listener check is a courtesy, not authentication.** It passes only on a relation word ("main mummy bol rahi hoon", "আমি মা বলছি", "म आमा बोल्दै छु") or an explicit yes spoken after the question finished — never on a greeting ("haan ji, boliye", "হ্যাঁ বলুন", "हजुर?"). What the call may then say is set by the purpose's **payload tier** and the number, not by the check:
    - *Tier 0* — class-wide notices (PTM, event, closure): no child facts; no check.
    - *Tier 1* — the child's name plus a request to talk, or recognition.
@@ -302,7 +304,7 @@ Per answered conversational call of about 2.5 minutes:
 5. A2: killing the engine at any stage still pages; only the confirmed read-back suppresses the page.
 6. Seeded safeguarding disclosures in all four languages always reach the safeguarding lead and never the purpose owner, summaries, tasks or QA.
 7. No free-text field is stored without recorded-conversation consent; no sentiment field; transcript debug logging is off in every deploy block.
-8. Prompts and director cues fail a lint on non-disclosure phrases or a personal name; every opener's transcribe-back contains the AI disclosure; a voicemail produces no audio.
+8. Prompts and director cues fail a lint on a personal name or a claim to be human; no opener says "recorded" in any language (`gate-spoken-register`); "are you a robot?" and "is this a person?" in four languages always get the honest answer; a voicemail produces no audio. If decision 6 puts the AI wording in the opener, every opener's transcribe-back must contain it.
 9. Fee replies always come from the answer bank (30 pushback lines per language).
 10. An opt-out survives a crash after hangup; no routine call to an opted-out number for 90 days.
 11. No provider route outside India; an undeclared route falls back to the recorded notice.
@@ -310,6 +312,8 @@ Per answered conversational call of about 2.5 minutes:
 13. Every played line can be reconstructed from the turn log.
 14. A family that already answered is never called again for the same intent (outcome-before-hangup race test).
 15. Every recorded line passes transcribe-back in its own language; every enabled language has a signed-off pack and a passing score per mode.
+
+The edge-case review adds twelve conversation gates (NG1–NG12, `edge-cases/parent-behaviour-and-language.md` §5) and one gate per hardening fix (`EDGE_CASES.md` §2).
 
 ## 11. Compliance notes (carried and tightened)
 - **Numbers:**
@@ -331,6 +335,8 @@ Per answered conversational call of about 2.5 minutes:
 3. **Vobiz:** about 22–45 channels and more calls per second for the pilot and closures. Also a written confirmation of a service-eligible number class and the robocall declaration.
 4. **Native writers and rater panels per language;** a Darjeeling Nepali voice artist with a written consent and licence.
 5. **Phase 0 now:** restore the learned bridge in production for teacher parent calls and retire the Pipecat Vobiz path.
+6. **AI wording in the opener.** Calls no longer say they are recorded, and they always answer honestly when asked. Should the first sentence also say "the school's AI assistant" unprompted? Recommended before Live mode: yes for conversational calls. It costs a few words and protects the school if a parent later feels misled.
+7. **Paging channel and chain** for A2 and urgent cases (app push, SMS or WhatsApp; teacher, principal, security). A2 cannot go live without it. See `EDGE_CASES.md` §5 for the shared-number policy and the repeat key.
 
 ## 13. Critical review log (v1 → v2)
 
