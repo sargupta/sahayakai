@@ -41,7 +41,7 @@ describe('answer — happy path', () => {
 
         const [message, noInput] = playUrls(result.xml);
         expect(playUrls(result.xml)).toHaveLength(2);
-        expect(result.xml).toMatch(/<Gather [^>]*executionTimeout="8"[^>]*><Play>[^<]+<\/Play><\/Gather><Play>[^<]+<\/Play><Hangup\/><\/Response>$/);
+        expect(result.xml).toMatch(/<Gather [^>]*executionTimeout="8"[^>]*><Play>[^<]+<\/Play><\/Gather><Play>[^<]+<\/Play><Wait length="1"\/><Hangup\/><\/Response>$/);
         // The audio tokens name exactly the verified message and no-input clips.
         expect(await verifySamparkVoiceToken('sampark-audio', tokenOf(message))).toBe(voicePrincipal(ORG, w.keys.message as string));
         expect(await verifySamparkVoiceToken('sampark-audio', tokenOf(noInput))).toBe(voicePrincipal(ORG, w.keys.no_input as string));

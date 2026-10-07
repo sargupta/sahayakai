@@ -43,7 +43,7 @@ async function hangupNow(w: World, fields: Record<string, string> = { HangupCaus
 async function playedClip(xml: string): Promise<string> {
     const urls = playUrls(xml);
     expect(urls).toHaveLength(1);
-    expect(xml).toMatch(/<\/Play><Hangup\/><\/Response>$/);
+    expect(xml).toMatch(/<\/Play><Wait length="1"\/><Hangup\/><\/Response>$/);
     const principal = await verifySamparkVoiceToken('sampark-audio', tokenOf(urls[0]));
     return (principal ?? '').split('~')[1];
 }
