@@ -306,7 +306,10 @@ export function gatherAction(xml: string): string | null {
 
 /** The `t` query parameter of a URL we built. */
 export function tokenOf(url: string): string {
-    const t = new URL(url).searchParams.get('t');
+    const parsed = new URL(url);
+    // Audio clips carry the token in the path (`…/clip/<token>.wav`); callbacks in the query (`?t=`).
+    const clip = parsed.pathname.match(/\/clip\/([^/]+)\.wav$/);
+    const t = clip ? decodeURIComponent(clip[1]) : parsed.searchParams.get('t');
     if (!t) throw new Error(`no token in ${url}`);
     return t;
 }

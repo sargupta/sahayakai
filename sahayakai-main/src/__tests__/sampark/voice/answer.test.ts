@@ -54,7 +54,7 @@ describe('answer — happy path', () => {
     it('builds every URL from SAMPARK_PUBLIC_BASE_URL, with the .wav path before the query', async () => {
         const w = await world();
         const result = await handleSamparkAnswer(w, { token: await answerToken(), callUuid: null });
-        for (const url of playUrls(result.xml)) expect(url.startsWith(`${BASE_URL}/api/webhooks/sampark-voice/audio.wav?t=`)).toBe(true);
+        for (const url of playUrls(result.xml)) expect(url).toMatch(new RegExp(`^${BASE_URL.replace(/[.]/g, '\\.')}/api/webhooks/sampark-voice/clip/[^/?#]+\\.wav$`));
         expect(gatherAction(result.xml)?.startsWith(`${BASE_URL}/api/webhooks/sampark-voice/gather?t=`)).toBe(true);
     });
 
