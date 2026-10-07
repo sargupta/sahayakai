@@ -20,6 +20,8 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { initializeFirebase } from '@/lib/firebase-admin';
 import { type AudioStore, type Clock, type SamparkRepo, type SpeechSynthesizer, type SpeechVerifier, systemClock } from '@/lib/sampark/ports';
 import { FirestoreSamparkRepo } from '@/lib/sampark/repo/firestore';
+import type { VoiceCheckDeps } from '@/lib/sampark/speech/render-job';
+import type { ParentLanguage } from '@/types/sampark';
 
 export const SAMPARK_NONPROD_DATABASE = 'sampark-nonprod';
 
@@ -122,6 +124,10 @@ export interface SpeechDeps {
     synth: SpeechSynthesizer;
     verifier: SpeechVerifier;
     store: AudioStore;
+    /** The hard-word probe's two independent recognisers (render-job.ts). */
+    voiceCheck: VoiceCheckDeps;
+    /** Loudness normalisation; defaults to normaliseTelephonyWav in the render job. */
+    normalise?: (wav: Buffer) => Buffer;
 }
 
 let speechOverride: SpeechDeps | null = null;
@@ -135,14 +141,22 @@ export async function getSpeechDeps(): Promise<SpeechDeps> {
     if (speechOverride) return speechOverride;
     if (!speechPromise) {
         speechPromise = (async () => {
-            const [{ createGoogleSynthesizer, createChirpVerifier }, { createLocalAudioStore }] = await Promise.all([
+            const [{ createGoogleSynthesizer, createChirpVerifier }, { createLocalAudioStore }, recognizers] = await Promise.all([
                 import('@/lib/sampark/speech/google-speech'),
                 import('@/lib/sampark/speech/local-audio-store'),
+                import('@/lib/sampark/speech/secondary-recognizers'),
             ]);
+            const verifier = createChirpVerifier();
+            const sarvam = { name: 'sarvam-saarika', verifier: recognizers.createSarvamVerifier() };
+            const chirp3 = { name: 'google-chirp3', verifier: recognizers.createChirp3Verifier() };
             return {
                 synth: createGoogleSynthesizer(),
-                verifier: createChirpVerifier(),
+                verifier,
                 store: createLocalAudioStore(process.env.SAMPARK_AUDIO_DIR ?? '.sampark-audio'),
+                voiceCheck: {
+                    primary: { name: 'google-chirp2', verifier },
+                    secondaryFor: (language: ParentLanguage) => (recognizers.secondaryRecognizerFor(language) === 'sarvam' ? sarvam : chirp3),
+                },
             };
         })().catch((err) => {
             speechPromise = null;
