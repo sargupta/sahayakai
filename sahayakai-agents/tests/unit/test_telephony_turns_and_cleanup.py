@@ -191,3 +191,43 @@ class TestEveryExitCleansUp:
         )
         assert hangups == ["call-uuid-1"]
         assert engine_failures == ["RuntimeError"]
+
+
+class TestTheGoodbyeIsNotCutOff:
+    """`_run_call` ends the call as soon as ANY of its tasks finishes.
+
+    The silence watchdog used to return the moment a close began, so the line
+    was hung up as soon as the closing cue was SENT and the goodbye was never
+    spoken (local verification, 2026-10-08: hangup 65 ms after
+    `telephony.closing`). It must stay alive until `stop`.
+    """
+
+    async def test_watchdog_outlives_the_closing_cue(self) -> None:
+        bridge = _bridge()
+        bridge.closing = True  # a close began elsewhere (goodbye, opt-out, model)
+        task = asyncio.create_task(telephony._conversation_watchdog(bridge, _FakeSession()))
+        await asyncio.sleep(0.5)
+        assert not task.done(), "the watchdog ended the call before the goodbye was spoken"
+        bridge.stop = True
+        await asyncio.wait_for(task, timeout=2)
+
+    async def test_watchdog_initiated_close_waits_for_stop(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        bridge = _bridge()
+        bridge.engaged = True
+        bridge.model_has_spoken = True
+        bridge.parent_said = ["one", "two", "three", "four", "five", "six"]  # at the ceiling
+        closes: list[str] = []
+
+        async def _close(b: Any, _s: Any, reason: str) -> None:
+            closes.append(reason)
+            b.closing = True
+
+        monkeypatch.setattr(telephony, "_begin_close", _close)
+        task = asyncio.create_task(telephony._conversation_watchdog(bridge, _FakeSession()))
+        await asyncio.sleep(1.0)
+        assert closes == ["max_turns"]
+        assert not task.done()
+        bridge.stop = True
+        await asyncio.wait_for(task, timeout=2)

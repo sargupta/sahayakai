@@ -736,17 +736,25 @@ async def _conversation_watchdog(bridge: _Bridge, session: Any) -> None:
 
         if _must_end_now(bridge):
             await _begin_close(bridge, session, "max_turns")
-            return
+            break
 
         if quiet_for > _CONVERSATION_SILENCE:
             nudges += 1
             bridge.last_activity = time.monotonic()
             if nudges > _MAX_SILENCE_NUDGES:
                 await _begin_close(bridge, session, "silence")
-                return
+                break
             with contextlib.suppress(Exception):
                 await _send_director(session, SILENCE_NUDGE)
             log.info("telephony.nudge", outreach_id=bridge.outreach_id, kind="silence", n=nudges)
+
+    # A close has begun (here, on a goodbye, on opt-out, or by the model). Stay
+    # alive until `_end_after_goodbye` sets `stop`. `_run_call` ends the call as
+    # soon as ANY of its tasks finishes, so returning here hung up the line the
+    # instant the closing cue was sent — the goodbye was never spoken. Seen in
+    # local verification 2026-10-08: hangup 65 ms after `telephony.closing`.
+    while not bridge.stop:
+        await asyncio.sleep(0.1)
 
 
 async def _pump_carrier_to_live(bridge: _Bridge, session: Any) -> str:
