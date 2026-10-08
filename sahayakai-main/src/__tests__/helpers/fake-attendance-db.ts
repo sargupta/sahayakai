@@ -44,7 +44,17 @@ export function createFakeDb(store: Store) {
             return { empty: docs.length === 0, docs };
         },
     });
-    return { collection: (name: string) => coll(name) } as any;
+    return {
+        collection: (name: string) => coll(name),
+        // Sequential stand-in for a Firestore transaction: enough for routes
+        // that read-then-write one document (reconcile-call-status).
+        runTransaction: async (fn: (tx: any) => Promise<unknown>) =>
+            fn({
+                get: (ref: any) => ref.get(),
+                update: (ref: any, patch: Record<string, any>) => ref.update(patch),
+                set: (ref: any, rec: Record<string, any>) => ref.set(rec),
+            }),
+    } as any;
 }
 
 /**

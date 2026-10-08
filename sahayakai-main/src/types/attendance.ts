@@ -10,7 +10,7 @@ export type OutreachReason =
     | 'behavioral_concern'
     | 'positive_feedback';
 
-export type CallStatus = 'initiated' | 'completed' | 'failed' | 'no_answer' | 'busy' | 'manual';
+export type CallStatus = 'initiated' | 'ringing' | 'in_progress' | 'completed' | 'failed' | 'no_answer' | 'busy' | 'manual';
 
 // ── Firestore: classes/{classId} ─────────────────────────────────────────────
 

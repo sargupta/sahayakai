@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/firebase-admin';
+import { reconcileCallStatus } from '@/lib/attendance/reconcile-call-status';
 
 // ── GET /api/attendance/call-summary?outreachId=xxx ──────────────────────────
 // Returns the call transcript and AI-generated summary for a completed call.
@@ -20,7 +21,9 @@ export async function GET(req: NextRequest) {
 
         const data = doc.data()!;
         return NextResponse.json({
-            callStatus:          data.callStatus ?? null,
+            // Reconciled, never raw (CLAUDE.md law 1): a stale "initiated" or an
+            // engine failure reads as failed rather than "Calling…" forever.
+            callStatus:          reconcileCallStatus(data),
             callDurationSeconds: data.callDurationSeconds ?? null,
             answeredBy:          data.answeredBy ?? null,
             turnCount:           data.turnCount ?? 0,

@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getDb } from '@/lib/firebase-admin';
+import { writeCallStatus, type CallStatusDb } from '@/lib/attendance/reconcile-call-status';
 import { logger } from '@/lib/logger';
 import { VOBIZ_DOMAINS, verifyVobizToken } from '@/lib/vobiz/tokens';
 import type { CallStatus } from '@/types/attendance';
@@ -51,14 +52,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // is never mistaken for a hangup even if the provider reuses field names.
     const kind = url.searchParams.get('kind');
 
-    const db = await getDb();
-    const ref = db.collection('parent_outreach').doc(outreachId);
+    const db = (await getDb()) as unknown as CallStatusDb;
 
     if (kind === 'ring') {
-        // Ringing is progress, not an outcome: it must not overwrite a terminal
-        // status if events arrive out of order.
-        await ref
-            .update({ ringingAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+        // Ringing is progress, not an outcome: the reconciled writer never lets
+        // it overwrite a later or terminal status when events arrive out of order.
+        await writeCallStatus(db, outreachId, 'ringing', { ringingAt: new Date().toISOString() })
             .catch((e: unknown) =>
                 logger.error('Vobiz ring: could not stamp record', e, 'ATTENDANCE', { outreachId }),
             );
@@ -73,14 +72,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const callStatus: CallStatus =
         HANGUP_CAUSE_MAP[cause.toUpperCase()] ?? (answered ? 'completed' : 'failed');
 
-    await ref
-        .update({
-            callStatus,
-            callDurationSeconds: Number.isFinite(duration) ? duration : null,
-            vobizHangupCause: cause || null,
-            completedAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-        })
+    // The first terminal status wins; duration and cause are always recorded.
+    await writeCallStatus(db, outreachId, callStatus, {
+        callDurationSeconds: Number.isFinite(duration) ? duration : null,
+        vobizHangupCause: cause || null,
+        completedAt: new Date().toISOString(),
+    })
         .catch((e: unknown) =>
             logger.error('Vobiz hangup: could not stamp record', e, 'ATTENDANCE', { outreachId }),
         );

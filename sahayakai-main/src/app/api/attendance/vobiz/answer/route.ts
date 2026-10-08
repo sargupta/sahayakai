@@ -18,6 +18,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { checkCallingWindow } from '@/lib/calling-hours';
 import { getDb } from '@/lib/firebase-admin';
+import { writeCallStatus, type CallStatusDb } from '@/lib/attendance/reconcile-call-status';
 import { logger } from '@/lib/logger';
 import { buildVobizAnswerXml, toWebSocketOrigin } from '@/lib/vobiz/answer-xml';
 import { VOBIZ_DOMAINS, mintVobizToken, verifyVobizToken } from '@/lib/vobiz/tokens';
@@ -114,13 +115,12 @@ async function handle(req: NextRequest): Promise<NextResponse> {
     }
     const data = snap.data()!;
 
-    await ref
-        .update({
-            callStatus: 'initiated',
-            vobizCallUuid: callUuid || null,
-            answeredAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-        })
+    // Answered: the conversation is in progress. Written through the reconciled
+    // writer so a hangup that already landed is never regressed.
+    await writeCallStatus(db as unknown as CallStatusDb, outreachId, 'in_progress', {
+        vobizCallUuid: callUuid || null,
+        answeredAt: new Date().toISOString(),
+    })
         .catch((e: unknown) => {
             // Bookkeeping must never cost the parent their call.
             logger.error('Vobiz answer: could not stamp outreach record', e, 'ATTENDANCE', { outreachId });

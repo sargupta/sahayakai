@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/firebase-admin';
+import { writeCallStatus, type CallStatusDb } from '@/lib/attendance/reconcile-call-status';
 import { validateTwilioSignaturePost } from '@/lib/twilio-validate';
 import { generateCallSummary } from '@/ai/flows/parent-call-agent';
 import type { CallStatus } from '@/types/attendance';
@@ -27,8 +28,12 @@ export async function POST(req: NextRequest) {
 
         if (!callSid) return new NextResponse('OK', { status: 200 });
 
-        // Only update Firestore on terminal states
+        // Progress AND terminal states. The reconciled writer only moves a call
+        // forward, so a late `ringing` can never overwrite a finished call.
         const statusMap: Record<string, CallStatus> = {
+            ringing:     'ringing',
+            'in-progress': 'in_progress',
+            answered:    'in_progress',
             completed:   'completed',
             failed:      'failed',
             'no-answer': 'no_answer',
@@ -50,14 +55,13 @@ export async function POST(req: NextRequest) {
         const docRef = snap.docs[0].ref;
         const data = snap.docs[0].data();
 
-        const update: Record<string, unknown> = {
-            callStatus,
-            updatedAt: new Date().toISOString(),
-        };
-        if (answeredBy) update.answeredBy = answeredBy;
-        if (callDuration) update.callDurationSeconds = parseInt(callDuration, 10);
+        const fields: Record<string, unknown> = {};
+        if (answeredBy) fields.answeredBy = answeredBy;
+        if (callDuration) fields.callDurationSeconds = parseInt(callDuration, 10);
 
-        await docRef.update(update);
+        // The first terminal status wins; a duplicate or late callback cannot
+        // regress or overwrite it (audit F7).
+        const written = await writeCallStatus(db as unknown as CallStatusDb, docRef.id, callStatus, fields);
 
         // F8-03 / F9-002 fix (P0): idempotency guard + atomic summary-generation
         // lock. Twilio retries the completed-status callback on transient
@@ -66,7 +70,7 @@ export async function POST(req: NextRequest) {
         // cost and churning the saved summary doc. transcript-sync may have
         // already claimed the lock or written the summary; we only proceed
         // if we successfully claim it here. Mirrors transcript-sync/route.ts:87.
-        if (callStatus === 'completed' && data.transcript?.length > 1) {
+        if (written.status === 'completed' && written.applied && data.transcript?.length > 1) {
             const claimed = await db.runTransaction(async (tx) => {
                 const fresh = await tx.get(docRef);
                 if (!fresh.exists) return false;

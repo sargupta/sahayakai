@@ -5,6 +5,7 @@ import { isValidE164 } from '@/lib/twilio-validate';
 import { checkCallingWindow } from '@/lib/calling-hours';
 import { logger } from '@/lib/logger';
 import { classifyTwilioFailure, releasesDedupWindow } from '@/lib/twilio-errors';
+import { writeCallStatus, type CallStatusDb } from '@/lib/attendance/reconcile-call-status';
 import { getEffectiveMode } from '@/lib/voice-pipeline/health';
 import { refuseIfParentOptedOut } from '@/lib/call-suppression';
 import { placeVobizCall, readVobizConfig } from '@/lib/vobiz/client';
@@ -160,10 +161,8 @@ async function forwardToVobiz(
         // No call was placed, so the per-student dedup window is released for
         // the same reason the Twilio path releases it: the parent was never
         // disturbed, and holding the record "recent" only locks the teacher out.
-        await db.collection('parent_outreach').doc(outreachId).update({
-            callStatus: 'failed',
+        await writeCallStatus(db as unknown as CallStatusDb, outreachId, 'failed', {
             callFailureCategory: result.failure.category,
-            updatedAt: new Date().toISOString(),
         }).catch((e: unknown) => {
             console.error('[attendance/call] could not mark outreach failed:', e);
         });
@@ -180,14 +179,24 @@ async function forwardToVobiz(
         );
     }
 
-    await db.collection('parent_outreach').doc(outreachId).update({
+    // Through the reconciled writer: a fast ring/hangup webhook may already have
+    // moved the record on, and this late `initiated` must not regress it.
+    await writeCallStatus(db as unknown as CallStatusDb, outreachId, 'initiated', {
         callSid: result.handle.requestUuid,
-        callStatus: 'initiated',
         deliveryMethod: 'vobiz_call',
-        updatedAt: new Date().toISOString(),
     });
 
     return NextResponse.json({ callSid: result.handle.requestUuid });
+}
+
+/**
+ * The call was never dialled (and ownership was already verified): mark the
+ * record failed so it does not read "Calling…" and does not hold the
+ * per-student dedup window. Never fatal.
+ */
+async function markNotDialled(db: unknown, outreachId: string, category: string): Promise<void> {
+    await writeCallStatus(db as CallStatusDb, outreachId, 'failed', { callFailureCategory: category })
+        .catch((e: unknown) => console.error('[attendance/call] could not mark outreach failed:', e));
 }
 
 export async function POST(req: NextRequest) {
@@ -255,6 +264,8 @@ export async function POST(req: NextRequest) {
 
     const { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER } = process.env;
     if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
+        // No call can be placed: release the record rather than leave it "initiated".
+        await markNotDialled(db, outreachId, 'provider_unconfigured');
         return NextResponse.json({ error: 'Twilio not configured' }, { status: 503 });
     }
 
@@ -271,6 +282,7 @@ export async function POST(req: NextRequest) {
         // Check that the language is supported for Twilio calls
         const langCode = TWILIO_LANGUAGE_MAP[parentLanguage];
         if (!langCode) {
+            await markNotDialled(db, outreachId, 'language_unsupported');
             return NextResponse.json({
                 error: `Auto-call not supported for ${parentLanguage}. Use WhatsApp copy instead.`
             }, { status: 422 });
@@ -352,10 +364,8 @@ export async function POST(req: NextRequest) {
             // the record "recent" locks the teacher out for five minutes to
             // protect a parent who was never disturbed.
             if (releasesDedupWindow(failure)) {
-                await db.collection('parent_outreach').doc(outreachId).update({
-                    callStatus: 'failed',
+                await writeCallStatus(db as unknown as CallStatusDb, outreachId, 'failed', {
                     callFailureCategory: failure.category,
-                    updatedAt: new Date().toISOString(),
                 }).catch((e: unknown) => {
                     // Never let bookkeeping mask the error the teacher needs.
                     console.error('[attendance/call] could not mark outreach failed:', e);
@@ -372,11 +382,9 @@ export async function POST(req: NextRequest) {
         const callSid: string = twilioData.sid;
 
         // Update outreach record with callSid
-        await db.collection('parent_outreach').doc(outreachId).update({
+        await writeCallStatus(db as unknown as CallStatusDb, outreachId, 'initiated', {
             callSid,
-            callStatus: 'initiated',
             deliveryMethod: 'twilio_call',
-            updatedAt: new Date().toISOString(),
         });
 
         return NextResponse.json({ callSid });
