@@ -261,14 +261,44 @@ Never condescend, never use school jargon, never sound like a notice.
 """
 
 
-def build_parent_call_instruction(context: CallContext) -> str:
-    """Compose the instruction for one call."""
+_DISCLOSE_AI = """
+DISCLOSURE — REQUIRED ON THIS CALL
+In your FIRST turn, right after naming the school and the teacher, say in one
+short clause that you are an automated assistant calling for the teacher. Say it
+once, plainly, in {language}, and carry on. This replaces "do not volunteer it"
+above; everything else about who you are still applies."""
+
+_DELIVERY_ONLY = """
+THIS CALL DELIVERS THE MESSAGE ONLY
+The school cannot yet hold a full conversation in {language} on this line. After
+your introduction, deliver the teacher's message clearly and warmly, say the
+teacher will follow up personally if the parent has any questions, thank them,
+and then call end_call with reason "message_delivered". Do not ask questions and
+do not invite discussion. If the parent asks something anyway, say kindly that
+the teacher will call them back about it."""
+
+
+def build_parent_call_instruction(
+    context: CallContext, *, disclose_ai: bool = False, two_way: bool = True
+) -> str:
+    """Compose the instruction for one call.
+
+    `disclose_ai` makes the first turn state that this is an automated assistant
+    (policy switch; off keeps the current "only when asked" behaviour).
+    `two_way=False` is delivery mode, for languages whose two-way recognition is
+    not yet trusted on phone audio: speak the message, then close.
+    """
+    language = context.language or "English"
     lines = [
         _BASE.format(
-            language=context.language or "English",
+            language=language,
             student_school=context.school_name or "an Indian school",
         )
     ]
+    if disclose_ai:
+        lines.append(_DISCLOSE_AI.format(language=language))
+    if not two_way:
+        lines.append(_DELIVERY_ONLY.format(language=language))
 
     facts: list[str] = []
     if context.student_name:

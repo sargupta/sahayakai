@@ -159,6 +159,28 @@ _MAX_CALL_SECONDS = int(os.environ.get("VOBIZ_MAX_CALL_SECONDS", "600"))
 #: Nobody has said anything for this long — treat the call as dead.
 _IDLE_SECONDS = int(os.environ.get("VOBIZ_IDLE_SECONDS", "45"))
 
+
+def disclose_ai() -> bool:
+    """`VOBIZ_DISCLOSE_AI`: say in the first turn that this is an automated assistant.
+
+    A policy switch, off by default so production keeps today's behaviour (the
+    assistant says so only when a parent asks). Read per call, not at import.
+    """
+    return os.environ.get("VOBIZ_DISCLOSE_AI", "").strip().lower() in ("1", "true", "yes")
+
+
+def is_two_way(language: str) -> bool:
+    """`VOBIZ_TWO_WAY_LANGUAGES`: languages trusted for a full conversation.
+
+    Comma-separated display names ("English,Hindi"). Unset or empty means every
+    language is two-way, which is today's behaviour. A language outside the list
+    gets delivery mode: the message is spoken and the call closes, rather than a
+    conversation whose recognition of the parent is not yet trusted.
+    """
+    raw = os.environ.get("VOBIZ_TWO_WAY_LANGUAGES", "")
+    allowed = {x.strip().lower() for x in raw.split(",") if x.strip()}
+    return not allowed or (language or "English").strip().lower() in allowed
+
 #: 20 ms of mu-law at 8 kHz. Carriers expect a steady frame cadence.
 _FRAME_BYTES = 160
 _FRAME_SECONDS = 0.02
@@ -486,6 +508,9 @@ class _Bridge:
         #: mid-flight — the close-after-goodbye would then silently never run
         #: and the call would hold until the idle or max-duration guard.
         self.background: set[asyncio.Task[Any]] = set()
+        #: Delivery mode (see `is_two_way`): the message is spoken and the call
+        #: may end straight after it, without the two-turn minimum.
+        self.delivery_only = False
         #: The conversation, in the shape the rest of the app already stores.
         #: Kept for BOTH sides: a transcript with only one voice in it cannot be
         #: reviewed, and reviewing calls is the whole point of keeping one.
@@ -1124,7 +1149,12 @@ async def _handle_tool_call(bridge: _Bridge, session: Any, tool_call: Any) -> No
         # hatch of the Twilio flow does not exist here. Spoken words are the
         # ONLY way a parent can end this call, which makes refusing one a
         # much more serious thing than it was in June.
-        honour_immediately = reason in ("opt_out", "call_back_later", "wrong_number", "voicemail")
+        honour_immediately = reason in (
+            "opt_out",
+            "call_back_later",
+            "wrong_number",
+            "voicemail",
+        ) or (reason == "message_delivered" and bridge.delivery_only)
         if not honour_immediately and not _may_end_yet(bridge):
             log.info(
                 "telephony.end_call_declined",
@@ -1337,7 +1367,15 @@ async def _prepare_live_session(
     config = genai_types.LiveConnectConfig(
         response_modalities=[genai_types.Modality.AUDIO],
         system_instruction=genai_types.Content(
-            parts=[genai_types.Part(text=build_parent_call_instruction(context))]
+            parts=[
+                genai_types.Part(
+                    text=build_parent_call_instruction(
+                        context,
+                        disclose_ai=disclose_ai(),
+                        two_way=is_two_way(context.language),
+                    )
+                )
+            ]
         ),
         speech_config=genai_types.SpeechConfig(
             voice_config=genai_types.VoiceConfig(
@@ -1387,7 +1425,7 @@ async def _prepare_live_session(
                                     type=genai_types.Type.STRING,
                                     description=(
                                         "One of: parent_finished, opt_out, wrong_number, "
-                                        "call_back_later"
+                                        "call_back_later, voicemail, message_delivered"
                                     ),
                                 ),
                             },
@@ -1528,6 +1566,7 @@ async def vobiz_stream(ws: WebSocket) -> None:
             outreach_id, language, started
         )
         bridge.context = context
+        bridge.delivery_only = not is_two_way(context.language)
 
         from google.genai import types as genai_types
 
