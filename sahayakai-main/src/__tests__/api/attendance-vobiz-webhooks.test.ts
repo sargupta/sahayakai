@@ -70,7 +70,12 @@ describe('Vobiz status webhook', () => {
     it('a duplicate hangup with a different cause does not overwrite the first outcome', async () => {
         await status('hangup', { HangupCause: 'NORMAL_CLEARING', Duration: '43' });
         await status('hangup', { HangupCause: 'CALL_REJECTED', Duration: '0' });
-        expect(store.parent_outreach.o1.callStatus).toBe('completed');
+        // Status AND details: a duplicate once turned a 61 s call into a 0 s one.
+        expect(store.parent_outreach.o1).toMatchObject({
+            callStatus: 'completed',
+            callDurationSeconds: 43,
+            vobizHangupCause: 'NORMAL_CLEARING',
+        });
     });
 
     it('a bad token writes nothing and still answers 200 (no retry storm)', async () => {

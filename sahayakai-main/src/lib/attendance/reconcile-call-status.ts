@@ -11,8 +11,9 @@
  * forever (audit F7/F9, docs/calling/PARENT_CALL_AUDIT_2026-10-08.md).
  *
  * The rule: status only moves FORWARD (initiated < ringing < in_progress <
- * terminal), and the FIRST terminal status wins. Extra fields (duration,
- * carrier ids, timestamps) are always merged.
+ * terminal), and the FIRST terminal status wins, details included. Extra fields
+ * (duration, carrier ids, timestamps) are merged on every other write, so a
+ * late progress event still records its timestamp.
  */
 
 import type { CallStatus } from '@/types/attendance';
@@ -78,6 +79,14 @@ export async function writeCallStatus(
         if (!snap.exists) return { status: null, applied: false };
         const current = (snap.data()?.callStatus ?? null) as CallStatus | null;
         const next = nextCallStatus(current, incoming);
+        // The FIRST terminal event owns the outcome AND its details. A second
+        // terminal event (a carrier retry, a duplicate hangup with another
+        // cause) must not rewrite the recorded duration or hangup cause: found
+        // in local verification, where a duplicate CALL_REJECTED/Duration=0
+        // turned a 61 s completed call into a 0 s one.
+        if (isTerminalCallStatus(current) && isTerminalCallStatus(incoming)) {
+            return { status: current, applied: current === incoming };
+        }
         tx.update(ref, {
             ...fields,
             ...(next !== current ? { callStatus: next } : {}),

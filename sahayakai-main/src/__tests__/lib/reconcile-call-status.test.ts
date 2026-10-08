@@ -47,7 +47,7 @@ describe('nextCallStatus', () => {
 });
 
 describe('writeCallStatus', () => {
-    it('applies forward moves, ignores regressions, and always merges fields', async () => {
+    it('applies forward moves, ignores regressions, and merges fields except over a terminal outcome', async () => {
         const store: Store = { parent_outreach: { o1: { callStatus: 'initiated' } } };
         const db = createFakeDb(store);
 
@@ -59,10 +59,13 @@ describe('writeCallStatus', () => {
         expect(late).toEqual({ status: 'completed', applied: false });
         expect(store.parent_outreach.o1).toMatchObject({ callStatus: 'completed', callDurationSeconds: 42, ringingAt: 'r' });
 
-        const second = await writeCallStatus(db, 'o1', 'failed');
+        const second = await writeCallStatus(db, 'o1', 'failed', { callDurationSeconds: 0 });
         expect(second).toEqual({ status: 'completed', applied: false });
-        const duplicate = await writeCallStatus(db, 'o1', 'completed');
+        const duplicate = await writeCallStatus(db, 'o1', 'completed', { callDurationSeconds: 7 });
         expect(duplicate).toEqual({ status: 'completed', applied: true });
+        // The first terminal event owns the details too: neither later terminal
+        // event may rewrite the recorded duration.
+        expect(store.parent_outreach.o1.callDurationSeconds).toBe(42);
     });
 
     it('reports a missing record without writing', async () => {
