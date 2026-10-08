@@ -60,7 +60,7 @@ from .flow import (
 )
 from .prompt import CallContext, build_parent_call_instruction, stt_language_hints
 from .suppression import SUPPRESSION_COLLECTION, phone_suppression_id
-from .tokens import VobizDomain, verify_vobiz_token
+from .tokens import VobizDomain, token_minted_at, verify_vobiz_token
 from .vobiz_frames import InboundKind, build_clear_audio, build_play_audio, parse_inbound
 
 if TYPE_CHECKING:
@@ -354,7 +354,27 @@ async def _admit(ws: WebSocket) -> str | None:
         await ws.close(code=_CLOSE_AT_CAPACITY)
         log.warning("telephony.rejected", reason="at_capacity", outreach_id=outreach_id)
         return None
+    _log_admit_latency(outreach_id, token)
     return outreach_id
+
+
+#: The carrier gives up on an answered call whose media socket has not opened
+#: within a few seconds. On 2026-10-08 a cold start accepted the socket 10 s
+#: after the instance started; Vobiz had hung up at 5 s and the parent heard
+#: dead air. This threshold is the alert line for that failure.
+_SLOW_ADMIT_MS = 3000
+
+
+def _log_admit_latency(outreach_id: str, token: str | None) -> None:
+    """Answer webhook -> socket accepted, in ms (second resolution, from the token)."""
+    minted = token_minted_at(token)
+    if minted is None:
+        return
+    lag_ms = max(0, round((time.time() - minted) * 1000))
+    if lag_ms > _SLOW_ADMIT_MS:
+        log.warning("telephony.slow_admit", outreach_id=outreach_id, answer_to_socket_ms=lag_ms)
+    else:
+        log.info("telephony.admitted", outreach_id=outreach_id, answer_to_socket_ms=lag_ms)
 
 
 def context_from_outreach(data: dict[str, Any], language: str) -> CallContext:

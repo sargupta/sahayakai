@@ -1,0 +1,21 @@
+{
+  "displayName": "Parent calling: __METRIC__",
+  "combiner": "OR",
+  "conditions": [
+    {
+      "displayName": "__METRIC__ > 0 in 10 min",
+      "conditionThreshold": {
+        "filter": "metric.type=\"logging.googleapis.com/user/__METRIC__\" AND resource.type=\"cloud_run_revision\"",
+        "aggregations": [{ "alignmentPeriod": "600s", "perSeriesAligner": "ALIGN_SUM" }],
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 0,
+        "duration": "0s"
+      }
+    }
+  ],
+  "notificationChannels": ["__CHANNEL__"],
+  "documentation": {
+    "content": "See docs/calling/PARENT_CALL_AUDIT_2026-10-08.md. Correlate by outreach id across the web app (Vobiz answer/hangup logs) and sahayakai-telephony.",
+    "mimeType": "text/markdown"
+  }
+}

@@ -78,6 +78,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         vobizHangupCause: cause || null,
         completedAt: new Date().toISOString(),
     })
+        .then((written) =>
+            logger.info('Vobiz hangup recorded', 'ATTENDANCE', {
+                outreachId,
+                reported: callStatus,
+                stored: written.status,
+                cause: cause || null,
+                durationSeconds: Number.isFinite(duration) ? duration : null,
+            }),
+        )
         .catch((e: unknown) =>
             logger.error('Vobiz hangup: could not stamp record', e, 'ATTENDANCE', { outreachId }),
         );

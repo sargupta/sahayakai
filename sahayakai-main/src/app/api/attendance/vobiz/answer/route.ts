@@ -130,6 +130,9 @@ async function handle(req: NextRequest): Promise<NextResponse> {
     // socket and nothing else. It is minted here rather than at dial time so its
     // lifetime starts when the parent actually answers.
     const { token: streamToken } = await mintVobizToken(VOBIZ_DOMAINS.STREAM, outreachId);
+    // Correlation point: the telephony bridge logs `answer_to_socket_ms` against
+    // this moment (the stream token's mint time) under the same outreach id.
+    logger.info('Vobiz answer: stream issued', 'ATTENDANCE', { outreachId, hasCallUuid: Boolean(callUuid) });
 
     const streamUrl =
         `${wsOrigin}/telephony/vobiz/stream` +
