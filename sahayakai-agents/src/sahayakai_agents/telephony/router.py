@@ -474,8 +474,18 @@ class _Bridge:
         self.closing = False
         #: Last time either side made a sound, for the silence watchdog.
         self.last_activity = time.monotonic()
-        #: What the parent said, for the record and for goodbye detection.
+        #: What the parent said, ONE ENTRY PER UTTERANCE (their turn), for the
+        #: turn limits, the question veto and goodbye detection. Transcription
+        #: fragments are merged into the current entry until VIDYA speaks again.
         self.parent_said: list[str] = []
+        #: VIDYA has spoken since the parent's last fragment, so the parent's
+        #: next fragment starts a new utterance.
+        self.agent_spoke_since_parent = True
+        #: Fire-and-forget tasks this call started. The event loop keeps only a
+        #: WEAK reference to a task, so an unreferenced one can be collected
+        #: mid-flight — the close-after-goodbye would then silently never run
+        #: and the call would hold until the idle or max-duration guard.
+        self.background: set[asyncio.Task[Any]] = set()
         #: The conversation, in the shape the rest of the app already stores.
         #: Kept for BOTH sides: a transcript with only one voice in it cannot be
         #: reviewed, and reviewing calls is the whole point of keeping one.
@@ -633,7 +643,7 @@ async def _begin_close(bridge: _Bridge, session: Any, reason: str) -> None:
                 break
         bridge.stop = True
 
-    asyncio.create_task(_end_after_goodbye())
+    _spawn(bridge, _end_after_goodbye())
 
 
 async def _conversation_watchdog(bridge: _Bridge, session: Any) -> None:
@@ -756,7 +766,43 @@ def _record_turn(bridge: _Bridge, role: str, text: str) -> None:
     # specifically so it would be read back afterwards.
     if len(bridge.transcript) - bridge.transcript_saved_at >= _TRANSCRIPT_FLUSH_EVERY:
         bridge.transcript_saved_at = len(bridge.transcript)
-        asyncio.create_task(_persist_transcript(bridge))
+        _spawn(bridge, _persist_transcript(bridge))
+
+
+def _spawn(bridge: _Bridge, coro: Any) -> asyncio.Task[Any]:
+    """Start a fire-and-forget task that cannot be garbage-collected mid-flight."""
+    task = asyncio.create_task(coro)
+    bridge.background.add(task)
+    task.add_done_callback(bridge.background.discard)
+    return task
+
+
+async def _persist_engine_failure(bridge: _Bridge, error_type: str) -> None:
+    """Record that the conversation engine never came up for this call.
+
+    The carrier still reports the call as answered and completed, so without
+    this the record reads as a normal finished call while the parent heard only
+    the opener and then a hangup. Never fatal; the log line is the alert source.
+    """
+    try:
+        from google.cloud import firestore
+
+        client = firestore.Client(
+            project=get_settings().gcp_project,
+            database=get_settings().firestore_database,
+        )
+        now = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+        ref = client.collection("parent_outreach").document(bridge.outreach_id)
+        await asyncio.to_thread(
+            ref.update,
+            {"engineFailure": {"at": now, "errorType": error_type}, "updatedAt": now},
+        )
+    except Exception as exc:  # noqa: BLE001
+        log.error(
+            "telephony.engine_failure_not_saved",
+            outreach_id=bridge.outreach_id,
+            error=str(exc),
+        )
 
 
 async def _persist_opt_out(bridge: _Bridge) -> bool:
@@ -979,7 +1025,16 @@ async def _handle_parent_speech(bridge: _Bridge, session: Any, server: Any) -> N
 
     bridge.engaged = True
     bridge.last_activity = time.monotonic()
-    bridge.parent_said.append(said)
+    # One entry per UTTERANCE, not per fragment. Live transcription arrives in
+    # pieces ("theek hai", "thank", "you so much"), so appending each piece made
+    # one long sentence count as several turns: it tripped the 6-turn ceiling
+    # and ended calls mid-conversation, satisfied the 2-turn minimum on a single
+    # "haan", and showed the question veto only the last fragment of a question.
+    if bridge.agent_spoke_since_parent or not bridge.parent_said:
+        bridge.parent_said.append(said)
+        bridge.agent_spoke_since_parent = False
+    else:
+        bridge.parent_said[-1] = f"{bridge.parent_said[-1]} {said}"
     _record_turn(bridge, "parent", said)
 
     # Match on the ACCUMULATED tail, not on this fragment.
@@ -1010,7 +1065,7 @@ async def _handle_parent_speech(bridge: _Bridge, session: Any, server: Any) -> N
     if is_optout(bridge.recent_speech):
         bridge.opted_out = True
         await _begin_close(bridge, session, "opt_out")
-    elif is_goodbye(said) and _may_end_yet(bridge):
+    elif is_goodbye(bridge.parent_said[-1]) and _may_end_yet(bridge):
         await _begin_close(bridge, session, "goodbye")
 
 
@@ -1085,7 +1140,7 @@ async def _handle_tool_call(bridge: _Bridge, session: Any, tool_call: Any) -> No
         # The model says its closing line BEFORE calling this, so there is
         # nothing left to say — end without sending another closing cue.
         bridge.closing = True
-        asyncio.create_task(_drain_then_stop(bridge))
+        _spawn(bridge, _drain_then_stop(bridge))
 
     with contextlib.suppress(Exception):
         await session.send_tool_response(
@@ -1148,12 +1203,14 @@ async def _pump_live_to_carrier(bridge: _Bridge, session: Any) -> str:
                 text = (getattr(spoken, "text", "") or "").strip() if spoken else ""
                 if text:
                     _record_turn(bridge, "agent", text)
+                    bridge.agent_spoke_since_parent = True
             await _handle_tool_call(bridge, session, getattr(resp, "tool_call", None))
 
             data = getattr(resp, "data", None)
             if data:
                 bridge.last_activity = time.monotonic()
                 bridge.model_has_spoken = True
+                bridge.agent_spoke_since_parent = True
                 bridge.model_last_audio = bridge.last_activity
                 if bridge.first_audio_at is None:
                     bridge.first_audio_at = time.monotonic()
@@ -1392,6 +1449,50 @@ async def _run_call(bridge: _Bridge, session: Any, pacer: asyncio.Task[None]) ->
     return reason
 
 
+async def _settle_call(bridge: _Bridge, engine_error: str | None, started: float) -> None:
+    """End the carrier call, then write the record."""
+    # HANG UP FIRST. Everything else is bookkeeping and the parent must
+    # not be held on the line for it.
+    #
+    # This used to run transcript-write then LLM summary then hangup,
+    # with a comment claiming the summary "runs after the parent is off
+    # the line". It did not: measured on a real call, the line stayed
+    # open and silent for 5.3 seconds after the goodbye while Firestore
+    # was written and a summary was generated. From the parent's side
+    # that is a call that would not end.
+    await _hangup(bridge.call_uuid)
+
+    # Now the record, with the parent already gone. The opt-out goes
+    # first: it is the one write whose loss re-dials someone who said no.
+    if bridge.opted_out:
+        await _persist_opt_out(bridge)
+    if engine_error is not None:
+        await _persist_engine_failure(bridge, engine_error)
+    await _persist_transcript(bridge)
+    if bridge.context is not None:
+        await _generate_call_summary(
+            bridge, bridge.context, int(time.monotonic() - started)
+        )
+
+
+async def _stop_side_tasks(
+    bridge: _Bridge | None, *tasks: asyncio.Task[None] | None
+) -> None:
+    """Stop the pacer and the greeter on EVERY exit.
+
+    `_run_call` stops them on the normal path, but a Live connect or setup
+    failure skipped it and left the pacer ticking at 50 Hz for the life of the
+    process.
+    """
+    if bridge is not None:
+        bridge.stop = True
+    for task in tasks:
+        if task is not None and not task.done():
+            task.cancel()
+            with contextlib.suppress(asyncio.CancelledError, Exception):
+                await task
+
+
 @telephony_router.websocket("/telephony/vobiz/stream")
 async def vobiz_stream(ws: WebSocket) -> None:
     """One phone call, bridged to one Live session."""
@@ -1403,6 +1504,10 @@ async def vobiz_stream(ws: WebSocket) -> None:
     started = time.monotonic()
     reason = "unknown"
     bridge: _Bridge | None = None
+    pacer: asyncio.Task[None] | None = None
+    greeter: asyncio.Task[None] | None = None
+    live_connected = False
+    engine_error: str | None = None
     try:
         await ws.accept()
         bridge = _Bridge(
@@ -1427,6 +1532,7 @@ async def vobiz_stream(ws: WebSocket) -> None:
         from google.genai import types as genai_types
 
         async with client.aio.live.connect(model=model, config=config) as session:
+            live_connected = True
             bridge.t_ready = time.monotonic()
             log.info(
                 "telephony.live_connected",
@@ -1462,10 +1568,16 @@ async def vobiz_stream(ws: WebSocket) -> None:
     except WebSocketDisconnect:
         reason = "carrier_disconnect"
     except Exception as exc:  # noqa: BLE001
-        reason = "error"
+        # Before Live is connected, a failure means the parent heard the opener
+        # and then nothing: the conversation engine never came up. That is a
+        # different incident from a mid-call error and is alerted on separately.
+        reason = "error" if live_connected else "live_unavailable"
+        if not live_connected:
+            engine_error = type(exc).__name__
         log.error(
             "telephony.call_failed",
             outreach_id=outreach_id,
+            reason=reason,
             error=str(exc),
             error_type=type(exc).__name__,
         )
@@ -1473,27 +1585,9 @@ async def vobiz_stream(ws: WebSocket) -> None:
         # Release capacity before anything that can raise, so a failure on the
         # way out cannot strand a slot for the life of the process.
         _SESSION_SEM.release()
+        await _stop_side_tasks(bridge, greeter, pacer)
         if bridge is not None:
-            # HANG UP FIRST. Everything else is bookkeeping and the parent must
-            # not be held on the line for it.
-            #
-            # This used to run transcript-write then LLM summary then hangup,
-            # with a comment claiming the summary "runs after the parent is off
-            # the line". It did not: measured on a real call, the line stayed
-            # open and silent for 5.3 seconds after the goodbye while Firestore
-            # was written and a summary was generated. From the parent's side
-            # that is a call that would not end.
-            await _hangup(bridge.call_uuid)
-
-            # Now the record, with the parent already gone. The opt-out goes
-            # first: it is the one write whose loss re-dials someone who said no.
-            if bridge.opted_out:
-                await _persist_opt_out(bridge)
-            await _persist_transcript(bridge)
-            if bridge.context is not None:
-                await _generate_call_summary(
-                    bridge, bridge.context, int(time.monotonic() - started)
-                )
+            await _settle_call(bridge, engine_error, started)
         log.info(
             "telephony.call_closed",
             outreach_id=outreach_id,

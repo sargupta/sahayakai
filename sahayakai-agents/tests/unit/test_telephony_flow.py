@@ -705,7 +705,7 @@ class TestTheCallEndsBeforeTheBookkeeping:
 
         source = Path(telephony.__file__).read_text()
         hangup = source.index("await _hangup(bridge.call_uuid)")
-        transcript = source.index("await _persist_transcript(bridge)\n            if bridge.context")
+        transcript = source.index("await _persist_transcript(bridge)\n    if bridge.context")
         summary = source.index("await _generate_call_summary")
         assert hangup < transcript, "the parent waits on a Firestore write"
         assert hangup < summary, "the parent waits on an LLM summary"
@@ -734,6 +734,7 @@ class TestTheGoodbyeIsSpokenBeforeTheLineDrops:
             self.out: _a.Queue = _a.Queue()
             self.model_last_audio = 0.0
             self.call_uuid = ""
+            self.background: set[_a.Task[object]] = set()
 
     async def test_waits_for_the_closing_line_to_be_produced(self) -> None:
         bridge = self._B()
