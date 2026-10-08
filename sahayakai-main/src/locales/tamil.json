@@ -1692,5 +1692,17 @@
   "Connecting…": "இணைக்கிறது…",
   "Tool": "கருவி",
   "Not connected": "இணைக்கப்படவில்லை",
-  "Not configured": "கட்டமைக்கப்படவில்லை"
+  "Not configured": "கட்டமைக்கப்படவில்லை",
+  "Call a student's parent with Sahayak, delivered through the Sahayak MCP server.": "சகாயக் MCP சேவையகம் வழியாக சகாயக் மூலம் மாணவரின் பெற்றோரை அழைக்கவும்.",
+  "Loading classes…": "வகுப்புகள் ஏற்றப்படுகின்றன…",
+  "No classes are linked to this school's Sahayak MCP key.": "இந்தப் பள்ளியின் சகாயக் MCP விசையுடன் எந்த வகுப்பும் இணைக்கப்படவில்லை.",
+  "Parent": "பெற்றோர்",
+  "No parent phone on record": "பெற்றோர் தொலைபேசி பதிவில் இல்லை",
+  "Contact parent": "பெற்றோரைத் தொடர்பு கொள்ளவும்",
+  "Sahayak writes the message and calls the parent number on record.": "சகாயக் செய்தியை எழுதி, பதிவில் உள்ள பெற்றோர் எண்ணுக்கு அழைக்கிறது.",
+  "Call started": "அழைப்பு தொடங்கியது",
+  "Calling the parent": "பெற்றோரை அழைக்கிறது",
+  "Add a note for the parent (optional)": "பெற்றோருக்கான குறிப்பைச் சேர்க்கவும் (விருப்பத்தேர்வு)",
+  "The call could not be started": "அழைப்பைத் தொடங்க முடியவில்லை",
+  "Call parent": "பெற்றோரை அழைக்கவும்"
 }
