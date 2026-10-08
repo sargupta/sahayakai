@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { auth } from "@/lib/firebase";
+import { useAuth } from "@/context/auth-context";
 import type { OutreachReason } from "@/types/attendance";
 import type { ParentCallResult, ParentContactsResult } from "@/lib/mcp/calling/schema";
 import type { McpConnection } from "@/features/mcp-demo/lesson-planner/use-mcp-lesson-plan";
@@ -31,6 +32,9 @@ async function post(body: unknown): Promise<{ ok: boolean; data: any }> {
 }
 
 export function useMcpCalling() {
+    const { user, loading: authLoading } = useAuth();
+    // null until Firebase has restored the session: the demo API needs the ID token.
+    const signedIn = authLoading ? null : !!user;
     const [connection, setConnection] = useState<McpConnection>({ state: "checking" });
     const [classes, setClasses] = useState<ContactClass[] | null>(null);
     const [listError, setListError] = useState<CallingError | null>(null);
@@ -64,7 +68,16 @@ export function useMcpCalling() {
         }
     }, []);
 
-    useEffect(() => { void checkConnection(); void loadContacts(); }, [checkConnection, loadContacts]);
+    useEffect(() => {
+        if (signedIn === true) {
+            void checkConnection();
+            void loadContacts();
+        } else if (signedIn === false) {
+            setConnection({ state: "unavailable", configured: true });
+            setClasses([]);
+            setListError({ category: "authentication", message: "Sign in to Sahayak to use this demo.", retryable: false });
+        }
+    }, [signedIn, checkConnection, loadContacts]);
 
     const openContact = (student: ContactStudent) => {
         setActiveStudent(student);

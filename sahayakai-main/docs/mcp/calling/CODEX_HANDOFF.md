@@ -171,3 +171,137 @@ These were run on 2026-10-07 against the local `next dev` server on port 3000, u
   - `tsc` and ESLint are clean.
   - The i18n source audit and ratchet are at baseline.
   - The SHA is printed by `git log --oneline -1` on `feat/calling-mcp`.
+
+## 23. Follow-up live dev check — 2026-10-07
+
+- Branch: `feat/calling-mcp`; HEAD: `feaaa74787e840970683adc0d4673048e473f19f`.
+- Files read for this follow-up: `docs/mcp/calling/CODEX_CALLING_AUDIT.md`, `docs/mcp/calling/CODEX_HANDOFF.md`, `src/app/attendance/[classId]/page.tsx`, `src/components/attendance/contact-parent-modal.tsx`, `src/app/api/attendance/call/route.ts`, `src/app/api/attendance/outreach/route.ts`, `src/app/api/ai/parent-message/route.ts`, and the Calling MCP service/schema/capability/routes plus the calling demo BFF/client introduced by `f29e4454` and `feaaa747`.
+- Demo records created: **none**. The handoff identifies the existing local key's org as `local-dev-org`; that org has no members. No legitimate teacher UID was available to authorize a class, and the local page had no signed-in Sahayak session. No class, student, parent contact, outreach, membership, or API key was written.
+- Seed/reset commands: **none**; no seed script was run and there is no data to delete. See `docs/mcp/calling/DEV_DEMO_DATA.md`.
+- UI: opened `http://localhost:3000/mcp-demo/calling`. It showed the sign-in button and `Sahayak MCP Connecting… Loading classes…`; it did not show Connected, a class/student, or masked phone details. The authenticated demo BFF could not be exercised from this signed-out page.
+- Live MCP check: used the existing `MCP_LOCAL_DEV_API_KEY` with the official MCP SDK against `POST /api/mcp/calling`. `initialize` identified `sahayak-parent-calling` v1.0.0; `tools/list` returned `list_parent_contacts` and `initiate_parent_call`. `list_parent_contacts` returned `{ "classes": [] }`.
+- `initiate_parent_call` was invoked with non-existent demo class/student IDs and no phone argument. It returned `not_found` (`No such class or student for this API key.`). The request stopped in class/organisation membership authorization, before `/api/ai/parent-message`, `/api/attendance/outreach`, `/api/attendance/call`, or the provider. No phone call was placed.
+- Provider/configuration: `.env.local` has no `VOICE_PROVIDER`, Twilio, Vobiz, or Exotel variables. The existing call route would default to Twilio and return `503 Twilio not configured` if reached, but that provider response was **not observed** because authorization stopped the MCP request first.
+- Tests: the live MCP initialize/tools/list and safe unknown-class tool call above were run. The prior handoff reports 360/360 tests, typecheck, ESLint, and i18n passing; these suites were not rerun for this documentation-only follow-up. No commit was created.
+- Next step: sign in to the local Sahayak app and provide the Firebase UID of the intended development teacher, whose existing profile must pass the advanced-plan checks. If that teacher is not already in `local-dev-org`, confirm that this dev-only membership may be added. Then seed through a reversible dev-only script and repeat the UI flow. Do not dial until the supplied number is explicitly confirmed as the user's own/test number and expected.
+
+## 24. Restart follow-up — 2026-10-07
+
+- Branch/HEAD remain `feat/calling-mcp` / `feaaa74787e840970683adc0d4673048e473f19f`.
+- Port 3000 was free. Started the existing server with
+  `node node_modules/next/dist/bin/next dev -p 3000`; Next reported `Ready` at
+  `http://localhost:3000` and reported Twilio credentials were unset.
+- The in-app browser backend could not connect. The available browser tab was
+  at `http://localhost:3000/mcp-demo/calling`, but browser access was rejected
+  by its URL policy. No alternate browser surface, API request, or session
+  extraction was used to bypass that rejection. The post-restart sign-in state
+  and live page could not be verified.
+- Teacher UID last verified in the preceding signed-in session:
+  `Yt5XFJyz45TVlY7UKyVRgxUe8Tn1`. The profile existed with `planType: premium`
+  and passed `hasAdvancedPlan` then; neither identity nor plan was re-read after
+  restart. The teacher's actual `organizationId` was not revalidated.
+- The local dev key's org is `local-dev-org`. In the previously checked
+  Firebase project `sahayakai-b4248`, `organizations/local-dev-org` was absent,
+  as was `organizations/local-dev-org/members/{teacherUid}`. No usable class or
+  teacher membership exists there. This project is production-linked; no
+  membership, org, class, student, contact, API key, or other Firestore write
+  was made.
+- Existing supported key configuration is documented in
+  `src/lib/mcp-demo/calling-client.ts`: prefer `MCP_CALLING_DEMO_API_KEY`, else
+  `MCP_LOCAL_DEV_API_KEY` under `next dev`. The existing
+  `scripts/mcp/create-api-key.ts --org <existing-org> --scope calling` is
+  dry-run by default and requires the organization to exist; `--apply` writes a
+  key record. No key was issued or rebound because the expected org is absent
+  from the connected project. Do not point this flow at production to create
+  dev data or credentials.
+- No demo records or outreach were created. No seed or reset command ran. The
+  last live `list_parent_contacts` result remains the prior-session
+  `{ "classes": [] }`; it was not rerun. The prior safe `initiate_parent_call`
+  request with unknown IDs returned `not_found` at MCP class/organization
+  authorization. No `initiate_parent_call` was invoked in this restart attempt,
+  no provider boundary was reached, and no call was placed.
+- Validation this session: the six focused Calling MCP/call/outreach/demo suites
+  passed, 76/76 tests; targeted ESLint passed. Full typecheck was not retried
+  because the previous typecheck attempt exhausted memory. No commit was made.
+- Exact next action: restore permitted browser access to the local page and
+  verify the signed-in session. Configure local development to use a confirmed
+  non-production Firebase project that already contains the teacher's actual
+  org, then use the existing scoped-key configuration and reversible Sahayak
+  class/student helpers. Only seed after membership, ownership, and plan checks
+  pass. Do not call until the user confirms the intended number is their own/test
+  number and they expect exactly one call.
+
+## 25. Authenticated-session continuation — 2026-10-07
+
+- The user confirmed successful sign-in to the local Sahayak app. The current
+  UID and organization were not read from that session; the previous-session
+  UID was not reused.
+- Port 3000 was free at check time. Started
+  `node node_modules/next/dist/bin/next dev -p 3000` from
+  `E:\sargvision\sahayakai\sahayakai-main`. Next reported
+  `Local: http://localhost:3000` and `Ready`.
+- The supported browser-use IAB bootstrap again failed because no Codex IAB
+  browser backend was available. The page and its login/connected state could
+  not be inspected. No alternate browser surface, API call, session extraction,
+  or authentication bypass was used.
+- No Firebase writes, MCP calls, outreach, or phone calls were made. The most
+  recent known key org remains `local-dev-org`; in the previously checked
+  production-linked Firebase project `sahayakai-b4248`, that org document was
+  absent. No current teacher membership or actual org could be verified.
+- No demo class/student/contact IDs exist. The latest known MCP list result is
+  still the earlier `{ "classes": [] }`; `initiate_parent_call` was not invoked
+  during this continuation.
+- Exact next action: restore the Codex IAB browser connection and inspect the
+  already-authenticated page to read the current session UID/org. Continue only
+  against a confirmed non-production Firebase project; then apply the existing
+  org/member and class/student authorization helpers and update
+  `DEV_DEMO_DATA.md` with the resulting IDs and reset method.
+
+## 26. Finalization — 2026-10-08
+
+- Shared fix: tool error results no longer put `{ error }` in
+  `structuredContent` (the SDK client validated it against the output schema
+  and turned every error into `-32602`). The error is in
+  `_meta["sahayak/error"]`; the demo client reads it with `toolErrorOf()`.
+  Class gate: `src/__tests__/lib/mcp/mcp-error-results.test.ts`.
+- `/mcp-demo/calling` waits for the Firebase session before calling its API.
+- `npm run mcp:calling:demo` added (read-only: `list_parent_contacts` only).
+- Live results and the remaining blocker (no org/class data in a
+  non-production project, no provider configured) are in
+  [DEV_DEMO_DATA.md](./DEV_DEMO_DATA.md) and [../DEMOS.md](../DEMOS.md).
+
+## 27. Emulator end-to-end — 2026-10-08
+
+- Production Firebase (`sahayakai-b4248`) was not written. Demo data lives in
+  a local Firestore emulator, seeded by `scripts/mcp/seed-calling-emulator.cjs`
+  (emulator-only guard, `--reset`).
+- Org `mcp-calling-dev-org`, teacher `Yt5XFJyz45TVlY7UKyVRgxUe8Tn1` (admin
+  member, premium), class `mcp-calling-demo-class-7`, student
+  `mcp-demo-student`, key `165a785fe50efdee` (scope `calling`, same org).
+- Live: `list_parent_contacts` returns the class (masked). One
+  `initiate_parent_call` ran parent-message → outreach → call route, which
+  returned 503 "Twilio not configured" → `not_configured`. **No call placed;
+  the phone did not ring.**
+- No authorization, route or schema code was changed.
+- Script note: `scripts/mcp/create-api-key.ts` needs
+  `NODE_OPTIONS=--conditions=react-server` (it imports `server-only` modules).
+- Next action: add Twilio credentials, a public callback URL (restricted ngrok
+  tunnel) and, for a trial account, verify the test number; then one call.
+  Full steps: [DEV_DEMO_DATA.md](./DEV_DEMO_DATA.md).
+
+## 28. Real-call attempt with a Twilio trial account — 2026-10-08
+
+- The Twilio Console trial call to the verified test number succeeded.
+- Through Sahayak, `initiate_parent_call` reached Twilio's Create Call API
+  twice (one request each, no retry). Twilio answered 400 code 0 both times:
+  trial Create Call allows only Twilio sample call instructions, and Sahayak
+  needs its own TwiML URL. **No call was placed by Sahayak.** A full custom
+  end-to-end call needs an upgraded Twilio account.
+- Kept fixes (`src/lib/twilio-errors.ts`): an unrecognised Twilio 4xx (not
+  401/403/429) is `provider_unconfigured` → 503 → MCP `not_configured`, not
+  retryable, and the outreach record is marked `failed` (dedup released).
+- A temporary trial-mode request shape (omitting `MachineDetection`) was tried
+  and removed: Twilio still refused the request, and production needs the
+  full request.
+- Details: [DEV_DEMO_DATA.md](./DEV_DEMO_DATA.md).
+

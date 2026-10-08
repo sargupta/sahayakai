@@ -14,6 +14,7 @@
     "mcp:lesson-planner:demo": "node scripts/mcp/demo.mjs lesson-planner",
     "mcp:exam-paper:demo": "node scripts/mcp/demo.mjs exam-paper",
     "mcp:quiz:demo": "node scripts/mcp/demo.mjs quiz",
+    "mcp:calling:demo": "node scripts/mcp/demo.mjs calling",
     "predeploy": "npm run typecheck && npm run build",
     "test": "jest",
     "test:coverage": "jest --coverage",

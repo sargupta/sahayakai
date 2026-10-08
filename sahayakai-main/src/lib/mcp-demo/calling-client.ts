@@ -1,6 +1,7 @@
 import 'server-only';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import { toolErrorOf } from '@/lib/mcp/errors';
 import { InitiateParentCallInput, ListParentContactsInput, ParentCallResult, ParentContactsResult } from '@/lib/mcp/calling/schema';
 
 /**
@@ -53,7 +54,7 @@ const identity = (c: Client): ServerIdentity => {
 };
 
 function toolError(res: unknown): DemoError {
-    const e = ((res as { structuredContent?: unknown }).structuredContent as { error?: Partial<DemoError> } | undefined)?.error;
+    const e = toolErrorOf(res);
     return {
         category: typeof e?.category === 'string' ? e.category : 'internal',
         message: typeof e?.message === 'string' ? e.message : 'The request could not be completed. Please try again.',

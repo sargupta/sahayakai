@@ -109,7 +109,7 @@ export function McpCallingView({
 
                     {callResult ? (
                         <div data-testid="mcp-call-result" className="space-y-3">
-                            <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
+                            <div className="flex items-center gap-2 text-success">
                                 <CheckCircle2 className="h-5 w-5" aria-hidden />
                                 <p className="font-semibold">{t("Call started")}</p>
                             </div>

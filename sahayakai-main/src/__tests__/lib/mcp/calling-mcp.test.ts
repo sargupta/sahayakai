@@ -85,6 +85,7 @@ jest.mock('next/server', () => ({
 }));
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { toolErrorOf } from '@/lib/mcp/errors';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { mintApiKey, MCP_API_KEYS_COLLECTION, type McpScope } from '@/lib/mcp/api-keys';
 import { handleMcpHttpRequest, type McpCapabilityDefinition } from '@/lib/mcp/http-handler';
@@ -138,6 +139,9 @@ async function connect(apiKey: string) {
         requestInit: { headers: { Authorization: `Bearer ${apiKey}`, 'X-Org-Id': 'org-b' } },
         fetch: async (url, init) => callServer(new Request(url, init)),
     }));
+    // Like real MCP clients, list tools first: this arms the SDK client's output-schema
+    // validation, so an error result carrying non-conforming structuredContent fails here.
+    await client.listTools();
     return client;
 }
 async function callTool(apiKey: string, name: string, args: Record<string, unknown>): Promise<any> {
@@ -256,7 +260,7 @@ describe('initiate_parent_call — through the real Contact flow', () => {
 describe('tenant isolation and authorization', () => {
     it('a class whose teacher is not in the key\'s organisation is invisible (not_found), nothing happens', async () => {
         const res = await callTool(keyA.apiKey, 'initiate_parent_call', { ...CALL, class_id: 'class-x', student_id: 'stu-x' });
-        expect(res.structuredContent.error).toMatchObject({ category: 'not_found' });
+        expect(toolErrorOf(res)).toMatchObject({ category: 'not_found' });
         expect(twilioCalls).toHaveLength(0);
         expect(outreachDocs()).toHaveLength(0);
         expect(mockDispatch).not.toHaveBeenCalled();
@@ -266,20 +270,20 @@ describe('tenant isolation and authorization', () => {
         const keyB = issue('org-b', ['calling']);
         const forbidden = await callTool(keyB.apiKey, 'initiate_parent_call', CALL);
         const missing = await callTool(keyB.apiKey, 'initiate_parent_call', { ...CALL, class_id: 'no-such-class' });
-        expect(forbidden.structuredContent.error).toEqual(missing.structuredContent.error);
+        expect(toolErrorOf(forbidden)).toEqual(toolErrorOf(missing));
         expect(twilioCalls).toHaveLength(0);
     });
 
     it('unknown student → not_found; student without a phone → invalid_input; neither dials', async () => {
-        expect((await callTool(keyA.apiKey, 'initiate_parent_call', { ...CALL, student_id: 'nobody' })).structuredContent.error.category).toBe('not_found');
-        expect((await callTool(keyA.apiKey, 'initiate_parent_call', { ...CALL, student_id: 'stu-2' })).structuredContent.error.category).toBe('invalid_input');
+        expect(toolErrorOf(await callTool(keyA.apiKey, 'initiate_parent_call', { ...CALL, student_id: 'nobody' }))?.category).toBe('not_found');
+        expect(toolErrorOf(await callTool(keyA.apiKey, 'initiate_parent_call', { ...CALL, student_id: 'stu-2' }))?.category).toBe('invalid_input');
         expect(twilioCalls).toHaveLength(0);
     });
 
     it('the class teacher\'s plan still gates calling (existing PREMIUM_REQUIRED rule)', async () => {
         store.set('users/teacher-a', { planType: 'free' });
         const res = await callTool(keyA.apiKey, 'initiate_parent_call', CALL);
-        expect(res.structuredContent.error).toMatchObject({ category: 'authorization' });
+        expect(toolErrorOf(res)).toMatchObject({ category: 'authorization' });
         expect(twilioCalls).toHaveLength(0);
     });
 });
@@ -288,8 +292,8 @@ describe('existing safety rules hold over MCP', () => {
     it('quiet hours: refused before any model call or record is written', async () => {
         mockWindow.allowed = false;
         const res = await callTool(keyA.apiKey, 'initiate_parent_call', CALL);
-        expect(res.structuredContent.error).toMatchObject({ category: 'outside_allowed_hours', retryable: true });
-        expect(res.structuredContent.error.retry_after_seconds).toBeGreaterThan(0);
+        expect(toolErrorOf(res)).toMatchObject({ category: 'outside_allowed_hours', retryable: true });
+        expect(toolErrorOf(res)?.retry_after_seconds).toBeGreaterThan(0);
         expect(mockDispatch).not.toHaveBeenCalled();
         expect(outreachDocs()).toHaveLength(0);
     });
@@ -298,31 +302,49 @@ describe('existing safety rules hold over MCP', () => {
         capDeps.checkCallingWindow = () => ({ allowed: true, istHour: 11, istTime: '11:00', reason: '', nextAllowedAt: null });
         mockWindow.allowed = false; // the route's own check
         const res = await callTool(keyA.apiKey, 'initiate_parent_call', CALL);
-        expect(res.structuredContent.error.category).toBe('outside_allowed_hours');
+        expect(toolErrorOf(res)?.category).toBe('outside_allowed_hours');
         expect(twilioCalls).toHaveLength(0);
     });
 
     it('5-minute dedup: a second call to the same parent is refused with retry_after', async () => {
         await callTool(keyA.apiKey, 'initiate_parent_call', CALL);
         const again = await callTool(keyA.apiKey, 'initiate_parent_call', CALL);
-        expect(again.structuredContent.error).toMatchObject({ category: 'rate_limited', retryable: true });
-        expect(again.structuredContent.error.retry_after_seconds).toBeGreaterThan(0);
+        expect(toolErrorOf(again)).toMatchObject({ category: 'rate_limited', retryable: true });
+        expect(toolErrorOf(again)?.retry_after_seconds).toBeGreaterThan(0);
         expect(twilioCalls).toHaveLength(1);
     });
 
     it('transient provider failure → retryable upstream_unavailable; dedup kept (existing rule); no internals leaked', async () => {
         twilioReply = () => ({ status: 500, body: { code: 20500, message: 'internal twilio account AC999 detail' } });
         const res = await callTool(keyA.apiKey, 'initiate_parent_call', CALL);
-        expect(res.structuredContent.error).toMatchObject({ category: 'upstream_unavailable', retryable: true });
+        expect(toolErrorOf(res)).toMatchObject({ category: 'upstream_unavailable', retryable: true });
         expect(JSON.stringify(res)).not.toMatch(/AC999|twilio account/i);
         expect(outreachDocs()[0].callStatus).toBe('initiated');
+    });
+
+    it('Twilio refuses the request itself (trial parameter limit, code 0) → not_configured, NOT retryable; record marked failed', async () => {
+        twilioReply = () => ({ status: 400, body: { code: 0, message: 'Invalid or disallowed parameters provided - trial accounts have limited parameter access, upgrade your account to unlock full functionality' } });
+        const res = await callTool(keyA.apiKey, 'initiate_parent_call', CALL);
+        expect(toolErrorOf(res)).toMatchObject({ category: 'not_configured', retryable: false });
+        expect(JSON.stringify(res)).not.toMatch(/trial accounts|upgrade your account/i);
+        expect(twilioCalls).toHaveLength(1);
+        expect(outreachDocs()[0]).toMatchObject({ callStatus: 'failed', callFailureCategory: 'provider_unconfigured' });
+    });
+
+    it('Create Call keeps answering-machine detection, GET TwiML and the full status callback', async () => {
+        await callTool(keyA.apiKey, 'initiate_parent_call', CALL);
+        const body = twilioCalls[0].body;
+        expect(body.get('MachineDetection')).toBe('DetectMessageEnd');
+        expect(body.get('Method')).toBe('GET');
+        expect(body.get('StatusCallback')).toBe(`${CALLBACK_BASE}/api/attendance/twiml-status`);
+        expect(body.get('StatusCallbackEvent')).toBe('initiated ringing answered completed');
     });
 
     it('unreachable parent number → invalid_input; record marked failed so dedup is released (existing rule)', async () => {
         twilioReply = () => ({ status: 400, body: { code: 21211, message: 'Invalid To number +919876543210' } });
         const res = await callTool(keyA.apiKey, 'initiate_parent_call', CALL);
-        expect(res.structuredContent.error).toMatchObject({ category: 'invalid_input', retryable: false });
-        expect(res.structuredContent.error.message).toMatch(/could not be reached/);
+        expect(toolErrorOf(res)).toMatchObject({ category: 'invalid_input', retryable: false });
+        expect(toolErrorOf(res)?.message).toMatch(/could not be reached/);
         expect(JSON.stringify(res)).not.toContain('9876543210');
         expect(outreachDocs()[0].callStatus).toBe('failed');
     });
@@ -330,14 +352,14 @@ describe('existing safety rules hold over MCP', () => {
     it('provider not configured → not_configured, nothing dialled', async () => {
         delete process.env.TWILIO_AUTH_TOKEN;
         const res = await callTool(keyA.apiKey, 'initiate_parent_call', CALL);
-        expect(res.structuredContent.error).toMatchObject({ category: 'not_configured', retryable: false });
+        expect(toolErrorOf(res)).toMatchObject({ category: 'not_configured', retryable: false });
         expect(twilioCalls).toHaveLength(0);
     });
 
     it('no callback base URL configured → not_configured before anything runs', async () => {
         capDeps.callbackBaseUrl = null;
         const res = await callTool(keyA.apiKey, 'initiate_parent_call', CALL);
-        expect(res.structuredContent.error.category).toBe('not_configured');
+        expect(toolErrorOf(res)?.category).toBe('not_configured');
         expect(outreachDocs()).toHaveLength(0);
     });
 
@@ -363,7 +385,7 @@ describe('list_parent_contacts', () => {
     });
 
     it('a foreign class_id is not_found', async () => {
-        expect((await callTool(keyA.apiKey, 'list_parent_contacts', { class_id: 'class-x' })).structuredContent.error.category).toBe('not_found');
+        expect(toolErrorOf(await callTool(keyA.apiKey, 'list_parent_contacts', { class_id: 'class-x' }))?.category).toBe('not_found');
     });
 });
 

@@ -10,6 +10,8 @@ import '@testing-library/jest-dom';
 
 jest.mock('@/lib/firebase', () => ({ auth: { currentUser: { getIdToken: jest.fn().mockResolvedValue('firebase-id-token') } } }));
 jest.mock('@/context/language-context', () => ({ useLanguage: () => ({ t: (k: string) => k, language: 'English' }) }));
+const mockAuth = { user: { uid: 'teacher-1' } as unknown, loading: false };
+jest.mock('@/context/auth-context', () => ({ useAuth: () => mockAuth }));
 
 import McpCallingDemoPage from '@/app/mcp-demo/calling/page';
 
@@ -32,6 +34,8 @@ beforeEach(() => {
         return body.action === 'list' ? reply(200, { result: CONTACTS, mcp: { ...SERVER, durationMs: 300 } }) : callReply();
     });
     (global as any).fetch = fetchMock;
+    mockAuth.user = { uid: 'teacher-1' };
+    mockAuth.loading = false;
 });
 const posts = () => fetchMock.mock.calls.filter(([, i]) => i?.method === 'POST').map(([u, i]) => ({ url: u, body: JSON.parse(i.body) }));
 
@@ -82,4 +86,12 @@ it('empty state when the key\'s school has no classes', async () => {
         : reply(200, { configured: true, connected: true, server: SERVER })));
     render(<McpCallingDemoPage />);
     expect(await screen.findByTestId('mcp-calling-empty')).toBeInTheDocument();
+});
+
+it('waits for the Firebase session; signed out it asks to sign in and calls nothing', async () => {
+    mockAuth.user = null;
+    render(<McpCallingDemoPage />);
+    expect(await screen.findByTestId('mcp-calling-list-error')).toHaveTextContent('Sign in to Sahayak to use this demo.');
+    expect(within(screen.getByTestId('mcp-status')).getByText('Not connected')).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
 });

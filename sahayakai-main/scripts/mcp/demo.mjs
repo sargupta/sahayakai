@@ -7,6 +7,7 @@
  *   npm run mcp:lesson-planner:demo        (= node scripts/mcp/demo.mjs lesson-planner)
  *   npm run mcp:exam-paper:demo            (= node scripts/mcp/demo.mjs exam-paper)
  *   npm run mcp:quiz:demo                  (= node scripts/mcp/demo.mjs quiz)
+ *   npm run mcp:calling:demo               (= node scripts/mcp/demo.mjs calling; read-only, never dials)
  *   npm run mcp:exam-paper:demo -- --twice # call the tool twice on the SAME client/session
  *   PORT=3100 npm run mcp:exam-paper:demo  # local dev on another port
  *   SAHAYAK_MCP_URL=https://<host>/api/mcp/exam-paper SAHAYAK_MCP_API_KEY=sk_sahayak_… npm run mcp:exam-paper:demo
@@ -69,6 +70,22 @@ const DEMOS = {
             return ok ? `"${quiz.title}" (Class ${result.grade}, ${quiz.difficulty}, ${questions.length} questions, each with answer and explanation)` : null;
         },
         failure: 'the response did not contain a 5-question medium quiz with answers and explanations.',
+    },
+    // Read-only: lists classes and masked parent contacts. This script never calls
+    // initiate_parent_call (that rings a real phone) — use /mcp-demo/calling for that.
+    calling: {
+        name: 'Parent Calling',
+        tool: 'list_parent_contacts',
+        alsoExpect: ['initiate_parent_call'],
+        input: {},
+        expect: 'usually under 5 s',
+        check(result) {
+            if (!Array.isArray(result?.classes)) return null;
+            const students = result.classes.flatMap((c) => c.students ?? []);
+            if (students.some((s) => !/^\d{0,4}$/.test(s.parent_phone_last4 ?? ''))) return null; // never a full number
+            return `${result.classes.length} class(es), ${students.length} student(s), ${students.filter((s) => s.parent_reachable).length} with a parent phone on record (last 4 digits only)`;
+        },
+        failure: 'the response did not contain a masked class/student list.',
     },
 };
 
