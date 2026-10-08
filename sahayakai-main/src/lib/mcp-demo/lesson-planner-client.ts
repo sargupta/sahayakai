@@ -1,6 +1,7 @@
 import 'server-only';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import { toolErrorOf } from '@/lib/mcp/errors';
 import { CreateLessonPlanInput, LessonPlanResult } from '@/lib/mcp/lesson-planner/schema';
 
 /**
@@ -115,7 +116,7 @@ export async function createLessonPlanViaMcp(args: unknown, config: McpDemoConfi
         const durationMs = Date.now() - started;
 
         if (res.isError) {
-            const err = (res.structuredContent as { error?: Partial<McpDemoError> } | undefined)?.error;
+            const err = toolErrorOf(res);
             return {
                 ok: false,
                 error: {

@@ -56,6 +56,7 @@ function sidecarErrors(prefix: string) {
 jest.mock('@/lib/sidecar/exam-paper-client', () => ({ callSidecarExamPaper: jest.fn(), ...sidecarErrors('ExamPaperSidecar') }));
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { toolErrorOf } from '@/lib/mcp/errors';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { generateExamPaper } from '@/ai/flows/exam-paper-generator';
 import { callSidecarExamPaper } from '@/lib/sidecar/exam-paper-client';
@@ -116,6 +117,9 @@ async function call(args: Record<string, unknown>) {
         requestInit: { headers: { Authorization: `Bearer ${apiKey}` } },
         fetch: async (url, init) => handleMcpHttpRequest(new Request(url, init), capability, { getDb: async () => authDb, rateLimit: mcpRateLimit }),
     }));
+    // Like real MCP clients, list tools first: this arms the SDK client's output-schema
+    // validation, so an error result carrying non-conforming structuredContent fails here.
+    await client.listTools();
     try {
         return await client.callTool({ name: 'create_exam_paper', arguments: args });
     } finally {
@@ -154,7 +158,7 @@ it('Sahayak\'s real content policy blocks unsafe chapter text before any model c
     mockMode.mode = 'full';
     const res: any = await call({ ...ARGS, chapters: ['how to make a bomb at home'] });
     expect(res.isError).toBe(true);
-    expect(res.structuredContent.error).toMatchObject({ category: 'content_policy', retryable: false });
+    expect(toolErrorOf(res)).toMatchObject({ category: 'content_policy', retryable: false });
     expect(callSidecarExamPaper).not.toHaveBeenCalled();
     expect(generateExamPaper).not.toHaveBeenCalled();
 });
@@ -164,5 +168,5 @@ it('the service\'s generation budget surfaces as an honest, retryable timeout', 
     const { ExamPaperGenerationInProgressError } = jest.requireActual('@/lib/sidecar/exam-paper-dispatch');
     (generateExamPaper as jest.Mock).mockRejectedValueOnce(new ExamPaperGenerationInProgressError(75_000, 75_010));
     const res: any = await call(ARGS);
-    expect(res.structuredContent.error).toMatchObject({ category: 'timeout', retryable: true });
+    expect(toolErrorOf(res)).toMatchObject({ category: 'timeout', retryable: true });
 });

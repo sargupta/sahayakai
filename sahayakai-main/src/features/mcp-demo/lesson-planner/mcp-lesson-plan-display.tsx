@@ -64,7 +64,7 @@ export function McpLessonPlanDisplay({ plan, generation }: { plan: LessonPlanRes
             ) : undefined}
         >
             {plan.curriculum_note && (
-                <div role="note" className="mb-4 flex gap-2 rounded-lg border border-amber-300/60 bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                <div role="note" className="mb-4 flex gap-2 rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm text-foreground">
                     <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                     <span>{plan.curriculum_note}</span>
                 </div>

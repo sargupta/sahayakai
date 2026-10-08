@@ -18,6 +18,7 @@ jest.mock('@/lib/logger/structured-logger', () => ({
 }));
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { toolErrorOf } from '@/lib/mcp/errors';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { mintApiKey, MCP_API_KEYS_COLLECTION, type McpScope } from '@/lib/mcp/api-keys';
 import { handleMcpHttpRequest, MAX_MCP_REQUEST_BYTES, type McpHandlerDeps } from '@/lib/mcp/http-handler';
@@ -94,6 +95,9 @@ async function connect(apiKey: string, extraHeaders: Record<string, string> = {}
         fetch: async (url, init) => callServer(new Request(url, init)),
     });
     await client.connect(transport);
+    // Like real MCP clients, list tools first: this arms the SDK client's output-schema
+    // validation, so an error result carrying non-conforming structuredContent fails here.
+    await client.listTools();
     return client;
 }
 const rawPost = (headers: Record<string, string>, body: unknown = { jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} }) =>
@@ -222,8 +226,8 @@ describe('create_lesson_plan — errors an agent can act on', () => {
         const client = await connect(keyA.apiKey);
         const res: any = await client.callTool({ name: 'create_lesson_plan', arguments: VALID });
         expect(res.isError).toBe(true);
-        expect(res.structuredContent.error).toMatchObject({ category, retryable });
-        if (category === 'rate_limited') expect(res.structuredContent.error.retry_after_seconds).toBe(420);
+        expect(toolErrorOf(res)).toMatchObject({ category, retryable });
+        if (category === 'rate_limited') expect(toolErrorOf(res)?.retry_after_seconds).toBe(420);
         await client.close();
     });
 
@@ -234,7 +238,7 @@ describe('create_lesson_plan — errors an agent can act on', () => {
         const client = await connect(keyA.apiKey);
         const res: any = await client.callTool({ name: 'create_lesson_plan', arguments: VALID });
         const wire = JSON.stringify(res);
-        expect(res.structuredContent.error).toMatchObject({ category: 'internal', retryable: true });
+        expect(toolErrorOf(res)).toMatchObject({ category: 'internal', retryable: true });
         for (const leak of ['TypeError', 'undefined', '/srv', 'lesson-plan-dispatch', 'AIza', 'stack']) expect(wire).not.toContain(leak);
         await client.close();
     });
@@ -243,7 +247,7 @@ describe('create_lesson_plan — errors an agent can act on', () => {
         rateLimit.mockRejectedValueOnce(new Error('Rate limit exceeded. Please wait 3 minutes.'));
         const client = await connect(keyA.apiKey);
         const res: any = await client.callTool({ name: 'create_lesson_plan', arguments: VALID });
-        expect(res.structuredContent.error).toMatchObject({ category: 'rate_limited', retry_after_seconds: 180 });
+        expect(toolErrorOf(res)).toMatchObject({ category: 'rate_limited', retry_after_seconds: 180 });
         expect(dispatch).not.toHaveBeenCalled();
         await client.close();
     });

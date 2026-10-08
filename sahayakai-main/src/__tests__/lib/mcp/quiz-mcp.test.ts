@@ -20,6 +20,7 @@ jest.mock('@/lib/logger/structured-logger', () => ({
 }));
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { toolErrorOf } from '@/lib/mcp/errors';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { mintApiKey, MCP_API_KEYS_COLLECTION, type McpScope } from '@/lib/mcp/api-keys';
 import { handleMcpHttpRequest, type McpCapabilityDefinition, type McpHandlerDeps } from '@/lib/mcp/http-handler';
@@ -87,6 +88,9 @@ async function connect(apiKey: string, extraHeaders: Record<string, string> = {}
         requestInit: { headers: { Authorization: `Bearer ${apiKey}`, ...extraHeaders } },
         fetch: async (url, init) => callServer(new Request(url, init)),
     }));
+    // Like real MCP clients, list tools first: this arms the SDK client's output-schema
+    // validation, so an error result carrying non-conforming structuredContent fails here.
+    await client.listTools();
     return client;
 }
 const rawPost = (headers: Record<string, string>, body: unknown = { jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} }, cap?: McpCapabilityDefinition) =>
@@ -196,7 +200,7 @@ describe('create_quiz — success path', () => {
         const client = await connect(keyA.apiKey);
         const res: any = await client.callTool({ name: 'create_quiz', arguments: VALID });
         expect(res.isError).toBe(true);
-        expect(res.structuredContent.error).toMatchObject({ category: 'generation_failed', retryable: true });
+        expect(toolErrorOf(res)).toMatchObject({ category: 'generation_failed', retryable: true });
         await client.close();
     });
 });
@@ -240,7 +244,7 @@ describe('create_quiz — errors an agent can act on', () => {
     ])('Sahayak\'s topic safety policy refuses %j before the service runs', async (args) => {
         const client = await connect(keyA.apiKey);
         const res: any = await client.callTool({ name: 'create_quiz', arguments: args });
-        expect(res.structuredContent.error).toMatchObject({ category: 'content_policy', retryable: false });
+        expect(toolErrorOf(res)).toMatchObject({ category: 'content_policy', retryable: false });
         expect(dispatch).not.toHaveBeenCalled();
         await client.close();
     });
@@ -256,8 +260,8 @@ describe('create_quiz — errors an agent can act on', () => {
         dispatch.mockRejectedValueOnce(thrown);
         const client = await connect(keyA.apiKey);
         const res: any = await client.callTool({ name: 'create_quiz', arguments: VALID });
-        expect(res.structuredContent.error).toMatchObject({ category, retryable });
-        expect(res.structuredContent.error.message).toMatch(msg);
+        expect(toolErrorOf(res)).toMatchObject({ category, retryable });
+        expect(toolErrorOf(res)?.message).toMatch(msg);
         await client.close();
     });
 

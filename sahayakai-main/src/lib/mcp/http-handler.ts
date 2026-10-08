@@ -54,8 +54,9 @@ export interface CapabilityRegistrationContext {
         toText: (result: T) => string,
     ): Promise<{
         content: { type: 'text'; text: string }[];
-        structuredContent: Record<string, unknown>;
+        structuredContent?: Record<string, unknown>;
         isError?: boolean;
+        _meta?: Record<string, unknown>;
     }>;
 }
 

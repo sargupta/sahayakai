@@ -92,19 +92,42 @@ export function classifyError(err: unknown): McpCapabilityError {
     return new McpCapabilityError('internal', GENERIC_INTERNAL);
 }
 
-/** The MCP `CallToolResult` for a failed tool call (isError: true). */
+/** `_meta` key carrying the machine-readable error of a failed tool call. */
+export const MCP_TOOL_ERROR_META_KEY = 'sahayak/error';
+
+export interface McpToolErrorPayload {
+    category: McpErrorCategory;
+    message: string;
+    retryable: boolean;
+    retry_after_seconds?: number;
+}
+
+/**
+ * The MCP `CallToolResult` for a failed tool call (isError: true).
+ *
+ * `structuredContent` is deliberately absent: it is reserved for the tool's
+ * declared output schema, and the official SDK client validates it against
+ * that schema even on error results — an `{ error }` object there makes every
+ * tool error surface as "-32602 Structured content does not match the tool's
+ * output schema". The machine-readable error travels in `_meta` instead.
+ */
 export function toToolErrorResult(error: McpCapabilityError) {
-    const payload = {
-        error: {
-            category: error.category,
-            message: error.message,
-            retryable: error.retryable,
-            ...(error.retryAfterSeconds ? { retry_after_seconds: error.retryAfterSeconds } : {}),
-        },
+    const payload: McpToolErrorPayload = {
+        category: error.category,
+        message: error.message,
+        retryable: error.retryable,
+        ...(error.retryAfterSeconds ? { retry_after_seconds: error.retryAfterSeconds } : {}),
     };
     return {
         isError: true as const,
         content: [{ type: 'text' as const, text: `${error.message} (${error.category})` }],
-        structuredContent: payload,
+        _meta: { [MCP_TOOL_ERROR_META_KEY]: payload },
     };
+}
+
+/** Read the machine-readable error of a failed tool call (undefined if absent, e.g. an SDK argument-validation error). */
+export function toolErrorOf(result: unknown): Partial<McpToolErrorPayload> | undefined {
+    const meta = (result as { _meta?: Record<string, unknown> } | null | undefined)?._meta;
+    const e = meta?.[MCP_TOOL_ERROR_META_KEY];
+    return e && typeof e === 'object' ? (e as Partial<McpToolErrorPayload>) : undefined;
 }

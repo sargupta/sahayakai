@@ -149,7 +149,7 @@ A key without `quiz` receives **403** here. A `quiz` key cannot call the other s
 
 ## 8. Errors
 
-Request-level errors (HTTP 401 / 403 / 405 / 413 / 503) and invalid-argument errors behave exactly as in the [Lesson Planner MCP](../lesson-planner/README.md#9-errors). Generation failures return `isError: true` with `structuredContent.error = { category, message, retryable, retry_after_seconds? }`:
+Request-level errors (HTTP 401 / 403 / 405 / 413 / 503) and invalid-argument errors behave exactly as in the [Lesson Planner MCP](../lesson-planner/README.md#9-errors). Generation failures return `isError: true` with `_meta["sahayak/error"] = { category, message, retryable, retry_after_seconds? }` (never `structuredContent`, which always matches the output schema):
 
 | `category` | Meaning | Retry? |
 |---|---|---|

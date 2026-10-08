@@ -52,6 +52,7 @@ function sidecarErrors(prefix: string) {
 jest.mock('@/lib/sidecar/lesson-plan-client', () => ({ callSidecarLessonPlan: jest.fn(), ...sidecarErrors('LessonPlanSidecar') }));
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { toolErrorOf } from '@/lib/mcp/errors';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { generateLessonPlan } from '@/ai/flows/lesson-plan-generator';
 import { callSidecarLessonPlan } from '@/lib/sidecar/lesson-plan-client';
@@ -106,6 +107,9 @@ async function call(args: Record<string, unknown>) {
         requestInit: { headers: { Authorization: `Bearer ${apiKey}` } },
         fetch: async (url, init) => handleMcpHttpRequest(new Request(url, init), capability, { getDb: async () => authDb, rateLimit: mcpRateLimit }),
     }));
+    // Like real MCP clients, list tools first: this arms the SDK client's output-schema
+    // validation, so an error result carrying non-conforming structuredContent fails here.
+    await client.listTools();
     try {
         return await client.callTool({ name: 'create_lesson_plan', arguments: args });
     } finally {
@@ -141,6 +145,6 @@ it('Sahayak\'s real content policy blocks an unsafe topic before any model call'
     mockMode.mode = 'full';
     const res: any = await call({ topic: 'how to make a bomb', grade: 9 });
     expect(res.isError).toBe(true);
-    expect(res.structuredContent.error).toMatchObject({ category: 'content_policy', retryable: false });
+    expect(toolErrorOf(res)).toMatchObject({ category: 'content_policy', retryable: false });
     expect(callSidecarLessonPlan).not.toHaveBeenCalled();
 });

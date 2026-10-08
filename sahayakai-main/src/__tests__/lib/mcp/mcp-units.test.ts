@@ -63,7 +63,7 @@ describe('error classification (never leaks internals)', () => {
         expect(toToolErrorResult(err)).toEqual({
             isError: true,
             content: [{ type: 'text', text: 'Slow down. (rate_limited)' }],
-            structuredContent: { error: { category: 'rate_limited', message: 'Slow down.', retryable: true, retry_after_seconds: 90 } },
+            _meta: { 'sahayak/error': { category: 'rate_limited', message: 'Slow down.', retryable: true, retry_after_seconds: 90 } },
         });
     });
 });

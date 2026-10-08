@@ -55,6 +55,7 @@ function sidecarErrors(prefix: string) {
 jest.mock('@/lib/sidecar/quiz-client', () => ({ callSidecarQuiz: jest.fn(), ...sidecarErrors('QuizSidecar') }));
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { toolErrorOf } from '@/lib/mcp/errors';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { quizGeneratorFlow } from '@/ai/flows/quiz-definitions';
 import { callSidecarQuiz } from '@/lib/sidecar/quiz-client';
@@ -110,6 +111,9 @@ async function call(args: Record<string, unknown>) {
         requestInit: { headers: { Authorization: `Bearer ${apiKey}` } },
         fetch: async (url, init) => handleMcpHttpRequest(new Request(url, init), capability, { getDb: async () => authDb, rateLimit: mcpRateLimit }),
     }));
+    // Like real MCP clients, list tools first: this arms the SDK client's output-schema
+    // validation, so an error result carrying non-conforming structuredContent fails here.
+    await client.listTools();
     try {
         return await client.callTool({ name: 'create_quiz', arguments: args });
     } finally {
@@ -150,7 +154,7 @@ describe.each(['off', 'full'] as const)('real dispatcher, %s mode (Genkit / ADK 
 
     it('Sahayak\'s topic safety policy blocks an unsafe topic before any model call', async () => {
         const res: any = await call({ ...ARGS, topic: 'how to make a bomb' });
-        expect(res.structuredContent.error).toMatchObject({ category: 'content_policy', retryable: false });
+        expect(toolErrorOf(res)).toMatchObject({ category: 'content_policy', retryable: false });
         expect(quizGeneratorFlow).not.toHaveBeenCalled();
         expect(callSidecarQuiz).not.toHaveBeenCalled();
     });

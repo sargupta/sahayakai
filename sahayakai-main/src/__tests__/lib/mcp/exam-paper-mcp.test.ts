@@ -18,6 +18,7 @@ jest.mock('@/lib/logger/structured-logger', () => ({
 }));
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { toolErrorOf } from '@/lib/mcp/errors';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { mintApiKey, MCP_API_KEYS_COLLECTION, type McpScope } from '@/lib/mcp/api-keys';
 import { handleMcpHttpRequest, type McpCapabilityDefinition, type McpHandlerDeps } from '@/lib/mcp/http-handler';
@@ -93,6 +94,9 @@ async function connect(apiKey: string, extraHeaders: Record<string, string> = {}
         requestInit: { headers: { Authorization: `Bearer ${apiKey}`, ...extraHeaders } },
         fetch: async (url, init) => callServer(new Request(url, init)),
     }));
+    // Like real MCP clients, list tools first: this arms the SDK client's output-schema
+    // validation, so an error result carrying non-conforming structuredContent fails here.
+    await client.listTools();
     return client;
 }
 const rawPost = (headers: Record<string, string>, body: unknown = { jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} }, cap?: McpCapabilityDefinition) =>
@@ -159,6 +163,24 @@ describe('create_exam_paper — success path', () => {
         });
         expect(isEnabledFor).toHaveBeenCalledWith('mcp:org-a');
         expect(rateLimit).toHaveBeenCalledWith(`mcp_${keyA.keyId}`);
+        await client.close();
+    });
+
+    it('validates both fresh and repeated create calls against the declared output schema', async () => {
+        const client = await connect(keyA.apiKey);
+        for (let attempt = 0; attempt < 2; attempt++) {
+            const res = await client.callTool({ name: 'create_exam_paper', arguments: VALID });
+            expect(res.isError).toBeFalsy();
+            expect(ExamPaperResult.parse(res.structuredContent)).toMatchObject({
+                title: SERVICE_PAPER.title,
+                board: 'CBSE',
+                grade: 8,
+                subject: 'Science',
+                total_question_marks: 10,
+                sections: expect.any(Array),
+            });
+        }
+        expect(dispatch).toHaveBeenCalledTimes(2);
         await client.close();
     });
 
@@ -246,8 +268,8 @@ describe('create_exam_paper — errors an agent can act on', () => {
         canAnchorWholeSyllabus.mockResolvedValueOnce(false);
         const client = await connect(keyA.apiKey);
         const res: any = await client.callTool({ name: 'create_exam_paper', arguments: { board: 'CBSE', grade: 3, subject: 'Sanskrit' } });
-        expect(res.structuredContent.error).toMatchObject({ category: 'invalid_input', retryable: false });
-        expect(res.structuredContent.error.message).toContain('"chapters"');
+        expect(toolErrorOf(res)).toMatchObject({ category: 'invalid_input', retryable: false });
+        expect(toolErrorOf(res)?.message).toContain('"chapters"');
         expect(dispatch).not.toHaveBeenCalled();
         await client.close();
     });
@@ -256,7 +278,7 @@ describe('create_exam_paper — errors an agent can act on', () => {
         isEnabledFor.mockResolvedValueOnce(false);
         const client = await connect(keyA.apiKey);
         const res: any = await client.callTool({ name: 'create_exam_paper', arguments: VALID });
-        expect(res.structuredContent.error).toMatchObject({ category: 'capability_disabled', retryable: false });
+        expect(toolErrorOf(res)).toMatchObject({ category: 'capability_disabled', retryable: false });
         expect(dispatch).not.toHaveBeenCalled();
         await client.close();
     });
@@ -273,8 +295,8 @@ describe('create_exam_paper — errors an agent can act on', () => {
         const client = await connect(keyA.apiKey);
         const res: any = await client.callTool({ name: 'create_exam_paper', arguments: VALID });
         expect(res.isError).toBe(true);
-        expect(res.structuredContent.error).toMatchObject({ category, retryable });
-        expect(res.structuredContent.error.message).toMatch(msg);
+        expect(toolErrorOf(res)).toMatchObject({ category, retryable });
+        expect(toolErrorOf(res)?.message).toMatch(msg);
         await client.close();
     });
 
@@ -285,7 +307,7 @@ describe('create_exam_paper — errors an agent can act on', () => {
         const client = await connect(keyA.apiKey);
         const res: any = await client.callTool({ name: 'create_exam_paper', arguments: VALID });
         const wire = JSON.stringify(res);
-        expect(res.structuredContent.error).toMatchObject({ category: 'internal', retryable: true });
+        expect(toolErrorOf(res)).toMatchObject({ category: 'internal', retryable: true });
         for (const leak of ['TypeError', 'undefined', '/srv', 'exam-paper-dispatch', 'AIza', 'stack']) expect(wire).not.toContain(leak);
         await client.close();
     });

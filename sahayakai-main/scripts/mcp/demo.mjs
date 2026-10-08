@@ -7,6 +7,7 @@
  *   npm run mcp:lesson-planner:demo        (= node scripts/mcp/demo.mjs lesson-planner)
  *   npm run mcp:exam-paper:demo            (= node scripts/mcp/demo.mjs exam-paper)
  *   npm run mcp:quiz:demo                  (= node scripts/mcp/demo.mjs quiz)
+ *   npm run mcp:exam-paper:demo -- --twice # call the tool twice on the SAME client/session
  *   PORT=3100 npm run mcp:exam-paper:demo  # local dev on another port
  *   SAHAYAK_MCP_URL=https://<host>/api/mcp/exam-paper SAHAYAK_MCP_API_KEY=sk_sahayak_… npm run mcp:exam-paper:demo
  *
@@ -41,7 +42,8 @@ const DEMOS = {
     'exam-paper': {
         name: 'Exam Paper Generator',
         tool: 'create_exam_paper',
-        input: { board: 'CBSE', grade: 8, subject: 'Science', chapters: ['Force and Pressure'], difficulty: 'medium', language: 'English' },
+        // A small unit test keeps the live demo quick.
+        input: { board: 'CBSE', grade: 8, subject: 'Science', chapters: ['Force and Pressure'], difficulty: 'medium', language: 'English', max_marks: 20, duration_minutes: 45 },
         expect: 'usually 30–75 s',
         check(paper) {
             const questions = (paper?.sections ?? []).flatMap((s) => s.questions ?? []);
@@ -70,6 +72,9 @@ const DEMOS = {
     },
 };
 
+/** The machine-readable error Sahayak attaches to a failed tool call (see src/lib/mcp/errors.ts). */
+const toolError = (res) => res?._meta?.['sahayak/error'] ?? res?.content?.[0]?.text ?? res;
+
 function readEnvLocal(name) {
     const file = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '.env.local');
     if (!existsSync(file)) return undefined;
@@ -77,7 +82,8 @@ function readEnvLocal(name) {
     return m ? m[1].replace(/^["']|["']$/g, '') : undefined;
 }
 
-const capability = process.argv[2] ?? 'lesson-planner';
+const capability = process.argv.slice(2).find((a) => !a.startsWith('--')) ?? 'lesson-planner';
+const runs = process.argv.includes('--twice') ? 2 : 1;
 const demo = DEMOS[capability];
 const url = process.env.SAHAYAK_MCP_URL ?? `http://localhost:${process.env.PORT ?? 3000}/api/mcp/${capability}`;
 const apiKey = process.env.SAHAYAK_MCP_API_KEY ?? readEnvLocal('MCP_LOCAL_DEV_API_KEY');
@@ -108,24 +114,33 @@ async function main() {
     const { tools } = await client.listTools(undefined, SLOW);
     const tool = tools.find((t) => t.name === demo.tool);
     console.log(`      discovered: ${tools.map((t) => t.name).join(', ')}`);
-    if (!tool) fail(`${demo.tool} was not discovered.`);
+    for (const name of [demo.tool, ...(demo.alsoExpect ?? [])]) {
+        if (!tools.some((t) => t.name === name)) fail(`${name} was not discovered.`);
+    }
     console.log(`      required inputs: ${(tool.inputSchema.required ?? []).join(', ')}`);
 
-    step(3, `tools/call ${demo.tool} ${JSON.stringify(demo.input)}`);
-    console.log(`      generating (${demo.expect})…`);
-    const started = Date.now();
-    const res = await client.callTool({ name: demo.tool, arguments: demo.input }, undefined, SLOW);
-    const secs = ((Date.now() - started) / 1000).toFixed(1);
+    // From here the SDK client holds the tool's declared outputSchema and validates every
+    // structuredContent it receives against it (a mismatch throws -32602).
+    const summaries = [];
+    for (let run = 1; run <= runs; run++) {
+        const label = runs > 1 ? ` (call ${run}/${runs}, same client)` : '';
+        step(3, `tools/call ${demo.tool} ${JSON.stringify(demo.input)}${label}`);
+        console.log(`      running (${demo.expect})…`);
+        const started = Date.now();
+        const res = await client.callTool({ name: demo.tool, arguments: demo.input }, undefined, SLOW);
+        const secs = ((Date.now() - started) / 1000).toFixed(1);
+        if (res.isError) fail(`tool returned an error after ${secs}s: ${JSON.stringify(toolError(res))}`);
+
+        const result = res.structuredContent;
+        step(4, `result received in ${secs}s${label}; structuredContent matched the declared outputSchema`);
+        console.log(`\n${res.content?.[0]?.text ?? JSON.stringify(result, null, 2)}`);
+
+        const summary = demo.check(result);
+        if (!summary) fail(demo.failure);
+        summaries.push(summary);
+    }
     await client.close();
-    if (res.isError) fail(`tool returned an error after ${secs}s: ${JSON.stringify(res.structuredContent ?? res.content)}`);
-
-    const result = res.structuredContent;
-    step(4, `result received in ${secs}s`);
-    console.log(`\n${res.content?.[0]?.text ?? JSON.stringify(result, null, 2)}`);
-
-    const summary = demo.check(result);
-    if (!summary) fail(demo.failure);
-    console.log(`\nPASS — discovered and invoked ${demo.tool}; ${summary}.`);
+    console.log(`\nPASS — discovered and invoked ${demo.tool}${runs > 1 ? ` ${runs}× on one client` : ''}; ${summaries.join(' | ')}.`);
 }
 
 main().then(() => process.exit(0), (e) => fail(e?.message ?? String(e)));

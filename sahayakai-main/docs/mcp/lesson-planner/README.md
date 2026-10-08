@@ -222,11 +222,17 @@ A valid key without the scope receives **403**, so a school can be granted only 
 Input validation error: Invalid arguments for tool create_lesson_plan: Invalid grade. Expected an integer between 1 and 12. at grade
 ```
 
-**Generation failures** come back as a tool result with `isError: true` and machine-readable details:
+**Generation failures** come back as a tool result with `isError: true`, a readable `content` text, and machine-readable details in `_meta["sahayak/error"]`:
 
 ```json
-{ "error": { "category": "rate_limited", "message": "Rate limit reached for this API key. Retry after about 7 minutes.", "retryable": true, "retry_after_seconds": 420 } }
+{
+  "isError": true,
+  "content": [{ "type": "text", "text": "Rate limit reached for this API key. Retry after about 7 minutes. (rate_limited)" }],
+  "_meta": { "sahayak/error": { "category": "rate_limited", "message": "Rate limit reached for this API key. Retry after about 7 minutes.", "retryable": true, "retry_after_seconds": 420 } }
+}
 ```
+
+Error results never carry `structuredContent`: that field is reserved for the tool's declared output schema, and the official MCP SDK client validates it against that schema even on errors (an error object there would surface as `-32602 Structured content does not match the tool's output schema`). Gate: `src/__tests__/lib/mcp/mcp-error-results.test.ts`.
 
 | `category` | Meaning | Retry? |
 |---|---|---|
