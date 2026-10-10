@@ -511,7 +511,7 @@ async def _hangup(call_uuid: str) -> None:
 class _Bridge:
     """Mutable state for one call. Small enough to read in one sitting."""
 
-    def __init__(self, ws: WebSocket, outreach_id: str, call_uuid: str) -> None:
+    def __init__(self, ws: WebSocket, outreach_id: str, call_uuid: str) -> None:  # noqa: PLR0915 — one line per piece of call state
         self.ws = ws
         self.outreach_id = outreach_id
         self.call_uuid = call_uuid
@@ -613,6 +613,14 @@ class _Bridge:
         self.tool_calls = 0
         #: Last time the parent's audio cleared the speech threshold.
         self.last_parent_voice_at = 0.0
+        #: The goodbye safety net is waiting to see whether the model closes.
+        self.goodbye_net_armed = False
+        #: Speech frames generated vs. actually sent for the turn in progress,
+        #: so an interrupted turn is transcribed as far as the parent heard it.
+        self.turn_frames_generated = 0
+        self.turn_frames_played = 0
+        #: The model is mid-turn (audio arrived, no turn_complete/interrupt yet).
+        self.model_turn_open = False
 
 
 def _kickoff_text(opener_played: bool) -> str:
@@ -902,6 +910,35 @@ def _agent_said(bridge: _Bridge, fragment: str) -> None:
     bridge.agent_turn_text += fragment
 
 
+def _heard_so_far(bridge: _Bridge, text: str) -> str:
+    """`text` cut to the share of this turn's audio that has been sent."""
+    if bridge.turn_frames_generated <= 0:
+        return text
+    return _heard_part(text, bridge.turn_frames_played / bridge.turn_frames_generated)
+
+
+def _truncate_last_agent_entry(bridge: _Bridge) -> None:
+    """The turn was already filed (generation ended) but was still PLAYING when
+    the parent cut in: rewrite its entry to what they heard."""
+    if not bridge.transcript or bridge.transcript[-1]["role"] != "agent":
+        return
+    heard = _heard_so_far(bridge, bridge.transcript[-1]["text"])
+    bridge.transcript[-1]["text"] = f"{heard} …" if heard else "…"
+
+
+def _heard_part(text: str, fraction: float) -> str:
+    """The words of a cut-off turn the parent actually heard, approximately.
+
+    The model's transcription runs ahead of playout: on the staging run a turn
+    interrupted 1.5 s in was transcribed in full, so the record said the
+    parent heard a message they never did. Keep the share of words matching
+    the share of the turn's audio that was sent.
+    """
+    words = text.split()
+    keep = round(len(words) * min(1.0, max(0.0, fraction)))
+    return " ".join(words[:keep])
+
+
 def _commit_agent_turn(bridge: _Bridge, *, interrupted: bool = False) -> None:
     """File VIDYA's finished (or cut-off) turn in the transcript.
 
@@ -912,6 +949,8 @@ def _commit_agent_turn(bridge: _Bridge, *, interrupted: bool = False) -> None:
     """
     text = _SPACES.sub(" ", bridge.agent_turn_text).strip()
     bridge.agent_turn_text = ""
+    if interrupted:
+        text = _heard_so_far(bridge, text)
     if not text:
         return
     before = bridge.dialogue.repeat_intros
@@ -1282,7 +1321,11 @@ def _silence_current_reply(bridge: _Bridge, *, model_still_sending: bool) -> Non
     if model_still_sending:
         # Whatever the model is still streaming for this reply is stale.
         bridge.discard_model_audio = True
-    _commit_agent_turn(bridge, interrupted=was_playing)
+    if bridge.agent_turn_text.strip():
+        _commit_agent_turn(bridge, interrupted=was_playing)
+    elif was_playing:
+        _truncate_last_agent_entry(bridge)
+    bridge.model_turn_open = False
 
 
 def _cancel_response(bridge: _Bridge, *, by_model: bool) -> None:
@@ -1363,8 +1406,33 @@ async def _handle_parent_speech(bridge: _Bridge, session: Any, server: Any) -> N
     if is_optout(bridge.recent_speech):
         bridge.opted_out = True
         await _begin_close(bridge, session, "opt_out")
-    elif is_goodbye(bridge.parent_said[-1]) and _may_end_yet(bridge):
-        await _begin_close(bridge, session, "goodbye")
+    elif (
+        is_goodbye(bridge.parent_said[-1])
+        and _may_end_yet(bridge)
+        and not bridge.goodbye_net_armed
+    ):
+        bridge.goodbye_net_armed = True
+        _spawn(bridge, _close_unless_model_does(bridge, session))
+
+
+#: How long the goodbye safety net lets the model close the call itself.
+_GOODBYE_NET_GRACE_SECONDS = 3.0
+
+
+async def _close_unless_model_does(bridge: _Bridge, session: Any) -> None:
+    """The parent said goodbye: give the MODEL the first chance to close.
+
+    Sending the closing cue at once raced the model's own goodbye: on the
+    staging run the cue went out 86 ms before the model's end_call, and the
+    parent heard "Thank you for your time… Thank you for your time," — two
+    goodbyes. The model closes properly almost always; this net only speaks
+    when it has not (no end_call, no spoken farewell) within the grace period.
+    """
+    await asyncio.sleep(_GOODBYE_NET_GRACE_SECONDS)
+    bridge.goodbye_net_armed = False
+    if bridge.closing or bridge.stop:
+        return
+    await _begin_close(bridge, session, "goodbye")
 
 
 def _must_end_now(bridge: _Bridge) -> bool:
@@ -1595,8 +1663,17 @@ def _on_agent_transcription(bridge: _Bridge, server: Any) -> None:
     spoken = getattr(server, "output_transcription", None)
     text = (getattr(spoken, "text", "") or "") if spoken else ""
     if text.strip() and not bridge.discard_model_audio:
+        _open_model_turn(bridge)
         _agent_said(bridge, text)
         bridge.agent_spoke_since_parent = True
+
+
+def _open_model_turn(bridge: _Bridge) -> None:
+    """A new model turn starts at its first audio OR its first transcription;
+    what was played before belongs to the previous turn."""
+    if not bridge.model_turn_open:
+        bridge.model_turn_open = True
+        bridge.turn_frames_generated = bridge.turn_frames_played = 0
 
 
 def _on_model_audio(bridge: _Bridge, data: bytes | None) -> None:
@@ -1612,7 +1689,9 @@ def _on_model_audio(bridge: _Bridge, data: bytes | None) -> None:
     bridge.model_last_audio = bridge.last_activity
     if bridge.first_audio_at is None:
         bridge.first_audio_at = time.monotonic()
+    _open_model_turn(bridge)
     ulaw, bridge.decimator = pcm24k_to_ulaw8k(data, bridge.decimator)
+    bridge.turn_frames_generated += len(ulaw) // _FRAME_BYTES
     _queue_ulaw(bridge, ulaw)
 
 
@@ -1650,6 +1729,7 @@ async def _pump_live_to_carrier(bridge: _Bridge, session: Any) -> str:
                 # The abandoned response is over even if the model never
                 # flagged it as interrupted; what follows is new speech.
                 bridge.discard_model_audio = False
+                bridge.model_turn_open = False
                 _commit_agent_turn(bridge)
 
             _on_model_audio(bridge, getattr(resp, "data", None))
@@ -1764,6 +1844,7 @@ async def _pace_outbound(bridge: _Bridge) -> None:
                 return
             if is_speech:
                 bridge.last_speech_frame_at = time.monotonic()
+                bridge.turn_frames_played += 1
         if not is_speech:
             # A cancel empties the queue; the first tick with nothing to play
             # is when VIDYA actually went quiet.

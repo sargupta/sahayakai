@@ -124,6 +124,7 @@ async def _call(turns: list[list[SimpleNamespace]], *, lookups: bool = True) -> 
         if not b.tool_tasks:
             break
         await asyncio.sleep(0.01)
+    await asyncio.sleep(0.05)  # let tasks spawned by the last turn (e.g. the goodbye net) run
     b.stop = True
     await asyncio.wait_for(task, timeout=2)
     return b, session
@@ -173,13 +174,17 @@ class TestScriptedCalls:
         assert b.dialogue.interruptions == 1
         assert b.transcript[-1]["role"] == "agent"
 
-    async def test_code_mixed_goodbye_closes_after_a_real_conversation(self) -> None:
+    async def test_code_mixed_goodbye_closes_after_a_real_conversation(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(telephony, "_GOODBYE_NET_GRACE_SECONDS", 0.0)
         b, s = await _call([
             INTRO,
             [parent("haan ji boliye")],
             DELIVER,
             [parent("achha theek hai, थैंक यू सो मच")],
         ], lookups=False)
+        await asyncio.sleep(0.2)  # the net gives the model the first chance
         assert b.closing, "a code-mixed goodbye after two turns must close the call"
         assert any("signing off" in c for c in s.cues)
         assert "ALREADY introduced" in s.cues[-1]
@@ -242,3 +247,84 @@ class TestLongPause:
         assert session.cues, "no nudge after a long pause"
         assert "do not repeat it" in session.cues[0]
         assert "ALREADY introduced" in session.cues[0]
+
+
+
+@pytest.mark.asyncio
+class TestOneGoodbyeNotTwo:
+    """Staging run, 2026-10-10: the safety net's closing cue went out 86 ms before
+    the model's own end_call, and the parent heard two goodbyes."""
+
+    async def test_the_model_closing_itself_means_no_second_cue(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(telephony, "_GOODBYE_NET_GRACE_SECONDS", 0.2)
+        b, s = await _call([
+            INTRO,
+            [parent("yes")],
+            DELIVER,
+            [parent("okay thank you so much, bye"),
+             *agent("Thank you for your time. We're partners in Ravi's success."),
+             tool("end_call", "e1", reason="parent_finished")],
+        ], lookups=False)
+        await asyncio.sleep(0.4)
+        assert b.closing
+        assert not any("signing off" in c for c in s.cues), "a second goodbye was requested"
+        for t in list(b.background):
+            t.cancel()
+
+    async def test_the_net_still_closes_if_the_model_does_not(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(telephony, "_GOODBYE_NET_GRACE_SECONDS", 0.0)
+        b, s = await _call([
+            INTRO,
+            [parent("yes")],
+            DELIVER,
+            [parent("okay thank you so much, bye")],
+            agent("Would you like the teacher to call you back?"),  # the model ignores it
+        ], lookups=False)
+        await asyncio.sleep(0.3)
+        assert b.closing
+        assert sum("signing off" in c for c in s.cues) == 1
+        for t in list(b.background):
+            t.cancel()
+
+
+class TestTheTranscriptSaysWhatWasHeard:
+    """Staging run, 2026-10-10: a turn interrupted 1.5 s in was transcribed in
+    full, because the model's transcription runs ahead of playout."""
+
+    def _bridge(self) -> Any:
+        b = telephony._Bridge(_Ws(), "o", call_uuid="")  # type: ignore[arg-type]
+        b.stream_id = "s"
+        return b
+
+    def test_a_turn_cut_while_generating_keeps_the_heard_share(self) -> None:
+        b = self._bridge()
+        b.agent_turn_text = " one two three four five six seven eight nine ten"
+        b.model_turn_open = True
+        b.turn_frames_generated, b.turn_frames_played = 100, 30
+        b.out.put_nowait((b.generation, b"x" * 160))
+        telephony._silence_current_reply(b, model_still_sending=True)
+        assert b.transcript[-1]["text"] == "one two three …"
+
+    def test_a_filed_turn_still_playing_is_rewritten(self) -> None:
+        b = self._bridge()
+        b.agent_turn_text = " alpha beta gamma delta"
+        telephony._commit_agent_turn(b)  # turn_complete: filed in full
+        b.turn_frames_generated, b.turn_frames_played = 40, 20
+        b.out.put_nowait((b.generation, b"x" * 160))  # ...but still playing
+        telephony._silence_current_reply(b, model_still_sending=False)
+        assert b.transcript[-1]["text"] == "alpha beta …"
+
+    def test_a_turn_that_finished_playing_is_left_alone(self) -> None:
+        b = self._bridge()
+        b.agent_turn_text = " all of it was heard"
+        telephony._commit_agent_turn(b)
+        b.turn_frames_generated = b.turn_frames_played = 50
+        telephony._silence_current_reply(b, model_still_sending=False)  # nothing playing
+        assert b.transcript[-1]["text"] == "all of it was heard"
+
+    def test_counters_restart_with_each_new_turn(self) -> None:
+        b = self._bridge()
+        b.turn_frames_generated, b.turn_frames_played = 10, 10
+        telephony._on_model_audio(b, bytes([0x10, 0x00]) * 480 * 5)
+        assert b.model_turn_open and b.turn_frames_played == 0
+        assert b.turn_frames_generated > 0

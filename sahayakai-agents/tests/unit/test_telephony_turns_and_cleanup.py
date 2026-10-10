@@ -123,7 +123,11 @@ class TestTurnsAreUtterances:
         assert bridge.parent_said[-1] == "ghar par kya karna chahiye?"
         assert not telephony._may_end_yet(bridge)
 
-    async def test_a_goodbye_split_across_fragments_closes_the_call(self) -> None:
+    async def test_a_goodbye_split_across_fragments_closes_the_call(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # The net gives the model the first chance to close; here it does not.
+        monkeypatch.setattr(telephony, "_GOODBYE_NET_GRACE_SECONDS", 0.0)
         bridge = _bridge()
         session = _FakeSession()
         await telephony._handle_parent_speech(bridge, session, _parent("haan boliye"))
@@ -132,6 +136,7 @@ class TestTurnsAreUtterances:
         _agent_speaks(bridge)
         for fragment in ("thank", "you so much", "namaskar"):
             await telephony._handle_parent_speech(bridge, session, _parent(fragment))
+        await asyncio.sleep(0.05)
         assert bridge.closing
         for task in list(bridge.background):
             task.cancel()
