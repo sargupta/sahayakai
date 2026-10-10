@@ -247,7 +247,7 @@ def _bridge(reader: _Reader) -> Any:
     b.tools = _tools(reader)
     b.dialogue.on_agent_turn("Am I speaking with Ravi's parent?")
     b.parent_said.append("haan ji")
-    b.dialogue.confirm_identity("confirmed", parent_turns=1)
+    b.dialogue.confirm_identity("confirmed", parent_turns=1, parent_reply="haan ji")
     return b
 
 

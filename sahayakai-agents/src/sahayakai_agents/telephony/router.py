@@ -48,7 +48,7 @@ from .audio import (
     ulaw_to_pcm16,
 )
 from .barge_in import Action, BargeIn, frame_level, percentile
-from .dialogue import DialogueState
+from .dialogue import DialogueState, looks_affirmative
 from .flow import (
     CLOSE,
     KICKOFF_AFTER_OPENER,
@@ -611,6 +611,8 @@ class _Bridge:
         #: Lookups in flight, by function-call id, so a cancellation can find them.
         self.tool_tasks: dict[str, asyncio.Task[Any]] = {}
         self.tool_calls = 0
+        #: Last time the parent's audio cleared the speech threshold.
+        self.last_parent_voice_at = 0.0
 
 
 def _kickoff_text(opener_played: bool) -> str:
@@ -921,6 +923,38 @@ def _commit_agent_turn(bridge: _Bridge, *, interrupted: bool = False) -> None:
             count=bridge.dialogue.repeat_intros,
         )
     _record_turn(bridge, "agent", f"{text} …" if interrupted else text)
+    if not interrupted and not bridge.closing and _is_agent_farewell(text):
+        _spawn(bridge, _end_if_model_forgets(bridge, time.monotonic()))
+
+
+#: VIDYA's turn ends in an explicit goodbye.
+_AGENT_FAREWELL = re.compile(
+    r"(\b(good ?bye|bye|take care)\b|अलविदा|नमस्ते|नमस्कार|ಬಾಯ್|பை|বিদায়)[\W\s]*$",
+    re.IGNORECASE,
+)
+#: How long after VIDYA's goodbye to wait for the model's own end_call.
+_FAREWELL_GRACE_SECONDS = 2.5
+
+
+def _is_agent_farewell(text: str) -> bool:
+    return bool(_AGENT_FAREWELL.search(text.strip()[-60:]))
+
+
+async def _end_if_model_forgets(bridge: _Bridge, said_at: float) -> None:
+    """VIDYA said goodbye but the model did not call end_call. End it anyway.
+
+    Against the real model, a wrong-number call ended "...I'll make a note of
+    this. Goodbye." with no end_call, which would have left a stranger holding
+    an open line until the silence nudges ran out. If the parent speaks after
+    the goodbye, they are not done, and the call carries on.
+    """
+    await asyncio.sleep(_FAREWELL_GRACE_SECONDS)
+    if bridge.closing or bridge.stop or bridge.last_parent_voice_at > said_at:
+        return
+    log.info("telephony.agent_farewell_close", outreach_id=bridge.outreach_id)
+    bridge.closing = True
+    bridge.dialogue.begin_closing()
+    await _drain_then_stop(bridge)
 
 
 def _spawn(bridge: _Bridge, coro: Any) -> asyncio.Task[Any]:
@@ -1162,6 +1196,7 @@ def _note_parent_audio(bridge: _Bridge, ulaw: bytes) -> None:
     if bridge.loud_frames >= _PARENT_SPEECH_FRAMES:
         bridge.engaged = True
         bridge.last_activity = time.monotonic()
+        bridge.last_parent_voice_at = bridge.last_activity
 
 
 #: VIDYA counts as audible for this long after her last frame was sent: the
@@ -1234,6 +1269,22 @@ def _measure_stop(bridge: _Bridge) -> None:
     bridge.detect_to_stop_ms.append(max(0.0, end - detected) * 1000)
 
 
+def _silence_current_reply(bridge: _Bridge, *, model_still_sending: bool) -> None:
+    """Empty every place the current reply's audio can be, and file it as cut off."""
+    was_playing = bool(bridge.pending) or not bridge.out.empty() or bridge.barge.paused
+    bridge.generation += 1
+    bridge.pending = b""
+    bridge.decimator = None
+    while not bridge.out.empty():
+        with contextlib.suppress(asyncio.QueueEmpty):
+            bridge.out.get_nowait()
+    bridge.clear_pending = True
+    if model_still_sending:
+        # Whatever the model is still streaming for this reply is stale.
+        bridge.discard_model_audio = True
+    _commit_agent_turn(bridge, interrupted=was_playing)
+
+
 def _cancel_response(bridge: _Bridge, *, by_model: bool) -> None:
     """Abandon the response the parent talked over, completely.
 
@@ -1243,19 +1294,9 @@ def _cancel_response(bridge: _Bridge, *, by_model: bool) -> None:
     already handed to the queue unplayable, and `discard_model_audio` drops the
     chunks the model is still streaming for the abandoned turn.
     """
-    was_playing = bool(bridge.pending) or not bridge.out.empty() or bridge.barge.paused
-    bridge.generation += 1
-    bridge.pending = b""
-    bridge.decimator = None
-    while not bridge.out.empty():
-        with contextlib.suppress(asyncio.QueueEmpty):
-            bridge.out.get_nowait()
-    bridge.clear_pending = True
+    _silence_current_reply(bridge, model_still_sending=not by_model)
     if not by_model:
-        # The model has not noticed yet; what it is still sending is stale.
-        bridge.discard_model_audio = True
         _arm_stop_measurement(bridge)
-    _commit_agent_turn(bridge, interrupted=was_playing)
     bridge.dialogue.on_interrupted()
     log.info(
         "telephony.barge_in",
@@ -1374,14 +1415,9 @@ async def _handle_tool_call(bridge: _Bridge, session: Any, tool_call: Any) -> No
                 bridge.tool_tasks[fc.id] = task
             continue
         if fc.name == "confirm_parent_identity":
-            status = str((dict(fc.args or {})).get("status") or "")
-            _, outcome = bridge.dialogue.confirm_identity(
-                status, parent_turns=len(bridge.parent_said)
-            )
-            log.info("telephony.identity", outreach_id=bridge.outreach_id, outcome=outcome)
-            immediate.append(
-                genai_types.FunctionResponse(id=fc.id, name=fc.name, response={"status": outcome})
-            )
+            task = _spawn(bridge, _run_identity_check(bridge, session, fc))
+            if fc.id:
+                bridge.tool_tasks[fc.id] = task
             continue
         if fc.name != "end_call":
             immediate.append(
@@ -1441,6 +1477,50 @@ async def _handle_tool_call(bridge: _Bridge, session: Any, tool_call: Any) -> No
     if immediate:
         with contextlib.suppress(Exception):
             await session.send_tool_response(function_responses=immediate)
+
+
+#: The parent's "yes" is transcribed late, often after the model has already
+#: decided to call `confirm_parent_identity`. Wait this long for it.
+_IDENTITY_TRANSCRIPT_WAIT = 1.2
+
+
+async def _run_identity_check(bridge: _Bridge, session: Any, fc: Any) -> None:
+    """Check the model's identity claim against what the parent actually said."""
+    from google.genai import types as genai_types
+
+    try:
+        status = str((dict(fc.args or {})).get("status") or "")
+        if status == "confirmed":
+            deadline = time.monotonic() + _IDENTITY_TRANSCRIPT_WAIT
+            seen = len(bridge.parent_said)
+            while time.monotonic() < deadline:
+                latest = bridge.parent_said[-1] if bridge.parent_said else None
+                if latest and looks_affirmative(latest):
+                    break
+                if len(bridge.parent_said) > seen and latest:
+                    break  # a new answer arrived and it is not a yes
+                await asyncio.sleep(0.05)
+        _, outcome = bridge.dialogue.confirm_identity(
+            status,
+            parent_turns=len(bridge.parent_said),
+            parent_reply=bridge.parent_said[-1] if bridge.parent_said else None,
+        )
+        log.info("telephony.identity", outreach_id=bridge.outreach_id, outcome=outcome)
+        response: dict[str, Any] = {"status": outcome}
+        if outcome == "not_confirmed_ask_directly":
+            response["say"] = (
+                "Do not share anything about the child yet. Ask plainly, once, whether "
+                "you are speaking with the child's parent or guardian."
+            )
+        with contextlib.suppress(Exception):
+            await session.send_tool_response(
+                function_responses=[
+                    genai_types.FunctionResponse(id=fc.id, name=fc.name, response=response)
+                ]
+            )
+    finally:
+        if fc.id:
+            bridge.tool_tasks.pop(fc.id, None)
 
 
 async def _run_lookup(bridge: _Bridge, session: Any, fc: Any) -> None:

@@ -24,7 +24,9 @@ import re
 from dataclasses import dataclass, field
 from enum import Enum
 
-__all__ = ["Identity", "Phase", "DialogueState"]
+from .flow import indic_word
+
+__all__ = ["Identity", "Phase", "DialogueState", "looks_affirmative"]
 
 
 class Phase(Enum):
@@ -53,6 +55,43 @@ _INTRO_MARKERS = re.compile(r"\b(calling from|on behalf of|calling for)\b", re.I
 
 def _content_words(text: str) -> set[str]:
     return {w.lower() for w in _WORD.findall(text or "") if len(w) > 3}
+
+
+#: Words a parent uses to say "yes, that's me" — romanised English/Hindi plus
+#: each supported script. Deliberately narrow: a miss only means VIDYA asks
+#: once more, a false hit reads a child's record to a stranger.
+#: Script words are whole-word matched with `indic_word` — `\b` is unreliable
+#: in Indic scripts, and as a bare substring Marathi "हो" (yes) would match
+#: inside Hindi "होमवर्क" (homework).
+_AFFIRM_SCRIPT = (
+    "हाँ", "हां", "जी", "बोल रहा", "बोल रही", "मम्मी", "पापा", "माँ", "पिता", "अभिभावक",
+    "হ্যাঁ", "হাঁ", "বলছি", "মা", "বাবা", "हो", "होय", "बोलतोय", "बोलतेय", "आई", "बाबा",
+    "હા", "બોલું", "ਹਾਂ", "ਜੀ", "ಹೌದು", "ಹೂಂ", "ಅಮ್ಮ", "ಅಪ್ಪ", "ஆமா", "ஆமாம்", "ஆம்",
+    "அம்மா", "அப்பா", "అవును", "అమ్మ", "నాన్న", "അതെ", "ഉവ്വ്", "അമ്മ", "അച്ഛൻ", "ହଁ",
+)
+_DENY_SCRIPT = (
+    "नहीं", "नही", "गलत", "না", "ভুল", "नाही", "ના", "ਨਹੀਂ", "ಇಲ್ಲ", "இல்லை", "కాదు",
+    "లేదు", "അല്ല", "ഇല്ല", "ନା",
+)
+_AFFIRM = re.compile(
+    r"\b(yes|yeah|yep|yup|speaking|haan|haa|han|hanji|haanji|ji|mother|father|"
+    r"mom|mum|mummy|mama|dad|papa|guardian|parent|i am his|i am her|i'm his|i'm her|"
+    r"bol raha|bol rahi|bol rha|bol rhi)\b|"
+    + "|".join(indic_word(w) for w in _AFFIRM_SCRIPT),
+    re.IGNORECASE,
+)
+_DENY = re.compile(
+    r"\b(no|nope|not|nahi|nahin|wrong|galat)\b|"
+    + "|".join(indic_word(w) for w in _DENY_SCRIPT),
+    re.IGNORECASE,
+)
+
+
+def looks_affirmative(text: str | None) -> bool:
+    """Did the parent's reply actually say "yes, I'm the parent"?"""
+    if not text:
+        return False
+    return bool(_AFFIRM.search(text)) and not _DENY.search(text)
 
 
 @dataclass
@@ -91,12 +130,16 @@ class DialogueState:
     def on_interrupted(self) -> None:
         self.interruptions += 1
 
-    def confirm_identity(self, status: str, *, parent_turns: int) -> tuple[bool, str]:
+    def confirm_identity(
+        self, status: str, *, parent_turns: int, parent_reply: str | None = None
+    ) -> tuple[bool, str]:
         """The model reports what the parent said about who they are.
 
-        The model proposes; the bridge checks it is even possible: the agent
-        must have asked (introduced) and the parent must have spoken. A
-        "confirmed" with no parent speech is refused.
+        The model proposes; the bridge checks. The agent must have asked
+        (introduced), the parent must have spoken, and what they said must
+        actually be a yes. Against the real model, a parent who answered "am I
+        speaking with Ravi's parent?" with "what is his attendance?" was
+        reported as confirmed — so the model's word alone is not enough.
         """
         if status == "wrong_person":
             self.identity = Identity.DENIED
@@ -108,6 +151,8 @@ class DialogueState:
             return False, "parent_has_not_answered"
         if self.identity is Identity.DENIED:
             return False, "already_denied"
+        if not looks_affirmative(parent_reply):
+            return False, "not_confirmed_ask_directly"
         self.identity = Identity.CONFIRMED
         self._advance()
         return True, "confirmed"

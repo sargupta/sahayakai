@@ -36,7 +36,9 @@ class TestPhases:
         assert d.phase is Phase.OPENING
         d.on_agent_turn("I'm calling from Sahayak Test School on behalf of Ms. Rao. Am I speaking with Ravi's parent?")
         assert d.introduced and d.phase is Phase.IDENTITY
-        assert d.confirm_identity("confirmed", parent_turns=1) == (True, "confirmed")
+        assert d.confirm_identity(
+            "confirmed", parent_turns=1, parent_reply="Yes, I'm his mother."
+        ) == (True, "confirmed")
         assert d.phase is Phase.MESSAGE
         d.on_agent_turn(
             "Ms. Rao wanted you to know Ravi's science performance has declined recently, "
@@ -89,6 +91,37 @@ class TestIdentityGate:
         assert d.confirm_identity("confirmed", parent_turns=2) == (False, "already_denied")
         assert not d.may_share_student_data
         assert "share nothing" in d.cue_context()
+
+
+class TestTheParentMustActuallySayYes:
+    """The model's word is not enough (seen against the real model: a parent who
+    answered the identity question with "what is his attendance?" was reported
+    as confirmed)."""
+
+    def _asked(self) -> DialogueState:
+        d = _state()
+        d.on_agent_turn("Am I speaking with Ravi's parent?")
+        return d
+
+    @pytest.mark.parametrize("reply", [
+        "Yes, I'm his mother.", "Haan ji, main Ravi ki mummy bol rahi hoon.", "speaking",
+        "हाँ जी, मैं उसकी माँ हूँ", "ಹೌದು, ನಾನು ಅವನ ಅಮ್ಮ", "ஆமா, நான் அவங்க அம்மா",
+        "అవును", "হ্যাঁ, আমি ওর মা", "हो, मी त्याची आई",
+    ])
+    def test_a_real_yes_confirms(self, reply: str) -> None:
+        d = self._asked()
+        assert d.confirm_identity("confirmed", parent_turns=1, parent_reply=reply)[0], reply
+
+    @pytest.mark.parametrize("reply", [
+        "What is his attendance?", "Who is this?", "No, wrong number.",
+        "Nahi, main padosi hoon.", "होमवर्क कैसा है?", "", None,
+        "Yes but I am not his parent",
+    ])
+    def test_anything_else_does_not(self, reply: str | None) -> None:
+        d = self._asked()
+        ok, outcome = d.confirm_identity("confirmed", parent_turns=1, parent_reply=reply)
+        assert not ok and outcome == "not_confirmed_ask_directly"
+        assert not d.may_share_student_data
 
 
 class TestCues:
@@ -224,12 +257,14 @@ class TestIdentityTool:
             SimpleNamespace(id="1", name="confirm_parent_identity", args={"status": "confirmed"})
         ])
         await telephony._handle_tool_call(b, session, call)
+        await asyncio.gather(*list(b.background))
         # The parent has not spoken: the claim is refused.
         assert session.tool_responses[-1]["function_responses"][0].response == {
             "status": "parent_has_not_answered"
         }
         b.parent_said.append("haan ji, main Ravi ki mummy")
         await telephony._handle_tool_call(b, session, call)
+        await asyncio.gather(*list(b.background))
         assert session.tool_responses[-1]["function_responses"][0].response == {"status": "confirmed"}
         assert b.dialogue.may_share_student_data
 
@@ -253,3 +288,64 @@ class TestIdentityTool:
         ])
         await telephony._handle_tool_call(b, session, call)
         assert session.tool_responses[-1]["function_responses"][0].response == {"error": "unknown_tool"}
+
+
+@pytest.mark.asyncio
+class TestIdentityWaitsForTheLateTranscript:
+    async def test_a_yes_that_arrives_late_still_confirms(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        b = telephony._Bridge(_Ws(), "o", call_uuid="")  # type: ignore[arg-type]
+        b.dialogue = _state()
+        b.dialogue.on_agent_turn("Am I speaking with Ravi's parent?")
+        session = _Session([])
+        call = SimpleNamespace(function_calls=[
+            SimpleNamespace(id="1", name="confirm_parent_identity", args={"status": "confirmed"})
+        ])
+        await telephony._handle_tool_call(b, session, call)
+        await asyncio.sleep(0.3)
+        b.parent_said.append("haan ji, bol rahi hoon")  # transcription lands late
+        await asyncio.gather(*list(b.background))
+        assert session.tool_responses[-1]["function_responses"][0].response == {"status": "confirmed"}
+
+    async def test_a_question_instead_of_an_answer_is_refused(self) -> None:
+        b = telephony._Bridge(_Ws(), "o", call_uuid="")  # type: ignore[arg-type]
+        b.dialogue = _state()
+        b.dialogue.on_agent_turn("Am I speaking with Ravi's parent?")
+        b.parent_said.append("What is his attendance?")
+        session = _Session([])
+        call = SimpleNamespace(function_calls=[
+            SimpleNamespace(id="1", name="confirm_parent_identity", args={"status": "confirmed"})
+        ])
+        await telephony._handle_tool_call(b, session, call)
+        await asyncio.gather(*list(b.background))
+        resp = session.tool_responses[-1]["function_responses"][0].response
+        assert resp["status"] == "not_confirmed_ask_directly"
+        assert not b.dialogue.may_share_student_data
+
+
+@pytest.mark.asyncio
+class TestTheModelForgettingEndCall:
+    async def _farewell(self, monkeypatch: pytest.MonkeyPatch, *, parent_speaks: bool) -> Any:
+        monkeypatch.setattr(telephony, "_FAREWELL_GRACE_SECONDS", 0.1)
+        monkeypatch.setattr(telephony, "_PREBUFFER_SECONDS", 0.0)
+        b = telephony._Bridge(_Ws(), "o", call_uuid="")  # type: ignore[arg-type]
+        b.agent_turn_text = " My apologies, I have the wrong number. Goodbye."
+        telephony._commit_agent_turn(b)
+        if parent_speaks:
+            import time as _t
+            b.last_parent_voice_at = _t.monotonic() + 0.01
+        await asyncio.sleep(0.8)
+        return b
+
+    async def test_a_spoken_goodbye_ends_the_call(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        b = await self._farewell(monkeypatch, parent_speaks=False)
+        assert b.closing and b.stop
+
+    async def test_the_parent_speaking_after_it_keeps_the_call(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        b = await self._farewell(monkeypatch, parent_speaks=True)
+        assert not b.closing and not b.stop
+
+    def test_only_a_goodbye_at_the_end_counts(self) -> None:
+        assert telephony._is_agent_farewell("Thank you for your time. Goodbye!")
+        assert telephony._is_agent_farewell("धन्यवाद, नमस्ते।")
+        assert not telephony._is_agent_farewell("Goodbye isn't what I meant — any questions?")
+        assert not telephony._is_agent_farewell("Thank you. Ms. Rao wanted you to know Ravi did well.")
