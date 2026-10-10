@@ -324,3 +324,24 @@ def test_the_prompt_mentions_lookups_only_when_on() -> None:
     assert "confirm_parent_identity" in on and "get_attendance_summary" in on
     # Delivery-only calls never invite a lookup conversation.
     assert "confirm_parent_identity" not in build_parent_call_instruction(ctx, lookups=True, two_way=False)
+
+
+@pytest.mark.asyncio
+class TestWarmUp:
+    async def test_warm_does_the_setup_once_and_the_first_lookup_is_warm(self) -> None:
+        reader = _Reader()
+        reader.attendance = [_day("2026-10-09", "present")]
+        tools = _tools(reader)
+        await asyncio.gather(
+            tools.warm(), tools.run("get_attendance_summary", {}, may_share=True)
+        )
+        assert reader.reads.count("class:class-1") == 1, "setup ran twice"
+
+    async def test_warm_never_raises(self) -> None:
+        def broken() -> _Reader:
+            raise RuntimeError("no credentials")
+
+        tools = SchoolDataTools(SCOPE, broken, today=TODAY)
+        await tools.warm()  # logged, not raised
+        out = await tools.run("get_attendance_summary", {}, may_share=True)
+        assert out["available"] is False

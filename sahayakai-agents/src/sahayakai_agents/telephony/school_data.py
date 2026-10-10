@@ -271,6 +271,34 @@ class SchoolDataTools:
         self._today = today
         self._timeout = timeout
         self._cache: dict[str, tuple[float, dict[str, Any]]] = {}
+        #: The warm-up and a first lookup may race; one of them does the setup.
+        self._setup_lock = asyncio.Lock()
+
+    async def warm(self) -> None:
+        """Build the client and check the scope now, not on the first question.
+
+        Measured against Firestore: the first lookup of a call — client
+        construction plus the two authorisation reads plus the query — took
+        longer than the 2.5 s budget and answered "unavailable"; the next took
+        250 ms. Run at call start, in the background, so the parent's first
+        question gets the warm path. Never raises.
+        """
+        if self._scope is None:
+            return
+        started = time.monotonic()
+        try:
+            await self._authorised_reader()
+        except Exception as exc:  # noqa: BLE001 — a lookup will report it properly later
+            self._reader = None
+            self._authorised = None
+            log.warning("telephony.tool_warm_failed", error_type=type(exc).__name__)
+            return
+        log.info(
+            "telephony.tool_warm",
+            outreach_id=self._scope.outreach_id,
+            authorised=self._authorised,
+            duration_ms=round((time.monotonic() - started) * 1000),
+        )
 
     def _now_date(self) -> date:
         return self._today or datetime.now(UTC).date()
@@ -350,6 +378,10 @@ class SchoolDataTools:
         return await asyncio.to_thread(self._assessments, reader, args.subject)
 
     async def _authorised_reader(self) -> SchoolDataReader | None:
+        async with self._setup_lock:
+            return await self._authorised_reader_locked()
+
+    async def _authorised_reader_locked(self) -> SchoolDataReader | None:
         if self._authorised is False:
             return None
         if self._reader is None:

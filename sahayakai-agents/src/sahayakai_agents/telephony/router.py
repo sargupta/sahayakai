@@ -2027,6 +2027,8 @@ def _equip_bridge(bridge: _Bridge, context: CallContext, scope: CallScope | None
             scope,
             lambda: FirestoreSchoolData(settings.gcp_project, settings.firestore_database),
         )
+        # While VIDYA introduces herself, so the first question is answered warm.
+        _spawn(bridge, bridge.tools.warm())
 
 
 def _conversation_metrics(bridge: _Bridge) -> dict[str, Any]:
