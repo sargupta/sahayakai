@@ -107,7 +107,9 @@ def _no_io(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(telephony, "_persist_transcript", _noop)
 
 
-async def _call(turns: list[list[SimpleNamespace]], *, lookups: bool = True) -> tuple[Any, _Session]:
+async def _call(
+    turns: list[list[SimpleNamespace]], *, lookups: bool = True, linger: float = 0.05
+) -> tuple[Any, _Session]:
     b = telephony._Bridge(_Ws(), "o-script", call_uuid="")  # type: ignore[arg-type]
     b.stream_id = "s"
     b.dialogue = DialogueState(school_name="Sahayak Test School", message=MESSAGE)
@@ -124,7 +126,7 @@ async def _call(turns: list[list[SimpleNamespace]], *, lookups: bool = True) -> 
         if not b.tool_tasks:
             break
         await asyncio.sleep(0.01)
-    await asyncio.sleep(0.05)  # let tasks spawned by the last turn (e.g. the goodbye net) run
+    await asyncio.sleep(linger)  # let tasks spawned by the last turn (e.g. the goodbye net) run
     b.stop = True
     await asyncio.wait_for(task, timeout=2)
     return b, session
@@ -283,6 +285,28 @@ class TestOneGoodbyeNotTwo:
         await asyncio.sleep(0.3)
         assert b.closing
         assert sum("signing off" in c for c in s.cues) == 1
+        for t in list(b.background):
+            t.cancel()
+
+
+@pytest.mark.asyncio
+class TestTheModelClosingWithoutEndCall:
+    async def test_a_closing_line_without_end_call_ends_without_a_second_cue(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Staging run 2: "You're most welcome... Goodbye." finished after the
+        # fixed grace, the net cued, and the closing was spoken twice.
+        monkeypatch.setattr(telephony, "_GOODBYE_NET_GRACE_SECONDS", 0.3)
+        monkeypatch.setattr(telephony, "_PREBUFFER_SECONDS", 0.0)
+        b, s = await _call([
+            INTRO,
+            [parent("yes")],
+            DELIVER,
+            [parent("okay thank you so much, bye"),
+             *agent("You're most welcome. We appreciate your partnership in Ravi's success.")],
+        ], lookups=False, linger=1.0)
+        assert b.closing
+        assert not any("signing off" in c for c in s.cues), "a second goodbye was requested"
         for t in list(b.background):
             t.cancel()
 

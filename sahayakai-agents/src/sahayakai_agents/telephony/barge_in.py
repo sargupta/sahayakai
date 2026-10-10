@@ -70,6 +70,9 @@ class BargeInConfig:
     #: so one noisy line cannot stutter every sentence.
     refractory_multiplier: int = 2
     refractory_seconds: float = 2.0
+    #: Speech resuming this soon after a release continues the same
+    #: interruption; its frames count towards confirmation.
+    carry_seconds: float = 1.0
 
 
 def frame_level(pcm: Iterable[int]) -> float:
@@ -107,6 +110,8 @@ class BargeIn:
     cancels: int = 0
     #: Interruptions the model's detector caught before ours did.
     model_first: int = 0
+    carry_frames: int = 0
+    carry_until: float = 0.0
 
     @property
     def paused(self) -> bool:
@@ -136,7 +141,14 @@ class BargeIn:
                 # A backchannel or a noise: carry on where VIDYA stopped.
                 self.state = _State.LISTENING
                 self.false_triggers += 1
-                self.refractory_until = now + self.config.refractory_seconds
+                if self.loud_since_onset < self.config.onset_frames + 2:
+                    # Barely past the onset: a click or a crackle. A noisy
+                    # line must not stutter every sentence, so demand more.
+                    self.refractory_until = now + self.config.refractory_seconds
+                # A word, not a noise: if more speech follows soon it is the
+                # same interruption ("wait... wait, one minute"), so carry it.
+                self.carry_frames = self.loud_since_onset
+                self.carry_until = now + self.config.carry_seconds
                 self._reset_run()
                 return Action.RESUME
             return Action.NONE
@@ -159,6 +171,9 @@ class BargeIn:
             self.quiet_run = 0
             self.detected_at = now
             self.onset_at = self.run_started_at
+            if now < self.carry_until:
+                self.loud_since_onset += self.carry_frames
+            self.carry_frames = 0
             if self.loud_since_onset >= self.config.confirm_frames:
                 return self._cancel(now)
             return Action.PAUSE

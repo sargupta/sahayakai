@@ -1415,8 +1415,10 @@ async def _handle_parent_speech(bridge: _Bridge, session: Any, server: Any) -> N
         _spawn(bridge, _close_unless_model_does(bridge, session))
 
 
-#: How long the goodbye safety net lets the model close the call itself.
+#: How long the goodbye safety net waits for the model to START replying.
 _GOODBYE_NET_GRACE_SECONDS = 3.0
+#: ...and the longest it waits for that reply to finish.
+_GOODBYE_NET_MAX_WAIT_SECONDS = 10.0
 
 
 async def _close_unless_model_does(bridge: _Bridge, session: Any) -> None:
@@ -1424,14 +1426,46 @@ async def _close_unless_model_does(bridge: _Bridge, session: Any) -> None:
 
     Sending the closing cue at once raced the model's own goodbye: on the
     staging run the cue went out 86 ms before the model's end_call, and the
-    parent heard "Thank you for your time… Thank you for your time," — two
-    goodbyes. The model closes properly almost always; this net only speaks
-    when it has not (no end_call, no spoken farewell) within the grace period.
+    parent heard two goodbyes. A fixed wait was not enough either — the
+    model's closing line can take longer than any grace period to finish.
+
+    So: wait for the model's reply to the goodbye to FINISH. A reply that is
+    not a question is the closing line — end after it plays, with no second
+    cue. Only a reply that ignores the goodbye (a question) or no reply at
+    all gets the closing cue.
     """
-    await asyncio.sleep(_GOODBYE_NET_GRACE_SECONDS)
+    armed_turns = bridge.dialogue.agent_turns
+    started = time.monotonic()
+    while time.monotonic() - started < _GOODBYE_NET_MAX_WAIT_SECONDS:
+        if bridge.closing or bridge.stop:
+            bridge.goodbye_net_armed = False
+            return
+        replied = bridge.dialogue.agent_turns > armed_turns
+        if replied and not bridge.model_turn_open:
+            break
+        if (
+            not replied
+            and not bridge.model_turn_open
+            and time.monotonic() - started >= _GOODBYE_NET_GRACE_SECONDS
+        ):
+            break  # the model has said nothing at all
+        await asyncio.sleep(0.1)
     bridge.goodbye_net_armed = False
     if bridge.closing or bridge.stop:
         return
+    last = bridge.transcript[-1] if bridge.transcript else None
+    if (
+        bridge.dialogue.agent_turns > armed_turns
+        and last is not None
+        and last["role"] == "agent"
+        and not last["text"].rstrip(" .…").endswith("?")
+    ):
+        log.info("telephony.goodbye_net", outreach_id=bridge.outreach_id, action="model_closed")
+        bridge.closing = True
+        bridge.dialogue.begin_closing()
+        await _drain_then_stop(bridge)
+        return
+    log.info("telephony.goodbye_net", outreach_id=bridge.outreach_id, action="cue")
     await _begin_close(bridge, session, "goodbye")
 
 

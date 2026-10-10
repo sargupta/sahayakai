@@ -89,12 +89,27 @@ class TestDetector:
         assert Action.CANCEL not in acts
         assert det.false_triggers == 1
 
-    def test_refractory_after_a_false_trigger_needs_more_speech(self) -> None:
+    def test_refractory_after_a_click_needs_more_speech(self) -> None:
         det = BargeIn()
-        _feed(det, [3000] * 8 + [0] * 15)  # false trigger, ends at t = 0.44
+        _feed(det, [3000] * 6 + [0] * 15)  # barely past onset: a click, ends at t = 0.42
         later = _feed(det, [3000] * 6, t0=0.5)
         assert Action.PAUSE not in later  # needs 12 frames during the refractory window
         assert _feed(det, [3000] * 6, t0=0.62)[-1] is Action.PAUSE
+
+    def test_a_word_then_more_words_is_one_interruption(self) -> None:
+        # "Wait... wait, one minute": the comma pause released the first word.
+        # The second must continue the same interruption, not start over.
+        det = BargeIn()
+        first = _feed(det, [3000] * 10 + [0] * 15)
+        assert first[-1] is Action.RESUME
+        second = _feed(det, [3000] * 10, t0=0.6)
+        assert Action.CANCEL in second, "the second 'wait' did not confirm the interruption"
+
+    def test_carry_expires(self) -> None:
+        det = BargeIn()
+        _feed(det, [3000] * 10 + [0] * 15)
+        later = _feed(det, [3000] * 10, t0=3.0)
+        assert Action.CANCEL not in later and Action.PAUSE in later
 
     def test_echo_of_vidyas_own_voice_does_not_trigger(self) -> None:
         # A speakerphone leaks our audio back at a steady, moderate level.
