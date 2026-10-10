@@ -20,6 +20,8 @@ import time
 import pytest
 
 from sahayakai_agents.telephony import router as telephony
+from sahayakai_agents.telephony.barge_in import BargeIn
+from sahayakai_agents.telephony.dialogue import DialogueState
 from sahayakai_agents.telephony.flow import (
     CLOSE,
     KICKOFF_AFTER_OPENER,
@@ -457,6 +459,9 @@ class TestTheWatchdogDoesNotTalkOverTheSchool:
             self.model_has_spoken = False
             self.model_last_audio = 0.0
             self.last_activity = 0.0
+            self.tool_tasks: dict[str, object] = {}
+            self.barge = BargeIn()
+            self.dialogue = DialogueState()
             for k, v in kw.items():
                 setattr(self, k, v)
 
@@ -556,6 +561,7 @@ class TestEngagementComesFromAudioNotTranscript:
         engaged = False
         last_activity = 0.0
         loud_frames = 0
+        local_barge_in = False
 
     @staticmethod
     def _ulaw(level: int) -> bytes:
@@ -735,6 +741,7 @@ class TestTheGoodbyeIsSpokenBeforeTheLineDrops:
             self.model_last_audio = 0.0
             self.call_uuid = ""
             self.background: set[_a.Task[object]] = set()
+            self.dialogue = DialogueState()
 
     async def test_waits_for_the_closing_line_to_be_produced(self) -> None:
         bridge = self._B()

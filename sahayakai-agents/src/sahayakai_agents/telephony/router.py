@@ -47,6 +47,8 @@ from .audio import (
     ulaw8k_to_pcm16k,
     ulaw_to_pcm16,
 )
+from .barge_in import Action, BargeIn, frame_level, percentile
+from .dialogue import DialogueState
 from .flow import (
     CLOSE,
     KICKOFF_AFTER_OPENER,
@@ -59,6 +61,13 @@ from .flow import (
     is_optout,
 )
 from .prompt import CallContext, build_parent_call_instruction, stt_language_hints
+from .school_data import (
+    TOOL_NAMES,
+    CallScope,
+    FirestoreSchoolData,
+    SchoolDataTools,
+    tool_declarations,
+)
 from .suppression import SUPPRESSION_COLLECTION, phone_suppression_id
 from .tokens import VobizDomain, token_minted_at, verify_vobiz_token
 from .vobiz_frames import InboundKind, build_clear_audio, build_play_audio, parse_inbound
@@ -180,6 +189,20 @@ def is_two_way(language: str) -> bool:
     raw = os.environ.get("VOBIZ_TWO_WAY_LANGUAGES", "")
     allowed = {x.strip().lower() for x in raw.split(",") if x.strip()}
     return not allowed or (language or "English").strip().lower() in allowed
+
+
+def school_data_tools_enabled() -> bool:
+    """`VOBIZ_SCHOOL_DATA_TOOLS`: let the call look up attendance and marks.
+
+    Off by default. Reading a child's records to a voice on the phone is a
+    policy decision as much as a feature, so it is switched on per deployment.
+    """
+    return os.environ.get("VOBIZ_SCHOOL_DATA_TOOLS", "").strip().lower() in ("1", "true", "yes")
+
+
+def local_barge_in_enabled() -> bool:
+    """`VOBIZ_LOCAL_BARGE_IN`: pause on the parent's speech onset (default on)."""
+    return os.environ.get("VOBIZ_LOCAL_BARGE_IN", "1").strip().lower() not in ("0", "false", "no")
 
 #: 20 ms of mu-law at 8 kHz. Carriers expect a steady frame cadence.
 _FRAME_BYTES = 160
@@ -420,8 +443,12 @@ def context_from_outreach(data: dict[str, Any], language: str) -> CallContext:
     )
 
 
-async def _load_context(outreach_id: str, language: str) -> CallContext:
+async def _load_context(outreach_id: str, language: str) -> tuple[CallContext, CallScope | None]:
     """Read the teacher's message and the child's details for this call.
+
+    Also returns the call's data scope (teacher, class, student), taken from the
+    same record the signed token names; the school-data tools can read nothing
+    outside it.
 
     Never fatal. A call that connects with a generic instruction is far better
     than a parent hearing dead air because a read timed out.
@@ -449,11 +476,11 @@ async def _load_context(outreach_id: str, language: str) -> CallContext:
         )
         data = snap.to_dict() if snap.exists else None
         if not data:
-            return CallContext(language=language)
-        return context_from_outreach(data, language)
+            return CallContext(language=language), None
+        return context_from_outreach(data, language), CallScope.from_outreach(outreach_id, data)
     except Exception as exc:  # noqa: BLE001
         log.warning("telephony.context_unavailable", outreach_id=outreach_id, error=str(exc))
-        return CallContext(language=language)
+        return CallContext(language=language), None
 
 
 async def _hangup(call_uuid: str) -> None:
@@ -555,6 +582,36 @@ class _Bridge:
         #: like a person picking up or like a robocall.
         self.first_audio_at: float | None = None
 
+        # ---- barge-in (see barge_in.py) ----
+        self.barge = BargeIn()
+        self.local_barge_in = local_barge_in_enabled()
+        #: The response playing when the parent cut in was cancelled before the
+        #: model itself noticed. Its remaining audio and transcription are still
+        #: in flight and must not play; this holds until the model's turn ends.
+        self.discard_model_audio = False
+        #: The pacer owes the carrier a clearAudio (it is the only writer).
+        self.clear_pending = False
+        #: Last time a frame of VIDYA's speech (not comfort silence) was sent.
+        self.last_speech_frame_at = 0.0
+        #: (onset_at, detected_at) of a stop the pacer has yet to measure.
+        self.stop_to_measure: tuple[float, float] | None = None
+        self.measured_detection: float | None = None
+        #: Speech onset -> last VIDYA frame sent, and decision -> last frame, ms.
+        self.onset_to_stop_ms: list[float] = []
+        self.detect_to_stop_ms: list[float] = []
+        self.stale_chunks_dropped = 0
+
+        # ---- dialogue and tools ----
+        self.dialogue = DialogueState()
+        #: VIDYA's words for the turn in progress. Committed to the transcript
+        #: when the turn ends, so the parent's words — whose transcription
+        #: arrives late — are filed BEFORE the reply they prompted.
+        self.agent_turn_text = ""
+        self.tools: SchoolDataTools | None = None
+        #: Lookups in flight, by function-call id, so a cancellation can find them.
+        self.tool_tasks: dict[str, asyncio.Task[Any]] = {}
+        self.tool_calls = 0
+
 
 def _kickoff_text(opener_played: bool) -> str:
     """The first stage direction of the call.
@@ -648,6 +705,7 @@ async def _begin_close(bridge: _Bridge, session: Any, reason: str) -> None:
     if bridge.closing or bridge.stop:
         return
     bridge.closing = True
+    bridge.dialogue.begin_closing()
     log.info("telephony.closing", outreach_id=bridge.outreach_id, reason=reason)
     cue = {
         "opt_out": OPTOUT_CLOSE,
@@ -656,7 +714,7 @@ async def _begin_close(bridge: _Bridge, session: Any, reason: str) -> None:
         "never_engaged": NO_RESPONSE_CLOSE,
     }.get(reason, CLOSE)
     with contextlib.suppress(Exception):
-        await _send_director(session, cue)
+        await _send_director(session, cue + bridge.dialogue.cue_context())
 
     async def _end_after_goodbye() -> None:
         """Let the closing line actually reach the parent before hanging up.
@@ -713,10 +771,14 @@ async def _conversation_watchdog(bridge: _Bridge, session: Any) -> None:
         # this cue's own words welded onto the end of the opening. The line is
         # only quiet when the model has actually spoken, has stopped, and has
         # nothing queued to play.
+        # A lookup in flight or a paused response is not silence either: the
+        # parent is waiting for an answer, or is mid-sentence.
         speaking = (
             not bridge.model_has_spoken
             or not bridge.out.empty()
             or (time.monotonic() - bridge.model_last_audio) < _MODEL_SETTLE_SECONDS
+            or bool(bridge.tool_tasks)
+            or bridge.barge.paused
         )
         if speaking:
             continue
@@ -726,7 +788,9 @@ async def _conversation_watchdog(bridge: _Bridge, session: Any) -> None:
                 nudged_after_opener = True
                 bridge.last_activity = time.monotonic()
                 with contextlib.suppress(Exception):
-                    await _send_director(session, POST_OPENER_NUDGE)
+                    await _send_director(
+                        session, POST_OPENER_NUDGE + bridge.dialogue.cue_context()
+                    )
                 log.info("telephony.nudge", outreach_id=bridge.outreach_id, kind="post_opener")
             elif nudged_after_opener and quiet_for > _UNANSWERED_GIVE_UP:
                 # Nobody is there, or they cannot hear us. Ending quietly is
@@ -745,7 +809,7 @@ async def _conversation_watchdog(bridge: _Bridge, session: Any) -> None:
                 await _begin_close(bridge, session, "silence")
                 break
             with contextlib.suppress(Exception):
-                await _send_director(session, SILENCE_NUDGE)
+                await _send_director(session, SILENCE_NUDGE + bridge.dialogue.cue_context())
             log.info("telephony.nudge", outreach_id=bridge.outreach_id, kind="silence", n=nudges)
 
     # A close has begun (here, on a goodbye, on opt-out, or by the model). Stay
@@ -820,6 +884,43 @@ def _record_turn(bridge: _Bridge, role: str, text: str) -> None:
     if len(bridge.transcript) - bridge.transcript_saved_at >= _TRANSCRIPT_FLUSH_EVERY:
         bridge.transcript_saved_at = len(bridge.transcript)
         _spawn(bridge, _persist_transcript(bridge))
+
+
+_SPACES = re.compile(r"\s+")
+
+
+def _agent_said(bridge: _Bridge, fragment: str) -> None:
+    """Collect VIDYA's transcription for the turn in progress.
+
+    Joined RAW, not stripped-and-spaced: the model's transcription arrives in
+    sub-word pieces that already carry their own leading spaces. Stripping each
+    one and re-joining with a space is what produced "Sah ayak" and "Ms ." in
+    the 2026-10-10 live transcript.
+    """
+    bridge.agent_turn_text += fragment
+
+
+def _commit_agent_turn(bridge: _Bridge, *, interrupted: bool = False) -> None:
+    """File VIDYA's finished (or cut-off) turn in the transcript.
+
+    Done at the END of her turn rather than per fragment. The parent's words
+    are transcribed late — often after VIDYA has begun replying — and filing
+    fragments as they came put the first word of each reply at the end of the
+    previous one ("…discuss this further? I" / parent / "don't have…").
+    """
+    text = _SPACES.sub(" ", bridge.agent_turn_text).strip()
+    bridge.agent_turn_text = ""
+    if not text:
+        return
+    before = bridge.dialogue.repeat_intros
+    bridge.dialogue.on_agent_turn(text)
+    if bridge.dialogue.repeat_intros > before:
+        log.warning(
+            "telephony.repeat_intro",
+            outreach_id=bridge.outreach_id,
+            count=bridge.dialogue.repeat_intros,
+        )
+    _record_turn(bridge, "agent", f"{text} …" if interrupted else text)
 
 
 def _spawn(bridge: _Bridge, coro: Any) -> asyncio.Task[Any]:
@@ -1052,6 +1153,8 @@ def _note_parent_audio(bridge: _Bridge, ulaw: bytes) -> None:
     if not pcm:
         return
     level = sum(abs(s) for s in pcm) / len(pcm)
+    if bridge.local_barge_in:
+        _feed_barge_in(bridge, ulaw)
     if level < _PARENT_SPEECH_LEVEL:
         bridge.loud_frames = 0
         return
@@ -1059,6 +1162,107 @@ def _note_parent_audio(bridge: _Bridge, ulaw: bytes) -> None:
     if bridge.loud_frames >= _PARENT_SPEECH_FRAMES:
         bridge.engaged = True
         bridge.last_activity = time.monotonic()
+
+
+#: VIDYA counts as audible for this long after her last frame was sent: the
+#: carrier's playout buffer is still draining it.
+_AUDIBLE_TAIL_SECONDS = 0.2
+
+
+def _ai_audible(bridge: _Bridge, now: float) -> bool:
+    return (now - bridge.last_speech_frame_at) < _AUDIBLE_TAIL_SECONDS
+
+
+def _feed_barge_in(bridge: _Bridge, ulaw: bytes) -> None:
+    """Run each 20 ms of the parent's audio through the barge-in detector."""
+    for start in range(0, len(ulaw) - _FRAME_BYTES + 1, _FRAME_BYTES):
+        now = time.monotonic()
+        level = frame_level(ulaw_to_pcm16(ulaw[start : start + _FRAME_BYTES]))
+        action = bridge.barge.on_frame(level, now, ai_audible=_ai_audible(bridge, now))
+        _apply_barge_action(bridge, action, by_model=False)
+
+
+def _apply_barge_action(bridge: _Bridge, action: Action, *, by_model: bool) -> None:
+    """Make playback follow the detector. Synchronous: the pacer does the I/O."""
+    if action is Action.NONE:
+        return
+    if action is Action.RESUME:
+        # Playback stopped at the pause, whether or not the pacer has ticked
+        # since; record that stop before frames flow again.
+        _measure_stop(bridge)
+        log.info("telephony.barge_in", outreach_id=bridge.outreach_id, action="resume")
+        return
+    if action is Action.PAUSE:
+        # Stop now; keep the frames in case this is only "haan".
+        bridge.clear_pending = True
+        _arm_stop_measurement(bridge)
+        log.info("telephony.barge_in", outreach_id=bridge.outreach_id, action="pause")
+        return
+    _cancel_response(bridge, by_model=by_model)
+
+
+def _arm_stop_measurement(bridge: _Bridge) -> None:
+    """Remember a local detection so the pacer can time how fast VIDYA stopped.
+
+    Only local detections are timed: when the model's detector fires first we
+    do not know when the parent actually began, so any number would be made up.
+    """
+    onset, detected = bridge.barge.onset_at, bridge.barge.detected_at
+    if onset is None or detected is None or bridge.stop_to_measure is not None:
+        return
+    # A pause that later becomes a cancel is ONE stop, measured once.
+    if detected == bridge.measured_detection or not _ai_audible(bridge, detected):
+        return
+    bridge.measured_detection = detected
+    bridge.stop_to_measure = (onset, detected)
+
+
+def _measure_stop(bridge: _Bridge) -> None:
+    """Record onset->silence and decision->silence for the armed detection.
+
+    "Silence" is the end of the last VIDYA frame we sent (sent time + 20 ms).
+    What the carrier still had buffered is not visible to us; clearAudio asks
+    it to drop that, and how promptly it does is the carrier's contract.
+    """
+    armed = bridge.stop_to_measure
+    if armed is None:
+        return
+    bridge.stop_to_measure = None
+    onset, detected = armed
+    end = bridge.last_speech_frame_at + _FRAME_SECONDS
+    bridge.onset_to_stop_ms.append(max(0.0, end - onset) * 1000)
+    bridge.detect_to_stop_ms.append(max(0.0, end - detected) * 1000)
+
+
+def _cancel_response(bridge: _Bridge, *, by_model: bool) -> None:
+    """Abandon the response the parent talked over, completely.
+
+    Every place its audio can still be is emptied: the pacer queue, the
+    half-frame carry-over, the resampler's filter tail and — via clearAudio —
+    the carrier's own playout buffer. The generation bump makes any frame
+    already handed to the queue unplayable, and `discard_model_audio` drops the
+    chunks the model is still streaming for the abandoned turn.
+    """
+    was_playing = bool(bridge.pending) or not bridge.out.empty() or bridge.barge.paused
+    bridge.generation += 1
+    bridge.pending = b""
+    bridge.decimator = None
+    while not bridge.out.empty():
+        with contextlib.suppress(asyncio.QueueEmpty):
+            bridge.out.get_nowait()
+    bridge.clear_pending = True
+    if not by_model:
+        # The model has not noticed yet; what it is still sending is stale.
+        bridge.discard_model_audio = True
+        _arm_stop_measurement(bridge)
+    _commit_agent_turn(bridge, interrupted=was_playing)
+    bridge.dialogue.on_interrupted()
+    log.info(
+        "telephony.barge_in",
+        outreach_id=bridge.outreach_id,
+        action="cancel",
+        by_model=by_model,
+    )
 
 
 async def _handle_parent_speech(bridge: _Bridge, session: Any, server: Any) -> None:
@@ -1150,14 +1354,45 @@ def _may_end_yet(bridge: _Bridge) -> bool:
 
 
 async def _handle_tool_call(bridge: _Bridge, session: Any, tool_call: Any) -> None:
-    """The model has decided the call is over."""
+    """Answer the model's function calls.
+
+    `end_call` and `confirm_parent_identity` are answered at once. School-data
+    lookups run as their own tasks so the receive loop keeps flowing — a
+    barge-in or a cancellation must still be seen while a read is in flight —
+    and each answers for itself when done.
+    """
     if tool_call is None or not getattr(tool_call, "function_calls", None):
         return
     from google.genai import types as genai_types
 
+    immediate: list[Any] = []
     for fc in tool_call.function_calls:
-        if fc.name != "end_call":
+        if fc.name in TOOL_NAMES:
+            bridge.tool_calls += 1
+            task = _spawn(bridge, _run_lookup(bridge, session, fc))
+            if fc.id:
+                bridge.tool_tasks[fc.id] = task
             continue
+        if fc.name == "confirm_parent_identity":
+            status = str((dict(fc.args or {})).get("status") or "")
+            _, outcome = bridge.dialogue.confirm_identity(
+                status, parent_turns=len(bridge.parent_said)
+            )
+            log.info("telephony.identity", outreach_id=bridge.outreach_id, outcome=outcome)
+            immediate.append(
+                genai_types.FunctionResponse(id=fc.id, name=fc.name, response={"status": outcome})
+            )
+            continue
+        if fc.name != "end_call":
+            immediate.append(
+                genai_types.FunctionResponse(
+                    id=fc.id, name=fc.name, response={"error": "unknown_tool"}
+                )
+            )
+            continue
+        immediate.append(
+            genai_types.FunctionResponse(id=fc.id, name=fc.name, response={"status": "ok"})
+        )
         reason = str((dict(fc.args or {})).get("reason") or "parent_finished")
 
         # The model proposes; we dispose.
@@ -1194,19 +1429,59 @@ async def _handle_tool_call(bridge: _Bridge, session: Any, tool_call: Any) -> No
 
         if reason == "opt_out":
             bridge.opted_out = True
+        if reason == "wrong_number":
+            bridge.dialogue.confirm_identity("wrong_person", parent_turns=len(bridge.parent_said))
         log.info("telephony.end_call_tool", outreach_id=bridge.outreach_id, reason=reason)
         # The model says its closing line BEFORE calling this, so there is
         # nothing left to say — end without sending another closing cue.
         bridge.closing = True
+        bridge.dialogue.begin_closing()
         _spawn(bridge, _drain_then_stop(bridge))
 
-    with contextlib.suppress(Exception):
-        await session.send_tool_response(
-            function_responses=[
-                genai_types.FunctionResponse(id=fc.id, name=fc.name, response={"status": "ok"})
-                for fc in tool_call.function_calls
-            ]
-        )
+    if immediate:
+        with contextlib.suppress(Exception):
+            await session.send_tool_response(function_responses=immediate)
+
+
+async def _run_lookup(bridge: _Bridge, session: Any, fc: Any) -> None:
+    """Run one school-data lookup and answer the model with its result.
+
+    Cancelled (by the model's tool_call_cancellation, or the call ending) means
+    no answer is sent: the model has moved on, and a late answer would make it
+    talk about a question the parent abandoned.
+    """
+    from google.genai import types as genai_types
+
+    try:
+        if bridge.tools is None:
+            result: dict[str, Any] = {
+                "available": False,
+                "reason": "lookups_disabled",
+                "say": "Say you do not have that to hand and offer a teacher callback.",
+            }
+        else:
+            result = await bridge.tools.run(
+                fc.name,
+                dict(fc.args or {}),
+                may_share=bridge.dialogue.may_share_student_data,
+            )
+        with contextlib.suppress(Exception):
+            await session.send_tool_response(
+                function_responses=[
+                    genai_types.FunctionResponse(id=fc.id, name=fc.name, response=result)
+                ]
+            )
+    finally:
+        if fc.id:
+            bridge.tool_tasks.pop(fc.id, None)
+
+
+def _cancel_lookups(bridge: _Bridge, ids: list[str] | None) -> None:
+    for call_id in ids or []:
+        task = bridge.tool_tasks.pop(call_id, None)
+        if task is not None:
+            task.cancel()
+            log.info("telephony.tool_cancelled", outreach_id=bridge.outreach_id)
 
 
 async def _drain_then_stop(bridge: _Bridge) -> None:
@@ -1218,6 +1493,47 @@ async def _drain_then_stop(bridge: _Bridge) -> None:
             await asyncio.sleep(_PREBUFFER_SECONDS + 0.3)
             break
     bridge.stop = True
+
+
+def _on_model_interrupted(bridge: _Bridge, server: Any) -> None:
+    if server is None or not getattr(server, "interrupted", False):
+        return
+    if bridge.discard_model_audio:
+        # We cancelled this response already, on the parent's onset; the model
+        # has now caught up. Its next audio is the reply.
+        bridge.discard_model_audio = False
+        return
+    # The model heard the parent first. Drop everything queued and have the
+    # carrier discard what it has buffered; doing only the first still leaves
+    # stale speech in their ear.
+    _apply_barge_action(bridge, bridge.barge.on_model_interrupted(time.monotonic()), by_model=True)
+
+
+def _on_agent_transcription(bridge: _Bridge, server: Any) -> None:
+    if server is None:
+        return
+    spoken = getattr(server, "output_transcription", None)
+    text = (getattr(spoken, "text", "") or "") if spoken else ""
+    if text.strip() and not bridge.discard_model_audio:
+        _agent_said(bridge, text)
+        bridge.agent_spoke_since_parent = True
+
+
+def _on_model_audio(bridge: _Bridge, data: bytes | None) -> None:
+    if not data:
+        return
+    if bridge.discard_model_audio:
+        # Still streaming for the response the parent talked over.
+        bridge.stale_chunks_dropped += 1
+        return
+    bridge.last_activity = time.monotonic()
+    bridge.model_has_spoken = True
+    bridge.agent_spoke_since_parent = True
+    bridge.model_last_audio = bridge.last_activity
+    if bridge.first_audio_at is None:
+        bridge.first_audio_at = time.monotonic()
+    ulaw, bridge.decimator = pcm24k_to_ulaw8k(data, bridge.decimator)
+    _queue_ulaw(bridge, ulaw)
 
 
 async def _pump_live_to_carrier(bridge: _Bridge, session: Any) -> str:
@@ -1240,48 +1556,69 @@ async def _pump_live_to_carrier(bridge: _Bridge, session: Any) -> str:
                 break
             turn_had_output = True
             server = getattr(resp, "server_content", None)
-            if server is not None and getattr(server, "interrupted", False):
-                # The parent started speaking. Drop everything already queued AND
-                # tell the carrier to discard what it has buffered; doing only the
-                # first still leaves a second of stale speech in the parent's ear.
-                bridge.generation += 1
-                # Half a frame of abandoned speech must not be prepended to the
-                # next thing VIDYA says.
-                bridge.pending = b""
-                while not bridge.out.empty():
-                    with contextlib.suppress(asyncio.QueueEmpty):
-                        bridge.out.get_nowait()
-                if bridge.stream_id:
-                    with contextlib.suppress(Exception):
-                        await bridge.ws.send_text(build_clear_audio(bridge.stream_id))
+            _on_model_interrupted(bridge, server)
+
+            cancelled = getattr(resp, "tool_call_cancellation", None)
+            if cancelled is not None:
+                _cancel_lookups(bridge, getattr(cancelled, "ids", None))
 
             await _handle_parent_speech(bridge, session, server)
-            if server is not None:
-                spoken = getattr(server, "output_transcription", None)
-                text = (getattr(spoken, "text", "") or "").strip() if spoken else ""
-                if text:
-                    _record_turn(bridge, "agent", text)
-                    bridge.agent_spoke_since_parent = True
+            _on_agent_transcription(bridge, server)
             await _handle_tool_call(bridge, session, getattr(resp, "tool_call", None))
 
-            data = getattr(resp, "data", None)
-            if data:
-                bridge.last_activity = time.monotonic()
-                bridge.model_has_spoken = True
-                bridge.agent_spoke_since_parent = True
-                bridge.model_last_audio = bridge.last_activity
-                if bridge.first_audio_at is None:
-                    bridge.first_audio_at = time.monotonic()
-                ulaw, bridge.decimator = pcm24k_to_ulaw8k(data, bridge.decimator)
-                _queue_ulaw(bridge, ulaw)
+            if server is not None and getattr(server, "turn_complete", False):
+                # The abandoned response is over even if the model never
+                # flagged it as interrupted; what follows is new speech.
+                bridge.discard_model_audio = False
+                _commit_agent_turn(bridge)
+
+            _on_model_audio(bridge, getattr(resp, "data", None))
         # The turn is over: the carry-over is a true tail now, not a chunk seam.
         _flush_ulaw(bridge)
+        _commit_agent_turn(bridge)
         if not turn_had_output:
             # The generator returned without yielding anything. That is the
             # session really being gone, not a completed turn; re-entering it
             # would spin.
             break
     return "live_stream_end"
+
+
+async def _barge_in_tick(bridge: _Bridge) -> bool:
+    """The pacer's barge-in duties for one tick. False if the carrier is gone.
+
+    - A clearAudio is owed: send it, so the carrier drops its buffer too.
+    - Playback is paused: hold VIDYA's frames (they play on if this was only
+      "haan") and keep the line fed with one frame of silence.
+    """
+    if not bridge.stream_id:
+        return True
+    try:
+        if bridge.clear_pending:
+            bridge.clear_pending = False
+            await bridge.ws.send_text(build_clear_audio(bridge.stream_id))
+        if bridge.barge.paused:
+            _measure_stop(bridge)
+            await bridge.ws.send_text(build_play_audio(bridge.stream_id, _SILENCE_FRAME))
+    except Exception:  # noqa: BLE001 — the carrier is gone; the handler decides what that means
+        bridge.stop = True
+        return False
+    return True
+
+
+def _next_current_frame(bridge: _Bridge) -> bytes | None:
+    """Take the first queued frame that is still current.
+
+    Frames from a superseded generation are dropped here rather than played,
+    and dropping them costs no time.
+    """
+    while True:
+        try:
+            generation, candidate = bridge.out.get_nowait()
+        except asyncio.QueueEmpty:
+            return None
+        if generation == bridge.generation:
+            return candidate
 
 
 async def _pace_outbound(bridge: _Bridge) -> None:
@@ -1319,18 +1656,17 @@ async def _pace_outbound(bridge: _Bridge) -> None:
     while not bridge.stop:
         next_at += _FRAME_SECONDS
 
-        # Take the first frame that is still current. Stale ones are dropped
-        # here rather than played, and dropping them costs no time.
-        chunk: bytes | None = None
-        while True:
-            try:
-                generation, candidate = bridge.out.get_nowait()
-            except asyncio.QueueEmpty:
-                break
-            if generation == bridge.generation:
-                chunk = candidate
-                break
+        if not await _barge_in_tick(bridge):
+            return
+        if bridge.barge.paused:
+            now = time.monotonic()
+            if next_at < now - _MAX_PACING_LAG:
+                next_at = now
+            await asyncio.sleep(max(0.0, next_at - now))
+            continue
 
+        chunk = _next_current_frame(bridge)
+        is_speech = chunk is not None
         if chunk is not None:
             comfort_ticks_remaining = _COMFORT_TICKS
         elif comfort_ticks_remaining > 0:
@@ -1346,6 +1682,12 @@ async def _pace_outbound(bridge: _Bridge) -> None:
             except Exception:  # noqa: BLE001 — the carrier is gone; the handler decides what that means
                 bridge.stop = True
                 return
+            if is_speech:
+                bridge.last_speech_frame_at = time.monotonic()
+        if not is_speech:
+            # A cancel empties the queue; the first tick with nothing to play
+            # is when VIDYA actually went quiet.
+            _measure_stop(bridge)
 
         now = time.monotonic()
         # Self-measurement. Client-observed jitter mixes our pacing with the
@@ -1367,7 +1709,7 @@ async def _pace_outbound(bridge: _Bridge) -> None:
 
 async def _prepare_live_session(
     outreach_id: str, language: str, started: float
-) -> tuple[Any, Any, str, CallContext]:
+) -> tuple[Any, Any, str, CallContext, CallScope | None]:
     """Load the call's context and build the Live client, config and model.
 
     Split out of the handler so the handler reads as the shape of a call rather
@@ -1378,8 +1720,9 @@ async def _prepare_live_session(
     from google.genai import types as genai_types
 
     t_accept = time.monotonic()
-    context = await _load_context(outreach_id, language)
+    context, scope = await _load_context(outreach_id, language)
     t_context = time.monotonic()
+    lookups = school_data_tools_enabled() and scope is not None
 
     settings = get_settings()
     # Model and location come from the app-facing voice route rather than from
@@ -1401,6 +1744,7 @@ async def _prepare_live_session(
                         context,
                         disclose_ai=disclose_ai(),
                         two_way=is_two_way(context.language),
+                        lookups=lookups,
                     )
                 )
             ]
@@ -1459,7 +1803,8 @@ async def _prepare_live_session(
                             },
                             required=["reason"],
                         ),
-                    )
+                    ),
+                    *(_identity_and_lookup_declarations() if lookups else []),
                 ]
             )
         ],
@@ -1478,8 +1823,35 @@ async def _prepare_live_session(
         context_ms=round((t_context - t_accept) * 1000),
         client_ms=round((time.monotonic() - t_context) * 1000),
         since_open_ms=round((time.monotonic() - started) * 1000),
+        lookups=lookups,
     )
-    return client, config, model, context
+    return client, config, model, context, (scope if lookups else None)
+
+
+def _identity_and_lookup_declarations() -> list[Any]:
+    """`confirm_parent_identity` plus the read-only school-data allowlist."""
+    from google.genai import types as genai_types
+
+    identity = genai_types.FunctionDeclaration(
+        name="confirm_parent_identity",
+        description=(
+            "Report what the person said when you asked if they are the child's parent "
+            "or guardian. Call it once, right after they answer. Student details can only "
+            "be looked up after 'confirmed'."
+        ),
+        parameters=genai_types.Schema(
+            type=genai_types.Type.OBJECT,
+            properties={
+                "status": genai_types.Schema(
+                    type=genai_types.Type.STRING,
+                    enum=["confirmed", "wrong_person", "unsure"],
+                    description="confirmed, wrong_person, or unsure",
+                )
+            },
+            required=["status"],
+        ),
+    )
+    return [identity, *tool_declarations()]
 
 
 async def _run_call(bridge: _Bridge, session: Any, pacer: asyncio.Task[None]) -> str:
@@ -1528,6 +1900,11 @@ async def _settle_call(bridge: _Bridge, engine_error: str | None, started: float
     # that is a call that would not end.
     await _hangup(bridge.call_uuid)
 
+    # A lookup still running has nobody to answer; a turn still being spoken
+    # when the call ended belongs in the transcript.
+    _cancel_lookups(bridge, list(bridge.tool_tasks))
+    _commit_agent_turn(bridge)
+
     # Now the record, with the parent already gone. The opt-out goes
     # first: it is the one write whose loss re-dials someone who said no.
     if bridge.opted_out:
@@ -1557,6 +1934,42 @@ async def _stop_side_tasks(
             task.cancel()
             with contextlib.suppress(asyncio.CancelledError, Exception):
                 await task
+
+
+def _equip_bridge(bridge: _Bridge, context: CallContext, scope: CallScope | None) -> None:
+    """Give the call what it learned from its outreach record."""
+    bridge.context = context
+    bridge.delivery_only = not is_two_way(context.language)
+    bridge.dialogue = DialogueState(school_name=context.school_name, message=context.message)
+    if scope is not None:
+        settings = get_settings()
+        bridge.tools = SchoolDataTools(
+            scope,
+            lambda: FirestoreSchoolData(settings.gcp_project, settings.firestore_database),
+        )
+
+
+def _conversation_metrics(bridge: _Bridge) -> dict[str, Any]:
+    """Barge-in latency and dialogue quality, for the call_closed line."""
+
+    def _ms(values: list[float], pct: float) -> int | None:
+        v = percentile(values, pct)
+        return None if v is None else round(v)
+
+    return {
+        "barge_pauses": bridge.barge.pauses,
+        "barge_cancels": bridge.barge.cancels,
+        "barge_false_triggers": bridge.barge.false_triggers,
+        "barge_model_first": bridge.barge.model_first,
+        "stale_chunks_dropped": bridge.stale_chunks_dropped,
+        "onset_to_stop_p50_ms": _ms(bridge.onset_to_stop_ms, 50),
+        "onset_to_stop_p95_ms": _ms(bridge.onset_to_stop_ms, 95),
+        "detect_to_stop_p95_ms": _ms(bridge.detect_to_stop_ms, 95),
+        "repeat_intros": bridge.dialogue.repeat_intros,
+        "identity": bridge.dialogue.identity.value,
+        "message_delivered": bridge.dialogue.message_delivered,
+        "tool_calls": bridge.tool_calls,
+    }
 
 
 @telephony_router.websocket("/telephony/vobiz/stream")
@@ -1590,11 +2003,10 @@ async def vobiz_stream(ws: WebSocket) -> None:
         pacer = asyncio.create_task(_pace_outbound(bridge))
         greeter = asyncio.create_task(_greet_and_drain(bridge, language))
 
-        client, config, model, context = await _prepare_live_session(
+        client, config, model, context, scope = await _prepare_live_session(
             outreach_id, language, started
         )
-        bridge.context = context
-        bridge.delivery_only = not is_two_way(context.language)
+        _equip_bridge(bridge, context, scope)
 
         from google.genai import types as genai_types
 
@@ -1687,6 +2099,7 @@ async def vobiz_stream(ws: WebSocket) -> None:
                 if bridge and bridge.first_audio_at
                 else None
             ),
+            **(_conversation_metrics(bridge) if bridge else {}),
         )
         with contextlib.suppress(Exception):
             code = {
