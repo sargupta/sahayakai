@@ -68,10 +68,22 @@ function checkInitialized() {
   }
 }
 
+/**
+ * Named Firestore database for isolated test environments. Unset (or
+ * "(default)") = the default database, i.e. production behaviour. Same
+ * variable the telephony bridge reads, so a test stack points both halves of a
+ * parent call at one isolated database.
+ */
+export function firestoreDatabaseId(env: NodeJS.ProcessEnv = process.env): string | null {
+  const id = env.SAHAYAKAI_FIRESTORE_DATABASE?.trim();
+  return id && id !== '(default)' ? id : null;
+}
+
 export async function getDb() {
   await initializeFirebase();
   checkInitialized();
-  return getFirestore();
+  const databaseId = firestoreDatabaseId();
+  return databaseId ? getFirestore(databaseId) : getFirestore();
 }
 
 export async function getAuthInstance() {

@@ -127,6 +127,7 @@ jest.mock('@/lib/vobiz/tokens', () => ({
 }));
 const placeVobizCall = jest.fn();
 jest.mock('@/lib/vobiz/client', () => ({
+    isDestinationAllowed: jest.requireActual('@/lib/vobiz/client').isDestinationAllowed,
     placeVobizCall: (...a: unknown[]) => placeVobizCall(...a),
     readVobizConfig: () => ({ authId: 'a', authToken: 't', fromNumber: '+911', baseUrl: 'https://x' }),
 }));

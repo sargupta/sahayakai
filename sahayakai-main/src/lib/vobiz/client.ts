@@ -66,6 +66,21 @@ export function toVobizNumber(phone: string): string {
     return digits.length === 10 ? `91${digits}` : digits;
 }
 
+/**
+ * Server-side destination allowlist (`CALL_ALLOWED_DESTINATIONS`, comma-separated).
+ *
+ * For test and staging stacks: when set, a call may ONLY go to a listed number,
+ * compared in the exact form the carrier receives. Unset = no restriction
+ * (production). It is checked on the FINAL destination, after any test override,
+ * so a missing override can never fall back to a real parent's number.
+ */
+export function isDestinationAllowed(phone: string, env: NodeJS.ProcessEnv = process.env): boolean {
+    const raw = env.CALL_ALLOWED_DESTINATIONS?.trim();
+    if (!raw) return true;
+    const allowed = new Set(raw.split(',').map((n) => toVobizNumber(n)).filter(Boolean));
+    return allowed.has(toVobizNumber(phone));
+}
+
 export interface PlaceCallOptions {
     to: string;
     answerUrl: string;

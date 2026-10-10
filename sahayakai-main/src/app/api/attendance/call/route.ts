@@ -8,7 +8,7 @@ import { classifyTwilioFailure, releasesDedupWindow } from '@/lib/twilio-errors'
 import { writeCallStatus, type CallStatusDb } from '@/lib/attendance/reconcile-call-status';
 import { getEffectiveMode } from '@/lib/voice-pipeline/health';
 import { refuseIfParentOptedOut } from '@/lib/call-suppression';
-import { placeVobizCall, readVobizConfig } from '@/lib/vobiz/client';
+import { isDestinationAllowed, placeVobizCall, readVobizConfig } from '@/lib/vobiz/client';
 import {
     VOBIZ_DOMAINS,
     VOBIZ_STATUS_TTL_SECONDS,
@@ -128,6 +128,8 @@ async function forwardToVobiz(
     // Same escape hatch the Twilio path has: lets a teacher exercise the flow
     // without dialling a real parent. Unset it to go live.
     const callTo = process.env.VOBIZ_TEST_OVERRIDE_NUMBER || target.parentPhone;
+    const refused = await refuseIfDestinationNotAllowed(db, outreachId, callTo);
+    if (refused) return refused;
 
     const host = req.headers.get('host');
     const protocol = host?.includes('localhost') ? 'http' : 'https';
@@ -197,6 +199,24 @@ async function forwardToVobiz(
 async function markNotDialled(db: unknown, outreachId: string, category: string): Promise<void> {
     await writeCallStatus(db as CallStatusDb, outreachId, 'failed', { callFailureCategory: category })
         .catch((e: unknown) => console.error('[attendance/call] could not mark outreach failed:', e));
+}
+
+/**
+ * Test/staging guard (`CALL_ALLOWED_DESTINATIONS`): refuse, before any provider
+ * is contacted, a destination that is not on the allowlist. No-op when unset.
+ */
+async function refuseIfDestinationNotAllowed(
+    db: unknown,
+    outreachId: string,
+    callTo: string,
+): Promise<NextResponse | null> {
+    if (isDestinationAllowed(callTo)) return null;
+    console.error('[attendance/call] DESTINATION_NOT_ALLOWED — refused by CALL_ALLOWED_DESTINATIONS; nothing dialled.');
+    await markNotDialled(db, outreachId, 'destination_not_allowed');
+    return NextResponse.json(
+        { error: 'This destination is not allowed on this server.', code: 'DESTINATION_NOT_ALLOWED', retryable: false },
+        { status: 403 },
+    );
 }
 
 export async function POST(req: NextRequest) {
@@ -278,6 +298,8 @@ export async function POST(req: NextRequest) {
         // In test mode, override the destination number so all teachers can test
         // without calling real parents. Remove this env var to go live.
         const callTo = process.env.TWILIO_TEST_OVERRIDE_NUMBER || parentPhone;
+        const refused = await refuseIfDestinationNotAllowed(db, outreachId, callTo);
+        if (refused) return refused;
 
         // Check that the language is supported for Twilio calls
         const langCode = TWILIO_LANGUAGE_MAP[parentLanguage];
