@@ -62,6 +62,9 @@ class BargeInConfig:
     confirm_frames: int = 20
     #: Quiet frames, while paused and unconfirmed, before playback resumes.
     release_frames: int = 15
+    #: ...when what paused it was a real word (>= `word_frames`, 200 ms).
+    word_frames: int = 10
+    word_release_frames: int = 25
     #: A loud level must clear the echo floor by this ratio to count.
     echo_ratio: float = 3.0
     #: Smoothing for the echo floor (per frame).
@@ -137,7 +140,15 @@ class BargeIn:
                     return self._cancel(now)
                 return Action.NONE
             self.quiet_run += 1
-            if self.quiet_run >= self.config.release_frames:
+            # After a real word, a sentence pause ("Wait. Wait, one minute")
+            # is longer than the gap after a blip; resuming into it talks over
+            # the parent's next word (staging run 3: 0.5 s of VIDYA resumed).
+            needed = (
+                self.config.word_release_frames
+                if self.loud_since_onset >= self.config.word_frames
+                else self.config.release_frames
+            )
+            if self.quiet_run >= needed:
                 # A backchannel or a noise: carry on where VIDYA stopped.
                 self.state = _State.LISTENING
                 self.false_triggers += 1

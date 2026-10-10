@@ -83,7 +83,7 @@ class TestDetector:
     def test_a_backchannel_releases_and_resumes(self) -> None:
         # "haan" — 160 ms of voice, then quiet. Playback must continue.
         det = BargeIn()
-        acts = _feed(det, [3000] * 8 + [0] * 15)
+        acts = _feed(det, [3000] * 8 + [0] * 15)  # 160 ms: a short "haan"
         assert Action.PAUSE in acts
         assert acts[-1] is Action.RESUME
         assert Action.CANCEL not in acts
@@ -100,14 +100,20 @@ class TestDetector:
         # "Wait... wait, one minute": the comma pause released the first word.
         # The second must continue the same interruption, not start over.
         det = BargeIn()
-        first = _feed(det, [3000] * 10 + [0] * 15)
+        first = _feed(det, [3000] * 10 + [0] * 25)
         assert first[-1] is Action.RESUME
         second = _feed(det, [3000] * 10, t0=0.6)
         assert Action.CANCEL in second, "the second 'wait' did not confirm the interruption"
 
+    def test_a_sentence_pause_after_a_word_does_not_resume(self) -> None:
+        # "Wait." then a 400 ms pause: still the parent's turn.
+        det = BargeIn()
+        acts = _feed(det, [3000] * 12 + [0] * 20)
+        assert Action.RESUME not in acts and det.paused
+
     def test_carry_expires(self) -> None:
         det = BargeIn()
-        _feed(det, [3000] * 10 + [0] * 15)
+        _feed(det, [3000] * 10 + [0] * 25)
         later = _feed(det, [3000] * 10, t0=3.0)
         assert Action.CANCEL not in later and Action.PAUSE in later
 
@@ -413,7 +419,8 @@ class TestInterruptionLatency:
 
     async def test_p95_is_under_target(self) -> None:
         b = _bridge()
-        b.barge = BargeIn(BargeInConfig(refractory_seconds=0.0))
+        # Independent interruptions: no refractory window, no carry-over between them.
+        b.barge = BargeIn(BargeInConfig(refractory_seconds=0.0, carry_seconds=0.0))
         pacer = asyncio.create_task(telephony._pace_outbound(b))
         try:
             for _ in range(10):
