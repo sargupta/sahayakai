@@ -2336,6 +2336,11 @@ def _after_tick(bridge: _Bridge, *, is_speech: bool) -> None:
         _measure_stop(bridge)
         return
     bridge.last_speech_frame_at = time.monotonic()
+    # The line is busy until VIDYA's audio has PLAYED, not merely been made.
+    # Synthesis runs several times faster than playback; counting silence from
+    # the last synthesised chunk put the follow-up question straight onto the
+    # end of her own question (staging 00015).
+    bridge.last_activity = bridge.last_speech_frame_at
     bridge.turn_frames_played += 1
     if bridge.awaiting_reply_since:
         # The parent stopped speaking -> the first frame of the reply left.

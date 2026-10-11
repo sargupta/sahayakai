@@ -752,6 +752,26 @@ class TestEndingSafely:
             follow = c.carrier.first_speech_after(asked_at + 0.05)
             assert follow is not None and follow - asked_at >= 1.0
 
+    async def test_13c_silence_is_counted_from_playback_not_synthesis(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Staging 00015: synthesis ran ~4x faster than playback, the watchdog
+        # counted silence from the last SYNTHESISED chunk, and the follow-up
+        # question was spoken the instant the message's own question ended.
+        monkeypatch.setattr(telephony, "_CONVERSATION_SILENCE", 1.0)
+        monkeypatch.setattr(telephony, "_MODEL_SETTLE_SECONDS", 0.1)
+        llm = FakeLlm([])
+        async with Call(llm, tts=FakeTts(per_char=0.02, rtf=0.1), name="13c_playback_silence") as c:
+            await c.parent("Ravi")
+            await c.settle(timeout=15)  # the whole message has played
+            assert c.agent_lines()[-1].endswith(INVITE)
+            delivered_until = c.carrier.last_speech_at()
+            await c.until(lambda: EN["follow_up"] in c.agent_lines(), 8)
+            follow = c.carrier.first_speech_after(delivered_until + 0.05)
+            assert follow is not None and follow - delivered_until >= 1.0, (
+                f"follow-up {1000 * (follow - delivered_until):.0f} ms after VIDYA's own question"
+            )
+
     async def test_14_many_real_turns_and_interruptions_are_not_cut_off(self) -> None:
         questions = [f"Question number {i}, how is he doing in class?" for i in range(1, 9)]
         llm = FakeLlm([[f"Answer {i}."] for i in range(1, 9)])
