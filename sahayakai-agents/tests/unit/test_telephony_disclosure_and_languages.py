@@ -93,12 +93,23 @@ class TestMessageDeliveredEnding:
         b.delivery_only = delivery_only
         return b
 
-    async def test_honoured_at_once_in_delivery_mode(self) -> None:
+    async def test_honoured_at_once_in_delivery_mode_once_verified(self) -> None:
+        from sahayakai_agents.telephony.dialogue import DialogueState
+
         bridge = self._bridge(delivery_only=True)
+        bridge.dialogue = DialogueState(student_name="Arun Kumar")
+        bridge.dialogue.on_identity_question_asked()
+        bridge.dialogue.check_identity("Arun")  # the caller named the child
         await telephony._handle_tool_call(bridge, _Session(), _end_call("message_delivered"))
         assert bridge.closing
         for task in list(bridge.background):
             task.cancel()
+
+    async def test_declined_before_verification_even_in_delivery_mode(self) -> None:
+        # Nothing about the child is "delivered" to an unverified caller.
+        bridge = self._bridge(delivery_only=True)
+        await telephony._handle_tool_call(bridge, _Session(), _end_call("message_delivered"))
+        assert not bridge.closing
 
     async def test_declined_on_a_two_way_call_before_any_conversation(self) -> None:
         bridge = self._bridge(delivery_only=False)

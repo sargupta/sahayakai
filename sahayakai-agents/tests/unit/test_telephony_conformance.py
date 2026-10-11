@@ -49,6 +49,7 @@ class TestThisIntegrationConforms:
             def __init__(self) -> None:
                 self.pending = b""
                 self.generation = 0
+                self.max_queue_frames = 0
                 import asyncio
 
                 self.out: asyncio.Queue = asyncio.Queue()

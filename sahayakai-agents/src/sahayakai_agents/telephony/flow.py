@@ -33,6 +33,9 @@ NO_RESPONSE_CLOSE = (
 )
 
 __all__ = [
+    "LINES",
+    "VERIFIED_CUE",
+    "line",
     "NO_RESPONSE_CLOSE",
     "KICKOFF_AFTER_OPENER",
     "KICKOFF_NO_OPENER",
@@ -51,19 +54,29 @@ KICKOFF_AFTER_OPENER = (
     "(The parent has just answered. A recording has already said this is an "
     "important message from their child's school, but it did NOT say who is "
     "calling. So do not say namaste again, and do NOT deliver the teacher's "
-    "message yet. In one or two short sentences: name the school, name the "
-    "teacher, say you are calling on that teacher's behalf, and check you are "
-    "speaking with the child's parent. Then stop and wait — their 'haan ji, "
-    "boliye' is the invitation you speak into, and the message comes after it.)"
+    "message yet: you do not have it, and you will be given it only after the "
+    "system has verified the caller. In one or two short sentences: name the "
+    "school, name the teacher, say you are calling on that teacher's behalf, and "
+    "ask them to tell you their child's name. Never say a child's name yourself. "
+    "Then stop and wait.)"
 )
 
 #: Used only when no recording could be played, so the model must greet.
 KICKOFF_NO_OPENER = (
     "(The parent has just answered and has heard nothing yet. Greet them warmly, say "
-    "this is an important message from their child's school, then say the teacher's "
-    "message ESSENTIALLY AS WRITTEN, naming the child, and invite them to ask or "
-    "share anything. Do not summarise the message and do not use any assistant or "
-    "product name. Then stop and listen.)"
+    "this is an important message from their child's school, name the school and "
+    "the teacher you are calling for, and ask them to tell you their child's name. "
+    "Do NOT deliver any message and never say a child's name yourself: the system "
+    "gives you the message only after it has verified the caller. Do not use any "
+    "assistant or product name. Then stop and listen.)"
+)
+
+#: Sent to an engine that cannot take a new system instruction (Gemini Live)
+#: once the bridge has verified the caller. The child's context follows it.
+VERIFIED_CUE = (
+    "(The system has verified that you are speaking with the child's parent. The "
+    "child's details and the teacher's message follow. Deliver the teacher's "
+    "message now, ESSENTIALLY AS WRITTEN, then invite their questions.)"
 )
 
 #: The parent has not spoken since the greeting. Never assume consent — check in.
@@ -200,3 +213,83 @@ def is_goodbye(text: str | None) -> bool:
     if _QUESTION.search(text):
         return False
     return bool(_GOODBYE.search(text))
+
+
+# ---- fixed lines the bridge speaks itself (no model) ------------------------------
+#
+# Spoken verbatim by an engine that can (the cascade's `say`), so that the
+# identity check, the teacher's message, its repeats and every goodbye are the
+# same words every time and can never carry anything the gate has not allowed.
+# None of the identity lines names a child: the caller must name them.
+
+LINES: dict[str, dict[str, str]] = {
+    "English": {
+        "identity_first": (
+            "I'm calling from {school} on behalf of {teacher}.{ai} Before I share the "
+            "teacher's message, could you please tell me your child's name?"
+        ),
+        "identity_retry": "Sorry, I didn't catch that. Could you please tell me your child's name?",
+        "identity_name_please": "Thank you. Could you please tell me your child's name?",
+        "identity_who": (
+            "I'm calling from {school} on behalf of {teacher}.{ai} The teacher has a message "
+            "for a student's parent. Could you please tell me your child's name?"
+        ),
+        "ai": " I'm an automated assistant.",
+        "deliver_lead": "Thank you.",
+        "deliver_invite": "Do you have any questions about this?",
+        "wait_prompt": "Take your time, I'm listening.",
+        "follow_up": "Is there anything else you'd like to ask?",
+        "close_goodbye": (
+            "Thank you for your time. We are partners in your child's success. Goodbye."
+        ),
+        "close_busy": "No problem. The school will call you at a better time. Thank you, goodbye.",
+        "close_opt_out": (
+            "Understood. I've noted that you don't want these calls. Thank you, goodbye."
+        ),
+        "close_wrong_person": "Sorry to have disturbed you. Thank you, goodbye.",
+        "close_unverified": (
+            "I'm sorry, I couldn't confirm that, so I can't share the message on this call. "
+            "The school will contact you another way. Thank you, goodbye."
+        ),
+        "close_silence": (
+            "I'll let you go now. The teacher will follow up with you. Thank you, goodbye."
+        ),
+    },
+    "Hindi": {
+        "identity_first": (
+            "मैं {school} से {teacher} की ओर से बोल रही हूँ।{ai} संदेश बताने से पहले, "
+            "क्या आप अपने बच्चे का नाम बता सकते हैं?"
+        ),
+        "identity_retry": "माफ़ कीजिए, मैं सुन नहीं पाई। क्या आप अपने बच्चे का नाम बता सकते हैं?",
+        "identity_name_please": "धन्यवाद। क्या आप अपने बच्चे का नाम बता सकते हैं?",
+        "identity_who": (
+            "मैं {school} से {teacher} की ओर से बोल रही हूँ।{ai} टीचर का एक संदेश है। "
+            "क्या आप अपने बच्चे का नाम बता सकते हैं?"
+        ),
+        "ai": " मैं एक ऑटोमेटेड असिस्टेंट हूँ।",
+        "deliver_lead": "धन्यवाद।",
+        "deliver_invite": "क्या आप इस बारे में कुछ पूछना चाहेंगे?",
+        "wait_prompt": "कोई बात नहीं, आराम से बोलिए, मैं सुन रही हूँ।",
+        "follow_up": "क्या आप कुछ और पूछना चाहेंगे?",
+        "close_goodbye": "आपके समय के लिए धन्यवाद। हम आपके बच्चे की प्रगति में आपके साथी हैं। नमस्कार।",
+        "close_busy": "कोई बात नहीं। स्कूल आपको किसी और समय फ़ोन करेगा। धन्यवाद, नमस्कार।",
+        "close_opt_out": "ठीक है, मैंने नोट कर लिया है कि आप ये कॉल नहीं चाहते। धन्यवाद, नमस्कार।",
+        "close_wrong_person": "परेशानी के लिए माफ़ कीजिए। धन्यवाद, नमस्कार।",
+        "close_unverified": (
+            "माफ़ कीजिए, मैं पुष्टि नहीं कर पाई, इसलिए इस कॉल पर संदेश नहीं बता सकती। "
+            "स्कूल आपसे दूसरे तरीके से संपर्क करेगा। धन्यवाद, नमस्कार।"
+        ),
+        "close_silence": "मैं अब कॉल रखती हूँ। टीचर आपसे बात करेंगे। धन्यवाद, नमस्कार।",
+    },
+}
+
+
+def line(key: str, language: str, *, school: str = "", teacher: str = "", ai: bool = True) -> str:
+    """A fixed line in the call's current language (English if not available)."""
+    table = LINES.get(language) or LINES["English"]
+    template = table.get(key) or LINES["English"][key]
+    return template.format(
+        school=school or "your child's school",
+        teacher=teacher or "the class teacher",
+        ai=table["ai"] if ai else "",
+    )

@@ -49,7 +49,8 @@ from .audio import (
 )
 from .barge_in import Action, BargeIn, frame_level, percentile
 from .cascade import CascadeConfig, cascade_enabled, open_cascade
-from .dialogue import DialogueState, identity_answer, looks_affirmative
+from .dialogue import Action as Next
+from .dialogue import DialogueState, Floor, Identity, Kind, Stage, classify
 from .flow import (
     CLOSE,
     KICKOFF_AFTER_OPENER,
@@ -58,10 +59,19 @@ from .flow import (
     OPTOUT_CLOSE,
     POST_OPENER_NUDGE,
     SILENCE_NUDGE,
+    VERIFIED_CUE,
     is_goodbye,
     is_optout,
+    line,
 )
-from .prompt import CallContext, build_parent_call_instruction, stt_language_hints
+from .privacy import ProtectedTerms
+from .prompt import (
+    CallContext,
+    build_parent_call_instruction,
+    spoken_message,
+    stt_language_hints,
+    verified_facts,
+)
 from .school_data import (
     TOOL_NAMES,
     CallScope,
@@ -74,6 +84,8 @@ from .tokens import VobizDomain, token_minted_at, verify_vobiz_token
 from .vobiz_frames import InboundKind, build_clear_audio, build_play_audio, parse_inbound
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from google.cloud.firestore import DocumentSnapshot
 
 log = structlog.get_logger(__name__)
@@ -246,7 +258,7 @@ _UNANSWERED_GIVE_UP = 12.0
 #: feeling dead.
 _CONVERSATION_SILENCE = 12.0
 #: After this many unanswered nudges, close warmly instead of nagging.
-_MAX_SILENCE_NUDGES = 2
+_MAX_SILENCE_NUDGES = 1
 #: The parent must have spoken at least this many times before the model is
 #: allowed to end the call. One turn is not a conversation — ending there is a
 #: delivery that hangs up, which is what people resent about robocalls.
@@ -267,6 +279,19 @@ _MIN_PARENT_TURNS_BEFORE_END = 2
 #: exchanges it has stopped being that. Without it the only limit was a
 #: 600-second wall clock, and a real call ran to eighteen turns.
 _MAX_PARENT_TURNS = 6
+#: Meaningful exchanges (content, not "wait"/"what"/"repeat"/"okay"/silence)
+#: before VIDYA wraps up. Replaces the 6-utterance ceiling, which on the
+#: 2026-10-11 handset call ended the call after "Hello, What, Wait, Wait,
+#: Repeat, Yeah" — six utterances, none of them a real exchange. The 600 s
+#: wall clock (_MAX_CALL_SECONDS) remains the hard safety limit.
+_MAX_MEANINGFUL_EXCHANGES = 12
+#: After the parent says "wait", hold the floor this long before one gentle
+#: "take your time, I'm listening".
+_YIELD_PROMPT_SECONDS = 7.0
+#: After a short burst paused VIDYA, wait this long for the transcript to say
+#: whether it was "haan" (resume) or "wait"/a question (cancel). Without a
+#: transcript by then it was noise: resume.
+_VERDICT_SECONDS = 1.6
 
 #: A question in the parent's last words vetoes an end. Deliberately broad: a
 #: missed veto hangs up on someone mid-question, a spurious one merely keeps a
@@ -706,6 +731,30 @@ class _Bridge:
         self.engine: Any = None
         #: The last agent turn filed was cut off by the parent.
         self.last_turn_interrupted = False
+        # ---- the call state machine and the privacy gate (dialogue/privacy) ----
+        #: Child-specific words that must not be spoken before verification.
+        self.protected: ProtectedTerms | None = None
+        #: The full (child) instruction, for the engine once the caller is verified.
+        self.unlocked_instruction = ""
+        self.unlocked = False
+        #: The next agent turn is one of the bridge's fixed lines.
+        self.next_turn_scripted = False
+        #: Playback held after a short burst, awaiting the transcript's verdict.
+        self.verdict_hold_until = 0.0
+        #: Parent gave the floor ("wait"): when, and whether we have prompted.
+        self.yielded_at = 0.0
+        self.wait_prompted = False
+        self.decisions: dict[str, int] = {}
+        self.privacy_blocks = 0
+        self.end_call_declined = 0
+        # ---- lifecycle timings ----
+        #: Parent end-of-speech -> transcript, and -> first reply audio sent.
+        self.eos_to_final_ms: list[float] = []
+        self.eos_to_first_audio_ms: list[float] = []
+        self.awaiting_reply_since = 0.0
+        self.max_queue_frames = 0
+        self.stale_frames_dropped = 0
+        self.lateness_samples: list[float] = []
 
 
 def _kickoff_text(opener_played: bool) -> str:
@@ -736,6 +785,7 @@ def _queue_ulaw(bridge: _Bridge, ulaw: bytes) -> None:
     for start in range(0, complete, _FRAME_BYTES):
         bridge.out.put_nowait((bridge.generation, data[start : start + _FRAME_BYTES]))
     bridge.pending = data[complete:]
+    bridge.max_queue_frames = max(bridge.max_queue_frames, bridge.out.qsize())
 
 
 def _flush_ulaw(bridge: _Bridge) -> None:
@@ -856,6 +906,7 @@ async def _conversation_watchdog(bridge: _Bridge, session: Any) -> None:
     """
     nudged_after_opener = False
     nudges = 0
+    silence = {"nudges": 0}
     while not bridge.stop and not bridge.closing:
         await asyncio.sleep(0.5)
         quiet_for = time.monotonic() - bridge.last_activity
@@ -880,8 +931,14 @@ async def _conversation_watchdog(bridge: _Bridge, session: Any) -> None:
             # line. Staging run 2: a 6.3 s model reply after a lookup drew a
             # silence nudge, and the nudge cancelled the attendance answer.
             or bool(getattr(bridge.engine, "busy", False))
+            or bool(bridge.verdict_hold_until)
         )
         if speaking:
+            continue
+
+        if _scripted(bridge):
+            if await _scripted_silence(bridge, session, quiet_for, silence):
+                break
             continue
 
         if not bridge.engaged:
@@ -918,6 +975,50 @@ async def _conversation_watchdog(bridge: _Bridge, session: Any) -> None:
     # local verification 2026-10-08: hangup 65 ms after `telephony.closing`.
     while not bridge.stop:
         await asyncio.sleep(0.1)
+
+
+async def _scripted_silence(
+    bridge: _Bridge, session: Any, quiet_for: float, state: dict[str, int]
+) -> bool:
+    """Silence, as the state machine sees it (Neha cascade). True = closing.
+
+    - After "wait": one "take your time, I'm listening" after a while, never
+      a resumed monologue.
+    - Before verification: ask the neutral identity question again; after the
+      last attempt, close politely without sharing anything.
+    - After verification: ONE natural follow-up, then a polite close; and a
+      long call wraps up only when the line is idle and no question is open.
+    """
+    d = bridge.dialogue
+    now = time.monotonic()
+    if d.floor is Floor.WAITING_FOR_PARENT and not bridge.wait_prompted:
+        if now - max(bridge.yielded_at, bridge.last_activity) > _YIELD_PROMPT_SECONDS:
+            bridge.wait_prompted = True
+            bridge.last_activity = now
+            await _say(bridge, session, _fixed(bridge, "wait_prompt"))
+        return False
+    if not d.may_share_student_data:
+        if quiet_for > _POST_OPENER_SILENCE:
+            bridge.last_activity = now
+            if d.identity_questions >= d.max_identity_attempts:
+                await _close_call(
+                    bridge, session, "unverified" if bridge.engaged else "never_engaged"
+                )
+                return True
+            await _say(bridge, session, _fixed(bridge, "identity_retry"))
+            d.on_identity_question_asked()
+        return False
+    if _must_end_now(bridge) and not d.open_question:
+        await _close_call(bridge, session, "limit")
+        return True
+    if quiet_for > _CONVERSATION_SILENCE:
+        state["nudges"] += 1
+        bridge.last_activity = now
+        if state["nudges"] > _MAX_SILENCE_NUDGES:
+            await _close_call(bridge, session, "silence")
+            return True
+        await _say(bridge, session, _fixed(bridge, "follow_up"))
+    return False
 
 
 async def _pump_carrier_to_live(bridge: _Bridge, session: Any) -> str:
@@ -965,8 +1066,12 @@ def _record_turn(bridge: _Bridge, role: str, text: str) -> None:
     fragments from the same speaker are joined into one turn, which is the shape
     the rest of the app already stores and the shape a teacher can actually
     review.
+
+    Only the PARENT's fragments are merged. VIDYA's turns arrive whole (see
+    `_commit_agent_turn`), and merging two of them filed a question and the
+    goodbye said after the parent's silence as one entry, as if glued together.
     """
-    if bridge.transcript and bridge.transcript[-1]["role"] == role:
+    if bridge.transcript and bridge.transcript[-1]["role"] == role == "parent":
         bridge.transcript[-1]["text"] = f"{bridge.transcript[-1]['text']} {text}".strip()
         return
     bridge.transcript.append(
@@ -1064,7 +1169,8 @@ def _commit_agent_turn(bridge: _Bridge, *, interrupted: bool = False) -> None:
     if not text:
         return
     before = bridge.dialogue.repeat_intros
-    bridge.dialogue.on_agent_turn(text)
+    bridge.dialogue.on_agent_turn(text, scripted=bridge.next_turn_scripted)
+    bridge.next_turn_scripted = False
     if bridge.dialogue.repeat_intros > before:
         log.warning(
             "telephony.repeat_intro",
@@ -1074,7 +1180,10 @@ def _commit_agent_turn(bridge: _Bridge, *, interrupted: bool = False) -> None:
     _record_turn(bridge, "agent", f"{text} …" if interrupted else text)
     bridge.last_turn_interrupted = interrupted
     _tell_engine_the_state(bridge)
-    if not interrupted and not bridge.closing and _is_agent_farewell(text):
+    # Gemini Live only: on the cascade a model "goodbye" must not end the call;
+    # closings there are the bridge's own decision and fixed line.
+    live_farewell = not _scripted(bridge) and _is_agent_farewell(text)
+    if live_farewell and not interrupted and not bridge.closing:
         _spawn(bridge, _end_if_model_forgets(bridge, time.monotonic()))
 
 
@@ -1406,6 +1515,13 @@ def _apply_barge_action(bridge: _Bridge, action: Action, *, by_model: bool) -> N
         # Playback stopped at the pause, whether or not the pacer has ticked
         # since; record that stop before frames flow again.
         _measure_stop(bridge)
+        if _scripted(bridge):
+            # Do NOT resume on silence alone. On the handset call a "Wait." was
+            # resumed over after 0.5 s of quiet; the transcript decides instead
+            # ("haan" resumes, anything else cancels), or noise times out.
+            bridge.verdict_hold_until = time.monotonic() + _VERDICT_SECONDS
+            log.info("telephony.barge_in", outreach_id=bridge.outreach_id, action="hold")
+            return
         log.info("telephony.barge_in", outreach_id=bridge.outreach_id, action="resume")
         return
     if action is Action.PAUSE:
@@ -1549,6 +1665,16 @@ async def _handle_parent_speech(bridge: _Bridge, session: Any, server: Any) -> N
         # own speech about their child.
         log.info("telephony.heard", outreach_id=bridge.outreach_id, text=said)
 
+    if bridge.last_parent_voice_at:
+        bridge.eos_to_final_ms.append((time.monotonic() - bridge.last_parent_voice_at) * 1000)
+
+    if _scripted(bridge):
+        # The cascade delivers ONE final transcript per utterance: the state
+        # machine decides what happens; the model is only asked when it says so.
+        await _act_on(bridge, session, said)
+        return
+    await _live_identity(bridge, session)
+
     # SAFETY NET. The model ending the call itself is still the main mechanism,
     # but it cannot be the only one: on a live call the parent said "theek hai,
     # thank you so much, namaskar" and the model replied "is there anything else
@@ -1559,14 +1685,6 @@ async def _handle_parent_speech(bridge: _Bridge, session: Any, server: Any) -> N
     # A false positive here would hang up on someone mid-sentence, so this runs
     # ONLY through `_may_end_yet`: at least two parent turns, and their latest
     # utterance must not be a question.
-    if is_optout(bridge.recent_speech):
-        bridge.opted_out = True
-        await _begin_close(bridge, session, "opt_out")
-    elif (
-        is_goodbye(bridge.parent_said[-1]) and _may_end_yet(bridge) and not bridge.goodbye_net_armed
-    ):
-        bridge.goodbye_net_armed = True
-        _spawn(bridge, _close_unless_model_does(bridge, session))
 
 
 #: How long the goodbye safety net waits for the model to START replying.
@@ -1624,9 +1742,15 @@ async def _close_unless_model_does(bridge: _Bridge, session: Any) -> None:
     await _begin_close(bridge, session, "goodbye")
 
 
+def _meaningful(bridge: _Bridge) -> int:
+    """Parent utterances that carried content: not wait/what/repeat/okay."""
+    return sum(1 for u in bridge.parent_said if classify(u) is Kind.SUBSTANTIVE)
+
+
 def _must_end_now(bridge: _Bridge) -> bool:
-    """Has the call reached its ceiling regardless of what the model wants?"""
-    return len(bridge.parent_said) >= _MAX_PARENT_TURNS
+    """A long call wraps up after this many REAL exchanges, never on a count of
+    "wait", "what?" and "okay" (the old 6-utterance ceiling)."""
+    return _meaningful(bridge) >= _MAX_MEANINGFUL_EXCHANGES
 
 
 def _may_end_yet(bridge: _Bridge) -> bool:
@@ -1671,11 +1795,6 @@ async def _handle_tool_call(bridge: _Bridge, session: Any, tool_call: Any) -> No
             if fc.id:
                 bridge.tool_tasks[fc.id] = task
             continue
-        if fc.name == "confirm_parent_identity":
-            task = _spawn(bridge, _run_identity_check(bridge, session, fc))
-            if fc.id:
-                bridge.tool_tasks[fc.id] = task
-            continue
         if fc.name != "end_call":
             immediate.append(
                 genai_types.FunctionResponse(
@@ -1683,10 +1802,32 @@ async def _handle_tool_call(bridge: _Bridge, session: Any, tool_call: Any) -> No
                 )
             )
             continue
+        reason = str((dict(fc.args or {})).get("reason") or "parent_finished")
+        if not _end_call_allowed(bridge, reason):
+            # The model may ask; the state machine decides. A model that ends
+            # the call on its own reading of the conversation hung up on parents
+            # mid-question in earlier tests.
+            bridge.end_call_declined += 1
+            log.info(
+                "telephony.end_call_declined",
+                outreach_id=bridge.outreach_id,
+                reason=reason,
+                stage=bridge.dialogue.stage.value,
+            )
+            immediate.append(
+                genai_types.FunctionResponse(
+                    id=fc.id,
+                    name=fc.name,
+                    response={
+                        "status": "declined",
+                        "say": "The call is not over. Carry on listening to the parent.",
+                    },
+                )
+            )
+            continue
         immediate.append(
             genai_types.FunctionResponse(id=fc.id, name=fc.name, response={"status": "ok"})
         )
-        reason = str((dict(fc.args or {})).get("reason") or "parent_finished")
 
         # The model proposes; we dispose.
         #
@@ -1722,8 +1863,6 @@ async def _handle_tool_call(bridge: _Bridge, session: Any, tool_call: Any) -> No
 
         if reason == "opt_out":
             bridge.opted_out = True
-        if reason == "wrong_number":
-            bridge.dialogue.confirm_identity("wrong_person", parent_turns=len(bridge.parent_said))
         log.info("telephony.end_call_tool", outreach_id=bridge.outreach_id, reason=reason)
         # The model says its closing line BEFORE calling this, so there is
         # nothing left to say — end without sending another closing cue.
@@ -1736,49 +1875,28 @@ async def _handle_tool_call(bridge: _Bridge, session: Any, tool_call: Any) -> No
             await session.send_tool_response(function_responses=immediate)
 
 
-#: The parent's "yes" is transcribed late, often after the model has already
-#: decided to call `confirm_parent_identity`. Wait this long for it.
-_IDENTITY_TRANSCRIPT_WAIT = 1.2
-
-
-async def _run_identity_check(bridge: _Bridge, session: Any, fc: Any) -> None:
-    """Check the model's identity claim against what the parent actually said."""
-    from google.genai import types as genai_types
-
-    try:
-        status = str((dict(fc.args or {})).get("status") or "")
-        if status == "confirmed":
-            deadline = time.monotonic() + _IDENTITY_TRANSCRIPT_WAIT
-            seen = len(bridge.parent_said)
-            while time.monotonic() < deadline:
-                latest = bridge.parent_said[-1] if bridge.parent_said else None
-                if looks_affirmative(identity_answer(bridge.parent_said)):
-                    break
-                if len(bridge.parent_said) > seen and latest:
-                    break  # a new answer arrived and it is not a yes
-                await asyncio.sleep(0.05)
-        _, outcome = bridge.dialogue.confirm_identity(
-            status,
-            parent_turns=len(bridge.parent_said),
-            parent_reply=identity_answer(bridge.parent_said),
-        )
-        log.info("telephony.identity", outreach_id=bridge.outreach_id, outcome=outcome)
-        _tell_engine_the_state(bridge)
-        response: dict[str, Any] = {"status": outcome}
-        if outcome == "not_confirmed_ask_directly":
-            response["say"] = (
-                "Do not share anything about the child yet. Ask plainly, once, whether "
-                "you are speaking with the child's parent or guardian."
-            )
-        with contextlib.suppress(Exception):
-            await session.send_tool_response(
-                function_responses=[
-                    genai_types.FunctionResponse(id=fc.id, name=fc.name, response=response)
-                ]
-            )
-    finally:
-        if fc.id:
-            bridge.tool_tasks.pop(fc.id, None)
+def _end_call_allowed(bridge: _Bridge, reason: str) -> bool:
+    """May the model end the call now? Only where the state machine agrees."""
+    if bridge.dialogue.stage is Stage.GOODBYE:
+        return True
+    if _scripted(bridge):
+        # The cascade's closings are the bridge's own fixed lines.
+        return False
+    last = bridge.parent_said[-1] if bridge.parent_said else ""
+    # Each reason is honoured only on the evidence for it.
+    evidence: dict[str, Callable[[], bool]] = {
+        "voicemail": lambda: not bridge.engaged,
+        "wrong_number": lambda: bridge.dialogue.identity is Identity.DENIED,
+        "opt_out": lambda: is_optout(bridge.recent_speech),
+        "call_back_later": lambda: classify(last) is Kind.BUSY,
+        "message_delivered": lambda: (
+            bridge.delivery_only and bridge.dialogue.may_share_student_data
+        ),
+    }
+    check = evidence.get(reason)
+    if check is not None:
+        return check()
+    return _may_end_yet(bridge) and is_goodbye(last)
 
 
 async def _run_lookup(bridge: _Bridge, session: Any, fc: Any) -> None:
@@ -1812,6 +1930,226 @@ async def _run_lookup(bridge: _Bridge, session: Any, fc: Any) -> None:
     finally:
         if fc.id:
             bridge.tool_tasks.pop(fc.id, None)
+
+
+# ---- the conversation manager: executes the state machine's decisions --------
+
+
+def _scripted(bridge: _Bridge) -> bool:
+    """The engine takes direct orders (respond / say): the Neha cascade."""
+    return callable(getattr(bridge.engine, "say", None)) and callable(
+        getattr(bridge.engine, "respond", None)
+    )
+
+
+def _leaks(bridge: _Bridge, text: str) -> bool:
+    """Would saying `text` disclose child data before verification?"""
+    if bridge.dialogue.may_share_student_data or bridge.protected is None:
+        return False
+    return bool(bridge.protected.leaks(text))
+
+
+def _vidya_speaking(bridge: _Bridge) -> bool:
+    return (
+        not bridge.out.empty()
+        or bool(bridge.pending)
+        or bridge.barge.paused
+        or bool(bridge.verdict_hold_until)
+        or bool(getattr(bridge.engine, "busy", False))
+    )
+
+
+def _language(bridge: _Bridge) -> str:
+    lang = getattr(bridge.engine, "language", None)
+    if isinstance(lang, str) and lang:
+        return lang
+    return bridge.context.language if bridge.context else "English"
+
+
+def _fixed(bridge: _Bridge, key: str) -> str:
+    ctx = bridge.context
+    return line(
+        key,
+        _language(bridge),
+        school=(ctx.school_name if ctx else "") or "",
+        teacher=(ctx.teacher_name if ctx else "") or "",
+        ai=disclose_ai(),
+    )
+
+
+async def _say(bridge: _Bridge, session: Any, text: str) -> None:
+    """Speak a fixed line verbatim (cascade) or have the model say it (Live)."""
+    if _leaks(bridge, text):
+        # A fixed line is never child-specific before verification; if one ever
+        # is, that is a bug and it is not spoken.
+        bridge.privacy_blocks += 1
+        log.warning("telephony.privacy_block", outreach_id=bridge.outreach_id, where="fixed_line")
+        return
+    bridge.next_turn_scripted = True
+    if _scripted(bridge):
+        await bridge.engine.say(text)
+    else:
+        with contextlib.suppress(Exception):
+            await _send_director(session, f'(Say exactly this, and nothing else: "{text}")')
+
+
+def _stop_current(bridge: _Bridge) -> bool:
+    """Silence whatever VIDYA is saying (or holding) and drop it for good.
+
+    Returns whether anything was cut off. Leaves the dialogue's floor alone:
+    this runs AFTER the state machine has decided ("wait" -> waiting for the
+    parent), and marking the floor "interrupted" here overwrote that decision.
+    """
+    held = bool(bridge.verdict_hold_until)
+    bridge.verdict_hold_until = 0.0
+    if not (held or _vidya_speaking(bridge)):
+        return False
+    _silence_current_reply(bridge, model_still_sending=bridge.model_turn_open)
+    stop = getattr(bridge.engine, "cancel_response", None)
+    if callable(stop):
+        stop(_heard_text(bridge))
+    return True
+
+
+def _unlock(bridge: _Bridge) -> None:
+    """Verified: from now on the engine may know (and say) the child's context."""
+    if bridge.unlocked:
+        return
+    bridge.unlocked = True
+    unlock = getattr(bridge.engine, "unlock", None)
+    if callable(unlock):
+        unlock(bridge.unlocked_instruction)
+    log.info("telephony.identity", outreach_id=bridge.outreach_id, outcome="verified")
+
+
+async def _act_on(bridge: _Bridge, session: Any, said: str) -> None:  # noqa: PLR0912 — one branch per decision
+    """Execute the state machine's decision for one parent utterance."""
+    decision = bridge.dialogue.on_parent(said, vidya_speaking=_vidya_speaking(bridge))
+    action = decision.action
+    bridge.decisions[action.value] = bridge.decisions.get(action.value, 0) + 1
+    log.info(
+        "telephony.decision",
+        outreach_id=bridge.outreach_id,
+        action=action.value,
+        kind=decision.kind.value,
+        detail=decision.detail or None,
+        stage=bridge.dialogue.stage.value,
+    )
+    if action in (Next.IGNORE, Next.RESUME):
+        bridge.verdict_hold_until = 0.0  # "haan": carry on from where she paused
+        return
+    if _stop_current(bridge):
+        bridge.dialogue.interruptions += 1
+    expects_reply = action is not Next.YIELD_FLOOR
+    if expects_reply:
+        bridge.awaiting_reply_since = bridge.last_parent_voice_at or time.monotonic()
+    if action is Next.YIELD_FLOOR:
+        bridge.yielded_at = time.monotonic()
+        bridge.wait_prompted = False
+    elif action is Next.ASK_IDENTITY:
+        await _say(bridge, session, _fixed(bridge, f"identity_{decision.detail or 'retry'}"))
+        bridge.dialogue.on_identity_question_asked()
+    elif action is Next.DELIVER_MESSAGE:
+        _unlock(bridge)
+        _tell_engine_the_state(bridge)
+        await _say(bridge, session, _delivery_text(bridge))
+        bridge.dialogue.on_message_delivered()
+        if bridge.delivery_only:
+            await _close_call(bridge, session, "goodbye")
+    elif action is Next.REPEAT_MESSAGE:
+        await _say(
+            bridge, session, spoken_message(bridge.context.message if bridge.context else "")
+        )
+    elif action is Next.REPEAT_LAST:
+        await _say(bridge, session, bridge.dialogue.last_agent_text)
+    elif action is Next.RESPOND:
+        bridge.dialogue.last_reply_was_to_ack = decision.kind is Kind.ACK
+        _tell_engine_the_state(bridge)
+        await bridge.engine.respond(said)
+    elif action is Next.CLOSE:
+        await _close_call(bridge, session, decision.detail or "goodbye")
+
+
+def _delivery_text(bridge: _Bridge) -> str:
+    message = spoken_message(bridge.context.message if bridge.context else "")
+    if not message:
+        message = "The teacher asked me to check in with you about your child."
+    return f"{_fixed(bridge, 'deliver_lead')} {message} {_fixed(bridge, 'deliver_invite')}"
+
+
+async def _close_call(bridge: _Bridge, session: Any, why: str) -> None:
+    """One complete goodbye (a fixed line), then hang up once it has played."""
+    if bridge.closing or bridge.stop:
+        return
+    if why == "opt_out":
+        bridge.opted_out = True
+    if not _scripted(bridge):
+        await _begin_close(bridge, session, {"opt_out": "opt_out"}.get(why, why))
+        return
+    bridge.closing = True
+    bridge.dialogue.begin_closing()
+    log.info("telephony.closing", outreach_id=bridge.outreach_id, reason=why)
+    _stop_current(bridge)
+    key = {
+        "goodbye": "close_goodbye",
+        "busy": "close_busy",
+        "opt_out": "close_opt_out",
+        "wrong_person": "close_wrong_person",
+        "unverified": "close_unverified",
+        "silence": "close_silence",
+        "never_engaged": "close_silence",
+        "limit": "close_goodbye",
+    }.get(why, "close_goodbye")
+    await _say(bridge, session, _fixed(bridge, key))
+    _spawn(bridge, _end_after_fixed_line(bridge))
+
+
+async def _end_after_fixed_line(bridge: _Bridge) -> None:
+    """Hang up only after the goodbye has been synthesised AND played."""
+    deadline = time.monotonic() + _CLOSING_GRACE_SECONDS + 6.0
+    while time.monotonic() < deadline:
+        if not getattr(bridge.engine, "busy", False) and bridge.out.empty() and not bridge.pending:
+            await asyncio.sleep(0.6)  # the carrier's own buffer
+            break
+        await asyncio.sleep(0.1)
+    bridge.stop = True
+
+
+async def _live_identity(bridge: _Bridge, session: Any) -> None:
+    """Gemini Live: verify from the transcript; unlock with a context turn.
+
+    Live answers the audio itself, so here the bridge only owns the gate: the
+    session starts locked (no child context), and the child's context is sent
+    only once the caller has said the child's name.
+    """
+    last = bridge.parent_said[-1] if bridge.parent_said else ""
+    if is_optout(bridge.recent_speech):
+        bridge.opted_out = True
+        await _begin_close(bridge, session, "opt_out")
+        return
+    if not bridge.dialogue.may_share_student_data:
+        decision = bridge.dialogue.check_identity(last)
+        if decision is Identity.CONFIRMED:
+            _unlock(bridge)
+            from google.genai import types as genai_types
+
+            facts = verified_facts(bridge.context) if bridge.context else ""
+            with contextlib.suppress(Exception):
+                await session.send_client_content(
+                    turns=genai_types.Content(
+                        role="user",
+                        parts=[genai_types.Part(text=f"{VERIFIED_CUE}\n{facts}")],
+                    ),
+                    turn_complete=True,
+                )
+            bridge.dialogue.on_message_delivered()
+        elif decision is Identity.DENIED:
+            await _begin_close(bridge, session, "goodbye")
+            return
+    # A goodbye ends the call whether or not the caller was verified.
+    if is_goodbye(last) and _may_end_yet(bridge) and not bridge.goodbye_net_armed:
+        bridge.goodbye_net_armed = True
+        _spawn(bridge, _close_unless_model_does(bridge, session))
 
 
 def _cancel_lookups(bridge: _Bridge, ids: list[str] | None) -> None:
@@ -1856,6 +2194,13 @@ def _on_agent_transcription(bridge: _Bridge, server: Any) -> None:
         _open_model_turn(bridge)
         _agent_said(bridge, text)
         bridge.agent_spoke_since_parent = True
+        if _leaks(bridge, bridge.agent_turn_text):
+            # Defence in depth for an engine whose output we cannot pre-check
+            # (Gemini Live): stop it the moment its transcript shows it.
+            bridge.privacy_blocks += 1
+            log.warning("telephony.privacy_block", outreach_id=bridge.outreach_id, where="live")
+            bridge.agent_turn_text = ""
+            _silence_current_reply(bridge, model_still_sending=bridge.model_turn_open)
 
 
 def _open_model_turn(bridge: _Bridge) -> None:
@@ -1866,8 +2211,14 @@ def _open_model_turn(bridge: _Bridge) -> None:
         bridge.turn_frames_generated = bridge.turn_frames_played = 0
 
 
-def _on_model_audio(bridge: _Bridge, data: bytes | None) -> None:
-    if not data:
+def _on_model_audio(bridge: _Bridge, data: bytes | None, *, ulaw: bytes | None = None) -> None:
+    """Model speech for the parent: PCM16 24 kHz (Live), or ready mu-law (cascade).
+
+    The cascade sends mu-law it has already resampled in 40 ms slices, off the
+    pacer's critical path; resampling whole TTS chunks here held the event loop
+    ~28 ms per second of audio and made the 20 ms pacer late.
+    """
+    if not data and not ulaw:
         return
     if bridge.discard_model_audio:
         # Still streaming for the response the parent talked over.
@@ -1880,7 +2231,8 @@ def _on_model_audio(bridge: _Bridge, data: bytes | None) -> None:
     if bridge.first_audio_at is None:
         bridge.first_audio_at = time.monotonic()
     _open_model_turn(bridge)
-    ulaw, bridge.decimator = pcm24k_to_ulaw8k(data, bridge.decimator)
+    if ulaw is None:
+        ulaw, bridge.decimator = pcm24k_to_ulaw8k(data or b"", bridge.decimator)
     bridge.turn_frames_generated += len(ulaw) // _FRAME_BYTES
     _queue_ulaw(bridge, ulaw)
 
@@ -1922,7 +2274,7 @@ async def _pump_live_to_carrier(bridge: _Bridge, session: Any) -> str:
                 bridge.model_turn_open = False
                 _commit_agent_turn(bridge)
 
-            _on_model_audio(bridge, getattr(resp, "data", None))
+            _on_model_audio(bridge, getattr(resp, "data", None), ulaw=getattr(resp, "ulaw", None))
         # The turn is over: the carry-over is a true tail now, not a chunk seam.
         _flush_ulaw(bridge)
         _commit_agent_turn(bridge)
@@ -1948,7 +2300,10 @@ async def _barge_in_tick(bridge: _Bridge) -> bool:
             bridge.clear_pending = False
             await bridge.ws.send_text(build_clear_audio(bridge.stream_id))
             bridge.clear_sent_at = time.monotonic()
-        if bridge.barge.paused:
+        if bridge.verdict_hold_until and time.monotonic() > bridge.verdict_hold_until:
+            # No transcript came: it was noise, not the parent. Carry on.
+            bridge.verdict_hold_until = 0.0
+        if bridge.barge.paused or bridge.verdict_hold_until:
             _measure_stop(bridge)
             await bridge.ws.send_text(build_play_audio(bridge.stream_id, _SILENCE_FRAME))
     except Exception:  # noqa: BLE001 — the carrier is gone; the handler decides what that means
@@ -1970,6 +2325,24 @@ def _next_current_frame(bridge: _Bridge) -> bytes | None:
             return None
         if generation == bridge.generation:
             return candidate
+        bridge.stale_frames_dropped += 1
+
+
+def _after_tick(bridge: _Bridge, *, is_speech: bool) -> None:
+    """Bookkeeping for one pacer tick: what was played, and when."""
+    if not is_speech:
+        # A cancel empties the queue; the first tick with nothing to play
+        # is when VIDYA actually went quiet.
+        _measure_stop(bridge)
+        return
+    bridge.last_speech_frame_at = time.monotonic()
+    bridge.turn_frames_played += 1
+    if bridge.awaiting_reply_since:
+        # The parent stopped speaking -> the first frame of the reply left.
+        bridge.eos_to_first_audio_ms.append(
+            (bridge.last_speech_frame_at - bridge.awaiting_reply_since) * 1000
+        )
+        bridge.awaiting_reply_since = 0.0
 
 
 async def _pace_outbound(bridge: _Bridge) -> None:
@@ -2009,7 +2382,7 @@ async def _pace_outbound(bridge: _Bridge) -> None:
 
         if not await _barge_in_tick(bridge):
             return
-        if bridge.barge.paused:
+        if bridge.barge.paused or bridge.verdict_hold_until:
             now = time.monotonic()
             if next_at < now - _MAX_PACING_LAG:
                 next_at = now
@@ -2033,19 +2406,15 @@ async def _pace_outbound(bridge: _Bridge) -> None:
             except Exception:  # noqa: BLE001 — the carrier is gone; the handler decides what that means
                 bridge.stop = True
                 return
-            if is_speech:
-                bridge.last_speech_frame_at = time.monotonic()
-                bridge.turn_frames_played += 1
-        if not is_speech:
-            # A cancel empties the queue; the first tick with nothing to play
-            # is when VIDYA actually went quiet.
-            _measure_stop(bridge)
+        _after_tick(bridge, is_speech=is_speech and bool(bridge.stream_id))
 
         now = time.monotonic()
         # Self-measurement. Client-observed jitter mixes our pacing with the
         # internet path to the carrier; this is the part we actually own, so it
         # is the part worth reporting.
         lateness = now - next_at
+        if len(bridge.lateness_samples) < 30000:
+            bridge.lateness_samples.append(max(0.0, lateness * 1000))
         if lateness > 0:
             bridge.ticks_late += 1
             bridge.worst_lateness_ms = max(bridge.worst_lateness_ms, lateness * 1000)
@@ -2092,13 +2461,10 @@ async def _prepare_live_session(
         system_instruction=genai_types.Content(
             parts=[
                 genai_types.Part(
-                    text=build_parent_call_instruction(
-                        context,
-                        disclose_ai=disclose_ai(),
-                        two_way=is_two_way(context.language),
-                        lookups=lookups,
-                        switch_to_hindi=cascade_enabled() and CascadeConfig.from_env().hindi,
-                    )
+                    # LOCKED: nothing about the child until the bridge verifies
+                    # the caller (privacy.py). The full context is handed over
+                    # by _unlock / _live_identity, never before.
+                    text=_instruction(context, lookups=lookups, verified=False)
                 )
             ]
         ),
@@ -2182,29 +2548,24 @@ async def _prepare_live_session(
 
 
 def _identity_and_lookup_declarations() -> list[Any]:
-    """`confirm_parent_identity` plus the read-only school-data allowlist."""
-    from google.genai import types as genai_types
+    """The read-only school-data allowlist.
 
-    identity = genai_types.FunctionDeclaration(
-        name="confirm_parent_identity",
-        description=(
-            "Report what the person said when you asked if they are the child's parent "
-            "or guardian. Call it once, right after they answer. Student details can only "
-            "be looked up after 'confirmed'."
-        ),
-        parameters=genai_types.Schema(
-            type=genai_types.Type.OBJECT,
-            properties={
-                "status": genai_types.Schema(
-                    type=genai_types.Type.STRING,
-                    enum=["confirmed", "wrong_person", "unsure"],
-                    description="confirmed, wrong_person, or unsure",
-                )
-            },
-            required=["status"],
-        ),
+    There is deliberately no identity tool any more: verification is the
+    bridge's (dialogue.check_identity), from what the caller actually said, not
+    something the model reports.
+    """
+    return list(tool_declarations())
+
+
+def _instruction(context: CallContext, *, lookups: bool, verified: bool) -> str:
+    return build_parent_call_instruction(
+        context,
+        disclose_ai=disclose_ai(),
+        two_way=is_two_way(context.language),
+        lookups=lookups,
+        switch_to_hindi=cascade_enabled() and CascadeConfig.from_env().hindi,
+        verified=verified,
     )
-    return [identity, *tool_declarations()]
 
 
 def _connect_engine(client: Any, model: str, config: Any) -> Any:
@@ -2305,7 +2666,19 @@ def _equip_bridge(bridge: _Bridge, context: CallContext, scope: CallScope | None
     """Give the call what it learned from its outreach record."""
     bridge.context = context
     bridge.delivery_only = not is_two_way(context.language)
-    bridge.dialogue = DialogueState(school_name=context.school_name, message=context.message)
+    bridge.dialogue = DialogueState(
+        student_name=context.student_name,
+        school_name=context.school_name,
+        message=context.message,
+    )
+    bridge.protected = ProtectedTerms.build(
+        student_name=context.student_name,
+        class_name=context.class_name,
+        message=context.message,
+        extra=context.performance_summary,
+        allowed=f"{context.school_name or ''} {context.teacher_name or ''}",
+    )
+    bridge.unlocked_instruction = _instruction(context, lookups=scope is not None, verified=True)
     if scope is not None:
         settings = get_settings()
         bridge.tools = SchoolDataTools(
@@ -2314,6 +2687,32 @@ def _equip_bridge(bridge: _Bridge, context: CallContext, scope: CallScope | None
         )
         # While VIDYA introduces herself, so the first question is answered warm.
         _spawn(bridge, bridge.tools.warm())
+
+
+async def _kickoff(bridge: _Bridge, session: Any) -> None:
+    """Open the conversation with the neutral identity question.
+
+    The model takes over mid-conversation. Telling it the recording already
+    played is what stops it introducing itself a second time, which is the
+    single most obviously robotic thing this call could do.
+    """
+    if _scripted(bridge):
+        # The guard runs before synthesis: before verification nothing
+        # child-specific can be spoken, whoever composed it.
+        session.set_guard(lambda sentence: not _leaks(bridge, sentence))
+        await _say(bridge, session, _fixed(bridge, "identity_first"))
+    else:
+        from google.genai import types as genai_types
+
+        await session.send_client_content(
+            turns=genai_types.Content(
+                role="user",
+                parts=[genai_types.Part(text=_kickoff_text(bool(bridge.opener_queued_at)))],
+            ),
+            turn_complete=True,
+        )
+    bridge.dialogue.on_identity_question_asked()
+    bridge.last_activity = time.monotonic()
 
 
 def _conversation_metrics(bridge: _Bridge) -> dict[str, Any]:
@@ -2335,6 +2734,22 @@ def _conversation_metrics(bridge: _Bridge) -> dict[str, Any]:
         "media_format": bridge.media_format,
         **bridge.inbound.summary(),
         **{f"barge_{k}": v for k, v in bridge.barge.diagnostics().items()},
+        "eos_to_final_p50_ms": _ms(bridge.eos_to_final_ms, 50),
+        "eos_to_final_p95_ms": _ms(bridge.eos_to_final_ms, 95),
+        "eos_to_first_audio_p50_ms": _ms(bridge.eos_to_first_audio_ms, 50),
+        "eos_to_first_audio_p95_ms": _ms(bridge.eos_to_first_audio_ms, 95),
+        "frame_lateness_p50_ms": _ms(bridge.lateness_samples, 50),
+        "frame_lateness_p95_ms": _ms(bridge.lateness_samples, 95),
+        "max_queue_frames": bridge.max_queue_frames,
+        "stale_frames_dropped": bridge.stale_frames_dropped,
+        "stage": bridge.dialogue.stage.value,
+        "identity_questions": bridge.dialogue.identity_questions,
+        "meaningful_exchanges": _meaningful(bridge),
+        "decisions": bridge.decisions,
+        "privacy_blocks": bridge.privacy_blocks
+        + int(getattr(bridge.engine, "privacy_blocks", 0) or 0),
+        "end_call_declined": bridge.end_call_declined,
+        "refused_transitions": bridge.dialogue.refused_transitions,
         "repeat_intros": bridge.dialogue.repeat_intros,
         "identity": bridge.dialogue.identity.value,
         "message_delivered": bridge.dialogue.message_delivered,
@@ -2378,8 +2793,6 @@ async def vobiz_stream(ws: WebSocket) -> None:
         )
         _equip_bridge(bridge, context, scope)
 
-        from google.genai import types as genai_types
-
         async with _connect_engine(client, model, config) as session:
             live_connected = True
             bridge.engine = session
@@ -2402,18 +2815,7 @@ async def vobiz_stream(ws: WebSocket) -> None:
             with contextlib.suppress(asyncio.CancelledError):
                 await greeter
 
-            # The model takes over mid-conversation. Telling it the recording
-            # already played is what stops it introducing itself a second time,
-            # which is the single most obviously robotic thing this call could do.
-            await session.send_client_content(
-                turns=genai_types.Content(
-                    role="user",
-                    parts=[genai_types.Part(text=_kickoff_text(bool(bridge.opener_queued_at)))],
-                ),
-                turn_complete=True,
-            )
-
-            bridge.last_activity = time.monotonic()
+            await _kickoff(bridge, session)
             reason = await _run_call(bridge, session, pacer)
     except WebSocketDisconnect:
         reason = "carrier_disconnect"

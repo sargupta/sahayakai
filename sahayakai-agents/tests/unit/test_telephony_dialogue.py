@@ -1,12 +1,11 @@
-"""Dialogue state, transcript order and the identity gate.
+"""The call's state machine and the identity gate (dialogue.py), plus transcript order.
 
-Gates the classes of defect seen on real calls:
-- a second introduction (counted, and every cue reminds the model it is done);
-- the message re-delivered after "haan ji, boliye" (cues say it is delivered);
-- transcript lines filed out of order — the 2026-10-10 live transcript put the
-  first word of each reply at the end of the previous one ("…further? I");
-- sub-word fragments joined with spaces ("Sah ayak", "Ms .");
-- student data reachable before the parent has said who they are.
+Gates the classes of defect from the 2026-10-11 handset call (Vobiz 41534a41-...):
+- the teacher's message given to a caller who only said "Hello" and "What";
+- "Wait" answered with a new reply each time ("Yes, please tell me." twice);
+- "Repeat" refused;
+- a six-utterance ceiling that counted "wait"/"what"/"repeat"/"yeah";
+and from earlier calls: transcript lines filed out of order, sub-word joins.
 """
 
 from __future__ import annotations
@@ -18,7 +17,15 @@ from typing import Any
 import pytest
 
 from sahayakai_agents.telephony import router as telephony
-from sahayakai_agents.telephony.dialogue import DialogueState, Identity, Phase
+from sahayakai_agents.telephony.dialogue import (
+    Action,
+    DialogueState,
+    Floor,
+    Identity,
+    Kind,
+    Stage,
+    classify,
+)
 
 MESSAGE = (
     "Ravi's science performance has declined recently, and he missed two homework "
@@ -27,113 +34,199 @@ MESSAGE = (
 
 
 def _state() -> DialogueState:
-    return DialogueState(school_name="Sahayak Test School", message=MESSAGE)
+    d = DialogueState(student_name="Ravi Test", school_name="Sahayak Test School", message=MESSAGE)
+    d.on_identity_question_asked()
+    return d
 
 
-class TestPhases:
-    def test_the_happy_path(self) -> None:
+class TestClassification:
+    @pytest.mark.parametrize(
+        ("said", "kind"),
+        [
+            ("Wait", Kind.YIELD),
+            ("wait wait, one minute please", Kind.YIELD),
+            ("Hold on", Kind.YIELD),
+            ("Stop.", Kind.YIELD),
+            ("let me speak", Kind.YIELD),
+            ("ek minute", Kind.YIELD),
+            ("रुकिए", Kind.YIELD),
+            ("Repeat", Kind.REPEAT_LAST),
+            ("can you say that again?", Kind.REPEAT_LAST),
+            ("repeat the message please", Kind.REPEAT_MESSAGE),
+            ("dobara boliye pura message", Kind.REPEAT_MESSAGE),
+            ("What?", Kind.CLARIFY),
+            ("Sorry?", Kind.CLARIFY),
+            ("I didn't hear that", Kind.CLARIFY),
+            ("Hello", Kind.CLARIFY),
+            ("yeah", Kind.ACK),
+            ("okay", Kind.ACK),
+            ("haan ji", Kind.ACK),
+            ("Okay, thank you so much, bye.", Kind.GOODBYE),
+            ("I'm driving, call me later", Kind.BUSY),
+            ("please don't call me again", Kind.OPT_OUT),
+            ("who is this?", Kind.WHO),
+            ("What marks did he get in science?", Kind.SUBSTANTIVE),
+            ("Wait, I have a question about his marks, actually.", Kind.SUBSTANTIVE),
+            ("", Kind.EMPTY),
+        ],
+    )
+    def test_kinds(self, said: str, kind: Kind) -> None:
+        assert classify(said) is kind
+
+
+class TestTheIdentityGate:
+    """The caller must NAME the child; nothing else verifies."""
+
+    @pytest.mark.parametrize(
+        "said",
+        ["Hello", "What", "What?", "Yes", "Yes, I'm the mother", "Repeat the message",
+         "Wait", "Who is this?", "haan ji boliye", "", "What is his attendance?"],
+    )
+    def test_nothing_but_the_childs_name_unlocks(self, said: str) -> None:
         d = _state()
-        assert d.phase is Phase.OPENING
-        d.on_agent_turn("I'm calling from Sahayak Test School on behalf of Ms. Rao. Am I speaking with Ravi's parent?")
-        assert d.introduced and d.phase is Phase.IDENTITY
-        assert d.confirm_identity(
-            "confirmed", parent_turns=1, parent_reply="Yes, I'm his mother."
-        ) == (True, "confirmed")
-        assert d.phase is Phase.MESSAGE
-        d.on_agent_turn(
-            "Ms. Rao wanted you to know Ravi's science performance has declined recently, "
-            "and he missed two homework submissions this week."
-        )
-        assert d.message_delivered and d.phase is Phase.CONVERSATION
-        d.begin_closing()
-        d.on_agent_turn("Thank you for your time.")
-        assert d.phase is Phase.CLOSING
+        decision = d.on_parent(said)
+        assert not d.may_share_student_data, said
+        assert decision.action is not Action.DELIVER_MESSAGE
+        assert decision.action in (Action.ASK_IDENTITY, Action.YIELD_FLOOR, Action.IGNORE)
 
-    def test_a_second_introduction_is_counted(self) -> None:
+    @pytest.mark.parametrize(
+        "said", ["Ravi", "His name is Ravi", "Yes, I'm Ravi's mother", "haan ji, Ravee", "रवि"]
+    )
+    def test_the_childs_name_verifies(self, said: str) -> None:
         d = _state()
-        d.on_agent_turn("I'm calling from Sahayak Test School on behalf of Ms. Rao.")
-        d.on_agent_turn("Sorry — I'm calling from Sahayak Test School, on behalf of Ms. Rao.")
-        assert d.repeat_intros == 1
+        decision = d.on_parent(said)
+        assert d.may_share_student_data, said
+        assert decision.action is Action.DELIVER_MESSAGE
+        assert d.stage is Stage.MESSAGE_DELIVERY
 
-    def test_a_first_turn_in_another_language_still_counts_as_the_intro(self) -> None:
+    def test_another_name_does_not(self) -> None:
         d = _state()
-        d.on_agent_turn("नमस्ते, मैं स्कूल से बोल रही हूँ।")
-        assert d.introduced and d.repeat_intros == 0
-
-    def test_a_partial_mention_is_not_delivery(self) -> None:
-        d = _state()
-        d.on_agent_turn("It's about Ravi's science.")
-        assert not d.message_delivered
-
-
-class TestIdentityGate:
-    def test_confirmed_needs_the_parent_to_have_spoken(self) -> None:
-        d = _state()
-        d.on_agent_turn("Am I speaking with Ravi's parent?")
-        assert d.confirm_identity("confirmed", parent_turns=0) == (False, "parent_has_not_answered")
+        assert d.on_parent("Rahul").action is Action.ASK_IDENTITY
         assert not d.may_share_student_data
 
-    def test_confirmed_needs_the_question_to_have_been_asked(self) -> None:
+    def test_a_denial_fails_closed(self) -> None:
         d = _state()
-        assert d.confirm_identity("confirmed", parent_turns=1)[0] is False
-
-    def test_unsure_shares_nothing(self) -> None:
-        d = _state()
-        d.on_agent_turn("Am I speaking with Ravi's parent?")
-        assert d.confirm_identity("unsure", parent_turns=1) == (False, "unsure")
-        assert not d.may_share_student_data
-
-    def test_wrong_person_is_sticky(self) -> None:
-        d = _state()
-        d.on_agent_turn("Am I speaking with Ravi's parent?")
-        d.confirm_identity("wrong_person", parent_turns=1)
+        decision = d.on_parent("No, you have the wrong number")
+        assert decision.action is Action.CLOSE and decision.detail == "wrong_person"
         assert d.identity is Identity.DENIED
-        assert d.confirm_identity("confirmed", parent_turns=2) == (False, "already_denied")
+        assert d.on_parent("Ravi").action is not Action.DELIVER_MESSAGE
         assert not d.may_share_student_data
-        assert "share nothing" in d.cue_context()
 
-
-class TestTheParentMustActuallySayYes:
-    """The model's word is not enough (seen against the real model: a parent who
-    answered the identity question with "what is his attendance?" was reported
-    as confirmed)."""
-
-    def _asked(self) -> DialogueState:
+    def test_attempts_run_out_and_the_call_ends_safely(self) -> None:
         d = _state()
-        d.on_agent_turn("Am I speaking with Ravi's parent?")
+        for _ in range(d.max_identity_attempts - 1):
+            assert d.on_parent("Hello").action is Action.ASK_IDENTITY
+            d.on_identity_question_asked()
+        decision = d.on_parent("What?")
+        assert decision.action is Action.CLOSE and decision.detail == "unverified"
+        assert d.identity is Identity.FAILED and d.stage is Stage.GOODBYE
+        assert d.floor is Floor.HANGING_UP and not d.may_share_student_data
+
+    def test_the_name_only_counts_after_the_question(self) -> None:
+        d = DialogueState(student_name="Ravi Test")
+        assert d.check_identity("Ravi") is None
+        assert not d.may_share_student_data
+
+    def test_the_re_ask_matches_what_was_said(self) -> None:
+        d = _state()
+        assert d.on_parent("Yes").detail == "name_please"
+        assert d.on_parent("Who is this?").detail == "who"
+        assert d.on_parent("Hello").detail == "retry"
+
+    def test_verified_stages_are_unreachable_before_verification(self) -> None:
+        d = _state()
+        for stage in (Stage.MESSAGE_DELIVERY, Stage.PARENT_RESPONSE, Stage.TOOL_LOOKUP, Stage.FOLLOW_UP):
+            assert not d.goto(stage)
+        assert d.refused_transitions == 4
+
+
+class TestAfterVerification:
+    def _verified(self) -> DialogueState:
+        d = _state()
+        d.on_parent("Ravi")
+        d.on_agent_turn(f"Thank you. {MESSAGE} Do you have any questions about this?", scripted=True)
+        d.on_message_delivered()
         return d
 
-    @pytest.mark.parametrize("reply", [
-        "Yes, I'm his mother.", "Haan ji, main Ravi ki mummy bol rahi hoon.", "speaking",
-        "हाँ जी, मैं उसकी माँ हूँ", "ಹೌದು, ನಾನು ಅವನ ಅಮ್ಮ", "ஆமா, நான் அவங்க அம்மா",
-        "అవును", "হ্যাঁ, আমি ওর মা", "हो, मी त्याची आई",
-    ])
-    def test_a_real_yes_confirms(self, reply: str) -> None:
-        d = self._asked()
-        assert d.confirm_identity("confirmed", parent_turns=1, parent_reply=reply)[0], reply
+    def test_wait_yields_the_floor_without_a_reply(self) -> None:
+        d = self._verified()
+        decision = d.on_parent("Wait", vidya_speaking=True)
+        assert decision.action is Action.YIELD_FLOOR
+        assert d.floor is Floor.WAITING_FOR_PARENT
 
-    @pytest.mark.parametrize("reply", [
-        "What is his attendance?", "Who is this?", "No, wrong number.",
-        "Nahi, main padosi hoon.", "होमवर्क कैसा है?", "", None,
-        "Yes but I am not his parent",
-    ])
-    def test_anything_else_does_not(self, reply: str | None) -> None:
-        d = self._asked()
-        ok, outcome = d.confirm_identity("confirmed", parent_turns=1, parent_reply=reply)
-        assert not ok and outcome == "not_confirmed_ask_directly"
-        assert not d.may_share_student_data
+    def test_repeat_after_the_message_repeats_the_message(self) -> None:
+        d = self._verified()
+        assert d.on_parent("Repeat").action is Action.REPEAT_MESSAGE
+        assert d.on_parent("Please repeat the message").action is Action.REPEAT_MESSAGE
+
+    def test_what_repeats_the_last_answer(self) -> None:
+        d = self._verified()
+        d.on_agent_turn("He was absent on the eighth.")
+        assert d.on_parent("What?").action is Action.REPEAT_LAST
+
+    def test_haan_while_speaking_resumes(self) -> None:
+        d = self._verified()
+        assert d.on_parent("haan", vidya_speaking=True).action is Action.RESUME
+
+    def test_okay_after_a_statement_is_just_listening(self) -> None:
+        d = self._verified()
+        d.on_agent_turn("He was absent on the eighth.")
+        assert d.on_parent("okay").action is Action.IGNORE
+
+    def test_a_second_yeah_does_not_start_a_loop(self) -> None:
+        d = self._verified()  # last turn ended "Do you have any questions about this?"
+        assert d.on_parent("yeah").action is Action.RESPOND
+        d.last_reply_was_to_ack = True
+        d.on_agent_turn("Sure, what would you like to know?")
+        assert d.on_parent("yeah").action is Action.IGNORE
+
+    def test_questions_are_meaningful_exchanges(self) -> None:
+        d = self._verified()
+        for q in ("What marks did he get?", "How is his attendance?"):
+            assert d.on_parent(q).action is Action.RESPOND
+        for noise in ("wait", "what?", "repeat", "okay"):
+            d.on_parent(noise)
+        assert d.meaningful_exchanges == 2
+
+    def test_goodbye_and_busy_close(self) -> None:
+        assert self._verified().on_parent("Okay thank you, bye").detail == "goodbye"
+        assert self._verified().on_parent("I'm busy, call later").detail == "busy"
+
+    def test_opt_out_closes_at_any_stage(self) -> None:
+        assert _state().on_parent("don't call me again").detail == "opt_out"
+        assert self._verified().on_parent("stop calling me").detail == "opt_out"
 
 
 class TestCues:
-    def test_nothing_to_say_before_the_call_starts(self) -> None:
-        assert _state().cue_context() == ""
+    def test_unverified_cue_forbids_sharing(self) -> None:
+        assert "NOT verified" in _state().cue_context()
 
-    def test_cues_remind_the_model_what_is_done(self) -> None:
+    def test_verified_cue(self) -> None:
         d = _state()
-        d.on_agent_turn("I'm calling from Sahayak Test School. " + MESSAGE)
+        d.on_parent("Ravi")
+        d.on_message_delivered()
         ctx = d.cue_context()
-        assert "ALREADY introduced" in ctx
-        assert "do not repeat it" in ctx
+        assert "verified" in ctx and "delivered" in ctx
+        assert "Ravi" not in ctx  # the state line never carries child data
+
+
+class TestRepeatedIntroductions:
+    def test_the_first_model_intro_is_not_a_repeat(self) -> None:
+        d = _state()  # the question was "asked" (Live: just before the model spoke)
+        d.on_agent_turn("I'm calling from Sahayak Test School on behalf of Ms. Rao.")
+        assert d.repeat_intros == 0
+
+    def test_a_second_model_intro_is(self) -> None:
+        d = _state()
+        d.on_agent_turn("I'm calling from Sahayak Test School on behalf of Ms. Rao.")
+        d.on_agent_turn("As I said, I'm calling from Sahayak Test School.")
+        assert d.repeat_intros == 1
+
+    def test_scripted_re_asks_are_not_repeats(self) -> None:
+        d = _state()
+        d.on_agent_turn("I'm calling from Sahayak Test School on behalf of Ms. Rao.", scripted=True)
+        d.on_agent_turn("I'm calling from Sahayak Test School. Your child's name?", scripted=True)
+        assert d.repeat_intros == 0
 
 
 # ---------------------------------------------------------------------------
@@ -244,82 +337,6 @@ class TestTranscript:
         assert b.dialogue.repeat_intros == 1
 
 
-@pytest.mark.asyncio
-class TestIdentityTool:
-    async def test_the_tool_reports_and_the_bridge_checks(self) -> None:
-        from google.genai import types as genai_types  # noqa: F401 — real FunctionResponse
-
-        b = telephony._Bridge(_Ws(), "o", call_uuid="")  # type: ignore[arg-type]
-        b.dialogue = _state()
-        b.dialogue.on_agent_turn("Am I speaking with Ravi's parent?")
-        session = _Session([])
-        call = SimpleNamespace(function_calls=[
-            SimpleNamespace(id="1", name="confirm_parent_identity", args={"status": "confirmed"})
-        ])
-        await telephony._handle_tool_call(b, session, call)
-        await asyncio.gather(*list(b.background))
-        # The parent has not spoken: the claim is refused.
-        assert session.tool_responses[-1]["function_responses"][0].response == {
-            "status": "parent_has_not_answered"
-        }
-        b.parent_said.append("haan ji, main Ravi ki mummy")
-        await telephony._handle_tool_call(b, session, call)
-        await asyncio.gather(*list(b.background))
-        assert session.tool_responses[-1]["function_responses"][0].response == {"status": "confirmed"}
-        assert b.dialogue.may_share_student_data
-
-    async def test_wrong_number_end_call_denies_identity(self) -> None:
-        b = telephony._Bridge(_Ws(), "o", call_uuid="")  # type: ignore[arg-type]
-        b.dialogue = _state()
-        b.dialogue.on_agent_turn("Am I speaking with Ravi's parent?")
-        call = SimpleNamespace(function_calls=[
-            SimpleNamespace(id="1", name="end_call", args={"reason": "wrong_number"})
-        ])
-        await telephony._handle_tool_call(b, _Session([]), call)
-        assert b.dialogue.identity is Identity.DENIED
-        for t in list(b.background):
-            t.cancel()
-
-    async def test_an_unknown_tool_is_refused(self) -> None:
-        b = telephony._Bridge(_Ws(), "o", call_uuid="")  # type: ignore[arg-type]
-        session = _Session([])
-        call = SimpleNamespace(function_calls=[
-            SimpleNamespace(id="9", name="google_search", args={"q": "Ravi marks"})
-        ])
-        await telephony._handle_tool_call(b, session, call)
-        assert session.tool_responses[-1]["function_responses"][0].response == {"error": "unknown_tool"}
-
-
-@pytest.mark.asyncio
-class TestIdentityWaitsForTheLateTranscript:
-    async def test_a_yes_that_arrives_late_still_confirms(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        b = telephony._Bridge(_Ws(), "o", call_uuid="")  # type: ignore[arg-type]
-        b.dialogue = _state()
-        b.dialogue.on_agent_turn("Am I speaking with Ravi's parent?")
-        session = _Session([])
-        call = SimpleNamespace(function_calls=[
-            SimpleNamespace(id="1", name="confirm_parent_identity", args={"status": "confirmed"})
-        ])
-        await telephony._handle_tool_call(b, session, call)
-        await asyncio.sleep(0.3)
-        b.parent_said.append("haan ji, bol rahi hoon")  # transcription lands late
-        await asyncio.gather(*list(b.background))
-        assert session.tool_responses[-1]["function_responses"][0].response == {"status": "confirmed"}
-
-    async def test_a_question_instead_of_an_answer_is_refused(self) -> None:
-        b = telephony._Bridge(_Ws(), "o", call_uuid="")  # type: ignore[arg-type]
-        b.dialogue = _state()
-        b.dialogue.on_agent_turn("Am I speaking with Ravi's parent?")
-        b.parent_said.append("What is his attendance?")
-        session = _Session([])
-        call = SimpleNamespace(function_calls=[
-            SimpleNamespace(id="1", name="confirm_parent_identity", args={"status": "confirmed"})
-        ])
-        await telephony._handle_tool_call(b, session, call)
-        await asyncio.gather(*list(b.background))
-        resp = session.tool_responses[-1]["function_responses"][0].response
-        assert resp["status"] == "not_confirmed_ask_directly"
-        assert not b.dialogue.may_share_student_data
 
 
 @pytest.mark.asyncio
@@ -350,22 +367,3 @@ class TestTheModelForgettingEndCall:
         assert not telephony._is_agent_farewell("Goodbye isn't what I meant — any questions?")
         assert not telephony._is_agent_farewell("Thank you. Ms. Rao wanted you to know Ravi did well.")
 
-
-class TestTheIdentityAnswerIsFoundWhereverItIs:
-    def test_a_yes_before_the_parent_moved_on_still_counts(self) -> None:
-        from sahayakai_agents.telephony.dialogue import identity_answer
-
-        said = ["Yes, I am Ravi's mother. Please tell me.", "Wait, wait, one minute please."]
-        assert identity_answer(said) == said[0]
-
-    def test_a_denial_anywhere_wins(self) -> None:
-        from sahayakai_agents.telephony.dialogue import identity_answer, looks_affirmative
-
-        said = ["Yes, hello?", "No, this is not Ravi's house."]
-        assert not looks_affirmative(identity_answer(said))
-
-    def test_no_yes_at_all_is_not_a_yes(self) -> None:
-        from sahayakai_agents.telephony.dialogue import identity_answer, looks_affirmative
-
-        assert not looks_affirmative(identity_answer(["What is his attendance?", "Hello?"]))
-        assert identity_answer([]) is None

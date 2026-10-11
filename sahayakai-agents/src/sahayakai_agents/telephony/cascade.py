@@ -59,9 +59,17 @@ from typing import Any, Protocol
 
 import structlog
 
+from .audio import DecimatorState, pcm24k_to_ulaw8k
+
 log = structlog.get_logger(__name__)
 
-__all__ = ["CascadeConfig", "CascadeSession", "cascade_enabled", "split_sentences"]
+__all__ = [
+    "CascadeConfig",
+    "CascadeSession",
+    "cascade_enabled",
+    "split_first_clause",
+    "split_sentences",
+]
 
 SARVAM_TTS_STREAM_URL = "https://api.sarvam.ai/text-to-speech/stream"
 SARVAM_STT_WS_URL = "wss://api.sarvam.ai/speech-to-text-realtime/ws"
@@ -119,6 +127,10 @@ _SENTENCE_END = re.compile(r"(?<=[.!?।])\s+")
 #: Don't send a fragment this short to TTS on its own; it sounds clipped.
 _MIN_SENTENCE_CHARS = 12
 _MARKUP = re.compile(r"[*_#`>]+|<<<|>>>|\[[^\]]*\]")
+#: A title before a name is not the end of a sentence. Splitting there sent
+#: "...on behalf of Ms." and "Rao. Before I share..." to TTS separately: a
+#: sentence pause inside the teacher's name.
+_TITLE = re.compile(r"\b(?:Mr|Mrs|Ms|Dr|Prof|Smt|Shri|Sr|Jr|St)\.$", re.IGNORECASE)
 
 
 def split_sentences(buffer: str) -> tuple[list[str], str]:
@@ -131,6 +143,8 @@ def split_sentences(buffer: str) -> tuple[list[str], str]:
     carry = ""
     for p in done:
         carry = f"{carry} {p}".strip()
+        if _TITLE.search(carry):
+            continue
         if len(carry) >= _MIN_SENTENCE_CHARS:
             out.append(carry)
             carry = ""
@@ -139,24 +153,21 @@ def split_sentences(buffer: str) -> tuple[list[str], str]:
     return out, rest
 
 
-def clean_for_speech(text: str) -> str:
-    return re.sub(r"\s+", " ", _MARKUP.sub("", text)).strip(" …")
+#: 40 ms of 24 kHz PCM16.
+_SLICE_BYTES = 1920
+#: The first clause of a reply goes to TTS early (at a comma) once it is this
+#: long, so the parent hears VIDYA sooner without a clipped fragment.
+_FIRST_CLAUSE_CHARS = 40
 
 
-def speech_language(text: str, cfg: CascadeConfig) -> str:
-    if cfg.hindi and re.search(r"[ऀ-ॿ]", text):
-        return "hi-IN"
-    return cfg.tts_language
-
-
-#: Short replies that are acknowledgements, not a new turn. Said while VIDYA
-#: talks they must not cancel her (the bridge's barge-in already resumes her
-#: after a "haan"; the engine must not undo that by starting a new reply).
-_BACKCHANNEL = re.compile(
-    r"^\W*(haan|han|haa|ji|haan ji|hmm+|hm|achha|acha|accha|ok|okay|yes|yeah|right|"
-    r"theek hai|thik hai|हाँ|हां|जी|अच्छा|ठीक है)\W*$",
-    re.IGNORECASE,
-)
+def split_first_clause(buffer: str) -> tuple[list[str], str]:
+    """For the FIRST audio of a turn: release a long opening clause at a comma."""
+    if len(buffer) < _FIRST_CLAUSE_CHARS:
+        return [], buffer
+    cut = buffer.rfind(", ")
+    if cut < _FIRST_CLAUSE_CHARS // 2:
+        return [], buffer
+    return [buffer[: cut + 1].strip()], buffer[cut + 2 :]
 
 
 #: Spoken when the model could not be reached at all for a turn.
@@ -173,17 +184,14 @@ _ANSWER_NOW = (
 )
 
 
-def closing_line(language: str) -> str:
-    """The school's reviewed closing line (call_prompts.json `thanks`)."""
-    from pathlib import Path
-
-    prompts = json.loads((Path(__file__).parent / "call_prompts.json").read_text(encoding="utf-8"))
-    code = "hi-IN" if language == "Hindi" else "en-IN"
-    return str(prompts.get(code, prompts["en-IN"])["thanks"])
+def clean_for_speech(text: str) -> str:
+    return re.sub(r"\s+", " ", _MARKUP.sub("", text)).strip(" …")
 
 
-def is_backchannel(text: str) -> bool:
-    return bool(_BACKCHANNEL.match(text.strip()))
+def speech_language(text: str, cfg: CascadeConfig) -> str:
+    if cfg.hindi and re.search(r"[ऀ-ॿ]", text):
+        return "hi-IN"
+    return cfg.tts_language
 
 
 # ---- pluggable parts (real implementations below; fakes in tests) ---------
@@ -223,6 +231,9 @@ def _msg(**kw: Any) -> SimpleNamespace:
         "server_content": None,
         "tool_call": None,
         "tool_call_cancellation": None,
+        #: Carrier-ready mu-law 8 kHz. The cascade converts in small slices so
+        #: the bridge's pacer is never blocked (see _speak).
+        "ulaw": None,
     }
     fields.update(kw)
     return SimpleNamespace(**fields)
@@ -280,7 +291,11 @@ class CascadeSession:
         self.failed_turns = 0
         self.tts_first_byte_ms: list[float] = []
         self.stt_finals = 0
-        self.backchannels_ignored = 0
+        #: Sentences the privacy guard stopped before they were spoken.
+        self.privacy_blocks = 0
+        self._guard: Callable[[str], bool] | None = None
+        #: The model has the verified (child) context. False until unlock().
+        self.unlocked = False
 
     # -- lifecycle --
 
@@ -362,6 +377,31 @@ class CascadeSession:
             self.language = "Hindi"
             log.info("telephony.cascade_language", language="Hindi")
 
+    async def respond(self, text: str) -> None:
+        """A model reply to `text` (a parent utterance or a director cue)."""
+        await self._user_turn(text)
+
+    async def say(self, text: str) -> None:
+        """Speak `text` VERBATIM, no model involved: identity questions, the
+        teacher's message and its repeats, closings. Recorded in the model's
+        memory as said."""
+        if self._speaking():
+            await self._cancel_turn(emit=True)
+        turn = _Turn()
+        self._turn = turn
+        turn.task = asyncio.get_running_loop().create_task(self._say_turn(turn, text))
+
+    def unlock(self, system_text: str) -> None:
+        """The caller is verified: the model may now see the child's context."""
+        setter = getattr(self._llm, "set_system", None)
+        if callable(setter):
+            setter(system_text)
+        self.unlocked = True
+
+    def set_guard(self, guard: Callable[[str], bool]) -> None:
+        """`guard(sentence)` -> False blocks the sentence before synthesis."""
+        self._guard = guard
+
     @property
     def busy(self) -> bool:
         """A reply is being generated, looked up or spoken."""
@@ -402,16 +442,13 @@ class CascadeSession:
             return
         self.stt_finals += 1
         self._maybe_switch_language(text, event.get("language"))
-        # The bridge records the parent's words from this, exactly as from Live.
+        # Reported, never answered here. The first version answered every final
+        # transcript itself, so each "Wait" on the 2026-10-11 handset call got a
+        # fresh "Yes, please tell me." The bridge's state machine (dialogue.py)
+        # now decides: respond, repeat, yield the floor, ask again, or close.
         self._out.put_nowait(
             _msg(server_content=_content(input_transcription=SimpleNamespace(text=text)))
         )
-        if self._speaking() and is_backchannel(text):
-            # "haan" while VIDYA talks: heard, recorded, not a new turn.
-            self.backchannels_ignored += 1
-            self._history.append(_user(text))
-            return
-        await self._user_turn(text)
 
     def _speaking(self) -> bool:
         return self._turn is not None and self._turn.task is not None and not self._turn.task.done()
@@ -447,6 +484,21 @@ class CascadeSession:
             if emit:
                 self._out.put_nowait(_msg(server_content=_content(interrupted=True)))
 
+    async def _say_turn(self, turn: _Turn, text: str) -> None:
+        started = time.monotonic()
+        first = True
+        try:
+            pending = text
+            sentences, rest = split_sentences(pending)
+            for sentence in [*sentences, rest]:
+                if sentence.strip():
+                    first = await self._speak(turn, sentence, started, first)
+            self._history.append(_model(" ".join(turn.spoken) or text))
+            self._out.put_nowait(_msg(server_content=_content(turn_complete=True)))
+        finally:
+            if self._turn is turn:
+                self._turn = None
+
     async def _respond(self, turn: _Turn) -> None:
         self.turns += 1
         started = time.monotonic()
@@ -465,13 +517,9 @@ class CascadeSession:
                         turn, started, first_audio, extra=_ANSWER_NOW
                     )
                 after_tool = False
-                if any(c.name == "end_call" for c in calls) and not turn.spoken:
-                    # The text model often calls end_call without saying
-                    # anything (staging run 2: no goodbye at all). The parent
-                    # must hear one complete goodbye: the school's own line.
-                    line = closing_line(self.language)
-                    first_audio = await self._speak(turn, line, started, first_audio)
-                    text_parts.append(line)
+                # Goodbyes are the bridge's, not the model's: an end_call here is
+                # a request the bridge may decline, so the engine must not have
+                # already said goodbye on the strength of it.
                 self._history.append(_model("".join(text_parts), calls))
                 if not calls:
                     break
@@ -517,6 +565,8 @@ class CascadeSession:
                 buffer += chunk.text
                 text_parts.append(chunk.text)
                 sentences, buffer = split_sentences(buffer)
+                if not sentences and first_audio:
+                    sentences, buffer = split_first_clause(buffer)
                 for s in sentences:
                     first_audio = await self._speak(turn, s, started, first_audio)
             calls.extend(getattr(chunk, "function_calls", None) or [])
@@ -528,9 +578,15 @@ class CascadeSession:
         text = clean_for_speech(sentence)
         if not text:
             return first
+        if self._guard is not None and not self._guard(text):
+            # The privacy guard (privacy.py) stopped it: never synthesised.
+            self.privacy_blocks += 1
+            log.warning("telephony.privacy_block", where="cascade_tts")
+            return first
         language = speech_language(text, self.cfg)
         announced = False
         carry = b""
+        decimator: DecimatorState | None = None
         requested = time.monotonic()
         async for audio in self._tts.stream(text, language):
             if not announced:
@@ -552,8 +608,17 @@ class CascadeSession:
             data = carry + audio
             even = len(data) - (len(data) % 2)
             carry = data[even:]
-            if even:
-                self._out.put_nowait(_msg(data=data[:even]))
+            # Resample in 40 ms slices and yield between them. Converting a
+            # whole TTS chunk at once held the event loop ~28 ms per second of
+            # audio and starved the 20 ms pacer (2026-10-11 handset call: 2.9%
+            # of frames late, worst 285 ms).
+            for start in range(0, even, _SLICE_BYTES):
+                ulaw, decimator = pcm24k_to_ulaw8k(
+                    data[start : min(start + _SLICE_BYTES, even)], decimator
+                )
+                if ulaw:
+                    self._out.put_nowait(_msg(ulaw=ulaw))
+                await asyncio.sleep(0)
         return first
 
     async def _run_tools(self, calls: list[Any]) -> list[tuple[Any, dict[str, Any]]]:
@@ -730,6 +795,15 @@ class GeminiReasoner:
             automatic_function_calling=t.AutomaticFunctionCallingConfig(disable=True),
         )
 
+    def set_system(self, text: str) -> None:
+        """Replace the system instruction (locked -> verified context)."""
+        from google.genai import types as t
+
+        self._system_text = text
+        self._config = self._config.model_copy(
+            update={"system_instruction": t.Content(parts=[t.Part(text=text)])}
+        )
+
     async def stream(self, history: list[Any], note: str = "") -> AsyncIterator[Any]:
         config = self._config
         if note:
@@ -799,7 +873,7 @@ async def open_cascade(
             "telephony.cascade_closed",
             turns=session.turns,
             stt_finals=session.stt_finals,
-            backchannels_ignored=session.backchannels_ignored,
+            privacy_blocks=session.privacy_blocks,
             first_audio_ms=[round(x) for x in session.first_audio_ms][:12],
             llm_first_token_ms=[round(x) for x in session.llm_first_token_ms][:12],
             tts_first_byte_ms=[round(x) for x in session.tts_first_byte_ms][:16],

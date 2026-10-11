@@ -245,9 +245,13 @@ class _Ws:
 def _bridge(reader: _Reader) -> Any:
     b = telephony._Bridge(_Ws(), "o1", call_uuid="")  # type: ignore[arg-type]
     b.tools = _tools(reader)
-    b.dialogue.on_agent_turn("Am I speaking with Ravi's parent?")
-    b.parent_said.append("haan ji")
-    b.dialogue.confirm_identity("confirmed", parent_turns=1, parent_reply="haan ji")
+    from sahayakai_agents.telephony.dialogue import DialogueState
+
+    b.dialogue = DialogueState(student_name="Ravi Kumar")
+    b.dialogue.on_identity_question_asked()
+    b.parent_said.append("haan ji, Ravi")
+    b.dialogue.check_identity("haan ji, Ravi")  # verified by the bridge, not the model
+    assert b.dialogue.may_share_student_data
     return b
 
 

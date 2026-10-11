@@ -461,6 +461,7 @@ class TestTheWatchdogDoesNotTalkOverTheSchool:
             self.last_activity = 0.0
             self.tool_tasks: dict[str, object] = {}
             self.engine = None
+            self.verdict_hold_until = 0.0
             self.barge = BargeIn()
             self.dialogue = DialogueState()
             for k, v in kw.items():

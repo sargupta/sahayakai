@@ -112,7 +112,8 @@ async def _call(
 ) -> tuple[Any, _Session]:
     b = telephony._Bridge(_Ws(), "o-script", call_uuid="")  # type: ignore[arg-type]
     b.stream_id = "s"
-    b.dialogue = DialogueState(school_name="Sahayak Test School", message=MESSAGE)
+    b.dialogue = DialogueState(student_name="Ravi Test", school_name="Sahayak Test School", message=MESSAGE)
+    b.dialogue.on_identity_question_asked()  # the neutral question has been asked
     if lookups:
         b.tools = SchoolDataTools(CallScope("o-script", "t1", "c1", "ravi"), _Reader,
                                   today=date(2026, 10, 10))
@@ -145,7 +146,7 @@ class TestScriptedCalls:
     async def test_normal_question_is_answered_from_the_record(self) -> None:
         b, s = await _call([
             INTRO,
-            [parent("Haan ji, I am his mother."), tool("confirm_parent_identity", "i1", status="confirmed")],
+            [parent("Haan ji, I am Ravi's mother.")],
             DELIVER,
             [parent("How has his attendance been?"), tool("get_attendance_summary", "a1")],
             agent("He was absent on the eighth and present on the ninth."),
@@ -167,7 +168,7 @@ class TestScriptedCalls:
     async def test_a_topic_change_mid_reply_cancels_and_moves_on(self) -> None:
         b, _ = await _call([
             INTRO,
-            [parent("yes")],
+            [parent("yes, Ravi")],
             [_c(output_transcription=SimpleNamespace(text=" Ms. Rao says Ravi")), interrupted()],
             [parent("Actually, when is the parent-teacher meeting?")],
             agent("I don't have the date — I'll ask Ms. Rao to call you about it."),
@@ -182,7 +183,7 @@ class TestScriptedCalls:
         monkeypatch.setattr(telephony, "_GOODBYE_NET_GRACE_SECONDS", 0.0)
         b, s = await _call([
             INTRO,
-            [parent("haan ji boliye")],
+            [parent("haan ji boliye, Ravi")],
             DELIVER,
             [parent("achha theek hai, थैंक यू सो मच")],
         ], lookups=False)
@@ -196,7 +197,7 @@ class TestScriptedCalls:
     async def test_a_goodbye_inside_a_question_does_not_close(self) -> None:
         b, _ = await _call([
             INTRO,
-            [parent("yes")],
+            [parent("yes, Ravi")],
             DELIVER,
             [parent("thank you, but what should I do at home?")],
         ], lookups=False)
@@ -205,7 +206,7 @@ class TestScriptedCalls:
     async def test_unavailable_information_is_reported_not_invented(self) -> None:
         b, s = await _call([
             INTRO,
-            [parent("yes I'm his father"), tool("confirm_parent_identity", "i1", status="confirmed")],
+            [parent("yes, Ravi's father")],
             [parent("What were his last test marks?"), tool("get_recent_assessments", "m1")],
             [parent("And his homework?"), tool("get_homework_status", "h1")],
         ])
@@ -217,7 +218,7 @@ class TestScriptedCalls:
     async def test_repeated_interruptions_keep_the_conversation_state(self) -> None:
         b, _ = await _call([
             INTRO,
-            [parent("yes"), tool("confirm_parent_identity", "i1", status="confirmed")],
+            [parent("yes, his name is Ravi")],
             [_c(output_transcription=SimpleNamespace(text=" Ms. Rao says")), interrupted()],
             [parent("wait")],
             [_c(output_transcription=SimpleNamespace(text=" Of course. Ms. Rao")), interrupted()],
@@ -236,7 +237,10 @@ class TestLongPause:
         monkeypatch.setattr(telephony, "_CONVERSATION_SILENCE", 0.3)
         monkeypatch.setattr(telephony, "_MODEL_SETTLE_SECONDS", 0.0)
         b = telephony._Bridge(_Ws(), "o", call_uuid="")  # type: ignore[arg-type]
-        b.dialogue = DialogueState(school_name="Sahayak Test School", message=MESSAGE)
+        b.dialogue = DialogueState(student_name="Ravi Test", school_name="Sahayak Test School", message=MESSAGE)
+        b.dialogue.on_identity_question_asked()
+        b.dialogue.check_identity("Ravi")
+        b.dialogue.on_message_delivered()
         b.dialogue.on_agent_turn("I'm calling from Sahayak Test School. " + MESSAGE)
         b.engaged = True
         b.model_has_spoken = True
@@ -261,7 +265,7 @@ class TestOneGoodbyeNotTwo:
         monkeypatch.setattr(telephony, "_GOODBYE_NET_GRACE_SECONDS", 0.2)
         b, s = await _call([
             INTRO,
-            [parent("yes")],
+            [parent("yes, Ravi")],
             DELIVER,
             [parent("okay thank you so much, bye"),
              *agent("Thank you for your time. We're partners in Ravi's success."),
@@ -277,7 +281,7 @@ class TestOneGoodbyeNotTwo:
         monkeypatch.setattr(telephony, "_GOODBYE_NET_GRACE_SECONDS", 0.0)
         b, s = await _call([
             INTRO,
-            [parent("yes")],
+            [parent("yes, Ravi")],
             DELIVER,
             [parent("okay thank you so much, bye")],
             agent("Would you like the teacher to call you back?"),  # the model ignores it
@@ -300,7 +304,7 @@ class TestTheModelClosingWithoutEndCall:
         monkeypatch.setattr(telephony, "_PREBUFFER_SECONDS", 0.0)
         b, s = await _call([
             INTRO,
-            [parent("yes")],
+            [parent("yes, Ravi")],
             DELIVER,
             [parent("okay thank you so much, bye"),
              *agent("You're most welcome. We appreciate your partnership in Ravi's success.")],
@@ -365,7 +369,7 @@ class TestAnInterruptedTurnIsNotAGoodbye:
         monkeypatch.setattr(telephony, "_GOODBYE_NET_GRACE_SECONDS", 0.2)
         b, s = await _call([
             INTRO,
-            [parent("yes")],
+            [parent("yes, Ravi")],
             DELIVER,
             [_c(output_transcription=SimpleNamespace(text=" Ek minute, let me check.")),
              parent("okay thank you so much, bye"), interrupted()],

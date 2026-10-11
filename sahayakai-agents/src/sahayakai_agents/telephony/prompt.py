@@ -12,6 +12,7 @@ from __future__ import annotations
 
 __all__ = ["build_parent_call_instruction", "CallContext", "stt_language_hints"]
 
+import re
 from dataclasses import dataclass
 
 #: BCP-47 codes per app language, mirroring TWILIO_LANGUAGE_MAP in the web
@@ -94,9 +95,13 @@ YOUR OPENING — TWO STEPS, NOT ONE
 A recording has ALREADY said "Namaste, this is an important message from your
 child's school". Do not greet again. It did not say who is calling, so:
 STEP ONE — in one or two short sentences, name the school by name and the
-teacher by name, say you are calling on that teacher's behalf, and check you are
-speaking with the child's parent. Then STOP and wait.
-STEP TWO — once they answer, give the teacher's message ESSENTIALLY AS WRITTEN.
+teacher by name, say you are calling on that teacher's behalf, and ask the
+neutral identity question: whether you are speaking with the parent or guardian
+of a student at the school, and the child's name. NEVER say the child's name or
+anything about the child yourself before the system tells you the caller is
+verified. Then STOP and wait.
+STEP TWO — only once the system has verified the caller, give the teacher's
+message ESSENTIALLY AS WRITTEN.
 You may name the child, add a short lead-in and split a long sentence; you may
 NOT summarise, shorten, reorder or change it. If it is written as a letter,
 leave out the salutation ("Dear ...") and the sign-off; nobody says those aloud.
@@ -109,9 +114,10 @@ reply comes through garbled, ask them to repeat it — do not start again.
 "GO AHEAD" IS NOT A REQUEST TO REPEAT
 Parents invite a caller to talk — "haan ji, boliye", "bolo", "haan", "yes, tell
 me". After you have given the message, that is them settling in to listen, NOT
-asking for it again. Never re-deliver it, restate it in other words, say "as I
-said", or say you did not understand them: say something short that moves the
-conversation on — invite their question, or add one detail you have not said.
+asking for it again. Do not re-deliver it unprompted or say "as I said": say
+something short that moves the conversation on — invite their question, or add
+one detail you have not said. But if they ASK you to repeat it, repeat it
+faithfully and willingly; never refuse a request to repeat.
 
 HOW TO TALK
 - React to what they just said first, then add your bit.
@@ -221,6 +227,43 @@ refuse a request to speak Hindi and never say you will continue in {language}
 when they have asked for Hindi."""
 
 
+#: The instruction before the bridge has verified the caller. It holds NOTHING
+#: about the child: no name, class, reason, marks or message. What the model
+#: does not know, it cannot say.
+_LOCKED = """
+IDENTITY NOT YET VERIFIED
+You have not been told anything about the child and you must not guess. Your
+only job right now is to say who is calling and ask the neutral identity
+question. Do not mention any child, any class, marks, attendance or the reason
+for the call. If asked what it is about, say the teacher has a message for the
+child's parent and you will share it once you have confirmed you are speaking
+with them."""
+
+#: Salutations and sign-offs of a letter-shaped teacher message.
+_SALUTATION = re.compile(r"^\s*(dear|respected|hello|hi)\b[^\n,]*,?\s*", re.IGNORECASE)
+_SIGN_OFF = re.compile(
+    r"\n\s*(warm(est)? regards|best regards|kind regards|regards|sincerely|yours sincerely|"
+    r"yours truly|thank you,?\s*$|thanks,?\s*$)[\s\S]*$",
+    re.IGNORECASE,
+)
+
+
+def spoken_message(message: str | None) -> str:
+    """The teacher's message as it is spoken: no "Dear ...", no sign-off.
+
+    Used for the verbatim delivery and every requested repeat, so the parent
+    hears the teacher's own words, the same way each time.
+    """
+    text = (message or "").strip()
+    text = _SIGN_OFF.sub("", text)
+    first, _, rest = text.partition("\n")
+    if _SALUTATION.match(first) and len(first.split()) <= 8:
+        text = rest
+    else:
+        text = _SALUTATION.sub("", text, count=1) if len(text.split(",")[0].split()) <= 6 else text
+    return re.sub(r"\s+", " ", text).strip()
+
+
 def build_parent_call_instruction(
     context: CallContext,
     *,
@@ -228,6 +271,7 @@ def build_parent_call_instruction(
     two_way: bool = True,
     lookups: bool = False,
     switch_to_hindi: bool = False,
+    verified: bool = True,
 ) -> str:
     """Compose the instruction for one call.
 
@@ -252,6 +296,20 @@ def build_parent_call_instruction(
     if switch_to_hindi and two_way and language != "Hindi":
         lines.append(_SWITCH_TO_HINDI.format(language=language))
 
+    if not verified:
+        # Locked: the school and the teacher only. See _LOCKED.
+        lines.append(_LOCKED)
+        if context.teacher_name:
+            lines.append(f"\nWHAT YOU KNOW\n- You are calling on behalf of {context.teacher_name}.")
+        return "\n".join(lines)
+
+    lines.append(verified_facts(context))
+    return "\n".join(lines)
+
+
+def verified_facts(context: CallContext) -> str:
+    """Everything about the child, for AFTER verification only."""
+    lines: list[str] = []
     facts: list[str] = []
     if context.student_name:
         facts.append(f"- The child is {context.student_name}.")

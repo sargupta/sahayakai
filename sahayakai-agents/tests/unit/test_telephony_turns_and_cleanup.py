@@ -98,13 +98,26 @@ class TestTurnsAreUtterances:
         assert len(bridge.parent_said) == 1
         assert not telephony._must_end_now(bridge)
 
-    async def test_the_ceiling_still_counts_real_turns(self) -> None:
+    async def test_the_ceiling_counts_meaningful_exchanges(self) -> None:
         bridge = _bridge()
         session = _FakeSession()
-        for i in range(telephony._MAX_PARENT_TURNS):
-            await telephony._handle_parent_speech(bridge, session, _parent(f"reply {i}"))
+        for i in range(telephony._MAX_MEANINGFUL_EXCHANGES):
+            await telephony._handle_parent_speech(
+                bridge, session, _parent(f"tell me more about his science work {i}")
+            )
             _agent_speaks(bridge)
         assert telephony._must_end_now(bridge)
+
+    async def test_wait_what_repeat_and_okay_are_not_exchanges(self) -> None:
+        # The 2026-10-11 handset call was ended by a 6-utterance ceiling after
+        # "Hello, What, Wait, Wait, Repeat, Yeah": no real exchange at all.
+        bridge = _bridge()
+        session = _FakeSession()
+        for said in ["Hello", "What", "Wait", "Wait", "Repeat", "Yeah"] * 3:
+            await telephony._handle_parent_speech(bridge, session, _parent(said))
+            _agent_speaks(bridge)
+        assert not telephony._must_end_now(bridge)
+        assert telephony._meaningful(bridge) == 0
 
     async def test_one_word_does_not_satisfy_the_two_turn_minimum(self) -> None:
         bridge = _bridge()
@@ -222,7 +235,10 @@ class TestTheGoodbyeIsNotCutOff:
         bridge = _bridge()
         bridge.engaged = True
         bridge.model_has_spoken = True
-        bridge.parent_said = ["one", "two", "three", "four", "five", "six"]  # at the ceiling
+        bridge.parent_said = [
+            f"please tell me more about his marks {i}"
+            for i in range(telephony._MAX_MEANINGFUL_EXCHANGES)
+        ]  # at the ceiling
         closes: list[str] = []
 
         async def _close(b: Any, _s: Any, reason: str) -> None:

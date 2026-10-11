@@ -3,13 +3,19 @@
 What is gated is the engine's contract with the bridge, which is what makes it
 safe to put behind the unchanged call path:
 - it speaks the Live message shapes the bridge consumes;
-- a sentence is transcribed when its audio starts, and audio is whole samples;
-- "haan" while VIDYA talks is recorded but does not cancel her;
-- a real interruption, or the bridge's cancel_response(), abandons the reply:
-  `interrupted` is emitted, no audio of the abandoned reply follows, and the
-  model's memory holds only what was actually spoken;
+- a sentence is transcribed when its audio starts; audio arrives as carrier
+  mu-law in slices of at most 40 ms, so the pacer is never starved;
+- a final transcript is REPORTED, never answered by the engine: the bridge's
+  state machine decides (2026-10-11 handset call: each "Wait" got a fresh
+  "Yes, please tell me.");
+- the bridge's cancel_response() abandons the reply: `interrupted` is emitted,
+  no audio of the abandoned reply follows, and the model's memory holds only
+  what was actually spoken;
+- say() speaks fixed lines verbatim without the model; the privacy guard
+  blocks a sentence before synthesis; unlock() swaps the model's instruction;
 - tools round-trip through the bridge (which owns them), survive an
   interruption mid-lookup, and cannot hang a turn;
+- goodbyes are the bridge's: the engine never adds one on an end_call;
 - Hindi is synthesised only when enabled AND the text is Devanagari.
 """
 
@@ -25,8 +31,8 @@ from sahayakai_agents.telephony import cascade as cas
 from sahayakai_agents.telephony.cascade import (
     CascadeConfig,
     CascadeSession,
-    is_backchannel,
     speech_language,
+    split_first_clause,
     split_sentences,
 )
 
@@ -112,7 +118,7 @@ def kinds(msgs: list[Any]) -> list[str]:
     out = []
     for m in msgs:
         sc = m.server_content
-        if m.data:
+        if m.data or m.ulaw:
             out.append("audio")
         elif m.tool_call:
             out.append("tool_call")
@@ -138,15 +144,21 @@ class TestPieces:
         done, rest = split_sentences("Hello there, Ravi's mother. How are you")
         assert done == ["Hello there, Ravi's mother."] and rest == "How are you"
 
+    def test_a_title_is_not_a_sentence_end(self) -> None:
+        # The kickoff line was synthesised as "...on behalf of Ms." + "Rao. Before...".
+        done, rest = split_sentences("I'm calling on behalf of Ms. Rao. Before I share it, please")
+        assert done == ["I'm calling on behalf of Ms. Rao."] and rest == "Before I share it, please"
+        done, _ = split_sentences("Dr. Mehta and Mrs. Iyer agreed. Thank you all. ")
+        assert done == ["Dr. Mehta and Mrs. Iyer agreed.", "Thank you all."]
+
     def test_a_tiny_fragment_waits_for_more(self) -> None:
         done, rest = split_sentences("Okay. Ravi missed two homeworks. And")
         assert done == ["Okay. Ravi missed two homeworks."] and rest == "And"
 
-    def test_backchannels(self) -> None:
-        for t in ("haan", "Haan ji.", "hmm", "achha", "okay", "हाँ", "ठीक है"):
-            assert is_backchannel(t), t
-        for t in ("haan, what about his marks?", "wait", "no", "how is his attendance"):
-            assert not is_backchannel(t), t
+    def test_a_long_first_clause_is_released_at_a_comma(self) -> None:
+        done, rest = split_first_clause("Thank you for confirming, I have a message from the teacher")
+        assert done == ["Thank you for confirming,"] and rest == "I have a message from the teacher"
+        assert split_first_clause("Okay, sure") == ([], "Okay, sure")
 
     def test_hindi_only_when_enabled_and_devanagari(self) -> None:
         on, off = CascadeConfig(hindi=True), CascadeConfig()
@@ -176,40 +188,50 @@ class TestTurns:
         assert "said:Am I speaking with Ravi's parent?" in k
         assert k[-1] == "turn_complete"
         assert [t for t, _ in tts.spoken] == ["I'm calling from Sahayak Test School.", "Am I speaking with Ravi's parent?"]
-        # Whole 16-bit samples only, even though TTS chunks were odd-sized.
-        assert all(len(m.data) % 2 == 0 for m in msgs if m.data)
+        # Carrier mu-law, sliced to <= 40 ms (320 bytes at 8 kHz) so the pacer
+        # gets the event loop back between slices.
+        ulaw = [m.ulaw for m in msgs if m.ulaw]
+        assert ulaw and all(len(u) <= 320 for u in ulaw)
+        assert not any(m.data for m in msgs)
         assert s.first_audio_ms
 
-    async def test_parent_speech_is_reported_then_answered(self) -> None:
-        s, stt, _ = session(FakeLlm([["Yes, he did well."]]))
+    async def test_parent_speech_is_reported_but_never_answered_by_the_engine(self) -> None:
+        llm = FakeLlm([["Yes, he did well."]])
+        s, stt, _ = session(llm)
         await s.start()
         await stt.final("How was his test?")
+        await asyncio.sleep(0.05)
+        assert llm.histories == [], "the engine replied on its own; the bridge decides"
+        await s.respond("How was his test?")
         k = kinds(await turn(s))
         assert k[0] == "heard:How was his test?"
         assert "said:Yes, he did well." in k and k[-1] == "turn_complete"
 
-    async def test_haan_while_speaking_does_not_cancel(self) -> None:
-        s, stt, _ = session(FakeLlm([["Ravi missed two homework submissions this week."]]),
-                            FakeTts(chunk_delay=0.05, chunks=6))
+    async def test_wait_while_speaking_is_reported_and_starts_no_reply(self) -> None:
+        # The 2026-10-11 loop: "Wait" -> "Yes, please tell me." -> "Wait" -> ...
+        llm = FakeLlm([["Ravi missed two homework submissions this week."], ["Yes, please tell me."]])
+        s, stt, _ = session(llm, FakeTts(chunk_delay=0.05, chunks=6))
         await s.start()
         await s.send_client_content(turns=cue("(deliver)"))
         await asyncio.sleep(0.08)
-        await stt.final("haan")
+        await stt.final("Wait")
         k = kinds(await turn(s))
-        assert "interrupted" not in k and k[-1] == "turn_complete"
-        assert s.backchannels_ignored == 1
+        assert "heard:Wait" in k and "interrupted" not in k  # the bridge, not the engine, cuts
+        await asyncio.sleep(0.1)
+        assert len(llm.histories) == 1, "a reply was generated for 'Wait'"
 
-    async def test_a_real_interruption_abandons_the_reply(self) -> None:
+    async def test_the_bridges_cancel_abandons_the_reply(self) -> None:
         llm = FakeLlm([["Ravi missed two homework submissions this week. ", "His science marks dropped too."],
                        ["Sure, one minute."]])
         s, stt, tts = session(llm, FakeTts(chunk_delay=0.05, chunks=6))
         await s.start()
         await s.send_client_content(turns=cue("(deliver)"))
         await asyncio.sleep(0.12)
-        await stt.final("Wait, wait, one minute.")
+        s.cancel_response()
         first = kinds(await turn(s))
         assert first[-1] == "interrupted"
         assert "said:His science marks dropped too." not in first, "the abandoned sentence was spoken"
+        await s.respond("Wait, wait, what about his marks?")
         second = kinds(await turn(s))
         assert "said:Sure, one minute." in second
         # The model remembers only what was said before the cut.
@@ -262,6 +284,60 @@ class TestTurns:
 
 
 @pytest.mark.asyncio
+class TestFixedLinesAndThePrivacyGuard:
+    async def test_say_speaks_verbatim_without_the_model(self) -> None:
+        llm = FakeLlm([])
+        s, _, tts = session(llm)
+        await s.start()
+        line = "Hello, I'm calling from Sahayak Test School. May I know your child's name, please?"
+        await s.say(line)
+        k = kinds(await turn(s))
+        assert k[-1] == "turn_complete" and llm.histories == []
+        assert " ".join(t for t, _ in tts.spoken) == line
+        # Remembered as said, so a later reply knows what the parent heard.
+        assert s._history[-1].parts[0].text == line
+
+    async def test_say_cuts_off_a_reply_in_progress(self) -> None:
+        s, _, _ = session(FakeLlm([["A long answer that is still being spoken to the parent."]]),
+                          FakeTts(chunk_delay=0.05, chunks=10))
+        await s.start()
+        await s.respond("question")
+        await asyncio.sleep(0.1)
+        await s.say("Thank you for your time. Goodbye.")
+        first = kinds(await turn(s))
+        assert first[-1] == "interrupted"
+        assert "said:Thank you for your time." in kinds(await turn(s))
+
+    async def test_the_guard_blocks_a_sentence_before_synthesis(self) -> None:
+        llm = FakeLlm([["Hello, I'm from the school. ", "Ravi missed two homework submissions."]])
+        s, _, tts = session(llm)
+        s.set_guard(lambda text: "Ravi" not in text)
+        await s.start()
+        await s.respond("hello")
+        k = kinds(await turn(s))
+        assert all("Ravi" not in t for t, _ in tts.spoken)
+        assert not any("Ravi" in x for x in k)
+        assert s.privacy_blocks == 1
+
+    async def test_the_guard_also_covers_fixed_lines(self) -> None:
+        s, _, tts = session(FakeLlm([]))
+        s.set_guard(lambda text: "Ravi" not in text)
+        await s.start()
+        await s.say("This is about Ravi.")
+        await turn(s)
+        assert tts.spoken == [] and s.privacy_blocks == 1
+
+    def test_unlock_swaps_the_models_instruction(self) -> None:
+        swapped: list[str] = []
+        llm = FakeLlm([])
+        llm.set_system = swapped.append  # type: ignore[attr-defined]
+        s, _, _ = session(llm)
+        assert not s.unlocked
+        s.unlock("verified instruction")
+        assert s.unlocked and swapped == ["verified instruction"]
+
+
+@pytest.mark.asyncio
 class TestTools:
     async def test_a_lookup_round_trips_through_the_bridge(self) -> None:
         llm = FakeLlm([["Ek minute, let me check. ", call("get_attendance_summary")],
@@ -294,6 +370,7 @@ class TestTools:
         await s.send_client_content(turns=cue("marks?"))
         await asyncio.sleep(0.05)
         await stt.final("Actually, never mind, tell me about attendance.")
+        s.cancel_response()  # the bridge's decision on that utterance
         msgs: list[Any] = []
 
         async def collect() -> None:
@@ -411,6 +488,7 @@ class TestLanguageIsTheParentsChoice:
         s, stt, tts = session(llm, cfg=CascadeConfig(hindi=True))
         await s.start()
         await stt.final("Can you please speak in Hindi?")
+        await s.respond("Can you please speak in Hindi?")
         await turn(s)
         assert s.language == "Hindi" and "REPLY LANGUAGE NOW: Hindi" in llm.notes[0]
 
@@ -418,13 +496,13 @@ class TestLanguageIsTheParentsChoice:
         s, stt, _ = session(FakeLlm([["ठीक है।"]]), cfg=CascadeConfig(hindi=True))
         await s.start()
         await stt.cb({"event": "transcript.final", "text": "उसकी अटेंडेंस कैसी है?", "language": "hi-IN"})
-        await turn(s)
         assert s.language == "Hindi"
 
     async def test_no_switch_when_hindi_is_not_enabled(self) -> None:
         s, stt, _ = session(FakeLlm([["Sorry."]]), cfg=CascadeConfig(hindi=False))
         await s.start()
         await stt.final("Can you speak Hindi?")
+        await s.respond("Can you speak Hindi?")
         await turn(s)
         assert s.language == "English"
 
@@ -439,14 +517,19 @@ class TestLanguageIsTheParentsChoice:
 
 
 class TestStateNotes:
-    def test_an_undelivered_message_is_flagged_after_the_intro(self) -> None:
+    def test_the_note_follows_the_gate_and_never_carries_child_data(self) -> None:
         from sahayakai_agents.telephony.dialogue import DialogueState
 
-        d = DialogueState(school_name="Sahayak Test School", message="Ravi missed two homework submissions.")
-        d.on_agent_turn("I'm calling from Sahayak Test School. Am I speaking with Ravi's parent?")
-        assert "NOT been delivered yet" in d.cue_context()
-        d.on_agent_turn("Ravi missed two homework submissions this week.")
-        assert "NOT been delivered" not in d.cue_context()
+        d = DialogueState(student_name="Ravi Test", school_name="Sahayak Test School",
+                          message="Ravi missed two homework submissions.")
+        d.on_agent_turn("I'm calling from Sahayak Test School. May I know your child's name?")
+        d.on_identity_question_asked()
+        assert "ALREADY introduced" in d.cue_context() and "NOT verified" in d.cue_context()
+        d.on_parent("Ravi")
+        d.on_message_delivered()
+        note = d.cue_context()
+        assert "delivered" in note and "NOT verified" not in note
+        assert "Ravi" not in note and "homework submissions" not in note
 
     def test_the_bridge_tells_the_engine(self) -> None:
         from sahayakai_agents.telephony import router as telephony
@@ -477,8 +560,10 @@ class TestAudibleAcrossSentenceGaps:
 
 @pytest.mark.asyncio
 class TestStagingRun2Fixes:
-    async def test_a_silent_end_call_still_gets_one_complete_goodbye(self) -> None:
-        # The text model called end_call without a word; the parent heard nothing.
+    async def test_the_engine_never_says_goodbye_on_its_own(self) -> None:
+        # The model's end_call is a REQUEST the bridge may decline (a question
+        # may still be open); the engine must not have said goodbye already.
+        # The bridge speaks its own fixed closing line when it ends the call.
         s, _, tts = session(FakeLlm([[call("end_call", reason="parent_finished")]]))
         await s.start()
         await s.send_client_content(turns=cue("Okay thank you, bye."))
@@ -496,9 +581,8 @@ class TestStagingRun2Fixes:
 
         await asyncio.wait_for(collect(), timeout=3)
         k = kinds(msgs)
-        assert k.index("said:Thank you for your time. We are partners in your child's success. Goodbye.") < k.index("tool_call")
-        assert [t for t, _ in tts.spoken] == [
-            "Thank you for your time. We are partners in your child's success. Goodbye."]
+        assert "tool_call" in k and k[-1] == "turn_complete"
+        assert tts.spoken == []
 
     async def test_a_goodbye_that_was_spoken_is_not_doubled(self) -> None:
         s, _, tts = session(FakeLlm([["Thank you, take care. ", call("end_call", reason="parent_finished")]]))
@@ -526,7 +610,7 @@ class TestStagingRun2Fixes:
         await asyncio.sleep(0.6)  # into the second sentence
         s.cancel_response(heard="Certainly. Ravi's science")
         await turn(s)
-        await stt.final("What marks did he get?")
+        await s.respond("What marks did he get?")
         await turn(s)
         memory = " ".join(p.text for c in llm.histories[-1] for p in (c.parts or []) if getattr(p, "text", None))
         assert "Certainly. Ravi's science … [the parent interrupted here" in memory
