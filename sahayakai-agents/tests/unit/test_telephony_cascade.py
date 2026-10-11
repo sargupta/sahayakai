@@ -155,7 +155,7 @@ class TestPieces:
     def test_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("VOBIZ_CASCADE_HINDI", "true")
         cfg = CascadeConfig.from_env()
-        assert cfg.hindi and cfg.stt_language == "unknown"
+        assert cfg.hindi and cfg.stt_language == "auto"  # the API value for detection
         assert cfg.tts_speaker == "neha_en_customer" and cfg.tts_model == "bulbul:v4-flash"
         monkeypatch.delenv("VOBIZ_CASCADE_HINDI")
         assert CascadeConfig.from_env().stt_language == "en-IN"

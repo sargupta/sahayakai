@@ -99,7 +99,7 @@ class CascadeConfig:
             tts_speaker=os.environ.get("VOBIZ_CASCADE_TTS_SPEAKER", cls.tts_speaker),
             hindi=hindi,
             stt_language=os.environ.get(
-                "VOBIZ_CASCADE_STT_LANGUAGE", "unknown" if hindi else cls.stt_language
+                "VOBIZ_CASCADE_STT_LANGUAGE", "auto" if hindi else cls.stt_language
             ),
             stt_mode=os.environ.get("VOBIZ_CASCADE_STT_MODE", cls.stt_mode),
             llm_model=os.environ.get("VOBIZ_CASCADE_LLM_MODEL", cls.llm_model),
