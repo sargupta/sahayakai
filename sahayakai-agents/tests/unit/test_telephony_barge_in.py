@@ -60,9 +60,15 @@ class TestDetector:
     def test_pauses_after_the_onset_window_while_vidya_is_audible(self) -> None:
         det = BargeIn()
         acts = _feed(det, [3000] * 6)
-        assert acts[:5] == [Action.NONE] * 5
-        assert acts[5] is Action.PAUSE
-        assert det.onset_at == 0.0 and det.detected_at == pytest.approx(5 * F)
+        assert acts[:4] == [Action.NONE] * 4
+        assert acts[4] is Action.PAUSE  # 5 of the last 7 frames: 100 ms of speech
+        assert det.onset_at == 0.0 and det.detected_at == pytest.approx(4 * F)
+
+    def test_a_dip_between_syllables_does_not_reset_the_onset(self) -> None:
+        # The old detector needed six CONSECUTIVE loud frames; real speech dips.
+        det = BargeIn()
+        acts = _feed(det, [3000, 3000, 3000, 0, 3000, 3000])
+        assert Action.PAUSE in acts
 
     def test_never_triggers_while_vidya_is_silent(self) -> None:
         # Talking into silence is just the parent's turn, not an interruption.
@@ -91,10 +97,10 @@ class TestDetector:
 
     def test_refractory_after_a_click_needs_more_speech(self) -> None:
         det = BargeIn()
-        _feed(det, [3000] * 6 + [0] * 15)  # barely past onset: a click, ends at t = 0.42
-        later = _feed(det, [3000] * 6, t0=0.5)
-        assert Action.PAUSE not in later  # needs 12 frames during the refractory window
-        assert _feed(det, [3000] * 6, t0=0.62)[-1] is Action.PAUSE
+        _feed(det, [3000] * 5 + [0] * 15)  # barely past onset: a click, ends at t = 0.4
+        later = _feed(det, [3000, 3000, 3000, 3000, 3000, 0], t0=0.5)
+        assert Action.PAUSE not in later  # a full window is needed while refractory
+        assert Action.PAUSE in _feed(det, [3000] * 7, t0=0.62)
 
     def test_a_word_then_more_words_is_one_interruption(self) -> None:
         # "Wait... wait, one minute": the comma pause released the first word.
@@ -120,8 +126,9 @@ class TestDetector:
     def test_echo_of_vidyas_own_voice_does_not_trigger(self) -> None:
         # A speakerphone leaks our audio back at a steady, moderate level.
         det = BargeIn()
-        _feed(det, [300] * 200)  # learn the echo floor below the speech floor
-        assert det.echo_floor > 200
+        acts = _feed(det, [300] * 200)  # a steady leak, above the absolute floor
+        assert Action.PAUSE not in acts, "VIDYA's own echo paused her"
+        assert det.echo_floor == 300
         # Echo that creeps just above the fixed floor is still not the parent.
         assert set(_feed(det, [700] * 30, t0=4.0)) == {Action.NONE}
         # The parent, much louder than the leak, still gets through.
@@ -138,7 +145,7 @@ class TestDetector:
         assert det2.model_first == 0
 
     def test_config_is_respected(self) -> None:
-        det = BargeIn(BargeInConfig(onset_frames=3, confirm_frames=4))
+        det = BargeIn(BargeInConfig(onset_votes=3, onset_window=3, confirm_frames=4))
         acts = _feed(det, [3000] * 4)
         assert acts[2] is Action.PAUSE and acts[3] is Action.CANCEL
 

@@ -41,6 +41,10 @@ class InboundKind(StrEnum):
     START = "start"
     MEDIA = "media"
     STOP = "stop"
+    #: Vobiz confirms a clearAudio took effect (carrier-side buffer dropped).
+    CLEARED = "clearedAudio"
+    #: Vobiz confirms playback reached a named checkpoint.
+    PLAYED = "playedStream"
     #: Parsed fine, but not a frame we act on. Ignored rather than treated as an
     #: error: carriers add events over time and an unknown one must never drop a
     #: live call.
@@ -55,6 +59,12 @@ class InboundFrame:
     stream_id: str | None = None
     #: Decoded mu-law bytes for MEDIA frames.
     audio: bytes | None = None
+    #: The inbound format Vobiz reports in `start.mediaFormat` (diagnostics:
+    #: the bridge decodes mu-law, and the stream XML asks for it, but nothing
+    #: checked what actually arrived).
+    media_format: str | None = None
+    #: Checkpoint name, for PLAYED.
+    name: str | None = None
 
 
 def parse_inbound(raw: str | bytes) -> InboundFrame:  # noqa: PLR0911 — one return per frame shape; the enumeration is the parser
@@ -73,7 +83,20 @@ def parse_inbound(raw: str | bytes) -> InboundFrame:  # noqa: PLR0911 — one re
 
     event = data.get("event") or data.get("type")
     if event == "start":
-        return InboundFrame(InboundKind.START, stream_id=stream_id)
+        fmt = start.get("mediaFormat") or data.get("mediaFormat")
+        return InboundFrame(
+            InboundKind.START,
+            stream_id=stream_id,
+            media_format=json.dumps(fmt, sort_keys=True)
+            if isinstance(fmt, dict)
+            else (str(fmt) if fmt else None),
+        )
+    if event == "clearedAudio":
+        return InboundFrame(InboundKind.CLEARED, stream_id=stream_id)
+    if event == "playedStream":
+        return InboundFrame(
+            InboundKind.PLAYED, stream_id=stream_id, name=str(data.get("name") or "")
+        )
     if event == "stop":
         return InboundFrame(InboundKind.STOP, stream_id=stream_id)
     if event == "media":

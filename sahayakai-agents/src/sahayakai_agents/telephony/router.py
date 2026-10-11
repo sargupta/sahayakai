@@ -508,6 +508,56 @@ async def _hangup(call_uuid: str) -> None:
         log.warning("telephony.hangup_failed", error=str(exc))
 
 
+class InboundStats:
+    """Aggregates of the parent's audio for one call. Never audio, never words.
+
+    Exists because the handset call that logged zero barge-in pauses left no
+    evidence of why: no chunk sizes, no levels, no format. Bounded: levels are
+    kept in fixed-size reservoirs, chunk sizes as a small histogram.
+    """
+
+    _CAP = 3000
+
+    def __init__(self) -> None:
+        self.chunks = 0
+        self.chunk_sizes: dict[int, int] = {}
+        self.levels_audible: list[float] = []
+        self.levels_quiet: list[float] = []
+        self.clear_ms: list[float] = []
+
+    def chunk(self, size: int) -> None:
+        self.chunks += 1
+        if size in self.chunk_sizes or len(self.chunk_sizes) < 16:
+            self.chunk_sizes[size] = self.chunk_sizes.get(size, 0) + 1
+
+    def level(self, value: float, *, ai_audible: bool) -> None:
+        bucket = self.levels_audible if ai_audible else self.levels_quiet
+        if len(bucket) < self._CAP:
+            bucket.append(value)
+
+    def carrier_cleared(self, ms: float) -> None:
+        self.clear_ms.append(ms)
+
+    def summary(self) -> dict[str, Any]:
+        def pct(values: list[float], p: float) -> int | None:
+            v = percentile(values, p)
+            return None if v is None else round(v)
+
+        top = sorted(self.chunk_sizes.items(), key=lambda kv: -kv[1])[:4]
+        return {
+            "inbound_chunks": self.chunks,
+            "inbound_chunk_sizes": {str(k): v for k, v in top},
+            "level_quiet_p50": pct(self.levels_quiet, 50),
+            "level_quiet_p90": pct(self.levels_quiet, 90),
+            "level_quiet_p99": pct(self.levels_quiet, 99),
+            "level_audible_p50": pct(self.levels_audible, 50),
+            "level_audible_p90": pct(self.levels_audible, 90),
+            "level_audible_p99": pct(self.levels_audible, 99),
+            "carrier_clear_p50_ms": pct(self.clear_ms, 50),
+            "carrier_clear_p95_ms": pct(self.clear_ms, 95),
+        }
+
+
 class _Bridge:
     """Mutable state for one call. Small enough to read in one sitting."""
 
@@ -621,6 +671,13 @@ class _Bridge:
         self.turn_frames_played = 0
         #: The model is mid-turn (audio arrived, no turn_complete/interrupt yet).
         self.model_turn_open = False
+        #: Parent audio not yet making a whole 20 ms frame (see _feed_barge_in).
+        self.inbound_pending = b""
+        self.inbound = InboundStats()
+        #: What Vobiz reported in start.mediaFormat.
+        self.media_format: str | None = None
+        #: When the last clearAudio was sent, for carrier clear latency.
+        self.clear_sent_at: float | None = None
 
 
 def _kickoff_text(opener_played: bool) -> str:
@@ -680,6 +737,8 @@ async def _greet_and_drain(bridge: _Bridge, language: str) -> None:
         except Exception:  # noqa: BLE001 — the caller owns the socket's lifetime
             return
         frame = parse_inbound(raw)
+        if frame.media_format:
+            bridge.media_format = frame.media_format
         if frame.stream_id and not bridge.stream_id:
             bridge.stream_id = frame.stream_id
         if not greeted and bridge.stream_id:
@@ -846,6 +905,7 @@ async def _pump_carrier_to_live(bridge: _Bridge, session: Any) -> str:
         frame = parse_inbound(raw)
         if frame.kind is InboundKind.START:
             bridge.stream_id = frame.stream_id
+            bridge.media_format = frame.media_format or bridge.media_format
             log.info(
                 "telephony.stream_start",
                 outreach_id=bridge.outreach_id,
@@ -861,6 +921,9 @@ async def _pump_carrier_to_live(bridge: _Bridge, session: Any) -> str:
                     data=ulaw8k_to_pcm16k(frame.audio), mime_type=_PCM_IN_MIME
                 )
             )
+        elif frame.kind is InboundKind.CLEARED and bridge.clear_sent_at is not None:
+            bridge.inbound.carrier_cleared((time.monotonic() - bridge.clear_sent_at) * 1000)
+            bridge.clear_sent_at = None
         elif frame.kind is InboundKind.STOP:
             return "carrier_stop"
     return "stopped"
@@ -1248,12 +1311,25 @@ def _ai_audible(bridge: _Bridge, now: float) -> bool:
 
 
 def _feed_barge_in(bridge: _Bridge, ulaw: bytes) -> None:
-    """Run each 20 ms of the parent's audio through the barge-in detector."""
-    for start in range(0, len(ulaw) - _FRAME_BYTES + 1, _FRAME_BYTES):
+    """Run each 20 ms of the parent's audio through the barge-in detector.
+
+    Re-framed from whatever chunk size the carrier sends. The first version
+    stepped through each payload in whole 160-byte frames and silently looked
+    at NOTHING in a shorter one; Vobiz documents no inbound chunk size, and on
+    the 2026-10-11 handset call the detector logged zero pauses while the
+    payload-level engagement check (which reads any size) fired.
+    """
+    bridge.inbound.chunk(len(ulaw))
+    data = bridge.inbound_pending + ulaw
+    complete = len(data) - (len(data) % _FRAME_BYTES)
+    for start in range(0, complete, _FRAME_BYTES):
         now = time.monotonic()
-        level = frame_level(ulaw_to_pcm16(ulaw[start : start + _FRAME_BYTES]))
-        action = bridge.barge.on_frame(level, now, ai_audible=_ai_audible(bridge, now))
+        audible = _ai_audible(bridge, now)
+        level = frame_level(ulaw_to_pcm16(data[start : start + _FRAME_BYTES]))
+        bridge.inbound.level(level, ai_audible=audible)
+        action = bridge.barge.on_frame(level, now, ai_audible=audible)
         _apply_barge_action(bridge, action, by_model=False)
+    bridge.inbound_pending = data[complete:]
 
 
 def _apply_barge_action(bridge: _Bridge, action: Action, *, by_model: bool) -> None:
@@ -1791,6 +1867,7 @@ async def _barge_in_tick(bridge: _Bridge) -> bool:
         if bridge.clear_pending:
             bridge.clear_pending = False
             await bridge.ws.send_text(build_clear_audio(bridge.stream_id))
+            bridge.clear_sent_at = time.monotonic()
         if bridge.barge.paused:
             _measure_stop(bridge)
             await bridge.ws.send_text(build_play_audio(bridge.stream_id, _SILENCE_FRAME))
@@ -2162,6 +2239,9 @@ def _conversation_metrics(bridge: _Bridge) -> dict[str, Any]:
         "onset_to_stop_p50_ms": _ms(bridge.onset_to_stop_ms, 50),
         "onset_to_stop_p95_ms": _ms(bridge.onset_to_stop_ms, 95),
         "detect_to_stop_p95_ms": _ms(bridge.detect_to_stop_ms, 95),
+        "media_format": bridge.media_format,
+        **bridge.inbound.summary(),
+        **{f"barge_{k}": v for k, v in bridge.barge.diagnostics().items()},
         "repeat_intros": bridge.dialogue.repeat_intros,
         "identity": bridge.dialogue.identity.value,
         "message_delivered": bridge.dialogue.message_delivered,
