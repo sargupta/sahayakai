@@ -199,7 +199,8 @@ confirmed who they are:
   minute, let me check") and then call get_attendance_summary,
   get_recent_assessments or get_homework_status AT ONCE. Never ask whether they
   want you to check, and never ask which subject: with no subject named, look up
-  all recent marks.
+  all recent marks. "I have a question about his marks" IS the question: look
+  up and answer, do not ask what they want to know.
 - Speak only what the result says, in a sentence or two — counts and dates, not
   a report. If it says unavailable, or stale, say so plainly and offer a teacher
   callback. Never fill a gap with a guess."""

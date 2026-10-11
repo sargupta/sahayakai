@@ -1468,7 +1468,12 @@ def _cancel_response(bridge: _Bridge, *, by_model: bool) -> None:
     already handed to the queue unplayable, and `discard_model_audio` drops the
     chunks the model is still streaming for the abandoned turn.
     """
-    _silence_current_reply(bridge, model_still_sending=not by_model)
+    # Discard what the engine is still streaming ONLY if its turn is still
+    # open. A reply that had finished generating but was still PLAYING gets no
+    # `interrupted` or `turn_complete` afterwards, so the discard never lifted
+    # and silently swallowed the NEXT reply (Neha staging run 4: the attendance
+    # answer was generated and thrown away; the silence nudge spoke instead).
+    _silence_current_reply(bridge, model_still_sending=not by_model and bridge.model_turn_open)
     if not by_model:
         _arm_stop_measurement(bridge)
         # An engine that can abandon a reply (the cascade) is told to, so it

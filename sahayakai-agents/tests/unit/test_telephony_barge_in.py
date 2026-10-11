@@ -256,6 +256,7 @@ class TestBridgePlayback:
 
     async def test_confirmed_interruption_cancels_for_good(self) -> None:
         b = await self._speaking(80)
+        b.model_turn_open = True  # still generating
         b.agent_turn_text = " Ravi's science marks have"
         await self._talk_over(b, 20)
         assert b.out.empty() and b.pending == b""
@@ -333,6 +334,7 @@ async def _pump(bridge: Any, session: _Session) -> None:
 class TestStaleModelAudio:
     async def test_chunks_still_streaming_for_the_cancelled_turn_are_dropped(self) -> None:
         b = _bridge()
+        b.model_turn_open = True  # the model is still generating
         telephony._cancel_response(b, by_model=False)  # local barge-in fired
         session = _Session([[_audio(), _audio(), _content(output_transcription=SimpleNamespace(text=" stale words"))]])
         await _pump(b, session)
@@ -342,6 +344,7 @@ class TestStaleModelAudio:
 
     async def test_the_models_late_interrupted_does_not_cancel_the_next_reply(self) -> None:
         b = _bridge()
+        b.model_turn_open = True
         telephony._cancel_response(b, by_model=False)
         gen_after_local_cancel = b.generation
         session = _Session([[_content(interrupted=True), _audio(), _audio()]])
@@ -352,6 +355,7 @@ class TestStaleModelAudio:
 
     async def test_turn_complete_ends_the_discard_even_without_interrupted(self) -> None:
         b = _bridge()
+        b.model_turn_open = True
         telephony._cancel_response(b, by_model=False)
         session = _Session([[_audio(), _content(turn_complete=True)], [_audio()]])
         await _pump(b, session)
@@ -372,6 +376,7 @@ class TestStaleModelAudio:
     async def test_repeated_interruptions_each_cancel_once(self) -> None:
         b = _bridge()
         for _ in range(3):
+            b.model_turn_open = True
             b.last_speech_frame_at = time.monotonic()
             for i in range(10):
                 b.out.put_nowait((b.generation, _speech_frame(i)))
@@ -450,3 +455,28 @@ class TestInterruptionLatency:
         assert len(b.onset_to_stop_ms) >= 10
         assert onset is not None and onset < 300, b.onset_to_stop_ms
         assert detect is not None and detect <= 60, b.detect_to_stop_ms
+
+
+@pytest.mark.asyncio
+class TestTheNextReplyIsNotSwallowed:
+    """Neha staging run 4: the parent cut in after VIDYA's reply had finished
+    GENERATING but while it was still PLAYING. The bridge set discard-until-the-
+    engine-confirms, a finished turn never confirms, and the NEXT reply (the
+    attendance answer) was thrown away. True of the Live engine as well."""
+
+    async def test_cutting_into_a_finished_but_playing_reply_does_not_discard_the_next(self) -> None:
+        b = _bridge()
+        for i in range(50):
+            b.out.put_nowait((b.generation, _speech_frame(i)))
+        b.model_turn_open = False  # turn_complete already received
+        telephony._cancel_response(b, by_model=False)
+        assert not b.discard_model_audio
+        # The next reply is played.
+        await _pump(b, _Session([[_audio(), _audio()]]))
+        assert b.out.qsize() == 2 and b.stale_chunks_dropped == 0
+
+    async def test_cutting_into_a_reply_still_generating_discards_its_rest(self) -> None:
+        b = _bridge()
+        b.model_turn_open = True
+        telephony._cancel_response(b, by_model=False)
+        assert b.discard_model_audio
