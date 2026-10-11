@@ -205,3 +205,62 @@ The call connected and completed (100 s), but as a voice test it failed:
 - **Model variance:** the model still occasionally asks a clarifying question, or answers a question again when it is repeated.
 - **Vertex capacity:** asia-south1 returned 429s and timeouts for over an hour on 2026-10-11. The global fallback covers it but changes the processing location.
 - **Ownership:** the cascade is a prototype for the Sampark owner (CONVERSATION_PLAN.md §4, C1), not a production engine.
+
+# 2026-10-11 repair: privacy gate, state machine, true barge-in
+
+After the 2026-10-11 handset call (Vobiz `41534a41-…`), the teacher's message was given to a caller who had only said "Hello" and "What". Each "Wait" got a new "Yes, please tell me." "Repeat" was refused. The call ended after six utterances. Commits `62c80b13`, `52cd2a86` and `a09e198d` (local, not pushed). Nothing deployed to production; no call placed.
+
+## Root causes
+
+| # | Defect | Where |
+|---|---|---|
+| 1 | Child data (name, reason, marks, message) was in the model's context from the first word; only the two lookup tools were gated; the kickoff told the model to name the child | `prompt.build_parent_call_instruction`, `router._prepare_live_session`, `flow.KICKOFF_*` |
+| 2 | Identity was the model's claim, checked against a yes-word; the question named the child | `router._run_identity_check`, `dialogue.confirm_identity` |
+| 3 | The cascade answered every final transcript itself ("Wait" → "Yes, please tell me.") | `cascade._on_stt` |
+| 4 | The acoustic release resumed VIDYA before the transcript said what was spoken | `barge_in` release → `router._apply_barge_action` |
+| 5 | "Never re-deliver the message" made VIDYA refuse a repeat | `prompt._BASE` |
+| 6 | The 6-utterance ceiling counted wait/what/repeat/yeah; the close cue could follow a question | `router._must_end_now`, `_begin_close` |
+| 7 | The model's `end_call` was honoured on its own say-so | `router._handle_tool_call` |
+| 8 | Resampling whole TTS chunks on the event loop starved the 20 ms pacer (2.9% late, worst 285 ms) | `router._on_model_audio` |
+| 9 | Found on staging: the privacy allowlist was unfolded ("message") while tokens were folded ("mesage"), so the guard blocked VIDYA's own identity question | `privacy.ProtectedTerms.build` |
+| 10 | Found on staging: silence was counted from synthesis, not playback, so the follow-up question landed on the end of VIDYA's own question | `router._pace_outbound` |
+| 11 | Found in replay: a child's surname that is a word in the school's or teacher's name blocked the introduction; "Ms." split the teacher's name across two TTS requests; consecutive VIDYA turns were filed as one transcript entry | `privacy`, `cascade.split_sentences`, `router._record_turn` |
+
+## What changed
+
+- **One non-LLM gate** (`privacy.py`, `dialogue.check_identity`). The caller must say the child's name, fuzzy-matched strictly. The model starts LOCKED and is unlocked only by the bridge. Every pre-verification sentence passes an output guard before synthesis (cascade) or is cut the moment its transcript shows it (Live). A denial fails closed; three neutral questions, then a polite close.
+- **Explicit state machine** (`dialogue.py`): stages GREETING → IDENTITY_CHECK → MESSAGE_DELIVERY → PARENT_RESPONSE → TOOL_LOOKUP → FOLLOW_UP → GOODBYE, plus floor sub-states. Verified stages are unreachable before verification. One decision per final transcript: respond, repeat the message verbatim, repeat the last line, yield the floor, resume, ask again, or close.
+- **Barge-in**: stop on onset; after a release, hold until the transcript decides ("haan" resumes, anything else cancels); "wait" never auto-resumes.
+- **Turns**: only substantive utterances count, up to 12. The limit closes only when no question is open. Goodbyes are fixed lines, said separately. `end_call` is a request the state machine may decline.
+- **Pacing**: μ-law is produced in 40 ms slices off the pacer's path; per-call lifecycle metrics are logged.
+
+## Verification
+
+- Python: 1579 passed, 1 skipped; the 4 failures are the pre-existing `test_telephony_only_surface` baseline (local FastAPI). Telephony: 569 passed. ruff, ruff format (changed files) and mypy are clean. The web app is unchanged.
+- Deterministic replays (`test_telephony_call_replays.py`, 28 tests) run through the real bridge, pacer, carrier pump, barge-in detector, state machine, guard, cascade and tools, with fake STT/LLM/TTS only. They cover scenarios 1–14 plus a model trying to disclose before verification.
+- Isolated staging `sahayakai-telephony-calltest-00016-npd` (image `…f3476d33…`) with real Sarvam STT/TTS and Gemini, and a simulated carrier (no phone, no `cuid`, synthetic record in `parent-call-test`):
+
+| Scenario | Result |
+|---|---|
+| "Hello?" / "What?" / "Can you repeat the message?" unverified | Neutral question each time (0.46–0.73 s), polite close after the third; no child data |
+| Name → message; talk over it | Clear sent 141 ms after onset, last VIDYA audio 110 ms; parent's question answered from the record |
+| "Repeat the message", then "Wait." | Verbatim repeat; 0 VIDYA frames in the following 3 s |
+| "Sorry?" / "Okay." / "What?" | Repeat / carry on / repeat; no "Yes, please tell me" |
+| Goodbye | One fixed closing line, then hang-up |
+
+| Metric (p50 / p95) | Mock replays | Staging (real STT/LLM/TTS) |
+|---|---|---|
+| End of speech → final transcript | 141 / 172 ms (simulated) | 905–986 / 1032–1151 ms |
+| End of speech → first reply audio | 188 / 281 ms | 1309–1512 / 1596–3597 ms (p95 includes lookups) |
+| Speech onset → VIDYA silent | 83 / 99 ms | 77–91 ms |
+| Pacer frames late | 0.26% | <0.05%; worst single tick 301–548 ms |
+
+## Remaining limitations
+
+- **Recogniser floor:** end-of-speech → final takes about 0.95 s (Sarvam VAD, 500 ms silence), most of the reply latency.
+- **Loud echo:** at about −37 dBov the detector can pause on VIDYA's own echo during its warm-up. Typical handset echo (−40 to −45 dBov) is fine. Unproven on a real line.
+- **Interrupted delivery:** the message counts as delivered once started. After an interruption the model may finish it in its own words rather than verbatim.
+- **Bare "Hmm" after a question** goes to the model, which answered off-target ("I don't have information about his homework"), honestly but unhelpfully.
+- **"What?" after the message** repeats the whole delivery turn, including "Thank you."
+- **Worst pacer tick:** about 0.3–0.5 s once per call on staging (cause not yet isolated).
+- **No real-handset validation** of this build. Ownership remains the Sampark owner's (the cascade is a staging prototype).
