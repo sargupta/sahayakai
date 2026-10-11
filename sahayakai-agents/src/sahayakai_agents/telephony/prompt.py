@@ -205,12 +205,27 @@ confirmed who they are:
   callback. Never fill a gap with a guess."""
 
 
+#: Only for an engine that verifiably speaks and hears Hindi on the phone path
+#: (the Neha cascade: Bulbul hi-IN generation and saaras recognition, checked
+#: by round trip on 2026-10-11). Gemini Live never gets this section.
+_SWITCH_TO_HINDI = """
+SWITCHING TO HINDI
+This call can be held in Hindi. If the parent asks you to speak Hindi, asks
+whether you understand Hindi, or keeps answering you in Hindi, switch to Hindi
+at once and stay in it unless they ask for {language} again. Write Hindi in
+Devanagari script, in simple everyday spoken Hindi; English school words such
+as attendance, test, homework and marks are fine inside a Hindi sentence. Never
+refuse a request to speak Hindi and never say you will continue in {language}
+when they have asked for Hindi."""
+
+
 def build_parent_call_instruction(
     context: CallContext,
     *,
     disclose_ai: bool = False,
     two_way: bool = True,
     lookups: bool = False,
+    switch_to_hindi: bool = False,
 ) -> str:
     """Compose the instruction for one call.
 
@@ -232,6 +247,8 @@ def build_parent_call_instruction(
         lines.append(_DISCLOSE_AI.format(language=language))
     if not two_way:
         lines.append(_DELIVERY_ONLY.format(language=language))
+    if switch_to_hindi and two_way and language != "Hindi":
+        lines.append(_SWITCH_TO_HINDI.format(language=language))
 
     facts: list[str] = []
     if context.student_name:

@@ -48,6 +48,7 @@ from .audio import (
     ulaw_to_pcm16,
 )
 from .barge_in import Action, BargeIn, frame_level, percentile
+from .cascade import CascadeConfig, cascade_enabled, open_cascade
 from .dialogue import DialogueState, looks_affirmative
 from .flow import (
     CLOSE,
@@ -129,6 +130,16 @@ def _load_openers() -> dict[str, bytes]:
 
 _OPENERS = _load_openers()
 
+#: The same opener lines rendered in the cascade engine's voice (Neha). The
+#: opener exists to sound like the voice that takes over; a Gemini-voice
+#: greeting followed by Neha would be heard as two people.
+_NEHA_OPENER_DIR = Path(__file__).parent / "openers_neha"
+_NEHA_OPENERS = (
+    {f.stem: f.read_bytes() for f in _NEHA_OPENER_DIR.glob("*.ulaw")}
+    if _NEHA_OPENER_DIR.is_dir()
+    else {}
+)
+
 if not _OPENERS:
     # Loud on purpose. If the recordings do not ship with the image, every call
     # silently reverts to ~3.4s of dead air before the model speaks — the exact
@@ -151,6 +162,10 @@ def opener_for(language: str) -> bytes:
     hear a human-sounding voice and stay on the line long enough for the model
     to take over in their own language.
     """
+    if cascade_enabled():
+        neha = _NEHA_OPENERS.get(language) or _NEHA_OPENERS.get(_DEFAULT_OPENER_LANGUAGE)
+        if neha:
+            return neha
     return _OPENERS.get(language) or _OPENERS.get(_DEFAULT_OPENER_LANGUAGE, b"")
 
 # ---- Limits -------------------------------------------------------------
@@ -678,6 +693,8 @@ class _Bridge:
         self.media_format: str | None = None
         #: When the last clearAudio was sent, for carrier clear latency.
         self.clear_sent_at: float | None = None
+        #: The conversation engine session (Gemini Live or the cascade).
+        self.engine: Any = None
 
 
 def _kickoff_text(opener_played: bool) -> str:
@@ -1416,6 +1433,11 @@ def _cancel_response(bridge: _Bridge, *, by_model: bool) -> None:
     _silence_current_reply(bridge, model_still_sending=not by_model)
     if not by_model:
         _arm_stop_measurement(bridge)
+        # An engine that can abandon a reply (the cascade) is told to, so it
+        # stops generating and synthesising rather than finishing into the void.
+        stop = getattr(bridge.engine, "cancel_response", None)
+        if callable(stop):
+            stop()
     bridge.dialogue.on_interrupted()
     log.info(
         "telephony.barge_in",
@@ -2017,6 +2039,7 @@ async def _prepare_live_session(
                         disclose_ai=disclose_ai(),
                         two_way=is_two_way(context.language),
                         lookups=lookups,
+                        switch_to_hindi=cascade_enabled() and CascadeConfig.from_env().hindi,
                     )
                 )
             ]
@@ -2090,7 +2113,7 @@ async def _prepare_live_session(
     log.info(
         "telephony.warmup",
         outreach_id=outreach_id,
-        model=model,
+        model="cascade" if cascade_enabled() else model,
         language=context.language,
         context_ms=round((t_context - t_accept) * 1000),
         client_ms=round((time.monotonic() - t_context) * 1000),
@@ -2124,6 +2147,22 @@ def _identity_and_lookup_declarations() -> list[Any]:
         ),
     )
     return [identity, *tool_declarations()]
+
+
+def _connect_engine(client: Any, model: str, config: Any) -> Any:
+    """Gemini Live (default) or, on `VOBIZ_ENGINE=cascade`, the Neha cascade.
+
+    Both are async context managers yielding the same session surface
+    (engine.ConversationSession), so nothing downstream knows which it got.
+    """
+    if cascade_enabled():
+        return open_cascade(
+            CascadeConfig.from_env(),
+            project=get_settings().gcp_project,
+            system_instruction=config.system_instruction,
+            tools=config.tools,
+        )
+    return client.aio.live.connect(model=model, config=config)
 
 
 async def _run_call(bridge: _Bridge, session: Any, pacer: asyncio.Task[None]) -> str:
@@ -2287,8 +2326,9 @@ async def vobiz_stream(ws: WebSocket) -> None:
 
         from google.genai import types as genai_types
 
-        async with client.aio.live.connect(model=model, config=config) as session:
+        async with _connect_engine(client, model, config) as session:
             live_connected = True
+            bridge.engine = session
             bridge.t_ready = time.monotonic()
             log.info(
                 "telephony.live_connected",

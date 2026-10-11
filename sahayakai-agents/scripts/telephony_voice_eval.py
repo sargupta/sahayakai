@@ -168,6 +168,12 @@ SARVAM_CANDIDATES = [
     Candidate("sarvam-v4f-ishita_en_customer", "sarvam", "bulbul:v4-flash", "ishita_en_customer"),
     Candidate("sarvam-v4f-ritu_en_edtech", "sarvam", "bulbul:v4-flash", "ritu_en_edtech"),
     Candidate("sarvam-v4f-shubh_enhi_banking", "sarvam", "bulbul:v4-flash", "shubh_enhi_banking"),
+    # The requested "Neha" style (2026-10-11): every Neha the API offers for English.
+    Candidate("sarvam-v4f-neha_en_customer", "sarvam", "bulbul:v4-flash", "neha_en_customer"),
+    Candidate("sarvam-v4f-neha_en_latenight", "sarvam", "bulbul:v4-flash", "neha_en_latenight"),
+    Candidate("sarvam-v3-neha", "sarvam", "bulbul:v3", "neha"),
+    Candidate("sarvam-v4f-neha_en_customer-mulaw8k", "sarvam", "bulbul:v4-flash",
+              "neha_en_customer", codec="mulaw8k"),
     Candidate("sarvam-v4f-simran_enhi_customer-mulaw8k", "sarvam", "bulbul:v4-flash",
               "simran_enhi_customer", codec="mulaw8k"),
 ]
