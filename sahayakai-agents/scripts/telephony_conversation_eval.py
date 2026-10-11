@@ -182,7 +182,6 @@ _DIGITS = re.compile(r"\d+")
 
 
 async def _turn(  # noqa: PLR0912 — one branch per Live message kind
-
     session: Any,
     tools: SchoolDataTools,
     dialogue: DialogueState,

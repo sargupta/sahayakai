@@ -77,9 +77,11 @@ class FakeLlm:
     def __init__(self, replies: list[list[Any]], *, delay: float = 0.0) -> None:
         self.replies, self.delay = list(replies), delay
         self.histories: list[list[Any]] = []
+        self.notes: list[str] = []
 
-    async def stream(self, history: list[Any]) -> Any:
+    async def stream(self, history: list[Any], note: str = "") -> Any:
         self.histories.append(list(history))
+        self.notes.append(note)
         reply = self.replies.pop(0) if self.replies else ["Okay."]
         for part in reply:
             if self.delay:
@@ -241,7 +243,7 @@ class TestTurns:
 
     async def test_a_failing_model_ends_the_turn_not_the_call(self) -> None:
         class Boom(FakeLlm):
-            async def stream(self, history: list[Any]) -> Any:
+            async def stream(self, history: list[Any], note: str = "") -> Any:
                 raise RuntimeError("vertex 503")
                 yield  # pragma: no cover
 
@@ -388,3 +390,85 @@ def test_engine_choice(monkeypatch: pytest.MonkeyPatch) -> None:
     assert telephony.opener_for("English") == telephony._NEHA_OPENERS["English"]
     monkeypatch.setenv("VOBIZ_ENGINE", "live")
     assert telephony.opener_for("English") == telephony._OPENERS["English"]
+
+
+@pytest.mark.asyncio
+class TestLanguageIsTheParentsChoice:
+    """Staging run 1 (2026-10-11): an English call opened in Hindi, because a
+    prompt section allowed the model to choose. The engine now decides."""
+
+    async def test_replies_start_in_english_with_an_explicit_note(self) -> None:
+        llm = FakeLlm([["Hello."]])
+        s, _, _ = session(llm, cfg=CascadeConfig(hindi=True))
+        await s.start()
+        await s.send_client_content(turns=cue("(kickoff)"))
+        await turn(s)
+        assert "REPLY LANGUAGE NOW: English" in llm.notes[0]
+
+    async def test_asking_for_hindi_switches(self) -> None:
+        llm = FakeLlm([["Ji, bilkul."], ["अच्छा।"]])
+        s, stt, tts = session(llm, cfg=CascadeConfig(hindi=True))
+        await s.start()
+        await stt.final("Can you please speak in Hindi?")
+        await turn(s)
+        assert s.language == "Hindi" and "REPLY LANGUAGE NOW: Hindi" in llm.notes[0]
+
+    async def test_hindi_speech_switches(self) -> None:
+        s, stt, _ = session(FakeLlm([["ठीक है।"]]), cfg=CascadeConfig(hindi=True))
+        await s.start()
+        await stt.cb({"event": "transcript.final", "text": "उसकी अटेंडेंस कैसी है?", "language": "hi-IN"})
+        await turn(s)
+        assert s.language == "Hindi"
+
+    async def test_no_switch_when_hindi_is_not_enabled(self) -> None:
+        s, stt, _ = session(FakeLlm([["Sorry."]]), cfg=CascadeConfig(hindi=False))
+        await s.start()
+        await stt.final("Can you speak Hindi?")
+        await turn(s)
+        assert s.language == "English"
+
+    async def test_the_call_state_reaches_the_next_reply(self) -> None:
+        llm = FakeLlm([["Okay."]])
+        s, _, _ = session(llm)
+        await s.start()
+        s.set_context_note("You have ALREADY introduced yourself; never do it again.")
+        await s.send_client_content(turns=cue("yes"))
+        await turn(s)
+        assert "ALREADY introduced" in llm.notes[0]
+
+
+class TestStateNotes:
+    def test_an_undelivered_message_is_flagged_after_the_intro(self) -> None:
+        from sahayakai_agents.telephony.dialogue import DialogueState
+
+        d = DialogueState(school_name="Sahayak Test School", message="Ravi missed two homework submissions.")
+        d.on_agent_turn("I'm calling from Sahayak Test School. Am I speaking with Ravi's parent?")
+        assert "NOT been delivered yet" in d.cue_context()
+        d.on_agent_turn("Ravi missed two homework submissions this week.")
+        assert "NOT been delivered" not in d.cue_context()
+
+    def test_the_bridge_tells_the_engine(self) -> None:
+        from sahayakai_agents.telephony import router as telephony
+
+        notes: list[str] = []
+        b = telephony._Bridge(SimpleNamespace(), "o", call_uuid="")  # type: ignore[arg-type]
+        b.engine = SimpleNamespace(set_context_note=notes.append)
+        b.agent_turn_text = " I'm calling from Sahayak Test School on behalf of Ms. Rao."
+        telephony._commit_agent_turn(b)
+        assert notes and "introduced" in notes[-1]
+
+
+class TestAudibleAcrossSentenceGaps:
+    """Staging run 1: a parent who began between two of VIDYA's sentences was
+    not treated as interrupting until her next sentence (537 ms p95)."""
+
+    def test_open_turn_keeps_her_audible_through_a_short_gap(self) -> None:
+        from sahayakai_agents.telephony import router as telephony
+
+        b = telephony._Bridge(SimpleNamespace(), "o", call_uuid="")  # type: ignore[arg-type]
+        b.last_speech_frame_at = 100.0
+        b.model_turn_open = True
+        assert telephony._ai_audible(b, 100.9)
+        assert not telephony._ai_audible(b, 102.0)
+        b.model_turn_open = False
+        assert not telephony._ai_audible(b, 100.9)

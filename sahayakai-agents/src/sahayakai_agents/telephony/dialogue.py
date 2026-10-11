@@ -177,6 +177,11 @@ class DialogueState:
             parts.append("This is NOT the child's parent; share nothing about the child.")
         if self.message_delivered:
             parts.append("The teacher's message has been delivered; do not repeat it.")
+        elif self.introduced and self.identity is not Identity.DENIED:
+            parts.append(
+                "The teacher's message has NOT been delivered yet: after answering what "
+                "the parent just said, deliver it (or the part they have not heard)."
+            )
         return f" [Call state: {' '.join(parts)}]" if parts else ""
 
     # ---- internals --------------------------------------------------------

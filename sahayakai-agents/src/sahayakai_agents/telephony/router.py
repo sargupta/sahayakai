@@ -168,6 +168,7 @@ def opener_for(language: str) -> bytes:
             return neha
     return _OPENERS.get(language) or _OPENERS.get(_DEFAULT_OPENER_LANGUAGE, b"")
 
+
 # ---- Limits -------------------------------------------------------------
 #
 # All per process, like the web stream's: with N instances the real ceiling is
@@ -218,6 +219,7 @@ def school_data_tools_enabled() -> bool:
 def local_barge_in_enabled() -> bool:
     """`VOBIZ_LOCAL_BARGE_IN`: pause on the parent's speech onset (default on)."""
     return os.environ.get("VOBIZ_LOCAL_BARGE_IN", "1").strip().lower() not in ("0", "false", "no")
+
 
 #: 20 ms of mu-law at 8 kHz. Carriers expect a steady frame cadence.
 _FRAME_BYTES = 160
@@ -278,9 +280,17 @@ _ENDS_IN_QUESTION = re.compile(
 
 #: App language -> the two-letter code the parent-call schemas expect.
 _ISO_LANGUAGE = {
-    "English": "en", "Hindi": "hi", "Kannada": "kn", "Tamil": "ta", "Telugu": "te",
-    "Malayalam": "ml", "Bengali": "bn", "Marathi": "mr", "Gujarati": "gu",
-    "Punjabi": "pa", "Odia": "or",
+    "English": "en",
+    "Hindi": "hi",
+    "Kannada": "kn",
+    "Tamil": "ta",
+    "Telugu": "te",
+    "Malayalam": "ml",
+    "Bengali": "bn",
+    "Marathi": "mr",
+    "Gujarati": "gu",
+    "Punjabi": "pa",
+    "Odia": "or",
 }
 
 #: Mean absolute sample level that counts as speech rather than line noise.
@@ -427,10 +437,13 @@ def context_from_outreach(data: dict[str, Any], language: str) -> CallContext:
     # subjects, quoted only if the parent asks.
     perf = data.get("performanceContext") or {}
     breakdown = perf.get("subjectBreakdown") or []
-    marks = ", ".join(
-        f"{a.get('subject')}: {a.get('marksObtained')}/{a.get('maxMarks')}"
-        for a in breakdown[:3]
-    ) or None
+    marks = (
+        ", ".join(
+            f"{a.get('subject')}: {a.get('marksObtained')}/{a.get('maxMarks')}"
+            for a in breakdown[:3]
+        )
+        or None
+    )
     if marks and isinstance(perf.get("latestPercentage"), (int, float)):
         marks = f"{marks} · overall {round(perf['latestPercentage'])}%"
 
@@ -450,11 +463,7 @@ def context_from_outreach(data: dict[str, Any], language: str) -> CallContext:
         # lacked a `spokenScript` told the model "no specific message" while the
         # letter sat unread on the same document. `message` stays as a last
         # resort for any older record that used it.
-        message=(
-            data.get("spokenScript")
-            or data.get("generatedMessage")
-            or data.get("message")
-        ),
+        message=(data.get("spokenScript") or data.get("generatedMessage") or data.get("message")),
     )
 
 
@@ -695,6 +704,8 @@ class _Bridge:
         self.clear_sent_at: float | None = None
         #: The conversation engine session (Gemini Live or the cascade).
         self.engine: Any = None
+        #: The last agent turn filed was cut off by the parent.
+        self.last_turn_interrupted = False
 
 
 def _kickoff_text(opener_played: bool) -> str:
@@ -874,9 +885,7 @@ async def _conversation_watchdog(bridge: _Bridge, session: Any) -> None:
                 nudged_after_opener = True
                 bridge.last_activity = time.monotonic()
                 with contextlib.suppress(Exception):
-                    await _send_director(
-                        session, POST_OPENER_NUDGE + bridge.dialogue.cue_context()
-                    )
+                    await _send_director(session, POST_OPENER_NUDGE + bridge.dialogue.cue_context())
                 log.info("telephony.nudge", outreach_id=bridge.outreach_id, kind="post_opener")
             elif nudged_after_opener and quiet_for > _UNANSWERED_GIVE_UP:
                 # Nobody is there, or they cannot hear us. Ending quietly is
@@ -934,9 +943,7 @@ async def _pump_carrier_to_live(bridge: _Bridge, session: Any) -> str:
             bridge.last_voice = time.monotonic()
             _note_parent_audio(bridge, frame.audio)
             await session.send_realtime_input(
-                audio=genai_types.Blob(
-                    data=ulaw8k_to_pcm16k(frame.audio), mime_type=_PCM_IN_MIME
-                )
+                audio=genai_types.Blob(data=ulaw8k_to_pcm16k(frame.audio), mime_type=_PCM_IN_MIME)
             )
         elif frame.kind is InboundKind.CLEARED and bridge.clear_sent_at is not None:
             bridge.inbound.carrier_cleared((time.monotonic() - bridge.clear_sent_at) * 1000)
@@ -988,6 +995,18 @@ def _agent_said(bridge: _Bridge, fragment: str) -> None:
     the 2026-10-10 live transcript.
     """
     bridge.agent_turn_text += fragment
+
+
+def _tell_engine_the_state(bridge: _Bridge) -> None:
+    """An engine that takes per-reply notes (the cascade) gets the call state.
+
+    Gemini Live only hears the state inside director cues; the cascade hears it
+    before every reply, which is what stops a second introduction after the
+    parent's "yes" and brings the conversation back to an unfinished message.
+    """
+    note = getattr(bridge.engine, "set_context_note", None)
+    if callable(note):
+        note(bridge.dialogue.cue_context().strip(" []").removeprefix("Call state: "))
 
 
 def _heard_so_far(bridge: _Bridge, text: str) -> str:
@@ -1042,6 +1061,8 @@ def _commit_agent_turn(bridge: _Bridge, *, interrupted: bool = False) -> None:
             count=bridge.dialogue.repeat_intros,
         )
     _record_turn(bridge, "agent", f"{text} …" if interrupted else text)
+    bridge.last_turn_interrupted = interrupted
+    _tell_engine_the_state(bridge)
     if not interrupted and not bridge.closing and _is_agent_farewell(text):
         _spawn(bridge, _end_if_model_forgets(bridge, time.monotonic()))
 
@@ -1135,9 +1156,7 @@ async def _persist_opt_out(bridge: _Bridge) -> bool:
         snap = await asyncio.to_thread(ref.get)
         data = (snap.to_dict() if snap.exists else None) or {}
         now = datetime.now(UTC).isoformat().replace("+00:00", "Z")
-        await asyncio.to_thread(
-            ref.update, {"optedOut": True, "optedOutAt": now, "updatedAt": now}
-        )
+        await asyncio.to_thread(ref.update, {"optedOut": True, "optedOutAt": now, "updatedAt": now})
         phone = data.get("parentPhone")
         if not isinstance(phone, str) or not phone.strip():
             log.error("telephony.opt_out_no_phone", outreach_id=bridge.outreach_id)
@@ -1159,9 +1178,7 @@ async def _persist_opt_out(bridge: _Bridge) -> bool:
         log.info("telephony.opt_out_saved", outreach_id=bridge.outreach_id)
         return True
     except Exception as exc:  # noqa: BLE001
-        log.error(
-            "telephony.opt_out_lost", outreach_id=bridge.outreach_id, error=str(exc)
-        )
+        log.error("telephony.opt_out_lost", outreach_id=bridge.outreach_id, error=str(exc))
         return False
 
 
@@ -1323,8 +1340,18 @@ def _note_parent_audio(bridge: _Bridge, ulaw: bytes) -> None:
 _AUDIBLE_TAIL_SECONDS = 0.2
 
 
+#: While the engine's turn is still open, a gap this short between two of
+#: VIDYA's sentences is still "VIDYA talking". The cascade synthesises sentence
+#: by sentence; on staging a parent who began in such a gap was not treated as
+#: interrupting until she started her next sentence over them (537 ms p95).
+_SENTENCE_GAP_SECONDS = 1.5
+
+
 def _ai_audible(bridge: _Bridge, now: float) -> bool:
-    return (now - bridge.last_speech_frame_at) < _AUDIBLE_TAIL_SECONDS
+    since = now - bridge.last_speech_frame_at
+    return since < _AUDIBLE_TAIL_SECONDS or (
+        bridge.model_turn_open and bridge.last_speech_frame_at > 0 and since < _SENTENCE_GAP_SECONDS
+    )
 
 
 def _feed_barge_in(bridge: _Bridge, ulaw: bytes) -> None:
@@ -1505,9 +1532,7 @@ async def _handle_parent_speech(bridge: _Bridge, session: Any, server: Any) -> N
         bridge.opted_out = True
         await _begin_close(bridge, session, "opt_out")
     elif (
-        is_goodbye(bridge.parent_said[-1])
-        and _may_end_yet(bridge)
-        and not bridge.goodbye_net_armed
+        is_goodbye(bridge.parent_said[-1]) and _may_end_yet(bridge) and not bridge.goodbye_net_armed
     ):
         bridge.goodbye_net_armed = True
         _spawn(bridge, _close_unless_model_does(bridge, session))
@@ -1556,6 +1581,7 @@ async def _close_unless_model_does(bridge: _Bridge, session: Any) -> None:
         bridge.dialogue.agent_turns > armed_turns
         and last is not None
         and last["role"] == "agent"
+        and not bridge.last_turn_interrupted
         and not last["text"].rstrip(" .…").endswith("?")
     ):
         log.info("telephony.goodbye_net", outreach_id=bridge.outreach_id, action="model_closed")
@@ -1706,6 +1732,7 @@ async def _run_identity_check(bridge: _Bridge, session: Any, fc: Any) -> None:
             parent_reply=bridge.parent_said[-1] if bridge.parent_said else None,
         )
         log.info("telephony.identity", outreach_id=bridge.outreach_id, outcome=outcome)
+        _tell_engine_the_state(bridge)
         response: dict[str, Any] = {"status": outcome}
         if outcome == "not_confirmed_ask_directly":
             response["say"] = (
@@ -2224,14 +2251,10 @@ async def _settle_call(bridge: _Bridge, engine_error: str | None, started: float
         await _persist_engine_failure(bridge, engine_error)
     await _persist_transcript(bridge)
     if bridge.context is not None:
-        await _generate_call_summary(
-            bridge, bridge.context, int(time.monotonic() - started)
-        )
+        await _generate_call_summary(bridge, bridge.context, int(time.monotonic() - started))
 
 
-async def _stop_side_tasks(
-    bridge: _Bridge | None, *tasks: asyncio.Task[None] | None
-) -> None:
+async def _stop_side_tasks(bridge: _Bridge | None, *tasks: asyncio.Task[None] | None) -> None:
     """Stop the pacer and the greeter on EVERY exit.
 
     `_run_call` stops them on the normal path, but a Live connect or setup

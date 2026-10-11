@@ -31,11 +31,25 @@ LANGUAGES = {"English": "en-IN", "Hindi": "hi-IN"}
 
 
 def main() -> None:
-    key = os.environ.get("SARVAM_API_KEY") or subprocess.run(
-        ["gcloud.cmd" if os.name == "nt" else "gcloud", "secrets", "versions", "access", "latest",
-         "--secret", "SARVAM_AI_API_KEY", "--project", "sahayakai-b4248"],
-        capture_output=True, text=True, check=True,
-    ).stdout.strip()
+    key = (
+        os.environ.get("SARVAM_API_KEY")
+        or subprocess.run(
+            [
+                "gcloud.cmd" if os.name == "nt" else "gcloud",
+                "secrets",
+                "versions",
+                "access",
+                "latest",
+                "--secret",
+                "SARVAM_AI_API_KEY",
+                "--project",
+                "sahayakai-b4248",
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+    )
     prompts = json.loads((ROOT / "call_prompts.json").read_text(encoding="utf-8"))
     cfg = CascadeConfig()
     OUT.mkdir(exist_ok=True)
@@ -44,9 +58,14 @@ def main() -> None:
         r = httpx.post(
             "https://api.sarvam.ai/text-to-speech/stream",
             headers={"api-subscription-key": key},
-            json={"text": text, "target_language_code": code, "speaker": cfg.tts_speaker,
-                  "model": cfg.tts_model, "speech_sample_rate": 24000,
-                  "output_audio_codec": "linear16"},
+            json={
+                "text": text,
+                "target_language_code": code,
+                "speaker": cfg.tts_speaker,
+                "model": cfg.tts_model,
+                "speech_sample_rate": 24000,
+                "output_audio_codec": "linear16",
+            },
             timeout=30,
         )
         r.raise_for_status()

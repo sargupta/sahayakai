@@ -172,9 +172,17 @@ class TextToSpeech(Protocol):
 
 
 class Reasoner(Protocol):
-    def stream(self, history: list[Any]) -> AsyncIterator[Any]:
-        """Yield chunks with `.text` (str|None) and `.function_calls` (list)."""
+    def stream(self, history: list[Any], note: str = "") -> AsyncIterator[Any]:
+        """Yield chunks with `.text` (str|None) and `.function_calls` (list).
+
+        `note` is appended to the system instruction for this generation only:
+        the call's current state and reply language.
+        """
         ...
+
+
+_ASKS_FOR_HINDI = re.compile(r"\bhindi\b|हिंदी|हिन्दी", re.IGNORECASE)
+_DEVANAGARI = re.compile(r"[\u0900-\u097F]")
 
 
 # ---- the session ------------------------------------------------------------
@@ -223,8 +231,18 @@ class CascadeSession:
         self._closed = False
         self._call_seq = 0
         # metrics
+        #: Reply language. English until the PARENT speaks Hindi or asks for it;
+        #: never the model's own choice. On the first staging run the model
+        #: opened an English call in Hindi because a prompt section allowed it.
+        self.language = "English"
+        #: The bridge's view of the call (introduced? identity? message
+        #: delivered?), refreshed before each reply via set_context_note().
+        self._context_note = ""
         self.turns = 0
         self.first_audio_ms: list[float] = []
+        #: Per reply: model first token, and TTS first byte per sentence (ms).
+        self.llm_first_token_ms: list[float] = []
+        self.tts_first_byte_ms: list[float] = []
         self.stt_finals = 0
         self.backchannels_ignored = 0
 
@@ -280,6 +298,34 @@ class CascadeSession:
             if fut is not None and not fut.done():
                 fut.set_result(dict(getattr(fr, "response", None) or {}))
 
+    def set_context_note(self, note: str) -> None:
+        """The bridge's call state, carried into the next generation."""
+        self._context_note = note.strip()
+
+    def _note(self) -> str:
+        if self.language == "Hindi":
+            lang = (
+                "REPLY LANGUAGE NOW: Hindi. The parent switched to Hindi; reply in "
+                "simple spoken Hindi in Devanagari script."
+            )
+        else:
+            lang = (
+                "REPLY LANGUAGE NOW: English. Reply ONLY in English (Latin script) "
+                "unless the parent has spoken Hindi or asked for Hindi."
+            )
+        return f"{lang}\n{self._context_note}".strip()
+
+    def _maybe_switch_language(self, text: str, detected: str | None) -> None:
+        if not self.cfg.hindi or self.language == "Hindi":
+            return
+        if (
+            (detected or "").startswith("hi")
+            or _DEVANAGARI.search(text)
+            or _ASKS_FOR_HINDI.search(text)
+        ):
+            self.language = "Hindi"
+            log.info("telephony.cascade_language", language="Hindi")
+
     def cancel_response(self) -> None:
         """The bridge confirmed a barge-in. Stop now; the reply is abandoned."""
         if self._turn is not None and self._turn.task is not None and not self._turn.task.done():
@@ -295,6 +341,7 @@ class CascadeSession:
         if not text:
             return
         self.stt_finals += 1
+        self._maybe_switch_language(text, event.get("language"))
         # The bridge records the parent's words from this, exactly as from Live.
         self._out.put_nowait(
             _msg(server_content=_content(input_transcription=SimpleNamespace(text=text)))
@@ -352,7 +399,12 @@ class CascadeSession:
                 text_parts: list[str] = []
                 calls: list[Any] = []
                 buffer = ""
-                async for chunk in self._llm.stream(self._history):
+                asked = time.monotonic()
+                got_first = False
+                async for chunk in self._llm.stream(self._history, self._note()):
+                    if not got_first:
+                        got_first = True
+                        self.llm_first_token_ms.append((time.monotonic() - asked) * 1000)
                     if getattr(chunk, "text", None):
                         buffer += chunk.text
                         text_parts.append(chunk.text)
@@ -386,8 +438,10 @@ class CascadeSession:
         language = speech_language(text, self.cfg)
         announced = False
         carry = b""
+        requested = time.monotonic()
         async for audio in self._tts.stream(text, language):
             if not announced:
+                self.tts_first_byte_ms.append((time.monotonic() - requested) * 1000)
                 # Transcribe a sentence when its audio starts, not before: the
                 # transcript must follow what the parent can hear.
                 announced = True
@@ -557,6 +611,8 @@ class GeminiReasoner:
         from google.genai import types as t
 
         self._client = genai.Client(vertexai=True, project=project, location=cfg.llm_location)
+        parts = getattr(system_instruction, "parts", None) or []
+        self._system_text = "\n".join(p.text for p in parts if getattr(p, "text", None))
         self._model = cfg.llm_model
         self._config = t.GenerateContentConfig(
             system_instruction=system_instruction,
@@ -566,9 +622,17 @@ class GeminiReasoner:
             automatic_function_calling=t.AutomaticFunctionCallingConfig(disable=True),
         )
 
-    async def stream(self, history: list[Any]) -> AsyncIterator[Any]:
+    async def stream(self, history: list[Any], note: str = "") -> AsyncIterator[Any]:
+        config = self._config
+        if note:
+            from google.genai import types as t
+
+            base = self._system_text
+            config = self._config.model_copy(
+                update={"system_instruction": t.Content(parts=[t.Part(text=f"{base}\n\n{note}")])}
+            )
         resp = await self._client.aio.models.generate_content_stream(
-            model=self._model, contents=list(history), config=self._config
+            model=self._model, contents=list(history), config=config
         )
         async for chunk in resp:
             text = None
@@ -602,6 +666,9 @@ async def open_cascade(
             stt_finals=session.stt_finals,
             backchannels_ignored=session.backchannels_ignored,
             first_audio_ms=[round(x) for x in session.first_audio_ms][:12],
+            llm_first_token_ms=[round(x) for x in session.llm_first_token_ms][:12],
+            tts_first_byte_ms=[round(x) for x in session.tts_first_byte_ms][:16],
+            language=session.language,
             tts_model=cfg.tts_model,
             tts_speaker=cfg.tts_speaker,
         )

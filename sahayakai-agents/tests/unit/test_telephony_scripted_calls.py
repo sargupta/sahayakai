@@ -352,3 +352,25 @@ class TestTheTranscriptSaysWhatWasHeard:
         telephony._on_model_audio(b, bytes([0x10, 0x00]) * 480 * 5)
         assert b.model_turn_open and b.turn_frames_played == 0
         assert b.turn_frames_generated > 0
+
+
+@pytest.mark.asyncio
+class TestAnInterruptedTurnIsNotAGoodbye:
+    async def test_the_net_does_not_take_a_cut_off_lookup_filler_as_the_closing(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # Staging run 1: "ek minute, let me check" was cut off by the parent's
+        # goodbye, the net took it as the closing line, and the call ended with
+        # no goodbye at all.
+        monkeypatch.setattr(telephony, "_GOODBYE_NET_GRACE_SECONDS", 0.2)
+        b, s = await _call([
+            INTRO,
+            [parent("yes")],
+            DELIVER,
+            [_c(output_transcription=SimpleNamespace(text=" Ek minute, let me check.")),
+             parent("okay thank you so much, bye"), interrupted()],
+        ], lookups=False, linger=1.0)
+        assert b.last_turn_interrupted
+        assert any("signing off" in c for c in s.cues), "no goodbye was asked for"
+        for t in list(b.background):
+            t.cancel()
