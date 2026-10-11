@@ -1281,19 +1281,30 @@ async def _generate_call_summary(bridge: _Bridge, context: CallContext, seconds:
                 call_duration_seconds=seconds,
             )
         )
-        client = genai.Client(
-            vertexai=True,
-            project=get_settings().gcp_project,
-            location=os.environ.get("VOBIZ_SUMMARY_LOCATION", "asia-south1"),
-        )
-        resp = await client.aio.models.generate_content(
-            model=os.environ.get("VOBIZ_SUMMARY_MODEL", "gemini-2.5-flash"),
-            contents=prompt,
-            config=genai_types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_schema=CallSummaryCore,
-            ),
-        )
+        # Primary region, then `global`: on 2026-10-11 asia-south1 answered 429
+        # RESOURCE_EXHAUSTED for minutes and a summary was lost.
+        primary = os.environ.get("VOBIZ_SUMMARY_LOCATION", "asia-south1")
+        resp = None
+        for location in dict.fromkeys([primary, "global"]):
+            client = genai.Client(
+                vertexai=True, project=get_settings().gcp_project, location=location
+            )
+            try:
+                resp = await client.aio.models.generate_content(
+                    model=os.environ.get("VOBIZ_SUMMARY_MODEL", "gemini-2.5-flash"),
+                    contents=prompt,
+                    config=genai_types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        response_schema=CallSummaryCore,
+                    ),
+                )
+                break
+            except Exception as exc:  # noqa: BLE001 — try the next region, then give up
+                log.warning(
+                    "telephony.summary_fallback", location=location, error_type=type(exc).__name__
+                )
+        if resp is None:
+            raise RuntimeError("summary model unavailable in every region")
         summary = CallSummaryCore.model_validate_json(resp.text or "{}")
 
         from google.cloud import firestore

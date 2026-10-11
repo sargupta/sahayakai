@@ -68,6 +68,8 @@ SARVAM_STT_WS_URL = "wss://api.sarvam.ai/speech-to-text-realtime/ws"
 #: The bridge answers every tool (the identity check waits <= 1.2 s, lookups
 #: <= 2.5 s). Past this the reply continues without the answer.
 TOOL_TIMEOUT_SECONDS = 8.0
+#: No first token from the model in this long: try the next region.
+LLM_FIRST_TOKEN_SECONDS = 5.0
 
 
 def cascade_enabled() -> bool:
@@ -90,6 +92,7 @@ class CascadeConfig:
     stt_silence_ms: int = 500
     llm_model: str = "gemini-2.5-flash"
     llm_location: str = "asia-south1"
+    llm_fallback_locations: tuple[str, ...] = ("global",)
 
     @classmethod
     def from_env(cls) -> CascadeConfig:
@@ -152,6 +155,12 @@ _BACKCHANNEL = re.compile(
     re.IGNORECASE,
 )
 
+
+#: Spoken when the model could not be reached at all for a turn.
+_SAY_AGAIN = {
+    "English": "Sorry, I didn't catch that properly. Could you please say that again?",
+    "Hindi": "माफ़ कीजिए, मैं ठीक से सुन नहीं पाई। क्या आप फिर से बता सकते हैं?",
+}
 
 #: Said to the model when a lookup came back and it produced no words.
 _ANSWER_NOW = (
@@ -265,6 +274,7 @@ class CascadeSession:
         #: Per reply: model first token, and TTS first byte per sentence (ms).
         self.llm_first_token_ms: list[float] = []
         self.empty_after_tool = 0
+        self.failed_turns = 0
         self.tts_first_byte_ms: list[float] = []
         self.stt_finals = 0
         self.backchannels_ignored = 0
@@ -476,6 +486,11 @@ class CascadeSession:
             log.error(
                 "telephony.cascade_turn_failed", error_type=type(exc).__name__, error=str(exc)[:200]
             )
+            self.failed_turns += 1
+            # Never leave the parent in silence: ask them to say it again. The
+            # model was unreachable, so this is a fixed line, not generated.
+            with contextlib.suppress(Exception):
+                await self._speak(turn, _SAY_AGAIN[self.language], started, first_audio)
             self._out.put_nowait(_msg(server_content=_content(turn_complete=True)))
         finally:
             if self._turn is turn:
@@ -694,7 +709,13 @@ class GeminiReasoner:
         from google import genai
         from google.genai import types as t
 
-        self._client = genai.Client(vertexai=True, project=project, location=cfg.llm_location)
+        # Primary region, then `global`. Staging run 5: asia-south1 answered
+        # 429 RESOURCE_EXHAUSTED for minutes, with 16-23 s to a first token.
+        locations = list(dict.fromkeys([cfg.llm_location, *cfg.llm_fallback_locations]))
+        self._clients = [
+            (loc, genai.Client(vertexai=True, project=project, location=loc)) for loc in locations
+        ]
+        self.fallbacks = 0
         parts = getattr(system_instruction, "parts", None) or []
         self._system_text = "\n".join(p.text for p in parts if getattr(p, "text", None))
         self._model = cfg.llm_model
@@ -715,14 +736,41 @@ class GeminiReasoner:
             config = self._config.model_copy(
                 update={"system_instruction": t.Content(parts=[t.Part(text=f"{base}\n\n{note}")])}
             )
-        resp = await self._client.aio.models.generate_content_stream(
-            model=self._model, contents=list(history), config=config
-        )
-        async for chunk in resp:
-            text = None
-            with contextlib.suppress(Exception):
-                text = chunk.text
-            yield SimpleNamespace(text=text, function_calls=chunk.function_calls or [])
+        last: Exception | None = None
+        for location, client in self._clients:
+            try:
+                resp = await asyncio.wait_for(
+                    client.aio.models.generate_content_stream(
+                        model=self._model, contents=list(history), config=config
+                    ),
+                    timeout=LLM_FIRST_TOKEN_SECONDS,
+                )
+                chunks = resp.__aiter__()
+                first = await asyncio.wait_for(chunks.__anext__(), timeout=LLM_FIRST_TOKEN_SECONDS)
+            except StopAsyncIteration:
+                return
+            except Exception as exc:  # noqa: BLE001 — 429/5xx/timeout: try the next region
+                last = exc
+                self.fallbacks += 1
+                log.warning(
+                    "telephony.cascade_llm_fallback",
+                    location=location,
+                    error_type=type(exc).__name__,
+                    error=str(exc)[:120],
+                )
+                continue
+            yield _chunk(first)
+            async for chunk in chunks:
+                yield _chunk(chunk)
+            return
+        raise last if last is not None else RuntimeError("no model location answered")
+
+
+def _chunk(chunk: Any) -> SimpleNamespace:
+    text = None
+    with contextlib.suppress(Exception):
+        text = chunk.text
+    return SimpleNamespace(text=text, function_calls=chunk.function_calls or [])
 
 
 @contextlib.asynccontextmanager
@@ -754,6 +802,8 @@ async def open_cascade(
             tts_first_byte_ms=[round(x) for x in session.tts_first_byte_ms][:16],
             language=session.language,
             empty_after_tool=session.empty_after_tool,
+            failed_turns=session.failed_turns,
+            llm_fallbacks=getattr(session._llm, "fallbacks", 0),
             tts_model=cfg.tts_model,
             tts_speaker=cfg.tts_speaker,
         )

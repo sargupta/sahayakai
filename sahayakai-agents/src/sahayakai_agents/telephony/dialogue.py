@@ -172,7 +172,10 @@ class DialogueState:
         if self.introduced:
             parts.append("You have ALREADY introduced yourself; never do it again.")
         if self.identity is Identity.CONFIRMED:
-            parts.append("The parent's identity is confirmed.")
+            parts.append(
+                "The parent's identity is confirmed. If they mention attendance, marks or "
+                "homework, look it up now; do not ask which subject or whether to check."
+            )
         elif self.identity is Identity.DENIED:
             parts.append("This is NOT the child's parent; share nothing about the child.")
         if self.message_delivered:

@@ -250,7 +250,8 @@ class TestTurns:
         s, _, _ = session(Boom([]))
         await s.start()
         await s.send_client_content(turns=cue("(kickoff)"))
-        assert kinds(await turn(s)) == ["turn_complete"]
+        k = kinds(await turn(s))
+        assert k[-1] == "turn_complete" and k[0].startswith("said:Sorry")
 
     async def test_close_ends_receive_without_yielding(self) -> None:
         s, stt, tts = session(FakeLlm([]))
@@ -591,3 +592,96 @@ async def test_a_silent_reply_after_a_lookup_is_asked_again() -> None:
     assert "said:He was absent two days." in kinds(msgs)
     assert s.empty_after_tool == 1
     assert "Tell the parent the answer now" in llm.notes[-1]
+
+
+class _Resp:
+    def __init__(self, chunks: list[Any]) -> None:
+        self._chunks = chunks
+
+    def __aiter__(self) -> Any:
+        async def gen() -> Any:
+            for c in self._chunks:
+                yield c
+
+        return gen()
+
+
+class _Models:
+    def __init__(self, behaviour: Any) -> None:
+        self.behaviour = behaviour
+        self.calls = 0
+
+    async def generate_content_stream(self, **_kw: Any) -> Any:
+        self.calls += 1
+        return await self.behaviour()
+
+
+def _client(behaviour: Any) -> Any:
+    models = _Models(behaviour)
+    return SimpleNamespace(aio=SimpleNamespace(models=models)), models
+
+
+@pytest.mark.asyncio
+class TestModelRegionFallback:
+    """Staging run 5: asia-south1 answered 429 RESOURCE_EXHAUSTED for minutes."""
+
+    def _reasoner(self, *behaviours: Any) -> tuple[Any, list[Any]]:
+        from google.genai import types as gt
+
+        r = cas.GeminiReasoner.__new__(cas.GeminiReasoner)
+        r._model = "m"
+        r._system_text = "sys"
+        r._config = gt.GenerateContentConfig()
+        r.fallbacks = 0
+        pairs = [_client(b) for b in behaviours]
+        r._clients = [(f"loc{i}", c) for i, (c, _) in enumerate(pairs)]
+        return r, [m for _, m in pairs]
+
+    async def test_a_429_falls_back_to_the_next_region(self) -> None:
+        async def exhausted() -> Any:
+            raise RuntimeError("429 RESOURCE_EXHAUSTED")
+
+        async def ok() -> Any:
+            return _Resp([SimpleNamespace(text="Hello.", function_calls=None)])
+
+        r, models = self._reasoner(exhausted, ok)
+        out = [c async for c in r.stream([], "note")]
+        assert [c.text for c in out] == ["Hello."]
+        assert r.fallbacks == 1 and models[1].calls == 1
+
+    async def test_a_slow_first_token_falls_back(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(cas, "LLM_FIRST_TOKEN_SECONDS", 0.05)
+
+        async def slow() -> Any:
+            await asyncio.sleep(1)
+            return _Resp([])
+
+        async def ok() -> Any:
+            return _Resp([SimpleNamespace(text="Hi.", function_calls=None)])
+
+        r, _ = self._reasoner(slow, ok)
+        out = [c async for c in r.stream([])]
+        assert [c.text for c in out] == ["Hi."]
+
+    async def test_every_region_failing_raises(self) -> None:
+        async def exhausted() -> Any:
+            raise RuntimeError("429")
+
+        r, _ = self._reasoner(exhausted, exhausted)
+        with pytest.raises(RuntimeError):
+            _ = [c async for c in r.stream([])]
+
+
+@pytest.mark.asyncio
+async def test_an_unreachable_model_is_never_silence() -> None:
+    class Down(FakeLlm):
+        async def stream(self, history: list[Any], note: str = "") -> Any:
+            raise RuntimeError("429 in every region")
+            yield  # pragma: no cover
+
+    s, _, tts = session(Down([]))
+    await s.start()
+    await s.send_client_content(turns=cue("What marks did he get?"))
+    k = kinds(await turn(s))
+    assert k[0].startswith("said:Sorry, I didn't catch that properly")
+    assert k[-1] == "turn_complete" and s.failed_turns == 1
