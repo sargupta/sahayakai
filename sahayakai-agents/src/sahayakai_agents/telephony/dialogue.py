@@ -26,7 +26,7 @@ from enum import Enum
 
 from .flow import indic_word
 
-__all__ = ["Identity", "Phase", "DialogueState", "looks_affirmative"]
+__all__ = ["Identity", "Phase", "DialogueState", "identity_answer", "looks_affirmative"]
 
 
 class Phase(Enum):
@@ -85,6 +85,24 @@ _DENY = re.compile(
     + "|".join(indic_word(w) for w in _DENY_SCRIPT),
     re.IGNORECASE,
 )
+
+
+def identity_answer(utterances: list[str]) -> str | None:
+    """The parent's answer to "am I speaking with ...'s parent?", from all they said.
+
+    The model calls confirm_parent_identity when it chooses, which is not always
+    straight after the answer: on staging it called it after the parent had
+    already moved on ("Wait, wait, one minute..."), and reading only the latest
+    utterance refused a parent who had clearly said "Yes, I am Ravi's mother".
+    A denial anywhere wins; otherwise the first clear yes; otherwise the latest.
+    """
+    for u in utterances:
+        if _DENY.search(u):
+            return u
+    for u in utterances:
+        if looks_affirmative(u):
+            return u
+    return utterances[-1] if utterances else None
 
 
 def looks_affirmative(text: str | None) -> bool:

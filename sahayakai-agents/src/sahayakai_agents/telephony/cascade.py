@@ -91,8 +91,11 @@ class CascadeConfig:
     #: End-of-utterance silence for Sarvam's VAD. Its default is 500 ms.
     stt_silence_ms: int = 500
     llm_model: str = "gemini-2.5-flash"
-    llm_location: str = "asia-south1"
-    llm_fallback_locations: tuple[str, ...] = ("global",)
+    #: `global` first: on 2026-10-11 asia-south1 timed out (no first token in
+    #: 5 s) on half of all replies for over an hour while `global` answered in
+    #: 0.4-0.9 s. Same residency position as the Gemini Live engine (global).
+    llm_location: str = "global"
+    llm_fallback_locations: tuple[str, ...] = ("asia-south1",)
 
     @classmethod
     def from_env(cls) -> CascadeConfig:

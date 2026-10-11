@@ -49,7 +49,7 @@ from .audio import (
 )
 from .barge_in import Action, BargeIn, frame_level, percentile
 from .cascade import CascadeConfig, cascade_enabled, open_cascade
-from .dialogue import DialogueState, looks_affirmative
+from .dialogue import DialogueState, identity_answer, looks_affirmative
 from .flow import (
     CLOSE,
     KICKOFF_AFTER_OPENER,
@@ -1752,7 +1752,7 @@ async def _run_identity_check(bridge: _Bridge, session: Any, fc: Any) -> None:
             seen = len(bridge.parent_said)
             while time.monotonic() < deadline:
                 latest = bridge.parent_said[-1] if bridge.parent_said else None
-                if latest and looks_affirmative(latest):
+                if looks_affirmative(identity_answer(bridge.parent_said)):
                     break
                 if len(bridge.parent_said) > seen and latest:
                     break  # a new answer arrived and it is not a yes
@@ -1760,7 +1760,7 @@ async def _run_identity_check(bridge: _Bridge, session: Any, fc: Any) -> None:
         _, outcome = bridge.dialogue.confirm_identity(
             status,
             parent_turns=len(bridge.parent_said),
-            parent_reply=bridge.parent_said[-1] if bridge.parent_said else None,
+            parent_reply=identity_answer(bridge.parent_said),
         )
         log.info("telephony.identity", outreach_id=bridge.outreach_id, outcome=outcome)
         _tell_engine_the_state(bridge)

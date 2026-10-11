@@ -349,3 +349,23 @@ class TestTheModelForgettingEndCall:
         assert telephony._is_agent_farewell("धन्यवाद, नमस्ते।")
         assert not telephony._is_agent_farewell("Goodbye isn't what I meant — any questions?")
         assert not telephony._is_agent_farewell("Thank you. Ms. Rao wanted you to know Ravi did well.")
+
+
+class TestTheIdentityAnswerIsFoundWhereverItIs:
+    def test_a_yes_before_the_parent_moved_on_still_counts(self) -> None:
+        from sahayakai_agents.telephony.dialogue import identity_answer
+
+        said = ["Yes, I am Ravi's mother. Please tell me.", "Wait, wait, one minute please."]
+        assert identity_answer(said) == said[0]
+
+    def test_a_denial_anywhere_wins(self) -> None:
+        from sahayakai_agents.telephony.dialogue import identity_answer, looks_affirmative
+
+        said = ["Yes, hello?", "No, this is not Ravi's house."]
+        assert not looks_affirmative(identity_answer(said))
+
+    def test_no_yes_at_all_is_not_a_yes(self) -> None:
+        from sahayakai_agents.telephony.dialogue import identity_answer, looks_affirmative
+
+        assert not looks_affirmative(identity_answer(["What is his attendance?", "Hello?"]))
+        assert identity_answer([]) is None
