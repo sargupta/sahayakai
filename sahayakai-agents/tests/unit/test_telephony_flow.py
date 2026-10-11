@@ -460,6 +460,7 @@ class TestTheWatchdogDoesNotTalkOverTheSchool:
             self.model_last_audio = 0.0
             self.last_activity = 0.0
             self.tool_tasks: dict[str, object] = {}
+            self.engine = None
             self.barge = BargeIn()
             self.dialogue = DialogueState()
             for k, v in kw.items():

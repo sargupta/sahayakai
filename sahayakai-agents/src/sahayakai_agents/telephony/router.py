@@ -876,6 +876,10 @@ async def _conversation_watchdog(bridge: _Bridge, session: Any) -> None:
             or (time.monotonic() - bridge.model_last_audio) < _MODEL_SETTLE_SECONDS
             or bool(bridge.tool_tasks)
             or bridge.barge.paused
+            # An engine still composing or looking something up is not a quiet
+            # line. Staging run 2: a 6.3 s model reply after a lookup drew a
+            # silence nudge, and the nudge cancelled the attendance answer.
+            or bool(getattr(bridge.engine, "busy", False))
         )
         if speaking:
             continue
@@ -995,6 +999,13 @@ def _agent_said(bridge: _Bridge, fragment: str) -> None:
     the 2026-10-10 live transcript.
     """
     bridge.agent_turn_text += fragment
+
+
+def _heard_text(bridge: _Bridge) -> str:
+    """The cut-off reply as the parent heard it (the transcript's heard share)."""
+    if bridge.transcript and bridge.transcript[-1]["role"] == "agent":
+        return bridge.transcript[-1]["text"].removesuffix("…").strip()
+    return ""
 
 
 def _tell_engine_the_state(bridge: _Bridge) -> None:
@@ -1464,7 +1475,11 @@ def _cancel_response(bridge: _Bridge, *, by_model: bool) -> None:
         # stops generating and synthesising rather than finishing into the void.
         stop = getattr(bridge.engine, "cancel_response", None)
         if callable(stop):
-            stop()
+            stop(_heard_text(bridge))
+    else:
+        note = getattr(bridge.engine, "note_heard", None)
+        if callable(note):
+            note(_heard_text(bridge))
     bridge.dialogue.on_interrupted()
     log.info(
         "telephony.barge_in",

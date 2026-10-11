@@ -216,7 +216,7 @@ class TestTurns:
         history_text = " ".join(
             p.text for c in llm.histories[-1] for p in (c.parts or []) if getattr(p, "text", None)
         )
-        assert "[the parent interrupted here]" in history_text
+        assert "[the parent interrupted here" in history_text
         assert "His science marks dropped too" not in history_text
 
     async def test_cancel_response_stops_audio_at_once(self) -> None:
@@ -355,7 +355,7 @@ class TestThroughTheBridge:
         cancelled = []
 
         class _Engine:
-            def cancel_response(self) -> None:
+            def cancel_response(self, heard: str | None = None) -> None:  # noqa: ARG002
                 cancelled.append(True)
 
         b = telephony._Bridge(SimpleNamespace(), "o", call_uuid="")  # type: ignore[arg-type]
@@ -472,3 +472,97 @@ class TestAudibleAcrossSentenceGaps:
         assert not telephony._ai_audible(b, 102.0)
         b.model_turn_open = False
         assert not telephony._ai_audible(b, 100.9)
+
+
+@pytest.mark.asyncio
+class TestStagingRun2Fixes:
+    async def test_a_silent_end_call_still_gets_one_complete_goodbye(self) -> None:
+        # The text model called end_call without a word; the parent heard nothing.
+        s, _, tts = session(FakeLlm([[call("end_call", reason="parent_finished")]]))
+        await s.start()
+        await s.send_client_content(turns=cue("Okay thank you, bye."))
+        msgs: list[Any] = []
+
+        async def collect() -> None:
+            async for m in s.receive():
+                msgs.append(m)
+                if m.tool_call:
+                    from google.genai import types as t
+
+                    fc = m.tool_call.function_calls[0]
+                    await s.send_tool_response(function_responses=[
+                        t.FunctionResponse(id=fc.id, name=fc.name, response={"status": "ok"})])
+
+        await asyncio.wait_for(collect(), timeout=3)
+        k = kinds(msgs)
+        assert k.index("said:Thank you for your time. We are partners in your child's success. Goodbye.") < k.index("tool_call")
+        assert [t for t, _ in tts.spoken] == [
+            "Thank you for your time. We are partners in your child's success. Goodbye."]
+
+    async def test_a_goodbye_that_was_spoken_is_not_doubled(self) -> None:
+        s, _, tts = session(FakeLlm([["Thank you, take care. ", call("end_call", reason="parent_finished")]]))
+        await s.start()
+        await s.send_client_content(turns=cue("bye"))
+
+        async def collect() -> None:
+            async for m in s.receive():
+                if m.tool_call:
+                    from google.genai import types as t
+
+                    fc = m.tool_call.function_calls[0]
+                    await s.send_tool_response(function_responses=[
+                        t.FunctionResponse(id=fc.id, name=fc.name, response={"status": "ok"})])
+
+        await asyncio.wait_for(collect(), timeout=3)
+        assert [t for t, _ in tts.spoken] == ["Thank you, take care."]
+
+    async def test_memory_holds_what_was_heard_not_what_was_synthesised(self) -> None:
+        llm = FakeLlm([["Certainly. ", "Ravi's science marks have dropped and he missed two homeworks. ",
+                        "She would like to help."], ["Sure."]])
+        s, stt, _ = session(llm, FakeTts(chunk_delay=0.05, chunks=8))
+        await s.start()
+        await s.send_client_content(turns=cue("yes"))
+        await asyncio.sleep(0.6)  # into the second sentence
+        s.cancel_response(heard="Certainly. Ravi's science")
+        await turn(s)
+        await stt.final("What marks did he get?")
+        await turn(s)
+        memory = " ".join(p.text for c in llm.histories[-1] for p in (c.parts or []) if getattr(p, "text", None))
+        assert "Certainly. Ravi's science … [the parent interrupted here" in memory
+        assert "missed two homeworks" not in memory, "unheard words were remembered as said"
+
+    async def test_the_engine_is_busy_while_composing(self) -> None:
+        s, _, _ = session(FakeLlm([["Done."]], delay=0.2))
+        await s.start()
+        assert not s.busy
+        await s.send_client_content(turns=cue("hello"))
+        assert s.busy
+        await turn(s)
+        assert not s.busy
+
+
+@pytest.mark.asyncio
+async def test_the_watchdog_does_not_nudge_a_busy_engine(monkeypatch: pytest.MonkeyPatch) -> None:
+    from sahayakai_agents.telephony import router as telephony
+    from sahayakai_agents.telephony.dialogue import DialogueState
+
+    monkeypatch.setattr(telephony, "_CONVERSATION_SILENCE", 0.2)
+    monkeypatch.setattr(telephony, "_MODEL_SETTLE_SECONDS", 0.0)
+    b = telephony._Bridge(SimpleNamespace(), "o", call_uuid="")  # type: ignore[arg-type]
+    b.dialogue = DialogueState()
+    b.engaged, b.model_has_spoken, b.parent_said = True, True, ["haan"]
+    b.engine = SimpleNamespace(busy=True)
+    cues: list[Any] = []
+
+    class _S:
+        async def send_client_content(self, **kw: Any) -> None:
+            cues.append(kw)
+
+    task = asyncio.create_task(telephony._conversation_watchdog(b, _S()))
+    await asyncio.sleep(0.8)
+    assert not cues, "nudged an engine that was still composing a reply"
+    b.engine = SimpleNamespace(busy=False)
+    await asyncio.sleep(0.8)
+    b.stop = True
+    await asyncio.wait_for(task, timeout=2)
+    assert cues

@@ -153,6 +153,15 @@ _BACKCHANNEL = re.compile(
 )
 
 
+def closing_line(language: str) -> str:
+    """The school's reviewed closing line (call_prompts.json `thanks`)."""
+    from pathlib import Path
+
+    prompts = json.loads((Path(__file__).parent / "call_prompts.json").read_text(encoding="utf-8"))
+    code = "hi-IN" if language == "Hindi" else "en-IN"
+    return str(prompts.get(code, prompts["en-IN"])["thanks"])
+
+
 def is_backchannel(text: str) -> bool:
     return bool(_BACKCHANNEL.match(text.strip()))
 
@@ -238,6 +247,11 @@ class CascadeSession:
         #: The bridge's view of the call (introduced? identity? message
         #: delivered?), refreshed before each reply via set_context_note().
         self._context_note = ""
+        #: What the parent actually heard of a reply cut off by the bridge's
+        #: barge-in (from the bridge's played-audio share), if known.
+        self._pending_heard: str | None = None
+        #: History index of the last "[the parent interrupted here]" entry.
+        self._interrupt_entry: int | None = None
         self.turns = 0
         self.first_audio_ms: list[float] = []
         #: Per reply: model first token, and TTS first byte per sentence (ms).
@@ -326,10 +340,34 @@ class CascadeSession:
             self.language = "Hindi"
             log.info("telephony.cascade_language", language="Hindi")
 
-    def cancel_response(self) -> None:
-        """The bridge confirmed a barge-in. Stop now; the reply is abandoned."""
+    @property
+    def busy(self) -> bool:
+        """A reply is being generated, looked up or spoken."""
+        return self._speaking()
+
+    def cancel_response(self, heard: str | None = None) -> None:
+        """The bridge confirmed a barge-in. Stop now; the reply is abandoned.
+
+        `heard` is what the parent actually heard of it (the bridge knows how
+        much audio was played; this engine only knows what it synthesised).
+        """
+        self._pending_heard = heard
         if self._turn is not None and self._turn.task is not None and not self._turn.task.done():
             asyncio.get_running_loop().create_task(self._cancel_turn(emit=True))
+
+    def note_heard(self, heard: str) -> None:
+        """Correct the model's memory of a cut-off reply to what was heard.
+
+        On staging the parent heard "Certainly. Ms. Test Teacher..." but the
+        engine had started synthesising the whole first sentence of the message,
+        remembered it as said, and resumed AFTER it: the concern itself was
+        never spoken.
+        """
+        if self._speaking():
+            self._pending_heard = heard
+            return
+        if self._interrupt_entry is not None and self._interrupt_entry < len(self._history):
+            self._history[self._interrupt_entry] = _interrupted_model(heard)
 
     # -- speech recognition events --
 
@@ -378,15 +416,12 @@ class CascadeSession:
                 if not fut.done():
                     fut.cancel()
                 self._tool_waiters.pop(call_id, None)
-            # The model's memory holds what was actually said, then the cut.
-            said = " ".join(turn.spoken)
-            self._history.append(
-                _model(
-                    f"{said} … [the parent interrupted here]"
-                    if said
-                    else "[the parent interrupted before I spoke]"
-                )
-            )
+            # The model's memory holds what was actually HEARD, then the cut.
+            heard = self._pending_heard
+            self._pending_heard = None
+            said = heard if heard is not None else " ".join(turn.spoken)
+            self._interrupt_entry = len(self._history)
+            self._history.append(_interrupted_model(said))
             if emit:
                 self._out.put_nowait(_msg(server_content=_content(interrupted=True)))
 
@@ -396,29 +431,23 @@ class CascadeSession:
         first_audio = True
         try:
             while True:
-                text_parts: list[str] = []
-                calls: list[Any] = []
-                buffer = ""
-                asked = time.monotonic()
-                got_first = False
-                async for chunk in self._llm.stream(self._history, self._note()):
-                    if not got_first:
-                        got_first = True
-                        self.llm_first_token_ms.append((time.monotonic() - asked) * 1000)
-                    if getattr(chunk, "text", None):
-                        buffer += chunk.text
-                        text_parts.append(chunk.text)
-                        sentences, buffer = split_sentences(buffer)
-                        for s in sentences:
-                            first_audio = await self._speak(turn, s, started, first_audio)
-                    calls.extend(getattr(chunk, "function_calls", None) or [])
-                if buffer.strip():
-                    first_audio = await self._speak(turn, buffer, started, first_audio)
+                text_parts, calls, first_audio = await self._generate(turn, started, first_audio)
+                if any(c.name == "end_call" for c in calls) and not turn.spoken:
+                    # The text model often calls end_call without saying
+                    # anything (staging run 2: no goodbye at all). The parent
+                    # must hear one complete goodbye: the school's own line.
+                    line = closing_line(self.language)
+                    first_audio = await self._speak(turn, line, started, first_audio)
+                    text_parts.append(line)
                 self._history.append(_model("".join(text_parts), calls))
                 if not calls:
                     break
                 responses = await self._run_tools(calls)
                 self._history.append(_function_responses(responses))
+                if any(c.name == "end_call" for c in calls):
+                    # The goodbye has been said; asking the model to continue
+                    # after end_call produced a second goodbye in testing.
+                    break
             self._out.put_nowait(_msg(server_content=_content(turn_complete=True)))
         except asyncio.CancelledError:
             raise
@@ -430,6 +459,30 @@ class CascadeSession:
         finally:
             if self._turn is turn:
                 self._turn = None
+
+    async def _generate(
+        self, turn: _Turn, started: float, first_audio: bool
+    ) -> tuple[list[str], list[Any], bool]:
+        """One model generation: speak sentences as they complete, collect calls."""
+        text_parts: list[str] = []
+        calls: list[Any] = []
+        buffer = ""
+        asked = time.monotonic()
+        got_first = False
+        async for chunk in self._llm.stream(self._history, self._note()):
+            if not got_first:
+                got_first = True
+                self.llm_first_token_ms.append((time.monotonic() - asked) * 1000)
+            if getattr(chunk, "text", None):
+                buffer += chunk.text
+                text_parts.append(chunk.text)
+                sentences, buffer = split_sentences(buffer)
+                for s in sentences:
+                    first_audio = await self._speak(turn, s, started, first_audio)
+            calls.extend(getattr(chunk, "function_calls", None) or [])
+        if buffer.strip():
+            first_audio = await self._speak(turn, buffer, started, first_audio)
+        return text_parts, calls, first_audio
 
     async def _speak(self, turn: _Turn, sentence: str, started: float, first: bool) -> bool:
         text = clean_for_speech(sentence)
@@ -489,6 +542,15 @@ def _user(text: str) -> Any:
     from google.genai import types as t
 
     return t.Content(role="user", parts=[t.Part(text=text)])
+
+
+def _interrupted_model(heard: str) -> Any:
+    heard = heard.strip(" …")
+    return _model(
+        f"{heard} … [the parent interrupted here; only the words before this were heard]"
+        if heard
+        else "[the parent interrupted before hearing anything of my reply]"
+    )
 
 
 def _model(text: str, calls: list[Any] | None = None) -> Any:
