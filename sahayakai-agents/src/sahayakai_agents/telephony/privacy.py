@@ -31,6 +31,8 @@ import unicodedata
 from dataclasses import dataclass
 from difflib import SequenceMatcher
 
+from .flow import LINES
+
 __all__ = ["ProtectedTerms", "fuzzy_name_in", "norm_tokens", "romanise"]
 
 _WORD = re.compile(r"\w+", re.UNICODE)
@@ -219,6 +221,27 @@ _GENERIC = {
 }
 
 
+def _allowed_vocabulary() -> frozenset[str]:
+    """Generic words plus every word of the bridge's own fixed lines, FOLDED.
+
+    Folded like the tokens they are compared with: the first version compared
+    folded tokens ("mesage") with unfolded words ("message"), so every generic
+    word with a double letter was protected whenever the teacher's letter used
+    it, and on staging the guard blocked VIDYA's own identity question.
+
+    The fixed lines (flow.LINES) are reviewed templates that carry only the
+    school's and teacher's names, so no word of theirs is child data.
+    """
+    words = set(_GENERIC)
+    for table in LINES.values():
+        for template in table.values():
+            words.update(norm_tokens(template.format(school="", teacher="", ai="")))
+    return frozenset(_fold(w) for w in words)
+
+
+_ALLOWED = _allowed_vocabulary()
+
+
 @dataclass(frozen=True)
 class ProtectedTerms:
     """Child-specific words that must not be spoken before verification."""
@@ -237,7 +260,7 @@ class ProtectedTerms:
         allowed: str,
     ) -> ProtectedTerms:
         allowed_names = set(norm_tokens(allowed))
-        allow = allowed_names | _GENERIC
+        allow = allowed_names | _ALLOWED
         terms: set[str] = set()
         for t in norm_tokens(student_name or ""):
             # A word the school's or teacher's own name contains is said in the

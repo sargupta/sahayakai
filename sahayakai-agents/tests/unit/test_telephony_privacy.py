@@ -75,6 +75,31 @@ class TestTheGuard:
                 text = LINES[language][key].format(school="Sahayak Test School", teacher="Ms. Rao", ai="")
                 assert terms.leaks(text) == [], (language, key, text)
 
+    def test_a_long_letter_does_not_block_the_bridges_own_lines(self) -> None:
+        # Staging 2026-10-11 (00014): a teacher's letter used "message", and the
+        # folded token "mesage" never matched the unfolded allowlist, so the
+        # guard blocked VIDYA's identity question and her closing line.
+        letter = (
+            "Dear Ravi Test's Parent/Guardian, I hope this message finds you well. I am "
+            "writing regarding Ravi's academic progress in Class 7 Science. We've noticed "
+            "a recent decline in his performance, and he has missed submitting two science "
+            "homework assignments this week. Could you please support him at home? I would "
+            "really appreciate it if you could contact me another time to discuss this. "
+            "Thank you for your time and cooperation. Sincerely, Ms. Test Teacher"
+        )
+        terms = ProtectedTerms.build(
+            student_name="Ravi Test", class_name="Class 7 - Call Test", message=letter,
+            extra=None, allowed="Sahayak Test School Ms. Test Teacher",
+        )
+        for language, table in LINES.items():
+            for key, template in table.items():
+                text = template.format(school="Sahayak Test School", teacher="Ms. Test Teacher",
+                                       ai=table["ai"])
+                assert terms.leaks(text) == [], (language, key, text)
+        # ...while the letter's substance is still caught.
+        assert terms.leaks("He missed two science homework assignments.")
+        assert terms.leaks("We noticed a decline in his performance.")
+
     @pytest.mark.parametrize(
         ("student", "school", "teacher"),
         [
