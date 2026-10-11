@@ -566,3 +566,28 @@ async def test_the_watchdog_does_not_nudge_a_busy_engine(monkeypatch: pytest.Mon
     b.stop = True
     await asyncio.wait_for(task, timeout=2)
     assert cues
+
+
+@pytest.mark.asyncio
+async def test_a_silent_reply_after_a_lookup_is_asked_again() -> None:
+    # Staging run 3: the attendance lookup returned and the model said nothing.
+    llm = FakeLlm([[call("get_attendance_summary")], [], ["He was absent two days."]])
+    s, _, tts = session(llm)
+    await s.start()
+    await s.send_client_content(turns=cue("How is his attendance?"))
+    msgs: list[Any] = []
+
+    async def collect() -> None:
+        async for m in s.receive():
+            msgs.append(m)
+            if m.tool_call:
+                from google.genai import types as gt
+
+                fc = m.tool_call.function_calls[0]
+                await s.send_tool_response(function_responses=[
+                    gt.FunctionResponse(id=fc.id, name=fc.name, response={"absent": 2})])
+
+    await asyncio.wait_for(collect(), timeout=3)
+    assert "said:He was absent two days." in kinds(msgs)
+    assert s.empty_after_tool == 1
+    assert "Tell the parent the answer now" in llm.notes[-1]

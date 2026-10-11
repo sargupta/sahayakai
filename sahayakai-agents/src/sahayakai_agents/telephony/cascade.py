@@ -153,6 +153,14 @@ _BACKCHANNEL = re.compile(
 )
 
 
+#: Said to the model when a lookup came back and it produced no words.
+_ANSWER_NOW = (
+    "You have just received the lookup result above. Tell the parent the answer now, "
+    "in one or two short sentences, using only what the result says. If it says the "
+    "information is unavailable, say so and offer a teacher callback."
+)
+
+
 def closing_line(language: str) -> str:
     """The school's reviewed closing line (call_prompts.json `thanks`)."""
     from pathlib import Path
@@ -256,6 +264,7 @@ class CascadeSession:
         self.first_audio_ms: list[float] = []
         #: Per reply: model first token, and TTS first byte per sentence (ms).
         self.llm_first_token_ms: list[float] = []
+        self.empty_after_tool = 0
         self.tts_first_byte_ms: list[float] = []
         self.stt_finals = 0
         self.backchannels_ignored = 0
@@ -429,9 +438,20 @@ class CascadeSession:
         self.turns += 1
         started = time.monotonic()
         first_audio = True
+        after_tool = False
         try:
             while True:
                 text_parts, calls, first_audio = await self._generate(turn, started, first_audio)
+                if after_tool and not calls and not "".join(text_parts).strip():
+                    # Staging run 3: the attendance lookup returned data and the
+                    # model said nothing at all; the silence nudge then asked
+                    # "any other questions?" and the answer was never given.
+                    self.empty_after_tool += 1
+                    log.warning("telephony.cascade_empty_reply_after_tool")
+                    text_parts, calls, first_audio = await self._generate(
+                        turn, started, first_audio, extra=_ANSWER_NOW
+                    )
+                after_tool = False
                 if any(c.name == "end_call" for c in calls) and not turn.spoken:
                     # The text model often calls end_call without saying
                     # anything (staging run 2: no goodbye at all). The parent
@@ -444,6 +464,7 @@ class CascadeSession:
                     break
                 responses = await self._run_tools(calls)
                 self._history.append(_function_responses(responses))
+                after_tool = True
                 if any(c.name == "end_call" for c in calls):
                     # The goodbye has been said; asking the model to continue
                     # after end_call produced a second goodbye in testing.
@@ -461,7 +482,7 @@ class CascadeSession:
                 self._turn = None
 
     async def _generate(
-        self, turn: _Turn, started: float, first_audio: bool
+        self, turn: _Turn, started: float, first_audio: bool, *, extra: str = ""
     ) -> tuple[list[str], list[Any], bool]:
         """One model generation: speak sentences as they complete, collect calls."""
         text_parts: list[str] = []
@@ -469,7 +490,8 @@ class CascadeSession:
         buffer = ""
         asked = time.monotonic()
         got_first = False
-        async for chunk in self._llm.stream(self._history, self._note()):
+        note = f"{self._note()}\n{extra}".strip()
+        async for chunk in self._llm.stream(self._history, note):
             if not got_first:
                 got_first = True
                 self.llm_first_token_ms.append((time.monotonic() - asked) * 1000)
@@ -731,6 +753,7 @@ async def open_cascade(
             llm_first_token_ms=[round(x) for x in session.llm_first_token_ms][:12],
             tts_first_byte_ms=[round(x) for x in session.tts_first_byte_ms][:16],
             language=session.language,
+            empty_after_tool=session.empty_after_tool,
             tts_model=cfg.tts_model,
             tts_speaker=cfg.tts_speaker,
         )
