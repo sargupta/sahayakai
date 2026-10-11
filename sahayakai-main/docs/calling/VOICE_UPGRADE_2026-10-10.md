@@ -149,3 +149,59 @@ voice-reference clip was available; nothing was cloned.
 1. One approved live call on staging `00006-mrv` (lookups on) to verify barge-in on a handset, a lookup, and the single goodbye.
 2. A blind listening test on a real Vobiz line of the shortlist: native-audio Aoede/Kore (us-central1) vs Sarvam `bulbul:v4-flash`. Decide residency first.
 3. A Sampark sync before any engine work.
+
+---
+
+# 2026-10-11 update: Neha voice and real-phone reliability
+
+## The handset test that failed (14:12 IST, Vobiz `e6860f6b-…`)
+
+The call connected and completed (100 s), but as a voice test it failed:
+
+1. **Zero barge-in pauses.**
+2. **Garbled transcriptions:** "connection matlab in English x ^ 6Y", "Villa".
+3. **No identity confirmation,** so no lookups.
+4. **A second introduction.**
+5. **English kept** when the parent asked in Hindi.
+
+## Root causes (measured)
+
+| Failure | Cause | Evidence |
+|---|---|---|
+| No barge-in | (a) `_feed_barge_in` examined only whole 160-byte frames inside each payload; Vobiz documents no inbound chunk size. (b) A fixed 400 threshold with six consecutive loud frames rejected quiet handset speech and reset on every syllable dip. | Old code on handset-like signals: 0 pauses for normal speech in 80-byte chunks; 0 pauses for -38 dBov speech even at 160 bytes. New code: pause + cancel in every case (`test_telephony_handset_barge_in`, 37 cases). |
+| Garbled replies | Gemini Live's own input transcription, not our audio conversion | Phone-path recognition eval (288 runs, `scripts/telephony_stt_eval.py`). Gemini Live returned English in Devanagari ("व्हाट मार्क्स डीड ही गेट इन साइंस?") and dropped utterances: 56–67% exact, 4 empty. Sarvam `saaras:v3-realtime`: 93–96% exact on English, 0 empty. |
+| Swallowed reply (both engines) | A barge-in on a reply that had finished generating but was still playing set a discard that never lifted. | Staging: the attendance answer was generated and dropped. |
+
+## Neha engine (staging only: `VOBIZ_ENGINE=cascade`)
+
+- **Pipeline:** Sarvam `saaras:v3-realtime` (language `auto`) → `gemini-2.5-flash` (global first, asia-south1 fallback) with the bridge's own prompt and tools → Sarvam **`bulbul:v4-flash` / `neha_en_customer` / `en-IN`**.
+- **Audio from Bulbul:** `audio/pcm`, headerless PCM16 at 24 kHz, the same as Gemini Live, so it goes through the bridge's resampler unchanged. The recorded opener was re-rendered in Neha's voice.
+- **Hindi:** spoken only after the parent speaks Hindi or asks for it. The engine decides; the model does not. Hindi intelligibility was verified on the phone path by round trip. Naturalness was not verified.
+- **Voice choice:**
+  - `neha_en_customer`: judge scores 4.33 per-clip / 3.75 holistic.
+  - `neha_en_latenight`: 3.80 / 2.90.
+  - v3 `neha`: 4.22 / 3.00, with a p95 time to first audio of 4.4 s.
+  - Current Gemini voice: 3.73 / 2.80.
+  - These are LLM-judge scores, not human ratings. "Messy and relatable" is a human judgement; the judges call `neha_en_customer` clear and Indian-English with somewhat flat prosody.
+
+## Final staging results (revision `00013-p2p`, image `…a80d0459…`, simulated carrier, 80-byte chunks)
+
+| | sim-13 | sim-14 | sim-15 (Hindi) |
+|---|---|---|---|
+| Onset → stop p50 / p95 (server) | 77 / 84 ms | 59 / 87 ms | 88 / 88 ms |
+| Inject → last speech frame (client, incl. network) | 140 ms | 125 ms | n/a |
+| Identity | confirmed | confirmed | confirmed |
+| Lookups | marks + attendance correct | marks + attendance correct | attendance correct (Hindi) |
+| Message completed after interruption | yes | yes | n/a (not interrupted) |
+| Repeated intro | 0 | 0 | 0 |
+| Goodbye | one | one | one (Hindi) |
+| First audio per reply | 0.88–2.06 s | 0.81–2.08 s | 0.95–2.23 s |
+
+## Remaining limitations
+
+- **Unproven on a real handset:** carrier-side clear latency, real echo levels and real inbound chunk sizes. The new per-call telemetry logs all of them without audio or words.
+- **Reply latency:** 0.8–2.2 s after the recogniser's end-of-speech (≈0.5 s silence), so slower than ideal.
+- **Short Hindi replies** are sometimes transcribed in Gujarati script by language auto-detect.
+- **Model variance:** the model still occasionally asks a clarifying question, or answers a question again when it is repeated.
+- **Vertex capacity:** asia-south1 returned 429s and timeouts for over an hour on 2026-10-11. The global fallback covers it but changes the processing location.
+- **Ownership:** the cascade is a prototype for the Sampark owner (CONVERSATION_PLAN.md §4, C1), not a production engine.
