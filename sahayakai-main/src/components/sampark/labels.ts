@@ -415,6 +415,7 @@ export function suppressionSourceLabel(t: Translate, source: Suppression['source
         case 'office': return t("School office");
         case 'crm': return t("School records");
         case 'carrier_invalid_number': return t("The phone company says this number is not in use");
+        case 'conversation_request': return t("Asked Riya to stop calls");
         default: return source;
     }
 }

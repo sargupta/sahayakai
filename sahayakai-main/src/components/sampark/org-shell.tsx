@@ -3,7 +3,7 @@
 import { useCallback, useMemo, type ReactNode } from "react";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
-import { ArrowLeft, ChevronsUpDown, Database, Megaphone, Phone, PhoneCall, Settings, Sun, Users, type LucideIcon } from "lucide-react";
+import { ArrowLeft, Bot, ChevronsUpDown, Database, Megaphone, Phone, PhoneCall, Settings, Sun, Users, type LucideIcon } from "lucide-react";
 import { PageShell } from "@/components/layout";
 import { SamparkAuthGate } from "@/components/sampark/sampark-auth-gate";
 import { cn } from "@/lib/utils";
@@ -55,6 +55,7 @@ function useSections(orgId: string, liveCount: number): (Section & { active: boo
         { href: base, label: t("Today"), icon: Sun, exact: true },
         { href: `${base}/campaigns`, label: t("Campaigns"), icon: Megaphone, exact: false, badge: liveCount > 0 ? fmt(t("{count} live"), { count: liveCount }) : null },
         { href: `${base}/calls`, label: t("Calls"), icon: Phone, exact: false },
+        { href: `${base}/riya`, label: t("Riya calls"), icon: Bot, exact: false },
         { href: `${base}/families`, label: t("Families"), icon: Users, exact: false },
         { href: `${base}/settings`, label: t("Settings"), icon: Settings, exact: false },
     ];

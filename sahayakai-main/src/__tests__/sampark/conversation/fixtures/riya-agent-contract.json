@@ -1,0 +1,97 @@
+{
+  "_source": "Derived from Varunesh's ElevenLabs export 'Riya School Calling Assistant' (sahayakcallagentvarunesh.txt, 15 Oct 2026). Names and structure only: no phone numbers, credentials, or sample student data.",
+  "callPurposeEdgeValues": [
+    "absence_notice",
+    "emergency_closure",
+    "event_invitation",
+    "exam_schedule_notice",
+    "holiday_notice",
+    "ptm_invitation"
+  ],
+  "nodeVariables": {
+    "event_invitation": [
+      "event_date",
+      "event_name",
+      "event_time",
+      "school_name",
+      "student_name"
+    ],
+    "ptm_invitation": [
+      "class_name",
+      "event_date",
+      "event_time",
+      "school_name",
+      "section_name",
+      "student_name"
+    ],
+    "holiday_notice": [
+      "holiday_dates",
+      "school_name",
+      "student_name"
+    ],
+    "exam_schedule_notice": [
+      "exam_schedule",
+      "school_name",
+      "student_name"
+    ],
+    "absence_notice": [
+      "absence_date",
+      "school_name",
+      "student_name"
+    ],
+    "emergency_closure": [
+      "closure_date",
+      "closure_reason",
+      "school_name",
+      "student_name",
+      "transport_information"
+    ]
+  },
+  "promptVariables": [
+    "absence_date",
+    "call_purpose",
+    "class_name",
+    "closure_date",
+    "closure_reason",
+    "event_date",
+    "event_name",
+    "event_time",
+    "exam_schedule",
+    "holiday_dates",
+    "school_name",
+    "section_name",
+    "student_name",
+    "transport_information"
+  ],
+  "placeholderVariables": [
+    "absence_date",
+    "call_purpose",
+    "class_name",
+    "event_date",
+    "event_name",
+    "event_time",
+    "holiday_dates",
+    "school_name",
+    "section_name",
+    "student_name"
+  ],
+  "firstMessageVariables": [
+    "school_name"
+  ],
+  "dataCollectionKeys": [
+    "child_at_school_during_closure",
+    "event_attendance",
+    "exam_absence_date",
+    "expected_return_date",
+    "good_time_to_talk",
+    "late_return_date",
+    "ptm_attendance",
+    "ptm_meeting_mode",
+    "ptm_preferred_time"
+  ],
+  "clientOverridesAllowed": {
+    "first_message": false,
+    "prompt": false,
+    "voice_id": false
+  }
+}

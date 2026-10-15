@@ -47,6 +47,8 @@ describe('Sampark deploy flags', () => {
         const env = envVars(stepId);
         expect(env.get('SAMPARK_ENABLED')).toBe('false');
         expect(env.get('SAMPARK_LIVE_DIAL_ENABLED')).toBe('false');
+        // Riya (ElevenLabs conversation calls) ships dark the same way.
+        expect(env.get('SAMPARK_ELEVENLABS_ENABLED')).toBe('false');
     });
 
     it('never declares a NEXT_PUBLIC_ Sampark flag', () => {
