@@ -23,6 +23,11 @@
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 
+import { encryptPhone, hashPhone } from '@/lib/sampark/phone';
+import { FirestoreSamparkRepo } from '@/lib/sampark/repo/firestore';
+
+import { riyaDemoFamily } from './riya-demo-family';
+
 const ORG_ID = 'hillview-demo';
 const ADMIN_UID = 'dev-user-123';
 
@@ -91,6 +96,22 @@ async function main(): Promise<void> {
     out(`  organizations/${ORG_ID} (admin ${ADMIN_UID}, isDemoData true)`);
     out(`  organizations/${ORG_ID}/members/${ADMIN_UID} (role admin)`);
     out(`  users/${ADMIN_UID}`);
+    if (process.argv.includes('--riya-demo-family')) {
+        // Opt-in: one synthetic English family with notices + recorded-conversation consent,
+        // so the Riya tab has someone to rehearse with in Practice mode. Needs the Sampark
+        // school to exist (enable it in the console first) and the SAME SAMPARK_PII_KEY /
+        // SAMPARK_PHONE_PEPPER as the app, or the app cannot read the encrypted phone.
+        const repo = new FirestoreSamparkRepo(db);
+        if (!(await repo.getSchool(ORG_ID))) {
+            out('Riya demo family NOT seeded: enable Sampark for Hillview Demo School in the console first, then re-run with --riya-demo-family.');
+        } else {
+            const { student, guardian, preferences } = riyaDemoFamily(ORG_ID, new Date().toISOString(), { encrypt: encryptPhone, hash: hashPhone });
+            await repo.upsertStudents(ORG_ID, [student]);
+            await repo.upsertGuardians(ORG_ID, [guardian]);
+            await repo.upsertPreferences([preferences]);
+            out(`  sampark_schools/${ORG_ID}: synthetic family "${guardian.displayName}" → "${student.displayName}" (English; notices + recorded-conversation consent)`);
+        }
+    }
     out('Next: sign in with the dev token, open /sampark, enable Sampark for Hillview Demo School.');
 }
 
