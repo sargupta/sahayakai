@@ -104,12 +104,16 @@ async function main(): Promise<void> {
         const repo = new FirestoreSamparkRepo(db);
         if (!(await repo.getSchool(ORG_ID))) {
             out('Riya demo family NOT seeded: enable Sampark for Hillview Demo School in the console first, then re-run with --riya-demo-family.');
+            process.exitCode = 3; // distinct code so the launcher can tell "school not enabled yet" from a crash
+            return;
         } else {
             const { student, guardian, preferences } = riyaDemoFamily(ORG_ID, new Date().toISOString(), { encrypt: encryptPhone, hash: hashPhone });
             await repo.upsertStudents(ORG_ID, [student]);
             await repo.upsertGuardians(ORG_ID, [guardian]);
             await repo.upsertPreferences([preferences]);
             out(`  sampark_schools/${ORG_ID}: synthetic family "${guardian.displayName}" → "${student.displayName}" (English; notices + recorded-conversation consent)`);
+            out(`Next: open /sampark/${ORG_ID}/riya and run a Practice call with this family.`);
+            return;
         }
     }
     out('Next: sign in with the dev token, open /sampark, enable Sampark for Hillview Demo School.');

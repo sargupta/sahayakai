@@ -35,6 +35,12 @@ for (let i = 0; i < argv.length; i++) if (argv[i].startsWith('--')) args[argv[i]
 const KEY = process.env.ELEVENLABS_API_KEY?.trim();
 const BASE = 'https://api.elevenlabs.io';
 const PURPOSES = ['absence_notice', 'emergency_closure', 'event_invitation', 'exam_schedule_notice', 'holiday_notice', 'ptm_invitation'];
+// Copies of src/lib/sampark/conversation/riya-purposes.ts (RIYA_VARIABLES, RIYA_OPENING_TEMPLATE);
+// riya-agent-sync.test.ts fails if they drift.
+export const SAHAYAK_VARIABLES = ['school_name', 'call_purpose', 'student_name', 'class_name', 'section_name', 'event_name', 'event_date', 'event_time', 'holiday_dates', 'exam_schedule', 'absence_date', 'closure_date', 'closure_reason', 'transport_information'];
+export const OPENING_TEMPLATE = 'Hello, this is Riya, calling from {{school_name}}, with an important update. Is this a good time to talk?';
+/** Word sequence, ignoring case, punctuation and the agent's pause dots ("Hello..... this"). */
+export const words = (s) => String(s ?? '').toLowerCase().replace(/\{\{\s*(\w+)\s*\}\}/g, ' var_$1 ').replace(/[^a-z0-9_]+/g, ' ').trim();
 
 export function mask(text) {
     return String(text)
@@ -113,6 +119,7 @@ function fingerprint(a) {
         firstMessage: ag.first_message ?? null,
         prompt: sha(get(ag, 'prompt.prompt')),
         promptVariables: vars(get(ag, 'prompt.prompt')),
+        allVariables: vars(JSON.stringify({ p: get(ag, 'prompt.prompt'), f: get(ag, 'first_message'), w: get(a, 'workflow') ?? null })).filter((v) => !v.startsWith('system__')),
         llm: get(ag, 'prompt.llm'),
         temperature: get(ag, 'prompt.temperature'),
         tools: (get(ag, 'prompt.tools') ?? []).map((t) => `${t.name}:${get(t, 'params.system_tool_type') ?? t.type}`).sort(),
@@ -163,6 +170,11 @@ function checks(src, dst, phone, phoneId, liveSource) {
     cmp('8a dynamic-variable placeholders', src.placeholders, dst.placeholders);
     cmp('8b prompt variables', src.promptVariables, dst.promptVariables, false);
     cmp('8c data-collection fields', src.dataCollection, dst.dataCollection, false);
+    const unsupplied = dst.allVariables.filter((v) => !SAHAYAK_VARIABLES.includes(v));
+    add('8d every agent variable is supplied by Sahayak', unsupplied.length === 0 ? 'PASS' : 'FAIL', unsupplied.length ? `not sent by Sahayak: ${unsupplied.join(', ')}` : `${dst.allVariables.length} variables, all in Sahayak's 14`);
+    const unused = SAHAYAK_VARIABLES.filter((v) => !dst.allVariables.includes(v));
+    add('8e Sahayak variables the agent never reads', unused.length === 0 ? 'PASS' : 'UNVERIFIED', unused.length ? `sent but unused: ${unused.join(', ')}` : 'none');
+    add('5d preview opening = agent first message', words(dst.firstMessage) === words(OPENING_TEMPLATE) ? 'PASS' : 'FAIL', words(dst.firstMessage) === words(OPENING_TEMPLATE) ? 'word for word' : `agent says "${mask(dst.firstMessage ?? '').slice(0, 160)}"; update RIYA_OPENING_TEMPLATE so the preview shows what the agent says`);
     cmp('9 end-call tool', src.tools, dst.tools);
     add('10 branch / version', dst.branchId && (!args['target-branch'] || dst.branchId === args['target-branch']) ? 'PASS' : 'FAIL', `target branch ${short(dst.branchId)} (expected ${short(args['target-branch'])}), main ${short(dst.mainBranchId)}`);
 
@@ -173,10 +185,19 @@ function checks(src, dst, phone, phoneId, liveSource) {
         add('11a number assigned to the clone', assigned === dst.agentId ? 'PASS' : 'FAIL', `assigned to ${short(assigned)}${assigned === src.agentId ? ' (the SOURCE agent)' : ''}`);
         add('11b outbound SIP trunk configured', phone.provider === 'sip_trunk' ? (phone.outbound_trunk || phone.provider_config?.has_outbound_trunk ? 'PASS' : 'FAIL') : 'UNVERIFIED', `provider ${phone.provider}`);
         const inbound = phone.inbound_trunk?.allowed_addresses ?? [];
+        add('11d outbound calls enabled', phone.supports_outbound === true ? 'PASS' : 'FAIL', `supports_outbound=${phone.supports_outbound}`);
+        const ob = phone.outbound_trunk ?? phone.provider_config ?? {};
+        add('11e outbound transport', ['tcp', 'tls'].includes(String(ob.transport ?? '').toLowerCase()) ? 'PASS' : 'FAIL', `transport ${ob.transport ?? 'unset'}, codecs ${(ob.enabled_codecs ?? []).join(' ') || 'default'}, media encryption ${ob.media_encryption ?? 'unset'}`);
+        add('11f outbound authentication configured', ob.has_auth_credentials === true ? 'PASS' : 'FAIL', `has_auth_credentials=${ob.has_auth_credentials} (username and password are never printed)`);
         add('11c inbound restricted', !phone.supports_inbound ? 'PASS' : inbound.includes('0.0.0.0/0') || inbound.length === 0 ? 'FAIL' : 'PASS', `inbound ${phone.supports_inbound ? 'on' : 'off'}, allowed ${inbound.length ? inbound.map(mask).join(' ') : 'any'}`);
     }
+    if (liveSource === true) {
+        const kept = src.phones.filter((p) => p.assignedTo === src.agentId).length;
+        add('11g original agent keeps its own number', kept > 0 ? 'PASS' : 'FAIL', `${kept} number(s) still assigned to the source agent`);
+    } else add('11g original agent keeps its own number', 'UNVERIFIED', 'pass --source to fetch the live source agent');
     const pv = dst.privacy ?? {};
     add('12a recording / retention', !pv.record_voice || (pv.retention_days ?? -1) > 0 || pv.zero_retention_mode ? 'PASS' : 'FAIL', `record_voice=${pv.record_voice}, retention_days=${pv.retention_days}, zero_retention=${pv.zero_retention_mode}, delete_audio=${pv.delete_audio}`);
+    add('12h transcript retention (separate from audio)', (pv.retention_days ?? -1) > 0 || pv.delete_transcript_and_pii || pv.zero_retention_mode ? 'PASS' : 'FAIL', `retention_days=${pv.retention_days} (applies to transcripts even when record_voice=false), delete_transcript_and_pii=${pv.delete_transcript_and_pii}`);
     add('12b agent access (auth)', dst.auth.enable_auth ? 'PASS' : 'FAIL', `enable_auth=${dst.auth.enable_auth}`);
     add('12c post-call webhook', dst.webhooks?.post_call_webhook_id ? 'PASS' : 'FAIL', `webhook ${short(dst.webhooks?.post_call_webhook_id)}, events ${JSON.stringify(dst.webhooks?.events ?? [])}, audio ${dst.webhooks?.send_audio}`);
     add('12d call limits', (dst.callLimits?.daily_limit ?? 1e9) <= 1000 && (dst.callLimits?.agent_concurrency_limit ?? -1) > 0 ? 'PASS' : 'FAIL', JSON.stringify(dst.callLimits));

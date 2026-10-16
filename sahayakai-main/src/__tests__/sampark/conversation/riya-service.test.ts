@@ -453,6 +453,18 @@ describe('post-call webhook', () => {
         expect((await handleRiyaWebhook({ ...s.deps, env: { ...s.env, ELEVENLABS_WEBHOOK_SECRET: undefined } }, body, sign(body, ts))).status).toBe(503);
     });
 
+    it('signature freshness follows the real wall clock, never the local rehearsal clock', async () => {
+        const { s } = await started();
+        const body = postCall('conv_abc123');
+        // Local rehearsal (SAMPARK_DEV_NOW): the Sampark clock reads 11:00 IST but the real time is 8 h later.
+        const realNow = new Date(WED_11_IST.getTime() + 8 * 3600_000);
+        const realTs = Math.floor(realNow.getTime() / 1000);
+        const rehearsal = { ...s.deps, wallClock: { now: () => realNow } };
+        expect((await handleRiyaWebhook(rehearsal, body, sign(body, realTs))).status).toBe(200);
+        // A signature that is fresh only by the rehearsal clock is stale in real time.
+        expect((await handleRiyaWebhook(rehearsal, body, sign(body, ts))).status).toBe(401);
+    });
+
     it('404 when Riya or Sampark is off', async () => {
         const { s } = await started();
         const body = postCall('conv_abc123');

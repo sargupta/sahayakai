@@ -73,6 +73,38 @@ export function riyaPurposeLabel(t: Translate, p: RiyaPurpose): string {
     }
 }
 
+/** Human labels for Riya's data-collection answers; free-text answers are shown as said. */
+function answerKeyLabel(t: Translate, key: string): string {
+    switch (key) {
+        case "good_time_to_talk": return t("Good time to talk");
+        case "ptm_attendance": return t("Coming to the meeting");
+        case "ptm_preferred_time": return t("Preferred meeting time");
+        case "ptm_meeting_mode": return t("Meeting type requested");
+        case "event_attendance": return t("Coming to the event");
+        case "late_return_date": return t("Late return after holidays");
+        case "exam_absence_date": return t("Exam that may be missed");
+        case "expected_return_date": return t("Expected back on");
+        case "child_at_school_during_closure": return t("Child at school now");
+        case "recipient_confirmed": return t("Parent confirmed");
+        case "stop_requested": return t("Asked not to be called");
+        default: return key;
+    }
+}
+
+function answerValueLabel(t: Translate, value: string): string {
+    switch (value.trim().toLowerCase()) {
+        case "yes": case "true": return t("Yes");
+        case "no": case "false": return t("No");
+        case "unsure": return t("Not sure");
+        case "no_answer": return t("No clear answer");
+        case "can_attend": return t("Can attend");
+        case "cannot_attend": return t("Cannot attend");
+        case "online": return t("Online");
+        case "phone": return t("Phone");
+        default: return value;
+    }
+}
+
 function stateLabel(t: Translate, s: ConversationCallState): string {
     switch (s) {
         case "initiating": return t("Starting");
@@ -287,7 +319,8 @@ function CallRow({ orgId, call, onChange }: { orgId: string; call: ConversationC
         }
     };
 
-    const answers = Object.entries(call.dataCollection ?? {}).filter(([, v]) => v);
+    // "not_applicable" is the agent's "this question was not part of the call": nothing to show.
+    const answers = Object.entries(call.dataCollection ?? {}).filter(([, v]) => v && v.trim().toLowerCase() !== "not_applicable");
     return (
         <li className="space-y-2 border-b border-border py-3 last:border-b-0">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -310,7 +343,7 @@ function CallRow({ orgId, call, onChange }: { orgId: string; call: ConversationC
             {answers.length > 0 && (
                 <dl className="grid grid-cols-1 gap-x-4 text-sm sm:grid-cols-2">
                     {answers.map(([k, v]) => (
-                        <div key={k} className="flex gap-2"><dt className="text-muted-foreground">{k}</dt><dd className="text-foreground break-words">{v}</dd></div>
+                        <div key={k} className="flex gap-2"><dt className="text-muted-foreground">{answerKeyLabel(t, k)}</dt><dd className="text-foreground break-words">{answerValueLabel(t, v ?? "")}</dd></div>
                     ))}
                 </dl>
             )}

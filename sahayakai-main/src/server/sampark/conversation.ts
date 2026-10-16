@@ -45,7 +45,7 @@ import {
 import { getConversationRepo } from '@/lib/sampark/conversation/factory';
 import { buildRiyaVariables, RiyaFactsSchema, type RiyaFactProblem, type RiyaFacts } from '@/lib/sampark/conversation/facts';
 import type { ConversationCallRepo } from '@/lib/sampark/conversation/repo';
-import { enabledRiyaPurposes, riyaPurposeSpec, RiyaPurposeSchema, type RiyaPurpose } from '@/lib/sampark/conversation/riya-purposes';
+import { enabledRiyaPurposes, riyaOpening, riyaPurposeSpec, RiyaPurposeSchema, type RiyaPurpose } from '@/lib/sampark/conversation/riya-purposes';
 import { simulateRiyaCall, SimulationScenarioSchema, type SimulationScenario } from '@/lib/sampark/conversation/simulated-provider';
 import { applyRiyaEvent, applyRiyaSnapshot } from '@/lib/sampark/conversation/state';
 import {
@@ -60,7 +60,7 @@ import { decryptPhone, hashPhone } from '@/lib/sampark/phone';
 import { evaluateGate, FREQUENCY_WINDOW_MS } from '@/lib/sampark/policy/gate';
 import { SAMPARK_NONPROD_DATABASE } from '@/lib/sampark/repo/factory';
 import { pauseStopsPurpose } from '@/lib/sampark/policy/pause';
-import type { Clock, SamparkRepo } from '@/lib/sampark/ports';
+import { type Clock, type SamparkRepo, systemClock } from '@/lib/sampark/ports';
 import type { BlockReason, CallDestination, Campaign, SamparkGuardian, SamparkSchool, SamparkStudent } from '@/types/sampark';
 import { badRequest, conflict, notFound, SamparkServiceError } from '@/server/sampark/errors';
 import { getSchoolOrThrow } from '@/server/sampark/school';
@@ -82,12 +82,18 @@ export interface RiyaDeps {
     repo: SamparkRepo;
     calls: ConversationCallRepo;
     clock: Clock;
+    /**
+     * Real wall-clock time, used only to check the freshness of a webhook signature. The
+     * sender signs with ITS real clock, so this must never follow the local rehearsal clock
+     * (SAMPARK_DEV_NOW), which can be hours away. Defaults to `clock` (tests pin both).
+     */
+    wallClock?: Clock;
     env?: Env;
     http?: HttpDeps;
 }
 
 export async function riyaDeps(ctx: { repo: SamparkRepo; clock: Clock }): Promise<RiyaDeps> {
-    return { repo: ctx.repo, clock: ctx.clock, calls: await getConversationRepo() };
+    return { repo: ctx.repo, clock: ctx.clock, wallClock: systemClock, calls: await getConversationRepo() };
 }
 
 // ── Flags and configuration ─────────────────────────────────────────────────
@@ -381,7 +387,7 @@ async function evaluate(deps: RiyaDeps, orgId: string, input: RiyaPreviewInput):
         },
         variables,
         announcement,
-        opening: variables ? `Hello, this is Riya, calling from ${variables.school_name}, with an important update. Is this a good time to talk?` : null,
+        opening: variables ? riyaOpening(variables.school_name) : null,
         agentId: maskId(config?.agentId),
         agentPhoneNumberId: maskId(config?.agentPhoneNumberId),
     };
@@ -682,7 +688,7 @@ export async function handleRiyaWebhook(deps: RiyaDeps, rawBody: string, signatu
     const env = deps.env ?? process.env;
     if (env.SAMPARK_ENABLED !== 'true' || !riyaEnabled(env)) return { status: 404, body: { ok: false, error: 'Not found' } };
     if (Buffer.byteLength(rawBody, 'utf8') > MAX_WEBHOOK_BYTES) return { status: 413, body: { ok: false, error: 'too large' } };
-    const nowSec = Math.floor(deps.clock.now().getTime() / 1000);
+    const nowSec = Math.floor((deps.wallClock ?? deps.clock).now().getTime() / 1000);
     const sig = verifyElevenLabsSignature(rawBody, signatureHeader, env.ELEVENLABS_WEBHOOK_SECRET?.trim(), nowSec);
     if (!sig.ok) {
         logger.warn('Riya webhook refused', LOG, { reason: sig.reason });

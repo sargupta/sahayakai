@@ -177,8 +177,13 @@ describe('Riya calls tab (Practice)', () => {
 
         await waitFor(() => expect(toastSpy).toHaveBeenCalledWith({ title: 'Call status: Conversation ended' }));
         expect(await screen.findByText('Conversation ended')).toBeTruthy();
-        expect(screen.getByText('cannot_attend')).toBeTruthy();
-        expect(screen.getByText('Saturday after 11 AM')).toBeTruthy();
+        // Answers are shown in words, never as the agent's raw ids (class: any raw key or enum value).
+        expect(screen.getByText('Coming to the meeting')).toBeTruthy();
+        expect(screen.getByText('Cannot attend')).toBeTruthy();
+        expect(screen.getByText('Preferred meeting time')).toBeTruthy();
+        expect(screen.getByText('Saturday after 11 AM')).toBeTruthy(); // free text is shown as said
+        const answers = screen.getByText('Coming to the meeting').closest('dl') as HTMLElement;
+        expect(answers.textContent).not.toMatch(/_/);
         expect(fetchSpy).not.toHaveBeenCalled();
         const stored = await deps.calls.listCalls(ORG, 10);
         expect(stored).toHaveLength(1);
