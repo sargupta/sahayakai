@@ -8,12 +8,45 @@ import { logger } from '@/lib/logger';
 
 let firebasePromise: Promise<void> | null = null;
 
+/** Default project id for the local emulator. A `demo-` id can never resolve to a real Google Cloud project. */
+export const EMULATOR_DEFAULT_PROJECT_ID = 'demo-sahayakai';
+
+const LOCAL_EMULATOR_HOST = /^(localhost|127\.0\.0\.1|\[::1\]):\d{2,5}$/;
+
+/**
+ * Development-only Firestore-emulator path. Returns the app options to use, or null to keep
+ * the normal (service account / Secret Manager) path, which is unchanged.
+ *
+ * Taken ONLY when NODE_ENV === 'development' AND FIRESTORE_EMULATOR_HOST is explicitly set.
+ * Then no credential is loaded at all — no FIREBASE_SERVICE_ACCOUNT_KEY, no Secret Manager —
+ * so a developer machine with gcloud logged in can never pull the production key this way.
+ * The emulator host must be local; anything else is refused rather than silently sending
+ * Firestore traffic somewhere unexpected. The project id comes from GCLOUD_PROJECT, else a
+ * `demo-` id; it never falls back to the production project id.
+ */
+export function emulatorAdminOptions(env: Record<string, string | undefined> = process.env): { projectId: string } | null {
+  if (env.NODE_ENV !== 'development') return null;
+  const host = env.FIRESTORE_EMULATOR_HOST?.trim();
+  if (!host) return null;
+  if (!LOCAL_EMULATOR_HOST.test(host)) {
+    throw new Error('FIRESTORE_EMULATOR_HOST must be a local address (localhost/127.0.0.1/[::1]:port) in development');
+  }
+  return { projectId: env.GCLOUD_PROJECT?.trim() || EMULATOR_DEFAULT_PROJECT_ID };
+}
+
 export async function initializeFirebase() {
   if (firebasePromise) return firebasePromise;
 
   firebasePromise = (async () => {
     if (!admin.apps.length) {
       try {
+        const emulator = emulatorAdminOptions();
+        if (emulator) {
+          // Firestore calls go to FIRESTORE_EMULATOR_HOST; no credentials are read or fetched.
+          admin.initializeApp({ projectId: emulator.projectId });
+          logger.info("Initialized for the local Firestore emulator (development only).", "FirebaseAdmin", { projectId: emulator.projectId });
+          return;
+        }
         logger.info("Initializing...", "FirebaseAdmin");
         const isPlaceholder = (val?: string) => !val || val.startsWith('secrets/');
         let serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;

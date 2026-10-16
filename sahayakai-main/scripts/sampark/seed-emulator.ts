@@ -37,7 +37,8 @@ async function main(): Promise<void> {
         process.exit(1);
     }
     // Must match the project id the app's Admin SDK uses, or the emulator keeps the data in another namespace.
-    const projectId = process.env.GCLOUD_PROJECT || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'sahayakai-b4248';
+    // Same rule as src/lib/firebase-admin.ts emulatorAdminOptions(): GCLOUD_PROJECT, else the `demo-` id.
+    const projectId = process.env.GCLOUD_PROJECT?.trim() || 'demo-sahayakai';
     const app = getApps()[0] ?? initializeApp({ projectId });
     const db = getFirestore(app);
     const now = FieldValue.serverTimestamp();
