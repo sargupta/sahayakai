@@ -340,9 +340,19 @@ async function main() {
                 ['authentic post-call', '200', send([])],
                 ['duplicate post-call', '200 (no change)', send([])],
                 ['late failure event', '200 (no regression)', send(['--type', 'failure'])],
+                ['unlinked conversation', '503 (retryable)', run(NODE, ['scripts/sampark/send-test-riya-webhook.mjs', '--url', `${base}/api/webhooks/elevenlabs-riya`, '--conversation', `conv_unlinked_${Date.now().toString(36)}`], appEnv).out],
             ];
-            for (const [what, expected, got] of rows) say(`   ${what.padEnd(20)} expected ${expected.padEnd(20)} got ${got}`);
-            say('   The Riya tab now shows this call as "Conversation ended · Coming to the meeting: Can attend". Press Refresh there.');
+            for (const [what, expected, got] of rows) say(`   ${what.padEnd(22)} expected ${expected.padEnd(20)} got ${got}`);
+            // Read the stored record back through the console's own API (the dev login, development only).
+            try {
+                const res = await fetch(`${base}/api/sampark/${ORG}/riya`, { headers: { cookie: 'auth-token=dev-token' } });
+                const data = await res.json();
+                const c = (data.calls ?? []).find((x) => x.providerConversationId === conv);
+                say(c ? `   stored: state ${c.state} · ${c.durationSeconds ?? '—'} s · ${c.callSuccessful ?? '—'} · answers ${JSON.stringify(c.dataCollection)}` : `   stored record not found (HTTP ${res.status})`);
+            } catch (err) {
+                say(`   could not read the record back: ${err instanceof Error ? err.message : String(err)}`);
+            }
+            say('   The Riya tab shows the same call (Test phone · Conversation ended · Coming to the meeting: Can attend). Press Refresh there.');
         } else if (a === 's') {
             say(`   emulator ${(await tcpOpen(EMU_HOST, EMU_PORT)) ? 'up' : 'DOWN'} · GET /sampark → HTTP ${await httpStatus(`${base}/sampark`)} · logs in ${STATE_DIR}`);
         }

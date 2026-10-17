@@ -208,13 +208,25 @@ function checks(src, dst, phone, phoneId, liveSource) {
 }
 
 async function main() {
-    if (!args.target || (!args.source && !args['source-file'])) {
-        console.error('Usage: --target <clone agent id> and at least one of --source <agent id> / --source-file <export>.');
+    if ((!args.target && !args['phone-number-id']) || (!args.source && !args['source-file'])) {
+        console.error('Usage: --target <clone agent id> (or --phone-number-id phnum_… to use the agent that number is assigned to) and at least one of --source <agent id> / --source-file <export>.');
         process.exit(2);
     }
     if (!KEY) {
         console.error('ELEVENLABS_API_KEY is not set in this shell.');
         process.exit(2);
+    }
+    if (!args.target) {
+        // Resolve the agent from the number's live assignment instead of assuming an id.
+        const pn = await fetchJson(`/v1/convai/phone-numbers/${encodeURIComponent(args['phone-number-id'])}`);
+        const assigned = pn.data?.assigned_agent;
+        if (pn.error || !assigned?.agent_id) {
+            console.error(`Phone number ${short(args['phone-number-id'])}: ${pn.error ?? 'not assigned to any agent'}`);
+            process.exit(2);
+        }
+        args.target = assigned.agent_id;
+        if (!args['target-branch'] && assigned.branch_id) args['target-branch'] = assigned.branch_id;
+        console.log(`Number ${short(args['phone-number-id'])} is assigned to agent ${assigned.agent_id} ("${mask(assigned.agent_name ?? '')}"), branch ${assigned.branch_id ?? 'none (main)'}.`);
     }
     const target = await fetchJson(`/v1/convai/agents/${encodeURIComponent(args.target)}${args['target-branch'] ? `?branch_id=${encodeURIComponent(args['target-branch'])}` : ''}`);
     if (target.error) {
@@ -223,6 +235,8 @@ async function main() {
     }
     let liveSource = null;
     let srcRaw = null;
+    // The source agent id is in the export; read it (GET only) so checks 2 and 11g use the live source.
+    if (!args.source && args['source-file']) args.source = loadExport(args['source-file']).agent_id ?? undefined;
     if (args.source) {
         const s = await fetchJson(`/v1/convai/agents/${encodeURIComponent(args.source)}`);
         liveSource = !s.error;

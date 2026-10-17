@@ -127,12 +127,14 @@ node node_modules\next\dist\bin\next dev
 
 The log shows `Initialized for the local Firestore emulator (development only)`; no service-account key is read and Secret Manager is not called. Ignorable warnings: `MISSING FIREBASE_SERVICE_ACCOUNT_KEY` (generic startup check), `GOOGLE_GENAI_API_KEY`, Twilio, Sentry, and `/api/health` returning 503 (it probes services the emulator does not provide).
 
-## 6. Sign in with the development login  [verified]
+## 6. Sign in with the development login  [verified, including in your browser pane]
 
 1. Open `http://localhost:3000/sampark`.
 2. DevTools (F12) → Console: `document.cookie = "auth-token=dev-token; path=/"`, then reload.
 
-In development only, the middleware maps that cookie to `dev-user-123`; `SamparkAuthGate` keeps it in place. It is refused outside development and compiled out of production builds. The header still shows "Sign in with Google": that is the app-wide Firebase login, which the dev cookie deliberately does not fake.
+In development only, the middleware maps that cookie to `dev-user-123` (the seeded school admin); `SamparkAuthGate` keeps it in place. It is refused outside development and compiled out of production builds.
+
+**If you are also signed in with Google in the same browser** (fixed in v7). The API client used to attach your Google user's Firebase token to every request, and the middleware prefers that token over the cookie, so the console ran as your Google account (not an admin of Hillview) and the school routes answered **403**. Your Google account is correctly not an admin of the demo school, so the server was right. Now, in development only, for same-origin `/api/sampark/...` requests while the exact `auth-token=dev-token` cookie is set, the client sends no Bearer and the browser sends the cookie (`src/lib/api/client.ts`, `fetchAudioBlob` too). Auth-context also no longer overwrites that exact cookie with the Google token on page load (`src/lib/dev-login.ts`), which caused a 403 on first load. Production, other paths, and browsers without the dev cookie are unchanged. The server's admin check is untouched: the same browser with the Google Bearer still gets `403` on `/api/sampark/hillview-demo/school`.
 
 ## 7. Enable Sampark for the demo school  [verified]
 
@@ -207,14 +209,20 @@ Console "Check status" ──▶ /riya/[callId]/reconcile ──▶ GET /v1/conv
 Claude cannot reach ElevenLabs from its environment and holds no key. Run this yourself; it only sends GET requests and never prints the key, SIP username or password:
 
 ```powershell
-$env:ELEVENLABS_API_KEY = (Read-Host -AsSecureString "ElevenLabs key" | ConvertFrom-SecureString -AsPlainText)
-node scripts/sampark/verify-riya-clone.mjs --target agent_2401m4zy4gyaev48rz65wfmr5yr2 `
-  --source-file E:\sargvision\sahayakcallagentvarunesh.txt --source <Varunesh's agent id> `
-  --phone-number-id phnum_8101m535s90df9qa3jy6mdh2b864 --out riya-clone-report.md
-Remove-Item Env:ELEVENLABS_API_KEY
+cd E:\sargvision\riya-wt\sahayakai-main
+$sec = Read-Host -AsSecureString "ElevenLabs API key (input hidden)"
+$env:ELEVENLABS_API_KEY = [System.Net.NetworkCredential]::new('', $sec).Password
+node scripts/sampark/verify-riya-clone.mjs --phone-number-id phnum_8101m535s90df9qa3jy6mdh2b864 `
+  --source-file E:\sargvision\sahayakcallagentvarunesh.txt --out $env:TEMP\riya-clone-report.md
+Remove-Item Env:ELEVENLABS_API_KEY; Remove-Variable sec
+notepad $env:TEMP\riya-clone-report.md
 ```
 
-If the target GET returns 404, the clone is not in the workspace this key belongs to: use the id the ElevenLabs UI shows for "Riya School Calling Assistant" in the current workspace, and re-run.
+- It first reads the number and prints **which agent and branch it is assigned to**, then verifies that agent. Pass `--target <agent id>` to check a specific agent instead.
+- The source agent id is read from the export and fetched with GET only (checks 2 and 11g). Nothing is written to ElevenLabs.
+- The key lives only in that PowerShell session (`NetworkCredential` works in Windows PowerShell 5.1 and PowerShell 7); the report contains no key, SIP username or password, and is written outside the repository.
+- If check 1 fails with the target equal to the source, the number is still assigned to Varunesh's agent: stop there.
+
 
 What the report must show before a call:
 
@@ -223,15 +231,15 @@ What the report must show before a call:
 | 1, 3, 10 | target fetched; it is not the source; the expected branch |
 | 5d | the preview opening equals the agent's first message word for word; if the clone now opens with an AI disclosure (12e), update `RIYA_OPENING_TEMPLATE` in `riya-purposes.ts` to the exact text the report prints |
 | 7, 8a–8e | six branches; every `{{variable}}` is one of Sahayak's 14 |
-| 11a | `phnum_8101…b864` is assigned to the **clone** |
+| 11a + 1 | `phnum_8101…b864` is assigned to an agent that is **not** Varunesh's (when you pass `--target`, it must be that agent) |
 | 11b, 11d, 11e, 11f | SIP trunk, outbound enabled, TCP/TLS, outbound credentials configured |
-| 11g | Varunesh's agent still has its own number (pass `--source`) |
+| 11g | Varunesh's agent still has its own number (source read from the export automatically) |
 | 12a, 12h | audio recording and transcript retention, each checked separately |
 | 12b–12g | auth on, post-call webhook set, call limits, AI disclosure, overrides locked, fallback edge |
 
 What Claude established offline: `phnum_8101…b864` is **not** the phone-number resource in Varunesh's export, but it has the **same DID (…3645), outbound host and SIP username**. It is therefore a second ElevenLabs resource for the same Vobiz number. Whether it is assigned to the clone, and whether ElevenLabs and Vobiz accept two resources for one DID, is exactly what checks 11a–11g and the first call will show. The source agent's variables, from the export, are exactly Sahayak's 14 (none missing, none extra).
 
-### 11.2 Remaining prerequisites
+### 11.2 Remaining prerequisites (the variables come from `src/server/sampark/conversation.ts` and `elevenlabs-client.ts`)
 
 1. **A public HTTPS URL for the webhook** on an authorised non-production deployment, the workspace post-call webhook pointing at `/api/webhooks/elevenlabs-riya` (created with your approval), and its secret stored server-side only.
 2. **The test phone** saved in the demo school's Settings (a phone you own), and the mode set to **Test**.
@@ -239,8 +247,12 @@ What Claude established offline: `phnum_8101…b864` is **not** the phone-number
    - `SAMPARK_ENABLED=true`, `SAMPARK_ELEVENLABS_ENABLED=true`, `SAMPARK_LIVE_DIAL_ENABLED=true`, `SAMPARK_RIYA_PURPOSES=ptm_invitation`
    - `SAMPARK_FIRESTORE_DATABASE=sampark-nonprod` (a real Riya call refuses to run without it)
    - `SAMPARK_PII_KEY`, `SAMPARK_PHONE_PEPPER` (that deployment's own)
+   - `SAMPARK_RIYA_TEST_DAILY_CAP=1` for the first call (default 5; 0–20 accepted), so a second Test call that day is refused
+   - Leave `SAMPARK_RIYA_RECORDING_OFF_CONFIRMED` unset unless the verifier shows recording off and transcripts not retained (12a/12h); while it is unset, the call needs recorded-conversation consent
+   - `SAMPARK_RIYA_STORE_TRANSCRIPTS` unset (no transcript is stored in Sahayak)
    - `ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_ID` (the verified clone), `ELEVENLABS_AGENT_BRANCH_ID`, `ELEVENLABS_AGENT_PHONE_NUMBER_ID` (`phnum_8101…b864` once 11a passes), `ELEVENLABS_SOURCE_AGENT_ID` (Varunesh's; refused as a target), `ELEVENLABS_WEBHOOK_SECRET`
-4. **Your go-ahead with the destination named.** The server then dials **only** the school test phone, one call in flight, under the daily cap, inside calling hours, with no automatic retry. If the outcome is unclear, use **Check status** (read-only) before anything else.
+4. **Set your own phone as the school Test phone** on `/sampark/hillview-demo/settings` → Test phone → Save (only the last four digits are shown afterwards). Never edit the synthetic family's phone. Then switch the school to **Test — my phone only** (available only when the deployment has `SAMPARK_LIVE_DIAL_ENABLED=true`).
+5. **Your go-ahead with the destination named.** The server then dials **only** the school test phone, one call in flight, under the daily cap, inside calling hours, with no automatic retry. If the outcome is unclear, use **Check status** (read-only) before anything else.
 
 ## 12. Troubleshooting
 

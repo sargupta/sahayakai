@@ -2,13 +2,7 @@
 
 import { useEffect, useState, type ComponentProps } from "react";
 import { AuthGate } from "@/components/auth/auth-gate";
-
-const DEV_COOKIE = "auth-token=dev-token";
-const DEV_FLAG = "sampark:dev-bypass";
-
-function hasDevCookie(): boolean {
-    return document.cookie.split("; ").includes(DEV_COOKIE);
-}
+import { DEV_LOGIN_COOKIE as DEV_COOKIE, DEV_LOGIN_FLAG as DEV_FLAG, hasDevLoginCookie as hasDevCookie } from "@/lib/dev-login";
 
 /**
  * AuthGate, plus the client half of the middleware's development bypass.

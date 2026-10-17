@@ -11,8 +11,7 @@
  * header, so `fetchAudioBlob` fetches the clip with the Bearer token and the
  * console plays it from an object URL (see components/sampark/use-authed-audio).
  */
-import { auth } from '@/lib/firebase';
-import { apiFetch, ApiError } from '@/lib/api/client';
+import { apiFetch, ApiError, authHeaderFor } from '@/lib/api/client';
 import type {
     BlockReason,
     Campaign,
@@ -308,11 +307,11 @@ export function audioUrl(orgId: string, key: string): string {
 
 /** GET /api/sampark/[orgId]/audio/[key] with the signed-in user's token, as a Blob (audio/wav). */
 export async function fetchAudioBlob(orgId: string, key: string, opts: Opts = {}): Promise<Blob> {
-    const headers: Record<string, string> = {};
-    const user = auth.currentUser;
-    if (user) headers.Authorization = `Bearer ${await user.getIdToken()}`;
+    const url = audioUrl(orgId, key);
+    // Same auth rule as apiFetch (including the development dev-cookie case).
+    const headers = await authHeaderFor(url);
     // ?format=pcm: the stored clip is telephony μ-law, which not every browser decodes.
-    const res = await fetch(`${audioUrl(orgId, key)}?format=pcm`, { headers, signal: opts.signal });
+    const res = await fetch(`${url}?format=pcm`, { headers, signal: opts.signal });
     if (!res.ok) {
         const data = await res.json().catch(() => undefined);
         const message =
