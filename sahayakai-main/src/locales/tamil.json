@@ -2266,5 +2266,17 @@
   "Cannot attend": "வர முடியாது",
   "Online": "ஆன்லைன்",
   "Phone": "தொலைபேசி",
-  "This is a demo school, so Riya calls stay in Practice. Real test calls need a non-demo school.": "இது ஒரு டெமோ பள்ளி, எனவே Riya அழைப்புகள் பயிற்சியிலேயே இருக்கும். உண்மையான சோதனை அழைப்புகளுக்கு டெமோ அல்லாத பள்ளி தேவை."
+  "This is a demo school, so Riya calls stay in Practice. Real test calls need a non-demo school.": "இது ஒரு டெமோ பள்ளி, எனவே Riya அழைப்புகள் பயிற்சியிலேயே இருக்கும். உண்மையான சோதனை அழைப்புகளுக்கு டெமோ அல்லாத பள்ளி தேவை.",
+  "Before the call": "அழைப்புக்கு முன்",
+  "Agent {agent} · branch {branch} · number {number}": "முகவர் {agent} · கிளை {branch} · எண் {number}",
+  "Purpose: {purpose}": "நோக்கம்: {purpose}",
+  "Non-production database": "உற்பத்தி அல்லாத தரவுத்தளம்",
+  "Not the non-production database: real calls are refused": "உற்பத்தி அல்லாத தரவுத்தளம் இல்லை: உண்மையான அழைப்புகள் மறுக்கப்படும்",
+  "Normal calling hours": "வழக்கமான அழைப்பு நேரம்",
+  "Staging test window until {time}": "ஸ்டேஜிங் சோதனை நேரம் {time} வரை",
+  "Webhook reachable, signature check on": "வெப்ஹுக் அணுகக்கூடியது, கையொப்பச் சரிபார்ப்பு இயக்கத்தில்",
+  "Webhook check failed: the call result could not come back": "வெப்ஹுக் சரிபார்ப்பு தோல்வி: அழைப்பின் முடிவு திரும்ப வர முடியாது",
+  "Checking the webhook…": "வெப்ஹுக் சரிபார்க்கப்படுகிறது…",
+  "At most {cap} real test call(s) today; no other Riya call is in progress": "இன்று அதிகபட்சம் {cap} உண்மையான சோதனை அழைப்புகள்; வேறு Riya அழைப்பு நடைபெறவில்லை",
+  "Another Riya call is still in progress": "மற்றொரு Riya அழைப்பு இன்னும் நடைபெறுகிறது"
 }

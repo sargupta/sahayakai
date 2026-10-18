@@ -268,6 +268,65 @@ describe('refusals (nothing is created or dialled)', () => {
         expect(preview.refusals).toContainEqual(expect.objectContaining({ code: 'OUTSIDE_CALLING_HOURS' }));
     });
 
+    describe('staging test-window override (SAMPARK_RIYA_STAGING_TEST_WINDOW_UNTIL)', () => {
+        const inOneHour = new Date(WED_21_IST.getTime() + 3600_000).toISOString();
+        const nightTest = (extra: Record<string, string | undefined> = {}, school: Partial<SamparkSchool> = {}, opts: Partial<Parameters<typeof setup>[0]> = {}) =>
+            setup({ mode: 'test', at: WED_21_IST, env: { ...elevenEnv(), ...extra }, school, ...opts });
+
+        it('without it, a night-time Test call is deferred and nothing is dialled', async () => {
+            const s = await nightTest();
+            expect(await refusalCode(startRiyaCall(s.deps, ORG, ADMIN, await startInput(s.deps)))).toBe('OUTSIDE_CALLING_HOURS');
+            expect(s.fetchImpl).not.toHaveBeenCalled();
+        });
+
+        it('with it: exactly one call to the test phone, marked in the preview and the audit', async () => {
+            const s = await nightTest({ SAMPARK_RIYA_STAGING_TEST_WINDOW_UNTIL: inOneHour });
+            const preview = await previewRiyaCall(s.deps, ORG, { purpose: 'ptm_invitation', guardianId: 'g1', studentId: 's1', facts: FACTS.ptm_invitation });
+            expect(preview.ok).toBe(true);
+            expect(preview.testWindowOverride).toEqual({ until: inOneHour });
+            expect(preview.nonProductionDatabase).toBe(true);
+            const { call } = await startRiyaCall(s.deps, ORG, ADMIN, await startInput(s.deps));
+            expect(call.destination).toBe('test_phone');
+            expect(s.fetchImpl).toHaveBeenCalledTimes(1);
+            expect(s.audits.find((a) => a.action === 'riya_call.start')?.detail).toMatchObject({ testWindowOverride: inOneHour });
+        });
+
+        it.each([
+            ['expired', { SAMPARK_RIYA_STAGING_TEST_WINDOW_UNTIL: new Date(WED_21_IST.getTime() - 60_000).toISOString() }, 'expired'],
+            ['longer than 3 hours', { SAMPARK_RIYA_STAGING_TEST_WINDOW_UNTIL: new Date(WED_21_IST.getTime() + 4 * 3600_000).toISOString() }, 'longer_than_3_hours'],
+            ['unparseable', { SAMPARK_RIYA_STAGING_TEST_WINDOW_UNTIL: 'tonight' }, 'unparseable'],
+            ['not the non-production database', { SAMPARK_RIYA_STAGING_TEST_WINDOW_UNTIL: inOneHour, SAMPARK_FIRESTORE_DATABASE: undefined, SAMPARK_RIYA_PRODUCTION_DATA_APPROVED: 'true' }, 'not_nonprod_database'],
+        ])('ignored when %s', async (_label, extra, reason) => {
+            const s = await nightTest(extra);
+            expect(riyaAvailability((await s.repo.getSchool(ORG))!, s.env, WED_21_IST).testWindowOverride).toMatchObject({ active: false, inactiveReason: reason });
+            expect(await refusalCode(startRiyaCall(s.deps, ORG, ADMIN, await startInput(s.deps)))).toBe('OUTSIDE_CALLING_HOURS');
+            expect(s.fetchImpl).not.toHaveBeenCalled();
+        });
+
+        it('never for a demo school, and never in Practice (Practice still defers at night)', async () => {
+            const demo = await nightTest({ SAMPARK_RIYA_STAGING_TEST_WINDOW_UNTIL: inOneHour }, { isDemo: true });
+            expect(await refusalCode(startRiyaCall(demo.deps, ORG, ADMIN, await startInput(demo.deps)))).toBe('DEMO_SCHOOL_PRACTICE_ONLY');
+            expect(demo.fetchImpl).not.toHaveBeenCalled();
+            const practice = await setup({ mode: 'practice', at: WED_21_IST, env: { ...baseEnv(), SAMPARK_FIRESTORE_DATABASE: 'sampark-nonprod', SAMPARK_RIYA_STAGING_TEST_WINDOW_UNTIL: inOneHour } });
+            expect(await refusalCode(startRiyaCall(practice.deps, ORG, ADMIN, await startInput(practice.deps)))).toBe('OUTSIDE_CALLING_HOURS');
+        });
+
+        it('bypasses nothing else: suppression, consent, the daily cap', async () => {
+            const sup = await nightTest({ SAMPARK_RIYA_STAGING_TEST_WINDOW_UNTIL: inOneHour });
+            await sup.repo.upsertSuppression({ orgId: ORG, phoneHash: hashPhone(GUARDIAN_PHONE), phoneLast4: '1111', scope: 'routine', source: 'keypad', officeVerification: 'confirmed', createdAt: WED_21_IST.toISOString(), callId: null });
+            const p1 = await previewRiyaCall(sup.deps, ORG, { purpose: 'ptm_invitation', guardianId: 'g1', studentId: 's1', facts: FACTS.ptm_invitation });
+            expect(p1.refusals).toContainEqual({ code: 'GATE_BLOCKED', reason: 'suppressed' });
+
+            const noConsent = await nightTest({ SAMPARK_RIYA_STAGING_TEST_WINDOW_UNTIL: inOneHour }, {}, { consent: { notices: 'granted', progress: 'granted', recorded_conversation: 'unknown' } });
+            const p2 = await previewRiyaCall(noConsent.deps, ORG, { purpose: 'ptm_invitation', guardianId: 'g1', studentId: 's1', facts: FACTS.ptm_invitation });
+            expect(p2.refusals).toContainEqual(expect.objectContaining({ code: 'RECORDING_CONSENT_REQUIRED' }));
+
+            const capped = await nightTest({ SAMPARK_RIYA_STAGING_TEST_WINDOW_UNTIL: inOneHour, SAMPARK_RIYA_TEST_DAILY_CAP: '0' });
+            await expect(startRiyaCall(capped.deps, ORG, ADMIN, await startInput(capped.deps))).rejects.toBeInstanceOf(SamparkServiceError);
+            expect(capped.fetchImpl).not.toHaveBeenCalled();
+        });
+    });
+
     it('a suppressed number, missing consent, a custody restriction, a paused school', async () => {
         const s = await setup();
         await s.repo.upsertSuppression({ orgId: ORG, phoneHash: hashPhone(GUARDIAN_PHONE), phoneLast4: '1111', scope: 'routine', source: 'office', officeVerification: 'confirmed', createdAt: WED_11_IST.toISOString(), callId: null });

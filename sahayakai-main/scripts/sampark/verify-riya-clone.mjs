@@ -227,6 +227,8 @@ async function main() {
         args.target = assigned.agent_id;
         if (!args['target-branch'] && assigned.branch_id) args['target-branch'] = assigned.branch_id;
         console.log(`Number ${short(args['phone-number-id'])} is assigned to agent ${assigned.agent_id} ("${mask(assigned.agent_name ?? '')}"), branch ${assigned.branch_id ?? 'none (main)'}.`);
+        // Machine-readable for Deploy-Riya-Staging.ps1 (ids only; they are configuration, not secrets).
+        console.log(`RIYA_TARGET agent=${assigned.agent_id} branch=${assigned.branch_id ?? ''}`);
     }
     const target = await fetchJson(`/v1/convai/agents/${encodeURIComponent(args.target)}${args['target-branch'] ? `?branch_id=${encodeURIComponent(args['target-branch'])}` : ''}`);
     if (target.error) {

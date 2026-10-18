@@ -2266,5 +2266,17 @@
   "Cannot attend": "ଆସିପାରିବେ ନାହିଁ",
   "Online": "ଅନଲାଇନ୍",
   "Phone": "ଫୋନ୍",
-  "This is a demo school, so Riya calls stay in Practice. Real test calls need a non-demo school.": "ଏହା ଏକ ଡେମୋ ସ୍କୁଲ, ତେଣୁ Riya କଲ୍ ଅଭ୍ୟାସରେ ହିଁ ରହିବ। ପ୍ରକୃତ ପରୀକ୍ଷା କଲ୍ ପାଇଁ ଡେମୋ ନଥିବା ସ୍କୁଲ ଦରକାର।"
+  "This is a demo school, so Riya calls stay in Practice. Real test calls need a non-demo school.": "ଏହା ଏକ ଡେମୋ ସ୍କୁଲ, ତେଣୁ Riya କଲ୍ ଅଭ୍ୟାସରେ ହିଁ ରହିବ। ପ୍ରକୃତ ପରୀକ୍ଷା କଲ୍ ପାଇଁ ଡେମୋ ନଥିବା ସ୍କୁଲ ଦରକାର।",
+  "Before the call": "କଲ୍ ପୂର୍ବରୁ",
+  "Agent {agent} · branch {branch} · number {number}": "ଏଜେଣ୍ଟ {agent} · ଶାଖା {branch} · ନମ୍ବର {number}",
+  "Purpose: {purpose}": "ଉଦ୍ଦେଶ୍ୟ: {purpose}",
+  "Non-production database": "ନନ୍-ପ୍ରୋଡକ୍ସନ୍ ଡାଟାବେସ୍",
+  "Not the non-production database: real calls are refused": "ନନ୍-ପ୍ରୋଡକ୍ସନ୍ ଡାଟାବେସ୍ ନୁହେଁ: ପ୍ରକୃତ କଲ୍ ମନା",
+  "Normal calling hours": "ସାଧାରଣ କଲ୍ ସମୟ",
+  "Staging test window until {time}": "ଷ୍ଟେଜିଂ ପରୀକ୍ଷା ସମୟ {time} ପର୍ଯ୍ୟନ୍ତ",
+  "Webhook reachable, signature check on": "ୱେବହୁକ୍ ଉପଲବ୍ଧ, ସ୍ୱାକ୍ଷର ଯାଞ୍ଚ ଚାଲୁ",
+  "Webhook check failed: the call result could not come back": "ୱେବହୁକ୍ ଯାଞ୍ଚ ବିଫଳ: କଲ୍ ଫଳାଫଳ ଫେରିପାରିବ ନାହିଁ",
+  "Checking the webhook…": "ୱେବହୁକ୍ ଯାଞ୍ଚ ହେଉଛି…",
+  "At most {cap} real test call(s) today; no other Riya call is in progress": "ଆଜି ସର୍ବାଧିକ {cap}ଟି ପ୍ରକୃତ ପରୀକ୍ଷା କଲ୍; ଅନ୍ୟ କୌଣସି Riya କଲ୍ ଚାଲୁନାହିଁ",
+  "Another Riya call is still in progress": "ଆଉ ଏକ Riya କଲ୍ ଏବେ ବି ଚାଲୁଛି"
 }

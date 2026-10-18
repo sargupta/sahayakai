@@ -380,6 +380,7 @@ export function RiyaCallPanel() {
     const { t } = useLanguage();
     const { toast } = useToast();
     const { orgId, school } = useSamparkSchool();
+    const f = useSamparkFormat();
     const riya = useSamparkQuery((signal) => getRiya(orgId, { signal }), [orgId]);
     const families = useSamparkQuery((signal) => listGuardians(orgId, { limit: 500 }, { signal }), [orgId]);
 
@@ -392,6 +393,9 @@ export function RiyaCallPanel() {
     const [idempotencyKey, setIdempotencyKey] = useState<string | null>(null);
     const [busy, setBusy] = useState<"preview" | "start" | null>(null);
     const [confirmOpen, setConfirmOpen] = useState(false);
+    // Real calls only: the webhook route is checked over this page's own public origin (the URL
+    // ElevenLabs posts the result to) every time the confirmation opens.
+    const [webhook, setWebhook] = useState<"unchecked" | "checking" | "ok" | "failed">("unchecked");
 
     const options = useMemo(() => {
         const rows: { key: string; label: string; guardian: GuardianRow; studentId: string }[] = [];
@@ -431,8 +435,25 @@ export function RiyaCallPanel() {
         }
     };
 
+    const realCall = availability.provider === "elevenlabs";
+    // A real call still ringing, or one whose outcome nobody has checked, blocks the next one.
+    const callInProgress = calls.some((c) => c.provider === "elevenlabs" && (c.state === "initiating" || c.state === "initiated" || (c.state === "unknown" && !c.reviewedAt)));
+    const realReady = !realCall || (webhook === "ok" && preview?.nonProductionDatabase === true && !callInProgress);
+
+    const openConfirm = async () => {
+        setConfirmOpen(true);
+        if (!realCall) return;
+        setWebhook("checking");
+        try {
+            const res = await fetch("/api/webhooks/elevenlabs-riya", { method: "GET", cache: "no-store" });
+            setWebhook(res.ok ? "ok" : "failed");
+        } catch {
+            setWebhook("failed");
+        }
+    };
+
     const doStart = async () => {
-        if (!request || !preview?.ok || !preview.announcement || !idempotencyKey) return;
+        if (!request || !preview?.ok || !preview.announcement || !idempotencyKey || !realReady) return;
         setBusy("start");
         try {
             const r = await startRiya(orgId, {
@@ -502,7 +523,7 @@ export function RiyaCallPanel() {
                         {busy === "preview" && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
                         {t("Preview what Riya will say")}
                     </Button>
-                    <Button type="button" disabled={!preview?.ok || busy !== null} onClick={() => setConfirmOpen(true)}>
+                    <Button type="button" disabled={!preview?.ok || busy !== null} onClick={() => void openConfirm()}>
                         {availability.provider === "simulated" ? t("Run practice call") : t("Place call")}
                     </Button>
                 </div>
@@ -556,9 +577,19 @@ export function RiyaCallPanel() {
                                 : fmt(t("Riya will call the school test phone ending {last4} now and say the lines shown in the preview."), { last4: preview?.destinationLast4 ?? "" })}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
+                    {realCall && preview && (
+                        <ul className="space-y-1 text-sm text-foreground" aria-label={t("Before the call")}>
+                            <li>{fmt(t("Agent {agent} · branch {branch} · number {number}"), { agent: preview.agentId ?? "—", branch: preview.agentBranchId ?? "main", number: preview.agentPhoneNumberId ?? "—" })}</li>
+                            <li>{fmt(t("Purpose: {purpose}"), { purpose: riyaPurposeLabel(t, preview.purpose) })}</li>
+                            <li>{preview.nonProductionDatabase ? t("Non-production database") : t("Not the non-production database: real calls are refused")}</li>
+                            <li>{preview.testWindowOverride ? fmt(t("Staging test window until {time}"), { time: f.dateTime(preview.testWindowOverride.until) }) : t("Normal calling hours")}</li>
+                            <li>{webhook === "ok" ? t("Webhook reachable, signature check on") : webhook === "failed" ? t("Webhook check failed: the call result could not come back") : t("Checking the webhook…")}</li>
+                            <li>{callInProgress ? t("Another Riya call is still in progress") : fmt(t("At most {cap} real test call(s) today; no other Riya call is in progress"), { cap: availability.testDailyCap })}</li>
+                        </ul>
+                    )}
                     <AlertDialogFooter>
                         <AlertDialogCancel disabled={busy === "start"}>{t("Cancel")}</AlertDialogCancel>
-                        <AlertDialogAction disabled={busy === "start"} onClick={(e) => { e.preventDefault(); void doStart(); }}>
+                        <AlertDialogAction disabled={busy === "start" || !realReady} onClick={(e) => { e.preventDefault(); void doStart(); }}>
                             {busy === "start" && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
                             {availability.provider === "simulated" ? t("Run practice call") : t("Place call")}
                         </AlertDialogAction>

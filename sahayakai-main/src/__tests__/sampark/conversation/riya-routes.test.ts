@@ -11,7 +11,7 @@ jest.mock('@/server/sampark/auth', () => ({ requireOrgAdmin: jest.fn(async (orgI
 import type { NextRequest } from 'next/server';
 
 import { guardRiyaRoute } from '@/server/sampark/conversation-http';
-import { POST as webhookPOST } from '@/app/api/webhooks/elevenlabs-riya/route';
+import { GET as webhookGET, POST as webhookPOST } from '@/app/api/webhooks/elevenlabs-riya/route';
 
 // The jest.setup Request polyfill drops headers, so routes get a minimal stand-in with real header lookup.
 const fakeRequest = (headers: Record<string, string>, body = '') =>
@@ -60,5 +60,21 @@ describe('POST /api/webhooks/elevenlabs-riya', () => {
         process.env.SAMPARK_ENABLED = 'true';
         process.env.SAMPARK_ELEVENLABS_ENABLED = 'true';
         expect((await post('x'.repeat(600 * 1024))).status).toBe(413);
+    });
+});
+
+describe('GET /api/webhooks/elevenlabs-riya (health)', () => {
+    it('404 when off, 503 without a secret, 200 with one, and never echoes the secret', async () => {
+        process.env.SAMPARK_ENABLED = 'true';
+        process.env.SAMPARK_ELEVENLABS_ENABLED = 'false';
+        expect((await webhookGET()).status).toBe(404);
+        process.env.SAMPARK_ELEVENLABS_ENABLED = 'true';
+        delete process.env.ELEVENLABS_WEBHOOK_SECRET;
+        expect((await webhookGET()).status).toBe(503);
+        process.env.ELEVENLABS_WEBHOOK_SECRET = 'whsec_local_test_value';
+        const res = await webhookGET();
+        expect(res.status).toBe(200);
+        // (the jest.setup Response polyfill does not keep NextResponse.json bodies; the status is the contract)
+        expect(JSON.stringify(await res.json().catch(() => ({})))).not.toContain('whsec_local_test_value');
     });
 });

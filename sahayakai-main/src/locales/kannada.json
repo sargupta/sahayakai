@@ -2292,5 +2292,17 @@
   "Cannot attend": "ಬರಲು ಸಾಧ್ಯವಿಲ್ಲ",
   "Online": "ಆನ್‌ಲೈನ್",
   "Phone": "ಫೋನ್",
-  "This is a demo school, so Riya calls stay in Practice. Real test calls need a non-demo school.": "ಇದು ಡೆಮೊ ಶಾಲೆ, ಆದ್ದರಿಂದ Riya ಕರೆಗಳು ಅಭ್ಯಾಸದಲ್ಲೇ ಇರುತ್ತವೆ. ನಿಜವಾದ ಪರೀಕ್ಷಾ ಕರೆಗಳಿಗೆ ಡೆಮೊ ಅಲ್ಲದ ಶಾಲೆ ಬೇಕು."
+  "This is a demo school, so Riya calls stay in Practice. Real test calls need a non-demo school.": "ಇದು ಡೆಮೊ ಶಾಲೆ, ಆದ್ದರಿಂದ Riya ಕರೆಗಳು ಅಭ್ಯಾಸದಲ್ಲೇ ಇರುತ್ತವೆ. ನಿಜವಾದ ಪರೀಕ್ಷಾ ಕರೆಗಳಿಗೆ ಡೆಮೊ ಅಲ್ಲದ ಶಾಲೆ ಬೇಕು.",
+  "Before the call": "ಕರೆಯ ಮೊದಲು",
+  "Agent {agent} · branch {branch} · number {number}": "ಏಜೆಂಟ್ {agent} · ಶಾಖೆ {branch} · ಸಂಖ್ಯೆ {number}",
+  "Purpose: {purpose}": "ಉದ್ದೇಶ: {purpose}",
+  "Non-production database": "ಪ್ರೊಡಕ್ಷನ್ ಅಲ್ಲದ ಡೇಟಾಬೇಸ್",
+  "Not the non-production database: real calls are refused": "ಪ್ರೊಡಕ್ಷನ್ ಅಲ್ಲದ ಡೇಟಾಬೇಸ್ ಅಲ್ಲ: ನಿಜವಾದ ಕರೆಗಳನ್ನು ನಿರಾಕರಿಸಲಾಗುತ್ತದೆ",
+  "Normal calling hours": "ಸಾಮಾನ್ಯ ಕರೆ ಸಮಯ",
+  "Staging test window until {time}": "ಸ್ಟೇಜಿಂಗ್ ಪರೀಕ್ಷಾ ಸಮಯ {time} ವರೆಗೆ",
+  "Webhook reachable, signature check on": "ವೆಬ್‌ಹುಕ್ ತಲುಪಬಹುದು, ಸಹಿ ಪರಿಶೀಲನೆ ಆನ್",
+  "Webhook check failed: the call result could not come back": "ವೆಬ್‌ಹುಕ್ ಪರಿಶೀಲನೆ ವಿಫಲ: ಕರೆಯ ಫಲಿತಾಂಶ ಹಿಂತಿರುಗಲು ಸಾಧ್ಯವಿಲ್ಲ",
+  "Checking the webhook…": "ವೆಬ್‌ಹುಕ್ ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ…",
+  "At most {cap} real test call(s) today; no other Riya call is in progress": "ಇಂದು ಗರಿಷ್ಠ {cap} ನಿಜವಾದ ಪರೀಕ್ಷಾ ಕರೆಗಳು; ಬೇರೆ ಯಾವುದೇ Riya ಕರೆ ನಡೆಯುತ್ತಿಲ್ಲ",
+  "Another Riya call is still in progress": "ಇನ್ನೊಂದು Riya ಕರೆ ಇನ್ನೂ ನಡೆಯುತ್ತಿದೆ"
 }

@@ -26,8 +26,12 @@ const opt = (n, d) => {
 
 const url = opt('url', 'http://localhost:3000/api/webhooks/elevenlabs-riya');
 const u = new URL(url);
-if (u.protocol !== 'http:' || !['localhost', '127.0.0.1', '[::1]'].includes(u.hostname)) {
-    console.error('Refusing: this tool only posts to a local server (http://localhost…).');
+const isLocal = u.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(u.hostname);
+// The ONLY non-local target: the isolated staging service (https, sahayakai-riya-staging*.run.app),
+// and only with --staging. Never production, preview or any other host.
+const isStaging = flag('staging') && u.protocol === 'https:' && /^sahayakai-riya-staging[-a-z0-9.]*\.run\.app$/.test(u.hostname) && u.pathname === '/api/webhooks/elevenlabs-riya';
+if (!isLocal && !isStaging) {
+    console.error('Refusing: this tool only posts to a local server (http://localhost…), or with --staging to https://sahayakai-riya-staging…run.app/api/webhooks/elevenlabs-riya.');
     process.exit(2);
 }
 const secret = process.env.ELEVENLABS_WEBHOOK_SECRET?.trim();

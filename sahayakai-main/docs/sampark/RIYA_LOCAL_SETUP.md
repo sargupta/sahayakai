@@ -243,48 +243,45 @@ What Claude established offline: `phnum_8101…b864` is **not** the phone-number
 
 `hillview-demo` has `isDemoData=true`. Riya refuses real calls from any demo school, even to its test phone (`DEMO_SCHOOL_PRACTICE_ONLY`, tested in `riya-service.test.ts`); Practice keeps working there. The real call needs a **non-demo** organisation on the staging service below. Your Google account must be its admin (`organizations/{orgId}.adminUserId` or `members/{uid}.role = admin`), because staging runs `NODE_ENV=production`, where the dev cookie is refused. Its Sampark data goes to `sampark-nonprod`.
 
-### 11.3 Non-production deployment — PREPARED, NOT RUN (needs your written approval)
+### 11.3 Non-production staging — one script, step by step (authorised 2026-10-18 for non-production only)
 
-No authorised non-production Riya deployment exists in the evidence:
-- `sahayakai-preview` exists, but it is shared by QA and auto-deploys `develop` with `--update-env-vars`, which would carry live-dial flags into later preview revisions;
-- `sahayakai-telephony-calltest` is the parent-call bridge, not this app.
-
-So this branch adds `cloudbuild-riya-staging.yaml`: a **separate** service `sahayakai-riya-staging`.
-- Its settings are `SAMPARK_FIRESTORE_DATABASE=sampark-nonprod` and `SAMPARK_RIYA_TEST_DAILY_CAP=1`, and it runs with `max-instances=1`.
-- No Vobiz or Twilio secrets are bound.
-- Its smoke step expects `401` from an unsigned webhook POST.
-
-Every step below changes Google Cloud. Run them only after you approve them in writing (an owner of `sahayakai-b4248`):
+Run in PowerShell from `E:\sargvision\riya-wt\sahayakai-main`, signed in with `gcloud auth login` as an owner of `sahayakai-b4248`. Each step stops at the first failure and names the missing permission.
 
 ```powershell
-# 1. The non-production database (check first; create only if absent)
-gcloud firestore databases describe --database=sampark-nonprod --project=sahayakai-b4248
-gcloud firestore databases create --database=sampark-nonprod --location=asia-south1 --project=sahayakai-b4248
-
-# 2. Dedicated secrets, typed at a hidden prompt (never on the command line or in a file)
-foreach ($name in 'RIYA_ELEVENLABS_API_KEY','RIYA_ELEVENLABS_WEBHOOK_SECRET') {
-  $sec = Read-Host -AsSecureString "$name (input hidden)"
-  [System.Net.NetworkCredential]::new('', $sec).Password | gcloud secrets create $name --data-file=- --project=sahayakai-b4248
-}
-# PII key and pepper: random values, generated in place
--join ((1..32) | % { [char](Get-Random -Min 33 -Max 127) }) | gcloud secrets create RIYA_SAMPARK_PHONE_PEPPER --data-file=- --project=sahayakai-b4248
-[Convert]::ToBase64String((1..32 | % { [byte](Get-Random -Max 256) })) | gcloud secrets create RIYA_SAMPARK_PII_KEY --data-file=- --project=sahayakai-b4248
-
-# 3. Build and deploy the separate service, with the ids the verifier (11.1) printed
-cd E:\sargvision\riya-wt\sahayakai-main
-gcloud builds submit .. --project=sahayakai-b4248 --config=cloudbuild-riya-staging.yaml `
-  --substitutions="SHORT_SHA=$(git rev-parse --short HEAD),_AGENT_ID=<clone agent id>,_AGENT_BRANCH_ID=<branch id>,_PHONE_NUMBER_ID=phnum_8101m535s90df9qa3jy6mdh2b864,_SOURCE_AGENT_ID=<Varunesh's agent id>"
+$s = 'scripts\sampark\Deploy-Riya-Staging.ps1'
+powershell -ExecutionPolicy Bypass -File $s -Step Verify    # read-only: prints the agent + branch the number is assigned to; requires SIP/outbound/auth PASS
+powershell -ExecutionPolicy Bypass -File $s -Step Infra     # sampark-nonprod database + RIYA_* secrets (hidden prompts)
+powershell -ExecutionPolicy Bypass -File $s -Step Deploy    # builds and deploys sahayakai-riya-staging; smoke: GET 200, unsigned POST 401
+# → ElevenLabs UI (current workspace): add a post-call webhook to <staging URL>/api/webhooks/elevenlabs-riya,
+#   HMAC on, attached to the CLONE only, transcript events, no audio. Leave Varunesh's agent alone.
+powershell -ExecutionPolicy Bypass -File $s -Step Webhook   # stores its secret, rolls a revision; signed checks: bad 401, stale 401, other agent 200, unlinked 503
+powershell -ExecutionPolicy Bypass -File $s -Step Status
 ```
 
-The ElevenLabs webhook secret is the value ElevenLabs shows when you create the webhook in step 4, so create the webhook first and store its secret, or rotate the secret after.
+What the service is:
+- It deploys `cloudbuild-riya-staging.yaml`: the separate service `sahayakai-riya-staging`.
+- It uses `sampark-nonprod` and allows `SAMPARK_RIYA_TEST_DAILY_CAP=1` call per day, with `max-instances=1`.
+- No Vobiz or Twilio secrets are bound.
+- The build refuses to deploy if the agent id equals the source agent id.
 
-### 11.4 Register the post-call webhook (ElevenLabs UI, needs approval)
+Not run by Claude: this session has no Google Cloud credentials, and its shell on your laptop does not start.
 
-1. In the **current** workspace, add a post-call webhook to `https://<sahayakai-riya-staging URL>/api/webhooks/elevenlabs-riya`, HMAC enabled.
-2. Copy its secret straight into `RIYA_ELEVENLABS_WEBHOOK_SECRET` (step 2 above).
-3. Attach the webhook to the **clone only**, with transcript events and no audio.
-4. Leave Varunesh's agent unchanged.
-5. Re-run 11.1: check 12c must show the webhook.
+### 11.4 Calling-window override for the controlled test (staging only)
+
+`SAMPARK_RIYA_STAGING_TEST_WINDOW_UNTIL=<ISO time>` replaces **only** the calling-hours deferral. It is active only when every condition below holds:
+- the value is at most 3 hours ahead (so it expires by itself);
+- the database is `sampark-nonprod`;
+- the school is in Test mode and is not a demo school;
+- the call rings the saved test phone.
+
+It does not bypass consent, school admin authorisation, suppression or opt-outs, the source-agent refusal, the daily cap, the in-flight lock, or webhook signatures. The call's audit entry records it. Tested in `riya-service.test.ts`.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File $s -Step WindowOn -WindowMinutes 60   # only if outside 10:00–20:00 IST
+powershell -ExecutionPolicy Bypass -File $s -Step WindowOff                    # right after the call
+```
+
+Opt-out on a Riya call is **spoken**. "Stop calling" or the agent's `stop_requested` answer adds a routine suppression, pending office confirmation. Keypad 9 belongs to the Vobiz recorded-notice path and is unchanged; the hosted Riya agent does not listen for keypad tones.
 
 ### 11.5 The one call
 
@@ -293,7 +290,15 @@ The ElevenLabs webhook secret is the value ElevenLabs shows when you create the 
 3. Give that family English, **Notices** and **Recorded conversation** consent.
 4. Go to **Settings → Test phone**. Type your number there; only the last four digits are shown after saving. Then choose **Test — my phone only**.
 5. Open the **Riya calls** tab and set up the call: PTM invitation, a future date, then **Preview**. The preview must show "Rings: the school test phone ending ….", plus the masked agent and number ids.
-6. Click **Place call**. The dialog "Place a real test call?" repeats the last four digits; confirm once.
+6. Click **Place call**. The dialog "Place a real test call?" must show all of these before **Place call** is enabled:
+   - the agent, branch and number (masked);
+   - the purpose;
+   - "Non-production database";
+   - the calling window (normal hours, or the staging test window and its end time);
+   - "Webhook reachable, signature check on" (checked live over this page's own HTTPS origin);
+   - the daily cap, with "no other Riya call is in progress".
+
+   Confirm once.
 7. Afterwards, the call row moves from "Ringing or on the call" to **Conversation ended** when the webhook arrives. If it stays unclear, use **Check status** (a read-only provider lookup) and do not retry. The daily cap of 1 refuses a second call that day.
 8. Do not call Sir until you have reviewed this result and approved a second call in writing.
 

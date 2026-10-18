@@ -145,6 +145,12 @@ export interface RiyaAvailability {
     transcriptDays: number;
     testDailyCap: number;
     recordingConsentRequired: boolean;
+    agentBranchId: string | null;
+    nonProductionDatabase: boolean;
+    /** The post-call webhook secret is configured server-side (the value is never exposed). */
+    webhookSecretConfigured: boolean;
+    /** The staging test-window override as it applies to this school now. */
+    testWindowOverride: StagingTestWindowOverride;
 }
 
 function providerFor(school: SamparkSchool, env: Env): { provider: ConversationProviderKind; config: ElevenLabsConfig | null } | { blocker: RiyaBlocker; problems: string[] } {
@@ -169,7 +175,50 @@ function providerFor(school: SamparkSchool, env: Env): { provider: ConversationP
     return { provider: 'elevenlabs', config: cfg.config };
 }
 
-export function riyaAvailability(school: SamparkSchool, env: Env = process.env): RiyaAvailability {
+/** Longest window the staging test override may stay open, so a forgotten setting expires by itself. */
+export const STAGING_TEST_WINDOW_MAX_MS = 3 * 60 * 60 * 1000;
+
+export interface StagingTestWindowOverride {
+    active: boolean;
+    /** When the override ends (ISO), if one is configured and well formed. */
+    until: string | null;
+    /** Why a configured override is NOT active (machine string), or null. */
+    inactiveReason: string | null;
+}
+
+/**
+ * SAMPARK_RIYA_STAGING_TEST_WINDOW_UNTIL — a narrow, self-expiring exception to the school
+ * calling window for ONE controlled Riya test on the isolated staging service. It replaces only
+ * the calling-hours deferral (gate rule 15, which runs after every other rule), and only when ALL
+ * of these hold:
+ *   - the value is an ISO time in the future, at most 3 hours away (it switches itself off);
+ *   - this deployment uses the separate `sampark-nonprod` database;
+ *   - the school is in Test mode, is not a demo school, and the call rings its saved test phone.
+ * Consent, school authorisation, opt-outs, suppression, the source-agent refusal, the daily cap,
+ * the in-flight lock and webhook verification are untouched. Every call placed under it is
+ * audited with `testWindowOverride`.
+ */
+export function stagingTestWindowOverride(
+    env: Env,
+    school: SamparkSchool,
+    destination: CallDestination | null,
+    now: Date,
+): StagingTestWindowOverride {
+    const raw = env.SAMPARK_RIYA_STAGING_TEST_WINDOW_UNTIL?.trim();
+    if (!raw) return { active: false, until: null, inactiveReason: null };
+    const untilMs = Date.parse(raw);
+    if (!Number.isFinite(untilMs)) return { active: false, until: null, inactiveReason: 'unparseable' };
+    const until = new Date(untilMs).toISOString();
+    const off = (inactiveReason: string): StagingTestWindowOverride => ({ active: false, until, inactiveReason });
+    if (untilMs <= now.getTime()) return off('expired');
+    if (untilMs - now.getTime() > STAGING_TEST_WINDOW_MAX_MS) return off('longer_than_3_hours');
+    if (env.SAMPARK_FIRESTORE_DATABASE?.trim() !== SAMPARK_NONPROD_DATABASE) return off('not_nonprod_database');
+    if (school.isDemo) return off('demo_school');
+    if (school.mode !== 'test' || destination !== 'test_phone') return off('not_test_phone');
+    return { active: true, until, inactiveReason: null };
+}
+
+export function riyaAvailability(school: SamparkSchool, env: Env = process.env, now: Date = new Date()): RiyaAvailability {
     const p = providerFor(school, env);
     const cfg = readElevenLabsConfig(env);
     return {
@@ -186,6 +235,10 @@ export function riyaAvailability(school: SamparkSchool, env: Env = process.env):
         transcriptDays: transcriptDays(env),
         testDailyCap: testDailyCap(env),
         recordingConsentRequired: !recordingOffConfirmed(env),
+        agentBranchId: cfg.ok ? maskId(cfg.config.branchId ?? null) : null,
+        nonProductionDatabase: env.SAMPARK_FIRESTORE_DATABASE?.trim() === SAMPARK_NONPROD_DATABASE,
+        webhookSecretConfigured: Boolean(env.ELEVENLABS_WEBHOOK_SECRET?.trim()),
+        testWindowOverride: stagingTestWindowOverride(env, school, school.mode === 'test' ? 'test_phone' : null, now),
     };
 }
 
@@ -265,6 +318,12 @@ export interface RiyaPreview {
     opening: string | null;
     agentId: string | null;
     agentPhoneNumberId: string | null;
+    /** Masked agent branch id (Test mode). */
+    agentBranchId: string | null;
+    /** This deployment stores Sampark data in the separate non-production database. */
+    nonProductionDatabase: boolean;
+    /** Set when this call is allowed only because of the staging test-window override. */
+    testWindowOverride: { until: string } | null;
 }
 
 interface Resolved {
@@ -355,7 +414,23 @@ async function evaluate(deps: RiyaDeps, orgId: string, input: RiyaPreviewInput):
     if (verdict.kind === 'block') refusals.push({ code: 'GATE_BLOCKED', reason: verdict.reason });
     // Riya speaks English only (agent prompt §5): a family whose language is another is not called by her.
     if (verdict.kind === 'allow' && verdict.language !== 'English') refusals.push({ code: 'LANGUAGE_NOT_SUPPORTED', language: verdict.language });
-    if (verdict.kind === 'defer') refusals.push({ code: 'OUTSIDE_CALLING_HOURS', nextAllowedAt: verdict.until.toISOString(), reason: verdict.reason });
+    const destPreview = provider ? destinationOf(school, guardian) : null;
+    const windowOverride = stagingTestWindowOverride(env, school, provider === 'elevenlabs' ? destPreview?.destination ?? null : null, now);
+    let gateLanguage = verdict.kind === 'allow' ? verdict.language : null;
+    if (verdict.kind === 'defer' && windowOverride.active) {
+        // Only rule 15 deferred (it runs last); re-read the verdict without it for the language.
+        const rest = evaluateGate({
+            school, spec, guardian, students: [student], preferences, suppression, recentCallsToPhone,
+            carrierKind: 'vobiz', now, stage: 'materialise',
+        });
+        if (rest.kind === 'block') refusals.push({ code: 'GATE_BLOCKED', reason: rest.reason });
+        else if (rest.kind === 'allow') gateLanguage = rest.language;
+    } else if (verdict.kind === 'defer') {
+        refusals.push({ code: 'OUTSIDE_CALLING_HOURS', nextAllowedAt: verdict.until.toISOString(), reason: verdict.reason });
+    }
+    if (verdict.kind === 'defer' && windowOverride.active && gateLanguage && gateLanguage !== 'English') {
+        refusals.push({ code: 'LANGUAGE_NOT_SUPPORTED', language: gateLanguage });
+    }
 
     // The agent records audio and keeps transcripts unless the operator has turned that off.
     if (!recordingOffConfirmed(env) && preferences?.consent?.recorded_conversation?.status !== 'granted') {
@@ -395,6 +470,9 @@ async function evaluate(deps: RiyaDeps, orgId: string, input: RiyaPreviewInput):
         opening: variables ? riyaOpening(variables.school_name) : null,
         agentId: maskId(config?.agentId),
         agentPhoneNumberId: maskId(config?.agentPhoneNumberId),
+        agentBranchId: maskId(config?.branchId ?? null),
+        nonProductionDatabase: env.SAMPARK_FIRESTORE_DATABASE?.trim() === SAMPARK_NONPROD_DATABASE,
+        testWindowOverride: windowOverride.active && verdict.kind === 'defer' ? { until: windowOverride.until as string } : null,
     };
     return { preview, resolved, config };
 }
@@ -554,7 +632,7 @@ export async function startRiyaCall(deps: RiyaDeps, orgId: string, uid: string, 
     }
     await deps.repo.appendAudit(orgId, {
         at: nowIso, actor: uid, action: 'riya_call.start', target: `riya_call/${callId}`,
-        detail: { purpose: input.purpose, provider, mode: school.mode, destination: dest.destination, guardianId: guardian.id, studentId: student.id },
+        detail: { purpose: input.purpose, provider, mode: school.mode, destination: dest.destination, guardianId: guardian.id, studentId: student.id, ...(preview.testWindowOverride ? { testWindowOverride: preview.testWindowOverride.until } : {}) },
     });
     logger.info('Riya call starting', LOG, { orgId, callId, purpose: input.purpose, provider, destination: dest.destination });
 
@@ -788,7 +866,7 @@ export async function listRiyaCalls(deps: RiyaDeps, orgId: string, limit = 50): 
 /** GET /riya: what this school can do with Riya now, and its latest calls. */
 export async function riyaOverview(deps: RiyaDeps, orgId: string): Promise<{ availability: RiyaAvailability; calls: ConversationCallView[] }> {
     const school = await getSchoolOrThrow({ repo: deps.repo, clock: deps.clock }, orgId);
-    return { availability: riyaAvailability(school, deps.env ?? process.env), calls: await listRiyaCalls(deps, orgId, 50) };
+    return { availability: riyaAvailability(school, deps.env ?? process.env, deps.clock.now()), calls: await listRiyaCalls(deps, orgId, 50) };
 }
 
 export interface RiyaCallDetail {

@@ -39,3 +39,16 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ ok: false }, { status: 500 });
     }
 }
+
+/**
+ * GET — health check over the public URL, for the console's pre-call checklist and the deploy
+ * smoke test: 200 when Riya is on and a webhook secret is configured (signature checking will
+ * run), 503 when the secret is missing, 404 when the flags are off. Reveals nothing else.
+ */
+export async function GET() {
+    if (process.env.SAMPARK_ENABLED !== 'true' || process.env.SAMPARK_ELEVENLABS_ENABLED !== 'true') {
+        return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
+    const ready = Boolean(process.env.ELEVENLABS_WEBHOOK_SECRET?.trim());
+    return NextResponse.json({ ok: ready, signatureCheck: ready }, { status: ready ? 200 : 503, headers: { 'cache-control': 'no-store' } });
+}

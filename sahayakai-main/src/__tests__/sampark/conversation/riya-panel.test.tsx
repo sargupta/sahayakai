@@ -108,7 +108,8 @@ const WED_11_IST = new Date('2026-10-07T05:30:00Z');
 async function seed(mode: 'practice' | 'test' = 'practice') {
     setPhoneEnv();
     const repo = createMemorySamparkRepo();
-    const s = school({ mode, holidays: [] });
+    const testPhone = '+919800000001';
+    const s = school({ mode, holidays: [], ...(mode === 'test' ? { testPhoneEnc: encryptPhone(testPhone), testPhoneHash: hashPhone(testPhone), testPhoneLast4: '0001' } : {}) });
     await repo.upsertSchool(s);
     await repo.upsertStudents(ORG, [
         student('s1', { displayName: 'Asha Rai', spokenFirstName: { English: 'Asha' }, guardianIds: ['g1'] }),
@@ -236,5 +237,85 @@ describe('Riya calls tab (Practice)', () => {
         currentUid = ADMIN;
         renderPanel(view, 'other-school');
         expect(await screen.findByText('Only administrators of this school can use school calls.')).toBeTruthy();
+    });
+});
+
+describe('Riya calls tab (Test mode, real call)', () => {
+    const outbound = jest.fn(async () => new Response(JSON.stringify({ success: true, message: 'ok', conversation_id: 'conv_panel_1', sip_call_id: 'sip_1' }), { status: 200 }));
+
+    function testEnv() {
+        env = {
+            ...env,
+            SAMPARK_LIVE_DIAL_ENABLED: 'true',
+            SAMPARK_FIRESTORE_DATABASE: 'sampark-nonprod',
+            ELEVENLABS_API_KEY: 'sk_test_panel_key_not_real',
+            ELEVENLABS_AGENT_ID: 'agent_1111cloneclonecloneclone111',
+            ELEVENLABS_AGENT_BRANCH_ID: 'agtbrch_2222branchbranchbranch22',
+            ELEVENLABS_AGENT_PHONE_NUMBER_ID: 'phnum_3333numbernumbernumber333',
+            ELEVENLABS_SOURCE_AGENT_ID: 'agent_0000sourcesourcesourcesource00',
+            ELEVENLABS_WEBHOOK_SECRET: 'whsec_panel_test',
+        };
+        process.env.SAMPARK_LIVE_DIAL_ENABLED = 'true'; // evaluateGate reads it from process.env
+    }
+
+    function webhookHealth(ok: boolean) {
+        fetchSpy.mockImplementation((async (url: string) => {
+            if (url === '/api/webhooks/elevenlabs-riya') return { ok, status: ok ? 200 : 503 };
+            throw new Error(`unexpected browser request ${url}`);
+        }) as never);
+    }
+
+    afterEach(() => {
+        delete process.env.SAMPARK_LIVE_DIAL_ENABLED;
+        outbound.mockClear();
+    });
+
+    it('the confirmation lists agent, branch, number, purpose, database, window, webhook and cap; a failed webhook check blocks the call', async () => {
+        testEnv();
+        const view = await seed('test');
+        deps = { ...deps, env, http: { fetchImpl: outbound as unknown as typeof fetch } };
+        webhookHealth(false);
+        renderPanel(view);
+        await screen.findByText('Riya calling assistant');
+        await fillPtm('g1|s1');
+        fireEvent.click(screen.getByRole('button', { name: 'Preview what Riya will say' }));
+        expect(await screen.findByText(/Rings: the school test phone ending 0001/)).toBeTruthy();
+        const place = screen.getByRole('button', { name: 'Place call' }) as HTMLButtonElement;
+        await waitFor(() => expect(place.disabled).toBe(false));
+        fireEvent.click(place);
+        const dialog = await screen.findByRole('alertdialog');
+        expect(within(dialog).getByText('Place a real test call?')).toBeTruthy();
+        expect(within(dialog).getByText(/Agent …one111 · branch …anch22 · number …ber333/)).toBeTruthy();
+        expect(within(dialog).getByText('Purpose: PTM invitation')).toBeTruthy();
+        expect(within(dialog).getByText('Non-production database')).toBeTruthy();
+        expect(within(dialog).getByText('Normal calling hours')).toBeTruthy();
+        expect(await within(dialog).findByText('Webhook check failed: the call result could not come back')).toBeTruthy();
+        expect(within(dialog).getByText(/At most 5 real test call\(s\) today/)).toBeTruthy();
+        const confirm = within(dialog).getByRole('button', { name: 'Place call' }) as HTMLButtonElement;
+        expect(confirm.disabled).toBe(true);
+        fireEvent.click(confirm);
+        expect(outbound).not.toHaveBeenCalled();
+    });
+
+    it('with a healthy webhook, one confirmation places exactly one call to the test phone', async () => {
+        testEnv();
+        const view = await seed('test');
+        deps = { ...deps, env, http: { fetchImpl: outbound as unknown as typeof fetch } };
+        webhookHealth(true);
+        renderPanel(view);
+        await screen.findByText('Riya calling assistant');
+        await fillPtm('g1|s1');
+        fireEvent.click(screen.getByRole('button', { name: 'Preview what Riya will say' }));
+        await screen.findByText(/Rings: the school test phone ending 0001/);
+        fireEvent.click(screen.getByRole('button', { name: 'Place call' }));
+        const dialog = await screen.findByRole('alertdialog');
+        expect(await within(dialog).findByText('Webhook reachable, signature check on')).toBeTruthy();
+        const confirm = within(dialog).getByRole('button', { name: 'Place call' }) as HTMLButtonElement;
+        await waitFor(() => expect(confirm.disabled).toBe(false));
+        fireEvent.click(confirm);
+        await waitFor(() => expect(outbound).toHaveBeenCalledTimes(1));
+        const stored = await deps.calls.listCalls(ORG, 10);
+        expect(stored).toHaveLength(1);
+        expect(stored[0]).toMatchObject({ provider: 'elevenlabs', destination: 'test_phone', phoneLast4: '0001', providerConversationId: 'conv_panel_1' });
     });
 });

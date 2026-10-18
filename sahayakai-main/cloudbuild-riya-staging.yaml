@@ -14,6 +14,8 @@
 #   - VOICE_PROVIDER, Vobiz and Twilio secrets are NOT bound: attendance parent calls cannot dial here.
 #   - Secrets come from Secret Manager (dedicated RIYA_* secrets), never plaintext or NEXT_PUBLIC_.
 #   - max-instances=1.
+#   - SAMPARK_RIYA_STAGING_TEST_WINDOW_UNTIL is NOT set here. Deploy-Riya-Staging.ps1 sets it for one
+#     controlled test (at most 3 hours, it expires by itself) and removes it afterwards.
 #
 # Submit (only after written approval; see docs/sampark/RIYA_LOCAL_SETUP.md §11.3):
 #   gcloud builds submit .. --project=sahayakai-b4248 --config=cloudbuild-riya-staging.yaml \
@@ -77,8 +79,8 @@ steps:
       - --quiet
     waitFor: [push]
 
-  # The webhook route must answer 401 to an unsigned request: proves this code is deployed, the
-  # flags are on, and signature checking is active — without sending any event.
+  # GET must answer 200 (flags on, webhook secret configured) and an unsigned POST 401: proves this
+  # code is deployed and signature checking is active — without sending any event.
   - id: smoke
     name: gcr.io/google.com/cloudsdktool/cloud-sdk
     entrypoint: bash
@@ -87,9 +89,11 @@ steps:
       - |
         set -euo pipefail
         url=$$(gcloud run services describe ${_SERVICE} --region=${_REGION} --project=$PROJECT_ID --format='value(status.url)')
+        health=$$(curl -s -o /dev/null -m 60 -w '%{http_code}' "$$url/api/webhooks/elevenlabs-riya")
+        echo "GET  $$url/api/webhooks/elevenlabs-riya -> $$health (expected 200: flags on, secret configured)"
         code=$$(curl -s -o /dev/null -m 60 -w '%{http_code}' -X POST -H 'content-type: application/json' -d '{}' "$$url/api/webhooks/elevenlabs-riya")
-        echo "unsigned POST $$url/api/webhooks/elevenlabs-riya -> $$code (expected 401)"
-        [ "$$code" = "401" ]
+        echo "POST (unsigned) -> $$code (expected 401)"
+        [ "$$health" = "200" ] && [ "$$code" = "401" ]
     waitFor: [deploy]
 
 options:
