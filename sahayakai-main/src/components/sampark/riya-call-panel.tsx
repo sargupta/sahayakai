@@ -460,7 +460,7 @@ export function RiyaCallPanel() {
                 description={t("Riya is an AI assistant that calls one family about one school notice. She says she is an AI if asked, never shares a child's details before the listener confirms they are the parent or guardian, and only says the facts you enter here.")}
             >
                 <p className="text-sm text-foreground">{modeBannerText(t, availability.mode, availability.destinationLast4)}</p>
-                {availability.blocker && <p className="text-sm text-muted-foreground">{availability.blocker === "LIVE_MODE_NOT_AVAILABLE" ? t("Riya calls run only in Practice or Test mode in this release.") : fmt(t("Riya cannot place calls yet ({reason})."), { reason: availability.blocker })}</p>}
+                {availability.blocker && <p className="text-sm text-muted-foreground">{availability.blocker === "LIVE_MODE_NOT_AVAILABLE" ? t("Riya calls run only in Practice or Test mode in this release.") : availability.blocker === "DEMO_SCHOOL_PRACTICE_ONLY" ? t("This is a demo school, so Riya calls stay in Practice. Real test calls need a non-demo school.") : fmt(t("Riya cannot place calls yet ({reason})."), { reason: availability.blocker })}</p>}
                 {availability.recordingConsentRequired && <p className="text-sm text-muted-foreground">{t("Riya calls are recorded, so only families who agreed to recorded calls can be called.")}</p>}
             </SectionCard>
 

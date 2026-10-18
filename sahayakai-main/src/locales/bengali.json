@@ -2265,5 +2265,6 @@
   "Can attend": "আসতে পারবেন",
   "Cannot attend": "আসতে পারবেন না",
   "Online": "অনলাইন",
-  "Phone": "ফোন"
+  "Phone": "ফোন",
+  "This is a demo school, so Riya calls stay in Practice. Real test calls need a non-demo school.": "এটি একটি ডেমো স্কুল, তাই Riya কল অনুশীলনেই থাকবে। আসল টেস্ট কলের জন্য ডেমো নয় এমন স্কুল দরকার।"
 }

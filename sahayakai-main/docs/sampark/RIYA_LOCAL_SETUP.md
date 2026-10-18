@@ -202,7 +202,7 @@ Console "Check status" ──▶ /riya/[callId]/reconcile ──▶ GET /v1/conv
 - The API key and webhook secret are server-side only; no `NEXT_PUBLIC_` ElevenLabs variable exists (a test enforces it).
 - A 200 from the outbound call means only "initiated". The final state comes only from the webhook or a reconcile. Unknown outcomes are never redialled. Live mode is refused in this release.
 
-## 11. Test mode and the single authorised test call  [BLOCKED: needs your read-only check and approvals]
+## 11. Test mode and the single authorised test call  [BLOCKED: verifier run, deployment, webhook and non-demo school need your approval]
 
 ### 11.1 Verify the clone and its number (read-only; run on your laptop)
 
@@ -239,20 +239,63 @@ What the report must show before a call:
 
 What Claude established offline: `phnum_8101…b864` is **not** the phone-number resource in Varunesh's export, but it has the **same DID (…3645), outbound host and SIP username**. It is therefore a second ElevenLabs resource for the same Vobiz number. Whether it is assigned to the clone, and whether ElevenLabs and Vobiz accept two resources for one DID, is exactly what checks 11a–11g and the first call will show. The source agent's variables, from the export, are exactly Sahayak's 14 (none missing, none extra).
 
-### 11.2 Remaining prerequisites (the variables come from `src/server/sampark/conversation.ts` and `elevenlabs-client.ts`)
+### 11.2 Not from `hillview-demo`
 
-1. **A public HTTPS URL for the webhook** on an authorised non-production deployment, the workspace post-call webhook pointing at `/api/webhooks/elevenlabs-riya` (created with your approval), and its secret stored server-side only.
-2. **The test phone** saved in the demo school's Settings (a phone you own), and the mode set to **Test**.
-3. **Server environment** on that deployment (values from the authorised owner; never in a file in the repo):
-   - `SAMPARK_ENABLED=true`, `SAMPARK_ELEVENLABS_ENABLED=true`, `SAMPARK_LIVE_DIAL_ENABLED=true`, `SAMPARK_RIYA_PURPOSES=ptm_invitation`
-   - `SAMPARK_FIRESTORE_DATABASE=sampark-nonprod` (a real Riya call refuses to run without it)
-   - `SAMPARK_PII_KEY`, `SAMPARK_PHONE_PEPPER` (that deployment's own)
-   - `SAMPARK_RIYA_TEST_DAILY_CAP=1` for the first call (default 5; 0–20 accepted), so a second Test call that day is refused
-   - Leave `SAMPARK_RIYA_RECORDING_OFF_CONFIRMED` unset unless the verifier shows recording off and transcripts not retained (12a/12h); while it is unset, the call needs recorded-conversation consent
-   - `SAMPARK_RIYA_STORE_TRANSCRIPTS` unset (no transcript is stored in Sahayak)
-   - `ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_ID` (the verified clone), `ELEVENLABS_AGENT_BRANCH_ID`, `ELEVENLABS_AGENT_PHONE_NUMBER_ID` (`phnum_8101…b864` once 11a passes), `ELEVENLABS_SOURCE_AGENT_ID` (Varunesh's; refused as a target), `ELEVENLABS_WEBHOOK_SECRET`
-4. **Set your own phone as the school Test phone** on `/sampark/hillview-demo/settings` → Test phone → Save (only the last four digits are shown afterwards). Never edit the synthetic family's phone. Then switch the school to **Test — my phone only** (available only when the deployment has `SAMPARK_LIVE_DIAL_ENABLED=true`).
-5. **Your go-ahead with the destination named.** The server then dials **only** the school test phone, one call in flight, under the daily cap, inside calling hours, with no automatic retry. If the outcome is unclear, use **Check status** (read-only) before anything else.
+`hillview-demo` has `isDemoData=true`. Riya refuses real calls from any demo school, even to its test phone (`DEMO_SCHOOL_PRACTICE_ONLY`, tested in `riya-service.test.ts`); Practice keeps working there. The real call needs a **non-demo** organisation on the staging service below. Your Google account must be its admin (`organizations/{orgId}.adminUserId` or `members/{uid}.role = admin`), because staging runs `NODE_ENV=production`, where the dev cookie is refused. Its Sampark data goes to `sampark-nonprod`.
+
+### 11.3 Non-production deployment — PREPARED, NOT RUN (needs your written approval)
+
+No authorised non-production Riya deployment exists in the evidence:
+- `sahayakai-preview` exists, but it is shared by QA and auto-deploys `develop` with `--update-env-vars`, which would carry live-dial flags into later preview revisions;
+- `sahayakai-telephony-calltest` is the parent-call bridge, not this app.
+
+So this branch adds `cloudbuild-riya-staging.yaml`: a **separate** service `sahayakai-riya-staging`.
+- Its settings are `SAMPARK_FIRESTORE_DATABASE=sampark-nonprod` and `SAMPARK_RIYA_TEST_DAILY_CAP=1`, and it runs with `max-instances=1`.
+- No Vobiz or Twilio secrets are bound.
+- Its smoke step expects `401` from an unsigned webhook POST.
+
+Every step below changes Google Cloud. Run them only after you approve them in writing (an owner of `sahayakai-b4248`):
+
+```powershell
+# 1. The non-production database (check first; create only if absent)
+gcloud firestore databases describe --database=sampark-nonprod --project=sahayakai-b4248
+gcloud firestore databases create --database=sampark-nonprod --location=asia-south1 --project=sahayakai-b4248
+
+# 2. Dedicated secrets, typed at a hidden prompt (never on the command line or in a file)
+foreach ($name in 'RIYA_ELEVENLABS_API_KEY','RIYA_ELEVENLABS_WEBHOOK_SECRET') {
+  $sec = Read-Host -AsSecureString "$name (input hidden)"
+  [System.Net.NetworkCredential]::new('', $sec).Password | gcloud secrets create $name --data-file=- --project=sahayakai-b4248
+}
+# PII key and pepper: random values, generated in place
+-join ((1..32) | % { [char](Get-Random -Min 33 -Max 127) }) | gcloud secrets create RIYA_SAMPARK_PHONE_PEPPER --data-file=- --project=sahayakai-b4248
+[Convert]::ToBase64String((1..32 | % { [byte](Get-Random -Max 256) })) | gcloud secrets create RIYA_SAMPARK_PII_KEY --data-file=- --project=sahayakai-b4248
+
+# 3. Build and deploy the separate service, with the ids the verifier (11.1) printed
+cd E:\sargvision\riya-wt\sahayakai-main
+gcloud builds submit .. --project=sahayakai-b4248 --config=cloudbuild-riya-staging.yaml `
+  --substitutions="SHORT_SHA=$(git rev-parse --short HEAD),_AGENT_ID=<clone agent id>,_AGENT_BRANCH_ID=<branch id>,_PHONE_NUMBER_ID=phnum_8101m535s90df9qa3jy6mdh2b864,_SOURCE_AGENT_ID=<Varunesh's agent id>"
+```
+
+The ElevenLabs webhook secret is the value ElevenLabs shows when you create the webhook in step 4, so create the webhook first and store its secret, or rotate the secret after.
+
+### 11.4 Register the post-call webhook (ElevenLabs UI, needs approval)
+
+1. In the **current** workspace, add a post-call webhook to `https://<sahayakai-riya-staging URL>/api/webhooks/elevenlabs-riya`, HMAC enabled.
+2. Copy its secret straight into `RIYA_ELEVENLABS_WEBHOOK_SECRET` (step 2 above).
+3. Attach the webhook to the **clone only**, with transcript events and no audio.
+4. Leave Varunesh's agent unchanged.
+5. Re-run 11.1: check 12c must show the webhook.
+
+### 11.5 The one call
+
+1. On the staging URL, sign in with Google. Open `/sampark`, then **Enable school calls** for the non-demo school.
+2. Add the one family whose phone is your own, **or** use any family: in Test mode the call rings only the school test phone.
+3. Give that family English, **Notices** and **Recorded conversation** consent.
+4. Go to **Settings → Test phone**. Type your number there; only the last four digits are shown after saving. Then choose **Test — my phone only**.
+5. Open the **Riya calls** tab and set up the call: PTM invitation, a future date, then **Preview**. The preview must show "Rings: the school test phone ending ….", plus the masked agent and number ids.
+6. Click **Place call**. The dialog "Place a real test call?" repeats the last four digits; confirm once.
+7. Afterwards, the call row moves from "Ringing or on the call" to **Conversation ended** when the webhook arrives. If it stays unclear, use **Check status** (a read-only provider lookup) and do not retry. The daily cap of 1 refuses a second call that day.
+8. Do not call Sir until you have reviewed this result and approved a second call in writing.
 
 ## 12. Troubleshooting
 
@@ -273,6 +316,7 @@ What Claude established offline: `phnum_8101…b864` is **not** the phone-number
 | Webhook 503 `not yet linked` | Normal for an unknown conversation under 15 minutes old. |
 | `ELEVENLABS_AGENT_ID_IS_SOURCE_EXPORT` | You configured Varunesh's agent. Use the clone. |
 | `NONPROD_DATABASE_REQUIRED` | A real call needs `SAMPARK_FIRESTORE_DATABASE=sampark-nonprod`. |
+| `DEMO_SCHOOL_PRACTICE_ONLY` | Riya never calls from a demo school. Use a non-demo school on staging (§11.2). |
 
 ## 13. Stop and clean up
 

@@ -391,6 +391,15 @@ describe('Test mode — ElevenLabs (mocked network)', () => {
         expect(JSON.stringify(call)).not.toContain(API_KEY);
     });
 
+    it('a demo school (isDemoData) never places a real Riya call, even to its test phone; Practice still works', async () => {
+        const s = await setup({ mode: 'test', school: { isDemo: true } });
+        expect(await refusalCode(startRiyaCall(s.deps, ORG, ADMIN, await startInput(s.deps)))).toBe('DEMO_SCHOOL_PRACTICE_ONLY');
+        expect(s.fetchImpl).not.toHaveBeenCalled();
+        expect(riyaAvailability((await s.repo.getSchool(ORG))!, s.env).blocker).toBe('DEMO_SCHOOL_PRACTICE_ONLY');
+        const practice = await setup({ mode: 'practice', school: { isDemo: true } });
+        expect((await startRiyaCall(practice.deps, ORG, ADMIN, await startInput(practice.deps))).call.provider).toBe('simulated');
+    });
+
     it('on a deployment reading the production database, real Riya calls are refused (preview/staging guard)', async () => {
         const s = await setup({ mode: 'test', env: { ...elevenEnv(), SAMPARK_FIRESTORE_DATABASE: undefined } });
         expect(await refusalCode(startRiyaCall(s.deps, ORG, ADMIN, await startInput(s.deps)))).toBe('NONPROD_DATABASE_REQUIRED');

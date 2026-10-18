@@ -127,6 +127,7 @@ export type RiyaBlocker =
     | 'LIVE_DIAL_DISABLED'
     | 'ELEVENLABS_UNCONFIGURED'
     | 'NONPROD_DATABASE_REQUIRED'
+    | 'DEMO_SCHOOL_PRACTICE_ONLY'
     | 'TEST_PHONE_MISSING';
 
 export interface RiyaAvailability {
@@ -150,6 +151,9 @@ function providerFor(school: SamparkSchool, env: Env): { provider: ConversationP
     if (!riyaEnabled(env)) return { blocker: 'RIYA_DISABLED', problems: [] };
     if (school.mode === 'practice') return { provider: 'simulated', config: null };
     if (school.mode !== 'test') return { blocker: 'LIVE_MODE_NOT_AVAILABLE', problems: [] };
+    // A demo school (organisation isDemoData) never places a real Riya call, even to its test phone:
+    // its families are synthetic and it exists to rehearse. Real test calls need a non-demo school.
+    if (school.isDemo) return { blocker: 'DEMO_SCHOOL_PRACTICE_ONLY', problems: [] };
     if (env.SAMPARK_LIVE_DIAL_ENABLED !== 'true') return { blocker: 'LIVE_DIAL_DISABLED', problems: [] };
     const cfg = readElevenLabsConfig(env);
     if (!cfg.ok) return { blocker: 'ELEVENLABS_UNCONFIGURED', problems: cfg.problems };
@@ -192,6 +196,7 @@ const BLOCKER_MESSAGE: Record<RiyaBlocker, string> = {
     ELEVENLABS_UNCONFIGURED: 'The Riya agent is not configured for this deployment',
     NONPROD_DATABASE_REQUIRED: 'Riya test calls need the separate non-production database on this deployment',
     TEST_PHONE_MISSING: 'Test mode needs a test phone number for this school',
+    DEMO_SCHOOL_PRACTICE_ONLY: 'This is a demo school: Riya calls stay in Practice. Real test calls need a non-demo school',
 };
 
 // ── Requests ────────────────────────────────────────────────────────────────
