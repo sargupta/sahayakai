@@ -147,7 +147,7 @@ On `/sampark`, **Hillview Demo School → Enable school calls**. You land on `/s
 3. A **future date** and a time → **Preview what Riya will say**. Observed:
    - To: Meena Demo (synthetic) (Mother) about Asha Demo
    - Rings: phone ending 0101 (simulated, nothing rings)
-   - "Hello, this is Riya, calling from Hillview Demo School, with an important update. Is this a good time to talk?"
+   - "Hello, I'm Riya, an AI assistant calling on behalf of Hillview Demo School with an important update. Is this a good time to talk?" (the clone's live first message, verified 2026-10-18)
    - "I'm calling to invite you to the parent-teacher meeting for your child's class, Seven, section B, on Wednesday, the twenty-first of October at ten o'clock in the morning."
 4. Optional: a **Practice: what happens on the call** scenario.
 5. **Run practice call** → confirm in the dialog. Observed under **Recent Riya calls**: *PTM invitation · Meena Demo (synthetic) (Asha Demo) · Phone ending 0101 · Simulated · 48 s · Conversation ended · Good time to talk: Yes · Coming to the meeting: Can attend*. **Details** shows the announcement and "No transcript is kept for this call."

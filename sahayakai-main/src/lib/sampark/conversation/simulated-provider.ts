@@ -61,7 +61,7 @@ export function simulateRiyaCall(callId: string, purpose: RiyaPurpose, scenario:
         callSuccessful: 'success',
         dataCollection: positiveData(purpose),
         transcript: [
-            { role: 'agent', message: 'Hello, this is Riya calling from the school with an important update. Is this a good time to talk?', timeInCallSecs: 0 },
+            { role: 'agent', message: "Hello, I'm Riya, an AI assistant calling on behalf of the school with an important update. Is this a good time to talk?", timeInCallSecs: 0 },
             { role: 'user', message: 'Yes, go ahead.', timeInCallSecs: 5 },
         ],
         ...over,

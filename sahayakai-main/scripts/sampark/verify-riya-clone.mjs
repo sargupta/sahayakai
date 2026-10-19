@@ -38,7 +38,7 @@ const PURPOSES = ['absence_notice', 'emergency_closure', 'event_invitation', 'ex
 // Copies of src/lib/sampark/conversation/riya-purposes.ts (RIYA_VARIABLES, RIYA_OPENING_TEMPLATE);
 // riya-agent-sync.test.ts fails if they drift.
 export const SAHAYAK_VARIABLES = ['school_name', 'call_purpose', 'student_name', 'class_name', 'section_name', 'event_name', 'event_date', 'event_time', 'holiday_dates', 'exam_schedule', 'absence_date', 'closure_date', 'closure_reason', 'transport_information'];
-export const OPENING_TEMPLATE = 'Hello, this is Riya, calling from {{school_name}}, with an important update. Is this a good time to talk?';
+export const OPENING_TEMPLATE = "Hello, I'm Riya, an AI assistant calling on behalf of {{school_name}} with an important update. Is this a good time to talk?";
 /** Word sequence, ignoring case, punctuation and the agent's pause dots ("Hello..... this"). */
 export const words = (s) => String(s ?? '').toLowerCase().replace(/\{\{\s*(\w+)\s*\}\}/g, ' var_$1 ').replace(/[^a-z0-9_]+/g, ' ').trim();
 
@@ -102,10 +102,13 @@ function workflowShape(a) {
         forward: sha(JSON.stringify(e.forward_condition ?? null)),
         backward: sha(JSON.stringify(e.backward_condition ?? null)),
     })).sort((x, y) => `${x.from}>${x.to}`.localeCompare(`${y.from}>${y.to}`));
+    // Readable conditions (workflow configuration, no personal data) to explain a 4b mismatch.
+    const edgeConditions = {};
+    for (const e of Object.values(edges)) edgeConditions[`${label(e.source)}>${label(e.target)}`] = JSON.stringify(e.forward_condition ?? null);
     const branchPrompts = {};
     for (const [id, p] of Object.entries(purposeOfNode)) branchPrompts[p] = { sha: sha(nodes[id]?.additional_prompt), variables: vars(nodes[id]?.additional_prompt) };
     const fallback = Object.values(edges).some((e) => e.source && nodes[e.source]?.type === 'start' && get(e, 'forward_condition.type') !== 'expression');
-    return { nodeShape, edgeShape, branchPrompts, fallback };
+    return { nodeShape, edgeShape, edgeConditions, branchPrompts, fallback };
 }
 
 function fingerprint(a) {
@@ -155,10 +158,21 @@ function checks(src, dst, phone, phoneId, liveSource) {
     const cmp = (id, a, b, show = true) => add(id, same(a, b) ? 'PASS' : 'FAIL', same(a, b) ? (show ? mask(JSON.stringify(b)).slice(0, 120) : 'identical') : `source ${mask(JSON.stringify(a)).slice(0, 90)} ≠ target ${mask(JSON.stringify(b)).slice(0, 90)}`);
 
     add('1 ids and name', dst.agentId && src.agentId !== dst.agentId && src.name === dst.name ? 'PASS' : 'FAIL', `source ${short(src.agentId)} "${src.name}" · target ${short(dst.agentId)} "${dst.name}"`);
-    add('2 source exists in this account', liveSource === true ? 'PASS' : liveSource === false ? 'FAIL' : 'UNVERIFIED', liveSource === null ? 'compared against the export file only; pass --source to fetch the live source' : '');
+    add('2 source exists in this account', liveSource === true ? 'PASS' : liveSource === false ? 'FAIL' : 'UNVERIFIED',
+        liveSource === null ? 'compared against the export file only; pass --source to fetch the live source'
+            : liveSource === false ? `GET of the source agent failed (${src.liveError ?? 'error'}): it is not readable with this key — expected when the clone lives in a different workspace; the comparison used the export file`
+            : '');
     add('3 target fetched from ElevenLabs', 'PASS', `branch ${short(dst.branchId)}, version ${short(dst.versionId)}`);
     cmp('4a workflow nodes (types, prompts, overrides)', src.workflow.nodeShape, dst.workflow.nodeShape, false);
     cmp('4b workflow edges (endpoints and conditions)', src.workflow.edgeShape, dst.workflow.edgeShape, false);
+    if (!same(src.workflow.edgeShape, dst.workflow.edgeShape)) {
+        const keys = [...new Set([...Object.keys(src.workflow.edgeConditions), ...Object.keys(dst.workflow.edgeConditions)])].sort();
+        for (const k of keys) {
+            const a = src.workflow.edgeConditions[k] ?? 'missing';
+            const b = dst.workflow.edgeConditions[k] ?? 'missing';
+            if (a !== b) add(`4b′ edge ${k}`, 'INFO', `source ${mask(a).slice(0, 220)} → target ${mask(b).slice(0, 220)}`);
+        }
+    }
     cmp('5a main prompt (sha256)', src.prompt, dst.prompt);
     cmp('5b first message', src.firstMessage, dst.firstMessage);
     for (const p of PURPOSES) cmp(`5c ${p} prompt and variables`, src.workflow.branchPrompts[p] ?? null, dst.workflow.branchPrompts[p] ?? null);
@@ -194,7 +208,9 @@ function checks(src, dst, phone, phoneId, liveSource) {
     if (liveSource === true) {
         const kept = src.phones.filter((p) => p.assignedTo === src.agentId).length;
         add('11g original agent keeps its own number', kept > 0 ? 'PASS' : 'FAIL', `${kept} number(s) still assigned to the source agent`);
-    } else add('11g original agent keeps its own number', 'UNVERIFIED', 'pass --source to fetch the live source agent');
+    } else add('11g original agent keeps its own number', 'UNVERIFIED', liveSource === false
+        ? `the source agent is not readable with this key (${src.liveError ?? 'error'}); confirm in its own workspace that its number is still assigned to it`
+        : 'pass --source to fetch the live source agent');
     const pv = dst.privacy ?? {};
     add('12a recording / retention', !pv.record_voice || (pv.retention_days ?? -1) > 0 || pv.zero_retention_mode ? 'PASS' : 'FAIL', `record_voice=${pv.record_voice}, retention_days=${pv.retention_days}, zero_retention=${pv.zero_retention_mode}, delete_audio=${pv.delete_audio}`);
     add('12h transcript retention (separate from audio)', (pv.retention_days ?? -1) > 0 || pv.delete_transcript_and_pii || pv.zero_retention_mode ? 'PASS' : 'FAIL', `retention_days=${pv.retention_days} (applies to transcripts even when record_voice=false), delete_transcript_and_pii=${pv.delete_transcript_and_pii}`);
@@ -236,12 +252,14 @@ async function main() {
         process.exit(2);
     }
     let liveSource = null;
+    let sourceError = null;
     let srcRaw = null;
     // The source agent id is in the export; read it (GET only) so checks 2 and 11g use the live source.
     if (!args.source && args['source-file']) args.source = loadExport(args['source-file']).agent_id ?? undefined;
     if (args.source) {
         const s = await fetchJson(`/v1/convai/agents/${encodeURIComponent(args.source)}`);
         liveSource = !s.error;
+        sourceError = s.error ?? null;
         srcRaw = s.data ?? null;
     }
     if (!srcRaw && args['source-file']) srcRaw = loadExport(args['source-file']);
@@ -252,13 +270,13 @@ async function main() {
     const phoneId = args['phone-number-id'] ?? process.env.ELEVENLABS_AGENT_PHONE_NUMBER_ID ?? null;
     const phone = phoneId ? await fetchJson(`/v1/convai/phone-numbers/${encodeURIComponent(phoneId)}`).then((r) => r.data ?? { error: r.error }) : null;
 
-    const src = fingerprint(srcRaw);
+    const src = { ...fingerprint(srcRaw), liveError: sourceError };
     const dst = fingerprint(target.data);
     const results = checks(src, dst, phone, phoneId, liveSource);
     const lines = [
         `# Riya clone verification — ${new Date().toISOString()}`,
         '',
-        `Source ${short(src.agentId)} (${liveSource === null ? 'export file' : 'live'}), target ${short(dst.agentId)}, branch ${short(dst.branchId)}, version ${short(dst.versionId)}. Read-only; no values that could identify a person or a credential are shown.`,
+        `Source ${short(src.agentId)} (${liveSource === true ? 'live' : liveSource === false ? `export file — live GET failed: ${sourceError}` : 'export file'}), target ${short(dst.agentId)}, branch ${short(dst.branchId)}, version ${short(dst.versionId)}. Read-only; no values that could identify a person or a credential are shown.`,
         '',
         '| Check | Status | Detail |',
         '|---|---|---|',

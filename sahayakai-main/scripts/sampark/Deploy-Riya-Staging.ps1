@@ -24,7 +24,10 @@ param(
     [string]$Region = 'asia-southeast1',
     [string]$PhoneNumberId = 'phnum_8101m535s90df9qa3jy6mdh2b864',
     [string]$SourceExport = 'E:\sargvision\sahayakcallagentvarunesh.txt',
-    [ValidateRange(10, 180)][int]$WindowMinutes = 60
+    [ValidateRange(10, 180)][int]$WindowMinutes = 60,
+    # Only when the verifier cannot read the source agent (it lives in another workspace): you looked in
+    # THAT workspace and its number is still assigned to the source agent. Never set it without looking.
+    [switch]$SourceNumberCheckedManually
 )
 # 'Continue': Windows PowerShell 5.1 turns a native command's stderr (2>&1) into a terminating
 # error under 'Stop'. Every native call below is checked through $LASTEXITCODE instead.
@@ -70,7 +73,13 @@ switch ($Step) {
         $agent = $Matches[1]; $branch = $Matches[2]
         $src = (Get-Content $SourceExport -Raw); $src = $src.Substring($src.IndexOf('{')) | ConvertFrom-Json
         if ($agent -eq $src.agent_id) { Fail 'the number is assigned to Varunesh''s SOURCE agent. Stop: do not reassign it here.' }
-        $must = '1 ids and name', '11b outbound SIP trunk configured', '11d outbound calls enabled', '11e outbound transport', '11f outbound authentication configured', '11g original agent keeps its own number', '8d every agent variable is supplied by Sahayak'
+        $must = '1 ids and name', '5d preview opening = agent first message', '11a number assigned to the clone', '11b outbound SIP trunk configured', '11d outbound calls enabled', '11e outbound transport', '11f outbound authentication configured', '8d every agent variable is supplied by Sahayak', '12e AI disclosure in first message'
+        # 11g needs the live source agent. If this key cannot read it (another workspace), the check is
+        # UNVERIFIED and you must confirm it yourself in that workspace (-SourceNumberCheckedManually).
+        if (-not (Select-String -Path $report -SimpleMatch '| 11g original agent keeps its own number | PASS |' -Quiet)) {
+            if (-not $SourceNumberCheckedManually) { Fail '11g is not PASS: open the source agent''s workspace, confirm its number is still assigned to it, then re-run with -SourceNumberCheckedManually' }
+            Write-Host '  note  11g confirmed manually by the operator (source agent not readable with this key)' -ForegroundColor Yellow
+        }
         $failed = foreach ($m in $must) { if (-not (Select-String -Path $report -SimpleMatch "| $m | PASS |" -Quiet)) { $m } }
         Save-Ids @{ agentId = $agent; branchId = $branch; phoneNumberId = $PhoneNumberId; sourceAgentId = $src.agent_id }
         Write-Host "Report: $report  (exit $code)"

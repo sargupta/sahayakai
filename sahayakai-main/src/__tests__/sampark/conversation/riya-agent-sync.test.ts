@@ -25,12 +25,14 @@ describe('verify-riya-clone.mjs stays in step with the app', () => {
     });
 
     it('has the same preview opening', () => {
-        expect(literal('OPENING_TEMPLATE')).toBe(`'${RIYA_OPENING_TEMPLATE}'`);
+        expect(literal('OPENING_TEMPLATE')).toBe(JSON.stringify(RIYA_OPENING_TEMPLATE));
     });
 
     it('the preview opening only uses a variable Sahayak sends, and fills it', () => {
         const used = [...RIYA_OPENING_TEMPLATE.matchAll(/\{\{(\w+)\}\}/g)].map((m) => m[1]);
         expect(used.every((v) => (RIYA_VARIABLES as readonly string[]).includes(v))).toBe(true);
-        expect(riyaOpening('Hillview Demo School')).toBe('Hello, this is Riya, calling from Hillview Demo School, with an important update. Is this a good time to talk?');
+        expect(riyaOpening('Hillview Demo School')).toBe("Hello, I'm Riya, an AI assistant calling on behalf of Hillview Demo School with an important update. Is this a good time to talk?");
+        // AI disclosure is in the opening itself (verifier 12e), so the preview shows it before anything else.
+        expect(RIYA_OPENING_TEMPLATE).toMatch(/\ban AI assistant\b/);
     });
 });

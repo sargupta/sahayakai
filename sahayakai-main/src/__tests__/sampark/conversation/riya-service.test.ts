@@ -257,6 +257,25 @@ describe('refusals (nothing is created or dialled)', () => {
         await expect(previewRiyaCall(s.deps, ORG, { purpose: 'ptm_invitation', guardianId: 'gx', studentId: 'sx', facts: FACTS.ptm_invitation })).rejects.toMatchObject({ code: 'RECIPIENT_NOT_FOUND' });
     });
 
+    it('records that do not exist in this school: 404, nothing dialled, never a fallback recipient', async () => {
+        const s = await setup({ mode: 'test' });
+        const base = await startInput(s.deps);
+        expect(await refusalCode(startRiyaCall(s.deps, ORG, ADMIN, { ...base, guardianId: 'no-such-guardian', idempotencyKey: crypto.randomUUID() }))).toBe('RECIPIENT_NOT_FOUND');
+        expect(await refusalCode(startRiyaCall(s.deps, ORG, ADMIN, { ...base, studentId: 'no-such-student', idempotencyKey: crypto.randomUUID() }))).toBe('RECIPIENT_NOT_FOUND');
+        expect(s.fetchImpl).not.toHaveBeenCalled();
+        expect(await s.calls.listCalls(ORG, 10)).toHaveLength(0);
+    });
+
+    it('an invalid number on record is refused before any provider contact', async () => {
+        const s = await setup({ mode: 'test' });
+        const g1 = (await s.repo.getGuardian(ORG, 'g1'))!;
+        await s.repo.upsertGuardians(ORG, [{ ...g1, phoneClass: 'invalid' }]);
+        const preview = await previewRiyaCall(s.deps, ORG, { purpose: 'ptm_invitation', guardianId: 'g1', studentId: 's1', facts: FACTS.ptm_invitation });
+        expect(preview.refusals).toContainEqual({ code: 'GATE_BLOCKED', reason: 'invalid_number' });
+        expect(await refusalCode(startRiyaCall(s.deps, ORG, ADMIN, await startInput(s.deps)))).toBe('GATE_BLOCKED');
+        expect(s.fetchImpl).not.toHaveBeenCalled();
+    });
+
     it('a guardian who is not of record for that student', async () => {
         const s = await setup();
         expect(await refusalCode(startRiyaCall(s.deps, ORG, ADMIN, await startInput(s.deps, 'ptm_invitation', { guardianId: 'g2', studentId: 's1' })))).toBe('NOT_GUARDIAN_OF_RECORD');

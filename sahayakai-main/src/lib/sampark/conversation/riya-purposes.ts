@@ -56,11 +56,12 @@ export const RIYA_VARIABLES = [
 export type RiyaVariable = (typeof RIYA_VARIABLES)[number];
 
 /**
- * The hosted agent's first message, as Sahayak shows it in the preview. Kept in step with
+ * The hosted agent's first message, as Sahayak shows it in the preview. Updated 2026-10-19 to the
+ * clone's live first message (verifier check 5d, report 2026-10-18), which opens with the AI disclosure. Kept in step with
  * the agent by scripts/sampark/verify-riya-clone.mjs (check 5d), which compares it word for
  * word with the live first message; riya-agent-sync.test.ts keeps the script's copy equal.
  */
-export const RIYA_OPENING_TEMPLATE = 'Hello, this is Riya, calling from {{school_name}}, with an important update. Is this a good time to talk?';
+export const RIYA_OPENING_TEMPLATE = "Hello, I'm Riya, an AI assistant calling on behalf of {{school_name}} with an important update. Is this a good time to talk?";
 
 export function riyaOpening(schoolName: string): string {
     return RIYA_OPENING_TEMPLATE.replace('{{school_name}}', schoolName);
