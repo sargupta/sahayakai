@@ -1,0 +1,8 @@
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/branding/app_icon.png"
+  min_sdk_android: 24
+  # Adaptive icon: SahayakAI mark on an ivory ground (Ledger paper)
+  adaptive_icon_background: "#F3EEE4"
+  adaptive_icon_foreground: "assets/branding/app_icon.png"

@@ -1,0 +1,163 @@
+{
+  "_readme": [
+    "Sample lines for the PDF-vs-Flutter Indic rendering spike.",
+    "",
+    "Both renderers read THIS file — tool/spike/pdf_indic_spike.dart (Dart `pdf`",
+    "package) and test/golden/pdf_indic_spike_render_test.dart (Flutter). Neither",
+    "holds its own copy of the strings, so 'the same string renders differently'",
+    "is a fact about the file, not a claim about my copy-paste.",
+    "",
+    "Every line is a real sentence a teacher could plausibly read, and every one",
+    "was chosen because it contains at least one feature that CANNOT be rendered",
+    "by mapping codepoints to glyphs in order. A row of isolated vowels would",
+    "pass in any renderer and prove nothing. `probes` names what each line is",
+    "actually testing."
+  ],
+  "samples": [
+    {
+      "code": "en",
+      "language": "English",
+      "script": "Latin",
+      "font": "Inter-Variable.ttf",
+      "family": "Inter",
+      "text": "The teacher gave the students a difficult question.",
+      "probes": [
+        "control: no shaping required, proves the harness itself renders text"
+      ]
+    },
+    {
+      "code": "hi",
+      "language": "Hindi",
+      "script": "Devanagari",
+      "font": "NotoSansDevanagari-Variable.ttf",
+      "family": "Noto Sans Devanagari",
+      "text": "शिक्षक ने विद्यार्थियों को कठिन प्रश्न दिए।",
+      "probes": [
+        "i-matra reordering: शि is stored श+ि but must DRAW ि to the LEFT of श; same in कठिन and दिए",
+        "conjunct ligature क्ष (क+्+ष) in शिक्षक",
+        "half-form द्य in विद्यार्थियों",
+        "reph र्थ: the ra rides ABOVE the following consonant, not beside it",
+        "half-form प्र and श्न in प्रश्न"
+      ]
+    },
+    {
+      "code": "mr",
+      "language": "Marathi",
+      "script": "Devanagari",
+      "font": "NotoSansDevanagari-Variable.ttf",
+      "family": "Noto Sans Devanagari",
+      "text": "मराठी विद्यार्थ्यांची शाळा उद्या सुरू होईल.",
+      "probes": [
+        "three-deep stack र्थ्यां: reph + half-tha + ya + matra + anusvara, the densest cluster in the set",
+        "half-form द्य in उद्या",
+        "ठी / ची / शा matra attachment"
+      ]
+    },
+    {
+      "code": "bn",
+      "language": "Bengali",
+      "script": "Bengali",
+      "font": "NotoSansBengali-Variable.ttf",
+      "family": "Noto Sans Bengali",
+      "text": "শিক্ষক শ্রেণিকক্ষে বিদ্যার্থীদের প্রশ্ন করলেন।",
+      "probes": [
+        "i-matra reordering: শি and বি and ণি draw ি to the LEFT",
+        "e-matra reordering: শ্রে draws ে to the LEFT of the whole cluster",
+        "conjunct ক্ষ, a true ligature with no resemblance to ক or ষ",
+        "conjunct শ্র (ra-phala, a hook below), দ্য, র্থ (reph), প্র, শ্ন"
+      ]
+    },
+    {
+      "code": "ta",
+      "language": "Tamil",
+      "script": "Tamil",
+      "font": "NotoSansTamil-Variable.ttf",
+      "family": "Noto Sans Tamil",
+      "text": "ஆசிரியர் மாணவர்களுக்குக் கேள்விகள் கொடுத்தார்.",
+      "probes": [
+        "SPLIT vowel கொ: the single codepoint ொ must be drawn as TWO marks, one before க and one after it",
+        "pre-base vowel கே: ே precedes க visually but follows it in memory",
+        "ligature க்கு / த்தா: consonant + virama + u forms a single fused glyph, not three marks"
+      ]
+    },
+    {
+      "code": "te",
+      "language": "Telugu",
+      "script": "Telugu",
+      "font": "NotoSansTelugu-Variable.ttf",
+      "family": "Noto Sans Telugu",
+      "text": "ఉపాధ్యాయుడు విద్యార్థులకు ప్రశ్నలు ఇచ్చారు.",
+      "probes": [
+        "below-base conjuncts (vattu) ధ్యా, ద్యా, ప్ర, శ్న, చ్చా: the second consonant shrinks and hangs UNDER the first",
+        "ర్థు reph-equivalent",
+        "matras that sit above the headline while a vattu sits below it"
+      ]
+    },
+    {
+      "code": "kn",
+      "language": "Kannada",
+      "script": "Kannada",
+      "font": "NotoSansKannada-Variable.ttf",
+      "family": "Noto Sans Kannada",
+      "text": "ಶಿಕ್ಷಕರು ವಿದ್ಯಾರ್ಥಿಗಳಿಗೆ ಪ್ರಶ್ನೆ ಕೇಳಿದರು.",
+      "probes": [
+        "conjunct ಕ್ಷ, and below-base ದ್ಯಾ / ಪ್ರ / ಶ್ನೆ",
+        "ರ್ಥಿ: repha in Kannada attaches after, not above — a different rule from Devanagari",
+        "ಗೆ / ಕೇ vowel signs that reshape the consonant's own outline"
+      ]
+    },
+    {
+      "code": "ml",
+      "language": "Malayalam",
+      "script": "Malayalam",
+      "font": "NotoSansMalayalam-Variable.ttf",
+      "family": "Noto Sans Malayalam",
+      "text": "അധ്യാപകൻ വിദ്യാർത്ഥികളോട് ചോദ്യം ചോദിച്ചു.",
+      "probes": [
+        "SPLIT vowels ചോ and ളോ: ോ is one codepoint drawn as two marks straddling the consonant",
+        "chillu letters ൻ and ർ: standalone dead consonants, distinct glyphs",
+        "stacked conjunct ത്ഥ and ധ്യ / ദ്യ / ച്ചു"
+      ]
+    },
+    {
+      "code": "gu",
+      "language": "Gujarati",
+      "script": "Gujarati",
+      "font": "NotoSansGujarati-Variable.ttf",
+      "family": "Noto Sans Gujarati",
+      "text": "શિક્ષક વિદ્યાર્થીઓને પ્રશ્ન પૂછે છે.",
+      "probes": [
+        "i-matra reordering: શિ and વિ draw િ to the LEFT",
+        "conjunct ક્ષ, half-forms દ્યા / પ્ર / શ્ન",
+        "reph ર્થી riding above the following consonant"
+      ]
+    },
+    {
+      "code": "pa",
+      "language": "Punjabi",
+      "script": "Gurmukhi",
+      "font": "NotoSansGurmukhi-Variable.ttf",
+      "family": "Noto Sans Gurmukhi",
+      "text": "ਅਧਿਆਪਕ ਨੇ ਵਿਦਿਆਰਥੀਆਂ ਨੂੰ ਸਵਾਲ ਪੁੱਛਿਆ।",
+      "probes": [
+        "sihari reordering: ਧਿ ਵਿ ਦਿ ਛਿ all store the vowel AFTER the consonant and must draw it BEFORE",
+        "addak ੱ (gemination mark) stacked above in ਪੁੱਛਿਆ",
+        "ੂੰ: dulainkar below plus tippi above on the same base"
+      ]
+    },
+    {
+      "code": "or",
+      "language": "Odia",
+      "script": "Odia",
+      "font": "NotoSansOriya-Variable.ttf",
+      "family": "Noto Sans Oriya",
+      "text": "ଶିକ୍ଷକ ବିଦ୍ୟାର୍ଥୀମାନଙ୍କୁ ପ୍ରଶ୍ନ ପଚାରିଲେ।",
+      "probes": [
+        "vowel sign ି in ଶି / ବି must fuse into the cluster, not sit after the consonant as a free-standing stroke",
+        "conjunct କ୍ଷ, below-base ଦ୍ୟା / ପ୍ର / ଶ୍ନ",
+        "below-base ଙ୍କୁ: nga + ka + u fused under one headstroke",
+        "reph ର୍ଥୀ"
+      ]
+    }
+  ]
+}

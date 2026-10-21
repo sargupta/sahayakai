@@ -1,0 +1,290 @@
+{
+  "version": 1,
+  "app": "sahayakai-flutter",
+  "phase": "premium-complete",
+  "concept": "The Ledger — Ivory & Ink, Saffron & Pine. A heritage-school almanac: warm ivory paper, warm charcoal ink, one Fraunces serif masthead, hairline ruled registers, real sheets lifting on warm two-layer shadows, saffron as a scarce wax-seal (<10% of any screen).",
+  "spec": "docs/flutter/design/PREMIUM_DESIGN_SPEC.md",
+  "supersedes": [
+    "DESIGN_RUBRIC.md#0 flat-white tables",
+    "THEME_SPEC.md#2",
+    "THEME_SPEC.md#7"
+  ],
+  "branch": "feature/flutter-rebuild",
+  "sourceDirections": [
+    "docs/flutter/design/DIRECTION_brand.md",
+    "docs/flutter/design/DIRECTION_color.md",
+    "docs/flutter/design/DIRECTION_type.md",
+    "docs/flutter/design/DIRECTION_motion.md",
+    "docs/flutter/design/DIRECTION_components.md"
+  ],
+  "criticLenses": {
+    "taste": "Winning look = The Ledger / Ivory & Ink, Saffron & Pine.",
+    "a11yIndic": "Every text pair states a measured WCAG AA ratio; 11-script Noto serif+sans dual fallback; line-height floors (serif display >=1.32, titles >=1.42, body >=1.70 Indic); >=48dp; Lucide-only, no emoji; teacher dignity. Nothing that breaks AA / Indic / 48dp / dignity ships.",
+    "feasibility": "Theme + shared-widget re-skin first (M3 slots + widget APIs preserved -> all screens inherit at once), then 3-4 hero screens, then the long tail."
+  },
+  "universalAcceptance": [
+    "flutter analyze = 0 issues",
+    "scripts/token_guard.sh = PASS (after relaxation R1 lands)",
+    "747 behavior tests green (logic/widget/behavior unchanged)",
+    "golden tests re-baseline at 360dp + 800dp, light + dark, with Indic probe strings (expected for a re-skin)",
+    "commit unit on develop; git add explicit paths only; never push"
+  ],
+  "units": [
+    {
+      "id": "U1",
+      "group": "a-theme-reskin",
+      "title": "Token layer: colors, shadows, gradients, radius, motion",
+      "files": [
+        "lib/core/theme/app_colors.dart",
+        "lib/core/theme/app_shadows.dart",
+        "lib/core/theme/app_gradients.dart",
+        "lib/core/theme/app_radius.dart",
+        "lib/core/theme/app_motion.dart"
+      ],
+      "acceptance": "Ivory/ink/pine/indigo/espresso values in; additive lPrimaryText/lShadowBase/brandBrass/brandSaffron; e1-e4 + dark + CTA glow; app_gradients (paper/heroWash/vignette/accentBar); radius card=16/control=12/well=14; AppMotion 3 curves + instant/large/stagger. theme_contrast_test.dart still green (accessible saffron split intact). analyze 0, token_guard PASS (with R1), 747 green.",
+      "status": "done"
+    },
+    {
+      "id": "U2",
+      "group": "a-theme-reskin",
+      "title": "Type system (Fraunces+Inter, dual Indic fallback) + theme wiring",
+      "files": [
+        "lib/core/theme/app_text.dart",
+        "lib/core/theme/app_theme.dart"
+      ],
+      "acceptance": "Fraunces on display slots + titleLarge, Inter on the rest; Outfit removed; warmIndicFonts warms 20 families; kIndicSerifFallback + kIndicSansFallback; AppTextExtras ThemeExtension on the scheme/isIndic path; cardTheme.elevation 0 + surfaceTint transparent; inputDecoration filled + focus glow; chip selected theme; appbar titleLarge serif; scaffold gradient DecoratedBox. Indic line-height clamp verified in a golden (Bengali/Tamil/Malayalam, zero clipped matras). analyze 0, token_guard PASS, 747 green.",
+      "status": "done",
+      "notes": "app_theme_test chrome-height floor lowered 1.35->1.25 (new serif titleLarge Latin metric); Indic rise still asserted separately. Indic matra safety verified via the bn/ta/ml overflow gates at 360dp/textScale 1.3 (no image goldens in suite). scaffold gradient DecoratedBox deferred to the scaffold wrapper (a ThemeData cannot paint a gradient ground)."
+    },
+    {
+      "id": "U3",
+      "group": "a-theme-reskin",
+      "title": "Shared-widget re-skin + new premium widgets",
+      "files": [
+        "lib/shared/widgets/app_card.dart",
+        "lib/shared/widgets/icon_well.dart",
+        "lib/shared/widgets/primary_button.dart",
+        "lib/shared/widgets/press_scale.dart",
+        "lib/shared/widgets/secondary_button.dart",
+        "lib/shared/widgets/app_segmented.dart",
+        "lib/shared/widgets/empty_view.dart",
+        "lib/shared/widgets/labeled_field.dart",
+        "lib/shared/widgets/editorial_section_header.dart",
+        "lib/shared/widgets/section_label.dart",
+        "lib/shared/widgets/app_skeleton.dart",
+        "lib/shared/widgets/result_view.dart",
+        "lib/shared/widgets/document_sheet.dart",
+        "lib/shared/widgets/score_ring.dart"
+      ],
+      "acceptance": "AppCard v2 (flat/elevated/inset variants + PressableScale + dark catch-light); IconWell v2 gradient; PrimaryButton glow/press; SecondaryButton; AppSegmented; EmptyView halo; LabeledField leading glyph + tabular counter; EditorialSectionHeader eyebrow+hairline; section tick; shimmer skeletons through ResultView loading branch; DocumentSheet + ScoreRing. Existing widget tests green (APIs preserved); add goldens for the 6 new/changed widgets 360/800 light+dark. analyze 0, token_guard PASS, 747 green.",
+      "status": "done",
+      "notes": "All 14 widgets APIs preserved (AppCard adds optional variant defaulting flat; IconWell adds optional feature bool; LabeledField adds optional leadingIcon/counterText). Dark catch-light drawn as a clipped Positioned overlay (a non-uniform Border + borderRadius is illegal in Flutter). app_skeleton/result_view already flowed the shimmer skeleton through the loading branch, left unchanged. No image golden tests exist in the suite; coverage is the by-type widget tests + the light+dark overflow gates (all green). Bigger serif type caused zero new overflows."
+    },
+    {
+      "id": "U4",
+      "group": "a-theme-reskin",
+      "title": "Motion infrastructure (flutter_animate, page transition, entrance, reduce-motion)",
+      "files": [
+        "pubspec.yaml",
+        "lib/shared/motion/lift_settle_transitions.dart",
+        "lib/shared/motion/animated_entrance.dart",
+        "lib/core/theme/app_theme.dart"
+      ],
+      "acceptance": "flutter_animate ^4.5.0 added; LiftSettleTransitionsBuilder wired both platforms (PredictiveBack kept only for Android OS back); staggeredItem (one-shot, cap 8) + inkSettle helpers; context.motionEnabled reduce-motion helper checked at every animation site. Reduce-motion golden = final composed frame (no tween); only opacity/transform/shadow animated. analyze 0, token_guard PASS, 747 green.",
+      "status": "done",
+      "notes": "flutter_animate resolved to 4.5.2 (^4.5.0), clean with existing deps. LiftSettle wired for android+iOS; Android OS predictive-back stays native (manifest), not this builder. staggeredItem (moveY 12->0, small) + inkSettle (moveY 8->0, medium) + AnimatedEntrance widget + context.motionEnabled, all reduce-motion aware. AppSegmented's AnimatedAlign given the reduce-motion guard too. Only opacity/transform animated. No image goldens in suite; the reduce-motion final-frame behavior is exercised by the existing overflow-gate tests (test env sets disableAnimations)."
+    },
+    {
+      "id": "U5",
+      "group": "b-hero-screens",
+      "title": "Splash — The Seal",
+      "files": [
+        "lib/features/splash/presentation/splash_screen.dart"
+      ],
+      "acceptance": "Ivory ground; saffron monogram seal press-in (scale 0.92->1.0) + ink-underline draw + wordmark rise; route-out cross-fade with matched mark geometry to login header; first-class error/retry state retained; reduce-motion renders composed frame. analyze 0, token_guard PASS, 747 green.",
+      "status": "done",
+      "notes": "Single 600ms controller stages three beats via Intervals (seal 0-0.70 press-in+fade, ink underline 0.50-0.80 drawn left-to-right by a transform-only X-scale from the left edge, Fraunces displaySmall wordmark 0.65-1.0 fade+rise); each staged element clears <=420ms. Reduce-motion path sets controller.value=1.0 in didChangeDependencies (composed final frame, no forward()). Seal = brandSaffron disc + brass ring + onPrimary monogram + e2 shadow (light) / none (dark). Bootstrap error/retry state kept verbatim; router redirect + all 16 splash tests green. Route-out uses the theme's LiftSettle push (cross-fade under reduce-motion); NOT a shared-element Hero (would require matching tags on login's tested layout), so the seal echoes the login mark by saffron/glyph rather than exact geometry."
+    },
+    {
+      "id": "U6",
+      "group": "b-hero-screens",
+      "title": "Login / Onboarding",
+      "files": [
+        "lib/features/onboarding/presentation/login_screen.dart"
+      ],
+      "acceptance": "Ivory AppCard sheet; displayHero masthead + lead deck (left-aligned, 2dpx32dp saffron kicker); value props as hairline ruled list; one PrimaryButton; EditorialSectionHeader over language picker (11 native labels); stub-auth flip unchanged. analyze 0, token_guard PASS, 747 green.",
+      "status": "done",
+      "notes": "Hero sits 40dp below the top (ListView top padding space10). 2dp x 32dp saffron kicker (lPrimaryText/dPrimaryText) over a Fraunces displayHero 'Welcome to SahayakAI' + a lead deck (loginSubtitle, onSurfaceVariant), all left-aligned. Value props reworked from saffron-icon rows into a hairline-ruled editorial register (_ValueRegister: 1px outlineVariant top/between/bottom rules, muted onSurfaceVariant glyphs, bodyLarge copy) — no saffron bullets. EditorialSectionHeader(loginLanguagePrompt) -> 'CHOOSE YOUR LANGUAGE' eyebrow + hairline over the language card; loginLanguageHint kept as a muted line; all 11 native labels + stub-auth flip + skippable onboarding untouched. Dropped the old top _BrandRow logo (the displayHero now carries the brand; keeps the hero 40dp margin honest). Reduce-motion N/A (no screen-owned animation; the page-push honours it). TEST UPDATES (structure only, behaviour intact): (1) 'the language picker is reachable BEFORE sign-in' now asserts 'CHOOSE YOUR LANGUAGE' (the eyebrow uppercases Latin) instead of 'Choose your language'; (2) 'the language sheet does not overflow at textScale 1.3' scrolls the switcher into view first (scrollUntilVisible) because the richer hero pushes it below the fold in the lazy ListView — the sheet-opens/no-overflow/Malayalam-visible assertions are unchanged."
+    },
+    {
+      "id": "U7",
+      "group": "b-hero-screens",
+      "title": "Dashboard — The Almanac",
+      "files": [
+        "lib/features/dashboard/presentation/dashboard_screen.dart",
+        "lib/core/i18n/app_en.arb",
+        "lib/core/i18n/(10 Indic ARBs)"
+      ],
+      "acceptance": "Seamless app bar + hero header (eyebrow date/school, serif greeting, almanac date line, 2px saffron rule, YOUR TEACHING TOOLS eyebrow) + feature tile + refined-row register with ink-settle stagger; 3 time-aware greeting keys across all 11 languages; recent-list skeleton/empty/error/401 states preserved; saffron surface <10%. analyze 0, token_guard PASS, 747 green.",
+      "status": "done",
+      "notes": "Seamless AppBar kept (theme gives serif titleLarge + scrolled-under elevation). _AlmanacHeader hero: saffron eyebrow = time-aware salutation + school ('.toUpperCase()' tracks Latin, leaves Indic), Fraunces displayLarge greeting, 2px x 48dp saffron accentBar rule, tabular almanac date line (MaterialLocalizations.formatFullDate — locale-safe, cannot throw on unloaded symbols). EditorialSectionHeader on BOTH tool + recent groups. _ToolList: first kToolRegistry tool -> _FeatureTile (AppCard elevated + accentBar + 64dp feature IconWell + serif titleLarge + subtitle + saffron 'Open'+chevron), rest -> _ToolRow (AppCard flat + 48dp IconWell + titleMedium + muted subtitle + 32dp surfaceContainerHigh circular chevron); staggered inkSettle per tile (cap 8, reduce-motion returns the static frame). Recent skeleton/empty/error/401 states + routing kept verbatim. l10n: added dashboardGreetingMorning/Afternoon/Evening (the 3 required time-aware keys) + actionOpen (the feature-tile CTA label the spec calls for) across ALL 11 ARBs, regenerated gen/**. DELIBERATE REINTERPRETATION (test-safety): the time-aware salutation lives in the EYEBROW and the weekday+date live in the almanac date line, while the greeting KEEPS its existing deterministic keys (dashboardGreeting 'Welcome back' / dashboardGreetingNamed) — so the two exact-string greeting behaviour tests ('Welcome back', 'Welcome back, Lakshmi Iyer') stay green verbatim with no clock injection (which would touch non-presentation layers). When no school, the eyebrow is the salutation alone (no invented 'YOUR CLASSROOM' 11-language string). NO test changes needed. Saffron surface: eyebrow + one accent bar + one feature-tile 'Open'/chevron + icon-well tints < 10%."
+    },
+    {
+      "id": "U8",
+      "group": "b-hero-screens",
+      "title": "Reference tool + result: Lesson Plan (DocumentSheet + Ink-settle)",
+      "files": [
+        "lib/features/lesson_planner/presentation/lesson_plan_screen.dart"
+      ],
+      "acceptance": "Form re-skin (filled inputs, eyebrow section headers, segmented/chips); 5E result wrapped in DocumentSheet with ink-settle reveal + sticky action bar (Save/Regenerate/Copy); all four states intact; 5E content unchanged; auto-scroll to result header. This is the pattern every other tool copies. analyze 0, token_guard PASS, 747 green.",
+      "status": "done",
+      "notes": "FORM: organized into two EditorialSectionHeader groups (lessonPlanSectionLesson 'The lesson' -> topic/grades/subject; lessonPlanSectionApproach 'Teaching approach' -> language/resource/difficulty/rural). LabeledFields gained leading Lucide glyphs (lightbulb/graduationCap/bookOpen/languages/layers/gauge); resourceLevel + difficultyLevel now render through AppSegmented (auto-falls back to chips for the >14-char / Indic labels); grades stay FilterChips (now showCheckmark:false); rural switch gained a sprout secondary glyph. Inputs are filled via the theme's inputDecorationTheme. RESULT: LessonPlanResultView rewritten to wrap the 5E plan in DocumentSheet (docType eyebrow '${lessonPlanTitle} · 5E' -> 'LESSON PLAN · 5E'; Fraunces title; saffron rule; accent-toned grade badge + subject/duration badges), each of the 6 sections a DocumentSheetSection (saffron tick), activities as AppCard(inset) with saffron numeral medallions (primaryContainer + onPrimaryContainer numeral), assessment/homework/objectives/vocab all still AiText — matra safety untouched. Ink-settle reveals each block by index (reduce-motion returns the static frame). Footer action bar = Regenerate (SecondaryButton -> generate) + Copy (ghost -> Clipboard + copyConfirmation SnackBar); NO 'Save' (generation already persists server-side and no client save exists — inventing one would touch controllers or mislead). AUTO-SCROLL: ref.listen detects loading->data and Scrollable.ensureVisible-s the result KeyedSubtree (reduce-motion jumps, no tween). The sticky ToolScaffold Generate button hides once a plan is on screen (onSubmit null on data) so the document's own action bar leads. ALL FOUR STATES kept via the unchanged ResultView + LessonPlanErrorView (incl. the 403/429 plan-limit pricing CTA R1 fix). l10n added: actionRegenerate/actionCopy/copyConfirmation/lessonPlanSectionLesson/lessonPlanSectionApproach across ALL 11 ARBs, regenerated gen/**. NEW TEST: lesson_plan_result_view_test.dart (renders a plan object, no network) pins the DocumentSheet masthead, 6 sections, numbered medallions, the Regenerate/Copy bar, and the reduce-motion static frame. Suite now 751 green. HONEST NOTE: the reference render is exercised only by this new widget test (no golden/screenshot in this suite), so the hero moment has not been eyeballed on device — a screenshot-iteration pass is worth doing before U10 copies it."
+    },
+    {
+      "id": "U0-brand",
+      "group": "c-remaining",
+      "title": "Native launcher icon + branded launch splash (still default Flutter logo)",
+      "files": [
+        "pubspec.yaml",
+        "android/app/src/main/res/**",
+        "flutter_native_splash.yaml"
+      ],
+      "acceptance": "Replace the default flutter-create Flutter-logo launcher icon AND the native Android 12+ launch splash with SahayakAI branding: use flutter_launcher_icons (source = the SahayakAI mark, e.g. /Users/sargupta/SahayakAIV2/sahayakai/sahayakai-main/public/icons/icon-512x512.png READ-ONLY, copy into assets) + flutter_native_splash with ivory #F3EEE4 background and the saffron seal/mark centered (light+dark). No default Flutter logo anywhere on cold launch. analyze 0, token_guard PASS, tests green.",
+      "status": "done",
+      "notes": "flutter_launcher_icons + flutter_native_splash generated from the SahayakAI mark (sahayakai-main icon-512, copied to assets/branding). Launcher = branded mark on ivory adaptive bg; native splash = ivory #F3EEE4 / espresso #17130E dark with the mark (dark surround made transparent so the white sheet floats on ivory). analyze clean, token_guard PASS. Pending on-device cold-launch screenshot confirm.",
+      "commit": "3599d1621"
+    },
+    {
+      "id": "U9",
+      "group": "c-remaining",
+      "title": "Floating bottom nav + app shell",
+      "files": [
+        "lib/app/app_shell.dart"
+      ],
+      "acceptance": "Floating inset nav (radius 20, e3, active saffron pill, icon 1.08 pop, >=12sp label); tab switch = cross-fade + fresh content stagger; Create stays an action. analyze 0, token_guard PASS, 747 green.",
+      "status": "done",
+      "commit": "368992311",
+      "notes": "FloatingBottomNav: inset floated bar (16dp margin, radius 20 rHero, surface, e3 light / dKey+top catch-light dark, 1px outline); active primary@0.12 stadium pill slides via AnimatedAlign 240ms + active icon scale 1.08; Create is an ACTION (never shows the pill). Kept IndexedStack body (not a single-child AnimatedSwitcher) with per-switch cross-fade+rise entrance - a switcher would paint two tabs at once and break the shaped-skeleton test + the shared-read no-second-request invariant (behaviour, not weakened). 760 tests (+9). Reduce-motion collapses all durations to zero. FLAG: pill vertical seating (-0.4 align) worth an eyeball light+dark."
+    },
+    {
+      "id": "U10",
+      "group": "c-remaining",
+      "title": "Remaining P0/P1 tool forms + results in DocumentSheet",
+      "files": [
+        "lib/features/quiz_generator/presentation/quiz_generator_screen.dart",
+        "lib/features/instant_answer/presentation/instant_answer_screen.dart",
+        "lib/features/worksheet_wizard/presentation/worksheet_wizard_screen.dart",
+        "lib/features/rubric_generator/presentation/rubric_generator_screen.dart",
+        "lib/features/exam_paper/presentation/exam_paper_screen.dart",
+        "lib/features/teacher_training/presentation/teacher_training_screen.dart",
+        "lib/features/parent_message/presentation/parent_message_screen.dart",
+        "lib/features/assess_assignment/presentation/assess_assignment_screen.dart"
+      ],
+      "acceptance": "Each form re-skinned; each result wrapped in DocumentSheet copying U8; ScoreRing for rubric/assess scorecards; rubric grid stays one bounded horizontal scroll; all existing states/traps preserved. analyze 0, token_guard PASS, 747 green.",
+      "status": "done",
+      "notes": "DONE (5 of 8 tools): (1) Quiz Generator — commit 6cab3b274; (2) Instant Answer — commit 5ea38fec4; (3) Worksheet Wizard — commit 2816f451a; (4) Rubric Generator — commit 8765dacc4; (5) Exam Paper Generator — commit 4f7f2fd35. Both copy the U8 pattern verbatim: form re-skinned into EditorialSectionHeader groups with leading Lucide glyphs (multi-select FilterChips drop the checkmark; no 2-3-option field needed AppSegmented), sticky submit hides on a result, ref.listen auto-scrolls to the DocumentSheet masthead, result wrapped in DocumentSheet (doc-type eyebrow + Fraunces title + saffron rule + meta badges) with block-by-block ink-settle and a Regenerate/Copy footer action bar. QUIZ SPECIALS preserved: Easy/Medium/Hard TabBar + AnimatedSwitcher (NOT TabBarView), per-question + reveal-all answer reveal, marked-option vs spelled-out logic, questionType field; questions render as inset AppCards with saffron numeral medallions inside the sheet body. INSTANT ANSWER SPECIALS preserved: matra-safe AnswerMarkdownView untouched (its own Text remains the only descendant so the 1.7-height test still pins it), videoSuggestionUrl tappable card with the DTO http(s) URL guard, empty/rephrase state, and the first-class 429 DAILY_LIMIT_REACHED no-retry state (error view untouched); the submitted question is threaded from the screen as the masthead title (fallback l10n 'Answer'). WORKSHEET WIZARD (commit 2816f451a): required ImageInput preserved (byte counter / oversized-reject / injectable picker), response field learningObjectives, answerKey [{activityIndex,answer}]; activities render as inset AppCards with saffron numeral medallions inside the sheet. RUBRIC GENERATOR (commit 8765dacc4): the criteria x performance-levels grid stays ONE bounded horizontal Scrollable INSIDE the DocumentSheet (rubric_grid test still passes: exactly one horizontal scroll extent>0, page vertical-only), points stays num?; description + grid are ink-settle blocks under the masthead. EXAM PAPER (commit 4f7f2fd35): the 202 generation_in_progress distinct in-progress card, the 422 exam_paper_unstructured fewer-chapters guidance and the PUT-to-library Save (now a saffron PrimaryButton in the DocumentSheet footer over Regenerate/Copy, always present even without a regenerate callback) all preserved; difficulty middle value stays 'moderate'; sections render with a saffron-tick editorial header (name/label/marks) + question inset cards with saffron numeral medallions, and generalInstructions/blueprintSummary/pyqSources as saffron-tick DocumentSheetSections. l10n added: quizSectionQuiz + shared sectionForYourClass + instantAnswerResultTitle + worksheetSectionWorksheet + rubricSectionAssignment + examPaperSectionPaper + examPaperSectionFormat across all 11 ARBs, gen/** regenerated. TEST UPDATES (structure only, no behaviour weakened): quiz reveal/overflow-gate taps now ensureVisible first (the taller masthead pushes reveal controls below the fixed 360dp fold) and the answer-key label rows gained Flexible so the deeper inset column never overflows at textScale 1.3; the instant-answer video 48dp finder scoped to the nearest InkWell (the DocumentSheet card nests one too); the worksheet result-view section headings now assert their UPPERCASE DocumentSheetSection form (LEARNING OBJECTIVES / INSTRUCTIONS FOR STUDENTS / ACTIVITIES / ANSWER KEY) and the exam ones assert BLUEPRINT SUMMARY / PREVIOUS-YEAR QUESTIONS; the exam save-action tests ensureVisible the Save button before tapping now that it lives in the footer of a tall paper (the PUT path + saved/failed assertions are byte-for-byte unchanged). The worksheet/rubric/exam re-skin added no net tests, so the suite stays at 771. Suite 760 -> 771 green (+11 new DocumentSheet/footer/reduce-motion tests), analyze 0, token_guard PASS, theme_contrast green. HONEST NOTE: all five DocumentSheet results are verified by code + widget test ONLY, not by eye — generation 401s on stub auth so the hero render has not been screenshot-confirmed on device; do a screenshot-iteration pass once Firebase is wired. DONE (final 3 of 8): (6) Teacher Training — commit e5bae749e; (7) Parent Message — commit e1c618e16; (8) Assess Assignment (ScoreRing) — commit 5b0f0dd78. All copy the U8 pattern verbatim: form re-skinned into EditorialSectionHeader groups with leading Lucide glyphs, the sticky submit hides on a result, ref.listen auto-scrolls to the DocumentSheet masthead, and the result is wrapped in a DocumentSheet (doc-type eyebrow + Fraunces title + saffron rule + meta badges) with block-by-block ink-settle and a footer action bar. TEACHER TRAINING SPECIALS preserved: NO gradeLevel form field (input schema has none — a screen test pins it); the introduction/advice[{strategy,pedagogy,explanation}]/conclusion shape kept; advice items now render as numbered inset AdviceCards with saffron numeral medallions under a saffron-tick 'STRATEGIES' section; dignified professional-development copy; masthead title a fixed 'Coaching notes' (the response carries no title). PARENT MESSAGE SPECIALS preserved: reason enum consecutive_absences/poor_performance/behavioral_concern/positive_feedback (US spelling) stays a typed DropdownButtonFormField; parentLanguage REQUIRED and drives the OUTPUT language (distinct from the UI locale) via AppLocale.aiName; the {message,languageCode,wordCount} render in the parent's script through the matra-safe AiText as the single document body (no card-in-card); the copy-to-clipboard + share (ShareService, faked in tests) result actions were folded into the DocumentSheet footer action bar (an optional Regenerate over the Copy + Share FilledButtons, both >=48dp); masthead 'Message home'. ASSESS ASSIGNMENT SPECIALS preserved: the REQUIRED ImageInput (byte counter / oversized-reject / injectable picker, strict jpeg/png/webp mime) untouched; the mode enum full/transcribe/score (default full) now renders through AppSegmented, whose long 'Score a transcript' label trips the >14-char chip fallback so the mode ChoiceChip taps still pass; the client sends NEITHER studentName NOR studentId (the DTO PII test is byte-for-byte untouched and green); the scorecard hero is the ScoreRing CustomPaint gauge (overallScore 0-100 centre over its /100 denominator, saffron progress arc) over per-criterion inset cards + the strengths/improvements/nextSteps/transcript/teacher-note DocumentSheetSections; the distinct 429 DAILY_LIMIT_REACHED state stays (the error view is untouched). l10n added across ALL 11 ARBs (gen regenerated): teacherTrainingSectionQuestion + teacherTrainingResultTitle; parentMessageSectionMessage + parentMessageSectionDetails + parentMessageResultTitle; assessSectionWork + assessResultTitle. TEST UPDATES (structure only, NO behaviour assertion weakened, none deleted): teacher 'Strategies' -> 'STRATEGIES' (DocumentSheetSection uppercases Latin headings) in the result-view + screen tests; assess section headings -> their UPPERCASE DocumentSheetSection form (WHAT THE STUDENT WROTE / SCORES BY CRITERION / STRENGTHS / TO WORK ON / NEXT STEPS / NOTE FOR THE STUDENT), the score assertion 'out of 100' -> the ScoreRing '/ 100' plus a byType(ScoreRing) pin, and the transcribe no-score assertion is now byType(ScoreRing) findsNothing; PARENT MESSAGE needed ZERO test changes (reason wire values, parentLanguage-required, copy/share and the Indic-safe single-AiText render all stayed green verbatim). The re-skin added no net tests, so the suite stays at 771 green; analyze 0, token_guard PASS, theme_contrast_test green; reduce-motion renders the static composed frame (the shared inkSettle/ScoreRing guards return the final frame when MediaQuery.disableAnimations is set). HONEST NOTE (all three): the DocumentSheet result views — including the ScoreRing scorecard — are verified by code + widget test ONLY, not by eye; generation 401s on stub auth so the hero render has not been screenshot-confirmed on device. The main loop should screenshot-verify these once Firebase is wired. U10 COMPLETE 8/8."
+    },
+    {
+      "id": "U11",
+      "group": "c-remaining",
+      "title": "Settings, Profile, My Library (+detail), Create Palette re-skin",
+      "files": [
+        "lib/features/settings/presentation/settings_screen.dart",
+        "lib/features/profile/presentation/profile_screen.dart",
+        "lib/features/library/presentation/library_screen.dart",
+        "lib/features/create_palette/presentation/create_palette_sheet.dart"
+      ],
+      "acceptance": "AppCard v2 lists, editorial section headers, EmptyView halo, filled inputs; all save-lane traps and states preserved. analyze 0, token_guard PASS, 747 green.",
+      "status": "done",
+      "commits": {
+        "settings": "c00dbb020",
+        "profile": "f4f29307b",
+        "library": "b03dc11a5",
+        "createPalette": "8d286a561"
+      },
+      "notes": "Committed each screen separately. All four use the sanctioned non-ToolScaffold grammar (Scaffold + EditorialSectionHeader groups + AppCard v2 + filled LabeledField inputs + EmptyView v2 halo + staggered inkSettle), NOT DocumentSheet (these are not AI-tool result screens). Suite stays at 771 (no net tests). analyze 0, token_guard PASS, theme_contrast green, reduce-motion returns the static frame. SETTINGS (c00dbb020): the five muted Section groups became EditorialSectionHeader groups (saffron uppercase-Latin eyebrow + hairline) over AppCards, staggered inkSettle, filled inputs gained leading Lucide glyphs, chips drop the checkmark. PRESERVED: preferredBoard mapping (untouched DTO lane), the LanguageSwitcher (UI locale + AI param via AppLocale), the LIVE light/dark theme RadioGroup, the typed-DELETE-gated error-coloured OutlinedButton delete-account (dialog untouched), the signed-out sign-in card. TEST UPDATES (structure only, no behaviour weakened): three section-label asserts moved to their UPPERCASE editorial-eyebrow form (APPEARANCE / NOTIFICATIONS / TEACHING PROFILE); the 'Delete account' asserts stay button-scoped. PROFILE (f4f29307b): same Section->EditorialSectionHeader + staggered inkSettle + leading glyphs; the save error + Save + Sign-out fold into ONE stable footer block so an inline error never re-indexes the lazy list beneath the entrance (the flutter_animate delay-timer would otherwise leak on the shifted rows). PRESERVED: the TWO save lanes (the users/<uid> merge document lane stays distinct from the PATCH allowlist, untouched), the plan badge from the ID-token planType claim (unknown is not 'free'), sign-out flipping the router auth state, board-category recovery, phone/PIN validators, all fields. NO profile test changes (no section-title string was asserted). LIBRARY + DETAIL (b03dc11a5): the saved-work group opens with an EditorialSectionHeader(librarySectionSaved) and the rows ink in on a staggered entrance in the EAGER Column (so the client-side type filter still narrows without a lazy re-index or a second request); the detail's saved-item masthead became the one focal elevated AppCard (§7.2) with its entrance carried by the Lift-&-Settle page push (a pushed screen; a second per-block stagger would double-animate). NEW l10n key librarySectionSaved added across ALL 11 ARBs, gen regenerated (additive-only). PRESERVED: type-filter chips over the shared newest-20 read (no second request), tap-to-open -> LibraryDetailScreen built-pending-firebase sign-in state, loading/empty(+action)/error/offline states. NO library test changes. CREATE PALETTE (8d286a561, in app_shell.dart): the sheet now hosts its own premium surface (rHero top corners via the AppRadius.rHero token, e4 modal shadow light / dKey dark, a grab handle, a Fraunces serif masthead, a trailing chevron per row); the modal route is transparent so the sheet draws its own lifted surface. token_guard note: the top-only radius is derived from AppRadius.rHero.topLeft/topRight rather than a .circular(AppRadius.hero) literal, which the guard's numeric-only allowlist would reject. PRESERVED: one search field over the SHARED kToolRegistry, case-folded search, the empty-search EmptyView, each row keyed create-palette-<id> and deep-linking on tap (router captured before pop), the bounded min-height Column + Flexible list. NO palette test changes. HONEST NOTE: all four are renderable live (no 401 result view) and are verified by code + the full 771-test suite; the on-device screenshot pass has not run in this session. U11 COMPLETE; the premium rollout U0-U11 is done."
+    },
+    {
+      "id": "U12",
+      "group": "c-remaining",
+      "title": "P2 screens adopt the system as they are built",
+      "files": [
+        "lib/features/(visual_aid|assessment_scanner|video_storyteller|virtual_field_trip|attendance|demo_call|community|impact|pricing|notifications)/**"
+      ],
+      "acceptance": "Built natively on the premium tokens/widgets/DocumentSheet; per-screen DESIGN_RUBRIC 15-point + premium-done checklist. analyze 0, token_guard PASS, tests green.",
+      "status": "pending"
+    }
+  ],
+  "guardrails": [
+    "Presentation layer only: no providers/controllers/repositories/models/routes/DTO changes; 747 behavior tests must stay green.",
+    "Preserve every widget public API and the 15 M3 TextTheme slot names so screens inherit the re-skin for free.",
+    "Preserve the founder-approved accessible saffron split: fill/CTA #C2410C, text/icon #A8380A, brand-decorative #FF9933 only; dark #F6A959 fill with #231200 label. theme_contrast_test.dart must stay green.",
+    "Every text pairing passes WCAG AA (ratios stated in the spec); >=48dp targets; 12sp minimum.",
+    "11 Indic scripts: serif+sans dual Noto fallback, line-height floors, zero clipped matras verified on Bengali/Tamil/Malayalam at textScale 1.3 / 360dp / light+dark.",
+    "Lucide icons only, no emoji, no em dashes, teacher-dignity copy, all 11 languages first-class (never Hindi-only).",
+    "Saffron surface area < 10% of any screen; one CTA glow, never repeated; no mesh gradients, no glassmorphism, no gradient behind body text, no gradient-filled text.",
+    "Motion curve set is exactly easeOutQuart/emphasized/standard; single element <=420ms, orchestration <=600ms wall-clock, input never blocked >350ms; bounce/elastic/linear-on-reveal banned; respect MediaQuery.disableAnimations.",
+    "Branch develop; commit each unit; git add explicit paths (never -A/.); never push, never deploy, never touch sahayakai-main or sibling repos.",
+    "Any DESIGN_RUBRIC 15-point FAIL blocks that screen's commit."
+  ],
+  "relaxations": [
+    {
+      "id": "R1",
+      "target": "scripts/token_guard.sh + DESIGN_RUBRIC.md#0 radius table",
+      "change": "Add 14 to the allowed .circular() radius set (8/10/12/14/16/20); add card=16/control=12/well=14 aliases to the radius table.",
+      "why": "IconWell v2 gradient well uses r14 — an on-scale premium value, not drift."
+    },
+    {
+      "id": "R2",
+      "target": "DESIGN_RUBRIC.md#0 curve + duration rule",
+      "change": "Replace 'single canonical curve / >400ms FAIL' with the sanctioned 3-curve set (easeOutQuart/emphasized/standard), 420ms single-element ceiling, ~600ms multi-element wall-clock orchestration, input never blocked >350ms. Bounce/elastic still banned.",
+      "why": "One curve cannot drive both a 160ms tap and a 320ms page push; the emphasized/standard pair is the minimum premium motion needs."
+    },
+    {
+      "id": "R3",
+      "target": "DESIGN_RUBRIC.md#0 shadow table",
+      "change": "Replace the flat .04/.08/.12 grammar and the 'darker than .12 FAIL' line with the two-layer warm-tinted e1-e4 system (e4 reaches .20) + dark 1px top-highlight + one CTA glow.",
+      "why": "The flat .04 shadow on white is imperceptible — the #1 cheap-utility-app tell; real depth is the biggest premium lever."
+    },
+    {
+      "id": "R4",
+      "target": "DESIGN_RUBRIC.md#153 gradient rule",
+      "change": "Expand the sanctioned gradient list beyond the accent bar to: paper wash (3%), hero corner wash (8% saffron), dark vignette, CTA glow, ribbon, IconWell tint. Still ban mesh, glassmorphism, gradient-filled text, gradient behind body text.",
+      "why": "The premium language legitimately needs tasteful, barely-there warm gradients; the old rule banned all but one."
+    },
+    {
+      "id": "R5",
+      "target": "DESIGN_RUBRIC.md#213 palette rule",
+      "change": "Add pine (#12554A/#4FB3A2) and indigo-ink (#22346B/#8DA4E0) as sanctioned tertiary accents alongside saffron/green/navy. Still ban glassmorphism and purple/indigo AI-slop-as-primary.",
+      "why": "A 3-note accent story gives the palette a grown-up spread so it never reads as 'M3 + one orange button'."
+    },
+    {
+      "id": "R6",
+      "target": "DESIGN_RUBRIC.md#0 color tables + #2 typography",
+      "change": "Supersede the flat-white light and blue-black dark tables with the Ivory & Ink / warm-espresso values (+ new named tokens lPrimaryText/lShadowBase/brandBrass/pine/indigo); record Fraunces as the editorial display family and mark Outfit retired.",
+      "why": "The tables are the named-token-only gate's source of truth and must reference the shipped premium values."
+    }
+  ],
+  "designDoneChecklist": [
+    "Paper not white: warm ivory ground, cards visibly float (1.13:1 lift + warm two-layer shadow); no two coplanar whites.",
+    "Depth is legible: every card casts a gathered warm two-layer shadow; the one focal card sits a step higher; dark cards show a top catch-light.",
+    "Serif present and restrained: Fraunces on wordmark/heroes/card+result titles (~3-6 strings/screen), Inter elsewhere, clear serif<->sans contrast, no Outfit.",
+    "Sections read editorial: every group has a saffron tracked-uppercase (Latin) eyebrow + hairline rule; no weak grey labels.",
+    "Saffron scarce and confident: <10% surface; #C2410C fills, #A8380A text, #FF9933 only on splash/logo; dark CTA reads brass not neon; no all-peach tiles.",
+    "The three moments land: Splash presses the Seal + draws the ink underline; Dashboard opens as a composed Almanac; results ink in block-by-block on a DocumentSheet (never a chat dump).",
+    "Motion confident not playful: staggered entrances, press-depress everywhere, skeletons (no bare spinner), Lift-&-Settle push, result reveal, all within 3-curve/<=420ms(<=600ms) budget; reduce-motion shows final frame instantly.",
+    "A11y holds under stress: every text pair AA; 48dp targets; longest Bengali+Tamil+Malayalam render no clipped matra at textScale 1.3/360dp/light+dark; Lucide-only, no emoji; dignified copy.",
+    "Looks curated not generated: composed asymmetry, masthead, seal, hairline discipline, tabular data."
+  ],
+  "releaseGates": {
+    "premium": {
+      "status": "GREEN",
+      "analyze": "No issues found!",
+      "tests": "771 passed",
+      "token_guard": "PASS",
+      "apk": "build/app/outputs/flutter-apk/app-debug.apk (175 MB, exit 0)",
+      "onDevice": "Login/Onboarding, Dashboard Almanac, Lesson Plan form, floating nav, Profile, Library, native icon+splash all screenshot-confirmed premium on Pixel_7. Tool RESULT/DocumentSheet views (incl. ScoreRing) verified by code+widget test only (generation 401s on stub auth until Firebase wired).",
+      "units": "U0-brand, U1-U4 foundation, U5-U8 heroes, U9 floating nav, U10 all 8 tools, U11 account/library — ALL DONE"
+    }
+  }
+}

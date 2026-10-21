@@ -1,0 +1,415 @@
+{
+  "$SUPERSEDED": "SUPERSEDED 2026-08-17 by docs/flutter/loop/LOOP_STATE.json and LOOP_RUNBOOK_V3.md. An audit on that date compared this file against the code and found specific false claims (see the $falseClaims list). It is kept, not deleted, so the forensic record survives and any future grep hit is obviously stale. DO NOT USE IT AS A SOURCE OF TRUTH.",
+  "$falseClaims": [
+    "Says Firebase auth is deferred with no firebase_* deps — four Firebase packages are in pubspec.yaml and a real google-services.json is committed.",
+    "Marks Visual Aid, Assessment Scanner, Video Storyteller and Virtual Field Trip as pending — all four are built, tested and routed.",
+    "Reports i18n as 262 keys / 21 translated — the real numbers are 971 / 495.",
+    "Records branch 'develop' — the work is on feature/flutter-rebuild.",
+    "Cites golden tests as an acceptance gate — there were zero matchesGoldenFile call sites."
+  ],
+  "version": 1,
+  "app": "sahayakai-flutter",
+  "generatedFrom": [
+    "THEME_SPEC.md",
+    "SCREEN_INVENTORY.md",
+    "ARCHITECTURE.md",
+    "DESIGN_RUBRIC.md"
+  ],
+  "masterPlan": "FLUTTER_BUILD_PLAN.md",
+  "branch": "develop",
+  "backend": "https://sahayakai.com",
+  "acceptanceRubric": "DESIGN_RUBRIC.md#12 (15-point pre-merge checklist)",
+  "currentPhase": "p0",
+  "phaseOrder": [
+    "foundation",
+    "p0",
+    "p1",
+    "p2"
+  ],
+  "next": "P0.2 real Firebase auth (HANDOFF-gated: flutterfire configure sahayakai-b4248) — or P0.1 Splash polish. Foundation-v1 boots to Splash -> Login -> 4-tab shell, light+dark, flutter analyze clean.",
+  "decisions": {
+    "brandPrimary": "#FF9933 (light) / #FFAB57 (dark) — deliberate vivid-saffron BRAND override of THEME_SPEC's token-accurate #E0924D/#EB9447. ring + surfaceTint updated to match; primaryContainer kept as the #FBF2E9 saffron tint. Documented in lib/core/theme/app_colors.dart. Change in web + Flutter together if adopted upstream.",
+    "fonts": "google_fonts RUNTIME fetch (no TTFs bundled — disk-constrained). The token-guard does NOT yet enforce 'no runtime GoogleFonts fetch'. DEFERRED HARDENING: bundle Outfit/Inter/9 Noto TTFs as offline assets for rural/low-connectivity, set GoogleFonts.config.allowRuntimeFetching=false, then add that rule to scripts/token_guard.sh.",
+    "firebaseAuth": "DEFERRED to P0.2 (handoff-gated). No firebase_* / google_sign_in deps this pass so the app builds clean with no Firebase config. STUB auth layer instead: AuthController (signedOut/signedIn) in lib/core/auth/auth_providers.dart drives the go_router redirect; appBootstrap() future simulates first-run init (parks router on /splash). The dio auth interceptor reads a tokenProvider (lib/core/network/api_providers.dart) that currently returns null — TODOs mark where the Firebase ID token + App Check wiring goes.",
+    "depSubstitutions": "lucide_icons ^0.257.0 (resolved; provides Home/Sparkles/Library/User etc.). Routing uses hand-written GoRoute list (go_router_builder NOT added this pass). Omitted this pass (per scope): firebase_core/auth/app_check, google_sign_in, sentry_flutter, cached_network_image, image_picker, file_picker, go_router_builder. custom_lint + riverpod_lint added as deps but the token-guard is a grep script (scripts/token_guard.sh), not custom_lint rules.",
+    "l10n": "flutter gen-l10n outputs to lib/core/i18n/gen/ (synthetic package deprecated); import package:sahayakai/core/i18n/gen/app_localizations.dart. l10n.yaml at repo root."
+  },
+  "foundation": [
+    {
+      "id": "F1",
+      "task": "Project scaffold + pubspec metadata (name/version/sdk ^3.11.4)",
+      "status": "done"
+    },
+    {
+      "id": "F2",
+      "task": "pubspec deps + pub get clean (scope-reduced: no firebase/google_sign_in this pass; lucide_icons ^0.257.0)",
+      "status": "done"
+    },
+    {
+      "id": "F3",
+      "task": "Bundle Outfit/Inter/9 Noto fonts as assets",
+      "status": "deferred",
+      "note": "Using google_fonts runtime fetch for foundation-v1; bundling deferred (disk-constrained). See decisions.fonts."
+    },
+    {
+      "id": "F4",
+      "task": "Theme layer lib/core/theme/* (split files: app_colors/app_radius/app_spacing/app_shadows/app_motion/app_text/app_theme)",
+      "status": "done",
+      "note": "Brand override to #FF9933/#FFAB57 (see decisions.brandPrimary); everything else per THEME_SPEC §7 verbatim."
+    },
+    {
+      "id": "F5",
+      "task": "i18n scaffold: l10n.yaml, 11 ARBs (en+10 with native translations), AppLocale enum (source of truth), locale_provider (persisted)",
+      "status": "done"
+    },
+    {
+      "id": "F6",
+      "task": "Firebase + App Check: flutterfire configure sahayakai-b4248 (HANDOFF), bootstrap() in main.dart",
+      "status": "deferred",
+      "handoff": true,
+      "note": "Replaced by STUB auth + appBootstrap() this pass. Real Firebase = P0.2. See decisions.firebaseAuth."
+    },
+    {
+      "id": "F7",
+      "task": "Auth layer lib/core/auth/* — STUB (AuthController signedOut/signedIn + appBootstrap + isSignedIn)",
+      "status": "done",
+      "note": "Stub; real google sign-in repo lands in P0.2."
+    },
+    {
+      "id": "F8",
+      "task": "dio + auth interceptor lib/core/network/* (Bearer via tokenProvider stub->null, 401 retry hook TODO, ApiException mapper, apiClientProvider)",
+      "status": "done"
+    },
+    {
+      "id": "F9",
+      "task": "Router lib/core/router/* (go_router + redirect auth guard off stub auth + appBootstrap, publicPaths)",
+      "status": "done"
+    },
+    {
+      "id": "F10",
+      "task": "Shared shells lib/shared/widgets/* (ToolScaffold, ResultView, AppSkeleton, ErrorView, EmptyView, OfflineView, PrimaryButton, AppCard, LanguageSwitcher)",
+      "status": "done"
+    },
+    {
+      "id": "F11",
+      "task": "App root app.dart (MaterialApp.router + theme + darkTheme + l10n + locale watch) + AppShell NavigationBar 4 tabs (Home/Create/Library/Me, Lucide, saffron active, transparent indicator, 56dp)",
+      "status": "done"
+    },
+    {
+      "id": "F12",
+      "task": "build_runner clean + flutter analyze ZERO + token-guard grep gate (scripts/token_guard.sh)",
+      "status": "done",
+      "note": "analyze: 'No issues found'. token-guard: PASS. custom_lint rules not authored (grep guard used); 'no GoogleFonts fetch' rule deferred with F3."
+    }
+  ],
+  "screens": [
+    {
+      "name": "Splash",
+      "priority": "p0",
+      "endpoint": null,
+      "file": "lib/features/splash/presentation/splash_screen.dart",
+      "status": "done",
+      "note": "Placeholder brand mark + tagline + progress; router redirect wired. Polish = P0.1.",
+      "commit": "ed82867f9",
+      "notes": "brand mark + FIRST-CLASS ERROR STATE with retry. BUG FIXED: guard parks on /splash whenever bootstrap has no value incl. AsyncError -> old spinner-only splash span FOREVER when App Check/init failed (realistic on rural 2G)."
+    },
+    {
+      "name": "Login / Onboarding (Google)",
+      "priority": "p0",
+      "endpoint": "client Firebase sign-in + profile save (users/<uid>)",
+      "file": "lib/features/onboarding/presentation/login_screen.dart",
+      "status": "built-pending-firebase",
+      "note": "Placeholder 'Continue' flips stub auth to signed-in. Real Google sign-in + onboarding = P0.2.",
+      "commit": "ed82867f9",
+      "notes": "Google button -> stub AuthController (built-pending-firebase). Onboarding reachable but SKIPPABLE (ONBOARDING_GATE_ENABLED off; no hard gate reintroduced). Language picker step 0, all 11 native labels. BUG FIXED: 'saved' snackbar floated over the sticky footer and swallowed the CTA tap for 4s. Needs official Google branding asset (Lucide has no Google mark)."
+    },
+    {
+      "name": "Dashboard Home",
+      "priority": "p0",
+      "endpoint": "profile + recent library (no dedicated AI call)",
+      "file": "lib/features/dashboard/presentation/dashboard_screen.dart",
+      "status": "built-pending-firebase",
+      "note": "Greeting + non-navigating tool tiles (AppCard). Real content/routing = P0.3.",
+      "commit": "ed82867f9",
+      "notes": "Real tool-tile grid deep-linking live routes (no dead tiles) + recent list via GET /api/content/list with skeleton/empty/error/401 states; hosts 4-tab nav."
+    },
+    {
+      "name": "Lesson Plan Generator",
+      "priority": "p0",
+      "endpoint": "POST /api/ai/lesson-plan",
+      "file": "lib/features/lesson_planner/presentation/lesson_plan_screen.dart",
+      "status": "done",
+      "commit": "55a4244",
+      "notes": "POST /api/ai/lesson-plan; ToolScaffold+ResultView+@riverpod; full 5E result render; all states; rubric self-check PASS; analyze clean. Runtime API needs Firebase auth (built against stub token)."
+    },
+    {
+      "name": "Quiz Generator",
+      "priority": "p0",
+      "endpoint": "POST /api/ai/quiz",
+      "file": "lib/features/quiz_generator/presentation/quiz_generator_screen.dart",
+      "status": "done",
+      "commit": "0e4b71e",
+      "notes": "POST /api/ai/quiz; 3 difficulty tabs via TabBar+AnimatedSwitcher (TabBarView unbounded-height crash inside ToolScaffold scroll); field is questionType (not type) per backend Zod schema; validationWarning banner; numQuestions 1-20; targetDifficulty null => all variants. Picker lists moved to lib/shared/domain/picker_options.dart (shared with lesson_planner). analyze clean; rubric PASS (contrast/dark verified by token-usage + render, no device available)."
+    },
+    {
+      "name": "Instant Answer",
+      "priority": "p0",
+      "endpoint": "POST /api/ai/instant-answer",
+      "file": "lib/features/instant_answer/presentation/instant_answer_screen.dart",
+      "status": "done",
+      "commit": "e59335a",
+      "notes": "POST /api/ai/instant-answer; 429 DAILY_LIMIT_REACHED is a first-class no-retry state; hand-written pure markdown parser in domain/answer_markdown.dart (flutter_markdown is DISCONTINUED; theme-styled, AI prose height 1.7 + full height behaviour); url_launcher ^6.3.2 behind LinkOpener riverpod provider (testable, single audit point). SECURITY: videoSuggestionUrl is untrusted LLM output handed to the OS - DTO now drops anything not absolute http(s) with a host (blocks javascript:/file:/intent:/data:), tested. 4000-char client cap (flow throws above). analyze clean; 112 tests green; rubric PASS."
+    },
+    {
+      "name": "Settings",
+      "priority": "p0",
+      "endpoint": "prefs + profile save; POST /api/user/delete-account",
+      "file": "lib/features/settings/presentation/settings_screen.dart",
+      "status": "built-pending-firebase",
+      "commit": "0fd0e82",
+      "notes": "Scaffold+AppBar+AppCard list (NOT ToolScaffold: no single request->result). Language via single AppLocale (drives UI locale AND AI language param); live theme toggle (new theme_mode_provider wired into app.dart); notifications local-only, defaults OFF (dark-pattern avoidance); delete-account typed-DELETE gate. BUG CAUGHT: board must be sent as preferredBoard (handler allowlist drops educationBoard silently -> save would no-op); EDUCATION_BOARDS is 29 not 28. HANDOFF: delete-account needs reauthenticateWithCredential (forceRefresh keeps original auth_time -> still rejected); failures are 401 reauth_required, no 429. Reached from Me tab app bar. analyze clean; 187 tests green; rubric PASS (contrast not independently instrumented)."
+    },
+    {
+      "name": "Profile (Me)",
+      "priority": "p0",
+      "endpoint": "read/write users/<uid>; client sign-out",
+      "file": "lib/features/profile/presentation/profile_screen.dart",
+      "status": "built-pending-firebase",
+      "note": "Placeholder identity card + LanguageSwitcher + sign-out (flips stub auth). Real profile r/w = P0.8.",
+      "commit": "9775d97",
+      "notes": "Full read/edit, plan badge, sign-out. NO GET /api/user/profile exists (web uses an RSC server action) -> read is direct users/<uid> client-SDK behind ProfileDocSource seam. POST /api/user/profile DELIBERATELY NOT WIRED (unsafe: Zod-strips state/district/pincode; reads teachingGradeLevels only; defaults write through createUser set(merge) with no allowlist -> saving a name downgrades planType to free + zeros impactScore). Two save lanes: PATCH (administrativeRole/preferredBoard/qualifications) + users/<uid> merge. boardCategory is persisted by NOTHING - UI-only. INDIAN_STATES is 36 not 35. Plan badge from ID-token planType claim; no token -> 'Not available' (never fake Free). Settings profile repo refactored into profile feature (not forked); its tests moved + green. analyze clean; 283 tests green; rubric PASS."
+    },
+    {
+      "name": "Worksheet Wizard",
+      "priority": "p1",
+      "endpoint": "POST /api/ai/worksheet",
+      "file": "lib/features/worksheet_wizard/presentation/worksheet_wizard_screen.dart",
+      "status": "built-pending-firebase",
+      "commit": "07b39c764",
+      "notes": "POST /api/ai/worksheet with REQUIRED imageDataUri (data:mime;base64, cap 14_000_000 CHARS enforced client-side; Zod rejects over-cap with 400, does not clamp). Shared lib/shared/media/image_input.dart (camera/gallery, injectable picker service, thumbnail, byte counter, oversized-reject, permission-denied) reused by future Assess Assignment. image_picker 1.2.3; CAMERA manifest perm (required=false). BUGS: response field is learningObjectives NOT objectives; answerKey is [{activityIndex(0-based),answer}]; no validationWarning on this endpoint. Camera RUNTIME permission = handoff. analyze clean; 482 tests; rubric PASS."
+    },
+    {
+      "name": "Rubric Generator",
+      "priority": "p1",
+      "endpoint": "POST /api/ai/rubric",
+      "file": "lib/features/rubric_generator/presentation/rubric_generator_screen.dart",
+      "status": "built-pending-firebase",
+      "commit": "f1ca54ff3",
+      "notes": "POST /api/ai/rubric; criteria x performance-levels grid = single Table in ONE horizontal SingleChildScrollView inside a bounded box (page never scrolls sideways; unbounded child in ToolScaffold would crash) - proven by rubric_grid_test (exactly one horizontal Scrollable with extent>0; no overflow 360dp x textScale 1.3 light+dark + Indic probes). points is num? NOT int (.5-point rubrics). SCREEN_INVENTORY was ACCURATE here. analyze clean; 518 tests; rubric PASS."
+    },
+    {
+      "name": "Exam Paper Generator",
+      "priority": "p1",
+      "endpoint": "POST /api/ai/exam-paper (+ PUT save)",
+      "file": "lib/features/exam_paper/presentation/exam_paper_screen.dart",
+      "status": "built-pending-firebase",
+      "commit": "931b36119",
+      "notes": "POST /api/ai/exam-paper (+PUT save). CRITICAL: 202 generation_in_progress is a Dio SUCCESS (<400) so it does NOT throw - decoded off body marker into distinct ExamPaperInProgress state (a naive impl renders an empty paper). 422 exam_paper_unstructured -> fewer-chapters guidance (distinct from generic error). Blueprint = only CBSE 9/10 x Math/Science (4 combos) allow empty chapters; else chapters>=1. difficulty middle value is 'moderate' NOT 'medium'. PUT body {paper:<raw response JSON>} -> {contentId}. ApiException gained errorCode field (no new ApiErrorKind, kept switches exhaustive); ApiClient.put + FakeApiClient.put added. analyze clean; 559 tests; rubric PASS."
+    },
+    {
+      "name": "Teacher Training",
+      "priority": "p1",
+      "endpoint": "POST /api/ai/teacher-training",
+      "file": "lib/features/teacher_training/presentation/teacher_training_screen.dart",
+      "status": "built-pending-firebase",
+      "commit": "11ad3182c",
+      "notes": "POST /api/ai/teacher-training. Contract ACCURATE (no mismatch). Request {question(max2000 rejects),subject?,language?} - NO gradeLevel in schema so no grade picker (pinned by test). Response {introduction,advice[{strategy,pedagogy,explanation}],conclusion}; DTO drops advice points with no strategy AND no explanation. Dignified PD copy ('Teaching Coach', empty state = invitation). analyze clean; 598 tests; rubric PASS."
+    },
+    {
+      "name": "Parent Message",
+      "priority": "p1",
+      "endpoint": "POST /api/ai/parent-message",
+      "file": "lib/features/parent_message/presentation/parent_message_screen.dart",
+      "status": "built-pending-firebase",
+      "commit": "e65ee9860",
+      "notes": "POST /api/ai/parent-message. Required: studentName/className/subject/reason/parentLanguage. reason enum: consecutive_absences|poor_performance|behavioral_concern|positive_feedback (US spelling). parentLanguage = AppLocale.aiName (drives OUTPUT lang, distinct from UI). Response {message,languageCode,wordCount}. Message rendered via AiText (Indic-safe, so Tamil msg from English UI shapes). Copy + share (share_plus 12, behind ShareService provider, faked in tests). BACKEND TRAP: default Genkit path OVERWRITES client reasonContext with a server REASON_CONTEXT[reason] template - teacherNote is the field that actually reaches the model (recorded HANDOFF). analyze clean; 643 tests; rubric PASS."
+    },
+    {
+      "name": "Assess Assignment",
+      "priority": "p1",
+      "endpoint": "POST /api/ai/assess-assignment",
+      "file": "lib/features/assess_assignment/presentation/assess_assignment_screen.dart",
+      "status": "built-pending-firebase",
+      "commit": "f98072a56",
+      "notes": "POST /api/ai/assess-assignment; REUSES lib/shared/media/image_input.dart. imageDataUri REQUIRED, cap 14MB AND regex data:image/(jpeg|png|webp) - STRICTER than worksheet (heic/gif 400; image_picker re-encodes to jpeg so OK). mode enum full|transcribe|score (default full); score reveals editedTranscript. Client sends NEITHER studentName NOR studentId (server strips PII; pinned by test). rubricSnapshot optional (no picker - no client saved-rubric store yet; server DEFAULT_RUBRIC). Scorecard rendered defensively per mode. Distinct retry-free DAILY_LIMIT branch kept (correct for when backend wires it). BACKEND NOTE (CORRECTED from agent overstatement): image daily cap 10/day DOES map to 429 (classifier matches 'Rate limit exceeded'); but the gemini_tokens 500k/day budget error is NOT recognized by the classifier and falls through to a generic 500 - a real backend gap, flagged as a chip. analyze clean; 688 tests; rubric PASS."
+    },
+    {
+      "name": "My Library",
+      "priority": "p1",
+      "endpoint": "library list/read (Firestore/Storage)",
+      "file": "lib/features/library/presentation/library_screen.dart",
+      "status": "built-pending-firebase",
+      "note": "Placeholder empty state. Real list/filters = P1.7.",
+      "commit": "2eb4a8e82",
+      "notes": "COMPLETED (not rebuilt): existing library screen/repo/provider/dtos/row kept. Added: type filter chips (client-side over the shared newest-20 read to preserve the one-shared-read invariant the dashboard depends on; server ?type= param exists + recorded for future pagination), tap-to-open -> new LibraryDetailScreen /my-library/detail/:id wiring the REAL GET /api/content/get?id (corrects old 'not wired' comment). Detail is built-pending-firebase: content/get is Firebase-gated AND stored data shape diverges from result-view models (quiz stored single-variant not 3, worksheet stored as .md markdown) - so detail shows metadata + 'sign in to open' state, data payload ready for a future per-type adapter. analyze clean; 716 tests; rubric PASS."
+    },
+    {
+      "name": "Create / Command Palette",
+      "priority": "p1",
+      "endpoint": null,
+      "file": "lib/features/create_palette/presentation/create_palette_sheet.dart",
+      "status": "done",
+      "note": "Create tab opens a placeholder bottom sheet in AppShell. Real searchable palette = P1.8.",
+      "commit": "ac46495d4",
+      "notes": "Modal bottom sheet (not a route), searchable, deep-links to all 9 tools. Extracted ONE shared kToolRegistry (lib/shared/domain/tool_registry.dart) consumed by BOTH dashboard grid AND palette (placeholder palette was missing assess-assignment). analyze clean; 731 tests; rubric PASS."
+    },
+    {
+      "name": "Visual Aid Designer",
+      "priority": "p2",
+      "endpoint": "POST /api/ai/visual-aid",
+      "file": "lib/features/visual_aid/presentation/visual_aid_screen.dart",
+      "status": "pending"
+    },
+    {
+      "name": "Assessment Scanner",
+      "priority": "p2",
+      "endpoint": "POST /api/ai/assessment-scanner",
+      "file": "lib/features/assessment_scanner/presentation/assessment_scanner_screen.dart",
+      "status": "pending"
+    },
+    {
+      "name": "Video Storyteller",
+      "priority": "p2",
+      "endpoint": "POST /api/ai/video-storyteller",
+      "file": "lib/features/video_storyteller/presentation/video_storyteller_screen.dart",
+      "status": "pending"
+    },
+    {
+      "name": "Virtual Field Trip",
+      "priority": "p2",
+      "endpoint": "POST /api/ai/virtual-field-trip",
+      "file": "lib/features/virtual_field_trip/presentation/virtual_field_trip_screen.dart",
+      "status": "pending"
+    },
+    {
+      "name": "Attendance",
+      "priority": "p2",
+      "endpoint": "/api/attendance/* (Twilio)",
+      "file": "lib/features/attendance/presentation/attendance_screen.dart",
+      "status": "pending"
+    },
+    {
+      "name": "Demo / Try Call",
+      "priority": "p2",
+      "endpoint": "/api/demo-call (anon, flag-gated)",
+      "file": "lib/features/demo_call/presentation/demo_call_screen.dart",
+      "status": "pending"
+    },
+    {
+      "name": "Community",
+      "priority": "p2",
+      "endpoint": "community APIs",
+      "file": "lib/features/community/presentation/community_screen.dart",
+      "status": "pending"
+    },
+    {
+      "name": "Impact Dashboard",
+      "priority": "p2",
+      "endpoint": "analytics APIs",
+      "file": "lib/features/impact/presentation/impact_dashboard_screen.dart",
+      "status": "pending"
+    },
+    {
+      "name": "Pricing / Usage",
+      "priority": "p2",
+      "endpoint": "billing APIs (read-only v1)",
+      "file": "lib/features/pricing/presentation/pricing_screen.dart",
+      "status": "pending"
+    },
+    {
+      "name": "Notifications",
+      "priority": "p2",
+      "endpoint": "notifications API",
+      "file": "lib/features/notifications/presentation/notifications_screen.dart",
+      "status": "pending"
+    }
+  ],
+  "verification": {
+    "perUnit": [
+      "build_runner build --delete-conflicting-outputs",
+      "flutter analyze (zero issues)",
+      "token-guard grep (scripts/token_guard.sh)",
+      "DESIGN_RUBRIC.md#12 15-point checklist for screens",
+      "commit unit on develop"
+    ],
+    "perPhase": [
+      "flutter gen-l10n",
+      "flutter build apk --debug",
+      "emulator smoke 360dp+tablet + one live AI call",
+      "golden tests 360/800 light+dark with Indic strings"
+    ]
+  },
+  "guardrails": [
+    "Never push to any remote — local commits only",
+    "Never touch sahayakai-main or any sibling repo (no backend edits)",
+    "Never publish (no deploy, no store upload, no artifact publish)",
+    "Commit each unit on the develop branch; never git add -A/.; stage explicit paths",
+    "Primary color is the vivid-saffron BRAND override #FF9933 (light) / #FFAB57 (dark) — see decisions.brandPrimary; never #E0924D",
+    "No emojis, no em dashes, Lucide icons only, all 11 languages first-class (never Hindi-only), teacher-dignity copy",
+    "Any DESIGN_RUBRIC §12 FAIL blocks that screen's commit"
+  ],
+  "knownGaps": [
+    {
+      "id": "i18n-translation",
+      "severity": "high",
+      "status": "open",
+      "summary": "UI is effectively English-only for Indic users: app_en.arb has 262 keys but all 10 Indic ARBs carry only 21 (241 keys render English fallback).",
+      "why": "Contradicts the product's core promise (11 Indic languages first-class, never Hindi-only) and DESIGN_RUBRIC 12.15. Language picker and AI output language DO work across 11; the UI chrome does not.",
+      "note": "Pre-existing across all shipped screens, not introduced by any one unit. Machine translation of teacher-facing copy needs native review for dignity + pedagogical terminology before shipping."
+    },
+    {
+      "id": "brand-contrast",
+      "severity": "medium",
+      "status": "resolved",
+      "summary": "Brand saffron #FF9933 fails WCAG AA contrast: #FF9933 text on white = 2.13:1, white on #FF9933 (button fill) = 2.13:1 (AA needs 4.5, AA-large 3.0). The original token #E0924D was 2.50:1 and also failed.",
+      "why": "Founder chose vivid #FF9933 over #E0924D for brand identity. Contrast is a real accessibility issue (rural low-end screens, sunlight). NOT auto-fixable without either darkening the saffron for text/CTA use (e.g. a #C2410C-ish 'saffron-700' for on-white text while keeping #FF9933 for large brand surfaces) or using dark text on saffron buttons.",
+      "options": [
+        "keep #FF9933 everywhere (accept AA fail)",
+        "use a darker saffron shade ONLY for text/CTA-on-white while keeping #FF9933 for brand surfaces/large fills",
+        "dark onPrimary text on saffron buttons"
+      ],
+      "note": "Left untouched pending the founder's call. Saffron is currently used as text/icon at dashboard tiles, quiz correct-answer mark, plan badge.",
+      "resolution": "Founder-approved accessible split (2026-07): LIGHT primary/ring = #C2410C deep saffron (5.18:1 on white -> saffron text AND white-on-saffron CTA both pass AA); DARK primary stays vivid #FFAB57 (9.7:1 on near-black) but dOnPrimary fixed white->#231200 (white on bright saffron was ~1.9:1, a pre-existing dark-button bug the contrast test caught). brandSaffron #FF9933 reserved for large brand moments only. Locked by test/core/theme/theme_contrast_test.dart."
+    }
+  ],
+  "releaseGates": {
+    "p0": {
+      "status": "GREEN",
+      "gen_l10n": "clean",
+      "analyze": "No issues found!",
+      "tests": "421 passed",
+      "token_guard": "PASS",
+      "apk": "build/app/outputs/flutter-apk/app-debug.apk (149 MB, assembleDebug 497.8s, exit 0)",
+      "rubric_sweep": "adversarial cross-screen sweep found 13 confirmed fails; ALL fixed (10 commits cff9e335e..b3b4ff362); token layer was already clean (no hardcoded colors/fontSize/off-grid/emoji/bad-lucide). Key fixes: Indic line-height system was bypassed on AppBar+nav app-wide (now withIndic rebuilds all component styles); Library dead-tab wired; 6 duplicated widgets consolidated to lib/shared.",
+      "screens_shipped": [
+        "Splash",
+        "Login/Onboarding",
+        "Dashboard",
+        "Lesson Plan",
+        "Quiz",
+        "Instant Answer",
+        "Settings",
+        "Profile"
+      ]
+    },
+    "p1": {
+      "status": "GREEN",
+      "gen_l10n": "clean",
+      "analyze": "No issues found!",
+      "tests": "747 passed",
+      "token_guard": "PASS",
+      "apk": "build/app/outputs/flutter-apk/app-debug.apk (174M, exit 0, post-fix rebuild)",
+      "rubric_sweep": "6-agent report-only cross-screen Workflow across all 16 screens: NO hard blockers (zero raw colors/fontSize literals/emoji/em-dashes/sub-48dp/saffron-on-light). 3 REAL fails found + FIXED: R1 (FUNCTIONAL) lesson-plan+quiz plan-limit states had no pricing CTA despite 'upgrade' copy -> wired openPricing (cfe776371, +12 tests); R2 note-panel grammar was 3 divergent variants + stray 0.4-tracking caption -> one shared NoteBanner + labelSmall token, 9 sites unified (42c0208ba); R3 section-gap rhythm 16/24/32 -> standardized to space8 across 10 result views. Nitpicks (header/MetaRow consolidation, switch styles) left as follow-up.",
+      "screens_shipped_p1": [
+        "Worksheet Wizard",
+        "Rubric Generator",
+        "Exam Paper",
+        "Teacher Training",
+        "Parent Message",
+        "Assess Assignment",
+        "My Library",
+        "Create Palette"
+      ]
+    }
+  }
+}

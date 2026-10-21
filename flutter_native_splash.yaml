@@ -1,0 +1,16 @@
+# Native launch splash — "The Ledger" ivory ground with the SahayakAI mark.
+# Replaces the default Flutter-logo native splash that flashes before the
+# Flutter-side "Seal" splash renders.
+flutter_native_splash:
+  color: "#F3EEE4"          # ivory paper (light)
+  color_dark: "#17130E"     # warm espresso (dark)
+  image: "assets/branding/splash_mark.png"
+  image_dark: "assets/branding/splash_mark.png"
+  android_12:
+    color: "#F3EEE4"
+    color_dark: "#17130E"
+    image: "assets/branding/splash_mark.png"
+    image_dark: "assets/branding/splash_mark.png"
+  android: true
+  ios: false
+  fullscreen: false

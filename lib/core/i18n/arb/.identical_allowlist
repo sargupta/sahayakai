@@ -1,0 +1,15 @@
+# Keys whose translation is legitimately identical to English.
+#
+# Only PROPER NOUNS belong here. Format-only strings ('{used} / {limit}',
+# '•••• {last4}') are detected automatically by i18n_audit.is_format_only —
+# strip the placeholders, and if no Latin letter remains there is no word to
+# translate. That is derived rather than listed because a hand-kept list has to
+# anticipate every such key across ten locales, and the Hindi pilot proved it
+# misses: two format-only keys were absent from this file, so the Devanagari
+# rule pushed the translator into inventing words English never had.
+#
+# Keep this list near-empty. It is the one place the script-coverage check can
+# be switched off, and that check is all that stands between a ten-way parallel
+# fan-out and ten agents pasting English to make the counts reconcile.
+#
+appTitle
