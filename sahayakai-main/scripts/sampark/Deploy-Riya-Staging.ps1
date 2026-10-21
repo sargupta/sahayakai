@@ -108,11 +108,18 @@ switch ($Step) {
             Put-Secret 'RIYA_ELEVENLABS_WEBHOOK_SECRET' ([Convert]::ToBase64String($bytes))
         }
         $sa = (& gcloud projects describe $Project --format='value(projectNumber)') + '-compute@developer.gserviceaccount.com'
-        foreach ($n in 'RIYA_ELEVENLABS_API_KEY', 'RIYA_ELEVENLABS_WEBHOOK_SECRET', 'RIYA_SAMPARK_PII_KEY', 'RIYA_SAMPARK_PHONE_PEPPER') {
-            & gcloud secrets add-iam-policy-binding $n --member="serviceAccount:$sa" --role=roles/secretmanager.secretAccessor --project=$Project *> $null
-            if ($LASTEXITCODE -ne 0) { Fail "could not grant $sa access to $n" }
+        # Editors cannot set IAM policy on a secret. If the runtime account already holds Secret Accessor on the
+        # whole project (true for sahayakai-b4248 on 2026-10-21), a per-secret grant is redundant, so skip it.
+        $projectWide = (& gcloud projects get-iam-policy $Project --flatten='bindings[].members' --filter="bindings.role=roles/secretmanager.secretAccessor AND bindings.members=serviceAccount:$sa" --format='value(bindings.role)' 2>$null)
+        if ($projectWide) {
+            Ok "runtime service account $sa already reads all project secrets (project-level Secret Accessor); no per-secret grant needed"
+        } else {
+            foreach ($n in 'RIYA_ELEVENLABS_API_KEY', 'RIYA_ELEVENLABS_WEBHOOK_SECRET', 'RIYA_SAMPARK_PII_KEY', 'RIYA_SAMPARK_PHONE_PEPPER') {
+                & gcloud secrets add-iam-policy-binding $n --member="serviceAccount:$sa" --role=roles/secretmanager.secretAccessor --project=$Project *> $null
+                if ($LASTEXITCODE -ne 0) { Fail "could not grant $sa access to $n (needs roles/secretmanager.admin; ask the project owner)" }
+            }
+            Ok "runtime service account $sa can read the RIYA_* secrets"
         }
-        Ok "runtime service account $sa can read the RIYA_* secrets"
     }
     'Deploy' {
         Gcloud-Ok
