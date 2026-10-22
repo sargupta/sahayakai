@@ -16,7 +16,12 @@ concurrency:
 
 jobs:
   smoke:
-    runs-on: ubuntu-latest
+    # Pinned, never ubuntu-latest: Playwright supports only the OS images it
+    # was released for. On 2026-10-22 ubuntu-latest moved to 26.04 and
+    # `playwright install --with-deps` refused it, failing every PR before a
+    # test ran. Move this pin when Playwright supports the newer image
+    # (gate: src/__tests__/scripts/workflow-playwright-runner-pinned.test.ts).
+    runs-on: ubuntu-24.04
 
     defaults:
       run:

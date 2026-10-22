@@ -1,0 +1,60 @@
+# Dummy school CRM (mock-school-crm/) CI.
+#
+# Runs the package's own typecheck and node:test suite. The suite includes the
+# contract gate (src/contract/crm-schema.ts must stay byte-identical to the
+# app's src/lib/sampark/crm/schema.ts) and the fixture-freshness gate
+# (sahayakai-main/src/__tests__/fixtures/sampark/ must match the generator),
+# so a PR that changes either side without the other goes red here.
+name: CI — mock school CRM
+
+on:
+  pull_request:
+    branches: [main, 'release/**']
+    paths:
+      - 'mock-school-crm/**'
+      - 'sahayakai-main/src/lib/sampark/crm/schema.ts'
+      - 'sahayakai-main/src/__tests__/fixtures/sampark/**'
+      - '.github/workflows/mock-school-crm.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'mock-school-crm/**'
+      - 'sahayakai-main/src/lib/sampark/crm/schema.ts'
+      - 'sahayakai-main/src/__tests__/fixtures/sampark/**'
+  workflow_dispatch:
+
+concurrency:
+  group: mock-school-crm-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: mock-school-crm
+
+jobs:
+  test:
+    name: typecheck + node:test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: mock-school-crm/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm test
