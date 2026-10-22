@@ -34,7 +34,7 @@ export function school(overrides: Partial<SamparkSchool> = {}): SamparkSchool {
         displayName: 'Hillview Demo School',
         mode: 'practice',
         isDemo: false,
-        callingWindow: { startHour: 10, endHour: 20, offDays: [0] },
+        callingWindow: { startHour: 10, endHour: 19, offDays: [0] },
         holidays: [],
         venues: [],
         defaultLanguage: null,

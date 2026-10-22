@@ -12,7 +12,7 @@
  *
  * Why the checks live HERE and not only at dial time: a call is placed minutes
  * before it is answered, and the world can change in between — the calling
- * window closes at 20:00, an admin flips the school back to practice, the
+ * window closes at 19:00, an admin flips the school back to practice, the
  * campaign is cancelled, someone presses the kill switch. The answer webhook is
  * the last moment we can still say nothing, so it re-checks everything that
  * decides whether a parent may hear a message, and refuses with a clean hangup.

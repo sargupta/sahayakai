@@ -192,7 +192,7 @@ The contract is **REST to pull, signed webhooks as hints, write-back endpoints f
 | Do-not-call | Sampark's suppression list and the CRM's own flag |
 | Fees | RTE / fee-waived excluded; two automated calls per due; 10:00–19:00 |
 | Frequency | about four routine calls per guardian per month, counting teacher-initiated calls too; urgent notices exempt from the cap only |
-| Hours | the school's adopted window inside 10:00–20:00 IST, no Sundays or school holidays (Dashain, Tihar, Durga Puja…); concern calls never on Friday or Saturday; D4 from 06:00 with the principal's approval |
+| Hours | the school's adopted window inside 10:00–19:00 IST (founder decision, 23 Oct 2026), no Sundays or school holidays (Dashain, Tihar, Durga Puja…); concern calls never on Friday or Saturday; D4 from 06:00 with the principal's approval |
 | Language | if the guardian's language cannot run the requested mode, degrade to notice; if the language is unknown, **ask the family** rather than defaulting — defaulting a Nepali-speaking hill family to Bengali is not a neutral act in this region |
 | Number | valid Indian mobile, not synthetic, not the student's own number; Nepal (+977) and Bhutan (+975) numbers to be checked with the school and the carrier |
 | School | Sampark enabled, rules adopted, mode permits dialing, minute budget not exhausted |
@@ -462,7 +462,7 @@ Real calls of any kind; conversation mode for new purposes; changes to the Pytho
 1. **Positioning:** Sampark as the escalation, emergency and two-way voice layer beside the school's existing messaging — not a robocaller for every notice.
 2. **Requests to talk:** automatically detected attendance, academic and conduct concerns produce a request for the class teacher to talk, not an AI delivering the concern. (Teacher-initiated AI calls, which exist today, are unchanged.)
 3. **The school as sender:** the school registers on DLT with its own caller ID; SahayakAI registers as telemarketer; and **check today's production calls against TRAI regulation 4 now**.
-4. **Calling windows:** routine 10:00–20:00 IST, no Sundays or holidays, no concern calls on Friday or Saturday; emergency closures from 06:00 with the principal's approval.
+4. **Calling windows:** routine 10:00–19:00 IST, no Sundays or holidays, no concern calls on Friday or Saturday; emergency closures from 06:00 with the principal's approval.
 5. **Consent:** per guardian and per purpose group, owned by Sampark, with a school-run consent drive in P0; whether emergency closures may reach non-consenting families is for counsel.
 6. **Nepali:** notice mode now; conversation only after a Vertex-based trial with Darjeeling speakers; A7 for Nepali families routed to a Nepali-speaking teacher meanwhile.
 7. **The two live production problems (§10.1, §10.2):** fix the dialing hole now; restore or correct the telephony service.

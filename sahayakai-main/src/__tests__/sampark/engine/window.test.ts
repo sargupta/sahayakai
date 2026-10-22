@@ -29,10 +29,10 @@ describe('samparkWindowVerdict — routine purposes', () => {
 
     it('start hour is inclusive and end hour exclusive', () => {
         expect(samparkWindowVerdict(s, PTM, ist('2026-10-07', 10)).allowed).toBe(true);
-        expect(samparkWindowVerdict(s, PTM, ist('2026-10-07', 19, 59)).allowed).toBe(true);
-        const at20 = samparkWindowVerdict(s, PTM, ist('2026-10-07', 20));
-        expect(at20.allowed).toBe(false);
-        expect(at20.nextAllowedAt?.toISOString()).toBe(ist('2026-10-08', 10).toISOString());
+        expect(samparkWindowVerdict(s, PTM, ist('2026-10-07', 18, 59)).allowed).toBe(true);
+        const at19 = samparkWindowVerdict(s, PTM, ist('2026-10-07', 19));
+        expect(at19.allowed).toBe(false);
+        expect(at19.nextAllowedAt?.toISOString()).toBe(ist('2026-10-08', 10).toISOString());
     });
 
     it('before the window opens → next opening the same day', () => {
@@ -42,11 +42,11 @@ describe('samparkWindowVerdict — routine purposes', () => {
         expect(v.nextAllowedAt?.toISOString()).toBe(ist('2026-10-07', 10).toISOString());
     });
 
-    it('clamps a wider school window into [10, 20): 09:30 and 20:30 are refused even if the school says 8–22', () => {
+    it('clamps a wider school window into [10, 19): 09:30 and 19:30 are refused even if the school says 8–22', () => {
         const wide = school({ callingWindow: { startHour: 8, endHour: 22, offDays: [0] } });
-        expect(effectiveRoutineWindow(wide.callingWindow)).toEqual({ startHour: 10, endHour: 20 });
+        expect(effectiveRoutineWindow(wide.callingWindow)).toEqual({ startHour: 10, endHour: 19 });
         expect(samparkWindowVerdict(wide, PTM, ist('2026-10-07', 9, 30)).allowed).toBe(false);
-        expect(samparkWindowVerdict(wide, PTM, ist('2026-10-07', 20, 30)).allowed).toBe(false);
+        expect(samparkWindowVerdict(wide, PTM, ist('2026-10-07', 19, 30)).allowed).toBe(false);
         expect(samparkWindowVerdict(wide, PTM, ist('2026-10-07', 10)).allowed).toBe(true);
     });
 

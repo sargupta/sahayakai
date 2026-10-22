@@ -25,7 +25,7 @@ export const SAMPLE_SCHOOL: SamparkSchool = {
     displayName: 'Hillview Demo School, Siliguri',
     mode: 'practice',
     isDemo: true,
-    callingWindow: { startHour: 10, endHour: 20, offDays: [0] },
+    callingWindow: { startHour: 10, endHour: 19, offDays: [0] },
     holidays: [],
     venues: [],
     defaultLanguage: null,

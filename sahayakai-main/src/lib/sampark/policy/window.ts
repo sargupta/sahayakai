@@ -3,7 +3,7 @@
  *
  * ROUTINE purposes — every purpose except the emergency closure — are allowed
  * only when ALL of these hold at the IST instant:
- *   1. inside the school's adopted window, clamped into [10:00, 20:00) IST
+ *   1. inside the school's adopted window, clamped into [10:00, 19:00) IST
  *      (a school may narrow the band, never widen it);
  *   2. inside the platform window 09:00–21:00 IST (`checkCallingWindow`,
  *      reused, not re-implemented — it is the platform floor every dialer obeys);
@@ -32,6 +32,7 @@
 import { checkCallingWindow, formatIST } from '@/lib/calling-hours';
 import type { PurposeSpec } from '@/lib/sampark/catalogue';
 import { addDays, istInstant, istParts, weekdayOf } from '@/lib/sampark/policy/ist';
+import { ROUTINE_END_CEILING_HOUR, ROUTINE_START_FLOOR_HOUR } from '@/lib/sampark/policy/routine-hours';
 import type { CallingWindow, SamparkSchool } from '@/types/sampark';
 
 export interface WindowVerdict {
@@ -41,8 +42,7 @@ export interface WindowVerdict {
 }
 
 /** Routine band every school window is clamped into (IST hours, start inclusive, end exclusive). */
-export const ROUTINE_START_FLOOR_HOUR = 10;
-export const ROUTINE_END_CEILING_HOUR = 20;
+export { ROUTINE_END_CEILING_HOUR, ROUTINE_START_FLOOR_HOUR };
 
 /** Emergency (D4) band — see the block comment above. */
 export const EMERGENCY_START_HOUR = 6;
@@ -58,7 +58,7 @@ function clampHour(value: unknown, fallback: number): number {
     return Math.min(ROUTINE_END_CEILING_HOUR, Math.max(ROUTINE_START_FLOOR_HOUR, n));
 }
 
-/** The school's window after clamping into [10, 20) IST. `startHour >= endHour` means the window is empty. */
+/** The school's window after clamping into [10, 19) IST. `startHour >= endHour` means the window is empty. */
 export function effectiveRoutineWindow(window: CallingWindow | null | undefined): { startHour: number; endHour: number } {
     return {
         startHour: Math.ceil(clampHour(window?.startHour, ROUTINE_START_FLOOR_HOUR)),

@@ -84,8 +84,8 @@ describe('overview — the Today screen', () => {
     it('windowToday is the clamped band on an open day, and null on an off-day or a holiday', async () => {
         const open = await env({ callingWindow: { startHour: 8, endHour: 22, offDays: [0] } });
         expect((await getOverview(open.ctx, ORG)).windowToday).toEqual({
-            opensAt: '2026-10-07T04:30:00.000Z', // 10:00 IST: a window is never wider than 10:00–20:00
-            closesAt: '2026-10-07T14:30:00.000Z', // 20:00 IST
+            opensAt: '2026-10-07T04:30:00.000Z', // 10:00 IST: a window is never wider than 10:00–19:00
+            closesAt: '2026-10-07T13:30:00.000Z', // 19:00 IST
         });
         const offDay = await env({ callingWindow: { startHour: 10, endHour: 19, offDays: [3] } }); // Wednesday off
         expect((await getOverview(offDay.ctx, ORG)).windowToday).toBeNull();

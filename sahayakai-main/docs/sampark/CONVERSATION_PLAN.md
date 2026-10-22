@@ -338,6 +338,14 @@ The edge-case review adds twelve conversation gates (NG1–NG12, `edge-cases/par
 6. **AI wording in the opener.** Calls no longer say they are recorded, and they always answer honestly when asked. Should the first sentence also say "the school's AI assistant" unprompted? Recommended before Live mode: yes for conversational calls. It costs a few words and protects the school if a parent later feels misled.
 7. **Paging channel and chain** for A2 and urgent cases (app push, SMS or WhatsApp; teacher, principal, security). A2 cannot go live without it. See `EDGE_CASES.md` §5 for the shared-number policy and the repeat key.
 
+### Decided (23 Oct 2026)
+
+These came out of the review of the MCP work (sargupta/sahayakai#160, #161) and how it meets Sampark.
+
+- **Outside systems cannot start a concern call on their own.** The Parent Calling MCP's `initiate_parent_call` stays switched off until it routes through Sampark's request-to-talk purposes (A1, A3, A4, A5), with Sampark's gate and a person's approval. Its read-only `list_parent_contacts` can ship.
+- **One routine calling band: 10:00 to 19:00 IST,** for every routine parent call, whatever starts it: a Sampark campaign, a teacher in the app, or an API call. Only D4 keeps its own 06:00 to 21:00 band. Sampark's ceiling moved from 20:00 to 19:00 in one module (`src/lib/sampark/policy/routine-hours.ts`), with `gate-routine-window-single-source.test.ts`; the teacher path adopts it in Step 2 of the integration brief.
+- **Any school admin can issue and revoke API keys,** from the console's Settings, and every key action is audited.
+
 ## 13. Critical review log (v1 → v2)
 
 **Accepted — the plan changed (all 9 blockers and the majors):**

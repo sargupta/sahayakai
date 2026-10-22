@@ -654,7 +654,7 @@ export interface SamparkOverview {
     windowOpenNow: boolean;
     nextWindowOpensAt: string | null;
     /**
-     * Today's routine calling band (the school's window clamped into 10:00–20:00 IST), or null
+     * Today's routine calling band (the school's window clamped into 10:00–19:00 IST), or null
      * when today is an off-day or a school holiday, or the window is empty.
      */
     windowToday: { opensAt: string; closesAt: string } | null;

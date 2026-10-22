@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useLanguage } from "@/context/language-context";
 import { useToast } from "@/hooks/use-toast";
 import { PARENT_LANGUAGE_INFO } from "@/lib/sampark/languages";
+import { ROUTINE_END_CEILING_HOUR, ROUTINE_END_HOUR_OPTIONS, ROUTINE_START_HOUR_OPTIONS } from "@/lib/sampark/policy/routine-hours";
 import { updateSchool, type UpdateSchoolInput } from "@/lib/api/sampark";
 import { PARENT_LANGUAGES, type ParentLanguage, type SchoolVenue } from "@/types/sampark";
 import { useSamparkSchool } from "./school-context";
@@ -19,8 +20,6 @@ import { fmt, languageName } from "./labels";
 import { errorMessage } from "./states";
 
 const ASK_FAMILY = "__ask__";
-const START_HOURS = Array.from({ length: 10 }, (_, i) => i + 10); // 10 … 19
-const END_HOURS = Array.from({ length: 10 }, (_, i) => i + 11); // 11 … 20
 const WEEK = [0, 1, 2, 3, 4, 5, 6];
 
 type SpokenNames = Record<ParentLanguage, string>;
@@ -163,8 +162,10 @@ export function CallingWindowSection() {
     const f = useSamparkFormat();
     const { school } = useSamparkSchool();
     const { save, saving } = useSaveSchool();
-    const [startHour, setStartHour] = useState(school.callingWindow.startHour);
-    const [endHour, setEndHour] = useState(school.callingWindow.endHour);
+    // A school saved before the 19:00 ceiling may still hold a later hour; the dispatcher already
+    // clamps it, so show it clamped too and the picker is never blank.
+    const [startHour, setStartHour] = useState(Math.min(school.callingWindow.startHour, ROUTINE_END_CEILING_HOUR - 1));
+    const [endHour, setEndHour] = useState(Math.min(school.callingWindow.endHour, ROUTINE_END_CEILING_HOUR));
     const [offDays, setOffDays] = useState<number[]>([...school.callingWindow.offDays]);
     // The school's own holidays (H10). A school from before the split has only `holidays`,
     // which then counts as its own. Holidays from the school records are shown apart and
@@ -193,7 +194,7 @@ export function CallingWindowSection() {
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                {START_HOURS.map((h) => (
+                                {ROUTINE_START_HOUR_OPTIONS.map((h) => (
                                     <SelectItem key={h} value={String(h)}>{hourLabel(h)}</SelectItem>
                                 ))}
                             </SelectContent>
@@ -206,7 +207,7 @@ export function CallingWindowSection() {
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                {END_HOURS.map((h) => (
+                                {ROUTINE_END_HOUR_OPTIONS.map((h) => (
                                     <SelectItem key={h} value={String(h)}>{hourLabel(h)}</SelectItem>
                                 ))}
                             </SelectContent>

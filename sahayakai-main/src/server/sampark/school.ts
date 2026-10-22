@@ -3,7 +3,7 @@
  *
  * Validation lives here, at the boundary, so no route can write a school the
  * engine would misread:
- *   - callingWindow: startHour >= 10, endHour <= 20, start < end (plan §4④);
+ *   - callingWindow: startHour >= 10, endHour <= 19, start < end (plan §4④, founder decision 23 Oct 2026);
  *   - venues: every venue has a reviewed name in all four parent languages
  *     (no free text reaches TTS);
  *   - crm.baseUrl: SSRF-checked on save (plan §4①), and the API-key secret
@@ -48,6 +48,7 @@ import type { SamparkCtx } from '@/server/sampark/http';
 import { LIVE_MODE_NOT_AVAILABLE, liveDialBlocker, TEST_PHONE_MISSING } from '@/server/sampark/carrier';
 import { hangupRingingCalls } from '@/server/sampark/hangup';
 import { pauseStopsPurpose } from '@/lib/sampark/policy/pause';
+import { ROUTINE_END_CEILING_HOUR, ROUTINE_START_FLOOR_HOUR } from '@/lib/sampark/policy/routine-hours';
 
 export { LIVE_MODE_NOT_AVAILABLE, TEST_PHONE_MISSING };
 
@@ -105,8 +106,16 @@ export const IsoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'expected Y
 
 export const CallingWindowSchema = z
     .object({
-        startHour: z.number().int().min(10, 'calling window cannot start before 10:00 IST').max(19),
-        endHour: z.number().int().min(11).max(20, 'calling window must end by 20:00 IST'),
+        startHour: z
+            .number()
+            .int()
+            .min(ROUTINE_START_FLOOR_HOUR, `calling window cannot start before ${ROUTINE_START_FLOOR_HOUR}:00 IST`)
+            .max(ROUTINE_END_CEILING_HOUR - 1),
+        endHour: z
+            .number()
+            .int()
+            .min(ROUTINE_START_FLOOR_HOUR + 1)
+            .max(ROUTINE_END_CEILING_HOUR, `calling window must end by ${ROUTINE_END_CEILING_HOUR}:00 IST`),
         offDays: z.array(z.number().int().min(0).max(6)).max(7),
     })
     .refine((w) => w.startHour < w.endHour, { message: 'startHour must be before endHour', path: ['endHour'] })
