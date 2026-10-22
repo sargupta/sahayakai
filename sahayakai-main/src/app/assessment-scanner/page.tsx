@@ -11,8 +11,9 @@
  * Scope:
  *   - Subjects: Mathematics (best-in-class), Science, EVS, Social Science
  *     (History / Geography / Civics), Hindi, English, plus "Other".
- *   - Pages: up to ASSESSMENT_DEMO_PAGE_CAP per scan (currently 3); schema
- *     ceiling is 15.
+ *   - Pages: up to ASSESSMENT_DEMO_PAGE_CAP per scan (currently 10); schema
+ *     ceiling is 15. A PDF is split into page images in the browser; one that
+ *     doesn't fit the remaining page slots is rejected whole, never truncated.
  *   - Multi-student rosters + class analytics land in Phase 3.
  */
 
@@ -45,6 +46,7 @@ import { GradeLevelSelector } from "@/components/grade-level-selector";
 import { LanguageSelector } from "@/components/language-selector";
 import { ImageUploader } from "@/components/image-uploader";
 import { renderPdfToImages, PdfRenderError } from "./pdf-to-images";
+import { pdfErrorMessage, scanRequestTooLargeMessage } from "./scan-messages";
 import {
     Select,
     SelectContent,
@@ -76,6 +78,7 @@ import { z } from "zod";
 import type { AssessmentScannerOutput } from "@/ai/schemas/assessment-scanner-schemas";
 import {
     ASSESSMENT_DEMO_PAGE_CAP,
+    ASSESSMENT_MAX_REQUEST_BYTES,
     ASSESSMENT_SUPPORTED_SUBJECTS,
 } from "@/ai/schemas/assessment-scanner-constants";
 
@@ -140,6 +143,10 @@ function AssessmentScannerPageInner() {
     // page-cap / empty / error message.
     const [pdfBusy, setPdfBusy] = useState(false);
     const [pdfNotice, setPdfNotice] = useState<string | null>(null);
+    // Real render progress from pdf-to-images (pages rendered / total).
+    const [pdfProgress, setPdfProgress] = useState<{ done: number; total: number } | null>(null);
+    // Pages in the request currently being graded (drives the loading copy).
+    const [gradingPageCount, setGradingPageCount] = useState(0);
 
     // Derived flag for the submit control — the form owns its own field state;
     // this only reflects the request phase.
@@ -274,37 +281,28 @@ function AssessmentScannerPageInner() {
             return;
         }
         setPdfBusy(true);
+        setPdfProgress(null);
         try {
-            const { images, totalPages } = await renderPdfToImages(file, {
+            // Every page is rendered, in order. A PDF that doesn't fit the
+            // remaining slots is rejected whole (PDF_TOO_MANY_PAGES) — a partly
+            // added answer sheet would be graded as if it were complete.
+            const { images } = await renderPdfToImages(file, {
                 maxPages: remaining,
+                onProgress: (done, total) => setPdfProgress({ done, total }),
             });
-            if (images.length === 0) {
-                setPdfNotice(t("This PDF has no readable pages to add."));
-                return;
-            }
             form.setValue("pageUrls", [...current, ...images], {
                 shouldValidate: true,
                 shouldDirty: true,
             });
-            if (totalPages > images.length) {
-                // Single parameterised string (not concatenated t() fragments) so
-                // translations control word order. Placeholders filled via the
-                // repo's {{token}} .replace() convention (t has no interpolation).
-                setPdfNotice(
-                    t(
-                        "Added the first {{count}} of {{total}} PDF pages — the scan limit is {{cap}}. Run a second scan for the rest.",
-                    )
-                        .replace("{{count}}", String(images.length))
-                        .replace("{{total}}", String(totalPages))
-                        .replace("{{cap}}", String(ASSESSMENT_DEMO_PAGE_CAP)),
-                );
-            }
         } catch (err) {
             setPdfNotice(
-                err instanceof PdfRenderError ? err.message : t("Could not read that PDF."),
+                err instanceof PdfRenderError
+                    ? pdfErrorMessage(err, t, ASSESSMENT_DEMO_PAGE_CAP)
+                    : t("Could not read that PDF."),
             );
         } finally {
             setPdfBusy(false);
+            setPdfProgress(null);
         }
     };
 
@@ -315,6 +313,25 @@ function AssessmentScannerPageInner() {
             submittingRef.current = false;
             return;
         }
+        const body = JSON.stringify({
+            assessmentId: uuidv4(),
+            subject: values.subject,
+            gradeLevel: values.gradeLevel,
+            language: values.language,
+            pageUrls: values.pageUrls,
+        });
+        // Same ceiling the server enforces (oversized bodies are truncated by the
+        // middleware and answered 413) — say so before uploading anything.
+        if (body.length > ASSESSMENT_MAX_REQUEST_BYTES) {
+            setScan({
+                kind: "error",
+                origin: "scan",
+                message: scanRequestTooLargeMessage(body.length, t),
+            });
+            submittingRef.current = false;
+            return;
+        }
+        setGradingPageCount(values.pageUrls.length);
         setScan({ kind: "loading", origin: "scan" });
 
         try {
@@ -325,13 +342,7 @@ function AssessmentScannerPageInner() {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify({
-                    assessmentId: uuidv4(),
-                    subject: values.subject,
-                    gradeLevel: values.gradeLevel,
-                    language: values.language,
-                    pageUrls: values.pageUrls,
-                }),
+                body,
             });
 
             if (!res.ok) {
@@ -393,7 +404,10 @@ function AssessmentScannerPageInner() {
             <Alert className="w-full border-primary/30 bg-primary/5">
                 <Info className="h-4 w-4" />
                 <AlertTitle>
-                    {t("Now supporting six subject families, up to 3 pages per scan")}
+                    {t("Now supporting six subject families, up to {{cap}} pages per scan").replace(
+                        "{{cap}}",
+                        String(ASSESSMENT_DEMO_PAGE_CAP),
+                    )}
                 </AlertTitle>
                 <AlertDescription>
                     {t(
@@ -514,9 +528,17 @@ function AssessmentScannerPageInner() {
                                         )}
 
                                         {pdfBusy && (
-                                            <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+                                            <p
+                                                className="mt-3 flex items-center gap-2 text-sm text-muted-foreground"
+                                                role="status"
+                                                data-testid="pdf-progress"
+                                            >
                                                 <Loader2 className="h-4 w-4 animate-spin" />
-                                                {t("Reading PDF pages…")}
+                                                {pdfProgress
+                                                    ? t("Reading PDF page {{done}} of {{total}}…")
+                                                          .replace("{{done}}", String(pdfProgress.done))
+                                                          .replace("{{total}}", String(pdfProgress.total))
+                                                    : t("Reading PDF pages…")}
                                             </p>
                                         )}
 
@@ -692,6 +714,19 @@ function AssessmentScannerPageInner() {
 
             {scan.kind === "loading" && (
                 <Card className="w-full">
+                    {scan.origin === "scan" && gradingPageCount > 0 && (
+                        <p
+                            className="px-6 pt-5 flex items-center gap-2 text-sm text-muted-foreground"
+                            role="status"
+                            data-testid="grading-status"
+                        >
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            {(gradingPageCount === 1
+                                ? t("Uploading and grading 1 page. This can take up to 2 minutes.")
+                                : t("Uploading and grading {{count}} pages. This can take up to 2 minutes.")
+                            ).replace("{{count}}", String(gradingPageCount))}
+                        </p>
+                    )}
                     <CardHeader>
                         <Skeleton className="h-6 w-1/3" />
                         <Skeleton className="h-4 w-2/3" />

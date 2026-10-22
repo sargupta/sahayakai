@@ -2524,5 +2524,18 @@
   "Next message": "આગલો સંદેશ",
   "Open Community": "સમુદાય ખોલો",
   "Account menu": "એકાઉન્ટ મેનૂ",
-  "Profile and classes": "પ્રોફાઇલ અને વર્ગો"
+  "Profile and classes": "પ્રોફાઇલ અને વર્ગો",
+  "Now supporting six subject families, up to {{cap}} pages per scan": "હવે છ વિષય પરિવારોને સમર્થન, પ્રતિ સ્કેન {{cap}} પાનાં સુધી",
+  "Reading PDF page {{done}} of {{total}}…": "PDF પાનું {{done}} / {{total}} વાંચી રહ્યા છીએ…",
+  "Uploading and grading 1 page. This can take up to 2 minutes.": "1 પાનું અપલોડ કરીને તપાસી રહ્યા છીએ. આમાં 2 મિનિટ સુધી લાગી શકે છે.",
+  "Uploading and grading {{count}} pages. This can take up to 2 minutes.": "{{count}} પાનાં અપલોડ કરીને તપાસી રહ્યા છીએ. આમાં 2 મિનિટ સુધી લાગી શકે છે.",
+  "This PDF is {{size}} MB — the limit is {{limit}} MB. Re-export it at a lower resolution, or upload the pages as photos.": "આ PDF {{size}} MB ની છે — મર્યાદા {{limit}} MB છે. ઓછા રિઝોલ્યુશનમાં ફરી સેવ કરો, અથવા પાનાંના ફોટા અપલોડ કરો.",
+  "This PDF is password-protected. Remove the password (or print it to a new PDF), then upload it again.": "આ PDF પાસવર્ડથી સુરક્ષિત છે. પાસવર્ડ દૂર કરો (અથવા નવી PDF માં પ્રિન્ટ કરો), પછી ફરી અપલોડ કરો.",
+  "This PDF has no pages to add.": "આ PDF માં ઉમેરવા માટે કોઈ પાનાં નથી.",
+  "This PDF has {{total}} pages, but only {{remaining}} more can be added (limit {{cap}} pages per scan). Nothing was added. Split the PDF, or remove pages already added.": "આ PDF માં {{total}} પાનાં છે, પરંતુ ફક્ત {{remaining}} વધુ ઉમેરી શકાય છે (પ્રતિ સ્કેન મર્યાદા {{cap}} પાનાં). કંઈ ઉમેરાયું નથી. PDF ને વિભાજિત કરો, અથવા પહેલાં ઉમેરેલાં પાનાં દૂર કરો.",
+  "Page {{page}} of this PDF could not be read, so nothing was added. Re-export the PDF, or upload that page as a photo.": "આ PDF નું પાનું {{page}} વાંચી શકાયું નથી, તેથી કંઈ ઉમેરાયું નથી. PDF ફરી સેવ કરો, અથવા તે પાનાનો ફોટો અપલોડ કરો.",
+  "Your browser could not render the PDF. Try another browser, or upload the pages as photos.": "તમારું બ્રાઉઝર આ PDF બતાવી શક્યું નથી. બીજું બ્રાઉઝર અજમાવો, અથવા પાનાંના ફોટા અપલોડ કરો.",
+  "Could not open this PDF — it may be corrupt. Re-export it, or upload the pages as images instead.": "આ PDF ખોલી શકાઈ નથી — તે ખરાબ હોઈ શકે છે. ફરી સેવ કરો, અથવા પાનાં છબીઓ તરીકે અપલોડ કરો.",
+  "These pages add up to {{size}} MB — a scan can upload at most {{limit}} MB. Remove a page or two, or use smaller photos, and try again.": "આ પાનાં કુલ {{size}} MB છે — એક સ્કેનમાં વધુમાં વધુ {{limit}} MB અપલોડ કરી શકાય છે. એક-બે પાનાં દૂર કરો, અથવા નાના ફોટા વાપરીને ફરી પ્રયાસ કરો.",
+  "Page notices": "પાનાં વિશેની સૂચનાઓ"
 }

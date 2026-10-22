@@ -2524,5 +2524,18 @@
   "Next message": "ਅਗਲਾ ਸੁਨੇਹਾ",
   "Open Community": "ਭਾਈਚਾਰਾ ਖੋਲ੍ਹੋ",
   "Account menu": "ਖਾਤਾ ਮੀਨੂ",
-  "Profile and classes": "ਪ੍ਰੋਫ਼ਾਈਲ ਅਤੇ ਕਲਾਸਾਂ"
+  "Profile and classes": "ਪ੍ਰੋਫ਼ਾਈਲ ਅਤੇ ਕਲਾਸਾਂ",
+  "Now supporting six subject families, up to {{cap}} pages per scan": "ਹੁਣ ਛੇ ਵਿਸ਼ਾ ਪਰਿਵਾਰਾਂ ਦਾ ਸਮਰਥਨ, ਪ੍ਰਤੀ ਸਕੈਨ {{cap}} ਪੰਨਿਆਂ ਤੱਕ",
+  "Reading PDF page {{done}} of {{total}}…": "PDF ਪੰਨਾ {{done}} / {{total}} ਪੜ੍ਹਿਆ ਜਾ ਰਿਹਾ ਹੈ…",
+  "Uploading and grading 1 page. This can take up to 2 minutes.": "1 ਪੰਨਾ ਅੱਪਲੋਡ ਕਰਕੇ ਜਾਂਚਿਆ ਜਾ ਰਿਹਾ ਹੈ। ਇਸ ਵਿੱਚ 2 ਮਿੰਟ ਤੱਕ ਲੱਗ ਸਕਦੇ ਹਨ।",
+  "Uploading and grading {{count}} pages. This can take up to 2 minutes.": "{{count}} ਪੰਨੇ ਅੱਪਲੋਡ ਕਰਕੇ ਜਾਂਚੇ ਜਾ ਰਹੇ ਹਨ। ਇਸ ਵਿੱਚ 2 ਮਿੰਟ ਤੱਕ ਲੱਗ ਸਕਦੇ ਹਨ।",
+  "This PDF is {{size}} MB — the limit is {{limit}} MB. Re-export it at a lower resolution, or upload the pages as photos.": "ਇਹ PDF {{size}} MB ਦੀ ਹੈ — ਸੀਮਾ {{limit}} MB ਹੈ। ਘੱਟ ਰੈਜ਼ੋਲਿਊਸ਼ਨ ਵਿੱਚ ਦੁਬਾਰਾ ਸੇਵ ਕਰੋ, ਜਾਂ ਪੰਨਿਆਂ ਦੀਆਂ ਫ਼ੋਟੋਆਂ ਅੱਪਲੋਡ ਕਰੋ।",
+  "This PDF is password-protected. Remove the password (or print it to a new PDF), then upload it again.": "ਇਹ PDF ਪਾਸਵਰਡ ਨਾਲ ਸੁਰੱਖਿਅਤ ਹੈ। ਪਾਸਵਰਡ ਹਟਾਓ (ਜਾਂ ਨਵੀਂ PDF ਵਿੱਚ ਪ੍ਰਿੰਟ ਕਰੋ), ਫਿਰ ਦੁਬਾਰਾ ਅੱਪਲੋਡ ਕਰੋ।",
+  "This PDF has no pages to add.": "ਇਸ PDF ਵਿੱਚ ਜੋੜਨ ਲਈ ਕੋਈ ਪੰਨਾ ਨਹੀਂ ਹੈ।",
+  "This PDF has {{total}} pages, but only {{remaining}} more can be added (limit {{cap}} pages per scan). Nothing was added. Split the PDF, or remove pages already added.": "ਇਸ PDF ਵਿੱਚ {{total}} ਪੰਨੇ ਹਨ, ਪਰ ਸਿਰਫ਼ {{remaining}} ਹੋਰ ਜੋੜੇ ਜਾ ਸਕਦੇ ਹਨ (ਪ੍ਰਤੀ ਸਕੈਨ ਸੀਮਾ {{cap}} ਪੰਨੇ)। ਕੁਝ ਵੀ ਨਹੀਂ ਜੋੜਿਆ ਗਿਆ। PDF ਨੂੰ ਵੰਡੋ, ਜਾਂ ਪਹਿਲਾਂ ਜੋੜੇ ਪੰਨੇ ਹਟਾਓ।",
+  "Page {{page}} of this PDF could not be read, so nothing was added. Re-export the PDF, or upload that page as a photo.": "ਇਸ PDF ਦਾ ਪੰਨਾ {{page}} ਪੜ੍ਹਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ, ਇਸ ਲਈ ਕੁਝ ਵੀ ਨਹੀਂ ਜੋੜਿਆ ਗਿਆ। PDF ਦੁਬਾਰਾ ਸੇਵ ਕਰੋ, ਜਾਂ ਉਸ ਪੰਨੇ ਦੀ ਫ਼ੋਟੋ ਅੱਪਲੋਡ ਕਰੋ।",
+  "Your browser could not render the PDF. Try another browser, or upload the pages as photos.": "ਤੁਹਾਡਾ ਬ੍ਰਾਊਜ਼ਰ ਇਹ PDF ਨਹੀਂ ਦਿਖਾ ਸਕਿਆ। ਕੋਈ ਹੋਰ ਬ੍ਰਾਊਜ਼ਰ ਵਰਤੋ, ਜਾਂ ਪੰਨਿਆਂ ਦੀਆਂ ਫ਼ੋਟੋਆਂ ਅੱਪਲੋਡ ਕਰੋ।",
+  "Could not open this PDF — it may be corrupt. Re-export it, or upload the pages as images instead.": "ਇਹ PDF ਖੁੱਲ੍ਹ ਨਹੀਂ ਸਕੀ — ਇਹ ਖ਼ਰਾਬ ਹੋ ਸਕਦੀ ਹੈ। ਦੁਬਾਰਾ ਸੇਵ ਕਰੋ, ਜਾਂ ਪੰਨਿਆਂ ਨੂੰ ਤਸਵੀਰਾਂ ਵਜੋਂ ਅੱਪਲੋਡ ਕਰੋ।",
+  "These pages add up to {{size}} MB — a scan can upload at most {{limit}} MB. Remove a page or two, or use smaller photos, and try again.": "ਇਹ ਪੰਨੇ ਕੁੱਲ {{size}} MB ਹਨ — ਇੱਕ ਸਕੈਨ ਵਿੱਚ ਵੱਧ ਤੋਂ ਵੱਧ {{limit}} MB ਅੱਪਲੋਡ ਹੋ ਸਕਦੇ ਹਨ। ਇੱਕ-ਦੋ ਪੰਨੇ ਹਟਾਓ, ਜਾਂ ਛੋਟੀਆਂ ਫ਼ੋਟੋਆਂ ਵਰਤ ਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+  "Page notices": "ਪੰਨਿਆਂ ਬਾਰੇ ਸੂਚਨਾਵਾਂ"
 }

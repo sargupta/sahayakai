@@ -629,7 +629,7 @@ export function AssessmentResultCard({
                         className="border-info/40 bg-info/5 print:hidden"
                     >
                         <Info className="h-4 w-4" />
-                        <AlertTitle>{t("Some pages were blank")}</AlertTitle>
+                        <AlertTitle>{t("Page notices")}</AlertTitle>
                         <AlertDescription>
                             <ul className="list-disc pl-4 space-y-1 text-xs">
                                 {(edited.skippedPageNotices ?? []).map((n, i) => (
@@ -933,6 +933,11 @@ function QuestionRow({
             </AccordionTrigger>
             <AccordionContent className="space-y-3 text-sm">
                 <div className="flex flex-wrap items-center gap-2">
+                    {/* Source page, so every page's answers stay traceable on a
+                        multi-page scan. */}
+                    <Badge variant="outline" data-testid="question-page">
+                        {t("Page")} {question.pageIndex + 1}
+                    </Badge>
                     {patternInfo && (
                         <Badge
                             variant="outline"

@@ -2524,5 +2524,18 @@
   "Next message": "അടുത്ത സന്ദേശം",
   "Open Community": "കമ്മ്യൂണിറ്റി തുറക്കുക",
   "Account menu": "അക്കൗണ്ട് മെനു",
-  "Profile and classes": "പ്രൊഫൈലും ക്ലാസുകളും"
+  "Profile and classes": "പ്രൊഫൈലും ക്ലാസുകളും",
+  "Now supporting six subject families, up to {{cap}} pages per scan": "ഇപ്പോൾ ആറ് വിഷയ കുടുംബങ്ങൾക്ക് പിന്തുണ, ഓരോ സ്കാനിനും {{cap}} പേജുകൾ വരെ",
+  "Reading PDF page {{done}} of {{total}}…": "PDF പേജ് {{done}} / {{total}} വായിക്കുന്നു…",
+  "Uploading and grading 1 page. This can take up to 2 minutes.": "1 പേജ് അപ്‌ലോഡ് ചെയ്ത് വിലയിരുത്തുന്നു. ഇതിന് 2 മിനിറ്റ് വരെ എടുത്തേക്കാം.",
+  "Uploading and grading {{count}} pages. This can take up to 2 minutes.": "{{count}} പേജുകൾ അപ്‌ലോഡ് ചെയ്ത് വിലയിരുത്തുന്നു. ഇതിന് 2 മിനിറ്റ് വരെ എടുത്തേക്കാം.",
+  "This PDF is {{size}} MB — the limit is {{limit}} MB. Re-export it at a lower resolution, or upload the pages as photos.": "ഈ PDF {{size}} MB ആണ് — പരിധി {{limit}} MB. കുറഞ്ഞ റെസല്യൂഷനിൽ വീണ്ടും സേവ് ചെയ്യുക, അല്ലെങ്കിൽ പേജുകളുടെ ഫോട്ടോകൾ അപ്‌ലോഡ് ചെയ്യുക.",
+  "This PDF is password-protected. Remove the password (or print it to a new PDF), then upload it again.": "ഈ PDF പാസ്‌വേഡ് ഉപയോഗിച്ച് സംരക്ഷിച്ചതാണ്. പാസ്‌വേഡ് നീക്കം ചെയ്യുക (അല്ലെങ്കിൽ പുതിയ PDF ആയി പ്രിന്റ് ചെയ്യുക), തുടർന്ന് വീണ്ടും അപ്‌ലോഡ് ചെയ്യുക.",
+  "This PDF has no pages to add.": "ഈ PDF-ൽ ചേർക്കാൻ പേജുകളൊന്നുമില്ല.",
+  "This PDF has {{total}} pages, but only {{remaining}} more can be added (limit {{cap}} pages per scan). Nothing was added. Split the PDF, or remove pages already added.": "ഈ PDF-ൽ {{total}} പേജുകളുണ്ട്, പക്ഷേ ഇനി {{remaining}} എണ്ണം മാത്രമേ ചേർക്കാനാകൂ (ഓരോ സ്കാനിനും പരിധി {{cap}} പേജുകൾ). ഒന്നും ചേർത്തിട്ടില്ല. PDF വിഭജിക്കുക, അല്ലെങ്കിൽ ഇതിനകം ചേർത്ത പേജുകൾ നീക്കം ചെയ്യുക.",
+  "Page {{page}} of this PDF could not be read, so nothing was added. Re-export the PDF, or upload that page as a photo.": "ഈ PDF-ന്റെ പേജ് {{page}} വായിക്കാനായില്ല, അതിനാൽ ഒന്നും ചേർത്തിട്ടില്ല. PDF വീണ്ടും സേവ് ചെയ്യുക, അല്ലെങ്കിൽ ആ പേജിന്റെ ഫോട്ടോ അപ്‌ലോഡ് ചെയ്യുക.",
+  "Your browser could not render the PDF. Try another browser, or upload the pages as photos.": "നിങ്ങളുടെ ബ്രൗസറിന് ഈ PDF കാണിക്കാനായില്ല. മറ്റൊരു ബ്രൗസർ പരീക്ഷിക്കുക, അല്ലെങ്കിൽ പേജുകളുടെ ഫോട്ടോകൾ അപ്‌ലോഡ് ചെയ്യുക.",
+  "Could not open this PDF — it may be corrupt. Re-export it, or upload the pages as images instead.": "ഈ PDF തുറക്കാനായില്ല — അത് കേടായതാകാം. വീണ്ടും സേവ് ചെയ്യുക, അല്ലെങ്കിൽ പേജുകൾ ചിത്രങ്ങളായി അപ്‌ലോഡ് ചെയ്യുക.",
+  "These pages add up to {{size}} MB — a scan can upload at most {{limit}} MB. Remove a page or two, or use smaller photos, and try again.": "ഈ പേജുകൾ ആകെ {{size}} MB ആണ് — ഒരു സ്കാനിൽ പരമാവധി {{limit}} MB മാത്രമേ അപ്‌ലോഡ് ചെയ്യാനാകൂ. ഒന്നോ രണ്ടോ പേജുകൾ നീക്കം ചെയ്യുക, അല്ലെങ്കിൽ ചെറിയ ഫോട്ടോകൾ ഉപയോഗിച്ച് വീണ്ടും ശ്രമിക്കുക.",
+  "Page notices": "പേജ് അറിയിപ്പുകൾ"
 }

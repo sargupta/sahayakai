@@ -2524,5 +2524,18 @@
   "Next message": "পরের বার্তা",
   "Open Community": "কমিউনিটি খুলুন",
   "Account menu": "অ্যাকাউন্ট মেনু",
-  "Profile and classes": "প্রোফাইল ও ক্লাস"
+  "Profile and classes": "প্রোফাইল ও ক্লাস",
+  "Now supporting six subject families, up to {{cap}} pages per scan": "এখন ছয়টি বিষয়-পরিবার সমর্থিত, প্রতি স্ক্যানে {{cap}} পৃষ্ঠা পর্যন্ত",
+  "Reading PDF page {{done}} of {{total}}…": "PDF পৃষ্ঠা {{done}} / {{total}} পড়া হচ্ছে…",
+  "Uploading and grading 1 page. This can take up to 2 minutes.": "১টি পৃষ্ঠা আপলোড ও মূল্যায়ন করা হচ্ছে। এতে ২ মিনিট পর্যন্ত সময় লাগতে পারে।",
+  "Uploading and grading {{count}} pages. This can take up to 2 minutes.": "{{count}}টি পৃষ্ঠা আপলোড ও মূল্যায়ন করা হচ্ছে। এতে ২ মিনিট পর্যন্ত সময় লাগতে পারে।",
+  "This PDF is {{size}} MB — the limit is {{limit}} MB. Re-export it at a lower resolution, or upload the pages as photos.": "এই PDF-টি {{size}} MB — সীমা {{limit}} MB। কম রেজোলিউশনে আবার সেভ করুন, বা পৃষ্ঠাগুলির ছবি আপলোড করুন।",
+  "This PDF is password-protected. Remove the password (or print it to a new PDF), then upload it again.": "এই PDF পাসওয়ার্ড-সুরক্ষিত। পাসওয়ার্ড সরান (বা নতুন PDF-এ প্রিন্ট করুন), তারপর আবার আপলোড করুন।",
+  "This PDF has no pages to add.": "এই PDF-এ যোগ করার মতো কোনো পৃষ্ঠা নেই।",
+  "This PDF has {{total}} pages, but only {{remaining}} more can be added (limit {{cap}} pages per scan). Nothing was added. Split the PDF, or remove pages already added.": "এই PDF-এ {{total}}টি পৃষ্ঠা আছে, কিন্তু আর মাত্র {{remaining}}টি যোগ করা যাবে (প্রতি স্ক্যানে সীমা {{cap}} পৃষ্ঠা)। কিছুই যোগ করা হয়নি। PDF ভাগ করুন, বা আগে যোগ করা পৃষ্ঠা সরান।",
+  "Page {{page}} of this PDF could not be read, so nothing was added. Re-export the PDF, or upload that page as a photo.": "এই PDF-এর পৃষ্ঠা {{page}} পড়া যায়নি, তাই কিছুই যোগ করা হয়নি। PDF আবার সেভ করুন, বা সেই পৃষ্ঠার ছবি আপলোড করুন।",
+  "Your browser could not render the PDF. Try another browser, or upload the pages as photos.": "আপনার ব্রাউজার PDF-টি দেখাতে পারেনি। অন্য ব্রাউজার ব্যবহার করুন, বা পৃষ্ঠাগুলির ছবি আপলোড করুন।",
+  "Could not open this PDF — it may be corrupt. Re-export it, or upload the pages as images instead.": "এই PDF খোলা যায়নি — এটি নষ্ট হতে পারে। আবার সেভ করুন, বা পৃষ্ঠাগুলি ছবি হিসেবে আপলোড করুন।",
+  "These pages add up to {{size}} MB — a scan can upload at most {{limit}} MB. Remove a page or two, or use smaller photos, and try again.": "এই পৃষ্ঠাগুলি মোট {{size}} MB — একটি স্ক্যানে সর্বোচ্চ {{limit}} MB আপলোড করা যায়। এক-দুটি পৃষ্ঠা সরান, বা ছোট ছবি ব্যবহার করে আবার চেষ্টা করুন।",
+  "Page notices": "পৃষ্ঠা সংক্রান্ত বিজ্ঞপ্তি"
 }
