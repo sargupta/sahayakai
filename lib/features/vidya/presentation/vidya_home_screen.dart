@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import 'package:lucide_icons/lucide_icons.dart';
+
 import '../../../core/i18n/app_locale.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
@@ -12,6 +14,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_glass.dart';
 import '../../../core/theme/app_gradients.dart';
 import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../shared/motion/animated_entrance.dart';
@@ -187,6 +190,8 @@ class _HomeBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(profileControllerProvider).valueOrNull;
+
     // Content only: the wash + glow paint the whole frame behind the
     // Scaffold (see the screen root), so this body is free to sit at its
     // natural height at the top of the body slot.
@@ -206,17 +211,38 @@ class _HomeBody extends ConsumerWidget {
         // pinned content to the top but never absorbed the deficit
         // (a Spacer can't go below zero), which is what pushed the
         // RenderFlex past its 734px bottom edge at 360dp x 1.3.
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _HeaderRow(),
-              const SizedBox(height: AppSpacing.verticalGap), // 14
-              const _HeroSection(),
-              const SizedBox(height: AppSpacing.verticalGap), // 14
-              _TileGrid(),
-              // Orb + hint is rendered by VidyaOverlay
-            ],
+        child: RefreshIndicator(
+          onRefresh: () async {
+            try {
+              await ref.read(profileControllerProvider.notifier).refresh();
+            } catch (_) {}
+            try {
+              await controller.restoreSession();
+            } catch (_) {}
+          },
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                staggeredItem(context, _HeaderRow(), index: 0),
+                const SizedBox(height: AppSpacing.verticalGap), // 14
+                staggeredItem(context, const _HeroSection(), index: 1),
+                const SizedBox(height: AppSpacing.verticalGap), // 14
+                if (profile != null && profile.isEmpty) ...[
+                  staggeredItem(
+                    context,
+                    const _CompleteProfileCard(),
+                    index: 2,
+                  ),
+                  const SizedBox(height: AppSpacing.verticalGap), // 14
+                ],
+                staggeredItem(context, const _TileGrid(), index: 3),
+                // Orb + hint is rendered by VidyaOverlay
+              ],
+            ),
           ),
         ),
       ),
@@ -250,17 +276,18 @@ class _HeaderRow extends ConsumerWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // 36px glass avatar circle
+        // 36px glass avatar circle with soft shadow for premium depth.
         Container(
-          width: 36,
-          height: 36,
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.white.withValues(alpha: 0.8),
+            color: Colors.white.withValues(alpha: 0.85),
             border: Border.all(
               color: AppColors.borderGlass,
               width: 1,
             ),
+            boxShadow: const [AppShadows.card],
           ),
           alignment: Alignment.center,
           child: initials == null
@@ -301,9 +328,10 @@ class _HeaderRow extends ConsumerWidget {
                 name,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontFamily: 'Bricolage Grotesque',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
                       color: AppColors.textStrong,
+                      letterSpacing: -0.2,
                     ),
               ),
             ],
@@ -469,13 +497,15 @@ class _HeroSection extends ConsumerWidget {
 
 /// 2×2 tile grid (r18, .70 glass, 13px padding)
 class _TileGrid extends StatelessWidget {
+  const _TileGrid();
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final tileWidth = (constraints.maxWidth - 9) / 2; // 9 = gap
+        final tileWidth = (constraints.maxWidth - AppSpacing.gridGap) / 2;
         return Column(
           children: [
             Row(
@@ -483,15 +513,21 @@ class _TileGrid extends StatelessWidget {
                 SizedBox(
                   width: tileWidth,
                   child: _Tile(
+                    icon: LucideIcons.userCheck,
+                    iconColor: AppColors.leaf500,
+                    iconBg: AppColors.leaf100,
                     title: l10n.homeTileRollCall,
                     subtitle: l10n.homeTileRollCallSub,
                     onTap: () => context.push(Routes.attendance),
                   ),
                 ),
-                const SizedBox(width: 9),
+                const SizedBox(width: AppSpacing.gridGap),
                 SizedBox(
                   width: tileWidth,
                   child: _Tile(
+                    icon: LucideIcons.bookOpen,
+                    iconColor: AppColors.info,
+                    iconBg: AppColors.infoTint,
                     title: l10n.homeTileLesson,
                     subtitle: l10n.homeTileLessonSub,
                     onTap: () => context.push(Routes.lessonPlan),
@@ -499,22 +535,28 @@ class _TileGrid extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 9),
+            const SizedBox(height: AppSpacing.gridGap),
             Row(
               children: [
                 SizedBox(
                   width: tileWidth,
                   child: _Tile(
                     key: const ValueKey('home-tile-scan'),
+                    icon: LucideIcons.scanLine,
+                    iconColor: AppColors.accent,
+                    iconBg: AppColors.accentTint,
                     title: l10n.homeTileScan,
                     subtitle: l10n.homeTileScanSub,
                     onTap: () => context.push(Routes.assessmentScanner),
                   ),
                 ),
-                const SizedBox(width: 9),
+                const SizedBox(width: AppSpacing.gridGap),
                 SizedBox(
                   width: tileWidth,
                   child: _Tile(
+                    icon: LucideIcons.phone,
+                    iconColor: AppColors.warning,
+                    iconBg: AppColors.accentTint,
                     title: l10n.homeTileCall,
                     subtitle: l10n.homeTileCallSub,
                     onTap: () => context.push(Routes.parentHotline),
@@ -529,24 +571,30 @@ class _TileGrid extends StatelessWidget {
   }
 }
 
-/// Tile: 70% white glass (`.70 white` + 1px 95%-white border), card radius 18
-/// and 13px padding — Screen 02's 2×2 home grid renders its tiles at the CARD
-/// radius (18), one step above the generic tile token (16).
+/// Tile: Unacademy-style category card — 70% white glass, icon badge,
+/// title + subtitle. Card radius 18.
 class _Tile extends StatelessWidget {
   const _Tile({
     super.key,
     required this.title,
     required this.subtitle,
+    this.icon,
+    this.iconColor,
+    this.iconBg,
     this.onTap,
   });
 
   final String title;
   final String subtitle;
+  final IconData? icon;
+  final Color? iconColor;
+  final Color? iconBg;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = iconColor ?? AppColors.accent;
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -556,6 +604,7 @@ class _Tile extends StatelessWidget {
           color: isDark ? AppGlass.dBorderColor : AppGlass.lBorderColor,
           width: 1,
         ),
+        boxShadow: const [AppShadows.card],
       ),
       child: Material(
         color: Colors.transparent,
@@ -563,33 +612,135 @@ class _Tile extends StatelessWidget {
           onTap: onTap,
           borderRadius: AppRadius.rCard,
           child: Padding(
-            padding: AppSpacing.tilePadding, // 13
+            padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (icon != null)
+                  ExcludeSemantics(
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: iconBg ?? AppColors.accentTint,
+                        borderRadius: AppRadius.rField,
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(icon, size: 20, color: accent),
+                    ),
+                  ),
+                if (icon != null) const SizedBox(height: 10),
                 Text(
                   title,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontFamily: 'Bricolage Grotesque',
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
                         color: AppColors.textStrong,
-                        height: 1.3,
+                        height: 1.25,
+                        letterSpacing: -0.1,
                       ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
                 Text(
                   subtitle,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         fontFamily: 'Instrument Sans',
-                        fontSize: 11,
-                        color: AppColors.textBody, // #5C534A, design-exact
-                        height: 1.45,
+                        fontSize: 11.5,
+                        color: AppColors.textBody,
+                        height: 1.4,
                       ),
                 ),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "Complete your profile" card shown when the teacher's profile is empty.
+class _CompleteProfileCard extends StatelessWidget {
+  const _CompleteProfileCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.accentTint,
+            AppColors.milk50.withValues(alpha: 0.9),
+          ],
+        ),
+        borderRadius: AppRadius.rCard,
+        border: Border.all(color: AppColors.accentTintBorder, width: 1),
+        boxShadow: const [AppShadows.card],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.cardPadding),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: const BoxDecoration(
+                color: AppColors.accent,
+                borderRadius: AppRadius.rField,
+              ),
+              alignment: Alignment.center,
+              child: const Icon(
+                LucideIcons.userPlus,
+                color: Colors.white,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Complete your profile',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontFamily: 'Bricolage Grotesque',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textStrong,
+                        ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Add your name, school, subjects and grade levels to '
+                    'personalize VIDYA.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontFamily: 'Instrument Sans',
+                          fontSize: 12,
+                          color: AppColors.textBody,
+                          height: 1.4,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            FilledButton(
+              onPressed: () => context.push(Routes.profile),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.accent,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: const RoundedRectangleBorder(
+                  borderRadius: AppRadius.rPill,
+                ),
+              ),
+              child: const Text('Complete'),
+            ),
+          ],
         ),
       ),
     );
