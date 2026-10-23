@@ -203,29 +203,6 @@ Future<void> _pumpHomeWithRouter(
   await tester.pumpAndSettle();
 }
 
-/// The task row inside the "Waiting for you" card that carries [label] — its
-/// nearest Row ancestor (the card's own layout rows are further up).
-Finder _taskRow(String label) =>
-    find.ancestor(of: find.text(label), matching: find.byType(Row)).first;
-
-/// The 8px status dot ([color]) belonging to the task row that carries
-/// [label], so each assertion ties a colour to its row rather than finding any
-/// dot of that colour anywhere on the screen.
-Finder _statusDot(String label, Color color) => find.descendant(
-  of: _taskRow(label),
-  matching: find.byWidgetPredicate(
-    (w) =>
-        w is Container &&
-        w.decoration is BoxDecoration &&
-        (w.decoration! as BoxDecoration).color == color,
-    description: '8px status dot $color',
-  ),
-);
-
-/// The "Open" affordance inside the task row that carries [label].
-Finder _openActionFor(String label) =>
-    find.descendant(of: _taskRow(label), matching: find.text('Open'));
-
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -268,51 +245,17 @@ void main() {
       await _pumpHome(tester, const VidyaState());
       await tester.pumpAndSettle();
 
-      // The hero carries the line break inside the copy and the subtitle's
-      // middle dot must survive as one joined string — findRichText matches
-      // both a bare Text and a Text.rich against the same expectation.
-      expect(
-        find.text('Two periods,\none prep gap', findRichText: true),
-        findsOneWidget,
-      );
+      // The hero now shows a time-based greeting plus a profile-derived
+      // subtitle (fallback when the profile has no grades/subjects).
+      expect(find.textContaining('Good '), findsWidgets);
       expect(
         find.text(
-          'Class 7 Maths at 10:20 · Class 5 EVS at 12:00',
+          'Complete your profile to personalize your experience',
           findRichText: true,
         ),
         findsOneWidget,
       );
     });
-
-    testWidgets(
-      'renders the Waiting-for-you card: three rows, status dots, Open actions',
-      (tester) async {
-        await _pumpHome(tester, const VidyaState());
-        await tester.pumpAndSettle();
-
-        expect(find.text('WAITING FOR YOU'), findsOneWidget);
-        expect(find.text('4 absentees to call'), findsOneWidget);
-        expect(find.text('34 test sheets to scan'), findsOneWidget);
-        expect(find.text('Fractions lesson ready'), findsOneWidget);
-        // Each row carries the saffron "Open" affordance — and nothing else
-        // on the screen uses that label.
-        expect(find.text('Open'), findsNWidgets(3));
-        // The 8px status dot of each row, scoped to its own row: red for the
-        // absentees, amber for the sheets to scan, green for the ready lesson.
-        expect(
-          _statusDot('4 absentees to call', AppColors.red500),
-          findsOneWidget,
-        );
-        expect(
-          _statusDot('34 test sheets to scan', AppColors.amber500),
-          findsOneWidget,
-        );
-        expect(
-          _statusDot('Fractions lesson ready', AppColors.leaf500),
-          findsOneWidget,
-        );
-      },
-    );
 
     testWidgets('renders exactly four tiles in the 2×2 grid', (tester) async {
       await _pumpHome(tester, const VidyaState());
@@ -366,17 +309,6 @@ void main() {
       },
     );
 
-    testWidgets(
-      "the green task row's Open action pushes the lesson-plan route",
-      (tester) async {
-        await _pumpHomeWithRouter(tester, const VidyaState());
-
-        await tester.tap(_openActionFor('Fractions lesson ready'));
-        await tester.pumpAndSettle();
-
-        expect(find.byKey(const Key('dest-lesson-plan')), findsOneWidget);
-      },
-    );
   });
 
   group('the app bar entries', () {
@@ -478,17 +410,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.bySemanticsLabel('Meena Kulkarni'), findsOneWidget);
-      expect(
-        find.bySemanticsLabel('Two periods,\none prep gap'),
-        findsOneWidget,
-      );
-      // The whole task ROW is now the tap target, so its InkWell merges the
-      // label and the "Open" action into one button label (same rule as the
-      // tiles below).
-      expect(
-        find.bySemanticsLabel('4 absentees to call\nOpen'),
-        findsOneWidget,
-      );
       // The tile's InkWell semantics merge title + subtitle into one label.
       expect(
         find.bySemanticsLabel('Roll call\nSpeak the names'),

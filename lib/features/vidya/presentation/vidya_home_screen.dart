@@ -12,11 +12,9 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_glass.dart';
 import '../../../core/theme/app_gradients.dart';
 import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text.dart';
 import '../../../shared/motion/animated_entrance.dart';
-import '../../../shared/widgets/glass_surface.dart';
 import '../../../shared/widgets/language_switcher.dart';
 import '../../inbox/presentation/widgets/inbox_entry_button.dart';
 import '../../profile/presentation/profile_controller.dart';
@@ -216,8 +214,6 @@ class _HomeBody extends ConsumerWidget {
               const SizedBox(height: AppSpacing.verticalGap), // 14
               const _HeroSection(),
               const SizedBox(height: AppSpacing.verticalGap), // 14
-              _WaitingForYouCard(),
-              const SizedBox(height: AppSpacing.verticalGap), // 14
               _TileGrid(),
               // Orb + hint is rendered by VidyaOverlay
             ],
@@ -414,25 +410,40 @@ class _HeroSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final extras = AppTextExtras.of(context);
-    final l10n = context.l10n;
     final profile = ref.watch(profileControllerProvider).valueOrNull;
 
-    // Build the subtitle from the teacher's own classes/subjects so the home
-    // screen reflects their actual data instead of a placeholder.
-    String subtitle;
-    if (profile != null && profile.gradeLevels.isNotEmpty && profile.subjects.isNotEmpty) {
-      subtitle = '${profile.gradeLevels.join(", ")} · ${profile.subjects.join(", ")}';
+    final name = (profile?.displayName?.trim().isNotEmpty ?? false)
+        ? profile!.displayName!.trim()
+        : 'Teacher';
+
+    final hour = DateTime.now().hour;
+    String greeting;
+    if (hour >= 5 && hour <= 11) {
+      greeting = 'Good morning, $name';
+    } else if (hour >= 12 && hour <= 16) {
+      greeting = 'Good afternoon, $name';
+    } else if (hour >= 17 && hour <= 20) {
+      greeting = 'Good evening, $name';
     } else {
-      subtitle = l10n.homeHeroSubtitle;
+      greeting = 'Good night, $name';
+    }
+
+    // Subtitle: grade levels + subjects, or prompt to complete profile.
+    String subtitle;
+    final gradeLevels = profile?.gradeLevels ?? const <String>[];
+    final subjects = profile?.subjects ?? const <String>[];
+    if (gradeLevels.isNotEmpty && subjects.isNotEmpty) {
+      subtitle = '${gradeLevels.join(', ')} · ${subjects.join(', ')}';
+    } else {
+      subtitle = 'Complete your profile to personalize your experience';
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Hero title — design: 700 26px Bricolage, letter-spacing −.012em
-        // (≈ −0.31px at 26), line-height 1.16, the line break built into the copy.
+        // Hero title — dynamic greeting, displayHero style.
         Text(
-          l10n.homeHeroTitle,
+          greeting,
           style: extras.displayHero.copyWith(
             fontSize: 26,
             height: 1.16,
@@ -441,8 +452,7 @@ class _HeroSection extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 7),
-        // Subtitle — one flat #5C534A line; the design colours the middle dot
-        // exactly like the words around it, so there is no muted span here.
+        // Subtitle
         Text(
           subtitle,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -453,137 +463,6 @@ class _HeroSection extends ConsumerWidget {
               ),
         ),
       ],
-    );
-  }
-}
-
-/// "Waiting for you" glass card with three task rows
-class _WaitingForYouCard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final extras = AppTextExtras.of(context);
-
-    // The design's shadow `0 8px 20px rgba(23,19,16,.06)` lives OUTSIDE the
-    // glass: GlassSurface clips its child to the squircle, so a shadow declared
-    // on an inner box is clipped away instead of falling on the wash.
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        borderRadius: AppRadius.rPanel,
-        boxShadow: [AppShadows.card],
-      ),
-      child: GlassSurface.flat(
-        radius: AppRadius.panel, // 20
-        padding: EdgeInsets.zero,
-        addSheen: false,
-        child: Padding(
-          // Design: `padding: 14px 15px`, `gap: 10px` between every child.
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Eyebrow — the design uppercases "Waiting for you" with CSS
-              // text-transform; `.toUpperCase()` is a no-op on Indic scripts.
-              Text(
-                l10n.homeEyebrowWaiting.toUpperCase(),
-                style: extras.eyebrow.copyWith(
-                  fontSize: 10,
-                  height: 1.2,
-                  letterSpacing: 1.6,
-                ),
-              ),
-              const SizedBox(height: 10),
-              // Three task rows
-              _TaskRow(
-                dotColor: AppColors.red500,
-                label: l10n.homeTaskAbsent,
-                actionLabel: l10n.actionOpen,
-                onAction: () => context.push(Routes.attendance),
-              ),
-              const SizedBox(height: 10),
-              _TaskRow(
-                dotColor: AppColors.amber500,
-                label: l10n.homeTaskScanSheets,
-                actionLabel: l10n.actionOpen,
-                onAction: () => context.push(Routes.assessmentScanner),
-              ),
-              const SizedBox(height: 10),
-              _TaskRow(
-                dotColor: AppColors.leaf500,
-                label: l10n.homeTaskLessonReady,
-                actionLabel: l10n.actionOpen,
-                onAction: () => context.push(Routes.lessonPlan),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Task row: status dot + label + saffron "Open" action
-class _TaskRow extends StatelessWidget {
-  const _TaskRow({
-    required this.dotColor,
-    required this.label,
-    required this.actionLabel,
-    required this.onAction,
-  });
-
-  final Color dotColor;
-  final String label;
-  final String actionLabel;
-  final VoidCallback onAction;
-
-  @override
-  Widget build(BuildContext context) {
-    // The design paints "Open" flush to the row's right edge with no padding of
-    // its own; instead of a ~14px-tall tap sliver around the word, the WHOLE
-    // ROW is the target — same pixels, a wide hit area.
-    return Material(
-      type: MaterialType.transparency,
-      child: InkWell(
-        onTap: onAction,
-        child: Row(
-          children: [
-            // 8px status dot
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: dotColor,
-              ),
-            ),
-            const SizedBox(width: 10),
-            // Label — design: `500 12px`, full-strength ink (#171310), so the
-            // task reads as strongly as the card around it.
-            Expanded(
-              child: Text(
-                label,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontFamily: 'Instrument Sans',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textStrong,
-                      height: 1.3,
-                    ),
-              ),
-            ),
-            // Saffron "Open" action
-            Text(
-              actionLabel,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    fontFamily: 'Instrument Sans',
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.saffron600,
-                  ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
