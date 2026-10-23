@@ -6,6 +6,7 @@ import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/platform/clock.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/app_badge.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_skeleton.dart';
@@ -159,8 +160,10 @@ class _AttendanceMonthScreenState extends ConsumerState<AttendanceMonthScreen> {
                     children: [
                       for (final (index, item) in items.indexed) ...[
                         if (index > 0)
-                          const SizedBox(height: AppSpacing.space3),
-                        _SummaryCard(
+                          const SizedBox(height: AppSpacing.space4),
+                        staggeredItem(
+                          context,
+                          _SummaryCard(
                           summary: item,
                           expanded: _openStudentId == item.studentId,
                           onToggle: () => setState(
@@ -177,6 +180,8 @@ class _AttendanceMonthScreenState extends ConsumerState<AttendanceMonthScreen> {
                                   today,
                                 )
                               : null,
+                        ),
+                          index: index,
                         ),
                       ],
                     ],
@@ -349,7 +354,7 @@ class _SummaryCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(summary.studentName, style: text.titleMedium),
+                    Text(summary.studentName, style: text.titleLarge),
                     const SizedBox(height: AppSpacing.space1),
                     Text(
                       l10n.attendanceRollLabel(summary.rollNumber),

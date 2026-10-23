@@ -6,6 +6,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/app_badge.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_skeleton.dart';
@@ -53,20 +54,28 @@ class AttendanceClassesScreen extends ConsumerWidget {
           const SizedBox(height: AppSpacing.space6),
           classes.when(
             loading: () => const AppSkeleton(lines: 5),
-            error: (error, _) => AppCard(
-              child: AttendanceFailureView(
-                error: error,
-                message: l10n.attendanceClassesError,
-                onRetry: () => ref.invalidate(attendanceClassesProvider),
+            error: (error, _) => staggeredItem(
+              context,
+              AppCard(
+                child: AttendanceFailureView(
+                  error: error,
+                  message: l10n.attendanceClassesError,
+                  onRetry: () => ref.invalidate(attendanceClassesProvider),
+                ),
               ),
+              index: 0,
             ),
             data: (items) => items.isEmpty
-                ? AppCard(
-                    child: EmptyView(
-                      icon: LucideIcons.users,
-                      title: l10n.attendanceClassesEmptyTitle,
-                      message: l10n.attendanceClassesEmptyBody,
+                ? staggeredItem(
+                    context,
+                    AppCard(
+                      child: EmptyView(
+                        icon: LucideIcons.users,
+                        title: l10n.attendanceClassesEmptyTitle,
+                        message: l10n.attendanceClassesEmptyBody,
+                      ),
                     ),
+                    index: 0,
                   )
                 : Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -74,8 +83,8 @@ class AttendanceClassesScreen extends ConsumerWidget {
                     children: [
                       for (final (index, item) in items.indexed) ...[
                         if (index > 0)
-                          const SizedBox(height: AppSpacing.space3),
-                        _ClassCard(item: item),
+                          const SizedBox(height: AppSpacing.space4),
+                        staggeredItem(context, _ClassCard(item: item), index: index),
                       ],
                     ],
                   ),
@@ -121,7 +130,7 @@ class _ClassCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(item.name, style: text.titleMedium),
+                    Text(item.name, style: text.titleLarge),
                     const SizedBox(height: AppSpacing.space1),
                     Text(
                       _meta(item),

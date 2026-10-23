@@ -7,6 +7,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_segmented.dart';
 import '../../../shared/widgets/app_skeleton.dart';
@@ -384,11 +385,15 @@ class _MarkAttendanceScreenState extends ConsumerState<MarkAttendanceScreen> {
         ),
         const SizedBox(height: AppSpacing.space4),
         for (final (index, student) in roll.indexed) ...[
-          if (index > 0) const SizedBox(height: AppSpacing.space3),
-          _RegisterRow(
-            student: student,
-            status: _statusFor(student.studentId, record),
-            onChanged: (status) => _setStatus(student.studentId, status),
+          if (index > 0) const SizedBox(height: AppSpacing.space4),
+          staggeredItem(
+            context,
+            _RegisterRow(
+              student: student,
+              status: _statusFor(student.studentId, record),
+              onChanged: (status) => _setStatus(student.studentId, status),
+            ),
+            index: index,
           ),
         ],
       ],

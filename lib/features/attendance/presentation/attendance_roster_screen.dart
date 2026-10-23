@@ -6,6 +6,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/app_badge.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/app_skeleton.dart';
@@ -83,21 +84,29 @@ class AttendanceRosterScreen extends ConsumerWidget {
           ],
           roster.when(
             loading: () => const AppSkeleton(lines: 5),
-            error: (error, _) => AppCard(
-              child: AttendanceFailureView(
+            error: (error, _) => staggeredItem(
+               context,
+               AppCard(
+                 child: AttendanceFailureView(
                 error: error,
                 message: l10n.attendanceRosterError,
                 onRetry: () =>
                     ref.invalidate(attendanceRosterProvider(classId)),
               ),
-            ),
+               ),
+               index: 0,
+             ),
             data: (students) => students.isEmpty
-                ? AppCard(
-                    child: EmptyView(
-                      icon: LucideIcons.userPlus,
-                      title: l10n.attendanceRosterEmptyTitle,
-                      message: l10n.attendanceRosterEmptyBody,
+                ? staggeredItem(
+                    context,
+                    AppCard(
+                      child: EmptyView(
+                        icon: LucideIcons.userPlus,
+                        title: l10n.attendanceRosterEmptyTitle,
+                        message: l10n.attendanceRosterEmptyBody,
+                      ),
                     ),
+                    index: 0,
                   )
                 : Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -145,7 +154,7 @@ class _RosterRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(student.name, style: text.titleMedium),
+                Text(student.name, style: text.titleLarge),
                 const SizedBox(height: AppSpacing.space1),
                 Text(
                   '${l10n.attendanceRollLabel(student.rollNumber)} · '
