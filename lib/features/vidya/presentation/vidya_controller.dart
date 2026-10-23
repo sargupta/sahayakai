@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../../core/ai/openrouter_client.dart';
+import '../../../core/ai/openrouter_providers.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../shared/voice/audio_player_service.dart';
@@ -334,6 +336,8 @@ class VidyaController extends _$VidyaController {
   VidyaProfileRepository get _profileRepo =>
       ref.read(vidyaProfileRepositoryProvider);
   GeminiLiveClient get _live => ref.read(geminiLiveClientProvider);
+  OpenRouterClient? get _openRouter => ref.read(openRouterClientProvider);
+  String get _openRouterModel => ref.read(openRouterDefaultModelProvider);
 
   /// The teacher's chosen voice engine. Defensive: a missing preferences plugin
   /// in a plain unit test degrades to the turn-based default rather than
@@ -537,6 +541,7 @@ class VidyaController extends _$VidyaController {
 
   Future<void> _begin() async {
     final gen = ++_gen;
+    debugPrint('[Vidya] _begin() started, gen=$_gen');
     _set(status: VidyaStatus.requestingPermission, errorMessage: null);
     final MicPermission perm;
     try {
@@ -550,6 +555,7 @@ class VidyaController extends _$VidyaController {
       _set(status: VidyaStatus.failed);
       return;
     }
+    debugPrint('[Vidya] permission result: $perm');
     if (_stale(gen)) return;
     switch (perm) {
       case MicPermission.permanentlyDenied:
@@ -565,6 +571,7 @@ class VidyaController extends _$VidyaController {
     _speechDetected = false;
     try {
       await _recorder.start();
+      debugPrint('[Vidya] recorder started');
     } catch (_) {
       // Unexpected (device busy, plugin error) — not a mis-tap. Same
       // dignified-failure treatment as above, never a silent idle bounce.
@@ -587,15 +594,20 @@ class VidyaController extends _$VidyaController {
       if (!_stale(gen) &&
           state.status == VidyaStatus.listening &&
           !_speechDetected) {
+        debugPrint('[Vidya] initial silence timeout - discarding');
         _discardCapture();
       }
     });
   }
 
   void _onAmplitude(double level) {
+    debugPrint('[Vidya] amplitude=$level speechDetected=$_speechDetected');
     if (state.status != VidyaStatus.listening) return;
     _set(amplitude: level);
     if (level >= kSpeechOnsetLevel) {
+      if (!_speechDetected) {
+        debugPrint('[Vidya] speech detected!');
+      }
       _speechDetected = true;
       _initialSilenceTimer?.cancel();
       _trailingSilenceTimer?.cancel();
@@ -613,6 +625,7 @@ class VidyaController extends _$VidyaController {
   }
 
   Future<void> _stopAndProcess() async {
+    debugPrint('[Vidya] _stopAndProcess started');
     final gen = _gen; // same trip; a cancel/new tap would have bumped _gen
     _teardownCapture();
     _set(status: VidyaStatus.transcribing, amplitude: 0);
@@ -631,7 +644,7 @@ class VidyaController extends _$VidyaController {
     if (_stale(gen)) return;
     // Silence / mis-tap reject before paying for STT.
     if (recording == null || recording.byteLength < kMinAudioBytes) {
-      _set(status: VidyaStatus.idle);
+      _set(status: VidyaStatus.failed, errorMessage: 'No speech detected. Please try again.');
       return;
     }
 
@@ -686,7 +699,12 @@ class VidyaController extends _$VidyaController {
 
     final VidyaTurn turn;
     try {
-      turn = await _vidya.ask(request);
+      // Try OpenRouter first if configured (direct AI access, bypasses backend).
+      if (_openRouter != null) {
+        turn = await _askOpenRouter(message, priorHistory, uiLang);
+      } else {
+        turn = await _vidya.ask(request);
+      }
     } on ApiException catch (e) {
       if (_stale(gen)) return;
       _handleError(e);
@@ -749,6 +767,81 @@ class VidyaController extends _$VidyaController {
     _set(status: VidyaStatus.idle, pendingNavigation: single);
 
     _persistTurn(message, turn.response, single);
+  }
+
+  /// Calls OpenRouter directly for VEDA responses (bypasses backend).
+  ///
+  /// Converts the conversation history and message to OpenRouter format,
+  /// sends to the configured model, and converts the response back to
+  /// a [VidyaTurn] with the same structure as the backend would return.
+  Future<VidyaTurn> _askOpenRouter(
+    String message,
+    List<ChatMessage> history,
+    String uiLang,
+  ) async {
+    final openRouter = _openRouter!;
+    final model = _openRouterModel;
+
+    // Build system prompt for VEDA (teacher's co-teacher persona).
+    final systemPrompt = _buildOpenRouterSystemPrompt(uiLang);
+
+    // Convert chat history to OpenRouter messages.
+    final messages = <OpenRouterMessage>[
+      OpenRouterMessage(role: 'system', content: systemPrompt),
+      ...history.map((m) => OpenRouterMessage(
+            role: m.role == ChatRole.user ? 'user' : 'assistant',
+            content: m.text,
+          )),
+      OpenRouterMessage(role: 'user', content: message),
+    ];
+
+    final request = OpenRouterChatRequest(
+      model: model,
+      messages: messages,
+      temperature: 0.7,
+      maxTokens: 2048,
+    );
+
+    final response = await openRouter.chat(request);
+    final content = response.content.trim();
+
+    // Convert OpenRouter response to VidyaTurn format.
+    // Since OpenRouter doesn't return directives, we return a simple
+    // speak-only turn. The backend would normally classify intent and
+    // return directives; here we just return the text response.
+    return VidyaTurn(
+      response: content,
+      directives: const [],
+    );
+  }
+
+  /// Builds the system prompt for OpenRouter VEDA calls.
+  String _buildOpenRouterSystemPrompt(String uiLang) {
+    final languageName = _languageDisplayName(uiLang);
+    return '''
+You are VEDYA, a helpful AI co-teacher for Indian teachers.
+Respond in $languageName.
+Keep responses concise, practical, and classroom-ready.
+Do not use markdown formatting unless explicitly asked.
+If the user asks for a tool (lesson plan, quiz, worksheet, etc.), explain that you can guide them but they should use the dedicated tool in the app.
+'''.trim();
+  }
+
+  /// Maps language code to display name for system prompt.
+  String _languageDisplayName(String code) {
+    switch (code) {
+      case 'hi': return 'Hindi';
+      case 'bn': return 'Bengali';
+      case 'gu': return 'Gujarati';
+      case 'kn': return 'Kannada';
+      case 'ml': return 'Malayalam';
+      case 'mr': return 'Marathi';
+      case 'or': return 'Odia';
+      case 'pa': return 'Punjabi';
+      case 'ta': return 'Tamil';
+      case 'te': return 'Telugu';
+      default: return 'English';
+    }
   }
 
   /// Whether the prior turns still count as the same conversation (SPEC §A.6).

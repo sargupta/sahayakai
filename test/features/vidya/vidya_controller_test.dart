@@ -594,7 +594,8 @@ void main() {
       await vidya.onMicTap();
       await vidya.onMicTap();
 
-      expect(container.read(vidyaControllerProvider).status, VidyaStatus.idle);
+      expect(container.read(vidyaControllerProvider).status, VidyaStatus.failed);
+      expect(container.read(vidyaControllerProvider).errorMessage, 'No speech detected. Please try again.');
       expect(container.read(vidyaControllerProvider).conversation, isEmpty);
       expect(client.multiparts, isEmpty, reason: 'no STT call for silence');
     });
