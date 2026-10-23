@@ -10,6 +10,7 @@ import '../../../core/platform/clock.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
 import '../../../shared/domain/tool_prefill.dart';
+import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/voice/tts_speaker.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
@@ -323,14 +324,24 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
       isBusy: state.isLoading,
       submitLabel: l10n.actionGenerate,
       onSubmit: (state.isLoading || hasReadyPaper) ? null : _submit,
-      result: KeyedSubtree(key: _resultKey, child: result),
-      child: Form(
-        key: _formKey,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
+      result: KeyedSubtree(
+        key: _resultKey,
+        child: AnimatedSwitcher(
+          duration: AppMotion.small,
+          switchInCurve: AppMotion.easeOutQuart,
+          switchOutCurve: AppMotion.easeOutQuart,
+          child: result,
+        ),
+      ),
+      child: staggeredItem(
+        context,
+        Form(
+          key: _formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
             EditorialSectionHeader(l10n.examPaperSectionPaper),
             const SizedBox(height: AppSpacing.space4),
             _boardField(l10n),
@@ -356,6 +367,8 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
             _markingSchemeToggle(l10n),
           ],
         ),
+      ),
+      index: 0,
       ),
     );
   }
