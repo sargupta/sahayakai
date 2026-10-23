@@ -384,7 +384,11 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
         ],
         for (final (index, student) in students.indexed) ...[
           if (index > 0) const SizedBox(height: AppSpacing.space3),
-          _studentRow(context, student, l10n),
+          staggeredItem(
+            context,
+            _studentRow(context, student, l10n),
+            index: index,
+          ),
         ],
       ],
     );
@@ -550,7 +554,16 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
             textCapitalization: TextCapitalization.sentences,
             keyboardType: TextInputType.multiline,
             onChanged: _controller.updateNote,
-            decoration: InputDecoration(hintText: _noteHint(l10n, reason)),
+            decoration: InputDecoration(
+              hintText: _noteHint(l10n, reason),
+              filled: true,
+              fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
+              contentPadding: const EdgeInsets.all(AppSpacing.space4),
+              border: const OutlineInputBorder(
+                borderRadius: AppRadius.rField,
+                borderSide: BorderSide.none,
+              ),
+            ),
           ),
         ),
         const SizedBox(height: AppSpacing.space6),
@@ -1120,4 +1133,3 @@ class _ClassPicker extends StatelessWidget {
     );
   }
 }
-

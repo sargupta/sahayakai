@@ -7,6 +7,7 @@ import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/empty_view.dart';
@@ -153,7 +154,10 @@ class _StaffroomReadyState extends ConsumerState<_StaffroomReady> {
 
     final shown = _filter == null
         ? feed
-        : [for (final item in feed) if (item.type == _filter) item];
+        : [
+            for (final item in feed)
+              if (item.type == _filter) item,
+          ];
 
     return RefreshIndicator(
       onRefresh: _refresh,
@@ -215,13 +219,17 @@ class _StaffroomReadyState extends ConsumerState<_StaffroomReady> {
             if (shown.isEmpty)
               _FeedEmpty()
             else
-              ...shown.map(
-                (item) => Padding(
+              ...shown.asMap().entries.map(
+                (entry) => Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.space3),
-                  child: FeedItemView(
-                    key: ValueKey<String>('feed-${item.id}'),
-                    item: item,
-                    likedIds: likedIds,
+                  child: staggeredItem(
+                    context,
+                    FeedItemView(
+                      key: ValueKey<String>('feed-${entry.value.id}'),
+                      item: entry.value,
+                      likedIds: likedIds,
+                    ),
+                    index: entry.key,
                   ),
                 ),
               ),
@@ -232,12 +240,16 @@ class _StaffroomReadyState extends ConsumerState<_StaffroomReady> {
             const SizedBox(height: AppSpacing.space3),
             EditorialSectionHeader(l10n.staffroomSectionPeople),
             const SizedBox(height: AppSpacing.space3),
-            ...people.map(
-              (t) => Padding(
+            ...people.asMap().entries.map(
+              (entry) => Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.space3),
-                child: TeacherSuggestionCard(
-                  key: ValueKey<String>('pymk-${t.uid}'),
-                  teacher: t,
+                child: staggeredItem(
+                  context,
+                  TeacherSuggestionCard(
+                    key: ValueKey<String>('pymk-${entry.value.uid}'),
+                    teacher: entry.value,
+                  ),
+                  index: entry.key,
                 ),
               ),
             ),
@@ -411,7 +423,8 @@ class _StaffroomSignIn extends StatelessWidget {
           // Real auth landed — a plain push is correct now. See
           // inbox_screen.dart's _InboxSignIn for the Firestore-handoff
           // caveat this button still carries (same shape here).
-          onPressed: () => context.push(Routes.loginWithReturnTo(Routes.staffroom)),
+          onPressed: () =>
+              context.push(Routes.loginWithReturnTo(Routes.staffroom)),
         ),
       ),
     );

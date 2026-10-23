@@ -1,10 +1,10 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
@@ -185,7 +185,9 @@ class _ConversationThreadScreenState
 
   Future<void> _dispatch(_PendingSend pending) async {
     try {
-      await ref.read(inboxTransportProvider).sendMessage(
+      await ref
+          .read(inboxTransportProvider)
+          .sendMessage(
             SendMessageInput(
               conversationId: widget.conversationId,
               type: MessageType.text,
@@ -218,10 +220,9 @@ class _ConversationThreadScreenState
     final oldestId = currentOldestFirst.first.id;
     setState(() => _loadingOlder = true);
     try {
-      final older = await ref.read(inboxTransportProvider).loadOlderMessages(
-            widget.conversationId,
-            beforeMessageId: oldestId,
-          );
+      final older = await ref
+          .read(inboxTransportProvider)
+          .loadOlderMessages(widget.conversationId, beforeMessageId: oldestId);
       if (!mounted) return;
       setState(() {
         if (older.isEmpty) {
@@ -325,12 +326,16 @@ class _ConversationThreadScreenState
                   itemBuilder: (context, index) {
                     if (index < ordered.length) {
                       final m = ordered[ordered.length - 1 - index];
-                      return MessageBubble(
-                        key: ValueKey<String>('msg-${m.id}'),
-                        message: m,
-                        myUid: myUid,
-                        otherParticipantIds: otherIds,
-                        isGroup: isGroup,
+                      return staggeredItem(
+                        context,
+                        MessageBubble(
+                          key: ValueKey<String>('msg-${m.id}'),
+                          message: m,
+                          myUid: myUid,
+                          otherParticipantIds: otherIds,
+                          isGroup: isGroup,
+                        ),
+                        index: index,
                       );
                     }
                     // index == ordered.length → the load-older trigger (top).
@@ -356,7 +361,8 @@ class _ConversationThreadScreenState
   /// route's conversation when present, else recovered from the deterministic
   /// direct id (`a_b`).
   List<String> _otherParticipantIds(String myUid) {
-    final ids = widget.conversation?.participantIds ??
+    final ids =
+        widget.conversation?.participantIds ??
         () {
           final pair = widget.conversationId.directPair;
           return pair == null ? const <String>[] : <String>[pair.a, pair.b];
@@ -382,12 +388,12 @@ class _ThreadTitle extends StatelessWidget {
     }
     final label = convo.isGroup
         ? ((convo.name?.trim().isNotEmpty ?? false)
-            ? convo.name!.trim()
-            : l10n.inboxThreadFallbackTitle)
+              ? convo.name!.trim()
+              : l10n.inboxThreadFallbackTitle)
         : ((convo.otherParticipant(myUid!)?.displayName.trim().isNotEmpty ??
-                false)
-            ? convo.otherParticipant(myUid!)!.displayName.trim()
-            : l10n.inboxThreadFallbackTitle);
+                  false)
+              ? convo.otherParticipant(myUid!)!.displayName.trim()
+              : l10n.inboxThreadFallbackTitle);
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -411,10 +417,14 @@ class _ThreadSignIn extends StatelessWidget {
     final l10n = context.l10n;
     return SingleChildScrollView(
       padding: AppSpacing.pagePadding,
-      child: EmptyView(
-        icon: LucideIcons.messageCircle,
-        title: l10n.inboxSignInTitle,
-        message: l10n.inboxSignInBody,
+      child: staggeredItem(
+        context,
+        EmptyView(
+          icon: LucideIcons.messageCircle,
+          title: l10n.inboxSignInTitle,
+          message: l10n.inboxSignInBody,
+        ),
+        index: 0,
       ),
     );
   }
@@ -430,10 +440,14 @@ class _ThreadEmpty extends StatelessWidget {
     final l10n = context.l10n;
     return SingleChildScrollView(
       padding: AppSpacing.pagePadding,
-      child: EmptyView(
-        icon: LucideIcons.messageCircle,
-        title: l10n.inboxThreadEmptyTitle,
-        message: l10n.inboxThreadEmptyBody,
+      child: staggeredItem(
+        context,
+        EmptyView(
+          icon: LucideIcons.messageCircle,
+          title: l10n.inboxThreadEmptyTitle,
+          message: l10n.inboxThreadEmptyBody,
+        ),
+        index: 0,
       ),
     );
   }
@@ -578,18 +592,36 @@ class _ComposerState extends State<_Composer> {
                     decoration: InputDecoration(
                       hintText: l10n.inboxComposerHint,
                       isDense: true,
+                      filled: true,
+                      fillColor: scheme.surfaceContainerHigh,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.space4,
+                        vertical: AppSpacing.space3,
+                      ),
+                      border: const OutlineInputBorder(
+                        borderRadius: AppRadius.rPill,
+                        borderSide: BorderSide.none,
+                      ),
                       // Turn the field's own border red while over the cap, so
                       // the block state reads even without looking at the hint.
                       enabledBorder: tooLong
-                          ? UnderlineInputBorder(
+                          ? OutlineInputBorder(
+                              borderRadius: AppRadius.rPill,
                               borderSide: BorderSide(color: scheme.error),
                             )
-                          : null,
+                          : const OutlineInputBorder(
+                              borderRadius: AppRadius.rPill,
+                              borderSide: BorderSide.none,
+                            ),
                       focusedBorder: tooLong
-                          ? UnderlineInputBorder(
+                          ? OutlineInputBorder(
+                              borderRadius: AppRadius.rPill,
                               borderSide: BorderSide(color: scheme.error),
                             )
-                          : null,
+                          : OutlineInputBorder(
+                              borderRadius: AppRadius.rPill,
+                              borderSide: BorderSide(color: scheme.primary),
+                            ),
                     ),
                   ),
                 ),
@@ -692,12 +724,12 @@ class _PendingSend {
   MessageDeliveryStatus status = MessageDeliveryStatus.sending;
 
   Message toMessage() => Message(
-        id: clientMessageId,
-        type: MessageType.text,
-        text: text,
-        senderId: senderId,
-        senderName: '',
-        clientMessageId: clientMessageId,
-        deliveryStatus: status,
-      );
+    id: clientMessageId,
+    type: MessageType.text,
+    text: text,
+    senderId: senderId,
+    senderName: '',
+    clientMessageId: clientMessageId,
+    deliveryStatus: status,
+  );
 }

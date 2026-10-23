@@ -6,6 +6,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/app_skeleton.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/error_view.dart';
@@ -109,14 +110,18 @@ class _InboxList extends StatelessWidget {
       separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.space3),
       itemBuilder: (context, index) {
         final conversation = conversations[index];
-        return ConversationRow(
-          key: ValueKey<String>('inbox-row-${conversation.id.value}'),
-          conversation: conversation,
-          myUid: myUid,
-          onTap: () => context.push(
-            Routes.conversationThreadPath(conversation.id.value),
-            extra: conversation,
+        return staggeredItem(
+          context,
+          ConversationRow(
+            key: ValueKey<String>('inbox-row-${conversation.id.value}'),
+            conversation: conversation,
+            myUid: myUid,
+            onTap: () => context.push(
+              Routes.conversationThreadPath(conversation.id.value),
+              extra: conversation,
+            ),
           ),
+          index: index,
         );
       },
     );
@@ -133,28 +138,33 @@ class _InboxSignIn extends StatelessWidget {
     final l10n = context.l10n;
     return SingleChildScrollView(
       padding: AppSpacing.pagePadding,
-      child: EmptyView(
-        icon: LucideIcons.messageCircle,
-        title: l10n.inboxSignInTitle,
-        message: l10n.inboxSignInBody,
-        action: SecondaryButton(
-          label: l10n.actionSignIn,
-          icon: LucideIcons.logIn,
-          // Real auth landed — a plain push is correct now (see
-          // vidya_home_screen.dart's _TerminalPanel for the full story).
-          // NOTE — a real, DIFFERENT gap this button doesn't close: this
-          // EmptyView renders whenever the inbox transport is
-          // `awaitingFirebase` OR `signedOut` (isEmptyByDesign). Firestore
-          // (the Block-C live-read layer) is a separate handoff from auth —
-          // so a genuinely signed-in teacher can still land here once
-          // Firestore is wired only if auth is broken; today, pre-Firestore,
-          // ANY teacher (signed in or not) sees this, and a signed-in one
-          // tapping "Sign in" will correctly bounce back to Home (the
-          // router sees them as already authenticated) rather than reach a
-          // login screen they don't need. That's expected, not a bug — the
-          // remaining fix is wiring cloud_firestore, not this button.
-          onPressed: () => context.push(Routes.loginWithReturnTo(Routes.inbox)),
+      child: staggeredItem(
+        context,
+        EmptyView(
+          icon: LucideIcons.messageCircle,
+          title: l10n.inboxSignInTitle,
+          message: l10n.inboxSignInBody,
+          action: SecondaryButton(
+            label: l10n.actionSignIn,
+            icon: LucideIcons.logIn,
+            // Real auth landed — a plain push is correct now (see
+            // vidya_home_screen.dart's _TerminalPanel for the full story).
+            // NOTE — a real, DIFFERENT gap this button doesn't close: this
+            // EmptyView renders whenever the inbox transport is
+            // `awaitingFirebase` OR `signedOut` (isEmptyByDesign). Firestore
+            // (the Block-C live-read layer) is a separate handoff from auth —
+            // so a genuinely signed-in teacher can still land here once
+            // Firestore is wired only if auth is broken; today, pre-Firestore,
+            // ANY teacher (signed in or not) sees this, and a signed-in one
+            // tapping "Sign in" will correctly bounce back to Home (the
+            // router sees them as already authenticated) rather than reach a
+            // login screen they don't need. That's expected, not a bug — the
+            // remaining fix is wiring cloud_firestore, not this button.
+            onPressed: () =>
+                context.push(Routes.loginWithReturnTo(Routes.inbox)),
+          ),
         ),
+        index: 0,
       ),
     );
   }
@@ -169,10 +179,14 @@ class _InboxEmpty extends StatelessWidget {
     final l10n = context.l10n;
     return SingleChildScrollView(
       padding: AppSpacing.pagePadding,
-      child: EmptyView(
-        icon: LucideIcons.messagesSquare,
-        title: l10n.inboxEmptyTitle,
-        message: l10n.inboxEmptyBody,
+      child: staggeredItem(
+        context,
+        EmptyView(
+          icon: LucideIcons.messagesSquare,
+          title: l10n.inboxEmptyTitle,
+          message: l10n.inboxEmptyBody,
+        ),
+        index: 0,
       ),
     );
   }
@@ -189,9 +203,13 @@ class _InboxError extends ConsumerWidget {
     final l10n = context.l10n;
     return SingleChildScrollView(
       padding: AppSpacing.pagePadding,
-      child: ErrorView(
-        message: l10n.inboxErrorBody,
-        onRetry: () => ref.invalidate(inboxListProvider),
+      child: staggeredItem(
+        context,
+        ErrorView(
+          message: l10n.inboxErrorBody,
+          onRetry: () => ref.invalidate(inboxListProvider),
+        ),
+        index: 0,
       ),
     );
   }
