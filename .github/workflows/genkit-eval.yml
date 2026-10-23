@@ -43,6 +43,16 @@ jobs:
           cache-dependency-path: sahayakai-main/package-lock.json
       - name: Install dependencies
         run: npm ci
+      # The app's default provider has been Vertex AI since b058ca65 (2026-07-22),
+      # and several flows and evaluators pin `vertexai/gemini-2.5-flash`. Vertex
+      # authenticates with Application Default Credentials, not the API key, so
+      # without this step every live eval failed with VertexAI.GoogleAuthError
+      # (gate: src/__tests__/scripts/eval-workflow-vertex-auth.test.ts). Same
+      # credentials and action as the Cloud Run deploy workflow.
+      - name: Authenticate to Google Cloud (ADC for Vertex AI)
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
       - name: Validate dataset structure (no API spend)
         run: npx tsx --tsconfig scripts/eval/tsconfig.json scripts/eval/run-evals.mts --all --dry
       - name: Require eval API key

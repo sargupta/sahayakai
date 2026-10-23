@@ -65,12 +65,17 @@ steps:
   # ── 5. Production build ───────────────────────────────────────────────────
   # A commit that type-checks and tests green can still fail `next build`.
   # Catching that here keeps a broken build out of the deploy pipeline.
+  # Same heap as the production image (Dockerfile NODE_OPTIONS): node:20's
+  # default ~2 GB heap ran out in `next build` on 2026-10-23 while the deploy
+  # build had 4 GB, so the gate failed builds production would ship
+  # (gate: src/__tests__/scripts/ci-build-heap-parity.test.ts).
   - id: build
     name: node:20
     dir: sahayakai-main
     entrypoint: npm
     args: ['run', 'build']
     env:
+      - 'NODE_OPTIONS=--max-old-space-size=4096'
       - 'NEXT_TELEMETRY_DISABLED=1'
       - 'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=sahayakai-b4248-mumbai'
     waitFor: [test]
