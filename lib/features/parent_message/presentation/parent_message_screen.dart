@@ -9,6 +9,7 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
+import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/result_view.dart';
@@ -150,14 +151,24 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
       // Hide the sticky action button once a draft is on screen — the document's
       // own action bar (Regenerate / Copy / Share) takes over.
       onSubmit: (state.isLoading || hasResult) ? null : _submit,
-      result: KeyedSubtree(key: _resultKey, child: result),
-      child: Form(
-        key: _formKey,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
+      result: KeyedSubtree(
+        key: _resultKey,
+        child: AnimatedSwitcher(
+          duration: AppMotion.small,
+          switchInCurve: AppMotion.easeOutQuart,
+          switchOutCurve: AppMotion.easeOutQuart,
+          child: result,
+        ),
+      ),
+      child: staggeredItem(
+        context,
+        Form(
+          key: _formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
             EditorialSectionHeader(l10n.parentMessageSectionMessage),
             const SizedBox(height: AppSpacing.space4),
             _studentNameField(l10n),
@@ -185,6 +196,8 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
             _schoolNameField(l10n),
           ],
         ),
+      ),
+      index: 0,
       ),
     );
   }
