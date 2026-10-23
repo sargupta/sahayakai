@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/firebase-admin';
 import { TWILIO_LANGUAGE_MAP } from '@/types/attendance';
 import { isValidE164 } from '@/lib/twilio-validate';
-import { checkCallingWindow } from '@/lib/calling-hours';
+import { contactHoursVerdict, type ContactClearance, type ContactDecision } from '@/lib/contact-policy';
+import { clearTeacherCall, recordTeacherContact, type TeacherSchoolDb } from '@/lib/contact-policy/teacher';
 import { logger } from '@/lib/logger';
 import { classifyTwilioFailure, releasesDedupWindow } from '@/lib/twilio-errors';
 import { getEffectiveMode } from '@/lib/voice-pipeline/health';
@@ -24,12 +25,14 @@ import type { Language } from '@/types';
  *   VOICE_EXOTEL_CALL_URL — full URL of the voicebot's start-call endpoint,
  *     e.g. https://sahayakai-voice-call-xxxx.a.run.app/api/exotel/call
  */
-async function forwardToExotel(userId: string, outreachId: string): Promise<NextResponse> {
+async function forwardToExotel(userId: string, outreachId: string, clearance: ContactClearance): Promise<NextResponse> {
     const callUrl = process.env.VOICE_EXOTEL_CALL_URL;
     if (!callUrl) {
         console.error('[attendance/call] VOICE_PROVIDER=exotel but VOICE_EXOTEL_CALL_URL is not set');
         return NextResponse.json({ error: 'Voice service not configured' }, { status: 503 });
     }
+    const recorded = await recordBeforeDial(clearance, outreachId, true);
+    if (recorded) return recorded;
     try {
         const res = await fetch(callUrl, {
             method: 'POST',
@@ -109,8 +112,9 @@ async function resolveOutreachTarget(
 async function forwardToVobiz(
     req: NextRequest,
     db: FirebaseFirestore.Firestore,
-    userId: string,
     outreachId: string,
+    target: Extract<TargetResolution, { ok: true }>,
+    clearance: ContactClearance,
 ): Promise<NextResponse> {
     const config = readVobizConfig();
     if (!config) {
@@ -122,12 +126,11 @@ async function forwardToVobiz(
         return NextResponse.json({ error: 'Voice service not configured' }, { status: 503 });
     }
 
-    const target = await resolveOutreachTarget(db, outreachId, userId);
-    if (!target.ok) return target.response;
-
     // Same escape hatch the Twilio path has: lets a teacher exercise the flow
     // without dialling a real parent. Unset it to go live.
     const callTo = process.env.VOBIZ_TEST_OVERRIDE_NUMBER || target.parentPhone;
+    const recorded = await recordBeforeDial(clearance, outreachId, !process.env.VOBIZ_TEST_OVERRIDE_NUMBER);
+    if (recorded) return recorded;
 
     const host = req.headers.get('host');
     const protocol = host?.includes('localhost') ? 'http' : 'https';
@@ -191,6 +194,59 @@ async function forwardToVobiz(
     return NextResponse.json({ callSid: result.handle.requestUuid });
 }
 
+/**
+ * The shared contact check refused (src/lib/contact-policy). Outside hours keeps its old wire
+ * contract (409 OUTSIDE_CALLING_HOURS + nextAllowedAt). An opt-out or the 30-day cap is
+ * definitive, so the outreach is marked failed and the per-student dedup window released: the
+ * parent was never disturbed. A check that could not run fails closed with 503.
+ */
+async function contactRefusal(
+    db: FirebaseFirestore.Firestore,
+    userId: string,
+    outreachId: string,
+    decision: Extract<ContactDecision, { allowed: false }>,
+): Promise<NextResponse> {
+    logger.warn(`Parent call refused by the contact policy (${decision.reason})`, 'ATTENDANCE', { userId, outreachId, reason: decision.reason });
+    if (decision.reason === 'opted_out' || decision.reason === 'frequency_cap') {
+        await db.collection('parent_outreach').doc(outreachId).update({
+            callStatus: 'failed',
+            callFailureCategory: `contact_policy_${decision.reason}`,
+            updatedAt: new Date().toISOString(),
+        }).catch((e: unknown) => {
+            console.error('[attendance/call] could not mark outreach refused:', e);
+        });
+    }
+    const code = {
+        outside_hours: 'OUTSIDE_CALLING_HOURS',
+        opted_out: 'OPTED_OUT',
+        frequency_cap: 'FREQUENCY_CAP',
+        policy_unavailable: 'CONTACT_POLICY_UNAVAILABLE',
+    }[decision.reason];
+    return NextResponse.json(
+        { error: decision.message, code, nextAllowedAt: decision.nextAllowedAt?.toISOString() ?? null },
+        { status: decision.reason === 'policy_unavailable' ? 503 : 409 },
+    );
+}
+
+/**
+ * Write the shared-ledger entry before the carrier is contacted (like Sampark's claim). A call
+ * whose entry cannot be written is not placed. A test-override call rings the tester, not the
+ * parent, so it is not counted against the parent. Returns a response only when the call must stop.
+ */
+async function recordBeforeDial(clearance: ContactClearance, outreachId: string, ringsParent: boolean): Promise<NextResponse | null> {
+    if (!ringsParent) return null;
+    try {
+        await recordTeacherContact(clearance, outreachId);
+        return null;
+    } catch (e) {
+        console.error('[attendance/call] contact ledger write failed; call not placed:', e);
+        return NextResponse.json(
+            { error: 'The calling rules could not be checked just now, so this call was not placed.', code: 'CONTACT_POLICY_UNAVAILABLE' },
+            { status: 503 },
+        );
+    }
+}
+
 export async function POST(req: NextRequest) {
     const userId = req.headers.get('x-user-id');
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -207,26 +263,37 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Quiet hours. Enforced HERE, ahead of the provider switch, so it binds every
-    // caller equally — the modal's Try again, a scheduled retry, a cron sweep, or
-    // a direct POST. Hiding a button is a courtesy; this is the guarantee.
-    // A parent should never be phoned about their child's attendance at 2am.
-    const window = checkCallingWindow();
-    if (!window.allowed) {
-        logger.warn(
-            `Parent call refused outside calling hours (${window.istTime})`,
-            'ATTENDANCE',
-            { userId, outreachId, istHour: window.istHour },
-        );
+    // Quiet hours first, before anything is read: the routine band (10:00–19:00 IST) binds every
+    // caller equally — the modal's Try again, a scheduled retry, a cron sweep, or a direct POST.
+    // Hiding a button is a courtesy; this is the guarantee.
+    const now = new Date();
+    const hours = contactHoursVerdict('routine', now);
+    if (!hours.allowed) {
+        logger.warn('Parent call refused outside calling hours', 'ATTENDANCE', { userId, outreachId });
         return NextResponse.json(
-            {
-                error: window.reason,
-                code: 'OUTSIDE_CALLING_HOURS',
-                nextAllowedAt: window.nextAllowedAt?.toISOString() ?? null,
-            },
+            { error: hours.message, code: 'OUTSIDE_CALLING_HOURS', nextAllowedAt: hours.nextAllowedAt.toISOString() },
             { status: 409 },
         );
     }
+
+    // The shared contact check (src/lib/contact-policy), for EVERY provider below: the school's
+    // opt-outs (a keypad 9 on a Sampark call blocks this call too), at most 4 routine calls to the
+    // number in 30 days across every path, and the hours again. Ownership and the server-stored
+    // destination are resolved first, because the check is about the number that would ring.
+    // Fails closed: if the rules cannot be read, nothing dials.
+    let db: FirebaseFirestore.Firestore;
+    let target: TargetResolution;
+    try {
+        db = await getDb();
+        target = await resolveOutreachTarget(db, outreachId, userId);
+    } catch (error) {
+        console.error('[attendance/call] Error:', error);
+        return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    }
+    if (!target.ok) return target.response;
+    const cleared = await clearTeacherCall({ db: db as unknown as TeacherSchoolDb, uid: userId, parentPhone: target.parentPhone, at: now });
+    if (!cleared.ok) return contactRefusal(db, userId, outreachId, cleared.decision);
+    const clearance = cleared.clearance;
 
     // Provider switch. Default 'twilio' preserves the existing batch TwiML path.
     // Set VOICE_PROVIDER=exotel to route attendance calls through the standalone
@@ -236,13 +303,13 @@ export async function POST(req: NextRequest) {
     // forward the outreachId + the caller identity.
     const provider = (process.env.VOICE_PROVIDER || 'twilio').toLowerCase();
     if (provider === 'exotel') {
-        return forwardToExotel(userId, outreachId);
+        return forwardToExotel(userId, outreachId, clearance);
     }
     // Vobiz owns a real Indian origination number, so unlike the Twilio TRIAL
     // account it can actually reach a parent. It streams the leg into a live
     // conversation with VIDYA rather than reading a fixed script.
     if (provider === 'vobiz') {
-        return forwardToVobiz(req, await getDb(), userId, outreachId);
+        return forwardToVobiz(req, db, outreachId, target, clearance);
     }
 
     const { TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER } = process.env;
@@ -252,11 +319,7 @@ export async function POST(req: NextRequest) {
 
     try {
 
-        // Ownership + server-stored destination. Shared with the Vobiz path so
-        // the two providers cannot drift apart on the security checks.
-        const db = await getDb();
-        const target = await resolveOutreachTarget(db, outreachId, userId);
-        if (!target.ok) return target.response;
+        // Ownership + server-stored destination were resolved above, once, for every provider.
         const parentPhone = target.parentPhone;
 
         // In test mode, override the destination number so all teachers can test
@@ -270,6 +333,9 @@ export async function POST(req: NextRequest) {
                 error: `Auto-call not supported for ${parentLanguage}. Use WhatsApp copy instead.`
             }, { status: 422 });
         }
+
+        const recorded = await recordBeforeDial(clearance, outreachId, !process.env.TWILIO_TEST_OVERRIDE_NUMBER);
+        if (recorded) return recorded;
 
         // Determine pipeline mode (streaming if orchestrator is healthy, else batch)
         const pipelineMode = await getEffectiveMode();

@@ -53,7 +53,9 @@ describe('quiet hours bind every entry point on the call path', () => {
     it.each(routes)('%s consults the shared calling window', (rel) => {
         if (EXEMPT[rel]) return;
         const src = readFileSync(join(ROOT, rel), 'utf8');
-        expect(src).toMatch(/checkCallingWindow\(/);
+        // The shared calling window itself, or the shared contact check (src/lib/contact-policy),
+        // whose hours are the same single-sourced band (routine-hours.ts) plus opt-outs and the cap.
+        expect(src).toMatch(/checkCallingWindow\(|contactHoursVerdict\(|clearTeacherCall\(|checkContact\(/);
     });
 
     it.each(routes)('%s does not re-implement the window itself', (rel) => {
