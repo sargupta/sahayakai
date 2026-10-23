@@ -22,4 +22,4 @@
 # there and the override is unnecessary.
 dependency_overrides:
   lucide_icons:
-    path: C:\Users\sachi\dev\lucide_icons-patched
+    path: C:\\Users\\shree\\dev\\lucide_icons-patched

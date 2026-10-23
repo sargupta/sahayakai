@@ -31,6 +31,7 @@ import '../../features/parent_message/presentation/parent_message_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/quiz_generator/presentation/quiz_generator_screen.dart';
 import '../../features/rubric_generator/presentation/rubric_generator_screen.dart';
+import '../../features/settings/presentation/privacy_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/staffroom/data/chat_stream_provider.dart';
@@ -329,6 +330,10 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: Routes.settings,
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: Routes.privacyForTeachers,
+        builder: (context, state) => const PrivacyScreen(),
       ),
       GoRoute(
         // The Library tab itself is mounted inside AppShell, so this route

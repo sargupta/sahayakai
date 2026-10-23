@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/theme/app_theme.dart';
 import 'glass_surface.dart';
@@ -100,7 +101,14 @@ class _AppCardState extends State<AppCard> {
     final tapLayer = Material(
       type: MaterialType.transparency,
       child: InkWell(
-        onTap: widget.onTap,
+        onTap: widget.onTap == null
+            ? null
+            : () {
+                HapticFeedback.lightImpact();
+                widget.onTap!();
+              },
+        focusColor: scheme.primary.withValues(alpha: 0.12),
+        hoverColor: scheme.primary.withValues(alpha: 0.04),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
@@ -154,7 +162,7 @@ class _AppCardState extends State<AppCard> {
           );
 
     final scaled = AnimatedScale(
-      scale: (animate && _pressed) ? 0.98 : 1.0,
+      scale: (animate && _pressed) ? 0.96 : 1.0,
       duration: AppMotion.micro,
       curve: AppMotion.easeOutQuart,
       child: content,

@@ -63,7 +63,12 @@ class IconWell extends StatelessWidget {
                 ],
               ),
             ),
-            child: Center(child: Icon(icon, size: glyph, color: scheme.primary)),
+            child: Center(
+        child: Transform.translate(
+          offset: const Offset(1, 0), // optical alignment for asymmetric icons
+          child: Icon(icon, size: glyph, color: scheme.primary),
+        ),
+      ),
           ),
         ),
       ),

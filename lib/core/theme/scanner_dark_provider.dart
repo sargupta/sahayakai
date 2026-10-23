@@ -7,4 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// renders dark only for the capture phase and returns to the teacher's own
 /// theme everywhere else. [SahayakApp] maps it to `themeMode`, which also
 /// flips the floating tab bar to its dark-scanner variant.
+///
+/// Mutations MUST be guarded by the owning screen's lifecycle: a deferred
+/// write (microtask/post-frame) that lands after the screen has unmounted
+/// would re-assert `true` and leave the app stuck in dark mode. See
+/// `AssessmentScannerScreen`'s `_disposed` / epoch discipline.
 final scannerDarkProvider = StateProvider<bool>((ref) => false);

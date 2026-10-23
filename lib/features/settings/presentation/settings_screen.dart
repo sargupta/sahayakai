@@ -133,6 +133,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       const _NotificationSection(),
       const _VoiceModeSection(),
       const _OrbHandSection(),
+      const _PrivacySection(),
       if (signedIn) ...[
         _profileSection(l10n),
         _dangerSection(l10n),
@@ -681,6 +682,35 @@ class _ReauthOrErrorView extends StatelessWidget {
     return InlineError(
       title: isReauth ? l10n.settingsReauthTitle : null,
       message: isReauth ? l10n.settingsReauthBody : l10n.settingsDeleteFailed,
+    );
+  }
+}
+
+/// A link to the privacy explainer for teachers.
+class _PrivacySection extends StatelessWidget {
+  const _PrivacySection();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+
+    return _SettingsGroup(
+      title: l10n.mePrivacyTitle,
+      child: AppCard(
+        padding: EdgeInsets.zero,
+        child: ListTile(
+          leading: Icon(
+            LucideIcons.shieldCheck,
+            size: AppIconSize.inline,
+            color: scheme.primary,
+          ),
+          title: Text('Privacy for Teachers', style: text.bodyLarge),
+          trailing: const Icon(LucideIcons.chevronRight, size: AppIconSize.inline),
+          onTap: () => context.push(Routes.privacyForTeachers),
+        ),
+      ),
     );
   }
 }

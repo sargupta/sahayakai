@@ -425,8 +425,9 @@ class _RecentSection extends ConsumerWidget {
 
     return recent.when(
       // A shaped shimmer of the rows that are coming, never a bare spinner
-      // (DESIGN_RUBRIC §6).
-      loading: () => const AppSkeleton(lines: 2),
+      // (DESIGN_RUBRIC §6). Mirrors LibraryItemRow: avatar circle + title/meta
+      // bars + trailing media rect.
+      loading: () => const _RecentSkeleton(),
       error: (error, _) => _RecentError(
         error: error,
         onRetry: () => ref.read(libraryItemsProvider.notifier).refresh(),
@@ -500,6 +501,59 @@ class _RecentError extends StatelessWidget {
     }
     return AppCard(
       child: ErrorView(message: l10n.dashboardRecentFailed, onRetry: onRetry),
+    );
+  }
+}
+
+/// Shape-matching skeleton for the dashboard's recent-work list. Mirrors
+/// [LibraryItemRow]: an avatar circle, title + meta bars, and a trailing media
+/// rect, repeated for a few rows.
+class _RecentSkeleton extends AppSkeleton {
+  const _RecentSkeleton() : super(lines: 0);
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return SkeletonShimmer(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < 3; i++) ...[
+            if (i > 0) const SizedBox(height: AppSpacing.space3),
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.space4),
+              decoration: BoxDecoration(
+                color: scheme.surfaceContainerLow,
+                borderRadius: AppRadius.rCard,
+                border: Border.all(color: scheme.outline, width: 1),
+              ),
+              child: const Row(
+                children: [
+                  SkeletonCircle(size: AppIconSize.wellBox),
+                  SizedBox(width: AppSpacing.space4),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SkeletonBar(height: SkeletonBar.title, widthFactor: 0.7),
+                        SizedBox(height: AppSpacing.space2),
+                        SkeletonBar(widthFactor: 0.45),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: AppSpacing.space2),
+                  SkeletonMedia(
+                    width: AppIconSize.wellBox,
+                    height: AppIconSize.wellBox,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

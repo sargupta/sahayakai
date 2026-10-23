@@ -6,7 +6,7 @@ part of 'vidya_metrics.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$vidyaMetricsHash() => r'0fb3f1df3ca664a798bb8d8e89db80e9014ea4e2';
+String _$vidyaMetricsHash() => r'f04944bc3a3862b7d92509192d606341d8d9edc2';
 
 /// Provider that computes metrics from the real usage summary.
 /// Degrades gracefully to [VidyaMetrics.demo] when the fetch fails

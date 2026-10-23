@@ -65,6 +65,14 @@ class _AssessmentScannerScreenState
   /// surface must be relinquished when the route unmounts.
   late final StateController<bool> _scannerDark;
 
+  /// Guards every deferred write to [scannerDarkProvider] so a microtask that
+  /// was scheduled before unmount can never re-assert `true` after
+  /// [dispose] has already flipped it back to `false` (which would leave the
+  /// app stuck in dark mode). Bumped on dispose (and on every fresh
+  /// scheduling) to orphan stale continuations — belt-and-braces on the flag.
+  bool _disposed = false;
+  int _darkSyncEpoch = 0;
+
   @override
   void initState() {
     super.initState();
@@ -74,12 +82,17 @@ class _AssessmentScannerScreenState
     // Scheduled post-frame — a provider that the root widget watches must not
     // be mutated during the first build.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _scannerDark.state = true;
+      if (_disposed || !mounted) return;
+      _scannerDark.state = true;
     });
   }
 
   @override
   void dispose() {
+    // Invalidate any in-flight / pending dark-surface write FIRST, so a
+    // microtask scheduled during the last build cannot land after this.
+    _disposed = true;
+    _darkSyncEpoch++; // orphan any pending continuation (belt on _disposed)
     // Leave the app in the teacher's own theme when the route unmounts.
     _scannerDark.state = false;
     _answerKeyController.dispose();
@@ -146,10 +159,16 @@ class _AssessmentScannerScreenState
     // v3 Screen 11 → 12: the CAPTURE phase is the dark scanner surface; a
     // landed result flips back to Screen 12's LIGHT wash and the teacher's own
     // theme (which also flips the floating tab bar back to its light variant).
-    final wantDark = !hasResult;
-    if (_scannerDark.state != wantDark) {
+    // Dark is owned by the capture/idle phase only — loading (grading
+    // skeleton) and error states do not re-assert the dark surface, so a
+    // transient failure or in-flight grade can never drag the app into dark.
+    final wantDark =
+        !hasResult && !state.isLoading && !state.hasError;
+    if (!_disposed && _scannerDark.state != wantDark) {
+      final epoch = ++_darkSyncEpoch;
       Future.microtask(() {
-        if (mounted) _scannerDark.state = wantDark;
+        if (_disposed || epoch != _darkSyncEpoch || !mounted) return;
+        _scannerDark.state = wantDark;
       });
     }
 

@@ -48,9 +48,11 @@ class AuthController extends _$AuthController {
       state = user != null ? AuthStatus.signedIn : AuthStatus.signedOut;
     });
     ref.onDispose(() => _sub?.cancel());
-    return FirebaseAuth.instance.currentUser != null
-        ? AuthStatus.signedIn
-        : AuthStatus.signedOut;
+    // Do NOT read `currentUser` synchronously on cold start: Firebase hasn't
+    // necessarily restored the persisted session yet. Rely entirely on the
+    // `authStateChanges()` stream instead — the initial emission (which
+    // fires synchronously when a cached session exists) sets the real state.
+    return AuthStatus.signedOut;
   }
 
   /// Runs the real Google Sign-In → Firebase credential exchange used by the

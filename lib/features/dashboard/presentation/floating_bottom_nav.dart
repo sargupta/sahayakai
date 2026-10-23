@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/l10n_ext.dart';
@@ -100,7 +101,10 @@ class FloatingBottomNav extends StatelessWidget {
                     isDark: isDark,
                     orbDragging: orbDragging,
                     motion: motion,
-                    onTap: () => onSelected(i),
+                    onTap: () {
+                      if (i != currentIndex) HapticFeedback.selectionClick();
+                      onSelected(i);
+                    },
                   );
                 }),
               ),

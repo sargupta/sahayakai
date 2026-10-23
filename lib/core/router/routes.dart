@@ -45,6 +45,9 @@ class Routes {
   /// a token expires while the screen is open), not a public entry point.
   static const String settings = '/settings';
 
+  /// Privacy explainer for teachers (Pillar 06). Pushed from Settings.
+  static const String privacyForTeachers = '/privacy-for-teachers';
+
   // AI tools (pushed on top of the signed-in shell).
   static const String lessonPlan = '/lesson-plan';
   static const String quizGenerator = '/quiz-generator';

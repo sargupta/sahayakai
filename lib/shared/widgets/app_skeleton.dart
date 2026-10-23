@@ -89,6 +89,47 @@ class SkeletonBlock extends StatelessWidget {
   }
 }
 
+/// A circular shimmer placeholder — an avatar, icon well, or profile picture.
+class SkeletonCircle extends StatelessWidget {
+  const SkeletonCircle({super.key, this.size = 48});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainer,
+        shape: BoxShape.circle,
+      ),
+    );
+  }
+}
+
+/// A rectangular shimmer placeholder for media — a thumbnail, image, or video.
+class SkeletonMedia extends StatelessWidget {
+  const SkeletonMedia({super.key, this.width, this.height = 72});
+
+  final double? width;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainer,
+        borderRadius: AppRadius.rCard,
+      ),
+    );
+  }
+}
+
 /// Shimmer skeleton that mimics the shape of loaded content — never a bare
 /// centered spinner for content areas. See DESIGN_RUBRIC §6.
 class AppSkeleton extends StatelessWidget {
