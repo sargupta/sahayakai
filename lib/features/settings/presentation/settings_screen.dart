@@ -701,6 +701,11 @@ class _PrivacySection extends StatelessWidget {
       child: AppCard(
         padding: EdgeInsets.zero,
         child: ListTile(
+          shape: const RoundedRectangleBorder(borderRadius: AppRadius.rRow),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.space4,
+            vertical: AppSpacing.space2,
+          ),
           leading: Icon(
             LucideIcons.shieldCheck,
             size: AppIconSize.inline,

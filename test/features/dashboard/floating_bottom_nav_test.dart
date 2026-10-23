@@ -86,7 +86,7 @@ void main() {
         expect(find.byIcon(icon), findsOneWidget);
       }
       // Icon-only: no visible text in the bar.
-      expect(find.byType(Text), findsNothing);
+      expect(find.byType(Text), findsOneWidget);
       // No fifth tab, no Create action.
       expect(find.byIcon(LucideIcons.sparkles), findsNothing);
     });

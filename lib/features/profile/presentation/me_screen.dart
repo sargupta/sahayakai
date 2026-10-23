@@ -357,8 +357,8 @@ class _InitialAvatar extends StatelessWidget {
     final fg = isDark ? AppColors.dMutedForeground : AppColors.ink600;
 
     return Container(
-      width: 44,
-      height: 44,
+      width: 56,
+      height: 56,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
@@ -367,13 +367,14 @@ class _InitialAvatar extends StatelessWidget {
           color: isDark ? AppGlass.dBorderColor : AppGlass.lBorderColor,
           width: 1,
         ),
+        boxShadow: isDark ? AppShadows.cardDark : AppShadows.cardLight,
       ),
       child: initials == null
           ? Icon(LucideIcons.user, size: AppIconSize.inline, color: fg)
           : Text(
               initials,
               style: theme.textTheme.titleSmall?.copyWith(
-                fontSize: 14,
+                fontSize: 18,
                 fontWeight: FontWeight.w600,
                 color: fg,
               ),
@@ -742,9 +743,10 @@ class _HubRow extends StatelessWidget {
 
     return ListTile(
       onTap: onTap,
+      shape: const RoundedRectangleBorder(borderRadius: AppRadius.rRow),
       contentPadding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.space4,
-        vertical: AppSpacing.space2,
+        vertical: AppSpacing.space3,
       ),
       leading: IconWell(icon: icon),
       title: Text(label, style: text.titleMedium),

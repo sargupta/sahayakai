@@ -170,6 +170,14 @@ class _TabButton extends StatelessWidget {
       iconColor = AppColors.ink500;
     }
 
+    // Instagram-style: only the active tab speaks its label, expanding the
+    // circular disc into a rounded pill that carries icon + label. Inactive
+    // tabs stay bare icon-only circles, so the bar stays quiet until a tab is
+    // chosen.
+    final borderRadius = BorderRadius.circular(
+      isActive ? 9999 : FloatingBottomNav._tabTarget / 2,
+    );
+
     return Semantics(
       button: true,
       selected: isActive,
@@ -184,21 +192,48 @@ class _TabButton extends StatelessWidget {
       child: AnimatedContainer(
         duration: motion ? AppMotion.small : Duration.zero,
         curve: AppMotion.easeOutQuart,
-        width: FloatingBottomNav._tabTarget,
         height: FloatingBottomNav._tabTarget,
-        decoration: BoxDecoration(color: background, shape: BoxShape.circle),
+        padding: isActive
+            ? const EdgeInsets.symmetric(horizontal: 14)
+            : EdgeInsets.zero,
+        decoration: BoxDecoration(color: background, borderRadius: borderRadius),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            customBorder: const CircleBorder(),
+            customBorder: RoundedRectangleBorder(borderRadius: borderRadius),
             onTap: onTap,
             child: Center(
-              child: Icon(
-                icon,
-                size: FloatingBottomNav._iconSize,
-                color: iconColor,
-                // lucide's 2/24 stroke lands at ~1.67px at 20px — the v3 1.7.
-              ),
+              child: isActive
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          icon,
+                          size: FloatingBottomNav._iconSize,
+                          color: iconColor,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          label,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: iconColor,
+                          ),
+                        ),
+                      ],
+                    )
+                  : SizedBox(
+                      width: FloatingBottomNav._tabTarget,
+                      height: FloatingBottomNav._tabTarget,
+                      child: Center(
+                        child: Icon(
+                          icon,
+                          size: FloatingBottomNav._iconSize,
+                          color: iconColor,
+                        ),
+                      ),
+                    ),
             ),
           ),
         ),
