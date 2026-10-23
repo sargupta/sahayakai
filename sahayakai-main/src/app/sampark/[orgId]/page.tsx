@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/language-context";
-import { getOverview } from "@/lib/api/sampark";
+import { getOverview, listTeacherCalls } from "@/lib/api/sampark";
 import { ErrorPanel, LoadingBlock } from "@/components/sampark/states";
 import { useSamparkQuery } from "@/components/sampark/use-sampark-query";
 import { useSamparkSchool } from "@/components/sampark/school-context";
@@ -27,6 +27,7 @@ import {
 
 /** How often Today re-reads the overview. The overview reads up to 1000 calls and every family, so it stays at 30 s. */
 const OVERVIEW_POLL_MS = 30_000;
+const TEACHER_FEED_LIMIT = 8;
 
 /**
  * Today: the campaign calling now, the calling window, real calls to families
@@ -40,6 +41,8 @@ export default function SamparkTodayPage() {
     const { orgId, school } = useSamparkSchool();
     const base = `/sampark/${encodeURIComponent(orgId)}`;
     const query = useSamparkQuery((signal) => getOverview(orgId, { signal }), [orgId], { pollMs: OVERVIEW_POLL_MS });
+    // Teachers' Contact calls join the Recent feed, labelled. If they fail to load, the feed shows campaign calls only.
+    const teacherCalls = useSamparkQuery((signal) => listTeacherCalls(orgId, { limit: TEACHER_FEED_LIMIT }, { signal }), [orgId], { pollMs: OVERVIEW_POLL_MS });
     const o = query.data;
     // The server's clock, not this device's: the window and the current hour follow the server's rules.
     const now = useServerNow(o?.asOf, OVERVIEW_POLL_MS);
@@ -95,7 +98,7 @@ export default function SamparkTodayPage() {
             </div>
 
             <div className="grid gap-4 xl:grid-cols-5">
-                <ActivityFeed overview={o} base={base} className="xl:col-span-3" />
+                <ActivityFeed overview={o} teacherCalls={teacherCalls.data} base={base} className="xl:col-span-3" />
                 <FamiliesCard overview={o} steps={steps} className="xl:col-span-2" />
             </div>
 

@@ -36,6 +36,7 @@ import type {
     SchoolVenue,
     ScriptPreview,
     Suppression,
+    TeacherCallEntry,
 } from '@/types/sampark';
 
 export type { SamparkSchoolView };
@@ -296,6 +297,12 @@ export async function listCalls(orgId: string, query: ListCallsQuery = {}, opts:
         orgPath(orgId, `/calls${qs({ campaignId: query.campaignId, limit: query.limit })}`),
         { signal: opts.signal },
     );
+    return res.calls;
+}
+
+/** GET /api/sampark/[orgId]/teacher-calls?limit= — teachers' Contact calls, last four digits only. */
+export async function listTeacherCalls(orgId: string, query: { limit?: number } = {}, opts: Opts = {}): Promise<TeacherCallEntry[]> {
+    const res = await apiFetch<{ calls: TeacherCallEntry[] }>(orgPath(orgId, `/teacher-calls${qs({ limit: query.limit })}`), { signal: opts.signal });
     return res.calls;
 }
 

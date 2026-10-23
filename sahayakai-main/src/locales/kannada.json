@@ -2202,5 +2202,9 @@
   "{hour}: {calls} calls, {heard} heard": "{hour}: {calls} ಕರೆಗಳು, {heard} ಕೇಳಿದರು",
   "{percent} of families are called in {language}": "{percent} ಕುಟುಂಬಗಳಿಗೆ {language} ಭಾಷೆಯಲ್ಲಿ ಕರೆ ಮಾಡಲಾಗುತ್ತದೆ",
   "{time} IST": "{time} IST",
-  "{time} left today": "ಇಂದು ಇನ್ನೂ {time} ಉಳಿದಿದೆ"
+  "{time} left today": "ಇಂದು ಇನ್ನೂ {time} ಉಳಿದಿದೆ",
+  "Integration": "ಸಂಯೋಜನೆ",
+  "Result not known": "ಫಲಿತಾಂಶ ತಿಳಿದಿಲ್ಲ",
+  "Every call the school made to a parent, from a campaign or by a teacher, newest first. Numbers show the last four digits only.": "ಶಾಲೆ ಪೋಷಕರಿಗೆ ಮಾಡಿದ ಪ್ರತಿಯೊಂದು ಕರೆ, ಅಭಿಯಾನದಿಂದ ಅಥವಾ ಶಿಕ್ಷಕರಿಂದ, ಹೊಸದು ಮೊದಲು. ಸಂಖ್ಯೆಗಳ ಕೊನೆಯ ನಾಲ್ಕು ಅಂಕೆಗಳು ಮಾತ್ರ ಕಾಣುತ್ತವೆ.",
+  "Class not recorded": "ತರಗತಿ ದಾಖಲಾಗಿಲ್ಲ"
 }

@@ -2176,5 +2176,9 @@
   "{hour}: {calls} calls, {heard} heard": "{hour}: {calls} அழைப்புகள், {heard} கேட்டனர்",
   "{percent} of families are called in {language}": "{percent} குடும்பங்கள் {language} மொழியில் அழைக்கப்படுகின்றன",
   "{time} IST": "IST {time}",
-  "{time} left today": "இன்று இன்னும் {time} மீதம்"
+  "{time} left today": "இன்று இன்னும் {time} மீதம்",
+  "Integration": "ஒருங்கிணைப்பு",
+  "Result not known": "முடிவு தெரியவில்லை",
+  "Every call the school made to a parent, from a campaign or by a teacher, newest first. Numbers show the last four digits only.": "பள்ளி பெற்றோருக்குச் செய்த ஒவ்வொரு அழைப்பும், பிரச்சாரத்திலிருந்தோ ஆசிரியரிடமிருந்தோ, புதியது முதலில். எண்களின் கடைசி நான்கு இலக்கங்கள் மட்டுமே காட்டப்படும்.",
+  "Class not recorded": "வகுப்பு பதிவு செய்யப்படவில்லை"
 }
