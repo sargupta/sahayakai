@@ -80,7 +80,7 @@ const CALL = { action: 'call', class_id: 'class-6a', student_id: 'stu-1', reason
 it('GET: MCP status from initialize + tools/list', async () => {
     expect(await (await GET(signedIn())).json()).toEqual({
         configured: true, connected: true,
-        server: { name: 'sahayak-parent-calling', version: '1.0.0', tool: 'initiate_parent_call', protocol: 'Streamable HTTP' },
+        server: { name: 'sahayak-parent-calling', version: '1.0.0', tool: 'list_parent_contacts', protocol: 'Streamable HTTP' },
     });
 });
 
@@ -91,16 +91,12 @@ it('list → list_parent_contacts through MCP, masked', async () => {
     expect(JSON.stringify(body)).not.toContain('9876543210');
 });
 
-it('call → initiate_parent_call through the MCP endpoint with the server key; nothing secret reaches the browser', async () => {
+it('call → refused (initiate_parent_call is switched off); MCP is never contacted, nothing dials', async () => {
     const res = await POST(signedIn(CALL));
-    expect(res.status).toBe(200);
-    const text = await res.text();
-    const body = JSON.parse(text);
-    expect(body.result).toMatchObject({ status: 'call_initiated', student_name: 'Ravi', parent_phone_last4: '3210' });
-    expect(body.mcp).toMatchObject({ name: 'sahayak-parent-calling', tool: 'initiate_parent_call', protocol: 'Streamable HTTP' });
-    expect(routes.call).toHaveBeenCalledTimes(1);
-    expect(mcpRequests.every((r) => r.url === MCP_URL && r.headers.get('authorization') === `Bearer ${apiKey}`)).toBe(true);
-    for (const s of [apiKey, MCP_URL, '9876543210', 'out-secret-1', 'CA-secret-sid', 'teacher-a', PEPPER]) expect(text).not.toContain(s);
+    expect(res.status).toBe(403);
+    expect((await res.json()).error.category).toBe('capability_disabled');
+    expect(mcpRequests).toHaveLength(0);
+    expect(routes.call).not.toHaveBeenCalled();
 });
 
 it('requires a signed-in Sahayak user (not an open telephony proxy)', async () => {
@@ -110,7 +106,7 @@ it('requires a signed-in Sahayak user (not an open telephony proxy)', async () =
 });
 
 it('rejects phone numbers, tenant fields and unknown actions before calling MCP', async () => {
-    for (const bad of [{ ...CALL, phone_number: '+911111111111' }, { ...CALL, org_id: 'org-z' }, { action: 'dial', to: '+911111111111' }]) {
+    for (const bad of [{ action: 'list', phone_number: '+911111111111' }, { action: 'list', org_id: 'org-z' }, { action: 'dial', to: '+911111111111' }]) {
         const res = await POST(signedIn(bad));
         expect(res.status).toBe(400);
     }
@@ -119,7 +115,7 @@ it('rejects phone numbers, tenant fields and unknown actions before calling MCP'
 });
 
 it('maps MCP errors (foreign class → 404 not_found)', async () => {
-    const res = await POST(signedIn({ ...CALL, class_id: 'class-zz' }));
+    const res = await POST(signedIn({ action: 'list', class_id: 'class-zz' }));
     expect(res.status).toBe(404);
     expect((await res.json()).error.category).toBe('not_found');
 });

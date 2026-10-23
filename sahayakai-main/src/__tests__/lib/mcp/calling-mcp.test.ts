@@ -89,7 +89,7 @@ import { toolErrorOf } from '@/lib/mcp/errors';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { mintApiKey, MCP_API_KEYS_COLLECTION, type McpScope } from '@/lib/mcp/api-keys';
 import { handleMcpHttpRequest, type McpCapabilityDefinition } from '@/lib/mcp/http-handler';
-import { callingCapability } from '@/lib/mcp/calling/capability';
+import { callingCapability, registerInitiateParentCall } from '@/lib/mcp/calling/capability';
 import { ParentCallResult, ParentContactsResult } from '@/lib/mcp/calling/schema';
 import { lessonPlannerCapability } from '@/lib/mcp/lesson-planner/capability';
 import { checkCallingWindow } from '@/lib/calling-hours';
@@ -123,7 +123,13 @@ const deps = () => ({
     checkCallingWindow: () => checkCallingWindow(),
 });
 let capDeps = deps();
-const capability = () => callingCapability(capDeps);
+// initiate_parent_call is switched off in production (decision 1, see
+// calling-tool-registration.test.ts). Its code is kept, so this suite still
+// exercises it by registering the disabled tool on a test-only capability.
+const capability = (): McpCapabilityDefinition => {
+    const prod = callingCapability(capDeps);
+    return { ...prod, register(server, ctx) { prod.register(server, ctx); registerInitiateParentCall(server, ctx, capDeps); } };
+};
 const mcpRateLimit = jest.fn(async () => undefined);
 const callServer = (req: Request, cap: McpCapabilityDefinition = capability()) =>
     handleMcpHttpRequest(req, cap, { getDb: async () => fakeDb as any, rateLimit: mcpRateLimit });
@@ -194,7 +200,7 @@ beforeEach(() => {
 });
 
 describe('discovery', () => {
-    it('exposes list_parent_contacts and initiate_parent_call; no phone-number input exists', async () => {
+    it('(test capability) the kept initiate_parent_call has no phone-number input', async () => {
         const client = await connect(keyA.apiKey);
         expect(client.getServerVersion()).toMatchObject({ name: 'sahayak-parent-calling', version: '1.0.0' });
         const { tools } = await client.listTools();

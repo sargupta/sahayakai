@@ -1,14 +1,24 @@
 import 'server-only';
-import type { McpCapabilityDefinition } from '../http-handler';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import type { CapabilityRegistrationContext, McpCapabilityDefinition } from '../http-handler';
 import { InitiateParentCallInput, ListParentContactsInput, ParentCallResult, ParentContactsResult } from './schema';
 import { initiateParentCall, listParentContacts, renderContactsText, renderParentCallText, type CallingServiceDeps } from './service';
 
 /**
  * Sahayak Parent Calling — public MCP capability (scope `calling`).
- * Tools: `list_parent_contacts` (read-only, masked) and `initiate_parent_call`
- * (places a REAL phone call through the app's existing Contact flow).
+ * Tools: `list_parent_contacts` (read-only, masked).
+ *
+ * `initiate_parent_call` (places a REAL phone call through the app's existing
+ * Contact flow) is SWITCHED OFF by decision 1 of the Sampark + MCP integration
+ * brief (2026-10-23): it is not registered until it routes through Sampark's
+ * request-to-talk purposes (A1/A3/A4/A5), gate, approval and records. The code
+ * is kept in `registerInitiateParentCall` for that work.
+ * Gate: src/__tests__/lib/mcp/calling-tool-registration.test.ts.
  */
 export const CALLING_VERSION = '1.0.0';
+
+/** The only tools the calling server exposes. Adding a dialling tool here needs Step 3 of the brief. */
+export const ENABLED_CALLING_TOOLS = ['list_parent_contacts'] as const;
 
 export const INITIATE_PARENT_CALL_DESCRIPTION =
     'Places a real phone call from Sahayak to a student\'s parent, exactly like the "Contact" button in the Sahayak ' +
@@ -40,22 +50,31 @@ export function callingCapability(deps: CallingServiceDeps): McpCapabilityDefini
                     renderContactsText,
                 ),
             );
-            server.registerTool(
-                'initiate_parent_call',
-                {
-                    title: 'Call a parent',
-                    description: INITIATE_PARENT_CALL_DESCRIPTION,
-                    inputSchema: InitiateParentCallInput,
-                    outputSchema: ParentCallResult,
-                    // A real-world side effect: rings a phone and records an outreach for the teacher.
-                    annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
-                },
-                async (args) => ctx.run(
-                    'initiate_parent_call',
-                    ({ principal }) => initiateParentCall(args as InitiateParentCallInput, principal, deps),
-                    renderParentCallText,
-                ),
-            );
         },
     };
+}
+
+/**
+ * DISABLED (decision 1, 2026-10-23). Not called by `callingCapability`; only
+ * tests that exercise the kept Contact-flow code register it. Do not call this
+ * from production code: the registration gate fails CI if anything outside
+ * this file and src/__tests__ references it.
+ */
+export function registerInitiateParentCall(server: McpServer, ctx: CapabilityRegistrationContext, deps: CallingServiceDeps): void {
+    server.registerTool(
+        'initiate_parent_call',
+        {
+            title: 'Call a parent',
+            description: INITIATE_PARENT_CALL_DESCRIPTION,
+            inputSchema: InitiateParentCallInput,
+            outputSchema: ParentCallResult,
+            // A real-world side effect: rings a phone and records an outreach for the teacher.
+            annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+        },
+        async (args) => ctx.run(
+            'initiate_parent_call',
+            ({ principal }) => initiateParentCall(args as InitiateParentCallInput, principal, deps),
+            renderParentCallText,
+        ),
+    );
 }

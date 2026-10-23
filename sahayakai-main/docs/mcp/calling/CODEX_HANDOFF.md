@@ -1,5 +1,11 @@
 # CODEX HANDOFF — Sahayak Parent Calling MCP
 
+> **Status 2026-10-23: `initiate_parent_call` is switched off.** Per decision 1 of the
+> Sampark + MCP integration brief it is not registered on the calling server until it
+> routes through Sampark's request-to-talk purposes (A1/A3/A4/A5), gate, approval and
+> records. The code is kept in `registerInitiateParentCall` (src/lib/mcp/calling/capability.ts).
+> Only `list_parent_contacts` ships. Gate: `src/__tests__/lib/mcp/calling-tool-registration.test.ts`.
+
 All paths are relative to `E:\sargvision\sahayakai\sahayakai-main`.
 
 - Git root: `E:\sargvision\sahayakai`

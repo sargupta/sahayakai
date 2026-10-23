@@ -1,4 +1,4 @@
-import { getCallingDemoConfig, getCallingStatus, initiateCallViaMcp, listContactsViaMcp } from '@/lib/mcp-demo/calling-client';
+import { getCallingDemoConfig, getCallingStatus, listContactsViaMcp } from '@/lib/mcp-demo/calling-client';
 
 /**
  * Backend for /mcp-demo/calling.
@@ -11,7 +11,8 @@ import { getCallingDemoConfig, getCallingStatus, initiateCallViaMcp, listContact
  *
  *   GET                                   → MCP status (initialize + tools/list)
  *   POST {action:'list', class_id?}       → list_parent_contacts
- *   POST {action:'call', class_id, student_id, reason, teacher_note?, subject?} → initiate_parent_call
+ *   POST {action:'call', …}               → 403 capability_disabled. initiate_parent_call is switched
+ *                                           off until it routes through Sampark (integration brief, decision 1).
  */
 
 export const runtime = 'nodejs';
@@ -21,6 +22,12 @@ export const maxDuration = 150;
 const json = (body: unknown, status = 200) =>
     new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
 const NOT_CONFIGURED = { category: 'not_configured', message: 'The MCP calling demo is not configured on this server.', retryable: false };
+
+const CALLING_DISABLED = {
+    category: 'capability_disabled',
+    message: 'Placing parent calls through the MCP is switched off until it goes through the Sampark calling rules of the school.',
+    retryable: false,
+};
 
 const STATUS_BY_CATEGORY: Record<string, number> = {
     invalid_input: 400, not_found: 404, authorization: 403, rate_limited: 429, outside_allowed_hours: 409, not_configured: 503,
@@ -47,9 +54,8 @@ export async function POST(request: Request) {
         return json({ error: { category: 'invalid_input', message: 'Request body must be JSON.', retryable: false } }, 400);
     }
     const { action, ...args } = body ?? {};
-    const outcome = action === 'list' ? await listContactsViaMcp(args, config)
-        : action === 'call' ? await initiateCallViaMcp(args, config)
-        : null;
+    if (action === 'call') return json({ error: CALLING_DISABLED }, 403);
+    const outcome = action === 'list' ? await listContactsViaMcp(args, config) : null;
     if (!outcome) return json({ error: { category: 'invalid_input', message: 'Unknown action.', retryable: false } }, 400);
     if (outcome.ok) return json({ result: outcome.result, mcp: outcome.mcp });
     return json({ error: outcome.error }, STATUS_BY_CATEGORY[outcome.error.category] ?? 502);

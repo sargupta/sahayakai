@@ -12,6 +12,8 @@ import { InitiateParentCallInput, ListParentContactsInput, ParentCallResult, Par
  */
 
 export const CALLING_TOOL = 'initiate_parent_call';
+/** The tool the calling server exposes today; initiate_parent_call is switched off (decision 1). */
+export const CONTACTS_TOOL = 'list_parent_contacts';
 export const CALLING_PROTOCOL = 'Streamable HTTP';
 const CLIENT_INFO = { name: 'sahayak-mcp-calling-demo-ui', version: '1.0.0' };
 
@@ -50,7 +52,7 @@ async function withClient<T>(config: CallingDemoConfig, fetchImpl: FetchLike | u
 
 const identity = (c: Client): ServerIdentity => {
     const s = c.getServerVersion();
-    return { name: s?.name ?? 'unknown', version: s?.version ?? 'unknown', tool: CALLING_TOOL, protocol: CALLING_PROTOCOL };
+    return { name: s?.name ?? 'unknown', version: s?.version ?? 'unknown', tool: CONTACTS_TOOL, protocol: CALLING_PROTOCOL };
 };
 
 function toolError(res: unknown): DemoError {
@@ -67,7 +69,7 @@ export async function getCallingStatus(config: CallingDemoConfig, fetchImpl?: Fe
     try {
         return await withClient(config, fetchImpl, async (c) => {
             const { tools } = await c.listTools();
-            return tools.some((t) => t.name === CALLING_TOOL) ? { connected: true as const, server: identity(c) } : { connected: false as const };
+            return tools.some((t) => t.name === CONTACTS_TOOL) ? { connected: true as const, server: identity(c) } : { connected: false as const };
         });
     } catch {
         return { connected: false };

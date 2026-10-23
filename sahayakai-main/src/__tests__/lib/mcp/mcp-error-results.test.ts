@@ -24,7 +24,7 @@ import { handleMcpHttpRequest, type McpCapabilityDefinition } from '@/lib/mcp/ht
 import { lessonPlannerCapability } from '@/lib/mcp/lesson-planner/capability';
 import { examPaperCapability } from '@/lib/mcp/exam-paper/capability';
 import { quizCapability } from '@/lib/mcp/quiz/capability';
-import { callingCapability } from '@/lib/mcp/calling/capability';
+import { callingCapability, registerInitiateParentCall } from '@/lib/mcp/calling/capability';
 
 const PEPPER = 'error-results-pepper-0123456789-abcdefgh';
 const store = new Map<string, unknown>();
@@ -49,12 +49,18 @@ const CAPABILITIES: Array<{ cap: McpCapabilityDefinition; tool: string; args: Re
         tool: 'create_quiz', args: { topic: 'Fractions', grade: 7 }, category: 'rate_limited',
     },
     {
-        cap: callingCapability({
-            getDb: async () => { throw new Error('not used'); },
-            routes: { parentMessage: jest.fn(), outreach: jest.fn(), call: jest.fn() },
-            callbackBaseUrl: null,
-            checkCallingWindow: () => ({ allowed: true, istHour: 11, istTime: '11:00', reason: '', nextAllowedAt: null }),
-        }),
+        // initiate_parent_call is switched off in production (decision 1); its kept code still has to
+        // return error results a real client can read, so register it on a test-only capability.
+        cap: (() => {
+            const deps = {
+                getDb: async () => { throw new Error('not used'); },
+                routes: { parentMessage: jest.fn(), outreach: jest.fn(), call: jest.fn() },
+                callbackBaseUrl: null,
+                checkCallingWindow: () => ({ allowed: true, istHour: 11, istTime: '11:00', reason: '', nextAllowedAt: null }),
+            };
+            const prod = callingCapability(deps);
+            return { ...prod, register: (server: any, ctx: any) => { prod.register(server, ctx); registerInitiateParentCall(server, ctx, deps); } };
+        })(),
         tool: 'initiate_parent_call', args: { class_id: 'c1', student_id: 's1', reason: 'positive_feedback' }, category: 'not_configured',
     },
 ];
