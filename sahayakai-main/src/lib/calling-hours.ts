@@ -6,18 +6,27 @@
  * attendance from abroad, a cron firing in UTC, and a retry scheduled hours
  * later must all agree, and the only clock a family cares about is their own.
  *
- * The window is 09:00–21:00 IST. Outside it, no call is placed — not delayed,
- * not queued for "soon", refused with the time it would next be allowed.
+ * The window is 10:00–19:00 IST, the routine band every parent call shares
+ * (decision 2 of the Sampark + MCP integration brief, 23 Oct 2026: a Sampark
+ * campaign, a teacher in the app and an API call all use it). The numbers come
+ * from src/lib/sampark/policy/routine-hours.ts, the single source, so this
+ * window and Sampark's cannot drift apart. Outside it, no call is placed — not
+ * delayed, not queued for "soon", refused with the time it would next be allowed.
+ *
+ * The full pre-dial check (opt-outs, the 30-day cap, these hours) is
+ * src/lib/contact-policy; this module stays for the hours alone.
  *
  * This must be enforced on the SERVER. Hiding the button is a courtesy; the
  * guarantee is that the route will not dial. Anything that can reach the call
  * route — a retry, a scheduled job, a direct POST — has to pass through here.
  */
 
+import { ROUTINE_END_CEILING_HOUR, ROUTINE_START_FLOOR_HOUR } from '@/lib/sampark/policy/routine-hours';
+
 /** First hour at which calling is allowed (IST, inclusive). */
-export const CALLING_WINDOW_START_HOUR = 9;
+export const CALLING_WINDOW_START_HOUR = ROUTINE_START_FLOOR_HOUR;
 /** First hour at which calling is NO LONGER allowed (IST, exclusive). */
-export const CALLING_WINDOW_END_HOUR = 21;
+export const CALLING_WINDOW_END_HOUR = ROUTINE_END_CEILING_HOUR;
 
 const IST_TIME_ZONE = 'Asia/Kolkata';
 

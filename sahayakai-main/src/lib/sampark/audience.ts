@@ -205,7 +205,11 @@ export async function materialiseCampaignIntents(
 
         let recent = recentByPhone.get(guardian.phoneHash);
         if (recent === undefined) {
-            recent = await repo.countCallsToPhoneSince(orgId, guardian.phoneHash, since, true);
+            // Every path counts towards the cap: this school's own calls and the shared contact
+            // ledger (a teacher in the app, later an integration; src/lib/contact-policy).
+            recent =
+                (await repo.countCallsToPhoneSince(orgId, guardian.phoneHash, since, true)) +
+                (await repo.countContactsToPhoneSince(guardian.phoneHash, since, 'routine'));
             recentByPhone.set(guardian.phoneHash, recent);
         }
         const prefs = preferences.get(guardianId) ?? null;

@@ -33,6 +33,7 @@
 import type { DocumentReference, Firestore, WriteBatch } from 'firebase-admin/firestore';
 import { Timestamp } from 'firebase-admin/firestore';
 
+import type { ContactKind, ContactRecord } from '@/lib/contact-policy';
 import { purposeSpec } from '@/lib/sampark/catalogue';
 import type { AuditEntry, CallListFilter, ClaimResult, SamparkRepo } from '@/lib/sampark/ports';
 import type { VoiceProbeRecord } from '@/lib/sampark/speech/probe';
@@ -63,6 +64,8 @@ const DUE_INTENT_STATUSES = ['approved', 'retry_wait'];
 
 /** gRPC ALREADY_EXISTS — what `.create()` throws when the document exists. */
 const ALREADY_EXISTS = 6;
+/** Top-level: a teacher with no school writes here too. See src/lib/contact-policy. */
+const CONTACT_LEDGER = 'contact_ledger';
 
 /**
  * Firestore rejects `undefined` (unless ignoreUndefinedProperties is set, which
@@ -409,6 +412,25 @@ export class FirestoreSamparkRepo implements SamparkRepo {
                 return true; // unknown purpose counts against the cap (fail closed)
             }
         }).length;
+    }
+
+    // ── Shared contact ledger (src/lib/contact-policy) ──────────────────────
+
+    async countContactsToPhoneSince(phoneHash: string, since: Date, kind: ContactKind): Promise<number> {
+        // Index: contact_ledger (phoneHash ASC, at ASC). `kind` is filtered here so it needs no index of its own.
+        const snap = await this.db.collection(CONTACT_LEDGER).where('phoneHash', '==', phoneHash).where('at', '>=', since.toISOString()).select('kind').get();
+        return snap.docs.filter((d) => d.get('kind') === kind).length;
+    }
+
+    async recordContact(entry: ContactRecord): Promise<boolean> {
+        try {
+            // create() makes the check and the write one operation: a retried request never counts twice.
+            await this.db.collection(CONTACT_LEDGER).doc(entry.id).create(clean(entry));
+            return true;
+        } catch (err) {
+            if (isAlreadyExists(err)) return false;
+            throw err;
+        }
     }
 
     // ── Rendered audio metadata ─────────────────────────────────────────────
