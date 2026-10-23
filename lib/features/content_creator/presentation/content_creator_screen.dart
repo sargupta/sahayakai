@@ -5,6 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/tool_scaffold.dart';
 import 'widgets/content_creator_card.dart';
@@ -58,7 +59,9 @@ class ContentCreatorScreen extends StatelessWidget {
 
     return ToolScaffold(
       title: l10n.contentCreatorTitle,
-      child: Column(
+      child: staggeredItem(
+        context,
+        Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -83,6 +86,8 @@ class ContentCreatorScreen extends StatelessWidget {
           ],
         ],
       ),
+      index: 0,
+    ),
     );
   }
 }

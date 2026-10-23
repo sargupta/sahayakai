@@ -9,6 +9,7 @@ import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
 import '../../../shared/domain/tool_prefill.dart';
+import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/voice/tts_speaker.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
@@ -183,8 +184,18 @@ class _VideoStorytellerScreenState
       // (only a live request suppresses it) — the teacher tweaks the topic and
       // searches again in place.
       onSubmit: state.isLoading ? null : _submit,
-      result: KeyedSubtree(key: _resultKey, child: result),
-      child: Column(
+      result: KeyedSubtree(
+        key: _resultKey,
+        child: AnimatedSwitcher(
+          duration: AppMotion.small,
+          switchInCurve: AppMotion.easeOutQuart,
+          switchOutCurve: AppMotion.easeOutQuart,
+          child: result,
+        ),
+      ),
+      child: staggeredItem(
+        context,
+        Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -199,6 +210,8 @@ class _VideoStorytellerScreenState
           _languageField(l10n),
         ],
       ),
+      index: 0,
+    ),
     );
   }
 

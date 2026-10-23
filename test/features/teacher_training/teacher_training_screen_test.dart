@@ -73,6 +73,7 @@ void main() {
         ),
       );
       await tester.pump(); // don't settle: the loading future never completes
+      await tester.pump(const Duration(milliseconds: 300)); // settle entrance animations
 
       expect(find.byType(TeacherTrainingSkeleton), findsOneWidget);
     });
