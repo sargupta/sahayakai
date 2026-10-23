@@ -7,9 +7,9 @@ import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/theme/scanner_dark_provider.dart';
 import '../../../shared/domain/picker_options.dart';
 import '../../../shared/media/image_input.dart';
+import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
 import '../../../shared/widgets/note_banner.dart';
@@ -61,50 +61,14 @@ class _AssessmentScannerScreenState
   /// capture cap stay in sync.
   bool _batch = false;
 
-  /// Held from initState: Riverpod forbids `ref` in dispose, but the dark
-  /// surface must be relinquished when the route unmounts.
-  late final StateController<bool> _scannerDark;
-
-  /// Guards every deferred write to [scannerDarkProvider] so a microtask that
-  /// was scheduled before unmount can never re-assert `true` after
-  /// [dispose] has already flipped it back to `false` (which would leave the
-  /// app stuck in dark mode). Bumped on dispose (and on every fresh
-  /// scheduling) to orphan stale continuations — belt-and-braces on the flag.
-  bool _disposed = false;
-  int _darkSyncEpoch = 0;
-
   @override
   void initState() {
     super.initState();
     _language = ref.read(localeControllerProvider);
-    _scannerDark = ref.read(scannerDarkProvider.notifier);
-    // v3 Screen 11: the capture phase owns the app's ONE dark surface.
-    // Scheduled post-frame — a provider that the root widget watches must not
-    // be mutated during the first build.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_disposed || !mounted) return;
-      _scannerDark.state = true;
-    });
-  }
-
-  @override
-  void deactivate() {
-    // Belt-and-braces: when the scanner leaves the tree (route popped or
-    // pushed away), reset the dark surface immediately. `dispose()` also
-    // does this, but `deactivate()` fires first and covers cases where
-    // `dispose()` is delayed or skipped by the framework.
-    _scannerDark.state = false;
-    super.deactivate();
   }
 
   @override
   void dispose() {
-    // Invalidate any in-flight / pending dark-surface write FIRST, so a
-    // microtask scheduled during the last build cannot land after this.
-    _disposed = true;
-    _darkSyncEpoch++; // orphan any pending continuation (belt on _disposed)
-    // Leave the app in the teacher's own theme when the route unmounts.
-    _scannerDark.state = false;
     _answerKeyController.dispose();
     super.dispose();
   }
@@ -166,22 +130,6 @@ class _AssessmentScannerScreenState
 
     final hasResult = state.hasValue && state.valueOrNull != null;
 
-    // v3 Screen 11 → 12: the CAPTURE phase is the dark scanner surface; a
-    // landed result flips back to Screen 12's LIGHT wash and the teacher's own
-    // theme (which also flips the floating tab bar back to its light variant).
-    // Dark is owned by the capture/idle phase only — loading (grading
-    // skeleton) and error states do not re-assert the dark surface, so a
-    // transient failure or in-flight grade can never drag the app into dark.
-    final wantDark =
-        !hasResult && !state.isLoading && !state.hasError;
-    if (!_disposed && _scannerDark.state != wantDark) {
-      final epoch = ++_darkSyncEpoch;
-      Future.microtask(() {
-        if (_disposed || epoch != _darkSyncEpoch || !mounted) return;
-        _scannerDark.state = wantDark;
-      });
-    }
-
     final result = state.hasError
         ? AssessmentScannerErrorView(error: state.error!, onRetry: _submit)
         : ResultView<AssessmentResult>(
@@ -207,11 +155,21 @@ class _AssessmentScannerScreenState
       // Screen 11 (capture) wears the solid dark scanner surface; Screen 12
       // (results) wears its own warm light wash — the design's phase flip.
       wash: hasResult ? AppGradients.washScanResults : AppGradients.washScanner,
-      result: KeyedSubtree(key: _resultKey, child: result),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
+      result: KeyedSubtree(
+        key: _resultKey,
+        child: AnimatedSwitcher(
+          duration: AppMotion.small,
+          switchInCurve: AppMotion.easeOutQuart,
+          switchOutCurve: AppMotion.easeOutQuart,
+          child: result,
+        ),
+      ),
+      child: staggeredItem(
+        context,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
           // v3 Screen 11/12's header line: the test context + the page pill.
           _HeaderRow(
             contextLine: _contextLine(l10n),
@@ -252,6 +210,8 @@ class _AssessmentScannerScreenState
             ),
           ),
         ],
+      ),
+      index: 0,
       ),
     );
   }
