@@ -24,6 +24,8 @@ import type {
     ConsentStatus,
     GuardianPreferences,
     ImportRun,
+    IntegrationApiKey,
+    IntegrationScope,
     ParentLanguage,
     PhoneClass,
     PurposeId,
@@ -297,6 +299,30 @@ export async function listCalls(orgId: string, query: ListCallsQuery = {}, opts:
         { signal: opts.signal },
     );
     return res.calls;
+}
+
+// ── Integrations (MCP API keys) ─────────────────────────────────────────────
+
+export interface CreateApiKeyInput {
+    label: string;
+    scopes: IntegrationScope[];
+}
+
+/** GET /api/sampark/[orgId]/api-keys — never carries a key itself. */
+export async function listApiKeys(orgId: string, opts: Opts = {}): Promise<IntegrationApiKey[]> {
+    const res = await apiFetch<{ keys: IntegrationApiKey[] }>(orgPath(orgId, '/api-keys'), { signal: opts.signal });
+    return res.keys;
+}
+
+/** POST /api/sampark/[orgId]/api-keys — `apiKey` is the full key, returned this once only. */
+export function createApiKey(orgId: string, input: CreateApiKeyInput): Promise<{ key: IntegrationApiKey; apiKey: string }> {
+    return apiFetch<{ key: IntegrationApiKey; apiKey: string }>(orgPath(orgId, '/api-keys'), { method: 'POST', body: input });
+}
+
+/** POST /api/sampark/[orgId]/api-keys/[keyId]/revoke */
+export async function revokeApiKey(orgId: string, keyId: string): Promise<IntegrationApiKey> {
+    const res = await apiFetch<{ key: IntegrationApiKey }>(orgPath(orgId, `/api-keys/${encodeURIComponent(keyId)}/revoke`), { method: 'POST' });
+    return res.key;
 }
 
 // ── Audio ────────────────────────────────────────────────────────────────────
