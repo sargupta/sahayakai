@@ -721,3 +721,23 @@ export interface CallLogEntry extends Pick<SamparkCall,
     guardianDisplayName: string;
     studentDisplayNames: string[];
 }
+
+// ── Integrations (MCP API keys) ─────────────────────────────────────────────
+
+/** Scopes a school admin can grant from the console (calling is left out: decision 1). */
+export type IntegrationScope = 'lesson-planner' | 'exam-paper' | 'quiz';
+
+/** A school's MCP API key as the console sees it. Never carries the key itself. */
+export interface IntegrationApiKey {
+    keyId: string;
+    /** `sk_sahayak_<keyId>_…` — the key id is not secret. */
+    displayKey: string;
+    label: string;
+    scopes: string[];
+    status: 'active' | 'revoked';
+    createdAt: string | null;
+    createdBy: string | null;
+    lastUsedAt: string | null;
+    revokedAt: string | null;
+    revokedBy: string | null;
+}

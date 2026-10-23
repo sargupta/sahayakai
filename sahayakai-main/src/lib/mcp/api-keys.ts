@@ -17,7 +17,9 @@ import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
  *     scopes:     string[]  — capabilities, e.g. ['lesson-planner']
  *     secretHash: string    — HMAC-SHA256(pepper, secret), hex
  *     status:     'active' | 'revoked'
- *     createdAt:  string (ISO), createdBy: string
+ *     createdAt:  string (ISO), createdBy: string (uid of the admin, or the CLI user)
+ *     lastUsedAt?: string (ISO) — written by authenticateMcpRequest, at most once a minute
+ *     revokedAt?:  string (ISO), revokedBy?: string (uid)
  *   }
  *
  * The tenant (orgId) and scopes come ONLY from this record — never from
@@ -40,6 +42,14 @@ export interface McpApiKeyRecord {
     status: 'active' | 'revoked';
     createdAt: string;
     createdBy: string;
+    lastUsedAt?: string;
+    revokedAt?: string;
+    revokedBy?: string;
+}
+
+/** The non-secret form of a key, safe to show anywhere: `sk_sahayak_<keyId>_…`. */
+export function displayApiKey(keyId: string): string {
+    return `${API_KEY_PREFIX}${keyId}_…`;
 }
 
 export interface ParsedApiKey {
