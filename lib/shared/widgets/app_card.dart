@@ -86,7 +86,7 @@ class _AppCardState extends State<AppCard> {
     List<BoxShadow>? shadow;
     switch (widget.variant) {
       case AppCardVariant.flat:
-        shadow = (animate && _pressed) ? AppShadows.e2 : AppShadows.e1;
+        shadow = (animate && _pressed) ? AppShadows.e2 : AppShadows.cardLight;
       case AppCardVariant.elevated:
         shadow = (animate && _pressed) ? AppShadows.e3 : AppShadows.e2;
       case AppCardVariant.inset:

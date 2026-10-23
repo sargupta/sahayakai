@@ -18,6 +18,8 @@ class SkeletonShimmer extends StatelessWidget {
     return Shimmer.fromColors(
       baseColor: scheme.surfaceContainer,
       highlightColor: scheme.surfaceContainerHigh,
+      period: const Duration(milliseconds: 1200),
+      direction: ShimmerDirection.ltr,
       child: child,
     );
   }

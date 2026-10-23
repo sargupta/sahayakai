@@ -39,6 +39,14 @@ class PrimaryButton extends StatelessWidget {
       enabled: enabled,
       child: DecoratedBox(
         decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              scheme.primary,
+              Color.lerp(scheme.primary, Colors.black, 0.18)!,
+            ],
+          ),
           borderRadius: AppRadius.rControl,
           boxShadow: glow,
         ),
@@ -54,8 +62,11 @@ class PrimaryButton extends StatelessWidget {
           ),
           child: FilledButton(
             onPressed: isBusy ? null : onPressed,
-            style: const ButtonStyle(
-              shape: WidgetStatePropertyAll(
+            style: ButtonStyle(
+              backgroundColor: const WidgetStatePropertyAll(Colors.transparent),
+              foregroundColor: WidgetStatePropertyAll(scheme.onPrimary),
+              elevation: const WidgetStatePropertyAll(0),
+              shape: const WidgetStatePropertyAll(
                 RoundedRectangleBorder(borderRadius: AppRadius.rControl),
               ),
             ),

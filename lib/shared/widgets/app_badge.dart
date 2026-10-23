@@ -95,8 +95,16 @@ class AppBadge extends StatelessWidget {
 
     final baseStyle =
         size == AppBadgeSize.small ? text.labelSmall : text.labelMedium;
-    final labelStyle =
-        baseStyle?.copyWith(color: labelColor, fontWeight: weight);
+    final labelStyle = baseStyle?.copyWith(
+      color: labelColor,
+      fontWeight: weight,
+      fontFeatures: _count
+          ? const [
+              FontFeature.tabularFigures(),
+              FontFeature.liningFigures(),
+            ]
+          : null,
+    );
 
     // The ordinal marker owns its height through [_countExtent]; everything
     // else takes vertical breathing room by size.
@@ -152,6 +160,14 @@ class AppBadge extends StatelessWidget {
       decoration: ShapeDecoration(
         shape: const StadiumBorder(),
         gradient: borderGradient,
+        shadows: [
+          BoxShadow(
+            color: (isDark ? Colors.black : AppColors.lShadowBase)
+                .withValues(alpha: isDark ? 0.30 : 0.08),
+            offset: const Offset(0, 2),
+            blurRadius: 6,
+          ),
+        ],
       ),
       child: Padding(
         padding: const EdgeInsets.all(AppGlass.borderWidth),

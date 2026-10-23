@@ -30,7 +30,7 @@ class AppGlass {
 
   /// Real-blur sigma for `ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma)`.
   /// 18px matches the design spec (`blur(18px)` on web nav).
-  static const double blurSigma = 18.0;
+  static const double blurSigma = 20.0;
 
   /// Width of the gradient edge-highlight ring (1px).
   static const double borderWidth = 1.0;
@@ -117,8 +117,8 @@ class AppGlass {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Colors.white.withValues(alpha: 0.40),
-      Colors.white.withValues(alpha: 0.10),
+      Colors.white.withValues(alpha: 0.50),
+      Colors.white.withValues(alpha: 0.15),
     ],
   );
 
@@ -127,8 +127,8 @@ class AppGlass {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Colors.white.withValues(alpha: 0.14),
-      Colors.white.withValues(alpha: 0.03),
+      Colors.white.withValues(alpha: 0.20),
+      Colors.white.withValues(alpha: 0.06),
     ],
   );
 

@@ -112,6 +112,7 @@ class GlassSurface extends StatelessWidget {
                 filter: ImageFilter.blur(
                   sigmaX: AppGlass.blurSigma,
                   sigmaY: AppGlass.blurSigma,
+                  tileMode: TileMode.clamp,
                 ),
                 child: const SizedBox.expand(),
               ),

@@ -3,19 +3,14 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../core/theme/app_theme.dart';
 
-/// EmptyView v2 (PREMIUM_DESIGN_SPEC.md §5). Left-aligned (never a centered
-/// hero stack): a 72dp haloed Lucide glyph (`primary@0.06` outer /
-/// `primary@0.12` inner, 28dp glyph in `primary`), an optional `titleMedium`
-/// title, a full-ink `bodyLarge` message, and an optional next-step action.
+/// EmptyView v2 (PREMIUM_DESIGN_SPEC.md A5). Left-aligned (never a centered
+/// hero stack): a 96dp haloed Lucide glyph (`primary@0.06` outer / `primary@0.12`
+/// inner, 36dp glyph in `primary`), an optional `titleMedium` title, a
+/// full-ink `bodyLarge` message, and an optional next-step action.
 ///
-/// The body message is `onSurface` (full ink), NOT the muted `onSurfaceVariant`:
-/// EmptyView mounts on the scaffold ground (`surfaceContainerLowest` #F9F7F3),
-/// where `onSurfaceVariant` is only 4.36:1 — under the 4.5 floor. Full ink is
-/// ~16:1 and aligns EmptyView with its sibling state panels (ErrorView /
-/// OfflineView already use full-ink bodies). Only this body role changed; the
-/// muted-foreground token stays production-parity for genuine captions elsewhere.
+/// The body message is `onSurface` (full ink), NOT the muted `onSurfaceVariant`.
 ///
-/// Owns NO outer padding — it is always mounted inside something that already
+/// Owns NO outer padding �?" it is always mounted inside something that already
 /// pads (an [AppCard], or a page's `pagePadding`). API preserved
 /// ({message, title, icon, action}).
 class EmptyView extends StatelessWidget {
@@ -43,7 +38,7 @@ class EmptyView extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _HaloGlyph(icon: icon),
-        const SizedBox(height: AppSpacing.space4),
+        const SizedBox(height: AppSpacing.space5),
         if (title != null) ...[
           Text(title!, style: text.titleMedium),
           const SizedBox(height: AppSpacing.space1),
@@ -53,7 +48,7 @@ class EmptyView extends StatelessWidget {
           style: text.bodyLarge?.copyWith(color: scheme.onSurface),
         ),
         if (action != null) ...[
-          const SizedBox(height: AppSpacing.space4),
+          const SizedBox(height: AppSpacing.space5),
           action!,
         ],
       ],
@@ -70,22 +65,38 @@ class _HaloGlyph extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Container(
-      width: 72,
-      height: 72,
+      width: 96,
+      height: 96,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: scheme.primary.withValues(alpha: 0.06),
+        gradient: RadialGradient(
+          colors: [
+            scheme.primary.withValues(alpha: 0.12),
+            scheme.primary.withValues(alpha: 0.04),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: scheme.primary.withValues(alpha: 0.12),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Container(
-        width: 48,
-        height: 48,
+        width: 64,
+        height: 64,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: scheme.primary.withValues(alpha: 0.12),
+          color: scheme.primary.withValues(alpha: 0.10),
+          border: Border.all(
+            color: scheme.primary.withValues(alpha: 0.18),
+            width: 1,
+          ),
         ),
-        child: Icon(icon, size: 28, color: scheme.primary),
+        child: Icon(icon, size: 32, color: scheme.primary),
       ),
     );
   }
