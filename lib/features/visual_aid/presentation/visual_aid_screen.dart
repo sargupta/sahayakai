@@ -9,6 +9,7 @@ import '../../../core/i18n/locale_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
 import '../../../shared/domain/tool_prefill.dart';
+import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/voice/tts_speaker.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
@@ -201,14 +202,24 @@ class _VisualAidScreenState extends ConsumerState<VisualAidScreen> {
       // document's own action bar (Regenerate / Copy) takes over. An imageless
       // result keeps it, so the empty state is never a dead end.
       onSubmit: (state.isLoading || hasActionableResult) ? null : _submit,
-      result: KeyedSubtree(key: _resultKey, child: result),
-      child: Form(
-        key: _formKey,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
+      result: KeyedSubtree(
+        key: _resultKey,
+        child: AnimatedSwitcher(
+          duration: AppMotion.small,
+          switchInCurve: AppMotion.easeOutQuart,
+          switchOutCurve: AppMotion.easeOutQuart,
+          child: result,
+        ),
+      ),
+      child: staggeredItem(
+        context,
+        Form(
+          key: _formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
             _promptField(l10n),
             const SizedBox(height: AppSpacing.space8),
             EditorialSectionHeader(l10n.sectionForYourClass),
@@ -220,6 +231,8 @@ class _VisualAidScreenState extends ConsumerState<VisualAidScreen> {
             _languageField(l10n),
           ],
         ),
+      ),
+      index: 0,
       ),
     );
   }
