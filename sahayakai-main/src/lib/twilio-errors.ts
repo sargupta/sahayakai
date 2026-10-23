@@ -22,9 +22,11 @@
  * something the teacher can fix by correcting a phone number. Collapsing them
  * loses the distinction exactly when someone needs it.
  *
- * Codes are from https://www.twilio.com/docs/api/errors. Anything unrecognised
- * stays a 502 — the conservative default, because guessing a specific cause we
- * do not understand is worse than admitting an upstream failure.
+ * Codes are from https://www.twilio.com/docs/api/errors. An unrecognised code
+ * on a 4xx is still Twilio refusing our request, so it is non-retryable. An
+ * unrecognised code without a 4xx stays a 502 — the conservative default,
+ * because guessing a specific cause we do not understand is worse than
+ * admitting an upstream failure.
  */
 
 /** Who owns the failure, and therefore who can act on it. */
@@ -128,7 +130,12 @@ export function classifyTwilioFailure(
     }
 
     // A 401/403 with no recognised code is still, unambiguously, our auth.
-    if (status === 401 || status === 403) {
+    // Any other 4xx with an unrecognised code means Twilio refused OUR request
+    // (a parameter this account may not use, a malformed field): the same
+    // request fails the same way every time, so it must not read as a
+    // transient outage. Seen 2026-10-08: code 0, "trial accounts have limited
+    // parameter access". Destination problems were classified above.
+    if (status !== undefined && status >= 400 && status < 500) {
         return {
             category: 'provider_unconfigured',
             status: 503,

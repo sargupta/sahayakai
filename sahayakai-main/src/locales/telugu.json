@@ -1692,5 +1692,17 @@
   "Connecting…": "కనెక్ట్ అవుతోంది…",
   "Tool": "సాధనం",
   "Not connected": "కనెక్ట్ కాలేదు",
-  "Not configured": "కాన్ఫిగర్ చేయలేదు"
+  "Not configured": "కాన్ఫిగర్ చేయలేదు",
+  "Call a student's parent with Sahayak, delivered through the Sahayak MCP server.": "సహాయక్ MCP సర్వర్ ద్వారా సహాయక్‌తో విద్యార్థి తల్లిదండ్రులకు కాల్ చేయండి.",
+  "Loading classes…": "తరగతులు లోడ్ అవుతున్నాయి…",
+  "No classes are linked to this school's Sahayak MCP key.": "ఈ పాఠశాల సహాయక్ MCP కీకి ఏ తరగతీ లింక్ కాలేదు.",
+  "Parent": "తల్లిదండ్రులు",
+  "No parent phone on record": "తల్లిదండ్రుల ఫోన్ నమోదు కాలేదు",
+  "Contact parent": "తల్లిదండ్రులను సంప్రదించండి",
+  "Sahayak writes the message and calls the parent number on record.": "సహాయక్ సందేశం రాసి, నమోదైన తల్లిదండ్రుల నంబర్‌కు కాల్ చేస్తుంది.",
+  "Call started": "కాల్ ప్రారంభమైంది",
+  "Calling the parent": "తల్లిదండ్రులకు కాల్ చేస్తోంది",
+  "Add a note for the parent (optional)": "తల్లిదండ్రుల కోసం గమనిక జోడించండి (ఐచ్ఛికం)",
+  "The call could not be started": "కాల్ ప్రారంభించడం సాధ్యం కాలేదు",
+  "Call parent": "తల్లిదండ్రులకు కాల్ చేయండి"
 }

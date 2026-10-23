@@ -1692,5 +1692,17 @@
   "Connecting…": "કનેક્ટ થઈ રહ્યું છે…",
   "Tool": "ટૂલ",
   "Not connected": "કનેક્ટ નથી",
-  "Not configured": "ગોઠવેલ નથી"
+  "Not configured": "ગોઠવેલ નથી",
+  "Call a student's parent with Sahayak, delivered through the Sahayak MCP server.": "સહાયક MCP સર્વર દ્વારા સહાયક વડે વિદ્યાર્થીના વાલીને કૉલ કરો.",
+  "Loading classes…": "વર્ગો લોડ થઈ રહ્યા છે…",
+  "No classes are linked to this school's Sahayak MCP key.": "આ શાળાની સહાયક MCP કી સાથે કોઈ વર્ગ જોડાયેલ નથી.",
+  "Parent": "વાલી",
+  "No parent phone on record": "વાલીનો ફોન નોંધાયેલ નથી",
+  "Contact parent": "વાલીનો સંપર્ક કરો",
+  "Sahayak writes the message and calls the parent number on record.": "સહાયક સંદેશ લખે છે અને નોંધાયેલ વાલી નંબર પર કૉલ કરે છે.",
+  "Call started": "કૉલ શરૂ થયો",
+  "Calling the parent": "વાલીને કૉલ થઈ રહ્યો છે",
+  "Add a note for the parent (optional)": "વાલી માટે નોંધ ઉમેરો (વૈકલ્પિક)",
+  "The call could not be started": "કૉલ શરૂ થઈ શક્યો નહીં",
+  "Call parent": "વાલીને કૉલ કરો"
 }
