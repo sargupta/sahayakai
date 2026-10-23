@@ -141,9 +141,18 @@ class AppGradients {
     transform: GradientRotation(12 * 3.14159 / 180),
   );
 
-  /// Scanner (Screen 11) — SOLID DARK `#171310` (no gradient)
+  /// Scanner (Screen 11) — light warm wash (dark surface removed per user request)
   static const LinearGradient washScanner = LinearGradient(
-    colors: [AppColors.ink900, AppColors.ink900],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    stops: [0.0, 0.36, 0.72, 1.0],
+    colors: [
+      Color(0xFFFFF3E4),
+      Color(0xFFFDEFEE),
+      Color(0xFFEFF4EE),
+      Color(0xFFFFF7EC),
+    ],
+    transform: GradientRotation(12 * 3.14159 / 180),
   );
 
   /// Scan Results (Screen 12) — `#FFF5E8 → #FAF1EE → #EFF4EE → #FFF8F0`
