@@ -57,6 +57,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # `--with-deps` runs `apt-get update`, which fails the whole step if ANY
+      # source the runner image ships is unreachable. On 2026-10-23
+      # packages.microsoft.com answered 403 ("no longer signed") and E2E Smoke
+      # failed before a test ran. Playwright needs only Ubuntu's own archive, so
+      # drop the image's third-party sources first
+      # (gate: src/__tests__/scripts/ci-build-heap-parity.test.ts).
+      - name: Drop the runner image's third-party apt sources
+        run: sudo rm -f /etc/apt/sources.list.d/microsoft-prod.list /etc/apt/sources.list.d/microsoft-prod.sources
+
       - name: Install Playwright browser (chromium only)
         run: npx playwright install --with-deps chromium
 
