@@ -191,11 +191,11 @@ class AppColors {
 
     surface: ink900,
     onSurface: milk50,
-    surfaceContainerHighest: ink800,
-    surfaceContainerHigh: ink800,
-    surfaceContainer: ink800,
+    surfaceContainerHighest: Color(0xFF332C26),
+    surfaceContainerHigh: Color(0xFF2A241F),
+    surfaceContainer: Color(0xFF1F1A16),
     surfaceContainerLow: ink900,
-    surfaceContainerLowest: ink900,
+    surfaceContainerLowest: Color(0xFF0F0C0A),
 
     outline: Color(0x33FFFFFF),      // rgba(255,255,255,.2)
     outlineVariant: Color(0x1FFFFFFF), // rgba(255,255,255,.12)

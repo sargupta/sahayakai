@@ -88,6 +88,16 @@ class _AssessmentScannerScreenState
   }
 
   @override
+  void deactivate() {
+    // Belt-and-braces: when the scanner leaves the tree (route popped or
+    // pushed away), reset the dark surface immediately. `dispose()` also
+    // does this, but `deactivate()` fires first and covers cases where
+    // `dispose()` is delayed or skipped by the framework.
+    _scannerDark.state = false;
+    super.deactivate();
+  }
+
+  @override
   void dispose() {
     // Invalidate any in-flight / pending dark-surface write FIRST, so a
     // microtask scheduled during the last build cannot land after this.

@@ -214,7 +214,7 @@ class _HomeBody extends ConsumerWidget {
             children: [
               _HeaderRow(),
               const SizedBox(height: AppSpacing.verticalGap), // 14
-              _HeroSection(),
+              const _HeroSection(),
               const SizedBox(height: AppSpacing.verticalGap), // 14
               _WaitingForYouCard(),
               const SizedBox(height: AppSpacing.verticalGap), // 14
@@ -403,12 +403,28 @@ String? _initialsOf(String name) {
   return initials.isEmpty ? null : initials;
 }
 
-/// Hero: "Two periods, / one prep gap" + subtitle with middle dot
-class _HeroSection extends StatelessWidget {
+/// Hero: "Two periods, / one prep gap" + subtitle with middle dot.
+///
+/// The subtitle now builds from the teacher's own profile (grade levels +
+/// subjects set during profile generation), falling back to the static
+/// `homeHeroSubtitle` when nothing has been saved yet.
+class _HeroSection extends ConsumerWidget {
+  const _HeroSection();
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final extras = AppTextExtras.of(context);
     final l10n = context.l10n;
+    final profile = ref.watch(profileControllerProvider).valueOrNull;
+
+    // Build the subtitle from the teacher's own classes/subjects so the home
+    // screen reflects their actual data instead of a placeholder.
+    String subtitle;
+    if (profile != null && profile.gradeLevels.isNotEmpty && profile.subjects.isNotEmpty) {
+      subtitle = '${profile.gradeLevels.join(", ")} · ${profile.subjects.join(", ")}';
+    } else {
+      subtitle = l10n.homeHeroSubtitle;
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -428,7 +444,7 @@ class _HeroSection extends StatelessWidget {
         // Subtitle — one flat #5C534A line; the design colours the middle dot
         // exactly like the words around it, so there is no muted span here.
         Text(
-          l10n.homeHeroSubtitle,
+          subtitle,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontFamily: 'Instrument Sans',
                 fontSize: 12,
