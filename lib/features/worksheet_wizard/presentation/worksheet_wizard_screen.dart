@@ -212,7 +212,15 @@ class _WorksheetWizardScreenState extends ConsumerState<WorksheetWizardScreen> {
       // Hide the sticky Generate button once a worksheet is on screen — the
       // document's own action bar (Regenerate / Copy) takes over.
       onSubmit: (state.isLoading || hasResult) ? null : _submit,
-      result: KeyedSubtree(key: _resultKey, child: result),
+      result: KeyedSubtree(
+        key: _resultKey,
+        child: AnimatedSwitcher(
+          duration: AppMotion.small,
+          switchInCurve: AppMotion.easeOutQuart,
+          switchOutCurve: AppMotion.easeOutQuart,
+          child: result,
+        ),
+      ),
       child: Form(
         key: _formKey,
         autovalidateMode: AutovalidateMode.onUserInteraction,

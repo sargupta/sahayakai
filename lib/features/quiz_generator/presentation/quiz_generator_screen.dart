@@ -10,6 +10,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
 import '../../../shared/domain/tool_prefill.dart';
 import '../../../shared/media/image_input.dart';
+import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/voice/tts_speaker.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/labeled_field.dart';
@@ -217,14 +218,24 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
       // — the document's own action bar (Regenerate / Copy) takes over. An
       // empty-variants result keeps it, so the empty state is never a dead end.
       onSubmit: (state.isLoading || hasResult) ? null : _submit,
-      result: KeyedSubtree(key: _resultKey, child: result),
-      child: Form(
-        key: _formKey,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
+      result: KeyedSubtree(
+        key: _resultKey,
+        child: AnimatedSwitcher(
+          duration: AppMotion.small,
+          switchInCurve: AppMotion.easeOutQuart,
+          switchOutCurve: AppMotion.easeOutQuart,
+          child: result,
+        ),
+      ),
+      child: staggeredItem(
+        context,
+        Form(
+          key: _formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
             EditorialSectionHeader(l10n.quizSectionQuiz),
             const SizedBox(height: AppSpacing.space4),
             _topicField(l10n),
@@ -249,6 +260,8 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
           ],
         ),
       ),
+      index: 0,
+    ),
     );
   }
 
@@ -498,8 +511,9 @@ class _Stepper extends StatelessWidget {
       children: [
         DecoratedBox(
           decoration: BoxDecoration(
-            borderRadius: AppRadius.rMd,
+            borderRadius: AppRadius.rField,
             border: Border.all(color: scheme.outline),
+            boxShadow: AppShadows.e1,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,

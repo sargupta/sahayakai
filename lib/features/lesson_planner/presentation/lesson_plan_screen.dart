@@ -14,6 +14,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/picker_options.dart';
 import '../../../shared/domain/tool_prefill.dart';
 import '../../../shared/media/image_input.dart';
+import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/voice/tts_speaker.dart';
 import '../../../shared/widgets/app_segmented.dart';
 import '../../../shared/widgets/editorial_section_header.dart';
@@ -269,14 +270,24 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
       // (v3 06) so the teacher can leave and let VIDYA finish.
       onMinimise: _minimise,
       onStop: _stop,
-      result: KeyedSubtree(key: _resultKey, child: result),
-      child: Form(
-        key: _formKey,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
+      result: KeyedSubtree(
+        key: _resultKey,
+        child: AnimatedSwitcher(
+          duration: AppMotion.small,
+          switchInCurve: AppMotion.easeOutQuart,
+          switchOutCurve: AppMotion.easeOutQuart,
+          child: result,
+        ),
+      ),
+      child: staggeredItem(
+        context,
+        Form(
+          key: _formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
             EditorialSectionHeader(l10n.lessonPlanSectionLesson),
             const SizedBox(height: AppSpacing.space4),
             _topicField(l10n),
@@ -305,6 +316,8 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
           ],
         ),
       ),
+      index: 0,
+    ),
     );
   }
 
@@ -441,8 +454,9 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
       padding: const EdgeInsets.all(AppSpacing.space3),
       decoration: BoxDecoration(
         color: scheme.tertiary.withValues(alpha: 0.08),
-        borderRadius: AppRadius.rMd,
+        borderRadius: AppRadius.rCard,
         border: Border.all(color: scheme.tertiary.withValues(alpha: 0.18)),
+        boxShadow: const [AppShadows.card],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
