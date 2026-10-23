@@ -721,3 +721,29 @@ export interface CallLogEntry extends Pick<SamparkCall,
     guardianDisplayName: string;
     studentDisplayNames: string[];
 }
+
+// ── One calls view: every parent call the school made, whatever started it ──
+
+/**
+ * What started a call. `integration` is reserved for Step 3 of the Sampark + MCP
+ * integration brief (calls requested through the school's own systems).
+ */
+export type CallSource = 'campaign' | 'teacher' | 'integration';
+
+export type TeacherCallReason = 'consecutive_absences' | 'poor_performance' | 'behavioral_concern' | 'positive_feedback' | 'other';
+export type TeacherCallOutcome = 'initiated' | 'completed' | 'failed' | 'no_answer' | 'busy' | 'unknown';
+
+/**
+ * A call a teacher placed from the attendance app, as the school's Calls view sees it.
+ * Last four digits only; never the number, the message, the note or the transcript.
+ */
+export interface TeacherCallEntry {
+    id: string;
+    source: 'teacher';
+    createdAt: string;
+    phoneLast4: string;
+    className: string | null;
+    reason: TeacherCallReason;
+    outcome: TeacherCallOutcome;
+    durationSeconds: number | null;
+}

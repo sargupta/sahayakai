@@ -2176,5 +2176,9 @@
   "{hour}: {calls} calls, {heard} heard": "{hour}: {calls} കോളുകൾ, {heard} പേർ കേട്ടു",
   "{percent} of families are called in {language}": "{percent} കുടുംബങ്ങളെ {language} ഭാഷയിലാണ് വിളിക്കുന്നത്",
   "{time} IST": "IST {time}",
-  "{time} left today": "ഇന്ന് ഇനി {time} ബാക്കി"
+  "{time} left today": "ഇന്ന് ഇനി {time} ബാക്കി",
+  "Integration": "സംയോജനം",
+  "Result not known": "ഫലം അറിയില്ല",
+  "Every call the school made to a parent, from a campaign or by a teacher, newest first. Numbers show the last four digits only.": "സ്കൂൾ രക്ഷിതാക്കൾക്ക് ചെയ്ത എല്ലാ കോളുകളും, ക്യാമ്പെയ്‌നിൽ നിന്നോ അധ്യാപകർ വഴിയോ, പുതിയത് ആദ്യം. നമ്പറുകളുടെ അവസാന നാല് അക്കങ്ങൾ മാത്രം കാണിക്കും.",
+  "Class not recorded": "ക്ലാസ് രേഖപ്പെടുത്തിയിട്ടില്ല"
 }

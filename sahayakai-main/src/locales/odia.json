@@ -2176,5 +2176,9 @@
   "{hour}: {calls} calls, {heard} heard": "{hour}: {calls}ଟି କଲ୍, {heard} ଶୁଣିଲେ",
   "{percent} of families are called in {language}": "{percent} ପରିବାରଙ୍କୁ {language} ଭାଷାରେ କଲ୍ କରାଯାଏ",
   "{time} IST": "{time} IST",
-  "{time} left today": "ଆଜି ଆଉ {time} ବାକି"
+  "{time} left today": "ଆଜି ଆଉ {time} ବାକି",
+  "Integration": "ସମନ୍ୱୟ",
+  "Result not known": "ଫଳାଫଳ ଜଣା ନାହିଁ",
+  "Every call the school made to a parent, from a campaign or by a teacher, newest first. Numbers show the last four digits only.": "ବିଦ୍ୟାଳୟ ଅଭିଭାବକଙ୍କୁ କରିଥିବା ସମସ୍ତ କଲ୍, ଅଭିଯାନରୁ କିମ୍ବା ଶିକ୍ଷକଙ୍କ ଦ୍ୱାରା, ନୂଆଟି ପ୍ରଥମେ। ନମ୍ବରର କେବଳ ଶେଷ ଚାରୋଟି ଅଙ୍କ ଦେଖାଯାଏ।",
+  "Class not recorded": "ଶ୍ରେଣୀ ରେକର୍ଡ ହୋଇନାହିଁ"
 }
