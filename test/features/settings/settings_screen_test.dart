@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/app.dart';
 import 'package:sahayakai/core/i18n/app_locale.dart';
 import 'package:sahayakai/core/i18n/locale_provider.dart';
-import 'package:sahayakai/core/theme/theme_mode_provider.dart';
 import 'package:sahayakai/features/settings/presentation/settings_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -142,76 +141,6 @@ void main() {
     });
   });
 
-  group('theme', () {
-    testWidgets('offers system, light and dark', (tester) async {
-      await _pumpScreen(tester);
-      expect(find.text('Match my device'), findsOneWidget);
-      expect(find.text('Light'), findsOneWidget);
-      expect(find.text('Dark'), findsOneWidget);
-    });
-
-    testWidgets('tapping Dark switches ThemeMode', (tester) async {
-      await _pumpScreen(tester);
-      final container = _containerOf(tester);
-      expect(container.read(themeModeControllerProvider), ThemeMode.system);
-
-      await tester.tap(find.text('Dark'));
-      await tester.pumpAndSettle();
-      expect(container.read(themeModeControllerProvider), ThemeMode.dark);
-
-      // ... and back, so the toggle is not one-way.
-      await tester.tap(find.text('Light'));
-      await tester.pumpAndSettle();
-      expect(container.read(themeModeControllerProvider), ThemeMode.light);
-    });
-
-    testWidgets('the choice is persisted', (tester) async {
-      await _pumpScreen(tester);
-      await tester.tap(find.text('Dark'));
-      await tester.pumpAndSettle();
-
-      final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getString('app_theme_mode'), 'dark');
-    });
-
-    testWidgets('the selected radio reflects the active mode', (tester) async {
-      await tester.pumpWidget(
-        hostSettings(
-          const SettingsScreen(),
-          overrides: [themeModeOverride(ThemeMode.dark)],
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      final group = tester.widget<RadioGroup<ThemeMode>>(
-        find.byType(RadioGroup<ThemeMode>),
-      );
-      expect(group.groupValue, ThemeMode.dark);
-    });
-
-    testWidgets('app.dart drives MaterialApp.themeMode from the provider', (
-      tester,
-    ) async {
-      // Proves "re-themes LIVE": the screen sets the provider (above) and the
-      // root MaterialApp reads it, so the whole app re-themes on the tap.
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [themeModeOverride(ThemeMode.dark)],
-          child: const SahayakApp(),
-        ),
-      );
-      await tester.pump();
-
-      expect(
-        tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode,
-        ThemeMode.dark,
-      );
-
-      await tester.pump(const Duration(milliseconds: 700));
-      await tester.pump();
-    });
-  });
-
   group('notifications', () {
     testWidgets('defaults off and persists when switched on', (tester) async {
       await _pumpScreen(tester);
@@ -251,15 +180,7 @@ void main() {
       // not take them away.
       await _pumpScreen(tester);
       // Section eyebrows are the editorial saffron header (UPPERCASE Latin, §5).
-      expect(find.text('APPEARANCE'), findsOneWidget);
       expect(find.text('NOTIFICATIONS'), findsOneWidget);
-
-      await tester.tap(find.text('Dark'));
-      await tester.pumpAndSettle();
-      expect(
-        _containerOf(tester).read(themeModeControllerProvider),
-        ThemeMode.dark,
-      );
     });
 
     testWidgets('signed in, the account sections replace the sign-in card', (
@@ -371,7 +292,6 @@ void main() {
         }
       }
 
-      await checkAll(find.byType(RadioListTile<ThemeMode>), 'theme radio');
       // The two switches (notifications, live voice) sit in different sections
       // of a lazily-built ListView, so a bare `byType(SwitchListTile)` index can
       // go stale as off-screen tiles unmount mid-scroll. Measure each by a
@@ -404,7 +324,6 @@ void main() {
             );
 
             expect(tester.takeException(), isNull);
-            expect(find.text('APPEARANCE'), findsOneWidget);
             await _scrollWholeList(tester);
             expect(find.text('You are signed out'), findsOneWidget);
           },

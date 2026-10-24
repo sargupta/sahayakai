@@ -48,7 +48,6 @@ void main() {
   // needs an initialized binding, so building at main() scope throws first.
   final bases = <String, ThemeData Function()>{
     'light': AppTheme.light,
-    'dark': AppTheme.dark,
   };
 
   for (final base in bases.entries) {

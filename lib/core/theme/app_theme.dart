@@ -28,7 +28,6 @@ class AppTheme {
   AppTheme._();
 
   static ThemeData light() => _build(Brightness.light);
-  static ThemeData dark() => _build(Brightness.dark);
 
   /// Rebuild the theme for an Indic locale (raised line-heights).
   /// Re-runs the WHOLE [_build] instead of `copyWith(textTheme:)`,

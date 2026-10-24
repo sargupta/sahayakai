@@ -202,9 +202,7 @@ Widget hostProfile(
   Locale locale = const Locale('en'),
   List<Override> overrides = const [],
 }) {
-  final base = brightness == Brightness.dark
-      ? AppTheme.dark()
-      : AppTheme.light();
+  final base = AppTheme.light();
   return ProviderScope(
     overrides: overrides,
     child: MaterialApp(

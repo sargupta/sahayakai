@@ -9,7 +9,6 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/theme/theme_mode_provider.dart';
 import '../../../shared/domain/picker_options.dart';
 import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/app_card.dart';
@@ -128,7 +127,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     // work signed out); the account half is either the profile + danger
     // sections or, with no identity, the sign-in prompt card.
     final groups = <Widget>[
-      const _ThemeSection(),
       const _LanguageSection(),
       const _NotificationSection(),
       const _VoiceModeSection(),
@@ -406,53 +404,6 @@ String _roleLabel(AppLocalizations l10n, AdministrativeRole role) {
 String _saveErrorText(AppLocalizations l10n, Object? error) {
   if (error is ApiException && error.isAuth) return l10n.instantAnswerSignIn;
   return l10n.settingsSaveFailed;
-}
-
-/// Appearance: a live theme switch. Radio rows rather than a SegmentedButton —
-/// a full-width row wraps its label vertically, so three localized labels at
-/// textScale 1.3 can never overflow a 360dp screen, and every row clears 48dp.
-class _ThemeSection extends ConsumerWidget {
-  const _ThemeSection();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
-    final mode = ref.watch(themeModeControllerProvider);
-
-    return _SettingsGroup(
-      title: l10n.settingsAppearanceTitle,
-      child: AppCard(
-        padding: EdgeInsets.zero,
-        child: RadioGroup<ThemeMode>(
-          groupValue: mode,
-          onChanged: (value) {
-            if (value != null) {
-              ref.read(themeModeControllerProvider.notifier).set(value);
-            }
-          },
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (final entry in <(ThemeMode, String, IconData)>[
-                (
-                  ThemeMode.system,
-                  l10n.settingsThemeSystem,
-                  LucideIcons.monitor,
-                ),
-                (ThemeMode.light, l10n.settingsThemeLight, LucideIcons.sun),
-                (ThemeMode.dark, l10n.settingsThemeDark, LucideIcons.moon),
-              ])
-                RadioListTile<ThemeMode>(
-                  value: entry.$1,
-                  title: Text(entry.$2),
-                  secondary: Icon(entry.$3, size: AppIconSize.inline),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 /// Language: reuses the shared [LanguageSwitcher] rather than growing a second

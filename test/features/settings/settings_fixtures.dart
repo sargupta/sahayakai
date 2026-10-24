@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sahayakai/core/auth/auth_providers.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
-import 'package:sahayakai/core/theme/theme_mode_provider.dart';
 import 'package:sahayakai/features/profile/data/profile_doc_source.dart';
 
 import '../profile/profile_fixtures.dart';
@@ -57,9 +56,7 @@ Widget hostSettings(
   Locale locale = const Locale('en'),
   List<Override> overrides = const [],
 }) {
-  final base = brightness == Brightness.dark
-      ? AppTheme.dark()
-      : AppTheme.light();
+  final base = AppTheme.light();
   return ProviderScope(
     overrides: overrides,
     child: MaterialApp(
@@ -78,20 +75,6 @@ Widget hostSettings(
       home: child,
     ),
   );
-}
-
-/// A ProviderScope override pinning the theme mode, for suites that assert on
-/// the live re-theme without racing the shared_preferences hydration.
-Override themeModeOverride(ThemeMode mode) =>
-    themeModeControllerProvider.overrideWith(() => _FixedThemeMode(mode));
-
-class _FixedThemeMode extends ThemeModeController {
-  _FixedThemeMode(this._initial);
-
-  final ThemeMode _initial;
-
-  @override
-  ThemeMode build() => _initial;
 }
 
 /// Signs the stub auth controller in, so the account sections render.
