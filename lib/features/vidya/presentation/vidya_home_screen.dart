@@ -60,16 +60,12 @@ class _VidyaHomeScreenState extends ConsumerState<VidyaHomeScreen> {
       VidyaNavDispatcher.dispatch(context, directive);
     });
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final wash = isDark ? AppGradients.darkVignette : AppGradients.lightPaper;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(gradient: wash),
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: _VidyaAppBar(l10n: l10n, state: state, controller: controller),
-        body: _VidyaBody(state: state, controller: controller),
-      ),
+    // Background is provided by AppBackground in app.dart — keep Scaffold
+    // transparent so it shows through.
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: _VidyaAppBar(l10n: l10n, state: state, controller: controller),
+      body: _VidyaBody(state: state, controller: controller),
     );
   }
 }
