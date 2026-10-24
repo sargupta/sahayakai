@@ -109,7 +109,7 @@ class AppSegmented<T> extends StatelessWidget {
         color: trackFill,
         borderRadius: AppRadius.rControl,
       ),
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(AppSpacing.space1),
       child: LayoutBuilder(
         builder: (context, constraints) {
           return Stack(

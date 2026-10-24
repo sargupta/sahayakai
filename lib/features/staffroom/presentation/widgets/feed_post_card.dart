@@ -309,6 +309,8 @@ class _LikeButton extends StatelessWidget {
         type: MaterialType.transparency,
         child: InkWell(
           onTap: onTap,
+          focusColor: scheme.primary.withValues(alpha: 0.12),
+          hoverColor: scheme.primary.withValues(alpha: 0.04),
           borderRadius: AppRadius.rControl,
           child: ConstrainedBox(
             constraints: const BoxConstraints(minWidth: 48, minHeight: 48),

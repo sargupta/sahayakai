@@ -7,9 +7,9 @@ import 'core/i18n/gen/app_localizations.dart';
 import 'core/i18n/locale_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
-import 'core/theme/scanner_dark_provider.dart';
 import 'core/theme/theme_mode_provider.dart';
 import 'features/vidya/presentation/vidya_overlay.dart';
+import 'shared/scroll/no_overscroll_behavior.dart';
 
 /// Root widget: MaterialApp.router wired to the theme (light + dark),
 /// localization delegates, and the active locale.
@@ -21,9 +21,6 @@ class SahayakApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
     final locale = ref.watch(localeControllerProvider);
     final themeMode = ref.watch(themeModeControllerProvider);
-    // v3 Screen 11: the scanner's capture phase is the one surface the design
-    // ships dark; its results (Screen 12) flip back to the teacher's theme.
-    final scannerDark = ref.watch(scannerDarkProvider);
 
     final light = locale.isIndic
         ? AppTheme.withIndic(AppTheme.light())
@@ -37,8 +34,10 @@ class SahayakApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: light,
       darkTheme: dark,
-      themeMode: scannerDark ? ThemeMode.dark : themeMode,
+      themeMode: themeMode,
       routerConfig: router,
+      // Remove iOS rubber-band overscroll / glow — Instagram-style clamping scroll.
+      scrollBehavior: const NoOverscrollBehavior(),
       builder: (context, child) => Stack(
         children: [
           ?child,

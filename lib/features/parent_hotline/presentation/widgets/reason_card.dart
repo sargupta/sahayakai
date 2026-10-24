@@ -56,6 +56,8 @@ class ReasonCard extends StatelessWidget {
           type: MaterialType.transparency,
           child: InkWell(
             onTap: onTap,
+            focusColor: scheme.primary.withValues(alpha: 0.12),
+            hoverColor: scheme.primary.withValues(alpha: 0.04),
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.space4),
               child: Row(
@@ -104,7 +106,7 @@ class ReasonCard extends StatelessWidget {
       button: true,
       selected: selected,
       label: label,
-      child: PressableScale(pressedScale: 0.98, child: content),
+      child: PressableScale(pressedScale: 0.96, child: content),
     );
   }
 }

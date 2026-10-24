@@ -215,9 +215,7 @@ class _Viewfinder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    // The capture phase forces the scanner's dark surface (scannerDarkProvider),
-    // so the design's milk-on-ink contrast holds; the raw hex below is the
-    // canonical Screen 11 frame palette.
+    // The raw hex below is the canonical Screen 11 frame palette.
     const milk = AppColors.milk50;
 
     return SizedBox(

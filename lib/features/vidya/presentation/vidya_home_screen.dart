@@ -12,7 +12,6 @@ import '../../../core/router/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_gradients.dart';
 import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_spacing.dart';
 import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/language_switcher.dart';
 import '../../inbox/presentation/widgets/inbox_entry_button.dart';
@@ -93,8 +92,6 @@ class _VidyaAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-
     return AppBar(
       backgroundColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
@@ -135,7 +132,7 @@ class _VidyaAppBar extends StatelessWidget implements PreferredSizeWidget {
             child: Container(
               width: 32,
               height: 32,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 color: AppColors.saffron500,
               ),
@@ -199,9 +196,9 @@ class _VidyaBody extends ConsumerWidget {
                 ],
                 const _TodayCard(),
                 const SizedBox(height: 24),
-                Text(
+                const Text(
                   'YOUR TOOLS',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Instrument Sans',
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -398,9 +395,9 @@ class _Hero extends ConsumerWidget {
           ),
         ] else ...[
           const SizedBox(height: 8),
-          Text(
+          const Text(
             'Complete your profile to personalize your experience',
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Instrument Sans',
               fontSize: 13,
               fontWeight: FontWeight.w400,
@@ -435,7 +432,6 @@ class _TodayCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -456,12 +452,12 @@ class _TodayCard extends StatelessWidget {
             child: const Icon(LucideIcons.clipboardCheck, size: 18, color: AppColors.saffron600),
           ),
           const SizedBox(width: 12),
-          Expanded(
+          const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
+                Text(
                   'Today',
                   style: TextStyle(
                     fontFamily: 'Bricolage Grotesque',
@@ -471,8 +467,8 @@ class _TodayCard extends StatelessWidget {
                     height: 1.2,
                   ),
                 ),
-                const SizedBox(height: 2),
-                const Text(
+                SizedBox(height: 2),
+                Text(
                   'Start with your class roll call',
                   style: TextStyle(
                     fontFamily: 'Instrument Sans',
@@ -686,12 +682,12 @@ class _CompleteProfileCard extends StatelessWidget {
             child: const Icon(LucideIcons.userPlus, size: 18, color: AppColors.saffron600),
           ),
           const SizedBox(width: 12),
-          Expanded(
+          const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
+                Text(
                   'Complete your profile',
                   style: TextStyle(
                     fontFamily: 'Bricolage Grotesque',
@@ -701,8 +697,8 @@ class _CompleteProfileCard extends StatelessWidget {
                     height: 1.2,
                   ),
                 ),
-                const SizedBox(height: 2),
-                const Text(
+                SizedBox(height: 2),
+                Text(
                   'Add name, school, subjects, grades',
                   style: TextStyle(
                     fontFamily: 'Instrument Sans',

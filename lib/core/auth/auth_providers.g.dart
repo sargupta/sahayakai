@@ -80,7 +80,7 @@ final appBootstrapProvider = FutureProvider<void>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef AppBootstrapRef = FutureProviderRef<void>;
-String _$authControllerHash() => r'e276a137aba12e2583b0128a65bfe29649e15875';
+String _$authControllerHash() => r'4277b6bcf87a641bc95da262b2438dfe914569be';
 
 /// The real auth controller. State mirrors `FirebaseAuth.instance
 /// .authStateChanges()` — the single source of truth both the router and the

@@ -60,7 +60,13 @@ class ScoreRing extends StatelessWidget {
               Text(_fmt(score), style: extras.dataLarge),
               Text(
                 '/ ${_fmt(max)}',
-                style: text.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
+                style: text.labelSmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                  fontFeatures: const [
+                    FontFeature.tabularFigures(),
+                    FontFeature.liningFigures(),
+                  ],
+                ),
               ),
             ],
           ),
