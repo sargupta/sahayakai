@@ -55,7 +55,9 @@ class AppTheme {
       colorScheme: scheme,
       // Solid surface; the pastel wash is painted as a DecoratedBox by the
       // scaffold wrapper (AppShell / PhoneScreen), never as scaffoldBackgroundColor.
-      scaffoldBackgroundColor: scheme.surfaceContainerLowest,
+      // Transparent so the shared AppBackground (applied in app.dart's builder)
+      // shows through. Screens that paint their own gradient still override.
+      scaffoldBackgroundColor: Colors.transparent,
       shadowColor: isDark ? Colors.black : AppColors.ink900,
       textTheme: textTheme,
       extensions: [textExtras],

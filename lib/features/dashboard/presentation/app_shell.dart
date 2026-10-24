@@ -75,6 +75,7 @@ class _AppShellState extends State<AppShell> {
     ];
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       // The floating capsule rides OVER each tab's wash: extend the body to
       // the true bottom so the screen background continues behind the bar
       // (the design frames paint wash to the bottom edge, never a strip of
