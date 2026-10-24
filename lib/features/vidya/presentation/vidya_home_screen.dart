@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/app_locale.dart';
@@ -12,29 +11,16 @@ import '../../../core/platform/clock.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_gradients.dart';
-import '../../../core/theme/app_icon_size.dart';
 import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../shared/motion/animated_entrance.dart';
-import '../../../shared/widgets/app_card.dart';
-import '../../../shared/widgets/editorial_section_header.dart';
-import '../../../shared/widgets/icon_well.dart';
 import '../../../shared/widgets/language_switcher.dart';
 import '../../inbox/presentation/widgets/inbox_entry_button.dart';
 import '../../profile/presentation/profile_controller.dart';
 import 'vidya_controller.dart';
-import 'vidya_greeting.dart'
-    show maybeSpeakVidyaGreeting; // avoid conflicting export
+import 'vidya_greeting.dart' show maybeSpeakVidyaGreeting;
 import 'vidya_nav_dispatcher.dart';
 
-/// VIDYA Home — "The Ledger · Ivory & Ink, Saffron & Pine".
-///
-/// A warm-ivory paper surface: a quiet app bar carries the wordmark, a scriptural
-/// hero owns the top with a time-aware greeting and a saffron masthead rule, and
-/// the teaching tools land as a register — one raised feature tile, then refined
-/// rows. Nothing here is a placeholder: every value comes from the profile or
-/// the clock.
 class VidyaHomeScreen extends ConsumerStatefulWidget {
   const VidyaHomeScreen({super.key});
 
@@ -77,42 +63,20 @@ class _VidyaHomeScreenState extends ConsumerState<VidyaHomeScreen> {
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final wash = isDark ? AppGradients.darkVignette : AppGradients.lightPaper;
-    final glow = isDark ? null : AppGradients.lightHeroWash;
 
     return DecoratedBox(
       decoration: BoxDecoration(gradient: wash),
-      child: Stack(
-        children: [
-          if (glow != null)
-            Positioned(
-              top: -46,
-              right: -54,
-              width: 214,
-              height: 214,
-              child: DecoratedBox(
-                decoration: BoxDecoration(shape: BoxShape.circle, gradient: glow),
-              ),
-            ),
-          Scaffold(
-            backgroundColor: Colors.transparent,
-            appBar: _VidyaAppBar(
-              l10n: l10n,
-              state: state,
-              controller: controller,
-            ),
-            body: _VidyaBody(
-              state: state,
-              controller: controller,
-              hasConversation: state.hasConversation,
-            ),
-          ),
-        ],
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: _VidyaAppBar(l10n: l10n, state: state, controller: controller),
+        body: _VidyaBody(state: state, controller: controller),
       ),
     );
   }
 }
 
-/// Quiet app-bar: seamless chrome, wordmark, and the actions the home needs.
+// ─── App bar: calm, identity left, 3 actions right ──────────────────────────
+
 class _VidyaAppBar extends StatelessWidget implements PreferredSizeWidget {
   const _VidyaAppBar({
     required this.l10n,
@@ -130,75 +94,60 @@ class _VidyaAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
 
     return AppBar(
       backgroundColor: Colors.transparent,
-      foregroundColor: scheme.onSurface,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
-      scrolledUnderElevation: 1,
-      shadowColor: Colors.transparent,
+      scrolledUnderElevation: 0,
       centerTitle: false,
-      leading: Padding(
-        padding: const EdgeInsets.only(left: AppSpacing.space3),
-        child: Center(
-          child: Container(
-            width: 28,
-            height: 28,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppColors.accentTint,
-            ),
-            alignment: Alignment.center,
-            child: const Icon(
-              Icons.auto_awesome,
-              size: 16,
-              color: AppColors.saffron600,
-            ),
-          ),
-        ),
-      ),
-      title: Text(
+      title: const Text(
         'SahayakAI',
-        style: text.titleLarge?.copyWith(
+        style: TextStyle(
           fontFamily: 'Bricolage Grotesque',
-          fontWeight: FontWeight.w600,
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.3,
+          color: AppColors.textStrong,
         ),
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.public_outlined),
+          icon: const Icon(Icons.public_outlined, size: 20),
           tooltip: l10n.networkTooltip,
           onPressed: () => context.push(Routes.network),
         ),
         const InboxEntryButton(),
         if (state.hasConversation)
           IconButton(
-            icon: const Icon(Icons.delete_outline),
+            icon: const Icon(Icons.delete_outline, size: 20),
             tooltip: l10n.vidyaClearConversation,
             onPressed: controller.clearConversation,
           ),
         IconButton(
-          icon: const Icon(Icons.dashboard_outlined),
+          icon: const Icon(Icons.dashboard_outlined, size: 20),
           tooltip: l10n.vidyaPrepDesk,
           onPressed: () => context.push(Routes.prepDesk),
         ),
         Padding(
-          padding: const EdgeInsets.only(right: AppSpacing.space3),
+          padding: const EdgeInsets.only(right: 12),
           child: Center(
             child: Container(
-              width: 30,
-              height: 30,
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: scheme.surfaceContainerHigh,
+                color: AppColors.saffron500,
               ),
               alignment: Alignment.center,
-              child: const Icon(
-                Icons.person_outline,
-                size: 18,
-                color: AppColors.textBody,
+              child: const Text(
+                'S',
+                style: TextStyle(
+                  fontFamily: 'Bricolage Grotesque',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
@@ -208,31 +157,21 @@ class _VidyaAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
-/// Scroll body: header row, hero, complete-profile flow, tool register.
+// ─── Body ────────────────────────────────────────────────────────────────────
+
 class _VidyaBody extends ConsumerWidget {
-  const _VidyaBody({
-    required this.state,
-    required this.controller,
-    required this.hasConversation,
-  });
+  const _VidyaBody({required this.state, required this.controller});
 
   final VidyaState state;
   final VidyaController controller;
-  final bool hasConversation;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
     final profile = ref.watch(profileControllerProvider).valueOrNull;
 
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.screenGutter,
-          AppSpacing.space2,
-          AppSpacing.screenGutter,
-          AppSpacing.bottomPad,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         child: RefreshIndicator(
           onRefresh: () async {
             try {
@@ -248,31 +187,31 @@ class _VidyaBody extends ConsumerWidget {
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
               children: [
-                staggeredItem(context, const _HeaderRow(), index: 0),
-                const SizedBox(height: AppSpacing.space4),
-                staggeredItem(context, const _HeroHeader(), index: 1),
-                const SizedBox(height: AppSpacing.space8), // 32
+                const SizedBox(height: 16),
+                const _HeaderRow(),
+                const SizedBox(height: 24),
+                const _Hero(),
+                const SizedBox(height: 24),
                 if (profile != null && profile.isEmpty) ...[
-                  staggeredItem(
-                    context,
-                    const _CompleteProfileCard(),
-                    index: 2,
-                  ),
-                  const SizedBox(height: AppSpacing.space4),
+                  const _CompleteProfileCard(),
+                  const SizedBox(height: 24),
                 ],
-                staggeredItem(
-                  context,
-                  EditorialSectionHeader(l10n.dashboardToolsTitle),
-                  index: 3,
+                const _TodayCard(),
+                const SizedBox(height: 24),
+                Text(
+                  'YOUR TOOLS',
+                  style: const TextStyle(
+                    fontFamily: 'Instrument Sans',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.saffron600,
+                    letterSpacing: 1.4,
+                  ),
                 ),
-                const SizedBox(height: AppSpacing.space4),
-                staggeredItem(
-                  context,
-                  _TileGrid(state: state),
-                  index: 4,
-                ),
+                const SizedBox(height: 12),
+                _TileGrid(state: state),
+                const SizedBox(height: 32),
               ],
             ),
           ),
@@ -282,20 +221,18 @@ class _VidyaBody extends ConsumerWidget {
   }
 }
 
-/// Top row: avatar (40px) · date/name · language pill. Kept so the teacher's
-/// identity and the active language stay one tap away.
+// ─── Header row: avatar, name, date ─────────────────────────────────────────
+
 class _HeaderRow extends ConsumerWidget {
   const _HeaderRow();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
-
     final profile = ref.watch(profileControllerProvider).valueOrNull;
     final storedName = profile?.displayName?.trim();
     final name = (storedName != null && storedName.isNotEmpty)
         ? storedName
-        : l10n.profileNoName;
+        : 'Teacher';
     final initials = _initialsOf(name);
     final today = _formatToday(context, ref.read(nowProvider)());
     final current = AppLocale.fromCode(
@@ -306,90 +243,81 @@ class _HeaderRow extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
-          width: 40,
-          height: 40,
+          width: 44,
+          height: 44,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: Colors.white.withValues(alpha: 0.85),
-            border: Border.all(
-              color: AppColors.borderGlass,
-              width: 1,
-            ),
-            boxShadow: const [AppShadows.card],
+            border: Border.all(color: AppColors.borderGlass, width: 1),
+            boxShadow: null,
           ),
           alignment: Alignment.center,
           child: initials == null
-              ? const Icon(
-                  Icons.person_outline,
-                  size: 18,
-                  color: AppColors.textBody,
-                )
+              ? const Icon(LucideIcons.user, size: 18, color: AppColors.textBody)
               : Text(
                   initials,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        fontFamily: 'Instrument Sans',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textBody,
-                      ),
+                  style: const TextStyle(
+                    fontFamily: 'Instrument Sans',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textBody,
+                  ),
                 ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 today,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      fontFamily: 'Instrument Sans',
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textBody,
-                    ),
+                style: const TextStyle(
+                  fontFamily: 'Instrument Sans',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textBody,
+                  height: 1.1,
+                ),
               ),
+              const SizedBox(height: 2),
               Text(
                 name,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontFamily: 'Bricolage Grotesque',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textStrong,
-                      letterSpacing: -0.2,
-                    ),
+                style: const TextStyle(
+                  fontFamily: 'Bricolage Grotesque',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textStrong,
+                  height: 1.1,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
         ),
         const SizedBox(width: 8),
         Material(
-          type: MaterialType.transparency,
+          color: Colors.transparent,
           child: InkWell(
             onTap: () => showLanguagePickerSheet(context, ref),
             borderRadius: AppRadius.rPill,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 8),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 11,
-                  vertical: 7,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                borderRadius: AppRadius.rPill,
+                color: Colors.white.withValues(alpha: 0.8),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.95),
+                  width: 1,
                 ),
-                decoration: BoxDecoration(
-                  borderRadius: AppRadius.rPill,
-                  color: Colors.white.withValues(alpha: 0.8),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.95),
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  current.nativeLabel,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        fontFamily: 'Instrument Sans',
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.saffron600,
-                      ),
+              ),
+              child: Text(
+                current.nativeLabel,
+                style: const TextStyle(
+                  fontFamily: 'Instrument Sans',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.saffron600,
                 ),
               ),
             ),
@@ -400,145 +328,171 @@ class _HeaderRow extends ConsumerWidget {
   }
 }
 
-/// Hero header: saffron eyebrow (date · school), greeting, saffron rule,
-/// and an optional summary strip driven by real profile data.
-class _HeroHeader extends ConsumerWidget {
-  const _HeroHeader();
+// ─── Hero (greeting + date) ───────────────────────────────────────────────
+
+class _Hero extends ConsumerWidget {
+  const _Hero();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
-    final text = Theme.of(context).textTheme;
     final profile = ref.watch(profileControllerProvider).valueOrNull;
-    final name = (profile?.displayName?.trim().isNotEmpty ?? false)
-        ? profile!.displayName!.trim()
-        : 'Teacher';
+    final name = profile?.displayName?.trim();
 
     final hour = ref.read(nowProvider)().hour;
     String salutation;
-    if (hour >= 5 && hour <= 11) {
-      salutation = l10n.dashboardGreetingMorning;
-    } else if (hour >= 12 && hour <= 16) {
-      salutation = l10n.dashboardGreetingAfternoon;
-    } else if (hour >= 17 && hour <= 20) {
-      salutation = l10n.dashboardGreetingEvening;
+    if (hour < 12) {
+      salutation = 'Good morning';
+    } else if (hour < 17) {
+      salutation = 'Good afternoon';
     } else {
-      salutation = l10n.dashboardGreetingEvening;
+      salutation = 'Good evening';
     }
 
     final school = profile?.schoolName?.trim();
-    final weekday = DateFormat('EEEE').format(ref.read(nowProvider)());
-    final eyebrow = (school != null && school.isNotEmpty)
-        ? '$weekday · $school'
-        : weekday;
-
     final gradeLevels = profile?.gradeLevels ?? const <String>[];
     final subjects = profile?.subjects ?? const <String>[];
     final hasSummary = gradeLevels.isNotEmpty || subjects.isNotEmpty;
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.space4,
-        AppSpacing.space2,
-        AppSpacing.space4,
-        AppSpacing.space6,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          name != null && name.isNotEmpty ? '$salutation, ${name.split(' ').first}' : salutation,
+          style: const TextStyle(
+            fontFamily: 'Bricolage Grotesque',
+            fontSize: 26,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textStrong,
+            height: 1.15,
+            letterSpacing: -0.3,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          _formatTodayFull(context, ref.read(nowProvider)()) +
+              (school != null && school.isNotEmpty ? '  ·  $school' : ''),
+          style: const TextStyle(
+            fontFamily: 'Instrument Sans',
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+            color: AppColors.textBody,
+            height: 1.4,
+          ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        if (hasSummary) ...[
+          const SizedBox(height: 8),
+          Text(
+            '${gradeLevels.join(', ')} · ${subjects.join(', ')}',
+            style: const TextStyle(
+              fontFamily: 'Instrument Sans',
+              fontSize: 13,
+              fontWeight: FontWeight.w400,
+              color: AppColors.textBody,
+              height: 1.4,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ] else ...[
+          const SizedBox(height: 8),
+          Text(
+            'Complete your profile to personalize your experience',
+            style: const TextStyle(
+              fontFamily: 'Instrument Sans',
+              fontSize: 13,
+              fontWeight: FontWeight.w400,
+              color: AppColors.textMuted,
+              height: 1.4,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+String _formatTodayFull(BuildContext context, DateTime day) {
+  final locale = Localizations.localeOf(context);
+  if (locale.languageCode == 'en') {
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
+    ];
+    return '${DateFormat('EEEE', locale.toString()).format(day)}, '
+        '${day.day} ${months[day.month - 1]}';
+  }
+  return DateFormat('EEEE, d MMM', locale.toString()).format(day);
+}
+
+// ─── Today card (actionable strip) ─────────────────────────────────────────
+
+class _TodayCard extends StatelessWidget {
+  const _TodayCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0x14171310), width: 1),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+      padding: const EdgeInsets.all(14),
+      child: Row(
         children: [
-          Text(
-            eyebrow.toUpperCase(),
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColors.saffron600,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 1.2,
-                ),
-          ),
-          const SizedBox(height: AppSpacing.space2),
-          Text(
-            '$salutation, $name.',
-            style: text.displayMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface,
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: const Color(0x1FFAF1E8),
+              borderRadius: BorderRadius.circular(8),
             ),
+            alignment: Alignment.center,
+            child: const Icon(LucideIcons.clipboardCheck, size: 18, color: AppColors.saffron600),
           ),
-          const SizedBox(height: AppSpacing.space3),
-          const SizedBox(
-            width: 48,
-            height: 2,
-            child: DecoratedBox(
-              decoration: BoxDecoration(gradient: AppGradients.accentBar),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.space3),
-          if (hasSummary)
-            Wrap(
-              spacing: AppSpacing.space2,
-              runSpacing: AppSpacing.space2,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  '${gradeLevels.join(', ')} · ${subjects.join(', ')}',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                const Text(
+                  'Today',
+                  style: TextStyle(
+                    fontFamily: 'Bricolage Grotesque',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textStrong,
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                const Text(
+                  'Start with your class roll call',
+                  style: TextStyle(
+                    fontFamily: 'Instrument Sans',
+                    fontSize: 12,
+                    color: AppColors.textBody,
+                    height: 1.3,
+                  ),
                 ),
               ],
-            )
-          else
-            Text(
-              'Complete your profile to personalize your experience',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
             ),
+          ),
+          const Icon(LucideIcons.chevronRight, size: 18, color: AppColors.textMuted),
         ],
       ),
     );
   }
 }
 
-String _formatToday(BuildContext context, DateTime day) {
-  final locale = Localizations.localeOf(context);
-  if (locale.languageCode == 'en') {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sept',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return '${DateFormat('EEE', locale.toString()).format(day)}, '
-        '${day.day} ${months[day.month - 1]}';
-  }
-  return DateFormat('EEE, d MMM', locale.toString()).format(day);
-}
+// ─── Tile grid (2x2 equal) ─────────────────────────────────────────────────
 
-String? _initialsOf(String name) {
-  final trimmed = name.trim();
-  if (trimmed.isEmpty) return null;
-
-  final words = trimmed
-      .split(RegExp(r'\s+'))
-      .where((word) => word.isNotEmpty)
-      .take(2);
-
-  final buffer = StringBuffer();
-  for (final word in words) {
-    buffer.write(String.fromCharCode(word.runes.first).toUpperCase());
-  }
-  final initials = buffer.toString();
-  return initials.isEmpty ? null : initials;
-}
-
-/// 2×2 tile grid, now built on the premium AppCard + IconWell grammar while
-/// keeping the runtime type `_Tile` so the grid remains addressable.
 class _TileGrid extends StatelessWidget {
   const _TileGrid({required this.state});
 
@@ -550,53 +504,64 @@ class _TileGrid extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final tileWidth = (constraints.maxWidth - AppSpacing.gridGap) / 2;
+        final w = (constraints.maxWidth - 10) / 2;
         return Column(
           children: [
             Row(
               children: [
                 SizedBox(
-                  width: tileWidth,
+                  width: w,
                   child: _Tile(
-                    featured: true,
                     icon: LucideIcons.userCheck,
+                    color: const Color(0xFFC96A28),
+                    tint: const Color(0x1FC96A28),
+                    border: const Color(0x33C96A28),
                     title: l10n.homeTileRollCall,
-                    subtitle: l10n.homeTileRollCallSub,
+                    subtitle: 'Speak the names',
                     onTap: () => context.push(Routes.attendance),
                   ),
                 ),
-                const SizedBox(width: AppSpacing.gridGap),
+                const SizedBox(width: 10),
                 SizedBox(
-                  width: tileWidth,
+                  width: w,
                   child: _Tile(
                     icon: LucideIcons.bookOpen,
+                    color: const Color(0xFF2C5F2D),
+                    tint: const Color(0x1F2C5F2D),
+                    border: const Color(0x332C5F2D),
                     title: l10n.homeTileLesson,
-                    subtitle: l10n.homeTileLessonSub,
+                    subtitle: 'Plan a 5E lesson',
                     onTap: () => context.push(Routes.lessonPlan),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.gridGap),
+            const SizedBox(height: 10),
             Row(
               children: [
                 SizedBox(
-                  width: tileWidth,
+                  width: w,
                   child: _Tile(
                     key: const ValueKey('home-tile-scan'),
                     icon: LucideIcons.scanLine,
+                    color: const Color(0xFF2A3B8F),
+                    tint: const Color(0x1F2A3B8F),
+                    border: const Color(0x332A3B8F),
                     title: l10n.homeTileScan,
-                    subtitle: l10n.homeTileScanSub,
+                    subtitle: 'Check sheets',
                     onTap: () => context.push(Routes.assessmentScanner),
                   ),
                 ),
-                const SizedBox(width: AppSpacing.gridGap),
+                const SizedBox(width: 10),
                 SizedBox(
-                  width: tileWidth,
+                  width: w,
                   child: _Tile(
-                    icon: LucideIcons.phone,
+                    icon: LucideIcons.users,
+                    color: const Color(0xFFB45309),
+                    tint: const Color(0x1FB45309),
+                    border: const Color(0x33B45309),
                     title: l10n.homeTileCall,
-                    subtitle: l10n.homeTileCallSub,
+                    subtitle: 'Reach parents',
                     onTap: () => context.push(Routes.parentHotline),
                   ),
                 ),
@@ -612,189 +577,163 @@ class _TileGrid extends StatelessWidget {
 class _Tile extends StatelessWidget {
   const _Tile({
     super.key,
+    required this.icon,
+    required this.color,
+    required this.tint,
+    required this.border,
     required this.title,
     required this.subtitle,
-    this.icon,
-    this.onTap,
-    this.featured = false,
+    required this.onTap,
   });
 
+  final IconData icon;
+  final Color color;
+  final Color tint;
+  final Color border;
   final String title;
   final String subtitle;
-  final IconData? icon;
   final VoidCallback? onTap;
-  final bool featured;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    const saffron = AppColors.saffron600;
-
-    if (featured) {
-      return AppCard(
-        variant: AppCardVariant.elevated,
-        accentBar: true,
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
         onTap: onTap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                if (icon != null) IconWell(icon: icon!, feature: true),
-                const SizedBox(width: AppSpacing.space4),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(title, style: text.titleLarge),
-                      const SizedBox(height: AppSpacing.space1),
-                      Text(
-                        subtitle,
-                        style: text.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
+        splashColor: color.withValues(alpha: 0.08),
+        highlightColor: color.withValues(alpha: 0.04),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0x12171310), width: 1),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: tint,
+                  border: Border.all(color: border, width: 1),
                 ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.space4),
-            ExcludeSemantics(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    l10n.actionOpen,
-                    style: text.labelLarge?.copyWith(color: saffron),
-                  ),
-                  const SizedBox(width: AppSpacing.space1),
-                  Icon(
-                    LucideIcons.chevronRight,
-                    size: AppIconSize.inline,
-                    color: saffron,
-                  ),
-                ],
+                alignment: Alignment.center,
+                child: Icon(icon, size: 18, color: color),
               ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return AppCard(
-      onTap: onTap,
-      child: Row(
-        children: [
-          if (icon != null) IconWell(icon: icon!),
-          const SizedBox(width: AppSpacing.space4),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(title, style: text.titleMedium),
-                const SizedBox(height: AppSpacing.space1),
-                Text(
-                  subtitle,
-                  style: text.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontFamily: 'Bricolage Grotesque',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textStrong,
+                  height: 1.2,
                 ),
-              ],
-            ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontFamily: 'Instrument Sans',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.textBody,
+                  height: 1.3,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
-          const SizedBox(width: AppSpacing.space3),
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: scheme.surfaceContainerHigh,
-            ),
-            alignment: Alignment.center,
-            child: Icon(
-              LucideIcons.chevronRight,
-              size: AppIconSize.inline,
-              color: scheme.onSurfaceVariant,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
-/// "Complete your profile" card shown when the teacher's profile is empty.
+// ─── Complete profile ─────────────────────────────────────────────────────
+
 class _CompleteProfileCard extends StatelessWidget {
   const _CompleteProfileCard();
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
-      variant: AppCardVariant.elevated,
-      accentBar: true,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.accentTintBorder, width: 1),
+      ),
+      padding: const EdgeInsets.all(14),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: 44,
-            height: 44,
-            decoration: const BoxDecoration(
-              color: AppColors.accent,
-              borderRadius: AppRadius.rField,
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: AppColors.accentTint,
+              borderRadius: BorderRadius.circular(8),
             ),
             alignment: Alignment.center,
-            child: const Icon(
-              LucideIcons.userPlus,
-              color: Colors.white,
-              size: 22,
-            ),
+            child: const Icon(LucideIcons.userPlus, size: 18, color: AppColors.saffron600),
           ),
-          const SizedBox(width: AppSpacing.space3),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
+                const Text(
                   'Complete your profile',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontFamily: 'Bricolage Grotesque',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textStrong,
-                      ),
+                  style: TextStyle(
+                    fontFamily: 'Bricolage Grotesque',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textStrong,
+                    height: 1.2,
+                  ),
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  'Add your name, school, subjects and grade levels to '
-                  'personalize VIDYA.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontFamily: 'Instrument Sans',
-                        fontSize: 12,
-                        color: AppColors.textBody,
-                        height: 1.4,
-                      ),
+                const Text(
+                  'Add name, school, subjects, grades',
+                  style: TextStyle(
+                    fontFamily: 'Instrument Sans',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.textBody,
+                    height: 1.3,
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: AppSpacing.space2),
-          FilledButton(
-            onPressed: () => context.push(Routes.profile),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.accent,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              shape: const RoundedRectangleBorder(
-                borderRadius: AppRadius.rPill,
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () => context.push(Routes.profile),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.saffron500,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: const Text(
+                'Setup',
+                style: TextStyle(
+                  fontFamily: 'Instrument Sans',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
               ),
             ),
-            child: const Text('Complete'),
           ),
         ],
       ),
@@ -802,4 +741,27 @@ class _CompleteProfileCard extends StatelessWidget {
   }
 }
 
-// No extra top-level helpers beyond those already defined.
+String _formatToday(BuildContext context, DateTime day) {
+  final locale = Localizations.localeOf(context);
+  if (locale.languageCode == 'en') {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec',
+    ];
+    return '${DateFormat('EEE', locale.toString()).format(day)}, '
+        '${day.day} ${months[day.month - 1]}';
+  }
+  return DateFormat('EEE, d MMM', locale.toString()).format(day);
+}
+
+String? _initialsOf(String name) {
+  final trimmed = name.trim();
+  if (trimmed.isEmpty) return null;
+  final words = trimmed.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).take(2);
+  final buffer = StringBuffer();
+  for (final word in words) {
+    buffer.write(String.fromCharCode(word.runes.first).toUpperCase());
+  }
+  final initials = buffer.toString();
+  return initials.isEmpty ? null : initials;
+}
