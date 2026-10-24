@@ -2,4 +2,6 @@
 <resources>
     <!-- Warm cream matching the app's lightPaper background (#FFF6EC). -->
     <color name="splash_background">#FFF6EC</color>
+    <!-- Launcher icon background (warm paper, matches app canvas). -->
+    <color name="ic_launcher_background">#F3EEE4</color>
 </resources>

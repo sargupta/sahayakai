@@ -70,6 +70,9 @@ dependencies:
   # exactly what is already in pubspec.lock, so nothing else re-resolves.
   firebase_app_check: ^0.3.2+10
 
+  # Push notifications (FCM). Client side only; backend must send data messages.
+  firebase_messaging: ^15.0.0
+
   # Fonts: no package. All 11 families are bundled as assets under
   # flutter.fonts below, so nothing can fetch a face at runtime.
 

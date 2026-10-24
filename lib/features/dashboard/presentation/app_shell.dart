@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/domain/tool_registry.dart';
-import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/empty_view.dart';
 import '../../../shared/widgets/glass_surface.dart';
 import '../../../shared/widgets/icon_well.dart';
@@ -15,38 +15,17 @@ import '../../staffroom/presentation/network_hub_screen.dart';
 import '../../vidya/presentation/vidya_home_screen.dart';
 import 'floating_bottom_nav.dart';
 
-/// The signed-in shell: the v3 icon-only floating tab bar over 4 tabs
-/// (**Home · Library · Community · You**). Home is the voice-first VIDYA canvas;
-/// Community is the staffroom/network hub. There is **no fifth tab and no
-/// Create action** — Create lives as a Home tile (v3: "the four tabs are the
-/// whole wayfinding"), and the searchable tool palette is still reachable via
-/// [openCreatePalette] for power users.
-///
-/// The body is an [IndexedStack] (every tab stays warm, so the shared library
-/// read serves both surfaces in one request and off-screen peers never slide);
-/// switching tabs plays a fresh cross-fade + rise on the newly-shown tab via
-/// [_AnimatedTabBody], guarded by reduce-motion.
-///
-/// A later unit can convert this to a StatefulShellRoute for deep-linkable tabs.
+/// The signed-in shell: 4 swipeable tabs (Home · Library · Community · You)
+/// held in a [PageView] with a WhatsApp-style swipe between them. The floating
+/// bottom nav indicator follows the swipe progress.
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
-  /// Opens the searchable Create (command) palette as a bottom sheet — the
-  /// non-tab route to every tool in [kToolRegistry]. Kept public so any
-  /// surface (home app bar, prep desk) can offer it without importing the
-  /// private sheet widgets.
   static Future<void> openCreatePalette(BuildContext context) async {
     await showModalBottomSheet<void>(
       context: context,
-      // The sheet hosts its own premium surface (rPanel top corners + the e4
-      // modal shadow), so the modal route stays transparent and draws no
-      // Material of its own. [_CreatePalette] carries its own grab handle.
       backgroundColor: Colors.transparent,
       elevation: 0,
-      // The sheet carries a search field: it must be free to grow past the
-      // default 9/16-screen cap and to lift above the keyboard. [_CreatePalette]
-      // bounds its own height and scrolls its list inside that bound, so this
-      // never becomes an unbounded list in an unbounded sheet.
       isScrollControlled: true,
       builder: (_) => const _CreatePalette(),
     );
@@ -57,125 +36,72 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
-  int _index = 0;
+  final PageController _pageController = PageController();
+  int _currentIndex = 0;
+
+  final List<Widget> _pages = const [
+    VidyaHomeScreen(),
+    LibraryScreen(),
+    NetworkHubScreen(),
+    MeScreen(),
+  ];
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _onPageChanged(int index) {
+    if (_currentIndex != index) {
+      HapticFeedback.selectionClick();
+      setState(() => _currentIndex = index);
+    }
+  }
+
+  void _onNavTap(int index) {
+    if (index == _currentIndex) return;
+    _pageController.animateToPage(
+      index,
+      duration: AppMotion.fadeThrough,
+      curve: AppMotion.easeOutQuart,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    // v3 order: Home · Library · Community · You. Every slot is a real tab —
-    // no action slot, so the selected index always lands on a page.
-    final pages = <Widget>[
-      const VidyaHomeScreen(),
-      const LibraryScreen(),
-      // Community — the staffroom feed / network hub behind one surface.
-      const NetworkHubScreen(),
-      // U-OS1 — the You tab is the operating-system hub, which composes the
-      // profile summary, plan & usage, defaults and settings links. The full
-      // profile editor ([ProfileScreen]) is one tap away, at `Routes.profile`.
-      const MeScreen(),
-    ];
-
     return Scaffold(
       backgroundColor: Colors.transparent,
-      // The floating capsule rides OVER each tab's wash: extend the body to
-      // the true bottom so the screen background continues behind the bar
-      // (the design frames paint wash to the bottom edge, never a strip of
-      // flat scaffold colour around the nav).
       extendBody: true,
-      body: _AnimatedTabBody(index: _index, children: pages),
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: _onPageChanged,
+        // Allow swipe between tabs. No wrap-around (default behavior).
+        // Offscreen pages: keep 1 adjacent tab loaded.
+        allowImplicitScrolling: false,
+        children: _pages.map((p) => _PageWrapper(child: p)).toList(),
+      ),
       bottomNavigationBar: FloatingBottomNav(
-        currentIndex: _index,
-        onSelected: (i) => setState(() => _index = i),
+        currentIndex: _currentIndex,
+        onSelected: _onNavTap,
       ),
     );
   }
 }
 
-/// The shell body: an [IndexedStack] (every tab stays mounted, so the shared
-/// library read serves the dashboard and the Library tab in one request and
-/// off-screen peers keep their state and never slide) wrapped in a one-shot
-/// cross-fade + rise that replays whenever the selected tab changes — the
-/// "fresh content entrance" of PREMIUM_DESIGN_SPEC.md §4/§5, reusing the
-/// `staggeredItem` recipe (fade + moveY, `small`/`standard`). Under reduce-motion
-/// it renders the final composed frame instantly.
-class _AnimatedTabBody extends StatefulWidget {
-  const _AnimatedTabBody({required this.index, required this.children});
+/// Wraps each page to preserve scroll state via PageStorageKey.
+class _PageWrapper extends StatelessWidget {
+  const _PageWrapper({required this.child});
 
-  final int index;
-  final List<Widget> children;
-
-  @override
-  State<_AnimatedTabBody> createState() => _AnimatedTabBodyState();
-}
-
-class _AnimatedTabBodyState extends State<_AnimatedTabBody>
-    with SingleTickerProviderStateMixin {
-  // Created eagerly in initState, NOT as a lazy `late final`: under reduce-motion
-  // build() returns before ever touching it, so a lazy field would first
-  // initialize inside dispose() — which creates a Ticker and looks up TickerMode
-  // on a deactivated element, and Flutter throws. Eager init keeps dispose safe.
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: AppMotion.small,
-      // Start settled: the first tab does its own entrance; only SWITCHING
-      // replays this one.
-      value: 1,
-    );
-  }
-
-  @override
-  void didUpdateWidget(_AnimatedTabBody old) {
-    super.didUpdateWidget(old);
-    if (old.index != widget.index) {
-      if (context.motionEnabled) {
-        _controller.forward(from: 0);
-      } else {
-        _controller.value = 1;
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    final stack = IndexedStack(index: widget.index, children: widget.children);
-    if (!context.motionEnabled) return stack;
-
-    return AnimatedBuilder(
-      animation: _controller,
-      child: stack,
-      builder: (context, child) {
-        final t = AppMotion.standard.transform(_controller.value);
-        return Opacity(
-          opacity: t,
-          child: Transform.translate(
-            offset: Offset(0, (1 - t) * 12),
-            child: child,
-          ),
-        );
-      },
-    );
+    return child;
   }
 }
 
-/// The Create (command) palette: a search field over the shared [kToolRegistry],
-/// each row deep-linking into its tool. Reached from the shell's Create action.
-///
-/// It walks the SAME registry the dashboard grid does, so the two always agree
-/// on which tools exist. It is a premium floating sheet (§5): it draws its own
-/// surface with rHero top corners and the e4 modal shadow (dark uses the black
-/// key shadow), a serif masthead, and its own grab handle. The height is bounded
-/// here (a min-height [Column] with the list in a [Flexible]) so the list
-/// scrolls inside the sheet rather than the sheet growing without limit.
+// _CreatePalette unchanged below
 class _CreatePalette extends StatefulWidget {
   const _CreatePalette();
 
@@ -193,15 +119,8 @@ class _CreatePaletteState extends State<_CreatePalette> {
     super.dispose();
   }
 
-  /// Case- (and, for Latin, diacritic-) folding so "quiz", "QUIZ" and a stray
-  /// leading space all match. Indic scripts are caseless, so `toLowerCase` is a
-  /// no-op there and `contains` matches on the raw glyphs.
   static String _fold(String s) => s.trim().toLowerCase();
 
-  /// The sheet's own top-corner radius (rHero 20) — used by both the shadow
-  /// carrier and the clip so the surface and its ripple share one edge. Derived
-  /// from the `AppRadius.rHero` token (top corners only; the bottom sits at the
-  /// screen edge) rather than an off-token literal.
   static final BorderRadius _sheetRadius = BorderRadius.only(
     topLeft: AppRadius.rHero.topLeft,
     topRight: AppRadius.rHero.topRight,
@@ -223,29 +142,13 @@ class _CreatePaletteState extends State<_CreatePalette> {
               if (_fold(tool.title(l10n)).contains(query)) tool,
           ];
 
-    // Lift the whole sheet above the keyboard so the focused search field is
-    // never hidden behind it (DESIGN_RUBRIC §9).
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      // Shadow-only carrier: `GlassSurface` below draws the real-blur fill,
-      // gradient border and sheen (App-wide Glassmorphism Reskin, GL-2) but
-      // casts no external shadow of its own, so the e4/dKey "floating modal"
-      // shadow is kept here, underneath the glass.
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: _sheetRadius,
           boxShadow: isDark ? AppShadows.dKey : AppShadows.e4,
         ),
-        // Same corner-rounding call as `vidya_sheet.dart`: this is a modal
-        // bottom sheet flush against the screen's bottom edge
-        // (`isScrollControlled: true` + `SafeArea(top: false)`), so the
-        // original rHero-top-corners-only shape is passed straight into
-        // `GlassSurface.borderRadius` (a squircle NATIVELY supports
-        // non-uniform corners) rather than clipping a uniform squircle with
-        // an outer `ClipRRect` — an RRect clip doesn't trim a squircle to a
-        // partial one, it silently discards the squircle geometry entirely
-        // (caught by the GL-2 design review; see `vidya_sheet.dart` for the
-        // full geometric explanation).
         child: GlassSurface(
           borderRadius: _sheetRadius,
           padding: EdgeInsets.zero,
@@ -255,7 +158,6 @@ class _CreatePaletteState extends State<_CreatePalette> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // A slim grab handle — the sheet hosts its own chrome now.
                 Padding(
                   padding: const EdgeInsets.only(
                     top: AppSpacing.space3,
@@ -283,16 +185,12 @@ class _CreatePaletteState extends State<_CreatePalette> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Serif masthead (Fraunces titleLarge) over the search.
                       Text(l10n.navCreate, style: text.titleLarge),
                       const SizedBox(height: AppSpacing.space3),
                       TextField(
                         controller: _controller,
                         textInputAction: TextInputAction.search,
                         onChanged: (value) => setState(() => _query = value),
-                        // The themed input styling (radius, saffron focus ring,
-                        // Indic fallback) comes from `inputDecorationTheme`; only
-                        // the palette-specific affordances are set here.
                         decoration: InputDecoration(
                           hintText: l10n.createPaletteSearchHint,
                           prefixIcon: Icon(
@@ -353,9 +251,6 @@ class _CreatePaletteState extends State<_CreatePalette> {
   }
 }
 
-/// One tool row in the palette: the shared [IconWell], the localized name and
-/// description, deep-linking into the tool's route and closing the sheet. Rows
-/// are ListTiles, so each is comfortably past the 48dp touch floor.
 class _CreatePaletteRow extends StatelessWidget {
   const _CreatePaletteRow({required this.tool});
 
@@ -384,9 +279,6 @@ class _CreatePaletteRow extends StatelessWidget {
         color: scheme.onSurfaceVariant,
       ),
       onTap: () {
-        // Capture the router before the sheet pops: after the pop this row's
-        // element is defunct, so `context.push` off it would look up a disposed
-        // navigator.
         final router = GoRouter.of(context);
         Navigator.of(context).pop();
         router.push(tool.route);

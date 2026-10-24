@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
 import 'core/firebase/firebase_init.dart';
+import 'core/notifications/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,6 +15,10 @@ void main() async {
   try {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('app_theme_mode');
+  } catch (_) {}
+  // Initialize notification service (channels, permission deferred to first use).
+  try {
+    await NotificationService.instance.initialize();
   } catch (_) {}
   runApp(const ProviderScope(child: SahayakApp()));
 }
