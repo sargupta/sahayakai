@@ -493,11 +493,11 @@
   "@lessonPlanTitle": {
     "description": "Lesson Plan tool title (app bar and dashboard tile)."
   },
-  "lessonPlanSubtitle": "Plan a full 5E lesson",
+  "lessonPlanSubtitle": "Plan a full lesson",
   "@lessonPlanSubtitle": {
     "description": "Lesson Plan dashboard tile subtitle."
   },
-  "lessonPlanEmpty": "Add a topic and tap Generate to build a 5E lesson plan.",
+  "lessonPlanEmpty": "Add a topic and tap Generate to build a lesson plan.",
   "@lessonPlanEmpty": {
     "description": "Lesson Plan idle/empty state before generating."
   },
@@ -581,9 +581,9 @@
   "@lessonPlanMaterials": {
     "description": "Result section heading for materials."
   },
-  "lessonPlanActivities": "5E activities",
+  "lessonPlanActivities": "Activities",
   "@lessonPlanActivities": {
-    "description": "Result section heading for the 5E activities."
+    "description": "Result section heading for the activities."
   },
   "lessonPlanAssessment": "Assessment",
   "@lessonPlanAssessment": {

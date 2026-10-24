@@ -118,7 +118,7 @@ class LessonPlanResultView extends StatelessWidget {
     ];
 
     return DocumentSheet(
-      docType: '${l10n.lessonPlanTitle} · 5E',
+      docType: l10n.lessonPlanTitle,
       title: plan.title,
       meta: meta,
       footer: onRegenerate == null

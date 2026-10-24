@@ -10,7 +10,6 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/platform/clock.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_gradients.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../shared/motion/animated_entrance.dart';
 import '../../../shared/widgets/language_switcher.dart';
@@ -423,65 +422,92 @@ String _formatTodayFull(BuildContext context, DateTime day) {
 
 // ─── Today card (actionable strip) ─────────────────────────────────────────
 
-class _TodayCard extends StatelessWidget {
+class _TodayCard extends StatefulWidget {
   const _TodayCard();
 
   @override
+  State<_TodayCard> createState() => _TodayCardState();
+}
+
+class _TodayCardState extends State<_TodayCard> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0x14171310), width: 1),
-      ),
-      padding: const EdgeInsets.all(14),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: const Color(0x1FFAF1E8),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            alignment: Alignment.center,
-            child: const Icon(LucideIcons.clipboardCheck, size: 18, color: AppColors.saffron600),
+    return GestureDetector(
+      onTap: () => context.push(Routes.attendance),
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
+      child: AnimatedScale(
+        scale: _pressed ? 0.98 : 1.0,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOut,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          curve: Curves.easeOut,
+          decoration: BoxDecoration(
+            color: _pressed ? const Color(0xFFF5F0E8) : Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0x14171310), width: 1),
           ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Today',
-                  style: TextStyle(
-                    fontFamily: 'Bricolage Grotesque',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textStrong,
-                    height: 1.2,
-                  ),
+          constraints: const BoxConstraints(minHeight: 48),
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: const Color(0x1FFAF1E8),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                SizedBox(height: 2),
-                Text(
-                  'Start with your class roll call',
-                  style: TextStyle(
-                    fontFamily: 'Instrument Sans',
-                    fontSize: 12,
-                    color: AppColors.textBody,
-                    height: 1.3,
-                  ),
+                alignment: Alignment.center,
+                child: const Icon(LucideIcons.clipboardCheck, size: 18, color: AppColors.saffron600),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Today',
+                      style: TextStyle(
+                        fontFamily: 'Bricolage Grotesque',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textStrong,
+                        height: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      'Start with your class roll call',
+                      style: TextStyle(
+                        fontFamily: 'Instrument Sans',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.textBody,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              const Icon(
+                LucideIcons.chevronRight,
+                size: 18,
+                color: AppColors.textMuted,
+              ),
+            ],
           ),
-          const Icon(LucideIcons.chevronRight, size: 18, color: AppColors.textMuted),
-        ],
+        ),
       ),
     );
   }
 }
+
 
 // ─── Tile grid (2x2 equal) ─────────────────────────────────────────────────
 
@@ -522,7 +548,7 @@ class _TileGrid extends StatelessWidget {
                     tint: const Color(0x1F2C5F2D),
                     border: const Color(0x332C5F2D),
                     title: l10n.homeTileLesson,
-                    subtitle: 'Plan a 5E lesson',
+                    subtitle: 'Plan a lesson',
                     onTap: () => context.push(Routes.lessonPlan),
                   ),
                 ),

@@ -125,7 +125,7 @@ void main() {
 
     expect(find.byType(DocumentSheet), findsOneWidget);
     // The masthead doc-type eyebrow (uppercased Latin) and the Fraunces title.
-    expect(find.text('LESSON PLAN · 5E'), findsOneWidget);
+    expect(find.text('LESSON PLAN'), findsOneWidget);
     expect(find.text('Photosynthesis for Class 6'), findsOneWidget);
     // objectives, vocabulary, materials, activities, assessment, homework.
     expect(find.byType(DocumentSheetSection), findsNWidgets(6));
