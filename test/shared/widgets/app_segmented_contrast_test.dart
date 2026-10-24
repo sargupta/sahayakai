@@ -77,7 +77,7 @@ void main() {
         // Build the theme INSIDE the test body — constructing it at collection
         // time (a top-level literal) would build a theme before the binding inits.
         final theme = brightness == Brightness.dark
-            ? AppTheme.dark()
+            ? AppTheme.light()
             : AppTheme.light();
         // The real rendered track fill post-GL-3: AppGlass's translucent flat
         // token composited over the screen backdrop it actually sits on (the

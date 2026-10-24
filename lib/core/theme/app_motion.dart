@@ -52,6 +52,39 @@ class AppMotion {
   static const Duration sheetEnter = Duration(milliseconds: 400);
   static const Duration sheetExit = Duration(milliseconds: 300);
 
+  // -----------------------------------------------------------------------
+  // M3 CONTAINER / SHARED-AXIS / FADE-THROUGH (Material 3 motion tokens)
+  // -----------------------------------------------------------------------
+  /// Container transform: card -> screen expand (Google Photos / M3).
+  static const Duration containerTransform = Duration(milliseconds: 300);
+
+  /// Shared-axis horizontal: push/pop inside a flow.
+  static const Duration sharedAxis = Duration(milliseconds: 300);
+
+  /// Fade-through: bottom-nav tab switch.
+  static const Duration fadeThrough = Duration(milliseconds: 220);
+
+  /// Dialog fade+scale.
+  static const Duration dialogScale = Duration(milliseconds: 200);
+
+  /// Swipe-to-dismiss settle.
+  static const Duration swipeDismiss = Duration(milliseconds: 200);
+
+  /// Branded spinner one full rotation (sweep length varies).
+  static const Duration spinnerRotation = Duration(milliseconds: 1100);
+
+  /// Anti-flicker: show loader only after this delay.
+  static const Duration loaderShowDelay = Duration(milliseconds: 150);
+
+  /// Anti-flicker: keep loader at least this long once shown.
+  static const Duration loaderMinDisplay = Duration(milliseconds: 400);
+
+  /// Slow-state threshold: add "Still working..." after this.
+  static const Duration loaderSlowThreshold = Duration(seconds: 8);
+
+  /// Reduce-motion fallback duration (instant).
+  static const Duration reduceMotion = Duration.zero;
+
   /// Standard easing alias (same cubic-bezier(.4,0,.2,1)).
   static const Cubic standardEasing = standard;
 

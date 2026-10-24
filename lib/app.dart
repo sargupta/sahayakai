@@ -7,7 +7,6 @@ import 'core/i18n/gen/app_localizations.dart';
 import 'core/i18n/locale_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
-import 'core/theme/theme_mode_provider.dart';
 import 'features/vidya/presentation/vidya_overlay.dart';
 import 'shared/scroll/no_overscroll_behavior.dart';
 import 'shared/widgets/app_background.dart';
@@ -21,21 +20,15 @@ class SahayakApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     final locale = ref.watch(localeControllerProvider);
-    final themeMode = ref.watch(themeModeControllerProvider);
 
     final light = locale.isIndic
         ? AppTheme.withIndic(AppTheme.light())
         : AppTheme.light();
-    final dark = locale.isIndic
-        ? AppTheme.withIndic(AppTheme.dark())
-        : AppTheme.dark();
 
     return MaterialApp.router(
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       debugShowCheckedModeBanner: false,
       theme: light,
-      darkTheme: dark,
-      themeMode: themeMode,
       routerConfig: router,
       // Remove iOS rubber-band overscroll / glow — Instagram-style clamping scroll.
       scrollBehavior: const NoOverscrollBehavior(),

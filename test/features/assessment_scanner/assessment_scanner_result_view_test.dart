@@ -123,7 +123,7 @@ void main() {
     for (final brightness in Brightness.values) {
       test('marks badge + outcome chips clear 4.5:1 in ${brightness.name}', () {
         final scheme =
-            (brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light())
+            (brightness == Brightness.dark ? AppTheme.light() : AppTheme.light())
                 .colorScheme;
         final isDark = brightness == Brightness.dark;
 
@@ -168,7 +168,7 @@ void main() {
     for (final brightness in Brightness.values) {
       test('every fixed site clears 4.5:1 in ${brightness.name}', () {
         final scheme =
-            (brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light())
+            (brightness == Brightness.dark ? AppTheme.light() : AppTheme.light())
                 .colorScheme;
 
         // 1. Empty page-capture well prompt — on the well's surfaceContainerHigh.
@@ -203,7 +203,7 @@ void main() {
         (tester) async {
           final scheme =
               (brightness == Brightness.dark
-                      ? AppTheme.dark()
+                      ? AppTheme.light()
                       : AppTheme.light())
                   .colorScheme;
           const unscored = AssessmentResult(

@@ -70,7 +70,7 @@ Widget _host({
   return ProviderScope(
     child: MaterialApp.router(
       routerConfig: router,
-      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+      theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,

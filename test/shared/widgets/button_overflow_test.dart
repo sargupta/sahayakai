@@ -26,7 +26,7 @@ const _longLabel =
 
 Widget _host(Widget child, {Brightness brightness = Brightness.light}) {
   return MaterialApp(
-    theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+    theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
     home: Scaffold(
       body: Center(
         // A bounded, narrow width forces the label to wrap — the exact case

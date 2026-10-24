@@ -295,7 +295,7 @@ Future<_HostState> _pumpInput(
       overrides: [imagePickerServiceProvider.overrideWithValue(service)],
       child: MaterialApp(
         theme: brightness == Brightness.dark
-            ? AppTheme.dark()
+            ? AppTheme.light()
             : AppTheme.light(),
         locale: const Locale('en'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,

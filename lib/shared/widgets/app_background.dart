@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_gradients.dart';
 
 /// Reusable app-wide background for the reference "Two periods, one prep gap"
@@ -18,19 +17,19 @@ class AppBackground extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         // Diagonal 4-stop pastel wash (the reference background).
-        Positioned.fill(
+        const Positioned.fill(
           child: DecoratedBox(
-            decoration: const BoxDecoration(gradient: AppGradients.washDefault),
+            decoration: BoxDecoration(gradient: AppGradients.washDefault),
           ),
         ),
         // Single soft saffron orb bleeding off the top-right corner.
-        Positioned(
+        const Positioned(
           top: -46,
           right: -54,
           width: 214,
           height: 214,
           child: DecoratedBox(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: AppGradients.glowSaffron,
             ),

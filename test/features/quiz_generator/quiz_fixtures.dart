@@ -30,7 +30,7 @@ Widget hostResult(
   bool reduceMotion = false,
 }) {
   return MaterialApp(
-    theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+    theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
     locale: const Locale('en'),
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,

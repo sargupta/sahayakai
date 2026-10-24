@@ -33,7 +33,7 @@ void main() {
         ],
         child: MaterialApp(
           theme: brightness == Brightness.dark
-              ? AppTheme.dark()
+              ? AppTheme.light()
               : AppTheme.light(),
           locale: const Locale('en'),
           localizationsDelegates: AppLocalizations.localizationsDelegates,

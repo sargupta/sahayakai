@@ -380,11 +380,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get lessonPlanSubtitle => 'Plan a full 5E lesson';
+  String get lessonPlanSubtitle => 'Plan a full lesson';
 
   @override
   String get lessonPlanEmpty =>
-      'Add a topic and tap Generate to build a 5E lesson plan.';
+      'Add a topic and tap Generate to build a lesson plan.';
 
   @override
   String get lessonPlanTopicLabel => 'Topic';
@@ -448,7 +448,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lessonPlanMaterials => 'Materials';
 
   @override
-  String get lessonPlanActivities => '5E activities';
+  String get lessonPlanActivities => 'Activities';
 
   @override
   String get lessonPlanAssessment => 'Assessment';

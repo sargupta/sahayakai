@@ -41,13 +41,10 @@ class SplashScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final boot = ref.watch(appBootstrapProvider);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      // This screen has no AppBar, so nothing else sets the status-bar style
-      // for it. Derived from the theme rather than hardcoded, so the dark
-      // theme gets light icons (DESIGN_RUBRIC §9).
-      value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+      // Light-only app: dark status-bar icons on the warm cream background.
+      value: SystemUiOverlayStyle.dark,
       child: Scaffold(
         body: SafeArea(
           child: LayoutBuilder(
@@ -282,9 +279,7 @@ class _Seal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final brass = isDark ? AppColors.dBrandBrass : AppColors.brandBrass;
+    const brass = AppColors.brandBrass;
     return Container(
       width: 96,
       height: 96,
@@ -292,12 +287,10 @@ class _Seal extends StatelessWidget {
         shape: BoxShape.circle,
         color: AppColors.brandSaffron,
         border: Border.all(color: brass, width: 2),
-        // Lift off the ivory ground; on espresso the bright seal carries itself,
-        // so no muddy warm shadow there (§2.3 dark model).
-        boxShadow: isDark ? null : AppShadows.e2,
+        boxShadow: AppShadows.e2,
       ),
       alignment: Alignment.center,
-      child: Icon(LucideIcons.graduationCap, size: 40, color: scheme.onPrimary),
+      child: const Icon(LucideIcons.graduationCap, size: 40, color: AppColors.textOnAccent),
     );
   }
 }

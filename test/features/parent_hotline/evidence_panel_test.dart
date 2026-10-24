@@ -29,7 +29,7 @@ Future<void> _pump(
 
   await tester.pumpWidget(
     MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+      theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,

@@ -40,7 +40,7 @@ Widget _host({
   return ProviderScope(
     overrides: overrides,
     child: MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+      theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
       locale: const Locale('en'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,

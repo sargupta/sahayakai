@@ -388,11 +388,11 @@ class AppLocalizationsKn extends AppLocalizations {
   }
 
   @override
-  String get lessonPlanSubtitle => 'ಪೂರ್ಣ 5E ಪಾಠವನ್ನು ಯೋಜಿಸಿ';
+  String get lessonPlanSubtitle => 'ಪೂರ್ಣ ಪಾಠವನ್ನು ಯೋಜಿಸಿ';
 
   @override
   String get lessonPlanEmpty =>
-      'ಒಂದು ಟಾಪಿಕ್ ಸೇರಿಸಿ, 5E ಪಾಠ ಯೋಜನೆ ರಚಿಸಲು ರಚಿಸಿ ಒತ್ತಿರಿ.';
+      'ಒಂದು ಟಾಪಿಕ್ ಸೇರಿಸಿ, ಪಾಠ ಯೋಜನೆ ರಚಿಸಲು ರಚಿಸಿ ಒತ್ತಿರಿ.';
 
   @override
   String get lessonPlanTopicLabel => 'ಟಾಪಿಕ್';
@@ -456,7 +456,7 @@ class AppLocalizationsKn extends AppLocalizations {
   String get lessonPlanMaterials => 'ಸಾಮಗ್ರಿಗಳು';
 
   @override
-  String get lessonPlanActivities => '5E ಚಟುವಟಿಕೆಗಳು';
+  String get lessonPlanActivities => 'ಚಟುವಟಿಕೆಗಳು';
 
   @override
   String get lessonPlanAssessment => 'ಮೌಲ್ಯಮಾಪನ';

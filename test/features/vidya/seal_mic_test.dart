@@ -19,7 +19,7 @@ Future<void> _pumpSeal(
 }) async {
   await tester.pumpWidget(
     MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+      theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
       home: Builder(
         builder: (context) => MediaQuery(
           data: MediaQuery.of(

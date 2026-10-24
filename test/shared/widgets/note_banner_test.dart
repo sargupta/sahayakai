@@ -11,7 +11,7 @@ import 'package:sahayakai/shared/widgets/note_banner.dart';
 void main() {
   Widget host(Widget child, {Brightness brightness = Brightness.light}) {
     return MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+      theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
       home: Scaffold(
         body: SingleChildScrollView(
           padding: AppSpacing.pagePadding,

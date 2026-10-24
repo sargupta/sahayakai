@@ -35,7 +35,7 @@ double _ratio(Color a, Color b) {
 void main() {
   Widget host(Widget child, {required Brightness brightness}) {
     return MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+      theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
       home: Scaffold(
         body: SingleChildScrollView(
           padding: AppSpacing.pagePadding,

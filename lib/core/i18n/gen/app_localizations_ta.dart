@@ -395,11 +395,11 @@ class AppLocalizationsTa extends AppLocalizations {
   }
 
   @override
-  String get lessonPlanSubtitle => 'முழு 5E பாடத்தைத் திட்டமிடுங்கள்';
+  String get lessonPlanSubtitle => 'முழு பாடத்தைத் திட்டமிடுங்கள்';
 
   @override
   String get lessonPlanEmpty =>
-      'ஒரு தலைப்பைச் சேர்த்து, 5E பாடத் திட்டத்தை உருவாக்க உருவாக்கு என்பதைத் தட்டவும்.';
+      'ஒரு தலைப்பைச் சேர்த்து, பாடத் திட்டத்தை உருவாக்க உருவாக்கு என்பதைத் தட்டவும்.';
 
   @override
   String get lessonPlanTopicLabel => 'தலைப்பு';
@@ -464,7 +464,7 @@ class AppLocalizationsTa extends AppLocalizations {
   String get lessonPlanMaterials => 'பொருட்கள்';
 
   @override
-  String get lessonPlanActivities => '5E செயல்பாடுகள்';
+  String get lessonPlanActivities => 'செயல்பாடுகள்';
 
   @override
   String get lessonPlanAssessment => 'மதிப்பீடு';

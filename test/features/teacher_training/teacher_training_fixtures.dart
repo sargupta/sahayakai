@@ -27,7 +27,7 @@ const Size kNarrowPhone = Size(360, 900);
 /// cards, so no horizontal scroll should ever appear.
 Widget hostResult(Widget child, {Brightness brightness = Brightness.light}) {
   return MaterialApp(
-    theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+    theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
     locale: const Locale('en'),
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,

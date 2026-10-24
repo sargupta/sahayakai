@@ -13,7 +13,7 @@ const _wide = Size(800, 900);
 
 Widget _host({required Widget child, required Brightness brightness}) {
   return MaterialApp(
-    theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+    theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
     home: Scaffold(
       body: Center(
         child: SingleChildScrollView(

@@ -104,7 +104,7 @@ Future<void> _pump(
       ],
       child: MaterialApp.router(
         theme: brightness == Brightness.dark
-            ? AppTheme.dark()
+            ? AppTheme.light()
             : AppTheme.light(),
         locale: const Locale('en'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,

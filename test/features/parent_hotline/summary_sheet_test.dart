@@ -128,7 +128,7 @@ Future<void> _pump(
 
   await tester.pumpWidget(
     MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+      theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -332,7 +332,7 @@ void main() {
             );
             final scheme =
                 (brightness == Brightness.dark
-                        ? AppTheme.dark()
+                        ? AppTheme.light()
                         : AppTheme.light())
                     .colorScheme;
 
@@ -392,7 +392,7 @@ void main() {
           brightness: brightness,
         );
         final scheme =
-            (brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light())
+            (brightness == Brightness.dark ? AppTheme.light() : AppTheme.light())
                 .colorScheme;
 
         // Expand so the agent turn is in the tree.

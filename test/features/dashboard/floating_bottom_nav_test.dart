@@ -32,7 +32,7 @@ Future<void> _pumpNav(
   var selected = initialIndex;
   await tester.pumpWidget(
     MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+      theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
       // The bar is icon-only visually but carries localized screen-reader
       // labels (v3), so it resolves `context.l10n` — the host must install the
       // app's delegates or `AppLocalizations.of` throws on the first build.

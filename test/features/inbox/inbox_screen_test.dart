@@ -92,7 +92,7 @@ Future<FakeInboxTransport> _pump(
   ];
 
   final theme = brightness == Brightness.dark
-      ? AppTheme.dark()
+      ? AppTheme.light()
       : AppTheme.light();
 
   if (router) {

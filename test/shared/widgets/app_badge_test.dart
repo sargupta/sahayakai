@@ -51,7 +51,7 @@ Color _accentLabelColor(WidgetTester tester, String label) =>
     tester.widget<Text>(find.text(label)).style!.color!;
 
 Widget _host(Brightness brightness, Widget child) => MaterialApp(
-  theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+  theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
   home: Scaffold(body: Center(child: child)),
 );
 

@@ -803,13 +803,13 @@ abstract class AppLocalizations {
   /// Lesson Plan dashboard tile subtitle.
   ///
   /// In en, this message translates to:
-  /// **'Plan a full 5E lesson'**
+  /// **'Plan a full lesson'**
   String get lessonPlanSubtitle;
 
   /// Lesson Plan idle/empty state before generating.
   ///
   /// In en, this message translates to:
-  /// **'Add a topic and tap Generate to build a 5E lesson plan.'**
+  /// **'Add a topic and tap Generate to build a lesson plan.'**
   String get lessonPlanEmpty;
 
   /// Label for the required lesson topic field.
@@ -932,10 +932,10 @@ abstract class AppLocalizations {
   /// **'Materials'**
   String get lessonPlanMaterials;
 
-  /// Result section heading for the 5E activities.
+  /// Result section heading for the activities.
   ///
   /// In en, this message translates to:
-  /// **'5E activities'**
+  /// **'Activities'**
   String get lessonPlanActivities;
 
   /// Result section heading for assessment.

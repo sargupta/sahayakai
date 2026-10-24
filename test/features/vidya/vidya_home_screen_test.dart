@@ -117,7 +117,7 @@ Future<void> _pumpHome(
       ],
       child: MaterialApp(
         theme: brightness == Brightness.dark
-            ? AppTheme.dark()
+            ? AppTheme.light()
             : AppTheme.light(),
         locale: locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,

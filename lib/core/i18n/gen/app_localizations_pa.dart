@@ -386,11 +386,11 @@ class AppLocalizationsPa extends AppLocalizations {
   }
 
   @override
-  String get lessonPlanSubtitle => 'ਪੂਰਾ 5E ਪਾਠ ਯੋਜਨਾਬੱਧ ਕਰੋ';
+  String get lessonPlanSubtitle => 'ਪੂਰਾ ਪਾਠ ਯੋਜਨਾਬੱਧ ਕਰੋ';
 
   @override
   String get lessonPlanEmpty =>
-      'ਇੱਕ ਟੌਪਿਕ ਜੋੜੋ ਅਤੇ 5E ਪਾਠ ਯੋਜਨਾ ਬਣਾਉਣ ਲਈ ਬਣਾਓ ਦਬਾਓ।';
+      'ਇੱਕ ਟੌਪਿਕ ਜੋੜੋ ਅਤੇ ਪਾਠ ਯੋਜਨਾ ਬਣਾਉਣ ਲਈ ਬਣਾਓ ਦਬਾਓ।';
 
   @override
   String get lessonPlanTopicLabel => 'ਟੌਪਿਕ';
@@ -454,7 +454,7 @@ class AppLocalizationsPa extends AppLocalizations {
   String get lessonPlanMaterials => 'ਸਮੱਗਰੀ';
 
   @override
-  String get lessonPlanActivities => '5E ਗਤੀਵਿਧੀਆਂ';
+  String get lessonPlanActivities => 'ਗਤੀਵਿਧੀਆਂ';
 
   @override
   String get lessonPlanAssessment => 'ਮੁਲਾਂਕਣ';

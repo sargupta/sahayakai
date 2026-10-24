@@ -24,7 +24,7 @@ Future<void> _pump(
 
   await tester.pumpWidget(
     MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+      theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
       home: Scaffold(
         body: Padding(padding: const EdgeInsets.all(16), child: child),
       ),
