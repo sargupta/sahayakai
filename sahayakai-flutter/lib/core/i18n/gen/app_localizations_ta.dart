@@ -4044,14 +4044,14 @@ class AppLocalizationsTa extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: 'இன்று $count வேலைகள் காத்திருக்கின்றன',
-      one: 'இன்று 1 வேலை காத்திருக்கிறது',
+      other: 'இன்று $count வேலைகள் உள்ளன',
+      one: 'இன்று 1 வேலை உள்ளது',
     );
     return '$_temp0';
   }
 
   @override
-  String get homeDayClear => 'இன்று எதுவும் காத்திருக்கவில்லை';
+  String get homeDayClear => 'இன்று எந்த வேலையும் இல்லை';
 
   @override
   String homeSayCallAbsentees(int count, String className) {
