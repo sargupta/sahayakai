@@ -152,15 +152,6 @@ class _AlmanacHeader extends ConsumerWidget {
         const SizedBox(height: AppSpacing.space2),
         Text(greeting, style: text.displayLarge),
         const SizedBox(height: AppSpacing.space3),
-        // The 2px x 48dp saffron masthead rule under the greeting.
-        const SizedBox(
-          width: 48,
-          height: 2,
-          child: DecoratedBox(
-            decoration: BoxDecoration(gradient: AppGradients.accentBar),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.space3),
         Text(
           dateLine,
           style: extras.dataMedium.copyWith(color: scheme.onSurfaceVariant),
@@ -218,7 +209,6 @@ class _SetupNudgeState extends ConsumerState<_SetupNudge> {
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.space4),
       child: AppCard(
-        accentBar: true,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -318,7 +308,6 @@ class _FeatureTile extends StatelessWidget {
 
     return AppCard(
       variant: AppCardVariant.elevated,
-      accentBar: true,
       onTap: () => context.push(tool.route),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

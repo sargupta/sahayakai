@@ -51,7 +51,6 @@ class DocumentSheet extends StatelessWidget {
         constraints: BoxConstraints(maxWidth: maxWidth),
         child: AppCard(
           variant: AppCardVariant.elevated,
-          accentBar: true,
           padding: EdgeInsets.all(pad),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,13 +60,6 @@ class DocumentSheet extends StatelessWidget {
               Text(docTypeLabel, style: extras.eyebrow),
               const SizedBox(height: AppSpacing.space2),
               Text(title, style: text.displaySmall),
-              const SizedBox(height: AppSpacing.space3),
-              const SizedBox(
-                height: 2,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(gradient: AppGradients.accentBar),
-                ),
-              ),
               if (meta.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.space3),
                 Wrap(

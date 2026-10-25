@@ -20,7 +20,6 @@ import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/library_item_row.dart';
 import '../../../shared/widgets/offline_view.dart';
 import '../../../shared/widgets/secondary_button.dart';
-import '../../vidya/presentation/vidya_sheet.dart';
 
 /// My Library — the teacher's own saved work.
 ///
@@ -55,7 +54,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     return Scaffold(
       appBar: GlassAppBar(
         title: Text(context.l10n.libraryTitle),
-        actions: const [VidyaAppBarAction()],
       ),
       body: SafeArea(
         child: RefreshIndicator(

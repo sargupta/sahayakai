@@ -107,8 +107,8 @@ void main() {
         expect(find.text('Did you know?'), findsWidgets);
         expect(find.text('Think about this'), findsWidgets);
         // The analogy + explanation section labels render.
-        expect(find.text('In our context'), findsWidgets);
-        expect(find.text('Why we visit'), findsWidgets);
+        expect(findEyebrow('In our context'), findsWidgets);
+        expect(findEyebrow('Why we visit'), findsWidgets);
         // The document footer offers Regenerate + Done.
         expect(find.text('Regenerate'), findsOneWidget);
         expect(find.text('Done'), findsOneWidget);

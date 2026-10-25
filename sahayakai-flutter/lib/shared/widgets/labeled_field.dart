@@ -21,6 +21,7 @@ import '../../core/theme/app_theme.dart';
 ///     [optionalLabel] and [counterText] sit in the label row (10px, muted).
 ///   • [trailing] (e.g. the inline VIDYA mic) sits on the value row, 10px
 ///     after the input, as the v2 mic disc does.
+///   • No icon before the label: the v2 Field label is text only.
 ///
 /// The card is drawn only around a text input or a dropdown — the controls
 /// the v2 Field describes. Any other control (a chip group, a segmented
@@ -28,8 +29,8 @@ import '../../core/theme/app_theme.dart';
 /// card, because v2 never nests a card in a card and those controls carry
 /// their own surfaces.
 ///
-/// The API ({label, child, optionalLabel, hint, errorText, leadingIcon,
-/// counterText, trailing}) is unchanged, so every call site keeps working.
+/// The API is {label, child, optionalLabel, hint, errorText, counterText,
+/// trailing}.
 class LabeledField extends StatefulWidget {
   const LabeledField({
     super.key,
@@ -38,7 +39,6 @@ class LabeledField extends StatefulWidget {
     this.optionalLabel,
     this.hint,
     this.errorText,
-    this.leadingIcon,
     this.counterText,
     this.trailing,
   });
@@ -54,9 +54,6 @@ class LabeledField extends StatefulWidget {
 
   /// A field-level error shown under the value in `red-700`.
   final String? errorText;
-
-  /// An optional leading glyph before the label (long forms).
-  final IconData? leadingIcon;
 
   /// An optional right-aligned tabular counter (e.g. "0 / 1000").
   final String? counterText;
@@ -99,14 +96,6 @@ class _LabeledFieldState extends State<LabeledField> {
     final head = Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        if (widget.leadingIcon != null) ...[
-          Icon(
-            widget.leadingIcon,
-            size: AppIconSize.inline,
-            color: isDark ? scheme.onSurfaceVariant : AppColors.textMuted,
-          ),
-          const SizedBox(width: 7), // space-3
-        ],
         Flexible(
           child: Text(
             indicLabel ? widget.label : widget.label.toUpperCase(),

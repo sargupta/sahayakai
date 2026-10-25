@@ -106,7 +106,7 @@ void main() {
       // Each card carries a thumbnail Image (falls back gracefully in-test).
       expect(find.byType(Image), findsWidgets);
       // A category heading and a video title rode along.
-      expect(find.text('Top recommended for you'), findsOneWidget);
+      expect(findEyebrow('Top recommended for you'), findsOneWidget);
       expect(find.textContaining('The water cycle explained'), findsOneWidget);
       // The official-source badge shows on the NCERT video.
       expect(find.text('Official source'), findsWidgets);

@@ -27,7 +27,6 @@ Future<AppLocalizations> _pump(
       locale: const Locale('en'),
       home: ToolScaffold(
         title: 'Tool',
-        vidyaAction: false,
         isBusy: isBusy,
         submitLabel: 'Generate',
         onSubmit: onSubmit,
