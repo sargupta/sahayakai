@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -194,6 +195,10 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
                       semanticLabel: context.l10n.appTitle,
                       semanticHint: _hintFor(context, visual, status),
                       onTap: () => _onTap(context, ref, visual, location),
+                      onLongPress: () {
+                        HapticFeedback.lightImpact();
+                        showVidyaSheet(_sheetContext, pagePath: location);
+                      },
                     ),
                   ),
                 ),

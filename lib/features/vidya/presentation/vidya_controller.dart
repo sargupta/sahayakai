@@ -25,6 +25,7 @@ import '../data/vidya_profile_repository.dart';
 import '../data/vidya_repository.dart';
 import '../data/vidya_session_repository.dart';
 import '../data/voice_to_text_repository.dart';
+import 'vidya_status_ui.dart';
 
 // The language→BCP-47 helpers now live in shared voice infra (so the
 // read-aloud path resolves the same way); re-exported here for this feature's
@@ -451,6 +452,14 @@ class VidyaController extends _$VidyaController {
   void consumeNavigation() {
     if (state.pendingNavigation != null) {
       _set(pendingNavigation: null);
+    }
+  }
+
+  /// Dismisses a terminal state (mic denied, failed, etc.) so the teacher can
+  /// type instead of speaking. Sets status to idle without clearing conversation.
+  void dismissTerminal() {
+    if (isVidyaTerminal(state.status)) {
+      _set(status: VidyaStatus.idle, errorMessage: null);
     }
   }
 

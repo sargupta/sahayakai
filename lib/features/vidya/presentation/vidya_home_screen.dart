@@ -466,12 +466,12 @@ class _TodayCardState extends State<_TodayCard> {
                 child: const Icon(LucideIcons.clipboardCheck, size: 18, color: AppColors.saffron600),
               ),
               const SizedBox(width: 12),
-              Expanded(
+              const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
+                    Text(
                       'Today',
                       style: TextStyle(
                         fontFamily: 'Bricolage Grotesque',
@@ -481,8 +481,8 @@ class _TodayCardState extends State<_TodayCard> {
                         height: 1.2,
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    const Text(
+                    SizedBox(height: 2),
+                    Text(
                       'Start with your class roll call',
                       style: TextStyle(
                         fontFamily: 'Instrument Sans',

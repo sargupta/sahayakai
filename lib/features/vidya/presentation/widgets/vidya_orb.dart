@@ -45,6 +45,7 @@ class VidyaOrb extends StatefulWidget {
     this.size = 56,
     this.readyCount = 0,
     this.onTap,
+    this.onLongPress,
     this.semanticLabel,
     this.semanticHint,
   });
@@ -53,6 +54,7 @@ class VidyaOrb extends StatefulWidget {
   final double size;
   final int readyCount;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
   final String? semanticLabel;
   final String? semanticHint;
 
@@ -165,6 +167,7 @@ class _VidyaOrbState extends State<VidyaOrb> with SingleTickerProviderStateMixin
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: widget.onTap,
+          onLongPress: widget.onLongPress,
           child: orb,
         ),
       ),

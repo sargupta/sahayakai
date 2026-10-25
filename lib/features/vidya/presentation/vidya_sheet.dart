@@ -493,6 +493,11 @@ class _SheetTerminalPanel extends ConsumerWidget {
             const SizedBox(height: AppSpacing.space4),
             action,
           ],
+          const SizedBox(height: AppSpacing.space3),
+          TextButton(
+            onPressed: controller.dismissTerminal,
+            child: const Text('Type instead'),
+          ),
         ],
       ),
     );

@@ -1,4 +1,4 @@
-﻿name: sahayakai
+name: sahayakai
 description: "SahayakAI — native Android app (SARGVISION Intelligence)"
 publish_to: 'none'
 # versionName+versionCode. Starts at build 2, not 1: the Capacitor wrap at
@@ -158,6 +158,7 @@ dependencies:
   # Only invoked on that specific 403; zero impact on paid/upgrade flows.
   flutter_tts: ^4.2.2
   gpt_markdown: ^1.1.8
+  firebase_crashlytics: ^4.3.10
 
 dev_dependencies:
   flutter_test:

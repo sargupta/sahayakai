@@ -1,8 +1,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
-import 'notification_service.dart';
-
 /// FCM client: token registration, refresh, cleanup on sign-out.
 /// Backend must send data messages with a `type` field for routing.
 class FcmService {
@@ -48,7 +46,6 @@ class FcmService {
   /// Handle a foreground FCM message (show local notification).
   void _handleForegroundMessage(RemoteMessage message) {
     final notification = message.notification;
-    final data = message.data;
 
     if (notification != null) {
       // Foreground messages are shown by the system notification tray.
@@ -75,23 +72,6 @@ class FcmService {
   Future<void> clearToken() async {
     await _messaging.deleteToken();
     _currentToken = null;
-  }
-
-  String _channelForType(String? type) {
-    switch (type) {
-      case 'class_reminder':
-        return 'class_reminders';
-      case 'task_result':
-        return 'task_results';
-      case 'message':
-      case 'update':
-        return 'messages_updates';
-      case 'account':
-      case 'system':
-        return 'account_system';
-      default:
-        return 'messages_updates';
-    }
   }
 
   /// Mask token for safe logging (first 4 + last 4 chars).

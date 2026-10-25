@@ -451,21 +451,58 @@ class _VoiceModeSection extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
     final mode = ref.watch(voiceModeControllerProvider);
+    final defaultInput = ref.watch(defaultInputControllerProvider);
 
     return _SettingsGroup(
       title: l10n.settingsVoiceModeTitle,
       child: AppCard(
         padding: EdgeInsets.zero,
-        child: SwitchListTile.adaptive(
-          value: mode == VoiceMode.live,
-          onChanged: (value) => ref
-              .read(voiceModeControllerProvider.notifier)
-              .set(value ? VoiceMode.live : VoiceMode.turnBased),
-          title: Text(l10n.settingsVoiceModeLabel, style: text.bodyLarge),
-          subtitle: Text(
-            l10n.settingsVoiceModeHint,
-            style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SwitchListTile.adaptive(
+              value: mode == VoiceMode.live,
+              onChanged: (value) => ref
+                  .read(voiceModeControllerProvider.notifier)
+                  .set(value ? VoiceMode.live : VoiceMode.turnBased),
+              title: Text(l10n.settingsVoiceModeLabel, style: text.bodyLarge),
+              subtitle: Text(
+                l10n.settingsVoiceModeHint,
+                style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+              ),
+            ),
+            const Divider(height: 1),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Default input', style: text.bodyLarge),
+                  const SizedBox(height: 8),
+                  SegmentedButton<VidyaDefaultInput>(
+                    segments: const [
+                      ButtonSegment(
+                        value: VidyaDefaultInput.voice,
+                        label: Text('Voice'),
+                        icon: Icon(LucideIcons.mic),
+                      ),
+                      ButtonSegment(
+                        value: VidyaDefaultInput.text,
+                        label: Text('Text'),
+                        icon: Icon(LucideIcons.keyboard),
+                      ),
+                    ],
+                    selected: {defaultInput},
+                    onSelectionChanged: (selected) {
+                      ref
+                          .read(defaultInputControllerProvider.notifier)
+                          .set(selected.first);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

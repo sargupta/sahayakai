@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 part 'voice_mode_provider.g.dart';
 
 const String _kVoiceModeLiveKey = 'voice_mode_live';
+const String _kDefaultInputKey = 'vidya_default_input';
 
 /// Which VIDYA voice engine the mic drives.
 enum VoiceMode {
@@ -55,5 +56,38 @@ class VoiceModeController extends _$VoiceModeController {
     } catch (_) {
       // Persisting a preference must never crash the settings screen.
     }
+  }
+}
+
+/// Default input mode for VIDYA: voice or text.
+enum VidyaDefaultInput { voice, text }
+
+/// Persisted default input mode for VIDYA.
+@Riverpod(keepAlive: true)
+class DefaultInputController extends _$DefaultInputController {
+  @override
+  VidyaDefaultInput build() {
+    _hydrate();
+    return VidyaDefaultInput.voice;
+  }
+
+  Future<void> _hydrate() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final stored = prefs.getString(_kDefaultInputKey);
+      if (stored != null) {
+        state = stored == 'text'
+            ? VidyaDefaultInput.text
+            : VidyaDefaultInput.voice;
+      }
+    } catch (_) {}
+  }
+
+  Future<void> set(VidyaDefaultInput mode) async {
+    state = mode;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_kDefaultInputKey, mode.name);
+    } catch (_) {}
   }
 }
