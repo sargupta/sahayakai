@@ -330,10 +330,7 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet>
                           ),
                         ),
                       ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: _buildComposer(text, l10n, controller, hasText),
-                    ),
+                    _buildComposer(text, l10n, controller, hasText),
                   ],
                 ],
               ),
@@ -353,55 +350,107 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet>
     VidyaController controller,
     bool hasText,
   ) {
-    final button = Container(
-      width: 40,
-      height: 40,
-      decoration: const BoxDecoration(
-        shape: BoxShape.circle,
-        color: AppColors.saffron500,
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x5CC96A28), // rgba(201,106,40,.36) (design)
-            offset: Offset(0, 5),
-            blurRadius: 14,
-          ),
-        ],
-      ),
-      child: Icon(
-        hasText ? LucideIcons.arrowUp : LucideIcons.mic,
-        size: 18,
-        color: Colors.white,
-      ),
-    );
+    final state = ref.watch(vidyaControllerProvider);
+    final isGenerating = state.status == VidyaStatus.thinking ||
+        state.status == VidyaStatus.transcribing ||
+        state.status == VidyaStatus.speaking;
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: hasText ? () => unawaited(_send()) : controller.onMicTap,
-      // 44px hit area around the 40px circle (touch targets ≥ 42px).
-      child: SizedBox(
-        width: 44,
-        height: 44,
-        child: Center(
-          child: AnimatedBuilder(
-            animation: _pulse,
-            builder: (context, child) {
-              final t = _pulse.value;
-              final scale =
-                  1 + 0.07 * (0.5 - 0.5 * math.cos(2 * math.pi * t));
-              return Transform.scale(
-                scale: hasText ? 1 : scale,
-                child: child,
-              );
-            },
-            child: button,
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _input,
+              maxLines: 4,
+              minLines: 1,
+              textInputAction: TextInputAction.send,
+              onSubmitted: (_) {
+                if (hasText && !isGenerating) unawaited(_send());
+              },
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                hintText: 'Type your question',
+                hintStyle: text.bodyMedium?.copyWith(
+                  color: AppColors.textMuted,
+                ),
+                filled: true,
+                fillColor: AppColors.milk300,
+                border: const OutlineInputBorder(
+                  borderRadius: AppRadius.rField,
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+              ),
+              style: text.bodyMedium,
+            ),
           ),
-        ),
+          const SizedBox(width: 8),
+          if (isGenerating)
+            SizedBox(
+              width: 44,
+              height: 44,
+              child: IconButton(
+                onPressed: () => controller.cancel(),
+                icon: const Icon(LucideIcons.square, size: 18),
+                style: IconButton.styleFrom(
+                  backgroundColor: AppColors.saffron500,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            )
+          else
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: hasText ? () => unawaited(_send()) : controller.onMicTap,
+              child: SizedBox(
+                width: 44,
+                height: 44,
+                child: Center(
+                  child: AnimatedBuilder(
+                    animation: _pulse,
+                    builder: (context, child) {
+                      final t = _pulse.value;
+                      final scale = hasText
+                          ? 1.0
+                          : 1 + 0.07 * (0.5 - 0.5 * math.cos(2 * math.pi * t));
+                      return Transform.scale(scale: scale, child: child);
+                    },
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.saffron500,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Color(0x5CC96A28),
+                            offset: Offset(0, 5),
+                            blurRadius: 14,
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        hasText ? LucideIcons.arrowUp : LucideIcons.mic,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
 }
 
-/// The route → localized page title map behind Screen 04's "THIS PAGE" line.
+/// The routetete → localized page title map behind Screen 04's "THIS PAGE" line.
 /// Unmapped routes hide the box rather than showing English-only copy.
 String? _pageLabelFor(String? path, AppLocalizations l10n) {
   if (path == null || path.isEmpty) return null;
