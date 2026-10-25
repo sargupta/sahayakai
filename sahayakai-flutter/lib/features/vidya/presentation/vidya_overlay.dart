@@ -13,6 +13,7 @@ import 'deliver_tray.dart';
 import 'deliverables_controller.dart';
 import 'vidya_controller.dart';
 import 'vidya_orb_placement_controller.dart';
+import 'vidya_sheet.dart';
 import 'widgets/vidya_orb.dart';
 
 /// The presence layer: mounts the draggable [VidyaOrb] above the app Navigator
@@ -90,7 +91,9 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
             final hasWork = bgActive || readyCount > 0;
 
             final tab = ref.watch(shellTabControllerProvider);
-            if (!_visibleAt(location, signedIn, hasWork, tab)) {
+            // A VIDYA sheet is up: the sheet is VIDYA, so the orb steps aside.
+            final sheetOpen = ref.watch(vidyaSurfaceOpenProvider);
+            if (sheetOpen || !_visibleAt(location, signedIn, hasWork, tab)) {
               return const SizedBox.shrink();
             }
 
@@ -161,7 +164,7 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
                       readyCount: readyCount,
                       semanticLabel: context.l10n.appTitle,
                       semanticHint: _hintFor(context, visual, status),
-                      onTap: () => _onTap(context, ref, visual),
+                      onTap: () => _onTap(ref, visual),
                     ),
                   ),
                 ),
@@ -238,16 +241,23 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
 
   // ── Interaction ────────────────────────────────────────────────────────────
 
-  void _onTap(BuildContext context, WidgetRef ref, VidyaOrbVisual visual) {
+  /// A tap opens VIDYA's sheet over the page, already listening (design system
+  /// v2 `Orb`: "a tap opens the voice sheet"); the green orb opens the deliver
+  /// tray. The overlay sits ABOVE the Navigator (`MaterialApp.router.builder`),
+  /// so both sheets open from the router's navigator — this widget's own
+  /// context has no Navigator to push onto.
+  void _onTap(WidgetRef ref, VidyaOrbVisual visual) {
+    final nav = widget.router.routerDelegate.navigatorKey.currentContext;
+    if (nav == null) return;
     if (visual == VidyaOrbVisual.ready) {
-      // Green orb → open the one deliver tray for the latest ready result.
       final latest = ref.read(deliverablesControllerProvider.notifier).latest;
-      if (latest != null) {
-        showDeliverTray(context, latest);
-      }
+      if (latest != null) showDeliverTray(nav, latest);
       return;
     }
-    ref.read(vidyaControllerProvider.notifier).onMicTap();
+    if (ref.read(vidyaControllerProvider).status == VidyaStatus.idle) {
+      ref.read(vidyaControllerProvider.notifier).onMicTap();
+    }
+    showVidyaSheet(nav);
   }
 
   // ── Geometry ─────────────────────────────────────────────────────────────

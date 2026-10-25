@@ -283,19 +283,11 @@ class _Masthead extends ConsumerWidget {
           tone: AppBadgeTone.accent,
         ),
         const SizedBox(height: AppSpacing.space3),
-        EditorialSectionHeader(l10n.vidyaEyebrow, rule: false),
+        EditorialSectionHeader(l10n.vidyaEyebrow),
         const SizedBox(height: AppSpacing.space3),
         Text(
           _salutation(l10n, ref.read(nowProvider)()),
           style: text.displayLarge,
-        ),
-        const SizedBox(height: AppSpacing.space3),
-        const SizedBox(
-          width: 48,
-          height: 2,
-          child: DecoratedBox(
-            decoration: BoxDecoration(gradient: AppGradients.accentBar),
-          ),
         ),
         const SizedBox(height: AppSpacing.space3),
         ConstrainedBox(

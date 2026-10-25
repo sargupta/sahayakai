@@ -82,11 +82,6 @@ class AppGradients {
   static const lightHeroWash = RadialGradient(
     colors: [Color(0x00C96A28), Color(0x00C96A28)],
   );
-
-  /// 3px saffron ribbon: saffron-500 → transparent.
-  static const accentBar = LinearGradient(
-    colors: [Color(0xFFC96A28), Color(0x00C96A28)],
-  );
 }
 
 /// A CSS `linear-gradient(<angle>deg, …)` gradient line for a Flutter

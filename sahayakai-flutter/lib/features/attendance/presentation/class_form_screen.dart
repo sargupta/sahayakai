@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/theme/app_theme.dart';
@@ -161,7 +160,6 @@ class _ClassFormScreenState extends ConsumerState<ClassFormScreen> {
             LabeledField(
               label: l10n.attendanceClassNameLabel,
               hint: l10n.attendanceClassNameHint,
-              leadingIcon: LucideIcons.users,
               child: TextFormField(
                 controller: _nameController,
                 textCapitalization: TextCapitalization.words,
@@ -173,7 +171,6 @@ class _ClassFormScreenState extends ConsumerState<ClassFormScreen> {
             const SizedBox(height: AppSpacing.space6),
             LabeledField(
               label: l10n.attendanceSubjectLabel,
-              leadingIcon: LucideIcons.bookOpen,
               child: DropdownButtonFormField<String>(
                 initialValue: _subject,
                 isExpanded: true,
@@ -191,7 +188,6 @@ class _ClassFormScreenState extends ConsumerState<ClassFormScreen> {
             const SizedBox(height: AppSpacing.space6),
             LabeledField(
               label: l10n.attendanceGradeLabel,
-              leadingIcon: LucideIcons.graduationCap,
               child: DropdownButtonFormField<String>(
                 initialValue: _grade,
                 isExpanded: true,
@@ -206,7 +202,6 @@ class _ClassFormScreenState extends ConsumerState<ClassFormScreen> {
             LabeledField(
               label: l10n.attendanceAcademicYearLabel,
               hint: l10n.attendanceAcademicYearHint,
-              leadingIcon: LucideIcons.calendar,
               child: TextFormField(
                 controller: _yearController,
                 validator: (value) => (value?.trim().isEmpty ?? true)
@@ -219,7 +214,6 @@ class _ClassFormScreenState extends ConsumerState<ClassFormScreen> {
               label: l10n.attendanceSectionLabel,
               optionalLabel: l10n.parentMessageOptional,
               hint: l10n.attendanceSectionHint,
-              leadingIcon: LucideIcons.tag,
               child: TextFormField(
                 controller: _sectionController,
                 textCapitalization: TextCapitalization.characters,

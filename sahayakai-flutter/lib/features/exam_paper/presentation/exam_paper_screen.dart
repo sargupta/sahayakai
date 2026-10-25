@@ -363,7 +363,6 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
   Widget _boardField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.examPaperBoardLabel,
-      leadingIcon: LucideIcons.scrollText,
       child: DropdownButtonFormField<String?>(
         initialValue: _board,
         isExpanded: true,
@@ -381,7 +380,6 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
   Widget _gradeField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.examPaperGradeLabel,
-      leadingIcon: LucideIcons.graduationCap,
       child: DropdownButtonFormField<String?>(
         initialValue: _grade,
         isExpanded: true,
@@ -399,7 +397,6 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
   Widget _subjectField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.examPaperSubjectLabel,
-      leadingIcon: LucideIcons.bookOpen,
       child: DropdownButtonFormField<String?>(
         initialValue: _subject,
         isExpanded: true,
@@ -427,7 +424,6 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
   Widget _otherSubjectField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.examPaperSubjectOtherLabel,
-      leadingIcon: LucideIcons.pencil,
       child: TextFormField(
         controller: _otherSubjectController,
         maxLength: 60,
@@ -460,7 +456,6 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
         return LabeledField(
           label: l10n.examPaperChaptersLabel,
           hint: l10n.examPaperChaptersHint,
-          leadingIcon: LucideIcons.bookMarked,
           errorText: field.errorText,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -522,7 +517,6 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
   Widget _difficultyField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.examPaperDifficultyLabel,
-      leadingIcon: LucideIcons.gauge,
       child: Wrap(
         spacing: AppSpacing.space2,
         runSpacing: AppSpacing.space2,
@@ -544,7 +538,6 @@ class _ExamPaperScreenState extends ConsumerState<ExamPaperScreen> {
   Widget _languageField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.languageLabel,
-      leadingIcon: LucideIcons.languages,
       child: DropdownButtonFormField<AppLocale>(
         initialValue: _language,
         isExpanded: true,

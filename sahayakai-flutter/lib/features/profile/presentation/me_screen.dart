@@ -166,7 +166,6 @@ class _ProfileSummaryCard extends StatelessWidget {
     final language = profile.preferredLanguage;
 
     return AppCard(
-      accentBar: true,
       onTap: () => context.push(Routes.profile),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -627,7 +626,6 @@ class _SignedOutCard extends StatelessWidget {
     final l10n = context.l10n;
 
     return AppCard(
-      accentBar: true,
       child: EmptyView(
         icon: LucideIcons.logIn,
         title: l10n.profileSignedOutTitle,

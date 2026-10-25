@@ -65,28 +65,16 @@ void main() {
     }
   });
 
-  group('affordance glyph', () {
-    for (final state in const [
-      VidyaOrbVisual.resting,
-      VidyaOrbVisual.dragging,
-      VidyaOrbVisual.listening,
-    ]) {
-      testWidgets('${state.name} shows the mic glyph', (tester) async {
-        await _pumpOrb(tester, state);
-        expect(find.byIcon(LucideIcons.mic), findsOneWidget);
+  group('no glyph: a sphere is VIDYA, a mic glyph is a control', () {
+    // Design system v2 `Orb`: "The orb carries no glyph. Its meaning comes
+    // from the state colour and motion, plus the words beside it."
+    for (final state in VidyaOrbVisual.values) {
+      testWidgets('${state.name} draws no glyph', (tester) async {
+        await _pumpOrb(tester, state, readyCount: 2);
+        expect(find.byIcon(LucideIcons.mic), findsNothing);
+        expect(find.byIcon(LucideIcons.sparkles), findsNothing);
       });
     }
-
-    testWidgets('working shows the spark glyph', (tester) async {
-      await _pumpOrb(tester, VidyaOrbVisual.working);
-      expect(find.byIcon(LucideIcons.sparkles), findsOneWidget);
-    });
-
-    testWidgets('ready shows no glyph — the badge speaks', (tester) async {
-      await _pumpOrb(tester, VidyaOrbVisual.ready, readyCount: 2);
-      expect(find.byIcon(LucideIcons.mic), findsNothing);
-      expect(find.byIcon(LucideIcons.sparkles), findsNothing);
-    });
   });
 
   group('ready badge', () {

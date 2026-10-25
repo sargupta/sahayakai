@@ -109,5 +109,16 @@ if [ -n "$hits" ]; then
   echo "$hits"; fail=1
 fi
 
+# Pre-v2 decoration the design system does not have: the saffron gradient
+# ribbon on cards and the hairline rule after an eyebrow. v2 GlassCard: "no
+# coloured left-border accents"; v2 Eyebrow carries no rule.
+hits=$(font_scan_files | xargs grep -nE 'accentBar|EditorialSectionHeader\([^)]*rule:' 2>/dev/null \
+  | grep -vE '^[^:]+:[0-9]+: *(///?|\*)')
+if [ -n "$hits" ]; then
+  echo "VIOLATION: pre-v2 card ribbon / eyebrow rule. Design system v2 cards and"
+  echo "  eyebrows carry no ribbons or rules (components/GlassCard, Eyebrow)."
+  echo "$hits"; fail=1
+fi
+
 if [ "$fail" -eq 0 ]; then echo "token-guard: PASS"; fi
 exit "$fail"

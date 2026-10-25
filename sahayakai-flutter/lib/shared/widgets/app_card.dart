@@ -23,7 +23,8 @@ import 'glass_surface.dart';
 /// Built on [GlassSurface.flat] — the no-blur path, because `AppCard` is
 /// reused inside scrolling lists across ~35 screens.
 ///
-/// The API ({child, padding, onTap, accentBar, variant}) is unchanged.
+/// v2 cards carry no ribbons or coloured edge accents (GlassCard rules), so
+/// the old saffron top ribbon is gone.
 enum AppCardVariant { flat, elevated, inset }
 
 class AppCard extends StatefulWidget {
@@ -32,7 +33,6 @@ class AppCard extends StatefulWidget {
     required this.child,
     this.padding,
     this.onTap,
-    this.accentBar = false,
     this.variant = AppCardVariant.flat,
   });
 
@@ -40,8 +40,6 @@ class AppCard extends StatefulWidget {
   final EdgeInsetsGeometry? padding;
   final VoidCallback? onTap;
 
-  /// Optional 3px saffron ribbon on the top edge (top corners clipped).
-  final bool accentBar;
   final AppCardVariant variant;
 
   @override
@@ -74,26 +72,13 @@ class _AppCardState extends State<AppCard> {
       AppCardVariant.inset => AppRadius.rField,
     };
 
-    // The tap layer (ripple + accent bar + padded child), clipped by the
-    // surface that wraps it.
+    // The tap layer (ripple + padded child), clipped by the surface that
+    // wraps it.
     final tapLayer = Material(
       type: MaterialType.transparency,
       child: InkWell(
         onTap: widget.onTap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (widget.accentBar)
-              const SizedBox(
-                height: 3,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(gradient: AppGradients.accentBar),
-                ),
-              ),
-            Padding(padding: pad, child: widget.child),
-          ],
-        ),
+        child: Padding(padding: pad, child: widget.child),
       ),
     );
 
@@ -108,10 +93,7 @@ class _AppCardState extends State<AppCard> {
             width: 1,
           ),
         ),
-        child: ClipRRect(
-          borderRadius: corners,
-          child: tapLayer,
-        ),
+        child: ClipRRect(borderRadius: corners, child: tapLayer),
       );
     } else {
       final raised = widget.variant == AppCardVariant.elevated;
