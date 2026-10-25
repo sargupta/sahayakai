@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/network/api_exception.dart';
 import 'package:sahayakai/core/network/api_providers.dart';
@@ -206,5 +207,25 @@ void main() {
     final size = tester.getSize(find.byType(InlineFieldMic));
     expect(size.width, greaterThanOrEqualTo(48));
     expect(size.height, greaterThanOrEqualTo(48));
+  });
+
+  // Founder decision 2026-10-25: every mic disc carries a mic glyph (a glyph
+  // marks a control; the bare sphere is VIDYA), so the two never read alike.
+  testWidgets('the saffron disc carries a mic glyph', (tester) async {
+    await _pumpMic(
+      tester,
+      onResult: (_) {},
+      client: FakeApiClient(),
+      recorder: FakeAudioRecorderService(),
+      permission: FakeMicPermissionService(),
+    );
+
+    expect(
+      find.descendant(
+        of: find.byType(InlineFieldMic),
+        matching: find.byIcon(LucideIcons.mic),
+      ),
+      findsOneWidget,
+    );
   });
 }

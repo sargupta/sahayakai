@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/i18n/gen/app_localizations.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -32,8 +33,9 @@ enum InlineMicPhase { idle, requesting, listening, transcribing }
 /// the mic-permission gate, the STT repository), so a test never touches a real
 /// microphone. On a captured, usable transcript it calls [onResult] with the
 /// text; the host wires that to its `TextEditingController`. It draws as the
-/// design system v2 Field mic: a 34px saffron disc (no glyph) with a 48dp touch
-/// band. It animates only while listening (the v2 `micpulse`), and not at all
+/// design system v2 Field mic, a 34px saffron disc with a 48dp touch band, plus
+/// a white mic glyph: a mic glyph marks a control, the sphere is VIDYA (founder
+/// decision 2026-10-25, every mic disc carries the glyph). It animates only while listening (the v2 `micpulse`), and not at all
 /// under reduce-motion; every other phase is a still.
 ///
 /// Errors stay minimal here by design: the field mic is a convenience, and the
@@ -257,8 +259,8 @@ class _InlineFieldMicState extends ConsumerState<InlineFieldMic> {
       InlineMicPhase.idle => l10n.vidyaFieldMicLabel,
     };
 
-    // The v2 Field mic: a 34px saffron-500 disc with `shadow-mic` and no
-    // glyph. Listening adds a 6px `accent-tint-strong` halo.
+    // The v2 Field mic: a 34px saffron-500 disc with `shadow-mic` and a white
+    // mic glyph. Listening adds a 6px `accent-tint-strong` halo.
     final disc = Opacity(
       opacity: opacity,
       child: Container(
@@ -275,6 +277,11 @@ class _InlineFieldMicState extends ConsumerState<InlineFieldMic> {
               ),
             if (!isDark) ...AppShadows.mic,
           ],
+        ),
+        child: Icon(
+          LucideIcons.mic,
+          size: 16,
+          color: theme.colorScheme.onPrimary,
         ),
       ),
     );
