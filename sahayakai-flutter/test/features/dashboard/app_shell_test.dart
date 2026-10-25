@@ -11,6 +11,7 @@ import 'package:sahayakai/features/staffroom/data/staffroom_providers.dart';
 import 'package:sahayakai/features/staffroom/data/staffroom_transport.dart';
 import 'package:sahayakai/features/staffroom/presentation/network_hub_screen.dart';
 import 'package:sahayakai/features/vidya/presentation/vidya_home_screen.dart';
+import 'package:sahayakai/features/vidya/presentation/vidya_overlay.dart';
 import 'package:sahayakai/features/vidya/presentation/widgets/vidya_orb.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -28,6 +29,12 @@ List<Override> _hubOverrides() => [
   inboxTransportProvider.overrideWithValue(FakeInboxTransport()),
   currentInboxUserIdProvider.overrideWithValue('u-me'),
 ];
+
+/// The parked orb: the one the overlay mounts above the Navigator.
+Finder get _parkedOrb => find.descendant(
+  of: find.byType(VidyaOverlay),
+  matching: find.byType(VidyaOrb),
+);
 
 Future<void> _tap(WidgetTester tester, AppTab tab) async {
   await tester.tap(find.byKey(ValueKey('tab-${tab.name}')));
@@ -80,19 +87,23 @@ void main() {
     );
   });
 
-  testWidgets('the orb stays off Home (the Seal Mic is the mic there) and '
+  testWidgets('the parked orb stays off Home (Home\'s hero is the orb) and '
       'shows on every other tab, where it is how creation starts', (
     tester,
   ) async {
     await pumpSignedInApp(tester, extraOverrides: _hubOverrides());
-    expect(find.byType(VidyaOrb), findsNothing);
+    expect(_parkedOrb, findsNothing);
+    // Exactly one VIDYA on Home: the hero.
+    expect(find.byType(VidyaOrb), findsOneWidget);
 
     for (final tab in [AppTab.library, AppTab.community, AppTab.profile]) {
       await _tap(tester, tab);
+      expect(_parkedOrb, findsOneWidget, reason: tab.name);
+      // Home's hero is offstage in the IndexedStack, so still one orb shows.
       expect(find.byType(VidyaOrb), findsOneWidget, reason: tab.name);
     }
 
     await _tap(tester, AppTab.home);
-    expect(find.byType(VidyaOrb), findsNothing);
+    expect(_parkedOrb, findsNothing);
   });
 }

@@ -41,6 +41,7 @@ class VidyaOrb extends StatefulWidget {
     this.onTap,
     this.semanticLabel,
     this.semanticHint,
+    this.glyph = true,
   });
 
   final VidyaOrbVisual state;
@@ -61,6 +62,12 @@ class VidyaOrb extends StatefulWidget {
 
   /// Announced as the hint — the current state's spoken label.
   final String? semanticHint;
+
+  /// Draws the small affordance glyph (mic, spark). Off for Home's hero orb:
+  /// there the words under it and the type bar's mic say what a tap does, and
+  /// design system v2 draws VIDYA as a bare sphere ("a sphere is VIDYA, a mic
+  /// glyph is a control — never both").
+  final bool glyph;
 
   /// Fixed clear space around the sphere for the listening ripple / drag halo /
   /// ready badge, so the painted box is always [size] + 2·[_halo] regardless of
@@ -216,7 +223,7 @@ class _VidyaOrbState extends State<VidyaOrb> with SingleTickerProviderStateMixin
         ],
       ),
       alignment: Alignment.center,
-      child: _glyph(scheme, diameter),
+      child: widget.glyph ? _glyph(scheme, diameter) : null,
     );
   }
 

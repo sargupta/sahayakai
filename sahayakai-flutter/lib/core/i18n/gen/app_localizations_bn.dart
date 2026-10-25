@@ -3974,4 +3974,84 @@ class AppLocalizationsBn extends AppLocalizations {
   String attendanceVoiceMarked(int count) {
     return '$countটি নাম চিহ্নিত করা হয়েছে।';
   }
+
+  @override
+  String get homeSayItTitle => 'বলুন, আমি খুলে দেব';
+
+  @override
+  String homeDayWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'আজ $countটি কাজ বাকি',
+      one: 'আজ 1টি কাজ বাকি',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeDayClear => 'আজ কিছু বাকি নেই';
+
+  @override
+  String homeSayCallAbsentees(int count, String className) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '“$className-এর $count জন absentee-র অভিভাবকদের call করো”',
+      one: '“$className-এর 1 জন absentee-র অভিভাবককে call করো”',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeSayTakeAttendance(String className) {
+    return '“$className-এর attendance নাও”';
+  }
+
+  @override
+  String homeSayOpenReady(String title) {
+    return '“$title খোলো”';
+  }
+
+  @override
+  String get homeSayLessonExample => '“পরের class-এর জন্য lesson plan”';
+
+  @override
+  String get homeSayQuizExample => '“আজকের topic-এ দশ প্রশ্নের quiz”';
+
+  @override
+  String get homeSayAnswerExample => '“একটা কঠিন বিষয় সহজ করে বোঝাও”';
+
+  @override
+  String get homeActionCall => 'কল করুন';
+
+  @override
+  String get homeActionMark => 'হাজিরা';
+
+  @override
+  String get homeActionMake => 'তৈরি করুন';
+
+  @override
+  String get homeActionAsk => 'জিজ্ঞাসা করুন';
+
+  @override
+  String get homeStatusUrgent => 'জরুরি';
+
+  @override
+  String get homeStatusToDo => 'বাকি';
+
+  @override
+  String get homeStatusReady => 'তৈরি';
+
+  @override
+  String get homeStatusIdea => 'পরামর্শ';
+
+  @override
+  String get homeComposerHint => 'VIDYA-কে জিজ্ঞাসা করুন, বা যা দরকার লিখুন…';
+
+  @override
+  String get homeOrbHint => 'বলতে orb-এ ট্যাপ করুন, বা নিচে লিখুন';
+
+  @override
+  String get homeComposerLabel => 'যা দরকার লিখুন';
 }
