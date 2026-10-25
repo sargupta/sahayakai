@@ -16,8 +16,8 @@ import '../../vidya/presentation/vidya_home_screen.dart';
 import 'floating_bottom_nav.dart';
 
 /// The signed-in shell: 4 swipeable tabs (Home · Library · Community · You)
-/// held in a [PageView] with a WhatsApp-style swipe between them. The floating
-/// bottom nav indicator follows the swipe progress.
+/// held in a [PageView]. Swiping horizontally switches tabs; the bottom nav
+/// indicator follows the swipe progress.
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
@@ -38,6 +38,7 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   final PageController _pageController = PageController();
   int _currentIndex = 0;
+  double _currentPage = 0.0;
 
   final List<Widget> _pages = const [
     VidyaHomeScreen(),
@@ -47,9 +48,23 @@ class _AppShellState extends State<AppShell> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _pageController.addListener(_onPageScroll);
+  }
+
+  @override
   void dispose() {
+    _pageController.removeListener(_onPageScroll);
     _pageController.dispose();
     super.dispose();
+  }
+
+  void _onPageScroll() {
+    final page = _pageController.page;
+    if (page != null && page != _currentPage) {
+      setState(() => _currentPage = page);
+    }
   }
 
   void _onPageChanged(int index) {
@@ -70,38 +85,38 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      extendBody: true,
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: _onPageChanged,
-        // Allow swipe between tabs. No wrap-around (default behavior).
-        // Offscreen pages: keep 1 adjacent tab loaded.
-        allowImplicitScrolling: false,
-        children: _pages.map((p) => _PageWrapper(child: p)).toList(),
-      ),
-      bottomNavigationBar: FloatingBottomNav(
-        currentIndex: _currentIndex,
-        onSelected: _onNavTap,
+    return PopScope(
+      canPop: _currentIndex == 0,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _currentIndex != 0) {
+          _pageController.animateToPage(
+            0,
+            duration: AppMotion.fadeThrough,
+            curve: AppMotion.easeOutQuart,
+          );
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        extendBody: true,
+        body: PageView(
+          controller: _pageController,
+          onPageChanged: _onPageChanged,
+          allowImplicitScrolling: true,
+          physics: const PageScrollPhysics(),
+          children: _pages,
+        ),
+        bottomNavigationBar: FloatingBottomNav(
+          currentPage: _currentPage,
+          currentIndex: _currentIndex,
+          onSelected: _onNavTap,
+        ),
       ),
     );
   }
 }
 
-/// Wraps each page to preserve scroll state via PageStorageKey.
-class _PageWrapper extends StatelessWidget {
-  const _PageWrapper({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return child;
-  }
-}
-
-// _CreatePalette unchanged below
+// _CreatePalette and _CreatePaletteRow unchanged
 class _CreatePalette extends StatefulWidget {
   const _CreatePalette();
 

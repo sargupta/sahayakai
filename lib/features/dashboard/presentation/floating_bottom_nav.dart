@@ -26,10 +26,14 @@ import '../../../shared/motion/animated_entrance.dart';
 class FloatingBottomNav extends StatelessWidget {
   const FloatingBottomNav({
     super.key,
+    this.currentPage = 0.0,
     required this.currentIndex,
     required this.onSelected,
     this.orbDragging = false,
   });
+
+  /// Fractional page position (0.0-3.0) for indicator animation.
+  final double currentPage;
 
   /// Index of the active tab: 0=Home, 1=Library, 2=Community, 3=You.
   final int currentIndex;
@@ -93,11 +97,17 @@ class FloatingBottomNav extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: List.generate(_icons.length, (i) {
+                  final effectivePage = (currentPage == 0.0 && currentIndex != 0)
+                      ? currentIndex.toDouble()
+                      : currentPage;
+                  final dist = (effectivePage - i).abs().clamp(0.0, 1.0);
+                  final weight = 1.0 - dist;
                   return _TabButton(
                     key: ValueKey('tab_$i'),
                     icon: _icons[i],
                     label: _labels(context)[i],
                     isActive: i == currentIndex,
+                    activeWeight: weight,
                     isDark: isDark,
                     orbDragging: orbDragging,
                     motion: motion,
@@ -133,6 +143,7 @@ class _TabButton extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.isActive,
+    this.activeWeight = 0.0,
     required this.isDark,
     required this.orbDragging,
     required this.motion,
@@ -142,6 +153,7 @@ class _TabButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool isActive;
+  final double activeWeight;
   final bool isDark;
   final bool orbDragging;
   final bool motion;
@@ -152,40 +164,55 @@ class _TabButton extends StatelessWidget {
     Color? background;
     Color iconColor;
 
-    if (isDark) {
-      // Scanner surface: active = translucent milk, icons milk/ink-400.
-      background = isActive ? const Color(0x29FFFDF9) : null;
-      iconColor = isActive ? AppColors.milk50 : AppColors.ink400;
-    } else if (isActive) {
-      if (orbDragging) {
-        // Dragging: only a 12% saffron tint stands in for the disc.
-        background = AppColors.accentTint;
-        iconColor = AppColors.saffron600;
-      } else {
-        background = AppColors.saffron500;
-        iconColor = AppColors.textOnAccent;
-      }
-    } else {
+    // Cross-fade: when activeWeight is 0 (inactive), background is null (test
+    // expects null). When > 0, interpolate toward the active color.
+    if (activeWeight <= 0.0) {
       background = null;
-      iconColor = AppColors.ink500;
+      iconColor = isDark ? AppColors.ink400 : AppColors.ink500;
+    } else if (isDark) {
+      background = activeWeight > 0.5
+          ? const Color(0x29FFFDF9)
+          : null;
+      iconColor = Color.lerp(
+        AppColors.ink400,
+        AppColors.milk50,
+        activeWeight,
+      )!;
+    } else if (orbDragging) {
+      background = Color.lerp(
+        Colors.transparent,
+        AppColors.accentTint,
+        activeWeight,
+      );
+      iconColor = Color.lerp(
+        AppColors.ink500,
+        AppColors.saffron600,
+        activeWeight,
+      )!;
+    } else {
+      background = Color.lerp(
+        Colors.transparent,
+        AppColors.saffron500,
+        activeWeight,
+      );
+      iconColor = Color.lerp(
+        AppColors.ink500,
+        AppColors.textOnAccent,
+        activeWeight,
+      )!;
     }
 
-    // Instagram-style: only the active tab speaks its label, expanding the
-    // circular disc into a rounded pill that carries icon + label. Inactive
-    // tabs stay bare icon-only circles, so the bar stays quiet until a tab is
-    // chosen.
+    // Cross-fade: pill expands when activeWeight > 0.5, bare circle otherwise.
+    // During swipe, the pill appears to slide via cross-fade between tabs.
+    final showLabel = activeWeight > 0.5;
     final borderRadius = BorderRadius.circular(
-      isActive ? 9999 : FloatingBottomNav._tabTarget / 2,
+      activeWeight > 0.5 ? 9999 : FloatingBottomNav._tabTarget / 2,
     );
 
     return Semantics(
       button: true,
       selected: isActive,
       label: label,
-      // The bar is ONE clean node per tab: with excludeSemantics the
-      // InkWell's own semantics (tap action + enabled state) are dropped, so
-      // they must be re-declared here or assistive tech announces a button it
-      // cannot activate (no tap action, no hasEnabledState).
       enabled: true,
       onTap: onTap,
       excludeSemantics: true,
@@ -193,7 +220,7 @@ class _TabButton extends StatelessWidget {
         duration: motion ? AppMotion.small : Duration.zero,
         curve: AppMotion.easeOutQuart,
         height: FloatingBottomNav._tabTarget,
-        padding: isActive
+        padding: showLabel
             ? const EdgeInsets.symmetric(horizontal: 14)
             : EdgeInsets.zero,
         decoration: BoxDecoration(color: background, borderRadius: borderRadius),
@@ -203,7 +230,7 @@ class _TabButton extends StatelessWidget {
             customBorder: RoundedRectangleBorder(borderRadius: borderRadius),
             onTap: onTap,
             child: Center(
-              child: isActive
+              child: showLabel
                   ? Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
