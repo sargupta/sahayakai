@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/motion/animated_entrance.dart';
 import '../../../../shared/widgets/press_scale.dart';
 
@@ -285,7 +286,7 @@ class _VidyaOrbState extends State<VidyaOrb> with SingleTickerProviderStateMixin
         child: Text(
           label,
           style: TextStyle(
-            fontFamily: 'Inter',
+            fontFamily: kUiFamily,
             fontSize: 10,
             height: 1.0,
             fontWeight: FontWeight.w700,

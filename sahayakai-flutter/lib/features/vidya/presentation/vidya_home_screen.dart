@@ -125,11 +125,12 @@ class _VidyaHomeScreenState extends ConsumerState<VidyaHomeScreen> {
           ),
         ],
       ),
+      // Light: the page route already paints the v2 wash and saffron glow
+      // under this transparent scaffold (`ScreenWash`); painting the wash
+      // again here would cover the glow. Dark keeps its vignette.
       body: DecoratedBox(
         decoration: BoxDecoration(
-          gradient: isDark
-              ? AppGradients.darkVignette
-              : AppGradients.lightPaper,
+          gradient: isDark ? AppGradients.darkVignette : null,
         ),
         child: SafeArea(
           child: state.hasConversation

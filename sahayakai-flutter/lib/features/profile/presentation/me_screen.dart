@@ -250,7 +250,7 @@ class _InitialAvatar extends StatelessWidget {
         : null;
     final saffronText = theme.brightness == Brightness.dark
         ? AppColors.dPrimaryText
-        : AppColors.lPrimaryText;
+        : AppColors.lPrimaryTextOnTint;
 
     return Container(
       width: AppIconSize.wellBox,
@@ -426,9 +426,10 @@ class _UsageRow extends StatelessWidget {
 /// [FractionallySizedBox] fill, tokens only.
 ///
 /// AA (WCAG 1.4.11, computed vs the ACTUAL fill): the fill is the saffron-text
-/// token — `#AC4815` light / `#EB9447` dark — NOT the `#E0924D` brand FILL,
-/// which is only ~2:1 on the track. Saffron-text on `surfaceContainerHigh` is
-/// 4.7:1 (light) / 5.6:1 (dark), clearing the 3:1 non-text floor; and the
+/// token — saffron-600 `#A5551D` light / `#EB9447` dark — NOT the saffron-500
+/// brand FILL, which is only 2.9:1 on the track. Saffron-text on
+/// `surfaceContainerHigh` is 4.12:1 (light) / 5.6:1 (dark), clearing the 3:1
+/// non-text floor; and the
 /// `used / limit` number carries the value non-colour too. Static (no sweep),
 /// so it is reduce-motion safe by construction.
 class _UsageMeter extends StatelessWidget {

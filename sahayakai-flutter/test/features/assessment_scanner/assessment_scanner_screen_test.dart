@@ -19,6 +19,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/app_harness.dart';
 import '../../support/fake_api_client.dart';
+import '../../support/field_finders.dart';
 import 'assessment_scanner_fixtures.dart';
 
 /// Screen-layer gates: the multi-page capture over the FAKED image seam (add up
@@ -284,7 +285,7 @@ void main() {
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
 
-            expect(find.text('Answer sheet pages'), findsOneWidget);
+            expect(findFieldLabel('Answer sheet pages'), findsOneWidget);
           },
         );
       }

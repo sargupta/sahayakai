@@ -510,7 +510,7 @@ class _SendFailedBar extends StatelessWidget {
 
 /// The bottom composer: a growable text field + a ≥48dp send button. The send
 /// button uses the AA-safe `primaryContainer` + `onPrimaryContainer` pairing
-/// (6.9:1) — a small saffron glyph on the `#E0924D` fill would be only 2.5:1.
+/// (5.55:1) — a small white glyph on the saffron-500 fill would be 3.77:1.
 class _Composer extends StatefulWidget {
   const _Composer({required this.controller, required this.onSend});
 

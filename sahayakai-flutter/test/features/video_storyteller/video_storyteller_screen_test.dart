@@ -18,6 +18,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/app_harness.dart';
 import '../../support/fake_api_client.dart';
+import '../../support/field_finders.dart';
 import 'video_storyteller_fixtures.dart';
 
 /// Screen-layer gates: the inputs render, tapping Find drives the real
@@ -285,10 +286,10 @@ void main() {
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
 
-            expect(find.text('Topic or chapter'), findsOneWidget);
-            expect(find.text('Subject'), findsOneWidget);
-            expect(find.text('Grade level'), findsOneWidget);
-            expect(find.text('Language'), findsOneWidget);
+            expect(findFieldLabel('Topic or chapter'), findsOneWidget);
+            expect(findFieldLabel('Subject'), findsOneWidget);
+            expect(findFieldLabel('Grade level'), findsOneWidget);
+            expect(findFieldLabel('Language'), findsOneWidget);
           },
         );
       }

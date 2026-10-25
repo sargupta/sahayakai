@@ -22,6 +22,7 @@ import '../../../shared/widgets/icon_well.dart';
 import '../../../shared/widgets/library_item_row.dart';
 import '../../../shared/widgets/offline_view.dart';
 import '../../profile/presentation/profile_controller.dart';
+import 'create_palette.dart';
 
 /// P0.3 — Dashboard Home, "The Almanac" (PREMIUM_DESIGN_SPEC.md §5 / §6b U7).
 /// The Home tab of the 4-tab shell (`AppShell`), and the most-seen screen.
@@ -52,7 +53,20 @@ class DashboardScreen extends ConsumerWidget {
       // Seamless masthead: the theme gives the AppBar a serif titleLarge and a
       // scrolled-under elevation only (elevation 0 at rest); the hero owns the
       // top of the page.
-      appBar: GlassAppBar(title: Text(l10n.appTitle)),
+      appBar: GlassAppBar(
+        title: Text(l10n.appTitle),
+        actions: [
+          // The searchable Create palette over the same tool registry. It used
+          // to open from a Create slot in the bottom bar; v2 draws four tabs
+          // and never five (see `create_palette.dart`).
+          IconButton(
+            key: const ValueKey('prep-desk-search'),
+            icon: const Icon(LucideIcons.search),
+            tooltip: l10n.createPaletteSearchHint,
+            onPressed: () => showCreatePalette(context),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: ListView(
           padding: AppSpacing.pagePadding,

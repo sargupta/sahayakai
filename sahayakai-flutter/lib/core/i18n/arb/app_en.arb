@@ -16,6 +16,10 @@
   "@navLibrary": {
     "description": "Bottom-nav label: saved generations."
   },
+  "navCommunity": "Community",
+  "@navCommunity": {
+    "description": "Tab bar (accessible name + tooltip): the community tab — teachers sharing, asking and celebrating (the Network hub)."
+  },
   "navProfile": "Me",
   "@navProfile": {
     "description": "Bottom-nav label: profile / account tab."

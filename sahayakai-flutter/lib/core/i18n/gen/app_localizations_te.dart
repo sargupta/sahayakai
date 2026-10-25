@@ -21,6 +21,9 @@ class AppLocalizationsTe extends AppLocalizations {
   String get navLibrary => 'గ్రంథాలయం';
 
   @override
+  String get navCommunity => 'సముదాయం';
+
+  @override
   String get navProfile => 'ప్రొఫైల్';
 
   @override

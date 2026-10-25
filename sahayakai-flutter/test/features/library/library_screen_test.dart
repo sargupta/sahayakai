@@ -106,7 +106,7 @@ Future<void> _openLibrary(
     locale: locale,
     surface: surface,
   );
-  await tester.tap(find.byIcon(LucideIcons.library));
+  await tester.tap(find.byKey(const ValueKey('tab-library')));
   await (settle ? tester.pumpAndSettle() : tester.pump());
 }
 
@@ -323,7 +323,7 @@ void main() {
           client.gets.where((g) => g.path == '/api/content/list').length;
       expect(contentReads(), 1);
 
-      await tester.tap(find.byIcon(LucideIcons.library));
+      await tester.tap(find.byKey(const ValueKey('tab-library')));
       await tester.pumpAndSettle();
 
       // Switching to the tab shows the already-loaded list without a re-read.

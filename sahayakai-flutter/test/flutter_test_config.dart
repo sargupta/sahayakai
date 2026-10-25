@@ -43,8 +43,17 @@ Future<void> _loadBundledFonts() async {
 
   for (final file in dir.listSync().whereType<File>()) {
     if (!file.path.endsWith('.ttf')) continue;
-    final family = _familyFor(file.uri.pathSegments.last);
-    if (family == null) continue;
+    final name = file.uri.pathSegments.last;
+    final family = _familyFor(name);
+    // A bundled face with no mapping used to be skipped silently, so a font
+    // swap could leave every golden rendering in Ahem boxes with nothing
+    // failing. Unmapped is now an error.
+    if (family == null) {
+      throw StateError(
+        'assets/fonts/$name has no family mapping in flutter_test_config.dart. '
+        'Add it with the exact family name from pubspec.yaml.',
+      );
+    }
     final loader = FontLoader(family)
       ..addFont(
         file.readAsBytes().then(
@@ -62,8 +71,8 @@ Future<void> _loadBundledFonts() async {
 /// regex that got a space wrong would produce a silently-unused registration.
 String? _familyFor(String filename) {
   const map = <String, String>{
-    'Outfit-Variable.ttf': 'Outfit',
-    'Inter-Variable.ttf': 'Inter',
+    'BricolageGrotesque-Variable.ttf': 'Bricolage Grotesque',
+    'InstrumentSans-Variable.ttf': 'Instrument Sans',
     'NotoSansDevanagari-Variable.ttf': 'Noto Sans Devanagari',
     'NotoSansBengali-Variable.ttf': 'Noto Sans Bengali',
     'NotoSansTamil-Variable.ttf': 'Noto Sans Tamil',

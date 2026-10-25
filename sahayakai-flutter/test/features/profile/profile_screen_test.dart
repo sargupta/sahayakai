@@ -13,6 +13,7 @@ import 'package:sahayakai/shared/widgets/error_view.dart';
 import 'package:sahayakai/shared/widgets/offline_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../support/field_finders.dart';
 import 'profile_fixtures.dart';
 
 /// Screen-layer gates for P0.8.
@@ -296,10 +297,7 @@ void main() {
       required String label,
       required String value,
     }) async {
-      final field = find.ancestor(
-        of: find.text(label),
-        matching: find.byType(Column),
-      );
+      final field = findFieldLabel(label);
       expect(field, findsWidgets);
       await tester.enterText(
         find.descendant(of: field.first, matching: find.byType(TextFormField)),
@@ -408,10 +406,7 @@ void main() {
       final source = FakeProfileDocSource(doc: teacherDoc());
       await _pumpScreen(tester, source: source);
 
-      final phone = find.ancestor(
-        of: find.text('Mobile number'),
-        matching: find.byType(Column),
-      );
+      final phone = findFieldLabel('Mobile number');
       await tester.enterText(
         find.descendant(of: phone.first, matching: find.byType(TextFormField)),
         '123',

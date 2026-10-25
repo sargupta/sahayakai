@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'glass_surface.dart';
 
-/// Chrome `AppBar` wrapper — App-wide Glassmorphism Reskin, GL-2.
+/// Chrome `AppBar` wrapper — App-wide Glassmorphism Reskin, GL-2; design
+/// system v2 in light (see the `flexibleSpace` note in [build]).
 ///
 /// Wraps Flutter's [AppBar] so it renders on glass instead of a flat surface
 /// fill: transparent + no elevation, with a [GlassSurface] filling
@@ -68,11 +69,17 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
       actions: actions,
       leading: leading,
       automaticallyImplyLeading: automaticallyImplyLeading,
-      flexibleSpace: const GlassSurface.flat(
-        radius: 0,
-        addSheen: false,
-        child: SizedBox.expand(),
-      ),
+      // Light: no bar at all. The v2 ScreenHeader is the title set straight
+      // on the screen wash, and the body never scrolls under this bar (no
+      // screen sets `extendBodyBehindAppBar`), so a fill would only draw a
+      // band across the wash. Dark keeps its pre-v2 glass bar.
+      flexibleSpace: Theme.of(context).brightness == Brightness.dark
+          ? const GlassSurface.flat(
+              radius: 0,
+              addSheen: false,
+              child: SizedBox.expand(),
+            )
+          : null,
     );
   }
 

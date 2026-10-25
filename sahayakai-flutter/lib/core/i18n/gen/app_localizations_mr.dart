@@ -21,6 +21,9 @@ class AppLocalizationsMr extends AppLocalizations {
   String get navLibrary => 'ग्रंथालय';
 
   @override
+  String get navCommunity => 'समुदाय';
+
+  @override
   String get navProfile => 'प्रोफाइल';
 
   @override

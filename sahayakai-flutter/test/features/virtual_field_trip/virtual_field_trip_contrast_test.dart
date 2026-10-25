@@ -65,11 +65,11 @@ void main() {
         greaterThanOrEqualTo(4.5),
         reason: 'the reflection label + prompt must be full ink on the inset',
       );
-      // The exact trap the hard rule guards against: the MUTED role on this same
-      // inset fill is BELOW the floor, which is why the inset uses full ink.
+      // Pre-v2 the MUTED role was below the floor on this inset, which is why
+      // the inset uses full ink; v2's body ink clears it too.
       expect(
         _ratio(AppColors.lMutedForeground, AppColors.lSurfaceContainerLow),
-        lessThan(4.5),
+        greaterThanOrEqualTo(4.5),
       );
     });
     test('dark: onSurface on surfaceContainerLow (>=4.5)', () {
