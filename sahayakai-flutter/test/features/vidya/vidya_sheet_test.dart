@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/vidya/data/dto/vidya_action.dart';
@@ -10,9 +9,10 @@ import 'package:sahayakai/features/vidya/presentation/vidya_sheet.dart';
 import 'package:sahayakai/features/vidya/presentation/widgets/seal_mic.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// U-V7 — the VIDYA-on-every-screen affordance: tapping the shared app-bar
-/// action opens the VIDYA sheet (reusing the Seal Mic + the top-level
-/// controller), and the running conversation renders inside it.
+/// U-V7 — the VIDYA sheet the floating orb opens: it reuses the Seal Mic and
+/// the top-level controller, the running conversation renders inside it, and
+/// it raises [vidyaSurfaceOpenProvider] while open so the orb steps aside
+/// (one orb per screen).
 
 class _FakeVidyaController extends VidyaController {
   _FakeVidyaController(this._state);
@@ -57,8 +57,14 @@ Future<void> _pumpHost(WidgetTester tester, {VidyaState? state}) async {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
-          appBar: AppBar(actions: const [VidyaAppBarAction()]),
-          body: const SizedBox.expand(),
+          body: Builder(
+            builder: (context) => Center(
+              child: TextButton(
+                onPressed: () => showVidyaSheet(context),
+                child: const Text('open'),
+              ),
+            ),
+          ),
         ),
       ),
     ),
@@ -71,17 +77,15 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
-  testWidgets('the app-bar action opens the VIDYA sheet with the Seal Mic', (
+  testWidgets('showVidyaSheet opens the VIDYA sheet with the Seal Mic', (
     tester,
   ) async {
     await _pumpHost(tester);
 
-    // The action is present and unobtrusive (one glyph).
-    expect(find.byIcon(LucideIcons.sparkles), findsOneWidget);
     // Nothing is open yet.
     expect(find.byType(SealMic), findsNothing);
 
-    await tester.tap(find.byIcon(LucideIcons.sparkles));
+    await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
 
     // The sheet opened: its title and the Seal Mic are on screen.
@@ -108,7 +112,7 @@ void main() {
       ),
     );
 
-    await tester.tap(find.byIcon(LucideIcons.sparkles));
+    await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
 
     expect(find.text('make a quiz on fractions'), findsOneWidget);
@@ -116,10 +120,23 @@ void main() {
     expect(find.byType(SealMic), findsOneWidget);
   });
 
-  testWidgets('a 48dp+ tap target for the action', (tester) async {
+  testWidgets('the sheet raises the surface-open flag until it closes', (
+    tester,
+  ) async {
     await _pumpHost(tester);
-    final size = tester.getSize(find.byType(VidyaAppBarAction));
-    expect(size.width, greaterThanOrEqualTo(48));
-    expect(size.height, greaterThanOrEqualTo(48));
+    final container = ProviderScope.containerOf(
+      tester.element(find.text('open')),
+    );
+    expect(container.read(vidyaSurfaceOpenProvider), isFalse);
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    expect(container.read(vidyaSurfaceOpenProvider), isTrue);
+
+    // Dismiss on the scrim.
+    await tester.tapAt(const Offset(195, 20));
+    await tester.pumpAndSettle();
+    expect(find.byType(SealMic), findsNothing);
+    expect(container.read(vidyaSurfaceOpenProvider), isFalse);
   });
 }

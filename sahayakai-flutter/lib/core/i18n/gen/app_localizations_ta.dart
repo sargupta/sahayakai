@@ -21,6 +21,9 @@ class AppLocalizationsTa extends AppLocalizations {
   String get navLibrary => 'நூலகம்';
 
   @override
+  String get navCommunity => 'சமூகம்';
+
+  @override
   String get navProfile => 'சுயவிவரம்';
 
   @override

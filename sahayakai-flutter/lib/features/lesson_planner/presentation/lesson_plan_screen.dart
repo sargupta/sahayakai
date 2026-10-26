@@ -310,7 +310,6 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
   Widget _topicField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.lessonPlanTopicLabel,
-      leadingIcon: LucideIcons.lightbulb,
       trailing: InlineFieldMic(
         expectedLanguage: _language.code,
         onResult: (text) => _topicController.text = text,
@@ -334,7 +333,6 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
     return LabeledField(
       label: l10n.lessonPlanGradeLabel,
       optionalLabel: l10n.lessonPlanOptional,
-      leadingIcon: LucideIcons.graduationCap,
       child: Wrap(
         spacing: AppSpacing.space2,
         runSpacing: AppSpacing.space2,
@@ -362,7 +360,6 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
     return LabeledField(
       label: l10n.lessonPlanSubjectLabel,
       optionalLabel: l10n.lessonPlanOptional,
-      leadingIcon: LucideIcons.bookOpen,
       child: DropdownButtonFormField<String?>(
         initialValue: _subject,
         isExpanded: true,
@@ -386,7 +383,6 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
     return LabeledField(
       label: l10n.lessonPlanIncludeLabel,
       optionalLabel: l10n.lessonPlanOptional,
-      leadingIcon: LucideIcons.listChecks,
       child: Wrap(
         spacing: AppSpacing.space2,
         runSpacing: AppSpacing.space2,
@@ -495,7 +491,6 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
     return LabeledField(
       label: l10n.toolImageOptionalLabel,
       hint: l10n.toolImageOptionalHint,
-      leadingIcon: LucideIcons.image,
       child: ImageInput(
         value: _image,
         onChanged: (picked) => setState(() => _image = picked),
@@ -506,7 +501,6 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
   Widget _languageField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.languageLabel,
-      leadingIcon: LucideIcons.languages,
       child: DropdownButtonFormField<AppLocale>(
         initialValue: _language,
         isExpanded: true,
@@ -525,7 +519,6 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
   Widget _resourceField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.lessonPlanResourceLabel,
-      leadingIcon: LucideIcons.layers,
       child: AppSegmented<ResourceLevel>(
         value: _resource,
         onChanged: (value) => setState(() => _resource = value),
@@ -550,7 +543,6 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
   Widget _difficultyField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.lessonPlanDifficultyLabel,
-      leadingIcon: LucideIcons.gauge,
       child: AppSegmented<DifficultyLevel>(
         value: _difficulty,
         onChanged: (value) => setState(() => _difficulty = value),

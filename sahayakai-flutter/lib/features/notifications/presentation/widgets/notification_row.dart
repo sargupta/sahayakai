@@ -15,11 +15,10 @@ import '../../domain/teacher_notification.dart';
 /// Network hub rather than as a bolted-on screen.
 ///
 /// Unread is carried by weight plus a small saffron dot, never a coloured row
-/// fill. The dot uses the saffron **text** token (`#AC4815` light /
-/// `#EB9447` dark), not `scheme.primary`: the brand fill `#E0924D` on the
-/// card's white ground is ~2.26:1, under the 3:1 floor a meaningful non-text
-/// indicator has to clear. Same reasoning, same tokens, as AppBadge's accent
-/// tone.
+/// fill. The dot uses the saffron **text** token (saffron-600 `#A5551D`
+/// light / `#EB9447` dark), not `scheme.primary`, so a meaningful non-text
+/// indicator clears the 3:1 floor with room to spare (5.28:1 on the card).
+/// Same reasoning, same tokens, as AppBadge's accent tone.
 class NotificationRow extends StatelessWidget {
   const NotificationRow({
     super.key,

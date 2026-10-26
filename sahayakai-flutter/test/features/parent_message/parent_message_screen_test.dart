@@ -19,6 +19,7 @@ import 'package:sahayakai/shared/widgets/labeled_field.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/fake_api_client.dart';
+import '../../support/field_finders.dart';
 import 'parent_message_fixtures.dart';
 
 /// Screen-layer gates: the four async states, the required-field validation the
@@ -52,7 +53,7 @@ Widget _host({
 
 /// The TextFormField inside the [LabeledField] carrying [label].
 Finder _fieldFor(String label) => find.descendant(
-  of: find.ancestor(of: find.text(label), matching: find.byType(LabeledField)),
+  of: findFieldLabel(label),
   matching: find.byType(TextFormField),
 );
 
@@ -173,11 +174,11 @@ void main() {
       await tester.pumpWidget(_host());
       await tester.pumpAndSettle();
 
-      expect(find.text('Student name'), findsOneWidget);
-      expect(find.text('Class'), findsOneWidget);
-      expect(find.text('Subject'), findsOneWidget);
-      expect(find.text('Reason for the message'), findsOneWidget);
-      expect(find.text("Parent's language"), findsOneWidget);
+      expect(findFieldLabel('Student name'), findsOneWidget);
+      expect(findFieldLabel('Class'), findsOneWidget);
+      expect(findFieldLabel('Subject'), findsOneWidget);
+      expect(findFieldLabel('Reason for the message'), findsOneWidget);
+      expect(findFieldLabel("Parent's language"), findsOneWidget);
 
       // Open the reason dropdown; all four options must be present.
       await tester.ensureVisible(_reasonDropdown);
@@ -197,11 +198,11 @@ void main() {
       await tester.pumpAndSettle();
 
       // Not shown until a reason is chosen.
-      expect(find.text('Days absent'), findsNothing);
+      expect(findFieldLabel('Days absent'), findsNothing);
 
       await _selectDropdown(tester, _reasonDropdown, 'Repeated absences');
 
-      expect(find.text('Days absent'), findsOneWidget);
+      expect(findFieldLabel('Days absent'), findsOneWidget);
     });
   });
 
@@ -319,8 +320,8 @@ void main() {
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
 
-            expect(find.text('Student name'), findsOneWidget);
-            expect(find.text("Parent's language"), findsOneWidget);
+            expect(findFieldLabel('Student name'), findsOneWidget);
+            expect(findFieldLabel("Parent's language"), findsOneWidget);
           },
         );
       }
@@ -352,10 +353,7 @@ void main() {
   group('voice input', () {
     /// The InlineFieldMic nested inside the LabeledField carrying [label].
     Finder micFor(String label) => find.descendant(
-      of: find.ancestor(
-        of: find.text(label),
-        matching: find.byType(LabeledField),
-      ),
+      of: findFieldLabel(label),
       matching: find.byType(InlineFieldMic),
     );
 
@@ -384,7 +382,7 @@ void main() {
       // narrative content, not sprayed onto every field.
       final classMic = find.descendant(
         of: find.ancestor(
-          of: find.text('Class'),
+          of: findFieldLabel('Class'),
           matching: find.byType(LabeledField),
         ),
         matching: find.byType(InlineFieldMic),

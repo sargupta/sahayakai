@@ -7,7 +7,7 @@ import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/network/api_providers.dart';
 import 'package:sahayakai/core/router/routes.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
-import 'package:sahayakai/features/dashboard/presentation/floating_bottom_nav.dart';
+import 'package:sahayakai/features/dashboard/presentation/app_tab_bar.dart';
 import 'package:sahayakai/features/vidya/data/dto/vidya_action.dart';
 import 'package:sahayakai/features/vidya/presentation/vidya_controller.dart';
 import 'package:sahayakai/features/vidya/presentation/vidya_home_screen.dart';
@@ -380,9 +380,9 @@ void main() {
       'Quick Tools tiles clear the floating bottom nav on first paint',
       (tester) async {
         // Regression test for the DP-1 design review finding: the bare
-        // _pumpHome harness has no AppShell/FloatingBottomNav, so it could not
+        // _pumpHome harness has no AppShell/AppTabBar, so it could not
         // catch a tile being sliced off by the real nav bar. This wraps the
-        // home in the same Scaffold+FloatingBottomNav shape AppShell gives it.
+        // home in the same Scaffold+AppTabBar shape AppShell gives it.
         tester.view.physicalSize = const Size(390, 844);
         tester.view.devicePixelRatio = 1.0;
         addTearDown(tester.view.reset);
@@ -405,22 +405,15 @@ void main() {
               supportedLocales: AppLocalizations.supportedLocales,
               home: Scaffold(
                 body: const VidyaHomeScreen(),
-                bottomNavigationBar: FloatingBottomNav(
-                  currentIndex: 0,
+                bottomNavigationBar: AppTabBar(
+                  current: AppTab.home,
                   onSelected: (_) {},
-                  items: const [
-                    FloatingNavItem(icon: LucideIcons.mic, label: 'Home'),
-                    FloatingNavItem(
-                      icon: LucideIcons.sparkles,
-                      label: 'Create',
-                      isAction: true,
-                    ),
-                    FloatingNavItem(
-                      icon: LucideIcons.library,
-                      label: 'Library',
-                    ),
-                    FloatingNavItem(icon: LucideIcons.user, label: 'Me'),
-                  ],
+                  labels: const {
+                    AppTab.home: 'Home',
+                    AppTab.library: 'Library',
+                    AppTab.community: 'Community',
+                    AppTab.profile: 'Me',
+                  },
                 ),
               ),
             ),
@@ -433,7 +426,7 @@ void main() {
         // in the tree (a bare find.text would pass even half-clipped).
         final lastTile = find.byKey(const ValueKey('quick-tool-quiz'));
         expect(lastTile, findsOneWidget);
-        final navTop = tester.getTopLeft(find.byType(FloatingBottomNav)).dy;
+        final navTop = tester.getTopLeft(find.byType(AppTabBar)).dy;
         final tileBottom = tester.getBottomLeft(lastTile).dy;
         expect(
           tileBottom,

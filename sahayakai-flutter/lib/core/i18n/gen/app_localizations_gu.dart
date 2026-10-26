@@ -21,6 +21,9 @@ class AppLocalizationsGu extends AppLocalizations {
   String get navLibrary => 'પુસ્તકાલય';
 
   @override
+  String get navCommunity => 'સમુદાય';
+
+  @override
   String get navProfile => 'પ્રોફાઇલ';
 
   @override

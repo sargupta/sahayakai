@@ -41,11 +41,11 @@ void main() {
         greaterThanOrEqualTo(4.5),
         reason: 'the caption (full ink) must clear AA on the drawing frame',
       );
-      // The muted role the caption used to carry is below the floor here — this
-      // is exactly why the fix routes it through onSurface.
+      // Pre-v2 the muted role was below the floor here, which is why the
+      // caption moved to onSurface; v2's body ink clears it too.
       expect(
         _ratio(AppColors.lMutedForeground, AppColors.lSurfaceContainerLow),
-        lessThan(4.5),
+        greaterThanOrEqualTo(4.5),
       );
     });
 

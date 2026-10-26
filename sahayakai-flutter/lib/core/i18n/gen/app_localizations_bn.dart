@@ -21,6 +21,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get navLibrary => 'লাইব্রেরি';
 
   @override
+  String get navCommunity => 'কমিউনিটি';
+
+  @override
   String get navProfile => 'প্রোফাইল';
 
   @override

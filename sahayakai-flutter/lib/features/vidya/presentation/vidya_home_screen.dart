@@ -125,11 +125,12 @@ class _VidyaHomeScreenState extends ConsumerState<VidyaHomeScreen> {
           ),
         ],
       ),
+      // Light: the page route already paints the v2 wash and saffron glow
+      // under this transparent scaffold (`ScreenWash`); painting the wash
+      // again here would cover the glow. Dark keeps its vignette.
       body: DecoratedBox(
         decoration: BoxDecoration(
-          gradient: isDark
-              ? AppGradients.darkVignette
-              : AppGradients.lightPaper,
+          gradient: isDark ? AppGradients.darkVignette : null,
         ),
         child: SafeArea(
           child: state.hasConversation
@@ -282,19 +283,11 @@ class _Masthead extends ConsumerWidget {
           tone: AppBadgeTone.accent,
         ),
         const SizedBox(height: AppSpacing.space3),
-        EditorialSectionHeader(l10n.vidyaEyebrow, rule: false),
+        EditorialSectionHeader(l10n.vidyaEyebrow),
         const SizedBox(height: AppSpacing.space3),
         Text(
           _salutation(l10n, ref.read(nowProvider)()),
           style: text.displayLarge,
-        ),
-        const SizedBox(height: AppSpacing.space3),
-        const SizedBox(
-          width: 48,
-          height: 2,
-          child: DecoratedBox(
-            decoration: BoxDecoration(gradient: AppGradients.accentBar),
-          ),
         ),
         const SizedBox(height: AppSpacing.space3),
         ConstrainedBox(

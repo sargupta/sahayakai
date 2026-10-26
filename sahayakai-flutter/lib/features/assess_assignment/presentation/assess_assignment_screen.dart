@@ -190,7 +190,6 @@ class _AssessAssignmentScreenState
         return LabeledField(
           label: l10n.assessImageLabel,
           hint: l10n.assessImageHint,
-          leadingIcon: LucideIcons.image,
           child: ImageInput(
             value: _image,
             errorText: field.errorText,
@@ -208,7 +207,6 @@ class _AssessAssignmentScreenState
     return LabeledField(
       label: l10n.assessModeLabel,
       hint: l10n.assessModeHint,
-      leadingIcon: LucideIcons.listChecks,
       // Three modes -> AppSegmented. The longest label ("Score a transcript")
       // exceeds the track's length budget, so it falls back to a wrapping chip
       // row (>=48dp, never clips a translated label).
@@ -232,7 +230,6 @@ class _AssessAssignmentScreenState
       label: l10n.assessTranscriptLabel,
       optionalLabel: l10n.assessOptional,
       hint: l10n.assessTranscriptHint,
-      leadingIcon: LucideIcons.fileText,
       // Voice-first: dictate the student's answer transcript instead of typing.
       trailing: InlineFieldMic(
         expectedLanguage: _language.code,
@@ -253,7 +250,6 @@ class _AssessAssignmentScreenState
   Widget _languageField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.languageLabel,
-      leadingIcon: LucideIcons.languages,
       child: DropdownButtonFormField<AppLocale>(
         initialValue: _language,
         isExpanded: true,

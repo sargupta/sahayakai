@@ -21,6 +21,9 @@ class AppLocalizationsPa extends AppLocalizations {
   String get navLibrary => 'ਲਾਇਬ੍ਰੇਰੀ';
 
   @override
+  String get navCommunity => 'ਭਾਈਚਾਰਾ';
+
+  @override
   String get navProfile => 'ਪ੍ਰੋਫਾਈਲ';
 
   @override

@@ -1,0 +1,1653 @@
+{
+ "name": "SahayakAI",
+ "version": 2,
+ "meta": {
+  "source": "claude-design",
+  "file": "Sahayakai mobile app design.zip (SahayakAI Design System, 2026-10-08) + SahayakAI Mobile v3 (standalone).html",
+  "frames": [
+   "v3 canvas: 16 screens, 01 Onboarding to 16 Offline and you",
+   "export tokens/*.css",
+   "export components/**/*.jsx"
+  ],
+  "components": {
+   "Button": "core/Button",
+   "Chip": "core/Chip",
+   "Pill": "core/Pill",
+   "Eyebrow": "core/Eyebrow",
+   "PhoneScreen": "device/PhoneScreen",
+   "Composer": "lists/Composer",
+   "SuggestionRow": "lists/SuggestionRow",
+   "TaskRow": "lists/TaskRow",
+   "ScreenHeader": "navigation/ScreenHeader",
+   "StatusBar": "navigation/StatusBar",
+   "TabBar": "navigation/TabBar",
+   "GlassCard": "surfaces/GlassCard",
+   "NoticeCard": "surfaces/NoticeCard",
+   "Tile": "surfaces/Tile",
+   "Orb": "vidya/Orb",
+   "OrbHint": "vidya/OrbHint",
+   "VoiceSheet": "vidya/VoiceSheet",
+   "WebNav": "web/WebNav",
+   "WebHero": "web/WebHero",
+   "WebSection": "web/WebSection",
+   "FeatureCard": "web/FeatureCard",
+   "MetricCard": "web/MetricCard",
+   "DevicePhone": "web/DevicePhone",
+   "Testimonial": "web/Testimonial",
+   "CTABand": "web/CTABand",
+   "WebFooter": "web/WebFooter"
+  },
+  "paths": {
+   "boards": "sahayakai-main/src/types/index.ts (EDUCATION_BOARDS, STATE_BOARD_MAP)",
+   "curriculum": "sahayakai-main/src/data/ncert/*.ts",
+   "fonts": "google/fonts ofl/bricolagegrotesque, ofl/instrumentsans; sahayakai-flutter/assets/fonts (Noto)"
+  },
+  "synced": "2026-10-24"
+ },
+ "color": {
+  "note": "One theme, as the source draws it. The app's only dark surface is the scanner (screen 11), held in the camera-* tokens. Prod web and Flutter still ship their own dark modes; a SahayakAI dark theme is an open decision.",
+  "themes": [
+   {
+    "id": "light",
+    "name": "Light"
+   }
+  ],
+  "tokens": [
+   {
+    "name": "milk-50",
+    "value": "#fffdf9",
+    "usage": "Card and sheet surface; the solid ground under sheets, the deliver tray and website cards. Base of `surface-card`."
+   },
+   {
+    "name": "milk-100",
+    "value": "#fff8f0",
+    "usage": "Warm white. Text on `ink-800` (16.9:1) and on the CTA band gradient; the website's primary-on-dark label."
+   },
+   {
+    "name": "milk-200",
+    "value": "#fbf8f3",
+    "usage": "Website page ground. Base of `surface-web`."
+   },
+   {
+    "name": "milk-300",
+    "value": "#fbf6ee",
+    "usage": "Inset ground for the Composer, context cards (\"This page\", \"Draft so far\") and deliver options. Base of `surface-inset`."
+   },
+   {
+    "name": "milk-400",
+    "value": "#f6f1e9",
+    "usage": "Website band ground, alternated with `milk-200` down a page. Base of `surface-band`."
+   },
+   {
+    "name": "milk-500",
+    "value": "#f4f2ed",
+    "usage": "App canvas ground behind phone screens and the design canvas. Base of `surface-page`."
+   },
+   {
+    "name": "ink-900",
+    "value": "#171310",
+    "usage": "Primary text: titles, values, row labels. 15.2:1 or better on every app ground, including tints. Also the camera ground (screen 11)."
+   },
+   {
+    "name": "ink-800",
+    "value": "#1b1713",
+    "usage": "Dark fill: the website nav CTA pill and the one dark FeatureCard; `milk-100` text on it."
+   },
+   {
+    "name": "ink-600",
+    "value": "#5c534a",
+    "usage": "Body and secondary text, chip labels, sublines. 6.2:1 or better on every app ground."
+   },
+   {
+    "name": "ink-500",
+    "value": "#6e655c",
+    "usage": "Muted text and inactive tab icons: placeholders, the orb hint label, timestamps. 4.7:1 or better on every app ground."
+   },
+   {
+    "name": "ink-400",
+    "value": "#8a7f73",
+    "usage": "Faint text: website eyebrows, footer links, metric CTAs. 3.2-3.9:1, so only at 13px+ beside a stronger label, never for body copy. Flagged (source value)."
+   },
+   {
+    "name": "stone-500",
+    "value": "#8a8178",
+    "usage": "Pending and offline grey: the not-yet step in the working checklist (screen 06) and the offline orb (screen 16). 3.1-3.8:1: always paired with a word."
+   },
+   {
+    "name": "stone-100",
+    "value": "#e6e1da",
+    "usage": "Highlight of the offline orb (screen 16)."
+   },
+   {
+    "name": "saffron-100",
+    "value": "#ffe3c2",
+    "usage": "Orb highlight while dragging; the warm stop in orb gradients."
+   },
+   {
+    "name": "saffron-200",
+    "value": "#ffd9ae",
+    "usage": "Orb highlight at rest and while listening; the saffron glow on screens."
+   },
+   {
+    "name": "saffron-300",
+    "value": "#e0a878",
+    "usage": "Testimonial voice bars and the testimonial avatar highlight (website)."
+   },
+   {
+    "name": "saffron-400",
+    "value": "#e08a3c",
+    "usage": "Decorative warm mid-tone for website glows. Not for text."
+   },
+   {
+    "name": "saffron-500",
+    "value": "#c96a28",
+    "usage": "THE brand accent: the one primary button per screen, selected chips, the active tab disc, the orb, the mic disc, status dots. White on it is 3.77:1, the shipped pair: flagged, kept exact (labels stay 13px/600 or larger). As text it is 3.1-3.7:1: large text and icons only."
+   },
+   {
+    "name": "saffron-600",
+    "value": "#a5551d",
+    "usage": "Saffron as text: eyebrows, text actions (\"Open\", \"Change\"), links, the active tab icon on a tint, the focus ring. 4.7:1 or better on every app ground except leaf tints (4.4)."
+   },
+   {
+    "name": "saffron-700",
+    "value": "#8a4a08",
+    "usage": "Deep saffron text on saffron and amber tints: language pills, warning row labels, the offline notice title. 5.6:1 or better on every app ground."
+   },
+   {
+    "name": "saffron-750",
+    "value": "#7a4a08",
+    "usage": "Body text of the offline notice (screen 16): 5.9:1 or better on its saffron tint."
+   },
+   {
+    "name": "saffron-800",
+    "value": "#7e3f16",
+    "usage": "Deepest saffron: the CTA band's dark stop and its button label on `milk-100` (7.6:1)."
+   },
+   {
+    "name": "leaf-100",
+    "value": "#cfe6cf",
+    "usage": "Highlight of the ready orb."
+   },
+   {
+    "name": "leaf-300",
+    "value": "#7fbf7f",
+    "usage": "The live dot in the website hero eyebrow. Decorative only."
+   },
+   {
+    "name": "leaf-500",
+    "value": "#2c5f2d",
+    "usage": "Selected class and Include chips, done ticks, the ready orb, present marks, the Submit attendance button, the \"On call\" pill. White on it is 7.55:1."
+   },
+   {
+    "name": "leaf-700",
+    "value": "#234b24",
+    "usage": "Leaf as text on leaf tints: \"Mic on\", pills, completed checklist steps. 8.2:1 or better."
+   },
+   {
+    "name": "indigo-100",
+    "value": "#dce2fa",
+    "usage": "Highlight of the working orb."
+   },
+   {
+    "name": "indigo-500",
+    "value": "#2a3b8f",
+    "usage": "VIDYA working (orb, progress bar, the active checklist step) and curriculum (board marks, curriculum pills, the curriculum notice). 8.1:1 or better as text; white on it 9.9:1."
+   },
+   {
+    "name": "red-500",
+    "value": "#c0392b",
+    "usage": "Absent, wrong and urgent: status dots, the absent mark, \"22 wrong\", End call. White on it 5.44:1; as text 4.5:1 or better on cards and glass. Always with a word."
+   },
+   {
+    "name": "red-700",
+    "value": "#8a1c1c",
+    "usage": "Red as text on the absent row tint. 7.6:1 or better."
+   },
+   {
+    "name": "amber-500",
+    "value": "#b45309",
+    "usage": "Late, queued and waiting: status dots, the late mark, the level-2 rubric badge. White on it 5.02:1. As text use `saffron-700`."
+   },
+   {
+    "name": "surface-page",
+    "value": "{milk-500}",
+    "usage": "App canvas behind phone screens."
+   },
+   {
+    "name": "surface-web",
+    "value": "{milk-200}",
+    "usage": "Website page ground."
+   },
+   {
+    "name": "surface-band",
+    "value": "{milk-400}",
+    "usage": "Website band sections."
+   },
+   {
+    "name": "surface-card",
+    "value": "{milk-50}",
+    "usage": "Solid cards, sheets and the deliver tray."
+   },
+   {
+    "name": "surface-glass",
+    "value": "rgba(255,255,255,.82)",
+    "usage": "Glass cards and unselected chips over a screen wash: the default card. Text on it reads as on `milk-50` (ink-500 at 5.6:1)."
+   },
+   {
+    "name": "surface-glass-soft",
+    "value": "rgba(255,255,255,.7)",
+    "usage": "Secondary glass: home tiles, the Recent list, secondary cards."
+   },
+   {
+    "name": "surface-glass-strong",
+    "value": "rgba(255,255,255,.88)",
+    "usage": "Content glass: composer field cards, lesson sections, quiz and stat cards (screens 05, 07, 09, 12)."
+   },
+   {
+    "name": "surface-glass-chip",
+    "value": "rgba(255,255,255,.86)",
+    "usage": "Unselected small chips inside composers (Include)."
+   },
+   {
+    "name": "surface-disc",
+    "value": "rgba(255,255,255,.8)",
+    "usage": "Glass discs and pills on a screen header: the teacher avatar, the back disc, the language pill."
+   },
+   {
+    "name": "surface-segment",
+    "value": "rgba(255,255,255,.62)",
+    "usage": "The segmented control track."
+   },
+   {
+    "name": "surface-inset",
+    "value": "{milk-300}",
+    "usage": "Inset controls and context: the Composer, \"This page\", \"Draft so far\", deliver options."
+   },
+   {
+    "name": "surface-chrome",
+    "value": "rgba(255,253,249,.9)",
+    "usage": "The floating tab bar capsule."
+   },
+   {
+    "name": "surface-capsule",
+    "value": "rgba(255,253,249,.92)",
+    "usage": "Hint capsules beside the orb (\"Tap to speak\", \"Typing still works\") and toasts."
+   },
+   {
+    "name": "surface-capsule-strong",
+    "value": "rgba(255,253,249,.94)",
+    "usage": "Hint capsules that must stand off busy content (\"Release to park\", \"Turn this post into a worksheet\")."
+   },
+   {
+    "name": "surface-float",
+    "value": "rgba(255,253,249,.96)",
+    "usage": "The orb's context prompt card (screen 12)."
+   },
+   {
+    "name": "border-glass",
+    "value": "rgba(255,255,255,.95)",
+    "usage": "1px edge of every glass card, chip, tile and the tab bar: the luminous edge that separates glass from the wash. It is not a 3:1 boundary; components are identified by fill, label and shape."
+   },
+   {
+    "name": "border-hairline",
+    "value": "rgba(23,19,16,.08)",
+    "usage": "Hairline on inset context cards and website dividers."
+   },
+   {
+    "name": "border-row",
+    "value": "rgba(23,19,16,.1)",
+    "usage": "Row and capsule hairline: suggestion rows, deliver options, hint capsules, section rules."
+   },
+   {
+    "name": "border-strong",
+    "value": "rgba(23,19,16,.12)",
+    "usage": "The Composer's edge and the website hero eyebrow capsule."
+   },
+   {
+    "name": "border-control",
+    "value": "rgba(23,19,16,.14)",
+    "usage": "Outline buttons (\"Minimise to orb\") and the sheet grab handle."
+   },
+   {
+    "name": "fill-quiet",
+    "value": "rgba(23,19,16,.06)",
+    "usage": "Quiet button fill (\"Stop\") and unselected mark chips."
+   },
+   {
+    "name": "fill-subtle",
+    "value": "rgba(23,19,16,.04)",
+    "usage": "Unselected quiz options."
+   },
+   {
+    "name": "dot-idle",
+    "value": "rgba(23,19,16,.28)",
+    "usage": "The idle dot on an unselected suggestion row."
+   },
+   {
+    "name": "ring-idle",
+    "value": "rgba(23,19,16,.16)",
+    "usage": "Rings of pending steps and unmarked rows."
+   },
+   {
+    "name": "fill-mark",
+    "value": "rgba(23,19,16,.07)",
+    "usage": "The unpressed \"A\" (absent) mark button in the roll call."
+   },
+   {
+    "name": "scrim",
+    "value": "rgba(23,19,16,.14)",
+    "usage": "Scrim under a sheet; the page behind stays visible at about 34%."
+   },
+   {
+    "name": "text-strong",
+    "value": "{ink-900}",
+    "usage": "Titles, values and labels on every app ground."
+   },
+   {
+    "name": "text-body",
+    "value": "{ink-600}",
+    "usage": "Body, sublines and chip labels."
+   },
+   {
+    "name": "text-muted",
+    "value": "{ink-500}",
+    "usage": "Placeholders, hints, inactive icons."
+   },
+   {
+    "name": "text-faint",
+    "value": "{ink-400}",
+    "usage": "Website eyebrows and footer links only (flagged, 3.2-3.9:1)."
+   },
+   {
+    "name": "text-eyebrow",
+    "value": "{saffron-600}",
+    "usage": "Uppercase eyebrows above cards and sections."
+   },
+   {
+    "name": "text-on-accent",
+    "value": "#ffffff",
+    "usage": "Labels on saffron, leaf, indigo, red and amber fills."
+   },
+   {
+    "name": "text-link",
+    "value": "{saffron-600}",
+    "usage": "Text actions and links."
+   },
+   {
+    "name": "text-link-hover",
+    "value": "{saffron-500}",
+    "usage": "Link hover on the website."
+   },
+   {
+    "name": "accent",
+    "value": "{saffron-500}",
+    "usage": "Alias of the brand accent."
+   },
+   {
+    "name": "accent-tint",
+    "value": "rgba(201,106,40,.10)",
+    "usage": "Selected suggestion row, the offline notice, the deliver note."
+   },
+   {
+    "name": "accent-tint-strong",
+    "value": "rgba(201,106,40,.12)",
+    "usage": "Saffron pills (\"Preview\", \"Resource\") and the tab disc while the orb is dragged."
+   },
+   {
+    "name": "accent-tint-border",
+    "value": "rgba(201,106,40,.22)",
+    "usage": "Edge of saffron-tinted rows and notices; the Daily Briefing card edge."
+   },
+   {
+    "name": "accent-tint-soft",
+    "value": "rgba(201,106,40,.08)",
+    "usage": "The deliver note ground."
+   },
+   {
+    "name": "accent-tint-border-soft",
+    "value": "rgba(201,106,40,.2)",
+    "usage": "The deliver note edge."
+   },
+   {
+    "name": "accent-wash",
+    "value": "rgba(201,106,40,.14)",
+    "usage": "Saffron avatar discs and wells."
+   },
+   {
+    "name": "accent-edge",
+    "value": "rgba(201,106,40,.3)",
+    "usage": "Edge of VIDYA's context prompt card."
+   },
+   {
+    "name": "accent-outline",
+    "value": "rgba(201,106,40,.35)",
+    "usage": "Edge of the saffron outline button (\"Message parents\")."
+   },
+   {
+    "name": "success",
+    "value": "{leaf-500}",
+    "usage": "Status: done, present, ready."
+   },
+   {
+    "name": "success-tint",
+    "value": "rgba(44,95,45,.12)",
+    "usage": "Leaf pills (\"Mic on\", \"Class 7\") and done ticks."
+   },
+   {
+    "name": "success-tint-strong",
+    "value": "rgba(44,95,45,.16)",
+    "usage": "The done disc in VIDYA's checklist."
+   },
+   {
+    "name": "leaf-wash",
+    "value": "rgba(44,95,45,.14)",
+    "usage": "Leaf avatar discs."
+   },
+   {
+    "name": "leaf-tint-edge",
+    "value": "rgba(44,95,45,.22)",
+    "usage": "Edge of the correct quiz option."
+   },
+   {
+    "name": "leaf-tint",
+    "value": "rgba(44,95,45,.1)",
+    "usage": "Selected deliver option and the correct quiz answer."
+   },
+   {
+    "name": "leaf-tint-border",
+    "value": "rgba(44,95,45,.24)",
+    "usage": "Edge of the selected deliver option and the correct answer."
+   },
+   {
+    "name": "leaf-row",
+    "value": "rgba(231,240,229,.85)",
+    "usage": "Present row in the roll call (screen 13)."
+   },
+   {
+    "name": "leaf-row-border",
+    "value": "rgba(44,95,45,.18)",
+    "usage": "Edge of a present row."
+   },
+   {
+    "name": "info",
+    "value": "{indigo-500}",
+    "usage": "Status: working, curriculum."
+   },
+   {
+    "name": "info-tint",
+    "value": "rgba(42,59,143,.08)",
+    "usage": "The curriculum notice ground."
+   },
+   {
+    "name": "info-tint-strong",
+    "value": "rgba(42,59,143,.1)",
+    "usage": "Curriculum pills (\"NCERT Ch 8\", \"Need help\")."
+   },
+   {
+    "name": "info-tint-border",
+    "value": "rgba(42,59,143,.18)",
+    "usage": "Edge of the curriculum notice."
+   },
+   {
+    "name": "info-track",
+    "value": "rgba(42,59,143,.12)",
+    "usage": "The progress bar track."
+   },
+   {
+    "name": "info-ring",
+    "value": "rgba(42,59,143,.35)",
+    "usage": "The ring of the active checklist step."
+   },
+   {
+    "name": "indigo-wash",
+    "value": "rgba(42,59,143,.14)",
+    "usage": "Indigo avatar discs."
+   },
+   {
+    "name": "warning",
+    "value": "{amber-500}",
+    "usage": "Status: late, queued, waiting."
+   },
+   {
+    "name": "amber-tint",
+    "value": "rgba(180,83,9,.12)",
+    "usage": "Amber pills (\"Tried This\") and amber avatars."
+   },
+   {
+    "name": "amber-wash",
+    "value": "rgba(180,83,9,.14)",
+    "usage": "Amber avatar discs."
+   },
+   {
+    "name": "amber-row",
+    "value": "rgba(254,246,231,.9)",
+    "usage": "Late row in the roll call."
+   },
+   {
+    "name": "amber-row-border",
+    "value": "rgba(180,83,9,.22)",
+    "usage": "Edge of a late row."
+   },
+   {
+    "name": "danger",
+    "value": "{red-500}",
+    "usage": "Status: absent, wrong, end."
+   },
+   {
+    "name": "red-tint",
+    "value": "rgba(192,57,43,.12)",
+    "usage": "Red pills."
+   },
+   {
+    "name": "red-row",
+    "value": "rgba(254,236,236,.9)",
+    "usage": "Absent row in the roll call."
+   },
+   {
+    "name": "red-row-border",
+    "value": "rgba(192,57,43,.22)",
+    "usage": "Edge of an absent row."
+   },
+   {
+    "name": "camera-ground",
+    "value": "{ink-900}",
+    "usage": "The scanner screen's ground. The only dark surface in the app."
+   },
+   {
+    "name": "on-camera",
+    "value": "{milk-50}",
+    "usage": "Text and the active chip fill on the camera ground (18.2:1)."
+   },
+   {
+    "name": "on-camera-muted",
+    "value": "rgba(255,253,249,.66)",
+    "usage": "Secondary text on the camera ground (8.3:1)."
+   },
+   {
+    "name": "on-camera-icon",
+    "value": "rgba(255,253,249,.7)",
+    "usage": "Inactive tab icons on the camera ground (9.2:1)."
+   },
+   {
+    "name": "camera-glass",
+    "value": "rgba(255,253,249,.16)",
+    "usage": "Inactive chips and the tab bar capsule on the camera ground."
+   },
+   {
+    "name": "camera-border",
+    "value": "rgba(255,253,249,.22)",
+    "usage": "Edge of the tab bar capsule on the camera ground."
+   },
+   {
+    "name": "camera-frame",
+    "value": "rgba(255,253,249,.3)",
+    "usage": "The scan frame's 2px edge."
+   },
+   {
+    "name": "camera-guide",
+    "value": "rgba(255,253,249,.4)",
+    "usage": "The dashed inner guide in the scan frame."
+   },
+   {
+    "name": "scan-line",
+    "value": "rgba(255,214,170,.8)",
+    "usage": "The glowing scan line."
+   },
+   {
+    "name": "web-nav-glass",
+    "value": "rgba(251,248,243,.82)",
+    "usage": "The sticky website nav, blurred 18px."
+   },
+   {
+    "name": "web-hairline",
+    "value": "rgba(27,23,19,.07)",
+    "usage": "Website card edges and FeatureCard point dividers."
+   },
+   {
+    "name": "web-glass",
+    "value": "rgba(255,255,255,.74)",
+    "usage": "The website hero eyebrow capsule."
+   },
+   {
+    "name": "web-device-edge",
+    "value": "rgba(27,23,19,.1)",
+    "usage": "Edge of the website device bezel."
+   },
+   {
+    "name": "web-pager-idle",
+    "value": "rgba(27,23,19,.18)",
+    "usage": "Idle pager dots under the screen slider and testimonials."
+   },
+   {
+    "name": "band-outline",
+    "value": "rgba(255,248,240,.5)",
+    "usage": "Outline button edge on the CTA band."
+   },
+   {
+    "name": "web-pager-hover",
+    "value": "rgba(27,23,19,.32)",
+    "usage": "Pager dots on hover."
+   },
+   {
+    "name": "on-ink-muted",
+    "value": "rgba(255,248,240,.72)",
+    "usage": "Body text on the dark FeatureCard (ink-800)."
+   },
+   {
+    "name": "on-ink-faint",
+    "value": "rgba(255,248,240,.62)",
+    "usage": "Eyebrows on the dark FeatureCard."
+   },
+   {
+    "name": "on-ink-hairline",
+    "value": "rgba(255,248,240,.16)",
+    "usage": "Dividers on the dark FeatureCard."
+   }
+  ]
+ },
+ "type": {
+  "fonts": [
+   {
+    "family": "Bricolage Grotesque",
+    "file": "fonts/BricolageGrotesque-Variable.ttf",
+    "weight": "200 800",
+    "style": "normal"
+   },
+   {
+    "family": "Instrument Sans",
+    "file": "fonts/InstrumentSans-Variable.ttf",
+    "weight": "400 700",
+    "style": "normal"
+   },
+   {
+    "family": "Noto Sans Devanagari",
+    "file": "fonts/NotoSansDevanagari-Variable.ttf",
+    "weight": "100 900",
+    "style": "normal"
+   },
+   {
+    "family": "Noto Sans Bengali",
+    "file": "fonts/NotoSansBengali-Variable.ttf",
+    "weight": "100 900",
+    "style": "normal"
+   },
+   {
+    "family": "Noto Sans Tamil",
+    "file": "fonts/NotoSansTamil-Variable.ttf",
+    "weight": "100 900",
+    "style": "normal"
+   },
+   {
+    "family": "Noto Sans Telugu",
+    "file": "fonts/NotoSansTelugu-Variable.ttf",
+    "weight": "100 900",
+    "style": "normal"
+   },
+   {
+    "family": "Noto Sans Kannada",
+    "file": "fonts/NotoSansKannada-Variable.ttf",
+    "weight": "100 900",
+    "style": "normal"
+   },
+   {
+    "family": "Noto Sans Malayalam",
+    "file": "fonts/NotoSansMalayalam-Variable.ttf",
+    "weight": "100 900",
+    "style": "normal"
+   },
+   {
+    "family": "Noto Sans Gujarati",
+    "file": "fonts/NotoSansGujarati-Variable.ttf",
+    "weight": "100 900",
+    "style": "normal"
+   },
+   {
+    "family": "Noto Sans Gurmukhi",
+    "file": "fonts/NotoSansGurmukhi-Variable.ttf",
+    "weight": "100 900",
+    "style": "normal"
+   },
+   {
+    "family": "Noto Sans Oriya",
+    "file": "fonts/NotoSansOriya-Variable.ttf",
+    "weight": "100 900",
+    "style": "normal"
+   }
+  ],
+  "families": {
+   "display": "Bricolage Grotesque, Noto Sans Devanagari, Noto Sans Bengali, Noto Sans Tamil, Noto Sans Telugu, Noto Sans Kannada, Noto Sans Malayalam, Noto Sans Gujarati, Noto Sans Gurmukhi, Noto Sans Oriya",
+   "ui": "Instrument Sans, Noto Sans Devanagari, Noto Sans Bengali, Noto Sans Tamil, Noto Sans Telugu, Noto Sans Kannada, Noto Sans Malayalam, Noto Sans Gujarati, Noto Sans Gurmukhi, Noto Sans Oriya",
+   "devanagari": "Noto Sans Devanagari, Instrument Sans, sans-serif",
+   "bengali": "Noto Sans Bengali, Instrument Sans, sans-serif",
+   "tamil": "Noto Sans Tamil, Instrument Sans, sans-serif",
+   "telugu": "Noto Sans Telugu, Instrument Sans, sans-serif",
+   "kannada": "Noto Sans Kannada, Instrument Sans, sans-serif",
+   "malayalam": "Noto Sans Malayalam, Instrument Sans, sans-serif",
+   "gujarati": "Noto Sans Gujarati, Instrument Sans, sans-serif",
+   "gurmukhi": "Noto Sans Gurmukhi, Instrument Sans, sans-serif",
+   "oriya": "Noto Sans Oriya, Instrument Sans, sans-serif"
+  },
+  "groups": [
+   {
+    "name": "App titles",
+    "family": "display",
+    "styles": [
+     {
+      "name": "type-hero-app",
+      "fontSize": "28px",
+      "lineHeight": 1.14,
+      "fontWeight": 700,
+      "usage": "The onboarding greeting. Once per flow.",
+      "letterSpacing": "-0.012em",
+      "sample": "नमस्ते, I'm VIDYA"
+     },
+     {
+      "name": "type-screen-title",
+      "fontSize": "26px",
+      "lineHeight": 1.16,
+      "fontWeight": 700,
+      "usage": "Home's day headline: two short lines.",
+      "letterSpacing": "-0.012em",
+      "sample": "Two periods, one prep gap"
+     },
+     {
+      "name": "type-page-title",
+      "fontSize": "22px",
+      "lineHeight": 1.2,
+      "fontWeight": 700,
+      "usage": "A screen title (\"Make a lesson\", \"Community\").",
+      "sample": "Make a lesson"
+     },
+     {
+      "name": "type-output-title",
+      "fontSize": "20px",
+      "lineHeight": 1.22,
+      "fontWeight": 700,
+      "usage": "The title of a generated artifact or a person (screens 07, 10, 14).",
+      "letterSpacing": "-0.01em",
+      "sample": "Working with fractions in the kitchen"
+     },
+     {
+      "name": "type-card-title",
+      "fontSize": "15px",
+      "lineHeight": 1.3,
+      "fontWeight": 600,
+      "usage": "Field values, sheet headlines, the topic.",
+      "sample": "Fractions in everyday cooking"
+     },
+     {
+      "name": "type-quote",
+      "fontSize": "15px",
+      "lineHeight": 1.45,
+      "fontWeight": 600,
+      "usage": "What the teacher said, in quotes, in the voice sheet.",
+      "sample": "“इससे एक worksheet बना दो — दस सवाल”"
+     },
+     {
+      "name": "type-value",
+      "fontSize": "14px",
+      "lineHeight": 1.3,
+      "fontWeight": 600,
+      "usage": "Compact field values and the teacher's name on Home.",
+      "sample": "Class 7"
+     },
+     {
+      "name": "type-tile-title",
+      "fontSize": "13px",
+      "lineHeight": 1.3,
+      "fontWeight": 600,
+      "usage": "Tile titles, sheet titles, the VIDYA speaking line.",
+      "sample": "Roll call"
+     },
+     {
+      "name": "type-stat",
+      "fontSize": "18px",
+      "lineHeight": 1.2,
+      "fontWeight": 700,
+      "usage": "Numbers on stat tiles (\"68%\").",
+      "sample": "68%"
+     },
+     {
+      "name": "type-cta",
+      "fontSize": "15px",
+      "lineHeight": 1,
+      "fontWeight": 600,
+      "usage": "The 52px primary CTA label.",
+      "sample": "Start teaching"
+     },
+     {
+      "name": "type-cta-sm",
+      "fontSize": "14px",
+      "lineHeight": 1,
+      "fontWeight": 600,
+      "usage": "The 50px button label (\"Deliver\").",
+      "sample": "Deliver"
+     }
+    ]
+   },
+   {
+    "name": "App text",
+    "family": "ui",
+    "styles": [
+     {
+      "name": "type-reading",
+      "fontSize": "12px",
+      "lineHeight": 1.6,
+      "fontWeight": 400,
+      "usage": "Generated content the teacher reads: lesson sections, posts, scripts.",
+      "sample": "Hold up one chapati. Ask: if four of you share this, how much does each get?"
+     },
+     {
+      "name": "type-body",
+      "fontSize": "12px",
+      "lineHeight": 1.55,
+      "fontWeight": 400,
+      "usage": "Body copy and descriptions.",
+      "sample": "Tell me what you teach."
+     },
+     {
+      "name": "type-label",
+      "fontSize": "12px",
+      "lineHeight": 1.4,
+      "fontWeight": 500,
+      "usage": "Row labels, list items, suggestion rows.",
+      "sample": "4 absentees to call"
+     },
+     {
+      "name": "type-label-strong",
+      "fontSize": "12px",
+      "lineHeight": 1.4,
+      "fontWeight": 600,
+      "usage": "Option titles and criterion names.",
+      "sample": "Parent group"
+     },
+     {
+      "name": "type-chip",
+      "fontSize": "12px",
+      "lineHeight": 1.3,
+      "fontWeight": 600,
+      "usage": "Chip labels (500 when unselected).",
+      "sample": "Class 7"
+     },
+     {
+      "name": "type-button",
+      "fontSize": "13px",
+      "lineHeight": 1,
+      "fontWeight": 600,
+      "usage": "Secondary pill buttons (\"Edit\", \"Mute\", \"Minimise to orb\").",
+      "sample": "Edit"
+     },
+     {
+      "name": "type-body-sm",
+      "fontSize": "11px",
+      "lineHeight": 1.45,
+      "fontWeight": 400,
+      "usage": "Sublines under titles, notices, hints.",
+      "sample": "Spoken or typed — same result"
+     },
+     {
+      "name": "type-chip-sm",
+      "fontSize": "11px",
+      "lineHeight": 1.3,
+      "fontWeight": 600,
+      "usage": "Small chips inside composers.",
+      "sample": "Board work"
+     },
+     {
+      "name": "type-action",
+      "fontSize": "11px",
+      "lineHeight": 1.4,
+      "fontWeight": 600,
+      "usage": "Text actions at a row's end (\"Open\", \"Change\").",
+      "sample": "Open"
+     },
+     {
+      "name": "type-status",
+      "fontSize": "11px",
+      "lineHeight": 1.4,
+      "fontWeight": 500,
+      "usage": "The status bar.",
+      "sample": "9:41"
+     },
+     {
+      "name": "type-pill",
+      "fontSize": "10px",
+      "lineHeight": 1.22,
+      "fontWeight": 600,
+      "usage": "Status pills and tags. Floor size: Latin only; Indic text in a pill renders at 12px.",
+      "sample": "Mic on"
+     },
+     {
+      "name": "type-eyebrow",
+      "fontSize": "10px",
+      "lineHeight": 1.22,
+      "fontWeight": 600,
+      "usage": "Uppercase tracked eyebrows (Latin only; Indic eyebrows are not uppercased or tracked and render at 12px).",
+      "letterSpacing": "0.16em",
+      "sample": "WAITING FOR YOU"
+     },
+     {
+      "name": "type-caption",
+      "fontSize": "10px",
+      "lineHeight": 1.4,
+      "fontWeight": 400,
+      "usage": "Captions under option titles and stat numbers.",
+      "sample": "WhatsApp · 34"
+     }
+    ]
+   },
+   {
+    "name": "Website",
+    "family": "display",
+    "styles": [
+     {
+      "name": "type-web-h1",
+      "fontSize": "68px",
+      "lineHeight": 1.02,
+      "fontWeight": 700,
+      "usage": "Hero headline; on the page it is clamp(40px, 6vw, 68px).",
+      "letterSpacing": "-0.03em",
+      "sample": "Say it once. VIDYA does the rest."
+     },
+     {
+      "name": "type-web-h2",
+      "fontSize": "44px",
+      "lineHeight": 1.06,
+      "fontWeight": 700,
+      "usage": "Section headline; clamp(28px, 3.4vw, 44px). Two short contrasting clauses.",
+      "letterSpacing": "-0.025em",
+      "sample": "The work doesn't fit in the day."
+     },
+     {
+      "name": "type-web-quote",
+      "fontSize": "34px",
+      "lineHeight": 1.3,
+      "fontWeight": 500,
+      "usage": "Testimonial quote; clamp(22px, 3vw, 34px).",
+      "letterSpacing": "-0.02em",
+      "sample": "“I say one sentence on the walk home.”"
+     },
+     {
+      "name": "type-metric",
+      "fontSize": "26px",
+      "lineHeight": 1.05,
+      "fontWeight": 700,
+      "usage": "Metric values.",
+      "letterSpacing": "-0.02em",
+      "sample": "11 hrs"
+     },
+     {
+      "name": "type-web-h3",
+      "fontSize": "21px",
+      "lineHeight": 1.2,
+      "fontWeight": 700,
+      "usage": "Card titles.",
+      "letterSpacing": "-0.015em",
+      "sample": "Quiz, rubric and camera grading"
+     },
+     {
+      "name": "type-web-lead",
+      "fontSize": "18px",
+      "lineHeight": 1.62,
+      "fontWeight": 400,
+      "usage": "Hero lead.",
+      "family": "ui",
+      "sample": "One teacher. Several classes. One sentence."
+     },
+     {
+      "name": "type-web-body",
+      "fontSize": "14px",
+      "lineHeight": 1.6,
+      "fontWeight": 400,
+      "usage": "Website body.",
+      "family": "ui",
+      "sample": "Pilots run for one term."
+     },
+     {
+      "name": "type-web-eyebrow",
+      "fontSize": "11px",
+      "lineHeight": 1.6,
+      "fontWeight": 600,
+      "usage": "Website eyebrows, tracked .18em.",
+      "letterSpacing": "0.18em",
+      "family": "ui",
+      "sample": "TWO PEOPLE, ONE ROLLOUT"
+     }
+    ]
+   },
+   {
+    "name": "Indic scripts",
+    "family": "ui",
+    "styles": [
+     {
+      "name": "indic-devanagari",
+      "fontSize": "14px",
+      "lineHeight": 1.7,
+      "fontWeight": 500,
+      "usage": "Noto Sans Devanagari at the Indic reading size: 1.7 line height, never uppercased, letter-spaced or truncated.",
+      "family": "devanagari",
+      "sample": "नमस्ते, कक्षा 7 का पाठ तैयार है"
+     },
+     {
+      "name": "indic-bengali",
+      "fontSize": "14px",
+      "lineHeight": 1.7,
+      "fontWeight": 500,
+      "usage": "Noto Sans Bengali at the Indic reading size: 1.7 line height, never uppercased, letter-spaced or truncated.",
+      "family": "bengali",
+      "sample": "নমস্কার, সপ্তম শ্রেণির পাঠ তৈরি"
+     },
+     {
+      "name": "indic-tamil",
+      "fontSize": "14px",
+      "lineHeight": 1.7,
+      "fontWeight": 500,
+      "usage": "Noto Sans Tamil at the Indic reading size: 1.7 line height, never uppercased, letter-spaced or truncated.",
+      "family": "tamil",
+      "sample": "வணக்கம், ஏழாம் வகுப்பு பாடம் தயார்"
+     },
+     {
+      "name": "indic-telugu",
+      "fontSize": "14px",
+      "lineHeight": 1.7,
+      "fontWeight": 500,
+      "usage": "Noto Sans Telugu at the Indic reading size: 1.7 line height, never uppercased, letter-spaced or truncated.",
+      "family": "telugu",
+      "sample": "నమస్కారం, ఏడవ తరగతి పాఠం సిద్ధం"
+     },
+     {
+      "name": "indic-kannada",
+      "fontSize": "14px",
+      "lineHeight": 1.7,
+      "fontWeight": 500,
+      "usage": "Noto Sans Kannada at the Indic reading size: 1.7 line height, never uppercased, letter-spaced or truncated.",
+      "family": "kannada",
+      "sample": "ನಮಸ್ಕಾರ, ಏಳನೇ ತರಗತಿಯ ಪಾಠ ಸಿದ್ಧ"
+     },
+     {
+      "name": "indic-malayalam",
+      "fontSize": "14px",
+      "lineHeight": 1.7,
+      "fontWeight": 500,
+      "usage": "Noto Sans Malayalam at the Indic reading size: 1.7 line height, never uppercased, letter-spaced or truncated.",
+      "family": "malayalam",
+      "sample": "നമസ്കാരം, ഏഴാം ക്ലാസ് പാഠം തയ്യാർ"
+     },
+     {
+      "name": "indic-gujarati",
+      "fontSize": "14px",
+      "lineHeight": 1.7,
+      "fontWeight": 500,
+      "usage": "Noto Sans Gujarati at the Indic reading size: 1.7 line height, never uppercased, letter-spaced or truncated.",
+      "family": "gujarati",
+      "sample": "નમસ્તે, ધોરણ 7 નો પાઠ તૈયાર છે"
+     },
+     {
+      "name": "indic-gurmukhi",
+      "fontSize": "14px",
+      "lineHeight": 1.7,
+      "fontWeight": 500,
+      "usage": "Noto Sans Gurmukhi at the Indic reading size: 1.7 line height, never uppercased, letter-spaced or truncated.",
+      "family": "gurmukhi",
+      "sample": "ਸਤ ਸ੍ਰੀ ਅਕਾਲ, ਸੱਤਵੀਂ ਜਮਾਤ ਦਾ ਪਾਠ ਤਿਆਰ"
+     },
+     {
+      "name": "indic-oriya",
+      "fontSize": "14px",
+      "lineHeight": 1.7,
+      "fontWeight": 500,
+      "usage": "Noto Sans Oriya at the Indic reading size: 1.7 line height, never uppercased, letter-spaced or truncated.",
+      "family": "oriya",
+      "sample": "ନମସ୍କାର, ସପ୍ତମ ଶ୍ରେଣୀ ପାଠ ପ୍ରସ୍ତୁତ"
+     }
+    ]
+   }
+  ]
+ },
+ "spacing": {
+  "note": "The source's own irregular scale (4, 6, 7, 9, 10, 12, 14, 16, 20, 22, 26, 44). Card paddings such as 13px 14px are literal in components, exactly as drawn.",
+  "tokens": [
+   {
+    "name": "space-1",
+    "value": "4px",
+    "usage": "Hairline gaps: segmented control inset, between a title and its subline."
+   },
+   {
+    "name": "space-2",
+    "value": "6px",
+    "usage": "Tab gap inside the tab bar; gap between small chips and pills."
+   },
+   {
+    "name": "space-3",
+    "value": "7px",
+    "usage": "Gap between chips; padding of the tab bar capsule; list gaps in sheets."
+   },
+   {
+    "name": "space-4",
+    "value": "9px",
+    "usage": "Gap between tiles and paired cards; gap inside lists of rows."
+   },
+   {
+    "name": "space-5",
+    "value": "10px",
+    "usage": "Gap inside a row (dot, label, action)."
+   },
+   {
+    "name": "space-6",
+    "value": "12px",
+    "usage": "Gap between stacked sheet sections and card blocks."
+   },
+   {
+    "name": "space-7",
+    "value": "14px",
+    "usage": "Vertical rhythm between blocks on a screen."
+   },
+   {
+    "name": "space-8",
+    "value": "16px",
+    "usage": "Orb inset from the screen edge (right 16)."
+   },
+   {
+    "name": "space-9",
+    "value": "20px",
+    "usage": "Screen side gutter."
+   },
+   {
+    "name": "space-10",
+    "value": "22px",
+    "usage": "Status bar side padding; canvas section gap."
+   },
+   {
+    "name": "space-11",
+    "value": "26px",
+    "usage": "Gap between phone screens on the canvas; website panel padding."
+   },
+   {
+    "name": "space-12",
+    "value": "44px",
+    "usage": "Canvas section gap; website block gap."
+   }
+  ]
+ },
+ "radius": {
+  "tokens": [
+   {
+    "name": "radius-xs",
+    "value": "6px",
+    "usage": "Rubric level badges."
+   },
+   {
+    "name": "radius-sm",
+    "value": "8px",
+    "usage": "Square letter marks (board mark, Daily Briefing mark)."
+   },
+   {
+    "name": "radius-row",
+    "value": "12px",
+    "usage": "Rows: suggestion rows, deliver note, notices inside sheets."
+   },
+   {
+    "name": "radius-option",
+    "value": "10px",
+    "usage": "Quiz options."
+   },
+   {
+    "name": "radius-field",
+    "value": "14px",
+    "usage": "Inset context cards, deliver options, roster rows, stat tiles."
+   },
+   {
+    "name": "radius-tile",
+    "value": "16px",
+    "usage": "Compact field cards, content sections, curriculum notice."
+   },
+   {
+    "name": "radius-card",
+    "value": "18px",
+    "usage": "Cards: home tiles, field cards, script cards, settings."
+   },
+   {
+    "name": "radius-panel",
+    "value": "20px",
+    "usage": "The primary card (\"Waiting for you\") and the orb prompt."
+   },
+   {
+    "name": "radius-sheet",
+    "value": "26px",
+    "usage": "Bottom sheet top corners; website FeatureCards."
+   },
+   {
+    "name": "radius-screen",
+    "value": "38px",
+    "usage": "The phone screen and a sheet's bottom corners."
+   },
+   {
+    "name": "radius-pill",
+    "value": "9999px",
+    "usage": "Everything you press: buttons, chips, the tab bar, tabs, pills, the Composer, the orb."
+   },
+   {
+    "name": "radius-scan",
+    "value": "22px",
+    "usage": "The scanner frame (screen 11)."
+   },
+   {
+    "name": "radius-web-metric",
+    "value": "24px",
+    "usage": "Large website MetricCards."
+   },
+   {
+    "name": "radius-band",
+    "value": "36px",
+    "usage": "The website CTA band."
+   },
+   {
+    "name": "radius-device",
+    "value": "56px",
+    "usage": "The website device bezel; its screen uses 44px."
+   },
+   {
+    "name": "radius-device-screen",
+    "value": "44px",
+    "usage": "The screen inside the website device bezel."
+   },
+   {
+    "name": "radius-slider",
+    "value": "27px",
+    "usage": "The website screen slider window."
+   }
+  ]
+ },
+ "shadow": {
+  "note": "Warm and low, tinted with ink rgba(23,19,16). Brand elements cast saffron-tinted shadows. Focus is an outline, never a shadow, so no shadow can hide it.",
+  "tokens": [
+   {
+    "name": "shadow-screen",
+    "value": "0 22px 54px rgba(23,19,16,.16)",
+    "usage": "Phone screens on the canvas."
+   },
+   {
+    "name": "shadow-float",
+    "value": "0 8px 22px rgba(23,19,16,.1)",
+    "usage": "The floating tab bar."
+   },
+   {
+    "name": "shadow-card",
+    "value": "0 8px 20px rgba(23,19,16,.06)",
+    "usage": "The one primary card on a screen (\"Waiting for you\")."
+   },
+   {
+    "name": "shadow-panel",
+    "value": "0 10px 30px rgba(23,19,16,.06)",
+    "usage": "Large canvas panels."
+   },
+   {
+    "name": "shadow-sheet",
+    "value": "0 -14px 40px rgba(23,19,16,.18)",
+    "usage": "Bottom sheets."
+   },
+   {
+    "name": "shadow-hint",
+    "value": "0 8px 20px rgba(23,19,16,.1)",
+    "usage": "Hint capsules and toasts that float."
+   },
+   {
+    "name": "shadow-post",
+    "value": "0 6px 16px rgba(23,19,16,.06)",
+    "usage": "The automated Daily Briefing post."
+   },
+   {
+    "name": "shadow-prompt",
+    "value": "0 10px 28px rgba(23,19,16,.14)",
+    "usage": "The orb's context prompt card."
+   },
+   {
+    "name": "shadow-cta",
+    "value": "0 10px 26px rgba(201,106,40,.34)",
+    "usage": "The 52px saffron CTA."
+   },
+   {
+    "name": "shadow-cta-sm",
+    "value": "0 8px 22px rgba(201,106,40,.34)",
+    "usage": "The 50px saffron button beside a secondary (\"Deliver\")."
+   },
+   {
+    "name": "shadow-cta-tray",
+    "value": "0 8px 20px rgba(201,106,40,.34)",
+    "usage": "The send button in the deliver tray."
+   },
+   {
+    "name": "shadow-cta-leaf",
+    "value": "0 10px 26px rgba(44,95,45,.3)",
+    "usage": "The leaf success CTA (\"Submit attendance\")."
+   },
+   {
+    "name": "shadow-cta-red",
+    "value": "0 8px 22px rgba(192,57,43,.3)",
+    "usage": "The red danger button (\"End call\")."
+   },
+   {
+    "name": "shadow-mic",
+    "value": "0 5px 14px rgba(201,106,40,.36)",
+    "usage": "The 40px mic disc in the Composer."
+   },
+   {
+    "name": "shadow-current",
+    "value": "0 8px 22px rgba(201,106,40,.18)",
+    "usage": "The current row in the roll call and a focused Field."
+   },
+   {
+    "name": "shadow-orb",
+    "value": "0 10px 26px rgba(201,106,40,.42)",
+    "usage": "The resting orb."
+   },
+   {
+    "name": "shadow-orb-working",
+    "value": "0 8px 20px rgba(42,59,143,.34)",
+    "usage": "The working orb."
+   },
+   {
+    "name": "shadow-orb-ready",
+    "value": "0 8px 20px rgba(44,95,45,.34)",
+    "usage": "The ready orb."
+   },
+   {
+    "name": "shadow-orb-working-sm",
+    "value": "0 6px 18px rgba(42,59,143,.32)",
+    "usage": "The working orb in a sheet header."
+   },
+   {
+    "name": "shadow-orb-ready-sm",
+    "value": "0 5px 14px rgba(44,95,45,.3)",
+    "usage": "The ready orb in the deliver tray header."
+   },
+   {
+    "name": "shadow-orb-offline",
+    "value": "0 10px 26px rgba(23,19,16,.2)",
+    "usage": "The offline orb."
+   },
+   {
+    "name": "shadow-orb-camera",
+    "value": "0 0 0 6px rgba(255,253,249,.12), 0 10px 26px rgba(0,0,0,.4)",
+    "usage": "The orb on the camera ground."
+   },
+   {
+    "name": "ring-orb-listen",
+    "value": "0 0 0 8px rgba(201,106,40,.14), 0 6px 18px rgba(201,106,40,.4)",
+    "usage": "The listening orb's halo plus shadow."
+   },
+   {
+    "name": "ring-orb-drag",
+    "value": "0 0 0 12px rgba(201,106,40,.14), 0 16px 34px rgba(23,19,16,.28)",
+    "usage": "The dragged orb's lift."
+   },
+   {
+    "name": "shadow-web-lift",
+    "value": "0 14px 30px rgba(27,23,19,.09)",
+    "usage": "Website cards on hover (lift 3px)."
+   },
+   {
+    "name": "shadow-device",
+    "value": "0 30px 70px rgba(27,23,19,.14)",
+    "usage": "The website device frame."
+   },
+   {
+    "name": "shadow-band",
+    "value": "0 34px 80px rgba(201,106,40,.28)",
+    "usage": "The website CTA band."
+   },
+   {
+    "name": "shadow-slider",
+    "value": "0 18px 40px rgba(27,23,19,.12)",
+    "usage": "The website screen slider."
+   },
+   {
+    "name": "shadow-orb-brand",
+    "value": "0 4px 14px rgba(201,106,40,.5)",
+    "usage": "The small orb beside the wordmark (website nav, SideRail)."
+   },
+   {
+    "name": "shadow-orb-band",
+    "value": "0 0 0 10px rgba(255,248,240,.14)",
+    "usage": "The orb's halo on the CTA band."
+   }
+  ]
+ },
+ "gradient": {
+  "note": "Screen washes, glows and the orb's state fills. Each is one CSS background value.",
+  "tokens": [
+   {
+    "name": "wash-screen",
+    "value": "linear-gradient(168deg,#fff3e4 0%,#fdefee 36%,#eff4ee 72%,#fff7ec 100%)",
+    "usage": "Every app screen's ground: peach, blush, sage, cream at 168 degrees. Glass cards only read on it."
+   },
+   {
+    "name": "wash-working",
+    "value": "linear-gradient(168deg,#f1f3fb 0%,#edeff8 34%,#f5f2ec 70%,#fbf7f1 100%)",
+    "usage": "The screen ground while VIDYA works (screen 06): the wash turns faintly indigo."
+   },
+   {
+    "name": "wash-call",
+    "value": "linear-gradient(168deg,#f1f6f1 0%,#eaf2ea 40%,#f3f6f0 74%,#f8faf6 100%)",
+    "usage": "The screen ground during a live parent call (screen 14): faintly leaf."
+   },
+   {
+    "name": "wash-canvas",
+    "value": "linear-gradient(150deg,#fff6ec 0%,#f5f1f4 40%,#ecf2f0 74%,#fff8f1 100%)",
+    "usage": "The design canvas behind screens."
+   },
+   {
+    "name": "glow-saffron",
+    "value": "radial-gradient(circle at 38% 32%,rgba(255,214,170,.78),rgba(201,106,40,0) 76%)",
+    "usage": "The one saffron glow bleeding off a screen's top-right corner."
+   },
+   {
+    "name": "orb-resting",
+    "value": "radial-gradient(circle at 34% 30%,#ffd9ae,#c96a28 72%)",
+    "usage": "VIDYA resting and listening."
+   },
+   {
+    "name": "orb-dragging",
+    "value": "radial-gradient(circle at 34% 30%,#ffe3c2,#c96a28 72%)",
+    "usage": "VIDYA while dragged."
+   },
+   {
+    "name": "orb-working",
+    "value": "radial-gradient(circle at 34% 30%,#dce2fa,#2a3b8f 74%)",
+    "usage": "VIDYA working."
+   },
+   {
+    "name": "orb-ready",
+    "value": "radial-gradient(circle at 34% 30%,#cfe6cf,#2c5f2d 74%)",
+    "usage": "VIDYA ready to deliver."
+   },
+   {
+    "name": "orb-offline",
+    "value": "radial-gradient(circle at 34% 30%,#e6e1da,#8a8178 74%)",
+    "usage": "VIDYA with no signal (voice paused, typing works)."
+   },
+   {
+    "name": "orb-cta",
+    "value": "radial-gradient(circle at 34% 30%,#fff0dc,#e0a878 74%)",
+    "usage": "The orb inside the website CTA band."
+   },
+   {
+    "name": "avatar-saffron",
+    "value": "radial-gradient(circle at 34% 30%,#e0a878,#a5551d 76%)",
+    "usage": "Testimonial avatar disc."
+   },
+   {
+    "name": "band-cta",
+    "value": "linear-gradient(140deg,#c96a28 0%,#a5551d 52%,#7e3f16 100%)",
+    "usage": "The website CTA band, once per page."
+   },
+   {
+    "name": "device-bezel",
+    "value": "linear-gradient(160deg,#fffdf9,#f1e9de)",
+    "usage": "The website device frame bezel."
+   },
+   {
+    "name": "glow-web-saffron",
+    "value": "radial-gradient(circle at 40% 35%,rgba(201,106,40,.2),rgba(201,106,40,0) 70%)",
+    "usage": "Drifting saffron blob behind the website hero and sections."
+   },
+   {
+    "name": "glow-web-indigo",
+    "value": "radial-gradient(circle at 50% 50%,rgba(42,59,143,.14),rgba(42,59,143,0) 68%)",
+    "usage": "Drifting indigo blob behind the website hero."
+   },
+   {
+    "name": "glow-band",
+    "value": "radial-gradient(circle at 40% 36%,rgba(255,217,174,.45),rgba(255,217,174,0) 68%)",
+    "usage": "The drifting warm blob on the CTA band."
+   },
+   {
+    "name": "sweep-band",
+    "value": "linear-gradient(90deg,rgba(255,248,240,0),rgba(255,248,240,.16),rgba(255,248,240,0))",
+    "usage": "The light sweep across the CTA band."
+   }
+  ]
+ },
+ "size": {
+  "tokens": [
+   {
+    "name": "screen-w",
+    "value": "360px",
+    "usage": "Phone screen width every mobile layout is drawn at."
+   },
+   {
+    "name": "screen-h",
+    "value": "760px",
+    "usage": "Phone screen height."
+   },
+   {
+    "name": "status-h",
+    "value": "36px",
+    "usage": "Status bar height."
+   },
+   {
+    "name": "tab-size",
+    "value": "42px",
+    "usage": "One tab disc; its touch area extends to 48px."
+   },
+   {
+    "name": "cta-height",
+    "value": "52px",
+    "usage": "The full-width primary CTA."
+   },
+   {
+    "name": "button-height",
+    "value": "50px",
+    "usage": "Paired buttons (\"Deliver\" + \"Edit\")."
+   },
+   {
+    "name": "button-height-sm",
+    "value": "46px",
+    "usage": "Buttons inside sheets (\"Minimise to orb\", \"Stop\")."
+   },
+   {
+    "name": "composer-height",
+    "value": "54px",
+    "usage": "The type-or-speak Composer."
+   },
+   {
+    "name": "mic-size",
+    "value": "40px",
+    "usage": "The Composer's mic disc; touch area 44px."
+   },
+   {
+    "name": "orb-size",
+    "value": "56px",
+    "usage": "The parked orb."
+   },
+   {
+    "name": "target-min",
+    "value": "44px",
+    "usage": "Minimum touch area for anything pressable (an addition: v3 draws some controls smaller and their touch area is extended invisibly)."
+   },
+   {
+    "name": "screen-pad-x",
+    "value": "20px",
+    "usage": "Screen side padding."
+   },
+   {
+    "name": "screen-pad-bottom",
+    "value": "96px",
+    "usage": "Bottom padding that clears the floating tab bar."
+   },
+   {
+    "name": "tabbar-bottom",
+    "value": "18px",
+    "usage": "Tab bar distance from the screen bottom."
+   },
+   {
+    "name": "toast-bottom",
+    "value": "84px",
+    "usage": "Toast distance from the screen bottom, above the tab bar."
+   },
+   {
+    "name": "orb-park-bottom",
+    "value": "100px",
+    "usage": "Orb bottom offset above the tab bar."
+   },
+   {
+    "name": "orb-park-bottom-cta",
+    "value": "172px",
+    "usage": "Orb bottom offset when a full-width CTA sits above the tab bar."
+   },
+   {
+    "name": "container-web",
+    "value": "1220px",
+    "usage": "Website container width (28px side padding)."
+   }
+  ]
+ },
+ "zIndex": {
+  "tokens": [
+   {
+    "name": "z-page",
+    "value": "0",
+    "usage": "Page content."
+   },
+   {
+    "name": "z-orb",
+    "value": "40",
+    "usage": "The orb and its hint, above content."
+   },
+   {
+    "name": "z-tabbar",
+    "value": "30",
+    "usage": "The floating tab bar."
+   },
+   {
+    "name": "z-scrim",
+    "value": "50",
+    "usage": "Sheet scrim."
+   },
+   {
+    "name": "z-sheet",
+    "value": "60",
+    "usage": "Bottom sheets and the orb prompt."
+   },
+   {
+    "name": "z-toast",
+    "value": "70",
+    "usage": "Toasts."
+   },
+   {
+    "name": "z-webnav",
+    "value": "50",
+    "usage": "The sticky website nav."
+   }
+  ]
+ },
+ "effect": {
+  "tokens": [
+   {
+    "name": "blur-nav",
+    "value": "blur(18px)",
+    "usage": "Backdrop blur behind the sticky website nav. The only blur in the system."
+   }
+  ]
+ }
+}

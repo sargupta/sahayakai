@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/app_locale.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
@@ -192,7 +191,6 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
   Widget _studentNameField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.parentMessageStudentLabel,
-      leadingIcon: LucideIcons.user,
       // Voice-first: a teacher speaks the student's name rather than typing it —
       // the same field mic every tool input carries. Overwrites the field with
       // the transcript (mirrors Instant Answer's question mic).
@@ -216,7 +214,6 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
   Widget _classNameField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.parentMessageClassLabel,
-      leadingIcon: LucideIcons.users,
       child: TextFormField(
         controller: _classNameController,
         textCapitalization: TextCapitalization.characters,
@@ -233,7 +230,6 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
   Widget _subjectField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.parentMessageSubjectLabel,
-      leadingIcon: LucideIcons.bookOpen,
       child: DropdownButtonFormField<String>(
         initialValue: _subject,
         isExpanded: true,
@@ -252,7 +248,6 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
   Widget _reasonField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.parentMessageReasonLabel,
-      leadingIcon: LucideIcons.messageCircle,
       child: DropdownButtonFormField<ParentMessageReason>(
         initialValue: _reason,
         isExpanded: true,
@@ -276,7 +271,6 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
       label: l10n.parentMessageAbsentDaysLabel,
       optionalLabel: l10n.parentMessageOptional,
       hint: l10n.parentMessageAbsentDaysHint,
-      leadingIcon: LucideIcons.calendarDays,
       child: TextFormField(
         controller: _absentDaysController,
         keyboardType: TextInputType.number,
@@ -292,7 +286,6 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
     return LabeledField(
       label: l10n.parentMessageParentLanguageLabel,
       hint: l10n.parentMessageParentLanguageHint,
-      leadingIcon: LucideIcons.languages,
       child: DropdownButtonFormField<AppLocale>(
         initialValue: _parentLanguage,
         isExpanded: true,
@@ -316,7 +309,6 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
       label: l10n.parentMessageContextLabel,
       optionalLabel: l10n.parentMessageOptional,
       hint: l10n.parentMessageContextHint,
-      leadingIcon: LucideIcons.fileText,
       // The narrative field a teacher most naturally dictates ("Ravi missed
       // three days and is behind in fractions") instead of typing a paragraph.
       trailing: InlineFieldMic(
@@ -340,7 +332,6 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
       label: l10n.parentMessageNoteLabel,
       optionalLabel: l10n.parentMessageOptional,
       hint: l10n.parentMessageNoteHint,
-      leadingIcon: LucideIcons.stickyNote,
       // A second free-text narrative the teacher can speak rather than type.
       trailing: InlineFieldMic(
         expectedLanguage: _dictationLanguage,
@@ -363,7 +354,6 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
       label: l10n.parentMessageTeacherNameLabel,
       optionalLabel: l10n.parentMessageOptional,
       hint: l10n.parentMessageTeacherNameHint,
-      leadingIcon: LucideIcons.userCheck,
       child: TextFormField(
         controller: _teacherNameController,
         textCapitalization: TextCapitalization.words,
@@ -378,7 +368,6 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
     return LabeledField(
       label: l10n.parentMessageSchoolNameLabel,
       optionalLabel: l10n.parentMessageOptional,
-      leadingIcon: LucideIcons.school,
       child: TextFormField(
         controller: _schoolNameController,
         textCapitalization: TextCapitalization.words,

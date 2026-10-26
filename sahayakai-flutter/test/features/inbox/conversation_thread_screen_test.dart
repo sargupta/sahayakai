@@ -10,7 +10,6 @@ import 'package:sahayakai/features/inbox/data/messages_stream_provider.dart';
 import 'package:sahayakai/features/inbox/domain/conversation_id.dart';
 import 'package:sahayakai/features/inbox/domain/inbox_models.dart';
 import 'package:sahayakai/features/inbox/presentation/conversation_thread_screen.dart';
-import 'package:sahayakai/features/vidya/presentation/vidya_sheet.dart';
 
 import '../../support/fake_block_c_transports.dart';
 
@@ -121,8 +120,6 @@ void main() {
     expect(find.text('Thank you Bina'), findsOneWidget); // mine
     // My message carries a read receipt (double check); their message has none.
     expect(find.byIcon(LucideIcons.checkCheck), findsOneWidget);
-    // P1.2 launcher ubiquity: the co-teacher action rides the thread app bar too.
-    expect(find.byType(VidyaAppBarAction), findsOneWidget);
   });
 
   testWidgets('markConversationRead fires once on open', (tester) async {

@@ -41,8 +41,8 @@ class IconWell extends StatelessWidget {
 
     final borderGradient =
         isDark ? AppGlass.dBorderGradient : AppGlass.lBorderGradient;
-    final outerShape = AppGlass.squircle(AppRadius.well);
-    final innerShape = AppGlass.squircle(AppRadius.well - AppGlass.borderWidth);
+    final outerShape = AppGlass.shape(AppRadius.well);
+    final innerShape = AppGlass.shape(AppRadius.well - AppGlass.borderWidth);
 
     return SizedBox(
       width: box,

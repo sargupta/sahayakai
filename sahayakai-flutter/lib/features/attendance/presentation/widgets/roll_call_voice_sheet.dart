@@ -46,8 +46,8 @@ class _RollCallVoiceSheetState extends ConsumerState<RollCallVoiceSheet> {
   _Phase _phase = _Phase.starting;
 
   static final BorderRadius _sheetRadius = BorderRadius.only(
-    topLeft: AppRadius.rHero.topLeft,
-    topRight: AppRadius.rHero.topRight,
+    topLeft: AppRadius.rSheet.topLeft,
+    topRight: AppRadius.rSheet.topRight,
   );
 
   @override
@@ -128,6 +128,8 @@ class _RollCallVoiceSheetState extends ConsumerState<RollCallVoiceSheet> {
       ),
       child: GlassSurface(
         borderRadius: _sheetRadius,
+        // A sheet is solid `surface-card` (design system v2 `Sheet`).
+        fill: AppColors.surfaceCard,
         padding: EdgeInsets.zero,
         child: SafeArea(
           top: false,

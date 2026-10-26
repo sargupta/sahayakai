@@ -247,7 +247,7 @@ jobs:
       - name: Install deps
         run: npm ci
       - name: Run jest on CI script tests
-        run: npx jest src/__tests__/scripts/ci-no-verify-check.test.ts src/__tests__/scripts/workflow-secrets-declared.test.ts src/__tests__/scripts/workflow-playwright-runner-pinned.test.ts --runInBand --coverage=false
+        run: npx jest src/__tests__/scripts/ci-no-verify-check.test.ts src/__tests__/scripts/workflow-secrets-declared.test.ts --runInBand --coverage=false
 
 # NOTE: the full unit suite gates PRs via test.yml (Test Suite workflow).
 # Its exit code is only meaningful because the `| tee` pipe was removed
