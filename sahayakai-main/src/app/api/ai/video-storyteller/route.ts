@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { aiKillSwitchGate } from '@/lib/ai-killswitch';
 import { dispatchVideoStoryteller } from '@/lib/sidecar/video-storyteller-dispatch';
 import { logger } from '@/lib/logger';
 import { logAIError } from '@/lib/ai-error-response';
@@ -49,6 +50,12 @@ export async function POST(request: Request) {
     if (!userId) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // Billing kill-switch. This route has no plan-guard choke point, so the read
+    // happens here — see lib/ai-killswitch.ts. It sits before the quota gate so a
+    // teacher's daily allowance is not spent on a request that cannot run.
+    const killed = await aiKillSwitchGate();
+    if (killed) return killed;
 
     // SERVER-SIDE daily quota gate — the most expensive flow in the product
     // (Gemini categorization + YouTube fan-out) previously had no cap.

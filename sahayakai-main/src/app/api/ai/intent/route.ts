@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { aiKillSwitchGate } from '@/lib/ai-killswitch';
 import { agentRouterFlow } from '@/ai/flows/agent-definitions';
 import { dispatchInstantAnswer } from '@/lib/sidecar/instant-answer-dispatch';
 import { logger } from '@/lib/logger';
@@ -72,6 +73,11 @@ export async function POST(request: Request) {
         if (!userId) {
             return NextResponse.json({ error: 'Unauthorized: Missing User Identity' }, { status: 401 });
         }
+
+        // Billing kill-switch. This route has no plan-guard choke point, so the
+        // read happens here — see lib/ai-killswitch.ts.
+        const killed = await aiKillSwitchGate();
+        if (killed) return killed;
 
         const body = await request.json();
         // `language` = caller-supplied language hint (UI language, ISO code).

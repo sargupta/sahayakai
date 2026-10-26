@@ -4,6 +4,7 @@ import type { GatedFeature } from './plan-config';
 import { PLAN_CONFIG, getMinimumPlan, PLAN_DISPLAY_NAMES } from './plan-config';
 import { normalizePlan } from './plan-utils';
 import { reserveQuota, rollbackQuota } from './usage-counters';
+import { isAiEnabled, AI_KILLSWITCH_RESPONSE_BODY } from './ai-killswitch';
 
 /**
  * Higher-order function that wraps an API route handler with plan-based gating.
@@ -41,6 +42,15 @@ export async function reservePlanQuota(request: Request, feature: GatedFeature):
     const userId = request.headers.get('x-user-id');
     if (!userId) {
         return { ok: false, status: 401, body: { error: 'Unauthorized' } };
+    }
+
+    // Billing kill-switch, checked BEFORE the quota reservation. Order matters:
+    // a teacher must not spend one of their monthly generations on a request
+    // that was never going to reach a model. See lib/ai-killswitch.ts — this is
+    // the choke point both `withPlanCheck` and the streaming routes share, which
+    // is why the read lives here rather than being repeated in 18 route files.
+    if (!(await isAiEnabled())) {
+        return { ok: false, status: 503, body: { ...AI_KILLSWITCH_RESPONSE_BODY } };
     }
 
     // Feature flag — if subscription gating is disabled, pass through.
