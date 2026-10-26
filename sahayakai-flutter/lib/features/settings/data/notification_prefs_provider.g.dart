@@ -10,7 +10,7 @@ String _$notificationPrefsControllerHash() =>
     r'2065cc7b59c206816cd68f2f4b02c74705b31caa';
 
 /// Whether the teacher wants reminders and updates. Persisted locally, same
-/// shape as `LocaleController` / `ThemeModeController`.
+/// shape as `LocaleController`.
 ///
 /// LOCAL ONLY — this flag currently controls nothing but itself.
 ///
