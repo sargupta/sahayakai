@@ -15,8 +15,25 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Class gate: any job that installs Playwright must pin its runner image.
+  # Runs on every PR, so a new Playwright job on `ubuntu-latest` fails here
+  # before it can break on the next runner upgrade.
+  runner-pins:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout workflows
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+
+      - name: Check Playwright jobs pin their runner
+        run: python3 .github/scripts/check_playwright_runners.py
+
   smoke:
-    runs-on: ubuntu-latest
+    # Pinned, not ubuntu-latest: GitHub moved ubuntu-latest to 26.04 on
+    # 24 Oct 2026 and Playwright has no chromium build for it yet. Move to a
+    # newer image only once `playwright install` supports it.
+    runs-on: ubuntu-24.04
 
     defaults:
       run:
