@@ -1,6 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 import path from 'node:path';
 
+// Default target is the UAT environment (the preview Cloud Run service acts
+// as UAT until a dedicated UAT URL exists). CI passes QA_BASE_URL explicitly:
+// the uat-verify workflow sets it from the repo var UAT_BASE_URL.
 const BASE_URL =
   process.env.QA_BASE_URL || 'https://sahayakai-preview-zwydpvyuca-as.a.run.app';
 
@@ -44,7 +47,19 @@ export default defineConfig({
   // Playwright's default testMatch only picks up *.spec.ts / *.test.ts.
   testDir: path.resolve(__dirname),
   timeout: 60_000,
-  expect: { timeout: 10_000 },
+  expect: {
+    timeout: 10_000,
+    // Visual-regression tolerance for the @visual suite (qa/e2e/visual.spec.ts).
+    // 2% of pixels may differ before a comparison fails — absorbs minor
+    // anti-aliasing drift without hiding real layout/theme regressions.
+    toHaveScreenshot: { maxDiffPixelRatio: 0.02 },
+  },
+  // Keep screenshot baselines together under qa/e2e/__screenshots__/ instead
+  // of Playwright's default per-spec-file "-snapshots" sibling dirs.
+  // NOTE: the template deliberately omits {platform} — baselines are
+  // linux-CI-generated ONLY (font rasterisation differs per OS). Never commit
+  // darwin-generated snapshots; see qa/HARNESS.md "Visual Regression".
+  snapshotPathTemplate: '{testDir}/e2e/__screenshots__/{projectName}/{arg}{ext}',
   fullyParallel: false,
   retries: 0,
   reporter: [['list'], ['html', { outputFolder: path.resolve(__dirname, 'results/playwright-report'), open: 'never' }]],
