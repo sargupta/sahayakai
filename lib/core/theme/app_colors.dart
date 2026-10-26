@@ -97,6 +97,10 @@ class AppColors {
 
   // Accents
   static const Color accent = saffron500;
+  // accentFill = saffron-600: white-text-safe fill for labelled saffron fills
+  // (buttons, selected chips, selected segments). saffron-500 (accent) stays
+  // for orb, mic discs, tab disc, dots, bars, focus edges (no white label).
+  static const Color accentFill = saffron600;
   static const Color accentTint = Color(0x1AFF8D2A);           // rgba(201,106,40,.10)
   static const Color accentTintBorder = Color(0x38C96A28);     // rgba(201,106,40,.22)
   static const Color success = leaf500;

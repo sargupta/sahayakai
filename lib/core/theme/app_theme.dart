@@ -88,13 +88,13 @@ class AppTheme {
             if (states.contains(WidgetState.pressed)) {
               return Color.alphaBlend(
                 Colors.white.withValues(alpha: 0.1),
-                scheme.primary,
+                AppColors.accentFill,
               );
             }
             if (states.contains(WidgetState.disabled)) {
-              return scheme.primary.withValues(alpha: 0.38);
+              return AppColors.accentFill.withValues(alpha: 0.38);
             }
-            return scheme.primary; // saffron-500
+            return AppColors.accentFill; // saffron-600 (white-text-safe)
           }),
           foregroundColor: WidgetStatePropertyAll(scheme.onPrimary),
           minimumSize: const WidgetStatePropertyAll(
@@ -120,13 +120,13 @@ class AppTheme {
             if (states.contains(WidgetState.pressed)) {
               return Color.alphaBlend(
                 Colors.white.withValues(alpha: 0.1),
-                scheme.primary,
+                AppColors.accentFill,
               );
             }
             if (states.contains(WidgetState.disabled)) {
-              return scheme.primary.withValues(alpha: 0.38);
+              return AppColors.accentFill.withValues(alpha: 0.38);
             }
-            return scheme.primary;
+            return AppColors.accentFill;
           }),
           foregroundColor: WidgetStatePropertyAll(scheme.onPrimary),
           minimumSize: const WidgetStatePropertyAll(
