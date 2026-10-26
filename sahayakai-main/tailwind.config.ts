@@ -3,10 +3,17 @@ import type { Config } from 'tailwindcss';
 
 export default {
   darkMode: ['class'],
+  // Scan ALL of src/. The old list (pages/components/app only) silently
+  // dropped every class written elsewhere (src/features, src/data,
+  // src/types, ...) from the shipped CSS: GeneratorPage spinner and sticky
+  // mobile CTA, instant-answer prose-lg, quick-template colours. Tests and
+  // mocks are excluded: they only repeat classes from the code they test.
+  // Gate: src/__tests__/design/tailwind-content-coverage.test.ts.
   content: [
-    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/**/*.{js,ts,jsx,tsx,mdx}',
+    '!./src/**/__tests__/**',
+    '!./src/**/__mocks__/**',
+    '!./src/**/*.test.{js,ts,jsx,tsx}',
   ],
   theme: {
     extend: {
