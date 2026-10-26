@@ -15,7 +15,7 @@ import 'instant_answer_fixtures.dart';
 /// screen promises.
 void main() {
   group('overflow gates (DESIGN_RUBRIC §12.9, §12.10, §12.13)', () {
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       for (final scale in <double>[1.0, 1.3]) {
         testWidgets('renders at 360dp, textScale $scale, ${brightness.name}', (
           tester,

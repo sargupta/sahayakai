@@ -22,8 +22,8 @@ import 'package:flutter/material.dart';
 ///     13px/600 or larger). Do not "fix" it here.
 ///   • White on [leaf500] 7.55:1, on [indigo500] 9.9:1, on [red500] 5.44:1.
 ///
-/// DARK is an open founder decision: no SahayakAI dark theme exists yet, so
-/// the `d*` roles below are the pre-v2 values, unchanged on purpose.
+/// Light only: the design system retired dark mode on 26 Oct 2026. The one
+/// dark surface is the camera (the `camera*` tokens).
 class AppColors {
   AppColors._();
 
@@ -177,9 +177,6 @@ class AppColors {
   /// brass, so it uses the nearest warm token.
   static const brandBrass = saffron300;
 
-  /// Dark-theme brass ornament (dark is unchanged; see the class doc).
-  static const dBrandBrass = Color(0xFF8A6E43);
-
   /// Back-compat names for the old tricolour accents, now the v2 meaning
   /// colours: indigo (working, curriculum) and leaf (selected, done, ready).
   static const navy = indigo500;
@@ -232,39 +229,6 @@ class AppColors {
 
   static const lPine = lSecondary;
   static const lIndigo = lTertiary;
-
-  // ---- Dark (pre-v2 values; dark mode is an open founder decision) ----
-  static const dBackground = Color(0xFF13151B);
-  static const dSurfaceContainerLow = Color(0xFF181A21);
-  static const dCard = Color(0xFF1C1F26);
-  static const dPopover = Color(0xFF1E2129);
-  static const dSurfaceContainerHigh = Color(0xFF2B303B);
-  static const dMuted = Color(0xFF252931);
-  static const dForeground = Color(0xFFF2F5F8);
-  static const dMutedForeground = Color(0xFF95A1B2);
-
-  static const dPrimary = Color(0xFFEB9447);
-  static const dPrimaryText = dPrimary;
-  static const dOnPrimary = Color(0xFF0F1729);
-  static const dPrimaryContainer = Color(0xFF3D2A15);
-  static const dOnPrimaryContainer = Color(0xFFFFCE9E);
-
-  static const dSecondary = Color(0xFF448848);
-  static const dSecondaryContainer = Color(0xFF1E3A22);
-  static const dOnSecondaryContainer = Color(0xFFBAE0BE);
-
-  static const dTertiary = Color(0xFF8DA4E0);
-  static const dError = Color(0xFFBA2C2C);
-  static const dErrorContainer = Color(0xFF3A1613);
-  static const dOnErrorContainer = Color(0xFFFBC5BC);
-
-  static const dBorder = Color(0xFF31353F);
-  static const dInput = Color(0xFF31353F);
-  static const dOutlineVariant = Color(0xFF23272F);
-  static const dRing = Color(0xFFEB9447);
-
-  static const dPine = dSecondary;
-  static const dIndigo = dTertiary;
 
   /// The theme-wide `shadowColor` for any Material-drawn shadow.
   static const shadowBase = lShadowBase;

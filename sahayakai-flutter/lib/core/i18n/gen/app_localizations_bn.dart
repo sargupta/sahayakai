@@ -770,18 +770,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get settingsTitle => 'সেটিংস';
 
   @override
-  String get settingsAppearanceTitle => 'চেহারা';
-
-  @override
-  String get settingsThemeSystem => 'আমার ডিভাইস অনুযায়ী';
-
-  @override
-  String get settingsThemeLight => 'উজ্জ্বল';
-
-  @override
-  String get settingsThemeDark => 'গাঢ়';
-
-  @override
   String get settingsLanguageHint =>
       'অ্যাপের ভাষা এবং আপনার শিক্ষণ উপকরণ যে ভাষায় লেখা হবে, দুটিই এটি ঠিক করে।';
 

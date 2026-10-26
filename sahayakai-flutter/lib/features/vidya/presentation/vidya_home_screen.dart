@@ -66,7 +66,6 @@ class _VidyaHomeScreenState extends ConsumerState<VidyaHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final state = ref.watch(vidyaControllerProvider);
     final controller = ref.read(vidyaControllerProvider.notifier);
 
@@ -108,18 +107,13 @@ class _VidyaHomeScreenState extends ConsumerState<VidyaHomeScreen> {
               ],
             )
           : null,
-      // Light: the page route already paints the v2 wash and saffron glow
-      // under this transparent scaffold (`ScreenWash`); painting the wash
-      // again here would cover the glow. Dark keeps its vignette.
-      body: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: isDark ? AppGradients.darkVignette : null,
-        ),
-        child: SafeArea(
-          child: state.hasConversation
-              ? _ActiveLayout(state: state, controller: controller)
-              : _EmptyLayout(state: state, controller: controller),
-        ),
+      // The page route already paints the v2 wash and saffron glow under
+      // this transparent scaffold (`ScreenWash`); painting the wash again here
+      // would cover the glow.
+      body: SafeArea(
+        child: state.hasConversation
+            ? _ActiveLayout(state: state, controller: controller)
+            : _EmptyLayout(state: state, controller: controller),
       ),
     );
   }

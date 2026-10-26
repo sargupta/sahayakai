@@ -32,9 +32,7 @@ void main() {
             linkOpenerProvider.overrideWithValue(linkOpener),
         ],
         child: MaterialApp(
-          theme: brightness == Brightness.dark
-              ? AppTheme.dark()
-              : AppTheme.light(),
+          theme: AppTheme.light(),
           locale: const Locale('en'),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
@@ -222,7 +220,7 @@ void main() {
   });
 
   group('overflow gates (DESIGN_RUBRIC §12.9, §12.10, §12.13)', () {
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       testWidgets('daily-limit prompt at 360dp x 1.3 in ${brightness.name}', (
         tester,
       ) async {

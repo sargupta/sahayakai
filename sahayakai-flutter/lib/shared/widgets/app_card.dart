@@ -53,8 +53,6 @@ class _AppCardState extends State<AppCard> {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final reduce = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     final animate = _tappable && !reduce;
     final pressed = animate && _pressed;
@@ -86,10 +84,10 @@ class _AppCardState extends State<AppCard> {
     if (widget.variant == AppCardVariant.inset) {
       content = DecoratedBox(
         decoration: BoxDecoration(
-          color: isDark ? scheme.surfaceContainerLow : AppColors.surfaceInset,
+          color: AppColors.surfaceInset,
           borderRadius: corners,
           border: Border.all(
-            color: isDark ? scheme.outline : AppColors.borderHairline,
+            color: AppColors.borderHairline,
             width: 1,
           ),
         ),
@@ -101,7 +99,7 @@ class _AppCardState extends State<AppCard> {
         // Shadow-only carrier: GlassSurface casts no shadow of its own.
         decoration: BoxDecoration(
           borderRadius: corners,
-          boxShadow: raised ? (isDark ? AppShadows.e2 : AppShadows.card) : null,
+          boxShadow: raised ? (AppShadows.card) : null,
         ),
         child: GlassSurface.flat(
           borderRadius: corners,

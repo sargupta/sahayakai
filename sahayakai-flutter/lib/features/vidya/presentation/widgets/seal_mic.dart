@@ -13,12 +13,10 @@ import '../../../../shared/widgets/press_scale.dart';
 enum SealMicState { idle, listening, transcribing, thinking, speaking }
 
 /// The Seal Mic — the app's authored signature control (PREMIUM_DESIGN_SPEC
-/// §B.2). A circular saffron orb (`scheme.primary` face — saffron-500 #C96A28
-/// light / #EB9447 dark — with an `onPrimary` rim + Lucide mic glyph, lifted on the warm
-/// saffron glow), matching the production web mic (`from-primary` fill,
-/// `primary-foreground` glyph). The glyph/rim flip with the theme: WHITE in
-/// light, DARK #0F1729 on the saffron in dark (production `.dark`
-/// primary-foreground). NOT a Material FAB. Five states drive five calm motions,
+/// §B.2). A circular saffron orb (`scheme.primary` face, saffron-500 #C96A28,
+/// with a white `onPrimary` rim + Lucide mic glyph, lifted on the warm saffron
+/// glow), matching the production web mic (`from-primary` fill,
+/// `primary-foreground` glyph). NOT a Material FAB. Five states drive five calm motions,
 /// each guarded by
 /// `context.motionEnabled` so reduce-motion renders the composed still:
 ///   • idle → a slow ~3s breathing scale
@@ -120,7 +118,6 @@ class _SealMicState extends State<SealMic>
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final motion = context.motionEnabled;
     final disc = widget.size * 0.72;
 
@@ -158,14 +155,12 @@ class _SealMicState extends State<SealMic>
                   height: disc,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    // Saffron fill flips with the theme (saffron-500 #C96A28
-                    // light / #EB9447 dark).
+                    // saffron-500: an icon-only disc keeps the brand accent.
                     color: scheme.primary,
-                    // Rim matches the glyph (production `primary-foreground`):
-                    // white in light, dark #0F1729 on the saffron in dark.
+                    // Rim matches the glyph (production `primary-foreground`).
                     border: Border.all(color: scheme.onPrimary, width: 3),
                     boxShadow:
-                        isDark ? AppShadows.dSaffronGlow : AppShadows.ctaGlowLight,
+                        AppShadows.ctaGlowLight,
                   ),
                   alignment: Alignment.center,
                   child: Icon(

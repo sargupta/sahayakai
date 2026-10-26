@@ -46,8 +46,7 @@ class SecondaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
-    final labelColor = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
+    const labelColor = AppColors.lPrimaryText;
     final enabled = onPressed != null && !isBusy;
 
     final borderGradient = LinearGradient(
@@ -90,7 +89,7 @@ class SecondaryButton extends StatelessWidget {
                 minimumSize: Size.zero,
               ),
               child: isBusy
-                  ? SizedBox(
+                  ? const SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(

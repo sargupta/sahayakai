@@ -61,7 +61,6 @@ class AppBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final Color background;
     final Color labelColor;
@@ -88,7 +87,7 @@ class AppBadge extends StatelessWidget {
         // an inset ground). The glyph now shares the label's token
         // so the two read as one accent unit (an earlier note wrongly exempted
         // the glyph as "non-text, 3:1 suffices"; it now matches the label).
-        labelColor = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryTextOnTint;
+        labelColor = AppColors.lPrimaryTextOnTint;
         iconColor = labelColor;
         weight = FontWeight.w600;
     }
@@ -146,11 +145,11 @@ class AppBadge extends StatelessWidget {
       child: content,
     );
 
-    final borderGradient =
-        isDark ? AppGlass.dBorderGradient : AppGlass.lBorderGradient;
+    const borderGradient =
+        AppGlass.lBorderGradient;
     return DecoratedBox(
-      decoration: ShapeDecoration(
-        shape: const StadiumBorder(),
+      decoration: const ShapeDecoration(
+        shape: StadiumBorder(),
         gradient: borderGradient,
       ),
       child: Padding(

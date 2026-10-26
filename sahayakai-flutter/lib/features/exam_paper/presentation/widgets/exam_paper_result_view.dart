@@ -191,10 +191,9 @@ class _SectionView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    final saffron = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
+    const saffron = AppColors.lPrimaryText;
 
     final totalMarks = section.totalMarks;
     return Column(
@@ -208,7 +207,7 @@ class _SectionView extends StatelessWidget {
               width: 4,
               height: 14,
               margin: const EdgeInsets.only(top: 4),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: saffron,
                 borderRadius: AppRadius.rSm,
               ),

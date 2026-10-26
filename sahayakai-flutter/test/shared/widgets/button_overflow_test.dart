@@ -26,7 +26,7 @@ const _longLabel =
 
 Widget _host(Widget child, {Brightness brightness = Brightness.light}) {
   return MaterialApp(
-    theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+    theme: AppTheme.light(),
     home: Scaffold(
       body: Center(
         // A bounded, narrow width forces the label to wrap — the exact case
@@ -46,7 +46,7 @@ RenderParagraph _label(WidgetTester tester, Type buttonType) =>
     );
 
 void main() {
-  for (final brightness in Brightness.values) {
+  for (final brightness in const [Brightness.light]) {
     testWidgets(
       'PrimaryButton: a wrapping label never overflows at textScale 1.3 '
       '(${brightness.name})',

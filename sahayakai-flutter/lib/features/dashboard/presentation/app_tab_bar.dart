@@ -27,9 +27,6 @@ enum AppTab { home, library, community, profile }
 ///
 /// No labels are drawn: [labels] are each tab's accessible name and tooltip.
 /// The active tab reports itself selected (the `aria-current` analogue).
-///
-/// Dark is an open founder decision, so dark keeps its pre-v2 glass colours
-/// and the scheme's saffron pairing; the geometry is the same.
 class AppTabBar extends StatelessWidget {
   const AppTabBar({
     super.key,
@@ -64,17 +61,16 @@ class AppTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     assert(targetSize - discSize == _gap);
 
     final decoration = BoxDecoration(
-      color: isDark ? AppGlass.dChromeFill : AppColors.surfaceChrome,
+      color: AppColors.surfaceChrome,
       borderRadius: AppRadius.rPill,
       border: Border.all(
-        color: isDark ? AppColors.dBorder : AppColors.borderGlass,
+        color: AppColors.borderGlass,
         width: AppGlass.borderWidth,
       ),
-      boxShadow: isDark ? AppShadows.dKey : AppShadows.float,
+      boxShadow: AppShadows.float,
     );
 
     return SafeArea(
@@ -150,17 +146,16 @@ class _TabDiscState extends State<_TabDisc> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
     final motion = context.motionEnabled;
 
     final Color disc;
     final Color ink;
     if (!widget.active) {
       disc = Colors.transparent;
-      ink = isDark ? scheme.onSurfaceVariant : AppColors.textMuted;
+      ink = AppColors.textMuted;
     } else if (widget.tint) {
       disc = AppColors.accentTintStrong;
-      ink = isDark ? scheme.primary : AppColors.saffron600;
+      ink = AppColors.saffron600;
     } else {
       disc = scheme.primary;
       ink = scheme.onPrimary;
@@ -203,7 +198,7 @@ class _TabDiscState extends State<_TabDisc> {
                     ? BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: isDark ? scheme.primary : AppColors.saffron600,
+                          color: AppColors.saffron600,
                           width: 2,
                           strokeAlign: BorderSide.strokeAlignOutside + 2,
                         ),

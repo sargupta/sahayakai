@@ -155,9 +155,7 @@ class AppText {
   }) {
     final strong = s.onSurface;
     final body = s.onSurfaceVariant;
-    final eyebrowInk = s.brightness == Brightness.dark
-        ? AppColors.dPrimaryText
-        : AppColors.textEyebrow;
+    const eyebrowInk = AppColors.textEyebrow;
 
     // Latin line height, or the Indic one.
     double h(double latin, double indic) => isIndic ? indic : latin;

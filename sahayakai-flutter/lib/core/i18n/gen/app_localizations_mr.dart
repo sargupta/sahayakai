@@ -771,18 +771,6 @@ class AppLocalizationsMr extends AppLocalizations {
   String get settingsTitle => 'सेटिंग्ज';
 
   @override
-  String get settingsAppearanceTitle => 'स्वरूप';
-
-  @override
-  String get settingsThemeSystem => 'माझ्या डिव्हाइसनुसार';
-
-  @override
-  String get settingsThemeLight => 'उजळ';
-
-  @override
-  String get settingsThemeDark => 'गडद';
-
-  @override
   String get settingsLanguageHint =>
       'ॲपची भाषा आणि तुमचे शिक्षण साहित्य ज्या भाषेत लिहिले जाते ती भाषा ठरवते.';
 

@@ -10,9 +10,6 @@ import '../../core/theme/app_theme.dart';
 /// the light scaffold is transparent (`app_theme.dart`): each page carries
 /// its own opaque wash, so glass cards read as glass everywhere and a pushed
 /// page still fully covers the page beneath it mid-transition.
-///
-/// Dark has no v2 ground (an open founder decision): its scaffold stays the
-/// solid pre-v2 ground, so this paints nothing there.
 class ScreenWash extends StatelessWidget {
   const ScreenWash({super.key, required this.child, this.wash});
 
@@ -24,7 +21,6 @@ class ScreenWash extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (Theme.of(context).brightness == Brightness.dark) return child;
     return DecoratedBox(
       decoration: BoxDecoration(gradient: wash ?? AppGradients.washScreen),
       child: Stack(

@@ -955,22 +955,6 @@
   "@settingsTitle": {
     "description": "Settings screen title and the tooltip on the gear action."
   },
-  "settingsAppearanceTitle": "Appearance",
-  "@settingsAppearanceTitle": {
-    "description": "Section header for the theme selector."
-  },
-  "settingsThemeSystem": "Match my device",
-  "@settingsThemeSystem": {
-    "description": "Theme option: follow the device light/dark setting."
-  },
-  "settingsThemeLight": "Light",
-  "@settingsThemeLight": {
-    "description": "Theme option: always light."
-  },
-  "settingsThemeDark": "Dark",
-  "@settingsThemeDark": {
-    "description": "Theme option: always dark."
-  },
   "settingsLanguageHint": "Sets the app language and the language your teaching material is written in.",
   "@settingsLanguageHint": {
     "description": "Explains that the language choice drives both the UI and the AI output language."

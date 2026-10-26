@@ -248,7 +248,6 @@ class _InlineFieldMicState extends ConsumerState<InlineFieldMic> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final listening = _phase == InlineMicPhase.listening;
     final opacity = _phase == InlineMicPhase.transcribing ? 0.6 : 1.0;
 
@@ -275,7 +274,7 @@ class _InlineFieldMicState extends ConsumerState<InlineFieldMic> {
                 color: AppColors.accentTintStrong,
                 spreadRadius: 6,
               ),
-            if (!isDark) ...AppShadows.mic,
+            ...AppShadows.mic,
           ],
         ),
         child: Icon(

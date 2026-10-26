@@ -74,9 +74,7 @@ class _TeacherSuggestionCardState extends ConsumerState<TeacherSuggestionCard> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final text = theme.textTheme;
-    final saffronText = theme.brightness == Brightness.dark
-        ? AppColors.dPrimaryText
-        : AppColors.lPrimaryText;
+    const saffronText = AppColors.lPrimaryText;
     final teacher = widget.teacher;
     final reason = teacher.recommendationReason?.trim();
 
@@ -140,7 +138,7 @@ class _TeacherSuggestionCardState extends ConsumerState<TeacherSuggestionCard> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
+                  const Icon(
                     LucideIcons.check,
                     size: AppIconSize.inline,
                     color: saffronText,

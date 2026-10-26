@@ -15,9 +15,6 @@ import 'package:sahayakai/shared/widgets/app_segmented.dart';
 /// 10 (fix on the table: a `saffron-600` fill at 5.28:1). This test pins that
 /// value as it stands rather than resolving it, and fails if it drops below the
 /// 3:1 UI-component floor.
-///
-/// Dark keeps the pre-v2 glass track (dark mode is an open founder decision):
-/// the unselected label is full-ink `onSurface` on `AppGlass.dFlatFill`.
 double _lin(int c) {
   final s = c / 255.0;
   return s <= 0.03928
@@ -102,18 +99,6 @@ void main() {
     final ratio = _ratio(label, AppColors.saffron500);
     expect(ratio, closeTo(3.77, 0.01));
     expect(ratio, greaterThanOrEqualTo(3.0));
-  });
-
-  testWidgets('dark: unselected label clears AA on the glass track', (
-    tester,
-  ) async {
-    final theme = AppTheme.dark();
-    await _pump(tester, theme);
-    final track = Color.alphaBlend(AppGlass.dFlatFill, AppColors.dBackground);
-    final label = _labelColor(tester, 'Two');
-
-    expect(label, theme.colorScheme.onSurface);
-    expect(_ratio(label, track), greaterThanOrEqualTo(4.5));
   });
 
   testWidgets('segments read as a radio group', (tester) async {

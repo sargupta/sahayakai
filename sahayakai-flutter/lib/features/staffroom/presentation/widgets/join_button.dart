@@ -83,9 +83,7 @@ class _JoinButtonState extends ConsumerState<JoinButton> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final text = theme.textTheme;
-    final saffronText = theme.brightness == Brightness.dark
-        ? AppColors.dPrimaryText
-        : AppColors.lPrimaryTextOnTint;
+    const saffronText = AppColors.lPrimaryTextOnTint;
 
     if (_isJoined) {
       // Settled, full-width "Joined" indicator: a check + label in the saffron
@@ -104,7 +102,7 @@ class _JoinButtonState extends ConsumerState<JoinButton> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(LucideIcons.check, size: AppIconSize.inline, color: saffronText),
+              const Icon(LucideIcons.check, size: AppIconSize.inline, color: saffronText),
               const SizedBox(width: AppSpacing.space2),
               Text(
                 l10n.staffroomJoined,

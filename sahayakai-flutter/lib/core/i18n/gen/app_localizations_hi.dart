@@ -769,18 +769,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get settingsTitle => 'सेटिंग्स';
 
   @override
-  String get settingsAppearanceTitle => 'दिखावट';
-
-  @override
-  String get settingsThemeSystem => 'मेरे डिवाइस के अनुसार';
-
-  @override
-  String get settingsThemeLight => 'लाइट';
-
-  @override
-  String get settingsThemeDark => 'डार्क';
-
-  @override
   String get settingsLanguageHint =>
       'यह ऐप की भाषा और आपकी शिक्षण सामग्री की भाषा तय करता है।';
 

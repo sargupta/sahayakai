@@ -170,8 +170,7 @@ class _ReflectionInset extends StatelessWidget {
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final saffron = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
+    const saffron = AppColors.lPrimaryText;
 
     return AppCard(
       variant: AppCardVariant.inset,
@@ -182,7 +181,7 @@ class _ReflectionInset extends StatelessWidget {
           Row(
             children: [
               // Saffron glyph — non-text, and saffron-700 clears 3:1 on the fill.
-              Icon(
+              const Icon(
                 LucideIcons.helpCircle,
                 size: AppIconSize.inline,
                 color: saffron,

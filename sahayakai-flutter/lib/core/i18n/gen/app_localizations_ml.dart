@@ -783,18 +783,6 @@ class AppLocalizationsMl extends AppLocalizations {
   String get settingsTitle => 'ക്രമീകരണങ്ങൾ';
 
   @override
-  String get settingsAppearanceTitle => 'കാഴ്ച';
-
-  @override
-  String get settingsThemeSystem => 'ഉപകരണത്തിന് അനുസരിച്ച്';
-
-  @override
-  String get settingsThemeLight => 'ലൈറ്റ്';
-
-  @override
-  String get settingsThemeDark => 'ഡാർക്ക്';
-
-  @override
   String get settingsLanguageHint =>
       'ആപ്പിന്റെ ഭാഷയും നിങ്ങളുടെ അധ്യാപന സാമഗ്രികൾ എഴുതുന്ന ഭാഷയും ഇത് നിശ്ചയിക്കുന്നു.';
 

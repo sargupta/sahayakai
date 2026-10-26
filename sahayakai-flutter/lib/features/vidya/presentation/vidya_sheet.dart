@@ -66,9 +66,6 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
     final state = ref.watch(vidyaControllerProvider);
     final controller = ref.read(vidyaControllerProvider.notifier);
 
@@ -99,7 +96,7 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet> {
         child: DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: _sheetRadius,
-            boxShadow: isDark ? AppShadows.dKey : AppShadows.e4,
+            boxShadow: AppShadows.e4,
           ),
           // A sheet is solid (`surface-card`), never glass: the page behind
           // it must not show through what VIDYA is saying. Top corners only;
@@ -114,10 +111,8 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _GrabHandle(
-                    color: isDark
-                        ? scheme.outlineVariant
-                        : AppColors.borderControl,
+                  const _GrabHandle(
+                    color: AppColors.borderControl,
                   ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(18, 12, 18, 0),

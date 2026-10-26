@@ -774,18 +774,6 @@ class AppLocalizationsOr extends AppLocalizations {
   String get settingsTitle => 'ସେଟିଂସ୍';
 
   @override
-  String get settingsAppearanceTitle => 'ଦୃଶ୍ୟରୂପ';
-
-  @override
-  String get settingsThemeSystem => 'ମୋ ଡିଭାଇସ୍ ଅନୁସାରେ';
-
-  @override
-  String get settingsThemeLight => 'ଉଜ୍ଜ୍ୱଳ';
-
-  @override
-  String get settingsThemeDark => 'ଗାଢ଼';
-
-  @override
   String get settingsLanguageHint =>
       'ଆପ୍‌ର ଭାଷା ଏବଂ ଆପଣଙ୍କ ଶିକ୍ଷାଦାନ ସାମଗ୍ରୀ ଲେଖାଯିବା ଭାଷା ଏଥିରେ ସେଟ୍ ହୁଏ।';
 

@@ -11,8 +11,7 @@ import 'app_colors.dart';
 /// one [BoxShadow] (CSS blur radius = Flutter `blurRadius`).
 ///
 /// The pre-v2 elevation names (`e1`…`e4`) are aliases of the v2 token each
-/// role now maps to. Dark keeps its pre-v2 key shadow (dark mode is an open
-/// founder decision). This file is exempt from token_guard.
+/// role now maps to. This file is exempt from token_guard.
 class AppShadows {
   AppShadows._();
 
@@ -54,18 +53,8 @@ class AppShadows {
   /// Bottom sheets and modals.
   static final List<BoxShadow> e4 = sheet;
 
-  // Dark: floating key shadow (sheets/dialogs only) + 1px top highlight border.
-  static final List<BoxShadow> dKey = [
-    BoxShadow(color: Colors.black.withValues(alpha: 0.45), offset: const Offset(0, 16), blurRadius: 48, spreadRadius: -12),
-  ];
-  static final Border dTopHighlight =
-      Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.05), width: 1));
-
-  /// The saffron CTA glow (light = `shadow-cta`; dark unchanged).
+  /// The saffron CTA glow (`shadow-cta`).
   static final List<BoxShadow> ctaGlowLight = cta;
-  static final List<BoxShadow> dSaffronGlow = [
-    BoxShadow(color: const Color(0xFFEB9447).withValues(alpha: 0.22), offset: const Offset(0, 6), blurRadius: 24, spreadRadius: -6),
-  ];
 
   // Back-compat aliases so existing call sites keep compiling.
   static final List<BoxShadow> soft = e1;

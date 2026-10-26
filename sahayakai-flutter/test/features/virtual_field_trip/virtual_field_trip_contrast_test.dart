@@ -49,12 +49,6 @@ void main() {
           greaterThanOrEqualTo(4.5),
         );
       });
-      test('dark: onSurface on surfaceContainerHigh (>=4.5)', () {
-        expect(
-          _ratio(AppColors.dForeground, AppColors.dSurfaceContainerHigh),
-          greaterThanOrEqualTo(4.5),
-        );
-      });
     },
   );
 
@@ -72,12 +66,6 @@ void main() {
         greaterThanOrEqualTo(4.5),
       );
     });
-    test('dark: onSurface on surfaceContainerLow (>=4.5)', () {
-      expect(
-        _ratio(AppColors.dForeground, AppColors.dSurfaceContainerLow),
-        greaterThanOrEqualTo(4.5),
-      );
-    });
   });
 
   group(
@@ -90,12 +78,6 @@ void main() {
           reason: 'muted section labels must clear AA on the white card fill',
         );
       });
-      test('dark: onSurfaceVariant on the dark card surface (>=4.5)', () {
-        expect(
-          _ratio(AppColors.dMutedForeground, AppColors.dCard),
-          greaterThanOrEqualTo(4.5),
-        );
-      });
     },
   );
 
@@ -103,12 +85,6 @@ void main() {
     test('light: onPrimaryContainer on primaryContainer (>=4.5)', () {
       expect(
         _ratio(AppColors.lOnPrimaryContainer, AppColors.lPrimaryContainer),
-        greaterThanOrEqualTo(4.5),
-      );
-    });
-    test('dark: onPrimaryContainer on primaryContainer (>=4.5)', () {
-      expect(
-        _ratio(AppColors.dOnPrimaryContainer, AppColors.dPrimaryContainer),
         greaterThanOrEqualTo(4.5),
       );
     });

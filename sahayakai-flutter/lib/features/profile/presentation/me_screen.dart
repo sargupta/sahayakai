@@ -247,9 +247,7 @@ class _InitialAvatar extends StatelessWidget {
     final initial = (trimmed != null && trimmed.isNotEmpty)
         ? String.fromCharCode(trimmed.runes.first).toUpperCase()
         : null;
-    final saffronText = theme.brightness == Brightness.dark
-        ? AppColors.dPrimaryText
-        : AppColors.lPrimaryTextOnTint;
+    const saffronText = AppColors.lPrimaryTextOnTint;
 
     return Container(
       width: AppIconSize.wellBox,
@@ -440,9 +438,7 @@ class _UsageMeter extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final fill = theme.brightness == Brightness.dark
-        ? AppColors.dPrimaryText
-        : AppColors.lPrimaryText;
+    const fill = AppColors.lPrimaryText;
 
     return SizedBox(
       height: AppSpacing.space2,
@@ -465,7 +461,7 @@ class _UsageMeter extends StatelessWidget {
               FractionallySizedBox(
                 alignment: AlignmentDirectional.centerStart,
                 widthFactor: fraction.clamp(0.0, 1.0),
-                child: ColoredBox(color: fill),
+                child: const ColoredBox(color: fill),
               ),
             ],
           ),

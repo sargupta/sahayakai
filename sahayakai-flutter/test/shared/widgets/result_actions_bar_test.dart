@@ -257,7 +257,7 @@ void main() {
   });
 
   group('overflow gates (DESIGN_RUBRIC §12.9, §12.10)', () {
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       testWidgets(
         'no overflow at 360dp x textScale 1.3 in ${brightness.name}',
         (tester) async {
@@ -268,9 +268,7 @@ void main() {
           await tester.pumpWidget(
             ProviderScope(
               child: MaterialApp(
-                theme: brightness == Brightness.dark
-                    ? AppTheme.dark()
-                    : AppTheme.light(),
+                theme: AppTheme.light(),
                 locale: const Locale('en'),
                 localizationsDelegates: AppLocalizations.localizationsDelegates,
                 supportedLocales: AppLocalizations.supportedLocales,

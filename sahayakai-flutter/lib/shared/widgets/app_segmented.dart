@@ -27,7 +27,6 @@ class AppSegment<T> {
 /// Falls back to a wrapped row of the theme's choice chips (the v2 `Chip`)
 /// when there are more than 3 options or any label is long or in an Indic
 /// script, so a translated label wraps instead of clipping in a fixed track.
-/// Dark keeps the pre-v2 glass track (dark mode is an open founder decision).
 class AppSegmented<T> extends StatelessWidget {
   const AppSegmented({
     super.key,
@@ -82,7 +81,6 @@ class AppSegmented<T> extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final type = AppTypeTokens.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final n = segments.length;
     final index = segments.indexWhere((s) => s.value == value).clamp(0, n - 1);
     final duration = context.motionEnabled ? AppMotion.change : Duration.zero;
@@ -104,13 +102,11 @@ class AppSegmented<T> extends StatelessWidget {
                   height: _pill,
                   // 4px track padding; the 1px edge adds its own inset.
                   padding: const EdgeInsets.all(4),
-                  decoration: ShapeDecoration(
-                    color: isDark
-                        ? AppGlass.dFlatFill
-                        : AppColors.surfaceSegment,
+                  decoration: const ShapeDecoration(
+                    color: AppColors.surfaceSegment,
                     shape: StadiumBorder(
                       side: BorderSide(
-                        color: isDark ? scheme.outline : AppColors.borderGlass,
+                        color: AppColors.borderGlass,
                       ),
                     ),
                   ),
@@ -144,9 +140,7 @@ class AppSegmented<T> extends StatelessWidget {
                                     height: 15 / 12,
                                     color: s.value == value
                                         ? scheme.onPrimary
-                                        : (isDark
-                                              ? scheme.onSurface
-                                              : AppColors.textBody),
+                                        : (AppColors.textBody),
                                   ),
                                   child: Text(
                                     s.label,

@@ -96,9 +96,8 @@ class DocumentSheetSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final text = Theme.of(context).textTheme;
-    final saffron = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
+    const saffron = AppColors.lPrimaryText;
     final heading = _hasNonLatin(title) ? title : title.toUpperCase();
 
     return Column(
@@ -111,7 +110,7 @@ class DocumentSheetSection extends StatelessWidget {
             Container(
               width: 4,
               height: 14,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: saffron,
                 borderRadius: AppRadius.rSm,
               ),

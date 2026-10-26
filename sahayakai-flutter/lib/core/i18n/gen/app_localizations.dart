@@ -1478,30 +1478,6 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get settingsTitle;
 
-  /// Section header for the theme selector.
-  ///
-  /// In en, this message translates to:
-  /// **'Appearance'**
-  String get settingsAppearanceTitle;
-
-  /// Theme option: follow the device light/dark setting.
-  ///
-  /// In en, this message translates to:
-  /// **'Match my device'**
-  String get settingsThemeSystem;
-
-  /// Theme option: always light.
-  ///
-  /// In en, this message translates to:
-  /// **'Light'**
-  String get settingsThemeLight;
-
-  /// Theme option: always dark.
-  ///
-  /// In en, this message translates to:
-  /// **'Dark'**
-  String get settingsThemeDark;
-
   /// Explains that the language choice drives both the UI and the AI output language.
   ///
   /// In en, this message translates to:

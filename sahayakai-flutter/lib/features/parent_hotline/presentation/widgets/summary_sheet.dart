@@ -305,7 +305,6 @@ class _SentimentBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final (Color fill, Color ink, IconData icon) = switch (sentiment) {
       ParentSentiment.grateful || ParentSentiment.cooperative => (
@@ -323,7 +322,7 @@ class _SentimentBadge extends StatelessWidget {
               : LucideIcons.alertCircle,
         ),
       ParentSentiment.upset => (
-          scheme.error.withValues(alpha: isDark ? 0.22 : 0.12),
+          scheme.error.withValues(alpha: 0.12),
           scheme.onSurface,
           LucideIcons.frown,
         ),
@@ -654,9 +653,8 @@ class _SummaryFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final text = Theme.of(context).textTheme;
-    final saffron = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
+    const saffron = AppColors.lPrimaryText;
     final scheme = Theme.of(context).colorScheme;
 
     final callAgainLabel = isDedupBlocked

@@ -73,22 +73,6 @@ void main() {
       },
     );
 
-    testWidgets('label uses the dark saffron-text token in dark', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        hostProfile(
-          const PlanBadgeChip(),
-          brightness: Brightness.dark,
-          overrides: [
-            tokenOverride(fakeJwt({'planType': 'gold'})),
-          ],
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(_labelColor(tester, 'Gold'), AppColors.dPrimaryText); // #EB9447
-    });
   });
 
   group('muted / free plan chip', () {
@@ -119,15 +103,6 @@ void main() {
       );
       expect(_ratio(AppColors.lPrimaryTextOnTint, tint), greaterThanOrEqualTo(4.5));
       expect(_ratio(AppColors.brandSaffron, tint), lessThan(4.5));
-
-      final darkTint = _over(
-        AppColors.dPrimary.withValues(alpha: 0.12),
-        AppColors.dCard,
-      );
-      expect(
-        _ratio(AppColors.dPrimaryText, darkTint),
-        greaterThanOrEqualTo(4.5),
-      );
     });
 
     test(
@@ -135,12 +110,6 @@ void main() {
       () {
         expect(
           _ratio(AppColors.lForeground, AppColors.lMuted),
-          greaterThanOrEqualTo(4.5),
-        );
-        // Pre-v2 the muted slate label was < 4.5 here; the chip keeps full
-        // ink regardless, which is what the assertion above locks.
-        expect(
-          _ratio(AppColors.dForeground, AppColors.dMuted),
           greaterThanOrEqualTo(4.5),
         );
       },

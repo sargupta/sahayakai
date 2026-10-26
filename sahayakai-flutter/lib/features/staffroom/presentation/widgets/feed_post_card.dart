@@ -116,9 +116,7 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
     final scheme = theme.colorScheme;
     final text = theme.textTheme;
     final extras = AppTextExtras.of(context);
-    final saffronText = theme.brightness == Brightness.dark
-        ? AppColors.dPrimaryText
-        : AppColors.lPrimaryText;
+    const saffronText = AppColors.lPrimaryText;
     final post = widget.post;
 
     final (icon: typeIcon, label: typeLabel) = _postType(l10n, post.postType);
@@ -281,9 +279,7 @@ class _LikeButton extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final extras = AppTextExtras.of(context);
-    final saffronText = theme.brightness == Brightness.dark
-        ? AppColors.dPrimaryText
-        : AppColors.lPrimaryText;
+    const saffronText = AppColors.lPrimaryText;
 
     final heart = Container(
       width: _disc,

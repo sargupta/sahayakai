@@ -28,10 +28,9 @@ class PrimaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
     final enabled = onPressed != null && !isBusy;
     final glow = enabled
-        ? (isDark ? AppShadows.dSaffronGlow : AppShadows.ctaGlowLight)
+        ? (AppShadows.ctaGlowLight)
         : null;
 
     return PressableScale(

@@ -36,7 +36,7 @@ double _ratio(Color a, Color b) {
 void main() {
   Widget host(Widget child, {required Brightness brightness}) {
     return MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+      theme: AppTheme.light(),
       home: Scaffold(
         body: SingleChildScrollView(
           padding: AppSpacing.pagePadding,
@@ -46,7 +46,7 @@ void main() {
     );
   }
 
-  for (final brightness in Brightness.values) {
+  for (final brightness in const [Brightness.light]) {
     testWidgets(
       'EmptyView.message clears AA on the scaffold ground (${brightness.name})',
       (tester) async {

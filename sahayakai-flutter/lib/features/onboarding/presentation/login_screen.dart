@@ -102,11 +102,10 @@ class LoginScreen extends ConsumerWidget {
     final text = Theme.of(context).textTheme;
     final extras = AppTextExtras.of(context);
     final scheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       // No AppBar on this screen, so nothing else sets the status-bar style.
-      value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+      value: SystemUiOverlayStyle.dark,
       child: Scaffold(
         body: SafeArea(
           child: Align(

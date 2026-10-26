@@ -16,8 +16,6 @@ import 'package:sahayakai/core/theme/app_glass.dart';
 ///     3:1, below 4.5:1. If the founder moves primary fills to saffron-600,
 ///     this test is the one to update.
 ///   • Leaf, indigo and red fills carry white at AA.
-///   • DARK is an open founder decision (no v2 dark theme exists), so the dark
-///     block below still pins the pre-v2 pairing.
 double _lin(int c) {
   final s = c / 255.0;
   return s <= 0.03928
@@ -163,35 +161,6 @@ void main() {
     });
   });
 
-  group('DARK — pre-v2 values (dark mode is an open founder decision)', () {
-    test('the dark saffron button uses DARK text and passes AA', () {
-      expect(AppColors.dPrimary, const Color(0xFFEB9447));
-      expect(AppColors.dOnPrimary, const Color(0xFF0F1729));
-      expect(
-        _ratio(AppColors.dOnPrimary, AppColors.dPrimary),
-        greaterThanOrEqualTo(4.5),
-      );
-    });
-    test('saffron-as-text is legible on the dark ground (>=4.5)', () {
-      expect(
-        _ratio(AppColors.dPrimaryText, AppColors.dBackground),
-        greaterThanOrEqualTo(4.5),
-      );
-    });
-    test('body foreground passes AA on the dark ground', () {
-      expect(
-        _ratio(AppColors.dForeground, AppColors.dBackground),
-        greaterThanOrEqualTo(4.5),
-      );
-    });
-    test('onErrorContainer on errorContainer', () {
-      expect(
-        _ratio(AppColors.dOnErrorContainer, AppColors.dErrorContainer),
-        greaterThanOrEqualTo(4.5),
-      );
-    });
-  });
-
   group('glass stays AA-safe once composited', () {
     test('LIGHT: ink-900 on chrome over the most saturated real backdrop '
         '(saffron-500) still passes AA', () {
@@ -213,17 +182,6 @@ void main() {
             reason: 'worst-case backdrop $extreme',
           );
         }
-      }
-    });
-    test('DARK: chrome fill over pure black and white', () {
-      for (final extreme in [Colors.black, Colors.white]) {
-        expect(
-          _ratio(
-            AppColors.dForeground,
-            Color.alphaBlend(AppGlass.dChromeFill, extreme),
-          ),
-          greaterThanOrEqualTo(4.5),
-        );
       }
     });
   });
@@ -249,21 +207,6 @@ void main() {
       );
       expect(
         _ratio(AppColors.lOnPrimaryContainer, composited),
-        greaterThanOrEqualTo(4.5),
-      );
-    });
-    test('DARK: body and meta on the wash composite pass AA', () {
-      final composited = doubleComposite(
-        AppGlass.dFlatFill,
-        AppColors.dBackground,
-        AppColors.dPrimaryContainer,
-      );
-      expect(
-        _ratio(AppColors.dForeground, composited),
-        greaterThanOrEqualTo(4.5),
-      );
-      expect(
-        _ratio(AppColors.dOnPrimaryContainer, composited),
         greaterThanOrEqualTo(4.5),
       );
     });

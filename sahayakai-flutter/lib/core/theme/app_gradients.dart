@@ -66,14 +66,6 @@ class AppGradients {
   static const double glowSize = 214;
   static const Offset glowOffset = Offset(-54, -46);
 
-  /// Cool center-top → darker edges — the dark ground (dark is an open
-  /// founder decision; unchanged).
-  static const darkVignette = RadialGradient(
-    center: Alignment(0.0, -0.6),
-    radius: 1.4,
-    colors: [Color(0xFF181A21), Color(0xFF0E1014)],
-  );
-
   /// Pre-v2 name for the light ground, now the v2 screen wash.
   static const lightPaper = washScreen;
 

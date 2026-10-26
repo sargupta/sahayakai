@@ -49,11 +49,5 @@ void main() {
       );
     });
 
-    test('dark: onSurface ink on surfaceContainerLow', () {
-      expect(
-        _ratio(AppColors.dForeground, AppColors.dSurfaceContainerLow),
-        greaterThanOrEqualTo(4.5),
-      );
-    });
   });
 }

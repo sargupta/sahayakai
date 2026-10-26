@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/core/i18n/app_locale.dart';
 import 'package:sahayakai/core/i18n/locale_provider.dart';
-import 'package:sahayakai/core/theme/theme_mode_provider.dart';
 import 'package:sahayakai/features/settings/data/notification_prefs_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -17,62 +16,6 @@ void main() {
     addTearDown(container.dispose);
     return container;
   }
-
-  group('ThemeModeController', () {
-    test('defaults to following the device', () {
-      expect(
-        makeContainer().read(themeModeControllerProvider),
-        ThemeMode.system,
-      );
-    });
-
-    test(
-      'set persists, and a fresh container hydrates it (round-trip)',
-      () async {
-        final first = makeContainer();
-        await first
-            .read(themeModeControllerProvider.notifier)
-            .set(ThemeMode.dark);
-        expect(first.read(themeModeControllerProvider), ThemeMode.dark);
-
-        // A new container is a new app launch reading the same store.
-        final second = makeContainer();
-        expect(
-          second.read(themeModeControllerProvider),
-          ThemeMode.system,
-        ); // pre-hydration
-        await hydrate(second);
-        expect(second.read(themeModeControllerProvider), ThemeMode.dark);
-      },
-    );
-
-    test('round-trips every mode', () async {
-      for (final mode in ThemeMode.values) {
-        SharedPreferences.setMockInitialValues(<String, Object>{});
-        final container = ProviderContainer();
-        addTearDown(container.dispose);
-        await container.read(themeModeControllerProvider.notifier).set(mode);
-
-        final next = ProviderContainer();
-        addTearDown(next.dispose);
-        await hydrate(next);
-        expect(next.read(themeModeControllerProvider), mode);
-      }
-    });
-
-    test(
-      'a corrupted stored value falls back to system, never throws',
-      () async {
-        SharedPreferences.setMockInitialValues(<String, Object>{
-          'app_theme_mode': 'ultraviolet',
-        });
-        final container = makeContainer();
-        await hydrate(container);
-        expect(container.read(themeModeControllerProvider), ThemeMode.system);
-        expect(themeModeFromName(null), ThemeMode.system);
-      },
-    );
-  });
 
   group('NotificationPrefsController', () {
     test('defaults to OFF (we cannot deliver notifications yet)', () {
@@ -193,7 +136,6 @@ void main() {
 Future<void> hydrate(ProviderContainer container) async {
   // Touch the providers so they build (and start hydrating) ...
   container
-    ..read(themeModeControllerProvider)
     ..read(notificationPrefsControllerProvider)
     ..read(localeControllerProvider);
   // ... then drain the event queue. `SharedPreferences.getInstance()` is a

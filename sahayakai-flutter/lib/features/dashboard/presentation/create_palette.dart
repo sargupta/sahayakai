@@ -69,7 +69,6 @@ class _CreatePaletteState extends State<CreatePalette> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final type = AppTypeTokens.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     final query = _fold(_query);
     final tools = query.isEmpty
@@ -86,7 +85,7 @@ class _CreatePaletteState extends State<CreatePalette> {
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: _sheetRadius,
-          boxShadow: isDark ? AppShadows.dKey : AppShadows.sheet,
+          boxShadow: AppShadows.sheet,
         ),
         child: GlassSurface(
           borderRadius: _sheetRadius,
@@ -105,11 +104,9 @@ class _CreatePaletteState extends State<CreatePalette> {
                     child: Container(
                       width: 44,
                       height: 4,
-                      decoration: ShapeDecoration(
-                        color: isDark
-                            ? scheme.outlineVariant
-                            : AppColors.borderControl,
-                        shape: const StadiumBorder(),
+                      decoration: const ShapeDecoration(
+                        color: AppColors.borderControl,
+                        shape: StadiumBorder(),
                       ),
                     ),
                   ),
