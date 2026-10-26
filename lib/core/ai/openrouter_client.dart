@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
+import '../../core/network/api_exception.dart';
 import '../../core/network/dio_config.dart';
 
 /// OpenRouter API client for direct AI model access.
@@ -29,18 +30,31 @@ class OpenRouterClient {
                 'HTTP-Referer': 'https://sahayakai.com',
                 'X-Title': 'SahayakAI',
               },
-              validateStatus: (s) => s != null && s < 500,
+              // 4xx/5xx must throw so callers can map them to typed errors
+              // (ApiException). Treating them as success hid invalid/expired/
+              // quota-exhausted keys behind a generic parse failure.
+              validateStatus: (s) => s != null && s < 400,
             ));
 
   final Dio _dio;
 
   /// Sends a chat completion request (non-streaming).
   Future<OpenRouterChatResponse> chat(OpenRouterChatRequest request) async {
-    final response = await _dio.post<Map<String, dynamic>>(
-      '/chat/completions',
-      data: request.toJson(),
-    );
-    return OpenRouterChatResponse.fromJson(response.data!);
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/chat/completions',
+        data: request.toJson(),
+      );
+      return OpenRouterChatResponse.fromJson(response.data!);
+    } on DioException catch (e) {
+      throw ApiException.fromDio(e);
+    } on FormatException catch (e) {
+      throw ApiException(
+        ApiErrorKind.badResponse,
+        'Unexpected response from AI service.',
+        raw: e,
+      );
+    }
   }
 
   /// Sends a streaming chat completion request.
@@ -73,6 +87,7 @@ class OpenRouterClient {
       );
     }).catchError((e) {
       controller.addError(e);
+      controller.close();
       return null;
     });
 
@@ -159,15 +174,22 @@ class OpenRouterChatResponse {
   final OpenRouterUsage usage;
 
   factory OpenRouterChatResponse.fromJson(Map<String, dynamic> json) {
+    final choicesRaw = json['choices'];
+    if (choicesRaw is! List || choicesRaw.isEmpty) {
+      throw const FormatException('OpenRouter response missing choices');
+    }
+    final usageRaw = json['usage'];
     return OpenRouterChatResponse(
-      id: json['id'] as String,
-      object: json['object'] as String,
-      created: json['created'] as int,
-      model: json['model'] as String,
-      choices: (json['choices'] as List)
+      id: (json['id'] as String?) ?? '',
+      object: (json['object'] as String?) ?? 'chat.completion',
+      created: (json['created'] as num?)?.toInt() ?? 0,
+      model: (json['model'] as String?) ?? '',
+      choices: choicesRaw
           .map((c) => OpenRouterChoice.fromJson(c as Map<String, dynamic>))
           .toList(),
-      usage: OpenRouterUsage.fromJson(json['usage'] as Map<String, dynamic>),
+      usage: usageRaw is Map<String, dynamic>
+          ? OpenRouterUsage.fromJson(usageRaw)
+          : const OpenRouterUsage(promptTokens: 0, completionTokens: 0, totalTokens: 0),
     );
   }
 
@@ -187,10 +209,13 @@ class OpenRouterChoice {
   final String finishReason;
 
   factory OpenRouterChoice.fromJson(Map<String, dynamic> json) {
+    final msg = json['message'];
     return OpenRouterChoice(
-      index: json['index'] as int,
-      message: OpenRouterResponseMessage.fromJson(json['message'] as Map<String, dynamic>),
-      finishReason: json['finish_reason'] as String,
+      index: (json['index'] as num?)?.toInt() ?? 0,
+      message: msg is Map<String, dynamic>
+          ? OpenRouterResponseMessage.fromJson(msg)
+          : OpenRouterResponseMessage(role: 'assistant', content: ''),
+      finishReason: (json['finish_reason'] as String?) ?? '',
     );
   }
 }
@@ -207,15 +232,15 @@ class OpenRouterResponseMessage {
 
   factory OpenRouterResponseMessage.fromJson(Map<String, dynamic> json) {
     return OpenRouterResponseMessage(
-      role: json['role'] as String,
-      content: json['content'] as String,
+      role: (json['role'] as String?) ?? 'assistant',
+      content: (json['content'] as String?) ?? '',
     );
   }
 }
 
 /// OpenRouter usage stats.
 class OpenRouterUsage {
-  OpenRouterUsage({
+  const OpenRouterUsage({
     required this.promptTokens,
     required this.completionTokens,
     required this.totalTokens,

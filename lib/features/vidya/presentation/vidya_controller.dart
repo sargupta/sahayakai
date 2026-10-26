@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -289,6 +290,7 @@ class VidyaState {
 @Riverpod(keepAlive: true)
 class VidyaController extends _$VidyaController {
   int _gen = 0;
+  int _activeGen = 0; // gen captured when listening started (for timer closures)
   bool _speechDetected = false;
   bool _restored = false;
   bool _restoring = false;
@@ -551,6 +553,7 @@ class VidyaController extends _$VidyaController {
 
   Future<void> _begin() async {
     final gen = ++_gen;
+    _activeGen = gen;
     debugPrint('[Vidya] _begin() started, gen=$_gen');
     _set(status: VidyaStatus.requestingPermission, errorMessage: null);
     final MicPermission perm;
@@ -597,7 +600,7 @@ class VidyaController extends _$VidyaController {
     _amplitudeSub = _recorder.amplitude.listen(_onAmplitude);
     _hardCapTimer = Timer(kMaxCapture, () {
       if (!_stale(gen) && state.status == VidyaStatus.listening) {
-        _stopAndProcess();
+        _stopAndProcess(gen);
       }
     });
     _initialSilenceTimer = Timer(kInitialSilence, () {
@@ -611,7 +614,7 @@ class VidyaController extends _$VidyaController {
   }
 
   void _onAmplitude(double level) {
-    debugPrint('[Vidya] amplitude=$level speechDetected=$_speechDetected');
+    if (_stale(_activeGen)) return;
     if (state.status != VidyaStatus.listening) return;
     _set(amplitude: level);
     if (level >= kSpeechOnsetLevel) {
@@ -622,7 +625,9 @@ class VidyaController extends _$VidyaController {
       _initialSilenceTimer?.cancel();
       _trailingSilenceTimer?.cancel();
       _trailingSilenceTimer = Timer(kTrailingSilence, () {
-        if (state.status == VidyaStatus.listening) _stopAndProcess();
+        if (!_stale(_activeGen) && state.status == VidyaStatus.listening) {
+          _stopAndProcess(_activeGen);
+        }
       });
     }
   }
@@ -634,9 +639,10 @@ class VidyaController extends _$VidyaController {
     _set(status: VidyaStatus.idle, amplitude: 0);
   }
 
-  Future<void> _stopAndProcess() async {
-    debugPrint('[Vidya] _stopAndProcess started');
-    final gen = _gen; // same trip; a cancel/new tap would have bumped _gen
+  Future<void> _stopAndProcess([int? genParam]) async {
+    final gen = genParam ?? _activeGen;
+    if (_stale(gen)) return;
+    debugPrint('[Vidya] _stopAndProcess started gen=$gen');
     _teardownCapture();
     _set(status: VidyaStatus.transcribing, amplitude: 0);
 
@@ -677,10 +683,10 @@ class VidyaController extends _$VidyaController {
       if (_stale(gen)) return;
       debugPrint('[Vidya] STT ApiException: ${e.runtimeType} status=${e.statusCode}');
       _handleError(e);
-    } catch (e, st) {
+    } catch (e) {
       if (_stale(gen)) return;
       debugPrint('[Vidya] STT exception: ${e.runtimeType}: $e');
-      _set(status: VidyaStatus.failed);
+      _set(status: VidyaStatus.failed, errorMessage: e.toString());
     }
   }
 
@@ -726,7 +732,7 @@ class VidyaController extends _$VidyaController {
       if (_stale(gen)) return;
       debugPrint('[Vidya] _converse exception: ${e.runtimeType}: $e');
       debugPrint('[Vidya] stack: ${st.toString().split('\\n').take(5).join(' | ')}');
-      _set(status: VidyaStatus.failed);
+      _set(status: VidyaStatus.failed, errorMessage: e.toString());
       return;
     }
     if (_stale(gen)) return;
@@ -818,7 +824,18 @@ class VidyaController extends _$VidyaController {
     );
 
     debugPrint('[Vidya] OpenRouter request: model=$model messages=${messages.length}');
-    final response = await openRouter.chat(request);
+    final OpenRouterChatResponse response;
+    try {
+      response = await openRouter.chat(request);
+    } on DioException catch (e) {
+      debugPrint('[Vidya] OpenRouter DioException: type=${e.type} status=${e.response?.statusCode}');
+      // Redact body: status + first 200 chars of error (no user message content).
+      final body = e.response?.data?.toString();
+      if (body != null) {
+        debugPrint('[Vidya] OpenRouter error body: ${body.length > 200 ? body.substring(0, 200) : body}');
+      }
+      throw ApiException.fromDio(e);
+    }
     debugPrint('[Vidya] OpenRouter response: ${response.content.length} chars');
     final content = response.content.trim();
 
