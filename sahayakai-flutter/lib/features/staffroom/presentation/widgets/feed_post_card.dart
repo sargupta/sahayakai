@@ -157,8 +157,8 @@ class _FeedPostCardState extends ConsumerState<FeedPostCard> {
                         Icon(
                           typeIcon,
                           size: AppIconSize.inline,
-                          // saffron-TEXT token (AA on the white card), never the
-                          // #E0924D fill routed as an icon.
+                          // saffron-TEXT token (AA on the card), never the
+                          // saffron-500 fill routed as an icon.
                           color: saffronText,
                         ),
                         const SizedBox(width: AppSpacing.space1),

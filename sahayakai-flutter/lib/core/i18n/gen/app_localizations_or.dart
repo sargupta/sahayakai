@@ -21,6 +21,9 @@ class AppLocalizationsOr extends AppLocalizations {
   String get navLibrary => 'ଲାଇବ୍ରେରୀ';
 
   @override
+  String get navCommunity => 'କମ୍ୟୁନିଟି';
+
+  @override
   String get navProfile => 'ପ୍ରୋଫାଇଲ୍';
 
   @override

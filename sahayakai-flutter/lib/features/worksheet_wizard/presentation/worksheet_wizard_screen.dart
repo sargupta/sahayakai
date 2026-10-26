@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/app_locale.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
@@ -250,7 +249,6 @@ class _WorksheetWizardScreenState extends ConsumerState<WorksheetWizardScreen> {
         return LabeledField(
           label: l10n.worksheetImageLabel,
           hint: l10n.worksheetImageHint,
-          leadingIcon: LucideIcons.image,
           child: ImageInput(
             value: _image,
             errorText: field.errorText,
@@ -267,7 +265,6 @@ class _WorksheetWizardScreenState extends ConsumerState<WorksheetWizardScreen> {
   Widget _promptField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.worksheetPromptLabel,
-      leadingIcon: LucideIcons.fileText,
       // Voice-first: dictate the worksheet instructions instead of typing them.
       trailing: InlineFieldMic(
         expectedLanguage: _language.code,
@@ -292,7 +289,6 @@ class _WorksheetWizardScreenState extends ConsumerState<WorksheetWizardScreen> {
     return LabeledField(
       label: l10n.worksheetGradeLabel,
       optionalLabel: l10n.worksheetOptional,
-      leadingIcon: LucideIcons.graduationCap,
       child: DropdownButtonFormField<String?>(
         initialValue: _grade,
         isExpanded: true,
@@ -313,7 +309,6 @@ class _WorksheetWizardScreenState extends ConsumerState<WorksheetWizardScreen> {
     return LabeledField(
       label: l10n.worksheetSubjectLabel,
       optionalLabel: l10n.worksheetOptional,
-      leadingIcon: LucideIcons.bookOpen,
       child: DropdownButtonFormField<String?>(
         initialValue: _subject,
         isExpanded: true,
@@ -333,7 +328,6 @@ class _WorksheetWizardScreenState extends ConsumerState<WorksheetWizardScreen> {
   Widget _languageField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.languageLabel,
-      leadingIcon: LucideIcons.languages,
       child: DropdownButtonFormField<AppLocale>(
         initialValue: _language,
         isExpanded: true,

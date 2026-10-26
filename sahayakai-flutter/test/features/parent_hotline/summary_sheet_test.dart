@@ -430,16 +430,18 @@ void main() {
       });
     }
 
-    testWidgets('regression guard: the inset fill WOULD fail AA in light', (
+    testWidgets('the agent line holds AA on the inset fill too, in light', (
       tester,
     ) async {
-      // Pin the exact reason the fix was needed — the muted role on the inset
-      // surfaceContainerLow is 4.49:1 (under the floor), while the surface fill
-      // clears it — so the transcript must never regress to inset.
+      // Pre-v2 this pinned the reason the transcript left the inset fill: the
+      // slate muted role on surfaceContainerLow was 4.49:1. Design system v2's
+      // body ink (ink-600) on surface-inset (milk-300) clears 4.5:1, so the
+      // guard now asserts that both surfaces stay legible, whichever the
+      // transcript sits on.
       final scheme = AppTheme.light().colorScheme;
       expect(
         _ratio(scheme.onSurfaceVariant, scheme.surfaceContainerLow),
-        lessThan(4.5),
+        greaterThanOrEqualTo(4.5),
       );
       expect(
         _ratio(scheme.onSurfaceVariant, scheme.surface),

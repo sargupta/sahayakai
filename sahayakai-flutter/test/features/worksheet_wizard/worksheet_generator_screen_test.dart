@@ -15,6 +15,7 @@ import 'package:sahayakai/features/worksheet_wizard/presentation/worksheet_wizar
 import 'package:sahayakai/shared/media/image_input.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../support/field_finders.dart';
 import 'worksheet_fixtures.dart';
 
 /// Screen-layer gates: the required-image + required-prompt validation the
@@ -198,8 +199,8 @@ void main() {
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
 
-            expect(find.text('Textbook page photo'), findsOneWidget);
-            expect(find.text('What worksheet do you need?'), findsOneWidget);
+            expect(findFieldLabel('Textbook page photo'), findsOneWidget);
+            expect(findFieldLabel('What worksheet do you need?'), findsOneWidget);
             expect(find.text('Take photo'), findsOneWidget);
           },
         );

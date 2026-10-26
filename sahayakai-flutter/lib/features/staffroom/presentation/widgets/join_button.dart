@@ -85,7 +85,7 @@ class _JoinButtonState extends ConsumerState<JoinButton> {
     final text = theme.textTheme;
     final saffronText = theme.brightness == Brightness.dark
         ? AppColors.dPrimaryText
-        : AppColors.lPrimaryText;
+        : AppColors.lPrimaryTextOnTint;
 
     if (_isJoined) {
       // Settled, full-width "Joined" indicator: a check + label in the saffron

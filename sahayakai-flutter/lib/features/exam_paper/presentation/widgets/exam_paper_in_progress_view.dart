@@ -28,7 +28,6 @@ class ExamPaperInProgressView extends StatelessWidget {
     final text = Theme.of(context).textTheme;
 
     return AppCard(
-      accentBar: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,

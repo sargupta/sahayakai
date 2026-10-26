@@ -140,6 +140,12 @@ abstract class AppLocalizations {
   /// **'Library'**
   String get navLibrary;
 
+  /// Tab bar (accessible name + tooltip): the community tab — teachers sharing, asking and celebrating (the Network hub).
+  ///
+  /// In en, this message translates to:
+  /// **'Community'**
+  String get navCommunity;
+
   /// Bottom-nav label: profile / account tab.
   ///
   /// In en, this message translates to:

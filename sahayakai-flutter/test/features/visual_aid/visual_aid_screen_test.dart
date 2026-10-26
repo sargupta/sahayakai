@@ -16,6 +16,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/app_harness.dart';
 import '../../support/fake_api_client.dart';
+import '../../support/field_finders.dart';
 import 'visual_aid_fixtures.dart';
 
 /// Screen-layer gates: the one validation rule the endpoint depends on (a prompt
@@ -269,10 +270,10 @@ void main() {
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
 
-            expect(find.text('What should the drawing show?'), findsOneWidget);
-            expect(find.text('Grade level'), findsOneWidget);
-            expect(find.text('Subject'), findsOneWidget);
-            expect(find.text('Language'), findsOneWidget);
+            expect(findFieldLabel('What should the drawing show?'), findsOneWidget);
+            expect(findFieldLabel('Grade level'), findsOneWidget);
+            expect(findFieldLabel('Subject'), findsOneWidget);
+            expect(findFieldLabel('Language'), findsOneWidget);
           },
         );
       }

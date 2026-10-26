@@ -18,6 +18,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/app_harness.dart';
 import '../../support/fake_api_client.dart';
+import '../../support/field_finders.dart';
 import 'exam_paper_fixtures.dart';
 
 /// Screen-layer gates for the highest-risk screen: the async states (incl. the
@@ -361,8 +362,8 @@ void main() {
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
 
-            expect(find.text('Board'), findsOneWidget);
-            expect(find.text('Chapters'), findsOneWidget);
+            expect(findFieldLabel('Board'), findsOneWidget);
+            expect(findFieldLabel('Chapters'), findsOneWidget);
           },
         );
       }

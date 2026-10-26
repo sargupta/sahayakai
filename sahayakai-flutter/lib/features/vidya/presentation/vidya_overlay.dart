@@ -6,11 +6,14 @@ import '../../../core/auth/auth_providers.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../dashboard/presentation/app_tab_bar.dart';
+import '../../dashboard/presentation/shell_tab_controller.dart';
 import 'background_generation_controller.dart';
 import 'deliver_tray.dart';
 import 'deliverables_controller.dart';
 import 'vidya_controller.dart';
 import 'vidya_orb_placement_controller.dart';
+import 'vidya_sheet.dart';
 import 'widgets/vidya_orb.dart';
 
 /// The presence layer: mounts the draggable [VidyaOrb] above the app Navigator
@@ -54,9 +57,18 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
   @override
   Widget build(BuildContext context) {
     // Rebuild on navigation so the visibility gate re-evaluates per route.
-    return ValueListenableBuilder<RouteInformation>(
-      valueListenable: widget.router.routeInformationProvider,
-      builder: (context, info, _) {
+    // The location comes from the router delegate's current configuration,
+    // not the route-information provider: a `redirect` (splash → `/` after
+    // sign-in) never rewrites the provider's value, which then still reads
+    // `/splash` on the shell — and the gate below must know it is on `/`.
+    final router = widget.router;
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        router.routeInformationProvider,
+        router.routerDelegate,
+      ]),
+      builder: (context, _) {
+        final location = router.routerDelegate.currentConfiguration.uri.path;
         return Consumer(
           builder: (context, ref, _) {
             final signedIn =
@@ -78,7 +90,10 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
                 ref.watch(backgroundGenerationControllerProvider) != null;
             final hasWork = bgActive || readyCount > 0;
 
-            if (!_visibleAt(info.uri.path, signedIn, hasWork)) {
+            final tab = ref.watch(shellTabControllerProvider);
+            // A VIDYA sheet is up: the sheet is VIDYA, so the orb steps aside.
+            final sheetOpen = ref.watch(vidyaSurfaceOpenProvider);
+            if (sheetOpen || !_visibleAt(location, signedIn, hasWork, tab)) {
               return const SizedBox.shrink();
             }
 
@@ -149,7 +164,7 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
                       readyCount: readyCount,
                       semanticLabel: context.l10n.appTitle,
                       semanticHint: _hintFor(context, visual, status),
-                      onTap: () => _onTap(context, ref, visual),
+                      onTap: () => _onTap(ref, visual),
                     ),
                   ),
                 ),
@@ -165,14 +180,16 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
 
   /// The orb shows only when signed in and away from the surfaces that own their
   /// own VIDYA affordance or predate auth: splash, login, onboarding, and the
-  /// voice home (`/`), where the SealMic hero is the mic — except the home makes
-  /// an exception for [hasWork] (a background generation running or a ready
+  /// voice home — the shell's Home TAB at `/`, where the SealMic hero is the
+  /// mic. The other three tabs share `/` and show the orb: with no Create slot
+  /// in the v2 tab bar, the orb is how creation starts there. Home makes an
+  /// exception for [hasWork] (a background generation running or a ready
   /// result), so the teacher can always see and reach VIDYA's off-screen work.
-  bool _visibleAt(String location, bool signedIn, bool hasWork) {
+  bool _visibleAt(String location, bool signedIn, bool hasWork, AppTab tab) {
     if (!signedIn) return false;
     const preAuth = {Routes.splash, Routes.login, Routes.onboarding};
     if (preAuth.contains(location)) return false;
-    if (location == Routes.home) return hasWork;
+    if (location == Routes.home && tab == AppTab.home) return hasWork;
     return true;
   }
 
@@ -224,16 +241,23 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
 
   // ── Interaction ────────────────────────────────────────────────────────────
 
-  void _onTap(BuildContext context, WidgetRef ref, VidyaOrbVisual visual) {
+  /// A tap opens VIDYA's sheet over the page, already listening (design system
+  /// v2 `Orb`: "a tap opens the voice sheet"); the green orb opens the deliver
+  /// tray. The overlay sits ABOVE the Navigator (`MaterialApp.router.builder`),
+  /// so both sheets open from the router's navigator — this widget's own
+  /// context has no Navigator to push onto.
+  void _onTap(WidgetRef ref, VidyaOrbVisual visual) {
+    final nav = widget.router.routerDelegate.navigatorKey.currentContext;
+    if (nav == null) return;
     if (visual == VidyaOrbVisual.ready) {
-      // Green orb → open the one deliver tray for the latest ready result.
       final latest = ref.read(deliverablesControllerProvider.notifier).latest;
-      if (latest != null) {
-        showDeliverTray(context, latest);
-      }
+      if (latest != null) showDeliverTray(nav, latest);
       return;
     }
-    ref.read(vidyaControllerProvider.notifier).onMicTap();
+    if (ref.read(vidyaControllerProvider).status == VidyaStatus.idle) {
+      ref.read(vidyaControllerProvider.notifier).onMicTap();
+    }
+    showVidyaSheet(nav);
   }
 
   // ── Geometry ─────────────────────────────────────────────────────────────

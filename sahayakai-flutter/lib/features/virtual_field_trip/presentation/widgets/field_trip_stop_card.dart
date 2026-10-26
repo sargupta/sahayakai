@@ -95,19 +95,13 @@ class FieldTripStopCard extends StatelessWidget {
             // muted section label (AA-safe on the white card surface) + AiText.
             if (stop.culturalAnalogy.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.space4),
-              SectionLabel(
-                l10n.virtualFieldTripAnalogyLabel,
-                icon: LucideIcons.mapPin,
-              ),
+              SectionLabel(l10n.virtualFieldTripAnalogyLabel),
               const SizedBox(height: AppSpacing.space2),
               AiText(stop.culturalAnalogy),
             ],
             if (stop.explanation.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.space4),
-              SectionLabel(
-                l10n.virtualFieldTripExplanationLabel,
-                icon: LucideIcons.graduationCap,
-              ),
+              SectionLabel(l10n.virtualFieldTripExplanationLabel),
               const SizedBox(height: AppSpacing.space2),
               AiText(stop.explanation),
             ],

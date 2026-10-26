@@ -15,6 +15,7 @@ import 'package:sahayakai/features/teacher_training/presentation/widgets/teacher
 import 'package:sahayakai/shared/domain/tool_prefill.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../support/field_finders.dart';
 import 'teacher_training_fixtures.dart';
 
 /// Screen-layer gates: the required-question validation the endpoint depends on,
@@ -129,12 +130,12 @@ void main() {
       await tester.pumpWidget(_host());
       await tester.pumpAndSettle();
 
-      expect(find.text('Your question'), findsOneWidget);
-      expect(find.text('Subject'), findsOneWidget);
-      expect(find.text('Language'), findsOneWidget);
+      expect(findFieldLabel('Your question'), findsOneWidget);
+      expect(findFieldLabel('Subject'), findsOneWidget);
+      expect(findFieldLabel('Language'), findsOneWidget);
       // The endpoint's input schema has no gradeLevel, so the form must not
       // offer one (a pin against re-adding it).
-      expect(find.text('Grade level'), findsNothing);
+      expect(findFieldLabel('Grade level'), findsNothing);
       expect(find.text('Any subject'), findsOneWidget);
       expect(find.text('Optional'), findsOneWidget);
     });
@@ -217,7 +218,7 @@ void main() {
       expect(find.text('ಕನ್ನಡ'), findsOneWidget);
       // No grade field exists on this form — the prefilled grade must not
       // conjure one into existence.
-      expect(find.text('Grade level'), findsNothing);
+      expect(findFieldLabel('Grade level'), findsNothing);
       expect(tester.takeException(), isNull);
     });
 
@@ -275,9 +276,9 @@ void main() {
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
 
-            expect(find.text('Your question'), findsOneWidget);
-            expect(find.text('Subject'), findsOneWidget);
-            expect(find.text('Language'), findsOneWidget);
+            expect(findFieldLabel('Your question'), findsOneWidget);
+            expect(findFieldLabel('Subject'), findsOneWidget);
+            expect(findFieldLabel('Language'), findsOneWidget);
           },
         );
       }

@@ -26,6 +26,7 @@ import 'package:sahayakai/shared/widgets/secondary_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/fake_api_client.dart';
+import '../../support/field_finders.dart';
 import 'fake_parent_hotline_repositories.dart';
 
 /// U-PH3 — the Parent Hotline screen (stages 1–4 + decision bar).
@@ -410,7 +411,7 @@ void main() {
         ),
       );
       expect(find.text('What happened'), findsOneWidget); // evidence header
-      expect(find.text('Add a note'), findsOneWidget);
+      expect(findFieldLabel('Add a note'), findsOneWidget);
       expect(find.text('Draft the message'), findsOneWidget);
     });
 

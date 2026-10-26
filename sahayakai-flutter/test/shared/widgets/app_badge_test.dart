@@ -69,7 +69,7 @@ void main() {
       );
 
       final color = _accentLabelColor(tester, 'Class 6');
-      expect(color, AppColors.lPrimaryText); // #AC4815, NOT #E0924D
+      expect(color, AppColors.lPrimaryTextOnTint); // saffron-700, NOT saffron-500
       expect(color, isNot(AppColors.brandSaffron));
     });
 
@@ -96,7 +96,7 @@ void main() {
       await tester.pumpWidget(
         _host(Brightness.light, const AppBadge.count('3')),
       );
-      expect(_accentLabelColor(tester, '3'), AppColors.lPrimaryText);
+      expect(_accentLabelColor(tester, '3'), AppColors.lPrimaryTextOnTint);
     });
 
     testWidgets(
@@ -118,7 +118,7 @@ void main() {
         final icon = tester.widget<Icon>(
           find.byIcon(LucideIcons.graduationCap),
         );
-        expect(icon.color, AppColors.lPrimaryText);
+        expect(icon.color, AppColors.lPrimaryTextOnTint);
         expect(icon.color, isNot(AppColors.brandSaffron)); // never #E0924D
       },
     );
@@ -157,18 +157,18 @@ void main() {
   });
 
   group('accent label clears WCAG AA (>=4.5) on the primary@0.12 tint', () {
-    test('light: #AC4815 on the tint over a white card', () {
+    test('light: saffron-700 on the tint over a white card', () {
       final tint = _over(
         AppColors.lPrimary.withValues(alpha: 0.12),
         AppColors.lCard,
       );
       expect(
-        _ratio(AppColors.lPrimaryText, tint),
+        _ratio(AppColors.lPrimaryTextOnTint, tint),
         greaterThanOrEqualTo(4.5),
         reason: 'saffron-700 label must meet AA on the accent tint',
       );
-      // The OLD label (#E0924D as text) is a documented fail on the same tint.
-      expect(_ratio(AppColors.brandSaffron, tint), lessThan(3.0));
+      // saffron-500 as text is a documented AA fail on the same tint (3.23:1).
+      expect(_ratio(AppColors.brandSaffron, tint), lessThan(4.5));
     });
 
     test('dark: #EB9447 on the tint over a dark card', () {
@@ -208,11 +208,9 @@ void main() {
           _ratio(color, AppColors.lSurfaceContainerHigh),
           greaterThanOrEqualTo(4.5),
         );
-        // The OLD muted label (onSurfaceVariant) is a documented fail on the fill.
-        expect(
-          _ratio(AppColors.lMutedForeground, AppColors.lSurfaceContainerHigh),
-          lessThan(4.5),
-        );
+        // Pre-v2 the muted slate label was a documented fail (3.86:1) on this
+        // fill. v2's body ink clears it, but the badge keeps full ink: the
+        // assertion above is the contract, the palette is not.
       });
 
       testWidgets('dark: full-ink onSurface clears AA', (tester) async {
