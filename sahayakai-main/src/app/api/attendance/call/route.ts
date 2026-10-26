@@ -63,13 +63,22 @@ async function forwardToExotel(userId: string, outreachId: string): Promise<Next
 /**
  * Ownership + destination for one outreach record.
  *
- * SECURITY: the parent's phone number is read from the server-stored document,
- * never from the request body. A teacher who could supply the destination could
- * dial any number on the company's telephony account.
+ * SECURITY: the number dialled is the one on the STUDENT'S RECORD now
+ * (`classes/{classId}/students/{studentId}.parentPhone`), re-read at dial time
+ * — never the request body, and never trusted merely because it was copied
+ * onto the outreach doc. `POST /api/attendance/outreach-records` once stored a
+ * client-supplied phone on the doc, which let a teacher make the company's
+ * telephony account ring any number; fixing that one writer closed the
+ * instance, and re-deriving the destination here closes the class: whatever a
+ * present or future writer puts on the doc, a phone that does not match the
+ * student record is refused before any provider is contacted.
  *
- * Shared by both providers on purpose. These four checks are the security
- * boundary of the whole feature, and when the Twilio path owned its own copy
- * there was nothing stopping a second provider from shipping with three of them.
+ * The class is re-checked too, so a teacher who has lost the class can no
+ * longer call from an outreach they created while they owned it.
+ *
+ * Shared by every provider on purpose. These checks are the security boundary
+ * of the whole feature, and when the Twilio path owned its own copy there was
+ * nothing stopping a second provider from shipping with only some of them.
  */
 type TargetResolution =
     | { ok: true; parentPhone: string; data: FirebaseFirestore.DocumentData }
@@ -88,11 +97,50 @@ async function resolveOutreachTarget(
     if (data.teacherUid !== userId) {
         return { ok: false, response: NextResponse.json({ error: 'Unauthorized' }, { status: 403 }) };
     }
-    const parentPhone: string | undefined = data.parentPhone;
-    if (!parentPhone || !isValidE164(parentPhone)) {
+
+    const classId = typeof data.classId === 'string' ? data.classId : '';
+    const studentId = typeof data.studentId === 'string' ? data.studentId : '';
+    if (!classId || !studentId) {
         return {
             ok: false,
-            response: NextResponse.json({ error: 'Outreach record has no valid parent phone' }, { status: 422 }),
+            response: NextResponse.json({ error: 'Outreach record is missing its class or student' }, { status: 422 }),
+        };
+    }
+    const classRef = db.collection('classes').doc(classId);
+    const classDoc = await classRef.get();
+    if (!classDoc.exists || classDoc.data()?.teacherUid !== userId) {
+        return { ok: false, response: NextResponse.json({ error: 'Unauthorized' }, { status: 403 }) };
+    }
+    const studentDoc = await classRef.collection('students').doc(studentId).get();
+    if (!studentDoc.exists) {
+        return { ok: false, response: NextResponse.json({ error: 'Student not found in this class' }, { status: 404 }) };
+    }
+
+    const parentPhone: unknown = studentDoc.data()?.parentPhone;
+    if (typeof parentPhone !== 'string' || !isValidE164(parentPhone)) {
+        return {
+            ok: false,
+            response: NextResponse.json({ error: 'Student has no valid parent phone on record' }, { status: 422 }),
+        };
+    }
+    if (data.parentPhone !== parentPhone) {
+        // Either the record was written with a number that is not the parent's,
+        // or the teacher edited the student's phone since. Both are refused: the
+        // first is the attack this function exists to stop, and the second only
+        // costs the teacher a fresh outreach. The number itself is never logged.
+        logger.warn('Parent call refused — outreach phone does not match the student record', 'ATTENDANCE', {
+            userId,
+            outreachId,
+        });
+        return {
+            ok: false,
+            response: NextResponse.json(
+                {
+                    error: "The parent's phone on this outreach no longer matches the student record. Start a new outreach.",
+                    code: 'PHONE_MISMATCH',
+                },
+                { status: 409 },
+            ),
         };
     }
     return { ok: true, parentPhone, data };
@@ -236,6 +284,11 @@ export async function POST(req: NextRequest) {
     // forward the outreachId + the caller identity.
     const provider = (process.env.VOICE_PROVIDER || 'twilio').toLowerCase();
     if (provider === 'exotel') {
+        // The voicebot dials the number on the outreach doc itself, so the
+        // destination is checked here first — the same boundary every provider
+        // passes through (see resolveOutreachTarget).
+        const target = await resolveOutreachTarget(await getDb(), outreachId, userId);
+        if (!target.ok) return target.response;
         return forwardToExotel(userId, outreachId);
     }
     // Vobiz owns a real Indian origination number, so unlike the Twilio TRIAL
