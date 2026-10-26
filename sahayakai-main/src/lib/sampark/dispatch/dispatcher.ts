@@ -71,6 +71,7 @@
  *     claim never collides with the refused call's record.
  */
 
+import { checkContact } from '@/lib/contact-policy';
 import { logger } from '@/lib/logger';
 import { purposeSpec } from '@/lib/sampark/catalogue';
 import { chooseClosureVariant, istDateString } from '@/lib/sampark/closure';
@@ -111,6 +112,8 @@ export const TEST_MODE_MAX_IN_FLIGHT = 1;
 /** Sent to the carrier when the rendered audio length is unknown (the call record keeps null). */
 const DEFAULT_AUDIO_SECONDS = 40;
 const LOG_CONTEXT = 'SAMPARK_DISPATCH';
+/** The shared contact check could not run (it fails closed): look again in this long. */
+const CONTACT_POLICY_RETRY_MS = 5 * 60 * 1000;
 
 export interface DispatchDeps {
     repo: SamparkRepo;
@@ -466,13 +469,13 @@ async function processIntent(ctx: SchoolContext, intent: Intent): Promise<boolea
     // but only real guardian calls are in the count to take back out: test calls carry the test
     // phone's hash, and simulated (Practice) calls are never counted at all (H1).
     const ownAttemptsInCount = plan.destination === 'guardian' && ctx.carrier.kind !== 'simulated' ? intent.attempts : 0;
+    // Calls from every other path (a teacher in the app, later an integration) count too: they sit
+    // in the shared contact ledger (src/lib/contact-policy), never in this school's call log.
+    const frequencySince = new Date(now.getTime() - FREQUENCY_WINDOW_MS);
     const recentCallsToPhone = spec.emergency
         ? 0
-        : Math.max(
-              0,
-              (await deps.repo.countCallsToPhoneSince(orgId, guardian.phoneHash, new Date(now.getTime() - FREQUENCY_WINDOW_MS), true)) -
-                  ownAttemptsInCount,
-          );
+        : Math.max(0, (await deps.repo.countCallsToPhoneSince(orgId, guardian.phoneHash, frequencySince, true)) - ownAttemptsInCount) +
+          (await deps.repo.countContactsToPhoneSince(guardian.phoneHash, frequencySince, 'routine'));
 
     const verdict = evaluateGate({
         school,
@@ -498,6 +501,29 @@ async function processIntent(ctx: SchoolContext, intent: Intent): Promise<boolea
             await setIntentStatus(ctx, intent, 'expired');
         } else {
             await deps.repo.updateIntent(orgId, intent.id, { notBefore: verdict.until.toISOString(), updatedAt: now.toISOString() });
+            report.deferred += 1;
+        }
+        return false;
+    }
+
+    // The shared contact check every parent call path runs (src/lib/contact-policy): the same
+    // suppression, the same total and the same hours the gate just used, so it agrees with the gate
+    // — it is here so this path can never drift from the teacher path. Never dial on a refusal.
+    const contact = await checkContact(
+        { orgId, phone: { hash: guardian.phoneHash }, kind: spec.emergency ? 'emergency' : 'routine', at: now, routineContactsInWindow: recentCallsToPhone },
+        deps.repo,
+    );
+    if (!contact.allowed) {
+        if (contact.reason === 'opted_out' || contact.reason === 'frequency_cap') {
+            await setIntentStatus(ctx, intent, 'blocked', { blockReason: contact.reason === 'opted_out' ? 'suppressed' : 'frequency_cap' });
+            report.blocked += 1;
+            return false;
+        }
+        const until = contact.nextAllowedAt ?? new Date(now.getTime() + CONTACT_POLICY_RETRY_MS);
+        if (until.getTime() > Date.parse(intent.expiresAt)) {
+            await setIntentStatus(ctx, intent, 'expired');
+        } else {
+            await deps.repo.updateIntent(orgId, intent.id, { notBefore: until.toISOString(), updatedAt: now.toISOString() });
             report.deferred += 1;
         }
         return false;

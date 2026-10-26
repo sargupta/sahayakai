@@ -11,6 +11,7 @@
  *   Clock             injected so hours/retries/leases are testable
  */
 
+import type { ContactKind, ContactRecord } from '@/lib/contact-policy';
 import type {
     CallEvent,
     Campaign,
@@ -143,6 +144,14 @@ export interface SamparkRepo {
     countNonTerminalCalls(orgId: string): Promise<number>;
     /** Calls to this phone hash created at or after `since` (frequency cap). Emergency purposes excluded when asked. */
     countCallsToPhoneSince(orgId: string, phoneHash: string, since: Date, excludeEmergency: boolean): Promise<number>;
+
+    // Shared contact ledger (src/lib/contact-policy): calls placed by every path that is not
+    // a Sampark campaign — a teacher in the app, later an integration. Top-level, not per
+    // school: a teacher with no school writes here too, and the cap is per number.
+    /** Ledger entries of `kind` for this phone hash at or after `since`, from every school and none. */
+    countContactsToPhoneSince(phoneHash: string, since: Date, kind: ContactKind): Promise<number>;
+    /** Create-only by `entry.id`. Returns false (and changes nothing) if it is already recorded. */
+    recordContact(entry: ContactRecord): Promise<boolean>;
 
     // Rendered audio metadata
     saveClip(clip: RenderedClip): Promise<void>;

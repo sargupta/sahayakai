@@ -30,20 +30,21 @@ function istInstant(hour: number, minute = 0, day = 15): Date {
 
 describe('calling window (class gate)', () => {
     it('allows calls through the working day', () => {
-        for (const h of [9, 10, 13, 17, 20]) {
+        for (const h of [10, 13, 17, 18]) {
             expect(checkCallingWindow(istInstant(h, 30)).allowed).toBe(true);
         }
     });
 
     it('refuses calls at night and early morning', () => {
-        for (const h of [21, 22, 23, 0, 1, 3, 6, 8]) {
+        for (const h of [19, 20, 21, 22, 23, 0, 1, 3, 6, 8, 9]) {
             const v = checkCallingWindow(istInstant(h, 30));
             expect(v.allowed).toBe(false);
             expect(v.reason).toMatch(/only placed between/);
         }
     });
 
-    it('has exact boundaries — 09:00 open, 21:00 shut', () => {
+    it('has exact boundaries — 10:00 open, 19:00 shut (routine band, decision 2)', () => {
+        expect([CALLING_WINDOW_START_HOUR, CALLING_WINDOW_END_HOUR]).toEqual([10, 19]);
         // The two minutes that decide whether a family's evening is interrupted.
         expect(checkCallingWindow(istInstant(CALLING_WINDOW_START_HOUR, 0)).allowed).toBe(true);
         expect(checkCallingWindow(istInstant(CALLING_WINDOW_START_HOUR - 1, 59)).allowed).toBe(false);
@@ -79,7 +80,7 @@ describe('calling window (class gate)', () => {
     });
 
     it('always says when calling reopens, and that time is inside the window', () => {
-        for (const h of [21, 23, 2, 8]) {
+        for (const h of [19, 21, 23, 2, 8, 9]) {
             const v = checkCallingWindow(istInstant(h, 15));
             expect(v.allowed).toBe(false);
             expect(v.nextAllowedAt).toBeInstanceOf(Date);
@@ -90,9 +91,9 @@ describe('calling window (class gate)', () => {
         }
     });
 
-    it('reopens at 09:00 IST, not merely "some time later"', () => {
+    it('reopens at 10:00 IST, not merely "some time later"', () => {
         const v = checkCallingWindow(istInstant(23, 10));
-        expect(formatIST(v.nextAllowedAt!)).toBe('09:00 IST');
+        expect(formatIST(v.nextAllowedAt!)).toBe('10:00 IST');
     });
 
     it('offers no reopening time when calling is already allowed', () => {
