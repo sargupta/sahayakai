@@ -1,3 +1,4 @@
+import type { OnboardingPhase } from '@/lib/onboarding-phase';
 // import { Timestamp } from 'firebase-admin/firestore'; // Removed to prevent client bundle crash
 
 export interface Timestamp {
@@ -212,8 +213,9 @@ export interface UserProfile {
     // Onboarding generation counter (client-side tracks, periodically syncs)
     aiGenerationCount?: number;
 
-    // Onboarding — progressive disclosure state machine
-    onboardingPhase?: 'setup' | 'first-generation' | 'exploring' | 'completing' | 'done';
+    // Onboarding — progressive disclosure state machine. The union lives in
+    // src/lib/onboarding-phase.ts; never widen it here.
+    onboardingPhase?: OnboardingPhase;
     onboardingCompletedAt?: Timestamp;
     firstGenerationContentId?: string;
     firstGenerationTool?: ContentType;
