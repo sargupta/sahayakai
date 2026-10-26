@@ -14,8 +14,8 @@ import '../../../shared/widgets/language_switcher.dart';
 import '../../../shared/widgets/primary_button.dart';
 
 /// P0.2 — Login. Re-skinned as a heritage-almanac title page
-/// (PREMIUM_DESIGN_SPEC.md §6b U6): a saffron kicker rule, a Fraunces
-/// `displayHero` masthead, a `lead` deck, the app's real capabilities as a
+/// (PREMIUM_DESIGN_SPEC.md §6b U6): a `displayHero` masthead (no kicker rule:
+/// design system v2 draws no decorative rules), a `lead` deck, the app's real capabilities as a
 /// hairline-ruled editorial register (not saffron bullets), an
 /// `EditorialSectionHeader` over the language picker, and one glowing CTA.
 ///
@@ -103,7 +103,6 @@ class LoginScreen extends ConsumerWidget {
     final extras = AppTextExtras.of(context);
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final saffron = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       // No AppBar on this screen, so nothing else sets the status-bar style.
@@ -124,16 +123,6 @@ class LoginScreen extends ConsumerWidget {
                   AppSpacing.space6,
                 ),
                 children: [
-                  // The 2dp x 32dp saffron kicker rule above the masthead.
-                  Container(
-                    width: 32,
-                    height: 2,
-                    decoration: BoxDecoration(
-                      color: saffron,
-                      borderRadius: AppRadius.rSm,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.space4),
                   Text(l10n.loginTitle, style: extras.displayHero),
                   const SizedBox(height: AppSpacing.space3),
                   Text(

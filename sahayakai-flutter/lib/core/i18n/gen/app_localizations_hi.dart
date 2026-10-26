@@ -21,6 +21,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get navLibrary => 'लाइब्रेरी';
 
   @override
+  String get navCommunity => 'समुदाय';
+
+  @override
   String get navProfile => 'प्रोफ़ाइल';
 
   @override

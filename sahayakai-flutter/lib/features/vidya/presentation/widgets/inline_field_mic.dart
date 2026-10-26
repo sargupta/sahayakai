@@ -6,6 +6,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/i18n/gen/app_localizations.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/motion/animated_entrance.dart';
 import '../../../../shared/voice/audio_recorder_service.dart';
 import '../../../../shared/voice/mic_permission_service.dart';
 import '../../../../shared/widgets/press_scale.dart';
@@ -31,10 +32,11 @@ enum InlineMicPhase { idle, requesting, listening, transcribing }
 /// It reuses the SAME injectable voice stack as the home Seal Mic (the recorder,
 /// the mic-permission gate, the STT repository), so a test never touches a real
 /// microphone. On a captured, usable transcript it calls [onResult] with the
-/// text; the host wires that to its `TextEditingController`. It is a compact,
-/// SealMic-flavoured press control — NOT the 128dp hero — and it does NOT animate
-/// continuously (each state is a composed still), so it never blocks a hosting
-/// form's `pumpAndSettle` and is trivially reduce-motion safe.
+/// text; the host wires that to its `TextEditingController`. It draws as the
+/// design system v2 Field mic, a 34px saffron disc with a 48dp touch band, plus
+/// a white mic glyph: a mic glyph marks a control, the sphere is VIDYA (founder
+/// decision 2026-10-25, every mic disc carries the glyph). It animates only while listening (the v2 `micpulse`), and not at all
+/// under reduce-motion; every other phase is a still.
 ///
 /// Errors stay minimal here by design: the field mic is a convenience, and the
 /// home Seal Mic owns the dignified permission / signed-out / limit recovery —
@@ -245,14 +247,9 @@ class _InlineFieldMicState extends ConsumerState<InlineFieldMic> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
-    final active = _phase != InlineMicPhase.idle;
-
-    // Saffron (the primary role) only while active — the resting form stays
-    // calm and the saffron budget is spent on the home Seal, not the fields.
-    final glyphColour =
-        active ? scheme.primary : scheme.onSurfaceVariant;
-    final fill = active ? scheme.primaryContainer : Colors.transparent;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final listening = _phase == InlineMicPhase.listening;
     final opacity = _phase == InlineMicPhase.transcribing ? 0.6 : 1.0;
 
     final hint = switch (_phase) {
@@ -261,6 +258,33 @@ class _InlineFieldMicState extends ConsumerState<InlineFieldMic> {
       InlineMicPhase.transcribing => l10n.vidyaStateThinking,
       InlineMicPhase.idle => l10n.vidyaFieldMicLabel,
     };
+
+    // The v2 Field mic: a 34px saffron-500 disc with `shadow-mic` and a white
+    // mic glyph. Listening adds a 6px `accent-tint-strong` halo.
+    final disc = Opacity(
+      opacity: opacity,
+      child: Container(
+        width: _disc,
+        height: _disc,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: theme.colorScheme.primary,
+          boxShadow: [
+            if (listening)
+              const BoxShadow(
+                color: AppColors.accentTintStrong,
+                spreadRadius: 6,
+              ),
+            if (!isDark) ...AppShadows.mic,
+          ],
+        ),
+        child: Icon(
+          LucideIcons.mic,
+          size: 16,
+          color: theme.colorScheme.onPrimary,
+        ),
+      ),
+    );
 
     return Semantics(
       button: true,
@@ -277,25 +301,14 @@ class _InlineFieldMicState extends ConsumerState<InlineFieldMic> {
             containedInkWell: true,
             customBorder: const CircleBorder(),
             // 48dp keeps the tap target past the a11y floor even though the
-            // painted disc is smaller.
+            // painted disc is 34px.
             child: SizedBox(
               width: 48,
               height: 48,
               child: Center(
-                child: Opacity(
-                  opacity: opacity,
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(shape: BoxShape.circle, color: fill),
-                    alignment: Alignment.center,
-                    child: Icon(
-                      LucideIcons.mic,
-                      size: AppIconSize.inline,
-                      color: glyphColour,
-                    ),
-                  ),
-                ),
+                child: listening && context.motionEnabled
+                    ? _MicPulse(child: disc)
+                    : disc,
               ),
             ),
           ),
@@ -303,4 +316,40 @@ class _InlineFieldMicState extends ConsumerState<InlineFieldMic> {
       ),
     );
   }
+
+  static const double _disc = 34;
+}
+
+/// v2 `micpulse`: the listening disc breathes 1 → 1.07 → 1 over 2.2s,
+/// ease-in-out. Runs only while listening and only with motion enabled.
+class _MicPulse extends StatefulWidget {
+  const _MicPulse({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_MicPulse> createState() => _MicPulseState();
+}
+
+class _MicPulseState extends State<_MicPulse>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1100),
+  )..repeat(reverse: true);
+
+  late final Animation<double> _scale = Tween<double>(
+    begin: 1,
+    end: 1.07,
+  ).animate(CurvedAnimation(parent: _c, curve: Curves.easeInOut));
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      ScaleTransition(scale: _scale, child: widget.child);
 }

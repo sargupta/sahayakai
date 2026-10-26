@@ -13,6 +13,7 @@ import '../../../shared/voice/tts_speaker.dart';
 import '../../../shared/widgets/glass_surface.dart';
 import '../domain/deliverable.dart';
 import 'deliverables_controller.dart';
+import 'vidya_sheet.dart';
 
 /// The one deliver tray (v3 screen 08) — every output, whatever tool made it,
 /// lands in the same sheet: a green orb header, a grid of destinations, the
@@ -25,12 +26,15 @@ import 'deliverables_controller.dart';
 /// staffroom, and Read aloud speaks the text. Delivering clears the result from
 /// the orb's ready count.
 Future<void> showDeliverTray(BuildContext context, Deliverable deliverable) {
-  return showModalBottomSheet<void>(
-    context: context,
-    backgroundColor: Colors.transparent,
-    elevation: 0,
-    isScrollControlled: true,
-    builder: (_) => DeliverTray(deliverable: deliverable),
+  return showVidyaSurface(
+    context,
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      isScrollControlled: true,
+      builder: (_) => DeliverTray(deliverable: deliverable),
+    ),
   );
 }
 
@@ -40,8 +44,8 @@ class DeliverTray extends ConsumerWidget {
   final Deliverable deliverable;
 
   static final BorderRadius _sheetRadius = BorderRadius.only(
-    topLeft: AppRadius.rHero.topLeft,
-    topRight: AppRadius.rHero.topRight,
+    topLeft: AppRadius.rSheet.topLeft,
+    topRight: AppRadius.rSheet.topRight,
   );
 
   @override
@@ -60,6 +64,8 @@ class DeliverTray extends ConsumerWidget {
         ),
         child: GlassSurface(
           borderRadius: _sheetRadius,
+          // A sheet is solid `surface-card` (design system v2 `Sheet`).
+          fill: AppColors.surfaceCard,
           padding: EdgeInsets.zero,
           child: SafeArea(
             top: false,

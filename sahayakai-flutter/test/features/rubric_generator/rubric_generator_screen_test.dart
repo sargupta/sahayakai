@@ -15,6 +15,7 @@ import 'package:sahayakai/features/rubric_generator/presentation/widgets/rubric_
 import 'package:sahayakai/shared/domain/tool_prefill.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../support/field_finders.dart';
 import 'rubric_fixtures.dart';
 
 /// Screen-layer gates: the required-assignment validation the endpoint depends
@@ -221,8 +222,8 @@ void main() {
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
 
-            expect(find.text('What is the assignment?'), findsOneWidget);
-            expect(find.text('Grade level'), findsOneWidget);
+            expect(findFieldLabel('What is the assignment?'), findsOneWidget);
+            expect(findFieldLabel('Grade level'), findsOneWidget);
           },
         );
       }

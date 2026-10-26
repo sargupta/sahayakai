@@ -2,42 +2,56 @@ import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
 
-/// Typography — production parity. Two families, one Indic-safe fallback
-/// strategy. **Fraunces is retired; Outfit is the display family.**
-///   • Outfit (400–700) — geometric-sans display; every brand/human/masthead
-///     moment: display slots + titleLarge + the `displayHero`/`dataLarge` extras.
-///     Matches the web `headline` family (`tailwind.config.ts`).
-///   • Inter (400–700) — all functional UI, body, labels, data (+ tabular).
-///     Matches the web `body` family.
+/// Typography — design system v2 (`type` family in `tokens.json`).
 ///
-/// The 15 M3 `TextTheme` slot names are preserved, so every current widget and
-/// all behavior tests inherit the new look for free; editorial extras are
-/// additive opt-ins exposed via a `ThemeExtension<AppTextExtras>` built on the
-/// same `scheme`/`isIndic` path as `AppTheme`.
+///   • **Bricolage Grotesque** (display) — titles, field values, card titles,
+///     CTAs. Its optical size follows the font size, as CSS
+///     `font-optical-sizing: auto` does: every display style carries an
+///     `opsz` axis value equal to its size ([_opsz]).
+///   • **Instrument Sans** (ui) — everything else.
 ///
-/// FALLBACK: the web pairs BOTH Latin families with the Noto **Sans** Indic
-/// block (`headline: [Outfit, "Noto Sans Devanagari", …]`,
-/// `body: [Inter, "Noto Sans Devanagari", …]`). Since Outfit is a sans, its
-/// Indic companion is Noto Sans — so both families degrade through
-/// [kIndicSansFallback], matching production exactly and never clipping matras.
+/// Both fall back through the Noto Sans family of each Indian script, in the
+/// order `tokens.json` lists them, so a mixed line ("Script in हिन्दी") shapes
+/// with no per-string work. All 11 families are bundled (pubspec
+/// `flutter.fonts`); nothing is fetched at runtime.
 ///
-/// BUNDLED, NOT FETCHED (U0.5). Every family here ships inside the APK via
-/// `pubspec.yaml`'s `flutter.fonts` block. This previously went through
-/// `google_fonts`, which streams a face on first use — so a teacher opening the
-/// app offline saw fallback boxes for their own script, and golden tests were
-/// impossible, because `flutter test` has no network and would have blessed
-/// those boxes as correct.
+/// The v2 app scale is exposed exactly, under its token names, as
+/// [AppTypeTokens] (`AppTypeTokens.of(context).eyebrow`). The 15 M3
+/// [TextTheme] slots map onto those tokens, so every existing widget inherits
+/// v2 without call-site churn:
 ///
-/// `warmIndicFonts()` went with it. It existed to pre-fetch faces; the engine
-/// registers bundled fonts at startup, so there is nothing left to warm. A
-/// no-op kept "for compatibility" is just a lie in the shape of a function.
+///   displayLarge  type-hero-app 28     titleMedium   type-card-title 15
+///   displayMedium type-screen-title 26 titleSmall    type-value 14
+///   headlineLarge type-screen-title 26 bodyLarge     (14/400 ui, web-body)
+///   displaySmall  type-page-title 22   bodyMedium    type-body 12
+///   titleLarge    type-page-title 22   bodySmall     type-body-sm 11
+///   headlineMedium type-output-title 20 labelLarge   type-cta 15
+///   headlineSmall type-stat 18         labelMedium   type-label 12
+///                                      labelSmall    type-pill 10
 ///
-/// `kIndicSerifFallback` went too. It was exported from `app_theme.dart` but
-/// never consumed as a `fontFamilyFallback` anywhere, so bundling its nine Noto
-/// Serif families would have doubled the Indic payload to render nothing.
+/// TWO DELIBERATE HOLDS, both flagged in the PR:
+///   • Small type. 10–11px Latin (pills, eyebrows, sublines) is v2-exact and
+///     an OPEN founder decision ("the small-type floor"). Kept exact here.
+///     Chrome that `ThemeData` resolves with `??` (app bar, buttons, snack
+///     bar, tooltip) stays at 12sp or more — the repo's DESIGN_RUBRIC §0
+///     gate (`app_theme_test.dart`) — so the tooltip uses type-label (12).
+///   • Chrome line height. v2 draws the CTA at line-height 1 and the page
+///     title at 1.2; the repo's Indic-clipping class gate (DESIGN_RUBRIC §12,
+///     founder-reported) floors every `??`-resolved chrome style at 1.25. Size,
+///     weight, tracking and face are exact; only those two line heights hold
+///     at 1.25.
+///
+/// INDIC ([isIndic]): v2's script rules — 10px roles (eyebrows, pills, field
+/// labels) render at 12px, never tracked or uppercased; reading text gets a
+/// 1.7 line height; everything else rises so matras never collide.
 
-/// Sans fallback per Indic script — Outfit (display) and Inter (body) both
-/// degrade to Noto Sans, matching the web `headline`/`body` families.
+/// The display face (`--font-display`).
+const String kDisplayFamily = 'Bricolage Grotesque';
+
+/// The UI face (`--font-ui`).
+const String kUiFamily = 'Instrument Sans';
+
+/// The Noto Sans fallback chain, in `tokens.json` order.
 const List<String> kIndicSansFallback = [
   'Noto Sans Devanagari',
   'Noto Sans Bengali',
@@ -53,9 +67,34 @@ const List<String> kIndicSansFallback = [
 /// Back-compat alias (the app referenced a single `kIndicFallback`).
 const List<String> kIndicFallback = kIndicSansFallback;
 
-/// Outfit (display) + Inter (structure/body). Pass [isIndic] true when the
-/// active locale uses an Indic script to raise line-heights so matras /
-/// conjuncts never clip (§3.2 floors).
+/// The v2 app type tokens, by name.
+enum AppTypeToken {
+  heroApp,
+  screenTitle,
+  pageTitle,
+  outputTitle,
+  cardTitle,
+  quote,
+  value,
+  tileTitle,
+  stat,
+  cta,
+  ctaSm,
+  reading,
+  body,
+  label,
+  labelStrong,
+  chip,
+  button,
+  bodySm,
+  chipSm,
+  action,
+  status,
+  pill,
+  eyebrow,
+  caption,
+}
+
 class AppText {
   AppText._();
 
@@ -64,132 +103,202 @@ class AppText {
     FontFeature.liningFigures(),
   ];
 
-  static TextTheme build(ColorScheme s, {required bool isIndic}) {
-    final onS = s.onSurface;
-    final onV = s.onSurfaceVariant;
-    double h(double latin, double indic) => isIndic ? indic : latin;
+  /// Bricolage's `opsz` axis spans 12–96; CSS sets it to the font size.
+  static List<FontVariation> _opsz(double size) => [
+    FontVariation('opsz', size.clamp(12, 96).toDouble()),
+  ];
 
-    // Display family — Outfit (geometric sans), Noto Sans Indic fallback.
-    TextStyle display(
-      double size,
-      FontWeight w,
-      double lh, {
-      Color? c,
-      double ls = 0,
-      List<FontFeature>? feats,
-    }) => TextStyle(
-      fontFamily: 'Outfit',
-      fontSize: size,
-      fontWeight: w,
-      height: lh,
-      letterSpacing: ls,
-      color: c ?? onS,
-      fontFeatures: feats,
-    ).copyWith(fontFamilyFallback: kIndicSansFallback);
-    TextStyle sans(
-      double size,
-      FontWeight w,
-      double lh, {
-      Color? c,
-      double ls = 0,
-      List<FontFeature>? feats,
-    }) => TextStyle(
-      fontFamily: 'Inter',
-      fontSize: size,
-      fontWeight: w,
-      height: lh,
-      letterSpacing: ls,
-      color: c ?? onS,
-      fontFeatures: feats,
-    ).copyWith(fontFamilyFallback: kIndicSansFallback);
+  /// A display (Bricolage) style. [em] is CSS letter-spacing in em.
+  static TextStyle _display(
+    double size,
+    FontWeight weight,
+    double height, {
+    double em = 0,
+    Color? color,
+    List<FontFeature>? features,
+  }) => TextStyle(
+    fontFamily: kDisplayFamily,
+    fontFamilyFallback: kIndicSansFallback,
+    fontSize: size,
+    fontWeight: weight,
+    height: height,
+    letterSpacing: em * size,
+    color: color,
+    fontFeatures: features,
+    fontVariations: _opsz(size),
+  );
+
+  /// A UI (Instrument Sans) style.
+  static TextStyle _ui(
+    double size,
+    FontWeight weight,
+    double height, {
+    double em = 0,
+    Color? color,
+    List<FontFeature>? features,
+  }) => TextStyle(
+    fontFamily: kUiFamily,
+    fontFamilyFallback: kIndicSansFallback,
+    fontSize: size,
+    fontWeight: weight,
+    height: height,
+    letterSpacing: em * size,
+    color: color,
+    fontFeatures: features,
+  );
+
+  /// The v2 app scale for [s]. Latin values are `tokens.json` exactly; Indic
+  /// applies the script rules from the class doc.
+  static Map<AppTypeToken, TextStyle> tokens(
+    ColorScheme s, {
+    required bool isIndic,
+  }) {
+    final strong = s.onSurface;
+    final body = s.onSurfaceVariant;
+    final eyebrowInk = s.brightness == Brightness.dark
+        ? AppColors.dPrimaryText
+        : AppColors.textEyebrow;
+
+    // Latin line height, or the Indic one.
+    double h(double latin, double indic) => isIndic ? indic : latin;
+    // 10px roles render at 12px in Indic scripts.
+    double small(double latin) => isIndic && latin < 12 ? 12 : latin;
+    // Indic is never tracked.
+    double track(double em) => isIndic ? 0 : em;
+
+    return {
+      AppTypeToken.heroApp: _display(28, FontWeight.w700, h(1.14, 1.4), em: track(-0.012), color: strong),
+      AppTypeToken.screenTitle: _display(26, FontWeight.w700, h(1.16, 1.4), em: track(-0.012), color: strong),
+      AppTypeToken.pageTitle: _display(22, FontWeight.w700, h(1.2, 1.42), color: strong),
+      AppTypeToken.outputTitle: _display(20, FontWeight.w700, h(1.22, 1.45), em: track(-0.01), color: strong),
+      AppTypeToken.cardTitle: _display(15, FontWeight.w600, h(1.3, 1.5), color: strong),
+      AppTypeToken.quote: _display(15, FontWeight.w600, h(1.45, 1.7), color: strong),
+      AppTypeToken.value: _display(14, FontWeight.w600, h(1.3, 1.7), color: strong),
+      AppTypeToken.tileTitle: _display(13, FontWeight.w600, h(1.3, 1.5), color: strong),
+      AppTypeToken.stat: _display(18, FontWeight.w700, h(1.2, 1.4), color: strong, features: _tabular),
+      AppTypeToken.cta: _display(15, FontWeight.w600, h(1, 1.4), color: strong),
+      AppTypeToken.ctaSm: _display(14, FontWeight.w600, h(1, 1.4), color: strong),
+      AppTypeToken.reading: _ui(12, FontWeight.w400, h(1.6, 1.7), color: strong),
+      AppTypeToken.body: _ui(12, FontWeight.w400, h(1.55, 1.7), color: body),
+      AppTypeToken.label: _ui(12, FontWeight.w500, h(1.4, 1.5), color: strong),
+      AppTypeToken.labelStrong: _ui(12, FontWeight.w600, h(1.4, 1.5), color: strong),
+      AppTypeToken.chip: _ui(12, FontWeight.w600, h(1.3, 1.5), color: strong),
+      AppTypeToken.button: _ui(13, FontWeight.w600, h(1, 1.4), color: strong),
+      AppTypeToken.bodySm: _ui(small(11), FontWeight.w400, h(1.45, 1.7), color: body),
+      AppTypeToken.chipSm: _ui(small(11), FontWeight.w600, h(1.3, 1.5), color: strong),
+      AppTypeToken.action: _ui(small(11), FontWeight.w600, h(1.4, 1.5), color: eyebrowInk),
+      AppTypeToken.status: _ui(small(11), FontWeight.w500, h(1.4, 1.5), color: body),
+      AppTypeToken.pill: _ui(small(10), FontWeight.w600, h(1.22, 1.5), color: strong),
+      AppTypeToken.eyebrow: _ui(small(10), FontWeight.w600, h(1.22, 1.5), em: track(0.16), color: eyebrowInk),
+      AppTypeToken.caption: _ui(small(10), FontWeight.w400, h(1.4, 1.5), color: body),
+    };
+  }
+
+  static TextTheme build(ColorScheme s, {required bool isIndic}) {
+    final t = tokens(s, isIndic: isIndic);
+    // Chrome slots `??`-resolved by ThemeData hold the 1.25 Indic-safety
+    // floor (see the class doc); the Indic value is already above it.
+    TextStyle chrome(TextStyle style) => (style.height ?? 0) < 1.25
+        ? style.copyWith(height: 1.25)
+        : style;
 
     return TextTheme(
-      // --- Outfit (display / masthead) ---
-      displayLarge: display(32, FontWeight.w600, h(1.15, 1.32), ls: -0.5),
-      displayMedium: display(26, FontWeight.w600, h(1.20, 1.35), ls: -0.4),
-      displaySmall: display(22, FontWeight.w500, h(1.25, 1.40), ls: -0.3),
-      headlineLarge: display(26, FontWeight.w600, h(1.20, 1.35), ls: -0.4),
-      titleLarge: display(21, FontWeight.w600, h(1.25, 1.42), ls: -0.2),
-      // --- Inter (structure & body) ---
-      headlineMedium: sans(20, FontWeight.w600, h(1.30, 1.45), ls: -0.2),
-      headlineSmall: sans(18, FontWeight.w600, h(1.35, 1.50), ls: -0.1),
-      titleMedium: sans(16, FontWeight.w600, h(1.40, 1.50)),
-      titleSmall: sans(14, FontWeight.w600, h(1.40, 1.50), ls: 0.2),
-      bodyLarge: sans(16, FontWeight.w400, h(1.60, 1.75)),
-      bodyMedium: sans(14, FontWeight.w400, h(1.55, 1.70), c: onS),
-      bodySmall: sans(13, FontWeight.w400, h(1.50, 1.70), c: onV),
-      labelLarge: sans(15, FontWeight.w600, h(1.30, 1.45), ls: 0.1),
-      labelMedium: sans(13, FontWeight.w500, h(1.40, 1.50), ls: 0.1),
-      labelSmall: sans(12, FontWeight.w500, h(1.40, 1.50), ls: 0.2),
+      displayLarge: t[AppTypeToken.heroApp],
+      displayMedium: t[AppTypeToken.screenTitle],
+      displaySmall: t[AppTypeToken.pageTitle],
+      headlineLarge: t[AppTypeToken.screenTitle],
+      headlineMedium: t[AppTypeToken.outputTitle],
+      headlineSmall: t[AppTypeToken.stat]!.copyWith(fontFeatures: const []),
+      titleLarge: chrome(t[AppTypeToken.pageTitle]!),
+      titleMedium: t[AppTypeToken.cardTitle],
+      titleSmall: t[AppTypeToken.value],
+      // No 14px body on the v2 app scale; this is the website body
+      // (type-web-body 14/400/1.6), the nearest v2 token.
+      bodyLarge: _ui(14, FontWeight.w400, isIndic ? 1.7 : 1.6, color: s.onSurface),
+      bodyMedium: t[AppTypeToken.body]!.copyWith(color: s.onSurface),
+      bodySmall: t[AppTypeToken.bodySm],
+      labelLarge: chrome(t[AppTypeToken.cta]!),
+      labelMedium: t[AppTypeToken.label],
+      labelSmall: t[AppTypeToken.pill],
     );
   }
 
-  /// The additive editorial slots (§3.3). Built on the SAME scheme/isIndic path
-  /// so `AppTheme.withIndic` keeps them in sync with the TextTheme.
+  /// The additive editorial slots, on the same scheme/isIndic path.
   static AppTextExtras buildExtras(ColorScheme s, {required bool isIndic}) {
-    final onS = s.onSurface;
-    final saffronText = s.brightness == Brightness.dark
-        ? AppColors.dPrimaryText
-        : AppColors.lPrimaryText;
-    double h(double latin, double indic) => isIndic ? indic : latin;
-
-    // Display family — Outfit (geometric sans), Noto Sans Indic fallback.
-    TextStyle display(
-      double size,
-      FontWeight w,
-      double lh, {
-      Color? c,
-      double ls = 0,
-      List<FontFeature>? feats,
-    }) => TextStyle(
-      fontFamily: 'Outfit',
-      fontSize: size,
-      fontWeight: w,
-      height: lh,
-      letterSpacing: ls,
-      color: c ?? onS,
-      fontFeatures: feats,
-    ).copyWith(fontFamilyFallback: kIndicSansFallback);
-    TextStyle sans(
-      double size,
-      FontWeight w,
-      double lh, {
-      Color? c,
-      double ls = 0,
-      List<FontFeature>? feats,
-    }) => TextStyle(
-      fontFamily: 'Inter',
-      fontSize: size,
-      fontWeight: w,
-      height: lh,
-      letterSpacing: ls,
-      color: c ?? onS,
-      fontFeatures: feats,
-    ).copyWith(fontFamilyFallback: kIndicSansFallback);
-
+    final t = tokens(s, isIndic: isIndic);
     return AppTextExtras(
-      displayHero: display(40, FontWeight.w600, h(1.12, 1.32), ls: -0.8),
-      lead: sans(17, FontWeight.w400, h(1.50, 1.65)),
-      // Eyebrow / overline colour = saffron TEXT token; the widget applies
-      // UPPERCASE for Latin only (unicameral Indic leans on tracking + saffron).
-      eyebrow: sans(
-        12,
-        FontWeight.w700,
-        h(1.40, 1.50),
-        ls: 1.2,
-        c: saffronText,
+      displayHero: t[AppTypeToken.heroApp]!,
+      lead: _ui(14, FontWeight.w400, isIndic ? 1.7 : 1.6, color: s.onSurfaceVariant),
+      eyebrow: t[AppTypeToken.eyebrow]!,
+      // The field label: an eyebrow tracked .14em instead of .16em.
+      overline: t[AppTypeToken.eyebrow]!.copyWith(
+        letterSpacing: isIndic ? 0 : 0.14 * 10,
       ),
-      overline: sans(
-        12,
-        FontWeight.w600,
-        h(1.40, 1.50),
-        ls: 0.8,
-        c: saffronText,
-      ),
-      // A serif-free display numeral, tabular so counters never reflow.
-      dataLarge: display(28, FontWeight.w600, 1.10, ls: -0.3, feats: _tabular),
-      dataMedium: sans(15, FontWeight.w500, h(1.40, 1.40), feats: _tabular),
+      // type-metric (26/700/1.05, −.02em), tabular so counters never reflow.
+      dataLarge: _display(26, FontWeight.w700, isIndic ? 1.32 : 1.05,
+          em: isIndic ? 0 : -0.02, color: s.onSurface, features: _tabular),
+      dataMedium: t[AppTypeToken.value]!.copyWith(fontFeatures: _tabular),
     );
+  }
+
+  static AppTypeTokens buildTokens(ColorScheme s, {required bool isIndic}) =>
+      AppTypeTokens(tokens(s, isIndic: isIndic));
+}
+
+/// The v2 app type scale under its token names, as a theme extension:
+/// `AppTypeTokens.of(context).cardTitle`.
+@immutable
+class AppTypeTokens extends ThemeExtension<AppTypeTokens> {
+  const AppTypeTokens(this._styles);
+
+  final Map<AppTypeToken, TextStyle> _styles;
+
+  TextStyle operator [](AppTypeToken token) => _styles[token]!;
+
+  TextStyle get heroApp => this[AppTypeToken.heroApp];
+  TextStyle get screenTitle => this[AppTypeToken.screenTitle];
+  TextStyle get pageTitle => this[AppTypeToken.pageTitle];
+  TextStyle get outputTitle => this[AppTypeToken.outputTitle];
+  TextStyle get cardTitle => this[AppTypeToken.cardTitle];
+  TextStyle get quote => this[AppTypeToken.quote];
+  TextStyle get value => this[AppTypeToken.value];
+  TextStyle get tileTitle => this[AppTypeToken.tileTitle];
+  TextStyle get stat => this[AppTypeToken.stat];
+  TextStyle get cta => this[AppTypeToken.cta];
+  TextStyle get ctaSm => this[AppTypeToken.ctaSm];
+  TextStyle get reading => this[AppTypeToken.reading];
+  TextStyle get body => this[AppTypeToken.body];
+  TextStyle get label => this[AppTypeToken.label];
+  TextStyle get labelStrong => this[AppTypeToken.labelStrong];
+  TextStyle get chip => this[AppTypeToken.chip];
+  TextStyle get button => this[AppTypeToken.button];
+  TextStyle get bodySm => this[AppTypeToken.bodySm];
+  TextStyle get chipSm => this[AppTypeToken.chipSm];
+  TextStyle get action => this[AppTypeToken.action];
+  TextStyle get status => this[AppTypeToken.status];
+  TextStyle get pill => this[AppTypeToken.pill];
+  TextStyle get eyebrow => this[AppTypeToken.eyebrow];
+  TextStyle get caption => this[AppTypeToken.caption];
+
+  /// Reads the extension off the ambient theme; falls back to the Latin
+  /// scale if (unexpectedly) unregistered, so call sites are never null.
+  static AppTypeTokens of(BuildContext context) {
+    final theme = Theme.of(context);
+    return theme.extension<AppTypeTokens>() ??
+        AppText.buildTokens(theme.colorScheme, isIndic: false);
+  }
+
+  @override
+  AppTypeTokens copyWith({Map<AppTypeToken, TextStyle>? styles}) =>
+      AppTypeTokens(styles ?? _styles);
+
+  @override
+  AppTypeTokens lerp(covariant ThemeExtension<AppTypeTokens>? other, double t) {
+    if (other is! AppTypeTokens) return this;
+    return AppTypeTokens({
+      for (final token in AppTypeToken.values)
+        token: TextStyle.lerp(this[token], other[token], t)!,
+    });
   }
 }
 
@@ -206,26 +315,25 @@ class AppTextExtras extends ThemeExtension<AppTextExtras> {
     required this.dataMedium,
   });
 
-  /// login / onboarding hero (Outfit 40/600).
+  /// Login / onboarding hero (type-hero-app 28/700).
   final TextStyle displayHero;
 
-  /// deck / standfirst under a hero (Inter 17/400).
+  /// Standfirst under a hero (14/400 ui, body ink).
   final TextStyle lead;
 
-  /// section label ("YOUR TEACHING TOOLS") — saffron, tracked, UPPERCASE Latin.
+  /// Section label ("YOUR TEACHING TOOLS") — type-eyebrow, saffron-600,
+  /// tracked, UPPERCASE Latin only.
   final TextStyle eyebrow;
 
-  /// micro-meta ("OPTIONAL", category) — saffron, tracked, UPPERCASE Latin.
+  /// Field label / micro-meta — the eyebrow tracked .14em.
   final TextStyle overline;
 
-  /// big number moment (score, count) — Outfit 28/600 tabular.
+  /// Big number moment (score, count) — type-metric, tabular.
   final TextStyle dataLarge;
 
-  /// inline data ("0 / 1000", "Class 12") — Inter 15/500 tabular.
+  /// Inline data ("0 / 1000", "Class 12") — type-value, tabular.
   final TextStyle dataMedium;
 
-  /// Reads the extension off the ambient theme; falls back to a scheme-derived
-  /// default if (unexpectedly) unregistered, so call sites are never null.
   static AppTextExtras of(BuildContext context) {
     final theme = Theme.of(context);
     return theme.extension<AppTextExtras>() ??

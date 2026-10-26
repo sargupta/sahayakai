@@ -5,24 +5,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/shared/widgets/app_segmented.dart';
 
-/// WCAG AA for the [AppSegmented] `_track` labels. The **unselected** label sits
-/// on the track fill, not the thumb — it previously used `onSurfaceVariant`,
-/// which is only 3.86:1 on the old `surfaceContainerHigh` fill (a fail for the
-/// `labelLarge` text, which is not large text). It now uses full-ink
-/// `onSurface` (matching the `_chips` fallback), which this test pins in both
-/// themes by reading the ACTUAL rendered label colour and computing its ratio
-/// against the actual track fill.
+/// Contrast for the [AppSegmented] `_track` labels, read from the ACTUAL
+/// rendered label colours.
 ///
-/// GL-3 (App-wide Glassmorphism Reskin) updated the track's fill from the
-/// flat `surfaceContainerHigh` token to `AppGlass`'s translucent flat-fill
-/// token (the same one `AppCard` now uses) — so the "actual track fill" this
-/// test composites against is now [AppGlass.lFlatFill]/[AppGlass.dFlatFill]
-/// alpha-blended over the screen backdrop, using the SAME `Color.alphaBlend`
-/// composite method `theme_contrast_test.dart`'s own "GL-1 glassmorphism —
-/// flat-fill token stays AA-safe" group already uses (and already proves
-/// clears AA generically for this token) — not the plain opaque
-/// `surfaceContainerHigh` colour this test asserted against before the
-/// reskin.
+/// Light follows the design system v2 `SegmentedControl`: the unselected label
+/// is `text-body` on the 62% `surface-segment` glass composited over the milk
+/// wash, which must clear AA (>=4.5) for 12px text. The selected label is
+/// white on the `saffron-500` pill: 3.77:1, the open founder decision in guide
+/// 10 (fix on the table: a `saffron-600` fill at 5.28:1). This test pins that
+/// value as it stands rather than resolving it, and fails if it drops below the
+/// 3:1 UI-component floor.
+///
+/// Dark keeps the pre-v2 glass track (dark mode is an open founder decision):
+/// the unselected label is full-ink `onSurface` on `AppGlass.dFlatFill`.
 double _lin(int c) {
   final s = c / 255.0;
   return s <= 0.03928
@@ -43,10 +38,7 @@ double _ratio(Color a, Color b) {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-Future<Color> _unselectedLabelColor(
-  WidgetTester tester,
-  ThemeData theme,
-) async {
+Future<void> _pump(WidgetTester tester, ThemeData theme) async {
   await tester.pumpWidget(
     MaterialApp(
       theme: theme,
@@ -65,43 +57,92 @@ Future<Color> _unselectedLabelColor(
     ),
   );
   await tester.pumpAndSettle();
-  final label = tester.widget<Text>(find.text('Two'));
-  return label.style!.color!;
+}
+
+Color _labelColor(WidgetTester tester, String text) {
+  final style = tester
+      .widget<AnimatedDefaultTextStyle>(
+        find
+            .ancestor(
+              of: find.text(text),
+              matching: find.byType(AnimatedDefaultTextStyle),
+            )
+            .first,
+      )
+      .style;
+  return style.color!;
 }
 
 void main() {
-  for (final brightness in Brightness.values) {
-    testWidgets(
-      'AppSegmented unselected label clears AA on the track fill (${brightness.name})',
-      (tester) async {
-        // Build the theme INSIDE the test body — constructing it at collection
-        // time (a top-level literal) would build a theme before the binding inits.
-        final theme = brightness == Brightness.dark
-            ? AppTheme.dark()
-            : AppTheme.light();
-        // The real rendered track fill post-GL-3: AppGlass's translucent flat
-        // token composited over the screen backdrop it actually sits on (the
-        // same backdrop AppGlass's own doc comments and theme_contrast_test.dart
-        // assume — see the file header).
-        final backdrop = brightness == Brightness.dark
-            ? AppColors.dBackground
-            : AppColors.lBackground;
-        final glassFill = brightness == Brightness.dark
-            ? AppGlass.dFlatFill
-            : AppGlass.lFlatFill;
-        final trackFill = Color.alphaBlend(glassFill, backdrop);
-        final labelColor = await _unselectedLabelColor(tester, theme);
-
-        // Full-ink, not the muted onSurfaceVariant (the regression this guards).
-        expect(labelColor, theme.colorScheme.onSurface);
-        expect(
-          _ratio(labelColor, trackFill),
-          greaterThanOrEqualTo(4.5),
-          reason:
-              'the unselected segment label must meet AA (>=4.5) on the '
-              'surfaceContainerHigh track fill',
-        );
-      },
+  testWidgets('light: unselected label is text-body and clears AA on the '
+      'segment glass', (tester) async {
+    await _pump(tester, AppTheme.light());
+    final track = Color.alphaBlend(
+      AppColors.surfaceSegment,
+      AppColors.lBackground,
     );
-  }
+    final label = _labelColor(tester, 'Two');
+
+    expect(label, AppColors.textBody);
+    expect(
+      _ratio(label, track),
+      greaterThanOrEqualTo(4.5),
+      reason: 'the unselected segment label must meet AA on surface-segment',
+    );
+  });
+
+  testWidgets('light: selected label is white on saffron-500 (open founder '
+      'decision, 3.77:1)', (tester) async {
+    final theme = AppTheme.light();
+    await _pump(tester, theme);
+    final label = _labelColor(tester, 'One');
+
+    expect(label, theme.colorScheme.onPrimary);
+    expect(theme.colorScheme.primary, AppColors.saffron500);
+    final ratio = _ratio(label, AppColors.saffron500);
+    expect(ratio, closeTo(3.77, 0.01));
+    expect(ratio, greaterThanOrEqualTo(3.0));
+  });
+
+  testWidgets('dark: unselected label clears AA on the glass track', (
+    tester,
+  ) async {
+    final theme = AppTheme.dark();
+    await _pump(tester, theme);
+    final track = Color.alphaBlend(AppGlass.dFlatFill, AppColors.dBackground);
+    final label = _labelColor(tester, 'Two');
+
+    expect(label, theme.colorScheme.onSurface);
+    expect(_ratio(label, track), greaterThanOrEqualTo(4.5));
+  });
+
+  testWidgets('segments read as a radio group', (tester) async {
+    await _pump(tester, AppTheme.light());
+    expect(
+      tester.getSemantics(find.bySemanticsLabel('One')),
+      matchesSemantics(
+        label: 'One',
+        isButton: true,
+        hasCheckedState: true,
+        isChecked: true,
+        isInMutuallyExclusiveGroup: true,
+        hasTapAction: true,
+        isFocusable: true,
+        hasFocusAction: true,
+      ),
+    );
+    expect(
+      tester.getSemantics(find.bySemanticsLabel('Two')),
+      matchesSemantics(
+        label: 'Two',
+        isButton: true,
+        hasCheckedState: true,
+        isChecked: false,
+        isInMutuallyExclusiveGroup: true,
+        hasTapAction: true,
+        isFocusable: true,
+        hasFocusAction: true,
+      ),
+    );
+  });
 }

@@ -8,6 +8,7 @@ import 'package:sahayakai/core/theme/theme_mode_provider.dart';
 import 'package:sahayakai/features/settings/presentation/settings_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../support/field_finders.dart';
 import 'settings_fixtures.dart';
 
 /// Screen-layer gates for P0.7.
@@ -272,9 +273,9 @@ void main() {
       expect(find.text('You are signed out'), findsNothing);
       // The teaching-profile eyebrow is the editorial saffron header.
       expect(find.text('TEACHING PROFILE'), findsOneWidget);
-      expect(find.text('Education board'), findsOneWidget);
-      expect(find.text('Qualifications'), findsOneWidget);
-      expect(find.text('Administrative role'), findsOneWidget);
+      expect(findFieldLabel('Education board'), findsOneWidget);
+      expect(findFieldLabel('Qualifications'), findsOneWidget);
+      expect(findFieldLabel('Administrative role'), findsOneWidget);
     });
   });
 

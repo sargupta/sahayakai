@@ -219,7 +219,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget _boardField(AppLocalizations l10n, ProfileSettings profile) {
     return LabeledField(
       label: l10n.settingsBoardLabel,
-      leadingIcon: LucideIcons.landmark,
       child: DropdownButtonFormField<String?>(
         // Keyed on the value so a hydrate (or a refresh) rebuilds the field
         // from the document instead of stranding it on the initial value.
@@ -247,7 +246,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget _qualificationsField(AppLocalizations l10n, ProfileSettings profile) {
     return LabeledField(
       label: l10n.settingsQualificationsLabel,
-      leadingIcon: LucideIcons.award,
       hint: l10n.settingsQualificationsHint,
       child: Wrap(
         spacing: AppSpacing.space2,
@@ -288,7 +286,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget _adminRoleField(AppLocalizations l10n, ProfileSettings profile) {
     return LabeledField(
       label: l10n.settingsAdminRoleLabel,
-      leadingIcon: LucideIcons.briefcase,
       child: DropdownButtonFormField<AdministrativeRole?>(
         key: ValueKey<AdministrativeRole?>(profile.administrativeRole),
         initialValue: profile.administrativeRole,
@@ -594,7 +591,6 @@ class _SignedOutCard extends StatelessWidget {
     final text = Theme.of(context).textTheme;
 
     return AppCard(
-      accentBar: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,

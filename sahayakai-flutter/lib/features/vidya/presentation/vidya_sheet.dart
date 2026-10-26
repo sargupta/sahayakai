@@ -13,39 +13,42 @@ import 'vidya_status_ui.dart';
 import 'widgets/conversation_block.dart';
 import 'widgets/seal_mic.dart';
 
-/// Opens VIDYA as a modal sheet from anywhere — the "co-teacher on every page"
-/// affordance (SPEC §C.6). Reuses the SAME top-level [VidyaController] as the
-/// home, so the conversation is continuous across surfaces.
+/// Opens VIDYA as a modal sheet over the current page — what a tap on the orb
+/// does (design system v2 `Orb`: "a tap opens the voice sheet"). Reuses the
+/// SAME top-level [VidyaController] as the home, so the conversation is
+/// continuous across surfaces.
 Future<void> showVidyaSheet(BuildContext context) {
-  return showModalBottomSheet<void>(
-    context: context,
-    backgroundColor: Colors.transparent,
-    elevation: 0,
-    isScrollControlled: true,
-    builder: (_) => const VidyaSheet(),
+  return showVidyaSurface(
+    context,
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      isScrollControlled: true,
+      builder: (_) => const VidyaSheet(),
+    ),
   );
 }
 
-/// A small, Ledger-styled app-bar action that opens the VIDYA sheet. Added to
-/// [ToolScaffold] so VIDYA is reachable from every tool screen without going
-/// back Home; unobtrusive (one glyph in the app bar), never on the result view.
-class VidyaAppBarAction extends StatelessWidget {
-  const VidyaAppBarAction({super.key});
+/// True while one of VIDYA's own sheets (the voice sheet, the deliver tray) is
+/// up. The parked orb hides meanwhile: the sheet is VIDYA, and design system
+/// v2 never shows two VIDYAs on one screen.
+final vidyaSurfaceOpenProvider = StateProvider<bool>((ref) => false);
 
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return IconButton(
-      icon: const Icon(LucideIcons.sparkles),
-      tooltip: l10n.vidyaOpen,
-      onPressed: () => showVidyaSheet(context),
-    );
-  }
+/// Marks [sheet] as a VIDYA surface for as long as it is open.
+Future<T?> showVidyaSurface<T>(BuildContext context, Future<T?> sheet) {
+  final open = ProviderScope.containerOf(
+    context,
+    listen: false,
+  ).read(vidyaSurfaceOpenProvider.notifier);
+  open.state = true;
+  return sheet.whenComplete(() => open.state = false);
 }
 
-/// The VIDYA sheet body: a premium floating surface (rHero top corners + the e4
-/// modal shadow, §5) with the running conversation (if any), the Seal Mic and
-/// its caption, and the dignified terminal panels. A single valid intent routes
+/// The VIDYA sheet body, drawn as the design system v2 `Sheet`: solid
+/// `surface-card`, `radius-sheet` top corners, `shadow-sheet`, a 44 × 4 handle
+/// and a 14/600 display title, holding the running conversation (if any), the
+/// Seal Mic and its caption, and the dignified terminal panels. A single valid intent routes
 /// to its tool (and closes the sheet); a compound intent offers confirm chips.
 class VidyaSheet extends ConsumerStatefulWidget {
   const VidyaSheet({super.key});
@@ -56,8 +59,8 @@ class VidyaSheet extends ConsumerStatefulWidget {
 
 class _VidyaSheetState extends ConsumerState<VidyaSheet> {
   static final BorderRadius _sheetRadius = BorderRadius.only(
-    topLeft: AppRadius.rHero.topLeft,
-    topRight: AppRadius.rHero.topRight,
+    topLeft: AppRadius.rSheet.topLeft,
+    topRight: AppRadius.rSheet.topRight,
   );
 
   @override
@@ -92,29 +95,18 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet> {
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: ConstrainedBox(
         constraints: BoxConstraints(maxHeight: maxHeight),
-        // Shadow-only carrier: `GlassSurface` draws the real-blur fill,
-        // gradient border and sheen below, but casts no external shadow of
-        // its own (see `glass_surface.dart`), so the old e4/dKey "floating
-        // modal" shadow is kept here, underneath the glass.
+        // Shadow-only carrier: `GlassSurface` casts no shadow of its own.
         child: DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: _sheetRadius,
             boxShadow: isDark ? AppShadows.dKey : AppShadows.e4,
           ),
-          // CORNER-ROUNDING DECISION: this sheet is a modal BOTTOM sheet
-          // (`showModalBottomSheet`, `isScrollControlled: true`,
-          // `SafeArea(top: false)`) that sits flush against the screen's
-          // bottom edge rather than floating fully in view — deliberately
-          // top-corners-only (`_sheetRadius`), not a fully-floating panel.
-          // Passed straight into `GlassSurface.borderRadius` (a squircle
-          // NATIVELY supports non-uniform corners) rather than clipping a
-          // uniform squircle with an outer `ClipRRect` — an RRect clip
-          // doesn't trim a squircle to a partial one, it silently discards
-          // the squircle geometry entirely (a squircle's curve strictly
-          // encloses the circular-arc RRect corner at equal nominal radius;
-          // caught by the GL-2 design review).
+          // A sheet is solid (`surface-card`), never glass: the page behind
+          // it must not show through what VIDYA is saying. Top corners only;
+          // the bottom sits flush with the screen edge.
           child: GlassSurface(
             borderRadius: _sheetRadius,
+            fill: AppColors.surfaceCard,
             padding: EdgeInsets.zero,
             child: SafeArea(
               top: false,
@@ -122,17 +114,16 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _GrabHandle(color: scheme.outlineVariant),
+                  _GrabHandle(
+                    color: isDark
+                        ? scheme.outlineVariant
+                        : AppColors.borderControl,
+                  ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.space4,
-                      AppSpacing.space1,
-                      AppSpacing.space4,
-                      AppSpacing.space2,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(18, 12, 18, 0),
                     child: Text(
                       l10n.vidyaOpen,
-                      style: theme.textTheme.titleLarge,
+                      style: AppTypeTokens.of(context).value,
                     ),
                   ),
                   if (state.hasConversation)
@@ -279,13 +270,10 @@ class _GrabHandle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(
-        top: AppSpacing.space3,
-        bottom: AppSpacing.space1,
-      ),
+      padding: const EdgeInsets.only(top: 14),
       child: Center(
         child: Container(
-          width: 36,
+          width: 44,
           height: 4,
           decoration: ShapeDecoration(
             color: color,

@@ -179,7 +179,6 @@ class _AssessmentScannerScreenState
     return LabeledField(
       label: l10n.assessmentScannerPagesLabel,
       hint: l10n.assessmentScannerPagesHint,
-      leadingIcon: LucideIcons.scanLine,
       child: PageCapture(
         pages: _pages,
         onChanged: (pages) => setState(() {
@@ -195,7 +194,6 @@ class _AssessmentScannerScreenState
     return LabeledField(
       label: l10n.assessmentScannerSubjectLabel,
       hint: l10n.assessmentScannerSubjectHint,
-      leadingIcon: LucideIcons.bookOpen,
       child: DropdownButtonFormField<String>(
         initialValue: _subject,
         isExpanded: true,
@@ -214,7 +212,6 @@ class _AssessmentScannerScreenState
   Widget _gradeField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.assessmentScannerGradeLabel,
-      leadingIcon: LucideIcons.graduationCap,
       child: DropdownButtonFormField<String>(
         initialValue: _grade,
         isExpanded: true,
@@ -233,7 +230,6 @@ class _AssessmentScannerScreenState
   Widget _languageField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.languageLabel,
-      leadingIcon: LucideIcons.languages,
       child: DropdownButtonFormField<AppLocale>(
         initialValue: _language,
         isExpanded: true,
@@ -254,7 +250,6 @@ class _AssessmentScannerScreenState
       label: l10n.assessmentScannerAnswerKeyLabel,
       optionalLabel: l10n.assessmentScannerOptional,
       hint: l10n.assessmentScannerAnswerKeyHint,
-      leadingIcon: LucideIcons.listChecks,
       child: TextFormField(
         controller: _answerKeyController,
         maxLength: 20000,

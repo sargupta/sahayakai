@@ -21,6 +21,9 @@ class AppLocalizationsKn extends AppLocalizations {
   String get navLibrary => 'ಗ್ರಂಥಾಲಯ';
 
   @override
+  String get navCommunity => 'ಸಮುದಾಯ';
+
+  @override
   String get navProfile => 'ಪ್ರೊಫೈಲ್';
 
   @override

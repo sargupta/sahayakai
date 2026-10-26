@@ -39,7 +39,6 @@ class ChatEntryTile extends StatelessWidget {
 
     return AppCard(
       variant: feature ? AppCardVariant.elevated : AppCardVariant.flat,
-      accentBar: feature,
       onTap: onTap,
       child: Row(
         children: [

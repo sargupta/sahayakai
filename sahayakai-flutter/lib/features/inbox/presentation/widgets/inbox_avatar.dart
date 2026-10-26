@@ -12,8 +12,9 @@ import '../../../../core/theme/app_theme.dart';
 ///
 /// The initial is taken by **rune** (not `substring`) so an Indic name shows its
 /// base character rather than a split UTF-16 code unit, and its colour is the
-/// AA-safe saffron-**text** token (`#AC4815` light / `#EB9447` dark) on the light
-/// saffron tint — legible, never the `#E0924D` fill routed as text.
+/// AA-safe on-tint saffron-**text** token (saffron-700 `#8A4A08` light /
+/// `#EB9447` dark) on the light saffron tint — legible, never the saffron-500
+/// fill routed as text.
 class InboxAvatar extends StatelessWidget {
   const InboxAvatar({
     super.key,
@@ -76,7 +77,7 @@ class _InitialFallback extends StatelessWidget {
     final scheme = theme.colorScheme;
     final saffronText = theme.brightness == Brightness.dark
         ? AppColors.dPrimaryText
-        : AppColors.lPrimaryText;
+        : AppColors.lPrimaryTextOnTint;
 
     final trimmed = name.trim();
     final initial = trimmed.isEmpty

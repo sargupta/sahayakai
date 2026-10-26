@@ -10,9 +10,10 @@ import 'profile_fixtures.dart';
 
 /// AA gate for the shared [PlanBadgeChip] (the identity plan badge on the Me hub
 /// and the profile editor). Locks the fix at the source:
-///   • PAID label + glyph route through the saffron-TEXT token (`#AC4815` light /
-///     `#EB9447` dark) on the primary@0.12 tint (~5.1:1), NEVER `scheme.primary`
-///     (`#E0924D` = ~2.26:1 — the banned `#E0924D`-as-text anti-pattern).
+///   • PAID label + glyph route through the saffron-TEXT token (saffron-600
+///     `#A5551D` light / `#EB9447` dark) on the primary@0.12 tint (4.59:1),
+///     NEVER `scheme.primary` (saffron-500 = 3.23:1 there — saffron as text
+///     is always saffron-600 in design system v2).
 ///   • MUTED/free inks full onSurface on its surfaceContainer fill (~14:1), not
 ///     the sub-4.5 onSurfaceVariant it used before.
 
@@ -52,7 +53,7 @@ Color _labelColor(WidgetTester tester, String label) =>
 void main() {
   group('paid plan chip', () {
     testWidgets(
-      'label + glyph use the saffron-TEXT token in light, not #E0924D',
+      'label + glyph use the saffron-TEXT token in light, not saffron-500',
       (tester) async {
         await tester.pumpWidget(
           hostProfile(
@@ -64,10 +65,10 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(_labelColor(tester, 'Pro'), AppColors.lPrimaryText); // #AC4815
+        expect(_labelColor(tester, 'Pro'), AppColors.lPrimaryTextOnTint); // saffron-700 on the tint
         expect(_labelColor(tester, 'Pro'), isNot(AppColors.brandSaffron));
         final icon = tester.widget<Icon>(find.byIcon(LucideIcons.sparkles));
-        expect(icon.color, AppColors.lPrimaryText);
+        expect(icon.color, AppColors.lPrimaryTextOnTint);
         expect(icon.color, isNot(AppColors.brandSaffron));
       },
     );
@@ -111,13 +112,13 @@ void main() {
   });
 
   group('WCAG AA ratios (computed vs the ACTUAL fill)', () {
-    test('paid label clears 4.5 on the primary@0.12 tint; #E0924D fails', () {
+    test('paid label clears 4.5 on the primary@0.12 tint; saffron-500 fails', () {
       final tint = _over(
         AppColors.lPrimary.withValues(alpha: 0.12),
         AppColors.lCard,
       );
-      expect(_ratio(AppColors.lPrimaryText, tint), greaterThanOrEqualTo(4.5));
-      expect(_ratio(AppColors.brandSaffron, tint), lessThan(3.0));
+      expect(_ratio(AppColors.lPrimaryTextOnTint, tint), greaterThanOrEqualTo(4.5));
+      expect(_ratio(AppColors.brandSaffron, tint), lessThan(4.5));
 
       final darkTint = _over(
         AppColors.dPrimary.withValues(alpha: 0.12),
@@ -130,17 +131,14 @@ void main() {
     });
 
     test(
-      'muted label clears 4.5 on the surfaceContainer fill; old token failed',
+      'muted label clears 4.5 on the surfaceContainer fill',
       () {
         expect(
           _ratio(AppColors.lForeground, AppColors.lMuted),
           greaterThanOrEqualTo(4.5),
         );
-        // The OLD muted label (onSurfaceVariant on surfaceContainer) was < 4.5.
-        expect(
-          _ratio(AppColors.lMutedForeground, AppColors.lMuted),
-          lessThan(4.5),
-        );
+        // Pre-v2 the muted slate label was < 4.5 here; the chip keeps full
+        // ink regardless, which is what the assertion above locks.
         expect(
           _ratio(AppColors.dForeground, AppColors.dMuted),
           greaterThanOrEqualTo(4.5),

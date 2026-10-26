@@ -114,11 +114,11 @@ void main() {
         final isDark = brightness == Brightness.dark;
 
         // Marks badge: saffron-TEXT on the accent tint (primary@0.12) composited
-        // over the inset question card (surfaceContainerLow) — NOT the #E0924D
+        // over the inset question card (surfaceContainerLow) — NOT the saffron-500
         // fill, which as ink would fail AA.
         final marksFg = isDark
             ? AppColors.dPrimaryText
-            : AppColors.lPrimaryText;
+            : AppColors.lPrimaryTextOnTint;
         final marksBg = Color.alphaBlend(
           scheme.primary.withValues(alpha: 0.12),
           scheme.surfaceContainerLow,
