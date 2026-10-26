@@ -212,6 +212,7 @@ export async function middleware(request: NextRequest) {
         pathname.startsWith('/api/billing/callback') ||  // Razorpay redirect — verified via signature
         pathname === '/api/billing/create-public-subscription' ||  // Anon pricing checkout — creates Razorpay payment link; payment-side verification on webhook (exact path, NOT /api/billing prefix)
         pathname.startsWith('/api/seo/') ||  // SEO endpoints (llms.txt, google-verify) — public, no auth needed
+        pathname.startsWith('/api/mcp/') ||  // Public MCP servers for external schools / AI agents — NOT Firebase users: every request is authenticated in-handler by a scoped, hashed API key bound to one organisation (src/lib/mcp/auth.ts); never reads x-user-id
         pathname.startsWith('/api/demo-call');  // "Hear the Call" lead magnet — anon by design; gated in-handler (flag + Turnstile + transactional caps; twiml/status verify Twilio signatures). Spec: docs/PARENT_CALL_DEMO_SPEC.md
 
     if (isPublicApi) {

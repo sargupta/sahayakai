@@ -22,6 +22,14 @@ import { UsageTracker } from '@/lib/usage-tracker';
 import { validateChapterForFlow, type ValidationWarning } from '@/lib/ncert/validate-chapter';
 import { getGradeBand, getPedagogyFrameworkBlock, getBandDisplayLabel } from '@/lib/grade-bands';
 
+/**
+ * Callers with no teacher account (public MCP servers, server scripts) use this
+ * id. They are never rate-limited, profiled, persisted or metered as a teacher.
+ */
+const HEADLESS_CALLER_ID = 'anonymous_user';
+const isTeacherCaller = (userId: string | null | undefined): userId is string =>
+  Boolean(userId) && userId !== HEADLESS_CALLER_ID;
+
 export const LessonPlanInputSchema = z.object({
   topic: z.string().max(1000).describe('The topic for which to generate a lesson plan.'),
   language: z.string().max(50).optional().describe('The language in which to generate the lesson plan. Defaults to English if not specified.'),
@@ -436,7 +444,7 @@ const lessonPlanFlow = ai.defineFlow(
 
             // Still persist to this user's personal library
             const userId = input.userId;
-            if (userId) {
+            if (isTeacherCaller(userId)) {
               try {
                 const storage = await getStorageInstance();
                 const now = new Date();
@@ -501,7 +509,7 @@ const lessonPlanFlow = ai.defineFlow(
           }, 'lessonPlan.generate');
         });
 
-        if (normalizedInput.userId && usage) {
+        if (isTeacherCaller(normalizedInput.userId) && usage) {
           UsageTracker.trackGemini(normalizedInput.userId, usage.totalTokens || 0, 'gemini-2.5-flash');
         }
         genTimer.stop();
@@ -575,7 +583,7 @@ const lessonPlanFlow = ai.defineFlow(
         }
 
         const userId = input.userId;
-        if (userId) {
+        if (isTeacherCaller(userId)) {
           try {
             await Sentry.startSpan({ name: 'Persistence Phase', op: 'db.save' }, async () => {
               const persistTimer = logger.startTimer(`Persisting Lesson Plan`, 'STORAGE', { userId });
