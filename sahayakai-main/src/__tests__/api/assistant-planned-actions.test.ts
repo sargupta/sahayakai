@@ -143,3 +143,64 @@ describe('POST /api/assistant — plannedActions wire contract', () => {
         expect(wireBody.plannedActions).toHaveLength(1);
     });
 });
+
+// ── App awareness: appAction wire field + cache safety ─────────────────────
+
+describe('POST /api/assistant — appAction + live-state cache bypass', () => {
+    beforeEach(() => {
+        mockDispatchVidya.mockReset();
+        jsonSpy.mockReset();
+    });
+    const wire = () => jsonSpy.mock.calls[jsonSpy.mock.calls.length - 1][0] as Record<string, unknown>;
+    const fresh = (message: string, app?: unknown) => ({
+        ...baseRequestBody,
+        message,
+        chatHistory: [], // fresh query → normally cacheable
+        currentScreenContext: { path: '/attendance/class-1', uiState: {}, ...(app ? { app } : {}) },
+    });
+    const LIVE_APP = {
+        screenId: 'attendance.class',
+        entities: { className: 'Class 7A', attendanceSubmitted: false },
+        capabilities: [{ id: 'attendance.submit', enabled: true }],
+        fingerprint: 'f1',
+    };
+
+    it('forwards the validated appAction to the client', async () => {
+        mockDispatchVidya.mockResolvedValue({
+            response: 'Opening My Library.',
+            action: null,
+            appAction: { type: 'NAVIGATE', destination: 'my-library' },
+        });
+
+        await POST(makeRequest(fresh('take me to my library now')));
+
+        expect(wire().appAction).toEqual({ type: 'NAVIGATE', destination: 'my-library' });
+    });
+
+    it('never serves a live-screen question from the cache (answer depends on current state)', async () => {
+        mockDispatchVidya.mockResolvedValue({ response: 'Not yet — 2 students are absent.', action: null });
+
+        await POST(makeRequest(fresh('is todays attendance complete', LIVE_APP)));
+        await POST(makeRequest(fresh('is todays attendance complete', LIVE_APP)));
+
+        expect(mockDispatchVidya).toHaveBeenCalledTimes(2);
+    });
+
+    it('never caches a reply that carries an app action', async () => {
+        mockDispatchVidya.mockResolvedValue({ response: 'Opening My Library.', action: null, appAction: { type: 'NAVIGATE', destination: 'my-library' } });
+
+        await POST(makeRequest(fresh('library kahan hai')));
+        await POST(makeRequest(fresh('library kahan hai')));
+
+        expect(mockDispatchVidya).toHaveBeenCalledTimes(2);
+    });
+
+    it('still caches a plain conversational reply on a screen without live state', async () => {
+        mockDispatchVidya.mockResolvedValue({ response: 'Namaste! How can I help?', action: null });
+
+        await POST(makeRequest(fresh('namaste vidya cache probe')));
+        await POST(makeRequest(fresh('namaste vidya cache probe')));
+
+        expect(mockDispatchVidya).toHaveBeenCalledTimes(1);
+    });
+});

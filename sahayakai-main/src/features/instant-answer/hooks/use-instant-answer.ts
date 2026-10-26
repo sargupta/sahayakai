@@ -21,6 +21,7 @@ import { useLanguage } from "@/context/language-context";
 import { LANGUAGE_TO_ISO } from "@/types";
 import { auth } from "@/lib/firebase";
 import { saveToLibrary } from "@/lib/api/content";
+import { useLibraryId } from "@/hooks/use-library-id";
 import { useGenerator } from "@/features/generator";
 import { instantAnswerTranslations } from "../i18n";
 import { formSchema, type FormValues, type Answer } from "../types";
@@ -80,6 +81,11 @@ export function useInstantAnswer() {
         },
     });
 
+    // An instant answer is saved to My Library ONLY by an explicit Save (the
+    // server never auto-persists it). One stable id per shown answer keeps
+    // that Save idempotent; a restored answer re-saves onto its own row.
+    const answerLibraryId = useLibraryId(generator.contentId, generator.result);
+
     const onSubmit = (values: FormValues) => generator.generate(values);
 
     // ── VIDYA Form Sync ───────────────────────────────────────────────────────
@@ -136,7 +142,7 @@ export function useInstantAnswer() {
                                 // which is the honest reading of "we never
                                 // knew".
                                 grounded: content.data.grounded,
-                            } as Answer);
+                            } as Answer, id);
                         }
                     }
                 } catch (err) {
@@ -193,6 +199,7 @@ export function useInstantAnswer() {
                     gradeLevel: form.getValues("gradeLevel"),
                     subject: form.getValues("subject"),
                 },
+                answerLibraryId,
             );
             if (result.success) {
                 setSavedToLib(true);

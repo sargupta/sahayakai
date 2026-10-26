@@ -376,9 +376,9 @@ describe('dispatchInstantAnswer — Firestore dispatch decision (Phase J.5)', ()
     });
 });
 
-// ── Phase K — pre-call rate-limit gate + Storage/Firestore persist ─────────
+// ── Phase K — pre-call rate-limit gate; no library persistence ─────────────
 
-describe('dispatchInstantAnswer — Phase K (gate + persist)', () => {
+describe('dispatchInstantAnswer — Phase K (gate, no persist)', () => {
     it('runs the rate-limit gate BEFORE the sidecar call in canary mode', async () => {
         setMode('canary');
         mockSidecar.mockResolvedValue(SIDECAR_OUTPUT);
@@ -398,28 +398,24 @@ describe('dispatchInstantAnswer — Phase K (gate + persist)', () => {
         expect(mockGate).toHaveBeenCalledWith(BASE_INPUT.userId);
     });
 
-    it('persists sidecar answer JSON when canary serves it', async () => {
-        setMode('canary');
-        mockSidecar.mockResolvedValue(SIDECAR_OUTPUT);
+    // Class gate (library pollution): an instant answer is an assistant
+    // response, never an automatic Library artifact — in ANY dispatch mode.
+    // A future "mirror the Genkit persistence" change must fail here.
+    it.each(['off', 'shadow', 'canary', 'full'] as const)(
+        'never persists an instant answer to the library in %s mode',
+        async (mode) => {
+            setMode(mode);
+            mockSidecar.mockResolvedValue(SIDECAR_OUTPUT);
+            mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
 
-        await dispatchInstantAnswer(BASE_INPUT);
+            const out = await dispatchInstantAnswer(BASE_INPUT);
 
-        expect(mockPersist).toHaveBeenCalledTimes(1);
-        const call = mockPersist.mock.calls[0][0];
-        expect(call.contentType).toBe('instant-answer');
-        expect(call.collection).toBe('instant-answers');
-        expect(call.uid).toBe(BASE_INPUT.userId);
-        expect(call.title).toBe(BASE_INPUT.question);
-        // Payload should hold the sanitised answer fields.
-        expect(call.output).toMatchObject({
-            answer: SIDECAR_OUTPUT.answer,
-            videoSuggestionUrl: SIDECAR_OUTPUT.videoSuggestionUrl,
-        });
-    });
+            expect(out.answer).toBeTruthy();
+            expect(mockPersist).not.toHaveBeenCalled();
+        },
+    );
 
     it('does not persist on the off-path Genkit response', async () => {
-        // Genkit flow handles its own persistence; dispatcher must
-        // NOT duplicate it.
         setMode('off');
         mockGenkit.mockResolvedValue(GENKIT_OUTPUT);
 
@@ -438,14 +434,12 @@ describe('dispatchInstantAnswer — Phase K (gate + persist)', () => {
 
         await dispatchInstantAnswer(BASE_INPUT);
 
-        // The fallback Genkit flow handles persistence itself.
         expect(mockPersist).not.toHaveBeenCalled();
     });
 
-    it('still returns sidecar response when persistence fails (fail-soft)', async () => {
+    it('returns the sidecar response in canary mode', async () => {
         setMode('canary');
         mockSidecar.mockResolvedValue(SIDECAR_OUTPUT);
-        mockPersist.mockResolvedValue(null);
 
         const out = await dispatchInstantAnswer(BASE_INPUT);
 
@@ -560,20 +554,16 @@ describe('dispatchInstantAnswer — grounding provenance', () => {
         expect(out.videoSuggestionUrl).toBeNull();
     });
 
-    it('persists exactly what it served, sources and all', async () => {
+    // Served/persisted parity used to be asserted here. Nothing is persisted
+    // any more; an explicit Save stores the served result verbatim
+    // (`use-instant-answer.ts` saves `generator.result`).
+    it('serves the guarded answer without persisting it', async () => {
         setMode('canary');
         mockSidecar.mockResolvedValue(UNGROUNDED_SIDECAR);
 
         const out = await dispatchInstantAnswer(BASE_INPUT);
 
-        expect(mockPersist).toHaveBeenCalledTimes(1);
-        const persisted = mockPersist.mock.calls[0][0].output as {
-            answer: string;
-            videoSuggestionUrl?: string | null;
-            grounded?: boolean;
-        };
-        expect(persisted.answer).toBe(out.answer);
-        expect(persisted.videoSuggestionUrl).toBe(out.videoSuggestionUrl);
-        expect(persisted.grounded).toBe(false);
+        expect(out.grounded).toBe(false);
+        expect(mockPersist).not.toHaveBeenCalled();
     });
 });

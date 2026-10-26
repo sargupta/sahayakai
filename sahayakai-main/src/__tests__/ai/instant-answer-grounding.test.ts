@@ -432,6 +432,34 @@ describe('stripSourceLinks', () => {
     });
 });
 
+describe('instantAnswer library persistence', () => {
+    // Class gate: an answer is an assistant response, not a Library
+    // artifact. "Hi Vidya" / "Where is attendance?" / factual questions all
+    // land in this flow; none of them may create a My Library row.
+    it('returns the answer without writing to Storage or the content library', async () => {
+        mockPromptFn.mockResolvedValue({
+            output: {
+                answer: 'Hello! How can I help you today?',
+                videoSuggestionUrl: null,
+                gradeLevel: null,
+                subject: null,
+            },
+        });
+        /* eslint-disable @typescript-eslint/no-require-imports */
+        const { dbAdapter } = require('@/lib/db/adapter') as { dbAdapter: { saveContent: jest.Mock } };
+        const firebaseAdmin = require('@/lib/firebase-admin') as Record<string, jest.Mock | undefined>;
+        /* eslint-enable @typescript-eslint/no-require-imports */
+        dbAdapter.saveContent.mockClear();
+        firebaseAdmin.getStorageInstance?.mockClear();
+
+        const out = await instantAnswer({ ...ASK, question: 'Hi Vidya' });
+
+        expect(out.answer).toBe('Hello! How can I help you today?');
+        expect(dbAdapter.saveContent).not.toHaveBeenCalled();
+        expect(firebaseAdmin.getStorageInstance ?? jest.fn()).not.toHaveBeenCalled();
+    });
+});
+
 describe('instantAnswer output guard', () => {
     it('never asks the model to declare whether it was grounded', () => {
         const promptConfig = genkitMock.__mockPromptConfigs.at(-1);

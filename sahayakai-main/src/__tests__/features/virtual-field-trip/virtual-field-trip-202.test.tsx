@@ -34,6 +34,8 @@ jest.mock('@/lib/firebase', () => ({
 
 jest.mock('next/navigation', () => ({
     useSearchParams: () => ({ get: (key: string) => searchParamsGet(key) }),
+    // useGenerator publishes VIDYA screen context keyed by the route.
+    usePathname: () => '/virtual-field-trip',
 }));
 
 jest.mock('@/hooks/use-toast', () => ({

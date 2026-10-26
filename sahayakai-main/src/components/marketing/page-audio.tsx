@@ -157,7 +157,8 @@ export function PageAudio({ selector }: Props) {
             data-nospeech
             onClick={handleClick}
             aria-label={label}
-            className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 text-[13px] font-medium px-[14px] py-[10px] rounded-full bg-saffron text-white shadow-[0_14px_28px_-12px_hsl(28_70%_45%/0.45)] hover:bg-saffron-600 transition-colors cursor-pointer"
+            style={{ bottom: "calc(1.25rem + env(safe-area-inset-bottom))" }}
+            className="fixed bottom-5 left-5 z-40 inline-flex items-center gap-2 text-[13px] font-medium px-[14px] py-[10px] rounded-full bg-saffron text-white shadow-[0_14px_28px_-12px_hsl(28_70%_45%/0.45)] hover:bg-saffron-600 transition-colors cursor-pointer"
         >
             {state === "preparing" ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

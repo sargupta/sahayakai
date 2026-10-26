@@ -41,6 +41,7 @@ export function WorksheetWizardView({
     canUseAI,
     aiUnavailableReason,
     worksheet,
+    contentId,
     status,
     isGenerating,
     limitState,
@@ -68,6 +69,7 @@ export function WorksheetWizardView({
                         }}
                         title={form.getValues("prompt") || t.resultTitle}
                         selectedLanguage={selectedLanguage}
+                        contentId={contentId}
                     />
                 )
             }

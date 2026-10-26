@@ -16,6 +16,7 @@ import { isFeatureEnabled } from '@/lib/feature-flags';
 import { normalizeLanguage } from '@/ai/lib/normalize-language';
 import type { Language } from '@/types/index';
 import { StructuredLogger } from '@/lib/logger/structured-logger';
+import { isContentId } from '@/lib/content-id';
 
 const ExamPaperInputSchema = z.object({
   board: z.string().max(100).describe("The education board (e.g., 'CBSE', 'ICSE')."),
@@ -40,6 +41,7 @@ const ExamPaperInputSchema = z.object({
   includeMarkingScheme: z.boolean().default(true).describe("Whether to generate marking schemes."),
   userId: z.string().optional().describe("The ID of the user generating the paper."),
   teacherContext: z.string().optional().describe('Career-stage context for personalising AI output tone and depth.'),
+  contentId: z.string().max(64).optional().describe('Stable Library artifact id minted by the client once per generation (idempotency key). Invalid values are replaced server-side.'),
 });
 export type ExamPaperInput = z.infer<typeof ExamPaperInputSchema>;
 
@@ -1504,10 +1506,13 @@ const examPaperGeneratorFlow = ai.defineFlow(
     // placeholder we write now and the finished paper we save later are the
     // SAME My-Library entry — an upsert, not two docs. Lets the library show a
     // live generating → ready | error lifecycle even when the request 202s and
-    // the paper finishes in the background. (Sidecar canary/full path is NOT
-    // wired for this — default dispatch mode is 'off' → this Genkit flow is the
-    // live path; canary can still leave a second unlinked doc, known + parked.)
-    const contentId = uid ? uuidv4() : undefined;
+    // the paper finishes in the background. The id is the client's per-Generate
+    // idempotency key when valid (a retried request upserts the same row; the
+    // sidecar canary/full path persists under the same id), else a fresh one.
+    const contentId = uid ? (isContentId(input.contentId) ? input.contentId : uuidv4()) : undefined;
+    // Creation time is fixed at the first (generating) write; later
+    // transitions only bump updatedAt, so the paper keeps its Library order.
+    let createdAt: unknown = null;
 
     // Single writer for all three lifecycle states. Best-effort by design: a
     // status write must never block or fail generation (mirrors the flow's
@@ -1522,6 +1527,7 @@ const examPaperGeneratorFlow = ai.defineFlow(
         const { Timestamp } = await import('firebase-admin/firestore');
         const { toExamPaperContentFields } = await import('@/ai/data/exam-paper-content-fields');
         const now = Timestamp.fromDate(new Date());
+        createdAt ??= now;
         await dbAdapter.saveContent(uid, {
           id: contentId,
           type: 'exam-paper' as const,
@@ -1535,7 +1541,7 @@ const examPaperGeneratorFlow = ai.defineFlow(
           isPublic: false,
           isDraft: false,
           status,
-          createdAt: now,
+          createdAt: createdAt as typeof now,
           updatedAt: now,
           ...(data ? { data } : {}),
         });

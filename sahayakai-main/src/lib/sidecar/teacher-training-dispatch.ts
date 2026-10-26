@@ -309,6 +309,7 @@ async function _dispatchTeacherTrainingInner(
         try {
             await persistSidecarJSON({
                 uid: input.userId,
+                contentId: input.contentId,
                 collection: 'teacher-training',
                 contentType: 'teacher-training',
                 title: `Advice: ${input.question.substring(0, 50)}...`,

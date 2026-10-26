@@ -4,6 +4,7 @@ import { withPlanCheck } from '@/lib/plan-guard';
 import { dispatchVidya } from '@/lib/sidecar/vidya-dispatch';
 import { isFeatureEnabled } from '@/lib/feature-flags';
 import { logger } from '@/lib/logger';
+import { hasLiveAppState, sanitizeAppContext } from '@/lib/vidya/app-context-contract';
 
 // ── L1: In-process intent cache (per server instance, sub-millisecond) ────────
 // Keyed on: normalised_message + "::" + screen_path
@@ -150,7 +151,11 @@ async function _handler(req: Request) {
 
         // Cache applies only to fresh single-turn queries (no prior conversation).
         // Multi-turn context is too personalised to be safely shared across users.
-        const isFreshQuery = chatHistory.length === 0;
+        // Replies that depend on live screen state ("is attendance complete?",
+        // "which class is this?") are never read from or written to the cache —
+        // the key is only message + path, so a cached answer would be stale.
+        const liveAppState = hasLiveAppState(sanitizeAppContext(currentScreenContext?.app));
+        const isFreshQuery = chatHistory.length === 0 && !liveAppState;
         const cacheKey = normalisedCacheKey(message, currentScreenContext?.path || '');
         const cacheHash = hashKey(cacheKey);
 
@@ -211,6 +216,9 @@ async function _handler(req: Request) {
             response: dispatched.response,
             action: dispatched.action,
             plannedActions: dispatched.plannedActions,
+            // In-app action (validated against the manifest + the screen's
+            // offered capabilities). Older clients ignore the field.
+            appAction: dispatched.appAction ?? null,
         };
 
         // Only cache pure-conversational replies (no tool action, no
@@ -235,6 +243,8 @@ async function _handler(req: Request) {
         //   .vidyaIntentCacheGate.enabled = false
         const cacheGate = await isFeatureEnabled('vidyaIntentCacheGate', userId);
         const isCacheable = isFreshQuery
+            // An app action is always a live decision — never replay it.
+            && !dispatched.appAction
             && (!cacheGate.enabled || (
                 !dispatched.action
                 && (!dispatched.plannedActions || dispatched.plannedActions.length === 0)

@@ -32,6 +32,7 @@ import { LanguagePill } from "@/components/language-pill";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { LabsBanner } from "@/components/labs/labs-banner";
+import { VidyaLiveProvider } from "@/components/vidya/vidya-live-provider";
 import { Search } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 // GlobalVoiceInterface (voice input for unauthenticated visitors) is loaded
@@ -79,21 +80,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   // Cold visitor on the home route OR any visitor on a marketing surface
   // → landing layout, no app chrome. Marketing pages always stay chrome-free
   // regardless of auth state since they are for cold buyers and sales demos.
-  // GlobalVoiceInterface is shown on the home landing page for voice input
-  // from unauthenticated visitors (stores transcript for post-auth submission).
+  // GlobalVoiceInterface (floating mic; stores transcript for post-auth
+  // submission) is shown on marketing surfaces only. The home landing page
+  // already has exactly one voice entry — the hero VIDYA orb, which uses the
+  // same voice-intent handoff — so a second mic there would be a duplicate.
   if ((isHome && !user) || isMarketing) {
     return (
       <>
         {children}
         <PWAInstallPrompt />
-        <GlobalVoiceInterface />
+        {isMarketing && <GlobalVoiceInterface />}
       </>
     );
   }
 
   // All other cases → existing app chrome (mirrors what main's layout.tsx had).
+  // VidyaLiveProvider holds the ONE voice session for the app so it survives
+  // route changes (VIDYA's tools navigate); every VIDYA surface is a view of it.
   return (
-    <>
+    <VidyaLiveProvider>
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>
@@ -145,6 +150,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <MobileBottomNav />
       <PWAInstallPrompt />
       <VoiceQuotaToastListener />
-    </>
+    </VidyaLiveProvider>
   );
 }

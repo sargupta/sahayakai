@@ -244,6 +244,12 @@ export interface BaseContent<T = any> {
     status?: 'generating' | 'ready' | 'error';
     deletedAt?: Timestamp | null;  // null = active, set = soft-deleted
     expiresAt?: Timestamp | null;  // TTL field: Firestore auto-purges 30 days after soft-delete
+    /**
+     * Kept in storage but not shown in My Library — set (reversibly) by
+     * scripts/migrate-library-instant-answers.ts for rows that were
+     * auto-saved conversation rather than artifacts. Never deletes data.
+     */
+    hiddenFromLibrary?: boolean;
 
     // Storage
     storagePath?: string; // Path to full JSON/Markdown in Cloud Storage

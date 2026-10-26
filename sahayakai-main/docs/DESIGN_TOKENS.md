@@ -39,6 +39,43 @@ History: flag saffron `#FF9933` and the softer `#E0924D` (`hsl(28 70% 59%)`) bot
 
 Usage rule that follows from the numbers: saffron may color **large headings, icons, borders, focus rings, and filled buttons**; body-size saffron text on white (or white body text on saffron) does not meet AA 4.5:1 — use `--foreground` for body copy.
 
+### Warm surfaces (2026-10, SahayakAI website design reference)
+
+The brand colours are **unchanged** (`--primary` stays `hsl(24 65% 47%)`). Only the
+neutral surface / text tokens moved from cool slate to the design's warm ivory / ink,
+in `:root` and the `.force-light` mirror (dark mode unchanged):
+
+| Token | Before | Now (≈ hex) |
+|---|---|---|
+| `--background` | `40 20% 99.5%` | `38 50% 97%` (#FBF8F4 ivory) |
+| `--foreground`, `--card-foreground`, `--popover-foreground` | `222 47% 11%` | `30 17% 9%` (#1B1713 ink) |
+| `--card`, `--popover` | `0 0% 100%` | `40 100% 99%` (#FFFDFA) |
+| `--muted` | `210 40% 96%` | `37 45% 93%` (#F5EFE5) |
+| `--muted-foreground` | `215 16% 47%` | `30 9% 40%` (#6F665D) |
+| `--border` / `--input` | `220 16% 93%` / `90%` | `36 20% 89%` / `36 18% 85%` |
+| `--sidebar-background` / `-foreground` / `-border` | cool greys | `38 45% 96%` / `30 10% 24%` / `36 20% 89%` |
+
+Contrast recomputed for the new surfaces (WCAG 2.x, 2026-10-01):
+
+| Pair | Ratio | Verdict |
+|---|---|---|
+| `--foreground` on `--background` | **16.83:1** | AAA |
+| `--foreground` on `--card` | **17.55:1** | AAA |
+| `--muted-foreground` on `--background` | **5.31:1** | AA (normal text) |
+| `--muted-foreground` on `--card` | **5.54:1** | AA (normal text) |
+| `--muted-foreground` on `--muted` | **4.92:1** | AA (normal text) |
+| `--primary` on `--background` | **3.66:1** | Large text / UI components only (same verdict as before) |
+| `--primary` on `--card` | **3.82:1** | Large text / UI components only |
+| `--secondary` on `--background` | **7.97:1** | AAA |
+| White on `--primary` | **3.88:1** | Unchanged |
+
+### VIDYA orb states
+
+The orb (`vidya-presence.tsx`, `.vidya-*` in `globals.css`) uses one radial fill + one
+state ring — no glow fields, orbits or particles. Saffron (`#FFD9AE → #C96A28`) at rest,
+listening and speaking (ring follows the real audio level); indigo (`#DCE2FA → #2A3B8F`)
+while connecting / thinking; muted with a `#C0392B` ring on error.
+
 ### Palette FREEZE (2026-08)
 
 The brand palette is **frozen**. Any PR that changes `--primary` (or any brand/status color) MUST include the contrast math in the PR description: recompute the table above (ratio vs white and vs `--background`, both modes) and state which WCAG level each affected pair meets. No eyeballed color changes. Remember the `.force-light` mirror.
@@ -154,6 +191,12 @@ Never:
 ---
 
 ## 6. Typography
+
+Families (2026-10, website design reference; self-hosted via `next/font` in
+`src/app/layout.tsx`): **Instrument Sans** for body / UI (`font-body`,
+`--font-instrument`) and **Bricolage Grotesque** for headings (`font-headline`,
+`--font-bricolage`). Inter / Outfit remain as fallbacks; the Noto Indic families
+follow so every script still gets its glyphs.
 
 Hierarchy via **weight first**, size second. This works equally well for Indic and Latin scripts (size-only hierarchy fails on Devanagari/Tamil due to consonant-conjunct height variance).
 

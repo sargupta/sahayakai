@@ -1,6 +1,7 @@
 "use client";
 
 import type { FC } from "react";
+import { useLibraryId } from "@/hooks/use-library-id";
 import type { VirtualFieldTripOutput } from "@/ai/flows/virtual-field-trip";
 import Link from "next/link";
 import { Button } from "./ui/button";
@@ -18,6 +19,8 @@ type VirtualFieldTripDisplayProps = {
     topic: string;
     gradeLevel?: string;
     language?: string;
+    /** Library id of this artifact (useGenerator().contentId); Save upserts it. */
+    contentId?: string | null;
     /** Re-run the generator with the same inputs; absent when viewing a saved artifact. */
     onRegenerate?: () => void;
 };
@@ -26,12 +29,14 @@ const PDF_ID = "field-trip-card";
 
 export const VirtualFieldTripDisplay: FC<VirtualFieldTripDisplayProps> = ({
     trip,
+    contentId,
     topic,
     gradeLevel,
     language,
     onRegenerate,
 }) => {
     const { toast } = useToast();
+    const libraryId = useLibraryId(contentId, trip);
     const t = getResultShellDict(language);
 
     const handleSave = async () => {
@@ -48,7 +53,7 @@ export const VirtualFieldTripDisplay: FC<VirtualFieldTripDisplayProps> = ({
             }
             const token = await user.getIdToken();
             const payload = {
-                id: crypto.randomUUID(),
+                id: libraryId,
                 type: "virtual-field-trip",
                 title: trip.title,
                 gradeLevel: trip.gradeLevel || gradeLevel || "Class 5",

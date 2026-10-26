@@ -66,6 +66,9 @@ export default function OnboardingPage() {
     const [previewExample, setPreviewExample] = useState<OnboardingExample | null>(null);
     const [generating, setGenerating] = useState(false);
     const [generatedContent, setGeneratedContent] = useState<any>(null);
+    // Library id the first lesson plan is filed under by the generation; the
+    // finish-step save reuses it so onboarding creates ONE Library row.
+    const [generatedContentId, setGeneratedContentId] = useState<string | null>(null);
     const [generationError, setGenerationError] = useState(false);
     const [selectedTopic, setSelectedTopic] = useState<string>("");
     const [showAllActivities, setShowAllActivities] = useState(false);
@@ -491,6 +494,7 @@ export default function OnboardingPage() {
         setGenerationError(false);
         try {
             const token = await auth.currentUser?.getIdToken();
+            const submitContentId = crypto.randomUUID();
             const res = await fetch("/api/ai/lesson-plan", {
                 method: "POST",
                 headers: {
@@ -498,6 +502,7 @@ export default function OnboardingPage() {
                     ...(token ? { Authorization: `Bearer ${token}` } : {}),
                 },
                 body: JSON.stringify({
+                    contentId: submitContentId,
                     topic: selectedTopic,
                     gradeLevel: formData.gradeLevels[0] || "Class 6",
                     subject: formData.subjects[0] || "Science",
@@ -507,6 +512,7 @@ export default function OnboardingPage() {
             if (!res.ok) throw new Error("Generation failed");
             const data = await res.json();
             setGeneratedContent(data);
+            setGeneratedContentId(submitContentId);
         } catch {
             setGenerationError(true);
         } finally {
@@ -525,7 +531,7 @@ export default function OnboardingPage() {
         if (generatedContent) {
             try {
                 const title = generatedContent.result?.title || generatedContent.title || `Lesson Plan: ${selectedTopic}`;
-                const result = await saveToLibrary(userId, 'lesson-plan' as ContentType, title, generatedContent);
+                const result = await saveToLibrary(userId, 'lesson-plan' as ContentType, title, generatedContent, generatedContentId);
                 if (result.success && result.id) {
                     updates.firstGenerationContentId = result.id;
                     updates.firstGenerationTool = 'lesson-plan';
