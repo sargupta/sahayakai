@@ -24,26 +24,25 @@ import 'app_colors.dart';
 ///   displayMedium type-screen-title 26 titleSmall    type-value 14
 ///   headlineLarge type-screen-title 26 bodyLarge     (14/400 ui, web-body)
 ///   displaySmall  type-page-title 22   bodyMedium    type-body 12
-///   titleLarge    type-page-title 22   bodySmall     type-body-sm 11
+///   titleLarge    type-page-title 22   bodySmall     type-body-sm 12
 ///   headlineMedium type-output-title 20 labelLarge   type-cta 15
 ///   headlineSmall type-stat 18         labelMedium   type-label 12
-///                                      labelSmall    type-pill 10
+///                                      labelSmall    type-pill 12
 ///
-/// TWO DELIBERATE HOLDS, both flagged in the PR:
-///   • Small type. 10–11px Latin (pills, eyebrows, sublines) is v2-exact and
-///     an OPEN founder decision ("the small-type floor"). Kept exact here.
-///     Chrome that `ThemeData` resolves with `??` (app bar, buttons, snack
-///     bar, tooltip) stays at 12sp or more — the repo's DESIGN_RUBRIC §0
-///     gate (`app_theme_test.dart`) — so the tooltip uses type-label (12).
+/// 12px FLOOR (decided 26 Oct 2026): no text style is smaller than 12px in
+/// any script, and the app follows the phone's own text-size setting with no
+/// clamp. `scripts/token_guard.sh` fails a sub-12 `fontSize` anywhere in lib/.
+///
+/// ONE DELIBERATE HOLD, flagged in the PR:
 ///   • Chrome line height. v2 draws the CTA at line-height 1 and the page
 ///     title at 1.2; the repo's Indic-clipping class gate (DESIGN_RUBRIC §12,
 ///     founder-reported) floors every `??`-resolved chrome style at 1.25. Size,
 ///     weight, tracking and face are exact; only those two line heights hold
 ///     at 1.25.
 ///
-/// INDIC ([isIndic]): v2's script rules — 10px roles (eyebrows, pills, field
-/// labels) render at 12px, never tracked or uppercased; reading text gets a
-/// 1.7 line height; everything else rises so matras never collide.
+/// INDIC ([isIndic]): v2's script rules — eyebrows, pills and field labels are
+/// never tracked or uppercased; reading text gets a 1.7 line height;
+/// everything else rises so matras never collide.
 
 /// The display face (`--font-display`).
 const String kDisplayFamily = 'Bricolage Grotesque';
@@ -155,14 +154,10 @@ class AppText {
   }) {
     final strong = s.onSurface;
     final body = s.onSurfaceVariant;
-    final eyebrowInk = s.brightness == Brightness.dark
-        ? AppColors.dPrimaryText
-        : AppColors.textEyebrow;
+    const eyebrowInk = AppColors.textEyebrow;
 
     // Latin line height, or the Indic one.
     double h(double latin, double indic) => isIndic ? indic : latin;
-    // 10px roles render at 12px in Indic scripts.
-    double small(double latin) => isIndic && latin < 12 ? 12 : latin;
     // Indic is never tracked.
     double track(double em) => isIndic ? 0 : em;
 
@@ -184,13 +179,13 @@ class AppText {
       AppTypeToken.labelStrong: _ui(12, FontWeight.w600, h(1.4, 1.5), color: strong),
       AppTypeToken.chip: _ui(12, FontWeight.w600, h(1.3, 1.5), color: strong),
       AppTypeToken.button: _ui(13, FontWeight.w600, h(1, 1.4), color: strong),
-      AppTypeToken.bodySm: _ui(small(11), FontWeight.w400, h(1.45, 1.7), color: body),
-      AppTypeToken.chipSm: _ui(small(11), FontWeight.w600, h(1.3, 1.5), color: strong),
-      AppTypeToken.action: _ui(small(11), FontWeight.w600, h(1.4, 1.5), color: eyebrowInk),
-      AppTypeToken.status: _ui(small(11), FontWeight.w500, h(1.4, 1.5), color: body),
-      AppTypeToken.pill: _ui(small(10), FontWeight.w600, h(1.22, 1.5), color: strong),
-      AppTypeToken.eyebrow: _ui(small(10), FontWeight.w600, h(1.22, 1.5), em: track(0.16), color: eyebrowInk),
-      AppTypeToken.caption: _ui(small(10), FontWeight.w400, h(1.4, 1.5), color: body),
+      AppTypeToken.bodySm: _ui(12, FontWeight.w400, h(1.45, 1.7), color: body),
+      AppTypeToken.chipSm: _ui(12, FontWeight.w600, h(1.3, 1.5), color: strong),
+      AppTypeToken.action: _ui(12, FontWeight.w600, h(1.4, 1.5), color: eyebrowInk),
+      AppTypeToken.status: _ui(12, FontWeight.w500, h(1.4, 1.5), color: body),
+      AppTypeToken.pill: _ui(12, FontWeight.w600, h(1.22, 1.5), color: strong),
+      AppTypeToken.eyebrow: _ui(12, FontWeight.w600, h(1.22, 1.5), em: track(0.16), color: eyebrowInk),
+      AppTypeToken.caption: _ui(12, FontWeight.w400, h(1.4, 1.5), color: body),
     };
   }
 
@@ -232,7 +227,7 @@ class AppText {
       eyebrow: t[AppTypeToken.eyebrow]!,
       // The field label: an eyebrow tracked .14em instead of .16em.
       overline: t[AppTypeToken.eyebrow]!.copyWith(
-        letterSpacing: isIndic ? 0 : 0.14 * 10,
+        letterSpacing: isIndic ? 0 : 0.14 * 12,
       ),
       // type-metric (26/700/1.05, −.02em), tabular so counters never reflow.
       dataLarge: _display(26, FontWeight.w700, isIndic ? 1.32 : 1.05,

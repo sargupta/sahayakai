@@ -29,7 +29,7 @@ Future<void> _pump(
 
   await tester.pumpWidget(
     MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+      theme: AppTheme.light(),
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -115,7 +115,7 @@ void main() {
   });
 
   group('overflow gates (DESIGN_RUBRIC §12)', () {
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       testWidgets('no overflow at 360dp x 1.3, Tamil (${brightness.name})', (
         tester,
       ) async {

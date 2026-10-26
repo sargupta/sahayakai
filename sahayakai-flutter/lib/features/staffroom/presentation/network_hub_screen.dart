@@ -134,7 +134,6 @@ class _NotificationsBell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final unread = ref.watch(unreadNotificationCountProvider);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return IconButton(
       tooltip: l10n.networkTabUpdates,
@@ -146,7 +145,7 @@ class _NotificationsBell extends ConsumerWidget {
           children: [
             Icon(unread > 0 ? LucideIcons.bellRing : LucideIcons.bell),
             if (unread > 0)
-              PositionedDirectional(
+              const PositionedDirectional(
                 top: -1,
                 end: -1,
                 child: SizedBox(
@@ -155,9 +154,7 @@ class _NotificationsBell extends ConsumerWidget {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: isDark
-                          ? AppColors.dPrimaryText
-                          : AppColors.lPrimaryText,
+                      color: AppColors.lPrimaryText,
                     ),
                   ),
                 ),

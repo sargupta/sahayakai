@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// SahayakAI colour tokens — design system v2 (`tokens.json` v2, synced
-/// 2026-10-24, the canonical v3 mobile design).
+/// SahayakAI colour tokens — design system v2 (`tokens.json`, synced
+/// 2026-10-26, the canonical v3 mobile design).
 ///
 /// The first block is the design system itself, under its own token names
 /// (`saffron-500` → [saffron500], `surface-glass` → [surfaceGlass]). Values
@@ -17,13 +17,16 @@ import 'package:flutter/material.dart';
 /// `theme_contrast_test.dart`):
 ///   • Saffron as text is [saffron600] `#A5551D` (5.28:1 on milk-50, 4.9:1 on
 ///     the wash's warmest stop), or [saffron700] on saffron tints (5.55:1).
-///   • White on [saffron500] is 3.77:1 — the shipped brand pair, kept EXACT and
-///     FLAGGED in the design system's open founder decisions (labels stay
-///     13px/600 or larger). Do not "fix" it here.
+///   • White never sits on [saffron500] (3.77:1). A saffron fill that carries
+///     a white label (primary buttons, selected chips and segments, the
+///     teacher's chat bubble, letter marks, solid saffron pills) is
+///     [accentFill] (`saffron-600`, 5.28:1); [saffron500] stays for the orb,
+///     mic discs, the active tab disc, dots, bars and focus edges (decided
+///     26 Oct 2026).
 ///   • White on [leaf500] 7.55:1, on [indigo500] 9.9:1, on [red500] 5.44:1.
 ///
-/// DARK is an open founder decision: no SahayakAI dark theme exists yet, so
-/// the `d*` roles below are the pre-v2 values, unchanged on purpose.
+/// Light only: the design system retired dark mode on 26 Oct 2026. The one
+/// dark surface is the camera (the `camera*` tokens).
 class AppColors {
   AppColors._();
 
@@ -114,8 +117,12 @@ class AppColors {
   static const textLink = saffron600;
   static const textLinkHover = saffron500;
 
-  // Accent (saffron) tints.
+  // Accent (saffron).
   static const accent = saffron500;
+
+  /// `accent-fill`: the saffron fill under a white label. White on it is
+  /// 5.28:1; white on [saffron500] (3.77:1) is never allowed.
+  static const accentFill = saffron600;
   static const accentTint = Color.fromRGBO(201, 106, 40, 0.1);
   static const accentTintStrong = Color.fromRGBO(201, 106, 40, 0.12);
   static const accentTintBorder = Color.fromRGBO(201, 106, 40, 0.22);
@@ -177,9 +184,6 @@ class AppColors {
   /// brass, so it uses the nearest warm token.
   static const brandBrass = saffron300;
 
-  /// Dark-theme brass ornament (dark is unchanged; see the class doc).
-  static const dBrandBrass = Color(0xFF8A6E43);
-
   /// Back-compat names for the old tricolour accents, now the v2 meaning
   /// colours: indigo (working, curriculum) and leaf (selected, done, ready).
   static const navy = indigo500;
@@ -232,39 +236,6 @@ class AppColors {
 
   static const lPine = lSecondary;
   static const lIndigo = lTertiary;
-
-  // ---- Dark (pre-v2 values; dark mode is an open founder decision) ----
-  static const dBackground = Color(0xFF13151B);
-  static const dSurfaceContainerLow = Color(0xFF181A21);
-  static const dCard = Color(0xFF1C1F26);
-  static const dPopover = Color(0xFF1E2129);
-  static const dSurfaceContainerHigh = Color(0xFF2B303B);
-  static const dMuted = Color(0xFF252931);
-  static const dForeground = Color(0xFFF2F5F8);
-  static const dMutedForeground = Color(0xFF95A1B2);
-
-  static const dPrimary = Color(0xFFEB9447);
-  static const dPrimaryText = dPrimary;
-  static const dOnPrimary = Color(0xFF0F1729);
-  static const dPrimaryContainer = Color(0xFF3D2A15);
-  static const dOnPrimaryContainer = Color(0xFFFFCE9E);
-
-  static const dSecondary = Color(0xFF448848);
-  static const dSecondaryContainer = Color(0xFF1E3A22);
-  static const dOnSecondaryContainer = Color(0xFFBAE0BE);
-
-  static const dTertiary = Color(0xFF8DA4E0);
-  static const dError = Color(0xFFBA2C2C);
-  static const dErrorContainer = Color(0xFF3A1613);
-  static const dOnErrorContainer = Color(0xFFFBC5BC);
-
-  static const dBorder = Color(0xFF31353F);
-  static const dInput = Color(0xFF31353F);
-  static const dOutlineVariant = Color(0xFF23272F);
-  static const dRing = Color(0xFFEB9447);
-
-  static const dPine = dSecondary;
-  static const dIndigo = dTertiary;
 
   /// The theme-wide `shadowColor` for any Material-drawn shadow.
   static const shadowBase = lShadowBase;

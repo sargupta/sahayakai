@@ -775,18 +775,6 @@ class AppLocalizationsTe extends AppLocalizations {
   String get settingsTitle => 'సెట్టింగ్‌లు';
 
   @override
-  String get settingsAppearanceTitle => 'రూపం';
-
-  @override
-  String get settingsThemeSystem => 'నా పరికరం ప్రకారం';
-
-  @override
-  String get settingsThemeLight => 'లైట్';
-
-  @override
-  String get settingsThemeDark => 'డార్క్';
-
-  @override
   String get settingsLanguageHint =>
       'యాప్ భాషను, మీ బోధన సామగ్రి రాయబడే భాషను ఇది నిర్ణయిస్తుంది.';
 

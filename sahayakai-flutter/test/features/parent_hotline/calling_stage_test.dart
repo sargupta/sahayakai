@@ -37,7 +37,7 @@ Future<void> _pump(
 
   await tester.pumpWidget(
     MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+      theme: AppTheme.light(),
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -231,7 +231,7 @@ void main() {
       ('ta', Locale('ta'), 'மணி ஒலிக்கிறது…', 'பெற்றோர'),
     ];
 
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       for (final (code, locale, ringing, parentWord) in probes) {
         testWidgets(
           'calling stage at 360dp x 1.3 in $code (${brightness.name})',
@@ -256,14 +256,13 @@ void main() {
       }
     }
 
-    testWidgets('in-progress + pill at 360dp x 1.3 in bn (dark)', (
+    testWidgets('in-progress + pill at 360dp x 1.3 in bn', (
       tester,
     ) async {
       await _pump(
         tester,
         parentName: 'Asha Rao',
         callResult: _calling(4),
-        brightness: Brightness.dark,
         textScale: 1.3,
         locale: const Locale('bn'),
         surface: const Size(360, 1200),

@@ -78,7 +78,6 @@ class _LabeledFieldState extends State<LabeledField> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
     final type = AppTypeTokens.of(context);
 
     final indicLabel = isIndicText(widget.label);
@@ -89,7 +88,7 @@ class _LabeledFieldState extends State<LabeledField> {
     final metaStyle = type.caption.copyWith(
       fontWeight: FontWeight.w500,
       height: 1.6,
-      color: isDark ? scheme.onSurfaceVariant : AppColors.textMuted,
+      color: AppColors.textMuted,
     );
     final error = widget.errorText;
 
@@ -133,7 +132,7 @@ class _LabeledFieldState extends State<LabeledField> {
         Text(
           error,
           style: type.status.copyWith(
-            color: isDark ? scheme.error : AppColors.red700,
+            color: AppColors.red700,
           ),
         ),
       ],
@@ -170,8 +169,8 @@ class _LabeledFieldState extends State<LabeledField> {
         ? BorderSide(color: scheme.error, width: 2)
         : _focused
         ? BorderSide(color: scheme.primary, width: 2)
-        : BorderSide(
-            color: isDark ? scheme.outlineVariant : AppColors.borderGlass,
+        : const BorderSide(
+            color: AppColors.borderGlass,
             width: 1,
           );
     final motion = MediaQuery.maybeOf(context)?.disableAnimations != true;
@@ -190,14 +189,10 @@ class _LabeledFieldState extends State<LabeledField> {
           horizontal: 14 + 1 - edge.width,
         ),
         decoration: BoxDecoration(
-          color: isDark
-              ? scheme.surfaceContainerLow
-              : AppColors.surfaceGlassStrong,
+          color: AppColors.surfaceGlassStrong,
           borderRadius: AppRadius.rCard,
           border: Border.fromBorderSide(edge),
-          boxShadow: _focused && error == null && !isDark
-              ? AppShadows.current
-              : null,
+          boxShadow: _focused && error == null ? AppShadows.current : null,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -225,7 +220,6 @@ class _BorderlessInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     final type = AppTypeTokens.of(context);
     // titleMedium is type-card-title (15/600 display) — the lg Field value —
     // and is what a dropdown already draws its value in. A TextField draws in
@@ -233,9 +227,7 @@ class _BorderlessInput extends StatelessWidget {
     final value = theme.textTheme.titleMedium!;
     final placeholder = type.reading.copyWith(
       fontSize: value.fontSize,
-      color: theme.brightness == Brightness.dark
-          ? scheme.onSurfaceVariant
-          : AppColors.textMuted,
+      color: AppColors.textMuted,
     );
     const none = InputBorder.none;
 

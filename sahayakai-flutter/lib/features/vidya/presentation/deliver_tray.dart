@@ -53,14 +53,13 @@ class DeliverTray extends ConsumerWidget {
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: _sheetRadius,
-          boxShadow: isDark ? AppShadows.dKey : AppShadows.e4,
+          boxShadow: AppShadows.e4,
         ),
         child: GlassSurface(
           borderRadius: _sheetRadius,

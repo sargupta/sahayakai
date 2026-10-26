@@ -70,7 +70,7 @@ Widget _host({
   return ProviderScope(
     child: MaterialApp.router(
       routerConfig: router,
-      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+      theme: AppTheme.light(),
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -214,7 +214,7 @@ void main() {
   });
 
   group('overflow gates (DESIGN_RUBRIC §12.9 / §12.10 / §12.13)', () {
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       for (final locale in const [Locale('bn'), Locale('ta')]) {
         testWidgets(
           'no overflow at 360dp x textScale 1.3 in ${brightness.name} '
@@ -244,14 +244,5 @@ void main() {
       }
     }
 
-    testWidgets('the dark host really is dark', (tester) async {
-      await tester.pumpWidget(
-        _host(router: _buildRouter(), brightness: Brightness.dark),
-      );
-      await tester.pumpAndSettle();
-
-      final theme = Theme.of(tester.element(find.byType(ContentCreatorScreen)));
-      expect(theme.brightness, Brightness.dark);
-    });
   });
 }

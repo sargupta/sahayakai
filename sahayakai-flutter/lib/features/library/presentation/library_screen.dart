@@ -257,7 +257,7 @@ class _FilterChip extends StatelessWidget {
         fontWeight: selected ? FontWeight.w600 : null,
       ),
       backgroundColor: scheme.surfaceContainerHigh,
-      selectedColor: scheme.primary.withValues(alpha: 0.12),
+      selectedColor: AppColors.accentTintStrong,
       side: BorderSide(
         color: selected ? scheme.primary.withValues(alpha: 0.5) : scheme.outline,
       ),

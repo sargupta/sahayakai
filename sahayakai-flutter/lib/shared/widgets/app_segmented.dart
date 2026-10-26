@@ -14,10 +14,10 @@ class AppSegment<T> {
 
 /// AppSegmented — the design system v2 `SegmentedControl`: a 62% glass pill
 /// (`surface-segment`, 1px `border-glass`, 4px padding) holding equal
-/// segments 5px apart; the chosen one is a solid `saffron-500` pill with a
-/// white label, the rest are `text-body`. Labels are 600 12/15 in the UI
-/// face. The saffron pill slides between segments on the standard curve
-/// (.25s), and jumps under reduce-motion.
+/// segments 5px apart; the chosen one is a solid `accent-fill` pill
+/// (`saffron-600`, white on it 5.28:1), the rest are `text-body`. Labels are
+/// 600 12/15 in the UI face. The saffron pill slides between segments on the
+/// standard curve (.25s), and jumps under reduce-motion.
 ///
 /// The pill draws 41px tall, as the system does; its touch band is 48px, so
 /// each segment's tap area extends past the visual edge without overlapping
@@ -27,7 +27,6 @@ class AppSegment<T> {
 /// Falls back to a wrapped row of the theme's choice chips (the v2 `Chip`)
 /// when there are more than 3 options or any label is long or in an Indic
 /// script, so a translated label wraps instead of clipping in a fixed track.
-/// Dark keeps the pre-v2 glass track (dark mode is an open founder decision).
 class AppSegmented<T> extends StatelessWidget {
   const AppSegmented({
     super.key,
@@ -82,7 +81,6 @@ class AppSegmented<T> extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final type = AppTypeTokens.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final n = segments.length;
     final index = segments.indexWhere((s) => s.value == value).clamp(0, n - 1);
     final duration = context.motionEnabled ? AppMotion.change : Duration.zero;
@@ -104,13 +102,11 @@ class AppSegmented<T> extends StatelessWidget {
                   height: _pill,
                   // 4px track padding; the 1px edge adds its own inset.
                   padding: const EdgeInsets.all(4),
-                  decoration: ShapeDecoration(
-                    color: isDark
-                        ? AppGlass.dFlatFill
-                        : AppColors.surfaceSegment,
+                  decoration: const ShapeDecoration(
+                    color: AppColors.surfaceSegment,
                     shape: StadiumBorder(
                       side: BorderSide(
-                        color: isDark ? scheme.outline : AppColors.borderGlass,
+                        color: AppColors.borderGlass,
                       ),
                     ),
                   ),
@@ -123,10 +119,10 @@ class AppSegmented<T> extends StatelessWidget {
                         top: 0,
                         bottom: 0,
                         width: segW,
-                        child: DecoratedBox(
+                        child: const DecoratedBox(
                           decoration: ShapeDecoration(
-                            color: scheme.primary,
-                            shape: const StadiumBorder(),
+                            color: AppColors.accentFill,
+                            shape: StadiumBorder(),
                           ),
                         ),
                       ),
@@ -144,9 +140,7 @@ class AppSegmented<T> extends StatelessWidget {
                                     height: 15 / 12,
                                     color: s.value == value
                                         ? scheme.onPrimary
-                                        : (isDark
-                                              ? scheme.onSurface
-                                              : AppColors.textBody),
+                                        : (AppColors.textBody),
                                   ),
                                   child: Text(
                                     s.label,

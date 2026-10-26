@@ -62,7 +62,6 @@ Future<void> _pump(
   String initialLocation = '/staffroom/group/g1',
   String? uid = _me,
   List<Override> extraOverrides = const [],
-  Brightness brightness = Brightness.light,
   double textScale = 1.0,
   Size surface = const Size(390, 1400),
   bool settle = true,
@@ -103,9 +102,7 @@ Future<void> _pump(
         ...extraOverrides,
       ],
       child: MaterialApp.router(
-        theme: brightness == Brightness.dark
-            ? AppTheme.dark()
-            : AppTheme.light(),
+        theme: AppTheme.light(),
         locale: const Locale('en'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,

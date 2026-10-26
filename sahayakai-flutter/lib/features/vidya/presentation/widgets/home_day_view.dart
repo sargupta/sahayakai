@@ -38,7 +38,6 @@ class HomeGreeting extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final scheme = theme.colorScheme;
     final type = AppTypeTokens.of(context);
     final name = ref
@@ -60,11 +59,9 @@ class HomeGreeting extends ConsumerWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isDark
-                  ? scheme.surfaceContainerHigh
-                  : AppColors.surfaceDisc,
+              color: AppColors.surfaceDisc,
               border: Border.all(
-                color: isDark ? scheme.outline : AppColors.borderGlass,
+                color: AppColors.borderGlass,
               ),
             ),
             child: (name == null || name.isEmpty)
@@ -118,20 +115,18 @@ class HomeGreeting extends ConsumerWidget {
                     horizontal: 12,
                     vertical: 6,
                   ),
-                  decoration: ShapeDecoration(
-                    color: isDark
-                        ? scheme.surfaceContainerHigh
-                        : AppColors.surfaceGlass,
+                  decoration: const ShapeDecoration(
+                    color: AppColors.surfaceGlass,
                     shape: StadiumBorder(
                       side: BorderSide(
-                        color: isDark ? scheme.outline : AppColors.borderGlass,
+                        color: AppColors.borderGlass,
                       ),
                     ),
                   ),
                   child: Text(
                     locale.nativeLabel,
                     style: type.chip.copyWith(
-                      color: isDark ? scheme.primary : AppColors.textEyebrow,
+                      color: AppColors.textEyebrow,
                     ),
                   ),
                 ),
@@ -282,8 +277,6 @@ class _SayItRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final type = AppTypeTokens.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final scheme = Theme.of(context).colorScheme;
 
     final (
       Color dot,
@@ -350,7 +343,7 @@ class _SayItRow extends StatelessWidget {
                   height: 8,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: isDark ? _darkDot(item.kind, scheme) : dot,
+                    color: dot,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -364,7 +357,7 @@ class _SayItRow extends StatelessWidget {
                 Text(
                   action,
                   style: type.action.copyWith(
-                    color: isDark ? scheme.primary : AppColors.textEyebrow,
+                    color: AppColors.textEyebrow,
                   ),
                 ),
               ],
@@ -374,13 +367,6 @@ class _SayItRow extends StatelessWidget {
       ),
     );
   }
-
-  Color _darkDot(HomeDayItemKind kind, ColorScheme scheme) => switch (kind) {
-    HomeDayItemKind.callAbsentees => scheme.error,
-    HomeDayItemKind.takeAttendance => scheme.primary,
-    HomeDayItemKind.openReady => scheme.secondary,
-    _ => scheme.primary,
-  };
 
   void _open(BuildContext context) {
     switch (item.kind) {
@@ -442,7 +428,6 @@ class _HomeComposerState extends State<HomeComposer> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final scheme = theme.colorScheme;
     final type = AppTypeTokens.of(context);
     final focused = _focus.hasFocus;
@@ -451,7 +436,7 @@ class _HomeComposerState extends State<HomeComposer> {
     // focus takes a 2px saffron-500 edge and `shadow-current`, as a field does.
     final edge = focused
         ? BorderSide(color: scheme.primary, width: 2)
-        : BorderSide(color: isDark ? scheme.outline : AppColors.borderStrong);
+        : const BorderSide(color: AppColors.borderStrong);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -465,9 +450,9 @@ class _HomeComposerState extends State<HomeComposer> {
           constraints: const BoxConstraints(minHeight: 56),
           padding: EdgeInsets.fromLTRB(15 - edge.width, 0, 9 - edge.width, 0),
           decoration: ShapeDecoration(
-            color: isDark ? scheme.surfaceContainerLow : AppColors.surfaceInset,
+            color: AppColors.surfaceInset,
             shape: StadiumBorder(side: edge),
-            shadows: focused && !isDark ? AppShadows.current : null,
+            shadows: focused ? AppShadows.current : null,
           ),
           child: Row(
             children: [
@@ -492,9 +477,7 @@ class _HomeComposerState extends State<HomeComposer> {
                       contentPadding: const EdgeInsets.symmetric(vertical: 8),
                       hintText: l10n.homeComposerHint,
                       hintStyle: type.reading.copyWith(
-                        color: isDark
-                            ? scheme.onSurfaceVariant
-                            : AppColors.textMuted,
+                        color: AppColors.textMuted,
                       ),
                       semanticCounterText: '',
                     ),
@@ -520,7 +503,7 @@ class _HomeComposerState extends State<HomeComposer> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: scheme.primary,
-                          boxShadow: isDark ? null : AppShadows.mic,
+                          boxShadow: AppShadows.mic,
                         ),
                         child: Icon(
                           LucideIcons.mic,

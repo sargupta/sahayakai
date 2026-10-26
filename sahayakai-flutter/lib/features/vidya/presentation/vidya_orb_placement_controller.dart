@@ -121,7 +121,7 @@ class VidyaOrbPlacement {
 /// follows the teacher across every screen (the same "one store, every screen"
 /// contract as [VidyaController]).
 ///
-/// Mirrors [ThemeModeController] in `core/theme/theme_mode_provider` in shape —
+/// Mirrors `LocaleController` in `core/i18n/locale_provider` in shape —
 /// the same keepAlive notifier and the "start at the default, hydrate the
 /// persisted choice asynchronously" contract, so a cold launch paints the
 /// default perch immediately and settles onto the teacher's remembered side once

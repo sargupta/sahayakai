@@ -106,19 +106,16 @@ void main() {
   });
 
   group('WCAG AA — computed against the actual rendered fills', () {
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       test('marks badge + outcome chips clear 4.5:1 in ${brightness.name}', () {
         final scheme =
-            (brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light())
+            AppTheme.light()
                 .colorScheme;
-        final isDark = brightness == Brightness.dark;
 
         // Marks badge: saffron-TEXT on the accent tint (primary@0.12) composited
         // over the inset question card (surfaceContainerLow) — NOT the saffron-500
         // fill, which as ink would fail AA.
-        final marksFg = isDark
-            ? AppColors.dPrimaryText
-            : AppColors.lPrimaryTextOnTint;
+        const marksFg = AppColors.lPrimaryTextOnTint;
         final marksBg = Color.alphaBlend(
           scheme.primary.withValues(alpha: 0.12),
           scheme.surfaceContainerLow,
@@ -151,10 +148,10 @@ void main() {
     // the muted onSurfaceVariant on a NON-white fill now uses onSurface, so this
     // failure class cannot ship green again. Each pairing is computed against the
     // site's ACTUAL fill, in BOTH themes.
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       test('every fixed site clears 4.5:1 in ${brightness.name}', () {
         final scheme =
-            (brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light())
+            AppTheme.light()
                 .colorScheme;
 
         // 1. Empty page-capture well prompt — on the well's surfaceContainerHigh.
@@ -188,9 +185,7 @@ void main() {
         'the rendered "Not scored" colour clears AA (${brightness.name})',
         (tester) async {
           final scheme =
-              (brightness == Brightness.dark
-                      ? AppTheme.dark()
-                      : AppTheme.light())
+              AppTheme.light()
                   .colorScheme;
           const unscored = AssessmentResult(
             assessmentId: 'x',
@@ -236,7 +231,7 @@ void main() {
   });
 
   group('overflow gates (DESIGN_RUBRIC §12.9, §12.10, §12.11, §12.13)', () {
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       testWidgets(
         'scorecard: no overflow at 360dp x textScale 1.3 in ${brightness.name}',
         (tester) async {

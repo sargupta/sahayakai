@@ -75,9 +75,7 @@ class _InitialFallback extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final saffronText = theme.brightness == Brightness.dark
-        ? AppColors.dPrimaryText
-        : AppColors.lPrimaryTextOnTint;
+    const saffronText = AppColors.lPrimaryTextOnTint;
 
     final trimmed = name.trim();
     final initial = trimmed.isEmpty

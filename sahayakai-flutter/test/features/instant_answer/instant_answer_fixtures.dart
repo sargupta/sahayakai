@@ -50,7 +50,7 @@ Widget hostResult(
       if (linkOpener != null) linkOpenerProvider.overrideWithValue(linkOpener),
     ],
     child: MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+      theme: AppTheme.light(),
       locale: const Locale('en'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,

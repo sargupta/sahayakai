@@ -48,7 +48,6 @@ void main() {
   // needs an initialized binding, so building at main() scope throws first.
   final bases = <String, ThemeData Function()>{
     'light': AppTheme.light,
-    'dark': AppTheme.dark,
   };
 
   for (final base in bases.entries) {
@@ -155,7 +154,8 @@ void main() {
 
         expect(selected.fontWeight, FontWeight.w600);
         expect(unselected.fontWeight, FontWeight.w500);
-        expect(selected.color, theme.colorScheme.primary);
+        // saffron as text is saffron-600 (text-link), never saffron-500.
+        expect(selected.color, AppColors.textLink);
         expect(unselected.color, theme.colorScheme.onSurfaceVariant);
       });
 

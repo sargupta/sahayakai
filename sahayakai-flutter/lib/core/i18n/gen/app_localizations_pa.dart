@@ -770,18 +770,6 @@ class AppLocalizationsPa extends AppLocalizations {
   String get settingsTitle => 'ਸੈਟਿੰਗਾਂ';
 
   @override
-  String get settingsAppearanceTitle => 'ਦਿੱਖ';
-
-  @override
-  String get settingsThemeSystem => 'ਮੇਰੇ ਡਿਵਾਈਸ ਅਨੁਸਾਰ';
-
-  @override
-  String get settingsThemeLight => 'ਹਲਕਾ';
-
-  @override
-  String get settingsThemeDark => 'ਗੂੜ੍ਹਾ';
-
-  @override
   String get settingsLanguageHint =>
       'ਇਹ ਐਪ ਦੀ ਭਾਸ਼ਾ ਅਤੇ ਤੁਹਾਡੀ ਅਧਿਆਪਨ ਸਮੱਗਰੀ ਦੀ ਭਾਸ਼ਾ, ਦੋਵੇਂ ਤੈਅ ਕਰਦਾ ਹੈ।';
 

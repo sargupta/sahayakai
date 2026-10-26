@@ -121,12 +121,11 @@ class _ReadAloudButtonState extends ConsumerState<ReadAloudButton> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final textTheme = Theme.of(context).textTheme;
-    final saffron = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
+    const saffron = AppColors.lPrimaryText;
 
     final Widget leading = _loading
-        ? SizedBox(
+        ? const SizedBox(
             width: AppIconSize.inline,
             height: AppIconSize.inline,
             child: CircularProgressIndicator(strokeWidth: 2, color: saffron),

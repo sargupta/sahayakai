@@ -128,7 +128,7 @@ Future<void> _pump(
 
   await tester.pumpWidget(
     MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+      theme: AppTheme.light(),
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -169,13 +169,13 @@ Color _expectedInk(ColorScheme s, ParentSentiment sent) => switch (sent) {
   ParentSentiment.indifferent => s.onSurface,
 };
 
-Color _expectedFill(ColorScheme s, ParentSentiment sent, bool dark) =>
+Color _expectedFill(ColorScheme s, ParentSentiment sent) =>
     switch (sent) {
       ParentSentiment.grateful ||
       ParentSentiment.cooperative => s.secondaryContainer,
       ParentSentiment.concerned ||
       ParentSentiment.confused => s.primaryContainer,
-      ParentSentiment.upset => s.error.withValues(alpha: dark ? 0.22 : 0.12),
+      ParentSentiment.upset => s.error.withValues(alpha: 0.12),
       ParentSentiment.indifferent => s.surfaceContainerHigh,
     };
 
@@ -318,7 +318,7 @@ void main() {
   // ── Sentiment badge: tone per sentiment + WCAG AA on the fill ───────────────
 
   group('sentiment badge tone + WCAG AA', () {
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       for (final sentiment in ParentSentiment.values) {
         testWidgets(
           'sentiment ${sentiment.name} (${brightness.name}): correct ink role '
@@ -331,9 +331,7 @@ void main() {
               brightness: brightness,
             );
             final scheme =
-                (brightness == Brightness.dark
-                        ? AppTheme.dark()
-                        : AppTheme.light())
+                AppTheme.light()
                     .colorScheme;
 
             final label = _sentimentLabel(en, sentiment);
@@ -351,7 +349,7 @@ void main() {
 
             // …and it clears WCAG AA on its own (composited) fill.
             final fill = _composite(
-              _expectedFill(scheme, sentiment, brightness == Brightness.dark),
+              _expectedFill(scheme, sentiment),
               scheme.surface,
             );
             final ratio = _ratio(ink, fill);
@@ -373,7 +371,7 @@ void main() {
   group('transcript agent line WCAG AA', () {
     const agentLine = 'Hello, I am calling from the school about your child.';
 
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       testWidgets('agent (muted) turn clears AA 4.5:1 on the transcript card '
           '(${brightness.name})', (tester) async {
         await _pump(
@@ -383,7 +381,7 @@ void main() {
           brightness: brightness,
         );
         final scheme =
-            (brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light())
+            AppTheme.light()
                 .colorScheme;
 
         // Expand so the agent turn is in the tree.
@@ -710,7 +708,7 @@ void main() {
       ),
     ];
 
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       for (final (code, locale, summary, transcriptLabel) in probes) {
         testWidgets(
           'full summary at 360dp x 1.3 in $code (${brightness.name})',
@@ -732,14 +730,13 @@ void main() {
       }
     }
 
-    testWidgets('a callFailed terminal at 360dp x 1.3 in ta (dark)', (
+    testWidgets('a callFailed terminal at 360dp x 1.3 in ta', (
       tester,
     ) async {
       await _pump(
         tester,
         outcome: HotlineSummaryOutcome.callFailed,
         callResult: const CallResult(callStatus: CallStatus.busy),
-        brightness: Brightness.dark,
         textScale: 1.3,
         locale: const Locale('ta'),
         surface: const Size(360, 1400),

@@ -770,18 +770,6 @@ class AppLocalizationsGu extends AppLocalizations {
   String get settingsTitle => 'સેટિંગ્સ';
 
   @override
-  String get settingsAppearanceTitle => 'દેખાવ';
-
-  @override
-  String get settingsThemeSystem => 'મારા ઉપકરણ પ્રમાણે';
-
-  @override
-  String get settingsThemeLight => 'આછો';
-
-  @override
-  String get settingsThemeDark => 'ઘેરો';
-
-  @override
   String get settingsLanguageHint =>
       'ઍપની ભાષા અને તમારી શિક્ષણ સામગ્રી જે ભાષામાં લખાય તે નક્કી કરે છે.';
 

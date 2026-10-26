@@ -15,12 +15,11 @@ Future<void> _pumpOrb(
   VidyaOrbVisual state, {
   bool reduceMotion = false,
   int readyCount = 0,
-  Brightness brightness = Brightness.light,
   VoidCallback? onTap,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+      theme: AppTheme.light(),
       home: Builder(
         builder: (context) => MediaQuery(
           data: MediaQuery.of(
@@ -167,13 +166,4 @@ void main() {
     expect(size.height, greaterThanOrEqualTo(48));
   });
 
-  testWidgets('renders in dark without error', (tester) async {
-    await _pumpOrb(
-      tester,
-      VidyaOrbVisual.working,
-      brightness: Brightness.dark,
-    );
-    expect(tester.takeException(), isNull);
-    expect(find.byType(VidyaOrb), findsOneWidget);
-  });
 }

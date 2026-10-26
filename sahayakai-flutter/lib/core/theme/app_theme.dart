@@ -29,27 +29,33 @@ export 'app_text.dart'
 
 /// SahayakAI Material 3 theme — design system v2 (the v3 mobile design).
 ///
-/// LIGHT maps the v2 tokens onto the M3 `ColorScheme` roles (`primary` =
-/// `saffron-500`, `onSurface` = `ink-900`, `secondary` = `leaf-500`,
-/// `tertiary` = `indigo-500`, `error` = `red-500`) and draws the v2 component
-/// language: pills for everything pressable, glass cards on the wash, solid
-/// `surface-card` sheets.
+/// One light theme. The design system retired dark mode on 26 Oct 2026
+/// (guide 10, "Theme: light only"), so the app has no dark theme and no theme
+/// switch; only the camera surface stays dark, and it paints its own ground.
 ///
-/// The light scaffold is TRANSPARENT: every page route paints the v2 screen
-/// wash (`wash-screen` + `glow-saffron`) under its own page, from the page
+/// The v2 tokens map onto the M3 `ColorScheme` roles (`primary` =
+/// `saffron-500`, `onSurface` = `ink-900`, `secondary` = `leaf-500`,
+/// `tertiary` = `indigo-500`, `error` = `red-500`) and the theme draws the v2
+/// component language: pills for everything pressable, glass cards on the
+/// wash, solid `surface-card` sheets.
+///
+/// `primary` is the brand ACCENT, `saffron-500`: the orb, mic discs, the
+/// active tab disc, dots, bars and focus edges. A saffron fill that carries a
+/// white label (buttons, selected chips) uses [AppColors.accentFill]
+/// (`saffron-600`, 5.28:1) instead, because white on `saffron-500` is 3.77:1
+/// (decided 26 Oct 2026).
+///
+/// The scaffold is TRANSPARENT: every page route paints the v2 screen wash
+/// (`wash-screen` + `glow-saffron`) under its own page, from the page
 /// transition (`LiftSettleTransitionsBuilder` → `ScreenWash`), so glass reads
 /// as glass on every screen and a pushed page still covers the one beneath.
-///
-/// DARK is an open founder decision (v2 defines no dark theme), so its colours
-/// are the pre-v2 values; only type and shape follow v2.
 class AppTheme {
   AppTheme._();
 
-  static ThemeData light() => _build(Brightness.light);
-  static ThemeData dark() => _build(Brightness.dark);
+  static ThemeData light() => _build();
 
-  /// Rebuild the theme for an Indic locale (v2 script rules: 10px roles at
-  /// 12px, reading text at 1.7, no tracking).
+  /// Rebuild the theme for an Indic locale (v2 script rules: reading text at
+  /// 1.7, no tracking).
   ///
   /// Re-runs the WHOLE [_build] instead of `copyWith(textTheme:)`, because
   /// Flutter resolves component text styles — `appBarTheme.titleTextStyle`,
@@ -62,79 +68,43 @@ class AppTheme {
   ///
   /// [_build] is the single construction path and every component style below is
   /// derived from [textTheme], so the two cannot drift apart again.
-  static ThemeData withIndic(ThemeData base) =>
-      _build(base.brightness, isIndic: true);
+  static ThemeData withIndic(ThemeData base) => _build(isIndic: true);
 
-  static ThemeData _build(Brightness b, {bool isIndic = false}) {
-    final isDark = b == Brightness.dark;
-
-    final scheme = isDark
-        ? const ColorScheme(
-            brightness: Brightness.dark,
-            primary: AppColors.dPrimary,
-            onPrimary: AppColors.dOnPrimary,
-            primaryContainer: AppColors.dPrimaryContainer,
-            onPrimaryContainer: AppColors.dOnPrimaryContainer,
-            secondary: AppColors.dSecondary,
-            onSecondary: Color(0xFFFFFFFF),
-            secondaryContainer: AppColors.dSecondaryContainer,
-            onSecondaryContainer: AppColors.dOnSecondaryContainer,
-            tertiary: AppColors.dTertiary,
-            onTertiary: Color(0xFFFFFFFF),
-            error: AppColors.dError,
-            onError: Color(0xFFFFFFFF),
-            errorContainer: AppColors.dErrorContainer,
-            onErrorContainer: AppColors.dOnErrorContainer,
-            surface: AppColors.dCard,
-            onSurface: AppColors.dForeground,
-            surfaceContainerLowest: AppColors.dBackground,
-            surfaceContainerLow: AppColors.dSurfaceContainerLow,
-            surfaceContainer: AppColors.dMuted,
-            surfaceContainerHigh: AppColors.dSurfaceContainerHigh,
-            surfaceContainerHighest: AppColors.dBorder,
-            onSurfaceVariant: AppColors.dMutedForeground,
-            outline: AppColors.dBorder,
-            outlineVariant: AppColors.dOutlineVariant,
-            surfaceTint: AppColors.dPrimary,
-            inverseSurface: AppColors.dForeground,
-            onInverseSurface: AppColors.dBackground,
-            shadow: Color(0xFF000000),
-            scrim: Color(0xFF000000),
-          )
-        : const ColorScheme(
-            brightness: Brightness.light,
-            primary: AppColors.saffron500,
-            onPrimary: AppColors.textOnAccent,
-            primaryContainer: AppColors.saffron100,
-            onPrimaryContainer: AppColors.saffron700,
-            secondary: AppColors.leaf500,
-            onSecondary: AppColors.textOnAccent,
-            secondaryContainer: AppColors.leaf100,
-            onSecondaryContainer: AppColors.leaf700,
-            tertiary: AppColors.indigo500,
-            onTertiary: AppColors.textOnAccent,
-            tertiaryContainer: AppColors.indigo100,
-            onTertiaryContainer: AppColors.indigo500,
-            error: AppColors.red500,
-            onError: AppColors.textOnAccent,
-            errorContainer: AppColors.redRow,
-            onErrorContainer: AppColors.red700,
-            surface: AppColors.surfaceCard,
-            onSurface: AppColors.textStrong,
-            surfaceContainerLowest: AppColors.lBackground,
-            surfaceContainerLow: AppColors.surfaceInset,
-            surfaceContainer: AppColors.milk400,
-            surfaceContainerHigh: AppColors.stone100,
-            surfaceContainerHighest: AppColors.borderControl,
-            onSurfaceVariant: AppColors.textBody,
-            outline: AppColors.borderRow,
-            outlineVariant: AppColors.borderHairline,
-            surfaceTint: AppColors.saffron500,
-            inverseSurface: AppColors.ink800,
-            onInverseSurface: AppColors.milk100,
-            shadow: AppColors.ink900,
-            scrim: AppColors.scrim,
-          );
+  static ThemeData _build({bool isIndic = false}) {
+    const scheme = ColorScheme(
+      brightness: Brightness.light,
+      primary: AppColors.saffron500,
+      onPrimary: AppColors.textOnAccent,
+      primaryContainer: AppColors.saffron100,
+      onPrimaryContainer: AppColors.saffron700,
+      secondary: AppColors.leaf500,
+      onSecondary: AppColors.textOnAccent,
+      secondaryContainer: AppColors.leaf100,
+      onSecondaryContainer: AppColors.leaf700,
+      tertiary: AppColors.indigo500,
+      onTertiary: AppColors.textOnAccent,
+      tertiaryContainer: AppColors.indigo100,
+      onTertiaryContainer: AppColors.indigo500,
+      error: AppColors.red500,
+      onError: AppColors.textOnAccent,
+      errorContainer: AppColors.redRow,
+      onErrorContainer: AppColors.red700,
+      surface: AppColors.surfaceCard,
+      onSurface: AppColors.textStrong,
+      surfaceContainerLowest: AppColors.lBackground,
+      surfaceContainerLow: AppColors.surfaceInset,
+      surfaceContainer: AppColors.milk400,
+      surfaceContainerHigh: AppColors.stone100,
+      surfaceContainerHighest: AppColors.borderControl,
+      onSurfaceVariant: AppColors.textBody,
+      outline: AppColors.borderRow,
+      outlineVariant: AppColors.borderHairline,
+      surfaceTint: AppColors.saffron500,
+      inverseSurface: AppColors.ink800,
+      onInverseSurface: AppColors.milk100,
+      shadow: AppColors.ink900,
+      scrim: AppColors.scrim,
+    );
 
     final textTheme = AppText.build(scheme, isIndic: isIndic);
     final textExtras = AppText.buildExtras(scheme, isIndic: isIndic);
@@ -151,43 +121,36 @@ class AppTheme {
 
     return ThemeData(
       useMaterial3: true,
-      brightness: b,
+      brightness: Brightness.light,
       colorScheme: scheme,
-      // Light: transparent, so the route's ScreenWash shows (see class doc).
-      // Dark: the solid pre-v2 ground.
-      scaffoldBackgroundColor: isDark
-          ? scheme.surfaceContainerLowest
-          : Colors.transparent,
-      canvasColor: isDark ? null : AppColors.surfaceCard,
+      // Transparent, so the route's ScreenWash shows (see class doc).
+      scaffoldBackgroundColor: Colors.transparent,
+      canvasColor: AppColors.surfaceCard,
       shadowColor: AppColors.shadowBase,
       textTheme: textTheme,
       // Both extensions derive from the same scheme/isIndic path, so
       // AppTheme.withIndic() rebuilds them in lockstep with the TextTheme.
       extensions: [textExtras, typeTokens],
       splashFactory: InkRipple.splashFactory,
-      focusColor: isDark ? null : AppColors.accentTint,
+      focusColor: AppColors.accentTint,
       appBarTheme: AppBarTheme(
-        backgroundColor: isDark
-            ? scheme.surfaceContainerLowest
-            : AppColors.surfaceChrome,
+        backgroundColor: AppColors.surfaceChrome,
         foregroundColor: scheme.onSurface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        scrolledUnderElevation: isDark ? 2 : 0,
+        scrolledUnderElevation: 0,
         shadowColor: AppColors.shadowBase,
         centerTitle: false,
         // type-page-title — derived rather than re-declared, so the Indic
         // line-height follows the locale.
         titleTextStyle: textTheme.titleLarge,
-        systemOverlayStyle: isDark
-            ? SystemUiOverlayStyle.light
-            : SystemUiOverlayStyle.dark,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
       ),
-      // v2 Button `primary` md: saffron-500 pill, white label (3.77:1,
-      // flagged), 50px (`button-height`), 18px side padding.
+      // v2 Button `primary` md: an `accent-fill` pill with a white label
+      // (5.28:1), 50px (`button-height`), 18px side padding.
       filledButtonTheme: FilledButtonThemeData(
         style: ButtonStyle(
-          backgroundColor: WidgetStatePropertyAll(scheme.primary),
+          backgroundColor: const WidgetStatePropertyAll(AppColors.accentFill),
           foregroundColor: WidgetStatePropertyAll(scheme.onPrimary),
           minimumSize: const WidgetStatePropertyAll(Size(0, 50)),
           padding: const WidgetStatePropertyAll(
@@ -200,7 +163,7 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ButtonStyle(
-          backgroundColor: WidgetStatePropertyAll(scheme.primary),
+          backgroundColor: const WidgetStatePropertyAll(AppColors.accentFill),
           foregroundColor: WidgetStatePropertyAll(scheme.onPrimary),
           minimumSize: const WidgetStatePropertyAll(Size(0, 50)),
           padding: const WidgetStatePropertyAll(
@@ -208,9 +171,7 @@ class AppTheme {
           ),
           shape: const WidgetStatePropertyAll(pill),
           elevation: const WidgetStatePropertyAll(1),
-          shadowColor: WidgetStatePropertyAll(
-            isDark ? AppColors.shadowBase : AppColors.saffron500,
-          ),
+          shadowColor: const WidgetStatePropertyAll(AppColors.saffron500),
           textStyle: WidgetStatePropertyAll(textTheme.labelLarge),
         ),
       ),
@@ -218,18 +179,13 @@ class AppTheme {
       // the UI face at 13px.
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: ButtonStyle(
-          foregroundColor: WidgetStatePropertyAll(
-            isDark ? scheme.onSurface : AppColors.textBody,
-          ),
+          foregroundColor: const WidgetStatePropertyAll(AppColors.textBody),
           minimumSize: const WidgetStatePropertyAll(Size(0, 46)),
           padding: const WidgetStatePropertyAll(
             EdgeInsets.symmetric(horizontal: 18),
           ),
-          side: WidgetStatePropertyAll(
-            BorderSide(
-              color: isDark ? scheme.outlineVariant : AppColors.borderControl,
-              width: 1,
-            ),
+          side: const WidgetStatePropertyAll(
+            BorderSide(color: AppColors.borderControl, width: 1),
           ),
           shape: const WidgetStatePropertyAll(pill),
           textStyle: WidgetStatePropertyAll(quietLabel),
@@ -238,27 +194,22 @@ class AppTheme {
       // Text actions: saffron as TEXT is saffron-600 (5.28:1), never 500.
       textButtonTheme: TextButtonThemeData(
         style: ButtonStyle(
-          foregroundColor: WidgetStatePropertyAll(
-            isDark ? scheme.primary : AppColors.textLink,
-          ),
+          foregroundColor: const WidgetStatePropertyAll(AppColors.textLink),
           minimumSize: const WidgetStatePropertyAll(Size(0, 44)),
           shape: const WidgetStatePropertyAll(pill),
           textStyle: WidgetStatePropertyAll(quietLabel),
         ),
       ),
       // v2 GlassCard: `surface-glass` with a 1px `border-glass` edge, flat.
-      cardTheme: CardThemeData(
-        color: isDark ? scheme.surface : AppColors.surfaceGlass,
+      cardTheme: const CardThemeData(
+        color: AppColors.surfaceGlass,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         shadowColor: AppColors.shadowBase,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: AppRadius.rCard,
-          side: BorderSide(
-            color: isDark ? scheme.outline : AppColors.borderGlass,
-            width: 1,
-          ),
+          side: BorderSide(color: AppColors.borderGlass, width: 1),
         ),
       ),
       // v2 Field, for a bare TextField: the field card's strong glass and 1px
@@ -267,84 +218,56 @@ class AppTheme {
       // borderless (see labeled_field.dart).
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: isDark
-            ? scheme.surfaceContainerLow
-            : AppColors.surfaceGlassStrong,
+        fillColor: AppColors.surfaceGlassStrong,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,
           vertical: 13,
         ),
-        hintStyle: isDark
-            ? textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant)
-            : typeTokens.reading.copyWith(color: AppColors.textMuted),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: isDark ? AppRadius.rControl : AppRadius.rCard,
-          borderSide: BorderSide(
-            color: isDark ? scheme.outlineVariant : AppColors.borderGlass,
-            width: 1,
-          ),
+        hintStyle: typeTokens.reading.copyWith(color: AppColors.textMuted),
+        enabledBorder: const OutlineInputBorder(
+          borderRadius: AppRadius.rCard,
+          borderSide: BorderSide(color: AppColors.borderGlass, width: 1),
         ),
-        border: OutlineInputBorder(
-          borderRadius: isDark ? AppRadius.rControl : AppRadius.rCard,
-          borderSide: BorderSide(
-            color: isDark ? scheme.outlineVariant : AppColors.borderGlass,
-            width: 1,
-          ),
+        border: const OutlineInputBorder(
+          borderRadius: AppRadius.rCard,
+          borderSide: BorderSide(color: AppColors.borderGlass, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: isDark ? AppRadius.rControl : AppRadius.rCard,
+          borderRadius: AppRadius.rCard,
           borderSide: BorderSide(color: scheme.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: isDark ? AppRadius.rControl : AppRadius.rCard,
+          borderRadius: AppRadius.rCard,
           borderSide: BorderSide(color: scheme.error, width: 2),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: isDark ? AppRadius.rControl : AppRadius.rCard,
+          borderRadius: AppRadius.rCard,
           borderSide: BorderSide(color: scheme.error, width: 2),
         ),
-        errorStyle: isDark
-            ? null
-            : typeTokens.status.copyWith(color: AppColors.red700),
+        errorStyle: typeTokens.status.copyWith(color: AppColors.red700),
       ),
       // v2 Chip (choice, md): glass pill with a 1px glass edge, 12/600 UI
-      // label; selected = a saffron-500 fill with a white label (3.77:1,
-      // flagged with the primary button).
+      // label; selected = an `accent-fill` pill with a white label (5.28:1).
       chipTheme: ChipThemeData(
-        backgroundColor: isDark
-            ? scheme.surfaceContainerHigh
-            : AppColors.surfaceGlass,
-        selectedColor: isDark ? scheme.primaryContainer : AppColors.saffron500,
-        checkmarkColor: isDark
-            ? scheme.onPrimaryContainer
-            : AppColors.textOnAccent,
-        labelStyle: isDark
-            ? textTheme.labelMedium?.copyWith(color: scheme.onSurface)
-            : typeTokens.chip,
-        secondaryLabelStyle: isDark
-            ? textTheme.labelMedium?.copyWith(
-                color: scheme.onPrimaryContainer,
-                fontWeight: FontWeight.w600,
-              )
-            : typeTokens.chip.copyWith(color: AppColors.textOnAccent),
-        // Light: v2 md padding (9px 14px) less the 1px edge Flutter paints
-        // inside the shape, with no extra label inset.
-        padding: isDark
-            ? const EdgeInsets.symmetric(horizontal: 12, vertical: 4)
-            : const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
-        labelPadding: isDark ? null : EdgeInsets.zero,
-        shape: const StadiumBorder(),
-        side: BorderSide(
-          color: isDark ? scheme.outline : AppColors.borderGlass,
+        backgroundColor: AppColors.surfaceGlass,
+        selectedColor: AppColors.accentFill,
+        checkmarkColor: AppColors.textOnAccent,
+        labelStyle: typeTokens.chip,
+        secondaryLabelStyle: typeTokens.chip.copyWith(
+          color: AppColors.textOnAccent,
         ),
+        // v2 md padding (9px 14px) less the 1px edge Flutter paints inside
+        // the shape, with no extra label inset.
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+        labelPadding: EdgeInsets.zero,
+        shape: const StadiumBorder(),
+        side: const BorderSide(color: AppColors.borderGlass),
       ),
       // The app's own navigation is the v2 TabBar (`app_tab_bar.dart`); this
       // theme only serves any stray M3 NavigationBar.
       navigationBarTheme: NavigationBarThemeData(
         height: 56,
-        backgroundColor: isDark
-            ? scheme.surfaceContainerLowest
-            : AppColors.surfaceChrome,
+        backgroundColor: AppColors.surfaceChrome,
         surfaceTintColor: Colors.transparent,
         indicatorColor: Colors.transparent,
         elevation: 0,
@@ -354,7 +277,7 @@ class AppTheme {
             size: AppIconSize.inline,
             color: s.contains(WidgetState.selected)
                 ? scheme.primary
-                : (isDark ? scheme.onSurfaceVariant : AppColors.textMuted),
+                : AppColors.textMuted,
           ),
         ),
         // DESIGN_RUBRIC §0 floors label text at 12sp / height 1.4; derived from
@@ -365,26 +288,25 @@ class AppTheme {
                 ? FontWeight.w600
                 : FontWeight.w500,
             color: s.contains(WidgetState.selected)
-                ? scheme.primary
+                ? AppColors.textLink
                 : scheme.onSurfaceVariant,
           ),
         ),
       ),
       // v2 Sheet: solid `surface-card`, `radius-sheet` top corners. Dialogs
-      // share the card surface at `radius-sheet`. Dark keeps its pre-v2 flat
-      // glass.
+      // share the card surface at `radius-sheet`.
       dialogTheme: DialogThemeData(
-        backgroundColor: isDark ? AppGlass.dFlatFill : AppColors.surfaceCard,
+        backgroundColor: AppColors.surfaceCard,
         surfaceTintColor: Colors.transparent,
-        shape: AppGlass.shape(isDark ? AppRadius.card : AppRadius.sheet),
+        shape: AppGlass.shape(AppRadius.sheet),
       ),
-      bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: isDark ? AppGlass.dFlatFill : AppColors.surfaceCard,
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: AppColors.surfaceCard,
         surfaceTintColor: Colors.transparent,
-        modalBarrierColor: isDark ? null : AppColors.scrim,
-        dragHandleColor: isDark ? null : AppColors.borderControl,
-        dragHandleSize: isDark ? null : const Size(44, 4),
-        shape: const RoundedRectangleBorder(
+        modalBarrierColor: AppColors.scrim,
+        dragHandleColor: AppColors.borderControl,
+        dragHandleSize: Size(44, 4),
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(AppRadius.sheet),
           ),
@@ -394,29 +316,25 @@ class AppTheme {
       // text. v2 sets it at 11px; the snack bar is `??`-resolved chrome, so it
       // holds the 12sp floor (type-label).
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: isDark ? scheme.inverseSurface : AppColors.surfaceCapsule,
-        contentTextStyle: isDark
-            ? textTheme.bodyMedium?.copyWith(color: scheme.onInverseSurface)
-            : textTheme.labelMedium?.copyWith(color: AppColors.textStrong),
-        actionTextColor: isDark ? null : AppColors.textLink,
-        shape: isDark
-            ? const RoundedRectangleBorder(borderRadius: AppRadius.rMd)
-            : const StadiumBorder(side: BorderSide(color: AppColors.borderRow)),
-        elevation: isDark ? null : 0,
+        backgroundColor: AppColors.surfaceCapsule,
+        contentTextStyle: textTheme.labelMedium?.copyWith(
+          color: AppColors.textStrong,
+        ),
+        actionTextColor: AppColors.textLink,
+        shape: const StadiumBorder(side: BorderSide(color: AppColors.borderRow)),
+        elevation: 0,
         behavior: SnackBarBehavior.floating,
       ),
-      dividerTheme: DividerThemeData(
-        color: isDark ? scheme.outline.withValues(alpha: 0.6) : AppColors.borderRow,
+      dividerTheme: const DividerThemeData(
+        color: AppColors.borderRow,
         thickness: 1,
         space: 1,
       ),
       tooltipTheme: TooltipThemeData(
         decoration: BoxDecoration(
-          color: isDark ? scheme.surface : AppColors.surfaceCapsule,
-          borderRadius: isDark ? AppRadius.rSm : AppRadius.rPill,
-          border: Border.all(
-            color: isDark ? scheme.outline : AppColors.borderRow,
-          ),
+          color: AppColors.surfaceCapsule,
+          borderRadius: AppRadius.rPill,
+          border: Border.all(color: AppColors.borderRow),
         ),
         // type-label (12): the tooltip is `??`-resolved chrome (12sp floor).
         textStyle: textTheme.labelMedium?.copyWith(color: scheme.onSurface),

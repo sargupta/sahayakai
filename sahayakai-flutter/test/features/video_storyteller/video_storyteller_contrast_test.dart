@@ -56,12 +56,6 @@ void main() {
       );
     });
 
-    test('dark: onSurfaceVariant on the dark card surface (>=4.5)', () {
-      expect(
-        _ratio(AppColors.dMutedForeground, AppColors.dCard),
-        greaterThanOrEqualTo(4.5),
-      );
-    });
   });
 
   group('thumbnail fallback label clears AA on the surfaceContainer fill', () {
@@ -74,11 +68,5 @@ void main() {
       );
     });
 
-    test('dark: onSurface ink on surfaceContainer', () {
-      expect(
-        _ratio(AppColors.dForeground, AppColors.dMuted),
-        greaterThanOrEqualTo(4.5),
-      );
-    });
   });
 }

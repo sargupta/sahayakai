@@ -67,9 +67,7 @@ class _Chip extends StatelessWidget {
     //     not the sub-4.5 onSurfaceVariant it used before.
     final fg = muted
         ? scheme.onSurface
-        : (theme.brightness == Brightness.dark
-            ? AppColors.dPrimaryText
-            : AppColors.lPrimaryTextOnTint);
+        : (AppColors.lPrimaryTextOnTint);
 
     // A bordered identity chip — the border is load-bearing (it separates the
     // free/outline, paid/accent and unknown/muted states), so it is not the

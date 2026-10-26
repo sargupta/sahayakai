@@ -14,6 +14,8 @@
 # Rejects ANYWHERE in lib/ (theme included — that is where they lived):
 #   - the retired pre-v2 saffron #E0924D   (design system v2: saffron-500 #C96A28)
 #   - the retired Outfit / Inter families   (v2: Bricolage Grotesque / Instrument Sans)
+#   - text under 12px and clamped text scaling (the 12px floor, 26 Oct 2026)
+#   - a saffron-500 component fill          (labels sit on accent-fill)
 #
 # The second block exists because the founder rejected design system v1 for
 # not matching the v3 mobile design: the app had kept a retired saffron
@@ -117,6 +119,39 @@ hits=$(font_scan_files | xargs grep -nE 'accentBar|EditorialSectionHeader\([^)]*
 if [ -n "$hits" ]; then
   echo "VIOLATION: pre-v2 card ribbon / eyebrow rule. Design system v2 cards and"
   echo "  eyebrows carry no ribbons or rules (components/GlassCard, Eyebrow)."
+  echo "$hits"; fail=1
+fi
+
+# 12px floor (design system, decided 26 Oct 2026): no text style smaller
+# than 12px in any script, anywhere in lib/ (theme included, where the type
+# scale lives), and the phone's own text size is respected: no clamped
+# TextScaler.
+hits=$(font_scan_files | xargs grep -nE 'fontSize:\s*([0-9]|1[01])(\.[0-9]+)?\b|_(ui|display)\(\s*([0-9]|1[01])(\.[0-9]+)?\s*,' 2>/dev/null \
+  | grep -vE '^[^:]+:[0-9]+: *(///?|\*)')
+if [ -n "$hits" ]; then
+  echo "VIOLATION: text under the 12px floor (design system: 12px in every"
+  echo "  script). Use an AppTypeTokens style; the smallest is 12px."
+  echo "$hits"; fail=1
+fi
+
+hits=$(font_scan_files | xargs grep -nE 'maxScaleFactor|minScaleFactor|withClampedTextScaling|TextScaler\.noScaling' 2>/dev/null \
+  | grep -vE '^[^:]+:[0-9]+: *(///?|\*)')
+if [ -n "$hits" ]; then
+  echo "VIOLATION: clamped text scaling. The app follows the phone's own text"
+  echo "  size (no clamp); let the label wrap and its container grow instead."
+  echo "$hits"; fail=1
+fi
+
+# White never sits on saffron-500 (3.77:1): a saffron fill under a label is
+# AppColors.accentFill (saffron-600, 5.28:1). Statically, no component fill
+# (backgroundColor / selectedColor) may be saffron-500 or the primary role;
+# test/core/theme/saffron_fill_gate_test.dart catches the rest at render time.
+hits=$(font_scan_files | xargs grep -nE '(backgroundColor|selectedColor)\s*:\s*[^,]*\b(saffron500|brandSaffron|lPrimary|AppColors\.accent|scheme\.primary|colorScheme\.primary)\b' 2>/dev/null \
+  | grep -vE '^[^:]+:[0-9]+: *(///?|\*)' \
+  | grep -vE 'accentFill|accentTint|withValues\(alpha|withAlpha|withOpacity')
+if [ -n "$hits" ]; then
+  echo "VIOLATION: a saffron-500 component fill. A fill that carries a label is"
+  echo "  AppColors.accentFill (saffron-600, white on it 5.28:1)."
   echo "$hits"; fail=1
 fi
 

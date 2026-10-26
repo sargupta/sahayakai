@@ -38,7 +38,7 @@ Widget _host({
   return ProviderScope(
     overrides: overrides,
     child: MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.dark() : AppTheme.light(),
+      theme: AppTheme.light(),
       locale: const Locale('en'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -338,7 +338,7 @@ void main() {
   });
 
   group('overflow gates (DESIGN_RUBRIC §12.9, §12.10, §12.13)', () {
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       for (final scale in <double>[1.0, 1.3]) {
         testWidgets(
           'form renders at 360dp, textScale $scale, ${brightness.name}',
@@ -361,7 +361,7 @@ void main() {
       }
     }
 
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       testWidgets(
         'the itinerary does not overflow at 360dp x 1.3 in ${brightness.name} '
         '(Indic probe)',

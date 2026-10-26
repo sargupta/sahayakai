@@ -119,12 +119,11 @@ class _RollCallVoiceSheetState extends ConsumerState<RollCallVoiceSheet> {
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: _sheetRadius,
-        boxShadow: isDark ? AppShadows.dKey : AppShadows.e4,
+        boxShadow: AppShadows.e4,
       ),
       child: GlassSurface(
         borderRadius: _sheetRadius,

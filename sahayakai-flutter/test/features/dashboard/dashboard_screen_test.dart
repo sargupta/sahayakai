@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations_ml.dart';
 import 'package:sahayakai/features/attendance/presentation/attendance_classes_screen.dart';
-import 'package:sahayakai/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:sahayakai/features/instant_answer/presentation/instant_answer_screen.dart';
 import 'package:sahayakai/features/lesson_planner/presentation/lesson_plan_screen.dart';
 import 'package:sahayakai/features/onboarding/presentation/onboarding_screen.dart';
@@ -378,7 +377,7 @@ void main() {
   });
 
   group('overflow gates (DESIGN_RUBRIC §12.9 / §12.10 / §12.11)', () {
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       testWidgets(
         'no overflow at 360dp x textScale 1.3 in ${brightness.name}',
         (tester) async {
@@ -395,15 +394,6 @@ void main() {
         },
       );
     }
-
-    testWidgets('the dark theme really is dark', (tester) async {
-      // The gates above only prove the dark run did not overflow. This proves
-      // the dark run was actually dark.
-      await pumpDashboard(tester, brightness: Brightness.dark);
-
-      final theme = Theme.of(tester.element(find.byType(DashboardScreen)));
-      expect(theme.brightness, Brightness.dark);
-    });
 
     for (final locale in const [Locale('bn'), Locale('ta'), Locale('ml')]) {
       testWidgets(

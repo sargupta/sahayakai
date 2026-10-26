@@ -74,7 +74,7 @@ class NotificationsStore extends Notifier<List<TeacherNotification>> {
   @override
   List<TeacherNotification> build() {
     // Start empty and hydrate asynchronously — the same contract
-    // `ThemeModeController` / `LocaleController` use. Anything recorded during
+    // `LocaleController` use. Anything recorded during
     // that gap is preserved: `_hydrate` MERGES, it does not overwrite.
     unawaited(_hydrate());
     return const <TeacherNotification>[];

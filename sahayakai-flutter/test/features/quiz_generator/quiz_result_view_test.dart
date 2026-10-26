@@ -13,7 +13,7 @@ import 'quiz_fixtures.dart';
 /// compound word; plus the tab and answer-reveal behaviour the screen promises.
 void main() {
   group('overflow gates (DESIGN_RUBRIC §12.9, §12.10, §12.13)', () {
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       for (final scale in <double>[1.0, 1.3]) {
         testWidgets('renders at 360dp, textScale $scale, ${brightness.name}', (
           tester,

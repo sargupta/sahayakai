@@ -189,9 +189,8 @@ class _ActionBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final text = Theme.of(context).textTheme;
-    final saffron = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
+    const saffron = AppColors.lPrimaryText;
     final request = saveRequest;
     final canSave = request != null && trip.raw != null;
 

@@ -302,9 +302,8 @@ class _FeatureTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final text = Theme.of(context).textTheme;
-    final saffron = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
+    const saffron = AppColors.lPrimaryText;
 
     return AppCard(
       variant: AppCardVariant.elevated,
@@ -344,7 +343,7 @@ class _FeatureTile extends StatelessWidget {
                 style: text.labelLarge?.copyWith(color: saffron),
               ),
               const SizedBox(width: AppSpacing.space1),
-              Icon(
+              const Icon(
                 LucideIcons.chevronRight,
                 size: AppIconSize.inline,
                 color: saffron,

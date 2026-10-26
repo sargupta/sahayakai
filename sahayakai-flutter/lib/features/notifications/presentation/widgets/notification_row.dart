@@ -40,7 +40,6 @@ class NotificationRow extends StatelessWidget {
     final scheme = theme.colorScheme;
     final text = theme.textTheme;
     final extras = AppTextExtras.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     final unread = !notification.isRead;
     final timestamp = inboxRelativeTime(
@@ -100,9 +99,9 @@ class NotificationRow extends StatelessWidget {
                       const SizedBox(width: AppSpacing.space2),
                       Semantics(
                         label: l10n.inboxUnreadLabel(1),
-                        child: Padding(
+                        child: const Padding(
                           // Optically centre the dot against the body line.
-                          padding: const EdgeInsets.only(
+                          padding: EdgeInsets.only(
                             top: AppSpacing.space1,
                           ),
                           child: SizedBox(
@@ -111,9 +110,7 @@ class NotificationRow extends StatelessWidget {
                             child: DecoratedBox(
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: isDark
-                                    ? AppColors.dPrimaryText
-                                    : AppColors.lPrimaryText,
+                                color: AppColors.lPrimaryText,
                               ),
                             ),
                           ),

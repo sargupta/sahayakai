@@ -91,9 +91,7 @@ Future<FakeInboxTransport> _pump(
     if (myUid != null) currentInboxUserIdProvider.overrideWithValue(myUid),
   ];
 
-  final theme = brightness == Brightness.dark
-      ? AppTheme.dark()
-      : AppTheme.light();
+  final theme = AppTheme.light();
 
   if (router) {
     final config = GoRouter(
@@ -300,7 +298,7 @@ void main() {
   });
 
   group('overflow probe — 360dp × 1.3, light + dark', () {
-    for (final brightness in Brightness.values) {
+    for (final brightness in const [Brightness.light]) {
       testWidgets('no overflow (${brightness.name}) with a long Bengali name', (
         tester,
       ) async {

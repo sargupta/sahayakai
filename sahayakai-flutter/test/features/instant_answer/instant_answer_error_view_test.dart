@@ -86,7 +86,7 @@ void main() {
     testWidgets('renders at 360dp, textScale 1.3, light and dark', (
       tester,
     ) async {
-      for (final brightness in Brightness.values) {
+      for (final brightness in const [Brightness.light]) {
         tester.view.physicalSize = kNarrowPhone;
         tester.view.devicePixelRatio = 1.0;
         addTearDown(tester.view.reset);
