@@ -14,6 +14,7 @@ import 'deliverables_controller.dart';
 import 'vidya_controller.dart';
 import 'vidya_orb_placement_controller.dart';
 import 'vidya_sheet.dart';
+import 'vidya_status_ui.dart';
 import 'widgets/vidya_orb.dart';
 
 /// The presence layer: mounts the draggable [VidyaOrb] above the app Navigator
@@ -25,7 +26,7 @@ import 'widgets/vidya_orb.dart';
 /// works and shows a green badge when a result is ready), owns the drag → snap →
 /// remember-per-hand behaviour against [VidyaOrbPlacementController], and stays
 /// out of the way where VIDYA already has a home: it is hidden on the pre-auth
-/// screens and on the voice home itself, where the [SealMic] hero is the mic.
+/// screens and on Home itself, whose hero is the orb.
 class VidyaOverlay extends StatefulWidget {
   const VidyaOverlay({super.key, required this.router});
 
@@ -85,19 +86,23 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
               deliverablesControllerProvider.select((d) => d.length),
             );
             // VIDYA is finishing a minimised generation off-screen (v3 06): the
-            // orb rides on to show its progress, even onto the voice home.
+            // orb rides on to show its progress (on Home the hero shows it).
             final bgActive =
                 ref.watch(backgroundGenerationControllerProvider) != null;
-            final hasWork = bgActive || readyCount > 0;
 
             final tab = ref.watch(shellTabControllerProvider);
             // A VIDYA sheet is up: the sheet is VIDYA, so the orb steps aside.
             final sheetOpen = ref.watch(vidyaSurfaceOpenProvider);
-            if (sheetOpen || !_visibleAt(location, signedIn, hasWork, tab)) {
+            if (sheetOpen || !_visibleAt(location, signedIn, tab)) {
               return const SizedBox.shrink();
             }
 
-            final visual = _visualFor(status, placement, readyCount, bgActive);
+            final visual = vidyaOrbVisualFor(
+              status,
+              dragging: placement.dragging,
+              readyCount: readyCount,
+              bgActive: bgActive,
+            );
 
             final media = MediaQuery.of(context);
             final screen = media.size;
@@ -180,47 +185,20 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
 
   /// The orb shows only when signed in and away from the surfaces that own their
   /// own VIDYA affordance or predate auth: splash, login, onboarding, and the
-  /// voice home — the shell's Home TAB at `/`, where the SealMic hero is the
-  /// mic. The other three tabs share `/` and show the orb: with no Create slot
-  /// in the v2 tab bar, the orb is how creation starts there. Home makes an
-  /// exception for [hasWork] (a background generation running or a ready
-  /// result), so the teacher can always see and reach VIDYA's off-screen work.
-  bool _visibleAt(String location, bool signedIn, bool hasWork, AppTab tab) {
+  /// shell's Home TAB at `/`. Home's hero IS the orb — it takes the working and
+  /// ready states and the deliver tray itself — so a parked orb there would be
+  /// a second VIDYA on one screen. The other three tabs share `/` and show the
+  /// orb: with no Create slot in the v2 tab bar, the orb is how creation starts
+  /// there.
+  bool _visibleAt(String location, bool signedIn, AppTab tab) {
     if (!signedIn) return false;
     const preAuth = {Routes.splash, Routes.login, Routes.onboarding};
     if (preAuth.contains(location)) return false;
-    if (location == Routes.home && tab == AppTab.home) return hasWork;
+    if (location == Routes.home && tab == AppTab.home) return false;
     return true;
   }
 
   // ── State mapping ────────────────────────────────────────────────────────
-
-  VidyaOrbVisual _visualFor(
-    VidyaStatus status,
-    VidyaOrbPlacement placement,
-    int readyCount,
-    bool bgActive,
-  ) {
-    if (placement.dragging) return VidyaOrbVisual.dragging;
-    switch (status) {
-      case VidyaStatus.requestingPermission:
-      case VidyaStatus.listening:
-        return VidyaOrbVisual.listening;
-      case VidyaStatus.transcribing:
-      case VidyaStatus.thinking:
-      case VidyaStatus.speaking:
-        return VidyaOrbVisual.working;
-      case VidyaStatus.idle:
-      case VidyaStatus.micDenied:
-      case VidyaStatus.signedOut:
-      case VidyaStatus.limitReached:
-      case VidyaStatus.failed:
-        // A minimised generation still running shows the working orb even while
-        // VIDYA's own turn is idle; a finished one shows the green ready badge.
-        if (bgActive) return VidyaOrbVisual.working;
-        return readyCount > 0 ? VidyaOrbVisual.ready : VidyaOrbVisual.resting;
-    }
-  }
 
   String _hintFor(BuildContext context, VidyaOrbVisual visual, VidyaStatus s) {
     final l10n = context.l10n;

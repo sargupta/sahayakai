@@ -366,6 +366,30 @@ class VidyaController extends _$VidyaController {
     }
   }
 
+  /// A typed request: voice's equal sibling. The design system's first
+  /// principle is that every request takes speech or text and the result is
+  /// the same, so a typed line runs the very same conversation turn a spoken
+  /// one does, minus capture and STT. Anything in flight is abandoned for it,
+  /// as a new mic tap would be. The language is left to detection; the UI
+  /// language still rides as the reply language.
+  Future<void> submitText(String text) async {
+    final message = text.trim();
+    if (message.isEmpty) return;
+    if (_liveActive || state.status != VidyaStatus.idle) {
+      await cancel();
+    }
+    final gen = ++_gen;
+    try {
+      await _converse(message, '', gen);
+    } on ApiException catch (e) {
+      if (_stale(gen)) return;
+      _handleError(e);
+    } catch (_) {
+      if (_stale(gen)) return;
+      _set(status: VidyaStatus.failed);
+    }
+  }
+
   /// Starts a voice interaction using the teacher's chosen engine. In `live`
   /// mode it attempts a Gemini Live session; if the flag is off OR the Live
   /// connect/mic fails, it falls through to the EXISTING turn-based `_begin()`

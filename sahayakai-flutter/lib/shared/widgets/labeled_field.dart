@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/i18n/script.dart';
 import '../../core/theme/app_theme.dart';
 
 /// LabeledField — the design system v2 field card (`Field`, `size="lg"`).
@@ -80,7 +81,7 @@ class _LabeledFieldState extends State<LabeledField> {
     final isDark = theme.brightness == Brightness.dark;
     final type = AppTypeTokens.of(context);
 
-    final indicLabel = _isIndic(widget.label);
+    final indicLabel = isIndicText(widget.label);
     final eyebrow = AppTextExtras.of(context).overline;
     final labelStyle = indicLabel
         ? eyebrow.copyWith(fontSize: 12, height: 1.5, letterSpacing: 0)
@@ -258,7 +259,3 @@ class _BorderlessInput extends StatelessWidget {
     );
   }
 }
-
-/// True when [s] carries any character beyond Latin Extended (an Indic
-/// script, in this app) — such labels are never uppercased or tracked.
-bool _isIndic(String s) => s.runes.any((r) => r > 0x24F);
