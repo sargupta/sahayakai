@@ -15,6 +15,7 @@ import 'package:sahayakai/features/assess_assignment/presentation/widgets/assess
 import 'package:sahayakai/shared/media/image_input.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../support/field_finders.dart';
 import 'assess_assignment_fixtures.dart';
 
 /// Screen-layer gates: the required-image validation the endpoint depends on,
@@ -202,7 +203,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Hidden by default (full mode).
-      expect(find.text('Corrected transcript'), findsNothing);
+      expect(findFieldLabel('Corrected transcript'), findsNothing);
 
       final scoreChip = find.widgetWithText(ChoiceChip, 'Score a transcript');
       await tester.ensureVisible(scoreChip);
@@ -210,14 +211,14 @@ void main() {
       await tester.pumpAndSettle();
 
       // Now revealed.
-      expect(find.text('Corrected transcript'), findsOneWidget);
+      expect(findFieldLabel('Corrected transcript'), findsOneWidget);
 
       // Switching back to Read only hides it again.
       final readChip = find.widgetWithText(ChoiceChip, 'Read only');
       await tester.ensureVisible(readChip);
       await tester.tap(readChip);
       await tester.pumpAndSettle();
-      expect(find.text('Corrected transcript'), findsNothing);
+      expect(findFieldLabel('Corrected transcript'), findsNothing);
     });
   });
 
@@ -237,7 +238,7 @@ void main() {
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
 
-            expect(find.text('Student work photo'), findsOneWidget);
+            expect(findFieldLabel('Student work photo'), findsOneWidget);
             expect(find.text('Take photo'), findsOneWidget);
             expect(find.text('Assess'), findsOneWidget);
           },

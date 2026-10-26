@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/app_locale.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
@@ -206,7 +205,6 @@ class _VideoStorytellerScreenState
     return LabeledField(
       label: l10n.videoStorytellerTopicLabel,
       optionalLabel: l10n.videoStorytellerOptional,
-      leadingIcon: LucideIcons.search,
       trailing: InlineFieldMic(
         expectedLanguage: _language.code,
         onResult: (text) => _topicController.text = text,
@@ -225,7 +223,6 @@ class _VideoStorytellerScreenState
     return LabeledField(
       label: l10n.videoStorytellerSubjectLabel,
       optionalLabel: l10n.videoStorytellerOptional,
-      leadingIcon: LucideIcons.bookOpen,
       child: DropdownButtonFormField<String?>(
         initialValue: _subject,
         isExpanded: true,
@@ -246,7 +243,6 @@ class _VideoStorytellerScreenState
     return LabeledField(
       label: l10n.videoStorytellerGradeLabel,
       optionalLabel: l10n.videoStorytellerOptional,
-      leadingIcon: LucideIcons.graduationCap,
       child: DropdownButtonFormField<String?>(
         initialValue: _grade,
         isExpanded: true,
@@ -266,7 +262,6 @@ class _VideoStorytellerScreenState
   Widget _languageField(AppLocalizations l10n) {
     return LabeledField(
       label: l10n.languageLabel,
-      leadingIcon: LucideIcons.languages,
       child: DropdownButtonFormField<AppLocale>(
         initialValue: _language,
         isExpanded: true,

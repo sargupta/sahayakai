@@ -7,16 +7,20 @@ import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/network/api_providers.dart';
 import 'package:sahayakai/core/router/routes.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
-import 'package:sahayakai/features/dashboard/presentation/floating_bottom_nav.dart';
+import 'package:sahayakai/features/attendance/domain/attendance_record.dart';
+import 'package:sahayakai/features/attendance/presentation/attendance_providers.dart';
+import 'package:sahayakai/features/dashboard/presentation/app_tab_bar.dart';
 import 'package:sahayakai/features/vidya/data/dto/vidya_action.dart';
 import 'package:sahayakai/features/vidya/presentation/vidya_controller.dart';
 import 'package:sahayakai/features/vidya/presentation/vidya_home_screen.dart';
 import 'package:sahayakai/features/vidya/presentation/widgets/seal_mic.dart';
+import 'package:sahayakai/features/vidya/presentation/widgets/vidya_orb.dart';
 import 'package:sahayakai/shared/voice/audio_player_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/fake_api_client.dart';
 import '../../support/fake_voice.dart';
+import '../../support/home_day_fixtures.dart';
 
 /// U-V5 — the VIDYA home. Rendered with a fixed-state fake controller so each
 /// phase is asserted in isolation (the machine itself is covered by
@@ -47,6 +51,13 @@ class _FakeVidyaController extends VidyaController {
   @override
   Future<void> restoreSession() async {}
 
+  // Tracked so a test can prove the type bar reaches the controller.
+  final List<String> submitted = <String>[];
+  @override
+  Future<void> submitText(String text) async {
+    submitted.add(text);
+  }
+
   // U9: tracked (not just inert) so a test can prove the app-bar "Clear
   // conversation" action really reaches the controller.
   bool clearConversationCalled = false;
@@ -64,6 +75,8 @@ Future<void> _pumpHome(
   Locale locale = const Locale('en'),
   double textScale = 1.0,
   Size surface = const Size(390, 844),
+  List<Override> overrides = const [],
+  _FakeVidyaController? controller,
 }) async {
   tester.view.physicalSize = surface;
   tester.view.devicePixelRatio = 1.0;
@@ -79,11 +92,14 @@ Future<void> _pumpHome(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        vidyaControllerProvider.overrideWith(() => _FakeVidyaController(state)),
+        vidyaControllerProvider.overrideWith(
+          () => controller ?? _FakeVidyaController(state),
+        ),
         // The home speaks a mother-tongue greeting on load; fake the TTS stack so
         // it never reaches the network (or leaves a pending timer under motion).
         apiClientProvider.overrideWithValue(FakeApiClient()),
         audioPlayerServiceProvider.overrideWithValue(FakeAudioPlayerService()),
+        ...overrides,
       ],
       child: MaterialApp(
         theme: brightness == Brightness.dark
@@ -124,6 +140,7 @@ Future<void> _pumpHomeWithRouter(
   WidgetTester tester,
   VidyaState state, {
   Locale locale = const Locale('en'),
+  List<Override> overrides = const [],
 }) async {
   // Same reduce-motion default as [_pumpHome]: without it the idle seal's
   // breathing animation and the rotating prompt's timer never settle, and
@@ -144,6 +161,19 @@ Future<void> _pumpHomeWithRouter(
         path: Routes.lessonPlan,
         builder: (_, _) => const _DestMarker('lesson-plan'),
       ),
+      GoRoute(
+        path: Routes.prepDesk,
+        builder: (_, _) => const _DestMarker('prep-desk'),
+      ),
+      GoRoute(
+        path: Routes.parentHotline,
+        builder: (_, _) => const _DestMarker('parent-hotline'),
+      ),
+      GoRoute(
+        path: Routes.attendanceMarkPattern,
+        builder: (_, state) =>
+            _DestMarker('mark-${state.pathParameters['classId']}'),
+      ),
     ],
   );
 
@@ -155,6 +185,7 @@ Future<void> _pumpHomeWithRouter(
         // it never reaches the network (or leaves a pending timer under motion).
         apiClientProvider.overrideWithValue(FakeApiClient()),
         audioPlayerServiceProvider.overrideWithValue(FakeAudioPlayerService()),
+        ...overrides,
       ],
       child: MaterialApp.router(
         routerConfig: router,
@@ -183,28 +214,26 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
-  group('the nearly-empty first canvas', () {
-    testWidgets('renders the Seal Mic, a time-aware greeting, and a prompt', (
-      tester,
-    ) async {
+  group('the idle Home: voice-first, on the teacher\'s day', () {
+    testWidgets('renders the greeting, the day, the card of things to say, '
+        'the hero orb and the type bar', (tester) async {
       await _pumpHome(tester, const VidyaState());
       await tester.pumpAndSettle();
 
-      expect(find.byType(SealMic), findsOneWidget);
-      expect(find.byIcon(LucideIcons.mic), findsOneWidget);
-      expect(find.text(_expectedGreeting()), findsOneWidget);
-      // The deck and the idle caption + first (static) rotating prompt.
-      expect(
-        find.text('Speak in your language, and I will prepare the work.'),
-        findsOneWidget,
-      );
+      // The day headline (its states are covered in the 'the day' group).
+      expect(find.byKey(const ValueKey('home-day-headline')), findsOneWidget);
+      expect(find.text('SAY IT, I’LL OPEN IT'), findsOneWidget);
+      // The orb is the hero: one sphere, no glyph, the idle caption under it.
+      expect(find.byKey(const ValueKey('home-orb')), findsOneWidget);
+      expect(find.byType(VidyaOrb), findsOneWidget);
       expect(find.text('Tap to speak'), findsOneWidget);
-      expect(find.text('Ask me to plan a lesson'), findsOneWidget);
-      // The Prep desk is one tap away.
-      expect(find.byIcon(LucideIcons.layoutGrid), findsOneWidget);
-      // U-SI2 — the Network hub entry sits in the app bar next to the messages
-      // entry.
-      expect(find.byIcon(LucideIcons.network), findsOneWidget);
+      // The type bar, voice's equal sibling.
+      expect(find.byKey(const ValueKey('home-composer')), findsOneWidget);
+      // The Prep desk is one tap away from the card.
+      expect(find.byKey(const ValueKey('home-all-tools')), findsOneWidget);
+      // Idle Home has no app bar: Network and Messages live in Community.
+      expect(find.byType(AppBar), findsNothing);
+      expect(find.byIcon(LucideIcons.network), findsNothing);
     });
 
     testWidgets('reduce-motion is a static frame (pumpAndSettle returns)', (
@@ -213,17 +242,32 @@ void main() {
       await _pumpHome(tester, const VidyaState());
       await tester.pumpAndSettle();
       expect(tester.binding.transientCallbackCount, 0);
-      expect(find.byType(SealMic), findsOneWidget);
+      expect(find.byKey(const ValueKey('home-orb')), findsOneWidget);
     });
 
-    testWidgets('under motion the seal breathes and the page still builds', (
+    testWidgets('under motion the orb floats and the page still builds', (
       tester,
     ) async {
       await _pumpHome(tester, const VidyaState(), reduceMotion: false);
-      // The Seal Mic ticks its breathing controller; do not settle (infinite).
+      // The orb ticks its float; do not settle (infinite).
       expect(tester.binding.transientCallbackCount, greaterThan(0));
-      expect(find.byType(SealMic), findsOneWidget);
-      expect(find.text(_expectedGreeting()), findsOneWidget);
+      expect(find.byKey(const ValueKey('home-orb')), findsOneWidget);
+      expect(find.byKey(const ValueKey('home-day-headline')), findsOneWidget);
+    });
+
+    testWidgets('a typed line goes to VIDYA as a typed turn', (tester) async {
+      final fake = _FakeVidyaController(const VidyaState());
+      await _pumpHome(tester, const VidyaState(), controller: fake);
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(const ValueKey('home-composer')),
+        'Class 7 ke liye fractions ka lesson',
+      );
+      await tester.testTextInput.receiveAction(TextInputAction.send);
+      await tester.pump();
+
+      expect(fake.submitted, ['Class 7 ke liye fractions ka lesson']);
     });
   });
 
@@ -293,8 +337,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Sign in to talk to VIDYA'), findsOneWidget);
-      // The mic is present-but-inert, never a crash.
-      expect(find.byType(SealMic), findsOneWidget);
+      // The orb is present-but-inert, never a crash.
+      expect(find.byKey(const ValueKey('home-orb')), findsOneWidget);
     });
 
     testWidgets(
@@ -340,110 +384,135 @@ void main() {
     });
   });
 
-  group('DP-1: the hero badge', () {
-    testWidgets('renders the AI co-teaching badge above the eyebrow', (
+  group('the day: real counts, or none', () {
+    testWidgets('the headline counts what is waiting; every row is real', (
       tester,
     ) async {
-      await _pumpHome(tester, const VidyaState());
+      await _pumpHome(
+        tester,
+        const VidyaState(),
+        overrides: sampleDayOverrides(),
+      );
       await tester.pumpAndSettle();
 
-      expect(find.text('Your AI co-teaching assistant'), findsOneWidget);
-      // In the idle state (no confirm chips) the sparkles glyph belongs to
-      // the badge alone.
-      expect(find.byIcon(LucideIcons.sparkles), findsOneWidget);
-      // The existing eyebrow still renders below it (EditorialSectionHeader
-      // upper-cases Latin text; unlike the badge, which does not).
-      expect(find.text('YOUR CO-TEACHER'), findsOneWidget);
+      expect(find.text('2 things waiting today'), findsOneWidget);
+      expect(find.text('Class 7 Maths · Class 5 EVS'), findsOneWidget);
+      expect(
+        find.text('“Call the parents of 4 absentees in Class 7 Maths”'),
+        findsOneWidget,
+      );
+      expect(find.text('“Take attendance for Class 5 EVS”'), findsOneWidget);
+      // Examples are for an empty day only, never mixed with real items.
+      expect(find.text('“A lesson plan for my next class”'), findsNothing);
+    });
+
+    testWidgets('a register that cannot be read makes no count claim', (
+      tester,
+    ) async {
+      await _pumpHome(
+        tester,
+        const VidyaState(),
+        overrides: [
+          attendanceClassesProvider.overrideWith(
+            (ref) async => const [sampleClass7, sampleClass5],
+          ),
+          dailyRegisterProvider.overrideWith((ref, key) async {
+            if (key.classId == 'c5') throw StateError('offline');
+            return sampleClass7Register(key.date);
+          }),
+        ],
+      );
+      await tester.pumpAndSettle();
+
+      // Class 5 was never read, so "1 thing waiting" would be a guess.
+      expect(find.textContaining('waiting today'), findsNothing);
+      expect(find.text(_expectedGreeting()), findsOneWidget);
+      // What WAS read still shows.
+      expect(
+        find.text('“Call the parents of 4 absentees in Class 7 Maths”'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('a clear day says so and offers examples, not facts', (
+      tester,
+    ) async {
+      await _pumpHome(
+        tester,
+        const VidyaState(),
+        overrides: [
+          attendanceClassesProvider.overrideWith(
+            (ref) async => const [sampleClass5],
+          ),
+          dailyRegisterProvider.overrideWith(
+            (ref, key) async => DailyAttendance(
+              classId: key.classId,
+              date: key.date,
+              statuses: const {'s1': AttendanceStatus.present},
+            ),
+          ),
+        ],
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Nothing waiting today'), findsOneWidget);
+      expect(find.text('“A lesson plan for my next class”'), findsOneWidget);
+      expect(
+        find.text('“A ten-question quiz on today’s topic”'),
+        findsOneWidget,
+      );
+      expect(find.text('“Explain a hard idea simply”'), findsOneWidget);
     });
   });
 
-  group('DP-1: Quick Tools preview (idle canvas only)', () {
-    testWidgets('previews the first two registry tools below the mic', (
+  group('the card of things to say', () {
+    testWidgets('a row opens its tool: an unmarked class opens its register', (
       tester,
     ) async {
-      await _pumpHome(tester, const VidyaState());
+      await _pumpHomeWithRouter(
+        tester,
+        const VidyaState(),
+        overrides: sampleDayOverrides(),
+      );
+
+      await tester.tap(find.text('“Take attendance for Class 5 EVS”'));
       await tester.pumpAndSettle();
 
-      // EditorialSectionHeader upper-cases Latin eyebrow text.
-      expect(find.text('YOUR TEACHING TOOLS'), findsOneWidget);
-      expect(find.text('Lesson Plan'), findsOneWidget);
-      expect(find.text('Quiz'), findsOneWidget);
-      // Floored at 2 (one row), not the full registry — the rest stay one
-      // tap away at the Prep desk. See the DESIGN_PARITY_BLOCK DP-1 fix:
-      // even a 2nd row measured below the floating bottom nav's top edge in
-      // the real-geometry regression test, so the preview stops at one row.
-      expect(find.text('Instant Answer'), findsNothing);
-      expect(find.text('Worksheet'), findsNothing);
+      expect(find.byKey(const Key('dest-mark-c5')), findsOneWidget);
     });
 
-    testWidgets(
-      'Quick Tools tiles clear the floating bottom nav on first paint',
-      (tester) async {
-        // Regression test for the DP-1 design review finding: the bare
-        // _pumpHome harness has no AppShell/FloatingBottomNav, so it could not
-        // catch a tile being sliced off by the real nav bar. This wraps the
-        // home in the same Scaffold+FloatingBottomNav shape AppShell gives it.
-        tester.view.physicalSize = const Size(390, 844);
-        tester.view.devicePixelRatio = 1.0;
-        addTearDown(tester.view.reset);
-        tester.platformDispatcher.accessibilityFeaturesTestValue =
-            const FakeAccessibilityFeatures(disableAnimations: true);
-        addTearDown(
-          tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
-        );
+    testWidgets('absentees open the parent calls', (tester) async {
+      await _pumpHomeWithRouter(
+        tester,
+        const VidyaState(),
+        overrides: sampleDayOverrides(),
+      );
 
-        await tester.pumpWidget(
-          ProviderScope(
-            overrides: [
-              vidyaControllerProvider.overrideWith(
-                () => _FakeVidyaController(const VidyaState()),
-              ),
-            ],
-            child: MaterialApp(
-              theme: AppTheme.light(),
-              localizationsDelegates: AppLocalizations.localizationsDelegates,
-              supportedLocales: AppLocalizations.supportedLocales,
-              home: Scaffold(
-                body: const VidyaHomeScreen(),
-                bottomNavigationBar: FloatingBottomNav(
-                  currentIndex: 0,
-                  onSelected: (_) {},
-                  items: const [
-                    FloatingNavItem(icon: LucideIcons.mic, label: 'Home'),
-                    FloatingNavItem(
-                      icon: LucideIcons.sparkles,
-                      label: 'Create',
-                      isAction: true,
-                    ),
-                    FloatingNavItem(
-                      icon: LucideIcons.library,
-                      label: 'Library',
-                    ),
-                    FloatingNavItem(icon: LucideIcons.user, label: 'Me'),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
+      await tester.tap(
+        find.text('“Call the parents of 4 absentees in Class 7 Maths”'),
+      );
+      await tester.pumpAndSettle();
 
-        // The last preview tile (the 2nd, at _quickToolsCount) must sit fully
-        // above the floating nav's top edge, unscrolled — not merely present
-        // in the tree (a bare find.text would pass even half-clipped).
-        final lastTile = find.byKey(const ValueKey('quick-tool-quiz'));
-        expect(lastTile, findsOneWidget);
-        final navTop = tester.getTopLeft(find.byType(FloatingBottomNav)).dy;
-        final tileBottom = tester.getBottomLeft(lastTile).dy;
-        expect(
-          tileBottom,
-          lessThanOrEqualTo(navTop),
-          reason:
-              'the last Quick Tools tile must clear the floating bottom '
-              'nav on first paint, unscrolled',
-        );
-      },
-    );
+      expect(find.byKey(const Key('dest-parent-hotline')), findsOneWidget);
+    });
+
+    testWidgets('an example opens its tool', (tester) async {
+      await _pumpHomeWithRouter(tester, const VidyaState());
+
+      await tester.tap(find.text('“A lesson plan for my next class”'));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('dest-lesson-plan')), findsOneWidget);
+    });
+
+    testWidgets('"Prep desk" opens the tools grid', (tester) async {
+      await _pumpHomeWithRouter(tester, const VidyaState());
+
+      await tester.tap(find.byKey(const ValueKey('home-all-tools')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('dest-prep-desk')), findsOneWidget);
+    });
 
     testWidgets('never appears once a conversation is active', (tester) async {
       await _pumpHome(
@@ -459,22 +528,66 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // The Quick Tools preview is an idle-canvas affordance only — once a
-      // turn lands, the transcript is the page and the tool grid stays a
-      // Prep-desk tap away, not a second copy inline.
-      expect(find.text('YOUR TEACHING TOOLS'), findsNothing);
+      // Once a turn lands, the transcript is the page.
+      expect(find.text('SAY IT, I’LL OPEN IT'), findsNothing);
+      expect(find.byKey(const ValueKey('home-composer')), findsNothing);
     });
 
-    testWidgets('tapping a tile pushes the tool\'s real route', (tester) async {
-      await _pumpHomeWithRouter(tester, const VidyaState());
+    testWidgets('the type bar clears the tab bar on first paint', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(360, 760);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      tester.platformDispatcher.accessibilityFeaturesTestValue =
+          const FakeAccessibilityFeatures(disableAnimations: true);
+      addTearDown(
+        tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+      );
 
-      final tile = find.text('Lesson Plan');
-      await tester.ensureVisible(tile);
-      await tester.pumpAndSettle();
-      await tester.tap(tile);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            vidyaControllerProvider.overrideWith(
+              () => _FakeVidyaController(const VidyaState()),
+            ),
+            apiClientProvider.overrideWithValue(FakeApiClient()),
+            audioPlayerServiceProvider.overrideWithValue(
+              FakeAudioPlayerService(),
+            ),
+            ...sampleDayOverrides(),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.light(),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: const VidyaHomeScreen(),
+              bottomNavigationBar: AppTabBar(
+                current: AppTab.home,
+                onSelected: (_) {},
+                labels: const {
+                  AppTab.home: 'Home',
+                  AppTab.library: 'Library',
+                  AppTab.community: 'Community',
+                  AppTab.profile: 'Me',
+                },
+              ),
+            ),
+          ),
+        ),
+      );
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('dest-lesson-plan')), findsOneWidget);
+      final barTop = tester.getTopLeft(find.byType(AppTabBar)).dy;
+      final composer = find.byKey(const ValueKey('home-composer'));
+      expect(tester.getBottomLeft(composer).dy, lessThanOrEqualTo(barTop));
+      // The orb and the card are on the first screen, unscrolled.
+      expect(
+        tester.getBottomLeft(find.byKey(const ValueKey('home-orb'))).dy,
+        lessThanOrEqualTo(barTop),
+      );
+      expect(tester.takeException(), isNull);
     });
   });
 

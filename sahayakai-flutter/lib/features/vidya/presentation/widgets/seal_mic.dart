@@ -13,8 +13,8 @@ import '../../../../shared/widgets/press_scale.dart';
 enum SealMicState { idle, listening, transcribing, thinking, speaking }
 
 /// The Seal Mic — the app's authored signature control (PREMIUM_DESIGN_SPEC
-/// §B.2). A circular saffron orb (`scheme.primary` face — #E0924D light /
-/// #EB9447 dark — with an `onPrimary` rim + Lucide mic glyph, lifted on the warm
+/// §B.2). A circular saffron orb (`scheme.primary` face — saffron-500 #C96A28
+/// light / #EB9447 dark — with an `onPrimary` rim + Lucide mic glyph, lifted on the warm
 /// saffron glow), matching the production web mic (`from-primary` fill,
 /// `primary-foreground` glyph). The glyph/rim flip with the theme: WHITE in
 /// light, DARK #0F1729 on the saffron in dark (production `.dark`
@@ -158,8 +158,8 @@ class _SealMicState extends State<SealMic>
                   height: disc,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    // Saffron fill flips with the theme (#E0924D light / #EB9447
-                    // dark) — production `from-primary`.
+                    // Saffron fill flips with the theme (saffron-500 #C96A28
+                    // light / #EB9447 dark).
                     color: scheme.primary,
                     // Rim matches the glyph (production `primary-foreground`):
                     // white in light, dark #0F1729 on the saffron in dark.

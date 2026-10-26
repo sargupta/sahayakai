@@ -12,6 +12,7 @@ import 'package:sahayakai/features/quiz_generator/presentation/quiz_generator_sc
 import 'package:sahayakai/features/quiz_generator/presentation/widgets/quiz_result_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../support/field_finders.dart';
 import 'quiz_fixtures.dart';
 
 /// Form-layer gates: the chips, dropdowns and stepper are the overflow-prone
@@ -63,11 +64,11 @@ void main() {
             expect(tester.takeException(), isNull);
 
             // Every field is laid out, including the wrapping chip groups.
-            expect(find.text('Topic'), findsOneWidget);
-            expect(find.text('Number of questions'), findsOneWidget);
-            expect(find.text('Question types'), findsOneWidget);
+            expect(findFieldLabel('Topic'), findsOneWidget);
+            expect(findFieldLabel('Number of questions'), findsOneWidget);
+            expect(findFieldLabel('Question types'), findsOneWidget);
             expect(find.text('All levels'), findsOneWidget);
-            expect(find.text('Thinking skills'), findsOneWidget);
+            expect(findFieldLabel('Thinking skills'), findsOneWidget);
           },
         );
       }

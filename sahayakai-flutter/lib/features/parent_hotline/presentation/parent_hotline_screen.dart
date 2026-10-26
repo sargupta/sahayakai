@@ -27,7 +27,6 @@ import '../../../shared/widgets/secondary_button.dart';
 import '../../attendance/data/attendance_errors.dart';
 import '../../notifications/data/notifications_store.dart';
 import '../../notifications/domain/teacher_notification.dart';
-import '../../vidya/presentation/vidya_sheet.dart';
 import '../domain/hotline_student.dart';
 import '../domain/parent_outreach.dart';
 import 'hotline_roster_provider.dart';
@@ -370,7 +369,6 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
         if (classes.length > 1) ...[
           LabeledField(
             label: l10n.parentHotlineClassLabel,
-            leadingIcon: LucideIcons.users,
             child: _ClassPicker(
               classes: classes,
               value: selectedClassId,
@@ -539,7 +537,6 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
         LabeledField(
           label: l10n.parentHotlineNoteLabel,
           optionalLabel: l10n.parentMessageOptional,
-          leadingIcon: LucideIcons.stickyNote,
           child: TextFormField(
             controller: _noteController,
             maxLines: 4,
@@ -927,7 +924,6 @@ class _ParentHotlineScreenState extends ConsumerState<ParentHotlineScreen> {
     final text = Theme.of(context).textTheme;
     final drafted = state.draftedMessage?.trim() ?? '';
     return AppCard(
-      accentBar: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -1045,7 +1041,6 @@ class _ToolFooterScaffold extends StatelessWidget {
       resizeToAvoidBottomInset: true,
       appBar: GlassAppBar(
         title: Text(title),
-        actions: const [VidyaAppBarAction()],
       ),
       body: SafeArea(
         child: SingleChildScrollView(

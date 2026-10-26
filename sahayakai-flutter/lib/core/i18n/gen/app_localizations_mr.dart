@@ -21,6 +21,9 @@ class AppLocalizationsMr extends AppLocalizations {
   String get navLibrary => 'ग्रंथालय';
 
   @override
+  String get navCommunity => 'समुदाय';
+
+  @override
   String get navProfile => 'प्रोफाइल';
 
   @override
@@ -3956,4 +3959,86 @@ class AppLocalizationsMr extends AppLocalizations {
   String attendanceVoiceMarked(int count) {
     return '$count नावे नोंदवली.';
   }
+
+  @override
+  String get homeSayItTitle => 'बोला, मी उघडते';
+
+  @override
+  String homeDayWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'आज $count कामे बाकी आहेत',
+      one: 'आज 1 काम बाकी आहे',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeDayClear => 'आज काहीही बाकी नाही';
+
+  @override
+  String homeSayCallAbsentees(int count, String className) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '“$className मधील $count गैरहजर विद्यार्थ्यांच्या पालकांना call करा”',
+      one: '“$className मधील 1 गैरहजर विद्यार्थ्याच्या पालकांना call करा”',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeSayTakeAttendance(String className) {
+    return '“$className ची हजेरी घ्या”';
+  }
+
+  @override
+  String homeSayOpenReady(String title) {
+    return '“$title उघडा”';
+  }
+
+  @override
+  String get homeSayLessonExample => '“पुढच्या class साठी lesson plan”';
+
+  @override
+  String get homeSayQuizExample => '“आजच्या topic वर दहा प्रश्नांची quiz”';
+
+  @override
+  String get homeSayAnswerExample => '“अवघड गोष्ट सोप्या भाषेत समजावून सांगा”';
+
+  @override
+  String get homeActionCall => 'कॉल';
+
+  @override
+  String get homeActionMark => 'हजेरी';
+
+  @override
+  String get homeActionMake => 'तयार करा';
+
+  @override
+  String get homeActionAsk => 'विचारा';
+
+  @override
+  String get homeStatusUrgent => 'तातडीचे';
+
+  @override
+  String get homeStatusToDo => 'करायचे';
+
+  @override
+  String get homeStatusReady => 'तयार';
+
+  @override
+  String get homeStatusIdea => 'सूचना';
+
+  @override
+  String get homeComposerHint =>
+      'VIDYA ला विचारा, किंवा तुम्हाला काय हवे ते लिहा…';
+
+  @override
+  String get homeOrbHint => 'बोलण्यासाठी orb वर टॅप करा, किंवा खाली लिहा';
+
+  @override
+  String get homeComposerLabel => 'तुम्हाला काय हवे ते लिहा';
 }

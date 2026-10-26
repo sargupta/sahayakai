@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/router/routes.dart';
 import 'package:sahayakai/features/dashboard/presentation/app_shell.dart';
-import 'package:sahayakai/features/dashboard/presentation/floating_bottom_nav.dart';
 import 'package:sahayakai/features/lesson_planner/presentation/lesson_plan_screen.dart';
 import 'package:sahayakai/shared/domain/tool_registry.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,8 +12,9 @@ import '../onboarding/onboarding_fixtures.dart';
 /// P1.8 — the Create (command) palette.
 ///
 /// The palette is reached the way a teacher reaches it: by booting the real app
-/// onto the signed-in shell and tapping the Create action, so the sheet, the
-/// search, the deep links and the shared registry are all asserted end to end.
+/// onto the signed-in shell, opening the Prep desk and tapping its search
+/// action, so the sheet, the search, the deep links and the shared registry
+/// are all asserted end to end.
 ///
 /// The shell's tab body stays mounted behind the modal sheet, so tool names
 /// visible there collide with the palette's own rows. Every palette-scoped
@@ -53,34 +52,26 @@ const Set<String> _expectedIds = {
 
 Key _rowKey(String id) => ValueKey('create-palette-$id');
 
-/// The shell's Create action, scoped to the bottom nav bar.
+/// The palette's entry: the Prep desk (the tools grid, opened from the link on
+/// Home's card of things to say), then its search action.
 ///
-/// The sparkles glyph is NOT unique on screen. The VIDYA home behind the shell
-/// wears one in its hero badge, so a bare `find.byIcon` is ambiguous and `tap`
-/// refuses it — which is how 13 cases in this file came to fail at once.
-///
-/// It is not the only other one, either: Me renders a sparkles in its plan
-/// badge when the plan is paid, and Me is permanently mounted in the shell's
-/// IndexedStack. Today's fixture is on a free plan, so there are two on screen
-/// rather than three — a paid-plan fixture would add a third, which is further
-/// reason not to depend on the count.
-///
-/// Scoping by the [FloatingBottomNav] ancestor is the durable fix: the nav owns
-/// exactly one sparkles slot (Home/Create/Library/Me are
-/// mic/sparkles/library/user), and it survives any restyle of either badge,
-/// unlike a finder keyed on the icon's size or colour. It is also
-/// locale-independent, which the Indic probes below require — the slot's
-/// [Semantics] label is the translated `navCreate` string, so a label-based
-/// finder would pass in English and fail under bn/ta/ml.
-final Finder _createAction = find.descendant(
-  of: find.byType(FloatingBottomNav),
-  matching: find.byIcon(LucideIcons.sparkles),
-);
+/// The palette used to open from a Create slot in the bottom bar. Design
+/// system v2 draws four tabs and never five, and moves creation to VIDYA, so
+/// the palette moved to the tools grid it searches. Both finders are keyed, so
+/// they are locale-independent — the Indic probes below need that, since every
+/// label here is translated.
+final Finder _prepDesk = find.byKey(const ValueKey('home-all-tools'));
+final Finder _searchAction = find.byKey(const ValueKey('prep-desk-search'));
 
-/// Opens the palette from the shell's Create action.
+/// Opens the palette from the Prep desk's search action.
 Future<void> _openPalette(WidgetTester tester) async {
-  expect(_createAction, findsOneWidget, reason: 'nav Create action');
-  await tester.tap(_createAction);
+  expect(_prepDesk, findsOneWidget, reason: 'Home card Prep desk link');
+  await tester.ensureVisible(_prepDesk);
+  await tester.pumpAndSettle();
+  await tester.tap(_prepDesk);
+  await tester.pumpAndSettle();
+  expect(_searchAction, findsOneWidget, reason: 'Prep desk search action');
+  await tester.tap(_searchAction);
   await tester.pumpAndSettle();
 }
 
@@ -194,7 +185,7 @@ void main() {
   });
 
   group('opening', () {
-    testWidgets('the Create action opens the palette over the shell', (
+    testWidgets('the Prep desk search action opens the palette', (
       tester,
     ) async {
       await pumpSignedInApp(tester);

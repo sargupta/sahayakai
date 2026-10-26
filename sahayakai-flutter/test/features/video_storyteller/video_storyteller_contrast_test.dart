@@ -47,12 +47,12 @@ void main() {
         greaterThanOrEqualTo(4.5),
         reason: 'muted meta must clear AA on the white card fill',
       );
-      // The exact trap the rule guards against: the same role on a
-      // surfaceContainer tint is BELOW the floor, so the meta must stay on the
-      // white card surface, never a tint.
+      // Pre-v2 the slate muted role fell below the floor on a surfaceContainer
+      // tint; v2's body ink (ink-600) clears it there too, so the meta holds
+      // AA on either fill.
       expect(
         _ratio(AppColors.lMutedForeground, AppColors.lMuted),
-        lessThan(4.5),
+        greaterThanOrEqualTo(4.5),
       );
     });
 

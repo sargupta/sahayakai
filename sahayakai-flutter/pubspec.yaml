@@ -207,18 +207,24 @@ flutter:
   # Variable fonts (one file per family, all weights on the wght axis). Google
   # Fonts no longer ships static instances for these families — ofl/*/static/
   # returns 404 — so this is not a preference, it is what upstream publishes.
-  # 5.8MB total across 11 families, on a ~30MB release APK.
+  # ~5.6MB total across 11 families, on a ~30MB release APK.
+  #
+  # Design system v2: Bricolage Grotesque (display; wght 200-800 plus an
+  # opsz axis that AppText sets to the font size) and Instrument Sans (UI;
+  # wght 400-700) replace Outfit and Inter. The files are the design
+  # system's own (`project/fonts` in the published artifact). Licences:
+  # assets/fonts/OFL.txt.
   #
   # Noto SERIF Indic is deliberately absent: kIndicSerifFallback was exported
   # but never consumed as a fontFamilyFallback anywhere, so bundling 9 more
   # families would have doubled the Indic payload to render exactly nothing.
   fonts:
-    - family: Outfit
+    - family: Bricolage Grotesque
       fonts:
-        - asset: assets/fonts/Outfit-Variable.ttf
-    - family: Inter
+        - asset: assets/fonts/BricolageGrotesque-Variable.ttf
+    - family: Instrument Sans
       fonts:
-        - asset: assets/fonts/Inter-Variable.ttf
+        - asset: assets/fonts/InstrumentSans-Variable.ttf
     - family: Noto Sans Devanagari
       fonts:
         - asset: assets/fonts/NotoSansDevanagari-Variable.ttf

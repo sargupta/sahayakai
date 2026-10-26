@@ -111,14 +111,14 @@ describe('updateProfileAction — prereq enforcement', () => {
         expect(updateUserMock).not.toHaveBeenCalled();
     });
 
-    it('rejects onboardingPhase=completed without preferredLanguage', async () => {
+    it('rejects onboardingPhase=done without preferredLanguage', async () => {
         mockHeadersMap.set('x-user-id', 'u1');
         mockExistingProfile = {
             displayName: 'A', state: 'KA', schoolName: 'KV',
             subjects: ['Math'], gradeLevels: ['Class 8'],
         };
         await expect(
-            updateProfileAction('u1', { onboardingPhase: 'completed' }),
+            updateProfileAction('u1', { onboardingPhase: 'done' }),
         ).rejects.toThrow(/preferredLanguage/);
     });
 
@@ -182,7 +182,7 @@ describe('updateProfileAction — completion + onboardingCompleted', () => {
         expect(written.profileCompletionLevel).toBeGreaterThan(0);
     });
 
-    it('stamps onboardingCompleted=true only when phase=completed and score≥threshold', async () => {
+    it('stamps onboardingCompleted=true only when phase=done and score≥threshold', async () => {
         mockHeadersMap.set('x-user-id', 'u1');
         mockExistingProfile = {
             displayName: 'Anita', state: 'Karnataka', schoolName: 'KV',
@@ -190,10 +190,24 @@ describe('updateProfileAction — completion + onboardingCompleted', () => {
             preferredLanguage: 'Hindi', educationBoard: 'CBSE',
             phoneNumber: '+919876543210',
         };
-        await updateProfileAction('u1', { onboardingPhase: 'completed' });
+        await updateProfileAction('u1', { onboardingPhase: 'done' });
         const [, written] = updateUserMock.mock.calls[0] as [string, Record<string, any>];
         expect(written.onboardingCompleted).toBe(true);
         expect(written.onboardingCompletedAt).toBeInstanceOf(Date);
         expect(written.profileCompletionLevel).toBeGreaterThanOrEqual(PROFILE_COMPLETE_THRESHOLD);
+    });
+
+    it("a stale cached client sending legacy 'completed' is stored as 'done' and stamped", async () => {
+        mockHeadersMap.set('x-user-id', 'u1');
+        mockExistingProfile = {
+            displayName: 'Anita', state: 'Karnataka', schoolName: 'KV',
+            subjects: ['Math'], gradeLevels: ['Class 8'],
+            preferredLanguage: 'Hindi', educationBoard: 'CBSE',
+            phoneNumber: '+919876543210',
+        };
+        await updateProfileAction('u1', { onboardingPhase: 'completed' } as any);
+        const [, written] = updateUserMock.mock.calls[0] as [string, Record<string, any>];
+        expect(written.onboardingPhase).toBe('done');
+        expect(written.onboardingCompleted).toBe(true);
     });
 });

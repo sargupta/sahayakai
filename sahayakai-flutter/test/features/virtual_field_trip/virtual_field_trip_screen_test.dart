@@ -20,6 +20,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/app_harness.dart';
 import '../../support/fake_api_client.dart';
+import '../../support/field_finders.dart';
 import 'virtual_field_trip_fixtures.dart';
 
 /// Screen-layer gates: the inputs render, tapping Plan drives the real
@@ -106,8 +107,8 @@ void main() {
         expect(find.text('Did you know?'), findsWidgets);
         expect(find.text('Think about this'), findsWidgets);
         // The analogy + explanation section labels render.
-        expect(find.text('In our context'), findsWidgets);
-        expect(find.text('Why we visit'), findsWidgets);
+        expect(findEyebrow('In our context'), findsWidgets);
+        expect(findEyebrow('Why we visit'), findsWidgets);
         // The document footer offers Regenerate + Done.
         expect(find.text('Regenerate'), findsOneWidget);
         expect(find.text('Done'), findsOneWidget);
@@ -352,9 +353,9 @@ void main() {
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
 
-            expect(find.text('Topic or theme'), findsOneWidget);
-            expect(find.text('Grade level'), findsOneWidget);
-            expect(find.text('Language'), findsOneWidget);
+            expect(findFieldLabel('Topic or theme'), findsOneWidget);
+            expect(findFieldLabel('Grade level'), findsOneWidget);
+            expect(findFieldLabel('Language'), findsOneWidget);
           },
         );
       }

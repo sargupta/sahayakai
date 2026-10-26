@@ -21,65 +21,62 @@ class LanguageSwitcher extends ConsumerWidget {
       title: Text(context.l10n.languageLabel),
       subtitle: Text(current.nativeLabel),
       trailing: const Icon(LucideIcons.chevronRight, size: AppIconSize.inline),
-      onTap: () => _openPicker(context, ref, current),
+      onTap: () => showLanguagePicker(context, ref),
     );
   }
+}
 
-  Future<void> _openPicker(
-    BuildContext context,
-    WidgetRef ref,
-    AppLocale current,
-  ) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (sheetContext) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.space4,
-                  AppSpacing.space2,
-                  AppSpacing.space4,
-                  AppSpacing.space2,
-                ),
-                child: Text(
-                  sheetContext.l10n.languageLabel,
-                  style: Theme.of(sheetContext).textTheme.titleMedium,
+/// Opens the UI-language picker sheet. Shared by Settings' language row and
+/// Home's language pill, so both change the language the same way.
+Future<void> showLanguagePicker(BuildContext context, WidgetRef ref) async {
+  final current = ref.read(localeControllerProvider);
+  await showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (sheetContext) {
+      return SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.space4,
+                AppSpacing.space2,
+                AppSpacing.space4,
+                AppSpacing.space2,
+              ),
+              child: Text(
+                sheetContext.l10n.languageLabel,
+                style: Theme.of(sheetContext).textTheme.titleMedium,
+              ),
+            ),
+            Flexible(
+              child: RadioGroup<AppLocale>(
+                groupValue: current,
+                onChanged: (value) {
+                  if (value != null) {
+                    ref.read(localeControllerProvider.notifier).set(value);
+                  }
+                  Navigator.of(sheetContext).pop();
+                },
+                child: ListView(
+                  shrinkWrap: true,
+                  children: [
+                    for (final locale in AppLocale.values)
+                      RadioListTile<AppLocale>(
+                        value: locale,
+                        title: Text(locale.nativeLabel),
+                        subtitle: Text(locale.aiName),
+                      ),
+                  ],
                 ),
               ),
-              Flexible(
-                child: RadioGroup<AppLocale>(
-                  groupValue: current,
-                  onChanged: (value) {
-                    if (value != null) {
-                      ref
-                          .read(localeControllerProvider.notifier)
-                          .set(value);
-                    }
-                    Navigator.of(sheetContext).pop();
-                  },
-                  child: ListView(
-                    shrinkWrap: true,
-                    children: [
-                      for (final locale in AppLocale.values)
-                        RadioListTile<AppLocale>(
-                          value: locale,
-                          title: Text(locale.nativeLabel),
-                          subtitle: Text(locale.aiName),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+            ),
+          ],
+        ),
+      );
+    },
+  );
 }

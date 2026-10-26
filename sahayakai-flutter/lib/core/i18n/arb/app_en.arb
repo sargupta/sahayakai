@@ -16,6 +16,10 @@
   "@navLibrary": {
     "description": "Bottom-nav label: saved generations."
   },
+  "navCommunity": "Community",
+  "@navCommunity": {
+    "description": "Tab bar (accessible name + tooltip): the community tab — teachers sharing, asking and celebrating (the Network hub)."
+  },
   "navProfile": "Me",
   "@navProfile": {
     "description": "Bottom-nav label: profile / account tab."
@@ -4810,5 +4814,108 @@
   "attendanceVoiceNone": "I didn't catch any names. Try again.",
   "@attendanceVoiceNone": {"description": "Voice roll call"},
   "attendanceVoiceMarked": "Marked {count} names.",
-  "@attendanceVoiceMarked": {"placeholders": {"count": {"type": "int"}}}
+  "@attendanceVoiceMarked": {"placeholders": {"count": {"type": "int"}}},
+  "homeSayItTitle": "Say it, I’ll open it",
+  "@homeSayItTitle": {
+    "description": "Home: eyebrow on the card of things to say; VIDYA speaks in the first person."
+  },
+  "homeDayWaiting": "{count, plural, =1{1 thing waiting today} other{{count} things waiting today}}",
+  "@homeDayWaiting": {
+    "description": "Home headline when the day was fully read: how many real things are waiting today.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeDayClear": "Nothing waiting today",
+  "@homeDayClear": {
+    "description": "Home headline when the day was fully read and nothing is waiting."
+  },
+  "homeSayCallAbsentees": "{count, plural, =1{“Call the parents of 1 absentee in {className}”} other{“Call the parents of {count} absentees in {className}”}}",
+  "@homeSayCallAbsentees": {
+    "description": "Home row, phrased as what the teacher can say: call the parents of today's absentees in one class.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "className": {
+        "type": "String"
+      }
+    }
+  },
+  "homeSayTakeAttendance": "“Take attendance for {className}”",
+  "@homeSayTakeAttendance": {
+    "description": "Home row, phrased as what to say: take today's attendance for a class not yet marked.",
+    "placeholders": {
+      "className": {
+        "type": "String"
+      }
+    }
+  },
+  "homeSayOpenReady": "“Open {title}”",
+  "@homeSayOpenReady": {
+    "description": "Home row, phrased as what to say: open something VIDYA finished.",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "homeSayLessonExample": "“A lesson plan for my next class”",
+  "@homeSayLessonExample": {
+    "description": "Home example of what to say, shown only when nothing is waiting."
+  },
+  "homeSayQuizExample": "“A ten-question quiz on today’s topic”",
+  "@homeSayQuizExample": {
+    "description": "Home example of what to say, shown only when nothing is waiting."
+  },
+  "homeSayAnswerExample": "“Explain a hard idea simply”",
+  "@homeSayAnswerExample": {
+    "description": "Home example of what to say, shown only when nothing is waiting."
+  },
+  "homeActionCall": "Call",
+  "@homeActionCall": {
+    "description": "Home row action: call parents."
+  },
+  "homeActionMark": "Mark",
+  "@homeActionMark": {
+    "description": "Home row action: mark attendance."
+  },
+  "homeActionMake": "Make",
+  "@homeActionMake": {
+    "description": "Home row action: make something."
+  },
+  "homeActionAsk": "Ask",
+  "@homeActionAsk": {
+    "description": "Home row action: ask a question."
+  },
+  "homeStatusUrgent": "urgent",
+  "@homeStatusUrgent": {
+    "description": "Screen-reader word for a red dot."
+  },
+  "homeStatusToDo": "to do",
+  "@homeStatusToDo": {
+    "description": "Screen-reader word for an amber dot."
+  },
+  "homeStatusReady": "ready",
+  "@homeStatusReady": {
+    "description": "Screen-reader word for a green dot."
+  },
+  "homeStatusIdea": "idea",
+  "@homeStatusIdea": {
+    "description": "Screen-reader word for a suggestion row."
+  },
+  "homeComposerHint": "Ask VIDYA, or type what you need…",
+  "@homeComposerHint": {
+    "description": "Home type bar placeholder."
+  },
+  "homeOrbHint": "Tap the orb to speak, or type below",
+  "@homeOrbHint": {
+    "description": "Home hint under the type bar."
+  },
+  "homeComposerLabel": "Type what you need",
+  "@homeComposerLabel": {
+    "description": "Home type bar accessible name."
+  }
 }

@@ -79,7 +79,6 @@ class _VidyaBlock extends StatelessWidget {
     final saffron = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
 
     return AppCard(
-      accentBar: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,

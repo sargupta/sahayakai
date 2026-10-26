@@ -13,7 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SUBJECTS, GRADE_LEVELS, LANGUAGES, INDIAN_STATES, LANGUAGE_NATIVE_LABELS, STATE_BOARD_MAP, ADMINISTRATIVE_ROLES, EDUCATION_BOARDS, LANGUAGE_CODE_MAP } from "@/types";
 import type { AdministrativeRole, EducationBoard } from "@/types";
 import { tState, tSubject } from "@/lib/i18n-proper-nouns";
-import { updateProfileAction, getProfileData, lookupSchoolDominantLocationAction } from "@/lib/api/profile";
+import { updateProfileAction, getProfileData, lookupSchoolDominantLocationAction, type ProfileUpdatePatch } from "@/lib/api/profile";
+import { ONBOARDING_FINISHED_PHASE } from "@/lib/onboarding-phase";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/context/language-context";
 import { Loader2, GraduationCap, MapPin, BookOpen, Sparkles, ArrowRight, ChevronDown, ChevronUp, Check, Clock, Target, Users, Briefcase } from "lucide-react";
@@ -401,7 +402,7 @@ export default function OnboardingPage() {
         }));
     };
 
-    const saveStep = async (stepData: Record<string, any>) => {
+    const saveStep = async (stepData: ProfileUpdatePatch) => {
         if (!userId) return;
         try {
             await updateProfileAction(userId, stepData);
@@ -422,7 +423,7 @@ export default function OnboardingPage() {
         if (!userId) return;
         setSubmitting(true);
         try {
-            const profileData: Record<string, any> = {
+            const profileData: ProfileUpdatePatch = {
                 displayName: formData.displayName.trim(),
                 schoolName: formData.schoolName,
                 schoolNormalized: formData.schoolName.toUpperCase().trim(),
@@ -519,7 +520,9 @@ export default function OnboardingPage() {
     const handleFinish = async () => {
         if (!userId) { router.push("/"); return; }
 
-        const updates: Record<string, any> = { onboardingPhase: 'completed' };
+        // The wizard finish ends new-user mode: write the canonical finished
+        // phase. (It used to write 'completed', which no reader recognised.)
+        const updates: ProfileUpdatePatch = { onboardingPhase: ONBOARDING_FINISHED_PHASE };
 
         // B5: Save generated content to library
         if (generatedContent) {
@@ -570,7 +573,7 @@ export default function OnboardingPage() {
     if (step === 0) {
         return (
             <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-background/50 p-3 sm:p-6">
-                <Card className="w-full max-w-lg rounded-2xl border border-border shadow-soft">
+                <Card className="w-full max-w-lg rounded-surface-lg border border-border shadow-soft">
                     <CardHeader className="text-center space-y-2 pb-4 pt-7">
                         <CardTitle className="text-2xl sm:text-3xl font-bold font-headline tracking-tight">
                             {t("Choose your language")}
@@ -612,8 +615,8 @@ export default function OnboardingPage() {
             <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-background/50 p-3 sm:p-6">
                 <div className="w-full max-w-2xl space-y-6">
                     {/* Pre-generated example */}
-                    <Card className="rounded-2xl border border-border shadow-soft">
-                        <CardHeader className="text-center space-y-1.5 pb-3 pt-6">
+                    <Card className="rounded-surface-lg border border-border shadow-soft">
+                        <CardHeader className="text-center space-y-2 pb-3 pt-6">
                             <CardTitle className="text-xl sm:text-2xl font-bold font-headline tracking-tight">
                                 {t("Sample lesson plan")}
                             </CardTitle>
@@ -679,7 +682,7 @@ export default function OnboardingPage() {
                     </Card>
 
                     {/* Real generation CTA */}
-                    <Card className="rounded-2xl border border-primary/20 bg-primary/5 shadow-soft">
+                    <Card className="rounded-surface-lg border border-primary/20 bg-primary/5 shadow-soft">
                         <CardContent className="p-4 sm:p-6 space-y-4">
                             <h3 className="font-headline font-bold text-base">{t("Create your own")}</h3>
 
@@ -774,7 +777,7 @@ export default function OnboardingPage() {
 
     return (
         <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-background/50 p-3 sm:p-6">
-            <Card className="w-full max-w-lg sm:max-w-2xl rounded-2xl border border-border shadow-soft">
+            <Card className="w-full max-w-lg sm:max-w-2xl rounded-surface-lg border border-border shadow-soft">
                 <CardHeader className="text-center space-y-2 pb-4 sm:pb-6 pt-7">
                     <CardTitle className="text-2xl sm:text-3xl font-bold font-headline tracking-tight">
                         {t("Tell us about your teaching")}
@@ -798,7 +801,7 @@ export default function OnboardingPage() {
                             </div>
                             <div className="flex items-center gap-2">
                                 {formData.administrativeRole !== undefined && activeSection !== 0 && (
-                                    <span className="text-xs text-muted-foreground truncate max-w-[160px]">
+                                    <span className="text-xs text-muted-foreground truncate max-w-40">
                                         {t(ROLE_LABEL[formData.administrativeRole])}
                                     </span>
                                 )}
@@ -847,10 +850,10 @@ export default function OnboardingPage() {
                             </div>
                             <div className="flex items-center gap-2">
                                 {formData.schoolName.trim() && formData.state && activeSection !== 1 && (
-                                    <span className="text-xs text-muted-foreground truncate max-w-[140px]">{formData.schoolName.split(' ').slice(0,2).join(' ')}, {tState(formData.state, formData.preferredLanguage)}</span>
+                                    <span className="text-xs text-muted-foreground truncate max-w-36">{formData.schoolName.split(' ').slice(0,2).join(' ')}, {tState(formData.state, formData.preferredLanguage)}</span>
                                 )}
                                 {formData.schoolName.trim() && formData.state ? (
-                                    <Check className="h-4 w-4 text-green-600" />
+                                    <Check className="h-4 w-4 text-primary" />
                                 ) : (
                                     <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", activeSection === 1 && "rotate-180")} />
                                 )}
@@ -858,7 +861,7 @@ export default function OnboardingPage() {
                         </button>
                         {activeSection === 1 && (
                             <div className="px-3 pb-3 space-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
-                                <div className="space-y-1.5">
+                                <div className="space-y-2">
                                     <Label htmlFor="displayName" className="text-xs">{t("Your name")}*</Label>
                                     <Input
                                         id="displayName"
@@ -868,7 +871,7 @@ export default function OnboardingPage() {
                                         className="h-11 text-sm shadow-soft"
                                     />
                                 </div>
-                                <div className="space-y-1.5">
+                                <div className="space-y-2">
                                     <Label htmlFor="school" className="text-xs">{t("School / Institution Name")}*</Label>
                                     <Input
                                         id="school"
@@ -878,7 +881,7 @@ export default function OnboardingPage() {
                                         className="h-11 text-sm shadow-soft"
                                     />
                                 </div>
-                                <div className="space-y-1.5">
+                                <div className="space-y-2">
                                     <Label className="text-xs">{t("State")}*</Label>
                                     <Select value={formData.state} onValueChange={handleStateChange}>
                                         <SelectTrigger className="h-11 shadow-soft">
@@ -960,7 +963,7 @@ export default function OnboardingPage() {
                             </div>
                             <div className="flex items-center gap-2">
                                 {formData.subjects.length > 0 && activeSection !== 3 && (
-                                    <span className="text-xs text-muted-foreground truncate max-w-[160px]">
+                                    <span className="text-xs text-muted-foreground truncate max-w-40">
                                         {formData.subjects.slice(0, 2).map(s => tSubject(s, formData.preferredLanguage)).join(', ')}{formData.subjects.length > 2 ? ` +${formData.subjects.length - 2}` : ''}
                                     </span>
                                 )}
@@ -1006,7 +1009,7 @@ export default function OnboardingPage() {
                             </div>
                             <div className="flex items-center gap-2">
                                 {formData.gradeLevels.length > 0 && activeSection !== 4 && (
-                                    <span className="text-xs text-muted-foreground truncate max-w-[160px]">
+                                    <span className="text-xs text-muted-foreground truncate max-w-40">
                                         {formData.gradeLevels.slice(0, 3).join(', ')}{formData.gradeLevels.length > 3 ? ` +${formData.gradeLevels.length - 3}` : ''}
                                     </span>
                                 )}
@@ -1084,7 +1087,7 @@ export default function OnboardingPage() {
                         </button>
                         {activeSection === 5 && (
                             <div className="px-3 pb-3 space-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
-                                <div className="space-y-1.5">
+                                <div className="space-y-2">
                                     <Label htmlFor="phone" className="text-xs">{t("Mobile number")}</Label>
                                     <div className="flex gap-2 items-stretch">
                                         <div className="flex items-center px-3 rounded-xl border border-border bg-muted/30 text-sm text-muted-foreground select-none">+91</div>
@@ -1108,7 +1111,7 @@ export default function OnboardingPage() {
                                     <p className="text-xs text-muted-foreground">{t("Optional. Used for parent SMS only. Never shared.")}</p>
                                     {phoneError && <p className="text-xs text-destructive">{phoneError}</p>}
                                 </div>
-                                <div className="space-y-1.5">
+                                <div className="space-y-2">
                                     <Label htmlFor="pincode" className="text-xs">{t("Pincode")}</Label>
                                     <Input
                                         id="pincode"

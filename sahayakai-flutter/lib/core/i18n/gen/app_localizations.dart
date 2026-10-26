@@ -140,6 +140,12 @@ abstract class AppLocalizations {
   /// **'Library'**
   String get navLibrary;
 
+  /// Tab bar (accessible name + tooltip): the community tab — teachers sharing, asking and celebrating (the Network hub).
+  ///
+  /// In en, this message translates to:
+  /// **'Community'**
+  String get navCommunity;
+
   /// Bottom-nav label: profile / account tab.
   ///
   /// In en, this message translates to:
@@ -6865,6 +6871,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Marked {count} names.'**
   String attendanceVoiceMarked(int count);
+
+  /// Home: eyebrow on the card of things to say; VIDYA speaks in the first person.
+  ///
+  /// In en, this message translates to:
+  /// **'Say it, I’ll open it'**
+  String get homeSayItTitle;
+
+  /// Home headline when the day was fully read: how many real things are waiting today.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 thing waiting today} other{{count} things waiting today}}'**
+  String homeDayWaiting(int count);
+
+  /// Home headline when the day was fully read and nothing is waiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing waiting today'**
+  String get homeDayClear;
+
+  /// Home row, phrased as what the teacher can say: call the parents of today's absentees in one class.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{“Call the parents of 1 absentee in {className}”} other{“Call the parents of {count} absentees in {className}”}}'**
+  String homeSayCallAbsentees(int count, String className);
+
+  /// Home row, phrased as what to say: take today's attendance for a class not yet marked.
+  ///
+  /// In en, this message translates to:
+  /// **'“Take attendance for {className}”'**
+  String homeSayTakeAttendance(String className);
+
+  /// Home row, phrased as what to say: open something VIDYA finished.
+  ///
+  /// In en, this message translates to:
+  /// **'“Open {title}”'**
+  String homeSayOpenReady(String title);
+
+  /// Home example of what to say, shown only when nothing is waiting.
+  ///
+  /// In en, this message translates to:
+  /// **'“A lesson plan for my next class”'**
+  String get homeSayLessonExample;
+
+  /// Home example of what to say, shown only when nothing is waiting.
+  ///
+  /// In en, this message translates to:
+  /// **'“A ten-question quiz on today’s topic”'**
+  String get homeSayQuizExample;
+
+  /// Home example of what to say, shown only when nothing is waiting.
+  ///
+  /// In en, this message translates to:
+  /// **'“Explain a hard idea simply”'**
+  String get homeSayAnswerExample;
+
+  /// Home row action: call parents.
+  ///
+  /// In en, this message translates to:
+  /// **'Call'**
+  String get homeActionCall;
+
+  /// Home row action: mark attendance.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark'**
+  String get homeActionMark;
+
+  /// Home row action: make something.
+  ///
+  /// In en, this message translates to:
+  /// **'Make'**
+  String get homeActionMake;
+
+  /// Home row action: ask a question.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask'**
+  String get homeActionAsk;
+
+  /// Screen-reader word for a red dot.
+  ///
+  /// In en, this message translates to:
+  /// **'urgent'**
+  String get homeStatusUrgent;
+
+  /// Screen-reader word for an amber dot.
+  ///
+  /// In en, this message translates to:
+  /// **'to do'**
+  String get homeStatusToDo;
+
+  /// Screen-reader word for a green dot.
+  ///
+  /// In en, this message translates to:
+  /// **'ready'**
+  String get homeStatusReady;
+
+  /// Screen-reader word for a suggestion row.
+  ///
+  /// In en, this message translates to:
+  /// **'idea'**
+  String get homeStatusIdea;
+
+  /// Home type bar placeholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask VIDYA, or type what you need…'**
+  String get homeComposerHint;
+
+  /// Home hint under the type bar.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the orb to speak, or type below'**
+  String get homeOrbHint;
+
+  /// Home type bar accessible name.
+  ///
+  /// In en, this message translates to:
+  /// **'Type what you need'**
+  String get homeComposerLabel;
 }
 
 class _AppLocalizationsDelegate

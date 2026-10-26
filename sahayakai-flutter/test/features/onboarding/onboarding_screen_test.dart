@@ -10,6 +10,7 @@ import 'package:sahayakai/features/vidya/presentation/vidya_orb_placement_contro
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/fake_api_client.dart';
+import '../../support/field_finders.dart';
 import 'onboarding_fixtures.dart';
 
 /// P0.2 — Onboarding.
@@ -37,10 +38,7 @@ Future<void> _tapSave(WidgetTester tester) async {
 }
 
 Future<void> _enter(WidgetTester tester, String label, String value) async {
-  final field = find.ancestor(
-    of: find.text(label),
-    matching: find.byType(Column),
-  );
+  final field = findFieldLabel(label);
   expect(field, findsWidgets);
   await tester.enterText(
     find.descendant(of: field.first, matching: find.byType(TextFormField)),
