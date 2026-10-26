@@ -3962,4 +3962,84 @@ class AppLocalizationsGu extends AppLocalizations {
   String attendanceVoiceMarked(int count) {
     return '$count નામ નોંધ્યાં.';
   }
+
+  @override
+  String get homeSayItTitle => 'બોલો, હું ખોલી દઈશ';
+
+  @override
+  String homeDayWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'આજે $count કામ બાકી છે',
+      one: 'આજે 1 કામ બાકી છે',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeDayClear => 'આજે કંઈ બાકી નથી';
+
+  @override
+  String homeSayCallAbsentees(int count, String className) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '“$className ના $count ગેરહાજર વિદ્યાર્થીઓના વાલીઓને call કરો”',
+      one: '“$className ના 1 ગેરહાજર વિદ્યાર્થીના વાલીને call કરો”',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeSayTakeAttendance(String className) {
+    return '“$className ની હાજરી લો”';
+  }
+
+  @override
+  String homeSayOpenReady(String title) {
+    return '“$title ખોલો”';
+  }
+
+  @override
+  String get homeSayLessonExample => '“આગળના class માટે lesson plan”';
+
+  @override
+  String get homeSayQuizExample => '“આજના topic પર દસ પ્રશ્નોની quiz”';
+
+  @override
+  String get homeSayAnswerExample => '“અઘરી વાત સરળ રીતે સમજાવો”';
+
+  @override
+  String get homeActionCall => 'કૉલ';
+
+  @override
+  String get homeActionMark => 'હાજરી';
+
+  @override
+  String get homeActionMake => 'બનાવો';
+
+  @override
+  String get homeActionAsk => 'પૂછો';
+
+  @override
+  String get homeStatusUrgent => 'તાત્કાલિક';
+
+  @override
+  String get homeStatusToDo => 'કરવાનું';
+
+  @override
+  String get homeStatusReady => 'તૈયાર';
+
+  @override
+  String get homeStatusIdea => 'સૂચન';
+
+  @override
+  String get homeComposerHint => 'VIDYA ને પૂછો, અથવા તમને જે જોઈએ તે લખો…';
+
+  @override
+  String get homeOrbHint => 'બોલવા માટે orb પર ટૅપ કરો, અથવા નીચે લખો';
+
+  @override
+  String get homeComposerLabel => 'તમને જે જોઈએ તે લખો';
 }

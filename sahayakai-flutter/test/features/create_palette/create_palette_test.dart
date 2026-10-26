@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/router/routes.dart';
 import 'package:sahayakai/features/dashboard/presentation/app_shell.dart';
@@ -53,21 +52,22 @@ const Set<String> _expectedIds = {
 
 Key _rowKey(String id) => ValueKey('create-palette-$id');
 
-/// The palette's entry: the Prep desk (Home's app-bar tools grid), then its
-/// search action.
+/// The palette's entry: the Prep desk (the tools grid, opened from the link on
+/// Home's card of things to say), then its search action.
 ///
 /// The palette used to open from a Create slot in the bottom bar. Design
 /// system v2 draws four tabs and never five, and moves creation to VIDYA, so
-/// the palette moved to the tools grid it searches. Both finders are keyed
-/// (the layoutGrid glyph is unique to Home's app bar; the search action has
-/// its own key), so they are locale-independent — the Indic probes below need
-/// that, since every label here is translated.
-final Finder _prepDesk = find.byIcon(LucideIcons.layoutGrid);
+/// the palette moved to the tools grid it searches. Both finders are keyed, so
+/// they are locale-independent — the Indic probes below need that, since every
+/// label here is translated.
+final Finder _prepDesk = find.byKey(const ValueKey('home-all-tools'));
 final Finder _searchAction = find.byKey(const ValueKey('prep-desk-search'));
 
 /// Opens the palette from the Prep desk's search action.
 Future<void> _openPalette(WidgetTester tester) async {
-  expect(_prepDesk, findsOneWidget, reason: 'Home app bar Prep desk entry');
+  expect(_prepDesk, findsOneWidget, reason: 'Home card Prep desk link');
+  await tester.ensureVisible(_prepDesk);
+  await tester.pumpAndSettle();
   await tester.tap(_prepDesk);
   await tester.pumpAndSettle();
   expect(_searchAction, findsOneWidget, reason: 'Prep desk search action');

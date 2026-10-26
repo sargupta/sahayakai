@@ -4035,4 +4035,85 @@ class AppLocalizationsTa extends AppLocalizations {
   String attendanceVoiceMarked(int count) {
     return '$count பெயர்கள் குறிக்கப்பட்டன.';
   }
+
+  @override
+  String get homeSayItTitle => 'சொல்லுங்கள், நான் திறக்கிறேன்';
+
+  @override
+  String homeDayWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'இன்று $count வேலைகள் உள்ளன',
+      one: 'இன்று 1 வேலை உள்ளது',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeDayClear => 'இன்று எந்த வேலையும் இல்லை';
+
+  @override
+  String homeSayCallAbsentees(int count, String className) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '“$className வகுப்பில் வராத $count மாணவர்களின் பெற்றோரை அழை”',
+      one: '“$className வகுப்பில் வராத 1 மாணவரின் பெற்றோரை அழை”',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeSayTakeAttendance(String className) {
+    return '“$className வருகைப் பதிவு எடு”';
+  }
+
+  @override
+  String homeSayOpenReady(String title) {
+    return '“$title ஐத் திற”';
+  }
+
+  @override
+  String get homeSayLessonExample => '“அடுத்த வகுப்புக்கு lesson plan”';
+
+  @override
+  String get homeSayQuizExample => '“இன்றைய பாடத்தில் பத்து கேள்வி quiz”';
+
+  @override
+  String get homeSayAnswerExample => '“கடினமான ஒன்றை எளிமையாக விளக்கு”';
+
+  @override
+  String get homeActionCall => 'அழை';
+
+  @override
+  String get homeActionMark => 'வருகை';
+
+  @override
+  String get homeActionMake => 'உருவாக்கு';
+
+  @override
+  String get homeActionAsk => 'கேள்';
+
+  @override
+  String get homeStatusUrgent => 'அவசரம்';
+
+  @override
+  String get homeStatusToDo => 'செய்ய வேண்டியது';
+
+  @override
+  String get homeStatusReady => 'தயார்';
+
+  @override
+  String get homeStatusIdea => 'யோசனை';
+
+  @override
+  String get homeComposerHint =>
+      'VIDYA-விடம் கேளுங்கள், அல்லது தேவையானதை எழுதுங்கள்…';
+
+  @override
+  String get homeOrbHint => 'பேச orb-ஐத் தட்டுங்கள், அல்லது கீழே எழுதுங்கள்';
+
+  @override
+  String get homeComposerLabel => 'தேவையானதை எழுதுங்கள்';
 }

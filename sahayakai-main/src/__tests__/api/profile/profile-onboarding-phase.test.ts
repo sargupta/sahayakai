@@ -112,12 +112,30 @@ describe('updateProfileAction — onboardingPhase prerequisite check (F11-3)', (
         expect(updateUserMock).toHaveBeenCalled();
     });
 
-    it('ACCEPTS onboardingPhase=language-picked without any prerequisite check', async () => {
+    it('ACCEPTS legacy onboardingPhase=language-picked without any prerequisite check, stored as setup', async () => {
         getUserMock.mockResolvedValue(null);
         await updateProfileAction('user-1', {
             onboardingPhase: 'language-picked',
             preferredLanguage: 'Hindi',
         });
         expect(updateUserMock).toHaveBeenCalled();
+        const [, written] = updateUserMock.mock.calls[0] as unknown as [string, Record<string, any>];
+        expect(written.onboardingPhase).toBe('setup');
     });
+
+    // 2026-10 stuck-new-user class gate: a phase the readers don't recognise
+    // must never reach Firestore.
+    it.each(['finished', 'COMPLETED', '', 'done ', 42, null])(
+        'REJECTS unrecognised onboardingPhase %p without writing',
+        async (phase) => {
+            getUserMock.mockResolvedValue({
+                displayName: 'Asha', state: 'West Bengal', schoolName: 'KV',
+                subjects: ['Science'], gradeLevels: ['Class 7'], preferredLanguage: 'Bengali',
+            });
+            await expect(
+                updateProfileAction('user-1', { onboardingPhase: phase })
+            ).rejects.toThrow(/^Invalid onboardingPhase/);
+            expect(updateUserMock).not.toHaveBeenCalled();
+        },
+    );
 });

@@ -4012,4 +4012,88 @@ class AppLocalizationsMl extends AppLocalizations {
   String attendanceVoiceMarked(int count) {
     return '$count പേരുകൾ അടയാളപ്പെടുത്തി.';
   }
+
+  @override
+  String get homeSayItTitle => 'പറയൂ, ഞാൻ തുറക്കാം';
+
+  @override
+  String homeDayWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ഇന്ന് $count കാര്യങ്ങൾ ബാക്കിയുണ്ട്',
+      one: 'ഇന്ന് 1 കാര്യം ബാക്കിയുണ്ട്',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeDayClear => 'ഇന്ന് ഒന്നും ബാക്കിയില്ല';
+
+  @override
+  String homeSayCallAbsentees(int count, String className) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '“$className ലെ ഹാജരാകാത്ത $count കുട്ടികളുടെ രക്ഷിതാക്കളെ call ചെയ്യൂ”',
+      one: '“$className ലെ ഹാജരാകാത്ത 1 കുട്ടിയുടെ രക്ഷിതാവിനെ call ചെയ്യൂ”',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeSayTakeAttendance(String className) {
+    return '“$className ഹാജർ എടുക്കൂ”';
+  }
+
+  @override
+  String homeSayOpenReady(String title) {
+    return '“$title തുറക്കൂ”';
+  }
+
+  @override
+  String get homeSayLessonExample => '“അടുത്ത class നുള്ള lesson plan”';
+
+  @override
+  String get homeSayQuizExample => '“ഇന്നത്തെ topic ൽ പത്ത് ചോദ്യങ്ങളുടെ quiz”';
+
+  @override
+  String get homeSayAnswerExample =>
+      '“ബുദ്ധിമുട്ടുള്ള ഒരു കാര്യം ലളിതമായി വിശദീകരിക്കൂ”';
+
+  @override
+  String get homeActionCall => 'വിളിക്കുക';
+
+  @override
+  String get homeActionMark => 'ഹാജർ';
+
+  @override
+  String get homeActionMake => 'തയ്യാറാക്കുക';
+
+  @override
+  String get homeActionAsk => 'ചോദിക്കുക';
+
+  @override
+  String get homeStatusUrgent => 'അടിയന്തരം';
+
+  @override
+  String get homeStatusToDo => 'ചെയ്യാനുള്ളത്';
+
+  @override
+  String get homeStatusReady => 'തയ്യാർ';
+
+  @override
+  String get homeStatusIdea => 'നിർദ്ദേശം';
+
+  @override
+  String get homeComposerHint =>
+      'VIDYA യോട് ചോദിക്കൂ, അല്ലെങ്കിൽ വേണ്ടത് ടൈപ്പ് ചെയ്യൂ…';
+
+  @override
+  String get homeOrbHint =>
+      'സംസാരിക്കാൻ orb ൽ തൊടൂ, അല്ലെങ്കിൽ താഴെ ടൈപ്പ് ചെയ്യൂ';
+
+  @override
+  String get homeComposerLabel => 'വേണ്ടത് ടൈപ്പ് ചെയ്യൂ';
 }

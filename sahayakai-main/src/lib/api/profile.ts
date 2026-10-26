@@ -12,6 +12,7 @@
  *  - lookupSchoolDominantLocationAction returns null on any failure.
  */
 import { apiFetch } from '@/lib/api/client';
+import type { OnboardingPhasePatch } from '@/lib/onboarding-phase';
 
 export async function getProfileData(
     _userId?: string,
@@ -43,9 +44,17 @@ export async function addCertificationAction(formData: FormData): Promise<void> 
     });
 }
 
+/**
+ * A profile patch. `onboardingPhase` is typed against the canonical union so a
+ * phase the readers don't recognise cannot be written (2026-10 stuck-new-user
+ * bug: the wizard wrote 'completed'). Build phase-carrying patches with this
+ * type, not `Record<string, any>`, or the check is bypassed.
+ */
+export type ProfileUpdatePatch = Record<string, unknown> & OnboardingPhasePatch;
+
 export async function updateProfileAction(
     _userId: string,
-    data: any,
+    data: ProfileUpdatePatch,
 ): Promise<{ profileCompletionLevel: number }> {
     return apiFetch<{ profileCompletionLevel: number }>(`/api/profile`, {
         method: 'PUT',

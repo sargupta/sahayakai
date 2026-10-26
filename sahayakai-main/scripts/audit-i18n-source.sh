@@ -101,6 +101,9 @@ EXCLUDE_PATTERNS=(
     'alt=\"SahayakAI\"'      # brand
     'alt=\"VIDYA\"'          # brand
     'alt=\"SARGVISION\"'     # brand
+    # Digit-only format hints (phone "9876543210", pincode "560001") are the
+    # same in every language — inputs take ASCII digits — so they are not copy.
+    'placeholder=\"[0-9 +()-]+\"'
 )
 
 build_exclude_args() {

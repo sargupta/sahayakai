@@ -3964,4 +3964,85 @@ class AppLocalizationsPa extends AppLocalizations {
   String attendanceVoiceMarked(int count) {
     return '$count ਨਾਂ ਲਗਾਏ ਗਏ।';
   }
+
+  @override
+  String get homeSayItTitle => 'ਬੋਲੋ, ਮੈਂ ਖੋਲ੍ਹ ਦਿਆਂਗੀ';
+
+  @override
+  String homeDayWaiting(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'ਅੱਜ $count ਕੰਮ ਬਾਕੀ ਹਨ',
+      one: 'ਅੱਜ 1 ਕੰਮ ਬਾਕੀ ਹੈ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeDayClear => 'ਅੱਜ ਕੁਝ ਵੀ ਬਾਕੀ ਨਹੀਂ';
+
+  @override
+  String homeSayCallAbsentees(int count, String className) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          '“$className ਦੇ $count ਗੈਰਹਾਜ਼ਰ ਵਿਦਿਆਰਥੀਆਂ ਦੇ ਮਾਪਿਆਂ ਨੂੰ call ਕਰੋ”',
+      one: '“$className ਦੇ 1 ਗੈਰਹਾਜ਼ਰ ਵਿਦਿਆਰਥੀ ਦੇ ਮਾਪਿਆਂ ਨੂੰ call ਕਰੋ”',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String homeSayTakeAttendance(String className) {
+    return '“$className ਦੀ ਹਾਜ਼ਰੀ ਲਗਾਓ”';
+  }
+
+  @override
+  String homeSayOpenReady(String title) {
+    return '“$title ਖੋਲ੍ਹੋ”';
+  }
+
+  @override
+  String get homeSayLessonExample => '“ਅਗਲੀ class ਲਈ lesson plan”';
+
+  @override
+  String get homeSayQuizExample => '“ਅੱਜ ਦੇ topic ਉੱਤੇ ਦਸ ਸਵਾਲਾਂ ਦਾ quiz”';
+
+  @override
+  String get homeSayAnswerExample => '“ਔਖੀ ਗੱਲ ਸੌਖੇ ਤਰੀਕੇ ਨਾਲ ਸਮਝਾਓ”';
+
+  @override
+  String get homeActionCall => 'ਕਾਲ';
+
+  @override
+  String get homeActionMark => 'ਹਾਜ਼ਰੀ';
+
+  @override
+  String get homeActionMake => 'ਬਣਾਓ';
+
+  @override
+  String get homeActionAsk => 'ਪੁੱਛੋ';
+
+  @override
+  String get homeStatusUrgent => 'ਜ਼ਰੂਰੀ';
+
+  @override
+  String get homeStatusToDo => 'ਕਰਨਾ ਹੈ';
+
+  @override
+  String get homeStatusReady => 'ਤਿਆਰ';
+
+  @override
+  String get homeStatusIdea => 'ਸੁਝਾਅ';
+
+  @override
+  String get homeComposerHint => 'VIDYA ਨੂੰ ਪੁੱਛੋ, ਜਾਂ ਜੋ ਚਾਹੀਦਾ ਹੈ ਲਿਖੋ…';
+
+  @override
+  String get homeOrbHint => 'ਬੋਲਣ ਲਈ orb ਤੇ ਟੈਪ ਕਰੋ, ਜਾਂ ਹੇਠਾਂ ਲਿਖੋ';
+
+  @override
+  String get homeComposerLabel => 'ਜੋ ਚਾਹੀਦਾ ਹੈ ਲਿਖੋ';
 }

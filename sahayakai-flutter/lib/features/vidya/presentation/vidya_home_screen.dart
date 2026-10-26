@@ -1,40 +1,37 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
-import '../../../core/platform/clock.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../shared/domain/tool_registry.dart';
 import '../../../shared/motion/animated_entrance.dart';
-import '../../../shared/widgets/app_badge.dart';
-import '../../../shared/widgets/editorial_section_header.dart';
 import '../../../shared/widgets/glass_app_bar.dart';
 import '../../../shared/widgets/secondary_button.dart';
-import '../../inbox/presentation/widgets/inbox_entry_button.dart';
+import 'background_generation_controller.dart';
+import 'deliver_tray.dart';
+import 'deliverables_controller.dart';
 import 'vidya_controller.dart';
 import 'vidya_greeting.dart';
 import 'vidya_nav_dispatcher.dart';
 import 'vidya_status_ui.dart';
 import 'widgets/conversation_block.dart';
-import 'widgets/quick_tools_row.dart';
+import 'widgets/home_day_view.dart';
 import 'widgets/seal_mic.dart';
+import 'widgets/vidya_orb.dart';
 
-/// "The Almanac Speaks" — the voice-first home (PREMIUM_DESIGN_SPEC §B). A
-/// nearly-empty warm-ivory page: a time-aware Fraunces greeting, a rotating
-/// prompt, and one large saffron Seal Mic at the optical centre. The teacher
-/// taps and speaks; each turn inks onto the page as a document block (never a
-/// chat thread). A single valid intent routes to its tool prefilled; a compound
-/// intent renders confirm chips. Signed-out (401 on the stub token) degrades to
-/// a dignified "Sign in to talk to VIDYA" state with the mic still present.
+/// Home: VIDYA's voice-first front door, set on the teacher's real day
+/// (design system v2 `ScreenHome`). Idle, it shows the day — a greeting, the
+/// day in one headline, what is waiting phrased as what to say — with the orb
+/// as the hero and a type bar at the foot. The teacher taps the orb and
+/// speaks, or types; each turn inks onto the page as a document block (never
+/// a chat thread). A single valid intent routes to its tool prefilled; a
+/// compound intent renders confirm chips. Signed-out (401) degrades to a
+/// dignified "Sign in to talk to VIDYA" panel under the orb.
 ///
-/// This replaces the form-first dashboard as the app's landing; the tool grid
-/// stays one tap away as the Prep desk (the app-bar action).
+/// The tool grid stays one tap away as the Prep desk (the card's link, and
+/// the app bar once a conversation is on the page).
 class VidyaHomeScreen extends ConsumerStatefulWidget {
   const VidyaHomeScreen({super.key});
 
@@ -89,42 +86,28 @@ class _VidyaHomeScreenState extends ConsumerState<VidyaHomeScreen> {
     });
 
     return Scaffold(
-      appBar: GlassAppBar(
-        // `backgroundColor: Colors.transparent` used to be set explicitly
-        // here so the body's gradient (`AppGradients.darkVignette`/
-        // `lightPaper`) showed through the app bar's slot; `GlassAppBar`
-        // makes transparency (plus the real blur) its own baseline, so the
-        // call site no longer needs to ask for it.
-        title: Text(l10n.appTitle),
-        actions: [
-          // The Network hub entry (U-SI2): the Staffroom feed + Pro Inbox behind
-          // one surface. Sits next to the messages entry (SPEC option (a)).
-          IconButton(
-            icon: const Icon(LucideIcons.network),
-            tooltip: l10n.networkTooltip,
-            onPressed: () => context.push(Routes.network),
-          ),
-          // The Pro Inbox entry (U-SI1): a messages glyph with a live unread
-          // badge. Firebase-gated → the badge stays hidden (deferred unread = 0)
-          // until the transport goes live.
-          const InboxEntryButton(),
-          // U9 — the manual "Clear conversation" action (the app's analogue of
-          // the web's Trash2 "Clear Context" button): only offered once there
-          // is a transcript to clear, so the idle canvas never carries a
-          // dead-looking action.
-          if (state.hasConversation)
-            IconButton(
-              icon: const Icon(LucideIcons.trash2),
-              tooltip: l10n.vidyaClearConversation,
-              onPressed: controller.clearConversation,
-            ),
-          IconButton(
-            icon: const Icon(LucideIcons.layoutGrid),
-            tooltip: l10n.vidyaPrepDesk,
-            onPressed: () => context.push(Routes.prepDesk),
-          ),
-        ],
-      ),
+      // Idle, Home has no app bar: the greeting row is its header (v2). Once
+      // a conversation is on the page, the bar returns for clearing it and for
+      // the Prep desk. Network and Messages live in the Community tab.
+      appBar: state.hasConversation
+          ? GlassAppBar(
+              title: Text(l10n.appTitle),
+              actions: [
+                // U9 — the manual "Clear conversation" action (the app's
+                // analogue of the web's Trash2 "Clear Context" button).
+                IconButton(
+                  icon: const Icon(LucideIcons.trash2),
+                  tooltip: l10n.vidyaClearConversation,
+                  onPressed: controller.clearConversation,
+                ),
+                IconButton(
+                  icon: const Icon(LucideIcons.layoutGrid),
+                  tooltip: l10n.vidyaPrepDesk,
+                  onPressed: () => context.push(Routes.prepDesk),
+                ),
+              ],
+            )
+          : null,
       // Light: the page route already paints the v2 wash and saffron glow
       // under this transparent scaffold (`ScreenWash`); painting the wash
       // again here would cover the glow. Dark keeps its vignette.
@@ -142,67 +125,138 @@ class _VidyaHomeScreenState extends ConsumerState<VidyaHomeScreen> {
   }
 }
 
-/// The nearly-empty first canvas: masthead pinned high-left, the Seal Mic
-/// beneath it, then a Quick Tools preview so the idle canvas reads as a
-/// populated product (matching the PWA's hero + tool grid) rather than an
-/// empty placeholder holding one mic.
+/// The idle Home: the greeting, the day headline, the card of things to say,
+/// the orb as the hero, and the type bar pinned at the foot so it rides above
+/// the keyboard.
 ///
-/// A `SingleChildScrollView` over a top-down `Column`, NOT the earlier
-/// `Stack`-of-`Align`s: the old composition depended on the Stack being given
-/// the full viewport height (so its fractional `Alignment` could place the
-/// mic at the optical centre), which leaves no room to show the Quick Tools
-/// row without an extra full-screen scroll. A `Column` sized to its own
-/// content — scrollable so it NEVER overflows at 360dp × textScale 1.3 or on
-/// a Malayalam-length label — trades the exact fractional centring for
-/// content that is actually visible on the first screen, which is the
-/// specific gap this unit exists to close (DESIGN_PARITY_BLOCK DP-1).
+/// The top block scrolls, so it never overflows at 360dp × textScale 1.3 or in
+/// a long-script locale; while everything fits, the orb centres in the space
+/// left between the card and the type bar.
 class _EmptyLayout extends StatelessWidget {
   const _EmptyLayout({required this.state, required this.controller});
 
   final VidyaState state;
   final VidyaController controller;
 
-  /// How many of the registry's tools the idle canvas previews below the
-  /// mic. The rest stay one tap away at the Prep desk — this is a preview,
-  /// not a second copy of the full grid.
-  ///
-  /// Floored at 2 (one row), not 6: on the standard 390×844 test surface
-  /// (and smaller real phones) the content above this row — badge, eyebrow,
-  /// greeting, rule, deck, the 128dp mic, caption — already fills most of
-  /// the viewport height that remains once `AppShell`'s floating bottom nav
-  /// claims its ~72dp. Even a 2nd row still landed below the nav bar's top
-  /// edge in a real layout measurement, not just a guess — a 3rd/4th tile
-  /// rendered there with its label sliced off by the nav bar on first
-  /// paint: a half-visible, label-less tile reads as broken, not "scroll for
-  /// more" — the opposite of this unit's purpose. See
-  /// `test/features/vidya/vidya_home_screen_test.dart` ("Quick Tools tiles
-  /// clear the floating bottom nav on first paint"), which asserts this by
-  /// measuring real widget geometry, not by counting rows.
-  static const int _quickToolsCount = 2;
-
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final tools = kToolRegistry.take(_quickToolsCount).toList();
+    return Column(
+      children: [
+        Expanded(
+          child: LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: (constraints.maxHeight - 4).clamp(
+                    0.0,
+                    double.infinity,
+                  ),
+                ),
+                // No IntrinsicHeight: with a viewport-height minimum and an
+                // unbounded maximum, a Column hands its leftover height to
+                // `spaceBetween`, so the orb centres in the space under the
+                // card while it fits and everything scrolls when it does not —
+                // without measuring intrinsics (which a button under-reports).
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        HomeGreeting(),
+                        SizedBox(height: 14),
+                        HomeDayHeadline(),
+                        SizedBox(height: 14),
+                        HomeSayItCard(),
+                        SizedBox(height: 14),
+                      ],
+                    ),
+                    _HomeOrb(state: state, controller: controller),
+                    const SizedBox(height: 14),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+          child: HomeComposer(
+            onSubmit: controller.submitText,
+            onMic: controller.onMicTap,
+          ),
+        ),
+      ],
+    );
+  }
+}
 
-    return SingleChildScrollView(
-      padding: AppSpacing.pagePadding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const _Masthead(),
-          // Tightened from space10/space8/space4 (measured, not guessed): the
-          // Quick Tools row only clears the floating bottom nav on first
-          // paint with this rhythm reclaimed — see the geometry regression
-          // test above _quickToolsCount.
-          const SizedBox(height: AppSpacing.space5),
-          _MicCluster(state: state, controller: controller, big: true),
-          const SizedBox(height: AppSpacing.space4),
-          EditorialSectionHeader(l10n.dashboardToolsTitle),
-          const SizedBox(height: AppSpacing.space2),
-          QuickToolsRow(tools: tools),
-        ],
-      ),
+/// Home's hero: the orb, 112px, and the one line under it. On Home the orb is
+/// VIDYA's only presence (the parked orb stays off this screen), so it takes
+/// every state the parked orb would: working while a minimised generation
+/// runs, ready with a count — a tap then opens the deliver tray.
+class _HomeOrb extends ConsumerWidget {
+  const _HomeOrb({required this.state, required this.controller});
+
+  final VidyaState state;
+  final VidyaController controller;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final type = AppTypeTokens.of(context);
+    final readyCount = ref.watch(
+      deliverablesControllerProvider.select((d) => d.length),
+    );
+    final bgActive = ref.watch(backgroundGenerationControllerProvider) != null;
+    final visual = vidyaOrbVisualFor(
+      state.status,
+      readyCount: readyCount,
+      bgActive: bgActive,
+    );
+    final caption = switch (visual) {
+      VidyaOrbVisual.ready when state.status == VidyaStatus.idle =>
+        '${ref.read(deliverablesControllerProvider.notifier).latest?.title ?? ''}'
+            ' · ${l10n.homeStatusReady}',
+      VidyaOrbVisual.working when state.status == VidyaStatus.idle =>
+        l10n.vidyaStateThinking,
+      _ => vidyaStateCaption(state.status, l10n),
+    };
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        VidyaOrb(
+          key: const ValueKey('home-orb'),
+          state: visual,
+          size: 112,
+          glyph: false,
+          readyCount: readyCount,
+          semanticLabel: l10n.appTitle,
+          semanticHint: caption ?? vidyaTerminalTitle(state.status, l10n),
+          onTap: () {
+            final latest = ref
+                .read(deliverablesControllerProvider.notifier)
+                .latest;
+            if (visual == VidyaOrbVisual.ready && latest != null) {
+              showDeliverTray(context, latest);
+            } else {
+              controller.onMicTap();
+            }
+          },
+        ),
+        const SizedBox(height: 12),
+        if (isVidyaTerminal(state.status))
+          _TerminalPanel(status: state.status, controller: controller)
+        else
+          Text(
+            caption ?? l10n.vidyaStateIdle,
+            textAlign: TextAlign.center,
+            style: type.button.copyWith(height: 1.4),
+          ),
+      ],
     );
   }
 }
@@ -253,67 +307,20 @@ class _ActiveLayout extends StatelessWidget {
             bottom: AppSpacing.space4,
             top: AppSpacing.space2,
           ),
-          child: _MicCluster(state: state, controller: controller, big: false),
+          child: _MicCluster(state: state, controller: controller),
         ),
       ],
     );
   }
 }
 
-/// The idle masthead: saffron eyebrow → time-aware Fraunces greeting → a saffron
-/// masthead rule → the deck. Reuses the dashboard's time-aware l10n keys.
-class _Masthead extends ConsumerWidget {
-  const _Masthead();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
-    final text = Theme.of(context).textTheme;
-    final extras = AppTextExtras.of(context);
-    final scheme = Theme.of(context).colorScheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const SizedBox(height: AppSpacing.space6),
-        AppBadge(
-          icon: LucideIcons.sparkles,
-          label: l10n.vidyaHeroBadge,
-          tone: AppBadgeTone.accent,
-        ),
-        const SizedBox(height: AppSpacing.space3),
-        EditorialSectionHeader(l10n.vidyaEyebrow),
-        const SizedBox(height: AppSpacing.space3),
-        Text(
-          _salutation(l10n, ref.read(nowProvider)()),
-          style: text.displayLarge,
-        ),
-        const SizedBox(height: AppSpacing.space3),
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: Text(
-            l10n.vidyaDeck,
-            style: extras.lead.copyWith(color: scheme.onSurfaceVariant),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// The Seal Mic + its caption. In the empty state the idle caption trails a
-/// rotating prompt; the terminal error phases render a dignified panel instead.
+/// The anchored Seal Mic + its caption under a conversation; the terminal
+/// error phases render a dignified panel instead.
 class _MicCluster extends StatelessWidget {
-  const _MicCluster({
-    required this.state,
-    required this.controller,
-    required this.big,
-  });
+  const _MicCluster({required this.state, required this.controller});
 
   final VidyaState state;
   final VidyaController controller;
-  final bool big;
 
   @override
   Widget build(BuildContext context) {
@@ -327,7 +334,7 @@ class _MicCluster extends StatelessWidget {
         SealMic(
           state: sealStateForStatus(state.status),
           amplitude: state.amplitude,
-          size: big ? 128 : 88,
+          size: 88,
           onTap: controller.onMicTap,
           semanticLabel: l10n.appTitle,
           semanticHint: caption ?? vidyaTerminalTitle(state.status, l10n),
@@ -341,10 +348,6 @@ class _MicCluster extends StatelessWidget {
             style: Theme.of(context).textTheme.titleMedium,
             textAlign: TextAlign.center,
           ),
-          if (state.status == VidyaStatus.idle && big) ...[
-            const SizedBox(height: AppSpacing.space3),
-            const _RotatingPrompt(),
-          ],
         ],
       ],
     );
@@ -417,76 +420,7 @@ class _TerminalPanel extends StatelessWidget {
   }
 }
 
-/// The rotating hint under an idle mic. Cycles a few real prompt examples via a
-/// gentle cross-fade — only when motion is enabled, so reduce-motion (and the
-/// test harness) shows a single static line and schedules no timer.
-class _RotatingPrompt extends StatefulWidget {
-  const _RotatingPrompt();
-
-  @override
-  State<_RotatingPrompt> createState() => _RotatingPromptState();
-}
-
-class _RotatingPromptState extends State<_RotatingPrompt> {
-  static const Duration _dwell = Duration(seconds: 4);
-  int _index = 0;
-  Timer? _timer;
-  bool _started = false;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_started) return;
-    _started = true;
-    if (context.motionEnabled) {
-      _timer = Timer.periodic(_dwell, (_) {
-        if (mounted) setState(() => _index++);
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    final prompts = [
-      l10n.vidyaPromptLesson,
-      l10n.vidyaPromptQuiz,
-      l10n.vidyaPromptParent,
-    ];
-    final label = prompts[_index % prompts.length];
-    return AnimatedSwitcher(
-      duration: AppMotion.small,
-      switchInCurve: AppMotion.easeOutQuart,
-      switchOutCurve: AppMotion.easeOutQuart,
-      child: Text(
-        label,
-        key: ValueKey(label),
-        style: text.bodyMedium?.copyWith(
-          color: scheme.onSurfaceVariant,
-          fontStyle: FontStyle.italic,
-        ),
-        textAlign: TextAlign.center,
-      ),
-    );
-  }
-}
-
 // ─── Mappings ────────────────────────────────────────────────────────────────
-
-String _salutation(AppLocalizations l10n, DateTime now) {
-  final hour = now.hour;
-  if (hour < 12) return l10n.dashboardGreetingMorning;
-  if (hour < 17) return l10n.dashboardGreetingAfternoon;
-  return l10n.dashboardGreetingEvening;
-}
 
 // The seal-state / caption / terminal mappings moved to `vidya_status_ui.dart`,
 // and the flow→route map + prefill to `VidyaNavDispatcher` (U-V6/U-V7), so the
