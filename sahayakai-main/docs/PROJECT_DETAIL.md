@@ -59,32 +59,94 @@ The application follows a **Serverless, Event-Driven Architecture**:
 *   `src/lib/`: Utilities and helper functions.
 *   `docs/`: Project documentation and strategy files.
 
-## 3. Product Features (Deep Dive)
+## 3. Product Capabilities
 
-### 3.1 Voice-First Interface
-*   **Implementation:** `MicrophoneInput` component.
-*   **Details:** Uses Web Audio API for real-time waveform visualization. Records audio chunks and converts to Base64 Data URI for server-side processing.
+> Rewritten 2026-08-23. The previous version of this section listed five
+> features (voice, lesson generation, rubrics, offline, multilingual) while the
+> codebase shipped sixteen AI tools plus attendance, parent calling, community
+> and organisations. A capability list that undercounts the product by that much
+> misdirects planning, pitching and hiring, so this section is now derived from
+> the shipped route surface rather than maintained by hand.
+>
+> Source of truth for the customer-facing version: the Capability Brief
+> (two pages, generated 2026-08-23).
 
-### 3.2 Context-Aware Lesson Generation
-*   **Logic:** `src/ai/flows/lesson-plan-generator.ts`
-*   **Feature:** Automatically injects "Rural Context" instructions:
-    *   *Food:* Pizza -> Roti/Dal
-    *   *Currency:* Dollars -> Rupees
-    *   *Geography:* Western -> Indian (Ganga, Himalayas)
-    *   *Resources:* Assumes Chalk/Board only unless specified.
+### 3.1 Preparation and assessment (16 AI tools)
 
-### 3.3 Rubric Generator
-*   **Logic:** `src/ai/flows/rubric-generator.ts`
-*   **Feature:** Generates detailed, structured rubrics for assignments based on a description. Includes performance levels, criteria, and points.
+Each has a route under `src/app/api/ai/` and a screen in both web and Android.
 
-### 3.4 Offline PWA Support (In-Progress)
-*   **Service Workers:** Caches static assets (JS, CSS, Images).
-*   **Strategy:** "Stale-while-revalidate" for UI shell.
-*   **Future:** `IndexedDB` implementation for storing generated content ("Store & Forward").
+| Tool | What it does for a teacher |
+|---|---|
+| Lesson Plan | NCERT / NCF-2023 aligned plans by grade, subject, chapter |
+| Worksheet Wizard | Differentiated worksheets, including from a photo of a textbook page |
+| Quiz Generator | Three difficulty tiers, teacher-controlled answer key |
+| Exam Paper | Full papers to a board blueprint with marks distribution |
+| Rubric Generator | Criterion-and-level grids for any assignment |
+| Assess Assignment | Grades student work against a rubric; transcribe-only mode |
+| Assessment Scanner | Multi-page, multi-subject answer sheets to a scorecard |
+| Instant Answer | Subject questions at classroom register and depth |
+| Visual Aid Designer | Blackboard-ready diagrams from a description |
+| Video Storyteller | A vetted shelf of teaching videos matched to the lesson |
+| Virtual Field Trip | Narrated stop-by-stop journeys with Google Earth links |
+| Teacher Training | Pedagogy coaching on the problem in front of the teacher |
+| Parent Message | A parent note in their language, ready for WhatsApp |
+| Content Creator | Open-ended generation for what the tools do not cover |
+| Voice to Text | Indic speech recognition tuned for classroom audio |
+| Avatar / Intent | Routes a spoken request to the right tool, pre-filled |
 
-### 3.5 Multilingual Support
-*   **Languages:** English, Hindi, Bengali, Telugu, Marathi, Tamil, Gujarati, Kannada.
-*   **Implementation:** `LanguageSelector` passes language codes to the AI prompt.
+### 3.2 Classroom operations
+
+*   **Attendance register** (`/api/attendance/*`, ten routes) - classes, roster,
+    daily marking, monthly summaries, per-student absence history. Writes are
+    Pro-plan gated server-side. The markable window is `[today-7, today]`
+    computed in IST, so a teacher marking before 05:30 IST is not silently
+    rejected. Classes cap at 40 students, roll numbers 1-40, enforced
+    transactionally.
+*   **Parent Hotline** - an AI places a real phone call to a parent in their
+    language, holds a conversation, and returns a transcript and summary.
+    Chain: `outreach` -> `call` -> `twiml` -> `twiml-status` -> `call-summary`.
+*   **Absence to outreach** - a consecutive-absence run becomes a suggested
+    call, carrying the reason through.
+*   **Performance tracking** - per-student and per-class views from real marks.
+
+### 3.3 Profession and practice
+
+*   **VIDYA** - voice-first co-teacher on every screen, all eleven languages.
+    Turn-based STT -> classifier -> TTS is the shipped path; real-time Live
+    voice over Vertex is built and staging-verified, not yet released.
+*   **Staffroom** - groups, feed, direct messages, connections.
+*   **Library** - every result saved, searchable, re-openable; copy and share.
+*   **Organisations** - multi-school administration, invitations, analytics.
+*   **Public API** - documented endpoints plus a live playground for partners.
+
+### 3.4 Language and reach
+
+Eleven languages complete rather than partial: Hindi, Bengali, Marathi, Telugu,
+Tamil, Gujarati, Kannada, Malayalam, Odia, Punjabi, English. 1,066 interface
+strings, zero untranslated in any locale. All ten Indic font families are
+bundled in the Android app, so a first launch with no connectivity renders the
+teacher's own script rather than fallback boxes.
+
+### 3.5 Offline status (do not overstate)
+
+The app shell and fonts work offline. Full offline authoring is scaffolded, not
+general. Claiming offline GA is a known documentation failure mode in this repo;
+say "shell and fonts" unless the sync path has been proven end to end.
+
+### 3.6 How capability is verified
+
+Roughly 5,260 automated tests run green across web, Android and the voice
+sidecar. They are necessary and not sufficient: all of them mock the telephony
+provider, which is why the 2026-08-18 parent-call outage reached a teacher with
+a fully green suite. Live capability that depends on a third party is therefore
+verified separately, against the real provider:
+
+```
+node scripts/verify-call-chain.mjs --from-secrets
+```
+
+Read-only, places no call, exit 1 with the failing check named.
+
 
 ## 4. Development Roadmap
 
