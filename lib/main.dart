@@ -39,5 +39,8 @@ void main() async {
   try {
     await NotificationService.instance.initialize();
   } catch (_) {}
+  // Debug: log whether keys are loaded (masked).
+  debugPrint('[App] OPENROUTER_API_KEY: ${const String.fromEnvironment('OPENROUTER_API_KEY', defaultValue: '').isEmpty ? 'EMPTY' : 'SET (${const String.fromEnvironment('OPENROUTER_API_KEY', defaultValue: '').substring(0, 4)}...${const String.fromEnvironment('OPENROUTER_API_KEY', defaultValue: '').substring(const String.fromEnvironment('OPENROUTER_API_KEY', defaultValue: '').length - 4)})'}');
+  debugPrint('[App] API_BASE_URL: ${const String.fromEnvironment('API_BASE_URL', defaultValue: 'https://sahayakai.com')}');
   runApp(const ProviderScope(child: SahayakApp()));
 }

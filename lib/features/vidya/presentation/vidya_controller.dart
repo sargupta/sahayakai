@@ -420,6 +420,7 @@ class VidyaController extends _$VidyaController {
   Future<void> sendText(String message) async {
     final text = message.trim();
     if (text.isEmpty) return;
+    debugPrint('[Vidya] sendText: ${text.length} chars');
     _gen++;
     final gen = _gen;
     await _teardownLive(); // no-op without a Live session
@@ -674,9 +675,11 @@ class VidyaController extends _$VidyaController {
       await _converse(transcript.text, transcript.language, gen);
     } on ApiException catch (e) {
       if (_stale(gen)) return;
+      debugPrint('[Vidya] STT ApiException: ${e.runtimeType} status=${e.statusCode}');
       _handleError(e);
-    } catch (_) {
+    } catch (e, st) {
       if (_stale(gen)) return;
+      debugPrint('[Vidya] STT exception: ${e.runtimeType}: $e');
       _set(status: VidyaStatus.failed);
     }
   }
@@ -716,10 +719,13 @@ class VidyaController extends _$VidyaController {
       }
     } on ApiException catch (e) {
       if (_stale(gen)) return;
+      debugPrint('[Vidya] _converse ApiException: ${e.runtimeType} status=${e.statusCode} code=${e.errorCode}');
       _handleError(e);
       return;
-    } catch (_) {
+    } catch (e, st) {
       if (_stale(gen)) return;
+      debugPrint('[Vidya] _converse exception: ${e.runtimeType}: $e');
+      debugPrint('[Vidya] stack: ${st.toString().split('\\n').take(5).join(' | ')}');
       _set(status: VidyaStatus.failed);
       return;
     }
@@ -811,7 +817,9 @@ class VidyaController extends _$VidyaController {
       maxTokens: 2048,
     );
 
+    debugPrint('[Vidya] OpenRouter request: model=$model messages=${messages.length}');
     final response = await openRouter.chat(request);
+    debugPrint('[Vidya] OpenRouter response: ${response.content.length} chars');
     final content = response.content.trim();
 
     // Convert OpenRouter response to VidyaTurn format.
