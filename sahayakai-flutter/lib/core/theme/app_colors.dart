@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// SahayakAI colour tokens — design system v2 (`tokens.json` v2, synced
-/// 2026-10-24, the canonical v3 mobile design).
+/// SahayakAI colour tokens — design system v2 (`tokens.json`, synced
+/// 2026-10-26, the canonical v3 mobile design).
 ///
 /// The first block is the design system itself, under its own token names
 /// (`saffron-500` → [saffron500], `surface-glass` → [surfaceGlass]). Values
@@ -17,9 +17,12 @@ import 'package:flutter/material.dart';
 /// `theme_contrast_test.dart`):
 ///   • Saffron as text is [saffron600] `#A5551D` (5.28:1 on milk-50, 4.9:1 on
 ///     the wash's warmest stop), or [saffron700] on saffron tints (5.55:1).
-///   • White on [saffron500] is 3.77:1 — the shipped brand pair, kept EXACT and
-///     FLAGGED in the design system's open founder decisions (labels stay
-///     13px/600 or larger). Do not "fix" it here.
+///   • White never sits on [saffron500] (3.77:1). A saffron fill that carries
+///     a white label (primary buttons, selected chips and segments, the
+///     teacher's chat bubble, letter marks, solid saffron pills) is
+///     [accentFill] (`saffron-600`, 5.28:1); [saffron500] stays for the orb,
+///     mic discs, the active tab disc, dots, bars and focus edges (decided
+///     26 Oct 2026).
 ///   • White on [leaf500] 7.55:1, on [indigo500] 9.9:1, on [red500] 5.44:1.
 ///
 /// Light only: the design system retired dark mode on 26 Oct 2026. The one
@@ -114,8 +117,12 @@ class AppColors {
   static const textLink = saffron600;
   static const textLinkHover = saffron500;
 
-  // Accent (saffron) tints.
+  // Accent (saffron).
   static const accent = saffron500;
+
+  /// `accent-fill`: the saffron fill under a white label. White on it is
+  /// 5.28:1; white on [saffron500] (3.77:1) is never allowed.
+  static const accentFill = saffron600;
   static const accentTint = Color.fromRGBO(201, 106, 40, 0.1);
   static const accentTintStrong = Color.fromRGBO(201, 106, 40, 0.12);
   static const accentTintBorder = Color.fromRGBO(201, 106, 40, 0.22);

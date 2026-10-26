@@ -39,10 +39,11 @@ export 'app_text.dart'
 /// component language: pills for everything pressable, glass cards on the
 /// wash, solid `surface-card` sheets.
 ///
-/// `primary` is the brand ACCENT (the orb, mic discs, the active tab disc,
-/// dots, bars, focus edges). A saffron fill that carries a white label uses
-/// [AppColors.accentFill] (`saffron-600`, 5.28:1) instead: white on
-/// `saffron-500` is 3.77:1 (decided 26 Oct 2026).
+/// `primary` is the brand ACCENT, `saffron-500`: the orb, mic discs, the
+/// active tab disc, dots, bars and focus edges. A saffron fill that carries a
+/// white label (buttons, selected chips) uses [AppColors.accentFill]
+/// (`saffron-600`, 5.28:1) instead, because white on `saffron-500` is 3.77:1
+/// (decided 26 Oct 2026).
 ///
 /// The scaffold is TRANSPARENT: every page route paints the v2 screen wash
 /// (`wash-screen` + `glow-saffron`) under its own page, from the page
@@ -145,11 +146,11 @@ class AppTheme {
         titleTextStyle: textTheme.titleLarge,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
       ),
-      // v2 Button `primary` md: a saffron pill with a white label, 50px
-      // (`button-height`), 18px side padding.
+      // v2 Button `primary` md: an `accent-fill` pill with a white label
+      // (5.28:1), 50px (`button-height`), 18px side padding.
       filledButtonTheme: FilledButtonThemeData(
         style: ButtonStyle(
-          backgroundColor: WidgetStatePropertyAll(scheme.primary),
+          backgroundColor: const WidgetStatePropertyAll(AppColors.accentFill),
           foregroundColor: WidgetStatePropertyAll(scheme.onPrimary),
           minimumSize: const WidgetStatePropertyAll(Size(0, 50)),
           padding: const WidgetStatePropertyAll(
@@ -162,7 +163,7 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ButtonStyle(
-          backgroundColor: WidgetStatePropertyAll(scheme.primary),
+          backgroundColor: const WidgetStatePropertyAll(AppColors.accentFill),
           foregroundColor: WidgetStatePropertyAll(scheme.onPrimary),
           minimumSize: const WidgetStatePropertyAll(Size(0, 50)),
           padding: const WidgetStatePropertyAll(
@@ -246,10 +247,10 @@ class AppTheme {
         errorStyle: typeTokens.status.copyWith(color: AppColors.red700),
       ),
       // v2 Chip (choice, md): glass pill with a 1px glass edge, 12/600 UI
-      // label; selected = a saffron fill with a white label.
+      // label; selected = an `accent-fill` pill with a white label (5.28:1).
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.surfaceGlass,
-        selectedColor: AppColors.saffron500,
+        selectedColor: AppColors.accentFill,
         checkmarkColor: AppColors.textOnAccent,
         labelStyle: typeTokens.chip,
         secondaryLabelStyle: typeTokens.chip.copyWith(
@@ -287,7 +288,7 @@ class AppTheme {
                 ? FontWeight.w600
                 : FontWeight.w500,
             color: s.contains(WidgetState.selected)
-                ? scheme.primary
+                ? AppColors.textLink
                 : scheme.onSurfaceVariant,
           ),
         ),

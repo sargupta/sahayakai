@@ -141,7 +141,7 @@
    {
     "name": "saffron-500",
     "value": "#c96a28",
-    "usage": "THE brand accent: the one primary button per screen, selected chips, the active tab disc, the orb, the mic disc, status dots. White on it is 3.77:1, the shipped pair: flagged, kept exact (labels stay 13px/600 or larger). As text it is 3.1-3.7:1: large text and icons only."
+    "usage": "THE brand accent: the orb, the mic disc, the active tab disc, status dots, progress bars and focus edges. Never under white text (3.77:1): a saffron fill that carries a label uses accent-fill (saffron-600, 5.28:1), decided 26 Oct 2026. As text it is 3.1-3.7:1: large text and icons only."
    },
    {
     "name": "saffron-600",
@@ -367,6 +367,11 @@
     "name": "text-on-accent",
     "value": "#ffffff",
     "usage": "Labels on saffron, leaf, indigo, red and amber fills."
+   },
+   {
+    "name": "accent-fill",
+    "value": "{saffron-600}",
+    "usage": "Saffron fills that carry white text: primary buttons, selected chips and segments, the teacher's chat bubble, letter marks and solid saffron pills. White on it is 5.28:1. saffron-500 stays for the orb, dots, bars, focus edges and icon-only discs (decided 26 Oct 2026)."
    },
    {
     "name": "text-link",
@@ -879,59 +884,59 @@
      },
      {
       "name": "type-body-sm",
-      "fontSize": "11px",
+      "fontSize": "12px",
       "lineHeight": 1.45,
       "fontWeight": 400,
-      "usage": "Sublines under titles, notices, hints.",
+      "usage": "Sublines under titles, notices, hints. 12px floor (decided 26 Oct 2026).",
       "sample": "Spoken or typed — same result"
      },
      {
       "name": "type-chip-sm",
-      "fontSize": "11px",
+      "fontSize": "12px",
       "lineHeight": 1.3,
       "fontWeight": 600,
-      "usage": "Small chips inside composers.",
+      "usage": "Small chips inside composers. 12px floor (decided 26 Oct 2026).",
       "sample": "Board work"
      },
      {
       "name": "type-action",
-      "fontSize": "11px",
+      "fontSize": "12px",
       "lineHeight": 1.4,
       "fontWeight": 600,
-      "usage": "Text actions at a row's end (\"Open\", \"Change\").",
+      "usage": "Text actions at a row's end (\"Open\", \"Change\"). 12px floor (decided 26 Oct 2026).",
       "sample": "Open"
      },
      {
       "name": "type-status",
-      "fontSize": "11px",
+      "fontSize": "12px",
       "lineHeight": 1.4,
       "fontWeight": 500,
-      "usage": "The status bar.",
+      "usage": "The status bar. 12px floor (decided 26 Oct 2026).",
       "sample": "9:41"
      },
      {
       "name": "type-pill",
-      "fontSize": "10px",
+      "fontSize": "12px",
       "lineHeight": 1.22,
       "fontWeight": 600,
-      "usage": "Status pills and tags. Floor size: Latin only; Indic text in a pill renders at 12px.",
+      "usage": "Status pills and tags. Floor size: Latin only; Indic text in a pill renders at 12px. 12px floor (decided 26 Oct 2026).",
       "sample": "Mic on"
      },
      {
       "name": "type-eyebrow",
-      "fontSize": "10px",
+      "fontSize": "12px",
       "lineHeight": 1.22,
       "fontWeight": 600,
-      "usage": "Uppercase tracked eyebrows (Latin only; Indic eyebrows are not uppercased or tracked and render at 12px).",
+      "usage": "Uppercase tracked eyebrows (Latin only; Indic eyebrows are not uppercased or tracked and render at 12px). 12px floor (decided 26 Oct 2026).",
       "letterSpacing": "0.16em",
       "sample": "WAITING FOR YOU"
      },
      {
       "name": "type-caption",
-      "fontSize": "10px",
+      "fontSize": "12px",
       "lineHeight": 1.4,
       "fontWeight": 400,
-      "usage": "Captions under option titles and stat numbers.",
+      "usage": "Captions under option titles and stat numbers. 12px floor (decided 26 Oct 2026).",
       "sample": "WhatsApp · 34"
      }
     ]
@@ -1005,10 +1010,10 @@
      },
      {
       "name": "type-web-eyebrow",
-      "fontSize": "11px",
+      "fontSize": "12px",
       "lineHeight": 1.6,
       "fontWeight": 600,
-      "usage": "Website eyebrows, tracked .18em.",
+      "usage": "Website eyebrows, tracked .18em. 12px floor (decided 26 Oct 2026).",
       "letterSpacing": "0.18em",
       "family": "ui",
       "sample": "TWO PEOPLE, ONE ROLLOUT"
@@ -1410,6 +1415,51 @@
     "name": "shadow-orb-band",
     "value": "0 0 0 10px rgba(255,248,240,.14)",
     "usage": "The orb's halo on the CTA band."
+   },
+   {
+    "name": "shadow-orb-live",
+    "value": "0 20px 44px rgba(142,74,28,.35), inset 0 -16px 34px rgba(88,42,12,.45), inset 0 12px 26px rgba(255,255,255,.4)",
+    "usage": "The 164px listening orb in VIDYA Live: lift, a deep under-shade and a top highlight, so it reads as a sphere."
+   },
+   {
+    "name": "shadow-orb-live-working",
+    "value": "0 18px 40px rgba(30,43,107,.35), inset 0 12px 24px rgba(255,255,255,.35)",
+    "usage": "The 118px working orb in VIDYA Live (checking a source)."
+   },
+   {
+    "name": "shadow-orb-live-speaking",
+    "value": "0 18px 40px rgba(28,74,29,.32), inset 0 12px 24px rgba(255,255,255,.3)",
+    "usage": "The 118px speaking orb in VIDYA Live and the in-call orb."
+   },
+   {
+    "name": "shadow-pill-working",
+    "value": "0 6px 16px rgba(42,59,143,.3)",
+    "usage": "The solid indigo status pill (\"Checking CBSE source\")."
+   },
+   {
+    "name": "shadow-pill-speaking",
+    "value": "0 6px 16px rgba(44,95,45,.28)",
+    "usage": "The solid leaf status pill (\"Speaking · हिन्दी\")."
+   },
+   {
+    "name": "shadow-pill-failed",
+    "value": "0 6px 16px rgba(192,57,43,.26)",
+    "usage": "The solid red status pill (\"Couldn't hear\")."
+   },
+   {
+    "name": "shadow-live-card",
+    "value": "0 8px 24px rgba(23,19,16,.08)",
+    "usage": "Glass cards inside VIDYA Live: the transcript, caption and receipts cards."
+   },
+   {
+    "name": "shadow-bubble",
+    "value": "0 6px 18px rgba(23,19,16,.07)",
+    "usage": "VIDYA's reply bubble in a conversation."
+   },
+   {
+    "name": "shadow-bubble-teacher",
+    "value": "0 6px 18px rgba(201,106,40,.26)",
+    "usage": "The teacher's saffron bubble in a conversation."
    }
   ]
  },
@@ -1505,6 +1555,66 @@
     "name": "sweep-band",
     "value": "linear-gradient(90deg,rgba(255,248,240,0),rgba(255,248,240,.16),rgba(255,248,240,0))",
     "usage": "The light sweep across the CTA band."
+   },
+   {
+    "name": "wash-live-listening",
+    "value": "linear-gradient(170deg,#fff1df 0%,#fbedea 30%,#f3f1ea 60%,#fff6e9 100%)",
+    "usage": "VIDYA Live while listening: a warmer wash than the app screen."
+   },
+   {
+    "name": "wash-live-speaking",
+    "value": "linear-gradient(170deg,#f0f6ef 0%,#edf3ec 34%,#f6f3ec 70%,#fbf8f1 100%)",
+    "usage": "VIDYA Live while speaking: faintly leaf."
+   },
+   {
+    "name": "wash-live-failed",
+    "value": "linear-gradient(170deg,#fdf1ef 0%,#faf0ec 34%,#f5f3ed 70%,#fcf8f1 100%)",
+    "usage": "VIDYA Live after a failure: faintly red, never alarming."
+   },
+   {
+    "name": "glow-live-listening",
+    "value": "radial-gradient(circle at 50% 42%,rgba(255,206,150,.5),rgba(255,206,150,0) 58%)",
+    "usage": "The saffron light behind the listening orb."
+   },
+   {
+    "name": "glow-live-working",
+    "value": "radial-gradient(circle at 50% 38%,rgba(124,140,222,.3),rgba(124,140,222,0) 60%)",
+    "usage": "The indigo light behind the working orb."
+   },
+   {
+    "name": "glow-live-speaking",
+    "value": "radial-gradient(circle at 50% 36%,rgba(120,180,130,.34),rgba(120,180,130,0) 60%)",
+    "usage": "The leaf light behind the speaking orb."
+   },
+   {
+    "name": "halo-live-listening",
+    "value": "radial-gradient(circle,rgba(201,106,40,.22),rgba(201,106,40,0) 70%)",
+    "usage": "The breathing halo just outside the listening orb."
+   },
+   {
+    "name": "halo-live-working",
+    "value": "radial-gradient(circle,rgba(42,59,143,.2),rgba(42,59,143,0) 70%)",
+    "usage": "The breathing halo just outside the working orb."
+   },
+   {
+    "name": "halo-live-speaking",
+    "value": "radial-gradient(circle,rgba(44,95,45,.18),rgba(44,95,45,0) 70%)",
+    "usage": "The halo just outside the speaking orb."
+   },
+   {
+    "name": "orb-live",
+    "value": "radial-gradient(circle at 32% 26%,#fff0dc 0%,#fbc98e 22%,#e08a3c 48%,#c96a28 68%,#8e4a1c 100%)",
+    "usage": "The 164px VIDYA Live orb while listening: five stops, so the large sphere has depth the 56px orb does not need."
+   },
+   {
+    "name": "orb-live-working",
+    "value": "radial-gradient(circle at 32% 26%,#dce2fa 0%,#8d9be0 34%,#2a3b8f 72%,#1e2b6b 100%)",
+    "usage": "The VIDYA Live orb while working (checking a source, building)."
+   },
+   {
+    "name": "orb-live-speaking",
+    "value": "radial-gradient(circle at 32% 26%,#e4f2e2 0%,#8fc090 32%,#2c5f2d 74%,#1c4a1d 100%)",
+    "usage": "The VIDYA Live orb while speaking, and the in-call orb."
    }
   ]
  },
@@ -1599,6 +1709,51 @@
     "name": "container-web",
     "value": "1220px",
     "usage": "Website container width (28px side padding)."
+   },
+   {
+    "name": "live-stage",
+    "value": "176px",
+    "usage": "The square that holds the VIDYA Live orb and its halo."
+   },
+   {
+    "name": "live-orb",
+    "value": "164px",
+    "usage": "The VIDYA Live orb while listening."
+   },
+   {
+    "name": "live-orb-sm",
+    "value": "118px",
+    "usage": "The VIDYA Live orb while working or speaking, inside its rings."
+   },
+   {
+    "name": "live-control",
+    "value": "50px",
+    "usage": "The round glass controls at the foot of VIDYA Live (type, mute, end)."
+   },
+   {
+    "name": "bubble-max",
+    "value": "260px",
+    "usage": "The widest a conversation bubble grows on a 360px screen."
+   },
+   {
+    "name": "sidebar-w",
+    "value": "256px",
+    "usage": "The web app sidebar at desktop widths (1024px and up)."
+   },
+   {
+    "name": "sidebar-w-rail",
+    "value": "76px",
+    "usage": "The web app's icon rail at tablet widths (768-1023px)."
+   },
+   {
+    "name": "topbar-h",
+    "value": "64px",
+    "usage": "The web app top bar."
+   },
+   {
+    "name": "container-app",
+    "value": "1120px",
+    "usage": "The web app's widest content column, inside the sidebar."
    }
   ]
  },

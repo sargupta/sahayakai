@@ -109,16 +109,9 @@ class SecondaryButton extends StatelessWidget {
                           child: Text(
                             label,
                             textAlign: TextAlign.center,
-                            // Cap the wrap at two lines (then ellipsis) and
-                            // clamp accessibility scaling at the project's
-                            // tested 1.3 ceiling, so a long localized label can
-                            // never bleed past the pill — the same no-overflow
-                            // discipline the floating nav slot applies.
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            textScaler: MediaQuery.textScalerOf(
-                              context,
-                            ).clamp(maxScaleFactor: 1.3),
+                            // Follows the phone's own text size with no clamp
+                            // (decided 26 Oct 2026): a long or scaled label
+                            // wraps and the pill grows, never truncating.
                           ),
                         ),
                       ],

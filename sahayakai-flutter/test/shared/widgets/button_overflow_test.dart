@@ -5,18 +5,17 @@ import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/shared/widgets/primary_button.dart';
 import 'package:sahayakai/shared/widgets/secondary_button.dart';
 
-/// The app-wide CTA primitives must obey the mandatory textScale-1.3 no-overflow
-/// rule (DESIGN_RUBRIC §12): a long localized label must never bleed below the
-/// pill (a `ButtonStyleButton` defaults to `Clip.none`). The predecessor bug was
-/// a fixed-height `SizedBox` around a `Flexible(Text)` with NO `maxLines`, so at
-/// textScale 1.3 a long label wrapped to three-plus lines and overflowed.
+/// The app-wide CTA primitives must obey the no-overflow rule (DESIGN_RUBRIC
+/// §12) at the phone's own text size: a long localized label never bleeds
+/// below the pill (a `ButtonStyleButton` defaults to `Clip.none`).
 ///
-/// Each probe pumps a button into a deliberately narrow column at textScale 1.3
-/// with a long label and asserts BOTH that nothing overflows AND that the label
-/// genuinely exceeded the two-line cap (`didExceedMaxLines`) — the latter proves
-/// the probe is real: the same label under the old uncapped, fixed-height pill
-/// would have overflowed. The happy-path cases confirm a short label at scale
-/// 1.0 still renders at the exact pill height, so the fix changed nothing there.
+/// Since the 12px-floor decision (26 Oct 2026) the label is not clamped: it
+/// follows the system text scale, wraps without a line cap, and the pill grows
+/// from its minimum height. Each probe pumps a button into a deliberately
+/// narrow column at textScale 2.0 with a long label and asserts that nothing
+/// overflows, nothing is truncated, the pill grew, and the paragraph renders
+/// at the full 2.0 scale (no clamp). The happy-path cases confirm a short
+/// label at scale 1.0 still renders at the exact pill height.
 
 // Long enough to spill past two lines in a narrow column at textScale 1.3 — the
 // realistic "Continue with your school Google account" class of CTA label once
@@ -24,7 +23,7 @@ import 'package:sahayakai/shared/widgets/secondary_button.dart';
 const _longLabel =
     'Continue with your school Google account now to keep going and finish setup';
 
-Widget _host(Widget child, {Brightness brightness = Brightness.light}) {
+Widget _host(Widget child) {
   return MaterialApp(
     theme: AppTheme.light(),
     home: Scaffold(
@@ -46,57 +45,35 @@ RenderParagraph _label(WidgetTester tester, Type buttonType) =>
     );
 
 void main() {
-  for (final brightness in const [Brightness.light]) {
+  for (final (type, button, minHeight) in [
+    (
+      PrimaryButton,
+      PrimaryButton(label: _longLabel, onPressed: () {}),
+      56.0,
+    ),
+    (
+      SecondaryButton,
+      SecondaryButton(label: _longLabel, onPressed: () {}),
+      52.0,
+    ),
+  ]) {
     testWidgets(
-      'PrimaryButton: a wrapping label never overflows at textScale 1.3 '
-      '(${brightness.name})',
+      '$type: a long label at textScale 2.0 wraps in full and the pill grows',
       (tester) async {
-        tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+        tester.platformDispatcher.textScaleFactorTestValue = 2.0;
         addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
 
-        await tester.pumpWidget(
-          _host(
-            PrimaryButton(label: _longLabel, onPressed: () {}),
-            brightness: brightness,
-          ),
-        );
-        await tester.pumpAndSettle();
-
-        // The load-bearing assertion: the old fixed-height SizedBox clipped the
-        // wrapped label and Flutter reported a RenderBox overflow here.
-        expect(tester.takeException(), isNull);
-        // ...and the label really was long enough to need clamping, so the old
-        // uncapped pill would have overflowed it — this is not a label that
-        // trivially fit on one line.
-        expect(
-          _label(tester, PrimaryButton).didExceedMaxLines,
-          isTrue,
-          reason: 'the probe must exercise a genuinely wrapping label',
-        );
-      },
-    );
-
-    testWidgets(
-      'SecondaryButton: a wrapping label never overflows at textScale 1.3 '
-      '(${brightness.name})',
-      (tester) async {
-        tester.platformDispatcher.textScaleFactorTestValue = 1.3;
-        addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-
-        await tester.pumpWidget(
-          _host(
-            SecondaryButton(label: _longLabel, onPressed: () {}),
-            brightness: brightness,
-          ),
-        );
+        await tester.pumpWidget(_host(button));
         await tester.pumpAndSettle();
 
         expect(tester.takeException(), isNull);
-        expect(
-          _label(tester, SecondaryButton).didExceedMaxLines,
-          isTrue,
-          reason: 'the probe must exercise a genuinely wrapping label',
-        );
+        final label = _label(tester, type);
+        // Not truncated: no line cap, no ellipsis.
+        expect(label.didExceedMaxLines, isFalse);
+        // Not clamped: the phone's own 2.0 reaches the label.
+        expect(label.textScaler.scale(10), 20);
+        // The pill grew to hold the wrapped label.
+        expect(tester.getSize(find.byType(type)).height, greaterThan(minHeight));
       },
     );
   }

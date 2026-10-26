@@ -2,8 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sahayakai/core/theme/app_colors.dart';
-import 'package:sahayakai/core/theme/app_glass.dart';
+import 'package:sahayakai/core/theme/app_theme.dart';
 
 /// WCAG 2.1 relative-luminance contrast, encoding the design system v2
 /// contract ("Accessibility and quality gates", `tokens.json` usage notes):
@@ -11,10 +10,9 @@ import 'package:sahayakai/core/theme/app_glass.dart';
 ///   • Text holds 4.5:1 on the composited ground: ink-900, ink-600, ink-500
 ///     on milk and glass; saffron as text is saffron-600 (or saffron-700 on
 ///     saffron tints), never saffron-500.
-///   • White on saffron-500 is 3.77:1 — the shipped brand pair, kept EXACT and
-///     FLAGGED (an open founder decision). It is asserted as what it is: above
-///     3:1, below 4.5:1. If the founder moves primary fills to saffron-600,
-///     this test is the one to update.
+///   • White never sits on saffron-500 (3.77:1). A saffron fill under a white
+///     label is `accent-fill` (saffron-600, 5.28:1), decided 26 Oct 2026; the
+///     buttons and selected chips in the theme are asserted to use it.
 ///   • Leaf, indigo and red fills carry white at AA.
 double _lin(int c) {
   final s = c / 255.0;
@@ -98,19 +96,34 @@ void main() {
     });
   });
 
-  group('LIGHT — the saffron fill (flagged, kept exact)', () {
-    test('the primary fill is saffron-500 #C96A28 with a white label', () {
+  group('LIGHT — saffron accent and the label fill', () {
+    test('the accent (orb, mic discs, dots, bars) is saffron-500 #C96A28', () {
       expect(AppColors.lPrimary, const Color(0xFFC96A28));
       expect(AppColors.lPrimary, AppColors.brandSaffron);
-      expect(AppColors.lOnPrimary, _white);
     });
 
-    test('white on saffron-500 is the flagged 3.77:1 — above 3:1, below '
-        '4.5:1 (open founder decision; not "fixed" here)', () {
-      final r = _ratio(_white, AppColors.saffron500);
-      expect(r, closeTo(3.77, 0.01));
-      expect(r, greaterThanOrEqualTo(3.0));
-      expect(r, lessThan(4.5));
+    test('a saffron fill under a white label is accent-fill: 5.28:1', () {
+      expect(AppColors.accentFill, AppColors.saffron600);
+      expect(
+        _ratio(_white, AppColors.accentFill),
+        greaterThanOrEqualTo(4.5),
+      );
+      // Why: white on saffron-500 is 3.77:1, under AA for 12-15px labels.
+      expect(_ratio(_white, AppColors.saffron500), lessThan(4.5));
+    });
+
+    testWidgets('the primary and elevated buttons and the selected chip fill '
+        'with accent-fill, white on top', (tester) async {
+      final t = AppTheme.light();
+      for (final style in [
+        t.filledButtonTheme.style!,
+        t.elevatedButtonTheme.style!,
+      ]) {
+        expect(style.backgroundColor!.resolve({}), AppColors.accentFill);
+        expect(style.foregroundColor!.resolve({}), _white);
+      }
+      expect(t.chipTheme.selectedColor, AppColors.accentFill);
+      expect(t.chipTheme.secondaryLabelStyle!.color, _white);
     });
 
     test('focus is saffron-600: 3:1 or better on every ground', () {

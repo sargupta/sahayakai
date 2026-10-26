@@ -11,10 +11,8 @@ import 'package:sahayakai/shared/widgets/app_segmented.dart';
 /// Light follows the design system v2 `SegmentedControl`: the unselected label
 /// is `text-body` on the 62% `surface-segment` glass composited over the milk
 /// wash, which must clear AA (>=4.5) for 12px text. The selected label is
-/// white on the `saffron-500` pill: 3.77:1, the open founder decision in guide
-/// 10 (fix on the table: a `saffron-600` fill at 5.28:1). This test pins that
-/// value as it stands rather than resolving it, and fails if it drops below the
-/// 3:1 UI-component floor.
+/// white on the `accent-fill` pill (`saffron-600`, 5.28:1), never on
+/// `saffron-500` (3.77:1), decided 26 Oct 2026.
 double _lin(int c) {
   final s = c / 255.0;
   return s <= 0.03928
@@ -88,17 +86,22 @@ void main() {
     );
   });
 
-  testWidgets('light: selected label is white on saffron-500 (open founder '
-      'decision, 3.77:1)', (tester) async {
-    final theme = AppTheme.light();
-    await _pump(tester, theme);
+  testWidgets('light: selected label is white on the accent-fill pill (AA)', (
+    tester,
+  ) async {
+    await _pump(tester, AppTheme.light());
     final label = _labelColor(tester, 'One');
+    final pill = tester
+        .widgetList<DecoratedBox>(find.byType(DecoratedBox))
+        .map((b) => b.decoration)
+        .whereType<ShapeDecoration>()
+        .where((d) => d.shape is StadiumBorder && d.color != null)
+        .map((d) => d.color)
+        .toList();
 
-    expect(label, theme.colorScheme.onPrimary);
-    expect(theme.colorScheme.primary, AppColors.saffron500);
-    final ratio = _ratio(label, AppColors.saffron500);
-    expect(ratio, closeTo(3.77, 0.01));
-    expect(ratio, greaterThanOrEqualTo(3.0));
+    expect(label, AppColors.textOnAccent);
+    expect(pill, contains(AppColors.accentFill));
+    expect(_ratio(label, AppColors.accentFill), greaterThanOrEqualTo(4.5));
   });
 
   testWidgets('segments read as a radio group', (tester) async {

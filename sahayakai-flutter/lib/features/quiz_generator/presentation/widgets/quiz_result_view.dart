@@ -350,8 +350,8 @@ class _DifficultyVariantsState extends State<_DifficultyVariants> {
 }
 
 /// A saffron-filled segmented control (v3 screen 09): one rounded track, the
-/// selected segment filled `scheme.primary` with `onPrimary` text (the app's
-/// button fill contract), the rest plain on the track. Public so the quiz result
+/// selected segment filled `accent-fill` with white text (5.28:1, the app's
+/// label-fill contract), the rest plain on the track. Public so the quiz result
 /// tests can target it (its labels also appear as per-question difficulty
 /// badges, so tests scope finders to this widget).
 class QuizDifficultySegmented extends StatelessWidget {
@@ -420,7 +420,7 @@ class _Segment extends StatelessWidget {
           height: 44,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: selected ? scheme.primary : Colors.transparent,
+            color: selected ? AppColors.accentFill : Colors.transparent,
             borderRadius: AppRadius.rSm,
           ),
           child: Text(

@@ -1123,7 +1123,7 @@ class _CallPlanCard extends StatelessWidget {
         children: [
           Text(
             l10n.parentHotlineCoverTitle,
-            style: text.labelLarge?.copyWith(color: scheme.primary),
+            style: text.labelLarge?.copyWith(color: AppColors.textLink),
           ),
           const SizedBox(height: AppSpacing.space3),
           point(l10n.parentHotlineCoverPoint1),

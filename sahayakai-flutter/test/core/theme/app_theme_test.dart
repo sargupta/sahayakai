@@ -154,7 +154,8 @@ void main() {
 
         expect(selected.fontWeight, FontWeight.w600);
         expect(unselected.fontWeight, FontWeight.w500);
-        expect(selected.color, theme.colorScheme.primary);
+        // saffron as text is saffron-600 (text-link), never saffron-500.
+        expect(selected.color, AppColors.textLink);
         expect(unselected.color, theme.colorScheme.onSurfaceVariant);
       });
 

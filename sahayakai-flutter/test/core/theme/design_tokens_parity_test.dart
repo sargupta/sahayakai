@@ -104,6 +104,7 @@ void main() {
       'text-link': AppColors.textLink,
       'text-link-hover': AppColors.textLinkHover,
       'accent': AppColors.accent,
+      'accent-fill': AppColors.accentFill,
       'accent-tint': AppColors.accentTint,
       'accent-tint-strong': AppColors.accentTintStrong,
       'accent-tint-border': AppColors.accentTintBorder,

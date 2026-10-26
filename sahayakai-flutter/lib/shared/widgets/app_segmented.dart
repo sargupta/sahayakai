@@ -14,10 +14,10 @@ class AppSegment<T> {
 
 /// AppSegmented — the design system v2 `SegmentedControl`: a 62% glass pill
 /// (`surface-segment`, 1px `border-glass`, 4px padding) holding equal
-/// segments 5px apart; the chosen one is a solid `saffron-500` pill with a
-/// white label, the rest are `text-body`. Labels are 600 12/15 in the UI
-/// face. The saffron pill slides between segments on the standard curve
-/// (.25s), and jumps under reduce-motion.
+/// segments 5px apart; the chosen one is a solid `accent-fill` pill
+/// (`saffron-600`, white on it 5.28:1), the rest are `text-body`. Labels are
+/// 600 12/15 in the UI face. The saffron pill slides between segments on the
+/// standard curve (.25s), and jumps under reduce-motion.
 ///
 /// The pill draws 41px tall, as the system does; its touch band is 48px, so
 /// each segment's tap area extends past the visual edge without overlapping
@@ -119,10 +119,10 @@ class AppSegmented<T> extends StatelessWidget {
                         top: 0,
                         bottom: 0,
                         width: segW,
-                        child: DecoratedBox(
+                        child: const DecoratedBox(
                           decoration: ShapeDecoration(
-                            color: scheme.primary,
-                            shape: const StadiumBorder(),
+                            color: AppColors.accentFill,
+                            shape: StadiumBorder(),
                           ),
                         ),
                       ),

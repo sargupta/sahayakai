@@ -282,10 +282,11 @@ class _VidyaOrbState extends State<VidyaOrb> with SingleTickerProviderStateMixin
       top: VidyaOrb._halo - 2,
       right: VidyaOrb._halo - 2,
       child: Container(
-        constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+        // A 22px pill, so "9+" at the 12px floor still fits.
+        constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
         padding: const EdgeInsets.symmetric(horizontal: 5),
         decoration: BoxDecoration(
-          shape: BoxShape.circle,
+          borderRadius: AppRadius.rPill,
           color: scheme.secondary,
           border: Border.all(color: scheme.surface, width: 2),
         ),
@@ -294,7 +295,7 @@ class _VidyaOrbState extends State<VidyaOrb> with SingleTickerProviderStateMixin
           label,
           style: TextStyle(
             fontFamily: kUiFamily,
-            fontSize: 10,
+            fontSize: 12,
             height: 1.0,
             fontWeight: FontWeight.w700,
             color: scheme.onSecondary,
