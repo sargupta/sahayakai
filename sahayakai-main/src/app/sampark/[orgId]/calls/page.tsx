@@ -8,15 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/context/language-context";
-import { listCalls, listCampaigns } from "@/lib/api/sampark";
+import { listCalls, listCampaigns, listTeacherCalls } from "@/lib/api/sampark";
 import { PARENT_LANGUAGE_INFO } from "@/lib/sampark/languages";
-import type { CallLogEntry, CallState } from "@/types/sampark";
+import type { CallLogEntry, CallState, TeacherCallEntry } from "@/types/sampark";
 import { CallStateBadge, HeardBadge, StatusPill } from "@/components/sampark/status-pill";
 import { ErrorPanel, LoadingBlock } from "@/components/sampark/states";
 import { useSamparkQuery } from "@/components/sampark/use-sampark-query";
 import { useSamparkSchool } from "@/components/sampark/school-context";
 import { useSamparkFormat } from "@/components/sampark/format";
 import { useCampaignSummary } from "@/components/sampark/campaign-summary";
+import { CallSourcePill, TeacherOutcomePill, maskedPhone, mergeCallRows, teacherReasonLabel, type CallRow } from "@/components/sampark/call-source";
 import {
     HEARD_LEVELS,
     callStateLabel,
@@ -59,6 +60,7 @@ function Family({ call }: { call: CallLogEntry }) {
         <div className="min-w-0">
             <p className="flex flex-wrap items-center gap-2 text-foreground break-words">
                 <span className="min-w-0 break-words">{call.guardianDisplayName}</span>
+                <CallSourcePill source="campaign" />
                 {testPhone && (
                     <StatusPill tone="warning" title={t("This call rang the school test phone, not the family.")}>
                         {t("Test phone")}
@@ -73,6 +75,71 @@ function Family({ call }: { call: CallLogEntry }) {
                 {call.carrier === "simulated" && <> · {t("Simulated")}</>}
             </p>
         </div>
+    );
+}
+
+/** A teacher's call: class, reason and the masked number only — never the message or the full number. */
+function TeacherFamily({ call }: { call: TeacherCallEntry }) {
+    const { t } = useLanguage();
+    return (
+        <div className="min-w-0">
+            <p className="flex flex-wrap items-center gap-2 text-foreground break-words">
+                <span className="min-w-0 break-words">{teacherReasonLabel(t, call.reason)}</span>
+                <CallSourcePill source="teacher" />
+            </p>
+            {call.className && <p className="text-muted-foreground break-words">{call.className}</p>}
+            <p className="text-xs leading-normal text-muted-foreground">
+                <span aria-hidden="true">{maskedPhone(call.phoneLast4)}</span>
+                <span className="sr-only">{fmt(t("Phone ending {last4}"), { last4: call.phoneLast4 })}</span>
+            </p>
+        </div>
+    );
+}
+
+function Dash() {
+    return <span className="text-muted-foreground">—</span>;
+}
+
+function TeacherDuration({ call }: { call: TeacherCallEntry }) {
+    const { t } = useLanguage();
+    return call.durationSeconds === null ? <Dash /> : <span>{fmt(t("{seconds} s"), { seconds: call.durationSeconds })}</span>;
+}
+
+function TeacherTableRow({ call }: { call: TeacherCallEntry }) {
+    const f = useSamparkFormat();
+    return (
+        <tr className="border-b border-border align-top last:border-b-0">
+            <td className="px-3 py-3 whitespace-nowrap text-foreground">{f.dateTime(call.createdAt)}</td>
+            <td className="px-3 py-3"><TeacherFamily call={call} /></td>
+            <td className="px-3 py-3"><Dash /></td>
+            <td className="px-3 py-3"><TeacherOutcomePill call={call} /></td>
+            <td className="px-3 py-3"><Dash /></td>
+            <td className="px-3 py-3"><Dash /></td>
+            <td className="px-3 py-3 whitespace-nowrap text-foreground"><TeacherDuration call={call} /></td>
+            <td className="px-3 py-3"><Dash /></td>
+        </tr>
+    );
+}
+
+function TeacherCard({ call }: { call: TeacherCallEntry }) {
+    const { t } = useLanguage();
+    const f = useSamparkFormat();
+    return (
+        <li className="rounded-surface-md border border-border bg-card p-4 space-y-3 type-body">
+            <div className="flex items-start justify-between gap-3">
+                <TeacherFamily call={call} />
+                <span className="shrink-0 text-xs leading-normal text-muted-foreground">{f.dateTime(call.createdAt)}</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+                <TeacherOutcomePill call={call} />
+            </div>
+            <dl className="grid grid-cols-2 gap-2">
+                <div>
+                    <dt className="text-xs leading-normal text-muted-foreground">{t("Duration")}</dt>
+                    <dd className="text-foreground"><TeacherDuration call={call} /></dd>
+                </div>
+            </dl>
+        </li>
     );
 }
 
@@ -96,7 +163,7 @@ function Keys({ call }: { call: CallLogEntry }) {
     );
 }
 
-function CallsTable({ calls }: { calls: CallLogEntry[] }) {
+function CallsTable({ rows }: { rows: CallRow[] }) {
     const { t } = useLanguage();
     const f = useSamparkFormat();
     return (
@@ -114,8 +181,8 @@ function CallsTable({ calls }: { calls: CallLogEntry[] }) {
                         </tr>
                     </thead>
                     <tbody>
-                        {calls.map((c) => (
-                            <tr key={c.id} className="border-b border-border align-top last:border-b-0">
+                        {rows.map(({ source, call }) => source === "teacher" ? <TeacherTableRow key={`teacher-${call.id}`} call={call} /> : ((c: CallLogEntry) => (
+                            <tr key={`campaign-${c.id}`} className="border-b border-border align-top last:border-b-0">
                                 <td className="px-3 py-3 whitespace-nowrap text-foreground">{f.dateTime(c.createdAt)}</td>
                                 <td className="px-3 py-3"><Family call={c} /></td>
                                 <td className="px-3 py-3 text-foreground"><Language call={c} /></td>
@@ -130,15 +197,15 @@ function CallsTable({ calls }: { calls: CallLogEntry[] }) {
                                 <td className="px-3 py-3 whitespace-nowrap text-foreground"><Duration call={c} /></td>
                                 <td className="px-3 py-3 text-foreground">{c.attempt}</td>
                             </tr>
-                        ))}
+                        ))(call))}
                     </tbody>
                 </table>
             </div>
 
             {/* Mobile: cards */}
             <ul className="space-y-3 md:hidden">
-                {calls.map((c) => (
-                    <li key={c.id} className="rounded-surface-md border border-border bg-card p-4 space-y-3 type-body">
+                {rows.map(({ source, call }) => source === "teacher" ? <TeacherCard key={`teacher-${call.id}`} call={call} /> : ((c: CallLogEntry) => (
+                    <li key={`campaign-${c.id}`} className="rounded-surface-md border border-border bg-card p-4 space-y-3 type-body">
                         <div className="flex items-start justify-between gap-3">
                             <Family call={c} />
                             <span className="shrink-0 text-xs leading-normal text-muted-foreground">{f.dateTime(c.createdAt)}</span>
@@ -167,7 +234,7 @@ function CallsTable({ calls }: { calls: CallLogEntry[] }) {
                             </div>
                         </dl>
                     </li>
-                ))}
+                ))(call))}
             </ul>
         </>
     );
@@ -238,17 +305,26 @@ function CallsContent() {
         router.replace(q ? `${pathname}?${q}` : pathname);
     };
 
-    const calls = callsQuery.data
-        ? [...callsQuery.data].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-        : undefined;
+    // Teacher calls belong to no campaign, so they join the list only when it is not filtered to one.
+    const teacherQuery = useSamparkQuery(
+        campaignId ? null : (signal) => listTeacherCalls(orgId, { limit: CALL_LIMIT }, { signal }),
+        [orgId, campaignId],
+    );
+    const teacherCalls = campaignId ? [] : teacherQuery.data;
+    const calls = callsQuery.data && teacherCalls ? mergeCallRows(callsQuery.data, teacherCalls, CALL_LIMIT) : undefined;
+    const loading = callsQuery.loading || (!campaignId && teacherQuery.loading);
+    const reload = () => {
+        callsQuery.reload();
+        if (!campaignId) teacherQuery.reload();
+    };
 
     return (
         <SectionCard
             title={t("Calls")}
-            description={t("Every call attempt, what the family heard, and what they pressed. Newest first.")}
+            description={t("Every call the school made to a parent, from a campaign or by a teacher, newest first. Numbers show the last four digits only.")}
             action={
-                <Button type="button" variant="outline" size="sm" onClick={callsQuery.reload} disabled={callsQuery.loading}>
-                    <RefreshCw aria-hidden="true" className={callsQuery.loading ? "animate-spin" : undefined} />
+                <Button type="button" variant="outline" size="sm" onClick={reload} disabled={loading}>
+                    <RefreshCw aria-hidden="true" className={loading ? "animate-spin" : undefined} />
                     {t("Refresh")}
                 </Button>
             }
@@ -273,8 +349,9 @@ function CallsContent() {
 
             <Legend />
 
-            {!calls && callsQuery.loading && <LoadingBlock rows={4} />}
+            {!calls && loading && <LoadingBlock rows={4} />}
             {callsQuery.error && <ErrorPanel error={callsQuery.error} onRetry={callsQuery.reload} />}
+            {!campaignId && teacherQuery.error && <ErrorPanel error={teacherQuery.error} onRetry={teacherQuery.reload} />}
             {calls && calls.length === 0 && (
                 <EmptyState
                     icon={PhoneCall}
@@ -289,7 +366,7 @@ function CallsContent() {
                             ? fmt(t("Showing the latest {count} calls."), { count: f.number(calls.length) })
                             : fmt(t("{count} calls"), { count: f.number(calls.length) })}
                     </p>
-                    <CallsTable calls={calls} />
+                    <CallsTable rows={calls} />
                 </>
             )}
         </SectionCard>

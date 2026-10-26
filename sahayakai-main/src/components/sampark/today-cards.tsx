@@ -31,9 +31,10 @@ import { useLanguage } from "@/context/language-context";
 import { PARENT_LANGUAGE_INFO } from "@/lib/sampark/languages";
 import { EMERGENCY_END_HOUR, EMERGENCY_START_HOUR, effectiveRoutineWindow } from "@/lib/sampark/policy/window";
 import { cn } from "@/lib/utils";
-import { PARENT_LANGUAGES, type ParentLanguage, type SamparkMode, type SamparkOverview, type TrendDay, type UpcomingItem } from "@/types/sampark";
+import { PARENT_LANGUAGES, type ParentLanguage, type RecentCall, type SamparkMode, type SamparkOverview, type TeacherCallEntry, type TrendDay, type UpcomingItem } from "@/types/sampark";
+import { CallSourcePill, TeacherOutcomePill, maskedPhone, teacherReasonLabel } from "./call-source";
 import { useCampaignSummary } from "./campaign-summary";
-import { hourLabel, istHour, useSamparkFormat } from "./format";
+import { hourLabel, istDate, istHour, istToday, useSamparkFormat } from "./format";
 import { KpiTile } from "./kpi-tile";
 import {
     LIVE_CAMPAIGN_STATUSES,
@@ -495,10 +496,66 @@ export function LanguagesCard({ overview, className }: { overview: SamparkOvervi
     );
 }
 
-export function ActivityFeed({ overview, base, className }: { overview: SamparkOverview; base: string; className?: string }) {
+/** How many rows the feed shows; matches the server's RECENT_LIMIT for campaign calls. */
+const FEED_LIMIT = 8;
+
+type FeedRow = { source: "campaign"; call: RecentCall } | { source: "teacher"; call: TeacherCallEntry };
+
+/** Today's campaign calls and today's teacher calls, newest first (integration brief Step 1B). */
+export function feedRows(recent: RecentCall[], teacherCalls: TeacherCallEntry[], today: string): FeedRow[] {
+    const rows: FeedRow[] = [
+        ...recent.map((call) => ({ source: "campaign" as const, call })),
+        ...teacherCalls
+            .filter((c) => istDate(new Date(c.createdAt)) === today)
+            .map((call) => ({ source: "teacher" as const, call })),
+    ];
+    return rows
+        .sort((a, b) => b.call.createdAt.localeCompare(a.call.createdAt) || a.call.id.localeCompare(b.call.id))
+        .slice(0, FEED_LIMIT);
+}
+
+function TeacherFeedItem({ call }: { call: TeacherCallEntry }) {
+    const { t } = useLanguage();
+    const f = useSamparkFormat();
+    return (
+        <li className="flex items-start gap-3 border-b border-border py-3 last:border-b-0">
+            <time dateTime={call.createdAt} className="w-12 shrink-0 text-xs tabular-nums leading-normal text-muted-foreground">
+                {f.time(call.createdAt)}
+            </time>
+            <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                    <p className="type-body font-semibold text-foreground break-words">
+                        {call.className ?? t("Class not recorded")}{" "}
+                        <span aria-hidden="true" className="font-normal text-muted-foreground">· {maskedPhone(call.phoneLast4)}</span>
+                        <span className="sr-only">{fmt(t("Phone ending {last4}"), { last4: call.phoneLast4 })}</span>
+                    </p>
+                    <p className="text-xs leading-normal text-muted-foreground">{teacherReasonLabel(t, call.reason)}</p>
+                </div>
+                <div className="flex shrink-0 flex-wrap items-center gap-2 sm:flex-col sm:items-end">
+                    <CallSourcePill source="teacher" />
+                    <TeacherOutcomePill call={call} />
+                </div>
+            </div>
+        </li>
+    );
+}
+
+export function ActivityFeed({
+    overview,
+    teacherCalls = [],
+    base,
+    className,
+}: {
+    overview: SamparkOverview;
+    /** The school's teacher calls; only today's are shown. */
+    teacherCalls?: TeacherCallEntry[];
+    base: string;
+    className?: string;
+}) {
     const { t } = useLanguage();
     const f = useSamparkFormat();
     const titles = activityTitles(t, overview.activityMode);
+    const rows = feedRows(overview.recent, teacherCalls, istToday());
 
     return (
         <SectionCard
@@ -515,14 +572,16 @@ export function ActivityFeed({ overview, base, className }: { overview: SamparkO
                 </Link>
             }
         >
-            {overview.recent.length === 0 ? (
+            {rows.length === 0 ? (
                 <p className="rounded-surface-md border border-dashed border-border p-6 text-center type-body text-muted-foreground">{t("No calls yet")}</p>
             ) : (
                 <ul>
-                    {overview.recent.map((r) => {
+                    {rows.map((row) => {
+                        if (row.source === "teacher") return <TeacherFeedItem key={`teacher-${row.call.id}`} call={row.call} />;
+                        const r = row.call;
                         const info = PARENT_LANGUAGE_INFO[r.language];
                         return (
-                            <li key={r.id} className="flex items-start gap-3 border-b border-border py-3 last:border-b-0">
+                            <li key={`campaign-${r.id}`} className="flex items-start gap-3 border-b border-border py-3 last:border-b-0">
                                 <time dateTime={r.createdAt} className="w-12 shrink-0 text-xs tabular-nums leading-normal text-muted-foreground">
                                     {f.time(r.createdAt)}
                                 </time>
@@ -538,6 +597,7 @@ export function ActivityFeed({ overview, base, className }: { overview: SamparkO
                                         </p>
                                     </div>
                                     <div className="flex shrink-0 flex-wrap items-center gap-2 sm:flex-col sm:items-end">
+                                        <CallSourcePill source="campaign" />
                                         <StatusPill tone={outcomeClassTone(r.outcomeClass)}>{outcomeClassLabel(t, r)}</StatusPill>
                                         {r.retryAt && (
                                             <span className="text-xs leading-normal text-muted-foreground">
