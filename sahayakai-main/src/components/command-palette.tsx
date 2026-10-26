@@ -28,6 +28,7 @@ import {
   Lightbulb,
   MessageCircle,
   PencilRuler,
+  PhoneCall,
   Search,
   Settings,
   ShieldCheck,
@@ -71,6 +72,7 @@ const ROUTES: Route[] = [
   { href: "/rubric-generator", label: "Rubric Generator", i18nKey: "Rubric Generator", keywords: "rubric grade score marking", group: "Assess", icon: ClipboardCheck },
   { href: "/exam-paper", label: "Exam Paper", i18nKey: "Exam Paper", keywords: "exam paper board question", group: "Assess", icon: FileText },
   { href: "/attendance", label: "Attendance", i18nKey: "Attendance", keywords: "attendance roll call marks", group: "Assess", icon: ClipboardList },
+  { href: "/sampark", label: "School calls", i18nKey: "School calls", keywords: "school calls parents families ptm event closure notice sampark", group: "Assess", icon: PhoneCall },
 
   // Engage
   { href: "/video-storyteller", label: "Video Storyteller", i18nKey: "Video Storyteller", keywords: "video storyteller youtube recommend", group: "Labs", icon: Video },
