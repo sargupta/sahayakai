@@ -1,0 +1,163 @@
+"use client";
+
+import { useState, type ReactNode } from "react";
+import Link from "next/link";
+import { ArrowLeftRight, GraduationCap, LayoutDashboard, Menu, Phone, PhoneCall, Users } from "lucide-react";
+import { LanguagePill } from "@/components/language-pill";
+import { ErrorBoundary } from "@/components/error-boundary";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { ProductSideNav, type NavSection } from "@/components/shell/side-nav";
+import { SamparkWordmark } from "@/components/shell/brand";
+import { useCollapsedNav } from "@/components/shell/use-collapsed";
+import { useSamparkHref, useSamparkPathname } from "@/components/shell/product-paths";
+import { StatusPill } from "@/components/sampark/status-pill";
+import { useLanguage } from "@/context/language-context";
+import { useDemo } from "./use-demo";
+
+function initials(name: string): string {
+    const words = name.trim().split(/\s+/).filter(Boolean);
+    return (words.length > 1 ? words[0][0] + words[1][0] : (words[0] ?? "").slice(0, 2)).toUpperCase();
+}
+
+/**
+ * The SamparkAI frame for the demo school: the same side rail and top bar as
+ * the school workspace, with the sections of whoever is signed in. A teacher
+ * sees their classes and calls; the admin sees the whole school.
+ */
+export function DemoFrame({ children }: { children: ReactNode }) {
+    const { t } = useLanguage();
+    const view = useDemo();
+    const href = useSamparkHref();
+    const current = useSamparkPathname();
+    const [menuOpen, setMenuOpen] = useState(false);
+    const [collapsed, toggleCollapsed] = useCollapsedNav("sampark.demo.sidebar.folded");
+
+    const under = (p: string) => current === p || current.startsWith(`${p}/`);
+    const openComplaints = view?.visibleCalls.filter((c) => c.complaintStatus === "open").length ?? 0;
+    const complaintBadge = openComplaints > 0 ? { text: String(openComplaints), label: t("Open complaints"), tone: "danger" as const } : null;
+
+    const sections: NavSection[] =
+        view?.role === "admin"
+            ? [
+                  {
+                      key: "school",
+                      tier: "primary",
+                      items: [
+                          { key: "monitor", label: t("School monitor"), shortLabel: t("Monitor"), icon: LayoutDashboard, href: href("/demo/admin"), active: current === "/demo/admin" },
+                          { key: "calls", label: t("All calls"), shortLabel: t("Calls"), icon: Phone, href: href("/demo/admin/calls"), active: under("/demo/admin/calls"), badge: complaintBadge },
+                          { key: "families", label: t("Families"), icon: Users, href: href("/demo/admin/families"), active: under("/demo/admin/families") },
+                      ],
+                  },
+              ]
+            : view?.role === "teacher"
+              ? [
+                    {
+                        key: "classes",
+                        tier: "primary",
+                        items: [
+                            { key: "classes", label: t("My classes"), shortLabel: t("Classes"), icon: GraduationCap, href: href("/demo/teacher"), active: current === "/demo/teacher" },
+                            { key: "calls", label: t("My calls"), shortLabel: t("Calls"), icon: PhoneCall, href: href("/demo/teacher/calls"), active: under("/demo/teacher/calls"), badge: complaintBadge },
+                        ],
+                    },
+                ]
+              : [];
+
+    const lead = view?.role
+        ? (mode: "full" | "rail") => {
+              const roleLabel = view.role === "admin" ? t(view.school.admin.title) : t("Class teacher");
+              const avatar = (
+                  <span aria-hidden="true" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-row bg-milk-400 font-display text-tile font-semibold text-ink-900">
+                      {initials(view.actorName)}
+                  </span>
+              );
+              if (mode === "rail") {
+                  return (
+                      <Link href={href("/demo")} aria-label={t("Switch role")} className="focus-ring flex min-h-11 w-full flex-col items-center gap-1 rounded-tile py-1">
+                          {avatar}
+                          <span className="text-xs font-medium leading-tight text-ink-600">{roleLabel}</span>
+                      </Link>
+                  );
+              }
+              return (
+                  <Link
+                      href={href("/demo")}
+                      onClick={() => setMenuOpen(false)}
+                      className="focus-ring group/role flex min-h-12 items-center gap-3 rounded-field border border-line-glass bg-surface-glass px-3 py-2 transition-colors duration-small ease-standard hover:bg-surface-glass-strong"
+                  >
+                      {avatar}
+                      <span className="min-w-0 flex-1">
+                          <span className="block break-words font-display text-value font-semibold leading-tight text-ink-900">{view.actorName}</span>
+                          <span className="block text-xs leading-snug text-ink-500">{roleLabel}</span>
+                      </span>
+                      <ArrowLeftRight aria-hidden="true" strokeWidth={1.7} className="h-4 w-4 shrink-0 text-ink-500 group-hover/role:text-ink-900" />
+                  </Link>
+              );
+          }
+        : undefined;
+
+    const footer = (mode: "full" | "rail") =>
+        mode === "rail" ? null : (
+            <div className="rounded-field px-3 py-2 text-xs leading-snug text-ink-500">
+                <span className="block font-display text-value font-semibold leading-tight text-ink-900">{view?.school.name ?? ""}</span>
+                {t("Demo school · every name is made up")}
+            </div>
+        );
+
+    const nav = (forceFull: boolean) => (
+        <ProductSideNav
+            label="SamparkAI"
+            brand={<SamparkWordmark endorsed />}
+            brandCompact={<SamparkWordmark compact />}
+            brandHref={href("/demo")}
+            lead={lead}
+            sections={sections}
+            footer={footer}
+            collapsed={forceFull ? false : collapsed}
+            onToggleCollapsed={forceFull ? undefined : toggleCollapsed}
+            forceFull={forceFull}
+            onNavigate={forceFull ? () => setMenuOpen(false) : undefined}
+            collapseLabel={t("Fold sidebar")}
+            expandLabel={t("Unfold sidebar")}
+        />
+    );
+
+    return (
+        <div className="flex min-h-svh w-full bg-milk-200">
+            {nav(false)}
+            <div className="flex min-w-0 flex-1 flex-col">
+                <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-line-hairline bg-surface-chrome px-3 md:h-topbar md:px-6">
+                    <div className="flex min-w-0 items-center gap-1">
+                        <button
+                            type="button"
+                            onClick={() => setMenuOpen(true)}
+                            aria-label={t("Open menu")}
+                            aria-expanded={menuOpen}
+                            className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-pill text-ink-600 hover:bg-milk-300 hover:text-ink-900 md:hidden"
+                        >
+                            <Menu aria-hidden="true" strokeWidth={1.7} className="h-5 w-5" />
+                        </button>
+                        <p className="hidden min-w-0 truncate text-tile text-ink-500 md:block">
+                            {view ? `${view.school.name}, ${view.school.city}` : t("Demo school")}
+                        </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+                        <StatusPill tone="brand" title={t("Calls in this demo are played in the browser. No phone rings and no real family is contacted.")}>
+                            {t("Demo · no phone rings")}
+                        </StatusPill>
+                        <LanguagePill />
+                    </div>
+                </header>
+                <main className="w-full max-w-full flex-1 overflow-x-hidden px-3 pb-16 pt-4 sm:px-4 md:px-8 md:pt-8">
+                    <ErrorBoundary>{children}</ErrorBoundary>
+                </main>
+            </div>
+
+            <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+                <SheetContent side="left" className="w-[min(320px,88vw)] border-r border-line-hairline bg-milk-50 p-0 md:hidden">
+                    <SheetTitle className="sr-only">{t("Menu")}</SheetTitle>
+                    {nav(true)}
+                </SheetContent>
+            </Sheet>
+        </div>
+    );
+}

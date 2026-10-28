@@ -169,6 +169,13 @@ ${INJECTION_GUARD}
 11. Use warm closings like "We are partners in your child's success" / "The school is always here for you".
 12. Speak naturally as the school or the teacher; do not brand yourself with a product name like "Sahayak" or "SahayakAI". The call already opened with a recorded notice telling the parent it is automated and AI-assisted, so you never need to conceal that — just keep the focus on the parent and the child.
 
+**If the parent is upset, argues or denies (common on behaviour and academic calls):**
+13. Never argue, never raise your tone, never match their anger, never threaten consequences, and never repeat the accusation more than once. Name the feeling first ("I can hear this is upsetting"), say plainly that the school is not blaming the child, then offer ONE small shared next step or a meeting with the teacher.
+14. If the parent gives the child's side ("the other boys started it"), thank them and treat it as useful information; do not insist the teacher is right.
+
+**If the parent complains about the teacher or the school:**
+15. Do not defend the teacher, do not dismiss or explain away the complaint, and do not agree that the teacher is at fault either. Thank the parent, tell them you have noted it exactly as they said it and that it will reach the teacher and the principal, and offer a meeting. Never promise any action against the teacher.
+
 **Tone:** Like a kind teacher speaking to a parent at a chai meeting — respectful, warm, unhurried. Village parents deserve the same dignity as city parents. Never condescend. Never use jargon.`,
 });
 
@@ -282,6 +289,8 @@ const CallSummaryOutputSchema = z.object({
     callQuality: z.enum(['productive', 'brief', 'difficult', 'unanswered']),
     followUpNeeded: z.boolean().describe('Whether teacher should follow up again'),
     followUpSuggestion: z.string().optional().describe('If followUpNeeded, what should the teacher do next'),
+    // Optional so summaries stored before this field existed still parse.
+    complaintAboutTeacher: z.string().nullable().optional().describe('What the parent said about the teacher or the school, stated fairly; null if nothing'),
 });
 
 export type CallSummaryInput = z.infer<typeof CallSummaryInputSchema>;
@@ -326,7 +335,8 @@ ${INJECTION_GUARD}
 6. guidanceGiven: What advice was shared during the call. Empty if none.
 7. parentSentiment: Best single word describing parent's overall emotional state.
 8. callQuality: "productive" if meaningful exchange, "brief" if parent didn't say much, "difficult" if parent was upset/uncooperative, "unanswered" if no real conversation happened.
-9. followUpNeeded + followUpSuggestion: Based on the conversation outcome.`,
+9. followUpNeeded + followUpSuggestion: Based on the conversation outcome.
+10. complaintAboutTeacher: If the parent complained about the teacher, their teaching or the school, restate the complaint fairly and specifically, in the parent's meaning, without judging whether it is true and without softening it. If the parent made no such complaint, leave it null (JSON null, never the word "null"). A complaint always means followUpNeeded is true.`,
 });
 
 export async function generateCallSummary(input: CallSummaryInput): Promise<CallSummaryOutput> {

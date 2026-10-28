@@ -150,6 +150,21 @@ export async function middleware(request: NextRequest) {
         return new NextResponse(null, { status: 404 });
     }
 
+    // Demo deployments only (SAMPARK_DEMO_ENABLED): Sahayak's Attendance
+    // feature opens the SamparkAI teacher page, where parent calls now live.
+    // Off everywhere else, so production Attendance is unchanged.
+    if (
+        process.env.SAMPARK_DEMO_ENABLED === 'true' &&
+        request.method === 'GET' &&
+        !isSamparkHost(host) &&
+        (pathname === '/attendance' || pathname.startsWith('/attendance/'))
+    ) {
+        const url = request.nextUrl.clone();
+        url.pathname = `${SAMPARK_PREFIX}/demo/teacher`;
+        url.search = '?from=sahayak';
+        return NextResponse.redirect(url, 307);
+    }
+
     // SamparkAI host routing (docs/products/SAMPARK_SUBDOMAIN.md). On a
     // SamparkAI host the public URL has no /sampark prefix: page paths are
     // rewritten onto the /sampark route tree, and a prefixed URL typed by
@@ -285,6 +300,7 @@ export async function middleware(request: NextRequest) {
         pathname.startsWith('/api/billing/callback') ||  // Razorpay redirect — verified via signature
         pathname === '/api/billing/create-public-subscription' ||  // Anon pricing checkout — creates Razorpay payment link; payment-side verification on webhook (exact path, NOT /api/billing prefix)
         pathname.startsWith('/api/seo/') ||  // SEO endpoints (llms.txt, google-verify) — public, no auth needed
+        pathname.startsWith('/api/sampark-demo/') ||  // SamparkAI demo agent turns + summaries — fictional school only; 404 unless SAMPARK_DEMO_ENABLED, rate-limited in-handler (src/server/sampark/demo.ts)
         pathname.startsWith('/api/demo-call');  // "Hear the Call" lead magnet — anon by design; gated in-handler (flag + Turnstile + transactional caps; twiml/status verify Twilio signatures). Spec: docs/PARENT_CALL_DEMO_SPEC.md
 
     if (isPublicApi) {

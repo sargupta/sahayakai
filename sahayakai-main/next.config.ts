@@ -15,6 +15,9 @@ const serwistOptions = {
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Local only: two `next dev` servers on one checkout corrupt a shared .next,
+  // so a second server can set NEXT_DIST_DIR (e.g. ".next-demo"). Unset = .next.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   // Reverse-proxy Firebase Auth helper paths through our domain so the OAuth
   // iframe (loaded by signInWithPopup / signInWithRedirect) is same-site with
   // the app. Required for iPhone Safari: ITP blocks third-party iframes to
