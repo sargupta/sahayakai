@@ -52,6 +52,38 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
+# PATH bootstrap for Windows/fvm environments where flutter/dart/python3
+# are not on PATH. Probe common install locations and prepend to PATH.
+if ! command -v flutter >/dev/null 2>&1; then
+  for candidate in "$HOME"/fvm/versions/*/bin /c/flutter/bin /c/flutter/flutter/bin; do
+    if [ -x "$candidate/flutter" ] || [ -x "$candidate/flutter.bat" ] || [ -x "$candidate/flutter.exe" ]; then
+      export PATH="$candidate:$PATH"
+      break
+    fi
+  done
+fi
+if ! command -v python3 >/dev/null 2>&1; then
+  for candidate in /c/Users/*/AppData/Local/Programs/Python/Python*/python.exe; do
+    if [ -x "$candidate" ]; then
+      export PATH="$(dirname "$candidate"):$PATH"
+      break
+    fi
+  done
+fi
+# Set PYTHON_CMD to whichever python binary is available.
+if command -v python3 >/dev/null 2>&1; then
+  PYTHON_CMD="python3"
+elif command -v python >/dev/null 2>&1; then
+  PYTHON_CMD="python"
+else
+  PYTHON_CMD=""
+fi
+
+# Use a repo-local temp dir with a Windows-native path (cygpath -w converts
+# the POSIX pwd to a Windows path that Flutter can resolve).
+REPORT_DIR="$(cygpath -w "$(pwd)")/.i18n-gate-tmp"
+mkdir -p "$REPORT_DIR"
+
 L10N_YAML="l10n.yaml"
 if [ ! -f "$L10N_YAML" ]; then
   echo "✗  i18n-gate: $L10N_YAML not found (expected at repo root)."
@@ -64,7 +96,7 @@ if [ ! -d "$ONBOARDING_DIR" ]; then
   exit 1
 fi
 
-REPORT_DIR="$(mktemp -d)"
+# REPORT_DIR already set above (repo-local, Windows-accessible)
 BACKUP_YAML="$REPORT_DIR/l10n.yaml.bak"
 REPORT="$REPORT_DIR/untranslated.json"
 GEN_LOG="$REPORT_DIR/gen_l10n.log"
@@ -128,7 +160,7 @@ if [ ! -f "$REPORT" ]; then
   exit 1
 fi
 
-hits="$(python3 - "$REPORT" "$REACHABLE_KEYS" <<'PY'
+hits="$("$PYTHON_CMD" - "$REPORT" "$REACHABLE_KEYS" <<'PY'
 import json, sys
 
 report_path, reachable_path = sys.argv[1], sys.argv[2]

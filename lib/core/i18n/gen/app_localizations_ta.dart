@@ -782,18 +782,6 @@ class AppLocalizationsTa extends AppLocalizations {
   String get settingsTitle => 'அமைப்புகள்';
 
   @override
-  String get settingsAppearanceTitle => 'தோற்றம்';
-
-  @override
-  String get settingsThemeSystem => 'எனது சாதனத்தின்படி';
-
-  @override
-  String get settingsThemeLight => 'வெளிர்';
-
-  @override
-  String get settingsThemeDark => 'இருண்ட';
-
-  @override
   String get settingsLanguageHint =>
       'செயலியின் மொழியையும், உங்கள் கற்பித்தல் பொருட்கள் எழுதப்படும் மொழியையும் இது அமைக்கிறது.';
 

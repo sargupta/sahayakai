@@ -1,3 +1,4 @@
+// ignore_for_file: prefer_const_constructors
 import 'package:flutter/material.dart';
 
 import '../../core/i18n/l10n_ext.dart';
@@ -255,17 +256,17 @@ class _WorkingBarState extends State<_WorkingBar>
                   child: Container(
                     width: 42,
                     height: 42,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: RadialGradient(
+                      gradient: const RadialGradient(
                         center: Alignment(-0.32, -0.4),
                         radius: 0.95,
-                        colors: [Color(0xFFDCE2FA), Color(0xFF2A3B8F)],
+                        colors: [AppColors.indigo100, AppColors.indigo500],
                         stops: [0.0, 0.74],
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Color(0x522A3B8F), // indigo @ .32
+                          color: AppColors.indigo500.withValues(alpha: 0.32), // indigo @ .32
                           offset: Offset(0, 6),
                           blurRadius: 18,
                         ),

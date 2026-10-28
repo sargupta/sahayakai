@@ -38,6 +38,18 @@ cd "$(dirname "$0")/.."
 : "${JAVA_HOME:=/opt/homebrew/opt/openjdk@17}"
 export ANDROID_HOME JAVA_HOME
 export PATH="$JAVA_HOME/bin:$PATH"
+# PATH bootstrap for Windows/fvm
+if ! command -v flutter >/dev/null 2>&1; then
+  for candidate in "$HOME"/fvm/versions/*/bin; do
+    [ -x "$candidate/flutter.bat" ] && export PATH="$candidate:$PATH" && break
+  done
+fi
+if ! command -v python3 >/dev/null 2>&1; then
+  for candidate in /c/Users/*/AppData/Local/Programs/Python/Python*/python.exe; do
+    [ -x "$candidate" ] && export PATH="$(dirname "$candidate"):$PATH" && break
+  done
+  command -v python3 >/dev/null 2>&1 || { command -v python >/dev/null 2>&1 && alias python3=python; }
+fi
 
 fail=0
 step() { echo ""; echo "==> $1"; }

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+// ignore_for_file: prefer_const_constructors
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -398,7 +399,7 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet>
                 onPressed: () => controller.cancel(),
                 icon: const Icon(LucideIcons.square, size: 18),
                 style: IconButton.styleFrom(
-                  backgroundColor: AppColors.saffron500,
+                  backgroundColor: AppColors.accentFill,
                   foregroundColor: Colors.white,
                 ),
               ),
@@ -423,12 +424,12 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet>
                     child: Container(
                       width: 40,
                       height: 40,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: AppColors.saffron500,
                         boxShadow: [
                           BoxShadow(
-                            color: Color(0x5CC96A28),
+                            color: AppColors.saffron500.withValues(alpha: 0.36),
                             offset: Offset(0, 5),
                             blurRadius: 14,
                           ),

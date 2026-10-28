@@ -353,7 +353,7 @@ class _HeaderRow extends StatelessWidget {
             // Theme role: legible on the dark capture surface AND on Screen
             // 12's light wash once the phase flips.
             style: text.bodySmall?.copyWith(
-              fontSize: 11,
+              fontSize: 12,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
@@ -369,7 +369,7 @@ class _HeaderRow extends StatelessWidget {
           child: Text(
             '$pages / $maxPages',
             style: text.labelSmall?.copyWith(
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
               color: AppColors.ink900,
             ),

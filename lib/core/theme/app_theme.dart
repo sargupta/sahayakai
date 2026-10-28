@@ -1,3 +1,4 @@
+// ignore_for_file: prefer_const_constructors
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -40,10 +41,8 @@ class AppTheme {
   static ThemeData get demo => light();
 
   static ThemeData _build(Brightness b, {bool isIndic = false}) {
-    final isDark = b == Brightness.dark;
-
-    // Use the canonical ColorScheme from AppColors (tokens/colors.css)
-    final scheme = isDark ? AppColors.darkScheme : AppColors.lightScheme;
+    // Light only (decided 26 Oct 2026): ignore `b`; darkScheme is retired.
+    final scheme = AppColors.lightScheme;
 
     final textTheme = AppText.build(scheme, isIndic: isIndic);
     final textExtras = AppText.buildExtras(scheme, isIndic: isIndic);
@@ -57,7 +56,7 @@ class AppTheme {
       // Transparent so the shared AppBackground (applied in app.dart's builder)
       // shows through. Screens that paint their own gradient still override.
       scaffoldBackgroundColor: Colors.transparent,
-      shadowColor: isDark ? Colors.black : AppColors.ink900,
+      shadowColor: AppColors.ink900,
       textTheme: textTheme,
       extensions: [textExtras],
       splashFactory: InkRipple.splashFactory,
@@ -74,9 +73,7 @@ class AppTheme {
         shadowColor: Colors.transparent,
         centerTitle: false,
         titleTextStyle: textTheme.titleLarge,
-        systemOverlayStyle: isDark
-            ? SystemUiOverlayStyle.light
-            : SystemUiOverlayStyle.dark,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
       ),
 
       // -----------------------------------------------------------------------
@@ -106,11 +103,7 @@ class AppTheme {
           shape: const WidgetStatePropertyAll(StadiumBorder()),
           textStyle: WidgetStatePropertyAll(textTheme.labelLarge),
           elevation: const WidgetStatePropertyAll(0),
-          shadowColor: WidgetStatePropertyAll(
-            isDark
-                ? AppShadows.dSaffronGlow.first.color
-                : AppShadows.cta.color,
-          ),
+          shadowColor: WidgetStatePropertyAll(AppShadows.cta.color),
         ),
       ),
 
@@ -190,7 +183,7 @@ class AppTheme {
       // Cards — GlassSurface.flat, rCard (18), two-layer warm shadow
       // -----------------------------------------------------------------------
       cardTheme: CardThemeData(
-        color: isDark ? AppGlass.dFlatFill : AppGlass.lFlatFill,
+        color: AppGlass.lFlatFill,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         shadowColor: Colors.transparent,
@@ -205,7 +198,7 @@ class AppTheme {
       // -----------------------------------------------------------------------
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: isDark ? AppGlass.dFlatFillSoft : AppGlass.lFlatFillSoft,
+        fillColor: AppGlass.lFlatFillSoft,
         contentPadding: AppSpacing.fieldPadding,
         hintStyle: textTheme.bodyMedium?.copyWith(
           color: scheme.onSurfaceVariant,
@@ -239,7 +232,7 @@ class AppTheme {
       // Chips — pill (StadiumBorder), 8-9px vertical padding, selected = saffron/leaf
       // -----------------------------------------------------------------------
       chipTheme: ChipThemeData(
-        backgroundColor: isDark ? AppGlass.dFlatFillSoft : AppGlass.lFlatFillSoft,
+        backgroundColor: AppGlass.lFlatFillSoft,
         selectedColor: scheme.primaryContainer, // saffron-100 / leaf-100 / indigo-100
         checkmarkColor: scheme.onPrimaryContainer,
         labelStyle: textTheme.labelMedium?.copyWith(color: scheme.onSurface),
@@ -282,7 +275,7 @@ class AppTheme {
       // Real-blur surfaces use GlassSurface.chrome() directly.
       // -----------------------------------------------------------------------
       dialogTheme: DialogThemeData(
-        backgroundColor: isDark ? AppGlass.dFlatFill : AppGlass.lFlatFill,
+        backgroundColor: AppGlass.lFlatFill,
         surfaceTintColor: Colors.transparent,
         shape: const ContinuousRectangleBorder(
           borderRadius: AppRadius.rCard,
@@ -290,7 +283,7 @@ class AppTheme {
       ),
 
       bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: isDark ? AppGlass.dFlatFill : AppGlass.lFlatFill,
+        backgroundColor: AppGlass.lFlatFill,
         surfaceTintColor: Colors.transparent,
         shape: const ContinuousRectangleBorder(
           borderRadius: BorderRadius.vertical(

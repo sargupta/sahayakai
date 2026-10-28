@@ -1,3 +1,4 @@
+// ignore_for_file: prefer_const_constructors
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -110,9 +111,9 @@ class DeliverTray extends ConsumerWidget {
                   DecoratedBox(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(9999),
-                      boxShadow: const [
+                      boxShadow: [
                         BoxShadow(
-                          color: Color(0x57C96A28), // rgba(201,106,40,.34)
+                          color: AppColors.saffron500.withValues(alpha: 0.34), // rgba(201,106,40,.34)
                           offset: Offset(0, 8),
                           blurRadius: 20,
                         ),
@@ -128,7 +129,7 @@ class DeliverTray extends ConsumerWidget {
                             ),
                       ),
                       style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.saffron500,
+                        backgroundColor: AppColors.accentFill,
                         foregroundColor: Colors.white,
                         minimumSize: const Size.fromHeight(50),
                         padding: EdgeInsets.zero,
@@ -291,7 +292,7 @@ class _Header extends StatelessWidget {
     final orb = Container(
       width: 36,
       height: 36,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: RadialGradient(
           center: Alignment(-0.34, -0.4),
@@ -301,7 +302,7 @@ class _Header extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Color(0x4D4C8B4E), // leaf500 @ .30
+            color: AppColors.leaf500.withValues(alpha: 0.3), // leaf500 @ .30
             offset: Offset(0, 5),
             blurRadius: 14,
           ),

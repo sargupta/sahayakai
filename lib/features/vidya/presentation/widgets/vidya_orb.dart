@@ -238,7 +238,7 @@ class _VidyaOrbState extends State<VidyaOrb> with SingleTickerProviderStateMixin
         return const RadialGradient(
           center: center,
           radius: radius,
-          colors: [Color(0xFFE6E2DA), Color(0xFF8A8178)],
+          colors: [Color.fromARGB(255, 230, 226, 218), Color.fromARGB(255, 138, 129, 120)],
           stops: [0.0, 0.72],
         );
     }
@@ -393,7 +393,7 @@ class _VidyaOrbState extends State<VidyaOrb> with SingleTickerProviderStateMixin
           label,
           style: const TextStyle(
             fontFamily: 'Instrument Sans',
-            fontSize: 10,
+            fontSize: 12,
             height: 1.0,
             fontWeight: FontWeight.w700,
             color: AppColors.textOnAccent,

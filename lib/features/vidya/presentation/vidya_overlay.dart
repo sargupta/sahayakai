@@ -225,10 +225,10 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xEBFFFDF9), // rgba(255,253,249,.92)
+                              color: Colors.white.withValues(alpha: 0.92), // rgba(255,253,249,.92)
                               borderRadius: AppRadius.rPill,
                               border: Border.all(
-                                color: const Color(0x1A171310), // rgba(23,19,16,.1)
+                                color: AppColors.ink900.withValues(alpha: 0.1), // rgba(23,19,16,.1)
                                 width: 1,
                               ),
                             ),
@@ -237,7 +237,7 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
                               softWrap: false,
                               style: const TextStyle(
                                 fontFamily: 'Instrument Sans',
-                                fontSize: 10,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w500,
                                 color: AppColors.textMuted, // #6E655C
                                 // This chip lives in the overlay, outside any
