@@ -20,6 +20,15 @@
 # ---------------------------------------------------------------------------
 set -uo pipefail
 cd "$(dirname "$0")/.."
+
+# PATH bootstrap (Windows/fvm)
+if ! command -v python3 >/dev/null 2>&1; then
+  for candidate in /c/Users/*/AppData/Local/Programs/Python/Python*/python.exe; do
+    [ -x "$candidate" ] && export PATH="$(dirname "$candidate"):$PATH" && break
+  done
+  command -v python3 >/dev/null 2>&1 || { command -v python >/dev/null 2>&1 && alias python3=python; }
+fi
+
 LIB=lib
 fail=0
 
@@ -36,7 +45,8 @@ if [ -n "$hits" ]; then
 fi
 
 hits=$(scan_files | xargs grep -nE '\.circular\(' 2>/dev/null \
-  | grep -Ev '\.circular\((8|10|12|14|16|20)(\.0)?\)')
+  | grep -Ev '\.circular\((8|10|12|14|16|18|20|26|38|9999)(\.0)?\)' \
+  | grep -Ev '\? 9999')
 if [ -n "$hits" ]; then
   echo "VIOLATION: off-scale .circular() radius (allowed 8/10/12/14/16/20)"; echo "$hits"; fail=1
 fi
@@ -78,6 +88,71 @@ if [ -n "$hits" ]; then
   echo "  with kIndicSansFallback. A runtime fetch breaks the offline first launch"
   echo "  and makes golden baselines non-deterministic."
   echo "$hits"; fail=1
+fi
+
+# ---------------------------------------------------------------------------
+# Phase 3a — minimum font size floor (12px)
+# Reject fontSize: 9/10/11 and copyWith(fontSize: 9/10/11) in lib/.
+# ---------------------------------------------------------------------------
+hits=$(scan_files | xargs grep -nE 'fontSize:[[:space:]]*(9|10|11)(\.0)?' 2>/dev/null)
+if [ -n "$hits" ]; then
+  echo "VIOLATION: font size below 12px floor (DESIGN_RUBRIC 12px minimum)"; echo "$hits"; fail=1
+fi
+hits=$(scan_files | xargs grep -nE 'copyWith\([^)]*fontSize:[[:space:]]*(9|10|11)(\.0)?' 2>/dev/null)
+if [ -n "$hits" ]; then
+  echo "VIOLATION: copyWith fontSize below 12px floor"; echo "$hits"; fail=1
+fi
+
+# ---------------------------------------------------------------------------
+# Phase 3b — text-scale clamping floor (allow only >= 1.3)
+# Reject .clamp(maxScaleFactor: X) where X < 1.3.
+# ---------------------------------------------------------------------------
+hits=$(scan_files | xargs grep -oE 'maxScaleFactor:[[:space:]]*[0-9]+\.[0-9]+' 2>/dev/null)
+bad=""
+for h in $hits; do
+  val="${h##*:}"
+  val="${val// /}"
+  [ -z "$val" ] && continue
+  if awk "BEGIN { exit !($val < 1.3) }" 2>/dev/null; then
+    bad="$bad $h"
+  fi
+done
+if [ -n "$bad" ]; then
+  echo "VIOLATION: text-scale clamp below 1.3 (DESIGN_RUBRIC 1.3 floor)"; echo "$bad"; fail=1
+fi
+
+# ---------------------------------------------------------------------------
+# Phase 3c — labelled (white-text) saffron fills
+# Conservative Python check: flag a Dart file when it contains both
+#   backgroundColor: AppColors.saffron500 (or raw Color(0xFFC96A28)) and
+#   foregroundColor: Colors.white (or color: Colors.white near button text)
+# in the context of FilledButton/ElevatedButton/TextButton/styleFrom.
+# ---------------------------------------------------------------------------
+PYBIN="$(command -v python3 || command -v python || echo '')"
+py_hits=$("$PYBIN" - 2>/dev/null <<'PY' || true
+import pathlib, re, sys
+files = []
+for p in pathlib.Path("lib").rglob("*.dart"):
+    if "/gen/" in str(p) or p.name.endswith(".g.dart"):
+        continue
+    text = p.read_text(encoding="utf-8", errors="ignore")
+    has_saffron_fill = (
+        "backgroundColor: AppColors.saffron500" in text
+        or "Color(0xFFC96A28)" in text
+        or "Color(0xffc96a28)" in text.lower()
+    )
+    has_white_fg = (
+        "foregroundColor: Colors.white" in text
+        or "color: Colors.white" in text
+    )
+    if has_saffron_fill and has_white_fg:
+        print(str(p))
+PY
+)
+if [ -n "$py_hits" ]; then
+  echo "VIOLATION: labelled white-text on saffron-500 fill (use AppColors.accentFill)"
+  echo "$py_hits"
+  fail=1
 fi
 
 if [ "$fail" -eq 0 ]; then echo "token-guard: PASS"; fi

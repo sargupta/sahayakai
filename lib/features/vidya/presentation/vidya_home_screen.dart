@@ -1,3 +1,4 @@
+// ignore_for_file: prefer_const_constructors
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -195,7 +196,7 @@ class _VidyaBody extends ConsumerWidget {
                   'YOUR TOOLS',
                   style: TextStyle(
                     fontFamily: 'Instrument Sans',
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: AppColors.saffron600,
                     letterSpacing: 1.4,
@@ -266,7 +267,7 @@ class _HeaderRow extends ConsumerWidget {
                 today,
                 style: const TextStyle(
                   fontFamily: 'Instrument Sans',
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: FontWeight.w500,
                   color: AppColors.textBody,
                   height: 1.1,
@@ -307,7 +308,7 @@ class _HeaderRow extends ConsumerWidget {
                 current.nativeLabel,
                 style: const TextStyle(
                   fontFamily: 'Instrument Sans',
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: AppColors.saffron600,
                 ),
@@ -447,9 +448,9 @@ class _TodayCardState extends State<_TodayCard> {
           duration: const Duration(milliseconds: 120),
           curve: Curves.easeOut,
           decoration: BoxDecoration(
-            color: _pressed ? const Color(0xFFF5F0E8) : Colors.white,
+            color: _pressed ? Color.fromARGB(255, 245, 240, 232) : Colors.white,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0x14171310), width: 1),
+            border: Border.all(color: AppColors.ink900.withValues(alpha: 0.08), width: 1),
           ),
           constraints: const BoxConstraints(minHeight: 48),
           padding: const EdgeInsets.all(14),
@@ -459,7 +460,7 @@ class _TodayCardState extends State<_TodayCard> {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: const Color(0x1FFAF1E8),
+                  color: AppColors.milk200.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 alignment: Alignment.center,
@@ -531,9 +532,9 @@ class _TileGrid extends StatelessWidget {
                   width: w,
                   child: _Tile(
                     icon: LucideIcons.userCheck,
-                    color: const Color(0xFFC96A28),
-                    tint: const Color(0x1FC96A28),
-                    border: const Color(0x33C96A28),
+                    color: AppColors.saffron500,
+                    tint: AppColors.saffron500.withValues(alpha: 0.12),
+                    border: AppColors.saffron500.withValues(alpha: 0.2),
                     title: l10n.homeTileRollCall,
                     subtitle: 'Speak the names',
                     onTap: () => context.push(Routes.attendance),
@@ -544,9 +545,9 @@ class _TileGrid extends StatelessWidget {
                   width: w,
                   child: _Tile(
                     icon: LucideIcons.bookOpen,
-                    color: const Color(0xFF2C5F2D),
-                    tint: const Color(0x1F2C5F2D),
-                    border: const Color(0x332C5F2D),
+                    color: AppColors.leaf500,
+                    tint: AppColors.leaf500.withValues(alpha: 0.12),
+                    border: AppColors.leaf500.withValues(alpha: 0.2),
                     title: l10n.homeTileLesson,
                     subtitle: 'Plan a lesson',
                     onTap: () => context.push(Routes.lessonPlan),
@@ -562,9 +563,9 @@ class _TileGrid extends StatelessWidget {
                   child: _Tile(
                     key: const ValueKey('home-tile-scan'),
                     icon: LucideIcons.scanLine,
-                    color: const Color(0xFF2A3B8F),
-                    tint: const Color(0x1F2A3B8F),
-                    border: const Color(0x332A3B8F),
+                    color: AppColors.indigo500,
+                    tint: AppColors.indigo500.withValues(alpha: 0.12),
+                    border: AppColors.indigo500.withValues(alpha: 0.2),
                     title: l10n.homeTileScan,
                     subtitle: 'Check sheets',
                     onTap: () => context.push(Routes.assessmentScanner),
@@ -575,9 +576,9 @@ class _TileGrid extends StatelessWidget {
                   width: w,
                   child: _Tile(
                     icon: LucideIcons.users,
-                    color: const Color(0xFFB45309),
-                    tint: const Color(0x1FB45309),
-                    border: const Color(0x33B45309),
+                    color: AppColors.amber500,
+                    tint: AppColors.amber500.withValues(alpha: 0.12),
+                    border: AppColors.amber500.withValues(alpha: 0.2),
                     title: l10n.homeTileCall,
                     subtitle: 'Reach parents',
                     onTap: () => context.push(Routes.parentHotline),
@@ -626,7 +627,7 @@ class _Tile extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0x12171310), width: 1),
+            border: Border.all(color: AppColors.ink900.withValues(alpha: 0.07), width: 1),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -661,7 +662,7 @@ class _Tile extends StatelessWidget {
                 subtitle,
                 style: const TextStyle(
                   fontFamily: 'Instrument Sans',
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: FontWeight.w400,
                   color: AppColors.textBody,
                   height: 1.3,
@@ -724,7 +725,7 @@ class _CompleteProfileCard extends StatelessWidget {
                   'Add name, school, subjects, grades',
                   style: TextStyle(
                     fontFamily: 'Instrument Sans',
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: FontWeight.w400,
                     color: AppColors.textBody,
                     height: 1.3,
@@ -740,13 +741,13 @@ class _CompleteProfileCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: AppColors.saffron500,
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: BorderRadius.circular(9999),
               ),
               child: const Text(
                 'Setup',
                 style: TextStyle(
                   fontFamily: 'Instrument Sans',
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
                 ),

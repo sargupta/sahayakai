@@ -1,3 +1,4 @@
+// ignore_for_file: prefer_const_constructors
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -155,12 +156,12 @@ class _RemedialPrompt extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(13, 12, 13, 12),
       decoration: BoxDecoration(
-        color: const Color(0xF5FFFDF9),
+        color: Colors.white.withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: scheme.primary.withValues(alpha: 0.3)),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x24171310),
+            color: AppColors.ink900.withValues(alpha: 0.14),
             offset: Offset(0, 10),
             blurRadius: 28,
           ),
@@ -258,7 +259,7 @@ class _PillButton extends StatelessWidget {
             label,
             textAlign: TextAlign.center,
             style: text.labelSmall?.copyWith(
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
               color: filled ? Colors.white : scheme.primary,
             ),
@@ -296,7 +297,7 @@ class _StatRow extends StatelessWidget {
       color: scheme.onSurface,
     );
     final labelStyle = (text.labelSmall ?? const TextStyle()).copyWith(
-      fontSize: 10,
+      fontSize: 12,
       fontWeight: FontWeight.w400,
       color: AppColors.textMuted,
     );
@@ -372,8 +373,8 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
       decoration: BoxDecoration(
-        color: const Color(0xE6FFFFFF),
-        border: Border.all(color: const Color(0xF2FFFFFF)),
+        color: Colors.white.withValues(alpha: 0.9),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.95)),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(

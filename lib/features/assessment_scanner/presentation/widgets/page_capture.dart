@@ -247,7 +247,7 @@ class _Viewfinder extends StatelessWidget {
               child: Text(
                 context.l10n.assessmentScannerFrameGuide,
                 style: text.labelSmall?.copyWith(
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: FontWeight.w500,
                   color: milk.withValues(alpha: 0.72),
                   height: 1.35,
@@ -275,7 +275,7 @@ class _ViewfinderPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
-    final outer = RRect.fromRectAndRadius(rect, const Radius.circular(22));
+    final outer = RRect.fromRectAndRadius(rect, const Radius.circular(20));
 
     // Striped ground: milk @ .02 base with milk @ .05 bands every 24px,
     // tilted like the design's 115deg repeating gradient.
@@ -325,7 +325,7 @@ class _ViewfinderPainter extends CustomPainter {
     if (showScanLine) {
       // The saffron scan line at 46% with its soft glow (design:
       // rgba(255,214,170,.8), blur 14), spanning the dashed frame's width.
-      const lineColor = Color(0xCCFFD6AA); // #FFD6AA @ .8
+      final lineColor = AppColors.saffron200.withValues(alpha: 0.8); // #FFD6AA @ .8
       final y = rect.top + rect.height * 0.46;
       final from = Offset(rect.left + 18, y);
       final to = Offset(rect.right - 18, y);
@@ -573,7 +573,7 @@ class _Chip extends StatelessWidget {
                 child: Text(
                   label,
                   style: text.labelSmall?.copyWith(
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: fg,
                   ),

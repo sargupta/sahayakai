@@ -21,9 +21,7 @@ class SahayakApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
     final locale = ref.watch(localeControllerProvider);
 
-    final light = locale.isIndic
-        ? AppTheme.withIndic(AppTheme.light())
-        : AppTheme.light();
+    final light = locale.isIndic  ? AppTheme.withIndic(AppTheme.light()) : AppTheme.light();
 
     return MaterialApp.router(
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,

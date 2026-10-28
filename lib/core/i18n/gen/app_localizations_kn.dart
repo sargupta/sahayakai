@@ -769,18 +769,6 @@ class AppLocalizationsKn extends AppLocalizations {
   String get settingsTitle => 'ಸೆಟ್ಟಿಂಗ್‌ಗಳು';
 
   @override
-  String get settingsAppearanceTitle => 'ನೋಟ';
-
-  @override
-  String get settingsThemeSystem => 'ನನ್ನ ಸಾಧನದಂತೆ';
-
-  @override
-  String get settingsThemeLight => 'ತಿಳಿ';
-
-  @override
-  String get settingsThemeDark => 'ಗಾಢ';
-
-  @override
   String get settingsLanguageHint =>
       'ಆ್ಯಪ್‌ನ ಭಾಷೆ ಮತ್ತು ನಿಮ್ಮ ಬೋಧನಾ ಸಾಮಗ್ರಿ ಬರೆಯುವ ಭಾಷೆಯನ್ನು ಇದು ನಿರ್ಧರಿಸುತ್ತದೆ.';
 

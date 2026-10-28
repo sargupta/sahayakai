@@ -286,7 +286,7 @@ class _ProfileSummaryCard extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: text.bodySmall?.copyWith(
-                            fontSize: 11,
+                            fontSize: 12,
                             color: subColor,
                           ),
                         ),

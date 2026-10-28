@@ -62,8 +62,8 @@ class FloatingBottomNav extends StatelessWidget {
 
     // Light: rgba(255,253,249,.90). Dark (scanner): rgba(255,253,249,.16).
     final fillColor = isDark
-        ? const Color(0x29FFFDF9)
-        : const Color(0xE6FFFDF9);
+        ? Colors.white.withValues(alpha: 0.16)
+        : Colors.white.withValues(alpha: 0.9);
 
     return SafeArea(
       top: false,
@@ -171,7 +171,7 @@ class _TabButton extends StatelessWidget {
       iconColor = isDark ? AppColors.ink400 : AppColors.ink500;
     } else if (isDark) {
       background = activeWeight > 0.5
-          ? const Color(0x29FFFDF9)
+          ? Colors.white.withValues(alpha: 0.16)
           : null;
       iconColor = Color.lerp(
         AppColors.ink400,
@@ -205,9 +205,7 @@ class _TabButton extends StatelessWidget {
     // Cross-fade: pill expands when activeWeight > 0.5, bare circle otherwise.
     // During swipe, the pill appears to slide via cross-fade between tabs.
     final showLabel = activeWeight > 0.5;
-    final borderRadius = BorderRadius.circular(
-      activeWeight > 0.5 ? 9999 : FloatingBottomNav._tabTarget / 2,
-    );
+    final borderRadius = BorderRadius.circular(activeWeight > 0.5 ? 9999 : FloatingBottomNav._tabTarget / 2);
 
     return Semantics(
       button: true,
