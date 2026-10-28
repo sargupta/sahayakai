@@ -377,6 +377,15 @@ export function createMemorySamparkRepo(opts?: { faults?: { failAfterClaim?: (in
             list.push(clone(entry));
             audit.set(orgId, list);
         },
+        async listAuditFor(orgId, target, limit) {
+            // Reversed first so equal timestamps keep newest-written first (sort is stable).
+            return (audit.get(orgId) ?? [])
+                .filter((e) => e.target === target)
+                .reverse()
+                .sort((a, b) => b.at.localeCompare(a.at))
+                .slice(0, limit)
+                .map(clone);
+        },
     };
 
     return repo;

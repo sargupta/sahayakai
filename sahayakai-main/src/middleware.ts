@@ -5,6 +5,14 @@ import {
     PROFILE_COMPLETE_COOKIE,
     verifyProfileCompleteCookie,
 } from '@/lib/profile-complete-cookie';
+import {
+    isSahayakRoute,
+    isSamparkHost,
+    SAHAYAK_BRIDGE_PREFIX,
+    SAMPARK_PREFIX,
+    sahayakOriginFor,
+    samparkOrigin,
+} from '@/lib/products';
 
 // Firebase Project ID
 const PROJECT_ID = 'sahayakai-b4248';
@@ -142,6 +150,70 @@ export async function middleware(request: NextRequest) {
         return new NextResponse(null, { status: 404 });
     }
 
+    // SamparkAI host routing (docs/products/SAMPARK_SUBDOMAIN.md). On a
+    // SamparkAI host the public URL has no /sampark prefix: page paths are
+    // rewritten onto the /sampark route tree, and a prefixed URL typed by
+    // hand is redirected to its unprefixed form. /api, Next internals, the
+    // Firebase auth proxy, well-known URIs and files (anything with an
+    // extension) are served as-is, so auth, webhooks and assets behave the
+    // same on both hosts. The rewrite is applied at the single page-response
+    // exit below, after every auth/security branch has run.
+    let samparkRewrite: URL | null = null;
+    const isFileOrInternal =
+        pathname.startsWith('/api/') ||
+        pathname.startsWith('/_next') ||
+        pathname.startsWith('/__/') ||
+        pathname.startsWith('/.well-known/') ||
+        /\.[a-z0-9]+$/i.test(pathname);
+    if (isSamparkHost(host) && !isFileOrInternal) {
+        if (pathname === SAMPARK_PREFIX || pathname.startsWith(`${SAMPARK_PREFIX}/`)) {
+            const url = request.nextUrl.clone();
+            url.pathname = pathname.slice(SAMPARK_PREFIX.length) || '/';
+            return NextResponse.redirect(url, 308);
+        }
+        // SahayakAI pages (and the /to-sahayak bridge) go to the SahayakAI origin.
+        const bridged = pathname === SAHAYAK_BRIDGE_PREFIX || pathname.startsWith(`${SAHAYAK_BRIDGE_PREFIX}/`);
+        if (bridged || isSahayakRoute(pathname)) {
+            const forwardedProto = request.headers.get('x-forwarded-proto');
+            const protocol = forwardedProto ? `${forwardedProto.split(',')[0].trim()}:` : request.nextUrl.protocol;
+            const target = new URL(sahayakOriginFor(host ?? request.nextUrl.host, protocol));
+            target.pathname = bridged ? pathname.slice(SAHAYAK_BRIDGE_PREFIX.length) || '/' : pathname;
+            target.search = request.nextUrl.search;
+            // Never bounce between two SamparkAI hosts (SAMPARK_HOSTS without a
+            // "sampark." label and no SAHAYAK_URL): fall through instead.
+            if (!isSamparkHost(target.host)) {
+                if (process.env.NODE_ENV === 'development') {
+                    // `next dev` turns a Location on its own bind origin
+                    // (http://localhost:PORT) into a relative path, which would
+                    // send sampark.localhost back to itself. A refresh page
+                    // avoids that locally; deployed servers get the 307. The URL
+                    // serializer percent-encodes quotes and angle brackets.
+                    const href = target.toString();
+                    return new NextResponse(
+                        `<!doctype html><meta http-equiv="refresh" content="0;url=${href}"><a href="${href}">SahayakAI</a>`,
+                        { status: 200, headers: { 'content-type': 'text/html; charset=utf-8' } },
+                    );
+                }
+                return NextResponse.redirect(target, 307);
+            }
+        }
+        samparkRewrite = request.nextUrl.clone();
+        samparkRewrite.pathname = pathname === '/' ? SAMPARK_PREFIX : `${SAMPARK_PREFIX}${pathname}`;
+    } else if (
+        !isFileOrInternal &&
+        process.env.SAMPARK_CANONICAL_REDIRECT === 'true' &&
+        samparkOrigin() &&
+        (pathname === SAMPARK_PREFIX || pathname.startsWith(`${SAMPARK_PREFIX}/`))
+    ) {
+        // Once the subdomain is live, old /sampark links on the main host
+        // move to it. Off by default: flip only after DNS, TLS and the
+        // Firebase authorised domain are in place.
+        const target = new URL(samparkOrigin());
+        target.pathname = pathname.slice(SAMPARK_PREFIX.length) || '/';
+        target.search = request.nextUrl.search;
+        return NextResponse.redirect(target, 308);
+    }
+
     // SECURITY: Strip any client-supplied identity headers BEFORE any branch.
     // `x-user-id` / `x-user-plan` are trusted by every downstream route
     // handler as the verified-from-token identity. A client that sets them
@@ -209,6 +281,7 @@ export async function middleware(request: NextRequest) {
         pathname.startsWith('/api/jobs/') ||  // Cloud Scheduler cron jobs — OIDC validated by Cloud Run
         pathname.startsWith('/api/migrate-ncert') ||  // manual migration — gated in-handler by CRON_SECRET (constant-time)
         pathname.startsWith('/api/webhooks/') ||  // Payment webhooks — verified via HMAC signature
+        pathname === '/api/sampark/google-calendar/notifications' ||  // Google Calendar push — no user token; channel id + hashed channel token + resource id verified in-handler, then reconciled against the API (exact path, NOT the /api/sampark prefix)
         pathname.startsWith('/api/billing/callback') ||  // Razorpay redirect — verified via signature
         pathname === '/api/billing/create-public-subscription' ||  // Anon pricing checkout — creates Razorpay payment link; payment-side verification on webhook (exact path, NOT /api/billing prefix)
         pathname.startsWith('/api/seo/') ||  // SEO endpoints (llms.txt, google-verify) — public, no auth needed
@@ -403,7 +476,9 @@ export async function middleware(request: NextRequest) {
     const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
     requestHeaders.set('x-nonce', nonce);
 
-    const response = NextResponse.next({ request: { headers: requestHeaders } });
+    const response = samparkRewrite
+        ? NextResponse.rewrite(samparkRewrite, { request: { headers: requestHeaders } })
+        : NextResponse.next({ request: { headers: requestHeaders } });
 
     response.headers.set('X-Frame-Options', 'DENY');
     response.headers.set('X-Content-Type-Options', 'nosniff');

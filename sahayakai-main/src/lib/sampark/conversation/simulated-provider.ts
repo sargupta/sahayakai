@@ -23,6 +23,7 @@ export const SIMULATION_SCENARIOS = [
     'busy',
     'wrong_person',
     'stop_requested',
+    'callback_requested',
     'interrupted',
     'provider_rejected',
     'provider_timeout',
@@ -105,6 +106,21 @@ export function simulateRiyaCall(callId: string, purpose: RiyaPurpose, scenario:
                     callSuccessful: 'failure',
                     dataCollection: { good_time_to_talk: 'no' },
                     transcript: [{ role: 'user', message: 'Please stop calling me.', timeInCallSecs: 4 }],
+                })],
+            };
+        case 'callback_requested':
+            // The parent is busy and asks for a call later: Practice for the callback calendar.
+            return {
+                start: accepted,
+                events: [postCall({
+                    durationSeconds: 19,
+                    callSuccessful: 'success',
+                    dataCollection: { good_time_to_talk: 'no', callback_requested_time: 'in 20 minutes' },
+                    transcript: [
+                        { role: 'agent', message: "Hello, I'm Riya, an AI assistant calling on behalf of the school with an important update. Is this a good time to talk?", timeInCallSecs: 0 },
+                        { role: 'user', message: "I'm busy right now. Can you call me back in 20 minutes?", timeInCallSecs: 6 },
+                        { role: 'agent', message: "Of course. The school will call you back. Thank you.", timeInCallSecs: 12 },
+                    ],
                 })],
             };
         case 'interrupted':

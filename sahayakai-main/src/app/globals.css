@@ -105,48 +105,48 @@
      single source (planned; do not restructure it by hand now).
      ======================================== */
   .force-light {
-    --background: 40 20% 99.5%;
-    --foreground: 222 47% 11%;
+    --background: 37.5 50% 96.9%;
+    --foreground: 25.7 17.9% 7.6%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card: 40 100% 98.8%;
+    --card-foreground: 25.7 17.9% 7.6%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover: 40 100% 98.8%;
+    --popover-foreground: 25.7 17.9% 7.6%;
 
-    --primary: 24 65% 47%;
+    --primary: 24.7 70.1% 38%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 123 37% 25%;
+    --secondary: 121.2 36.7% 27.3%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 36.9 41.9% 93.9%;
+    --muted-foreground: 30 10.8% 32.5%;
 
-    --accent: 240 100% 25%;
+    --accent: 229.9 54.6% 36.3%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 5.6 63.4% 46.1%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 16% 93%;
-    --input: 220 16% 90%;
-    --ring: 24 65% 47%;
+    --border: 37.5 12.9% 87.8%;
+    --input: 37.5 10% 84.3%;
+    --ring: 24.7 70.1% 38%;
 
-    --chart-1: 24 65% 47%;
-    --chart-2: 123 37% 25%;
-    --chart-3: 240 100% 25%;
+    --chart-1: 24.6 66.8% 47.3%;
+    --chart-2: 121.2 36.7% 27.3%;
+    --chart-3: 229.9 54.6% 36.3%;
     --chart-4: 43 96% 56%;
     --chart-5: 340 82% 52%;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-background: 40 100% 98.8%;
+    --sidebar-foreground: 30 10.8% 32.5%;
     --sidebar-primary: 240 5.9% 10%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 28 70% 96%;
-    --sidebar-accent-foreground: 24 65% 47%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 24 65% 47%;
+    --sidebar-accent: 36.9 41.9% 93.9%;
+    --sidebar-accent-foreground: 25.7 17.9% 7.6%;
+    --sidebar-border: 37.5 12.9% 87.8%;
+    --sidebar-ring: 24.7 70.1% 38%;
 
     /* Paint this subtree's own surface light too, so any element that
        relies on inherited body background (not an explicit bg-*) reads
@@ -229,7 +229,7 @@
        docs/DESIGN_TOKENS.md for the usage rules and the palette FREEZE.
        Flag saffron #FF9933 and the bright --saffron-{50..300} shades stay
        DECORATIVE ONLY (gradients, tints, glows) — never text or icons. */
-    --primary: 24 65% 47%;
+    --primary: 24.7 70.1% 38%;
     /* ≈#C96A28 - Warm saffron interactive tone (contrast data in
        docs/DESIGN_TOKENS.md) */
     --primary-foreground: 0 0% 100%;
@@ -239,53 +239,53 @@
        across lightness. Used by landing-hero CTAs, landing-pillar-strip
        active-card glow, and animated-headline border. */
     --saffron-50: 28 100% 96%;
-    --saffron-100: 28 96% 92%;
-    --saffron-200: 28 95% 84%;
-    --saffron-300: 28 88% 73%;
-    --saffron-600: 24 75% 50%;
-    --saffron-700: 20 78% 38%;
-    --saffron-800: 18 82% 30%;
+    --saffron-100: 32.5 100% 88%;
+    --saffron-200: 31.9 100% 84.1%;
+    --saffron-300: 27.7 62.7% 67.5%;
+    --saffron-600: 24.7 70.1% 38%;
+    --saffron-700: 30.5 89% 28.6%;
+    --saffron-800: 23.7 70.3% 29%;
 
     /* Secondary - Warm Green (Indian Flag) */
-    --secondary: 123 37% 25%;
+    --secondary: 121.2 36.7% 27.3%;
     /* #2C5F2D - Deep Green */
     --secondary-foreground: 0 0% 100%;
 
     /* Accent - Navy Blue (Indian Flag) */
-    --accent: 240 100% 25%;
+    --accent: 229.9 54.6% 36.3%;
     /* #000080 - Navy */
     --accent-foreground: 0 0% 100%;
 
     /* Background - Warm, Welcoming */
-    --background: 40 20% 99.5%;
+    --background: 37.5 50% 96.9%;
     /* Warm Off-White */
-    --foreground: 222 47% 11%;
+    --foreground: 25.7 17.9% 7.6%;
     /* Dark Gray #1F2937 */
 
     /* Card - Glassmorphism with Saffron accent */
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card: 40 100% 98.8%;
+    --card-foreground: 25.7 17.9% 7.6%;
 
     /* Popover */
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover: 40 100% 98.8%;
+    --popover-foreground: 25.7 17.9% 7.6%;
 
     /* Muted - Warm Neutrals */
-    --muted: 210 40% 96%;
+    --muted: 36.9 41.9% 93.9%;
     /* #F9FAFB */
-    --muted-foreground: 215 16% 47%;
+    --muted-foreground: 30 10.8% 32.5%;
     /* #6B7280 */
 
     /* Borders - Warm, soft */
-    --border: 220 16% 93%;
+    --border: 37.5 12.9% 87.8%;
     /* Warm light gray */
-    --input: 220 16% 90%;
+    --input: 37.5 10% 84.3%;
     /* Slightly darker for input affordance */
-    --ring: 24 65% 47%;
+    --ring: 24.7 70.1% 38%;
     /* Saffron focus ring — matches --primary (AA tone) */
 
     /* Status Colors */
-    --destructive: 0 84% 60%;
+    --destructive: 5.6 63.4% 46.1%;
     /* #EF4444 - Red */
     --destructive-foreground: 0 0% 100%;
 
@@ -293,13 +293,13 @@
        raw green/amber/blue Tailwind palette classes in status UI. All three
        pass WCAG AA both ways: as text/icon on --background AND with their
        white foreground on top. */
-    --success: 142 72% 29%;
+    --success: 121.2 36.7% 27.3%;
     /* #15803D - Green, 5.0:1 on white */
     --success-foreground: 0 0% 100%;
-    --warning: 26 90% 37%;
+    --warning: 26 90.5% 37.1%;
     /* #B45309 - Deep amber, 5.0:1 on white */
     --warning-foreground: 0 0% 100%;
-    --info: 221 83% 53%;
+    --info: 229.9 54.6% 36.3%;
     /* #2563EB - Blue, 5.2:1 on white */
     --info-foreground: 0 0% 100%;
 
@@ -331,12 +331,12 @@
     --motion-medium: 350ms; /* page transition, modal */
 
     /* Chart Colors - Indian-friendly palette */
-    --chart-1: 24 65% 47%;
+    --chart-1: 24.6 66.8% 47.3%;
     /* Saffron — matches --primary (2026-08 token-drift fix; was the
        pre-2026-07 #E0924D value hsl(28 70% 59%)) */
-    --chart-2: 123 37% 25%;
+    --chart-2: 121.2 36.7% 27.3%;
     /* Green */
-    --chart-3: 240 100% 25%;
+    --chart-3: 229.9 54.6% 36.3%;
     /* Navy */
     --chart-4: 43 96% 56%;
     /* Gold */
@@ -344,19 +344,102 @@
     /* Rose */
 
     /* Sidebar - Solid & Clean */
-    --sidebar-background: 0 0% 98%;
+    --sidebar-background: 40 100% 98.8%;
     /* Off-white for distinct sidebar */
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-foreground: 30 10.8% 32.5%;
     --sidebar-primary: 240 5.9% 10%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 28 70% 96%;
+    --sidebar-accent: 36.9 41.9% 93.9%;
     /* Light Saffron Tint */
-    --sidebar-accent-foreground: 24 65% 47%;
+    --sidebar-accent-foreground: 25.7 17.9% 7.6%;
     /* Saffron text — 3.57:1 measured on the 96% tint (AA for large
        text / UI components; the old #B35609 note claiming 4.54:1 was
        stale) */
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 24 65% 47%;
+    --sidebar-border: 37.5 12.9% 87.8%;
+    --sidebar-ring: 24.7 70.1% 38%;
+
+    /* ========================================
+       SAHAYAKAI DESIGN SYSTEM TOKENS (Oct 2026)
+       Source: the founder-approved design system ("SahayakAI is a
+       voice-first teaching…", tokens section). The shadcn variables above
+       are mapped onto these per "Platforms and code": --primary is
+       accent-fill (saffron-600, white text 5.28:1), never saffron-500.
+       Colour families are HSL triplets for Tailwind; surfaces, borders and
+       tints are complete colour values (used without opacity modifiers).
+       ======================================== */
+    --saffron-400: 28.5 72.6% 55.7%;
+    --saffron-500: 24.6 66.8% 47.3%;
+    --milk-50: 40 100% 98.8%;
+    --milk-100: 32 100% 97.1%;
+    --milk-200: 37.5 50% 96.9%;
+    --milk-300: 36.9 61.9% 95.9%;
+    --milk-400: 36.9 41.9% 93.9%;
+    --milk-500: 42.9 24.1% 94.3%;
+    --ink-400: 31.3 9.1% 49.6%;
+    --ink-500: 30 8.9% 39.6%;
+    --ink-600: 30 10.8% 32.5%;
+    --ink-800: 30 17.4% 9%;
+    --ink-900: 25.7 17.9% 7.6%;
+    --stone-100: 35 19.4% 87.8%;
+    --stone-500: 30 7.1% 50.6%;
+    --leaf-100: 120 31.5% 85.7%;
+    --leaf-300: 120 33.3% 62.4%;
+    --leaf-500: 121.2 36.7% 27.3%;
+    --leaf-700: 121.5 36.4% 21.6%;
+    --indigo-100: 228 75% 92.2%;
+    --indigo-500: 229.9 54.6% 36.3%;
+    --red-500: 5.6 63.4% 46.1%;
+    --red-700: 0 66.3% 32.5%;
+    --amber-500: 26 90.5% 37.1%;
+
+    --surface-glass: rgba(255, 255, 255, 0.82);
+    --surface-glass-soft: rgba(255, 255, 255, 0.7);
+    --surface-glass-strong: rgba(255, 255, 255, 0.88);
+    --surface-chrome: rgba(255, 253, 249, 0.9);
+    --surface-capsule: rgba(255, 253, 249, 0.92);
+    --surface-float: rgba(255, 253, 249, 0.96);
+    --surface-segment: rgba(255, 255, 255, 0.62);
+    --border-glass: rgba(255, 255, 255, 0.95);
+    --border-hairline: rgba(23, 19, 16, 0.08);
+    --border-row: rgba(23, 19, 16, 0.1);
+    --border-control: rgba(23, 19, 16, 0.14);
+    --fill-quiet: rgba(23, 19, 16, 0.06);
+    --fill-subtle: rgba(23, 19, 16, 0.04);
+    --fill-mark: rgba(23, 19, 16, 0.07);
+    --accent-tint: rgba(201, 106, 40, 0.1);
+    --accent-tint-strong: rgba(201, 106, 40, 0.12);
+    --accent-tint-border: rgba(201, 106, 40, 0.22);
+    --accent-tint-soft: rgba(201, 106, 40, 0.08);
+    --success-tint: rgba(44, 95, 45, 0.12);
+    --leaf-tint-border: rgba(44, 95, 45, 0.24);
+    --info-tint: rgba(42, 59, 143, 0.08);
+    --info-tint-border: rgba(42, 59, 143, 0.18);
+    --red-tint: rgba(192, 57, 43, 0.12);
+    --amber-tint: rgba(180, 83, 9, 0.12);
+    --web-nav-glass: rgba(251, 248, 243, 0.82);
+    --web-hairline: rgba(27, 23, 19, 0.07);
+    --web-glass: rgba(255, 255, 255, 0.74);
+    --web-device-edge: rgba(27, 23, 19, 0.1);
+
+    --wash-screen: linear-gradient(168deg, #fff3e4 0%, #fdefee 36%, #eff4ee 72%, #fff7ec 100%);
+    --glow-saffron: radial-gradient(circle at 38% 32%, rgba(255, 214, 170, 0.78), rgba(201, 106, 40, 0) 76%);
+    --glow-web-saffron: radial-gradient(circle at 40% 35%, rgba(201, 106, 40, 0.2), rgba(201, 106, 40, 0) 70%);
+    --glow-web-indigo: radial-gradient(circle at 50% 50%, rgba(42, 59, 143, 0.14), rgba(42, 59, 143, 0) 68%);
+    --orb-resting: radial-gradient(circle at 34% 30%, #ffd9ae, #c96a28 72%);
+    --band-cta: linear-gradient(140deg, #c96a28 0%, #a5551d 52%, #7e3f16 100%);
+
+    /* Shadows: warm (ink-tinted), low and rare. The txt export names them
+       but omits values; these follow its rules (low, warm, saffron light
+       only on brand elements). */
+    --shadow-float: 0 10px 30px -12px rgba(23, 19, 16, 0.18), 0 2px 6px rgba(23, 19, 16, 0.05);
+    --shadow-card: 0 12px 32px -18px rgba(23, 19, 16, 0.22), 0 1px 2px rgba(23, 19, 16, 0.04);
+    --shadow-cta: 0 10px 24px -10px rgba(165, 85, 29, 0.55);
+    --shadow-orb: 0 4px 12px -2px rgba(201, 106, 40, 0.45);
+
+    --sidebar-w: 256px;
+    --sidebar-w-rail: 76px;
+    --topbar-h: 64px;
+    --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .dark {
@@ -475,39 +558,39 @@
      leading-* utilities still override per element.
      ======================================== */
   :lang(hi), :lang(mr) {
-    font-family: var(--font-inter), var(--font-noto-devanagari), sans-serif;
+    font-family: var(--font-ui), var(--font-noto-devanagari), sans-serif;
     line-height: 1.7;
   }
   :lang(bn) {
-    font-family: var(--font-inter), var(--font-noto-bengali), sans-serif;
+    font-family: var(--font-ui), var(--font-noto-bengali), sans-serif;
     line-height: 1.7;
   }
   :lang(ta) {
-    font-family: var(--font-inter), var(--font-noto-tamil), sans-serif;
+    font-family: var(--font-ui), var(--font-noto-tamil), sans-serif;
     line-height: 1.7;
   }
   :lang(te) {
-    font-family: var(--font-inter), var(--font-noto-telugu), sans-serif;
+    font-family: var(--font-ui), var(--font-noto-telugu), sans-serif;
     line-height: 1.7;
   }
   :lang(kn) {
-    font-family: var(--font-inter), var(--font-noto-kannada), sans-serif;
+    font-family: var(--font-ui), var(--font-noto-kannada), sans-serif;
     line-height: 1.7;
   }
   :lang(ml) {
-    font-family: var(--font-inter), var(--font-noto-malayalam), sans-serif;
+    font-family: var(--font-ui), var(--font-noto-malayalam), sans-serif;
     line-height: 1.7;
   }
   :lang(gu) {
-    font-family: var(--font-inter), var(--font-noto-gujarati), sans-serif;
+    font-family: var(--font-ui), var(--font-noto-gujarati), sans-serif;
     line-height: 1.7;
   }
   :lang(pa) {
-    font-family: var(--font-inter), var(--font-noto-gurmukhi), sans-serif;
+    font-family: var(--font-ui), var(--font-noto-gurmukhi), sans-serif;
     line-height: 1.7;
   }
   :lang(or) {
-    font-family: var(--font-inter), var(--font-noto-oriya), sans-serif;
+    font-family: var(--font-ui), var(--font-noto-oriya), sans-serif;
     line-height: 1.7;
   }
 }
@@ -649,3 +732,66 @@
     @apply text-xs font-medium text-muted-foreground uppercase tracking-widest px-2;
   }
 }
+
+/* ========================================
+   DESIGN SYSTEM — SHELL + UTILITIES (Oct 2026)
+   See src/components/shell/side-nav.tsx. Widths per "The web app and the
+   school console": rail 768–1023px; sidebar from 1024px unless folded.
+   ======================================== */
+.side-nav { width: var(--sidebar-w-rail); }
+.side-nav[data-force-full="true"] { width: 100%; }
+.side-nav[data-force-full="true"] .nav-rail { display: none !important; }
+@media (max-width: 1023.98px) {
+  .side-nav:not([data-force-full="true"]) .nav-full { display: none !important; }
+}
+@media (min-width: 1024px) {
+  .side-nav:not([data-collapsed="true"]):not([data-force-full="true"]) { width: var(--sidebar-w); }
+  .side-nav[data-collapsed="true"] .nav-full { display: none !important; }
+  .side-nav:not([data-collapsed="true"]) .nav-rail { display: none !important; }
+}
+
+@layer utilities {
+  /* Focus: a 2px saffron-600 outline offset 2px, never a shadow. */
+  .focus-ring:focus-visible {
+    outline: 2px solid hsl(var(--saffron-600));
+    outline-offset: 2px;
+  }
+  .focus-ring:focus { box-shadow: none; }
+
+  /* App ground: the wash plus one saffron glow off the top-right corner. */
+  .bg-wash-screen {
+    background-color: hsl(var(--milk-200));
+    background-image: var(--glow-saffron), var(--wash-screen);
+    background-repeat: no-repeat, no-repeat;
+    background-position: right -160px top -200px, 0 0;
+    background-size: 640px 640px, 100% 100%;
+    background-attachment: scroll, fixed;
+  }
+
+  /* Eyebrow: 12px, tracked, uppercase — Latin script only. */
+  .type-eyebrow {
+    font-size: 12px;
+    line-height: 1.22;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  .type-web-eyebrow {
+    font-size: 12px;
+    line-height: 1.6;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+}
+
+/* Indic text is never uppercased or letter-spaced (it breaks conjuncts and
+   matras). The page language is synced on <html lang>. */
+:is(:lang(hi), :lang(mr), :lang(bn), :lang(ta), :lang(te), :lang(kn), :lang(ml), :lang(gu), :lang(pa), :lang(or))
+  :is(.type-eyebrow, .type-web-eyebrow) {
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* VIDYA's floating orb never covers the phone navigation sheet. */
+body[data-nav-sheet-open] [data-vidya-entry="orb"] { visibility: hidden; }

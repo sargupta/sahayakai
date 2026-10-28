@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSamparkHref } from "@/components/shell/product-paths";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/language-context";
@@ -38,7 +39,8 @@ export default function SamparkTodayPage() {
     const { t } = useLanguage();
     const f = useSamparkFormat();
     const { orgId, school } = useSamparkSchool();
-    const base = `/sampark/${encodeURIComponent(orgId)}`;
+    const samparkHref = useSamparkHref();
+    const base = samparkHref(`/${encodeURIComponent(orgId)}`);
     const query = useSamparkQuery((signal) => getOverview(orgId, { signal }), [orgId], { pollMs: OVERVIEW_POLL_MS });
     const o = query.data;
     // The server's clock, not this device's: the window and the current hour follow the server's rules.

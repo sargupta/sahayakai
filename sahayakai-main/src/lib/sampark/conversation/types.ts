@@ -54,6 +54,9 @@ export const RIYA_DATA_COLLECTION_KEYS = [
     // Recommended additions (not on the agent yet): used when present, never required.
     'recipient_confirmed',
     'stop_requested',
+    // The parent asked to be called back ("call me at 5 PM", "in 20 minutes"): their words,
+    // as the agent heard them. Becomes a PROPOSED callback a person confirms; never a call by itself.
+    'callback_requested_time',
 ] as const;
 export type RiyaDataCollectionKey = (typeof RIYA_DATA_COLLECTION_KEYS)[number];
 
@@ -83,6 +86,12 @@ export interface ConversationCall {
     variables: RiyaVariables;
     /** The line staff approved in the preview. */
     announcement: string;
+    /**
+     * What the call was started with — typed facts or a campaign id — so a callback can
+     * start the same call again later. Absent on calls recorded before callbacks existed.
+     */
+    facts?: import('./facts').RiyaFacts | null;
+    campaignId?: string | null;
     /** sha256 of the canonical facts: two calls about the same announcement share it. */
     factsHash: string;
     state: ConversationCallState;

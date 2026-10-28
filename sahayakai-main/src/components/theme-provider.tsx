@@ -13,6 +13,11 @@ import type { ComponentProps } from "react";
  * - enableSystem={false}   → explicit control only; no OS-driven surprises.
  * - disableTransitionOnChange → no color-transition flash when flipping themes.
  *
+ * - forcedTheme="light"   → light only (design system decision, 26 Oct 2026):
+ *                            the dark mode retires; the camera surface stays dark
+ *                            through its own tokens. The .dark styles remain in
+ *                            globals.css but are never applied.
+ *
  * Mounted high in the tree (root layout) so the toggle works on every surface.
  * `<html>` already carries suppressHydrationWarning in layout.tsx, which
  * next-themes needs to avoid a hydration mismatch on the injected class.
@@ -25,6 +30,7 @@ export function ThemeProvider({
     <NextThemesProvider
       attribute="class"
       defaultTheme="light"
+      forcedTheme="light"
       enableSystem={false}
       disableTransitionOnChange
       {...props}

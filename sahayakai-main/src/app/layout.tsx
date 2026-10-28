@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import {
-  Inter,
-  Outfit,
+  Bricolage_Grotesque,
+  Instrument_Sans,
   Noto_Sans_Devanagari,
   Noto_Sans_Bengali,
   Noto_Sans_Tamil,
@@ -28,17 +28,19 @@ import './globals.css';
 // Per-language application: LanguageContext syncs <html lang>, and
 // globals.css maps :lang() -> the right --font-noto-* variable.
 // ========================================
-const inter = Inter({
+// Design system (Oct 2026): Bricolage Grotesque for display (titles, card
+// titles, values, CTAs; optical size follows font size) and Instrument Sans
+// for UI text. Both fall back through the Noto Sans family of each Indian
+// script (see tailwind.config.ts), so mixed-script lines shape correctly.
+const instrumentSans = Instrument_Sans({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-inter',
+  variable: '--font-ui',
   display: 'swap',
 });
-// 800 kept: landing headlines use font-extrabold with font-headline.
-const outfit = Outfit({
+const bricolage = Bricolage_Grotesque({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
-  variable: '--font-outfit',
+  axes: ['opsz'],
+  variable: '--font-display',
   display: 'swap',
 });
 const notoDevanagari = Noto_Sans_Devanagari({
@@ -97,8 +99,8 @@ const notoOriya = Noto_Sans_Oriya({
 });
 
 const fontVariables = [
-  inter.variable,
-  outfit.variable,
+  instrumentSans.variable,
+  bricolage.variable,
   notoDevanagari.variable,
   notoBengali.variable,
   notoTamil.variable,

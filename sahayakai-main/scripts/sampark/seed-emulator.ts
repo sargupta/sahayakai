@@ -12,6 +12,11 @@
  *   users/dev-user-123                          minimal complete profile (organizationId hint,
  *                                                 onboarding done) so app pages render
  *
+ * `--admin <uid>` (repeatable) also makes that real signed-in account an admin of
+ * the demo school, so a developer's own Google sign-in opens the workspace:
+ *   …/seed-emulator.ts --admin Yt5XFJyz45TVlY7UKyVRgxUe8Tn1
+ * Emulator only, like everything here; it never touches a real project.
+ *
  * `dev-user-123` is the uid the middleware assigns to the `dev-token` bearer in
  * development. It does NOT create the Sampark school — enabling Sampark is part
  * of what the demo exercises (POST /api/sampark/hillview-demo/enable).
@@ -30,6 +35,15 @@ import { riyaDemoFamily } from './riya-demo-family';
 
 const ORG_ID = 'hillview-demo';
 const ADMIN_UID = 'dev-user-123';
+
+/** Values of every `--admin <uid>` on the command line. */
+function extraAdmins(argv: string[]): string[] {
+    const uids: string[] = [];
+    argv.forEach((arg, i) => {
+        if (arg === '--admin' && argv[i + 1] && !argv[i + 1].startsWith('--')) uids.push(argv[i + 1]);
+    });
+    return uids;
+}
 
 function out(line: string): void {
     process.stdout.write(`${line}\n`);
@@ -91,6 +105,17 @@ async function main(): Promise<void> {
         },
         { merge: true },
     );
+
+    for (const uid of extraAdmins(process.argv)) {
+        await orgRef.collection('members').doc(uid).set(
+            { userId: uid, role: 'admin', joinedAt: now, invitedBy: ADMIN_UID },
+            { merge: true },
+        );
+        // GET /api/sampark/me lists member-admins through this profile hint
+        // (src/server/sampark/auth.ts listAdministeredOrgs); the members doc decides.
+        await db.collection('users').doc(uid).set({ uid, organizationId: ORG_ID }, { merge: true });
+        out(`  organizations/${ORG_ID}/members/${uid} (role admin, --admin) + users/${uid}.organizationId`);
+    }
 
     out(`Seeded emulator ${emulator} (project ${projectId}):`);
     out(`  organizations/${ORG_ID} (admin ${ADMIN_UID}, isDemoData true)`);

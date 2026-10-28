@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSamparkHref } from "@/components/shell/product-paths";
 import { ChevronRight, Megaphone, Plus } from "lucide-react";
 import { SectionCard, EmptyState } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -66,7 +67,8 @@ function CampaignRow({ campaign, href }: { campaign: Campaign; href: string }) {
 export default function SamparkCampaignsPage() {
     const { t } = useLanguage();
     const { orgId } = useSamparkSchool();
-    const base = `/sampark/${encodeURIComponent(orgId)}/campaigns`;
+    const samparkHref = useSamparkHref();
+    const base = samparkHref(`/${encodeURIComponent(orgId)}/campaigns`);
 
     // Refresh every 10 s while any campaign is rendering or calling.
     const [pollMs, setPollMs] = useState<number | null>(null);

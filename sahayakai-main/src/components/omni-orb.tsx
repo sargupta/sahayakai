@@ -7,7 +7,10 @@ import { useAuth } from "@/context/auth-context";
 import { useFeatureFlag } from "@/context/feature-flags-context";
 import { stripRedundantGreeting } from "@/lib/vidya-greeting-suppressor";
 import { auth } from "@/lib/firebase";
-import { MicrophoneInput } from "@/components/microphone-input";
+import { MicrophoneInput, type MicStatus } from "@/components/microphone-input";
+import { VidyaSphere, type VidyaOrbState } from "@/components/vidya/vidya-sphere";
+import { useOverlayOpen } from "@/components/vidya/use-overlay-open";
+import { deriveOrbState } from "@/components/vidya/orb-state";
 import { Button } from "@/components/ui/button";
 import { Trash2, BrainCircuit, Sparkles, Cloud } from "lucide-react";
 import { tts } from "@/lib/tts";
@@ -253,6 +256,24 @@ export function OmniOrb() {
         return () => mq.removeEventListener("change", onChange);
     }, [isClient]);
 
+    // ── The orb's state, from real signals only ──────────────────────────
+    // listening: the microphone is recording · thinking: transcribing, or the
+    // /api/assistant request is in flight · speaking: VIDYA's audio is playing
+    // (tts.subscribeSpeaking) · error: the last request failed (shown briefly).
+    const [micStatus, setMicStatus] = useState<MicStatus>("idle");
+    const [awaitingReply, setAwaitingReply] = useState(false);
+    const [speaking, setSpeaking] = useState(false);
+    const [failed, setFailed] = useState(false);
+    useEffect(() => tts.subscribeSpeaking(setSpeaking), []);
+    useEffect(() => {
+        if (!failed) return;
+        const id = setTimeout(() => setFailed(false), 4000);
+        return () => clearTimeout(id);
+    }, [failed]);
+    const orbState: VidyaOrbState = deriveOrbState({ failed, micStatus, speaking, awaitingReply });
+    // A dialog, sheet or menu is open: step aside so the orb never covers it.
+    const overlayOpen = useOverlayOpen(isClient);
+
     // ── Proactive daily-inspiration greeting (once per session) ──────────
     useEffect(() => {
         if (proactiveShown.current) return;
@@ -439,6 +460,8 @@ export function OmniOrb() {
             ?? (profileLang && LANG_TO_BCP47[profileLang])
             ?? 'en-IN';
 
+        setFailed(false);
+        setAwaitingReply(true);
         try {
             logger.info('POST /api/assistant', 'VIDYA OmniOrb', {
                 transcriptLen: transcript.length,
@@ -632,6 +655,9 @@ export function OmniOrb() {
                 description: errMsg.slice(0, 200),
                 variant: 'destructive',
             });
+            setFailed(true);
+        } finally {
+            setAwaitingReply(false);
         }
     };
 
@@ -753,13 +779,25 @@ export function OmniOrb() {
     // is open. Prevents two simultaneous voice surfaces (UX bug).
     if (voiceDialogOpen) return null;
 
+    const stateWords: Record<VidyaOrbState, string> = {
+        idle: t("VIDYA is ready"),
+        listening: t("VIDYA is listening"),
+        thinking: t("VIDYA is thinking"),
+        speaking: t("VIDYA is speaking"),
+        error: t("VIDYA could not act on that"),
+    };
+
     return (
         <div
             ref={orbRef}
+            // The sidebar's "Talk to VIDYA" presses this orb's mic (src/lib/vidya-entry.ts).
+            data-vidya-entry="orb"
+            data-vidya-state={orbState}
+            aria-hidden={overlayOpen || undefined}
             className={`fixed bottom-[calc(3.75rem+env(safe-area-inset-bottom))] right-4 sm:bottom-12 sm:right-12 z-[90] ${
                 reducedMotion ? "" : "transition-[transform,opacity] duration-300"
             } ${
-                hiddenByScroll && !orbOpen && !isDragging
+                overlayOpen || (hiddenByScroll && !orbOpen && !isDragging)
                     ? "opacity-0 pointer-events-none"
                     : "opacity-100"
             }`}
@@ -771,7 +809,7 @@ export function OmniOrb() {
         >
             {/* Explicit Memory Drawer */}
             {orbOpen && (
-                <div className="absolute bottom-24 right-0 w-[calc(100vw-2rem)] max-w-xs sm:w-80 bg-card text-card-foreground rounded-3xl shadow-2xl border border-border p-4 animate-in fade-in slide-in-from-bottom-5">
+                <div className="absolute bottom-24 right-0 w-[calc(100vw-2rem)] max-w-xs sm:w-80 bg-card text-card-foreground rounded-surface-lg shadow-floating border border-border p-4 animate-in fade-in slide-in-from-bottom-5">
                     <div className="flex justify-between items-center mb-4 pb-2 border-b">
                         <h3 className="font-bold flex items-center gap-2">
                             <BrainCircuit className="h-5 w-5 text-primary" />
@@ -816,7 +854,7 @@ export function OmniOrb() {
                             <p className="text-muted-foreground italic text-center py-4">{t("Memory is clear. I have no context of prior conversations.")}</p>
                         ) : (
                             chatHistory.map((msg, i) => (
-                                <div key={i} className={"p-3 rounded-2xl " + (msg.role === "user" ? "bg-muted self-end ml-4" : "bg-primary/10 self-start mr-4")}>
+                                <div key={i} className={"p-3 rounded-surface-lg " + (msg.role === "user" ? "bg-muted self-end ml-4" : "bg-primary/10 self-start mr-4")}>
                                     {msg.parts.map((p) => p.text).join("")}
                                 </div>
                             ))
@@ -863,7 +901,7 @@ export function OmniOrb() {
                 {/* Proactive daily-inspiration tip */}
                 {proactiveTip && (
                     <div
-                        className="absolute bottom-20 right-0 w-[calc(100vw-2rem)] max-w-[18rem] sm:w-72 bg-card border border-primary/20 rounded-2xl shadow-xl p-3 text-xs text-foreground animate-in fade-in slide-in-from-bottom-4 pointer-events-none"
+                        className="absolute bottom-20 right-0 w-[calc(100vw-2rem)] max-w-[18rem] sm:w-72 bg-card border border-primary/20 rounded-surface-lg shadow-floating p-3 text-xs text-foreground animate-in fade-in slide-in-from-bottom-4 pointer-events-none"
                     >
                         <div className="flex items-start gap-2">
                             <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
@@ -898,11 +936,14 @@ export function OmniOrb() {
                 <div className="relative z-10 pointer-events-auto">
                     <MicrophoneInput
                         onTranscriptChange={processTranscription}
+                        onStatusChange={setMicStatus}
+                        renderVisual={() => <VidyaSphere state={orbState} reducedMotion={reducedMotion} />}
                         isFloating={true}
                         iconSize="lg"
-                        className="shadow-2xl transition-transform hover:scale-105"
+                        className={reducedMotion ? "" : "transition-transform hover:scale-105"}
                     />
                 </div>
+                <span className="sr-only" role="status" aria-live="polite">{stateWords[orbState]}</span>
 
                 {/* Toggle Memory Button */}
                 <Button
@@ -910,7 +951,7 @@ export function OmniOrb() {
                         e.stopPropagation();
                         if (!isDragging) setOrbOpen(!orbOpen);
                     }}
-                    className="absolute -top-4 -left-4 h-10 w-10 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity bg-card text-primary hover:bg-muted border pointer-events-auto"
+                    className="absolute -top-4 -left-4 h-10 w-10 rounded-full shadow-elevated opacity-0 group-hover:opacity-100 transition-opacity bg-card text-primary hover:bg-muted border pointer-events-auto"
                     size="icon"
                     title={t("View Memory")}
                 >

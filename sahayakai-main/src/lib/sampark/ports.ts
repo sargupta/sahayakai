@@ -170,6 +170,8 @@ export interface SamparkRepo {
 
     // Audit
     appendAudit(orgId: string, entry: AuditEntry): Promise<void>;
+    /** One record's audit trail (e.g. 'callback/abc'), newest first, at most `limit`. */
+    listAuditFor(orgId: string, target: string, limit: number): Promise<AuditEntry[]>;
 }
 
 // ── CRM ─────────────────────────────────────────────────────────────────────

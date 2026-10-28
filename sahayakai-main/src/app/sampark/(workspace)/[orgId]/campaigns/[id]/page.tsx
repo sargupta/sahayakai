@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSamparkHref } from "@/components/shell/product-paths";
 import { useParams } from "next/navigation";
 import { AlertTriangle, ArrowLeft, CirclePause } from "lucide-react";
 import { SectionCard } from "@/components/layout";
@@ -39,7 +40,8 @@ export default function SamparkCampaignPage() {
     const campaignId = params?.id ? safeDecode(params.id) : "";
     const { orgId, school } = useSamparkSchool();
     const { describe } = useCampaignSummary();
-    const base = `/sampark/${encodeURIComponent(orgId)}`;
+    const samparkHref = useSamparkHref();
+    const base = samparkHref(`/${encodeURIComponent(orgId)}`);
 
     const [pollMs, setPollMs] = useState<number | null>(null);
     const query = useSamparkQuery(

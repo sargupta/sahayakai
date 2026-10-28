@@ -2304,5 +2304,22 @@
   "Webhook check failed: the call result could not come back": "वेबहुक जाँच विफल: कॉल का नतीजा वापस नहीं आ पाएगा",
   "Checking the webhook…": "वेबहुक जाँचा जा रहा है…",
   "At most {cap} real test call(s) today; no other Riya call is in progress": "आज अधिकतम {cap} असली टेस्ट कॉल; कोई और Riya कॉल चालू नहीं",
-  "Another Riya call is still in progress": "एक और Riya कॉल अभी चालू है"
+  "Another Riya call is still in progress": "एक और Riya कॉल अभी चालू है",
+  "Library": "लाइब्रेरी",
+  "Make": "बनाएँ",
+  "Talk to VIDYA": "VIDYA से बात करें",
+  "Shared resources": "साझा संसाधन",
+  "Alerts": "सूचनाएँ",
+  "Calls and notices to parents": "अभिभावकों को कॉल और सूचनाएँ",
+  "Your account": "आपका खाता",
+  "Profile and classes": "प्रोफ़ाइल और कक्षाएँ",
+  "Fold sidebar": "साइडबार छोटा करें",
+  "Unfold sidebar": "साइडबार खोलें",
+  "Open SamparkAI": "SamparkAI खोलें",
+  "Search tools and your work": "टूल और अपना काम खोजें",
+  "Open menu": "मेन्यू खोलें",
+  "Menu": "मेन्यू",
+  "New in Community": "Community में नया",
+  "unread messages": "अपठित संदेश",
+  "SamparkAI · Calls and notices to parents": "SamparkAI · अभिभावकों को कॉल और सूचनाएँ"
 }

@@ -15,6 +15,9 @@
  *         calls cost nothing.
  * Done:   calls happen only inside the school's window; outcomes, keys and
  *         opt-outs are recorded.
+ * Then:   due callbacks (src/server/sampark/callbacks.ts runCallbackTick) under their
+ *         own single-flight lock, when Riya is on: claim → re-check → startRiyaCall.
+ *         Reported as `callbacks`. A callback failure never fails the dispatch tick.
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -22,6 +25,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { requireCronAuth } from '@/lib/cron-auth';
 import { errorResponse, samparkContext, samparkDisabledResponse } from '@/server/sampark/http';
 import { dispatchJob } from '@/server/sampark/jobs';
+import { callbackDeps, runCallbackTick, type CallbackTickReport } from '@/server/sampark/callbacks';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -32,7 +36,16 @@ export async function POST(req: NextRequest) {
     const denied = requireCronAuth(req);
     if (denied) return denied;
     try {
-        return NextResponse.json(await dispatchJob(await samparkContext()));
+        const ctx = await samparkContext();
+        const dispatch = await dispatchJob(ctx);
+        let callbacks: CallbackTickReport | { error: string };
+        try {
+            callbacks = await runCallbackTick(await callbackDeps(ctx));
+        } catch (err) {
+            console.error('[SAMPARK_CALLBACKS] tick failed', err);
+            callbacks = { error: 'callback tick failed' };
+        }
+        return NextResponse.json({ ...dispatch, callbacks });
     } catch (err) {
         return errorResponse(err, 'SAMPARK_DISPATCH_JOB');
     }

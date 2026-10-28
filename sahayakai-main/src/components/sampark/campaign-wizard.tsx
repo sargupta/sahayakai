@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useSamparkHref } from "@/components/shell/product-paths";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
 import { SectionCard } from "@/components/layout";
@@ -96,7 +97,8 @@ export function CampaignWizard() {
     const f = useSamparkFormat();
     const { orgId, school } = useSamparkSchool();
     const summary = useCampaignSummary();
-    const base = `/sampark/${encodeURIComponent(orgId)}`;
+    const samparkHref = useSamparkHref();
+    const base = samparkHref(`/${encodeURIComponent(orgId)}`);
 
     const purposes = useMemo(() => availablePurposes(), []);
     const [step, setStep] = useState<Step>(0);

@@ -26,7 +26,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { MicrophoneInput } from "@/components/microphone-input";
+import { MicrophoneInput, type MicStatus } from "@/components/microphone-input";
+import { VidyaSphere } from "@/components/vidya/vidya-sphere";
+import { deriveOrbState } from "@/components/vidya/orb-state";
+import { usePrefersReducedMotion, useVidyaSpeaking } from "@/components/vidya/use-vidya-signals";
 import { AutoCompleteInput } from "@/components/auto-complete-input";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -129,6 +132,18 @@ export function DashboardHome() {
   const { showNudge, dismissNudge, markVisited, trackGeneration } = useCommunityIntro({ profile });
   const [greeting, setGreeting] = useState("Namaste");
   const [isThinking, setIsThinking] = useState(false);
+  // The home mic's 3D VIDYA orb shows real state only: the mic's status, the answer
+  // being fetched (isThinking) and VIDYA's voice playing.
+  const [micStatus, setMicStatus] = useState<MicStatus>("idle");
+  const [orbFailed, setOrbFailed] = useState(false);
+  useEffect(() => {
+    if (!orbFailed) return;
+    const id = setTimeout(() => setOrbFailed(false), 4000);
+    return () => clearTimeout(id);
+  }, [orbFailed]);
+  const vidyaSpeaking = useVidyaSpeaking();
+  const reducedMotion = usePrefersReducedMotion();
+  const orbState = deriveOrbState({ failed: orbFailed, micStatus, speaking: vidyaSpeaking, awaitingReply: isThinking });
   const [answer, setAnswer] = useState<string | null>(null);
   const router = useRouter();
 
@@ -214,6 +229,7 @@ export function DashboardHome() {
         variant: "destructive"
       });
       setIsThinking(false);
+      setOrbFailed(true);
     }
   };
 
@@ -288,9 +304,12 @@ export function DashboardHome() {
           onDismiss={markSpotlightSeen}
           position="bottom"
         >
-          <div className="flex flex-col items-center gap-4">
+          {/* data-vidya-entry: the sidebar's "Talk to VIDYA" presses this mic on Home. */}
+          <div className="flex flex-col items-center gap-4" data-vidya-entry="home" data-vidya-state={orbState}>
             <MicrophoneInput
               onTranscriptChange={handleTranscript}
+              onStatusChange={setMicStatus}
+              renderVisual={() => <VidyaSphere state={orbState} reducedMotion={reducedMotion} />}
               iconSize="xl"
               label={t("Speak your topic")}
               className=""

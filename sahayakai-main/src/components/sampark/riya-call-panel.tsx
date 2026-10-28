@@ -134,6 +134,7 @@ function scenarioLabel(t: Translate, s: SimulationScenario): string {
         case "busy": return t("Busy");
         case "wrong_person": return t("Wrong person answers");
         case "stop_requested": return t("Parent asks to stop calls");
+        case "callback_requested": return t("Parent asks to be called back later");
         case "interrupted": return t("Call cut off");
         case "provider_rejected": return t("Calling service refuses");
         case "provider_timeout": return t("Calling service does not reply");

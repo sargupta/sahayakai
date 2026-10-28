@@ -93,11 +93,20 @@ const nextConfig: NextConfig = {
         source: '/((?!_next/static|_next/image|favicon\\.ico|blog|about|for-schools|pricing|faq|hi|bn|kn|ta).*)',
         headers: [{ key: 'Cache-Control', value: 'no-store, must-revalidate' }],
       },
-      {
-        // Static JS/CSS chunks are content-addressed â safe to cache forever
-        source: '/_next/static/:path*',
-        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
-      },
+      // Static JS/CSS chunks are content-addressed in production builds, so
+      // caching them forever is safe there. In `next dev` they are NOT:
+      // webpack.js, main-app.js and the route chunks keep the same name across
+      // restarts, and an immutable copy pinned in the browser loads stale module
+      // ids ("Cannot read properties of undefined (reading 'call')"). Dev keeps
+      // Next's own no-cache headers.
+      ...(process.env.NODE_ENV === 'production'
+        ? [
+            {
+              source: '/_next/static/:path*',
+              headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+            },
+          ]
+        : []),
     ];
   },
   typescript: {

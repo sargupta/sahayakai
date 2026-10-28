@@ -39,7 +39,22 @@ function speakFallback(text: string, targetLang: string = 'en') {
         utterance.voice = voice;
     }
 
+    utterance.onstart = () => setSpeaking(true);
+    utterance.onend = () => setSpeaking(false);
+    utterance.onerror = () => setSpeaking(false);
     window.speechSynthesis.speak(utterance);
+}
+
+// ---- Speaking state ----
+// True only while VIDYA's audio is actually playing (cloud audio between `play()`
+// and its end, or a browser utterance between onstart and onend). The VIDYA orb
+// shows "speaking" from this and nothing else.
+let speaking = false;
+const speakingListeners = new Set<(speaking: boolean) => void>();
+function setSpeaking(next: boolean) {
+    if (speaking === next) return;
+    speaking = next;
+    speakingListeners.forEach((fn) => fn(next));
 }
 
 let activeAudio: HTMLAudioElement | null = null;
@@ -151,19 +166,23 @@ export const tts = {
                 // Capture resolve so cancel() can unblock this await
                 activeSpeakResolve = resolve;
 
+                audio.onplaying = () => setSpeaking(true);
                 audio.onended = () => {
                     activeAudio = null;
                     activeSpeakResolve = null;
+                    setSpeaking(false);
                     resolve();
                 };
                 audio.onerror = (e) => {
                     activeAudio = null;
                     activeSpeakResolve = null;
+                    setSpeaking(false);
                     reject(e);
                 };
                 audio.play().catch((e) => {
                     activeAudio = null;
                     activeSpeakResolve = null;
+                    setSpeaking(false);
                     reject(e);
                 });
             });
@@ -189,6 +208,20 @@ export const tts = {
         if (typeof window !== 'undefined' && window.speechSynthesis) {
             window.speechSynthesis.cancel();
         }
+        setSpeaking(false);
+    },
+
+    /** Whether VIDYA's voice is playing right now. */
+    isSpeaking(): boolean {
+        return speaking;
+    },
+
+    /** Listen for speaking start/stop; returns the unsubscribe function. */
+    subscribeSpeaking(listener: (speaking: boolean) => void): () => void {
+        speakingListeners.add(listener);
+        return () => {
+            speakingListeners.delete(listener);
+        };
     },
 
     prime() {

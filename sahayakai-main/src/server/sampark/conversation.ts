@@ -64,6 +64,9 @@ import { type Clock, type SamparkRepo, systemClock } from '@/lib/sampark/ports';
 import type { BlockReason, CallDestination, Campaign, SamparkGuardian, SamparkSchool, SamparkStudent } from '@/types/sampark';
 import { badRequest, conflict, notFound, SamparkServiceError } from '@/server/sampark/errors';
 import { getSchoolOrThrow } from '@/server/sampark/school';
+import { getCallbackRepo } from '@/lib/sampark/callbacks/factory';
+import type { CallbackRepo } from '@/lib/sampark/callbacks/repo';
+import { proposeCallbackFromCall } from '@/server/sampark/callback-proposals';
 
 const LOG = 'SAMPARK_RIYA';
 
@@ -90,10 +93,12 @@ export interface RiyaDeps {
     wallClock?: Clock;
     env?: Env;
     http?: HttpDeps;
+    /** Where a parent's "call me back" becomes a proposed callback. Absent: not recorded. */
+    callbacks?: CallbackRepo;
 }
 
 export async function riyaDeps(ctx: { repo: SamparkRepo; clock: Clock }): Promise<RiyaDeps> {
-    return { repo: ctx.repo, clock: ctx.clock, wallClock: systemClock, calls: await getConversationRepo() };
+    return { repo: ctx.repo, clock: ctx.clock, wallClock: systemClock, calls: await getConversationRepo(), callbacks: await getCallbackRepo() };
 }
 
 // ── Flags and configuration ─────────────────────────────────────────────────
@@ -596,6 +601,8 @@ export async function startRiyaCall(deps: RiyaDeps, orgId: string, uid: string, 
         language: 'English',
         variables: preview.variables as ConversationCall['variables'],
         announcement: preview.announcement,
+        facts: input.facts ?? null,
+        campaignId: input.campaignId ?? null,
         factsHash,
         state: 'initiating',
         leaseUntil: new Date(now.getTime() + INITIATING_LEASE_MS).toISOString(),
@@ -737,6 +744,7 @@ async function settle(deps: RiyaDeps, call: ConversationCall): Promise<void> {
         at, actor: 'riya', action: `riya_call.${call.state}`, target: `riya_call/${call.id}`,
         detail: { durationSeconds: call.durationSeconds, stopRequested: call.stopRequested, provider: call.provider },
     });
+    if (!call.stopRequested && deps.callbacks) await proposeCallbackFromCall({ callbacks: deps.callbacks, repo: deps.repo, clock: deps.clock }, call);
     if (!call.stopRequested) return;
     if (call.provider === 'simulated' || call.destination === 'test_phone') {
         // A rehearsal: never suppress a parent, never list the test phone (same rule as the keypad 9).

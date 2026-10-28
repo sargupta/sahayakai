@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * The pieces of a campaign's page (src/app/sampark/[orgId]/campaigns/[id]/page.tsx):
+ * The pieces of a campaign's page (src/app/sampark/(workspace)/[orgId]/campaigns/[id]/page.tsx):
  * the five-step progress, the funnel from families to answers, the outcomes so far,
  * the families who will not be called and why, and the latest calls. Everything is
  * derived from the campaign record (status, timestamps, renderProgress, counts), its
@@ -9,6 +9,7 @@
  * out rather than estimated.
  */
 import Link from "next/link";
+import { useSamparkHref } from "@/components/shell/product-paths";
 import { Check, ChevronRight, X } from "lucide-react";
 import { SectionCard } from "@/components/layout";
 import { useLanguage } from "@/context/language-context";
@@ -216,6 +217,7 @@ export function CampaignOutcomes({ campaign, className }: { campaign: Campaign; 
 // ── Not called ───────────────────────────────────────────────────────────────
 
 export function NotCalledSection({ detail }: { detail: CampaignDetail }) {
+    const samparkHref = useSamparkHref();
     const { t } = useLanguage();
     const f = useSamparkFormat();
     const a = detail.audience;
@@ -235,7 +237,7 @@ export function NotCalledSection({ detail }: { detail: CampaignDetail }) {
             action={
                 blockedTotal > 0 ? (
                     <Link
-                        href={`/sampark/${encodeURIComponent(detail.campaign.orgId)}/families`}
+                        href={samparkHref(`/${encodeURIComponent(detail.campaign.orgId)}/families`)}
                         className="inline-flex min-h-11 items-center gap-1 rounded-surface-sm type-body font-semibold text-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                         {t("Review families")}
@@ -270,6 +272,7 @@ export function NotCalledSection({ detail }: { detail: CampaignDetail }) {
 const CALLS_SHOWN = 20;
 
 export function CampaignCallsTable({ campaign, pollMs }: { campaign: Campaign; pollMs: number | null }) {
+    const samparkHref = useSamparkHref();
     const { t } = useLanguage();
     const f = useSamparkFormat();
     const query = useSamparkQuery(
@@ -279,7 +282,7 @@ export function CampaignCallsTable({ campaign, pollMs }: { campaign: Campaign; p
     );
     const calls = query.data;
     const today = istDate(new Date());
-    const href = `/sampark/${encodeURIComponent(campaign.orgId)}/calls?campaignId=${encodeURIComponent(campaign.id)}`;
+    const href = samparkHref(`/${encodeURIComponent(campaign.orgId)}/calls?campaignId=${encodeURIComponent(campaign.id)}`);
 
     return (
         <SectionCard

@@ -7,9 +7,17 @@
  *
  * Options:
  *   --reuse-emulator   use a Firestore emulator already listening on 127.0.0.1:8080
- *   --real-clock       never shift the Sampark clock (calls refused outside 10:00–20:00 IST)
+ *   --real-clock       never shift the Sampark clock (calls refused outside the demo school's 10:00–19:00 IST)
  *   --no-open          do not open the browser
  *   --port <n>         Next.js port (default 3000)
+ *   --ticker           also run the local scheduler (scripts/sampark/ticker.ts, every 30 s), the
+ *                      stand-in for Cloud Scheduler: due callbacks and campaigns then run from the
+ *                      server with no browser open. Practice only: nothing rings.
+ *   --demo-family      after switching the school on (needs --admin), add the synthetic family
+ *                      (same as menu key f), so a Practice call and its callback can be tried at once
+ *   --admin <uid>      also make this signed-in account an admin of hillview-demo and switch
+ *                      Sampark on for it in Practice mode, so opening SamparkAI goes straight to
+ *                      the demo school's workspace (emulator only; repeatable)
  *
  * What it does, in order, and what it refuses:
  *   1. Checks Node >= 20 and Java >= 11 (the Firestore emulator is a Java program).
@@ -263,22 +271,41 @@ async function main() {
         ELEVENLABS_AGENT_PHONE_NUMBER_ID: 'phnum_localtestlocaltestlocaltest0',
         ELEVENLABS_SOURCE_AGENT_ID: 'agent_sourcesourcesourcesource0000',
         PORT: String(APP_PORT),
+        // Disposable, memory-only: authorises the scheduler routes (/api/jobs/*) for --ticker.
+        CRON_SECRET: randomBytes(24).toString('hex'),
     };
+    // Node >= 22.6 strips TypeScript types itself and then loads tailwind.config.ts as an ES
+    // module, where its `require(...)` plugins throw "require is not defined" and no page
+    // compiles. Keep Next's own loader in charge of .ts config files.
+    const [appNodeMajor, appNodeMinor] = process.versions.node.split('.').map(Number);
+    if (appNodeMajor > 22 || (appNodeMajor === 22 && appNodeMinor >= 6)) {
+        appEnv.NODE_OPTIONS = [process.env.NODE_OPTIONS, '--no-experimental-strip-types'].filter(Boolean).join(' ');
+    }
+    // Google Calendar (docs/sampark/GOOGLE_CALENDAR.md). With GOOGLE_CALENDAR_CLIENT_ID and
+    // _CLIENT_SECRET in this shell, the real OAuth client is used (its redirect URI must list
+    // http://localhost:<port>/api/sampark/google-calendar/oauth/callback). Without them, the
+    // local fake Google (mock mode): no real account, clearly labelled in the app.
+    appEnv.SAMPARK_GCAL_TOKEN_KEY = randomBytes(32).toString('base64');
+    appEnv.GOOGLE_CALENDAR_REDIRECT_URI = `http://localhost:${APP_PORT}/api/sampark/google-calendar/oauth/callback`;
+    if (!(process.env.GOOGLE_CALENDAR_CLIENT_ID && process.env.GOOGLE_CALENDAR_CLIENT_SECRET)) appEnv.GOOGLE_CALENDAR_MODE = 'mock';
+    delete appEnv.GOOGLE_CALENDAR_WEBHOOK_URL; // Google cannot reach localhost; sync runs on the ticker and "Sync now".
     delete appEnv.SAMPARK_LIVE_DIAL_ENABLED;
     delete appEnv.SAMPARK_FIRESTORE_DATABASE;
     delete appEnv.GOOGLE_APPLICATION_CREDENTIALS;
     delete appEnv.FIREBASE_SERVICE_ACCOUNT_KEY;
     const hour = istHour();
-    if (!has('real-clock') && (hour < 10 || hour >= 20)) {
+    if (!has('real-clock') && (hour < 10 || hour >= 19)) {
         // Emulator-only rehearsal clock (src/lib/sampark/repo/factory.ts devClockFromEnv): ignored
         // in production and without the emulator. Webhook signatures still use the real clock.
         appEnv.SAMPARK_DEV_NOW = `${istDate()}T11:00:00+05:30`;
-        say(`   It is ${hour}:xx IST, outside the 10:00–20:00 calling window: the app's Sampark clock starts at ${appEnv.SAMPARK_DEV_NOW} (emulator only). Use --real-clock to keep real time.`);
+        say(`   It is ${hour}:xx IST, outside the demo school's 10:00–19:00 calling window: the app's Sampark clock starts at ${appEnv.SAMPARK_DEV_NOW} (emulator only). Use --real-clock to keep real time.`);
     }
     say('   PII key, pepper and webhook secret generated; they exist only in this window.');
+    say(`   Google Calendar: ${appEnv.GOOGLE_CALENDAR_MODE === 'mock' ? 'local MOCK Google (no real account; set GOOGLE_CALENDAR_CLIENT_ID/_SECRET for real Google)' : 'real Google OAuth client from this shell'}; token key is per run (reconnect after a restart).`);
 
     step(`4. Seed ${ORG}`);
-    const seed = run(NODE, tsx('scripts/sampark/seed-emulator.ts'), appEnv);
+    const adminArgs = argv.flatMap((a, i) => (a === '--admin' && argv[i + 1] && !argv[i + 1].startsWith('--') ? ['--admin', argv[i + 1]] : []));
+    const seed = run(NODE, tsx('scripts/sampark/seed-emulator.ts', ...adminArgs), appEnv);
     say(seed.out.replace(/^/gm, '   '));
     if (seed.code !== 0) fail(`seeding failed (exit ${seed.code}).`);
 
@@ -290,6 +317,40 @@ async function main() {
     say('   compiling the Riya page (first time takes a minute)…');
     const pageStatus = await httpStatus(`${base}/sampark/${ORG}/riya`);
     say(`   GET /sampark/${ORG}/riya → HTTP ${pageStatus}`);
+
+    if (adminArgs.length > 0) {
+        // Switch the demo school on through the app's own route, as the seeded admin (the
+        // development-only dev-token). Practice mode: nothing can ring.
+        // The first request compiles the route, so retry until the app answers.
+        let status = 0;
+        let lastError = '';
+        for (let attempt = 0; attempt < 5 && status !== 200; attempt += 1) {
+            try {
+                const res = await fetch(`${base}/api/sampark/${ORG}/enable`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Cookie: 'auth-token=dev-token' },
+                    body: JSON.stringify({ displayName: 'Hillview Demo School' }),
+                    signal: AbortSignal.timeout(180000),
+                });
+                status = res.status;
+            } catch (err) {
+                lastError = err instanceof Error ? err.message : String(err);
+                await new Promise((r) => setTimeout(r, 5000));
+            }
+        }
+        say(status === 200
+            ? `   POST /api/sampark/${ORG}/enable → HTTP 200 (Practice mode: nothing rings)`
+            : `   could not switch Sampark on for ${ORG} (HTTP ${status}${lastError ? `, ${lastError}` : ''}); use "Enable school calls" in the browser.`);
+        if (status === 200 && has('demo-family')) {
+            const fam = run(NODE, tsx('scripts/sampark/seed-emulator.ts', '--riya-demo-family'), appEnv);
+            say(fam.out.replace(/^/gm, '   '));
+        }
+    }
+
+    if (has('ticker')) {
+        start('ticker', NODE, tsx('scripts/sampark/ticker.ts', '--interval', '30'), { ...appEnv, SAMPARK_BASE_URL: base }, join(STATE_DIR, 'ticker.log'));
+        say(`   Local scheduler running every 30 s (log: ${join(STATE_DIR, 'ticker.log')}). Due callbacks run from the server.`);
+    }
 
     const url = `${base}/sampark`;
     step('6. In your browser');
