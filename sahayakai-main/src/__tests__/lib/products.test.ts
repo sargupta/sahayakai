@@ -12,6 +12,7 @@ import path from 'path';
 import {
     SAHAYAK_ROUTE_SEGMENTS,
     SAMPARK_RESERVED_SEGMENTS,
+    samparkEntryPath,
     isExternalUrl,
     isSahayakRoute,
     isSamparkHost,
@@ -118,5 +119,17 @@ describe('isExternalUrl', () => {
         expect(isExternalUrl('/to-sahayak/terms')).toBe(true);
         expect(isExternalUrl('/sampark/workspace')).toBe(false);
         expect(isExternalUrl('/to-sahayakai')).toBe(false);
+    });
+});
+
+describe('samparkEntryPath', () => {
+    it('opens the signed-in workspace unless this is a demo build', () => {
+        expect(samparkEntryPath({})).toBe('/workspace');
+        expect(samparkEntryPath({ NEXT_PUBLIC_SAMPARK_DEMO_ENABLED: 'false' })).toBe('/workspace');
+        expect(samparkEntryPath({ NEXT_PUBLIC_SAMPARK_DEMO_ENABLED: 'true' })).toBe('/demo');
+    });
+
+    it('keeps "demo" out of the orgId space', () => {
+        expect(SAMPARK_RESERVED_SEGMENTS).toContain('demo');
     });
 });

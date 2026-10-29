@@ -29,10 +29,10 @@ export function ComplaintCard({ call, viewerRole }: { call: DemoCall; viewerRole
     const text = call.summary?.complaintAboutTeacher;
     if (!text || !call.complaintStatus) return null;
     return (
-        <div className="space-y-3 rounded-surface-md border border-destructive/40 bg-destructive/5 p-4">
+        <div className="space-y-3 rounded-xl border border-sampark-rose-border bg-sampark-rose-soft p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="flex items-center gap-2 font-medium text-ink-900">
-                    <MessageSquareWarning aria-hidden="true" className="h-4 w-4 text-destructive" />
+                    <MessageSquareWarning aria-hidden="true" className="h-4 w-4 text-sampark-rose" />
                     {t("Parent's complaint about the teacher")}
                 </p>
                 <StatusPill tone={COMPLAINT_TONE[call.complaintStatus]}>{t(COMPLAINT_LABEL[call.complaintStatus])}</StatusPill>
@@ -89,7 +89,7 @@ export function CallSummaryView({ call, viewerRole }: { call: DemoCall; viewerRo
                 <List title={t("Advice shared")} items={s.guidanceGiven} />
             </div>
             {s.followUpNeeded && s.followUpSuggestion && (
-                <p className="rounded-field bg-milk-300 px-3 py-2 text-sm text-ink-800">
+                <p className="rounded-lg border border-sampark-peach-border bg-sampark-peach px-3 py-2 text-sm text-ink-800">
                     <span className="font-medium">{t("Follow-up")}: </span>
                     {s.followUpSuggestion}
                 </p>
@@ -108,7 +108,7 @@ export function Transcript({ turns, className }: { turns: DemoTurn[]; className?
                     <div
                         className={cn(
                             "max-w-md rounded-surface-md px-3 py-2 text-sm",
-                            turn.role === "parent" ? "bg-primary text-primary-foreground" : "border border-border bg-surface-glass text-ink-900",
+                            turn.role === "parent" ? "bg-sampark-slate text-white" : "border border-sampark-line bg-card text-ink-900",
                         )}
                     >
                         <span className="mb-0.5 block text-xs font-medium uppercase tracking-wide opacity-70">

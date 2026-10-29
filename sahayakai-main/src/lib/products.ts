@@ -23,7 +23,7 @@
 export const SAMPARK_PREFIX = '/sampark';
 
 /** Route segments under /sampark that are not an orgId. */
-export const SAMPARK_RESERVED_SEGMENTS = ['workspace'] as const;
+export const SAMPARK_RESERVED_SEGMENTS = ['workspace', 'demo'] as const;
 
 /**
  * First path segments that belong to SahayakAI. On a SamparkAI host these are
@@ -117,6 +117,16 @@ export function samparkUrl(path: string = '/'): string {
     const origin = samparkOrigin();
     if (origin) return `${origin}${p === '/' ? '' : p}` || '/';
     return p === '/' ? SAMPARK_PREFIX : `${SAMPARK_PREFIX}${p}`;
+}
+
+/**
+ * Where SahayakAI's "SamparkAI" entry opens: the signed-in school workspace,
+ * or — on a demo deployment (NEXT_PUBLIC_SAMPARK_DEMO_ENABLED=true, set beside
+ * the server flag SAMPARK_DEMO_ENABLED) — the demo school. The public flag only
+ * picks the link; the demo pages and APIs are still gated on the server flag.
+ */
+export function samparkEntryPath(env: Record<string, string | undefined> = { NEXT_PUBLIC_SAMPARK_DEMO_ENABLED: process.env.NEXT_PUBLIC_SAMPARK_DEMO_ENABLED }): string {
+    return env.NEXT_PUBLIC_SAMPARK_DEMO_ENABLED === 'true' ? '/demo' : '/workspace';
 }
 
 /** URL of a SahayakAI page from inside SamparkAI. */

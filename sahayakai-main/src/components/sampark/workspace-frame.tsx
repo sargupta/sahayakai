@@ -194,7 +194,7 @@ export function SamparkFrame({ children }: { children: ReactNode }) {
     const nav = (forceFull: boolean) => (
         <ProductSideNav
             label="SamparkAI"
-            brand={<SamparkWordmark endorsed />}
+            brand={<SamparkWordmark />}
             brandCompact={<SamparkWordmark compact />}
             brandHref={href("/")}
             lead={lead}

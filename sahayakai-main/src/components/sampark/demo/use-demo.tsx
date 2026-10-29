@@ -6,7 +6,7 @@ import { useSamparkHref } from "@/components/shell/product-paths";
 import { LoadingBlock } from "@/components/sampark/states";
 import { getDemoSchool, teacherById } from "@/lib/sampark/demo/school";
 import { useDemoState, type DemoState } from "@/lib/sampark/demo/store";
-import type { DemoCall, DemoRole, DemoSchool, DemoTeacher } from "@/lib/sampark/demo/types";
+import type { DemoCall, DemoCallback, DemoCampaign, DemoRole, DemoSchool, DemoTeacher } from "@/lib/sampark/demo/types";
 
 export interface DemoView {
     state: DemoState;
@@ -15,6 +15,10 @@ export interface DemoView {
     teacher: DemoTeacher | null;
     /** Calls this viewer may see: all for the admin, own classes for a teacher. */
     visibleCalls: DemoCall[];
+    /** Callbacks for the same scope. */
+    visibleCallbacks: DemoCallback[];
+    /** Campaigns: all for the admin; for a teacher, whole-school ones and those that include their classes. */
+    visibleCampaigns: DemoCampaign[];
     /** Display name of who is signed in. */
     actorName: string;
 }
@@ -28,8 +32,18 @@ export function useDemo(): DemoView | null {
         const teacher = role === "teacher" ? teacherById(state.session?.teacherId) ?? null : null;
         const visibleCalls =
             role === "admin" ? state.calls : teacher ? state.calls.filter((c) => teacher.classIds.includes(c.classId)) : [];
+        const mine = (classId: string) => role === "admin" || Boolean(teacher?.classIds.includes(classId));
+        const visibleCallbacks = role ? state.callbacks.filter((c) => mine(c.classId)) : [];
+        const visibleCampaigns =
+            role === "admin"
+                ? state.campaigns
+                : teacher
+                  ? state.campaigns.filter(
+                        (c) => c.status !== "draft" && (c.audience.sections.length === 0 || c.audience.sections.some((x) => teacher.classIds.includes(`${x.grade}${x.section}`))),
+                    )
+                  : [];
         const actorName = role === "admin" ? school.admin.name : teacher?.name ?? "";
-        return { state, school, role, teacher, visibleCalls, actorName };
+        return { state, school, role, teacher, visibleCalls, visibleCallbacks, visibleCampaigns, actorName };
     }, [state]);
 }
 

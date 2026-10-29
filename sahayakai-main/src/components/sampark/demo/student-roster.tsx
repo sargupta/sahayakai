@@ -65,7 +65,7 @@ export function StudentRoster({
                 <span className="text-sm text-ink-500">{fmt(t("{count} students"), { count: rows.length })}</span>
             </div>
 
-            <ul className="divide-y divide-border overflow-hidden rounded-surface-md border border-border bg-surface-glass">
+            <ul className="divide-y divide-sampark-line overflow-hidden rounded-xl border border-sampark-line bg-card">
                 {rows.map(({ s, signals }) => {
                     const last = lastCall.get(s.id);
                     return (

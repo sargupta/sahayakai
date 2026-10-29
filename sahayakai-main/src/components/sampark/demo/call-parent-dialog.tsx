@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AlertTriangle, BookOpen, CalendarX, Loader2, PhoneOff, PhoneOutgoing, Send, Star, Volume2, VolumeX } from "lucide-react";
+import { AlertTriangle, BookOpen, CalendarClock, CalendarX, Loader2, PhoneOff, PhoneOutgoing, Send, Star, Volume2, VolumeX } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,7 +21,9 @@ import {
     quickReplies,
     type ParentPersona,
 } from "@/lib/sampark/demo/script";
-import { addCall } from "@/lib/sampark/demo/store";
+import { addCall, useDemoState } from "@/lib/sampark/demo/store";
+import { demoHolidays } from "@/lib/sampark/demo/seed-planning";
+import { ScheduleCallbackDialog } from "./planning";
 import type { DemoCall, DemoCallContext, DemoLanguage, DemoRole, DemoStudent, DemoSummary, DemoTurn } from "@/lib/sampark/demo/types";
 import type { OutreachReason } from "@/types/attendance";
 import { cn } from "@/lib/utils";
@@ -73,11 +75,13 @@ interface Props {
     onOpenChange: (open: boolean) => void;
     placedBy: { role: DemoRole; name: string };
     initialReason?: OutreachReason | null;
+    /** Called once the call (reached or not) is saved, e.g. to close the callback it ran for. */
+    onSaved?: (call: DemoCall) => void;
 }
 
 type Step = "setup" | "live" | "summarising" | "done";
 
-export function CallParentDialog({ student, open, onOpenChange, placedBy, initialReason }: Props) {
+export function CallParentDialog({ student, open, onOpenChange, placedBy, initialReason, onSaved }: Props) {
     const { t } = useLanguage();
     const school = getDemoSchool();
     const cls = student ? classById(student.classId) : undefined;
@@ -97,6 +101,8 @@ export function CallParentDialog({ student, open, onOpenChange, placedBy, initia
     const [error, setError] = useState<string | null>(null);
     const [ending, setEnding] = useState(false);
     const [result, setResult] = useState<DemoCall | null>(null);
+    const [scheduling, setScheduling] = useState(false);
+    const demo = useDemoState();
     const callId = useRef(newId());
     const startedAt = useRef(0);
     const scroller = useRef<HTMLDivElement>(null);
@@ -144,6 +150,7 @@ export function CallParentDialog({ student, open, onOpenChange, placedBy, initia
 
     const save = (call: DemoCall) => {
         addCall(call);
+        onSaved?.(call);
         setResult(call);
         setStep("done");
     };
@@ -286,14 +293,14 @@ export function CallParentDialog({ student, open, onOpenChange, placedBy, initia
                                             aria-pressed={reason === r}
                                             className={cn(
                                                 "focus-ring flex items-start gap-3 rounded-field border px-3 py-2 text-left transition-colors",
-                                                reason === r ? "border-primary bg-primary/10" : "border-border hover:bg-milk-300",
+                                                reason === r ? "border-sampark-saffron bg-sampark-peach" : "border-sampark-line hover:bg-sampark-slate-soft",
                                             )}
                                         >
                                             <Icon aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-ink-600" />
                                             <span className="min-w-0">
                                                 <span className="block font-medium text-ink-900">{t(REASON_LABEL[r])}</span>
                                                 <span className="block text-xs text-ink-500">{t(REASON_HINT[r])}</span>
-                                                {signal && <span className="mt-1 block text-xs font-medium text-primary">{t(signal.label)}</span>}
+                                                {signal && <span className="mt-1 block text-xs font-medium text-sampark-saffron-strong">{t(signal.label)}</span>}
                                             </span>
                                         </button>
                                     );
@@ -325,7 +332,7 @@ export function CallParentDialog({ student, open, onOpenChange, placedBy, initia
                             ))}
                         </div>
 
-                        <div className="rounded-surface-md border border-border bg-milk-50 p-3 text-sm">
+                        <div className="rounded-xl border border-sampark-indigo-border bg-sampark-indigo-soft p-3 text-sm">
                             <p className="mb-1 text-xs font-medium uppercase tracking-wide text-ink-500">{t("The AI opens with")}</p>
                             <p className="text-ink-800">{openingLine(context, teacher)}</p>
                         </div>
@@ -364,7 +371,7 @@ export function CallParentDialog({ student, open, onOpenChange, placedBy, initia
                             </Button>
                         </div>
 
-                        <div ref={scroller} className="max-h-[38vh] min-h-[160px] overflow-y-auto rounded-surface-md border border-border bg-milk-50 p-3">
+                        <div ref={scroller} className="max-h-[38vh] min-h-[160px] overflow-y-auto rounded-xl border border-sampark-line bg-sampark-slate-soft p-3">
                             <Transcript turns={turns} />
                             {thinking && (
                                 <p className="mt-2 flex items-center gap-2 text-sm text-ink-500">
@@ -461,14 +468,27 @@ export function CallParentDialog({ student, open, onOpenChange, placedBy, initia
                         <CallSummaryView call={result} viewerRole={placedBy.role} />
                         {error && <p className="text-sm text-destructive">{error}</p>}
                         {result.transcript.length > 0 && (
-                            <details className="rounded-surface-md border border-border p-3">
+                            <details className="rounded-xl border border-sampark-line p-3">
                                 <summary className="cursor-pointer text-sm font-medium text-ink-800">{t("Transcript")}</summary>
                                 <Transcript turns={result.transcript} className="mt-3" />
                             </details>
                         )}
-                        <div className="flex justify-end">
+                        <div className="flex flex-wrap justify-end gap-2">
+                            <Button variant="outline" onClick={() => setScheduling(true)}>
+                                <CalendarClock aria-hidden="true" className="mr-2 h-4 w-4" />
+                                {result.status === "completed" ? t("Schedule a callback") : t("Try again later")}
+                            </Button>
                             <Button onClick={() => onOpenChange(false)}>{t("Done")}</Button>
                         </div>
+                        <ScheduleCallbackDialog
+                            open={scheduling}
+                            onOpenChange={setScheduling}
+                            student={student}
+                            reason={reason}
+                            sourceCallId={result.id}
+                            placedBy={placedBy}
+                            holidays={demo ? demoHolidays(demo.seededAt) : []}
+                        />
                     </div>
                 )}
             </DialogContent>

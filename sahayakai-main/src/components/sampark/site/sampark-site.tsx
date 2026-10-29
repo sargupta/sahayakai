@@ -57,7 +57,7 @@ function WebNav({ workspaceHref }: { workspaceHref: string }) {
         >
             <div className={cn(CONTAINER, "flex h-16 items-center justify-between gap-4")}>
                 <Link href={home} className="focus-ring flex min-h-11 items-center rounded-pill">
-                    <SamparkWordmark endorsed />
+                    <SamparkWordmark />
                 </Link>
                 <nav aria-label={t("SamparkAI")} className="hidden items-center gap-1 md:flex">
                     {links.map((l) => (
@@ -186,7 +186,7 @@ function Hero({ workspaceHref }: { workspaceHref: string }) {
                 <div>
                     <span className="inline-flex items-center gap-2 rounded-pill border border-line-glass bg-[color:var(--web-glass)] px-3 py-1.5 text-xs font-semibold text-ink-600">
                         <span aria-hidden="true" className="h-2 w-2 rounded-pill bg-leaf-500" />
-                        {t("School-to-parent calls · part of SahayakAI")}
+                        {t("School-to-parent calls, in every family's language")}
                     </span>
                     <h1 className="mt-5 font-display text-web-h1 font-bold tracking-[-0.03em] text-ink-900">
                         {t("Reach every family.")} <span className="text-saffron-600">{t("In their own language.")}</span>
@@ -377,7 +377,7 @@ function Footer() {
             <div className={cn(CONTAINER, "flex flex-col gap-6 py-10 md:flex-row md:items-center md:justify-between")}>
                 <div className="space-y-1">
                     <SamparkWordmark />
-                    <p className="text-tile text-ink-500">{t("SamparkAI is part of SahayakAI, by SARGVISION Intelligence.")}</p>
+                    <p className="text-tile text-ink-500">{t("SamparkAI, by SARGVISION Intelligence.")}</p>
                 </div>
                 <ul className="flex flex-wrap gap-x-5 gap-y-2">
                     {links.map((l) => (

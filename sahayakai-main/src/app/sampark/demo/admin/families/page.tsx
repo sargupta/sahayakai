@@ -1,7 +1,9 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useSearchParams } from "next/navigation";
+import { PageHeader, Panel } from "@/components/sampark/console-ui";
+import { cn } from "@/lib/utils";
 import { LoadingBlock } from "@/components/sampark/states";
 import { useLanguage } from "@/context/language-context";
 import { DemoRoleGate, type DemoView } from "@/components/sampark/demo/use-demo";
@@ -14,23 +16,31 @@ const ALL = "all";
 
 function Families({ view }: { view: DemoView }) {
     const { t } = useLanguage();
-    const [tab, setTab] = useState(ALL);
+    const params = useSearchParams();
+    const requested = params.get("class");
+    const [tab, setTab] = useState(requested && view.school.classes.some((c) => c.id === requested) ? requested : ALL);
     const [calling, setCalling] = useState<{ student: DemoStudent; reason: OutreachReason | null } | null>(null);
     const classes = tab === ALL ? view.school.classes : view.school.classes.filter((c) => c.id === tab);
     return (
         <div className="mx-auto max-w-6xl space-y-6">
-            <header className="space-y-1">
-                <h1 className="font-display text-2xl font-semibold text-ink-900 md:text-3xl">{t("Families")}</h1>
-                <p className="text-ink-600">{t("Every student and parent in the school. As principal you can call any family; the call also shows in the class teacher's log.")}</p>
-            </header>
-            <div className="flex flex-wrap gap-2" role="tablist" aria-label={t("Classes")}>
-                {[{ id: ALL, label: t("Whole school") }, ...view.school.classes.map((c) => ({ id: c.id, label: c.name }))].map((x) => (
-                    <Button key={x.id} role="tab" aria-selected={tab === x.id} size="sm" variant={tab === x.id ? "default" : "outline"} className="rounded-pill" onClick={() => setTab(x.id)}>
-                        {x.label}
-                    </Button>
-                ))}
-            </div>
-            <StudentRoster classes={classes} students={view.school.students} calls={view.visibleCalls} showClass onCall={(student, reason) => setCalling({ student, reason })} />
+            <PageHeader eyebrow={t("Workspace")} title={t("Families")} description={t("Every student and parent in the school. As principal you can call any family; the call also shows in the class teacher's log.")} />
+            <Panel>
+                <div className="mb-4 flex flex-wrap gap-2" role="tablist" aria-label={t("Classes")}>
+                    {[{ id: ALL, label: t("Whole school") }, ...view.school.classes.map((c) => ({ id: c.id, label: c.name }))].map((x) => (
+                        <button
+                            key={x.id}
+                            type="button"
+                            role="tab"
+                            aria-selected={tab === x.id}
+                            onClick={() => setTab(x.id)}
+                            className={cn("focus-ring rounded-full border px-3.5 py-1.5 text-sm transition-colors", tab === x.id ? "border-sampark-saffron bg-sampark-peach font-medium text-sampark-saffron-strong" : "border-sampark-line bg-card text-ink-600 hover:bg-sampark-slate-soft")}
+                        >
+                            {x.label}
+                        </button>
+                    ))}
+                </div>
+                <StudentRoster classes={classes} students={view.school.students} calls={view.visibleCalls} showClass onCall={(student, reason) => setCalling({ student, reason })} />
+            </Panel>
             <CallParentDialog
                 student={calling?.student ?? null}
                 initialReason={calling?.reason ?? null}

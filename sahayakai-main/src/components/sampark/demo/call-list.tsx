@@ -61,7 +61,7 @@ export function CallDetailSheet({ call, viewerRole, onClose }: { call: DemoCall 
                             </SheetDescription>
                         </SheetHeader>
                         <div className="mt-4 space-y-5">
-                            <div className="rounded-field bg-milk-300 px-3 py-2 text-sm text-ink-800">
+                            <div className="rounded-lg border border-sampark-indigo-border bg-sampark-indigo-soft px-3 py-2 text-sm text-ink-800">
                                 <span className="font-medium">{fmt(t("{teacher}'s note"), { teacher: teacher?.name ?? "" })}: </span>
                                 {call.note}
                             </div>
@@ -85,16 +85,18 @@ export function CallList({
     viewerRole,
     teachers,
     initialFilter = "all",
+    initialTeacher,
 }: {
     calls: DemoCall[];
     viewerRole: DemoRole;
     /** Admin only: offer a filter by teacher. */
     teachers?: DemoTeacher[];
     initialFilter?: CallFilter;
+    initialTeacher?: string | null;
 }) {
     const { t } = useLanguage();
     const [filter, setFilter] = useState<CallFilter>(initialFilter);
-    const [teacherId, setTeacherId] = useState(ALL);
+    const [teacherId, setTeacherId] = useState(initialTeacher && teachers?.some((x) => x.id === initialTeacher) ? initialTeacher : ALL);
     const [reason, setReason] = useState(ALL);
     const [openId, setOpenId] = useState<string | null>(null);
 
@@ -121,7 +123,7 @@ export function CallList({
                                 aria-pressed={filter === f.key}
                                 className={
                                     "focus-ring rounded-pill border px-3 py-1.5 text-sm transition-colors " +
-                                    (filter === f.key ? "border-primary bg-primary text-primary-foreground" : "border-border bg-surface-glass text-ink-700 hover:bg-milk-300")
+                                    (filter === f.key ? "border-sampark-saffron bg-sampark-peach font-medium text-sampark-saffron-strong" : "border-sampark-line bg-card text-ink-700 hover:bg-sampark-slate-soft")
                                 }
                             >
                                 {t(f.label)} <span className="opacity-70">{count}</span>
@@ -168,7 +170,7 @@ export function CallList({
             {rows.length === 0 ? (
                 <EmptyState icon={PhoneOff} title={t("No calls here")} description={t("Try another filter, or place a call from the class list.")} />
             ) : (
-                <ul className="divide-y divide-border overflow-hidden rounded-surface-md border border-border bg-surface-glass">
+                <ul className="divide-y divide-sampark-line overflow-hidden rounded-xl border border-sampark-line bg-card shadow-sampark-card">
                     {rows.map((c) => {
                         const student = studentById(c.studentId);
                         const cls = classById(c.classId);
@@ -178,7 +180,7 @@ export function CallList({
                                 <button
                                     type="button"
                                     onClick={() => setOpenId(c.id)}
-                                    className="focus-ring flex w-full items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-milk-300"
+                                    className="focus-ring flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-sampark-slate-soft"
                                 >
                                     <div className="min-w-0 flex-1 space-y-1">
                                         <p className="flex flex-wrap items-center gap-2">

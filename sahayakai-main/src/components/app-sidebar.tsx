@@ -41,7 +41,7 @@ import { ProductSideNav, type NavBadge, type NavSection } from "@/components/she
 import { SahayakWordmark, SamparkMark } from "@/components/shell/brand"
 import { useNavAccess } from "@/components/shell/use-nav-access"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { samparkUrl, isExternalUrl } from "@/lib/products"
+import { samparkEntryPath, samparkUrl, isExternalUrl } from "@/lib/products"
 import { pressVidyaEntry } from "@/lib/vidya-entry"
 import { cn } from "@/lib/utils"
 import type { UserProfile } from "@/types"
@@ -328,8 +328,9 @@ export function AppSidebar({ collapsed = false, onToggleCollapsed, forceFull = f
 
   // The one SamparkAI entry in SahayakAI's navigation. samparkUrl() picks the
   // configured SamparkAI origin (NEXT_PUBLIC_SAMPARK_URL, e.g.
-  // https://sampark.sahayakai.com) or, unset, /sampark on this origin.
-  const samparkHref = samparkUrl("/workspace")
+  // https://sampark.sahayakai.com) or, unset, /sampark on this origin;
+  // samparkEntryPath() opens the demo school on a demo deployment.
+  const samparkHref = samparkUrl(samparkEntryPath())
   // Returns the element itself (not a component) so TooltipTrigger asChild can
   // attach its ref and handlers to the <a>.
   const samparkLink = ({ className, children, label }: { className: string; children: React.ReactNode; label?: string }) =>

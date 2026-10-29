@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, GraduationCap, RotateCcw, ShieldCheck } from "lucide-react";
-import { SectionCard } from "@/components/layout";
+import { PageHeader, Panel, MiniStat } from "@/components/sampark/console-ui";
 import { Button } from "@/components/ui/button";
 import { StatusPill } from "@/components/sampark/status-pill";
 import { LoadingBlock } from "@/components/sampark/states";
@@ -39,49 +39,49 @@ function RolePicker() {
 
     return (
         <div className="mx-auto max-w-5xl space-y-6">
-            <header className="space-y-2">
-                <p className="text-xs font-medium uppercase tracking-wide text-ink-500">{t("SamparkAI demo")}</p>
-                <h1 className="font-display text-2xl font-semibold text-ink-900 md:text-3xl">
-                    {fmt(t("Sign in to {school}"), { school: school.name })}
-                </h1>
-                <p className="max-w-3xl text-ink-600">
-                    {fmt(t("A demo school in {city}: {teachers} teachers, {classes} classes, {students} students and their parents. Every name is made up, and calls play in your browser: you speak as the parent, the AI answers."), {
-                        city: school.city,
-                        teachers: school.teachers.length,
-                        classes: school.classes.length,
-                        students: school.students.length,
-                    })}
-                </p>
-            </header>
+            <PageHeader
+                eyebrow={t("SamparkAI demo")}
+                title={fmt(t("Sign in to {school}"), { school: school.name })}
+                description={t("A demo school: every name is made up, and calls play in your browser. You speak as the parent, the AI answers. No phone rings.")}
+            />
+            <div className="grid grid-cols-3 gap-3 sm:max-w-xl">
+                <MiniStat label={t("Teachers")} value={school.teachers.length} />
+                <MiniStat label={t("Classes")} value={school.classes.length} />
+                <MiniStat label={t("Students")} value={school.students.length} sub={school.city} />
+            </div>
 
             {fromSahayak && (
-                <div role="status" className="rounded-surface-md border border-border bg-milk-50 p-4 text-ink-700">
+                <div role="status" className="rounded-xl border border-sampark-indigo-border bg-sampark-indigo-soft p-4 text-ink-700">
                     {t("You opened Attendance in SahayakAI. Parent calls now live in SamparkAI: choose your teacher account to continue.")}
                 </div>
             )}
 
             <div className="grid gap-4 md:grid-cols-2">
-                <SectionCard
+                <Panel
+                    tone="live"
                     title={t("Principal / admin")}
                     description={t("The whole school: every class, every teacher's calls, complaints and follow-ups.")}
                     icon={ShieldCheck}
                     className={asTeacher ? "opacity-80" : undefined}
+                    bodyClassName="space-y-4"
                 >
                     <ul className="list-disc space-y-1 pl-5 text-sm text-ink-600">
                         <li>{t("Call any family in the school")}</li>
                         <li>{t("Review every call a teacher made")}</li>
+                        <li>{t("Run campaigns and manage the school calendar and callbacks")}</li>
                         <li>{t("Monitor today: who was reached, upset parents, complaints")}</li>
                     </ul>
                     <Button onClick={enterAdmin} className="w-full justify-between sm:w-auto">
                         {fmt(t("Continue as {name}"), { name: school.admin.name })}
                         <ArrowRight aria-hidden="true" className="ml-2 h-4 w-4" />
                     </Button>
-                </SectionCard>
+                </Panel>
 
-                <SectionCard
+                <Panel
                     title={t("Teacher")}
                     description={t("Only your own classes. Four kinds of parent call, the same as SahayakAI Attendance.")}
                     icon={GraduationCap}
+                    bodyClassName="space-y-2"
                 >
                     <ul className="space-y-2">
                         {school.teachers.map((teacher) => (
@@ -89,7 +89,7 @@ function RolePicker() {
                                 <button
                                     type="button"
                                     onClick={() => enterTeacher(teacher.id)}
-                                    className="focus-ring flex w-full items-center justify-between gap-3 rounded-field border border-border bg-surface-glass px-3 py-2 text-left transition-colors hover:bg-milk-300"
+                                    className="focus-ring flex w-full items-center justify-between gap-3 rounded-lg border border-sampark-line bg-card px-3 py-2.5 text-left transition-colors hover:border-sampark-saffron hover:bg-sampark-peach"
                                 >
                                     <span className="min-w-0">
                                         <span className="block font-medium text-ink-900">{teacher.name}</span>
@@ -102,7 +102,7 @@ function RolePicker() {
                             </li>
                         ))}
                     </ul>
-                </SectionCard>
+                </Panel>
             </div>
 
             <div className="flex flex-wrap items-center gap-3 text-sm text-ink-500">

@@ -1,22 +1,30 @@
 "use client";
 
 /**
- * Browser-side store for the demo: who is signed in (admin or which teacher)
- * and every call, seeded history first. It lives in localStorage so a call a
- * teacher places shows up on the admin monitor in the same browser, survives
- * a reload, and never leaves the viewer's machine. "Reset demo" puts the
- * seeded school back.
+ * Browser-side store for the demo: who is signed in (admin or which teacher),
+ * every call (seeded history first), callbacks and notice campaigns. It lives
+ * in localStorage so work a teacher does shows up on the admin monitor in the
+ * same browser, survives a reload, and never leaves the viewer's machine.
+ * "Reset demo" puts the seeded school back.
  */
 
 import { useSyncExternalStore } from 'react';
+import type { CallbackStatus } from '@/lib/sampark/callbacks/types';
+import type { CampaignStatus } from '@/types/sampark';
 import { buildSeedCalls } from './seed-calls';
-import type { ComplaintStatus, DemoCall, DemoSession } from './types';
+import { buildSeedCallbacks, buildSeedCampaigns } from './seed-planning';
+import type { ComplaintStatus, DemoCall, DemoCallback, DemoCampaign, DemoSession } from './types';
 
-const KEY = 'sampark.demo.v1';
+const KEY = 'sampark.demo.v2';
+const OLD_KEYS = ['sampark.demo.v1'];
 
 export interface DemoState {
-    version: 1;
+    version: 2;
+    /** When the seed was built; planning dates are relative to it. */
+    seededAt: number;
     calls: DemoCall[];
+    callbacks: DemoCallback[];
+    campaigns: DemoCampaign[];
     session: DemoSession | null;
 }
 
@@ -24,7 +32,9 @@ let state: DemoState | null = null;
 const listeners = new Set<() => void>();
 
 function fresh(session: DemoSession | null = null): DemoState {
-    return { version: 1, calls: buildSeedCalls(Date.now()), session };
+    const now = Date.now();
+    const calls = buildSeedCalls(now);
+    return { version: 2, seededAt: now, calls, callbacks: buildSeedCallbacks(now, calls), campaigns: buildSeedCampaigns(now), session };
 }
 
 function load(): DemoState {
@@ -32,7 +42,18 @@ function load(): DemoState {
     try {
         const raw = window.localStorage.getItem(KEY);
         const parsed = raw ? (JSON.parse(raw) as DemoState) : null;
-        state = parsed && parsed.version === 1 && Array.isArray(parsed.calls) ? parsed : fresh();
+        if (parsed && parsed.version === 2 && Array.isArray(parsed.calls) && Array.isArray(parsed.callbacks) && Array.isArray(parsed.campaigns)) {
+            state = parsed;
+        } else {
+            // First visit, or a v1 store from before callbacks and campaigns: keep who was signed in.
+            let session: DemoSession | null = null;
+            for (const k of OLD_KEYS) {
+                const old = window.localStorage.getItem(k);
+                if (old) session = (JSON.parse(old) as { session?: DemoSession }).session ?? session;
+                window.localStorage.removeItem(k);
+            }
+            state = fresh(session);
+        }
     } catch {
         state = fresh();
     }
@@ -80,6 +101,42 @@ export function addCall(call: DemoCall) {
 export function setComplaintStatus(callId: string, status: ComplaintStatus) {
     const s = load();
     commit({ ...s, calls: s.calls.map((c) => (c.id === callId && c.complaintStatus ? { ...c, complaintStatus: status } : c)) });
+}
+
+export function setFollowUpDone(callId: string, done: boolean) {
+    const s = load();
+    commit({ ...s, calls: s.calls.map((c) => (c.id === callId ? { ...c, followUpDone: done } : c)) });
+}
+
+export function addCallback(cb: DemoCallback) {
+    const s = load();
+    commit({ ...s, callbacks: [cb, ...s.callbacks.filter((x) => x.id !== cb.id)] });
+}
+
+export function updateCallback(id: string, patch: Partial<Pick<DemoCallback, 'status' | 'scheduledAt' | 'resultCallId'>>) {
+    const s = load();
+    commit({ ...s, callbacks: s.callbacks.map((cb) => (cb.id === id ? { ...cb, ...patch } : cb)) });
+}
+
+/** Callback statuses a person may move to from the console (the worker owns 'running'). */
+export const CALLBACK_ACTIONS: Record<CallbackStatus, CallbackStatus[]> = {
+    proposed: ['scheduled', 'cancelled'],
+    scheduled: ['completed', 'cancelled'],
+    running: [],
+    completed: [],
+    failed: ['scheduled', 'cancelled'],
+    missed: ['scheduled', 'cancelled'],
+    cancelled: [],
+};
+
+export function addCampaign(c: DemoCampaign) {
+    const s = load();
+    commit({ ...s, campaigns: [c, ...s.campaigns.filter((x) => x.id !== c.id)] });
+}
+
+export function setCampaignStatus(id: string, status: CampaignStatus, patch: Partial<DemoCampaign> = {}) {
+    const s = load();
+    commit({ ...s, campaigns: s.campaigns.map((c) => (c.id === id ? { ...c, ...patch, status, updatedAt: new Date().toISOString() } : c)) });
 }
 
 /** Puts the seeded school back; keeps who is signed in. */

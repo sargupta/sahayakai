@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { SamparkThemeScope } from "@/components/sampark/theme-scope";
 
 /**
  * SamparkAI — school-to-parent communication, a product in the SahayakAI
@@ -18,5 +19,10 @@ export const metadata: Metadata = {
 };
 
 export default function SamparkLayout({ children }: { children: ReactNode }) {
-    return children;
+    return (
+        <div className="theme-sampark">
+            <SamparkThemeScope />
+            {children}
+        </div>
+    );
 }

@@ -8,7 +8,9 @@
  * the post-call summary (`/api/sampark-demo/*`, behind SAMPARK_DEMO_ENABLED).
  */
 
+import type { CallbackStatus } from '@/lib/sampark/callbacks/types';
 import type { OutreachReason } from '@/types/attendance';
+import type { Campaign } from '@/types/sampark';
 
 export type DemoLanguage = 'en' | 'hi';
 
@@ -123,7 +125,37 @@ export interface DemoCall {
     complaintStatus: ComplaintStatus | null;
     /** True when the replies came from the scripted fallback, not the AI. */
     offlineReplies?: boolean;
+    /** A follow-up someone marked handled (summary.followUpNeeded stays as the AI wrote it). */
+    followUpDone?: boolean;
 }
+
+/**
+ * A call back to one family, the demo's form of SamparkAI's callback record
+ * (src/lib/sampark/callbacks/types.ts): same statuses and rules — a parent's
+ * request arrives as 'proposed' and never runs until a person confirms a time.
+ */
+export interface DemoCallback {
+    id: string;
+    studentId: string;
+    classId: string;
+    teacherId: string;
+    reason: OutreachReason;
+    status: CallbackStatus;
+    /** Null while a parent's request still needs a time. */
+    scheduledAt: string | null;
+    /** The parent's own words for a request ("after 6 in the evening"), or the staff note. */
+    note: string;
+    source: 'parent_request' | 'staff';
+    createdBy: { role: DemoRole | 'parent'; name: string };
+    createdAt: string;
+    /** The call this callback follows up, if any. */
+    sourceCallId: string | null;
+    /** The call placed when it ran. */
+    resultCallId: string | null;
+}
+
+/** A class or school-wide notice campaign: SamparkAI's own Campaign record, on the demo school. */
+export type DemoCampaign = Campaign & { createdByName: string };
 
 /** What the server needs to speak for the school on one call. */
 export interface DemoCallContext {
