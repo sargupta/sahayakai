@@ -38,7 +38,7 @@ const PURPOSES = ['absence_notice', 'emergency_closure', 'event_invitation', 'ex
 // Copies of src/lib/sampark/conversation/riya-purposes.ts (RIYA_VARIABLES, RIYA_OPENING_TEMPLATE);
 // riya-agent-sync.test.ts fails if they drift.
 export const SAHAYAK_VARIABLES = ['school_name', 'call_purpose', 'student_name', 'class_name', 'section_name', 'event_name', 'event_date', 'event_time', 'holiday_dates', 'exam_schedule', 'absence_date', 'closure_date', 'closure_reason', 'transport_information'];
-export const OPENING_TEMPLATE = "Hello, I'm Riya, an AI assistant calling on behalf of {{school_name}} with an important update. Is this a good time to talk?";
+export const OPENING_TEMPLATE = "Hello, I'm Riya, an AI assistant calling on behalf of {{school_name}} with a school-related update. This conversation is transcribed by our service providers. Is this a good time to talk?";
 /** Word sequence, ignoring case, punctuation and the agent's pause dots ("Hello..... this"). */
 export const words = (s) => String(s ?? '').toLowerCase().replace(/\{\{\s*(\w+)\s*\}\}/g, ' var_$1 ').replace(/[^a-z0-9_]+/g, ' ').trim();
 

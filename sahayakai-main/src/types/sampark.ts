@@ -153,6 +153,12 @@ export interface SamparkSchool {
     manualHolidays?: string[];
     /** Holidays from the last CRM import. `holidays` is always the sorted union of both lists. */
     crmHolidays?: string[];
+    /**
+     * Local emulator only: arms the one authorised after-hours Riya test (see
+     * `localAfterHoursTestOverride` in server/sampark/conversation.ts). Written only by
+     * `seed-emulator.ts --arm-after-hours-test`; ignored everywhere else.
+     */
+    localAfterHoursTest?: { armedAt: string; until: string } | null;
     createdAt: string;
     updatedAt: string;
 }

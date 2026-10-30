@@ -65,7 +65,7 @@ export function CalendarPage({ view }: { view: DemoView }) {
                 open={Boolean(calling)}
                 onOpenChange={(o) => !o && setCalling(null)}
                 placedBy={placedByOf(view)}
-                onSaved={(call) => calling && updateCallback(calling.id, { status: "completed", resultCallId: call.id })}
+                onSaved={(call) => calling && updateCallback(calling.id, { status: call.status === "completed" ? "completed" : "missed", resultCallId: call.id })}
             />
         </div>
     );
@@ -176,7 +176,7 @@ export function CampaignDetailPage({ view, id }: { view: DemoView; id: string })
                     <CampaignOutcomePanel c={c} />
                 </div>
             </div>
-            <Panel tone="notice" title={t("Practice mode")} description={t("This demo school is in Practice: calls are simulated and no phone rings. Approval, scheduling and calling hours work as they do for a real school.")}>
+            <Panel tone="notice" title={t("Practice mode")} description={t("This demo school is in Practice: calls are simulated and no phone rings. Approval schedules calls inside calling hours as for a real school; \"Start calling now\" runs the simulation straight away.")}>
                 <p className="text-sm text-ink-600">
                     {c.approvedAt ? fmt(t("Approved {when}"), { when: whenLabel(c.approvedAt) }) : t("Not approved yet.")}
                     {c.notBefore ? ` · ${fmt(t("calls from {when}"), { when: whenLabel(c.notBefore) })}` : ""}

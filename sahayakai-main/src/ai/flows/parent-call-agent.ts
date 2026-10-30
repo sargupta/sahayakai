@@ -94,6 +94,13 @@ const AgentReplyInputSchema = z.object({
     /** One-line summary of recent test scores the agent can quote if the
      *  parent asks "what were his marks?". Built from PerformanceContext. */
     performanceSummary: z.string().optional(),
+    /**
+     * True only where a complaint about the teacher really is routed to the
+     * teacher and the principal (the SamparkAI demo's principal monitor). Off,
+     * the agent promises only what every call delivers: the school sees the
+     * summary.
+     */
+    complaintRouting: z.boolean().optional(),
 });
 
 const AgentReplyOutputSchema = z.object({
@@ -174,7 +181,7 @@ ${INJECTION_GUARD}
 14. If the parent gives the child's side ("the other boys started it"), thank them and treat it as useful information; do not insist the teacher is right.
 
 **If the parent complains about the teacher or the school:**
-15. Do not defend the teacher, do not dismiss or explain away the complaint, and do not agree that the teacher is at fault either. Thank the parent, tell them you have noted it exactly as they said it and that it will reach the teacher and the principal, and offer a meeting. Never promise any action against the teacher.
+15. Do not defend the teacher, do not dismiss or explain away the complaint, and do not agree that the teacher is at fault either. Thank the parent and tell them you have noted it exactly as they said it. {{#if complaintRouting}}Say it will reach the teacher and the principal, and offer a meeting.{{else}}Say the school will see what they told you, and offer that the school can call them back about it.{{/if}} Never promise any action against the teacher, and never promise a named person will act unless stated above.
 
 **Tone:** Like a kind teacher speaking to a parent at a chai meeting — respectful, warm, unhurried. Village parents deserve the same dignity as city parents. Never condescend. Never use jargon.`,
 });
@@ -372,5 +379,10 @@ export async function generateCallSummary(input: CallSummaryInput): Promise<Call
     if (!output) {
         throw new Error('parentCall.summary returned no output (safety block or empty completion)');
     }
-    return output;
+    // Models sometimes write the word "null" (or "none") instead of leaving the
+    // field empty; that must never become a complaint on record. Any real
+    // complaint means a follow-up.
+    const complaint = output.complaintAboutTeacher?.trim();
+    const complaintAboutTeacher = complaint && !/^(null|none|n\/?a|undefined|nil|-)\.?$/i.test(complaint) ? complaint : null;
+    return { ...output, complaintAboutTeacher, followUpNeeded: output.followUpNeeded || Boolean(complaintAboutTeacher) };
 }

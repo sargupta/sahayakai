@@ -35,6 +35,7 @@ import { logger } from '@/lib/logger';
 import { purposeSpec } from '@/lib/sampark/catalogue';
 import {
     fetchConversation,
+    findConversationByUserId,
     maskId,
     readElevenLabsConfig,
     startRiyaOutboundCall,
@@ -59,6 +60,7 @@ import { hashId } from '@/lib/sampark/intents';
 import { decryptPhone, hashPhone } from '@/lib/sampark/phone';
 import { evaluateGate, FREQUENCY_WINDOW_MS } from '@/lib/sampark/policy/gate';
 import { SAMPARK_NONPROD_DATABASE } from '@/lib/sampark/repo/factory';
+import { SARGVISION_ORG_ID } from '@/lib/sampark/sargvision';
 import { pauseStopsPurpose } from '@/lib/sampark/policy/pause';
 import { type Clock, type SamparkRepo, systemClock } from '@/lib/sampark/ports';
 import type { BlockReason, CallDestination, Campaign, SamparkGuardian, SamparkSchool, SamparkStudent } from '@/types/sampark';
@@ -133,7 +135,8 @@ export type RiyaBlocker =
     | 'ELEVENLABS_UNCONFIGURED'
     | 'NONPROD_DATABASE_REQUIRED'
     | 'DEMO_SCHOOL_PRACTICE_ONLY'
-    | 'TEST_PHONE_MISSING';
+    | 'TEST_PHONE_MISSING'
+    | 'TEST_PHONE_NOT_ALLOWED';
 
 export interface RiyaAvailability {
     enabled: boolean;
@@ -156,6 +159,10 @@ export interface RiyaAvailability {
     webhookSecretConfigured: boolean;
     /** The staging test-window override as it applies to this school now. */
     testWindowOverride: StagingTestWindowOverride;
+    /** Local Sargvision roster: each call rings the chosen contact's own (allow-listed) number. */
+    rosterMode: boolean;
+    /** When the local after-hours test window is armed and open (roster or single test). */
+    localAfterHoursUntil: string | null;
 }
 
 function providerFor(school: SamparkSchool, env: Env): { provider: ConversationProviderKind; config: ElevenLabsConfig | null } | { blocker: RiyaBlocker; problems: string[] } {
@@ -176,8 +183,77 @@ function providerFor(school: SamparkSchool, env: Env): { provider: ConversationP
     if (env.SAMPARK_FIRESTORE_DATABASE?.trim() !== SAMPARK_NONPROD_DATABASE && env.SAMPARK_RIYA_PRODUCTION_DATA_APPROVED !== 'true') {
         return { blocker: 'NONPROD_DATABASE_REQUIRED', problems: [] };
     }
+    // The local Sargvision roster rings each contact's own number; its allow-list is checked per call.
+    if (sargvisionRosterMode(env, school)) return { provider: 'elevenlabs', config: cfg.config };
     if (!school.testPhoneEnc || !school.testPhoneHash || !school.testPhoneLast4) return { blocker: 'TEST_PHONE_MISSING', problems: [] };
+    if (!allowedTestNumbers(env).some((e164) => hashPhone(e164) === school.testPhoneHash)) return { blocker: 'TEST_PHONE_NOT_ALLOWED', problems: [] };
     return { provider: 'elevenlabs', config: cfg.config };
+}
+
+/**
+ * The local Sargvision test roster (scripts/sampark/sargvision-roster.json): in Test mode, a call to
+ * one of its contacts rings THAT contact's own number instead of the school test phone. Only when
+ * ALL of these hold — otherwise every school keeps the test-phone-only rule:
+ *   - the app runs against the local Firestore emulator, not in production, on `sampark-nonprod`;
+ *   - the school is SARGVISION_ORG_ID, is not a demo school, and is in Test mode.
+ * Each call still needs the contact's number on SAMPARK_RIYA_TEST_ALLOWED_NUMBERS (checked against
+ * the stored hash at preview and against the decrypted number at dial time), plus every gate rule,
+ * the per-contact daily cap, the lock and idempotency.
+ */
+export function sargvisionRosterMode(env: Env, school: SamparkSchool): boolean {
+    return Boolean(env.FIRESTORE_EMULATOR_HOST?.trim())
+        && env.NODE_ENV !== 'production'
+        && env.SAMPARK_FIRESTORE_DATABASE?.trim() === SAMPARK_NONPROD_DATABASE
+        && school.orgId === SARGVISION_ORG_ID
+        && !school.isDemo
+        && school.mode === 'test';
+}
+
+function rosterNumberAllowed(env: Env, guardian: SamparkGuardian): boolean {
+    return allowedTestNumbers(env).some((e164) => hashPhone(e164) === guardian.phoneHash);
+}
+
+/** Decrypts a roster contact's number, checks its hash and the allow-list. Throws otherwise. */
+function rosterContactE164(guardian: SamparkGuardian, env: Env): string {
+    const e164 = decryptPhone(guardian.phoneEnc);
+    if (hashPhone(e164) !== guardian.phoneHash) throw new Error('TEST_PHONE_MISMATCH: the contact number does not match its recorded hash');
+    if (!allowedTestNumbers(env).includes(e164)) throw new Error('TEST_PHONE_NOT_ALLOWED: the contact number is not on the allowed list');
+    return e164;
+}
+
+/**
+ * Evening testing on the local roster: the same arming field as `localAfterHoursTestOverride`
+ * (`school.localAfterHoursTest`, written only by the emulator seed), but for any roster contact on
+ * the allow-list, until it expires (at most 3 hours). The per-contact daily cap limits attempts.
+ */
+export function sargvisionAfterHoursOverride(env: Env, school: SamparkSchool, guardian: SamparkGuardian, destination: CallDestination | null, now: Date): StagingTestWindowOverride {
+    const arm = school.localAfterHoursTest;
+    if (!arm) return { active: false, until: null, inactiveReason: null };
+    const untilMs = Date.parse(arm.until);
+    const armedMs = Date.parse(arm.armedAt);
+    if (!Number.isFinite(untilMs) || !Number.isFinite(armedMs)) return { active: false, until: null, inactiveReason: 'unparseable' };
+    const until = new Date(untilMs).toISOString();
+    const off = (inactiveReason: string): StagingTestWindowOverride => ({ active: false, until, inactiveReason });
+    if (!sargvisionRosterMode(env, school)) return off('not_roster_school');
+    if (destination !== 'guardian' || !rosterNumberAllowed(env, guardian)) return off('not_allowed_number');
+    if (untilMs <= now.getTime()) return off('expired');
+    if (untilMs - armedMs > STAGING_TEST_WINDOW_MAX_MS || untilMs - now.getTime() > STAGING_TEST_WINDOW_MAX_MS) return off('longer_than_3_hours');
+    return { active: true, until, inactiveReason: null };
+}
+
+const E164 = /^\+[1-9]\d{7,14}$/;
+
+/**
+ * SAMPARK_RIYA_TEST_ALLOWED_NUMBERS — comma-separated E.164 numbers a real Riya call may ring
+ * (spaces inside a number are ignored). Required: unset or empty means no real call, whatever
+ * test phone the school saved. Checked against the test phone's hash when the provider is
+ * chosen and again against the decrypted number just before dialling.
+ */
+export function allowedTestNumbers(env: Env): string[] {
+    return (env.SAMPARK_RIYA_TEST_ALLOWED_NUMBERS ?? '')
+        .split(',')
+        .map((n) => n.replace(/\s+/g, ''))
+        .filter((n) => E164.test(n));
 }
 
 /** Longest window the staging test override may stay open, so a forgotten setting expires by itself. */
@@ -235,7 +311,7 @@ export function riyaAvailability(school: SamparkSchool, env: Env = process.env, 
         purposes: riyaEnabled(env) ? enabledRiyaPurposes(env) : [],
         agentId: cfg.ok ? maskId(cfg.config.agentId) : null,
         agentPhoneNumberId: cfg.ok ? maskId(cfg.config.agentPhoneNumberId) : null,
-        destinationLast4: school.mode === 'test' ? school.testPhoneLast4 ?? null : null,
+        destinationLast4: school.mode === 'test' && !sargvisionRosterMode(env, school) ? school.testPhoneLast4 ?? null : null,
         storeTranscripts: storeTranscripts(env),
         transcriptDays: transcriptDays(env),
         testDailyCap: testDailyCap(env),
@@ -244,6 +320,10 @@ export function riyaAvailability(school: SamparkSchool, env: Env = process.env, 
         nonProductionDatabase: env.SAMPARK_FIRESTORE_DATABASE?.trim() === SAMPARK_NONPROD_DATABASE,
         webhookSecretConfigured: Boolean(env.ELEVENLABS_WEBHOOK_SECRET?.trim()),
         testWindowOverride: stagingTestWindowOverride(env, school, school.mode === 'test' ? 'test_phone' : null, now),
+        rosterMode: sargvisionRosterMode(env, school),
+        localAfterHoursUntil: school.localAfterHoursTest && Date.parse(school.localAfterHoursTest.until) > now.getTime() && Boolean(env.FIRESTORE_EMULATOR_HOST?.trim()) && env.NODE_ENV !== 'production'
+            ? new Date(Date.parse(school.localAfterHoursTest.until)).toISOString()
+            : null,
     };
 }
 
@@ -254,8 +334,50 @@ const BLOCKER_MESSAGE: Record<RiyaBlocker, string> = {
     ELEVENLABS_UNCONFIGURED: 'The Riya agent is not configured for this deployment',
     NONPROD_DATABASE_REQUIRED: 'Riya test calls need the separate non-production database on this deployment',
     TEST_PHONE_MISSING: 'Test mode needs a test phone number for this school',
+    TEST_PHONE_NOT_ALLOWED: 'The school test phone is not on the list of numbers Riya may call on this deployment',
     DEMO_SCHOOL_PRACTICE_ONLY: 'This is a demo school: Riya calls stay in Practice. Real test calls need a non-demo school',
 };
+
+/** The one authorised local after-hours Riya test (user's own phone, 2026-10-29): the only school, student and number it covers. */
+export const LOCAL_AFTER_HOURS_TEST = { orgId: 'riya-test-local', studentId: 'riya-test-student-alyssa', phoneE164: '+918431339732' } as const;
+
+/**
+ * A narrower, local-only sibling of `stagingTestWindowOverride`: replaces only the calling-hours
+ * deferral for ONE real Riya attempt, and only when ALL of these hold:
+ *   - the app runs against the local Firestore emulator, not in production, on `sampark-nonprod`;
+ *   - the school is LOCAL_AFTER_HOURS_TEST.orgId (non-demo, Test mode) and the call rings its
+ *     saved test phone, which is LOCAL_AFTER_HOURS_TEST.phoneE164 and on the allow-list;
+ *   - the student is LOCAL_AFTER_HOURS_TEST.studentId;
+ *   - it was armed (`school.localAfterHoursTest`) at most 3 hours ago and has not expired;
+ *   - no ElevenLabs call (accepted, unknown or refused) was created since it was armed.
+ * Every other refusal, the daily cap, the lock and idempotency still apply.
+ */
+export function localAfterHoursTestOverride(
+    env: Env,
+    school: SamparkSchool,
+    studentId: string,
+    destination: CallDestination | null,
+    now: Date,
+    realAttemptsSinceArmed: number,
+): StagingTestWindowOverride {
+    const arm = school.localAfterHoursTest;
+    if (!arm) return { active: false, until: null, inactiveReason: null };
+    const untilMs = Date.parse(arm.until);
+    const armedMs = Date.parse(arm.armedAt);
+    if (!Number.isFinite(untilMs) || !Number.isFinite(armedMs)) return { active: false, until: null, inactiveReason: 'unparseable' };
+    const until = new Date(untilMs).toISOString();
+    const off = (inactiveReason: string): StagingTestWindowOverride => ({ active: false, until, inactiveReason });
+    if (!env.FIRESTORE_EMULATOR_HOST?.trim() || env.NODE_ENV === 'production') return off('not_local_emulator');
+    if (env.SAMPARK_FIRESTORE_DATABASE?.trim() !== SAMPARK_NONPROD_DATABASE) return off('not_nonprod_database');
+    if (school.orgId !== LOCAL_AFTER_HOURS_TEST.orgId || school.isDemo) return off('not_test_school');
+    if (studentId !== LOCAL_AFTER_HOURS_TEST.studentId) return off('not_test_student');
+    if (school.mode !== 'test' || destination !== 'test_phone') return off('not_test_phone');
+    if (school.testPhoneHash !== hashPhone(LOCAL_AFTER_HOURS_TEST.phoneE164) || !allowedTestNumbers(env).includes(LOCAL_AFTER_HOURS_TEST.phoneE164)) return off('not_test_number');
+    if (untilMs <= now.getTime()) return off('expired');
+    if (untilMs - armedMs > STAGING_TEST_WINDOW_MAX_MS || untilMs - now.getTime() > STAGING_TEST_WINDOW_MAX_MS) return off('longer_than_3_hours');
+    if (realAttemptsSinceArmed > 0) return off('already_used');
+    return { active: true, until, inactiveReason: null };
+}
 
 // ── Requests ────────────────────────────────────────────────────────────────
 
@@ -298,7 +420,8 @@ export type RiyaRefusal =
     | { code: 'OUTSIDE_CALLING_HOURS'; nextAllowedAt: string; reason: string }
     | { code: 'RECORDING_CONSENT_REQUIRED' }
     | { code: 'LANGUAGE_NOT_SUPPORTED'; language: string }
-    | { code: 'PROVIDER_UNAVAILABLE'; blocker: RiyaBlocker; message: string };
+    | { code: 'PROVIDER_UNAVAILABLE'; blocker: RiyaBlocker; message: string }
+    | { code: 'NUMBER_NOT_ALLOWED' };
 
 export interface RiyaPreview {
     ok: boolean;
@@ -307,6 +430,8 @@ export interface RiyaPreview {
     provider: ConversationProviderKind | null;
     destination: CallDestination | null;
     destinationLast4: string | null;
+    /** Real calls only: the full test-phone number that will ring, so the admin can check it before confirming. */
+    destinationE164: string | null;
     recipient: {
         guardianDisplayName: string;
         relation: SamparkGuardian['relation'];
@@ -368,7 +493,8 @@ async function resolve(deps: RiyaDeps, orgId: string, input: RiyaPreviewInput, r
     return { school, guardian, student, facts };
 }
 
-function destinationOf(school: SamparkSchool, guardian: SamparkGuardian): { destination: CallDestination; phoneHash: string; phoneLast4: string } {
+function destinationOf(school: SamparkSchool, guardian: SamparkGuardian, env: Env): { destination: CallDestination; phoneHash: string; phoneLast4: string } {
+    if (sargvisionRosterMode(env, school)) return { destination: 'guardian', phoneHash: guardian.phoneHash, phoneLast4: guardian.phoneLast4 };
     if (school.mode === 'test' && school.testPhoneHash && school.testPhoneLast4) {
         return { destination: 'test_phone', phoneHash: school.testPhoneHash, phoneLast4: school.testPhoneLast4 };
     }
@@ -413,20 +539,29 @@ async function evaluate(deps: RiyaDeps, orgId: string, input: RiyaPreviewInput):
         recentCallsToPhone,
         // An ElevenLabs call rides the agent's Vobiz SIP trunk: a real carrier for every gate rule.
         carrierKind: provider === 'elevenlabs' ? 'vobiz' : 'simulated',
+        ...(sargvisionRosterMode(env, school) ? { destination: 'guardian' as const } : {}),
         now,
         stage: 'dispatch',
     });
     if (verdict.kind === 'block') refusals.push({ code: 'GATE_BLOCKED', reason: verdict.reason });
     // Riya speaks English only (agent prompt §5): a family whose language is another is not called by her.
     if (verdict.kind === 'allow' && verdict.language !== 'English') refusals.push({ code: 'LANGUAGE_NOT_SUPPORTED', language: verdict.language });
-    const destPreview = provider ? destinationOf(school, guardian) : null;
-    const windowOverride = stagingTestWindowOverride(env, school, provider === 'elevenlabs' ? destPreview?.destination ?? null : null, now);
+    const destPreview = provider ? destinationOf(school, guardian, env) : null;
+    const stagingOverride = stagingTestWindowOverride(env, school, provider === 'elevenlabs' ? destPreview?.destination ?? null : null, now);
+    const armedAt = school.localAfterHoursTest?.armedAt;
+    const windowOverride = stagingOverride.active || !armedAt || provider !== 'elevenlabs'
+        ? stagingOverride
+        : sargvisionRosterMode(env, school)
+        ? sargvisionAfterHoursOverride(env, school, guardian, destPreview?.destination ?? null, now)
+        : localAfterHoursTestOverride(env, school, student.id, destPreview?.destination ?? null, now,
+            (await deps.calls.listCalls(orgId, 100)).filter((c) => c.provider === 'elevenlabs' && c.createdAt >= armedAt).length);
     let gateLanguage = verdict.kind === 'allow' ? verdict.language : null;
     if (verdict.kind === 'defer' && windowOverride.active) {
         // Only rule 15 deferred (it runs last); re-read the verdict without it for the language.
         const rest = evaluateGate({
             school, spec, guardian, students: [student], preferences, suppression, recentCallsToPhone,
             carrierKind: 'vobiz', now, stage: 'materialise',
+            ...(sargvisionRosterMode(env, school) ? { destination: 'guardian' as const } : {}),
         });
         if (rest.kind === 'block') refusals.push({ code: 'GATE_BLOCKED', reason: rest.reason });
         else if (rest.kind === 'allow') gateLanguage = rest.language;
@@ -436,6 +571,8 @@ async function evaluate(deps: RiyaDeps, orgId: string, input: RiyaPreviewInput):
     if (verdict.kind === 'defer' && windowOverride.active && gateLanguage && gateLanguage !== 'English') {
         refusals.push({ code: 'LANGUAGE_NOT_SUPPORTED', language: gateLanguage });
     }
+
+    if (provider === 'elevenlabs' && sargvisionRosterMode(env, school) && !rosterNumberAllowed(env, guardian)) refusals.push({ code: 'NUMBER_NOT_ALLOWED' });
 
     // The agent records audio and keeps transcripts unless the operator has turned that off.
     if (!recordingOffConfirmed(env) && preferences?.consent?.recorded_conversation?.status !== 'granted') {
@@ -454,7 +591,7 @@ async function evaluate(deps: RiyaDeps, orgId: string, input: RiyaPreviewInput):
         }
     }
 
-    const dest = provider ? destinationOf(school, guardian) : null;
+    const dest = provider ? destinationOf(school, guardian, env) : null;
     const preview: RiyaPreview = {
         ok: refusals.length === 0,
         refusals,
@@ -462,6 +599,10 @@ async function evaluate(deps: RiyaDeps, orgId: string, input: RiyaPreviewInput):
         provider,
         destination: dest?.destination ?? null,
         destinationLast4: dest?.phoneLast4 ?? null,
+        destinationE164: provider !== 'elevenlabs' ? null
+            : dest?.destination === 'test_phone' ? displayTestPhone(school, env)
+            : sargvisionRosterMode(env, school) ? displayRosterContact(guardian, env)
+            : null,
         recipient: {
             guardianDisplayName: guardian.displayName,
             relation: guardian.relation,
@@ -528,6 +669,7 @@ function refusalError(refusals: RiyaRefusal[]): SamparkServiceError {
         RECORDING_CONSENT_REQUIRED: 'This family has not agreed to recorded calls',
         LANGUAGE_NOT_SUPPORTED: 'Riya speaks English only; this family is called in another language',
         PROVIDER_UNAVAILABLE: '',
+        NUMBER_NOT_ALLOWED: 'This contact’s number is not on the list of numbers Riya may call on this deployment',
     };
     const detail = first.code === 'GATE_BLOCKED' ? `: ${first.reason}` : first.code === 'OUTSIDE_CALLING_HOURS' ? ` (next opening ${first.nextAllowedAt})` : '';
     return conflict(first.code, `${message[first.code]}${detail}`);
@@ -562,7 +704,7 @@ export async function startRiyaCall(deps: RiyaDeps, orgId: string, uid: string, 
     if (input.scenario && provider !== 'simulated') throw badRequest('SCENARIO_PRACTICE_ONLY', 'Scenarios can only be chosen in Practice mode');
 
     const { school, guardian, student } = resolved;
-    const dest = destinationOf(school, guardian);
+    const dest = destinationOf(school, guardian, env);
     const factsHash = factsHashOf(input.purpose, preview.variables);
 
     // 9a. An unresolved earlier attempt at the same announcement to the same family blocks this one.
@@ -575,7 +717,17 @@ export async function startRiyaCall(deps: RiyaDeps, orgId: string, uid: string, 
     // 9b. Test mode: a small daily cap on calls to the test phone.
     if (provider === 'elevenlabs') {
         const dayAgo = new Date(now.getTime() - 24 * 60 * 60_000);
-        if ((await deps.calls.countCallsSince(orgId, dayAgo, 'elevenlabs')) >= testDailyCap(env)) {
+        // A call ElevenLabs refused outright (4xx, no conversation) never rang, so it does not use the
+        // allowance. Accepted and unknown outcomes always count. Refusals older than `recent` stay
+        // counted, so this can only over-count.
+        const refused = recent.filter((c) => c.provider === 'elevenlabs' && c.createdAt >= dayAgo.toISOString()
+            && c.state === 'failed' && !c.providerConversationId && (c.failureReason ?? '').startsWith('rejected:')).length;
+        if (sargvisionRosterMode(env, school)) {
+            // Roster: the cap is per contact (their own number), counted the same way.
+            const toContact = recent.filter((c) => c.provider === 'elevenlabs' && c.createdAt >= dayAgo.toISOString() && c.phoneHash === dest.phoneHash
+                && !(c.state === 'failed' && !c.providerConversationId && (c.failureReason ?? '').startsWith('rejected:'))).length;
+            if (toContact >= testDailyCap(env)) throw conflict('TEST_CALL_CAP_REACHED', 'The daily cap on Riya test calls to this contact has been reached');
+        } else if ((await deps.calls.countCallsSince(orgId, dayAgo, 'elevenlabs')) - refused >= testDailyCap(env)) {
             throw conflict('TEST_CALL_CAP_REACHED', 'The daily cap on Riya test calls for this school has been reached');
         }
     }
@@ -652,7 +804,7 @@ export async function startRiyaCall(deps: RiyaDeps, orgId: string, uid: string, 
     } else {
         let toNumber: string;
         try {
-            toNumber = testPhoneE164(school);
+            toNumber = sargvisionRosterMode(env, school) ? rosterContactE164(guardian, env) : testPhoneE164(school, env);
         } catch (err) {
             await finishBeforeDial(deps, call, 'failed', `destination_unavailable: ${(err as Error).message.split(':')[0]}`);
             throw conflict('TEST_PHONE_MISMATCH', 'The school test phone could not be verified; nothing was dialled');
@@ -675,12 +827,29 @@ export async function startRiyaCall(deps: RiyaDeps, orgId: string, uid: string, 
 }
 
 /** Decrypts the school's test phone and checks it against its recorded hash. The ONLY number a Riya call may dial in this release. */
-function testPhoneE164(school: SamparkSchool): string {
+function testPhoneE164(school: SamparkSchool, env: Env): string {
     if (school.mode !== 'test') throw new Error('LIVE_MODE_NOT_AVAILABLE: only Test mode dials');
     if (!school.testPhoneEnc || !school.testPhoneHash) throw new Error('TEST_PHONE_MISSING: the school has no test phone');
     const e164 = decryptPhone(school.testPhoneEnc);
     if (hashPhone(e164) !== school.testPhoneHash) throw new Error('TEST_PHONE_MISMATCH: the test phone does not match its recorded hash');
+    if (!allowedTestNumbers(env).includes(e164)) throw new Error('TEST_PHONE_NOT_ALLOWED: the test phone is not on the allowed list');
     return e164;
+}
+
+function displayRosterContact(guardian: SamparkGuardian, env: Env): string | null {
+    try {
+        return rosterContactE164(guardian, env);
+    } catch {
+        return null;
+    }
+}
+
+function displayTestPhone(school: SamparkSchool, env: Env): string | null {
+    try {
+        return testPhoneE164(school, env);
+    } catch {
+        return null;
+    }
 }
 
 async function finishBeforeDial(deps: RiyaDeps, call: ConversationCall, state: 'failed', reason: string): Promise<void> {
@@ -710,14 +879,15 @@ async function recordStartResult(deps: RiyaDeps, call: ConversationCall, result:
         return updated ?? call;
     }
     const state = result.kind === 'rejected' ? 'failed' : 'unknown';
-    const reason = `${result.kind}:${result.category}${result.httpStatus ? `:${result.httpStatus}` : ''}`;
+    const providerMessage = result.kind === 'rejected' ? result.providerMessage ?? null : null;
+    const reason = `${result.kind}:${result.category}${result.httpStatus ? `:${result.httpStatus}` : ''}${providerMessage ? ` — ${providerMessage}` : ''}`;
     const updated = await deps.calls.mutateCall(call.orgId, call.id, (c) => c.state !== 'initiating' ? null : {
         ...c, state, failureReason: reason, endedAt: at, updatedAt: at,
     });
     // A rejected call never rang, so the school may place another; an unknown one keeps the lock until it expires.
     if (result.kind === 'rejected') await deps.repo.releaseLock(lockName(call.orgId), call.id);
     await deps.repo.appendAudit(call.orgId, { at, actor: 'riya', action: `riya_call.${state}`, target: `riya_call/${call.id}`, detail: { reason } });
-    logger.warn('Riya call not accepted', LOG, { orgId: call.orgId, callId: call.id, outcome: result.kind, category: result.category, httpStatus: result.httpStatus });
+    logger.warn('Riya call not accepted', LOG, { orgId: call.orgId, callId: call.id, outcome: result.kind, category: result.category, httpStatus: result.httpStatus, providerMessage });
     return updated ?? call;
 }
 
@@ -894,13 +1064,52 @@ export async function reconcileRiyaCall(deps: RiyaDeps, orgId: string, callId: s
     const call = await deps.calls.getCall(orgId, callId);
     if (!call) throw notFound('CALL_NOT_FOUND', 'Call not found');
     if (call.provider !== 'elevenlabs') return getRiyaCall(deps, orgId, callId);
-    if (!call.providerConversationId) throw conflict('NO_PROVIDER_ID', 'The provider never returned an id for this call; it cannot be looked up');
     const cfg = readElevenLabsConfig(env);
     if (!cfg.ok) throw conflict('ELEVENLABS_UNCONFIGURED', BLOCKER_MESSAGE.ELEVENLABS_UNCONFIGURED);
-    const fetched = await fetchConversation(cfg.config, call.providerConversationId, deps.http);
+    let conversationId = call.providerConversationId;
+    if (!conversationId) {
+        // The request timed out after ElevenLabs had started the call: find it by our own user id
+        // (read-only), link it create-only, then read its outcome like any other call.
+        if (call.state !== 'unknown') throw conflict('NO_PROVIDER_ID', 'The provider never returned an id for this call; it cannot be looked up');
+        const since = Math.floor(Date.parse(call.createdAt) / 1000) - 60;
+        const found = await findConversationByUserId(cfg.config, riyaUserId(orgId, callId), since, deps.http);
+        if (found.kind === 'error') throw conflict('PROVIDER_ERROR', `The provider could not be reached (${found.category})`);
+        if (found.kind === 'none') throw conflict('PROVIDER_NOT_FOUND', 'The provider has no conversation for this call yet; nothing was rung or it is still starting');
+        if (!(await deps.calls.linkConversation(found.conversationId, { orgId, callId, createdAt: deps.clock.now().toISOString() }))) {
+            throw conflict('CONVERSATION_ALREADY_LINKED', 'That conversation is already linked to another call');
+        }
+        await deps.calls.mutateCall(orgId, callId, (c) => (c.providerConversationId ? null : { ...c, providerConversationId: found.conversationId, updatedAt: deps.clock.now().toISOString() }));
+        conversationId = found.conversationId;
+        logger.info('Riya unknown call matched by user id', LOG, { orgId, callId });
+    }
+    const fetched = await fetchConversation(cfg.config, conversationId, deps.http);
     if (fetched.kind === 'not_found') throw conflict('PROVIDER_NOT_FOUND', 'The provider has no record of this conversation');
     if (fetched.kind === 'error') throw conflict('PROVIDER_ERROR', `The provider could not be reached (${fetched.category})`);
     if (fetched.snapshot.agentId && fetched.snapshot.agentId !== call.agentId) throw conflict('AGENT_MISMATCH', 'The provider reports a different agent for this conversation');
+    if (fetched.snapshot.status === 'done') {
+        // A finished conversation carries everything a post-call webhook would (transcript, collected
+        // answers, a callback request). Apply it through the SAME parser and reducer, so a status check
+        // and a webhook record exactly the same outcome (transcript only when stored, with expiry).
+        const event = parseRiyaWebhook(JSON.stringify({ type: 'post_call_transcription', event_timestamp: Math.floor(deps.clock.now().getTime() / 1000), data: fetched.snapshot.raw }));
+        if (event && event.kind === 'post_call' && event.conversationId === conversationId) {
+            const current = await deps.calls.getCall(orgId, callId);
+            if (current?.appliedEvents.includes(event.eventId)) {
+                // Already applied (e.g. while transcripts were off): only fill a missing transcript, once.
+                if (storeTranscripts(env) && current.transcript === null) {
+                    const now = deps.clock.now();
+                    await deps.calls.mutateCall(orgId, callId, (c) => (c.transcript !== null ? null : {
+                        ...c,
+                        transcript: event.transcript,
+                        transcriptExpiresAt: new Date(now.getTime() + transcriptDays(env) * 86_400_000).toISOString(),
+                        updatedAt: now.toISOString(),
+                    }));
+                }
+            } else {
+                await applyEvent(deps, orgId, callId, event);
+            }
+            return getRiyaCall(deps, orgId, callId);
+        }
+    }
     let changed = false;
     const after = await deps.calls.mutateCall(orgId, callId, (c) => {
         const next = applyRiyaSnapshot(c, fetched.snapshot, deps.clock.now());

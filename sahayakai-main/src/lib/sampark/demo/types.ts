@@ -40,7 +40,8 @@ export interface DemoClass {
 
 export interface DemoGuardian {
     name: string;
-    relation: 'Mother' | 'Father' | 'Guardian';
+    /** 'Contact' is a Sargvision roster member: the person themself, not a parent. */
+    relation: 'Mother' | 'Father' | 'Guardian' | 'Contact';
     phoneLast4: string;
     language: DemoLanguage;
 }
@@ -61,6 +62,12 @@ export interface DemoStudent {
     /** An achievement worth a positive call, if any. */
     achievement: string | null;
     guardian: DemoGuardian;
+    /**
+     * Set for a Sargvision roster contact (src/lib/sampark/sargvision.ts): a real local test
+     * contact, not a pupil. It has no attendance, marks or notes, and its Call button places a real
+     * Riya call through the Sampark server (school `sargvision-local`), never the simulated one.
+     */
+    rosterContact?: { orgId: string; guardianId: string };
 }
 
 export interface DemoSchool {

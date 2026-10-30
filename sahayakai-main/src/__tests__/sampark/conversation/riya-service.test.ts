@@ -87,6 +87,8 @@ const elevenEnv = (): Record<string, string | undefined> => ({
     ELEVENLABS_SOURCE_AGENT_ID: 'agent_0000sourcesourcesourcesource00',
     SAMPARK_FIRESTORE_DATABASE: 'sampark-nonprod',
     ELEVENLABS_WEBHOOK_SECRET: WEBHOOK_SECRET,
+    // Spaces inside a number are ignored, as an operator might type it.
+    SAMPARK_RIYA_TEST_ALLOWED_NUMBERS: '+91 98000 00001',
 });
 
 function accepted(conversationId = 'conv_abc123') {
@@ -250,6 +252,24 @@ describe('refusals (nothing is created or dialled)', () => {
         const noPhone = await setup({ mode: 'test', school: { testPhoneEnc: null, testPhoneHash: null, testPhoneLast4: null } });
         expect(await refusalCode(startRiyaCall(noPhone.deps, ORG, ADMIN, await startInput(noPhone.deps)))).toBe('TEST_PHONE_MISSING');
         for (const s of [off, noCfg, noPhone]) expect(s.fetchImpl).not.toHaveBeenCalled();
+    });
+
+    it('a real call rings only a test phone on SAMPARK_RIYA_TEST_ALLOWED_NUMBERS (fail closed)', async () => {
+        const unset = await setup({ mode: 'test', env: { ...elevenEnv(), SAMPARK_RIYA_TEST_ALLOWED_NUMBERS: undefined } });
+        expect(await refusalCode(startRiyaCall(unset.deps, ORG, ADMIN, await startInput(unset.deps)))).toBe('TEST_PHONE_NOT_ALLOWED');
+        const other = await setup({ mode: 'test', env: { ...elevenEnv(), SAMPARK_RIYA_TEST_ALLOWED_NUMBERS: '+919811111111,not-a-number' } });
+        expect(await refusalCode(startRiyaCall(other.deps, ORG, ADMIN, await startInput(other.deps)))).toBe('TEST_PHONE_NOT_ALLOWED');
+        for (const s of [unset, other]) expect(s.fetchImpl).not.toHaveBeenCalled();
+    });
+
+    it('the preview of a real call shows the full test phone that will ring; Practice never does', async () => {
+        const s = await setup({ mode: 'test', env: elevenEnv() });
+        const preview = await previewRiyaCall(s.deps, ORG, { purpose: 'ptm_invitation', guardianId: 'g1', studentId: 's1', facts: FACTS.ptm_invitation });
+        expect(preview.destinationE164).toBe(TEST_PHONE);
+        const practice = await setup({ mode: 'practice' });
+        const p2 = await previewRiyaCall(practice.deps, ORG, { purpose: 'ptm_invitation', guardianId: 'g1', studentId: 's1', facts: FACTS.ptm_invitation });
+        expect(p2.destinationE164).toBeNull();
+        expect(s.fetchImpl).not.toHaveBeenCalled();
     });
 
     it('another school’s family cannot be named (cross-tenant)', async () => {
@@ -418,7 +438,8 @@ describe('Test mode — ElevenLabs (mocked network)', () => {
     });
 
     it('a test phone whose stored hash does not match is never dialled', async () => {
-        const s = await setup({ mode: 'test', school: { testPhoneHash: hashPhone('+919899999999') } });
+        // Both numbers allowed, so the refusal comes from the decrypt-and-hash check at dial time.
+        const s = await setup({ mode: 'test', env: { ...elevenEnv(), SAMPARK_RIYA_TEST_ALLOWED_NUMBERS: '+919800000001,+919899999999' }, school: { testPhoneHash: hashPhone('+919899999999') } });
         expect(await refusalCode(startRiyaCall(s.deps, ORG, ADMIN, await startInput(s.deps)))).toBe('TEST_PHONE_MISMATCH');
         expect(s.fetchImpl).not.toHaveBeenCalled();
     });
@@ -506,6 +527,24 @@ describe('Test mode — ElevenLabs (mocked network)', () => {
         await handleRiyaWebhook(s.deps, postCall('conv_abc123'), sign(postCall('conv_abc123'), Math.floor(WED_11_IST.getTime() / 1000)));
         expect((await getRiyaCall(s.deps, ORG, first.call.id)).call.state).toBe('completed');
         expect(await refusalCode(startRiyaCall(s.deps, ORG, ADMIN, await startInput(s.deps, 'ptm_invitation', { guardianId: 'g2', studentId: 's2' })))).toBe('TEST_CALL_CAP_REACHED');
+    });
+
+    it('a call ElevenLabs refused outright (nothing rang) does not use the daily allowance; an unknown outcome does', async () => {
+        const refusedThenOk = jest.fn()
+            .mockResolvedValueOnce(new Response(JSON.stringify({ detail: { status: 'invalid_request', message: 'no outbound trunk' } }), { status: 400 }))
+            .mockResolvedValue(new Response(JSON.stringify({ success: true, conversation_id: 'conv_after_fix', sip_call_id: 'sip_2' }), { status: 200 }));
+        const s = await setup({ mode: 'test', env: { ...elevenEnv(), SAMPARK_RIYA_TEST_DAILY_CAP: '1' }, fetchImpl: refusedThenOk });
+        expect((await startRiyaCall(s.deps, ORG, ADMIN, await startInput(s.deps))).call.state).toBe('failed');
+        expect((await startRiyaCall(s.deps, ORG, ADMIN, await startInput(s.deps))).call.state).toBe('initiated');
+        expect(refusedThenOk).toHaveBeenCalledTimes(2);
+
+        const timeout = jest.fn(async () => { throw Object.assign(new Error('aborted'), { name: 'AbortError' }); });
+        const u = await setup({ mode: 'test', env: { ...elevenEnv(), SAMPARK_RIYA_TEST_DAILY_CAP: '1' }, fetchImpl: timeout });
+        const first = await startRiyaCall(u.deps, ORG, ADMIN, await startInput(u.deps));
+        expect(first.call.state).toBe('unknown');
+        await reviewRiyaCall(u.deps, ORG, first.call.id, ADMIN, 'cannot_tell');
+        expect(await refusalCode(startRiyaCall(u.deps, ORG, ADMIN, await startInput(u.deps, 'ptm_invitation', { guardianId: 'g2', studentId: 's2' })))).toBe('TEST_CALL_CAP_REACHED');
+        expect(timeout).toHaveBeenCalledTimes(1);
     });
 });
 

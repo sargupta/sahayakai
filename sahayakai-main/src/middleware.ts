@@ -162,6 +162,13 @@ export async function middleware(request: NextRequest) {
         const url = request.nextUrl.clone();
         url.pathname = `${SAMPARK_PREFIX}/demo/teacher`;
         url.search = '?from=sahayak';
+        // Behind Cloud Run the container's :8080 and http leak into nextUrl
+        // (see the apex redirect above): keep the scheme the browser used, no port.
+        const forwardedProto = request.headers.get('x-forwarded-proto')?.split(',')[0].trim();
+        if (forwardedProto) {
+            url.protocol = `${forwardedProto}:`;
+            url.port = '';
+        }
         return NextResponse.redirect(url, 307);
     }
 

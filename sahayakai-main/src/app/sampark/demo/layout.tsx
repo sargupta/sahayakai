@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { DemoFrame } from "@/components/sampark/demo/demo-frame";
+import { loadSargvisionRoster } from "@/server/sampark/sargvision";
 
 /**
  * SamparkAI demo: a fictional school where a teacher or the principal can
@@ -15,7 +16,9 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default function SamparkDemoLayout({ children }: { children: ReactNode }) {
+export default async function SamparkDemoLayout({ children }: { children: ReactNode }) {
     if (process.env.SAMPARK_DEMO_ENABLED !== "true") notFound();
-    return <DemoFrame>{children}</DemoFrame>;
+    // Local emulator only (SAMPARK_SARGVISION_ROSTER): the Sargvision sample class, names and last four digits.
+    const sargvision = await loadSargvisionRoster();
+    return <DemoFrame sargvision={sargvision}>{children}</DemoFrame>;
 }

@@ -362,7 +362,8 @@ describe('real provider', () => {
         SAMPARK_ENABLED: 'true', SAMPARK_ELEVENLABS_ENABLED: 'true', SAMPARK_RIYA_PURPOSES: RIYA_PURPOSES.join(','),
         SAMPARK_LIVE_DIAL_ENABLED: 'true', ELEVENLABS_API_KEY: 'sk_test_not_a_real_key_0123456789', ELEVENLABS_AGENT_ID: 'agent_2401m4zy4gyaev48rz65wfmf5yr2',
         ELEVENLABS_AGENT_PHONE_NUMBER_ID: 'phnum_0000testtesttesttesttest00', ELEVENLABS_SOURCE_AGENT_ID: 'agent_0000sourcesourcesourcesource00',
-        SAMPARK_FIRESTORE_DATABASE: 'sampark-nonprod', ELEVENLABS_WEBHOOK_SECRET: 'whsec_test_only', ...extra,
+        SAMPARK_FIRESTORE_DATABASE: 'sampark-nonprod', ELEVENLABS_WEBHOOK_SECRET: 'whsec_test_only',
+        SAMPARK_RIYA_TEST_ALLOWED_NUMBERS: '+919800000001', ...extra,
     });
     afterEach(() => { delete process.env.SAMPARK_LIVE_DIAL_ENABLED; });
 

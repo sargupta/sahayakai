@@ -13,7 +13,8 @@ import { CampaignStatusBadge } from "@/components/sampark/status-pill";
 import { closureReasonLabel, eventTypeLabel, fmt, purposeLabel } from "@/components/sampark/labels";
 import { OutcomeDonut, campaignOutcome, segmentsSummary } from "@/components/sampark/outcome-chart";
 import { useLanguage } from "@/context/language-context";
-import { istAt, DEMO_VENUES } from "@/lib/sampark/demo/seed-planning";
+import { DEMO_VENUES, demoHolidays } from "@/lib/sampark/demo/seed-planning";
+import { nextAllowed } from "@/lib/sampark/demo/rules";
 import { DEMO_SCHOOL_ID, getDemoSchool } from "@/lib/sampark/demo/school";
 import { addCampaign, setCampaignStatus } from "@/lib/sampark/demo/store";
 import type { DemoCampaign } from "@/lib/sampark/demo/types";
@@ -78,14 +79,17 @@ export function CampaignActions({ c, compact = false }: { c: DemoCampaign; compa
                     onClick={() => {
                         const n = c.counts.guardians;
                         const blocked = Math.max(1, Math.round(n * 0.02));
+                        // The next permitted calling time (never a Sunday, holiday or night).
+                        const now = new Date();
+                        const firstSlot = nextAllowed(now, now, demoHolidays(now.getTime())) ?? now;
                         setCampaignStatus(c.id, "scheduled", {
                             approvedAt: new Date().toISOString(),
                             approvedBy: getDemoSchool().admin.id,
-                            notBefore: istAt(Date.now(), 1, 10, 0),
+                            notBefore: firstSlot.toISOString(),
                             renderProgress: { done: 8, total: 8, failures: [] },
                             counts: { ...c.counts, blocked, queued: n - blocked },
                         });
-                        toast({ title: t("Approved and scheduled"), description: t("Calls start tomorrow at 10:00, inside calling hours.") });
+                        toast({ title: t("Approved and scheduled"), description: fmt(t("Calls start {when}, inside calling hours."), { when: whenLabel(firstSlot.toISOString()) }) });
                     }}
                 >
                     {t("Approve and schedule")}

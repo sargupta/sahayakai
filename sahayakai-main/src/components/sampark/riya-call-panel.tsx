@@ -11,7 +11,7 @@
  * Live is not available in this release.
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Bot, Loader2, PhoneCall, RefreshCw } from "lucide-react";
 import { EmptyState, SectionCard } from "@/components/layout";
 import {
@@ -156,6 +156,7 @@ function refusalText(t: Translate, r: RiyaPreview["refusals"][number]): string {
         case "RECORDING_CONSENT_REQUIRED": return t("This family has not agreed to recorded calls.");
         case "LANGUAGE_NOT_SUPPORTED": return t("Riya speaks English only; this family is called in another language.");
         case "PROVIDER_UNAVAILABLE": return r.message;
+        case "NUMBER_NOT_ALLOWED": return t("This contact's number is not on the list of numbers Riya may call here.");
         default: return t("This call is not allowed.");
     }
 }
@@ -188,6 +189,25 @@ function factsFor(purpose: RiyaPurpose, f: FactsState): RiyaFacts {
         case "absence_notice": return { purpose, date: f.date };
         case "emergency_closure":
             return { purpose, date: f.date, reason: f.reason, busesRunning: f.buses === "unknown" ? null : f.buses === "yes" };
+    }
+}
+
+/**
+ * What the chosen workflow still needs before a preview can be asked for, or null when complete.
+ * The server validates again; this only keeps an incomplete request from being sent.
+ */
+function missingFact(t: Translate, purpose: RiyaPurpose, f: FactsState): string | null {
+    switch (purpose) {
+        case "ptm_invitation":
+        case "event_invitation":
+            return !f.date ? t("Choose the date first.") : !f.time ? t("Choose the time first.") : null;
+        case "holiday_notice":
+            return f.holidays.length === 0 ? t("Choose at least one holiday from the school calendar. If none are listed, add them in the school's Settings first.") : null;
+        case "exam_schedule_notice":
+            return f.exams.some((e) => !e.date) ? t("Give every exam a date first.") : null;
+        case "absence_notice":
+        case "emergency_closure":
+            return !f.date ? t("Choose the date first.") : null;
     }
 }
 
@@ -350,7 +370,8 @@ function CallRow({ orgId, call, onChange }: { orgId: string; call: ConversationC
             )}
             <div className="flex flex-wrap gap-2">
                 <Button type="button" size="sm" variant="ghost" disabled={busy} onClick={() => run(() => getRiyaCall(orgId, call.id))}>{t("Details")}</Button>
-                {call.provider === "elevenlabs" && call.providerConversationId && (call.state === "initiated" || call.state === "unknown") && (
+                {/* An unknown call without an id is looked up by our own user id on the server. */}
+                {call.provider === "elevenlabs" && (call.state === "unknown" || (call.providerConversationId && call.state === "initiated")) && (
                     <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => run(() => reconcileRiya(orgId, call.id))}>{t("Check status")}</Button>
                 )}
                 {call.state === "unknown" && !call.reviewedAt && (
@@ -366,7 +387,7 @@ function CallRow({ orgId, call, onChange }: { orgId: string; call: ConversationC
                     })}</p>
                     <p className="text-foreground break-words">{detail.call.announcement}</p>
                     {detail.transcript === null && <p className="text-muted-foreground">{t("No transcript is kept for this call.")}</p>}
-                    {detail.transcript?.map((turn, i) => (
+                    {detail.transcript?.filter((turn) => turn.message.trim()).map((turn, i) => (
                         <p key={i} className="break-words"><span className="font-medium">{turn.role === "agent" ? "Riya" : t("Listener")}:</span> {turn.message}</p>
                     ))}
                 </div>
@@ -375,9 +396,78 @@ function CallRow({ orgId, call, onChange }: { orgId: string; call: ConversationC
     );
 }
 
+// ── Live history ─────────────────────────────────────────────────────────────
+
+/**
+ * Real calls still worth a provider lookup: ringing, talking, unclear and not yet checked by a
+ * person, or (when transcripts are kept) finished in the last 7 days without one.
+ */
+function pendingRealCalls(calls: ConversationCallView[], storeTranscripts: boolean): ConversationCallView[] {
+    const week = Date.now() - 7 * 86_400_000;
+    return calls.filter((c) => c.provider === "elevenlabs" && (
+        c.state === "initiating" || c.state === "initiated" || (c.state === "unknown" && !c.reviewedAt)
+        || (storeTranscripts && c.state === "completed" && Boolean(c.providerConversationId) && !c.transcriptExpiresAt && Date.parse(c.createdAt) > week)
+    ));
+}
+
+export const LIVE_STATUS_INTERVAL_MS = 15_000;
+
+/**
+ * Keeps real calls current without a webhook (a local machine cannot receive one): every 15 s while
+ * a call is ringing, talking or unclear, the server's read-only provider lookup ("Check status") runs
+ * for it and the list reloads, so the outcome, collected answers, transcript and any callback
+ * request appear on their own. Stops as soon as nothing is pending. Never places a call.
+ */
+function useLiveRiyaStatus(orgId: string, calls: ConversationCallView[], reload: () => void, storeTranscripts: boolean): boolean {
+    const pending = pendingRealCalls(calls, storeTranscripts);
+    const key = pending.map((c) => `${c.id}:${c.state}`).join(",");
+    const latest = useRef({ pending, reload });
+    latest.current = { pending, reload };
+    useEffect(() => {
+        if (!key) return;
+        const tick = () => {
+            void (async () => {
+                for (const c of latest.current.pending) {
+                    if (c.state === "initiating") continue;
+                    try {
+                        await reconcileRiya(orgId, c.id);
+                    } catch {
+                        // Not found yet / provider busy: the next tick tries again; a person can still "Mark as checked".
+                    }
+                }
+                latest.current.reload();
+            })();
+        };
+        // A finished call missing its transcript is fetched at once; live calls every 15 s.
+        const first = setTimeout(tick, 1_000);
+        const timer = setInterval(tick, LIVE_STATUS_INTERVAL_MS);
+        return () => { clearTimeout(first); clearInterval(timer); };
+    }, [orgId, key]);
+    return pending.length > 0;
+}
+
+/** An org's Riya calls with live status (see useLiveRiyaStatus), outcome, answers and Details (transcript). */
+export function RiyaCallHistory({ orgId, calls, reload, storeTranscripts = false }: { orgId: string; calls: ConversationCallView[]; reload: () => void; storeTranscripts?: boolean }) {
+    const { t } = useLanguage();
+    const live = useLiveRiyaStatus(orgId, calls, reload, storeTranscripts);
+    if (calls.length === 0) return <p className="text-sm text-muted-foreground">{t("No Riya calls yet.")}</p>;
+    return (
+        <>
+            {live && <p className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />{t("Updating call status every 15 seconds…")}</p>}
+            <ul>{calls.map((c) => <CallRow key={c.id} orgId={orgId} call={c} onChange={reload} />)}</ul>
+        </>
+    );
+}
+
 // ── Panel ────────────────────────────────────────────────────────────────────
 
-export function RiyaCallPanel() {
+/** One contact chosen elsewhere (e.g. a class roster): the family picker is hidden and history shows only their calls. */
+export interface RiyaFixedFamily {
+    guardianId: string;
+    studentId: string;
+}
+
+export function RiyaCallPanel({ fixedFamily }: { fixedFamily?: RiyaFixedFamily } = {}) {
     const { t } = useLanguage();
     const { toast } = useToast();
     const { orgId, school } = useSamparkSchool();
@@ -386,7 +476,7 @@ export function RiyaCallPanel() {
     const families = useSamparkQuery((signal) => listGuardians(orgId, { limit: 500 }, { signal }), [orgId]);
 
     const [purpose, setPurpose] = useState<RiyaPurpose | "">("");
-    const [familyKey, setFamilyKey] = useState("");
+    const [familyKey, setFamilyKey] = useState(fixedFamily ? `${fixedFamily.guardianId}|${fixedFamily.studentId}` : "");
     const [query, setQuery] = useState("");
     const [facts, setFacts] = useState<FactsState>({ date: "", time: "10:00", eventType: "annual_day", holidays: [], exams: [{ subject: "english", date: "", time: "" }], reason: "heavy_rain", buses: "unknown" });
     const [scenario, setScenario] = useState<SimulationScenario>("answered_positive");
@@ -411,7 +501,8 @@ export function RiyaCallPanel() {
 
     if (riya.error) return <ErrorPanel error={riya.error} onRetry={riya.reload} />;
     if (!riya.data) return <LoadingBlock rows={4} />;
-    const { availability, calls } = riya.data;
+    const { availability } = riya.data;
+    const calls = fixedFamily ? riya.data.calls.filter((c) => c.guardianId === fixedFamily.guardianId && c.studentId === fixedFamily.studentId) : riya.data.calls;
 
     if (!availability.enabled) {
         return <EmptyState icon={Bot} title={t("Riya is not switched on for this school yet")} description={t("Your SahayakAI contact switches Riya on when your school is ready to test.")} />;
@@ -419,7 +510,8 @@ export function RiyaCallPanel() {
 
     const reset = () => { setPreview(null); setIdempotencyKey(null); };
     const selected = options.find((o) => o.key === familyKey) ?? (families.data ?? []).flatMap((g) => g.students.map((s) => ({ key: `${g.id}|${s.id}`, guardian: g, studentId: s.id }))).find((o) => o.key === familyKey);
-    const request = purpose && selected ? { purpose, guardianId: selected.guardian.id, studentId: selected.studentId, facts: factsFor(purpose, facts) } : null;
+    const missing = purpose ? missingFact(t, purpose, facts) : null;
+    const request = purpose && selected && !missing ? { purpose, guardianId: selected.guardian.id, studentId: selected.studentId, facts: factsFor(purpose, facts) } : null;
 
     const doPreview = async () => {
         if (!request) return;
@@ -439,7 +531,7 @@ export function RiyaCallPanel() {
     const realCall = availability.provider === "elevenlabs";
     // A real call still ringing, or one whose outcome nobody has checked, blocks the next one.
     const callInProgress = calls.some((c) => c.provider === "elevenlabs" && (c.state === "initiating" || c.state === "initiated" || (c.state === "unknown" && !c.reviewedAt)));
-    const realReady = !realCall || (webhook === "ok" && preview?.nonProductionDatabase === true && !callInProgress);
+    const realReady = !realCall || (webhook === "ok" && preview?.nonProductionDatabase === true && Boolean(preview?.destinationE164) && !callInProgress);
 
     const openConfirm = async () => {
         setConfirmOpen(true);
@@ -481,8 +573,11 @@ export function RiyaCallPanel() {
                 title={t("Riya calling assistant")}
                 description={t("Riya is an AI assistant that calls one family about one school notice. She says she is an AI if asked, never shares a child's details before the listener confirms they are the parent or guardian, and only says the facts you enter here.")}
             >
-                <p className="text-sm text-foreground">{modeBannerText(t, availability.mode, availability.destinationLast4)}</p>
-                {availability.blocker && <p className="text-sm text-muted-foreground">{availability.blocker === "LIVE_MODE_NOT_AVAILABLE" ? t("Riya calls run only in Practice or Test mode in this release.") : availability.blocker === "DEMO_SCHOOL_PRACTICE_ONLY" ? t("This is a demo school, so Riya calls stay in Practice. Real test calls need a non-demo school.") : fmt(t("Riya cannot place calls yet ({reason})."), { reason: availability.blocker })}</p>}
+                <p className="text-sm text-foreground">{availability.rosterMode ? t("Local test roster: each call rings the chosen contact's own number, only if it is on this machine's allow-list.") : modeBannerText(t, availability.mode, availability.destinationLast4)}</p>
+                {availability.localAfterHoursUntil && (
+                    <p className="text-sm font-medium text-destructive">{fmt(t("Local after-hours test window is open until {time}. Real calls can ring outside school calling hours."), { time: f.dateTime(availability.localAfterHoursUntil) })}</p>
+                )}
+                {availability.blocker && <p className="text-sm text-muted-foreground">{availability.blocker === "LIVE_MODE_NOT_AVAILABLE" ? t("Riya calls run only in Practice or Test mode in this release.") : availability.blocker === "DEMO_SCHOOL_PRACTICE_ONLY" ? t("This is a demo school, so Riya calls stay in Practice. Real test calls need a non-demo school.") : availability.blocker === "TEST_PHONE_NOT_ALLOWED" ? t("The saved test phone is not on this deployment's list of numbers Riya may call.") : fmt(t("Riya cannot place calls yet ({reason})."), { reason: availability.blocker })}</p>}
                 {availability.recordingConsentRequired && <p className="text-sm text-muted-foreground">{t("Riya calls are recorded, so only families who agreed to recorded calls can be called.")}</p>}
             </SectionCard>
 
@@ -495,14 +590,14 @@ export function RiyaCallPanel() {
                             <SelectContent>{availability.purposes.map((p) => <SelectItem key={p} value={p}>{riyaPurposeLabel(t, p)}</SelectItem>)}</SelectContent>
                         </Select>
                     </div>
-                    <div className="space-y-1">
+                    {!fixedFamily && <div className="space-y-1">
                         <Label htmlFor="riya-family">{t("Family")}</Label>
                         <Input aria-label={t("Search families")} placeholder={t("Search families")} value={query} onChange={(e) => setQuery(e.target.value)} />
                         <Select value={familyKey} onValueChange={(v) => { setFamilyKey(v); reset(); }}>
                             <SelectTrigger id="riya-family"><SelectValue placeholder={t("Choose")} /></SelectTrigger>
                             <SelectContent>{options.slice(0, 200).map((o) => <SelectItem key={o.key} value={o.key}>{o.label}</SelectItem>)}</SelectContent>
                         </Select>
-                    </div>
+                    </div>}
                 </div>
 
                 {purpose && (
@@ -520,6 +615,7 @@ export function RiyaCallPanel() {
                 )}
 
                 <div className="flex flex-wrap gap-2">
+                    {missing && <p className="w-full text-sm text-muted-foreground">{missing}</p>}
                     <Button type="button" variant="outline" disabled={!request || busy !== null} onClick={doPreview}>
                         {busy === "preview" && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
                         {t("Preview what Riya will say")}
@@ -542,7 +638,9 @@ export function RiyaCallPanel() {
                         )}
                         {preview.destinationLast4 && (
                             <p className="text-foreground">
-                                {preview.destination === "test_phone"
+                                {preview.destinationE164
+                                    ? fmt(t("Number that will ring: {number}"), { number: preview.destinationE164 })
+                                    : preview.destination === "test_phone"
                                     ? fmt(t("Rings: the school test phone ending {last4}"), { last4: preview.destinationLast4 })
                                     : fmt(t("Rings: phone ending {last4} (simulated, nothing rings)"), { last4: preview.destinationLast4 })}
                             </p>
@@ -563,9 +661,7 @@ export function RiyaCallPanel() {
                 title={t("Recent Riya calls")}
                 action={<Button type="button" size="sm" variant="ghost" onClick={riya.reload}><RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />{t("Refresh")}</Button>}
             >
-                {calls.length === 0 ? <p className="text-sm text-muted-foreground">{t("No Riya calls yet.")}</p> : (
-                    <ul>{calls.map((c) => <CallRow key={c.id} orgId={orgId} call={c} onChange={riya.reload} />)}</ul>
-                )}
+                <RiyaCallHistory orgId={orgId} calls={calls} reload={riya.reload} storeTranscripts={availability.storeTranscripts} />
             </SectionCard>
 
             <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
@@ -575,12 +671,15 @@ export function RiyaCallPanel() {
                         <AlertDialogDescription>
                             {availability.provider === "simulated"
                                 ? t("Nothing will ring. The result appears in the list below.")
+                                : availability.rosterMode
+                                ? fmt(t("Riya will call {name} on {number} now and say the lines shown in the preview."), { name: preview?.recipient?.studentDisplayName ?? "", number: preview?.destinationE164 ?? "" })
                                 : fmt(t("Riya will call the school test phone ending {last4} now and say the lines shown in the preview."), { last4: preview?.destinationLast4 ?? "" })}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     {realCall && preview && (
                         <ul className="space-y-1 text-sm text-foreground" aria-label={t("Before the call")}>
                             <li>{fmt(t("Agent {agent} · branch {branch} · number {number}"), { agent: preview.agentId ?? "—", branch: preview.agentBranchId ?? "main", number: preview.agentPhoneNumberId ?? "—" })}</li>
+                            <li className="font-medium">{preview.destinationE164 ? fmt(t("Number that will ring: {number}"), { number: preview.destinationE164 }) : t("The number that will ring could not be verified: real calls are refused")}</li>
                             <li>{fmt(t("Purpose: {purpose}"), { purpose: riyaPurposeLabel(t, preview.purpose) })}</li>
                             <li>{preview.nonProductionDatabase ? t("Non-production database") : t("Not the non-production database: real calls are refused")}</li>
                             <li>{preview.testWindowOverride ? fmt(t("Staging test window until {time}"), { time: f.dateTime(preview.testWindowOverride.until) }) : t("Normal calling hours")}</li>

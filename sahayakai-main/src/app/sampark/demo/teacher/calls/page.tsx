@@ -7,6 +7,8 @@ import { useLanguage } from "@/context/language-context";
 import { DemoRoleGate } from "@/components/sampark/demo/use-demo";
 import { CallList, type CallFilter } from "@/components/sampark/demo/call-list";
 import { PageHeader } from "@/components/sampark/console-ui";
+import { SargvisionCallLog } from "@/components/sampark/demo/sargvision-call-log";
+import { SARGVISION_CLASS_ID } from "@/lib/sampark/sargvision";
 
 const FILTERS: CallFilter[] = ["all", "attention", "complaints", "upset", "unreached"];
 
@@ -20,6 +22,7 @@ function TeacherCalls() {
             {(view) => (
                 <div className="mx-auto max-w-5xl space-y-6">
                     <PageHeader eyebrow={t("Outreach")} title={t("My calls")} description={t("Every call to a parent in your classes, including calls the principal placed. Open a call for the summary, the transcript and any complaint the parent raised.")} />
+                    {view.teacher?.classIds.includes(SARGVISION_CLASS_ID) && <SargvisionCallLog />}
                     <CallList calls={view.visibleCalls} viewerRole="teacher" initialFilter={initial} />
                 </div>
             )}

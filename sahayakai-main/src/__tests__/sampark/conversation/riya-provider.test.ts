@@ -9,6 +9,7 @@ import crypto from 'node:crypto';
 import {
     fetchConversation,
     maskId,
+    providerErrorMessage,
     readElevenLabsConfig,
     startRiyaOutboundCall,
     type ElevenLabsConfig,
@@ -90,6 +91,16 @@ describe('startRiyaOutboundCall', () => {
     ])('HTTP %i → %j', async (status, expected) => {
         const fetchImpl = async () => jsonResponse(status, { detail: 'x' });
         expect(await startRiyaOutboundCall(config(), req, { fetchImpl: fetchImpl as unknown as typeof fetch })).toMatchObject(expected);
+    });
+
+    it('a refusal keeps the provider’s own explanation, bounded and with phone numbers cut to the last 4', async () => {
+        const fetchImpl = async () => jsonResponse(400, { detail: { status: 'invalid_request', message: 'Cannot call +91 84313 39732: number not verified' } });
+        expect(await startRiyaOutboundCall(config(), req, { fetchImpl: fetchImpl as unknown as typeof fetch })).toEqual({
+            kind: 'rejected', category: 'invalid_request', httpStatus: 400, providerMessage: 'invalid_request: Cannot call …9732: number not verified',
+        });
+        expect(providerErrorMessage({ detail: [{ loc: ['body', 'to_number'], msg: 'field required' }] })).toBe('body.to_number: field required');
+        expect(providerErrorMessage({ detail: 'x'.repeat(400) })).toHaveLength(300);
+        expect(providerErrorMessage(undefined)).toBeNull();
     });
 
     it('a 200 with success=false and no conversation id was refused: nothing rang', async () => {

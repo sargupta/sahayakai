@@ -254,6 +254,7 @@ describe('Riya calls tab (Test mode, real call)', () => {
             ELEVENLABS_AGENT_PHONE_NUMBER_ID: 'phnum_3333numbernumbernumber333',
             ELEVENLABS_SOURCE_AGENT_ID: 'agent_0000sourcesourcesourcesource00',
             ELEVENLABS_WEBHOOK_SECRET: 'whsec_panel_test',
+            SAMPARK_RIYA_TEST_ALLOWED_NUMBERS: '+919800000001',
         };
         process.env.SAMPARK_LIVE_DIAL_ENABLED = 'true'; // evaluateGate reads it from process.env
     }
@@ -279,13 +280,14 @@ describe('Riya calls tab (Test mode, real call)', () => {
         await screen.findByText('Riya calling assistant');
         await fillPtm('g1|s1');
         fireEvent.click(screen.getByRole('button', { name: 'Preview what Riya will say' }));
-        expect(await screen.findByText(/Rings: the school test phone ending 0001/)).toBeTruthy();
+        expect(await screen.findByText(/Number that will ring: \+919800000001/)).toBeTruthy();
         const place = screen.getByRole('button', { name: 'Place call' }) as HTMLButtonElement;
         await waitFor(() => expect(place.disabled).toBe(false));
         fireEvent.click(place);
         const dialog = await screen.findByRole('alertdialog');
         expect(within(dialog).getByText('Place a real test call?')).toBeTruthy();
         expect(within(dialog).getByText(/Agent …one111 · branch …anch22 · number …ber333/)).toBeTruthy();
+        expect(within(dialog).getByText('Number that will ring: +919800000001')).toBeTruthy();
         expect(within(dialog).getByText('Purpose: PTM invitation')).toBeTruthy();
         expect(within(dialog).getByText('Non-production database')).toBeTruthy();
         expect(within(dialog).getByText('Normal calling hours')).toBeTruthy();
@@ -306,7 +308,7 @@ describe('Riya calls tab (Test mode, real call)', () => {
         await screen.findByText('Riya calling assistant');
         await fillPtm('g1|s1');
         fireEvent.click(screen.getByRole('button', { name: 'Preview what Riya will say' }));
-        await screen.findByText(/Rings: the school test phone ending 0001/);
+        await screen.findByText(/Number that will ring: \+919800000001/);
         fireEvent.click(screen.getByRole('button', { name: 'Place call' }));
         const dialog = await screen.findByRole('alertdialog');
         expect(await within(dialog).findByText('Webhook reachable, signature check on')).toBeTruthy();

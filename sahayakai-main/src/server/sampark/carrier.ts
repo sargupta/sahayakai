@@ -61,6 +61,29 @@ export function liveDialBlocker(env: NodeJS.ProcessEnv = process.env): LiveDialB
     return null;
 }
 
+/**
+ * Riya (ElevenLabs) is set up to place real Test-mode calls on this deployment: Riya and live
+ * dialling on, the agent's key, id and number id present, and an allow-list of test numbers set.
+ * Riya needs no Vobiz account or public callback URL (the agent's SIP trunk dials). Presence only:
+ * conversation.ts validates the configuration and applies every Riya refusal on each call (and is
+ * the only importer of the ElevenLabs client, riya-gates.test.ts).
+ */
+export function riyaTestDialReady(env: NodeJS.ProcessEnv = process.env): boolean {
+    return env.SAMPARK_ELEVENLABS_ENABLED === 'true'
+        && env.SAMPARK_LIVE_DIAL_ENABLED === 'true'
+        && ['ELEVENLABS_API_KEY', 'ELEVENLABS_AGENT_ID', 'ELEVENLABS_AGENT_PHONE_NUMBER_ID'].every((k) => Boolean(env[k]?.trim()))
+        && Boolean(env.SAMPARK_RIYA_TEST_ALLOWED_NUMBERS?.trim());
+}
+
+/**
+ * Why a school may not switch to Test mode: null when either real path can dial (Vobiz notices or
+ * Riya). Notice calls are unaffected: `carrierKindFor` still refuses them without Vobiz.
+ */
+export function testModeBlocker(env: NodeJS.ProcessEnv = process.env): LiveDialBlocker | null {
+    const blocker = liveDialBlocker(env);
+    return blocker && riyaTestDialReady(env) ? null : blocker;
+}
+
 export const TEST_PHONE_MISSING = 'TEST_PHONE_MISSING';
 export const LIVE_MODE_NOT_AVAILABLE = 'LIVE_MODE_NOT_AVAILABLE';
 

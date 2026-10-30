@@ -1,5 +1,7 @@
 "use client";
 
+import { registerSargvisionRoster } from "@/lib/sampark/demo/school";
+import type { SargvisionContact } from "@/lib/sampark/sargvision";
 import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { ArrowLeftRight, ArrowUpRight, CalendarDays, ClipboardList, GraduationCap, LayoutDashboard, Megaphone, Menu, MessageSquareWarning, Phone, PhoneCall, School, Sun, Users } from "lucide-react";
@@ -14,6 +16,7 @@ import { isExternalUrl } from "@/lib/products";
 import { StatusPill } from "@/components/sampark/status-pill";
 import { fmt } from "@/components/sampark/labels";
 import { useLanguage } from "@/context/language-context";
+import { istDate } from "@/lib/sampark/demo/seed-planning";
 import { useDemo } from "./use-demo";
 
 function initials(name: string): string {
@@ -26,7 +29,9 @@ function initials(name: string): string {
  * the school workspace, with the sections of whoever is signed in. A teacher
  * sees their classes and calls; the admin sees the whole school.
  */
-export function DemoFrame({ children }: { children: ReactNode }) {
+export function DemoFrame({ children, sargvision = [] }: { children: ReactNode; sargvision?: SargvisionContact[] }) {
+    // Before anything reads the school: the Sargvision class exists only when the server sent its roster.
+    registerSargvisionRoster(sargvision);
     const { t } = useLanguage();
     const view = useDemo();
     const href = useSamparkHref();
@@ -41,8 +46,9 @@ export function DemoFrame({ children }: { children: ReactNode }) {
     const openComplaints = calls.filter((c) => c.complaintStatus === "open").length;
     const openFollowUps = calls.filter((c) => c.complaintStatus === "open" || (c.summary?.followUpNeeded && !c.followUpDone && !c.complaintStatus)).length;
     const needsTime = callbacks.filter((c) => c.status === "proposed" || c.status === "missed" || c.status === "failed").length;
-    const today = new Date().toDateString();
-    const dueToday = callbacks.filter((c) => c.status === "scheduled" && c.scheduledAt && new Date(c.scheduledAt).toDateString() === today).length;
+    // "Today" in India time, whatever the viewer's own time zone.
+    const today = istDate(Date.now(), 0);
+    const dueToday = callbacks.filter((c) => c.status === "scheduled" && c.scheduledAt && istDate(new Date(c.scheduledAt).getTime(), 0) === today).length;
     const liveCampaigns = (view?.visibleCampaigns ?? []).filter((c) => c.status === "dispatching").length;
     const badge = (n: number, label: string, tone: "accent" | "danger" = "accent") => (n > 0 ? { text: String(n), label: fmt(t(label), { count: n }), tone } : null);
 
@@ -218,9 +224,15 @@ export function DemoFrame({ children }: { children: ReactNode }) {
                         </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-                        <StatusPill tone="brand" title={t("Calls in this demo are played in the browser. No phone rings and no real family is contacted.")}>
-                            {t("Demo · no phone rings")}
-                        </StatusPill>
+                        {sargvision.length > 0 ? (
+                            <StatusPill tone="warning" title={t("Demo classes play in the browser. The Sargvision sample class places REAL calls by Riya to its allow-listed contacts, after confirmation, on this local machine only.")}>
+                                {t("Demo · Sargvision rings real phones")}
+                            </StatusPill>
+                        ) : (
+                            <StatusPill tone="brand" title={t("Calls in this demo are played in the browser. No phone rings and no real family is contacted.")}>
+                                {t("Demo · no phone rings")}
+                            </StatusPill>
+                        )}
                         <LanguagePill />
                     </div>
                 </header>

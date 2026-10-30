@@ -76,10 +76,16 @@ export function StudentRoster({
                                     {showClass && <span className="text-xs text-ink-500">{fmt(t("Class {id}"), { id: s.classId })}</span>}
                                     <span className="text-xs text-ink-500">· {fmt(t("Roll {n}"), { n: s.roll })}</span>
                                 </p>
-                                <p className="text-xs text-ink-500">
-                                    {s.guardian.name} ({t(s.guardian.relation)}) · {s.guardian.language === "hi" ? t("Hindi") : t("English")} ·{" "}
-                                    {fmt(t("{pct}% attendance"), { pct: s.attendancePct })} · {fmt(t("tests {score}/100"), { score: s.recentScore })}
-                                </p>
+                                {s.rosterContact ? (
+                                    <p className="text-xs text-ink-500">
+                                        {t("Sample contact")} · {fmt(t("phone ending {last4}"), { last4: s.guardian.phoneLast4 })} · {t("real Riya call")}
+                                    </p>
+                                ) : (
+                                    <p className="text-xs text-ink-500">
+                                        {s.guardian.name} ({t(s.guardian.relation)}) · {s.guardian.language === "hi" ? t("Hindi") : t("English")} ·{" "}
+                                        {fmt(t("{pct}% attendance"), { pct: s.attendancePct })} · {fmt(t("tests {score}/100"), { score: s.recentScore })}
+                                    </p>
+                                )}
                                 {(signals.length > 0 || last) && (
                                     <div className="mt-1 flex flex-wrap gap-1.5">
                                         {signals.map((sig) => (
@@ -110,7 +116,7 @@ export function StudentRoster({
                                 onClick={() => onCall(s, signals[0]?.reason ?? null)}
                             >
                                 <Phone aria-hidden="true" className="mr-2 h-4 w-4" />
-                                {t("Call parent")}
+                                {s.rosterContact ? fmt(t("Call {name}"), { name: s.name }) : t("Call parent")}
                             </Button>
                         </li>
                     );

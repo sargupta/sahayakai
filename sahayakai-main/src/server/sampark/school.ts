@@ -45,7 +45,7 @@ import { PARENT_LANGUAGES, type ParentLanguage, type SamparkCall, type SamparkMo
 export type { SamparkSchoolView };
 import { badRequest, conflict, schoolNotEnabled } from '@/server/sampark/errors';
 import type { SamparkCtx } from '@/server/sampark/http';
-import { LIVE_MODE_NOT_AVAILABLE, liveDialBlocker, TEST_PHONE_MISSING } from '@/server/sampark/carrier';
+import { LIVE_MODE_NOT_AVAILABLE, TEST_PHONE_MISSING, testModeBlocker } from '@/server/sampark/carrier';
 import { hangupRingingCalls } from '@/server/sampark/hangup';
 import { pauseStopsPurpose } from '@/lib/sampark/policy/pause';
 
@@ -57,7 +57,7 @@ export const TEST_PHONE_INVALID = 'TEST_PHONE_INVALID';
 
 export function schoolView(school: SamparkSchool, env: NodeJS.ProcessEnv = process.env): SamparkSchoolView {
     const { testPhoneEnc: _enc, testPhoneHash: _hash, testPhoneLast4, ...rest } = school;
-    const blocker = liveDialBlocker(env);
+    const blocker = testModeBlocker(env);
     return {
         ...rest,
         // Always present, so the console's pause banner never has to guess.
@@ -319,7 +319,7 @@ export async function setSchoolMode(ctx: SamparkCtx, orgId: string, uid: string,
     const school = await getSchoolOrThrow(ctx, orgId);
     if (mode === 'live') throw conflict(LIVE_MODE_NOT_AVAILABLE, 'Live mode (calling families) is not available in this release');
     if (mode === 'test') {
-        const blocker = liveDialBlocker();
+        const blocker = testModeBlocker();
         if (blocker) throw conflict(blocker, BLOCKER_MESSAGE[blocker]);
         if (!hasTestPhone(school)) throw conflict(TEST_PHONE_MISSING, 'Save a test phone before switching to Test mode');
     }

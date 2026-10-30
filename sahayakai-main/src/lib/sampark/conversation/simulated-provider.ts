@@ -62,7 +62,7 @@ export function simulateRiyaCall(callId: string, purpose: RiyaPurpose, scenario:
         callSuccessful: 'success',
         dataCollection: positiveData(purpose),
         transcript: [
-            { role: 'agent', message: "Hello, I'm Riya, an AI assistant calling on behalf of the school with an important update. Is this a good time to talk?", timeInCallSecs: 0 },
+            { role: 'agent', message: "Hello, I'm Riya, an AI assistant calling on behalf of the school with a school-related update. This conversation is transcribed by our service providers. Is this a good time to talk?", timeInCallSecs: 0 },
             { role: 'user', message: 'Yes, go ahead.', timeInCallSecs: 5 },
         ],
         ...over,
@@ -117,7 +117,7 @@ export function simulateRiyaCall(callId: string, purpose: RiyaPurpose, scenario:
                     callSuccessful: 'success',
                     dataCollection: { good_time_to_talk: 'no', callback_requested_time: 'in 20 minutes' },
                     transcript: [
-                        { role: 'agent', message: "Hello, I'm Riya, an AI assistant calling on behalf of the school with an important update. Is this a good time to talk?", timeInCallSecs: 0 },
+                        { role: 'agent', message: "Hello, I'm Riya, an AI assistant calling on behalf of the school with a school-related update. This conversation is transcribed by our service providers. Is this a good time to talk?", timeInCallSecs: 0 },
                         { role: 'user', message: "I'm busy right now. Can you call me back in 20 minutes?", timeInCallSecs: 6 },
                         { role: 'agent', message: "Of course. The school will call you back. Thank you.", timeInCallSecs: 12 },
                     ],

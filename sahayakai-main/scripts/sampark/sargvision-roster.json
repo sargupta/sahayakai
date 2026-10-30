@@ -1,0 +1,15 @@
+{
+  "_comment": "Local emulator test roster for the Sargvision sample class. Real team phone numbers: used only by the local seed and the local launcher allow-list. Never seed into a shared or production database.",
+  "orgId": "sargvision-local",
+  "contacts": [
+    { "id": "sv-abhishek", "name": "Abhishek", "phone": "+916363740720" },
+    { "id": "sv-nischay", "name": "Nischay", "phone": "+918791574175" },
+    { "id": "sv-nandini", "name": "Nandini", "phone": "+919548214910" },
+    { "id": "sv-shivadeth", "name": "Shivadeth", "phone": "+918592898442" },
+    { "id": "sv-varunesh", "name": "Varunesh", "phone": "+918300457646" },
+    { "id": "sv-yash", "name": "Yash", "phone": "+917783043238" },
+    { "id": "sv-sachitt", "name": "Sachitt", "phone": "+917384273605" },
+    { "id": "sv-shree", "name": "Shree", "phone": "+917400444110" },
+    { "id": "sv-alyssa", "name": "Alyssa", "phone": "+918431339732" }
+  ]
+}

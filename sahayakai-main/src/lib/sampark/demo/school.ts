@@ -5,6 +5,14 @@
  */
 
 import type { OutreachReason } from '@/types/attendance';
+import {
+    SARGVISION_CLASS_ID,
+    SARGVISION_CLASS_NAME,
+    SARGVISION_GRADE,
+    SARGVISION_ORG_ID,
+    SARGVISION_SECTION,
+    type SargvisionContact,
+} from '@/lib/sampark/sargvision';
 import type { DemoClass, DemoGuardian, DemoSchool, DemoStudent, DemoTeacher } from './types';
 
 export const DEMO_SCHOOL_ID = 'green-valley-demo';
@@ -185,18 +193,63 @@ function buildStudents(classes: DemoClass[]): DemoStudent[] {
 export const FEATURED_STUDENT_IDS: readonly string[] = Object.keys(FEATURED);
 
 let cached: DemoSchool | null = null;
+let roster: SargvisionContact[] = [];
+
+/** The teacher who sees the Sargvision class alongside their own. */
+export const SARGVISION_TEACHER_ID = 't-rai';
+
+/**
+ * Adds the Sargvision sample class (local emulator only: the server passes the roster to the demo
+ * frame only when it is available) to the demo school. Calling it again with the same roster
+ * changes nothing.
+ */
+export function registerSargvisionRoster(contacts: SargvisionContact[]): void {
+    const key = (list: SargvisionContact[]) => list.map((c) => `${c.studentId}:${c.phoneLast4}`).join(',');
+    if (key(contacts) === key(roster)) return;
+    roster = contacts;
+    cached = null;
+}
+
+function sargvisionStudents(): DemoStudent[] {
+    return roster.map((c, i) => ({
+        id: c.studentId,
+        name: c.name,
+        classId: SARGVISION_CLASS_ID,
+        roll: i + 1,
+        // A contact, not a pupil: no attendance, marks or notes exist, so none are shown or used.
+        attendancePct: 100,
+        consecutiveAbsences: 0,
+        recentScore: 100,
+        scoreChange: 0,
+        behaviourNote: null,
+        achievement: null,
+        guardian: { name: c.name, relation: 'Contact', phoneLast4: c.phoneLast4, language: 'en' },
+        rosterContact: { orgId: SARGVISION_ORG_ID, guardianId: c.guardianId },
+    }));
+}
 
 export function getDemoSchool(): DemoSchool {
     if (cached) return cached;
     const classes = buildClasses();
+    const withRoster = roster.length > 0;
+    const sargvisionClass: DemoClass = {
+        id: SARGVISION_CLASS_ID,
+        name: SARGVISION_CLASS_NAME,
+        grade: SARGVISION_GRADE,
+        section: SARGVISION_SECTION,
+        teacherId: SARGVISION_TEACHER_ID,
+        subject: 'Sample class (local test)',
+    };
     cached = {
         id: DEMO_SCHOOL_ID,
         name: 'Green Valley Public School',
         city: 'Siliguri',
         admin: { id: 'a-ghosh', name: 'Meera Ghosh', title: 'Principal' },
-        teachers: TEACHERS,
-        classes,
-        students: buildStudents(classes),
+        teachers: withRoster
+            ? TEACHERS.map((t) => (t.id === SARGVISION_TEACHER_ID ? { ...t, classIds: [...t.classIds, SARGVISION_CLASS_ID] } : t))
+            : TEACHERS,
+        classes: withRoster ? [...classes, sargvisionClass] : classes,
+        students: [...buildStudents(classes), ...sargvisionStudents()],
     };
     return cached;
 }
@@ -216,6 +269,7 @@ export function studentById(id: string | null | undefined): DemoStudent | undefi
 /** Signals a teacher would act on, strongest first; drives the suggested reason. */
 export function studentSignals(s: DemoStudent): { reason: OutreachReason; label: string }[] {
     const out: { reason: OutreachReason; label: string }[] = [];
+    if (s.rosterContact) return out;
     if (s.consecutiveAbsences >= 3) out.push({ reason: 'consecutive_absences', label: `${s.consecutiveAbsences} days absent in a row` });
     if (s.scoreChange <= -10) out.push({ reason: 'poor_performance', label: `Scores down ${Math.abs(s.scoreChange)} points` });
     else if (s.recentScore < 40) out.push({ reason: 'poor_performance', label: `Low scores: ${s.recentScore}/100` });

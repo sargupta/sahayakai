@@ -13,6 +13,8 @@
   powershell -ExecutionPolicy Bypass -File scripts\sampark\Start-Riya-Local.ps1
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File scripts\sampark\Start-Riya-Local.ps1 -Stop
+.EXAMPLE
+  powershell -ExecutionPolicy Bypass -File scripts\sampark\Start-Riya-Local.ps1 -RealCall
 #>
 [CmdletBinding()]
 param(
@@ -21,6 +23,15 @@ param(
     [switch]$ReuseEmulator,
     [switch]$RealClock,
     [switch]$NoOpen,
+    # The one authorised real Riya test call (RIYA_LOCAL_SETUP.md section 11.6). Asks for the
+    # ElevenLabs key with hidden input when ELEVENLABS_API_KEY is not already set in this window.
+    [switch]$RealCall,
+    # Optional: a local file holding the ElevenLabs key (read into this window's process only, never printed).
+    [string]$KeyFile,
+    # Keep emulator data and the local disposable keys between runs (outside the repository).
+    [switch]$Persist,
+    # Run without the interactive menu (stop with -Stop).
+    [switch]$NoMenu,
     [int]$Port = 3000
 )
 
@@ -63,6 +74,22 @@ $launcherArgs = @('scripts/sampark/riya-local.mjs', '--port', "$Port")
 if ($ReuseEmulator) { $launcherArgs += '--reuse-emulator' }
 if ($RealClock) { $launcherArgs += '--real-clock' }
 if ($NoOpen) { $launcherArgs += '--no-open' }
+if ($RealCall) {
+    if (-not $env:ELEVENLABS_API_KEY -and $KeyFile) {
+        $raw = (Get-Content -Raw $KeyFile).Trim()
+        if ($raw -match '=') { $raw = ($raw -split '=', 2)[1].Trim().Trim('"', "'") }
+        $env:ELEVENLABS_API_KEY = $raw
+        Remove-Variable raw
+    }
+    if (-not $env:ELEVENLABS_API_KEY) {
+        $sec = Read-Host -AsSecureString 'ElevenLabs API key (input hidden; kept in this window only)'
+        $env:ELEVENLABS_API_KEY = [System.Net.NetworkCredential]::new('', $sec).Password
+        Remove-Variable sec
+    }
+    $launcherArgs += '--real-call'
+}
+if ($Persist) { $launcherArgs += '--persist' }
+if ($NoMenu) { $launcherArgs += '--no-menu' }
 
 & node @launcherArgs
 exit $LASTEXITCODE

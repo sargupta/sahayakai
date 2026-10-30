@@ -302,6 +302,19 @@ Opt-out on a Riya call is **spoken**. "Stop calling" or the agent's `stop_reques
 7. Afterwards, the call row moves from "Ringing or on the call" to **Conversation ended** when the webhook arrives. If it stays unclear, use **Check status** (a read-only provider lookup) and do not retry. The daily cap of 1 refuses a second call that day.
 8. Do not call Sir until you have reviewed this result and approved a second call in writing.
 
+### 11.6 The local real test call (authorised 2026-10-29: one call to +91 8431339732)
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\sampark\Start-Riya-Local.ps1 -RealCall -RealClock
+```
+
+- Asks for the ElevenLabs key with hidden input (or uses `ELEVENLABS_API_KEY` already set in that window). The key stays in that process only.
+- Uses agent `agent_9601m63tk4rtfqbvd190w9nvb1v4` and number id `phnum_1501m63v1ns0ewb974m87d5q7wze` (sent as `agent_phone_number_id`), turns on live dialling, uses the emulator's separate `sampark-nonprod` database, sets `SAMPARK_RIYA_TEST_ALLOWED_NUMBERS=+918431339732` and a cap of 1 call per day, and keeps the real clock.
+- Seeds the **non-demo** emulator school `riya-test-local` (admin `dev-user-123`). In the console: **Enable school calls** for *Riya Test School (local)*, then **Settings → Test phone** `+918431339732` and **Test — my phone only**. Then run `npx tsx scripts/sampark/seed-emulator.ts --riya-test-student` with the launcher's values (menu key **a**) to add student **Alyssa**.
+- **Riya calls** tab → PTM invitation → Alyssa → Preview. The preview and the confirmation both show the full number that will ring. **Place call** once.
+- ElevenLabs cannot reach `localhost`, so no webhook arrives: follow the result with **Check status** (a read-only GET of the conversation).
+- `SAMPARK_RIYA_TEST_ALLOWED_NUMBERS` is required for every real Riya call. If it is unset, or the saved test phone is not on it, the call is refused before anything is dialled (`TEST_PHONE_NOT_ALLOWED`).
+
 ## 12. Troubleshooting
 
 | Symptom | Cause / fix |

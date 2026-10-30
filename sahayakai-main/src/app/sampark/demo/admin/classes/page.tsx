@@ -41,7 +41,8 @@ function ClassesAndTeachers({ view }: { view: DemoView }) {
                             action={complaints > 0 ? <StatusPill tone="danger">{fmt(t("{n} complaint(s)"), { n: complaints })}</StatusPill> : undefined}
                         >
                             <div className="grid grid-cols-3 gap-2">
-                                <MiniStat label={t("Students")} value={students.length} sub={fmt(t("{pct}% attendance"), { pct: attendance })} />
+                                {/* Roster contacts are not pupils: no attendance exists, so none is shown. */}
+                                <MiniStat label={t("Students")} value={students.length} sub={students.some((s) => s.rosterContact) ? t("Sample contacts · real calls") : fmt(t("{pct}% attendance"), { pct: attendance })} />
                                 <MiniStat label={t("Need a call")} value={needCall} />
                                 <MiniStat label={t("Calls this week")} value={calls.length} sub={fmt(t("{n} reached"), { n: reached })} />
                             </div>

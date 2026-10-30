@@ -28,6 +28,7 @@ import type { DemoCall, DemoCallContext, DemoLanguage, DemoRole, DemoStudent, De
 import type { OutreachReason } from "@/types/attendance";
 import { cn } from "@/lib/utils";
 import { CallSummaryView, Transcript } from "./call-summary";
+import { SargvisionRiyaCall } from "./sargvision-call";
 
 const REASON_ICON: Record<OutreachReason, typeof CalendarX> = {
     consecutive_absences: CalendarX,
@@ -99,10 +100,14 @@ export function CallParentDialog({ student, open, onOpenChange, placedBy, initia
     const [voiceOn, setVoiceOn] = useState(true);
     const [offline, setOffline] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [ending, setEnding] = useState(false);
     const [result, setResult] = useState<DemoCall | null>(null);
     const [scheduling, setScheduling] = useState(false);
     const demo = useDemoState();
+    const holidays = useMemo(() => (demo ? demoHolidays(demo.seededAt) : []), [demo?.seededAt]);
+    // Refs, not state: the speech callback that ends a call was created in an
+    // earlier render and must still see a call already ended by the button.
+    const endingRef = useRef(false);
+    const offlineRef = useRef(false);
     const callId = useRef(newId());
     const startedAt = useRef(0);
     const scroller = useRef<HTMLDivElement>(null);
@@ -120,8 +125,9 @@ export function CallParentDialog({ student, open, onOpenChange, placedBy, initia
         setTurns([]);
         setDraft("");
         setOffline(false);
+        offlineRef.current = false;
         setError(null);
-        setEnding(false);
+        endingRef.current = false;
         setResult(null);
         callId.current = newId();
     }, [open, student, initialReason, signals]);
@@ -131,6 +137,23 @@ export function CallParentDialog({ student, open, onOpenChange, placedBy, initia
     }, [turns, thinking]);
 
     if (!student || !cls || !teacher) return null;
+
+    // A Sargvision roster contact: a real call by Riya through the Sampark server, never the simulator.
+    if (student.rosterContact) {
+        return (
+            <Dialog open={open} onOpenChange={onOpenChange}>
+                <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>{fmt(t("Call {name}"), { name: student.name })}</DialogTitle>
+                        <DialogDescription>
+                            {fmt(t("{class} sample class · phone ending {last4} · a REAL call by Riya. Nothing rings until you confirm Place call."), { class: cls.name, last4: student.guardian.phoneLast4 })}
+                        </DialogDescription>
+                    </DialogHeader>
+                    {open && <SargvisionRiyaCall orgId={student.rosterContact.orgId} guardianId={student.rosterContact.guardianId} studentId={student.id} />}
+                </DialogContent>
+            </Dialog>
+        );
+    }
 
     const context: DemoCallContext = {
         studentName: student.name,
@@ -142,6 +165,9 @@ export function CallParentDialog({ student, open, onOpenChange, placedBy, initia
         schoolName: school.name,
         parentLanguage: language,
     };
+
+    // What the server needs: demo record ids and the note. It builds every name itself.
+    const callRef = () => ({ callId: callId.current, studentId: student.id, reason, language, note: context.teacherMessage });
 
     const chooseReason = (r: OutreachReason) => {
         setReason(r);
@@ -183,8 +209,8 @@ export function CallParentDialog({ student, open, onOpenChange, placedBy, initia
     };
 
     const finish = async (finalTurns: DemoTurn[]) => {
-        if (ending) return;
-        setEnding(true);
+        if (endingRef.current) return;
+        endingRef.current = true;
         window.speechSynthesis?.cancel();
         setStep("summarising");
         const durationSeconds = Math.max(1, Math.round((Date.now() - startedAt.current) / 1000));
@@ -195,7 +221,7 @@ export function CallParentDialog({ student, open, onOpenChange, placedBy, initia
                 const res = await fetch("/api/sampark-demo/summary", {
                     method: "POST",
                     headers: { "content-type": "application/json" },
-                    body: JSON.stringify({ callId: callId.current, context, transcript: finalTurns.slice(-24), durationSeconds }),
+                    body: JSON.stringify({ ...callRef(), transcript: finalTurns.slice(-24), durationSeconds }),
                 });
                 if (!res.ok) throw new Error(String(res.status));
                 const data = (await res.json()) as { summary: DemoSummary; source: "ai" | "fallback" };
@@ -220,7 +246,7 @@ export function CallParentDialog({ student, open, onOpenChange, placedBy, initia
             transcript: finalTurns,
             summary,
             complaintStatus: summary?.complaintAboutTeacher ? "open" : null,
-            offlineReplies: offline || summaryOffline,
+            offlineReplies: offlineRef.current || summaryOffline,
         });
     };
 
@@ -239,11 +265,14 @@ export function CallParentDialog({ student, open, onOpenChange, placedBy, initia
             const res = await fetch("/api/sampark-demo/turn", {
                 method: "POST",
                 headers: { "content-type": "application/json" },
-                body: JSON.stringify({ callId: callId.current, context, transcript: history.slice(-23), parentSpeech: said, turnNumber }),
+                body: JSON.stringify({ ...callRef(), transcript: history.slice(-23), parentSpeech: said, turnNumber }),
             });
             if (!res.ok) throw new Error(res.status === 429 ? t("The demo is busy. Try again in a minute.") : t("The AI did not answer. Try again."));
             const data = (await res.json()) as { reply: string; shouldEndCall: boolean; source: "ai" | "fallback" };
-            if (data.source === "fallback") setOffline(true);
+            if (data.source === "fallback") {
+                offlineRef.current = true;
+                setOffline(true);
+            }
             const next: DemoTurn[] = [...withParent, { role: "agent", text: data.reply }];
             setTurns(next);
             const end = data.shouldEndCall || turnNumber >= MAX_PARENT_TURNS;
@@ -487,7 +516,7 @@ export function CallParentDialog({ student, open, onOpenChange, placedBy, initia
                             reason={reason}
                             sourceCallId={result.id}
                             placedBy={placedBy}
-                            holidays={demo ? demoHolidays(demo.seededAt) : []}
+                            holidays={holidays}
                         />
                     </div>
                 )}

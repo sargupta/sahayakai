@@ -1,5 +1,6 @@
 "use client";
 
+import { SARGVISION_CLASS_ID, SARGVISION_CLASS_NAME } from "@/lib/sampark/sargvision";
 import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, GraduationCap, RotateCcw, ShieldCheck } from "lucide-react";
@@ -42,7 +43,11 @@ function RolePicker() {
             <PageHeader
                 eyebrow={t("SamparkAI demo")}
                 title={fmt(t("Sign in to {school}"), { school: school.name })}
-                description={t("A demo school: every name is made up, and calls play in your browser. You speak as the parent, the AI answers. No phone rings.")}
+                description={
+                    school.classes.some((c) => c.id === SARGVISION_CLASS_ID)
+                        ? t("A demo school: every name is made up, and calls play in your browser. No phone rings — except the Sargvision sample class (local test), where Call places a REAL call by Riya after you confirm.")
+                        : t("A demo school: every name is made up, and calls play in your browser. You speak as the parent, the AI answers. No phone rings.")
+                }
             />
             <div className="grid grid-cols-3 gap-3 sm:max-w-xl">
                 <MiniStat label={t("Teachers")} value={school.teachers.length} />
@@ -94,7 +99,7 @@ function RolePicker() {
                                     <span className="min-w-0">
                                         <span className="block font-medium text-ink-900">{teacher.name}</span>
                                         <span className="block text-xs text-ink-500">
-                                            {t(teacher.subject)} · {teacher.classIds.map((c) => fmt(t("Class {id}"), { id: c })).join(", ")}
+                                            {t(teacher.subject)} · {teacher.classIds.map((c) => (c === SARGVISION_CLASS_ID ? SARGVISION_CLASS_NAME : fmt(t("Class {id}"), { id: c }))).join(", ")}
                                         </span>
                                     </span>
                                     <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0 text-ink-500" />

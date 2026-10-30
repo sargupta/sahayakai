@@ -15,6 +15,16 @@
  *                      server with no browser open. Practice only: nothing rings.
  *   --demo-family      after switching the school on (needs --admin), add the synthetic family
  *                      (same as menu key f), so a Practice call and its callback can be tried at once
+ *   --real-call        the ONE authorised real Riya test call (docs/sampark/RIYA_LOCAL_SETUP.md §11.6):
+ *                      reads ELEVENLABS_API_KEY from this shell (refuses without it), uses the
+ *                      configured agent and number, live dialling on, the emulator's separate
+ *                      `sampark-nonprod` database, only +918431339732 allowed, 1 call per day,
+ *                      real clock. Seeds the non-demo school riya-test-local.
+ *   --persist          keep the emulator data between runs (%LOCALAPPDATA%\riya-local\emulator-data,
+ *                      imported at start, exported on exit) and reuse the same LOCAL disposable keys
+ *                      (%LOCALAPPDATA%\riya-local\local-keys.json, outside the repository) so the
+ *                      stored encrypted test numbers stay readable. Local emulator data only.
+ *   --no-menu          run without the interactive menu (stop with --stop)
  *   --admin <uid>      also make this signed-in account an admin of hillview-demo and switch
  *                      Sampark on for it in Practice mode, so opening SamparkAI goes straight to
  *                      the demo school's workspace (emulator only; repeatable)
@@ -34,8 +44,8 @@
  *   6. Menu: seed the synthetic family (after you enable Sampark in the UI), run the signed
  *      local-webhook checks, or quit (which stops every process it started).
  *
- * It never sets a real ElevenLabs key, never enables live dialling, and the webhook checks post
- * only to localhost.
+ * Without --real-call it never uses a real ElevenLabs key and never enables live dialling. The
+ * webhook checks post only to localhost.
  */
 
 import { spawn, spawnSync } from 'node:child_process';
@@ -47,6 +57,15 @@ import { join } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 
 const argv = process.argv.slice(2);
+
+// --real-call: the configured Riya agent and its Vobiz number, Varunesh's source agent (from his
+// export; refused as the target) and the single destination the user authorised.
+const REAL_CALL = {
+    agentId: 'agent_9601m63tk4rtfqbvd190w9nvb1v4',
+    phoneNumberId: 'phnum_1501m63v1ns0ewb974m87d5q7wze',
+    sourceAgentId: 'agent_9201m4wq7tahfedr03vcf5es80bq',
+    allowedNumber: '+918431339732',
+};
 const has = (f) => argv.includes(`--${f}`);
 const opt = (f, d) => {
     const i = argv.indexOf(`--${f}`);
@@ -62,6 +81,11 @@ const APP_PORT = Number(opt('port', '3000'));
 const STATE_DIR = join(tmpdir(), 'riya-local');
 const PID_FILE = join(STATE_DIR, 'pids.json'); // process ids only — no secrets
 const EMU_CONFIG = join(STATE_DIR, 'firebase.riya-emulator.json');
+// --persist: emulator data and the local disposable keys survive restarts (outside the repository).
+const PERSIST_DIR = join(process.env.LOCALAPPDATA ?? homedir(), 'riya-local');
+const EMU_DATA_DIR = join(PERSIST_DIR, 'emulator-data');
+const LOCAL_KEYS_FILE = join(PERSIST_DIR, 'local-keys.json');
+const SARGVISION_ROSTER_FILE = join('scripts', 'sampark', 'sargvision-roster.json');
 const NPM_CACHE = WIN ? join(process.env.LOCALAPPDATA ?? homedir(), 'npm-cache-riya-firestore') : join(homedir(), '.npm-cache-riya-firestore');
 const LOCAL_AGENT = 'agent_localtestlocaltestlocaltest0';
 
@@ -189,6 +213,16 @@ async function httpStatus(url) {
     }
 }
 
+/** The Sargvision roster's numbers, for the local allow-list only (never printed). */
+function sargvisionNumbers() {
+    try {
+        const roster = JSON.parse(readFileSync(SARGVISION_ROSTER_FILE, 'utf8'));
+        return roster.contacts.map((c) => c.phone).filter((p) => /^\+91[6-9]\d{9}$/.test(p));
+    } catch {
+        return [];
+    }
+}
+
 function istHour(now = new Date()) {
     return Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', hour12: false }).format(now));
 }
@@ -234,7 +268,11 @@ async function main() {
     const startedEmulator = !already;
     if (!already) {
         const env = { ...process.env, npm_config_cache: NPM_CACHE };
-        const emu = start('firestore-emulator', 'npx', ['-y', 'firebase-tools@13', 'emulators:start', '--only', 'firestore', '--project', PROJECT, '--config', q(EMU_CONFIG)], env, join(STATE_DIR, 'emulator.log'));
+        const persistArgs = has('persist')
+            ? (mkdirSync(EMU_DATA_DIR, { recursive: true }), [...(existsSync(join(EMU_DATA_DIR, 'firebase-export-metadata.json')) ? ['--import', q(EMU_DATA_DIR)] : []), '--export-on-exit', q(EMU_DATA_DIR)])
+            : [];
+        if (has('persist')) say(`   persistent data: ${EMU_DATA_DIR}`);
+        const emu = start('firestore-emulator', 'npx', ['-y', 'firebase-tools@13', 'emulators:start', '--only', 'firestore', '--project', PROJECT, '--config', q(EMU_CONFIG), ...persistArgs], env, join(STATE_DIR, 'emulator.log'));
         say('   starting (the first run downloads the emulator, about 60 MB)…');
         const up = await waitFor('the emulator', () => tcpOpen(EMU_HOST, EMU_PORT), 240, emu);
         if (!up) {
@@ -252,20 +290,28 @@ async function main() {
     }
     say(`   TCP ${EMU_HOST}:${EMU_PORT} accepts connections  ok`);
 
-    step('3. Disposable local values (memory only)');
+    step(has('persist') ? '3. Local disposable values (kept outside the repository with --persist)' : '3. Disposable local values (memory only)');
+    const localKeys = (() => {
+        const fresh = { piiKey: randomBytes(32).toString('base64'), pepper: `local-${randomBytes(12).toString('hex')}`, webhookSecret: randomBytes(24).toString('hex') };
+        if (!has('persist')) return fresh;
+        mkdirSync(PERSIST_DIR, { recursive: true });
+        if (existsSync(LOCAL_KEYS_FILE)) return JSON.parse(readFileSync(LOCAL_KEYS_FILE, 'utf8'));
+        writeFileSync(LOCAL_KEYS_FILE, JSON.stringify(fresh), { mode: 0o600 });
+        return fresh;
+    })();
     const appEnv = {
         ...process.env,
         NODE_ENV: 'development',
         FIRESTORE_EMULATOR_HOST: `${EMU_HOST}:${EMU_PORT}`,
         GCLOUD_PROJECT: PROJECT,
-        SAMPARK_PII_KEY: randomBytes(32).toString('base64'),
-        SAMPARK_PHONE_PEPPER: `local-${randomBytes(12).toString('hex')}`,
+        SAMPARK_PII_KEY: localKeys.piiKey,
+        SAMPARK_PHONE_PEPPER: localKeys.pepper,
         SAMPARK_ENABLED: 'true',
         SAMPARK_ELEVENLABS_ENABLED: 'true',
         SAMPARK_RIYA_PURPOSES: 'ptm_invitation',
         // Disposable placeholders so the webhook receiver can be tested. Not a real key: Test mode
         // stays refused because live dialling is off and this is not the non-production database.
-        ELEVENLABS_WEBHOOK_SECRET: randomBytes(24).toString('hex'),
+        ELEVENLABS_WEBHOOK_SECRET: localKeys.webhookSecret,
         ELEVENLABS_API_KEY: 'local-placeholder-not-a-key',
         ELEVENLABS_AGENT_ID: LOCAL_AGENT,
         ELEVENLABS_AGENT_PHONE_NUMBER_ID: 'phnum_localtestlocaltestlocaltest0',
@@ -300,12 +346,48 @@ async function main() {
         appEnv.SAMPARK_DEV_NOW = `${istDate()}T11:00:00+05:30`;
         say(`   It is ${hour}:xx IST, outside the demo school's 10:00–19:00 calling window: the app's Sampark clock starts at ${appEnv.SAMPARK_DEV_NOW} (emulator only). Use --real-clock to keep real time.`);
     }
+    if (has('real-call')) {
+        // The key comes only from the operator's shell; it is never printed, written or defaulted.
+        const realKey = process.env.ELEVENLABS_API_KEY?.trim() ?? '';
+        if (realKey.length < 20 || realKey === 'local-placeholder-not-a-key') fail('--real-call needs ELEVENLABS_API_KEY in this shell (Start-Riya-Local.ps1 -RealCall asks for it with hidden input).');
+        Object.assign(appEnv, {
+            ELEVENLABS_API_KEY: realKey,
+            ELEVENLABS_AGENT_ID: REAL_CALL.agentId,
+            ELEVENLABS_AGENT_PHONE_NUMBER_ID: REAL_CALL.phoneNumberId,
+            ELEVENLABS_SOURCE_AGENT_ID: REAL_CALL.sourceAgentId,
+            SAMPARK_LIVE_DIAL_ENABLED: 'true',
+            SAMPARK_FIRESTORE_DATABASE: 'sampark-nonprod',
+            // The test phone plus the Sargvision roster (scripts/sampark/sargvision-roster.json): nothing else can ring.
+            SAMPARK_RIYA_TEST_ALLOWED_NUMBERS: [REAL_CALL.allowedNumber, ...sargvisionNumbers()].filter((n, i, all) => all.indexOf(n) === i).join(','),
+            // Per contact on the roster, per school elsewhere.
+            SAMPARK_RIYA_TEST_DAILY_CAP: '2',
+            SAMPARK_RIYA_PURPOSES: 'ptm_invitation,event_invitation,holiday_notice,exam_schedule_notice,emergency_closure',
+            SAMPARK_DEMO_ENABLED: 'true',
+            SAMPARK_SARGVISION_ROSTER: 'true',
+            // Verified on the agent 2026-10-29 (record_voice=false, delete_audio, 7-day retention):
+            // the console must not tell staff calls are recorded.
+            SAMPARK_RIYA_RECORDING_OFF_CONFIRMED: 'true',
+            // Staff read the transcript under Details; kept 7 days, the same as the agent's retention.
+            SAMPARK_RIYA_STORE_TRANSCRIPTS: 'true',
+            SAMPARK_RIYA_TRANSCRIPT_DAYS: '7',
+        });
+        delete appEnv.SAMPARK_DEV_NOW; // a real call keeps the real calling hours
+        say(`   Sargvision roster: ${sargvisionNumbers().length} contacts allow-listed (numbers not shown).`);
+        say(`   REAL CALL MODE: agent ${REAL_CALL.agentId.slice(-6)}, number id ${REAL_CALL.phoneNumberId.slice(-6)}, test phone ending ${REAL_CALL.allowedNumber.slice(-4)} + Sargvision roster, cap 2/day per contact, database sampark-nonprod in the emulator. Key read from this shell (not shown).`);
+    }
     say('   PII key, pepper and webhook secret generated; they exist only in this window.');
     say(`   Google Calendar: ${appEnv.GOOGLE_CALENDAR_MODE === 'mock' ? 'local MOCK Google (no real account; set GOOGLE_CALENDAR_CLIENT_ID/_SECRET for real Google)' : 'real Google OAuth client from this shell'}; token key is per run (reconnect after a restart).`);
 
+    const addTestStudent = () => {
+        const r = run(NODE, tsx('scripts/sampark/seed-emulator.ts', '--riya-test-student'), appEnv);
+        say(r.out.replace(/^/gm, '   '));
+        if (r.code === 3) say('   → Enable school calls for Riya Test School (local) in the browser first, then press a.');
+        else if (r.code !== 0) say(`   seed failed (exit ${r.code}).`);
+    };
+
     step(`4. Seed ${ORG}`);
     const adminArgs = argv.flatMap((a, i) => (a === '--admin' && argv[i + 1] && !argv[i + 1].startsWith('--') ? ['--admin', argv[i + 1]] : []));
-    const seed = run(NODE, tsx('scripts/sampark/seed-emulator.ts', ...adminArgs), appEnv);
+    const seed = run(NODE, tsx('scripts/sampark/seed-emulator.ts', ...adminArgs, ...(has('real-call') ? ['--riya-test-school', '--sargvision-org'] : [])), appEnv);
     say(seed.out.replace(/^/gm, '   '));
     if (seed.code !== 0) fail(`seeding failed (exit ${seed.code}).`);
 
@@ -347,6 +429,46 @@ async function main() {
         }
     }
 
+    if (has('real-call')) {
+        // Switch Sampark on for the non-demo test school (Practice mode: nothing rings yet), then
+        // add Alyssa. Test phone and Test mode are set by a person in the console.
+        let status = 0;
+        for (let attempt = 0; attempt < 5 && status !== 200; attempt += 1) {
+            try {
+                const res = await fetch(`${base}/api/sampark/riya-test-local/enable`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Cookie: 'auth-token=dev-token' },
+                    body: JSON.stringify({ displayName: 'Riya Test School (local)' }),
+                    signal: AbortSignal.timeout(180000),
+                });
+                status = res.status;
+            } catch {
+                await new Promise((r) => setTimeout(r, 5000));
+            }
+        }
+        say(`   POST /api/sampark/riya-test-local/enable → HTTP ${status} (Practice mode until Test mode is chosen in the console)`);
+        addTestStudent();
+
+        // The Sargvision sample class: enable the non-demo school, seed the roster, Test mode.
+        let svStatus = 0;
+        try {
+            const res = await fetch(`${base}/api/sampark/sargvision-local/enable`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Cookie: 'auth-token=dev-token' },
+                body: JSON.stringify({ displayName: 'Sargvision (sample class, local test)', spokenName: { English: 'Sargvision', Hindi: 'Sargvision', Bengali: 'Sargvision', Nepali: 'Sargvision' } }),
+                signal: AbortSignal.timeout(180000),
+            });
+            svStatus = res.status;
+        } catch {
+            /* reported below */
+        }
+        say(`   POST /api/sampark/sargvision-local/enable → HTTP ${svStatus}`);
+        const hourNow = istHour();
+        const sv = run(NODE, tsx('scripts/sampark/seed-emulator.ts', '--sargvision', ...(hourNow < 10 || hourNow >= 20 ? ['--arm-sargvision-after-hours'] : [])), appEnv);
+        say(sv.out.replace(/^/gm, '   '));
+        say(`   Teacher: ${base}/sampark/demo/teacher/classes (Anjali Rai → Sargvision) · Principal: ${base}/sampark/demo/admin/classes · Console: ${base}/sampark/sargvision-local/riya`);
+    }
+
     if (has('ticker')) {
         start('ticker', NODE, tsx('scripts/sampark/ticker.ts', '--interval', '30'), { ...appEnv, SAMPARK_BASE_URL: base }, join(STATE_DIR, 'ticker.log'));
         say(`   Local scheduler running every 30 s (log: ${join(STATE_DIR, 'ticker.log')}). Due callbacks run from the server.`);
@@ -368,6 +490,11 @@ async function main() {
         }
     }
 
+    if (has('no-menu')) {
+        say('\nRunning without the menu. Stop with: node scripts/sampark/riya-local.mjs --stop');
+        process.on('SIGINT', () => { stopAll(); process.exit(0); });
+        await new Promise(() => {});
+    }
     const rl = createInterface({ input: process.stdin, output: process.stdout });
     const quit = () => {
         rl.close();
@@ -378,8 +505,9 @@ async function main() {
     };
     process.on('SIGINT', quit);
     for (;;) {
-        const a = (await rl.question('\n[f] add synthetic family   [w] run local webhook checks   [s] status   [q] quit > ')).trim().toLowerCase();
+        const a = (await rl.question(`\n[f] add synthetic family   ${has('real-call') ? '[a] add test student Alyssa   ' : ''}[w] run local webhook checks   [s] status   [q] quit > `)).trim().toLowerCase();
         if (a === 'q') quit();
+        else if (a === 'a' && has('real-call')) addTestStudent();
         else if (a === 'f') {
             const r = run(NODE, tsx('scripts/sampark/seed-emulator.ts', '--riya-demo-family'), appEnv);
             say(r.out.replace(/^/gm, '   '));

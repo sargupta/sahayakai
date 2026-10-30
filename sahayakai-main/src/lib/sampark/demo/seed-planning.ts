@@ -9,6 +9,7 @@ import type { OutreachReason } from '@/types/attendance';
 import type { CampaignCounts, CampaignFacts, CampaignStatus, PurposeId } from '@/types/sampark';
 import { DEFAULT_CALLBACK_TIME_ZONE, zonedToUtc } from '@/lib/sampark/callbacks/time';
 import { DEMO_SCHOOL_ID, classById, getDemoSchool, studentSignals, teacherById } from './school';
+import { checkCallbackTime } from './rules';
 import type { DemoCallback, DemoCampaign, DemoCall } from './types';
 
 const TZ = DEFAULT_CALLBACK_TIME_ZONE;
@@ -226,6 +227,15 @@ export function buildSeedCallbacks(now: number, calls: DemoCall[]): DemoCallback
             createdHoursAgo: 28,
         },
     ];
+    // A booked callback always sits at a permitted time (the demo's own rules):
+    // a seed that lands on a Sunday, a holiday or after hours moves to the next
+    // permitted time. Past ones (completed, missed) keep their time.
+    const holidays = demoHolidays(now);
+    const permitted = (s: CallbackSeed): string | null => {
+        if (!s.scheduledAt || s.status !== 'scheduled') return s.scheduledAt;
+        const check = checkCallbackTime(new Date(s.scheduledAt), new Date(now), holidays);
+        return check.ok ? s.scheduledAt : (check.next ?? new Date(s.scheduledAt)).toISOString();
+    };
     return seeds.flatMap((s, i) => {
         const student = school.students.find((x) => x.id === s.studentId);
         const cls = student && classById(student.classId);
@@ -239,7 +249,7 @@ export function buildSeedCallbacks(now: number, calls: DemoCall[]): DemoCallback
                 teacherId: teacher.id,
                 reason: s.reason,
                 status: s.status,
-                scheduledAt: s.scheduledAt,
+                scheduledAt: permitted(s),
                 note: s.note,
                 source: s.source,
                 createdBy: s.source === 'parent_request' ? { role: 'parent' as const, name: student.guardian.name } : s.byAdmin ? { role: 'admin' as const, name: school.admin.name } : { role: 'teacher' as const, name: teacher.name },
