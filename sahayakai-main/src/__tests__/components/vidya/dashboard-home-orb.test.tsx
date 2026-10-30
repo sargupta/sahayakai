@@ -45,4 +45,23 @@ describe('Home: VIDYA mic is the 3D orb', () => {
         // The old flat gradient face is gone when the orb draws the button.
         expect(button.className).not.toMatch(/!bg-gradient-to-br/);
     });
+
+    it('follows the design system: workspace orb size, saffron-600 name, leaf send disc, ink-500 tool icons', () => {
+        jest.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
+        render(<DashboardHome />);
+        // LiveOrb workspace size (164px x 1.1): 176px from tablet up, 144px on phones.
+        const orb = screen.getByRole('button', { name: 'Start recording' });
+        expect(orb.className).toMatch(/\bh-36\b/);
+        expect(orb.className).toMatch(/\bmd:h-44\b/);
+        // "Good morning, <saffron-600>Meena.</>" (ScreenWebHome).
+        const name = document.querySelector('h1 span') as HTMLElement;
+        expect(name.className).toMatch(/\btext-saffron-600\b/);
+        // Composer send disc: leaf-500 with a white glyph.
+        const send = document.querySelector('form button[type="submit"]') as HTMLElement;
+        expect(send.className).toMatch(/\bbg-leaf-500\b/);
+        expect(send.className).toMatch(/\btext-white\b/);
+        // Icons in the tool pills: ink-500.
+        // (lucide icons render as <div data-testicon> under the jest mock)
+        expect(document.querySelectorAll('[data-testicon].text-ink-500').length).toBeGreaterThan(0);
+    });
 });

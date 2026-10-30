@@ -101,7 +101,7 @@ const PrepToolsRow = () => {
             href={href}
             className="inline-flex items-center gap-2 rounded-surface-sm border border-border bg-card px-3 py-2 text-sm font-medium text-foreground shadow-soft hover:border-primary/50 hover:text-primary transition-colors duration-micro ease-out-quart indic-text"
           >
-            <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            <Icon className="h-4 w-4 text-ink-500 dark:text-muted-foreground" aria-hidden="true" />
             {t(labelKey)}
           </Link>
         ))}
@@ -280,7 +280,7 @@ export function DashboardHome() {
       {/* Greeting — restrained scale so the input, not the headline, dominates */}
       <div className="text-center space-y-3 max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-medium">
         <h1 className="font-headline text-3xl md:text-5xl font-bold text-foreground tracking-tight indic-text leading-[1.15]">
-          {greeting}, <span className="text-primary">{teacherName}.</span>
+          {greeting}, <span className="text-saffron-600 dark:text-primary">{teacherName}.</span>
         </h1>
         {showNewUserHome && suggestions.length > 0 ? (
           <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4 indic-text">
@@ -343,7 +343,7 @@ export function DashboardHome() {
                   <Button
                     type="submit"
                     size="icon"
-                    className="h-10 w-10 shrink-0 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm transition-all active:scale-95"
+                    className="h-10 w-10 shrink-0 rounded-full bg-leaf-500 hover:bg-leaf-500/90 text-white shadow-sm transition-all active:scale-95"
                     aria-label={t("Generate Lesson Plan")}
                   >
                     <ArrowRight className="h-5 w-5" />
@@ -391,7 +391,7 @@ export function DashboardHome() {
               }
             >
               <div className="prose prose-sm max-w-none text-foreground">
-                <h3 className="text-primary font-bold mb-2 text-lg flex items-center gap-2"><Lightbulb className="h-5 w-5" />{t("Answer")}</h3>
+                <h3 className="text-saffron-600 dark:text-primary font-bold mb-2 text-lg flex items-center gap-2"><Lightbulb className="h-5 w-5" />{t("Answer")}</h3>
                 <div className="whitespace-pre-wrap">{answer}</div>
                 <p className="text-xs text-muted-foreground mt-3 not-prose">
                   {t("Sahayak can make mistakes. Please review generated content.")}

@@ -99,7 +99,11 @@ export function hslVarToRgb(raw: string): [number, number, number] {
 const VERT = `attribute vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }`;
 
 const FRAG = `
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;   // time keeps growing; mediump loses it on many phone GPUs
+#else
 precision mediump float;
+#endif
 uniform vec2 uRes;
 uniform float uTime;
 uniform vec3 uC0; uniform vec3 uC1; uniform vec3 uC2; uniform vec3 uC3; uniform vec3 uC4;
@@ -261,6 +265,7 @@ export function VidyaSphere({ state, reducedMotion, className }: { state: VidyaO
     const stateRef = useRef(state);
     stateRef.current = state;
     const drawRef = useRef<(() => void) | null>(null);
+    const wakeRef = useRef<(() => void) | null>(null);
     const [renderer, setRenderer] = useState<"webgl" | "css">("webgl");
 
     useEffect(() => {
@@ -366,8 +371,17 @@ export function VidyaSphere({ state, reducedMotion, className }: { state: VidyaO
             gl!.drawArrays(gl!.TRIANGLE_STRIP, 0, 4);
         };
 
+        // A still look (failed) settles over ~1.5 s, then stops redrawing the same
+        // frame; the next state change wakes the loop again.
+        let settle = 0;
         const loop = () => {
             draw(0.08);
+            if (LOOKS[stateRef.current].still) {
+                if (++settle > 90) {
+                    raf = 0;
+                    return;
+                }
+            } else settle = 0;
             raf = requestAnimationFrame(loop);
         };
         const start = () => {
@@ -386,6 +400,12 @@ export function VidyaSphere({ state, reducedMotion, className }: { state: VidyaO
             setRenderer("css");
         };
         drawRef.current = () => draw(1);
+        wakeRef.current = () => {
+            if (reducedMotion || document.hidden || lost) return;
+            cancelAnimationFrame(raf);
+            settle = 0;
+            raf = requestAnimationFrame(loop);
+        };
         canvas.addEventListener("webglcontextlost", onLost);
         document.addEventListener("visibilitychange", onVisibility);
         start();
@@ -393,6 +413,7 @@ export function VidyaSphere({ state, reducedMotion, className }: { state: VidyaO
         return () => {
             cancelAnimationFrame(raf);
             drawRef.current = null;
+            wakeRef.current = null;
             canvas.removeEventListener("webglcontextlost", onLost);
             document.removeEventListener("visibilitychange", onVisibility);
             gl!.deleteBuffer(buf);
@@ -404,9 +425,11 @@ export function VidyaSphere({ state, reducedMotion, className }: { state: VidyaO
         };
     }, [reducedMotion]);
 
-    // Reduced motion: one still frame per state change.
+    // Reduced motion: one still frame per state change. Otherwise wake a loop
+    // that stopped on a still look.
     useEffect(() => {
         if (reducedMotion) drawRef.current?.();
+        else wakeRef.current?.();
     }, [state, reducedMotion]);
 
     const css = CSS_SPHERE[state];

@@ -667,7 +667,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
 
   const getButtonSize = () => {
     if (isFloating) return "h-20 w-20 md:h-24 md:w-24";
-    if (iconSize === 'xl') return "h-32 w-32";
+    if (iconSize === 'xl') return "h-36 w-36 md:h-44 md:w-44";
     if (iconSize === 'lg') return "h-20 w-20";
     return "";
   };
