@@ -78,7 +78,7 @@ const ROUTES: Route[] = [
   // Engage
   { href: "/video-storyteller", label: "Video Storyteller", i18nKey: "Video Storyteller", keywords: "video storyteller youtube recommend", group: "Labs", icon: Video },
   { href: "/virtual-field-trip", label: "Virtual Field Trip", i18nKey: "Virtual Field Trip", keywords: "virtual field trip explore visit", group: "Labs", icon: Globe2 },
-  { href: "/teacher-training", label: "Teacher Training", i18nKey: "Teacher Training", keywords: "teacher training professional development cpd", group: "Labs", icon: GraduationCap },
+  { href: "/teacher-training", label: "Teacher Training", i18nKey: "Teacher Training", keywords: "teacher training professional development cpd", group: "Engage", icon: GraduationCap },
   { href: "/community", label: "Community", i18nKey: "Community", keywords: "community teachers chat discover", group: "Engage", icon: Library },
 
   // Ask

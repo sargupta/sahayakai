@@ -33,6 +33,7 @@ import { Save, History, MessageCircleQuestion } from "lucide-react";
 // Mounting both here created the "two voice surfaces" UX bug.
 import { useJarvisStore } from "@/store/jarvisStore";
 import { useVidyaFormSync } from "@/hooks/use-vidya-form-sync";
+import { useVidyaCapability, useVidyaScreenContext } from "@/hooks/use-vidya-app-context";
 import { useNetworkAware } from "@/hooks/use-network-aware";
 import { normaliseVidyaLanguage } from "@/lib/vidya-action-normalizer";
 
@@ -104,6 +105,9 @@ const PRO_TIP_KEYS = [
 
 function TeacherTrainingContent() {
   const [advice, setAdvice] = useState<TeacherTrainingOutput | null>(null);
+  // Library id of the shown advice (minted per generation / restored id);
+  // both Save buttons upsert it, so one generation = one Library row.
+  const [adviceContentId, setAdviceContentId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [savingToLib, setSavingToLib] = useState(false);
   const [savedToLib, setSavedToLib] = useState(false);
@@ -191,7 +195,10 @@ function TeacherTrainingContent() {
             if (content.topic) form.setValue("question", content.topic);
             if (content.language) form.setValue("language", content.language);
             if (content.subject) form.setValue("subject", content.subject);
-            if (content.data) setAdvice(content.data as TeacherTrainingOutput);
+            if (content.data) {
+              setAdvice(content.data as TeacherTrainingOutput);
+              setAdviceContentId(id);
+            }
           }
         } catch (err) {
           console.error("Failed to load saved teacher training:", err);
@@ -231,6 +238,7 @@ function TeacherTrainingContent() {
     if (!requireAuth()) { submittingRef.current = false; return; }
     setIsLoading(true);
     setAdvice(null);
+    setAdviceContentId(null);
     try {
       const token = await auth.currentUser?.getIdToken();
       const headers: Record<string, string> = {
@@ -251,10 +259,12 @@ function TeacherTrainingContent() {
         ? values.subject
         : undefined;
 
+      const submitContentId = crypto.randomUUID();
       const res = await fetch("/api/ai/teacher-training", {
         method: "POST",
         headers: headers,
         body: JSON.stringify({
+          contentId: submitContentId,
           question: values.question,
           language: submittedLanguage,
           subject: submittedSubject,
@@ -272,6 +282,7 @@ function TeacherTrainingContent() {
 
       const result = await res.json();
       setAdvice(result);
+      setAdviceContentId(submitContentId);
       clearFormSnapshot("teacher-training");
       // UX audit #13: persist last question so a returning teacher can
       // pick up where they left off. Stored client-side only — no PII
@@ -325,11 +336,14 @@ function TeacherTrainingContent() {
     setSavingToLib(true);
     try {
       const title = form.getValues("question").slice(0, 80);
+      // Same id the generation was filed under → updates that row, never a
+      // second copy (this button and the display's Save share it).
       const result = await saveToLibrary(
         auth.currentUser.uid,
         "teacher-training",
         title,
         advice,
+        adviceContentId,
       );
       if (result.success) {
         setSavedToLib(true);
@@ -347,6 +361,30 @@ function TeacherTrainingContent() {
       setSavingToLib(false);
     }
   };
+
+  // VIDYA: what the teacher asked and the coaching on screen, so she can talk it
+  // through ("explain the second strategy", "how would that work in Class 3?").
+  // Only what the teacher already sees; strings are bounded by the contract.
+  useVidyaScreenContext("teacher-training", {
+    generatorTool: "teacher-training",
+    generationStatus: isLoading ? "generating" : advice ? "done" : "idle",
+    hasResult: advice !== null,
+    savedToLibrary: savedToLib,
+    currentQuestion: (watchedQuestion || "").trim() || null,
+    adviceStrategies: advice ? advice.advice.map((a) => a.strategy) : [],
+    advicePedagogies: advice ? advice.advice.map((a) => a.pedagogy) : [],
+  });
+  // The same handlers the buttons use; both create or update a My Library row,
+  // so VIDYA asks the teacher to confirm before running them.
+  useVidyaCapability("teacher-training.ask", ({ question }) => {
+    const q = (question || form.getValues("question") || "").trim();
+    if (!q) return;
+    form.setValue("question", q, { shouldValidate: true });
+    void form.handleSubmit(onSubmit)();
+  }, { enabled: !isLoading });
+  useVidyaCapability("teacher-training.save", handleSaveToLibrary, {
+    enabled: advice !== null && !savedToLib && !savingToLib,
+  });
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-8">
@@ -577,7 +615,7 @@ function TeacherTrainingContent() {
           <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest px-2">{t("Result")}</span>
           <hr className="flex-1 border-border/40" />
         </div>
-        <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4"><TeacherTrainingDisplay advice={advice} title={form.getValues("question")} selectedLanguage={selectedLanguage} /></div>
+        <div className="rounded-xl border border-border/60 border-l-4 border-l-primary/70 bg-primary/5 p-4"><TeacherTrainingDisplay advice={advice} title={form.getValues("question")} selectedLanguage={selectedLanguage} contentId={adviceContentId} /></div>
         {/* UX audit #7: save advice to library so the teacher can find it
             again later (separate from sharing publicly to community). */}
         <div className="flex flex-wrap gap-2 mt-3">

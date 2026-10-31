@@ -15,6 +15,7 @@ import {
   FileText,
   FlaskConical,
   Gauge,
+  GraduationCap,
   HeartPulse,
   Home,
   Library,
@@ -244,6 +245,14 @@ export function AppSidebar({ collapsed = false, onToggleCollapsed, forceFull = f
       tier: "secondary",
       items: [
         { key: "attendance", label: t("Attendance"), shortLabel: t("Class"), icon: ClipboardList, href: "/attendance", active: starts("/attendance") },
+      ],
+    },
+    {
+      // Back in the main nav (it was parked in Labs by the July IA refocus); always visible, never folded.
+      key: "training",
+      tier: "secondary",
+      items: [
+        { key: "teacher-training", label: t("Teacher Training"), shortLabel: t("Training"), icon: GraduationCap, href: "/teacher-training", active: starts("/teacher-training") },
       ],
     },
   ]
