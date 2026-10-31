@@ -82,7 +82,7 @@ export function FollowUpsPage({ view }: { view: DemoView }) {
                 title={admin ? t("Complaints & follow-ups") : t("Follow-ups")}
                 description={
                     admin
-                        ? t("What needs a person across the school: parents' complaints, promises to check, and families not reached.")
+                        ? t("What needs a person across the school: parents' complaints, promises to check, and parents not reached.")
                         : t("What your calls asked you to do next, and what parents said about your class.")
                 }
             />
@@ -108,8 +108,8 @@ export function CampaignsPage({ view }: { view: DemoView }) {
                 title={admin ? t("Campaigns") : t("Class notices")}
                 description={
                     admin
-                        ? t("Notices every family in the chosen classes hears in their own language: meetings, events and closures. Drafts wait for your approval.")
-                        : t("School notices that reach your classes' families. The principal approves and runs them.")
+                        ? t("Notices every parent in the chosen classes hears in their own language: meetings, events and closures. Drafts wait for your approval.")
+                        : t("School notices that reach your classes' parents. The principal approves and runs them.")
                 }
                 actions={
                     admin ? (
@@ -162,7 +162,7 @@ export function CampaignDetailPage({ view, id }: { view: DemoView; id: string })
                         {campaignTitle(t, c)} · {audienceText(t, c)} <CampaignStatusBadge status={c.status} />
                     </span>
                 }
-                description={`${factsText(t, c)} · ${fmt(t("{n} families"), { n: c.counts.guardians })} · ${fmt(t("created by {name}"), { name: c.createdByName })}`}
+                description={`${factsText(t, c)} · ${fmt(t("{n} parents"), { n: c.counts.guardians })} · ${fmt(t("created by {name}"), { name: c.createdByName })}`}
                 actions={admin ? <CampaignActions c={c} /> : undefined}
             />
             <Panel>

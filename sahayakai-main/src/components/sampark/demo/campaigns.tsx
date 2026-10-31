@@ -150,15 +150,15 @@ export function CampaignCard({ c, href, canManage }: { c: DemoCampaign; href: st
                 <div className="mt-4 grid items-center gap-4 sm:grid-cols-[1fr_auto]">
                     <div className="space-y-2">
                         <div className="flex items-baseline justify-between gap-2 text-sm">
-                            <span className="text-ink-600">{fmt(t("{n} of {total} families called"), { n: Math.max(0, called), total: c.counts.guardians - c.counts.blocked })}</span>
+                            <span className="text-ink-600">{fmt(t("{n} of {total} parents called"), { n: Math.max(0, called), total: c.counts.guardians - c.counts.blocked })}</span>
                             <span className="font-display text-lg font-semibold text-ink-900">{c.counts.heardKeyFact}</span>
                         </div>
-                        <ProgressBar value={Math.max(0, called)} max={c.counts.guardians - c.counts.blocked} tone={c.status === "completed" ? "done" : "live"} label={t("Families called")} />
+                        <ProgressBar value={Math.max(0, called)} max={c.counts.guardians - c.counts.blocked} tone={c.status === "completed" ? "done" : "live"} label={t("Parents called")} />
                         <p className="text-xs text-ink-500">{segmentsSummary(outcome.segments, (n) => String(n))}</p>
                     </div>
                 </div>
             )}
-            {c.status === "draft" && <p className="mt-3 text-sm text-ink-500">{fmt(t("Draft · {n} families · waiting for your approval"), { n: c.counts.guardians })}</p>}
+            {c.status === "draft" && <p className="mt-3 text-sm text-ink-500">{fmt(t("Draft · {n} parents · waiting for your approval"), { n: c.counts.guardians })}</p>}
         </>
     );
     return (
@@ -185,7 +185,7 @@ export function CampaignOutcomePanel({ c }: { c: DemoCampaign }) {
     const reachable = c.counts.guardians - c.counts.blocked;
     const pct = reachable > 0 ? Math.round((c.counts.heardKeyFact / reachable) * 100) : 0;
     return (
-        <Panel title={t("Outcomes so far")} description={t("Each family counts once, on their latest call.")}>
+        <Panel title={t("Outcomes so far")} description={t("Each parent counts once, on their latest call.")}>
             <OutcomeDonut segments={outcome.segments} label={t("Outcomes")} centre={`${pct}%`} caption={t("heard the notice")} />
         </Panel>
     );
@@ -272,7 +272,7 @@ export function NewCampaignDialog({ open, onOpenChange, onCreated }: { open: boo
             <DialogContent className="max-w-lg">
                 <DialogHeader>
                     <DialogTitle>{t("New campaign")}</DialogTitle>
-                    <DialogDescription>{t("A notice every family in the chosen classes hears in their own language. It starts as a draft; nothing is called until you approve it.")}</DialogDescription>
+                    <DialogDescription>{t("A notice every parent in the chosen classes hears in their own language. It starts as a draft; nothing is called until you approve it.")}</DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                     <div className="space-y-2">
@@ -303,7 +303,7 @@ export function NewCampaignDialog({ open, onOpenChange, onCreated }: { open: boo
                         </div>
                     )}
                     <div className="space-y-2">
-                        <Label>{t("Families to call")}</Label>
+                        <Label>{t("Parents to call")}</Label>
                         <div className="flex flex-wrap gap-2">
                             <button type="button" aria-pressed={classes.size === 0} onClick={() => setClasses(new Set())} className={cn("focus-ring rounded-full border px-3 py-1 text-sm", classes.size === 0 ? "border-sampark-saffron bg-sampark-peach text-ink-900" : "border-sampark-line text-ink-600")}>
                                 <Users aria-hidden="true" className="mr-1 inline h-3.5 w-3.5" />
@@ -318,7 +318,7 @@ export function NewCampaignDialog({ open, onOpenChange, onCreated }: { open: boo
                                 );
                             })}
                         </div>
-                        <p className="text-xs text-ink-500">{fmt(t("{n} families"), { n: familiesFor([...classes].map((id) => ({ grade: Number(id.slice(0, -1)), section: id.slice(-1) }))) })}</p>
+                        <p className="text-xs text-ink-500">{fmt(t("{n} parents"), { n: familiesFor([...classes].map((id) => ({ grade: Number(id.slice(0, -1)), section: id.slice(-1) }))) })}</p>
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2">
                         <div className="space-y-2">

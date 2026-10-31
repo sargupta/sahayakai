@@ -113,7 +113,7 @@ export function SamparkOrgShell({ children }: { children: ReactNode }) {
             <SamparkAuthGate
                 icon={PhoneCall}
                 title={t("School calls")}
-                description={t("Sign in with your school administrator account to manage calls to families.")}
+                description={t("Sign in with your school administrator account to manage calls to parents.")}
             >
                 <OrgShellInner>{children}</OrgShellInner>
             </SamparkAuthGate>

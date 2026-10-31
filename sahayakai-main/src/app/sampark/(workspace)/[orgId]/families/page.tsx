@@ -102,13 +102,13 @@ function Suppressions() {
 
     return (
         <SectionCard
-            title={t("Families who asked to stop calls")}
+            title={t("Parents who asked to stop calls")}
             icon={PhoneOff}
-            description={t("A family that presses 9 twice is not called again for routine notices. The office should confirm with the family within two school days.")}
+            description={t("A parent who presses 9 twice is not called again for routine notices. The office should confirm with the parent within two school days.")}
         >
             {!rows && query.loading && <LoadingBlock rows={2} />}
             {query.error && <ErrorPanel error={query.error} onRetry={query.reload} />}
-            {rows && rows.length === 0 && <p className="type-body text-muted-foreground">{t("No family has asked to stop calls.")}</p>}
+            {rows && rows.length === 0 && <p className="type-body text-muted-foreground">{t("No parent has asked to stop calls.")}</p>}
             {rows && rows.length > 0 && (
                 <ul className="divide-y divide-border rounded-surface-md border border-border">
                     {rows.map((s) => (
@@ -157,9 +157,9 @@ function FamiliesContent() {
     return (
         <div className="space-y-6">
             <SectionCard
-                title={t("Families")}
+                title={t("Parents")}
                 icon={Users}
-                description={t("Families come from your school records. Here you record the language each family wants and the consent they have given.")}
+                description={t("Parents come from your school records. Here you record the language each parent wants and the consent they have given.")}
             >
                 <div className="grid gap-3 md:grid-cols-3">
                     <div className="space-y-2 md:col-span-2">
@@ -198,16 +198,16 @@ function FamiliesContent() {
                 {rows && rows.length === 0 && (
                     <EmptyState
                         icon={Users}
-                        title={q || language !== ALL ? t("No families match") : t("No families yet")}
-                        description={q || language !== ALL ? t("Try a different search or language.") : t("Import your school data from Settings to see families here.")}
+                        title={q || language !== ALL ? t("No parents match") : t("No parents yet")}
+                        description={q || language !== ALL ? t("Try a different search or language.") : t("Import your school data from Settings to see parents here.")}
                     />
                 )}
                 {rows && rows.length > 0 && (
                     <>
                         <p className="type-body text-muted-foreground" aria-live="polite">
                             {rows.length >= FAMILY_LIMIT
-                                ? fmt(t("Showing the first {count} families. Search to narrow down."), { count: f.number(rows.length) })
-                                : fmt(t("{count} families"), { count: f.number(rows.length) })}
+                                ? fmt(t("Showing the first {count} parents. Search to narrow down."), { count: f.number(rows.length) })
+                                : fmt(t("{count} parents"), { count: f.number(rows.length) })}
                         </p>
                         <ul className="space-y-3">
                             {rows.map((g) => (

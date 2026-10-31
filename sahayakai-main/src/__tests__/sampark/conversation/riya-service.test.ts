@@ -25,6 +25,9 @@ import {
     handleRiyaWebhook,
     listRiyaCalls,
     previewRiyaCall,
+    purgeExpiredRiyaTranscripts,
+    runScheduledTranscriptPurge,
+    riyaOverview,
     reconcileRiyaCall,
     reviewRiyaCall,
     riyaAvailability,
@@ -565,7 +568,14 @@ describe('post-call webhook', () => {
         expect(await handleRiyaWebhook(s.deps, body, sign(body, ts))).toEqual({ status: 200, body: { ok: true } });
         const detail = await getRiyaCall(s.deps, ORG, call.id);
         expect(detail.call).toMatchObject({ state: 'completed', durationSeconds: 47, dataCollection: { ptm_attendance: 'can_attend', good_time_to_talk: 'yes' } });
-        expect(detail.transcript).toHaveLength(2);
+        // Stored server-side with speaker roles and order; never part of the response.
+        expect((await s.calls.getCall(ORG, call.id))?.transcript).toEqual([
+            { role: 'agent', message: 'Hello', timeInCallSecs: null },
+            { role: 'user', message: 'Yes, I can come.', timeInCallSecs: null },
+        ]);
+        expect(detail).not.toHaveProperty('transcript');
+        expect(detail.call).not.toHaveProperty('transcript');
+        expect(JSON.stringify(detail)).not.toContain('I can come');
         const before = JSON.stringify(await s.calls.getCall(ORG, call.id));
         expect((await handleRiyaWebhook(s.deps, body, sign(body, ts))).status).toBe(200);
         expect(JSON.stringify(await s.calls.getCall(ORG, call.id))).toBe(before);
@@ -646,7 +656,7 @@ describe('post-call webhook', () => {
         const body = postCall('conv_abc123');
         await handleRiyaWebhook(s.deps, body, sign(body, ts));
         s.clock.advance(8 * 86_400_000);
-        expect((await getRiyaCall(s.deps, ORG, call.id)).transcript).toBeNull();
+        await getRiyaCall(s.deps, ORG, call.id);
         expect((await s.calls.getCall(ORG, call.id))?.transcript).toBeNull();
     });
 
@@ -655,7 +665,110 @@ describe('post-call webhook', () => {
         const { call } = await startRiyaCall(s.deps, ORG, ADMIN, await startInput(s.deps));
         const body = postCall('conv_abc123');
         await handleRiyaWebhook(s.deps, body, sign(body, ts));
-        expect((await getRiyaCall(s.deps, ORG, call.id)).transcript).toBeNull();
+        expect((await s.calls.getCall(ORG, call.id))?.transcript).toBeNull();
+        // The synopsis is still written from the provider's transcript.
+        expect((await getRiyaCall(s.deps, ORG, call.id)).call.synopsis?.bullets.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it('retention never exceeds 7 days, whatever the env asks for', async () => {
+        const s = await setup({ mode: 'test', env: { ...elevenEnv(), SAMPARK_RIYA_STORE_TRANSCRIPTS: 'true', SAMPARK_RIYA_TRANSCRIPT_DAYS: '90' } });
+        const { call } = await startRiyaCall(s.deps, ORG, ADMIN, await startInput(s.deps));
+        const body = postCall('conv_abc123');
+        await handleRiyaWebhook(s.deps, body, sign(body, ts));
+        const stored = await s.calls.getCall(ORG, call.id);
+        expect(Date.parse(stored!.transcriptExpiresAt!) - s.clock.now().getTime()).toBe(7 * 86_400_000);
+    });
+
+    it('the retention sweep deletes expired transcripts without anyone opening the call', async () => {
+        const { s, call } = await started();
+        const body = postCall('conv_abc123');
+        await handleRiyaWebhook(s.deps, body, sign(body, ts));
+        expect(await purgeExpiredRiyaTranscripts(s.deps)).toBe(0);
+        s.clock.advance(8 * 86_400_000);
+        expect(await purgeExpiredRiyaTranscripts(s.deps)).toBe(1);
+        const stored = await s.calls.getCall(ORG, call.id);
+        expect(stored?.transcript).toBeNull();
+        expect(stored?.synopsis?.bullets.length).toBeGreaterThanOrEqual(3); // the synopsis outlives the transcript
+        expect(await purgeExpiredRiyaTranscripts(s.deps)).toBe(0);
+    });
+});
+
+describe('call synopsis', () => {
+    const ts = Math.floor(WED_11_IST.getTime() / 1000);
+    const env = { ...elevenEnv(), SAMPARK_RIYA_STORE_TRANSCRIPTS: 'true', SAMPARK_RIYA_TRANSCRIPT_DAYS: '7' };
+
+    it('the model writes it once; webhook redelivery and status checks never rewrite it', async () => {
+        const s = await setup({ mode: 'test', env });
+        const synopsis = jest.fn(async () => ({ bullets: ['Riya invited the parent to the PTM.', 'The parent said they can attend.', 'No callback was requested.'], callbackRequest: null }));
+        s.deps.synopsis = synopsis;
+        const { call } = await startRiyaCall(s.deps, ORG, ADMIN, await startInput(s.deps));
+        const body = postCall('conv_abc123');
+        await handleRiyaWebhook(s.deps, body, sign(body, ts));
+        await handleRiyaWebhook(s.deps, body, sign(body, ts));
+        const first = (await getRiyaCall(s.deps, ORG, call.id)).call.synopsis;
+        expect(first).toMatchObject({ source: 'ai', bullets: ['Riya invited the parent to the PTM.', 'The parent said they can attend.', 'No callback was requested.'] });
+        // A manual Check status on the finished call (the same provider data) changes nothing.
+        const data = JSON.stringify(JSON.parse(body).data);
+        s.deps.http = { fetchImpl: jest.fn(async () => new Response(data, { status: 200 })) as unknown as typeof fetch };
+        await reconcileRiyaCall(s.deps, ORG, call.id);
+        expect(synopsis).toHaveBeenCalledTimes(1);
+        expect((await getRiyaCall(s.deps, ORG, call.id)).call.synopsis).toEqual(first);
+    });
+
+    it('a model failure falls back to the rules synopsis, which only restates stored facts', async () => {
+        const s = await setup({ mode: 'test', env });
+        s.deps.synopsis = jest.fn(async () => { throw new Error('model down'); });
+        const { call } = await startRiyaCall(s.deps, ORG, ADMIN, await startInput(s.deps));
+        const body = postCall('conv_abc123');
+        await handleRiyaWebhook(s.deps, body, sign(body, ts));
+        const syn = (await getRiyaCall(s.deps, ORG, call.id)).call.synopsis!;
+        expect(syn.source).toBe('rules');
+        expect(syn.bullets).toContain('Riya collected 2 answers from the listener.');
+        expect(syn.callbackRequest).toBeNull();
+    });
+
+    it('a model bullet claiming a callback was scheduled is rejected', async () => {
+        const s = await setup({ mode: 'test', env });
+        s.deps.synopsis = jest.fn(async () => ({ bullets: ['The parent was busy.', 'A callback was scheduled for 5 PM tomorrow.', 'Riya ended the call.'], callbackRequest: 'tomorrow at 5 PM' }));
+        const { call } = await startRiyaCall(s.deps, ORG, ADMIN, await startInput(s.deps));
+        const body = postCall('conv_abc123');
+        await handleRiyaWebhook(s.deps, body, sign(body, ts));
+        const syn = (await getRiyaCall(s.deps, ORG, call.id)).call.synopsis!;
+        expect(syn.source).toBe('rules');
+        expect(syn.bullets.join(' ')).not.toMatch(/scheduled/i);
+    });
+
+    it('a call that never connected gets an honest synopsis and no transcript', async () => {
+        const s = await setup({ mode: 'test', env });
+        s.deps.synopsis = jest.fn();
+        const { call } = await startRiyaCall(s.deps, ORG, ADMIN, await startInput(s.deps));
+        const body = JSON.stringify({ type: 'call_initiation_failure', event_timestamp: ts, data: { agent_id: AGENT, conversation_id: 'conv_abc123', failure_reason: 'no-answer', metadata: { type: 'sip', body: {} } } });
+        await handleRiyaWebhook(s.deps, body, sign(body, ts));
+        const stored = await s.calls.getCall(ORG, call.id);
+        expect(stored?.transcript).toBeNull();
+        expect(stored?.synopsis?.bullets[0]).toMatch(/nobody answered|could not be placed|line was busy/);
+        expect(s.deps.synopsis).not.toHaveBeenCalled();
+    });
+
+    it('a provider outage on Check status changes nothing and reports the error', async () => {
+        const s = await setup({ mode: 'test', env });
+        const { call } = await startRiyaCall(s.deps, ORG, ADMIN, await startInput(s.deps));
+        s.deps.http = { fetchImpl: jest.fn(async () => new Response('', { status: 503 })) as unknown as typeof fetch };
+        await expect(refusalCode(reconcileRiyaCall(s.deps, ORG, call.id))).resolves.toBe('PROVIDER_ERROR');
+        const stored = await s.calls.getCall(ORG, call.id);
+        expect(stored).toMatchObject({ state: 'initiated', transcript: null });
+        expect(stored?.synopsis ?? null).toBeNull();
+    });
+
+    it('the console overview, list and detail carry no transcript text', async () => {
+        const s = await setup({ mode: 'test', env });
+        const { call } = await startRiyaCall(s.deps, ORG, ADMIN, await startInput(s.deps));
+        const body = postCall('conv_abc123');
+        await handleRiyaWebhook(s.deps, body, sign(body, ts));
+        expect((await s.calls.getCall(ORG, call.id))?.transcript).not.toBeNull();
+        const payload = JSON.stringify([await riyaOverview(s.deps, ORG), await listRiyaCalls(s.deps, ORG), await getRiyaCall(s.deps, ORG, call.id)]);
+        expect(payload).not.toContain('Yes, I can come.');
+        expect(payload).not.toContain('"transcript"');
     });
 });
 
@@ -694,5 +807,196 @@ describe('privacy of logs', () => {
         expect(text).not.toContain(API_KEY);
         expect(text).not.toContain('I can come');
         expect(text).not.toContain('Asha');
+    });
+});
+
+describe('result lifecycle: provisional → final, late transcripts, out-of-order deliveries', () => {
+    const ts = Math.floor(WED_11_IST.getTime() / 1000);
+    const env = { ...elevenEnv(), SAMPARK_RIYA_STORE_TRANSCRIPTS: 'true', SAMPARK_RIYA_TRANSCRIPT_DAYS: '7' };
+    const TURNS = [
+        { role: 'agent', message: 'Namaste, this is Riya, an AI assistant from the school.', time_in_call_secs: 0 },
+        { role: 'user', message: 'I am busy now, call me tomorrow at 5 PM.', time_in_call_secs: 7 },
+        { role: 'agent', message: 'Of course. Thank you.', time_in_call_secs: 12 },
+    ];
+    /** What GET /v1/convai/conversations/{id} returns for a finished call (read-only). */
+    const providerReads = (data: Record<string, unknown>) =>
+        jest.fn(async () => new Response(JSON.stringify(JSON.parse(postCall('conv_abc123', data)).data), { status: 200 })) as unknown as typeof fetch;
+    const setupWith = async (synopsis?: RiyaDeps['synopsis']) => {
+        const s = await setup({ mode: 'test', env });
+        if (synopsis) s.deps.synopsis = synopsis;
+        const { call } = await startRiyaCall(s.deps, ORG, ADMIN, await startInput(s.deps));
+        return { s, call };
+    };
+    const model = () => jest.fn(async () => ({ bullets: ['Riya shared the PTM invitation.', 'The parent said they were busy.', 'The parent asked to be called tomorrow at 5 PM.'], callbackRequest: 'tomorrow at 5 PM' }));
+
+    it('A. Check status before the transcript exists: provisional; a later webhook with the transcript stores it and makes the synopsis final', async () => {
+        const synopsis = model();
+        const { s, call } = await setupWith(synopsis);
+        s.deps.http = { fetchImpl: providerReads({ transcript: [] }) };
+        await reconcileRiyaCall(s.deps, ORG, call.id);
+        let stored = await s.calls.getCall(ORG, call.id);
+        expect(stored).toMatchObject({ state: 'completed', durationSeconds: 47, transcript: [], synopsis: { status: 'provisional', source: 'rules', transcriptTurns: 0 } });
+        expect(stored?.synopsis?.bullets.join(' ')).not.toMatch(/busy|5 PM/); // nothing invented before the conversation is known
+        expect(synopsis).not.toHaveBeenCalled();
+
+        const body = postCall('conv_abc123', { transcript: TURNS });
+        expect((await handleRiyaWebhook(s.deps, body, sign(body, ts))).status).toBe(200);
+        stored = await s.calls.getCall(ORG, call.id);
+        expect(stored?.transcript).toEqual([
+            { role: 'agent', message: TURNS[0].message, timeInCallSecs: 0 },
+            { role: 'user', message: TURNS[1].message, timeInCallSecs: 7 },
+            { role: 'agent', message: TURNS[2].message, timeInCallSecs: 12 },
+        ]);
+        expect(stored?.synopsis).toMatchObject({ status: 'final', source: 'ai', transcriptTurns: 3, callbackRequest: 'tomorrow at 5 PM' });
+        // Retention runs from the end of the call, not from the late arrival.
+        expect(Date.parse(stored!.transcriptExpiresAt!)).toBe(Date.parse(stored!.endedAt!) + 7 * 86_400_000);
+        expect(stored?.appliedEvents.filter((e) => e === 'post_call:conv_abc123')).toHaveLength(1);
+    });
+
+    it('B. auto-refresh (repeated Check status) fills a late transcript once, then nothing changes', async () => {
+        const synopsis = model();
+        const { s, call } = await setupWith(synopsis);
+        const body = postCall('conv_abc123', { transcript: [] });
+        await handleRiyaWebhook(s.deps, body, sign(body, ts)); // webhook first, without turns
+        expect((await s.calls.getCall(ORG, call.id))?.synopsis?.status).toBe('provisional');
+        s.deps.http = { fetchImpl: providerReads({ transcript: TURNS }) };
+        await reconcileRiyaCall(s.deps, ORG, call.id);
+        const after = JSON.stringify(await s.calls.getCall(ORG, call.id));
+        expect(JSON.parse(after).synopsis).toMatchObject({ status: 'final', transcriptTurns: 3 });
+        for (let i = 0; i < 3; i += 1) await reconcileRiyaCall(s.deps, ORG, call.id);
+        await handleRiyaWebhook(s.deps, postCall('conv_abc123', { transcript: TURNS }), sign(postCall('conv_abc123', { transcript: TURNS }), ts));
+        expect(JSON.stringify(await s.calls.getCall(ORG, call.id))).toBe(after);
+        expect(synopsis).toHaveBeenCalledTimes(1);
+    });
+
+    it('C. a final synopsis is never replaced by a later, poorer delivery (stale/out-of-order)', async () => {
+        const { s, call } = await setupWith(model());
+        const full = postCall('conv_abc123', { transcript: TURNS });
+        await handleRiyaWebhook(s.deps, full, sign(full, ts));
+        const before = JSON.stringify(await s.calls.getCall(ORG, call.id));
+        const empty = postCall('conv_abc123', { transcript: [], analysis: { call_successful: 'unknown', data_collection_results: {} }, metadata: { call_duration_secs: 3 } });
+        await handleRiyaWebhook(s.deps, empty, sign(empty, ts));
+        s.deps.http = { fetchImpl: providerReads({ transcript: [], metadata: { call_duration_secs: 3 } }) };
+        await reconcileRiyaCall(s.deps, ORG, call.id);
+        expect(JSON.stringify(await s.calls.getCall(ORG, call.id))).toBe(before);
+    });
+
+    it('D. an unfinished result first, the finished one later: the finished one is applied once', async () => {
+        const { s, call } = await setupWith();
+        const processing = postCall('conv_abc123', { status: 'processing', transcript: [] });
+        await handleRiyaWebhook(s.deps, processing, sign(processing, ts));
+        expect((await s.calls.getCall(ORG, call.id))?.state).toBe('unknown');
+        const done = postCall('conv_abc123', { transcript: TURNS });
+        await handleRiyaWebhook(s.deps, done, sign(done, ts));
+        const stored = await s.calls.getCall(ORG, call.id);
+        expect(stored).toMatchObject({ state: 'completed', durationSeconds: 47, failureReason: null });
+        expect(stored?.transcript).toHaveLength(3);
+        expect(stored?.appliedEvents.filter((e) => e === 'post_call:conv_abc123')).toHaveLength(1);
+        // ...and an unfinished one arriving after it changes nothing.
+        const snapshot = JSON.stringify(stored);
+        await handleRiyaWebhook(s.deps, processing, sign(processing, ts));
+        expect(JSON.stringify(await s.calls.getCall(ORG, call.id))).toBe(snapshot);
+    });
+
+    it('E. the provider never sends a transcript: the result says so; nothing is fabricated', async () => {
+        const { s, call } = await setupWith(model());
+        s.deps.http = { fetchImpl: providerReads({ transcript: null }) };
+        await reconcileRiyaCall(s.deps, ORG, call.id);
+        const stored = await s.calls.getCall(ORG, call.id);
+        expect(stored?.transcript).toEqual([]);
+        expect(stored?.synopsis).toMatchObject({ status: 'provisional', transcriptTurns: 0 });
+        expect(stored?.synopsis?.bullets).toContain('No conversation was recorded.');
+        expect(stored?.dataCollection).toMatchObject({ ptm_attendance: 'can_attend', good_time_to_talk: 'yes' }); // the actual answers, kept apart
+    });
+
+    it('F. a transcript deleted by retention is never stored again, whatever the provider still returns', async () => {
+        const { s, call } = await setupWith();
+        const full = postCall('conv_abc123', { transcript: TURNS });
+        await handleRiyaWebhook(s.deps, full, sign(full, ts));
+        s.clock.advance(8 * 86_400_000);
+        expect(await purgeExpiredRiyaTranscripts(s.deps)).toBe(1);
+        s.deps.http = { fetchImpl: providerReads({ transcript: TURNS }) };
+        await reconcileRiyaCall(s.deps, ORG, call.id);
+        await handleRiyaWebhook(s.deps, full, sign(full, Math.floor(s.clock.now().getTime() / 1000)));
+        const stored = await s.calls.getCall(ORG, call.id);
+        expect(stored).toMatchObject({ transcript: null, transcriptExpiresAt: null });
+        expect(stored?.transcriptPurgedAt).toBeTruthy();
+    });
+
+    it('H. a partial transcript first, the complete one later: transcript and synopsis are upgraded once, then nothing changes', async () => {
+        const synopsis = model();
+        const { s, call } = await setupWith(synopsis);
+        s.deps.http = { fetchImpl: providerReads({ transcript: TURNS.slice(0, 1) }) };
+        await reconcileRiyaCall(s.deps, ORG, call.id);
+        let stored = await s.calls.getCall(ORG, call.id);
+        expect(stored?.transcript).toHaveLength(1);
+        expect(stored?.synopsis).toMatchObject({ status: 'final', transcriptTurns: 1 });
+
+        const full = postCall('conv_abc123', { transcript: TURNS });
+        await handleRiyaWebhook(s.deps, full, sign(full, ts));
+        stored = await s.calls.getCall(ORG, call.id);
+        expect(stored?.transcript).toHaveLength(3);
+        expect(stored?.synopsis).toMatchObject({ status: 'final', source: 'ai', transcriptTurns: 3 });
+        expect(Date.parse(stored!.transcriptExpiresAt!)).toBe(Date.parse(stored!.endedAt!) + 7 * 86_400_000);
+        expect(synopsis).toHaveBeenCalledTimes(2);
+
+        // Retries and the shorter delivery arriving late change nothing and call no model.
+        const snapshot = JSON.stringify(stored);
+        await handleRiyaWebhook(s.deps, full, sign(full, ts));
+        await reconcileRiyaCall(s.deps, ORG, call.id);
+        expect(JSON.stringify(await s.calls.getCall(ORG, call.id))).toBe(snapshot);
+        expect(synopsis).toHaveBeenCalledTimes(2);
+        expect(stored?.appliedEvents.filter((e) => e === 'post_call:conv_abc123')).toHaveLength(1);
+    });
+
+    it('G. a callback request in the answers is reported as requested, never as scheduled', async () => {
+        const { s, call } = await setupWith(jest.fn(async () => ({ bullets: ['Riya shared the PTM invitation.', 'The parent was busy.', 'A call back is scheduled for tomorrow at 5 PM.'], callbackRequest: null })));
+        const body = postCall('conv_abc123', { transcript: TURNS, analysis: { call_successful: 'success', data_collection_results: { callback_requested_time: { value: 'tomorrow at 5 PM' } } } });
+        await handleRiyaWebhook(s.deps, body, sign(body, ts));
+        const syn = (await getRiyaCall(s.deps, ORG, call.id)).call.synopsis!;
+        expect(syn.callbackRequest).toBe('tomorrow at 5 PM');
+        expect(syn.bullets.join(' ')).toContain('Asked to be called back: "tomorrow at 5 PM".');
+        expect(syn.bullets.join(' ')).not.toMatch(/scheduled|booked|arranged/i);
+    });
+});
+
+describe('retention sweep', () => {
+    const ts = Math.floor(WED_11_IST.getTime() / 1000);
+    const env = { ...elevenEnv(), SAMPARK_RIYA_STORE_TRANSCRIPTS: 'true', SAMPARK_RIYA_TRANSCRIPT_DAYS: '7' };
+
+    it('pages through every expired transcript (oldest first, bounded) and touches only transcript fields', async () => {
+        const s = await setup({ mode: 'test', env });
+        const { call } = await startRiyaCall(s.deps, ORG, ADMIN, await startInput(s.deps));
+        const body = postCall('conv_abc123');
+        await handleRiyaWebhook(s.deps, body, sign(body, ts));
+        const real = (await s.calls.getCall(ORG, call.id))!;
+        // 7 more old calls with transcripts, beyond any "newest N" window; one fresh call that must stay.
+        for (let i = 0; i < 7; i += 1) {
+            await s.calls.createCallIfAbsent({ ...real, id: `old-${i}`, createdAt: `2026-09-0${i + 1}T05:00:00.000Z`, transcriptExpiresAt: `2026-09-1${i}T05:00:00.000Z`, appliedEvents: [] });
+        }
+        const freshExpiry = new Date(s.clock.now().getTime() + 30 * 86_400_000).toISOString();
+        await s.calls.createCallIfAbsent({ ...real, id: 'fresh', transcriptExpiresAt: freshExpiry });
+        s.clock.advance(8 * 86_400_000);
+        expect(await purgeExpiredRiyaTranscripts(s.deps, { pageSize: 3, maxPages: 2 })).toBe(6); // bounded per run
+        expect(await purgeExpiredRiyaTranscripts(s.deps, { pageSize: 3, maxPages: 2 })).toBe(2); // the rest next run
+        expect(await purgeExpiredRiyaTranscripts(s.deps, { pageSize: 3, maxPages: 2 })).toBe(0); // repeatable, no-op
+        for (const id of [call.id, ...Array.from({ length: 7 }, (_, i) => `old-${i}`)]) {
+            const c = (await s.calls.getCall(ORG, id))!;
+            expect(c).toMatchObject({ transcript: null, transcriptExpiresAt: null, state: 'completed', dataCollection: real.dataCollection, guardianId: real.guardianId });
+            expect(c.synopsis?.bullets.length).toBeGreaterThanOrEqual(3);
+        }
+        expect((await s.calls.getCall(ORG, 'fresh'))?.transcript).toHaveLength(2);
+        expect(await s.calls.getCall(OTHER_ORG, call.id)).toBeNull();
+    });
+});
+
+describe('scheduled retention sweep', () => {
+    it('runs at most once an hour across every instance (Firestore lease), then again', async () => {
+        const s = await setup({ mode: 'test', env: { ...elevenEnv(), SAMPARK_RIYA_STORE_TRANSCRIPTS: 'true' } });
+        expect(await runScheduledTranscriptPurge(s.deps)).toBe(0);
+        expect(await runScheduledTranscriptPurge(s.deps)).toBeNull(); // same hour: skipped
+        expect(await runScheduledTranscriptPurge({ ...s.deps })).toBeNull(); // another instance: skipped too
+        s.clock.advance(60 * 60_000 + 1);
+        expect(await runScheduledTranscriptPurge(s.deps)).toBe(0);
     });
 });

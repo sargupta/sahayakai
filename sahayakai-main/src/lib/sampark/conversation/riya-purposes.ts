@@ -11,10 +11,10 @@
  * never reach the wire: the console sends a `RiyaPurpose`, validated by
  * `RiyaPurposeSchema`, and nothing else.
  *
- * Variables: the agent's prompt references fourteen `{{…}}` variables. ElevenLabs
+ * Variables: the agent's prompt references nineteen `{{…}}` variables. ElevenLabs
  * refuses to start a conversation whose prompt references a variable the caller did
- * not send (and only ten of the fourteen have placeholders), so every call sends ALL
- * fourteen: the ones the workflow uses carry verified facts, the rest are the empty
+ * not send (and only twelve of the nineteen have placeholders), so every call sends ALL
+ * nineteen: the ones the workflow uses carry verified facts, the rest are the empty
  * string, which the prompt defines as "not provided" (§7 of the agent prompt).
  */
 
@@ -33,9 +33,27 @@ export const RIYA_PURPOSES = [
 
 export type RiyaPurpose = (typeof RIYA_PURPOSES)[number];
 
+/**
+ * Workflows the updated agent (version …dvdded, 30 Oct 2026) also routes on, which Sahayak
+ * does NOT offer: each speaks a child-specific academic, behaviour, homework, achievement or
+ * support fact, and Sahayak has no verified record to fill it from. Never sent as a
+ * call_purpose; listed so the contract test knows every edge on the agent.
+ */
+export const RIYA_AGENT_PURPOSES_NOT_OFFERED = [
+    'academic_performance',
+    'classroom_behaviour',
+    'homework_followup',
+    'student_achievement',
+    'student_support',
+] as const;
+
 export const RiyaPurposeSchema = z.enum(RIYA_PURPOSES);
 
-/** Every `{{variable}}` the agent prompt and workflow nodes reference (export of 15 Oct 2026). */
+/**
+ * Every `{{variable}}` the agent prompt and workflow nodes reference (live agent, 30 Oct 2026).
+ * The last five are read only by the RIYA_AGENT_PURPOSES_NOT_OFFERED nodes and are always
+ * sent as the empty string, never filled with an invented fact.
+ */
 export const RIYA_VARIABLES = [
     'school_name',
     'call_purpose',
@@ -51,6 +69,11 @@ export const RIYA_VARIABLES = [
     'closure_date',
     'closure_reason',
     'transport_information',
+    'academic_update',
+    'behaviour_summary',
+    'assignment_details',
+    'achievement_details',
+    'followup_details',
 ] as const;
 
 export type RiyaVariable = (typeof RIYA_VARIABLES)[number];

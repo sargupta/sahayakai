@@ -95,7 +95,7 @@ function useSections(orgId: string | undefined, liveCount: number): NavSection[]
                     badge: liveCount > 0 ? { text: String(liveCount), label: fmt(t("{count} live"), { count: liveCount }) } : null,
                 },
                 { key: "calls", label: t("Calls"), icon: Phone, href: href(`${base}/calls`), active: under("/calls") },
-                { key: "families", label: t("Families"), icon: Users, href: href(`${base}/families`), active: under("/families") },
+                { key: "families", label: t("Parents"), icon: Users, href: href(`${base}/families`), active: under("/families") },
             ],
         },
         {

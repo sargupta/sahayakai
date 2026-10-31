@@ -54,6 +54,7 @@ import {
     type ConversationCall,
     type ConversationCallView,
     type ConversationProviderKind,
+    type ConversationTranscriptTurn,
 } from '@/lib/sampark/conversation/types';
 import { MAX_WEBHOOK_BYTES, parseRiyaWebhook, verifyElevenLabsSignature, type RiyaWebhookEvent } from '@/lib/sampark/conversation/webhook';
 import { hashId } from '@/lib/sampark/intents';
@@ -61,6 +62,7 @@ import { decryptPhone, hashPhone } from '@/lib/sampark/phone';
 import { evaluateGate, FREQUENCY_WINDOW_MS } from '@/lib/sampark/policy/gate';
 import { SAMPARK_NONPROD_DATABASE } from '@/lib/sampark/repo/factory';
 import { SARGVISION_ORG_ID } from '@/lib/sampark/sargvision';
+import { acceptSynopsis, rulesSynopsis, spokenTurns, synopsisNeedsWrite, type RiyaSynopsis, type SynopsisInput } from '@/lib/sampark/conversation/synopsis';
 import { pauseStopsPurpose } from '@/lib/sampark/policy/pause';
 import { type Clock, type SamparkRepo, systemClock } from '@/lib/sampark/ports';
 import type { BlockReason, CallDestination, Campaign, SamparkGuardian, SamparkSchool, SamparkStudent } from '@/types/sampark';
@@ -77,7 +79,8 @@ export const INITIATING_LEASE_MS = 2 * 60_000;
 /** The per-school single-flight lock: ring timeout + max conversation (10 min) + margin. */
 export const RIYA_LOCK_TTL_MS = 15 * 60_000;
 export const DEFAULT_TEST_DAILY_CAP = 5;
-export const DEFAULT_TRANSCRIPT_DAYS = 30;
+/** The privacy policy's retention: a stored transcript lives at most 7 days (the provider's own copy is deleted after 7 too). */
+export const DEFAULT_TRANSCRIPT_DAYS = 7;
 /** An unknown webhook conversation younger than this is answered 503 so ElevenLabs retries (the link may not be written yet). */
 export const UNLINKED_RETRY_WINDOW_SECONDS = 15 * 60;
 
@@ -97,10 +100,20 @@ export interface RiyaDeps {
     http?: HttpDeps;
     /** Where a parent's "call me back" becomes a proposed callback. Absent: not recorded. */
     callbacks?: CallbackRepo;
+    /** Writes a call synopsis with the model (real calls only). Absent or failing: the rules synopsis. */
+    synopsis?: (input: SynopsisInput) => Promise<{ bullets: string[]; callbackRequest: string | null }>;
 }
 
 export async function riyaDeps(ctx: { repo: SamparkRepo; clock: Clock }): Promise<RiyaDeps> {
-    return { repo: ctx.repo, clock: ctx.clock, wallClock: systemClock, calls: await getConversationRepo(), callbacks: await getCallbackRepo() };
+    return {
+        repo: ctx.repo,
+        clock: ctx.clock,
+        wallClock: systemClock,
+        calls: await getConversationRepo(),
+        callbacks: await getCallbackRepo(),
+        // Loaded on first use, so routes that never finish a call never load the model client.
+        synopsis: async (input) => (await import('@/ai/flows/riya-call-synopsis')).generateRiyaSynopsis(input),
+    };
 }
 
 // ── Flags and configuration ─────────────────────────────────────────────────
@@ -115,7 +128,8 @@ function storeTranscripts(env: Env): boolean {
 
 function transcriptDays(env: Env): number {
     const n = Number(env.SAMPARK_RIYA_TRANSCRIPT_DAYS);
-    return Number.isInteger(n) && n >= 1 && n <= 90 ? n : DEFAULT_TRANSCRIPT_DAYS;
+    // Shorter is allowed; longer never: the env cannot turn 7-day storage into long-term storage.
+    return Number.isInteger(n) && n >= 1 && n <= DEFAULT_TRANSCRIPT_DAYS ? n : DEFAULT_TRANSCRIPT_DAYS;
 }
 
 function testDailyCap(env: Env): number {
@@ -903,7 +917,101 @@ async function applyEvent(deps: RiyaDeps, orgId: string, callId: string, event: 
         return next;
     });
     if (after && changed && isTerminalConversationState(after.state)) await settle(deps, after);
-    return after;
+    if (after && !changed && event.kind === 'post_call' && after.state === 'completed') {
+        // Already applied, e.g. a status check recorded the result before the provider had the
+        // transcript: a later delivery (webhook or status check) may only fill what is missing.
+        await backfillTranscript(deps, orgId, callId, event.transcript);
+    }
+    if (after && isTerminalConversationState(after.state)) {
+        await ensureSynopsis(deps, orgId, callId, event.kind === 'post_call' ? event.transcript : after.transcript ?? []);
+    }
+    return (await deps.calls.getCall(orgId, callId)) ?? after;
+}
+
+/** Stores a transcript that arrived after its result was applied: once, only within retention. */
+async function backfillTranscript(deps: RiyaDeps, orgId: string, callId: string, transcript: ConversationTranscriptTurn[]): Promise<void> {
+    const env = deps.env ?? process.env;
+    if (!storeTranscripts(env) || spokenTurns(transcript) === 0) return;
+    const now = deps.clock.now();
+    const days = transcriptDays(env);
+    await deps.calls.mutateCall(orgId, callId, (c) => (!mayBackfillTranscript(c, now, days, spokenTurns(transcript)) ? null : {
+        ...c,
+        transcript,
+        // Retention runs from the end of the call, not from the late arrival.
+        transcriptExpiresAt: new Date(Date.parse(c.endedAt ?? c.createdAt) + days * 86_400_000).toISOString(),
+        updatedAt: now.toISOString(),
+    }));
+}
+
+const PURPOSE_TEXT: Record<RiyaPurpose, string> = {
+    event_invitation: 'Event invitation',
+    ptm_invitation: 'PTM invitation',
+    holiday_notice: 'Holiday notice',
+    exam_schedule_notice: 'Exam schedule notice',
+    absence_notice: 'Absence notice',
+    emergency_closure: 'Emergency closure',
+};
+
+function synopsisOutcome(state: ConversationCall['state']): SynopsisInput['outcome'] {
+    return state === 'completed' || state === 'no_answer' || state === 'busy' || state === 'failed' ? state : 'unknown';
+}
+
+/**
+ * Writes the call's synopsis from the provider's transcript (whether or not the transcript itself
+ * is kept) and the collected answers. Without spoken turns it is 'provisional'; with them 'final'.
+ * Idempotent: a provisional one is replaced by a final one (a late transcript), a final one only by a
+ * more complete transcript, and an equal or poorer result changes nothing (no model call either). A model failure or a
+ * malformed answer falls back to the deterministic rules synopsis.
+ */
+async function ensureSynopsis(deps: RiyaDeps, orgId: string, callId: string, transcript: ConversationTranscriptTurn[]): Promise<void> {
+    const call = await deps.calls.getCall(orgId, callId);
+    if (!call || !isTerminalConversationState(call.state)) return;
+    const turns = spokenTurns(transcript);
+    // Only a missing synopsis, or a more complete transcript than the current one was written from.
+    if (!synopsisNeedsWrite(call.synopsis, turns)) return;
+    const now = deps.clock.now().toISOString();
+    const input: SynopsisInput = {
+        purposeLabel: PURPOSE_TEXT[call.riyaPurpose] ?? 'Riya',
+        announcement: call.announcement,
+        outcome: synopsisOutcome(call.state),
+        durationSeconds: call.durationSeconds,
+        answers: call.dataCollection,
+        stopRequested: call.stopRequested,
+        transcript,
+    };
+    let synopsis: RiyaSynopsis | null = null;
+    if (call.provider === 'elevenlabs' && deps.synopsis && turns > 0) {
+        try {
+            synopsis = acceptSynopsis(await deps.synopsis(input), now);
+        } catch (err) {
+            logger.warn('Riya synopsis fell back to rules', LOG, { orgId, callId, error: err instanceof Error ? err.message.slice(0, 120) : 'unknown' });
+        }
+    }
+    // A request the agent collected always wins over the model's reading.
+    const rules = rulesSynopsis(input, now);
+    const written: RiyaSynopsis = {
+        ...(synopsis ? { ...synopsis, callbackRequest: rules.callbackRequest ?? synopsis.callbackRequest } : rules),
+        status: turns > 0 ? 'final' : 'provisional',
+        transcriptTurns: turns,
+    };
+    // Re-checked inside the transaction: a concurrent webhook or status check may have written first.
+    await deps.calls.mutateCall(orgId, callId, (c) => {
+        if (!synopsisNeedsWrite(c.synopsis, turns)) return null;
+        return { ...c, synopsis: written, updatedAt: now };
+    });
+}
+
+/**
+ * Whether a transcript that arrives late (a status check after the event was applied) may still be
+ * stored: only when it is more complete than the one already kept, never once retention has deleted
+ * it, and never past the retention window of the call.
+ */
+function mayBackfillTranscript(call: ConversationCall, now: Date, days: number, incomingTurns: number): boolean {
+    if (call.transcript && spokenTurns(call.transcript) >= incomingTurns) return false;
+    if (call.transcriptPurgedAt) return false; // retention already deleted it: never again
+    if (call.transcriptExpiresAt && Date.parse(call.transcriptExpiresAt) <= now.getTime()) return false; // due for deletion
+    const ended = Date.parse(call.endedAt ?? call.createdAt);
+    return now.getTime() < ended + days * 86_400_000;
 }
 
 /** Terminal side effects: free the school's slot, note a stop request, audit. Idempotent. */
@@ -1007,13 +1115,71 @@ async function maintain(deps: RiyaDeps, call: ConversationCall): Promise<Convers
     if (call.state === 'initiating' && new Date(call.leaseUntil).getTime() < now.getTime()) {
         next = { ...call, state: 'unknown', failureReason: 'lost_while_initiating', endedAt: at, updatedAt: at };
     }
-    if (call.transcript && call.transcriptExpiresAt && new Date(call.transcriptExpiresAt).getTime() < now.getTime()) {
-        next = { ...(next ?? call), transcript: null, updatedAt: at };
+    if (next) {
+        const target = next;
+        const seen = call.updatedAt;
+        call = (await deps.calls.mutateCall(call.orgId, call.id, (c) => (c.updatedAt === seen ? target : null))) ?? call;
     }
-    if (!next) return call;
-    const target = next;
-    const stored = await deps.calls.mutateCall(call.orgId, call.id, (c) => (c.updatedAt === call.updatedAt ? target : null));
-    return stored ?? call;
+    return transcriptDue(call, now) ? (await purgeTranscript(deps, call.orgId, call.id, now)) ?? call : call;
+}
+
+function transcriptDue(call: ConversationCall, now: Date): boolean {
+    return call.transcriptExpiresAt !== null && Date.parse(call.transcriptExpiresAt) <= now.getTime();
+}
+
+/**
+ * Deletes ONE call's stored transcript (only the transcript fields; the call record, its answers
+ * and its synopsis stay). Re-checked inside the transaction, so it is safe to run twice.
+ */
+async function purgeTranscript(deps: RiyaDeps, orgId: string, callId: string, now: Date): Promise<ConversationCall | null> {
+    const at = now.toISOString();
+    return deps.calls.mutateCall(orgId, callId, (c) => (!transcriptDue(c, now) ? null : {
+        ...c, transcript: null, transcriptExpiresAt: null, transcriptPurgedAt: at, updatedAt: at,
+    }));
+}
+
+/** Bounds of one sweep: pages per school, and calls per page. */
+export const PURGE_PAGE_SIZE = 100;
+export const PURGE_MAX_PAGES = 10;
+
+/**
+ * Scheduled retention sweep (the dispatch job, at most hourly): deletes every expired Riya
+ * transcript in every Sampark school, not only those someone happens to open. Queries the expired
+ * ones directly (oldest first, paged); a purged call drops out of the query, so each page is fresh.
+ * Bounded per school per run; touches only transcript fields. Returns how many were deleted.
+ */
+export async function purgeExpiredRiyaTranscripts(deps: RiyaDeps, opts: { pageSize?: number; maxPages?: number } = {}): Promise<number> {
+    const pageSize = opts.pageSize ?? PURGE_PAGE_SIZE;
+    const maxPages = opts.maxPages ?? PURGE_MAX_PAGES;
+    const now = deps.clock.now();
+    let purged = 0;
+    for (const school of await deps.repo.listSchools()) {
+        for (let page = 0; page < maxPages; page += 1) {
+            const due = await deps.calls.listExpiredTranscripts(school.orgId, now, pageSize);
+            let progressed = 0;
+            for (const call of due) {
+                if (call.orgId !== school.orgId) continue;
+                if (await purgeTranscript(deps, school.orgId, call.id, now)) progressed += 1;
+            }
+            purged += progressed;
+            if (due.length < pageSize || progressed === 0) break;
+        }
+    }
+    if (purged > 0) logger.info('Riya transcripts purged', LOG, { purged });
+    return purged;
+}
+
+export const PURGE_LOCK_NAME = 'riya-transcript-purge';
+export const PURGE_EVERY_MS = 60 * 60_000;
+
+/**
+ * The scheduler's entry point: at most one sweep per hour across every instance and restart.
+ * The lease is taken and never released, so it simply expires an hour later. Returns the number
+ * deleted, or null when this tick was not the one to sweep.
+ */
+export async function runScheduledTranscriptPurge(deps: RiyaDeps): Promise<number | null> {
+    if (!(await deps.repo.acquireLock(PURGE_LOCK_NAME, `purge-${crypto.randomUUID()}`, deps.clock.now(), PURGE_EVERY_MS))) return null;
+    return purgeExpiredRiyaTranscripts(deps);
 }
 
 async function viewOf(deps: RiyaDeps, call: ConversationCall): Promise<ConversationCallView> {
@@ -1047,16 +1213,16 @@ export async function riyaOverview(deps: RiyaDeps, orgId: string): Promise<{ ava
     return { availability: riyaAvailability(school, deps.env ?? process.env, deps.clock.now()), calls: await listRiyaCalls(deps, orgId, 50) };
 }
 
+/** A call for the console. The transcript is never included: it stays in the database (see synopsis). */
 export interface RiyaCallDetail {
     call: ConversationCallView;
-    transcript: ConversationCall['transcript'];
 }
 
 export async function getRiyaCall(deps: RiyaDeps, orgId: string, callId: string): Promise<RiyaCallDetail> {
     const call = await deps.calls.getCall(orgId, callId);
     if (!call) throw notFound('CALL_NOT_FOUND', 'Call not found');
     const current = await maintain(deps, call);
-    return { call: await viewOf(deps, current), transcript: current.transcript };
+    return { call: await viewOf(deps, current) };
 }
 
 export async function reconcileRiyaCall(deps: RiyaDeps, orgId: string, callId: string): Promise<RiyaCallDetail> {
@@ -1092,21 +1258,8 @@ export async function reconcileRiyaCall(deps: RiyaDeps, orgId: string, callId: s
         // and a webhook record exactly the same outcome (transcript only when stored, with expiry).
         const event = parseRiyaWebhook(JSON.stringify({ type: 'post_call_transcription', event_timestamp: Math.floor(deps.clock.now().getTime() / 1000), data: fetched.snapshot.raw }));
         if (event && event.kind === 'post_call' && event.conversationId === conversationId) {
-            const current = await deps.calls.getCall(orgId, callId);
-            if (current?.appliedEvents.includes(event.eventId)) {
-                // Already applied (e.g. while transcripts were off): only fill a missing transcript, once.
-                if (storeTranscripts(env) && current.transcript === null) {
-                    const now = deps.clock.now();
-                    await deps.calls.mutateCall(orgId, callId, (c) => (c.transcript !== null ? null : {
-                        ...c,
-                        transcript: event.transcript,
-                        transcriptExpiresAt: new Date(now.getTime() + transcriptDays(env) * 86_400_000).toISOString(),
-                        updatedAt: now.toISOString(),
-                    }));
-                }
-            } else {
-                await applyEvent(deps, orgId, callId, event);
-            }
+            // The same path as the webhook: apply once, later fill a missing transcript, then the synopsis.
+            await applyEvent(deps, orgId, callId, event);
             return getRiyaCall(deps, orgId, callId);
         }
     }
@@ -1117,6 +1270,8 @@ export async function reconcileRiyaCall(deps: RiyaDeps, orgId: string, callId: s
         return next;
     });
     if (after && changed && isTerminalConversationState(after.state)) await settle(deps, after);
+    // Ended without a conversation (failed, busy, no answer): the synopsis says so; no transcript will come.
+    if (after && isTerminalConversationState(after.state) && after.state !== 'completed') await ensureSynopsis(deps, orgId, callId, []);
     return getRiyaCall(deps, orgId, callId);
 }
 

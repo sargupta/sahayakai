@@ -11,7 +11,7 @@ import { useSamparkQuery } from "@/components/sampark/use-sampark-query";
  * It is the Sampark console's own Riya panel (purpose, facts, preview, confirmation, history and
  * "Check status") on the local school `sargvision-local`, fixed to this contact. The server checks
  * sign-in, school admin authority, the roster rules and the allow-list; nothing rings until the
- * person confirms "Place call".
+ * person confirms "Trigger Call".
  */
 export function SargvisionRiyaCall({ orgId, guardianId, studentId }: { orgId: string; guardianId: string; studentId: string }) {
     const school = useSamparkQuery((signal) => getSchool(orgId, { signal }), [orgId]);

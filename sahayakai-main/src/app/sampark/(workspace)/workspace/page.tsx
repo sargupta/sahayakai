@@ -94,7 +94,7 @@ function SamparkHomeContent() {
             width="default"
             className="w-full"
             title={t("Your schools")}
-            description={t("Call families in their own language with school notices: PTM invitations, event invitations and emergency closures. Parents hear your school name, never ours.")}
+            description={t("Call parents in their own language with school notices: PTM invitations, event invitations and emergency closures. Parents hear your school name, never ours.")}
         >
             {((query.loading && !query.data) || (only && !showAll)) && <LoadingBlock rows={2} />}
 
@@ -115,7 +115,7 @@ function SamparkHomeContent() {
                     <EmptyState
                         icon={School}
                         title={t("No schools to show")}
-                        description={t("This page lists the schools you administer. Only a school administrator, usually the principal, can set up calls to families. If you run a school and see nothing here, ask your SahayakAI contact to link your account to your school.")}
+                        description={t("This page lists the schools you administer. Only a school administrator, usually the principal, can set up calls to parents. If you run a school and see nothing here, ask your SahayakAI contact to link your account to your school.")}
                     />
                 </SectionCard>
             )}
@@ -144,7 +144,7 @@ export default function SamparkWorkspacePage() {
             <SamparkAuthGate
                 icon={PhoneCall}
                 title={t("School calls")}
-                description={t("Sign in with your school administrator account to manage calls to families.")}
+                description={t("Sign in with your school administrator account to manage calls to parents.")}
             >
                 <SamparkHomeContent />
             </SamparkAuthGate>

@@ -54,7 +54,7 @@ export default function SamparkTodayPage() {
                 </p>
                 <h1 className="type-h1 text-foreground">{t("Today")}</h1>
                 <p className="type-body text-muted-foreground">
-                    {fmt(t("Every call to {school} families today, as it happens."), { school: school.displayName })}
+                    {fmt(t("Every call to {school} parents today, as it happens."), { school: school.displayName })}
                 </p>
             </div>
             <Button asChild className="min-h-11">

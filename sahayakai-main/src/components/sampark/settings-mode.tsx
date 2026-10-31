@@ -81,7 +81,7 @@ function ModeOption({
             )}
             {mode === "live" && (
                 <p className="type-body text-foreground">
-                    {t("Calling families needs approvals first: a phone number registered to the school, calling rules the school has adopted in writing, and a recorded consent drive.")}
+                    {t("Calling parents needs approvals first: a phone number registered to the school, calling rules the school has adopted in writing, and a recorded consent drive.")}
                 </p>
             )}
 
@@ -176,7 +176,7 @@ function TestPhoneField() {
                     {t("Test phone")}
                 </h3>
                 <p className="type-body text-muted-foreground">
-                    {t("In Test mode every call rings this phone instead of a family. Use a mobile you can answer during calling hours.")}
+                    {t("In Test mode every call rings this phone instead of a parent. Use a mobile you can answer during calling hours.")}
                 </p>
             </div>
 
@@ -315,8 +315,8 @@ export function ModeSection() {
 
             <p className="type-body text-muted-foreground">
                 {school.emergencyBypassConsent
-                    ? t("Emergency closures may reach families who have not given consent for recorded notices.")
-                    : t("Emergency closures reach only families who have given consent for recorded notices.")}
+                    ? t("Emergency closures may reach parents who have not given consent for recorded notices.")
+                    : t("Emergency closures reach only parents who have given consent for recorded notices.")}
             </p>
 
             <AlertDialog open={confirmTest} onOpenChange={(o) => !busy && setConfirmTest(o)}>
@@ -334,7 +334,7 @@ export function ModeSection() {
                                         end: hourLabel(w.endHour),
                                     })}
                                 </p>
-                                <p>{t("No family is called. A campaign rings this phone once for each language its families speak, so you hear each version once.")}</p>
+                                <p>{t("No parent is called. A campaign rings this phone once for each language its parents speak, so you hear each version once.")}</p>
                             </div>
                         </AlertDialogDescription>
                     </AlertDialogHeader>

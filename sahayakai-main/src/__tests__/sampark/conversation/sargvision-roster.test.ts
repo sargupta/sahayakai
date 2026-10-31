@@ -287,7 +287,8 @@ describe('Sargvision roster calls (Riya service)', () => {
         const detail = await reconcileRiyaCall({ ...s.deps, http: { fetchImpl: reads as unknown as typeof fetch } }, SARGVISION_ORG_ID, first.call.id);
         expect(detail.call).toMatchObject({ state: 'completed', providerConversationId: 'conv_ours', durationSeconds: 26, dataCollection: { ptm_attendance: 'can_attend', good_time_to_talk: 'yes' } });
         // The same post-call path as a webhook: transcript stored (opt-in, with expiry).
-        expect(detail.transcript?.map((x) => x.message)).toEqual(['Hello, I am Riya.', 'Yes, I can come.']);
+        expect((await s.calls.getCall(SARGVISION_ORG_ID, first.call.id))?.transcript?.map((x) => x.message)).toEqual(['Hello, I am Riya.', 'Yes, I can come.']);
+        expect(JSON.stringify(detail)).not.toContain('Yes, I can come.'); // the console never receives it
         // Only GETs: a lookup never places a call.
         expect(reads.mock.calls.every((c) => !(c as unknown as [string, RequestInit])[1] || ((c as unknown as [string, RequestInit])[1].method ?? 'GET') === 'GET')).toBe(true);
     });

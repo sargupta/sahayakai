@@ -43,7 +43,9 @@ function load(): DemoState {
         const raw = window.localStorage.getItem(KEY);
         const parsed = raw ? (JSON.parse(raw) as DemoState) : null;
         if (parsed && parsed.version === 2 && Array.isArray(parsed.calls) && Array.isArray(parsed.callbacks) && Array.isArray(parsed.campaigns)) {
-            state = parsed;
+            // Stores saved before call logs dropped transcripts: keep the calls, drop their turns.
+            state = parsed.calls.some((c) => c.transcript?.length) ? { ...parsed, calls: parsed.calls.map((c) => ({ ...c, transcript: [] })) } : parsed;
+            if (state !== parsed) window.localStorage.setItem(KEY, JSON.stringify(state));
         } else {
             // First visit, or a v1 store from before callbacks and campaigns: keep who was signed in.
             let session: DemoSession | null = null;

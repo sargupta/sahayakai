@@ -91,7 +91,7 @@ function Monitor({ view }: { view: DemoView }) {
                         <Button asChild>
                             <Link href={href("/demo/admin/families")}>
                                 <Phone aria-hidden="true" className="mr-2 h-4 w-4" />
-                                {t("Call a family")}
+                                {t("Call Parent")}
                             </Link>
                         </Button>
                     </>
@@ -110,11 +110,11 @@ function Monitor({ view }: { view: DemoView }) {
                         </div>
                         <div className="text-right">
                             <p className="font-display text-4xl font-semibold leading-none text-ink-900">{live.counts.heardKeyFact}</p>
-                            <p className="text-sm text-ink-600">{fmt(t("of {n} families heard it"), { n: live.counts.guardians - live.counts.blocked })}</p>
+                            <p className="text-sm text-ink-600">{fmt(t("of {n} parents heard it"), { n: live.counts.guardians - live.counts.blocked })}</p>
                         </div>
                     </div>
                     <div className="mt-4">
-                        <ProgressBar value={live.counts.heardKeyFact} max={live.counts.guardians - live.counts.blocked} label={t("Families who heard the notice")} />
+                        <ProgressBar value={live.counts.heardKeyFact} max={live.counts.guardians - live.counts.blocked} label={t("Parents who heard the notice")} />
                     </div>
                     <Link href={href(`/demo/admin/campaigns/${live.id}`)} className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-sampark-saffron-strong hover:underline">
                         {t("Open campaign")} <ArrowRight aria-hidden="true" className="h-4 w-4" />

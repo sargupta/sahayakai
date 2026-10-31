@@ -53,7 +53,7 @@ function ClassesAndTeachers({ view }: { view: DemoView }) {
                                 <Button asChild size="sm">
                                     <Link href={href(`/demo/admin/families?class=${cls.id}`)}>
                                         <Phone aria-hidden="true" className="mr-1.5 h-3.5 w-3.5" />
-                                        {t("Call a family")}
+                                        {t("Call Parent")}
                                     </Link>
                                 </Button>
                                 <Button asChild size="sm" variant="outline">

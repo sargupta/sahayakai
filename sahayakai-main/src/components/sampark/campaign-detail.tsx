@@ -65,7 +65,7 @@ function campaignSteps(t: Translate, f: SamparkFormat, campaign: Campaign, hold:
     const outcome = campaignOutcome(t, campaign.purpose, campaign.counts, LIVE_CAMPAIGN_STATUSES.includes(s));
     const reachedCalls = campaign.counts.guardians > 0;
     const audioDone = AUDIO_PASSED.includes(s) || (cancelled && !!campaign.clipKeys);
-    const calledLine = fmt(t("{called} of {total} families called"), { called: f.number(outcome.called), total: f.number(outcome.callable) });
+    const calledLine = fmt(t("{called} of {total} parents called"), { called: f.number(outcome.called), total: f.number(outcome.callable) });
 
     return [
         { title: t("Created"), sub: f.dateTime(campaign.createdAt), state: "done" },
@@ -154,7 +154,7 @@ export function CampaignFunnel({ campaign, className }: { campaign: Campaign; cl
     // Each step is a count the records hold. "Answered" is not one (an early hang-up is in no
     // count), so it is not drawn.
     const rows = [
-        { label: t("Families in this campaign"), n: c.guardians, bar: "bg-muted-foreground/30" },
+        { label: t("Parents in this campaign"), n: c.guardians, bar: "bg-muted-foreground/30" },
         { label: t("Can be called"), n: outcome.callable, bar: "bg-muted-foreground/50" },
         { label: t("Called so far"), n: outcome.called, bar: "bg-primary/50" },
         { label: t("Heard the key fact"), n: c.heardKeyFact, bar: "bg-primary" },
@@ -165,7 +165,7 @@ export function CampaignFunnel({ campaign, className }: { campaign: Campaign; cl
     return (
         <SectionCard
             title={t("From the class list to a confirmed answer")}
-            description={t("Each step counts families, not call attempts.")}
+            description={t("Each step counts parents, not call attempts.")}
             className={className}
         >
             <ul className="space-y-3">
@@ -228,10 +228,10 @@ export function NotCalledSection({ detail }: { detail: CampaignDetail }) {
 
     return (
         <SectionCard
-            title={blockedTotal > 0 ? fmt(t("{count} families will not be called, and why"), { count: f.number(blockedTotal) }) : t("Who will be called")}
+            title={blockedTotal > 0 ? fmt(t("{count} parents will not be called, and why"), { count: f.number(blockedTotal) }) : t("Who will be called")}
             description={
                 blockedTotal > 0
-                    ? t("Checked against the current school records. The office can reach these families another way.")
+                    ? t("Checked against the current school records. The office can reach these parents another way.")
                     : undefined
             }
             action={
@@ -240,14 +240,14 @@ export function NotCalledSection({ detail }: { detail: CampaignDetail }) {
                         href={samparkHref(`/${encodeURIComponent(detail.campaign.orgId)}/families`)}
                         className="inline-flex min-h-11 items-center gap-1 rounded-surface-sm type-body font-semibold text-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
-                        {t("Review families")}
+                        {t("Review parents")}
                         <ChevronRight aria-hidden="true" className="h-4 w-4" />
                     </Link>
                 ) : undefined
             }
         >
             <p className="type-body-lg text-foreground">
-                {fmt(t("{reachable} of {total} families can be called"), {
+                {fmt(t("{reachable} of {total} parents can be called"), {
                     reachable: f.number(Math.max(0, a.guardians - blockedTotal)),
                     total: f.number(a.guardians),
                 })}
@@ -310,7 +310,7 @@ export function CampaignCallsTable({ campaign, pollMs }: { campaign: Campaign; p
                         <caption className="sr-only">{t("Call log")}</caption>
                         <thead className="bg-muted/30">
                             <tr className="border-b border-border">
-                                {[t("Time"), t("Family"), t("Student"), t("Language"), t("Attempt"), t("Result"), t("Duration")].map((h, i) => (
+                                {[t("Time"), t("Parent"), t("Student"), t("Language"), t("Attempt"), t("Result"), t("Duration")].map((h, i) => (
                                     <th key={h} scope="col" className={cn("px-3 py-2 text-xs font-medium leading-normal text-muted-foreground", i === 6 && "text-right")}>
                                         {h}
                                     </th>

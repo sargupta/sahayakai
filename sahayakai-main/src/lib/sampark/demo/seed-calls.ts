@@ -246,7 +246,8 @@ export function buildSeedCalls(now: number): DemoCall[] {
             language: s.language ?? student.guardian.language,
             status,
             durationSeconds: status === 'completed' ? (s.durationSeconds ?? 120) : 0,
-            transcript: s.transcript ?? [],
+            // Call logs show the summary; a saved call keeps no transcript (the role-play script stays in the seed only).
+            transcript: [],
             summary: s.summary ?? null,
             complaintStatus: s.complaintStatus ?? null,
         });

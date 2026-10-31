@@ -2,8 +2,8 @@
 /**
  * Riya mapping — the wire contract with the hosted agent and the facts → variables builder.
  *
- * CLASS GATE: the six `call_purpose` ids and fourteen variables are pinned against the
- * agent export (fixtures/riya-agent-contract.json). A renamed purpose, a UI label leaking
+ * CLASS GATE: the six `call_purpose` ids and nineteen variables are pinned against the
+ * live agent (fixtures/riya-agent-contract.json). A renamed purpose, a UI label leaking
  * onto the wire, or a variable the agent reads but we never send fails here, not on a call.
  */
 
@@ -13,6 +13,7 @@ import { buildRiyaVariables, RiyaFactsSchema, spokenDateList, type RiyaFacts } f
 import {
     DEFAULT_RIYA_PURPOSES,
     enabledRiyaPurposes,
+    RIYA_AGENT_PURPOSES_NOT_OFFERED,
     RIYA_PURPOSES,
     RIYA_VARIABLES,
     riyaPurposeSpec,
@@ -47,8 +48,17 @@ const build = (purpose: RiyaPurpose, facts: RiyaFacts = FACTS[purpose], over: Pa
     buildRiyaVariables({ purpose, facts, school: SCHOOL, student: STUDENT, now: WED_11_IST, ...over });
 
 describe('the wire contract with the Riya agent export', () => {
-    it('uses exactly the six call_purpose values the workflow edges match', () => {
-        expect([...RIYA_PURPOSES].sort()).toEqual(contract.callPurposeEdgeValues);
+    it('uses six of the call_purpose values the workflow edges match, and knows the rest are not offered', () => {
+        for (const p of RIYA_PURPOSES) expect(contract.callPurposeEdgeValues).toContain(p);
+        expect([...RIYA_PURPOSES, ...RIYA_AGENT_PURPOSES_NOT_OFFERED].sort()).toEqual(contract.callPurposeEdgeValues);
+    });
+
+    it('sends the variables of the purposes it does not offer as the empty string', () => {
+        const notOffered = new Set(RIYA_AGENT_PURPOSES_NOT_OFFERED.flatMap((p) => (contract.nodeVariables as Record<string, string[]>)[p]));
+        for (const p of RIYA_PURPOSES) {
+            const v = build(p).variables;
+            for (const name of notOffered) if (!(contract.nodeVariables as Record<string, string[]>)[p].includes(name)) expect(v[name as keyof typeof v]).toBe('');
+        }
     });
 
     it('declares every variable the prompt, first message and nodes reference — no more, no fewer', () => {

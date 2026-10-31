@@ -152,7 +152,7 @@ export function ScheduleCallbackDialog({
                             aria-describedby={error ? "cb-error" : "cb-hint"}
                         />
                         <p id="cb-hint" className="text-xs text-ink-500">
-                            {t("Families are called 10:00–20:00, Monday to Saturday, never on school holidays.")}
+                            {t("Parents are called 10:00–20:00, Monday to Saturday, never on school holidays.")}
                         </p>
                         {error && (
                             <div id="cb-error" role="alert" className="space-y-2 rounded-lg border border-sampark-rose-border bg-sampark-rose-soft p-3 text-sm text-ink-800">
@@ -461,7 +461,7 @@ export function DemoCalendar({
                             </div>
                             {open.campaign && (
                                 <p className="text-sm text-ink-600">
-                                    {fmt(t("{heard} of {families} families heard the notice · {queued} still to call"), {
+                                    {fmt(t("{heard} of {families} parents heard the notice · {queued} still to call"), {
                                         heard: open.campaign.heardKeyFact,
                                         families: open.campaign.families,
                                         queued: open.campaign.queued,

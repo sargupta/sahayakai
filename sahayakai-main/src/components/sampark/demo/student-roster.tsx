@@ -116,7 +116,7 @@ export function StudentRoster({
                                 onClick={() => onCall(s, signals[0]?.reason ?? null)}
                             >
                                 <Phone aria-hidden="true" className="mr-2 h-4 w-4" />
-                                {s.rosterContact ? fmt(t("Call {name}"), { name: s.name }) : t("Call parent")}
+                                {s.rosterContact ? fmt(t("Call {name}"), { name: s.name }) : t("Call Parent")}
                             </Button>
                         </li>
                     );

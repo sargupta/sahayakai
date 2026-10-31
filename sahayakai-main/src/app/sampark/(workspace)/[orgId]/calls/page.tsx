@@ -60,7 +60,7 @@ function Family({ call }: { call: CallLogEntry }) {
             <p className="flex flex-wrap items-center gap-2 text-foreground break-words">
                 <span className="min-w-0 break-words">{call.guardianDisplayName}</span>
                 {testPhone && (
-                    <StatusPill tone="warning" title={t("This call rang the school test phone, not the family.")}>
+                    <StatusPill tone="warning" title={t("This call rang the school test phone, not the parent.")}>
                         {t("Test phone")}
                     </StatusPill>
                 )}
@@ -108,7 +108,7 @@ function CallsTable({ calls }: { calls: CallLogEntry[] }) {
                     <caption className="sr-only">{t("Call log")}</caption>
                     <thead className="bg-muted/30">
                         <tr className="border-b border-border">
-                            {[t("Time"), t("Family"), t("Language"), t("Result"), t("What they heard"), t("Keys pressed"), t("Duration"), t("Attempt")].map((h) => (
+                            {[t("Time"), t("Parent"), t("Language"), t("Result"), t("What they heard"), t("Keys pressed"), t("Duration"), t("Attempt")].map((h) => (
                                 <th key={h} scope="col" className="px-3 py-2 text-xs font-medium leading-normal text-muted-foreground">{h}</th>
                             ))}
                         </tr>
@@ -245,7 +245,7 @@ function CallsContent() {
     return (
         <SectionCard
             title={t("Calls")}
-            description={t("Every call attempt, what the family heard, and what they pressed. Newest first.")}
+            description={t("Every call attempt, what the parent heard, and what they pressed. Newest first.")}
             action={
                 <Button type="button" variant="outline" size="sm" onClick={callsQuery.reload} disabled={callsQuery.loading}>
                     <RefreshCw aria-hidden="true" className={callsQuery.loading ? "animate-spin" : undefined} />

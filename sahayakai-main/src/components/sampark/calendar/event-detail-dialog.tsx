@@ -76,7 +76,7 @@ export function EventDetailDialog({
                     {c && (
                         <>
                             <Row label={t("Who is called")}>{summary.audience({ sections: c.sections })}</Row>
-                            <Row label={t("Families")}>
+                            <Row label={t("Parents")}>
                                 {c.families} · {t("queued")} {c.queued} · {t("calling")} {c.inFlight} · {t("heard")} {c.heardKeyFact} · {t("no answer")} {c.noAnswer} · {t("failed")} {c.failed} · {t("not called")} {c.blocked}
                             </Row>
                         </>

@@ -23,7 +23,7 @@ function Families({ view }: { view: DemoView }) {
     const classes = tab === ALL ? view.school.classes : view.school.classes.filter((c) => c.id === tab);
     return (
         <div className="mx-auto max-w-6xl space-y-6">
-            <PageHeader eyebrow={t("Workspace")} title={t("Families")} description={t("Every student and parent in the school. As principal you can call any family; the call also shows in the class teacher's log.")} />
+            <PageHeader eyebrow={t("Workspace")} title={t("Parents")} description={t("Every student and parent in the school. As principal you can call any parent; the call also shows in the class teacher's log.")} />
             <Panel>
                 <div className="mb-4 flex flex-wrap gap-2" role="tablist" aria-label={t("Classes")}>
                     {[{ id: ALL, label: t("Whole school") }, ...view.school.classes.map((c) => ({ id: c.id, label: c.name }))].map((x) => (

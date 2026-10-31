@@ -45,9 +45,9 @@ export function startRiya(
     return apiFetch(path(orgId), { method: 'POST', body: req });
 }
 
+/** The transcript never reaches the browser: staff read the call's synopsis. */
 export interface RiyaCallDetail {
     call: ConversationCallView;
-    transcript: ConversationCall['transcript'];
 }
 
 export function getRiyaCall(orgId: string, callId: string, opts: Opts = {}): Promise<RiyaCallDetail> {

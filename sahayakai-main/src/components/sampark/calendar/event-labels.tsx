@@ -89,9 +89,9 @@ export function eventTitle(t: Translate, e: CalendarEvent): string {
     switch (e.type) {
         case "callback":
         case "scheduled_call":
-            return e.family?.guardianDisplayName ?? t("Family");
+            return e.family?.guardianDisplayName ?? t("Parent");
         case "campaign_calls":
-            return `${eventPurposeName(t, e)} · ${e.callCount} ${e.callCount === 1 ? t("family") : t("families")}`;
+            return `${eventPurposeName(t, e)} · ${e.callCount} ${e.callCount === 1 ? t("parent") : t("parents")}`;
         case "school_event":
             switch (e.facts?.kind) {
                 case "ptm_invite": return t("Parent-teacher meeting");

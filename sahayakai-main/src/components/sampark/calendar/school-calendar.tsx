@@ -225,7 +225,7 @@ export function SchoolCalendar({ orgId, timeZone = DEFAULT_CALLBACK_TIME_ZONE }:
                                     onClick={() => setOpenCallback(cb)}
                                     className="focus-ring w-full rounded-row border border-tint-accent-border bg-surface-glass-strong px-3 py-2 text-left hover:bg-milk-50"
                                 >
-                                    <span className="block text-sm font-semibold text-foreground">{cb.guardianDisplayName ?? t("Family")}</span>
+                                    <span className="block text-sm font-semibold text-foreground">{cb.guardianDisplayName ?? t("Parent")}</span>
                                     <span className="block text-xs text-muted-foreground">
                                         {cb.requestedText ? `“${cb.requestedText}”` : ""}{cb.scheduledAt ? ` · ${timeLabel(new Date(cb.scheduledAt), timeZone)} ${dayLabel(dayKeyOf(new Date(cb.scheduledAt), timeZone), "short")}` : ` · ${t("time not chosen")}`}
                                     </span>

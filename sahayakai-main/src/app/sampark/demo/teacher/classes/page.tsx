@@ -56,7 +56,7 @@ function TeacherClasses({ view }: { view: DemoView }) {
             {blocked && (
                 <div role="alert" className="flex items-start gap-2 rounded-xl border border-sampark-peach-border bg-sampark-peach p-3 text-sm text-ink-800">
                     <TriangleAlert aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-sampark-saffron-strong" />
-                    {fmt(t("Class {id} is not one of your classes, so you cannot call its parents. Ask the principal if this family needs a call."), { id: blocked })}
+                    {fmt(t("Class {id} is not one of your classes, so you cannot call its parents. Ask the principal if this parent needs a call."), { id: blocked })}
                 </div>
             )}
 

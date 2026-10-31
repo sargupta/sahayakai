@@ -26,6 +26,8 @@ export interface ConversationCallRepo {
     /** Transactional read-modify-write; `mutate` returns null to leave the record unchanged. */
     mutateCall(orgId: string, callId: string, mutate: (current: ConversationCall) => ConversationCall | null): Promise<ConversationCall | null>;
     listCalls(orgId: string, limit: number): Promise<ConversationCall[]>;
+    /** Calls whose stored transcript is due for deletion (transcriptExpiresAt <= now), oldest first, at most `limit`. */
+    listExpiredTranscripts(orgId: string, now: Date, limit: number): Promise<ConversationCall[]>;
     /** Create-only. False if the conversation id is already linked (to anything). */
     linkConversation(conversationId: string, link: ConversationLink): Promise<boolean>;
     getLink(conversationId: string): Promise<ConversationLink | null>;
@@ -68,6 +70,14 @@ export function createMemoryConversationRepo(): ConversationCallRepo & { calls: 
             return [...calls.values()]
                 .filter((c) => c.orgId === orgId)
                 .sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0))
+                .slice(0, limit)
+                .map(copy);
+        },
+        async listExpiredTranscripts(orgId, now, limit) {
+            const at = now.toISOString();
+            return [...calls.values()]
+                .filter((c) => c.orgId === orgId && c.transcriptExpiresAt !== null && c.transcriptExpiresAt <= at)
+                .sort((a, b) => ((a.transcriptExpiresAt ?? '') < (b.transcriptExpiresAt ?? '') ? -1 : 1))
                 .slice(0, limit)
                 .map(copy);
         },

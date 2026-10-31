@@ -183,7 +183,7 @@ export function PauseCallsButton({ className, size }: { className?: string; size
                                 onChange={(e) => setReason(e.target.value)}
                             />
                             <p id={`${reasonId}-help`} className="type-body text-muted-foreground">
-                                {t("Staff see this reason. Families never hear it.")}
+                                {t("Staff see this reason. Parents never hear it.")}
                             </p>
                         </div>
                         <fieldset className="space-y-2">

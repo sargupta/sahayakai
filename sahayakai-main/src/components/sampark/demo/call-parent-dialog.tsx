@@ -146,7 +146,7 @@ export function CallParentDialog({ student, open, onOpenChange, placedBy, initia
                     <DialogHeader>
                         <DialogTitle>{fmt(t("Call {name}"), { name: student.name })}</DialogTitle>
                         <DialogDescription>
-                            {fmt(t("{class} sample class · phone ending {last4} · a REAL call by Riya. Nothing rings until you confirm Place call."), { class: cls.name, last4: student.guardian.phoneLast4 })}
+                            {fmt(t("{class} sample class · phone ending {last4} · a REAL call by Riya. Nothing rings until you confirm Trigger Call."), { class: cls.name, last4: student.guardian.phoneLast4 })}
                         </DialogDescription>
                     </DialogHeader>
                     {open && <SargvisionRiyaCall orgId={student.rosterContact.orgId} guardianId={student.rosterContact.guardianId} studentId={student.id} />}
@@ -228,7 +228,7 @@ export function CallParentDialog({ student, open, onOpenChange, placedBy, initia
                 summary = data.summary;
                 summaryOffline = data.source === "fallback";
             } catch {
-                setError(t("The summary could not be written. The transcript is saved."));
+                setError(t("The summary could not be written. The call is saved."));
             }
         }
         save({
@@ -243,7 +243,8 @@ export function CallParentDialog({ student, open, onOpenChange, placedBy, initia
             language,
             status: "completed",
             durationSeconds,
-            transcript: finalTurns,
+            // The turns went to the summary only; the saved call keeps no transcript (call logs show the summary).
+            transcript: [],
             summary,
             complaintStatus: summary?.complaintAboutTeacher ? "open" : null,
             offlineReplies: offlineRef.current || summaryOffline,
@@ -496,12 +497,6 @@ export function CallParentDialog({ student, open, onOpenChange, placedBy, initia
                         </div>
                         <CallSummaryView call={result} viewerRole={placedBy.role} />
                         {error && <p className="text-sm text-destructive">{error}</p>}
-                        {result.transcript.length > 0 && (
-                            <details className="rounded-xl border border-sampark-line p-3">
-                                <summary className="cursor-pointer text-sm font-medium text-ink-800">{t("Transcript")}</summary>
-                                <Transcript turns={result.transcript} className="mt-3" />
-                            </details>
-                        )}
                         <div className="flex flex-wrap justify-end gap-2">
                             <Button variant="outline" onClick={() => setScheduling(true)}>
                                 <CalendarClock aria-hidden="true" className="mr-2 h-4 w-4" />

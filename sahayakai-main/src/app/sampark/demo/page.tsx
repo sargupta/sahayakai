@@ -71,7 +71,7 @@ function RolePicker() {
                     bodyClassName="space-y-4"
                 >
                     <ul className="list-disc space-y-1 pl-5 text-sm text-ink-600">
-                        <li>{t("Call any family in the school")}</li>
+                        <li>{t("Call any parent in the school")}</li>
                         <li>{t("Review every call a teacher made")}</li>
                         <li>{t("Run campaigns and manage the school calendar and callbacks")}</li>
                         <li>{t("Monitor today: who was reached, upset parents, complaints")}</li>

@@ -121,13 +121,13 @@ export function SchoolProfileSection() {
                     )}
                 </fieldset>
                 <div className="space-y-2">
-                    <Label htmlFor="default-language">{t("When a family language is not recorded")}</Label>
+                    <Label htmlFor="default-language">{t("When a parent's language is not recorded")}</Label>
                     <Select value={defaultLanguage} onValueChange={setDefaultLanguage}>
                         <SelectTrigger id="default-language" className="md:w-96">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value={ASK_FAMILY}>{t("Do not call until the family tells us")}</SelectItem>
+                            <SelectItem value={ASK_FAMILY}>{t("Do not call until the parent tells us")}</SelectItem>
                             {PARENT_LANGUAGES.map((l) => (
                                 <SelectItem key={l} value={l}>{fmt(t("Call in {language}"), { language: languageName(t, l) })}</SelectItem>
                             ))}

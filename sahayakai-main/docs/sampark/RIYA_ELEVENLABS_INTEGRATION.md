@@ -115,7 +115,7 @@ Server-only. None of these may be a `NEXT_PUBLIC_` variable; a class gate fails 
 | `ELEVENLABS_AGENT_PHONE_NUMBER_ID` | The `phnum_…` id assigned **to that clone**. |
 | `ELEVENLABS_AGENT_BRANCH_ID` | Optional pinned branch. |
 | `ELEVENLABS_WEBHOOK_SECRET` | Secret Manager. The HMAC secret of the workspace post-call webhook. |
-| `SAMPARK_RIYA_STORE_TRANSCRIPTS=true` | Optional. Without it no transcript is stored; with it, transcripts expire after `SAMPARK_RIYA_TRANSCRIPT_DAYS` (default 30, max 90). |
+| `SAMPARK_RIYA_STORE_TRANSCRIPTS=true` | Optional. Without it no transcript is stored; with it, transcripts expire after `SAMPARK_RIYA_TRANSCRIPT_DAYS` (default and maximum 7, the privacy policy). The console never receives a transcript: staff see the call synopsis. |
 | `SAMPARK_RIYA_RECORDING_OFF_CONFIRMED=true` | Set only after recording is off on the agent. Otherwise each family needs `recorded_conversation` consent. |
 | `SAMPARK_RIYA_TEST_DAILY_CAP` | Test-phone calls per school per 24 h (default 5). |
 | `SAMPARK_FIRESTORE_DATABASE=sampark-nonprod` | **Required for any real Riya call** (audit change), because preview and staging run with `NODE_ENV=production` against the production Firestore project. |

@@ -126,7 +126,7 @@ function WorkspacePreview() {
                         <div className="mb-3 flex items-center gap-2 px-1">
                             <SamparkWordmark />
                         </div>
-                        {[t("Today"), t("Campaigns"), t("Calls"), t("Families")].map((label, i) => (
+                        {[t("Today"), t("Campaigns"), t("Calls"), t("Parents")].map((label, i) => (
                             <div
                                 key={label}
                                 className={cn(
@@ -171,7 +171,7 @@ function WorkspacePreview() {
                     </div>
                 </div>
             </div>
-            <figcaption className="mt-3 text-center text-xs text-ink-500">{t("Sample screen. The families and numbers are illustrative, not real records.")}</figcaption>
+            <figcaption className="mt-3 text-center text-xs text-ink-500">{t("Sample screen. The parents and numbers are illustrative, not real records.")}</figcaption>
         </figure>
     );
 }
@@ -186,10 +186,10 @@ function Hero({ workspaceHref }: { workspaceHref: string }) {
                 <div>
                     <span className="inline-flex items-center gap-2 rounded-pill border border-line-glass bg-[color:var(--web-glass)] px-3 py-1.5 text-xs font-semibold text-ink-600">
                         <span aria-hidden="true" className="h-2 w-2 rounded-pill bg-leaf-500" />
-                        {t("School-to-parent calls, in every family's language")}
+                        {t("School-to-parent calls, in every parent's language")}
                     </span>
                     <h1 className="mt-5 font-display text-web-h1 font-bold tracking-[-0.03em] text-ink-900">
-                        {t("Reach every family.")} <span className="text-saffron-600">{t("In their own language.")}</span>
+                        {t("Reach every parent.")} <span className="text-saffron-600">{t("In their own language.")}</span>
                     </h1>
                     <p className="mt-5 max-w-xl text-web-lead text-ink-600">
                         {t("SamparkAI calls parents with your school's notices: PTM invitations, event invitations and emergency closures. Parents hear your school's name, and press a key to answer. Nothing rings until your school switches calls on.")}
@@ -249,11 +249,11 @@ function Section({ id, band = false, eyebrow, title, lead, children }: { id?: st
 function HowItWorks() {
     const { t } = useLanguage();
     const steps = [
-        { title: t("Bring in your families"), body: t("Import parents and guardians from your school's records. Each family keeps its language and its calling preferences.") },
+        { title: t("Bring in your parents"), body: t("Import parents and guardians from your school's records. Each parent keeps their language and their calling preferences.") },
         { title: t("Choose the notice and who hears it"), body: t("A PTM invitation, an event invitation or an emergency closure, for the whole school, some classes or some sections.") },
-        { title: t("Check what parents will hear"), body: t("Read and play the message in each family's language before anything is scheduled. The notice uses only the details you entered.") },
+        { title: t("Check what parents will hear"), body: t("Read and play the message in each parent's language before anything is scheduled. The notice uses only the details you entered.") },
         { title: t("Start in Practice, then Test"), body: t("Practice makes no calls. Test rings only your school's test phone. Live, which rings parents, is switched on with your SahayakAI contact.") },
-        { title: t("See every answer"), body: t("Confirmed, declined, heard, no answer, asked not to be called: each call's outcome in words, with retries and the families still to reach.") },
+        { title: t("See every answer"), body: t("Confirmed, declined, heard, no answer, asked not to be called: each call's outcome in words, with retries and the parents still to reach.") },
     ];
     return (
         <Section id="how" eyebrow={t("How it works")} title={<>{t("Five steps.")} {t("You approve each one.")}</>} lead={t("SamparkAI drafts the calls; the school decides who is called, what they hear and when.")}>
@@ -276,9 +276,9 @@ function Workspace() {
     const { t } = useLanguage();
     const parts = [
         { lead: t("Today."), body: t("What is scheduled, what is calling now and what needs a decision, for one school at a time.") },
-        { lead: t("Campaigns."), body: t("Each notice as a campaign: its audience, its schedule, the families not called and why.") },
+        { lead: t("Campaigns."), body: t("Each notice as a campaign: its audience, its schedule, the parents not called and why.") },
         { lead: t("Calls."), body: t("One list of every call the school placed, with the reason, the outcome in words, the duration and the time. Numbers show only their last four digits.") },
-        { lead: t("Families."), body: t("Every parent and guardian, their language and whether they can be called. A family that asks not to be called is not called again.") },
+        { lead: t("Parents."), body: t("Every parent and guardian, their language and whether they can be called. A parent who asks not to be called is not called again.") },
         { lead: t("Settings."), body: t("School details, calling hours, the calling mode and the connection to your school's records.") },
     ];
     return (
@@ -303,7 +303,7 @@ function Safeguards() {
         { lead: t("Calling hours."), body: t("Calls are placed only inside the school's calling hours. Nothing dials outside them.") },
         { lead: t("Pause in one tap."), body: t("Pause all calls for the school at once, and resume when you are ready.") },
         { lead: t("Parents can say no."), body: t("Every call lets the parent ask not to be called again, and that choice is kept.") },
-        { lead: t("Administrators only."), body: t("Only a school's administrators can see its families and start its calls. Each request is checked on the server.") },
+        { lead: t("Administrators only."), body: t("Only a school's administrators can see its parents and start its calls. Each request is checked on the server.") },
     ];
     return (
         <Section id="safeguards" eyebrow={t("Safeguards")} title={<>{t("Built to be careful.")} {t("Parents are never surprised.")}</>}>
@@ -327,7 +327,7 @@ function Languages() {
         { native: "नेपाली", lang: "ne" },
     ];
     return (
-        <Section id="languages" band eyebrow={t("Languages")} title={<>{t("Each family hears its own language.")} {t("Set once per family.")}</>} lead={t("Calls are spoken today in four languages. Teachers keep working in all eleven of SahayakAI's languages.")}>
+        <Section id="languages" band eyebrow={t("Languages")} title={<>{t("Each parent hears their own language.")} {t("Set once per parent.")}</>} lead={t("Calls are spoken today in four languages. Teachers keep working in all eleven of SahayakAI's languages.")}>
             <ul className="flex flex-wrap gap-3">
                 {langs.map((l) => (
                     <li key={l.lang} lang={l.lang} className="rounded-pill border border-line-glass bg-[color:var(--web-glass)] px-5 py-3 font-display text-output-title font-semibold text-ink-900">
@@ -346,7 +346,7 @@ function CtaBand({ workspaceHref }: { workspaceHref: string }) {
             <div className={CONTAINER}>
                 <div className="relative overflow-hidden rounded-band px-6 py-14 text-center sm:px-12" style={{ background: "var(--band-cta)" }}>
                     <h2 className="mx-auto max-w-2xl font-display text-web-h2 font-bold tracking-[-0.025em] text-white">
-                        {t("Start in Practice mode.")} {t("No family is called until you are ready.")}
+                        {t("Start in Practice mode.")} {t("No parent is called until you are ready.")}
                     </h2>
                     <div className="mt-8 flex justify-center">
                         <Link

@@ -62,7 +62,7 @@ export function DemoFrame({ children, sargvision = [] }: { children: ReactNode; 
                       items: [
                           { key: "monitor", label: t("School monitor"), shortLabel: t("Monitor"), icon: LayoutDashboard, href: href("/demo/admin"), active: current === "/demo/admin" },
                           { key: "classes", label: t("Classes & teachers"), shortLabel: t("Classes"), icon: School, href: href("/demo/admin/classes"), active: under("/demo/admin/classes") },
-                          { key: "families", label: t("Families"), icon: Users, href: href("/demo/admin/families"), active: under("/demo/admin/families") },
+                          { key: "families", label: t("Parents"), icon: Users, href: href("/demo/admin/families"), active: under("/demo/admin/families") },
                       ],
                   },
                   {
@@ -229,7 +229,7 @@ export function DemoFrame({ children, sargvision = [] }: { children: ReactNode; 
                                 {t("Demo · Sargvision rings real phones")}
                             </StatusPill>
                         ) : (
-                            <StatusPill tone="brand" title={t("Calls in this demo are played in the browser. No phone rings and no real family is contacted.")}>
+                            <StatusPill tone="brand" title={t("Calls in this demo are played in the browser. No phone rings and no real parent is contacted.")}>
                                 {t("Demo · no phone rings")}
                             </StatusPill>
                         )}

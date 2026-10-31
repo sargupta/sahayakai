@@ -37,7 +37,7 @@ const BASE = 'https://api.elevenlabs.io';
 const PURPOSES = ['absence_notice', 'emergency_closure', 'event_invitation', 'exam_schedule_notice', 'holiday_notice', 'ptm_invitation'];
 // Copies of src/lib/sampark/conversation/riya-purposes.ts (RIYA_VARIABLES, RIYA_OPENING_TEMPLATE);
 // riya-agent-sync.test.ts fails if they drift.
-export const SAHAYAK_VARIABLES = ['school_name', 'call_purpose', 'student_name', 'class_name', 'section_name', 'event_name', 'event_date', 'event_time', 'holiday_dates', 'exam_schedule', 'absence_date', 'closure_date', 'closure_reason', 'transport_information'];
+export const SAHAYAK_VARIABLES = ['school_name', 'call_purpose', 'student_name', 'class_name', 'section_name', 'event_name', 'event_date', 'event_time', 'holiday_dates', 'exam_schedule', 'absence_date', 'closure_date', 'closure_reason', 'transport_information', 'academic_update', 'behaviour_summary', 'assignment_details', 'achievement_details', 'followup_details'];
 export const OPENING_TEMPLATE = "Hello, I'm Riya, an AI assistant calling on behalf of {{school_name}} with a school-related update. This conversation is transcribed by our service providers. Is this a good time to talk?";
 /** Word sequence, ignoring case, punctuation and the agent's pause dots ("Hello..... this"). */
 export const words = (s) => String(s ?? '').toLowerCase().replace(/\{\{\s*(\w+)\s*\}\}/g, ' var_$1 ').replace(/[^a-z0-9_]+/g, ' ').trim();
@@ -185,7 +185,7 @@ function checks(src, dst, phone, phoneId, liveSource) {
     cmp('8b prompt variables', src.promptVariables, dst.promptVariables, false);
     cmp('8c data-collection fields', src.dataCollection, dst.dataCollection, false);
     const unsupplied = dst.allVariables.filter((v) => !SAHAYAK_VARIABLES.includes(v));
-    add('8d every agent variable is supplied by Sahayak', unsupplied.length === 0 ? 'PASS' : 'FAIL', unsupplied.length ? `not sent by Sahayak: ${unsupplied.join(', ')}` : `${dst.allVariables.length} variables, all in Sahayak's 14`);
+    add('8d every agent variable is supplied by Sahayak', unsupplied.length === 0 ? 'PASS' : 'FAIL', unsupplied.length ? `not sent by Sahayak: ${unsupplied.join(', ')}` : `${dst.allVariables.length} variables, all in Sahayak's 19`);
     const unused = SAHAYAK_VARIABLES.filter((v) => !dst.allVariables.includes(v));
     add('8e Sahayak variables the agent never reads', unused.length === 0 ? 'PASS' : 'UNVERIFIED', unused.length ? `sent but unused: ${unused.join(', ')}` : 'none');
     add('5d preview opening = agent first message', words(dst.firstMessage) === words(OPENING_TEMPLATE) ? 'PASS' : 'FAIL', words(dst.firstMessage) === words(OPENING_TEMPLATE) ? 'word for word' : `agent says "${mask(dst.firstMessage ?? '').slice(0, 160)}"; update RIYA_OPENING_TEMPLATE so the preview shows what the agent says`);

@@ -153,12 +153,12 @@ function refusalLine(t: Translate, code: string): string {
         case "TOO_SOON": return t("Choose a time at least a minute from now");
         case "TOO_FAR": return t("Callbacks can be up to 30 days ahead");
         case "CALLBACKS_PRACTICE_ONLY": return t("Scheduled callbacks run in Practice mode only for now");
-        case "GATE_BLOCKED": return t("This family cannot be called then (opt-out, consent or call limits)");
-        case "RECORDING_CONSENT_REQUIRED": return t("This family has not agreed to recorded calls");
+        case "GATE_BLOCKED": return t("This parent cannot be called then (opt-out, consent or call limits)");
+        case "RECORDING_CONSENT_REQUIRED": return t("This parent has not agreed to recorded calls");
         case "SCHOOL_PAUSED": return t("Calls are paused for this school");
         case "FACTS_INVALID": return t("The call's details are no longer valid at that time");
         case "PROVIDER_UNAVAILABLE": return t("Riya calls are not available right now");
-        case "LANGUAGE_NOT_SUPPORTED": return t("Riya cannot call this family in their language");
+        case "LANGUAGE_NOT_SUPPORTED": return t("Riya cannot call this parent in their language");
         default: return code;
     }
 }
@@ -270,7 +270,7 @@ export function NewCallbackDialog({
             <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-lg">
                 <DialogHeader>
                     <DialogTitle>{t("Schedule a callback")}</DialogTitle>
-                    <DialogDescription>{t("Riya calls the family back about an earlier call. Nothing rings now; the call starts at the time you choose, if the school's rules allow it then.")}</DialogDescription>
+                    <DialogDescription>{t("Riya calls the parent back about an earlier call. Nothing rings now; the call starts at the time you choose, if the school's rules allow it then.")}</DialogDescription>
                 </DialogHeader>
                 {sources.length === 0 ? (
                     <p className="text-sm text-muted-foreground">{t("No calls to follow up yet. Make a Riya call first, then schedule its callback here.")}</p>
@@ -283,7 +283,7 @@ export function NewCallbackDialog({
                                 <SelectContent>
                                     {sources.map((s) => (
                                         <SelectItem key={s.callId} value={s.callId}>
-                                            {s.guardianDisplayName ?? t("Family")} · {s.studentDisplayName ?? ""} · {riyaPurposeLabel(t, s.purpose)}
+                                            {s.guardianDisplayName ?? t("Parent")} · {s.studentDisplayName ?? ""} · {riyaPurposeLabel(t, s.purpose)}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -322,7 +322,7 @@ export function NewCallbackDialog({
 function callStateText(t: Translate, state: string | null): string | null {
     if (!state) return null;
     switch (state) {
-        case "completed": return t("Riya spoke with the family");
+        case "completed": return t("Riya spoke with the parent");
         case "no_answer": return t("No answer");
         case "busy": return t("Busy");
         case "failed": return t("The call failed");
@@ -462,7 +462,7 @@ export function CallbackDetailDialog({
         <Dialog open onOpenChange={onOpenChange}>
             <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-lg">
                 <DialogHeader>
-                    <DialogTitle>{callback.guardianDisplayName ?? t("Family")}</DialogTitle>
+                    <DialogTitle>{callback.guardianDisplayName ?? t("Parent")}</DialogTitle>
                     <DialogDescription>
                         {callback.studentDisplayName ?? ""} · {riyaPurposeLabel(t, callback.riyaPurpose)}
                         {callback.guardianPhoneLast4 && <> · {t("phone ending")} {callback.guardianPhoneLast4}</>}
@@ -518,7 +518,7 @@ export function CallbackDetailDialog({
                         {preview && <PreviewBlock preview={preview} onUseNext={setWhen} />}
                     </div>
                 )}
-                {mode === "cancel" && <p className="text-sm text-foreground">{t("Cancel this callback? The family will not be called.")}</p>}
+                {mode === "cancel" && <p className="text-sm text-foreground">{t("Cancel this callback? The parent will not be called.")}</p>}
                 {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
 
                 <DialogFooter className={cn("flex-wrap gap-2")}>

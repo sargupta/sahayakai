@@ -1,12 +1,17 @@
 {
-  "_source": "Derived from Varunesh's ElevenLabs export 'Riya School Calling Assistant' (sahayakcallagentvarunesh.txt, 15 Oct 2026). Names and structure only: no phone numbers, credentials, or sample student data.",
+  "_source": "Derived from the live published Main branch of the Riya agent (version agtvrsn_9401m66kazcdf7m94tq3gsdvdded, read 30 Oct 2026; Varunesh updated JSON imported into the same agent). Names and structure only: no phone numbers, credentials, or sample student data.",
   "callPurposeEdgeValues": [
     "absence_notice",
+    "academic_performance",
+    "classroom_behaviour",
     "emergency_closure",
     "event_invitation",
     "exam_schedule_notice",
     "holiday_notice",
-    "ptm_invitation"
+    "homework_followup",
+    "ptm_invitation",
+    "student_achievement",
+    "student_support"
   ],
   "nodeVariables": {
     "event_invitation": [
@@ -45,10 +50,39 @@
       "school_name",
       "student_name",
       "transport_information"
+    ],
+    "academic_performance": [
+      "academic_update",
+      "school_name",
+      "student_name"
+    ],
+    "classroom_behaviour": [
+      "behaviour_summary",
+      "school_name",
+      "student_name"
+    ],
+    "homework_followup": [
+      "assignment_details",
+      "school_name",
+      "student_name"
+    ],
+    "student_achievement": [
+      "achievement_details",
+      "school_name",
+      "student_name"
+    ],
+    "student_support": [
+      "followup_details",
+      "school_name",
+      "student_name"
     ]
   },
   "promptVariables": [
     "absence_date",
+    "academic_update",
+    "achievement_details",
+    "assignment_details",
+    "behaviour_summary",
     "call_purpose",
     "class_name",
     "closure_date",
@@ -57,6 +91,7 @@
     "event_name",
     "event_time",
     "exam_schedule",
+    "followup_details",
     "holiday_dates",
     "school_name",
     "section_name",
@@ -65,6 +100,8 @@
   ],
   "placeholderVariables": [
     "absence_date",
+    "academic_update",
+    "behaviour_summary",
     "call_purpose",
     "class_name",
     "event_date",

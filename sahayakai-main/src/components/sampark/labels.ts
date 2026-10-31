@@ -59,11 +59,11 @@ export function purposeLabel(t: Translate, id: PurposeId): string {
 export function purposeDescription(t: Translate, id: PurposeId): string {
     switch (id) {
         case 'ptm_invite':
-            return t("Invite families to a parent-teacher meeting. No child is named. Parents press 1 if they will come and 2 if the time does not suit them.");
+            return t("Invite parents to a parent-teacher meeting. No child is named. Parents press 1 if they will come and 2 if the time does not suit them.");
         case 'event_invite':
-            return t("Invite families to a school event such as Annual Day or Sports Day. No child is named. Parents press 1 if they will come and 2 if they cannot.");
+            return t("Invite parents to a school event such as Annual Day or Sports Day. No child is named. Parents press 1 if they will come and 2 if they cannot.");
         case 'emergency_closure':
-            return t("Tell families the school is closed today or tomorrow because of rain, a landslide or a bandh. Calls may start at 6 am and stop at the end of the closure day.");
+            return t("Tell parents the school is closed today or tomorrow because of rain, a landslide or a bandh. Calls may start at 6 am and stop at the end of the closure day.");
         default:
             return '';
     }
@@ -183,12 +183,12 @@ export const CLOSURE_REASONS: readonly ClosureReason[] = ['rain_landslide', 'hea
 export function blockReasonLabel(t: Translate, reason: BlockReason): string {
     switch (reason) {
         case 'no_consent': return t("No consent recorded for recorded notices");
-        case 'consent_denied': return t("The family said no to recorded notices");
-        case 'suppressed': return t("The family asked the school to stop these calls");
+        case 'consent_denied': return t("The parent said no to recorded notices");
+        case 'suppressed': return t("The parent asked the school to stop these calls");
         case 'crm_do_not_contact': return t("Marked do-not-contact in the school records");
         case 'invalid_number': return t("The phone number is not valid");
-        case 'language_unknown': return t("No language recorded, and the school asks families first");
-        case 'fee_category_excluded': return t("Not sent to RTE or fee-waived families");
+        case 'language_unknown': return t("No language recorded, and the school asks parents first");
+        case 'fee_category_excluded': return t("Not sent to parents of RTE or fee-waived students");
         case 'sensitive_flag': return t("A sensitive flag on the child stops automated calls");
         case 'human_only_purpose': return t("A member of staff must make this call");
         case 'frequency_cap': return t("Already called four times in the last 30 days");
@@ -198,8 +198,8 @@ export function blockReasonLabel(t: Translate, reason: BlockReason): string {
         case 'school_not_enabled': return t("School calls are not switched on for this school");
         case 'student_inactive': return t("The child has left the school");
         case 'not_guardian_of_record': return t("No longer the child's guardian in the school records");
-        case 'custody_restricted': return t("A custody restriction on the child: the office informs this family by hand");
-        case 'test_mode_sample': return t("Test mode: only one family per language rings the test phone");
+        case 'custody_restricted': return t("A custody restriction on the child: the office informs this parent by hand");
+        case 'test_mode_sample': return t("Test mode: only one parent per language rings the test phone");
         default: return reason;
     }
 }
@@ -225,12 +225,12 @@ export function callStateMeaning(t: Translate, state: CallState): string {
     switch (state) {
         case 'dialing': return t("The call is being placed.");
         case 'ringing': return t("The phone is ringing.");
-        case 'in_progress': return t("The family is on the line.");
-        case 'completed': return t("The family picked up and the call ended normally.");
+        case 'in_progress': return t("The parent is on the line.");
+        case 'completed': return t("The parent picked up and the call ended normally.");
         case 'no_answer': return t("The phone rang but nobody picked up.");
         case 'busy': return t("The line was busy.");
         case 'failed': return t("The call could not be placed.");
-        case 'unknown': return t("The result of this call was lost. It is never retried automatically, so check with the family.");
+        case 'unknown': return t("The result of this call was lost. It is never retried automatically, so check with the parent.");
         case 'cancelled': return t("The campaign was cancelled before this call was made.");
         default: return '';
     }
@@ -262,10 +262,10 @@ export function heardLabel(t: Translate, heard: HeardLevel): string {
 
 export function heardMeaning(t: Translate, heard: HeardLevel): string {
     switch (heard) {
-        case 'none': return t("The family did not hear the message.");
-        case 'early_hangup': return t("The family hung up before the key fact.");
-        case 'partial': return t("The family heard part of the message.");
-        case 'full': return t("The family heard the whole message.");
+        case 'none': return t("The parent did not hear the message.");
+        case 'early_hangup': return t("The parent hung up before the key fact.");
+        case 'partial': return t("The parent heard part of the message.");
+        case 'full': return t("The parent heard the whole message.");
         default: return '';
     }
 }
@@ -341,7 +341,7 @@ export function clipKindLabel(t: Translate, kind: ClipKind): string {
         case 'opt_out_done': return t("After the parent confirms stopping calls");
         case 'no_input': return t("If no key is pressed");
         case 'fallback_office': return t("If something goes wrong");
-        case 'withdrawn': return t("If the campaign was cancelled before the family answered");
+        case 'withdrawn': return t("If the campaign was cancelled before the parent answered");
         default: return kind;
     }
 }
@@ -422,8 +422,8 @@ export function suppressionSourceLabel(t: Translate, source: Suppression['source
 
 export function suppressionVerificationLabel(t: Translate, v: Suppression['officeVerification']): string {
     switch (v) {
-        case 'pending': return t("Office to confirm with the family");
-        case 'confirmed': return t("Confirmed with the family");
+        case 'pending': return t("Office to confirm with the parent");
+        case 'confirmed': return t("Confirmed with the parent");
         case 'reversed': return t("Reversed");
         default: return v;
     }
@@ -461,7 +461,7 @@ export function modeBannerText(t: Translate, mode: SamparkMode, testPhoneLast4?:
             return testPhoneLast4
                 ? fmt(t("Test — every call rings only the phone ending {last4}"), { last4: testPhoneLast4 })
                 : t("Test — every call goes to the school test phone");
-        case 'live': return t("Live — families receive real calls");
+        case 'live': return t("Live — parents receive real calls");
         default: return mode;
     }
 }
@@ -491,7 +491,7 @@ export function modeDescription(t: Translate, mode: SamparkMode): string {
         case 'test':
             return t("Every call rings only the school test phone, so you hear exactly what parents will hear.");
         case 'live':
-            return t("Families receive real calls from the school number.");
+            return t("Parents receive real calls from the school number.");
         default:
             return '';
     }
@@ -532,7 +532,7 @@ export function serverErrorText(t: Translate, message: string): string {
             return liveDialBlockerText(t, message);
         case 'TEST_PHONE_MISSING': return t("Save a test phone first. In Test mode every call rings that phone.");
         case 'TEST_PHONE_INVALID': return t("Enter an Indian mobile number: 10 digits starting with 6, 7, 8 or 9.");
-        case 'LIVE_MODE_NOT_AVAILABLE': return t("Live mode, calling families, is not available yet.");
+        case 'LIVE_MODE_NOT_AVAILABLE': return t("Live mode, calling parents, is not available yet.");
         default: return message;
     }
 }

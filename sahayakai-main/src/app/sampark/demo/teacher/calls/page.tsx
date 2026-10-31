@@ -21,7 +21,7 @@ function TeacherCalls() {
         <DemoRoleGate role="teacher">
             {(view) => (
                 <div className="mx-auto max-w-5xl space-y-6">
-                    <PageHeader eyebrow={t("Outreach")} title={t("My calls")} description={t("Every call to a parent in your classes, including calls the principal placed. Open a call for the summary, the transcript and any complaint the parent raised.")} />
+                    <PageHeader eyebrow={t("Outreach")} title={t("My calls")} description={t("Every call to a parent in your classes, including calls the principal placed. Open a call for the summary and any complaint the parent raised.")} />
                     {view.teacher?.classIds.includes(SARGVISION_CLASS_ID) && <SargvisionCallLog />}
                     <CallList calls={view.visibleCalls} viewerRole="teacher" initialFilter={initial} />
                 </div>

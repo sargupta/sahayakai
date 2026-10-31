@@ -16,6 +16,7 @@
  * facts, nothing else.
  */
 
+import type { RiyaSynopsis } from './synopsis';
 import type { CallDestination, ParentLanguage, PurposeId, SamparkMode } from '@/types/sampark';
 
 import type { RiyaPurpose, RiyaVariables } from './riya-purposes';
@@ -112,9 +113,16 @@ export interface ConversationCall {
     dataCollection: RiyaDataCollection;
     /** The listener asked Riya to stop calling (data collection or a phrase match), pending office confirmation. */
     stopRequested: boolean;
-    /** Stored only when SAMPARK_RIYA_STORE_TRANSCRIPTS === 'true'; deleted after transcriptExpiresAt. */
+    /**
+     * Stored only when SAMPARK_RIYA_STORE_TRANSCRIPTS === 'true'; deleted after transcriptExpiresAt.
+     * Server-side only: never part of a view, API response or browser payload.
+     */
     transcript: ConversationTranscriptTurn[] | null;
     transcriptExpiresAt: string | null;
+    /** When retention deleted the transcript (then transcript and transcriptExpiresAt are null). It is never stored again. */
+    transcriptPurgedAt?: string | null;
+    /** 3–6 factual bullets written once the call ended (synopsis.ts): provisional until the transcript arrives, then final. What staff see instead of the transcript. Absent on older records. */
+    synopsis?: RiyaSynopsis | null;
     /** Ids of webhook events already applied (dedupe), bounded. */
     appliedEvents: string[];
     lastEventAt: string | null;

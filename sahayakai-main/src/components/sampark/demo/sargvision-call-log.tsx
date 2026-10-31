@@ -20,7 +20,7 @@ const DAY = 86_400_000;
 /**
  * "My calls" for the Sargvision sample class: the REAL Riya calls from the Sampark server (school
  * `sargvision-local`), with live status, the outcome, Riya's collected answers (good time to talk,
- * attendance…) and, under Details, the transcript; then the class's callbacks — a listener's "call
+ * attendance…), its synopsis and callback status (never the transcript); then the class's callbacks — a listener's "call
  * me back" arrives as a proposed callback and rings only after a person confirms a time in the
  * school calendar. The demo's simulated calls stay in the list below it.
  */
@@ -43,7 +43,7 @@ export function SargvisionCallLog() {
             action={<Button type="button" size="sm" variant="ghost" onClick={reload}><RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />{t("Refresh")}</Button>}
         >
             {riya.error ? <ErrorPanel error={riya.error} onRetry={riya.reload} /> : !riya.data ? <LoadingBlock rows={2} /> : (
-                <RiyaCallHistory orgId={SARGVISION_ORG_ID} calls={riya.data.calls} reload={reload} storeTranscripts={riya.data.availability.storeTranscripts} />
+                <RiyaCallHistory orgId={SARGVISION_ORG_ID} calls={riya.data.calls} reload={reload} storeTranscripts={riya.data.availability.storeTranscripts} callbacks={callbacks.data ? [...callbacks.data.proposed, ...callbacks.data.callbacks] : []} />
             )}
             <div className="mt-4 space-y-2 border-t border-border pt-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">

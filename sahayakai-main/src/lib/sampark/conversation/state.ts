@@ -20,12 +20,12 @@ export interface ApplyOptions {
     now: Date;
     /** SAMPARK_RIYA_STORE_TRANSCRIPTS === 'true' */
     storeTranscript: boolean;
-    /** Days a stored transcript is kept (SAMPARK_RIYA_TRANSCRIPT_DAYS, default 30). */
+    /** Days a stored transcript is kept (SAMPARK_RIYA_TRANSCRIPT_DAYS, default and maximum 7). */
     transcriptDays: number;
 }
 
 function withEvent(call: ConversationCall, eventId: string, at: string): Pick<ConversationCall, 'appliedEvents' | 'lastEventAt' | 'updatedAt'> {
-    return { appliedEvents: [...call.appliedEvents, eventId].slice(-MAX_APPLIED_EVENTS), lastEventAt: at, updatedAt: at };
+    return { appliedEvents: [...call.appliedEvents.filter((e) => e !== eventId), eventId].slice(-MAX_APPLIED_EVENTS), lastEventAt: at, updatedAt: at };
 }
 
 function stopRequested(call: ConversationCall, event: Extract<RiyaWebhookEvent, { kind: 'post_call' }>): boolean {
@@ -36,7 +36,13 @@ function stopRequested(call: ConversationCall, event: Extract<RiyaWebhookEvent, 
 
 export function applyRiyaEvent(call: ConversationCall, event: RiyaWebhookEvent, opts: ApplyOptions): ConversationCall | null {
     if (event.kind === 'ignored') return null;
-    if (call.appliedEvents.includes(event.eventId)) return null;
+    if (call.appliedEvents.includes(event.eventId)) {
+        // The same conversation's result again. Only an upgrade is applied: a finished ('done')
+        // result for a call an earlier, unfinished result left open. Anything else is a duplicate
+        // or a stale, out-of-order delivery and changes nothing.
+        const upgrade = event.kind === 'post_call' && event.status === 'done' && call.state !== 'completed';
+        if (!upgrade) return null;
+    }
     const at = opts.now.toISOString();
 
     if (event.kind === 'initiation_failure') {

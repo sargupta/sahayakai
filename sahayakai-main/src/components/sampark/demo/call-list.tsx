@@ -12,7 +12,7 @@ import { useLanguage } from "@/context/language-context";
 import { classById, studentById, teacherById } from "@/lib/sampark/demo/school";
 import { DEMO_REASONS, REASON_LABEL } from "@/lib/sampark/demo/script";
 import type { DemoCall, DemoRole, DemoTeacher } from "@/lib/sampark/demo/types";
-import { CallSummaryView, Transcript } from "./call-summary";
+import { CallSummaryView } from "./call-summary";
 import { COMPLAINT_LABEL, COMPLAINT_TONE, SENTIMENT_LABEL, SENTIMENT_TONE, STATUS_LABEL, STATUS_TONE, needsAttention, whenLabel } from "./demo-labels";
 
 const ALL = "__all__";
@@ -65,13 +65,8 @@ export function CallDetailSheet({ call, viewerRole, onClose }: { call: DemoCall 
                                 <span className="font-medium">{fmt(t("{teacher}'s note"), { teacher: teacher?.name ?? "" })}: </span>
                                 {call.note}
                             </div>
+                            {/* Staff read the summary; a call's transcript is never shown in the call log. */}
                             <CallSummaryView call={call} viewerRole={viewerRole} />
-                            {call.transcript.length > 0 && (
-                                <div className="space-y-2">
-                                    <p className="text-xs font-medium uppercase tracking-wide text-ink-500">{t("Transcript")}</p>
-                                    <Transcript turns={call.transcript} />
-                                </div>
-                            )}
                         </div>
                     </>
                 )}

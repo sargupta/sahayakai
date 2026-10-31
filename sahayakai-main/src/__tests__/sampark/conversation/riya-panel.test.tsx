@@ -148,7 +148,7 @@ afterEach(() => fetchSpy.mockRestore());
 async function fillPtm(familyKey: string) {
     fireEvent.change(await screen.findByLabelText('What is the call about?'), { target: { value: 'ptm_invitation' } });
     await waitFor(() => expect(screen.getByRole('option', { name: /Meena Rai — Asha Rai/ })).toBeTruthy());
-    fireEvent.change(screen.getByLabelText('Family'), { target: { value: familyKey } });
+    fireEvent.change(screen.getByLabelText('Parent / Guardian'), { target: { value: familyKey } });
     fireEvent.change(screen.getByLabelText('Date'), { target: { value: '2026-10-10' } });
 }
 
@@ -176,8 +176,8 @@ describe('Riya calls tab (Practice)', () => {
         expect(within(dialog).getByText('Nothing will ring. The result appears in the list below.')).toBeTruthy();
         fireEvent.click(within(dialog).getByRole('button', { name: 'Run practice call' }));
 
-        await waitFor(() => expect(toastSpy).toHaveBeenCalledWith({ title: 'Call status: Conversation ended' }));
-        expect(await screen.findByText('Conversation ended')).toBeTruthy();
+        await waitFor(() => expect(toastSpy).toHaveBeenCalledWith({ title: 'Call status: Conversation Ended' }));
+        expect(await screen.findByText('Conversation Ended')).toBeTruthy();
         // Answers are shown in words, never as the agent's raw ids (class: any raw key or enum value).
         expect(screen.getByText('Coming to the meeting')).toBeTruthy();
         expect(screen.getByText('Cannot attend')).toBeTruthy();
@@ -196,10 +196,10 @@ describe('Riya calls tab (Practice)', () => {
         await screen.findByText('Riya calling assistant');
         fireEvent.change(await screen.findByLabelText('What is the call about?'), { target: { value: 'ptm_invitation' } });
         await waitFor(() => expect(screen.getByRole('option', { name: /Pema Gurung/ })).toBeTruthy());
-        fireEvent.change(screen.getByLabelText('Family'), { target: { value: 'g2|s2' } });
+        fireEvent.change(screen.getByLabelText('Parent / Guardian'), { target: { value: 'g2|s2' } });
         fireEvent.change(screen.getByLabelText('Date'), { target: { value: '2026-10-10' } });
         fireEvent.click(screen.getByRole('button', { name: 'Preview what Riya will say' }));
-        expect(await screen.findByText('This family has not agreed to recorded calls.')).toBeTruthy();
+        expect(await screen.findByText('This parent has not agreed to recorded calls.')).toBeTruthy();
         expect((screen.getByRole('button', { name: 'Run practice call' }) as HTMLButtonElement).disabled).toBe(true);
         expect(await deps.calls.listCalls(ORG, 10)).toHaveLength(0);
     });
@@ -281,11 +281,11 @@ describe('Riya calls tab (Test mode, real call)', () => {
         await fillPtm('g1|s1');
         fireEvent.click(screen.getByRole('button', { name: 'Preview what Riya will say' }));
         expect(await screen.findByText(/Number that will ring: \+919800000001/)).toBeTruthy();
-        const place = screen.getByRole('button', { name: 'Place call' }) as HTMLButtonElement;
+        const place = screen.getByRole('button', { name: 'Call Parent' }) as HTMLButtonElement;
         await waitFor(() => expect(place.disabled).toBe(false));
         fireEvent.click(place);
         const dialog = await screen.findByRole('alertdialog');
-        expect(within(dialog).getByText('Place a real test call?')).toBeTruthy();
+        expect(within(dialog).getByText('Confirm Parent Call')).toBeTruthy();
         expect(within(dialog).getByText(/Agent …one111 · branch …anch22 · number …ber333/)).toBeTruthy();
         expect(within(dialog).getByText('Number that will ring: +919800000001')).toBeTruthy();
         expect(within(dialog).getByText('Purpose: PTM invitation')).toBeTruthy();
@@ -293,7 +293,7 @@ describe('Riya calls tab (Test mode, real call)', () => {
         expect(within(dialog).getByText('Normal calling hours')).toBeTruthy();
         expect(await within(dialog).findByText('Webhook check failed: the call result could not come back')).toBeTruthy();
         expect(within(dialog).getByText(/At most 5 real test call\(s\) today/)).toBeTruthy();
-        const confirm = within(dialog).getByRole('button', { name: 'Place call' }) as HTMLButtonElement;
+        const confirm = within(dialog).getByRole('button', { name: 'Trigger Call' }) as HTMLButtonElement;
         expect(confirm.disabled).toBe(true);
         fireEvent.click(confirm);
         expect(outbound).not.toHaveBeenCalled();
@@ -309,10 +309,10 @@ describe('Riya calls tab (Test mode, real call)', () => {
         await fillPtm('g1|s1');
         fireEvent.click(screen.getByRole('button', { name: 'Preview what Riya will say' }));
         await screen.findByText(/Number that will ring: \+919800000001/);
-        fireEvent.click(screen.getByRole('button', { name: 'Place call' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Call Parent' }));
         const dialog = await screen.findByRole('alertdialog');
         expect(await within(dialog).findByText('Webhook reachable, signature check on')).toBeTruthy();
-        const confirm = within(dialog).getByRole('button', { name: 'Place call' }) as HTMLButtonElement;
+        const confirm = within(dialog).getByRole('button', { name: 'Trigger Call' }) as HTMLButtonElement;
         await waitFor(() => expect(confirm.disabled).toBe(false));
         fireEvent.click(confirm);
         await waitFor(() => expect(outbound).toHaveBeenCalledTimes(1));

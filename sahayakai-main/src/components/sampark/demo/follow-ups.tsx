@@ -76,7 +76,7 @@ export function FollowUpsBoard({
                     <span className="block text-sm text-ink-700">
                         {c.summary?.complaintAboutTeacher ?? c.summary?.followUpSuggestion ?? c.summary?.parentResponse ?? fmt(t("{family} did not pick up."), { family: student?.guardian.name ?? "" })}
                     </span>
-                    {booked.has(c.studentId) && <span className="block text-xs font-medium text-sampark-indigo">{t("A callback is booked for this family.")}</span>}
+                    {booked.has(c.studentId) && <span className="block text-xs font-medium text-sampark-indigo">{t("A callback is booked for this parent.")}</span>}
                 </button>
                 <div className="flex shrink-0 flex-wrap gap-2">{children}</div>
             </li>
@@ -153,9 +153,9 @@ export function FollowUpsBoard({
                 )}
             </Panel>
 
-            <Panel icon={PhoneMissed} title={t("Families not reached")} description={t("The last call to these families was not answered or the line was busy.")}>
+            <Panel icon={PhoneMissed} title={t("Parents not reached")} description={t("The last call to these parents was not answered or the line was busy.")}>
                 {unreached.length === 0 ? (
-                    <p className="text-sm text-ink-500">{t("Every family was reached on their last call.")}</p>
+                    <p className="text-sm text-ink-500">{t("Every parent was reached on their last call.")}</p>
                 ) : (
                     <ul className="divide-y divide-sampark-line">
                         {unreached.map((c) => {

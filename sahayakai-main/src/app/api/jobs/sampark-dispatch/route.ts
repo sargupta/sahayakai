@@ -18,6 +18,9 @@
  * Then:   due callbacks (src/server/sampark/callbacks.ts runCallbackTick) under their
  *         own single-flight lock, when Riya is on: claim → re-check → startRiyaCall.
  *         Reported as `callbacks`. A callback failure never fails the dispatch tick.
+ *         Then, at most hourly across all instances (lease 'riya-transcript-purge'): the Riya
+ *         transcript retention sweep (runScheduledTranscriptPurge; reads also delete expired
+ *         ones). Reported as `transcriptsPurged` (null on ticks that skip it).
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -26,6 +29,7 @@ import { requireCronAuth } from '@/lib/cron-auth';
 import { errorResponse, samparkContext, samparkDisabledResponse } from '@/server/sampark/http';
 import { dispatchJob } from '@/server/sampark/jobs';
 import { callbackDeps, runCallbackTick, type CallbackTickReport } from '@/server/sampark/callbacks';
+import { riyaDeps, runScheduledTranscriptPurge } from '@/server/sampark/conversation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -45,7 +49,14 @@ export async function POST(req: NextRequest) {
             console.error('[SAMPARK_CALLBACKS] tick failed', err);
             callbacks = { error: 'callback tick failed' };
         }
-        return NextResponse.json({ ...dispatch, callbacks });
+        // Hourly, single-flight across instances (a Firestore lease); null when this tick skipped it.
+        let transcriptsPurged: number | null = null;
+        try {
+            transcriptsPurged = await runScheduledTranscriptPurge(await riyaDeps(ctx));
+        } catch (err) {
+            console.error('[SAMPARK_RIYA] transcript purge failed', err);
+        }
+        return NextResponse.json({ ...dispatch, callbacks, transcriptsPurged });
     } catch (err) {
         return errorResponse(err, 'SAMPARK_DISPATCH_JOB');
     }

@@ -49,7 +49,7 @@ function CampaignRow({ campaign, href }: { campaign: Campaign; href: string }) {
                     </p>
                     {started && (
                         <p className="type-body text-muted-foreground">
-                            {fmt(t("{guardians} families · {heard} heard · {confirmed} confirmed · {optOuts} stopped calls"), {
+                            {fmt(t("{guardians} parents · {heard} heard · {confirmed} confirmed · {optOuts} stopped calls"), {
                                 guardians: f.number(c.guardians),
                                 heard: f.number(c.heardKeyFact),
                                 confirmed: f.number(c.confirmedYes),
@@ -82,7 +82,7 @@ export default function SamparkCampaignsPage() {
     return (
         <SectionCard
             title={t("Campaigns")}
-            description={t("A campaign calls a group of families with one notice. You approve it before any call goes out.")}
+            description={t("A campaign calls a group of parents with one notice. You approve it before any call goes out.")}
             action={
                 <Button asChild>
                     <Link href={`${base}/new`}>

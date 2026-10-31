@@ -66,6 +66,16 @@ export class FirestoreConversationRepo implements ConversationCallRepo {
         return snap.docs.map((d) => d.data() as ConversationCall);
     }
 
+    async listExpiredTranscripts(orgId: string, now: Date, limit: number): Promise<ConversationCall[]> {
+        // Single-field range on one field: served by Firestore's automatic index.
+        const snap = await this.db.collection('sampark_schools').doc(orgId).collection('sampark_conversation_calls')
+            .where('transcriptExpiresAt', '<=', now.toISOString())
+            .orderBy('transcriptExpiresAt', 'asc')
+            .limit(limit)
+            .get();
+        return snap.docs.map((d) => d.data() as ConversationCall);
+    }
+
     async linkConversation(conversationId: string, link: ConversationLink): Promise<boolean> {
         try {
             await this.db.collection('sampark_conversation_links').doc(conversationId).create(clean(link));
