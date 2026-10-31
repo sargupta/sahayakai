@@ -4,9 +4,12 @@ import { withPlanCheck } from '@/lib/plan-guard';
 import { dispatchVidya } from '@/lib/sidecar/vidya-dispatch';
 import { isFeatureEnabled } from '@/lib/feature-flags';
 import { logger } from '@/lib/logger';
+import { hasLiveAppState, sanitizeAppContext } from '@/lib/vidya/app-context-contract';
 
 // ── L1: In-process intent cache (per server instance, sub-millisecond) ────────
-// Keyed on: normalised_message + "::" + screen_path
+// Keyed on: screen_path + "::" + response_language + "::" + normalised_message
+// (the language is part of the key: the same words asked in a Tamil UI must
+// never get the reply cached for an English one).
 // Applied only to fresh single-turn queries (empty chat history).
 //
 // Phase 5 §5.7 wire-up: the cache stays in the route (above the dispatcher)
@@ -17,9 +20,9 @@ interface CacheEntry { data: unknown; ts: number }
 const intentCache = new Map<string, CacheEntry>();
 const L1_TTL_MS = 60 * 60 * 1000; // 1 hour
 
-function normalisedCacheKey(message: string, path: string): string {
+function normalisedCacheKey(message: string, path: string, language: string | null): string {
     const clean = message.toLowerCase().trim().replace(/\s+/g, ' ');
-    return `${path}::${clean}`;
+    return `${path}::${(language || 'auto').toLowerCase()}::${clean}`;
 }
 
 /** MD5 hash of the cache key — used as the Firestore document ID. */
@@ -150,8 +153,12 @@ async function _handler(req: Request) {
 
         // Cache applies only to fresh single-turn queries (no prior conversation).
         // Multi-turn context is too personalised to be safely shared across users.
-        const isFreshQuery = chatHistory.length === 0;
-        const cacheKey = normalisedCacheKey(message, currentScreenContext?.path || '');
+        // Replies that depend on live screen state ("is attendance complete?",
+        // "which class is this?") are never read from or written to the cache —
+        // the key is only message + path, so a cached answer would be stale.
+        const liveAppState = hasLiveAppState(sanitizeAppContext(currentScreenContext?.app));
+        const isFreshQuery = chatHistory.length === 0 && !liveAppState;
+        const cacheKey = normalisedCacheKey(message, currentScreenContext?.path || '', responseLanguage);
         const cacheHash = hashKey(cacheKey);
 
         if (isFreshQuery) {
@@ -211,6 +218,9 @@ async function _handler(req: Request) {
             response: dispatched.response,
             action: dispatched.action,
             plannedActions: dispatched.plannedActions,
+            // In-app action (validated against the manifest + the screen's
+            // offered capabilities). Older clients ignore the field.
+            appAction: dispatched.appAction ?? null,
         };
 
         // Only cache pure-conversational replies (no tool action, no
@@ -235,6 +245,8 @@ async function _handler(req: Request) {
         //   .vidyaIntentCacheGate.enabled = false
         const cacheGate = await isFeatureEnabled('vidyaIntentCacheGate', userId);
         const isCacheable = isFreshQuery
+            // An app action is always a live decision — never replay it.
+            && !dispatched.appAction
             && (!cacheGate.enabled || (
                 !dispatched.action
                 && (!dispatched.plannedActions || dispatched.plannedActions.length === 0)

@@ -184,6 +184,9 @@ function genkitToDispatched(
         // Forward when present so the OmniOrb client renders chips
         // regardless of which path serves the response.
         plannedActions: out.plannedActions as SidecarVidyaAction[] | undefined,
+        // Validated in-app action (Genkit path only; the sidecar wire
+        // contract has no app context yet).
+        appAction: out.appAction ?? null,
         source,
         decision,
     };

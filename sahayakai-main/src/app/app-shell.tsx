@@ -31,6 +31,7 @@ import { LabsBanner } from "@/components/labs/labs-banner";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { SahayakWordmark } from "@/components/shell/brand";
 import { useCollapsedNav } from "@/components/shell/use-collapsed";
+import { VidyaLiveProvider } from "@/components/vidya/vidya-live-provider";
 import { useLanguage } from "@/context/language-context";
 // GlobalVoiceInterface (voice input for unauthenticated visitors) is loaded
 // client-side only on the landing page to avoid adding its dependencies to
@@ -100,13 +101,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <>
         {children}
         <PWAInstallPrompt />
-        <GlobalVoiceInterface />
+        {isMarketing && <GlobalVoiceInterface />}
       </>
     );
   }
 
+  // VidyaLiveProvider holds the ONE voice session for the app so it survives
+  // route changes (VIDYA's tools navigate); every VIDYA surface is a view of it.
   return (
-    <>
+    <VidyaLiveProvider>
       <div className="flex min-h-svh w-full bg-wash-screen">
         <AppSidebar collapsed={collapsed} onToggleCollapsed={toggleCollapsed} />
 
@@ -178,6 +181,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <MobileBottomNav />
       <PWAInstallPrompt />
       <VoiceQuotaToastListener />
-    </>
+    </VidyaLiveProvider>
   );
 }

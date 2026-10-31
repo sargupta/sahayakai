@@ -211,6 +211,10 @@ export function useExamPaperGeneration() {
       // defend in depth in case future code wires this to a controlled
       // selector with a transient empty value.
       const submittedLanguage = language && language.trim() ? language : 'English';
+      // One Library id per Generate (idempotency key, same as useGenerator):
+      // a retried / double-submitted request upserts the same row instead of
+      // filing a second paper.
+      const submitContentId = crypto.randomUUID();
 
       const res = await fetch("/api/ai/exam-paper", {
         method: "POST",
@@ -229,6 +233,7 @@ export function useExamPaperGeneration() {
           includeAnswerKey,
           includeMarkingScheme,
           ...(pyqRatio !== undefined && { pyqRatio }),
+          contentId: submitContentId,
         }),
       });
 

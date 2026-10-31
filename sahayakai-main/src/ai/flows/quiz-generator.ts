@@ -5,6 +5,7 @@
  */
 
 import { QuizGeneratorInput, QuizGeneratorOutput, QuizVariantsOutput } from '@/ai/schemas/quiz-generator-schemas';
+import { resolveContentId } from '@/lib/content-id';
 import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
@@ -97,7 +98,7 @@ export async function generateQuiz(input: QuizGeneratorInput): Promise<QuizVaria
   }
 
   const difficulties = ['easy', 'medium', 'hard'] as const;
-  const contentId = uuidv4();
+  const contentId = resolveContentId(input.contentId);
   const now = new Date();
   const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
 

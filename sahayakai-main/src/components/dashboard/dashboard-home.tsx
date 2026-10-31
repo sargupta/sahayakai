@@ -27,7 +27,10 @@ import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { MicrophoneInput, type MicStatus } from "@/components/microphone-input";
-import { VidyaSphere } from "@/components/vidya/vidya-sphere";
+import { greetingFirstName } from "@/lib/teacher-name";
+import { VidyaSphere, type VidyaOrbState } from "@/components/vidya/vidya-sphere";
+import { useVidyaLiveSession, VIDYA_LIVE_VOICE_ENABLED } from "@/components/vidya/vidya-live-provider";
+import { vidyaStatusKey } from "@/lib/vidya-live/use-vidya-live";
 import { deriveOrbState } from "@/components/vidya/orb-state";
 import { usePrefersReducedMotion, useVidyaSpeaking } from "@/components/vidya/use-vidya-signals";
 import { AutoCompleteInput } from "@/components/auto-complete-input";
@@ -121,7 +124,7 @@ const PrepToolsRow = () => {
 };
 
 export function DashboardHome() {
-  const { requireAuth, openAuthModal } = useAuth();
+  const { requireAuth, openAuthModal, user } = useAuth();
   const { language: userLanguage, t } = useLanguage();
   const {
     isNewUser, generationCount, checklistItems, suggestions, phase, advancePhase,
@@ -144,11 +147,21 @@ export function DashboardHome() {
   const vidyaSpeaking = useVidyaSpeaking();
   const reducedMotion = usePrefersReducedMotion();
   const orbState = deriveOrbState({ failed: orbFailed, micStatus, speaking: vidyaSpeaking, awaitingReply: isThinking });
+  // Hands-free Live session (null when the flag is off or outside the app shell).
+  const liveSession = useVidyaLiveSession();
+  const live = VIDYA_LIVE_VOICE_ENABLED ? liveSession : null;
+  const liveOrbState: VidyaOrbState = !live ? orbState
+    : live.state === "error" ? "error"
+    : live.state === "listening" || live.state === "interrupted" ? "listening"
+    : live.state === "speaking" ? "speaking"
+    : live.state === "connecting" || live.state === "thinking" ? "thinking"
+    : "idle";
   const [answer, setAnswer] = useState<string | null>(null);
   const router = useRouter();
 
   const showNewUserHome = isNewUser && generationCount < 5;
-  const teacherName = profileSummary?.displayName?.split(' ')[0] || "Teacher";
+  // The saved profile name, else the sign-in account's (as the sidebar shows it).
+  const teacherName = greetingFirstName(profileSummary?.displayName, user?.displayName) ?? t("Teacher");
 
   const { toast } = useToast();
 
@@ -305,6 +318,37 @@ export function DashboardHome() {
           position="bottom"
         >
           {/* data-vidya-entry: the sidebar's "Talk to VIDYA" presses this mic on Home. */}
+          {live ? (
+            // Hands-free VIDYA (Gemini Live via the voice sidecar): one tap opens a
+            // continuous voice-to-voice session — server-side voice detection, so
+            // she answers the speaker, not the room. Same session as the compact
+            // orb on tool pages (VidyaLiveProvider); tap again to end.
+            <div className="flex flex-col items-center gap-3" data-vidya-entry="home" data-vidya-state={liveOrbState}>
+              <button
+                type="button"
+                onClick={live.error ? () => { live.dismissError(); void live.start(); } : live.toggle}
+                aria-label={live.active ? t("End voice conversation") : t("Talk to VIDYA")}
+                aria-pressed={live.active}
+                data-microphone="true"
+                data-testid="vidya-home-live"
+                // relative: VidyaSphere fills its nearest positioned box (absolute inset-0).
+                className="focus-ring relative h-40 w-40 shrink-0 rounded-pill md:h-52 md:w-52"
+              >
+                <VidyaSphere state={liveOrbState} reducedMotion={reducedMotion} />
+              </button>
+              <div role="status" aria-live="polite" data-state={live.state} className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="indic-text">{live.error ? t(live.error) : t(vidyaStatusKey(live.state, live.hasAnswered))}</span>
+                {live.active && (
+                  <button type="button" onClick={live.stop} className="focus-ring inline-flex items-center gap-1 rounded-pill px-2 py-0.5 text-xs font-medium hover:bg-muted hover:text-foreground">
+                    <X className="h-3 w-3" aria-hidden="true" /> {t("End")}
+                  </button>
+                )}
+              </div>
+              <p className="min-h-6 max-w-prose text-center text-sm text-muted-foreground indic-text" data-testid="vidya-home-caption">
+                {live.active && live.caption ? live.caption.text.slice(-160) : ""}
+              </p>
+            </div>
+          ) : (
           <div className="flex flex-col items-center gap-4" data-vidya-entry="home" data-vidya-state={orbState}>
             <MicrophoneInput
               onTranscriptChange={handleTranscript}
@@ -318,40 +362,43 @@ export function DashboardHome() {
               {t("Tap the microphone and tell Sahayak what you want to teach today")}
             </p>
           </div>
+          )}
         </FeatureSpotlight>
 
         {/* OR TEXT INPUT (SECONDARY) */}
-        <div className="w-full">
-          <Card className="border-none rounded-surface-md shadow-elevated bg-card/95 backdrop-blur-sm ring-1 ring-border/80 transition-shadow duration-micro ease-out-quart focus-within:ring-primary/40 focus-within:ring-2">
-            <CardContent className="p-2">
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-2">
-                  <div className="relative flex-1">
-                    <AutoCompleteInput
-                      placeholder={t("Type a topic, e.g. 'Photosynthesis for Class 8'")}
-                      {...form.register("topic")}
-                      value={form.watch("topic")}
-                      selectedLanguage={userLanguage || "English"}
-                      onSuggestionClick={(value) => {
-                        form.setValue("topic", value);
-                        form.handleSubmit(onSubmit)();
-                      }}
-                      className="border-none shadow-none focus-visible:ring-0 text-sm md:text-base py-2 pl-4 bg-transparent"
-                    />
-                  </div>
+        {/* Composer (chat): a surface-disc pill with a border-glass edge; focus gives a
+            2px saffron-500 edge and shadow-current; the send disc is saffron-500 (VIDYA's colour, on request), white glyph. */}
+        <div className="w-full max-w-xl">
+          <div className="rounded-pill border border-line-glass bg-surface-disc py-1.5 pl-[18px] pr-2 shadow-float backdrop-blur-sm transition-shadow duration-micro ease-out-quart focus-within:shadow-current focus-within:ring-2 focus-within:ring-saffron-500">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <AutoCompleteInput
+                    placeholder={t("Type a topic, e.g. 'Photosynthesis for Class 8'")}
+                    {...form.register("topic")}
+                    value={form.watch("topic")}
+                    selectedLanguage={userLanguage || "English"}
+                    onSuggestionClick={(value) => {
+                      form.setValue("topic", value);
+                      form.handleSubmit(onSubmit)();
+                    }}
+                    inputClassName="h-[38px] rounded-none border-0 bg-transparent px-0 py-0 text-sm text-ink-900 shadow-none backdrop-blur-none placeholder:text-ink-500 focus-visible:ring-0 focus-visible:ring-offset-0"
+                  />
+                </div>
 
-                  <Button
-                    type="submit"
-                    size="icon"
-                    className="h-10 w-10 shrink-0 rounded-full bg-leaf-500 hover:bg-leaf-500/90 text-white shadow-sm transition-all active:scale-95"
-                    aria-label={t("Generate Lesson Plan")}
-                  >
-                    <ArrowRight className="h-5 w-5" />
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
+                {/* A plain button: the shadcn Button's rounded-md and forced 16px svg
+                    survive tailwind-merge and spoil the disc. */}
+                <button
+                  type="submit"
+                  disabled={isThinking}
+                  className="focus-ring inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-pill bg-saffron-500 text-white shadow-mic transition-colors duration-micro hover:bg-saffron-600 active:scale-95 disabled:pointer-events-none disabled:opacity-[.55]"
+                  aria-label={t("Generate Lesson Plan")}
+                >
+                  <ArrowRight className="h-5 w-5" strokeWidth={2.5} aria-hidden="true" />
+                </button>
+              </form>
+            </Form>
+          </div>
         </div>
 
         <div className="flex flex-col items-center gap-2">

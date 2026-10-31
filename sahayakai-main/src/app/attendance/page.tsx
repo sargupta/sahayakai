@@ -14,6 +14,7 @@ import {
     CalendarDays, Loader2, Trash2, GraduationCap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useVidyaCapability, useVidyaScreenContext } from "@/hooks/use-vidya-app-context";
 
 function AttendancePageContent() {
     const { toast } = useToast();
@@ -41,6 +42,25 @@ function AttendancePageContent() {
     useEffect(() => {
         load();
     }, [load]);
+
+    // VIDYA: what this screen shows, and the real actions it offers.
+    // Class names come from getClassesAction (already scoped to this
+    // teacher by the server); opening one still goes through the class
+    // page's own server-side ownership check.
+    useVidyaScreenContext("attendance.classes", loading ? null : {
+        classCount: classes.length,
+        classNames: classes.map((c) => c.name),
+    });
+    useVidyaCapability("attendance.create_class", () => setCreateOpen(true));
+    useVidyaCapability("attendance.open_class", ({ className }) => {
+        const wanted = (className || "").trim().toLowerCase();
+        const match = wanted
+            ? classes.find((c) => c.name.trim().toLowerCase() === wanted)
+                ?? classes.find((c) => c.name.toLowerCase().includes(wanted))
+            : undefined;
+        if (!match) throw new Error("class_not_found");
+        router.push(`/attendance/${match.id}`);
+    }, { enabled: classes.length > 0 });
 
     const handleDelete = async (cls: ClassRecord, e: React.MouseEvent) => {
         e.stopPropagation();

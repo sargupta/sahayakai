@@ -182,6 +182,26 @@ describe('exam-paper-generator: persistence lifecycle (H3 contentId contract)', 
         expect(readyArgs[1].data.contentId).toBe(MINTED_ID);
     });
 
+    it('uses the client\'s per-Generate idempotency key, so a retried request upserts the SAME row', async () => {
+        const CLIENT_ID = '7d3f1c2a-9b4e-4c5d-8e6f-0a1b2c3d4e5f';
+        promptSpy.mockResolvedValueOnce({ output: paperFixture(10) }).mockResolvedValueOnce({ output: paperFixture(10) });
+
+        await generateExamPaper({ ...BASE_INPUT, userId: 'teacher-1', contentId: CLIENT_ID });
+        await generateExamPaper({ ...BASE_INPUT, userId: 'teacher-1', contentId: CLIENT_ID }); // retry / double-submit
+
+        const ids = new Set((mockSaveContent.mock.calls as Array<[string, { id: string }]>).map(([, doc]) => doc.id));
+        expect([...ids]).toEqual([CLIENT_ID]);
+    });
+
+    it('replaces an invalid client key with a system-minted id', async () => {
+        promptSpy.mockResolvedValueOnce({ output: paperFixture(10) });
+
+        const result = await generateExamPaper({ ...BASE_INPUT, userId: 'teacher-1', contentId: '../other-teacher/doc' });
+
+        expect(result.contentId).toBe(MINTED_ID);
+        expect((mockSaveContent.mock.calls[0] as [string, { id: string }])[1].id).toBe(MINTED_ID);
+    });
+
     it('degrades gracefully when the Firestore write throws — generation still resolves', async () => {
         mockSaveContent.mockRejectedValue(new Error('firestore unavailable'));
         promptSpy.mockResolvedValueOnce({ output: paperFixture(10) });

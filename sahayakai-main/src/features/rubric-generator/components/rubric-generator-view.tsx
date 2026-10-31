@@ -46,6 +46,7 @@ export function RubricGeneratorView({
     canUseAI,
     aiUnavailableReason,
     rubric,
+    contentId,
     status,
     isGenerating,
     limitState,
@@ -90,7 +91,7 @@ export function RubricGeneratorView({
             width="default"
             status={status}
             progressMessages={[translate("Building your rubric...")]}
-            result={rubric && <RubricDisplay rubric={rubric} selectedLanguage={selectedLanguage} />}
+            result={rubric && <RubricDisplay rubric={rubric} contentId={contentId} selectedLanguage={selectedLanguage} />}
             form={
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">

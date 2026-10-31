@@ -74,10 +74,23 @@ export function useOnboardingProgress(): UseOnboardingProgressReturn {
     useEffect(() => { phaseRef.current = phase; }, [phase]);
     useEffect(() => { userRef.current = user; }, [user]);
 
+    // A different account (or sign-out) must not keep the previous teacher's
+    // profile, e.g. the name on Home's greeting: drop it and load again.
+    const loadedUidRef = useRef<string | null>(null);
+    useEffect(() => {
+        if (loadedUidRef.current === null || loadedUidRef.current === (user?.uid ?? null)) return;
+        loadedUidRef.current = null;
+        profileRef.current = null;
+        setProfileData(null);
+        setProfileSummary(null);
+        setLoaded(false);
+    }, [user?.uid]);
+
     // Load once when user is available
     useEffect(() => {
         if (!user || loaded) return;
 
+        loadedUidRef.current = user.uid;
         getProfileData(user.uid).then(({ profile }) => {
             if (!profile) { setLoaded(true); return; }
             profileRef.current = profile;

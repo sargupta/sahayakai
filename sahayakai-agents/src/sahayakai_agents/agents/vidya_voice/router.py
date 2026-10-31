@@ -44,6 +44,7 @@ from pydantic import ValidationError
 
 from ...config import get_settings
 from ...shared.errors import AgentError
+from .adk_live import build_public_voice_instruction, get_voice_engine, run_adk_live_relay
 from .agent import (
     build_tool_definitions,
     build_vidya_voice_session,
@@ -381,6 +382,61 @@ def verify_stream_token(token: str | None) -> str | None:
     return uid
 
 
+# ---- Public (anonymous, landing-page) stream tokens ---------------------
+#
+# Visitors who have not signed in may talk to VIDYA on the landing page. They
+# get a DIFFERENT token: `pub.<id>.<exp>.<sig>` where the HMAC is computed over
+# `public:<id>.<exp>` — a separate signing domain, so a public token can never
+# verify as a teacher token (or vice versa) even though both use the same key.
+# A public session is served with NO tools, NO teacher profile / screen
+# context and a public-safe instruction (see `adk_live.build_public_voice_*`).
+# The web route that mints these (`/api/vidya-voice/public-session`) is feature
+# flagged and per-IP rate limited; this sidecar adds its own concurrency and
+# duration caps below. Scope is decided HERE, from the verified token, never
+# from anything the client sends.
+_PUBLIC_TOKEN_PREFIX = "pub."
+PUBLIC_UID_PREFIX = "public:"
+
+
+def verify_public_stream_token(token: str | None) -> str | None:
+    """Return `public:<id>` for a valid, unexpired PUBLIC token, else None."""
+    if not token or not token.startswith(_PUBLIC_TOKEN_PREFIX):
+        return None
+    try:
+        visitor_id, exp_raw, sig = token[len(_PUBLIC_TOKEN_PREFIX):].split(".", 2)
+        exp = int(exp_raw)
+    except (ValueError, AttributeError):
+        return None
+    if not visitor_id or not visitor_id.isalnum() or len(visitor_id) > 64:
+        return None
+    if exp < int(datetime.now(UTC).timestamp()):
+        return None
+    key = get_settings().request_signing_key.get_secret_value().strip().encode()
+    expected = base64.urlsafe_b64encode(
+        hmaclib.new(key, f"public:{visitor_id}.{exp}".encode(), hashlib.sha256).digest()
+    ).rstrip(b"=").decode()
+    if not hmaclib.compare_digest(expected, sig):
+        return None
+    return f"{PUBLIC_UID_PREFIX}{visitor_id}"
+
+
+def mint_public_stream_token(visitor_id: str, ttl_seconds: int = 120) -> str:
+    """Test/support twin of the web route's `mintPublicStreamToken`."""
+    exp = int((datetime.now(UTC) + timedelta(seconds=ttl_seconds)).timestamp())
+    key = get_settings().request_signing_key.get_secret_value().strip().encode()
+    sig = base64.urlsafe_b64encode(
+        hmaclib.new(key, f"public:{visitor_id}.{exp}".encode(), hashlib.sha256).digest()
+    ).rstrip(b"=").decode()
+    return f"{_PUBLIC_TOKEN_PREFIX}{visitor_id}.{exp}.{sig}"
+
+
+# Public sessions are a demo, not a workspace: a small separate pool so a busy
+# landing page can never starve signed-in teachers, and a short wall clock.
+_PUBLIC_MAX_LIVE_SESSIONS = 4
+_PUBLIC_MAX_SESSION_SECONDS = 180
+_PUBLIC_IDLE_INPUT_TIMEOUT_SECONDS = 20
+
+
 # ---- Cost + abuse controls ----------------------------------------------
 #
 # The billable unit on this route is the per-audio-token Vertex Live session,
@@ -481,6 +537,7 @@ _UID_OPEN_HISTORY: TTLCache[str, list[float]] = TTLCache(
 )
 _ACTIVE_UIDS: set[str] = set()
 _GLOBAL_SESSION_SEM = asyncio.Semaphore(_GLOBAL_MAX_LIVE_SESSIONS)
+_PUBLIC_SESSION_SEM = asyncio.Semaphore(_PUBLIC_MAX_LIVE_SESSIONS)
 
 
 def reset_stream_guards(*, max_global_sessions: int | None = None) -> None:
@@ -491,13 +548,24 @@ def reset_stream_guards(*, max_global_sessions: int | None = None) -> None:
     would spend another's hourly budget. Every test that opens `/stream` resets
     first — wired as an autouse fixture in `tests/conftest.py`.
     """
-    global _GLOBAL_SESSION_SEM
+    global _GLOBAL_SESSION_SEM, _PUBLIC_SESSION_SEM
     _STREAM_TOKEN_BURN.clear()
     _UID_OPEN_HISTORY.clear()
     _ACTIVE_UIDS.clear()
     _GLOBAL_SESSION_SEM = asyncio.Semaphore(
         _GLOBAL_MAX_LIVE_SESSIONS if max_global_sessions is None else max_global_sessions
     )
+    _PUBLIC_SESSION_SEM = asyncio.Semaphore(_PUBLIC_MAX_LIVE_SESSIONS)
+
+
+_PROTOCOL_SUBPROTOCOL = "vidya.v1"
+_BEARER_SUBPROTOCOL_PREFIX = "bearer."
+
+
+def _accept_subprotocol(ws: WebSocket) -> str | None:
+    """Echo `vidya.v1` when the client offered it (browsers require an echo)."""
+    offered = [p.strip() for p in ws.headers.get("sec-websocket-protocol", "").split(",")]
+    return _PROTOCOL_SUBPROTOCOL if _PROTOCOL_SUBPROTOCOL in offered else None
 
 
 def _extract_stream_token(ws: WebSocket) -> tuple[str | None, bool]:
@@ -519,6 +587,13 @@ def _extract_stream_token(ws: WebSocket) -> tuple[str | None, bool]:
         scheme, _, value = header.partition(" ")
         if scheme.lower() == "bearer" and value.strip():
             return value.strip(), False
+    # Browsers cannot set headers on a WebSocket. They offer the token as a
+    # subprotocol instead — `new WebSocket(url, ["vidya.v1", "bearer.<token>"])`
+    # — which, like the header, never lands in a URL or access log.
+    for proto in ws.headers.get("sec-websocket-protocol", "").split(","):
+        proto = proto.strip()
+        if proto.startswith(_BEARER_SUBPROTOCOL_PREFIX) and len(proto) > len(_BEARER_SUBPROTOCOL_PREFIX):
+            return proto[len(_BEARER_SUBPROTOCOL_PREFIX):], False
     query_token = ws.query_params.get("t")
     if query_token:
         return query_token, True
@@ -580,7 +655,28 @@ async def _admit_stream(ws: WebSocket) -> str | None:
     not their fault.
     """
     token, from_query = _extract_stream_token(ws)
+
+    public_uid = verify_public_stream_token(token)
+    if public_uid is not None and token is not None:
+        # Anonymous landing-page visitor. Same single-use burn; its own small
+        # pool (checked first) AND a global permit, so public traffic can
+        # neither exceed its budget nor exhaust the teachers' ceiling.
+        if not _burn_stream_token(token):
+            log.warning("vidya_voice.stream_rejected", reason="token_replayed", scope="public")
+            await ws.close(code=_CLOSE_CONFLICT)
+            return None
+        if _PUBLIC_SESSION_SEM.locked() or _GLOBAL_SESSION_SEM.locked():
+            log.warning("vidya_voice.stream_rejected", reason="public_capacity", scope="public")
+            await ws.close(code=_CLOSE_AT_CAPACITY)
+            return None
+        await _PUBLIC_SESSION_SEM.acquire()
+        await _GLOBAL_SESSION_SEM.acquire()
+        _ACTIVE_UIDS.add(public_uid)
+        return public_uid
+
     uid = verify_stream_token(token)
+    if uid is not None and uid.startswith(PUBLIC_UID_PREFIX):
+        uid = None  # the public scope is only ever granted by a public token
     if uid is None or token is None:
         log.warning("vidya_voice.stream_rejected", reason="invalid_stream_token")
         await ws.close(code=_CLOSE_BAD_TOKEN)
@@ -1055,6 +1151,7 @@ async def vidya_voice_stream(ws: WebSocket) -> None:
     uid = await _admit_stream(ws)
     if uid is None:
         return
+    is_public = uid.startswith(PUBLIC_UID_PREFIX)
 
     counters = _StreamCounters()
     started_at = time.monotonic()
@@ -1069,7 +1166,7 @@ async def vidya_voice_stream(ws: WebSocket) -> None:
     # otherwise strand a permit for the life of the process, and 24 of those
     # bricks the instance.
     try:
-        await ws.accept()
+        await ws.accept(subprotocol=_accept_subprotocol(ws))
 
         setup, pushback = await _await_setup_frame(ws, counters)
 
@@ -1084,27 +1181,31 @@ async def vidya_voice_stream(ws: WebSocket) -> None:
             or ws.query_params.get("screen")
             or "/dashboard"
         )
-        session_config = build_vidya_voice_session(
-            language=detected_language,
-            screen_path=screen_path,
-            grade=setup.grade if setup else None,
-            subject=setup.subject if setup else None,
-            school_context=setup.schoolContext if setup else None,
-        )
+        if is_public:
+            # Anonymous visitor: only the language is taken from the client.
+            # No profile, no screen/app context, no tools.
+            session_config = {
+                "system_instruction": build_public_voice_instruction(detected_language)
+            }
+        else:
+            session_config = build_vidya_voice_session(
+                language=detected_language,
+                screen_path=screen_path,
+                grade=setup.grade if setup else None,
+                subject=setup.subject if setup else None,
+                school_context=setup.schoolContext if setup else None,
+            )
 
         model = get_vertex_live_model()
-        from google import genai
-
-        client = genai.Client(
-            vertexai=True,
-            project=get_settings().gcp_project,
-            location=get_vertex_live_location(),
-        )
-        config = _build_vertex_live_config(session_config)
+        # Public sessions always run on ADK: it is the only engine with a
+        # tool-free, public-instruction configuration.
+        engine = "adk" if is_public else get_voice_engine()
         log.info(
             "vidya_voice.stream_open",
             uid=uid,
+            scope="public" if is_public else "teacher",
             model=model,
+            engine=engine,
             language=detected_language,
             # Whether the regression is actually fixed in production is not
             # answerable from the code — it depends on clients sending the
@@ -1112,10 +1213,61 @@ async def vidya_voice_stream(ws: WebSocket) -> None:
             personalised=setup is not None,
         )
 
-        async with client.aio.live.connect(model=model, config=config) as session:
-            close_code, end_reason = await _relay_session(
-                ws, session, counters, first_frame=pushback
+        if engine == "adk":
+            # Google ADK bidi-streaming engine (the voice path's target). Uses
+            # the SAME admission, frame validation, caps and telemetry above
+            # and below — only the model session itself is ADK-driven.
+            async def _send(payload: dict[str, Any]) -> None:
+                text = json.dumps(payload)
+                counters.bytes_down += len(text.encode("utf-8"))
+                counters.frames_down += 1
+                await ws.send_text(text)
+
+            async def _recv(timeout: float) -> tuple[str, Any]:
+                return await _receive_client_frame(ws, counters, timeout=timeout)
+
+            end_reason, hit_wall_clock = await run_adk_live_relay(
+                ws,
+                uid=uid,
+                session_config=session_config,
+                model=model,
+                project=get_settings().gcp_project,
+                location=get_vertex_live_location(),
+                receive_frame=_recv,
+                send=_send,
+                first_frame=pushback,
+                idle_timeout_seconds=(
+                    _PUBLIC_IDLE_INPUT_TIMEOUT_SECONDS if is_public else _IDLE_INPUT_TIMEOUT_SECONDS
+                ),
+                max_session_seconds=(
+                    _PUBLIC_MAX_SESSION_SECONDS if is_public else _MAX_SESSION_SECONDS
+                ),
+                pcm_in_mime=_PCM_IN_MIME,
+                tools_enabled=not is_public,
+                apply_teacher_rules=not is_public,
             )
+            close_code = (
+                _CLOSE_MAX_DURATION
+                if hit_wall_clock
+                else _CLOSE_IDLE_TIMEOUT
+                if end_reason == "idle_timeout"
+                else 1000
+            )
+        else:
+            # Legacy raw google-genai relay — kept as the rollback
+            # (`SAHAYAKAI_VIDYA_VOICE_ENGINE=genai`).
+            from google import genai
+
+            client = genai.Client(
+                vertexai=True,
+                project=get_settings().gcp_project,
+                location=get_vertex_live_location(),
+            )
+            config = _build_vertex_live_config(session_config)
+            async with client.aio.live.connect(model=model, config=config) as session:
+                close_code, end_reason = await _relay_session(
+                    ws, session, counters, first_frame=pushback
+                )
     except WebSocketDisconnect:
         end_reason = "client_disconnect"
     except Exception as exc:  # noqa: BLE001
@@ -1132,6 +1284,8 @@ async def vidya_voice_stream(ws: WebSocket) -> None:
         # way out cannot strand capacity for the life of the process.
         _ACTIVE_UIDS.discard(uid)
         _GLOBAL_SESSION_SEM.release()
+        if is_public:
+            _PUBLIC_SESSION_SEM.release()
         # Byte telemetry: the bill is per audio token and these are the only
         # numbers that attribute it to a uid, since the audio itself is relayed
         # and never stored.

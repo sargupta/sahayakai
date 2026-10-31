@@ -1,6 +1,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { INJECTION_GUARD, neutralizeUserInput } from '@/ai/prompt-hardening';
+import { VIDYA_SECTIONS, renderManifestForPrompt } from '@/lib/vidya/app-manifest';
 
 // Define the possible agent types
 const AgentTypeSchema = z.enum([
@@ -13,6 +14,10 @@ const AgentTypeSchema = z.enum([
   'rubric',
   'examPaper',
   'instantAnswer',
+  // Questions ABOUT SahayakAI itself (where is X, how do I Y). Never a
+  // generator route and never an instant answer: answered from the app
+  // manifest (@/lib/vidya/app-manifest).
+  'appHelp',
   'videoStoryteller',
   'unknown'
 ]);
@@ -120,8 +125,24 @@ const AgentRouterOutputSchema = z.object({
   // — every entry is teacher-confirmed.
   plannedActions: z.array(VidyaActionSchema).max(3).optional()
     .describe('Phase N.1 — ordered queue of NAVIGATE_AND_FILL actions for compound requests. Max 3.'),
+  // appHelp only — see APP_HELP_FIELDS.
+  appDestination: z.string().optional(),
+  wantsNavigation: z.boolean().optional(),
+  appAnswer: z.string().optional(),
   result: z.any().describe('The output from the selected agent.'),
 });
+
+// appHelp-only classifier fields. `appDestination` is validated against the
+// manifest section ids; the route never builds a URL from free model text.
+const APP_SECTION_IDS = VIDYA_SECTIONS.map((s) => s.id) as [string, ...string[]];
+const APP_HELP_FIELDS = {
+  appDestination: z.enum(APP_SECTION_IDS).nullable().optional()
+    .describe('appHelp only: the SahayakAI section the question is about.'),
+  wantsNavigation: z.boolean().nullable().optional()
+    .describe('appHelp only: true when the teacher asked to go to / open / be taken to the section.'),
+  appAnswer: z.string().max(500).nullable().optional()
+    .describe('appHelp only: 1-3 sentence answer in the prompt language, using the real menu/button names.'),
+};
 export type AgentRouterOutput = z.infer<typeof AgentRouterOutputSchema>;
 
 
@@ -143,6 +164,7 @@ const intentPrompt = ai.definePrompt({
       // (mapped via `INTENT_TO_FLOW`). Deeper actions express data flow
       // via `params.dependsOn` (max 2 ints).
       plannedActions: z.array(VidyaActionSchema).max(3).optional(),
+      ...APP_HELP_FIELDS,
     })
   },
   prompt: `Analyze the user prompt to determine the intended tool and extract key parameters.
@@ -169,7 +191,11 @@ const intentPrompt = ai.definePrompt({
         - 'examPaper': FULL board-style examination papers with sections, marks distribution, and time duration. Triggered by: "exam paper", "board paper", "question paper", "प्रश्न पत्र", "model paper", "previous year paper", "PYQ", "pre-board paper", "pattern paper", "CBSE paper", "ICSE paper", "sample paper", "test paper for board", "half-yearly paper", "annual exam paper", "board ke pattern par paper". An exam paper is FORMAL summative assessment, typically 60-180 minutes and 40-100 marks.
         - 'instantAnswer': Direct questions (What is...), definitions, quick facts.
         - 'videoStoryteller': Finding educational videos, YouTube.
+        - 'appHelp': Questions or requests ABOUT THE SAHAYAKAI APP ITSELF — where something is ("where is the Library?", "attendance kahan hai?"), how to do something in the app ("how do I add students?", "how do I take attendance?"), or "take me to / open <section>". Use the section list below; set \`appDestination\` to the section id, \`wantsNavigation\` true only when the teacher asked to go/open, and \`appAnswer\` to a 1-3 sentence answer IN THE PROMPT'S LANGUAGE using the real menu and button names. A request to CREATE content ("make a quiz") is NOT appHelp.
         - 'unknown': If the intent is unclear or just a greeting.
+
+        SahayakAI app map (for 'appHelp' only):
+        ${renderManifestForPrompt()}
 
         🔑 QUIZ vs EXAM-PAPER DISAMBIGUATION (worked examples):
         These two intents collide most often. Read these examples carefully —
@@ -266,7 +292,7 @@ const intentPrompt = ai.definePrompt({
         2. Use \`params.dependsOn\` (list of ints, max 2 entries) to express data flow between actions. Each int is the index of an EARLIER \`plannedActions\` entry whose output this action consumes. A rubric that grades a lesson plan at index 0 sets \`dependsOn: [0]\`. Independent follow-ups leave \`dependsOn: []\`.
         3. Re-use \`gradeLevel\`, \`subject\`, \`topic\`, and \`language\` across entries — the teacher meant a coherent unit, not unrelated requests.
         4. For SINGLE-step requests, emit \`plannedActions: []\` (an empty array). The OmniOrb client only renders chips for entries beyond the primary, so an empty list means "no follow-ups."
-        5. For \`instantAnswer\` and \`unknown\` intents, ALWAYS emit \`plannedActions: []\` — these never produce navigation actions.
+        5. For \`instantAnswer\`, \`appHelp\` and \`unknown\` intents, ALWAYS emit \`plannedActions: []\` — these never produce generator actions.
 
         The OmniOrb client iterates \`plannedActions\` and renders each entry as a one-tap chip the teacher can accept. The orchestrator does NOT execute follow-ups automatically — the teacher confirms each one.
 
@@ -290,7 +316,7 @@ const INTENT_TO_FLOW: Record<string, z.infer<typeof AllowedFlowEnum>> = {
   videoStoryteller: 'video-storyteller',
 };
 
-const NON_ROUTABLE_INTENTS = new Set(['instantAnswer', 'unknown']);
+const NON_ROUTABLE_INTENTS = new Set(['instantAnswer', 'unknown', 'appHelp']);
 
 /**
  * NCERT-demo 2026-05-19 — chapter validation hook.
@@ -456,6 +482,11 @@ export const agentRouterFlow = ai.defineFlow(
       subject,
       language,
       plannedActions,
+      ...(intent === 'appHelp' ? {
+        appDestination: intentOutput?.appDestination ?? undefined,
+        wantsNavigation: intentOutput?.wantsNavigation ?? undefined,
+        appAnswer: intentOutput?.appAnswer ?? undefined,
+      } : {}),
       result: null,
     };
   }

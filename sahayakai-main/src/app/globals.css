@@ -60,6 +60,136 @@
   .mark-float-c { animation: mark-float-c 15s ease-in-out infinite; }
 }
 
+/* ========================================
+   VIDYA orb (vidya-presence.tsx) — product-native, from the SahayakAI
+   website design reference (2026-10). ONE warm radial fill, ONE soft
+   shadow, ONE state ring. No glow field, orbits, sheen or particles:
+   colour + ring carry state, so motion always means something.
+   State arrives as data-state on .vidya-stage:
+   idle | connecting | listening | processing | speaking | error.
+   Live mic / playback level arrives as --vidya-level (0–1). All motion is
+   gated on prefers-reduced-motion: no-preference.
+   ======================================== */
+.vidya-stage {
+  --vidya-level: 0;
+  /* Fill = radial highlight → body (the design's orb recipe). */
+  --vidya-hi: 32 100% 84%;   /* #FFD9AE */
+  --vidya-lo: 25 67% 47%;    /* #C96A28 = --primary */
+  --vidya-ring: 25 67% 47%;
+}
+.vidya-stage[data-state="listening"],
+.vidya-stage[data-state="speaking"] { --vidya-hi: 33 100% 88%; } /* #FFE3C2 */
+.vidya-stage[data-state="connecting"],
+.vidya-stage[data-state="processing"] {
+  --vidya-hi: 228 76% 92%;   /* #DCE2FA — the design's "working" indigo */
+  --vidya-lo: 230 55% 36%;   /* #2A3B8F */
+  --vidya-ring: 230 55% 36%;
+}
+.vidya-stage[data-state="error"] {
+  --vidya-hi: 30 30% 90%;
+  --vidya-lo: 25 25% 55%;    /* desaturated: unavailable, not alarming */
+  --vidya-ring: 6 63% 46%;   /* #C0392B */
+}
+
+/* The orb button — it IS the control. */
+.vidya-sphere {
+  position: relative;
+  width: 30%;
+  aspect-ratio: 1;
+  border-radius: 9999px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transform: scale(calc(1 + var(--vidya-level) * 0.04));
+  transition: transform 0.12s linear;
+}
+.vidya-stage[data-size="compact"] .vidya-sphere { width: 100%; }
+@media (max-width: 640px) {
+  .vidya-stage[data-size="hero"] .vidya-sphere,
+  .vidya-stage[data-size="workspace"] .vidya-sphere { width: 38%; }
+}
+.vidya-sphere:focus { outline: none; }
+.vidya-sphere:focus-visible { outline: 3px solid hsl(var(--saffron-700)); outline-offset: 5px; }
+
+.vidya-core {
+  position: relative;
+  display: flex;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  color: hsl(0 0% 100%);
+  background: radial-gradient(circle at 34% 30%, hsl(var(--vidya-hi)), hsl(var(--vidya-lo)) 72%);
+  box-shadow: 0 8px 20px -4px hsl(var(--vidya-lo) / 0.42);
+  transition: background 0.5s ease, box-shadow 0.5s ease, transform 0.18s ease;
+}
+.vidya-sphere:hover .vidya-core { box-shadow: 0 10px 24px -4px hsl(var(--vidya-lo) / 0.48); }
+.vidya-sphere:active .vidya-core { transform: scale(0.97); }
+
+/* State ring: hidden at rest; follows the REAL level while listening /
+   speaking; a slow breath while connecting / thinking; static on error. */
+.vidya-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  pointer-events: none;
+  box-shadow: 0 0 0 0 hsl(var(--vidya-ring) / 0);
+  transition: box-shadow 0.2s ease;
+}
+.vidya-stage[data-state="listening"] .vidya-ring,
+.vidya-stage[data-state="speaking"] .vidya-ring {
+  box-shadow: 0 0 0 calc(5px + var(--vidya-level) * 12px) hsl(var(--vidya-ring) / 0.18);
+}
+.vidya-stage[data-state="connecting"] .vidya-ring,
+.vidya-stage[data-state="processing"] .vidya-ring { box-shadow: 0 0 0 6px hsl(var(--vidya-ring) / 0.14); }
+.vidya-stage[data-state="error"] .vidya-ring { box-shadow: 0 0 0 3px hsl(var(--vidya-ring) / 0.35); }
+
+.vidya-icon {
+  width: clamp(22px, 26%, 36px);
+  height: auto;
+  aspect-ratio: 1;
+}
+.vidya-stage[data-size="compact"] .vidya-icon { width: 24px; }
+.vidya-wordmark {
+  font-family: var(--font-bricolage), var(--font-outfit), system-ui, sans-serif;
+  font-size: clamp(10px, 7%, 13px);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  margin-right: -0.22em;
+}
+
+/* Status pill dot (home / tool-page status line) mirrors the orb colour. */
+.vidya-status-dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 9999px;
+  background: hsl(var(--muted-foreground) / 0.6);
+}
+.vidya-status[data-state="listening"] .vidya-status-dot,
+.vidya-status[data-state="interrupted"] .vidya-status-dot,
+.vidya-status[data-state="speaking"] .vidya-status-dot { background: hsl(25 67% 47%); }
+.vidya-status[data-state="connecting"] .vidya-status-dot,
+.vidya-status[data-state="thinking"] .vidya-status-dot { background: hsl(230 55% 36%); }
+.vidya-status[data-state="error"] .vidya-status-dot { background: hsl(6 63% 46%); }
+
+@keyframes vidya-rest   { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes vidya-breath { 0%, 100% { box-shadow: 0 0 0 4px hsl(var(--vidya-ring) / 0.10); } 50% { box-shadow: 0 0 0 9px hsl(var(--vidya-ring) / 0.16); } }
+@keyframes vidya-dot    { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+
+@media (prefers-reduced-motion: no-preference) {
+  .vidya-stage[data-state="idle"] .vidya-core { animation: vidya-rest 5s ease-in-out infinite; }
+  .vidya-stage[data-state="connecting"] .vidya-ring,
+  .vidya-stage[data-state="processing"] .vidya-ring { animation: vidya-breath 1.8s ease-in-out infinite; }
+  .vidya-status[data-state="listening"] .vidya-status-dot,
+  .vidya-status[data-state="thinking"] .vidya-status-dot,
+  .vidya-status[data-state="speaking"] .vidya-status-dot { animation: vidya-dot 1.4s ease-in-out infinite; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vidya-sphere, .vidya-core, .vidya-ring { transition: none; }
+  .vidya-sphere { transform: none; }
+}
+
 @layer utilities {
   .animate-bounce-subtle {
     animation: bounce-subtle 3s infinite;
@@ -399,6 +529,7 @@
     --surface-capsule: rgba(255, 253, 249, 0.92);
     --surface-float: rgba(255, 253, 249, 0.96);
     --surface-segment: rgba(255, 255, 255, 0.62);
+    --surface-disc: rgba(255, 255, 255, 0.8);
     --border-glass: rgba(255, 255, 255, 0.95);
     --border-hairline: rgba(23, 19, 16, 0.08);
     --border-row: rgba(23, 19, 16, 0.1);
@@ -462,6 +593,10 @@
     --shadow-card: 0 12px 32px -18px rgba(23, 19, 16, 0.22), 0 1px 2px rgba(23, 19, 16, 0.04);
     --shadow-cta: 0 10px 24px -10px rgba(165, 85, 29, 0.55);
     --shadow-orb: 0 4px 12px -2px rgba(201, 106, 40, 0.45);
+    /* A focused Field or Composer pill. */
+    --shadow-current: 0 8px 22px rgba(201, 106, 40, 0.18);
+    /* The Composer's saffron disc. */
+    --shadow-mic: 0 5px 14px rgba(201, 106, 40, 0.36);
 
     --sidebar-w: 256px;
     --sidebar-w-rail: 76px;

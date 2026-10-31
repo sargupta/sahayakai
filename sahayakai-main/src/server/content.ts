@@ -18,6 +18,7 @@ import { BaseContent, ContentType } from '@/types';
 import { getStorageInstance } from '@/lib/firebase-admin';
 import { logger } from '@/lib/logger';
 import { v4 as uuidv4 } from 'uuid';
+import { isContentId, resolveContentId } from '@/lib/content-id';
 import { format } from 'date-fns';
 import { Timestamp } from 'firebase-admin/firestore';
 import { aggregateUserMetrics } from '@/lib/aggregator';
@@ -108,12 +109,16 @@ export async function searchContent(userId: string, query: string): Promise<Base
 /**
  * Save content to the caller's library (Storage file + Firestore doc).
  */
-export async function saveToLibrary(userId: string, type: ContentType, title: string, data: any): Promise<{ success: boolean; id?: string; error?: string }> {
+export async function saveToLibrary(userId: string, type: ContentType, title: string, data: any, id?: string | null): Promise<{ success: boolean; id?: string; error?: string }> {
     try {
         const storage = await getStorageInstance();
         const now = new Date();
         const timestamp = format(now, 'yyyyMMdd_HHmmss');
-        const contentId = uuidv4();
+        // Stable id → idempotent Save. When the generation was already filed
+        // under this id, update that row in place: keep its creation time and
+        // Storage blob path instead of minting a second artifact.
+        const contentId = resolveContentId(id);
+        const existing = isContentId(id) ? await dbAdapter.getContent(userId, contentId) : null;
         const safeTitle = title.substring(0, 50).replace(/[^a-z0-9]+/gi, '_').toLowerCase().replace(/^_|_$/g, '');
 
         // Determine file extension and sub-path
@@ -138,7 +143,7 @@ export async function saveToLibrary(userId: string, type: ContentType, title: st
         }
 
         const fileName = `${timestamp}_${safeTitle}.${ext}`;
-        const filePath = `users/${userId}/${folder}/${fileName}`;
+        const filePath = existing?.storagePath || `users/${userId}/${folder}/${fileName}`;
         const file = storage.bucket().file(filePath);
 
         // Prep content for storage
@@ -164,7 +169,12 @@ export async function saveToLibrary(userId: string, type: ContentType, title: st
             data,
             isPublic: false,
             isDraft: false,
-            createdAt: Timestamp.fromDate(now),
+            status: 'ready',
+            // An explicit Save un-deletes / un-hides: the teacher asked for this item.
+            deletedAt: null,
+            expiresAt: null,
+            hiddenFromLibrary: false,
+            createdAt: existing?.createdAt ?? Timestamp.fromDate(now),
             updatedAt: Timestamp.fromDate(now),
         } as any);
 

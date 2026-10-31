@@ -7,6 +7,7 @@
  */
 
 import { ai } from '@/ai/genkit';
+import { resolveContentId } from '@/lib/content-id';
 import { z } from 'genkit';
 import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
@@ -27,6 +28,7 @@ export const WorksheetWizardInputSchema = z.object({
   language: z.string().max(50).optional().describe('The language for the worksheet.'),
   gradeLevel: z.string().optional().describe('The grade level for which the worksheet is intended.'),
   userId: z.string().optional().describe('The ID of the user for whom the worksheet is being generated.'),
+  contentId: z.string().max(64).optional().describe('Stable Library artifact id minted by the client once per generation (idempotency key). Invalid values are replaced server-side.'),
   subject: z.string().optional().describe('The academic subject.'),
   teacherContext: z.string().optional().describe('Career-stage context for personalising AI output tone and depth.'),
 });
@@ -240,7 +242,7 @@ const worksheetWizardFlow = ai.defineFlow(
           const storage = await getStorageInstance();
           const now = new Date();
           const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
-          const contentId = uuidv4();
+          const contentId = resolveContentId(input.contentId);
           const fileName = `${timestamp}-${contentId}.md`;
           const filePath = `users/${input.userId}/worksheets/${fileName}`;
           const file = storage.bucket().file(filePath);

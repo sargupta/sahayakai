@@ -156,6 +156,7 @@ export default {
           capsule: 'var(--surface-capsule)',
           float: 'var(--surface-float)',
           segment: 'var(--surface-segment)',
+          disc: 'var(--surface-disc)',
         },
         line: {
           glass: 'var(--border-glass)',
@@ -244,6 +245,8 @@ export default {
         'sampark-card': 'var(--shadow-sampark-card)',
         'sampark-raised': 'var(--shadow-sampark-raised)',
         orb: 'var(--shadow-orb)',
+        current: 'var(--shadow-current)',
+        mic: 'var(--shadow-mic)',
       },
       borderRadius: {
         lg: 'var(--radius)',

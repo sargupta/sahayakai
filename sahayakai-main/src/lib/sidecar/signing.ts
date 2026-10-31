@@ -141,6 +141,27 @@ export async function mintStreamToken(
 }
 
 /**
+ * Mint a PUBLIC (anonymous landing-page) stream token:
+ * `pub.<visitorId>.<exp>.<base64url(hmac_sha256(key, "public:visitorId.exp"))>`.
+ *
+ * A separate HMAC domain from `mintStreamToken`, so a public token can never
+ * verify as a teacher token on the sidecar (`verify_public_stream_token` in
+ * router.py) — the sidecar serves it with no tools and no account context.
+ */
+export async function mintPublicStreamToken(
+  ttlSeconds = 120,
+): Promise<{ token: string; expiresInSeconds: number }> {
+  const key = await getSigningKey();
+  const visitorId = crypto.randomBytes(12).toString('hex');
+  const exp = Math.floor(Date.now() / 1000) + ttlSeconds;
+  const sig = crypto
+    .createHmac('sha256', key)
+    .update(`public:${visitorId}.${exp}`, 'utf8')
+    .digest('base64url');
+  return { token: `pub.${visitorId}.${exp}.${sig}`, expiresInSeconds: ttlSeconds };
+}
+
+/**
  * Test-only: clear the cached signing key. Lets unit tests rotate the
  * key without restarting the process. Not exported through index.
  */

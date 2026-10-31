@@ -4,6 +4,7 @@
 import { useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
 import { MicrophoneInput } from "@/components/microphone-input";
+import { redirectWithVoiceIntent } from "@/lib/voice-intent";
 
 /**
  * Home Voice Interface — available to both authenticated and unauthenticated users.
@@ -12,32 +13,12 @@ import { MicrophoneInput } from "@/components/microphone-input";
  * sessionStorage so the dashboard can auto-fill it after sign-in completes.
  * For authenticated users: passes through to the normal dashboard path.
  *
- * The stored transcript key is consumed by DashboardHome's effect that checks
- * `sahayakai-voice-intent` when `voice_transcript` is not present in the URL.
+ * Handoff logic lives in src/lib/voice-intent.ts — it is shared by
+ * GlobalVoiceInterface (the fixed floating mic) and the hero VIDYA orb so
+ * both entry mics behave identically.
  */
-const VOICE_INTENT_KEY = "sahayakai-voice-intent";
-
 export function GlobalVoiceInterface() {
     const { user } = useAuth();
-
-    const handleTranscript = (transcript: string) => {
-        if (typeof window === "undefined") return;
-
-        if (!user) {
-            // Unauthenticated: store transcript for post-auth auto-fill
-            try {
-                sessionStorage.setItem(VOICE_INTENT_KEY, transcript);
-            } catch {
-                // storage unavailable — degrade gracefully
-            }
-            // Navigate with voice_intent flag so app-shell knows to wait for auth
-            window.location.href = "/?voice_intent=1";
-            return;
-        }
-
-        // Authenticated path: normal dashboard auto-submit via URL param
-        window.location.href = `/?voice_transcript=${encodeURIComponent(transcript)}`;
-    };
 
     // Clear voice_intent flag on load so it doesn't persist
     useEffect(() => {
@@ -52,7 +33,7 @@ export function GlobalVoiceInterface() {
 
     return (
         <MicrophoneInput
-            onTranscriptChange={handleTranscript}
+            onTranscriptChange={(transcript) => redirectWithVoiceIntent(transcript, Boolean(user))}
             isFloating
             label="ಹೇಳಿ (Speak)"
             iconSize="lg"

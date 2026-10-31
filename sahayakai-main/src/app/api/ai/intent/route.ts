@@ -3,6 +3,9 @@ import { agentRouterFlow } from '@/ai/flows/agent-definitions';
 import { dispatchInstantAnswer } from '@/lib/sidecar/instant-answer-dispatch';
 import { logger } from '@/lib/logger';
 import { logAIError } from '@/lib/ai-error-response';
+import { getSection } from '@/lib/vidya/app-manifest';
+
+const APP_HELP_FALLBACK = 'Everything in SahayakAI is in the sidebar (or press Ctrl/⌘+K to search). Ask me "where is My Library?" or "how do I take attendance?".';
 
 /**
  * BUG #7 (2026-05-28): When the agent router fails to extract a concise
@@ -156,8 +159,29 @@ export async function POST(request: Request) {
             case 'examPaper':
                 result = { action: 'NAVIGATE', url: `/exam-paper?${queryString}` };
                 break;
+            case 'appHelp': {
+                // A question about SahayakAI itself ("where is attendance?",
+                // "how do I add students?"). Answered from the app manifest —
+                // never the instant-answer flow. Navigation targets come ONLY
+                // from the manifest; the model never supplies a URL.
+                const section = flowOutput.appDestination ? getSection(flowOutput.appDestination) : undefined;
+                if (section && flowOutput.wantsNavigation) {
+                    result = { action: 'NAVIGATE', url: section.route };
+                    break;
+                }
+                const content = flowOutput.appAnswer?.trim()
+                    || (section ? `${section.label}: ${section.whereToFind}` : APP_HELP_FALLBACK);
+                result = { action: 'ANSWER', content, videoUrl: null };
+                break;
+            }
             case 'instantAnswer':
             default: {
+                // Library: this answer is NOT persisted. `dispatchInstantAnswer`
+                // (Genkit and sidecar paths alike) returns the answer only —
+                // greetings and questions that land here are conversation, not
+                // My Library artifacts. The teacher saves one explicitly from
+                // the Instant Answer page if they want to keep it.
+                //
                 // QA #1 (2026-05-28): a bare academic topic with no action verb
                 // ("Relations and Functions Class 12") previously fell to the
                 // default branch and returned "Not sure how to help", which felt

@@ -23,9 +23,17 @@ export const DEFAULT_MODEL = 'vertexai/gemini-2.5-flash';
 const activeModel = process.env.GENKIT_DEFAULT_MODEL || DEFAULT_MODEL;
 export const usingVertex = activeModel.startsWith('vertexai/');
 
+// A `demo-` project id is the Firestore emulator's offline project (the local Sampark/Riya
+// launcher sets GCLOUD_PROJECT=demo-sahayakai). It never exists on Google Cloud, so Vertex
+// answered 403 and VIDYA and every AI tool failed locally; keep Vertex on the real project.
+const configuredProject = process.env.GCLOUD_PROJECT?.trim();
+const vertexProject = configuredProject && !configuredProject.startsWith('demo-')
+  ? configuredProject
+  : 'sahayakai-b4248';
+
 export const ai = genkit({
   plugins: [
-    vertexAI({ projectId: process.env.GCLOUD_PROJECT || 'sahayakai-b4248', location: 'us-central1' }),
+    vertexAI({ projectId: vertexProject, location: 'us-central1' }),
     googleAI(), // still serves googleai/* models (images, 2.5-pro) via the per-call key pool
   ],
   model: activeModel,

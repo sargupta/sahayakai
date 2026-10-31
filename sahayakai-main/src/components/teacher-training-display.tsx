@@ -1,6 +1,7 @@
 "use client";
 
 import type { FC } from "react";
+import { useLibraryId } from "@/hooks/use-library-id";
 import type { TeacherTrainingOutput } from "@/ai/flows/teacher-training";
 import {
     GraduationCap,
@@ -21,6 +22,8 @@ type TeacherTrainingDisplayProps = {
     advice: TeacherTrainingOutput;
     title?: string;
     selectedLanguage?: string;
+    /** Library id of this artifact (useGenerator().contentId); Save upserts it. */
+    contentId?: string | null;
     /** Re-run the generator with the same inputs; absent when viewing a saved artifact. */
     onRegenerate?: () => void;
 };
@@ -29,11 +32,13 @@ const PDF_ID = "teacher-training-card";
 
 export const TeacherTrainingDisplay: FC<TeacherTrainingDisplayProps> = ({
     advice,
+    contentId,
     title,
     selectedLanguage,
     onRegenerate,
 }) => {
     const { toast } = useToast();
+    const libraryId = useLibraryId(contentId, advice);
     const t = getResultShellDict(selectedLanguage);
 
     const saveTitle = title || t.teacherAdviceTitle;
@@ -52,7 +57,7 @@ export const TeacherTrainingDisplay: FC<TeacherTrainingDisplayProps> = ({
             }
             const token = await user.getIdToken();
             const payload = {
-                id: crypto.randomUUID(),
+                id: libraryId,
                 type: "teacher-training",
                 title: saveTitle,
                 gradeLevel: advice.gradeLevel || "Class 5",

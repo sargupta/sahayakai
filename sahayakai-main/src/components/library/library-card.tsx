@@ -71,6 +71,13 @@ export function LibraryCard({
                             <Badge variant="secondary" className="bg-blue-50 text-blue-600 border-none text-[10px] px-2 py-0.5">
                                 {resource.subject ? t(resource.subject) : resource.subject}
                             </Badge>
+                            {/* In-flight artifact (202 STILL_GENERATING path). Failed
+                                ones never reach the list — see isListableContent. */}
+                            {resource.status === "generating" && (
+                                <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 text-xs px-2 py-0.5">
+                                    {t("Generating...")}
+                                </Badge>
+                            )}
                         </div>
 
                         {showAuthor && (

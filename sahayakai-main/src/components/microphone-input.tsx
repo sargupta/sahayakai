@@ -81,13 +81,24 @@ type MicrophoneInputProps = {
   greetingLang?: string;   // BCP-47 locale, e.g. "kn-IN"
   greetingText?: string;   // localised greeting string
   greetingLabel?: string;  // localised "listening" label shown during greeting
-  /** Told every status change (the VIDYA orb shows "listening" / "thinking" from it). */
-  onStatusChange?: (status: MicStatus) => void;
   /**
    * Draw the button's face (e.g. the VIDYA 3D orb) instead of the default gradient
    * and rings. The button, its icon, its label and all recording behaviour stay.
    */
   renderVisual?: (status: MicStatus) => ReactNode;
+  /**
+   * "orb" hands the visuals to the caller: renders a bare <button> (styled by
+   * `className`) whose content comes from `renderOrb`, and none of the default
+   * rings / label bubble / visible waveform (the caller renders and announces
+   * status via onStatusChange). Recording, VAD, STT and the greeting flow are
+   * identical to the default appearance.
+   */
+  appearance?: "default" | "orb";
+  renderOrb?: (status: MicStatus) => ReactNode;
+  /** Fires on every status transition (idle → greeting → … → idle). */
+  onStatusChange?: (status: MicStatus) => void;
+  /** Live voice-band input level 0–1, per animation frame while recording. */
+  onLevel?: (level: number) => void;
 };
 
 export const MicrophoneInput: FC<MicrophoneInputProps> = ({
@@ -101,16 +112,26 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
   greetingLang,
   greetingText,
   greetingLabel,
-  onStatusChange,
   renderVisual,
+  appearance = "default",
+  renderOrb,
+  onStatusChange,
+  onLevel,
 }) => {
   const [status, setStatus] = useState<MicStatus>('idle');
+  const { language, t } = useLanguage();
+
+  // Refs so the long-lived rAF closure (drawWaveform) always sees the latest
+  // callbacks without re-subscribing.
+  const onLevelRef = useRef(onLevel);
+  onLevelRef.current = onLevel;
   const onStatusChangeRef = useRef(onStatusChange);
   onStatusChangeRef.current = onStatusChange;
+
   useEffect(() => {
     onStatusChangeRef.current?.(status);
+    if (status !== 'recording') onLevelRef.current?.(0);
   }, [status]);
-  const { language, t } = useLanguage();
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -174,6 +195,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
     if (maxVal > maxVolumeRef.current) {
       maxVolumeRef.current = maxVal;
     }
+    onLevelRef.current?.(Math.min(1, maxVal / 90));
 
     // VAD Logic: Check Volume against Threshold
     if (maxVal > SPEECH_THRESHOLD) {
@@ -667,7 +689,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
 
   const getButtonSize = () => {
     if (isFloating) return "h-20 w-20 md:h-24 md:w-24";
-    if (iconSize === 'xl') return "h-36 w-36 md:h-44 md:w-44";
+    if (iconSize === 'xl') return "h-40 w-40 md:h-52 md:w-52";
     if (iconSize === 'lg') return "h-20 w-20";
     return "";
   };
@@ -686,6 +708,32 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
       default:             return label || t("Tap to speak");
     }
   };
+
+  if (appearance === "orb") {
+    return (
+      <>
+        <button
+          type="button"
+          className={className}
+          onClick={handleMicClick}
+          data-microphone="true"
+          data-status={status}
+          aria-label={status === 'recording' || status === 'processing' || status === 'initializing' ? t("Stop recording") : (label || t("Start recording"))}
+        >
+          {renderOrb?.(status)}
+        </button>
+        {/* The canvas must stay mounted: drawWaveform (which also runs VAD
+            auto-stop and feeds onLevel) bails out when canvasRef is null. */}
+        <canvas
+          ref={canvasRef}
+          width="300"
+          height="100"
+          aria-hidden
+          className="pointer-events-none absolute h-px w-px opacity-0"
+        />
+      </>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center gap-6">
@@ -720,6 +768,7 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
             !renderVisual && status !== 'recording' && "!bg-gradient-to-br !from-primary !to-primary/80 !text-primary-foreground hover:!from-primary/95 hover:!to-primary/75 animate-pulse [animation-duration:3s]",
             renderVisual && "!border-0 !bg-transparent !bg-none hover:!bg-transparent !shadow-none !scale-100"
           )}
+          style={isFloating ? { bottom: "calc(2rem + env(safe-area-inset-bottom))" } : undefined}
           onClick={handleMicClick}
           data-microphone="true"
           aria-label={status === 'recording' || status === 'processing' || status === 'initializing' ? "Stop recording" : "Start recording"}
@@ -730,16 +779,18 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
             <div className="absolute inset-0 bg-white/10 animate-pulse" />
           )}
 
-          {status === 'processing' || status === 'initializing' ? (
+          {/* VIDYA's sphere carries no glyph (design system: Orb, LiveOrb); its state is
+              its colour and motion, the label pill names it, aria-label names the action. */}
+          {renderVisual ? null : status === 'processing' || status === 'initializing' ? (
             <div className="relative h-10 w-10">
               <div className="absolute inset-0 rounded-full border-4 border-white/20" />
               <div className="absolute inset-0 rounded-full border-4 border-white border-t-transparent animate-spin" />
               <StopCircle className="absolute inset-0 m-auto h-4 w-4 text-white" />
             </div>
           ) : status === 'recording' ? (
-            <StopCircle className={cn(getIconSize(), "relative z-30 text-white", renderVisual && cn(iconSize === "xl" ? "h-12 w-12" : "h-8 w-8", "drop-shadow-md"))} />
+            <StopCircle className={cn(getIconSize(), "relative z-30 text-white")} />
           ) : (
-            <Mic className={cn(getIconSize(), "relative z-30 text-white", renderVisual && cn(iconSize === "xl" ? "h-12 w-12" : "h-8 w-8", "drop-shadow-md"))} />
+            <Mic className={cn(getIconSize(), "relative z-30 text-white")} />
           )}
         </Button>
       </div>
@@ -775,7 +826,9 @@ export const MicrophoneInput: FC<MicrophoneInputProps> = ({
         <div className={cn(
           "overflow-hidden rounded-surface-lg bg-card/40 backdrop-blur-md border border-border/40 transition-all duration-500 shadow-floating",
           isFloating ? "fixed bottom-44 right-8 w-72 h-32" : "h-20 w-full"
-        )}>
+        )}
+          style={isFloating ? { bottom: "calc(11rem + env(safe-area-inset-bottom))" } : undefined}
+        >
           <canvas ref={canvasRef} width="300" height="100" className="h-full w-full opacity-80" />
         </div>
       )}

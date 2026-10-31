@@ -77,6 +77,7 @@ export function useWorksheetWizard() {
     const generator = useGenerator<FormValues, WorksheetResult>({
         feature: "worksheet",
         endpoint: "/api/ai/worksheet",
+        persistsArtifact: true,
         // NCERT-demo 2026-05-19 hardening (same pattern as use-lesson-plan.ts):
         // ALWAYS send a non-empty `language`; strip the "General" subject
         // placeholder so the model isn't misled by a meaningless default.
@@ -194,7 +195,7 @@ export function useWorksheetWizard() {
                             // reopening the page silently blank.
                             const saved = content.data.worksheetContent;
                             if (typeof saved === "string" && saved.trim()) {
-                                generator.setResult(saved);
+                                generator.setResult(saved, id);
                             } else {
                                 toast({
                                     title: translate("Load Failed"),
@@ -309,6 +310,7 @@ export function useWorksheetWizard() {
         canUseAI,
         aiUnavailableReason,
         worksheet: generator.result,
+        contentId: generator.contentId,
         status: generator.status,
         isGenerating: generator.isGenerating,
         limitState: generator.limitState,

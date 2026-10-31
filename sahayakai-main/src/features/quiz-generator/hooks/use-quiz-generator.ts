@@ -52,6 +52,7 @@ export function useQuizGenerator() {
     const generator = useGenerator<FormValues, QuizVariantsOutput>({
         feature: "quiz",
         endpoint: "/api/ai/quiz",
+        persistsArtifact: true,
         // NCERT-demo 2026-05-19 hardening (same pattern as use-lesson-plan.ts):
         // ALWAYS send a non-empty `language`; strip the "General" subject
         // placeholder so the model isn't misled by a meaningless default.

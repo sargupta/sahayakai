@@ -55,6 +55,7 @@ export function useVirtualFieldTrip() {
     const generator = useGenerator<FormValues, VirtualFieldTripOutput>({
         feature: "virtual-field-trip",
         endpoint: "/api/ai/virtual-field-trip",
+        persistsArtifact: true,
         // The page has never gated submit behind the auth modal — it posts and
         // lets the route's 401 open it. Preserved verbatim through the move.
         requireAuthOnSubmit: false,
@@ -164,7 +165,7 @@ export function useVirtualFieldTrip() {
                             // written reopens as the same crash. Narrow here too.
                             const saved = asVirtualFieldTrip(content.data);
                             if (saved) {
-                                generator.setResult(saved);
+                                generator.setResult(saved, id);
                             } else {
                                 toast({
                                     title: translate("Load Failed"),
@@ -230,6 +231,7 @@ export function useVirtualFieldTrip() {
         selectedLanguage,
         handlePromptClick,
         trip: generator.result,
+        contentId: generator.contentId,
         isGenerating: generator.isGenerating,
         isRestoring,
         limitState: generator.limitState,

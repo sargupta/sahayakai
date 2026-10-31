@@ -7,6 +7,7 @@
  */
 
 import { ai } from '@/ai/genkit';
+import { resolveContentId } from '@/lib/content-id';
 import { z } from 'genkit';
 import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
@@ -22,6 +23,7 @@ export const RubricGeneratorInputSchema = z.object({
   subject: z.string().optional().describe('The academic subject.'),
   language: z.string().optional().describe('The language for the rubric.'),
   userId: z.string().optional().describe('The ID of the user for whom the rubric is being generated.'),
+  contentId: z.string().max(64).optional().describe('Stable Library artifact id minted by the client once per generation (idempotency key). Invalid values are replaced server-side.'),
   teacherContext: z.string().optional().describe('Career-stage context for personalising AI output tone and depth.'),
 });
 export type RubricGeneratorInput = z.infer<typeof RubricGeneratorInputSchema>;
@@ -186,7 +188,7 @@ const rubricGeneratorFlow = ai.defineFlow(
           const storage = await getStorageInstance();
           const now = new Date();
           const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
-          const contentId = uuidv4();
+          const contentId = resolveContentId(input.contentId);
           const fileName = `${timestamp}-${contentId}.json`;
           const filePath = `users/${input.userId}/rubrics/${fileName}`;
           const file = storage.bucket().file(filePath);

@@ -7,6 +7,7 @@
  */
 
 import { ai } from '@/ai/genkit';
+import { resolveContentId } from '@/lib/content-id';
 import { z } from 'genkit';
 import { getStorageInstance, getDb } from '@/lib/firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
@@ -21,6 +22,7 @@ export const VirtualFieldTripInputSchema = z.object({
   language: z.string().max(50).optional().describe('The language for the trip descriptions.'),
   gradeLevel: z.string().optional().describe('The grade level the trip should be tailored for.'),
   userId: z.string().optional().describe('The ID of the user for whom the trip is being generated.'),
+  contentId: z.string().max(64).optional().describe('Stable Library artifact id minted by the client once per generation (idempotency key). Invalid values are replaced server-side.'),
 });
 export type VirtualFieldTripInput = z.infer<typeof VirtualFieldTripInputSchema>;
 
@@ -185,7 +187,7 @@ const virtualFieldTripFlow = ai.defineFlow(
         try {
           const now = new Date();
           const timestamp = format(now, 'yyyy-MM-dd-HH-mm-ss');
-          const contentId = uuidv4();
+          const contentId = resolveContentId(input.contentId);
           const fileName = `${timestamp}-${contentId}.json`;
           const filePath = `users/${input.userId}/virtual-field-trips/${fileName}`;
 

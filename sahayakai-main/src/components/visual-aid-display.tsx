@@ -1,6 +1,7 @@
 "use client";
 
 import type { FC } from "react";
+import { useLibraryId } from "@/hooks/use-library-id";
 import type { VisualAidOutput } from "@/ai/flows/visual-aid-designer";
 import { Save, Download, Images } from "lucide-react";
 import Image from "next/image";
@@ -18,6 +19,8 @@ type VisualAidDisplayProps = {
     title: string;
     gradeLevel?: string;
     language?: string;
+    /** Library id of this artifact (useGenerator().contentId); Save upserts it. */
+    contentId?: string | null;
     /** Re-run the generator with the same inputs; absent when viewing a saved artifact. */
     onRegenerate?: () => void;
 };
@@ -26,12 +29,14 @@ const PDF_ID = "visual-aid-card";
 
 export const VisualAidDisplay: FC<VisualAidDisplayProps> = ({
     visualAid,
+    contentId,
     title,
     gradeLevel,
     language,
     onRegenerate,
 }) => {
     const { toast } = useToast();
+    const libraryId = useLibraryId(contentId, visualAid);
     const { t: translate } = useLanguage();
     const t = getResultShellDict(language);
 
@@ -56,7 +61,7 @@ export const VisualAidDisplay: FC<VisualAidDisplayProps> = ({
             }
             const token = await user.getIdToken();
             const payload = {
-                id: crypto.randomUUID(),
+                id: libraryId,
                 type: "visual-aid",
                 title,
                 gradeLevel: gradeLevel || "Class 5",

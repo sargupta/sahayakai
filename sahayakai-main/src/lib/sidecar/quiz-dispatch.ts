@@ -329,6 +329,7 @@ async function _dispatchQuizInner(
         const persistResult = input.userId
             ? await persistSidecarJSON({
                   uid: input.userId,
+                  contentId: input.contentId,
                   collection: 'quizzes',
                   contentType: 'quiz',
                   title: input.topic || sidecar.res.topic || 'Quiz',

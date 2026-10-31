@@ -308,6 +308,7 @@ export async function middleware(request: NextRequest) {
         pathname === '/api/billing/create-public-subscription' ||  // Anon pricing checkout — creates Razorpay payment link; payment-side verification on webhook (exact path, NOT /api/billing prefix)
         pathname.startsWith('/api/seo/') ||  // SEO endpoints (llms.txt, google-verify) — public, no auth needed
         pathname.startsWith('/api/sampark-demo/') ||  // SamparkAI demo agent turns + summaries — fictional school only; 404 unless SAMPARK_DEMO_ENABLED, rate-limited in-handler (src/server/sampark/demo.ts)
+        pathname === '/api/vidya-voice/public-session' ||  // Landing-page VIDYA voice for anon visitors — flag + per-IP limit in-handler; sidecar scopes the token to a tool-free demo session
         pathname.startsWith('/api/demo-call');  // "Hear the Call" lead magnet — anon by design; gated in-handler (flag + Turnstile + transactional caps; twiml/status verify Twilio signatures). Spec: docs/PARENT_CALL_DEMO_SPEC.md
 
     if (isPublicApi) {

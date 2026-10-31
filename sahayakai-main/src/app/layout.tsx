@@ -216,8 +216,9 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  // Next's metadata API needs a literal hex; mirrors --primary in globals.css.
-  themeColor: '#b35609', // design-token-allow
+  // Next's metadata API needs a literal hex: saffron-200 (--saffron-200), the light
+  // highlight of VIDYA's orb, for the installed app's title bar (decided 2026-10-30).
+  themeColor: '#ffd9ae', // design-token-allow
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,

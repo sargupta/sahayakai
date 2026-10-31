@@ -19,14 +19,15 @@
  *
  * Phase B §B.5.
  *
- * Phase K (forensic audit P0 #2): in canary/full mode the sidecar
- * served the answer to the caller but the dispatcher silently dropped
- * Cloud Storage persistence (`users/{uid}/instant-answers/`) +
- * Firestore content metadata. The Genkit flow does both inside
- * `instantAnswerFlow`; the sidecar process has no Firebase Admin
- * credentials, so the dispatcher mirrors the persistence here. The
- * pre-call rate-limit gate is also lifted to the dispatcher so a
- * sidecar-routed call cannot bypass `checkServerRateLimit`.
+ * Phase K (forensic audit P0 #2): the pre-call rate-limit gate is lifted
+ * to the dispatcher so a sidecar-routed call cannot bypass
+ * `checkServerRateLimit`.
+ *
+ * Persistence: NONE, on every path. Phase K used to mirror the Genkit
+ * flow's automatic Library write here; both were removed because an
+ * instant answer is an assistant response, not an artifact — greetings
+ * and navigation questions were landing in My Library. Answers reach the
+ * Library only through an explicit Save (`saveToLibrary`).
  */
 
 import {
@@ -45,7 +46,6 @@ import {
     type SidecarInstantAnswerRequest,
     type SidecarInstantAnswerResponse,
 } from './instant-answer-client';
-import { persistSidecarJSON } from './persist-helpers';
 import { writeAgentShadowDiff } from './shadow-diff-writer';
 import { shouldRunCanaryShadowDiff } from './canary-shadow-diff';
 import { WithTimeoutError, withTimeout } from './with-timeout';
@@ -394,31 +394,10 @@ async function _dispatchInstantAnswerInner(
         // answer had stripped.
         const dispatched = sidecarToDispatched(sidecar.res, decision);
 
-        // Phase K — persist sidecar output to Storage + Firestore so
-        // the teacher's library mirrors the Genkit-served entries.
-        // Fail-soft inside `persistSidecarJSON`.
-        if (input.userId) {
-            const sanitized: InstantAnswerOutput = {
-                answer: dispatched.answer,
-                videoSuggestionUrl: dispatched.videoSuggestionUrl,
-                gradeLevel: dispatched.gradeLevel,
-                subject: dispatched.subject,
-                grounded: dispatched.grounded,
-            };
-            await persistSidecarJSON({
-                uid: input.userId,
-                contentType: 'instant-answer',
-                collection: 'instant-answers',
-                title: input.question,
-                output: sanitized,
-                metadata: {
-                    gradeLevel: sidecar.res.gradeLevel || input.gradeLevel || 'Class 5',
-                    subject: input.subject || sidecar.res.subject || 'General',
-                    topic: input.question,
-                    language: input.language || 'English',
-                },
-            });
-        }
+        // Deliberately NOT persisted (mirrors the Genkit flow): an instant
+        // answer is an assistant response, not a Library artifact. It is
+        // saved only when the teacher presses Save, which goes through
+        // `saveToLibrary` / `/api/content/save`.
         const durationMs = Date.now() - dispatchStartedAt;
         logDispatch(decision, {
             source: 'sidecar',

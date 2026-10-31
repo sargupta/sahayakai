@@ -309,6 +309,7 @@ async function _dispatchRubricInner(
         try {
             await persistSidecarJSON({
                 uid: input.userId,
+                contentId: input.contentId,
                 collection: 'rubrics',
                 contentType: 'rubric',
                 title: dispatched.title || `Rubric: ${input.assignmentDescription}`,
