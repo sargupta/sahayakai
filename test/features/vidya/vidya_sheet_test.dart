@@ -86,8 +86,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // The sheet opened: its Screen 04 header (orb + idle caption) is on screen.
-    expect(find.text('Tap to speak'), findsWidgets); // vidyaStateIdle
-    expect(find.byType(VidyaOrb), findsOneWidget);
+    expect(find.text('Ask VIDYA'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -115,7 +114,7 @@ void main() {
 
     expect(find.text('make a quiz on fractions'), findsOneWidget);
     expect(find.text('Making your fractions quiz.'), findsOneWidget);
-    expect(find.byType(VidyaOrb), findsOneWidget);
+    expect(find.text('Ask VIDYA'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

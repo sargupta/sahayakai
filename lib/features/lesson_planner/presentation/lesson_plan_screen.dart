@@ -39,7 +39,11 @@ import 'widgets/lesson_plan_skeleton.dart';
 /// the 5E plan is wrapped in a `DocumentSheet` (see [LessonPlanResultView]) and
 /// the view auto-scrolls to its masthead.
 class LessonPlanScreen extends ConsumerStatefulWidget {
-  const LessonPlanScreen({super.key, this.prefill});
+  const LessonPlanScreen({super.key, this.prefill, this.taskId});
+
+  /// Optional task id. When set, a "From your task: ..." tag is shown at the
+  /// top. Defaults to null (normal entry, no tag).
+  final String? taskId;
 
   /// Optional seed from a VIDYA NAVIGATE_AND_FILL directive ("plan a Class 10
   /// Maths lesson on fractions" → this form opens filled). Defaults to null, so
@@ -160,8 +164,7 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
         ),
         deliverables: container.read(deliverablesControllerProvider.notifier),
         label: l10n.lessonPlanTitle,
-        awaitResult: () =>
-            container.read(lessonPlanControllerProvider.future),
+        awaitResult: () => container.read(lessonPlanControllerProvider.future),
         toDeliverable: (plan) => Deliverable(
           id: 'bg-lesson-${DateTime.now().microsecondsSinceEpoch}',
           title: plan.title.isEmpty ? l10n.lessonPlanTitle : plan.title,
@@ -288,36 +291,54 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-            EditorialSectionHeader(l10n.lessonPlanSectionLesson),
-            const SizedBox(height: AppSpacing.space4),
-            _topicField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _gradeField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _subjectField(l10n),
-            if (_grades.isNotEmpty) ...[
+              if (widget.taskId != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'From your task: ${widget.taskId}',
+                      style: Theme.of(context).textTheme.labelSmall,
+                    ),
+                  ),
+                ),
+              EditorialSectionHeader(l10n.lessonPlanSectionLesson),
               const SizedBox(height: AppSpacing.space4),
-              _ncertBanner(l10n),
+              _topicField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _gradeField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _subjectField(l10n),
+              if (_grades.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.space4),
+                _ncertBanner(l10n),
+              ],
+              const SizedBox(height: AppSpacing.space6),
+              _includeField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _imageField(l10n),
+              const SizedBox(height: AppSpacing.space8),
+              EditorialSectionHeader(l10n.lessonPlanSectionApproach),
+              const SizedBox(height: AppSpacing.space4),
+              _languageField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _resourceField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _difficultyField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _ruralField(l10n),
             ],
-            const SizedBox(height: AppSpacing.space6),
-            _includeField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _imageField(l10n),
-            const SizedBox(height: AppSpacing.space8),
-            EditorialSectionHeader(l10n.lessonPlanSectionApproach),
-            const SizedBox(height: AppSpacing.space4),
-            _languageField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _resourceField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _difficultyField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _ruralField(l10n),
-          ],
+          ),
         ),
+        index: 0,
       ),
-      index: 0,
-    ),
     );
   }
 

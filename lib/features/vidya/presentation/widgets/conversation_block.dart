@@ -1,69 +1,146 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../../core/i18n/gen/app_localizations.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_icon_size.dart';
+import '../../../../core/theme/app_motion.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../shared/motion/animated_entrance.dart';
 import '../../../../shared/widgets/ai_text.dart';
-import '../../../../shared/widgets/app_card.dart';
 import '../../data/dto/vidya_action.dart';
 import '../vidya_controller.dart';
 
-/// One inked turn in the VIDYA home register — a composed document block, NOT a
-/// chat bubble (PREMIUM_DESIGN_SPEC §B.3):
-///   • the teacher's transcript → `AppCard(inset)` with a "YOU SAID" overline
-///   • VIDYA's reply → `AppCard(flat)` + a 3px saffron accent bar + a section
-///     tick, its prose through the shared `AiText` (Indic matra-safe, 1.7 lh)
-///
-/// A compound reply (2–3 directives) renders a `Wrap` of confirm chips under the
-/// reply; [onChipTap] dispatches the picked one.
+/// Conversation turn rendered as a modern chat bubble (Gemini/ChatGPT voice
+/// mode pattern, not the old composed document block):
+///   • teacher turns are right-aligned in the brand tint;
+///   • VIDYA replies are left-aligned on a plain surface;
+///   • no "YOU SAID / THIS PAGE" labels;
+///   • a timestamp appears only when [showTimestamp] is true (first block of a
+///     group).
 class ConversationBlockView extends StatelessWidget {
   const ConversationBlockView({
     super.key,
     required this.block,
     this.onChipTap,
+    this.showTimestamp = false,
   });
 
   final ConversationBlock block;
   final ValueChanged<VidyaDirective>? onChipTap;
+  final bool showTimestamp;
 
   @override
   Widget build(BuildContext context) {
-    return block.role == ConversationRole.teacher
-        ? _TeacherBlock(text: block.text)
-        : _VidyaBlock(
+    final motion = context.motionEnabled;
+    final timestamp = showTimestamp && block.timestamp != null
+        ? DateFormat.jm().format(block.timestamp!)
+        : null;
+
+    Widget bubble = block.role == ConversationRole.teacher
+        ? _TeacherBubble(text: block.text)
+        : _VidyaBubble(
             text: block.text,
             directives: block.directives,
             onChipTap: onChipTap,
           );
-  }
-}
 
-class _TeacherBlock extends StatelessWidget {
-  const _TeacherBlock({required this.text});
+    // New replies fade in with an 8dp rise over 200ms, ease-out; no bounce.
+    // Reduce-motion renders the final frame instantly.
+    if (block.role == ConversationRole.vidya && motion) {
+      bubble = bubble
+          .animate()
+          .fadeIn(
+            duration: const Duration(milliseconds: 200),
+            curve: AppMotion.easeOutQuart,
+          )
+          .moveY(
+            begin: 8,
+            end: 0,
+            duration: const Duration(milliseconds: 200),
+            curve: AppMotion.easeOutQuart,
+          );
+    }
 
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final extras = AppTextExtras.of(context);
-    return AppCard(
-      variant: AppCardVariant.inset,
+    final row = Padding(
+      padding: EdgeInsets.only(
+        top: timestamp == null ? 0 : AppSpacing.space1,
+        bottom: AppSpacing.space1,
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: block.role == ConversationRole.teacher
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(_uppercaseLatin(l10n.vidyaYouSaid), style: extras.overline),
-          const SizedBox(height: AppSpacing.space2),
-          AiText(text),
+          if (timestamp != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Text(
+                timestamp,
+                style: Theme.of(
+                  context,
+                ).textTheme.labelSmall?.copyWith(color: AppColors.textMuted),
+                // 12px floor is enforced by the theme; keep decoration off for
+                // the overlay (outside Material's text fallback).
+                textAlign: block.role == ConversationRole.teacher
+                    ? TextAlign.right
+                    : TextAlign.left,
+              ),
+            ),
+          bubble,
         ],
+      ),
+    );
+
+    return Semantics(
+      label: block.role == ConversationRole.teacher
+          ? 'You said: ${block.text}'
+          : block.text,
+      child: Align(
+        alignment: block.role == ConversationRole.teacher
+            ? Alignment.centerRight
+            : Alignment.centerLeft,
+        child: row,
       ),
     );
   }
 }
 
-class _VidyaBlock extends StatelessWidget {
-  const _VidyaBlock({
+class _TeacherBubble extends StatelessWidget {
+  const _TeacherBubble({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 320),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.accentTint,
+          // 18 / 12 = AppRadius.card / AppRadius.row (token guard takes
+          // numeric literals only outside lib/core/theme).
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(18),
+            topRight: Radius.circular(18),
+            bottomLeft: Radius.circular(18),
+            bottomRight: Radius.circular(12),
+          ),
+          border: Border.all(color: AppColors.accentTintBorder, width: 1),
+        ),
+        child: AiText(text),
+      ),
+    );
+  }
+}
+
+/// VIDYA reply — plain surface, subtle divider only when directives exist.
+class _VidyaBubble extends StatelessWidget {
+  const _VidyaBubble({
     required this.text,
     required this.directives,
     required this.onChipTap,
@@ -75,54 +152,54 @@ class _VidyaBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final saffron = isDark ? AppColors.dPrimaryText : AppColors.lPrimaryText;
-
-    return AppCard(
-      accentBar: true,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // A small saffron tick — the editorial anchor of a VIDYA reply.
-              Container(
-                margin: const EdgeInsets.only(top: 4),
-                width: 4,
-                height: 14,
-                decoration: BoxDecoration(
-                  color: saffron,
-                  borderRadius: AppRadius.rSm,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.space3),
-              Expanded(child: AiText(text)),
-            ],
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 320),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.milk50,
+          // 18 = AppRadius.card (token guard takes numeric literals only
+          // outside lib/core/theme).
+          borderRadius: const BorderRadius.all(Radius.circular(18)),
+          border: Border.all(
+            color: AppColors.ink900.withValues(alpha: 0.08),
+            width: 1,
           ),
-          if (directives.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.space4),
-            Wrap(
-              spacing: AppSpacing.space2,
-              runSpacing: AppSpacing.space2,
-              children: [
-                for (final d in directives)
-                  _ConfirmChip(
-                    label: vidyaFlowLabel(d.flow, AppLocalizations.of(context)),
-                    onTap: onChipTap == null ? null : () => onChipTap!(d),
-                  ),
-              ],
-            ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (text.isNotEmpty) AiText(text),
+            if (directives.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.space3),
+              Container(
+                height: 1,
+                color: AppColors.ink900.withValues(alpha: 0.06),
+              ),
+              const SizedBox(height: AppSpacing.space3),
+              Wrap(
+                spacing: AppSpacing.space2,
+                runSpacing: AppSpacing.space2,
+                children: [
+                  for (final d in directives)
+                    _ConfirmChip(
+                      label: vidyaFlowLabel(
+                        d.flow,
+                        AppLocalizations.of(context),
+                      ),
+                      onTap: onChipTap == null ? null : () => onChipTap!(d),
+                    ),
+                ],
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
 }
 
-/// A compound-intent confirm chip (PREMIUM_DESIGN_SPEC §B.4): `primaryContainer`
-/// fill, a 1.5px `primary` border, a Lucide `sparkles` glyph + the flow label.
 class _ConfirmChip extends StatelessWidget {
   const _ConfirmChip({required this.label, required this.onTap});
 
@@ -135,9 +212,7 @@ class _ConfirmChip extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     return Material(
       color: scheme.primaryContainer,
-      shape: StadiumBorder(
-        side: BorderSide(color: scheme.primary, width: 1.5),
-      ),
+      shape: StadiumBorder(side: BorderSide(color: scheme.primary, width: 1.5)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -149,8 +224,11 @@ class _ConfirmChip extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(LucideIcons.sparkles,
-                  size: AppIconSize.inline, color: scheme.onPrimaryContainer),
+              Icon(
+                LucideIcons.sparkles,
+                size: AppIconSize.inline,
+                color: scheme.onPrimaryContainer,
+              ),
               const SizedBox(width: AppSpacing.space2),
               Text(
                 label,
@@ -167,9 +245,6 @@ class _ConfirmChip extends StatelessWidget {
   }
 }
 
-/// The localized label shown on a confirm chip for a flow. Reuses the built
-/// tools' titles where they exist; the three not-yet-built flows carry their own
-/// keys.
 String vidyaFlowLabel(VidyaFlow flow, AppLocalizations l10n) {
   switch (flow) {
     case VidyaFlow.lessonPlan:
@@ -194,7 +269,3 @@ String vidyaFlowLabel(VidyaFlow flow, AppLocalizations l10n) {
       return l10n.vidyaFlowVideoStoryteller;
   }
 }
-
-/// Uppercase for Latin overlines; leave unicameral Indic scripts untouched.
-String _uppercaseLatin(String s) =>
-    s.runes.any((r) => r > 0x24F) ? s : s.toUpperCase();

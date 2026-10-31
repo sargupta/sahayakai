@@ -31,7 +31,9 @@ class OsTtsService {
     _initialized = true;
 
     // Configure for speech use-case
-    await _tts.setSpeechRate(0.95);
+    // Slightly slower + clearer for teacher-facing speech.
+    await _tts.setSpeechRate(0.85);
+    await _tts.setPitch(0.95);
     await _tts.setVolume(1.0);
     await _tts.setPitch(1.0);
 

@@ -244,13 +244,24 @@ class _Viewfinder extends StatelessWidget {
               left: 32,
               right: 32,
               bottom: 32,
-              child: Text(
-                context.l10n.assessmentScannerFrameGuide,
-                style: text.labelSmall?.copyWith(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: milk.withValues(alpha: 0.72),
-                  height: 1.35,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.milk50.withValues(alpha: 0.92),
+                  borderRadius: AppRadius.rCard,
+                  border: Border.all(color: AppColors.borderGlass, width: 1),
+                ),
+                child: Text(
+                  context.l10n.assessmentScannerFrameGuide,
+                  style: text.labelSmall?.copyWith(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.ink900,
+                    height: 1.35,
+                  ),
                 ),
               ),
             ),
@@ -281,20 +292,14 @@ class _ViewfinderPainter extends CustomPainter {
     // tilted like the design's 115deg repeating gradient.
     canvas.save();
     canvas.clipRRect(outer);
-    canvas.drawRect(
-      rect,
-      Paint()..color = milk.withValues(alpha: 0.02),
-    );
+    canvas.drawRect(rect, Paint()..color = milk.withValues(alpha: 0.02));
     canvas.save();
     canvas.translate(size.width / 2, size.height / 2);
     canvas.rotate(25 * math.pi / 180);
     final extent = size.width + size.height;
     final stripe = Paint()..color = milk.withValues(alpha: 0.05);
     for (var x = -extent / 2; x < extent / 2; x += 24) {
-      canvas.drawRect(
-        Rect.fromLTWH(x, -extent / 2, 12, extent),
-        stripe,
-      );
+      canvas.drawRect(Rect.fromLTWH(x, -extent / 2, 12, extent), stripe);
     }
     canvas.restore();
     canvas.restore();
@@ -325,7 +330,9 @@ class _ViewfinderPainter extends CustomPainter {
     if (showScanLine) {
       // The saffron scan line at 46% with its soft glow (design:
       // rgba(255,214,170,.8), blur 14), spanning the dashed frame's width.
-      final lineColor = AppColors.saffron200.withValues(alpha: 0.8); // #FFD6AA @ .8
+      final lineColor = AppColors.saffron200.withValues(
+        alpha: 0.8,
+      ); // #FFD6AA @ .8
       final y = rect.top + rect.height * 0.46;
       final from = Offset(rect.left + 18, y);
       final to = Offset(rect.right - 18, y);
@@ -358,7 +365,10 @@ class _ViewfinderPainter extends CustomPainter {
       var distance = 0.0;
       while (distance < metric.length) {
         canvas.drawPath(
-          metric.extractPath(distance, math.min(distance + dash, metric.length)),
+          metric.extractPath(
+            distance,
+            math.min(distance + dash, metric.length),
+          ),
           paint,
         );
         distance += dash + gap;
@@ -550,33 +560,38 @@ class _Chip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    // Milk-filled chip (primary action or an ON toggle) reads ink on milk;
-    // the outlined chip reads milk on the dark ground.
-    final bg = filled
-        ? AppColors.milk50.withValues(alpha: 0.90)
-        : AppColors.milk50.withValues(alpha: 0.16);
-    final fg = filled ? AppColors.ink900 : AppColors.milk50;
+    // Disabled chips keep readable text; only the border/shadow backs off.
+    final baseBg = filled
+        ? AppColors.milk50
+        : AppColors.milk50.withValues(alpha: 0.92);
+    final baseFg = filled ? AppColors.ink900 : AppColors.ink900;
+    final bg = enabled ? baseBg : baseBg.withValues(alpha: 0.72);
+    final fg = enabled ? baseFg : AppColors.ink500;
+    final border = enabled
+        ? AppColors.borderGlass
+        : AppColors.borderGlass.withValues(alpha: 0.6);
 
-    return Opacity(
-      opacity: enabled ? 1 : 0.45,
-      child: Material(
-        color: bg,
+    return Material(
+      color: bg,
+      borderRadius: BorderRadius.circular(9999),
+      child: InkWell(
         borderRadius: BorderRadius.circular(9999),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(9999),
-          onTap: enabled ? onTap : null,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 42),
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Text(
-                  label,
-                  style: text.labelSmall?.copyWith(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: fg,
-                  ),
+        onTap: enabled ? onTap : null,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 42),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(9999),
+            border: Border.all(color: border, width: 1),
+          ),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                label,
+                style: text.labelSmall?.copyWith(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: fg,
                 ),
               ),
             ),

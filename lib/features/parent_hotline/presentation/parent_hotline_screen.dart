@@ -80,7 +80,11 @@ class ParentHotlineScreen extends ConsumerStatefulWidget {
     this.parentLanguage,
     this.subject,
     this.suggestedReason,
+    this.taskId,
   });
+
+  /// Optional task id. When set, a "From your task: ..." tag is shown.
+  final String? taskId;
 
   /// Optional launch context (the U12 attendance "Call parent" hand-off). All
   /// null for the standalone Dashboard entry, which opens on `pickStudent`.

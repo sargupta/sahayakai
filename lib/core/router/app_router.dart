@@ -175,7 +175,13 @@ GoRouter appRouter(Ref ref) {
         // student picker; the U12 attendance hand-off will push with launch
         // context (studentId/classId/parentLanguage) once it lands.
         path: Routes.parentHotline,
-        builder: (context, state) => const ParentHotlineScreen(),
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return ParentHotlineScreen(
+            classId: extra?['classId'] as String?,
+            className: extra?['className'] as String?,
+          );
+        },
       ),
       GoRoute(
         // Attendance (U12) — the class list. Reads are ungated, so this lands

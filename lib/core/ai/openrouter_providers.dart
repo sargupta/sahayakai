@@ -39,7 +39,7 @@ OpenRouterClient? openRouterClient(Ref ref) {
 /// Override via `--dart-define=OPENROUTER_DEFAULT_MODEL=google/gemini-2.5-flash`
 const String _defaultModel = String.fromEnvironment(
   'OPENROUTER_DEFAULT_MODEL',
-  defaultValue: 'google/gemini-2.5-flash',
+  defaultValue: 'google/gemini-2.5-flash-lite',
 );
 
 @riverpod

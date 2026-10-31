@@ -7,6 +7,7 @@ import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/data/library_items_provider.dart';
 import '../../../shared/domain/library_item.dart';
 import '../../../shared/widgets/app_badge.dart';
 import '../../../shared/widgets/app_card.dart';
@@ -70,10 +71,46 @@ class LibraryDetailScreen extends ConsumerWidget {
         : l10n.libraryDetailTitle;
 
     return Scaffold(
-      appBar: GlassAppBar(title: Text(appBarTitle)),
+      appBar: GlassAppBar(
+        title: Text(appBarTitle),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) async {
+              if (value != 'delete') return;
+              final shouldDelete = await showDialog<bool>(
+                context: context,
+                builder: (dialogContext) => AlertDialog(
+                  title: const Text('Delete this item?'),
+                  content: const Text("This can't be undone."),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(false),
+                      child: const Text('Cancel'),
+                    ),
+                    FilledButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(true),
+                      child: const Text('Delete'),
+                    ),
+                  ],
+                ),
+              );
+              if (shouldDelete != true || !context.mounted) return;
+              await ref.read(libraryItemsProvider.notifier).deleteOne(id);
+              if (!context.mounted) return;
+              context.pop();
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem<String>(
+                value: 'delete',
+                child: Text('Delete'),
+              ),
+            ],
+          ),
+        ],
+      ),
       body: SafeArea(
         child: ListView(
-          padding: AppSpacing.pagePadding,
+          padding: AppSpacing.pagePadding.copyWith(bottom: 96),
           children: [
             if (header != null) ...[
               _DetailHeader(item: header),
@@ -168,7 +205,9 @@ class _DetailHeader extends StatelessWidget {
                 // MaterialLocalizations, not intl's DateFormat: the delegates
                 // are already loaded for all 11 locales, so this cannot throw on
                 // a locale whose date symbols were never initialized.
-                MaterialLocalizations.of(context).formatMediumDate(item.createdAt!),
+                MaterialLocalizations.of(
+                  context,
+                ).formatMediumDate(item.createdAt!),
               ),
               style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
@@ -322,9 +361,7 @@ Widget? _savedResultView(LibraryItem full) {
 
     case ContentType.teacherTraining:
       final advice = mapSavedTeacherAdvice(full.data);
-      return advice == null
-          ? null
-          : TeacherTrainingResultView(advice: advice);
+      return advice == null ? null : TeacherTrainingResultView(advice: advice);
 
     case ContentType.examPaper:
       final ready = mapSavedExamPaper(full.data);

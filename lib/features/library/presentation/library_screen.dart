@@ -62,10 +62,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           onRefresh: () => ref.read(libraryItemsProvider.notifier).refresh(),
           child: ListView(
             // `pagePadding` like every other screen (16 horizontal), consistent
-            // with the dashboard and the tools.
-            padding: AppSpacing.pagePadding,
-            // Always scrollable, so pull-to-refresh still works on the empty and
-            // error states — the states a teacher most wants to retry from.
+            // with the dashboard and the tools; 96 dp bottom clears the mic dock.
+            padding: AppSpacing.pagePadding.copyWith(bottom: 96),
             physics: const AlwaysScrollableScrollPhysics(),
             children: [
               items.when(
@@ -96,7 +94,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
 /// The loaded library: the type-filter bar (when it earns its place), the
 /// filtered rows, and the newest-20 disclosure.
-class _LibraryLoaded extends StatelessWidget {
+class _LibraryLoaded extends ConsumerStatefulWidget {
   const _LibraryLoaded({
     required this.all,
     required this.filter,
@@ -106,6 +104,18 @@ class _LibraryLoaded extends StatelessWidget {
   final List<LibraryItem> all;
   final ContentType? filter;
   final ValueChanged<ContentType?> onFilter;
+
+  @override
+  ConsumerState<_LibraryLoaded> createState() => _LibraryLoadedState();
+}
+
+class _LibraryLoadedState extends ConsumerState<_LibraryLoaded> {
+  bool _selectionMode = false;
+  final Set<String> _selected = <String>{};
+
+  int get _selectedCount => _selected.length;
+  List<LibraryItem> get all => widget.all;
+  ContentType? get filter => widget.filter;
 
   @override
   Widget build(BuildContext context) {
@@ -121,8 +131,9 @@ class _LibraryLoaded extends StatelessWidget {
     ];
     final showFilters = present.length >= 2;
 
-    final visible =
-        filter == null ? all : all.where((i) => i.type == filter).toList();
+    final visible = filter == null
+        ? all
+        : all.where((i) => i.type == filter).toList();
 
     // The route takes a limit and no cursor, so a full page IS the end of what
     // this build can show. This is about the whole read, not the filter.
@@ -141,13 +152,70 @@ class _LibraryLoaded extends StatelessWidget {
           _TypeFilterBar(
             present: present,
             selected: filter,
-            onSelect: onFilter,
+            onSelect: widget.onFilter,
           ),
           const SizedBox(height: AppSpacing.space4),
         ],
         // Defensive: with present-only chips this cannot happen from a tap, but
         // a refresh could drop the filtered type between builds. Offer a way
         // back rather than a blank column.
+        if (_selectionMode) ...[
+          AppCard(
+            child: Row(
+              children: [
+                Text('$_selectedCount selected', style: text.labelLarge),
+                const Spacer(),
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _selected
+                        ..clear()
+                        ..addAll(visible.map((item) => item.id));
+                    });
+                  },
+                  child: const Text('Select all'),
+                ),
+                FilledButton(
+                  onPressed: _selected.isEmpty
+                      ? null
+                      : () async {
+                          final count = _selected.length;
+                          final shouldDelete = await showDialog<bool>(
+                            context: context,
+                            builder: (dialogContext) => AlertDialog(
+                              title: Text('Delete $count items?'),
+                              content: const Text("This can't be undone."),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.of(dialogContext).pop(false),
+                                  child: const Text('Cancel'),
+                                ),
+                                FilledButton(
+                                  onPressed: () =>
+                                      Navigator.of(dialogContext).pop(true),
+                                  child: const Text('Delete'),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (shouldDelete != true) return;
+                          await ref
+                              .read(libraryItemsProvider.notifier)
+                              .deleteMany(_selected.toList(growable: false));
+                          if (!mounted) return;
+                          setState(() {
+                            _selected.clear();
+                            _selectionMode = false;
+                          });
+                        },
+                  child: const Text('Delete'),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.space3),
+        ],
         if (visible.isEmpty)
           AppCard(
             child: EmptyView(
@@ -158,20 +226,89 @@ class _LibraryLoaded extends StatelessWidget {
         else
           for (final (index, item) in visible.indexed) ...[
             if (index > 0) const SizedBox(height: AppSpacing.space3),
-            // The saved rows ink in on a staggered entrance (§4); reduce-motion
-            // returns the static composed frame. These live in an eager Column,
-            // so the client-side filter narrows them without a lazy re-index.
             inkSettle(
               context,
-              LibraryItemRow(
-                item: item,
-                // A document with no id cannot be fetched, so it does not open.
-                onTap: item.id.isEmpty
-                    ? null
-                    : () => context.push(
-                          Routes.libraryDetailPath(item.id),
-                          extra: item,
+              Dismissible(
+                // Index is part of the key so a server that returns two rows
+                // with the same id cannot crash the list with duplicate keys.
+                key: ValueKey('lib-row-$index-${item.id}'),
+                direction: DismissDirection.endToStart,
+                background: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.space4),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Icon(LucideIcons.trash2, color: AppColors.leaf700),
+                  ),
+                ),
+                onDismissed: (_) async {
+                  final messenger = ScaffoldMessenger.of(context);
+                  await ref
+                      .read(libraryItemsProvider.notifier)
+                      .deleteOne(item.id);
+                  messenger.hideCurrentSnackBar();
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: const Text('Deleted'),
+                      duration: const Duration(seconds: 5),
+                      action: SnackBarAction(
+                        label: 'Undo',
+                        onPressed: () {
+                          ref
+                              .read(libraryItemsProvider.notifier)
+                              .restoreOne(item.id);
+                        },
+                      ),
+                    ),
+                  );
+                },
+                child: InkWell(
+                  onLongPress: () {
+                    if (!_selectionMode) {
+                      setState(() {
+                        _selectionMode = true;
+                        _selected.add(item.id);
+                      });
+                    }
+                  },
+                  child: Row(
+                    children: [
+                      if (_selectionMode)
+                        Checkbox(
+                          value: _selected.contains(item.id),
+                          onChanged: (checked) {
+                            setState(() {
+                              if (checked ?? false) {
+                                _selected.add(item.id);
+                              } else {
+                                _selected.remove(item.id);
+                              }
+                            });
+                          },
                         ),
+                      Expanded(
+                        child: LibraryItemRow(
+                          item: item,
+                          onTap: _selectionMode
+                              ? () {
+                                  setState(() {
+                                    if (_selected.contains(item.id)) {
+                                      _selected.remove(item.id);
+                                    } else {
+                                      _selected.add(item.id);
+                                    }
+                                  });
+                                }
+                              : (item.id.isEmpty
+                                    ? null
+                                    : () => context.push(
+                                        Routes.libraryDetailPath(item.id),
+                                        extra: item,
+                                      )),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
               index: index,
             ),
@@ -262,7 +399,9 @@ class _FilterChip extends StatelessWidget {
       backgroundColor: scheme.surfaceContainerHigh,
       selectedColor: scheme.primary.withValues(alpha: 0.12),
       side: BorderSide(
-        color: selected ? scheme.primary.withValues(alpha: 0.5) : scheme.outline,
+        color: selected
+            ? scheme.primary.withValues(alpha: 0.5)
+            : scheme.outline,
       ),
       shape: const StadiumBorder(),
       // Gives the chip a 48dp minimum hit area (rural, thumb-first §2).
@@ -320,7 +459,8 @@ class _LibraryError extends StatelessWidget {
           action: SecondaryButton(
             label: l10n.actionSignIn,
             icon: LucideIcons.logIn,
-            onPressed: () => context.push(Routes.loginWithReturnTo(Routes.library)),
+            onPressed: () =>
+                context.push(Routes.loginWithReturnTo(Routes.library)),
           ),
         ),
       );
@@ -366,7 +506,10 @@ class _LibrarySkeleton extends AppSkeleton {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        SkeletonBar(height: SkeletonBar.title, widthFactor: 0.7),
+                        SkeletonBar(
+                          height: SkeletonBar.title,
+                          widthFactor: 0.7,
+                        ),
                         SizedBox(height: AppSpacing.space2),
                         SkeletonBar(widthFactor: 0.45),
                       ],

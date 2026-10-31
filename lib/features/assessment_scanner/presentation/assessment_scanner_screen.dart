@@ -35,7 +35,12 @@ import 'widgets/page_capture.dart';
 /// wrapped in a `DocumentSheet` (see [AssessmentScannerResultView]) and the view
 /// auto-scrolls to its masthead.
 class AssessmentScannerScreen extends ConsumerStatefulWidget {
-  const AssessmentScannerScreen({super.key});
+  const AssessmentScannerScreen({super.key, this.taskDescription});
+
+  /// Optional human-readable task description. When set, a
+  /// "From your task: ..." tag is shown at the top of the screen. Defaults to
+  /// null (normal entry, no tag). Raw IDs are never shown.
+  final String? taskDescription;
 
   @override
   ConsumerState<AssessmentScannerScreen> createState() =>
@@ -170,48 +175,67 @@ class _AssessmentScannerScreenState
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-          // v3 Screen 11/12's header line: the test context + the page pill.
-          _HeaderRow(
-            contextLine: _contextLine(l10n),
-            pages: _pages.length,
-            maxPages: kAssessmentMaxPages,
-          ),
-          // The form is the CAPTURE phase (Screen 11). Once a scorecard is on
-          // screen the design shows results only (Screen 12), but the form
-          // stays mounted Offstage so its state — and the Form validation
-          // Regenerate relies on — survive the flip.
-          Offstage(
-            offstage: hasResult,
-            child: Form(
-              key: _formKey,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: AppSpacing.space6),
-                  EditorialSectionHeader(l10n.assessmentScannerSectionSheet),
-                  const SizedBox(height: AppSpacing.space4),
-                  _pagesField(l10n),
-                  const SizedBox(height: AppSpacing.space8),
-                  EditorialSectionHeader(l10n.sectionForYourClass),
-                  const SizedBox(height: AppSpacing.space4),
-                  _subjectField(l10n),
-                  const SizedBox(height: AppSpacing.space6),
-                  _gradeField(l10n),
-                  const SizedBox(height: AppSpacing.space6),
-                  _languageField(l10n),
-                  const SizedBox(height: AppSpacing.space6),
-                  _answerKeyField(l10n),
-                  const SizedBox(height: AppSpacing.space6),
-                  _PrivacyNote(l10n: l10n),
-                ],
+            if (widget.taskDescription != null &&
+                widget.taskDescription!.trim().isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentTint,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'From your task: ${widget.taskDescription}',
+                    style: Theme.of(context).textTheme.labelSmall,
+                  ),
+                ),
+              ),
+            // v3 Screen 11/12's header line: the test context + the page pill.
+            _HeaderRow(
+              contextLine: _contextLine(l10n),
+              pages: _pages.length,
+              maxPages: kAssessmentMaxPages,
+            ),
+            // The form is the CAPTURE phase (Screen 11). Once a scorecard is on
+            // screen the design shows results only (Screen 12), but the form
+            // stays mounted Offstage so its state — and the Form validation
+            // Regenerate relies on — survive the flip.
+            Offstage(
+              offstage: hasResult,
+              child: Form(
+                key: _formKey,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: AppSpacing.space6),
+                    EditorialSectionHeader(l10n.assessmentScannerSectionSheet),
+                    const SizedBox(height: AppSpacing.space4),
+                    _pagesField(l10n),
+                    const SizedBox(height: AppSpacing.space8),
+                    EditorialSectionHeader(l10n.sectionForYourClass),
+                    const SizedBox(height: AppSpacing.space4),
+                    _subjectField(l10n),
+                    const SizedBox(height: AppSpacing.space6),
+                    _gradeField(l10n),
+                    const SizedBox(height: AppSpacing.space6),
+                    _languageField(l10n),
+                    const SizedBox(height: AppSpacing.space6),
+                    _answerKeyField(l10n),
+                    const SizedBox(height: AppSpacing.space6),
+                    _PrivacyNote(l10n: l10n),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
-      ),
-      index: 0,
+          ],
+        ),
+        index: 0,
       ),
     );
   }

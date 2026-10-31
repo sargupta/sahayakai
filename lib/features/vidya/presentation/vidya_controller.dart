@@ -133,21 +133,28 @@ class ConversationBlock {
     required this.role,
     required this.text,
     this.directives = const [],
+    this.timestamp,
   });
 
   final ConversationRole role;
   final String text;
   final List<VidyaDirective> directives;
 
+  /// When this turn was inked, for a per-group timestamp. Null on restored
+  /// history (no reliable capture time) and on seeded test data.
+  final DateTime? timestamp;
+
   @override
   bool operator ==(Object other) =>
       other is ConversationBlock &&
       other.role == role &&
       other.text == text &&
-      listEquals(other.directives, directives);
+      listEquals(other.directives, directives) &&
+      other.timestamp == timestamp;
 
   @override
-  int get hashCode => Object.hash(role, text, Object.hashAll(directives));
+  int get hashCode =>
+      Object.hash(role, text, Object.hashAll(directives), timestamp);
 }
 
 const Object _unset = Object();
@@ -290,7 +297,8 @@ class VidyaState {
 @Riverpod(keepAlive: true)
 class VidyaController extends _$VidyaController {
   int _gen = 0;
-  int _activeGen = 0; // gen captured when listening started (for timer closures)
+  int _activeGen =
+      0; // gen captured when listening started (for timer closures)
   bool _speechDetected = false;
   bool _restored = false;
   bool _restoring = false;
@@ -444,6 +452,7 @@ class VidyaController extends _$VidyaController {
                 directives: b.directives
                     .where((d) => d != directive)
                     .toList(growable: false),
+                timestamp: b.timestamp,
               )
             : b,
     ];
@@ -660,7 +669,10 @@ class VidyaController extends _$VidyaController {
     if (_stale(gen)) return;
     // Silence / mis-tap reject before paying for STT.
     if (recording == null || recording.byteLength < kMinAudioBytes) {
-      _set(status: VidyaStatus.failed, errorMessage: 'No speech detected. Please try again.');
+      _set(
+        status: VidyaStatus.failed,
+        errorMessage: 'No speech detected. Please try again.',
+      );
       return;
     }
 
@@ -681,7 +693,9 @@ class VidyaController extends _$VidyaController {
       await _converse(transcript.text, transcript.language, gen);
     } on ApiException catch (e) {
       if (_stale(gen)) return;
-      debugPrint('[Vidya] STT ApiException: ${e.runtimeType} status=${e.statusCode}');
+      debugPrint(
+        '[Vidya] STT ApiException: ${e.runtimeType} status=${e.statusCode}',
+      );
       _handleError(e);
     } catch (e) {
       if (_stale(gen)) return;
@@ -696,11 +710,19 @@ class VidyaController extends _$VidyaController {
     // Ink the teacher's words immediately, then think.
     final withUser = [
       ...state.conversation,
-      ConversationBlock(role: ConversationRole.teacher, text: message),
+      ConversationBlock(
+        role: ConversationRole.teacher,
+        text: message,
+        timestamp: DateTime.now(),
+      ),
     ];
     // The prior history rides only when the fresh-classification window holds.
+    // Keep only the most recent few turns in the prompt: the full transcript is
+    // still shown locally, but shrinking the request keeps the round-trip fast.
     final priorHistory = _carryHistory()
-        ? state.chatHistory
+        ? (state.chatHistory.length <= 6
+              ? state.chatHistory
+              : state.chatHistory.sublist(state.chatHistory.length - 6))
         : const <ChatMessage>[];
     _set(conversation: withUser, status: VidyaStatus.thinking);
 
@@ -719,19 +741,30 @@ class VidyaController extends _$VidyaController {
     try {
       // Try OpenRouter first if configured (direct AI access, bypasses backend).
       if (_openRouter != null) {
-        turn = await _askOpenRouter(message, priorHistory, uiLang);
+        final liveTurn = await _askOpenRouter(
+          message,
+          priorHistory,
+          uiLang,
+          gen,
+        );
+        if (liveTurn == null) return;
+        turn = liveTurn;
       } else {
         turn = await _vidya.ask(request);
       }
     } on ApiException catch (e) {
       if (_stale(gen)) return;
-      debugPrint('[Vidya] _converse ApiException: ${e.runtimeType} status=${e.statusCode} code=${e.errorCode}');
+      debugPrint(
+        '[Vidya] _converse ApiException: ${e.runtimeType} status=${e.statusCode} code=${e.errorCode}',
+      );
       _handleError(e);
       return;
     } catch (e, st) {
       if (_stale(gen)) return;
       debugPrint('[Vidya] _converse exception: ${e.runtimeType}: $e');
-      debugPrint('[Vidya] stack: ${st.toString().split('\\n').take(5).join(' | ')}');
+      debugPrint(
+        '[Vidya] stack: ${st.toString().split('\\n').take(5).join(' | ')}',
+      );
       _set(status: VidyaStatus.failed, errorMessage: e.toString());
       return;
     }
@@ -744,6 +777,7 @@ class VidyaController extends _$VidyaController {
         role: ConversationRole.vidya,
         text: turn.response,
         directives: compound ? turn.directives : const [],
+        timestamp: DateTime.now(),
       ),
     ];
     _set(
@@ -760,18 +794,25 @@ class VidyaController extends _$VidyaController {
     if (turn.response.isNotEmpty) {
       _set(status: VidyaStatus.speaking);
       try {
-        final tts = await _tts.synthesize(
-          text: turn.response,
-          targetLang: vidyaTtsBcp47(uiLang),
-        );
+        // Timebox cloud TTS so a slow synthesis falls back to local speech
+        // instead of leaving the teacher waiting for the audio.
+        final tts = await _tts
+            .synthesize(text: turn.response, targetLang: vidyaTtsBcp47(uiLang))
+            .timeout(const Duration(seconds: 4));
         if (_stale(gen)) return;
-        if (tts.hasAudio) await _player.playBase64Mp3(tts.audioContent);
+        if (tts.hasAudio) {
+          await _player.playBase64Mp3(tts.audioContent);
+        } else {
+          throw Exception('No audio');
+        }
       } on ApiException catch (e) {
         // Plan-gate 403 → OS TTS fallback (strictly additive, demo-safe).
         if (e.errorCode == 'PLAN_UPGRADE_REQUIRED') {
           if (_stale(gen)) return;
           try {
-            await ref.read(osTtsServiceProvider).initialize(vidyaTtsBcp47(uiLang));
+            await ref
+                .read(osTtsServiceProvider)
+                .initialize(vidyaTtsBcp47(uiLang));
             await ref.read(osTtsServiceProvider).speak(turn.response);
           } catch (_) {
             // OS TTS also failed (language unavailable, engine missing) —
@@ -779,6 +820,27 @@ class VidyaController extends _$VidyaController {
           }
         }
         // Other TTS errors (rate limit, quota, 500) → swallow, text is inked.
+      } on TimeoutException catch (_) {
+        if (_stale(gen)) return;
+        try {
+          await ref
+              .read(osTtsServiceProvider)
+              .initialize(vidyaTtsBcp47(uiLang));
+          await ref.read(osTtsServiceProvider).speak(turn.response);
+        } catch (_) {
+          // Local TTS also failed — swallow; the text is already inked.
+        }
+      } catch (_) {
+        // Cloud TTS returned no usable audio — try local speech.
+        if (_stale(gen)) return;
+        try {
+          await ref
+              .read(osTtsServiceProvider)
+              .initialize(vidyaTtsBcp47(uiLang));
+          await ref.read(osTtsServiceProvider).speak(turn.response);
+        } catch (_) {
+          // Local TTS also failed — swallow; the text is already inked.
+        }
       }
       if (_stale(gen)) return;
     }
@@ -795,10 +857,11 @@ class VidyaController extends _$VidyaController {
   /// Converts the conversation history and message to OpenRouter format,
   /// sends to the configured model, and converts the response back to
   /// a [VidyaTurn] with the same structure as the backend would return.
-  Future<VidyaTurn> _askOpenRouter(
+  Future<VidyaTurn?> _askOpenRouter(
     String message,
     List<ChatMessage> history,
     String uiLang,
+    int gen,
   ) async {
     final openRouter = _openRouter!;
     final model = _openRouterModel;
@@ -809,72 +872,161 @@ class VidyaController extends _$VidyaController {
     // Convert chat history to OpenRouter messages.
     final messages = <OpenRouterMessage>[
       OpenRouterMessage(role: 'system', content: systemPrompt),
-      ...history.map((m) => OpenRouterMessage(
-            role: m.role == ChatRole.user ? 'user' : 'assistant',
-            content: m.text,
-          )),
+      ...history.map(
+        (m) => OpenRouterMessage(
+          role: m.role == ChatRole.user ? 'user' : 'assistant',
+          content: m.text,
+        ),
+      ),
       OpenRouterMessage(role: 'user', content: message),
     ];
 
     final request = OpenRouterChatRequest(
       model: model,
       messages: messages,
-      temperature: 0.7,
-      maxTokens: 2048,
+      temperature: 0.4,
+      maxTokens: 350,
+      stream: true,
     );
 
-    debugPrint('[Vidya] OpenRouter request: model=$model messages=${messages.length}');
-    final OpenRouterChatResponse response;
+    debugPrint(
+      '[Vidya] OpenRouter request: model=$model messages=${messages.length}',
+    );
+    final buffer = StringBuffer();
+    DateTime lastUi = DateTime.now();
+    bool hasAssistant = false;
+
     try {
-      response = await openRouter.chat(request);
+      await for (final chunk in openRouter.chatStream(request)) {
+        if (_stale(gen)) return null;
+        final choices = chunk.choices;
+        final delta = choices.isEmpty ? '' : choices.first.delta.content;
+        if (delta.isEmpty) continue;
+        buffer.write(delta);
+
+        final now = DateTime.now();
+        if (!hasAssistant || now.difference(lastUi).inMilliseconds >= 120) {
+          lastUi = now;
+          final text = buffer.toString().trimRight();
+          if (text.isEmpty) continue;
+          if (!_stale(gen)) {
+            if (!hasAssistant) {
+              hasAssistant = true;
+              _set(
+                conversation: [
+                  ...state.conversation,
+                  ConversationBlock(
+                    role: ConversationRole.vidya,
+                    text: text,
+                    timestamp: DateTime.now(),
+                  ),
+                ],
+                status: VidyaStatus.thinking,
+              );
+            } else {
+              final updated = [...state.conversation];
+              if (updated.isNotEmpty &&
+                  updated.last.role == ConversationRole.vidya) {
+                updated[updated.length - 1] = ConversationBlock(
+                  role: ConversationRole.vidya,
+                  text: text,
+                  timestamp: updated.last.timestamp ?? DateTime.now(),
+                );
+                _set(conversation: updated, status: VidyaStatus.thinking);
+              }
+            }
+          }
+        }
+      }
     } on DioException catch (e) {
-      debugPrint('[Vidya] OpenRouter DioException: type=${e.type} status=${e.response?.statusCode}');
-      // Redact body: status + first 200 chars of error (no user message content).
+      debugPrint(
+        '[Vidya] OpenRouter DioException: type=${e.type} status=${e.response?.statusCode}',
+      );
       final body = e.response?.data?.toString();
       if (body != null) {
-        debugPrint('[Vidya] OpenRouter error body: ${body.length > 200 ? body.substring(0, 200) : body}');
+        debugPrint(
+          '[Vidya] OpenRouter error body: ${body.length > 200 ? body.substring(0, 200) : body}',
+        );
       }
       throw ApiException.fromDio(e);
     }
-    debugPrint('[Vidya] OpenRouter response: ${response.content.length} chars');
-    final content = response.content.trim();
+    if (_stale(gen)) return null;
+
+    final content = buffer.toString().trim();
+    debugPrint('[Vidya] OpenRouter response: ${content.length} chars');
+
+    // Ensure the final full text is inked.
+    if (!_stale(gen)) {
+      if (state.conversation.isNotEmpty &&
+          state.conversation.last.role == ConversationRole.vidya) {
+        final updated = [...state.conversation];
+        updated[updated.length - 1] = ConversationBlock(
+          role: ConversationRole.vidya,
+          text: content,
+          timestamp: updated.last.timestamp ?? DateTime.now(),
+        );
+        _set(conversation: updated, status: VidyaStatus.thinking);
+      } else {
+        _set(
+          conversation: [
+            ...state.conversation,
+            ConversationBlock(
+              role: ConversationRole.vidya,
+              text: content,
+              timestamp: DateTime.now(),
+            ),
+          ],
+          status: VidyaStatus.thinking,
+        );
+      }
+    }
 
     // Convert OpenRouter response to VidyaTurn format.
-    // Since OpenRouter doesn't return directives, we return a simple
-    // speak-only turn. The backend would normally classify intent and
-    // return directives; here we just return the text response.
-    return VidyaTurn(
-      response: content,
-      directives: const [],
-    );
+    return VidyaTurn(response: content, directives: const []);
   }
 
   /// Builds the system prompt for OpenRouter VEDA calls.
   String _buildOpenRouterSystemPrompt(String uiLang) {
     final languageName = _languageDisplayName(uiLang);
     return '''
-You are VEDYA, a helpful AI co-teacher for Indian teachers.
-Respond in $languageName.
-Keep responses concise, practical, and classroom-ready.
-Do not use markdown formatting unless explicitly asked.
-If the user asks for a tool (lesson plan, quiz, worksheet, etc.), explain that you can guide them but they should use the dedicated tool in the app.
-'''.trim();
+You are VEDYA, a warm, clear AI co-teacher for Indian teachers.
+Reply entirely in $languageName (do not switch languages mid-answer).
+Make answers practical and classroom-ready, and easy to follow when read aloud:
+- Keep sentences short (under 20 words) and use plain words.
+- Prefer 2-4 short points over long paragraphs.
+- Avoid markdown, bullet symbols, code, and numbered lists unless the teacher asks.
+- End with one brief actionable next step.
+- If a tool is needed (lesson plan, quiz, worksheet, exam paper, assessment, visual aid, instant answer, parent communication), say what to do and point to the dedicated tool in the app.
+- Keep the whole reply under 120 words.
+'''
+        .trim();
   }
 
   /// Maps language code to display name for system prompt.
   String _languageDisplayName(String code) {
     switch (code) {
-      case 'hi': return 'Hindi';
-      case 'bn': return 'Bengali';
-      case 'gu': return 'Gujarati';
-      case 'kn': return 'Kannada';
-      case 'ml': return 'Malayalam';
-      case 'mr': return 'Marathi';
-      case 'or': return 'Odia';
-      case 'pa': return 'Punjabi';
-      case 'ta': return 'Tamil';
-      case 'te': return 'Telugu';
-      default: return 'English';
+      case 'hi':
+        return 'Hindi';
+      case 'bn':
+        return 'Bengali';
+      case 'gu':
+        return 'Gujarati';
+      case 'kn':
+        return 'Kannada';
+      case 'ml':
+        return 'Malayalam';
+      case 'mr':
+        return 'Marathi';
+      case 'or':
+        return 'Odia';
+      case 'pa':
+        return 'Punjabi';
+      case 'ta':
+        return 'Tamil';
+      case 'te':
+        return 'Telugu';
+      default:
+        return 'English';
     }
   }
 
@@ -1156,6 +1308,7 @@ If the user asks for a tool (lesson plan, quiz, worksheet, etc.), explain that y
             role: ConversationRole.vidya,
             text: '',
             directives: directives,
+            timestamp: DateTime.now(),
           ),
         ],
       );

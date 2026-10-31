@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:sahayakai/core/i18n/app_locale.dart';
 import 'package:sahayakai/core/i18n/gen/app_localizations.dart';
 import 'package:sahayakai/core/network/api_providers.dart';
 import 'package:sahayakai/core/platform/clock.dart';
@@ -215,28 +214,11 @@ void main() {
       await _pumpHome(tester, const VidyaState());
       await tester.pumpAndSettle();
 
-      // The 36px glass avatar, the date/name column, the language pill.
+      // The 36px glass avatar, the date/name column (language moved to settings).
       expect(find.text('MK'), findsOneWidget);
       expect(find.text('Tue, 18 Sept'), findsOneWidget);
       expect(find.text('Meena Kulkarni'), findsOneWidget);
-      // The pill names the ACTIVE language — its endonym, not a hard-coded
-      // other-language shortcut.
-      expect(find.text('English'), findsOneWidget);
-    });
-
-    testWidgets('the language pill opens the shared language picker', (
-      tester,
-    ) async {
-      await _pumpHome(tester, const VidyaState());
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('English'));
-      await tester.pumpAndSettle();
-
-      // The SAME sheet the You tab's switcher opens — titled with the
-      // language label and one radio per language, not a home-grown picker.
-      expect(find.text('Language'), findsOneWidget);
-      expect(find.byType(RadioListTile<AppLocale>), findsNWidgets(11));
+      expect(find.text('English'), findsNothing);
     });
 
     testWidgets('renders the hero title and its middle-dot subtitle', (
@@ -308,7 +290,6 @@ void main() {
         );
       },
     );
-
   });
 
   group('the app bar entries', () {
@@ -431,7 +412,9 @@ void main() {
       addTearDown(tester.view.reset);
       tester.platformDispatcher.accessibilityFeaturesTestValue =
           const FakeAccessibilityFeatures(disableAnimations: true);
-      addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+      addTearDown(
+        tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+      );
 
       await tester.pumpWidget(
         ProviderScope(

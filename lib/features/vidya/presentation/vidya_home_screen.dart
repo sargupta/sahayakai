@@ -5,15 +5,14 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import '../../../core/i18n/app_locale.dart';
 import '../../../core/i18n/gen/app_localizations.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/platform/clock.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../shared/motion/animated_entrance.dart';
-import '../../../shared/widgets/language_switcher.dart';
 import '../../inbox/presentation/widgets/inbox_entry_button.dart';
 import '../../profile/presentation/profile_controller.dart';
 import 'vidya_controller.dart';
@@ -35,7 +34,9 @@ class _VidyaHomeScreenState extends ConsumerState<VidyaHomeScreen> {
       if (!mounted) return;
       final controller = ref.read(vidyaControllerProvider.notifier);
       controller.registerScreenContext('/');
-      controller.restoreSession();
+      // Cold start stays fresh: do not restore a previous VIDYA thread here.
+      // Manual pull-to-refresh can still reload, and stored threads remain
+      // accessible via the history list / backend.
       maybeSpeakVidyaGreeting(
         ref,
         motionEnabled: context.motionEnabled,
@@ -122,29 +123,6 @@ class _VidyaAppBar extends StatelessWidget implements PreferredSizeWidget {
           tooltip: l10n.vidyaPrepDesk,
           onPressed: () => context.push(Routes.prepDesk),
         ),
-        Padding(
-          padding: const EdgeInsets.only(right: 12),
-          child: Center(
-            child: Container(
-              width: 32,
-              height: 32,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.saffron500,
-              ),
-              alignment: Alignment.center,
-              child: const Text(
-                'S',
-                style: TextStyle(
-                  fontFamily: 'Bricolage Grotesque',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -175,6 +153,9 @@ class _VidyaBody extends ConsumerWidget {
             } catch (_) {}
           },
           child: SingleChildScrollView(
+            padding: EdgeInsets.only(
+              bottom: 64 + MediaQuery.of(context).padding.bottom + 16,
+            ),
             physics: const BouncingScrollPhysics(
               parent: AlwaysScrollableScrollPhysics(),
             ),
@@ -183,15 +164,15 @@ class _VidyaBody extends ConsumerWidget {
               children: [
                 const SizedBox(height: 16),
                 const _HeaderRow(),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 const _Hero(),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 if (profile != null && profile.isEmpty) ...[
                   const _CompleteProfileCard(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                 ],
                 const _TodayCard(),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 const Text(
                   'YOUR TOOLS',
                   style: TextStyle(
@@ -228,34 +209,40 @@ class _HeaderRow extends ConsumerWidget {
         : 'Teacher';
     final initials = _initialsOf(name);
     final today = _formatToday(context, ref.read(nowProvider)());
-    final current = AppLocale.fromCode(
-      Localizations.localeOf(context).languageCode,
-    );
-
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white.withValues(alpha: 0.85),
-            border: Border.all(color: AppColors.borderGlass, width: 1),
-            boxShadow: null,
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => context.push(Routes.profile),
+            borderRadius: AppRadius.rPill,
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.85),
+                border: Border.all(color: AppColors.borderHairline, width: 1),
+              ),
+              alignment: Alignment.center,
+              child: initials == null
+                  ? const Icon(
+                      LucideIcons.user,
+                      size: 18,
+                      color: AppColors.textBody,
+                    )
+                  : Text(
+                      initials,
+                      style: const TextStyle(
+                        fontFamily: 'Instrument Sans',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textBody,
+                      ),
+                    ),
+            ),
           ),
-          alignment: Alignment.center,
-          child: initials == null
-              ? const Icon(LucideIcons.user, size: 18, color: AppColors.textBody)
-              : Text(
-                  initials,
-                  style: const TextStyle(
-                    fontFamily: 'Instrument Sans',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textBody,
-                  ),
-                ),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -270,7 +257,7 @@ class _HeaderRow extends ConsumerWidget {
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                   color: AppColors.textBody,
-                  height: 1.1,
+                  height: 1.3,
                 ),
               ),
               const SizedBox(height: 2),
@@ -281,39 +268,11 @@ class _HeaderRow extends ConsumerWidget {
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textStrong,
-                  height: 1.1,
+                  height: 1.2,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
             ],
-          ),
-        ),
-        const SizedBox(width: 8),
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () => showLanguagePickerSheet(context, ref),
-            borderRadius: AppRadius.rPill,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                borderRadius: AppRadius.rPill,
-                color: Colors.white.withValues(alpha: 0.8),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.95),
-                  width: 1,
-                ),
-              ),
-              child: Text(
-                current.nativeLabel,
-                style: const TextStyle(
-                  fontFamily: 'Instrument Sans',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.saffron600,
-                ),
-              ),
-            ),
           ),
         ),
       ],
@@ -351,7 +310,9 @@ class _Hero extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          name != null && name.isNotEmpty ? '$salutation, ${name.split(' ').first}' : salutation,
+          name != null && name.isNotEmpty
+              ? '$salutation, ${name.split(' ').first}'
+              : salutation,
           style: const TextStyle(
             fontFamily: 'Bricolage Grotesque',
             fontSize: 26,
@@ -378,7 +339,10 @@ class _Hero extends ConsumerWidget {
         if (hasSummary) ...[
           const SizedBox(height: 8),
           Text(
-            '${gradeLevels.join(', ')} · ${subjects.join(', ')}',
+            [
+              if (gradeLevels.isNotEmpty) gradeLevels.join(', '),
+              if (subjects.isNotEmpty) subjects.join(', '),
+            ].join(' · '),
             style: const TextStyle(
               fontFamily: 'Instrument Sans',
               fontSize: 13,
@@ -412,8 +376,18 @@ String _formatTodayFull(BuildContext context, DateTime day) {
   final locale = Localizations.localeOf(context);
   if (locale.languageCode == 'en') {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December',
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return '${DateFormat('EEEE', locale.toString()).format(day)}, '
         '${day.day} ${months[day.month - 1]}';
@@ -423,69 +397,125 @@ String _formatTodayFull(BuildContext context, DateTime day) {
 
 // ─── Today card (actionable strip) ─────────────────────────────────────────
 
-class _TodayCard extends StatefulWidget {
+class _TodayCard extends StatelessWidget {
   const _TodayCard();
 
   @override
-  State<_TodayCard> createState() => _TodayCardState();
-}
-
-class _TodayCardState extends State<_TodayCard> {
-  bool _pressed = false;
-
-  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => context.push(Routes.attendance),
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
-      child: AnimatedScale(
-        scale: _pressed ? 0.98 : 1.0,
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.easeOut,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          curve: Curves.easeOut,
-          decoration: BoxDecoration(
-            color: _pressed ? Color.fromARGB(255, 245, 240, 232) : Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.ink900.withValues(alpha: 0.08), width: 1),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Text(
+          'TODAY',
+          style: TextStyle(
+            fontFamily: 'Instrument Sans',
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: AppColors.saffron600,
+            letterSpacing: 1.4,
           ),
-          constraints: const BoxConstraints(minHeight: 48),
-          padding: const EdgeInsets.all(14),
+        ),
+        const SizedBox(height: AppSpacing.space3),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.ink900.withValues(alpha: 0.08)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _todayRow(
+                context,
+                icon: LucideIcons.clipboardCheck,
+                accent: AppColors.saffron500,
+                title: 'Attendance',
+                subtitle: 'Mark the register for your next class',
+                cta: 'Open',
+                onTap: () => context.push(Routes.attendance),
+              ),
+              Divider(
+                height: 1,
+                color: AppColors.ink900.withValues(alpha: 0.06),
+              ),
+              _todayRow(
+                context,
+                icon: LucideIcons.scanLine,
+                accent: AppColors.indigo500,
+                title: 'Tests to check',
+                subtitle: 'No tests waiting',
+                cta: 'Scan',
+                onTap: () => context.push(Routes.assessmentScanner),
+              ),
+              Divider(
+                height: 1,
+                color: AppColors.ink900.withValues(alpha: 0.06),
+              ),
+              _todayRow(
+                context,
+                icon: LucideIcons.phone,
+                accent: AppColors.leaf500,
+                title: 'Parent follow-ups',
+                subtitle: 'No calls due today',
+                cta: 'Call',
+                onTap: () => context.push(Routes.parentHotline),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  static Widget _todayRow(
+    BuildContext context, {
+    required IconData icon,
+    required Color accent,
+    required String title,
+    required String subtitle,
+    required String cta,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.space4),
           child: Row(
             children: [
               Container(
-                width: 36,
-                height: 36,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
-                  color: AppColors.milk200.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
+                  color: accent.withValues(alpha: 0.12),
+                  border: Border.all(color: accent.withValues(alpha: 0.2)),
                 ),
                 alignment: Alignment.center,
-                child: const Icon(LucideIcons.clipboardCheck, size: 18, color: AppColors.saffron600),
+                child: Icon(icon, size: 20, color: accent),
               ),
-              const SizedBox(width: 12),
-              const Expanded(
+              const SizedBox(width: AppSpacing.space3),
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Today',
-                      style: TextStyle(
+                      title,
+                      style: const TextStyle(
                         fontFamily: 'Bricolage Grotesque',
                         fontSize: 14,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w600,
                         color: AppColors.textStrong,
                         height: 1.2,
                       ),
                     ),
-                    SizedBox(height: 2),
+                    const SizedBox(height: 2),
                     Text(
-                      'Start with your class roll call',
-                      style: TextStyle(
+                      subtitle,
+                      style: const TextStyle(
                         fontFamily: 'Instrument Sans',
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
@@ -496,10 +526,26 @@ class _TodayCardState extends State<_TodayCard> {
                   ],
                 ),
               ),
-              const Icon(
-                LucideIcons.chevronRight,
-                size: 18,
-                color: AppColors.textMuted,
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: accent == AppColors.saffron500
+                      ? AppColors.accentFill
+                      : accent,
+                  borderRadius: BorderRadius.circular(9999),
+                ),
+                child: Text(
+                  cta,
+                  style: const TextStyle(
+                    fontFamily: 'Instrument Sans',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ],
           ),
@@ -508,7 +554,6 @@ class _TodayCardState extends State<_TodayCard> {
     );
   }
 }
-
 
 // ─── Tile grid (2x2 equal) ─────────────────────────────────────────────────
 
@@ -523,7 +568,7 @@ class _TileGrid extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final w = (constraints.maxWidth - 10) / 2;
+        final w = (constraints.maxWidth - 8) / 2;
         return Column(
           children: [
             Row(
@@ -540,7 +585,7 @@ class _TileGrid extends StatelessWidget {
                     onTap: () => context.push(Routes.attendance),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 SizedBox(
                   width: w,
                   child: _Tile(
@@ -555,7 +600,7 @@ class _TileGrid extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Row(
               children: [
                 SizedBox(
@@ -571,7 +616,7 @@ class _TileGrid extends StatelessWidget {
                     onTap: () => context.push(Routes.assessmentScanner),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 SizedBox(
                   width: w,
                   child: _Tile(
@@ -624,25 +669,28 @@ class _Tile extends StatelessWidget {
         splashColor: color.withValues(alpha: 0.08),
         highlightColor: color.withValues(alpha: 0.04),
         child: Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.ink900.withValues(alpha: 0.07), width: 1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.ink900.withValues(alpha: 0.08),
+              width: 1,
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 36,
-                height: 36,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                   color: tint,
                   border: Border.all(color: border, width: 1),
                 ),
                 alignment: Alignment.center,
-                child: Icon(icon, size: 18, color: color),
+                child: Icon(icon, size: 20, color: color),
               ),
               const SizedBox(height: 12),
               Text(
@@ -702,7 +750,11 @@ class _CompleteProfileCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             alignment: Alignment.center,
-            child: const Icon(LucideIcons.userPlus, size: 18, color: AppColors.saffron600),
+            child: const Icon(
+              LucideIcons.userPlus,
+              size: 18,
+              color: AppColors.saffron600,
+            ),
           ),
           const SizedBox(width: 12),
           const Expanded(
@@ -764,8 +816,18 @@ String _formatToday(BuildContext context, DateTime day) {
   final locale = Localizations.localeOf(context);
   if (locale.languageCode == 'en') {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sept',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${DateFormat('EEE', locale.toString()).format(day)}, '
         '${day.day} ${months[day.month - 1]}';
@@ -776,7 +838,10 @@ String _formatToday(BuildContext context, DateTime day) {
 String? _initialsOf(String name) {
   final trimmed = name.trim();
   if (trimmed.isEmpty) return null;
-  final words = trimmed.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).take(2);
+  final words = trimmed
+      .split(RegExp(r'\s+'))
+      .where((w) => w.isNotEmpty)
+      .take(2);
   final buffer = StringBuffer();
   for (final word in words) {
     buffer.write(String.fromCharCode(word.runes.first).toUpperCase());

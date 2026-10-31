@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../domain/library_item.dart';
 import 'library_repository.dart';
@@ -31,22 +32,87 @@ part 'library_items_provider.g.dart';
 ///                                       the typed `ApiException` kind,
 ///   - `AsyncData` with an empty list -> the "nothing saved yet" state,
 ///   - `AsyncData`                    -> the rows.
+const String _kDeletedLibraryIdsKey = 'deleted_library_ids';
+
+Future<Set<String>> _loadDeletedLibraryIds() async {
+  // Soft-delete state is a local convenience: if the prefs store is
+  // unavailable (tests, first-run plugin hiccup), treat it as "nothing
+  // hidden" rather than failing the whole library read.
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    return (prefs.getStringList(_kDeletedLibraryIdsKey) ?? <String>[]).toSet();
+  } catch (_) {
+    return <String>{};
+  }
+}
+
+Future<void> _storeDeletedLibraryIds(Set<String> ids) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(
+      _kDeletedLibraryIdsKey,
+      ids.toList(growable: false),
+    );
+  } catch (_) {
+    // Best-effort: the in-memory hide still applies for this session.
+  }
+}
+
 @riverpod
 class LibraryItems extends _$LibraryItems {
   @override
-  Future<List<LibraryItem>> build() {
-    return ref
+  Future<List<LibraryItem>> build() async {
+    final items = await ref
         .watch(libraryRepositoryProvider)
         .fetchRecent(limit: LibraryRepository.maxLimit);
+    final deleted = await _loadDeletedLibraryIds();
+    return items
+        .where((item) => !deleted.contains(item.id))
+        .toList(growable: false);
+  }
+
+  Future<void> deleteOne(String id) => deleteMany(<String>[id]);
+
+  Future<void> deleteMany(List<String> ids) async {
+    final deleted = await _loadDeletedLibraryIds();
+    deleted.addAll(ids);
+    await _storeDeletedLibraryIds(deleted);
+    final current = state.valueOrNull ?? const <LibraryItem>[];
+    state = AsyncData(
+      current.where((item) => !ids.contains(item.id)).toList(growable: false),
+    );
+  }
+
+  Future<void> restoreOne(String id) async {
+    final deleted = await _loadDeletedLibraryIds();
+    deleted.remove(id);
+    await _storeDeletedLibraryIds(deleted);
+    state = await AsyncValue.guard(() async {
+      final fetched = await ref
+          .read(libraryRepositoryProvider)
+          .fetchRecent(limit: LibraryRepository.maxLimit);
+      final deletedNow = await _loadDeletedLibraryIds();
+      return fetched
+          .where((item) => !deletedNow.contains(item.id))
+          .toList(growable: false);
+    });
   }
 
   /// Re-runs the fetch behind the error state's retry.
   Future<void> refresh() async {
     state = const AsyncValue<List<LibraryItem>>.loading();
-    state = await AsyncValue.guard(
-      () => ref
+    try {
+      final fetched = await ref
           .read(libraryRepositoryProvider)
-          .fetchRecent(limit: LibraryRepository.maxLimit),
-    );
+          .fetchRecent(limit: LibraryRepository.maxLimit);
+      final deleted = await _loadDeletedLibraryIds();
+      state = AsyncData(
+        fetched
+            .where((item) => !deleted.contains(item.id))
+            .toList(growable: false),
+      );
+    } catch (error, stack) {
+      state = AsyncError(error, stack);
+    }
   }
 }

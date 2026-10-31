@@ -244,6 +244,11 @@ class JustAudioPlayerService implements AudioPlayerService {
     await _player.stop();
     final id = ++_session;
     await _player.setAudioSource(Base64Mp3Source(bytes));
+    try {
+      await _player.setSpeed(0.88);
+    } catch (_) {
+      // Speed control is best-effort for cloud TTS clarity.
+    }
     _emit(true);
     // Start playback but do not await completion — mirror the web's
     // `new Audio().play()` which resolves when playback *begins*, so the
@@ -261,6 +266,11 @@ class JustAudioPlayerService implements AudioPlayerService {
     await _player.stop();
     final id = ++_session;
     await _player.setAudioSource(PcmStreamAudioSource(pcm));
+    try {
+      await _player.setSpeed(0.88);
+    } catch (_) {
+      // Speed control is best-effort for live PCM clarity.
+    }
     _emit(true);
     unawaited(_player.play());
     return id;

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../core/i18n/gen/app_localizations.dart';
@@ -62,12 +63,16 @@ class MarkAttendanceScreen extends ConsumerStatefulWidget {
     super.key,
     required this.classId,
     this.attendanceClass,
+    this.taskId,
   });
 
   final String classId;
 
   /// The class handed through `extra`, for the title.
   final AttendanceClass? attendanceClass;
+
+  /// Optional task id. When set, a "From your task: ..." tag is shown.
+  final String? taskId;
 
   @override
   ConsumerState<MarkAttendanceScreen> createState() =>
@@ -91,6 +96,7 @@ class _MarkAttendanceScreenState extends ConsumerState<MarkAttendanceScreen> {
   bool _isBusy = false;
   bool _blockedByPlan = false;
   String? _errorMessage;
+  int _absentCount = 0;
 
   @override
   void initState() {
@@ -143,9 +149,7 @@ class _MarkAttendanceScreenState extends ConsumerState<MarkAttendanceScreen> {
     );
     messenger.clearSnackBars();
     if (marks.isEmpty) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n.attendanceVoiceNone)),
-      );
+      messenger.showSnackBar(SnackBar(content: Text(l10n.attendanceVoiceNone)));
       return;
     }
     setState(() {
@@ -180,7 +184,12 @@ class _MarkAttendanceScreenState extends ConsumerState<MarkAttendanceScreen> {
 
       switch (result) {
         case AttendanceWriteAccepted<AttendanceDate>():
-          setState(() => _edits.remove(_date));
+          setState(() {
+            _edits.remove(_date);
+            _absentCount = statuses.values
+                .where((s) => s == AttendanceStatus.absent)
+                .length;
+          });
           ref
             ..invalidate(dailyRegisterProvider(_registerKey(_date)))
             // The month's rollups are derived from the day just written.
@@ -236,6 +245,24 @@ class _MarkAttendanceScreenState extends ConsumerState<MarkAttendanceScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (widget.taskId != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  'From your task: ${widget.taskId}',
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+              ),
+            ),
           EditorialSectionHeader(l10n.attendanceMarkEyebrow),
           const SizedBox(height: AppSpacing.space4),
           Text(
@@ -258,6 +285,21 @@ class _MarkAttendanceScreenState extends ConsumerState<MarkAttendanceScreen> {
             InlineError(
               title: l10n.attendanceSaveRegisterFailed,
               message: _errorMessage!,
+            ),
+          ],
+          if (_absentCount > 0) ...[
+            const SizedBox(height: AppSpacing.space4),
+            FilledButton(
+              onPressed: () {
+                GoRouter.of(context).push(
+                  '/parent-hotline',
+                  extra: <String, dynamic>{
+                    'classId': widget.classId,
+                    'className': widget.attendanceClass?.name,
+                  },
+                );
+              },
+              child: Text('Call $_absentCount parents'),
             ),
           ],
         ],
