@@ -182,6 +182,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionRegenerate => 'Regenerate';
 
   @override
+  String get outputEdit => 'Edit';
+
+  @override
   String get actionCopy => 'Copy';
 
   @override
@@ -2036,6 +2039,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get vidyaStateIdle => 'Tap to speak';
+
+  @override
+  String get vidyaDockReadyHint => 'Ready · Tap to deliver';
 
   @override
   String get vidyaStateReady => 'Getting ready';
@@ -4012,4 +4018,79 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeTileCallSub => 'Script in हिन्दी';
+
+  @override
+  String get homeAskEyebrow => 'VIDYA';
+
+  @override
+  String get homeAskTitle => 'Ask for anything\nin the app';
+
+  @override
+  String get homeAskSubtitle =>
+      'Any tool, any language. She opens the right one.';
+
+  @override
+  String get homeSayEyebrow => 'Say it, she routes it';
+
+  @override
+  String get homeSayLesson => '“Class 7 ka jal chakra lesson plan”';
+
+  @override
+  String get homeSayQuiz => '“Ten-question quiz, medium”';
+
+  @override
+  String get homeSayAttendance => '“Aaj ki attendance lagao”';
+
+  @override
+  String get homeOrbRest => 'Tap or hold to speak';
+
+  @override
+  String get homeOrbOffline => 'Voice needs signal · type below';
+
+  @override
+  String get homeAskPlaceholder => 'Ask VIDYA, or type what you need…';
+
+  @override
+  String get homeAskCaption => 'Hold the mic to speak · tap the box to type';
+
+  @override
+  String get homeSpeakToVidya => 'Speak to VIDYA';
+
+  @override
+  String get homeYourTools => 'Your tools';
+
+  @override
+  String homeAllTools(int count) {
+    return 'All $count tools';
+  }
+
+  @override
+  String homeTileCallSubLanguage(String language) {
+    return 'Script in $language';
+  }
+
+  @override
+  String homeWaitingReady(String title) {
+    return '$title is ready';
+  }
+
+  @override
+  String homeWaitingUpdates(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count new updates',
+      one: '1 new update',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeWaitingNothing => 'Nothing is waiting for you right now';
+
+  @override
+  String get homeSayLessonTopic => 'Water cycle';
+
+  @override
+  String get outputBackToResult => 'Back to result';
 }

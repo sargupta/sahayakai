@@ -212,6 +212,10 @@ class _VirtualFieldTripScreenState
     return ToolScaffold(
       title: l10n.virtualFieldTripTitle,
       isBusy: state.isLoading,
+      // Output screen (UX map Flow 4): the result replaces the form;
+      // Edit brings the form back and keeps the result until a new one lands.
+      hasResult: hasTrip,
+      onResubmit: _submit,
       submitLabel: l10n.virtualFieldTripAction,
       onSubmit: (state.isLoading || hasTrip) ? null : _submit,
       result: KeyedSubtree(
@@ -232,18 +236,18 @@ class _VirtualFieldTripScreenState
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-            _topicField(l10n),
-            const SizedBox(height: AppSpacing.space8),
-            EditorialSectionHeader(l10n.sectionForYourClass),
-            const SizedBox(height: AppSpacing.space4),
-            _gradeField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _languageField(l10n),
-          ],
+              _topicField(l10n),
+              const SizedBox(height: AppSpacing.space8),
+              EditorialSectionHeader(l10n.sectionForYourClass),
+              const SizedBox(height: AppSpacing.space4),
+              _gradeField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _languageField(l10n),
+            ],
+          ),
         ),
+        index: 0,
       ),
-      index: 0,
-    ),
     );
   }
 

@@ -208,6 +208,10 @@ class _WorksheetWizardScreenState extends ConsumerState<WorksheetWizardScreen> {
     return ToolScaffold(
       title: l10n.worksheetTitle,
       isBusy: state.isLoading,
+      // Output screen (UX map Flow 4): the result replaces the form;
+      // Edit brings the form back and keeps the result until a new one lands.
+      hasResult: hasResult,
+      onResubmit: _submit,
       submitLabel: l10n.actionGenerate,
       // Hide the sticky Generate button once a worksheet is on screen — the
       // document's own action bar (Regenerate / Copy) takes over.

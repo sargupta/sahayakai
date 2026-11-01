@@ -1,0 +1,30 @@
+<!-- @dsCard group="Lists" height=303 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>DisclosureRow</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Demo() {
+  var e = React.useState(false), more = e[0], setMore = e[1];
+  var a = React.useState(false), adv = a[0], setAdv = a[1];
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Card · expands in place'),
+      h(S.DisclosureRow, { title: 'Explore · 8 more tools', subtitle: 'Field trips, visual aids, training and more', expanded: more, controls: 'more-tools', onClick: function () { setMore(!more); } }),
+      more ? h('div', { id: 'more-tools', style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 } },
+        h(S.Tile, { title: 'Field trip', subtitle: 'Plan a class visit', onClick: function () {} }),
+        h(S.Tile, { title: 'Visual aid', subtitle: 'Board-ready diagram', onClick: function () {} })) : h('div', { id: 'more-tools', hidden: true }),
+      h('div', { className: 'sk-slice__label' }, 'Card · leads to a screen'),
+      h(S.DisclosureRow, { title: 'Exam paper blueprints', subtitle: 'CBSE · ICSE / ISC · 27 state and UT boards', href: '#' })),
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Toggle · hides a section'),
+      h(S.DisclosureRow, { variant: 'toggle', title: 'Show advanced options', expandedTitle: 'Hide advanced options', expanded: adv, controls: 'adv', onClick: function () { setAdv(!adv); } }),
+      adv ? h('div', { id: 'adv' }, h(S.Field, { label: 'Difficulty', size: 'md', as: 'select', value: 'Mixed' })) : h('div', { id: 'adv', hidden: true }),
+      h('div', { className: 'sk-slice__label' }, 'In हिन्दी'),
+      h(S.DisclosureRow, { lang: 'hi', title: 'और देखें · 8 और साधन', subtitle: 'शैक्षिक भ्रमण, दृश्य सामग्री, प्रशिक्षण', onClick: function () {} }),
+      h(S.DisclosureRow, { lang: 'hi', variant: 'toggle', title: 'और विकल्प दिखाएँ', expanded: false, onClick: function () {} })));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

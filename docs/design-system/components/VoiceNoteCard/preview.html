@@ -1,0 +1,40 @@
+<!-- @dsCard group="Class and calls" height=275 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>VoiceNoteCard</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* The corner glow, clipped inside its own layer so nothing pokes out of the slice. */
+function Glow() {
+  return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } },
+    h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } }));
+}
+function Slice(label, mods, kids) {
+  return h('div', { className: ['sk-slice'].concat(mods.filter(function (m) { return m !== 'glow-bg'; }).map(function (m) { return 'sk-slice--' + m; })).join(' ') },
+    mods.indexOf('glow-bg') !== -1 ? h(Glow) : null,
+    h('div', { className: 'sk-slice__label' }, label), kids);
+}
+function Player() {
+  var p = React.useState(false), playing = p[0], setPlaying = p[1];
+  var e = React.useState(0), elapsed = e[0], setElapsed = e[1];
+  React.useEffect(function () {
+    if (!playing) return undefined;
+    var t = setInterval(function () {
+      setElapsed(function (s) { if (s >= 20) { setPlaying(false); return 0; } return s + 1; });
+    }, 1000);
+    return function () { clearInterval(t); };
+  }, [playing]);
+  return h(S.VoiceNoteCard, { duration: 20, playing: playing, elapsed: elapsed, onToggle: setPlaying });
+}
+ReactDOM.createRoot(document.getElementById('root')).render(
+  h('div', { className: 'sk-slices' },
+    Slice('Ready · press to hear it', ['glow-bg'], h(Player)),
+    Slice('Playing · Hindi labels', [], [
+      h(S.VoiceNoteCard, { key: 'p', duration: 20, elapsed: 7, playing: true }),
+      h(S.VoiceNoteCard, { key: 'hi', lang: 'hi', duration: 20, eyebrow: 'अगर वे पढ़ नहीं सकते', title: 'वही शब्द, 20 सेकंड के वॉइस नोट में', playLabel: 'वॉइस नोट सुनें, 20 सेकंड', pauseLabel: 'वॉइस नोट रोकें' })
+    ])
+  )
+);
+</script>
+</body></html>

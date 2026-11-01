@@ -1,0 +1,66 @@
+<!-- @dsCard group="Surfaces" height=998 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>EmptyState</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* Phone slices: 360px, the phone's true width. The corner glow is clipped inside the slice, so nothing pokes out of it. */
+function Glow() { return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } }, h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } })); }
+function isHi(t) { return typeof t === 'string' && /[ऀ-ൿ]/.test(t); }
+function Slice(p) {
+  var vs = (p.v || '').split(' ').filter(Boolean);
+  var cls = 'sk-slice' + vs.filter(function (x) { return x !== 'glow'; }).map(function (x) { return ' sk-slice--' + x; }).join('');
+  return h('div', { className: cls, style: p.style }, vs.indexOf('glow') !== -1 ? h(Glow) : null, p.label ? h('div', { className: 'sk-slice__label' + (isHi(p.label) ? ' sk-indic' : '') }, p.label) : null, p.children);
+}
+function Row(p) { return h('div', { className: 'sk-slices', style: Object.assign({ alignItems: 'stretch' }, p.style) }, p.children); }
+function Note(t) { return h('div', { className: 'sk-slice__label' + (isHi(t) ? ' sk-indic' : ''), style: { marginTop: 4 } }, t); }
+function noop() {}
+ReactDOM.createRoot(document.getElementById('root')).render(
+  h('div', null,
+    h(Row, null,
+      h(Slice, { v: 'glow', label: 'Library · nothing saved yet', style: { paddingBottom: 96 } },
+        h(S.ScreenHeader, { title: 'Library', subtitle: 'Lessons, quizzes and worksheets you made' }),
+        h(S.EmptyState, {
+          title: 'Nothing saved yet',
+          body: 'Ask VIDYA for a lesson, quiz or worksheet. It lands here, ready to print or share.',
+          example: { title: 'Working with Fractions · Class 7 · lesson plan', meta: 'CBSE · NCERT Ganita Prakash 7, Ch 8 · 40 min · हिन्दी' },
+          primary: { label: 'Make a lesson', onClick: noop },
+          secondary: { label: 'See an example', onClick: noop }
+        }),
+        h('div', { className: 'sk-tabbar-dock' }, h(S.TabBar, { active: 'library' }))),
+      h(Slice, { v: 'glow', label: 'In Hindi', style: { paddingBottom: 96 } },
+        h(S.ScreenHeader, { title: 'लाइब्रेरी', subtitle: 'आपके बनाए पाठ, क्विज़ और वर्कशीट', lang: 'hi' }),
+        h(S.EmptyState, {
+          lang: 'hi',
+          title: 'अभी कुछ सहेजा नहीं गया',
+          body: 'VIDYA से पाठ, क्विज़ या वर्कशीट बनवाइए। वह यहीं मिलेगी, छापने या भेजने के लिए तैयार।',
+          example: { label: 'उदाहरण', title: 'भिन्नों के साथ काम · कक्षा 7 · पाठ योजना', meta: 'CBSE · NCERT गणित प्रकाश 7, अध्याय 8' },
+          primary: { label: 'पाठ बनाइए', onClick: noop },
+          secondary: { label: 'उदाहरण देखिए', onClick: noop }
+        }),
+        h('div', { className: 'sk-tabbar-dock' }, h(S.TabBar, { active: 'library' })))),
+    h(Row, { style: { paddingTop: 4 } },
+      h(Slice, { v: 'glow', label: 'Offline · the orb greys out', style: { paddingBottom: 96 } },
+        h(S.ScreenHeader, { title: 'Community', subtitle: 'Teachers across Bharat' }),
+        h(S.EmptyState, {
+          orbState: 'offline',
+          title: 'Community needs signal',
+          body: 'Posts load when you’re back online. Anything you write now waits in the queue and posts itself.',
+          primary: { label: 'Write a post', onClick: noop },
+          secondary: { label: 'Open Library', onClick: noop }
+        }),
+        h('div', { className: 'sk-tabbar-dock' }, h(S.TabBar, { active: 'community' }))),
+      h(Slice, { v: 'glow', label: 'A filter with nothing in it', style: { paddingBottom: 96 } },
+        h('div', { style: { display: 'flex', gap: 5, flexWrap: 'wrap' } },
+          h(S.Chip, { variant: 'filter' }, 'All'), h(S.Chip, { variant: 'filter', tone: 'saffron' }, 'Resource'), h(S.Chip, { variant: 'filter', tone: 'amber' }, 'Tried this'), h(S.Chip, { variant: 'filter', tone: 'indigo', selected: true }, 'Need help')),
+        h(S.EmptyState, {
+          title: 'No one has asked for help yet',
+          body: 'When a teacher asks a question, it shows here. You can ask the first one.',
+          primary: { label: 'Ask for help', onClick: noop },
+          secondary: { label: 'Show all posts', onClick: noop }
+        }),
+        h('div', { className: 'sk-tabbar-dock' }, h(S.TabBar, { active: 'community' })))))
+);
+</script>
+</body></html>

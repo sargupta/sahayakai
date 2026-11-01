@@ -1,0 +1,44 @@
+<!-- @dsCard group="Screens · Community" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Messages</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+var ul = { display: 'flex', flexDirection: 'column', gap: 6, margin: 0, padding: 0, listStyle: 'none' };
+function Messages() {
+  var a = React.useState({}), acc = a[0], setAcc = a[1];
+  function go() {}
+  function accept(k) { return function () { var n = Object.assign({}, acc); n[k] = true; setAcc(n); }; }
+  var newBtn = h('button', { type: 'button', className: 'sk-hit', 'aria-label': 'New message', onClick: go,
+    style: { flex: 'none', margin: 0, padding: 0, border: 0, background: 'transparent', borderRadius: 'var(--radius-pill)', cursor: 'pointer', '--sk-hit-inset': '-8px -2px' } },
+    h(S.Pill, { tone: 'glass', style: { display: 'flex', padding: '7px 11px' } }, 'New'));
+  return h(S.PhoneScreen, {
+    gap: 10,
+    overlay: [
+      h('div', { key: 'o', className: 'sk-orb-park' }, h(S.Orb, { onClick: go })),
+      h('div', { key: 't', className: 'sk-tabbar-dock' }, h(S.TabBar, { active: 'community' }))
+    ]
+  },
+    h(S.ScreenHeader, { title: 'Messages', trailing: newBtn }),
+    h(S.NoticeCard, { tone: 'indigo' }, 'Chat opens only after a teacher accepts your connection request.'),
+    h(S.Eyebrow, { as: 'h2', id: 'ms-req', size: 'tight', tone: 'muted' }, 'Pending requests · 2'),
+    h('ul', { style: ul, 'aria-labelledby': 'ms-req' },
+      h(S.MessageRow, { as: 'li', request: true, name: 'Suresh Reddy', avatarTone: 'saffron', accepted: !!acc.sr, onAccept: accept('sr') }),
+      h(S.MessageRow, { as: 'li', request: true, name: 'Deepa Iyer', avatarTone: 'leaf', accepted: !!acc.di, onAccept: accept('di') })),
+    h(S.Eyebrow, { as: 'h2', id: 'ms-chats', size: 'tight', tone: 'muted' }, 'Conversations · 1'),
+    h('ul', { style: ul, 'aria-labelledby': 'ms-chats' },
+      h(S.MessageRow, { as: 'li', name: 'Aisha Khan', avatarTone: 'indigo', preview: 'Sent you the photosynthesis sheet', unread: 2, onOpen: go })),
+    h('section', { 'aria-labelledby': 'ms-find', style: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 9, padding: '0 10px', textAlign: 'center' } },
+      h('span', { 'aria-hidden': 'true', style: { width: 54, height: 54, borderRadius: 'var(--radius-pill)', background: 'var(--accent-tint)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--saffron-600)' } },
+        h(S.Icon, { name: 'message', size: 24, stroke: 1.6 })),
+      h('h2', { id: 'ms-find', style: { margin: 0, font: '600 13px var(--font-display)', color: 'var(--text-body)' } }, 'Find more teachers'),
+      h('p', { style: { margin: 0, font: '400 12px/1.5 var(--font-ui)', color: 'var(--text-body)' } }, 'Search by subject, class or school.'),
+      h('button', { type: 'button', className: 'sk-hit', onClick: go,
+        style: { display: 'inline-flex', alignItems: 'center', gap: 2, margin: 0, padding: 0, border: 0, background: 'transparent', cursor: 'pointer', borderRadius: 'var(--radius-xs)', font: '600 12px var(--font-ui)', color: 'var(--saffron-600)', '--sk-hit-inset': '-15px -8px' } },
+        'Find teachers', h(S.Icon, { name: 'forward', size: 12, stroke: 2 }))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Messages)));
+</script>
+</body></html>

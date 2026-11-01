@@ -1,0 +1,40 @@
+<!-- @dsCard group="Class and calls" height=146 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>ClassTabs</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+var WORDS = { outreach: 'parents to contact today', clear: 'nobody to contact', pending: 'register not taken yet' };
+function Readout(props) {
+  var c = props.classes.filter(function (x) { return x.value === props.value; })[0] || {};
+  return h('div', { id: props.id, role: 'tabpanel', 'aria-labelledby': undefined, 'aria-label': 'Class ' + c.value, style: { font: '400 12px/1.45 var(--font-ui)', color: 'var(--text-body)' } },
+    'Class ', h('b', { style: { color: 'var(--text-strong)', fontWeight: 600 } }, c.value), ' · ', c.count, ' students · ', WORDS[c.status]);
+}
+function Demo() {
+  var a = React.useState('6A'), one = a[0], setOne = a[1];
+  var b = React.useState('7A'), two = b[0], setTwo = b[1];
+  var mine = [
+    { value: '6A', count: 40, status: 'outreach' },
+    { value: '7A', count: 38, status: 'clear' },
+    { value: '5B', count: 41, status: 'outreach' },
+    { value: '8B', count: 36, status: 'outreach' }
+  ];
+  var more = [
+    { value: '7A', count: 38, status: 'clear' },
+    { value: '9C', count: 35, status: 'pending' },
+    { value: '6अ', label: '6 अ', lang: 'hi', count: 42, status: 'outreach' }
+  ];
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Default · tap or use the arrow keys'),
+      h(S.ClassTabs, { classes: mine, value: one, onChange: setOne, label: 'Your classes', controls: 'ct-panel-1', bleed: true }),
+      h(Readout, { id: 'ct-panel-1', classes: mine, value: one })),
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'All clear · not taken · Indic'),
+      h(S.ClassTabs, { classes: more, value: two, onChange: setTwo, label: 'Your classes', controls: 'ct-panel-2' }),
+      h(Readout, { id: 'ct-panel-2', classes: more, value: two })));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

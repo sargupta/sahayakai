@@ -155,6 +155,10 @@ class _AssessmentScannerScreenState
     return ToolScaffold(
       title: l10n.assessmentScannerTitle,
       isBusy: state.isLoading,
+      // Output screen (UX map Flow 4): the result replaces the form;
+      // Edit brings the form back and keeps the result until a new one lands.
+      hasResult: hasResult,
+      onResubmit: _submit,
       submitLabel: l10n.assessmentScannerSubmit,
       onSubmit: canSubmit ? _submit : null,
       // Screen 11 (capture) wears the solid dark scanner surface; Screen 12

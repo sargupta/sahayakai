@@ -1,0 +1,38 @@
+<!-- @dsCard group="VIDYA Live" height=327 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>LiveReceipts</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Demo() {
+  var a = React.useState({ dg: false, ws: false }), added = a[0], setAdded = a[1];
+  function offer(key, label) {
+    return { key: key, label: label, added: added[key], onClick: function () { var n = Object.assign({}, added); n[key] = !added[key]; setAdded(n); } };
+  }
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice sk-slice--working' },
+      h('div', { className: 'sk-slice__label' }, 'Receipts and offers · tap an offer'),
+      h(S.LiveReceipts, {
+        items: [
+          { status: 'done', label: 'Heard: lesson plan, water cycle, Class 6' },
+          { status: 'done', label: 'Matched CBSE · NCERT Curiosity 6, Ch 8' },
+          { status: 'current', label: 'Building a 40-minute plan…' }
+        ],
+        offers: [offer('ws', 'Make a worksheet'), offer('dg', 'Add a diagram')]
+      })),
+    h('div', { className: 'sk-slice sk-slice--working' },
+      h('div', { className: 'sk-slice__label' }, 'State board · steps still to come'),
+      h(S.LiveReceipts, {
+        items: [
+          { status: 'done', label: 'Heard: quiz, fractions, Class 7' },
+          { status: 'done', label: 'Matched Karnataka State Board (KSEEB) · Class 7' },
+          { status: 'current', label: 'Writing 10 questions in ಕನ್ನಡ' },
+          { status: 'pending', label: 'Answer key' },
+          { status: 'pending', label: 'Ready to read back' }
+        ]
+      })));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

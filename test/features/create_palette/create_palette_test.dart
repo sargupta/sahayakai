@@ -89,6 +89,13 @@ Future<void> _scrollPalette(WidgetTester tester) async {
   }
 }
 
+/// The palette's search field. Scoped to the sheet: the Home tab behind it
+/// has its own type box, so a bare `find.byType(TextField)` matches two.
+Finder _searchField() => find.descendant(
+  of: find.byType(BottomSheet),
+  matching: find.byType(TextField),
+);
+
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -193,7 +200,7 @@ void main() {
       await _openPalette(tester);
 
       // The search field and every tool row are present.
-      expect(find.byType(TextField), findsOneWidget);
+      expect(_searchField(), findsOneWidget);
       for (final id in _expectedIds) {
         expect(find.byKey(_rowKey(id)), findsOneWidget, reason: id);
       }
@@ -205,7 +212,7 @@ void main() {
       await pumpSignedInApp(tester);
       await _openPalette(tester);
 
-      await tester.enterText(find.byType(TextField), 'quiz');
+      await tester.enterText(_searchField(), 'quiz');
       await tester.pumpAndSettle();
 
       expect(find.byKey(_rowKey('quiz')), findsOneWidget);
@@ -217,7 +224,7 @@ void main() {
       await pumpSignedInApp(tester);
       await _openPalette(tester);
 
-      await tester.enterText(find.byType(TextField), 'QUIZ');
+      await tester.enterText(_searchField(), 'QUIZ');
       await tester.pumpAndSettle();
 
       expect(find.byKey(_rowKey('quiz')), findsOneWidget);
@@ -230,7 +237,7 @@ void main() {
       await pumpSignedInApp(tester);
       await _openPalette(tester);
 
-      await tester.enterText(find.byType(TextField), 'zzzzzzz');
+      await tester.enterText(_searchField(), 'zzzzzzz');
       await tester.pumpAndSettle();
 
       // The palette's own empty copy, unique to it (the dashboard's empty state
@@ -241,7 +248,7 @@ void main() {
       }
 
       // Clearing the query restores the full list.
-      await tester.enterText(find.byType(TextField), '');
+      await tester.enterText(_searchField(), '');
       await tester.pumpAndSettle();
       expect(find.byKey(_rowKey('quiz')), findsOneWidget);
     });
@@ -275,7 +282,7 @@ void main() {
       await pumpSignedInApp(tester);
       await _openPalette(tester);
 
-      await tester.enterText(find.byType(TextField), 'lesson');
+      await tester.enterText(_searchField(), 'lesson');
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(_rowKey('lesson-plan')));
@@ -309,7 +316,7 @@ void main() {
       await pumpSignedInApp(tester, brightness: Brightness.dark);
       await _openPalette(tester);
 
-      final theme = Theme.of(tester.element(find.byType(TextField)));
+      final theme = Theme.of(tester.element(_searchField()));
       expect(theme.brightness, Brightness.dark);
     });
 
@@ -346,11 +353,11 @@ void main() {
       );
       await _openPalette(tester);
 
-      await tester.enterText(find.byType(TextField), 'zzzzzzz');
+      await tester.enterText(_searchField(), 'zzzzzzz');
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      expect(find.byType(TextField), findsOneWidget);
+      expect(_searchField(), findsOneWidget);
     });
   });
 }

@@ -13,6 +13,7 @@ import '../../library/presentation/library_screen.dart';
 import '../../profile/presentation/me_screen.dart';
 import '../../staffroom/presentation/network_hub_screen.dart';
 import '../../vidya/presentation/vidya_home_screen.dart';
+import '../../vidya/presentation/widgets/vidya_dock.dart';
 import 'floating_bottom_nav.dart';
 
 /// The signed-in shell: 4 swipeable tabs (Home · Library · Community · You)
@@ -40,11 +41,13 @@ class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
   double _currentPage = 0.0;
 
-  final List<Widget> _pages = const [
-    VidyaHomeScreen(),
-    LibraryScreen(),
-    NetworkHubScreen(),
-    MeScreen(),
+  /// Home switches tabs itself: its avatar opens Me and its updates row
+  /// opens Community (UX map Home).
+  late final List<Widget> _pages = [
+    VidyaHomeScreen(onOpenTab: _onNavTap),
+    const LibraryScreen(),
+    const NetworkHubScreen(),
+    const MeScreen(),
   ];
 
   @override
@@ -106,10 +109,16 @@ class _AppShellState extends State<AppShell> {
           physics: const PageScrollPhysics(),
           children: _pages,
         ),
+        // VIDYA is docked in the bar on the shell (v2 9a); the floating orb
+        // hides here and rides only over the pushed tool screens. On Home the
+        // big orb is VIDYA, so the docked orb and its capsule step aside there.
         bottomNavigationBar: FloatingBottomNav(
           currentPage: _currentPage,
           currentIndex: _currentIndex,
           onSelected: _onNavTap,
+          dock: const VidyaDockOrb(),
+          showDock: _currentIndex != 0,
+          prompt: _currentIndex == 0 ? null : const VidyaDockPrompt(),
         ),
       ),
     );

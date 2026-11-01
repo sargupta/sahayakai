@@ -191,6 +191,9 @@ class AppLocalizationsMl extends AppLocalizations {
   String get actionRegenerate => 'വീണ്ടും സൃഷ്ടിക്കുക';
 
   @override
+  String get outputEdit => 'മാറ്റുക';
+
+  @override
   String get actionCopy => 'പകർത്തുക';
 
   @override
@@ -2078,6 +2081,9 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get vidyaStateIdle => 'സംസാരിക്കാൻ ടാപ്പ് ചെയ്യൂ';
+
+  @override
+  String get vidyaDockReadyHint => 'തയ്യാർ · എത്തിക്കാൻ ടാപ്പ് ചെയ്യൂ';
 
   @override
   String get vidyaStateReady => 'തയ്യാറാകുന്നു';
@@ -4091,4 +4097,82 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get homeTileCallSub => 'ഹിന്ദിയിൽ സ്ക്രിപ്റ്റ്';
+
+  @override
+  String get homeAskEyebrow => 'VIDYA';
+
+  @override
+  String get homeAskTitle => 'ആപ്പിൽ എന്തും\nചോദിക്കൂ';
+
+  @override
+  String get homeAskSubtitle => 'ഏത് ടൂളും, ഏത് ഭാഷയും. അവൾ ശരിയായത് തുറക്കും.';
+
+  @override
+  String get homeSayEyebrow => 'പറയൂ, അവൾ ശരിയായത് തുറക്കും';
+
+  @override
+  String get homeSayLesson => '“ക്ലാസ് 7 ജലചക്രം lesson plan”';
+
+  @override
+  String get homeSayQuiz => '“പത്ത് ചോദ്യങ്ങളുള്ള quiz, medium”';
+
+  @override
+  String get homeSayAttendance => '“ഇന്നത്തെ attendance ഇടൂ”';
+
+  @override
+  String get homeOrbRest =>
+      'സംസാരിക്കാൻ ടാപ്പ് ചെയ്യൂ അല്ലെങ്കിൽ അമർത്തിപ്പിടിക്കൂ';
+
+  @override
+  String get homeOrbOffline => 'ശബ്ദത്തിന് സിഗ്നൽ വേണം · താഴെ ടൈപ്പ് ചെയ്യൂ';
+
+  @override
+  String get homeAskPlaceholder =>
+      'VIDYA യോട് ചോദിക്കൂ, അല്ലെങ്കിൽ വേണ്ടത് ടൈപ്പ് ചെയ്യൂ…';
+
+  @override
+  String get homeAskCaption =>
+      'സംസാരിക്കാൻ മൈക്ക് അമർത്തിപ്പിടിക്കൂ · ടൈപ്പ് ചെയ്യാൻ ബോക്സിൽ ടാപ്പ് ചെയ്യൂ';
+
+  @override
+  String get homeSpeakToVidya => 'VIDYA യോട് സംസാരിക്കൂ';
+
+  @override
+  String get homeYourTools => 'നിങ്ങളുടെ ടൂളുകൾ';
+
+  @override
+  String homeAllTools(int count) {
+    return 'എല്ലാ $count ടൂളുകളും';
+  }
+
+  @override
+  String homeTileCallSubLanguage(String language) {
+    return 'സ്ക്രിപ്റ്റ് · $language';
+  }
+
+  @override
+  String homeWaitingReady(String title) {
+    return '$title തയ്യാർ';
+  }
+
+  @override
+  String homeWaitingUpdates(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count പുതിയ അപ്ഡേറ്റുകൾ',
+      one: '1 പുതിയ അപ്ഡേറ്റ്',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeWaitingNothing =>
+      'ഇപ്പോൾ നിങ്ങൾക്കായി ഒന്നും കാത്തിരിക്കുന്നില്ല';
+
+  @override
+  String get homeSayLessonTopic => 'ജലചക്രം';
+
+  @override
+  String get outputBackToResult => 'ഫലത്തിലേക്ക് മടങ്ങുക';
 }

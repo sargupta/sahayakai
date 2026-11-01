@@ -1,0 +1,38 @@
+<!-- @dsCard group="Class and calls" height=382 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>ReasonOption</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+var EN = [
+  { kind: 'absence', value: 'absence', title: 'Consecutive absences', description: 'Absent for multiple days' },
+  { kind: 'academic', value: 'academic', title: 'Academic concern', description: 'Grades or performance declined' },
+  { kind: 'behaviour', value: 'behaviour', title: 'Behavioural concern', description: 'Classroom behaviour needs attention' },
+  { kind: 'positive', value: 'positive', title: 'Positive feedback', description: 'Share an achievement or good news' }
+];
+var HI = [
+  { kind: 'absence', value: 'absence', title: 'लगातार अनुपस्थिति', description: 'कई दिनों से स्कूल नहीं आया' },
+  { kind: 'academic', value: 'academic', title: 'पढ़ाई की चिंता', description: 'अंक या प्रदर्शन गिरा है' },
+  { kind: 'positive', value: 'positive', title: 'अच्छी ख़बर', description: 'कोई उपलब्धि साझा करें' }
+];
+function Group(props) {
+  return h('div', { role: 'radiogroup', 'aria-labelledby': props.labelId, className: 'sk-reasonopt-group', lang: props.lang },
+    props.options.map(function (o) {
+      return h(S.ReasonOption, Object.assign({ key: o.value, name: props.name, checked: props.value === o.value, onChange: props.onChange, lang: props.lang }, o));
+    }));
+}
+function Demo() {
+  var a = React.useState('academic'), en = a[0], setEn = a[1];
+  var b = React.useState('positive'), hi = b[0], setHi = b[1];
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice sk-slice--card' },
+      h(S.Eyebrow, { size: 'tight', tone: 'muted', id: 'ro-en' }, 'Reason for outreach'),
+      h(Group, { name: 'reason-en', labelId: 'ro-en', options: EN, value: en, onChange: setEn })),
+    h('div', { className: 'sk-slice sk-slice--card' },
+      h(S.Eyebrow, { size: 'tight', tone: 'muted', id: 'ro-hi', lang: 'hi' }, 'संपर्क का कारण'),
+      h(Group, { name: 'reason-hi', labelId: 'ro-hi', options: HI, value: hi, onChange: setHi, lang: 'hi' })));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

@@ -1,0 +1,46 @@
+<!-- @dsCard group="Navigation" height=596 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>ScreenHeader</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* Phone slices: 360px, the phone's true width. The corner glow is clipped inside the slice, so nothing pokes out of it. */
+function Glow() { return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } }, h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } })); }
+function isHi(t) { return typeof t === 'string' && /[ऀ-ൿ]/.test(t); }
+function Slice(p) {
+  var vs = (p.v || '').split(' ').filter(Boolean);
+  var cls = 'sk-slice' + vs.filter(function (x) { return x !== 'glow'; }).map(function (x) { return ' sk-slice--' + x; }).join('');
+  return h('div', { className: cls, style: p.style }, vs.indexOf('glow') !== -1 ? h(Glow) : null, p.label ? h('div', { className: 'sk-slice__label' + (isHi(p.label) ? ' sk-indic' : '') }, p.label) : null, p.children);
+}
+function Row(p) { return h('div', { className: 'sk-slices', style: Object.assign({ alignItems: 'stretch' }, p.style) }, p.children); }
+function Note(t) { return h('div', { className: 'sk-slice__label' + (isHi(t) ? ' sk-indic' : ''), style: { marginTop: 4 } }, t); }
+function Demo() {
+  var b = React.useState(0), backs = b[0], setBacks = b[1];
+  var l = React.useState(0), langs = l[0], setLangs = l[1];
+  return h('div', null,
+    h(Row, null,
+      h(Slice, { v: 'glow', label: 'Home · greeting and the day' },
+        h(S.ScreenHeader, {
+          level: 'screen', greeting: { name: 'Meena Kulkarni', date: 'Fri, 18 Sept', language: langs % 2 ? 'मराठी' : 'हिन्दी', languageLang: langs % 2 ? 'mr' : 'hi', onLanguage: function () { setLangs(langs + 1); } },
+          title: ['Two periods,', h('br', { key: 'b' }), 'one prep gap'], subtitle: 'Class 7 Maths at 10:20 · Class 5 EVS at 12:00'
+        }),
+        Note('Page · a tool or a list'),
+        h(S.ScreenHeader, { title: 'Make a lesson', subtitle: 'Spoken or typed, same result' })),
+      h(Slice, { label: 'Page · a live status on the subline' },
+        h(S.ScreenHeader, { title: 'Class 7 · roll call', subtitle: 'Fri 18 Sept · 38 students', align: 'end', trailing: h(S.Pill, { tone: 'solid-leaf', size: 'md' }, '34 present') }),
+        Note('Output · what VIDYA made'),
+        h(S.ScreenHeader, { level: 'output', title: 'Fractions in everyday cooking', subtitle: 'Class 7 · CBSE · NCERT Ganita Prakash 7, Ch 8 · 40 min' }),
+        Note('Two lines · it wraps, never truncates'),
+        h(S.ScreenHeader, { title: 'Water cycle revision for Class 6 Science', subtitle: 'Quiz · 5 questions · CBSE · NCERT Curiosity 6, Ch 8' }))),
+    h(Row, { style: { paddingTop: 4 } },
+      h(Slice, { v: 'call', label: 'Deep screen · back disc' },
+        h(S.ScreenHeader, { level: 'output', title: 'Dhruv’s father', subtitle: backs ? 'Back tapped ' + backs + '×' : 'Absent 3 days this week · ••••••4412', onBack: function () { setBacks(backs + 1); }, trailing: h(S.Pill, { tone: 'solid-leaf', size: 'md' }, 'On call · 1:12') }),
+        Note('In Hindi · not uppercased, roomier lines'),
+        h(S.ScreenHeader, { title: 'कक्षा 7 · हाज़िरी', subtitle: 'शुक्रवार, 18 सितंबर · 38 विद्यार्थी', lang: 'hi', onBack: function () {}, backLabel: 'वापस' })),
+      h(Slice, { v: 'camera', label: 'Scanner · on the camera ground' },
+        h('div', { className: 'sk-camera' }, h(S.ScreenHeader, { level: 'output', title: 'Scan answer sheets', subtitle: 'Class 7 · Maths test', trailing: h(S.Pill, { tone: 'camera', size: 'md' }, '12 / 34') })))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

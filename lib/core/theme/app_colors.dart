@@ -86,11 +86,24 @@ class AppColors {
     0xB3FFFFFF,
   ); // 70% white = 0.70 * 255 ≈ 179
   static const Color surfaceInset = milk300; // inset field / context card
+  static const Color surfaceChrome = Color(
+    0xE6FFFDF9,
+  ); // rgba(255,253,249,.9) — floating tab bar
+  static const Color surfaceCapsule = Color(
+    0xEBFFFDF9,
+  ); // rgba(255,253,249,.92) — orb hint / dock capsule
+
+  // Camera ground (the scanner, the one dark context)
+  static const Color onCamera = milk50; // text, active chip fill (18.2:1)
+  static const Color onCameraIcon = Color(0xB3FFFDF9); // rgba(255,253,249,.7)
+  static const Color cameraGlass = Color(0x29FFFDF9); // rgba(255,253,249,.16)
+  static const Color cameraBorder = Color(0x38FFFDF9); // rgba(255,253,249,.22)
 
   // Borders
   static const Color borderGlass = Color(0xF2FFFFFF); // 95% white
   static const Color borderHairline = Color(0x14171310); // rgba(23,19,16,.08)
   static const Color borderStrong = Color(0x1F171310); // rgba(23,19,16,.12)
+  static const Color borderRow = Color(0x1A171310); // rgba(23,19,16,.10)
 
   // Scrim
   static const Color scrim = Color(0x24171310); // 14% ink
@@ -111,7 +124,10 @@ class AppColors {
   // (buttons, selected chips, selected segments). saffron-500 (accent) stays
   // for orb, mic discs, tab disc, dots, bars, focus edges (no white label).
   static const Color accentFill = saffron600;
-  static const Color accentTint = Color(0x1AFF8D2A); // rgba(201,106,40,.10)
+  static const Color accentTint = Color(0x1AC96A28); // rgba(201,106,40,.10)
+  static const Color accentTintStrong = Color(
+    0x1FC96A28,
+  ); // rgba(201,106,40,.12) — active tab while the orb is dragged
   static const Color micUnavailable = Color(
     0xFF8A7F76,
   ); // neutral grey for unavailable mic

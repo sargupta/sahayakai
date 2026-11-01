@@ -1,0 +1,36 @@
+<!-- @dsCard group="Content" height=473 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>RubricCriterion</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+var NAMES = ['Exemplary', 'Proficient', 'Developing', 'Beginning'];
+function lv(a, named) { return a.map(function (d, i) { return { score: 4 - i, descriptor: d, label: named ? NAMES[i] : undefined }; }); }
+var ACCURACY = lv(['All planets present, sizes scaled, no factual errors', 'Mostly correct; one or two minor slips', 'Some planets missing; several errors', 'Incomplete with significant gaps']);
+var CREATIVITY = ['Original design; everyday materials used in a new way', 'Well designed and visually appealing', 'Basic or familiar design', 'Little visible effort at design'];
+var PRESENTATION = ['Clear and confident; every member explains a part', 'Clear; most members contribute', 'Hesitant; contribution uneven', 'Unclear; few members contribute'];
+var HI = lv(['सभी ग्रह मौजूद, आकार अनुपात में, कोई तथ्यात्मक ग़लती नहीं', 'ज़्यादातर सही; एक-दो छोटी चूक', 'कुछ ग्रह ग़ायब; कई ग़लतियाँ', 'अधूरा, बड़ी कमियों के साथ']);
+function Demo() {
+  var o = React.useState('creativity'), open = o[0], setOpen = o[1];
+  function toggle(k) { return function () { setOpen(open === k ? null : k); }; }
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice sk-slice--glow', style: { gap: 10 } },
+      h('div', { className: 'sk-slice__label' }, 'Stacked · one open, two folded'),
+      h('div', null,
+        h('div', { style: { font: '700 20px/normal var(--font-display)' } }, 'Solar system model'),
+        h('div', { style: { font: '400 12px/normal var(--font-ui)', color: 'var(--text-body)' } }, 'Rubric · 3 criteria · 4 levels')),
+      h(S.RubricCriterion, { name: 'Scientific accuracy', weight: '40%', levels: ACCURACY }),
+      h(S.RubricCriterion, { name: 'Creativity', weight: '30%', levels: lv(CREATIVITY), collapsed: true }),
+      h(S.RubricCriterion, { name: 'Presentation', weight: '30%', levels: lv(PRESENTATION), collapsed: true })),
+    h('div', { className: 'sk-slice', style: { gap: 10 } },
+      h('div', { className: 'sk-slice__label' }, 'Named levels · tap to open'),
+      h(S.RubricCriterion, { name: 'Creativity', description: 'Uniqueness and aesthetic appeal', weight: '30%', levels: lv(CREATIVITY, true), collapsed: open !== 'creativity', onToggle: toggle('creativity') }),
+      h(S.RubricCriterion, { name: 'Presentation', description: 'Clarity, confidence, engagement', weight: '30%', levels: lv(PRESENTATION, true), collapsed: open !== 'presentation', onToggle: toggle('presentation') }),
+      h('div', { className: 'sk-slice__label' }, 'हिन्दी'),
+      h(S.RubricCriterion, { lang: 'hi', name: 'वैज्ञानिक सटीकता', weight: '40%', levels: HI, levelLabel: 'स्तर', weightLabel: 'भार', collapsed: open !== 'hi', onToggle: toggle('hi') }))
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

@@ -1,0 +1,28 @@
+<!-- @dsCard group="Community" height=327 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>MessageRow</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Demo() {
+  var a = React.useState({ suresh: false, deepa: false }), acc = a[0], setAcc = a[1];
+  var d = React.useState(false), declined = d[0], setDeclined = d[1];
+  function accept(k) { return function () { setAcc(Object.assign({}, acc, (function () { var o = {}; o[k] = true; return o; })())); }; }
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice', style: { gap: 6 } },
+      h(S.Eyebrow, { size: 'tight', tone: 'muted' }, 'Pending requests · 2'),
+      h(S.MessageRow, { request: true, name: 'Suresh Reddy', avatarTone: 'saffron', accepted: acc.suresh, onAccept: accept('suresh') }),
+      h(S.MessageRow, { request: true, name: 'Deepa Iyer', avatarTone: 'leaf', accepted: acc.deepa, onAccept: accept('deepa') }),
+      h(S.Eyebrow, { size: 'tight', tone: 'muted', style: { marginTop: 4 } }, 'Conversations · 1'),
+      h(S.MessageRow, { name: 'Aisha Khan', avatarTone: 'indigo', preview: 'Sent you the photosynthesis sheet', unread: 2, onOpen: function () {} })),
+    h('div', { className: 'sk-slice', style: { gap: 6 } },
+      h('div', { className: 'sk-slice__label' }, 'Read · decline · in Hindi'),
+      h(S.MessageRow, { name: 'Ravi Kumar', avatarTone: 'saffron', preview: 'Thank you, I will try the chapati cut tomorrow', time: '9:12', onOpen: function () {} }),
+      h(S.MessageRow, { name: 'Kavita Joshi', avatarTone: 'amber', preview: 'Can I use your Class 5 tables quiz?', time: 'Yesterday', onOpen: function () {} }),
+      declined ? null : h(S.MessageRow, { request: true, name: 'Anjali Deshmukh', avatarTone: 'indigo', onAccept: function () {}, onDecline: function () { setDeclined(true); } }),
+      h(S.MessageRow, { lang: 'hi', name: 'सुनीता शर्मा', initials: 'सु', avatarTone: 'leaf', preview: 'कल की कक्षा के लिए पाठ योजना भेज दी है', time: 'कल', unread: 1, unreadLabel: '1 नया संदेश', onOpen: function () {} })));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

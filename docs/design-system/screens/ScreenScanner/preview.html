@@ -1,0 +1,43 @@
+<!-- @dsCard group="Screens · Library and you" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Scan answer sheets</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+function Frame() {
+  return h('div', { role: 'img', 'aria-label': 'Camera view. Fit the sheet inside the frame.', style: { position: 'relative', flex: 1, minHeight: 0, borderRadius: 'var(--radius-scan)', border: '2px solid var(--camera-frame)', background: 'repeating-linear-gradient(115deg, rgba(255,253,249,.05) 0 12px, rgba(255,253,249,.02) 12px 24px)' } },
+    h('div', { style: { position: 'absolute', left: 18, right: 18, top: 18, bottom: 18, borderRadius: 14, border: '1px dashed var(--camera-guide)', display: 'flex', alignItems: 'flex-end', padding: 14 } },
+      h('span', { 'aria-hidden': 'true', style: { font: '500 12px var(--font-ui)', color: 'rgba(255,253,249,.72)' } }, 'Fit the sheet inside the frame')),
+    h('div', { 'aria-hidden': 'true', style: { position: 'absolute', left: 18, right: 18, top: '46%', height: 2, background: 'var(--scan-line)', boxShadow: '0 0 14px var(--scan-line)' } }));
+}
+function Scanner() {
+  var c = React.useState(12), count = c[0], setCount = c[1];
+  var t = React.useState({ auto: true, torch: false, batch: false }), tg = t[0], setTg = t[1];
+  function flip(k) { return function () { var m = Object.assign({}, tg); m[k] = !m[k]; setTg(m); }; }
+  var latest = [{ status: 'read', label: 'Roll 10' }, { status: 'check', label: 'Roll 11' }, { status: 'read', label: 'Roll 12' }];
+  return h(S.PhoneScreen, {
+    wash: 'camera', gap: 12,
+    overlay: [
+      h('div', { key: 'o', className: 'sk-orb-park sk-orb-park--cta' }, h(S.Orb, { tone: 'camera', onClick: function () {} })),
+      h('div', { key: 't', className: 'sk-tabbar-dock' }, h(S.TabBar, { tone: 'camera', active: 'library' }))
+    ]
+  },
+    h(S.ScreenHeader, {
+      level: 'output',
+      title: h('span', { style: { fontSize: 19 } }, 'Scan answer sheets'),
+      subtitle: ['Water cycle quiz · Class 6-B', ' ', h(S.Pill, { key: 'x', size: 'xs', style: { marginLeft: 4, verticalAlign: 1, color: 'var(--saffron-200)', background: 'var(--camera-glass)' } }, 'Experimental')],
+      trailing: h(S.Pill, { tone: 'camera', size: 'md', style: { padding: '7px 11px' } }, count + ' / 36')
+    }),
+    h(Frame),
+    h(S.CaptureStrip, { count: count, sheets: latest, onOpen: function () {}, onAdd: function () { setCount(count + 1); } }),
+    h('div', { role: 'group', 'aria-label': 'Camera', style: { display: 'flex', gap: 7, flexWrap: 'wrap' } },
+      h(S.Chip, { tone: 'camera', size: 'sm', selected: tg.auto, onClick: flip('auto') }, tg.auto ? 'Auto-capture on' : 'Auto-capture off'),
+      h(S.Chip, { tone: 'camera', size: 'sm', selected: tg.torch, onClick: flip('torch') }, 'Torch'),
+      h(S.Chip, { tone: 'camera', size: 'sm', selected: tg.batch, onClick: flip('batch') }, 'Batch mode')),
+    h(S.Button, { block: true, onClick: function () {} }, 'Finish and grade'));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Scanner)));
+</script>
+</body></html>

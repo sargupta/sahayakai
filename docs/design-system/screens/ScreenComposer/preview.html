@@ -1,0 +1,38 @@
+<!-- @dsCard group="Screens · Make" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Lesson composer</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+function Composer() {
+  var inc = React.useState(['Activity', 'Board work']), on = inc[0], setOn = inc[1];
+  function toggle(k) { setOn(on.indexOf(k) > -1 ? on.filter(function (x) { return x !== k; }) : on.concat([k])); }
+  return h(S.PhoneScreen, {
+    gap: 11, glow: false,
+    overlay: [
+      h('div', { key: 'o', className: 'sk-orb-park sk-orb-park--left sk-orb-park--cta' }, h(S.Orb, { onClick: function () {} })),
+      h('div', { key: 't', className: 'sk-tabbar-dock' }, h(S.TabBar, { active: 'library' }))
+    ]
+  },
+    h(S.ScreenHeader, { level: 'page', title: 'Make a lesson', subtitle: 'Spoken or typed, same result' }),
+    h(S.Field, { label: 'Topic', defaultValue: 'Fractions in everyday cooking' }),
+    h('div', { style: { display: 'flex', gap: 9 } },
+      h(S.Field, { label: 'Class', size: 'md', as: 'select', value: 'Class 7', style: { flex: 1 } }),
+      h(S.Field, { label: 'Length', size: 'md', as: 'select', value: '40 min', style: { flex: 1 } }),
+      h(S.Field, { label: 'Board', size: 'md', as: 'select', value: 'CBSE', style: { flex: 1 } })),
+    h('div', { style: { display: 'flex', flexDirection: 'column', gap: 7 } },
+      h(S.Eyebrow, { size: 'tight' }, 'Include'),
+      h('div', { style: { display: 'flex', gap: 6, flexWrap: 'wrap' } }, ['Activity', 'Board work', 'Homework', 'Story hook'].map(function (k) {
+        return h(S.Chip, { key: k, size: 'sm', tone: 'leaf', emphasis: 'quiet', selected: on.indexOf(k) > -1, onClick: function () { toggle(k); } }, k);
+      }))),
+    h(S.NoticeCard, { tone: 'indigo', mark: 'C' }, 'Aligned to CBSE · NCERT Ganita Prakash 7, Chapter 8 before anything is written'),
+    h(S.GlassCard, { tone: 'soft', padding: '13px 14px', gap: 5, style: { flex: 1, minHeight: 0 } },
+      h('div', { style: { font: '600 12px/1.3 var(--font-ui)' } }, 'Recent'),
+      h('div', { style: { font: '400 12px/1.7 var(--font-ui)', color: 'var(--text-body)' } }, 'Water cycle · Class 6', h('br'), 'Photosynthesis · Class 7', h('br'), 'Place value · Class 5')),
+    h(S.Button, { block: true }, 'Generate lesson'));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Composer)));
+</script>
+</body></html>

@@ -1,0 +1,49 @@
+<!-- @dsCard group="Lists" height=520 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>TaskRow</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* Phone slices: 360px, the phone's true width. The corner glow is clipped inside the slice, so nothing pokes out of it. */
+function Glow() { return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } }, h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } })); }
+function isHi(t) { return typeof t === 'string' && /[ऀ-ൿ]/.test(t); }
+function Slice(p) {
+  var vs = (p.v || '').split(' ').filter(Boolean);
+  var cls = 'sk-slice' + vs.filter(function (x) { return x !== 'glow'; }).map(function (x) { return ' sk-slice--' + x; }).join('');
+  return h('div', { className: cls, style: p.style }, vs.indexOf('glow') !== -1 ? h(Glow) : null, p.label ? h('div', { className: 'sk-slice__label' + (isHi(p.label) ? ' sk-indic' : '') }, p.label) : null, p.children);
+}
+function Row(p) { return h('div', { className: 'sk-slices', style: Object.assign({ alignItems: 'stretch' }, p.style) }, p.children); }
+function Note(t) { return h('div', { className: 'sk-slice__label' + (isHi(t) ? ' sk-indic' : ''), style: { marginTop: 4 } }, t); }
+function list(gap, name, kids) { return h('ul', { 'aria-label': name, style: { display: 'flex', flexDirection: 'column', gap: gap, margin: 0, padding: 0, listStyle: 'none' } }, kids); }
+function Demo() {
+  var o = React.useState(''), opened = o[0], setOpened = o[1];
+  function open(what) { return function () { setOpened(what); }; }
+  return h(Row, null,
+    h(Slice, { v: 'glow', label: 'Home · what is waiting for you' },
+      h(S.ScreenHeader, { level: 'screen', greeting: { name: 'Meena Kulkarni', date: 'Fri, 18 Sept', language: 'हिन्दी', languageLang: 'hi' }, title: ['Two periods,', h('br', { key: 'b' }), 'one prep gap'], subtitle: 'Class 7 Maths at 10:20 · Class 5 EVS at 12:00' }),
+      h(S.GlassCard, { radius: 'panel', raised: true, gap: 10 },
+        h(S.Eyebrow, null, 'Waiting for you'),
+        list(10, 'Waiting for you', [
+          h(S.TaskRow, { key: 1, as: 'li', dot: 'red', statusLabel: 'urgent', label: '4 absentees to call', action: 'Open', onAction: open('the absentees') }),
+          h(S.TaskRow, { key: 2, as: 'li', dot: 'amber', statusLabel: 'to do', label: '34 test sheets to scan', action: 'Open', onAction: open('the scanner') }),
+          h(S.TaskRow, { key: 3, as: 'li', dot: 'leaf', statusLabel: 'ready', label: 'Fractions lesson ready', action: 'Open', onAction: open('the lesson') }),
+        ])),
+      h('div', { 'aria-live': 'polite', style: { font: '400 12px/1.45 var(--font-ui)', color: 'var(--text-body)', minHeight: 16 } }, opened ? 'Opened ' + opened : '')),
+    h(Slice, { label: 'You · the offline queue, boxed' },
+      h(S.Eyebrow, { tone: 'muted' }, '3 items queued'),
+      list(8, '3 items queued', [
+        h(S.TaskRow, { key: 1, as: 'li', variant: 'boxed', dot: 'amber', statusLabel: 'queued', label: 'Attendance · Class 7', meta: 'waiting' }),
+        h(S.TaskRow, { key: 2, as: 'li', variant: 'boxed', dot: 'amber', statusLabel: 'queued', label: 'Worksheet to parent group', meta: 'waiting' }),
+        h(S.TaskRow, { key: 3, as: 'li', variant: 'boxed', dot: 'amber', statusLabel: 'queued', label: 'Call log · Dhruv’s father', meta: 'waiting' }),
+      ]),
+      Note('Whole row is the button'),
+      h(S.TaskRow, { variant: 'boxed', dot: 'indigo', statusLabel: 'being written', label: 'Worksheet · Class 7 · 10 questions', action: 'View', onClick: open('the worksheet') }),
+      h(S.TaskRow, { variant: 'boxed', dot: 'leaf', statusLabel: 'sent', label: 'Sent at 9:12 · Class 7 parent group', meta: 'sent', disabled: true, onClick: function () {} }),
+      Note('In Hindi'),
+      h(S.TaskRow, { variant: 'boxed', lang: 'hi', dot: 'red', statusLabel: 'ज़रूरी', label: '4 अनुपस्थित बच्चों के घर फ़ोन करना है', action: 'खोलें', onAction: open('अनुपस्थित') }),
+      h(S.TaskRow, { variant: 'boxed', lang: 'hi', dot: 'amber', statusLabel: 'बाकी', label: 'हाज़िरी · कक्षा 7', meta: 'बाकी' })));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

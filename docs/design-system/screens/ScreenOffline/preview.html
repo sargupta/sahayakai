@@ -1,0 +1,33 @@
+<!-- @dsCard group="Screens · Library and you" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Waiting to sync</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+function Offline() {
+  var s = React.useState(false), trying = s[0], setTrying = s[1];
+  return h(S.PhoneScreen, {
+    network: 'no signal', gap: 13,
+    overlay: [
+      h(S.OrbHint, { key: 'o', parked: 'cta', state: 'offline', label: 'Typing still works', onClick: function () {} }),
+      h('div', { key: 't', className: 'sk-tabbar-dock' }, h(S.TabBar, { active: 'profile' }))
+    ]
+  },
+    h(S.ScreenHeader, { level: 'page', title: 'Waiting to sync', subtitle: 'Everything below is safe on this phone. Nothing is lost.', onBack: function () {} }),
+    h(S.NoticeCard, { tone: 'saffron', title: 'No signal since 8:12 am', role: 'status' }, 'Voice needs a connection. Typing, attendance and reading saved work all keep working.'),
+    h(S.Eyebrow, { id: 'q', tone: 'muted' }, '3 items queued'),
+    h('ul', { 'aria-labelledby': 'q', style: { display: 'flex', flexDirection: 'column', gap: 9, margin: 0, padding: 0, listStyle: 'none' } },
+      h(S.LibraryRow, { as: 'li', badge: 'AT', tone: 'ink', title: 'Class 7 attendance', meta: 'Marked 9:12 am', status: 'waiting', statusLabel: 'Queued', onClick: function () {} }),
+      h(S.LibraryRow, { as: 'li', type: 'WS', title: 'Water cycle worksheet', meta: 'Edited 9:34 am', status: 'waiting', statusLabel: 'Queued', onClick: function () {} }),
+      h(S.LibraryRow, { as: 'li', badge: 'MSG', tone: 'ink', title: 'Parent message · Divya R.', meta: 'Sends when online', status: 'waiting', statusLabel: 'Queued', onClick: function () {} })),
+    h(S.Eyebrow, { id: 'a', tone: 'muted' }, 'Available offline'),
+    h('ul', { 'aria-labelledby': 'a', style: { display: 'flex', flexWrap: 'wrap', gap: 7, margin: 0, padding: 0, listStyle: 'none' } },
+      ['24 saved items', 'Attendance', 'Printing'].map(function (x) { return h('li', { key: x }, h(S.Pill, { tone: 'leaf', size: 'md', style: { fontSize: 12, padding: '8px 13px' } }, x)); })),
+    h('div', { style: { marginTop: 'auto' } },
+      h(S.Button, { variant: 'secondary', size: 'md', block: true, disabled: trying, onClick: function () { setTrying(true); } }, trying ? 'Still no signal · I’ll keep trying' : 'Try syncing now')));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Offline)));
+</script>
+</body></html>

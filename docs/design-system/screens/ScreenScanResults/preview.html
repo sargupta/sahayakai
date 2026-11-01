@@ -1,0 +1,40 @@
+<!-- @dsCard group="Screens · Library and you" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Scan results</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+var BANDS = [{ label: '0–4', count: 7 }, { label: '5–9', count: 15 }, { label: '10–14', count: 8 }, { label: '15–19', count: 3 }, { label: '20–25', count: 1 }];
+function Results() {
+  var a = React.useState(false), accepted = a[0], setAccepted = a[1];
+  return h(S.PhoneScreen, {
+    gap: 10, padBottom: 144,
+    overlay: [
+      h('div', { key: 'act', style: { position: 'absolute', left: 16, right: 16, bottom: 78, zIndex: 'var(--z-orb)', display: 'flex', alignItems: 'center', gap: 10 } },
+        h('div', { style: { flex: 1, minWidth: 0, display: 'flex', gap: 9 } },
+          h('div', { style: { flex: 1, minWidth: 0 } }, h(S.Button, { variant: 'secondary', size: 'md', block: true, onClick: function () {} }, 'Scan more')),
+          h('div', { style: { flex: 1, minWidth: 0 } }, h(S.Button, { variant: 'success', size: 'md', block: true, disabled: accepted, onClick: function () { setAccepted(true); } }, accepted ? 'Marks saved' : 'Accept marks'))),
+        h(S.Orb, { onClick: function () {} })),
+      h('div', { key: 't', className: 'sk-tabbar-dock' }, h(S.TabBar, { active: 'library' }))
+    ]
+  },
+    h(S.ScreenHeader, { level: 'page', title: '36 sheets read', subtitle: 'Water cycle quiz · Class 6-B · 2 need your eye', trailing: h(S.Pill, { tone: accepted ? 'leaf' : 'saffron', style: { padding: '7px 11px' } }, accepted ? 'Marks saved' : 'Draft marks') }),
+    h('div', { style: { display: 'flex', gap: 7 } },
+      h(S.StatTile, { style: { flex: 1 }, value: '8.4', label: 'Average' }),
+      h(S.StatTile, { style: { flex: 1 }, tone: 'red', value: '7', label: 'Below 5' }),
+      h(S.StatTile, { style: { flex: 1 }, value: h('span', { style: { color: 'var(--saffron-700)' } }, '2'), label: 'Unreadable' })),
+    h(S.MarksChart, { bands: BANDS, caption: 'Marks distribution, 34 sheets marked out of 25' }),
+    h(S.NoticeCard, { tone: 'indigo', title: h(S.Eyebrow, { size: 'tight', style: { color: 'inherit' } }, 'Mistake pattern') },
+      h('span', { style: { display: 'block', font: '400 12px/1.6 var(--font-ui)', marginTop: -1 } }, '19 of 36 confused condensation with precipitation in Q4.'),
+      h('button', { type: 'button', className: 'sk-hit', style: { '--sk-hit-inset': '-15px -6px', display: 'inline-flex', alignItems: 'center', gap: 3, margin: '8px 0 0', padding: 0, border: 0, background: 'none', font: '600 12px var(--font-ui)', color: 'var(--indigo-500)', cursor: 'pointer', borderRadius: 'var(--radius-xs)' }, onClick: function () {} },
+        'Make a re-teach sheet', h(S.Icon, { name: 'forward', size: 12, stroke: 2 }))),
+    h(S.Eyebrow, { id: 'eye', size: 'tight', style: { color: 'var(--red-700)' } }, 'Needs your eye · 2'),
+    h('ul', { 'aria-labelledby': 'eye', style: { display: 'flex', flexDirection: 'column', gap: 7, margin: 0, padding: 0, listStyle: 'none' } },
+      h(S.ReviewRow, { as: 'li', name: 'Divya Rane', roll: '04', reason: 'Q4 handwriting unclear', tone: 'red', action: 'Review', onAction: function () {} }),
+      h(S.ReviewRow, { as: 'li', name: 'Gaurav Jadhav', roll: '07', reason: 'Photographed at an angle', tone: 'amber', action: 'Rescan', onAction: function () {} })));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Results)));
+</script>
+</body></html>

@@ -35,15 +35,22 @@ class AppSpacing {
   /// Legacy page section break (32).
   static const double sectionGap = space8;
 
-  static const EdgeInsets pagePadding = EdgeInsets.symmetric(horizontal: space4, vertical: space6);
-  static const EdgeInsets pagePaddingTablet = EdgeInsets.symmetric(horizontal: space6, vertical: space10);
+  static const EdgeInsets pagePadding = EdgeInsets.symmetric(
+    horizontal: space4,
+    vertical: space6,
+  );
+  static const EdgeInsets pagePaddingTablet = EdgeInsets.symmetric(
+    horizontal: space6,
+    vertical: space10,
+  );
 
   // ---------------------------------------------------------------------------
   // V3 ADDITIVE STEPS (names absent from the legacy scale)
   // ---------------------------------------------------------------------------
 
   static const double space7 = 14; // v3 vertical gap between cards
-  static const double space9 = 20; // v3 screen gutter (also space5 — same value)
+  static const double space9 =
+      20; // v3 screen gutter (also space5 — same value)
   static const double space11 = 26; // v3 section break
 
   // ---------------------------------------------------------------------------
@@ -64,8 +71,14 @@ class AppSpacing {
   static const double cardGap = 12;
   static const EdgeInsets cardPaddingDefault = EdgeInsets.all(16);
   static const EdgeInsets cardPaddingTight = EdgeInsets.all(9);
-  static const EdgeInsets fieldPadding = EdgeInsets.symmetric(horizontal: 16, vertical: 10);
-  static const EdgeInsets chipPadding = EdgeInsets.symmetric(horizontal: 12, vertical: 8);
+  static const EdgeInsets fieldPadding = EdgeInsets.symmetric(
+    horizontal: 16,
+    vertical: 10,
+  );
+  static const EdgeInsets chipPadding = EdgeInsets.symmetric(
+    horizontal: 12,
+    vertical: 8,
+  );
   static const EdgeInsets tilePadding = EdgeInsets.all(13); // 2×2 home tile
 
   // Components
@@ -75,6 +88,18 @@ class AppSpacing {
   static const double tabBarBottom = 18; // bar sits 18px above screen bottom
   static const double tabBarPadding = 7;
   static const double tabBarGap = 6;
+  static const double tabHit = 48; // tab touch area: 42 disc + 3px each side
+  static const double tabIconSize = 18; // 20-grid line icon drawn at 18
+  static const double targetMin =
+      44; // smallest touch area for anything pressable
+
+  // Tab bar with VIDYA docked (v2 9a): 40px discs, 4px gap, a 1×24 divider
+  // with 3px margins, then the 42px orb.
+  static const double dockTabSize = 40;
+  static const double dockCell = 44; // touch cell for a docked tab or the orb
+  static const double dockGap = 4;
+  static const double dockDividerHeight = 24;
+  static const double dockDividerMargin = 3;
   static const double statusBarHeight = 36;
 
   // Orb geometry (v3: the orb is 56px, colour is its state)

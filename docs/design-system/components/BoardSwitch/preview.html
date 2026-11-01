@@ -1,0 +1,44 @@
+<!-- @dsCard group="Inputs" height=624 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>BoardSwitch</title><style>.pv-page:has(.sk-sheet-layer) .pv-dim, .pv-page:has(.sk-sheet-layer) .pv-dimkids > :not(.sk-sheet-layer) { opacity: .34; }</style></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* Phone slices: 360px, the phone's true width. The corner glow is clipped inside the slice, so nothing pokes out of it. */
+function Glow() { return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } }, h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } })); }
+function isHi(t) { return typeof t === 'string' && /[ऀ-ൿ]/.test(t); }
+function Slice(p) {
+  var vs = (p.v || '').split(' ').filter(Boolean);
+  var cls = 'sk-slice' + vs.filter(function (x) { return x !== 'glow'; }).map(function (x) { return ' sk-slice--' + x; }).join('');
+  return h('div', { className: cls, style: p.style }, vs.indexOf('glow') !== -1 ? h(Glow) : null, p.label ? h('div', { className: 'sk-slice__label' + (isHi(p.label) ? ' sk-indic' : '') }, p.label) : null, p.children);
+}
+function Row(p) { return h('div', { className: 'sk-slices', style: Object.assign({ alignItems: 'stretch' }, p.style) }, p.children); }
+function Note(t) { return h('div', { className: 'sk-slice__label' + (isHi(t) ? ' sk-indic' : ''), style: { marginTop: 4 } }, t); }
+/* A phone screen inside a slice: it fills the slice, so a contained sheet rises over the whole 360px width, and the page behind dims to .34 while a sheet is open. */
+function Screen(p) { return h('div', { className: 'pv-page', style: Object.assign({ position: 'absolute', inset: 0, padding: '18px 20px 20px', display: 'flex', flexDirection: 'column', gap: 12, overflow: 'hidden', borderRadius: 'inherit' }, p.style) }, p.label ? h('div', { className: 'sk-slice__label' }, p.label) : null, p.children); }
+function Block(hh) { return h('div', { className: 'pv-dim', style: { height: hh, flex: hh ? 'none' : 1, minHeight: 0, background: 'rgba(255,255,255,.9)', borderRadius: 16 } }); }
+var HELP = 'CBSE and ICSE / ISC, plus 27 state and UT boards.';
+function short(v) { var m = /\(([^)]+)\)\s*$/.exec(v); return m ? m[1] : v; }
+function Demo() {
+  var a = React.useState('Karnataka State Board (KSEEB)'), chips = a[0], setChips = a[1];
+  var b = React.useState('CBSE'), field = b[0], setField = b[1];
+  var c = React.useState('West Bengal State Board (WBBSE)'), hi = c[0], setHi = c[1];
+  React.useEffect(function () { var t = document.getElementById('board-field'); if (t) t.click(); }, []);
+  return h(Row, null,
+    h(Slice, { v: 'glow', style: { height: 600 } },
+      h(Screen, { label: 'Onboarding · tap State board for all 27' },
+        h(S.BoardSwitch, { value: chips, onChange: setChips, helper: HELP, className: 'pv-dimkids' }),
+        h('div', { className: 'pv-dim', 'aria-live': 'polite', style: { display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' } },
+          h(S.Pill, { tone: 'leaf' }, 'Class 7'), h(S.Pill, { tone: 'indigo' }, short(chips) + ' · Ch 8')),
+        h('div', { className: 'pv-dim' }, Note('In Hindi')),
+        h(S.BoardSwitch, { value: hi, onChange: setHi, className: 'pv-dimkids', label: 'बोर्ड', stateLabel: 'राज्य बोर्ड', sheetTitle: 'राज्य और केंद्रशासित बोर्ड', searchPlaceholder: '27 बोर्ड खोजें', searchLabel: 'बोर्ड खोजें' }))),
+    h(Slice, { style: { height: 600 } },
+      h(Screen, { label: 'You · the field, its sheet open' },
+        h('div', { className: 'pv-dim' }, h(S.ScreenHeader, { title: 'Meena Kulkarni', subtitle: 'Green Valley Public School, Nashik · Classes 5 & 7' })),
+        h(S.BoardSwitch, { id: 'board-field', variant: 'field', value: field, onChange: setField, helper: HELP, className: 'pv-dimkids' }),
+        Block(90), Block())));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

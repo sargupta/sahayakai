@@ -1,0 +1,27 @@
+<!-- @dsCard group="VIDYA" height=287 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>ReadbackBar</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+var HI = { reading: 'पढ़कर सुना रही हूँ', paused: 'रुका हुआ', where: '{total} में से {step}', pause: 'पढ़ना रोकें', play: 'फिर से पढ़ें', region: 'पढ़कर सुनाना' };
+function Demo() {
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice sk-slice--glow' },
+      h('div', { className: 'sk-slice__label' }, 'Reading back · tap the disc to pause'),
+      h(S.ReadbackBar, { step: 2, total: 4, quote: 'Draw one loop, label four stages.' }),
+      h('div', { className: 'sk-slice__label' }, 'Paused'),
+      h(S.ReadbackBar, { step: 2, total: 4, defaultPlaying: false, quote: 'Draw one loop, label four stages.' })),
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Docked beside the orb'),
+      h('div', { style: { display: 'flex', alignItems: 'center', gap: 10 } },
+        h(S.ReadbackBar, { step: 3, total: 4, quote: 'Groups of four draw the loop on chart paper.', style: { flex: 1 } }),
+        h(S.Orb, { state: 'ready', label: 'VIDYA, reading back' })),
+      h('div', { className: 'sk-slice__label' }, 'हिन्दी'),
+      h(S.ReadbackBar, { lang: 'hi', text: HI, step: 2, total: 4, quote: 'एक घेरा बनाओ, चार चरण लिखो।' }))
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

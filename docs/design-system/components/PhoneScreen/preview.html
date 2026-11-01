@@ -1,0 +1,55 @@
+<!-- @dsCard group="Device" height=1320 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>PhoneScreen</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function noop() {}
+function Home() {
+  var t = React.useState('home'), tab = t[0], setTab = t[1];
+  return h(S.PhoneScreen, {
+    overlay: [
+      h(S.OrbHint, { key: 'o', parked: true, onClick: noop }),
+      h('div', { key: 't', className: 'sk-tabbar-dock' }, h(S.TabBar, { active: tab, onChange: setTab }))
+    ]
+  },
+    h(S.ScreenHeader, {
+      level: 'screen', greeting: { name: 'Meena Kulkarni', date: 'Fri, 18 Sept', language: 'हिन्दी', languageLang: 'hi' },
+      title: ['Two periods,', h('br', { key: 'b' }), 'one prep gap'], subtitle: 'Class 7 Maths at 10:20 · Class 5 EVS at 12:00'
+    }),
+    h(S.GlassCard, { radius: 'panel', raised: true, gap: 10 },
+      h(S.Eyebrow, null, 'Waiting for you'),
+      h(S.TaskRow, { dot: 'red', label: '4 absentees to call', statusLabel: 'urgent', action: 'Open', onAction: noop }),
+      h(S.TaskRow, { dot: 'amber', label: '34 test sheets to scan', statusLabel: 'waiting', action: 'Open', onAction: noop }),
+      h(S.TaskRow, { dot: 'leaf', label: 'Fractions lesson ready', statusLabel: 'ready', action: 'Open', onAction: noop })),
+    h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 } },
+      h(S.Tile, { title: 'Roll call', subtitle: 'Speak the names', onClick: noop }),
+      h(S.Tile, { title: 'Make a lesson', subtitle: 'Any topic, any class', onClick: noop }),
+      h(S.Tile, { title: 'Scan a test', subtitle: 'Camera grading', onClick: noop }),
+      h(S.Tile, { title: 'Call parents', subtitle: 'Script in हिन्दी', onClick: noop })));
+}
+function Label(t, camera) { return h('div', { className: 'sk-slice__label', style: camera ? { color: 'var(--on-camera-muted)' } : null }, t); }
+function Mini(p) {
+  return h(S.PhoneScreen, { wash: p.wash, height: p.height || 236, padBottom: 0, gap: 12 },
+    p.title ? h(S.ScreenHeader, { title: p.title, subtitle: p.sub, level: 'output', trailing: p.pill }) : null,
+    p.live ? h('div', { style: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10 } }, p.live) : null,
+    Label('wash="' + p.wash + '"', p.wash === 'camera'));
+}
+function Live(word, line) { return [h(S.Eyebrow, { key: 'e', tone: 'muted' }, word), h('div', { key: 'l', style: { font: '400 12px/1.45 var(--font-ui)', color: 'var(--text-body)' } }, line)]; }
+ReactDOM.createRoot(document.getElementById('root')).render(
+  h('div', { style: { display: 'flex', flexDirection: 'column', gap: 26, padding: '16px 0 20px', background: 'var(--wash-canvas)', alignItems: 'center' } },
+    h('div', { style: { display: 'flex', gap: 16, alignItems: 'flex-start' } },
+      h(Home),
+      h('div', { style: { display: 'flex', flexDirection: 'column', gap: 26 } },
+        h(Mini, { wash: 'working', title: 'Make a lesson', sub: 'I’m writing it · keep using the app' }),
+        h(Mini, { wash: 'call', title: 'Dhruv’s father', sub: 'Absent 3 days this week', pill: h(S.Pill, { tone: 'solid-leaf', size: 'md' }, 'On call · 1:12') }),
+        h(Mini, { wash: 'camera', title: 'Scan answer sheets', sub: 'Class 7 · Maths test', pill: h(S.Pill, { tone: 'camera', size: 'md' }, '12 / 34') }))),
+    h('div', { style: { display: 'grid', gridTemplateColumns: '360px 360px', gap: '26px 16px' } },
+      h(Mini, { wash: 'live-listening', live: Live('Listening', 'Saffron wash, lit from behind the orb') }),
+      h(Mini, { wash: 'live-working', live: Live('Reading a source', 'Indigo wash while VIDYA checks the book') }),
+      h(Mini, { wash: 'live-speaking', live: Live('Reading it back', 'Leaf wash while VIDYA speaks') }),
+      h(Mini, { wash: 'live-failed', live: Live('Couldn’t hear', 'No glow: an error card keeps the work') })))
+);
+</script>
+</body></html>

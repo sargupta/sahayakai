@@ -1,0 +1,55 @@
+<!-- @dsCard group="VIDYA" height=750 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Orb</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* Phone slices: 360px, the phone's true width. The corner glow is clipped inside the slice, so nothing pokes out of it. */
+function Glow() { return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } }, h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } })); }
+function isHi(t) { return typeof t === 'string' && /[ऀ-ൿ]/.test(t); }
+function Slice(p) {
+  var vs = (p.v || '').split(' ').filter(Boolean);
+  var cls = 'sk-slice' + vs.filter(function (x) { return x !== 'glow'; }).map(function (x) { return ' sk-slice--' + x; }).join('');
+  return h('div', { className: cls, style: p.style }, vs.indexOf('glow') !== -1 ? h(Glow) : null, p.label ? h('div', { className: 'sk-slice__label' + (isHi(p.label) ? ' sk-indic' : '') }, p.label) : null, p.children);
+}
+function Row(p) { return h('div', { className: 'sk-slices', style: Object.assign({ alignItems: 'stretch' }, p.style) }, p.children); }
+function Note(t) { return h('div', { className: 'sk-slice__label' + (isHi(t) ? ' sk-indic' : ''), style: { marginTop: 4 } }, t); }
+var STATES = [
+  ['resting', 'Resting', 'Parked, 56px, tap to talk'],
+  ['dragging', 'Dragging', 'Lifts, snaps to six perches'],
+  ['listening', 'Listening', 'Ripples, the page stays visible'],
+  ['working', 'Working', 'Indigo, keeps working off-screen'],
+  ['ready', 'Ready', 'Leaf and a count, tap to deliver'],
+  ['offline', 'Offline', 'Voice paused, typing still works']
+];
+function line(orb, name, text) {
+  return h('div', { style: { display: 'flex', alignItems: 'center', gap: 12 } }, h('div', { style: { width: 64, flex: 'none', display: 'flex', justifyContent: 'center' } }, orb),
+    h('div', { style: { minWidth: 0 } }, h('div', { style: { font: '600 13px/1.3 var(--font-ui)' } }, name), h('div', { style: { font: '400 12px/1.45 var(--font-ui)', color: 'var(--text-body)' } }, text)));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(
+  h('div', null,
+    h(Row, null,
+      h(Slice, { v: 'glow', label: 'Six states · 56px · colour is the state', style: { gap: 14 } },
+        STATES.map(function (s) { return h('div', { key: s[0] }, line(h(S.Orb, { state: s[0], badge: s[0] === 'ready' ? 1 : undefined, decorative: true }), s[1], s[2])); })),
+      h(Slice, { v: 'card', label: 'Sizes where VIDYA appears', style: { gap: 14 } },
+        line(h(S.Orb, { size: 60, decorative: true }), 'Onboarding · 60px', 'VIDYA introduces itself above “नमस्ते”'),
+        line(h(S.Orb, { size: 64, state: 'dragging', decorative: true }), 'Dragging · 64px', 'Lifted under the thumb'),
+        line(h(S.Orb, { size: 46, state: 'listening', decorative: true }), 'Listening sheet · 46px', 'Heads the sheet while the mic is on'),
+        line(h(S.Orb, { size: 42, state: 'working', decorative: true, style: { boxShadow: 'var(--shadow-orb-working-sm)' } }), 'Working sheet · 42px', 'Writing in the background'),
+        line(h(S.Orb, { size: 36, state: 'ready', decorative: true, style: { boxShadow: 'var(--shadow-orb-ready-sm)' } }), 'Deliver tray · 36px', 'Heads the tray when work is ready'))),
+    h(Row, { style: { paddingTop: 4 } },
+      h(Slice, { v: 'glow', label: 'Output · ready, parked above the actions', style: { height: 236 } },
+        h(S.GlassCard, { tone: 'strong', radius: 'tile', gap: 5, style: { height: 92 } },
+          h('div', { style: { font: '600 12px/1.4 var(--font-ui)' } }, 'Board work · 12 min'),
+          h('div', { style: { font: '400 12px/1.6 var(--font-ui)', color: 'var(--text-body)' } }, 'Write 1/2 of 1/4 = 1/8 and ask for a quarter of a half.')),
+        h('div', { style: { position: 'absolute', left: 20, right: 20, bottom: 20, display: 'flex', gap: 9 } }, h(S.Button, { size: 'md', style: { flex: 1 } }, 'Deliver'), h(S.Button, { size: 'md', variant: 'secondary' }, 'Edit')),
+        h('div', { style: { position: 'absolute', right: 16, bottom: 74 } }, h(S.Orb, { state: 'ready', badge: 1, onClick: function () {} }))),
+      h(Slice, { v: 'camera', label: 'Scanner · a milk halo lifts it off the camera', style: { height: 236 } },
+        h('div', { 'aria-hidden': 'true', style: { flex: 1, borderRadius: 'var(--radius-scan)', border: '1px solid var(--camera-frame)', position: 'relative' } },
+          h('div', { style: { position: 'absolute', inset: 12, border: '1px dashed var(--camera-guide)', borderRadius: 12 } }),
+          h('div', { style: { position: 'absolute', left: 12, right: 12, top: '46%', height: 2, background: 'var(--scan-line)' } })),
+        h('div', { style: { position: 'absolute', right: 16, bottom: 24 } }, h(S.Orb, { tone: 'camera', onClick: function () {} })))))
+);
+</script>
+</body></html>

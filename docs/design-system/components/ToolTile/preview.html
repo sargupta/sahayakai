@@ -1,0 +1,40 @@
+<!-- @dsCard group="Content" height=396 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>ToolTile</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function grid(cols, gap, kids) { return h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(' + cols + ', minmax(0, 1fr))', gap: gap } }, kids); }
+function Demo() {
+  var t = React.useState(null), opened = t[0], setOpened = t[1];
+  function open(name) { return function () { setOpened(name); }; }
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Tools · lettered by type'),
+      grid(2, 10, [
+        h(S.ToolTile, { key: 1, mark: 'LP', tone: 'saffron', title: 'Lesson plan', subtitle: 'A timed 40-minute plan', onClick: open('Lesson plan') }),
+        h(S.ToolTile, { key: 2, mark: 'WS', tone: 'leaf', title: 'Worksheet', subtitle: 'Printable practice', onClick: open('Worksheet') }),
+        h(S.ToolTile, { key: 3, mark: 'QZ', tone: 'indigo', title: 'Quiz', subtitle: 'Up to 20 questions', onClick: open('Quiz') }),
+        h(S.ToolTile, { key: 4, mark: 'AT', tone: 'saffron', title: 'Attendance', subtitle: 'Voice roll call', onClick: open('Attendance') }),
+      ]),
+      h('div', { className: 'sk-slice__label', 'aria-live': 'polite' }, opened ? 'Opening ' + opened : 'Tap a tool')),
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Quick-start templates'),
+      grid(3, 7, [
+        h(S.ToolTile, { key: 1, variant: 'template', tone: 'amber', title: 'Fractions', kicker: 'Maths', onClick: open('Fractions') }),
+        h(S.ToolTile, { key: 2, variant: 'template', tone: 'leaf', title: 'Photosynthesis', kicker: 'Science', onClick: open('Photosynthesis') }),
+        h(S.ToolTile, { key: 3, variant: 'template', tone: 'leaf', title: 'Water cycle', kicker: 'Science', onClick: open('Water cycle') }),
+        h(S.ToolTile, { key: 4, variant: 'template', tone: 'indigo', title: 'Solar system', kicker: 'Social', onClick: open('Solar system') }),
+        h(S.ToolTile, { key: 5, variant: 'template', tone: 'indigo', title: 'Gram Panchayat', kicker: 'Social', onClick: open('Gram Panchayat') }),
+        h(S.ToolTile, { key: 6, variant: 'template', tone: 'saffron', title: 'Nouns', kicker: 'English', onClick: open('Nouns') }),
+      ]),
+      h('div', { className: 'sk-slice__label' }, 'In हिन्दी'),
+      grid(2, 10, [
+        h(S.ToolTile, { key: 1, lang: 'hi', mark: 'LP', tone: 'saffron', title: 'पाठ योजना', subtitle: '40 मिनट की समयबद्ध योजना', onClick: open('पाठ योजना') }),
+        h(S.ToolTile, { key: 2, lang: 'hi', variant: 'template', tone: 'amber', title: 'भिन्न', kicker: 'गणित', onClick: open('भिन्न'), style: { alignSelf: 'start' } }),
+      ])));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

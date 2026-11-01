@@ -1,0 +1,30 @@
+<!-- @dsCard group="Class and calls" height=674 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>CallStage</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Slice(label, mods, kids) {
+  return h('div', { className: ['sk-slice'].concat(mods.map(function (m) { return 'sk-slice--' + m; })).join(' ') },
+    h('div', { className: 'sk-slice__label' }, label), kids);
+}
+var glow = { background: 'var(--glow-live-speaking), var(--wash-call)' };
+/* A stand-in for VIDYA's voice level: syllable-like bursts. */
+function voice() { var t = performance.now() / 1000; return Math.max(0, Math.sin(t * 7.3) * Math.sin(t * 2.1) * .9 + .15); }
+ReactDOM.createRoot(document.getElementById('root')).render(
+  h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice sk-slice--call', style: glow },
+      h('div', { className: 'sk-slice__label' }, 'Live · VIDYA speaking on the line'),
+      h(S.CallStage, { status: 'Call in progress', time: '1:12', name: 'Hiren’s mother', detail: 'Speaking Bengali · 3 exchanges so far', getLevel: voice, titleAs: 'h2' })),
+    Slice('Connecting · ringing the number on record', ['call'],
+      h(S.CallStage, { state: 'connecting', status: 'Calling', time: '0:04', name: 'Hiren’s mother', detail: '••••••0720 · the number on Hiren’s record', titleAs: 'h2' })),
+    Slice('Ended · writing the summary', ['call'],
+      h(S.CallStage, { state: 'ended', status: 'Call ended', time: '2:04', name: 'Hiren’s mother', detail: '5 exchanges · your summary is ready', titleAs: 'h2' })),
+    h('div', { className: 'sk-slice sk-slice--call', style: glow },
+      h('div', { className: 'sk-slice__label' }, 'Hindi'),
+      h(S.CallStage, { status: 'कॉल चल रही है', time: '0:48', name: 'ध्रुव के पिता', lang: 'hi', detail: 'हिन्दी में बात · अब तक 2 बार', level: .4, titleAs: 'h2' }))
+  )
+);
+</script>
+</body></html>

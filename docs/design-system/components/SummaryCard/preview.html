@@ -1,0 +1,36 @@
+<!-- @dsCard group="Class and calls" height=425 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>SummaryCard</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* The corner glow, clipped inside its own layer so nothing pokes out of the slice. */
+function Glow() {
+  return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } },
+    h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } }));
+}
+function Slice(label, mods, kids) {
+  return h('div', { className: ['sk-slice'].concat(mods.filter(function (m) { return m !== 'glow-bg'; }).map(function (m) { return 'sk-slice--' + m; })).join(' ') },
+    mods.indexOf('glow-bg') !== -1 ? h(Glow) : null,
+    h('div', { className: 'sk-slice__label' }, label),
+    h('div', { style: { display: 'flex', flexDirection: 'column', gap: 9 } }, kids));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(
+  h('div', { className: 'sk-slices' },
+    Slice('What happened · what the parent said', ['glow-bg'], [
+      h(S.SummaryCard, { key: 'd', tone: 'done', title: 'Call completed', meta: '2 min · 5 exchanges · parent was concerned' }),
+      h(S.SummaryCard, { key: 'n', title: 'Parent response' }, 'Acknowledged the performance drop; committed to daily home practice.'),
+      h(S.SummaryCard, { key: 'a', tone: 'amber', title: 'Concerns raised' }, 'Child says he doesn’t understand the topic · homework feels overwhelming'),
+      h(S.SummaryCard, { key: 'i', tone: 'indigo', title: 'Parent commitments', items: ['Elder daughter to help 20 min a day on fractions', 'Will encourage him to ask questions in class'] })
+    ]),
+    Slice('What you do next · the record · Hindi', [], [
+      h(S.SummaryCard, { key: 'x', tone: 'action', title: 'Your action items', items: ['Send the list of weak topics today', 'Offer a Q&A slot after class for two weeks', 'Re-test fractions in 10 days'] }),
+      h(S.SummaryCard, { key: 'r', tone: 'red', title: 'Follow-up recommended' }, 'Call in 14 days, after the re-test'),
+      h(S.SummaryCard, { key: 'l', tone: 'link', title: 'Conversation transcript', meta: '5 messages', onClick: function () {} }),
+      h(S.SummaryCard, { key: 'h', tone: 'indigo', lang: 'hi', title: 'अभिभावक के वादे', items: ['बड़ी बहन रोज़ 20 मिनट भिन्न में मदद करेगी'] })
+    ])
+  )
+);
+</script>
+</body></html>

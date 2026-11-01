@@ -1,0 +1,44 @@
+<!-- @dsCard group="Screens · Class and calls" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Evidence for the message</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+function Behind() {
+  var block = { height: 58, borderRadius: 'var(--radius-tile)', background: 'var(--surface-glass)' };
+  return h('div', { 'aria-hidden': 'true', style: { opacity: .34, display: 'flex', flexDirection: 'column', gap: 10 } },
+    h('div', { style: { font: '700 22px/1.2 var(--font-display)' } }, 'Parent outreach'),
+    h('div', { style: block }), h('div', { style: block }));
+}
+function Evidence() {
+  var n = React.useState(''), note = n[0], setNote = n[1];
+  var head = h('div', { style: { display: 'flex', flexDirection: 'column', gap: 3 } },
+    h(S.Eyebrow, { size: 'tight', tone: 'muted' }, 'Step 2 of 3'),
+    h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 } },
+      h('div', { style: { minWidth: 0 } },
+        h('h2', { id: 'ev-title', style: { margin: 0, font: '700 18px/1.25 var(--font-display)' } }, 'Contact Hiren’s parent'),
+        h('div', { style: { marginTop: 3, font: '400 12px var(--font-ui)', color: 'var(--text-body)' } }, '••••••0720 · Bengali')),
+      h(S.Pill, { tone: 'solid-leaf' }, 'Academic')));
+  return h(S.PhoneScreen, {
+    overlay: h(S.Sheet, { key: 's', header: head, 'aria-labelledby': 'ev-title', autoFocus: false, onClose: function () {} },
+      h(S.EvidenceCard, {
+        title: 'Recent marks · VIDYA cites the lowest', flag: 'At risk',
+        rows: [
+          { label: 'Science · Unit Test 1', value: '6/25 · 24%', valueLabel: '6 out of 25, 24 percent' },
+          { label: 'Maths · Mid Term', value: '16/50 · 32%', valueLabel: '16 out of 50, 32 percent' },
+          { label: 'Maths · Unit Test 1', value: '8/25 · 32%', valueLabel: '8 out of 25, 32 percent' }
+        ]
+      }),
+      h(S.Field, { label: 'Specific note', optional: true, size: 'md', surface: 'inset', multiline: true, rows: 2, value: note, onChange: function (e) { setNote(e.target.value); },
+        placeholder: 'e.g. “Scored 6/25 in the last unit test; missed 3 homeworks in 2 weeks.”', mic: 'idle', onMic: function () {}, micLabel: 'Speak the note' }),
+      h(S.NoticeCard, { tone: 'leaf' }, 'VIDYA is told to cite these marks and never to invent numbers.'),
+      h('div', { style: { display: 'flex', gap: 9 } },
+        h(S.Button, { size: 'md', variant: 'outline', style: { flex: 1 } }, 'Back'),
+        h(S.Button, { size: 'md', style: { flex: 1.4 } }, 'Generate message')))
+  }, h(Behind));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Evidence)));
+</script>
+</body></html>

@@ -146,6 +146,10 @@ class _AssessAssignmentScreenState
     return ToolScaffold(
       title: l10n.assessTitle,
       isBusy: state.isLoading,
+      // Output screen (UX map Flow 4): the result replaces the form;
+      // Edit brings the form back and keeps the result until a new one lands.
+      hasResult: hasResult,
+      onResubmit: _submit,
       submitLabel: l10n.assessSubmit,
       // Hide the sticky Assess button once a scorecard is on screen — the
       // document's own action bar (Regenerate / Copy) takes over.

@@ -1,0 +1,59 @@
+<!-- @dsCard group="Content" height=748 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>ArtifactFrame</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* Phone slices: 360px, the phone's true width. The corner glow is clipped inside the slice, so nothing pokes out of it. */
+function Glow() { return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } }, h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } })); }
+function isHi(t) { return typeof t === 'string' && /[ऀ-ൿ]/.test(t); }
+function Slice(p) {
+  var vs = (p.v || '').split(' ').filter(Boolean);
+  var cls = 'sk-slice' + vs.filter(function (x) { return x !== 'glow'; }).map(function (x) { return ' sk-slice--' + x; }).join('');
+  return h('div', { className: cls, style: p.style }, vs.indexOf('glow') !== -1 ? h(Glow) : null, p.label ? h('div', { className: 'sk-slice__label' + (isHi(p.label) ? ' sk-indic' : '') }, p.label) : null, p.children);
+}
+function Row(p) { return h('div', { className: 'sk-slices', style: Object.assign({ alignItems: 'stretch' }, p.style) }, p.children); }
+function Note(t) { return h('div', { className: 'sk-slice__label' + (isHi(t) ? ' sk-indic' : ''), style: { marginTop: 4 } }, t); }
+var SCREEN = 724;
+var META = [
+  { label: 'Class 7', tone: 'leaf' },
+  { label: '40 min', tone: 'leaf' },
+  { label: 'CBSE · NCERT Ch 8', tone: 'indigo' },
+  { label: 'हिन्दी', tone: 'amber', lang: 'hi' }
+];
+var SECTIONS = [
+  { title: 'Hook · 5 min', body: 'Hold up one chapati. Ask: if four of you share this, how much does each get?' },
+  { title: 'Activity · 15 min', body: 'Groups of four fold paper circles into quarters, then halve one quarter and name it.' },
+  { title: 'Board work · 12 min', body: 'Write 1/2 of 1/4 = 1/2 × 1/4 = 1/8 and ask the class to find a quarter of a half the same way.' }
+];
+var HI_SECTIONS = [
+  { title: 'शुरुआत · 5 मिनट', body: 'एक रोटी उठाइए। पूछिए: अगर तुम चार लोग इसे बाँटो, तो हर एक को कितना मिलेगा?' },
+  { title: 'गतिविधि · 15 मिनट', body: 'चार-चार के समूह काग़ज़ के गोले चौथाई में मोड़ें, फिर एक चौथाई को मोड़कर उसका आधा निकालें।' }
+];
+function Demo() {
+  var st = React.useState(true), streaming = st[0], setStreaming = st[1];
+  return h(Row, null,
+    h(Slice, { v: 'glow tall', label: 'Lesson output · above the tab bar', style: { height: SCREEN, paddingBottom: 96 } },
+      h('div', { style: { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' } },
+        h(S.ArtifactFrame, { fill: true, title: 'Fractions in everyday cooking', meta: META, sections: SECTIONS, provenance: 'Grounded in CBSE · NCERT Ganita Prakash 7, Chapter 8.' })),
+      h('div', { className: 'sk-orb-park sk-orb-park--cta' }, h(S.Orb, { state: 'ready', badge: 1, onClick: function () {} })),
+      h('div', { className: 'sk-tabbar-dock' }, h(S.TabBar, { active: 'library' }))),
+    h(Slice, { v: 'glow', label: streaming ? 'While VIDYA writes · in Hindi' : 'Finished · Deliver unlocks · in Hindi' },
+      h(S.ArtifactFrame, {
+        lang: 'hi',
+        title: 'रोज़ के खाने में भिन्न',
+        meta: [{ label: 'कक्षा 7', tone: 'leaf', lang: 'hi' }, { label: 'CBSE · NCERT Ch 8', tone: 'indigo' }, { label: 'हिन्दी', tone: 'amber', lang: 'hi' }],
+        sections: streaming ? HI_SECTIONS : HI_SECTIONS.concat([{ title: 'बोर्ड का काम · 12 मिनट', body: 'लिखिए 1/2 का 1/4 = 1/2 × 1/4 = 1/8, फिर कक्षा से आधे का चौथाई इसी तरह निकलवाइए।' }]),
+        streaming: streaming,
+        streamingLabel: 'बोर्ड का काम लिख रही हूँ…',
+        provenance: 'CBSE · NCERT गणित प्रकाश 7, अध्याय 8 पर आधारित।',
+        disclosure: 'VIDYA मसौदा बनाती है; पढ़ाने से पहले आप इसे जाँच लें।',
+        deliverLabel: 'भेजें',
+        editLabel: 'बदलें'
+      }),
+      h(S.Button, { variant: 'outline', size: 'sm', onClick: function () { setStreaming(!streaming); } }, streaming ? 'Finish writing' : 'Show the writing state')));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

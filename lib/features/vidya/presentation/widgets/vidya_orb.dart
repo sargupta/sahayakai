@@ -2,8 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import 'package:lucide_icons/lucide_icons.dart';
-
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_motion.dart';
 import '../../../../core/theme/app_shadows.dart';
@@ -25,14 +23,7 @@ import '../../../../shared/widgets/press_scale.dart';
 ///   • [ready]     — leaf radial `#CFE6CF → #2C5F2D 74%`, 56px, **20px count
 ///     badge** (white on `#2C5F2D`, 2px `#FFFDF9` border) at top-right (−3px).
 ///   • [offline]   — grey `#E6E2DA → #8A8178`, greys out when no signal.
-enum VidyaOrbVisual {
-  resting,
-  dragging,
-  listening,
-  working,
-  ready,
-  offline,
-}
+enum VidyaOrbVisual { resting, dragging, listening, working, ready, offline }
 
 /// The floating, draggable VIDYA orb — VIDYA's omnipresent presence layer.
 /// Mounted by [VidyaOverlay] above the app Navigator so it rides over every route.
@@ -48,6 +39,7 @@ class VidyaOrb extends StatefulWidget {
     this.onLongPress,
     this.semanticLabel,
     this.semanticHint,
+    this.shadows,
   });
 
   final VidyaOrbVisual state;
@@ -58,6 +50,65 @@ class VidyaOrb extends StatefulWidget {
   final String? semanticLabel;
   final String? semanticHint;
 
+  /// Overrides the state's own drop shadow — the docked orb in the tab bar
+  /// casts a smaller one than the floating orb (v2 9a).
+  final List<BoxShadow>? shadows;
+
+  /// The sphere's radial gradient for [state]: colour is the state. Shared
+  /// with the dock's mini-orb so every sphere of VIDYA reads the same.
+  static RadialGradient gradientFor(VidyaOrbVisual state) {
+    // Highlight at 34%/30% = Alignment(-0.32, -0.4)
+    const center = Alignment(-0.32, -0.4);
+    const radius = 0.95;
+
+    switch (state) {
+      case VidyaOrbVisual.resting:
+      case VidyaOrbVisual.listening:
+        // saffron-200 (#FFD9AE) → saffron-500 (#C96A28) at 72%
+        return const RadialGradient(
+          center: center,
+          radius: radius,
+          colors: [AppColors.saffron200, AppColors.saffron500],
+          stops: [0.0, 0.72],
+        );
+      case VidyaOrbVisual.dragging:
+        // saffron-100 (#FFE3C2) → saffron-500 (#C96A28) at 72%
+        return const RadialGradient(
+          center: center,
+          radius: radius,
+          colors: [AppColors.saffron100, AppColors.saffron500],
+          stops: [0.0, 0.72],
+        );
+      case VidyaOrbVisual.working:
+        // indigo-100 (#DCE2FA) → indigo-500 (#2A3B8F) at 74%
+        return const RadialGradient(
+          center: center,
+          radius: radius,
+          colors: [AppColors.indigo100, AppColors.indigo500],
+          stops: [0.0, 0.74],
+        );
+      case VidyaOrbVisual.ready:
+        // leaf-100 (#CFE6CF) → leaf-500 (#2C5F2D) at 74%
+        return const RadialGradient(
+          center: center,
+          radius: radius,
+          colors: [AppColors.leaf100, AppColors.leaf500],
+          stops: [0.0, 0.74],
+        );
+      case VidyaOrbVisual.offline:
+        // grey wash: #E6E2DA → #8A8178
+        return const RadialGradient(
+          center: center,
+          radius: radius,
+          colors: [
+            Color.fromARGB(255, 230, 226, 218),
+            Color.fromARGB(255, 138, 129, 120),
+          ],
+          stops: [0.0, 0.72],
+        );
+    }
+  }
+
   /// Fixed clear space around the sphere for listening ripple / drag halo / ready badge.
   static const double _halo = 14;
 
@@ -65,7 +116,8 @@ class VidyaOrb extends StatefulWidget {
   State<VidyaOrb> createState() => _VidyaOrbState();
 }
 
-class _VidyaOrbState extends State<VidyaOrb> with SingleTickerProviderStateMixin {
+class _VidyaOrbState extends State<VidyaOrb>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _c;
 
   @override
@@ -137,8 +189,7 @@ class _VidyaOrbState extends State<VidyaOrb> with SingleTickerProviderStateMixin
             children: [
               if (widget.state == VidyaOrbVisual.listening)
                 _buildListenRing(t, motion),
-              if (widget.state == VidyaOrbVisual.dragging)
-                _buildDragRing(),
+              if (widget.state == VidyaOrbVisual.dragging) _buildDragRing(),
               Transform.translate(
                 offset: Offset(0, _floatDy(t, motion)),
                 child: Transform.scale(
@@ -186,62 +237,12 @@ class _VidyaOrbState extends State<VidyaOrb> with SingleTickerProviderStateMixin
       height: diameter,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: _orbGradient(),
-        boxShadow: _orbShadows(isDark, lifted),
+        gradient: VidyaOrb.gradientFor(widget.state),
+        boxShadow: widget.shadows ?? _orbShadows(isDark, lifted),
       ),
-      alignment: Alignment.center,
-      child: _glyph(diameter),
+      // No glyph: the orb's meaning is its state colour, its motion and the
+      // words beside it. A mic glyph is a control, never VIDYA (Orb spec).
     );
-  }
-
-  RadialGradient _orbGradient() {
-    // Highlight at 34%/30% = Alignment(-0.32, -0.4)
-    const center = Alignment(-0.32, -0.4);
-    const radius = 0.95;
-
-    switch (widget.state) {
-      case VidyaOrbVisual.resting:
-      case VidyaOrbVisual.listening:
-        // saffron-200 (#FFD9AE) → saffron-500 (#C96A28) at 72%
-        return const RadialGradient(
-          center: center,
-          radius: radius,
-          colors: [AppColors.saffron200, AppColors.saffron500],
-          stops: [0.0, 0.72],
-        );
-      case VidyaOrbVisual.dragging:
-        // saffron-100 (#FFE3C2) → saffron-500 (#C96A28) at 72%
-        return const RadialGradient(
-          center: center,
-          radius: radius,
-          colors: [AppColors.saffron100, AppColors.saffron500],
-          stops: [0.0, 0.72],
-        );
-      case VidyaOrbVisual.working:
-        // indigo-100 (#DCE2FA) → indigo-500 (#2A3B8F) at 74%
-        return const RadialGradient(
-          center: center,
-          radius: radius,
-          colors: [AppColors.indigo100, AppColors.indigo500],
-          stops: [0.0, 0.74],
-        );
-      case VidyaOrbVisual.ready:
-        // leaf-100 (#CFE6CF) → leaf-500 (#2C5F2D) at 74%
-        return const RadialGradient(
-          center: center,
-          radius: radius,
-          colors: [AppColors.leaf100, AppColors.leaf500],
-          stops: [0.0, 0.74],
-        );
-      case VidyaOrbVisual.offline:
-        // grey wash: #E6E2DA → #8A8178
-        return const RadialGradient(
-          center: center,
-          radius: radius,
-          colors: [Color.fromARGB(255, 230, 226, 218), Color.fromARGB(255, 138, 129, 120)],
-          stops: [0.0, 0.72],
-        );
-    }
   }
 
   List<BoxShadow> _orbShadows(bool isDark, bool lifted) {
@@ -279,13 +280,9 @@ class _VidyaOrbState extends State<VidyaOrb> with SingleTickerProviderStateMixin
           ),
         ];
       case VidyaOrbVisual.working:
-        return [
-          AppShadows.orbWorking,
-        ];
+        return [AppShadows.orbWorking];
       case VidyaOrbVisual.ready:
-        return [
-          AppShadows.orbReady,
-        ];
+        return [AppShadows.orbReady];
       case VidyaOrbVisual.offline:
         return [
           BoxShadow(
@@ -295,43 +292,6 @@ class _VidyaOrbState extends State<VidyaOrb> with SingleTickerProviderStateMixin
             spreadRadius: -4,
           ),
         ];
-    }
-  }
-
-  Widget? _glyph(double diameter) {
-    IconData? icon;
-    switch (widget.state) {
-      case VidyaOrbVisual.resting:
-      case VidyaOrbVisual.dragging:
-      case VidyaOrbVisual.listening:
-        // Lucide, like every other glyph in the app (and SealMic's mic).
-        icon = LucideIcons.mic;
-      case VidyaOrbVisual.working:
-        icon = LucideIcons.sparkles;
-      case VidyaOrbVisual.ready:
-      case VidyaOrbVisual.offline:
-        icon = null;
-    }
-    if (icon == null) return null;
-    return Icon(
-      icon,
-      size: diameter * 0.38,
-      color: _onBaseColor().withValues(alpha: 0.92),
-    );
-  }
-
-  Color _onBaseColor() {
-    switch (widget.state) {
-      case VidyaOrbVisual.resting:
-      case VidyaOrbVisual.dragging:
-      case VidyaOrbVisual.listening:
-        return AppColors.textOnAccent; // white
-      case VidyaOrbVisual.working:
-        return AppColors.textOnAccent; // white on indigo
-      case VidyaOrbVisual.ready:
-        return AppColors.textOnAccent; // white on leaf
-      case VidyaOrbVisual.offline:
-        return AppColors.textOnAccent;
     }
   }
 
@@ -374,26 +334,31 @@ class _VidyaOrbState extends State<VidyaOrb> with SingleTickerProviderStateMixin
     );
   }
 
-  /// Ready badge: 20px circle, white number on leaf-500, 2px milk-50 border.
+  /// Ready badge: white number on leaf, milk-50 ring. 20px with a 2px ring on
+  /// the parked orb, at the halo's corner; on a big orb (Home's 144px orb) it
+  /// grows to 32px with a 3px ring, 8px inside the sphere's corner.
   Widget _buildReadyBadge() {
     final label = widget.readyCount > 9 ? '9+' : '${widget.readyCount}';
+    final big = widget.size >= _bigOrb;
+    final inset = big ? VidyaOrb._halo + 8 : VidyaOrb._halo - 3;
+    final diameter = big ? 32.0 : 20.0;
     return Positioned(
-      top: VidyaOrb._halo - 3,
-      right: VidyaOrb._halo - 3,
+      top: inset,
+      right: inset,
       child: Container(
-        constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+        constraints: BoxConstraints(minWidth: diameter, minHeight: diameter),
         padding: const EdgeInsets.symmetric(horizontal: 5),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: AppColors.leaf500,
-          border: Border.all(color: AppColors.milk50, width: 2),
+          border: Border.all(color: AppColors.milk50, width: big ? 3 : 2),
         ),
         alignment: Alignment.center,
         child: Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Instrument Sans',
-            fontSize: 12,
+            fontSize: big ? 15 : 12,
             height: 1.0,
             fontWeight: FontWeight.w700,
             color: AppColors.textOnAccent,
@@ -406,6 +371,10 @@ class _VidyaOrbState extends State<VidyaOrb> with SingleTickerProviderStateMixin
       ),
     );
   }
+
+  /// From this diameter up the orb is a hero (Home's big orb), not a parked
+  /// control: its badge scales with it.
+  static const double _bigOrb = 100;
 
   /// Float: resting only, 5.5s ease-in-out, translateY -7px.
   double _floatDy(double t, bool motion) {

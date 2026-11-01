@@ -1,0 +1,52 @@
+<!-- @dsCard group="VIDYA" height=714 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>DeliverTray</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* Phone slices: 360px, the phone's true width. The corner glow is clipped inside the slice, so nothing pokes out of it. */
+function Glow() { return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } }, h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } })); }
+function isHi(t) { return typeof t === 'string' && /[ऀ-ൿ]/.test(t); }
+function Slice(p) {
+  var vs = (p.v || '').split(' ').filter(Boolean);
+  var cls = 'sk-slice' + vs.filter(function (x) { return x !== 'glow'; }).map(function (x) { return ' sk-slice--' + x; }).join('');
+  return h('div', { className: cls, style: p.style }, vs.indexOf('glow') !== -1 ? h(Glow) : null, p.label ? h('div', { className: 'sk-slice__label' + (isHi(p.label) ? ' sk-indic' : '') }, p.label) : null, p.children);
+}
+function Row(p) { return h('div', { className: 'sk-slices', style: Object.assign({ alignItems: 'stretch' }, p.style) }, p.children); }
+function Note(t) { return h('div', { className: 'sk-slice__label' + (isHi(t) ? ' sk-indic' : ''), style: { marginTop: 4 } }, t); }
+var SCREEN = 690;
+function Behind(title) {
+  return h('div', { 'aria-hidden': 'true', inert: '', style: { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 10, opacity: .28 } },
+    h(S.ScreenHeader, { level: 'output', title: title }),
+    h('div', { style: { background: 'rgba(255,255,255,.9)', borderRadius: 16, flex: 1, minHeight: 0 } }));
+}
+var HI = [
+  { id: 'parents', title: 'अभिभावक समूह', sub: 'WhatsApp · 34', action: 'अभिभावक समूह को भेजें' },
+  { id: 'print', title: 'प्रिंट', sub: 'A4 · 34 प्रतियाँ', action: '34 प्रतियाँ प्रिंट करें' },
+  { id: 'class', title: 'कक्षा में सहेजें', sub: 'कक्षा 7 · गणित', action: 'कक्षा 7 में सहेजें' },
+  { id: 'community', title: 'समुदाय में साझा करें', sub: 'संसाधन के रूप में', action: 'समुदाय में साझा करें' },
+  { id: 'pdf', title: 'PDF डाउनलोड', sub: 'इस फ़ोन में', action: 'PDF डाउनलोड करें' },
+  { id: 'aloud', title: 'पढ़कर सुनाएँ', sub: 'कक्षा को', action: 'कक्षा को पढ़कर सुनाएँ' }
+];
+function Demo() {
+  var s = React.useState(['parents']), sel = s[0], setSel = s[1];
+  var d = React.useState(''), sent = d[0], setSent = d[1];
+  return h(Row, null,
+    h(Slice, { v: 'glow tall', label: 'Lesson output · one tray for every output', style: { height: SCREEN } },
+      Behind('Fractions in everyday cooking'),
+      h(S.DeliverTray, {
+        subtitle: sent || 'Lesson plan + worksheet · हिन्दी', selected: sel, onChange: function (ids) { setSel(ids); setSent(''); },
+        onDeliver: function (ids) { setSent('Sent · ' + ids.length + (ids.length === 1 ? ' way' : ' ways')); }, onPreview: function () {}, autoFocus: false
+      })),
+    h(Slice, { v: 'glow tall', label: 'Three ways at once · in Hindi', style: { height: SCREEN } },
+      Behind('रोज़ के खाने में भिन्न'),
+      h(S.DeliverTray, {
+        lang: 'hi', title: 'भेजें', subtitle: 'पाठ योजना + वर्कशीट · हिन्दी', previewLabel: 'देखें', onPreview: function () {},
+        options: HI, defaultSelected: ['parents', 'print', 'class'], groupLabel: 'कहाँ भेजें',
+        note: 'जब तक आप भेजें नहीं दबातीं, फ़ोन से कुछ नहीं जाता।', manyLabel: function (n) { return n + ' तरह से भेजें'; }, emptyLabel: 'भेजने का तरीका चुनें', autoFocus: false
+      })));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

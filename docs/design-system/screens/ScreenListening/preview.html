@@ -1,0 +1,29 @@
+<!-- @dsCard group="Screens · VIDYA" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Listening</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+function Listening() {
+  var s = React.useState(0), pick = s[0], setPick = s[1];
+  var behind = h('div', { 'aria-hidden': 'true', inert: '', style: { opacity: .34, display: 'flex', flexDirection: 'column', gap: 12, flex: 1, minHeight: 0 } },
+    h(S.ScreenHeader, { level: 'page', title: 'Fractions · Class 7', subtitle: 'Lesson plan · saved yesterday' }),
+    h('div', { style: { background: 'rgba(255,255,255,.9)', borderRadius: 16, height: 130, flex: 'none' } }),
+    h('div', { style: { background: 'rgba(255,255,255,.9)', borderRadius: 16, flex: 1, minHeight: 0 } }));
+  return h(S.PhoneScreen, {
+    padBottom: 0, glow: false,
+    overlay: h(S.VoiceSheet, {
+      state: 'listening', title: 'Listening', subtitle: 'हिन्दी · about the page behind me',
+      context: 'Fractions · Class 7 · CBSE · lesson plan', transcript: 'इससे एक worksheet बना दो, दस सवाल', transcriptLang: 'hi', autoFocus: false
+    },
+      h('div', { role: 'radiogroup', 'aria-label': 'What I understood', style: { display: 'flex', flexDirection: 'column', gap: 7 } },
+        h(S.SuggestionRow, { selected: pick === 0, onSelect: function () { setPick(0); } }, 'Worksheet · 10 questions · हिन्दी'),
+        h(S.SuggestionRow, { selected: pick === 1, onSelect: function () { setPick(1); } }, 'Explain again for students who need it')),
+      h(S.Composer, { onMic: function () {} }))
+  }, behind);
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Listening)));
+</script>
+</body></html>

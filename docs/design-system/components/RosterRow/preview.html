@@ -1,0 +1,46 @@
+<!-- @dsCard group="Lists" height=495 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>RosterRow</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* Phone slices: 360px, the phone's true width. The corner glow is clipped inside the slice, so nothing pokes out of it. */
+function Glow() { return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } }, h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } })); }
+function isHi(t) { return typeof t === 'string' && /[ऀ-ൿ]/.test(t); }
+function Slice(p) {
+  var vs = (p.v || '').split(' ').filter(Boolean);
+  var cls = 'sk-slice' + vs.filter(function (x) { return x !== 'glow'; }).map(function (x) { return ' sk-slice--' + x; }).join('');
+  return h('div', { className: cls, style: p.style }, vs.indexOf('glow') !== -1 ? h(Glow) : null, p.label ? h('div', { className: 'sk-slice__label' + (isHi(p.label) ? ' sk-indic' : '') }, p.label) : null, p.children);
+}
+function Row(p) { return h('div', { className: 'sk-slices', style: Object.assign({ alignItems: 'stretch' }, p.style) }, p.children); }
+function Note(t) { return h('div', { className: 'sk-slice__label' + (isHi(t) ? ' sk-indic' : ''), style: { marginTop: 4 } }, t); }
+function Demo() {
+  var b = React.useState('unmarked'), bhavna = b[0], setBhavna = b[1];
+  var c = React.useState(3), cur = c[0], setCur = c[1];
+  var r = React.useState('present'), chetan = r[0], setChetan = r[1];
+  var present = 34 + (bhavna === 'present' ? 1 : 0);
+  return h(Row, null,
+    h(Slice, { v: 'glow', label: 'Roll call · VIDYA marks as you read' },
+      h(S.ScreenHeader, { title: 'Class 7 · roll call', subtitle: 'Fri 18 Sept · 38 students', align: 'end', trailing: h(S.Pill, { tone: 'solid-leaf', size: 'md' }, present + ' present') }),
+      h('ul', { className: 'sk-rosterrow-list', 'aria-label': 'Class 7 register' },
+        h(S.RosterRow, { number: 1, name: 'Aarav Sharma', status: 'present' }),
+        h(S.RosterRow, { number: 2, name: 'Ananya Iyer', status: 'present' }),
+        h(S.RosterRow, { number: 3, name: 'Bhavna Patil', status: bhavna, current: cur === 3, onMark: setBhavna, onClick: function () { setCur(3); } }),
+        h(S.RosterRow, { number: 12, name: 'Uma Krishnan', status: 'late' }),
+        h(S.RosterRow, { number: 19, name: 'Dhruv Chauhan', status: 'absent' }))),
+    h(Slice, { label: 'Not yet marked · tap to correct · Hindi' },
+      h('ul', { className: 'sk-rosterrow-list', 'aria-label': 'Class 7 register, continued' },
+        h(S.RosterRow, { number: 20, name: 'Farhan Ali', status: 'unmarked' }),
+        h(S.RosterRow, { number: 21, name: 'Gurpreet Kaur', status: 'unmarked' }),
+        h(S.RosterRow, { number: 4, name: 'Chetan Rao', status: chetan, current: cur === 4, onMark: function (st) { setChetan(st); setCur(3); }, onClick: function () { setCur(4); } }),
+        h(S.RosterRow, { number: 27, name: 'Venkata Lakshmi Narasimhan', status: 'late' })),
+      Note('In Hindi · status words are translated'),
+      h('ul', { className: 'sk-rosterrow-list', 'aria-label': 'कक्षा 7 की हाज़िरी', lang: 'hi' },
+        h(S.RosterRow, { number: 22, name: 'रिया वर्मा', status: 'present', statusLabels: { present: 'उपस्थित' } }),
+        h(S.RosterRow, { number: 23, name: 'सुमित यादव', status: 'late', lateMark: 'दे', statusLabels: { late: 'देर से' } }),
+        h(S.RosterRow, { number: 24, name: 'आयशा ख़ान', status: 'unmarked', current: true, markLabels: { present: 'उपस्थित', absent: 'अनुपस्थित' }, onMark: function () {} }))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

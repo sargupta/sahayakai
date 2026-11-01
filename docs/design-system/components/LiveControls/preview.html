@@ -1,0 +1,26 @@
+<!-- @dsCard group="VIDYA Live" height=266 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>LiveControls</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function noop() {}
+function Demo() {
+  var m = React.useState(false), muted = m[0], setMuted = m[1];
+  var p = React.useState(false), paused = p[0], setPaused = p[1];
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice', style: { background: 'var(--wash-live-listening)', paddingBottom: 0, gap: 6 } },
+      h('div', { className: 'sk-slice__label' }, 'Listening · Mute is a toggle'),
+      h(S.LiveControls, { mode: 'listening', muted: muted, onMute: function () { setMuted(!muted); }, onType: noop, onEnd: noop }),
+      h('div', { className: 'sk-slice__label' }, 'Working'),
+      h(S.LiveControls, { mode: 'working', onStop: noop })),
+    h('div', { className: 'sk-slice', style: { background: 'var(--wash-live-speaking)', paddingBottom: 0, gap: 6 } },
+      h('div', { className: 'sk-slice__label' }, 'Speaking · Pause, then Resume'),
+      h(S.LiveControls, { mode: 'speaking', paused: paused, onPause: function () { setPaused(true); }, onResume: function () { setPaused(false); }, onEnd: noop }),
+      h('div', { className: 'sk-slice__label' }, 'Failed · voice again, or finish typed'),
+      h(S.LiveControls, { mode: 'failed', ctaLabel: 'Make the quiz', onCta: noop, onMic: noop })));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

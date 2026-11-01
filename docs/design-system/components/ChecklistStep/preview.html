@@ -1,0 +1,52 @@
+<!-- @dsCard group="Lists" height=320 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>ChecklistStep</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* Phone slices: 360px, the phone's true width. The corner glow is clipped inside the slice, so nothing pokes out of it. */
+function Glow() { return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } }, h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } })); }
+function isHi(t) { return typeof t === 'string' && /[ऀ-ൿ]/.test(t); }
+function Slice(p) {
+  var vs = (p.v || '').split(' ').filter(Boolean);
+  var cls = 'sk-slice' + vs.filter(function (x) { return x !== 'glow'; }).map(function (x) { return ' sk-slice--' + x; }).join('');
+  return h('div', { className: cls, style: p.style }, vs.indexOf('glow') !== -1 ? h(Glow) : null, p.label ? h('div', { className: 'sk-slice__label' + (isHi(p.label) ? ' sk-indic' : '') }, p.label) : null, p.children);
+}
+function Row(p) { return h('div', { className: 'sk-slices', style: Object.assign({ alignItems: 'stretch' }, p.style) }, p.children); }
+function Note(t) { return h('div', { className: 'sk-slice__label' + (isHi(t) ? ' sk-indic' : ''), style: { marginTop: 4 } }, t); }
+function head(title, sub) {
+  return h('div', { style: { display: 'flex', alignItems: 'center', gap: 11 } },
+    h(S.Orb, { state: 'working', size: 42, decorative: true, style: { boxShadow: 'var(--shadow-orb-working-sm)' } }),
+    h('div', { style: { flex: 1, minWidth: 0 } },
+      h('div', { style: { font: '600 13px/1.25 var(--font-display)' } }, title),
+      h('div', { style: { font: '400 12px/1.45 var(--font-ui)', color: 'var(--text-body)' } }, sub)));
+}
+function bar(pct, name) {
+  return h('div', { role: 'progressbar', 'aria-label': name, 'aria-valuenow': pct, 'aria-valuemin': 0, 'aria-valuemax': 100, style: { height: 10, borderRadius: 'var(--radius-pill)', background: 'var(--info-track)', overflow: 'hidden' } },
+    h('div', { style: { width: pct + '%', height: '100%', borderRadius: 'var(--radius-pill)', background: 'var(--indigo-500)' } }));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(
+  h(Row, null,
+    h(Slice, { v: 'card', label: 'Working sheet · VIDYA’s steps' },
+      head('Writing your lesson', 'Keep using the app. I’ll finish in the background.'),
+      h('ol', { className: 'sk-checkliststep-list', 'aria-label': 'Progress' },
+        h(S.ChecklistStep, { status: 'done' }, 'Matched CBSE · NCERT Ganita Prakash 7, Ch 8'),
+        h(S.ChecklistStep, { status: 'done' }, 'Chose a chapati activity'),
+        h(S.ChecklistStep, { status: 'active' }, 'Writing board work in हिन्दी'),
+        h(S.ChecklistStep, { status: 'pending' }, 'Ready to deliver')),
+      bar(62, 'Writing your lesson')),
+    h(Slice, { v: 'card', label: 'Another board · in Kannada' },
+      head('Writing your worksheet', 'Ten questions · Class 7 · I’ll tell you when it’s ready'),
+      h('ol', { className: 'sk-checkliststep-list', 'aria-label': 'Progress' },
+        h(S.ChecklistStep, { status: 'done' }, 'Matched Karnataka State Board (KSEEB) · Class 7'),
+        h(S.ChecklistStep, { status: 'active' }, 'ಭಿನ್ನರಾಶಿಗಳ 10 ಪ್ರಶ್ನೆಗಳನ್ನು ಬರೆಯುತ್ತಿದ್ದೇನೆ'),
+        h(S.ChecklistStep, { status: 'pending' }, 'Answer key'),
+        h(S.ChecklistStep, { status: 'pending' }, 'Ready to deliver')),
+      Note('All done · the steps stay as receipts'),
+      h('ol', { className: 'sk-checkliststep-list', 'aria-label': 'Finished steps' },
+        h(S.ChecklistStep, { status: 'done' }, 'Checked CBSE · NCERT Curiosity 6, Ch 8'),
+        h(S.ChecklistStep, { status: 'done' }, 'Wrote 5 questions · Water cycle'))))
+);
+</script>
+</body></html>

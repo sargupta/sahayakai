@@ -1,0 +1,34 @@
+<!-- @dsCard group="Community" height=331 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>ResourceCard</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function useSave(n, on) {
+  var s = React.useState({ n: n, on: !!on }), v = s[0], set = s[1];
+  return { saves: v.n, saved: v.on, onSave: function () { set({ n: v.n + (v.on ? -1 : 1), on: !v.on }); } };
+}
+function Demo() {
+  var a = useSave(214), b = useSave(186), c = useSave(97), d = useSave(63, true);
+  var e = useSave(142), f = useSave(88), g = useSave(71), k = useSave(44);
+  function card(props, s) { return h(S.ResourceCard, Object.assign({ as: 'li', onOpen: function () {} }, props, s)); }
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Library grid · every type'),
+      h('ul', { className: 'sk-resourcecard-grid', 'aria-label': 'Shared resources' },
+        card({ type: 'lesson', title: 'Water cycle', chips: ['Class 6', 'Science'], board: 'CBSE' }, a),
+        card({ type: 'worksheet', title: 'Photosynthesis', chips: ['Class 7', { label: 'हिन्दी', lang: 'hi' }] }, b),
+        card({ type: 'quiz', title: 'Fractions', chips: ['Class 5', 'Maths'], board: 'ICSE' }, c),
+        card({ type: 'visual', title: 'Solar system', chips: ['Class 6', { label: 'मराठी', lang: 'mr' }] }, d))),
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Saved · state boards · in Hindi'),
+      h('ul', { className: 'sk-resourcecard-grid', 'aria-label': 'More shared resources' },
+        card({ type: 'lesson', title: 'Gram Panchayat', chips: ['Class 6', 'Social'], board: 'KSEEB' }, e),
+        card({ type: 'rubric', title: 'Poster project', chips: ['Class 6', 'General'] }, k),
+        card({ type: 'worksheet', title: 'Profit and loss', chips: ['Class 8', 'Maths'], board: 'GSEB' }, g),
+        card({ lang: 'hi', type: 'quiz', typeLabel: 'प्रश्नोत्तरी', title: 'संज्ञा और क्रिया', chips: ['कक्षा 4', 'हिन्दी'], savesLabel: f.saves + ' बार सहेजा', saveLabel: 'सहेजें', savedLabel: 'सहेजा गया' }, f))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

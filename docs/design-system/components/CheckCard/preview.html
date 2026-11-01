@@ -1,0 +1,37 @@
+<!-- @dsCard group="Inputs" height=362 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>CheckCard</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+var TYPES = ['Multiple choice', 'True / false', 'Fill in the blanks', 'Short answer'];
+function Demo() {
+  var s = React.useState(['Multiple choice', 'Short answer']), on = s[0], setOn = s[1];
+  var k = React.useState(true), key = k[0], setKey = k[1];
+  function toggle(t) { return function (checked) { setOn(checked ? on.concat([t]) : on.filter(function (x) { return x !== t; })); }; }
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice' },
+      h(S.Eyebrow, { size: 'tight', id: 'qt' }, 'Question types'),
+      h('div', { role: 'group', 'aria-labelledby': 'qt', style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 } },
+        TYPES.map(function (t) { return h(S.CheckCard, { key: t, label: t, name: 'types', value: t, checked: on.indexOf(t) > -1, onChange: toggle(t) }); })),
+      h('div', { className: 'sk-slice__label', 'aria-live': 'polite' }, on.length + ' of 4 chosen'),
+      h('div', { className: 'sk-slice__label' }, 'With a hint · disabled'),
+      h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 } },
+        h(S.CheckCard, { label: 'Match the following', hint: 'Needs 4 or more terms', defaultChecked: true }),
+        h(S.CheckCard, { label: 'Diagram labelling', hint: 'Needs a picture', disabled: true }))),
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Checkbox · the plain row'),
+      h('div', null,
+        h(S.Checkbox, { label: 'Add an answer key', checked: key, onChange: setKey }),
+        h(S.Checkbox, { label: 'Print on one page', hint: 'Shrinks the questions to fit A4', defaultChecked: false }),
+        h(S.Checkbox, { label: 'Share to Community', disabled: true })),
+      h('div', { className: 'sk-slice__label' }, 'In हिन्दी'),
+      h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 } },
+        h(S.CheckCard, { lang: 'hi', label: 'बहुविकल्पीय', defaultChecked: true }),
+        h(S.CheckCard, { lang: 'hi', label: 'रिक्त स्थान भरें' })),
+      h(S.Checkbox, { lang: 'hi', label: 'उत्तर कुंजी जोड़ें', defaultChecked: true })));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

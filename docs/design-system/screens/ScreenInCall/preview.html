@@ -1,0 +1,36 @@
+<!-- @dsCard group="Screens · Class and calls" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>In call</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+/* A stand-in for VIDYA's voice level on the line. */
+function voice() { var t = performance.now() / 1000; return Math.max(0, Math.sin(t * 7.3) * Math.sin(t * 2.1) * .9 + .15); }
+function InCall() {
+  var l = React.useState(false), listening = l[0], setListening = l[1];
+  return h(S.PhoneScreen, {
+    wash: 'call', glow: false, gap: 18,
+    style: { background: 'var(--glow-live-speaking), var(--wash-call)' },
+    overlay: h('div', { className: 'sk-tabbar-dock' }, h(S.TabBar, { active: 'home' }))
+  },
+    h(S.CallStage, { status: 'Call in progress', time: '1:12', name: 'Hiren’s mother', detail: 'Speaking Bengali · 3 exchanges so far', getLevel: voice, style: { marginTop: 10 } }),
+    h(S.CallTranscript, {
+      style: { flex: '0 1 auto' }, parentName: 'Hiren’s mother', translatedFrom: 'Translated from Bengali',
+      lines: [
+        { who: 'vidya', text: 'Namaste. This is from Class 6A. I want to discuss Hiren’s progress in maths.' },
+        { who: 'parent', text: 'Yes teacher, I know his marks have dropped. At home he says he doesn’t understand.' },
+        { who: 'vidya', text: 'Thank you for telling me. Could someone at home sit with him for 20 minutes a day?' }
+      ]
+    }),
+    h('div', { style: { display: 'flex', gap: 9, flex: 'none', marginTop: 'auto' } },
+      h(S.Button, { variant: 'danger', size: 'md', style: { flex: 1 } }, 'End call'),
+      h(S.Button, {
+        variant: 'secondary', size: 'md', 'aria-pressed': listening, onClick: function () { setListening(!listening); },
+        style: listening ? { background: 'var(--leaf-tint)', borderColor: 'var(--leaf-tint-border)', color: 'var(--leaf-700)' } : undefined
+      }, S.Icon({ name: 'speaker', size: 18 }), 'Listen in')));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(InCall)));
+</script>
+</body></html>

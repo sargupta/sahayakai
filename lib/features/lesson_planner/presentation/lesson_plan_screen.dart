@@ -192,6 +192,20 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
   /// Abandon the running generation and return to the form.
   void _stop() => ref.read(lessonPlanControllerProvider.notifier).clear();
 
+  /// The plan on the Output screen as the deliver tray takes it. Keyed by the
+  /// plan instance, so a regeneration is a new deliverable.
+  Deliverable? _deliverableFor(LessonPlan? plan, AppLocalizations l10n) {
+    if (plan == null) return null;
+    return Deliverable(
+      id: 'lesson-${identityHashCode(plan)}',
+      title: plan.title.isEmpty ? l10n.lessonPlanTitle : plan.title,
+      subtitle: plan.title.isEmpty ? null : plan.title,
+      text: lessonPlanAsPlainText(plan, l10n),
+      shareSubject: plan.title.isEmpty ? null : plan.title,
+      language: plan.language,
+    );
+  }
+
   /// Brings the result masthead to the top of the viewport when a fresh plan
   /// lands. Honours reduce-motion by jumping (no scroll tween).
   void _scrollToResult() {
@@ -265,6 +279,11 @@ class _LessonPlanScreenState extends ConsumerState<LessonPlanScreen> {
       wash: AppGradients.washComposer,
       title: l10n.lessonPlanTitle,
       isBusy: state.isLoading,
+      // Output screen (UX map Flow 4): the result replaces the form;
+      // Edit brings the form back and keeps the result until a new one lands.
+      hasResult: hasResult,
+      onResubmit: _submit,
+      deliverable: _deliverableFor(state.valueOrNull, l10n),
       submitLabel: l10n.actionGenerate,
       // Hide the sticky Generate button once a plan is on screen — the
       // document's own action bar (Regenerate / Copy) takes over.

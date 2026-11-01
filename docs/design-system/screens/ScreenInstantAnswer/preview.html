@@ -1,0 +1,31 @@
+<!-- @dsCard group="Screens · VIDYA" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Instant answer</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+var n = function () {};
+function Answer() {
+  return h(S.PhoneScreen, { glow: false, gap: 11, padBottom: 24 },
+    h(S.ScreenHeader, { level: 'page', title: 'Your answer', subtitle: h('span', { style: { fontStyle: 'italic' } }, '“Explain photosynthesis to a 10-year-old using one simple everyday analogy.”') }),
+    h(S.HonestyNote, { title: 'Not checked against web sources' }, 'I answered from my own knowledge, not a web search. Please check the facts before you teach them.'),
+    h(S.GlassCard, { radius: 'tile', tone: 'strong', padding: 14, raised: true },
+      h('p', { style: { margin: 0, font: '400 13px/1.75 var(--font-ui)' } },
+        'Imagine plants are like little chefs, but instead of a stove they use the sun. They take water from the soil, and carbon dioxide from the air. In their green leaves, their kitchen, they mix these ingredients using sunlight as energy. That cooking process is called ',
+        h('strong', null, 'photosynthesis'),
+        '. What do they cook? Their own food, a kind of sugar. And as a bonus, they release oxygen, which is what we breathe.')),
+    h(S.MediaRow, { eyebrow: 'Recommended video', title: 'Watch on YouTube', meta: 'Photosynthesis for Class 7', href: '#video' }),
+    h('div', { style: { display: 'flex', gap: 7 } },
+      h(S.Field, { label: 'Class', size: 'md', as: 'select', value: 'Class 6', onOpen: n, style: { flex: '1 1 auto' } }),
+      h(S.Field, { label: 'Subject', size: 'md', as: 'select', value: 'Science', onOpen: n, style: { flex: '1 1 auto' } }),
+      h(S.Field, { label: 'Language', size: 'md', as: 'select', value: 'English', onOpen: n, style: { flex: '1 1 auto' } })),
+    h('div', { style: { flex: '1 1 auto' } }),
+    h('div', { style: { display: 'flex', gap: 9 } },
+      h(S.Button, { variant: 'accent-outline', size: 'md', style: { flex: 1 } }, 'Share to Community'),
+      h(S.Button, { size: 'md', style: { flex: 1 } }, 'Save to Library')));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Answer)));
+</script>
+</body></html>

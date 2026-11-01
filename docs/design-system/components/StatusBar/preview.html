@@ -1,0 +1,38 @@
+<!-- @dsCard group="Navigation" height=323 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>StatusBar</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* Phone slices: 360px, the phone's true width. The corner glow is clipped inside the slice, so nothing pokes out of it. */
+function Glow() { return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } }, h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } })); }
+function isHi(t) { return typeof t === 'string' && /[ऀ-ൿ]/.test(t); }
+function Slice(p) {
+  var vs = (p.v || '').split(' ').filter(Boolean);
+  var cls = 'sk-slice' + vs.filter(function (x) { return x !== 'glow'; }).map(function (x) { return ' sk-slice--' + x; }).join('');
+  return h('div', { className: cls, style: p.style }, vs.indexOf('glow') !== -1 ? h(Glow) : null, p.label ? h('div', { className: 'sk-slice__label' + (isHi(p.label) ? ' sk-indic' : '') }, p.label) : null, p.children);
+}
+function Row(p) { return h('div', { className: 'sk-slices', style: Object.assign({ alignItems: 'stretch' }, p.style) }, p.children); }
+function Note(t) { return h('div', { className: 'sk-slice__label' + (isHi(t) ? ' sk-indic' : ''), style: { marginTop: 4 } }, t); }
+/* The top of a phone: the status bar runs edge to edge, the screen's content sits 20px in below it. */
+function Top(p) {
+  return h(Slice, { v: 'bleed ' + (p.v || ''), style: { paddingTop: 0, paddingBottom: 18, gap: 4 } },
+    h(S.StatusBar, { network: p.network, tone: p.tone }),
+    h('div', { className: p.tone === 'camera' ? 'sk-camera' : null, style: { padding: '4px 20px 0', display: 'flex', flexDirection: 'column', gap: 12 } }, p.children, Note(p.label)));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(
+  h('div', null,
+    h(Row, null,
+      h(Top, { v: 'glow', label: 'Every screen · 36px · hidden from assistive tech' },
+        h(S.ScreenHeader, { title: 'Make a lesson', subtitle: 'Spoken or typed, same result' })),
+      h(Top, { network: 'no signal', label: 'Offline · the words say it, no icon' },
+        h(S.ScreenHeader, { title: 'Meena Kulkarni', subtitle: 'Green Valley Public School, Nashik · Classes 5 & 7' }))),
+    h(Row, { style: { paddingTop: 4 } },
+      h(Top, { v: 'camera', tone: 'camera', label: 'On the scanner’s camera ground' },
+        h(S.ScreenHeader, { level: 'output', title: 'Scan answer sheets', subtitle: 'Class 7 · Maths test', trailing: h(S.Pill, { tone: 'camera', size: 'md' }, '12 / 34') })),
+      h(Top, { v: 'call', label: 'On a call · same row on every wash' },
+        h(S.ScreenHeader, { level: 'output', title: 'Dhruv’s father', subtitle: 'Absent 3 days this week', trailing: h(S.Pill, { tone: 'solid-leaf', size: 'md' }, 'On call · 1:12') }))))
+);
+</script>
+</body></html>

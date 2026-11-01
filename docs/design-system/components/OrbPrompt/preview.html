@@ -1,0 +1,57 @@
+<!-- @dsCard group="VIDYA" height=416 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>OrbPrompt</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* Phone slices: 360px, the phone's true width. The corner glow is clipped inside the slice, so nothing pokes out of it. */
+function Glow() { return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } }, h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } })); }
+function isHi(t) { return typeof t === 'string' && /[ऀ-ൿ]/.test(t); }
+function Slice(p) {
+  var vs = (p.v || '').split(' ').filter(Boolean);
+  var cls = 'sk-slice' + vs.filter(function (x) { return x !== 'glow'; }).map(function (x) { return ' sk-slice--' + x; }).join('');
+  return h('div', { className: cls, style: p.style }, vs.indexOf('glow') !== -1 ? h(Glow) : null, p.label ? h('div', { className: 'sk-slice__label' + (isHi(p.label) ? ' sk-indic' : '') }, p.label) : null, p.children);
+}
+function Row(p) { return h('div', { className: 'sk-slices', style: Object.assign({ alignItems: 'stretch' }, p.style) }, p.children); }
+function Note(t) { return h('div', { className: 'sk-slice__label' + (isHi(t) ? ' sk-indic' : ''), style: { marginTop: 4 } }, t); }
+var TALL = { height: 392 };
+function page() {
+  return [
+    h(S.ScreenHeader, { key: 'h', title: 'Scan results', subtitle: 'Class 7 · Maths test · 34 sheets' }),
+    h('div', { key: 'c', style: { borderRadius: 'var(--radius-card)', background: 'var(--surface-glass-strong)', border: '1px solid var(--border-glass)', padding: '13px 14px', height: 150 } },
+      h('div', { style: { font: '600 12px/1.4 var(--font-ui)' } }, 'Students needing help'),
+      h('div', { style: { font: '400 12px/1.6 var(--font-ui)', color: 'var(--text-body)', marginTop: 6 } }, 'Aarav · Kavya · Imran · Divya · Rohit · and 6 more'))
+  ];
+}
+function dock() { return h('div', { className: 'sk-tabbar-dock' }, h(S.TabBar, { active: 'library' })); }
+function Demo() {
+  var d = React.useState(false), gone = d[0], setGone = d[1];
+  var b = React.useState(false), building = b[0], setBuilding = b[1];
+  return h(Row, null,
+    h(Slice, { v: 'glow', label: 'Scan results · VIDYA offers from context', style: TALL },
+      page(),
+      h(S.OrbPrompt, {
+        message: building ? 'Building the worksheet. I’ll turn green when it’s ready.' : 'I can build a remedial worksheet for the 4 weak concepts.',
+        orbState: building ? 'working' : 'resting',
+        primary: building ? null : { label: 'Build it', onClick: function () { setBuilding(true); } },
+        secondary: building ? null : { label: 'Message parents', onClick: function () {} },
+        onOrb: function () { setBuilding(false); }
+      }),
+      dock()),
+    h(Slice, { v: 'glow', label: 'In Hindi · dismissible, close or Escape', style: TALL },
+      page(),
+      gone
+        ? h('div', { style: { position: 'absolute', left: 20, bottom: 96 } }, h(S.Button, { variant: 'secondary', size: 'sm', onClick: function () { setGone(false); } }, 'Show the offer again'))
+        : h(S.OrbPrompt, {
+          lang: 'hi',
+          message: 'मैं इन 4 कमज़ोर हिस्सों पर एक अभ्यास वर्कशीट बना सकती हूँ।',
+          primary: { label: 'बनाइए', onClick: function () {} },
+          secondary: { label: 'अभिभावकों को संदेश', onClick: function () {} },
+          onDismiss: function () { setGone(true); }, dismissLabel: 'अभी नहीं'
+        }),
+      dock()));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

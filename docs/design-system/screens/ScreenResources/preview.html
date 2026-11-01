@@ -1,0 +1,55 @@
+<!-- @dsCard group="Screens · Community" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Shared resources</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+var ITEMS = [
+  { type: 'lesson', title: 'Water cycle', chips: ['Class 6', 'Science'], board: 'CBSE', saves: 214, kind: 'lessons' },
+  { type: 'worksheet', title: 'Photosynthesis', chips: ['Class 7', { label: 'हिन्दी', lang: 'hi' }], saves: 186, kind: 'worksheets' },
+  { type: 'quiz', title: 'Fractions', chips: ['Class 5', 'Maths'], saves: 97, kind: 'quizzes' },
+  { type: 'visual', title: 'Solar system', chips: ['Class 6', { label: 'मराठी', lang: 'mr' }], saves: 63, kind: 'visual' },
+  { type: 'lesson', title: 'Gram Panchayat', chips: ['Class 6', 'Social'], board: 'KSEEB', saves: 142, kind: 'lessons' },
+  { type: 'quiz', title: 'Nouns and verbs', chips: ['Class 4', 'English'], saves: 88, kind: 'quizzes' },
+  { type: 'worksheet', title: 'Profit and loss', chips: ['Class 8', 'Maths'], saves: 71, kind: 'worksheets' },
+  { type: 'rubric', title: 'Poster project', chips: ['Class 6', 'General'], saves: 44, kind: 'rubrics' }
+];
+var GLASS = { background: 'var(--surface-glass-chip)', borderColor: 'var(--border-glass)', color: 'var(--text-body)' };
+function Resources() {
+  var f = React.useState('all'), filter = f[0], setFilter = f[1];
+  var s = React.useState({}), saved = s[0], setSaved = s[1];
+  function go() {}
+  function chip(key, label) {
+    var on = filter === key;
+    return h(S.Chip, { key: key, variant: 'filter', selected: on, onClick: function () { setFilter(key); }, style: on ? undefined : GLASS }, label);
+  }
+  var shown = ITEMS.filter(function (x) { return filter === 'all' || x.kind === filter; });
+  return h(S.PhoneScreen, {
+    gap: 10,
+    padBottom: 164,
+    overlay: [
+      h('div', { key: 'o', className: 'sk-orb-park' }, h(S.Orb, { onClick: go })),
+      h('div', { key: 't', className: 'sk-tabbar-dock' }, h(S.TabBar, { active: 'community' }))
+    ]
+  },
+    h(S.ScreenHeader, { title: 'Shared resources', subtitle: 'Material other teachers have published' }),
+    h(S.SearchField, { label: 'Search shared resources', placeholder: 'Search lessons, quizzes, worksheets…' }),
+    h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 } },
+      h('div', { role: 'group', 'aria-label': 'Show', style: { display: 'flex', gap: 5, minWidth: 0 } },
+        chip('all', 'All 24'), chip('lessons', 'Lessons'), chip('quizzes', 'Quizzes')),
+      h('button', { type: 'button', className: 'sk-hit', 'aria-haspopup': 'dialog', 'aria-label': 'Language: हिन्दी. Change', onClick: go,
+        style: { flex: 'none', display: 'inline-flex', alignItems: 'center', gap: 2, margin: 0, padding: 0, border: 0, background: 'transparent', cursor: 'pointer', borderRadius: 'var(--radius-xs)', color: 'var(--saffron-600)', '--sk-hit-inset': '-14px -8px' } },
+        h('span', { lang: 'hi', className: 'sk-indic', style: { font: '600 12px/1.4 var(--font-ui)' } }, 'हिन्दी'),
+        h(S.Icon, { name: 'chevron', size: 14, stroke: 2 }))),
+    h('ul', { className: 'sk-resourcecard-grid', 'aria-label': 'Shared resources', style: { flex: 1, minHeight: 0, overflow: 'hidden' } },
+      shown.map(function (x) {
+        return h(S.ResourceCard, { key: x.title, as: 'li', type: x.type, title: x.title, chips: x.chips, board: x.board, headingLevel: 2, onOpen: go,
+          saves: x.saves + (saved[x.title] ? 1 : 0), saved: !!saved[x.title],
+          onSave: function () { var n = Object.assign({}, saved); n[x.title] = !saved[x.title]; setSaved(n); } });
+      })));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Resources)));
+</script>
+</body></html>

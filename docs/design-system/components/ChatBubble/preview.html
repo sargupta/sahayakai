@@ -1,0 +1,24 @@
+<!-- @dsCard group="Conversation" height=379 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>ChatBubble</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Slice(label, kids, extra) { return h('div', { className: 'sk-slice' + (extra ? ' ' + extra : '') }, h('div', { className: 'sk-slice__label' }, label), kids); }
+ReactDOM.createRoot(document.getElementById('root')).render(
+  h('div', { className: 'sk-slices' },
+    Slice('Teacher, then a run of two VIDYA turns', [
+      h(S.ChatBubble, { key: 'a', from: 'teacher', initials: 'MK', name: 'Meena Kulkarni', lang: 'hi-Latn' }, 'Class 6 ke liye jal chakra ka 40-minute lesson plan banao'),
+      h(S.ChatBubble, { key: 'b', from: 'vidya', avatar: false }, 'Happy to.'),
+      h(S.ChatBubble, { key: 'b2', from: 'vidya' }, 'Which section is this for? I have 6A at 10:20 and 6B after lunch.'),
+      h(S.ChatBubble, { key: 'c', from: 'teacher', lang: 'hi-Latn' }, '6A, and keep it hands-on')
+    ]),
+    Slice('Indic · wraps, never truncates', [
+      h(S.ChatBubble, { key: 'a', from: 'teacher', initials: 'MK', name: 'Meena Kulkarni', lang: 'hi' }, 'कक्षा छह के लिए जल चक्र की पाठ योजना बनाओ'),
+      h(S.ChatBubble, { key: 'b', from: 'vidya', lang: 'hi' }, 'ठीक है। मैं CBSE · NCERT Curiosity 6 के अध्याय 8 से 40 मिनट की योजना बना रही हूँ।')
+    ])
+  )
+);
+</script>
+</body></html>

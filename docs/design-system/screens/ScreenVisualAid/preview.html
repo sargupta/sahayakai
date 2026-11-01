@@ -1,0 +1,45 @@
+<!-- @dsCard group="Screens · Outputs" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Visual aid</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+function VisualAid() {
+  var st = React.useState('chalk'), style = st[0], setStyle = st[1];
+  var mr = React.useState(true), marathi = mr[0], setMarathi = mr[1];
+  return h(S.PhoneScreen, {
+    gap: 10,
+    overlay: [
+      h('div', { key: 'o', className: 'sk-orb-park sk-orb-park--cta' }, h(S.Orb, { onClick: function () {} })),
+      h('div', { key: 't', className: 'sk-tabbar-dock' }, h(S.TabBar, { active: 'library' }))
+    ]
+  },
+    h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } },
+      h(S.ScreenHeader, { onBack: function () {}, backLabel: 'Back to Make', style: { marginTop: 6 } }),
+      h(S.Pill, { tone: 'saffron', size: 'md', style: { padding: '7px 12px' } }, '2 left this month')),
+    h('div', null,
+      h(S.Eyebrow, { tone: 'muted', style: { letterSpacing: '.18em' } }, 'Visual aid · board-ready'),
+      h(S.ScreenHeader, { level: 'page', title: 'The water cycle, as one loop', style: { marginTop: 4 } })),
+    h(S.ActionBar, { set: 'revise', size: 'md', bleed: true, label: 'Visual aid actions' }),
+    h('div', {
+      role: 'img', 'aria-label': 'Generated diagram: the water cycle as one loop, four labelled stages',
+      style: { flex: 1, minHeight: 0, borderRadius: 20, background: 'var(--surface-glass-soft)', border: '1px dashed var(--accent-outline)', boxShadow: '0 10px 26px rgba(23,19,16,.07)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 20, textAlign: 'center' }
+    },
+      h('div', { style: { font: '600 13px/normal var(--font-display)', color: 'var(--saffron-600)' } }, 'Generated diagram'),
+      h('div', { style: { font: '400 12px/1.6 var(--font-ui)', color: 'var(--text-body)' } }, 'Four labelled stages in one loop, thick chalk-weight lines')),
+    h('div', { style: { display: 'flex', gap: 6, flexWrap: 'wrap' } },
+      h(S.Chip, { tone: 'leaf', selected: style === 'chalk', onClick: function () { setStyle('chalk'); } }, 'Chalk style'),
+      h(S.Chip, { tone: 'leaf', emphasis: 'quiet', selected: style === 'line', onClick: function () { setStyle('line'); } }, 'Line art'),
+      h(S.Chip, { tone: 'leaf', emphasis: 'quiet', selected: marathi, onClick: function () { setMarathi(!marathi); } }, 'Labels in Marathi')),
+    h(S.GlassCard, { radius: 'field', tone: 'soft', padding: '11px 14px' },
+      h('p', { style: { margin: 0, font: '400 12px/1.5 var(--font-ui)', color: 'var(--text-body)' } }, 'Copies onto a blackboard in five minutes: thick lines, four labels.')),
+    h('div', { 'aria-hidden': 'true', style: { flex: 'none', height: 82 } }),
+    h('div', { style: { display: 'flex', gap: 9 } },
+      h(S.Button, { variant: 'primary', size: 'md', style: { flex: 1 } }, 'Save & print'),
+      h(S.Button, { variant: 'secondary', size: 'md' }, 'Try again')));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(VisualAid)));
+</script>
+</body></html>

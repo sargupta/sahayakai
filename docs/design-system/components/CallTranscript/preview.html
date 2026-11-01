@@ -1,0 +1,46 @@
+<!-- @dsCard group="Class and calls" height=610 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>CallTranscript</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Slice(label, mods, kids) {
+  return h('div', { className: ['sk-slice'].concat(mods.map(function (m) { return 'sk-slice--' + m; })).join(' ') },
+    h('div', { className: 'sk-slice__label' }, label), kids);
+}
+var LINES = [
+  { who: 'vidya', text: 'Namaste. This is from Class 6A. I want to discuss Hiren’s progress in maths.' },
+  { who: 'parent', text: 'Yes teacher, I know his marks have dropped. At home he says he doesn’t understand.' },
+  { who: 'vidya', text: 'Thank you for telling me. Could someone at home sit with him for 20 minutes a day?' }
+];
+function Live() {
+  var n = React.useState(2), count = n[0], setCount = n[1];
+  return h('div', { style: { display: 'flex', flexDirection: 'column', gap: 12 } },
+    h(S.CallTranscript, { lines: LINES.slice(0, count), parentName: 'Hiren’s mother', translatedFrom: 'Translated from Bengali' }),
+    h(S.Button, { variant: 'outline', size: 'sm', onClick: function () { setCount(count >= 3 ? 2 : 3); } }, count >= 3 ? 'Back to two lines' : 'Add the next line'));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(
+  h('div', { className: 'sk-slices' },
+    Slice('Live · translated for you', ['call'], h(Live)),
+    Slice('Asked if it is automated', ['call'],
+      h(S.CallTranscript, {
+        parentName: 'Hiren’s mother', translatedFrom: 'Translated from Bengali', note: null,
+        lines: [
+          { who: 'parent', text: 'Is this a recording? Am I talking to a person?' },
+          { who: 'vidya', text: 'I’m an automated assistant calling for Hiren’s school. His class teacher reads everything you say and can call you back herself.' },
+          { who: 'parent', text: 'All right. Then please tell her his sister can help him.' }
+        ]
+      })),
+    Slice('As spoken · Bengali', ['call'],
+      h(S.CallTranscript, {
+        parentName: 'Hiren’s mother', live: false,
+        lines: [
+          { who: 'vidya', lang: 'bn', text: 'নমস্কার। আমি ক্লাস ৬এ থেকে বলছি। হিরেনের গণিতের অগ্রগতি নিয়ে কথা বলতে চাই।' },
+          { who: 'parent', lang: 'bn', text: 'হ্যাঁ, জানি ওর নম্বর কমে গেছে।' }
+        ]
+      }))
+  )
+);
+</script>
+</body></html>

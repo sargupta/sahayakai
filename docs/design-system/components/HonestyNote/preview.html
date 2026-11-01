@@ -1,0 +1,21 @@
+<!-- @dsCard group="Content" height=250 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>HonestyNote</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Slice(label, kids) { return h('div', { className: 'sk-slice' }, h('div', { className: 'sk-slice__label' }, label), kids); }
+ReactDOM.createRoot(document.getElementById('root')).render(
+  h('div', { className: 'sk-slices' },
+    Slice('On an answer · titled', [
+      h(S.HonestyNote, { key: 'a', title: 'Not checked against web sources' }, 'I answered from my own knowledge, not a web search. Please check the facts before you teach them.')
+    ]),
+    Slice('On the ask · compact, and Hindi', [
+      h(S.HonestyNote, { key: 'b' }, 'Answers come from VIDYA’s own knowledge unless a web check is on.'),
+      h(S.HonestyNote, { key: 'c', lang: 'hi', title: 'वेब स्रोतों से जाँचा नहीं गया' }, 'मैंने अपनी जानकारी से उत्तर दिया है, वेब खोज से नहीं। पढ़ाने से पहले तथ्य जाँच लें।')
+    ])
+  )
+);
+</script>
+</body></html>

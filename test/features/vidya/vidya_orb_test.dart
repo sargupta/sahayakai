@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sahayakai/core/theme/app_theme.dart';
 import 'package:sahayakai/features/vidya/presentation/widgets/vidya_orb.dart';
 
@@ -20,7 +19,9 @@ Future<void> _pumpOrb(
 }) async {
   await tester.pumpWidget(
     MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
+      theme: brightness == Brightness.dark
+          ? AppTheme.light()
+          : AppTheme.light(),
       home: Builder(
         builder: (context) => MediaQuery(
           data: MediaQuery.of(
@@ -65,28 +66,21 @@ void main() {
     }
   });
 
-  group('affordance glyph', () {
-    for (final state in const [
-      VidyaOrbVisual.resting,
-      VidyaOrbVisual.dragging,
-      VidyaOrbVisual.listening,
-    ]) {
-      testWidgets('${state.name} shows the mic glyph', (tester) async {
-        await _pumpOrb(tester, state);
-        expect(find.byIcon(LucideIcons.mic), findsOneWidget);
+  group('no glyph', () {
+    // Orb spec: the orb carries no glyph in any state. Its meaning is its
+    // colour, its motion and the words beside it; a mic glyph is a control.
+    for (final state in VidyaOrbVisual.values) {
+      testWidgets('${state.name} draws no icon', (tester) async {
+        await _pumpOrb(tester, state, readyCount: 2);
+        expect(
+          find.descendant(
+            of: find.byType(VidyaOrb),
+            matching: find.byType(Icon),
+          ),
+          findsNothing,
+        );
       });
     }
-
-    testWidgets('working shows the spark glyph', (tester) async {
-      await _pumpOrb(tester, VidyaOrbVisual.working);
-      expect(find.byIcon(LucideIcons.sparkles), findsOneWidget);
-    });
-
-    testWidgets('ready shows no glyph — the badge speaks', (tester) async {
-      await _pumpOrb(tester, VidyaOrbVisual.ready, readyCount: 2);
-      expect(find.byIcon(LucideIcons.mic), findsNothing);
-      expect(find.byIcon(LucideIcons.sparkles), findsNothing);
-    });
   });
 
   group('ready badge', () {
@@ -137,7 +131,9 @@ void main() {
     }
 
     for (final state in _staticStates) {
-      testWidgets('${state.name} is a still frame under motion', (tester) async {
+      testWidgets('${state.name} is a still frame under motion', (
+        tester,
+      ) async {
         await _pumpOrb(tester, state, readyCount: 1);
         await tester.pumpAndSettle();
         expect(tester.binding.transientCallbackCount, 0);
@@ -180,11 +176,7 @@ void main() {
   });
 
   testWidgets('renders in dark without error', (tester) async {
-    await _pumpOrb(
-      tester,
-      VidyaOrbVisual.working,
-      brightness: Brightness.dark,
-    );
+    await _pumpOrb(tester, VidyaOrbVisual.working, brightness: Brightness.dark);
     expect(tester.takeException(), isNull);
     expect(find.byType(VidyaOrb), findsOneWidget);
   });

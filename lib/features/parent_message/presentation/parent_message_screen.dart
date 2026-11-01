@@ -122,8 +122,10 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
     final state = ref.watch(parentMessageControllerProvider);
 
     // Auto-scroll to the result header on a fresh success (loading -> data).
-    ref.listen<AsyncValue<ParentMessage?>>(parentMessageControllerProvider,
-        (prev, next) {
+    ref.listen<AsyncValue<ParentMessage?>>(parentMessageControllerProvider, (
+      prev,
+      next,
+    ) {
       final wasLoading = prev?.isLoading ?? false;
       final nowHasMessage =
           !next.isLoading && next.hasValue && next.valueOrNull != null;
@@ -140,13 +142,19 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
             state: state,
             skeleton: const ParentMessageSkeleton(),
             emptyMessage: l10n.parentMessageEmpty,
-            onData: (message) =>
-                ParentMessageResultView(message: message, onRegenerate: _submit),
+            onData: (message) => ParentMessageResultView(
+              message: message,
+              onRegenerate: _submit,
+            ),
           );
 
     return ToolScaffold(
       title: l10n.parentMessageTitle,
       isBusy: state.isLoading,
+      // Output screen (UX map Flow 4): the result replaces the form;
+      // Edit brings the form back and keeps the result until a new one lands.
+      hasResult: hasResult,
+      onResubmit: _submit,
       submitLabel: l10n.parentMessageAction,
       // Hide the sticky action button once a draft is on screen — the document's
       // own action bar (Regenerate / Copy / Share) takes over.
@@ -169,35 +177,35 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-            EditorialSectionHeader(l10n.parentMessageSectionMessage),
-            const SizedBox(height: AppSpacing.space4),
-            _studentNameField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _classNameField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _subjectField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _reasonField(l10n),
-            if (_reason?.isAbsence ?? false) ...[
+              EditorialSectionHeader(l10n.parentMessageSectionMessage),
+              const SizedBox(height: AppSpacing.space4),
+              _studentNameField(l10n),
               const SizedBox(height: AppSpacing.space6),
-              _absentDaysField(l10n),
+              _classNameField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _subjectField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _reasonField(l10n),
+              if (_reason?.isAbsence ?? false) ...[
+                const SizedBox(height: AppSpacing.space6),
+                _absentDaysField(l10n),
+              ],
+              const SizedBox(height: AppSpacing.space6),
+              _parentLanguageField(l10n),
+              const SizedBox(height: AppSpacing.space8),
+              EditorialSectionHeader(l10n.parentMessageSectionDetails),
+              const SizedBox(height: AppSpacing.space4),
+              _reasonContextField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _teacherNoteField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _teacherNameField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _schoolNameField(l10n),
             ],
-            const SizedBox(height: AppSpacing.space6),
-            _parentLanguageField(l10n),
-            const SizedBox(height: AppSpacing.space8),
-            EditorialSectionHeader(l10n.parentMessageSectionDetails),
-            const SizedBox(height: AppSpacing.space4),
-            _reasonContextField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _teacherNoteField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _teacherNameField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _schoolNameField(l10n),
-          ],
+          ),
         ),
-      ),
-      index: 0,
+        index: 0,
       ),
     );
   }
@@ -217,8 +225,9 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
         controller: _studentNameController,
         textCapitalization: TextCapitalization.words,
         textInputAction: TextInputAction.next,
-        decoration:
-            InputDecoration(hintText: l10n.parentMessageStudentPlaceholder),
+        decoration: InputDecoration(
+          hintText: l10n.parentMessageStudentPlaceholder,
+        ),
         validator: (value) => (value == null || value.trim().isEmpty)
             ? l10n.parentMessageStudentError
             : null,
@@ -234,8 +243,9 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
         controller: _classNameController,
         textCapitalization: TextCapitalization.characters,
         textInputAction: TextInputAction.next,
-        decoration:
-            InputDecoration(hintText: l10n.parentMessageClassPlaceholder),
+        decoration: InputDecoration(
+          hintText: l10n.parentMessageClassPlaceholder,
+        ),
         validator: (value) => (value == null || value.trim().isEmpty)
             ? l10n.parentMessageClassError
             : null,
@@ -295,8 +305,9 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
         keyboardType: TextInputType.number,
         textInputAction: TextInputAction.next,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration:
-            InputDecoration(hintText: l10n.parentMessageAbsentDaysPlaceholder),
+        decoration: InputDecoration(
+          hintText: l10n.parentMessageAbsentDaysPlaceholder,
+        ),
       ),
     );
   }
@@ -342,8 +353,9 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
         minLines: 2,
         textCapitalization: TextCapitalization.sentences,
         keyboardType: TextInputType.multiline,
-        decoration:
-            InputDecoration(hintText: l10n.parentMessageContextPlaceholder),
+        decoration: InputDecoration(
+          hintText: l10n.parentMessageContextPlaceholder,
+        ),
       ),
     );
   }
@@ -365,8 +377,9 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
         minLines: 2,
         textCapitalization: TextCapitalization.sentences,
         keyboardType: TextInputType.multiline,
-        decoration:
-            InputDecoration(hintText: l10n.parentMessageNotePlaceholder),
+        decoration: InputDecoration(
+          hintText: l10n.parentMessageNotePlaceholder,
+        ),
       ),
     );
   }
@@ -381,8 +394,9 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
         controller: _teacherNameController,
         textCapitalization: TextCapitalization.words,
         textInputAction: TextInputAction.next,
-        decoration:
-            InputDecoration(hintText: l10n.parentMessageTeacherNamePlaceholder),
+        decoration: InputDecoration(
+          hintText: l10n.parentMessageTeacherNamePlaceholder,
+        ),
       ),
     );
   }
@@ -396,8 +410,9 @@ class _ParentMessageScreenState extends ConsumerState<ParentMessageScreen> {
         controller: _schoolNameController,
         textCapitalization: TextCapitalization.words,
         textInputAction: TextInputAction.done,
-        decoration:
-            InputDecoration(hintText: l10n.parentMessageSchoolNamePlaceholder),
+        decoration: InputDecoration(
+          hintText: l10n.parentMessageSchoolNamePlaceholder,
+        ),
       ),
     );
   }

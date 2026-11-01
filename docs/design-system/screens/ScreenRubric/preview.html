@@ -1,0 +1,41 @@
+<!-- @dsCard group="Screens · Outputs" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Rubric</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+var LEVELS = ['Exemplary', 'Proficient', 'Developing', 'Beginning'];
+var WEIGHTS = { 'Scientific accuracy': '40%', 'Creativity': '30%', 'Presentation': '30%' };
+var CRITERIA = [
+  { name: 'Scientific accuracy', description: 'Planet representation, orbital paths, facts', cells: ['All major planets, relative sizes scaled, no factual errors.', 'Most planets and orbits correct; one or two minor slips.', 'Some planets shown; three or four factual errors or omissions.', 'Incomplete, with significant inaccuracies or gaps.'] },
+  { name: 'Creativity', description: 'Uniqueness and aesthetic appeal', cells: ['Outstanding, innovative design; materials used effectively.', 'Well designed and visually appealing; good creativity.', 'Basic or conventional design; material use adequate.', 'Hastily put together; minimal visual appeal.'] },
+  { name: 'Presentation', description: 'Clarity, confidence, engagement', cells: ['Exceptional clarity; all members contribute and engage.', 'Clear and confident; most members contribute.', 'Lacks confidence; uneven contribution among members.', 'Unclear and disorganised; few or no members contribute.'] }
+];
+function Rubric() {
+  var o = React.useState('Scientific accuracy'), open = o[0], setOpen = o[1];
+  return h(S.PhoneScreen, {
+    gap: 10,
+    overlay: [
+      h('div', { key: 'o', className: 'sk-orb-park sk-orb-park--left sk-orb-park--cta' }, h(S.Orb, { onClick: function () {} })),
+      h('div', { key: 't', className: 'sk-tabbar-dock' }, h(S.TabBar, { active: 'library' }))
+    ]
+  },
+    h(S.ScreenHeader, { level: 'output', title: 'Solar System Model Project Rubric', subtitle: 'Class 7 group project: students build and present a working model.' }),
+    h(S.ActionBar, { set: 'save', label: 'Rubric actions', bleed: true }),
+    h('div', { style: { display: 'flex', flexDirection: 'column', gap: 9 } }, CRITERIA.map(function (c) {
+      return h(S.RubricCriterion, {
+        key: c.name, name: c.name, description: open === c.name ? c.description : null, weight: WEIGHTS[c.name],
+        collapsed: open !== c.name, onToggle: function () { setOpen(open === c.name ? null : c.name); },
+        levels: c.cells.map(function (d, i) { return { score: 4 - i, label: LEVELS[i], descriptor: d }; })
+      });
+    })),
+    h('div', { style: { marginTop: 'auto', minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' } }, h(S.FeedbackRow, { align: 'end' })),
+    h('div', { style: { display: 'flex', gap: 9 } },
+      h(S.Button, { variant: 'primary', size: 'md', style: { flex: 1 } }, 'Deliver'),
+      h(S.Button, { variant: 'secondary', size: 'md' }, 'Weights')));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Rubric)));
+</script>
+</body></html>

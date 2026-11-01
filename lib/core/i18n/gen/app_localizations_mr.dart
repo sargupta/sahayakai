@@ -184,6 +184,9 @@ class AppLocalizationsMr extends AppLocalizations {
   String get actionRegenerate => 'पुन्हा तयार करा';
 
   @override
+  String get outputEdit => 'बदला';
+
+  @override
   String get actionCopy => 'कॉपी करा';
 
   @override
@@ -2046,6 +2049,9 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get vidyaStateIdle => 'बोलण्यासाठी टॅप करा';
+
+  @override
+  String get vidyaDockReadyHint => 'तयार · पोहोचवण्यासाठी टॅप करा';
 
   @override
   String get vidyaStateReady => 'तयार होत आहे';
@@ -4035,4 +4041,80 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get homeTileCallSub => 'हिंदीत स्क्रिप्ट';
+
+  @override
+  String get homeAskEyebrow => 'VIDYA';
+
+  @override
+  String get homeAskTitle => 'ॲपमध्ये काहीही\nविचारा';
+
+  @override
+  String get homeAskSubtitle =>
+      'कोणतेही साधन, कोणतीही भाषा. ती योग्य साधन उघडते.';
+
+  @override
+  String get homeSayEyebrow => 'बोला, ती योग्य साधन उघडेल';
+
+  @override
+  String get homeSayLesson => '“इयत्ता 7 चा जलचक्र lesson plan”';
+
+  @override
+  String get homeSayQuiz => '“दहा प्रश्नांचा quiz, medium”';
+
+  @override
+  String get homeSayAttendance => '“आजची attendance लावा”';
+
+  @override
+  String get homeOrbRest => 'बोलण्यासाठी टॅप करा किंवा दाबून ठेवा';
+
+  @override
+  String get homeOrbOffline => 'आवाजासाठी सिग्नल हवा · खाली टाइप करा';
+
+  @override
+  String get homeAskPlaceholder => 'VIDYA ला विचारा, किंवा हवे ते टाइप करा…';
+
+  @override
+  String get homeAskCaption =>
+      'बोलण्यासाठी माइक दाबून ठेवा · टाइप करण्यासाठी बॉक्सवर टॅप करा';
+
+  @override
+  String get homeSpeakToVidya => 'VIDYA शी बोला';
+
+  @override
+  String get homeYourTools => 'तुमची साधने';
+
+  @override
+  String homeAllTools(int count) {
+    return 'सर्व $count साधने';
+  }
+
+  @override
+  String homeTileCallSubLanguage(String language) {
+    return '$language मध्ये स्क्रिप्ट';
+  }
+
+  @override
+  String homeWaitingReady(String title) {
+    return '$title तयार आहे';
+  }
+
+  @override
+  String homeWaitingUpdates(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count नवीन अपडेट',
+      one: '1 नवीन अपडेट',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get homeWaitingNothing => 'सध्या तुमच्यासाठी काहीही प्रलंबित नाही';
+
+  @override
+  String get homeSayLessonTopic => 'जलचक्र';
+
+  @override
+  String get outputBackToResult => 'निकालाकडे परत';
 }

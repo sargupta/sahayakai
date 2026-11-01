@@ -1,0 +1,36 @@
+<!-- @dsCard group="Screens · Start" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Home</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+function noop() {}
+function Home() {
+  var t = React.useState('home'), tab = t[0], setTab = t[1];
+  return h(S.PhoneScreen, {
+    overlay: [
+      h('div', { key: 't', className: 'sk-tabbar-dock' }, h(S.TabBar, { active: tab, onChange: setTab }))
+    ]
+  },
+    // The day, in one headline: the teacher's real periods, never a generic welcome.
+    h(S.ScreenHeader, { level: 'screen', greeting: { name: 'Meena Kulkarni', date: 'Fri, 18 Sept', language: 'हिन्दी', languageLang: 'hi' }, title: ['Two periods,', h('br', { key: 'b' }), 'one prep gap'], subtitle: 'Class 7 Maths at 10:20 · Class 5 EVS at 12:00' }),
+    // What is waiting, written as what to say. Each row routes to its tool.
+    h(S.GlassCard, { radius: 'panel', raised: true, gap: 10 },
+      h(S.Eyebrow, null, 'Say it, I’ll open it'),
+      h(S.TaskRow, { dot: 'red', lang: 'hi', label: '“आज के 4 absentees के parents को call करो”', statusLabel: 'urgent', action: 'Call', onClick: noop }),
+      h(S.TaskRow, { dot: 'amber', lang: 'hi', label: '“Class 7 की 34 copies scan करो”', statusLabel: 'waiting', action: 'Scan', onClick: noop }),
+      h(S.TaskRow, { dot: 'leaf', label: '“Open Working with Fractions”', statusLabel: 'ready', action: 'Open', onClick: noop }),
+      h(S.TaskRow, { dot: 'indigo', lang: 'hi', label: '“Prep gap में Class 5 EVS का quiz”', statusLabel: 'for your prep gap', action: 'Make', onClick: noop })),
+    // VIDYA is the screen: the one orb, large and centred. No parked orb on Home.
+    h('div', { style: { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 } },
+      h(S.Orb, { size: 112, onClick: noop, label: 'VIDYA. Tap to speak, or hold to keep talking' }),
+      h('p', { style: { margin: 0, font: '600 13px var(--font-ui)', color: 'var(--text-strong)' } }, 'Tap or hold to speak')),
+    h('div', { style: { display: 'flex', flexDirection: 'column', gap: 6 } },
+      h(S.Composer, { placeholder: 'Ask VIDYA, or type what you need…', onSubmit: noop, onMic: noop }),
+      h('p', { style: { margin: 0, textAlign: 'center', font: '400 12px/1.45 var(--font-ui)', color: 'var(--text-body)' } }, 'Hold the orb to keep talking · tap the box to type')));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Home)));
+</script>
+</body></html>

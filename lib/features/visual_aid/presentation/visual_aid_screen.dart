@@ -160,8 +160,10 @@ class _VisualAidScreenState extends ConsumerState<VisualAidScreen> {
     final state = ref.watch(visualAidControllerProvider);
 
     // Auto-scroll to the result header on a fresh success (loading -> data).
-    ref.listen<AsyncValue<VisualAid?>>(visualAidControllerProvider,
-        (prev, next) {
+    ref.listen<AsyncValue<VisualAid?>>(visualAidControllerProvider, (
+      prev,
+      next,
+    ) {
       final wasLoading = prev?.isLoading ?? false;
       final nowHasResult =
           !next.isLoading && next.hasValue && next.valueOrNull != null;
@@ -197,6 +199,10 @@ class _VisualAidScreenState extends ConsumerState<VisualAidScreen> {
     return ToolScaffold(
       title: l10n.visualAidTitle,
       isBusy: state.isLoading,
+      // Output screen (UX map Flow 4): the result replaces the form;
+      // Edit brings the form back and keeps the result until a new one lands.
+      hasResult: hasActionableResult,
+      onResubmit: _submit,
       submitLabel: l10n.visualAidAction,
       // Hide the sticky submit button once a usable drawing is on screen — the
       // document's own action bar (Regenerate / Copy) takes over. An imageless
@@ -220,19 +226,19 @@ class _VisualAidScreenState extends ConsumerState<VisualAidScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-            _promptField(l10n),
-            const SizedBox(height: AppSpacing.space8),
-            EditorialSectionHeader(l10n.sectionForYourClass),
-            const SizedBox(height: AppSpacing.space4),
-            _gradeField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _subjectField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _languageField(l10n),
-          ],
+              _promptField(l10n),
+              const SizedBox(height: AppSpacing.space8),
+              EditorialSectionHeader(l10n.sectionForYourClass),
+              const SizedBox(height: AppSpacing.space4),
+              _gradeField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _subjectField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _languageField(l10n),
+            ],
+          ),
         ),
-      ),
-      index: 0,
+        index: 0,
       ),
     );
   }

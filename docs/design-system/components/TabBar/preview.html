@@ -1,0 +1,47 @@
+<!-- @dsCard group="Navigation" height=629 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>TabBar</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* Phone slices: 360px, the phone's true width. The corner glow is clipped inside the slice, so nothing pokes out of it. */
+function Glow() { return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } }, h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } })); }
+function isHi(t) { return typeof t === 'string' && /[ऀ-ൿ]/.test(t); }
+function Slice(p) {
+  var vs = (p.v || '').split(' ').filter(Boolean);
+  var cls = 'sk-slice' + vs.filter(function (x) { return x !== 'glow'; }).map(function (x) { return ' sk-slice--' + x; }).join('');
+  return h('div', { className: cls, style: p.style }, vs.indexOf('glow') !== -1 ? h(Glow) : null, p.label ? h('div', { className: 'sk-slice__label' + (isHi(p.label) ? ' sk-indic' : '') }, p.label) : null, p.children);
+}
+function Row(p) { return h('div', { className: 'sk-slices', style: Object.assign({ alignItems: 'stretch' }, p.style) }, p.children); }
+function Note(t) { return h('div', { className: 'sk-slice__label' + (isHi(t) ? ' sk-indic' : ''), style: { marginTop: 4 } }, t); }
+var TALL = { height: 280, paddingBottom: 96 };
+function tile(t, s) { return h('div', { key: t, style: { background: 'var(--surface-glass-soft)', border: '1px solid var(--border-glass)', borderRadius: 'var(--radius-card)', padding: 13 } }, h('div', { style: { font: '600 13px var(--font-display)' } }, t), h('div', { style: { font: '400 12px var(--font-ui)', color: 'var(--text-body)', marginTop: 2 } }, s)); }
+function perch(pos) { return h('div', { 'aria-hidden': 'true', style: Object.assign({ position: 'absolute', width: 46, height: 46, borderRadius: 9999, border: '2px dashed var(--accent-outline)' }, pos) }); }
+function Demo() {
+  var st = React.useState('home'), tab = st[0], setTab = st[1];
+  var names = { home: 'Home', library: 'Library', community: 'Community', profile: 'You' };
+  return h('div', null,
+    h(Row, null,
+      h(Slice, { v: 'glow', label: 'Home · docked 18px above the foot', style: TALL },
+        h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 } }, tile('Roll call', 'Speak the names'), tile('Make a lesson', 'Any topic, any class')),
+        h('div', { 'aria-live': 'polite', style: { font: '400 12px/1.45 var(--font-ui)', color: 'var(--text-body)' } }, 'Showing ' + names[tab] + ' · tap a tab'),
+        h('div', { className: 'sk-tabbar-dock' }, h(S.TabBar, { active: tab, onChange: setTab }))),
+      h(Slice, { v: 'glow', label: 'While the orb is dragged · tint, half opacity', style: TALL },
+        h('div', { 'aria-hidden': 'true', style: { opacity: .5, display: 'flex', flexDirection: 'column', gap: 12 } },
+          h('div', { style: { background: 'rgba(255,255,255,.88)', borderRadius: 16, height: 96 } })),
+        perch({ left: 14, top: 52 }), perch({ right: 14, top: 52 }), perch({ right: 14, bottom: 100 }),
+        h('div', { className: 'sk-toast-dock', style: { bottom: 88 } }, h(S.Toast, null, 'Release to park · six perches')),
+        h('div', { style: { position: 'absolute', left: 96, top: 70 } }, h(S.Orb, { state: 'dragging', size: 64, decorative: true })),
+        h('div', { className: 'sk-tabbar-dock' }, h(S.TabBar, { active: 'community', emphasis: 'tint', dimmed: true })))),
+    h(Row, { style: { paddingTop: 4 } },
+      h(Slice, { v: 'camera', label: 'Scanner · on the camera ground', style: TALL },
+        h(S.Button, { block: true }, 'Finish and grade'),
+        h('div', { className: 'sk-tabbar-dock' }, h(S.TabBar, { active: 'library', tone: 'camera' }))),
+      h(Slice, { label: 'One tab active · four, never five', style: { gap: 10 } },
+        ['library', 'community', 'profile'].map(function (t) { return h('div', { key: t, style: { display: 'flex', justifyContent: 'center' } }, h(S.TabBar, { active: t, label: 'Main, ' + names[t] + ' shown' })); }),
+        h('div', { className: 'sk-indic', style: { font: '400 12px/1.7 var(--font-ui)', color: 'var(--text-body)' } }, 'Each tab is named for assistive tech in the teacher’s language: घर, लाइब्रेरी, समुदाय, आप.'))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

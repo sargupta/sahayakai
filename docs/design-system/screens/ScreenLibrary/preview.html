@@ -1,0 +1,63 @@
+<!-- @dsCard group="Screens · Library and you" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>My work</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+var START = 'generations';
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+var FILTERS = [{ id: 'all', label: 'All 24' }, { id: 'LP', label: 'Lessons' }, { id: 'WS', label: 'Worksheets' }, { id: 'QZ', label: 'Quizzes' }, { id: 'VA', label: 'Visual aids' }];
+var WORK = [
+  { type: 'LP', title: 'Water cycle · Class 6', meta: 'Lesson plan · CBSE · today', status: 'synced' },
+  { type: 'WS', title: 'Water cycle practice · 12 Q', meta: 'Worksheet · today', status: 'waiting' },
+  { type: 'QZ', title: 'Water cycle quiz · Class 6-B', meta: 'Quiz · 16 Sept · assigned', status: 'synced' },
+  { type: 'VA', title: 'Board diagram · water cycle', meta: 'Visual aid · 15 Sept', status: 'synced' },
+  { type: 'WS', title: 'Grammar drill', meta: 'Worksheet · Class 5', status: 'local' }
+];
+var CHATS = [
+  { ask: 'Why does a cold glass of water get wet on the outside?', messages: 6, mode: 'typed', when: 'today' },
+  { ask: 'कक्षा छह के लिए जल चक्र की पाठ योजना बनाओ', lang: 'hi', messages: 12, mode: 'live', when: 'yesterday' },
+  { ask: 'How do I show condensation with a steel tumbler?', messages: 8, mode: 'voice', when: '16 Sept', kept: true },
+  { ask: 'Ideas for a group activity on evaporation', messages: 4, mode: 'typed', when: '15 Sept' }
+];
+function Ask() {
+  return h('button', { type: 'button', className: 'sk-hit', 'aria-label': 'Find in my work. Say “find my water cycle sheet”', style: { flex: 'none', display: 'flex', alignItems: 'center', gap: 10, height: 44, padding: '0 16px', margin: 0, border: '1px solid var(--border-glass)', borderRadius: 'var(--radius-pill)', background: 'rgba(255,255,255,.76)', boxShadow: '0 6px 18px rgba(23,19,16,.07)', cursor: 'pointer', textAlign: 'left' } },
+    h(S.Icon, { name: 'search', size: 18, color: 'var(--text-body)' }),
+    h('span', { style: { flex: 1, minWidth: 0, font: '400 13px var(--font-ui)', color: 'var(--text-body)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, 'Say “find my water cycle sheet”'));
+}
+function list(name, gap, kids) { return h('ul', { 'aria-label': name, style: { display: 'flex', flexDirection: 'column', gap: gap, margin: 0, padding: 0, listStyle: 'none', flex: 1, minHeight: 0, overflow: 'hidden' } }, kids); }
+function Library() {
+  var t = React.useState(START), tab = t[0], setTab = t[1];
+  var f = React.useState('all'), filter = f[0], setFilter = f[1];
+  var k = React.useState({ 2: true }), kept = k[0], setKept = k[1];
+  var rows = WORK.filter(function (w) { return filter === 'all' || w.type === filter; });
+  var body = tab === 'generations'
+    ? [
+      h('div', { key: 'f', role: 'group', 'aria-label': 'Show only', style: { flex: 'none', display: 'flex', gap: 7, margin: '-4px -20px', padding: '4px 20px', overflowX: 'auto', scrollbarWidth: 'none' } },
+        FILTERS.map(function (x) { return h(S.Chip, { key: x.id, tone: 'leaf', selected: filter === x.id, onClick: function () { setFilter(x.id); } }, x.label); })),
+      list('Generations', 9, rows.map(function (w, i) {
+        return h(S.LibraryRow, Object.assign({ key: w.title, as: 'li', onClick: function () {} }, w));
+      }))
+    ]
+    : [
+      h('p', { key: 'n', style: { flex: 'none', margin: '0 2px', font: '400 12px/1.5 var(--font-ui)', color: 'var(--text-body)' } }, 'Every chat with VIDYA lands here, typed or spoken. The latest 10 stay; keep one to hold it for good.'),
+      list('Conversations', 9, CHATS.map(function (c, i) {
+        return h(S.ConversationRow, Object.assign({ key: i, as: 'li', onClick: function () {}, onKeep: function (v) { var m = Object.assign({}, kept); m[i] = v; setKept(m); } }, c, { kept: !!kept[i] }));
+      }))
+    ];
+  return h(S.PhoneScreen, {
+    gap: 12,
+    overlay: [
+      h(S.OrbHint, { key: 'o', parked: true, label: '', onClick: function () {} }),
+      h('div', { key: 't', className: 'sk-tabbar-dock' }, h(S.TabBar, { active: 'library' }))
+    ]
+  },
+    h(S.ScreenHeader, { level: 'screen', title: 'My work' }),
+    h(Ask),
+    h(S.SegmentedControl, { label: 'Show', value: tab, onChange: setTab, options: [{ value: 'generations', label: 'Generations' }, { value: 'conversations', label: 'Conversations' }] }),
+    body);
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Library)));
+</script>
+</body></html>

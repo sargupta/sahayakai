@@ -1,0 +1,31 @@
+<!-- @dsCard group="Inputs" height=302 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>SearchField</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Demo() {
+  var q = React.useState('fractions'), query = q[0], setQuery = q[1];
+  var m = React.useState(false), listening = m[0], setListening = m[1];
+  var p = React.useState(''), posted = p[0], setPosted = p[1];
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Search · solid'),
+      h(S.SearchField, { label: 'Search shared resources', placeholder: 'Search lessons, quizzes, worksheets…' }),
+      h('div', { className: 'sk-slice__label' }, 'Typed · cross and Escape clear it'),
+      h(S.SearchField, { label: 'Search shared resources', placeholder: 'Search lessons, quizzes, worksheets…', value: query, onChange: setQuery }),
+      h('div', { className: 'sk-slice__label' }, 'Post prompt · no glyph · Enter posts'),
+      h(S.SearchField, { glyph: false, label: 'Write a post', placeholder: 'What did you do today?', clearOnSubmit: true, onSubmit: setPosted }),
+      posted ? h('div', { className: 'sk-slice__label', 'aria-live': 'polite' }, 'Posted') : null),
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Staff room ask bar · glass · mic'),
+      h(S.SearchField, { surface: 'glass', glyph: false, label: 'Ask the staff room', placeholder: 'Ask something, or share what worked', onMic: function () {} }),
+      h('div', { className: 'sk-slice__label' }, 'Dictating · mic is a toggle'),
+      h(S.SearchField, { surface: 'glass', glyph: false, label: 'Ask the staff room', placeholder: 'Ask something, or share what worked', micState: listening ? 'listening' : 'idle', onMic: function () { setListening(!listening); } }),
+      h('div', { className: 'sk-slice__label' }, 'In Hindi'),
+      h(S.SearchField, { lang: 'hi', label: 'संसाधन खोजें', placeholder: 'पाठ, प्रश्नोत्तरी, वर्कशीट खोजें…', onMic: function () {}, micLabel: 'बोलकर खोजें' })));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

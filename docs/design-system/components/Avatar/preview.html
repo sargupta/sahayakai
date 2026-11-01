@@ -1,0 +1,48 @@
+<!-- @dsCard group="Core" height=460 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Avatar</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* Phone slices: 360px, the phone's true width. The corner glow is clipped inside the slice, so nothing pokes out of it. */
+function Glow() { return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } }, h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } })); }
+function isHi(t) { return typeof t === 'string' && /[ऀ-ൿ]/.test(t); }
+function Slice(p) {
+  var vs = (p.v || '').split(' ').filter(Boolean);
+  var cls = 'sk-slice' + vs.filter(function (x) { return x !== 'glow'; }).map(function (x) { return ' sk-slice--' + x; }).join('');
+  return h('div', { className: cls, style: p.style }, vs.indexOf('glow') !== -1 ? h(Glow) : null, p.label ? h('div', { className: 'sk-slice__label' + (isHi(p.label) ? ' sk-indic' : '') }, p.label) : null, p.children);
+}
+function Row(p) { return h('div', { className: 'sk-slices', style: Object.assign({ alignItems: 'stretch' }, p.style) }, p.children); }
+function Note(t) { return h('div', { className: 'sk-slice__label' + (isHi(t) ? ' sk-indic' : ''), style: { marginTop: 4 } }, t); }
+var photo = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e0a878"/><stop offset="1" stop-color="#7e3f16"/></linearGradient></defs><rect width="44" height="44" fill="url(#g)"/><circle cx="22" cy="17" r="8" fill="#fff8f0" opacity=".85"/><path d="M7 44c2-10 8-14 15-14s13 4 15 14z" fill="#fff8f0" opacity=".85"/></svg>');
+function Who(av, name, meta, nameFont, gap) {
+  return h('div', { style: { display: 'flex', alignItems: 'center', gap: gap || 10, minWidth: 0 } }, av,
+    h('div', { style: { minWidth: 0 } },
+      h('div', { className: isHi(name) ? 'sk-indic' : null, lang: isHi(name) ? 'hi' : undefined, style: { font: nameFont || '600 12px/1.4 var(--font-ui)' } }, name),
+      h('div', { style: { font: '400 12px/1.4 var(--font-ui)', color: 'var(--text-body)' } }, meta)));
+}
+function Post(av, name, meta, body) {
+  return h(S.GlassCard, { tone: 'strong', radius: 'tile', padding: '13px 14px', gap: 10, raised: true }, Who(av, name, meta), h('div', { style: { font: '400 12px/1.6 var(--font-ui)' } }, body));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(
+  h('div', null,
+    h(Row, null,
+      h(Slice, { v: 'glow', label: 'You · the teacher’s initials, 44px glass' },
+        Who(h(S.Avatar, { name: 'Meena Kulkarni', size: 'lg' }), 'Meena Kulkarni', 'Green Valley Public School, Nashik · Classes 5 & 7', '700 18px/1.2 var(--font-display)', 11),
+        Note('Community · authors, 26px tinted'),
+        Post(h(S.Avatar, { name: 'Suresh Reddy', size: 'sm', tone: 'amber' }), 'Suresh Reddy', 'Maths · Class 7 · 11 hours ago', 'Taught fractions by cutting chapatis. The class finally understood halves and quarters.'),
+        Post(h(S.Avatar, { name: 'Deepa Iyer', size: 'sm', tone: 'leaf' }), 'Deepa Iyer', 'English · 1 day ago', 'Any ideas for students who won’t speak up in English class?')),
+      h(Slice, { label: 'Marks, photo and sizes' },
+        Who(h(S.Avatar, { name: 'Daily Briefing', shape: 'square', tone: 'saffron', initials: 'स', lang: 'hi' }), 'Daily Briefing', 'Thu, 18 Sept · automated'),
+        Who(h(S.Avatar, { name: 'CBSE curriculum', shape: 'square', tone: 'indigo', initials: 'C' }), 'CBSE · NCERT Ganita Prakash 7', 'Chapter 8 · Working with Fractions'),
+        Note('Header · 36px glass'),
+        Who(h(S.Avatar, { name: 'Meena Kulkarni' }), 'Meena Kulkarni', 'Fri, 18 Sept', '600 14px/1.2 var(--font-display)'),
+        Note('Photo fills the circle'),
+        Who(h(S.Avatar, { name: 'Meena Kulkarni', size: 'lg', src: photo }), 'Meena Kulkarni', 'Photo when she adds one', '700 18px/1.2 var(--font-display)', 11),
+        Note('In Hindi and Bangla · first letters'),
+        Who(h(S.Avatar, { name: 'अनिता वर्मा', size: 'sm', tone: 'saffron', lang: 'hi' }), 'अनिता वर्मा', 'Hindi · Class 6 · 2 days ago'),
+        Who(h(S.Avatar, { name: 'অনিতা বর্মন', size: 'md', lang: 'bn' }), 'অনিতা বর্মন', 'Bangla · Class 5'))))
+);
+</script>
+</body></html>

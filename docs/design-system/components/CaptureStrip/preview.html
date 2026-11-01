@@ -1,0 +1,28 @@
+<!-- @dsCard group="Content" height=250 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>CaptureStrip</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Demo() {
+  var c = React.useState(12), count = c[0], setCount = c[1];
+  var o = React.useState(''), opened = o[0], setOpened = o[1];
+  var latest = [{ status: 'read', label: 'Roll 10' }, { status: 'check', label: 'Roll 11' }, { status: 'read', label: 'Roll 12' }];
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice sk-slice--camera' },
+      h('div', { className: 'sk-slice__label' }, 'On the camera ground'),
+      h(S.CaptureStrip, { count: count, sheets: latest, onOpen: function (i) { setOpened(latest[i].label + ' opened'); }, onAdd: function () { setCount(count + 1); } }),
+      h('div', { 'aria-live': 'polite', style: { font: '400 12px var(--font-ui)', color: 'var(--on-camera-muted)', minHeight: 14 } }, opened)),
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Light · in हिन्दी'),
+      h(S.CaptureStrip, {
+        tone: 'light', lang: 'hi', count: 4, title: 'उत्तर-पत्र लिए गए', hint: 'हर पन्ना सीधा रखें; रोल नंबर दिखना चाहिए',
+        statusLabels: { read: 'पढ़ा गया', check: 'एक बार देखें' }, addLabel: 'पन्ना जोड़ें', stripLabel: 'लिए गए पन्ने',
+        sheets: [{ status: 'read', label: 'रोल 01' }, { status: 'read', label: 'रोल 02' }, { status: 'check', label: 'रोल 03' }, { status: 'read', label: 'रोल 04' }],
+        onOpen: function () {}, onAdd: function () {}
+      })));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

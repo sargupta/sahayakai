@@ -1,0 +1,28 @@
+<!-- @dsCard group="Screens · VIDYA" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Conversation</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+var n = function () {};
+function Conversation() {
+  var t = React.useState([]), sent = t[0], setSent = t[1];
+  var r = React.useState(false), reading = r[0], setReading = r[1];
+  function send(text) { setSent(sent.concat([text])); }
+  var turns = [
+    h(S.ChatBubble, { key: 't1', from: 'teacher', initials: 'MK', name: 'Meena Kulkarni', lang: 'hi-Latn' }, 'Class 6 ke liye jal chakra ka 40-minute lesson plan banao'),
+    h(S.AnswerCard, { key: 'a1', source: 'CBSE · NCERT Curiosity 6, Ch 8', resultName: 'Water cycle lesson plan, Class 6', onOpen: n, onReadAloud: function () { setReading(!reading); }, reading: reading, onAgain: n },
+      'Ready: a 40-minute water cycle plan for Class 6. Warm-up, four stages, group activity, wrap-up.'),
+    h(S.ChatBubble, { key: 't2', from: 'teacher', initials: 'MK', name: 'Meena Kulkarni', lang: 'hi-Latn' }, 'Ek worksheet bhi bana do, medium')
+  ].concat(sent.map(function (x, i) { return h(S.ChatBubble, { key: 's' + i, from: 'teacher', initials: 'MK', name: 'Meena Kulkarni' }, x); }));
+  turns.push(h(S.TypingIndicator, { key: 'typing', label: 'VIDYA is writing the worksheet' }));
+  return h(S.PhoneScreen, { glow: false, gap: 12, padBottom: 24 },
+    h(S.ChatHeader, { onBack: n, onSettings: n }),
+    h(S.ChatThread, { day: 'Today', refine: ['Make it easier', 'In Marathi', 'Add a diagram'], onRefine: send }, turns),
+    h(S.Composer, { variant: 'chat', onSend: send, onMic: n }));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Conversation)));
+</script>
+</body></html>

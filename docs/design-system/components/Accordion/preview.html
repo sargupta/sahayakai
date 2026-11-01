@@ -1,0 +1,36 @@
+<!-- @dsCard group="Content" height=521 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Accordion</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+var ACTIVITIES = [
+  { title: 'The Mystery of Plant Food', minutes: 7, description: '“We eat dosa or ragi mudde when we’re hungry. What do the big mango trees eat?”' },
+  { title: 'Leaf Investigation Station', minutes: 10, description: 'Groups observe fresh leaves and a cup of water; guide them to what roots and air provide.' },
+  { title: 'Decoding Photosynthesis', minutes: 10, description: 'Board diagram with arrows; use ಸೂರ್ಯನ ಬೆಳಕು and ನೀರು for clarity.' },
+  { title: 'Exit Ticket', minutes: 5, description: 'Each student writes one thing a leaf needs to make food.', collapsed: true }
+];
+function Demo() {
+  var o = React.useState('activities'), open = o[0], setOpen = o[1];
+  function sec(k) { return { expanded: open === k, onToggle: function (v) { setOpen(v ? k : null); } }; }
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice sk-slice--glow', style: { gap: 10 } },
+      h('div', { className: 'sk-slice__label' }, 'Compact · one open at a time'),
+      h(S.Accordion, Object.assign({ title: 'Objectives', count: 3, summary: 'SWBAT define photosynthesis in simple terms, name what a leaf needs, and explain why plants are called producers.' }, sec('objectives')),
+        h('ul', { style: { margin: 0, paddingLeft: 16 } }, h('li', null, 'Define photosynthesis in simple terms.'), h('li', null, 'Name the four things a leaf needs to make food.'), h('li', null, 'Explain why plants are called producers.'))),
+      h(S.Accordion, Object.assign({ title: 'Materials needed' }, sec('materials')), 'Fresh leaves, a cup of water, chart paper, chalk.'),
+      h(S.Accordion, Object.assign({ title: 'Activities', count: 4, items: ACTIVITIES }, sec('activities'))),
+      h(S.Accordion, Object.assign({ title: 'Assessment' }, sec('assessment')), 'Exit ticket, then three oral questions on the board diagram.')),
+    h('div', { className: 'sk-slice', style: { gap: 10 } },
+      h('div', { className: 'sk-slice__label' }, 'Comfortable · lesson sections'),
+      h(S.Accordion, { density: 'comfortable', time: '00–05', title: 'Warm-up', defaultExpanded: true }, 'Ask “baarish kahaan se aati hai?” and collect three answers on the board.'),
+      h(S.Accordion, { density: 'comfortable', time: '05–18', title: 'The four stages', defaultExpanded: true, current: true }, 'Evaporation, condensation, precipitation and collection, drawn as one loop.'),
+      h(S.Accordion, { density: 'comfortable', time: '18–30', title: 'Group work' }, 'Groups of four draw the loop on chart paper and label each stage.'),
+      h('div', { className: 'sk-slice__label' }, 'हिन्दी'),
+      h(S.Accordion, { lang: 'hi', title: 'उद्देश्य', count: 3, summary: 'विद्यार्थी जल चक्र के चार चरण पहचान सकेंगे और उन्हें एक घेरे में बना सकेंगे।' }, 'जल चक्र के चार चरण पहचानना।'))
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

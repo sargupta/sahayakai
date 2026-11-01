@@ -1,0 +1,47 @@
+<!-- @dsCard group="Core" height=523 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Pill</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* Phone slices: 360px, the phone's true width. The corner glow is clipped inside the slice, so nothing pokes out of it. */
+function Glow() { return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } }, h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } })); }
+function isHi(t) { return typeof t === 'string' && /[ऀ-ൿ]/.test(t); }
+function Slice(p) {
+  var vs = (p.v || '').split(' ').filter(Boolean);
+  var cls = 'sk-slice' + vs.filter(function (x) { return x !== 'glow'; }).map(function (x) { return ' sk-slice--' + x; }).join('');
+  return h('div', { className: cls, style: p.style }, vs.indexOf('glow') !== -1 ? h(Glow) : null, p.label ? h('div', { className: 'sk-slice__label' + (isHi(p.label) ? ' sk-indic' : '') }, p.label) : null, p.children);
+}
+function Row(p) { return h('div', { className: 'sk-slices', style: Object.assign({ alignItems: 'stretch' }, p.style) }, p.children); }
+function Note(t) { return h('div', { className: 'sk-slice__label' + (isHi(t) ? ' sk-indic' : ''), style: { marginTop: 4 } }, t); }
+function Tags(kids) { return h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 6 } }, kids); }
+function P(tone, text, extra) { return h(S.Pill, Object.assign({ key: text, tone: tone, lang: isHi(text) ? 'hi' : undefined }, extra), text); }
+ReactDOM.createRoot(document.getElementById('root')).render(
+  h('div', null,
+    h(Row, null,
+      h(Slice, { v: 'glow', label: 'Lesson output · tags under the title' },
+        h(S.ScreenHeader, { level: 'output', title: 'Fractions in everyday cooking' }),
+        Tags([P('leaf', 'Class 7'), P('leaf', '40 min'), P('indigo', 'CBSE · NCERT Ch 8'), P('amber', 'हिन्दी')]),
+        h(S.GlassCard, { tone: 'strong', radius: 'tile', gap: 5 },
+          h('div', { style: { font: '600 12px/1.4 var(--font-ui)' } }, 'Hook · 5 min'),
+          h('div', { style: { font: '400 12px/1.6 var(--font-ui)', color: 'var(--text-body)' } }, 'Hold up one chapati. Ask: if four of you share this, how much does each get?')),
+        Note('Roll call · the live count'),
+        h(S.ScreenHeader, { title: 'Class 7 · roll call', subtitle: 'Fri 18 Sept · 38 students', align: 'end', trailing: h(S.Pill, { tone: 'solid-leaf', size: 'md' }, '34 present') })),
+      h(Slice, { label: 'Status · tone is meaning, the word says it' },
+        Tags([P('leaf', 'Mic on'), P('leaf', 'Ready'), P('saffron', 'Preview'), P('amber', 'Waiting'), P('indigo', 'Checking CBSE source'), P('red', 'Absent')]),
+        Note('Live states · solid, 11px'),
+        Tags([P('solid-leaf', 'On call · 1:12', { size: 'md' }), P('solid-saffron', 'Listening', { size: 'md', dot: true })]),
+        Note('Language · glass, on the wash'),
+        Tags([P('glass', 'हिन्दी'), P('glass', 'English')]))),
+    h(Row, { style: { paddingTop: 4 } },
+      h(Slice, { v: 'camera', label: 'Scanner · the count on the camera ground' },
+        h('div', { className: 'sk-camera' }, h(S.ScreenHeader, { level: 'output', title: 'Scan answer sheets', subtitle: 'Class 7 · Maths test', trailing: h(S.Pill, { tone: 'camera', size: 'md' }, '12 / 34') }))),
+      h(Slice, { label: 'In Hindi · 12px, never clipped' },
+        h(S.ScreenHeader, { level: 'output', title: 'रोज़ के खाने में भिन्न', lang: 'hi' }),
+        Tags([P('leaf', 'कक्षा 7'), P('leaf', '40 मिनट'), P('indigo', 'CBSE · NCERT अध्याय 8'), P('amber', 'हिन्दी')]),
+        Tags([P('red', 'अनुपस्थित'), P('amber', 'बाकी'), P('solid-leaf', 'कॉल पर · 1:12', { size: 'md' })])))
+  )
+);
+</script>
+</body></html>

@@ -1,0 +1,22 @@
+<!-- @dsCard group="VIDYA Live" height=362 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>LiveTranscript</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Demo() {
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice', style: { background: 'var(--wash-live-listening)' } },
+      h('div', { className: 'sk-slice__label' }, 'Live · caret while she listens'),
+      h(S.LiveTranscript, { text: 'कक्षा छह के लिए जल चक्र की पाठ योजना बनाओ', lang: 'hi' }),
+      h('div', { className: 'sk-slice__label' }, 'Final · the caret goes'),
+      h(S.LiveTranscript, { text: 'Make a ten-question quiz on the water cycle for Class 6', final: true })),
+    h('div', { className: 'sk-slice', style: { background: 'var(--wash-live-failed)' } },
+      h('div', { className: 'sk-slice__label' }, 'Caught · after a dropped line'),
+      h(S.LiveTranscript, { variant: 'caught', text: ['Make a ten-question quiz on the water … ', { lost: true }] }),
+      h(S.LiveTranscript, { variant: 'caught', label: 'যা শুনতে পেয়েছি', labelLang: 'bn', lang: 'bn', lostLabel: '[শোনা যায়নি]', text: ['ষষ্ঠ শ্রেণির জন্য জলচক্রের … ', { lost: true }] })));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

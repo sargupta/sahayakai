@@ -111,6 +111,13 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
     }
     final locale = prefillLocale(p.language);
     if (locale != null) _language = locale;
+    final count = p.questionCount;
+    if (count != null && count >= kMinQuestions && count <= kMaxQuestions) {
+      _numQuestions = count;
+    }
+    for (final difficulty in QuizDifficulty.values) {
+      if (difficulty.name == p.difficulty) _targetDifficulty = difficulty;
+    }
   }
 
   @override
@@ -213,6 +220,10 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
       wash: AppGradients.washQuiz,
       title: l10n.quizTitle,
       isBusy: state.isLoading,
+      // Output screen (UX map Flow 4): the result replaces the form;
+      // Edit brings the form back and keeps the result until a new one lands.
+      hasResult: hasResult,
+      onResubmit: _submit,
       submitLabel: l10n.actionGenerate,
       // Hide the sticky Generate button once a quiz with questions is on screen
       // — the document's own action bar (Regenerate / Copy) takes over. An
@@ -236,32 +247,32 @@ class _QuizGeneratorScreenState extends ConsumerState<QuizGeneratorScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-            EditorialSectionHeader(l10n.quizSectionQuiz),
-            const SizedBox(height: AppSpacing.space4),
-            _topicField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _numQuestionsField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _questionTypesField(l10n),
-            const SizedBox(height: AppSpacing.space8),
-            EditorialSectionHeader(l10n.sectionForYourClass),
-            const SizedBox(height: AppSpacing.space4),
-            _gradeField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _subjectField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _imageField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _languageField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _difficultyField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _bloomsField(l10n),
-          ],
+              EditorialSectionHeader(l10n.quizSectionQuiz),
+              const SizedBox(height: AppSpacing.space4),
+              _topicField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _numQuestionsField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _questionTypesField(l10n),
+              const SizedBox(height: AppSpacing.space8),
+              EditorialSectionHeader(l10n.sectionForYourClass),
+              const SizedBox(height: AppSpacing.space4),
+              _gradeField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _subjectField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _imageField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _languageField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _difficultyField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _bloomsField(l10n),
+            ],
+          ),
         ),
+        index: 0,
       ),
-      index: 0,
-    ),
     );
   }
 

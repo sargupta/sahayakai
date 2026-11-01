@@ -1,0 +1,455 @@
+{
+  "v": 3,
+  "assetGroups": {
+    "Icons": {
+      "files": {
+        "home.svg": {
+          "blob": "6d9680e1096ebdfa9ba25fa3ea3262e7",
+          "name": "home.svg",
+          "size": 232,
+          "type": "image/svg+xml"
+        },
+        "library.svg": {
+          "blob": "843338e9fe02d2e28af2ffe4695acec2",
+          "name": "library.svg",
+          "size": 233,
+          "type": "image/svg+xml"
+        },
+        "community.svg": {
+          "blob": "885ac833fe85432f7e6ef6eadf2ba1ab",
+          "name": "community.svg",
+          "size": 341,
+          "type": "image/svg+xml"
+        },
+        "profile.svg": {
+          "blob": "a49db2683c305b792688bc33f950294b",
+          "name": "profile.svg",
+          "size": 292,
+          "type": "image/svg+xml"
+        },
+        "mic.svg": {
+          "blob": "1cbb2ab0f7d002e38c70fcf871803ed8",
+          "name": "mic.svg",
+          "size": 340,
+          "type": "image/svg+xml"
+        },
+        "mic-off.svg": {
+          "blob": "fc7ce5324a0a924cf7d7379379321911",
+          "name": "mic-off.svg",
+          "size": 379,
+          "type": "image/svg+xml"
+        },
+        "send.svg": {
+          "blob": "9c120dfa275bb2a71c15feb942d50c69",
+          "name": "send.svg",
+          "size": 275,
+          "type": "image/svg+xml"
+        },
+        "keyboard.svg": {
+          "blob": "f8c628f8ba948f2b08ff4f30ded68c40",
+          "name": "keyboard.svg",
+          "size": 328,
+          "type": "image/svg+xml"
+        },
+        "play.svg": {
+          "blob": "d74199852f6e26b68eb591075d94eaad",
+          "name": "play.svg",
+          "size": 227,
+          "type": "image/svg+xml"
+        },
+        "pause.svg": {
+          "blob": "91f5032c96ffb248dd84dbead168ccdb",
+          "name": "pause.svg",
+          "size": 226,
+          "type": "image/svg+xml"
+        },
+        "speaker.svg": {
+          "blob": "1395a10b680847c5a5443db85cf2353c",
+          "name": "speaker.svg",
+          "size": 307,
+          "type": "image/svg+xml"
+        },
+        "phone.svg": {
+          "blob": "b4e32ebff6a6ce3ea591ffe89cc5f881",
+          "name": "phone.svg",
+          "size": 346,
+          "type": "image/svg+xml"
+        },
+        "plus.svg": {
+          "blob": "1d919425b30c2fe252de215fdcfe24f0",
+          "name": "plus.svg",
+          "size": 231,
+          "type": "image/svg+xml"
+        },
+        "back.svg": {
+          "blob": "b1920c42309bd6d5decdf65b42de71b4",
+          "name": "back.svg",
+          "size": 229,
+          "type": "image/svg+xml"
+        },
+        "forward.svg": {
+          "blob": "6981d83c5fc41c90c04c70ed6f2dd595",
+          "name": "forward.svg",
+          "size": 228,
+          "type": "image/svg+xml"
+        },
+        "chevron.svg": {
+          "blob": "82747a2f62009c2e3f67d60c6e69eee8",
+          "name": "chevron.svg",
+          "size": 231,
+          "type": "image/svg+xml"
+        },
+        "arrow-up-right.svg": {
+          "blob": "006c0463e7fc2f5c9a7f581a52953efb",
+          "name": "arrow-up-right.svg",
+          "size": 237,
+          "type": "image/svg+xml"
+        },
+        "more.svg": {
+          "blob": "16a3342c0d283998a18f292bc9a9d340",
+          "name": "more.svg",
+          "size": 236,
+          "type": "image/svg+xml"
+        },
+        "search.svg": {
+          "blob": "8142379aa241c3f982d41956ecd8fab3",
+          "name": "search.svg",
+          "size": 258,
+          "type": "image/svg+xml"
+        },
+        "settings.svg": {
+          "blob": "e2eaf035be6ff92cb419fb14f752660b",
+          "name": "settings.svg",
+          "size": 354,
+          "type": "image/svg+xml"
+        },
+        "menu.svg": {
+          "blob": "d6105dd1bf3b02afe2eccaefe8da96eb",
+          "name": "menu.svg",
+          "size": 230,
+          "type": "image/svg+xml"
+        },
+        "cross.svg": {
+          "blob": "836ad2a15f79498cf26a17edbb9e4280",
+          "name": "cross.svg",
+          "size": 225,
+          "type": "image/svg+xml"
+        },
+        "check.svg": {
+          "blob": "03f3196053bdb0675cd56a1f0db42768",
+          "name": "check.svg",
+          "size": 230,
+          "type": "image/svg+xml"
+        },
+        "copy.svg": {
+          "blob": "497dddf14daf6dba48c56a93d115ef3e",
+          "name": "copy.svg",
+          "size": 361,
+          "type": "image/svg+xml"
+        },
+        "download.svg": {
+          "blob": "a259407e0d584383e2a7b4efb0a03d41",
+          "name": "download.svg",
+          "size": 258,
+          "type": "image/svg+xml"
+        },
+        "upload.svg": {
+          "blob": "a6baba982e6689725295402a637e934c",
+          "name": "upload.svg",
+          "size": 258,
+          "type": "image/svg+xml"
+        },
+        "print.svg": {
+          "blob": "47674bff836c62d54554fa15a51ea405",
+          "name": "print.svg",
+          "size": 307,
+          "type": "image/svg+xml"
+        },
+        "share.svg": {
+          "blob": "348af65d8476026e12b3607093cb7e52",
+          "name": "share.svg",
+          "size": 371,
+          "type": "image/svg+xml"
+        },
+        "edit.svg": {
+          "blob": "92f4ce11f7b3c119a84a2f330735fa64",
+          "name": "edit.svg",
+          "size": 236,
+          "type": "image/svg+xml"
+        },
+        "refresh.svg": {
+          "blob": "194f92776412dcd67b254d040f100beb",
+          "name": "refresh.svg",
+          "size": 317,
+          "type": "image/svg+xml"
+        },
+        "thumb-up.svg": {
+          "blob": "798979443f1a44dfa6008aed5cb4d94e",
+          "name": "thumb-up.svg",
+          "size": 344,
+          "type": "image/svg+xml"
+        },
+        "thumb-down.svg": {
+          "blob": "c75caa09662ee5c8833d1690738b1993",
+          "name": "thumb-down.svg",
+          "size": 344,
+          "type": "image/svg+xml"
+        },
+        "user-plus.svg": {
+          "blob": "48405707ce10dc7002fd9178eb724e77",
+          "name": "user-plus.svg",
+          "size": 317,
+          "type": "image/svg+xml"
+        },
+        "book.svg": {
+          "blob": "c4e16426948f22447d9ed6af1cbfb0b7",
+          "name": "book.svg",
+          "size": 335,
+          "type": "image/svg+xml"
+        },
+        "scan.svg": {
+          "blob": "613daefec5f5dda1aaf4d42198046011",
+          "name": "scan.svg",
+          "size": 328,
+          "type": "image/svg+xml"
+        },
+        "message.svg": {
+          "blob": "ef5a6ce8236a9d0da9b2d5c7910551ab",
+          "name": "message.svg",
+          "size": 235,
+          "type": "image/svg+xml"
+        },
+        "bell.svg": {
+          "blob": "374c93528156b91407b440766ee2b3e4",
+          "name": "bell.svg",
+          "size": 276,
+          "type": "image/svg+xml"
+        },
+        "calendar.svg": {
+          "blob": "c20884b020de6ce3e7fdd7fcb3ad0329",
+          "name": "calendar.svg",
+          "size": 298,
+          "type": "image/svg+xml"
+        },
+        "clock.svg": {
+          "blob": "ada4566d8315fc3918a275241dbe5777",
+          "name": "clock.svg",
+          "size": 266,
+          "type": "image/svg+xml"
+        },
+        "trend-down.svg": {
+          "blob": "453d37044ec5a22e7a1c9eee1f1ce0f9",
+          "name": "trend-down.svg",
+          "size": 256,
+          "type": "image/svg+xml"
+        },
+        "alert.svg": {
+          "blob": "38ac93eaee33e2849a9cbd7cda7c8330",
+          "name": "alert.svg",
+          "size": 245,
+          "type": "image/svg+xml"
+        },
+        "star.svg": {
+          "blob": "2874c0a9fdecb026dff91d9acecdaff3",
+          "name": "star.svg",
+          "size": 277,
+          "type": "image/svg+xml"
+        },
+        "globe.svg": {
+          "blob": "bf6c9041d8825ca762a457e192886590",
+          "name": "globe.svg",
+          "size": 323,
+          "type": "image/svg+xml"
+        },
+        "key.svg": {
+          "blob": "b22a1a20b5c75b1fb300bd910958a178",
+          "name": "key.svg",
+          "size": 280,
+          "type": "image/svg+xml"
+        },
+        "lock.svg": {
+          "blob": "dac9264e7197ef563aa019d4821edec4",
+          "name": "lock.svg",
+          "size": 300,
+          "type": "image/svg+xml"
+        },
+        "signal-off.svg": {
+          "blob": "27eeff6705f1fe0398ba39e0dcd58ee3",
+          "name": "signal-off.svg",
+          "size": 380,
+          "type": "image/svg+xml"
+        },
+        "sync.svg": {
+          "blob": "1e7761169ff56a6c4c72b31d41ef7d9c",
+          "name": "sync.svg",
+          "size": 317,
+          "type": "image/svg+xml"
+        },
+        "grid.svg": {
+          "blob": "54d4631852f4cd3953beccbfabd720c7",
+          "name": "grid.svg",
+          "size": 413,
+          "type": "image/svg+xml"
+        },
+        "sparkline.svg": {
+          "blob": "0c34c954b7efa8ff32ed5bca20bd7034",
+          "name": "sparkline.svg",
+          "size": 244,
+          "type": "image/svg+xml"
+        }
+      },
+      "name": "Icons",
+      "order": [
+        "home.svg",
+        "library.svg",
+        "community.svg",
+        "profile.svg",
+        "mic.svg",
+        "mic-off.svg",
+        "send.svg",
+        "keyboard.svg",
+        "play.svg",
+        "pause.svg",
+        "speaker.svg",
+        "phone.svg",
+        "plus.svg",
+        "back.svg",
+        "forward.svg",
+        "chevron.svg",
+        "arrow-up-right.svg",
+        "more.svg",
+        "search.svg",
+        "settings.svg",
+        "menu.svg",
+        "cross.svg",
+        "check.svg",
+        "copy.svg",
+        "download.svg",
+        "upload.svg",
+        "print.svg",
+        "share.svg",
+        "edit.svg",
+        "refresh.svg",
+        "thumb-up.svg",
+        "thumb-down.svg",
+        "user-plus.svg",
+        "book.svg",
+        "scan.svg",
+        "message.svg",
+        "bell.svg",
+        "calendar.svg",
+        "clock.svg",
+        "trend-down.svg",
+        "alert.svg",
+        "star.svg",
+        "globe.svg",
+        "key.svg",
+        "lock.svg",
+        "signal-off.svg",
+        "sync.svg",
+        "grid.svg",
+        "sparkline.svg"
+      ],
+      "tile": "s"
+    },
+    "Logos": {
+      "files": {
+        "sahayakai-mark-source.png": {
+          "blob": "be93d3645b7a723dab5edab36fbae4e2",
+          "name": "sahayakai-mark-source.png",
+          "size": 302496,
+          "type": "image/png"
+        },
+        "sahayakai-mark.png": {
+          "blob": "8a2dac1158b29b1ec6006715c46616ed",
+          "name": "sahayakai-mark.png",
+          "size": 22010,
+          "type": "image/png"
+        },
+        "sahayakai-app-icon.jpg": {
+          "blob": "1c355c737241e6be04e1db1c6a3c7f09",
+          "name": "sahayakai-app-icon.jpg",
+          "size": 390102,
+          "type": "image/jpeg"
+        }
+      },
+      "name": "Logos",
+      "order": [
+        "sahayakai-mark.png",
+        "sahayakai-mark-source.png",
+        "sahayakai-app-icon.jpg"
+      ],
+      "tile": "l"
+    },
+    "App icons": {
+      "files": {
+        "home.svg": {
+          "blob": "1bb8dea0005946bce68075c2d5895b80",
+          "name": "home.svg",
+          "size": 227,
+          "type": "image/svg+xml"
+        },
+        "library.svg": {
+          "blob": "dcee1b8b79851074e066b342be3f850c",
+          "name": "library.svg",
+          "size": 228,
+          "type": "image/svg+xml"
+        },
+        "community.svg": {
+          "blob": "f41c427efb4a73580a0cbf133b910ffe",
+          "name": "community.svg",
+          "size": 336,
+          "type": "image/svg+xml"
+        },
+        "profile.svg": {
+          "blob": "7291fdb4f0c45fdb1f880ccd3109933c",
+          "name": "profile.svg",
+          "size": 287,
+          "type": "image/svg+xml"
+        }
+      },
+      "name": "App icons",
+      "order": [
+        "home.svg",
+        "library.svg",
+        "community.svg",
+        "profile.svg"
+      ],
+      "tile": "s"
+    }
+  },
+  "blobs": {},
+  "createdOnFiles": {
+    "at": "2026-10-24T16:13:22Z",
+    "v": 1
+  },
+  "docs": {
+    "readme": "project/README.md",
+    "sections": []
+  },
+  "groups": [
+    "Logos",
+    "App icons",
+    "Icons"
+  ],
+  "lastChange": {
+    "by": "Abhishek Gupta",
+    "at": "2026-10-26T10:00:00Z",
+    "via": "Claude Code",
+    "note": "All 8 open decisions settled (26 Oct 2026) and applied: white text sits on accent-fill (saffron-600, 5.28:1), never saffron-500; a 12px floor in every script; light only (dark modes retire); Labs hidden from teachers; no sample testimonials on the site; no illustration; Live starts by holding Home's orb or 'Keep talking'; Live minutes on Profile's usage card, with a quiet pill near the end. Guide 10 lists the follow-through for the apps."
+  },
+  "layout": "files",
+  "libraries": [
+    {
+      "name": "react",
+      "version": "18"
+    },
+    {
+      "name": "react-dom",
+      "version": "18"
+    }
+  ],
+  "namespace": "SahayakAI",
+  "sections": {},
+  "title": "SahayakAI"
+}

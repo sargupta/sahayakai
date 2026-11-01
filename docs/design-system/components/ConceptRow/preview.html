@@ -1,0 +1,25 @@
+<!-- @dsCard group="Class and calls" height=320 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>ConceptRow</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Demo() {
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice' },
+      h(S.Eyebrow, { size: 'tight', tone: 'muted', id: 'cr-en' }, 'Where she’s struggling'),
+      h('ul', { className: 'sk-conceptrow-list', 'aria-labelledby': 'cr-en' },
+        h(S.ConceptRow, { as: 'li', concept: 'Condensation', value: 2, max: 5 }),
+        h(S.ConceptRow, { as: 'li', concept: 'Evaporation', value: 3, max: 5 }),
+        h(S.ConceptRow, { as: 'li', concept: 'Reading a diagram', value: 5, max: 5 }))),
+    h('div', { className: 'sk-slice' },
+      h(S.Eyebrow, { size: 'tight', tone: 'muted', id: 'cr-hi', lang: 'hi' }, 'कहाँ कठिनाई है'),
+      h('ul', { className: 'sk-conceptrow-list', 'aria-labelledby': 'cr-hi' },
+        h(S.ConceptRow, { as: 'li', lang: 'hi', concept: 'संघनन', value: 1, max: 6, levelLabels: { low: 'अभ्यास चाहिए', mid: 'सुधार हो रहा है', high: 'पक्का' }, scoreText: function (v, m) { return m + ' में से ' + v; } }),
+        h(S.ConceptRow, { as: 'li', lang: 'hi', concept: 'वाष्पन', value: 4, max: 5, levelLabels: { low: 'अभ्यास चाहिए', mid: 'सुधार हो रहा है', high: 'पक्का' }, scoreText: function (v, m) { return m + ' में से ' + v; } }),
+        h(S.ConceptRow, { as: 'li', concept: 'Fractions on a number line', value: 0, max: 4 }))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

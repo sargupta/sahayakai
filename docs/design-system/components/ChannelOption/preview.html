@@ -1,0 +1,38 @@
+<!-- @dsCard group="Class and calls" height=375 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>ChannelOption</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* The corner glow, clipped inside its own layer so nothing pokes out of the slice. */
+function Glow() {
+  return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } },
+    h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } }));
+}
+function Slice(label, mods, kids) {
+  return h('div', { className: ['sk-slice'].concat(mods.filter(function (m) { return m !== 'glow-bg'; }).map(function (m) { return 'sk-slice--' + m; })).join(' ') },
+    mods.indexOf('glow-bg') !== -1 ? h(Glow) : null,
+    h('div', { className: 'sk-slice__label' }, label), kids);
+}
+var legend = { padding: 0, margin: '0 0 12px', font: '600 12px/normal var(--font-ui)', letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--text-body)' };
+var set = { border: 0, margin: 0, padding: 0, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 9 };
+function Demo() {
+  var a = React.useState(true), wa = a[0], setWa = a[1];
+  var b = React.useState(false), vc = b[0], setVc = b[1];
+  return h('div', { className: 'sk-slices' },
+    Slice('Default · two numbers on record', ['glow-bg'],
+      h('fieldset', { style: set },
+        h('legend', { style: legend }, 'Send to'),
+        h(S.ChannelOption, { channel: 'WhatsApp', number: '+91 98765 54412', who: 'Mother', when: 'preferred', checked: wa, onChange: setWa }),
+        h(S.ChannelOption, { channel: 'Voice call', number: '••••••8830', who: 'Father', when: 'after 6 pm', checked: vc, onChange: setVc }))),
+    Slice('Calling hours · not on record · Hindi', [],
+      h('div', { style: set },
+        h(S.ChannelOption, { channel: 'Voice call', number: '••••••8830', who: 'Father', when: 'after 6 pm', defaultChecked: true, reason: 'Goes out at 18:00, inside the school’s calling hours' }),
+        h(S.ChannelOption, { channel: 'Voice call', who: 'Grandfather', disabled: true, reasonTone: 'muted', reason: 'No number on Divya’s record. I only call numbers on the record.' }),
+        h(S.ChannelOption, { channel: 'व्हाट्सऐप', number: '••••••4412', who: 'माँ', when: 'पसंदीदा', lang: 'hi', numberLabel: 'नंबर के आख़िरी अंक', defaultChecked: true })))
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

@@ -1,0 +1,31 @@
+<!-- @dsCard group="VIDYA" height=321 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>SpeakCard</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Demo() {
+  var s = React.useState('idle'), state = s[0], setState = s[1];
+  var t = React.useState(''), typed = t[0], setTyped = t[1];
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, state === 'idle' ? 'Idle · tap the card to speak' : 'Listening · tap again to stop'),
+      h(S.SpeakCard, {
+        state: state, example: 'Class 5 fractions revision sheet', language: 'हिन्दी', level: .55,
+        transcript: 'कक्षा पाँच के लिए भिन्न का दोहराव पत्रक',
+        onSpeak: function () { setState(state === 'idle' ? 'listening' : 'idle'); },
+        onType: function () { setTyped('Typing opens the topic field'); },
+      }),
+      h('div', { className: 'sk-slice__label', 'aria-live': 'polite' }, typed || ' '),
+      h('div', { className: 'sk-slice__label' }, 'Listening · live transcript'),
+      h(S.SpeakCard, { state: 'listening', language: 'English', level: .3, transcript: 'A revision sheet on equivalent fractions', onSpeak: function () {}, onType: function () {} })),
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Offline · typing still works'),
+      h(S.SpeakCard, { state: 'offline', onType: function () {} }),
+      h('div', { className: 'sk-slice__label' }, 'In हिन्दी'),
+      h(S.SpeakCard, { lang: 'hi', title: 'बोलिए', example: 'कक्षा छह के लिए जल चक्र की पाठ योजना बनाओ', typeLabel: 'या विषय लिखिए', micLabel: 'बोलिए', onSpeak: function () {}, onType: function () {} })));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

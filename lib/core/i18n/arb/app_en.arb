@@ -216,6 +216,10 @@
   "@actionRegenerate": {
     "description": "Result action bar: generate a fresh version from the same form."
   },
+  "outputEdit": "Edit",
+  "@outputEdit": {
+    "description": "Output screen action: back to the tool's form to change the request (UX map Flow 4)."
+  },
   "actionCopy": "Copy",
   "@actionCopy": {
     "description": "Result action bar: copy the generated document to the clipboard."
@@ -2553,6 +2557,10 @@
   "@vidyaStateIdle": {
     "description": "Seal-mic caption when idle."
   },
+  "vidyaDockReadyHint": "Ready · Tap to deliver",
+  "@vidyaDockReadyHint": {
+    "description": "Capsule above the tab bar and the docked orb's hint when a result is ready; a tap opens the deliver tray (v2 9a-06)."
+  },
   "vidyaStateReady": "Getting ready",
   "vidyaWorkingTitle": "Working on it",
   "@vidyaWorkingTitle": {
@@ -4842,5 +4850,105 @@
   "homeTileScan": "Scan a test",
   "homeTileScanSub": "Camera grading",
   "homeTileCall": "Call parents",
-  "homeTileCallSub": "Script in हिन्दी"
+  "homeTileCallSub": "Script in हिन्दी",
+  "homeAskEyebrow": "VIDYA",
+  "@homeAskEyebrow": {
+    "description": "Voice-first Home: eyebrow above the headline (VIDYA's name, Latin in every language)."
+  },
+  "homeAskTitle": "Ask for anything\nin the app",
+  "@homeAskTitle": {
+    "description": "Voice-first Home headline (UX map H-01). Two lines."
+  },
+  "homeAskSubtitle": "Any tool, any language. She opens the right one.",
+  "@homeAskSubtitle": {
+    "description": "Voice-first Home subline under the headline."
+  },
+  "homeSayEyebrow": "Say it, she routes it",
+  "@homeSayEyebrow": {
+    "description": "Eyebrow over the three example requests on Home."
+  },
+  "homeSayLesson": "“Class 7 ka jal chakra lesson plan”",
+  "@homeSayLesson": {
+    "description": "Example spoken request on Home that opens Lesson Plan, prefilled. Code-mixed as teachers speak."
+  },
+  "homeSayQuiz": "“Ten-question quiz, medium”",
+  "@homeSayQuiz": {
+    "description": "Example spoken request on Home that opens Quiz with ten questions, medium."
+  },
+  "homeSayAttendance": "“Aaj ki attendance lagao”",
+  "@homeSayAttendance": {
+    "description": "Example spoken request on Home that opens Attendance."
+  },
+  "homeOrbRest": "Tap or hold to speak",
+  "@homeOrbRest": {
+    "description": "Label under Home's big VIDYA orb while it rests."
+  },
+  "homeOrbOffline": "Voice needs signal · type below",
+  "@homeOrbOffline": {
+    "description": "Label under Home's big VIDYA orb when there is no signal."
+  },
+  "homeAskPlaceholder": "Ask VIDYA, or type what you need…",
+  "@homeAskPlaceholder": {
+    "description": "Placeholder of Home's type box."
+  },
+  "homeAskCaption": "Hold the mic to speak · tap the box to type",
+  "@homeAskCaption": {
+    "description": "Caption under Home's type box."
+  },
+  "homeSpeakToVidya": "Speak to VIDYA",
+  "@homeSpeakToVidya": {
+    "description": "Accessible name of Home's mic button."
+  },
+  "homeYourTools": "Your tools",
+  "@homeYourTools": {
+    "description": "Eyebrow over Home's four tool tiles."
+  },
+  "homeAllTools": "All {count} tools",
+  "@homeAllTools": {
+    "description": "Home link to every tool; count is the real number of tools.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeTileCallSubLanguage": "Script in {language}",
+  "@homeTileCallSubLanguage": {
+    "description": "Call parents tile subline; language is the app language's native name.",
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "homeWaitingReady": "{title} is ready",
+  "@homeWaitingReady": {
+    "description": "Waiting-for-you row: a finished result ready to deliver; title is the result's title.",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "homeWaitingUpdates": "{count, plural, =1{1 new update} other{{count} new updates}}",
+  "@homeWaitingUpdates": {
+    "description": "Waiting-for-you row: unread updates (notifications).",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeWaitingNothing": "Nothing is waiting for you right now",
+  "@homeWaitingNothing": {
+    "description": "Waiting-for-you card when nothing is waiting."
+  },
+  "homeSayLessonTopic": "Water cycle",
+  "@homeSayLessonTopic": {
+    "description": "Topic the Home say-it row prefills into Lesson Plan (the water cycle, as in its example request)."
+  },
+  "outputBackToResult": "Back to result",
+  "@outputBackToResult": {
+    "description": "Shown while editing a tool's request: returns to the result without regenerating (nothing is lost by Edit)."
+  }
 }

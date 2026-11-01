@@ -1,0 +1,22 @@
+<!-- @dsCard group="Conversation" height=191 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>TypingIndicator</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Slice(label, kids) { return h('div', { className: 'sk-slice' }, h('div', { className: 'sk-slice__label' }, label), kids); }
+ReactDOM.createRoot(document.getElementById('root')).render(
+  h('div', { className: 'sk-slices' },
+    Slice('After the teacher asks', [
+      h(S.ChatBubble, { key: 'a', from: 'teacher', lang: 'hi-Latn' }, 'Ek worksheet bhi bana do, medium'),
+      h(S.TypingIndicator, { key: 'b', label: 'VIDYA is writing the worksheet' })
+    ]),
+    Slice('Under VIDYA’s own turn · orb on the newest', [
+      h(S.ChatBubble, { key: 'v', from: 'vidya', avatar: false, lang: 'hi' }, 'ठीक है, मैं दस सवाल बना रही हूँ।'),
+      h(S.TypingIndicator, { key: 'c', label: 'VIDYA लिख रही है', lang: 'hi' })
+    ])
+  )
+);
+</script>
+</body></html>

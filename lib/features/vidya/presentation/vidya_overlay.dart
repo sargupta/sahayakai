@@ -7,24 +7,23 @@ import '../../../core/auth/auth_providers.dart';
 import '../../../core/i18n/l10n_ext.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_theme.dart';
-import 'background_generation_controller.dart';
-import 'deliver_tray.dart';
-import 'deliverables_controller.dart';
 import 'vidya_controller.dart';
 import 'vidya_orb_placement_controller.dart';
+import 'vidya_presence.dart';
 import 'vidya_sheet.dart';
 import 'widgets/vidya_orb.dart';
 
 /// The presence layer: mounts the draggable [VidyaOrb] above the app Navigator
-/// (via `MaterialApp.router.builder`) so VIDYA floats over EVERY route — the
-/// tool screens push on top of the shell, so an orb inside the shell would not
-/// ride over them; this one does (v3 "VIDYA floats over everything").
+/// (via `MaterialApp.router.builder`) so VIDYA floats over the tool screens
+/// that push on top of the shell.
 ///
-/// It reads the live [VidyaController] phase (so the orb turns indigo while she
-/// works and shows a green badge when a result is ready), owns the drag → snap →
-/// remember-per-hand behaviour against [VidyaOrbPlacementController], hides on
-/// the pre-auth screens, and hides whenever the [VidyaSheet] is open — Screen
-/// 04 puts the only orb inside the sheet's header.
+/// On the shell itself VIDYA is docked in the tab bar ([VidyaDockOrb], v2 9a),
+/// so this orb hides there: one orb per screen, wherever it is drawn. It reads
+/// the shared [vidyaOrbVisualProvider] (indigo while she works, a green badge
+/// when a result is ready), owns the drag → snap → remember-per-hand behaviour
+/// against [VidyaOrbPlacementController], hides on the pre-auth screens, and
+/// hides whenever the [VidyaSheet] is open — Screen 04 puts the only orb inside
+/// the sheet's header.
 class VidyaOverlay extends StatefulWidget {
   const VidyaOverlay({super.key, required this.router});
 
@@ -93,26 +92,19 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
             // The sheet owns the orb while it is open (v3 Screen 04).
             final sheetOpen = ref.watch(vidyaSheetOpenProvider);
 
-            // Only the phase drives the orb — not the per-frame amplitude, which
-            // would rebuild the overlay on every listening tick.
-            final status =
-                ref.watch(vidyaControllerProvider.select((s) => s.status));
-            final placement = ref.watch(vidyaOrbPlacementControllerProvider);
-            final placementNotifier =
-                ref.read(vidyaOrbPlacementControllerProvider.notifier);
-            final readyCount = ref.watch(
-              deliverablesControllerProvider.select((d) => d.length),
+            final status = ref.watch(
+              vidyaControllerProvider.select((s) => s.status),
             );
-            // VIDYA is finishing a minimised generation off-screen (v3 06): the
-            // orb rides on to show its progress, even onto the voice home.
-            final bgActive =
-                ref.watch(backgroundGenerationControllerProvider) != null;
+            final placement = ref.watch(vidyaOrbPlacementControllerProvider);
+            final placementNotifier = ref.read(
+              vidyaOrbPlacementControllerProvider.notifier,
+            );
+            final readyCount = ref.watch(vidyaReadyCountProvider);
+            final visual = ref.watch(vidyaOrbVisualProvider);
 
             if (sheetOpen || !_visibleAt(location, signedIn)) {
               return const SizedBox.shrink();
             }
-
-            final visual = _visualFor(status, placement, readyCount, bgActive);
 
             final media = MediaQuery.of(context);
             final screen = media.size;
@@ -121,21 +113,6 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
 
             final parked = _boxTopLeft(placement.perch, screen, pad);
             final at = _dragTopLeft ?? parked;
-
-            // Screen 02's parked hint — "Tap to speak" 9px to the left of the
-            // sphere, and only there: home + resting (the caption belongs to
-            // the parked state; every other state speaks for itself). Mirrored
-            // to the orb's other side when a left-hand perch parks it on the
-            // left, so it never runs off-screen.
-            final showHint =
-                location == '/' &&
-                visual == VidyaOrbVisual.resting &&
-                !placement.dragging;
-            final sphereLeft = at.dx + VidyaOverlay._halo;
-            final sphereTop = at.dy + VidyaOverlay._halo;
-            const sphereSize = VidyaOverlay._box - VidyaOverlay._halo * 2;
-            final orbOnLeft =
-                sphereLeft + sphereSize / 2 < screen.width / 2;
 
             return Stack(
               // The orb sits near the screen edges; its glow/badge/halo must not
@@ -150,8 +127,9 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
                   ),
                 // Parking animates; dragging tracks the finger 1:1 (no lag).
                 AnimatedPositioned(
-                  duration:
-                      placement.dragging ? Duration.zero : AppMotion.medium,
+                  duration: placement.dragging
+                      ? Duration.zero
+                      : AppMotion.medium,
                   curve: AppMotion.easeOutQuart,
                   left: at.dx,
                   top: at.dy,
@@ -180,10 +158,10 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
                         placementNotifier.cancelDrag();
                         return;
                       }
-                      final centre =
-                          released + const Offset(box / 2, box / 2);
-                      placementNotifier
-                          .endDrag(_nearestPerch(centre, screen, pad));
+                      final centre = released + const Offset(box / 2, box / 2);
+                      placementNotifier.endDrag(
+                        _nearestPerch(centre, screen, pad),
+                      );
                     },
                     onPanCancel: () {
                       setState(() => _dragTopLeft = null);
@@ -193,8 +171,13 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
                       state: visual,
                       readyCount: readyCount,
                       semanticLabel: context.l10n.appTitle,
-                      semanticHint: _hintFor(context, visual, status),
-                      onTap: () => _onTap(context, ref, visual, location),
+                      semanticHint: vidyaOrbHintFor(context, visual, status),
+                      onTap: () => openVidyaFromOrb(
+                        _sheetContext,
+                        ref,
+                        visual,
+                        location,
+                      ),
                       onLongPress: () {
                         HapticFeedback.lightImpact();
                         showVidyaSheet(_sheetContext, pagePath: location);
@@ -202,56 +185,6 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
                     ),
                   ),
                 ),
-                // The hint capsule itself: a band exactly as tall as the sphere
-                // with the chip centred in it (text-scale safe), its inner edge
-                // 9px from the sphere. Decorative — the orb already carries the
-                // same words as its `semanticHint`, so this chip is excluded
-                // from semantics and ignores taps.
-                if (showHint)
-                  Positioned(
-                    left: orbOnLeft ? sphereLeft + sphereSize + 9 : 0,
-                    right: orbOnLeft ? 0 : screen.width - sphereLeft + 9,
-                    top: sphereTop,
-                    height: sphereSize,
-                    child: ExcludeSemantics(
-                      child: IgnorePointer(
-                        child: Align(
-                          alignment: orbOnLeft
-                              ? Alignment.centerLeft
-                              : Alignment.centerRight,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.92), // rgba(255,253,249,.92)
-                              borderRadius: AppRadius.rPill,
-                              border: Border.all(
-                                color: AppColors.ink900.withValues(alpha: 0.1), // rgba(23,19,16,.1)
-                                width: 1,
-                              ),
-                            ),
-                            child: Text(
-                              context.l10n.vidyaStateIdle, // "Tap to speak"
-                              softWrap: false,
-                              style: const TextStyle(
-                                fontFamily: 'Instrument Sans',
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.textMuted, // #6E655C
-                                // This chip lives in the overlay, outside any
-                                // Material — neutralise MaterialApp's
-                                // text-outside-Material fallback decoration
-                                // (double yellow underline) it would inherit.
-                                decoration: TextDecoration.none,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
               ],
             );
           },
@@ -263,63 +196,12 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
   // ── Visibility ─────────────────────────────────────────────────────────────
 
   /// The orb shows only when signed in and away from the surfaces that own their
-  /// own VIDYA affordance or predate auth: splash, login, onboarding. On the
-  /// voice home (`/`) it parks bottom-right with the "Tap to speak" hint —
-  /// v3 Screen 02 puts the orb there permanently.
+  /// own VIDYA affordance or predate auth: splash, login, onboarding, and the
+  /// shell (`/`), where VIDYA is docked in the tab bar.
   bool _visibleAt(String location, bool signedIn) {
     if (!signedIn) return false;
-    const preAuth = {Routes.splash, Routes.login, Routes.onboarding};
-    if (preAuth.contains(location)) return false;
-    return true;
-  }
-
-  // ── State mapping ────────────────────────────────────────────────────────
-
-  VidyaOrbVisual _visualFor(
-    VidyaStatus status,
-    VidyaOrbPlacement placement,
-    int readyCount,
-    bool bgActive,
-  ) {
-    if (placement.dragging) return VidyaOrbVisual.dragging;
-    switch (status) {
-      case VidyaStatus.requestingPermission:
-      case VidyaStatus.listening:
-        return VidyaOrbVisual.listening;
-      case VidyaStatus.transcribing:
-      case VidyaStatus.thinking:
-      case VidyaStatus.speaking:
-        return VidyaOrbVisual.working;
-      case VidyaStatus.idle:
-      case VidyaStatus.micDenied:
-      case VidyaStatus.signedOut:
-      case VidyaStatus.limitReached:
-      case VidyaStatus.upgradeRequired:
-      case VidyaStatus.failed:
-        // A minimised generation still running shows the working orb even while
-        // VIDYA's own turn is idle; a finished one shows the green ready badge.
-        if (bgActive) return VidyaOrbVisual.working;
-        return readyCount > 0 ? VidyaOrbVisual.ready : VidyaOrbVisual.resting;
-    }
-  }
-
-  String _hintFor(BuildContext context, VidyaOrbVisual visual, VidyaStatus s) {
-    final l10n = context.l10n;
-    switch (visual) {
-      case VidyaOrbVisual.listening:
-        return l10n.vidyaStateListening;
-      case VidyaOrbVisual.working:
-        return s == VidyaStatus.speaking
-            ? l10n.vidyaStateSpeaking
-            : l10n.vidyaStateThinking;
-      case VidyaOrbVisual.ready:
-        return l10n.vidyaStateReady;
-      case VidyaOrbVisual.dragging:
-      case VidyaOrbVisual.resting:
-        return l10n.vidyaStateIdle;
-      case VidyaOrbVisual.offline:
-        return l10n.stateOfflineTitle;
-    }
+    const owned = {Routes.splash, Routes.login, Routes.onboarding, Routes.home};
+    return !owned.contains(location);
   }
 
   // ── Interaction ────────────────────────────────────────────────────────────
@@ -342,38 +224,22 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
     return nav ?? context;
   }
 
-  void _onTap(
-    BuildContext context,
-    WidgetRef ref,
-    VidyaOrbVisual visual,
-    String path,
-  ) {
-    if (visual == VidyaOrbVisual.ready) {
-      // Green orb → open the one deliver tray for the latest ready result.
-      final latest = ref.read(deliverablesControllerProvider.notifier).latest;
-      if (latest != null) {
-        showDeliverTray(_sheetContext, latest);
-      }
-      return;
-    }
-    // v3 Screen 04: the listening state lives in a sheet over the page — the
-    // tap opens it and starts the capture in the same gesture.
-    showVidyaSheet(_sheetContext, pagePath: path);
-    ref.read(vidyaControllerProvider.notifier).onMicTap();
-  }
-
   // ── Geometry ─────────────────────────────────────────────────────────────
 
   /// Keeps the whole box on-screen within the safe area.
   Offset _clampBox(Offset topLeft, Size screen, EdgeInsets pad) {
     final minX = pad.left + VidyaOverlay._edgeInsetLeft;
-    final maxX = screen.width -
+    final maxX =
+        screen.width -
         pad.right -
         VidyaOverlay._edgeInsetRight -
         VidyaOverlay._box;
     final minY = pad.top + VidyaOverlay._topInset;
     final maxY =
-        screen.height - pad.bottom - VidyaOverlay._box - VidyaOverlay._bottomInset;
+        screen.height -
+        pad.bottom -
+        VidyaOverlay._box -
+        VidyaOverlay._bottomInset;
     return Offset(
       topLeft.dx.clamp(minX, maxX < minX ? minX : maxX),
       topLeft.dy.clamp(minY, maxY < minY ? minY : maxY),
@@ -385,9 +251,9 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
     final x = perch.isLeft
         ? pad.left + VidyaOverlay._edgeInsetLeft
         : screen.width -
-            pad.right -
-            VidyaOverlay._edgeInsetRight -
-            VidyaOverlay._box;
+              pad.right -
+              VidyaOverlay._edgeInsetRight -
+              VidyaOverlay._box;
     return Offset(x, _bandTop(perch.band, screen, pad));
   }
 
@@ -408,8 +274,9 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
   /// The perch whose anchor is nearest [centre] — side by the screen midline,
   /// band by the closest of the three band anchors.
   VidyaPerch _nearestPerch(Offset centre, Size screen, EdgeInsets pad) {
-    final hand =
-        centre.dx < screen.width / 2 ? VidyaHand.left : VidyaHand.right;
+    final hand = centre.dx < screen.width / 2
+        ? VidyaHand.left
+        : VidyaHand.right;
     var best = VidyaPerchBand.mid;
     var bestDist = double.infinity;
     for (final band in VidyaPerchBand.values) {
@@ -442,9 +309,9 @@ class _PerchGuides extends StatelessWidget {
       final x = perch.isLeft
           ? pad.left + VidyaOverlay._edgeInsetLeft
           : screen.width -
-              pad.right -
-              VidyaOverlay._edgeInsetRight -
-              VidyaOverlay._box;
+                pad.right -
+                VidyaOverlay._edgeInsetRight -
+                VidyaOverlay._box;
       final double y;
       switch (perch.band) {
         case VidyaPerchBand.top:

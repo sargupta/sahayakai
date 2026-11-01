@@ -1,0 +1,53 @@
+<!-- @dsCard group="Inputs" height=624 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>OptionSheet</title><style>.pv-page:has(.sk-sheet-layer) .pv-dim, .pv-page:has(.sk-sheet-layer) .pv-dimkids > :not(.sk-sheet-layer) { opacity: .34; }</style></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* Phone slices: 360px, the phone's true width. The corner glow is clipped inside the slice, so nothing pokes out of it. */
+function Glow() { return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } }, h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } })); }
+function isHi(t) { return typeof t === 'string' && /[ऀ-ൿ]/.test(t); }
+function Slice(p) {
+  var vs = (p.v || '').split(' ').filter(Boolean);
+  var cls = 'sk-slice' + vs.filter(function (x) { return x !== 'glow'; }).map(function (x) { return ' sk-slice--' + x; }).join('');
+  return h('div', { className: cls, style: p.style }, vs.indexOf('glow') !== -1 ? h(Glow) : null, p.label ? h('div', { className: 'sk-slice__label' + (isHi(p.label) ? ' sk-indic' : '') }, p.label) : null, p.children);
+}
+function Row(p) { return h('div', { className: 'sk-slices', style: Object.assign({ alignItems: 'stretch' }, p.style) }, p.children); }
+function Note(t) { return h('div', { className: 'sk-slice__label' + (isHi(t) ? ' sk-indic' : ''), style: { marginTop: 4 } }, t); }
+/* A phone screen inside a slice: it fills the slice, so a contained sheet rises over the whole 360px width, and the page behind dims to .34 while a sheet is open. */
+function Screen(p) { return h('div', { className: 'pv-page', style: Object.assign({ position: 'absolute', inset: 0, padding: '18px 20px 20px', display: 'flex', flexDirection: 'column', gap: 12, overflow: 'hidden', borderRadius: 'inherit' }, p.style) }, p.label ? h('div', { className: 'sk-slice__label' }, p.label) : null, p.children); }
+function Block(hh) { return h('div', { className: 'pv-dim', style: { height: hh, flex: hh ? 'none' : 1, minHeight: 0, background: 'rgba(255,255,255,.9)', borderRadius: 16 } }); }
+var CLASSES = [
+  { value: 'Class 5', label: 'Class 5', meta: 'EVS · 32 students', group: 'Your classes' },
+  { value: 'Class 7', label: 'Class 7', meta: 'Maths · 38 students', group: 'Your classes' },
+  { value: 'Class 6', label: 'Class 6', group: 'Other classes' },
+  { value: 'Class 8', label: 'Class 8', group: 'Other classes' },
+];
+var LANGS = S.LANGUAGES.map(function (l) { return { value: l[0], label: l[1], meta: l[2] !== l[1] ? l[2] : undefined, lang: l[0] }; });
+function nativeOf(code) { var l = S.LANGUAGES.filter(function (x) { return x[0] === code; })[0]; return l ? l[1] : ''; }
+function Demo() {
+  var c = React.useState('Class 7'), cls = c[0], setCls = c[1];
+  var co = React.useState(true), clsOpen = co[0], setClsOpen = co[1];
+  var l = React.useState('hi'), lang = l[0], setLang = l[1];
+  var lo = React.useState(true), langOpen = lo[0], setLangOpen = lo[1];
+  return h(Row, null,
+    h(Slice, { v: 'glow', style: { height: 600 } },
+      h(Screen, { label: 'Make a lesson · the Class sheet' },
+        h('div', { className: 'pv-dim' }, h(S.ScreenHeader, { title: 'Make a lesson', subtitle: 'Spoken or typed, same result' })),
+        h('div', { className: 'pv-dim' }, h(S.Field, { label: 'Topic', defaultValue: 'Fractions in everyday cooking' })),
+        h('div', { className: 'pv-dim', style: { display: 'flex', gap: 9 } },
+          h(S.Field, { label: 'Class', size: 'md', as: 'select', value: cls, onOpen: function () { setClsOpen(true); }, style: { flex: 1 } }),
+          h(S.Field, { label: 'Length', size: 'md', as: 'select', value: '40 min', onOpen: function () {}, style: { flex: 1 } })),
+        Block(),
+        h(S.OptionSheet, { open: clsOpen, onClose: function () { setClsOpen(false); }, title: 'Class', options: CLASSES, value: cls, onSelect: setCls, autoFocus: false }))),
+    h(Slice, { style: { height: 600 } },
+      h(Screen, { label: 'Settings · eleven languages, with search' },
+        h('div', { className: 'pv-dim' }, h(S.ScreenHeader, { title: 'Settings', subtitle: 'Language, board and classes' })),
+        h('div', { className: 'pv-dim' }, h(S.Field, { label: 'Language', size: 'md', as: 'select', value: nativeOf(lang), lang: lang, onOpen: function () { setLangOpen(true); } })),
+        Block(),
+        h(S.OptionSheet, { open: langOpen, onClose: function () { setLangOpen(false); }, title: 'Language', options: LANGS, value: lang, onSelect: setLang, search: true, searchPlaceholder: 'Search 11 languages', searchLabel: 'Search languages' }))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

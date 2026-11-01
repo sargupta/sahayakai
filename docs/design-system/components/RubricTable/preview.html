@@ -1,0 +1,31 @@
+<!-- @dsCard group="Content" height=466 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>RubricTable</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+var CRITERIA = [
+  { name: 'Scientific accuracy', description: 'Planet representation, orbital paths, facts', cells: ['All major planets, relative sizes scaled, no factual errors.', 'Most planets and orbits correct; one or two minor slips.', 'Some planets shown; three or four factual errors or omissions.', 'Incomplete, with significant inaccuracies or gaps.'] },
+  { name: 'Creativity', description: 'Uniqueness and aesthetic appeal', cells: ['Original design; everyday materials used in a new way.', 'Well designed and visually appealing.', 'Basic or familiar design; materials used adequately.', 'Hastily put together; little visible effort at design.'] },
+  { name: 'Presentation', description: 'Clarity, confidence, engagement', cells: ['Clear and confident; every member explains a part.', 'Clear; most members contribute.', 'Hesitant; contribution uneven across the group.', 'Unclear; few or no members contribute.'] }
+];
+var HI_LEVELS = [{ label: 'उत्कृष्ट', score: 4 }, { label: 'दक्ष', score: 3 }, { label: 'विकासशील', score: 2 }, { label: 'आरंभिक', score: 1 }];
+var HI = [
+  { name: 'वैज्ञानिक सटीकता', description: 'ग्रह, कक्षाएँ, तथ्य', cells: ['सभी ग्रह, आकार अनुपात में, कोई ग़लती नहीं।', 'ज़्यादातर सही; एक-दो छोटी चूक।', 'कुछ ग्रह ग़ायब; कई ग़लतियाँ।', 'अधूरा, बड़ी कमियों के साथ।'] }
+];
+function Demo() {
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice sk-slice--glow' },
+      h('div', { className: 'sk-slice__label' }, 'Swipe sideways · criteria pinned'),
+      h(S.RubricTable, { caption: 'Solar system model rubric', criteria: CRITERIA })),
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'हिन्दी · one criterion'),
+      h(S.RubricTable, { lang: 'hi', caption: 'सौर मंडल मॉडल की रूब्रिक', criteriaLabel: 'मापदंड', hint: 'तालिका को बगल में खिसकाएँ', levels: HI_LEVELS, criteria: HI }),
+      h('div', { className: 'sk-slice__label' }, 'Two levels fit · no hint'),
+      h(S.RubricTable, { caption: 'Reading aloud check', columnWidth: 104, criteriaWidth: 104, levels: [{ label: 'Secure', score: 2 }, { label: 'Not yet', score: 1 }], criteria: [{ name: 'Fluency', cells: ['Reads the passage without stopping.', 'Stops at most lines.'] }] }))
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

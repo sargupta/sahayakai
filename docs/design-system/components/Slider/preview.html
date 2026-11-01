@@ -1,0 +1,27 @@
+<!-- @dsCard group="Inputs" height=292 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Slider</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Demo() {
+  var q = React.useState(5), n = q[0], setN = q[1];
+  var m = React.useState(40), mins = m[0], setMins = m[1];
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Drag, or arrow keys'),
+      h(S.Slider, { label: 'Questions', min: 1, max: 20, value: n, onChange: setN, unit: 'questions' }),
+      h(S.Slider, { label: 'Length', min: 20, max: 80, step: 5, value: mins, onChange: setMins, format: function (v) { return v + ' min'; }, valueText: function (v) { return v + ' minutes'; } }),
+      h('div', { className: 'sk-slice__label' }, 'Ends and disabled'),
+      h(S.Slider, { label: 'Marks', min: 0, max: 10, defaultValue: 0 })),
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'With a helper line'),
+      h(S.Slider, { label: 'Copies', min: 1, max: 40, defaultValue: 34, unit: 'copies', helper: 'One for each student in Class 7' }),
+      h(S.Slider, { label: 'Questions', min: 1, max: 20, defaultValue: 20, disabled: true, unit: 'questions' }),
+      h('div', { className: 'sk-slice__label' }, 'In हिन्दी'),
+      h(S.Slider, { lang: 'hi', label: 'प्रश्न', min: 1, max: 20, defaultValue: 8, valueText: function (v) { return v + ' प्रश्न'; } })));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

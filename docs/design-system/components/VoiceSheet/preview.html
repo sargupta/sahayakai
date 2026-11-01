@@ -1,0 +1,52 @@
+<!-- @dsCard group="VIDYA" height=714 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>VoiceSheet</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* Phone slices: 360px, the phone's true width. The corner glow is clipped inside the slice, so nothing pokes out of it. */
+function Glow() { return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } }, h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } })); }
+function isHi(t) { return typeof t === 'string' && /[ऀ-ൿ]/.test(t); }
+function Slice(p) {
+  var vs = (p.v || '').split(' ').filter(Boolean);
+  var cls = 'sk-slice' + vs.filter(function (x) { return x !== 'glow'; }).map(function (x) { return ' sk-slice--' + x; }).join('');
+  return h('div', { className: cls, style: p.style }, vs.indexOf('glow') !== -1 ? h(Glow) : null, p.label ? h('div', { className: 'sk-slice__label' + (isHi(p.label) ? ' sk-indic' : '') }, p.label) : null, p.children);
+}
+function Row(p) { return h('div', { className: 'sk-slices', style: Object.assign({ alignItems: 'stretch' }, p.style) }, p.children); }
+function Note(t) { return h('div', { className: 'sk-slice__label' + (isHi(t) ? ' sk-indic' : ''), style: { marginTop: 4 } }, t); }
+var SCREEN = 690;
+/* The page the sheet rises over: dimmed, inert, as on the phone. */
+function Behind(p) {
+  return h('div', { 'aria-hidden': 'true', inert: '', style: { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 12, opacity: p.op } },
+    h(S.ScreenHeader, { title: p.title, subtitle: p.sub }),
+    h('div', { style: { background: 'rgba(255,255,255,.9)', borderRadius: 16, height: p.block || 130, flex: 'none' } }),
+    h('div', { style: { background: 'rgba(255,255,255,.9)', borderRadius: 16, flex: 1, minHeight: 0 } }));
+}
+var STEPS = [['done', 'Matched CBSE · NCERT Ganita Prakash 7, Ch 8'], ['done', 'Chose a chapati activity'], ['active', 'Writing board work in हिन्दी'], ['pending', 'Ready to deliver']];
+function Demo() {
+  var s = React.useState(0), pick = s[0], setPick = s[1];
+  var m = React.useState(false), mini = m[0], setMini = m[1];
+  var k = React.useState(false), live = k[0], setLive = k[1];
+  return h(Row, null,
+    h(Slice, { v: 'tall', label: live ? 'Keep talking · opens VIDYA Live' : 'Listening · modal, over the page it reads', style: { height: SCREEN, background: 'var(--wash-live-listening)' } },
+      h(Behind, { op: .34, title: 'Fractions · Class 7', sub: 'Lesson plan · saved yesterday' }),
+      h(S.VoiceSheet, { subtitle: 'हिन्दी · about the page behind me', context: 'Fractions · Class 7 · CBSE · lesson plan', transcript: 'इससे एक worksheet बना दो, दस सवाल', transcriptLang: 'hi', autoFocus: false, onKeepTalking: function () { setLive(!live); } },
+        h('div', { role: 'radiogroup', 'aria-label': 'What I heard', className: 'sk-suggestionrow-group' },
+          h(S.SuggestionRow, { selected: pick === 0, onSelect: function () { setPick(0); } }, 'Worksheet · 10 questions · हिन्दी'),
+          h(S.SuggestionRow, { selected: pick === 1, onSelect: function () { setPick(1); } }, 'Explain again for students who need it')),
+        h(S.Composer, { onMic: function () {} }))),
+    h(Slice, { v: 'working tall', label: 'Working · non-modal, the page stays usable', style: { height: SCREEN } },
+      h(Behind, { op: 1, title: 'Make a lesson', sub: 'Spoken or typed, same result', block: 110 }),
+      mini ? h(S.OrbHint, { parked: true, state: 'working', label: 'Writing your lesson', onClick: function () { setMini(false); } }) : null,
+      h(S.VoiceSheet, { open: !mini, state: 'working', subtitle: 'Keep using the app. I’ll finish in the background.', onMinimise: function () { setMini(true); }, onStop: function () { setMini(true); } },
+        h('ol', { className: 'sk-checkliststep-list', 'aria-label': 'Progress' }, STEPS.map(function (x) { return h(S.ChecklistStep, { key: x[1], status: x[0] }, x[1]); })),
+        h('div', { style: { background: 'var(--surface-inset)', border: '1px solid var(--border-hairline)', borderRadius: 'var(--radius-field)', padding: '12px 13px', display: 'flex', flexDirection: 'column', gap: 7 } },
+          h(S.Eyebrow, { size: 'tight' }, 'Draft so far'),
+          h('div', { className: 'sk-indic', lang: 'hi', style: { font: '400 12px/1.7 var(--font-ui)' } }, 'शुरुआत: रोटी को चार बराबर हिस्सों में बाँटिए…'),
+          h('div', { 'aria-hidden': 'true', style: { height: 10, borderRadius: 'var(--radius-pill)', background: 'var(--border-hairline)', width: '74%' } })),
+        h(S.ProgressBar, { value: 62, label: 'Writing your lesson' }))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

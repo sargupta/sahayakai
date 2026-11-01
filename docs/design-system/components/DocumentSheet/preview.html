@@ -1,0 +1,44 @@
+<!-- @dsCard group="Print" height=1195 width=840 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>DocumentSheet</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+var SECTIONS = [
+  { title: 'Learning outcome', body: 'Students find a fraction of a quantity and multiply two fractions using paper folding and area models.' },
+  { title: 'Materials', body: 'One chapati or a paper cut-out, two paper circles per group, chalk.' },
+  { title: 'Hook · 5 min', body: 'Hold up one chapati. Ask: if four of you share this, how much does each get? Write each answer as a fraction of the whole.' },
+  { title: 'Activity · 15 min', body: 'Groups of four fold paper circles into quarters, then halve one quarter and name it. Ask: what part of the whole circle is half of a quarter?' },
+  { title: 'Board work · 12 min', body: 'Write 1/2 of 1/4 = 1/2 × 1/4 = 1/8. Ask the class to find a quarter of a half the same way, and to say why both answers match.' },
+  { title: 'Check for understanding · 8 min', body: h('ol', null,
+      h('li', null, 'What is 1/3 of 1/2? Draw it as a rectangle cut both ways.'),
+      h('li', null, 'Is 1/2 × 1/4 more or less than 1/4? Why?'),
+      h('li', null, 'A ribbon is 3/4 m long. How long is half of it?')) },
+  { title: 'Differentiation', body: 'If a group finishes early, ask for 2/3 of 3/4 and a drawing that proves it. If a group is stuck, fold first and write the fraction after.' },
+  { title: 'Homework', body: 'Find two things at home that are shared in fractions. Write each share as a product, for example 1/2 of 1/3 of a packet.' }
+];
+/* Print: the A4 page at true size (210 × 297 mm), on the canvas. */
+function Demo() {
+  return h('div', { className: 'sk-stage sk-stage--canvas', style: { borderRadius: 0, padding: '20px 22px 24px', gap: 12, alignItems: 'center' } },
+    h('div', { className: 'sk-stage__label', style: { alignSelf: 'stretch' } }, 'A4 at true size, 210 × 297 mm · prints black on white, no shadow, 16 × 18 mm margins'),
+    h(S.DocumentSheet, {
+      school: { name: 'Green Valley Public School', place: 'Nashik, Maharashtra' },
+      title: 'Fractions in everyday cooking',
+      meta: [
+        { label: 'Class', value: '7' },
+        { label: 'Subject', value: 'Mathematics' },
+        { label: 'Board', value: 'CBSE' },
+        { label: 'Textbook', value: 'NCERT Ganita Prakash 7' },
+        { label: 'Chapter', value: '8 · Working with Fractions' },
+        { label: 'Duration', value: '40 min' },
+        { label: 'Date', value: '22 Oct 2026' },
+        { label: 'Language', value: 'English' }
+      ],
+      sections: SECTIONS,
+      page: 1, pages: 1
+    }));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

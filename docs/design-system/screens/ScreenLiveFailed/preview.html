@@ -1,0 +1,31 @@
+<!-- @dsCard group="Screens · VIDYA" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>VIDYA Live · Failed</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+function noop() {}
+function Failed() {
+  var r = React.useState(true), retry = r[0], setRetry = r[1];
+  return h(S.PhoneScreen, { wash: 'live-failed', network: '2g ▮', padBottom: 0, gap: 0 },
+    h(S.LiveHeader, { status: h(S.LiveStatus, { state: 'failed' }) }),
+    h('div', { style: { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 12, padding: '14px 0 0', overflow: 'hidden' } },
+      h(S.LiveError, { title: 'I couldn’t hear that clearly' }, 'The connection dropped mid-sentence. I’ve kept what I caught.'),
+      h(S.LiveTranscript, { variant: 'caught', text: ['Make a ten-question quiz on the water … ', { lost: true }] }),
+      h(S.Field, { label: 'Finish it without voice', multiline: true, rows: 2, size: 'md', defaultValue: 'Make a ten-question quiz on the water cycle for Class 6' }),
+      h('div', { style: { display: 'flex', gap: 6, flexWrap: 'wrap' } },
+        h(S.Chip, { variant: 'more', onClick: noop, 'aria-label': 'Class: Class 6. Change' }, 'Class 6'),
+        h(S.Chip, { variant: 'more', onClick: noop, 'aria-label': 'Difficulty: Medium. Change' }, 'Medium'),
+        h(S.Chip, { variant: 'more', onClick: noop, 'aria-label': 'Length: 10 questions. Change' }, '10 questions')),
+      h(S.NoticeCard, { tone: 'saffron' }, 'On 2G I’ll stay on typing until the signal is back. It’s cheaper and it finishes.'),
+      h(S.GlassCard, { radius: 'card', raised: true, gap: 3 },
+        h(S.Switch, { label: h('span', { style: { font: '600 13px/1.3 var(--font-ui)', color: 'var(--text-strong)' } }, 'Retry voice when signal returns'), checked: retry, onChange: setRetry, 'aria-describedby': 'retry-help' }),
+        h('div', { id: 'retry-help', style: { font: '400 12px/1.45 var(--font-ui)', color: 'var(--text-body)' } }, 'I’ll tell you once, with no repeated attempts.')),
+      h('p', { style: { margin: 0, font: '400 12px/1.6 var(--font-ui)', color: 'var(--text-body)' } }, 'Your last three requests are saved as drafts in Library, whatever happens to the signal.')),
+    h(S.LiveControls, { mode: 'failed', ctaLabel: 'Make the quiz', onCta: noop, onMic: noop, micLabel: 'Try voice again' }));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Failed)));
+</script>
+</body></html>

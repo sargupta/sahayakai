@@ -1,0 +1,48 @@
+<!-- @dsCard group="Screens · Class and calls" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Student</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+function Student() {
+  return h(S.PhoneScreen, {
+    gap: 13,
+    overlay: [
+      h('div', { key: 'o', className: 'sk-orb-park sk-orb-park--cta' }, h(S.Orb, { onClick: function () {} })),
+      h('div', { key: 't', className: 'sk-tabbar-dock' }, h(S.TabBar, { active: 'home' }))
+    ]
+  },
+    h(S.ScreenHeader, { level: 'page', onBack: function () {}, backLabel: 'Back to Class 6-B',
+      trailing: h(S.Button, { size: 'xs', variant: 'quiet', 'aria-label': 'Edit Divya Rane’s details', style: { background: 'transparent', color: 'var(--saffron-600)', fontSize: 12, padding: '9px 0 9px 21px', '--sk-hit-inset': '-6px 0' } }, 'Edit') }),
+    h('div', { style: { display: 'flex', alignItems: 'center', gap: 14 } },
+      h(S.Avatar, { name: 'Divya Rane', decorative: true, style: { width: 56, height: 56, font: '600 17px/1 var(--font-display)', color: 'var(--saffron-600)', boxShadow: 'var(--shadow-card)' } }),
+      h('div', { style: { minWidth: 0 } },
+        h('h1', { style: { margin: 0, font: '700 22px/1.2 var(--font-display)' } }, 'Divya Rane'),
+        h('p', { style: { margin: '2px 0 0', font: '400 12px var(--font-ui)', color: 'var(--text-body)' } }, 'Roll 04 · Class 6-B · CBSE'))),
+    h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 } },
+      h(S.StatTile, { value: '82%', label: 'Attendance', tone: 'leaf' }),
+      h(S.StatTile, { value: h('span', { style: { color: 'var(--saffron-600)' } }, '6/12'), label: 'Last quiz' }),
+      h(S.StatTile, { value: '4', label: 'Worksheets' })),
+    h('div', { style: { display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 } },
+      h(S.Eyebrow, { as: 'h2', size: 'tight', tone: 'muted', id: 'st-gaps', style: { letterSpacing: '.18em' } }, 'Where she’s struggling'),
+      h('span', { style: { font: '500 12px var(--font-ui)', color: 'var(--indigo-500)', whiteSpace: 'nowrap' } }, 'NCERT Curiosity 6, Ch 8')),
+    h('ul', { className: 'sk-conceptrow-list', 'aria-labelledby': 'st-gaps' },
+      h(S.ConceptRow, { as: 'li', concept: 'Condensation', value: 2, max: 5 }),
+      h(S.ConceptRow, { as: 'li', concept: 'Evaporation', value: 3, max: 5 }),
+      h(S.ConceptRow, { as: 'li', concept: 'Reading a diagram', value: 5, max: 5 })),
+    h(S.GlassCard, { padding: '14px 16px', gap: 0, style: { borderColor: 'var(--info-tint-border)', boxShadow: 'var(--shadow-post)' } },
+      h('h2', { style: { margin: 0, font: '600 12px var(--font-ui)', color: 'var(--indigo-500)' } }, 'Suggested next step'),
+      h('p', { style: { margin: '3px 0 0', font: '400 13px/1.6 var(--font-ui)' } }, 'A six-question practice sheet on condensation, in Marathi.'),
+      h('div', null,
+        h(S.Button, { size: 'xs', variant: 'quiet', 'aria-label': 'Make the practice sheet', style: { background: 'transparent', color: 'var(--indigo-500)', fontSize: 12, padding: '9px 8px 9px 0', marginTop: 0, gap: 3, '--sk-hit-inset': '-6px 0' } },
+          'Make it', S.Icon({ name: 'forward', size: 14, stroke: 2 })))),
+    h('div', { style: { flex: 1 } }),
+    h('div', { style: { display: 'flex', gap: 9 } },
+      h(S.Button, { size: 'md', variant: 'secondary', style: { flex: 1 } }, 'Add a note'),
+      h(S.Button, { size: 'md', style: { flex: 1 } }, 'Tell parents')));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Student)));
+</script>
+</body></html>

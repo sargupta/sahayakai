@@ -1,0 +1,30 @@
+<!-- @dsCard group="Content" height=256 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>ReviewRow</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function list(name, kids) { return h('ul', { 'aria-label': name, style: { display: 'flex', flexDirection: 'column', gap: 7, margin: 0, padding: 0, listStyle: 'none' } }, kids); }
+function Demo() {
+  var d = React.useState({}), done = d[0], setDone = d[1];
+  function fix(n, word) { return function () { var m = Object.assign({}, done); m[n] = word; setDone(m); }; }
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Unreadable · retake'),
+      h(S.Eyebrow, { id: 'nye', size: 'tight', style: { color: 'var(--red-700)' } }, 'Needs your eye · 2'),
+      list('Needs your eye', [
+        h(S.ReviewRow, { key: 1, as: 'li', name: 'Divya Rane', roll: '04', reason: 'Q4 handwriting unclear', tone: 'red', action: 'Review', onAction: fix(1, 'Opened Divya Rane’s sheet') }),
+        h(S.ReviewRow, { key: 2, as: 'li', name: 'Gaurav Jadhav', roll: '07', reason: 'Photographed at an angle', tone: 'amber', action: 'Rescan', onAction: fix(2, 'Camera opened for Gaurav Jadhav') })
+      ]),
+      h('div', { 'aria-live': 'polite', style: { font: '400 12px var(--font-ui)', color: 'var(--text-body)', minHeight: 14 } }, done[1] || done[2] || '')),
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'In हिन्दी'),
+      list('जाँच बाकी', [
+        h(S.ReviewRow, { key: 1, as: 'li', lang: 'hi', name: 'Imran Shaikh', roll: '19', rollLabel: 'रोल', reason: 'प्रश्न 2 का उत्तर कटा हुआ है', tone: 'red', action: 'देखें', onAction: function () {} }),
+        h(S.ReviewRow, { key: 2, as: 'li', lang: 'hi', name: 'Kavya Nair', roll: '23', rollLabel: 'रोल', reason: 'रोल नंबर नहीं दिखा', tone: 'amber', action: 'फिर से स्कैन', onAction: function () {} })
+      ])));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

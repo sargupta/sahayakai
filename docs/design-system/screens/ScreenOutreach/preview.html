@@ -1,0 +1,43 @@
+<!-- @dsCard group="Screens · Class and calls" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Parent outreach</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+var GROUPS = [
+  { id: 'abs', label: 'Consecutive absences', color: 'var(--red-700)', tone: 'red', rows: [
+    { k: 'omkar', name: 'Omkar Naik', meta: '67% this month · 6 absent in a row' },
+    { k: 'neha', name: 'Neha Sengupta', meta: '72% this month · 5 absent in a row' }] },
+  { id: 'risk', label: 'At risk academically', color: 'var(--saffron-700)', tone: 'amber', rows: [
+    { k: 'hiren', name: 'Hiren Parmar', meta: '29% avg · at risk · Bengali' },
+    { k: 'gauri', name: 'Gauri Desai', meta: '28% avg · at risk · English' }] },
+  { id: 'cel', label: 'Celebrate', color: 'var(--leaf-700)', tone: 'leaf', rows: [
+    { k: 'aarav', name: 'Aarav Sharma', meta: '100% this month · 90% top performer' },
+    { k: 'ananya', name: 'Ananya Iyer', meta: '93% this month · top performer' }] }
+];
+function Outreach() {
+  var c = React.useState('hiren'), on = c[0], setOn = c[1];
+  return h(S.PhoneScreen, {
+    gap: 10,
+    overlay: [
+      h('div', { key: 'o', className: 'sk-orb-park' }, h(S.Orb, { onClick: function () {} })),
+      h('div', { key: 't', className: 'sk-tabbar-dock' }, h(S.TabBar, { active: 'home' }))
+    ]
+  },
+    h(S.ScreenHeader, { level: 'page', title: 'Parent outreach', subtitle: '40 of 40 students on file', trailing: h(S.Button, { size: 'xs', variant: 'secondary', style: { padding: '8px 12px', color: 'var(--saffron-600)', '--sk-hit-inset': '-8px 0' } }, 'Add student'), style: { paddingBottom: 2 } }),
+    h(S.GlassCard, { radius: 'field', tone: 'soft', padding: '10px 13px', style: { font: '400 12px/1.5 var(--font-ui)', color: 'var(--text-body)' } }, 'Phone and language are on file for every student.'),
+    GROUPS.map(function (g) {
+      return [
+        h(S.Eyebrow, { key: g.id + '-h', as: 'h2', size: 'tight', id: 'out-' + g.id, style: { color: g.color } }, g.label),
+        h('ul', { key: g.id, className: 'sk-contactrow-list', 'aria-labelledby': 'out-' + g.id },
+          g.rows.map(function (r) {
+            return h(S.ContactRow, { key: r.k, as: 'li', name: r.name, meta: r.meta, tone: g.tone, highlighted: on === r.k, onContact: function () { setOn(r.k); } });
+          }))
+      ];
+    }));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Outreach)));
+</script>
+</body></html>

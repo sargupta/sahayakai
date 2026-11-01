@@ -1,0 +1,29 @@
+<!-- @dsCard group="Inputs" height=418 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>UploadDrop</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function sizeOf(f) { return (f.size / 1048576).toFixed(1) + ' MB'; }
+function Demo() {
+  var a = React.useState(null), page = a[0], setPage = a[1];
+  var c = React.useState({ name: 'Plant parts chart.jpg', meta: 'Photo · 0.8 MB' }), ctx = c[0], setCtx = c[1];
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Empty · tap, drop or use the camera'),
+      h(S.UploadDrop, { label: 'Textbook page', required: true, hint: 'A clear photo of one page', file: page, onFile: function (f) { setPage({ name: f.name, meta: 'Photo · ' + sizeOf(f) }); }, onRemove: function () { setPage(null); } }),
+      h('div', { className: 'sk-slice__label' }, 'Required and missing'),
+      h(S.UploadDrop, { label: 'Textbook page', required: true, error: 'Add a photo of the textbook page to continue.' })),
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Filled'),
+      h(S.UploadDrop, { label: 'Textbook page', required: true, file: { name: 'IMG_2041.jpg', meta: 'Textbook page · 1.4 MB' }, onFile: function () {}, onRemove: function () {} }),
+      h('div', { className: 'sk-slice__label' }, 'Row · optional context'),
+      h(S.UploadDrop, { variant: 'row', label: 'Add a context image', onFile: function () {} }),
+      h(S.UploadDrop, { variant: 'row', label: 'Add a context image', file: ctx, onFile: function (f) { setCtx({ name: f.name, meta: 'Photo · ' + sizeOf(f) }); }, onRemove: function () { setCtx(null); } }),
+      h('div', { className: 'sk-slice__label' }, 'In हिन्दी'),
+      h(S.UploadDrop, { variant: 'row', lang: 'hi', label: 'संदर्भ चित्र जोड़ें', optionalLabel: 'वैकल्पिक', actionLabel: 'चुनें' })));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

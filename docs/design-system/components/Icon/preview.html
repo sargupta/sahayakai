@@ -1,0 +1,28 @@
+<!-- @dsCard group="Core" height=758 -->
+<!doctype html>
+<html><head><meta charset="utf-8"></head>
+<body><div id="root"></div>
+<script>
+(function () {
+  var S = window.SahayakAI, h = React.createElement;
+  var groups = [
+    ['Tabs', ['home', 'library', 'community', 'profile']],
+    ['Controls', ['mic', 'mic-off', 'send', 'keyboard', 'play', 'pause', 'speaker', 'phone', 'plus', 'back', 'forward', 'chevron', 'arrow-up-right', 'more', 'search', 'settings', 'menu', 'cross', 'check']],
+    ['Actions', ['copy', 'download', 'upload', 'print', 'share', 'edit', 'refresh', 'thumb-up', 'thumb-down', 'user-plus']],
+    ['Things and states', ['book', 'scan', 'message', 'bell', 'calendar', 'clock', 'trend-down', 'alert', 'star', 'globe', 'key', 'lock', 'signal-off', 'sync', 'grid', 'sparkline']]
+  ];
+  function Cell(n) {
+    return h('div', { key: n, style: { width: 78, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '10px 0', borderRadius: 14, background: 'var(--surface-glass)', border: '1px solid var(--border-glass)' } },
+      h(S.Icon, { name: n, size: 20, color: 'var(--ink-600)' }),
+      h('span', { style: { font: '500 12px var(--font-ui)', color: 'var(--text-muted)' } }, n));
+  }
+  function App() {
+    return h('div', { className: 'sk-stage', style: { gap: 14 } }, groups.map(function (g) {
+      return h('div', { key: g[0], style: { display: 'flex', flexDirection: 'column', gap: 8 } },
+        h('div', { className: 'sk-stage__label' }, g[0]),
+        h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 8 } }, g[1].map(Cell)));
+    }));
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+})();
+</script></body></html>

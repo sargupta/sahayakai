@@ -1,0 +1,29 @@
+<!-- @dsCard group="Screens · Class and calls" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Call summary</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+function Summary() {
+  var s = React.useState(false), saved = s[0], setSaved = s[1];
+  var save = h(S.Button, { variant: 'secondary', size: 'xs', style: { color: 'var(--saffron-600)', padding: '10px 12px' }, onClick: function () { setSaved(true); } },
+    saved ? h(React.Fragment, null, S.Icon({ name: 'check', size: 13, stroke: 2.2 }), 'Saved to record') : 'Save to record');
+  return h(S.PhoneScreen, { padBottom: 24, gap: 9, glow: false },
+    h(S.ScreenHeader, { onBack: function () {}, backLabel: 'Back to parent outreach', trailing: save, style: { paddingTop: 6 } }),
+    h(S.SummaryCard, { tone: 'done', headingAs: 'h1', title: 'Call completed', meta: '2 min · 5 exchanges · parent was concerned' }),
+    h(S.SummaryCard, { title: 'Parent response' }, 'Acknowledged the performance drop; committed to daily home practice.'),
+    h(S.SummaryCard, { tone: 'amber', title: 'Concerns raised' }, 'Child says he doesn’t understand the topic · homework feels overwhelming'),
+    h(S.SummaryCard, { tone: 'indigo', title: 'Parent commitments', items: ['Elder daughter to help 20 min a day on fractions', 'Will encourage him to ask questions in class'] }),
+    h(S.SummaryCard, { tone: 'action', title: 'Your action items', items: ['Send the list of weak topics today', 'Offer a Q&A slot after class for two weeks', 'Re-test fractions in 10 days'] }),
+    h(S.SummaryCard, { tone: 'red', title: 'Follow-up recommended' }, 'Call in 14 days, after the re-test'),
+    h(S.SummaryCard, { tone: 'link', title: 'Conversation transcript', meta: '5 messages', onClick: function () {} }),
+    h('div', { style: { marginTop: 'auto', paddingTop: 3, display: 'flex', gap: 9 } },
+      h(S.Button, { variant: 'secondary', size: 'md', style: { flex: 1, padding: '0 12px' } }, 'Make the topic sheet'),
+      h(S.Button, { variant: 'primary', size: 'md', style: { flex: 1, padding: '0 12px' } }, 'Schedule follow-up')),
+    h('span', { className: 'sk-visually-hidden', role: 'status' }, saved ? 'Saved to Hiren’s record' : ''));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Summary)));
+</script>
+</body></html>

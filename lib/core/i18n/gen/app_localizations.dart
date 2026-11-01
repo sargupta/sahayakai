@@ -434,6 +434,12 @@ abstract class AppLocalizations {
   /// **'Regenerate'**
   String get actionRegenerate;
 
+  /// Output screen action: back to the tool's form to change the request (UX map Flow 4).
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get outputEdit;
+
   /// Result action bar: copy the generated document to the clipboard.
   ///
   /// In en, this message translates to:
@@ -3691,6 +3697,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tap to speak'**
   String get vidyaStateIdle;
+
+  /// Capsule above the tab bar and the docked orb's hint when a result is ready; a tap opens the deliver tray (v2 9a-06).
+  ///
+  /// In en, this message translates to:
+  /// **'Ready · Tap to deliver'**
+  String get vidyaDockReadyHint;
 
   /// Seal-mic caption while requesting the microphone.
   ///
@@ -7021,6 +7033,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Script in हिन्दी'**
   String get homeTileCallSub;
+
+  /// Voice-first Home: eyebrow above the headline (VIDYA's name, Latin in every language).
+  ///
+  /// In en, this message translates to:
+  /// **'VIDYA'**
+  String get homeAskEyebrow;
+
+  /// Voice-first Home headline (UX map H-01). Two lines.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask for anything\nin the app'**
+  String get homeAskTitle;
+
+  /// Voice-first Home subline under the headline.
+  ///
+  /// In en, this message translates to:
+  /// **'Any tool, any language. She opens the right one.'**
+  String get homeAskSubtitle;
+
+  /// Eyebrow over the three example requests on Home.
+  ///
+  /// In en, this message translates to:
+  /// **'Say it, she routes it'**
+  String get homeSayEyebrow;
+
+  /// Example spoken request on Home that opens Lesson Plan, prefilled. Code-mixed as teachers speak.
+  ///
+  /// In en, this message translates to:
+  /// **'“Class 7 ka jal chakra lesson plan”'**
+  String get homeSayLesson;
+
+  /// Example spoken request on Home that opens Quiz with ten questions, medium.
+  ///
+  /// In en, this message translates to:
+  /// **'“Ten-question quiz, medium”'**
+  String get homeSayQuiz;
+
+  /// Example spoken request on Home that opens Attendance.
+  ///
+  /// In en, this message translates to:
+  /// **'“Aaj ki attendance lagao”'**
+  String get homeSayAttendance;
+
+  /// Label under Home's big VIDYA orb while it rests.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap or hold to speak'**
+  String get homeOrbRest;
+
+  /// Label under Home's big VIDYA orb when there is no signal.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice needs signal · type below'**
+  String get homeOrbOffline;
+
+  /// Placeholder of Home's type box.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask VIDYA, or type what you need…'**
+  String get homeAskPlaceholder;
+
+  /// Caption under Home's type box.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold the mic to speak · tap the box to type'**
+  String get homeAskCaption;
+
+  /// Accessible name of Home's mic button.
+  ///
+  /// In en, this message translates to:
+  /// **'Speak to VIDYA'**
+  String get homeSpeakToVidya;
+
+  /// Eyebrow over Home's four tool tiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Your tools'**
+  String get homeYourTools;
+
+  /// Home link to every tool; count is the real number of tools.
+  ///
+  /// In en, this message translates to:
+  /// **'All {count} tools'**
+  String homeAllTools(int count);
+
+  /// Call parents tile subline; language is the app language's native name.
+  ///
+  /// In en, this message translates to:
+  /// **'Script in {language}'**
+  String homeTileCallSubLanguage(String language);
+
+  /// Waiting-for-you row: a finished result ready to deliver; title is the result's title.
+  ///
+  /// In en, this message translates to:
+  /// **'{title} is ready'**
+  String homeWaitingReady(String title);
+
+  /// Waiting-for-you row: unread updates (notifications).
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 new update} other{{count} new updates}}'**
+  String homeWaitingUpdates(int count);
+
+  /// Waiting-for-you card when nothing is waiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is waiting for you right now'**
+  String get homeWaitingNothing;
+
+  /// Topic the Home say-it row prefills into Lesson Plan (the water cycle, as in its example request).
+  ///
+  /// In en, this message translates to:
+  /// **'Water cycle'**
+  String get homeSayLessonTopic;
+
+  /// Shown while editing a tool's request: returns to the result without regenerating (nothing is lost by Edit).
+  ///
+  /// In en, this message translates to:
+  /// **'Back to result'**
+  String get outputBackToResult;
 }
 
 class _AppLocalizationsDelegate

@@ -1,0 +1,33 @@
+<!-- @dsCard group="Library and offline" height=404 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>LibraryRow</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function list(name, kids) { return h('ul', { 'aria-label': name, style: { display: 'flex', flexDirection: 'column', gap: 9, margin: 0, padding: 0, listStyle: 'none' } }, kids); }
+function Demo() {
+  var o = React.useState(''), opened = o[0], setOpened = o[1];
+  function open(what) { return function () { setOpened(what); }; }
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Generations · sync state on every row'),
+      list('My work', [
+        h(S.LibraryRow, { key: 1, as: 'li', type: 'LP', title: 'Water cycle · Class 6', meta: 'Lesson plan · today', status: 'synced', onClick: open('Water cycle lesson plan') }),
+        h(S.LibraryRow, { key: 2, as: 'li', type: 'WS', title: 'Water cycle practice · 12 Q', meta: 'Worksheet · today', status: 'waiting', onClick: open('Water cycle practice') }),
+        h(S.LibraryRow, { key: 3, as: 'li', type: 'QZ', title: 'Water cycle quiz · Class 6-B', meta: 'Quiz · 16 Sept · assigned', status: 'synced', onClick: open('Water cycle quiz') }),
+        h(S.LibraryRow, { key: 4, as: 'li', type: 'VA', title: 'Board diagram · water cycle', meta: 'Visual aid · 15 Sept', status: 'local', onClick: open('Board diagram') })
+      ]),
+      h('div', { 'aria-live': 'polite', style: { font: '400 12px var(--font-ui)', color: 'var(--text-body)', minHeight: 14 } }, opened ? 'Opened: ' + opened : '')),
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Board line · making · हिन्दी'),
+      list('More rows', [
+        h(S.LibraryRow, { key: 1, as: 'li', type: 'LP', title: 'Working with Fractions · Class 7', meta: 'Lesson plan · today', source: 'CBSE · NCERT Ganita Prakash 7, Ch 8', status: 'synced', onClick: open('Working with Fractions') }),
+        h(S.LibraryRow, { key: 2, as: 'li', type: 'EP', title: 'Half-yearly paper · Class 8 Science', meta: 'Exam paper · just now', source: 'Karnataka State Board (KSEEB)', status: 'making', onClick: open('Half-yearly paper') }),
+        h(S.LibraryRow, { key: 3, as: 'li', type: 'RB', title: 'Solar system model', meta: 'Rubric · 10 Sept', status: 'waiting', onClick: open('Solar system rubric') }),
+        h(S.LibraryRow, { key: 4, as: 'li', type: 'LP', lang: 'hi', title: 'जल चक्र · कक्षा 6', meta: 'पाठ योजना · आज', status: 'synced', statusLabel: 'सिंक हो गया', onClick: open('जल चक्र') })
+      ])));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

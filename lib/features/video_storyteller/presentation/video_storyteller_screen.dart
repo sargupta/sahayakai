@@ -155,15 +155,19 @@ class _VideoStorytellerScreenState
 
     // Auto-scroll to the result on a fresh success (loading -> data).
     ref.listen<AsyncValue<VideoRecommendations?>>(
-        videoStorytellerControllerProvider, (prev, next) {
-      final wasLoading = prev?.isLoading ?? false;
-      final nowHasResult =
-          !next.isLoading && next.hasValue && next.valueOrNull != null;
-      if (wasLoading && nowHasResult) {
-        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToResult());
-        _maybeSpeakVoiceSummary(l10n);
-      }
-    });
+      videoStorytellerControllerProvider,
+      (prev, next) {
+        final wasLoading = prev?.isLoading ?? false;
+        final nowHasResult =
+            !next.isLoading && next.hasValue && next.valueOrNull != null;
+        if (wasLoading && nowHasResult) {
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _scrollToResult(),
+          );
+          _maybeSpeakVoiceSummary(l10n);
+        }
+      },
+    );
 
     final result = state.hasError
         ? VideoStorytellerErrorView(error: state.error!, onRetry: _submit)
@@ -171,14 +175,18 @@ class _VideoStorytellerScreenState
             state: state,
             skeleton: const VideoStorytellerSkeleton(),
             emptyMessage: l10n.videoStorytellerEmpty,
-            onData: (recommendations) => VideoStorytellerResultView(
-              recommendations: recommendations,
-            ),
+            onData: (recommendations) =>
+                VideoStorytellerResultView(recommendations: recommendations),
           );
 
     return ToolScaffold(
       title: l10n.videoStorytellerTitle,
       isBusy: state.isLoading,
+      // Output screen (UX map Flow 4): the result replaces the form;
+      // Edit brings the form back and keeps the result until a new one lands.
+      hasResult: state.hasValue && state.valueOrNull != null,
+      onResubmit: _submit,
+      onRegenerate: _submit,
       submitLabel: l10n.videoStorytellerAction,
       // A browse re-searches, so the Find button stays available after a result
       // (only a live request suppresses it) — the teacher tweaks the topic and
@@ -196,22 +204,22 @@ class _VideoStorytellerScreenState
       child: staggeredItem(
         context,
         Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _topicField(l10n),
-          const SizedBox(height: AppSpacing.space8),
-          EditorialSectionHeader(l10n.sectionForYourClass),
-          const SizedBox(height: AppSpacing.space4),
-          _subjectField(l10n),
-          const SizedBox(height: AppSpacing.space6),
-          _gradeField(l10n),
-          const SizedBox(height: AppSpacing.space6),
-          _languageField(l10n),
-        ],
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _topicField(l10n),
+            const SizedBox(height: AppSpacing.space8),
+            EditorialSectionHeader(l10n.sectionForYourClass),
+            const SizedBox(height: AppSpacing.space4),
+            _subjectField(l10n),
+            const SizedBox(height: AppSpacing.space6),
+            _gradeField(l10n),
+            const SizedBox(height: AppSpacing.space6),
+            _languageField(l10n),
+          ],
+        ),
+        index: 0,
       ),
-      index: 0,
-    ),
     );
   }
 

@@ -1,0 +1,38 @@
+<!-- @dsCard group="Library and offline" height=584 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>UsageMeter</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Demo() {
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Free plan · quota per conversation'),
+      h(S.UsageMeter, {
+        plan: 'Free plan',
+        stats: [{ value: '31', label: 'made' }, { value: '14h', label: 'saved' }, { value: '3', label: 'classes' }],
+        used: 62, quotaText: '62% used, resets on 1 Nov',
+        live: { left: 18, total: 60 },
+        note: 'Quota is per conversation; refining never locks you out mid-task.'
+      }),
+      h('div', { className: 'sk-slice__label' }, 'School plan · no quota bar'),
+      h(S.UsageMeter, {
+        plan: 'School plan', planTone: 'leaf', showQuota: false,
+        stats: [{ value: '58', label: 'made' }, { value: '26h', label: 'saved' }, { value: '41', label: 'calls' }],
+        live: { left: 4, total: 120, leftText: '4 min left · resets 1 Nov' },
+        note: 'Your school covers this plan. Parent calls count by the minute.'
+      })),
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'In हिन्दी · near the limit'),
+      h(S.UsageMeter, {
+        lang: 'hi', title: 'इस महीने', plan: 'मुफ़्त योजना',
+        stats: [{ value: '31', label: 'बनाए' }, { value: '14 घंटे', label: 'बचाए' }, { value: '3', label: 'कक्षाएँ' }],
+        used: 92, quotaLabel: 'इस महीने का कोटा', quotaText: '92% इस्तेमाल हुआ',
+        live: { left: 18, total: 60, label: 'VIDYA लाइव', leftText: '18 मिनट बाकी', barLabel: 'इस महीने के लाइव मिनट', valueText: '60 में से 42 मिनट इस्तेमाल हुए, 18 बाकी' },
+        note: 'कोटा हर बातचीत पर गिना जाता है; सुधार करते समय काम बीच में नहीं रुकता।'
+      })));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

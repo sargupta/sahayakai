@@ -23,6 +23,8 @@ class ToolPrefill {
     this.gradeLevel,
     this.subject,
     this.language,
+    this.questionCount,
+    this.difficulty,
     this.autoSubmit = false,
   });
 
@@ -42,6 +44,14 @@ class ToolPrefill {
   /// tool's language picker.
   final String? language;
 
+  /// How many questions a quiz request asked for ("ten-question quiz"). A quiz
+  /// applies it only inside its own bounds.
+  final int? questionCount;
+
+  /// The difficulty a request named, as `easy`, `medium` or `hard`. Applied only
+  /// by a tool that offers that choice.
+  final String? difficulty;
+
   /// The voice path's RUN verb: when true, a tool screen that receives this
   /// prefill and finds its required field populated auto-runs generation (no
   /// finger on Generate) — the last inch of "speak → result". The VIDYA nav
@@ -57,7 +67,12 @@ class ToolPrefill {
   /// [autoSubmit] is intentionally not part of this: an intent to run with no
   /// data to run on is still empty.
   bool get isEmpty =>
-      topic == null && gradeLevel == null && subject == null && language == null;
+      topic == null &&
+      gradeLevel == null &&
+      subject == null &&
+      language == null &&
+      questionCount == null &&
+      difficulty == null;
 
   @override
   bool operator ==(Object other) =>
@@ -66,11 +81,20 @@ class ToolPrefill {
       other.gradeLevel == gradeLevel &&
       other.subject == subject &&
       other.language == language &&
+      other.questionCount == questionCount &&
+      other.difficulty == difficulty &&
       other.autoSubmit == autoSubmit;
 
   @override
-  int get hashCode =>
-      Object.hash(topic, gradeLevel, subject, language, autoSubmit);
+  int get hashCode => Object.hash(
+    topic,
+    gradeLevel,
+    subject,
+    language,
+    questionCount,
+    difficulty,
+    autoSubmit,
+  );
 }
 
 /// The [AppLocale] a prefill's ISO-2 [code] maps to, or null when [code] is null

@@ -32,41 +32,91 @@ class AppShadows {
 
   // e1 — resting card / list tile / input
   static final List<BoxShadow> e1 = [
-    BoxShadow(color: _l.withValues(alpha: 0.04), offset: const Offset(0, 1), blurRadius: 3),
-    BoxShadow(color: _l.withValues(alpha: 0.06), offset: const Offset(0, 2), blurRadius: 6, spreadRadius: -1),
+    BoxShadow(
+      color: _l.withValues(alpha: 0.04),
+      offset: const Offset(0, 1),
+      blurRadius: 3,
+    ),
+    BoxShadow(
+      color: _l.withValues(alpha: 0.06),
+      offset: const Offset(0, 2),
+      blurRadius: 6,
+      spreadRadius: -1,
+    ),
   ];
 
   // e2 — raised / hover / the one focal card / result masthead
   static final List<BoxShadow> e2 = [
-    BoxShadow(color: _l.withValues(alpha: 0.05), offset: const Offset(0, 2), blurRadius: 6),
-    BoxShadow(color: _l.withValues(alpha: 0.09), offset: const Offset(0, 8), blurRadius: 20, spreadRadius: -4),
+    BoxShadow(
+      color: _l.withValues(alpha: 0.05),
+      offset: const Offset(0, 2),
+      blurRadius: 6,
+    ),
+    BoxShadow(
+      color: _l.withValues(alpha: 0.09),
+      offset: const Offset(0, 8),
+      blurRadius: 20,
+      spreadRadius: -4,
+    ),
   ];
 
   // e3 — dialog / menu / floating CTA bar / floating nav (`0 8px 22px rgba(23,19,16,.10)`)
   static final List<BoxShadow> e3 = [
-    BoxShadow(color: _l.withValues(alpha: 0.06), offset: const Offset(0, 4), blurRadius: 10),
-    BoxShadow(color: _l.withValues(alpha: 0.14), offset: const Offset(0, 16), blurRadius: 40, spreadRadius: -8),
+    BoxShadow(
+      color: _l.withValues(alpha: 0.06),
+      offset: const Offset(0, 4),
+      blurRadius: 10,
+    ),
+    BoxShadow(
+      color: _l.withValues(alpha: 0.14),
+      offset: const Offset(0, 16),
+      blurRadius: 40,
+      spreadRadius: -8,
+    ),
   ];
 
   // e4 — bottom sheet / modal
   static final List<BoxShadow> e4 = [
-    BoxShadow(color: _l.withValues(alpha: 0.08), offset: const Offset(0, 8), blurRadius: 16),
-    BoxShadow(color: _l.withValues(alpha: 0.20), offset: const Offset(0, 28), blurRadius: 64, spreadRadius: -12),
+    BoxShadow(
+      color: _l.withValues(alpha: 0.08),
+      offset: const Offset(0, 8),
+      blurRadius: 16,
+    ),
+    BoxShadow(
+      color: _l.withValues(alpha: 0.20),
+      offset: const Offset(0, 28),
+      blurRadius: 64,
+      spreadRadius: -12,
+    ),
   ];
 
   // Dark: floating key shadow (sheets/dialogs only) + 1px top highlight border.
   static final List<BoxShadow> dKey = [
-    BoxShadow(color: Colors.black.withValues(alpha: 0.45), offset: const Offset(0, 16), blurRadius: 48, spreadRadius: -12),
+    BoxShadow(
+      color: Colors.black.withValues(alpha: 0.45),
+      offset: const Offset(0, 16),
+      blurRadius: 48,
+      spreadRadius: -12,
+    ),
   ];
-  static final Border dTopHighlight =
-      Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.05), width: 1));
+  static final Border dTopHighlight = Border(
+    top: BorderSide(color: Colors.white.withValues(alpha: 0.05), width: 1),
+  );
 
   /// Signature saffron glow — CTA only: `0 10px 26px rgba(201,106,40,.34)` (v3).
   static final List<BoxShadow> ctaGlowLight = [
-    BoxShadow(color: AppColors.saffron500.withValues(alpha: 0.34), offset: const Offset(0, 10), blurRadius: 26),
+    BoxShadow(
+      color: AppColors.saffron500.withValues(alpha: 0.34),
+      offset: const Offset(0, 10),
+      blurRadius: 26,
+    ),
   ];
   static final List<BoxShadow> dSaffronGlow = [
-    BoxShadow(color: AppColors.saffron500.withValues(alpha: 0.40), offset: const Offset(0, 10), blurRadius: 26),
+    BoxShadow(
+      color: AppColors.saffron500.withValues(alpha: 0.40),
+      offset: const Offset(0, 10),
+      blurRadius: 26,
+    ),
   ];
 
   // Back-compat aliases so existing call sites keep compiling during migration.
@@ -84,6 +134,64 @@ class AppShadows {
     blurRadius: 20,
     offset: Offset(0, 8),
   );
+
+  /// Orb hint / dock capsule: `0 8px 20px rgba(23,19,16,.10)`
+  static const BoxShadow hint = BoxShadow(
+    color: Color(0x1A171310),
+    blurRadius: 20,
+    offset: Offset(0, 8),
+  );
+
+  /// Docked orb in the tab bar (v2 9a): `0 5px 14px` in the state colour.
+  static const BoxShadow orbDocked = BoxShadow(
+    color: Color(0x61C96A28), // rgba(201,106,40,.38)
+    blurRadius: 14,
+    offset: Offset(0, 5),
+  );
+  static const BoxShadow orbDockedReady = BoxShadow(
+    color: Color(0x572C5F2D), // rgba(44,95,45,.34)
+    blurRadius: 14,
+    offset: Offset(0, 5),
+  );
+  static const BoxShadow orbDockedWorking = BoxShadow(
+    color: Color(0x572A3B8F), // rgba(42,59,143,.34)
+    blurRadius: 14,
+    offset: Offset(0, 5),
+  );
+
+  /// Home's big VIDYA orb (UX map H-01): a deep drop plus an 18px halo ring,
+  /// both in the state colour.
+  static const List<BoxShadow> orbHero = [
+    BoxShadow(
+      color: Color(0x57C86A28), // rgba(200,106,40,.34)
+      blurRadius: 54,
+      offset: Offset(0, 28),
+    ),
+    BoxShadow(color: Color(0x29F6BE8C), spreadRadius: 18), // ring .16
+  ];
+  static const List<BoxShadow> orbHeroWorking = [
+    BoxShadow(
+      color: Color(0x5C344495), // rgba(52,68,149,.36)
+      blurRadius: 54,
+      offset: Offset(0, 28),
+    ),
+    BoxShadow(color: Color(0x298291D2), spreadRadius: 18), // ring .16
+  ];
+  static const List<BoxShadow> orbHeroReady = [
+    BoxShadow(
+      color: Color(0x572C5F2D), // rgba(44,95,45,.34)
+      blurRadius: 54,
+      offset: Offset(0, 28),
+    ),
+    BoxShadow(color: Color(0x2978AA78), spreadRadius: 18), // ring .16
+  ];
+  static const List<BoxShadow> orbHeroOffline = [
+    BoxShadow(
+      color: Color(0x3850463C), // rgba(80,70,60,.22)
+      blurRadius: 40,
+      offset: Offset(0, 20),
+    ),
+  ];
 
   /// Raised / float (floating nav): `0 8px 22px rgba(23,19,16,.10)`
   static const BoxShadow float = BoxShadow(
@@ -183,13 +291,21 @@ class AppShadows {
   /// Two-layer warm shadow for elevated cards (light).
   static final List<BoxShadow> cardLight = [
     card,
-    BoxShadow(color: _l.withValues(alpha: 0.03), offset: const Offset(0, 1), blurRadius: 4),
+    BoxShadow(
+      color: _l.withValues(alpha: 0.03),
+      offset: const Offset(0, 1),
+      blurRadius: 4,
+    ),
   ];
 
   /// Key shadow + catch-light for elevated cards (dark).
   static final List<BoxShadow> cardDark = [
     ...dKey,
-    BoxShadow(color: Colors.white.withValues(alpha: 0.05), offset: const Offset(0, -1), blurRadius: 0),
+    BoxShadow(
+      color: Colors.white.withValues(alpha: 0.05),
+      offset: const Offset(0, -1),
+      blurRadius: 0,
+    ),
   ];
 
   /// Floating bottom nav (light) — `0 8px 22px rgba(23,19,16,.10)`.

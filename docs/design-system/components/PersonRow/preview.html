@@ -1,0 +1,40 @@
+<!-- @dsCard group="Community" height=410 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>PersonRow</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function useConnect(initial) {
+  var s = React.useState(initial || 'connect'), v = s[0], set = s[1];
+  return { action: v, onAction: v === 'connect' || v === 'join' ? function () { set('pending'); } : undefined };
+}
+function useJoin() {
+  var s = React.useState(false), on = s[0], set = s[1];
+  return { action: on ? 'joined' : 'join', onAction: on ? undefined : function () { set(true); } };
+}
+function Demo() {
+  var rakesh = useConnect(), anjali = useConnect(), shalini = useConnect();
+  var g1 = useJoin(), g2 = useJoin();
+  var acc = React.useState(false), accepted = acc[0], setAccepted = acc[1];
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice', style: { gap: 6 } },
+      h('div', { className: 'sk-slice__label' }, 'People you may know · tap Connect'),
+      h(S.PersonRow, Object.assign({ name: 'Rakesh Singh', meta: 'Science · Class 8 · same school', avatarTone: 'saffron', emphasis: 'solid' }, rakesh)),
+      h(S.PersonRow, Object.assign({ name: 'Anjali Deshmukh', meta: 'Maths · Class 6 · Pune', avatarTone: 'indigo' }, anjali)),
+      h(S.PersonRow, Object.assign({ name: 'Shalini Desai', meta: 'English · Class 7 · Nashik', avatarTone: 'leaf' }, shalini)),
+      h('div', { className: 'sk-slice__label', style: { marginTop: 8 } }, 'Suggested groups · no avatar, Join'),
+      h(S.PersonRow, Object.assign({ name: '9 Mathematics · CBSE', meta: '4 members', avatar: false, emphasis: 'solid' }, g1)),
+      h(S.PersonRow, Object.assign({ name: '8 Science · KSEEB', meta: '15 members', avatar: false }, g2))),
+    h('div', { className: 'sk-slice', style: { gap: 6 } },
+      h('div', { className: 'sk-slice__label' }, 'Every action'),
+      h(S.PersonRow, { name: 'Suresh Reddy', meta: 'Wants to connect', avatarTone: 'amber', action: accepted ? 'connected' : 'accept', onAction: accepted ? undefined : function () { setAccepted(true); } }),
+      h(S.PersonRow, { name: 'Mohan Patil', meta: 'Science · Class 9 · Solapur', avatarTone: 'amber', action: 'pending' }),
+      h(S.PersonRow, { name: 'Lata Nair', meta: 'Maths · Class 5 · Kochi', avatarTone: 'indigo', action: 'connected' }),
+      h('div', { className: 'sk-slice__label', style: { marginTop: 8 } }, 'In Hindi · translated pill and name'),
+      h(S.PersonRow, { lang: 'hi', name: 'सुनीता शर्मा', initials: 'सु', meta: 'हिन्दी · कक्षा 6 · भोपाल', avatarTone: 'leaf', emphasis: 'outline', action: 'connect', actionLabel: 'जुड़ें', actionA11yLabel: 'सुनीता शर्मा से जुड़ें', onAction: function () {} }),
+      h(S.PersonRow, { lang: 'hi', name: 'कक्षा 7 विज्ञान · MPBSE', meta: '212 सदस्य', avatar: false, emphasis: 'solid', action: 'join', actionLabel: 'शामिल हों', actionA11yLabel: 'कक्षा 7 विज्ञान · MPBSE में शामिल हों', onAction: function () {} })));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

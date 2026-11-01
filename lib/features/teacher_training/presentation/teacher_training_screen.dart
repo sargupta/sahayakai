@@ -188,6 +188,10 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
     return ToolScaffold(
       title: l10n.teacherTrainingTitle,
       isBusy: state.isLoading,
+      // Output screen (UX map Flow 4): the result replaces the form;
+      // Edit brings the form back and keeps the result until a new one lands.
+      hasResult: hasResult,
+      onResubmit: _submit,
       submitLabel: l10n.teacherTrainingAction,
       // Hide the sticky action button once advice is on screen — the document's
       // own action bar (Regenerate / Copy) takes over.
@@ -210,20 +214,20 @@ class _TeacherTrainingScreenState extends ConsumerState<TeacherTrainingScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-            EditorialSectionHeader(l10n.teacherTrainingSectionQuestion),
-            const SizedBox(height: AppSpacing.space4),
-            _questionField(l10n),
-            const SizedBox(height: AppSpacing.space8),
-            EditorialSectionHeader(l10n.sectionForYourClass),
-            const SizedBox(height: AppSpacing.space4),
-            _subjectField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _languageField(l10n),
-          ],
+              EditorialSectionHeader(l10n.teacherTrainingSectionQuestion),
+              const SizedBox(height: AppSpacing.space4),
+              _questionField(l10n),
+              const SizedBox(height: AppSpacing.space8),
+              EditorialSectionHeader(l10n.sectionForYourClass),
+              const SizedBox(height: AppSpacing.space4),
+              _subjectField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _languageField(l10n),
+            ],
+          ),
         ),
+        index: 0,
       ),
-      index: 0,
-    ),
     );
   }
 

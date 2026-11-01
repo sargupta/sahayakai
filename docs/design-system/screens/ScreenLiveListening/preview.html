@@ -1,0 +1,24 @@
+<!-- @dsCard group="Screens · VIDYA" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>VIDYA Live · Listening</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+function noop() {}
+function Listening() {
+  var m = React.useState(false), muted = m[0], setMuted = m[1];
+  return h(S.PhoneScreen, { wash: 'live-listening', padBottom: 0, gap: 0 },
+    h(S.LiveHeader, { onBack: noop, status: h(S.LiveStatus, { state: 'listening', label: muted ? 'Muted' : 'Listening', language: 'हिन्दी', languageLang: 'hi' }) }),
+    h('div', { style: { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 26, margin: '0 -13px' } },
+      h(S.Eyebrow, { style: { fontSize: 12, letterSpacing: '.2em' } }, muted ? 'Muted' : 'Listening'),
+      h(S.LiveOrb, { state: 'listening', level: 0, still: muted, label: muted ? 'VIDYA, mic muted' : undefined }),
+      h(S.LiveTranscript, { text: 'कक्षा छह के लिए जल चक्र की पाठ योजना बनाओ', lang: 'hi', final: muted }),
+      h('p', { style: { margin: 0, font: '400 12px/1.6 var(--font-ui)', color: 'var(--text-body)', textAlign: 'center', textWrap: 'balance' } },
+        muted ? 'Tap Mute again and I’ll keep listening' : 'Stop speaking and I’ll start working')),
+    h(S.LiveControls, { mode: 'listening', muted: muted, onMute: function () { setMuted(!muted); }, onType: noop, onEnd: noop }));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Listening)));
+</script>
+</body></html>

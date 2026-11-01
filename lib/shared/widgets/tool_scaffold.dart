@@ -1,8 +1,12 @@
 // ignore_for_file: prefer_const_constructors
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/i18n/l10n_ext.dart';
 import '../../core/theme/app_theme.dart';
+import '../../features/vidya/domain/deliverable.dart';
+import '../../features/vidya/presentation/deliver_tray.dart';
+import '../../features/vidya/presentation/vidya_presence.dart';
 import '../../features/vidya/presentation/vidya_sheet.dart';
 import '../motion/animated_entrance.dart';
 import 'glass_app_bar.dart';
@@ -27,7 +31,19 @@ import 'primary_button.dart';
 /// the v3 screen 06 "working" bar — *Minimise to orb* lets the teacher leave
 /// and VIDYA finishes in the background, *Stop* cancels. Tools that pass neither
 /// keep the plain busy button, so nothing changes for them.
-class ToolScaffold extends StatelessWidget {
+///
+/// **The Output screen** (UX map Flow 4). When [hasResult] is true and nothing
+/// is generating, the scaffold becomes the tool's output: the form stays
+/// mounted but hidden (so its inputs survive), the [result] fills the page
+/// under *Edit* and *Regenerate* ([onRegenerate]), and *Deliver* is the one
+/// primary action when the tool supplies a [deliverable].
+///
+/// *Edit* never throws the result away: it brings the form back while the
+/// result stays in the tool's state, *Back to result* returns to it untouched,
+/// and the sticky Generate runs [onResubmit]. Only a finished regeneration
+/// replaces the result. While the output shows, that deliverable is the result on
+/// screen ([visibleDeliverableProvider]), so the orb turns green with a badge.
+class ToolScaffold extends ConsumerStatefulWidget {
   const ToolScaffold({
     super.key,
     required this.title,
@@ -40,6 +56,10 @@ class ToolScaffold extends StatelessWidget {
     this.onMinimise,
     this.onStop,
     this.wash,
+    this.hasResult = false,
+    this.onResubmit,
+    this.onRegenerate,
+    this.deliverable,
   });
 
   final String title;
@@ -65,22 +85,123 @@ class ToolScaffold extends StatelessWidget {
   /// *Minimise to orb*; ignored unless [onMinimise] is also set.
   final VoidCallback? onStop;
 
+  /// Whether a finished result is ready to show as the Output screen.
+  final bool hasResult;
+
+  /// The tool's own submit, run from the form while editing a finished
+  /// result (tools withdraw [onSubmit] while a result exists). Without it the
+  /// Output screen offers no Edit.
+  final VoidCallback? onResubmit;
+
+  /// Runs the same request again from the Output screen.
+  final VoidCallback? onRegenerate;
+
+  /// The finished result as the deliver tray takes it. When given, the Output
+  /// screen's primary action is *Deliver* and the orb counts it as ready.
+  final Deliverable? deliverable;
+
+  @override
+  ConsumerState<ToolScaffold> createState() => _ToolScaffoldState();
+}
+
+class _ToolScaffoldState extends ConsumerState<ToolScaffold> {
+  /// Captured while mounted, so leaving the screen can still clear the result
+  /// it put on screen.
+  late VisibleDeliverableController _visible;
+
+  /// The deliverable this screen has registered as on screen, if any.
+  Deliverable? _shown;
+
+  /// The teacher tapped Edit: the form is back, the result is kept.
+  bool _editing = false;
+
+  bool get _hasFinishedResult =>
+      widget.hasResult && !widget.isBusy && widget.result != null;
+
+  bool get _output => _hasFinishedResult && !_editing;
+
+  bool get _editingResult => _hasFinishedResult && _editing;
+
+  @override
+  void initState() {
+    super.initState();
+    _visible = ref.read(visibleDeliverableProvider.notifier);
+    _syncVisible();
+  }
+
+  @override
+  void didUpdateWidget(ToolScaffold oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // A finished generation shows its new result; a cleared one ends editing.
+    if ((oldWidget.isBusy && !widget.isBusy) || !widget.hasResult) {
+      _editing = false;
+    }
+    _syncVisible();
+  }
+
+  @override
+  void dispose() {
+    final shown = _shown;
+    if (shown != null) {
+      // Providers cannot change while the tree is finalising: defer.
+      final visible = _visible;
+      Future.microtask(() => visible.hide(shown));
+    }
+    super.dispose();
+  }
+
+  /// Keeps [visibleDeliverableProvider] in step with what this screen shows.
+  /// Compared by id: a tool may build a fresh [Deliverable] for the same
+  /// result on every frame.
+  void _syncVisible() {
+    final next = _output ? widget.deliverable : null;
+    if (next?.id == _shown?.id) return;
+    final previous = _shown;
+    _shown = next;
+    // Providers cannot change during build or initState: after the frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (previous != null) _visible.hide(previous);
+      if (next != null && mounted) _visible.show(next);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final output = _output;
+    final editing = _editingResult;
+
     // v3 Screen 06: while a minimisable generation runs, the whole screen is
     // the "working" state — the page recedes behind the working sheet.
-    final working = isBusy && onMinimise != null;
+    final working = widget.isBusy && widget.onMinimise != null;
 
     // While busy AND minimisable, the working bar replaces the submit button;
-    // otherwise the plain sticky Generate button (when there is a submit).
+    // the Output screen's one primary action is Deliver; otherwise the plain
+    // sticky Generate button (when there is a submit).
     final Widget? bottom;
+    final deliverable = widget.deliverable;
     if (working) {
-      bottom = _WorkingBar(onMinimise: onMinimise!, onStop: onStop);
-    } else if (onSubmit != null) {
+      bottom = _WorkingBar(
+        onMinimise: widget.onMinimise!,
+        onStop: widget.onStop,
+      );
+    } else if (output) {
+      bottom = deliverable == null
+          ? null
+          : PrimaryButton(
+              label: l10n.deliverTrayTitle,
+              onPressed: () => showDeliverTray(context, deliverable),
+            );
+    } else if (editing && widget.onResubmit != null) {
       bottom = PrimaryButton(
-        label: submitLabel ?? 'Generate',
-        onPressed: isBusy ? null : onSubmit,
-        isBusy: isBusy,
+        label: widget.submitLabel ?? 'Generate',
+        onPressed: widget.onResubmit,
+      );
+    } else if (widget.onSubmit != null) {
+      bottom = PrimaryButton(
+        label: widget.submitLabel ?? 'Generate',
+        onPressed: widget.isBusy ? null : widget.onSubmit,
+        isBusy: widget.isBusy,
       );
     } else {
       bottom = null;
@@ -93,10 +214,10 @@ class ToolScaffold extends StatelessWidget {
     final brightness = Theme.of(context).brightness;
     final effectiveWash = (working && brightness != Brightness.dark)
         ? AppGradients.washWorking
-        : (wash ??
-            (brightness == Brightness.dark
-                ? AppGradients.darkVignette
-                : AppGradients.washDefault));
+        : (widget.wash ??
+              (brightness == Brightness.dark
+                  ? AppGradients.darkVignette
+                  : AppGradients.washDefault));
 
     return DecoratedBox(
       decoration: BoxDecoration(gradient: effectiveWash),
@@ -104,8 +225,8 @@ class ToolScaffold extends StatelessWidget {
         backgroundColor: Colors.transparent,
         resizeToAvoidBottomInset: true,
         appBar: GlassAppBar(
-          title: Text(title),
-          actions: [if (vidyaAction) const VidyaAppBarAction()],
+          title: Text(widget.title),
+          actions: [if (widget.vidyaAction) const VidyaAppBarAction()],
         ),
         body: SafeArea(
           child: Stack(
@@ -124,10 +245,31 @@ class ToolScaffold extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          child,
-                          if (result != null) ...[
-                            const SizedBox(height: AppSpacing.sectionGap),
-                            result!,
+                          if (editing) ...[
+                            _ScaffoldPill(
+                              label: l10n.outputBackToResult,
+                              onTap: () => setState(() => _editing = false),
+                            ),
+                            const SizedBox(height: AppSpacing.space3),
+                          ],
+                          // The form stays mounted on the Output screen so
+                          // Edit returns to it with every input intact.
+                          Offstage(offstage: output, child: widget.child),
+                          if (output) ...[
+                            _OutputActions(
+                              onEdit: widget.onResubmit == null
+                                  ? null
+                                  : () => setState(() => _editing = true),
+                              onRegenerate: widget.onRegenerate,
+                            ),
+                            const SizedBox(height: AppSpacing.space3),
+                          ],
+                          if (widget.result != null) ...[
+                            if (!output && !editing)
+                              const SizedBox(height: AppSpacing.sectionGap),
+                            // Kept mounted while editing: the result is only
+                            // hidden, never dropped.
+                            Offstage(offstage: editing, child: widget.result!),
                           ],
                         ],
                       ),
@@ -150,13 +292,45 @@ class ToolScaffold extends StatelessWidget {
                 // The working sheet is full-bleed (its own sheetPadding sets
                 // the inset); the plain submit button keeps the page gutter.
                 child: Padding(
-                  padding: working
-                      ? EdgeInsets.zero
-                      : AppSpacing.pagePadding,
+                  padding: working ? EdgeInsets.zero : AppSpacing.pagePadding,
                   child: bottom,
                 ),
               ),
       ),
+    );
+  }
+}
+
+/// The Output screen's two ways back into the request: *Edit* (the form) and
+/// *Regenerate* (the same request again). Either is left out when the tool
+/// offers no handler for it.
+class _OutputActions extends StatelessWidget {
+  const _OutputActions({this.onEdit, this.onRegenerate});
+
+  final VoidCallback? onEdit;
+  final VoidCallback? onRegenerate;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final onEdit = this.onEdit;
+    final onRegenerate = this.onRegenerate;
+    if (onEdit == null && onRegenerate == null) return const SizedBox.shrink();
+    return Row(
+      children: [
+        if (onEdit != null)
+          Expanded(
+            child: _ScaffoldPill(label: l10n.outputEdit, onTap: onEdit),
+          ),
+        if (onEdit != null && onRegenerate != null) const SizedBox(width: 9),
+        if (onRegenerate != null)
+          Expanded(
+            child: _ScaffoldPill(
+              label: l10n.actionRegenerate,
+              onTap: onRegenerate,
+            ),
+          ),
+      ],
     );
   }
 }
@@ -266,7 +440,9 @@ class _WorkingBarState extends State<_WorkingBar>
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.indigo500.withValues(alpha: 0.32), // indigo @ .32
+                          color: AppColors.indigo500.withValues(
+                            alpha: 0.32,
+                          ), // indigo @ .32
                           offset: Offset(0, 6),
                           blurRadius: 18,
                         ),
@@ -299,7 +475,7 @@ class _WorkingBarState extends State<_WorkingBar>
             Row(
               children: [
                 Expanded(
-                  child: _WorkingPill(
+                  child: _ScaffoldPill(
                     label: l10n.vidyaWorkingMinimise,
                     onTap: widget.onMinimise,
                   ),
@@ -307,7 +483,7 @@ class _WorkingBarState extends State<_WorkingBar>
                 if (widget.onStop != null) ...[
                   const SizedBox(width: 9),
                   Expanded(
-                    child: _WorkingPill(
+                    child: _ScaffoldPill(
                       label: l10n.vidyaWorkingStop,
                       tonal: true,
                       onTap: widget.onStop!,
@@ -323,10 +499,10 @@ class _WorkingBarState extends State<_WorkingBar>
   }
 }
 
-/// One 46px working-state pill: outline (*Minimise to orb*) or tonal ink
-/// (*Stop*), 13/600 ink600 — the design's exact pair, side by side.
-class _WorkingPill extends StatelessWidget {
-  const _WorkingPill({
+/// One 46px pill: outline (*Minimise to orb*, *Edit*, *Regenerate*) or tonal
+/// ink (*Stop*), 13/600 ink600 — the design's exact pair, side by side.
+class _ScaffoldPill extends StatelessWidget {
+  const _ScaffoldPill({
     required this.label,
     required this.onTap,
     this.tonal = false,
@@ -353,9 +529,7 @@ class _WorkingPill extends StatelessWidget {
             borderRadius: BorderRadius.circular(9999),
             border: tonal
                 ? null
-                : Border.all(
-                    color: AppColors.ink900.withValues(alpha: 0.14),
-                  ),
+                : Border.all(color: AppColors.ink900.withValues(alpha: 0.14)),
           ),
           child: Text(
             label,

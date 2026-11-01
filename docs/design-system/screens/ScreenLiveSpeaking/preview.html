@@ -1,0 +1,26 @@
+<!-- @dsCard group="Screens · VIDYA" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>VIDYA Live · Speaking</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+function noop() {}
+function Speaking() {
+  var p = React.useState(false), paused = p[0], setPaused = p[1];
+  return h(S.PhoneScreen, { wash: 'live-speaking', padBottom: 0, gap: 0 },
+    h(S.LiveHeader, { status: h(S.LiveStatus, { state: paused ? 'paused' : 'speaking', language: paused ? undefined : 'हिन्दी', languageLang: 'hi' }) }),
+    h('div', { style: { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, margin: '0 -14px' } },
+      h(S.Eyebrow, { style: { fontSize: 12, letterSpacing: '.2em', color: 'var(--leaf-700)' } }, paused ? 'Paused' : 'Reading it back'),
+      h(S.LiveOrb, { state: paused ? 'paused' : 'speaking', level: 0 }),
+      h(S.LiveCaption, {
+        step: 2, total: 6, lang: 'hi',
+        text: 'वाष्पीकरण के पाँच मिनट के दोहराव से शुरू करें, फिर पूछें कि बारिश कहाँ से आती है।',
+        source: 'Source spoken aloud first: CBSE · NCERT Curiosity 6, Chapter 8.'
+      })),
+    h(S.LiveControls, { mode: 'speaking', paused: paused, onPause: function () { setPaused(true); }, onResume: function () { setPaused(false); }, onEnd: noop }));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Speaking)));
+</script>
+</body></html>

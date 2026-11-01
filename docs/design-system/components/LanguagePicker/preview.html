@@ -1,0 +1,44 @@
+<!-- @dsCard group="Inputs" height=624 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>LanguagePicker</title><style>.pv-page:has(.sk-sheet-layer) .pv-dim, .pv-page:has(.sk-sheet-layer) .pv-dimkids > :not(.sk-sheet-layer) { opacity: .34; }</style></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* Phone slices: 360px, the phone's true width. The corner glow is clipped inside the slice, so nothing pokes out of it. */
+function Glow() { return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } }, h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } })); }
+function isHi(t) { return typeof t === 'string' && /[ऀ-ൿ]/.test(t); }
+function Slice(p) {
+  var vs = (p.v || '').split(' ').filter(Boolean);
+  var cls = 'sk-slice' + vs.filter(function (x) { return x !== 'glow'; }).map(function (x) { return ' sk-slice--' + x; }).join('');
+  return h('div', { className: cls, style: p.style }, vs.indexOf('glow') !== -1 ? h(Glow) : null, p.label ? h('div', { className: 'sk-slice__label' + (isHi(p.label) ? ' sk-indic' : '') }, p.label) : null, p.children);
+}
+function Row(p) { return h('div', { className: 'sk-slices', style: Object.assign({ alignItems: 'stretch' }, p.style) }, p.children); }
+function Note(t) { return h('div', { className: 'sk-slice__label' + (isHi(t) ? ' sk-indic' : ''), style: { marginTop: 4 } }, t); }
+/* A phone screen inside a slice: it fills the slice, so a contained sheet rises over the whole 360px width, and the page behind dims to .34 while a sheet is open. */
+function Screen(p) { return h('div', { className: 'pv-page', style: Object.assign({ position: 'absolute', inset: 0, padding: '18px 20px 20px', display: 'flex', flexDirection: 'column', gap: 12, overflow: 'hidden', borderRadius: 'inherit' }, p.style) }, p.label ? h('div', { className: 'sk-slice__label' }, p.label) : null, p.children); }
+function Block(hh) { return h('div', { className: 'pv-dim', style: { height: hh, flex: hh ? 'none' : 1, minHeight: 0, background: 'rgba(255,255,255,.9)', borderRadius: 16 } }); }
+function nameOf(code) { var l = S.LANGUAGES.filter(function (x) { return x[0] === code; })[0]; return l ? l[1] + ' · ' + l[2] : 'none'; }
+function note(text) { return h('div', { className: 'pv-dim', 'aria-live': 'polite', style: { font: '400 12px/1.45 var(--font-ui)', color: 'var(--text-body)' } }, text); }
+function Demo() {
+  var a = React.useState('hi'), one = a[0], setOne = a[1];
+  var b = React.useState('bn'), two = b[0], setTwo = b[1];
+  React.useEffect(function () { var m = document.querySelector('#bengal [aria-haspopup="dialog"]'); if (m) m.click(); }, []);
+  return h(Row, null,
+    h(Slice, { v: 'glow', style: { height: 600 } },
+      h(Screen, { label: 'Onboarding · tap +7 more for all eleven', style: { gap: 16 } },
+        h('div', { className: 'pv-dim' }, h(S.Orb, { size: 60, decorative: true })),
+        h('div', { className: 'pv-dim' },
+          h('div', { style: { font: '700 28px/1.14 var(--font-display)', letterSpacing: '-.012em' } }, h('span', { lang: 'hi' }, 'नमस्ते'), ', I’m VIDYA'),
+          h('div', { style: { font: '400 14px/1.55 var(--font-ui)', color: 'var(--text-body)', marginTop: 8 } }, 'Tell me what you teach. I’ll stay a tap away on every screen after this.')),
+        h(S.LanguagePicker, { value: one, onChange: setOne, className: 'pv-dimkids' }),
+        note('Chosen: ' + nameOf(one)))),
+    h(Slice, { style: { height: 600 } },
+      h(Screen, { label: 'West Bengal order · the sheet open', style: { gap: 16 } },
+        h('div', { className: 'pv-dim' }, h(S.ScreenHeader, { title: 'Settings', subtitle: 'Language, board and classes' })),
+        h('div', { id: 'bengal', style: { display: 'contents' } }, h(S.LanguagePicker, { value: two, onChange: setTwo, visible: 3, order: ['bn', 'en', 'hi'], className: 'pv-dimkids' })),
+        note('Chosen: ' + nameOf(two)))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

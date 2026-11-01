@@ -1,0 +1,69 @@
+<!-- @dsCard group="Screens · Class and calls" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Register</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+var CLASSES = [
+  { value: '6A', count: 40, status: 'outreach' },
+  { value: '7A', count: 38, status: 'clear' },
+  { value: '5B', count: 41, status: 'outreach' },
+  { value: '8B', count: 36, status: 'outreach' }
+];
+var ROWS = [
+  { n: 1, name: 'Aarav Sharma' },
+  { n: 12, name: 'Uma Krishnan' },
+  { n: 30, name: 'Omkar Naik' }
+];
+/* The 37 students below the fold: 30 present, 6 absent, 1 late. */
+var HIDDEN = { present: 30, absent: 6, late: 1 };
+function Register() {
+  var c = React.useState('6A'), cls = c[0], setCls = c[1];
+  var v = React.useState('today'), view = v[0], setView = v[1];
+  var m = React.useState({ 1: 'present', 12: 'late', 30: 'absent' }), marks = m[0], setMarks = m[1];
+  var cur = React.useState(null), current = cur[0], setCurrent = cur[1];
+  var count = Object.assign({}, HIDDEN);
+  ROWS.forEach(function (r) { if (count[marks[r.n]] != null) count[marks[r.n]] += 1; });
+  function mark(n) { return function (st) { var x = Object.assign({}, marks); x[n] = st; setMarks(x); if (st !== 'unmarked') setCurrent(null); }; }
+  return h(S.PhoneScreen, {
+    gap: 11,
+    overlay: [
+      h('div', { key: 'o', className: 'sk-orb-park sk-orb-park--left sk-orb-park--cta' }, h(S.Orb, { onClick: function () {} })),
+      h('div', { key: 't', className: 'sk-tabbar-dock' }, h(S.TabBar, { active: 'home' }))
+    ]
+  },
+    h('div', { style: { display: 'flex', flexDirection: 'column', gap: 2, marginBottom: -5 } },
+      h(S.ScreenHeader, { level: 'page', title: 'Class ' + cls, trailing: h(S.Button, { size: 'xs', 'aria-label': 'Parent outreach, 12 to contact', style: { padding: '8px 12px', background: 'var(--saffron-600)', '--sk-hit-inset': '-8px 0' } }, 'Outreach 12') }),
+      h(S.ClassTabs, { classes: CLASSES, value: cls, onChange: setCls, label: 'Your classes', controls: 'reg-panel', bleed: true })),
+    h('div', { id: 'reg-panel', role: 'tabpanel', 'aria-label': 'Class ' + cls + ' register', style: { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 11 } },
+      h(S.TriageCard, {
+        title: 'Needs outreach today', count: 12,
+        sections: [
+          { tone: 'red', label: 'Consecutive absences', count: 6, items: [
+            { name: 'Omkar', facts: ['6 days', 'Malayalam'] },
+            { name: 'Neha', facts: ['5 days', 'Punjabi'] },
+            { name: 'Manish', facts: ['4 days', 'Kannada'] }] },
+          { tone: 'amber', label: 'At risk academically', count: 6, items: [
+            { name: 'Gauri', facts: ['28%', 'English'] },
+            { name: 'Hiren', facts: ['29%', 'Bengali'] },
+            { name: 'Jyoti', facts: ['30%', 'Marathi'] }] }
+        ]
+      }),
+      h(S.SegmentedControl, { label: 'Register view', value: view, onChange: setView, options: [{ value: 'today', label: 'Today' }, { value: 'students', label: 'Students' }, { value: 'reports', label: 'Reports' }] }),
+      h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 } },
+        h('p', { 'aria-live': 'polite', style: { margin: 0, font: '500 12px var(--font-ui)', color: 'var(--text-body)', whiteSpace: 'nowrap' } },
+          h('span', { style: { color: 'var(--leaf-700)', fontWeight: 600 } }, count.present + ' present'), ' · ',
+          h('span', { style: { color: 'var(--red-700)', fontWeight: 600 } }, count.absent + ' absent'), ' · ',
+          h('span', { style: { color: 'var(--saffron-700)', fontWeight: 600 } }, count.late + ' late')),
+        h('span', { style: { font: '600 12px var(--font-ui)', color: 'var(--saffron-600)', whiteSpace: 'nowrap' } }, 'Tap a row to correct it')),
+      h('ul', { className: 'sk-rosterrow-list', 'aria-label': 'Class ' + cls + ' register', style: { flex: 1, minHeight: 0, overflow: 'hidden' } },
+        ROWS.map(function (r) {
+          return h(S.RosterRow, { key: r.n, number: r.n, name: r.name, status: marks[r.n], current: current === r.n, onMark: mark(r.n), onClick: function () { setCurrent(r.n); } });
+        }))),
+    h(S.Button, { block: true, variant: 'success' }, 'Submit attendance'));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Register)));
+</script>
+</body></html>

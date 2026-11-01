@@ -1,0 +1,20 @@
+<!-- @dsCard group="VIDYA Live" height=320 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>LiveError</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Demo() {
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice', style: { background: 'var(--wash-live-failed)' } },
+      h('div', { className: 'sk-slice__label' }, 'The line dropped'),
+      h(S.LiveError, { role: 'note', title: 'I couldn’t hear that clearly' }, 'The connection dropped mid-sentence. I’ve kept what I caught.'),
+      h(S.LiveError, { role: 'note', title: 'I lost the signal' }, 'Your words are safe here. Type to finish, or I’ll try voice once when the signal is back.')),
+    h('div', { className: 'sk-slice', style: { background: 'var(--wash-live-failed)' } },
+      h('div', { className: 'sk-slice__label' }, 'In Hindi'),
+      h(S.LiveError, { role: 'note', lang: 'hi', title: 'मैं ठीक से सुन नहीं पाई' }, 'बीच में कनेक्शन टूट गया। जितना सुना, वह मैंने रख लिया है।')));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

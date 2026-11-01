@@ -1,0 +1,34 @@
+<!-- @dsCard group="Class and calls" height=453 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>ContactRow</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Section(label, color, kids) {
+  return [h(S.Eyebrow, { key: 'e', size: 'tight', as: 'h3', style: { color: color } }, label), h('ul', { key: 'l', className: 'sk-contactrow-list', 'aria-label': label }, kids)];
+}
+function Demo() {
+  var c = React.useState('hiren'), on = c[0], setOn = c[1];
+  function pick(k) { return function () { setOn(k); }; }
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Outline · highlighted (tap Contact)'),
+      Section('Consecutive absences', 'var(--red-700)', [
+        h(S.ContactRow, { key: 1, as: 'li', name: 'Omkar Naik', tone: 'red', meta: '67% this month · 6 absent in a row', highlighted: on === 'omkar', onContact: pick('omkar') }),
+        h(S.ContactRow, { key: 2, as: 'li', name: 'Neha Sengupta', tone: 'red', meta: '72% this month · 5 absent in a row', highlighted: on === 'neha', onContact: pick('neha') })]),
+      Section('At risk academically', 'var(--saffron-700)', [
+        h(S.ContactRow, { key: 3, as: 'li', name: 'Hiren Parmar', tone: 'amber', meta: '29% avg · at risk · Bengali', highlighted: on === 'hiren', onContact: pick('hiren') }),
+        h(S.ContactRow, { key: 4, as: 'li', name: 'Gauri Desai', tone: 'amber', meta: '28% avg · at risk · English', highlighted: on === 'gauri', onContact: pick('gauri') })])),
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Celebrate · reached · Indic'),
+      Section('Celebrate', 'var(--leaf-700)', [
+        h(S.ContactRow, { key: 5, as: 'li', name: 'Aarav Sharma', tone: 'leaf', meta: '100% this month · top of the class in Science', onContact: function () {} }),
+        h(S.ContactRow, { key: 6, as: 'li', name: 'Ananya Iyer', tone: 'leaf', meta: '93% this month · top performer', done: 'Message sent' })]),
+      Section('Reached today', 'var(--text-body)', [
+        h(S.ContactRow, { key: 7, as: 'li', name: 'Dhruv Chauhan', tone: 'red', meta: '4 absent in a row · Gujarati', done: 'Called · 10:40' }),
+        h(S.ContactRow, { key: 8, as: 'li', name: 'रिया वर्मा', lang: 'hi', tone: 'red', meta: 'इस महीने 70% · लगातार 4 दिन अनुपस्थित', actionLabel: 'संपर्क', contactLabel: 'रिया वर्मा के अभिभावक से संपर्क करें', onContact: function () {} })])));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

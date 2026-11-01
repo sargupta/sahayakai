@@ -1,0 +1,25 @@
+<!-- @dsCard group="Content" height=410 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>MarksChart</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+var BANDS = [{ label: '0–4', count: 7 }, { label: '5–9', count: 15 }, { label: '10–14', count: 8 }, { label: '15–19', count: 3 }, { label: '20–25', count: 1 }];
+function Demo() {
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Default · 34 sheets, out of 25'),
+      h(S.MarksChart, { bands: BANDS, caption: 'Marks distribution, water cycle quiz, Class 6-B, 34 sheets marked out of 25' }),
+      h('div', { className: 'sk-slice__label' }, 'With counts'),
+      h(S.MarksChart, { bands: BANDS, showCounts: true })),
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Ten bands · in हिन्दी'),
+      h(S.MarksChart, {
+        lang: 'hi', title: 'अंकों का बँटवारा', unit: 'उत्तर-पत्र', rangeLabel: 'अंक', height: 80,
+        bands: [{ label: '0', count: 1 }, { label: '1', count: 2 }, { label: '2', count: 3 }, { label: '3', count: 4 }, { label: '4', count: 6 }, { label: '5', count: 7 }, { label: '6', count: 5 }, { label: '7', count: 4 }, { label: '8', count: 3 }, { label: '9–10', count: 1 }]
+      })));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

@@ -1,0 +1,52 @@
+<!-- @dsCard group="Lists" height=363 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>SettingsRow</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* Phone slices: 360px, the phone's true width. The corner glow is clipped inside the slice, so nothing pokes out of it. */
+function Glow() { return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } }, h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } })); }
+function isHi(t) { return typeof t === 'string' && /[ऀ-ൿ]/.test(t); }
+function Slice(p) {
+  var vs = (p.v || '').split(' ').filter(Boolean);
+  var cls = 'sk-slice' + vs.filter(function (x) { return x !== 'glow'; }).map(function (x) { return ' sk-slice--' + x; }).join('');
+  return h('div', { className: cls, style: p.style }, vs.indexOf('glow') !== -1 ? h(Glow) : null, p.label ? h('div', { className: 'sk-slice__label' + (isHi(p.label) ? ' sk-indic' : '') }, p.label) : null, p.children);
+}
+function Row(p) { return h('div', { className: 'sk-slices', style: Object.assign({ alignItems: 'stretch' }, p.style) }, p.children); }
+function Note(t) { return h('div', { className: 'sk-slice__label' + (isHi(t) ? ' sk-indic' : ''), style: { marginTop: 4 } }, t); }
+function card(title, lang, rows) {
+  return h(S.GlassCard, { padding: '13px 14px', gap: 8, lang: lang },
+    h('h3', { className: 'sk-settingsrow-title' + (isHi(title) ? ' sk-indic' : '') }, title),
+    h('ul', { className: 'sk-settingsrow-list', 'aria-label': title }, rows));
+}
+function Demo() {
+  var l = React.useState('हिन्दी'), lang = l[0], setLang = l[1];
+  var a = React.useState(false), aloud = a[0], setAloud = a[1];
+  function cycle() { setLang(lang === 'हिन्दी' ? 'मराठी' : lang === 'मराठी' ? 'English' : 'हिन्दी'); }
+  return h(Row, null,
+    h(Slice, { v: 'glow', label: 'You · settings, under the queue' },
+      h(S.Eyebrow, { tone: 'muted' }, '3 items queued'),
+      h(S.TaskRow, { variant: 'boxed', dot: 'amber', label: 'Call log · Dhruv’s father', meta: 'waiting' }),
+      card('Settings', null, [
+        h(S.SettingsRow, { key: 1, as: 'li', label: 'Language · ' + lang, action: 'Change', onAction: cycle }),
+        h(S.SettingsRow, { key: 2, as: 'li', label: 'Board · CBSE', action: 'Change', onAction: function () {} }),
+        h(S.SettingsRow, { key: 3, as: 'li', label: 'Orb on the left hand', status: 'On' }),
+        h(S.SettingsRow, { key: 4, as: 'li', label: 'Download for offline', action: '24 items', onAction: function () {} }),
+      ])),
+    h(Slice, { label: 'Every trailing kind · in Hindi' },
+      card('Calls and sound', null, [
+        h(S.SettingsRow, { key: 1, as: 'li', label: 'Calling hours', action: '10:00 to 19:00', href: '#hours' }),
+        h(S.SettingsRow, { key: 2, as: 'li', label: 'Read lessons aloud', control: h(S.Switch, { label: 'Read lessons aloud', hideLabel: true, checked: aloud, onChange: setAloud }) }),
+        h(S.SettingsRow, { key: 3, as: 'li', label: 'Voice notes to parents', status: 'Off', statusTone: 'off' }),
+        h(S.SettingsRow, { key: 4, as: 'li', label: 'School account', action: 'Admin only', disabled: true, onAction: function () {} }),
+      ]),
+      card('सेटिंग्स', 'hi', [
+        h(S.SettingsRow, { key: 1, as: 'li', label: 'भाषा · हिन्दी', action: 'बदलें', onAction: function () {} }),
+        h(S.SettingsRow, { key: 2, as: 'li', label: 'बोर्ड · Karnataka State Board (KSEEB)', action: 'बदलें', onAction: function () {} }),
+        h(S.SettingsRow, { key: 3, as: 'li', label: 'ऑर्ब बाएँ हाथ पर', status: 'चालू' }),
+      ])));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

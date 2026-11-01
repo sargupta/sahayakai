@@ -1,0 +1,30 @@
+<!-- @dsCard group="Screens · Class and calls" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Message to parents</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+var eyebrow = { margin: 0, padding: 0, font: '600 12px/normal var(--font-ui)', letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--text-body)' };
+function Send() {
+  var a = React.useState(true), wa = a[0], setWa = a[1];
+  var b = React.useState(false), vc = b[0], setVc = b[1];
+  var none = !wa && !vc;
+  return h(S.PhoneScreen, { padBottom: 24, gap: 12, glow: false },
+    h(S.ScreenHeader, { onBack: function () {}, backLabel: 'Back to Divya Rane', style: { paddingTop: 6 } }),
+    h(S.ScreenHeader, { level: 'page', title: 'Message to parents', subtitle: 'Written in Marathi. Read it before it goes.' }),
+    h(S.MessagePreview, { eyebrow: 'What they’ll read', lang: 'mr' },
+      'नमस्कार, दिव्याने या आठवड्यात जलचक्राचा अभ्यास केला. तिला बाष्पीभवन समजले आहे; सांद्रीभवनाचा थोडा सराव आवश्यक आहे.'),
+    h(S.VoiceNoteCard, { duration: 20 }),
+    h('fieldset', { style: { border: 0, margin: 0, padding: 0, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 9 } },
+      h('legend', { style: Object.assign({}, eyebrow, { marginBottom: 12 }) }, 'Send to'),
+      h(S.ChannelOption, { channel: 'WhatsApp', number: '••••••4412', who: 'Mother', when: 'preferred', checked: wa, onChange: setWa }),
+      h(S.ChannelOption, { channel: 'Voice call', number: '••••••8830', who: 'Father', when: 'after 6 pm', checked: vc, onChange: setVc })),
+    h('div', { style: { marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 0 } },
+      h('p', { style: { margin: 0, font: '400 12px/1.5 var(--font-ui)', color: 'var(--text-body)', textAlign: 'center' } }, 'No name or marks leave this phone without your tap.'),
+      h(S.Button, { variant: 'success', block: true, disabled: none }, 'Send message')));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Send)));
+</script>
+</body></html>

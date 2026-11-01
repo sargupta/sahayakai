@@ -1,0 +1,3 @@
+Onboarding: VIDYA introduces itself and the teacher sets language, classes and board once.
+
+Built from `PhoneScreen` (with the corner glow), `Orb` (60), `LanguagePicker`, leaf `Chip`s for classes, `BoardSwitch`, a glass hint card that tells the teacher she can drag the orb to either hand, and one `Button` (lg, block). Onboarding is padded 16px 22px 24px, wider than other screens, with 16px between groups. Everything here is remembered in Profile and can be changed there. Copy greets the teacher in their language first. The board switch shows CBSE, ICSE / ISC and State board; a state board opens the list of all 27.

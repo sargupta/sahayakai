@@ -1,0 +1,21 @@
+<!-- @dsCard group="Content" height=230 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>MediaRow</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Slice(label, kids) { return h('div', { className: 'sk-slice' }, h('div', { className: 'sk-slice__label' }, label), kids); }
+ReactDOM.createRoot(document.getElementById('root')).render(
+  h('div', { className: 'sk-slices' },
+    Slice('Recommended video · in its card', [
+      h(S.MediaRow, { key: 'a', eyebrow: 'Recommended video', title: 'Watch on YouTube', meta: 'Photosynthesis for Class 7', href: '#video' })
+    ]),
+    Slice('Other kinds · Hindi', [
+      h(S.MediaRow, { key: 'b', eyebrow: 'सुझाई गई सामग्री', lang: 'hi', title: 'YouTube पर देखें', meta: 'कक्षा 6 के लिए प्रकाश संश्लेषण', href: '#hi' }),
+      h(S.MediaRow, { key: 'c', kind: 'document', title: 'Read the chapter', meta: 'CBSE · NCERT Curiosity 6, Ch 8 · A Journey through States of Water', onClick: function () {} })
+    ])
+  )
+);
+</script>
+</body></html>

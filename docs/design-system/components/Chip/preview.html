@@ -1,0 +1,85 @@
+<!-- @dsCard group="Core" height=986 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Chip</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* Phone slices: 360px, the phone's true width. The corner glow is clipped inside the slice, so nothing pokes out of it. */
+function Glow() { return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } }, h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } })); }
+function isHi(t) { return typeof t === 'string' && /[ऀ-ൿ]/.test(t); }
+function Slice(p) {
+  var vs = (p.v || '').split(' ').filter(Boolean);
+  var cls = 'sk-slice' + vs.filter(function (x) { return x !== 'glow'; }).map(function (x) { return ' sk-slice--' + x; }).join('');
+  return h('div', { className: cls, style: p.style }, vs.indexOf('glow') !== -1 ? h(Glow) : null, p.label ? h('div', { className: 'sk-slice__label' + (isHi(p.label) ? ' sk-indic' : '') }, p.label) : null, p.children);
+}
+function Row(p) { return h('div', { className: 'sk-slices', style: Object.assign({ alignItems: 'stretch' }, p.style) }, p.children); }
+function Note(t) { return h('div', { className: 'sk-slice__label' + (isHi(t) ? ' sk-indic' : ''), style: { marginTop: 4 } }, t); }
+function useSet(init) {
+  var s = React.useState(init), v = s[0], set = s[1];
+  return [v, function (k) { set(v.indexOf(k) === -1 ? v.concat(k) : v.filter(function (x) { return x !== k; })); }];
+}
+function Group(label, kids, tight) {
+  return h('div', { style: { display: 'flex', flexDirection: 'column', gap: tight ? 7 : 9 } },
+    h(S.Eyebrow, { size: tight ? 'tight' : 'app', lang: isHi(label) ? 'hi' : undefined }, label),
+    h('div', { role: 'group', 'aria-label': label, style: { display: 'flex', flexWrap: 'wrap', gap: tight ? 6 : 7 } }, kids));
+}
+function Demo() {
+  var l = React.useState('hi'), lang = l[0], setLang = l[1];
+  var c = useSet(['Class 5', 'Class 7']), classes = c[0], toggleClass = c[1];
+  var inc = useSet(['Activity', 'Board work']), include = inc[0], toggleInc = inc[1];
+  var b = React.useState('CBSE'), board = b[0], setBoard = b[1];
+  var f = React.useState('All'), filter = f[0], setFilter = f[1];
+  var cam = useSet(['Auto-capture']), camOn = cam[0], toggleCam = cam[1];
+  var hc = useSet(['गतिविधि']), hiInc = hc[0], toggleHi = hc[1];
+  var dd = React.useState(''), did = dd[0], setDid = dd[1];
+  var langs = [['hi', 'हिन्दी'], ['mr', 'मराठी'], ['en', 'English'], ['bn', 'বাংলা']];
+  var filters = [['All', 'saffron'], ['Resource', 'saffron'], ['Tried this', 'amber'], ['Celebrate', 'leaf'], ['Need help', 'indigo']];
+  return h('div', null,
+    h(Row, null,
+      h(Slice, { v: 'glow', label: 'Onboarding · language and classes' },
+        Group('Language', langs.map(function (x) { return h(S.Chip, { key: x[0], lang: x[0], selected: lang === x[0], onClick: function () { setLang(x[0]); } }, x[1]); })
+          .concat(h(S.Chip, { key: 'more', variant: 'more', 'aria-label': '+7 more languages' }, '+7 more'))),
+        Group('Classes you teach', ['Class 5', 'Class 7', 'Class 8'].map(function (x) { return h(S.Chip, { key: x, tone: 'leaf', selected: classes.indexOf(x) !== -1, onClick: function () { toggleClass(x); } }, x); })),
+        Note('Make a lesson · small, 11px'),
+        Group('Include', ['Activity', 'Board work', 'Homework', 'Story hook'].map(function (x) { return h(S.Chip, { key: x, size: 'sm', tone: 'leaf', selected: include.indexOf(x) !== -1, onClick: function () { toggleInc(x); } }, x); }), true)),
+      h(Slice, { label: 'Community · the active filter is solid' },
+        h('div', { role: 'group', 'aria-label': 'Show posts', style: { display: 'flex', flexWrap: 'wrap', gap: 5 } },
+          filters.map(function (x) { return h(S.Chip, { key: x[0], variant: 'filter', tone: x[1], selected: filter === x[0], onClick: function () { setFilter(x[0]); } }, x[0]); })),
+        h('div', { 'aria-live': 'polite', style: { font: '400 12px/1.45 var(--font-ui)', color: 'var(--text-body)' } }, filter === 'All' ? 'Showing every post' : 'Showing ' + filter.toLowerCase() + ' posts'),
+        Group('Board', ['CBSE', 'ICSE / ISC', 'State board'].map(function (x) { return h(S.Chip, { key: x, tone: 'indigo', selected: board === x, onClick: function () { setBoard(x); } }, x); })))),
+    h(Row, { style: { paddingTop: 4 } },
+      h(Slice, { v: 'camera', label: 'Scanner · on the camera ground' },
+        h('div', { 'aria-hidden': 'true', style: { height: 150, borderRadius: 'var(--radius-scan)', border: '1px solid var(--camera-frame)', position: 'relative' } },
+          h('div', { style: { position: 'absolute', inset: 12, border: '1px dashed var(--camera-guide)', borderRadius: 12 } }),
+          h('div', { style: { position: 'absolute', left: 12, right: 12, top: 66, height: 2, background: 'var(--scan-line)' } })),
+        h('div', { role: 'group', 'aria-label': 'Scanner options', style: { display: 'flex', flexWrap: 'wrap', gap: 7 } },
+          ['Auto-capture', 'Torch', 'Batch mode'].map(function (x) { var on = camOn.indexOf(x) !== -1; return h(S.Chip, { key: x, size: 'sm', tone: 'camera', selected: on, onClick: function () { toggleCam(x); } }, x === 'Auto-capture' ? x + (on ? ' on' : ' off') : x); }))),
+      h(Slice, { v: 'glow', label: 'In Hindi · disabled' },
+        Group('आप कौन सी कक्षाएँ पढ़ाती हैं', [h(S.Chip, { key: 1, tone: 'leaf', lang: 'hi', selected: true }, 'कक्षा 5'), h(S.Chip, { key: 2, tone: 'leaf', lang: 'hi' }, 'कक्षा 7'), h(S.Chip, { key: 3, tone: 'leaf', lang: 'hi', disabled: true }, 'कक्षा 9')]),
+        Group('शामिल करें', ['गतिविधि', 'बोर्ड का काम', 'गृहकार्य', 'कहानी से शुरुआत'].map(function (x) { return h(S.Chip, { key: x, size: 'sm', tone: 'leaf', lang: 'hi', selected: hiInc.indexOf(x) !== -1, onClick: function () { toggleHi(x); } }, x); }), true),
+        h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 5 } }, h(S.Chip, { variant: 'filter', selected: true, lang: 'hi' }, 'सभी'), h(S.Chip, { variant: 'filter', tone: 'leaf', lang: 'hi' }, 'जश्न'), h(S.Chip, { variant: 'filter', tone: 'indigo', lang: 'hi' }, 'मदद चाहिए')))),
+    h(Row, { style: { paddingTop: 4 } },
+      h(Slice, { v: 'glow', label: 'After an answer · action, not a toggle' },
+        h(S.GlassCard, { tone: 'strong', radius: 'card', gap: 6 },
+          h('div', { style: { font: '400 13px/1.6 var(--font-ui)' } }, 'Water heated by the sun turns into vapour. That change is called evaporation.'),
+          h('div', { style: { font: '400 12px/1.45 var(--font-ui)', color: 'var(--text-body)' } }, 'Class 6 · CBSE · NCERT Curiosity 6, Ch 8')),
+        h('div', { role: 'group', 'aria-label': 'Refine the answer', style: { display: 'flex', flexWrap: 'wrap', gap: 7 } },
+          h(S.Chip, { variant: 'action', onClick: function () { setDid('Making it easier'); } }, 'Make it easier'),
+          h(S.Chip, { variant: 'action', onClick: function () { setDid('Writing it in Marathi'); } }, 'In Marathi'),
+          h(S.Chip, { variant: 'action', icon: 'plus', onClick: function () { setDid('Adding a diagram'); } }, 'Add a diagram')),
+        h('div', { 'aria-live': 'polite', style: { font: '400 12px/1.45 var(--font-ui)', color: 'var(--text-body)', minHeight: 16 } }, did ? did + '…' : 'Tap one: it runs at once, nothing stays pressed.')),
+      h(Slice, { v: 'card', label: 'On a card · solid · in Hindi' },
+        h('div', { role: 'group', 'aria-label': 'Next', style: { display: 'flex', flexWrap: 'wrap', gap: 7 } },
+          h(S.Chip, { variant: 'action', emphasis: 'strong', icon: 'plus' }, 'Make a worksheet'),
+          h(S.Chip, { variant: 'action', emphasis: 'strong', icon: 'plus' }, 'Add a diagram')),
+        h('div', { style: { font: '400 12px/1.45 var(--font-ui)', color: 'var(--text-body)' } }, 'Nothing paid runs until you tap it.'),
+        Note('In Hindi'),
+        h('div', { role: 'group', 'aria-label': 'उत्तर बदलें', lang: 'hi', style: { display: 'flex', flexWrap: 'wrap', gap: 7 } },
+          h(S.Chip, { variant: 'action', emphasis: 'strong', lang: 'hi' }, 'और आसान करें'),
+          h(S.Chip, { variant: 'action', emphasis: 'strong', lang: 'hi' }, 'मराठी में'),
+          h(S.Chip, { variant: 'action', emphasis: 'strong', icon: 'plus', lang: 'hi' }, 'चित्र जोड़ें')))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

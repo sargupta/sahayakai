@@ -1,0 +1,55 @@
+<!-- @dsCard group="Screens · Community" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Your network</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+var ul = { display: 'flex', flexDirection: 'column', gap: 6, margin: 0, padding: 0, listStyle: 'none' };
+function Section(props) {
+  return h('div', { style: { display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 } },
+    h(S.Eyebrow, { as: 'h2', id: props.id, size: 'tight', tone: 'muted' }, props.title),
+    props.action ? h('button', { type: 'button', className: 'sk-hit', onClick: props.onAction, 'aria-label': props.actionLabel,
+      style: { flex: 'none', margin: 0, padding: 0, border: 0, background: 'transparent', cursor: 'pointer', borderRadius: 'var(--radius-xs)', font: '600 12px var(--font-ui)', color: 'var(--saffron-600)', '--sk-hit-inset': '-16px -8px' } }, props.action) : null);
+}
+function useAct(initial, next) {
+  var s = React.useState(initial), v = s[0], set = s[1];
+  return { action: v, onAction: v === initial ? function () { set(next); } : undefined };
+}
+function Network() {
+  function go() {}
+  var g1 = useAct('join', 'joined'), g2 = useAct('join', 'joined');
+  var p = [useAct('connect', 'pending'), useAct('connect', 'pending'), useAct('connect', 'pending'), useAct('connect', 'pending'), useAct('connect', 'pending')];
+  var people = [
+    ['Rakesh Singh', 'Science · Class 8 · same school', 'saffron', 'solid'],
+    ['Anjali Deshmukh', 'Maths · Class 6 · Pune', 'indigo'],
+    ['Shalini Desai', 'English · Class 7 · Nashik', 'leaf'],
+    ['Mohan Patil', 'Science · Class 9 · Solapur', 'amber'],
+    ['Lata Nair', 'Maths · Class 5 · Kochi', 'indigo']
+  ];
+  return h(S.PhoneScreen, {
+    gap: 10,
+    padBottom: 164,
+    overlay: [
+      h('div', { key: 'o', className: 'sk-orb-park' }, h(S.Orb, { onClick: go })),
+      h('div', { key: 't', className: 'sk-tabbar-dock' }, h(S.TabBar, { active: 'community' }))
+    ]
+  },
+    h(S.ScreenHeader, { title: 'Your network' }),
+    h(Section, { id: 'nw-mine', title: 'My groups · 3' }),
+    h('ul', { style: ul, 'aria-labelledby': 'nw-mine' },
+      h('li', null, h(S.GroupRow, { name: 'Daily Briefing', meta: '44 members', tone: 'saffron', newCount: 2, onClick: go })),
+      h('li', null, h(S.GroupRow, { name: 'Karnataka Teachers', meta: '3,880 members', tone: 'leaf', newCount: 6, onClick: go })),
+      h('li', null, h(S.GroupRow, { name: '8 Science · KSEEB', meta: '3 members', tone: 'indigo', onClick: go }))),
+    h(Section, { id: 'nw-groups', title: 'Suggested groups', action: 'Browse all', actionLabel: 'Browse all groups', onAction: go }),
+    h('ul', { style: ul, 'aria-labelledby': 'nw-groups' },
+      h(S.PersonRow, Object.assign({ as: 'li', name: '9 Mathematics · CBSE', meta: '4 members', avatar: false, emphasis: 'solid' }, g1)),
+      h(S.PersonRow, Object.assign({ as: 'li', name: 'Education Updates', meta: '15 members', avatar: false }, g2))),
+    h(Section, { id: 'nw-people', title: 'People you may know', action: 'Show all', actionLabel: 'Show all people you may know', onAction: go }),
+    h('ul', { style: Object.assign({}, ul, { flex: 1, minHeight: 0, overflow: 'hidden' }), 'aria-labelledby': 'nw-people' },
+      people.map(function (x, i) { return h(S.PersonRow, Object.assign({ key: x[0], as: 'li', name: x[0], meta: x[1], avatarTone: x[2], emphasis: x[3] }, p[i])); })));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Network)));
+</script>
+</body></html>

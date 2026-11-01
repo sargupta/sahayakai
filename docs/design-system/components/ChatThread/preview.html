@@ -1,0 +1,34 @@
+<!-- @dsCard group="Conversation" height=624 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>ChatThread</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Slice(label, kids) { return h('div', { className: 'sk-slice', style: { height: 600 } }, h('div', { className: 'sk-slice__label' }, label), kids); }
+var n = function () {};
+function Live() {
+  var t = React.useState([]), extra = t[0], setExtra = t[1];
+  var w = React.useState(true), writing = w[0], setWriting = w[1];
+  function refine(text) {
+    setExtra(extra.concat([text]));
+    setWriting(true);
+  }
+  var turns = [
+    h(S.ChatBubble, { key: 't1', from: 'teacher', initials: 'MK', name: 'Meena Kulkarni', lang: 'hi-Latn' }, 'Class 6 ke liye jal chakra ka 40-minute lesson plan banao'),
+    h(S.AnswerCard, { key: 'a1', source: 'CBSE · NCERT Curiosity 6, Ch 8', resultName: 'Water cycle lesson plan, Class 6', onOpen: n, onReadAloud: n, onAgain: n },
+      'Ready: a 40-minute water cycle plan for Class 6. Warm-up, four stages, group activity, wrap-up.'),
+    h(S.ChatBubble, { key: 't2', from: 'teacher', lang: 'hi-Latn' }, 'Ek worksheet bhi bana do, medium')
+  ].concat(extra.map(function (x, i) { return h(S.ChatBubble, { key: 'x' + i, from: 'teacher' }, x); }));
+  if (writing) turns.push(h(S.TypingIndicator, { key: 'typing' }));
+  return Slice('Today · tap a refine chip', h(S.ChatThread, { day: 'Today', refine: ['Make it easier', 'In Marathi', 'Add a diagram'], onRefine: refine }, turns));
+}
+function Hindi() {
+  return Slice('Indic · day chip and chips in Hindi', h(S.ChatThread, { day: 'आज', dayLang: 'hi', label: 'VIDYA से बातचीत', refineLabel: 'पिछला उत्तर बदलें', refine: [{ label: 'और आसान करो', lang: 'hi' }, { label: 'मराठी में', lang: 'hi' }, { label: 'चित्र जोड़ो', lang: 'hi' }], onRefine: n },
+    h(S.ChatBubble, { from: 'teacher', initials: 'MK', name: 'Meena Kulkarni', lang: 'hi' }, 'कक्षा छह के लिए जल चक्र की पाठ योजना बनाओ'),
+    h(S.AnswerCard, { lang: 'hi', source: 'CBSE · NCERT Curiosity 6, Ch 8', resultName: 'जल चक्र पाठ योजना', openLabel: 'खोलें', readAloudLabel: 'सुनाएँ', againLabel: 'फिर से', onOpen: n, onReadAloud: n, onAgain: n },
+      'तैयार है: कक्षा 6 के लिए जल चक्र की 40 मिनट की पाठ योजना।')));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h('div', { className: 'sk-slices' }, h(Live), h(Hindi)));
+</script>
+</body></html>

@@ -1,0 +1,46 @@
+<!-- @dsCard group="Screens · Community" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Community</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+var FILTERS = [['all', 'All', 'saffron'], ['resource', 'Resource', 'saffron'], ['tried', 'Tried this', 'amber'], ['celebrate', 'Celebrate', 'leaf'], ['help', 'Need help', 'indigo']];
+function useLike(n) {
+  var s = React.useState({ n: n, on: false }), v = s[0], set = s[1];
+  return { likes: v.n, liked: v.on, onLike: function () { set({ n: v.n + (v.on ? -1 : 1), on: !v.on }); } };
+}
+function Community() {
+  var f = React.useState('all'), filter = f[0], setFilter = f[1];
+  var c = React.useState('connect'), connect = c[0], setConnect = c[1];
+  var brief = useLike(0), suresh = useLike(38), deepa = useLike(6);
+  function go() {}
+  function shows(t) { return filter === 'all' || filter === t; }
+  return h(S.PhoneScreen, {
+    gap: 10,
+    padBottom: 164,
+    overlay: [
+      h(S.OrbHint, { key: 'o', parked: true, label: 'Make a worksheet from this post', onClick: go }),
+      h('div', { key: 't', className: 'sk-tabbar-dock' }, h(S.TabBar, { active: 'community' }))
+    ]
+  },
+    h(S.ScreenHeader, { title: 'Community', subtitle: 'Share, learn and grow with teachers everywhere' }),
+    h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 } },
+      h(S.Tile, { title: 'Staff room', subtitle: 'Open chat', onClick: go }),
+      h(S.Tile, { title: 'Find teachers', subtitle: 'By subject or school', onClick: go })),
+    h(S.SearchField, { glyph: false, label: 'Write a post', placeholder: 'What did you do today?', onSubmit: go }),
+    h('div', { role: 'group', 'aria-label': 'Show posts', style: { display: 'flex', gap: 5, flexWrap: 'wrap' } },
+      FILTERS.map(function (x) { return h(S.Chip, { key: x[0], variant: 'filter', tone: x[2], selected: filter === x[0], onClick: function () { setFilter(x[0]); } }, x[1]); })),
+    shows('resource') ? h(S.PostCard, Object.assign({ automated: true, author: 'Daily Briefing', meta: 'Fri, 18 Sept · automated', type: 'resource', comments: 3,
+      body: 'CBSE: capacity-building programme for skill subject “Office Procedures & Practices (804)”.', onReadMore: go,
+      source: { board: 'CBSE', title: 'Capacity building for Office Procedures', onClick: go } }, brief)) : null,
+    shows('tried') ? h(S.PostCard, Object.assign({ author: 'Suresh Reddy', meta: 'Maths · Class 7 · 11 hours ago', type: 'tried', avatarTone: 'amber', comments: 12,
+      body: 'Taught fractions by cutting chapatis. The class finally understood halves and quarters.',
+      connect: connect, onConnect: function () { setConnect('pending'); } }, suresh)) : null,
+    shows('help') ? h(S.PostCard, Object.assign({ author: 'Deepa Iyer', meta: 'English · 1 day ago', type: 'help', avatarTone: 'leaf', comments: 9,
+      body: 'Any ideas for students who won’t speak up in English class?', style: { flex: 1, minHeight: 0, overflow: 'hidden' } }, deepa)) : null);
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Community)));
+</script>
+</body></html>

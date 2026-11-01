@@ -1,0 +1,32 @@
+<!-- @dsCard group="Screens · VIDYA" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Instant answer ask</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+var n = function () {};
+var TRY = ['Why is the sky blue?', 'Photosynthesis, using how Pongal is made', 'The history of Nalanda University', 'The major rivers in India', 'Why do leaves change colour?', 'Explain gravity with a bullock cart'];
+function Ask() {
+  var q = React.useState('Explain photosynthesis to a 10-year-old using one everyday analogy.'), question = q[0], setQuestion = q[1];
+  var picked = TRY.indexOf(question);
+  return h(S.PhoneScreen, { glow: false, gap: 12, padBottom: 24 },
+    h(S.ScreenHeader, { level: 'page', title: 'Instant Answer', subtitle: 'A quick, expert answer to a question from class.' }),
+    h(S.Field, { label: 'Your question', multiline: true, rows: 3, value: question, onChange: function (e) { setQuestion(e.target.value); }, mic: 'idle', onMic: n }),
+    h(S.Eyebrow, { id: 'try-label', size: 'tight', tone: 'muted' }, 'Try one of these'),
+    h('div', { role: 'radiogroup', 'aria-labelledby': 'try-label', className: 'sk-suggestionrow-group', style: { gap: 6 } },
+      TRY.map(function (t, i) {
+        return h(S.SuggestionRow, { key: t, value: t, selected: picked === i, tabIndex: picked === -1 && i === 0 ? 0 : undefined, onSelect: setQuestion }, t);
+      })),
+    h('div', { style: { display: 'flex', gap: 7 } },
+      h(S.Field, { label: 'Class', size: 'md', as: 'select', value: 'Class 6', onOpen: n, style: { flex: '1 1 auto' } }),
+      h(S.Field, { label: 'Subject', size: 'md', as: 'select', value: 'Science', onOpen: n, style: { flex: '1 1 auto' } }),
+      h(S.Field, { label: 'Language', size: 'md', as: 'select', value: 'English', onOpen: n, style: { flex: '1 1 auto' } })),
+    h(S.HonestyNote, null, 'Answers come from VIDYA’s own knowledge unless a web check is on.'),
+    h('div', { style: { flex: '1 1 auto' } }),
+    h(S.Button, { block: true }, 'Get instant answer'));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Ask)));
+</script>
+</body></html>

@@ -1,0 +1,47 @@
+<!-- @dsCard group="Core" height=453 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Eyebrow</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* Phone slices: 360px, the phone's true width. The corner glow is clipped inside the slice, so nothing pokes out of it. */
+function Glow() { return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } }, h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } })); }
+function isHi(t) { return typeof t === 'string' && /[ऀ-ൿ]/.test(t); }
+function Slice(p) {
+  var vs = (p.v || '').split(' ').filter(Boolean);
+  var cls = 'sk-slice' + vs.filter(function (x) { return x !== 'glow'; }).map(function (x) { return ' sk-slice--' + x; }).join('');
+  return h('div', { className: cls, style: p.style }, vs.indexOf('glow') !== -1 ? h(Glow) : null, p.label ? h('div', { className: 'sk-slice__label' + (isHi(p.label) ? ' sk-indic' : '') }, p.label) : null, p.children);
+}
+function Row(p) { return h('div', { className: 'sk-slices', style: Object.assign({ alignItems: 'stretch' }, p.style) }, p.children); }
+function Note(t) { return h('div', { className: 'sk-slice__label' + (isHi(t) ? ' sk-indic' : ''), style: { marginTop: 4 } }, t); }
+function noop() {}
+ReactDOM.createRoot(document.getElementById('root')).render(
+  h('div', null,
+    h(Row, null,
+      h(Slice, { v: 'glow', label: 'Home · names the panel' },
+        h(S.GlassCard, { radius: 'panel', raised: true, gap: 10 },
+          h(S.Eyebrow, null, 'Waiting for you'),
+          h(S.TaskRow, { dot: 'red', label: '4 absentees to call', statusLabel: 'urgent', action: 'Open', onAction: noop }),
+          h(S.TaskRow, { dot: 'amber', label: '34 test sheets to scan', statusLabel: 'waiting', action: 'Open', onAction: noop }),
+          h(S.TaskRow, { dot: 'leaf', label: 'Fractions lesson ready', statusLabel: 'ready', action: 'Open', onAction: noop })),
+        Note('You · muted, over a list'),
+        h(S.Eyebrow, { tone: 'muted' }, '3 items queued'),
+        h(S.TaskRow, { variant: 'boxed', dot: 'amber', label: 'Attendance · Class 7', meta: 'waiting' })),
+      h(Slice, { v: 'card', label: 'Inside a sheet · tight, 10px' },
+        h(S.GlassCard, { radius: 'field', tone: 'inset', gap: 5 },
+          h(S.Eyebrow, { size: 'tight' }, 'This page'),
+          h('div', { style: { font: '500 12px/1.25 var(--font-ui)' } }, 'Fractions · Class 7 · lesson plan')),
+        h(S.GlassCard, { radius: 'field', tone: 'inset', gap: 7 },
+          h(S.Eyebrow, { size: 'tight' }, 'Draft so far'),
+          h('div', { className: 'sk-indic', lang: 'hi', style: { font: '400 12px/1.7 var(--font-ui)' } }, 'शुरुआत: रोटी को चार बराबर हिस्सों में बाँटिए…')),
+        Note('In Hindi · never uppercased'),
+        h(S.Eyebrow, { lang: 'hi' }, 'आपके लिए बाकी'),
+        h(S.Eyebrow, { tone: 'faint' }, 'Saved yesterday · faint')) ),
+    h('div', { className: 'sk-webstage', style: { margin: '4px 12px 12px', borderRadius: 18, padding: '16px 20px' } },
+      h('div', { className: 'sk-webstage__label' }, 'Website · 11px, at desktop width'),
+      h(S.Eyebrow, { size: 'web' }, 'Two people, one rollout'),
+      h('div', { style: { font: '700 26px/1.2 var(--font-display)', marginTop: -8 } }, 'A school pilot in two weeks')))
+);
+</script>
+</body></html>

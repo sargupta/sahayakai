@@ -1,0 +1,49 @@
+<!-- @dsCard group="Community" height=564 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>PostCard</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function useLike(n, on) {
+  var s = React.useState({ n: n, on: !!on }), v = s[0], set = s[1];
+  return { likes: v.n, liked: v.on, onLike: function () { set({ n: v.n + (v.on ? -1 : 1), on: !v.on }); } };
+}
+function useConnect() {
+  var s = React.useState('connect'), v = s[0], set = s[1];
+  return { connect: v, onConnect: function () { set('pending'); } };
+}
+function Demo() {
+  var brief = useLike(0), suresh = useLike(38), kavita = useLike(54, true), ravi = useLike(38), aisha = useLike(21);
+  var sureshC = useConnect();
+  var t = React.useState(false), translated = t[0], setTranslated = t[1];
+  var sv = React.useState(false), saved = sv[0], setSaved = sv[1];
+  var m = React.useState(false), more = m[0], setMore = m[1];
+  var briefBody = more
+    ? 'CBSE circular: capacity-building programme for skill subject “Office Procedures & Practices (804)”. Two days, online, for teachers of Classes 9 to 12. Registration is open till 30 Sept.'
+    : 'CBSE circular: capacity-building programme for skill subject “Office Procedures & Practices (804)”.';
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice', style: { gap: 10 } },
+      h('div', { className: 'sk-slice__label' }, 'Feed · briefing, Connect, liked'),
+      h(S.PostCard, Object.assign({ automated: true, author: 'Daily Briefing', meta: 'Fri, 18 Sept · automated', type: 'resource', comments: 3,
+        body: briefBody, onReadMore: more ? undefined : function () { setMore(true); },
+        source: { board: 'CBSE', title: 'Capacity building for Office Procedures', onClick: function () {} } }, brief)),
+      h(S.PostCard, Object.assign({ author: 'Suresh Reddy', meta: 'Maths · Class 7 · 11 hours ago', type: 'tried', avatarTone: 'amber', comments: 12,
+        body: 'Taught fractions by cutting chapatis. The class finally understood halves and quarters.' }, suresh, sureshC)),
+      h(S.PostCard, Object.assign({ lang: 'hi', author: 'कविता जोशी', initials: 'क', meta: 'हिन्दी · कक्षा 5 · 2 दिन पहले', type: 'celebrate', typeLabel: 'जश्न', avatarTone: 'indigo',
+        comments: 7, commentsLabel: '7 टिप्पणियाँ', likeLabel: 'पसंद', likesLabel: 'पसंद',
+        body: 'आज कक्षा 5 के सभी बच्चों ने पहाड़े बिना देखे सुनाए। रोज़ पाँच मिनट के अभ्यास का असर दिखा।' }, kavita))),
+    h('div', { className: 'sk-slice', style: { gap: 10 } },
+      h('div', { className: 'sk-slice__label' }, 'Staff room · size room · Translate'),
+      h(S.PostCard, Object.assign({ size: 'room', author: 'Ravi Kumar', meta: 'Science · Class 7 · 2h ago', type: 'tried', avatarTone: 'saffron', comments: 12, commentsLabel: '12 replies',
+        body: translated ? 'मैंने रोटी काटकर भिन्न पढ़ाए। बच्चे आखिरकार आधा और चौथाई समझ गए।' : 'Taught fractions by cutting chapatis. The kids finally understood halves and quarters.',
+        translated: translated, onTranslate: function () { setTranslated(!translated); } }, ravi)),
+      h(S.PostCard, { size: 'room', author: 'Aisha Khan', meta: 'Shared a worksheet · 5h ago', avatarTone: 'indigo',
+        attachment: { title: 'Photosynthesis · Class 7', meta: 'Hindi · 214 downloads', saved: saved, onSave: function () { setSaved(!saved); } } }),
+      h('div', { className: 'sk-slice__label' }, 'Need help · request sent'),
+      h(S.PostCard, Object.assign({ author: 'Deepa Iyer', meta: 'English · 1 day ago', type: 'help', avatarTone: 'leaf', comments: 9, connect: 'pending',
+        body: 'Any ideas for students who won’t speak up in English class?' }, aisha))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

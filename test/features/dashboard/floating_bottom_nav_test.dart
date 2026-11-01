@@ -9,8 +9,9 @@ import 'package:sahayakai/features/dashboard/presentation/floating_bottom_nav.da
 /// disc on the active one").
 ///
 /// Drives the widget in isolation so the icon-only structure, the saffron
-/// disc, the drag-tint fallback, the 42dp floor, the reduce-motion
-/// degradation and the dark (scanner) rendering are asserted directly. Tab
+/// disc, the 48dp touch area, the docked-VIDYA layout (v2 9a), the
+/// reduce-motion degradation and the camera (scanner) tone are asserted
+/// directly. Tab
 /// routing through the shell is covered end-to-end by the shell/home suites.
 
 const _icons = <IconData>[
@@ -24,15 +25,17 @@ const _icons = <IconData>[
 Future<void> _pumpNav(
   WidgetTester tester, {
   int initialIndex = 0,
-  Brightness brightness = Brightness.light,
+  FloatingNavTone tone = FloatingNavTone.standard,
   bool reduceMotion = false,
-  bool orbDragging = false,
+  Widget? dock,
+  Widget? prompt,
+  bool showDock = true,
   ValueChanged<int>? onSelect,
 }) async {
   var selected = initialIndex;
   await tester.pumpWidget(
     MaterialApp(
-      theme: brightness == Brightness.dark ? AppTheme.light() : AppTheme.light(),
+      theme: AppTheme.light(),
       // The bar is icon-only visually but carries localized screen-reader
       // labels (v3), so it resolves `context.l10n` — the host must install the
       // app's delegates or `AppLocalizations.of` throws on the first build.
@@ -44,7 +47,10 @@ Future<void> _pumpNav(
           builder: (context, setState) => Scaffold(
             bottomNavigationBar: FloatingBottomNav(
               currentIndex: selected,
-              orbDragging: orbDragging,
+              dock: dock,
+              prompt: prompt,
+              showDock: showDock,
+              tone: tone,
               onSelected: (i) {
                 onSelect?.call(i);
                 setState(() => selected = i);
@@ -63,8 +69,8 @@ Future<void> _pumpNav(
 /// The `tab_$i` key marks the tab BUTTON (the keyed element must own the
 /// semantics node the a11y assertions read); the disc container is its
 /// decorated descendant.
-AnimatedContainer _tabContainer(WidgetTester tester, int index) => tester
-    .widget<AnimatedContainer>(
+AnimatedContainer _tabContainer(WidgetTester tester, int index) =>
+    tester.widget<AnimatedContainer>(
       find.descendant(
         of: find.byKey(ValueKey('tab_$index')),
         matching: find.byType(AnimatedContainer),
@@ -85,8 +91,8 @@ void main() {
       for (final icon in _icons) {
         expect(find.byIcon(icon), findsOneWidget);
       }
-      // Icon-only: no visible text in the bar.
-      expect(find.byType(Text), findsOneWidget);
+      // Icon-only: labels are accessible names, never drawn.
+      expect(find.byType(Text), findsNothing);
       // No fifth tab, no Create action.
       expect(find.byIcon(LucideIcons.sparkles), findsNothing);
     });
@@ -117,12 +123,60 @@ void main() {
     });
   });
 
-  group('while the orb is dragged', () {
-    testWidgets('the active tab shows only a 12% saffron tint', (tester) async {
-      await _pumpNav(tester, initialIndex: 0, orbDragging: true);
+  group('with VIDYA docked (v2 9a)', () {
+    const dock = SizedBox.square(key: ValueKey('dock'), dimension: 44);
 
-      expect(_tabColor(tester, 0), AppColors.accentTint);
-      expect(_tabColor(tester, 0), isNot(AppColors.saffron500));
+    testWidgets('the active tab is a 12% saffron tint, not the disc', (
+      tester,
+    ) async {
+      await _pumpNav(tester, initialIndex: 2, dock: dock);
+
+      expect(_tabColor(tester, 2), AppColors.accentTintStrong);
+      expect(_tabColor(tester, 0), isNull);
+      final active = tester.widget<Icon>(find.byIcon(LucideIcons.users));
+      expect(active.color, AppColors.saffron600);
+    });
+
+    testWidgets('40dp discs in 44dp touch cells, the dock after the tabs', (
+      tester,
+    ) async {
+      await _pumpNav(tester, dock: dock);
+
+      for (var i = 0; i < 4; i++) {
+        expect(
+          tester.getSize(find.byKey(ValueKey('tab_$i'))),
+          const Size(44, 44),
+        );
+        final disc = _tabContainer(tester, i).constraints!;
+        expect(disc.maxWidth, 40);
+      }
+      final lastTab = tester.getRect(find.byKey(const ValueKey('tab_3')));
+      final dockRect = tester.getRect(find.byKey(const ValueKey('dock')));
+      // 5 lead + 1 divider + 6 trail between the last tab cell and the dock.
+      expect(dockRect.left - lastTab.right, 12);
+      expect(dockRect.center.dy, lastTab.center.dy);
+    });
+
+    testWidgets('showDock false hides the dock but keeps the docked tabs', (
+      tester,
+    ) async {
+      await _pumpNav(tester, dock: dock, showDock: false);
+
+      expect(find.byKey(const ValueKey('dock')), findsNothing);
+      expect(_tabContainer(tester, 0).constraints!.maxWidth, 40);
+      expect(_tabColor(tester, 0), AppColors.accentTintStrong);
+    });
+
+    testWidgets('the prompt sits above the capsule', (tester) async {
+      await _pumpNav(
+        tester,
+        dock: dock,
+        prompt: const SizedBox(key: ValueKey('prompt'), width: 120, height: 34),
+      );
+
+      final prompt = tester.getRect(find.byKey(const ValueKey('prompt')));
+      final tab = tester.getRect(find.byKey(const ValueKey('tab_0')));
+      expect(prompt.bottom, lessThanOrEqualTo(tab.top));
     });
   });
 
@@ -137,14 +191,30 @@ void main() {
       expect(inactive, isSemantics(isSelected: false));
     });
 
-    testWidgets('every tab clears the 42dp touch-target floor', (tester) async {
+    testWidgets('every tab draws a 42dp disc inside a 48dp touch area', (
+      tester,
+    ) async {
       await _pumpNav(tester);
 
       for (var i = 0; i < 4; i++) {
         final size = tester.getSize(find.byKey(ValueKey('tab_$i')));
-        expect(size.width, greaterThanOrEqualTo(42));
-        expect(size.height, greaterThanOrEqualTo(42));
+        expect(size.width, greaterThanOrEqualTo(48));
+        expect(size.height, greaterThanOrEqualTo(48));
+        final disc = _tabContainer(tester, i).constraints!;
+        expect(disc.maxWidth, 42);
+        expect(disc.maxHeight, 42);
       }
+    });
+
+    testWidgets('meets the Android tap-target and labelling guidelines', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      await _pumpNav(tester);
+
+      await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+      await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+      handle.dispose();
     });
   });
 
@@ -169,14 +239,31 @@ void main() {
     });
   });
 
-  group('dark mode (scanner surface)', () {
-    testWidgets('renders on ink without error', (tester) async {
-      await _pumpNav(tester, brightness: Brightness.dark);
+  group('camera tone (scanner surface)', () {
+    testWidgets('a 16% milk capsule with no shadow, saffron disc kept', (
+      tester,
+    ) async {
+      await _pumpNav(tester, tone: FloatingNavTone.camera);
 
-      expect(find.byType(FloatingBottomNav), findsOneWidget);
       expect(tester.takeException(), isNull);
-      // Active tab becomes translucent milk, not the saffron disc.
-      expect(_tabColor(tester, 0), const Color(0x29FFFDF9));
+      final capsule =
+          tester
+                  .widget<DecoratedBox>(
+                    find
+                        .descendant(
+                          of: find.byType(FloatingBottomNav),
+                          matching: find.byType(DecoratedBox),
+                        )
+                        .first,
+                  )
+                  .decoration
+              as BoxDecoration;
+      expect(capsule.color, AppColors.cameraGlass);
+      expect(capsule.boxShadow, isNull);
+      // The active tab keeps its saffron disc; inactive icons are on-camera.
+      expect(_tabColor(tester, 0), AppColors.saffron500);
+      final inactive = tester.widget<Icon>(find.byIcon(LucideIcons.library));
+      expect(inactive.color, AppColors.onCameraIcon);
     });
   });
 }

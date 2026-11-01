@@ -1,0 +1,50 @@
+<!-- @dsCard group="Surfaces" height=584 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>ProgressBar</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* Phone slices: 360px, the phone's true width. The corner glow is clipped inside the slice, so nothing pokes out of it. */
+function Glow() { return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } }, h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } })); }
+function isHi(t) { return typeof t === 'string' && /[ऀ-ൿ]/.test(t); }
+function Slice(p) {
+  var vs = (p.v || '').split(' ').filter(Boolean);
+  var cls = 'sk-slice' + vs.filter(function (x) { return x !== 'glow'; }).map(function (x) { return ' sk-slice--' + x; }).join('');
+  return h('div', { className: cls, style: p.style }, vs.indexOf('glow') !== -1 ? h(Glow) : null, p.label ? h('div', { className: 'sk-slice__label' + (isHi(p.label) ? ' sk-indic' : '') }, p.label) : null, p.children);
+}
+function Row(p) { return h('div', { className: 'sk-slices', style: Object.assign({ alignItems: 'stretch' }, p.style) }, p.children); }
+function Note(t) { return h('div', { className: 'sk-slice__label' + (isHi(t) ? ' sk-indic' : ''), style: { marginTop: 4 } }, t); }
+function Block(hh) { return h('div', { style: { height: hh, flex: hh ? 'none' : 1, minHeight: 0, background: 'rgba(255,255,255,.9)', borderRadius: 16 } }); }
+function Demo() {
+  var p = React.useState(62), pct = p[0], setPct = p[1];
+  React.useEffect(function () {
+    var t = setInterval(function () { setPct(function (v) { if (v >= 100) { clearInterval(t); return 100; } return Math.min(100, v + 6); }); }, 1400);
+    return function () { clearInterval(t); };
+  }, []);
+  return h(Row, null,
+    h(Slice, { v: 'working', style: { height: 560 } },
+      h('div', { style: { position: 'absolute', inset: 0, padding: '18px 20px 20px', display: 'flex', flexDirection: 'column', gap: 12, borderRadius: 'inherit', overflow: 'hidden' } },
+        h('div', { className: 'sk-slice__label' }, 'VIDYA working · indigo, under the steps'),
+        h('div', { style: { opacity: .4, display: 'flex', flexDirection: 'column', gap: 12, flex: 1, minHeight: 0 } },
+          h(S.ScreenHeader, { title: 'Make a lesson' }), Block(80), Block()),
+        h(S.VoiceSheet, { state: 'working', subtitle: 'Keep using the app. I’ll finish in the background', onMinimise: function () {}, onStop: function () {} },
+          h('ol', { className: 'sk-checkliststep-list', 'aria-label': 'Progress' },
+            h(S.ChecklistStep, { status: 'done' }, 'Matched CBSE · NCERT Ganita Prakash 7, Ch 8'),
+            h(S.ChecklistStep, { status: 'done' }, 'Chose a chapati activity'),
+            h(S.ChecklistStep, { status: pct >= 100 ? 'done' : 'active' }, 'Writing board work in हिन्दी')),
+          h(S.ProgressBar, { value: pct, label: 'Writing your lesson' })))),
+    h(Slice, { label: 'Tone is meaning · with label and value' },
+      h(S.ProgressBar, { value: pct, label: 'Writing board work in हिन्दी', showLabel: true }),
+      h(S.ProgressBar, { value: 34, max: 38, tone: 'leaf', label: 'Roll call · Class 7', valueText: '34 of 38 marked', showLabel: true }),
+      h(S.ProgressBar, { value: 18, max: 24, tone: 'saffron', label: 'Saving for offline', valueText: '18 of 24 items', showLabel: true }),
+      Note('Small · 6px, inside a row'),
+      h(S.GlassCard, { radius: 'field', padding: '11px 13px', gap: 8 },
+        h('div', { style: { display: 'flex', justifyContent: 'space-between', font: '500 12px/1.3 var(--font-ui)' } }, h('span', null, 'Class 7 · Maths test'), h('span', { style: { color: 'var(--text-body)', fontSize: 12 } }, 'scanning')),
+        h(S.ProgressBar, { value: 12, max: 34, size: 'sm', label: 'Answer sheets scanned', valueText: '12 of 34', showLabel: true })),
+      Note('In Hindi'),
+      h(S.ProgressBar, { value: 34, max: 38, tone: 'leaf', label: 'हाज़िरी · कक्षा 7', lang: 'hi', valueText: '38 में से 34', showLabel: true })));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

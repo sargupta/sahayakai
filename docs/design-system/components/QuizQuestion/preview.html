@@ -1,0 +1,30 @@
+<!-- @dsCard group="Content" height=724 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>QuizQuestion</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+var Q1 = { number: 1, question: 'What do we call water turning into vapour, like wet clothes drying in the sun?', options: ['Condensation', 'Precipitation', 'Evaporation', 'Collection'], correct: 2 };
+function Demo() {
+  var a = React.useState(null), pick = a[0], setPick = a[1];
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice sk-slice--glow', style: { gap: 9 } },
+      h('div', { className: 'sk-slice__label' }, 'Quiz · answer key, lettered grid'),
+      h(S.QuizQuestion, Object.assign({ layout: 'grid', collapsible: true }, Q1)),
+      h(S.QuizQuestion, { number: 2, type: 'short', collapsible: true, question: 'What term describes water falling back to Earth as rain, snow or hail?', answerArea: true }),
+      h('div', { className: 'sk-slice__label' }, 'List · folded'),
+      h(S.QuizQuestion, { number: 3, question: 'What happens to water when the sun heats it?', options: ['It evaporates', 'It freezes', 'It disappears'], correct: 0, collapsible: true, defaultCollapsed: true }),
+      h(S.QuizQuestion, { number: 4, question: 'What happens to water when the sun heats it?', options: ['It evaporates', 'It freezes', 'It disappears'], correct: 0 })),
+    h('div', { className: 'sk-slice', style: { gap: 9 } },
+      h('div', { className: 'sk-slice__label' }, 'Exam paper · PYQ tag, marks, OR, scheme'),
+      h(S.QuizQuestion, { variant: 'exam', number: 1, pyq: 'Past paper · 1 mark', question: 'If HCF(a, 12) = 4 and LCM(a, 12) = 60, then a is', options: ['16', '20', '24', '30'], correct: 1 }),
+      h(S.QuizQuestion, { variant: 'exam', type: 'short', number: 31, marks: '3 marks', question: 'Prove that √5 is irrational.', or: 'find the HCF and LCM of 510 and 92.', scheme: 'Marking scheme · 1 + 1 + 1' }),
+      h('div', { className: 'sk-slice__label' }, 'Answer mode · radio grid'),
+      h(S.QuizQuestion, Object.assign({ mode: 'answer', layout: 'grid', selected: pick, onSelect: setPick }, Q1, { number: 1 })),
+      h(S.QuizQuestion, { mode: 'answer', lang: 'hi', eyebrow: 'प्रश्न 2 · बहुविकल्पी', question: 'सूरज की गर्मी से पानी का क्या होता है?', options: ['वह भाप बनकर उड़ जाता है', 'वह जम जाता है'], defaultSelected: 0 }))
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

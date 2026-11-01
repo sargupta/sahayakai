@@ -1,0 +1,35 @@
+<!-- @dsCard group="Content" height=346 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>ActionBar</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+var HI = { copy: 'कॉपी', save: 'सहेजें', pdf: 'PDF', edit: 'बदलें', share: 'भेजें' };
+function Demo() {
+  var k = React.useState(true), key = k[0], setKey = k[1];
+  var l = React.useState(null), last = l[0], setLast = l[1];
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice sk-slice--glow' },
+      h('div', { className: 'sk-slice__label' }, 'Tool output · scrolls when it overflows'),
+      h(S.ActionBar, { set: 'save', label: 'Lesson plan actions', onAction: setLast }),
+      h('div', { className: 'sk-slice__label' }, 'Output chrome · md, to the screen edges'),
+      h(S.ActionBar, { set: 'revise', size: 'md', bleed: true, label: 'Exam paper actions', onAction: setLast }),
+      h('div', { className: 'sk-slice__label' }, 'With a toggle · answer key ' + (key ? 'on' : 'off')),
+      h(S.ActionBar, {
+        label: 'Quiz actions', onAction: setLast,
+        actions: [{ key: 'answer-key', label: 'Answer key', icon: 'key', pressed: key, onClick: function () { setKey(!key); } }, 'edit', 'regenerate', 'download', 'share']
+      }),
+      h('div', { style: { font: '400 12px/1.45 var(--font-ui)', color: 'var(--text-body)' }, 'aria-live': 'polite' }, last ? 'Pressed: ' + last : 'Arrow keys move between pills.')),
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Wrapped · no scrolling'),
+      h(S.ActionBar, { set: 'save', wrap: true, label: 'Rubric actions' }),
+      h('div', { className: 'sk-slice__label' }, 'हिन्दी · 12px, never tracked'),
+      h(S.ActionBar, { set: 'save', labels: HI, lang: 'hi', label: 'पाठ योजना के काम' }),
+      h('div', { className: 'sk-slice__label' }, 'Revise set · one action unavailable offline'),
+      h(S.ActionBar, { actions: ['edit', { key: 'regenerate', disabled: true }, 'download', 'share'], label: 'Visual aid actions' }))
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

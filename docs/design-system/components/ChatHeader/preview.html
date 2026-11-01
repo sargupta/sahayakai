@@ -1,0 +1,20 @@
+<!-- @dsCard group="Conversation" height=182 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>ChatHeader</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Slice(label, kids) { return h('div', { className: 'sk-slice' }, h('div', { className: 'sk-slice__label' }, label), kids); }
+var n = function () {};
+ReactDOM.createRoot(document.getElementById('root')).render(
+  h('div', { className: 'sk-slices' },
+    Slice('Live conversation', h(S.ChatHeader, { onBack: n, onSettings: n })),
+    Slice('A saved conversation · back only', [
+      h(S.ChatHeader, { key: 'a', title: 'Water cycle plan', onBack: n }),
+      h(S.ChatHeader, { key: 'b', title: 'जल चक्र की योजना', lang: 'hi', onBack: n, backLabel: 'वापस' })
+    ])
+  )
+);
+</script>
+</body></html>

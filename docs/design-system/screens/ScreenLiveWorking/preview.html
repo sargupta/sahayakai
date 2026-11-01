@@ -1,0 +1,32 @@
+<!-- @dsCard group="Screens · VIDYA" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>VIDYA Live · Working</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+function noop() {}
+function Working() {
+  var a = React.useState({}), added = a[0], setAdded = a[1];
+  function offer(key, label) {
+    return { key: key, label: label, added: !!added[key], onClick: function () { var n = Object.assign({}, added); n[key] = !added[key]; setAdded(n); } };
+  }
+  return h(S.PhoneScreen, { wash: 'live-working', padBottom: 0, gap: 0 },
+    h(S.LiveHeader, { status: h(S.LiveStatus, { state: 'working', label: 'Checking CBSE source' }) }),
+    h('div', { style: { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 22, margin: '0 -13px' } },
+      h(S.Eyebrow, { style: { fontSize: 12, letterSpacing: '.2em', color: 'var(--indigo-500)' } }, 'Reading a source'),
+      h(S.LiveOrb, { state: 'working' }),
+      h(S.LiveReceipts, {
+        items: [
+          { status: 'done', label: 'Heard: lesson plan, water cycle, Class 6' },
+          { status: 'done', label: 'Matched CBSE · NCERT Curiosity 6, Ch 8' },
+          { status: 'current', label: 'Building a 40-minute plan…' }
+        ],
+        offers: [offer('ws', 'Make a worksheet'), offer('dg', 'Add a diagram')]
+      })),
+    h(S.LiveControls, { mode: 'working', onStop: noop }));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Working)));
+</script>
+</body></html>

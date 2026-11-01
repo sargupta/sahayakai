@@ -1,0 +1,42 @@
+<!-- @dsCard group="Core" height=330 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Switch</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* Phone slices: 360px, the phone's true width. The corner glow is clipped inside the slice, so nothing pokes out of it. */
+function Glow() { return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } }, h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } })); }
+function isHi(t) { return typeof t === 'string' && /[ऀ-ൿ]/.test(t); }
+function Slice(p) {
+  var vs = (p.v || '').split(' ').filter(Boolean);
+  var cls = 'sk-slice' + vs.filter(function (x) { return x !== 'glow'; }).map(function (x) { return ' sk-slice--' + x; }).join('');
+  return h('div', { className: cls, style: p.style }, vs.indexOf('glow') !== -1 ? h(Glow) : null, p.label ? h('div', { className: 'sk-slice__label' + (isHi(p.label) ? ' sk-indic' : '') }, p.label) : null, p.children);
+}
+function Row(p) { return h('div', { className: 'sk-slices', style: Object.assign({ alignItems: 'stretch' }, p.style) }, p.children); }
+function Note(t) { return h('div', { className: 'sk-slice__label' + (isHi(t) ? ' sk-indic' : ''), style: { marginTop: 4 } }, t); }
+function Demo() {
+  var a = React.useState(true), left = a[0], setLeft = a[1];
+  var r = React.useState(false), aloud = r[0], setAloud = r[1];
+  return h(Row, null,
+    h(Slice, { v: 'glow', label: 'You · settings, tap a row' },
+      h(S.GlassCard, { padding: '13px 14px', gap: 8 },
+        h('h3', { className: 'sk-settingsrow-title' }, 'Settings'),
+        h('ul', { className: 'sk-settingsrow-list', 'aria-label': 'Settings' },
+          h(S.SettingsRow, { as: 'li', label: 'Language · हिन्दी', action: 'Change', onAction: function () {} }),
+          h(S.SettingsRow, { as: 'li', label: 'Orb on the left hand', control: h(S.Switch, { label: 'Orb on the left hand', hideLabel: true, checked: left, onChange: setLeft }) }),
+          h(S.SettingsRow, { as: 'li', label: 'Read lessons aloud', control: h(S.Switch, { label: 'Read lessons aloud', hideLabel: true, checked: aloud, onChange: setAloud }) }),
+          h(S.SettingsRow, { as: 'li', label: 'Download for offline', action: '24 items', onAction: function () {} })))),
+    h(Slice, { label: 'Own label · disabled · in Hindi' },
+      h(S.GlassCard, { padding: '13px 14px', gap: 10 },
+        h(S.Switch, { label: 'Auto-capture answer sheets', defaultChecked: true }),
+        h(S.Switch, { label: 'Batch mode when scanning' }),
+        h(S.Switch, { label: 'Download over mobile data', disabled: true, 'aria-describedby': 'sw-why' }),
+        h('div', { id: 'sw-why', style: { font: '400 12px/1.45 var(--font-ui)', color: 'var(--text-body)', marginTop: -4 } }, 'Your school admin turned this off.')),
+      h(S.GlassCard, { padding: '13px 14px', gap: 10, lang: 'hi' },
+        h(S.Switch, { label: 'नाम हिन्दी में पढ़ें', lang: 'hi', defaultChecked: true, stateLabels: { on: 'चालू', off: 'बंद' } }),
+        h(S.Switch, { label: 'ऑर्ब बाएँ हाथ पर', lang: 'hi', stateLabels: { on: 'चालू', off: 'बंद' } }))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

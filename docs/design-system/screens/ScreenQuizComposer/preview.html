@@ -1,0 +1,57 @@
+<!-- @dsCard group="Screens · Make" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Quiz composer</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+var TYPES = ['Multiple choice', 'True / false', 'Fill in the blanks', 'Short answer'];
+var LEVELS = ['Remember', 'Understand', 'Apply', 'Analyze', 'Evaluate', 'Create'];
+var HINTS = {
+  Remember: 'recall facts, terms and basic concepts.',
+  Understand: 'explain ideas in their own words.',
+  Apply: 'use what they know in a new situation.',
+  Analyze: 'break an idea into parts and connect them.',
+  Evaluate: 'judge an idea and justify the choice.',
+  Create: 'combine ideas into something original.'
+};
+function toggleIn(list, k) { return list.indexOf(k) > -1 ? list.filter(function (x) { return x !== k; }) : list.concat([k]); }
+function Quiz() {
+  var t = React.useState(['Multiple choice', 'Short answer']), types = t[0], setTypes = t[1];
+  var b = React.useState(['Remember', 'Understand']), levels = b[0], setLevels = b[1];
+  var n = React.useState(5), count = n[0], setCount = n[1];
+  var m = React.useState('idle'), mic = m[0], setMic = m[1];
+  var bd = React.useState('CBSE'), board = bd[0], setBoard = bd[1];
+  var chosen = LEVELS.filter(function (l) { return levels.indexOf(l) > -1; });
+  return h(S.PhoneScreen, {
+    gap: 10,
+    overlay: [
+      h('div', { key: 'o', className: 'sk-orb-park sk-orb-park--left', style: { bottom: 'calc(var(--orb-park-bottom) - 6px)' } }, h(S.Orb, { onClick: function () {} })),
+      h('div', { key: 't', className: 'sk-tabbar-dock' }, h(S.TabBar, { active: 'library' }))
+    ]
+  },
+    h(S.ScreenHeader, { level: 'page', title: 'Make a quiz', subtitle: 'Any topic, with the question types you choose' }),
+    h(S.Field, { label: 'Topic', defaultValue: 'The water cycle and its stages', mic: mic, onMic: function () { setMic(mic === 'idle' ? 'listening' : 'idle'); } }),
+    h('div', { style: { display: 'flex', gap: 7 } },
+      h(S.Field, { label: 'Class', size: 'md', as: 'select', value: 'Class 6', style: { flex: '1 1 0' } }),
+      h(S.BoardSwitch, { variant: 'field', value: board, onChange: setBoard, style: { flex: '.9 1 28px', minWidth: 0 } }),
+      h(S.Field, { label: 'Language', size: 'md', as: 'select', value: 'English', style: { flex: '1.1 1 0' } })),
+    h('div', { style: { display: 'flex', flexDirection: 'column', gap: 7 } },
+      h(S.Eyebrow, { size: 'tight', id: 'qz-types' }, 'Question types'),
+      h('div', { role: 'group', 'aria-labelledby': 'qz-types', style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 } },
+        TYPES.map(function (k) { return h(S.CheckCard, { key: k, label: k, checked: types.indexOf(k) > -1, onChange: function () { setTypes(toggleIn(types, k)); } }); }))),
+    h(S.Slider, { label: 'Questions', min: 1, max: 20, value: count, onChange: setCount, unit: 'questions' }),
+    h('div', { style: { display: 'flex', flexDirection: 'column', gap: 7 } },
+      h(S.Eyebrow, { size: 'tight', id: 'qz-bloom' }, 'Bloom’s taxonomy levels'),
+      h('div', { role: 'group', 'aria-labelledby': 'qz-bloom', style: { display: 'flex', gap: 6, flexWrap: 'wrap' } },
+        LEVELS.map(function (k) { return h(S.Chip, { key: k, size: 'sm', emphasis: 'quiet', selected: levels.indexOf(k) > -1, onClick: function () { setLevels(toggleIn(levels, k)); } }, k); }))),
+    chosen.length ? h(S.NoticeCard, { tone: 'saffron', 'aria-live': 'polite' },
+      h(S.Eyebrow, { size: 'tight', style: { letterSpacing: '.12em', color: 'var(--saffron-750)', marginBottom: 4 } }, 'Pedagogical strategy'),
+      chosen.map(function (l) { return h('span', { key: l, style: { display: 'block', lineHeight: 1.6 } }, h('strong', null, l + ': '), HINTS[l]); })) : null,
+    h('div', { style: { display: 'flex', gap: 10, paddingLeft: 64, marginTop: 'auto' } },
+      h(S.Button, { block: true, style: { flex: 1, minWidth: 0 } }, 'Generate quiz')));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Quiz)));
+</script>
+</body></html>

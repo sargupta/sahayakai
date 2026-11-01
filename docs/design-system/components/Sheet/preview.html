@@ -1,0 +1,51 @@
+<!-- @dsCard group="Surfaces" height=624 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Sheet</title><style>.pv-page:has(.sk-sheet-layer) .pv-dim, .pv-page:has(.sk-sheet-layer) .pv-dimkids > :not(.sk-sheet-layer) { opacity: .34; }</style></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* Phone slices: 360px, the phone's true width. The corner glow is clipped inside the slice, so nothing pokes out of it. */
+function Glow() { return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } }, h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } })); }
+function isHi(t) { return typeof t === 'string' && /[ऀ-ൿ]/.test(t); }
+function Slice(p) {
+  var vs = (p.v || '').split(' ').filter(Boolean);
+  var cls = 'sk-slice' + vs.filter(function (x) { return x !== 'glow'; }).map(function (x) { return ' sk-slice--' + x; }).join('');
+  return h('div', { className: cls, style: p.style }, vs.indexOf('glow') !== -1 ? h(Glow) : null, p.label ? h('div', { className: 'sk-slice__label' + (isHi(p.label) ? ' sk-indic' : '') }, p.label) : null, p.children);
+}
+function Row(p) { return h('div', { className: 'sk-slices', style: Object.assign({ alignItems: 'stretch' }, p.style) }, p.children); }
+function Note(t) { return h('div', { className: 'sk-slice__label' + (isHi(t) ? ' sk-indic' : ''), style: { marginTop: 4 } }, t); }
+/* A phone screen inside a slice: it fills the slice, so a contained sheet rises over the whole 360px width, and the page behind dims to .34 while a sheet is open. */
+function Screen(p) { return h('div', { className: 'pv-page', style: Object.assign({ position: 'absolute', inset: 0, padding: '18px 20px 20px', display: 'flex', flexDirection: 'column', gap: 12, overflow: 'hidden', borderRadius: 'inherit' }, p.style) }, p.label ? h('div', { className: 'sk-slice__label' }, p.label) : null, p.children); }
+function Block(hh) { return h('div', { className: 'pv-dim', style: { height: hh, flex: hh ? 'none' : 1, minHeight: 0, background: 'rgba(255,255,255,.9)', borderRadius: 16 } }); }
+function Body(t, lang) { return h('div', { lang: lang, className: lang ? 'sk-indic' : null, style: { font: '400 12px/' + (lang ? '1.7' : '1.55') + ' var(--font-ui)', color: 'var(--text-body)' } }, t); }
+function Demo() {
+  var o = React.useState(true), open = o[0], setOpen = o[1];
+  var p = React.useState(true), open2 = p[0], setOpen2 = p[1];
+  return h(Row, null,
+    h(Slice, { v: 'call', style: { height: 600 } },
+      h(Screen, { label: 'In a call · confirm before it ends' },
+        h('div', { className: 'pv-dim' }, h(S.ScreenHeader, { level: 'output', title: 'Dhruv’s father', subtitle: 'Absent 3 days this week', trailing: h(S.Pill, { tone: 'solid-leaf', size: 'md' }, 'On call · 1:12') })),
+        Block(150), Block(),
+        h('div', { className: 'pv-dim', style: { display: 'flex', gap: 9 } },
+          h(S.Button, { variant: 'danger', size: 'md', style: { flex: 1 }, onClick: function () { setOpen(true); } }, 'End call'),
+          h(S.Button, { variant: 'secondary', size: 'md' }, 'Mute')),
+        h(S.Sheet, { open: open, onClose: function () { setOpen(false); }, title: 'End the call with Dhruv’s father?', role: 'alertdialog', autoFocus: false },
+          Body('I’ll write the call log and a follow-up message for you to approve. Nothing is sent until you tap send.'),
+          h('div', { style: { display: 'flex', gap: 9 } },
+            h(S.Button, { variant: 'outline', size: 'sm', style: { flex: 1 }, onClick: function () { setOpen(false); } }, 'Keep talking'),
+            h(S.Button, { variant: 'danger', size: 'sm', style: { flex: 1, boxShadow: 'none' }, onClick: function () { setOpen(false); } }, 'End call'))))),
+    h(Slice, { v: 'glow', style: { height: 600 } },
+      h(Screen, { label: 'In Hindi · before sending to parents' },
+        h('div', { className: 'pv-dim' }, h(S.ScreenHeader, { level: 'output', title: 'Fractions in everyday cooking', subtitle: 'Class 7 · CBSE · NCERT Ganita Prakash 7, Ch 8' })),
+        Block(130), Block(),
+        h('div', { className: 'pv-dim' }, h(S.Button, { block: true, onClick: function () { setOpen2(true); } }, 'Deliver')),
+        h(S.Sheet, { open: open2, onClose: function () { setOpen2(false); }, title: 'कक्षा 7 के अभिभावक समूह को भेजें?', role: 'alertdialog', autoFocus: false },
+          Body('34 अभिभावकों को WhatsApp पर पाठ योजना और वर्कशीट जाएगी। भेजने के बाद आप इसे वापस ले सकती हैं।', 'hi'),
+          h('div', { style: { display: 'flex', gap: 9 } },
+            h(S.Button, { variant: 'outline', size: 'sm', lang: 'hi', style: { flex: 1 }, onClick: function () { setOpen2(false); } }, 'अभी नहीं'),
+            h(S.Button, { size: 'sm', lang: 'hi', style: { flex: 1 }, onClick: function () { setOpen2(false); } }, 'भेजें'))))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

@@ -1,0 +1,49 @@
+<!-- @dsCard group="Class and calls" height=472 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>TriageCard</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Demo() {
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Class 6A · after the register'),
+      h(S.TriageCard, {
+        title: 'Needs outreach today', count: 12,
+        sections: [
+          { tone: 'red', label: 'Consecutive absences', count: 6, items: [
+            { name: 'Omkar', facts: ['6 days', 'Malayalam'] },
+            { name: 'Neha', facts: ['5 days', 'Punjabi'] },
+            { name: 'Manish', facts: ['4 days', 'Kannada'] }] },
+          { tone: 'amber', label: 'At risk academically', count: 6, items: [
+            { name: 'Gauri', facts: ['28%', 'English'] },
+            { name: 'Hiren', facts: ['29%', 'Bengali'] },
+            { name: 'Jyoti', facts: ['30%', 'Marathi'] }] }
+        ]
+      })),
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Remainder · celebrate · Indic'),
+      h(S.TriageCard, {
+        title: 'Needs outreach today', count: 9,
+        action: h(S.Button, { variant: 'accent-outline', size: 'xs', style: { '--sk-hit-inset': '-6px 0' } }, 'Open list'),
+        sections: [
+          { tone: 'red', label: 'Consecutive absences', count: 4, items: [
+            { name: 'Farhan', facts: ['3 days', 'Urdu'] }, { name: 'Ishita', facts: ['3 days', 'Odia'] }] },
+          { tone: 'leaf', label: 'Celebrate', count: 5, items: [
+            { name: 'Kavya', facts: ['100%', 'Tamil'] }, { name: 'Rohit', facts: ['top in Maths'] }] }
+        ]
+      }),
+      h(S.TriageCard, {
+        title: 'आज संपर्क करें', count: 3, lang: 'hi',
+        sections: [
+          { tone: 'red', label: 'लगातार अनुपस्थित', lang: 'hi', count: 2, items: [
+            { name: 'रिया', facts: ['4 दिन', 'हिन्दी'], lang: 'hi' }, { name: 'अमन', facts: ['3 दिन', 'भोजपुरी'], lang: 'hi' }] },
+          { tone: 'amber', label: 'पढ़ाई में पीछे', lang: 'hi', count: 1, items: [
+            { name: 'सना', facts: ['31%', 'उर्दू'], lang: 'hi' }] }
+        ]
+      })));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

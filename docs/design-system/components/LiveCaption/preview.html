@@ -1,0 +1,23 @@
+<!-- @dsCard group="VIDYA Live" height=323 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>LiveCaption</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Demo() {
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice', style: { background: 'var(--wash-live-speaking)' } },
+      h('div', { className: 'sk-slice__label' }, 'With the source she read first'),
+      h(S.LiveCaption, {
+        step: 2, total: 6,
+        text: 'Start with a five-minute recap of evaporation, then ask where rain comes from.',
+        source: 'Source spoken aloud first: ‘based on CBSE · NCERT Curiosity 6, Chapter 8.’'
+      })),
+    h('div', { className: 'sk-slice', style: { background: 'var(--wash-live-speaking)' } },
+      h('div', { className: 'sk-slice__label' }, 'Speaking Hindi'),
+      h(S.LiveCaption, { step: 3, total: 6, lang: 'hi', text: 'वाष्पीकरण के पाँच मिनट के दोहराव से शुरू करें, फिर पूछें कि बारिश कहाँ से आती है।' })));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

@@ -1,0 +1,53 @@
+<!-- @dsCard group="Surfaces" height=700 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Toast</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* Phone slices: 360px, the phone's true width. The corner glow is clipped inside the slice, so nothing pokes out of it. */
+function Glow() { return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } }, h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } })); }
+function isHi(t) { return typeof t === 'string' && /[ऀ-ൿ]/.test(t); }
+function Slice(p) {
+  var vs = (p.v || '').split(' ').filter(Boolean);
+  var cls = 'sk-slice' + vs.filter(function (x) { return x !== 'glow'; }).map(function (x) { return ' sk-slice--' + x; }).join('');
+  return h('div', { className: cls, style: p.style }, vs.indexOf('glow') !== -1 ? h(Glow) : null, p.label ? h('div', { className: 'sk-slice__label' + (isHi(p.label) ? ' sk-indic' : '') }, p.label) : null, p.children);
+}
+function Row(p) { return h('div', { className: 'sk-slices', style: Object.assign({ alignItems: 'stretch' }, p.style) }, p.children); }
+function Note(t) { return h('div', { className: 'sk-slice__label' + (isHi(t) ? ' sk-indic' : ''), style: { marginTop: 4 } }, t); }
+function Block(hh) { return h('div', { style: { height: hh, flex: hh ? 'none' : 1, minHeight: 0, background: 'rgba(255,255,255,.9)', borderRadius: 16 } }); }
+function Item(t) { return h(S.TaskRow, { key: t, variant: 'boxed', dot: 'amber', label: t, meta: 'waiting' }); }
+function Demo() {
+  var u = React.useState(false), undone = u[0], setUndone = u[1];
+  var sent = undone
+    ? h(S.Toast, { tone: 'amber', action: 'Send again', onAction: function () { setUndone(false); } }, 'Not sent · still on your phone')
+    : h(S.Toast, { tone: 'leaf', action: 'Undo', onAction: function () { setUndone(true); } }, 'Sent to the Class 7 parent group');
+  return h('div', null,
+    h(Row, null,
+      h(Slice, { v: 'glow', label: 'After sending · above the tab bar', style: { height: 400 } },
+        h(S.ScreenHeader, { level: 'output', title: 'Fractions in everyday cooking' }),
+        h('div', { style: { display: 'flex', gap: 6 } }, h(S.Pill, { tone: 'leaf' }, 'Class 7'), h(S.Pill, { tone: 'leaf' }, '40 min'), h(S.Pill, { tone: 'indigo' }, 'CBSE · NCERT Ch 8')),
+        Block(),
+        h('div', { style: { height: 84, flex: 'none' } }),
+        h('div', { className: 'sk-toast-dock' }, sent),
+        h('div', { className: 'sk-tabbar-dock' }, h(S.TabBar, { active: 'library' }))),
+      h(Slice, { label: 'Offline · queued, amber', style: { height: 400 } },
+        h(S.Eyebrow, { tone: 'muted' }, '3 items queued'),
+        h('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } }, Item('Attendance · Class 7'), Item('Worksheet to parent group'), Item('Call log · Dhruv’s father')),
+        h('div', { className: 'sk-toast-dock' }, h(S.Toast, { tone: 'amber' }, 'Saved offline · I’ll send it when you’re back')),
+        h('div', { className: 'sk-tabbar-dock' }, h(S.TabBar, { active: 'profile' })))),
+    h(Row, { style: { paddingTop: 4 } },
+      h(Slice, { v: 'glow', label: 'Dragging the orb · a plain hint', style: { height: 260 } },
+        Block(100),
+        h('div', { className: 'sk-toast-dock', style: { bottom: 100 } }, h(S.Toast, null, 'Release to park · six perches')),
+        h('div', { className: 'sk-tabbar-dock' }, h(S.TabBar, { active: 'community', emphasis: 'tint', dimmed: true }))),
+      h(Slice, { label: 'Tones · Hindi wraps, never truncates', style: { height: 260 } },
+        h('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 } },
+          h(S.Toast, { tone: 'red', action: 'Try again' }, 'Couldn’t send · no signal'),
+          h(S.Toast, { tone: 'indigo' }, 'Writing your worksheet · 10 questions'),
+          h(S.Toast, { tone: 'saffron' }, 'Listening · हिन्दी'),
+          h(S.Toast, { tone: 'leaf', lang: 'hi', action: 'वापस लें' }, 'कक्षा 7 के अभिभावक समूह को पाठ योजना और वर्कशीट भेज दी गई')))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

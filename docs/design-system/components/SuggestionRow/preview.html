@@ -1,0 +1,42 @@
+<!-- @dsCard group="Lists" height=392 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>SuggestionRow</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* Phone slices: 360px, the phone's true width. The corner glow is clipped inside the slice, so nothing pokes out of it. */
+function Glow() { return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } }, h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } })); }
+function isHi(t) { return typeof t === 'string' && /[ऀ-ൿ]/.test(t); }
+function Slice(p) {
+  var vs = (p.v || '').split(' ').filter(Boolean);
+  var cls = 'sk-slice' + vs.filter(function (x) { return x !== 'glow'; }).map(function (x) { return ' sk-slice--' + x; }).join('');
+  return h('div', { className: cls, style: p.style }, vs.indexOf('glow') !== -1 ? h(Glow) : null, p.label ? h('div', { className: 'sk-slice__label' + (isHi(p.label) ? ' sk-indic' : '') }, p.label) : null, p.children);
+}
+function Row(p) { return h('div', { className: 'sk-slices', style: Object.assign({ alignItems: 'stretch' }, p.style) }, p.children); }
+function Note(t) { return h('div', { className: 'sk-slice__label' + (isHi(t) ? ' sk-indic' : ''), style: { marginTop: 4 } }, t); }
+function quote(t, lang) { return h('p', { lang: lang, className: isHi(t) ? 'sk-indic' : null, style: { margin: 0, font: '600 15px/' + (isHi(t) ? '1.7' : '1.45') + ' var(--font-display)' } }, '“', t, '”'); }
+function Group(p) {
+  var s = React.useState(p.pick || p.rows[0][0]), pick = s[0], setPick = s[1];
+  return h('div', { role: 'radiogroup', 'aria-label': p.name, className: 'sk-suggestionrow-group', lang: p.lang },
+    p.rows.map(function (r) { return h(S.SuggestionRow, { key: r[0], value: r[0], selected: pick === r[0], onSelect: setPick, disabled: r[2] }, r[1]); }));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(
+  h(Row, null,
+    h(Slice, { v: 'card', label: 'Listening sheet · what I heard' },
+      h('div', { style: { display: 'flex', alignItems: 'center', gap: 11 } },
+        h(S.Orb, { state: 'listening', size: 46, decorative: true }),
+        h('div', { style: { flex: 1, minWidth: 0 } },
+          h('div', { style: { font: '600 14px/1.2 var(--font-display)' } }, 'Listening'),
+          h('div', { className: 'sk-indic', style: { font: '400 12px/1.45 var(--font-ui)', color: 'var(--text-body)' } }, 'हिन्दी · about the page behind me'))),
+      quote('इससे एक worksheet बना दो, दस सवाल', 'hi'),
+      h(Group, { name: 'What I heard', rows: [['ws', 'Worksheet · 10 questions · हिन्दी'], ['explain', 'Explain again for students who need it']] }),
+      h('div', { style: { font: '400 12px/1.45 var(--font-ui)', color: 'var(--text-body)' } }, 'Tap one, or use the arrow keys. Typing works too.')),
+    h(Slice, { v: 'card', label: 'Three readings · disabled · in Marathi' },
+      h(Group, { name: 'What I heard, three readings', rows: [['ws', 'Worksheet · 10 questions · CBSE Class 7 Maths · Working with Fractions'], ['quiz', 'Quiz · 5 questions · multiple choice'], ['call', 'Message the parents of the 4 absentees', true]] }),
+      Note('In Marathi · wraps, never truncates'),
+      quote('याची एक worksheet बनवा, दहा प्रश्न', 'mr'),
+      h(Group, { name: 'मी काय ऐकले', lang: 'mr', rows: [['ws', 'Worksheet · 10 प्रश्न · मराठी'], ['explain', 'ज्यांना गरज आहे त्यांच्यासाठी पुन्हा सोप्या भाषेत समजावून सांगा']] })))
+);
+</script>
+</body></html>

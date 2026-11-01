@@ -1,0 +1,47 @@
+<!-- @dsCard group="Screens · Outputs" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Lesson plan</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+var SECTIONS = [
+  { key: 'warm', time: '00–05', title: 'Warm-up', body: 'Ask “baarish kahaan se aati hai?” and collect three answers on the board.' },
+  { key: 'stages', time: '05–18', title: 'The four stages', body: 'Evaporation, condensation, precipitation and collection, drawn as one loop.' },
+  { key: 'group', time: '18–30', title: 'Group work', body: 'Groups of four draw the loop on chart paper and label each stage.' },
+  { key: 'wrap', time: '30–40', title: 'Wrap-up', body: 'Three students trace one raindrop around the loop, out loud.' }
+];
+function LessonPlan() {
+  var o = React.useState({ warm: true, stages: true }), open = o[0], setOpen = o[1];
+  var p = React.useState(true), playing = p[0], setPlaying = p[1];
+  return h(S.PhoneScreen, {
+    gap: 10,
+    overlay: [
+      h('div', { key: 'o', className: 'sk-orb-park sk-orb-park--cta' }, h(S.Orb, { state: 'ready', label: 'VIDYA, reading back', onClick: function () {} })),
+      h('div', { key: 't', className: 'sk-tabbar-dock' }, h(S.TabBar, { active: 'library' }))
+    ]
+  },
+    h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 1 } },
+      h(S.ScreenHeader, { onBack: function () {}, backLabel: 'Back to Library', style: { marginTop: 6 } }),
+      h(S.Pill, { tone: 'glass', size: 'md', style: { fontSize: 12, padding: '8px 13px' } }, 'Saved')),
+    h('div', null,
+      h(S.Eyebrow, { tone: 'muted', style: { letterSpacing: '.18em' } }, 'Lesson plan · Class 6 Science'),
+      h(S.ScreenHeader, { level: 'page', title: 'A Journey through States of Water', style: { marginTop: 5 } }),
+      h(S.Pill, { tone: 'leaf', size: 'md', dot: true, style: { marginTop: 10, gap: 8, padding: '7px 12px', fontWeight: 500 } }, 'CBSE · NCERT Curiosity 6, Ch 8 · 40 minutes')),
+    h('div', { style: { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 8 } },
+      SECTIONS.map(function (s) {
+        return h(S.Accordion, {
+          key: s.key, density: 'comfortable', time: s.time, title: s.title, current: s.key === 'stages', headingLevel: 2,
+          expanded: !!open[s.key], onToggle: function (v) { var n = Object.assign({}, open); n[s.key] = v; setOpen(n); }
+        }, s.body);
+      })),
+    h(S.ReadbackBar, { step: 2, total: 4, quote: 'Draw one loop, label four stages.', playing: playing, onToggle: setPlaying, style: { marginRight: 62, marginBottom: 1 } }),
+    h('div', { style: { display: 'flex', gap: 9 } },
+      h(S.Button, { variant: 'primary', size: 'md', style: { flex: 1 } }, h(S.Icon, { name: 'mic', size: 16 }), 'Refine by voice'),
+      h(S.Button, { variant: 'secondary', size: 'md', 'aria-label': 'Print', style: { width: 50, padding: 0 } }, h(S.Icon, { name: 'print', size: 18 })),
+      h(S.Button, { variant: 'secondary', size: 'md', 'aria-label': 'Share', style: { width: 50, padding: 0 } }, h(S.Icon, { name: 'share', size: 18 }))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(LessonPlan)));
+</script>
+</body></html>

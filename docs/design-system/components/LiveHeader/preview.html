@@ -1,0 +1,26 @@
+<!-- @dsCard group="VIDYA Live" height=325 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>LiveHeader</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function noop() {}
+function Demo() {
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice', style: { background: 'var(--wash-live-listening)', gap: 16 } },
+      h('div', { className: 'sk-slice__label' }, 'Listening · back to the sheet'),
+      h(S.LiveHeader, { onBack: noop, status: h(S.LiveStatus, { state: 'listening', language: 'हिन्दी', languageLang: 'hi' }) }),
+      h('div', { className: 'sk-slice__label' }, 'Working'),
+      h(S.LiveHeader, { status: h(S.LiveStatus, { state: 'working', label: 'Checking CBSE source' }) })),
+    h('div', { className: 'sk-slice', style: { background: 'var(--wash-live-speaking)', gap: 16 } },
+      h('div', { className: 'sk-slice__label' }, 'Speaking'),
+      h(S.LiveHeader, { status: h(S.LiveStatus, { state: 'speaking', language: 'हिन्दी', languageLang: 'hi' }) }),
+      h('div', { className: 'sk-slice__label' }, 'Speaking · near the month’s last minutes'),
+      h(S.LiveHeader, { minutesLeft: 4, status: h(S.LiveStatus, { state: 'speaking', language: 'हिन्दी', languageLang: 'hi' }) }),
+      h('div', { className: 'sk-slice__label' }, 'Offline'),
+      h(S.LiveHeader, { onBack: noop, status: h(S.LiveStatus, { state: 'offline' }) })));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

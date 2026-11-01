@@ -1,0 +1,35 @@
+<!-- @dsCard group="Screens · Class and calls" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Message review</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+function Review() {
+  var c = React.useState(false), copied = c[0], setCopied = c[1];
+  var behind = h('div', { 'aria-hidden': 'true', style: { opacity: .34, display: 'flex', flexDirection: 'column', gap: 10 } },
+    h(S.ScreenHeader, { level: 'page', title: 'Parent outreach' }),
+    h(S.GlassCard, { radius: 'tile', style: { height: 58 } }));
+  var header = h('div', null,
+    h('h2', { id: 'review-title', style: { margin: 0, font: '700 18px/1.25 var(--font-display)', color: 'var(--text-strong)' } }, h('span', { className: 'sk-visually-hidden' }, 'Step 3 of 3. '), 'Review before sending'),
+    h('p', { style: { margin: '3px 0 0', font: '400 12px/1.4 var(--font-ui)', color: 'var(--text-body)' } },
+      'Hiren’s mother · ', h('span', { 'aria-hidden': 'true' }, '••••••0720'), h('span', { className: 'sk-visually-hidden' }, 'number ending 0720'), ' · Bengali'));
+  return h(S.PhoneScreen, {
+    padBottom: 0, glow: false,
+    overlay: h(S.Sheet, { autoFocus: false, 'aria-labelledby': 'review-title', header: header, style: { padding: '16px 20px 26px', gap: 13 } },
+      h(S.MessagePreview, {
+        tone: 'inset', lang: 'bn', label: 'Message to Hiren’s mother, in Bengali',
+        salutation: 'প্রিয় হিরেন পারমারের অভিভাবক,',
+        citation: 'Cites 16/50, the mark you entered. Nothing invented.'
+      }, 'আমরা হিরেনের পড়াশোনা নিয়ে আপনার সঙ্গে কথা বলতে চাই। সম্প্রতি তার গণিত বিষয়ে পারফরম্যান্স কিছুটা কমে গেছে। উদাহরণস্বরূপ, গণিতের মধ্যবর্তী পরীক্ষায় সে ৫০ এর মধ্যে ১৬ পেয়েছে।'),
+      h(S.Button, { variant: 'quiet', size: 'sm', block: true }, S.Icon({ name: 'refresh', size: 16 }), 'Regenerate'),
+      h('div', { style: { display: 'flex', gap: 9 } },
+        h(S.Button, { variant: 'outline', size: 'sm', style: { flex: 1, padding: '0 12px' }, onClick: function () { setCopied(true); } }, copied ? 'Copied' : 'Copy for WhatsApp'),
+        h(S.Button, { variant: 'success', size: 'sm', style: { flex: 1, padding: '0 12px', boxShadow: 'none' } }, S.Icon({ name: 'phone', size: 16 }), 'Call parent')),
+      h('span', { className: 'sk-visually-hidden', role: 'status' }, copied ? 'Message copied. Paste it into WhatsApp.' : ''))
+  }, behind);
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Review)));
+</script>
+</body></html>

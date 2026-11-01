@@ -1,0 +1,29 @@
+<!-- @dsCard group="Content" height=266 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>FeedbackRow</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+var HI = { question: 'क्या यह काम आया?', up: 'धन्यवाद। मैं आगे भी ऐसे ही बनाऊँगी।', down: 'धन्यवाद। बताइए क्या बदलूँ, मैं फिर से बना दूँगी।', upLabel: 'काम आया', downLabel: 'काम नहीं आया' };
+function Demo() {
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice sk-slice--glow' },
+      h('div', { className: 'sk-slice__label' }, 'Default · tap a thumb'),
+      h(S.FeedbackRow, null),
+      h('div', { className: 'sk-slice__label' }, 'Thanked · thumb up'),
+      h(S.FeedbackRow, { defaultValue: 'up' }),
+      h('div', { className: 'sk-slice__label' }, 'Thanked · thumb down'),
+      h(S.FeedbackRow, { defaultValue: 'down' })),
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Beside an orb parked left · end'),
+      h(S.FeedbackRow, { align: 'end' }),
+      h('div', { className: 'sk-slice__label' }, 'Beside an orb parked right · start'),
+      h(S.FeedbackRow, { align: 'start' }),
+      h('div', { className: 'sk-slice__label' }, 'हिन्दी'),
+      h(S.FeedbackRow, { lang: 'hi', text: HI }))
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

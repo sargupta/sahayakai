@@ -1,0 +1,50 @@
+<!-- @dsCard group="Class and calls" height=401 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>EvidenceCard</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Demo() {
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice sk-slice--card' },
+      h('div', { className: 'sk-slice__label' }, 'Academic concern · at risk'),
+      h(S.EvidenceCard, {
+        title: 'Recent marks · VIDYA cites the lowest', flag: 'At risk',
+        rows: [
+          { label: 'Science · Unit Test 1', value: '6/25 · 24%', valueLabel: '6 out of 25, 24 percent' },
+          { label: 'Maths · Mid Term', value: '16/50 · 32%', valueLabel: '16 out of 50, 32 percent' },
+          { label: 'Maths · Unit Test 1', value: '8/25 · 32%', valueLabel: '8 out of 25, 32 percent' }
+        ]
+      }),
+      h('div', { className: 'sk-slice__label' }, 'Absences · from the register'),
+      h(S.EvidenceCard, {
+        title: 'Register · VIDYA cites the dates', flag: '6 days absent',
+        rows: [
+          { label: 'Mon 13 Oct to Sat 18 Oct', value: 'Absent' },
+          { label: 'This month', value: '67% present' },
+          { label: 'Last month', value: '91% present', muted: true }
+        ]
+      })),
+    h('div', { className: 'sk-slice sk-slice--card' },
+      h('div', { className: 'sk-slice__label' }, 'Positive feedback · improving'),
+      h(S.EvidenceCard, {
+        tone: 'leaf', title: 'Recent marks · VIDYA cites the best', flag: 'Improving',
+        rows: [
+          { label: 'Science · Unit Test 2', value: '22/25 · 88%' },
+          { label: 'Science · Unit Test 1', value: '15/25 · 60%', muted: true }
+        ],
+        footnote: 'From the school’s mark register, updated Fri 17 Oct.'
+      }),
+      h('div', { className: 'sk-slice__label' }, 'Indic'),
+      h(S.EvidenceCard, {
+        tone: 'amber', title: 'हाल के अंक', flag: 'गिरावट', lang: 'hi',
+        rows: [
+          { label: 'गणित · इकाई परीक्षा 2', value: '11/25 · 44%', lang: 'hi' },
+          { label: 'गणित · इकाई परीक्षा 1', value: '17/25 · 68%', lang: 'hi', muted: true }
+        ]
+      })));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

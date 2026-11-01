@@ -1,0 +1,28 @@
+<!-- @dsCard group="Community" height=325 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>GroupRow</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Demo() {
+  var o = React.useState(null), opened = o[0], setOpened = o[1];
+  function open(name) { return function () { setOpened(name); }; }
+  return h('div', { className: 'sk-slices' },
+    h('div', { className: 'sk-slice', style: { gap: 6 } },
+      h(S.Eyebrow, { size: 'tight', tone: 'muted' }, 'My groups · 4'),
+      h(S.GroupRow, { name: 'Daily Briefing', meta: '44 members', tone: 'saffron', newCount: 2, onClick: open('Daily Briefing') }),
+      h(S.GroupRow, { name: 'Karnataka Teachers', meta: '3,880 members', tone: 'leaf', newCount: 6, onClick: open('Karnataka Teachers') }),
+      h(S.GroupRow, { name: '8 Science · KSEEB', meta: '3 members', tone: 'indigo', onClick: open('8 Science · KSEEB') }),
+      h(S.GroupRow, { name: '9 Mathematics · CBSE', meta: '41 members', tone: 'indigo', newCount: 1, onClick: open('9 Mathematics · CBSE') }),
+      h('div', { className: 'sk-slice__label', 'aria-live': 'polite' }, opened ? 'Opened ' + opened : 'Tap a group to open it')),
+    h('div', { className: 'sk-slice', style: { gap: 6 } },
+      h('div', { className: 'sk-slice__label' }, 'Tones · in Hindi and Tamil'),
+      h(S.GroupRow, { lang: 'hi', name: 'मध्य प्रदेश के शिक्षक', meta: '2,140 सदस्य', tone: 'leaf', newLabel: '3 नए', onClick: function () {} }),
+      h(S.GroupRow, { lang: 'ta', name: 'தமிழ்நாடு ஆசிரியர்கள்', meta: '1,560 உறுப்பினர்கள்', tone: 'leaf', onClick: function () {} }),
+      h(S.GroupRow, { name: 'Class 10 English · ICSE', meta: '86 members', tone: 'indigo', newCount: 12, onClick: function () {} }),
+      h(S.GroupRow, { name: 'Exam season tips', meta: '508 members', tone: 'amber', onClick: function () {} })));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

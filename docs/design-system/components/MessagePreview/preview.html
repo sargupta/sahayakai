@@ -1,0 +1,39 @@
+<!-- @dsCard group="Class and calls" height=471 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>MessagePreview</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* The corner glow, clipped inside its own layer so nothing pokes out of the slice. */
+function Glow() {
+  return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } },
+    h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } }));
+}
+function Slice(label, mods, kids) {
+  return h('div', { className: ['sk-slice'].concat(mods.filter(function (m) { return m !== 'glow-bg'; }).map(function (m) { return 'sk-slice--' + m; })).join(' ') },
+    mods.indexOf('glow-bg') !== -1 ? h(Glow) : null,
+    h('div', { className: 'sk-slice__label' }, label), kids);
+}
+ReactDOM.createRoot(document.getElementById('root')).render(
+  h('div', { className: 'sk-slices' },
+    Slice('In the review sheet · Bengali', ['card'], [
+      h(S.MessagePreview, {
+        key: 'bn', tone: 'inset', lang: 'bn', label: 'Message to Hiren’s parent, in Bengali',
+        salutation: 'প্রিয় হিরেন পারমারের অভিভাবক,',
+        citation: 'Cites 16/50, the mark you entered. Nothing invented.'
+      }, 'আমরা হিরেনের পড়াশোনা নিয়ে আপনার সঙ্গে কথা বলতে চাই। সম্প্রতি তার গণিত বিষয়ে পারফরম্যান্স কিছুটা কমে গেছে। উদাহরণস্বরূপ, গণিতের মধ্যবর্তী পরীক্ষায় সে ৫০ এর মধ্যে ১৬ পেয়েছে।')
+    ]),
+    Slice('On a screen · Marathi · cited mark marked', ['glow-bg'], [
+      h(S.MessagePreview, { key: 'mr', eyebrow: 'What they’ll read', lang: 'mr' },
+        'नमस्कार, दिव्याने या आठवड्यात जलचक्राचा अभ्यास केला. तिला बाष्पीभवन समजले आहे; सांद्रीभवनाचा थोडा सराव आवश्यक आहे.'),
+      h(S.MessagePreview, {
+        key: 'hi', eyebrow: 'What they’ll read', lang: 'hi', cite: '25 में से 8',
+        salutation: 'प्रिय आरव के अभिभावक,',
+        citation: 'Cites 8/25, the mark you entered. Nothing invented.'
+      }, 'इस सप्ताह गणित की इकाई परीक्षा में आरव को 25 में से 8 अंक मिले हैं। घर पर भिन्नों का थोड़ा अभ्यास उसकी मदद करेगा।')
+    ])
+  )
+);
+</script>
+</body></html>

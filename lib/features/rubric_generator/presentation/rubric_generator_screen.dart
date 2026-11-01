@@ -187,6 +187,10 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
       wash: AppGradients.washRubric,
       title: l10n.rubricTitle,
       isBusy: state.isLoading,
+      // Output screen (UX map Flow 4): the result replaces the form;
+      // Edit brings the form back and keeps the result until a new one lands.
+      hasResult: hasResult,
+      onResubmit: _submit,
       submitLabel: l10n.actionGenerate,
       // Hide the sticky Generate button once a rubric is on screen — the
       // document's own action bar (Regenerate / Copy) takes over.
@@ -209,21 +213,21 @@ class _RubricGeneratorScreenState extends ConsumerState<RubricGeneratorScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-            EditorialSectionHeader(l10n.rubricSectionAssignment),
-            const SizedBox(height: AppSpacing.space4),
-            _assignmentField(l10n),
-            const SizedBox(height: AppSpacing.space8),
-            EditorialSectionHeader(l10n.sectionForYourClass),
-            const SizedBox(height: AppSpacing.space4),
-            _gradeField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _subjectField(l10n),
-            const SizedBox(height: AppSpacing.space6),
-            _languageField(l10n),
-          ],
+              EditorialSectionHeader(l10n.rubricSectionAssignment),
+              const SizedBox(height: AppSpacing.space4),
+              _assignmentField(l10n),
+              const SizedBox(height: AppSpacing.space8),
+              EditorialSectionHeader(l10n.sectionForYourClass),
+              const SizedBox(height: AppSpacing.space4),
+              _gradeField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _subjectField(l10n),
+              const SizedBox(height: AppSpacing.space6),
+              _languageField(l10n),
+            ],
+          ),
         ),
-      ),
-      index: 0,
+        index: 0,
       ),
     );
   }

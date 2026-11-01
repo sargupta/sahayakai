@@ -1,0 +1,47 @@
+<!-- @dsCard group="VIDYA" height=576 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>OrbHint</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* Phone slices: 360px, the phone's true width. The corner glow is clipped inside the slice, so nothing pokes out of it. */
+function Glow() { return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } }, h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } })); }
+function isHi(t) { return typeof t === 'string' && /[ऀ-ൿ]/.test(t); }
+function Slice(p) {
+  var vs = (p.v || '').split(' ').filter(Boolean);
+  var cls = 'sk-slice' + vs.filter(function (x) { return x !== 'glow'; }).map(function (x) { return ' sk-slice--' + x; }).join('');
+  return h('div', { className: cls, style: p.style }, vs.indexOf('glow') !== -1 ? h(Glow) : null, p.label ? h('div', { className: 'sk-slice__label' + (isHi(p.label) ? ' sk-indic' : '') }, p.label) : null, p.children);
+}
+function Row(p) { return h('div', { className: 'sk-slices', style: Object.assign({ alignItems: 'stretch' }, p.style) }, p.children); }
+function Note(t) { return h('div', { className: 'sk-slice__label' + (isHi(t) ? ' sk-indic' : ''), style: { marginTop: 4 } }, t); }
+var TALL = { height: 268 };
+function card(text, hgt) { return h('div', { style: { height: hgt || 100, borderRadius: 'var(--radius-card)', background: 'var(--surface-glass)', border: '1px solid var(--border-glass)', padding: '13px 14px', font: '400 12px/1.6 var(--font-ui)', color: 'var(--text-strong)' } }, text); }
+function dock(tab) { return h('div', { className: 'sk-tabbar-dock' }, h(S.TabBar, { active: tab })); }
+function Demo() {
+  var l = React.useState(false), listening = l[0], setListening = l[1];
+  return h('div', null,
+    h(Row, null,
+      h(Slice, { v: 'glow', label: 'Home · parked bottom-right', style: TALL },
+        h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 9 } },
+          card(h('span', null, h('b', { style: { font: '600 13px var(--font-display)' } }, 'Scan a test'), h('br'), h('span', { style: { fontSize: 12, color: 'var(--text-body)' } }, 'Camera grading')), 'auto'),
+          card(h('span', null, h('b', { style: { font: '600 13px var(--font-display)' } }, 'Call parents'), h('br'), h('span', { className: 'sk-indic', style: { fontSize: 12, color: 'var(--text-body)' } }, 'Script in हिन्दी')), 'auto')),
+        h(S.OrbHint, { parked: true, label: listening ? 'Listening · tap to stop' : 'Tap to speak', state: listening ? 'listening' : 'resting', onClick: function () { setListening(!listening); } }),
+        dock('home')),
+      h(Slice, { v: 'glow', label: 'You · left hand, offline', style: TALL },
+        card(h('span', null, h('b', { style: { fontWeight: 600, fontSize: 12 } }, 'Settings'), h('br'), h('span', { style: { color: 'var(--text-body)' } }, 'Download for offline · 24 items')), 130),
+        h(S.OrbHint, { parked: true, side: 'left', state: 'offline', label: 'Typing still works', onClick: function () {} }),
+        dock('profile'))),
+    h(Row, { style: { paddingTop: 4 } },
+      h(Slice, { v: 'glow', label: 'Strong · an offer from the page', style: TALL },
+        card(h('span', null, h('b', { style: { fontWeight: 600, fontSize: 12 } }, 'Deepa Iyer'), h('span', { style: { fontSize: 12, color: 'var(--text-body)' } }, ' · English · 1 day ago'), h('br'), 'Any ideas for students who won’t speak up in English class?'), 130),
+        h(S.OrbHint, { parked: true, tone: 'strong', label: 'Turn this post into a worksheet', onClick: function () {} }),
+        dock('community')),
+      h(Slice, { v: 'glow', label: 'Ready · a count · in Hindi', style: TALL },
+        card(h('span', null, h('b', { style: { fontWeight: 600, fontSize: 12 } }, 'Fractions in everyday cooking'), h('br'), h('span', { style: { color: 'var(--text-body)' } }, 'Lesson plan · Class 7 · CBSE')), 100),
+        h(S.OrbHint, { parked: true, state: 'ready', badge: 1, label: 'पाठ तैयार है, भेजने के लिए टैप करें', lang: 'hi', onClick: function () {} }),
+        dock('library'))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

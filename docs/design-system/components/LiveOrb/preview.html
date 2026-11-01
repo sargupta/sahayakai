@@ -1,0 +1,60 @@
+<!-- @dsCard group="VIDYA Live" height=1591 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>LiveOrb</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+var WASH = { listening: 'var(--wash-live-listening)', working: 'var(--wash-working)', speaking: 'var(--wash-live-speaking)', failed: 'var(--wash-live-failed)' };
+function slice(label, wash, kids) {
+  return h('div', { className: 'sk-slice', style: wash ? { background: wash } : undefined },
+    h('div', { className: 'sk-slice__label' }, label),
+    h('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '20px 0 8px' } }, kids));
+}
+function note(text) { return h('p', { style: { margin: 0, font: '400 12px/1.45 var(--font-ui)', color: 'var(--text-body)', textAlign: 'center' } }, text); }
+function Range(props) {
+  return h('label', { style: { display: 'flex', alignItems: 'center', gap: 10, width: '100%', font: '500 12px var(--font-ui)', color: 'var(--text-body)' } },
+    props.label,
+    h('input', { type: 'range', min: 0, max: 100, value: Math.round(props.value * 100), onChange: function (e) { props.onChange(e.target.value / 100); }, style: { flex: 1, height: 28, accentColor: props.color } }));
+}
+var DOCK = [['resting', 'Resting'], ['connecting', 'Connecting'], ['listening', 'Listening'], ['working', 'Working'], ['speaking', 'Speaking'], ['paused', 'Paused'], ['failed', 'Failed'], ['offline', 'Offline']];
+function Demo() {
+  var a = React.useState(.35), mic = a[0], setMic = a[1];
+  var b = React.useState(.5), voice = b[0], setVoice = b[1];
+  return h('div', { className: 'sk-slices' },
+    slice('Listening · halo follows the mic', WASH.listening, [
+      h(S.LiveOrb, { key: 'o', state: 'listening', level: mic }),
+      h(Range, { key: 'r', label: 'Mic level', value: mic, onChange: setMic, color: 'var(--saffron-500)' })]),
+    slice('Working · checking a source', WASH.working, [
+      h(S.LiveOrb, { key: 'o', state: 'working' }),
+      note('A 3px indigo arc turns round a 118px sphere. Nothing follows the mic while she works.')]),
+    slice('Speaking · rings follow her voice', WASH.speaking, [
+      h(S.LiveOrb, { key: 'o', state: 'speaking', level: voice }),
+      h(Range, { key: 'r', label: 'Voice level', value: voice, onChange: setVoice, color: 'var(--leaf-500)' })]),
+    slice('Paused · still, no rings', WASH.speaking, [
+      h(S.LiveOrb, { key: 'o', state: 'paused' }),
+      note('The speaking orb stops. The pill says Paused; Resume picks up at the same step.')]),
+    slice('Connecting · a slow breath', WASH.listening, [
+      h(S.LiveOrb, { key: 'o', state: 'connecting' }),
+      note('Indigo while the line opens. The pill says Connecting.')]),
+    slice('Offline · voice paused', null, [
+      h(S.LiveOrb, { key: 'o', state: 'offline' }),
+      note('Stone grey and still. The pill says No signal · typing works.')]),
+    slice('Resting · web presence at rest', null, [
+      h(S.LiveOrb, { key: 'o', state: 'resting', onClick: function () {}, label: 'Talk to VIDYA' }),
+      note('A button: Talk to VIDYA. No glyph inside; the pill beside it says Tap to talk.')]),
+    slice('Failed · web presence', WASH.failed, [
+      h(S.LiveOrb, { key: 'o', state: 'failed' }),
+      note('Desaturated and still. The words carry the failure; the orb is never red.')]),
+    h('div', { className: 'sk-slice' },
+      h('div', { className: 'sk-slice__label' }, 'Compact · the 64px web dock'),
+      h('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px 6px', padding: '8px 0 4px' } },
+        DOCK.map(function (d) {
+          return h('div', { key: d[0], style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 } },
+            h(S.LiveOrb, { state: d[0], size: 'compact', level: .4, onClick: function () {}, label: 'Talk to VIDYA' }),
+            h('span', { style: { font: '500 12px var(--font-ui)', color: 'var(--text-body)' } }, d[1]));
+        }))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>

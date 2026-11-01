@@ -1,0 +1,38 @@
+<!-- @dsCard group="Screens · Class and calls" height=800 width=400 page="true" -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Reason for outreach</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+function Stage(screen) { return h('div', { className: 'sk-stage sk-stage--canvas', style: { alignItems: 'center', borderRadius: 0, padding: 20 } }, screen); }
+var REASONS = [
+  { kind: 'absence', value: 'absence', title: 'Consecutive absences', description: 'Absent for multiple days' },
+  { kind: 'academic', value: 'academic', title: 'Academic concern', description: 'Grades or performance declined' },
+  { kind: 'behaviour', value: 'behaviour', title: 'Behavioural concern', description: 'Classroom behaviour needs attention' },
+  { kind: 'positive', value: 'positive', title: 'Positive feedback', description: 'Share an achievement or good news' }
+];
+function Behind() {
+  var block = { height: 58, borderRadius: 'var(--radius-tile)', background: 'var(--surface-glass)' };
+  return h('div', { 'aria-hidden': 'true', style: { opacity: .34, display: 'flex', flexDirection: 'column', gap: 10 } },
+    h('div', { style: { font: '700 22px/1.2 var(--font-display)' } }, 'Parent outreach'),
+    h('div', { style: block }), h('div', { style: block }), h('div', { style: block }));
+}
+function Reason() {
+  var r = React.useState('academic'), reason = r[0], setReason = r[1];
+  var head = h('div', { style: { display: 'flex', flexDirection: 'column', gap: 3 } },
+    h(S.Eyebrow, { size: 'tight', tone: 'muted' }, 'Step 1 of 3'),
+    h('div', null,
+      h('h2', { id: 'reason-title', style: { margin: 0, font: '700 18px/1.25 var(--font-display)' } }, 'Contact Hiren’s parent'),
+      h('div', { style: { marginTop: 3, font: '400 12px var(--font-ui)', color: 'var(--text-body)' } }, '••••••0720 · Bengali')));
+  return h(S.PhoneScreen, {
+    overlay: h(S.Sheet, { key: 's', header: head, 'aria-labelledby': 'reason-title', autoFocus: false, onClose: function () {} },
+      h(S.Eyebrow, { size: 'tight', tone: 'muted', id: 'reason-q', style: { marginTop: 2 } }, 'Reason for outreach'),
+      h('div', { role: 'radiogroup', 'aria-labelledby': 'reason-q', className: 'sk-reasonopt-group' },
+        REASONS.map(function (o) { return h(S.ReasonOption, Object.assign({ key: o.value, name: 'reason', checked: reason === o.value, onChange: setReason }, o)); })),
+      h(S.Button, { block: true, size: 'md' }, 'Next: add note'))
+  }, h(Behind));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(Stage(h(Reason)));
+</script>
+</body></html>

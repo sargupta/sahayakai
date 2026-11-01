@@ -1,0 +1,55 @@
+<!-- @dsCard group="Surfaces" height=784 -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>NoticeCard</title></head>
+<body style="margin:0">
+<div id="root"></div>
+<script>
+var S = window.SahayakAI, h = React.createElement;
+/* Phone slices: 360px, the phone's true width. The corner glow is clipped inside the slice, so nothing pokes out of it. */
+function Glow() { return h('div', { 'aria-hidden': 'true', style: { position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none' } }, h('div', { style: { position: 'absolute', top: -70, right: -60, width: 220, height: 220, borderRadius: 9999, background: 'var(--glow-saffron)' } })); }
+function isHi(t) { return typeof t === 'string' && /[ऀ-ൿ]/.test(t); }
+function Slice(p) {
+  var vs = (p.v || '').split(' ').filter(Boolean);
+  var cls = 'sk-slice' + vs.filter(function (x) { return x !== 'glow'; }).map(function (x) { return ' sk-slice--' + x; }).join('');
+  return h('div', { className: cls, style: p.style }, vs.indexOf('glow') !== -1 ? h(Glow) : null, p.label ? h('div', { className: 'sk-slice__label' + (isHi(p.label) ? ' sk-indic' : '') }, p.label) : null, p.children);
+}
+function Row(p) { return h('div', { className: 'sk-slices', style: Object.assign({ alignItems: 'stretch' }, p.style) }, p.children); }
+function Note(t) { return h('div', { className: 'sk-slice__label' + (isHi(t) ? ' sk-indic' : ''), style: { marginTop: 4 } }, t); }
+function Item(t) { return h(S.TaskRow, { key: t, variant: 'boxed', dot: 'amber', label: t, meta: 'waiting' }); }
+function Demo() {
+  var o = React.useState(true), off = o[0], setOff = o[1];
+  return h('div', null,
+    h(Row, null,
+      h(Slice, { v: 'glow', label: 'Make a lesson · the curriculum notice' },
+        h('div', { style: { display: 'flex', flexDirection: 'column', gap: 7 } },
+          h(S.Eyebrow, { size: 'tight' }, 'Include'),
+          h('div', { style: { display: 'flex', gap: 6, flexWrap: 'wrap' } }, ['Activity', 'Board work'].map(function (k) { return h(S.Chip, { key: k, size: 'sm', tone: 'leaf', selected: true }, k); }), h(S.Chip, { size: 'sm', tone: 'leaf' }, 'Homework'))),
+        h(S.NoticeCard, { mark: 'C' }, 'Aligned to CBSE · NCERT Ganita Prakash 7, Chapter 8 before anything is written'),
+        Note('The mark is the teacher’s board'),
+        h(S.NoticeCard, { mark: 'K' }, 'Aligned to Karnataka State Board (KSEEB) · Class 7 · Chapter 8'),
+        h(S.NoticeCard, { mark: 'I' }, 'Aligned to ICSE · Class 6 Science · Water cycle'),
+        h(S.NoticeCard, { mark: 'C' }, 'Aligned to CBSE · NCERT Curiosity 6, Chapter 8 before anything is written')),
+      h(Slice, { v: 'glow', label: 'You · VIDYA’s own state, announced' },
+        h('div', { style: { display: 'flex', alignItems: 'center', gap: 11 } },
+          h(S.Avatar, { name: 'Meena Kulkarni', size: 'lg' }),
+          h('div', null, h('div', { style: { font: '700 18px/1.2 var(--font-display)' } }, 'Meena Kulkarni'), h('div', { style: { font: '400 12px/1.4 var(--font-ui)', color: 'var(--text-body)' } }, 'Green Valley Public School, Nashik · Classes 5 & 7'))),
+        off
+          ? h(S.NoticeCard, { tone: 'saffron', title: 'Working offline', role: 'status' }, 'Voice needs signal. Typing, roll call and saved work keep going. I’ll send the rest when you’re back.')
+          : h(S.NoticeCard, { tone: 'leaf', title: 'Back online', role: 'status' }, 'I sent the 3 queued items: attendance, the worksheet and the call log.'),
+        h(S.Eyebrow, { tone: 'muted' }, off ? '3 items queued' : 'Nothing queued'),
+        off ? h('div', { style: { display: 'flex', flexDirection: 'column', gap: 8 } }, Item('Attendance · Class 7'), Item('Worksheet to parent group'), Item('Call log · Dhruv’s father')) : null,
+        h(S.Button, { variant: 'outline', size: 'sm', onClick: function () { setOff(!off); } }, off ? 'Signal is back' : 'Lose signal again'))),
+    h(Row, { style: { paddingTop: 4 } },
+      h(Slice, { v: 'card', label: 'Deliver tray · the trust note' },
+        h(S.NoticeCard, { tone: 'note' }, 'Nothing leaves the phone until you tap send.'),
+        h(S.NoticeCard, { tone: 'note', lang: 'hi' }, 'जब तक आप भेजें नहीं दबातीं, फ़ोन से कुछ भी नहीं जाता।'),
+        Note('In Hindi · titled'),
+        h(S.NoticeCard, { tone: 'saffron', title: 'ऑफ़लाइन काम चल रहा है', lang: 'hi' }, 'आवाज़ के लिए सिग्नल चाहिए। टाइप करना, हाज़िरी और सहेजा हुआ काम चलता रहेगा।')),
+      h(Slice, { v: 'glow', label: 'Indic body · 1.7 line height' },
+        h(S.NoticeCard, { mark: 'C', lang: 'hi' }, 'लिखने से पहले CBSE · NCERT गणित प्रकाश 7, अध्याय 8 से मिलाया गया'),
+        h(S.NoticeCard, { mark: 'W', lang: 'bn' }, 'লেখার আগে West Bengal State Board (WBBSE) · ষষ্ঠ শ্রেণি · অধ্যায় ৮ এর সঙ্গে মেলানো হয়েছে'),
+        h(S.NoticeCard, { tone: 'leaf', title: 'Back online', role: 'note' }, 'I sent the 3 queued items: attendance, the worksheet and the call log.'))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body></html>
