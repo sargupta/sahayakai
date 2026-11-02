@@ -4212,4 +4212,35 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get vidyaSideRight => 'VIDYA on the right';
+
+  @override
+  String get settingsDefaultVoice => 'Default: Voice';
+
+  @override
+  String get settingsDefaultText => 'Default: Text';
+
+  @override
+  String get vidyaEndConversation => 'End';
+
+  @override
+  String get vidyaConversationEnded =>
+      'Okay, I\'ll stop listening. Tap me when you need me.';
+
+  @override
+  String get vidyaSayStop => 'Say “stop” when you\'re done';
+
+  @override
+  String get settingsKeepListeningLabel => 'Keep listening after replies';
+
+  @override
+  String get settingsKeepListeningHint =>
+      'VIDYA listens again after she answers, until you say “stop” or tap End. Never in the background.';
+
+  @override
+  String get worksheetTopicPageNote =>
+      'No textbook page was given. Build this worksheet from the standard school syllabus for this topic.';
+
+  @override
+  String get worksheetTopicPageHint =>
+      'VIDYA made this from your topic. Add a photo of a textbook page to build it from your book instead.';
 }

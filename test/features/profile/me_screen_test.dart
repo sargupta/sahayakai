@@ -170,11 +170,9 @@ void main() {
         find.textContaining('Government Higher Primary School'),
         findsWidgets,
       );
-      // The board sits in its settings row.
-      expect(
-        find.textContaining('Karnataka State Board (KSEEB)'),
-        findsOneWidget,
-      );
+      // As in the map, the board is not on this hub: it lives in Settings >
+      // Teaching profile.
+      expect(find.textContaining('Karnataka State Board'), findsNothing);
     });
 
     testWidgets('no display name falls back to a placeholder, never a blank', (
@@ -263,19 +261,14 @@ void main() {
   });
 
   group('defaults', () {
-    testWidgets('surfaces the board and the shared language switcher', (
+    testWidgets('surfaces the language with the shared switcher', (
       tester,
     ) async {
       await _pumpMe(tester);
 
-      // The map's rows: "Language · …" and "Education board · …", each with
-      // a Change link.
-      expect(
-        find.text('Education board · Karnataka State Board (KSEEB)'),
-        findsOneWidget,
-      );
+      // The map's row: "Language · …" with a Change link.
       expect(find.textContaining('Language · '), findsOneWidget);
-      expect(find.text('Change'), findsNWidgets(2));
+      expect(find.text('Change'), findsOneWidget);
 
       // The language row opens the ONE shared picker, not a second one.
       await tester.tap(find.textContaining('Language · '));
@@ -288,9 +281,9 @@ void main() {
     testWidgets('every hub row clears the 48dp touch floor', (tester) async {
       await _pumpMe(tester);
 
-      // Board, Settings, Privacy and Sign out are the hub's tap targets.
+      // Language, Settings, Privacy and Sign out are the hub's tap targets.
       for (final label in const [
-        'Education board · ',
+        'Language · ',
         'Settings',
         'Privacy for teachers',
         'Sign out',
@@ -338,21 +331,6 @@ void main() {
       );
 
       await tester.tap(find.text('Lakshmi Iyer'));
-      await tester.pumpAndSettle();
-      expect(find.text('EDIT-PROFILE'), findsOneWidget);
-    });
-
-    testWidgets('the board row opens the profile editor', (tester) async {
-      await _pumpMeRouter(
-        tester,
-        overrides: [
-          docSourceOverride(FakeProfileDocSource(doc: teacherDoc())),
-          apiClientOverride(net.FakeApiClient(getResponse: usageJson())),
-          tokenOverride(null),
-        ],
-      );
-
-      await tester.tap(find.textContaining('Education board · '));
       await tester.pumpAndSettle();
       expect(find.text('EDIT-PROFILE'), findsOneWidget);
     });

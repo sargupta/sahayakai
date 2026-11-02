@@ -49,5 +49,26 @@ final defaultInputControllerProvider =
     );
 
 typedef _$DefaultInputController = Notifier<VidyaDefaultInput>;
+String _$keepListeningControllerHash() =>
+    r'10e46c9be401bb6bd269333cb12b8dcd302b89fc';
+
+/// Whether VIDYA keeps the conversation going: after she finishes speaking she
+/// listens again, until the teacher ends it (taps the orb or End, says a stop
+/// phrase, stays quiet two turns, or leaves the app). On by default.
+///
+/// Copied from [KeepListeningController].
+@ProviderFor(KeepListeningController)
+final keepListeningControllerProvider =
+    NotifierProvider<KeepListeningController, bool>.internal(
+      KeepListeningController.new,
+      name: r'keepListeningControllerProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$keepListeningControllerHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$KeepListeningController = Notifier<bool>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

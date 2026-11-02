@@ -7357,6 +7357,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'VIDYA on the right'**
   String get vidyaSideRight;
+
+  /// Settings > Voice mode: VIDYA starts by listening.
+  ///
+  /// In en, this message translates to:
+  /// **'Default: Voice'**
+  String get settingsDefaultVoice;
+
+  /// Settings > Voice mode: VIDYA starts with the type box.
+  ///
+  /// In en, this message translates to:
+  /// **'Default: Text'**
+  String get settingsDefaultText;
+
+  /// VIDYA sheet: end the ongoing voice conversation.
+  ///
+  /// In en, this message translates to:
+  /// **'End'**
+  String get vidyaEndConversation;
+
+  /// VIDYA's reply when the teacher says a stop phrase.
+  ///
+  /// In en, this message translates to:
+  /// **'Okay, I\'ll stop listening. Tap me when you need me.'**
+  String get vidyaConversationEnded;
+
+  /// VIDYA sheet hint while a voice conversation is on.
+  ///
+  /// In en, this message translates to:
+  /// **'Say “stop” when you\'re done'**
+  String get vidyaSayStop;
+
+  /// Settings > Voice mode: keep the conversation going after each reply.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep listening after replies'**
+  String get settingsKeepListeningLabel;
+
+  /// Settings > Voice mode: what Keep listening does.
+  ///
+  /// In en, this message translates to:
+  /// **'VIDYA listens again after she answers, until you say “stop” or tap End. Never in the background.'**
+  String get settingsKeepListeningHint;
+
+  /// Worksheet Wizard: printed on the page VIDYA draws from a spoken topic when no textbook photo was given; read by the worksheet model.
+  ///
+  /// In en, this message translates to:
+  /// **'No textbook page was given. Build this worksheet from the standard school syllabus for this topic.'**
+  String get worksheetTopicPageNote;
+
+  /// Worksheet Wizard: hint under the image when VIDYA drew the page from the spoken topic.
+  ///
+  /// In en, this message translates to:
+  /// **'VIDYA made this from your topic. Add a photo of a textbook page to build it from your book instead.'**
+  String get worksheetTopicPageHint;
 }
 
 class _AppLocalizationsDelegate

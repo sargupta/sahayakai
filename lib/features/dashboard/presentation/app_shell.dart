@@ -152,7 +152,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                 vidyaOrbPlacementControllerProvider.select((p) => p.hand),
               ) ==
               VidyaHand.left,
-          prompt: _currentIndex == 0 ? null : const VidyaDockPrompt(),
+          prompt: VidyaDockPrompt(showReady: _currentIndex != 0),
         ),
       ),
     );

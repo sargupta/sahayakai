@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -18,6 +20,7 @@ import '../../../shared/widgets/tool_scaffold.dart';
 import '../../vidya/domain/deliverable.dart';
 import '../../vidya/presentation/widgets/inline_field_mic.dart';
 import '../domain/worksheet.dart';
+import 'topic_page.dart';
 import 'widgets/worksheet_error_view.dart';
 import 'widgets/worksheet_result_view.dart';
 import 'widgets/worksheet_skeleton.dart';
@@ -36,10 +39,9 @@ class WorksheetWizardScreen extends ConsumerStatefulWidget {
   /// Optional seed from a VIDYA NAVIGATE_AND_FILL directive ("make a Class 6
   /// worksheet on fractions" → this form opens with the prompt/grade/subject
   /// filled). Defaults to null, so every existing call site and test opens the
-  /// blank form unchanged. NOTE: the worksheet REQUIRES a textbook photo, which
-  /// the voice path structurally cannot supply, so a voice open lands on a
-  /// pre-filled form and WAITS for the teacher to add the photo — it never
-  /// completes "speak → result" on its own (see [_applyPrefill] / initState).
+  /// blank form unchanged. The endpoint needs a page image and voice carries
+  /// none, so a voice open with a topic draws a topic page in its place and
+  /// generates by itself (see [_generateFromTopic]).
   final ToolPrefill? prefill;
 
   @override
@@ -56,6 +58,13 @@ class _WorksheetWizardScreenState extends ConsumerState<WorksheetWizardScreen> {
   final _resultKey = GlobalKey();
 
   PickedImage? _image;
+
+  /// The image field's state, so a page drawn in code reaches the field (its
+  /// value is what the form validates).
+  final _imageFieldKey = GlobalKey<FormFieldState<PickedImage>>();
+
+  /// True while [_image] is the topic page VIDYA drew, not a textbook photo.
+  bool _topicPage = false;
   String? _grade;
   String? _subject;
   late AppLocale _language;
@@ -75,29 +84,52 @@ class _WorksheetWizardScreenState extends ConsumerState<WorksheetWizardScreen> {
     _language = ref.read(localeControllerProvider);
     _applyPrefill(widget.prefill);
     // The voice path's RUN verb (VOICE_FIRST_GAP §4): a directive that arrives
-    // with autoSubmit fires generation itself once every required field is
-    // present. The worksheet's blocking required field is the textbook photo,
-    // which the classifier can never resolve from speech — so this guard holds
-    // and the form waits for the teacher to add the photo rather than flashing
-    // an "add a photo" error on open. The prompt/grade/subject are already
-    // seeded, so all that is left is the one tap the voice path cannot do for
-    // them. (The guard is kept parallel to the eight fully voice-driven tools
-    // so it "just works" the day a prefill can carry an image.)
+    // with autoSubmit and a topic generates by itself, like every other tool.
+    // Voice carries no textbook photo, so the page is drawn from the topic.
     if (widget.prefill?.autoSubmit == true &&
-        _image != null &&
         _promptController.text.trim().isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _submit();
+        if (mounted) unawaited(_generateFromTopic());
       });
     }
+  }
+
+  /// Draws the topic page (the spoken topic, the class, and a note that no
+  /// textbook page was given), puts it in the image field where the teacher
+  /// can see it and swap in a real photo, then generates.
+  Future<void> _generateFromTopic() async {
+    final l10n = context.l10n;
+    final text = Theme.of(context).textTheme;
+    final PickedImage page;
+    try {
+      page = await ref.read(topicPageRendererProvider)(
+        TopicPageContent(
+          topic: _promptController.text.trim(),
+          details: [?_grade, ?_subject].join(' · '),
+          note: l10n.worksheetTopicPageNote,
+          titleStyle: text.headlineMedium ?? const TextStyle(),
+          bodyStyle: text.bodyLarge ?? const TextStyle(),
+        ),
+      );
+    } catch (_) {
+      // Could not draw the page: the form stays filled and waits for a photo.
+      return;
+    }
+    // The teacher added a photo while the page was drawn: theirs wins.
+    if (!mounted || _image != null) return;
+    setState(() {
+      _image = page;
+      _topicPage = true;
+    });
+    _imageFieldKey.currentState?.didChange(page);
+    _submit();
   }
 
   /// Seeds the form from a VIDYA directive. The spoken description becomes the
   /// prompt; grade/subject are applied only when they are values this form
   /// actually offers, so an unrecognised classifier value never lands in a
   /// strict dropdown; the language falls back to the current one when it is not
-  /// one of the 11. The image is deliberately untouched — voice cannot carry a
-  /// photo, so the teacher supplies it on the pre-filled form.
+  /// one of the 11. Voice carries no photo; [_generateFromTopic] draws one.
   void _applyPrefill(ToolPrefill? p) {
     if (p == null) return;
     if (p.topic != null) _promptController.text = p.topic!;
@@ -139,10 +171,7 @@ class _WorksheetWizardScreenState extends ConsumerState<WorksheetWizardScreen> {
   /// Part B — closes "speak → generate → hear". When the landed worksheet was
   /// voice-originated (VIDYA's RUN verb set `autoSubmit`), auto-speak a short
   /// "your … is ready" summary in the result's language, once. A manual open
-  /// (tapped Generate, or a tile open with no auto-submit) never speaks. Because
-  /// the worksheet needs a photo the teacher adds by hand, this fires when they
-  /// finish that photo and tap Generate — still the voice-loop close, just after
-  /// the one tap voice could not do for them.
+  /// (tapped Generate, or a tile open with no auto-submit) never speaks.
   void _maybeSpeakVoiceSummary(AppLocalizations l10n) {
     if (_spokeVoiceSummary || widget.prefill?.autoSubmit != true) return;
     _spokeVoiceSummary = true;
@@ -274,18 +303,24 @@ class _WorksheetWizardScreenState extends ConsumerState<WorksheetWizardScreen> {
   /// moment a photo is picked.
   Widget _imageField(AppLocalizations l10n) {
     return FormField<PickedImage>(
+      key: _imageFieldKey,
       initialValue: _image,
       validator: (value) => value == null ? l10n.worksheetImageError : null,
       builder: (field) {
         return LabeledField(
           label: l10n.worksheetImageLabel,
-          hint: l10n.worksheetImageHint,
+          hint: _topicPage
+              ? l10n.worksheetTopicPageHint
+              : l10n.worksheetImageHint,
           leadingIcon: LucideIcons.image,
           child: ImageInput(
             value: _image,
             errorText: field.errorText,
             onChanged: (picked) {
-              setState(() => _image = picked);
+              setState(() {
+                _image = picked;
+                _topicPage = false;
+              });
               field.didChange(picked);
             },
           ),

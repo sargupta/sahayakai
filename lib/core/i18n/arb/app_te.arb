@@ -1224,5 +1224,14 @@
   "meChange": "మార్చండి",
   "mePrivacyForTeachers": "ఉపాధ్యాయుల గోప్యత",
   "vidyaSideLeft": "VIDYA ఎడమ వైపు",
-  "vidyaSideRight": "VIDYA కుడి వైపు"
+  "vidyaSideRight": "VIDYA కుడి వైపు",
+  "settingsDefaultVoice": "డిఫాల్ట్: వాయిస్",
+  "settingsDefaultText": "డిఫాల్ట్: టెక్స్ట్",
+  "vidyaEndConversation": "ముగించు",
+  "vidyaConversationEnded": "సరే, నేను వినడం ఆపేస్తాను. అవసరమైనప్పుడు నన్ను నొక్కండి.",
+  "vidyaSayStop": "అయిపోయాక “ఆపు” అనండి",
+  "settingsKeepListeningLabel": "జవాబు తర్వాత కూడా వింటూ ఉండాలి",
+  "settingsKeepListeningHint": "VIDYA జవాబిచ్చాక మళ్లీ వింటుంది, మీరు “ఆపు” అనే వరకు లేదా ముగించు నొక్కే వరకు. ఎప్పుడూ నేపథ్యంలో కాదు.",
+  "worksheetTopicPageNote": "పాఠ్యపుస్తక పేజీ ఇవ్వలేదు. ఈ అంశానికి సంబంధించిన ప్రామాణిక పాఠశాల సిలబస్ నుండి ఈ వర్క్‌షీట్ తయారు చేయండి.",
+  "worksheetTopicPageHint": "VIDYA దీన్ని మీ అంశం నుండి తయారు చేసింది. మీ పుస్తకం నుండి తయారు చేయడానికి పాఠ్యపుస్తక పేజీ ఫోటోను జోడించండి."
 }

@@ -5111,5 +5111,41 @@
   "vidyaSideRight": "VIDYA on the right",
   "@vidyaSideRight": {
     "description": "Orb side setting: VIDYA sits on the right (tab bar and floating orb). The switch is off."
+  },
+  "settingsDefaultVoice": "Default: Voice",
+  "@settingsDefaultVoice": {
+    "description": "Settings > Voice mode: VIDYA starts by listening."
+  },
+  "settingsDefaultText": "Default: Text",
+  "@settingsDefaultText": {
+    "description": "Settings > Voice mode: VIDYA starts with the type box."
+  },
+  "vidyaEndConversation": "End",
+  "@vidyaEndConversation": {
+    "description": "VIDYA sheet: end the ongoing voice conversation."
+  },
+  "vidyaConversationEnded": "Okay, I'll stop listening. Tap me when you need me.",
+  "@vidyaConversationEnded": {
+    "description": "VIDYA's reply when the teacher says a stop phrase."
+  },
+  "vidyaSayStop": "Say “stop” when you're done",
+  "@vidyaSayStop": {
+    "description": "VIDYA sheet hint while a voice conversation is on."
+  },
+  "settingsKeepListeningLabel": "Keep listening after replies",
+  "@settingsKeepListeningLabel": {
+    "description": "Settings > Voice mode: keep the conversation going after each reply."
+  },
+  "settingsKeepListeningHint": "VIDYA listens again after she answers, until you say “stop” or tap End. Never in the background.",
+  "@settingsKeepListeningHint": {
+    "description": "Settings > Voice mode: what Keep listening does."
+  },
+  "worksheetTopicPageNote": "No textbook page was given. Build this worksheet from the standard school syllabus for this topic.",
+  "@worksheetTopicPageNote": {
+    "description": "Worksheet Wizard: printed on the page VIDYA draws from a spoken topic when no textbook photo was given; read by the worksheet model."
+  },
+  "worksheetTopicPageHint": "VIDYA made this from your topic. Add a photo of a textbook page to build it from your book instead.",
+  "@worksheetTopicPageHint": {
+    "description": "Worksheet Wizard: hint under the image when VIDYA drew the page from the spoken topic."
   }
 }

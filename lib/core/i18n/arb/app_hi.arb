@@ -1224,5 +1224,14 @@
   "meChange": "बदलें",
   "mePrivacyForTeachers": "शिक्षकों के लिए गोपनीयता",
   "vidyaSideLeft": "VIDYA बाईं ओर",
-  "vidyaSideRight": "VIDYA दाईं ओर"
+  "vidyaSideRight": "VIDYA दाईं ओर",
+  "settingsDefaultVoice": "डिफ़ॉल्ट: आवाज़",
+  "settingsDefaultText": "डिफ़ॉल्ट: टाइप",
+  "vidyaEndConversation": "बंद करें",
+  "vidyaConversationEnded": "ठीक है, मैं सुनना बंद करती हूँ। ज़रूरत हो तो मुझे दबाइए।",
+  "vidyaSayStop": "काम हो जाए तो “बस” कहिए",
+  "settingsKeepListeningLabel": "जवाब के बाद सुनती रहे",
+  "settingsKeepListeningHint": "VIDYA जवाब देने के बाद फिर सुनती है, जब तक आप “बस” न कहें या बंद करें न दबाएँ। पीछे से कभी नहीं।",
+  "worksheetTopicPageNote": "कोई पाठ्यपुस्तक पृष्ठ नहीं दिया गया। इस विषय के मानक स्कूल पाठ्यक्रम से यह वर्कशीट बनाएँ।",
+  "worksheetTopicPageHint": "VIDYA ने इसे आपके विषय से बनाया है। अपनी किताब से बनाने के लिए पाठ्यपुस्तक के पृष्ठ की फ़ोटो जोड़ें।"
 }

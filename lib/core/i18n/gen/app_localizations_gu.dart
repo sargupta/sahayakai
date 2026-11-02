@@ -4239,4 +4239,35 @@ class AppLocalizationsGu extends AppLocalizations {
 
   @override
   String get vidyaSideRight => 'VIDYA જમણી બાજુ';
+
+  @override
+  String get settingsDefaultVoice => 'ડિફૉલ્ટ: અવાજ';
+
+  @override
+  String get settingsDefaultText => 'ડિફૉલ્ટ: લખાણ';
+
+  @override
+  String get vidyaEndConversation => 'બંધ કરો';
+
+  @override
+  String get vidyaConversationEnded =>
+      'ઠીક છે, હું સાંભળવાનું બંધ કરું છું. જરૂર હોય ત્યારે મને દબાવો.';
+
+  @override
+  String get vidyaSayStop => 'કામ થઈ જાય ત્યારે “બસ” કહો';
+
+  @override
+  String get settingsKeepListeningLabel => 'જવાબ પછી પણ સાંભળતી રહે';
+
+  @override
+  String get settingsKeepListeningHint =>
+      'VIDYA જવાબ આપ્યા પછી ફરી સાંભળે છે, જ્યાં સુધી તમે “બસ” ન કહો કે બંધ કરો ન દબાવો. ક્યારેય પાછળથી નહીં.';
+
+  @override
+  String get worksheetTopicPageNote =>
+      'કોઈ પાઠ્યપુસ્તકનું પાનું આપ્યું નથી. આ વિષયના પ્રમાણભૂત શાળા અભ્યાસક્રમમાંથી આ વર્કશીટ બનાવો.';
+
+  @override
+  String get worksheetTopicPageHint =>
+      'VIDYA એ આ તમારા વિષય પરથી બનાવ્યું છે. તમારા પુસ્તકમાંથી બનાવવા પાઠ્યપુસ્તકના પાનાનો ફોટો ઉમેરો.';
 }

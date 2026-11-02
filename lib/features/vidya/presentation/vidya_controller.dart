@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart' show Locale;
+import 'package:flutter/widgets.dart' show AppLifecycleListener, Locale;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/ai/openrouter_client.dart';
@@ -14,6 +14,7 @@ import '../../../shared/voice/audio_player_service.dart';
 import '../../../shared/voice/audio_recorder_service.dart';
 import '../../../shared/voice/mic_permission_service.dart';
 import '../../../shared/voice/os_tts_service.dart';
+import '../../../shared/voice/speech_activity.dart';
 import '../../../shared/voice/tts_language.dart';
 import '../../settings/data/voice_mode_provider.dart';
 import '../data/dto/assistant_request.dart';
@@ -29,6 +30,7 @@ import '../data/vidya_repository.dart';
 import '../data/vidya_session_repository.dart';
 import '../data/voice_to_text_repository.dart';
 import '../domain/vidya_screen_intent.dart';
+import '../domain/vidya_stop_phrase.dart';
 import 'vidya_status_ui.dart';
 
 // The language→BCP-47 helpers now live in shared voice infra (so the
@@ -41,30 +43,25 @@ part 'vidya_controller.g.dart';
 
 // ─── VAD / capture thresholds (ported from the web, SPEC §A.4 / §C.2) ────────
 
-/// The HIGHEST normalised (0..1) level speech onset may require (the recorder maps dBFS
-/// to 0..1; a quiet room sits well under this).
-const double kSpeechOnsetLevel = 0.18;
-
-/// The lowest onset, so a dead-silent line (an emulator, a muted mic) does not
-/// count every flicker as speech.
-const double kMinSpeechOnsetLevel = 0.08;
-
-/// How far above the room's quietest level speech must rise. The onset is
-/// `floor + margin`, clamped to [kMinSpeechOnsetLevel, kSpeechOnsetLevel]: a
-/// fixed 0.18 (about -37 dBFS) missed normal speech on quiet mics with auto
-/// gain off, and the capture was thrown away as silence.
-const double kSpeechMargin = 0.12;
-
-/// Sound this far above the floor, heard before the initial-silence window
-/// closes, is worth transcribing even though it never crossed the onset.
-const double kSoundHeardMargin = 0.05;
-
 /// Trailing silence after speech began that auto-stops the capture, so the
-/// teacher never has to press stop.
-const Duration kTrailingSilence = Duration(milliseconds: 2500);
+/// teacher never has to press stop: long enough for a pause to think, short
+/// enough that VIDYA answers as soon as the teacher has finished.
+const Duration kTrailingSilence = Duration(milliseconds: 1800);
 
 /// Silence before any speech that abandons the capture (a mis-tap).
 const Duration kInitialSilence = Duration(milliseconds: 8000);
+
+/// In a conversation, the pause after VIDYA stops speaking before the mic
+/// reopens, so the tail of her own voice is never captured as the teacher's.
+const Duration kConversationEchoGap = Duration(milliseconds: 450);
+
+/// In a conversation, this many turns in a row with nothing heard pause it:
+/// a quiet room must not keep the mic open.
+const int kQuietTurnsToPause = 2;
+
+/// The longest VIDYA waits, mic shut, for another clip (a read-aloud) to end
+/// before she listens again, in case the player never reports the end.
+const Duration kMaxYield = Duration(minutes: 10);
 
 /// Hard failsafe cap on a single capture.
 const Duration kMaxCapture = Duration(seconds: 30);
@@ -199,6 +196,7 @@ class VidyaState {
     this.lastQueryPath,
     this.pendingNavigation,
     this.pendingScreen,
+    this.conversing = false,
     this.errorMessage,
   });
 
@@ -243,6 +241,11 @@ class VidyaState {
   /// the shell consumes it and calls [VidyaController.consumeScreen].
   final VidyaScreen? pendingScreen;
 
+  /// A voice conversation is on: after each reply VIDYA listens again, until
+  /// the teacher ends it (End, a stop phrase, two quiet turns, or leaving the
+  /// app). The sheet, dock and floating orb show "Mic on" and End while true.
+  final bool conversing;
+
   /// User-safe copy for a terminal error phase.
   final String? errorMessage;
 
@@ -268,6 +271,7 @@ class VidyaState {
     Object? lastQueryPath = _unset,
     Object? pendingNavigation = _unset,
     Object? pendingScreen = _unset,
+    bool? conversing,
     Object? errorMessage = _unset,
   }) {
     return VidyaState(
@@ -299,6 +303,7 @@ class VidyaState {
       pendingScreen: identical(pendingScreen, _unset)
           ? this.pendingScreen
           : pendingScreen as VidyaScreen?,
+      conversing: conversing ?? this.conversing,
       errorMessage: identical(errorMessage, _unset)
           ? this.errorMessage
           : errorMessage as String?,
@@ -332,15 +337,25 @@ class VidyaController extends _$VidyaController {
       0; // gen captured when listening started (for timer closures)
   bool _speechDetected = false;
 
-  /// The quietest and loudest levels of this capture, for the adaptive onset.
-  double _floorLevel = 1;
-  double _peakLevel = 0;
+  /// This capture's levels against the room: when speech starts and stops.
+  final SpeechActivity _speech = SpeechActivity();
   bool _restored = false;
   bool _restoring = false;
+
+  /// Turns in a row, within a conversation, that heard nothing usable.
+  int _quietTurns = 0;
+
+  /// Ends a conversation when the app leaves the screen (no background
+  /// listening, design guide 02).
+  AppLifecycleListener? _lifecycle;
   StreamSubscription<double>? _amplitudeSub;
   Timer? _initialSilenceTimer;
   Timer? _trailingSilenceTimer;
   Timer? _hardCapTimer;
+
+  /// While listening in a conversation: another clip starting (a "your quiz is
+  /// ready" summary, a read-aloud) shuts the mic until it ends.
+  StreamSubscription<PlaybackProgress>? _playbackSub;
 
   // ── Live session (Gemini Live audio-to-audio, behind the voiceMode flag) ────
   // ADDITIVE: when this is running the turn-based capture above is idle. On any
@@ -367,6 +382,13 @@ class VidyaController extends _$VidyaController {
     // No eager network here: a session/profile restore is U-V7 (needs real
     // auth). The machine starts idle and only touches the backend on a tap.
     ref.onDispose(_teardownCapture);
+    try {
+      _lifecycle = AppLifecycleListener(onHide: _onAppHidden);
+      ref.onDispose(() => _lifecycle?.dispose());
+    } catch (_) {
+      // No widgets binding (a plain unit test): nothing can go to the
+      // background there, so there is nothing to listen for.
+    }
     return const VidyaState();
   }
 
@@ -384,6 +406,16 @@ class VidyaController extends _$VidyaController {
   GeminiLiveClient get _live => ref.read(geminiLiveClientProvider);
   OpenRouterClient? get _openRouter => ref.read(openRouterClientProvider);
   String get _openRouterModel => ref.read(openRouterDefaultModelProvider);
+
+  /// Whether a voice turn should open a conversation (Settings > Voice mode).
+  /// Defensive like [_voiceMode]: a missing preferences plugin means on.
+  bool get _keepListening {
+    try {
+      return ref.read(keepListeningControllerProvider);
+    } catch (_) {
+      return true;
+    }
+  }
 
   /// The teacher's chosen voice engine. Defensive: a missing preferences plugin
   /// in a plain unit test degrades to the turn-based default rather than
@@ -437,6 +469,10 @@ class VidyaController extends _$VidyaController {
   /// connect/mic fails, it falls through to the EXISTING turn-based `_begin()`
   /// — the always-available fallback, which is never removed.
   Future<void> _beginVoice() async {
+    // A spoken start opens a conversation (when the teacher wants one): from
+    // here VIDYA listens again after each reply until it is ended.
+    _quietTurns = 0;
+    _set(conversing: _keepListening);
     if (_voiceMode == VoiceMode.live) {
       final handled = await _beginLive();
       if (handled) return;
@@ -445,8 +481,14 @@ class VidyaController extends _$VidyaController {
     await _begin();
   }
 
+  /// Ends the conversation: whatever is in flight stops and VIDYA goes quiet
+  /// until the next tap. The End button and the app going to the background
+  /// both land here.
+  Future<void> endConversation() => cancel();
+
   /// Abandons whatever is in flight (a fresh generation invalidates every
-  /// pending await), stops any capture and any TTS, and returns to idle.
+  /// pending await), stops any capture and any TTS, ends any conversation,
+  /// and returns to idle.
   Future<void> cancel() async {
     _gen++;
     // Tear the Live session down first (awaited, deterministic); a no-op when
@@ -455,7 +497,75 @@ class VidyaController extends _$VidyaController {
     _teardownCapture();
     await _recorder.cancel();
     await _player.stop();
+    _quietTurns = 0;
+    _set(status: VidyaStatus.idle, amplitude: 0, conversing: false);
+  }
+
+  /// The app went to the background (or the screen locked): VIDYA never
+  /// listens unseen, so a conversation or an open capture ends here.
+  void _onAppHidden() {
+    if (state.conversing ||
+        state.status == VidyaStatus.listening ||
+        state.status == VidyaStatus.requestingPermission) {
+      unawaited(cancel());
+    }
+  }
+
+  /// In a conversation, once VIDYA is idle again: wait out the echo gap, then
+  /// listen for the next turn. A no-op when the conversation ended, a newer
+  /// turn took over, or VIDYA is not idle (a panel, a fresh tap).
+  Future<void> _continueConversation(int gen) async {
+    if (!state.conversing || _stale(gen)) return;
+    await Future<void>.delayed(kConversationEchoGap);
+    if (!state.conversing || _stale(gen)) return;
+    if (state.status != VidyaStatus.idle) return;
+    await _begin();
+  }
+
+  /// Nothing usable was heard. In a conversation the first quiet turn just
+  /// listens again; [kQuietTurnsToPause] in a row end it with the "couldn't
+  /// hear" panel. Outside one, the panel shows straight away.
+  void _onNothingHeard(int gen) {
+    if (state.conversing && ++_quietTurns < kQuietTurnsToPause) {
+      _set(status: VidyaStatus.idle, amplitude: 0);
+      unawaited(_continueConversation(gen));
+      return;
+    }
+    _quietTurns = 0;
+    _set(status: VidyaStatus.notHeard, amplitude: 0, conversing: false);
+  }
+
+  /// A clip began playing while VIDYA listened in a conversation (a tool's
+  /// "your worksheet is ready", a read-aloud): her mic would take it for the
+  /// teacher. Drop this capture, wait for the clip to end, then listen again.
+  Future<void> _yieldToPlayback(int gen, int session) async {
+    if (_stale(gen) || state.status != VidyaStatus.listening) return;
+    final next = ++_gen;
+    _teardownCapture();
+    await _recorder.cancel();
+    if (_stale(next)) return;
     _set(status: VidyaStatus.idle, amplitude: 0);
+    await _awaitPlaybackEnd(session, '', bound: kMaxYield);
+    unawaited(_continueConversation(next));
+  }
+
+  /// Waits for the reply clip [session] to finish playing, so the mic never
+  /// opens over VIDYA's own voice. Bounded (by the reply's length, or [bound])
+  /// in case the player never reports completion.
+  Future<void> _awaitPlaybackEnd(
+    int session,
+    String text, {
+    Duration? bound,
+  }) async {
+    final words = text.trim().split(RegExp(r'\s+')).length;
+    bound ??= Duration(seconds: (words * 0.6).ceil().clamp(4, 90));
+    try {
+      await _player.playback
+          .firstWhere((p) => p.session != session || !p.playing)
+          .timeout(bound);
+    } catch (_) {
+      // Timed out, or the stream closed: carry on rather than hang.
+    }
   }
 
   /// Sends a typed message through the SAME turn pipeline as a captured
@@ -635,8 +745,7 @@ class VidyaController extends _$VidyaController {
     }
 
     _speechDetected = false;
-    _floorLevel = 1;
-    _peakLevel = 0;
+    _speech.reset();
     try {
       await _recorder.start();
       debugPrint('[Vidya] recorder started');
@@ -653,6 +762,11 @@ class VidyaController extends _$VidyaController {
     }
     _set(status: VidyaStatus.listening, amplitude: 0);
     _amplitudeSub = _recorder.amplitude.listen(_onAmplitude);
+    if (state.conversing) {
+      _playbackSub = _player.playback.listen((p) {
+        if (p.playing) unawaited(_yieldToPlayback(gen, p.session));
+      });
+    }
     _hardCapTimer = Timer(kMaxCapture, () {
       if (!_stale(gen) && state.status == VidyaStatus.listening) {
         _stopAndProcess(gen);
@@ -662,7 +776,7 @@ class VidyaController extends _$VidyaController {
       if (!_stale(gen) &&
           state.status == VidyaStatus.listening &&
           !_speechDetected) {
-        if (_peakLevel >= _floorLevel + kSoundHeardMargin) {
+        if (_speech.soundHeard) {
           // Something was said, just quieter than the onset: let the
           // speech-to-text decide rather than throwing the words away.
           debugPrint('[Vidya] no onset, but sound heard - transcribing');
@@ -679,15 +793,12 @@ class VidyaController extends _$VidyaController {
     if (_stale(_activeGen)) return;
     if (state.status != VidyaStatus.listening) return;
     _set(amplitude: level);
-    if (level < _floorLevel) _floorLevel = level;
-    if (level > _peakLevel) _peakLevel = level;
-    final onset = (_floorLevel + kSpeechMargin).clamp(
-      kMinSpeechOnsetLevel,
-      kSpeechOnsetLevel,
-    );
-    if (level >= onset) {
+    if (_speech.add(level)) {
       if (!_speechDetected) {
-        debugPrint('[Vidya] speech detected!');
+        debugPrint(
+          '[Vidya] speech detected (room ${_speech.room.toStringAsFixed(2)}, '
+          'onset ${_speech.onset.toStringAsFixed(2)})',
+        );
       }
       _speechDetected = true;
       _initialSilenceTimer?.cancel();
@@ -700,11 +811,14 @@ class VidyaController extends _$VidyaController {
     }
   }
 
-  /// Nothing was said (initial silence elapsed): drop the capture and say so.
+  /// Nothing was said (initial silence elapsed): drop the capture and say so
+  /// (or, in a conversation, listen once more; see [_onNothingHeard]).
   Future<void> _discardCapture() async {
+    final gen = _activeGen;
     _teardownCapture();
     await _recorder.cancel();
-    _set(status: VidyaStatus.notHeard, amplitude: 0);
+    if (_stale(gen)) return;
+    _onNothingHeard(gen);
   }
 
   Future<void> _stopAndProcess([int? genParam]) async {
@@ -728,7 +842,7 @@ class VidyaController extends _$VidyaController {
     if (_stale(gen)) return;
     // Silence / mis-tap reject before paying for STT.
     if (recording == null || recording.byteLength < kMinAudioBytes) {
-      _set(status: VidyaStatus.notHeard);
+      _onNothingHeard(gen);
       return;
     }
 
@@ -743,7 +857,7 @@ class VidyaController extends _$VidyaController {
       if (_stale(gen)) return;
       if (!transcript.isUsable ||
           isLikelyTranscriptionRefusal(transcript.text)) {
-        _set(status: VidyaStatus.notHeard);
+        _onNothingHeard(gen);
         return;
       }
       await _converse(transcript.text, transcript.language, gen);
@@ -763,7 +877,12 @@ class VidyaController extends _$VidyaController {
   // ── Conversation ─────────────────────────────────────────────────────────
 
   Future<void> _converse(String message, String detectedLang, int gen) async {
-    if (_openScreenIfAsked(message)) return;
+    _quietTurns = 0; // words were heard
+    if (_endIfStopPhrase(message)) return;
+    if (_openScreenIfAsked(message)) {
+      unawaited(_continueConversation(gen));
+      return;
+    }
     // Ink the teacher's words immediately, then think.
     final withUser = [
       ...state.conversation,
@@ -858,7 +977,12 @@ class VidyaController extends _$VidyaController {
             .timeout(const Duration(seconds: 4));
         if (_stale(gen)) return;
         if (tts.hasAudio) {
-          await _player.playBase64Mp3(tts.audioContent);
+          final session = await _player.playBase64Mp3(tts.audioContent);
+          // The player returns once playback STARTS. In a conversation the
+          // mic reopens next, so wait for the reply to finish first.
+          if (session != null && state.conversing) {
+            await _awaitPlaybackEnd(session, turn.response);
+          }
         } else {
           throw Exception('No audio');
         }
@@ -907,6 +1031,36 @@ class VidyaController extends _$VidyaController {
     _set(status: VidyaStatus.idle, pendingNavigation: single);
 
     _persistTurn(message, turn.response, single);
+    unawaited(_continueConversation(gen));
+  }
+
+  /// "Stop" / "बस" / "that's all" (see [isVidyaStopPhrase]): inks the words and
+  /// VIDYA's goodbye, ends the conversation, and asks no server. Returns false
+  /// (changing nothing) for anything else.
+  bool _endIfStopPhrase(String message) {
+    if (!isVidyaStopPhrase(message)) return false;
+    final reply = _localizations(_uiLanguage()).vidyaConversationEnded;
+    final now = DateTime.now();
+    _quietTurns = 0;
+    _set(
+      status: VidyaStatus.idle,
+      conversing: false,
+      amplitude: 0,
+      conversation: [
+        ...state.conversation,
+        ConversationBlock(
+          role: ConversationRole.teacher,
+          text: message,
+          timestamp: now,
+        ),
+        ConversationBlock(
+          role: ConversationRole.vidya,
+          text: reply,
+          timestamp: now,
+        ),
+      ],
+    );
+    return true;
   }
 
   /// Answers "take me to my profile" on the device: inks the teacher's words
@@ -1255,6 +1409,8 @@ Make answers practical and classroom-ready, and easy to follow when read aloud:
     _hardCapTimer = null;
     unawaited(_amplitudeSub?.cancel());
     _amplitudeSub = null;
+    unawaited(_playbackSub?.cancel());
+    _playbackSub = null;
     // A Live session, if any, is torn down alongside the capture machinery (a
     // guarded no-op in the turn-based path). This is also the provider-dispose
     // hook (see build()), so a disposed controller never leaks an open socket.
@@ -1486,8 +1642,17 @@ Make answers practical and classroom-ready, and easy to follow when read aloud:
     Object? lastQueryPath = _unset,
     Object? pendingNavigation = _unset,
     Object? pendingScreen = _unset,
+    bool? conversing,
     Object? errorMessage = _unset,
   }) {
+    // A dead end (signed out, limit, failure, mic off) ends a conversation:
+    // listening again could only fail the same way.
+    final terminal =
+        status == VidyaStatus.micDenied ||
+        status == VidyaStatus.signedOut ||
+        status == VidyaStatus.limitReached ||
+        status == VidyaStatus.upgradeRequired ||
+        status == VidyaStatus.failed;
     state = state.copyWith(
       status: status,
       conversation: conversation,
@@ -1501,6 +1666,7 @@ Make answers practical and classroom-ready, and easy to follow when read aloud:
       lastQueryPath: lastQueryPath,
       pendingNavigation: pendingNavigation,
       pendingScreen: pendingScreen,
+      conversing: terminal ? false : conversing,
       errorMessage: errorMessage,
     );
   }

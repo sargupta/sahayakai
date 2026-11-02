@@ -4253,4 +4253,35 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get vidyaSideRight => 'VIDYA ডান দিকে';
+
+  @override
+  String get settingsDefaultVoice => 'ডিফল্ট: ভয়েস';
+
+  @override
+  String get settingsDefaultText => 'ডিফল্ট: লেখা';
+
+  @override
+  String get vidyaEndConversation => 'শেষ করুন';
+
+  @override
+  String get vidyaConversationEnded =>
+      'ঠিক আছে, আমি শোনা বন্ধ করছি। দরকার হলে আমাকে চাপুন।';
+
+  @override
+  String get vidyaSayStop => 'কাজ শেষ হলে “থামো” বলুন';
+
+  @override
+  String get settingsKeepListeningLabel => 'উত্তরের পরেও শুনতে থাকুক';
+
+  @override
+  String get settingsKeepListeningHint =>
+      'VIDYA উত্তর দেওয়ার পর আবার শোনে, যতক্ষণ না আপনি “থামো” বলেন বা শেষ করুন চাপেন। কখনও পটভূমিতে নয়।';
+
+  @override
+  String get worksheetTopicPageNote =>
+      'কোনো পাঠ্যবইয়ের পৃষ্ঠা দেওয়া হয়নি। এই বিষয়ের প্রচলিত স্কুল পাঠ্যক্রম থেকে এই ওয়ার্কশিট তৈরি করো।';
+
+  @override
+  String get worksheetTopicPageHint =>
+      'VIDYA এটি আপনার বিষয় থেকে তৈরি করেছে। আপনার বই থেকে তৈরি করতে পাঠ্যবইয়ের পৃষ্ঠার ছবি যোগ করুন।';
 }

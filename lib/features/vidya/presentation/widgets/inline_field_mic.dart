@@ -8,15 +8,11 @@ import '../../../../core/i18n/gen/app_localizations.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/voice/audio_recorder_service.dart';
 import '../../../../shared/voice/mic_permission_service.dart';
+import '../../../../shared/voice/speech_activity.dart';
 import '../../../../shared/widgets/press_scale.dart';
 import '../../data/voice_to_text_repository.dart';
 import '../vidya_controller.dart'
-    show
-        kInitialSilence,
-        kMaxCapture,
-        kMinAudioBytes,
-        kSpeechOnsetLevel,
-        kTrailingSilence;
+    show kInitialSilence, kMaxCapture, kMinAudioBytes, kTrailingSilence;
 
 /// The phase the inline mic renders. Deliberately smaller than the home's full
 /// [VidyaStatus] machine — the field mic runs STT only (no VIDYA, no TTS, no
@@ -74,13 +70,15 @@ class _InlineFieldMicState extends ConsumerState<InlineFieldMic> {
   /// controller's generation guard).
   int _gen = 0;
   bool _speechDetected = false;
+  final SpeechActivity _speech = SpeechActivity();
   StreamSubscription<double>? _amplitudeSub;
   Timer? _initialSilenceTimer;
   Timer? _trailingSilenceTimer;
   Timer? _hardCapTimer;
 
   AudioRecorderService get _recorder => ref.read(audioRecorderServiceProvider);
-  MicPermissionService get _permission => ref.read(micPermissionServiceProvider);
+  MicPermissionService get _permission =>
+      ref.read(micPermissionServiceProvider);
   VoiceToTextRepository get _stt => ref.read(voiceToTextRepositoryProvider);
 
   bool _stale(int gen) => gen != _gen;
@@ -121,6 +119,7 @@ class _InlineFieldMicState extends ConsumerState<InlineFieldMic> {
       return;
     }
     _speechDetected = false;
+    _speech.reset();
     try {
       await _recorder.start();
     } catch (_) {
@@ -134,7 +133,9 @@ class _InlineFieldMicState extends ConsumerState<InlineFieldMic> {
     _setPhase(InlineMicPhase.listening);
     _amplitudeSub = _recorder.amplitude.listen(_onAmplitude);
     _hardCapTimer = Timer(kMaxCapture, () {
-      if (!_stale(gen) && _phase == InlineMicPhase.listening) _stopAndTranscribe();
+      if (!_stale(gen) && _phase == InlineMicPhase.listening) {
+        _stopAndTranscribe();
+      }
     });
     _initialSilenceTimer = Timer(kInitialSilence, () {
       if (!_stale(gen) &&
@@ -147,7 +148,7 @@ class _InlineFieldMicState extends ConsumerState<InlineFieldMic> {
 
   void _onAmplitude(double level) {
     if (_phase != InlineMicPhase.listening) return;
-    if (level >= kSpeechOnsetLevel) {
+    if (_speech.add(level)) {
       _speechDetected = true;
       _initialSilenceTimer?.cancel();
       _trailingSilenceTimer?.cancel();
@@ -207,7 +208,9 @@ class _InlineFieldMicState extends ConsumerState<InlineFieldMic> {
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
           ..showSnackBar(
-            SnackBar(content: Text(AppLocalizations.of(context).vidyaFieldMicFailed)),
+            SnackBar(
+              content: Text(AppLocalizations.of(context).vidyaFieldMicFailed),
+            ),
           );
       }
     }
@@ -250,8 +253,7 @@ class _InlineFieldMicState extends ConsumerState<InlineFieldMic> {
 
     // Saffron (the primary role) only while active — the resting form stays
     // calm and the saffron budget is spent on the home Seal, not the fields.
-    final glyphColour =
-        active ? scheme.primary : scheme.onSurfaceVariant;
+    final glyphColour = active ? scheme.primary : scheme.onSurfaceVariant;
     final fill = active ? scheme.primaryContainer : Colors.transparent;
     final opacity = _phase == InlineMicPhase.transcribing ? 0.6 : 1.0;
 
@@ -287,7 +289,10 @@ class _InlineFieldMicState extends ConsumerState<InlineFieldMic> {
                   child: Container(
                     width: 36,
                     height: 36,
-                    decoration: BoxDecoration(shape: BoxShape.circle, color: fill),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: fill,
+                    ),
                     alignment: Alignment.center,
                     child: Icon(
                       LucideIcons.mic,

@@ -1,10 +1,12 @@
 import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/router/routes.dart';
 import '../../../shared/domain/tool_prefill.dart';
 import '../data/dto/vidya_action.dart';
-import 'vidya_controller.dart' show normaliseVidyaLanguage;
+import 'vidya_controller.dart'
+    show normaliseVidyaLanguage, vidyaControllerProvider;
 
 /// The NAVIGATE_AND_FILL dispatcher — it threads a VIDYA directive INTO the
 /// tools: map each [VidyaFlow] to its tool [Routes] constant and carry a
@@ -63,12 +65,12 @@ class VidyaNavDispatcher {
   /// screen still guards on its required field, so a fieldless utterance lands
   /// on the form and waits rather than firing empty.
   static ToolPrefill prefillFor(VidyaDirectiveParams params) => ToolPrefill(
-        topic: params.topic,
-        gradeLevel: params.gradeLevel,
-        subject: params.subject,
-        language: normaliseVidyaLanguage(params.language),
-        autoSubmit: true,
-      );
+    topic: params.topic,
+    gradeLevel: params.gradeLevel,
+    subject: params.subject,
+    language: normaliseVidyaLanguage(params.language),
+    autoSubmit: true,
+  );
 
   /// Routes to [directive]'s tool with its prefill, or returns false (and pushes
   /// nothing) when the flow has no built tool. The tool reads the [ToolPrefill]
@@ -81,4 +83,67 @@ class VidyaNavDispatcher {
     context.push(route, extra: prefill.isEmpty ? null : prefill);
     return true;
   }
+
+  /// Opens [directive]'s tool from wherever the teacher is, and returns what
+  /// was opened (null when the flow has no tool). When that tool is already on
+  /// top, it is REPLACED rather than stacked, so a spoken change ("make it for
+  /// Class 5", "now in Hindi") runs straight away; the fields the change left
+  /// out are kept from [current], what VIDYA last opened there.
+  static OpenedTool? open(
+    GoRouter router,
+    VidyaDirective directive, {
+    OpenedTool? current,
+  }) {
+    final route = routeForFlow(directive.flow);
+    if (route == null) return null;
+    var prefill = prefillFor(directive.params);
+    final onTop = topLocation(router) == route;
+    if (onTop && current?.route == route) {
+      prefill = prefill.over(current!.prefill);
+    }
+    final extra = prefill.isEmpty ? null : prefill;
+    if (onTop) {
+      router.pushReplacement(route, extra: extra);
+    } else {
+      router.push(route, extra: extra);
+    }
+    return OpenedTool(route: route, prefill: prefill);
+  }
+}
+
+/// The screen on top: the last pushed route (a pushed route does not change
+/// the router's `uri`, which still names the shell underneath).
+String topLocation(GoRouter router) {
+  final matches = router.routerDelegate.currentConfiguration;
+  return matches.isEmpty ? matches.uri.path : matches.last.matchedLocation;
+}
+
+/// A tool VIDYA opened and what she filled it with.
+@immutable
+class OpenedTool {
+  const OpenedTool({required this.route, required this.prefill});
+
+  final String route;
+  final ToolPrefill prefill;
+}
+
+/// The tool VIDYA last opened, while it is still on screen; null once the
+/// teacher has left it. A spoken change re-runs this tool keeping its fields.
+final vidyaOpenedToolProvider = StateProvider<OpenedTool?>((ref) => null);
+
+/// Routes [directive] (see [VidyaNavDispatcher.open]) and tells VIDYA which
+/// tool is now open and with what, so the next thing the teacher says is
+/// understood against it. The one call both directive routers make: the VIDYA
+/// sheet and the app-wide `VidyaToolLauncher`.
+void openVidyaTool(WidgetRef ref, GoRouter router, VidyaDirective directive) {
+  final opened = VidyaNavDispatcher.open(
+    router,
+    directive,
+    current: ref.read(vidyaOpenedToolProvider),
+  );
+  if (opened == null) return;
+  ref.read(vidyaOpenedToolProvider.notifier).state = opened;
+  ref
+      .read(vidyaControllerProvider.notifier)
+      .registerScreenContext(opened.route, uiState: opened.prefill.toUiState());
 }

@@ -4294,4 +4294,35 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get vidyaSideRight => 'VIDYA വലതുവശത്ത്';
+
+  @override
+  String get settingsDefaultVoice => 'ഡിഫോൾട്ട്: ശബ്ദം';
+
+  @override
+  String get settingsDefaultText => 'ഡിഫോൾട്ട്: ടെക്സ്റ്റ്';
+
+  @override
+  String get vidyaEndConversation => 'അവസാനിപ്പിക്കുക';
+
+  @override
+  String get vidyaConversationEnded =>
+      'ശരി, ഞാൻ കേൾക്കുന്നത് നിർത്തുന്നു. ആവശ്യമുള്ളപ്പോൾ എന്നെ അമർത്തുക.';
+
+  @override
+  String get vidyaSayStop => 'കഴിഞ്ഞാൽ “നിർത്തൂ” എന്ന് പറയുക';
+
+  @override
+  String get settingsKeepListeningLabel => 'മറുപടിക്ക് ശേഷവും കേൾക്കുക';
+
+  @override
+  String get settingsKeepListeningHint =>
+      'VIDYA മറുപടി നൽകിയ ശേഷം വീണ്ടും കേൾക്കുന്നു, നിങ്ങൾ “നിർത്തൂ” എന്ന് പറയുന്നതുവരെ അല്ലെങ്കിൽ അവസാനിപ്പിക്കുക അമർത്തുന്നതുവരെ. ഒരിക്കലും പശ്ചാത്തലത്തിൽ ഇല്ല.';
+
+  @override
+  String get worksheetTopicPageNote =>
+      'പാഠപുസ്തകത്തിലെ പേജ് നൽകിയിട്ടില്ല. ഈ വിഷയത്തിന്റെ സാധാരണ സ്കൂൾ സിലബസിൽ നിന്ന് ഈ വർക്ക്ഷീറ്റ് തയ്യാറാക്കുക.';
+
+  @override
+  String get worksheetTopicPageHint =>
+      'VIDYA ഇത് നിങ്ങളുടെ വിഷയത്തിൽ നിന്ന് തയ്യാറാക്കി. നിങ്ങളുടെ പുസ്തകത്തിൽ നിന്ന് തയ്യാറാക്കാൻ പാഠപുസ്തക പേജിന്റെ ഫോട്ടോ ചേർക്കുക.';
 }

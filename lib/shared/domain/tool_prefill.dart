@@ -62,6 +62,34 @@ class ToolPrefill {
   /// fieldless prefill is still empty and carries nothing to auto-run on).
   final bool autoSubmit;
 
+  /// This prefill with the fields it leaves out taken from [base]: a spoken
+  /// change to an open tool ("make it for Class 5") keeps the rest of what was
+  /// asked. A new topic is a new request, so only the class and the language
+  /// carry over to it.
+  ToolPrefill over(ToolPrefill base) {
+    final newTopic = topic != null && topic != base.topic;
+    return ToolPrefill(
+      topic: topic ?? base.topic,
+      gradeLevel: gradeLevel ?? base.gradeLevel,
+      subject: subject ?? (newTopic ? null : base.subject),
+      language: language ?? base.language,
+      questionCount: questionCount ?? (newTopic ? null : base.questionCount),
+      difficulty: difficulty ?? (newTopic ? null : base.difficulty),
+      autoSubmit: autoSubmit,
+    );
+  }
+
+  /// The filled fields, as VIDYA's screen context sends them (`uiState`), so a
+  /// follow-up is understood against what the open tool is making.
+  Map<String, Object> toUiState() => {
+    'topic': ?topic,
+    'gradeLevel': ?gradeLevel,
+    'subject': ?subject,
+    'language': ?language,
+    'questionCount': ?questionCount,
+    'difficulty': ?difficulty,
+  };
+
   /// True when no field was extracted — the screen then behaves exactly as an
   /// un-prefilled open, so existing call sites and tests are unaffected.
   /// [autoSubmit] is intentionally not part of this: an intent to run with no

@@ -4253,4 +4253,35 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get vidyaSideRight => 'VIDYA ಬಲಭಾಗದಲ್ಲಿ';
+
+  @override
+  String get settingsDefaultVoice => 'ಡೀಫಾಲ್ಟ್: ಧ್ವನಿ';
+
+  @override
+  String get settingsDefaultText => 'ಡೀಫಾಲ್ಟ್: ಪಠ್ಯ';
+
+  @override
+  String get vidyaEndConversation => 'ಮುಗಿಸಿ';
+
+  @override
+  String get vidyaConversationEnded =>
+      'ಸರಿ, ನಾನು ಕೇಳುವುದನ್ನು ನಿಲ್ಲಿಸುತ್ತೇನೆ. ಬೇಕಾದಾಗ ನನ್ನನ್ನು ಒತ್ತಿ.';
+
+  @override
+  String get vidyaSayStop => 'ಮುಗಿದಾಗ “ನಿಲ್ಲಿಸು” ಎನ್ನಿ';
+
+  @override
+  String get settingsKeepListeningLabel => 'ಉತ್ತರದ ನಂತರವೂ ಕೇಳುತ್ತಿರಲಿ';
+
+  @override
+  String get settingsKeepListeningHint =>
+      'VIDYA ಉತ್ತರಿಸಿದ ನಂತರ ಮತ್ತೆ ಕೇಳುತ್ತಾಳೆ, ನೀವು “ನಿಲ್ಲಿಸು” ಎನ್ನುವವರೆಗೆ ಅಥವಾ ಮುಗಿಸಿ ಒತ್ತುವವರೆಗೆ. ಹಿನ್ನೆಲೆಯಲ್ಲಿ ಎಂದಿಗೂ ಇಲ್ಲ.';
+
+  @override
+  String get worksheetTopicPageNote =>
+      'ಯಾವುದೇ ಪಠ್ಯಪುಸ್ತಕದ ಪುಟ ನೀಡಿಲ್ಲ. ಈ ವಿಷಯದ ಪ್ರಮಾಣಿತ ಶಾಲಾ ಪಠ್ಯಕ್ರಮದಿಂದ ಈ ವರ್ಕ್‌ಶೀಟ್ ರಚಿಸಿ.';
+
+  @override
+  String get worksheetTopicPageHint =>
+      'VIDYA ಇದನ್ನು ನಿಮ್ಮ ವಿಷಯದಿಂದ ರಚಿಸಿದ್ದಾಳೆ. ನಿಮ್ಮ ಪುಸ್ತಕದಿಂದ ರಚಿಸಲು ಪಠ್ಯಪುಸ್ತಕದ ಪುಟದ ಫೋಟೋ ಸೇರಿಸಿ.';
 }

@@ -4236,4 +4236,35 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get vidyaSideRight => 'VIDYA दाईं ओर';
+
+  @override
+  String get settingsDefaultVoice => 'डिफ़ॉल्ट: आवाज़';
+
+  @override
+  String get settingsDefaultText => 'डिफ़ॉल्ट: टाइप';
+
+  @override
+  String get vidyaEndConversation => 'बंद करें';
+
+  @override
+  String get vidyaConversationEnded =>
+      'ठीक है, मैं सुनना बंद करती हूँ। ज़रूरत हो तो मुझे दबाइए।';
+
+  @override
+  String get vidyaSayStop => 'काम हो जाए तो “बस” कहिए';
+
+  @override
+  String get settingsKeepListeningLabel => 'जवाब के बाद सुनती रहे';
+
+  @override
+  String get settingsKeepListeningHint =>
+      'VIDYA जवाब देने के बाद फिर सुनती है, जब तक आप “बस” न कहें या बंद करें न दबाएँ। पीछे से कभी नहीं।';
+
+  @override
+  String get worksheetTopicPageNote =>
+      'कोई पाठ्यपुस्तक पृष्ठ नहीं दिया गया। इस विषय के मानक स्कूल पाठ्यक्रम से यह वर्कशीट बनाएँ।';
+
+  @override
+  String get worksheetTopicPageHint =>
+      'VIDYA ने इसे आपके विषय से बनाया है। अपनी किताब से बनाने के लिए पाठ्यपुस्तक के पृष्ठ की फ़ोटो जोड़ें।';
 }

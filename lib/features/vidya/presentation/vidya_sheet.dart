@@ -20,12 +20,18 @@ import 'vidya_controller.dart';
 import 'vidya_nav_dispatcher.dart';
 import 'vidya_status_ui.dart';
 import 'widgets/conversation_block.dart';
+import 'widgets/vidya_conversation.dart';
 import 'widgets/vidya_orb.dart';
 
 /// True while the VIDYA sheet (v3 Screen 04) is on screen. The floating orb
 /// hides underneath it — Screen 04 puts the ONLY orb inside the sheet's header,
 /// and a second orb riding over the composer would be a duplicate.
 final vidyaSheetOpenProvider = StateProvider<bool>((ref) => false);
+
+/// True while the VIDYA sheet itself is open (not the deliver tray, which also
+/// sets [vidyaSheetOpenProvider]). The sheet then routes VIDYA's tool
+/// directives itself; otherwise `VidyaToolLauncher` does.
+final vidyaConversationSheetOpenProvider = StateProvider<bool>((ref) => false);
 
 /// The shell tab on screen (0 Home, 1 Library, 2 Community, 3 Profile). All
 /// four share the `/` route, so the sheet reads this to name the page.
@@ -38,6 +44,7 @@ Future<void> showVidyaSheet(BuildContext context, {String? pagePath}) {
   final path = pagePath ?? GoRouter.maybeOf(context)?.state.uri.path;
   final container = ProviderScope.containerOf(context, listen: false);
   container.read(vidyaSheetOpenProvider.notifier).state = true;
+  container.read(vidyaConversationSheetOpenProvider.notifier).state = true;
   late final Future<void> sheet;
   try {
     sheet = showModalBottomSheet<void>(
@@ -50,10 +57,12 @@ Future<void> showVidyaSheet(BuildContext context, {String? pagePath}) {
     );
   } catch (_) {
     container.read(vidyaSheetOpenProvider.notifier).state = false;
+    container.read(vidyaConversationSheetOpenProvider.notifier).state = false;
     rethrow;
   }
   return sheet.whenComplete(() {
     container.read(vidyaSheetOpenProvider.notifier).state = false;
+    container.read(vidyaConversationSheetOpenProvider.notifier).state = false;
   });
 }
 
@@ -199,14 +208,10 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet>
       directive,
     ) {
       if (directive == null) return;
-      final route = VidyaNavDispatcher.routeForFlow(directive.flow);
       controller.consumeNavigation();
       final router = GoRouter.of(context);
       Navigator.of(context).pop();
-      if (route != null) {
-        final prefill = VidyaNavDispatcher.prefillFor(directive.params);
-        router.push(route, extra: prefill.isEmpty ? null : prefill);
-      }
+      openVidyaTool(ref, router, directive);
     });
 
     final hasText = _input.text.trim().isNotEmpty;
@@ -316,9 +321,15 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet>
                           ],
                         ),
                       ),
-                      if (micOn)
-                        _MicOnPill(label: l10n.vidyaMicOn)
-                      else
+                      // While a conversation is on: "Mic on" when she is
+                      // listening, and End to close it. Otherwise the close X.
+                      if (micOn) _MicOnPill(label: l10n.vidyaMicOn),
+                      if (state.conversing)
+                        const Padding(
+                          padding: EdgeInsetsDirectional.only(start: 6),
+                          child: VidyaEndButton(),
+                        )
+                      else if (!micOn)
                         IconButton(
                           onPressed: () => Navigator.of(context).pop(),
                           icon: const Icon(LucideIcons.x),
@@ -330,7 +341,11 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet>
                   ),
                   if (micOn || busy) ...[
                     const SizedBox(height: AppSpacing.space2),
-                    _StatusLine(status: state.status, visual: visual),
+                    _StatusLine(
+                      status: state.status,
+                      visual: visual,
+                      conversing: state.conversing,
+                    ),
                   ],
                   if (pageLabel != null) ...[
                     const SizedBox(height: AppSpacing.space3),
@@ -519,10 +534,17 @@ class _VidyaSheetState extends ConsumerState<VidyaSheet>
 }
 
 class _StatusLine extends StatelessWidget {
-  const _StatusLine({required this.status, required this.visual});
+  const _StatusLine({
+    required this.status,
+    required this.visual,
+    this.conversing = false,
+  });
 
   final VidyaStatus status;
   final VidyaOrbVisual visual;
+
+  /// In a conversation the listening line says how to end it.
+  final bool conversing;
 
   @override
   Widget build(BuildContext context) {
@@ -532,22 +554,24 @@ class _StatusLine extends StatelessWidget {
         status == VidyaStatus.listening ||
         status == VidyaStatus.requestingPermission;
 
-    return SizedBox(
-      height: 24,
+    final style = Theme.of(
+      context,
+    ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted);
+    // At least the waveform's height; taller when a line wraps (Indic scripts
+    // at large text), never clipped or ellipsized.
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 24),
       child: Row(
         children: [
           if (!listening && text != null)
-            Expanded(
-              child: Text(
-                text,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
-              ),
-            ),
-          if (listening) ...[_Waveform(reduceMotion: reduceMotion)],
+            Expanded(child: Text(text, style: style)),
+          if (listening) ...[
+            _Waveform(reduceMotion: reduceMotion),
+            if (conversing) ...[
+              const SizedBox(width: AppSpacing.space3),
+              Expanded(child: Text(context.l10n.vidyaSayStop, style: style)),
+            ],
+          ],
         ],
       ),
     );

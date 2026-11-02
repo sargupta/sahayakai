@@ -22,7 +22,6 @@ import 'deliver_tray.dart';
 import 'deliverables_controller.dart';
 import 'vidya_controller.dart';
 import 'vidya_greeting.dart' show maybeSpeakVidyaGreeting;
-import 'vidya_nav_dispatcher.dart';
 import 'vidya_presence.dart';
 import 'vidya_sheet.dart';
 import 'widgets/vidya_orb.dart';
@@ -74,17 +73,7 @@ class _VidyaHomeScreenState extends ConsumerState<VidyaHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final controller = ref.read(vidyaControllerProvider.notifier);
-
-    ref.listen(vidyaControllerProvider.select((s) => s.pendingNavigation), (
-      _,
-      directive,
-    ) {
-      if (directive == null) return;
-      if (!(ModalRoute.of(context)?.isCurrent ?? true)) return;
-      controller.consumeNavigation();
-      VidyaNavDispatcher.dispatch(context, directive);
-    });
+    // VIDYA's tool directives are routed app-wide by VidyaToolLauncher.
 
     final profile = ref.watch(profileControllerProvider).valueOrNull;
 

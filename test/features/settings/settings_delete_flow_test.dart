@@ -80,7 +80,7 @@ void main() {
   /// between each check.
   Future<void> confirmDeleteDialog(WidgetTester tester) async {
     await tester.pumpAndSettle();
-    final trigger = find.widgetWithText(OutlinedButton, 'Delete account');
+    final trigger = find.widgetWithText(TextButton, 'Delete account');
     await tester.scrollUntilVisible(
       trigger,
       200,

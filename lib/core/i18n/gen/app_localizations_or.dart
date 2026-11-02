@@ -4269,4 +4269,35 @@ class AppLocalizationsOr extends AppLocalizations {
 
   @override
   String get vidyaSideRight => 'VIDYA ଡାହାଣ ପଟେ';
+
+  @override
+  String get settingsDefaultVoice => 'ଡିଫଲ୍ଟ: ସ୍ୱର';
+
+  @override
+  String get settingsDefaultText => 'ଡିଫଲ୍ଟ: ଲେଖା';
+
+  @override
+  String get vidyaEndConversation => 'ଶେଷ କରନ୍ତୁ';
+
+  @override
+  String get vidyaConversationEnded =>
+      'ଠିକ୍ ଅଛି, ମୁଁ ଶୁଣିବା ବନ୍ଦ କରୁଛି। ଦରକାର ହେଲେ ମୋତେ ଦବାନ୍ତୁ।';
+
+  @override
+  String get vidyaSayStop => 'ସରିଗଲେ “ବନ୍ଦ କର” କୁହନ୍ତୁ';
+
+  @override
+  String get settingsKeepListeningLabel => 'ଉତ୍ତର ପରେ ବି ଶୁଣୁଥାଉ';
+
+  @override
+  String get settingsKeepListeningHint =>
+      'VIDYA ଉତ୍ତର ଦେବା ପରେ ପୁଣି ଶୁଣେ, ଆପଣ “ବନ୍ଦ କର” କହିବା କିମ୍ବା ଶେଷ କରନ୍ତୁ ଦବାଇବା ପର୍ଯ୍ୟନ୍ତ। କେବେ ପୃଷ୍ଠଭୂମିରେ ନୁହେଁ।';
+
+  @override
+  String get worksheetTopicPageNote =>
+      'କୌଣସି ପାଠ୍ୟପୁସ୍ତକ ପୃଷ୍ଠା ଦିଆଯାଇନାହିଁ। ଏହି ବିଷୟର ମାନକ ବିଦ୍ୟାଳୟ ପାଠ୍ୟକ୍ରମରୁ ଏହି ୱାର୍କସିଟ୍ ତିଆରି କର।';
+
+  @override
+  String get worksheetTopicPageHint =>
+      'VIDYA ଏହାକୁ ଆପଣଙ୍କ ବିଷୟରୁ ତିଆରି କରିଛି। ଆପଣଙ୍କ ବହିରୁ ତିଆରି କରିବାକୁ ପାଠ୍ୟପୁସ୍ତକ ପୃଷ୍ଠାର ଫଟୋ ଯୋଡନ୍ତୁ।';
 }

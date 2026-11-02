@@ -5,6 +5,8 @@ import 'package:sahayakai/app.dart';
 import 'package:sahayakai/core/i18n/app_locale.dart';
 import 'package:sahayakai/core/i18n/locale_provider.dart';
 import 'package:sahayakai/features/settings/presentation/settings_screen.dart';
+import 'package:sahayakai/shared/widgets/map_chip.dart';
+import 'package:sahayakai/shared/widgets/map_toggle.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'settings_fixtures.dart';
@@ -144,12 +146,14 @@ void main() {
   group('notifications', () {
     testWidgets('defaults off and persists when switched on', (tester) async {
       await _pumpScreen(tester);
-      final switchFinder = find.byType(SwitchListTile).first;
-      expect(tester.widget<SwitchListTile>(switchFinder).value, isFalse);
+      // The first toggle on the page is Notifications (the map's order).
+      final switchFinder = find.byType(MapToggle).first;
+      expect(tester.widget<MapToggle>(switchFinder).value, isFalse);
 
+      // The whole card is the target, not only the toggle.
       await tester.tap(find.text('Reminders and updates'));
       await tester.pumpAndSettle();
-      expect(tester.widget<SwitchListTile>(switchFinder).value, isTrue);
+      expect(tester.widget<MapToggle>(switchFinder).value, isTrue);
 
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getBool('notifications_enabled'), isTrue);
@@ -203,36 +207,38 @@ void main() {
     testWidgets('qualifications are a multi-select', (tester) async {
       await _pumpScreen(tester, signedIn: true, doc: const <String, dynamic>{});
 
-      final bEd = find.ancestor(
-        of: find.text('B.Ed'),
-        matching: find.byType(FilterChip),
-      );
-      await tester.ensureVisible(bEd);
+      // The Qualifications row opens a sheet of chips.
+      final row = find.text('Qualifications');
+      await tester.ensureVisible(row);
       await tester.pumpAndSettle();
-      expect(tester.widget<FilterChip>(bEd).selected, isFalse);
+      await tester.tap(row);
+      await tester.pumpAndSettle();
 
-      await tester.tap(bEd);
+      MapChip chip(String label) => tester.widget<MapChip>(
+        find.ancestor(of: find.text(label), matching: find.byType(MapChip)),
+      );
+      expect(chip('B.Ed').selected, isFalse);
+
+      await tester.tap(find.text('B.Ed'));
       await tester.pumpAndSettle();
-      expect(tester.widget<FilterChip>(bEd).selected, isTrue);
+      expect(chip('B.Ed').selected, isTrue);
 
       // A second qualification joins rather than replacing the first.
-      final net = find.ancestor(
-        of: find.text('NET'),
-        matching: find.byType(FilterChip),
-      );
-      await tester.ensureVisible(net);
+      await tester.tap(find.text('NET'));
       await tester.pumpAndSettle();
-      await tester.tap(net);
-      await tester.pumpAndSettle();
-
-      expect(tester.widget<FilterChip>(bEd).selected, isTrue);
-      expect(tester.widget<FilterChip>(net).selected, isTrue);
+      expect(chip('B.Ed').selected, isTrue);
+      expect(chip('NET').selected, isTrue);
 
       // ... and deselecting removes only that one.
-      await tester.tap(bEd);
+      await tester.tap(find.text('B.Ed'));
       await tester.pumpAndSettle();
-      expect(tester.widget<FilterChip>(bEd).selected, isFalse);
-      expect(tester.widget<FilterChip>(net).selected, isTrue);
+      expect(chip('B.Ed').selected, isFalse);
+      expect(chip('NET').selected, isTrue);
+
+      // Done hands the picks back to the row.
+      await tester.tap(find.text('Done'));
+      await tester.pumpAndSettle();
+      expect(find.text('NET'), findsOneWidget);
     });
 
     testWidgets('the delete-account button is reachable and destructive', (
@@ -240,10 +246,8 @@ void main() {
     ) async {
       await _pumpScreen(tester, signedIn: true);
 
-      final deleteButton = find.widgetWithText(
-        OutlinedButton,
-        'Delete account',
-      );
+      // The map's quiet red link.
+      final deleteButton = find.widgetWithText(TextButton, 'Delete account');
       // Below the fold: tap() only WARNS on a missed hit-test, so scroll first.
       await tester.ensureVisible(deleteButton);
       await tester.pumpAndSettle();
@@ -292,21 +296,37 @@ void main() {
         }
       }
 
-      // The two switches (notifications, live voice) sit in different sections
-      // of a lazily-built ListView, so a bare `byType(SwitchListTile)` index can
-      // go stale as off-screen tiles unmount mid-scroll. Measure each by a
-      // stable, unique title instead — same 48dp gate, one match apiece.
+      // Measured by stable, unique labels so a lazily-built list cannot hand
+      // a stale index: each switch's own touch cell, each profile row, the
+      // white Save button and the delete link.
+      for (final label in const [
+        'Reminders and updates',
+        'Live voice (beta)',
+        'Keep listening after replies',
+        'VIDYA on the left',
+      ]) {
+        await checkAll(
+          find.byWidgetPredicate((w) => w is MapToggle && w.label == label),
+          '$label switch',
+        );
+      }
+      for (final label in const [
+        'Education board',
+        'Qualifications',
+        'Administrative role',
+        'Save profile',
+      ]) {
+        await checkAll(
+          find
+              .ancestor(of: find.text(label), matching: find.byType(InkWell))
+              .first,
+          label,
+        );
+      }
       await checkAll(
-        find.widgetWithText(SwitchListTile, 'Reminders and updates'),
-        'notifications switch',
+        find.widgetWithText(TextButton, 'Delete account'),
+        'delete link',
       );
-      await checkAll(
-        find.widgetWithText(SwitchListTile, 'Live voice (beta)'),
-        'live voice switch',
-      );
-      await checkAll(find.byType(FilterChip), 'qualification chip');
-      await checkAll(find.byType(FilledButton), 'save button');
-      await checkAll(find.byType(OutlinedButton), 'delete button');
     });
   });
 
@@ -349,7 +369,7 @@ void main() {
             // screen and both sit below the fold.
             await _scrollWholeList(tester);
             expect(
-              find.widgetWithText(OutlinedButton, 'Delete account'),
+              find.widgetWithText(TextButton, 'Delete account'),
               findsOneWidget,
             );
           },
@@ -394,14 +414,11 @@ void main() {
         surface: kNarrowPhone,
       );
 
-      // The board dropdown carries the longest canonical strings in the app;
-      // isExpanded must keep them inside 360dp rather than overflow sideways.
-      // It sits below the fold, and tap() only WARNS on a missed hit-test, so
-      // scroll it into the viewport first. The board field is the only
-      // String?-typed dropdown on the screen, so this finder is unambiguous
-      // (and, unlike `.first`, does not throw while still unmounted).
+      // The board list carries the longest canonical strings in the app. The
+      // Education board row sits below the fold, and tap() only WARNS on a
+      // missed hit-test, so scroll it into the viewport first.
       const boardField = 'Himachal Pradesh State Board (HPBOSE)';
-      final board = find.byType(DropdownButtonFormField<String?>);
+      final board = find.text('Education board');
       await tester.scrollUntilVisible(
         board,
         200,
@@ -410,7 +427,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(board);
       await tester.pumpAndSettle();
-      // The open menu renders all 29 board names at 360dp.
+      // The open sheet renders all 29 board names at 360dp.
       expect(tester.takeException(), isNull);
 
       // Nothing is selected yet, so this name exists only inside the menu.
@@ -424,8 +441,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      // ... and the longest name now sits in the closed field, still inside
-      // 360dp at textScale 1.3.
+      // ... and the longest name now sits in the row, wrapping inside 360dp
+      // at textScale 1.3.
       expect(find.text(boardField), findsOneWidget);
     });
 

@@ -8,6 +8,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../vidya_controller.dart';
 import '../vidya_presence.dart';
 import '../vidya_sheet.dart';
+import 'vidya_conversation.dart';
 import 'vidya_orb.dart';
 
 /// VIDYA docked in the tab bar, after the four destinations — v2 9a, "VIDYA
@@ -77,7 +78,11 @@ class VidyaDockOrb extends ConsumerWidget {
 /// - Otherwise nothing: listening and working speak through the orb and the
 ///   sheet. Home shows no capsule at all — its big orb carries the words.
 class VidyaDockPrompt extends ConsumerWidget {
-  const VidyaDockPrompt({super.key});
+  const VidyaDockPrompt({super.key, this.showReady = true});
+
+  /// Whether the "Ready · Tap to deliver" capsule shows (off on Home, whose
+  /// big orb says it).
+  final bool showReady;
 
   /// Drawn gap between the capsule and the tab bar below it (v2 9a).
   static const double _gap = 10;
@@ -89,8 +94,22 @@ class VidyaDockPrompt extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final visual = ref.watch(vidyaOrbVisualProvider);
     final readyCount = ref.watch(vidyaReadyCountProvider);
+    final conversing = ref.watch(
+      vidyaControllerProvider.select((s) => s.conversing),
+    );
+    final sheetOpen = ref.watch(vidyaSheetOpenProvider);
 
-    if (visual == VidyaOrbVisual.ready && readyCount > 0) {
+    // A conversation going on behind a closed sheet: "Mic on · End" above
+    // the bar, on every tab including Home.
+    if (conversing && !sheetOpen) {
+      return const Padding(
+        padding: EdgeInsets.only(bottom: _gap),
+        child: VidyaMicOnCapsule(),
+      );
+    }
+
+    // The ready capsule is for the tabs: Home's big orb carries it there.
+    if (showReady && visual == VidyaOrbVisual.ready && readyCount > 0) {
       final label = context.l10n.vidyaDockReadyHint;
       // The 44px touch box already centres the capsule with slack below it.
       const slack = (AppSpacing.targetMin - _capsuleHeight) / 2;

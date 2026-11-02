@@ -91,3 +91,37 @@ class DefaultInputController extends _$DefaultInputController {
     } catch (_) {}
   }
 }
+
+const String _kKeepListeningKey = 'vidya_keep_listening';
+
+/// Whether VIDYA keeps the conversation going: after she finishes speaking she
+/// listens again, until the teacher ends it (taps the orb or End, says a stop
+/// phrase, stays quiet two turns, or leaves the app). On by default.
+@Riverpod(keepAlive: true)
+class KeepListeningController extends _$KeepListeningController {
+  @override
+  bool build() {
+    _hydrate();
+    return true;
+  }
+
+  Future<void> _hydrate() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final stored = prefs.getBool(_kKeepListeningKey);
+      if (stored != null) state = stored;
+    } catch (_) {
+      // No shared_preferences plugin (a plain unit test): keep the default.
+    }
+  }
+
+  Future<void> set({required bool keepListening}) async {
+    state = keepListening;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_kKeepListeningKey, keepListening);
+    } catch (_) {
+      // Persisting a preference must never crash the settings screen.
+    }
+  }
+}

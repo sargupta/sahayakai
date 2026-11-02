@@ -1224,5 +1224,14 @@
   "meChange": "ବଦଳାନ୍ତୁ",
   "mePrivacyForTeachers": "ଶିକ୍ଷକଙ୍କ ପାଇଁ ଗୋପନୀୟତା",
   "vidyaSideLeft": "VIDYA ବାମ ପଟେ",
-  "vidyaSideRight": "VIDYA ଡାହାଣ ପଟେ"
+  "vidyaSideRight": "VIDYA ଡାହାଣ ପଟେ",
+  "settingsDefaultVoice": "ଡିଫଲ୍ଟ: ସ୍ୱର",
+  "settingsDefaultText": "ଡିଫଲ୍ଟ: ଲେଖା",
+  "vidyaEndConversation": "ଶେଷ କରନ୍ତୁ",
+  "vidyaConversationEnded": "ଠିକ୍ ଅଛି, ମୁଁ ଶୁଣିବା ବନ୍ଦ କରୁଛି। ଦରକାର ହେଲେ ମୋତେ ଦବାନ୍ତୁ।",
+  "vidyaSayStop": "ସରିଗଲେ “ବନ୍ଦ କର” କୁହନ୍ତୁ",
+  "settingsKeepListeningLabel": "ଉତ୍ତର ପରେ ବି ଶୁଣୁଥାଉ",
+  "settingsKeepListeningHint": "VIDYA ଉତ୍ତର ଦେବା ପରେ ପୁଣି ଶୁଣେ, ଆପଣ “ବନ୍ଦ କର” କହିବା କିମ୍ବା ଶେଷ କରନ୍ତୁ ଦବାଇବା ପର୍ଯ୍ୟନ୍ତ। କେବେ ପୃଷ୍ଠଭୂମିରେ ନୁହେଁ।",
+  "worksheetTopicPageNote": "କୌଣସି ପାଠ୍ୟପୁସ୍ତକ ପୃଷ୍ଠା ଦିଆଯାଇନାହିଁ। ଏହି ବିଷୟର ମାନକ ବିଦ୍ୟାଳୟ ପାଠ୍ୟକ୍ରମରୁ ଏହି ୱାର୍କସିଟ୍ ତିଆରି କର।",
+  "worksheetTopicPageHint": "VIDYA ଏହାକୁ ଆପଣଙ୍କ ବିଷୟରୁ ତିଆରି କରିଛି। ଆପଣଙ୍କ ବହିରୁ ତିଆରି କରିବାକୁ ପାଠ୍ୟପୁସ୍ତକ ପୃଷ୍ଠାର ଫଟୋ ଯୋଡନ୍ତୁ।"
 }

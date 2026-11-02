@@ -197,7 +197,7 @@ class _MeHub extends StatelessWidget {
     final blocks = <Widget>[
       _Identity(profile: profile),
       const _ThisMonthCard(),
-      _SettingsCard(profile: profile),
+      const _SettingsCard(),
       const _SignOutButton(),
     ];
 
@@ -628,10 +628,9 @@ class _UsageBar extends StatelessWidget {
 
 /// The map's settings card: plain rows over hairlines. Every row leads to
 /// something that exists; the orb toggle writes the same setting Settings does.
+/// The board lives in Settings > Teaching profile, as in the map.
 class _SettingsCard extends ConsumerWidget {
-  const _SettingsCard({required this.profile});
-
-  final TeacherProfile profile;
+  const _SettingsCard();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -640,7 +639,6 @@ class _SettingsCard extends ConsumerWidget {
     final hand = ref.watch(
       vidyaOrbPlacementControllerProvider.select((p) => p.hand),
     );
-    final board = profile.settings.educationBoard;
 
     final rows = <Widget>[
       _SettingsRow(
@@ -649,13 +647,9 @@ class _SettingsCard extends ConsumerWidget {
         onTap: () => showLanguagePickerSheet(context, ref),
       ),
       _SettingsRow(
-        label:
-            '${l10n.settingsBoardLabel} · ${board ?? l10n.settingsBoardNone}',
-        trailing: _ChangeLink(label: l10n.meChange),
-        onTap: () => context.push(Routes.profile),
-      ),
-      _SettingsRow(
-        label: hand == VidyaHand.left ? l10n.vidyaSideLeft : l10n.vidyaSideRight,
+        label: hand == VidyaHand.left
+            ? l10n.vidyaSideLeft
+            : l10n.vidyaSideRight,
         // The toggle's 48dp cell overhangs its 44px track; pull it in so its
         // edge lines up with the chevrons and links above and below.
         trailing: Padding(

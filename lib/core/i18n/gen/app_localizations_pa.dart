@@ -4242,4 +4242,35 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get vidyaSideRight => 'VIDYA ਸੱਜੇ ਪਾਸੇ';
+
+  @override
+  String get settingsDefaultVoice => 'ਡਿਫ਼ਾਲਟ: ਆਵਾਜ਼';
+
+  @override
+  String get settingsDefaultText => 'ਡਿਫ਼ਾਲਟ: ਲਿਖਤ';
+
+  @override
+  String get vidyaEndConversation => 'ਬੰਦ ਕਰੋ';
+
+  @override
+  String get vidyaConversationEnded =>
+      'ਠੀਕ ਹੈ, ਮੈਂ ਸੁਣਨਾ ਬੰਦ ਕਰਦੀ ਹਾਂ। ਲੋੜ ਹੋਵੇ ਤਾਂ ਮੈਨੂੰ ਦਬਾਓ।';
+
+  @override
+  String get vidyaSayStop => 'ਕੰਮ ਹੋ ਜਾਵੇ ਤਾਂ “ਬੱਸ” ਕਹੋ';
+
+  @override
+  String get settingsKeepListeningLabel => 'ਜਵਾਬ ਤੋਂ ਬਾਅਦ ਵੀ ਸੁਣਦੀ ਰਹੇ';
+
+  @override
+  String get settingsKeepListeningHint =>
+      'VIDYA ਜਵਾਬ ਦੇਣ ਤੋਂ ਬਾਅਦ ਫਿਰ ਸੁਣਦੀ ਹੈ, ਜਦੋਂ ਤੱਕ ਤੁਸੀਂ “ਬੱਸ” ਨਾ ਕਹੋ ਜਾਂ ਬੰਦ ਕਰੋ ਨਾ ਦਬਾਓ। ਕਦੇ ਵੀ ਪਿੱਛੋਂ ਨਹੀਂ।';
+
+  @override
+  String get worksheetTopicPageNote =>
+      'ਕੋਈ ਪਾਠ-ਪੁਸਤਕ ਦਾ ਪੰਨਾ ਨਹੀਂ ਦਿੱਤਾ ਗਿਆ। ਇਸ ਵਿਸ਼ੇ ਦੇ ਮਿਆਰੀ ਸਕੂਲ ਪਾਠਕ੍ਰਮ ਤੋਂ ਇਹ ਵਰਕਸ਼ੀਟ ਬਣਾਓ।';
+
+  @override
+  String get worksheetTopicPageHint =>
+      'VIDYA ਨੇ ਇਹ ਤੁਹਾਡੇ ਵਿਸ਼ੇ ਤੋਂ ਬਣਾਈ ਹੈ। ਆਪਣੀ ਕਿਤਾਬ ਤੋਂ ਬਣਾਉਣ ਲਈ ਪਾਠ-ਪੁਸਤਕ ਦੇ ਪੰਨੇ ਦੀ ਫ਼ੋਟੋ ਜੋੜੋ।';
 }

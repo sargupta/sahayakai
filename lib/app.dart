@@ -8,6 +8,7 @@ import 'core/i18n/locale_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'features/vidya/presentation/vidya_overlay.dart';
+import 'features/vidya/presentation/vidya_tool_launcher.dart';
 import 'shared/scroll/no_overscroll_behavior.dart';
 import 'shared/widgets/app_background.dart';
 
@@ -21,7 +22,9 @@ class SahayakApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
     final locale = ref.watch(localeControllerProvider);
 
-    final light = locale.isIndic  ? AppTheme.withIndic(AppTheme.light()) : AppTheme.light();
+    final light = locale.isIndic
+        ? AppTheme.withIndic(AppTheme.light())
+        : AppTheme.light();
 
     return MaterialApp.router(
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
@@ -30,17 +33,19 @@ class SahayakApp extends ConsumerWidget {
       routerConfig: router,
       // Remove iOS rubber-band overscroll / glow — Instagram-style clamping scroll.
       scrollBehavior: const NoOverscrollBehavior(),
-      builder: (context, child) => AppBackground(
-        child: Stack(
-          children: [
-            ?child,
-            Positioned.fill(child: VidyaOverlay(router: router)),
-          ],
+      builder: (context, child) => VidyaToolLauncher(
+        router: router,
+        child: AppBackground(
+          child: Stack(
+            children: [
+              ?child,
+              Positioned.fill(child: VidyaOverlay(router: router)),
+            ],
+          ),
         ),
       ),
       locale: locale.flutterLocale,
-      supportedLocales:
-          AppLocale.values.map((l) => l.flutterLocale).toList(),
+      supportedLocales: AppLocale.values.map((l) => l.flutterLocale).toList(),
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,

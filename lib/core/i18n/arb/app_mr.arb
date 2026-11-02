@@ -1224,5 +1224,14 @@
   "meChange": "बदला",
   "mePrivacyForTeachers": "शिक्षकांसाठी गोपनीयता",
   "vidyaSideLeft": "VIDYA डावीकडे",
-  "vidyaSideRight": "VIDYA उजवीकडे"
+  "vidyaSideRight": "VIDYA उजवीकडे",
+  "settingsDefaultVoice": "डीफॉल्ट: आवाज",
+  "settingsDefaultText": "डीफॉल्ट: मजकूर",
+  "vidyaEndConversation": "थांबवा",
+  "vidyaConversationEnded": "ठीक आहे, मी ऐकणे थांबवते. गरज असेल तेव्हा मला दाबा.",
+  "vidyaSayStop": "काम झाले की “बस” म्हणा",
+  "settingsKeepListeningLabel": "उत्तरानंतरही ऐकत राहू दे",
+  "settingsKeepListeningHint": "VIDYA उत्तर दिल्यावर पुन्हा ऐकते, तुम्ही “बस” म्हणेपर्यंत किंवा थांबवा दाबेपर्यंत. कधीही पार्श्वभूमीत नाही.",
+  "worksheetTopicPageNote": "पाठ्यपुस्तकाचे पान दिलेले नाही. या विषयाच्या प्रमाणित शालेय अभ्यासक्रमातून ही वर्कशीट तयार करा.",
+  "worksheetTopicPageHint": "VIDYA ने हे तुमच्या विषयावरून तयार केले आहे. तुमच्या पुस्तकातून तयार करण्यासाठी पाठ्यपुस्तकाच्या पानाचा फोटो जोडा."
 }

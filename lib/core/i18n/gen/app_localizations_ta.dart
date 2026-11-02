@@ -4317,4 +4317,36 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get vidyaSideRight => 'VIDYA வலப்பக்கம்';
+
+  @override
+  String get settingsDefaultVoice => 'இயல்பு: குரல்';
+
+  @override
+  String get settingsDefaultText => 'இயல்பு: உரை';
+
+  @override
+  String get vidyaEndConversation => 'முடி';
+
+  @override
+  String get vidyaConversationEnded =>
+      'சரி, நான் கேட்பதை நிறுத்துகிறேன். தேவைப்படும்போது என்னைத் தட்டுங்கள்.';
+
+  @override
+  String get vidyaSayStop => 'முடிந்ததும் “நிறுத்து” என்று சொல்லுங்கள்';
+
+  @override
+  String get settingsKeepListeningLabel =>
+      'பதிலுக்குப் பிறகும் கேட்டுக்கொண்டிருக்கட்டும்';
+
+  @override
+  String get settingsKeepListeningHint =>
+      'VIDYA பதில் சொன்ன பிறகு மீண்டும் கேட்கிறாள், நீங்கள் “நிறுத்து” என்று சொல்லும் வரை அல்லது முடி என்பதைத் தட்டும் வரை. பின்னணியில் ஒருபோதும் இல்லை.';
+
+  @override
+  String get worksheetTopicPageNote =>
+      'பாடநூல் பக்கம் எதுவும் தரப்படவில்லை. இந்தத் தலைப்பின் வழக்கமான பள்ளிப் பாடத்திட்டத்திலிருந்து இந்தப் பயிற்சித்தாளை உருவாக்கவும்.';
+
+  @override
+  String get worksheetTopicPageHint =>
+      'VIDYA இதை உங்கள் தலைப்பிலிருந்து உருவாக்கினார். உங்கள் புத்தகத்திலிருந்து உருவாக்க, பாடநூல் பக்கத்தின் புகைப்படத்தைச் சேர்க்கவும்.';
 }

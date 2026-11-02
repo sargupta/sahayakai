@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/core/network/api_exception.dart';
 import 'package:sahayakai/core/network/api_providers.dart';
+import 'package:sahayakai/features/settings/data/voice_mode_provider.dart';
 import 'package:sahayakai/features/vidya/data/dto/vidya_action.dart';
 import 'package:sahayakai/features/vidya/domain/vidya_screen_intent.dart';
 import 'package:sahayakai/features/vidya/presentation/vidya_controller.dart';
@@ -85,9 +86,15 @@ ProviderContainer _container({
   FakeAudioRecorderService? recorder,
   FakeAudioPlayerService? player,
   FakeMicPermissionService? permission,
+  // Off unless a test is about conversations: the single-turn tests below
+  // check one turn ending in idle.
+  bool keepListening = false,
 }) {
   final container = ProviderContainer(
     overrides: [
+      keepListeningControllerProvider.overrideWith(
+        () => _FixedKeepListening(keepListening),
+      ),
       apiClientProvider.overrideWithValue(client),
       audioRecorderServiceProvider.overrideWithValue(
         recorder ?? FakeAudioRecorderService(),
@@ -719,8 +726,10 @@ void main() {
         final vidya = container.read(vidyaControllerProvider.notifier);
 
         await vidya.onMicTap(); // listening
-        recorder.emitAmplitude(0.02); // the room
-        recorder.emitAmplitude(0.15); // a teacher speaking softly (< 0.18)
+        recorder
+          ..emitAmplitude(0.02) // the room
+          ..emitAmplitude(0.15) // a teacher speaking softly (< 0.18)…
+          ..emitAmplitude(0.16); // …for more than one reading
         // Trailing silence after detected speech auto-stops the capture.
         await Future<void>.delayed(
           kTrailingSilence + const Duration(milliseconds: 300),
@@ -731,6 +740,163 @@ void main() {
           isNotEmpty,
           reason: 'the words were sent to STT',
         );
+      },
+    );
+  });
+
+  group('listening in a noisy room', () {
+    test('a room louder than the old fixed onset still ends the capture '
+        'once the teacher stops talking', () async {
+      final recorder = FakeAudioRecorderService();
+      final client = _happyClient();
+      final container = _container(client: client, recorder: recorder);
+      final vidya = container.read(vidyaControllerProvider.notifier);
+
+      await vidya.onMicTap(); // listening
+      recorder
+        ..emitAmplitude(0.30) // a fan: louder than 0.18, the old onset
+        ..emitAmplitude(0.32)
+        ..emitAmplitude(0.55) // the teacher speaks
+        ..emitAmplitude(0.60)
+        ..emitAmplitude(0.31) // and stops; the fan hums on
+        ..emitAmplitude(0.33);
+      await Future<void>.delayed(
+        kTrailingSilence + const Duration(milliseconds: 300),
+      );
+
+      expect(
+        client.multiparts,
+        isNotEmpty,
+        reason: 'the hum is the room, not speech, so the silence was heard',
+      );
+    });
+  });
+
+  group('conversation (keep listening)', () {
+    /// Waits (in real time) until [done] holds, or fails after [limit].
+    Future<void> until(
+      bool Function() done, {
+      Duration limit = const Duration(seconds: 3),
+    }) async {
+      final end = DateTime.now().add(limit);
+      while (!done()) {
+        if (DateTime.now().isAfter(end)) fail('condition not met in $limit');
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+      }
+    }
+
+    test('after a spoken reply VIDYA listens again, once the reply has '
+        'finished playing', () async {
+      final player = FakeAudioPlayerService();
+      final container = _container(
+        client: _happyClient(
+          assistant: {'response': 'Water evaporates, then rains.'},
+        ),
+        player: player,
+        keepListening: true,
+      );
+      final vidya = container.read(vidyaControllerProvider.notifier);
+      VidyaState read() => container.read(vidyaControllerProvider);
+
+      await vidya.onMicTap(); // listening
+      expect(read().conversing, isTrue);
+      final turn = vidya.onMicTap(); // → STT → reply → speaking
+
+      // The reply is playing: the mic must stay shut while she speaks.
+      await until(() => player.played.isNotEmpty);
+      await Future<void>.delayed(kConversationEchoGap * 2);
+      expect(read().status, VidyaStatus.speaking);
+
+      player.completePlayback();
+      await turn;
+      await until(() => read().status == VidyaStatus.listening);
+      expect(read().conversing, isTrue);
+
+      await vidya.endConversation();
+    });
+
+    test(
+      'a stop phrase ends the conversation without asking the server',
+      () async {
+        final client = FakeApiClient(
+          multipartResponse: {'text': 'बस', 'language': 'hi'},
+        );
+        final container = _container(client: client, keepListening: true);
+        final vidya = container.read(vidyaControllerProvider.notifier);
+
+        await vidya.onMicTap();
+        await vidya.onMicTap();
+
+        final state = container.read(vidyaControllerProvider);
+        expect(state.conversing, isFalse);
+        expect(state.status, VidyaStatus.idle);
+        expect(state.conversation.map((b) => b.text), [
+          'बस',
+          "Okay, I'll stop listening. Tap me when you need me.",
+        ]);
+        expect(
+          client.posts.where((p) => p.path == '/api/assistant'),
+          isEmpty,
+          reason: 'a goodbye is answered on the device',
+        );
+        // And she does not reopen the mic afterwards.
+        await Future<void>.delayed(kConversationEchoGap * 2);
+        expect(
+          container.read(vidyaControllerProvider).status,
+          VidyaStatus.idle,
+        );
+      },
+    );
+
+    test(
+      'one quiet turn listens again; two in a row pause the conversation',
+      () async {
+        final recorder = FakeAudioRecorderService(captureBytes: 500);
+        final container = _container(
+          client: _happyClient(),
+          recorder: recorder,
+          keepListening: true,
+        );
+        final vidya = container.read(vidyaControllerProvider.notifier);
+        VidyaState read() => container.read(vidyaControllerProvider);
+
+        await vidya.onMicTap(); // listening
+        await vidya.onMicTap(); // nothing usable heard (1)
+        expect(read().conversing, isTrue);
+        await until(() => read().status == VidyaStatus.listening);
+
+        await vidya.onMicTap(); // nothing usable heard (2)
+        expect(read().status, VidyaStatus.notHeard);
+        expect(read().conversing, isFalse);
+      },
+    );
+
+    test('End stops the capture and the conversation', () async {
+      final container = _container(client: _happyClient(), keepListening: true);
+      final vidya = container.read(vidyaControllerProvider.notifier);
+
+      await vidya.onMicTap();
+      expect(container.read(vidyaControllerProvider).conversing, isTrue);
+
+      await vidya.endConversation();
+      final state = container.read(vidyaControllerProvider);
+      expect(state.conversing, isFalse);
+      expect(state.status, VidyaStatus.idle);
+    });
+
+    test(
+      'with Keep listening off a spoken turn ends in idle, as before',
+      () async {
+        final container = _container(client: _happyClient());
+        final vidya = container.read(vidyaControllerProvider.notifier);
+
+        await vidya.onMicTap();
+        await vidya.onMicTap();
+        await Future<void>.delayed(kConversationEchoGap * 2);
+
+        final state = container.read(vidyaControllerProvider);
+        expect(state.conversing, isFalse);
+        expect(state.status, VidyaStatus.idle);
       },
     );
   });
@@ -826,4 +992,14 @@ void main() {
       );
     });
   });
+}
+
+/// Keep listening pinned for a test (no shared_preferences round trip).
+class _FixedKeepListening extends KeepListeningController {
+  _FixedKeepListening(this._value);
+
+  final bool _value;
+
+  @override
+  bool build() => _value;
 }

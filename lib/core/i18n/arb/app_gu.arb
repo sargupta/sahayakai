@@ -1224,5 +1224,14 @@
   "meChange": "બદલો",
   "mePrivacyForTeachers": "શિક્ષકો માટે ગોપનીયતા",
   "vidyaSideLeft": "VIDYA ડાબી બાજુ",
-  "vidyaSideRight": "VIDYA જમણી બાજુ"
+  "vidyaSideRight": "VIDYA જમણી બાજુ",
+  "settingsDefaultVoice": "ડિફૉલ્ટ: અવાજ",
+  "settingsDefaultText": "ડિફૉલ્ટ: લખાણ",
+  "vidyaEndConversation": "બંધ કરો",
+  "vidyaConversationEnded": "ઠીક છે, હું સાંભળવાનું બંધ કરું છું. જરૂર હોય ત્યારે મને દબાવો.",
+  "vidyaSayStop": "કામ થઈ જાય ત્યારે “બસ” કહો",
+  "settingsKeepListeningLabel": "જવાબ પછી પણ સાંભળતી રહે",
+  "settingsKeepListeningHint": "VIDYA જવાબ આપ્યા પછી ફરી સાંભળે છે, જ્યાં સુધી તમે “બસ” ન કહો કે બંધ કરો ન દબાવો. ક્યારેય પાછળથી નહીં.",
+  "worksheetTopicPageNote": "કોઈ પાઠ્યપુસ્તકનું પાનું આપ્યું નથી. આ વિષયના પ્રમાણભૂત શાળા અભ્યાસક્રમમાંથી આ વર્કશીટ બનાવો.",
+  "worksheetTopicPageHint": "VIDYA એ આ તમારા વિષય પરથી બનાવ્યું છે. તમારા પુસ્તકમાંથી બનાવવા પાઠ્યપુસ્તકના પાનાનો ફોટો ઉમેરો."
 }

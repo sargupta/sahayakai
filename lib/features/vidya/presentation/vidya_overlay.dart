@@ -11,6 +11,7 @@ import 'vidya_controller.dart';
 import 'vidya_orb_placement_controller.dart';
 import 'vidya_presence.dart';
 import 'vidya_sheet.dart';
+import 'widgets/vidya_conversation.dart';
 import 'widgets/vidya_orb.dart';
 
 /// The presence layer: mounts the draggable [VidyaOrb] above the app Navigator
@@ -124,6 +125,17 @@ class _VidyaOverlayState extends State<VidyaOverlay> {
                     child: IgnorePointer(
                       child: _PerchGuides(screen: screen, pad: pad),
                     ),
+                  ),
+                // A conversation going on: "Mic on · End" just above the orb,
+                // aligned to its side of the screen.
+                if (!placement.dragging)
+                  Positioned(
+                    left: placement.hand == VidyaHand.left ? at.dx : null,
+                    right: placement.hand == VidyaHand.left
+                        ? null
+                        : screen.width - (at.dx + box),
+                    bottom: screen.height - at.dy - 4,
+                    child: const VidyaMicOnCapsule(),
                   ),
                 // Parking animates; dragging tracks the finger 1:1 (no lag).
                 AnimatedPositioned(

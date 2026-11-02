@@ -4262,4 +4262,35 @@ class AppLocalizationsTe extends AppLocalizations {
 
   @override
   String get vidyaSideRight => 'VIDYA కుడి వైపు';
+
+  @override
+  String get settingsDefaultVoice => 'డిఫాల్ట్: వాయిస్';
+
+  @override
+  String get settingsDefaultText => 'డిఫాల్ట్: టెక్స్ట్';
+
+  @override
+  String get vidyaEndConversation => 'ముగించు';
+
+  @override
+  String get vidyaConversationEnded =>
+      'సరే, నేను వినడం ఆపేస్తాను. అవసరమైనప్పుడు నన్ను నొక్కండి.';
+
+  @override
+  String get vidyaSayStop => 'అయిపోయాక “ఆపు” అనండి';
+
+  @override
+  String get settingsKeepListeningLabel => 'జవాబు తర్వాత కూడా వింటూ ఉండాలి';
+
+  @override
+  String get settingsKeepListeningHint =>
+      'VIDYA జవాబిచ్చాక మళ్లీ వింటుంది, మీరు “ఆపు” అనే వరకు లేదా ముగించు నొక్కే వరకు. ఎప్పుడూ నేపథ్యంలో కాదు.';
+
+  @override
+  String get worksheetTopicPageNote =>
+      'పాఠ్యపుస్తక పేజీ ఇవ్వలేదు. ఈ అంశానికి సంబంధించిన ప్రామాణిక పాఠశాల సిలబస్ నుండి ఈ వర్క్‌షీట్ తయారు చేయండి.';
+
+  @override
+  String get worksheetTopicPageHint =>
+      'VIDYA దీన్ని మీ అంశం నుండి తయారు చేసింది. మీ పుస్తకం నుండి తయారు చేయడానికి పాఠ్యపుస్తక పేజీ ఫోటోను జోడించండి.';
 }

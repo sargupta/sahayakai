@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sahayakai/features/settings/presentation/settings_screen.dart';
@@ -29,7 +28,10 @@ void main() {
             return const SettingsScreen();
           },
         ),
-        overrides: [signedInOverride(), profileDocOverride(doc: {})],
+        overrides: [
+          signedInOverride(),
+          profileDocOverride(doc: {}),
+        ],
       ),
     );
     await tester.pumpAndSettle();
@@ -40,11 +42,8 @@ void main() {
       VidyaHand.right,
     );
 
-    // The row says where VIDYA is now.
-    final toggle = find.ancestor(
-      of: find.text('VIDYA on the right'),
-      matching: find.byType(SwitchListTile),
-    );
+    // The card says where VIDYA is now, and the whole card is the target.
+    final toggle = find.text('VIDYA on the right');
     expect(toggle, findsOneWidget);
 
     await tester.tap(toggle);
