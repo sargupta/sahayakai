@@ -4287,8 +4287,11 @@ class AppLocalizationsMl extends AppLocalizations {
   String get meChange => 'മാറ്റുക';
 
   @override
-  String get meOrbLeftHand => 'ഓർബ് ഇടതു കൈ വശത്ത്';
+  String get mePrivacyForTeachers => 'അധ്യാപകർക്കുള്ള സ്വകാര്യത';
 
   @override
-  String get mePrivacyForTeachers => 'അധ്യാപകർക്കുള്ള സ്വകാര്യത';
+  String get vidyaSideLeft => 'VIDYA ഇടതുവശത്ത്';
+
+  @override
+  String get vidyaSideRight => 'VIDYA വലതുവശത്ത്';
 }

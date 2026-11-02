@@ -4310,8 +4310,11 @@ class AppLocalizationsTa extends AppLocalizations {
   String get meChange => 'மாற்று';
 
   @override
-  String get meOrbLeftHand => 'உருண்டை இடது கைப் பக்கம்';
+  String get mePrivacyForTeachers => 'ஆசிரியர்களுக்கான தனியுரிமை';
 
   @override
-  String get mePrivacyForTeachers => 'ஆசிரியர்களுக்கான தனியுரிமை';
+  String get vidyaSideLeft => 'VIDYA இடப்பக்கம்';
+
+  @override
+  String get vidyaSideRight => 'VIDYA வலப்பக்கம்';
 }

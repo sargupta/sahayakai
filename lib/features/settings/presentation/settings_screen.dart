@@ -534,7 +534,10 @@ class _OrbHandSection extends ConsumerWidget {
           onChanged: (value) => ref
               .read(vidyaOrbPlacementControllerProvider.notifier)
               .setHand(value ? VidyaHand.left : VidyaHand.right),
-          title: Text(l10n.settingsOrbHandLabel, style: text.bodyLarge),
+          title: Text(
+            hand == VidyaHand.left ? l10n.vidyaSideLeft : l10n.vidyaSideRight,
+            style: text.bodyLarge,
+          ),
           subtitle: Text(
             l10n.settingsOrbHandHint,
             style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),

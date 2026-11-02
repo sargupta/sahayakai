@@ -4229,8 +4229,11 @@ class AppLocalizationsHi extends AppLocalizations {
   String get meChange => 'बदलें';
 
   @override
-  String get meOrbLeftHand => 'ओर्ब बाएँ हाथ की ओर';
+  String get mePrivacyForTeachers => 'शिक्षकों के लिए गोपनीयता';
 
   @override
-  String get mePrivacyForTeachers => 'शिक्षकों के लिए गोपनीयता';
+  String get vidyaSideLeft => 'VIDYA बाईं ओर';
+
+  @override
+  String get vidyaSideRight => 'VIDYA दाईं ओर';
 }

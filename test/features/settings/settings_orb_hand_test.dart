@@ -40,14 +40,16 @@ void main() {
       VidyaHand.right,
     );
 
+    // The row says where VIDYA is now.
     final toggle = find.ancestor(
-      of: find.text('On the left hand'),
+      of: find.text('VIDYA on the right'),
       matching: find.byType(SwitchListTile),
     );
     expect(toggle, findsOneWidget);
 
     await tester.tap(toggle);
     await tester.pumpAndSettle();
+    expect(find.text('VIDYA on the left'), findsOneWidget);
 
     expect(
       container.read(vidyaOrbPlacementControllerProvider).hand,

@@ -29,6 +29,7 @@ Future<void> _pumpNav(
   Widget? dock,
   Widget? prompt,
   bool showDock = true,
+  bool dockLeading = false,
   ValueChanged<int>? onSelect,
 }) async {
   var selected = initialIndex;
@@ -53,6 +54,7 @@ Future<void> _pumpNav(
                 dock: dock,
                 prompt: prompt,
                 showDock: showDock,
+                dockLeading: dockLeading,
                 tone: tone,
                 onSelected: (i) {
                   onSelect?.call(i);
@@ -166,6 +168,16 @@ void main() {
       // 4 lead + 1 divider + 6 trail between the last touch cell and the dock.
       expect(dockRect.left - lastTab.right, 11);
       expect(dockRect.center.dy, lastTab.center.dy);
+    });
+
+    testWidgets('on the left hand VIDYA sits before the tabs', (tester) async {
+      await _pumpNav(tester, dock: dock, dockLeading: true);
+
+      final firstTab = tester.getRect(find.byKey(const ValueKey('tab_0')));
+      final dockRect = tester.getRect(find.byKey(const ValueKey('dock')));
+      // The same 11px run, mirrored: dock, divider, then the first tab.
+      expect(firstTab.left - dockRect.right, 11);
+      expect(dockRect.center.dy, firstTab.center.dy);
     });
 
     testWidgets('showDock false hides the dock', (tester) async {

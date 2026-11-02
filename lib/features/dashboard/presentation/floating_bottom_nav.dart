@@ -35,6 +35,7 @@ class FloatingBottomNav extends StatelessWidget {
     required this.onSelected,
     this.dock,
     this.showDock = true,
+    this.dockLeading = false,
     this.prompt,
     this.tone = FloatingNavTone.standard,
   });
@@ -56,6 +57,10 @@ class FloatingBottomNav extends StatelessWidget {
   /// VIDYA there.
   final bool showDock;
 
+  /// Whether VIDYA sits at the start of the bar (the teacher's left hand)
+  /// rather than the end. Changing it glides the orb across.
+  final bool dockLeading;
+
   /// A capsule drawn above the bar; it owns its own spacing.
   final Widget? prompt;
 
@@ -64,6 +69,23 @@ class FloatingBottomNav extends StatelessWidget {
 
   /// How far a tab's 48dp touch cell reaches past its drawn 42px button.
   static const double _hit = (AppSpacing.tabHit - AppSpacing.tabButton) / 2;
+
+  /// The orb's slot: its 44 touch cell plus 1px either side, so the sphere
+  /// sits 6px in from the capsule edge.
+  static const double _orbSlot = AppSpacing.dockCell + 2;
+
+  /// From the orb's slot to the divider: margin + gap, less the orb cell's
+  /// 1px overhang and the slot's 1px.
+  static const double _dividerGap =
+      AppSpacing.dockDividerMargin + AppSpacing.dockGap - 2;
+
+  /// The room VIDYA takes on its side: slot, gap, divider, and the gap to the
+  /// nearest tab's touch cell (less that cell's overhang).
+  static const double _dockRun =
+      _orbSlot +
+      _dividerGap +
+      1 +
+      (AppSpacing.dockGap + AppSpacing.dockDividerMargin - _hit);
 
   /// The map's glyphs: a folder for Library (saved work), not a bookshelf.
   static const List<IconData> _icons = [
@@ -81,7 +103,7 @@ class FloatingBottomNav extends StatelessWidget {
     final labels = _labels(context);
     final showName = _nameFits(context, labels[currentIndex], docked: docked);
 
-    final row = Row(
+    final tabs = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         for (var i = 0; i < _icons.length; i++)
@@ -98,20 +120,55 @@ class FloatingBottomNav extends StatelessWidget {
               onSelected(i);
             },
           ),
-        if (docked) ...[
-          // Last tab's 3px overhang, then gap + margin, divider, margin + gap,
-          // less the orb cell's 1px overhang.
-          const SizedBox(
-            width: AppSpacing.dockGap + AppSpacing.dockDividerMargin - _hit,
-          ),
-          const _DockDivider(),
-          const SizedBox(
-            width: AppSpacing.dockDividerMargin + AppSpacing.dockGap - 1,
-          ),
-          dock!,
-        ],
       ],
     );
+
+    // VIDYA sits on the teacher's side. When the side changes the tabs make
+    // room on the other end, the orb glides across the bar to its new slot,
+    // and the divider fades from one gap to the other.
+    final glide = motion ? AppMotion.medium : Duration.zero;
+    final row = !docked
+        ? tabs
+        : Stack(
+            clipBehavior: Clip.none,
+            children: [
+              AnimatedPadding(
+                duration: glide,
+                curve: AppMotion.emphasized,
+                padding: EdgeInsetsDirectional.only(
+                  start: dockLeading ? _dockRun : 0,
+                  end: dockLeading ? 0 : _dockRun,
+                ),
+                child: tabs,
+              ),
+              for (final leadingSide in const [true, false])
+                PositionedDirectional(
+                  start: leadingSide ? _orbSlot + _dividerGap : null,
+                  end: leadingSide ? null : _orbSlot + _dividerGap,
+                  top: 0,
+                  bottom: 0,
+                  child: AnimatedOpacity(
+                    duration: glide,
+                    curve: AppMotion.emphasized,
+                    opacity: leadingSide == dockLeading ? 1 : 0,
+                    child: const Center(child: _DockDivider()),
+                  ),
+                ),
+              Positioned.fill(
+                child: AnimatedAlign(
+                  duration: glide,
+                  curve: AppMotion.emphasized,
+                  alignment: dockLeading
+                      ? AlignmentDirectional.centerStart
+                      : AlignmentDirectional.centerEnd,
+                  child: SizedBox(
+                    width: _orbSlot,
+                    child: Center(child: dock),
+                  ),
+                ),
+              ),
+            ],
+          );
 
     final capsule = DecoratedBox(
       decoration: BoxDecoration(
@@ -125,15 +182,9 @@ class FloatingBottomNav extends StatelessWidget {
       child: Padding(
         // Each tab's 48dp touch cell overhangs its drawn 42px button by 3px a
         // side, into the capsule's 7px padding, so the drawn geometry stays
-        // the map's 56px capsule. The docked orb's 44 cell overhangs by 1.
-        padding: EdgeInsetsDirectional.fromSTEB(
-          AppSpacing.tabBarPadding - _hit,
-          AppSpacing.tabBarPadding - _hit,
-          docked
-              ? AppSpacing.tabBarPadding - 1
-              : AppSpacing.tabBarPadding - _hit,
-          AppSpacing.tabBarPadding - _hit,
-        ),
+        // the map's 56px capsule. The orb's slot carries its own spacing, so
+        // the padding is the same on both ends whichever side VIDYA is on.
+        padding: const EdgeInsets.all(AppSpacing.tabBarPadding - _hit),
         // The pill's width eases as it moves between tabs and the dock shows
         // or hides. Under reduce motion it jumps: a zero-length AnimatedSize
         // re-dirties its own layout, so it is left out rather than run at
@@ -204,15 +255,8 @@ class FloatingBottomNav extends StatelessWidget {
         2 * _hit;
     // Padding both sides, plus the 1px border both sides.
     const chrome = 2 * (AppSpacing.tabBarPadding - _hit) + 2;
-    const dockRun =
-        (AppSpacing.dockGap + AppSpacing.dockDividerMargin - _hit) +
-        1 +
-        (AppSpacing.dockDividerMargin + AppSpacing.dockGap - 1) +
-        AppSpacing.dockCell +
-        // The docked end padding is 1 under the bar's 7, not 3.
-        (_hit - 1);
     final barWidth =
-        inactiveCells + activeCell + chrome + (docked ? dockRun : 0);
+        inactiveCells + activeCell + chrome + (docked ? _dockRun : 0);
     final available =
         MediaQuery.sizeOf(context).width - 2 * AppSpacing.screenGutter;
     return barWidth <= available;

@@ -4235,8 +4235,11 @@ class AppLocalizationsPa extends AppLocalizations {
   String get meChange => 'ਬਦਲੋ';
 
   @override
-  String get meOrbLeftHand => 'ਓਰਬ ਖੱਬੇ ਹੱਥ ਵੱਲ';
+  String get mePrivacyForTeachers => 'ਅਧਿਆਪਕਾਂ ਲਈ ਨਿੱਜਤਾ';
 
   @override
-  String get mePrivacyForTeachers => 'ਅਧਿਆਪਕਾਂ ਲਈ ਨਿੱਜਤਾ';
+  String get vidyaSideLeft => 'VIDYA ਖੱਬੇ ਪਾਸੇ';
+
+  @override
+  String get vidyaSideRight => 'VIDYA ਸੱਜੇ ਪਾਸੇ';
 }

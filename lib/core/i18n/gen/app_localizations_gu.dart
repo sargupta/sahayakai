@@ -4232,8 +4232,11 @@ class AppLocalizationsGu extends AppLocalizations {
   String get meChange => 'બદલો';
 
   @override
-  String get meOrbLeftHand => 'ઓર્બ ડાબા હાથ તરફ';
+  String get mePrivacyForTeachers => 'શિક્ષકો માટે ગોપનીયતા';
 
   @override
-  String get mePrivacyForTeachers => 'શિક્ષકો માટે ગોપનીયતા';
+  String get vidyaSideLeft => 'VIDYA ડાબી બાજુ';
+
+  @override
+  String get vidyaSideRight => 'VIDYA જમણી બાજુ';
 }

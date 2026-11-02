@@ -4246,8 +4246,11 @@ class AppLocalizationsKn extends AppLocalizations {
   String get meChange => 'ಬದಲಿಸಿ';
 
   @override
-  String get meOrbLeftHand => 'ಆರ್ಬ್ ಎಡಗೈ ಕಡೆ';
+  String get mePrivacyForTeachers => 'ಶಿಕ್ಷಕರ ಗೌಪ್ಯತೆ';
 
   @override
-  String get mePrivacyForTeachers => 'ಶಿಕ್ಷಕರ ಗೌಪ್ಯತೆ';
+  String get vidyaSideLeft => 'VIDYA ಎಡಭಾಗದಲ್ಲಿ';
+
+  @override
+  String get vidyaSideRight => 'VIDYA ಬಲಭಾಗದಲ್ಲಿ';
 }

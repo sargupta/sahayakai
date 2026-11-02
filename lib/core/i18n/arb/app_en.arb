@@ -5100,12 +5100,16 @@
   "@meChange": {
     "description": "Profile row action: change this setting."
   },
-  "meOrbLeftHand": "Orb on the left hand",
-  "@meOrbLeftHand": {
-    "description": "Profile toggle: park VIDYA's orb on the left side."
-  },
   "mePrivacyForTeachers": "Privacy for teachers",
   "@mePrivacyForTeachers": {
     "description": "Link to the Privacy for teachers page."
+  },
+  "vidyaSideLeft": "VIDYA on the left",
+  "@vidyaSideLeft": {
+    "description": "Orb side setting: VIDYA sits on the left (tab bar and floating orb). The switch is on."
+  },
+  "vidyaSideRight": "VIDYA on the right",
+  "@vidyaSideRight": {
+    "description": "Orb side setting: VIDYA sits on the right (tab bar and floating orb). The switch is off."
   }
 }

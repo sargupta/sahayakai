@@ -45,15 +45,18 @@ Future<void> _pumpOrb(
   await tester.pump(); // build + first animation frame
 }
 
-/// The states whose ambient motion is driven by a repeating controller.
+/// The states that live (surface turning, sheen, float or pulse): every
+/// state but offline, as in the v2 design's orb.
 const _animatedStates = [
   VidyaOrbVisual.resting,
   VidyaOrbVisual.listening,
   VidyaOrbVisual.working,
+  VidyaOrbVisual.dragging,
+  VidyaOrbVisual.ready,
 ];
 
-/// The states with no continuous motion — the overlay/badge drives them.
-const _staticStates = [VidyaOrbVisual.dragging, VidyaOrbVisual.ready];
+/// Offline greys and holds still.
+const _staticStates = [VidyaOrbVisual.offline];
 
 void main() {
   group('every state renders', () {

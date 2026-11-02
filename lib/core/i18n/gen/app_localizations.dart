@@ -7340,17 +7340,23 @@ abstract class AppLocalizations {
   /// **'Change'**
   String get meChange;
 
-  /// Profile toggle: park VIDYA's orb on the left side.
-  ///
-  /// In en, this message translates to:
-  /// **'Orb on the left hand'**
-  String get meOrbLeftHand;
-
   /// Link to the Privacy for teachers page.
   ///
   /// In en, this message translates to:
   /// **'Privacy for teachers'**
   String get mePrivacyForTeachers;
+
+  /// Orb side setting: VIDYA sits on the left (tab bar and floating orb). The switch is on.
+  ///
+  /// In en, this message translates to:
+  /// **'VIDYA on the left'**
+  String get vidyaSideLeft;
+
+  /// Orb side setting: VIDYA sits on the right (tab bar and floating orb). The switch is off.
+  ///
+  /// In en, this message translates to:
+  /// **'VIDYA on the right'**
+  String get vidyaSideRight;
 }
 
 class _AppLocalizationsDelegate

@@ -4246,8 +4246,11 @@ class AppLocalizationsBn extends AppLocalizations {
   String get meChange => 'বদলান';
 
   @override
-  String get meOrbLeftHand => 'অর্ব বাঁ হাতের দিকে';
+  String get mePrivacyForTeachers => 'শিক্ষকদের জন্য গোপনীয়তা';
 
   @override
-  String get mePrivacyForTeachers => 'শিক্ষকদের জন্য গোপনীয়তা';
+  String get vidyaSideLeft => 'VIDYA বাঁ দিকে';
+
+  @override
+  String get vidyaSideRight => 'VIDYA ডান দিকে';
 }

@@ -16,6 +16,7 @@ import '../../staffroom/presentation/network_hub_screen.dart';
 import '../../vidya/domain/vidya_screen_intent.dart';
 import '../../vidya/presentation/vidya_controller.dart';
 import '../../vidya/presentation/vidya_home_screen.dart';
+import '../../vidya/presentation/vidya_orb_placement_controller.dart';
 import '../../vidya/presentation/vidya_sheet.dart';
 import '../../vidya/presentation/widgets/vidya_dock.dart';
 import 'floating_bottom_nav.dart';
@@ -145,6 +146,12 @@ class _AppShellState extends ConsumerState<AppShell> {
           onSelected: _onNavTap,
           dock: const VidyaDockOrb(),
           showDock: _currentIndex != 0,
+          // VIDYA sits on the teacher's hand (Profile, Settings, onboarding).
+          dockLeading:
+              ref.watch(
+                vidyaOrbPlacementControllerProvider.select((p) => p.hand),
+              ) ==
+              VidyaHand.left,
           prompt: _currentIndex == 0 ? null : const VidyaDockPrompt(),
         ),
       ),

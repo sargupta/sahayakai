@@ -1222,6 +1222,7 @@
   "meStatMade": "ഉണ്ടാക്കിയത്",
   "meStatAskedVidya": "VIDYA-യോട് ചോദിച്ചത്",
   "meChange": "മാറ്റുക",
-  "meOrbLeftHand": "ഓർബ് ഇടതു കൈ വശത്ത്",
-  "mePrivacyForTeachers": "അധ്യാപകർക്കുള്ള സ്വകാര്യത"
+  "mePrivacyForTeachers": "അധ്യാപകർക്കുള്ള സ്വകാര്യത",
+  "vidyaSideLeft": "VIDYA ഇടതുവശത്ത്",
+  "vidyaSideRight": "VIDYA വലതുവശത്ത്"
 }

@@ -1222,6 +1222,7 @@
   "meStatMade": "बनवले",
   "meStatAskedVidya": "VIDYAला विचारले",
   "meChange": "बदला",
-  "meOrbLeftHand": "ऑर्ब डाव्या हाताकडे",
-  "mePrivacyForTeachers": "शिक्षकांसाठी गोपनीयता"
+  "mePrivacyForTeachers": "शिक्षकांसाठी गोपनीयता",
+  "vidyaSideLeft": "VIDYA डावीकडे",
+  "vidyaSideRight": "VIDYA उजवीकडे"
 }

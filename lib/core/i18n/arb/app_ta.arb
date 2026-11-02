@@ -1222,6 +1222,7 @@
   "meStatMade": "உருவாக்கியவை",
   "meStatAskedVidya": "VIDYA-விடம் கேட்டவை",
   "meChange": "மாற்று",
-  "meOrbLeftHand": "உருண்டை இடது கைப் பக்கம்",
-  "mePrivacyForTeachers": "ஆசிரியர்களுக்கான தனியுரிமை"
+  "mePrivacyForTeachers": "ஆசிரியர்களுக்கான தனியுரிமை",
+  "vidyaSideLeft": "VIDYA இடப்பக்கம்",
+  "vidyaSideRight": "VIDYA வலப்பக்கம்"
 }

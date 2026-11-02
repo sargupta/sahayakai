@@ -1222,6 +1222,7 @@
   "meStatMade": "ତିଆରି",
   "meStatAskedVidya": "VIDYAକୁ ପଚାରିଲେ",
   "meChange": "ବଦଳାନ୍ତୁ",
-  "meOrbLeftHand": "ଅର୍ବ ବାମ ହାତ ପଟେ",
-  "mePrivacyForTeachers": "ଶିକ୍ଷକଙ୍କ ପାଇଁ ଗୋପନୀୟତା"
+  "mePrivacyForTeachers": "ଶିକ୍ଷକଙ୍କ ପାଇଁ ଗୋପନୀୟତା",
+  "vidyaSideLeft": "VIDYA ବାମ ପଟେ",
+  "vidyaSideRight": "VIDYA ଡାହାଣ ପଟେ"
 }

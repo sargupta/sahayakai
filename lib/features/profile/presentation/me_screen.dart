@@ -655,14 +655,14 @@ class _SettingsCard extends ConsumerWidget {
         onTap: () => context.push(Routes.profile),
       ),
       _SettingsRow(
-        label: l10n.meOrbLeftHand,
+        label: hand == VidyaHand.left ? l10n.vidyaSideLeft : l10n.vidyaSideRight,
         // The toggle's 48dp cell overhangs its 44px track; pull it in so its
         // edge lines up with the chevrons and links above and below.
         trailing: Padding(
           padding: const EdgeInsetsDirectional.only(end: 4),
           child: MapToggle(
             value: hand == VidyaHand.left,
-            label: l10n.meOrbLeftHand,
+            label: l10n.vidyaSideLeft,
             onChanged: (left) => ref
                 .read(vidyaOrbPlacementControllerProvider.notifier)
                 .setHand(left ? VidyaHand.left : VidyaHand.right),
@@ -722,11 +722,22 @@ class _SettingsRow extends StatelessWidget {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 11),
-                child: Text(
-                  label,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontSize: 14,
-                    color: AppColors.textStrong,
+                // A label that changes in place (VIDYA's side) cross-fades.
+                child: AnimatedSwitcher(
+                  duration: context.motionEnabled
+                      ? AppMotion.small
+                      : Duration.zero,
+                  layoutBuilder: (current, previous) => Stack(
+                    alignment: AlignmentDirectional.centerStart,
+                    children: [...previous, ?current],
+                  ),
+                  child: Text(
+                    label,
+                    key: ValueKey<String>(label),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontSize: 14,
+                      color: AppColors.textStrong,
+                    ),
                   ),
                 ),
               ),

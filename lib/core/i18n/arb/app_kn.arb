@@ -1222,6 +1222,7 @@
   "meStatMade": "ಮಾಡಿದವು",
   "meStatAskedVidya": "VIDYAಗೆ ಕೇಳಿದ್ದು",
   "meChange": "ಬದಲಿಸಿ",
-  "meOrbLeftHand": "ಆರ್ಬ್ ಎಡಗೈ ಕಡೆ",
-  "mePrivacyForTeachers": "ಶಿಕ್ಷಕರ ಗೌಪ್ಯತೆ"
+  "mePrivacyForTeachers": "ಶಿಕ್ಷಕರ ಗೌಪ್ಯತೆ",
+  "vidyaSideLeft": "VIDYA ಎಡಭಾಗದಲ್ಲಿ",
+  "vidyaSideRight": "VIDYA ಬಲಭಾಗದಲ್ಲಿ"
 }

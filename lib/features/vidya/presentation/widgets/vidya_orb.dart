@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_motion.dart';
@@ -118,12 +119,18 @@ class VidyaOrb extends StatefulWidget {
 
 class _VidyaOrbState extends State<VidyaOrb>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _c;
+  /// One clock drives every motion (float, pulse, spin, sheen): each derives
+  /// its own phase from the elapsed seconds, so they never drift apart or
+  /// restart when the state changes.
+  late final Ticker _ticker;
+  final ValueNotifier<double> _seconds = ValueNotifier<double>(0);
 
   @override
   void initState() {
     super.initState();
-    _c = AnimationController(vsync: this);
+    _ticker = createTicker(
+      (elapsed) => _seconds.value = elapsed.inMicroseconds / 1e6,
+    );
   }
 
   @override
@@ -138,48 +145,51 @@ class _VidyaOrbState extends State<VidyaOrb>
     if (old.state != widget.state) _syncMotion();
   }
 
-  Duration? _periodFor(VidyaOrbVisual s) {
-    switch (s) {
-      case VidyaOrbVisual.resting:
-        return AppMotion.orbFloat; // 5.5s
-      case VidyaOrbVisual.listening:
-        return AppMotion.orbListenPulse; // 2s
-      case VidyaOrbVisual.working:
-        return AppMotion.orbWorkPulse; // 1.8s
-      case VidyaOrbVisual.dragging:
-      case VidyaOrbVisual.ready:
-      case VidyaOrbVisual.offline:
-        return null;
-    }
-  }
-
+  /// The orb lives (spins, shines, floats) in every state but offline, where
+  /// it greys and holds still; reduce-motion holds every state still.
   void _syncMotion() {
-    final period = _periodFor(widget.state);
-    final motion = context.motionEnabled;
-    if (!motion || period == null) {
-      _c.stop();
-      _c.value = 0;
-      return;
+    final live =
+        context.motionEnabled && widget.state != VidyaOrbVisual.offline;
+    if (live) {
+      if (!_ticker.isActive) _ticker.start();
+    } else {
+      if (_ticker.isActive) _ticker.stop();
+      _seconds.value = 0;
     }
-    if (_c.duration != period) _c.duration = period;
-    if (!_c.isAnimating) _c.repeat();
   }
 
   @override
   void dispose() {
-    _c.dispose();
+    _ticker.dispose();
+    _seconds.dispose();
     super.dispose();
   }
+
+  /// 0 -> 1 -> 0 over [period], eased like a breath: no corners to read as a
+  /// jolt, which a plain sine around the rest line or a snappy cubic-bezier
+  /// both produce.
+  static double _wave(double seconds, Duration period) {
+    final t = (seconds % _secs(period)) / _secs(period);
+    return 0.5 - 0.5 * math.cos(t * 2 * math.pi);
+  }
+
+  static double _secs(Duration d) => d.inMicroseconds / 1e6;
+
+  /// The surface turns once every 16s; the sheen breathes every 3.6s.
+  static const Duration _spinPeriod = Duration(seconds: 16);
+  static const Duration _sheenPeriod = Duration(milliseconds: 3600);
 
   @override
   Widget build(BuildContext context) {
     final motion = context.motionEnabled;
     final box = widget.size + VidyaOrb._halo * 2;
 
-    final orb = AnimatedBuilder(
-      animation: _c,
-      builder: (context, _) {
-        final t = _c.value; // 0..1, frozen at 0 under reduce-motion
+    final orb = ValueListenableBuilder<double>(
+      valueListenable: _seconds,
+      builder: (context, seconds, _) {
+        final listenPhase =
+            (seconds % _secs(AppMotion.orbListenPulse)) /
+            _secs(AppMotion.orbListenPulse);
         return SizedBox(
           width: box,
           height: box,
@@ -188,13 +198,13 @@ class _VidyaOrbState extends State<VidyaOrb>
             clipBehavior: Clip.none,
             children: [
               if (widget.state == VidyaOrbVisual.listening)
-                _buildListenRing(t, motion),
+                _buildListenRing(listenPhase, motion),
               if (widget.state == VidyaOrbVisual.dragging) _buildDragRing(),
               Transform.translate(
-                offset: Offset(0, _floatDy(t, motion)),
+                offset: Offset(0, _floatDy(seconds, motion)),
                 child: Transform.scale(
-                  scale: _scale(t, motion),
-                  child: _buildSphere(),
+                  scale: _scale(seconds, motion),
+                  child: _buildSphere(seconds),
                 ),
               ),
               if (widget.state == VidyaOrbVisual.ready && widget.readyCount > 0)
@@ -225,23 +235,170 @@ class _VidyaOrbState extends State<VidyaOrb>
     );
   }
 
-  /// The sphere — exact radial gradient from design tokens.
-  /// Specular highlight at 34%/30% (Alignment(-0.32, -0.4)).
-  Widget _buildSphere() {
+  /// The sphere, adapted from the v2 design's living orb with the app's own
+  /// state colours: the state gradient as the base; inside it, an oversized
+  /// layer of three soft blobs (a deep one low right, a light one left, a
+  /// warm one high) turning once every 16s so the surface slowly swirls; an
+  /// edge shade for depth; and a specular sheen that drifts and brightens on
+  /// a 3.6s breath. The size-relative geometry is the design's, measured on
+  /// its 164px orb, so the docked 42px orb and Home's 144px orb are the same
+  /// object at two sizes.
+  Widget _buildSphere(double seconds) {
     final lifted = widget.state == VidyaOrbVisual.dragging;
-    final diameter = lifted ? AppSpacing.orbDraggingSize : widget.size;
+    final d = lifted ? AppSpacing.orbDraggingSize : widget.size;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final gradient = VidyaOrb.gradientFor(widget.state);
+    final light = gradient.colors.first;
+    final base = gradient.colors.last;
+    final deep = Color.lerp(base, Colors.black, 0.38)!;
+    final k = d / 164; // the design's orb is 164px
+
+    final spin = seconds / _secs(_spinPeriod) * 2 * math.pi;
+    final sheen = _wave(seconds, _sheenPeriod);
+    final layer = d * 1.6; // the design's inset: -30% on each side
+
+    Widget blob({
+      required double w,
+      required double h,
+      required Color color,
+      double? left,
+      double? right,
+      double? top,
+      double? bottom,
+    }) {
+      return Positioned(
+        left: left == null ? null : layer * left,
+        right: right == null ? null : layer * right,
+        top: top == null ? null : layer * top,
+        bottom: bottom == null ? null : layer * bottom,
+        child: Transform(
+          alignment: Alignment.center,
+          // A circle stretched to the blob's aspect: an ellipse whose
+          // gradient reaches zero at its rim, so no edge ever shows.
+          transform: Matrix4.diagonal3Values(w / h, 1, 1),
+          child: Container(
+            width: h * k * 1.3,
+            height: h * k * 1.3,
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                radius: 0.5,
+                colors: [color, color.withValues(alpha: 0)],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     return Container(
-      width: diameter,
-      height: diameter,
+      width: d,
+      height: d,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: VidyaOrb.gradientFor(widget.state),
+        gradient: gradient,
         boxShadow: widget.shadows ?? _orbShadows(isDark, lifted),
       ),
       // No glyph: the orb's meaning is its state colour, its motion and the
       // words beside it. A mic glyph is a control, never VIDYA (Orb spec).
+      child: ClipOval(
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: OverflowBox(
+                maxWidth: layer,
+                maxHeight: layer,
+                child: Transform.rotate(
+                  angle: spin,
+                  child: SizedBox(
+                    width: layer,
+                    height: layer,
+                    child: Stack(
+                      children: [
+                        blob(
+                          w: 110,
+                          h: 92,
+                          color: deep.withValues(alpha: 0.42),
+                          bottom: 0.18,
+                          right: 0.08,
+                        ),
+                        blob(
+                          w: 100,
+                          h: 78,
+                          color: Color.lerp(
+                            light,
+                            Colors.white,
+                            0.3,
+                          )!.withValues(alpha: 0.45),
+                          bottom: 0.30,
+                          left: 0.06,
+                        ),
+                        blob(
+                          w: 76,
+                          h: 64,
+                          color: Color.lerp(
+                            light,
+                            base,
+                            0.35,
+                          )!.withValues(alpha: 0.5),
+                          top: 0.16,
+                          right: 0.26,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // Depth: the edge falls into shade, low and right (the design's
+            // inset shadow), so the blobs read as a surface on a sphere.
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: const Alignment(-0.25, -0.35),
+                    radius: 1.0,
+                    colors: [
+                      deep.withValues(alpha: 0),
+                      deep.withValues(alpha: 0),
+                      deep.withValues(alpha: 0.42),
+                    ],
+                    stops: const [0, 0.6, 1],
+                  ),
+                ),
+              ),
+            ),
+            // The specular sheen, drifting and brightening on its breath.
+            Positioned(
+              left: 25 * k + 6 * k * sheen,
+              top: 15 * k + 4 * k * sheen,
+              child: Opacity(
+                opacity: 0.55 + 0.4 * sheen,
+                child: Transform.scale(
+                  scale: 1 + 0.12 * sheen,
+                  child: Transform(
+                    alignment: Alignment.center,
+                    transform: Matrix4.diagonal3Values(56 / 38, 1, 1),
+                    child: Container(
+                      width: 38 * k,
+                      height: 38 * k,
+                      decoration: BoxDecoration(
+                        gradient: RadialGradient(
+                          center: const Alignment(-0.2, -0.2),
+                          radius: 0.5,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.85),
+                            Colors.white.withValues(alpha: 0),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -376,24 +533,33 @@ class _VidyaOrbState extends State<VidyaOrb>
   /// control: its badge scales with it.
   static const double _bigOrb = 100;
 
-  /// Float: resting only, 5.5s ease-in-out, translateY -7px.
-  double _floatDy(double t, bool motion) {
-    if (!motion || widget.state != VidyaOrbVisual.resting) return 0;
-    return -7 * math.sin(t * 2 * math.pi);
+  /// Float: resting and ready, one 5.5s breath up and back, never below the
+  /// rest line. The lift scales with the orb, 7px on Home's 144px orb down to
+  /// 2px in the tab bar, so every orb drifts at the same pace and none
+  /// jitters in a tight slot.
+  double _floatDy(double seconds, bool motion) {
+    if (!motion) return 0;
+    if (widget.state != VidyaOrbVisual.resting &&
+        widget.state != VidyaOrbVisual.ready) {
+      return 0;
+    }
+    final lift = (7 * widget.size / 144).clamp(2.0, 7.0);
+    return -lift * _wave(seconds, AppMotion.orbFloat);
   }
 
-  /// Scale: resting float scale 1.035, listening pulse 1.07, working pulse 1.04.
-  double _scale(double t, bool motion) {
+  /// Scale: the float's 1.035 swell, the listening pulse 1.07, the working
+  /// pulse 1.04, each on the same breath-shaped wave.
+  double _scale(double seconds, bool motion) {
     if (!motion) return 1.0;
     switch (widget.state) {
       case VidyaOrbVisual.resting:
-        return 1.0 + 0.035 * (0.5 + 0.5 * math.sin(t * 2 * math.pi));
-      case VidyaOrbVisual.listening:
-        return 1.0 + 0.07 * (0.5 + 0.5 * math.sin(t * 2 * math.pi));
-      case VidyaOrbVisual.working:
-        return 1.0 + 0.04 * math.sin(t * 2 * math.pi);
-      case VidyaOrbVisual.dragging:
       case VidyaOrbVisual.ready:
+        return 1.0 + 0.035 * _wave(seconds, AppMotion.orbFloat);
+      case VidyaOrbVisual.listening:
+        return 1.0 + 0.07 * _wave(seconds, AppMotion.orbListenPulse);
+      case VidyaOrbVisual.working:
+        return 1.0 + 0.04 * _wave(seconds, AppMotion.orbWorkPulse);
+      case VidyaOrbVisual.dragging:
       case VidyaOrbVisual.offline:
         return 1.0;
     }
