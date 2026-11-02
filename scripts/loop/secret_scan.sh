@@ -64,6 +64,9 @@ check "keystore password (bare literal)" \
   '(store|key)_?pass(word)?[[:space:]]*=[[:space:]]*[A-Za-z0-9+/_-]{6,}[[:space:]]*$'
 check "private key block" 'BEGIN (RSA|EC|DSA|OPENSSH|PGP) PRIVATE KEY'
 check "google api key"    'AIza[0-9A-Za-z_-]{35}' --case-sensitive
+check "openrouter key"    'sk-or-v1-[0-9a-f]{32,}' --case-sensitive
+check "anthropic key"     'sk-ant-[A-Za-z0-9_-]{20,}' --case-sensitive
+check "openai key"        'sk-proj-[A-Za-z0-9_-]{20,}' --case-sensitive
 check "service account"   '"private_key"[[:space:]]*:'
 check "generic bearer"    '(secret|token|passwd|password|api_?key)[[:space:]]*[=:][[:space:]]*["'"'"'][A-Za-z0-9+/_-]{16,}'
 
